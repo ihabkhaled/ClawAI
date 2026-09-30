@@ -1,3 +1,4 @@
+import { latestUserTurnText } from '../utilities/quoted-turn.utility';
 import { Injectable, Logger } from '@nestjs/common';
 import { PaygSurface, TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
 
@@ -1034,7 +1035,6 @@ export class JudgeRefereeManager {
    * (rule 42 §18) is spelled out, or the judge scores relevance to "".
    */
   private extractUserPrompt(context: AssembledContext): string {
-    const lastUserMsg = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
-    return resolveContextTurnText(lastUserMsg?.content ?? '', context);
+    return resolveContextTurnText(latestUserTurnText(context.threadMessages) ?? '', context);
   }
 }

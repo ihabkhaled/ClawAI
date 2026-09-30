@@ -42,7 +42,10 @@ describe('thread listing is always narrowed to one origin', () => {
 
     const call = findMany.mock.calls[0];
     expect(call).toBeDefined();
-    expect(call?.[0].where.origin).toBe(ThreadOrigin.CODING_AGENT);
+    // The coding agent family: the extension's threads and the CLI's (F094).
+    expect(call?.[0].where.origin).toEqual({
+      in: [ThreadOrigin.CODING_AGENT, ThreadOrigin.CODING_AGENT_CLI],
+    });
   });
 
   it('counts the same set it lists', async () => {
@@ -54,8 +57,6 @@ describe('thread listing is always narrowed to one origin', () => {
 
     const call = count.mock.calls[0];
     expect(call).toBeDefined();
-    expect(call?.[0].where).toEqual(
-      expect.objectContaining({ origin: ThreadOrigin.WEB }),
-    );
+    expect(call?.[0].where).toEqual(expect.objectContaining({ origin: ThreadOrigin.WEB }));
   });
 });

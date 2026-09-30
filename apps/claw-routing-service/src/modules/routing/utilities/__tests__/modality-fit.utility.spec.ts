@@ -5,9 +5,14 @@ import { RequiredModality } from '@claw/shared-types';
 import { describe, expect, it } from 'vitest';
 
 import { ModalityFit } from '../../../../common/enums/modality-fit.enum';
-import { ModalityKind } from '../../../../generated/prisma';
+import { ModalityKind, RoutingMode } from '../../../../generated/prisma';
 import { parseAttachmentModality } from '../attachment-modality.utility';
-import { modalityFitOf, modalityFitReasonTag } from '../modality-fit.utility';
+import {
+  modalityFitOf,
+  modalityFitReasonTag,
+  rankDecisionByModalityFit,
+} from '../modality-fit.utility';
+import type { RoutingDecisionResult } from '../../types/routing.types';
 
 const { IMAGE_INPUT, VIDEO_INPUT, AUDIO_INPUT } = RequiredModality;
 
@@ -108,5 +113,56 @@ describe('parseAttachmentModality', () => {
     expect(parsed.attachmentMimeTypes).toHaveLength(10);
     expect(parsed.requiredModalities).toEqual([VIDEO_INPUT]);
     expect(parsed.transformableModalities).toEqual([VIDEO_INPUT]);
+  });
+});
+
+describe('rankDecisionByModalityFit', () => {
+  const catalog: Record<string, { modalitiesIn: ModalityKind[] }> = {
+    'text-a': { modalitiesIn: [ModalityKind.TEXT] },
+    'text-b': { modalitiesIn: [ModalityKind.TEXT] },
+    vision: { modalitiesIn: [ModalityKind.TEXT, ModalityKind.IMAGE_INPUT] },
+  };
+  const decision: RoutingDecisionResult = {
+    selectedProvider: 'P',
+    selectedModel: 'text-a',
+    routingMode: RoutingMode.AUTO,
+    confidence: 0.7,
+    reasonTags: ['auto', 'heuristic'],
+    privacyClass: 'cloud',
+    costClass: 'medium',
+    fallbackChain: [
+      { provider: 'P', model: 'text-b' },
+      { provider: 'P', model: 'vision' },
+    ],
+  };
+  const lookup = (entry: { model: string }) => catalog[entry.model];
+
+  it('puts the capable model first and keeps the others in their order', () => {
+    const ranking = rankDecisionByModalityFit(decision, lookup, [IMAGE_INPUT], [IMAGE_INPUT]);
+
+    expect(ranking.decision.selectedModel).toBe('vision');
+    expect(ranking.decision.fallbackChain.map((e) => e.model)).toEqual(['text-a', 'text-b']);
+    expect(ranking.reordered).toBe(true);
+    expect(ranking.originalFit).toBe(ModalityFit.TRANSFORMED);
+    expect(ranking.fit).toBe(ModalityFit.DIRECT);
+    expect(ranking.decision.reasonTags).toEqual([
+      'auto',
+      'heuristic',
+      'modalityFit:direct',
+      'modality_fit_reranked',
+    ]);
+  });
+
+  it('keeps the pick when nothing fits better, and ranks unknown models as no modality', () => {
+    const ranking = rankDecisionByModalityFit(
+      { ...decision, fallbackChain: [{ provider: 'P', model: 'unknown' }] },
+      lookup,
+      [AUDIO_INPUT],
+      [],
+    );
+
+    expect(ranking.reordered).toBe(false);
+    expect(ranking.decision.selectedModel).toBe('text-a');
+    expect(ranking.decision.reasonTags).toContain('modalityFit:degraded');
   });
 });

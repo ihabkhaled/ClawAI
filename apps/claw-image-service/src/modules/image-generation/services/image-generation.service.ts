@@ -46,6 +46,11 @@ import { IMAGE_PRE_PROVIDER_STATUSES } from '../constants/image-cancel.constants
 import { isActiveImageStatus, isImageCancelledError } from '../utilities/image-cancel.utility';
 import { successorDataFrom, toLatestSummary } from '../utilities/image-supersession.utility';
 import { type ListImagesQueryDto } from '../dto/generate-image.dto';
+import {
+  isStorableReferenceSize,
+  referenceFilename,
+  sniffReferenceImageMime,
+} from '../utilities/image-reference-mime.utility';
 import { BusinessException } from '../../../common/errors';
 import { supportsImageEdit, supportsImageMask } from '@claw/shared-utilities';
 import { assertValidImageMask, imageEditRefusal } from '../utilities/image-mask.utility';
@@ -366,10 +371,13 @@ export class ImageGenerationService {
   }
 
   /**
-   * Keeps the reference image a retry will need. Only a file-service upload
-   * (`referenceFileId`) is stored, and only as its id — the bytes already live
-   * in file-service. A caller that sends bare base64 still gets it used on this
-   * send; a later retry of that job has nothing to re-read.
+   * Keeps the reference image a retry will need, always as a file-service id.
+   * An upload (`referenceFileId`) is stored by its id — the bytes already live
+   * in file-service. Bare base64 with no id is first stored as the OWNER's
+   * file (type sniffed from magic bytes, size-capped), then referenced the
+   * same way. A reference that is not a recognised image, too large, or that
+   * file-service refuses is still used on this send, but not kept — so a
+   * retry has nothing to re-read, exactly as before.
    */
   private async storeReference(
     generationId: string,
@@ -384,8 +392,69 @@ export class ImageGenerationService {
         fileId: params.referenceFileId,
         mimeType: params.referenceImageMimeType,
       });
+    } else if (params.referenceFileId === undefined) {
+      await this.storeBareReference(generationId, params.userId, params.referenceImageBase64);
     }
     return { base64: params.referenceImageBase64, mimeType: params.referenceImageMimeType };
+  }
+
+  /** Stores bare-base64 reference bytes as the owner's file; never fails the send. */
+  private async storeBareReference(
+    generationId: string,
+    userId: string,
+    base64: string,
+  ): Promise<void> {
+    const mimeType = sniffReferenceImageMime(base64);
+    if (mimeType === undefined || !isStorableReferenceSize(base64)) {
+      this.logger.warn(
+        `storeReference: bare reference not kept id=${generationId} recognised=${String(mimeType !== undefined)} base64Len=${String(base64.length)}`,
+      );
+      return;
+    }
+    try {
+      const fileId = await this.executionManager.storeReferenceImage(
+        userId,
+        referenceFilename(generationId, mimeType),
+        mimeType,
+        base64,
+      );
+      await this.repository.createReferenceAsset({ generationId, fileId, mimeType });
+      this.logger.log(`storeReference: bare reference stored id=${generationId} file=${fileId}`);
+    } catch (error: unknown) {
+      const detail = error instanceof Error ? error.message : 'unknown error';
+      this.logger.warn(`storeReference: bare reference not kept id=${generationId} — ${detail}`);
+    }
+  }
+
+  /**
+   * Records the chat assistant message that shows this generation's card.
+   * The message is stored after the generation was dispatched, so chat links
+   * it afterwards. Owner-checked on every row; only an unset id is written
+   * (first link wins), and successors an AUTO fallback already spawned get
+   * it too (≤ `IMAGE_SUPERSESSION_MAX_HOPS`). Returns how many rows changed;
+   * 0 for a missing or foreign generation — never an error that names it.
+   */
+  async linkAssistantMessage(
+    generationId: string,
+    userId: string,
+    assistantMessageId: string,
+  ): Promise<number> {
+    let linked = 0;
+    let currentId: string | null = generationId;
+    for (let hop = 0; hop <= IMAGE_SUPERSESSION_MAX_HOPS && currentId !== null; hop++) {
+      const row: ImageGenerationRecord | null = await this.repository.findById(currentId);
+      if (row?.userId !== userId) break;
+      linked += await this.repository.setAssistantMessageIfUnset(
+        row.id,
+        userId,
+        assistantMessageId,
+      );
+      currentId = row.supersededById;
+    }
+    this.logger.log(
+      `linkAssistantMessage: id=${generationId} message=${assistantMessageId} rows=${String(linked)}`,
+    );
+    return linked;
   }
 
   /**

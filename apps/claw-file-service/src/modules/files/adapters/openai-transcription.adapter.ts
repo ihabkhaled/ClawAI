@@ -5,6 +5,7 @@ import {
   type OpenAiTranscriptionResponse,
   type TranscriptionProviderResult,
 } from '../types/transcription.types';
+import { openAiResponseFormat } from '../utilities/transcription-model.utility';
 import {
   audioFilenameForMimeType,
   normalizeBaseUrl,
@@ -16,14 +17,16 @@ const logger = new Logger('OpenAiTranscriptionAdapter');
  * Transcribes audio with OpenAI's `/audio/transcriptions` (Whisper).
  *
  * `model` is a parameter rather than a constant so the signature matches every
- * other adapter, but note what the caller passes: OPENAI_TRANSCRIPTION_MODEL,
- * not the routed modelKey. The connector snapshot only ever lists CHAT
+ * other adapter, but note what the caller passes: an OPENAI_TRANSCRIPTION_*_MODEL
+ * constant, not the routed modelKey. The connector snapshot only ever lists CHAT
  * deployments, and sending one of those to this endpoint is a 400.
  *
- * `response_format: verbose_json` rather than `json`: whisper reports no token
- * usage, and verbose_json's `duration` (seconds of input audio) is the MEASURED
- * unit the PAYG finalize settles on (rule 37 item 17). There is no output-token
- * parameter on this endpoint, so the hold's ceiling has nowhere to land.
+ * whisper-1 gets `verbose_json`: it reports no token usage, and `duration`
+ * (seconds of input audio) plus `segments` come back with it. gpt-4o-*-transcribe
+ * accepts only `json`/`text`, so it returns neither: `durationSeconds` is then
+ * undefined and the caller's locally probed seconds (the hold) are what PAYG
+ * settles on (rule 37 item 17). There is no output-token parameter on this
+ * endpoint, so the hold's ceiling has nowhere to land.
  */
 export const transcribeWithOpenAi = async (
   baseUrl: string,
@@ -41,7 +44,7 @@ export const transcribeWithOpenAi = async (
   const audio = new Blob([Buffer.from(base64, 'base64')], { type: mimeType });
   form.append('file', audio, audioFilenameForMimeType(mimeType));
   form.append('model', model);
-  form.append('response_format', 'verbose_json');
+  form.append('response_format', openAiResponseFormat(model));
 
   const response = await httpPost<OpenAiTranscriptionResponse>(
     url,

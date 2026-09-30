@@ -3,14 +3,16 @@ import { useCallback } from 'react';
 import { type MessageFeedback, RoutingMode } from '@/enums';
 import { ResearchMode } from '@/enums/research-mode.enum';
 import { useEntitlements } from '@/hooks/plans/use-entitlements';
+import { useQuoteDraftStore } from '@/stores/quote-draft.store';
 import type {
   ModelSelection,
+  RegenerateMessageRequest,
   ResearchOptions,
   UseThreadDataControllerParams,
   UseThreadDataControllerReturn,
   UseVirtualizedMessagesControllerParams,
 } from '@/types';
-import { logger } from '@/utilities';
+import { logger, toQuoteRequest } from '@/utilities';
 import {
   resolveChatLimitNotice,
   resolveExhaustedQuotaNotice,
@@ -63,6 +65,7 @@ export const useThreadDataController = ({
       modelSelection?: ModelSelection,
       fileIds?: string[],
       research?: ResearchOptions,
+      maskFileId?: string,
     ): void => {
       logger.info({
         component: 'chat',
@@ -74,6 +77,7 @@ export const useThreadDataController = ({
           hasModel: !!modelSelection,
           fileCount: fileIds?.length ?? 0,
           researchMode: research?.mode ?? 'OFF',
+          hasMask: maskFileId !== undefined,
         },
       });
       detail.startWaitingForResponse();
@@ -89,6 +93,8 @@ export const useThreadDataController = ({
             }
           : {}),
         ...(fileIds && fileIds.length > 0 ? { fileIds } : {}),
+        ...(fileIds && fileIds.length > 0 && maskFileId !== undefined ? { maskFileId } : {}),
+        ...toQuoteRequest(useQuoteDraftStore.getState().byThread[threadId]),
         ...(research && research.mode !== ResearchMode.NONE
           ? {
               researchMode: research.mode,
@@ -103,14 +109,14 @@ export const useThreadDataController = ({
   );
 
   const handleRegenerate = useCallback(
-    (messageId: string): void => {
+    (messageId: string, choice?: RegenerateMessageRequest): void => {
       logger.info({
         component: 'chat',
         action: 'user-regenerate',
         message: 'User regenerating message',
         details: { threadId, messageId },
       });
-      regenerate(messageId);
+      regenerate(messageId, choice);
     },
     [regenerate, threadId],
   );

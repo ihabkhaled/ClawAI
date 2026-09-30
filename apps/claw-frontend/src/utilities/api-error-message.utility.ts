@@ -21,6 +21,12 @@ const API_ERROR_MESSAGE_KEY_BY_CODE: ReadonlyMap<string, string> = new Map([
   [ApiErrorCode.SUPER_ADMIN_SELF_LOCKED, 'admin.errors.superAdminSelfLocked'],
   [ApiErrorCode.SUPER_ADMIN_REQUIRED, 'admin.errors.superAdminRequired'],
   [ApiErrorCode.ANTIVIRUS_UNAVAILABLE, 'files.antivirusUnavailable'],
+  [ApiErrorCode.IMAGE_MASK_INVALID, 'chat.maskEdit.refusal.invalid'],
+  [ApiErrorCode.IMAGE_MASK_NOT_SUPPORTED, 'chat.maskEdit.refusal.notSupported'],
+  [ApiErrorCode.QUOTE_SOURCE_NOT_FOUND, 'chat.quote.sourceMissing'],
+  [ApiErrorCode.CONTEXT_SAVE_NOT_PENDING, 'chat.contextSave.notPending'],
+  [ApiErrorCode.CONTEXT_SAVE_UNKNOWN_PACK, 'chat.contextSave.notPending'],
+  [ApiErrorCode.CONTEXT_SAVE_UNAVAILABLE, 'chat.contextSave.reasons.UNAVAILABLE'],
 ]);
 
 export function resolveApiErrorMessage(

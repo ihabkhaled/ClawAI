@@ -4,7 +4,6 @@ import { estimateTokensFromText } from '../utilities/token-estimator.utility';
 import {
   classifyImageIntent,
   hasAttachedImageMime,
-  imageEditProviders,
   MultimodalImageIntent,
   resolveImageCapabilityProvider,
 } from '@claw/shared-utilities';
@@ -24,6 +23,7 @@ import {
 } from '@claw/shared-entitlements';
 import { ModelExposureClient } from '../clients/model-exposure.client';
 import { AttachmentInfoClient } from '../clients/attachment-info.client';
+import { ImageGenerationLinkClient } from '../clients/image-generation-link.client';
 import { SaveToContextManager } from '../managers/save-to-context.manager';
 import {
   detectConfirmationLocale,
@@ -72,10 +72,16 @@ import { RolePackManager } from '../managers/role-pack.manager';
 import { routerTraceEmittedSchema } from '../dto/router-trace.dto';
 import { RouterTraceStreamService } from './router-trace-stream.service';
 import { RuntimeV2LoopManager } from '../managers/runtime-v2-loop.manager';
+import { ZeroRetentionService } from './zero-retention.service';
 import { THREAD_HISTORY_FETCH_LIMIT } from '../../../common/constants';
 import { ModelContextWindowClient } from '../clients/model-context-window.client';
 import { ChatStreamService } from './chat-stream.service';
 import { AccessControlService } from './access-control.service';
+import {
+  keepsRoutedImageProvider,
+  selectImageEditor,
+} from '../utilities/image-editor-selection.utility';
+import { readMaskFileId } from '../utilities/image-mask-refusal.utility';
 import { type CreateMessageDto } from '../dto/create-message.dto';
 import { type ResearchRunResponse } from '../types/research.types';
 import type { CrawlRetrievalContext, CrawlRetrievalPage } from '../types/crawl-retrieval.types';
@@ -87,6 +93,15 @@ import {
   type AttachmentTurn,
   type UserMessageMetadata,
 } from '../types/user-message-metadata.types';
+import { type MessageQuoteInput } from '../dto/quote-fields.dto';
+import { type RegenerateMessageDto } from '../dto/regenerate-message.dto';
+import { resolveRegenerateRouting } from '../utilities/regenerate-routing.utility';
+import { type MessageQuote } from '../types/message-quote.types';
+import { type StoredContextMetadata } from '../types/message-citation.types';
+import { toStoredCitations } from '../utilities/stored-citations.utility';
+import { type ContextSaveDecision, type ContextSaveRecord } from '../types/context-save.types';
+import { ContextSaveOrchestratorManager } from '../managers/context-save-orchestrator.manager';
+import { hasContextSave, withContextSaveNote } from '../utilities/context-save-note.utility';
 import { type ConsensusMessageDto } from '../dto/consensus-message.dto';
 import { type EscalationChainMessageDto } from '../dto/escalation-chain-message.dto';
 import { type RepairMessageDto } from '../dto/repair-message.dto';
@@ -132,6 +147,7 @@ import { THREAD_TITLE_SCAN_LIMIT } from '../../chat-threads/constants/thread-tit
 import { deriveThreadTitle } from '../../chat-threads/utilities/derive-thread-title.utility';
 import type { AssembledContext } from '../types/context.types';
 import { MAX_STORED_REASONING_CHARS } from '../constants/stored-reasoning.constants';
+import { IMAGE_MASK_REFUSAL_METADATA_TYPE } from '../constants/image-mask-refusal.constants';
 import {
   HELPER_VISION_PLAN_FEATURE,
   PLAN_FEATURE_REFUSAL_METADATA_TYPE,
@@ -192,6 +208,15 @@ export class ChatMessagesService implements OnModuleInit {
     // Optional for the same reason. Absent → "save this as memory" is an
     // ordinary chat turn, as before owner feature 11.
     @Optional() private readonly saveToContext?: SaveToContextManager,
+    // Optional for the same reason. Absent → the image row's
+    // `assistantMessageId` stays null, as before batch 10a closed.
+    @Optional() private readonly imageGenerationLink?: ImageGenerationLinkClient,
+    // Before zeroRetention, which was added after it: specs build this service positionally, and a new
+    // optional dependency in the middle shifts every argument after it.
+    @Optional() private readonly contextSaveOrchestrator?: ContextSaveOrchestratorManager,
+    // Optional for the same reason. Absent → `X-Claw-Zero-Retention` is
+    // ignored and every turn is kept, as before F055.
+    @Optional() private readonly zeroRetention?: ZeroRetentionService,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -209,6 +234,7 @@ export class ChatMessagesService implements OnModuleInit {
     userId: string,
     dto: CreateMessageDto,
     userToken: string,
+    zeroRetention?: boolean,
   ): Promise<ChatMessage> {
     this.logger.log(`createMessage: starting for user ${userId} in thread ${dto.threadId}`);
     const thread = await this.getThreadForMessage(dto.threadId, userId);
@@ -232,6 +258,7 @@ export class ChatMessagesService implements OnModuleInit {
       forcedProvider,
       forcedModel,
     );
+    const quotes = await this.resolveQuotes(dto.threadId, dto.quotes);
     const allowedModels = entitlements ? allowedModelKeys(entitlements) : [];
     // Travels with the event so the router can tell an ALLOW_ALL plan, which
     // sends an empty list as a fast path, from a restricted plan whose list is
@@ -250,7 +277,7 @@ export class ChatMessagesService implements OnModuleInit {
         role: 'USER',
         content: dto.content,
         routingMode: effectiveRoutingMode,
-        metadata: this.buildMessageMetadata(dto, null),
+        metadata: this.buildMessageMetadata(dto, null, quotes),
       },
       entitlements === null
         ? null
@@ -265,6 +292,9 @@ export class ChatMessagesService implements OnModuleInit {
     }
 
     this.logger.log(`createMessage: created message ${message.id} in thread ${dto.threadId}`);
+    // Marked before the turn is published, so the consumer that answers it
+    // always sees the mark (F055).
+    await this.markZeroRetentionTurn(zeroRetention, dto.threadId, message.id);
     this.logMessageCreated(userId, dto.threadId, message.id);
     // What the attachments need a model to read, so AUTO ranks by modality
     // fit (multimodal batch 8). Bounded; no attachments → no fields.
@@ -311,7 +341,7 @@ export class ChatMessagesService implements OnModuleInit {
           forcedModel,
         );
         if (run !== null) {
-          const metadata = this.buildMessageMetadata(dto, run);
+          const metadata = this.buildMessageMetadata(dto, run, quotes);
           await this.chatMessagesRepository.updateMetadata(
             message.id,
             (metadata ?? {}) as Prisma.InputJsonValue,
@@ -989,7 +1019,11 @@ export class ChatMessagesService implements OnModuleInit {
     return pages.length > 0 ? { pages } : undefined;
   }
 
-  async regenerateMessage(id: string, userId: string): Promise<ChatMessage> {
+  async regenerateMessage(
+    id: string,
+    userId: string,
+    dto: RegenerateMessageDto = {},
+  ): Promise<ChatMessage> {
     this.logger.log(`regenerateMessage: starting for message ${id} by user ${userId}`);
     const message = await this.chatMessagesRepository.findById(id);
     if (!message) {
@@ -1009,10 +1043,18 @@ export class ChatMessagesService implements OnModuleInit {
     // it, which used to strand the run with no answer and no error.
     const target = await this.resolveRegenerationTarget(message);
 
-    const regenProvider = thread.preferredProvider ?? undefined;
-    const regenModel = thread.preferredModel ?? undefined;
-    const regenRoutingMode =
-      regenProvider && regenModel ? RoutingMode.MANUAL_MODEL : target.routingMode;
+    const routing = resolveRegenerateRouting(dto, thread, target.routingMode ?? RoutingMode.AUTO);
+    const regenProvider = routing.forcedProvider;
+    const regenModel = routing.forcedModel;
+    const regenRoutingMode = routing.routingMode;
+    // A regeneration is a new provider call: the same plan gate as a new
+    // message — a model the plan forbids, a spent quota — and the same access
+    // list on the event, or routing treats the turn as restricted-to-nothing.
+    const entitlements = await this.accessControlService.assertCanSendMessage(userId, {
+      provider: regenProvider,
+      model: regenModel,
+      promptTokens: estimateTokensFromText(target.content),
+    });
 
     this.logger.log(
       `regenerateMessage: publishing message.created for ${target.id} (requested via ${id}) mode=${regenRoutingMode}`,
@@ -1029,6 +1071,8 @@ export class ChatMessagesService implements OnModuleInit {
       routingMode: regenRoutingMode,
       forcedProvider: regenProvider,
       forcedModel: regenModel,
+      allowedModels: entitlements ? allowedModelKeys(entitlements) : [],
+      modelAccessMode: entitlements?.modelAccessMode,
       regenerate: true,
       ...modality,
       timestamp: new Date().toISOString(),
@@ -1143,6 +1187,16 @@ export class ChatMessagesService implements OnModuleInit {
     userId: string,
     content: string,
   ): Promise<void> {
+    const forcedProvider = thread.preferredProvider ?? undefined;
+    const forcedModel = thread.preferredModel ?? undefined;
+    // The plan gate runs BEFORE anything is rewritten or deleted (ADR-132):
+    // a user refused for quota or model must not lose the rest of the thread
+    // to an edit that then cannot run.
+    const entitlements = await this.accessControlService.assertCanSendMessage(userId, {
+      provider: forcedProvider,
+      model: forcedModel,
+      promptTokens: estimateTokensFromText(content),
+    });
     // Written only when still null, so a second edit keeps the first version.
     await this.chatMessagesRepository.replaceContent(
       message.id,
@@ -1157,8 +1211,6 @@ export class ChatMessagesService implements OnModuleInit {
       `editAndRerunMessage: message=${message.id} thread=${message.threadId} removedBelow=${removed}`,
     );
 
-    const forcedProvider = thread.preferredProvider ?? undefined;
-    const forcedModel = thread.preferredModel ?? undefined;
     const modality = await this.resolveRerunAttachmentModality(userId, message);
     void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
       messageId: message.id,
@@ -1168,6 +1220,8 @@ export class ChatMessagesService implements OnModuleInit {
       routingMode: forcedProvider && forcedModel ? RoutingMode.MANUAL_MODEL : message.routingMode,
       forcedProvider,
       forcedModel,
+      allowedModels: entitlements ? allowedModelKeys(entitlements) : [],
+      modelAccessMode: entitlements?.modelAccessMode,
       // The same flag regeneration uses: routing must not bill this as a new
       // turn against the daily message ceiling, because it is the same turn.
       regenerate: true,
@@ -1214,18 +1268,23 @@ export class ChatMessagesService implements OnModuleInit {
       thread = loadedThread;
       const chronologicalMessages = [...threadMessages].reverse();
       routedMessages = this.resolveRoutedMessageWindow(chronologicalMessages, payload.messageId);
-      // "Save this as memory / add this to my context pack": saved server-side
-      // and confirmed without a model call (owner feature 11, rules/57).
-      if (this.saveToContext !== undefined && thread !== null) {
-        const saved = await this.saveToContext.trySave(
-          thread.userId,
-          payload.threadId,
+      // "Remember this / add this to my context" (ADR-134): a planner model
+      // decides and the saves run before the answer, so the answering model
+      // can confirm them. The keyword path, confirmed without a model call,
+      // runs only when no planner answers (owner feature 11, rules/57).
+      const contextSave =
+        thread === null
+          ? null
+          : await this.resolveContextSave(thread.userId, payload.threadId, routedMessages);
+      if (contextSave?.kind === 'LEGACY' && thread !== null) {
+        await this.completeSaveTurn(
+          payload,
+          contextSave.outcome,
+          thread,
           routedMessages,
+          startedAt,
         );
-        if (saved !== null) {
-          await this.completeSaveTurn(payload, saved, thread, routedMessages, startedAt);
-          return;
-        }
+        return;
       }
       const threadSettings = await this.withModelContextWindow(
         this.extractThreadSettings(thread),
@@ -1247,12 +1306,13 @@ export class ChatMessagesService implements OnModuleInit {
       await this.runLlmAndStore(
         effectivePayload,
         payload,
-        context,
+        contextSave?.kind === 'AI' ? withContextSaveNote(context, contextSave.modelNote) : context,
         threadSettings,
         fileIds,
         thread,
         routedMessages,
         latestUserMetadata,
+        contextSave?.kind === 'AI' ? contextSave.record : undefined,
       );
     } catch (error: unknown) {
       await this.handleMessageRoutedFailure(error, payload, thread, routedMessages, startedAt);
@@ -1266,6 +1326,19 @@ export class ChatMessagesService implements OnModuleInit {
    * so nothing is deducted. The published completion carries no user text,
    * so memory extraction does not re-mine the pasted document.
    */
+  /** The AI save path when wired, else the keyword path; null = not a save turn. */
+  private async resolveContextSave(
+    userId: string,
+    threadId: string,
+    messages: ChatMessage[],
+  ): Promise<ContextSaveDecision | null> {
+    if (this.contextSaveOrchestrator !== undefined) {
+      return this.contextSaveOrchestrator.handle(userId, threadId, messages);
+    }
+    const outcome = await this.saveToContext?.trySave(userId, threadId, messages);
+    return outcome === undefined || outcome === null ? null : { kind: 'LEGACY', outcome };
+  }
+
   private async completeSaveTurn(
     payload: MessageRoutedData,
     outcome: SaveToContextOutcome,
@@ -1381,6 +1454,7 @@ export class ChatMessagesService implements OnModuleInit {
     thread: ChatThread | null,
     chronologicalMessages: ChatMessage[],
     latestUserMetadata: Record<string, unknown> | null,
+    contextSave?: ContextSaveRecord,
   ): Promise<void> {
     this.logger.debug(
       `runLlmAndStore: calling LLM execution for ${effectivePayload.selectedProvider}/${effectivePayload.selectedModel}`,
@@ -1397,12 +1471,21 @@ export class ChatMessagesService implements OnModuleInit {
     const contextMetadata = {
       memoryCount: this.contextAssemblyManager.injectedMemories(context).length,
       fileIds: fileIds ?? [],
+      // The sources exactly as the prompt numbered them, so the answer's [n]
+      // can be linked — and only linked — through this list. Not when
+      // SEARCH_FIRST ran: it adds a SECOND [1]..[k] list to the prompt, so a
+      // stored [n] could name the wrong page (ADR-133).
+      citations:
+        llmResponse.searchFirst?.applied === true
+          ? []
+          : toStoredCitations(context.researchEvidence),
     };
     const assistantMessage = await this.storeAssistantResponse(
       originalPayload,
       llmResponse,
       contextMetadata,
       latestUserMetadata,
+      contextSave,
     );
     // Integration V2 — persist the "why was this used?" receipt asynchronously.
     void this.contextReceiptService
@@ -1502,7 +1585,7 @@ export class ChatMessagesService implements OnModuleInit {
     });
     try {
       if (await this.runtimeV2LoopManager.tryHandleRouted(parsed)) return;
-      await this.handleMessageRouted(parsed);
+      await this.handleChatTurn(parsed);
     } catch (error: unknown) {
       const errorMsg = redactProviderText(error instanceof Error ? error.message : 'Unknown error');
       this.logger.error(
@@ -1517,6 +1600,28 @@ export class ChatMessagesService implements OnModuleInit {
         threadId: parsed.threadId,
         errorMessage: errorMsg,
       });
+    }
+  }
+
+  private async markZeroRetentionTurn(
+    requested: boolean | undefined,
+    threadId: string,
+    messageId: string,
+  ): Promise<void> {
+    if (requested !== true || this.zeroRetention === undefined) return;
+    await this.zeroRetention.markChatTurn(threadId, messageId);
+  }
+
+  /**
+   * Answers an ordinary chat turn, and purges it once it has ended — answered
+   * or failed — when its request asked for zero data retention (F055).
+   */
+  private async handleChatTurn(parsed: MessageRoutedData): Promise<void> {
+    const zeroRetention = (await this.zeroRetention?.isChatTurnMarked(parsed.messageId)) === true;
+    try {
+      await this.handleMessageRouted(zeroRetention ? { ...parsed, zeroRetention } : parsed);
+    } finally {
+      if (zeroRetention) await this.zeroRetention?.purgeChatTurn(parsed.threadId, parsed.messageId);
     }
   }
 
@@ -1653,8 +1758,9 @@ export class ChatMessagesService implements OnModuleInit {
   private async storeAssistantResponse(
     payload: MessageRoutedData,
     llmResponse: LlmResponse,
-    contextMetadata?: { memoryCount: number; fileIds: string[] },
+    contextMetadata?: StoredContextMetadata,
     latestUserMetadata?: Record<string, unknown> | null,
+    contextSave?: ContextSaveRecord,
   ): Promise<ChatMessage> {
     const hasVisibleContent = llmResponse.content.trim().length > 0;
     const storedContent = hasVisibleContent
@@ -1671,6 +1777,7 @@ export class ChatMessagesService implements OnModuleInit {
       hasVisibleContent,
       routeRoadmap,
       progressSummary,
+      contextSave,
     });
     // The turn's narrated work log becomes part of the answer, so "crawling ...
     // 14 pages read ... back to the AI" is still there after a refresh. Stored
@@ -1680,7 +1787,7 @@ export class ChatMessagesService implements OnModuleInit {
     if (narration.length > 0) {
       metadata['narration'] = narration;
     }
-    return this.chatMessagesRepository.create({
+    const stored = await this.chatMessagesRepository.create({
       threadId: payload.threadId,
       role: 'ASSISTANT',
       content: storedContent,
@@ -1694,6 +1801,37 @@ export class ChatMessagesService implements OnModuleInit {
       usedFallback: llmResponse.usedFallback,
       metadata: metadata as Prisma.InputJsonValue,
     });
+    if (llmResponse.imageGenerationId) {
+      void this.linkImageGeneration(llmResponse.imageGenerationId, payload.threadId, stored.id);
+    }
+    return stored;
+  }
+
+  /**
+   * Fills the image row's `assistantMessageId` with the message that shows its
+   * card (batch 10a). The generation was dispatched before this message
+   * existed, so it is linked now. Fire-and-forget; the thread's owner is the
+   * owner image-service checks against. Never throws.
+   */
+  private async linkImageGeneration(
+    generationId: string,
+    threadId: string,
+    assistantMessageId: string,
+  ): Promise<void> {
+    if (this.imageGenerationLink === undefined) return;
+    try {
+      const thread = await this.chatThreadsRepository.findById(threadId);
+      if (thread === null) return;
+      await this.imageGenerationLink.linkAssistantMessage(
+        generationId,
+        thread.userId,
+        assistantMessageId,
+      );
+    } catch (error: unknown) {
+      this.logger.warn(
+        `linkImageGeneration: generation=${generationId} not linked — ${error instanceof Error ? error.message : 'error'}`,
+      );
+    }
   }
 
   private buildRouteRoadmap(
@@ -1787,11 +1925,12 @@ export class ChatMessagesService implements OnModuleInit {
   private buildAssistantMetadata(args: {
     payload: MessageRoutedData;
     llmResponse: LlmResponse;
-    contextMetadata?: { memoryCount: number; fileIds: string[] };
+    contextMetadata?: StoredContextMetadata;
     latestUserMetadata?: Record<string, unknown> | null;
     hasVisibleContent: boolean;
     routeRoadmap: RouteRoadmap;
     progressSummary: StoredProgressSummaryStep[];
+    contextSave?: ContextSaveRecord;
   }): Record<string, unknown> {
     const {
       payload,
@@ -1801,8 +1940,11 @@ export class ChatMessagesService implements OnModuleInit {
       hasVisibleContent,
       routeRoadmap,
       progressSummary,
+      contextSave,
     } = args;
     return {
+      // The saved card renders from this (ADR-134).
+      ...(contextSave === undefined ? {} : { contextSave }),
       ...this.buildContextMetaPart(contextMetadata),
       ...this.buildResearchMetaPart(latestUserMetadata),
       ...this.buildResearchTranscriptMetaPart(latestUserMetadata),
@@ -2038,11 +2180,15 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   private buildContextMetaPart(
-    contextMetadata: { memoryCount: number; fileIds: string[] } | undefined,
+    contextMetadata: StoredContextMetadata | undefined,
   ): Record<string, unknown> {
-    return !contextMetadata
-      ? {}
-      : { memoryCount: contextMetadata.memoryCount, fileIds: contextMetadata.fileIds };
+    if (!contextMetadata) return {};
+    const citations = contextMetadata.citations ?? [];
+    return {
+      memoryCount: contextMetadata.memoryCount,
+      fileIds: contextMetadata.fileIds,
+      ...(citations.length > 0 ? { citations } : {}),
+    };
   }
 
   private buildResearchMetaPart(
@@ -2067,6 +2213,13 @@ export class ChatMessagesService implements OnModuleInit {
       return {
         type: PLAN_FEATURE_REFUSAL_METADATA_TYPE,
         planFeature: llmResponse.planFeatureRefusal.feature,
+      };
+    }
+    if (llmResponse.imageMaskRefusal) {
+      // image-service refused the drawn mask (422); the chat renders a translated notice.
+      return {
+        type: IMAGE_MASK_REFUSAL_METADATA_TYPE,
+        maskRefusalCode: llmResponse.imageMaskRefusal.code,
       };
     }
     return llmResponse.fileLimit ? { type: 'file_limit', fileLimit: llmResponse.fileLimit } : {};
@@ -2338,6 +2491,8 @@ export class ChatMessagesService implements OnModuleInit {
       threadId: payload.threadId,
       assistantMessageId: assistantMessage.id,
       userId: thread?.userId,
+      // SEC-006: a chat with memory off is not a memory SOURCE either.
+      useMemory: thread?.useMemory ?? true,
       provider: llmResponse.provider,
       model: llmResponse.model,
       inputTokens: llmResponse.inputTokens,
@@ -2346,8 +2501,7 @@ export class ChatMessagesService implements OnModuleInit {
       usedFallback: llmResponse.usedFallback,
       routingMode: payload.routingMode as RoutingMode,
       detectedCategory: payload.detectedCategory,
-      content: assistantMessage.content,
-      userContent: lastUserMsg?.content,
+      ...this.buildPublishContentPart(payload, assistantMessage, lastUserMsg),
       timestamp: new Date().toISOString(),
       executionSuccess: outcomeOverrides?.executionSuccess ?? true,
       finalStatus: outcomeOverrides?.finalStatus ?? 'completed',
@@ -2370,6 +2524,26 @@ export class ChatMessagesService implements OnModuleInit {
     // repair, verify, best-of-n, cost-ensemble, role-pack, pipeline, decompose)
     // consumes the user's daily quota — not only normal chat. This method only
     // publishes the MESSAGE_COMPLETED event for the audit ledger + memory.
+  }
+
+  /**
+   * The turn's text, or none of it under zero retention (F055): memory-service
+   * extracts — and keeps — memories from these two fields, and skips a
+   * completion without them. Every usage field is published either way.
+   */
+  private buildPublishContentPart(
+    payload: MessageRoutedData,
+    assistantMessage: ChatMessage,
+    lastUserMessage: ChatMessage | undefined,
+  ): Record<string, unknown> {
+    return payload.zeroRetention === true
+      ? { zeroRetention: true }
+      : {
+          content: assistantMessage.content,
+          // A save turn (ADR-134) was saved on purpose; letting extraction re-mine
+          // the same words would file a duplicate suggestion of what was just saved.
+          userContent: hasContextSave(assistantMessage) ? undefined : lastUserMessage?.content,
+        };
   }
 
   private buildPublishReRoutePart(llmResponse: LlmResponse): Record<string, unknown> {
@@ -2450,16 +2624,55 @@ export class ChatMessagesService implements OnModuleInit {
     };
   }
 
+  /**
+   * Resolves each quote's source against THIS thread and records its role.
+   * An id from another conversation — or one that no longer exists — is a 404,
+   * never a silent drop: the user asked about that text, and answering as if
+   * they had not would be worse than saying the source is gone.
+   */
+  private async resolveQuotes(
+    threadId: string,
+    quotes: MessageQuoteInput[] | undefined,
+  ): Promise<MessageQuote[] | undefined> {
+    if (quotes === undefined || quotes.length === 0) return undefined;
+    const found = await this.chatMessagesRepository.findQuotableInThread(
+      threadId,
+      quotes.map((quote) => quote.sourceMessageId),
+    );
+    const roles = new Map(found.map((row) => [row.id, row.role]));
+    const missing = quotes.find((quote) => !roles.has(quote.sourceMessageId));
+    if (missing !== undefined) {
+      throw new BusinessException(
+        'The quoted message is no longer in this conversation',
+        'QUOTE_SOURCE_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    this.logger.debug(`resolveQuotes: thread=${threadId} quotes=${String(quotes.length)}`);
+    return quotes.map((quote) => ({
+      sourceMessageId: quote.sourceMessageId,
+      sourceRole: roles.get(quote.sourceMessageId) ?? 'USER',
+      text: quote.text,
+    }));
+  }
+
   private buildMessageMetadata(
     dto: CreateMessageDto,
     researchRun: ResearchRunResponse | null,
+    quotes?: MessageQuote[],
   ): UserMessageMetadata | undefined {
     const metadata: UserMessageMetadata = {};
+    if (quotes !== undefined && quotes.length > 0) {
+      metadata.quotes = quotes;
+    }
     if (typeof dto.clientIntent === 'string' && dto.clientIntent.length > 0) {
       metadata.clientIntent = dto.clientIntent;
     }
     if (dto.fileIds && dto.fileIds.length > 0) {
       metadata.fileIds = dto.fileIds;
+    }
+    if (dto.maskFileId !== undefined && dto.fileIds !== undefined && dto.fileIds.length > 0) {
+      metadata.maskFileId = dto.maskFileId;
     }
     if (typeof dto.modelDisplayName === 'string' && dto.modelDisplayName.length > 0) {
       metadata.modelDisplayName = dto.modelDisplayName;
@@ -2689,12 +2902,14 @@ export class ChatMessagesService implements OnModuleInit {
     messages: ChatMessage[],
     userId: string | undefined,
   ): Promise<MessageRoutedData> {
-    if (payload.selectedProvider.startsWith('IMAGE_') || userId === undefined) return payload;
+    if (userId === undefined) return payload;
     const turn = this.latestAttachmentTurn(messages);
     if (turn === null) return payload;
+    if (keepsRoutedImageProvider(payload.selectedProvider, turn.hasMask)) return payload;
     const mimeTypes = await this.attachmentMimeTypesOf(userId, turn.fileIds);
     const intent = classifyImageIntent(turn.text, hasAttachedImageMime(mimeTypes));
-    const editor = imageEditProviders()[0];
+    // A drawn mask needs a provider that can apply one (Gemini/SD cannot).
+    const editor = selectImageEditor(turn.hasMask);
     if (intent !== MultimodalImageIntent.EDIT || editor === undefined) return payload;
     this.logger.log(
       `Image edit of an attachment: ${String(turn.fileIds.length)} files → ${editor.provider}/${editor.editModel}`,
@@ -2709,7 +2924,11 @@ export class ChatMessagesService implements OnModuleInit {
     const fileIds = Array.isArray(meta?.fileIds) ? meta.fileIds : [];
     return lastUser === undefined || fileIds.length === 0
       ? null
-      : { text: meta?.clientIntent ?? lastUser.content, fileIds };
+      : {
+          text: meta?.clientIntent ?? lastUser.content,
+          fileIds,
+          hasMask: readMaskFileId(meta) !== undefined,
+        };
   }
 
   /** The attachments' mime types; an outage reads as "no image" (never an image job by guess). */

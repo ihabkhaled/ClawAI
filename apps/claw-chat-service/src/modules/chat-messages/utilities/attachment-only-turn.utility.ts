@@ -1,3 +1,4 @@
+import { withQuotedContext } from './quoted-turn.utility';
 import {
   ATTACHMENT_ONLY_KIND_LINES,
   ATTACHMENT_ONLY_KIND_ORDER,
@@ -106,8 +107,19 @@ export function withAttachmentOnlyUserTurn<T extends { role: string; content: st
   return messages.map((message, position) => (position === index ? rewritten : message));
 }
 
-/** The `content` routing-service scores for a stored user row. */
+/**
+ * The `content` routing-service scores for a stored user row.
+ *
+ * Routing drops a turn with empty content, so an attachment-only send routes
+ * on a hint — and a quote-only send ("explain this" with nothing typed)
+ * routes on the quoted text, which is what the turn is actually about.
+ */
 export function resolveRoutingContent(content: string, metadata: unknown): string {
+  return withQuotedContext(resolveAttachmentRoutingContent(content, metadata), metadata);
+}
+
+/** The attachment half of `resolveRoutingContent`: a hint for a file-only turn. */
+export function resolveAttachmentRoutingContent(content: string, metadata: unknown): string {
   const fileIds =
     metadata !== null && typeof metadata === 'object'
       ? (metadata as Record<string, unknown>)['fileIds']

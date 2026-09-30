@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Optional } from '@nestjs/common';
 import { EventPattern } from '@claw/shared-types';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { randomBytes } from 'node:crypto';
@@ -15,6 +15,7 @@ import type { RuntimeV2BoundInput, RuntimeV2StartAck } from '../types/runtime-v2
 import { runtimeV2MessageMetadataSchema } from '../types/runtime-v2-run.types';
 import { resolveRuntimeRouting } from '../utilities/runtime-v2-routing.utility';
 import { RuntimeV2AccessService } from './runtime-v2-access.service';
+import { ZeroRetentionService } from './zero-retention.service';
 
 @Injectable()
 export class RuntimeV2RunService {
@@ -24,9 +25,16 @@ export class RuntimeV2RunService {
     private readonly access: RuntimeV2AccessService,
     private readonly store: RuntimeV2Store,
     private readonly rabbit: RabbitMQService,
+    // Optional so hand-built specs keep their shape. Absent → the header is
+    // ignored, exactly as before F055.
+    @Optional() private readonly zeroRetention?: ZeroRetentionService,
   ) {}
 
-  async start(ownerId: string, request: RuntimeStartDto): Promise<RuntimeV2StartAck> {
+  async start(
+    ownerId: string,
+    request: RuntimeStartDto,
+    zeroRetention?: boolean,
+  ): Promise<RuntimeV2StartAck> {
     const thread = await this.threads.findById(request.threadId);
     if (thread === null || thread.userId !== ownerId) {
       throw new EntityNotFoundException('ChatThread', request.threadId);
@@ -54,6 +62,9 @@ export class RuntimeV2RunService {
     }
 
     try {
+      // Marked before the prompt is stored or published, so however fast the
+      // run ends, its terminal event finds the mark and purges it (F055).
+      await this.markZeroRetention(zeroRetention, acknowledgement.runId);
       await this.messages.create({
         id: acknowledgement.messageId,
         threadId: request.threadId,
@@ -105,6 +116,11 @@ export class RuntimeV2RunService {
     }
 
     return acknowledgement;
+  }
+
+  private async markZeroRetention(requested: boolean | undefined, runId: string): Promise<void> {
+    if (requested !== true || this.zeroRetention === undefined) return;
+    await this.zeroRetention.markRuntimeRun(runId);
   }
 
   /** Finishes a start the caller already made, publishing it if that step never landed. */

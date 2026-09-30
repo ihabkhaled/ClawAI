@@ -41,6 +41,9 @@ const connectorFieldsSchema = z.object({
   region: z.string().max(50, 'Region must be at most 50 characters').optional(),
   workspaceId: z.string().max(100, 'Workspace ID must be at most 100 characters').optional(),
   accountId: connectorAccountIdSchema.optional().or(z.literal('')),
+  // Row-level checks run in gatewayHeaderRowsToRecord; connector-service
+  // re-validates names, reserved names and values on every write (F092).
+  gatewayHeaders: z.record(z.string(), z.string()).optional(),
 });
 
 export const createConnectorSchema = connectorFieldsSchema.superRefine((dto, ctx) => {

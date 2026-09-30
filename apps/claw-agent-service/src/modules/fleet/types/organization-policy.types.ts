@@ -1,3 +1,16 @@
+import type { McpServerPolicy, PolicyRule } from '../dto/organization-policy-guardrails.dto';
+
+/**
+ * Trust lists as the client reads them: one group per organization that set a
+ * list. A subject must match every group, so a user in two organizations is
+ * held to both — a flattened union would silently loosen the stricter one.
+ */
+export interface EffectiveTrustGroups {
+  readonly repositories: readonly (readonly string[])[];
+  readonly domains: readonly (readonly string[])[];
+  readonly commands: readonly (readonly string[])[];
+}
+
 /**
  * The policy shape sent to a coding-agent client.
  *
@@ -15,4 +28,33 @@ export interface EffectivePolicy {
   readonly requireApproval: readonly string[];
   readonly maximumRetentionDays: number;
   readonly minimumPermissionMode: string | null;
+  /** F053: every organization's rules; any deny beats any ask on the client. */
+  readonly rules: readonly PolicyRule[];
+  /** F053: see `EffectiveTrustGroups`. */
+  readonly trust: EffectiveTrustGroups;
+  /** F054: deny is the union; allow is the common patterns (or deny-all when none). */
+  readonly mcpServers: McpServerPolicy;
+}
+
+/** The row fields `toEffectivePolicy` reads; the JSON columns arrive unparsed. */
+export interface StoredOrganizationPolicy {
+  allowedTools: string[];
+  allowedModels: string[];
+  maximumRisk: string;
+  deniedEffects: string[];
+  requireApproval: string[];
+  maximumRetentionDays: number;
+  minimumPermissionMode: string | null;
+  rules: unknown;
+  trust: unknown;
+  mcpServers: unknown;
+}
+
+/** One stored policy's JSON columns, parsed. */
+export interface ParsedGuardrails {
+  readonly rules: readonly PolicyRule[];
+  readonly trust: EffectiveTrustGroups;
+  readonly mcpServers: McpServerPolicy;
+  /** True when a stored block no longer parses; the caller must fail closed. */
+  readonly unreadable: boolean;
 }

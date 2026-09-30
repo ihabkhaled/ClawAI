@@ -194,7 +194,11 @@ $0.25) that image-service meters against — one immutable row per priced size,
 never a price constant in image-service. v9 (2026-09-26) added
 `OPENAI:dall-e-3@hd` at $0.080 per 1024x1024 image (HD; the v4 `dall-e-3` row
 stays the $0.040 standard price), which image-service meters an `hd` call
-against. v8 (2026-09-25) priced xAI Grok
+against. v10 (2026-09-29) priced `OPENAI:gpt-4o-transcribe` (100) and
+`OPENAI:gpt-4o-mini-transcribe` (50) micro-USD per second of audio, from
+OpenAI's published $0.006 / $0.003 per-minute estimates
+(https://developers.openai.com/api/docs/pricing); file-service does not call
+them yet. v8 (2026-09-25) priced xAI Grok
 Imagine per image: `GROK:grok-imagine-image` $0.02 and
 `GROK:grok-imagine-image-2.0` $0.08 (top tier; source docs.x.ai/developers/models
 as of 2026-08-07), token rates 0. They fill gaps, but are flagged
@@ -528,6 +532,15 @@ attachments and each candidate's fit; the decision carries
 `modalityFit:<fit>` in `reasonTags`. Code: `utilities/modality-fit.utility.ts`,
 `utilities/attachment-modality.utility.ts`, `constants/modality-fit.constants.ts`,
 `common/enums/modality-fit.enum.ts`. Rule 51 item 13.
+
+**Every AUTO path (2026-09-29).** The capability (keyword), privacy-local,
+Ollama-router, category and heuristic paths now rank too: after the path builds
+its decision, `CloudRouterEligibilityManager.rankDecisionByModalityFit` reads the
+catalog rows and `rankDecisionByModalityFit` (pure, same `modalityFitOf` tiers)
+stable-sorts `[selected, ...fallbackChain]`. A text-only pick moves below a
+capable fallback entry but stays in the chain. Tags: `modalityFit:<fit>` always,
+`modality_fit_reranked` when the pick changed; a log line records before/after.
+Turns without attachments skip it entirely.
 
 ## Assistant model role TTS_VOICE (multimodal batch 9, 2026-09-25)
 

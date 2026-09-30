@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
+import { withQuotedContext } from '../utilities/quoted-turn.utility';
+import { withSaveTurnNote } from '../utilities/context-save-note.utility';
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import {
   CONTEXT_PACK_FIT_BUDGET_SHARE,
@@ -693,7 +695,9 @@ ${evidence.snippet}`);
   private formatMessageLines(
     messages: AssembledContext['threadMessages'],
     grounded = false,
-    attachments: AttachmentTurnContext = { fileContents: [] },
+    attachments: AttachmentTurnContext & Pick<AssembledContext, 'saveTurnNote'> = {
+      fileContents: [],
+    },
   ): string[] {
     const lastUserIndex = messages.reduce(
       (found, message, index) => (this.mapRole(message) === 'user' ? index : found),
@@ -702,9 +706,12 @@ ${evidence.snippet}`);
     return messages.map((message, index) => {
       const role = this.mapRole(message).toUpperCase();
       if (index !== lastUserIndex) {
-        return `${role}: ${message.content}`;
+        return `${role}: ${withQuotedContext(message.content, message.metadata)}`;
       }
-      const turnText = this.userTurnText(message.content, attachments);
+      const turnText = this.userTurnText(
+        withQuotedContext(message.content, message.metadata),
+        attachments,
+      );
       return `${role}: ${grounded ? this.withResearchGrounding(turnText) : turnText}`;
     });
   }
@@ -719,10 +726,13 @@ ${evidence.snippet}`);
    * something, the attachment is the request, and this says so. Per request
    * only: the stored row stays what the user sent. Rule 42 §18.
    */
-  private userTurnText(content: string, attachments: AttachmentTurnContext): string {
+  private userTurnText(
+    content: string,
+    attachments: AttachmentTurnContext & Pick<AssembledContext, 'saveTurnNote'>,
+  ): string {
     // Logged once per turn in assemble(), not here: the builders run several
     // times per turn (token estimates, then the real call).
-    return resolveContextTurnText(content, attachments);
+    return withSaveTurnNote(resolveContextTurnText(content, attachments), attachments.saveTurnNote);
   }
 
   private logAttachmentOnlyTurn(
@@ -905,9 +915,10 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       // The reminder rides on the final user turn, which is the part of the
       // prompt a model attends to most. Never persisted — this is assembled
       // per request, so the stored message stays exactly what the user typed.
-      const turnText = isLastUser ? this.userTurnText(msg.content, context) : '';
+      const quotedContent = withQuotedContext(msg.content, msg.metadata);
+      const turnText = isLastUser ? this.userTurnText(quotedContent, context) : '';
       const groundedTurn = grounded ? this.withResearchGrounding(turnText) : turnText;
-      const content = isLastUser ? groundedTurn : msg.content;
+      const content = isLastUser ? groundedTurn : quotedContent;
       if (isLastUser && (mediaFiles.length > 0 || frameParts.length > 0)) {
         messages.push({
           role,
@@ -1758,7 +1769,11 @@ ${RESEARCH_GROUNDING_REMINDER}`;
 
   private extractCurrentIntent(messages: ChatMessage[]): string {
     const lastUser = [...messages].reverse().find((msg) => msg.role === 'USER');
-    return this.normalizeIntentText(lastUser?.content ?? '');
+    // A quoted turn ("explain this") says little on its own; the quote is
+    // what memory relevance should be measured against.
+    return this.normalizeIntentText(
+      lastUser === undefined ? '' : withQuotedContext(lastUser.content, lastUser.metadata),
+    );
   }
 
   /**

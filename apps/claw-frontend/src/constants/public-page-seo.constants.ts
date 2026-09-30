@@ -506,7 +506,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/kimi': {
       title: 'ClawAI vs Kimi : le comparatif',
       description:
-        'Des poids ouverts que vous hébergez vous-même ou neuf familles dans un seul espace de travail : choix du modèle, routage, contexte long et auto-hébergement.',
+        'Contexte long chez un seul fournisseur ou neuf familles sous un abonnement : poids ouverts, exécution locale, auto-hébergement et coût par réponse.',
       keywords: ['ClawAI vs Kimi', 'alternative à Kimi', 'modèles à poids ouverts'],
     },
     'compare/qwen': {
@@ -524,7 +524,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/deepseek': {
       title: 'ClawAI vs DeepSeek : le comparatif',
       description:
-        'Un raisonnement à poids ouverts ou neuf familles dans un seul espace de travail : choix du modèle, routage, second avis et auto-hébergement.',
+        'Un modèle de raisonnement à poids ouverts ou neuf familles routées message par message : exécution locale, auto-hébergement et coût par réponse.',
       keywords: [
         'ClawAI vs DeepSeek',
         'alternative à DeepSeek',
@@ -692,7 +692,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/kimi': {
       title: 'ClawAI vs Kimi: il confronto',
       description:
-        'Pesi aperti da gestire da sé contro nove famiglie in un solo spazio di lavoro: scelta del modello, routing, contesto lungo e self-hosting.',
+        'Contesto lungo con pesi aperti da ospitare da sé contro nove famiglie in un abbonamento: routing, modelli locali, self-hosting e costo per risposta.',
       keywords: ['ClawAI vs Kimi', 'alternativa a Kimi', 'workspace IA a pesi aperti'],
     },
     'compare/qwen': {
@@ -710,7 +710,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/deepseek': {
       title: 'ClawAI vs DeepSeek: il confronto',
       description:
-        'Ragionamento a pesi aperti contro nove famiglie in un solo spazio di lavoro: scelta del modello, routing, secondi pareri e self-hosting.',
+        'Un fornitore di ragionamento a pesi aperti contro un workspace multi-modello: routing, risposte affiancate, modelli locali e self-hosting.',
       keywords: ['ClawAI vs DeepSeek', 'alternativa a DeepSeek', 'workspace IA con modelli locali'],
     },
     'coding-agent': {
@@ -870,7 +870,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/kimi': {
       title: 'ClawAI vs. Kimi im Vergleich',
       description:
-        'Offene Gewichte, die Sie selbst betreiben, gegen neun Familien in einem Arbeitsbereich: Modellauswahl, Routing, langer Kontext und Self-Hosting im Vergleich.',
+        'Langer Kontext mit offenen Gewichten gegen neun Modellfamilien: Modellauswahl, Routing, lokale Ausführung, Self-Hosting und Kosten pro Antwort im Vergleich.',
       keywords: ['ClawAI vs Kimi', 'Kimi Alternative', 'Workspace für offene Modelle'],
     },
     'compare/qwen': {
@@ -888,7 +888,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/deepseek': {
       title: 'ClawAI vs. DeepSeek im Vergleich',
       description:
-        'Reasoning mit offenen Gewichten gegen neun Familien in einem Arbeitsbereich: Modellauswahl, Routing, Zweitmeinung und Self-Hosting im Vergleich.',
+        'Ein Reasoning-Modell mit offenen Gewichten gegen neun Familien: Modellauswahl, Routing, Zweitmeinung, lokale Ausführung und Self-Hosting im Vergleich.',
       keywords: ['ClawAI vs DeepSeek', 'DeepSeek Alternative', 'Workspace für Reasoning-Modelle'],
     },
     'coding-agent': {
@@ -1076,7 +1076,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/kimi': {
       title: 'ClawAI vs Kimi: la comparativa',
       description:
-        'Pesos abiertos que usted mismo aloja frente a nueve familias en un solo espacio de trabajo: elección de modelos, enrutado, contexto largo y autoalojamiento.',
+        'Pesos abiertos de contexto largo frente a nueve familias en un solo espacio de trabajo: enrutado, modelos locales, autoalojamiento y coste por respuesta.',
       keywords: [
         'ClawAI vs Kimi',
         'alternativa a Kimi',
@@ -1098,7 +1098,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/deepseek': {
       title: 'ClawAI vs DeepSeek: la comparativa',
       description:
-        'Razonamiento de pesos abiertos frente a nueve familias en un solo espacio de trabajo: elección de modelos, enrutado, segundas opiniones y autoalojamiento.',
+        'Razonamiento de pesos abiertos a bajo precio frente a nueve familias: elección de modelos, enrutado, modelos locales y coste por respuesta.',
       keywords: [
         'ClawAI vs DeepSeek',
         'alternativa a DeepSeek',
@@ -1282,7 +1282,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/kimi': {
       title: 'ClawAI против Kimi',
       description:
-        'Открытые веса, которые вы запускаете сами, против девяти семейств в одном рабочем пространстве: выбор модели, маршрутизация, длинный контекст и self-hosting.',
+        'Длинный контекст и открытые веса у одного поставщика против девяти семейств в одном рабочем пространстве: маршрутизация, локальные модели, self-hosting и стоимость ответа.',
       keywords: ['ClawAI против Kimi', 'альтернатива Kimi', 'модели с открытыми весами'],
     },
     'compare/qwen': {
@@ -1300,7 +1300,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/deepseek': {
       title: 'ClawAI против DeepSeek',
       description:
-        'Рассуждающие модели с открытыми весами против девяти семейств в одном рабочем пространстве: выбор модели, маршрутизация, второе мнение и self-hosting.',
+        'Рассуждение у одного поставщика против маршрутизации между девятью семействами: ответы рядом, локальные модели, self-hosting и стоимость каждого ответа.',
       keywords: ['ClawAI против DeepSeek', 'альтернатива DeepSeek', 'модели с рассуждением'],
     },
     'coding-agent': {
@@ -1484,7 +1484,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/kimi': {
       title: 'ClawAI vs Kimi: o comparativo',
       description:
-        'Pesos abertos que você mesmo roda diante de nove famílias em um só espaço de trabalho: escolha de modelo, roteamento, contexto longo e self-hosting.',
+        'Contexto longo com pesos abertos diante de nove famílias de modelos num só espaço de trabalho: roteamento, modelos locais, self-hosting e custo por resposta.',
       keywords: ['ClawAI vs Kimi', 'alternativa ao Kimi', 'workspace de IA com pesos abertos'],
     },
     'compare/qwen': {
@@ -1502,7 +1502,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/deepseek': {
       title: 'ClawAI vs DeepSeek: o comparativo',
       description:
-        'Raciocínio com pesos abertos diante de nove famílias em um só espaço de trabalho: escolha de modelo, roteamento, segunda opinião e self-hosting.',
+        'Raciocínio de baixo custo com pesos abertos diante de nove famílias de modelos: roteamento por mensagem, comparação, modelos locais e self-hosting.',
       keywords: [
         'ClawAI vs DeepSeek',
         'alternativa ao DeepSeek',
@@ -1666,7 +1666,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/kimi': {
       title: 'ClawAI बनाम Kimi',
       description:
-        'ओपन-वेट मॉडल खुद चलाएँ या एक वर्कस्पेस में नौ मॉडल परिवार: मॉडल चुनाव, रूटिंग, लंबा संदर्भ और सेल्फ-होस्टिंग की तुलना।',
+        'ओपन-वेट मॉडल खुद चलाएँ या नौ मॉडल परिवारों वाला एक वर्कस्पेस: लंबा संदर्भ, लोकल मॉडल, सेल्फ-होस्टिंग और हर जवाब की लागत की तुलना।',
       keywords: ['ClawAI बनाम Kimi', 'Kimi विकल्प', 'ओपन-वेट AI वर्कस्पेस'],
     },
     'compare/qwen': {
@@ -1684,7 +1684,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/deepseek': {
       title: 'ClawAI बनाम DeepSeek',
       description:
-        'तर्क करने वाले ओपन-वेट मॉडल या एक वर्कस्पेस में नौ परिवार: मॉडल चुनाव, रूटिंग, दूसरी राय और सेल्फ-होस्टिंग की तुलना।',
+        'तर्क करने वाले ओपन-वेट मॉडल खुद चलाएँ या नौ परिवारों के बीच रूट करें: मॉडल चुनाव, लोकल मॉडल, सेल्फ-होस्टिंग और हर जवाब की लागत।',
       keywords: ['ClawAI बनाम DeepSeek', 'DeepSeek विकल्प', 'ओपन-वेट AI वर्कस्पेस'],
     },
     'coding-agent': {
@@ -1840,7 +1840,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/kimi': {
       title: 'ClawAI と Kimi の比較',
       description:
-        'ClawAI と Kimi の違いを、自分で動かすオープンウェイトと、ひとつのワークスペースにある 9 つのモデルファミリーという観点で整理します。モデル選択、ルーティング、長いコンテキスト、セルフホストまで比較。',
+        'ClawAI と Kimi の違いを、単一ベンダーのオープンウェイトと 9 つのモデルファミリーという観点で整理します。長いコンテキスト、ローカル実行、セルフホスト、回答ごとのコストまで比較。',
       keywords: ['ClawAI Kimi 比較', 'Kimi 代替', 'オープンウェイト AI ワークスペース'],
     },
     'compare/qwen': {
@@ -1858,7 +1858,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/deepseek': {
       title: 'ClawAI と DeepSeek の比較',
       description:
-        'ClawAI と DeepSeek の違いを、オープンウェイトの推論モデルと、ひとつのワークスペースにある 9 つのモデルファミリーという観点で整理します。モデル選択、ルーティング、セカンドオピニオン、セルフホストまで比較。',
+        'ClawAI と DeepSeek の違いを、推論に強い単一ラインと 9 つのモデルファミリーという観点で整理します。ルーティング、並列回答、ローカル実行、セルフホスト、回答ごとのコストまで比較。',
       keywords: ['ClawAI DeepSeek 比較', 'DeepSeek 代替', 'マルチモデル AI ワークスペース'],
     },
     'coding-agent': {
@@ -2014,7 +2014,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/kimi': {
       title: 'ClawAI เทียบกับ Kimi',
       description:
-        'น้ำหนักเปิดที่คุณรันเอง เทียบกับเก้าตระกูลในเวิร์กสเปซเดียว ทั้งการเลือกโมเดล การกำหนดเส้นทาง บริบทยาว และการโฮสต์เอง',
+        'บริบทยาวและน้ำหนักเปิดจากห้องแล็บเดียว เทียบกับเก้าตระกูลในเวิร์กสเปซเดียว ทั้งการกำหนดเส้นทาง การรันโมเดลเอง การโฮสต์เอง และต้นทุนต่อคำตอบ',
       keywords: ['ClawAI เทียบ Kimi', 'ทางเลือกแทน Kimi', 'เวิร์กสเปซโมเดลน้ำหนักเปิด'],
     },
     'compare/qwen': {
@@ -2032,7 +2032,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/deepseek': {
       title: 'ClawAI เทียบกับ DeepSeek',
       description:
-        'โมเดลให้เหตุผลแบบน้ำหนักเปิด เทียบกับเก้าตระกูลในเวิร์กสเปซเดียว ทั้งการเลือกโมเดล การกำหนดเส้นทาง ความเห็นที่สอง และการโฮสต์เอง',
+        'โมเดลให้เหตุผลราคาต่ำจากห้องแล็บเดียว เทียบกับเก้าตระกูล ทั้งการกำหนดเส้นทาง ความเห็นที่สอง น้ำหนักเปิดในเครื่อง การโฮสต์เอง และต้นทุนต่อคำตอบ',
       keywords: ['ClawAI เทียบ DeepSeek', 'ทางเลือกแทน DeepSeek', 'เวิร์กสเปซโมเดลน้ำหนักเปิด'],
     },
     'coding-agent': {
@@ -2184,7 +2184,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/kimi': {
       title: 'ClawAI در برابر Kimi',
       description:
-        'وزن‌های بازی که خودتان اجرا می‌کنید در برابر نُه خانوادهٔ مدل در یک فضای کاری: انتخاب مدل، مسیریابی، بافت طولانی و میزبانی شخصی.',
+        'بافت طولانی با وزن‌های باز در برابر نُه خانوادهٔ مدل در یک فضای کاری: انتخاب مدل، مسیریابی، اجرای محلی، میزبانی شخصی و هزینهٔ هر پاسخ.',
       keywords: ['ClawAI در برابر Kimi', 'جایگزین Kimi', 'فضای کاری مدل‌های وزن‌باز'],
     },
     'compare/qwen': {
@@ -2202,7 +2202,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/deepseek': {
       title: 'ClawAI در برابر DeepSeek',
       description:
-        'استدلال با وزن‌های باز در برابر نُه خانوادهٔ مدل در یک فضای کاری: انتخاب مدل، مسیریابی، نظر دوم و میزبانی شخصی.',
+        'مدل‌های استدلالی با وزن‌های باز در برابر نُه خانوادهٔ مدل: انتخاب مدل، مسیریابی برای هر پیام، پاسخ‌های هم‌زمان، اجرای محلی و میزبانی شخصی.',
       keywords: ['ClawAI در برابر DeepSeek', 'جایگزین DeepSeek', 'فضای کاری خودمیزبان'],
     },
     'coding-agent': {
@@ -2354,7 +2354,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/kimi': {
       title: 'ClawAI 与 Kimi 对比',
       description:
-        'ClawAI 与 Kimi 的差别在哪里：自己运行的开源权重，对比一个汇集九大模型家族的工作区。逐项比较模型选择、路由、长上下文和自托管。',
+        'ClawAI 与 Kimi 的差别在哪里：一家把旗舰权重公开的实验室，对比一个覆盖九大模型家族的工作区。逐项比较模型选择、路由、并排回答、在自有硬件上运行开源权重、自托管以及每次回答的成本记录。',
       keywords: ['ClawAI 对比 Kimi', 'Kimi 替代方案', '开源权重 AI 工作区'],
     },
     'compare/qwen': {
@@ -2372,7 +2372,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
     'compare/deepseek': {
       title: 'ClawAI 与 DeepSeek 对比',
       description:
-        'ClawAI 与 DeepSeek 的差别在哪里：开源权重的推理模型，对比一个汇集九大模型家族的工作区。逐项比较模型选择、路由、第二意见和自托管。',
+        'ClawAI 与 DeepSeek 的差别在哪里：一条以推理见长、并公开旗舰权重的产品线，对比一个多模型工作区。逐项比较模型选择、路由、并排回答、本地模型、自托管以及每次回答的成本记录。',
       keywords: ['ClawAI 对比 DeepSeek', 'DeepSeek 替代方案', '多模型 AI 工作区'],
     },
     'coding-agent': {

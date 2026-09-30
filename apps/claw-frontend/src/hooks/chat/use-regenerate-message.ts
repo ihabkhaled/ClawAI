@@ -1,9 +1,11 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 
 import { useTranslation } from '@/lib/i18n';
 import { chatRepository } from '@/repositories/chat/chat.repository';
+import type { RegenerateMessageRequest } from '@/types';
 import { invalidateThreadMessages, logger, showToast } from '@/utilities';
 
 export function useRegenerateMessage(threadId: string, onRegenerated?: () => void) {
@@ -11,14 +13,20 @@ export function useRegenerateMessage(threadId: string, onRegenerated?: () => voi
   const { t } = useTranslation();
 
   const mutation = useMutation({
-    mutationFn: (messageId: string) => {
+    mutationFn: ({
+      messageId,
+      choice,
+    }: {
+      messageId: string;
+      choice?: RegenerateMessageRequest;
+    }) => {
       logger.info({
         component: 'chat',
         action: 'regenerate-message',
         message: 'Regenerating message',
-        details: { threadId, messageId },
+        details: { threadId, messageId, routingMode: choice?.routingMode ?? 'default' },
       });
-      return chatRepository.regenerateMessage(messageId);
+      return chatRepository.regenerateMessage(messageId, choice);
     },
     onSuccess: () => {
       logger.info({
@@ -41,8 +49,14 @@ export function useRegenerateMessage(threadId: string, onRegenerated?: () => voi
     },
   });
 
+  const { mutate } = mutation;
+  const regenerate = useCallback(
+    (messageId: string, choice?: RegenerateMessageRequest): void => mutate({ messageId, choice }),
+    [mutate],
+  );
+
   return {
-    regenerate: mutation.mutate,
+    regenerate,
     isPending: mutation.isPending,
   };
 }

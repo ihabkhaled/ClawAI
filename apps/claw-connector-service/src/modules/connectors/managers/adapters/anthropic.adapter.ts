@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { withGatewayHeaders } from '../../utilities/gateway-headers.utility';
 import { ConnectorStatus, ModelLifecycle } from '../../../../generated/prisma';
 import { type HealthCheckResult, type NormalizedModel } from '../../types/connectors.types';
 import { type AnthropicModelsResponse } from '../../types/provider-api.types';
@@ -37,7 +38,7 @@ export class AnthropicAdapter implements ProviderAdapter {
       headers['anthropic-workspace-id'] = workspaceId;
     }
 
-    return headers;
+    return withGatewayHeaders(headers, config.gatewayHeaders);
   }
 
   // The provider explains its own 4xx in the body; the bare status does not say

@@ -25,7 +25,7 @@ export const ES_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: 'Comparativas',
     intro:
-      'ClawAI no intenta ser un asistente único mejor. Reúne {cloudProviderCount} proveedores en la nube y modelos locales de pesos abiertos en un solo espacio de trabajo y envía cada mensaje al que mejor encaja. Estas páginas lo contrastan con los asistentes que la gente ya usa, siempre sobre las mismas ocho capacidades.',
+      'ClawAI no intenta ser un asistente único mejor. Pone {cloudProviderCount} proveedores en la nube y modelos locales de pesos abiertos en un solo espacio de trabajo y envía cada mensaje al que mejor encaja. Estas páginas lo contrastan con los asistentes que la gente ya usa, siempre sobre las mismas ocho capacidades.',
     cardsTitle: 'Elige un asistente para comparar',
     cardCta: 'Comparar con {rival}',
     coversTitle: 'Qué cubre cada comparativa',
@@ -171,7 +171,7 @@ export const ES_COMPARISON_CONTENT: ComparisonDictionary = {
         {
           question: '¿Puede ClawAI usar modelos Gemini?',
           answer:
-            'Sí. Google es una de las nueve familias de modelos del catálogo, disponible en cualquier conversación dentro del mismo espacio de trabajo.',
+            'Sí. Google es una de las nueve familias de modelos del catálogo, disponible en cualquier conversación en el mismo espacio de trabajo.',
         },
         {
           question: '¿Se conecta ClawAI a Google Workspace?',

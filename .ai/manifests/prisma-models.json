@@ -20,6 +20,7 @@
       "RecipeRun",
       "RecipeRunStep",
       "RefreshToken",
+      "RunnerCredential",
       "ScheduledCommand",
       "TerminalCommand"
     ],
@@ -75,7 +76,8 @@
     ],
     "claw-file-service": [
       "File",
-      "FileChunk"
+      "FileChunk",
+      "PublishedArtifact"
     ],
     "claw-image-service": [
       "ImageGeneration",

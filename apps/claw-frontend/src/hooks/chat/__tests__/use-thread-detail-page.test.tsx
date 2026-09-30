@@ -156,6 +156,23 @@ const shareControllerMock = {
 // Both own a useQuery, and this suite renders the controller without a
 // QueryClientProvider — it mocks every data-owning hook rather than standing up
 // a client, so these follow the same pattern.
+const mockLineageBarProps = {
+  visible: false,
+  parent: null,
+  parentDeleted: false,
+  branches: [],
+  branchedFromLabel: 'chat.lineage.branchedFrom',
+  sourceDeletedLabel: 'chat.lineage.sourceDeleted',
+  branchesLabel: 'chat.lineage.branches',
+};
+const mockSelectionQuoteProps = { selection: null, onQuote: vi.fn(), label: 'chat.quote.action' };
+vi.mock('@/hooks/chat/use-selection-quote', () => ({
+  useSelectionQuote: () => mockSelectionQuoteProps,
+}));
+vi.mock('@/hooks/chat/use-thread-lineage-bar', () => ({
+  useThreadLineageBar: () => mockLineageBarProps,
+}));
+
 vi.mock('@/hooks/chat/use-in-thread-search', () => ({
   useInThreadSearch: () => ({
     term: '',
@@ -227,6 +244,13 @@ describe('useThreadDetailPage — composes every page-level hook', () => {
     act(() => result.current.shellProps.actionRailProps.onQuality());
     expect(result.current.shellProps.actionRailProps.compareIsOpen).toBe(false);
     expect(result.current.shellProps.actionRailProps.qualityIsOpen).toBe(true);
+  });
+
+  it('passes the branch lineage strip through to the shell', () => {
+    const { result } = renderHook(() => useThreadDetailPage());
+
+    expect(result.current.shellProps.lineageBarProps).toBe(mockLineageBarProps);
+    expect(result.current.shellProps.selectionQuoteProps).toBe(mockSelectionQuoteProps);
   });
 
   it('falls back to chat.untitled when the thread has no title', async () => {

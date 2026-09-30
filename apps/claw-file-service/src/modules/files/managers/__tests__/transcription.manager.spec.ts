@@ -37,6 +37,7 @@ import {
   TRANSCRIPTION_TOO_LARGE_MESSAGE,
 } from '../../constants/transcription.constants';
 import { waitForTranscriptionBackoff } from '../../utilities/transcription-backoff.utility';
+import { probeAudioSeconds } from '../../utilities/audio-duration.utility';
 
 vi.mock('../../adapters/gemini-transcription.adapter', () => ({
   transcribeWithGemini: vi.fn(),
@@ -47,12 +48,16 @@ vi.mock('../../adapters/openai-transcription.adapter', () => ({
 vi.mock('../../utilities/transcription-backoff.utility', () => ({
   waitForTranscriptionBackoff: vi.fn(() => Promise.resolve()),
 }));
+vi.mock('../../utilities/audio-duration.utility', () => ({
+  probeAudioSeconds: vi.fn(),
+}));
 vi.mock('../../../../common/utilities', () => ({
   readFile: vi.fn(() => Buffer.from('on-disk-audio')),
 }));
 
 const mockedGemini = transcribeWithGemini as Mock;
 const mockedOpenAi = transcribeWithOpenAi as Mock;
+const mockedProbe = probeAudioSeconds as Mock;
 const mockedBackoff = waitForTranscriptionBackoff as Mock;
 
 /** An axios error carrying a provider body, the shape `httpPost` re-throws. */
@@ -197,8 +202,9 @@ describe('TranscriptionManager', () => {
     expect(publishedPatterns(harness.rabbit)).not.toContain(EventPattern.FILE_TRANSCRIBE_FAILED);
   });
 
-  it('routes OPENAI through the whisper deployment, not the snapshot chat model', async () => {
+  it('routes OPENAI through gpt-4o-mini-transcribe, not the snapshot chat model', async () => {
     mockedOpenAi.mockResolvedValue({ text: 'openai transcript' });
+    mockedProbe.mockResolvedValueOnce(12);
     const harness = buildHarness(buildFile());
     harness.capability.findCapableModels.mockResolvedValue([
       { provider: 'OPENAI', model: 'gpt-4o-audio' },
@@ -211,16 +217,79 @@ describe('TranscriptionManager', () => {
 
     await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
 
+    expect(mockedProbe).toHaveBeenCalledTimes(1);
     expect(mockedOpenAi).toHaveBeenCalledWith(
       'https://api.openai.com/v1',
       'openai-key',
       expect.any(String),
       'audio/mpeg',
-      'whisper-1',
+      'gpt-4o-mini-transcribe',
     );
     expect(publishedPayload(harness.rabbit, EventPattern.FILE_TRANSCRIBE_COMPLETED).model).toBe(
-      'whisper-1',
+      'gpt-4o-mini-transcribe',
     );
+  });
+
+  it('does not probe the audio when no OpenAI candidate exists', async () => {
+    mockedGemini.mockResolvedValue({ text: 'gemini transcript' });
+    const harness = buildHarness(buildFile());
+
+    await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+    expect(mockedProbe).not.toHaveBeenCalled();
+  });
+
+  it("keeps whisper-1 for a video's derived audio (it needs segments)", async () => {
+    mockedOpenAi.mockResolvedValue({ text: 'video words', segments: [] });
+    const harness = buildHarness(buildFile());
+    harness.capability.findCapableModels.mockResolvedValue([
+      { provider: 'OPENAI', model: 'gpt-4o-audio' },
+    ]);
+    harness.capability.fetchConnectorConfig.mockResolvedValue({
+      provider: 'OPENAI',
+      apiKey: 'openai-key',
+      baseUrl: 'https://api.openai.com/v1',
+    });
+
+    const outcome = await harness.manager.transcribeDerivedAudio({
+      fileId: 'video-1',
+      userId: 'user-1',
+      audioBase64: 'YXVkaW8=',
+      mimeType: 'audio/wav',
+      sizeBytes: 1024,
+      audioSeconds: 10,
+      requestScope: 'video-audio',
+      instruction: 'timestamped',
+    });
+
+    expect(mockedProbe).not.toHaveBeenCalled();
+    expect(outcome).toMatchObject({ status: 'TRANSCRIBED', model: 'whisper-1' });
+  });
+
+  it('routes LOCAL through the OpenAI adapter on the container, with its own model (ADR-128)', async () => {
+    mockedOpenAi.mockResolvedValue({ text: 'local transcript' });
+    const harness = buildHarness(buildFile());
+    harness.capability.findCapableModels.mockResolvedValue([
+      { provider: 'LOCAL', model: 'Systran/faster-whisper-small' },
+    ]);
+    harness.capability.fetchConnectorConfig.mockResolvedValue({
+      provider: 'LOCAL',
+      apiKey: 'local',
+      baseUrl: 'http://speech:8000/v1',
+    });
+
+    await harness.manager.handleJob({ fileId: 'file-1', userId: 'user-1' });
+
+    expect(mockedOpenAi).toHaveBeenCalledWith(
+      'http://speech:8000/v1',
+      'local',
+      expect.any(String),
+      'audio/mpeg',
+      'Systran/faster-whisper-small',
+    );
+    const completed = publishedPayload(harness.rabbit, EventPattern.FILE_TRANSCRIBE_COMPLETED);
+    expect(completed.provider).toBe('LOCAL');
+    expect(completed.model).toBe('Systran/faster-whisper-small');
   });
 
   it('refuses clearly when no capable connector is configured', async () => {
@@ -409,7 +478,7 @@ describe('TranscriptionManager', () => {
         'test-key',
         expect.any(String),
         'audio/mpeg',
-        'whisper-1',
+        'gpt-4o-mini-transcribe',
       );
       const completed = publishedPayload(harness.rabbit, EventPattern.FILE_TRANSCRIBE_COMPLETED);
       expect(completed.provider).toBe('OPENAI');

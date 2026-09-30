@@ -3,11 +3,14 @@ import { CLOUD_ROUTER_MAX_CANDIDATES } from '../constants/cloud-router-eligibili
 import { ModelDeploymentRepository } from '../repositories/model-deployment.repository';
 import { ExposedModelsService } from '../services/exposed-models.service';
 import {
+  catalogMatchKey,
   modelMatchKey,
   selectCloudRouterCandidates,
 } from '../utilities/cloud-router-candidates.utility';
 import type { EligibleDeploymentRecord } from '../types/model-deployment.types';
-import type { RoutingContext } from '../types/routing.types';
+import { UNAVAILABLE_PROVIDER } from '../constants/routing.constants';
+import type { RoutingContext, RoutingDecisionResult } from '../types/routing.types';
+import { rankDecisionByModalityFit } from '../utilities/modality-fit.utility';
 
 /**
  * Hard eligibility filter for the cloud router's candidate set.
@@ -63,4 +66,41 @@ export class CloudRouterEligibilityManager {
     );
     return eligible;
   }
+
+  /**
+   * Modality fit for the AUTO paths that do not go through the cloud router
+   * (privacy-local, Ollama router, category model, heuristic - rule 51 item
+   * 13). Same `modalityFitOf` tiers as `selectCloudRouterCandidates`, applied
+   * to the decision the path already built: capable models move ahead of ones
+   * that cannot read the attachments; nothing is removed. No attachments = no
+   * database read and the decision is returned untouched.
+   */
+  async rankDecisionByModalityFit(
+    decision: RoutingDecisionResult,
+    context: RoutingContext,
+  ): Promise<RoutingDecisionResult> {
+    const required = context.requiredModalities ?? [];
+    if (required.length === 0 || decision.selectedProvider === UNAVAILABLE_PROVIDER) {
+      return decision;
+    }
+    const routable = await this.deployments.findRoutableForCloudRouting();
+    const byKey = new Map(
+      routable.map((row) => [modelMatchKey(row.provider, row.providerModelId), row]),
+    );
+    const ranking = rankDecisionByModalityFit(
+      decision,
+      (entry) => byKey.get(catalogMatchKey(entry)),
+      required,
+      context.transformableModalities ?? [],
+    );
+    const picked = `${decision.selectedProvider}/${decision.selectedModel}`;
+    const outcome = ranking.reordered
+      ? `${picked} is ${ranking.originalFit} -> ${ranking.decision.selectedProvider}/${ranking.decision.selectedModel} (${ranking.fit})`
+      : `kept ${picked} (${ranking.fit})`;
+    this.logger.log(
+      `rankDecisionByModalityFit: thread=${context.threadId ?? 'none'} required=${required.join(',')} ${outcome}`,
+    );
+    return ranking.decision;
+  }
 }
+

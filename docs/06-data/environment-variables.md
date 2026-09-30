@@ -278,6 +278,7 @@ Claw uses 14 separate PostgreSQL instances, one per data-owning service.
 | Variable                     | Required | Default                    | Description                                                                                                  |
 | ---------------------------- | -------- | -------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `OLLAMA_BASE_URL`            | Yes      | `http://claw-ollama:11434` | Ollama HTTP API base URL                                                                                     |
+| `LOCAL_SPEECH_BASE_URL`      | No       | `http://speech:8000`       | Free local speech container (ADR-128), used by file-service (STT) and chat-service (read aloud). Blank = off |
 | `OLLAMA_ROUTER_MODEL`        | No       | `deepseek-v4-pro`          | Model that PLANS the route (never answers the user). Cloud, not local — routing quality caps answer quality. |
 | `OLLAMA_ROUTER_TIMEOUT_MS`   | No       | `10000`                    | Timeout for router model calls (ms)                                                                          |
 | `ROUTER_COMPACT_PROMPT`      | No       | `true`                     | Toggles compact vs expanded AUTO router prompt layout                                                        |
@@ -386,8 +387,8 @@ rejected.
 | `PAYPAL_ENV`                                                     | No                 | `sandbox`              | `sandbox` or `live`; configured production requires `live`     |
 | `NEXT_PUBLIC_PAYPAL_CLIENT_ID`                                   | To render PayPal   | —                      | Public browser client identifier                               |
 | `PAYMOB_SECRET_KEY`, `PAYMOB_PUBLIC_KEY`, `PAYMOB_HMAC_SECRET`   | To enable Paymob   | —                      | Complete Paymob secret/public/HMAC set                         |
+| `PAYMOB_API_KEY`                                                 | To enable Paymob   | —                      | Required: exchanged for the auth token every Paymob call uses  |
 | `PAYMOB_CARD_INTEGRATION_ID`                                     | To enable Paymob   | —                      | Paymob hosted-card integration                                 |
-| `PAYMOB_API_KEY`                                                 | No                 | —                      | Legacy Paymob auth-token API key                               |
 | `PAYMOB_CURRENCY`, `NEXT_PUBLIC_PAYMOB_PUBLIC_KEY`               | No / render Paymob | `EGP` / —              | Settlement currency and safe browser key                       |
 | `EXCHANGE_RATE_API_BASE_URL`, `EXCHANGE_RATE_CACHE_TTL_MS`       | No                 | provider / `3600000`   | FX source and cache lifetime                                   |
 | `USD_TO_EGP_FALLBACK_RATE`                                       | No                 | `0`                    | Non-zero emergency fallback; zero fails closed                 |

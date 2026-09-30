@@ -32,10 +32,9 @@ export function useBillingCheckoutPage(): UseBillingCheckoutPageReturn {
   );
   const price = plan === null ? null : findPlanPrice(plan, interval);
   const purchasablePrice = price !== null && price.amountMinor > 0 ? price : null;
-  const available = useMemo(
-    () => gatewayQuery.gateways.filter((item) => !item.testingSoon),
-    [gatewayQuery.gateways],
-  );
+  // Every gateway the server lists is one it has enabled and configured: the
+  // server only returns enabled rows, so there is nothing left to hide here.
+  const available = gatewayQuery.gateways;
   const [gateway, setGateway] = useState(BillingGateway.PAYPAL);
 
   useEffect(() => {

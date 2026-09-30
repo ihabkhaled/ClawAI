@@ -1,6 +1,10 @@
 import { MODEL_PAGE_CONNECTOR_PROVIDERS } from '@/constants/model-provider-mapping.constants';
 import type { ModelProviderPage } from '@/enums/model-provider-page.enum';
-import type { PublicCatalogModel, PublicModelCatalog } from '@/types/public-models.types';
+import type {
+  PublicCatalogModel,
+  PublicCatalogProvider,
+  PublicModelCatalog,
+} from '@/types/public-models.types';
 import { compareModelsByRecency } from '@/utilities/model-recency.utility';
 
 /**
@@ -57,19 +61,17 @@ export function selectModelsForProviderPage(
 }
 
 /**
- * The provider names to show on a hub or landing page.
+ * The providers to show on a hub or landing page.
  *
  * Only providers that actually have a model: a connector configured but never
  * synced contributes nothing a visitor can use, and naming it would promise
  * something this deployment cannot deliver.
  */
-export function selectAvailableProviderNames(
+export function selectAvailableProviders(
   catalog: PublicModelCatalog | null,
-): readonly string[] {
+): readonly PublicCatalogProvider[] {
   if (catalog === null) {
     return [];
   }
-  return catalog.providers
-    .filter((provider) => provider.modelCount > 0)
-    .map((provider) => provider.displayName);
+  return catalog.providers.filter((provider) => provider.modelCount > 0);
 }

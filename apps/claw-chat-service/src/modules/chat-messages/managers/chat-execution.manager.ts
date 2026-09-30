@@ -1,3 +1,4 @@
+import { latestUserTurnText } from '../utilities/quoted-turn.utility';
 import { HttpStatus, Injectable, Logger, type OnModuleInit, Optional } from '@nestjs/common';
 import {
   BillingErrorCode,
@@ -57,6 +58,7 @@ import {
   type OpenAiChatMessage,
   type OpenAiChatRequest,
   type OpenAiChatResponse,
+  type ResolvedProviderConfig,
   type ThreadSettings,
 } from '../types/execution.types';
 import type {
@@ -126,6 +128,8 @@ import { boundImageGenerationPrompt } from '../utilities/image-generation-prompt
 import { buildReferenceImagePrompt } from '../utilities/image-reference-prompt.utility';
 import { transformOpenAiMessagesToOllama } from '../utilities/ollama-message-shape.utility';
 import { transformOpenAiMessagesToAnthropic } from '../utilities/anthropic-message-shape.utility';
+import { applyAnthropicPromptCache } from '../utilities/anthropic-prompt-cache.utility';
+import { withConnectorGatewayHeaders } from '../utilities/connector-gateway-headers.utility';
 import { buildGeminiRequestBody } from '../utilities/gemini-request-builder.utility';
 import {
   hasNativeAudioDelivery,
@@ -248,6 +252,11 @@ import {
   stripWriterReasoning,
   toFileContentCandidates,
 } from '../utilities/file-writer.utility';
+import {
+  imageMaskRefusalResponse,
+  readImageMaskRefusalCode,
+  readMaskFileId,
+} from '../utilities/image-mask-refusal.utility';
 import type { ChokepointCall, PaygCallOptions } from '../types/payg.types';
 import { IMAGE_GENERATION_PLAN_FEATURE } from '../constants/plan-feature-refusal.constants';
 import {
@@ -788,7 +797,9 @@ export class ChatExecutionManager implements OnModuleInit {
         'INTERNAL_ERROR',
       );
     }
-    const { baseUrl, apiKey } = await this.resolveProviderConfig(candidate.provider);
+    const { baseUrl, apiKey, gatewayHeaders } = await this.resolveProviderConfig(
+      candidate.provider,
+    );
     const initialBody = this.buildOllamaChatRequestBody(
       candidate.model,
       context,
@@ -805,6 +816,7 @@ export class ChatExecutionManager implements OnModuleInit {
       initialBody,
       baseUrl,
       apiKey,
+      gatewayHeaders,
       startTime,
       usedFallback,
       context,
@@ -1098,7 +1110,7 @@ export class ChatExecutionManager implements OnModuleInit {
         streamContext,
       );
     }
-    const { baseUrl, apiKey } = await this.resolveProviderConfig(provider);
+    const { baseUrl, apiKey, gatewayHeaders } = await this.resolveProviderConfig(provider);
     const effectiveModel = model;
     const { url, body, protocol, headers, allowedHosts } = await this.resolveStreamCloudRequest({
       provider,
@@ -1120,7 +1132,7 @@ export class ChatExecutionManager implements OnModuleInit {
         model: effectiveModel,
         url,
         allowedHosts,
-        headers,
+        headers: withConnectorGatewayHeaders(headers, gatewayHeaders),
         body,
         protocol,
         startMs: startTime,
@@ -1847,8 +1859,7 @@ export class ChatExecutionManager implements OnModuleInit {
   }
 
   private extractUserPrompt(context: AssembledContext): string {
-    const lastUserMsg = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
-    return lastUserMsg?.content ?? '';
+    return latestUserTurnText(context.threadMessages) ?? '';
   }
 
   private isGenerationResponse(response: LlmResponse): boolean {
@@ -2796,7 +2807,7 @@ export class ChatExecutionManager implements OnModuleInit {
   }): Promise<InternalGenerateResponse> {
     const { provider, model, systemPrompt, userPrompt, maxTokens } = args;
     const config = AppConfig.get();
-    const { baseUrl, apiKey } = await this.resolveProviderConfig(provider);
+    const { baseUrl, apiKey, gatewayHeaders } = await this.resolveProviderConfig(provider);
     const isOllamaConnector = provider === OLLAMA_CONNECTOR_PROVIDER;
     // Cloud Ollama (and any other provider routed through the OLLAMA
     // connector) speaks the *native* Ollama chat API at `/api/chat`, not
@@ -2853,6 +2864,7 @@ export class ChatExecutionManager implements OnModuleInit {
       // Connector baseUrl, declared from the base rather than from `url`.
       allowedHosts: declaredHost(baseUrl),
       apiKey,
+      gatewayHeaders,
       body,
       provider,
       model,
@@ -2886,6 +2898,7 @@ export class ChatExecutionManager implements OnModuleInit {
     url: string;
     allowedHosts: ReadonlySet<string>;
     apiKey: string;
+    gatewayHeaders?: Record<string, string>;
     body: OpenAiChatRequest | OllamaChatRequest;
     provider: string;
     model: string;
@@ -2900,7 +2913,10 @@ export class ChatExecutionManager implements OnModuleInit {
         url: args.url,
         allowedHosts: args.allowedHosts,
         method: 'POST',
-        headers: { Authorization: `Bearer ${args.apiKey}` },
+        headers: withConnectorGatewayHeaders(
+          { Authorization: `Bearer ${args.apiKey}` },
+          args.gatewayHeaders,
+        ),
         body: args.body,
         timeoutMs: args.timeoutMs,
       });
@@ -3197,7 +3213,7 @@ export class ChatExecutionManager implements OnModuleInit {
     this.logger.log(`callCloudProvider: calling ${provider}/${model}`);
     const config = AppConfig.get();
     this.logger.debug(`callCloudProvider: resolving provider config for ${provider}`);
-    const { baseUrl, apiKey } = await this.resolveProviderConfig(provider);
+    const { baseUrl, apiKey, gatewayHeaders } = await this.resolveProviderConfig(provider);
     this.logger.debug(`callCloudProvider: config resolved — baseUrl=${baseUrl}`);
 
     const isOllamaConnector = provider === OLLAMA_CONNECTOR_PROVIDER;
@@ -3232,6 +3248,7 @@ export class ChatExecutionManager implements OnModuleInit {
       requestBody,
       config.OLLAMA_GENERATE_TIMEOUT_MS,
       abortSignal,
+      gatewayHeaders,
     );
     this.logger.debug('callCloudProvider: parsing cloud response');
     const promptText = this.buildPromptTextForEstimate(context);
@@ -3283,6 +3300,7 @@ export class ChatExecutionManager implements OnModuleInit {
     requestBody: CloudProviderRequestBody,
     timeoutMs: number,
     abortSignal?: AbortSignal,
+    gatewayHeaders?: Record<string, string>,
   ): Promise<OpenAiChatResponse | OllamaChatResponse | GeminiGenerateContentResponse> {
     const response = await httpRequest<
       OpenAiChatResponse | OllamaChatResponse | GeminiGenerateContentResponse
@@ -3290,9 +3308,10 @@ export class ChatExecutionManager implements OnModuleInit {
       url,
       allowedHosts,
       method: 'POST',
-      headers: isNativeGemini
-        ? { 'x-goog-api-key': apiKey }
-        : { Authorization: `Bearer ${apiKey}` },
+      headers: withConnectorGatewayHeaders(
+        isNativeGemini ? { 'x-goog-api-key': apiKey } : { Authorization: `Bearer ${apiKey}` },
+        gatewayHeaders,
+      ),
       body: requestBody,
       timeoutMs,
       signal: abortSignal,
@@ -3381,6 +3400,7 @@ export class ChatExecutionManager implements OnModuleInit {
     initialBody: OllamaChatRequest;
     baseUrl: string;
     apiKey: string;
+    gatewayHeaders?: Record<string, string>;
     startTime: number;
     usedFallback: boolean;
     context: AssembledContext;
@@ -3401,6 +3421,7 @@ export class ChatExecutionManager implements OnModuleInit {
       url,
       allowedHosts,
       apiKey,
+      gatewayHeaders: args.gatewayHeaders,
       baseUrl,
       provider,
       model,
@@ -3427,6 +3448,7 @@ export class ChatExecutionManager implements OnModuleInit {
         url,
         allowedHosts,
         apiKey,
+        gatewayHeaders: args.gatewayHeaders,
         initialBody,
         messages: loopResult.messages,
         provider,
@@ -3471,6 +3493,7 @@ export class ChatExecutionManager implements OnModuleInit {
     url: string;
     allowedHosts: ReadonlySet<string>;
     apiKey: string;
+    gatewayHeaders?: Record<string, string>;
     baseUrl: string;
     provider: string;
     model: string;
@@ -3506,6 +3529,7 @@ export class ChatExecutionManager implements OnModuleInit {
         url: args.url,
         allowedHosts: args.allowedHosts,
         apiKey: args.apiKey,
+        gatewayHeaders: args.gatewayHeaders,
         initialBody: args.initialBody,
         messages,
         provider: args.provider,
@@ -3554,6 +3578,7 @@ export class ChatExecutionManager implements OnModuleInit {
     url: string;
     allowedHosts: ReadonlySet<string>;
     apiKey: string;
+    gatewayHeaders?: Record<string, string>;
     initialBody: OllamaChatRequest;
     messages: OllamaChatMessage[];
     provider: string;
@@ -3598,7 +3623,10 @@ export class ChatExecutionManager implements OnModuleInit {
         url,
         allowedHosts: args.allowedHosts,
         method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}` },
+        headers: withConnectorGatewayHeaders(
+          { Authorization: `Bearer ${apiKey}` },
+          args.gatewayHeaders,
+        ),
         body,
         timeoutMs,
       });
@@ -3669,6 +3697,7 @@ export class ChatExecutionManager implements OnModuleInit {
     url: string;
     allowedHosts: ReadonlySet<string>;
     apiKey: string;
+    gatewayHeaders?: Record<string, string>;
     initialBody: OllamaChatRequest;
     messages: OllamaChatMessage[];
     provider: string;
@@ -3696,7 +3725,10 @@ export class ChatExecutionManager implements OnModuleInit {
         url,
         allowedHosts: args.allowedHosts,
         method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}` },
+        headers: withConnectorGatewayHeaders(
+          { Authorization: `Bearer ${apiKey}` },
+          args.gatewayHeaders,
+        ),
         body,
         timeoutMs,
       });
@@ -4083,9 +4115,7 @@ export class ChatExecutionManager implements OnModuleInit {
     return url.length === 0 ? 'Fetching page' : `Fetching ${url.slice(0, 80)}`;
   }
 
-  private async resolveProviderConfig(
-    provider: string,
-  ): Promise<{ baseUrl: string; apiKey: string }> {
+  private async resolveProviderConfig(provider: string): Promise<ResolvedProviderConfig> {
     this.logger.debug(`resolveProviderConfig: fetching connector config for ${provider}`);
     const connectorConfig = await this.fetchConnectorConfig(provider);
     this.logger.debug(`resolveProviderConfig: connector config received for ${provider}`);
@@ -4114,7 +4144,13 @@ export class ChatExecutionManager implements OnModuleInit {
     }
 
     this.logger.debug(`resolveProviderConfig: resolved baseUrl=${baseUrl} for ${provider}`);
-    return { baseUrl, apiKey: connectorConfig.apiKey };
+    return {
+      baseUrl,
+      apiKey: connectorConfig.apiKey,
+      ...(connectorConfig.gatewayHeaders === undefined
+        ? {}
+        : { gatewayHeaders: connectorConfig.gatewayHeaders }),
+    };
   }
 
   // Translates the admitted Runtime V2 tool catalog for one request shape.
@@ -4151,11 +4187,13 @@ export class ChatExecutionManager implements OnModuleInit {
       return undefined;
     }
     const translated = translateToolCatalog(definitions, dialect);
+    // Over budget is not a reason to fail the turn: the prompt-JSON lane can
+    // still carry every tool, so the run continues there.
     if (translated.byteSize > config.CHAT_TOOL_CATALOG_MAX_BYTES) {
-      throw new BusinessException(
-        `Native tool catalog is ${String(translated.byteSize)} bytes, over the ${String(config.CHAT_TOOL_CATALOG_MAX_BYTES)} byte budget`,
-        'RUNTIME_TOOL_CATALOG_TOO_LARGE',
+      this.logger.warn(
+        `resolveNativeToolCatalog: catalog is ${String(translated.byteSize)} bytes, over the ${String(config.CHAT_TOOL_CATALOG_MAX_BYTES)} byte budget — falling back to the prompt-JSON lane`,
       );
+      return undefined;
     }
     return translated;
   }
@@ -4510,7 +4548,8 @@ export class ChatExecutionManager implements OnModuleInit {
     if (anthropicSpeed !== undefined) {
       requestBody.speed = anthropicSpeed;
     }
-    return requestBody;
+    // F093: the one insertion point for Anthropic prompt-cache breakpoints.
+    return applyAnthropicPromptCache(requestBody);
   }
 
   private buildAnthropicNativeStreamingBody(
@@ -5026,9 +5065,10 @@ export class ChatExecutionManager implements OnModuleInit {
     const config = AppConfig.get();
     this.logger.debug('callImageService: extracting last user message for prompt');
     const lastUserMsg = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
-    // The user's own words. Kept on the generation row as `originalPrompt`
-    // whenever the prompt sent upstream differs (pack §79).
-    const originalPrompt = lastUserMsg?.content ?? 'generate an image';
+    // The user's own words, plus any quoted text they asked about (ADR-131).
+    // Kept on the generation row as `originalPrompt` whenever the prompt sent
+    // upstream differs (pack §79).
+    const originalPrompt = latestUserTurnText(context.threadMessages) ?? 'generate an image';
     let prompt = originalPrompt;
     this.logger.debug(`callImageService: base prompt length=${String(prompt.length)}`);
 
@@ -5064,6 +5104,7 @@ export class ChatExecutionManager implements OnModuleInit {
     }
 
     prompt = boundImageGenerationPrompt(prompt);
+    const maskFileId = readMaskFileId(lastUserMsg?.metadata);
 
     this.logger.debug(
       `callImageService: sending request to image service at ${config.IMAGE_SERVICE_URL}`,
@@ -5082,6 +5123,9 @@ export class ChatExecutionManager implements OnModuleInit {
       referenceImageBase64,
       referenceImageMimeType,
       referenceFileId,
+      // The drawn mask rides only with a reference image: image-service
+      // refuses a mask with nothing to mask (422 IMAGE_MASK_INVALID).
+      ...(referenceFileId === undefined || maskFileId === undefined ? {} : { maskFileId }),
       ...(prompt === originalPrompt
         ? {}
         : { originalPrompt: boundImageGenerationPrompt(originalPrompt) }),
@@ -5106,6 +5150,12 @@ export class ChatExecutionManager implements OnModuleInit {
         startTime,
         usedFallback,
       );
+    }
+    const maskRefusal = readImageMaskRefusalCode(response.status, response.data);
+    if (maskRefusal !== undefined) {
+      // A refused mask is the user's to fix: a translated notice, not a failure.
+      this.logger.warn(`callImageService: mask refused code=${maskRefusal} user=${userId}`);
+      return imageMaskRefusalResponse(maskRefusal, provider, model, startTime, usedFallback);
     }
     if (!response.ok) {
       this.logger.error(
@@ -5143,8 +5193,7 @@ export class ChatExecutionManager implements OnModuleInit {
     this.logger.log(
       `callFileGenerationService: starting file generation writer=${fileWriters?.preferred ? `${fileWriters.preferred.provider}/${fileWriters.preferred.model}` : 'list'} localOnly=${String(fileWriters?.localOnly === true)}`,
     );
-    const lastUserMsg = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
-    const prompt = lastUserMsg?.content ?? 'generate a file';
+    const prompt = latestUserTurnText(context.threadMessages) ?? 'generate a file';
     const format = detectRequestedFileFormat(prompt);
     this.logger.debug(
       `callFileGenerationService: prompt length=${String(prompt.length)} format=${format}`,

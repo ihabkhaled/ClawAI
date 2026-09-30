@@ -102,6 +102,10 @@ describe('transcription PAYG utility', () => {
     expect(isPerSecondPricedProvider('GEMINI')).toBe(false);
   });
 
+  it('sizes the free LOCAL provider per second like whisper (it reports duration)', () => {
+    expect(isPerSecondPricedProvider('LOCAL')).toBe(true);
+  });
+
   describe('refusal mapping', () => {
     it('tells a user with no credit to add credit', () => {
       expect(transcriptionRefusalCode(BillingErrorCode.PAYG_CREDIT_EXHAUSTED)).toBe(

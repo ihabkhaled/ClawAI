@@ -80,14 +80,22 @@ describe('resolveComposerAttachmentChips — the chip life cycle', () => {
     ]);
   });
 
-  it('a failed ingestion carries the backend detail', () => {
+  it('a failed ingestion never shows the backend English; an unknown code is the generic key', () => {
     const chips = resolveComposerAttachmentChips({
       selectedFileIds: ['file-1'],
       uploads: [],
       files: [file(FileIngestionStatus.FAILED, 'Audio transcription failed: provider timed out')],
     });
     expect(chips[0]?.state).toBe(ComposerAttachmentState.Failed);
-    expect(chips[0]?.detail).toBe('Audio transcription failed: provider timed out');
+    expect(chips[0]?.detail).toBeNull();
+    expect(chips[0]?.detailKey).toBe('mediaUi.attachmentState.failureDetail.generic');
+    const draft = chips[0];
+    if (draft === undefined) {
+      throw new Error('expected a chip');
+    }
+    expect(describeComposerAttachmentChip(draft, t).note).toBe(
+      'mediaUi.attachmentState.processingFailedReason: mediaUi.attachmentState.failureDetail.generic',
+    );
   });
 
   it('keeps a failed upload visible until dismissed, and drops a deselected file', () => {

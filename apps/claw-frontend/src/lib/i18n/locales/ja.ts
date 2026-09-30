@@ -363,6 +363,46 @@ export const ja: TranslationDictionary = {
       succeeded: '新しい会話に分岐しました。',
       failed: '会話を分岐できませんでした。',
     },
+    lineage: {
+      branchedFrom: '分岐元',
+      sourceDeleted: '削除された会話から分岐',
+      branches: '分岐 ({count})',
+      branchBadge: '分岐',
+    },
+    quote: {
+      action: '引用',
+      composerHeading: '引用',
+      remove: '引用を削除',
+      repliedTo: '返信先',
+      limitReached: '1 件のメッセージで引用できるのは 3 か所までです。',
+      sourceMissing:
+        '引用したメッセージはこの会話にもうありません。引用を削除してもう一度お試しください。',
+    },
+    regenerateWith: {
+      trigger: '別のモデルで再試行…',
+      auto: 'AUTO に任せる',
+    },
+    contextSave: {
+      title: 'このチャットから保存',
+      savedMemory: 'メモリに保存しました',
+      createdPack: 'コンテキストパックを作成しました',
+      addedToPack: 'コンテキストパックに追加しました',
+      openMemory: 'メモリを開く',
+      openPack: 'パックを開く',
+      choosePack: 'どのコンテキストパックに保存しますか？',
+      newPack: '新しいパック：{name}',
+      saving: '保存中…',
+      packSaved: 'コンテキストパックに保存しました。',
+      failedTitle: '保存できませんでした',
+      memoryFailed: 'メモリは保存されませんでした。',
+      packFailed: 'コンテキストパックは保存されませんでした。',
+      notPending: 'この保存は完了済みか、もうパックの選択を待っていません。',
+      reasons: {
+        PLAN: 'ご利用のプランには含まれていません。',
+        LIMIT: 'プランの上限に達しました。',
+        UNAVAILABLE: '現在サービスを利用できません。少し後でもう一度お試しください。',
+      },
+    },
     speech: {
       action: '読み上げ',
       stop: '読み上げを停止',
@@ -396,6 +436,10 @@ export const ja: TranslationDictionary = {
       },
     },
     edit: {
+      inBranch: '新しい分岐で編集',
+      branchHint:
+        'この会話はそのままにして、編集した質問を新しい分岐で尋ねることもできます。何も削除されません。',
+      branchOpened: '編集した質問で新しい分岐を開きました。準備ができたら送信を押してください。',
       action: '編集して再実行',
       title: 'このメッセージを編集',
       warning: 'このメッセージより後はすべて削除され、会話はここから再実行されます。',
@@ -604,6 +648,34 @@ export const ja: TranslationDictionary = {
     helpful: '役に立った',
     notHelpful: '参考になりませんでした',
     feedbackSaved: 'フィードバックが保存されました',
+    maskEdit: {
+      action: 'マスク編集',
+      actionFor: 'マスク編集: {name}',
+      title: 'マスク編集',
+      description: 'モデルが変更してよい部分を塗ってください。塗らなかった部分はそのまま残ります。',
+      canvasLabel: 'マスクを描く領域',
+      brushSize: 'ブラシのサイズ',
+      erase: '消しゴム',
+      clear: 'すべて消去',
+      apply: 'マスクを適用',
+      applying: '保存中…',
+      loading: '画像を読み込み中…',
+      imageFailed: '画像を読み込めませんでした。',
+      saveFailed: 'マスクを保存できませんでした。もう一度お試しください。',
+      empty: 'まず1か所以上を塗ってください。',
+      applied: 'マスク適用済み',
+      remove: 'マスクを削除',
+      keyboardHint:
+        'ドラッグして塗ります。キーボードでは、矢印キーでブラシを移動し（Shift で速く移動）、スペースまたは Enter で塗りの開始と停止を切り替えます。',
+      paintingOn: '塗りオン',
+      paintingOff: '塗りオフ',
+      refusal: {
+        title: 'マスク編集は適用されませんでした',
+        invalid: 'マスクが画像と一致しません。描き直してから送信してください。',
+        notSupported:
+          '選択したモデルは画像の一部だけを編集できません。マスクに対応した画像編集モデルを選ぶか、マスクなしで送信してください。',
+      },
+    },
     attachFiles: 'ファイルを添付',
     attachment: {
       uploading: '添付ファイルをアップロードしています…',
@@ -790,12 +862,13 @@ export const ja: TranslationDictionary = {
     jumpToLatest: '最新にジャンプ',
     moreActions: 'その他の操作',
     useMemoryLabel: 'このスレッドのメモリを使用します',
-    useMemoryDescription: 'オフの場合、プロンプトにメモリは挿入されません。',
+    useMemoryDescription:
+      'オフの場合、このチャットではメモリを使わず、ここで話した内容もメモリとして保存されません。',
     useContextLabel: 'このスレッドでコンテキスト パックを使用してください',
     useContextDescription: 'オフの場合、接続されたパックは無視されます。',
     useCrossThreadContextLabel: '関連する過去のチャットを使用する',
     useCrossThreadContextDescription:
-      'オンにすると、ClawAI はこの会話に関連する内容を他の会話から探すことがあります。既定ではオフです。',
+      'オンにすると、ClawAI は許可されている他のチャットから、このチャットに関連する内容を使うことがあります。オフの場合、このチャットは他のチャットを読まず、他のチャットからも読まれません。',
     workflow: {
       searchFirst: '検索優先',
       direct: 'ダイレクト',
@@ -975,6 +1048,18 @@ export const ja: TranslationDictionary = {
     regionPlaceholder: '例: us-east-1',
     workspaceIdPlaceholder: '例: wrkspc_01AbCd...',
     saveFirstThenTest: 'まずコネクタを保存してからテストしてください',
+    gatewayHeaders: 'ゲートウェイヘッダー（任意）',
+    gatewayHeadersHelp:
+      'プロバイダーの前段にある LLM ゲートウェイ（LiteLLM、Portkey、Helicone）用の追加ヘッダーです。値は暗号化して保存され、再表示されません。API キーを置き換えることはありません。',
+    gatewayHeadersEditHelp:
+      '新しいヘッダーを追加しない限り、保存済みのヘッダーは保持されます。追加するとすべて置き換えられます。',
+    gatewayHeaderName: 'ヘッダー名',
+    gatewayHeaderValue: 'ヘッダー値',
+    addGatewayHeader: 'ヘッダーを追加',
+    removeGatewayHeader: 'ヘッダーを削除',
+    clearGatewayHeaders: '保存済みのゲートウェイヘッダーを削除',
+    gatewayHeadersInvalid:
+      '各ヘッダーには、有効で予約されていない一意の名前と 1 行の値が必要です（最大 10 個）。',
     selectProvider: 'プロバイダーを選択してください',
     groupConnected: '接続済みプロバイダー',
     groupLowCost: '低コストで高速な推論',
@@ -4864,7 +4949,7 @@ export const ja: TranslationDictionary = {
       PAYPAL: 'PayPal',
       PAYMOB: 'Paymob',
       paypalCard: 'PayPal/Card',
-      paymobTestingSoon: 'Paymob（テスト中 – 近日提供）',
+      paymobCard: 'Paymob（カード）',
       unavailable: '決済ゲートウェイを利用できません',
     },
     proration: {
@@ -5095,7 +5180,7 @@ export const ja: TranslationDictionary = {
         modelCount: '現在 {count} 件のモデルをご利用いただけます',
         title: '入手できるモデル',
         intro:
-          'ひとつのワークスペースから、以下のすべてのプロバイダーを利用できます。会話の途中でモデルを切り替えることも、メッセージごとに最適なモデルを ClawAI に選ばせることもできます。',
+          '1 つのワークスペースで、以下のすべてのプロバイダーがカバーされます。会話の途中でモデルを切り替えるか、ClawAI にメッセージごとに最適なモデルを選択させます。',
         footnote:
           '新しいフロンティア モデルが発売されるたびに追加されます。プランは 1 つの許容量に基づいて、初日からそれらをカバーします。',
         linkFeatures: 'すべての機能を詳しく見る',
@@ -5250,7 +5335,7 @@ export const ja: TranslationDictionary = {
         title: 'ClawAI の対象者',
         privacyName: 'AI を日常的に使用している人',
         privacyDesc:
-          '3 つや 4 つの AI アプリではなくひとつのワークスペースで、最も強力なモデルが別のペイウォールの向こうではなく、いつでもワンクリックの距離にあります。',
+          '3 つや 4 つの別々のサブスクリプションではなく 1 つのワークスペースで、別のペイウォールの背後にあるのではなく、常にクリックするだけで最も強力なモデルを利用できます。',
         devName: 'モデルを評価する開発者',
         devDesc:
           'は、同じプロンプトを 5 つのモデルに同時に送信し、1 つにコミットする前に答えを並べて読みます。',
@@ -5270,7 +5355,7 @@ export const ja: TranslationDictionary = {
         q3: '使用制限はどのように測定されますか?',
         a3: 'コスト正規化トークン内。高価なモデルは安価なモデルよりも多くの小遣いを取り崩すため、価格が 1 桁以上異なるモデル間でも、単一の日次および月次の数値は公平に保たれます。',
         q4: 'ClawAI は OpenAI、Anthropic、Google、または AWS と提携していますか?',
-        a4: 'いいえ。ClawAI は、これらのプロバイダーのモデルをひとつのワークスペースで利用できるようにする独立した製品です。いずれのプロバイダーからも承認・提携を受けていません。',
+        a4: 'いいえ。ClawAI は、1 つのワークスペースを通じてこれらのプロバイダーのモデルへのアクセスを提供する独立した製品です。それらのいずれからも承認または提携されていません。',
       },
       cta: {
         title: '無料プランで始める',
@@ -5324,7 +5409,7 @@ export const ja: TranslationDictionary = {
       providers: {
         title: 'すべてのフロンティア モデル ファミリー',
         intro:
-          'ひとつのワークスペースから、これらすべてを利用できます。ひとつの会話の中で切り替えられ、インストールするものも、作成するプロバイダーアカウントもありません。',
+          '1 つのワークスペースでこれらすべてにアクセスできます。 1 つの会話内でそれらを切り替えることができます。インストールするものやプロバイダー アカウントを作成するものは何もありません。',
         modelsLabel: 'モデル',
         anthropicDesc:
           '長い文書に対する慎重な推論、強力なコードレビュー、そして名簿に続く最も信頼できる指示。',
@@ -5594,7 +5679,7 @@ export const ja: TranslationDictionary = {
       models: {
         title: '到達可能なモデル',
         intro:
-          'ひとつのワークスペースで、以下のすべてのファミリーを。ひとつの会話の中で切り替えられます。',
+          '以下のすべてのファミリーを 1 つのワークスペースで。 1 つの会話内でそれらを切り替えることができます。',
         anthropicStrength:
           '慎重な推論、長いドキュメント、そして名簿の中で最も信頼性の高いコード レビュー。',
         openaiStrength: '強力なツールの使用と構造化された出力を備えた広範な一般機能。',
@@ -6001,7 +6086,7 @@ export const ja: TranslationDictionary = {
       hero: {
         title: 'ClawAI を使って実際に行うこと',
         subtitle:
-          '毎日発生する 10 の仕事と、それぞれを最もうまくこなすモデル (またはモデルの組み合わせ)。すべてひとつのワークスペースで。',
+          '毎日発生する 10 個のジョブと、それぞれのジョブを最適に処理するモデル (またはモデルの組み合わせ)。すべてひとつのワークスペースで。',
         lastReviewedLabel: '最終レビュー日',
       },
       grid: {
@@ -6075,7 +6160,7 @@ export const ja: TranslationDictionary = {
         imagesCapability: '画像生成',
       },
       oneSubscription: {
-        title: 'ひとつのワークスペースが複数のアプリに勝る理由',
+        title: '1 つのワークスペースが複数のサブスクリプションよりも優れている理由',
         intro:
           '4 つの AI サブスクリプションを実行することは、1 つよりも 4 倍優れているわけではありません。 4 つの請求書、4 つの制限セット、そしてどのタブを開くかについての常に低レベルの決定が必要です。',
         pointRightModelTitle: 'いつでも適切なモデル',
@@ -6121,7 +6206,7 @@ export const ja: TranslationDictionary = {
         description: 'ClawAI とは何か、そしてその始め方。',
         whatIsQ: 'ClawAIとは何ですか?',
         whatIsA:
-          'ひとつのチャット画面から、あらゆるフロンティア AI モデル (Claude、GPT、Gemini、Kimi、GLM、Qwen、DeepSeek、Grok、Amazon Bedrock) に届くひとつのワークスペースです。各メッセージを最適なモデルに振り分け、会話をまたいで役立つコンテキストを記憶し、アップロードしたファイルについての質問に答え、1 つの回答では足りないときは同じ問題に複数のモデルを当てられます。',
+          '1 つのチャット インターフェイスを通じて、あらゆるフロンティア AI モデル (Claude、GPT、Gemini、Kimi、GLM、Qwen、DeepSeek、Grok、Amazon Bedrock) に到達する 1 つのワークスペース。各メッセージをそのメッセージに最適なモデルにルーティングし、会話間の有用なコンテキストを記憶し、アップロードしたファイルに関する質問に答え、1 つの回答では不十分な場合は同じ問題に複数のモデルを適用できます。',
         apiKeysQ: 'OpenAI または Anthropic の API キーが必要ですか?',
         apiKeysA:
           'いいえ。モデル アクセスはサブスクリプションに含まれています。プロバイダー アカウントを作成したり、キーを貼り付けたり、プロバイダーを個別に請求したりする必要はありません。',

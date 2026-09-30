@@ -45,3 +45,31 @@ page the entry names. This log is the history between them.
   [requirements register](https://github.com/ihabkhaled/ClawAI/blob/main/docs/02-business-product/requirements-register.md) REQ-POS-001…006,
   root `README.md`, `wiki/`, `CLAUDE.md` and every agent router.
   Frontend marketing copy is changed in a separate, parallel batch.
+
+---
+
+## DRIFT-002 — "One subscription" copy removed from public pages, Team plan stops promising pooling (2026-09-29)
+
+- **Area:** product, market.
+- **Before:** DRIFT-001 changed the slogan, but 30-odd marketing, comparison, FAQ
+  and SEO strings in all 13 locales still said "one subscription", and the Team
+  plan's seeded description promised "shared workspaces and a large pooled
+  allowance" (pooling is not built, REQ-POS-005).
+- **Now:** the teams FAQ answer and the "teams" persona line no longer promise a
+  shared workspace: they describe administrator-managed accounts and say shared
+  billing, pooled allowances and single sign-on are not available today. Those
+  strings say "one workspace" (competitor and plan-specific uses of
+  "subscription" are untouched); the Team description reads "A large monthly
+  allowance for heavy daily use." Existing installs are updated by a migration
+  guarded on the old text, so an operator's own wording survives.
+- **Why:** "one subscription" contradicts pay-as-you-go credit and the
+  "Every AI, one workspace" slogan; the Team text overclaimed an unbuilt feature.
+- **Decided by:** the owner, 2026-09-29 ("do them and finish").
+- **Impact:** public copy only. No price, quota or entitlement changes.
+- **Touched:** `apps/claw-frontend` locale files, comparison, coding-agent and SEO
+  constants (13 locales); `apps/claw-auth-service` plan-catalog seed and
+  migration; [REQ-POS-005](https://github.com/ihabkhaled/ClawAI/blob/main/docs/02-business-product/requirements-register.md#req-pos-005);
+  [flagship catalog](https://github.com/ihabkhaled/ClawAI/blob/main/docs/02-business-product/flagship-features.md).
+- **Guarded by:** `one-subscription-wording.test.ts` (per-locale phrase list and the
+  teams FAQ), `repositioning-slogan-keys.test.ts` and `plan-catalog-pricing.seeder.spec.ts`
+  (no plan promises pooling).

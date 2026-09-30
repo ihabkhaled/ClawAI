@@ -3,7 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PwaManager } from '@/components/common/pwa-manager';
+import { APP_VERSION } from '@/constants';
 import { PWA_INSTALL_DISMISSED_KEY } from '@/constants/pwa.constants';
+import { appVersionRepository } from '@/repositories/app-version/app-version.repository';
+
+vi.mock('@/repositories/app-version/app-version.repository', () => ({
+  appVersionRepository: { deployed: vi.fn() },
+}));
 
 // Regression: the chat page pins a floating "new chat" action button to the
 // same bottom-end corner (fixed, end-4, see (portal)/chat/page.tsx), and this
@@ -37,6 +43,7 @@ describe('PwaManager', () => {
 
   beforeEach(() => {
     window.localStorage.clear();
+    vi.mocked(appVersionRepository.deployed).mockResolvedValue(APP_VERSION);
     Object.defineProperty(window.navigator, 'onLine', {
       configurable: true,
       value: true,
@@ -197,19 +204,20 @@ describe('PwaManager', () => {
   });
 });
 
-// Reported 2026-09-20: the update banner did not appear while a page sat open
-// (only after a reload), and once it appeared it came back on every reload
-// until Update was pressed. Both halves are covered here.
+// Reported 2026-09-20 and again 2026-09-29: a tab left open never showed the
+// banner after a deploy, and a freshly reloaded page (already current) showed
+// it anyway — even after Update. The banner now means exactly "the server runs
+// a later release than this page", so both halves are covered here.
 describe('PwaManager update offer', () => {
-  const VERSION = '9.9.9';
+  const [major, minor, patch] = APP_VERSION.split('.').map(Number);
+  const NEWER = `${major}.${minor}.${(patch ?? 0) + 1}`;
+  const OLDER = `${major}.${minor}.${Math.max((patch ?? 0) - 1, 0)}`;
+  const deployed = vi.mocked(appVersionRepository.deployed);
+  const reload = vi.fn();
+  const originalLocation = window.location;
 
-  function installServiceWorkerMock(waiting: { scriptURL: string } | null) {
-    const update = vi.fn().mockResolvedValue(undefined);
-    const registration = {
-      waiting,
-      update,
-      addEventListener: vi.fn(),
-    };
+  function installServiceWorkerMock(waiting: { postMessage: () => void } | null) {
+    const registration = { waiting, update: vi.fn(), addEventListener: vi.fn() };
     Object.defineProperty(window.navigator, 'serviceWorker', {
       configurable: true,
       value: {
@@ -220,57 +228,90 @@ describe('PwaManager update offer', () => {
         controller: {},
       },
     });
-    return { update };
+    return registration;
   }
 
   beforeEach(() => {
     vi.stubEnv('NODE_ENV', 'production');
     window.localStorage.clear();
+    reload.mockReset();
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...originalLocation, reload },
+    });
   });
 
   afterEach(() => {
-    // Unmount BEFORE the mock is removed: React runs effect cleanups during
-    // Testing Library's own afterEach, and one of them calls
-    // navigator.serviceWorker.removeEventListener.
+    // Unmount BEFORE the mock is removed: effect cleanups run in cleanup().
     cleanup();
+    vi.useRealTimers();
     vi.unstubAllEnvs();
+    deployed.mockReset();
     Reflect.deleteProperty(window.navigator, 'serviceWorker');
+    Object.defineProperty(window, 'location', { configurable: true, value: originalLocation });
   });
 
-  it('offers an update the person has not been shown yet', async () => {
-    installServiceWorkerMock({ scriptURL: `https://claw.local/sw.js?v=${VERSION}` });
+  it('shows the banner while the server runs a later release than the page', async () => {
+    deployed.mockResolvedValue(NEWER);
+    installServiceWorkerMock(null);
     render(<PwaManager />);
     expect(await screen.findByText('pwa.updateAvailable')).toBeInTheDocument();
   });
 
-  it('remembers that it asked, so a reload does not ask again', async () => {
-    installServiceWorkerMock({ scriptURL: `https://claw.local/sw.js?v=${VERSION}` });
-    const first = render(<PwaManager />);
-    await screen.findByText('pwa.updateAvailable');
-    expect(window.localStorage.getItem('claw.pwa.update.seen')).toBe(VERSION);
-    first.unmount();
-
-    // The reload: same waiting worker, same version, already answered.
-    installServiceWorkerMock({ scriptURL: `https://claw.local/sw.js?v=${VERSION}` });
+  it('stays hidden on a page that is already the deployed version, even with a worker waiting', async () => {
+    // The reload half of the bug: the reloaded page installs a new worker,
+    // which waits — and the banner used to read that as "out of date".
+    deployed.mockResolvedValue(APP_VERSION);
+    installServiceWorkerMock({ postMessage: vi.fn() });
     const { container } = render(<PwaManager />);
-    await waitFor(() => {
-      expect(container.textContent).not.toContain('pwa.updateAvailable');
-    });
+    await waitFor(() => expect(deployed).toHaveBeenCalled());
+    expect(container.textContent).not.toContain('pwa.updateAvailable');
   });
 
-  it('asks again when a different version arrives', async () => {
-    window.localStorage.setItem('claw.pwa.update.seen', VERSION);
-    installServiceWorkerMock({ scriptURL: 'https://claw.local/sw.js?v=10.0.0' });
+  it('stays hidden when the page is newer than the server (mid-rollout)', async () => {
+    deployed.mockResolvedValue(OLDER);
+    installServiceWorkerMock(null);
+    const { container } = render(<PwaManager />);
+    await waitFor(() => expect(deployed).toHaveBeenCalled());
+    expect(container.textContent).not.toContain('pwa.updateAvailable');
+  });
+
+  it('stays hidden when the server cannot say which version it runs', async () => {
+    deployed.mockResolvedValue(null);
+    installServiceWorkerMock(null);
+    const { container } = render(<PwaManager />);
+    await waitFor(() => expect(deployed).toHaveBeenCalled());
+    expect(container.textContent).not.toContain('pwa.updateAvailable');
+  });
+
+  it('notices a deploy while the tab stays open, without a reload', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    deployed.mockResolvedValue(APP_VERSION);
+    installServiceWorkerMock(null);
     render(<PwaManager />);
+    await waitFor(() => expect(deployed).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText('pwa.updateAvailable')).toBeNull();
+
+    deployed.mockResolvedValue(NEWER);
+    await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
     expect(await screen.findByText('pwa.updateAvailable')).toBeInTheDocument();
   });
 
-  it('checks for a new version without waiting for a reload', async () => {
-    // The whole first half of the bug: a tab left open never asked.
-    const { update } = installServiceWorkerMock(null);
+  it('Update hides the banner, hands over to a waiting worker, and reloads', async () => {
+    const user = userEvent.setup();
+    deployed.mockResolvedValue(NEWER);
+    const postMessage = vi.fn();
+    installServiceWorkerMock({ postMessage });
     render(<PwaManager />);
-    await waitFor(() => {
-      expect(update).toHaveBeenCalled();
-    });
+    await screen.findByText('pwa.updateAvailable');
+    // Let the registration promise settle so the worker handle is known.
+    await waitFor(() => expect(window.navigator.serviceWorker.register).toHaveBeenCalled());
+    await Promise.resolve();
+
+    await user.click(screen.getByRole('button', { name: 'pwa.updateAction' }));
+
+    expect(postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
+    expect(reload).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('pwa.updateAvailable')).toBeNull();
   });
 });

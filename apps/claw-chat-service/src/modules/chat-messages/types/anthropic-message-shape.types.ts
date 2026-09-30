@@ -86,3 +86,18 @@ export type AnthropicBuiltBlock = {
   pdfDelta: number;
   imageDelta: number;
 };
+
+// Prompt-cache breakpoint (F093). `ephemeral` is the only type Anthropic
+// accepts; the TTL is left at the provider default (5 minutes) on purpose — the
+// 1-hour TTL doubles the write premium and nothing here has measured it paying
+// back.
+export type AnthropicCacheControl = {
+  type: 'ephemeral';
+};
+
+// A `system` entry in block form — the only form that can carry a breakpoint.
+export type AnthropicSystemTextBlock = {
+  type: 'text';
+  text: string;
+  cache_control?: AnthropicCacheControl;
+};

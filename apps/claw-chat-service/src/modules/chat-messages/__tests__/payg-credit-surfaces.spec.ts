@@ -35,7 +35,9 @@ vi.mock('../clients/model-exposure.client', () => ({
 vi.mock('../../../common/utilities', () => ({
   httpRequest: vi.fn(),
   recordGet: <T>(record: Record<string, T> | undefined | null, key: string): T | undefined => {
-    return !record ? undefined : (Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined);
+    return !record
+      ? undefined
+      : (Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined);
   },
   buildFileDeliveryEntries: vi.fn().mockReturnValue([]),
 }));
@@ -320,6 +322,142 @@ describe('PAYG credit — compare is all-or-nothing (E2)', () => {
     await expect(reserveAllLanes(models, makeContext(), 'group-1')).rejects.toMatchObject({
       code: PAYG_COMPARE_ALL_OR_NOTHING_CODE,
       status: HttpStatus.PAYMENT_REQUIRED,
+    });
+  });
+});
+
+describe('F092 — gateway headers reach internal-generate and the Ollama tool loop', () => {
+  let accessControl: ReturnType<typeof createFakePaygAccessControl>;
+  let manager: ChatExecutionManager;
+  const gatewayHeaders = { 'x-portkey-config': 'cfg-1', authorization: 'Bearer gateway-override' };
+
+  const postHeaders = (): Array<Record<string, string>> =>
+    httpRequest.mock.calls
+      .map((call) => call[0])
+      .filter((req) => req.method === 'POST' && String(req.url).endsWith('/chat'))
+      .map((req) => req.headers);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    AppConfig.get.mockReturnValue(DEFAULT_APP_CONFIG);
+    accessControl = createFakePaygAccessControl();
+    manager = buildExecution(accessControl);
+  });
+
+  it('sends them on every tool-loop turn without replacing the provider key', async () => {
+    httpRequest
+      .mockResolvedValueOnce(toolTurn('let me look that up', true))
+      .mockResolvedValueOnce({ ok: true, status: 200, data: { results: [{ title: 't' }] } })
+      .mockResolvedValueOnce(toolTurn('done', false));
+
+    await manager.runOllamaCloudToolLoop({
+      provider: 'OLLAMA',
+      model: 'deepseek-v4-pro',
+      initialBody: {
+        model: 'deepseek-v4-pro',
+        messages: [{ role: 'user', content: 'q' }],
+        stream: false,
+      },
+      baseUrl: 'https://ollama.com/api',
+      apiKey: 'provider-key',
+      gatewayHeaders,
+      startTime: Date.now(),
+      usedFallback: false,
+      context: makeContext(),
+    });
+
+    const sent = postHeaders();
+    expect(sent).toHaveLength(2);
+    for (const headers of sent) {
+      expect(headers).toEqual({
+        'x-portkey-config': 'cfg-1',
+        Authorization: 'Bearer provider-key',
+      });
+    }
+  });
+
+  it('sends them on the cap-reached wrap-up POST too', async () => {
+    AppConfig.get.mockReturnValue({ ...DEFAULT_APP_CONFIG, OLLAMA_TOOL_LOOP_MAX_ITERATIONS: 1 });
+    httpRequest
+      .mockResolvedValueOnce(toolTurn('let me look that up', true))
+      .mockResolvedValueOnce({ ok: true, status: 200, data: { results: [{ title: 't' }] } })
+      .mockResolvedValueOnce(toolTurn('wrapped answer', false));
+
+    const result = await manager.runOllamaCloudToolLoop({
+      provider: 'OLLAMA',
+      model: 'deepseek-v4-pro',
+      initialBody: {
+        model: 'deepseek-v4-pro',
+        messages: [{ role: 'user', content: 'q' }],
+        stream: false,
+      },
+      baseUrl: 'https://ollama.com/api',
+      apiKey: 'provider-key',
+      gatewayHeaders,
+      startTime: Date.now(),
+      usedFallback: false,
+      context: makeContext(),
+    });
+
+    expect(result.content).toBe('wrapped answer');
+    const sent = postHeaders();
+    expect(sent).toHaveLength(2);
+    expect(sent[1]).toEqual({ 'x-portkey-config': 'cfg-1', Authorization: 'Bearer provider-key' });
+  });
+
+  it('keeps the plain provider header when the connector has no gateway headers', async () => {
+    httpRequest.mockResolvedValueOnce(toolTurn('done', false));
+
+    await manager.runOllamaCloudToolLoop({
+      provider: 'OLLAMA',
+      model: 'deepseek-v4-pro',
+      initialBody: {
+        model: 'deepseek-v4-pro',
+        messages: [{ role: 'user', content: 'q' }],
+        stream: false,
+      },
+      baseUrl: 'https://ollama.com/api',
+      apiKey: 'provider-key',
+      startTime: Date.now(),
+      usedFallback: false,
+      context: makeContext(),
+    });
+
+    expect(postHeaders()).toEqual([{ Authorization: 'Bearer provider-key' }]);
+  });
+
+  it('sends them on internal-generate (generateOnce) under the provider key', async () => {
+    httpRequest
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: { baseUrl: 'https://gateway.example.com/v1', apiKey: 'provider-key', gatewayHeaders },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          model: 'gpt-5',
+          choices: [{ message: { role: 'assistant', content: 'ok' }, finish_reason: 'stop' }],
+          usage: { prompt_tokens: 5, completion_tokens: 1, total_tokens: 6 },
+        },
+      });
+
+    const result = await manager.generateOnce({
+      userId: 'user-1',
+      surface: PaygSurface.CHAT,
+      provider: 'OPENAI',
+      model: 'gpt-5',
+      systemPrompt: 'sys',
+      userPrompt: 'hi',
+    });
+
+    expect(result.content).toBe('ok');
+    const providerCall = httpRequest.mock.calls[1]?.[0];
+    expect(providerCall.url).toBe('https://gateway.example.com/v1/chat/completions');
+    expect(providerCall.headers).toEqual({
+      'x-portkey-config': 'cfg-1',
+      Authorization: 'Bearer provider-key',
     });
   });
 });

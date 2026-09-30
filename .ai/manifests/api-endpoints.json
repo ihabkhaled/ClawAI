@@ -108,6 +108,26 @@
       },
       {
         "method": "POST",
+        "route": "/agent/channels/inbound/:userId",
+        "source": "apps/claw-agent-service/src/modules/channels/controllers/channel-webhook.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/channels/inbox",
+        "source": "apps/claw-agent-service/src/modules/channels/controllers/channel-inbox.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/agent/channels/inbox/:id",
+        "source": "apps/claw-agent-service/src/modules/channels/controllers/channel-inbox.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/channels/webhook",
+        "source": "apps/claw-agent-service/src/modules/channels/controllers/channel-inbox.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/agent/cli-capabilities/:id/complete",
         "source": "apps/claw-agent-service/src/modules/agent/controllers/capability-cli.controller.ts"
       },
@@ -363,6 +383,51 @@
       },
       {
         "method": "GET",
+        "route": "/agent/runners",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/runners",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/agent/runners/:id",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/runners/:id/credential/rotate",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/runners/:id/jobs",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/runners/claim",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/runners/heartbeat",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/runners/jobs",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/runners/jobs/:commandId/complete",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/agent/runtime/protocol",
         "source": "apps/claw-agent-service/src/modules/agent/controllers/runtime-protocol.controller.ts"
       },
@@ -384,6 +449,11 @@
       {
         "method": "PATCH",
         "route": "/agent/scheduled-commands/:id/status",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-scheduled-command.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/scheduled-commands/:id/trigger",
         "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-scheduled-command.controller.ts"
       },
       {
@@ -430,6 +500,11 @@
         "method": "GET",
         "route": "/health",
         "source": "apps/claw-agent-service/src/modules/health/health.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/agent/organizations/:id/usage-scope",
+        "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet-internal.controller.ts"
       },
       {
         "method": "POST",
@@ -782,8 +857,18 @@
       },
       {
         "method": "GET",
+        "route": "/auth/me/organizations/:organizationId/usage",
+        "source": "apps/claw-auth-service/src/modules/usage-attribution/controllers/me-usage-attribution.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/auth/me/usage",
         "source": "apps/claw-auth-service/src/modules/entitlements/controllers/me-entitlements.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/auth/me/usage/breakdown",
+        "source": "apps/claw-auth-service/src/modules/usage-attribution/controllers/me-usage-attribution.controller.ts"
       },
       {
         "method": "POST",
@@ -1079,6 +1164,11 @@
       },
       {
         "method": "POST",
+        "route": "/chat-messages/:id/context-save",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/context-save.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/chat-messages/:id/edit",
         "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
       },
@@ -1188,6 +1278,11 @@
         "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/runtime-v2-command.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/chat-messages/runtime/runs/:runId/tools",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/runtime-v2-tool-catalog.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/chat-messages/speech/availability",
         "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-speech.controller.ts"
@@ -1238,14 +1333,29 @@
         "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/chat-threads/:id/active-run",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/runtime-v2-thread-activity.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/chat-threads/:id/branch",
+        "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/chat-threads/:id/lineage",
         "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
       },
       {
         "method": "POST",
         "route": "/chat-threads/:id/preview-context",
         "source": "apps/claw-chat-service/src/modules/context-preview/controllers/context-preview.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-threads/:id/rewind",
+        "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
       },
       {
         "method": "DELETE",
@@ -1532,6 +1642,21 @@
     "claw-file-service": [
       {
         "method": "GET",
+        "route": "/artifacts",
+        "source": "apps/claw-file-service/src/modules/artifacts/controllers/artifacts.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/artifacts",
+        "source": "apps/claw-file-service/src/modules/artifacts/controllers/artifacts.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/artifacts/:id",
+        "source": "apps/claw-file-service/src/modules/artifacts/controllers/artifacts.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/files",
         "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
       },
@@ -1679,6 +1804,11 @@
         "method": "GET",
         "route": "/metrics",
         "source": "apps/claw-file-service/src/modules/metrics/controllers/metrics.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/public/artifacts/:publicId",
+        "source": "apps/claw-file-service/src/modules/artifacts/controllers/public-artifacts.controller.ts"
       }
     ],
     "claw-health-service": [
@@ -1732,6 +1862,11 @@
       {
         "method": "GET",
         "route": "/internal/images/:generationId",
+        "source": "apps/claw-image-service/src/modules/image-generation/controllers/internal-image.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/images/:generationId/assistant-message",
         "source": "apps/claw-image-service/src/modules/image-generation/controllers/internal-image.controller.ts"
       },
       {
@@ -1980,7 +2115,17 @@
       },
       {
         "method": "POST",
+        "route": "/internal/context-packs/:id/items/from-chat",
+        "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs-internal.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/internal/context-packs/for-chat",
+        "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/context-packs/options-for-chat",
         "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs-internal.controller.ts"
       },
       {
@@ -3578,5 +3723,5 @@
     ]
   },
   "generated": true,
-  "total": 708
+  "total": 737
 }

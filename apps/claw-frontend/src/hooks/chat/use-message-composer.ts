@@ -11,6 +11,7 @@ import { MEDIA_QUERY_LG_UP } from '@/constants/media-query.constants';
 import { ComposerControlVariant, PlanFeature } from '@/enums';
 import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
 import { useComposerAttachmentSurface } from '@/hooks/chat/use-composer-attachment-surface';
+import { useComposerQuotes } from '@/hooks/chat/use-composer-quotes';
 import { useMessageComposerState } from '@/hooks/chat/use-message-composer-state';
 import { useModelMediaCapabilities } from '@/hooks/chat/use-model-media-capabilities';
 import { useRegisterComposerDropTarget } from '@/hooks/chat/use-register-composer-drop-target';
@@ -34,7 +35,9 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
   const planFeatures = usePlanFeatures();
   const isWideViewport = useMediaQuery(MEDIA_QUERY_LG_UP);
   const mediaCapabilities = useModelMediaCapabilities();
+  const composerQuotes = useComposerQuotes(props.threadId ?? NEW_THREAD_DRAFT_KEY);
   const state = useMessageComposerState({
+    quoteCount: composerQuotes.quotes.length,
     onSend: props.onSend,
     isPending: props.isPending,
     selectedModel: props.selectedModel,
@@ -69,16 +72,33 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
     disabled: props.isPending,
   });
 
+  const trayMaskEdit = useMemo(
+    () => ({
+      maskedFileId: state.maskEdit.mask?.sourceFileId ?? null,
+      onOpen: state.maskEdit.openEditor,
+      onClear: state.maskEdit.clearMask,
+    }),
+    [state.maskEdit.clearMask, state.maskEdit.mask, state.maskEdit.openEditor],
+  );
+
   // A whole-panel drop lands here: the thread panel reads this composer's
   // ingest function from the drop-target store.
   useRegisterComposerDropTarget(state.ingestFiles);
 
   // Words or files. Still refused while an upload is in flight — that guard
   // lives in validateAndSend, which both Enter and the button go through.
-  const hasSendable = hasSendableInput(state.content, state.selectedFileIds.length);
+  const extraInputCount = state.selectedFileIds.length + composerQuotes.quotes.length;
+  const hasSendable = hasSendableInput(state.content, extraInputCount);
 
   return {
     isPending: props.isPending,
+    quoteChips: {
+      quotes: composerQuotes.quotes,
+      onRemove: composerQuotes.removeQuote,
+      heading: t('chat.quote.composerHeading'),
+      removeLabel: t('chat.quote.remove'),
+    },
+    allowEmptySubmit: extraInputCount > 0,
     placeholder: t('chat.composerPlaceholder'),
     sendLabel: t('chat.sendMessage'),
     uploadingLabel: state.isUploadingAttachment ? t('chat.attachment.uploading') : null,
@@ -94,7 +114,12 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
     onFormSubmit: state.handleSubmit,
     onIngestFiles: state.ingestFiles,
     attachmentChips,
-    attachmentTray,
+    attachmentTray: { ...attachmentTray, maskEdit: trayMaskEdit },
+    maskEditDialog: {
+      fileId: state.maskEdit.editingFileId,
+      onClose: state.maskEdit.closeEditor,
+      onApplied: state.maskEdit.applyMask,
+    },
     toolbarProps: {
       selectedModel: props.selectedModel,
       onModelChange: props.onModelChange,

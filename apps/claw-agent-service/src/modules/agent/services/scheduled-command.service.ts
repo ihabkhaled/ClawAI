@@ -4,7 +4,12 @@ import { DeviceStatus } from '../../../common/enums/device-status.enum';
 import { ScheduledCommandStatus } from '../../../common/enums/scheduled-command-status.enum';
 import { DeviceRepository } from '../repositories/device.repository';
 import { ScheduledCommandRepository } from '../repositories/scheduled-command.repository';
-import type { CreateScheduledCommandDto } from '../dto/create-scheduled-command.dto';
+import { ScheduledCommandKind } from '../../../common/enums/scheduled-command-kind.enum';
+import type {
+  CreateCommandRoutineDto,
+  CreatePromptRoutineDto,
+  CreateScheduledCommandDto,
+} from '../dto/create-scheduled-command.dto';
 import type { ScheduledCommand } from '../../../generated/prisma';
 
 @Injectable()
@@ -15,6 +20,15 @@ export class ScheduledCommandService {
   ) {}
 
   async create(userId: string, dto: CreateScheduledCommandDto): Promise<ScheduledCommand> {
+    return dto.kind === ScheduledCommandKind.PROMPT
+      ? this.createPrompt(userId, dto)
+      : this.createCommand(userId, dto);
+  }
+
+  private async createCommand(
+    userId: string,
+    dto: CreateCommandRoutineDto,
+  ): Promise<ScheduledCommand> {
     const device = await this.deviceRepo.findByIdForUser(dto.deviceId, userId);
     if (device === null) {
       throw new BusinessException(
@@ -26,17 +40,41 @@ export class ScheduledCommandService {
     if (device.status !== DeviceStatus.ACTIVE) {
       throw new BusinessException('agent.device.revoked', 'device_revoked', HttpStatus.CONFLICT);
     }
-    const now = new Date();
-    const nextRunAt = new Date(now.getTime() + dto.intervalMinutes * 60 * 1000);
     return this.repo.create({
       userId,
+      kind: ScheduledCommandKind.COMMAND,
       device: { connect: { id: dto.deviceId } },
       name: dto.name,
       command: dto.command,
       workingDir: dto.workingDir,
       intervalMinutes: dto.intervalMinutes,
-      nextRunAt,
+      nextRunAt: this.firstRun(dto.intervalMinutes),
     });
+  }
+
+  /**
+   * F099: no device. When due it goes to one of the caller's own online
+   * runners carrying every label; the runner approves each tool call locally.
+   */
+  private async createPrompt(
+    userId: string,
+    dto: CreatePromptRoutineDto,
+  ): Promise<ScheduledCommand> {
+    return this.repo.create({
+      userId,
+      kind: ScheduledCommandKind.PROMPT,
+      name: dto.name,
+      command: dto.prompt,
+      model: dto.model ?? null,
+      repoRef: dto.repoRef ?? null,
+      runnerLabels: [...new Set(dto.runnerLabels)],
+      intervalMinutes: dto.intervalMinutes,
+      nextRunAt: this.firstRun(dto.intervalMinutes),
+    });
+  }
+
+  private firstRun(intervalMinutes: number): Date {
+    return new Date(Date.now() + intervalMinutes * 60 * 1000);
   }
 
   async list(userId: string): Promise<ScheduledCommand[]> {

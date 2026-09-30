@@ -363,6 +363,46 @@ export const es: TranslationDictionary = {
       succeeded: 'Ramificado en una conversación nueva.',
       failed: 'No se pudo ramificar la conversación.',
     },
+    lineage: {
+      branchedFrom: 'Ramificado de',
+      sourceDeleted: 'Ramificado de una conversación eliminada',
+      branches: 'Ramas ({count})',
+      branchBadge: 'Rama',
+    },
+    quote: {
+      action: 'Citar',
+      composerHeading: 'Citas',
+      remove: 'Quitar cita',
+      repliedTo: 'En respuesta a',
+      limitReached: 'Puedes citar hasta 3 selecciones por mensaje.',
+      sourceMissing:
+        'El mensaje que citaste ya no está en esta conversación. Quita la cita e inténtalo de nuevo.',
+    },
+    regenerateWith: {
+      trigger: 'Reintentar con…',
+      auto: 'Dejar que AUTO elija',
+    },
+    contextSave: {
+      title: 'Guardado desde este chat',
+      savedMemory: 'Guardado en la memoria',
+      createdPack: 'Paquete de contexto creado',
+      addedToPack: 'Añadido al paquete de contexto',
+      openMemory: 'Abrir memoria',
+      openPack: 'Abrir paquete',
+      choosePack: '¿En qué paquete de contexto quieres guardarlo?',
+      newPack: 'Paquete nuevo: {name}',
+      saving: 'Guardando…',
+      packSaved: 'Guardado en el paquete de contexto.',
+      failedTitle: 'No se pudo guardar',
+      memoryFailed: 'La memoria no se guardó.',
+      packFailed: 'El paquete de contexto no se guardó.',
+      notPending: 'Este guardado ya se hizo o ya no espera un paquete.',
+      reasons: {
+        PLAN: 'Tu plan no incluye esto.',
+        LIMIT: 'Has alcanzado el límite de tu plan.',
+        UNAVAILABLE: 'El servicio no está disponible ahora. Inténtalo de nuevo en un momento.',
+      },
+    },
     speech: {
       action: 'Leer en voz alta',
       stop: 'Dejar de leer en voz alta',
@@ -398,6 +438,11 @@ export const es: TranslationDictionary = {
       },
     },
     edit: {
+      inBranch: 'Editar en una rama nueva',
+      branchHint:
+        'O deja esta conversación tal como está y haz la pregunta editada en una rama nueva: no se elimina nada.',
+      branchOpened:
+        'Se abrió una rama nueva con tu pregunta editada. Pulsa Enviar cuando esté lista.',
       action: 'Editar y volver a ejecutar',
       title: 'Editar este mensaje',
       warning:
@@ -608,6 +653,35 @@ export const es: TranslationDictionary = {
     helpful: 'Útil',
     notHelpful: 'No útil',
     feedbackSaved: 'Valoración guardada',
+    maskEdit: {
+      action: 'Editar con máscara',
+      actionFor: 'Editar con máscara: {name}',
+      title: 'Edición con máscara',
+      description:
+        'Pinta la zona que el modelo puede cambiar. Todo lo que no pintes se queda como está.',
+      canvasLabel: 'Área para pintar la máscara',
+      brushSize: 'Tamaño del pincel',
+      erase: 'Borrar',
+      clear: 'Limpiar todo',
+      apply: 'Aplicar máscara',
+      applying: 'Guardando…',
+      loading: 'Cargando la imagen…',
+      imageFailed: 'No se pudo cargar la imagen.',
+      saveFailed: 'No se pudo guardar la máscara. Inténtalo de nuevo.',
+      empty: 'Pinta al menos una zona primero.',
+      applied: 'Máscara aplicada',
+      remove: 'Quitar máscara',
+      keyboardHint:
+        'Arrastra para pintar. Con el teclado: las flechas mueven el pincel (con Mayús va más rápido), Espacio o Intro inicia y detiene el pintado.',
+      paintingOn: 'Pintado activado',
+      paintingOff: 'Pintado desactivado',
+      refusal: {
+        title: 'No se aplicó la edición con máscara',
+        invalid: 'La máscara no coincide con la imagen. Dibújala de nuevo y vuelve a enviar.',
+        notSupported:
+          'El modelo seleccionado no puede editar solo una parte de una imagen. Elige un modelo de edición de imágenes que admita máscaras o envía sin máscara.',
+      },
+    },
     attachFiles: 'Adjuntar archivos',
     attachment: {
       uploading: 'Subiendo adjunto…',
@@ -795,12 +869,13 @@ export const es: TranslationDictionary = {
     jumpToLatest: 'Ir a lo más reciente',
     moreActions: 'Más acciones',
     useMemoryLabel: 'Usar memoria en esta conversación',
-    useMemoryDescription: 'Cuando está desactivado, no se inyectan memorias en el prompt.',
+    useMemoryDescription:
+      'Cuando está desactivado, no se usan memorias en este chat y nada de lo que se dice aquí se guarda como memoria.',
     useContextLabel: 'Usar paquetes de contexto en esta conversación',
     useContextDescription: 'Cuando está desactivado, los paquetes adjuntos se ignoran.',
     useCrossThreadContextLabel: 'Usar chats anteriores relevantes',
     useCrossThreadContextDescription:
-      'Cuando está activado, ClawAI puede consultar tus otras conversaciones en busca de material relevante para esta. Desactivado por defecto.',
+      'Cuando está activado, ClawAI puede usar tus otros chats que lo permitan para encontrar material relevante para este. Cuando está desactivado, este chat no lee tus otros chats ni es leído por ellos.',
     workflow: {
       searchFirst: 'Búsqueda primero',
       direct: 'Directo',
@@ -981,6 +1056,18 @@ export const es: TranslationDictionary = {
     regionPlaceholder: 'p. ej., us-east-1',
     workspaceIdPlaceholder: 'p. ej., wrkspc_01AbCd...',
     saveFirstThenTest: 'Guarda el conector primero, luego pruébalo',
+    gatewayHeaders: 'Cabeceras de gateway (opcional)',
+    gatewayHeadersHelp:
+      'Cabeceras extra para un gateway de LLM delante del proveedor (LiteLLM, Portkey, Helicone). Los valores se guardan cifrados y no se vuelven a mostrar. Nunca sustituyen la clave de API.',
+    gatewayHeadersEditHelp:
+      'Las cabeceras guardadas se conservan salvo que añadas nuevas, que las sustituyen todas.',
+    gatewayHeaderName: 'Nombre de la cabecera',
+    gatewayHeaderValue: 'Valor de la cabecera',
+    addGatewayHeader: 'Añadir cabecera',
+    removeGatewayHeader: 'Quitar cabecera',
+    clearGatewayHeaders: 'Eliminar las cabeceras de gateway guardadas',
+    gatewayHeadersInvalid:
+      'Cada cabecera necesita un nombre válido, no reservado y único, y un valor de una sola línea (máximo 10 cabeceras).',
     selectProvider: 'Selecciona un proveedor',
     groupConnected: 'Proveedores conectados',
     groupLowCost: 'Inferencia rápida y de bajo costo',
@@ -4909,7 +4996,7 @@ export const es: TranslationDictionary = {
       PAYPAL: 'PayPal',
       PAYMOB: 'Paymob',
       paypalCard: 'PayPal/Card',
-      paymobTestingSoon: 'Paymob (Pruebas – próximamente)',
+      paymobCard: 'Paymob (tarjeta)',
       unavailable: 'Las pasarelas de pago no están disponibles',
     },
     proration: {
@@ -5140,7 +5227,7 @@ export const es: TranslationDictionary = {
         modelCount: '{count} modelos disponibles ahora',
         title: 'Los modelos que obtiene',
         intro:
-          'Un solo espacio de trabajo llega a todos los proveedores a continuación. Cambie de modelo a mitad de la conversación, o deje que ClawAI elija el mejor para cada mensaje.',
+          'Un solo espacio de trabajo cubre todos los proveedores a continuación. Cambie de modelo a mitad de la conversación, o deje que ClawAI elija el mejor para cada mensaje.',
         footnote:
           'Los nuevos modelos de frontera se añaden a medida que se lanzan: su plan los cubre desde el primer día, medidos frente a un solo cupo.',
         linkFeatures: 'Explore todas las funciones',
@@ -5296,7 +5383,7 @@ export const es: TranslationDictionary = {
         title: 'Para quién es ClawAI',
         privacyName: 'Personas que usan la IA a diario',
         privacyDesc:
-          'un solo espacio de trabajo en lugar de tres o cuatro apps de IA, con el modelo más potente siempre a un clic de distancia en lugar de detrás de otro muro de pago.',
+          'un solo espacio de trabajo en lugar de tres o cuatro suscripciones separadas, con el modelo más potente siempre a un clic de distancia en lugar de detrás de otro muro de pago.',
         devName: 'Desarrolladores que evalúan modelos',
         devDesc:
           'envíe el mismo prompt a cinco modelos a la vez y lea las respuestas una junto a otra antes de decidirse por una.',
@@ -5316,7 +5403,7 @@ export const es: TranslationDictionary = {
         q3: '¿Cómo se miden los límites de uso?',
         a3: 'En tokens normalizados por costo. Un modelo caro consume más de su cupo que uno económico, de modo que una sola cifra diaria y mensual se mantiene justa entre modelos cuyos precios difieren en más de un orden de magnitud.',
         q4: '¿Está ClawAI afiliado a OpenAI, Anthropic, Google o AWS?',
-        a4: 'No. ClawAI es un producto independiente que le da acceso a los modelos de esos proveedores en un solo espacio de trabajo. No cuenta con el respaldo ni está afiliado a ninguno de ellos.',
+        a4: 'No. ClawAI es un producto independiente que proporciona acceso a los modelos de esos proveedores mediante un solo espacio de trabajo. No cuenta con el respaldo ni está afiliado a ninguno de ellos.',
       },
       cta: {
         title: 'Empiece con el plan gratuito',
@@ -6132,7 +6219,7 @@ export const es: TranslationDictionary = {
         imagesCapability: 'Generación de imágenes',
       },
       oneSubscription: {
-        title: 'Por qué un espacio de trabajo supera a varias apps',
+        title: 'Por qué un espacio de trabajo supera a varias suscripciones',
         intro:
           'Tener cuatro suscripciones de IA no es cuatro veces mejor que tener una. Son cuatro facturas, cuatro conjuntos de límites y una decisión constante de bajo nivel sobre qué pestaña abrir.',
         pointRightModelTitle: 'El modelo adecuado, siempre',

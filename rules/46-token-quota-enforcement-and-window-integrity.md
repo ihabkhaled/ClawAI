@@ -27,7 +27,14 @@ carried that counter **forever**.
 
 1. **Count the prompt BEFORE the call.** It is the half that can be known
    exactly. A user who cannot afford to ask is refused, not billed for finding
-   out.
+   out. This holds for EVERY chat path that publishes `message.created` — send,
+   regenerate and edit-and-rerun (ADR-132; both used to skip the check, and the
+   edit checks BEFORE it deletes anything) — and each carries `allowedModels` +
+   `modelAccessMode` so routing's plan gate sees the real plan. Enforced by
+   `message-created-publishers.spec.ts` (chat-service), which fails for a new
+   publisher without the access mode. One recorded exception: the Runtime V2
+   coding-agent start omits the mode, which routing reads as restricted
+   (fail-closed).
 2. **Clamp the output to what is left.** `maxOutputTokens` is sized to the
    remaining allowance, so the reply physically cannot overrun. Below
    `MIN_USEFUL_OUTPUT_TOKENS` refuse instead of clamping — a three-token stub is

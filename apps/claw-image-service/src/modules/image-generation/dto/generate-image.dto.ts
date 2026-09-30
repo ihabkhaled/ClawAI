@@ -37,6 +37,18 @@ export const generateImageSchema = z.object({
 
 export type GenerateImageDto = z.infer<typeof generateImageSchema>;
 
+/**
+ * Body of `POST /internal/images/:generationId/assistant-message`: chat links
+ * the assistant message it stored for this generation's card. `userId` is the
+ * owner the rows must belong to.
+ */
+export const linkAssistantMessageSchema = z.object({
+  userId: z.string().min(1).max(100),
+  assistantMessageId: z.string().min(1).max(100),
+});
+
+export type LinkAssistantMessageDto = z.infer<typeof linkAssistantMessageSchema>;
+
 export const listImagesQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),

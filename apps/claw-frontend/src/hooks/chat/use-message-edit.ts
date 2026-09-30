@@ -9,6 +9,8 @@ import { queryKeys } from '@/repositories/shared/query-keys';
 import type { UseMessageEditReturn } from '@/types';
 import { showToast } from '@/utilities';
 
+import { useEditInBranch } from './use-edit-in-branch';
+
 /**
  * Rewrites one prompt and runs the thread again from that point.
  *
@@ -23,12 +25,14 @@ import { showToast } from '@/utilities';
 export function useMessageEdit(
   messageId: string,
   content: string,
+  threadId: string,
   onRerunStarted?: () => void,
 ): UseMessageEditReturn {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isOpen, setOpen] = useState(false);
   const [draft, setDraft] = useState(content);
+  const branch = useEditInBranch(threadId, messageId);
 
   const { mutate, isPending } = useMutation({
     mutationFn: (next: string) => chatRepository.editMessage(messageId, next),
@@ -73,5 +77,12 @@ export function useMessageEdit(
     isPending,
     // An unchanged or empty draft is a no-op, and the server refuses it anyway.
     canSave: draft.trim().length > 0 && draft.trim() !== content.trim(),
+    // An unchanged draft is still a useful branch: "ask this again, elsewhere".
+    saveAsBranch: () => {
+      if (draft.trim().length > 0) {
+        branch.editInBranch(draft.trim());
+      }
+    },
+    isBranching: branch.isPending,
   };
 }

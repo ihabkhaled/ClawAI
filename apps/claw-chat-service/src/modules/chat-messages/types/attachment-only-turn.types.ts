@@ -21,4 +21,6 @@ export type AttachmentTurnContext = {
 export type ContentOrAttachmentsInput = {
   content?: string;
   fileIds?: string[];
+  /** A quoted selection is something to talk about, like a file. */
+  quotes?: readonly unknown[];
 };

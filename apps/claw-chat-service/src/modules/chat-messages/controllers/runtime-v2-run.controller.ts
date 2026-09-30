@@ -1,6 +1,7 @@
 import { Body, Controller, Post } from '@nestjs/common';
 
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
+import { ZeroRetentionRequested } from '../../../app/decorators/zero-retention.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import type { AuthenticatedUser } from '../../../common/types';
 import { type RuntimeStartDto, runtimeStartSchema } from '../dto/runtime-v2.dto';
@@ -15,7 +16,8 @@ export class RuntimeV2RunController {
   start(
     @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(runtimeStartSchema)) request: RuntimeStartDto,
+    @ZeroRetentionRequested() zeroRetention: boolean,
   ): Promise<RuntimeV2StartAck> {
-    return this.runs.start(user.id, request);
+    return this.runs.start(user.id, request, zeroRetention);
   }
 }

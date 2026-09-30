@@ -23,22 +23,25 @@ this; see [build-system.md § Gotchas](../08-runtime-devops/build-system.md#7-go
 
 ### ChatThread
 
-| Column            | Type        | Notes                                |
-| ----------------- | ----------- | ------------------------------------ |
-| id                | String      | CUID primary key                     |
-| userId            | String      | Owner                                |
-| title             | String?     | Auto-generated or user-set           |
-| routingMode       | RoutingMode | AUTO, MANUAL_MODEL, LOCAL_ONLY, etc. |
-| lastProvider      | String?     | Last used provider                   |
-| lastModel         | String?     | Last used model                      |
-| isPinned          | Boolean     | User-pinned thread                   |
-| isArchived        | Boolean     | Soft archive                         |
-| preferredProvider | String?     | Thread-level override                |
-| preferredModel    | String?     | Thread-level override                |
-| contextPackIds    | String[]    | Attached context pack IDs            |
-| systemPrompt      | String?     | Custom system prompt                 |
-| temperature       | Float?      | Default 0.7                          |
-| maxTokens         | Int?        | Token limit override                 |
+| Column                | Type        | Notes                                                                    |
+| --------------------- | ----------- | ------------------------------------------------------------------------ |
+| id                    | String      | CUID primary key                                                         |
+| userId                | String      | Owner                                                                    |
+| title                 | String?     | Auto-generated or user-set                                               |
+| routingMode           | RoutingMode | AUTO, MANUAL_MODEL, LOCAL_ONLY, etc.                                     |
+| lastProvider          | String?     | Last used provider                                                       |
+| lastModel             | String?     | Last used model                                                          |
+| isPinned              | Boolean     | User-pinned thread                                                       |
+| isArchived            | Boolean     | Soft archive                                                             |
+| preferredProvider     | String?     | Thread-level override                                                    |
+| preferredModel        | String?     | Thread-level override                                                    |
+| contextPackIds        | String[]    | Attached context pack IDs                                                |
+| systemPrompt          | String?     | Custom system prompt                                                     |
+| temperature           | Float?      | Default 0.7                                                              |
+| maxTokens             | Int?        | Token limit override                                                     |
+| branchedFromThreadId  | String?     | Source thread of a branch (plain id; survives source deletion) — ADR-130 |
+| branchedFromMessageId | String?     | Fork message in the source                                               |
+| branchRootThreadId    | String?     | First ancestor; one indexed read finds the whole branch family           |
 
 ### ChatMessage
 
@@ -68,32 +71,35 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
 
 ### Threads (`/api/v1/chat-threads`)
 
-| Method | Path | Description                     |
-| ------ | ---- | ------------------------------- |
-| GET    | /    | List user's threads (paginated) |
-| POST   | /    | Create new thread               |
-| GET    | /:id | Get thread with recent messages |
-| PATCH  | /:id | Update title, settings, etc.    |
-| DELETE | /:id | Delete thread and all messages  |
+| Method | Path         | Description                                                                                                                       |
+| ------ | ------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | /            | List user's threads (paginated)                                                                                                   |
+| POST   | /            | Create new thread                                                                                                                 |
+| GET    | /:id         | Get thread with recent messages                                                                                                   |
+| POST   | /:id/branch  | Copy the thread up to `fromMessageId` into a new branch; `cut: INCLUDE` (default) or `BEFORE` (ADR-132); daily chat limit applies |
+| GET    | /:id/lineage | `{ threadId, parent, parentDeleted, forkMessageId, branches }` — owner-scoped (ADR-130)                                           |
+| PATCH  | /:id         | Update title, settings, etc.                                                                                                      |
+| DELETE | /:id         | Delete thread and all messages                                                                                                    |
 
 ### Messages (`/api/v1/chat-messages`)
 
-| Method | Path              | Description                                   |
-| ------ | ----------------- | --------------------------------------------- |
-| GET    | /thread/:threadId | List messages (paginated)                     |
-| POST   | /                 | Send new message (triggers flow)              |
-| PATCH  | /:id/feedback     | Submit feedback on a message                  |
-| POST   | /:id/regenerate   | Regenerate an assistant response              |
-| POST   | /parallel         | Send prompt to 2-5 models simultaneously      |
-| POST   | /consensus        | Build a consensus answer from multiple models |
-| POST   | /escalation-chain | Escalate to stronger models if needed         |
-| POST   | /repair           | Repair or critique an answer                  |
-| POST   | /decompose        | Decompose a task into structured subtasks     |
-| POST   | /best-of-n        | Generate multiple candidates and choose one   |
-| POST   | /cost-ensemble    | Balance answer quality against spend          |
-| POST   | /verify           | Run verification checks on an answer          |
-| POST   | /role-pack        | Execute multi-role prompt pack workflows      |
-| POST   | /pipeline         | Execute staged prompt pipelines               |
+| Method | Path              | Description                                                                                                          |
+| ------ | ----------------- | -------------------------------------------------------------------------------------------------------------------- |
+| GET    | /thread/:threadId | List messages (paginated)                                                                                            |
+| POST   | /                 | Send new message (triggers flow); optional `quotes` (ADR-131)                                                        |
+| PATCH  | /:id/feedback     | Submit feedback on a message                                                                                         |
+| POST   | /:id/context-save | Answer a save's "which pack?" card: `{packId}` or `{newPack: true}`; owner-only, saves once (ADR-134)                |
+| POST   | /:id/regenerate   | Answer again; optional `{routingMode AUTO/MANUAL_MODEL, provider, model}`; same plan/quota check as a send (ADR-132) |
+| POST   | /parallel         | Send prompt to 2-5 models simultaneously                                                                             |
+| POST   | /consensus        | Build a consensus answer from multiple models                                                                        |
+| POST   | /escalation-chain | Escalate to stronger models if needed                                                                                |
+| POST   | /repair           | Repair or critique an answer                                                                                         |
+| POST   | /decompose        | Decompose a task into structured subtasks                                                                            |
+| POST   | /best-of-n        | Generate multiple candidates and choose one                                                                          |
+| POST   | /cost-ensemble    | Balance answer quality against spend                                                                                 |
+| POST   | /verify           | Run verification checks on an answer                                                                                 |
+| POST   | /role-pack        | Execute multi-role prompt pack workflows                                                                             |
+| POST   | /pipeline         | Execute staged prompt pipelines                                                                                      |
 
 ## Message Flow (End-to-End)
 
@@ -125,7 +131,7 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
      user said (`VOICE_NOTE_TRANSCRIPT_FRAME`), never as a generic attached
      document, and never leaks the transcription placeholder itself into the
      prompt as if it were real content.
-5. **Prompt building** -- system prompt, memories, packs, files, history, with token budget truncation
+5. **Prompt building** -- system prompt, memories, packs, files, history, with token budget truncation. Before it, a **context-save pre-check** (ADR-134): a save-like message goes to the planner (`askPlanner`), the memory/pack saves run, and the platform note is appended to the system prompt so the model confirms them
    - **Attachment-only turns** (rule 42 §18–19). A send may carry files and
      no text (every send schema uses `requireContentOrAttachments`). The row is
      stored with empty `content`; `message.created` carries
@@ -148,9 +154,9 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
 7. **Quality check** -- `QualityCheckManager` scores the response (length, repetition, error patterns, echo)
 8. **Auto re-routing** -- if quality score < 0.4, re-routes to next candidate (max 2 re-route attempts)
 9. **Fallback chain** -- if primary fails or is weak, tries next candidate in chain
-10. **Store ASSISTANT message** -- with token counts, latency, provider metadata, re-routing metadata if applicable
+10. **Store ASSISTANT message** -- with token counts, latency, provider metadata, re-routing metadata if applicable, `metadata.citations` (`[{index,title,url,snippet}]`, ≤50, the prompt's own numbering; none when SEARCH_FIRST applied — ADR-133), and on a save turn `metadata.contextSave` (the saved card — ADR-134; the model's note is in the system prompt and repeated after the final user turn via `saveTurnNote`)
 11. **SSE emission** -- `emitCompletion()` pushes to connected clients
-12. **Publish `message.completed`** -- memory service extracts facts; audit logs usage
+12. **Publish `message.completed`** -- memory service extracts facts (unless the chat has memory off, or it was a save turn: no `userContent` then); audit logs usage
 
 ## SSE Streaming
 
@@ -253,6 +259,27 @@ Test: `common/constants/__tests__/connector-preset-provider-wiring.spec.ts`
 Bearer auth, response parsing through the real dispatch path).
 
 ---
+
+## Anthropic prompt caching and gateway headers (F093 / F092, 2026-09-29)
+
+**Prompt caching.** `buildAnthropicMessagesRequestBody` ends in
+`applyAnthropicPromptCache` (`utilities/anthropic-prompt-cache.utility.ts`): the
+system prompt becomes one text block with `cache_control: ephemeral`, and one
+automatic top-level `cache_control` follows the conversation tail — two of
+Anthropic's four breakpoints. Billing needed no change: `extractAnthropicUsage`
+already reports `cache_read_input_tokens` as `cachedPromptTokens`. Limits, stated
+honestly: this is the ENABLE_ANTHROPIC_NATIVE_PDF body only (the default
+Anthropic path is the OpenAI-shaped body, which carries no breakpoints); that
+body is posted to `${baseUrl}/chat/completions`, so breakpoints only take
+effect where that URL serves the Messages API; and a cache WRITE is still billed
+at the plain input rate (under by the 25% write premium) until
+`cacheWritePerMillionMicroUsd` is wired into the credit calculator.
+
+**Gateway headers.** `resolveProviderConfig` returns the connector's
+`gatewayHeaders`; `withConnectorGatewayHeaders` merges them under the provider
+auth header on the streaming (`runExecutor`) and buffered
+(`postCloudProviderRequest`) cloud paths. The internal-generate and Ollama-cloud
+tool-loop paths do not send them yet.
 
 ## Judge + Critic Pipeline
 
@@ -544,7 +571,11 @@ the web app, authenticated as the same user. Until `ThreadOrigin` existed, that
 meant every agent run appeared in the user's chat list beside conversations
 they had held themselves, and nothing in the data said which was which.
 
-`ChatThread.origin` is `WEB` or `CODING_AGENT`, defaulting to `WEB`. Three
+`ChatThread.origin` is `WEB`, `CODING_AGENT` (VS Code) or `CODING_AGENT_CLI`
+(the headless CLI, F094), defaulting to `WEB`. The two agent values are one
+family: listing `CODING_AGENT` returns both, and the agent transcript endpoint
+admits both (`isCodingAgentOrigin`), so a terminal run is resumable in the
+editor while each surface can still label where a thread began. Three
 things follow, and the first is the one that surprises people:
 
 - **`listThreadsQuerySchema` defaults `origin` to `WEB`, not to "any".** A list
@@ -626,6 +657,13 @@ hiding the next, all of them a bound, a ranking rule or a weight — never a
 missing embedding. ADR-087 D9–D14 has the full record with the measured
 numbers. What matters for anyone touching it again:
 
+- **An opted-out chat is never a candidate** (SEC-006): `findCandidateThreads`
+  requires `useMemory` AND `useCrossThreadContext` on the candidate thread, so a
+  chat with either switch off is never read FROM; only
+  `useCrossThreadContext=false` also stops it reading other chats.
+- **The current thread's whole branch family is excluded** (ADR-130):
+  `excludedThreadIds` reads the root, then every thread sharing it, and passes
+  them all as `notIn`. A branch must never retrieve its source's post-fork turns.
 - **Stage 1 reads, stage 2 ranks.** The candidate query takes one bounded slice
   per term and returns them all. The manager scores and cuts. A repository that
   also ranks decides which threads the scorer may consider, and it decided
@@ -669,6 +707,20 @@ needed changing." — has content after the claim and is left alone. Only a bare
 assertion is hollow. The false-positive cases in
 `utilities/__tests__/hollow-completion.utility.spec.ts` are the important half
 of that suite: this predicate decides whether to spend another provider call.
+
+## Is a run still going on this thread? (F095)
+
+`GET /chat-threads/:id/active-run` returns `{ active, runId?, startedAt? }` and
+nothing else. A run is bound to the USER message that started it
+(`metadata.runtimeV2.{runId, generation}`), so the newest user message names
+the only run that can still be live; the store's `READ_BINDING` and a
+`READ_EVENTS` from past the journal's end give its terminal flag without
+returning events or refreshing any TTL. Missing thread and another owner's
+thread are the same 404. An expired run (`RUNTIME_RUN_NOT_FOUND`) is
+`active: false`; `RUNTIME_STATE_UNAVAILABLE` stays a 503, because a client that
+read an outage as "not running" would post on top of a live run. The coding
+agent's resume command calls this and falls back to its old transcript guess
+only on a 404 from a backend that predates the route.
 
 ## Attachments on an agent run
 
@@ -845,6 +897,11 @@ transcription (ADR-120 addenda). **Asynchronous and segmented since
 characters could never finish inside nginx's 60 s (4,000 chars: 0/3, every
 one a 504). Our own overhead was 82–216 ms.
 
+- **Provider host** (2026-09-29): speech calls go to the connector's configured
+  `baseUrl` when set (blank = unset), else the default host — same rule as chat
+  completions. A Gemini base on the OpenAI-compat `…/openai` path is trimmed to
+  the native API (`speechProviderBaseUrl`, `utilities/speech-provider-url.utility.ts`);
+  the SSRF allowlist is declared from that base. `SpeechConnectorClient.resolveCredentials`.
 - **Routes** (`ChatSpeechController`, JWT; Zod params, id `^[A-Za-z0-9_-]{1,64}$`):
   - `GET /chat-messages/speech/availability` → `{ available, reason }` (unchanged).
   - `POST /chat-messages/:id/speech` → **200** `{status: READY, …}` when a stored
@@ -1064,3 +1121,41 @@ Edit intent is the shared `classifyImageIntent` (rule 51 item 18); the
 reference prompt keeps the user's instruction first and verbatim and sends
 `originalPrompt` to image-service (pack §79). Details in
 [`apps/claw-chat-service/CLAUDE.md`](../../apps/claw-chat-service/CLAUDE.md).
+
+## Image card assistant-message link (2026-09-29)
+
+After `storeAssistantResponse` stores an image turn's assistant message,
+`ImageGenerationLinkClient` posts `{ userId, assistantMessageId }` to
+image-service `POST /api/v1/internal/images/:generationId/assistant-message`
+(fire-and-forget, 5 s timeout, never throws). The thread owner is the owner
+image-service checks against. A failed link leaves the column null; the card
+reads `metadata.generationId` and does not depend on it.
+
+## Local read-aloud voice (ADR-128)
+
+`SpeechProvider.LOCAL` is a read-aloud candidate served by the `speech`
+container (Kokoro, model `speaches-ai/Kokoro-82M-v1.0-ONNX`, fixed voice
+`af_heart`). `SpeechSynthesisManager.candidates()` appends it after the admin
+`TTS_VOICE` rows when `SpeechConnectorClient.isConfigured(LOCAL)` (a 2 s
+`/health` probe) is true; it goes through `SpeechProviderClient.openAi` with the
+container base URL and is unmetered (`PAYG_EXEMPT_PROVIDERS`).
+
+## Inpainting mask forwarding (2026-09-29)
+
+The composer uploads a mask PNG as a file and sends its id as `maskFileId`. chat-service stores it on the user message metadata and forwards it to image-service with the reference image. image-service 422 codes `IMAGE_MASK_INVALID` and `IMAGE_MASK_NOT_SUPPORTED` become a stored assistant refusal message (`metadata.type = image_mask_refusal`) that the frontend renders as a localized notice. Only OpenAI honours masks; Gemini and Stable Diffusion refuse with `IMAGE_MASK_NOT_SUPPORTED`.
+
+## Runtime V2 native tool calling (ADR-129, 2026-09-30)
+
+- Every agent turn now passes its admitted tools as `executionOptions.toolCatalog`
+  (`runtimeV2TurnExecutionOptions`). The provider layer offers them natively or
+  drops them: lane off, provider without native tools, or over
+  `CHAT_TOOL_CATALOG_MAX_BYTES`. That last case falls back to the prompt-JSON
+  lane now instead of throwing.
+- `callWithRepair` prefers `response.toolCalls` over the text
+  (`runtimeV2OutputFromNativeCalls`), under the same schema and admitted-tool
+  checks. `MODEL_TOOL_UNKNOWN` / `MODEL_TOOL_ARGUMENT_INVALID` from the provider
+  layer get the repair turn (`settleNativeTurn`).
+- `normalizeToolCalls` resolves both `workspace.files` and `workspace_files`,
+  reads flattened input and an `operation` inside `arguments`, and defaults a
+  single-target tool's `targetId`. Its errors list the valid choices.
+- To check it live: `docker logs claw-chat-service-1 | grep -E 'attached [0-9]+ native tools|native tool call'`.

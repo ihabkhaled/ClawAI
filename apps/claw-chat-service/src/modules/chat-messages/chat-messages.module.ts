@@ -14,6 +14,10 @@ import { NarrationService } from './services/narration.service';
 import { ResearchOrchestratorManager } from './managers/research-orchestrator.manager';
 import { ContextAssemblyManager } from './managers/context-assembly.manager';
 import { SaveToContextManager } from './managers/save-to-context.manager';
+import { ContextSaveOrchestratorManager } from './managers/context-save-orchestrator.manager';
+import { ContextSaveClient } from './clients/context-save.client';
+import { ContextSaveChoiceService } from './services/context-save-choice.service';
+import { ContextSaveController } from './controllers/context-save.controller';
 import { ModelContextWindowClient } from './clients/model-context-window.client';
 import { ModelCapabilityClient } from './clients/model-capability.client';
 import { ModelOutputLimitClient } from './clients/model-output-limit.client';
@@ -37,6 +41,8 @@ import { SpeechConnectorClient } from './clients/speech-connector.client';
 import { SpeechPreferencesClient } from './clients/speech-preferences.client';
 import { SpeechProviderClient } from './clients/speech-provider.client';
 import { SpeechFileStoreClient } from './clients/speech-file-store.client';
+import { ImageGenerationLinkClient } from './clients/image-generation-link.client';
+import { AttachmentInfoClient } from './clients/attachment-info.client';
 import { ChatContextGatewayManager } from './managers/chat-context-gateway.manager';
 import { ModeExecutionGatewayManager } from './managers/mode-execution-gateway.manager';
 import { ContextComposerManager } from './managers/context-composer.manager';
@@ -72,16 +78,25 @@ import { ChatThreadsRepository } from '../chat-threads/repositories/chat-threads
 import { ContextReceiptsModule } from '../context-receipts/context-receipts.module';
 import { RuntimeV2RunController } from './controllers/runtime-v2-run.controller';
 import { RuntimeV2Store } from './repositories/runtime-v2.store';
+import { ZeroRetentionMarkerStore } from './repositories/zero-retention-marker.store';
+import { ZeroRetentionRepository } from './repositories/zero-retention.repository';
+import { ZeroRetentionService } from './services/zero-retention.service';
 import { RuntimeV2AccessService } from './services/runtime-v2-access.service';
 import { RuntimeV2RunService } from './services/runtime-v2-run.service';
 import { RuntimeV2StreamService } from './services/runtime-v2-stream.service';
 import { RuntimeV2CommandController } from './controllers/runtime-v2-command.controller';
 import { RuntimeV2CommandService } from './services/runtime-v2-command.service';
 import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
+import { RuntimeV2ToolCatalogController } from './controllers/runtime-v2-tool-catalog.controller';
+import { RuntimeV2ToolCatalogService } from './services/runtime-v2-tool-catalog.service';
+import { RuntimeV2ToolCatalogStore } from './repositories/runtime-v2-tool-catalog.store';
+import { RuntimeV2ThreadActivityController } from './controllers/runtime-v2-thread-activity.controller';
+import { RuntimeV2ThreadActivityService } from './services/runtime-v2-thread-activity.service';
 
 @Module({
   imports: [ContextReceiptsModule],
   controllers: [
+    ContextSaveController,
     ChatMessagesController,
     ChatStreamController,
     ChatInternalController,
@@ -89,6 +104,8 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     ProviderBreakerAdminController,
     RuntimeV2RunController,
     RuntimeV2CommandController,
+    RuntimeV2ToolCatalogController,
+    RuntimeV2ThreadActivityController,
   ],
   providers: [
     ResearchGateService,
@@ -103,11 +120,15 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     ConsensusExecutionManager,
     ContextAssemblyManager,
     SaveToContextManager,
+    ContextSaveClient,
+    ContextSaveOrchestratorManager,
+    ContextSaveChoiceService,
     // Registered because ChatContextGatewayManager injects it. Everywhere
     // else in this service it is built with `new` — its cache is static, so an
     // instance carries no state — and it had therefore never needed to be a
     // provider. Injecting it keeps the gateway's spec able to hand it a fake
     // rather than letting a unit test reach the network.
+    AttachmentInfoClient,
     ModelContextWindowClient,
     ModelCapabilityClient,
     ModelOutputLimitClient,
@@ -121,6 +142,7 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     SpeechPreferencesClient,
     SpeechProviderClient,
     SpeechFileStoreClient,
+    ImageGenerationLinkClient,
     SpeechSynthesisManager,
     SpeechJobManager,
     SpeechJobLockStore,
@@ -162,11 +184,17 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     FileDeliveryRecordService,
     ChatThreadsRepository,
     RuntimeV2Store,
+    ZeroRetentionMarkerStore,
+    ZeroRetentionRepository,
+    ZeroRetentionService,
     RuntimeV2AccessService,
     RuntimeV2RunService,
     RuntimeV2StreamService,
     RuntimeV2CommandService,
     RuntimeV2LoopManager,
+    RuntimeV2ToolCatalogStore,
+    RuntimeV2ToolCatalogService,
+    RuntimeV2ThreadActivityService,
   ],
   exports: [ChatMessagesService, ChatMessagesRepository, FileDeliveryRecordService],
 })

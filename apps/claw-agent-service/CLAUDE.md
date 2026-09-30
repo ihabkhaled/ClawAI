@@ -31,6 +31,8 @@ Controller → Service → Repository (data access)
 - PairingRequest (Phase A)
 - DeviceCodeRequest (Phase A)
 - AccessPolicy (Phase B)
+- ScheduledCommand (COMMAND or PROMPT routine; `deviceId` null for PROMPT, F099)
+- RunnerCredential (F100: SHA-256 of a runner token; the token itself is never stored)
 
 ## Key Environment Variables
 
@@ -51,6 +53,9 @@ Controller → Service → Repository (data access)
 - Scope enforcement (Phase B): @RequireScopes(DeviceScope.SHELL_EXEC) applied to
   /commands/pending and /commands/:id/complete; DeviceScope.SESSIONS_READ applied to
   /sessions/attach. ScopeGuard is permissive when deviceContext is absent (legacy path).
+- **Runner routes (`agent/runners/heartbeat|claim|jobs/:commandId/complete`) use
+  `RunnerTokenGuard` only** — the runner token from registration/rotation. Never add
+  CompatAgentGuard there: a device token or session key must not claim runner jobs (F100).
 - CompatAgentGuard bridges device tokens to agentSession by reading sessionId from
   query / body / path (/sessions/:id) so existing session-scoped controllers keep working.
 - **Organizations (`agent/organizations/*`) are gated by org membership, not RBAC.** Every

@@ -2,6 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { declaredHost, httpGet } from '@claw/shared-utilities';
 import { AppConfig } from '../../../app/config/app.config';
 import {
+  LOCAL_SPEECH_HEALTH_PATH,
+  LOCAL_SPEECH_PROBE_TIMEOUT_MS,
+  LOCAL_TRANSCRIPTION_API_KEY,
+  LOCAL_TRANSCRIPTION_MODEL,
+  LOCAL_TRANSCRIPTION_PROVIDER,
   TRANSCRIPTION_CAPABILITY_CACHE_TTL_MS,
   TRANSCRIPTION_CONNECTOR_TIMEOUT_MS,
   TRANSCRIPTION_PROVIDER_PRIORITY,
@@ -12,6 +17,7 @@ import {
   type TranscriptionSnapshotEntry,
   type TranscriptionSnapshotResponse,
 } from '../types/transcription.types';
+import { localSpeechApiBase, localSpeechHealthUrl } from '../utilities/local-speech.utility';
 import { selectTranscriptionCandidates } from '../utilities/transcription-candidates.utility';
 
 /**
@@ -75,6 +81,14 @@ export class TranscriptionCapabilityClient {
   }
 
   async fetchConnectorConfig(provider: string): Promise<TranscriptionConnectorConfig> {
+    if (provider === LOCAL_TRANSCRIPTION_PROVIDER) {
+      // Not a connector: the container needs no key and its URL is deployment config.
+      const apiBase = localSpeechApiBase(AppConfig.get().LOCAL_SPEECH_BASE_URL);
+      if (apiBase === null) {
+        throw new Error('Local speech is not configured');
+      }
+      return { provider, apiKey: LOCAL_TRANSCRIPTION_API_KEY, baseUrl: apiBase };
+    }
     const base = AppConfig.get().CONNECTOR_SERVICE_URL;
     const url = `${base}/api/v1/internal/connectors/config?provider=${encodeURIComponent(provider)}`;
     const config = await httpGet<TranscriptionConnectorConfig>(
@@ -102,12 +116,17 @@ export class TranscriptionCapabilityClient {
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'unknown error';
       this.logger.warn(`resolveAll: models-snapshot unavailable — ${message}`);
-      return [];
+      return this.localCandidate();
     }
 
     // Ranking, not snapshot order, decides who goes first: the snapshot is
     // sorted by key, and the first GEMINI key alphabetically was a preview.
-    const capabilities = selectTranscriptionCandidates(models);
+    const capabilities = [
+      ...selectTranscriptionCandidates(models),
+      // LAST: the free container is the fallback when every cloud provider is
+      // absent, or has refused, and the only candidate when none is capable.
+      ...(await this.localCandidate()),
+    ];
     for (const [index, capability] of capabilities.entries()) {
       this.logger.log(
         `resolveAll: candidate ${String(index + 1)} ${capability.provider}/${capability.model}`,
@@ -120,5 +139,28 @@ export class TranscriptionCapabilityClient {
       );
     }
     return capabilities;
+  }
+
+  /**
+   * The LOCAL candidate, or none. Offered only when the container answers its
+   * health check: a stopped `speech` service (API-only installs never create
+   * it) must not become a candidate that costs a failed call on every job.
+   */
+  private async localCandidate(): Promise<TranscriptionCapability[]> {
+    const apiBase = localSpeechApiBase(AppConfig.get().LOCAL_SPEECH_BASE_URL);
+    if (apiBase === null) {
+      return [];
+    }
+    try {
+      await httpGet<unknown>(
+        localSpeechHealthUrl(apiBase, LOCAL_SPEECH_HEALTH_PATH),
+        { timeout: LOCAL_SPEECH_PROBE_TIMEOUT_MS },
+        declaredHost(apiBase),
+      );
+      return [{ provider: LOCAL_TRANSCRIPTION_PROVIDER, model: LOCAL_TRANSCRIPTION_MODEL }];
+    } catch {
+      this.logger.debug('localCandidate: local speech container is not reachable');
+      return [];
+    }
   }
 }

@@ -12,6 +12,7 @@ import {
 import { CurrentUser } from '@claw/shared-auth';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { ScheduledCommandService } from '../services/scheduled-command.service';
+import { RemoteTriggerService } from '../services/remote-trigger.service';
 import {
   type CreateScheduledCommandDto,
   createScheduledCommandSchema,
@@ -20,12 +21,20 @@ import {
   type UpdateScheduledCommandStatusDto,
   updateScheduledCommandStatusSchema,
 } from '../dto/update-scheduled-command-status.dto';
+import {
+  type TriggerScheduledCommandDto,
+  triggerScheduledCommandSchema,
+} from '../dto/trigger-scheduled-command.dto';
+import type { RemoteTriggerResult } from '../types/remote-trigger.types';
 import type { AuthenticatedUser } from '../../../common/types/auth.types';
 import type { ScheduledCommand } from '../../../generated/prisma';
 
 @Controller('agent/scheduled-commands')
 export class AgentScheduledCommandController {
-  constructor(private readonly service: ScheduledCommandService) {}
+  constructor(
+    private readonly service: ScheduledCommandService,
+    private readonly remoteTrigger: RemoteTriggerService,
+  ) {}
 
   @Post()
   async create(
@@ -39,6 +48,18 @@ export class AgentScheduledCommandController {
   @Get()
   async list(@CurrentUser() user: AuthenticatedUser): Promise<ScheduledCommand[]> {
     return this.service.list(user.id);
+  }
+
+  /** F029: fire now, at most once per idempotency key. */
+  @Post(':id/trigger')
+  @HttpCode(HttpStatus.OK)
+  async trigger(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(triggerScheduledCommandSchema))
+    dto: TriggerScheduledCommandDto,
+  ): Promise<RemoteTriggerResult> {
+    return this.remoteTrigger.trigger(user.id, id, dto.idempotencyKey);
   }
 
   @Patch(':id/status')

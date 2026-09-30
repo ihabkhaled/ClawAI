@@ -1,11 +1,13 @@
 import {
   CanActivate,
   type ExecutionContext,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { AgentKeyGuard } from './agent-key.guard';
 import { DeviceAccessGuard } from './device-access.guard';
+import { AgentSessionRepository } from '../../modules/agent/repositories/agent-session.repository';
 import { DEPRECATION_HEADER, LEGACY_SUNSET_DATE, SUNSET_HEADER } from '../constants/auth.constants';
 import type { AgentRequest, AgentRequestWithContext } from '../types/auth.types';
 
@@ -14,37 +16,50 @@ export class CompatAgentGuard implements CanActivate {
   constructor(
     private readonly deviceGuard: DeviceAccessGuard,
     private readonly legacyGuard: AgentKeyGuard,
+    private readonly sessions: AgentSessionRepository,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    let deviceOk: boolean;
     try {
-      const ok = await this.deviceGuard.canActivate(context);
-      if (ok) this.bridgeDeviceToSession(context);
-      return ok;
+      deviceOk = await this.deviceGuard.canActivate(context);
     } catch (primary) {
-      try {
-        const ok = await this.legacyGuard.canActivate(context);
-        if (ok) {
-          this.markDeprecated(context);
-          const request = context.switchToHttp().getRequest<AgentRequest>();
-          if (request.agentSession !== undefined) {
-            request.agentSession.legacy = true;
-          }
+      return this.activateLegacy(context, primary);
+    }
+    // Outside the try: a device that names someone else's session must be
+    // refused, not retried as a legacy key.
+    if (deviceOk) await this.bridgeDeviceToSession(context);
+    return deviceOk;
+  }
+
+  private async activateLegacy(context: ExecutionContext, primary: unknown): Promise<boolean> {
+    try {
+      const ok = await this.legacyGuard.canActivate(context);
+      if (ok) {
+        this.markDeprecated(context);
+        const request = context.switchToHttp().getRequest<AgentRequest>();
+        if (request.agentSession !== undefined) {
+          request.agentSession.legacy = true;
         }
-        return ok;
-      } catch {
-        if (primary instanceof UnauthorizedException) throw primary;
-        throw new UnauthorizedException('Invalid agent credentials');
       }
+      return ok;
+    } catch {
+      if (primary instanceof UnauthorizedException) throw primary;
+      throw new UnauthorizedException('Invalid agent credentials');
     }
   }
 
-  private bridgeDeviceToSession(context: ExecutionContext): void {
+  private async bridgeDeviceToSession(context: ExecutionContext): Promise<void> {
     const request = context.switchToHttp().getRequest<AgentRequest>();
     const device = request.deviceContext;
     if (device === undefined) return;
     const sessionId = this.resolveSessionId(request as AgentRequestWithContext);
     if (sessionId === undefined) return;
+    const session = await this.sessions.findById(sessionId);
+    // One answer for "missing" and "not yours", so session ids cannot be probed.
+    if (session?.userId !== device.userId) {
+      throw new ForbiddenException('Session is not available to this device');
+    }
     request.agentSession = {
       sessionId,
       userId: device.userId,

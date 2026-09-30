@@ -28,6 +28,9 @@ const appConfigSchema = z.object({
   // them either, so it learns them over cached internal HTTP and fails CLOSED
   // for a metered provider when the cache is cold and routing is unreachable.
   ROUTING_SERVICE_URL: z.string().url().default('https://routing-service:4004'),
+  // Owner of coding-agent organizations. Auth asks it who administers an
+  // organization before aggregating that organization's usage (F108).
+  AGENT_SERVICE_URL: z.string().url().optional(),
   PUBLIC_SITE_URL: z.string().url().default('https://claw.local'),
   CONTACT_EMAIL_ENABLED: z.enum(['true', 'false']).default('false'),
   CONTACT_EMAIL_PROVIDER: z.enum(['none', 'smtp']).default('none'),
@@ -84,9 +87,6 @@ export class AppConfig {
   }
 
   static get(): AppConfigType {
-    if (!cachedConfig) {
-      return AppConfig.validate();
-    }
-    return cachedConfig;
+    return !cachedConfig ? AppConfig.validate() : cachedConfig;
   }
 }

@@ -25,6 +25,10 @@ import {
   RUNTIME_V2_TOOL_CATALOG_ENTRIES,
   RUNTIME_V2_TOOL_NAME_PATTERN,
 } from '../constants/runtime-v2.constants';
+import {
+  RUNTIME_V2_MAX_RESULT_FILE_IDS,
+  RUNTIME_V2_RESULT_FILE_ID_CHARACTERS,
+} from '../constants/runtime-v2-result-files.constants';
 import type { RuntimeV2JsonObject, RuntimeV2JsonValue } from '../types/runtime-v2.types';
 
 const utf8Bytes = (value: string): number => new TextEncoder().encode(value).byteLength;
@@ -91,6 +95,14 @@ export const toolDefinitionSchema = z
     riskClasses: z.array(z.enum(RUNTIME_V2_RISK_CLASSES)).min(1).max(13),
     targetIds: z.array(z.string().regex(RUNTIME_V2_ID_PATTERN)).min(1).max(32),
     inputSchema: boundedJsonObject(RUNTIME_V2_ARGUMENT_BYTES),
+    // F028 deferred tool: this entry is a stub (name + short description) and
+    // `definitionHash` commits to the full definition the client may load
+    // mid-run. The commitment sits inside the hashed start catalog, so a tool
+    // the client did not declare here can never be admitted later.
+    deferred: z
+      .object({ definitionHash: z.string().regex(RUNTIME_V2_SHA256_PATTERN) })
+      .strict()
+      .optional(),
   })
   .strict()
   .superRefine((definition, context) => {
@@ -189,11 +201,21 @@ export const toolResultSchema = z
     structured: boundedJsonObject(RUNTIME_V2_RESULT_BYTES).optional(),
     modelText: z.string().max(65_536).optional(),
     error: toolErrorSchema.optional(),
+    // F030: images the tool produced (a browser `observe` screenshot), uploaded
+    // by the client first. Ownership is checked before the result is accepted;
+    // the ids are covered by the receipt's resultHash.
+    fileIds: z
+      .array(z.string().min(1).max(RUNTIME_V2_RESULT_FILE_ID_CHARACTERS))
+      .min(1)
+      .max(RUNTIME_V2_MAX_RESULT_FILE_IDS)
+      .optional(),
     receipt: toolReceiptSchema,
     continuation: continuationSchema,
   })
   .strict()
   .superRefine((value, context) => {
+    if (value.fileIds !== undefined && new Set(value.fileIds).size !== value.fileIds.length)
+      context.addIssue({ code: 'custom', message: 'Duplicate result file id', path: ['fileIds'] });
     if (value.status === 'succeeded' && value.error !== undefined)
       context.addIssue({ code: 'custom', message: 'Succeeded result cannot contain error' });
     if (value.status !== 'succeeded' && value.error === undefined)

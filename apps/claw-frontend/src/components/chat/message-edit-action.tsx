@@ -26,11 +26,12 @@ import type { MessageEditActionProps } from '@/types';
  */
 export function MessageEditAction({
   messageId,
+  threadId,
   content,
   onRerunStarted,
 }: MessageEditActionProps): React.ReactElement {
   const { t } = useTranslation();
-  const edit = useMessageEdit(messageId, content, onRerunStarted);
+  const edit = useMessageEdit(messageId, content, threadId, onRerunStarted);
 
   return (
     <>
@@ -59,10 +60,19 @@ export function MessageEditAction({
             aria-label={t('chat.edit.title')}
             rows={8}
           />
+          <p className="text-muted-foreground text-xs">{t('chat.edit.branchHint')}</p>
 
-          <DialogFooter>
+          <DialogFooter className="flex-wrap gap-2">
             <Button type="button" variant="outline" onClick={edit.close}>
               {t('common.cancel')}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={edit.saveAsBranch}
+              disabled={edit.draft.trim().length === 0 || edit.isBranching}
+            >
+              {t('chat.edit.inBranch')}
             </Button>
             <Button type="button" onClick={edit.save} disabled={!edit.canSave || edit.isPending}>
               {edit.isPending ? t('chat.edit.saving') : t('chat.edit.confirm')}

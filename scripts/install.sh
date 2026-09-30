@@ -1751,6 +1751,7 @@ HUGGINGFACE_TOKEN=
 HUGGINGFACE_API_BASE=https://huggingface.co
 
 STABLE_DIFFUSION_URL=http://stable-diffusion:7860
+LOCAL_SPEECH_BASE_URL=http://speech:8000
 COMFYUI_BASE_URL=http://comfyui:8188
 COMFYUI_PORT=8188
 COMFYUI_MODELS_PATH=/var/lib/claw/comfyui-models

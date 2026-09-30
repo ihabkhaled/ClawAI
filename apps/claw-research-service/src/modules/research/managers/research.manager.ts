@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
+import { describeFetchFailure } from '../../../common/utilities/describe-fetch-failure.utility';
 import { EVIDENCE_FETCH_TOP_N } from '../../../common/constants/evidence.constants';
 import { DIRECT_FETCH_CONFIDENCE } from '../../../common/constants/url-detection.constants';
 import { clampSearchQuery } from '../../../common/utilities/search-query.utility';
@@ -122,7 +123,7 @@ export class ResearchManager {
       const bundle = this.finalize(dto, search.providerSelection, items, warnings, toolsUsed);
       return await this.completeRun(run.id, bundle, trace);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
+      const message = describeFetchFailure(error);
       this.logger.warn(`Research run ${run.id} failed: ${message}`);
       trace.push(traceEntry('run.failed', 'error', null, message));
       return this.failRun(run.id, trace, message);
@@ -342,7 +343,7 @@ export class ResearchManager {
           ),
         );
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
+        const message = describeFetchFailure(error);
         // Named explicitly, because this is the one the user will ask about:
         // they pasted THIS link and it is THIS page that could not be read.
         warnings.push(`Could not open the link you provided (${url}): ${message}`);
@@ -381,7 +382,7 @@ export class ResearchManager {
           ),
         );
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
+        const message = describeFetchFailure(error);
         warnings.push(`Fetch failed for ${item.url}: ${message}`);
         trace.push(traceEntry('fetch', 'warning', Date.now() - start, `${item.url}: ${message}`));
       }
@@ -442,7 +443,7 @@ export class ResearchManager {
           ),
         );
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
+        const message = describeFetchFailure(error);
         skippedCount += 1;
         warnings.push(`Scrape failed for ${item.url}: ${message}`);
         trace.push(traceEntry(profileTool, 'warning', Date.now() - start, message));

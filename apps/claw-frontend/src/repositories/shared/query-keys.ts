@@ -59,6 +59,8 @@ export const queryKeys = {
       [...queryKeys.threads.all, 'messages', threadId] as const,
     search: (threadId: string, term: string) =>
       [...queryKeys.threads.all, 'search', threadId, term] as const,
+    /** Under `threads.all`, so a branch mutation's invalidation refreshes it. */
+    lineage: (threadId: string) => [...queryKeys.threads.all, 'lineage', threadId] as const,
     listInfinite: (filters: Record<string, unknown>) =>
       [...queryKeys.threads.lists(), 'infinite', filters] as const,
   },

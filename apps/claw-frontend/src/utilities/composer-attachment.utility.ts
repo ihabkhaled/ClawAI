@@ -22,6 +22,7 @@ import type {
   ResolveComposerAttachmentChipsInput,
 } from '@/types/composer-attachment.types';
 import type { TranslateFunction } from '@/types/i18n.types';
+import { extractionErrorDetailKey } from '@/utilities/extraction-error.utility';
 
 /**
  * Where each composer attachment is, as one ordered list of chips.
@@ -51,6 +52,7 @@ export function resolveComposerAttachmentChips({
       fileId: null,
       localId: entry.localId,
       detail: entry.reason,
+      detailKey: null,
       canCancelProcessing: false,
     }));
 
@@ -66,7 +68,12 @@ export function resolveComposerAttachmentChips({
       state,
       fileId,
       localId: null,
-      detail: state === ComposerAttachmentState.Failed ? (file?.extractionError ?? null) : null,
+      // The backend's English sentence is never shown; its code picks a localized detail.
+      detail: null,
+      detailKey:
+        state === ComposerAttachmentState.Failed && file !== undefined
+          ? extractionErrorDetailKey(file)
+          : null,
       canCancelProcessing:
         state === ComposerAttachmentState.Processing &&
         (file?.mimeType ?? '').startsWith(COMPOSER_CANCELLABLE_MIME_PREFIX),
@@ -143,7 +150,7 @@ function resolveChipNote(draft: ComposerAttachmentChipDraft, t: TranslateFunctio
             ? COMPOSER_ATTACHMENT_UPLOAD_FAILED_KEY
             : COMPOSER_ATTACHMENT_PROCESSING_FAILED_KEY,
         ),
-        draft.detail,
+        draft.detailKey === null ? draft.detail : t(draft.detailKey),
       );
     default:
       return null;

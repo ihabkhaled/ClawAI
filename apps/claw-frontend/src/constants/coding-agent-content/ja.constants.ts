@@ -20,7 +20,7 @@ export const JA_CODING_AGENT_CONTENT: CodingAgentDictionary = {
     capabilitiesTitle: 'できること',
     capabilities: [
       {
-        title: 'すべてのモデルを、ひとつのワークスペースで',
+        title: 'すべてのモデルを 1 つのワークスペースで',
         body: '9 つのフロンティアモデルファミリーと、手元のローカルなオープンウェイトモデルに、API キーを貼り付けることなくエディタから届きます。ルーティングはプラットフォーム側で行われるため、エディタがプロバイダーの資格情報を持つことはありません。',
       },
       {

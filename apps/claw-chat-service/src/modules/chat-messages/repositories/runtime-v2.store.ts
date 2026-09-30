@@ -36,6 +36,10 @@ import type {
   RuntimeV2SteeringInput,
   RuntimeV2TerminalInput,
 } from '../types/runtime-v2-store.types';
+import type {
+  RuntimeV2TerminalListener,
+  RuntimeV2TerminalOutcome,
+} from '../types/runtime-v2-terminal-listener.types';
 import type { RuntimeV2JsonObject } from '../types/runtime-v2.types';
 import {
   createRuntimeV2Identity,
@@ -170,6 +174,10 @@ function canonicalResultOutput(result: RuntimeResultDto['result']): string {
     error: result.error ?? null,
     modelText: result.modelText ?? null,
     structured: result.structured ?? null,
+    // Only when present, so every result without files hashes exactly as it
+    // did before F030. Covered rather than excluded: which images the model is
+    // shown is part of what the tool returned.
+    ...(result.fileIds === undefined ? {} : { fileIds: result.fileIds }),
   };
   return stableRuntimeV2Json(output);
 }
@@ -208,7 +216,24 @@ function ttlMilliseconds(ttlSeconds: number): string {
 export class RuntimeV2Store {
   private readonly logger = new Logger(RuntimeV2Store.name);
 
+  private readonly terminalListeners: RuntimeV2TerminalListener[] = [];
+
   constructor(@Inject(RedisService) private readonly redis: RuntimeV2RedisPort) {}
+
+  /**
+   * Registers a listener told, fire-and-forget, after a run's terminal or
+   * cancel mutation lands — a replay too, so a listener that missed the first
+   * one still runs; listeners must be idempotent. Zero data retention (F055)
+   * purges here, because every way a run ends passes through this store.
+   */
+  onTerminal(listener: RuntimeV2TerminalListener): void {
+    this.terminalListeners.push(listener);
+  }
+
+  private notifyTerminal(input: RuntimeV2BoundInput, status: RuntimeV2TerminalOutcome): void {
+    const notice = { ownerId: input.ownerId, threadId: input.threadId, runId: input.runId, status };
+    for (const listener of this.terminalListeners) void listener(notice);
+  }
 
   private async execute(
     operation: RuntimeV2RedisOperation,
@@ -518,7 +543,7 @@ export class RuntimeV2Store {
       throw new Error('Runtime V2 cancellation generation does not match the bound run');
     assertEpochs(command.epochs, input);
     const ack = this.mutationDraft(input);
-    return this.mutationReply(RuntimeV2RedisOperation.CANCEL, input, [
+    const reply = await this.mutationReply(RuntimeV2RedisOperation.CANCEL, input, [
       binding(input),
       command.idempotencyKey,
       runtimeV2Sha256(stableRuntimeV2Json(command)),
@@ -527,6 +552,8 @@ export class RuntimeV2Store {
       eventJson(input, 'run.cancelled', ack.eventId, {}),
       ttlMilliseconds(input.ttlSeconds),
     ]);
+    this.notifyTerminal(input, 'cancelled');
+    return reply;
   }
 
   async claimRouted(input: RuntimeV2ClaimInput): Promise<RuntimeV2ClaimAck> {
@@ -581,7 +608,7 @@ export class RuntimeV2Store {
   async terminalize(input: RuntimeV2TerminalInput): Promise<RuntimeV2MutationAck> {
     const ack = this.mutationDraft(input);
     const fingerprint = await runtimeV2TerminalFingerprint(input);
-    return this.mutationReply(RuntimeV2RedisOperation.TERMINAL, input, [
+    const reply = await this.mutationReply(RuntimeV2RedisOperation.TERMINAL, input, [
       binding(input),
       input.idempotencyKey,
       fingerprint,
@@ -596,6 +623,8 @@ export class RuntimeV2Store {
       ),
       ttlMilliseconds(input.ttlSeconds),
     ]);
+    this.notifyTerminal(input, input.status);
+    return reply;
   }
 
   /**

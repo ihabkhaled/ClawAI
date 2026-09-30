@@ -4,6 +4,7 @@ import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-thre
 import { EntityNotFoundException } from '../../../common/errors';
 import { SortOrder } from '../../../common/enums';
 import { ThreadOrigin } from '../../../generated/prisma';
+import { isCodingAgentOrigin } from '../../chat-threads/utilities/thread-origin.utility';
 import { type PaginatedResult } from '../../../common/types';
 import { type CodingAgentMessage, type CodingAgentThread } from '../types/coding-agent-chats.types';
 import { type ListCodingAgentChatsQueryDto } from '../dto/list-coding-agent-chats-query.dto';
@@ -16,7 +17,8 @@ import { type ListCodingAgentChatsQueryDto } from '../dto/list-coding-agent-chat
  * accidentally offer one. A run belongs to the agent that produced it, and a
  * reply typed into a transcript from the web would have no run to reach.
  *
- * Every read is pinned to `ThreadOrigin.CODING_AGENT` as well as to the user.
+ * Every read is pinned to the coding agent origins (`CODING_AGENT`, and the
+ * headless CLI's `CODING_AGENT_CLI`, F094) as well as to the user.
  * The origin filter is what keeps these out of the web chat list; pinning it
  * again here is what stops this endpoint becoming a second way to read the
  * user's ordinary conversations.
@@ -36,6 +38,7 @@ export class CodingAgentChatsService {
   ): Promise<PaginatedResult<CodingAgentThread>> {
     const filters = {
       userId,
+      // Resolved by the repository to the whole coding agent family.
       origin: ThreadOrigin.CODING_AGENT,
       search: query.search,
     };
@@ -80,7 +83,7 @@ export class CodingAgentChatsService {
     // they answer identically, so this cannot be used to learn which threads
     // exist. `thread?.userId` is undefined for a missing thread, which never
     // equals a real user id.
-    if (thread?.userId !== userId || thread.origin !== ThreadOrigin.CODING_AGENT) {
+    if (thread?.userId !== userId || !isCodingAgentOrigin(thread.origin)) {
       throw new EntityNotFoundException('ChatThread', threadId);
     }
 

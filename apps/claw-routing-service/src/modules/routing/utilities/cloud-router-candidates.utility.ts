@@ -1,6 +1,8 @@
-import { modelMatchKey } from '@claw/shared-utilities';
+import { modelMatchKey, resolveImageCapabilityProvider } from '@claw/shared-utilities';
 import { ModalityFit } from '../../../common/enums/modality-fit.enum';
-import { DeploymentActivationState } from '../../../generated/prisma';
+import { DeploymentActivationState, RouterProvider } from '../../../generated/prisma';
+import { LOCAL_PROVIDER } from '../constants/routing.constants';
+import type { FallbackEntry } from '../types/routing.types';
 import { modalityFitOf, modalityFitRank } from './modality-fit.utility';
 import type {
   CloudRouterCandidateFilter,
@@ -14,6 +16,15 @@ import type {
 // capability lookup must key the connector snapshot exactly the same way
 // (rule 42 item 13); re-exported so existing importers stay untouched.
 export { modelMatchKey };
+
+/**
+ * The catalog key for a decision entry. Routing names local models
+ * `local-ollama`; their catalog rows are `OLLAMA`.
+ */
+export function catalogMatchKey(entry: FallbackEntry): string {
+  const provider = entry.provider === LOCAL_PROVIDER ? RouterProvider.OLLAMA : entry.provider;
+  return modelMatchKey(provider, entry.model);
+}
 
 /**
  * The AUTO router's candidates: exposed by an admin, on a healthy connector,
@@ -99,7 +110,12 @@ function isFit(deployment: RoutableDeploymentRecord, filter: CloudRouterCandidat
       : filter.exposed.has(key);
   const healthy = filter.connectorHealth[deployment.provider] !== false;
   const allowed = filter.allowed === null || filter.allowed.has(key);
-  return exposedOk && healthy && allowed;
+  // An image-OUTPUT model (chatgpt-image-latest, gpt-image-1, …) cannot answer a
+  // chat turn; image requests take their own path. 2026-09-29: the cloud router
+  // picked chatgpt-image-latest for "what happens at 0:02 in this video?".
+  const chatCapable =
+    resolveImageCapabilityProvider(deployment.provider, deployment.providerModelId) === undefined;
+  return exposedOk && healthy && allowed && chatCapable;
 }
 
 function rank(deployment: RoutableDeploymentRecord): number {

@@ -577,7 +577,7 @@ export class RoutingManager {
       }
       const capabilityResult = this.tryCapabilityRouting(context);
       if (capabilityResult) {
-        return capabilityResult;
+        return this.withModalityFit(capabilityResult, context);
       }
     }
 
@@ -592,7 +592,10 @@ export class RoutingManager {
       this.logger.log(
         `handleAuto: ${localEnforcementDomain} is enforced-local - skipping router invocation`,
       );
-      return this.buildLocalPrivacyDecision(context, localEnforcementDomain);
+      return this.withModalityFit(
+        this.buildLocalPrivacyDecision(context, localEnforcementDomain),
+        context,
+      );
     }
 
     const cloudResult = await this.tryCloudRouting(context);
@@ -604,22 +607,41 @@ export class RoutingManager {
     // medical → LOCAL_REASONING category model) would send it straight back to
     // the runtime we just found missing.
     if (detectedDomain !== null) {
-      return this.applyHeuristicRules(context, await this.computeHeuristicState(context));
+      return this.withModalityFit(
+        this.applyHeuristicRules(context, await this.computeHeuristicState(context)),
+        context,
+      );
     }
 
     const ollamaResult = await this.tryOllamaAssistedRouting(context);
     if (ollamaResult) {
-      return ollamaResult;
+      return this.withModalityFit(ollamaResult, context);
     }
 
     const categoryResult = await this.detectCategoryRoute(context);
     if (categoryResult) {
       this.logger.log('handleAuto: category-specific local model matched');
-      return categoryResult;
+      return this.withModalityFit(categoryResult, context);
     }
 
     this.logger.debug('handleAuto: Ollama router unavailable, using heuristic fallback');
-    return this.handleAutoHeuristic(context);
+    return this.withModalityFit(await this.handleAutoHeuristic(context), context);
+  }
+
+  /**
+   * Rule 51 item 13 on every non-cloud-router AUTO path: the cloud router ranks
+   * its candidates by modality fit before it picks; the capability (keyword),
+   * privacy-local, Ollama router, category and heuristic paths pick first, so their decision is
+   * re-ordered afterwards by the same tiers. A text-only pick drops below a
+   * capable fallback entry; nothing is removed (chat-service still transforms).
+   */
+  private withModalityFit(
+    decision: RoutingDecisionResult,
+    context: RoutingContext,
+  ): Promise<RoutingDecisionResult> {
+    return (context.requiredModalities ?? []).length === 0
+      ? Promise.resolve(decision)
+      : this.cloudRouterEligibility.rankDecisionByModalityFit(decision, context);
   }
 
   private logSensitiveContentDetections(message: string): void {

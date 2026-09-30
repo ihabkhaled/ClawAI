@@ -360,6 +360,46 @@ export const en: TranslationDictionary = {
       succeeded: 'Branched into a new conversation.',
       failed: 'Could not branch the conversation.',
     },
+    lineage: {
+      branchedFrom: 'Branched from',
+      sourceDeleted: 'Branched from a chat that was deleted',
+      branches: 'Branches ({count})',
+      branchBadge: 'Branch',
+    },
+    quote: {
+      action: 'Quote',
+      composerHeading: 'Quoting',
+      remove: 'Remove quote',
+      repliedTo: 'Replying to',
+      limitReached: 'You can quote up to 3 selections per message.',
+      sourceMissing:
+        'The message you quoted is no longer in this conversation. Remove the quote and try again.',
+    },
+    regenerateWith: {
+      trigger: 'Try again with…',
+      auto: 'Let AUTO choose',
+    },
+    contextSave: {
+      title: 'Saved from this chat',
+      savedMemory: 'Saved to memory',
+      createdPack: 'Created context pack',
+      addedToPack: 'Added to context pack',
+      openMemory: 'Open memory',
+      openPack: 'Open pack',
+      choosePack: 'Which context pack should this go in?',
+      newPack: 'New pack: {name}',
+      saving: 'Saving…',
+      packSaved: 'Saved to the context pack.',
+      failedTitle: 'Could not save',
+      memoryFailed: 'Memory was not saved.',
+      packFailed: 'The context pack was not saved.',
+      notPending: 'This save is already done or no longer waiting for a pack.',
+      reasons: {
+        PLAN: 'Your plan does not include this.',
+        LIMIT: 'You have reached your plan limit.',
+        UNAVAILABLE: 'The service is unavailable right now. Try again shortly.',
+      },
+    },
     speech: {
       action: 'Read aloud',
       stop: 'Stop reading aloud',
@@ -392,6 +432,10 @@ export const en: TranslationDictionary = {
       },
     },
     edit: {
+      inBranch: 'Edit in a new branch',
+      branchHint:
+        'Or keep this conversation as it is and ask the edited question in a new branch — nothing is deleted.',
+      branchOpened: 'Opened a new branch with your edited question. Press Send when it is ready.',
       action: 'Edit and re-run',
       title: 'Edit this message',
       warning:
@@ -597,6 +641,35 @@ export const en: TranslationDictionary = {
     helpful: 'Helpful',
     notHelpful: 'Not helpful',
     feedbackSaved: 'Feedback saved',
+    maskEdit: {
+      action: 'Mask edit',
+      actionFor: 'Mask edit: {name}',
+      title: 'Mask edit',
+      description:
+        'Paint the area the model may change. Everything you leave unpainted stays as it is.',
+      canvasLabel: 'Mask painting area',
+      brushSize: 'Brush size',
+      erase: 'Erase',
+      clear: 'Clear',
+      apply: 'Apply mask',
+      applying: 'Saving…',
+      loading: 'Loading the image…',
+      imageFailed: 'The image could not be loaded.',
+      saveFailed: 'The mask could not be saved. Try again.',
+      empty: 'Paint at least one area first.',
+      applied: 'Mask applied',
+      remove: 'Remove mask',
+      keyboardHint:
+        'Drag to paint. With the keyboard: arrow keys move the brush (hold Shift to move faster), Space or Enter starts and stops painting.',
+      paintingOn: 'Painting on',
+      paintingOff: 'Painting off',
+      refusal: {
+        title: 'The masked edit was not applied',
+        invalid: 'The mask does not match the image. Draw it again, then send.',
+        notSupported:
+          'The selected model cannot edit part of an image. Pick an image editing model that supports masks, or send without a mask.',
+      },
+    },
     attachFiles: 'Attach Files',
     attachment: {
       uploading: 'Uploading attachment…',
@@ -784,12 +857,13 @@ export const en: TranslationDictionary = {
     jumpToLatest: 'Jump to latest',
     moreActions: 'More actions',
     useMemoryLabel: 'Use memory in this thread',
-    useMemoryDescription: 'When off, no memories are injected into the prompt.',
+    useMemoryDescription:
+      'When off, memories are not used in this chat, and nothing said here is saved as a memory.',
     useContextLabel: 'Use context packs in this thread',
     useContextDescription: 'When off, attached packs are ignored.',
     useCrossThreadContextLabel: 'Use relevant previous chats',
     useCrossThreadContextDescription:
-      'When on, ClawAI may look through your other conversations for material relevant to this one. Off by default.',
+      'When on, ClawAI may use your other chats that allow it for material relevant to this one. When off, this chat neither reads your other chats nor is read by them.',
     workflow: {
       searchFirst: 'Search-first',
       direct: 'Direct',
@@ -968,6 +1042,18 @@ export const en: TranslationDictionary = {
     regionPlaceholder: 'e.g., us-east-1',
     workspaceIdPlaceholder: 'e.g., wrkspc_01AbCd...',
     saveFirstThenTest: 'Save the connector first, then test',
+    gatewayHeaders: 'Gateway headers (optional)',
+    gatewayHeadersHelp:
+      'Extra headers for an LLM gateway in front of the provider (LiteLLM, Portkey, Helicone). Values are stored encrypted and never shown again. They never replace the API key.',
+    gatewayHeadersEditHelp:
+      'Stored headers are kept unless you add new ones, which replace them all.',
+    gatewayHeaderName: 'Header name',
+    gatewayHeaderValue: 'Header value',
+    addGatewayHeader: 'Add header',
+    removeGatewayHeader: 'Remove header',
+    clearGatewayHeaders: 'Remove the stored gateway headers',
+    gatewayHeadersInvalid:
+      'Each header needs a valid, unreserved, unique name and a one-line value (at most 10 headers).',
     selectProvider: 'Select a provider',
     groupConnected: 'Connected providers',
     groupLowCost: 'Low-cost and fast inference',
@@ -4825,7 +4911,7 @@ export const en: TranslationDictionary = {
       PAYPAL: 'PayPal',
       PAYMOB: 'Paymob',
       paypalCard: 'PayPal/Card',
-      paymobTestingSoon: 'Paymob (Testing – Soon)',
+      paymobCard: 'Paymob (card)',
       unavailable: 'Gateways are unavailable',
     },
     proration: {
@@ -5052,7 +5138,7 @@ export const en: TranslationDictionary = {
         modelCount: '{count} models available now',
         title: 'The models you get',
         intro:
-          'One workspace reaches every provider below. Switch models mid-conversation, or let ClawAI pick the best one for each message.',
+          'One workspace covers every provider below. Switch models mid-conversation, or let ClawAI pick the best one for each message.',
         footnote:
           'New frontier models are added as they launch — your plan covers them from day one, metered against a single allowance.',
         linkFeatures: 'Explore every feature',
@@ -5206,7 +5292,7 @@ export const en: TranslationDictionary = {
         title: 'Who ClawAI is for',
         privacyName: 'People who use AI every day',
         privacyDesc:
-          'one workspace instead of three or four AI apps, with the strongest model always a click away rather than behind another paywall.',
+          'one workspace instead of three or four separate subscriptions, with the strongest model always a click away rather than behind another paywall.',
         devName: 'Developers evaluating models',
         devDesc:
           'send the same prompt to five models at once and read the answers side by side before committing to one.',
@@ -5226,7 +5312,7 @@ export const en: TranslationDictionary = {
         q3: 'How are usage limits measured?',
         a3: 'In cost-normalized tokens. An expensive model draws down more of your allowance than a cheap one, so a single daily and monthly figure stays fair across models whose prices differ by more than an order of magnitude.',
         q4: 'Is ClawAI affiliated with OpenAI, Anthropic, Google, or AWS?',
-        a4: 'No. ClawAI is an independent product that gives you access to those providers’ models in one workspace. It is not endorsed by or affiliated with any of them.',
+        a4: 'No. ClawAI is an independent product that provides access to those providers’ models through one workspace. It is not endorsed by or affiliated with any of them.',
       },
       cta: {
         title: 'Start on the free plan',
@@ -6034,7 +6120,7 @@ export const en: TranslationDictionary = {
         imagesCapability: 'Image generation',
       },
       oneSubscription: {
-        title: 'Why one workspace beats several apps',
+        title: 'Why one workspace beats several subscriptions',
         intro:
           'Running four AI subscriptions is not four times better than one. It is four bills, four sets of limits, and a constant low-grade decision about which tab to open.',
         pointRightModelTitle: 'The right model, every time',
@@ -6080,7 +6166,7 @@ export const en: TranslationDictionary = {
         description: 'What ClawAI is, and how to begin.',
         whatIsQ: 'What is ClawAI?',
         whatIsA:
-          'One workspace that reaches every frontier AI model — Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok and Amazon Bedrock — through one chat interface. It routes each message to the model best suited to it, remembers useful context between conversations, answers questions about files you upload, and can put several models on the same problem when one answer is not enough.',
+          'A single workspace that reaches every frontier AI model — Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok and Amazon Bedrock — through one chat interface. It routes each message to the model best suited to it, remembers useful context between conversations, answers questions about files you upload, and can put several models on the same problem when one answer is not enough.',
         apiKeysQ: 'Do I need an API key from OpenAI or Anthropic?',
         apiKeysA:
           'No. Model access is included in your subscription. There are no provider accounts to create, no keys to paste and no separate provider bills.',

@@ -58,6 +58,8 @@ export function buildRuntimeV2ToolResultRecord(result: RuntimeResultDto['result'
     structured: result.structured ?? null,
     modelText: result.modelText ?? null,
     error: result.error ?? null,
+    // F030: later turns see which images this step returned, by id.
+    ...(result.fileIds === undefined ? {} : { fileIds: result.fileIds }),
   };
   const document = JSON.stringify(record);
   if (document.length <= RUNTIME_V2_TRANSCRIPT_RESULT_CHARACTERS) return document;
@@ -80,8 +82,7 @@ function clip(value: RuntimeV2JsonValue, step?: RuntimeV2TranscriptClipStep): Ru
   if (step === undefined) return value;
   if (typeof value === 'string') return clipString(value, step.strings);
   if (value === null || typeof value !== 'object') return value;
-  if (isJsonArray(value)) return clipArray(value, step);
-  return clipObject(value, step);
+  return isJsonArray(value) ? clipArray(value, step) : clipObject(value, step);
 }
 
 function clipObject(
@@ -103,9 +104,7 @@ function clipObject(
  */
 function clipString(value: string, budget: number): string {
   if (value.length <= budget) return value;
-  if (budget <= RUNTIME_V2_TRANSCRIPT_IDENTITY_CHARACTERS)
-    return RUNTIME_V2_TRANSCRIPT_TRUNCATION_NOTICE;
-  return `${value.slice(0, budget)}${RUNTIME_V2_TRANSCRIPT_TRUNCATION_NOTICE}`;
+  return budget <= RUNTIME_V2_TRANSCRIPT_IDENTITY_CHARACTERS ? RUNTIME_V2_TRANSCRIPT_TRUNCATION_NOTICE : `${value.slice(0, budget)}${RUNTIME_V2_TRANSCRIPT_TRUNCATION_NOTICE}`;
 }
 
 function clipArray(

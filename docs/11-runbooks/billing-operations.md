@@ -165,3 +165,27 @@ webhook id can be paid but never verified — worse than the gateway being off.
 4. Register the webhook and verify a real round-trip reaches the service.
 5. Run one real low-value transaction end to end, then refund it.
 6. Only then enable it for users.
+
+### Paymob (2026-09-30)
+
+Paymob used to be hidden from checkout by a **hard-coded** `testingSoon` flag
+(`CheckoutGatewayView.testingSoon = gateway === PAYMOB`), whatever the admin set.
+That flag is gone: `GET /api/v1/billing/gateways` returns every ENABLED gateway and
+the checkout offers all of them. What still decides whether Paymob appears:
+
+1. Admin -> Payment gateways -> Paymob: all five fields set (`secretKey`, `publicKey`,
+   `apiKey`, `hmacSecret`, `cardIntegrationId`; the API key is required), currency EGP,
+   webhook URL registered with Paymob. Set the fields BEFORE switching Enabled on: the
+   checkout list checks only the Enabled flag, so an enabled Paymob with a missing field
+   is offered and then fails at charge time with `PAYMENT_METHOD_UNAVAILABLE`.
+2. Mode `LIVE` (a label: Paymob's endpoints are the same, the keys decide). A fresh
+   production install seeds `LIVE` (`gateway-config-bootstrap.service.spec.ts`); an
+   install seeded earlier, or a row an admin creates, keeps `TESTING` until an admin
+   changes it.
+3. **Enabled** switched on. Verify `GET /api/v1/billing/gateways` lists `PAYMOB`
+   with a non-empty `publicIdentifier`, then follow steps 4-5 above with a real
+   low-value payment and a refund.
+
+If the credentials came from `.env` on a database that already ran the one-time import
+(`gateway-config-env-import`), the import does NOT run again: set them in the admin
+page instead.

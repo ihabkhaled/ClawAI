@@ -20,8 +20,8 @@ npm run dev
 - Port: 4005
 - Database: postgresql
 - Prisma models: ContextPack, ContextPackAttachment, ContextPackItem, ContextPackTemplate, ContextPackUsage, ContextPackVersion, MemoryAuditLog, MemoryPreference, MemoryRecord, MemorySuggestion, MemoryUsage, WorkspaceObjectEmbedding
-- API endpoints: 49 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 22 (vitest)
+- API endpoints: 51 (see `.ai/manifests/api-endpoints.json`)
+- Test files: 23 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

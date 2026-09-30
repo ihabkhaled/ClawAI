@@ -12,6 +12,9 @@ import type {
   StreamEventType,
   VisibleProgressActorType,
   VisibleProgressStageStatus,
+  ContextSaveStatus,
+  MemoryType,
+  SaveFailureReason,
 } from '@/enums';
 import type { ModelRecencyTier } from '@/enums/model-recency-tier.enum';
 import type { ResearchMode } from '@/enums/research-mode.enum';
@@ -44,9 +47,38 @@ export type ChatThread = {
   useContext: boolean;
   /** ADR-087 — "use relevant previous chats". Opt-in; absent means false. */
   useCrossThreadContext?: boolean;
+  /** Branch lineage — set by the server when this thread was branched. */
+  branchedFromThreadId?: string | null;
+  branchedFromMessageId?: string | null;
+  branchRootThreadId?: string | null;
   createdAt: string;
   updatedAt: string;
   _count?: { messages: number };
+};
+
+/** One thread as a lineage view names it. */
+export type ThreadLineageEntry = {
+  id: string;
+  title: string | null;
+  createdAt: string;
+  branchedFromMessageId: string | null;
+};
+
+/** `GET /chat-threads/:id/lineage` — where a thread sits in its branch family. */
+export type ThreadLineage = {
+  threadId: string;
+  parent: ThreadLineageEntry | null;
+  /** True when this thread was branched from a chat that has since been deleted. */
+  parentDeleted: boolean;
+  forkMessageId: string | null;
+  branches: ThreadLineageEntry[];
+};
+
+/** A lineage entry resolved for display: label and destination. */
+export type ThreadLineageLink = {
+  id: string;
+  label: string;
+  href: string;
 };
 
 export type ChatMessage = {
@@ -142,8 +174,82 @@ export type CreateMessageRequest = {
   model?: string;
   modelDisplayName?: string;
   fileIds?: string[];
+  /** A drawn inpainting mask (PNG file id); only meaningful with fileIds[0] as the source image. */
+  maskFileId?: string;
   researchMode?: ResearchMode;
   researchProviderId?: string;
+  /** Selections from earlier messages this turn replies to (Batch 2). */
+  quotes?: MessageQuoteRequest[];
+};
+
+/**
+ * How to answer again (Batch 4). Absent = the old behaviour (the thread's pinned
+ * model, else the original mode). AUTO re-routes; MANUAL_MODEL needs both ids.
+ */
+export type RegenerateMessageRequest = {
+  routingMode?: RoutingMode;
+  provider?: string;
+  model?: string;
+};
+
+/**
+ * One source an answer was written from, as chat-service stored it
+ * (`metadata.citations`): `index` is the `[n]` the model was shown.
+ */
+export type MessageCitation = {
+  index: number;
+  title: string | null;
+  url: string;
+  snippet: string;
+};
+
+/** What an answer recorded about a chat save (`metadata.contextSave`, ADR-134). */
+export type ContextSaveRecord = {
+  status: ContextSaveStatus;
+  memory?: { id: string; type: MemoryType; preview: string; link: string };
+  memoryFailure?: SaveFailureReason;
+  pack?: { id: string; name: string; created: boolean; link: string };
+  packFailure?: SaveFailureReason;
+  pending?: {
+    suggestedName: string;
+    options: { id: string; name: string }[];
+  };
+};
+
+/** The "which pack?" answer: one offered pack, or a new one. */
+export type ContextSaveChoiceRequest = { packId: string } | { newPack: true };
+
+/** A quote as the send request carries it: the source id and the words. */
+export type MessageQuoteRequest = {
+  sourceMessageId: string;
+  text: string;
+};
+
+/** A quote as stored on a user message's metadata. */
+export type MessageQuote = MessageQuoteRequest & {
+  sourceRole: MessageRole;
+};
+
+/** A quote waiting in the composer; `key` makes the same selection idempotent. */
+export type ComposerQuote = MessageQuoteRequest & {
+  key: string;
+};
+
+/** A selection inside one message that could be quoted, with where to float the button. */
+export type QuotableSelection = {
+  sourceMessageId: string;
+  text: string;
+  top: number;
+  left: number;
+};
+
+/** Per-thread quotes waiting to be sent. Client-only state (rule 03). */
+export type QuoteDraftStore = {
+  byThread: Record<string, ComposerQuote[]>;
+  /** Returns false when the thread already holds the maximum. */
+  addQuote: (threadId: string, quote: MessageQuoteRequest) => boolean;
+  removeQuote: (threadId: string, key: string) => void;
+  clearQuotes: (threadId: string) => void;
 };
 
 export type PinThreadParams = {

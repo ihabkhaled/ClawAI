@@ -4,57 +4,59 @@ Owner: `apps/claw-frontend/src/components/common/pwa-manager.tsx`.
 Related: TD-034 in [`technical-debt.md`](../14-risk-debt/technical-debt.md) (the
 stale-chunk problem the versioned worker URL solved).
 
-## How an update reaches someone
+## What the banner means (since 2026-09-29)
+
+**Exactly one thing: the server now runs a later release than the one this page
+was built as.** Nothing about the service worker decides it.
 
 ```
-deploy  →  /sw.js?v=<new>  differs from the registered worker
-        →  browser installs it; it becomes the WAITING worker
-        →  banner offers it
-        →  Update  →  SKIP_WAITING  →  controllerchange  →  page reloads
+page (APP_VERSION baked at build)  →  GET /api/version  (no-store, per request)
+  deployed > APP_VERSION   →  banner
+  deployed <= APP_VERSION  →  no banner   (page is current, or newer mid-rollout)
+  no answer                →  no banner
+Update  →  SKIP_WAITING to any waiting worker  →  window.location.reload()
+        →  new page's APP_VERSION == deployed  →  no banner
 ```
 
-The worker's script URL carries the version (`serviceWorkerUrl`), which is what
-makes one update distinguishable from another. Without it the only question
-answerable is "is something waiting", and that stays true until the update is
-applied.
+- Route: `apps/claw-frontend/src/app/api/version/route.ts` (served by the
+  frontend through nginx `location /`; `force-dynamic`, `Cache-Control: no-store`).
+- Compare: `isNewerVersion` in `src/utilities/app-version.utility.ts` (numeric
+  dotted compare; unparseable → not newer).
+- Checked at mount, every `PWA_UPDATE_CHECK_INTERVAL_MS` (5 min) and when the
+  tab becomes visible; a hidden tab does not ask.
 
-## Two behaviours that were wrong until 2026-09-20
+## Why the service-worker version failed (twice)
 
-**It waited for a reload to notice a deploy.** The registration was checked once,
-at mount, and a browser only re-checks a worker script on navigation. A tab left
-open all day never learned that a release had happened, so the banner appeared on
-the next reload — after the person had already reloaded, which is the moment it
-is least useful.
+The worker is registered as `/sw.js?v=<APP_VERSION>`, but the **bytes of
+`sw.js` are identical across releases**. So:
 
-Now the page calls `registration.update()` immediately, every
-`PWA_UPDATE_CHECK_INTERVAL_MS` (5 minutes), and whenever the tab becomes
-visible. The check is skipped while the tab is hidden, and the interval is
-cleared on unmount, so a backgrounded tab costs nothing.
+1. **A stale tab never saw a deploy.** `registration.update()` re-fetches the
+   _registered_ URL (`?v=<old>`), gets the same bytes, and finds nothing. The
+   2026-09-20 fix (periodic `update()`) could never have worked.
+2. **A reloaded page — already current — showed the banner.** The new page
+   registers `?v=<new>`; that is a new script URL, so a new worker installs and
+   _waits_ (the old one still controls the page). The banner read "a worker is
+   waiting" as "you are out of date". The 2026-09-20 "seen" key only hid the
+   repeat, not the first false offer, and pressing Update cleared it.
 
-**It asked again after every reload.** Reloading does **not** activate a waiting
-worker — the old one still controls the page — so "is something waiting" stayed
-true and the banner returned on every load until Update was pressed. From the
-reader's side that looks like a banner that will not go away.
-
-Now the version being offered is written to `PWA_UPDATE_SEEN_KEY` the moment the
-banner is shown. A worker whose version matches that value is not offered again:
-reloading past the banner is an answer. A **different** version is a different
-question, so the banner returns for it. Pressing Update clears the key.
+The `PWA_UPDATE_SEEN_KEY` / `isUpdateAlreadySeen` / `serviceWorkerVersion`
+machinery was deleted with this change: with a truthful signal there is nothing
+to suppress. A page that is current never shows the banner; a stale one always
+does until it reloads.
 
 ## What this deliberately does not do
 
-- It does not apply the update by itself. The person decides when their page
-  reloads; a chat mid-answer is not a good moment to swap the bundle.
-- It does not nag. If they reload past it, the offer is gone until the next
-  release — so an update declined on a busy day arrives with the following one,
-  or when every tab is closed and the worker activates on its own.
+- It does not reload by itself. The person decides when; a chat mid-answer is
+  not a good moment to swap the bundle.
+- It does not auto-activate the new worker. Old chunks for stale tabs live
+  only in the old worker's cache (the server no longer has them after a
+  deploy); activating early would delete that cache under those tabs.
 
 ## Verifying it
 
-The worker only registers when `NODE_ENV === 'production'`
-(`shouldRegisterServiceWorker`), on purpose: a dev build reuses chunk URLs, so
-caching them serves stale code. **The local dev stack therefore cannot show this
-banner**, and the behaviour is covered by tests instead:
+The version check runs in every environment; in dev `/api/version` returns the
+same `package.json` version the page was built with, so no banner. The worker
+only registers in production (`shouldRegisterServiceWorker`). Tests:
 
 ```bash
 cd apps/claw-frontend
@@ -62,5 +64,6 @@ npx vitest run src/components/common/__tests__/pwa-manager.test.tsx \
   src/utilities/__tests__/service-worker.utility.test.ts
 ```
 
-To see it for real, a production build has to be served, deployed twice with
-different versions, with the first page left open across the second deploy.
+Live: `curl -sk https://<host>/api/version` shows the deployed version. Open a
+page, bump + deploy, wait ≤5 min (or switch tabs away and back) → banner.
+Reload → gone.

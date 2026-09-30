@@ -32,6 +32,7 @@ const IMAGE_BYTES = Buffer.from('png-bytes-of-a-receipt').toString('base64');
 const assembly = new ContextAssemblyManager(
   new ContextComposerManager(),
   new CrossThreadRetrievalManager({
+    findBranchRoot: async () => Promise.resolve(null),
     findCandidateThreads: async () => Promise.resolve([]),
     findMessagesForThreads: async () => Promise.resolve([]),
   } as never),

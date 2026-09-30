@@ -4,6 +4,7 @@ import {
   presetRequiresAccountId,
 } from '@claw/shared-utilities';
 import { ConnectorAuthType, ConnectorProvider } from '../../../generated/prisma';
+import { gatewayHeadersSchema } from './gateway-headers.dto';
 
 // Cloudflare's account id is spliced into the request PATH of every outbound
 // call, so it is normalised and then held to exactly 32 hex characters here —
@@ -24,6 +25,8 @@ export const createConnectorSchema = z
     region: z.string().max(50, 'Region must be at most 50 characters').optional(),
     workspaceId: z.string().max(100, 'Workspace ID must be at most 100 characters').optional(),
     accountId: connectorAccountIdSchema.optional(),
+    // Extra headers for an LLM gateway in front of the provider (F092).
+    gatewayHeaders: gatewayHeadersSchema.optional(),
     // Optional override of the provider default (`paygDefaultForProvider`). Left
     // out, an OpenAI connector is created metered and an Ollama connector free.
     // Present, the administrator's answer wins — an Ollama-Cloud connector is

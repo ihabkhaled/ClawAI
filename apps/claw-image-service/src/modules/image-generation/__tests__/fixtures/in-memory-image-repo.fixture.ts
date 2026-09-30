@@ -62,6 +62,7 @@ export type InMemoryImageRepo = {
   findMaskAsset: Mock;
   findByUserId: Mock;
   countByUserId: Mock;
+  setAssistantMessageIfUnset: Mock;
 };
 
 const referenceAsset = (
@@ -188,6 +189,15 @@ export const buildInMemoryImageRepo = (
     ),
     findByUserId: vi.fn().mockResolvedValue([]),
     countByUserId: vi.fn().mockResolvedValue(0),
+    // Same guard as the real conditional write: owner only, unset only.
+    setAssistantMessageIfUnset: vi.fn((id: string, userId: string, messageId: string) => {
+      const current = rows.get(id);
+      if (current?.userId !== userId || current.assistantMessageId !== null) {
+        return Promise.resolve(0);
+      }
+      rows.set(id, { ...current, assistantMessageId: messageId });
+      return Promise.resolve(1);
+    }),
   };
 };
 

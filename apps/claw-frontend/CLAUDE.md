@@ -709,6 +709,27 @@ for quiz answers; it used to reach users as raw tag text. `MarkdownRenderer`
   (share pages) deliberately parses **no** HTML — do not add `rehype-raw` there.
 - `details`/`summary`/`kbd`/`mark` have styled components in
   `markdown-components.tsx` (theme tokens, logical properties for RTL).
+- **Citations (ADR-133, rule 41 §16).** `MarkdownRenderer` takes `citations`;
+  when non-empty a remark stage (`remarkCitations`, before every rehype plugin)
+  rewrites text-node `[n]` into `#cite-n` links. The sanitizer must keep those
+  fragment hrefs (`citationIndexFromHref` also accepts `#user-content-cite-n`),
+  and `Anchor` renders `CitationLink` from `CitationsContext` (http(s) only).
+  The memo comparator checks `content` plus citations by index and url — keep
+  it, or every answer re-parses on each keystroke.
+
+## The chat's saved card and its deep links (2026-09-30, ADR-134)
+
+An answer with `metadata.contextSave` renders `ContextSaveCard`
+(`components/chat/context-save-card.tsx`, one controller hook
+`useContextSaveCard`, reader `contextSaveOfMessage`). The "which pack?" buttons
+call `POST /chat-messages/:id/context-save`, then `invalidateThreadMessages` —
+the card always re-renders from the stored record, never from local state.
+Failure reasons are `chat.contextSave.reasons.{PLAN,LIMIT,UNAVAILABLE}`; the
+route's codes map in `api-error-message.utility.ts`. Deep links use the params
+in `constants/deep-link.constants.ts`: `useMemoryPage` opens `?memoryId=` in the
+editor once (`useMemoryDeepLink`), `useContextPage` seeds `selectedPackId` from
+`?packId=`. Both read `useSearchParams` — tests of those hooks must mock
+`next/navigation`.
 
 ## A sent image that cannot load becomes a file card (2026-09-25)
 
@@ -721,3 +742,18 @@ download fails (404 past retention, 401, network — the old
 error page with 200). Never render an `<img>` for an attachment without an
 `onError` fallback. `useAuthenticatedImage` is still used by
 `image-generation-bubble.tsx` only.
+
+## A failed file's `extractionError` is never shown raw (2026-09-29)
+
+`extractionError` is file-service's English sentence. The composer chip shows
+a localized detail picked by CODE (`extractionErrorDetailKey`,
+`utilities/extraction-error.utility.ts`): the video
+`extractionMetadata.media.failureReason` → `mediaUi.attachmentState.failureDetail.*`,
+an archive `ZIP_…:` / `ARCHIVE_…:` prefix → `files.archive.rejected.*`, anything
+else → `failureDetail.generic`. A new backend code needs a map entry in
+`constants/extraction-error.constants.ts` plus the key in all 13 locales of
+`media-ui-translations.ts` and `i18n.types.ts`.
+
+## Inpainting mask editor (2026-09-29)
+
+Image tile in the composer tray offers "Mask edit" -> `MaskEditDialog` (canvas, brush size, erase, clear; pointer, touch, keyboard: Space toggles painting, arrows move, Shift x5). `useMaskEditor` paints a layer the size of the SOURCE image; `exportMask` writes the backend convention (painted = alpha 0, unpainted = opaque, threshold 128) via `paintLayerToMaskPixels`. `useMaskEditorDialog` uploads the PNG through `filesRepository.uploadFile`; `useComposerMaskEdit` keeps one mask, moves the source to `fileIds[0]` (the pipeline edits `imageFiles[0]`) and hands `maskFileId` out once on submit (5th `onSend` arg -> `CreateMessageRequest.maskFileId`). A 422 becomes an assistant message with metadata `image_mask_refusal`, rendered by `ImageMaskRefusalNotice`; both codes also map in `api-error-message.utility.ts`. Keys: `chat.maskEdit.*` (13 locales). Only OpenAI honours masks. Not built: action on generated-image cards; not browser-verified.

@@ -25,7 +25,7 @@ export const ZH_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: '对比',
     intro:
-      'ClawAI 并不打算做一个更好的单一助手。它把 {cloudProviderCount} 家云端供应商与本地开放权重模型汇集在一个工作区中，并把每条消息交给合适的那个。这些页面就用同样的八项能力，把这种做法与人们已在使用的助手逐一对照。',
+      'ClawAI 并不打算做一个更好的单一助手。它把 {cloudProviderCount} 家云端供应商与本地开放权重模型放在同一个工作区里，并把每条消息交给合适的那个。这些页面就用同样的八项能力，把这种做法与人们已在使用的助手逐一对照。',
     cardsTitle: '选择一款助手进行对比',
     cardCta: '与 {rival} 对比',
     coversTitle: '每篇对比涵盖什么',
@@ -164,7 +164,7 @@ export const ZH_COMPARISON_CONTENT: ComparisonDictionary = {
       faq: [
         {
           question: 'ClawAI 能使用 Gemini 模型吗？',
-          answer: '可以。Google 是清单中九个模型家族之一，在同一个工作区的任何对话中都可使用。',
+          answer: '可以。Google 是清单中九个模型家族之一，在同一个工作区中的任何对话中都可使用。',
         },
         {
           question: 'ClawAI 能连接 Google Workspace 吗？',
@@ -306,7 +306,7 @@ export const ZH_COMPARISON_CONTENT: ComparisonDictionary = {
       vendor: 'Alibaba',
       eyebrow: 'ClawAI 与 Qwen 对比',
       intro:
-        'Qwen 是现有最完整的开源权重家族之一：尺寸阶梯很宽，多语言覆盖扎实，大部分产品线还采用宽松许可。ClawAI 把这一类模型与另外八个家族一起放在同一个工作区中。',
+        'Qwen 是现有最完整的开源权重家族之一：尺寸阶梯很宽，多语言覆盖扎实，大部分产品线还采用宽松许可。ClawAI 把这一类模型与另外八个家族一起放在同一个工作区里。',
       theirStrength:
         '广度。尺寸从能在笔记本上跑的一直到需要服务器的，另有视觉与代码变体，在英语之外也确实好用，许可证还让商用自托管变得直截了当。',
       ourDifference:

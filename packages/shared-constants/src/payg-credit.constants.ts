@@ -64,7 +64,13 @@ export const PAYG_DEFAULT_PROVIDERS: readonly string[] = Object.freeze([
  * rate of 0, which would silently make a metered provider free. Asserted in
  * code and tested.
  */
-export const PAYG_EXEMPT_PROVIDERS: readonly string[] = Object.freeze(['OLLAMA', 'LLAMACPP']);
+export const PAYG_EXEMPT_PROVIDERS: readonly string[] = Object.freeze([
+  'OLLAMA',
+  'LLAMACPP',
+  // The local speech container (speaches, ADR-128): free STT and read-aloud on
+  // the operator's own CPU. Not a connector row, so nothing else classifies it.
+  'LOCAL',
+]);
 
 /**
  * Smallest answer worth spending someone's last cents on.

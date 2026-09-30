@@ -34,9 +34,15 @@ enum MessageRole {
 /// user, so without this every agent run appeared in the user's chat list
 /// beside their own conversations. WEB is the default so that every thread
 /// that already exists stays exactly where it was.
+///
+/// CODING_AGENT_CLI is the headless CLI. It is the same coding agent family as
+/// CODING_AGENT (the VS Code extension): every read that admits CODING_AGENT
+/// admits it too, so both surfaces share one history, while the value itself
+/// lets each surface label where a thread was started.
 enum ThreadOrigin {
   WEB
   CODING_AGENT
+  CODING_AGENT_CLI
 }
 
 model ChatThread {
@@ -74,6 +80,15 @@ model ChatThread {
   // when reading their messages — so this can surface your own past
   // conversations and nothing else. Per-thread opt-OUT remains.
   useCrossThreadContext Boolean  @default(true) @map("use_cross_thread_context")
+  // === Branch lineage (chat-supremacy Batch 1) ===
+  // Plain ids, not relations: deleting the source must not delete or block its
+  // branches, and a branch whose source is gone says so rather than vanishing.
+  // `branchRootThreadId` is the first ancestor, copied down on every branch, so
+  // one indexed read finds the whole family — cross-thread retrieval excludes
+  // it, otherwise a branch could read what the original said AFTER the fork.
+  branchedFromThreadId  String?  @map("branched_from_thread_id")
+  branchedFromMessageId String?  @map("branched_from_message_id")
+  branchRootThreadId    String?  @map("branch_root_thread_id")
   createdAt          DateTime    @default(now()) @map("created_at")
   updatedAt          DateTime    @updatedAt @map("updated_at")
 
@@ -81,6 +96,8 @@ model ChatThread {
 
   @@index([userId])
   @@index([userId, origin])
+  @@index([userId, branchedFromThreadId])
+  @@index([userId, branchRootThreadId])
   @@index([createdAt])
   @@map("chat_threads")
 }

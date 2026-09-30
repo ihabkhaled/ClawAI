@@ -30,6 +30,15 @@ const storedPolicy = {
   requireApproval: [],
   maximumRetentionDays: 30,
   minimumPermissionMode: 'ASK',
+  rules: [],
+  trust: { repositories: [], domains: [], commands: [] },
+  mcpServers: { allow: [], deny: [] },
+};
+
+const noGuardrails = {
+  rules: [],
+  trust: { repositories: [], domains: [], commands: [] },
+  mcpServers: { allow: [], deny: [] },
 };
 
 describe('OrganizationPolicyService', () => {
@@ -127,6 +136,7 @@ describe('OrganizationPolicyService', () => {
         requireApproval: [],
         maximumRetentionDays: 30,
         minimumPermissionMode: 'ASK',
+        ...noGuardrails,
       });
 
       expect(upsertPolicy).toHaveBeenCalledWith(
@@ -154,6 +164,7 @@ describe('OrganizationPolicyService', () => {
           requireApproval: [],
           maximumRetentionDays: 3_650,
           minimumPermissionMode: null,
+          ...noGuardrails,
         }),
       ).rejects.toBeInstanceOf(ForbiddenException);
       expect(upsertPolicy).not.toHaveBeenCalled();

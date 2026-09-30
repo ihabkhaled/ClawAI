@@ -16,15 +16,50 @@
  */
 export const TRANSCRIPTION_PROVIDER_PRIORITY: readonly string[] = ['GEMINI', 'OPENAI'];
 
+/**
+ * The free local speech container (ADR-128). Not a connector row: it never
+ * appears in the models snapshot, so the capability client appends it AFTER
+ * every cloud candidate. Its model is fixed like OpenAI's whisper-1 — the same
+ * `Systran/faster-whisper-small` the compose `speech` service pre-pulls, so the
+ * two must change together. Multilingual on purpose (`.en` variants are not).
+ */
+export const LOCAL_TRANSCRIPTION_PROVIDER = 'LOCAL';
+export const LOCAL_TRANSCRIPTION_MODEL = 'Systran/faster-whisper-small';
+/** speaches ignores auth; the OpenAI adapter still sends a bearer, so send an inert one. */
+export const LOCAL_TRANSCRIPTION_API_KEY = 'local';
+/** The OpenAI-compatible API root under the container's base URL. */
+export const LOCAL_SPEECH_API_PATH = '/v1';
+export const LOCAL_SPEECH_HEALTH_PATH = '/health';
+export const LOCAL_SPEECH_PROBE_TIMEOUT_MS = 2_000;
+
 /** The modality string connector-service puts in `modalitiesIn` for audio. */
 export const TRANSCRIPTION_AUDIO_MODALITY = 'AUDIO';
 
 /**
  * OpenAI's snapshot rows are CHAT models; none of them is the transcription
  * deployment. The capability lookup proves OpenAI is configured and reachable,
- * this constant names the endpoint's actual model.
+ * these constants name the endpoint's actual model.
+ *
+ * Plain audio uploads use the cheaper gpt-4o-mini-transcribe (50 micro-USD per
+ * audio second, routing seed v10). It supports only `json`/`text` responses:
+ * no `duration`, no `segments`. A video's derived audio needs the timestamped
+ * segments, so it stays on whisper-1 (`verbose_json`). A constant map, not an
+ * env var: model choice is code, prices are DB rows.
  */
-export const OPENAI_TRANSCRIPTION_MODEL = 'whisper-1';
+export const OPENAI_TRANSCRIPTION_SEGMENTS_MODEL = 'whisper-1';
+export const OPENAI_TRANSCRIPTION_PLAIN_MODEL = 'gpt-4o-mini-transcribe';
+
+/** OpenAI transcription models that reject `response_format=verbose_json`. */
+export const OPENAI_JSON_ONLY_TRANSCRIPTION_MODELS: readonly string[] = [
+  'gpt-4o-transcribe',
+  'gpt-4o-mini-transcribe',
+];
+
+export const OPENAI_RESPONSE_FORMAT_JSON = 'json';
+export const OPENAI_RESPONSE_FORMAT_VERBOSE_JSON = 'verbose_json';
+
+/** Temp file name for the ffprobe copy of an audio upload (inside a per-job temp dir). */
+export const AUDIO_PROBE_TEMP_NAME = 'audio-probe';
 
 export const OPENAI_TRANSCRIPTION_DEFAULT_BASE_URL = 'https://api.openai.com/v1';
 export const GEMINI_TRANSCRIPTION_DEFAULT_BASE_URL =
@@ -79,10 +114,10 @@ export const TRANSCRIPTION_MAX_CANDIDATES_PER_PROVIDER = 2;
 
 /**
  * Providers whose snapshot row only proves "configured": the model actually
- * called is fixed (`OPENAI_TRANSCRIPTION_MODEL`), so a second row would be the
+ * called is fixed (`OPENAI_TRANSCRIPTION_*_MODEL`), so a second row would be the
  * same call twice, and the row's own name says nothing about stability.
  */
-export const TRANSCRIPTION_FIXED_MODEL_PROVIDERS: readonly string[] = ['OPENAI'];
+export const TRANSCRIPTION_FIXED_MODEL_PROVIDERS: readonly string[] = ['OPENAI', 'LOCAL'];
 
 /**
  * Model-key fragments that mark a row as NOT a plain transcription model:

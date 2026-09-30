@@ -21,7 +21,6 @@ import {
   RUNTIME_V2_CONTINUATION_HISTORY_MESSAGES,
 } from '../constants/runtime-v2-run.constants';
 import { THREAD_CONTEXT_LIMIT } from '../../../common/constants';
-import { RUNTIME_V2_TURN_EXECUTION_OPTIONS } from '../constants/runtime-v2-execution.constants';
 import {
   PAYG_WORKFLOW_CODING_AGENT,
   PAYG_WORKFLOW_CODING_AGENT_REPAIR,
@@ -59,6 +58,11 @@ import {
   RUNTIME_V2_INTENT_CORRECTION_ATTEMPTS,
   RUNTIME_V2_INTENT_CORRECTION_INSTRUCTION,
 } from '../utilities/runtime-v2-model-output.utility';
+import {
+  runtimeV2OutputFromNativeCalls,
+  runtimeV2TurnExecutionOptions,
+  settleNativeTurn,
+} from '../utilities/runtime-v2-native-tools.utility';
 import { ChatExecutionManager } from './chat-execution.manager';
 import { ContextAssemblyManager } from './context-assembly.manager';
 import { ChatContextGatewayManager } from './chat-context-gateway.manager';
@@ -68,6 +72,10 @@ import {
   RUNTIME_V2_OUTPUT_RESERVE_TOKENS,
 } from '../constants/runtime-v2-transcript.constants';
 import type { RuntimeThreadContext } from '../types/runtime-thread-context.types';
+import {
+  runtimeV2ContinuationFileIds,
+  runtimeV2ResultFilesNote,
+} from '../utilities/runtime-v2-result-files.utility';
 
 @Injectable()
 export class RuntimeV2LoopManager {
@@ -253,6 +261,10 @@ export class RuntimeV2LoopManager {
       model: binding.model,
       maxOutputTokens: RUNTIME_V2_OUTPUT_RESERVE_TOKENS,
       routingMode: RoutingMode.MANUAL_MODEL,
+      // F030: images the tool returned ride the ordinary attachment path. The
+      // tool-result message is the last user-role turn, so a seeing lane gets
+      // the bytes on it and a blind lane gets the honest no-vision note.
+      ...runtimeV2ContinuationFileIds(history, command.result.fileIds),
     });
     const resultDocument = JSON.stringify({
       status: command.result.status,
@@ -266,6 +278,7 @@ export class RuntimeV2LoopManager {
         context.systemPrompt,
         buildRuntimeV2ModelInstruction(binding.toolDefinitions),
         `The trusted executor returned this redacted tool result: ${resultDocument}`,
+        runtimeV2ResultFilesNote(command.result.fileIds),
       ]
         .filter((value): value is string => value !== null)
         .join('\n\n'),
@@ -366,6 +379,7 @@ export class RuntimeV2LoopManager {
           generation: binding.generation,
           invocationId: command.result.invocationId,
           kind: 'tool-result',
+          ...(command.result.fileIds === undefined ? {} : { fileIds: command.result.fileIds }),
         },
       },
     });
@@ -486,7 +500,7 @@ export class RuntimeV2LoopManager {
           false,
           undefined,
           routingMode,
-          RUNTIME_V2_TURN_EXECUTION_OPTIONS,
+          runtimeV2TurnExecutionOptions(binding.toolDefinitions),
           TokenLedgerContext.CHAT,
           {
             surface: PaygSurface.CODING_AGENT,
@@ -578,7 +592,9 @@ export class RuntimeV2LoopManager {
     // the model replied `DONE`, the run recorded `run.completed`, and the
     // workspace was empty — the silent stop wearing the face of success.
     // Continuations are exempt because by then "done" is usually true.
-    return firstTurn && isHollowCompletion(turn.output.content) ? this.nudgeIntoActing(binding, runtimeContext, routingMode, turn, isHollowCompletion) : turn;
+    return firstTurn && isHollowCompletion(turn.output.content)
+      ? this.nudgeIntoActing(binding, runtimeContext, routingMode, turn, isHollowCompletion)
+      : turn;
   }
 
   /**
@@ -679,14 +695,27 @@ export class RuntimeV2LoopManager {
     response: Awaited<ReturnType<ChatExecutionManager['callProvider']>>;
     output: ReturnType<typeof parseRuntimeV2ModelOutput>;
   }> {
-    let response = await this.callRuntimeProvider(binding, runtimeContext, routingMode);
+    let turn = await settleNativeTurn(
+      this.callRuntimeProvider(binding, runtimeContext, routingMode),
+    );
+    let lastContent = '';
     let rejection: unknown;
     let repairs = 0;
     for (;;) {
       try {
+        // A native call the provider layer could not map back is the same kind
+        // of mistake as a malformed text request, so it gets the repair turn
+        // instead of ending the run.
+        if (turn.response === undefined) throw turn.error;
+        const response = turn.response;
+        lastContent = response.content;
         return {
           response,
-          output: parseRuntimeV2ModelOutput(response.content, binding.toolDefinitions),
+          // A native call is the provider's own structured answer; only without
+          // one is the text searched for a request the model wrote by hand.
+          output:
+            runtimeV2OutputFromNativeCalls(response.toolCalls, binding.toolDefinitions) ??
+            parseRuntimeV2ModelOutput(response.content, binding.toolDefinitions),
         };
       } catch (error: unknown) {
         rejection = error;
@@ -697,7 +726,9 @@ export class RuntimeV2LoopManager {
         this.logger.warn(
           `Runtime V2 repair ${String(repairs)}/${String(repairAttemptsFor(error))}: ${repairDiagnosis(error)}`,
         );
-        response = await this.repairTurn(binding, runtimeContext, routingMode, error, repairs);
+        turn = await settleNativeTurn(
+          this.repairTurn(binding, runtimeContext, routingMode, error, repairs),
+        );
       }
     }
     // The repair turns were the chances and none was taken. That is a run that
@@ -710,11 +741,7 @@ export class RuntimeV2LoopManager {
     // the quoted request is the long part, so putting the reason last would
     // make it the first thing lost — and it is the part worth reading.
     throw new BusinessException(
-      [
-        RUNTIME_V2_UNREPAIRABLE_REQUEST_MESSAGE,
-        repairDiagnosis(rejection),
-        excerpt(response.content),
-      ]
+      [RUNTIME_V2_UNREPAIRABLE_REQUEST_MESSAGE, repairDiagnosis(rejection), excerpt(lastContent)]
         .filter((value) => value.length > 0)
         .join(' '),
       RUNTIME_V2_UNREPAIRABLE_REQUEST_CODE,
@@ -755,7 +782,7 @@ export class RuntimeV2LoopManager {
       false,
       undefined,
       routingMode,
-      RUNTIME_V2_TURN_EXECUTION_OPTIONS,
+      runtimeV2TurnExecutionOptions(binding.toolDefinitions),
       TokenLedgerContext.CHAT,
       {
         surface: PaygSurface.CODING_AGENT,

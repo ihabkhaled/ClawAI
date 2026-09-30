@@ -5,10 +5,8 @@ import { SpeechProvider } from '../../../common/enums';
 import { SpeechProviderError } from '../../../common/errors';
 import { httpPostBinary, httpRequest } from '../../../common/utilities';
 import {
-  GEMINI_TTS_BASE_URL,
   GEMINI_TTS_CHANNELS,
   GEMINI_TTS_RESPONSE_MODALITY,
-  OPENAI_SPEECH_URL,
   OPENAI_TTS_RESPONSE_FORMAT,
   SPEECH_MIME_MP3,
   SPEECH_MIME_WAV,
@@ -24,6 +22,11 @@ import {
   isOpenAiRateLimited,
   parseRetryDelayMs,
 } from '../utilities/speech-rate-limit.utility';
+import {
+  geminiSpeechUrl,
+  openAiSpeechUrl,
+  speechProviderBaseUrl,
+} from '../utilities/speech-provider-url.utility';
 import { pcm16ToWav, pcmSampleRate } from '../utilities/wav-audio.utility';
 
 /**
@@ -38,22 +41,27 @@ import { pcm16ToWav, pcmSampleRate } from '../utilities/wav-audio.utility';
  * `AbortError`, reported like the deadline); the provider may still finish
  * rendering upstream — nothing here claims it stopped.
  *
- * Fixed provider hosts, not the connector's base URL: the speech endpoints
- * are not the OpenAI-compatible chat paths a connector base URL points at.
+ * Host: the connector's configured base URL when set (like chat completions),
+ * else the provider default (`speechProviderBaseUrl`). The allowlist is
+ * declared from that base, never from the finished URL.
  */
 @Injectable()
 export class SpeechProviderClient {
   async synthesize(request: SpeechProviderRequest): Promise<SynthesizedAudio> {
-    return request.candidate.provider === SpeechProvider.OPENAI
-      ? this.openAi(request)
-      : this.gemini(request);
+    return request.candidate.provider === SpeechProvider.GEMINI
+      ? this.gemini(request)
+      : this.openAi(request);
   }
 
-  /** OpenAI `/audio/speech`: MP3 bytes, no usage (settled on characters sent). */
+  /**
+   * OpenAI `/audio/speech`: MP3 bytes, no usage (settled on characters sent).
+   * The LOCAL container speaks the same API, so it takes this path with its own base.
+   */
   private async openAi(request: SpeechProviderRequest): Promise<SynthesizedAudio> {
+    const base = speechProviderBaseUrl(request.candidate.provider, request.baseUrl);
     const response = await this.guard(() =>
       httpPostBinary({
-        url: OPENAI_SPEECH_URL,
+        url: openAiSpeechUrl(base),
         headers: { Authorization: `Bearer ${request.apiKey}` },
         body: {
           model: request.candidate.model,
@@ -62,7 +70,7 @@ export class SpeechProviderClient {
           response_format: OPENAI_TTS_RESPONSE_FORMAT,
         },
         timeoutMs: request.candidate.timeoutMs,
-        allowedHosts: declaredHost(OPENAI_SPEECH_URL),
+        allowedHosts: declaredHost(base),
         signal: request.signal,
       }),
     );
@@ -83,7 +91,8 @@ export class SpeechProviderClient {
 
   /** Gemini `generateContent` with AUDIO modality: base64 PCM + usageMetadata → WAV. */
   private async gemini(request: SpeechProviderRequest): Promise<SynthesizedAudio> {
-    const url = `${GEMINI_TTS_BASE_URL}/models/${encodeURIComponent(request.candidate.model)}:generateContent`;
+    const base = speechProviderBaseUrl(SpeechProvider.GEMINI, request.baseUrl);
+    const url = geminiSpeechUrl(base, request.candidate.model);
     const response = await this.guard(() =>
       httpRequest<GeminiSpeechResponse>({
         url,
@@ -98,7 +107,7 @@ export class SpeechProviderClient {
           },
         },
         timeoutMs: request.candidate.timeoutMs,
-        allowedHosts: declaredHost(GEMINI_TTS_BASE_URL),
+        allowedHosts: declaredHost(base),
         signal: request.signal,
       }),
     );

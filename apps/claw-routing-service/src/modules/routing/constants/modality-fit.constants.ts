@@ -28,3 +28,6 @@ export const MODALITY_FIT_PROMPT_NOTES: Readonly<Record<ModalityFit, string>> = 
   [ModalityFit.TRANSFORMED]: 'cannot read every attachment itself; ClawAI converts them to text',
   [ModalityFit.DEGRADED]: 'cannot read an attachment; it would get only a partial text version',
 };
+
+/** Reason tag when a non-cloud-router AUTO path's pick was demoted for modality fit. */
+export const MODALITY_FIT_RERANKED_TAG = 'modality_fit_reranked';

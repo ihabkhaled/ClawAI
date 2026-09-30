@@ -10,7 +10,9 @@ import { AgentCommandRepository } from '../repositories/agent-command.repository
 import { AgentSessionRepository } from '../repositories/agent-session.repository';
 import { ScheduledCommandRepository } from '../repositories/scheduled-command.repository';
 import { CommandRiskService } from '../services/command-risk.service';
-import type { ScheduledCommand } from '../../../generated/prisma';
+import { RunnerService } from '../services/runner.service';
+import { ScheduledCommandKind } from '../../../common/enums/scheduled-command-kind.enum';
+import type { ScheduledCommand, TerminalCommand } from '../../../generated/prisma';
 
 @Injectable()
 export class SchedulerManager {
@@ -21,6 +23,7 @@ export class SchedulerManager {
     private readonly commandRepo: AgentCommandRepository,
     private readonly sessionRepo: AgentSessionRepository,
     private readonly riskService: CommandRiskService,
+    private readonly runners: RunnerService,
   ) {}
 
   @Interval(SCHEDULER_TICK_MS)
@@ -41,14 +44,27 @@ export class SchedulerManager {
     }
   }
 
-  private async fireOne(scheduled: ScheduledCommand, now: Date): Promise<void> {
+  /**
+   * Fires one scheduled command now and advances its next run. Public so a
+   * remote trigger (F029) runs exactly the path the timer runs. Null when
+   * nothing can receive it now: no connected session on the device, or for a
+   * PROMPT routine (F099) no live runner carrying its labels.
+   */
+  async fireOne(scheduled: ScheduledCommand, now: Date): Promise<TerminalCommand | null> {
+    if (scheduled.kind === ScheduledCommandKind.PROMPT) {
+      return this.firePrompt(scheduled, now);
+    }
+    if (scheduled.deviceId === null) {
+      this.logger.warn(`scheduled ${scheduled.id}: command routine without a device; skipped`);
+      return null;
+    }
     const sessions = await this.sessionRepo.findConnectedForDevice(scheduled.deviceId);
     const session = sessions[0];
     if (session === undefined) {
       this.logger.debug(
         `scheduled ${scheduled.id}: no connected session for device ${scheduled.deviceId}; deferring`,
       );
-      return;
+      return null;
     }
     const assessment = await this.riskService.assess(scheduled.command);
     const expiresAt = new Date(Date.now() + COMMAND_EXPIRY_MS);
@@ -78,5 +94,21 @@ export class SchedulerManager {
     const nextRunAt = new Date(now.getTime() + scheduled.intervalMinutes * 60 * 1000);
     await this.scheduledRepo.markRun(scheduled.id, created.id, nextRunAt);
     this.logger.log(`scheduled ${scheduled.id} fired → command ${created.id} (status=${status})`);
+    return created;
+  }
+
+  private async firePrompt(
+    scheduled: ScheduledCommand,
+    now: Date,
+  ): Promise<TerminalCommand | null> {
+    const created = await this.runners.dispatchPrompt(scheduled);
+    if (created === null) {
+      this.logger.debug(`scheduled ${scheduled.id}: no live runner matches its labels; deferring`);
+      return null;
+    }
+    const nextRunAt = new Date(now.getTime() + scheduled.intervalMinutes * 60 * 1000);
+    await this.scheduledRepo.markRun(scheduled.id, created.id, nextRunAt);
+    this.logger.log(`prompt routine ${scheduled.id} fired → runner job ${created.id}`);
+    return created;
   }
 }

@@ -110,15 +110,15 @@ Decisions: [ADR-116](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/
 
 ## 6. Conversation power tools — Shipped
 
-| Capability                                                                       | Evidence                                                                           | Limits                                                                                           |
-| -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Branch a conversation from any message                                           | `chat-threads.controller.ts` `POST :id/branch`; `message-branch-action.tsx`        | —                                                                                                |
-| Edit a prompt and rerun the thread from it                                       | `chat-messages.controller.ts` `POST :id/edit`                                      | Deletes the messages below, behind a warning                                                     |
-| Find in a conversation and jump to the message; search across threads            | `use-in-thread-search.ts`, `use-jump-to-message.ts`, `use-global-thread-search.ts` | —                                                                                                |
-| Export a whole conversation                                                      | `use-export-thread.ts`                                                             | **Markdown only**; single answers export in 8 formats (flagship 2)                               |
+| Capability                                                                       | Evidence                                                                           | Limits                                                                                                                                            |
+| -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Branch a conversation from any message                                           | `chat-threads.controller.ts` `POST :id/branch`; `message-branch-action.tsx`        | —                                                                                                                                                 |
+| Edit a prompt and rerun the thread from it                                       | `chat-messages.controller.ts` `POST :id/edit`                                      | Deletes the messages below, behind a warning                                                                                                      |
+| Find in a conversation and jump to the message; search across threads            | `use-in-thread-search.ts`, `use-jump-to-message.ts`, `use-global-thread-search.ts` | —                                                                                                                                                 |
+| Export a whole conversation                                                      | `use-export-thread.ts`                                                             | **Markdown only**; single answers export in 8 formats (flagship 2)                                                                                |
 | Cross-thread context, on by default, own threads only                            | `useCrossThreadContext @default(true)` in the chat schema                          | Off per thread; [ADR-087](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-087-cross-thread-retrieval.md) predates the default flip |
-| Prompt history with up and down                                                  | `use-rich-prompt-textarea.ts` `recallHistory`                                      | —                                                                                                |
-| Threads named from their opening sentence; model reasoning kept after the stream | `derive-thread-title.utility.ts`; `message-reasoning-panel.tsx`                    | Title costs no tokens                                                                            |
+| Prompt history with up and down                                                  | `use-rich-prompt-textarea.ts` `recallHistory`                                      | —                                                                                                                                                 |
+| Threads named from their opening sentence; model reasoning kept after the stream | `derive-thread-title.utility.ts`; `message-reasoning-panel.tsx`                    | Title costs no tokens                                                                                                                             |
 
 ## 7. Read aloud — Shipped
 
@@ -234,5 +234,8 @@ Decision: [ADR-076](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/a
 - [ADR-087](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-087-cross-thread-retrieval.md) says cross-thread context
   is off by default; it has been on by default since migration
   `20260917000000_cross_thread_context_on_by_default`.
-- The Team plan's seeded description ("Shared workspaces and a large pooled
-  allowance") promises pooling that does not exist — REQ-POS-005.
+- ~~The Team plan's seeded description ("Shared workspaces and a large pooled
+  allowance") promised pooling that does not exist~~ — fixed 2026-09-29
+  (migration `20260929100000_team_plan_description_drops_pooling_claim`, seed text
+  now "A large monthly allowance for heavy daily use."); the feature itself is
+  still REQ-POS-005.

@@ -14,6 +14,7 @@ import { HealthEventsRepository } from '../repositories/health-events.repository
 import { SyncRunsRepository } from '../repositories/sync-runs.repository';
 import { ConnectorsRepository } from '../repositories/connectors.repository';
 import { withKnownContextWindows } from '../utilities/model-context-window.utility';
+import { parseGatewayHeaders } from '../utilities/gateway-headers.utility';
 import { getAdapter } from './adapters/adapter-factory';
 import { type ConnectorConfig } from './provider-adapter.interface';
 import { type HealthCheckResult, type SyncModelsResult } from '../types/connectors.types';
@@ -157,8 +158,15 @@ export class ConnectorsManager {
     const apiKey = connector.encryptedConfig
       ? decrypt(connector.encryptedConfig, config.ENCRYPTION_KEY)
       : '';
+    const gatewayHeaders = parseGatewayHeaders(
+      connector.encryptedGatewayHeaders
+        ? decrypt(connector.encryptedGatewayHeaders, config.ENCRYPTION_KEY)
+        : null,
+    );
+    const gatewayHeaderCount = Object.keys(gatewayHeaders).length;
+    // Names and values are both withheld: a gateway header is a credential.
     this.logger.debug(
-      `getDecryptedConfig: config decrypted — hasApiKey=${String(apiKey.length > 0)} baseUrl=${connector.baseUrl ?? 'default'}`,
+      `getDecryptedConfig: config decrypted — hasApiKey=${String(apiKey.length > 0)} baseUrl=${connector.baseUrl ?? 'default'} gatewayHeaders=${String(gatewayHeaderCount)}`,
     );
 
     return {
@@ -168,6 +176,7 @@ export class ConnectorsManager {
       region: connector.region ?? undefined,
       workspaceId: connector.workspaceId ?? undefined,
       accountId: connector.accountId ?? undefined,
+      ...(gatewayHeaderCount > 0 ? { gatewayHeaders } : {}),
     };
   }
 

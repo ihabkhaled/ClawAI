@@ -215,6 +215,14 @@ in routing-service's `740_040_00N` block) → `SeedExecution` ledger row keyed o
   HD image was charged the standard price. Fills a gap; no
   `replacesFallbackRate` (the key was never requested before v9). Deploy
   routing BEFORE image-service, or every HD hold is `PAYG_MODEL_UNPRICED`.
+- **gpt-4o transcription** (seed **v10**, `model-cost-list-prices-2026-v10`,
+  2026-09-29): NEW keys `OPENAI:gpt-4o-transcribe` 100 and
+  `OPENAI:gpt-4o-mini-transcribe` 50 micro-USD per SECOND of audio
+  (`audioPerUnitMicroUsd`; OpenAI's published estimate $0.006 / $0.003 per
+  minute, https://developers.openai.com/api/docs/pricing, fetched 2026-09-29),
+  token rates 0 because file-service settles on duration. Fills gaps.
+  file-service still calls only `whisper-1` (`OPENAI_TRANSCRIPTION_MODEL` is a
+  constant, not data-driven) — using these needs a caller change.
 - **Correcting a seeded price**: set `supersedesSeededPrice: true` on the entry
   and bump the seed version. A model whose ACTIVE row is still `source: SEED`
   (never an override, never a synced row) and whose rates differ gets that row
@@ -395,9 +403,17 @@ transformable ⊆ required). They land on `RoutingContext` and reach
 - The cloud router prompt gets an `ATTACHMENTS:` line and a fit note per
   candidate; the decision gets `modalityFit:direct|transformed|degraded` in
   `reasonTags`. `routerModel` provenance and the plan gate are untouched.
-- Only the cloud-router path ranks by fit. The keyword capability router, the
-  Ollama-assisted path and the heuristic fallback do not (chat still serves any
-  model honestly — frames + transcript, OCR, transcript).
+- Every AUTO path ranks by fit (2026-09-29). The cloud router ranks its
+  candidates before it picks; the keyword capability router, privacy-local,
+  Ollama-assisted, category and heuristic paths pick first, then
+  `RoutingManager.withModalityFit` → `CloudRouterEligibilityManager.rankDecisionByModalityFit`
+  → pure `rankDecisionByModalityFit` stable-sorts `[selected, ...fallbackChain]`
+  by the same `modalityFitOf` tiers. Nothing is removed (chat still transforms);
+  a demoted pick adds `modality_fit_reranked`, every ranked decision adds
+  `modalityFit:<fit>`, and one log line names the before/after pick and fit.
+  Entries are keyed with `catalogMatchKey` (`local-ollama` → `OLLAMA`); a model
+  with no catalog row ranks as "no known modality". No attachments → no catalog
+  read, decision untouched. Image/file generation and `UNAVAILABLE` are never ranked.
 - `findRoutableForCloudRouting` now also selects `supportsVision` and
   `definition.modalitiesIn`.
 

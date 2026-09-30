@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { COMPOSER_SEED_STORAGE_KEY } from '@/constants/chat.constants';
 import { DEFAULT_RESEARCH_OPTIONS } from '@/constants/research.constants';
 import { ResearchMode } from '@/enums/research-mode.enum';
+import { useComposerMaskEdit } from '@/hooks/chat/use-composer-mask-edit';
 import { useComposerAttachments } from '@/hooks/files/use-composer-attachments';
 import { useResearchProviders } from '@/hooks/research/use-research-providers';
 import { useTranslation } from '@/lib/i18n';
@@ -24,6 +25,7 @@ export const useMessageComposerState = ({
   isPending,
   selectedModel,
   threadId,
+  quoteCount = 0,
 }: UseMessageComposerStateParams): UseMessageComposerStateReturn => {
   // Seeded from the saved draft rather than restored in an effect: an effect
   // would render an empty composer first and then fill it, which reads as the
@@ -47,6 +49,12 @@ export const useMessageComposerState = ({
     onChange: setSelectedFileIds,
     disabled: isPending,
   });
+
+  const maskEdit = useComposerMaskEdit({
+    selectedFileIds,
+    onSelectedFileIdsChange: setSelectedFileIds,
+  });
+  const { consumeMaskFor } = maskEdit;
 
   // Put the text back when a send was refused.
   //
@@ -116,10 +124,11 @@ export const useMessageComposerState = ({
     }
     // Files alone are a message: an empty prompt with a voice note or a PDF
     // attached is sent as-is, and chat-service tells the model to respond to
-    // the attachment itself.
+    // the attachment itself. A quoted selection counts the same way — "explain
+    // this" with nothing typed is a complete question.
     const result = sendMessageSchema.safeParse({
       content: content.trim(),
-      fileCount: selectedFileIds.length,
+      fileCount: selectedFileIds.length + quoteCount,
     });
     if (!result.success) {
       logger.warn({
@@ -143,12 +152,20 @@ export const useMessageComposerState = ({
         researchMode: research.mode,
       },
     });
-    onSend(
-      result.data.content,
-      selectedModel ?? undefined,
-      selectedFileIds.length > 0 ? selectedFileIds : undefined,
-      research.mode === ResearchMode.NONE ? undefined : research,
-    );
+    const sentFileIds = selectedFileIds.length > 0 ? selectedFileIds : undefined;
+    const sentResearch = research.mode === ResearchMode.NONE ? undefined : research;
+    const maskFileId = consumeMaskFor(sentFileIds);
+    if (maskFileId === undefined) {
+      onSend(result.data.content, selectedModel ?? undefined, sentFileIds, sentResearch);
+    } else {
+      onSend(
+        result.data.content,
+        selectedModel ?? undefined,
+        sentFileIds,
+        sentResearch,
+        maskFileId,
+      );
+    }
     setContent('');
     // Cleared explicitly rather than left to the effect: the message has been
     // sent, so a draft of it is no longer a draft.
@@ -163,6 +180,8 @@ export const useMessageComposerState = ({
     research,
     threadId,
     isUploadingAttachment,
+    consumeMaskFor,
+    quoteCount,
     t,
   ]);
 
@@ -221,5 +240,6 @@ export const useMessageComposerState = ({
     dismissAttachmentUpload,
     pendingUploads,
     removeAttachment,
+    maskEdit,
   };
 };

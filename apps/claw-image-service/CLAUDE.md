@@ -76,7 +76,21 @@ Image generation microservice for the Claw platform. Orchestrates image generati
    `ImageExecutionManager.loadStoredReference` (owner-checked by file-service);
    an unreadable reference fails `IMAGE_REFERENCE_UNAVAILABLE` rather than
    silently generating without it. Response reads include OUTPUT assets only
-   (`IMAGE_OUTPUT_ASSETS_INCLUDE`).
+   (`IMAGE_OUTPUT_ASSETS_INCLUDE`). **Bare base64 with no `referenceFileId`**
+   (2026-09-29) is first stored as the OWNER's file through file-service
+   `POST /internal/files/store-image` (`ImageExecutionManager.storeReferenceImage`),
+   typed by magic bytes (`sniffReferenceImageMime`: PNG/JPEG/GIF/WEBP; the
+   declared mime is ignored) and capped at 25 MB decoded; then referenced like
+   an upload. Not an image, too large, or refused by file-service → used for
+   this send only, not kept (logged), never a failed send.
+
+9. **`assistantMessageId` is linked after dispatch** (2026-09-29). chat stores
+   the assistant message from the generate answer, then calls
+   `POST /internal/images/:generationId/assistant-message` `{ userId,
+assistantMessageId }`. `linkAssistantMessage` walks the chain (≤
+   `IMAGE_SUPERSESSION_MAX_HOPS`), owner-checked per row, and
+   `setAssistantMessageIfUnset` writes only an unset column (first link wins).
+   Foreign/missing → `{ linked: 0 }`, never an error naming the row.
 
 Details: [`docs/04-backend/service-guide-image.md`](../../docs/04-backend/service-guide-image.md#ownership-and-auth-invariants-2026-09-25) · [`rules/16`](../../rules/16-authentication-and-authorization.md) items 6–7.
 

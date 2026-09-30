@@ -38,14 +38,10 @@ export function GatewaySelect({
         </SelectTrigger>
         <SelectContent>
           {gateways.map((gateway) => (
-            <SelectItem
-              key={gateway.gateway}
-              value={gateway.gateway}
-              disabled={gateway.testingSoon}
-            >
+            <SelectItem key={gateway.gateway} value={gateway.gateway}>
               {gateway.gateway === BillingGateway.PAYPAL
                 ? t('billing.gateway.paypalCard')
-                : t('billing.gateway.paymobTestingSoon')}
+                : t('billing.gateway.paymobCard')}
             </SelectItem>
           ))}
         </SelectContent>

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ConnectorAuthType, ConnectorProvider } from '../../../generated/prisma';
 import { connectorAccountIdSchema } from './create-connector.dto';
+import { gatewayHeadersSchema } from './gateway-headers.dto';
 
 export const updateConnectorSchema = z.object({
   name: z.string().min(1).max(100, 'Name must be at most 100 characters').optional(),
@@ -12,6 +13,8 @@ export const updateConnectorSchema = z.object({
   workspaceId: z.string().max(100, 'Workspace ID must be at most 100 characters').optional(),
   accountId: connectorAccountIdSchema.optional(),
   isEnabled: z.boolean().optional(),
+  // F092. `{}` clears the stored gateway headers; omitted keeps them.
+  gatewayHeaders: gatewayHeadersSchema.optional(),
   // The PAYG lever (ADR-082). Guarded by ADMIN_CONNECTORS_MANAGE on the route,
   // because flipping it decides whether every future request through this
   // connector debits a user's credit wallet. Optional: omitting it leaves the

@@ -6,7 +6,7 @@ ClawAI's positioning, since 2026-09-26, is **"Every AI, one workspace"**: every 
 
 Against that positioning the competitive set widens from chat interfaces to AI workspaces: single-provider assistants (ChatGPT, Claude, Gemini), multi-model aggregators (OpenRouter, Poe-style apps), and self-hosted front ends (Open WebUI, LibreChat). The differentiators to lead with are the four pillars — the multimodal, file-writing, researching workspace; pay-as-you-go credit; admin-managed teams; and running the whole stack locally.
 
-> **Stale below.** The comparison tables were written in 2026-Q2 and undercount ClawAI (for example "5 cloud providers" — there are now 20 usable cloud providers plus Ollama and llama.cpp, per [flagship 10](../02-business-product/flagship-features.md#10-every-provider-routed-well--shipped)). Competitor columns were not re-verified in this pass. _Unknown - ask the owner and record the answer._ — which competitors the business now benchmarks against, and their current pricing.
+> **Stale below.** The comparison tables were written in 2026-Q2 and undercount ClawAI (for example "5 cloud providers" — there are now 20 usable cloud providers plus Ollama and llama.cpp, per [flagship 10](../02-business-product/flagship-features.md#10-every-provider-routed-well--shipped)). Competitor columns were not re-verified in this pass. For the chat surface, the current first-party comparison (checked 2026-09-29) is [`chat-competitive-benchmark-2026-09.md`](../02-business-product/chat-competitive-benchmark-2026-09.md). _Unknown - ask the owner and record the answer._ — which competitors the business now benchmarks against, and their current pricing.
 
 This document compares ClawAI against direct competitors and alternative approaches.
 

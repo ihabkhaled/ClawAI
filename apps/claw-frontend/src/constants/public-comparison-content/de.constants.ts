@@ -25,7 +25,7 @@ export const DE_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: 'Vergleiche',
     intro:
-      'ClawAI will nicht der bessere einzelne Assistent sein. Es bringt {cloudProviderCount} Cloud-Anbieter und lokale Open-Weight-Modelle in einen Arbeitsbereich und schickt jede Nachricht an das passende Modell. Diese Seiten stellen das den Assistenten gegenüber, die Menschen bereits nutzen — jedes Mal anhand derselben acht Fähigkeiten.',
+      'ClawAI will nicht der bessere einzelne Assistent sein. Es vereint {cloudProviderCount} Cloud-Anbieter und lokale Open-Weight-Modelle in einem Arbeitsbereich und schickt jede Nachricht an das passende Modell. Diese Seiten stellen das den Assistenten gegenüber, die Menschen bereits nutzen — jedes Mal anhand derselben acht Fähigkeiten.',
     cardsTitle: 'Assistenten zum Vergleichen auswählen',
     cardCta: 'Mit {rival} vergleichen',
     coversTitle: 'Was jeder Vergleich abdeckt',
@@ -317,7 +317,7 @@ export const DE_COMPARISON_CONTENT: ComparisonDictionary = {
       vendor: 'Alibaba',
       eyebrow: 'ClawAI vs. Qwen',
       intro:
-        'Qwen ist eine der vollständigsten offenen Modellfamilien überhaupt: eine breite Leiter an Größen, starke Mehrsprachigkeit und eine großzügige Lizenzierung über den größten Teil der Reihe. ClawAI stellt Modelle dieser Klasse neben acht weitere Familien in einem Arbeitsbereich.',
+        'Qwen ist eine der vollständigsten offenen Modellfamilien überhaupt: eine breite Leiter an Größen, starke Mehrsprachigkeit und eine großzügige Lizenzierung über den größten Teil der Reihe. ClawAI stellt Modelle dieser Klasse neben acht weitere Familien in einen Arbeitsbereich.',
       theirStrength:
         'Breite. Größen von solchen, die auf einem Laptop laufen, bis zu solchen, die einen Server brauchen, Varianten für Bild und Code, wirklich gute Leistung außerhalb des Englischen und eine Lizenzierung, die kommerzielles Self-Hosting unkompliziert macht.',
       ourDifference:

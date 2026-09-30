@@ -180,6 +180,40 @@ describe('SpeechProviderClient', () => {
     );
   });
 
+  it('OpenAI: a configured connector base URL wins over the default host', async () => {
+    postBinary.mockResolvedValue({ ok: true, status: 200, body: Buffer.from('ID3mp3') });
+    await new SpeechProviderClient().synthesize({
+      candidate: OPENAI,
+      text: 'Hello.',
+      voice: 'nova',
+      apiKey: 'o-key',
+      baseUrl: 'https://proxy.example.com/openai/v1/',
+      maxOutputTokens: 1,
+    });
+    const call = postBinary.mock.calls[0]?.[0];
+    expect(call?.url).toBe('https://proxy.example.com/openai/v1/audio/speech');
+    expect([...(call?.allowedHosts ?? [])]).toEqual(['proxy.example.com']);
+  });
+
+  it('Gemini: a connector base URL on the /openai compat path speaks the native API above it', async () => {
+    request.mockResolvedValue({ ok: false, status: 500, data: {} } as never);
+    await expect(
+      new SpeechProviderClient().synthesize({
+        candidate: GEMINI,
+        text: 'Hello.',
+        voice: 'Puck',
+        apiKey: 'g-key',
+        baseUrl: 'https://gemini-gw.example.com/v1beta/openai',
+        maxOutputTokens: 10,
+      }),
+    ).rejects.toBeInstanceOf(SpeechProviderError);
+    const call = request.mock.calls[0]?.[0];
+    expect(call?.url).toBe(
+      'https://gemini-gw.example.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent',
+    );
+    expect([...(call?.allowedHosts ?? [])]).toEqual(['gemini-gw.example.com']);
+  });
+
   it('OpenAI: a deadline becomes a timed-out SpeechProviderError', async () => {
     const abort = new Error('aborted');
     abort.name = 'AbortError';
@@ -314,6 +348,34 @@ describe('SpeechConnectorClient', () => {
     await expect(client.resolveApiKey(SpeechProvider.OPENAI)).resolves.toBeNull();
   });
 
+  it('returns the configured base URL with the key; a blank base URL is null', async () => {
+    const client = new SpeechConnectorClient();
+    request.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: { apiKey: 'k1', baseUrl: ' https://proxy.example.com/v1 ' },
+    } as never);
+    await expect(client.resolveCredentials(SpeechProvider.OPENAI)).resolves.toEqual({
+      apiKey: 'k1',
+      baseUrl: 'https://proxy.example.com/v1',
+    });
+    request.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: { apiKey: 'k1', baseUrl: '  ' },
+    } as never);
+    await expect(client.resolveCredentials(SpeechProvider.OPENAI)).resolves.toEqual({
+      apiKey: 'k1',
+      baseUrl: null,
+    });
+    request.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: { baseUrl: 'https://x' },
+    } as never);
+    await expect(client.resolveCredentials(SpeechProvider.OPENAI)).resolves.toBeNull();
+  });
+
   it('caches only the configured yes/no, never the key, for a minute', async () => {
     const client = new SpeechConnectorClient();
     request.mockResolvedValue({ ok: true, status: 200, data: { apiKey: 'k' } } as never);
@@ -408,5 +470,92 @@ describe('SpeechFileStoreClient', () => {
     expect(request.mock.calls[0]?.[0].url).toBe(
       'http://file.test/api/v1/internal/files/f1/ingestion-state?userId=u1',
     );
+  });
+});
+
+describe('LOCAL speech (ADR-128)', () => {
+  const LOCAL = {
+    provider: SpeechProvider.LOCAL,
+    model: 'speaches-ai/Kokoro-82M-v1.0-ONNX',
+    timeoutMs: 60_000,
+    maxTokens: 1,
+  };
+
+  const withLocalBase = (base: string): void => {
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
+      AUTH_SERVICE_URL: 'http://auth.test',
+      ROUTING_SERVICE_URL: 'http://routing.test',
+      CONNECTOR_SERVICE_URL: 'http://connector.test',
+      FILE_SERVICE_URL: 'http://file.test',
+      INTER_SERVICE_AUTH_TOKEN: 't'.repeat(40),
+      LOCAL_SPEECH_BASE_URL: base,
+    } as never);
+  };
+
+  it('synthesizes through the OpenAI path against the container base URL', async () => {
+    postBinary.mockResolvedValue({ ok: true, status: 200, body: Buffer.from('ID3mp3') });
+    const audio = await new SpeechProviderClient().synthesize({
+      candidate: LOCAL,
+      text: 'Hello.',
+      voice: 'af_heart',
+      apiKey: 'local',
+      baseUrl: 'http://speech:8000/v1',
+      maxOutputTokens: 1,
+    });
+    expect(audio.mimeType).toBe('audio/mpeg');
+    const call = postBinary.mock.calls[0]?.[0];
+    expect(call?.url).toBe('http://speech:8000/v1/audio/speech');
+    expect(call?.body).toEqual({
+      model: 'speaches-ai/Kokoro-82M-v1.0-ONNX',
+      input: 'Hello.',
+      voice: 'af_heart',
+      response_format: 'mp3',
+    });
+    expect([...(call?.allowedHosts ?? [])]).toEqual(['speech:8000']);
+  });
+
+  it('resolveCredentials returns synthetic credentials without asking connector-service', async () => {
+    withLocalBase('http://speech:8000');
+    await expect(
+      new SpeechConnectorClient().resolveCredentials(SpeechProvider.LOCAL),
+    ).resolves.toEqual({
+      apiKey: 'local',
+      baseUrl: 'http://speech:8000/v1',
+    });
+    expect(request).not.toHaveBeenCalled();
+  });
+
+  it('resolveCredentials is null when the base URL is blank', async () => {
+    withLocalBase('');
+    await expect(
+      new SpeechConnectorClient().resolveCredentials(SpeechProvider.LOCAL),
+    ).resolves.toBeNull();
+  });
+
+  it('isConfigured is true only while the container answers /health', async () => {
+    withLocalBase('http://speech:8000');
+    request.mockResolvedValueOnce({ ok: true, status: 200, data: 'OK' } as never);
+    await expect(
+      new SpeechConnectorClient().isConfigured(SpeechProvider.LOCAL, () => 0),
+    ).resolves.toBe(true);
+    expect(request.mock.calls[0]?.[0]).toMatchObject({ url: 'http://speech:8000/health' });
+
+    request.mockResolvedValueOnce({ ok: false, status: 503, data: '' } as never);
+    await expect(
+      new SpeechConnectorClient().isConfigured(SpeechProvider.LOCAL, () => 0),
+    ).resolves.toBe(false);
+
+    request.mockRejectedValueOnce(new Error('ENOTFOUND speech'));
+    await expect(
+      new SpeechConnectorClient().isConfigured(SpeechProvider.LOCAL, () => 0),
+    ).resolves.toBe(false);
+  });
+
+  it('isConfigured is false with no probe when the base URL is blank', async () => {
+    withLocalBase('');
+    await expect(
+      new SpeechConnectorClient().isConfigured(SpeechProvider.LOCAL, () => 0),
+    ).resolves.toBe(false);
+    expect(request).not.toHaveBeenCalled();
   });
 });

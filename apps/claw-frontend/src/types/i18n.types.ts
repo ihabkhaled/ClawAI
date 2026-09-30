@@ -328,6 +328,45 @@ export type TranslationDictionary = {
       succeeded: string;
       failed: string;
     };
+    lineage: {
+      branchedFrom: string;
+      sourceDeleted: string;
+      branches: string;
+      branchBadge: string;
+    };
+    quote: {
+      action: string;
+      composerHeading: string;
+      remove: string;
+      repliedTo: string;
+      limitReached: string;
+      sourceMissing: string;
+    };
+    regenerateWith: {
+      trigger: string;
+      auto: string;
+    };
+    contextSave: {
+      title: string;
+      savedMemory: string;
+      createdPack: string;
+      addedToPack: string;
+      openMemory: string;
+      openPack: string;
+      choosePack: string;
+      newPack: string;
+      saving: string;
+      packSaved: string;
+      failedTitle: string;
+      memoryFailed: string;
+      packFailed: string;
+      notPending: string;
+      reasons: {
+        PLAN: string;
+        LIMIT: string;
+        UNAVAILABLE: string;
+      };
+    };
     speech: {
       action: string;
       stop: string;
@@ -360,6 +399,9 @@ export type TranslationDictionary = {
       };
     };
     edit: {
+      inBranch: string;
+      branchHint: string;
+      branchOpened: string;
       action: string;
       title: string;
       warning: string;
@@ -549,6 +591,32 @@ export type TranslationDictionary = {
     helpful: string;
     notHelpful: string;
     feedbackSaved: string;
+    maskEdit: {
+      action: string;
+      actionFor: string;
+      title: string;
+      description: string;
+      canvasLabel: string;
+      brushSize: string;
+      erase: string;
+      clear: string;
+      apply: string;
+      applying: string;
+      loading: string;
+      imageFailed: string;
+      saveFailed: string;
+      empty: string;
+      applied: string;
+      remove: string;
+      keyboardHint: string;
+      paintingOn: string;
+      paintingOff: string;
+      refusal: {
+        title: string;
+        invalid: string;
+        notSupported: string;
+      };
+    };
     attachFiles: string;
     attachment: {
       uploading: string;
@@ -934,6 +1002,15 @@ export type TranslationDictionary = {
     regionPlaceholder: string;
     workspaceIdPlaceholder: string;
     saveFirstThenTest: string;
+    gatewayHeaders: string;
+    gatewayHeadersHelp: string;
+    gatewayHeadersEditHelp: string;
+    gatewayHeaderName: string;
+    gatewayHeaderValue: string;
+    addGatewayHeader: string;
+    removeGatewayHeader: string;
+    clearGatewayHeaders: string;
+    gatewayHeadersInvalid: string;
     selectProvider: string;
     groupConnected: string;
     groupLowCost: string;
@@ -4811,7 +4888,7 @@ export type TranslationDictionary = {
       PAYPAL: string;
       PAYMOB: string;
       paypalCard: string;
-      paymobTestingSoon: string;
+      paymobCard: string;
       unavailable: string;
     };
     proration: {
@@ -6345,6 +6422,22 @@ export type MediaUiLocaleTranslation = {
     cancelProcessing: string;
     cancelProcessingAria: string;
     cancelling: string;
+    /** Localized detail for a known `extractionError` code (never the backend's English). */
+    failureDetail: {
+      noVideoStream: string;
+      invalidDuration: string;
+      dimensionsTooLarge: string;
+      durationTooLong: string;
+      probeTimeout: string;
+      corruptContainer: string;
+      videoTooLongForPlan: string;
+      videoDisabledForPlan: string;
+      sourceUnreadable: string;
+      toolUnavailable: string;
+      fileNotFound: string;
+      processingError: string;
+      generic: string;
+    };
   };
   deliveryReason: {
     noVision: string;

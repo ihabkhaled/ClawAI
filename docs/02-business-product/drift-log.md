@@ -46,25 +46,41 @@ page the entry names. This log is the history between them.
 
 ---
 
-## DRIFT-002 — Team plan and "one subscription" copy brought in line (2026-09-29)
+## DRIFT-002 — "One subscription" copy removed from public pages, Team plan stops promising pooling (2026-09-29)
 
-- **Area:** product, business.
-- **Before:** the Team plan's seeded description read "Shared workspaces and a
-  large pooled allowance.", the teams FAQ said Team "gives a shared workspace",
-  and marketing, comparison, SEO and coding-agent copy in all 13 locales still
-  sold "one subscription".
-- **After:** the Team description lists only real entitlements; the teams FAQ
-  describes administrator-managed accounts and says shared billing, pooled
-  allowances and SSO are not available today; every "one subscription" pitch
-  now says "one workspace". Guarded by
-  `apps/claw-frontend/src/lib/i18n/__tests__/one-subscription-wording.test.ts`.
-- **Why:** closes the REQ-POS-005 overclaim and finishes DRIFT-001's frontend
-  batch.
-- **Decided by:** the owner (ADR-126 positioning), 2026-09-29.
-- **Impact:** copy only. No price, quota, ceiling or entitlement changed (rule 28).
-- **Touched:** `plan-catalog.json`, new `plan-team-description.seeder.cjs`,
-  [requirements register](requirements-register.md) REQ-POS-005,
-  [flagship catalog](flagship-features.md),
-  [rollout checklist](../business/rollout-and-notice.md),
-  `apps/claw-auth-service/CLAUDE.md`, 13 locale dictionaries and the per-locale
-  comparison, SEO and coding-agent constants.
+- **Area:** product, market.
+- **Before:** DRIFT-001 changed the slogan, but 30-odd marketing, comparison, FAQ
+  and SEO strings in all 13 locales still said "one subscription", and the Team
+  plan's seeded description promised "shared workspaces and a large pooled
+  allowance" (pooling is not built, REQ-POS-005).
+- **Now:** the teams FAQ answer and the "teams" persona line no longer promise a
+  shared workspace: they describe administrator-managed accounts and say shared
+  billing, pooled allowances and single sign-on are not available today. Those
+  strings say "one workspace" (competitor and plan-specific uses of
+  "subscription" are untouched); the Team description reads "A large monthly
+  allowance for heavy daily use." Existing installs are updated by a migration
+  guarded on the old text, so an operator's own wording survives.
+- **Why:** "one subscription" contradicts pay-as-you-go credit and the
+  "Every AI, one workspace" slogan; the Team text overclaimed an unbuilt feature.
+- **Decided by:** the owner, 2026-09-29 ("do them and finish").
+- **Impact:** public copy only. No price, quota or entitlement changes.
+- **Touched:** `apps/claw-frontend` locale files, comparison, coding-agent and SEO
+  constants (13 locales); `apps/claw-auth-service` plan-catalog seed and
+  migration; [REQ-POS-005](requirements-register.md#req-pos-005);
+  [flagship catalog](flagship-features.md).
+- **Guarded by:** `one-subscription-wording.test.ts` (per-locale phrase list and the
+  teams FAQ), `repositioning-slogan-keys.test.ts` and `plan-catalog-pricing.seeder.spec.ts`
+  (no plan promises pooling).
+
+## DRIFT-003 — Saving from chat is decided by a model, not by keywords (2026-09-30)
+
+- **Area:** product.
+- **Before:** ADR-127 chose a deterministic keyword path with no model: one
+  target per turn, a guessed memory type, always a new pack, a templated reply.
+- **Now:** a planner model decides memory / context pack / both, the answering
+  model confirms, existing packs can be chosen (and are asked for), and a saved
+  card with deep links is persisted (ADR-134). The keyword path is the fallback.
+- **Why:** owner direction in chat, 2026-09-30 ("not just keyword detection but
+  AI intelligence").
+- **Who:** owner; implemented by the coding agent.
+- **Touched:** REQ-CHAT-006, ADR-134, ADR-127 addendum, rule 57 §11.

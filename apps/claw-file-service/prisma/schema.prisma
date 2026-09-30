@@ -58,3 +58,25 @@ model FileChunk {
   @@index([chunkIndex])
   @@map("file_chunks")
 }
+
+// A scrubbed text file the coding agent published as a hosted page (F025).
+//
+// `publicId` is the ONLY thing a stranger can address it by: 192 random bits,
+// base64url. The row id stays owner-side (list/delete). Content is plain UTF-8
+// text, capped at 1 MiB by the service, and is always served back as
+// text/plain — see docs/04-backend/service-guide-file-service.md.
+model PublishedArtifact {
+  id        String   @id @default(cuid())
+  publicId  String   @unique @map("public_id")
+  userId    String   @map("user_id")
+  title     String?
+  filename  String
+  mimeType  String   @map("mime_type")
+  content   String
+  sizeBytes Int      @map("size_bytes")
+  sha256    String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@map("published_artifacts")
+}

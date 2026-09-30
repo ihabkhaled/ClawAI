@@ -12,11 +12,19 @@ import { Public } from '../../../app/decorators/public.decorator';
 import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import {
+  type AddItemFromChatResult,
+  type ChatPackOption,
   type ChatPacksBundle,
   type ContextPackWithItems,
   type SavePackFromChatResult,
 } from '../types/context-packs.types';
 import { ContextPacksService } from '../services/context-packs.service';
+import { ContextPackChatService } from '../services/context-pack-chat.service';
+import {
+  type PackOptionsForChatDto,
+  packOptionsForChatSchema,
+} from '../dto/pack-options-for-chat.dto';
+import { type AddItemFromChatDto, addItemFromChatSchema } from '../dto/add-item-from-chat.dto';
 import { type PacksForChatDto, packsForChatSchema } from '../dto/packs-for-chat.dto';
 import { type SavePackFromChatDto, savePackFromChatSchema } from '../dto/save-pack-from-chat.dto';
 
@@ -29,7 +37,29 @@ import { type SavePackFromChatDto, savePackFromChatSchema } from '../dto/save-pa
 @UseGuards(ServiceTokenGuard)
 @Controller('internal/context-packs')
 export class ContextPacksInternalController {
-  constructor(private readonly contextPacksService: ContextPacksService) {}
+  constructor(
+    private readonly contextPacksService: ContextPacksService,
+    private readonly contextPackChatService: ContextPackChatService,
+  ) {}
+
+  @Public()
+  @Post('options-for-chat')
+  @HttpCode(HttpStatus.OK)
+  async optionsForChat(
+    @Body(new ZodValidationPipe(packOptionsForChatSchema)) body: PackOptionsForChatDto,
+  ): Promise<ChatPackOption[]> {
+    return this.contextPackChatService.listOptions(body.userId);
+  }
+
+  @Public()
+  @Post(':id/items/from-chat')
+  @HttpCode(HttpStatus.OK)
+  async addItemFromChat(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(addItemFromChatSchema)) body: AddItemFromChatDto,
+  ): Promise<AddItemFromChatResult> {
+    return this.contextPackChatService.addItemFromChat(id, body);
+  }
 
   @Public()
   @Get(':id/items')

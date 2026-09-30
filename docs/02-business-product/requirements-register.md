@@ -85,12 +85,10 @@ _inferred_ until the owner confirms it.
   fleet's, which is API-only.
 - **Until built:** copy says "bring your team" and describes admin-managed users,
   roles, plan grants and usage statistics; it does not promise seats, shared
-  billing or pooling. The Team plan description and the teams FAQ now list
-  only real entitlements (per-user plan and allowance, uncapped Compare, Judge,
-  Critic and Research, 15 workspace connections) and say shared billing,
-  pooled allowances and SSO are not available today.
-- **History:** 2026-09-26 created. 2026-09-29 overclaiming copy removed
-  ([DRIFT-002](drift-log.md)); the capability itself is still missing.
+  billing or pooling. The Team plan description no longer overclaims
+  (2026-09-29, text only: "A large monthly allowance for heavy daily use.").
+- **History:** 2026-09-26 created; 2026-09-29 Team plan description corrected (owner
+  approved a text-only change).
 
 ### REQ-POS-006
 
@@ -120,3 +118,87 @@ _inferred_ until the owner confirms it.
   Production had 0 organisations when fixed, so nothing was exploited.
 - **Governing rule:** [rules/16](../../rules/16-authentication-and-authorization.md) (IDOR).
 - **History:** 2026-09-26 created; fixed the same day.
+
+## Chat supremacy program (2026-09-29)
+
+Intake audit: [`chat-capability-audit-2026-09.md`](../14-risk-debt/chat-capability-audit-2026-09.md) ·
+benchmark: [`chat-competitive-benchmark-2026-09.md`](chat-competitive-benchmark-2026-09.md).
+
+### REQ-CHAT-001
+
+- **Statement:** A user can branch a conversation from any message, get back to
+  the source from the branch, and see the branches cut from a conversation. A
+  branch inherits the conversation up to the fork point (text, attachments,
+  settings, privacy switches) and never anything said after it — including via
+  cross-thread retrieval.
+- **Status:** done · **Priority:** high
+- **Source:** Chat Supremacy prompt pack, Batch A (owner, 2026-09-29).
+- **Current state:** ADR-130 — lineage columns, full-field copy, family
+  exclusion, `GET /chat-threads/:id/lineage`, lineage strip + thread-list icon.
+  Merge-back is not built (no product decision on what a merged message is).
+- **History:** 2026-09-29 created and delivered (Batch 1).
+
+### REQ-CHAT-002
+
+- **Statement:** Privacy defects found by the intake audit are fixed before
+  further memory-dependent features: memory extraction must honour a chat's
+  `useMemory=false`, and a chat with `useCrossThreadContext=false` must not be
+  retrieved INTO other chats.
+- **Status:** done · **Priority:** high (privacy)
+- **Source:** intake audit defects 3–4, 2026-09-29 (_inferred_ — owner to confirm
+  the intended semantics of the per-chat switch).
+- **Current state:** fixed 2026-09-30 (Batch 3). `message.completed` carries
+  `useMemory`; memory-service skips extraction when it is false. Cross-thread
+  candidates require BOTH switches on. The settings copy in 13 locales now says
+  both directions (and no longer claims cross-thread is off by default, which
+  was untrue). Owner answer (2026-09-30): **no** — "Use memory" off does NOT stop the chat
+  reading your other chats; only "Use relevant previous chats" controls reading.
+  The two-way reading is confirmed; the _inferred_ mark is removed.
+- **History:** 2026-09-29 created; 2026-09-30 delivered.
+
+### REQ-CHAT-003
+
+- **Statement:** A user can select text in any earlier message, quote it into
+  the composer (up to 3), and ask about it; the answer knows exactly which text
+  was meant, and the quote stays visible on the sent turn.
+- **Status:** done (messages) · **Priority:** high
+- **Source:** Chat Supremacy prompt pack, Batch B (owner, 2026-09-29).
+- **Current state:** ADR-131. Quoting from citations, file previews, research
+  reports and generated documents waits for batches M and D.
+- **History:** 2026-09-30 created and delivered (Batch 2).
+
+### REQ-CHAT-004
+
+- **Statement:** A user can answer the same question again with a model of
+  their choice (or AUTO), and can edit a question without deleting the
+  conversation after it.
+- **Status:** done · **Priority:** high
+- **Source:** Chat Supremacy prompt pack, Batch E (owner, 2026-09-29).
+- **Current state:** ADR-132. Regenerate also gained the plan/quota check it
+  was missing. Still open in batch E: send an answer to Repair/Verify/Compare
+  from the message, and "continue" a truncated answer.
+- **History:** 2026-09-30 created and delivered (Batch 4).
+
+### REQ-CHAT-005
+
+- **Statement:** An answer's inline `[n]` opens the exact source the model was
+  given under that number — and never a source it was not given.
+- **Status:** done (main chat) · **Priority:** high
+- **Source:** Chat Supremacy prompt pack, Batch M (owner, 2026-09-29).
+- **Current state:** ADR-133, rule 41 §16. Compare/lab lanes, file-page
+  provenance and a grounded-vs-model-knowledge marker are not built.
+- **History:** 2026-09-30 created and delivered (Batch 5).
+
+### REQ-CHAT-006
+
+- **Statement:** When the user asks, in their own words, to remember something
+  or add it to their context, a model decides memory, context pack or both,
+  saves the right text with the right memory type, asks which pack when the user
+  has packs and did not name one, shows a saved card with links to the exact
+  item, keeps it in the chat history, and the AI confirms it is done.
+- **Status:** done · **Priority:** high
+- **Source:** owner, in chat, 2026-09-30 (with the four design choices recorded
+  in ADR-134).
+- **Current state:** ADR-134. Changing a memory's type happens on the Memory
+  page (the card's link opens the editor), not on the card.
+- **History:** 2026-09-30 created and delivered (Batch 6).

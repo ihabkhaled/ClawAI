@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { withGatewayHeaders } from '../../utilities/gateway-headers.utility';
 import { ConnectorStatus, ModelLifecycle } from '../../../../generated/prisma';
 import { type HealthCheckResult, type NormalizedModel } from '../../types/connectors.types';
 import { type OpenAIModelsResponse } from '../../types/provider-api.types';
@@ -42,9 +43,10 @@ export class OpenAIAdapter implements ProviderAdapter {
       logger.debug('healthCheck: sending GET /models request');
       const response = await httpGet<OpenAIModelsResponse>({
         url: `${baseUrl}/models`,
-        headers: {
-          Authorization: `Bearer ${config.apiKey}`,
-        },
+        headers: withGatewayHeaders(
+          { Authorization: `Bearer ${config.apiKey}` },
+          config.gatewayHeaders,
+        ),
         // The base URL comes from an operator-edited connector row, so it is
         // on no static allowlist; the destination is declared explicitly here.
         allowedHosts: declaredHost(baseUrl),
@@ -87,9 +89,10 @@ export class OpenAIAdapter implements ProviderAdapter {
     logger.debug('syncModels: sending GET /models request');
     const response = await httpGet<OpenAIModelsResponse>({
       url: `${baseUrl}/models`,
-      headers: {
-        Authorization: `Bearer ${config.apiKey}`,
-      },
+      headers: withGatewayHeaders(
+        { Authorization: `Bearer ${config.apiKey}` },
+        config.gatewayHeaders,
+      ),
       // The base URL comes from an operator-edited connector row, so it is on
       // no static allowlist; the destination is declared explicitly here.
       allowedHosts: declaredHost(baseUrl),

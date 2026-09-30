@@ -1,7 +1,17 @@
 import { UNCONSTRAINED_POLICY } from '../constants/organization-policy.constants';
-import { POLICY_PERMISSION_MODES, POLICY_RISK_CLASSES } from '../dto/organization-policy.dto';
+import {
+  POLICY_EFFECT_KINDS,
+  POLICY_PERMISSION_MODES,
+  POLICY_RISK_CLASSES,
+} from '../dto/organization-policy.dto';
+import {
+  mergeMcpServers,
+  mergeRules,
+  mergeTrust,
+  parseStoredGuardrails,
+} from './policy-guardrails.utility';
 
-import type { EffectivePolicy } from '../types/organization-policy.types';
+import type { EffectivePolicy, StoredOrganizationPolicy } from '../types/organization-policy.types';
 
 /**
  * An empty allowlist means "everything", so intersecting two of them cannot be
@@ -69,6 +79,9 @@ export function intersectPolicies(policies: readonly EffectivePolicy[]): Effecti
         accumulated.minimumPermissionMode,
         policy.minimumPermissionMode,
       ),
+      rules: mergeRules(accumulated.rules, policy.rules),
+      trust: mergeTrust(accumulated.trust, policy.trust),
+      mcpServers: mergeMcpServers(accumulated.mcpServers, policy.mcpServers),
     }),
     UNCONSTRAINED_POLICY,
   );
@@ -81,22 +94,20 @@ export function intersectPolicies(policies: readonly EffectivePolicy[]): Effecti
  * member of two organizations must not learn one's identity from the other's
  * policy.
  */
-export function toEffectivePolicy(policy: {
-  allowedTools: string[];
-  allowedModels: string[];
-  maximumRisk: string;
-  deniedEffects: string[];
-  requireApproval: string[];
-  maximumRetentionDays: number;
-  minimumPermissionMode: string | null;
-}): EffectivePolicy {
+export function toEffectivePolicy(policy: StoredOrganizationPolicy): EffectivePolicy {
+  const guardrails = parseStoredGuardrails(policy);
   return {
     allowedTools: policy.allowedTools,
     allowedModels: policy.allowedModels,
     maximumRisk: policy.maximumRisk,
-    deniedEffects: policy.deniedEffects,
+    // An unreadable rules/trust/MCP block still meant "restrict"; refusing
+    // every effect is the one fail-closed answer the client cannot misread.
+    deniedEffects: guardrails.unreadable ? [...POLICY_EFFECT_KINDS] : policy.deniedEffects,
     requireApproval: policy.requireApproval,
     maximumRetentionDays: policy.maximumRetentionDays,
     minimumPermissionMode: policy.minimumPermissionMode,
+    rules: guardrails.rules,
+    trust: guardrails.trust,
+    mcpServers: guardrails.mcpServers,
   };
 }

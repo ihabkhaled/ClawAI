@@ -107,7 +107,7 @@ export class CrossThreadRetrievalManager {
     }
     const candidates = await this.repository.findCandidateThreads(
       args.userId,
-      args.currentThreadId,
+      await this.excludedThreadIds(args.userId, args.currentThreadId),
       terms,
     );
     if (candidates.length === 0) {
@@ -354,5 +354,23 @@ export class CrossThreadRetrievalManager {
       skippedReason,
       estimatedTokens: 0,
     };
+  }
+
+  /**
+   * The current thread plus its whole branch family. A branch is the same
+   * conversation up to its fork point; letting retrieval treat its source or a
+   * sibling as "another chat" would hand it the alternate future it was cut
+   * away from.
+   */
+  private async excludedThreadIds(userId: string, currentThreadId: string): Promise<string[]> {
+    const root = await this.repository.findBranchRoot(userId, currentThreadId);
+    if (root === null) return [currentThreadId];
+    const family = await this.repository.findBranchFamilyIds(userId, root);
+    if (family.length > 1) {
+      this.logger.debug(
+        `excludedThreadIds: thread=${currentThreadId} excludes branch family of ${String(family.length)}`,
+      );
+    }
+    return [...new Set([currentThreadId, ...family])];
   }
 }

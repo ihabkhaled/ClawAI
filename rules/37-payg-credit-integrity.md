@@ -103,6 +103,9 @@ paid model, rule 1 applies to it like anything else.
     not hand out unbounded provider spend, and must not take the product down
     either.
 
+    The exempt list (`PAYG_EXEMPT_PROVIDERS`) is OLLAMA, LLAMACPP and LOCAL (the free
+    speech container, [ADR-128](../docs/13-adr/adr-128-free-local-speech-container.md)).
+
 11. **A release returns each bucket to its own side, and is idempotent.** GRANT back
     to GRANT, PURCHASED back to PURCHASED — returning perishable allowance as
     purchased credit mints permanent money out of an expiring one. A second release

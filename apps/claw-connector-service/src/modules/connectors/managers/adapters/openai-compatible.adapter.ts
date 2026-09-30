@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { withGatewayHeaders } from '../../utilities/gateway-headers.utility';
 import { type ConnectorCreditHeadroomFormat, type ConnectorPreset } from '@claw/shared-types';
 import { declaredHost, resolvePresetBaseUrl, resolvePresetEndpoint } from '@claw/shared-utilities';
 import { ConnectorStatus } from '../../../../generated/prisma';
@@ -201,8 +202,9 @@ export class OpenAICompatibleAdapter implements ProviderAdapter {
   // without it, and a key-scoped health endpoint then refuses — which is the
   // correct health result for a connector saved without a key.
   private authHeaders(config: ConnectorConfig): Record<string, string> {
-    return config.apiKey.length > 0
-      ? { Authorization: `${PRESET_BEARER_PREFIX}${config.apiKey}` }
-      : {};
+    return withGatewayHeaders(
+      config.apiKey.length > 0 ? { Authorization: `${PRESET_BEARER_PREFIX}${config.apiKey}` } : {},
+      config.gatewayHeaders,
+    );
   }
 }

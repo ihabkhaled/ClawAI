@@ -18,13 +18,8 @@ import {
 //  - the only other variable parts are integers this file formats itself.
 
 /** The guard that precedes EVERY `-i`: no network protocol, no playlist demuxer. */
-export function inputGuardArgs(): string[] {
-  return [
-    '-protocol_whitelist',
-    MEDIA_PROTOCOL_WHITELIST,
-    '-format_whitelist',
-    MEDIA_FORMAT_WHITELIST,
-  ];
+export function inputGuardArgs(formatWhitelist: string = MEDIA_FORMAT_WHITELIST): string[] {
+  return ['-protocol_whitelist', MEDIA_PROTOCOL_WHITELIST, '-format_whitelist', formatWhitelist];
 }
 
 /** `ffmpeg`-only preamble. ffprobe has no `-nostdin`; its stdin is `ignore` instead. */
@@ -45,12 +40,15 @@ export function formatSeekSeconds(timestampMs: number): string {
 }
 
 /** `ffprobe` → JSON of the container and every stream. */
-export function buildProbeArgs(inputPath: string): string[] {
+export function buildProbeArgs(
+  inputPath: string,
+  formatWhitelist: string = MEDIA_FORMAT_WHITELIST,
+): string[] {
   return [
     '-hide_banner',
     '-v',
     'error',
-    ...inputGuardArgs(),
+    ...inputGuardArgs(formatWhitelist),
     '-print_format',
     'json',
     '-show_format',

@@ -15,6 +15,7 @@ function chip(overrides: Partial<ComposerAttachmentChip>): ComposerAttachmentChi
     fileId: 'file-1',
     localId: null,
     detail: null,
+    detailKey: null,
     note: null,
     removeLabel: 'Remove clip.mp4',
     canCancelProcessing: false,

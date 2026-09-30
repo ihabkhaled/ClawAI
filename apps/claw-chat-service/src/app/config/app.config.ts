@@ -34,6 +34,9 @@ const appConfigSchema = z.object({
   // rows served by routing-service — see ResearchGateService.
   LLAMACPP_SERVICE_URL: z.string().min(1).default('http://llamacpp-service:4017'),
   CONNECTOR_SERVICE_URL: z.string().min(1).default('http://connector-service:4003'),
+  // ADR-128 — the free local speech container (speaches, OpenAI-compatible),
+  // created with the local-ai compose profile. Blank turns LOCAL read-aloud off.
+  LOCAL_SPEECH_BASE_URL: z.string().default('http://speech:8000'),
   // Read for one thing only: the selected model's real context window, which
   // chat-service must never keep its own copy of. See ModelContextWindowClient
   // and ADR-086.
@@ -218,9 +221,6 @@ export class AppConfig {
   }
 
   static get(): AppConfigType {
-    if (!cachedConfig) {
-      return AppConfig.validate();
-    }
-    return cachedConfig;
+    return !cachedConfig ? AppConfig.validate() : cachedConfig;
   }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
@@ -8,9 +8,13 @@ import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 
 import { MARKDOWN_SANITIZE_SCHEMA } from '@/constants/markdown-sanitize.constants';
+import { NO_CITATIONS } from '@/constants/message-citation.constants';
 import type { MarkdownRendererProps } from '@/types';
+import { sameCitations } from '@/utilities/message-citation.utility';
 
+import { CitationsContext } from './citations-context';
 import { markdownComponents } from './markdown-components';
+import { remarkCitations } from './remark-citations';
 
 // Memoized: every MessageBubble in a long thread re-renders on parent state
 // changes (typing in the composer, feedback toggle, etc.). Re-parsing markdown
@@ -27,16 +31,34 @@ import { markdownComponents } from './markdown-components';
 // mode (message bubble, compare, parallel, escalation, judge, answer dialog);
 // public share pages deliberately use PublicMarkdownRenderer, which parses no
 // HTML at all.
-function MarkdownRendererBase({ content }: MarkdownRendererProps): React.JSX.Element {
+function MarkdownRendererBase({
+  content,
+  citations = NO_CITATIONS,
+}: MarkdownRendererProps): React.JSX.Element {
+  // `[n]` becomes a link only for a number this answer actually stored
+  // (ADR-133). With no citations the plugin list is exactly what it was.
+  const remarkPlugins = useMemo(
+    () =>
+      citations.length === 0
+        ? [remarkGfm]
+        : [remarkGfm, [remarkCitations, { count: Math.max(...citations.map((c) => c.index)) }]],
+    [citations],
+  );
   return (
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
-      rehypePlugins={[rehypeRaw, [rehypeSanitize, MARKDOWN_SANITIZE_SCHEMA], rehypeHighlight]}
-      components={markdownComponents}
-    >
-      {content}
-    </ReactMarkdown>
+    <CitationsContext.Provider value={citations}>
+      <ReactMarkdown
+        remarkPlugins={remarkPlugins as Parameters<typeof ReactMarkdown>[0]['remarkPlugins']}
+        rehypePlugins={[rehypeRaw, [rehypeSanitize, MARKDOWN_SANITIZE_SCHEMA], rehypeHighlight]}
+        components={markdownComponents}
+      >
+        {content}
+      </ReactMarkdown>
+    </CitationsContext.Provider>
   );
 }
 
-export const MarkdownRenderer = memo(MarkdownRendererBase);
+export const MarkdownRenderer = memo(
+  MarkdownRendererBase,
+  (previous, next) =>
+    previous.content === next.content && sameCitations(previous.citations, next.citations),
+);

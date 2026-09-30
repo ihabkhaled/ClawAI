@@ -139,3 +139,5 @@ After completing any implementation task on this service, produce:
 - `preflight.overridden` (MEDIUM, captures `userId` from payload — never `'system'`)
 
 All rows written under `entityType = LLAMACPP_AUDIT_ENTITY_TYPE = 'llamacpp_model'`. Wired in `audits.module.ts`.
+
+`VideoProcessAuditConsumer` (`src/modules/audits/consumers/video-process.consumer.ts`, 2026-09-29) subscribes to file-service's `file.video_process_requested` / `_completed` / `_failed` and writes `entityType = 'file'` rows (actions `file.video_process_*`, LOW / LOW / ERROR). Details hold structural facts only: never the filename, transcript, or free-text `reason` (it can echo user content) — only `reasonCode`. A failed write is logged and swallowed, like the other file handlers.

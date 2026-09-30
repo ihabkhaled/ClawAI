@@ -28,6 +28,7 @@ function manager(): ContextAssemblyManager {
   return new ContextAssemblyManager(
     new ContextComposerManager(),
     new CrossThreadRetrievalManager({
+      findBranchRoot: async () => Promise.resolve(null),
       findCandidateThreads: async () => Promise.resolve([]),
       findMessagesForThreads: async () => Promise.resolve([]),
     } as never),

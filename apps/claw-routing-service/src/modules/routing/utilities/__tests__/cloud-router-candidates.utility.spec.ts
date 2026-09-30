@@ -72,6 +72,22 @@ describe('selectCloudRouterCandidates', () => {
     expect(result).toHaveLength(1);
   });
 
+  // 2026-09-29 live QA: the cloud router picked chatgpt-image-latest for a
+  // question about a video; an image-output model never answers a chat turn.
+  it('never offers an image-output model as a chat candidate', () => {
+    const rows = [
+      row('img1', RouterProvider.OPENAI, 'chatgpt-image-latest', 'ACTIVE'),
+      row('img2', RouterProvider.OPENAI, 'gpt-image-1', 'ACTIVE'),
+      row('img3', RouterProvider.GEMINI, 'gemini-2.5-flash-image', 'ACTIVE'),
+      row('chat', RouterProvider.OPENAI, 'gpt-4.1-mini', 'ACTIVE'),
+    ];
+    const exposed = new Set(rows.map((r) => modelMatchKey(r.provider, r.providerModelId)));
+
+    const result = selectCloudRouterCandidates(rows, { ...unfiltered, exposed, max: 10 });
+
+    expect(result.map((r) => r.id)).toEqual(['chat']);
+  });
+
   it('treats an unknown connector health as usable', () => {
     const rows = [row('a', RouterProvider.ANTHROPIC, 'claude-sonnet-5')];
     const exposed = new Set(['ANTHROPIC/claude-sonnet-5']);

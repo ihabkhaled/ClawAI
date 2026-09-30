@@ -2,6 +2,7 @@ import type { AttachmentPreviewKind } from '@/enums/attachment-preview-kind.enum
 import type { ComposerAttachmentState } from '@/enums/composer-attachment-state.enum';
 import type { FileIngestionStatus } from '@/enums/file-ingestion-status.enum';
 import type { FileExtractionMetadata, UploadedFile } from '@/types/file.types';
+import type { ComposerTrayMaskEdit } from '@/types/image-mask-editor.types';
 import type { UploadProgressSnapshot } from '@/types/upload-progress.types';
 import type { getFileTypeDescriptor } from '@/utilities/file-type-icon.utility';
 
@@ -50,6 +51,8 @@ export type ComposerAttachmentChipDraft = {
   localId: string | null;
   /** Backend or upload detail behind a failure, shown after the reason. */
   detail: string | null;
+  /** i18n key for a failed stored file's detail; wins over `detail` when set. */
+  detailKey: string | null;
   /** A selected VIDEO still processing: its owner may stop the processing. */
   canCancelProcessing: boolean;
 };
@@ -140,6 +143,8 @@ export type ComposerAttachmentTrayProps = {
   processingCancelByFileId?: ReadonlyMap<string, ComposerProcessingCancel>;
   /** Takes back a file still uploading: aborts it and drops its tile. */
   onCancelUpload?: (key: string) => void;
+  /** "Mask edit" on image tiles. Absent on surfaces that cannot send a mask (Compare, labs). */
+  maskEdit?: ComposerTrayMaskEdit;
 };
 
 export type ComposerAttachmentTileProps = {
@@ -148,6 +153,7 @@ export type ComposerAttachmentTileProps = {
   disabled?: boolean;
   status?: string;
   processingCancel?: ComposerProcessingCancel;
+  maskEdit?: ComposerTrayMaskEdit;
 };
 
 export type ComposerPendingAttachmentTileProps = {
@@ -171,6 +177,10 @@ export type UseComposerAttachmentTileReturn = {
   label: string;
   sizeLabel: string | null;
   removeLabel: string;
+  maskLabel: string;
+  maskActionLabel: string;
+  maskedLabel: string;
+  maskClearLabel: string;
 };
 
 /**

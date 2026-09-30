@@ -48,6 +48,7 @@ const FAILED_CHIP: ComposerAttachmentChip = {
   fileId: null,
   localId: 'upload-1',
   detail: null,
+  detailKey: null,
   canCancelProcessing: false,
   displayName: 'broken.pdf',
   stateLabel: 'Failed',

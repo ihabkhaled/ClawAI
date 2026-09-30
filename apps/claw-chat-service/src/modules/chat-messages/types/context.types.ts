@@ -122,6 +122,13 @@ export type AssembledContext = {
    */
   researchGroundingInjected?: boolean;
   /**
+   * The platform's note about a chat save this turn (ADR-134), repeated on the
+   * final user turn by the prompt builders. Prompt-only: routing, fast path,
+   * search-first and quality checks read the user's own words, never this.
+   * Absent on every turn that saved nothing.
+   */
+  saveTurnNote?: string;
+  /**
    * Completed Runtime V2 tool rounds, oldest first.
    *
    * Runtime V2 tools execute client-side across an SSE hop, so the provider

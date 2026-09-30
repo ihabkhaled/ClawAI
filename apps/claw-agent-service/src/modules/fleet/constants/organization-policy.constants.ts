@@ -16,4 +16,7 @@ export const UNCONSTRAINED_POLICY: EffectivePolicy = {
   requireApproval: [],
   maximumRetentionDays: 3_650,
   minimumPermissionMode: null,
+  rules: [],
+  trust: { repositories: [], domains: [], commands: [] },
+  mcpServers: { allow: [], deny: [] },
 };

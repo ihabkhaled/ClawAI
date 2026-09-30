@@ -84,6 +84,7 @@ const FILES: Record<string, FileContentResponse> = {
 
 function stubCrossThreadRepository(): ConstructorParameters<typeof CrossThreadRetrievalManager>[0] {
   return {
+    findBranchRoot: async () => Promise.resolve(null),
     findCandidateThreads: async () => Promise.resolve([]),
     findMessagesForThreads: async () => Promise.resolve([]),
   } as unknown as ConstructorParameters<typeof CrossThreadRetrievalManager>[0];
@@ -110,7 +111,9 @@ describe('ContextAssemblyManager archive member delivery', () => {
     httpRequest.mockImplementation(({ url }: { url: string }) => {
       const match = /\/internal\/files\/([^/]+)\/(content|ingestion-state)/.exec(url);
       const file = match?.[1] === undefined ? undefined : FILES[match[1]];
-      return file === undefined ? Promise.resolve({ ok: false, status: 404, data: {} }) : Promise.resolve({ ok: true, status: 200, data: file });
+      return file === undefined
+        ? Promise.resolve({ ok: false, status: 404, data: {} })
+        : Promise.resolve({ ok: true, status: 200, data: file });
     });
   });
 

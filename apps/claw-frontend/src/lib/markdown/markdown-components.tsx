@@ -1,4 +1,5 @@
 import { Download } from 'lucide-react';
+import { useContext } from 'react';
 import type { Components } from 'react-markdown';
 
 import { CopyButton } from '@/components/common/copy-button';
@@ -6,6 +7,10 @@ import { API_BASE_URL } from '@/constants';
 import { ComponentSize } from '@/enums';
 import { useTranslation } from '@/lib/i18n';
 import { extractTextFromReactNode } from '@/utilities';
+import { citationIndexFromHref } from '@/utilities/message-citation.utility';
+
+import { CitationLink } from './citation-link';
+import { CitationsContext } from './citations-context';
 
 function PreBlock({ children, ...props }: React.JSX.IntrinsicElements['pre']): React.JSX.Element {
   // Extracts the raw source of the enclosed <code> child once per render so
@@ -84,6 +89,13 @@ function TableCell({ children, ...props }: React.JSX.IntrinsicElements['td']): R
 }
 
 function Anchor({ children, ...props }: React.JSX.IntrinsicElements['a']): React.JSX.Element {
+  const citations = useContext(CitationsContext);
+  const citationIndex = citationIndexFromHref(props.href);
+  const citation =
+    citationIndex === null ? undefined : citations.find((entry) => entry.index === citationIndex);
+  if (citation !== undefined) {
+    return <CitationLink citation={citation}>{children}</CitationLink>;
+  }
   return (
     <a
       className="text-primary focus-visible:ring-ring break-words underline underline-offset-2 hover:no-underline focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none"

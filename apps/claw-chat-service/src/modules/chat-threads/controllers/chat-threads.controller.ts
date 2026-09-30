@@ -1,14 +1,30 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ChatThreadsService } from '../services/chat-threads.service';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { CreateThreadDto, createThreadSchema } from '../dto/create-thread.dto';
 import { BranchThreadDto, branchThreadSchema } from '../dto/branch-thread.dto';
+import { RewindThreadDto, rewindThreadSchema } from '../dto/rewind-thread.dto';
 import { UpdateThreadDto, updateThreadSchema } from '../dto/update-thread.dto';
 import { ListThreadsQueryDto, listThreadsQuerySchema } from '../dto/list-threads-query.dto';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import { type AuthenticatedUser, type PaginatedResult } from '../../../common/types';
 import { type ChatThread } from '../../../generated/prisma';
-import { type ThreadWithMessageCount } from '../types/chat-threads.types';
+import {
+  type RewindThreadResult,
+  type ThreadLineage,
+  type ThreadWithMessageCount,
+} from '../types/chat-threads.types';
 
 @Controller('chat-threads')
 export class ChatThreadsController {
@@ -36,7 +52,25 @@ export class ChatThreadsController {
     @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(branchThreadSchema)) dto: BranchThreadDto,
   ): Promise<ChatThread> {
-    return this.chatThreadsService.branchThread(user.id, id, dto.fromMessageId);
+    return this.chatThreadsService.branchThread(user.id, id, dto.fromMessageId, dto.cut);
+  }
+
+  @Post(':id/rewind')
+  @HttpCode(HttpStatus.OK)
+  async rewind(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(rewindThreadSchema)) dto: RewindThreadDto,
+  ): Promise<RewindThreadResult> {
+    return this.chatThreadsService.rewindThread(user.id, id, dto.afterMessageId);
+  }
+
+  @Get(':id/lineage')
+  async lineage(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<ThreadLineage> {
+    return this.chatThreadsService.getLineage(id, user.id);
   }
 
   @Get(':id')

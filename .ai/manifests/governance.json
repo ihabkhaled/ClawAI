@@ -243,7 +243,7 @@
       "file": "rules/36-floating-ui-and-toast-clearance.md"
     },
     {
-      "bytes": 29042,
+      "bytes": 29218,
       "file": "rules/37-payg-credit-integrity.md"
     },
     {
@@ -255,15 +255,15 @@
       "file": "rules/39-worktree-branch-completion-pr-and-release-notes.md"
     },
     {
-      "bytes": 24919,
+      "bytes": 25104,
       "file": "rules/40-chat-surface-layout-and-composer.md"
     },
     {
-      "bytes": 22930,
+      "bytes": 24981,
       "file": "rules/41-web-evidence-truthfulness.md"
     },
     {
-      "bytes": 36539,
+      "bytes": 36818,
       "file": "rules/42-attachment-understanding.md"
     },
     {
@@ -279,7 +279,7 @@
       "file": "rules/45-display-currency-versus-settlement-currency.md"
     },
     {
-      "bytes": 2637,
+      "bytes": 3190,
       "file": "rules/46-token-quota-enforcement-and-window-integrity.md"
     },
     {
@@ -295,11 +295,11 @@
       "file": "rules/49-qa-team-discipline-and-test-evidence.md"
     },
     {
-      "bytes": 6450,
+      "bytes": 6638,
       "file": "rules/50-agentic-research-loop-and-narration.md"
     },
     {
-      "bytes": 7951,
+      "bytes": 8840,
       "file": "rules/51-router-candidates-and-model-window-fit.md"
     },
     {
@@ -323,7 +323,7 @@
       "file": "rules/56-model-reasoning-never-in-the-answer.md"
     },
     {
-      "bytes": 5349,
+      "bytes": 6997,
       "file": "rules/57-memory-and-context-pack-integrity.md"
     },
     {
@@ -333,7 +333,7 @@
   ],
   "skills": [
     {
-      "bytes": 31718,
+      "bytes": 31998,
       "file": "skills/00-index.md"
     },
     {
@@ -653,7 +653,7 @@
       "file": "skills/reuse-before-creating.md"
     },
     {
-      "bytes": 5275,
+      "bytes": 8079,
       "file": "skills/run-coding-agent-release-rounds.md"
     },
     {
@@ -687,6 +687,10 @@
     {
       "bytes": 5122,
       "file": "skills/verify-a-batch-live.md"
+    },
+    {
+      "bytes": 1355,
+      "file": "skills/verify-local-speech-container.md"
     },
     {
       "bytes": 7969,

@@ -29,6 +29,7 @@ describe('isPaygExemptProvider', () => {
     expect(isPaygExemptProvider('local-ollama')).toBe(true);
     expect(isPaygExemptProvider('OLLAMA')).toBe(true);
     expect(isPaygExemptProvider('LLAMACPP')).toBe(true);
+    expect(isPaygExemptProvider('LOCAL')).toBe(true); // ADR-128: the free speech container
   });
 
   it('never exempts a paid gateway', () => {

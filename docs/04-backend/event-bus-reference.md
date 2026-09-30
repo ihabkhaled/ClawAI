@@ -22,33 +22,33 @@ All patterns are defined in `packages/shared-types/src/events/event-patterns.ts`
 
 ```typescript
 export enum EventPattern {
-  USER_CREATED          = 'user.created',
-  USER_LOGIN            = 'user.login',
-  USER_LOGOUT           = 'user.logout',
-  USER_ROLE_CHANGED     = 'user.role_changed',
-  USER_DEACTIVATED      = 'user.deactivated',
-  MESSAGE_CREATED       = 'message.created',
-  MESSAGE_ROUTED        = 'message.routed',
-  MESSAGE_COMPLETED     = 'message.completed',
-  CONNECTOR_CREATED     = 'connector.created',
-  CONNECTOR_UPDATED     = 'connector.updated',
-  CONNECTOR_DELETED     = 'connector.deleted',
-  CONNECTOR_SYNCED      = 'connector.synced',
+  USER_CREATED = 'user.created',
+  USER_LOGIN = 'user.login',
+  USER_LOGOUT = 'user.logout',
+  USER_ROLE_CHANGED = 'user.role_changed',
+  USER_DEACTIVATED = 'user.deactivated',
+  MESSAGE_CREATED = 'message.created',
+  MESSAGE_ROUTED = 'message.routed',
+  MESSAGE_COMPLETED = 'message.completed',
+  CONNECTOR_CREATED = 'connector.created',
+  CONNECTOR_UPDATED = 'connector.updated',
+  CONNECTOR_DELETED = 'connector.deleted',
+  CONNECTOR_SYNCED = 'connector.synced',
   CONNECTOR_HEALTH_CHECKED = 'connector.health_checked',
   ROUTING_DECISION_MADE = 'routing.decision_made',
-  FILE_UPLOADED         = 'file.uploaded',
-  FILE_CHUNKED          = 'file.chunked',
-  MEMORY_EXTRACTED      = 'memory.extracted',
-  AUDIT_EVENT           = 'audit.event',
-  HEALTH_CHECK          = 'health.check',
-  LOG_SERVER            = 'log.server',
-  IMAGE_GENERATED       = 'image.generated',
-  IMAGE_FAILED          = 'image.failed',
-  FILE_GENERATED        = 'file.generated',
+  FILE_UPLOADED = 'file.uploaded',
+  FILE_CHUNKED = 'file.chunked',
+  MEMORY_EXTRACTED = 'memory.extracted',
+  AUDIT_EVENT = 'audit.event',
+  HEALTH_CHECK = 'health.check',
+  LOG_SERVER = 'log.server',
+  IMAGE_GENERATED = 'image.generated',
+  IMAGE_FAILED = 'image.failed',
+  FILE_GENERATED = 'file.generated',
   FILE_GENERATION_FAILED = 'file_generation.failed',
-  MODEL_PULLED          = 'model.pulled',
-  MODEL_DELETED         = 'model.deleted',
-  CATALOG_UPDATED       = 'catalog.updated',
+  MODEL_PULLED = 'model.pulled',
+  MODEL_DELETED = 'model.deleted',
+  CATALOG_UPDATED = 'catalog.updated',
 }
 ```
 
@@ -56,34 +56,34 @@ export enum EventPattern {
 
 ## Publisher/Consumer Matrix
 
-| Event | Publisher | Consumers | Purpose |
-|-------|----------|-----------|---------|
-| `user.created` | auth | audit | Audit new user creation |
-| `user.login` | auth | audit | Audit login events |
-| `user.logout` | auth | audit | Audit logout events |
-| `user.role_changed` | auth | audit | Audit role changes |
-| `user.deactivated` | auth | audit | Audit deactivation |
-| `message.created` | chat | routing | Trigger routing decision |
-| `message.routed` | routing | chat | Trigger AI execution |
-| `message.completed` | chat | audit, memory | Record usage + extract memories |
-| `connector.created` | connector | audit | Audit connector creation |
-| `connector.updated` | connector | audit | Audit connector changes |
-| `connector.deleted` | connector | audit | Audit connector deletion |
-| `connector.synced` | connector | audit, routing | Update model availability |
-| `connector.health_checked` | connector | audit, routing | Update connector status |
-| `routing.decision_made` | routing | audit | Audit routing decisions |
-| `file.uploaded` | file | - | (no consumers yet) |
-| `file.chunked` | file | - | (no consumers yet) |
-| `memory.extracted` | memory | audit | Audit memory extraction |
-| `audit.event` | all | audit | Generic audit events |
-| `log.server` | all | server-logs | Structured log ingestion |
-| `image.generated` | image | audit | Audit image generation |
-| `image.failed` | image | audit | Audit image failures |
-| `file.generated` | file-gen | audit | Audit file generation |
-| `file_generation.failed` | file-gen | audit | Audit file gen failures |
-| `model.pulled` | ollama | routing | Invalidate model cache |
-| `model.deleted` | ollama | routing | Invalidate model cache |
-| `catalog.updated` | ollama | - | (no consumers yet) |
+| Event                      | Publisher | Consumers      | Purpose                         |
+| -------------------------- | --------- | -------------- | ------------------------------- |
+| `user.created`             | auth      | audit          | Audit new user creation         |
+| `user.login`               | auth      | audit          | Audit login events              |
+| `user.logout`              | auth      | audit          | Audit logout events             |
+| `user.role_changed`        | auth      | audit          | Audit role changes              |
+| `user.deactivated`         | auth      | audit          | Audit deactivation              |
+| `message.created`          | chat      | routing        | Trigger routing decision        |
+| `message.routed`           | routing   | chat           | Trigger AI execution            |
+| `message.completed`        | chat      | audit, memory  | Record usage + extract memories |
+| `connector.created`        | connector | audit          | Audit connector creation        |
+| `connector.updated`        | connector | audit          | Audit connector changes         |
+| `connector.deleted`        | connector | audit          | Audit connector deletion        |
+| `connector.synced`         | connector | audit, routing | Update model availability       |
+| `connector.health_checked` | connector | audit, routing | Update connector status         |
+| `routing.decision_made`    | routing   | audit          | Audit routing decisions         |
+| `file.uploaded`            | file      | -              | (no consumers yet)              |
+| `file.chunked`             | file      | -              | (no consumers yet)              |
+| `memory.extracted`         | memory    | audit          | Audit memory extraction         |
+| `audit.event`              | all       | audit          | Generic audit events            |
+| `log.server`               | all       | server-logs    | Structured log ingestion        |
+| `image.generated`          | image     | audit          | Audit image generation          |
+| `image.failed`             | image     | audit          | Audit image failures            |
+| `file.generated`           | file-gen  | audit          | Audit file generation           |
+| `file_generation.failed`   | file-gen  | audit          | Audit file gen failures         |
+| `model.pulled`             | ollama    | routing        | Invalidate model cache          |
+| `model.deleted`            | ollama    | routing        | Invalidate model cache          |
+| `catalog.updated`          | ollama    | -              | (no consumers yet)              |
 
 ---
 
@@ -93,8 +93,8 @@ All payloads extend `BaseEventPayload`:
 
 ```typescript
 interface BaseEventPayload {
-  timestamp: string;       // ISO 8601
-  correlationId?: string;  // For request tracing
+  timestamp: string; // ISO 8601
+  correlationId?: string; // For request tracing
 }
 ```
 
@@ -104,7 +104,7 @@ interface BaseEventPayload {
 interface UserCreatedPayload extends BaseEventPayload {
   userId: string;
   email: string;
-  role: UserRole;    // ADMIN | OPERATOR | VIEWER
+  role: UserRole; // ADMIN | OPERATOR | VIEWER
 }
 
 interface UserLoginPayload extends BaseEventPayload {
@@ -122,12 +122,12 @@ interface UserRoleChangedPayload extends BaseEventPayload {
   userId: string;
   previousRole: UserRole;
   newRole: UserRole;
-  changedBy: string;  // Admin user ID
+  changedBy: string; // Admin user ID
 }
 
 interface UserDeactivatedPayload extends BaseEventPayload {
   userId: string;
-  deactivatedBy: string;  // Admin user ID
+  deactivatedBy: string; // Admin user ID
 }
 ```
 
@@ -138,22 +138,24 @@ interface MessageCreatedPayload extends BaseEventPayload {
   messageId: string;
   threadId: string;
   userId: string;
-  content: string;          // User's message text
+  content: string; // User's message text
   routingMode?: RoutingMode;
-  forcedProvider?: string;  // For MANUAL_MODEL mode
-  forcedModel?: string;     // For MANUAL_MODEL mode
+  forcedProvider?: string; // For MANUAL_MODEL mode
+  forcedModel?: string; // For MANUAL_MODEL mode
 }
 
 interface MessageRoutedPayload extends BaseEventPayload {
   messageId: string;
   threadId: string;
-  selectedProvider: string;   // e.g., "anthropic"
-  selectedModel: string;      // e.g., "claude-sonnet-4"
+  selectedProvider: string; // e.g., "anthropic"
+  selectedModel: string; // e.g., "claude-sonnet-4"
   routingMode: RoutingMode;
   fallbackProvider?: string;
   fallbackModel?: string;
 }
 
+// Abridged. The canonical, complete interface (≈25 fields) is
+// packages/shared-types/src/events/event-payloads.type.ts — read that one.
 interface MessageCompletedPayload extends BaseEventPayload {
   messageId: string;
   threadId: string;
@@ -163,6 +165,7 @@ interface MessageCompletedPayload extends BaseEventPayload {
   inputTokens?: number;
   outputTokens?: number;
   latencyMs: number;
+  useMemory?: boolean; // false = memory-service learns nothing from this turn (SEC-006)
 }
 ```
 
@@ -171,7 +174,7 @@ interface MessageCompletedPayload extends BaseEventPayload {
 ```typescript
 interface ConnectorCreatedPayload extends BaseEventPayload {
   connectorId: string;
-  provider: ConnectorProvider;  // OPENAI | ANTHROPIC | GEMINI | ...
+  provider: ConnectorProvider; // OPENAI | ANTHROPIC | GEMINI | ...
   name: string;
   userId: string;
 }
@@ -185,7 +188,7 @@ interface ConnectorSyncedPayload extends BaseEventPayload {
 interface ConnectorHealthCheckedPayload extends BaseEventPayload {
   connectorId: string;
   provider: ConnectorProvider;
-  status: ConnectorStatus;  // HEALTHY | DEGRADED | DOWN | UNKNOWN
+  status: ConnectorStatus; // HEALTHY | DEGRADED | DOWN | UNKNOWN
   latencyMs?: number;
 }
 ```
@@ -224,7 +227,7 @@ interface MemoryExtractedPayload extends BaseEventPayload {
   memoryId: string;
   threadId: string;
   userId: string;
-  type: MemoryType;   // FACT | PREFERENCE | INSTRUCTION | SUMMARY
+  type: MemoryType; // FACT | PREFERENCE | INSTRUCTION | SUMMARY
   content: string;
 }
 ```
@@ -233,7 +236,7 @@ interface MemoryExtractedPayload extends BaseEventPayload {
 
 ```typescript
 interface ServerLogPayload extends BaseEventPayload {
-  level: LogLevel;        // INFO | WARN | ERROR | DEBUG
+  level: LogLevel; // INFO | WARN | ERROR | DEBUG
   message: string;
   serviceName: string;
   module?: string;
@@ -277,6 +280,7 @@ await this.rabbitMQ.publish(EventPattern.MESSAGE_CREATED, {
 ```
 
 The `RabbitMQService.publish()` method:
+
 1. Serializes payload to JSON Buffer
 2. Wraps in `{ pattern, data, timestamp, source }` envelope
 3. Publishes to `claw.events` exchange with pattern as routing key
@@ -300,6 +304,7 @@ async onModuleInit(): Promise<void> {
 ```
 
 The `RabbitMQService.subscribe()` method:
+
 1. Creates a queue: `claw.<service>.<pattern>`
 2. Creates a DLQ: `claw.<service>.<pattern>.dlq`
 3. Binds queue to exchange with pattern routing key
@@ -340,10 +345,11 @@ The most important event chain is the message flow:
 9. chat-service stores ASSISTANT message
 10. chat-service publishes: message.completed
 11. audit-service receives message.completed -> records usage
-12. memory-service receives message.completed -> extracts memories
+12. memory-service receives message.completed -> extracts memories (unless useMemory=false or memory is paused)
 ```
 
 If any step fails:
+
 - Retry up to 3 times with backoff
 - After 3 failures, message goes to DLQ
 - Chat service stores error ASSISTANT message so frontend polling stops

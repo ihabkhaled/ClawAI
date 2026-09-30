@@ -18,3 +18,41 @@ Browser-lane rerun causes: first full run hit chat-service crash-looping after a
 needed baked shared-package symbols (`service:rebuild chat-service routing-service` fixed it);
 scenario 5's assertion predated the cancel-on-close request and was corrected in the script.
 Not run: OpenAI live (owner: no credit); local STT/TTS (no path); llamacpp/Ollama runtimes stopped (502 on their catalog).
+
+## Re-run after batches A/B/C (e18a6d72f), 12:50 UTC
+
+API lane 31/7/1 — every Gemini-backed check failed with Google's **"Your project has
+exceeded its monthly spending cap"** (image `IMAGE_PROVIDER_QUOTA_EXCEEDED`, helper
+vision, TTS 429 → RATE_LIMITED backoff, transcription "busy"); OpenAI has no credit.
+Our handling was correct in each case (right codes, holds released, no charge). Needs
+the owner to raise the cap at https://ai.studio/spend, then re-run.
+The recurring `frames route via nginx → 000` was nginx 499: unmatched
+`/api/v1/internal/*` fell through to the Next.js dev 404 page (326 KB, > 60 s cold).
+Fixed: `location /api/v1/internal/ { return 404; }` in `infra/nginx/locations.conf`.
+
+## Final run (main at 5e05450ca, after the Gemini cap was lifted)
+
+- API lane: **41/41** (`bash qa/test-multimodal.sh`).
+- Browser lane: **13/13 in one run** — `SUMMARY 1:PASS 2:PASS 3:PASS 4:PASS 5:PASS 6:PASS 7:PASS 8:PASS 9:PASS 10:PASS A:PASS B:PASS C:PASS` (`rerun/report.json`, screenshots in `rerun/screenshots/`).
+- The first post-cap run found a real bug (video question routed to `chatgpt-image-latest`, no reply) — fixed in 5e05450ca, rule 51 item 19.
+
+## Deferred-items live run (2026-09-29, `scripts/qa-lab/deferred-live.mjs`)
+
+Connectors toggled via `PATCH /connectors/:id` and restored in `finally`.
+
+- OpenAI STT (Gemini off): `provider=OPENAI model=gpt-4o-mini-transcribe kind=QUOTA_EXHAUSTED` (HTTP 429). Reserve released `reason=PROVIDER_ERROR`; fell through to LOCAL: `metered=false`, `audioSeconds=4`, transcript exact. Metered success path NOT proven live (OpenAI quota).
+- LOCAL STT (Gemini + OpenAI off): `provider=LOCAL model=Systran/faster-whisper-small`, unmetered, 3.7 s, transcript exact. PASS.
+- OpenAI masked edit: chat refused with "model cannot edit only part of an image" (no mask-capable model reachable, OpenAI 429). No image job created. NOT proven live.
+- Video restart recovery: not run live (Gemini spend); unit-gated.
+
+### Retry after OpenAI credit (2026-09-29, 3:11 PM)
+
+- OpenAI STT now succeeds: `provider=OPENAI model=gpt-4o-mini-transcribe`, metered=true, FINALIZED.
+- BUG found by that run: `audioSeconds=168` for a 3.5 s clip. `probeAudioSeconds` used the video-only ffprobe `-format_whitelist`, which rejects wav/mp3/ogg (`exit=1 bytes=5`), so the byte estimate was billed (~48x too much). Fixed with `AUDIO_PROBE_FORMAT_WHITELIST` (video demuxers + wav,mp3,ogg,flac,aac,aiff,amr; still no hls/concat). Lesson: a unit-mocked probe cannot catch a real-binary whitelist; only the live run did.
+
+## Deploy + re-run (2026-09-29, evening)
+
+- OpenAI STT: `finalize ... audioSeconds=4`, gpt-4o-mini-transcribe, 3.8 s. Local STT: `LOCAL`, unmetered, audioSeconds=4.
+- Masked edit: first re-run still 422 (routing had already chosen `IMAGE_GEMINI`, and `detectImageFromAttachment` returned early on any `IMAGE_` provider). Fixed by `keepsRoutedImageProvider`; second run COMPLETED on `IMAGE_OPENAI`.
+- Video restart recovery: pid 402 held the job, `docker restart`, pid 408 logged `videoStaleRecovery ... outcome=REQUEUED`, then `videoProcessed ... audioStatus=TRANSCRIBED segments=12`.
+- Lesson: a fix that is unit-tested on the function is not proven until the live path shows the branch ran; the first mask fix was correct but unreachable.

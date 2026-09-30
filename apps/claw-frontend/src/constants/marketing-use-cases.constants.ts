@@ -85,7 +85,7 @@ export const MARKETING_USE_CASES: ReadonlyArray<MarketingUseCase> = [
   },
 ];
 
-// The argument for one workspace across many models rather than several
+// The argument for one workspace across many models rather than several subscriptions
 // separate vendor plans.
 export const MARKETING_USE_CASE_VALUE_POINTS: ReadonlyArray<MarketingUseCaseValuePoint> = [
   {

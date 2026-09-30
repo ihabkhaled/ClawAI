@@ -364,6 +364,46 @@ export const it: TranslationDictionary = {
       succeeded: 'Diramato in una nuova conversazione.',
       failed: 'Impossibile diramare la conversazione.',
     },
+    lineage: {
+      branchedFrom: 'Diramato da',
+      sourceDeleted: 'Diramato da una conversazione eliminata',
+      branches: 'Diramazioni ({count})',
+      branchBadge: 'Diramazione',
+    },
+    quote: {
+      action: 'Cita',
+      composerHeading: 'Citazioni',
+      remove: 'Rimuovi citazione',
+      repliedTo: 'In risposta a',
+      limitReached: 'Puoi citare fino a 3 selezioni per messaggio.',
+      sourceMissing:
+        'Il messaggio citato non è più in questa conversazione. Rimuovi la citazione e riprova.',
+    },
+    regenerateWith: {
+      trigger: 'Riprova con…',
+      auto: 'Lascia scegliere ad AUTO',
+    },
+    contextSave: {
+      title: 'Salvato da questa chat',
+      savedMemory: 'Salvato in memoria',
+      createdPack: 'Pacchetto di contesto creato',
+      addedToPack: 'Aggiunto al pacchetto di contesto',
+      openMemory: 'Apri memoria',
+      openPack: 'Apri pacchetto',
+      choosePack: 'In quale pacchetto di contesto va messo?',
+      newPack: 'Nuovo pacchetto: {name}',
+      saving: 'Salvataggio…',
+      packSaved: 'Salvato nel pacchetto di contesto.',
+      failedTitle: 'Impossibile salvare',
+      memoryFailed: 'La memoria non è stata salvata.',
+      packFailed: 'Il pacchetto di contesto non è stato salvato.',
+      notPending: 'Questo salvataggio è già fatto o non attende più un pacchetto.',
+      reasons: {
+        PLAN: 'Il tuo piano non include questa funzione.',
+        LIMIT: 'Hai raggiunto il limite del tuo piano.',
+        UNAVAILABLE: 'Il servizio non è disponibile ora. Riprova tra poco.',
+      },
+    },
     speech: {
       action: 'Leggi ad alta voce',
       stop: 'Interrompi la lettura ad alta voce',
@@ -399,6 +439,11 @@ export const it: TranslationDictionary = {
       },
     },
     edit: {
+      inBranch: 'Modifica in una nuova diramazione',
+      branchHint:
+        'Oppure lascia questa conversazione com’è e fai la domanda modificata in una nuova diramazione: non viene eliminato nulla.',
+      branchOpened:
+        'Aperta una nuova diramazione con la domanda modificata. Premi Invia quando è pronta.',
       action: 'Modifica ed esegui di nuovo',
       title: 'Modifica questo messaggio',
       warning:
@@ -611,6 +656,35 @@ export const it: TranslationDictionary = {
     helpful: 'Utile',
     notHelpful: 'Non utile',
     feedbackSaved: 'Feedback salvato',
+    maskEdit: {
+      action: 'Modifica con maschera',
+      actionFor: 'Modifica con maschera: {name}',
+      title: 'Modifica con maschera',
+      description:
+        "Dipingi l'area che il modello può cambiare. Tutto ciò che lasci non dipinto resta com'è.",
+      canvasLabel: 'Area di disegno della maschera',
+      brushSize: 'Dimensione del pennello',
+      erase: 'Gomma',
+      clear: 'Cancella tutto',
+      apply: 'Applica maschera',
+      applying: 'Salvataggio…',
+      loading: "Caricamento dell'immagine…",
+      imageFailed: "Impossibile caricare l'immagine.",
+      saveFailed: 'Impossibile salvare la maschera. Riprova.',
+      empty: 'Dipingi prima almeno un’area.',
+      applied: 'Maschera applicata',
+      remove: 'Rimuovi maschera',
+      keyboardHint:
+        'Trascina per dipingere. Con la tastiera: le frecce spostano il pennello (con Maiusc più veloce), Spazio o Invio avvia e ferma la pittura.',
+      paintingOn: 'Pittura attiva',
+      paintingOff: 'Pittura disattivata',
+      refusal: {
+        title: 'La modifica con maschera non è stata applicata',
+        invalid: "La maschera non corrisponde all'immagine. Ridisegnala, poi invia.",
+        notSupported:
+          "Il modello selezionato non può modificare solo una parte di un'immagine. Scegli un modello di modifica immagini che supporti le maschere, oppure invia senza maschera.",
+      },
+    },
     attachFiles: 'Allega file',
     attachment: {
       uploading: 'Caricamento allegato…',
@@ -801,12 +875,13 @@ export const it: TranslationDictionary = {
     jumpToLatest: 'Vai al più recente',
     moreActions: 'Altre azioni',
     useMemoryLabel: 'Usa la memoria in questa conversazione',
-    useMemoryDescription: 'Se disattivato, nessuna memoria viene inserita nel prompt.',
+    useMemoryDescription:
+      'Se disattivato, in questa chat non vengono usate memorie e nulla di ciò che viene detto qui viene salvato come memoria.',
     useContextLabel: 'Usa i pacchetti di contesto in questa conversazione',
     useContextDescription: 'Se disattivato, i pacchetti allegati vengono ignorati.',
     useCrossThreadContextLabel: 'Usa le conversazioni precedenti pertinenti',
     useCrossThreadContextDescription:
-      'Se attivo, ClawAI può consultare le tue altre conversazioni per trovare materiale rilevante per questa. Disattivato per impostazione predefinita.',
+      'Se attivo, ClawAI può usare le tue altre chat che lo consentono per trovare materiale rilevante per questa. Se disattivato, questa chat non legge le tue altre chat e non viene letta da esse.',
     workflow: {
       searchFirst: 'Ricerca prima',
       direct: 'Diretto',
@@ -988,6 +1063,18 @@ export const it: TranslationDictionary = {
     regionPlaceholder: 'es., us-east-1',
     workspaceIdPlaceholder: 'es., wrkspc_01AbCd...',
     saveFirstThenTest: 'Salva prima il connettore, poi testalo',
+    gatewayHeaders: 'Header del gateway (facoltativo)',
+    gatewayHeadersHelp:
+      'Header aggiuntivi per un gateway LLM davanti al provider (LiteLLM, Portkey, Helicone). I valori sono salvati cifrati e non vengono più mostrati. Non sostituiscono mai la chiave API.',
+    gatewayHeadersEditHelp:
+      'Gli header salvati restano, a meno che tu non ne aggiunga di nuovi, che li sostituiscono tutti.',
+    gatewayHeaderName: "Nome dell'header",
+    gatewayHeaderValue: "Valore dell'header",
+    addGatewayHeader: 'Aggiungi header',
+    removeGatewayHeader: 'Rimuovi header',
+    clearGatewayHeaders: 'Elimina gli header del gateway salvati',
+    gatewayHeadersInvalid:
+      'Ogni header richiede un nome valido, non riservato e univoco e un valore su una sola riga (massimo 10 header).',
     selectProvider: 'Seleziona un provider',
     groupConnected: 'Provider connessi',
     groupLowCost: 'Inferenza rapida ed economica',
@@ -4912,7 +4999,7 @@ export const it: TranslationDictionary = {
       PAYPAL: 'PayPal',
       PAYMOB: 'Paymob',
       paypalCard: 'PayPal/Card',
-      paymobTestingSoon: 'Paymob (Test – presto)',
+      paymobCard: 'Paymob (carta)',
       unavailable: 'I gateway di pagamento non sono disponibili',
     },
     proration: {
@@ -5146,7 +5233,7 @@ export const it: TranslationDictionary = {
         modelCount: '{count} modelli disponibili adesso',
         title: 'I modelli che ottieni',
         intro:
-          'Un solo spazio di lavoro raggiunge tutti i provider qui sotto. Cambia modello a metà conversazione, oppure lascia che ClawAI scelga il migliore per ogni messaggio.',
+          'Un solo spazio di lavoro copre tutti i provider qui sotto. Cambia modello a metà conversazione, oppure lascia che ClawAI scelga il migliore per ogni messaggio.',
         footnote:
           'I nuovi modelli di frontiera vengono aggiunti man mano che escono: il tuo piano li include dal primo giorno, conteggiati su un unico plafond.',
         linkFeatures: 'Esplora tutte le funzionalità',
@@ -5301,7 +5388,7 @@ export const it: TranslationDictionary = {
         title: 'A chi è rivolto ClawAI',
         privacyName: 'Chi usa l’IA tutti i giorni',
         privacyDesc:
-          'un solo spazio di lavoro invece di tre o quattro app di IA, con il modello più potente sempre a un clic di distanza anziché dietro l’ennesimo paywall.',
+          'un solo spazio di lavoro invece di tre o quattro abbonamenti separati, con il modello più potente sempre a un clic di distanza anziché dietro l’ennesimo paywall.',
         devName: 'Sviluppatori che valutano modelli',
         devDesc:
           'invia lo stesso prompt a cinque modelli contemporaneamente e leggi le risposte affiancate prima di sceglierne uno.',
@@ -5321,7 +5408,7 @@ export const it: TranslationDictionary = {
         q3: 'Come vengono misurati i limiti d’uso?',
         a3: 'In token normalizzati sul costo. Un modello costoso consuma più plafond di uno economico, così un unico valore giornaliero e mensile resta equo su modelli i cui prezzi differiscono di oltre un ordine di grandezza.',
         q4: 'ClawAI è affiliato a OpenAI, Anthropic, Google o AWS?',
-        a4: 'No. ClawAI è un prodotto indipendente che ti dà accesso ai modelli di quei provider in un unico spazio di lavoro. Non è approvato da nessuno di loro né a essi affiliato.',
+        a4: 'No. ClawAI è un prodotto indipendente che fornisce accesso ai modelli di quei provider tramite un unico spazio di lavoro. Non è approvato da nessuno di loro né a essi affiliato.',
       },
       cta: {
         title: 'Inizia con il piano Free',
@@ -6138,7 +6225,7 @@ export const it: TranslationDictionary = {
         imagesCapability: 'Generazione di immagini',
       },
       oneSubscription: {
-        title: 'Perché un solo spazio di lavoro batte più app',
+        title: 'Perché un solo spazio di lavoro batte più abbonamenti',
         intro:
           'Avere quattro abbonamenti IA non è quattro volte meglio di averne uno. Sono quattro fatture, quattro serie di limiti e una costante, sorda decisione su quale scheda aprire.',
         pointRightModelTitle: 'Il modello giusto, ogni volta',

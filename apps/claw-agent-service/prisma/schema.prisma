@@ -77,6 +77,20 @@ enum ScheduledCommandStatus {
   DISABLED
 }
 
+/// F099: COMMAND runs a shell command on a paired device; PROMPT runs an agent
+/// prompt on an online registered runner whose labels match.
+enum ScheduledCommandKind {
+  COMMAND
+  PROMPT
+}
+
+/// F099: SHELL is a command line; PROMPT is an agent prompt a runner executes
+/// through the headless SDK under its own local approval policy.
+enum TerminalCommandKind {
+  SHELL
+  PROMPT
+}
+
 // === Capability Framework (Stream 10 — flagship) ===
 //
 // Generalises the existing terminal-command approval flow into a unified
@@ -258,6 +272,7 @@ model AgentSession {
   disconnectedAt  DateTime?
   metadata        Json?
   commands        TerminalCommand[]
+  runnerCredential RunnerCredential?
   repos           LocalRepo[]
   fileEvents      FileWatchEvent[]
   createdAt       DateTime           @default(now())
@@ -362,6 +377,10 @@ model TerminalCommand {
   userId          String
   command         String
   workingDir      String?
+  /// F099: PROMPT jobs carry the prompt in `command`, plus model and repository.
+  kind            TerminalCommandKind   @default(SHELL)
+  model           String?
+  repoRef         String?
   status          TerminalCommandStatus @default(PENDING_APPROVAL)
   riskScore       Int                   @default(0)
   riskLabel       RiskLabel             @default(LOW)
@@ -395,10 +414,16 @@ model TerminalCommand {
 model ScheduledCommand {
   id            String                 @id @default(cuid())
   userId        String
-  deviceId      String
-  device        Device                 @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  /// Null for PROMPT routines: they go to a runner, not to a paired device.
+  deviceId      String?
+  device        Device?                @relation(fields: [deviceId], references: [id], onDelete: Cascade)
   name          String
+  kind          ScheduledCommandKind   @default(COMMAND)
+  /// The shell command, or the agent prompt for a PROMPT routine.
   command       String
+  model         String?
+  repoRef       String?
+  runnerLabels  String[]               @default([])
   workingDir    String?
   intervalMinutes Int
   status        ScheduledCommandStatus @default(ENABLED)
@@ -411,6 +436,24 @@ model ScheduledCommand {
   @@index([deviceId, status])
   @@index([nextRunAt, status])
   @@map("scheduled_commands")
+}
+
+/// F100: a runner's own credential, separate from the user's token. Only the
+/// SHA-256 of the token is stored; the token is shown once at issue or rotation.
+model RunnerCredential {
+  id          String       @id @default(cuid())
+  sessionId   String       @unique
+  session     AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId      String
+  tokenHash   String       @unique
+  tokenPrefix String
+  issuedAt    DateTime     @default(now())
+  rotatedAt   DateTime?
+  revokedAt   DateTime?
+  lastUsedAt  DateTime?
+
+  @@index([userId])
+  @@map("runner_credentials")
 }
 
 model AccessPolicy {
@@ -645,6 +688,12 @@ model OrganizationPolicy {
   maximumRetentionDays Int @default(3650)
   /// When set, members cannot select a weaker permission mode than this one.
   minimumPermissionMode String?
+  /// F053 hard deny/ask rules, the extension's `policyRuleSchema` shape. Validated on write.
+  rules      Json @default("[]")
+  /// F053 trust lists: { repositories, domains, commands } glob arrays; empty constrains nothing.
+  trust      Json @default("{\"repositories\":[],\"domains\":[],\"commands\":[]}")
+  /// F054 MCP server patterns: { allow, deny }; deny wins, empty allow admits every server.
+  mcpServers Json @default("{\"allow\":[],\"deny\":[]}")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

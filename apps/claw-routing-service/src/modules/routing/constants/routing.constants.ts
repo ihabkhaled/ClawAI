@@ -2265,3 +2265,6 @@ export const MULTI_INTENT_CONFIDENCE_MULTI = 0.75;
 // answered "no reachable execution model". Retrying on demand heals it, and
 // the interval keeps a genuinely down connector service from being hammered.
 export const CONNECTOR_HEALTH_REHYDRATE_INTERVAL_MS = 15_000;
+
+/** The sentinel provider AUTO emits when no execution model is reachable. */
+export const UNAVAILABLE_PROVIDER = 'UNAVAILABLE';

@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { useSendMessage } from '@/hooks/chat/use-send-message';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import { ApiClientError } from '@/services/shared/api-client';
+import { useQuoteDraftStore } from '@/stores/quote-draft.store';
 import { readComposerDraft } from '@/utilities/composer-draft.utility';
 
 const mockCreateMessage = vi.fn();
@@ -117,5 +118,25 @@ describe('useSendMessage', () => {
     // The orchestration poll hooks read a different cache shape and still
     // need their own invalidation.
     expect(invalidatedKeys).toContainEqual(queryKeys.threads.messagesAnyPage('thread-1'));
+  });
+
+  it('clears the thread quotes only once the send succeeds', async () => {
+    useQuoteDraftStore.setState({ byThread: {} });
+    useQuoteDraftStore.getState().addQuote('thread-1', { sourceMessageId: 'm-1', text: 'a' });
+    const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useSendMessage('thread-1'), { wrapper });
+
+    mockCreateMessage.mockRejectedValueOnce(Object.assign(new Error('boom'), { status: 500 }));
+    act(() => result.current.sendMessage({ threadId: 'thread-1', content: 'hi' }));
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    // A failed send keeps what was quoted, like the draft, for the retry.
+    expect(useQuoteDraftStore.getState().byThread['thread-1']).toHaveLength(1);
+
+    mockCreateMessage.mockResolvedValueOnce({ id: 'm-2', threadId: 'thread-1' });
+    act(() => result.current.sendMessage({ threadId: 'thread-1', content: 'hi' }));
+    await waitFor(() => expect(useQuoteDraftStore.getState().byThread['thread-1']).toBeUndefined());
   });
 });

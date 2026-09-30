@@ -29,6 +29,32 @@ export class CrossThreadRetrievalRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
+   * The root of the branch family `threadId` belongs to — its own id when it is
+   * not a branch. Null when the thread is not this user's.
+   */
+  async findBranchRoot(userId: string, threadId: string): Promise<string | null> {
+    const row = await this.prisma.chatThread.findFirst({
+      where: { id: threadId, userId },
+      select: { id: true, branchRootThreadId: true },
+    });
+    return row === null ? null : (row.branchRootThreadId ?? row.id);
+  }
+
+  /**
+   * Every thread in one branch family: the root and everything branched from
+   * it at any depth. These are alternate futures of ONE conversation, so none
+   * of them may feed another as "a previous chat" — a branch that could read
+   * its source would read what was said there AFTER the fork.
+   */
+  async findBranchFamilyIds(userId: string, rootThreadId: string): Promise<string[]> {
+    const rows = await this.prisma.chatThread.findMany({
+      where: { userId, OR: [{ id: rootThreadId }, { branchRootThreadId: rootThreadId }] },
+      select: { id: true },
+    });
+    return rows.map((row) => row.id);
+  }
+
+  /**
    * Stage 1 — which of the user's other threads are worth reading.
    *
    * Searches message CONTENT, not just thread titles. Title-only ranking was
@@ -45,7 +71,7 @@ export class CrossThreadRetrievalRepository {
    */
   async findCandidateThreads(
     userId: string,
-    excludeThreadId: string,
+    excludeThreadIds: readonly string[],
     terms: readonly string[],
   ): Promise<CrossThreadCandidate[]> {
     if (terms.length === 0) return [];
@@ -58,7 +84,16 @@ export class CrossThreadRetrievalRepository {
       terms.map(async (term) =>
         this.prisma.chatMessage.findMany({
           where: {
-            thread: { userId, isArchived: false, id: { not: excludeThreadId } },
+            // A chat that turned memory or "use relevant previous chats" off
+            // is not a SOURCE for other chats either (SEC-006) — the switch
+            // used to guard only what the chat itself read.
+            thread: {
+              userId,
+              isArchived: false,
+              useMemory: true,
+              useCrossThreadContext: true,
+              id: { notIn: [...excludeThreadIds] },
+            },
             role: { in: ['USER', 'ASSISTANT'] },
             content: { contains: term, mode: 'insensitive' as const },
           },

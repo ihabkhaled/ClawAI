@@ -92,7 +92,7 @@ type Harness = {
   emitError: Mock;
 };
 
-function build(): Harness {
+function build(imageLink?: { linkAssistantMessage: Mock }): Harness {
   const access = createFakePaygAccessControl({ lockedPlanFeatures: ['allowImageGeneration'] });
   const context = {
     userId: 'user-1',
@@ -189,6 +189,9 @@ function build(): Harness {
       append: vi.fn().mockResolvedValue(undefined),
       read: vi.fn().mockResolvedValue([]),
     } as never,
+    undefined,
+    undefined,
+    imageLink as never,
   );
   return { service, access, create, emitError: stream.emitError };
 }
@@ -263,5 +266,30 @@ describe('image turn on a plan without image generation (ADR-122)', () => {
     expect(stored['metadata']).not.toHaveProperty('generationId');
     expect(h.emitError).not.toHaveBeenCalled();
     expect(h.access.reserveCredit).not.toHaveBeenCalled();
+  });
+
+  it('links the stored assistant message to the dispatched generation (10a)', async () => {
+    const linkAssistantMessage = vi.fn().mockResolvedValue(true);
+    const h = build({ linkAssistantMessage });
+    h.access.hasPlanFeatureFor.mockResolvedValue(true);
+    httpRequest.mockResolvedValue({
+      ok: true,
+      status: 201,
+      data: {
+        generationId: 'gen-9',
+        status: 'QUEUED',
+        provider: 'IMAGE_OPENAI',
+        model: 'gpt-image-1',
+      },
+    });
+
+    await h.service.handleMessageRouted(ROUTED);
+    await vi.waitFor(() => {
+      expect(linkAssistantMessage).toHaveBeenCalledWith('gen-9', 'user-1', 'msg-2');
+    });
+
+    expect(storedAssistant(h.create)['metadata']).toEqual(
+      expect.objectContaining({ type: 'image_generation', generationId: 'gen-9' }),
+    );
   });
 });

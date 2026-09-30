@@ -367,6 +367,46 @@ export const de: TranslationDictionary = {
       succeeded: 'In eine neue Unterhaltung verzweigt.',
       failed: 'Die Unterhaltung konnte nicht verzweigt werden.',
     },
+    lineage: {
+      branchedFrom: 'Verzweigt aus',
+      sourceDeleted: 'Verzweigt aus einer gelöschten Unterhaltung',
+      branches: 'Verzweigungen ({count})',
+      branchBadge: 'Verzweigung',
+    },
+    quote: {
+      action: 'Zitieren',
+      composerHeading: 'Zitate',
+      remove: 'Zitat entfernen',
+      repliedTo: 'Antwort auf',
+      limitReached: 'Pro Nachricht kannst du höchstens 3 Auswahlen zitieren.',
+      sourceMissing:
+        'Die zitierte Nachricht ist nicht mehr in dieser Unterhaltung. Entferne das Zitat und versuche es erneut.',
+    },
+    regenerateWith: {
+      trigger: 'Erneut versuchen mit…',
+      auto: 'AUTO wählen lassen',
+    },
+    contextSave: {
+      title: 'Aus diesem Chat gespeichert',
+      savedMemory: 'Im Gedächtnis gespeichert',
+      createdPack: 'Kontextpaket erstellt',
+      addedToPack: 'Zum Kontextpaket hinzugefügt',
+      openMemory: 'Erinnerung öffnen',
+      openPack: 'Paket öffnen',
+      choosePack: 'In welches Kontextpaket soll das?',
+      newPack: 'Neues Paket: {name}',
+      saving: 'Wird gespeichert…',
+      packSaved: 'Im Kontextpaket gespeichert.',
+      failedTitle: 'Speichern fehlgeschlagen',
+      memoryFailed: 'Die Erinnerung wurde nicht gespeichert.',
+      packFailed: 'Das Kontextpaket wurde nicht gespeichert.',
+      notPending: 'Dieses Speichern ist bereits erledigt oder wartet nicht mehr auf ein Paket.',
+      reasons: {
+        PLAN: 'Dein Tarif enthält das nicht.',
+        LIMIT: 'Du hast das Limit deines Tarifs erreicht.',
+        UNAVAILABLE: 'Der Dienst ist gerade nicht erreichbar. Versuche es gleich noch einmal.',
+      },
+    },
     speech: {
       action: 'Vorlesen',
       stop: 'Vorlesen beenden',
@@ -401,6 +441,11 @@ export const de: TranslationDictionary = {
       },
     },
     edit: {
+      inBranch: 'In neuer Verzweigung bearbeiten',
+      branchHint:
+        'Oder behalte diese Unterhaltung, wie sie ist, und stelle die bearbeitete Frage in einer neuen Verzweigung – nichts wird gelöscht.',
+      branchOpened:
+        'Neue Verzweigung mit deiner bearbeiteten Frage geöffnet. Drücke Senden, wenn sie fertig ist.',
       action: 'Bearbeiten und erneut ausführen',
       title: 'Diese Nachricht bearbeiten',
       warning:
@@ -612,6 +657,35 @@ export const de: TranslationDictionary = {
     helpful: 'Hilfreich',
     notHelpful: 'Nicht hilfreich',
     feedbackSaved: 'Feedback gespeichert',
+    maskEdit: {
+      action: 'Maske bearbeiten',
+      actionFor: 'Maske bearbeiten: {name}',
+      title: 'Maskenbearbeitung',
+      description:
+        'Male den Bereich, den das Modell ändern darf. Alles, was unbemalt bleibt, bleibt unverändert.',
+      canvasLabel: 'Malfläche für die Maske',
+      brushSize: 'Pinselgröße',
+      erase: 'Radieren',
+      clear: 'Alles löschen',
+      apply: 'Maske anwenden',
+      applying: 'Wird gespeichert…',
+      loading: 'Bild wird geladen…',
+      imageFailed: 'Das Bild konnte nicht geladen werden.',
+      saveFailed: 'Die Maske konnte nicht gespeichert werden. Versuche es erneut.',
+      empty: 'Male zuerst mindestens einen Bereich.',
+      applied: 'Maske angewendet',
+      remove: 'Maske entfernen',
+      keyboardHint:
+        'Ziehen zum Malen. Mit der Tastatur: Pfeiltasten bewegen den Pinsel (mit Umschalttaste schneller), Leertaste oder Eingabetaste startet und beendet das Malen.',
+      paintingOn: 'Malen aktiv',
+      paintingOff: 'Malen aus',
+      refusal: {
+        title: 'Die Maskenbearbeitung wurde nicht angewendet',
+        invalid: 'Die Maske passt nicht zum Bild. Zeichne sie neu und sende dann erneut.',
+        notSupported:
+          'Das gewählte Modell kann nicht nur einen Teil eines Bildes bearbeiten. Wähle ein Bildbearbeitungsmodell mit Maskenunterstützung oder sende ohne Maske.',
+      },
+    },
     attachFiles: 'Dateien anhängen',
     attachment: {
       uploading: 'Anhang wird hochgeladen…',
@@ -800,12 +874,13 @@ export const de: TranslationDictionary = {
     jumpToLatest: 'Zum neuesten springen',
     moreActions: 'Weitere Aktionen',
     useMemoryLabel: 'Erinnerung in diesem Gespräch verwenden',
-    useMemoryDescription: 'Wenn deaktiviert, werden keine Erinnerungen in den Prompt eingefügt.',
+    useMemoryDescription:
+      'Wenn deaktiviert, werden in diesem Chat keine Erinnerungen verwendet und nichts, was hier gesagt wird, wird als Erinnerung gespeichert.',
     useContextLabel: 'Kontextpakete in diesem Gespräch verwenden',
     useContextDescription: 'Wenn deaktiviert, werden angehängte Pakete ignoriert.',
     useCrossThreadContextLabel: 'Relevante frühere Chats verwenden',
     useCrossThreadContextDescription:
-      'Wenn aktiviert, darf ClawAI Ihre anderen Unterhaltungen nach Material durchsuchen, das für diese relevant ist. Standardmäßig aus.',
+      'Wenn aktiviert, darf ClawAI Ihre anderen Chats, die das erlauben, nach Material durchsuchen, das für diesen relevant ist. Wenn deaktiviert, liest dieser Chat Ihre anderen Chats nicht und wird auch nicht von ihnen gelesen.',
     workflow: {
       searchFirst: 'Suche zuerst',
       direct: 'Direkt',
@@ -988,6 +1063,18 @@ export const de: TranslationDictionary = {
     regionPlaceholder: 'z. B. us-east-1',
     workspaceIdPlaceholder: 'z. B. wrkspc_01AbCd...',
     saveFirstThenTest: 'Connector zuerst speichern, dann testen',
+    gatewayHeaders: 'Gateway-Header (optional)',
+    gatewayHeadersHelp:
+      'Zusätzliche Header für ein LLM-Gateway vor dem Anbieter (LiteLLM, Portkey, Helicone). Werte werden verschlüsselt gespeichert und nie wieder angezeigt. Sie ersetzen nie den API-Schlüssel.',
+    gatewayHeadersEditHelp:
+      'Gespeicherte Header bleiben erhalten, außer Sie fügen neue hinzu – diese ersetzen alle.',
+    gatewayHeaderName: 'Header-Name',
+    gatewayHeaderValue: 'Header-Wert',
+    addGatewayHeader: 'Header hinzufügen',
+    removeGatewayHeader: 'Header entfernen',
+    clearGatewayHeaders: 'Gespeicherte Gateway-Header entfernen',
+    gatewayHeadersInvalid:
+      'Jeder Header braucht einen gültigen, nicht reservierten, eindeutigen Namen und einen einzeiligen Wert (höchstens 10 Header).',
     selectProvider: 'Anbieter auswählen',
     groupConnected: 'Verbundene Anbieter',
     groupLowCost: 'Kostengünstige, schnelle Inferenz',
@@ -4927,7 +5014,7 @@ export const de: TranslationDictionary = {
       PAYPAL: 'PayPal',
       PAYMOB: 'Paymob',
       paypalCard: 'PayPal/Card',
-      paymobTestingSoon: 'Paymob (Test – demnächst)',
+      paymobCard: 'Paymob (Karte)',
       unavailable: 'Zahlungsanbieter sind nicht verfügbar',
     },
     proration: {
@@ -5162,7 +5249,7 @@ export const de: TranslationDictionary = {
         modelCount: '{count} Modelle derzeit verfügbar',
         title: 'Die Modelle, die Sie erhalten',
         intro:
-          'Ein Arbeitsbereich erreicht jeden der folgenden Anbieter. Wechseln Sie Modelle mitten in der Unterhaltung, oder lassen Sie ClawAI für jede Nachricht das beste auswählen.',
+          'Ein Arbeitsbereich deckt jeden der folgenden Anbieter ab. Wechseln Sie Modelle mitten in der Unterhaltung, oder lassen Sie ClawAI für jede Nachricht das beste auswählen.',
         footnote:
           'Neue Spitzenmodelle werden hinzugefügt, sobald sie erscheinen – Ihr Tarif deckt sie vom ersten Tag an ab, verrechnet gegen ein einziges Kontingent.',
         linkFeatures: 'Alle Funktionen entdecken',
@@ -5319,7 +5406,7 @@ export const de: TranslationDictionary = {
         title: 'Für wen ClawAI gedacht ist',
         privacyName: 'Menschen, die KI täglich nutzen',
         privacyDesc:
-          'ein Arbeitsbereich statt drei oder vier KI-Apps, mit dem stärksten Modell immer nur einen Klick entfernt statt hinter einer weiteren Bezahlschranke.',
+          'ein Arbeitsbereich statt drei oder vier separater Abonnements, mit dem stärksten Modell immer nur einen Klick entfernt statt hinter einer weiteren Bezahlschranke.',
         devName: 'Entwickler, die Modelle bewerten',
         devDesc:
           'senden Sie denselben Prompt gleichzeitig an fünf Modelle und lesen Sie die Antworten nebeneinander, bevor Sie sich für eine entscheiden.',
@@ -5339,7 +5426,7 @@ export const de: TranslationDictionary = {
         q3: 'Wie werden Nutzungslimits gemessen?',
         a3: 'In kostennormalisierten Token. Ein teures Modell zehrt Ihr Kontingent stärker an als ein günstiges, sodass eine einzige Tages- und Monatskennzahl über Modelle hinweg fair bleibt, deren Preise sich um mehr als eine Größenordnung unterscheiden.',
         q4: 'Ist ClawAI mit OpenAI, Anthropic, Google oder AWS verbunden?',
-        a4: 'Nein. ClawAI ist ein unabhängiges Produkt, das Ihnen die Modelle dieser Anbieter in einem Arbeitsbereich zugänglich macht. Es wird von keinem von ihnen unterstützt und steht mit keinem von ihnen in Verbindung.',
+        a4: 'Nein. ClawAI ist ein unabhängiges Produkt, das über einen Arbeitsbereich Zugang zu den Modellen dieser Anbieter bereitstellt. Es wird von keinem von ihnen unterstützt und steht mit keinem von ihnen in Verbindung.',
       },
       cta: {
         title: 'Mit dem kostenlosen Tarif starten',
@@ -6159,7 +6246,7 @@ export const de: TranslationDictionary = {
         imagesCapability: 'Bilderzeugung',
       },
       oneSubscription: {
-        title: 'Warum ein Arbeitsbereich mehrere Apps schlägt',
+        title: 'Warum ein Arbeitsbereich mehrere Abonnements schlägt',
         intro:
           'Vier KI-Abonnements zu betreiben ist nicht viermal besser als eines. Es sind vier Rechnungen, vier Sätze von Limits und eine ständige, niederschwellige Entscheidung, welchen Tab man öffnet.',
         pointRightModelTitle: 'Das richtige Modell, jedes Mal',
@@ -6205,7 +6292,7 @@ export const de: TranslationDictionary = {
         description: 'Was ClawAI ist und wie Sie beginnen.',
         whatIsQ: 'Was ist ClawAI?',
         whatIsA:
-          'Ein Arbeitsbereich, der jedes Spitzenmodell der KI erreicht – Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok und Amazon Bedrock – über eine einzige Chat-Oberfläche. Er leitet jede Nachricht an das am besten geeignete Modell, merkt sich nützlichen Kontext zwischen Unterhaltungen, beantwortet Fragen zu Dateien, die Sie hochladen, und kann mehrere Modelle auf dasselbe Problem ansetzen, wenn eine Antwort nicht ausreicht.',
+          'Ein einziger Arbeitsbereich, der jedes Spitzenmodell der KI erreicht – Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok und Amazon Bedrock – über eine einzige Chat-Oberfläche. Er leitet jede Nachricht an das am besten geeignete Modell, merkt sich nützlichen Kontext zwischen Unterhaltungen, beantwortet Fragen zu Dateien, die Sie hochladen, und kann bei Bedarf mehrere Modelle auf dasselbe Problem ansetzen, wenn eine Antwort nicht ausreicht.',
         apiKeysQ: 'Brauche ich einen API-Schlüssel von OpenAI oder Anthropic?',
         apiKeysA:
           'Nein. Der Zugang zu den Modellen ist in Ihrem Abonnement enthalten. Es gibt keine Anbieterkonten zu erstellen, keine Schlüssel einzufügen und keine separaten Anbieterrechnungen.',

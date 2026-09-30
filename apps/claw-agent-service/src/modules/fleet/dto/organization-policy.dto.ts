@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+import {
+  mcpServerPolicySchema,
+  organizationTrustListsSchema,
+  policyRulesSchema,
+} from './organization-policy-guardrails.dto';
+
 /**
  * The effect taxonomy the coding-agent client classifies every tool call into.
  *
@@ -48,6 +54,12 @@ export const updateOrganizationPolicySchema = z
       .default([]),
     maximumRetentionDays: z.number().int().min(0).max(3_650).default(3_650),
     minimumPermissionMode: z.enum(POLICY_PERMISSION_MODES).nullable().default(null),
+    /** F053 hard deny/ask rules. A PUT replaces the whole policy, so absent means none. */
+    rules: policyRulesSchema.default([]),
+    /** F053 trust lists; an empty list constrains nothing. */
+    trust: organizationTrustListsSchema.default({ repositories: [], domains: [], commands: [] }),
+    /** F054 MCP server allow/deny patterns; deny wins. */
+    mcpServers: mcpServerPolicySchema.default({ allow: [], deny: [] }),
   })
   .strict();
 

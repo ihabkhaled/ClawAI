@@ -122,6 +122,8 @@ export interface TranscriptionRequestContext {
   audioSeconds?: number;
   requestScope?: string;
   instruction?: string;
+  /** True for a video's derived audio: needs whisper-1's timestamped segments. */
+  needsSegments?: boolean;
   /** A video cancel: aborts the provider call and releases (never finalizes) the hold. */
   signal?: AbortSignal;
 }

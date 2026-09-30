@@ -3,13 +3,14 @@ import { resolveTtsVoice } from '@claw/shared-constants';
 import { PaygSurface } from '@claw/shared-types';
 import { estimateTextTokens } from '@claw/shared-utilities';
 
-import { SpeechAttemptOutcome } from '../../../common/enums';
+import { SpeechAttemptOutcome, SpeechProvider } from '../../../common/enums';
 import { BusinessException } from '../../../common/errors';
 import { ChatMediaMetricsService } from '../../metrics/services/chat-media-metrics.service';
 import { SpeechConnectorClient } from '../clients/speech-connector.client';
 import { SpeechProviderClient } from '../clients/speech-provider.client';
 import { TtsVoiceCandidatesClient } from '../clients/tts-voice-candidates.client';
 import {
+  LOCAL_TTS_VOICE,
   SPEECH_CANCELLED_LOG_REASON,
   SPEECH_CANCELLED_RELEASE_REASON,
   SPEECH_RATE_LIMIT_RETRIES,
@@ -43,6 +44,7 @@ import {
   geminiSpeechPromptTokens,
   isPerCharacterPriced,
   isSpeechTimeout,
+  localSpeechCandidate,
   speechAttemptTimeoutMs,
   speechReleaseReason,
   speechRequestId,
@@ -104,7 +106,13 @@ export class SpeechSynthesisManager {
 
   /** Admin candidates chat-service can call, in order. */
   async candidates(): Promise<SpeechCandidate[]> {
-    return toSpeechCandidates(await this.candidatesClient.resolve());
+    const admin = toSpeechCandidates(await this.candidatesClient.resolve());
+    // The free local voice goes LAST (ADR-128): cloud first, local as the
+    // fallback — and the only voice when the admin configured none. Offered
+    // only while its container answers, so a stopped one costs no attempt.
+    const local = await this.connector.isConfigured(SpeechProvider.LOCAL);
+    const alreadyListed = admin.some((candidate) => candidate.provider === SpeechProvider.LOCAL);
+    return local && !alreadyListed ? [...admin, localSpeechCandidate()] : admin;
   }
 
   /** Whether at least one supported candidate's provider has a connector key. */
@@ -292,8 +300,8 @@ export class SpeechSynthesisManager {
       outcome,
       latencyMs: Date.now() - started,
     });
-    const apiKey = await this.connector.resolveApiKey(candidate.provider);
-    if (apiKey === null) {
+    const credentials = await this.connector.resolveCredentials(candidate.provider);
+    if (credentials === null) {
       return { record: record(SpeechAttemptOutcome.NOT_CONFIGURED, null) };
     }
     if (this.isCancelled(input)) {
@@ -307,7 +315,8 @@ export class SpeechSynthesisManager {
         candidate,
         text: input.segment.text,
         voice: this.voiceFor(candidate, input.voice),
-        apiKey,
+        apiKey: credentials.apiKey,
+        baseUrl: credentials.baseUrl,
         maxOutputTokens: held.hold.maxOutputTokens,
         signal: input.signal,
       });
@@ -349,7 +358,9 @@ export class SpeechSynthesisManager {
    * reaches OpenAI, and the other way round).
    */
   voiceFor(candidate: SpeechCandidate, preferred: string | null): string {
-    return resolveTtsVoice(candidate.provider, preferred) ?? '';
+    return candidate.provider === SpeechProvider.LOCAL
+      ? LOCAL_TTS_VOICE
+      : (resolveTtsVoice(candidate.provider, preferred) ?? '');
   }
 
   /** The hold for one attempt, or a terminal refusal. Never a silent fall-through. */

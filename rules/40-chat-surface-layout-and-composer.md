@@ -210,8 +210,11 @@ today, and any future page built as header + transcript + input.
     `acceptDrop={false}`, because two nested drop zones upload every dropped
     file twice.
 
-21. **Files alone are a message, and the composer's file cap is the server's.**
-    Every send gate is `hasSendableInput(content, fileCount, minLength)` —
+21. **Files alone are a message — so are quotes — and the composer's file cap is
+    the server's.** A quoted selection makes an empty prompt sendable on the
+    main chat composer (ADR-131): the gate counts `files + quotes`, and
+    `allowEmptySubmit` follows it. Every send gate is
+    `hasSendableInput(content, fileCount, minLength)` —
     Enter and the button alike, and never while an upload is in flight.
     `MAX_ATTACHMENTS_PER_MESSAGE` (10) mirrors chat-service's
     `MAX_ATTACHMENTS_PER_REQUEST`, pinned by a test that reads the server file;

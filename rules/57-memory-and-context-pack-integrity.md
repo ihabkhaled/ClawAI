@@ -51,16 +51,25 @@ retrieval, internal routes) and `apps/claw-chat-service`
     and a "save this as memory/context" command yields nothing. Add a new
     generation keyword table → it must go through this filter too.
 
-11. **"Save this as memory / add this to my context pack" is a server-side save, not a model turn.** chat-service `SaveToContextManager` recognises the command with `detectSaveToContextIntent` (13 locales; must open the message or be its whole last paragraph), saves via memory-service `POST /internal/memories/save-from-chat` or `/internal/context-packs/save-from-chat` (service token, owner = thread owner, idempotent on the user message id), and stores a localized confirmation with type, size and a `/memory` or `/context` link. Zero tokens, no model call. A bare command saves the previous message; nothing to save → a one-line question.
+11. **"Save this as memory / add this to my context pack" is decided by a model, saved server-side, and confirmed by the answering model** (ADR-134, 2026-09-30): a multilingual pre-filter → the planner model's JSON verdict (memory type + sentence, pack source/name, or both) → owner-scoped memory-service routes → the answering model confirms from a platform note (in the system prompt AND repeated after the final user turn via `saveTurnNote` — a pending pack choice must never be reported as saved), and the answer stores `metadata.contextSave` (the saved card, with deep links). An unnamed pack with existing packs is never guessed: the card asks, and `POST /chat-messages/:id/context-save` saves once (atomic claim). A save turn's `message.completed` carries no `userContent`. Every save is idempotent, because regenerate re-runs the turn: memory on the user message, a new pack on its `chat:<id>` tag, an existing pack on the same text already in it. **Fallback when no planner answers:** the keyword path below, unchanged. chat-service `SaveToContextManager` recognises the command with `detectSaveToContextIntent` (13 locales; must open the message or be its whole last paragraph), saves via memory-service `POST /internal/memories/save-from-chat` or `/internal/context-packs/save-from-chat` (service token, owner = thread owner, idempotent on the user message id), and stores a localized confirmation with type, size and a `/memory` or `/context` link. Zero tokens, no model call. A bare command saves the previous message; nothing to save → a one-line question.
 
 12. **Memories are markdown end to end.** Stored and injected verbatim; the memory card renders them with `MarkdownRenderer` over `memoryCardPreview()` (first 4,000 characters) — never raw text, never a 250K parse per card.
 
 13. **Exact strings are quoted, never translated.** The memory and pack blocks end with `VERBATIM_QUOTE_INSTRUCTION`: an error message, label or code from the material is quoted verbatim in its original language even when the reply is in Arabic (live round R9 translated it). Its tokens are counted in `estimateSystemOverheadTokens` (rule 51).
 14. **An enforced-local domain needs a live local runtime.** `handleAuto` honours medical/legal/privacy → local-ollama only when `isRuntimeHealthy('OLLAMA')`; otherwise it goes cloud router → heuristic best-available cloud, skipping the Ollama router and local category models. Production runs no ollama-service; a pasted healthcare pack used to die with "fetch failed".
 
+15. **A chat's switches govern it as a SOURCE, not only as a reader** (SEC-006,
+    2026-09-30). `useMemory=false` means nothing said in that chat is LEARNED:
+    chat-service puts `useMemory` on `message.completed` and memory-service's
+    `handleMessageCompleted` returns before extraction when it is `false`
+    (absent = an older publisher = on). A chat with `useMemory=false` or
+    `useCrossThreadContext=false` is never a cross-thread candidate for another
+    chat (`findCandidateThreads` filters both). Before this, both switches only
+    stopped what the chat itself READ.
+
 ## How to check
 
 ```bash
-cd apps/claw-memory-service && npx vitest run src/modules/memory/__tests__/memory-large-content.spec.ts src/modules/context-packs/__tests__/context-packs-for-chat.spec.ts
-cd apps/claw-chat-service && npx vitest run src/modules/chat-messages/utilities/__tests__/relevant-chunks.utility.spec.ts src/modules/chat-messages/managers/__tests__/context-assembly-packs-for-chat.spec.ts
+cd apps/claw-memory-service && npx vitest run src/modules/memory/__tests__/memory-large-content.spec.ts src/modules/context-packs/__tests__/context-packs-for-chat.spec.ts src/modules/memory/__tests__/memory.service.spec.ts
+cd apps/claw-chat-service && npx vitest run src/modules/chat-messages/utilities/__tests__/relevant-chunks.utility.spec.ts src/modules/chat-messages/managers/__tests__/context-assembly-packs-for-chat.spec.ts src/modules/chat-messages/repositories/__tests__/cross-thread-branch-family.spec.ts
 ```

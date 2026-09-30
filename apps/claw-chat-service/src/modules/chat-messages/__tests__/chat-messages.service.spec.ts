@@ -66,7 +66,10 @@ const mockMessage = {
 
 const mockMessagesRepository = (): Record<keyof ChatMessagesRepository, Mock> => ({
   create: vi.fn(),
+  findLatestByThreadIdAndRole: vi.fn(),
   createUserMessageWithinDailyLimit: vi.fn(),
+  findQuotableInThread: vi.fn().mockResolvedValue([]),
+  transitionContextSave: vi.fn().mockResolvedValue(true),
   findById: vi.fn(),
   findByThreadId: vi.fn(),
   searchByThreadId: vi.fn().mockResolvedValue([]),
@@ -78,6 +81,7 @@ const mockMessagesRepository = (): Record<keyof ChatMessagesRepository, Mock> =>
   deleteById: vi.fn(),
   deleteByThreadId: vi.fn(),
   deleteCreatedAfter: vi.fn().mockResolvedValue(0),
+  deleteAfterMessage: vi.fn().mockResolvedValue(0),
   replaceContent: vi.fn().mockResolvedValue(undefined),
 });
 
@@ -327,6 +331,55 @@ describe('ChatMessagesService', () => {
       );
     });
 
+    describe('quotes', () => {
+      const quotes = [{ sourceMessageId: 'msg-src', text: 'the Paris plan' }];
+
+      it('stores each quote with the role of the message it came from', async () => {
+        threadsRepo.findById!.mockResolvedValue(mockThread);
+        messagesRepo.findQuotableInThread.mockResolvedValue([{ id: 'msg-src', role: 'ASSISTANT' }]);
+
+        await service.createMessage(
+          'user-1',
+          { threadId: 'thread-1', content: 'Why?', quotes },
+          '',
+        );
+
+        expect(messagesRepo.findQuotableInThread).toHaveBeenCalledWith('thread-1', ['msg-src']);
+        expect(messagesRepo.createUserMessageWithinDailyLimit).toHaveBeenCalledWith(
+          'user-1',
+          expect.objectContaining({
+            content: 'Why?',
+            metadata: {
+              quotes: [
+                { sourceMessageId: 'msg-src', sourceRole: 'ASSISTANT', text: 'the Paris plan' },
+              ],
+            },
+          }),
+          12,
+        );
+      });
+
+      it('refuses a quote whose source is not in this thread, before storing anything', async () => {
+        // The repository reads under threadId, so a message from another
+        // conversation comes back absent — the same answer as a deleted one.
+        threadsRepo.findById!.mockResolvedValue(mockThread);
+        messagesRepo.findQuotableInThread.mockResolvedValue([]);
+
+        await expect(
+          service.createMessage('user-1', { threadId: 'thread-1', content: 'Why?', quotes }, ''),
+        ).rejects.toMatchObject({ code: 'QUOTE_SOURCE_NOT_FOUND', status: 404 });
+        expect(messagesRepo.createUserMessageWithinDailyLimit).not.toHaveBeenCalled();
+      });
+
+      it('does not look anything up for a turn without quotes', async () => {
+        threadsRepo.findById!.mockResolvedValue(mockThread);
+
+        await service.createMessage('user-1', { threadId: 'thread-1', content: 'Hi' }, '');
+
+        expect(messagesRepo.findQuotableInThread).not.toHaveBeenCalled();
+      });
+    });
+
     it('rejects creation when the atomic daily message limit is exhausted', async () => {
       threadsRepo.findById!.mockResolvedValue(mockThread);
       messagesRepo.createUserMessageWithinDailyLimit.mockResolvedValue(null);
@@ -500,6 +553,78 @@ describe('ChatMessagesService', () => {
           regenerate: true,
         }),
       );
+    });
+
+    it('re-routes with AUTO when asked, forcing no model even on a pinned thread', async () => {
+      messagesRepo.findById.mockResolvedValue(mockMessage);
+      threadsRepo.findById!.mockResolvedValue({
+        ...mockThread,
+        preferredProvider: 'OPENAI',
+        preferredModel: 'gpt-5',
+      });
+
+      await service.regenerateMessage('msg-1', 'user-1', { routingMode: 'AUTO' });
+
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.MESSAGE_CREATED,
+        expect.objectContaining({
+          routingMode: 'AUTO',
+          forcedProvider: undefined,
+          forcedModel: undefined,
+        }),
+      );
+    });
+
+    it('answers again with a chosen model after the same plan check as a new message', async () => {
+      messagesRepo.findById.mockResolvedValue(mockMessage);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+
+      await service.regenerateMessage('msg-1', 'user-1', {
+        routingMode: 'MANUAL_MODEL',
+        provider: 'ANTHROPIC',
+        model: 'claude-opus-5',
+      });
+
+      expect(assertCanSendMessage).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({ provider: 'ANTHROPIC', model: 'claude-opus-5' }),
+      );
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.MESSAGE_CREATED,
+        expect.objectContaining({
+          routingMode: 'MANUAL_MODEL',
+          forcedProvider: 'ANTHROPIC',
+          forcedModel: 'claude-opus-5',
+        }),
+      );
+    });
+
+    it('refuses a model the plan forbids before publishing anything', async () => {
+      messagesRepo.findById.mockResolvedValue(mockMessage);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      assertCanSendMessage.mockRejectedValueOnce(new Error('PLAN_MODEL_NOT_ALLOWED'));
+
+      await expect(
+        service.regenerateMessage('msg-1', 'user-1', {
+          routingMode: 'MANUAL_MODEL',
+          provider: 'ANTHROPIC',
+          model: 'claude-opus-5',
+        }),
+      ).rejects.toThrow('PLAN_MODEL_NOT_ALLOWED');
+      expect(rabbitMQ.publish).not.toHaveBeenCalled();
+    });
+
+    it("carries the plan's access mode on the event, like a new message does", async () => {
+      messagesRepo.findById.mockResolvedValue(mockMessage);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+
+      await service.regenerateMessage('msg-1', 'user-1');
+
+      const publishCalls = vi.mocked(rabbitMQ.publish)?.mock.calls ?? [];
+      const [, event] =
+        publishCalls.find(([pattern]) => pattern === EventPattern.MESSAGE_CREATED) ?? [];
+      expect(event).toHaveProperty('allowedModels');
+      expect(event).toHaveProperty('modelAccessMode');
     });
 
     it('gates regeneration when critic review is enabled on the thread', async () => {
@@ -858,6 +983,39 @@ describe('ChatMessagesService', () => {
       );
     });
 
+    it('checks the plan BEFORE rewriting or deleting anything (ADR-132)', async () => {
+      // A refused edit used to be impossible to refuse in time: the thread
+      // below the message was already gone when routing met the restricted plan.
+      messagesRepo.findById.mockResolvedValue({ ...editable, originalContent: null });
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      assertCanSendMessage.mockRejectedValueOnce(new Error('QUOTA_DAILY_EXCEEDED'));
+
+      await expect(service.editAndRerunMessage('msg-1', 'user-1', 'second draft')).rejects.toThrow(
+        'QUOTA_DAILY_EXCEEDED',
+      );
+      expect(messagesRepo.replaceContent).not.toHaveBeenCalled();
+      expect(messagesRepo.deleteCreatedAfter).not.toHaveBeenCalled();
+      expect(rabbitMQ.publish).not.toHaveBeenCalled();
+    });
+
+    it("carries the plan's access mode on the re-run event", async () => {
+      messagesRepo.findById.mockResolvedValue({ ...editable, originalContent: null });
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      assertCanSendMessage.mockResolvedValueOnce({
+        isAdmin: false,
+        plan: { limits: { messagesPerDay: 12 } },
+        allowedModels: [],
+        modelAccessMode: 'ALLOW_ALL',
+      });
+
+      await service.editAndRerunMessage('msg-1', 'user-1', 'second draft');
+
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.MESSAGE_CREATED,
+        expect.objectContaining({ modelAccessMode: 'ALLOW_ALL' }),
+      );
+    });
+
     it('does not overwrite the original on a second edit', async () => {
       messagesRepo.findById.mockResolvedValue({
         ...editable,
@@ -1136,6 +1294,167 @@ describe('ChatMessagesService', () => {
       await service.handleMessageRouted(payload);
 
       expect(executionManager.execute).toHaveBeenCalledTimes(1);
+    });
+
+    it('on an AI save turn, tells the model what was saved and stores the card record (ADR-134)', async () => {
+      const record = {
+        status: 'SAVED',
+        memory: {
+          id: 'mem-1',
+          type: 'FACT',
+          preview: 'Works nights.',
+          link: '/memory?memoryId=mem-1',
+        },
+      };
+      Object.assign(service, {
+        contextSaveOrchestrator: {
+          handle: vi
+            .fn()
+            .mockResolvedValue({ kind: 'AI', record, modelNote: 'PLATFORM ACTION saved' }),
+        },
+      });
+      messagesRepo.findRecentByThreadId.mockResolvedValue([
+        { ...mockMessage, content: 'Remember that I work nights' },
+      ]);
+      executionManager.execute!.mockResolvedValue({
+        content: 'Done — saved to your memory.',
+        provider: 'GEMINI',
+        model: 'gemini-2.5-flash',
+        latencyMs: 5,
+        usedFallback: false,
+      });
+
+      await service.handleMessageRouted(payload);
+
+      const [, context] = executionManager.execute!.mock.calls[0] ?? [];
+      expect((context as { systemPrompt: string }).systemPrompt).toContain('PLATFORM ACTION saved');
+      const stored = messagesRepo.create.mock.calls.at(-1)?.[0] as {
+        metadata: Record<string, unknown>;
+      };
+      expect(stored.metadata['contextSave']).toEqual(record);
+    });
+
+    it('does not hand a save turn to memory extraction again (no duplicate suggestion)', async () => {
+      Object.assign(service, {
+        contextSaveOrchestrator: {
+          handle: vi.fn().mockResolvedValue({
+            kind: 'AI',
+            record: { status: 'SAVED' },
+            modelNote: 'PLATFORM ACTION saved',
+          }),
+        },
+      });
+      messagesRepo.findRecentByThreadId.mockResolvedValue([
+        { ...mockMessage, content: 'Remember that I work nights' },
+      ]);
+      messagesRepo.create.mockImplementation(async (data: Record<string, unknown>) => ({
+        ...mockMessage,
+        id: 'a-1',
+        role: 'ASSISTANT',
+        metadata: data['metadata'],
+      }));
+      executionManager.execute!.mockResolvedValue({
+        content: 'Saved.',
+        provider: 'GEMINI',
+        model: 'gemini-2.5-flash',
+        latencyMs: 5,
+        usedFallback: false,
+      });
+
+      await service.handleMessageRouted(payload);
+
+      const [, completed] =
+        (vi.mocked(rabbitMQ.publish)?.mock.calls ?? []).find(
+          ([pattern]) => pattern === EventPattern.MESSAGE_COMPLETED,
+        ) ?? [];
+      expect(completed).toMatchObject({ userContent: undefined });
+    });
+
+    it('stores the sources exactly as the prompt numbered them, for inline [n] links', async () => {
+      Object.assign(service, { saveToContext: { trySave: vi.fn().mockResolvedValue(null) } });
+      messagesRepo.findRecentByThreadId.mockResolvedValue([
+        { ...mockMessage, content: 'What changed in the Paris metro this year?' },
+      ]);
+      contextAssembly.assemble!.mockResolvedValueOnce({
+        systemPrompt: null,
+        threadMessages: [],
+        memories: [],
+        contextPackItems: [],
+        fileContents: [],
+        workspaceCitations: [],
+        tokenBudget: 4096,
+        researchEvidence: [
+          {
+            id: 'e1',
+            title: 'RATP news',
+            url: 'https://ratp.example/news',
+            snippet: 'Line 14',
+            source: 'web',
+            providerKind: null,
+            publishedAt: null,
+            confidence: 0.9,
+          },
+        ],
+      });
+      executionManager.execute!.mockResolvedValue({
+        content: 'Line 14 was extended [1].',
+        provider: 'GEMINI',
+        model: 'gemini-2.5-flash',
+        latencyMs: 5,
+        usedFallback: false,
+      });
+
+      await service.handleMessageRouted(payload);
+
+      const stored = messagesRepo.create.mock.calls.at(-1)?.[0] as {
+        metadata: Record<string, unknown>;
+      };
+      expect(stored.metadata['citations']).toEqual([
+        { index: 1, title: 'RATP news', url: 'https://ratp.example/news', snippet: 'Line 14' },
+      ]);
+    });
+
+    it('stores no citations when SEARCH_FIRST added its own numbered list to the prompt', async () => {
+      Object.assign(service, { saveToContext: { trySave: vi.fn().mockResolvedValue(null) } });
+      messagesRepo.findRecentByThreadId.mockResolvedValue([
+        { ...mockMessage, content: 'What changed in the Paris metro this year?' },
+      ]);
+      contextAssembly.assemble!.mockResolvedValueOnce({
+        systemPrompt: null,
+        threadMessages: [],
+        memories: [],
+        contextPackItems: [],
+        fileContents: [],
+        workspaceCitations: [],
+        tokenBudget: 4096,
+        researchEvidence: [
+          {
+            id: 'e1',
+            title: 'RATP news',
+            url: 'https://ratp.example/news',
+            snippet: 'Line 14',
+            source: 'web',
+            providerKind: null,
+            publishedAt: null,
+            confidence: 0.9,
+          },
+        ],
+      });
+      executionManager.execute!.mockResolvedValue({
+        content: 'Line 14 was extended [1].',
+        provider: 'GEMINI',
+        model: 'gemini-2.5-flash',
+        latencyMs: 5,
+        usedFallback: false,
+        searchFirst: { applied: true, resultCount: 3, runId: 'r1', warning: null },
+      });
+
+      await service.handleMessageRouted(payload);
+
+      const stored = messagesRepo.create.mock.calls.at(-1)?.[0] as {
+        metadata: Record<string, unknown>;
+      };
+      expect(stored.metadata).not.toHaveProperty('citations');
     });
   });
 
@@ -1530,6 +1849,33 @@ describe('ChatMessagesService', () => {
           finalStatus: 'failed',
           errorMessage: 'Cloud provider GEMINI returned status 429',
         }),
+      );
+    });
+
+    it('tells memory-service when the chat has memory off, so nothing is learned from it (SEC-006)', async () => {
+      messagesRepo.findRecentByThreadId.mockResolvedValue([mockMessage]);
+      threadsRepo.findById!.mockResolvedValue({ ...mockThread, useMemory: false });
+      executionManager.execute!.mockRejectedValue(new Error('boom'));
+      messagesRepo.create.mockResolvedValue({
+        ...mockMessage,
+        id: 'msg-error-2',
+        role: 'ASSISTANT',
+      });
+
+      await expect(
+        service.handleMessageRouted({
+          messageId: 'msg-1',
+          threadId: 'thread-1',
+          selectedProvider: 'GEMINI',
+          selectedModel: 'gemini-2.5-flash',
+          routingMode: 'AUTO',
+          timestamp: new Date().toISOString(),
+        }),
+      ).rejects.toThrow('boom');
+
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.MESSAGE_COMPLETED,
+        expect.objectContaining({ useMemory: false }),
       );
     });
 

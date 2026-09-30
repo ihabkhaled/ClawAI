@@ -25,7 +25,7 @@ export const IT_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: 'Confronti',
     intro:
-      'ClawAI non punta a essere un assistente singolo migliore. Riunisce {cloudProviderCount} provider cloud e modelli open-weight in locale in un solo spazio di lavoro e manda ogni messaggio a quello adatto. Queste pagine lo mettono a confronto con gli assistenti che si usano già, sempre sulle stesse otto capacità.',
+      'ClawAI non punta a essere un assistente singolo migliore. Mette {cloudProviderCount} provider cloud e modelli open-weight in locale in un solo spazio di lavoro e manda ogni messaggio a quello adatto. Queste pagine lo mettono a confronto con gli assistenti che si usano già, sempre sulle stesse otto capacità.',
     cardsTitle: 'Scegli un assistente da confrontare',
     cardCta: 'Confronta con {rival}',
     coversTitle: 'Cosa copre ogni confronto',

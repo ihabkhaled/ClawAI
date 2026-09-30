@@ -1,11 +1,16 @@
 import type { PlanFeature } from '@claw/shared-entitlements';
+import type { ImageMaskRefusalCode } from '../../../common/enums';
 import type { ResolvedSpeed, TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
 import type { AttemptRecord } from './fallback-executor.types';
 import type { FileContentCandidate } from './file-writer.types';
 import type { FileDeliveryEntry } from './file-delivery.types';
 import type { HelperExecution } from './vision-helper.types';
 import type { JudgeRefereeMetadata } from './judge-referee.types';
-import type { AnthropicMessage } from './anthropic-message-shape.types';
+import type {
+  AnthropicCacheControl,
+  AnthropicMessage,
+  AnthropicSystemTextBlock,
+} from './anthropic-message-shape.types';
 import type { GeminiContent } from './gemini.types';
 import type {
   OllamaCloudToolCall,
@@ -90,6 +95,10 @@ export type MessageRoutedData = {
   // F6 (ADR-119) — on a FILE_GENERATION decision made in MANUAL_MODEL, the
   // model the user picked; it writes the file's content first.
   fileWriter?: FileContentCandidate;
+  // F055 — never on the wire. Set by chat-service itself when the turn's
+  // request carried `X-Claw-Zero-Retention: 1`, so the completion event goes
+  // out without content and the turn is redacted once it ends.
+  zeroRetention?: boolean;
 };
 
 export type LlmResponse = {
@@ -150,6 +159,8 @@ export type LlmResponse = {
    * notice from this, not an error.
    */
   planFeatureRefusal?: PlanFeatureRefusalNotice;
+  /** Set instead of a generation when image-service refused the drawn mask (422). */
+  imageMaskRefusal?: ImageMaskRefusalNotice;
   reRouted?: boolean;
   originalProvider?: string;
   originalModel?: string;
@@ -413,6 +424,15 @@ export type ConnectorConfigResponse = {
   apiKey: string;
   baseUrl?: string;
   region?: string;
+  // Extra headers for an LLM gateway in front of the provider (F092). Absent
+  // when the connector has none. Values are credentials — never logged.
+  gatewayHeaders?: Record<string, string>;
+};
+
+export type ResolvedProviderConfig = {
+  baseUrl: string;
+  apiKey: string;
+  gatewayHeaders?: Record<string, string>;
 };
 
 export type FallbackAttemptData = {
@@ -444,7 +464,8 @@ export type CreateAssistantMessageData = {
  * asked for it; `referenceFileId` names the upload the reference bytes came
  * from, so image-service can re-read it on a retry. The assistant message does
  * not exist yet at dispatch (it is stored from this call's answer), so
- * `assistantMessageId` is never sent from here.
+ * `assistantMessageId` is not sent here — `ImageGenerationLinkClient` links it
+ * once the message is stored.
  */
 export type ImageGenerateRequest = {
   prompt: string;
@@ -457,6 +478,8 @@ export type ImageGenerateRequest = {
   referenceImageBase64?: string;
   referenceImageMimeType?: string;
   referenceFileId?: string;
+  /** A PNG alpha mask stored in file-service (pack §81); needs `referenceFileId`. */
+  maskFileId?: string;
   /** The user's words when `prompt` was rewritten for a reference image (debugging). */
   originalPrompt?: string;
 };
@@ -482,7 +505,12 @@ export type AnthropicMessagesRequest = {
   model: string;
   messages: AnthropicMessage[];
   stream: boolean;
-  system?: string;
+  // A plain string until prompt caching marks it; block form carries the
+  // system breakpoint (F093, applyAnthropicPromptCache).
+  system?: string | AnthropicSystemTextBlock[];
+  // Automatic (top-level) breakpoint: Anthropic places it on the last cacheable
+  // block and moves it forward as the conversation grows.
+  cache_control?: AnthropicCacheControl;
   temperature?: number;
   // Anthropic REQUIRES max_tokens on every request, and rejects outright when
   // `tools` is present without it. buildAnthropicMessagesRequestBody supplies a
@@ -520,3 +548,6 @@ export type FileLimitNotice = { used: number; limit: number; window: string | nu
 
 /** Which plan feature a turn needed and did not have (ADR-122). */
 export type PlanFeatureRefusalNotice = { feature: PlanFeature };
+
+/** Why image-service refused a masked edit (pack §81). */
+export type ImageMaskRefusalNotice = { code: ImageMaskRefusalCode };

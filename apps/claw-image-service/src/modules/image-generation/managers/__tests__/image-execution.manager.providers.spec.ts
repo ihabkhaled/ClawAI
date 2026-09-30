@@ -127,6 +127,35 @@ describe('ImageExecutionManager — cloud providers', () => {
     expect(release).toHaveBeenCalledWith(expect.anything(), 'CANCELLED');
   });
 
+  it('stores a bare reference through file-service store-image as the owner file', async () => {
+    const fileId = await build().storeReferenceImage(
+      'user-1',
+      'image-reference-g1.png',
+      'image/png',
+      'iVBORw0KGgo=',
+    );
+
+    expect(httpPost).toHaveBeenCalledWith(
+      'http://file-service:4006/api/v1/internal/files/store-image',
+      {
+        userId: 'user-1',
+        filename: 'image-reference-g1.png',
+        mimeType: 'image/png',
+        base64Data: 'iVBORw0KGgo=',
+      },
+      { timeout: 30_000, headers: { Authorization: 'Service t' } },
+    );
+    expect(fileId).toBe('file-1');
+  });
+
+  it('reports a refused reference store as STORAGE_FAILED', async () => {
+    vi.mocked(httpPost).mockRejectedValue(new Error('status code 415'));
+
+    await expect(
+      build().storeReferenceImage('user-1', 'r.png', 'image/png', 'iVBORw0KGgo='),
+    ).rejects.toMatchObject({ code: ImageFailureCode.STORAGE_FAILED });
+  });
+
   it('reports a missing connector as CONNECTOR_NOT_CONFIGURED', async () => {
     vi.mocked(httpGet).mockRejectedValue(new Error('Request failed with status code 404'));
 

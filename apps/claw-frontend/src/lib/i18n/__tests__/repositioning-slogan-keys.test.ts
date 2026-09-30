@@ -88,4 +88,11 @@ describe('repositioning slogan and homepage band keys', () => {
     expect(d.marketing.home.hero.title.toLowerCase()).not.toContain('subscription');
     expect(d.auth.tagline.toLowerCase()).not.toContain('subscription');
   });
+
+  it('the English marketing copy no longer sells "one subscription"', () => {
+    const d = getDictionary(Locale.EN);
+    const copy = JSON.stringify(d.marketing).toLowerCase();
+    expect(copy).not.toContain('one subscription');
+    expect(copy).not.toContain('single subscription');
+  });
 });

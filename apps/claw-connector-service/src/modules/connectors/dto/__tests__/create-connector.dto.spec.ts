@@ -296,3 +296,59 @@ describe('createConnectorSchema', () => {
     });
   });
 });
+
+describe('createConnectorSchema — gatewayHeaders (F092)', () => {
+  const base = {
+    name: 'Gateway',
+    provider: ConnectorProvider.OPENAI,
+    authType: ConnectorAuthType.API_KEY,
+    apiKey: 'sk',
+  };
+
+  it('accepts ordinary gateway headers', () => {
+    const result = createConnectorSchema.safeParse({
+      ...base,
+      baseUrl: 'https://api.portkey.ai/v1',
+      gatewayHeaders: { 'x-portkey-api-key': 'pk', 'x-portkey-provider': 'openai' },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it.each(['Authorization', 'x-api-key', 'Host', 'Cookie', 'anthropic-version'])(
+    'refuses %s, which the connector owns',
+    (name) => {
+      const result = createConnectorSchema.safeParse({ ...base, gatewayHeaders: { [name]: 'v' } });
+      expect(result.success).toBe(false);
+    },
+  );
+
+  it('refuses a value carrying a line break (header injection)', () => {
+    const result = createConnectorSchema.safeParse({
+      ...base,
+      gatewayHeaders: { 'x-gw': 'a\r\nHost: evil' },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('refuses a name that is not an HTTP token', () => {
+    const result = createConnectorSchema.safeParse({
+      ...base,
+      gatewayHeaders: { 'bad name': 'v' },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('refuses the same name twice in different case', () => {
+    const result = createConnectorSchema.safeParse({
+      ...base,
+      gatewayHeaders: { 'X-Gw': '1', 'x-gw': '2' },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('refuses more than ten headers', () => {
+    const many = Object.fromEntries(Array.from({ length: 11 }, (_, i) => [`x-h${String(i)}`, 'v']));
+    const result = createConnectorSchema.safeParse({ ...base, gatewayHeaders: many });
+    expect(result.success).toBe(false);
+  });
+});

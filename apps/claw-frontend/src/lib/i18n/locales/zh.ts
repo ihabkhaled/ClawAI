@@ -344,6 +344,45 @@ export const zh: TranslationDictionary = {
       succeeded: '已分支为新的对话。',
       failed: '无法分支该对话。',
     },
+    lineage: {
+      branchedFrom: '分支自',
+      sourceDeleted: '分支自一个已删除的对话',
+      branches: '分支 ({count})',
+      branchBadge: '分支',
+    },
+    quote: {
+      action: '引用',
+      composerHeading: '引用内容',
+      remove: '移除引用',
+      repliedTo: '回复',
+      limitReached: '每条消息最多可引用 3 段内容。',
+      sourceMissing: '你引用的消息已不在此对话中。请移除引用后重试。',
+    },
+    regenerateWith: {
+      trigger: '换个模型重试…',
+      auto: '让 AUTO 选择',
+    },
+    contextSave: {
+      title: '已从此聊天保存',
+      savedMemory: '已保存到记忆',
+      createdPack: '已创建上下文包',
+      addedToPack: '已添加到上下文包',
+      openMemory: '打开记忆',
+      openPack: '打开上下文包',
+      choosePack: '要保存到哪个上下文包？',
+      newPack: '新建上下文包：{name}',
+      saving: '正在保存…',
+      packSaved: '已保存到上下文包。',
+      failedTitle: '无法保存',
+      memoryFailed: '记忆未保存。',
+      packFailed: '上下文包未保存。',
+      notPending: '此保存已完成，或不再等待选择上下文包。',
+      reasons: {
+        PLAN: '你的套餐不包含此功能。',
+        LIMIT: '你已达到套餐上限。',
+        UNAVAILABLE: '服务暂时不可用，请稍后再试。',
+      },
+    },
     speech: {
       action: '朗读',
       stop: '停止朗读',
@@ -376,6 +415,9 @@ export const zh: TranslationDictionary = {
       },
     },
     edit: {
+      inBranch: '在新分支中编辑',
+      branchHint: '也可以保留当前对话不变，在新分支中提出修改后的问题——不会删除任何内容。',
+      branchOpened: '已用你修改后的问题打开新分支。准备好后点击发送。',
       action: '编辑并重新运行',
       title: '编辑此消息',
       warning: '此消息之后的内容都会被删除，对话将从这里重新运行。',
@@ -574,6 +616,34 @@ export const zh: TranslationDictionary = {
     helpful: '有帮助',
     notHelpful: '没有帮助',
     feedbackSaved: '反馈已保存',
+    maskEdit: {
+      action: '蒙版编辑',
+      actionFor: '蒙版编辑：{name}',
+      title: '蒙版编辑',
+      description: '涂出允许模型修改的区域。未涂抹的部分保持不变。',
+      canvasLabel: '蒙版绘制区域',
+      brushSize: '画笔大小',
+      erase: '橡皮擦',
+      clear: '全部清除',
+      apply: '应用蒙版',
+      applying: '正在保存…',
+      loading: '正在加载图片…',
+      imageFailed: '无法加载图片。',
+      saveFailed: '无法保存蒙版，请重试。',
+      empty: '请先至少涂抹一个区域。',
+      applied: '已应用蒙版',
+      remove: '移除蒙版',
+      keyboardHint:
+        '拖动即可涂抹。使用键盘时：方向键移动画笔（按住 Shift 移动更快），空格键或 Enter 键开始和停止涂抹。',
+      paintingOn: '涂抹已开启',
+      paintingOff: '涂抹已关闭',
+      refusal: {
+        title: '蒙版编辑未应用',
+        invalid: '蒙版与图片不匹配。请重新绘制后再发送。',
+        notSupported:
+          '所选模型无法只编辑图片的一部分。请选择支持蒙版的图片编辑模型，或不带蒙版发送。',
+      },
+    },
     attachFiles: '附加文件',
     attachment: {
       uploading: '正在上传附件...',
@@ -757,12 +827,12 @@ export const zh: TranslationDictionary = {
     jumpToLatest: '跳转至最新',
     moreActions: '更多操作',
     useMemoryLabel: '在该线程中使用内存',
-    useMemoryDescription: '关闭时，不会将任何记忆注入提示中。',
+    useMemoryDescription: '关闭后，此聊天不使用记忆，在这里说的任何内容也不会被保存为记忆。',
     useContextLabel: '在此线程中使用上下文包',
     useContextDescription: '关闭时，附加的包将被忽略。',
     useCrossThreadContextLabel: '使用相关的历史对话',
     useCrossThreadContextDescription:
-      '开启后，ClawAI 可在你的其他对话中查找与本次对话相关的内容。默认关闭。',
+      '开启后，ClawAI 可以从你允许的其他聊天中查找与本聊天相关的内容。关闭后，此聊天既不读取你的其他聊天，也不会被它们读取。',
     workflow: {
       searchFirst: '搜索优先',
       direct: '直接的',
@@ -941,6 +1011,16 @@ export const zh: TranslationDictionary = {
     regionPlaceholder: '例如，us-east-1',
     workspaceIdPlaceholder: '例如，wrkspc_01AbCd...',
     saveFirstThenTest: '先保存连接器，然后测试',
+    gatewayHeaders: '网关请求头（可选）',
+    gatewayHeadersHelp:
+      '为位于提供商前面的 LLM 网关（LiteLLM、Portkey、Helicone）添加的额外请求头。值会加密存储，且不再显示。它们绝不会替换 API 密钥。',
+    gatewayHeadersEditHelp: '除非添加新的请求头（将全部替换），否则已保存的请求头保持不变。',
+    gatewayHeaderName: '请求头名称',
+    gatewayHeaderValue: '请求头值',
+    addGatewayHeader: '添加请求头',
+    removeGatewayHeader: '移除请求头',
+    clearGatewayHeaders: '删除已保存的网关请求头',
+    gatewayHeadersInvalid: '每个请求头都需要有效、未保留且唯一的名称，以及单行的值（最多 10 个）。',
     selectProvider: '选择提供商',
     groupConnected: '已连接的提供商',
     groupLowCost: '低成本快速推理',
@@ -4686,7 +4766,7 @@ export const zh: TranslationDictionary = {
       PAYPAL: 'PayPal',
       PAYMOB: 'Paymob',
       paypalCard: 'PayPal/Card',
-      paymobTestingSoon: 'Paymob（测试中 – 即将推出）',
+      paymobCard: 'Paymob（银行卡）',
       unavailable: '支付网关不可用',
     },
     proration: {
@@ -4904,7 +4984,7 @@ export const zh: TranslationDictionary = {
         modelCount: '当前可用 {count} 个模型',
         title: '您获得的模型',
         intro:
-          '一个工作区即可使用以下所有提供商。可以在对话中途切换模型，也可以让 ClawAI 为每条消息挑选最合适的模型。',
+          '一个工作区涵盖以下所有提供商。在对话中切换模型，或者让 ClawAI 为每条消息选择最好的模型。',
         footnote:
           '新的前沿模型在推出时就会被添加——您的计划从第一天起就涵盖它们，并根据单一限额进行计量。',
         linkFeatures: '探索每一个功能',
@@ -5040,7 +5120,7 @@ export const zh: TranslationDictionary = {
         title: 'ClawAI 适合谁',
         privacyName: '每天使用人工智能的人',
         privacyDesc:
-          '一个工作区取代三四个 AI 应用，最强的模型始终只需点一下，而不是藏在又一道付费墙后面。',
+          '一个工作区而不是三四个独立订阅，只需点击一下即可获得最强大的模型，而不是在另一个付费专区后面。',
         devName: '开发人员评估模型',
         devDesc: '一次向五个模型发送相同的提示，并在提交一个模型之前并排阅读答案。',
         selfHostName: '研究人员和分析师',
@@ -5057,7 +5137,7 @@ export const zh: TranslationDictionary = {
         q3: '使用限制是如何衡量的？',
         a3: '在成本标准化代币中。昂贵的型号比便宜的型号会消耗更多的津贴，因此每日和每月的数字对于价格相差超过一个数量级的型号来说是公平的。',
         q4: 'ClawAI 是否隶属于 OpenAI、Anthropic、Google 或 AWS？',
-        a4: '不是。ClawAI 是一款独立产品，让你在一个工作区中使用这些提供商的模型。它未获得其中任何一家的背书，也与它们没有隶属关系。',
+        a4: '不会。ClawAI 是一款独立产品，通过一个工作区即可访问这些提供商的模型。它没有得到他们任何人的认可或附属。',
       },
       cta: {
         title: '开始免费计划',
@@ -5104,7 +5184,7 @@ export const zh: TranslationDictionary = {
       providers: {
         title: '每一个前沿模范家庭',
         intro:
-          '一个工作区即可使用所有这些模型。在同一个对话中随时切换——无需安装任何东西，也无需注册任何提供商账户。',
+          '一个工作区即可触达所有这些。在单个对话中在它们之间切换 - 无需安装任何内容，也无需创建提供商帐户。',
         modelsLabel: '型号',
         anthropicDesc: '对长文档的仔细推理、严格的代码审查以及名册中最可靠的说明。',
         openaiDesc: '广泛的通用功能，具有出色的工具使用和可靠的结构化输出。',
@@ -5342,7 +5422,7 @@ export const zh: TranslationDictionary = {
       },
       models: {
         title: '您可以接触到的模特',
-        intro: '一个工作区，涵盖以下所有家族。你可以在同一个对话中在它们之间切换。',
+        intro: '一个工作区，下面每个家族。您可以在单个对话中在它们之间切换。',
         anthropicStrength: '仔细的推理、冗长的文档以及名册中最可靠的代码审查。',
         openaiStrength: '广泛的通用能力，具有强大的工具使用和结构化输出。',
         geminiStrength: '巨大的上下文窗口、快速响应以及原生图像、音频和视频输入。',
@@ -5679,7 +5759,7 @@ export const zh: TranslationDictionary = {
       hero: {
         title: '人们实际上用 ClawAI 做什么',
         subtitle:
-          '每天都会遇到的十类工作，以及最擅长处理每一类的模型（或模型组合）。全部在一个工作区中完成。',
+          '每天都会出现十种工作，以及最能处理每一项工作的模型（或模型组合）。全部集中在一个工作区里。',
         lastReviewedLabel: '最后评论',
       },
       grid: {
@@ -5748,7 +5828,7 @@ export const zh: TranslationDictionary = {
         imagesCapability: '图像生成',
       },
       oneSubscription: {
-        title: '为什么一个工作区胜过多个应用',
+        title: '为什么一个工作区胜过多份订阅',
         intro:
           '运行四个 AI 订阅并不比一个好四倍。这是四项法案、四组限制，以及关于打开哪个选项卡的持续低级决定。',
         pointRightModelTitle: '每次都有正确的型号',
@@ -5793,7 +5873,7 @@ export const zh: TranslationDictionary = {
         description: 'ClawAI 是什么以及如何开始。',
         whatIsQ: 'ClawAI是什么？',
         whatIsA:
-          '一个工作区，通过同一个聊天界面触达所有前沿 AI 模型（Claude、GPT、Gemini、Kimi、GLM、Qwen、DeepSeek、Grok 和 Amazon Bedrock）。它把每条消息交给最合适的模型，在对话之间记住有用的上下文，回答关于你上传文件的问题，并在一个答案不够时让多个模型处理同一个问题。',
+          '单一工作区可通过一个聊天界面覆盖所有前沿 AI 模型（Claude、GPT、Gemini、Kimi、GLM、Qwen、DeepSeek、Grok 和 Amazon Bedrock）。它将每条消息路由到最适合它的模型，记住对话之间的有用上下文，回答有关您上传的文件的问题，并且在一个答案不够时可以针对同一问题放置多个模型。',
         apiKeysQ: '我需要 OpenAI 或 Anthropic 的 API 密钥吗？',
         apiKeysA:
           '不需要。模型访问权限包含在您的订阅中。无需创建提供商帐户，无需粘贴密钥，也无需单独的提供商账单。',

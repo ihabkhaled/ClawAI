@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { type ChatMessage, type MessageRole, type Prisma } from '../../../generated/prisma';
 import { type CreateMessageData } from '../types/chat-messages.types';
+import { type QuotableMessage } from '../types/message-quote.types';
 
 @Injectable()
 export class ChatMessagesRepository {
@@ -105,6 +106,17 @@ export class ChatMessagesRepository {
     });
   }
 
+  /** The newest message of one role on a thread, or null when there is none. */
+  async findLatestByThreadIdAndRole(
+    threadId: string,
+    role: MessageRole,
+  ): Promise<ChatMessage | null> {
+    return this.prisma.chatMessage.findFirst({
+      where: { threadId, role },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async updateFeedback(id: string, feedback: string | null): Promise<ChatMessage> {
     return this.prisma.chatMessage.update({
       where: { id },
@@ -131,6 +143,29 @@ export class ChatMessagesRepository {
   }
 
   /**
+   * Rewinds a thread: drops every message after `messageId`, keeping it.
+   *
+   * The pivot is re-read inside the transaction and matched on both id and
+   * thread, so a message from another conversation cannot be used as the cut
+   * point and a concurrent delete cannot leave a half-applied rewind. Returns
+   * `null` when the pivot is not in this thread, else how many rows were
+   * removed (attachments cascade with their message).
+   */
+  async deleteAfterMessage(threadId: string, messageId: string): Promise<number | null> {
+    return this.prisma.$transaction(async (transaction) => {
+      const pivot = await transaction.chatMessage.findFirst({
+        where: { id: messageId, threadId },
+        select: { createdAt: true },
+      });
+      if (!pivot) return null;
+      const result = await transaction.chatMessage.deleteMany({
+        where: { threadId, createdAt: { gt: pivot.createdAt } },
+      });
+      return result.count;
+    });
+  }
+
+  /**
    * Replaces a message's text, keeping the first version.
    *
    * `originalContent` is written only when it is still null, so a second edit
@@ -154,6 +189,35 @@ export class ChatMessagesRepository {
 
   async deleteById(id: string): Promise<void> {
     await this.prisma.chatMessage.delete({ where: { id } });
+  }
+
+  /**
+   * The subset of `ids` that are messages of `threadId`, with their roles.
+   * Thread-scoped in the WHERE clause: an id from another conversation is
+   * simply absent from the result, never read.
+   */
+  async findQuotableInThread(threadId: string, ids: readonly string[]): Promise<QuotableMessage[]> {
+    return this.prisma.chatMessage.findMany({
+      where: { threadId, id: { in: [...ids] }, role: { in: ['USER', 'ASSISTANT'] } },
+      select: { id: true, role: true },
+    });
+  }
+
+  /**
+   * Replaces the metadata only while `metadata.contextSave.status` is still
+   * `from` — one statement, so two clicks on the "which pack?" card cannot
+   * both claim the save (ADR-134). True when this call won.
+   */
+  async transitionContextSave(
+    id: string,
+    from: string,
+    metadata: Prisma.InputJsonValue,
+  ): Promise<boolean> {
+    const result = await this.prisma.chatMessage.updateMany({
+      where: { id, metadata: { path: ['contextSave', 'status'], equals: from } },
+      data: { metadata },
+    });
+    return result.count === 1;
   }
 
   async updateMetadata(id: string, metadata: Prisma.InputJsonValue): Promise<void> {

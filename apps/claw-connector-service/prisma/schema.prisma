@@ -97,6 +97,12 @@ model Connector {
   // for the same reason `workspaceId` has one — `region` means an AWS region.
   // Validated as 32 lowercase hex characters before it is written (ADR-117).
   accountId       String?           @map("account_id")
+  // LLM-gateway headers (F092) — LiteLLM, Portkey, Helicone, Cloudflare AI
+  // Gateway and similar proxies authenticate or route on headers of their own
+  // (`x-portkey-api-key`, `Helicone-Auth`, `cf-aig-authorization`). JSON object,
+  // AES-encrypted like `encryptedConfig` because the values are credentials.
+  // Null means "no gateway headers", never an empty object.
+  encryptedGatewayHeaders String?     @map("encrypted_gateway_headers")
   // Whether inference through this connector costs ClawAI real money and must
   // therefore debit the user's PAYG credit wallet.
   //
