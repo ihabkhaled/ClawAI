@@ -93,38 +93,40 @@ Each wraps a single `useQuery` call.
 
 Each wraps a single `useMutation` call with `onSuccess` cache invalidation.
 
-| Hook                   | Domain     | Invalidates             | Purpose                   |
-| ---------------------- | ---------- | ----------------------- | ------------------------- |
-| `useCreateThread`      | chat       | `threads.lists()`       | Create new chat thread    |
-| `useDeleteThread`      | chat       | `threads.lists()`       | Delete a thread           |
-| `useUpdateThread`      | chat       | `threads.detail(id)`    | Update thread settings    |
-| `useSendMessage`       | chat       | `threads.messages(id)`  | Send a message            |
-| `useRegenerateMessage` | chat       | `threads.messages(id)`  | Regenerate AI response    |
-| `useMessageFeedback`   | chat       | `threads.messages(id)`  | Submit feedback (up/down) |
-| `usePinThread`         | chat       | `threads.lists()`       | Pin/unpin a thread        |
-| `useArchiveThread`     | chat       | `threads.lists()`       | Archive/unarchive thread  |
-| `useCreateConnector`   | connectors | `connectors.all`        | Create connector          |
-| `useUpdateConnector`   | connectors | `connectors.detail(id)` | Update connector config   |
-| `useDeleteConnector`   | connectors | `connectors.all`        | Delete connector          |
-| `useSyncConnector`     | connectors | `connectors.detail(id)` | Trigger model sync        |
-| `useTestConnector`     | connectors | None                    | Test connector health     |
-| `usePullModel`         | ollama     | `localModels.lists()`   | Pull model from Ollama    |
-| `usePullFromCatalog`   | ollama     | `pullJobs.all`          | Pull model from catalog   |
-| `useCancelPullJob`     | ollama     | `pullJobs.all`          | Cancel download           |
-| `useAssignRole`        | ollama     | `localModels.lists()`   | Assign model role         |
-| `useCreateMemory`      | memory     | `memory.all`            | Create memory record      |
-| `useUpdateMemory`      | memory     | `memory.all`            | Update memory record      |
-| `useDeleteMemory`      | memory     | `memory.all`            | Delete memory record      |
-| `useToggleMemory`      | memory     | `memory.all`            | Enable/disable memory     |
-| `useCreatePolicy`      | routing    | `routing.policies.all`  | Create routing policy     |
-| `useUpdatePolicy`      | routing    | `routing.policies.all`  | Update routing policy     |
-| `useDeletePolicy`      | routing    | `routing.policies.all`  | Delete routing policy     |
-| `useUploadFile`        | files      | `files.all`             | Upload file               |
-| `useDeleteFile`        | files      | `files.all`             | Delete file               |
-| `useChangePassword`    | settings   | None                    | Change user password      |
-| `useUpdatePreferences` | settings   | `auth.me`               | Update user preferences   |
-| `useLogin`             | auth       | None                    | Authenticate user         |
-| `useLogout`            | auth       | None                    | End session               |
+| Hook                     | Domain     | Invalidates             | Purpose                                                                           |
+| ------------------------ | ---------- | ----------------------- | --------------------------------------------------------------------------------- |
+| `useCreateThread`        | chat       | `threads.lists()`       | Create new chat thread                                                            |
+| `useDeleteThread`        | chat       | `threads.lists()`       | Delete a thread                                                                   |
+| `useUpdateThread`        | chat       | `threads.detail(id)`    | Update thread settings                                                            |
+| `useSendMessage`         | chat       | `threads.messages(id)`  | Send a message                                                                    |
+| `useRegenerateMessage`   | chat       | `threads.messages(id)`  | Regenerate; `regenerate(messageId, choice?)` — choice = AUTO or a model (ADR-132) |
+| `useRegenerateWithModel` | chat       | —                       | Props for the "Try again with…" model picker                                      |
+| `useEditInBranch`        | chat       | `threads.all`           | Branch BEFORE a message, prefill the edited text, open it — never sends           |
+| `useMessageFeedback`     | chat       | `threads.messages(id)`  | Submit feedback (up/down)                                                         |
+| `usePinThread`           | chat       | `threads.lists()`       | Pin/unpin a thread                                                                |
+| `useArchiveThread`       | chat       | `threads.lists()`       | Archive/unarchive thread                                                          |
+| `useCreateConnector`     | connectors | `connectors.all`        | Create connector                                                                  |
+| `useUpdateConnector`     | connectors | `connectors.detail(id)` | Update connector config                                                           |
+| `useDeleteConnector`     | connectors | `connectors.all`        | Delete connector                                                                  |
+| `useSyncConnector`       | connectors | `connectors.detail(id)` | Trigger model sync                                                                |
+| `useTestConnector`       | connectors | None                    | Test connector health                                                             |
+| `usePullModel`           | ollama     | `localModels.lists()`   | Pull model from Ollama                                                            |
+| `usePullFromCatalog`     | ollama     | `pullJobs.all`          | Pull model from catalog                                                           |
+| `useCancelPullJob`       | ollama     | `pullJobs.all`          | Cancel download                                                                   |
+| `useAssignRole`          | ollama     | `localModels.lists()`   | Assign model role                                                                 |
+| `useCreateMemory`        | memory     | `memory.all`            | Create memory record                                                              |
+| `useUpdateMemory`        | memory     | `memory.all`            | Update memory record                                                              |
+| `useDeleteMemory`        | memory     | `memory.all`            | Delete memory record                                                              |
+| `useToggleMemory`        | memory     | `memory.all`            | Enable/disable memory                                                             |
+| `useCreatePolicy`        | routing    | `routing.policies.all`  | Create routing policy                                                             |
+| `useUpdatePolicy`        | routing    | `routing.policies.all`  | Update routing policy                                                             |
+| `useDeletePolicy`        | routing    | `routing.policies.all`  | Delete routing policy                                                             |
+| `useUploadFile`          | files      | `files.all`             | Upload file                                                                       |
+| `useDeleteFile`          | files      | `files.all`             | Delete file                                                                       |
+| `useChangePassword`      | settings   | None                    | Change user password                                                              |
+| `useUpdatePreferences`   | settings   | `auth.me`               | Update user preferences                                                           |
+| `useLogin`               | auth       | None                    | Authenticate user                                                                 |
+| `useLogout`              | auth       | None                    | End session                                                                       |
 
 ---
 

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import { withQuotedContext } from '../utilities/quoted-turn.utility';
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import {
   CONTEXT_PACK_FIT_BUDGET_SHARE,
@@ -702,9 +703,12 @@ ${evidence.snippet}`);
     return messages.map((message, index) => {
       const role = this.mapRole(message).toUpperCase();
       if (index !== lastUserIndex) {
-        return `${role}: ${message.content}`;
+        return `${role}: ${withQuotedContext(message.content, message.metadata)}`;
       }
-      const turnText = this.userTurnText(message.content, attachments);
+      const turnText = this.userTurnText(
+        withQuotedContext(message.content, message.metadata),
+        attachments,
+      );
       return `${role}: ${grounded ? this.withResearchGrounding(turnText) : turnText}`;
     });
   }
@@ -905,9 +909,10 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       // The reminder rides on the final user turn, which is the part of the
       // prompt a model attends to most. Never persisted — this is assembled
       // per request, so the stored message stays exactly what the user typed.
-      const turnText = isLastUser ? this.userTurnText(msg.content, context) : '';
+      const quotedContent = withQuotedContext(msg.content, msg.metadata);
+      const turnText = isLastUser ? this.userTurnText(quotedContent, context) : '';
       const groundedTurn = grounded ? this.withResearchGrounding(turnText) : turnText;
-      const content = isLastUser ? groundedTurn : msg.content;
+      const content = isLastUser ? groundedTurn : quotedContent;
       if (isLastUser && (mediaFiles.length > 0 || frameParts.length > 0)) {
         messages.push({
           role,
@@ -1758,7 +1763,11 @@ ${RESEARCH_GROUNDING_REMINDER}`;
 
   private extractCurrentIntent(messages: ChatMessage[]): string {
     const lastUser = [...messages].reverse().find((msg) => msg.role === 'USER');
-    return this.normalizeIntentText(lastUser?.content ?? '');
+    // A quoted turn ("explain this") says little on its own; the quote is
+    // what memory relevance should be measured against.
+    return this.normalizeIntentText(
+      lastUser === undefined ? '' : withQuotedContext(lastUser.content, lastUser.metadata),
+    );
   }
 
   /**

@@ -117,7 +117,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-chat-service",
-      "endpointCount": 58,
+      "endpointCount": 60,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -140,7 +140,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 239,
+      "testFiles": 252,
       "testRunner": "vitest"
     },
     {
@@ -307,7 +307,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-memory-service",
-      "endpointCount": 49,
+      "endpointCount": 51,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -334,7 +334,7 @@
         "MemoryUsage",
         "WorkspaceObjectEmbedding"
       ],
-      "testFiles": 22,
+      "testFiles": 23,
       "testRunner": "vitest"
     },
     {

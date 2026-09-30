@@ -38,7 +38,7 @@ Browser ──POST /api/v1/chat-messages──► nginx :4000 ──► chat :40
 
 ### Step by step
 
-1. **Frontend → chat.** `POST /api/v1/chat-messages {content, provider?, model?, fileIds?}`. Chat creates the USER `ChatMessage`, opens the SSE stream, and **publishes `message.created`**.
+1. **Frontend → chat.** `POST /api/v1/chat-messages {content, provider?, model?, fileIds?, quotes?}` (quotes: ADR-131). Chat creates the USER `ChatMessage`, opens the SSE stream, and **publishes `message.created`**.
 2. **routing consumes `message.created`.** Runs the 5-stage AUTO pipeline (privacy → image → file → category → Ollama/heuristic) or honors a forced provider/model. **Publishes `message.routed {selectedProvider, selectedModel, fallback}`.**
 3. **chat consumes `message.routed`** → `ContextAssemblyManager.assemble()`:
    - HTTP GET memories from **memory** (user-scoped, top-K).

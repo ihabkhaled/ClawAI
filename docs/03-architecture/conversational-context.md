@@ -148,9 +148,12 @@ judge disagreed".
 
 ## Cross-thread retrieval
 
-Off by default, per thread (`useCrossThreadContext`), surfaced as **"Use
-relevant previous chats"**. When off, the repository is never called — opt-out
-means not read, not read-then-discarded. Full rationale in
+On by default (since migration `20260917000000_cross_thread_context_on_by_default`),
+per thread (`useCrossThreadContext`), surfaced as **"Use relevant previous
+chats"**. When off, the repository is never called — opt-out means not read, not
+read-then-discarded. The switch also works in the other direction: a thread with
+`useMemory=false` or `useCrossThreadContext=false` is never a candidate for
+ANOTHER thread's retrieval (SEC-006, rule 57 §15). Full rationale in
 [ADR-087](../13-adr/adr-087-cross-thread-retrieval.md).
 
 ```text

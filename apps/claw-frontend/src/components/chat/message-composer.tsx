@@ -3,6 +3,7 @@ import { Send } from 'lucide-react';
 import { ComposerAttachmentChips } from '@/components/chat/composer-attachment-chips';
 import { ComposerAttachmentTray } from '@/components/chat/composer-attachment-tray';
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
+import { ComposerQuoteChips } from '@/components/chat/composer-quote-chips';
 import { ComposerToolbar } from '@/components/chat/composer-toolbar';
 import { MaskEditDialog } from '@/components/chat/mask-edit-dialog';
 import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
@@ -52,6 +53,7 @@ export function MessageComposer(props: MessageComposerProps): React.ReactElement
             uploads that never got an id (failed, not supported). */}
         <ComposerAttachmentTray {...composer.attachmentTray} />
         <ComposerAttachmentChips {...composer.attachmentChips} />
+        <ComposerQuoteChips {...composer.quoteChips} />
 
         <RichPromptTextarea
           value={composer.content}
@@ -63,7 +65,7 @@ export function MessageComposer(props: MessageComposerProps): React.ReactElement
           minRows={composer.minRows}
           maxRows={composer.maxRows}
           recallHistory={composer.recallHistory}
-          allowEmptySubmit={composer.attachmentTray.fileIds.length > 0}
+          allowEmptySubmit={composer.allowEmptySubmit}
           // Strips the shadcn field frame — the card around it is the frame
           // now — and turns off the native drag handle. Dragging is what let
           // the old composer be left in a state the user could not undo, and

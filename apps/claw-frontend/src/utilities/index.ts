@@ -29,6 +29,23 @@ export { formatDuration, formatMediaClock, formatSpeed } from './format-duration
 export { formatDate, formatOptionalIsoDate, formatDateTimeSafe } from './date.utility';
 export { memoryCardPreview } from './memory-card.utility';
 export { getThreadDateGroupId, groupThreadsByDate } from './thread-grouping.utility';
+export { buildLineageBarProps, toLineageLink } from './thread-lineage.utility';
+export { contextSaveOfMessage } from './context-save.utility';
+export {
+  citationHost,
+  citationHref,
+  citationIndexFromHref,
+  citationsOfMessage,
+  safeCitationUrl,
+  sameCitations,
+} from './message-citation.utility';
+export {
+  clampQuoteText,
+  quoteKey,
+  quotesOfMessage,
+  readQuotableSelection,
+  toQuoteRequest,
+} from './message-quote.utility';
 export { splitHighlightSegments } from './highlight.utility';
 export {
   readPersistedModelViewMode,

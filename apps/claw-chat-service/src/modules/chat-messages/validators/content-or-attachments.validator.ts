@@ -10,7 +10,8 @@ import { type ContentOrAttachmentsInput } from '../types/attachment-only-turn.ty
  * reached a model, and the composer had to invent text to get past it. The
  * owner's requirement is plain: "I can send attachments/files WITHOUT text."
  *
- * Attached files waive the minimum entirely. With no files the trimmed text
+ * Attached files — or a quoted selection ("explain this" with nothing typed) —
+ * waive the minimum entirely. With no files the trimmed text
  * must reach `minLength` — which is also stricter than before for the
  * no-files case: a whitespace-only prompt used to pass `min(1)`.
  *
@@ -21,7 +22,7 @@ export function requireContentOrAttachments(
   minLength = 1,
 ): (value: ContentOrAttachmentsInput, ctx: z.RefinementCtx) => void {
   return (value, ctx) => {
-    if ((value.fileIds?.length ?? 0) > 0) {
+    if ((value.fileIds?.length ?? 0) > 0 || (value.quotes?.length ?? 0) > 0) {
       return;
     }
     if ((value.content ?? '').trim().length >= minLength) {

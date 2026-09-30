@@ -95,7 +95,7 @@ This document describes the key user journeys through the ClawAI platform. Each 
 | 5    | Thinking indicator never resolves | Check for SSE connection issues. Refresh the page to re-establish the connection. Check chat-service logs for execution errors. |
 | 5    | LLM_EXECUTION_FAILED error        | All providers failed. Check connector health, verify API keys have quota remaining, or switch to LOCAL_ONLY mode.               |
 | 5    | CONNECTOR_CONFIG_FETCH_FAILED     | The chat service could not reach the connector service. Check connector-service health.                                         |
-| 6    | Regenerate returns same response  | The model may produce deterministic output at low temperature. Try increasing temperature in Thread Settings.                   |
+| 6    | Regenerate returns same response  | Use **Try again with…** beside Regenerate to ask another model (or AUTO); raising temperature in Thread Settings also helps.    |
 
 ### Screenshot Context
 

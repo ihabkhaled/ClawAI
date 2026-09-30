@@ -1129,6 +1129,11 @@
       },
       {
         "method": "POST",
+        "route": "/chat-messages/:id/context-save",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/context-save.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/chat-messages/:id/edit",
         "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
       },
@@ -1295,6 +1300,11 @@
       {
         "method": "POST",
         "route": "/chat-threads/:id/branch",
+        "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/chat-threads/:id/lineage",
         "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
       },
       {
@@ -2045,7 +2055,17 @@
       },
       {
         "method": "POST",
+        "route": "/internal/context-packs/:id/items/from-chat",
+        "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs-internal.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/internal/context-packs/for-chat",
+        "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/context-packs/options-for-chat",
         "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs-internal.controller.ts"
       },
       {
@@ -3643,5 +3663,5 @@
     ]
   },
   "generated": true,
-  "total": 721
+  "total": 725
 }

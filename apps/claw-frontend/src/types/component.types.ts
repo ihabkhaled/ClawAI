@@ -88,6 +88,12 @@ import type {
   StreamStageTimings,
   StreamUsage,
   UseEditableTitleReturn,
+  ThreadLineageLink,
+  ComposerQuote,
+  ContextSaveRecord,
+  MessageQuote,
+  QuotableSelection,
+  RegenerateMessageRequest,
   VisibleProgressStage,
 } from './chat.types';
 import type { CompareJudgeLaneResult } from './compare-judge.types';
@@ -639,7 +645,7 @@ export type MessageBubbleProps = {
   message: ChatMessage;
   routingDecision?: RoutingDecision | null;
   onFeedback?: (messageId: string, feedback: MessageFeedback | null) => void;
-  onRegenerate?: (messageId: string) => void;
+  onRegenerate?: (messageId: string, choice?: RegenerateMessageRequest) => void;
   /** Told when an edit starts a new run, so the page waits for its answer. */
   onRerunStarted?: () => void;
 };
@@ -1258,7 +1264,7 @@ export type VirtualizedMessagesProps = {
 export type VirtualizedMessageItemProps = {
   item: MessageRenderItem;
   onFeedback?: (messageId: string, feedback: MessageFeedback | null) => void;
-  onRegenerate?: (messageId: string) => void;
+  onRegenerate?: (messageId: string, choice?: RegenerateMessageRequest) => void;
   /** Told when an edit starts a new run, so the page waits for its answer. */
   onRerunStarted?: () => void;
   t: TranslateFunction;
@@ -2085,6 +2091,10 @@ export type ChatThreadShellProps = {
   // Thread settings dialog (mounted unconditionally; `open` gates visibility).
   threadSettingsProps: ThreadSettingsProps;
   threadQualityPanelProps: ThreadQualityPanelProps;
+  /** Branch lineage strip: source link and sibling branches. */
+  lineageBarProps: ThreadLineageBarProps;
+  /** Floating Quote button over a selection in the transcript (Batch 2). */
+  selectionQuoteProps: SelectionQuoteButtonProps;
   // Virtualized messages.
   virtualizedMessagesProps: VirtualizedMessagesProps;
   // Overflow menu. Holds export / settings / delete, plus the four primary
@@ -2858,12 +2868,59 @@ export type CodingAgentInstallFigureProps = {
 /** The edit affordance on a user message: the trigger and its dialog. */
 export type MessageEditActionProps = {
   messageId: string;
+  /** The message's thread — an edit can open a branch of it instead. */
+  threadId: string;
   content: string;
   /** Told when the edit starts a new run, so the page waits for its answer. */
   onRerunStarted?: () => void;
 };
 
 /** The branch affordance on a message. */
+/**
+ * The one-line lineage strip above a conversation. `visible` is false for a
+ * thread that is neither a branch nor has branches, so nothing is rendered
+ * and no height is spent (rule 40).
+ */
+export type ThreadLineageBarProps = {
+  visible: boolean;
+  parent: ThreadLineageLink | null;
+  parentDeleted: boolean;
+  branches: ThreadLineageLink[];
+  branchedFromLabel: string;
+  sourceDeletedLabel: string;
+  branchesLabel: string;
+};
+
+export type ComposerQuoteChipsProps = {
+  quotes: readonly ComposerQuote[];
+  onRemove: (key: string) => void;
+  heading: string;
+  removeLabel: string;
+};
+
+export type SelectionQuoteButtonProps = {
+  selection: QuotableSelection | null;
+  onQuote: () => void;
+  label: string;
+};
+
+export type MessageQuotesProps = {
+  quotes: readonly MessageQuote[];
+  label: string;
+};
+
+/** "Try again with…": a model picker whose pick regenerates the answer. */
+export type RegenerateWithModelProps = {
+  onPick: (choice: RegenerateMessageRequest) => void;
+  disabled?: boolean;
+};
+
+export type ContextSaveCardProps = {
+  messageId: string;
+  threadId: string;
+  record: ContextSaveRecord;
+};
+
 export type MessageBranchActionProps = {
   threadId: string;
   messageId: string;

@@ -50,3 +50,7 @@ Owner feature 11: "save this as memory / remember this / add this to my context 
 - AUTO downgrades an enforced-local domain to cloud when no Ollama runtime is healthy (owner decision: availability over locality when no local runtime exists). Where Ollama is healthy, enforcement is unchanged.
 - Memory/pack blocks instruct verbatim quoting of exact strings in their original language.
 - German and Chinese bare generation phrases added; the earlier "known gap" is closed.
+
+## Addendum (2026-09-30): superseded for saving from chat
+
+At the owner's direction, a planner model now decides saves from chat and asks which pack when none was named — see [ADR-134](adr-134-ai-decided-save-to-memory-and-context.md). The deterministic path described in "Addendum — saving from chat" remains as the fallback when no planner answers.

@@ -10,12 +10,12 @@ ClawAI's memory system automatically extracts key information from conversations
 
 ### Memory Types
 
-| Type | Description | Example |
-| --- | --- | --- |
-| FACT | Objective information about the user or their work | "User works on a NestJS microservices platform" |
-| PREFERENCE | User's stated preferences for AI behavior | "User prefers TypeScript code examples" |
-| INSTRUCTION | Explicit directives for AI interactions | "Always include error handling in code samples" |
-| SUMMARY | Condensed summaries of conversation topics | "Discussed database migration strategy for PostgreSQL" |
+| Type        | Description                                        | Example                                                |
+| ----------- | -------------------------------------------------- | ------------------------------------------------------ |
+| FACT        | Objective information about the user or their work | "User works on a NestJS microservices platform"        |
+| PREFERENCE  | User's stated preferences for AI behavior          | "User prefers TypeScript code examples"                |
+| INSTRUCTION | Explicit directives for AI interactions            | "Always include error handling in code samples"        |
+| SUMMARY     | Condensed summaries of conversation topics         | "Discussed database migration strategy for PostgreSQL" |
 
 ### Context Packs
 
@@ -44,7 +44,7 @@ sequenceDiagram
 
 ### Extraction Process
 
-1. **Trigger**: `message.completed` event arrives via RabbitMQ (async, non-blocking)
+1. **Trigger**: `message.completed` event arrives via RabbitMQ (async, non-blocking). Skipped when the chat has **Use memory** off (SEC-006) or the user paused all memory
 2. **Input**: Both the user's message and the AI's response
 3. **Model**: Ollama extraction model (default: gemma3:4b, configurable via `MEMORY_EXTRACTION_MODEL`)
 4. **Output**: Zod-validated array of extracted memories with type and content
@@ -54,6 +54,7 @@ sequenceDiagram
 ### Deduplication
 
 Before storing a new memory, the system checks for semantic similarity against existing memories for the same user. This prevents accumulation of redundant facts like:
+
 - "User prefers TypeScript" (already stored)
 - "User likes TypeScript for coding" (duplicate, skipped)
 
@@ -71,6 +72,7 @@ Before storing a new memory, the system checks for semantic similarity against e
 ### Create Memory (Manual)
 
 Users can manually create memories when they want to explicitly tell the AI something:
+
 - Select type (FACT, PREFERENCE, INSTRUCTION, SUMMARY)
 - Enter content (1-50,000 characters)
 - Memory is immediately available for future context assembly
@@ -82,6 +84,7 @@ Edit the content of an existing memory. Useful for correcting inaccurate extract
 ### Enable/Disable Memory
 
 Toggle individual memories without deleting them:
+
 - **Enabled**: Included in context assembly for all future messages
 - **Disabled**: Excluded from context assembly but retained in the database
 
@@ -111,12 +114,12 @@ Permanently remove a memory from the system.
 
 ### Use Cases
 
-| Pack Name | Contents | Who Creates |
-| --- | --- | --- |
-| "Project Architecture" | Architecture decisions, tech stack, coding patterns | Developer |
-| "Legal Standards" | Citation format, confidentiality rules, compliance requirements | Compliance officer |
-| "Data Dictionary" | Business metrics definitions, KPI formulas, data source descriptions | Analyst |
-| "Onboarding Guide" | Company policies, team structure, tool access | Team lead |
+| Pack Name              | Contents                                                             | Who Creates        |
+| ---------------------- | -------------------------------------------------------------------- | ------------------ |
+| "Project Architecture" | Architecture decisions, tech stack, coding patterns                  | Developer          |
+| "Legal Standards"      | Citation format, confidentiality rules, compliance requirements      | Compliance officer |
+| "Data Dictionary"      | Business metrics definitions, KPI formulas, data source descriptions | Analyst            |
+| "Onboarding Guide"     | Company policies, team structure, tool access                        | Team lead          |
 
 ---
 
@@ -187,32 +190,32 @@ createdAt:       DateTime
 
 ### Memories
 
-| Endpoint | Method | Description |
-| --- | --- | --- |
-| `/api/v1/memories` | GET | List user's memories (paginated, filterable) |
-| `/api/v1/memories` | POST | Create a manual memory |
-| `/api/v1/memories/:id` | GET | Get memory details |
-| `/api/v1/memories/:id` | PATCH | Update memory content or status |
-| `/api/v1/memories/:id` | DELETE | Delete memory permanently |
+| Endpoint               | Method | Description                                  |
+| ---------------------- | ------ | -------------------------------------------- |
+| `/api/v1/memories`     | GET    | List user's memories (paginated, filterable) |
+| `/api/v1/memories`     | POST   | Create a manual memory                       |
+| `/api/v1/memories/:id` | GET    | Get memory details                           |
+| `/api/v1/memories/:id` | PATCH  | Update memory content or status              |
+| `/api/v1/memories/:id` | DELETE | Delete memory permanently                    |
 
 ### Context Packs
 
-| Endpoint | Method | Description |
-| --- | --- | --- |
-| `/api/v1/context-packs` | GET | List user's context packs |
-| `/api/v1/context-packs` | POST | Create a new context pack |
-| `/api/v1/context-packs/:id` | GET | Get pack with items |
-| `/api/v1/context-packs/:id` | PATCH | Update pack name/description |
-| `/api/v1/context-packs/:id` | DELETE | Delete pack and items |
+| Endpoint                    | Method | Description                  |
+| --------------------------- | ------ | ---------------------------- |
+| `/api/v1/context-packs`     | GET    | List user's context packs    |
+| `/api/v1/context-packs`     | POST   | Create a new context pack    |
+| `/api/v1/context-packs/:id` | GET    | Get pack with items          |
+| `/api/v1/context-packs/:id` | PATCH  | Update pack name/description |
+| `/api/v1/context-packs/:id` | DELETE | Delete pack and items        |
 
 ---
 
 ## Events
 
-| Event | Publisher | Consumers |
-| --- | --- | --- |
-| `message.completed` | chat-service | memory-service (triggers extraction) |
-| `memory.extracted` | memory-service | audit-service |
+| Event               | Publisher      | Consumers                            |
+| ------------------- | -------------- | ------------------------------------ |
+| `message.completed` | chat-service   | memory-service (triggers extraction) |
+| `memory.extracted`  | memory-service | audit-service                        |
 
 ---
 

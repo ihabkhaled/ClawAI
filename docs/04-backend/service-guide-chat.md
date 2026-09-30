@@ -23,22 +23,25 @@ this; see [build-system.md § Gotchas](../08-runtime-devops/build-system.md#7-go
 
 ### ChatThread
 
-| Column            | Type        | Notes                                |
-| ----------------- | ----------- | ------------------------------------ |
-| id                | String      | CUID primary key                     |
-| userId            | String      | Owner                                |
-| title             | String?     | Auto-generated or user-set           |
-| routingMode       | RoutingMode | AUTO, MANUAL_MODEL, LOCAL_ONLY, etc. |
-| lastProvider      | String?     | Last used provider                   |
-| lastModel         | String?     | Last used model                      |
-| isPinned          | Boolean     | User-pinned thread                   |
-| isArchived        | Boolean     | Soft archive                         |
-| preferredProvider | String?     | Thread-level override                |
-| preferredModel    | String?     | Thread-level override                |
-| contextPackIds    | String[]    | Attached context pack IDs            |
-| systemPrompt      | String?     | Custom system prompt                 |
-| temperature       | Float?      | Default 0.7                          |
-| maxTokens         | Int?        | Token limit override                 |
+| Column                | Type        | Notes                                                                    |
+| --------------------- | ----------- | ------------------------------------------------------------------------ |
+| id                    | String      | CUID primary key                                                         |
+| userId                | String      | Owner                                                                    |
+| title                 | String?     | Auto-generated or user-set                                               |
+| routingMode           | RoutingMode | AUTO, MANUAL_MODEL, LOCAL_ONLY, etc.                                     |
+| lastProvider          | String?     | Last used provider                                                       |
+| lastModel             | String?     | Last used model                                                          |
+| isPinned              | Boolean     | User-pinned thread                                                       |
+| isArchived            | Boolean     | Soft archive                                                             |
+| preferredProvider     | String?     | Thread-level override                                                    |
+| preferredModel        | String?     | Thread-level override                                                    |
+| contextPackIds        | String[]    | Attached context pack IDs                                                |
+| systemPrompt          | String?     | Custom system prompt                                                     |
+| temperature           | Float?      | Default 0.7                                                              |
+| maxTokens             | Int?        | Token limit override                                                     |
+| branchedFromThreadId  | String?     | Source thread of a branch (plain id; survives source deletion) — ADR-130 |
+| branchedFromMessageId | String?     | Fork message in the source                                               |
+| branchRootThreadId    | String?     | First ancestor; one indexed read finds the whole branch family           |
 
 ### ChatMessage
 
@@ -68,32 +71,35 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
 
 ### Threads (`/api/v1/chat-threads`)
 
-| Method | Path | Description                     |
-| ------ | ---- | ------------------------------- |
-| GET    | /    | List user's threads (paginated) |
-| POST   | /    | Create new thread               |
-| GET    | /:id | Get thread with recent messages |
-| PATCH  | /:id | Update title, settings, etc.    |
-| DELETE | /:id | Delete thread and all messages  |
+| Method | Path         | Description                                                                                                                       |
+| ------ | ------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | /            | List user's threads (paginated)                                                                                                   |
+| POST   | /            | Create new thread                                                                                                                 |
+| GET    | /:id         | Get thread with recent messages                                                                                                   |
+| POST   | /:id/branch  | Copy the thread up to `fromMessageId` into a new branch; `cut: INCLUDE` (default) or `BEFORE` (ADR-132); daily chat limit applies |
+| GET    | /:id/lineage | `{ threadId, parent, parentDeleted, forkMessageId, branches }` — owner-scoped (ADR-130)                                           |
+| PATCH  | /:id         | Update title, settings, etc.                                                                                                      |
+| DELETE | /:id         | Delete thread and all messages                                                                                                    |
 
 ### Messages (`/api/v1/chat-messages`)
 
-| Method | Path              | Description                                   |
-| ------ | ----------------- | --------------------------------------------- |
-| GET    | /thread/:threadId | List messages (paginated)                     |
-| POST   | /                 | Send new message (triggers flow)              |
-| PATCH  | /:id/feedback     | Submit feedback on a message                  |
-| POST   | /:id/regenerate   | Regenerate an assistant response              |
-| POST   | /parallel         | Send prompt to 2-5 models simultaneously      |
-| POST   | /consensus        | Build a consensus answer from multiple models |
-| POST   | /escalation-chain | Escalate to stronger models if needed         |
-| POST   | /repair           | Repair or critique an answer                  |
-| POST   | /decompose        | Decompose a task into structured subtasks     |
-| POST   | /best-of-n        | Generate multiple candidates and choose one   |
-| POST   | /cost-ensemble    | Balance answer quality against spend          |
-| POST   | /verify           | Run verification checks on an answer          |
-| POST   | /role-pack        | Execute multi-role prompt pack workflows      |
-| POST   | /pipeline         | Execute staged prompt pipelines               |
+| Method | Path              | Description                                                                                                          |
+| ------ | ----------------- | -------------------------------------------------------------------------------------------------------------------- |
+| GET    | /thread/:threadId | List messages (paginated)                                                                                            |
+| POST   | /                 | Send new message (triggers flow); optional `quotes` (ADR-131)                                                        |
+| PATCH  | /:id/feedback     | Submit feedback on a message                                                                                         |
+| POST   | /:id/context-save | Answer a save's "which pack?" card: `{packId}` or `{newPack: true}`; owner-only, saves once (ADR-134)                |
+| POST   | /:id/regenerate   | Answer again; optional `{routingMode AUTO/MANUAL_MODEL, provider, model}`; same plan/quota check as a send (ADR-132) |
+| POST   | /parallel         | Send prompt to 2-5 models simultaneously                                                                             |
+| POST   | /consensus        | Build a consensus answer from multiple models                                                                        |
+| POST   | /escalation-chain | Escalate to stronger models if needed                                                                                |
+| POST   | /repair           | Repair or critique an answer                                                                                         |
+| POST   | /decompose        | Decompose a task into structured subtasks                                                                            |
+| POST   | /best-of-n        | Generate multiple candidates and choose one                                                                          |
+| POST   | /cost-ensemble    | Balance answer quality against spend                                                                                 |
+| POST   | /verify           | Run verification checks on an answer                                                                                 |
+| POST   | /role-pack        | Execute multi-role prompt pack workflows                                                                             |
+| POST   | /pipeline         | Execute staged prompt pipelines                                                                                      |
 
 ## Message Flow (End-to-End)
 
@@ -125,7 +131,7 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
      user said (`VOICE_NOTE_TRANSCRIPT_FRAME`), never as a generic attached
      document, and never leaks the transcription placeholder itself into the
      prompt as if it were real content.
-5. **Prompt building** -- system prompt, memories, packs, files, history, with token budget truncation
+5. **Prompt building** -- system prompt, memories, packs, files, history, with token budget truncation. Before it, a **context-save pre-check** (ADR-134): a save-like message goes to the planner (`askPlanner`), the memory/pack saves run, and the platform note is appended to the system prompt so the model confirms them
    - **Attachment-only turns** (rule 42 §18–19). A send may carry files and
      no text (every send schema uses `requireContentOrAttachments`). The row is
      stored with empty `content`; `message.created` carries
@@ -148,9 +154,9 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
 7. **Quality check** -- `QualityCheckManager` scores the response (length, repetition, error patterns, echo)
 8. **Auto re-routing** -- if quality score < 0.4, re-routes to next candidate (max 2 re-route attempts)
 9. **Fallback chain** -- if primary fails or is weak, tries next candidate in chain
-10. **Store ASSISTANT message** -- with token counts, latency, provider metadata, re-routing metadata if applicable
+10. **Store ASSISTANT message** -- with token counts, latency, provider metadata, re-routing metadata if applicable, `metadata.citations` (`[{index,title,url,snippet}]`, ≤50, the prompt's own numbering; none when SEARCH_FIRST applied — ADR-133), and on a save turn `metadata.contextSave` (the saved card — ADR-134)
 11. **SSE emission** -- `emitCompletion()` pushes to connected clients
-12. **Publish `message.completed`** -- memory service extracts facts; audit logs usage
+12. **Publish `message.completed`** -- memory service extracts facts (unless the chat has memory off, or it was a save turn: no `userContent` then); audit logs usage
 
 ## SSE Streaming
 
@@ -647,6 +653,13 @@ hiding the next, all of them a bound, a ranking rule or a weight — never a
 missing embedding. ADR-087 D9–D14 has the full record with the measured
 numbers. What matters for anyone touching it again:
 
+- **An opted-out chat is never a candidate** (SEC-006): `findCandidateThreads`
+  requires `useMemory` AND `useCrossThreadContext` on the candidate thread, so a
+  chat with either switch off is never read FROM; only
+  `useCrossThreadContext=false` also stops it reading other chats.
+- **The current thread's whole branch family is excluded** (ADR-130):
+  `excludedThreadIds` reads the root, then every thread sharing it, and passes
+  them all as `notIn`. A branch must never retrieve its source's post-fork turns.
 - **Stage 1 reads, stage 2 ranks.** The candidate query takes one bounded slice
   per term and returns them all. The manager scores and cuts. A repository that
   also ranks decides which threads the scorer may consider, and it decided

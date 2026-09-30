@@ -3,6 +3,7 @@ import { RoutingMode } from '../../../generated/prisma';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { stripNulBytes } from '../../../common/utilities/postgres-safe-text.utility';
 import { attachmentFields } from './attachment-fields.dto';
+import { quoteFields } from './quote-fields.dto';
 import { requireContentOrAttachments } from '../validators/content-or-attachments.validator';
 
 // Canonical research-mode schema for every chat DTO. Replaces the inline
@@ -35,6 +36,7 @@ export const createMessageSchema = z
       .max(255, 'Model display name must be at most 255 characters')
       .optional(),
     ...attachmentFields,
+    ...quoteFields,
     // File id of a drawn PNG mask for an image edit; needs an attached image.
     maskFileId: z
       .string()

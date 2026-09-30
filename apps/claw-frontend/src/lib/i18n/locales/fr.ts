@@ -364,6 +364,46 @@ export const fr: TranslationDictionary = {
       succeeded: 'Branche créée dans une nouvelle conversation.',
       failed: 'Impossible de créer une branche.',
     },
+    lineage: {
+      branchedFrom: 'Branche de',
+      sourceDeleted: 'Branche d’une conversation supprimée',
+      branches: 'Branches dérivées ({count})',
+      branchBadge: 'Branche dérivée',
+    },
+    quote: {
+      action: 'Citer',
+      composerHeading: 'Citations',
+      remove: 'Retirer la citation',
+      repliedTo: 'En réponse à',
+      limitReached: 'Vous pouvez citer jusqu’à 3 sélections par message.',
+      sourceMissing:
+        'Le message cité ne fait plus partie de cette conversation. Retirez la citation et réessayez.',
+    },
+    regenerateWith: {
+      trigger: 'Réessayer avec…',
+      auto: 'Laisser AUTO choisir',
+    },
+    contextSave: {
+      title: 'Enregistré depuis ce chat',
+      savedMemory: 'Enregistré en mémoire',
+      createdPack: 'Pack de contexte créé',
+      addedToPack: 'Ajouté au pack de contexte',
+      openMemory: 'Ouvrir la mémoire',
+      openPack: 'Ouvrir le pack',
+      choosePack: 'Dans quel pack de contexte faut-il le mettre ?',
+      newPack: 'Nouveau pack : {name}',
+      saving: 'Enregistrement…',
+      packSaved: 'Enregistré dans le pack de contexte.',
+      failedTitle: 'Échec de l’enregistrement',
+      memoryFailed: 'La mémoire n’a pas été enregistrée.',
+      packFailed: 'Le pack de contexte n’a pas été enregistré.',
+      notPending: 'Cet enregistrement est déjà fait ou n’attend plus de pack.',
+      reasons: {
+        PLAN: 'Votre forfait ne comprend pas cette fonction.',
+        LIMIT: 'Vous avez atteint la limite de votre forfait.',
+        UNAVAILABLE: 'Le service est indisponible pour le moment. Réessayez dans un instant.',
+      },
+    },
     speech: {
       action: 'Lire à voix haute',
       stop: 'Arrêter la lecture à voix haute',
@@ -400,6 +440,11 @@ export const fr: TranslationDictionary = {
       },
     },
     edit: {
+      inBranch: 'Modifier dans une nouvelle branche',
+      branchHint:
+        'Ou gardez cette conversation telle quelle et posez la question modifiée dans une nouvelle branche : rien n’est supprimé.',
+      branchOpened:
+        'Une nouvelle branche s’est ouverte avec votre question modifiée. Appuyez sur Envoyer quand elle est prête.',
       action: 'Modifier et relancer',
       title: 'Modifier ce message',
       warning: 'Tout ce qui suit ce message sera supprimé, et la conversation repart d’ici.',
@@ -828,12 +873,13 @@ export const fr: TranslationDictionary = {
     jumpToLatest: 'Aller au plus récent',
     moreActions: 'Plus d’actions',
     useMemoryLabel: 'Utiliser la mémoire dans cette conversation',
-    useMemoryDescription: "Lorsque désactivé, aucune mémoire n'est injectée dans l'invite.",
+    useMemoryDescription:
+      'Lorsque cette option est désactivée, aucune mémoire n’est utilisée dans ce chat et rien de ce qui y est dit n’est enregistré comme mémoire.',
     useContextLabel: 'Utiliser les paquets de contexte dans cette conversation',
     useContextDescription: 'Lorsque désactivé, les paquets attachés sont ignorés.',
     useCrossThreadContextLabel: 'Utiliser les conversations précédentes pertinentes',
     useCrossThreadContextDescription:
-      'Lorsque cette option est activée, ClawAI peut parcourir vos autres conversations à la recherche d’éléments pertinents pour celle-ci. Désactivé par défaut.',
+      'Lorsque cette option est activée, ClawAI peut utiliser vos autres chats qui l’autorisent pour trouver des éléments pertinents pour celui-ci. Lorsqu’elle est désactivée, ce chat ne lit pas vos autres chats et n’est pas lu par eux.',
     workflow: {
       searchFirst: "Recherche d'abord",
       direct: 'Direct',

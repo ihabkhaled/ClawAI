@@ -255,15 +255,15 @@
       "file": "rules/39-worktree-branch-completion-pr-and-release-notes.md"
     },
     {
-      "bytes": 24919,
+      "bytes": 25104,
       "file": "rules/40-chat-surface-layout-and-composer.md"
     },
     {
-      "bytes": 22930,
+      "bytes": 24981,
       "file": "rules/41-web-evidence-truthfulness.md"
     },
     {
-      "bytes": 36539,
+      "bytes": 36818,
       "file": "rules/42-attachment-understanding.md"
     },
     {
@@ -279,7 +279,7 @@
       "file": "rules/45-display-currency-versus-settlement-currency.md"
     },
     {
-      "bytes": 2637,
+      "bytes": 3190,
       "file": "rules/46-token-quota-enforcement-and-window-integrity.md"
     },
     {
@@ -295,7 +295,7 @@
       "file": "rules/49-qa-team-discipline-and-test-evidence.md"
     },
     {
-      "bytes": 6450,
+      "bytes": 6638,
       "file": "rules/50-agentic-research-loop-and-narration.md"
     },
     {
@@ -323,7 +323,7 @@
       "file": "rules/56-model-reasoning-never-in-the-answer.md"
     },
     {
-      "bytes": 5349,
+      "bytes": 6860,
       "file": "rules/57-memory-and-context-pack-integrity.md"
     },
     {

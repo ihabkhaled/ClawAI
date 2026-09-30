@@ -9,6 +9,10 @@ import type { CreateThreadData } from '../types/chat-threads.types';
  * `null` would be an explicit unset — and for `temperature` those differ: the
  * default is 0.7, not none.
  *
+ * The three privacy switches are copied too. A person who turned memory off in
+ * a conversation turned it off for that conversation's content, and a branch
+ * IS that content — defaulting them back on would quietly undo the choice.
+ *
  * Identity and history are deliberately not copied. The caller decides the
  * owner, and messages are copied separately with fresh identifiers.
  */
@@ -22,5 +26,8 @@ export function copyThreadSettings(source: ChatThread): Omit<CreateThreadData, '
     ...(source.preferredProvider === null ? {} : { preferredProvider: source.preferredProvider }),
     ...(source.preferredModel === null ? {} : { preferredModel: source.preferredModel }),
     contextPackIds: source.contextPackIds,
+    useMemory: source.useMemory,
+    useContext: source.useContext,
+    useCrossThreadContext: source.useCrossThreadContext,
   };
 }

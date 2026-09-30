@@ -71,3 +71,16 @@ page the entry names. This log is the history between them.
 - **Guarded by:** `one-subscription-wording.test.ts` (per-locale phrase list and the
   teams FAQ), `repositioning-slogan-keys.test.ts` and `plan-catalog-pricing.seeder.spec.ts`
   (no plan promises pooling).
+
+## DRIFT-003 — Saving from chat is decided by a model, not by keywords (2026-09-30)
+
+- **Area:** product.
+- **Before:** ADR-127 chose a deterministic keyword path with no model: one
+  target per turn, a guessed memory type, always a new pack, a templated reply.
+- **Now:** a planner model decides memory / context pack / both, the answering
+  model confirms, existing packs can be chosen (and are asked for), and a saved
+  card with deep links is persisted (ADR-134). The keyword path is the fallback.
+- **Why:** owner direction in chat, 2026-09-30 ("not just keyword detection but
+  AI intelligence").
+- **Who:** owner; implemented by the coding agent.
+- **Touched:** REQ-CHAT-006, ADR-134, ADR-127 addendum, rule 57 §11.

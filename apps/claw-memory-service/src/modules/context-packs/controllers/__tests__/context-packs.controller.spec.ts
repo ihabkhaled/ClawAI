@@ -2,6 +2,7 @@ import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ContextPacksController } from '../context-packs.controller';
 import { ContextPacksInternalController } from '../context-packs-internal.controller';
+import { ContextPackChatService } from '../../services/context-pack-chat.service';
 import { ContextPacksService } from '../../services/context-packs.service';
 
 describe('ContextPacksController', () => {
@@ -93,12 +94,17 @@ describe('ContextPacksController', () => {
 describe('ContextPacksInternalController', () => {
   let controller: ContextPacksInternalController;
   let serviceMock: { getContextPackItemsInternal: Mock };
+  let chatMock: { listOptions: Mock; addItemFromChat: Mock };
 
   beforeEach(async () => {
     serviceMock = { getContextPackItemsInternal: vi.fn() };
+    chatMock = { listOptions: vi.fn(), addItemFromChat: vi.fn() };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ContextPacksInternalController],
-      providers: [{ provide: ContextPacksService, useValue: serviceMock }],
+      providers: [
+        { provide: ContextPacksService, useValue: serviceMock },
+        { provide: ContextPackChatService, useValue: chatMock },
+      ],
     }).compile();
     controller = module.get<ContextPacksInternalController>(ContextPacksInternalController);
   });
@@ -107,5 +113,18 @@ describe('ContextPacksInternalController', () => {
     serviceMock.getContextPackItemsInternal.mockResolvedValue({ id: 'cp1', items: [] });
     await controller.getItems('cp1');
     expect(serviceMock.getContextPackItemsInternal).toHaveBeenCalledWith('cp1');
+  });
+
+  it('options-for-chat lists the packs of the user in the body (ADR-134)', async () => {
+    chatMock.listOptions.mockResolvedValue([]);
+    await controller.optionsForChat({ userId: 'user-1' });
+    expect(chatMock.listOptions).toHaveBeenCalledWith('user-1');
+  });
+
+  it('items/from-chat adds to the pack in the path for the user in the body', async () => {
+    chatMock.addItemFromChat.mockResolvedValue({ packId: 'cp1', itemId: 'i1', name: 'n' });
+    const body = { userId: 'user-1', content: 'x', sourceMessageId: 'm1' };
+    await controller.addItemFromChat('cp1', body);
+    expect(chatMock.addItemFromChat).toHaveBeenCalledWith('cp1', body);
   });
 });

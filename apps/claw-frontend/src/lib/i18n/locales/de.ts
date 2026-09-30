@@ -367,6 +367,46 @@ export const de: TranslationDictionary = {
       succeeded: 'In eine neue Unterhaltung verzweigt.',
       failed: 'Die Unterhaltung konnte nicht verzweigt werden.',
     },
+    lineage: {
+      branchedFrom: 'Verzweigt aus',
+      sourceDeleted: 'Verzweigt aus einer gelöschten Unterhaltung',
+      branches: 'Verzweigungen ({count})',
+      branchBadge: 'Verzweigung',
+    },
+    quote: {
+      action: 'Zitieren',
+      composerHeading: 'Zitate',
+      remove: 'Zitat entfernen',
+      repliedTo: 'Antwort auf',
+      limitReached: 'Pro Nachricht kannst du höchstens 3 Auswahlen zitieren.',
+      sourceMissing:
+        'Die zitierte Nachricht ist nicht mehr in dieser Unterhaltung. Entferne das Zitat und versuche es erneut.',
+    },
+    regenerateWith: {
+      trigger: 'Erneut versuchen mit…',
+      auto: 'AUTO wählen lassen',
+    },
+    contextSave: {
+      title: 'Aus diesem Chat gespeichert',
+      savedMemory: 'Im Gedächtnis gespeichert',
+      createdPack: 'Kontextpaket erstellt',
+      addedToPack: 'Zum Kontextpaket hinzugefügt',
+      openMemory: 'Erinnerung öffnen',
+      openPack: 'Paket öffnen',
+      choosePack: 'In welches Kontextpaket soll das?',
+      newPack: 'Neues Paket: {name}',
+      saving: 'Wird gespeichert…',
+      packSaved: 'Im Kontextpaket gespeichert.',
+      failedTitle: 'Speichern fehlgeschlagen',
+      memoryFailed: 'Die Erinnerung wurde nicht gespeichert.',
+      packFailed: 'Das Kontextpaket wurde nicht gespeichert.',
+      notPending: 'Dieses Speichern ist bereits erledigt oder wartet nicht mehr auf ein Paket.',
+      reasons: {
+        PLAN: 'Dein Tarif enthält das nicht.',
+        LIMIT: 'Du hast das Limit deines Tarifs erreicht.',
+        UNAVAILABLE: 'Der Dienst ist gerade nicht erreichbar. Versuche es gleich noch einmal.',
+      },
+    },
     speech: {
       action: 'Vorlesen',
       stop: 'Vorlesen beenden',
@@ -401,6 +441,11 @@ export const de: TranslationDictionary = {
       },
     },
     edit: {
+      inBranch: 'In neuer Verzweigung bearbeiten',
+      branchHint:
+        'Oder behalte diese Unterhaltung, wie sie ist, und stelle die bearbeitete Frage in einer neuen Verzweigung – nichts wird gelöscht.',
+      branchOpened:
+        'Neue Verzweigung mit deiner bearbeiteten Frage geöffnet. Drücke Senden, wenn sie fertig ist.',
       action: 'Bearbeiten und erneut ausführen',
       title: 'Diese Nachricht bearbeiten',
       warning:
@@ -829,12 +874,13 @@ export const de: TranslationDictionary = {
     jumpToLatest: 'Zum neuesten springen',
     moreActions: 'Weitere Aktionen',
     useMemoryLabel: 'Erinnerung in diesem Gespräch verwenden',
-    useMemoryDescription: 'Wenn deaktiviert, werden keine Erinnerungen in den Prompt eingefügt.',
+    useMemoryDescription:
+      'Wenn deaktiviert, werden in diesem Chat keine Erinnerungen verwendet und nichts, was hier gesagt wird, wird als Erinnerung gespeichert.',
     useContextLabel: 'Kontextpakete in diesem Gespräch verwenden',
     useContextDescription: 'Wenn deaktiviert, werden angehängte Pakete ignoriert.',
     useCrossThreadContextLabel: 'Relevante frühere Chats verwenden',
     useCrossThreadContextDescription:
-      'Wenn aktiviert, darf ClawAI Ihre anderen Unterhaltungen nach Material durchsuchen, das für diese relevant ist. Standardmäßig aus.',
+      'Wenn aktiviert, darf ClawAI Ihre anderen Chats, die das erlauben, nach Material durchsuchen, das für diesen relevant ist. Wenn deaktiviert, liest dieser Chat Ihre anderen Chats nicht und wird auch nicht von ihnen gelesen.',
     workflow: {
       searchFirst: 'Suche zuerst',
       direct: 'Direkt',

@@ -1,5 +1,7 @@
+import { useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 
+import { CONTEXT_PACK_DEEP_LINK_PARAM } from '@/constants/deep-link.constants';
 import type { CreateContextPackRequest, CreateContextPackItemRequest } from '@/types';
 
 import { useContextPackDetail } from './use-context-pack-detail';
@@ -8,7 +10,11 @@ import { useCreateContextPack } from './use-create-context-pack';
 
 export function useContextPage() {
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
-  const [selectedPackId, setSelectedPackId] = useState<string | null>(null);
+  // `/context?packId=…` (the chat's saved card) opens that pack directly.
+  const searchParams = useSearchParams();
+  const [selectedPackId, setSelectedPackId] = useState<string | null>(
+    searchParams.get(CONTEXT_PACK_DEEP_LINK_PARAM),
+  );
   const [isAddItemFormOpen, setIsAddItemFormOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
 

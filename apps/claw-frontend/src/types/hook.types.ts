@@ -48,6 +48,10 @@ import type {
 import type { ChatLimitNotice } from './chat-limit-notice.types';
 import type {
   InThreadSearchMatch,
+  ThreadLineage,
+  ComposerQuote,
+  QuotableSelection,
+  RegenerateMessageRequest,
   ChatMessage,
   ChatThread,
   CreateMessageRequest,
@@ -60,6 +64,7 @@ import type {
 } from './chat.types';
 import type {
   ChatThreadShellProps,
+  ComposerQuoteChipsProps,
   ComposerToolbarProps,
   ModelSelection,
   VirtualizedMessagesProps,
@@ -218,6 +223,29 @@ export type UseFloatingObstacleClearanceReturn = {
   remeasure: () => void;
 };
 
+export type UseContextSaveCardReturn = {
+  choosePack: (packId: string) => void;
+  chooseNewPack: () => void;
+  isPending: boolean;
+};
+
+export type UseComposerQuotesReturn = {
+  quotes: readonly ComposerQuote[];
+  removeQuote: (key: string) => void;
+};
+
+export type UseSelectionQuoteReturn = {
+  /** The quotable selection right now, or null — the button renders only for this. */
+  selection: QuotableSelection | null;
+  onQuote: () => void;
+  label: string;
+};
+
+export type UseThreadLineageReturn = {
+  lineage: ThreadLineage | null;
+  isLoading: boolean;
+};
+
 export type UseBranchThreadReturn = {
   /** Forks the conversation at this message into a thread of its own. */
   branchFrom: (fromMessageId: string) => void;
@@ -234,6 +262,15 @@ export type UseMessageEditReturn = {
   isPending: boolean;
   /** False for an empty or unchanged draft, which the server refuses anyway. */
   canSave: boolean;
+  /** Keeps this conversation and asks the edited question in a new branch. */
+  saveAsBranch: () => void;
+  isBranching: boolean;
+};
+
+export type UseEditInBranchReturn = {
+  /** Branches just before the message and puts `text` in the branch's composer. */
+  editInBranch: (text: string) => void;
+  isPending: boolean;
 };
 
 export type UseJumpToMessageReturn = {
@@ -628,6 +665,8 @@ export type UseMessageComposerStateParams = {
   ) => void;
   isPending: boolean;
   selectedModel: ModelSelection | null;
+  /** Quotes waiting in the composer; they make an empty prompt sendable. */
+  quoteCount?: number;
 };
 
 /**
@@ -641,6 +680,10 @@ export type UseMessageComposerStateParams = {
  */
 export type UseMessageComposerReturn = {
   isPending: boolean;
+  /** Quote chips above the textarea (Batch 2). */
+  quoteChips: ComposerQuoteChipsProps;
+  /** Enter may send an empty prompt when files or quotes carry the turn. */
+  allowEmptySubmit: boolean;
   placeholder: string;
   sendLabel: string;
   /** Non-null only while an attachment upload is in flight. */
@@ -1131,7 +1174,7 @@ export type UseVirtualizedMessagesControllerParams = {
   isCancellingStream?: boolean;
   onStartReached: () => void;
   onFeedback: (messageId: string, feedback: MessageFeedback | null) => void;
-  onRegenerate: (messageId: string) => void;
+  onRegenerate: (messageId: string, choice?: RegenerateMessageRequest) => void;
   /** Told when an edit starts a new run, so the page waits for its answer. */
   onRerunStarted?: () => void;
   // i18n surface forwarded into sub-components.

@@ -14,6 +14,7 @@ import { AnswerExpandDialog } from '@/components/chat/answer-expand-dialog';
 import { AnswerExportMenu } from '@/components/chat/answer-export-menu';
 import { AttachmentDeliveryChip } from '@/components/chat/attachments/attachment-delivery-chip';
 import { ContextReceiptButton } from '@/components/chat/context-receipt-button';
+import { ContextSaveCard } from '@/components/chat/context-save-card';
 import { CreditClampedNotice } from '@/components/chat/credit-clamped-notice';
 import { FileGenerationBubble } from '@/components/chat/file-generation-bubble';
 import { FileLimitNotice } from '@/components/chat/file-limit-notice';
@@ -24,12 +25,14 @@ import { MessageAttachments } from '@/components/chat/message-attachments';
 import { MessageBranchAction } from '@/components/chat/message-branch-action';
 import { MessageEditAction } from '@/components/chat/message-edit-action';
 import { MessageProvenance } from '@/components/chat/message-provenance';
+import { MessageQuotes } from '@/components/chat/message-quotes';
 import { MessageReasoningPanel } from '@/components/chat/message-reasoning-panel';
 import { MessageSpeechAction } from '@/components/chat/message-speech-action';
 import { MessageSpeechPlayer } from '@/components/chat/message-speech-player';
 import { NarrationLog } from '@/components/chat/narration-log';
 import { OllamaToolTranscriptPanel } from '@/components/chat/ollama-tool-transcript-panel';
 import { PlanFeatureNotice } from '@/components/chat/plan-feature-notice';
+import { RegenerateWithModel } from '@/components/chat/regenerate-with-model';
 import { ResearchRunDetails } from '@/components/chat/research-run-details';
 import { ResearchTranscriptPanel } from '@/components/chat/research-transcript-panel';
 import { RoutingTransparency } from '@/components/chat/routing-transparency';
@@ -48,7 +51,10 @@ import type { MessageBubbleProps, OllamaToolTranscript, ResearchTranscript } fro
 import {
   formatShortDateTime,
   getJudgeReviewFromMessage,
+  citationsOfMessage,
+  contextSaveOfMessage,
   getStoredReasoning,
+  quotesOfMessage,
   resolveFileDelivery,
 } from '@/utilities';
 import { resolveStoredErrorMessage } from '@/utilities/chat-stream-error.utility';
@@ -96,6 +102,9 @@ function MessageBubbleBase({
       ? `Research: ${researchSummary.workflow}${typeof researchSummary.itemCount === 'number' ? ` (${String(researchSummary.itemCount)} items)` : ''}`
       : null;
   const memoryCount = typeof metadata?.['memoryCount'] === 'number' ? metadata['memoryCount'] : 0;
+  const quotes = isUser ? quotesOfMessage(metadata) : [];
+  const citations = isUser ? undefined : citationsOfMessage(metadata);
+  const contextSave = isUser ? null : contextSaveOfMessage(metadata);
   const contextFileIds = Array.isArray(metadata?.['fileIds'])
     ? (metadata['fileIds'] as string[])
     : [];
@@ -114,7 +123,10 @@ function MessageBubbleBase({
   const hasVisibleAssistantContent = message.content.trim().length > 0;
   const storedErrorText = resolveStoredErrorMessage(metadata, t);
   const assistantContent = hasVisibleAssistantContent ? (
-    <MarkdownRenderer content={storedErrorText ?? message.content} />
+    <MarkdownRenderer
+      content={storedErrorText ?? message.content}
+      citations={storedErrorText === null ? citations : undefined}
+    />
   ) : (
     <p className="text-muted-foreground whitespace-pre-wrap">{t('chat.noVisibleAnswer')}</p>
   );
@@ -204,7 +216,14 @@ function MessageBubbleBase({
           </div>
         ) : null}
 
+        {/* What this turn replies to, above it and outside the coloured
+            bubble so the quoted words keep their contrast. */}
+        <MessageQuotes quotes={quotes} label={t('chat.quote.repliedTo')} />
+
+        {/* data-quote-source-id: a selection inside this element can be quoted
+            into the composer with this message as its source (Batch 2). */}
         <div
+          data-quote-source-id={message.id}
           className={cn(
             'max-w-full min-w-0 overflow-hidden rounded-lg px-4 py-2.5 text-sm transition-colors',
             isUser
@@ -248,6 +267,14 @@ function MessageBubbleBase({
           {!isUser && !isImageGeneration && !isFileGeneration && !isNotice
             ? assistantContent
             : null}
+          {/* What a "remember this / add to context" turn saved (ADR-134). */}
+          {contextSave === null ? null : (
+            <ContextSaveCard
+              messageId={message.id}
+              threadId={message.threadId}
+              record={contextSave}
+            />
+          )}
           {/* Below the answer, not above it: the reasoning is how the reply was
               reached, and a reader wants the reply first. */}
           {storedReasoning === null ? null : <MessageReasoningPanel reasoning={storedReasoning} />}
@@ -263,6 +290,7 @@ function MessageBubbleBase({
             />
             <MessageEditAction
               messageId={message.id}
+              threadId={message.threadId}
               content={message.content}
               onRerunStarted={onRerunStarted}
             />
@@ -377,6 +405,9 @@ function MessageBubbleBase({
               >
                 <RefreshCw className="h-3.5 w-3.5" />
               </Button>
+            ) : null}
+            {onRegenerate ? (
+              <RegenerateWithModel onPick={(choice) => onRegenerate(message.id, choice)} />
             ) : null}
             <MessageBranchAction threadId={message.threadId} messageId={message.id} />
             {onFeedback ? (

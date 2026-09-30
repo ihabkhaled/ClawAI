@@ -363,6 +363,46 @@ export const ja: TranslationDictionary = {
       succeeded: '新しい会話に分岐しました。',
       failed: '会話を分岐できませんでした。',
     },
+    lineage: {
+      branchedFrom: '分岐元',
+      sourceDeleted: '削除された会話から分岐',
+      branches: '分岐 ({count})',
+      branchBadge: '分岐',
+    },
+    quote: {
+      action: '引用',
+      composerHeading: '引用',
+      remove: '引用を削除',
+      repliedTo: '返信先',
+      limitReached: '1 件のメッセージで引用できるのは 3 か所までです。',
+      sourceMissing:
+        '引用したメッセージはこの会話にもうありません。引用を削除してもう一度お試しください。',
+    },
+    regenerateWith: {
+      trigger: '別のモデルで再試行…',
+      auto: 'AUTO に任せる',
+    },
+    contextSave: {
+      title: 'このチャットから保存',
+      savedMemory: 'メモリに保存しました',
+      createdPack: 'コンテキストパックを作成しました',
+      addedToPack: 'コンテキストパックに追加しました',
+      openMemory: 'メモリを開く',
+      openPack: 'パックを開く',
+      choosePack: 'どのコンテキストパックに保存しますか？',
+      newPack: '新しいパック：{name}',
+      saving: '保存中…',
+      packSaved: 'コンテキストパックに保存しました。',
+      failedTitle: '保存できませんでした',
+      memoryFailed: 'メモリは保存されませんでした。',
+      packFailed: 'コンテキストパックは保存されませんでした。',
+      notPending: 'この保存は完了済みか、もうパックの選択を待っていません。',
+      reasons: {
+        PLAN: 'ご利用のプランには含まれていません。',
+        LIMIT: 'プランの上限に達しました。',
+        UNAVAILABLE: '現在サービスを利用できません。少し後でもう一度お試しください。',
+      },
+    },
     speech: {
       action: '読み上げ',
       stop: '読み上げを停止',
@@ -396,6 +436,10 @@ export const ja: TranslationDictionary = {
       },
     },
     edit: {
+      inBranch: '新しい分岐で編集',
+      branchHint:
+        'この会話はそのままにして、編集した質問を新しい分岐で尋ねることもできます。何も削除されません。',
+      branchOpened: '編集した質問で新しい分岐を開きました。準備ができたら送信を押してください。',
       action: '編集して再実行',
       title: 'このメッセージを編集',
       warning: 'このメッセージより後はすべて削除され、会話はここから再実行されます。',
@@ -818,12 +862,13 @@ export const ja: TranslationDictionary = {
     jumpToLatest: '最新にジャンプ',
     moreActions: 'その他の操作',
     useMemoryLabel: 'このスレッドのメモリを使用します',
-    useMemoryDescription: 'オフの場合、プロンプトにメモリは挿入されません。',
+    useMemoryDescription:
+      'オフの場合、このチャットではメモリを使わず、ここで話した内容もメモリとして保存されません。',
     useContextLabel: 'このスレッドでコンテキスト パックを使用してください',
     useContextDescription: 'オフの場合、接続されたパックは無視されます。',
     useCrossThreadContextLabel: '関連する過去のチャットを使用する',
     useCrossThreadContextDescription:
-      'オンにすると、ClawAI はこの会話に関連する内容を他の会話から探すことがあります。既定ではオフです。',
+      'オンにすると、ClawAI は許可されている他のチャットから、このチャットに関連する内容を使うことがあります。オフの場合、このチャットは他のチャットを読まず、他のチャットからも読まれません。',
     workflow: {
       searchFirst: '検索優先',
       direct: 'ダイレクト',

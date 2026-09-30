@@ -76,7 +76,9 @@ AUTO research was a yes/no gate followed by one research run, all inside
 - Known gap: a brief blank between the live log closing (on `done`) and the
   stored copy arriving with the refetched message.
 - Known gap: decision calls go through ollama-service `/generate` for every
-  candidate provider and are not PAYG-metered (pre-existing, unchanged).
+  candidate provider and are not PAYG-metered (pre-existing, unchanged). Since
+  2026-09-30 the same planner also classifies save-like chat messages
+  (`askPlanner`, ADR-134), which widens this gap.
 
 ## See also
 

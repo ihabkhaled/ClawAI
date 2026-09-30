@@ -9,6 +9,7 @@ import { useMemoryPage } from '../use-memory-page';
 // "ALL" sentinel is mapped OUT (never sent to the API as an empty string).
 const useMemoriesMock = vi.fn();
 
+vi.mock('../use-memory-deep-link', () => ({ useMemoryDeepLink: vi.fn() }));
 vi.mock('../use-memories', () => ({
   useMemories: (filters: unknown) => {
     useMemoriesMock(filters);

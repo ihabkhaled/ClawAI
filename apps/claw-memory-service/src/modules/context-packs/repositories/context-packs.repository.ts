@@ -8,6 +8,7 @@ import {
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import {
   type AddContextPackItemData,
+  type ChatPackOption,
   type ContextPackFilters,
   type ContextPackWithItems,
   type CreateContextPackData,
@@ -67,6 +68,22 @@ export class ContextPacksRepository {
             },
           });
     });
+  }
+
+  /** The user's packs as choices for a chat save: newest first, owner-scoped. */
+  async findChatOptions(userId: string, limit: number): Promise<ChatPackOption[]> {
+    const rows = await this.prisma.contextPack.findMany({
+      where: { userId },
+      orderBy: { updatedAt: 'desc' },
+      take: limit,
+      select: { id: true, name: true, updatedAt: true, _count: { select: { items: true } } },
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      updatedAt: row.updatedAt,
+      itemCount: row._count.items,
+    }));
   }
 
   async findByUserAndTag(userId: string, tag: string): Promise<ContextPack | null> {
@@ -166,6 +183,14 @@ export class ContextPacksRepository {
           },
           take: limit,
         });
+  }
+
+  /** An item of this pack holding exactly this text, if one exists (chat-save idempotency). */
+  async findItemWithContent(
+    contextPackId: string,
+    content: string,
+  ): Promise<ContextPackItem | null> {
+    return this.prisma.contextPackItem.findFirst({ where: { contextPackId, content } });
   }
 
   async addItem(data: AddContextPackItemData): Promise<ContextPackItem> {

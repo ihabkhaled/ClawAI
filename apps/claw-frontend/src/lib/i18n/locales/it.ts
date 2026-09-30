@@ -364,6 +364,46 @@ export const it: TranslationDictionary = {
       succeeded: 'Diramato in una nuova conversazione.',
       failed: 'Impossibile diramare la conversazione.',
     },
+    lineage: {
+      branchedFrom: 'Diramato da',
+      sourceDeleted: 'Diramato da una conversazione eliminata',
+      branches: 'Diramazioni ({count})',
+      branchBadge: 'Diramazione',
+    },
+    quote: {
+      action: 'Cita',
+      composerHeading: 'Citazioni',
+      remove: 'Rimuovi citazione',
+      repliedTo: 'In risposta a',
+      limitReached: 'Puoi citare fino a 3 selezioni per messaggio.',
+      sourceMissing:
+        'Il messaggio citato non è più in questa conversazione. Rimuovi la citazione e riprova.',
+    },
+    regenerateWith: {
+      trigger: 'Riprova con…',
+      auto: 'Lascia scegliere ad AUTO',
+    },
+    contextSave: {
+      title: 'Salvato da questa chat',
+      savedMemory: 'Salvato in memoria',
+      createdPack: 'Pacchetto di contesto creato',
+      addedToPack: 'Aggiunto al pacchetto di contesto',
+      openMemory: 'Apri memoria',
+      openPack: 'Apri pacchetto',
+      choosePack: 'In quale pacchetto di contesto va messo?',
+      newPack: 'Nuovo pacchetto: {name}',
+      saving: 'Salvataggio…',
+      packSaved: 'Salvato nel pacchetto di contesto.',
+      failedTitle: 'Impossibile salvare',
+      memoryFailed: 'La memoria non è stata salvata.',
+      packFailed: 'Il pacchetto di contesto non è stato salvato.',
+      notPending: 'Questo salvataggio è già fatto o non attende più un pacchetto.',
+      reasons: {
+        PLAN: 'Il tuo piano non include questa funzione.',
+        LIMIT: 'Hai raggiunto il limite del tuo piano.',
+        UNAVAILABLE: 'Il servizio non è disponibile ora. Riprova tra poco.',
+      },
+    },
     speech: {
       action: 'Leggi ad alta voce',
       stop: 'Interrompi la lettura ad alta voce',
@@ -399,6 +439,11 @@ export const it: TranslationDictionary = {
       },
     },
     edit: {
+      inBranch: 'Modifica in una nuova diramazione',
+      branchHint:
+        'Oppure lascia questa conversazione com’è e fai la domanda modificata in una nuova diramazione: non viene eliminato nulla.',
+      branchOpened:
+        'Aperta una nuova diramazione con la domanda modificata. Premi Invia quando è pronta.',
       action: 'Modifica ed esegui di nuovo',
       title: 'Modifica questo messaggio',
       warning:
@@ -830,12 +875,13 @@ export const it: TranslationDictionary = {
     jumpToLatest: 'Vai al più recente',
     moreActions: 'Altre azioni',
     useMemoryLabel: 'Usa la memoria in questa conversazione',
-    useMemoryDescription: 'Se disattivato, nessuna memoria viene inserita nel prompt.',
+    useMemoryDescription:
+      'Se disattivato, in questa chat non vengono usate memorie e nulla di ciò che viene detto qui viene salvato come memoria.',
     useContextLabel: 'Usa i pacchetti di contesto in questa conversazione',
     useContextDescription: 'Se disattivato, i pacchetti allegati vengono ignorati.',
     useCrossThreadContextLabel: 'Usa le conversazioni precedenti pertinenti',
     useCrossThreadContextDescription:
-      'Se attivo, ClawAI può consultare le tue altre conversazioni per trovare materiale rilevante per questa. Disattivato per impostazione predefinita.',
+      'Se attivo, ClawAI può usare le tue altre chat che lo consentono per trovare materiale rilevante per questa. Se disattivato, questa chat non legge le tue altre chat e non viene letta da esse.',
     workflow: {
       searchFirst: 'Ricerca prima',
       direct: 'Diretto',

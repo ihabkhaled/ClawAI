@@ -74,6 +74,15 @@ model ChatThread {
   // when reading their messages — so this can surface your own past
   // conversations and nothing else. Per-thread opt-OUT remains.
   useCrossThreadContext Boolean  @default(true) @map("use_cross_thread_context")
+  // === Branch lineage (chat-supremacy Batch 1) ===
+  // Plain ids, not relations: deleting the source must not delete or block its
+  // branches, and a branch whose source is gone says so rather than vanishing.
+  // `branchRootThreadId` is the first ancestor, copied down on every branch, so
+  // one indexed read finds the whole family — cross-thread retrieval excludes
+  // it, otherwise a branch could read what the original said AFTER the fork.
+  branchedFromThreadId  String?  @map("branched_from_thread_id")
+  branchedFromMessageId String?  @map("branched_from_message_id")
+  branchRootThreadId    String?  @map("branch_root_thread_id")
   createdAt          DateTime    @default(now()) @map("created_at")
   updatedAt          DateTime    @updatedAt @map("updated_at")
 
@@ -81,6 +90,8 @@ model ChatThread {
 
   @@index([userId])
   @@index([userId, origin])
+  @@index([userId, branchedFromThreadId])
+  @@index([userId, branchRootThreadId])
   @@index([createdAt])
   @@map("chat_threads")
 }

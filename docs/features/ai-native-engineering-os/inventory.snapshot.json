@@ -1184,6 +1184,11 @@
         },
         {
           "method": "POST",
+          "route": "/chat-messages/:id/context-save",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/context-save.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/chat-messages/:id/edit",
           "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
         },
@@ -1350,6 +1355,11 @@
         {
           "method": "POST",
           "route": "/chat-threads/:id/branch",
+          "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/chat-threads/:id/lineage",
           "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
         },
         {
@@ -2100,7 +2110,17 @@
         },
         {
           "method": "POST",
+          "route": "/internal/context-packs/:id/items/from-chat",
+          "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs-internal.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/internal/context-packs/for-chat",
+          "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/context-packs/options-for-chat",
           "source": "apps/claw-memory-service/src/modules/context-packs/controllers/context-packs-internal.controller.ts"
         },
         {
@@ -7857,15 +7877,15 @@
           "file": "rules/39-worktree-branch-completion-pr-and-release-notes.md"
         },
         {
-          "bytes": 24919,
+          "bytes": 25104,
           "file": "rules/40-chat-surface-layout-and-composer.md"
         },
         {
-          "bytes": 22930,
+          "bytes": 24981,
           "file": "rules/41-web-evidence-truthfulness.md"
         },
         {
-          "bytes": 36539,
+          "bytes": 36818,
           "file": "rules/42-attachment-understanding.md"
         },
         {
@@ -7881,7 +7901,7 @@
           "file": "rules/45-display-currency-versus-settlement-currency.md"
         },
         {
-          "bytes": 2637,
+          "bytes": 3190,
           "file": "rules/46-token-quota-enforcement-and-window-integrity.md"
         },
         {
@@ -7897,7 +7917,7 @@
           "file": "rules/49-qa-team-discipline-and-test-evidence.md"
         },
         {
-          "bytes": 6450,
+          "bytes": 6638,
           "file": "rules/50-agentic-research-loop-and-narration.md"
         },
         {
@@ -7925,7 +7945,7 @@
           "file": "rules/56-model-reasoning-never-in-the-answer.md"
         },
         {
-          "bytes": 5349,
+          "bytes": 6860,
           "file": "rules/57-memory-and-context-pack-integrity.md"
         },
         {
@@ -8337,7 +8357,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5521
+        "value": 5558
       },
       "localeCount": 13,
       "locales": [
@@ -10315,7 +10335,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 239
+        "testFiles": 252
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10335,7 +10355,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 619
+        "testFiles": 631
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -10351,7 +10371,7 @@
       },
       "claw-memory-service": {
         "runner": "vitest",
-        "testFiles": 22
+        "testFiles": 23
       },
       "claw-ollama-service": {
         "runner": "vitest",
@@ -11101,7 +11121,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 52,
-    "endpointCount": 721,
+    "endpointCount": 725,
     "envVarCount": 360,
     "eventCount": 184,
     "frontendRouteCount": 155,
@@ -11113,7 +11133,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1728,
+    "totalTestFiles": 1754,
     "workspaceCount": 25
   }
 }

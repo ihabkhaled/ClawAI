@@ -92,6 +92,15 @@ import {
   type AttachmentTurn,
   type UserMessageMetadata,
 } from '../types/user-message-metadata.types';
+import { type MessageQuoteInput } from '../dto/quote-fields.dto';
+import { type RegenerateMessageDto } from '../dto/regenerate-message.dto';
+import { resolveRegenerateRouting } from '../utilities/regenerate-routing.utility';
+import { type MessageQuote } from '../types/message-quote.types';
+import { type StoredContextMetadata } from '../types/message-citation.types';
+import { toStoredCitations } from '../utilities/stored-citations.utility';
+import { type ContextSaveDecision, type ContextSaveRecord } from '../types/context-save.types';
+import { ContextSaveOrchestratorManager } from '../managers/context-save-orchestrator.manager';
+import { hasContextSave, withContextSaveNote } from '../utilities/context-save-note.utility';
 import { type ConsensusMessageDto } from '../dto/consensus-message.dto';
 import { type EscalationChainMessageDto } from '../dto/escalation-chain-message.dto';
 import { type RepairMessageDto } from '../dto/repair-message.dto';
@@ -201,6 +210,9 @@ export class ChatMessagesService implements OnModuleInit {
     // Optional for the same reason. Absent → the image row's
     // `assistantMessageId` stays null, as before batch 10a closed.
     @Optional() private readonly imageGenerationLink?: ImageGenerationLinkClient,
+    // LAST on purpose: specs build this service positionally, and a new
+    // optional dependency in the middle shifts every argument after it.
+    @Optional() private readonly contextSaveOrchestrator?: ContextSaveOrchestratorManager,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -241,6 +253,7 @@ export class ChatMessagesService implements OnModuleInit {
       forcedProvider,
       forcedModel,
     );
+    const quotes = await this.resolveQuotes(dto.threadId, dto.quotes);
     const allowedModels = entitlements ? allowedModelKeys(entitlements) : [];
     // Travels with the event so the router can tell an ALLOW_ALL plan, which
     // sends an empty list as a fast path, from a restricted plan whose list is
@@ -259,7 +272,7 @@ export class ChatMessagesService implements OnModuleInit {
         role: 'USER',
         content: dto.content,
         routingMode: effectiveRoutingMode,
-        metadata: this.buildMessageMetadata(dto, null),
+        metadata: this.buildMessageMetadata(dto, null, quotes),
       },
       entitlements === null
         ? null
@@ -320,7 +333,7 @@ export class ChatMessagesService implements OnModuleInit {
           forcedModel,
         );
         if (run !== null) {
-          const metadata = this.buildMessageMetadata(dto, run);
+          const metadata = this.buildMessageMetadata(dto, run, quotes);
           await this.chatMessagesRepository.updateMetadata(
             message.id,
             (metadata ?? {}) as Prisma.InputJsonValue,
@@ -998,7 +1011,11 @@ export class ChatMessagesService implements OnModuleInit {
     return pages.length > 0 ? { pages } : undefined;
   }
 
-  async regenerateMessage(id: string, userId: string): Promise<ChatMessage> {
+  async regenerateMessage(
+    id: string,
+    userId: string,
+    dto: RegenerateMessageDto = {},
+  ): Promise<ChatMessage> {
     this.logger.log(`regenerateMessage: starting for message ${id} by user ${userId}`);
     const message = await this.chatMessagesRepository.findById(id);
     if (!message) {
@@ -1018,10 +1035,18 @@ export class ChatMessagesService implements OnModuleInit {
     // it, which used to strand the run with no answer and no error.
     const target = await this.resolveRegenerationTarget(message);
 
-    const regenProvider = thread.preferredProvider ?? undefined;
-    const regenModel = thread.preferredModel ?? undefined;
-    const regenRoutingMode =
-      regenProvider && regenModel ? RoutingMode.MANUAL_MODEL : target.routingMode;
+    const routing = resolveRegenerateRouting(dto, thread, target.routingMode ?? RoutingMode.AUTO);
+    const regenProvider = routing.forcedProvider;
+    const regenModel = routing.forcedModel;
+    const regenRoutingMode = routing.routingMode;
+    // A regeneration is a new provider call: the same plan gate as a new
+    // message — a model the plan forbids, a spent quota — and the same access
+    // list on the event, or routing treats the turn as restricted-to-nothing.
+    const entitlements = await this.accessControlService.assertCanSendMessage(userId, {
+      provider: regenProvider,
+      model: regenModel,
+      promptTokens: estimateTokensFromText(target.content),
+    });
 
     this.logger.log(
       `regenerateMessage: publishing message.created for ${target.id} (requested via ${id}) mode=${regenRoutingMode}`,
@@ -1038,6 +1063,8 @@ export class ChatMessagesService implements OnModuleInit {
       routingMode: regenRoutingMode,
       forcedProvider: regenProvider,
       forcedModel: regenModel,
+      allowedModels: entitlements ? allowedModelKeys(entitlements) : [],
+      modelAccessMode: entitlements?.modelAccessMode,
       regenerate: true,
       ...modality,
       timestamp: new Date().toISOString(),
@@ -1152,6 +1179,16 @@ export class ChatMessagesService implements OnModuleInit {
     userId: string,
     content: string,
   ): Promise<void> {
+    const forcedProvider = thread.preferredProvider ?? undefined;
+    const forcedModel = thread.preferredModel ?? undefined;
+    // The plan gate runs BEFORE anything is rewritten or deleted (ADR-132):
+    // a user refused for quota or model must not lose the rest of the thread
+    // to an edit that then cannot run.
+    const entitlements = await this.accessControlService.assertCanSendMessage(userId, {
+      provider: forcedProvider,
+      model: forcedModel,
+      promptTokens: estimateTokensFromText(content),
+    });
     // Written only when still null, so a second edit keeps the first version.
     await this.chatMessagesRepository.replaceContent(
       message.id,
@@ -1166,8 +1203,6 @@ export class ChatMessagesService implements OnModuleInit {
       `editAndRerunMessage: message=${message.id} thread=${message.threadId} removedBelow=${removed}`,
     );
 
-    const forcedProvider = thread.preferredProvider ?? undefined;
-    const forcedModel = thread.preferredModel ?? undefined;
     const modality = await this.resolveRerunAttachmentModality(userId, message);
     void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
       messageId: message.id,
@@ -1177,6 +1212,8 @@ export class ChatMessagesService implements OnModuleInit {
       routingMode: forcedProvider && forcedModel ? RoutingMode.MANUAL_MODEL : message.routingMode,
       forcedProvider,
       forcedModel,
+      allowedModels: entitlements ? allowedModelKeys(entitlements) : [],
+      modelAccessMode: entitlements?.modelAccessMode,
       // The same flag regeneration uses: routing must not bill this as a new
       // turn against the daily message ceiling, because it is the same turn.
       regenerate: true,
@@ -1223,18 +1260,23 @@ export class ChatMessagesService implements OnModuleInit {
       thread = loadedThread;
       const chronologicalMessages = [...threadMessages].reverse();
       routedMessages = this.resolveRoutedMessageWindow(chronologicalMessages, payload.messageId);
-      // "Save this as memory / add this to my context pack": saved server-side
-      // and confirmed without a model call (owner feature 11, rules/57).
-      if (this.saveToContext !== undefined && thread !== null) {
-        const saved = await this.saveToContext.trySave(
-          thread.userId,
-          payload.threadId,
+      // "Remember this / add this to my context" (ADR-134): a planner model
+      // decides and the saves run before the answer, so the answering model
+      // can confirm them. The keyword path, confirmed without a model call,
+      // runs only when no planner answers (owner feature 11, rules/57).
+      const contextSave =
+        thread === null
+          ? null
+          : await this.resolveContextSave(thread.userId, payload.threadId, routedMessages);
+      if (contextSave?.kind === 'LEGACY' && thread !== null) {
+        await this.completeSaveTurn(
+          payload,
+          contextSave.outcome,
+          thread,
           routedMessages,
+          startedAt,
         );
-        if (saved !== null) {
-          await this.completeSaveTurn(payload, saved, thread, routedMessages, startedAt);
-          return;
-        }
+        return;
       }
       const threadSettings = await this.withModelContextWindow(
         this.extractThreadSettings(thread),
@@ -1256,12 +1298,13 @@ export class ChatMessagesService implements OnModuleInit {
       await this.runLlmAndStore(
         effectivePayload,
         payload,
-        context,
+        contextSave?.kind === 'AI' ? withContextSaveNote(context, contextSave.modelNote) : context,
         threadSettings,
         fileIds,
         thread,
         routedMessages,
         latestUserMetadata,
+        contextSave?.kind === 'AI' ? contextSave.record : undefined,
       );
     } catch (error: unknown) {
       await this.handleMessageRoutedFailure(error, payload, thread, routedMessages, startedAt);
@@ -1275,6 +1318,19 @@ export class ChatMessagesService implements OnModuleInit {
    * so nothing is deducted. The published completion carries no user text,
    * so memory extraction does not re-mine the pasted document.
    */
+  /** The AI save path when wired, else the keyword path; null = not a save turn. */
+  private async resolveContextSave(
+    userId: string,
+    threadId: string,
+    messages: ChatMessage[],
+  ): Promise<ContextSaveDecision | null> {
+    if (this.contextSaveOrchestrator !== undefined) {
+      return this.contextSaveOrchestrator.handle(userId, threadId, messages);
+    }
+    const outcome = await this.saveToContext?.trySave(userId, threadId, messages);
+    return outcome === undefined || outcome === null ? null : { kind: 'LEGACY', outcome };
+  }
+
   private async completeSaveTurn(
     payload: MessageRoutedData,
     outcome: SaveToContextOutcome,
@@ -1390,6 +1446,7 @@ export class ChatMessagesService implements OnModuleInit {
     thread: ChatThread | null,
     chronologicalMessages: ChatMessage[],
     latestUserMetadata: Record<string, unknown> | null,
+    contextSave?: ContextSaveRecord,
   ): Promise<void> {
     this.logger.debug(
       `runLlmAndStore: calling LLM execution for ${effectivePayload.selectedProvider}/${effectivePayload.selectedModel}`,
@@ -1406,12 +1463,21 @@ export class ChatMessagesService implements OnModuleInit {
     const contextMetadata = {
       memoryCount: this.contextAssemblyManager.injectedMemories(context).length,
       fileIds: fileIds ?? [],
+      // The sources exactly as the prompt numbered them, so the answer's [n]
+      // can be linked — and only linked — through this list. Not when
+      // SEARCH_FIRST ran: it adds a SECOND [1]..[k] list to the prompt, so a
+      // stored [n] could name the wrong page (ADR-133).
+      citations:
+        llmResponse.searchFirst?.applied === true
+          ? []
+          : toStoredCitations(context.researchEvidence),
     };
     const assistantMessage = await this.storeAssistantResponse(
       originalPayload,
       llmResponse,
       contextMetadata,
       latestUserMetadata,
+      contextSave,
     );
     // Integration V2 — persist the "why was this used?" receipt asynchronously.
     void this.contextReceiptService
@@ -1662,8 +1728,9 @@ export class ChatMessagesService implements OnModuleInit {
   private async storeAssistantResponse(
     payload: MessageRoutedData,
     llmResponse: LlmResponse,
-    contextMetadata?: { memoryCount: number; fileIds: string[] },
+    contextMetadata?: StoredContextMetadata,
     latestUserMetadata?: Record<string, unknown> | null,
+    contextSave?: ContextSaveRecord,
   ): Promise<ChatMessage> {
     const hasVisibleContent = llmResponse.content.trim().length > 0;
     const storedContent = hasVisibleContent
@@ -1680,6 +1747,7 @@ export class ChatMessagesService implements OnModuleInit {
       hasVisibleContent,
       routeRoadmap,
       progressSummary,
+      contextSave,
     });
     // The turn's narrated work log becomes part of the answer, so "crawling ...
     // 14 pages read ... back to the AI" is still there after a refresh. Stored
@@ -1827,11 +1895,12 @@ export class ChatMessagesService implements OnModuleInit {
   private buildAssistantMetadata(args: {
     payload: MessageRoutedData;
     llmResponse: LlmResponse;
-    contextMetadata?: { memoryCount: number; fileIds: string[] };
+    contextMetadata?: StoredContextMetadata;
     latestUserMetadata?: Record<string, unknown> | null;
     hasVisibleContent: boolean;
     routeRoadmap: RouteRoadmap;
     progressSummary: StoredProgressSummaryStep[];
+    contextSave?: ContextSaveRecord;
   }): Record<string, unknown> {
     const {
       payload,
@@ -1841,8 +1910,11 @@ export class ChatMessagesService implements OnModuleInit {
       hasVisibleContent,
       routeRoadmap,
       progressSummary,
+      contextSave,
     } = args;
     return {
+      // The saved card renders from this (ADR-134).
+      ...(contextSave === undefined ? {} : { contextSave }),
       ...this.buildContextMetaPart(contextMetadata),
       ...this.buildResearchMetaPart(latestUserMetadata),
       ...this.buildResearchTranscriptMetaPart(latestUserMetadata),
@@ -2078,11 +2150,15 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   private buildContextMetaPart(
-    contextMetadata: { memoryCount: number; fileIds: string[] } | undefined,
+    contextMetadata: StoredContextMetadata | undefined,
   ): Record<string, unknown> {
-    return !contextMetadata
-      ? {}
-      : { memoryCount: contextMetadata.memoryCount, fileIds: contextMetadata.fileIds };
+    if (!contextMetadata) return {};
+    const citations = contextMetadata.citations ?? [];
+    return {
+      memoryCount: contextMetadata.memoryCount,
+      fileIds: contextMetadata.fileIds,
+      ...(citations.length > 0 ? { citations } : {}),
+    };
   }
 
   private buildResearchMetaPart(
@@ -2385,6 +2461,8 @@ export class ChatMessagesService implements OnModuleInit {
       threadId: payload.threadId,
       assistantMessageId: assistantMessage.id,
       userId: thread?.userId,
+      // SEC-006: a chat with memory off is not a memory SOURCE either.
+      useMemory: thread?.useMemory ?? true,
       provider: llmResponse.provider,
       model: llmResponse.model,
       inputTokens: llmResponse.inputTokens,
@@ -2394,7 +2472,9 @@ export class ChatMessagesService implements OnModuleInit {
       routingMode: payload.routingMode as RoutingMode,
       detectedCategory: payload.detectedCategory,
       content: assistantMessage.content,
-      userContent: lastUserMsg?.content,
+      // A save turn (ADR-134) was saved on purpose; letting extraction re-mine
+      // the same words would file a duplicate suggestion of what was just saved.
+      userContent: hasContextSave(assistantMessage) ? undefined : lastUserMsg?.content,
       timestamp: new Date().toISOString(),
       executionSuccess: outcomeOverrides?.executionSuccess ?? true,
       finalStatus: outcomeOverrides?.finalStatus ?? 'completed',
@@ -2497,11 +2577,47 @@ export class ChatMessagesService implements OnModuleInit {
     };
   }
 
+  /**
+   * Resolves each quote's source against THIS thread and records its role.
+   * An id from another conversation — or one that no longer exists — is a 404,
+   * never a silent drop: the user asked about that text, and answering as if
+   * they had not would be worse than saying the source is gone.
+   */
+  private async resolveQuotes(
+    threadId: string,
+    quotes: MessageQuoteInput[] | undefined,
+  ): Promise<MessageQuote[] | undefined> {
+    if (quotes === undefined || quotes.length === 0) return undefined;
+    const found = await this.chatMessagesRepository.findQuotableInThread(
+      threadId,
+      quotes.map((quote) => quote.sourceMessageId),
+    );
+    const roles = new Map(found.map((row) => [row.id, row.role]));
+    const missing = quotes.find((quote) => !roles.has(quote.sourceMessageId));
+    if (missing !== undefined) {
+      throw new BusinessException(
+        'The quoted message is no longer in this conversation',
+        'QUOTE_SOURCE_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    this.logger.debug(`resolveQuotes: thread=${threadId} quotes=${String(quotes.length)}`);
+    return quotes.map((quote) => ({
+      sourceMessageId: quote.sourceMessageId,
+      sourceRole: roles.get(quote.sourceMessageId) ?? 'USER',
+      text: quote.text,
+    }));
+  }
+
   private buildMessageMetadata(
     dto: CreateMessageDto,
     researchRun: ResearchRunResponse | null,
+    quotes?: MessageQuote[],
   ): UserMessageMetadata | undefined {
     const metadata: UserMessageMetadata = {};
+    if (quotes !== undefined && quotes.length > 0) {
+      metadata.quotes = quotes;
+    }
     if (typeof dto.clientIntent === 'string' && dto.clientIntent.length > 0) {
       metadata.clientIntent = dto.clientIntent;
     }

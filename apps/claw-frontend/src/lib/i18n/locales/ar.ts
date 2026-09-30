@@ -355,6 +355,46 @@ export const ar: TranslationDictionary = {
       succeeded: 'تم التفريع إلى محادثة جديدة.',
       failed: 'تعذّر تفريع المحادثة.',
     },
+    lineage: {
+      branchedFrom: 'متفرّع من',
+      sourceDeleted: 'متفرّع من محادثة تم حذفها',
+      branches: 'الفروع ({count})',
+      branchBadge: 'فرع',
+    },
+    quote: {
+      action: 'اقتباس',
+      composerHeading: 'اقتباسات',
+      remove: 'إزالة الاقتباس',
+      repliedTo: 'ردًا على',
+      limitReached: 'يمكنك اقتباس 3 مقاطع كحد أقصى في كل رسالة.',
+      sourceMissing:
+        'الرسالة التي اقتبست منها لم تعد موجودة في هذه المحادثة. أزل الاقتباس وحاول مرة أخرى.',
+    },
+    regenerateWith: {
+      trigger: 'أعد المحاولة باستخدام…',
+      auto: 'دع AUTO يختار',
+    },
+    contextSave: {
+      title: 'محفوظ من هذه المحادثة',
+      savedMemory: 'حُفظ في الذاكرة',
+      createdPack: 'أُنشئت حزمة سياق',
+      addedToPack: 'أُضيف إلى حزمة السياق',
+      openMemory: 'فتح الذاكرة',
+      openPack: 'فتح الحزمة',
+      choosePack: 'في أي حزمة سياق تريد حفظ هذا؟',
+      newPack: 'حزمة جديدة: {name}',
+      saving: 'جارٍ الحفظ…',
+      packSaved: 'حُفظ في حزمة السياق.',
+      failedTitle: 'تعذّر الحفظ',
+      memoryFailed: 'لم تُحفظ الذاكرة.',
+      packFailed: 'لم تُحفظ حزمة السياق.',
+      notPending: 'هذا الحفظ تم بالفعل أو لم يعد بانتظار اختيار حزمة.',
+      reasons: {
+        PLAN: 'خطتك لا تتضمن هذه الميزة.',
+        LIMIT: 'لقد بلغت حد خطتك.',
+        UNAVAILABLE: 'الخدمة غير متاحة الآن. حاول مرة أخرى بعد قليل.',
+      },
+    },
     speech: {
       action: 'القراءة بصوت عالٍ',
       stop: 'إيقاف القراءة بصوت عالٍ',
@@ -387,6 +427,9 @@ export const ar: TranslationDictionary = {
       },
     },
     edit: {
+      inBranch: 'التعديل في فرع جديد',
+      branchHint: 'أو أبقِ هذه المحادثة كما هي واطرح السؤال المعدّل في فرع جديد — لن يُحذف شيء.',
+      branchOpened: 'فُتح فرع جديد بسؤالك المعدّل. اضغط إرسال عندما يكون جاهزًا.',
       action: 'تعديل وإعادة التشغيل',
       title: 'تعديل هذه الرسالة',
       warning: 'سيُحذف كل ما بعد هذه الرسالة، وتُعاد المحادثة من هنا.',
@@ -804,12 +847,13 @@ export const ar: TranslationDictionary = {
     jumpToLatest: 'الانتقال إلى الأحدث',
     moreActions: 'إجراءات أخرى',
     useMemoryLabel: 'استخدام الذاكرة في هذه المحادثة',
-    useMemoryDescription: 'عند الإيقاف، لن يتم إدخال أي ذكريات في الموجه.',
+    useMemoryDescription:
+      'عند الإيقاف، لا تُستخدم الذكريات في هذه المحادثة، ولا يُحفظ أي شيء قيل هنا كذكرى.',
     useContextLabel: 'استخدام حزم السياق في هذه المحادثة',
     useContextDescription: 'عند الإيقاف، يتم تجاهل الحزم المرفقة.',
     useCrossThreadContextLabel: 'استخدام المحادثات السابقة ذات الصلة',
     useCrossThreadContextDescription:
-      'عند التفعيل، قد يبحث ClawAI في محادثاتك الأخرى عن محتوى ذي صلة بهذه المحادثة. مُعطّل افتراضيًا.',
+      'عند التفعيل، قد يستخدم ClawAI محادثاتك الأخرى التي تسمح بذلك للعثور على محتوى ذي صلة بهذه المحادثة. عند الإيقاف، لا تقرأ هذه المحادثة محادثاتك الأخرى ولا تقرؤها هي.',
     workflow: {
       searchFirst: 'البحث أولاً',
       direct: 'مباشر',

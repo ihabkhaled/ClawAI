@@ -361,6 +361,46 @@ export const pt: TranslationDictionary = {
       succeeded: 'Ramificado numa nova conversa.',
       failed: 'Não foi possível ramificar a conversa.',
     },
+    lineage: {
+      branchedFrom: 'Ramificado de',
+      sourceDeleted: 'Ramificado de uma conversa eliminada',
+      branches: 'Ramificações ({count})',
+      branchBadge: 'Ramificação',
+    },
+    quote: {
+      action: 'Citar',
+      composerHeading: 'Citações',
+      remove: 'Remover citação',
+      repliedTo: 'Em resposta a',
+      limitReached: 'Pode citar até 3 seleções por mensagem.',
+      sourceMissing:
+        'A mensagem que citou já não está nesta conversa. Remova a citação e tente novamente.',
+    },
+    regenerateWith: {
+      trigger: 'Tentar novamente com…',
+      auto: 'Deixar o AUTO escolher',
+    },
+    contextSave: {
+      title: 'Guardado a partir deste chat',
+      savedMemory: 'Guardado na memória',
+      createdPack: 'Pacote de contexto criado',
+      addedToPack: 'Adicionado ao pacote de contexto',
+      openMemory: 'Abrir memória',
+      openPack: 'Abrir pacote',
+      choosePack: 'Em que pacote de contexto deve ficar?',
+      newPack: 'Novo pacote: {name}',
+      saving: 'A guardar…',
+      packSaved: 'Guardado no pacote de contexto.',
+      failedTitle: 'Não foi possível guardar',
+      memoryFailed: 'A memória não foi guardada.',
+      packFailed: 'O pacote de contexto não foi guardado.',
+      notPending: 'Esta gravação já foi feita ou já não espera um pacote.',
+      reasons: {
+        PLAN: 'O seu plano não inclui isto.',
+        LIMIT: 'Atingiu o limite do seu plano.',
+        UNAVAILABLE: 'O serviço está indisponível neste momento. Tente novamente daqui a pouco.',
+      },
+    },
     speech: {
       action: 'Ler em voz alta',
       stop: 'Parar a leitura em voz alta',
@@ -396,6 +436,11 @@ export const pt: TranslationDictionary = {
       },
     },
     edit: {
+      inBranch: 'Editar numa nova ramificação',
+      branchHint:
+        'Ou mantenha esta conversa como está e faça a pergunta editada numa nova ramificação — nada é eliminado.',
+      branchOpened:
+        'Abriu-se uma nova ramificação com a sua pergunta editada. Prima Enviar quando estiver pronta.',
       action: 'Editar e executar de novo',
       title: 'Editar esta mensagem',
       warning:
@@ -824,12 +869,13 @@ export const pt: TranslationDictionary = {
     jumpToLatest: 'Ir para o mais recente',
     moreActions: 'Mais ações',
     useMemoryLabel: 'Usar memória nesta conversa',
-    useMemoryDescription: 'Quando desativado, nenhuma memória é injetada no prompt.',
+    useMemoryDescription:
+      'Quando desativado, não são usadas memórias neste chat e nada do que é dito aqui é guardado como memória.',
     useContextLabel: 'Usar pacotes de contexto nesta conversa',
     useContextDescription: 'Quando desativado, os pacotes anexados são ignorados.',
     useCrossThreadContextLabel: 'Usar conversas anteriores relevantes',
     useCrossThreadContextDescription:
-      'Quando ativado, o ClawAI pode consultar as suas outras conversas em busca de material relevante para esta. Desativado por predefinição.',
+      'Quando ativado, o ClawAI pode usar os seus outros chats que o permitam para encontrar material relevante para este. Quando desativado, este chat não lê os seus outros chats nem é lido por eles.',
     workflow: {
       searchFirst: 'Busca primeiro',
       direct: 'Direto',

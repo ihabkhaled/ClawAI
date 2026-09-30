@@ -709,6 +709,27 @@ for quiz answers; it used to reach users as raw tag text. `MarkdownRenderer`
   (share pages) deliberately parses **no** HTML — do not add `rehype-raw` there.
 - `details`/`summary`/`kbd`/`mark` have styled components in
   `markdown-components.tsx` (theme tokens, logical properties for RTL).
+- **Citations (ADR-133, rule 41 §16).** `MarkdownRenderer` takes `citations`;
+  when non-empty a remark stage (`remarkCitations`, before every rehype plugin)
+  rewrites text-node `[n]` into `#cite-n` links. The sanitizer must keep those
+  fragment hrefs (`citationIndexFromHref` also accepts `#user-content-cite-n`),
+  and `Anchor` renders `CitationLink` from `CitationsContext` (http(s) only).
+  The memo comparator checks `content` plus citations by index and url — keep
+  it, or every answer re-parses on each keystroke.
+
+## The chat's saved card and its deep links (2026-09-30, ADR-134)
+
+An answer with `metadata.contextSave` renders `ContextSaveCard`
+(`components/chat/context-save-card.tsx`, one controller hook
+`useContextSaveCard`, reader `contextSaveOfMessage`). The "which pack?" buttons
+call `POST /chat-messages/:id/context-save`, then `invalidateThreadMessages` —
+the card always re-renders from the stored record, never from local state.
+Failure reasons are `chat.contextSave.reasons.{PLAN,LIMIT,UNAVAILABLE}`; the
+route's codes map in `api-error-message.utility.ts`. Deep links use the params
+in `constants/deep-link.constants.ts`: `useMemoryPage` opens `?memoryId=` in the
+editor once (`useMemoryDeepLink`), `useContextPage` seeds `selectedPackId` from
+`?packId=`. Both read `useSearchParams` — tests of those hooks must mock
+`next/navigation`.
 
 ## A sent image that cannot load becomes a file card (2026-09-25)
 

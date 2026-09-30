@@ -360,6 +360,46 @@ export const en: TranslationDictionary = {
       succeeded: 'Branched into a new conversation.',
       failed: 'Could not branch the conversation.',
     },
+    lineage: {
+      branchedFrom: 'Branched from',
+      sourceDeleted: 'Branched from a chat that was deleted',
+      branches: 'Branches ({count})',
+      branchBadge: 'Branch',
+    },
+    quote: {
+      action: 'Quote',
+      composerHeading: 'Quoting',
+      remove: 'Remove quote',
+      repliedTo: 'Replying to',
+      limitReached: 'You can quote up to 3 selections per message.',
+      sourceMissing:
+        'The message you quoted is no longer in this conversation. Remove the quote and try again.',
+    },
+    regenerateWith: {
+      trigger: 'Try again with…',
+      auto: 'Let AUTO choose',
+    },
+    contextSave: {
+      title: 'Saved from this chat',
+      savedMemory: 'Saved to memory',
+      createdPack: 'Created context pack',
+      addedToPack: 'Added to context pack',
+      openMemory: 'Open memory',
+      openPack: 'Open pack',
+      choosePack: 'Which context pack should this go in?',
+      newPack: 'New pack: {name}',
+      saving: 'Saving…',
+      packSaved: 'Saved to the context pack.',
+      failedTitle: 'Could not save',
+      memoryFailed: 'Memory was not saved.',
+      packFailed: 'The context pack was not saved.',
+      notPending: 'This save is already done or no longer waiting for a pack.',
+      reasons: {
+        PLAN: 'Your plan does not include this.',
+        LIMIT: 'You have reached your plan limit.',
+        UNAVAILABLE: 'The service is unavailable right now. Try again shortly.',
+      },
+    },
     speech: {
       action: 'Read aloud',
       stop: 'Stop reading aloud',
@@ -392,6 +432,10 @@ export const en: TranslationDictionary = {
       },
     },
     edit: {
+      inBranch: 'Edit in a new branch',
+      branchHint:
+        'Or keep this conversation as it is and ask the edited question in a new branch — nothing is deleted.',
+      branchOpened: 'Opened a new branch with your edited question. Press Send when it is ready.',
       action: 'Edit and re-run',
       title: 'Edit this message',
       warning:
@@ -813,12 +857,13 @@ export const en: TranslationDictionary = {
     jumpToLatest: 'Jump to latest',
     moreActions: 'More actions',
     useMemoryLabel: 'Use memory in this thread',
-    useMemoryDescription: 'When off, no memories are injected into the prompt.',
+    useMemoryDescription:
+      'When off, memories are not used in this chat, and nothing said here is saved as a memory.',
     useContextLabel: 'Use context packs in this thread',
     useContextDescription: 'When off, attached packs are ignored.',
     useCrossThreadContextLabel: 'Use relevant previous chats',
     useCrossThreadContextDescription:
-      'When on, ClawAI may look through your other conversations for material relevant to this one. Off by default.',
+      'When on, ClawAI may use your other chats that allow it for material relevant to this one. When off, this chat neither reads your other chats nor is read by them.',
     workflow: {
       searchFirst: 'Search-first',
       direct: 'Direct',

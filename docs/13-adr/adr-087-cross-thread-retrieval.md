@@ -339,3 +339,21 @@ guarantees above still hold: reads are limited to the user's own threads, and a
 thread with the setting turned off reads no other thread. The title and D1 describe the
 original decision; this addendum is the current state. Found during the
 [ADR-126](adr-126-every-ai-one-workspace-positioning.md) flagship audit.
+
+## Addendum (2026-09-29): a branch family is excluded as a whole
+
+Retrieval now excludes the current thread's entire branch family (root plus
+every thread sharing `branchRootThreadId`), not only the current thread — or a
+branch could retrieve what its source said after the fork. See
+[ADR-130](adr-130-branch-lineage-and-family-isolation.md).
+
+## Addendum (2026-09-30): an opted-out chat is not a source either
+
+A thread with `useMemory=false` or `useCrossThreadContext=false` is excluded
+from every OTHER thread's candidate search. Before this the switches only
+controlled what the thread itself read, so a chat the user had opted out could
+still be quoted into another. Decided as the conservative (more private)
+reading of the switches; confirmed by the owner 2026-09-30 (REQ-CHAT-002); "Use memory" off does not
+stop a chat reading other chats. Risk: SEC-006. The settings copy no longer says the switch is off by default (it has been on
+by default since 2026-09-17; D1 above describes the original decision) — do not
+restore that sentence.

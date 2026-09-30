@@ -1,10 +1,10 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { ThreadOrigin } from '../../../generated/prisma';
 import { ChatThreadsService } from '../services/chat-threads.service';
 import { type ChatThreadsRepository } from '../repositories/chat-threads.repository';
 import { type ChatMessagesRepository } from '../../chat-messages/repositories/chat-messages.repository';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
-import { SortOrder } from '../../../common/enums';
+import { BranchCut, SortOrder } from '../../../common/enums';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { type DailyLimitService } from '../../chat-messages/services/daily-limit.service';
 
@@ -21,6 +21,12 @@ const mockThread = {
   judgeModel: null,
   criticEnabled: false,
   criticModel: null,
+  useMemory: false,
+  useContext: true,
+  useCrossThreadContext: false,
+  branchedFromThreadId: null as string | null,
+  branchedFromMessageId: null as string | null,
+  branchRootThreadId: null as string | null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -35,6 +41,8 @@ const mockThreadsRepository = (): Record<keyof ChatThreadsRepository, Mock> => (
   createWithinDailyLimit: vi.fn(),
   createBranchWithinDailyLimit: vi.fn(),
   findById: vi.fn(),
+  findLineageEntry: vi.fn(),
+  findDirectBranches: vi.fn(),
   findAll: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
@@ -133,6 +141,7 @@ describe('ChatThreadsService', () => {
         2,
         'thread-1',
         pivot.createdAt,
+        true,
       );
     });
 
@@ -172,6 +181,134 @@ describe('ChatThreadsService', () => {
 
       const [data] = threadsRepo.createBranchWithinDailyLimit.mock.calls[0] ?? [];
       expect(data).not.toHaveProperty('title');
+    });
+  });
+
+  describe('branchThread lineage', () => {
+    const pivot = { id: 'msg-3', threadId: 'thread-1', createdAt: new Date('2026-08-28') };
+
+    beforeEach(() => {
+      messagesRepo.findById!.mockResolvedValue(pivot);
+      threadsRepo.createBranchWithinDailyLimit.mockResolvedValue({ ...mockThread, id: 'b' });
+    });
+
+    it('records the source thread, the fork message and the source as root', async () => {
+      threadsRepo.findById.mockResolvedValue(mockThread);
+
+      await service.branchThread('user-1', 'thread-1', 'msg-3');
+
+      const [data] = threadsRepo.createBranchWithinDailyLimit.mock.calls[0] ?? [];
+      expect(data).toMatchObject({
+        branchedFromThreadId: 'thread-1',
+        branchedFromMessageId: 'msg-3',
+        branchRootThreadId: 'thread-1',
+      });
+    });
+
+    it('keeps the family root when branching a branch', async () => {
+      // Grandchildren must share the root, or family exclusion misses them.
+      threadsRepo.findById.mockResolvedValue({
+        ...mockThread,
+        branchedFromThreadId: 'thread-0',
+        branchRootThreadId: 'thread-0',
+      });
+
+      await service.branchThread('user-1', 'thread-1', 'msg-3');
+
+      const [data] = threadsRepo.createBranchWithinDailyLimit.mock.calls[0] ?? [];
+      expect(data).toMatchObject({
+        branchedFromThreadId: 'thread-1',
+        branchRootThreadId: 'thread-0',
+      });
+    });
+
+    it('cuts before the pivot when asked, keeping it by default', async () => {
+      threadsRepo.findById.mockResolvedValue(mockThread);
+
+      await service.branchThread('user-1', 'thread-1', 'msg-3');
+      await service.branchThread('user-1', 'thread-1', 'msg-3', BranchCut.BEFORE);
+
+      expect(threadsRepo.createBranchWithinDailyLimit.mock.calls[0]?.[4]).toBe(true);
+      expect(threadsRepo.createBranchWithinDailyLimit.mock.calls[1]?.[4]).toBe(false);
+    });
+
+    it('carries the source privacy switches instead of resetting them to defaults', async () => {
+      threadsRepo.findById.mockResolvedValue(mockThread);
+
+      await service.branchThread('user-1', 'thread-1', 'msg-3');
+
+      const [data] = threadsRepo.createBranchWithinDailyLimit.mock.calls[0] ?? [];
+      expect(data).toMatchObject({
+        useMemory: false,
+        useContext: true,
+        useCrossThreadContext: false,
+      });
+    });
+  });
+
+  describe('getLineage', () => {
+    const entry = (id: string) => ({
+      id,
+      title: id,
+      createdAt: new Date('2026-09-01'),
+      branchedFromMessageId: null,
+    });
+
+    it('returns the source, the fork message and the direct branches', async () => {
+      threadsRepo.findById.mockResolvedValue({
+        ...mockThread,
+        branchedFromThreadId: 'thread-0',
+        branchedFromMessageId: 'msg-9',
+      });
+      threadsRepo.findLineageEntry.mockResolvedValue(entry('thread-0'));
+      threadsRepo.findDirectBranches.mockResolvedValue([entry('thread-2')]);
+
+      const lineage = await service.getLineage('thread-1', 'user-1');
+
+      expect(lineage).toEqual({
+        threadId: 'thread-1',
+        parent: entry('thread-0'),
+        parentDeleted: false,
+        forkMessageId: 'msg-9',
+        branches: [entry('thread-2')],
+      });
+      expect(threadsRepo.findLineageEntry).toHaveBeenCalledWith('user-1', 'thread-0');
+      expect(threadsRepo.findDirectBranches).toHaveBeenCalledWith('user-1', 'thread-1');
+    });
+
+    it('says the source is gone rather than pretending the thread is a root', async () => {
+      threadsRepo.findById.mockResolvedValue({ ...mockThread, branchedFromThreadId: 'deleted' });
+      threadsRepo.findLineageEntry.mockResolvedValue(null);
+      threadsRepo.findDirectBranches.mockResolvedValue([]);
+
+      const lineage = await service.getLineage('thread-1', 'user-1');
+
+      expect(lineage.parent).toBeNull();
+      expect(lineage.parentDeleted).toBe(true);
+    });
+
+    it('does not look up a parent for a root thread', async () => {
+      threadsRepo.findById.mockResolvedValue(mockThread);
+      threadsRepo.findDirectBranches.mockResolvedValue([]);
+
+      const lineage = await service.getLineage('thread-1', 'user-1');
+
+      expect(lineage.parentDeleted).toBe(false);
+      expect(threadsRepo.findLineageEntry).not.toHaveBeenCalled();
+    });
+
+    it("refuses another user's thread before reading any lineage (IDOR)", async () => {
+      threadsRepo.findById.mockResolvedValue({ ...mockThread, userId: 'someone-else' });
+
+      await expect(service.getLineage('thread-1', 'user-1')).rejects.toThrow();
+      expect(threadsRepo.findDirectBranches).not.toHaveBeenCalled();
+      expect(threadsRepo.findLineageEntry).not.toHaveBeenCalled();
+    });
+
+    it('404s an unknown thread', async () => {
+      threadsRepo.findById.mockResolvedValue(null);
+
+      await expect(service.getLineage('nope', 'user-1')).rejects.toThrow(EntityNotFoundException);
     });
   });
 

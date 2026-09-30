@@ -6,13 +6,23 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useMessageEdit } from '@/hooks/chat/use-message-edit';
 
 const mockEditMessage = vi.fn();
+const mockBranchThread = vi.fn();
+const mockPush = vi.fn();
+const mockWriteDraft = vi.fn();
 const mockSuccess = vi.fn();
 const mockApiError = vi.fn();
 
 vi.mock('@/repositories/chat/chat.repository', () => ({
   chatRepository: {
     editMessage: (...args: unknown[]) => mockEditMessage(...args),
+    branchThread: (...args: unknown[]) => mockBranchThread(...args),
   },
+}));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: (...args: unknown[]) => mockPush(...args) }),
+}));
+vi.mock('@/utilities/composer-draft.utility', () => ({
+  writeComposerDraft: (...args: unknown[]) => mockWriteDraft(...args),
 }));
 vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({ locale: 'en', t: (key: string) => key }),
@@ -39,7 +49,9 @@ describe('useMessageEdit', () => {
   it('refuses to save a draft that changes nothing', () => {
     // Otherwise a stray click deletes the rest of the thread and spends tokens
     // re-running a prompt that did not change.
-    const { result } = renderHook(() => useMessageEdit('msg-1', 'first draft'), { wrapper });
+    const { result } = renderHook(() => useMessageEdit('msg-1', 'first draft', 'thread-1'), {
+      wrapper,
+    });
 
     expect(result.current.canSave).toBe(false);
 
@@ -49,7 +61,9 @@ describe('useMessageEdit', () => {
   });
 
   it('refuses a draft that is only whitespace', () => {
-    const { result } = renderHook(() => useMessageEdit('msg-1', 'first draft'), { wrapper });
+    const { result } = renderHook(() => useMessageEdit('msg-1', 'first draft', 'thread-1'), {
+      wrapper,
+    });
 
     act(() => result.current.setDraft('   '));
 
@@ -57,7 +71,9 @@ describe('useMessageEdit', () => {
   });
 
   it('sends the trimmed draft and reports success', async () => {
-    const { result } = renderHook(() => useMessageEdit('msg-1', 'first draft'), { wrapper });
+    const { result } = renderHook(() => useMessageEdit('msg-1', 'first draft', 'thread-1'), {
+      wrapper,
+    });
 
     act(() => result.current.setDraft('  second draft  '));
     expect(result.current.canSave).toBe(true);
@@ -70,7 +86,9 @@ describe('useMessageEdit', () => {
 
   it('reseeds the draft on open, so a cancelled attempt does not come back', () => {
     // Reopening should show the message as it stands, not the abandoned edit.
-    const { result } = renderHook(() => useMessageEdit('msg-1', 'first draft'), { wrapper });
+    const { result } = renderHook(() => useMessageEdit('msg-1', 'first draft', 'thread-1'), {
+      wrapper,
+    });
 
     act(() => result.current.setDraft('abandoned'));
     act(() => result.current.close());
@@ -82,7 +100,9 @@ describe('useMessageEdit', () => {
 
   it('routes a failure through the translated error map rather than swallowing it', async () => {
     mockEditMessage.mockRejectedValue({ code: 'MESSAGE_NOT_EDITABLE' });
-    const { result } = renderHook(() => useMessageEdit('msg-1', 'first draft'), { wrapper });
+    const { result } = renderHook(() => useMessageEdit('msg-1', 'first draft', 'thread-1'), {
+      wrapper,
+    });
 
     act(() => result.current.open());
     act(() => result.current.setDraft('second draft'));
@@ -100,9 +120,12 @@ describe('useMessageEdit', () => {
     // the thread, but nothing told the page a run was underway, so it opened no
     // SSE subscription and started no polling and the reply sat in the database.
     const onRerunStarted = vi.fn();
-    const { result } = renderHook(() => useMessageEdit('msg-1', 'first draft', onRerunStarted), {
-      wrapper,
-    });
+    const { result } = renderHook(
+      () => useMessageEdit('msg-1', 'first draft', 'thread-1', onRerunStarted),
+      {
+        wrapper,
+      },
+    );
 
     act(() => {
       result.current.open();
@@ -122,9 +145,12 @@ describe('useMessageEdit', () => {
     // the poll ceiling ends.
     mockEditMessage.mockRejectedValue(new Error('nope'));
     const onRerunStarted = vi.fn();
-    const { result } = renderHook(() => useMessageEdit('msg-1', 'first draft', onRerunStarted), {
-      wrapper,
-    });
+    const { result } = renderHook(
+      () => useMessageEdit('msg-1', 'first draft', 'thread-1', onRerunStarted),
+      {
+        wrapper,
+      },
+    );
 
     act(() => {
       result.current.open();
@@ -138,5 +164,34 @@ describe('useMessageEdit', () => {
 
     await waitFor(() => expect(mockApiError).toHaveBeenCalled());
     expect(onRerunStarted).not.toHaveBeenCalled();
+  });
+
+  it('edits in a new branch: cuts before this message, keeps the original, sends nothing', async () => {
+    mockBranchThread.mockReset().mockResolvedValue({ id: 'thread-branch' });
+    const { result } = renderHook(() => useMessageEdit('msg-1', 'first draft', 'thread-1'), {
+      wrapper,
+    });
+
+    act(() => result.current.open());
+    act(() => result.current.setDraft('second draft'));
+    act(() => result.current.saveAsBranch());
+
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/chat/thread-branch'));
+    expect(mockBranchThread).toHaveBeenCalledWith('thread-1', 'msg-1', 'BEFORE');
+    expect(mockWriteDraft).toHaveBeenCalledWith('thread-branch', 'second draft');
+    // The destructive edit endpoint is never called on this path.
+    expect(mockEditMessage).not.toHaveBeenCalled();
+  });
+
+  it('does not branch an empty draft', () => {
+    mockBranchThread.mockReset();
+    const { result } = renderHook(() => useMessageEdit('msg-1', 'first draft', 'thread-1'), {
+      wrapper,
+    });
+
+    act(() => result.current.setDraft('   '));
+    act(() => result.current.saveAsBranch());
+
+    expect(mockBranchThread).not.toHaveBeenCalled();
   });
 });

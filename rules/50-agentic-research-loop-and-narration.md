@@ -1,7 +1,7 @@
 # Rule 50 — The research loop: plan first, open what the user named, narrate everything
 
 **Applies to**: chat-service's AUTO research path (`ResearchOrchestratorManager`,
-`ResearchGateService.plan`), `NarrationService`, research-service's crawl, and
+`ResearchGateService.plan`; its candidate walk also serves `askPlanner` for the chat save classifier, ADR-134, so a planner outage downgrades saves to the keyword path too), `NarrationService`, research-service's crawl, and
 the frontend `NarrationLog`.
 
 **Related**: [ADR-098](../docs/13-adr/adr-098-auto-research-is-an-ai-driven-narrated-loop.md) ·
@@ -61,18 +61,18 @@ the frontend `NarrationLog`.
 
 ## Enforcement
 
-| Mechanism | What it checks                                                                                                                                                             |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Unit      | `packages/shared-utilities/src/url-detection/__tests__/url-detection.utility.spec.ts` — bare domains, and every false-positive class (files, properties, versions, emails) |
-| Unit      | `research-plan.utility.spec.ts` — null on unusable replies, user URLs never dropped, bounds                                                                                |
-| Unit      | `research-gate.service.spec.ts` — the walk moves on after a bad reply; outage still crawls the user's link                                                                 |
-| Unit      | `research-orchestrator.manager.spec.ts` — crawl → back to AI → search only when asked; failures narrated                                                                   |
-| Unit      | `context-assembly-evidence-fit.spec.ts` — a 150-page crawl fits a 16k model, dropped pages are announced, history budget stays above 0                                     |
-| Unit      | `site-crawl.manager.spec.ts` — link hops fill a large budget on a site with no sitemap; ceiling 200                                                                        |
-| Unit      | `auto-research-resolution.spec.ts` — plan gate before everything, including a URL                                                                                          |
-| Unit      | `research-progress-bridge.service.spec.ts` — one dedupe key per tick across replicas                                                                                       |
-| Unit      | `research-client.utility.spec.ts` — internal route, service token, no user bearer                                                                                          |
-| Unit      | `escalation-policy.utility.spec.ts` — refusals stop, captcha/429/404 go archive-only, FlareSolverr only after a JS challenge                                               |
-| Unit      | `fetch-strategy-orchestrator.service.spec.ts` — attempt ceiling, wall clock, thin fallback, `fetch.served` line has no query string                                       |
-| Unit      | `fetch.service.escalation.spec.ts` + `robots-policy.service.spec.ts` — robots Disallow refuses before any strategy; RFC 9309 wildcards                                     |
+| Mechanism | What it checks                                                                                                                                                                |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit      | `packages/shared-utilities/src/url-detection/__tests__/url-detection.utility.spec.ts` — bare domains, and every false-positive class (files, properties, versions, emails)    |
+| Unit      | `research-plan.utility.spec.ts` — null on unusable replies, user URLs never dropped, bounds                                                                                   |
+| Unit      | `research-gate.service.spec.ts` — the walk moves on after a bad reply; outage still crawls the user's link                                                                    |
+| Unit      | `research-orchestrator.manager.spec.ts` — crawl → back to AI → search only when asked; failures narrated                                                                      |
+| Unit      | `context-assembly-evidence-fit.spec.ts` — a 150-page crawl fits a 16k model, dropped pages are announced, history budget stays above 0                                        |
+| Unit      | `site-crawl.manager.spec.ts` — link hops fill a large budget on a site with no sitemap; ceiling 200                                                                           |
+| Unit      | `auto-research-resolution.spec.ts` — plan gate before everything, including a URL                                                                                             |
+| Unit      | `research-progress-bridge.service.spec.ts` — one dedupe key per tick across replicas                                                                                          |
+| Unit      | `research-client.utility.spec.ts` — internal route, service token, no user bearer                                                                                             |
+| Unit      | `escalation-policy.utility.spec.ts` — refusals stop, captcha/429/404 go archive-only, FlareSolverr only after a JS challenge                                                  |
+| Unit      | `fetch-strategy-orchestrator.service.spec.ts` — attempt ceiling, wall clock, thin fallback, `fetch.served` line has no query string                                           |
+| Unit      | `fetch.service.escalation.spec.ts` + `robots-policy.service.spec.ts` — robots Disallow refuses before any strategy; RFC 9309 wildcards                                        |
 | Live      | [skills/verify-the-research-loop-live.md](../skills/verify-the-research-loop-live.md) · [skills/add-a-fetch-strategy.md](../skills/add-a-fetch-strategy.md) (live tier proof) |

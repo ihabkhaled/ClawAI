@@ -8,12 +8,18 @@ import { type CreateThreadDto } from '../dto/create-thread.dto';
 import { type UpdateThreadDto } from '../dto/update-thread.dto';
 import { type ListThreadsQueryDto } from '../dto/list-threads-query.dto';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
+import { BranchCut } from '../../../common/enums';
 import { type PaginatedResult } from '../../../common/types';
-import { type RewindThreadResult, type ThreadWithMessageCount } from '../types/chat-threads.types';
+import {
+  type RewindThreadResult,
+  type ThreadLineage,
+  type ThreadWithMessageCount,
+} from '../types/chat-threads.types';
 import { type ChatThread } from '../../../generated/prisma';
 import { THREAD_CREATED_EVENT } from '../constants/chat-threads.constants';
 import { DailyLimitService } from '../../chat-messages/services/daily-limit.service';
 import { copyThreadSettings } from '../utilities/copy-thread-settings.utility';
+import { branchLineageFor, buildThreadLineage } from '../utilities/branch-lineage.utility';
 
 @Injectable()
 export class ChatThreadsService {
@@ -76,7 +82,12 @@ export class ChatThreadsService {
    * is a thread, and exempting it would make branching the way around the
    * limit.
    */
-  async branchThread(userId: string, threadId: string, fromMessageId: string): Promise<ChatThread> {
+  async branchThread(
+    userId: string,
+    threadId: string,
+    fromMessageId: string,
+    cut: BranchCut = BranchCut.INCLUDE,
+  ): Promise<ChatThread> {
     const source = await this.chatThreadsRepository.findById(threadId);
     if (!source) {
       throw new EntityNotFoundException('ChatThread', threadId);
@@ -96,10 +107,11 @@ export class ChatThreadsService {
       // The branch is the same conversation up to this point, so it carries the
       // same name and settings. An untitled source stays untitled and the branch
       // names itself from its own first message, which is that same message.
-      { userId, ...copyThreadSettings(source) },
+      { userId, ...copyThreadSettings(source), ...branchLineageFor(source, fromMessageId) },
       resolvePlanLimit(entitlements, (limits) => limits.chatsPerDay),
       threadId,
       pivot.createdAt,
+      cut === BranchCut.INCLUDE,
     );
     if (!branch) {
       throw new BusinessException(
@@ -188,6 +200,24 @@ export class ChatThreadsService {
     }
     this.validateOwnership(thread, userId);
     return thread;
+  }
+
+  /**
+   * Where a thread sits in its branch family: its source (if any) and its
+   * direct branches. Owner-checked first, and every read below is scoped to
+   * the same user, so a lineage view can never name someone else's thread —
+   * even if a stale id pointed at one.
+   */
+  async getLineage(id: string, userId: string): Promise<ThreadLineage> {
+    const thread = await this.getThread(id, userId);
+    const [parent, branches] = await Promise.all([
+      thread.branchedFromThreadId === null
+        ? Promise.resolve(null)
+        : this.chatThreadsRepository.findLineageEntry(userId, thread.branchedFromThreadId),
+      this.chatThreadsRepository.findDirectBranches(userId, id),
+    ]);
+    this.logger.debug(`getLineage: thread=${id} parent=${parent?.id ?? 'none'}`);
+    return buildThreadLineage(thread, parent, branches);
   }
 
   async updateThread(id: string, userId: string, dto: UpdateThreadDto): Promise<ChatThread> {

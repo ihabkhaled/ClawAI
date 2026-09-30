@@ -314,6 +314,15 @@ export class MemoryService implements OnModuleInit {
       return;
     }
     const userId = (payload['userId'] as string) ?? 'system';
+    // SEC-006: turning memory off in a chat used to stop memories being
+    // injected into it while still extracting new ones FROM it. Absent means
+    // an older publisher, which predates the switch travelling — treated as on.
+    if (payload['useMemory'] === false) {
+      this.logger.debug(
+        `handleMessageCompleted: extraction skipped — thread=${threadId} has memory off`,
+      );
+      return;
+    }
     const preference = await this.preferenceService.get(userId);
     if (preference.pausedAll) {
       this.logger.debug(`handleMessageCompleted: extraction skipped — userId=${userId} paused`);

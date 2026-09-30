@@ -70,6 +70,7 @@ Content-Type: application/json
   "provider": null,          // optional: force specific provider
   "model": null,             // optional: force specific model
   "fileIds": ["uuid", ...],  // optional: attached files
+  "quotes": [{ "sourceMessageId": "uuid", "text": "..." }], // optional: ADR-131
   "contextPackIds": ["uuid"] // optional: attached context packs
 }
 ```
