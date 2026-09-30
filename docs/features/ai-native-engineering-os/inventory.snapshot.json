@@ -8005,7 +8005,7 @@
           "file": "rules/56-model-reasoning-never-in-the-answer.md"
         },
         {
-          "bytes": 6860,
+          "bytes": 6997,
           "file": "rules/57-memory-and-context-pack-integrity.md"
         },
         {
@@ -10417,7 +10417,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 268
+        "testFiles": 269
       },
       "claw-client-logs-service": {
         "runner": "vitest",

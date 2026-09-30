@@ -154,7 +154,7 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
 7. **Quality check** -- `QualityCheckManager` scores the response (length, repetition, error patterns, echo)
 8. **Auto re-routing** -- if quality score < 0.4, re-routes to next candidate (max 2 re-route attempts)
 9. **Fallback chain** -- if primary fails or is weak, tries next candidate in chain
-10. **Store ASSISTANT message** -- with token counts, latency, provider metadata, re-routing metadata if applicable, `metadata.citations` (`[{index,title,url,snippet}]`, ≤50, the prompt's own numbering; none when SEARCH_FIRST applied — ADR-133), and on a save turn `metadata.contextSave` (the saved card — ADR-134)
+10. **Store ASSISTANT message** -- with token counts, latency, provider metadata, re-routing metadata if applicable, `metadata.citations` (`[{index,title,url,snippet}]`, ≤50, the prompt's own numbering; none when SEARCH_FIRST applied — ADR-133), and on a save turn `metadata.contextSave` (the saved card — ADR-134; the model's note is in the system prompt and repeated after the final user turn via `saveTurnNote`)
 11. **SSE emission** -- `emitCompletion()` pushes to connected clients
 12. **Publish `message.completed`** -- memory service extracts facts (unless the chat has memory off, or it was a save turn: no `userContent` then); audit logs usage
 
