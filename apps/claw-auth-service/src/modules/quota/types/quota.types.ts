@@ -109,6 +109,22 @@ export type WeightedReserveResult =
       limit: number;
     };
 
+// One settled request on the legacy reserve/finalize path, written to the
+// weighted ledger purely so usage attribution has rows to group. Weight is 1:1
+// with raw tokens there, matching the legacy window counters.
+export type SettledUsageInput = {
+  userId: string;
+  planId: string | null;
+  provider: string;
+  model: string;
+  rawInputTokens: number;
+  rawOutputTokens: number;
+  weightedTokens: number;
+  dayKey: string;
+  weekKey: string;
+  monthKey: string;
+};
+
 export type WeightedFinalizeInput = {
   reservationId: string;
   rawInputTokens: number;

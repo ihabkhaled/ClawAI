@@ -594,7 +594,11 @@ than quietly showing an older run.
 - `GET /auth/me/usage/breakdown?from&to`: the caller's own weighted usage by
   surface (ledger `workflow`) and by model. The default window is 30 days,
   capped at 92. Integer totals. It lives under `/auth/me` because nginx sends
-  `/api/v1/usage` to audit-service.
+  `/api/v1/usage` to audit-service. The chat path settles through the legacy
+  `/internal/quota/finalize`, which also writes a FINALIZED zero-cost
+  `weighted_usage_records` row (provider, model, raw tokens, weight = total
+  tokens); before that the ledger it reads stayed empty and every total was 0.
+  `surface` is "unattributed" on these rows (finalize carries no workflow).
 - `GET /auth/me/organizations/:id/usage`: per-member and per-model totals for
   an org owner/admin. Membership comes from agent-service's internal
   usage-scope route (`AGENT_SERVICE_URL`), never from its database.

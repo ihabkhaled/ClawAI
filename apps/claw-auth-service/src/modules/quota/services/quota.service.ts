@@ -158,9 +158,29 @@ export class QuotaService {
       outputTokens: input.outputTokens,
       totalTokens: input.actualTotalTokens,
     });
+    await this.recordAttribution(input, now);
     this.logger.debug(
       `finalize: user=${input.userId} actual=${input.actualTotalTokens} estimate=${input.estimate}`,
     );
+  }
+
+  // Best effort: attribution is reporting, the quota and ledger writes above are
+  // the source of truth, so a failure here must not fail a settled request.
+  private async recordAttribution(input: FinalizeInput, now: Date): Promise<void> {
+    try {
+      await this.weightedUsage.recordSettledUsage({
+        userId: input.userId,
+        planId: input.planId,
+        provider: input.provider,
+        model: input.model,
+        rawInputTokens: input.inputTokens,
+        rawOutputTokens: input.outputTokens,
+        weightedTokens: input.actualTotalTokens,
+        ...buildPeriodKeys(now),
+      });
+    } catch (error) {
+      this.logger.warn(`finalize: attribution row not written — ${(error as Error).message}`);
+    }
   }
 
   // Release a reservation when the request failed before consuming tokens.

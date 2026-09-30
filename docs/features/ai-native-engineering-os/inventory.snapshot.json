@@ -10515,7 +10515,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 120
+        "testFiles": 121
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -11317,7 +11317,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1831,
+    "totalTestFiles": 1832,
     "workspaceCount": 25
   }
 }

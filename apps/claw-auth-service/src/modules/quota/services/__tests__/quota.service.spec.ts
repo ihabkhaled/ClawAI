@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { QuotaWindow } from '@claw/shared-types';
 import { QuotaService } from '../quota.service';
 import { type RedisService } from '../../../../infrastructure/redis/redis.service';
@@ -69,6 +69,7 @@ describe('QuotaService', () => {
   let ledger: { addUsage: Mock; findForDay: Mock };
   let weighted: {
     createReservation: Mock;
+    recordSettledUsage: Mock;
     findByReservationId: Mock;
     finalize: Mock;
     markReleased: Mock;
@@ -80,6 +81,7 @@ describe('QuotaService', () => {
     ledger = { addUsage: vi.fn(), findForDay: vi.fn() };
     weighted = {
       createReservation: vi.fn(),
+      recordSettledUsage: vi.fn(),
       findByReservationId: vi.fn(),
       finalize: vi.fn(),
       markReleased: vi.fn(),
@@ -137,6 +139,49 @@ describe('QuotaService', () => {
         outputTokens: 500,
       }),
     );
+  });
+
+  it('finalize records an attribution row so the usage breakdown is not empty', async () => {
+    await service.finalize({
+      userId: 'u1',
+      planId: 'p1',
+      reservationId: '',
+      estimate: 500,
+      actualTotalTokens: 800,
+      inputTokens: 300,
+      outputTokens: 500,
+      provider: 'OPENAI',
+      model: 'gpt-4o',
+    });
+    expect(weighted.recordSettledUsage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'u1',
+        planId: 'p1',
+        provider: 'OPENAI',
+        model: 'gpt-4o',
+        rawInputTokens: 300,
+        rawOutputTokens: 500,
+        weightedTokens: 800,
+      }),
+    );
+  });
+
+  it('finalize still succeeds when the attribution row cannot be written', async () => {
+    weighted.recordSettledUsage.mockRejectedValue(new Error('db down'));
+    await expect(
+      service.finalize({
+        userId: 'u1',
+        planId: null,
+        reservationId: '',
+        estimate: 10,
+        actualTotalTokens: 10,
+        inputTokens: 5,
+        outputTokens: 5,
+        provider: 'OPENAI',
+        model: 'gpt-4o',
+      }),
+    ).resolves.toBeUndefined();
+    expect(ledger.addUsage).toHaveBeenCalled();
   });
 
   it('finalize adjusts the counter down when actual is below estimate', async () => {

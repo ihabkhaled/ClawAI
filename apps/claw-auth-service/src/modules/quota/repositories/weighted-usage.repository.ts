@@ -3,7 +3,12 @@ import { type WeightedUsagePeriodField } from '../../../common/enums/weighted-us
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { type WeightedUsageRecord, WeightedUsageState } from '../../../generated/prisma';
 import { type ProviderCostAggregateRow } from '../types/provider-cost.types';
-import { type WeightedFinalizeInput, type WeightedReservationInput } from '../types/quota.types';
+import { randomUUID } from 'node:crypto';
+import {
+  type SettledUsageInput,
+  type WeightedFinalizeInput,
+  type WeightedReservationInput,
+} from '../types/quota.types';
 
 @Injectable()
 export class WeightedUsageRepository {
@@ -35,6 +40,32 @@ export class WeightedUsageRepository {
         weekKey: params.weekKey,
         monthKey: params.monthKey,
         billingPeriodKey: params.input.billingPeriodKey,
+      },
+    });
+  }
+
+  // The legacy /internal/quota/finalize path never opened a weighted
+  // reservation, so the ledger that usage attribution reads stayed empty and
+  // the breakdown returned zeros. This writes the settled request directly as
+  // FINALIZED with zero cost, leaving cost-ceiling sums untouched.
+  async recordSettledUsage(input: SettledUsageInput): Promise<WeightedUsageRecord> {
+    const reservationId = randomUUID();
+    return this.prisma.weightedUsageRecord.create({
+      data: {
+        reservationId,
+        requestId: reservationId,
+        userId: input.userId,
+        planId: input.planId,
+        provider: input.provider,
+        model: input.model,
+        rawInputTokens: input.rawInputTokens,
+        rawOutputTokens: input.rawOutputTokens,
+        weightedTokens: input.weightedTokens,
+        state: WeightedUsageState.FINALIZED,
+        dayKey: input.dayKey,
+        weekKey: input.weekKey,
+        monthKey: input.monthKey,
+        finalizedAt: new Date(),
       },
     });
   }
