@@ -46,7 +46,7 @@ export const startVeo = async (
         parameters: {
           aspectRatio: request.aspectRatio,
           resolution: VIDEO_RESOLUTION,
-          durationSeconds: String(request.durationSeconds),
+          durationSeconds: request.durationSeconds,
         },
       },
       { headers: veoAuthHeaders(config), timeout: VIDEO_START_TIMEOUT_MS },

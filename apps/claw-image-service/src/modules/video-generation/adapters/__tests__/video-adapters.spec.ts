@@ -35,7 +35,7 @@ describe('Gemini Veo client', () => {
     );
     expect(body).toEqual({
       instances: [{ prompt: 'A lighthouse at dusk' }],
-      parameters: { aspectRatio: '9:16', resolution: '720p', durationSeconds: '6' },
+      parameters: { aspectRatio: '9:16', resolution: '720p', durationSeconds: 6 },
     });
     expect(config.headers).toEqual({ 'x-goog-api-key': 'g-key' });
   });
