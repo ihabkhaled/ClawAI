@@ -17,6 +17,8 @@ export type FetchStrategyAttempt = {
   outcome: 'SUCCESS' | 'BLOCKED' | 'ERROR';
   blockSignal: BlockSignalKind;
   errorMessage?: string;
+  /** The status the site answered with, when it answered at all. */
+  httpStatus?: number;
   durationMs: number;
 };
 

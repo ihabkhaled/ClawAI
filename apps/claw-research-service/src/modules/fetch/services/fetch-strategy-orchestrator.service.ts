@@ -134,7 +134,12 @@ export class FetchStrategyOrchestratorService {
     }
 
     const signals = [...observed];
-    const trail = attempts.map((attempt) => `${attempt.kind}=${attempt.blockSignal}`).join(', ');
+    const trail = attempts
+      .map(
+        (attempt) =>
+          `${attempt.kind}=${attempt.blockSignal}${attempt.httpStatus === undefined ? '' : ` HTTP ${String(attempt.httpStatus)}`}`,
+      )
+      .join(', ');
     this.logger.warn(
       `fetch.failed host=${host} path=${loggablePath(request.url)} attempts=${String(attempts.length)} signals=${signals.join('|')} trail=[${trail}]`,
     );
@@ -160,10 +165,7 @@ export class FetchStrategyOrchestratorService {
       this.logger.warn(`No adapter registered for enabled strategy ${config.kind}`);
       return null;
     }
-    if (adapter.supports !== undefined && !adapter.supports(url)) {
-      return null;
-    }
-    return adapter;
+    return adapter.supports !== undefined && !adapter.supports(url) ? null : adapter;
   }
 
   private async buildChain(host: string): Promise<FetchStrategyConfig[]> {
@@ -177,10 +179,7 @@ export class FetchStrategyOrchestratorService {
       return enabled;
     }
     const preferred = enabled.find((config) => config.kind === memory.preferredKind);
-    if (preferred === undefined) {
-      return enabled;
-    }
-    return [preferred, ...enabled.filter((config) => config !== preferred)];
+    return preferred === undefined ? enabled : [preferred, ...enabled.filter((config) => config !== preferred)];
   }
 
   private async tryStrategy(
@@ -201,7 +200,13 @@ export class FetchStrategyOrchestratorService {
         `fetch.attempt kind=${config.kind} outcome=${outcome} signal=${blockSignal} status=${String(result.httpStatus)} host=${hostOf(request.url)} ms=${String(Date.now() - start)}`,
       );
       return {
-        record: { kind: config.kind, outcome, blockSignal, durationMs: Date.now() - start },
+        record: {
+          kind: config.kind,
+          outcome,
+          blockSignal,
+          httpStatus: result.httpStatus,
+          durationMs: Date.now() - start,
+        },
         result,
       };
     } catch (error) {
