@@ -129,6 +129,13 @@ export type AssembledContext = {
    */
   saveTurnNote?: string;
   /**
+   * The public address this deployment is served at, for the hidden platform
+   * self-awareness block (ADR-136). Read from configuration when the request is
+   * assembled, so a changed domain reaches every model on the next message.
+   * Prompt-only: never stored, never returned by an API.
+   */
+  platformOrigin?: string;
+  /**
    * Completed Runtime V2 tool rounds, oldest first.
    *
    * Runtime V2 tools execute client-side across an SSE hop, so the provider

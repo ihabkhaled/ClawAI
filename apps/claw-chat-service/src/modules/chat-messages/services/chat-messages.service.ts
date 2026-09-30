@@ -107,6 +107,10 @@ import { toStoredCitations } from '../utilities/stored-citations.utility';
 import { type ContextSaveDecision, type ContextSaveRecord } from '../types/context-save.types';
 import { ContextSaveOrchestratorManager } from '../managers/context-save-orchestrator.manager';
 import { hasContextSave, withContextSaveNote } from '../utilities/context-save-note.utility';
+import {
+  asksAboutThisPlatform,
+  buildSelfInspectIntent,
+} from '../utilities/platform-identity.utility';
 import { type ConsensusMessageDto } from '../dto/consensus-message.dto';
 import { type EscalationChainMessageDto } from '../dto/escalation-chain-message.dto';
 import { type RepairMessageDto } from '../dto/repair-message.dto';
@@ -323,7 +327,11 @@ export class ChatMessagesService implements OnModuleInit {
     // A message that COMMANDS a page to be read ("crawl <url>") still goes through
     // the research path with research off; `runResearchForIntent` re-checks the plan.
     const researchOff = dto.researchMode === undefined || dto.researchMode === ResearchMode.NONE;
-    if (researchOff && resolveExplicitFetchMode(dto.content) === null) {
+    if (
+      researchOff &&
+      resolveExplicitFetchMode(dto.content) === null &&
+      !asksAboutThisPlatform(dto.content)
+    ) {
       publish();
       return message;
     }
@@ -540,12 +548,19 @@ export class ChatMessagesService implements OnModuleInit {
       // Research is off, but the user COMMANDED a page to be read ("crawl <url>",
       // "curl <url>"). Do what was asked, unless the plan has no research unlock.
       const commanded = resolveExplicitFetchMode(intent);
-      if (commanded === null || !(await this.accessControlService.hasResearchAccess(userId))) {
+      // A question about the app itself ("what is the current webapp?") crawls the
+      // platform's OWN public site, so the answer comes from its pages (ADR-136).
+      const selfInspect =
+        commanded === null ? buildSelfInspectIntent(intent, AppConfig.get().PUBLIC_SITE_URL) : null;
+      if (
+        (commanded === null && selfInspect === null) ||
+        !(await this.accessControlService.hasResearchAccess(userId))
+      ) {
         return null;
       }
-      return this.runResearchForIntent(userId, userToken, threadId, intent, {
+      return this.runResearchForIntent(userId, userToken, threadId, selfInspect ?? intent, {
         ...options,
-        mode: commanded,
+        mode: commanded ?? ResearchMode.SEARCH_FETCH,
       });
     }
     if (options.mode === ResearchMode.AUTO) {

@@ -81,4 +81,36 @@ ${note}`);
       'Add this to my context',
     );
   });
+
+  describe('the hidden platform self-awareness block (ADR-136)', () => {
+    it('is in the system prompt of every builder, with the configured origin', () => {
+      const context = { ...contextWith(thread), platformOrigin: 'https://claw-ai.co' };
+      const system = textOf(manager.buildChatMessages(context)[0]?.content);
+
+      expect(system).toContain('PLATFORM AWARENESS');
+      expect(system).toContain('The workspace is served at: https://claw-ai.co');
+      expect(manager.buildPromptString(context)).toContain('PLATFORM AWARENESS');
+      expect(textOf(manager.buildGeminiChatMessages(context)[0]?.content)).toContain(
+        'PLATFORM AWARENESS',
+      );
+    });
+
+    it('is not a memory, a context pack or a stored message', () => {
+      const context = { ...contextWith(thread), platformOrigin: 'https://claw-ai.co' };
+      manager.buildChatMessages(context);
+
+      expect(context.memories).toEqual([]);
+      expect(context.contextPackItems).toEqual([]);
+      expect(context.systemPrompt).toBeNull();
+      expect(JSON.stringify(context.threadMessages)).not.toContain('PLATFORM AWARENESS');
+    });
+
+    it('reaches every model even when the user sets their own system prompt', () => {
+      const context = { ...contextWith(thread), systemPrompt: 'Be terse.' };
+      const system = textOf(manager.buildChatMessages(context)[0]?.content);
+
+      expect(system).toContain('PLATFORM AWARENESS');
+      expect(system).toContain('Be terse.');
+    });
+  });
 });

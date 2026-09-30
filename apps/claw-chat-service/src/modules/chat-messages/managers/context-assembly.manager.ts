@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { withQuotedContext } from '../utilities/quoted-turn.utility';
 import { withSaveTurnNote } from '../utilities/context-save-note.utility';
+import { buildPlatformIdentityBlock } from '../utilities/platform-identity.utility';
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import {
   CONTEXT_PACK_FIT_BUDGET_SHARE,
@@ -183,8 +184,10 @@ export class ContextAssemblyManager {
     // The prompt's fixed cost, measured before history is fitted, so history
     // is budgeted against what is actually left rather than against a number
     // that ignored files, memories and the system prompt entirely.
+    const platformOrigin = AppConfig.get().PUBLIC_SITE_URL;
     const systemOverheadTokens = this.estimateSystemOverheadTokens({
       systemPrompt: threadSettings?.systemPrompt ?? null,
+      platformOrigin,
       memories: fetched.memories,
       contextPackItems: fetched.contextPackItems,
       fileContents: filteredFileContents,
@@ -238,6 +241,7 @@ export class ContextAssemblyManager {
     return {
       userId,
       systemPrompt: threadSettings?.systemPrompt ?? null,
+      platformOrigin,
       threadMessages: selected.included,
       memories: fetched.memories,
       contextPackItems: fetched.contextPackItems,
@@ -286,13 +290,18 @@ export class ContextAssemblyManager {
    */
   private estimateSystemOverheadTokens(parts: {
     systemPrompt: string | null;
+    platformOrigin: string | undefined;
     memories: AssembledContext['memories'];
     contextPackItems: AssembledContext['contextPackItems'];
     fileContents: AssembledContext['fileContents'];
     workspaceCitations: AssembledContext['workspaceCitations'];
     researchEvidence: ResearchEvidenceCitation[];
   }): number {
-    let tokens = estimateTokensFromText(parts.systemPrompt ?? '');
+    // The hidden platform block rides on every request, so it is paid for in the
+    // window like the system prompt is (ADR-136).
+    let tokens =
+      estimateTokensFromText(parts.systemPrompt ?? '') +
+      estimateTokensFromText(buildPlatformIdentityBlock(parts.platformOrigin));
     for (const memory of parts.memories) tokens += estimateTokensFromText(memory.content);
     for (const item of parts.contextPackItems) tokens += estimateTokensFromText(item.content ?? '');
     // Each block also carries its fixed framing (header + verbatim-quote rule).
@@ -600,7 +609,7 @@ ${evidence.snippet}`);
       context.workspaceCitations,
       currentIntent,
     );
-    const parts: string[] = [];
+    const parts: string[] = [`SYSTEM: ${buildPlatformIdentityBlock(context.platformOrigin)}`];
     if (context.systemPrompt) {
       parts.push(`SYSTEM: ${context.systemPrompt}`);
     }
@@ -937,7 +946,9 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     relevantWorkspaceCitations: AssembledContext['workspaceCitations'],
     includeVideo: boolean,
   ): string[] {
-    const parts: string[] = [];
+    // The hidden self-awareness layer comes first, on every request, for every
+    // model (ADR-136). It is not a memory or a context item and nothing lists it.
+    const parts: string[] = [buildPlatformIdentityBlock(context.platformOrigin)];
     if (context.systemPrompt) parts.push(context.systemPrompt);
     if (relevantMemories.length > 0) {
       const block = relevantMemories.map((m) => `[${m.type}] ${m.content}`).join('\n');

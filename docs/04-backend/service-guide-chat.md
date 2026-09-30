@@ -131,7 +131,7 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
      user said (`VOICE_NOTE_TRANSCRIPT_FRAME`), never as a generic attached
      document, and never leaks the transcription placeholder itself into the
      prompt as if it were real content.
-5. **Prompt building** -- system prompt, memories, packs, files, history, with token budget truncation. Before it, a **context-save pre-check** (ADR-134): a save-like message goes to the planner (`askPlanner`), the memory/pack saves run, and the platform note is appended to the system prompt so the model confirms them
+5. **Prompt building** -- a hidden platform self-awareness block first (ADR-136: never stored or returned, address from `PUBLIC_SITE_URL`), then system prompt, memories, packs, files, history, with token budget truncation. Before it, a **context-save pre-check** (ADR-134): a save-like message goes to the planner (`askPlanner`), the memory/pack saves run, and the platform note is appended to the system prompt so the model confirms them
    - **Attachment-only turns** (rule 42 §18–19). A send may carry files and
      no text (every send schema uses `requireContentOrAttachments`). The row is
      stored with empty `content`; `message.created` carries

@@ -1563,6 +1563,16 @@ model's private notes run into its reply.
   `chat-execution.manager.spec.ts` (image-service contract),
   `image-reference-prompt.utility.spec.ts`. Rule 51 item 18.
 
+## Hidden platform self-awareness (2026-09-30, ADR-136)
+
+Every model is told it is inside ClawAI by `buildPlatformIdentityBlock`, the first part of
+the system message in `buildSystemMessageParts` / `buildPromptString`. Hidden by
+construction: built per request, never stored, never a memory/context item, never in a
+receipt or response. Address = `AssembledContext.platformOrigin` from `PUBLIC_SITE_URL`.
+Counted in `estimateSystemOverheadTokens`. "What is this app?" / "where are we?" crawls the
+platform's own site (`buildSelfInspectIntent`, plan-gated). No prices in the text. Coding-agent
+threads are NOT covered yet (own repo).
+
 ## An explicit fetch command runs even with research off (2026-09-30)
 
 "crawl <url>" / "curl <url>" with the research toggle off answered "I have no fetched

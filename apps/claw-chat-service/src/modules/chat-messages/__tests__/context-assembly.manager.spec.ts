@@ -68,7 +68,8 @@ describe('ContextAssemblyManager', () => {
     // one keeps proving the old behaviour is untouched.
     researchRequested: false,
     researchToolsUsed: ['web_search', 'search:ollama_web'],
-    tokenBudget: 512,
+    // Room for the hidden platform block (ADR-136) plus the content these tests read.
+    tokenBudget: 2_048,
     modelBudget: fallbackModelTokenBudget(),
     conversationManifest: emptyConversationManifest(),
     crossThread: disabledCrossThreadResult(),
@@ -269,7 +270,11 @@ describe('ContextAssemblyManager', () => {
     const messages = manager.buildChatMessages(context);
     const prompt = manager.buildPromptString(context);
 
-    expect(messages.map((message) => message.role)).toEqual(['user', 'assistant', 'user']);
+    // The hidden platform block is a leading system message (ADR-136); the
+    // conversation itself is what is asserted here.
+    expect(
+      messages.filter((message) => message.role !== 'system').map((message) => message.role),
+    ).toEqual(['user', 'assistant', 'user']);
     expect(prompt).toContain('ASSISTANT: {"kind":"tool"');
     expect(prompt).toContain('USER: {"status":"succeeded"');
   });

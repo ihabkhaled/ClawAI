@@ -36,6 +36,7 @@ describe('ChatMessagesService research modes', () => {
     vi.clearAllMocks();
     vi.spyOn(AppConfig, 'get').mockReturnValue({
       RESEARCH_SERVICE_URL: 'http://research.test',
+      PUBLIC_SITE_URL: 'https://claw-ai.co',
     } as unknown as ReturnType<typeof AppConfig.get>);
     mockedRunResearch.mockResolvedValue(RUN as never);
 
@@ -120,6 +121,25 @@ describe('ChatMessagesService research modes', () => {
     it('does nothing for a question about curl, or a link inside a question', async () => {
       await expect(run(`give me a curl command for ${url}`, ResearchMode.NONE)).resolves.toBeNull();
       await expect(run(`what is at ${url}?`, ResearchMode.NONE)).resolves.toBeNull();
+      expect(mockedRunResearch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('a question about the app itself, with research off', () => {
+    it('crawls the platform own site so the answer comes from its pages', async () => {
+      await expect(run('what is the current webapp ?', ResearchMode.NONE)).resolves.toBe(RUN);
+      expect(mockedRunResearch).toHaveBeenCalledWith(
+        'http://research.test',
+        expect.objectContaining({
+          workflow: 'SITE_CRAWL',
+          intent: 'what is the current webapp ?\ncrawl https://claw-ai.co',
+        }),
+      );
+    });
+
+    it('is kept off the web for a plan without the research unlock', async () => {
+      hasResearchAccess.mockResolvedValue(false);
+      await expect(run('what is this app?', ResearchMode.NONE)).resolves.toBeNull();
       expect(mockedRunResearch).not.toHaveBeenCalled();
     });
   });

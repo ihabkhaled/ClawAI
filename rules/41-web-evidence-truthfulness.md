@@ -49,6 +49,11 @@ from the missing capability statement, and neither knew about the other.**
    kept off the web (`hasResearchAccess`). Covered by
    `auto-research-resolution.spec.ts` and `explicit-fetch-intent.utility.spec.ts`.
 
+   **Second exception: a question about the app itself** (ADR-136). "What is the
+   current webapp?", "where are we?", "crawl this site" (`asksAboutThisPlatform`) crawl
+   ONLY the platform's own `PUBLIC_SITE_URL`, plan-gated by `hasResearchAccess`, and never
+   open a page the user supplied. It needs no URL and no fetch verb.
+
 4. **Every failure becomes a warning, never silence.** A research run that
    failed cleanly used to produce zero evidence AND zero warnings. Downstream,
    the model is told browsing happened only when one of those is non-empty — so

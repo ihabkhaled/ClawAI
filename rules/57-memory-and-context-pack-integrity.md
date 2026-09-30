@@ -67,6 +67,14 @@ retrieval, internal routes) and `apps/claw-chat-service`
     chat (`findCandidateThreads` filters both). Before this, both switches only
     stopped what the chat itself READ.
 
+16. **What the platform tells every model about itself is a hidden layer, never a
+    memory** (ADR-136, 2026-09-30). `buildPlatformIdentityBlock` is prepended to the
+    system message at assembly time. It is never stored, never in `memories`,
+    `contextPackItems` or `threadMessages`, never in a "context used" receipt or an API
+    response, and it names no price or limit. The served address is `PUBLIC_SITE_URL`
+    read per request, so a new domain needs no edit. Covered by
+    `platform-identity.utility.spec.ts` and `context-assembly-save-turn-note.spec.ts`.
+
 ## How to check
 
 ```bash
