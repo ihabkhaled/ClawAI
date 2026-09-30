@@ -212,6 +212,24 @@ enum ChatShareSafetyStatus {
   REQUIRES_REVIEW
 }
 
+/// A per-user saved prompt with {{variables}}.
+model PromptTemplate {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  title      String
+  body       String
+  tags       String[]  @default([])
+  isFavorite Boolean   @default(false) @map("is_favorite")
+  usageCount Int       @default(0) @map("usage_count")
+  lastUsedAt DateTime? @map("last_used_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId, updatedAt])
+  @@index([userId, isFavorite])
+  @@map("prompt_templates")
+}
+
 model ChatShare {
   id          String @id @default(uuid())
   /// One share per thread. Re-publishing reuses this row and bumps the version.

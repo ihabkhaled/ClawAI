@@ -1319,6 +1319,36 @@
       },
       {
         "method": "GET",
+        "route": "/chat-prompt-templates",
+        "source": "apps/claw-chat-service/src/modules/prompt-library/controllers/prompt-library.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-prompt-templates",
+        "source": "apps/claw-chat-service/src/modules/prompt-library/controllers/prompt-library.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/chat-prompt-templates/:id",
+        "source": "apps/claw-chat-service/src/modules/prompt-library/controllers/prompt-library.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/chat-prompt-templates/:id",
+        "source": "apps/claw-chat-service/src/modules/prompt-library/controllers/prompt-library.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/chat-prompt-templates/:id",
+        "source": "apps/claw-chat-service/src/modules/prompt-library/controllers/prompt-library.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-prompt-templates/:id/use",
+        "source": "apps/claw-chat-service/src/modules/prompt-library/controllers/prompt-library.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/chat-threads",
         "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
       },
@@ -3768,5 +3798,5 @@
     ]
   },
   "generated": true,
-  "total": 746
+  "total": 752
 }

@@ -1165,3 +1165,18 @@ The composer uploads a mask PNG as a file and sends its id as `maskFileId`. chat
 A picked veo/grok-video model, or an AUTO video request, routes to `VIDEO_GEMINI` /
 `VIDEO_GROK`, planned by the same gate as images and run by image-service. See
 [ADR-137](../13-adr/adr-137-video-generation.md).
+
+## Prompt library
+
+- Module `src/modules/prompt-library` ([ADR-138](../13-adr/adr-138-prompt-library.md)); table
+  `prompt_templates`; routes under `/api/v1/chat-prompt-templates` (nginx `location` in
+  `infra/nginx/locations.conf` and `nginx.distributed.conf.template`).
+- `GET /` (query `q`, `tag`, `favorite`, `cursor`, `limit` 30/100) returns
+  `{ items, nextCursor }`, favourites first, then last used, then last edited.
+  `POST /` (201), `GET /:id`, `PATCH /:id`, `DELETE /:id` (204), `POST /:id/use`
+  (bumps `usageCount`, sets `lastUsedAt`). Every view carries `variables: string[]`.
+- Rules: 200 templates per user (409 `PROMPT_LIBRARY_FULL`); title 1-120; body 1-20000;
+  tags at most 10, 1-32 chars, trimmed/lowercased/deduplicated; `{{name}}` variables
+  (`[a-z][a-z0-9_]{0,31}`, at most 20 distinct) or 400 `PROMPT_TEMPLATE_INVALID`.
+- Identity only from `@CurrentUser`; every repository read and write filters by `userId`,
+  so a foreign template is a 404. Titles and bodies are never logged.

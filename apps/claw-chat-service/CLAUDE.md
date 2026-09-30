@@ -1628,3 +1628,5 @@ request-scoped boolean; no global state.
 `detectVideoOutputModel` (a picked veo/grok-video model) and `detectVideoRequest` (AUTO plus
 `classifyVideoIntent` from `@claw/shared-utilities`). Video models are never redirected to
 chat. OpenAI has no video provider (Sora shut down).
+
+- **Prompt library (ADR-138):** `modules/prompt-library`, `chat-prompt-templates` routes; per-user saved prompts with `{{variables}}`, 200 cap, owner-scoped in the repository (foreign id = 404), titles/bodies never logged.

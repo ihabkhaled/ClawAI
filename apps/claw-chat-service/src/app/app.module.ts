@@ -23,6 +23,7 @@ import { MetricsModule } from '../modules/metrics/metrics.module';
 import { ChatThreadsModule } from '../modules/chat-threads/chat-threads.module';
 import { CodingAgentChatsModule } from '../modules/coding-agent-chats/coding-agent-chats.module';
 import { ChatSharesModule } from '../modules/chat-shares/chat-shares.module';
+import { PromptLibraryModule } from '../modules/prompt-library/prompt-library.module';
 import { ChatMessagesModule } from '../modules/chat-messages/chat-messages.module';
 import { ContextReceiptsModule } from '../modules/context-receipts/context-receipts.module';
 import { ContextPreviewModule } from '../modules/context-preview/context-preview.module';
@@ -89,6 +90,7 @@ import { ContextPreviewModule } from '../modules/context-preview/context-preview
     ChatThreadsModule,
     CodingAgentChatsModule,
     ChatSharesModule,
+    PromptLibraryModule,
     ChatMessagesModule,
     ContextReceiptsModule,
     ContextPreviewModule,

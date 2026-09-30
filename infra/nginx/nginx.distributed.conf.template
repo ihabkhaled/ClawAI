@@ -255,6 +255,11 @@ http {
             proxy_pass $backend;
         }
 
+        location /api/v1/chat-prompt-templates {
+            set $backend https://$origin_chat;
+            proxy_pass $backend;
+        }
+
         # What the coding agent did, for a person to read afterwards.
         #
         # Read verbs only, refused at the edge. The web app shows the agent's runs;

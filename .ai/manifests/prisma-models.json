@@ -61,7 +61,8 @@
       "ChatShareMessageAsset",
       "ChatThread",
       "FileDeliveryRecord",
-      "MessageAttachment"
+      "MessageAttachment",
+      "PromptTemplate"
     ],
     "claw-connector-service": [
       "Connector",

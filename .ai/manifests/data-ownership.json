@@ -85,7 +85,8 @@
         "ChatShareMessageAsset",
         "ChatThread",
         "FileDeliveryRecord",
-        "MessageAttachment"
+        "MessageAttachment",
+        "PromptTemplate"
       ],
       "service": "claw-chat-service"
     },
