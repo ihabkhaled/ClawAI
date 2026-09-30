@@ -11,6 +11,8 @@ const mockGetPlan = vi.fn();
 const mockListPrices = vi.fn();
 const mockPublishPrice = vi.fn();
 const mockSubscriberCounts = vi.fn();
+const mockGetIntervalPricing = vi.fn();
+const mockSetIntervalDiscounts = vi.fn();
 
 vi.mock('next/navigation', () => ({
   useParams: () => ({ id: 'plan-1' }),
@@ -34,6 +36,8 @@ vi.mock('@/repositories/admin/plans.repository', () => ({
     get: (...args: unknown[]) => mockGetPlan(...args),
     listPriceVersions: (...args: unknown[]) => mockListPrices(...args),
     publishPrice: (...args: unknown[]) => mockPublishPrice(...args),
+    getIntervalPricing: (...args: unknown[]) => mockGetIntervalPricing(...args),
+    setIntervalDiscounts: (...args: unknown[]) => mockSetIntervalDiscounts(...args),
   },
 }));
 
@@ -71,6 +75,24 @@ describe('useAdminPlanPrices', () => {
     mockGetPlan.mockResolvedValue({ id: 'plan-1', name: 'Test' });
     mockListPrices.mockResolvedValue([]);
     mockSubscriberCounts.mockResolvedValue([]);
+    mockGetIntervalPricing.mockResolvedValue({
+      planId: 'plan-1',
+      discounts: {
+        quarterlyDiscountBps: 1000,
+        semiannualDiscountBps: 1500,
+        yearlyDiscountBps: 2000,
+      },
+      prices: [],
+    });
+    mockSetIntervalDiscounts.mockResolvedValue({
+      planId: 'plan-1',
+      discounts: {
+        quarterlyDiscountBps: 500,
+        semiannualDiscountBps: 1250,
+        yearlyDiscountBps: 2500,
+      },
+      prices: [],
+    });
     mockPublishPrice.mockResolvedValue({
       id: 'price-1',
       planId: 'plan-1',
@@ -133,6 +155,90 @@ describe('useAdminPlanPrices', () => {
 
     await waitFor(() => {
       expect(mockPublishPrice).toHaveBeenCalled();
+    });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: queryKeys.billing.plans() });
+  });
+
+  it('starts the discount fields from what the plan holds, as percents', async () => {
+    const { result } = renderHook(() => useAdminPlanPrices(), {
+      wrapper: makeWrapper(queryClient),
+    });
+
+    await waitFor(() => {
+      expect(result.current.discountInputs).toEqual({
+        quarterly: '10',
+        semiannual: '15',
+        yearly: '20',
+      });
+    });
+  });
+
+  it('saves edited percents as the exact basis-point body', async () => {
+    const { result } = renderHook(() => useAdminPlanPrices(), {
+      wrapper: makeWrapper(queryClient),
+    });
+    await waitFor(() => {
+      expect(result.current.discountInputs.yearly).toBe('20');
+    });
+
+    act(() => {
+      result.current.setDiscountInput('quarterly', '5');
+      result.current.setDiscountInput('semiannual', '12.5');
+      result.current.setDiscountInput('yearly', '25');
+    });
+    act(() => {
+      result.current.saveDiscounts();
+    });
+
+    await waitFor(() => {
+      expect(mockSetIntervalDiscounts).toHaveBeenCalledWith('plan-1', {
+        quarterlyDiscountBps: 500,
+        semiannualDiscountBps: 1250,
+        yearlyDiscountBps: 2500,
+      });
+    });
+  });
+
+  it.each(['', 'abc', '91', '-1', '12.345'])(
+    'refuses to save %j and never calls the server',
+    async (bad) => {
+      const { result } = renderHook(() => useAdminPlanPrices(), {
+        wrapper: makeWrapper(queryClient),
+      });
+      await waitFor(() => {
+        expect(result.current.discountInputs.yearly).toBe('20');
+      });
+
+      act(() => {
+        result.current.setDiscountInput('yearly', bad);
+      });
+      act(() => {
+        result.current.saveDiscounts();
+      });
+
+      expect(result.current.discountsError).toBe('adminPlans.intervalDiscounts.invalid');
+      expect(mockSetIntervalDiscounts).not.toHaveBeenCalled();
+    },
+  );
+
+  it('refreshes the public and billing plan caches after saving discounts', async () => {
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+    const { result } = renderHook(() => useAdminPlanPrices(), {
+      wrapper: makeWrapper(queryClient),
+    });
+    await waitFor(() => {
+      expect(result.current.discountInputs.yearly).toBe('20');
+    });
+
+    act(() => {
+      result.current.saveDiscounts();
+    });
+
+    await waitFor(() => {
+      expect(mockSetIntervalDiscounts).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: queryKeys.publicPricing.all });
     });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: queryKeys.billing.plans() });
   });

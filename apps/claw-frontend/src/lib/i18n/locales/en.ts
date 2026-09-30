@@ -4210,6 +4210,14 @@ export const en: TranslationDictionary = {
     },
   },
   adminPlans: {
+    intervalDiscounts: {
+      title: 'Term discounts',
+      description:
+        'Quarterly, semiannual and yearly prices are calculated from the monthly price minus these discounts. Saving prices new checkouts at once; current subscribers keep the price they bought.',
+      fieldLabel: '{interval} discount (%)',
+      invalid: 'Enter a percent from 0 to 90, with at most two decimals.',
+      saved: 'Discounts saved. New prices are live.',
+    },
     title: 'Plans',
     description: 'Define subscription plans, quotas, feature gates and model access.',
     addPlan: 'New Plan',
@@ -5020,7 +5028,6 @@ export const en: TranslationDictionary = {
         'Start free. Upgrade when you need more. Every paid plan reaches the same models — the difference is how much you can use.',
       monthly: 'Monthly',
       yearly: 'Yearly',
-      yearlyBadge: 'Two months free',
       perMonth: '/month',
       perYear: '/year',
       cadence: {
@@ -5029,7 +5036,7 @@ export const en: TranslationDictionary = {
         SEMIANNUAL: '/6 months',
         YEARLY: '/year',
       },
-      discountBadge: '10% off',
+      savePercent: 'Save {percent}%',
       mostPopular: 'Most popular',
       dailyTokens: 'Daily allowance',
       monthlyTokens: 'Monthly allowance',
@@ -5151,7 +5158,6 @@ export const en: TranslationDictionary = {
         toggleLabel: 'Billing period',
         toggleMonthly: 'Monthly',
         toggleYearly: 'Yearly',
-        yearlyNote: 'Pay yearly and get {months} months free.',
         linkFaq: 'Billing questions? Read the FAQ',
         linkUseCases: 'See what people build with ClawAI',
       },
@@ -5596,7 +5602,7 @@ export const en: TranslationDictionary = {
           'an email address and a password. The free plan starts immediately, with no card required.',
         step2Title: 'Pick a plan',
         step2Desc:
-          'free to start; paid plans from $5 a month raise your allowance and unlock the larger models and the multi-model modes.',
+          'free to start; paid plans raise your allowance and unlock the larger models and the multi-model modes.',
         step3Title: 'Start a conversation',
         step3Desc:
           'type a message, optionally attach files, and either choose a model or leave it on Auto.',
@@ -5623,17 +5629,17 @@ export const en: TranslationDictionary = {
           'An email address and a password is all it takes. There is no provider account to create, no API key to paste and nothing to install — ClawAI holds the provider relationships on your behalf.',
         plansHeading: 'The plans',
         plansBody:
-          'Seven tiers, from free to Unlimited at $200 a month. Every paid plan reaches every model; what changes is how much you can use and which multi-model modes are unlocked.',
+          'Seven tiers, from free to Unlimited. Every paid plan reaches every model; what changes is how much you can use and which multi-model modes are unlocked.',
         bullet1:
-          'Free — $0. A small daily allowance, entry-tier models, and one trial run each of Compare, Judge and Research.',
+          'Free. A small daily allowance, entry-tier models, and one trial run each of Compare, Judge and Research.',
         bullet2:
-          'Starter $5, Plus $10, Pro $20 a month. Rising allowances, with premium models and larger Compare and Judge quotas as you go up.',
+          'Starter, Plus and Pro. Rising allowances, with premium models and larger Compare and Judge quotas as you go up.',
         bullet3:
-          'Team $50, Scale $100 a month. Unlimited Compare, Judge, Critic and Research, plus many more workspace connections.',
+          'Team and Scale. Unlimited Compare, Judge, Critic and Research, plus many more workspace connections.',
         bullet4:
-          'Unlimited $200 a month. Unlimited conversations and messages, with a fair-use boundary on premium models that you are warned about before you reach it.',
+          'Unlimited. Unlimited conversations and messages, with a fair-use boundary on premium models that you are warned about before you reach it.',
         upgradeNote:
-          'Pay yearly and you pay for ten months instead of twelve. You can change plan or cancel at any time — an upgrade applies immediately, a downgrade at the start of your next billing period.',
+          'Pay for a longer term and the price per month drops; the saving is shown on each plan. You can change plan or cancel at any time — an upgrade applies immediately, a downgrade at the start of your next billing period.',
         ctaRegister: 'Create your account',
       },
       models: {
@@ -6175,17 +6181,17 @@ export const en: TranslationDictionary = {
           'Create an account with an email address and a password and you are on the free plan immediately. Send a message. If you do not choose a model, ClawAI picks one for you.',
         freeTierQ: 'Is there a free plan?',
         freeTierA:
-          'Yes — $0, no card required. It includes a small daily allowance, access to entry-tier models, and one trial run each of Compare, Judge and Research so you can see what the paid modes do before paying for them.',
+          'Yes — no card required. It includes a small daily allowance, access to entry-tier models, and one trial run each of Compare, Judge and Research so you can see what the paid modes do before paying for them.',
       },
       plansBilling: {
         title: 'Plans and billing',
         description: 'What the tiers cost, and how billing works.',
         plansQ: 'What plans are available?',
         plansA:
-          'Seven: Free at $0, Starter $5, Plus $10, Pro $20, Team $50, Scale $100 and Unlimited $200 per month. Every paid plan reaches every model — what differs is your allowance, your daily message limits, and how many Compare, Judge and Research runs you get.',
+          'Seven: Free, Starter, Plus, Pro, Team, Scale and Unlimited. Every paid plan reaches every model — what differs is your allowance, your daily message limits, and how many Compare, Judge and Research runs you get.',
         paymentQ: 'How do I pay?',
         paymentA:
-          'By card, monthly or yearly. Pay yearly and you are charged for ten months instead of twelve, so two months are free.',
+          'By card, monthly or yearly. Pay for a longer term — three, six or twelve months — and you pay less per month; the saving is shown on every plan.',
         changePlanQ: 'Can I change plan later?',
         changePlanA:
           'Yes, at any time. An upgrade gives you the higher allowance straight away; a downgrade takes effect at the start of your next billing period, so you keep what you have already paid for.',
@@ -6366,7 +6372,7 @@ export const en: TranslationDictionary = {
           'Two different products for two different problems. Most organisations should start with the hosted app and move only if a requirement forces it.',
         hostedBadge: 'Self-serve',
         hostedTitle: 'ClawAI hosted',
-        hostedSubtitle: 'Sign up online, from $5 a month.',
+        hostedSubtitle: 'Sign up online.',
         hostedPoint1:
           'Every frontier cloud model — Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek, Grok and Bedrock.',
         hostedPoint2: 'Running in minutes. Nothing to install and no hardware to buy.',

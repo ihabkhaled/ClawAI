@@ -40,6 +40,21 @@ bound and not a projection.
 | Scale     |     $100.00 |            $25.00 |                    $75.00 |      75% |
 | Unlimited |     $200.00 |            $50.00 |                   $150.00 |      75% |
 
+**By term** (ADR-135). The PAYG credit is granted per month from the MONTHLY price
+whatever the term, so a longer term pays less for the same credit. Credit as a
+share of what the customer pays is `credit rate / (1 - discount)`:
+
+| Term (customer pays) | 30% plans (Starter, Plus) | 25% plans (Pro, Team, Scale, Unlimited) |
+| -------------------- | ------------------------: | --------------------------------------: |
+| Monthly (100%)       |             30.0% / 70.0% |                           25.0% / 75.0% |
+| Quarterly (90%)      |             33.3% / 66.7% |                           27.8% / 72.2% |
+| Semiannual (85%)     |             35.3% / 64.7% |                           29.4% / 70.6% |
+| Yearly (80%)         |             37.5% / 62.5% |                           31.3% / 68.8% |
+
+(credit share / gross margin at full draw.) No plan is below 62.5% at the
+default 10 / 15 / 20% discounts. Admin-set discounts of 70% or more make a 30%
+plan's yearly term loss-making at full draw; no floor is recorded.
+
 Before payment-gateway fees and before every other cost of running the platform.
 **This is gross margin on inference alone, not contribution margin.**
 
@@ -119,7 +134,7 @@ estimate of an estimate.
 | Is 25–30% of revenue the right allowance band?                          | **unassigned** |
 | Are the seeded list prices close enough to real invoices? (Q6)          | **unassigned** |
 | Should the Free tier's $0.30 be treated as CAC, and what is the budget? | **unassigned** |
-| What margin floor triggers a repricing?                                 | **unassigned** |
+| What margin floor triggers a repricing, and caps the term discounts?    | **unassigned** |
 
 The evidence that would settle all four is one full billing period of
 `credit_ledger_entries`: spend distribution per plan, wall-hit rate, and top-up

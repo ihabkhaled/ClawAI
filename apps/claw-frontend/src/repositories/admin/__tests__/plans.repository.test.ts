@@ -194,4 +194,37 @@ describe('plans repository', () => {
       amountMinor: 2_000,
     });
   });
+
+  it('reads the interval pricing from the encoded plan path', async () => {
+    const pricing = {
+      planId: 'p 1',
+      discounts: {
+        quarterlyDiscountBps: 1000,
+        semiannualDiscountBps: 1500,
+        yearlyDiscountBps: 2000,
+      },
+      prices: [],
+    };
+    mockGet.mockResolvedValue({ data: pricing });
+
+    await expect(plansRepository.getIntervalPricing('p 1')).resolves.toEqual(pricing);
+    expect(mockGet).toHaveBeenCalledWith('/admin/plans/p%201/interval-pricing');
+  });
+
+  it('puts the exact discount body in basis points', async () => {
+    const payload = {
+      quarterlyDiscountBps: 1000,
+      semiannualDiscountBps: 1500,
+      yearlyDiscountBps: 2000,
+    };
+    mockPut.mockResolvedValue({ data: { planId: 'p/1', discounts: payload, prices: [] } });
+
+    await plansRepository.setIntervalDiscounts('p/1', payload);
+
+    expect(mockPut).toHaveBeenCalledWith('/admin/plans/p%2F1/interval-discounts', {
+      quarterlyDiscountBps: 1000,
+      semiannualDiscountBps: 1500,
+      yearlyDiscountBps: 2000,
+    });
+  });
 });

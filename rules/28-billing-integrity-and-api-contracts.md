@@ -73,6 +73,21 @@ tests for any frontend repository that calls a changed API.
     auth-service and payment-service disagreeing, and must never be captioned as
     a free account either — that is the one case worth surfacing.
 
+11. **Longer-term prices are derived, and have exactly one writer.**
+    QUARTERLY, SEMIANNUAL and YEARLY `PlanPriceVersion` rows follow the plan's
+    MONTHLY price and its per-plan discounts (`round(monthly x months x (10000 -
+bps) / 10000)`) and are minted only through
+    `PlanBillingRepository.publishPriceSet`, called by
+    `PlanIntervalPricingService`, in one transaction. A discount is never computed
+    at checkout, at render or in a seeder that bypasses that path, and a
+    hand-typed longer-term publish is refused (`PLAN_INTERVAL_PRICE_DERIVED`,
+    covered by `plan-catalog.service.spec.ts`). The badge a customer sees is read
+    off the stored prices, and no copy names a plan price or a fixed discount.
+    [ADR-135](../docs/13-adr/adr-135-term-discounts-derive-price-versions.md).
+
+    This shipped live: yearly was a hand-set figure that could exceed twelve
+    monthly payments, and "two months free" was written into thirteen locales.
+
 The request-body test is required because the share feature once omitted
 `acknowledgedPublicWarning`: frontend and backend both typechecked, but every
 publication request returned 400. Exact serialization assertions catch that
@@ -88,6 +103,8 @@ class of split-contract failure.
 - Exposing `/api/v1/internal/payments/*` through nginx.
 - A frontend mutation test that asserts only `toHaveBeenCalled()`.
 - A plan whose daily cap exceeds its weekly cap, or weekly its monthly.
+- Writing a QUARTERLY/SEMIANNUAL/YEARLY price row anywhere but `publishPriceSet`,
+  or naming a plan price or a fixed discount in user-facing copy.
 - Reading `PlanTrialRedemption.expiresAt` on its own to decide whether a user is
   on a trial. It answers "when was the trial scheduled to end", never "is the
   trial still in force".

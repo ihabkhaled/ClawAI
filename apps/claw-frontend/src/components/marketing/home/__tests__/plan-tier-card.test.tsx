@@ -52,7 +52,7 @@ const PLAN: PublicPlan = {
       planId: 'plan-pro',
       billingInterval: BillingInterval.YEARLY,
       currency: 'USD',
-      amountMinor: 20_000,
+      amountMinor: 19_200,
       version: 1,
       isActive: true,
     },
@@ -139,7 +139,7 @@ describe('PlanTierCard', () => {
     );
   });
 
-  it('shows a discount badge for QUARTERLY and SEMIANNUAL but not MONTHLY or YEARLY', () => {
+  it('shows a discount badge for every longer term, never for MONTHLY', () => {
     const planWithQuarterly: PublicPlan = {
       ...PLAN,
       prices: [
@@ -168,16 +168,16 @@ describe('PlanTierCard', () => {
     const { rerender } = render(
       <PlanTierCard plan={planWithQuarterly} interval={BillingInterval.MONTHLY} />,
     );
-    expect(screen.queryByText('marketing.pricing.discountBadge')).not.toBeInTheDocument();
+    expect(screen.queryByText('marketing.pricing.savePercent')).not.toBeInTheDocument();
 
     rerender(<PlanTierCard plan={planWithQuarterly} interval={BillingInterval.YEARLY} />);
-    expect(screen.queryByText('marketing.pricing.discountBadge')).not.toBeInTheDocument();
+    expect(screen.getByText('marketing.pricing.savePercent')).toBeInTheDocument();
 
     rerender(<PlanTierCard plan={planWithQuarterly} interval={BillingInterval.QUARTERLY} />);
-    expect(screen.getByText('marketing.pricing.discountBadge')).toBeInTheDocument();
+    expect(screen.getByText('marketing.pricing.savePercent')).toBeInTheDocument();
 
     rerender(<PlanTierCard plan={planWithQuarterly} interval={BillingInterval.SEMIANNUAL} />);
-    expect(screen.getByText('marketing.pricing.discountBadge')).toBeInTheDocument();
+    expect(screen.getByText('marketing.pricing.savePercent')).toBeInTheDocument();
   });
 
   it('sends a free signup to chat instead of opening a rejected zero-value checkout', () => {

@@ -22,6 +22,31 @@ export type PublishAdminPlanPriceRequest = {
   amountMinor: number;
 };
 
+/** A plan's term discounts, in basis points (2000 = 20%). */
+export type AdminPlanIntervalDiscounts = {
+  quarterlyDiscountBps: number;
+  semiannualDiscountBps: number;
+  yearlyDiscountBps: number;
+};
+
+/** The discounts and the ACTIVE price per interval, as the auth service reports them. */
+export type AdminPlanIntervalPricing = {
+  planId: string;
+  discounts: AdminPlanIntervalDiscounts;
+  prices: AdminPlanPriceVersion[];
+};
+
+export type SetAdminPlanIntervalDiscountsRequest = AdminPlanIntervalDiscounts;
+
+/** The three percent fields, as the admin typed them. */
+export type IntervalDiscountInputs = {
+  quarterly: string;
+  semiannual: string;
+  yearly: string;
+};
+
+export type IntervalDiscountField = keyof IntervalDiscountInputs;
+
 export type AdminPriceSubscriberCount = {
   planPriceVersionId: string;
   count: number;
@@ -39,10 +64,13 @@ export type UseAdminPlanPricesResult = {
   error: Error | null;
   isSaving: boolean;
   saveError: Error | null;
-  billingInterval: BillingInterval;
   currency: string;
   amount: string;
-  setBillingInterval: (value: BillingInterval) => void;
+  discountInputs: IntervalDiscountInputs;
+  discountsError: string | null;
+  isSavingDiscounts: boolean;
+  setDiscountInput: (field: IntervalDiscountField, value: string) => void;
+  saveDiscounts: () => void;
   setCurrency: (value: string) => void;
   setAmount: (value: string) => void;
   publish: () => void;

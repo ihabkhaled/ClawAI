@@ -142,6 +142,7 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.adminPlans.all, 'detail', id] as const,
     users: (id: string) => [...queryKeys.adminPlans.all, 'users', id] as const,
     prices: (id: string) => [...queryKeys.adminPlans.all, 'prices', id] as const,
+    intervalPricing: (id: string) => [...queryKeys.adminPlans.all, 'interval-pricing', id] as const,
   },
   adminRefunds: {
     all: ['adminRefunds'] as const,

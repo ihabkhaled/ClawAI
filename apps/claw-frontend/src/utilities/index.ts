@@ -281,6 +281,10 @@ export {
   findPlanPrice,
   isCurrentPlan,
   computeYearlySavingMinor,
+  computeIntervalDiscountPercent,
+  parseDiscountPercentToBps,
+  bpsToPercentInput,
+  discountsToInputs,
   isSubscriptionEntitling,
 } from './billing.utility';
 export { invalidateThreadMessages } from './invalidate-thread-messages.utility';

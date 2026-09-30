@@ -12,79 +12,107 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { BILLING_INTERVAL_ORDER, SUPPORTED_PLAN_CURRENCIES } from '@/constants/billing.constants';
-import type { BillingInterval } from '@/enums/billing.enum';
+import {
+  ADMIN_INTERVAL_DISCOUNT_FIELDS,
+  SUPPORTED_PLAN_CURRENCIES,
+} from '@/constants/billing.constants';
 import type { UseAdminPlanPricesResult } from '@/types/admin-plan-price.types';
 import { formatMinorAmount } from '@/utilities';
 
 export function PlanPriceEditor(controller: UseAdminPlanPricesResult): ReactElement {
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(18rem,24rem)_1fr]">
-      <Card>
-        <CardHeader>
-          <CardTitle>{controller.t('common.create')}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="billing-interval" className="text-sm font-medium">
-              {controller.t('billing.interval.toggleLabel')}
-            </label>
-            <Select
-              value={controller.billingInterval}
-              onValueChange={(value) => controller.setBillingInterval(value as BillingInterval)}
-            >
-              <SelectTrigger id="billing-interval">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {BILLING_INTERVAL_ORDER.map((interval) => (
-                  <SelectItem key={interval} value={interval}>
-                    {controller.t(`billing.interval.${interval}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="price-currency" className="text-sm font-medium">
-              {controller.t('adminPlans.form.currency')}
-            </label>
-            <Select value={controller.currency} onValueChange={controller.setCurrency}>
-              <SelectTrigger id="price-currency">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {SUPPORTED_PLAN_CURRENCIES.map((currency) => (
-                  <SelectItem key={currency} value={currency}>
-                    {currency}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="price-amount" className="text-sm font-medium">
-              {controller.t('adminRefunds.amount')}
-            </label>
-            <Input
-              id="price-amount"
-              type="number"
-              min="0"
-              step="0.01"
-              value={controller.amount}
-              onChange={(event) => controller.setAmount(event.target.value)}
-            />
-          </div>
-          {controller.saveError === null ? null : (
-            <p role="alert" className="text-destructive text-sm">
-              {controller.saveError.message}
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>{controller.t('billing.interval.MONTHLY')}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="price-currency" className="text-sm font-medium">
+                {controller.t('adminPlans.form.currency')}
+              </label>
+              <Select value={controller.currency} onValueChange={controller.setCurrency}>
+                <SelectTrigger id="price-currency">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SUPPORTED_PLAN_CURRENCIES.map((currency) => (
+                    <SelectItem key={currency} value={currency}>
+                      {currency}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="price-amount" className="text-sm font-medium">
+                {controller.t('adminRefunds.amount')}
+              </label>
+              <Input
+                id="price-amount"
+                type="number"
+                min="0"
+                step="0.01"
+                value={controller.amount}
+                onChange={(event) => controller.setAmount(event.target.value)}
+              />
+            </div>
+            {controller.saveError === null ? null : (
+              <p role="alert" className="text-destructive text-sm">
+                {controller.saveError.message}
+              </p>
+            )}
+            <Button type="button" disabled={controller.isSaving} onClick={controller.publish}>
+              {controller.isSaving ? controller.t('common.loading') : controller.t('common.create')}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{controller.t('adminPlans.intervalDiscounts.title')}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground text-sm">
+              {controller.t('adminPlans.intervalDiscounts.description')}
             </p>
-          )}
-          <Button type="button" disabled={controller.isSaving} onClick={controller.publish}>
-            {controller.isSaving ? controller.t('common.loading') : controller.t('common.create')}
-          </Button>
-        </CardContent>
-      </Card>
+            {ADMIN_INTERVAL_DISCOUNT_FIELDS.map(({ field, interval }) => (
+              <div key={field} className="space-y-2">
+                <label htmlFor={`discount-${field}`} className="text-sm font-medium">
+                  {controller.t('adminPlans.intervalDiscounts.fieldLabel', {
+                    interval: controller.t(`billing.interval.${interval}`),
+                  })}
+                </label>
+                <Input
+                  id={`discount-${field}`}
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  max="90"
+                  step="0.01"
+                  value={controller.discountInputs[field]}
+                  onChange={(event) => controller.setDiscountInput(field, event.target.value)}
+                />
+              </div>
+            ))}
+            {controller.discountsError === null ? null : (
+              <p role="alert" className="text-destructive text-sm">
+                {controller.discountsError}
+              </p>
+            )}
+            <Button
+              type="button"
+              disabled={controller.isSavingDiscounts}
+              onClick={controller.saveDiscounts}
+            >
+              {controller.isSavingDiscounts
+                ? controller.t('common.loading')
+                : controller.t('common.save')}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="space-y-3">
         {controller.prices.length === 0 ? (

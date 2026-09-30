@@ -1816,16 +1816,18 @@ a generic receipt. nginx applies dedicated body and rate limits.
 
 Every route below requires `ADMIN_PLANS_MANAGE`.
 
-| Method | Route                                                   | Purpose                                   |
-| ------ | ------------------------------------------------------- | ----------------------------------------- |
-| GET    | `/api/v1/admin/plans/:id/price-versions`                | Read append-only price history            |
-| POST   | `/api/v1/admin/plans/:id/price-versions`                | Publish a future/current price version    |
-| DELETE | `/api/v1/admin/plans/:id`                               | Retire a plan and migrate assignments     |
-| GET    | `/api/v1/admin/billing/dashboard`                       | Revenue, cost, margin, refund, drift data |
-| GET    | `/api/v1/admin/billing/dashboard/price-version-counts`  | Subscribers by immutable price version    |
-| GET    | `/api/v1/admin/billing/refunds/refundable-transactions` | Refundable ledger                         |
-| POST   | `/api/v1/admin/billing/refunds`                         | Reserve and submit a partial/full refund  |
-| POST   | `/api/v1/admin/billing/reconciliation`                  | Start an owner-safe reconciliation run    |
+| Method | Route                                                   | Purpose                                                                                                                 |
+| ------ | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/v1/admin/plans/:id/price-versions`                | Read append-only price history                                                                                          |
+| POST   | `/api/v1/admin/plans/:id/price-versions`                | Publish a MONTHLY price; QUARTERLY/SEMIANNUAL/YEARLY are re-derived (a hand-typed one is `PLAN_INTERVAL_PRICE_DERIVED`) |
+| GET    | `/api/v1/admin/plans/:id/interval-pricing`              | The plan's term discounts and the active price per interval                                                             |
+| PUT    | `/api/v1/admin/plans/:id/interval-discounts`            | Set `{quarterlyDiscountBps, semiannualDiscountBps, yearlyDiscountBps}` (0-9000) and re-derive prices                    |
+| DELETE | `/api/v1/admin/plans/:id`                               | Retire a plan and migrate assignments                                                                                   |
+| GET    | `/api/v1/admin/billing/dashboard`                       | Revenue, cost, margin, refund, drift data                                                                               |
+| GET    | `/api/v1/admin/billing/dashboard/price-version-counts`  | Subscribers by immutable price version                                                                                  |
+| GET    | `/api/v1/admin/billing/refunds/refundable-transactions` | Refundable ledger                                                                                                       |
+| POST   | `/api/v1/admin/billing/refunds`                         | Reserve and submit a partial/full refund                                                                                |
+| POST   | `/api/v1/admin/billing/reconciliation`                  | Start an owner-safe reconciliation run                                                                                  |
 
 All monetary fields are integer minor units or integer microUSD. Refund writes
 require an operator idempotency key; cumulative pending/completed refunds may
