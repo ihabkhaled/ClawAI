@@ -1,4 +1,9 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import { BusinessException } from '../../../common/errors';
+import {
+  RUNTIME_V2_RECEIPT_MISMATCH_CODE,
+  RUNTIME_V2_RECEIPT_MISMATCH_MESSAGE,
+} from '../constants/runtime-v2-result-files.constants';
 import { z } from 'zod';
 
 import { RuntimeV2RedisOperation } from '../../../infrastructure/redis/enums/runtime-v2-redis-operation.enum';
@@ -187,7 +192,11 @@ function verifiedResult(input: RuntimeResultDto['result']): RuntimeV2JsonObject 
   const outputBytes = new TextEncoder().encode(canonical).byteLength;
   const resultHash = runtimeV2Sha256(canonical);
   if (input.receipt.outputBytes !== outputBytes || input.receipt.resultHash !== resultHash)
-    throw new Error('Runtime V2 result receipt does not match canonical output');
+    throw new BusinessException(
+      RUNTIME_V2_RECEIPT_MISMATCH_MESSAGE,
+      RUNTIME_V2_RECEIPT_MISMATCH_CODE,
+      HttpStatus.UNPROCESSABLE_ENTITY,
+    );
   return {
     argumentHash: input.receipt.argumentHash,
     continuation: input.continuation,

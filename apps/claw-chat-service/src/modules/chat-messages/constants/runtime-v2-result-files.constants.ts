@@ -28,3 +28,12 @@ export const RUNTIME_V2_RESULT_FILE_NOT_IMAGE_MESSAGE = 'A tool result file must
  */
 export const RUNTIME_V2_RESULT_FILES_NOTE_PREFIX =
   'The tool result also returned image file(s), attached to the tool result message when this model accepts images:';
+
+/**
+ * A tool result whose receipt hash or byte count disagrees with the result it
+ * travels with. The client can correct and resend, so it is a 422 with a code,
+ * not an unhandled 500 the model cannot act on.
+ */
+export const RUNTIME_V2_RECEIPT_MISMATCH_CODE = 'RUNTIME_RESULT_RECEIPT_MISMATCH';
+export const RUNTIME_V2_RECEIPT_MISMATCH_MESSAGE =
+  'Runtime V2 result receipt does not match canonical output';

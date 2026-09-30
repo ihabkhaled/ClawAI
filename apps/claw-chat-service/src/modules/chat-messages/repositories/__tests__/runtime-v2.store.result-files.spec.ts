@@ -1,3 +1,5 @@
+import { HttpStatus } from '@nestjs/common';
+import { BusinessException } from '../../../../common/errors';
 import { describe, expect, it } from 'vitest';
 import type {
   RuntimeResultDto,
@@ -162,5 +164,18 @@ describe('RuntimeV2Store result fileIds receipt coverage', () => {
     await expect(store.submitResult({ ...bound, command })).rejects.toThrow(
       'Runtime V2 result receipt does not match canonical output',
     );
+  });
+
+  it('reports a receipt mismatch as a structured 422, not an unhandled 500', async () => {
+    const { store, bound } = await admitted();
+    const command = result(bound.generation, ['file-1'], undefined);
+
+    const failure: unknown = await store
+      .submitResult({ ...bound, command })
+      .catch((e: unknown) => e);
+
+    expect(failure).toBeInstanceOf(BusinessException);
+    expect((failure as BusinessException).code).toBe('RUNTIME_RESULT_RECEIPT_MISMATCH');
+    expect((failure as BusinessException).getStatus()).toBe(HttpStatus.UNPROCESSABLE_ENTITY);
   });
 });

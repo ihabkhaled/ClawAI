@@ -1181,3 +1181,9 @@ A picked veo/grok-video model, or an AUTO video request, routes to `VIDEO_GEMINI
 - Identity only from `@CurrentUser`; every repository read and write filters by `userId`,
   so a foreign template is a 404. Titles and bodies are never logged.
 - UI: the composer dialog is described in [`chat-surface-layout.md`](../05-frontend/chat-surface-layout.md).
+
+- **Runtime V2 result receipt mismatch (2026-10-01):** a tool result (including a
+  failed/MCP one) whose receipt `resultHash`/`outputBytes` disagrees with its
+  output now returns 422 `RUNTIME_RESULT_RECEIPT_MISMATCH`, not an unhandled HTTP
+  500 from a bare `Error`. Other plain `Error`s in `runtime-v2.store.ts` (epoch,
+  generation, catalog-hash mismatch) are still 500s.
