@@ -1,4 +1,8 @@
-import { PROVIDER_ERROR_RESPONSE_SCAN_CHARACTERS } from '../constants/provider-error-response.constants';
+import {
+  MISTRAL_ERROR_ENVELOPE_KEYS,
+  MISTRAL_ERROR_OBJECT_TYPE,
+  PROVIDER_ERROR_RESPONSE_SCAN_CHARACTERS,
+} from '../constants/provider-error-response.constants';
 
 /**
  * Detects a provider "answer" that is really an error.
@@ -53,8 +57,17 @@ function detailMessage(detail: unknown): unknown {
  * The single-key requirement is what separates a provider envelope from an
  * answer that happens to include an `error` field.
  */
+function isMistralErrorObject(value: Record<string, unknown>): boolean {
+  return (
+    value['object'] === MISTRAL_ERROR_OBJECT_TYPE &&
+    typeof value['message'] === 'string' &&
+    Object.keys(value).every((key) => MISTRAL_ERROR_ENVELOPE_KEYS.includes(key))
+  );
+}
+
 function isErrorOnlyObject(value: unknown): boolean {
   if (!isRecord(value)) return false;
+  if (isMistralErrorObject(value)) return true;
   const keys = Object.keys(value);
   if (keys.length !== 1 || keys[0] !== 'error') return false;
   const detail = value['error'];
@@ -100,14 +113,21 @@ function containsUrl(value: string): boolean {
   return /https?:\/\//iu.test(value);
 }
 
+/** The unfiltered message of whichever envelope shape `candidate` has. */
+function rawErrorMessage(candidate: Record<string, unknown>): unknown {
+  if (isMistralErrorObject(candidate)) return candidate['message'];
+  const detail = candidate['error'];
+  return typeof detail === 'string' ? detail : detailMessage(detail);
+}
+
 /**
  * Pulls the human-readable sentence out of a provider error envelope that
  * `isProviderErrorResponse` recognized, so it can be shown instead of the
  * generic "every provider failed" message.
  *
  * Covers the common OpenAI-compatible shape `{"error":{"message":...}}`
- * (OpenAI, Groq, Mistral and the rest of `CONNECTOR_PRESETS` speak this
- * surface) and the simpler `{"error":"..."}` some providers use. Returns
+ * (OpenAI, Groq and most of `CONNECTOR_PRESETS` speak this surface),
+ * Mistral's flat `{"object":"error","message":...}` envelope and the simpler `{"error":"..."}` some providers use. Returns
  * `undefined` when there is nothing safe to show — no message field, an
  * empty message, or a message carrying a URL (account/billing links must
  * never reach the user, per the Gemini incident this module guards against).
@@ -121,8 +141,7 @@ export function extractSafeProviderErrorMessage(content?: string | null): string
   if (!isRecord(candidate)) {
     return undefined;
   }
-  const detail = candidate['error'];
-  const rawMessage = typeof detail === 'string' ? detail : detailMessage(detail);
+  const rawMessage = rawErrorMessage(candidate);
   if (typeof rawMessage !== 'string') {
     return undefined;
   }

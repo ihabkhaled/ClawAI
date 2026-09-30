@@ -22,3 +22,17 @@ export const PROVIDER_ERROR_ENVELOPE_PATTERNS: readonly RegExp[] = [
   // be mistaken for a status.
   /"code"\s*:\s*(?:4\d{2}|5\d{2})\s*[,}][\s\S]{0,120}?"message"\s*:/iu,
 ];
+
+/**
+ * Mistral's flat error envelope: `{"object":"error","message":...}`. These are
+ * the only keys it emits; a body with any other key is an answer that happens
+ * to carry `object: "error"`, not an envelope.
+ */
+export const MISTRAL_ERROR_OBJECT_TYPE = 'error';
+export const MISTRAL_ERROR_ENVELOPE_KEYS: readonly string[] = [
+  'object',
+  'message',
+  'type',
+  'param',
+  'code',
+];

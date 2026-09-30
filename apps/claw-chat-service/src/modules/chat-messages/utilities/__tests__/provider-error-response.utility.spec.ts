@@ -104,3 +104,29 @@ describe('extracting a safe message from a provider error envelope', () => {
     expect(extractSafeProviderErrorMessage(body)).toBe('Your prepayment credits are depleted.');
   });
 });
+
+// Mistral does not use `{"error":{...}}`. Its envelope is flat:
+// `{"object":"error","message":...,"type":...,"param":null,"code":"3051"}`.
+describe('the Mistral error envelope', () => {
+  const mistral =
+    '{"object":"error","message":"Invalid model: nope","type":"invalid_model","param":null,"code":"1500"}';
+
+  it('is recognised as an error rather than stored as the assistant reply', () => {
+    expect(isProviderErrorResponse(mistral)).toBe(true);
+  });
+
+  it('yields its message for the user', () => {
+    expect(extractSafeProviderErrorMessage(mistral)).toBe('Invalid model: nope');
+  });
+
+  it('withholds a message that carries a URL', () => {
+    const body = '{"object":"error","message":"See https://console.mistral.ai/billing","type":"x"}';
+
+    expect(extractSafeProviderErrorMessage(body)).toBeUndefined();
+  });
+
+  it('does not swallow an answer that merely has an object field', () => {
+    expect(isProviderErrorResponse('{"object":"list","message":"hello","data":[]}')).toBe(false);
+    expect(isProviderErrorResponse('{"object":"error","message":"x","answer":"42"}')).toBe(false);
+  });
+});

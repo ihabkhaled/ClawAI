@@ -1187,3 +1187,9 @@ A picked veo/grok-video model, or an AUTO video request, routes to `VIDEO_GEMINI
   output now returns 422 `RUNTIME_RESULT_RECEIPT_MISMATCH`, not an unhandled HTTP
   500 from a bare `Error`. Other plain `Error`s in `runtime-v2.store.ts` (epoch,
   generation, catalog-hash mismatch) are still 500s.
+- **Mistral error envelope (2026-10-01):** `provider-error-response.utility.ts`
+  (chat-service, not connector-service) now recognises Mistral's flat
+  `{"object":"error","message",...}` body, besides `{"error":{...}}`. Before, a
+  Mistral error returned as a 200 body was stored as the assistant reply and the
+  fallback chain did not advance. There is no Mistral adapter: Mistral goes
+  through the OpenAI-compatible connector preset.
