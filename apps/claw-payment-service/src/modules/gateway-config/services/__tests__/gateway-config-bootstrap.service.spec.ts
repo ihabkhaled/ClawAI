@@ -47,6 +47,48 @@ describe('GatewayConfigBootstrapService', () => {
     expect(JSON.stringify(input)).not.toContain('paypal-secret');
   });
 
+  it.each([
+    ['production', 'LIVE'],
+    ['development', 'TESTING'],
+    ['test', 'TESTING'],
+  ])('seeds Paymob in %s as %s (a label: the keys decide, not the mode)', async (nodeEnv, mode) => {
+    vi.mocked(AppConfig.get).mockReturnValue({
+      ...AppConfig.get(),
+      NODE_ENV: nodeEnv,
+    } as ReturnType<typeof AppConfig.get>);
+    repository.importEnvironmentOnce.mockResolvedValue('APPLIED');
+
+    await new GatewayConfigBootstrapService(repository as never).onModuleInit();
+
+    const paymob = repository.importEnvironmentOnce.mock.calls[0]?.[0].configurations[1];
+    expect(paymob).toMatchObject({ gateway: BillingGateway.PAYMOB, mode });
+  });
+
+  it('enables Paymob only when all five credentials are present, including the API key', async () => {
+    vi.mocked(AppConfig.get).mockReturnValue({
+      ...AppConfig.get(),
+      NODE_ENV: 'production',
+      PAYMOB_SECRET_KEY: 'sk',
+      PAYMOB_PUBLIC_KEY: 'pk',
+      PAYMOB_HMAC_SECRET: 'hmac',
+      PAYMOB_CARD_INTEGRATION_ID: '123',
+      PAYMOB_API_KEY: undefined,
+    } as ReturnType<typeof AppConfig.get>);
+    repository.importEnvironmentOnce.mockResolvedValue('APPLIED');
+    await new GatewayConfigBootstrapService(repository as never).onModuleInit();
+    const withoutApiKey = repository.importEnvironmentOnce.mock.calls[0]?.[0].configurations[1];
+
+    vi.mocked(AppConfig.get).mockReturnValue({
+      ...AppConfig.get(),
+      PAYMOB_API_KEY: 'api',
+    } as ReturnType<typeof AppConfig.get>);
+    await new GatewayConfigBootstrapService(repository as never).onModuleInit();
+    const withApiKey = repository.importEnvironmentOnce.mock.calls[1]?.[0].configurations[1];
+
+    expect(withoutApiKey.isEnabled).toBe(false);
+    expect(withApiKey.isEnabled).toBe(true);
+  });
+
   it('accepts an already-applied bootstrap without rewriting rows', async () => {
     repository.importEnvironmentOnce.mockResolvedValue('ALREADY_APPLIED');
     const service = new GatewayConfigBootstrapService(repository as never);

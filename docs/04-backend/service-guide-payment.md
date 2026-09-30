@@ -229,6 +229,11 @@ tables; the frontend fetches both and renders them together.
 }
 ```
 
+Checkout offers every gateway that is **enabled** (`GET /api/v1/billing/gateways`);
+there is no static per-gateway hide. Paymob appears once an admin enables it. Set all five credential fields first: the
+list checks only the Enabled flag, and a partial set fails at charge time (see the
+runbook, "Paymob (2026-09-30)").
+
 `status` degrades when the database is unreachable, so the aggregator at
 `health-service:4009` surfaces impaired payments rather than silently passing.
 The endpoint reports _configuration_ only — never whether a specific key is

@@ -14,7 +14,6 @@ const checkoutState = vi.hoisted(() => ({
       gateway: 'PAYPAL',
       mode: 'sandbox',
       publicIdentifier: 'client-id',
-      testingSoon: false,
     },
   ],
 }));
@@ -92,7 +91,6 @@ describe('BillingCheckoutPage', () => {
         gateway: 'PAYPAL',
         mode: 'sandbox',
         publicIdentifier: 'client-id',
-        testingSoon: false,
       },
     ];
   });
@@ -111,15 +109,27 @@ describe('BillingCheckoutPage', () => {
     });
   });
 
-  it('keeps checkout disabled when no production gateway is available', () => {
+  it('starts a Paymob checkout when Paymob is the enabled gateway', async () => {
     checkoutState.gateways = [
       {
         gateway: 'PAYMOB',
-        mode: 'test',
-        publicIdentifier: '',
-        testingSoon: true,
+        mode: 'LIVE',
+        publicIdentifier: 'egy_pk_live_public',
       },
     ];
+
+    render(<BillingCheckoutPage />);
+    await userEvent.click(screen.getByRole('button', { name: 'billing.planChange.confirm' }));
+
+    expect(checkoutState.startCheckout).toHaveBeenCalledWith({
+      planId: 'plan-pro',
+      billingInterval: BillingInterval.YEARLY,
+      gateway: BillingGateway.PAYMOB,
+    });
+  });
+
+  it('keeps checkout disabled when no production gateway is available', () => {
+    checkoutState.gateways = [];
 
     render(<BillingCheckoutPage />);
 

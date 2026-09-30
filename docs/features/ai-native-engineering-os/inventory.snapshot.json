@@ -8015,7 +8015,7 @@
           "file": "rules/56-model-reasoning-never-in-the-answer.md"
         },
         {
-          "bytes": 6860,
+          "bytes": 6997,
           "file": "rules/57-memory-and-context-pack-integrity.md"
         },
         {
@@ -10427,7 +10427,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 268
+        "testFiles": 269
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10475,7 +10475,7 @@
       },
       "claw-research-service": {
         "runner": "vitest",
-        "testFiles": 55
+        "testFiles": 56
       },
       "claw-routing-service": {
         "runner": "vitest",
@@ -11225,7 +11225,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1798,
+    "totalTestFiles": 1800,
     "workspaceCount": 25
   }
 }

@@ -4957,7 +4957,7 @@ export const ja: TranslationDictionary = {
       PAYPAL: 'PayPal',
       PAYMOB: 'Paymob',
       paypalCard: 'PayPal/Card',
-      paymobTestingSoon: 'Paymob（テスト中 – 近日提供）',
+      paymobCard: 'Paymob（カード）',
       unavailable: '決済ゲートウェイを利用できません',
     },
     proration: {

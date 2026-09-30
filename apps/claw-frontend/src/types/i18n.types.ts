@@ -4895,7 +4895,7 @@ export type TranslationDictionary = {
       PAYPAL: string;
       PAYMOB: string;
       paypalCard: string;
-      paymobTestingSoon: string;
+      paymobCard: string;
       unavailable: string;
     };
     proration: {

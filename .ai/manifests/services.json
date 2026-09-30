@@ -141,7 +141,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 268,
+      "testFiles": 269,
       "testRunner": "vitest"
     },
     {
@@ -434,7 +434,7 @@
         "SearchProvider",
         "SearchRun"
       ],
-      "testFiles": 55,
+      "testFiles": 56,
       "testRunner": "vitest"
     },
     {

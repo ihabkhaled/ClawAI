@@ -4774,7 +4774,7 @@ export const zh: TranslationDictionary = {
       PAYPAL: 'PayPal',
       PAYMOB: 'Paymob',
       paypalCard: 'PayPal/Card',
-      paymobTestingSoon: 'Paymob（测试中 – 即将推出）',
+      paymobCard: 'Paymob（银行卡）',
       unavailable: '支付网关不可用',
     },
     proration: {

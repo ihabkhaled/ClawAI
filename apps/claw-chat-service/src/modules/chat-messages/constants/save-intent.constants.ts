@@ -164,3 +164,11 @@ export const CONTEXT_SAVE_FAILURE_ERRORS: Record<
   LIMIT: { code: 'PLAN_CONTEXT_PACK_LIMIT_EXCEEDED', status: HttpStatus.TOO_MANY_REQUESTS },
   UNAVAILABLE: { code: 'CONTEXT_SAVE_UNAVAILABLE', status: HttpStatus.SERVICE_UNAVAILABLE },
 };
+
+/**
+ * Opens the save note when it is repeated on the final user turn. The system
+ * prompt alone was not enough: a small model (gpt-3.5-turbo, live QA-41)
+ * answered "I've added it to your context" while the pack choice was still
+ * pending — so the note rides where the model looks most (rule 41 pattern).
+ */
+export const CONTEXT_SAVE_TURN_MARKER = '[ClawAI save status — the truth about this turn:]';

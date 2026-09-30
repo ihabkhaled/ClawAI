@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { withQuotedContext } from '../utilities/quoted-turn.utility';
+import { withSaveTurnNote } from '../utilities/context-save-note.utility';
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import {
   CONTEXT_PACK_FIT_BUDGET_SHARE,
@@ -694,7 +695,9 @@ ${evidence.snippet}`);
   private formatMessageLines(
     messages: AssembledContext['threadMessages'],
     grounded = false,
-    attachments: AttachmentTurnContext = { fileContents: [] },
+    attachments: AttachmentTurnContext & Pick<AssembledContext, 'saveTurnNote'> = {
+      fileContents: [],
+    },
   ): string[] {
     const lastUserIndex = messages.reduce(
       (found, message, index) => (this.mapRole(message) === 'user' ? index : found),
@@ -723,10 +726,13 @@ ${evidence.snippet}`);
    * something, the attachment is the request, and this says so. Per request
    * only: the stored row stays what the user sent. Rule 42 §18.
    */
-  private userTurnText(content: string, attachments: AttachmentTurnContext): string {
+  private userTurnText(
+    content: string,
+    attachments: AttachmentTurnContext & Pick<AssembledContext, 'saveTurnNote'>,
+  ): string {
     // Logged once per turn in assemble(), not here: the builders run several
     // times per turn (token estimates, then the real call).
-    return resolveContextTurnText(content, attachments);
+    return withSaveTurnNote(resolveContextTurnText(content, attachments), attachments.saveTurnNote);
   }
 
   private logAttachmentOnlyTurn(

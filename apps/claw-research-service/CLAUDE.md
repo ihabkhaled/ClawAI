@@ -111,3 +111,15 @@ Future phases add: `/research/fetch`, `/research/evidence`, `/research/workflows
 - A new sidecar strategy: add it to `SIDECAR_HEALTH_PROBES` here AND to
   health-service `DEPENDENCY_PROBES` + `COMPONENT_MEMBERS` + the frontend
   `StatusComponent` + 13 locales.
+
+## A failed fetch says WHY, never "Business Exception" (2026-09-30)
+
+`BusinessException` extends `HttpException`, whose `.message` is the generic string
+"Business Exception". Crawl and fetch warnings built from `error.message` told the user
+"Could not crawl <url>: Business Exception" when the site had simply answered 404, and
+the answering model then said only "no fetched evidence". Every warning/trace built from
+a caught fetch error uses `describeFetchFailure(error)`
+(`common/utilities/describe-fetch-failure.utility.ts`): `details.message`, else the error
+code. The strategy attempt record carries `httpStatus`, so "No fetch strategy could serve
+/x" ends with `direct=NOT_FOUND HTTP 404`. Do not read `.message` off a caught
+`BusinessException` for user-visible text (rule 41: every failed web step is SAID).

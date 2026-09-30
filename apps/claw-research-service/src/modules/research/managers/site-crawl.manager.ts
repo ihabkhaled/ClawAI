@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { describeFetchFailure } from '../../../common/utilities/describe-fetch-failure.utility';
 import { rankCandidatesByIntent, stripWww } from '../utilities/crawl-ranking.utility';
 
 import {
@@ -446,7 +447,7 @@ export class SiteCrawlManager {
       );
       return result;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
+      const message = describeFetchFailure(error);
       warnings.push(`Could not crawl ${url}: ${message}`);
       trace.push(traceEntry(phase, 'warning', Date.now() - start, `${url}: ${message}`));
       return null;
@@ -548,10 +549,7 @@ export class SiteCrawlManager {
     try {
       const candidate = new URL(rawUrl);
       const site = new URL(origin);
-      if (candidate.protocol !== 'http:' && candidate.protocol !== 'https:') {
-        return false;
-      }
-      return stripWww(candidate.hostname) === stripWww(site.hostname);
+      return candidate.protocol !== 'http:' && candidate.protocol !== 'https:' ? false : stripWww(candidate.hostname) === stripWww(site.hostname);
     } catch {
       return false;
     }

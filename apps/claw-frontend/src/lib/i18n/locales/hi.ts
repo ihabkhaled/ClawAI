@@ -4944,7 +4944,7 @@ export const hi: TranslationDictionary = {
       PAYPAL: 'PayPal',
       PAYMOB: 'Paymob',
       paypalCard: 'PayPal/Card',
-      paymobTestingSoon: 'Paymob (परीक्षण – जल्द)',
+      paymobCard: 'Paymob (कार्ड)',
       unavailable: 'भुगतान गेटवे उपलब्ध नहीं हैं',
     },
     proration: {

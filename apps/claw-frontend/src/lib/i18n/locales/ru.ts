@@ -4982,7 +4982,7 @@ export const ru: TranslationDictionary = {
       PAYPAL: 'PayPal',
       PAYMOB: 'Paymob',
       paypalCard: 'PayPal/Card',
-      paymobTestingSoon: 'Paymob (Тестирование – скоро)',
+      paymobCard: 'Paymob (карта)',
       unavailable: 'Платёжные шлюзы недоступны',
     },
     proration: {

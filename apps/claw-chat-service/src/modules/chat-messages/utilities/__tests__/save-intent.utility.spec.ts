@@ -6,7 +6,8 @@ import {
   packContentFor,
   parseSaveIntentVerdict,
 } from '../save-intent.utility';
-import { withContextSaveNote } from '../context-save-note.utility';
+import { withContextSaveNote, withSaveTurnNote } from '../context-save-note.utility';
+import { CONTEXT_SAVE_TURN_MARKER } from '../../constants/save-intent.constants';
 import { type AssembledContext } from '../../types/context.types';
 
 describe('mightBeSaveRequest — the recall net, not the decision', () => {
@@ -95,10 +96,33 @@ describe('prompt and note', () => {
     expect(note).toContain('/memory?memoryId=m');
   });
 
+  it('says plainly that nothing is saved while the pack choice is pending', () => {
+    const note = contextSaveModelNote({
+      status: ContextSaveStatus.NEEDS_PACK_CHOICE,
+      pending: { sourceMessageId: 'u', content: 'x', suggestedName: 'Trips', options: [] },
+    });
+
+    expect(note).toContain('NOTHING has been saved to a context pack yet');
+    expect(note).toContain('Do NOT say it was');
+    expect(note).toContain('Include EVERY link');
+  });
+
+  it('adds the note once to a turn, and nothing when there is no note', () => {
+    const once = withSaveTurnNote('save this', 'NOTE');
+
+    expect(once).toBe(`save this
+
+${CONTEXT_SAVE_TURN_MARKER}
+NOTE`);
+    expect(withSaveTurnNote(once, 'NOTE')).toBe(once);
+    expect(withSaveTurnNote('hi', undefined)).toBe('hi');
+  });
+
   it('appends the note to the system prompt, or uses it alone', () => {
     const base = { systemPrompt: 'Be concise.' } as AssembledContext;
 
     expect(withContextSaveNote(base, 'NOTE').systemPrompt).toBe('Be concise.\n\nNOTE');
     expect(withContextSaveNote({ ...base, systemPrompt: null }, 'NOTE').systemPrompt).toBe('NOTE');
+    expect(withContextSaveNote(base, 'NOTE').saveTurnNote).toBe('NOTE');
   });
 });

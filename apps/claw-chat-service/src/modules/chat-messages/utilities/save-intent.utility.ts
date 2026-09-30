@@ -100,14 +100,15 @@ export function contextSaveModelNote(record: ContextSaveRecord): string {
   }
   if (record.status === ContextSaveStatus.NEEDS_PACK_CHOICE) {
     lines.push(
-      '- The context-pack part is waiting for the user to pick a pack. A card under your reply',
+      '- NOTHING has been saved to a context pack yet. It waits for the user to pick a pack:',
     );
     lines.push(
-      '  lists their packs and a "New pack" option. Ask them, in one short sentence, to choose.',
+      '  a card under your reply lists their packs and a "New pack" option. Do NOT say it was',
     );
+    lines.push('  added or saved to context. Ask them, in one short sentence, to choose.');
   }
   lines.push(
-    "Confirm this to the user briefly, in the user's language, and include each link above as a markdown link.",
+    "Tell the user exactly this, briefly, in the user's language. Include EVERY link above as a markdown link.",
   );
   return lines.join('\n');
 }
