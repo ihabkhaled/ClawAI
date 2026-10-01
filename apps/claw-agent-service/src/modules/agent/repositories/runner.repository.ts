@@ -6,7 +6,7 @@ import {
   RUNNER_METADATA_KIND,
   RUNNER_SELECT,
 } from '../constants/runner.constants';
-import type { RunnerRow } from '../types/runner.types';
+import type { RunnerHeartbeatReport, RunnerRow } from '../types/runner.types';
 
 /**
  * Runner reads. Every query is owner-scoped by `userId`; the session key is
@@ -45,8 +45,12 @@ export class RunnerRepository {
     });
   }
 
-  /** A heartbeat revives an EXPIRED runner; a DISCONNECTED (revoked) one stays down. */
-  async touchHeartbeat(id: string): Promise<number> {
+  /**
+   * A heartbeat revives an EXPIRED runner; a DISCONNECTED (revoked) one stays
+   * down. The self-reported version and platform ride the same write, so a
+   * refused heartbeat records nothing (F100).
+   */
+  async touchHeartbeat(id: string, report: RunnerHeartbeatReport): Promise<number> {
     const result = await this.prisma.agentSession.updateMany({
       where: {
         id,
@@ -56,6 +60,8 @@ export class RunnerRepository {
         status: AgentSessionStatus.CONNECTED,
         lastHeartbeatAt: new Date(),
         disconnectedAt: null,
+        ...(report.agentVersion === undefined ? {} : { agentVersion: report.agentVersion }),
+        ...(report.platform === undefined ? {} : { platform: report.platform }),
       },
     });
     return result.count;

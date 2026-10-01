@@ -4,6 +4,12 @@ import type { RunnerApprovalPolicy } from '../../../common/enums/runner-approval
 
 export type RunnerRow = Prisma.AgentSessionGetPayload<{ select: typeof RUNNER_SELECT }>;
 
+/** F100: the self-reported part of a heartbeat; either field may be absent. */
+export type RunnerHeartbeatReport = {
+  agentVersion?: string;
+  platform?: string;
+};
+
 export type RunnerMetadata = {
   kind: string;
   name: string;

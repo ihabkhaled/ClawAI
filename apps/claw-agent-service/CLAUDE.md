@@ -56,6 +56,8 @@ Controller → Service → Repository (data access)
 - **Runner routes (`agent/runners/heartbeat|claim|jobs/:commandId/complete`) use
   `RunnerTokenGuard` only** — the runner token from registration/rotation. Never add
   CompatAgentGuard there: a device token or session key must not claim runner jobs (F100).
+  The heartbeat body (`{ agentVersion?, platform? }`, optional) is a self-reported record for
+  the owner, written in the same update as the heartbeat; never authorise anything from it.
 - CompatAgentGuard bridges device tokens to agentSession by reading sessionId from
   query / body / path (/sessions/:id) so existing session-scoped controllers keep working.
 - **Organizations (`agent/organizations/*`) are gated by org membership, not RBAC.** Every

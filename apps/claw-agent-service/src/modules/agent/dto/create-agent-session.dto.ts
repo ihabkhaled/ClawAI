@@ -18,17 +18,17 @@ const canonicalPlatforms = ['windows'] as const;
 const supportedPlatforms = [...nodePlatforms, ...canonicalPlatforms] as const;
 
 function normalizePlatform(value: (typeof supportedPlatforms)[number]): string {
-  if (value === 'win32' || value === 'cygwin') {
-    return 'windows';
-  }
-
-  return value;
+  return value === 'win32' || value === 'cygwin' ? 'windows' : value;
 }
+
+export const agentPlatformSchema = z.enum(supportedPlatforms).transform(normalizePlatform);
+
+export const agentVersionSchema = z.string().min(1).max(50);
 
 export const createAgentSessionSchema = z.object({
   hostname: z.string().min(1).max(255),
-  platform: z.enum(supportedPlatforms).transform(normalizePlatform),
-  agentVersion: z.string().min(1).max(50),
+  platform: agentPlatformSchema,
+  agentVersion: agentVersionSchema,
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 

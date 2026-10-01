@@ -22,7 +22,11 @@ import { AgentCommandManager } from '../managers/agent-command.manager';
 import { AgentSessionService } from './agent-session.service';
 import { AgentCommandService } from './agent-command.service';
 import { RunnerCredentialService } from './runner-credential.service';
-import type { DispatchRunnerJobDto, RegisterRunnerDto } from '../dto/register-runner.dto';
+import type {
+  DispatchRunnerJobDto,
+  RegisterRunnerDto,
+  RunnerHeartbeatDto,
+} from '../dto/register-runner.dto';
 import type { CompleteCommandDto } from '../dto/complete-command.dto';
 import type {
   RegisterRunnerResult,
@@ -138,9 +142,13 @@ export class RunnerService {
     });
   }
 
-  /** Revives an EXPIRED runner; a revoked (DISCONNECTED) one answers 409. */
-  async heartbeat(sessionId: string): Promise<HeartbeatResult> {
-    const revived = await this.runners.touchHeartbeat(sessionId);
+  /**
+   * Revives an EXPIRED runner; a revoked (DISCONNECTED) one answers 409.
+   * The optional report (F100) updates the recorded version and platform only;
+   * it is self-reported and unsigned, so nothing decides access from it.
+   */
+  async heartbeat(sessionId: string, report?: RunnerHeartbeatDto): Promise<HeartbeatResult> {
+    const revived = await this.runners.touchHeartbeat(sessionId, report ?? {});
     if (revived === 0) {
       throw new BusinessException('agent.runner.offline', 'RUNNER_OFFLINE', HttpStatus.CONFLICT);
     }

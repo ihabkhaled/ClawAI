@@ -10507,7 +10507,7 @@
       },
       "claw-agent-service": {
         "runner": "vitest",
-        "testFiles": 37
+        "testFiles": 39
       },
       "claw-audit-service": {
         "runner": "vitest",
@@ -11317,7 +11317,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1836,
+    "totalTestFiles": 1838,
     "workspaceCount": 25
   }
 }

@@ -21,6 +21,8 @@ import {
   dispatchRunnerJobSchema,
   type RegisterRunnerDto,
   registerRunnerSchema,
+  type RunnerHeartbeatDto,
+  runnerHeartbeatSchema,
 } from '../dto/register-runner.dto';
 import type {
   RegisterRunnerResult,
@@ -71,8 +73,11 @@ export class AgentRunnerController {
   @HttpCode(HttpStatus.OK)
   @Public()
   @UseGuards(RunnerTokenGuard)
-  async heartbeat(@AgentSession() ctx: AgentAuthContext): Promise<HeartbeatResult> {
-    return this.runners.heartbeat(ctx.sessionId);
+  async heartbeat(
+    @AgentSession() ctx: AgentAuthContext,
+    @Body(new ZodValidationPipe(runnerHeartbeatSchema)) dto: RunnerHeartbeatDto,
+  ): Promise<HeartbeatResult> {
+    return this.runners.heartbeat(ctx.sessionId, dto);
   }
 
   @Post('claim')

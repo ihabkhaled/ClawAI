@@ -1,7 +1,11 @@
 import { z } from 'zod';
 import { RUNNER_LABEL_MAX } from '../constants/runner.constants';
 import { RunnerApprovalPolicy } from '../../../common/enums/runner-approval-policy.enum';
-import { createAgentSessionSchema } from './create-agent-session.dto';
+import {
+  agentPlatformSchema,
+  agentVersionSchema,
+  createAgentSessionSchema,
+} from './create-agent-session.dto';
 
 export const runnerLabelSchema = z
   .string()
@@ -26,3 +30,19 @@ export const dispatchRunnerJobSchema = z.object({
 });
 
 export type DispatchRunnerJobDto = z.infer<typeof dispatchRunnerJobSchema>;
+
+/**
+ * F100: what a runner says about itself at heartbeat. Self-reported and
+ * unsigned, so it is recorded for the owner and never used to authorise
+ * anything. Every field is optional and a missing body is an empty report,
+ * which keeps every runner that sends no body working. Unknown keys are
+ * dropped: a runner can change its version and platform, nothing else.
+ */
+export const runnerHeartbeatSchema = z
+  .object({
+    agentVersion: agentVersionSchema.optional(),
+    platform: agentPlatformSchema.optional(),
+  })
+  .default({});
+
+export type RunnerHeartbeatDto = z.infer<typeof runnerHeartbeatSchema>;

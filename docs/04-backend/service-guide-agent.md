@@ -211,6 +211,16 @@ repository-event triggers and secrets isolation are open: see
   `RUNNER_HEARTBEAT_TTL_SECONDS` (120 s) is not listed, gets no job and
   claims nothing; its next heartbeat revives it. Completing a job not
   addressed to the calling runner is 403.
+- **Runner report at heartbeat (F100 step 1, 2026-10-01):**
+  `POST agent/runners/heartbeat` takes an optional body `{ agentVersion?,
+platform? }` (`runnerHeartbeatSchema`; a missing body is an empty report, so
+  existing runners are unchanged; unknown keys are dropped). It is written to
+  the session's existing `agentVersion` and `platform` columns in the same
+  update as the heartbeat, so a refused (revoked) heartbeat records nothing, and
+  `GET agent/runners` shows the current values. It is self-reported and
+  unsigned: it informs the owner and decides nothing. There is no organization
+  runner-version policy and no enforcement yet; both need a signing-key decision
+  first (`docs/14-risk-debt/coding-agent-backend-decisions-2026-10.md`). No migration.
 - **Prompt routines (F099, 2026-09-30):** `POST agent/scheduled-commands` with
   `kind: PROMPT` (`prompt`, optional `model` as `PROVIDER/model`, optional
   `repoRef` = workspace folder name, `runnerLabels`) needs no device

@@ -298,9 +298,37 @@ describe('RunnerService', () => {
     it('heartbeat refreshes the session and the credential', async () => {
       const { service, repo, credentials } = setup();
       const result = await service.heartbeat('runner-1');
-      expect(repo.touchHeartbeat).toHaveBeenCalledWith('runner-1');
+      expect(repo.touchHeartbeat).toHaveBeenCalledWith('runner-1', {});
       expect(credentials.touch).toHaveBeenCalledWith('runner-1');
       expect(result).toEqual({ ok: true, nextHeartbeatInSeconds: 60 });
+    });
+
+    it('records the version and platform a runner reports at heartbeat (F100, record only)', async () => {
+      const { service, repo } = setup();
+      const result = await service.heartbeat('runner-1', {
+        agentVersion: '1.90.0',
+        platform: 'windows',
+      });
+      expect(repo.touchHeartbeat).toHaveBeenCalledWith('runner-1', {
+        agentVersion: '1.90.0',
+        platform: 'windows',
+      });
+      expect(result).toEqual({ ok: true, nextHeartbeatInSeconds: 60 });
+    });
+
+    it('a heartbeat with no report leaves the registered version and platform alone', async () => {
+      const { service, repo } = setup();
+      await service.heartbeat('runner-1', undefined);
+      expect(repo.touchHeartbeat).toHaveBeenCalledWith('runner-1', {});
+    });
+
+    it('a revoked runner reporting a version records nothing and is still refused', async () => {
+      const { service, repo, credentials } = setup();
+      repo.touchHeartbeat.mockResolvedValueOnce(0);
+      await expect(service.heartbeat('runner-1', { agentVersion: '9.9.9' })).rejects.toBeInstanceOf(
+        BusinessException,
+      );
+      expect(credentials.touch).not.toHaveBeenCalled();
     });
 
     it('heartbeat of a revoked (disconnected) runner is refused', async () => {
