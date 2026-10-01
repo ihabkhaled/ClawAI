@@ -81,6 +81,16 @@ describe('ModelRateClient — per-unit rows', () => {
     expect(snapshot?.rates.imagePerUnitMicroUsd).toBe(167_000);
   });
 
+  it('does NOT mistake a per-second VIDEO row with zero token rates for the local fallback', async () => {
+    // Found live 2026-10-01: a funded Pro user was refused PAYG_MODEL_UNPRICED on Veo.
+    answer(costPayload({ videoPerUnitMicroUsd: 50_000 }));
+
+    const snapshot = await client.findRate('GEMINI', 'veo-3.1-lite-generate-preview');
+
+    expect(snapshot?.isLocalComputeFallback).toBe(false);
+    expect(snapshot?.rates.videoPerUnitMicroUsd).toBe(50_000);
+  });
+
   it('treats per-second and per-character rows the same way', async () => {
     answer(costPayload({ audioPerUnitMicroUsd: 100 }));
     expect((await client.findRate('OPENAI', 'whisper-1'))?.isLocalComputeFallback).toBe(false);

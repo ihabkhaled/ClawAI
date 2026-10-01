@@ -164,13 +164,14 @@ export class ModelRateClient {
    * answer and refused.
    */
   private static looksLikeLocalFallback(payload: ModelCostResponse): boolean {
-    return payload.localComputeOwnership !== null ? true : (
-      payload.isPriced &&
-      (payload.inputPerMillionMicroUsd ?? 0) === 0 &&
-      (payload.outputPerMillionMicroUsd ?? 0) === 0 &&
-      (payload.imagePerUnitMicroUsd ?? 0) === 0 &&
-      (payload.audioPerUnitMicroUsd ?? 0) === 0 &&
-      (payload.ttsPerCharacterMicroUsd ?? 0) === 0
-    );
+    return payload.localComputeOwnership !== null
+      ? true
+      : payload.isPriced &&
+          (payload.inputPerMillionMicroUsd ?? 0) === 0 &&
+          (payload.outputPerMillionMicroUsd ?? 0) === 0 &&
+          (payload.imagePerUnitMicroUsd ?? 0) === 0 &&
+          (payload.audioPerUnitMicroUsd ?? 0) === 0 &&
+          (payload.videoPerUnitMicroUsd ?? 0) === 0 &&
+          (payload.ttsPerCharacterMicroUsd ?? 0) === 0;
   }
 }
