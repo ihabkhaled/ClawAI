@@ -44,6 +44,8 @@ const connectorFieldsSchema = z.object({
   // Row-level checks run in gatewayHeaderRowsToRecord; connector-service
   // re-validates names, reserved names and values on every write (F092).
   gatewayHeaders: z.record(z.string(), z.string()).optional(),
+  // Credit connector flag (`Connector.isPayAsYouGo`, ADR-082).
+  isPayAsYouGo: z.boolean().optional(),
 });
 
 export const createConnectorSchema = connectorFieldsSchema.superRefine((dto, ctx) => {

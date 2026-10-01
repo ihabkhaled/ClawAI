@@ -13,11 +13,13 @@ import { AdminCreditController } from './controllers/admin-credit.controller';
 import { CreditController } from './controllers/credit.controller';
 import { CreditInternalController } from './controllers/credit-internal.controller';
 import { CreditReservationManager } from './managers/credit-reservation.manager';
+import { CreditFreeAllowanceRepository } from './repositories/credit-free-allowance.repository';
 import { CreditLedgerRepository } from './repositories/credit-ledger.repository';
 import { CreditPackageRepository } from './repositories/credit-package.repository';
 import { CreditWalletRepository } from './repositories/credit-wallet.repository';
 import { CreditAccountService } from './services/credit-account.service';
 import { CreditEventService } from './services/credit-event.service';
+import { CreditFreeAllowanceService } from './services/credit-free-allowance.service';
 import { CreditGrantService } from './services/credit-grant.service';
 import { CreditPackageService } from './services/credit-package.service';
 import { CreditSweeperService } from './services/credit-sweeper.service';
@@ -50,8 +52,10 @@ import { CreditWalletService } from './services/credit-wallet.service';
   providers: [
     CreditWalletRepository,
     CreditLedgerRepository,
+    CreditFreeAllowanceRepository,
     CreditPackageRepository,
     CreditWalletService,
+    CreditFreeAllowanceService,
     CreditGrantService,
     CreditAccountService,
     CreditPackageService,

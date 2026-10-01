@@ -2,6 +2,8 @@
 
 import { Paperclip } from 'lucide-react';
 
+import { AdminFeedbackReporter } from '@/components/admin/feedback/admin-feedback-reporter';
+import { AdminFeedbackSourceBadge } from '@/components/admin/feedback/admin-feedback-source-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,6 +39,7 @@ export function AdminFeedbackTable({ items, onSelect }: AdminFeedbackListProps) 
             <TableHead>{t('feedback.admin.table.type')}</TableHead>
             <TableHead>{t('feedback.admin.table.title')}</TableHead>
             <TableHead>{t('feedback.admin.table.reporter')}</TableHead>
+            <TableHead>{t('feedback.admin.table.source')}</TableHead>
             <TableHead>{t('feedback.admin.table.status')}</TableHead>
             <TableHead>{t('feedback.admin.table.created')}</TableHead>
             <TableHead>{t('feedback.admin.table.updated')}</TableHead>
@@ -58,7 +61,12 @@ export function AdminFeedbackTable({ items, onSelect }: AdminFeedbackListProps) 
               </TableCell>
               <TableCell>{getTypeLabel(item.type)}</TableCell>
               <TableCell>{item.title}</TableCell>
-              <TableCell>{item.reporterEmail}</TableCell>
+              <TableCell className="min-w-[13rem]">
+                <AdminFeedbackReporter name={item.reporterName} email={item.reporterEmail} />
+              </TableCell>
+              <TableCell>
+                <AdminFeedbackSourceBadge source={item.source} />
+              </TableCell>
               <TableCell>
                 <Badge variant="outline">{getStatusLabel(item.status)}</Badge>
               </TableCell>

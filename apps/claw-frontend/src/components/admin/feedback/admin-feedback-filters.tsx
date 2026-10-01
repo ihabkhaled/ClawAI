@@ -9,7 +9,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FEEDBACK_STATUS_TABS, FEEDBACK_TYPE_OPTIONS } from '@/constants/feedback.constants';
+import {
+  FEEDBACK_SOURCE_OPTIONS,
+  FEEDBACK_STATUS_TABS,
+  FEEDBACK_TYPE_OPTIONS,
+} from '@/constants/feedback.constants';
 import { useTranslation } from '@/lib/i18n';
 import type { AdminFeedbackFiltersProps } from '@/types/feedback-props.types';
 
@@ -18,6 +22,8 @@ export function AdminFeedbackFilters({
   onStatusChange,
   type,
   onTypeChange,
+  source,
+  onSourceChange,
   search,
   onSearchChange,
   counts,
@@ -43,9 +49,9 @@ export function AdminFeedbackFilters({
         </TabsList>
       </Tabs>
 
-      <div className="flex gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
         <Select value={type} onValueChange={onTypeChange}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-full sm:w-[200px]">
             <SelectValue placeholder={t('feedback.admin.type.placeholder')} />
           </SelectTrigger>
           <SelectContent>
@@ -58,12 +64,30 @@ export function AdminFeedbackFilters({
           </SelectContent>
         </Select>
 
+        <Select value={source} onValueChange={onSourceChange}>
+          <SelectTrigger
+            className="w-full sm:w-[200px]"
+            aria-label={t('feedback.admin.source.label')}
+            data-testid="feedback-source-filter"
+          >
+            <SelectValue placeholder={t('feedback.admin.source.label')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t('feedback.admin.source.all')}</SelectItem>
+            {FEEDBACK_SOURCE_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {t(opt.labelKey)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         <Input
           placeholder={t('feedback.admin.searchPlaceholder')}
           aria-label={t('feedback.admin.searchLabel')}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="max-w-sm flex-1"
+          className="w-full sm:max-w-sm sm:flex-1"
         />
       </div>
     </div>

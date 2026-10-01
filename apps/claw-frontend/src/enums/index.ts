@@ -163,6 +163,7 @@ export { TrialStatus } from './trial-status.enum';
 export { TrialBannerDismissalChoice } from './trial-banner-dismissal.enum';
 export { InstallPromptOutcome } from './install-prompt-outcome.enum';
 export { FeedbackSortDirection } from './feedback-sort-direction.enum';
+export { FeedbackSource } from './feedback-source.enum';
 export { FeedbackEditorTab } from './feedback-editor-tab.enum';
 export { ImagePreviewStatus } from './image-preview-status.enum';
 export { ScreenCaptureStatus } from './screen-capture-status.enum';

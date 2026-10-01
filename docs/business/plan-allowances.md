@@ -282,3 +282,13 @@ Until then these are estimates that were reviewed, not measurements.
 - [margin-model.md](margin-model.md) · [topup-pricing.md](topup-pricing.md) · [rollout-and-notice.md](rollout-and-notice.md)
 - [`docs/06-data/plan-and-quota-specification.md`](../06-data/plan-and-quota-specification.md) — the technical quota contract
 - [`rules/28-billing-integrity-and-api-contracts.md`](../../rules/28-billing-integrity-and-api-contracts.md) — the widening invariant
+
+## Free requests on credit connectors (ADR-142, 2026-10-01)
+
+A user with no credit may still try each cloud provider: **Free gets 2 requests per credit
+connector per UTC month; every paid plan gets 0** (they pay with credit). The platform absorbs the
+provider cost, bounded per request by `min($0.15, monthlyProviderCostCeiling / allowance)`, so
+Free's worst case on one provider is $0.30 a month. `null` = unlimited, `0` = none. Only token-priced
+surfaces qualify; image, video, transcription and speech never do. Edit it per plan in the admin plan
+form (`creditConnectorFreeRequestsPerMonth`); raise the plan's provider-cost ceiling with it, because
+each request's budget shrinks as the count grows.

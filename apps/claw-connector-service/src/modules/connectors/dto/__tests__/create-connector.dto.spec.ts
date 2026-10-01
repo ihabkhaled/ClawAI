@@ -352,3 +352,29 @@ describe('createConnectorSchema — gatewayHeaders (F092)', () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe('isPayAsYouGo (credit connector flag)', () => {
+  const base = {
+    name: 'X',
+    provider: ConnectorProvider.OLLAMA,
+    authType: ConnectorAuthType.NONE,
+  };
+
+  it('is optional on create, so the provider default applies', () => {
+    const result = createConnectorSchema.safeParse(base);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.isPayAsYouGo).toBeUndefined();
+    }
+  });
+
+  it('accepts an explicit boolean on create and update', () => {
+    expect(createConnectorSchema.safeParse({ ...base, isPayAsYouGo: true }).success).toBe(true);
+    expect(updateConnectorSchema.safeParse({ isPayAsYouGo: false }).success).toBe(true);
+  });
+
+  it('rejects a non-boolean on create and update', () => {
+    expect(createConnectorSchema.safeParse({ ...base, isPayAsYouGo: 'yes' }).success).toBe(false);
+    expect(updateConnectorSchema.safeParse({ isPayAsYouGo: 1 }).success).toBe(false);
+  });
+});

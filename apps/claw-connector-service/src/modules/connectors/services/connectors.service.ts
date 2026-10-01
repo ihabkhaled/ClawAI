@@ -123,7 +123,7 @@ export class ConnectorsService implements OnApplicationBootstrap {
     this.logger.log(
       `createConnector: completed — connectorId=${connector.id}, provider=${dto.provider}`,
     );
-    return { ...connector, _count: { models: 0 } };
+    return this.maskSecrets({ ...connector, _count: { models: 0 } });
   }
 
   async getConnectors(
@@ -274,7 +274,7 @@ export class ConnectorsService implements OnApplicationBootstrap {
     });
 
     this.logger.log(`deleteConnector: completed — connectorId=${id}, provider=${deleted.provider}`);
-    return { ...deleted, _count: { models: 0 } };
+    return this.maskSecrets({ ...deleted, _count: { models: 0 } });
   }
 
   async probeModelToolCapability(id: string, modelKey: string): Promise<ModelBehaviorProbeResult> {

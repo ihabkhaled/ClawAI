@@ -8,6 +8,7 @@ import { AdminFeedbackDetailSection } from '@/components/admin/feedback/admin-fe
 import { AdminFeedbackHistoryList } from '@/components/admin/feedback/admin-feedback-history-list';
 import { AdminFeedbackImageViewer } from '@/components/admin/feedback/admin-feedback-image-viewer';
 import { AdminFeedbackMetaItem } from '@/components/admin/feedback/admin-feedback-meta-item';
+import { AdminFeedbackSourceBadge } from '@/components/admin/feedback/admin-feedback-source-badge';
 import { AdminFeedbackStatusActions } from '@/components/admin/feedback/admin-feedback-status-actions';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -22,7 +23,11 @@ import { useTranslation } from '@/lib/i18n';
 import { MarkdownRenderer } from '@/lib/markdown/markdown-renderer';
 import type { AdminFeedbackDetailDialogProps } from '@/types/feedback-props.types';
 import { formatDateTimeSafe } from '@/utilities/date.utility';
-import { feedbackStatusLabelKey, feedbackTypeLabelKey } from '@/utilities/feedback-label.utility';
+import {
+  feedbackSourceLabelKey,
+  feedbackStatusLabelKey,
+  feedbackTypeLabelKey,
+} from '@/utilities/feedback-label.utility';
 
 // The dialog used to return null while the ticket loaded, so a click on a row
 // did nothing visible until the request came back. It stays mounted now and
@@ -46,6 +51,12 @@ export function AdminFeedbackDetailDialog({
 
   const fallback = t('feedback.admin.detail.notAvailable');
   const context = ticket?.pageContext;
+  const reporterName =
+    ticket?.reporterName === undefined ||
+    ticket.reporterName === null ||
+    ticket.reporterName.trim().length === 0
+      ? null
+      : ticket.reporterName;
   const viewport =
     context === undefined ||
     context.viewportWidth === undefined ||
@@ -79,6 +90,7 @@ export function AdminFeedbackDetailDialog({
                     {t(feedbackStatusLabelKey(ticket.status))}
                   </Badge>
                   <Badge variant="outline">{t(feedbackTypeLabelKey(ticket.type))}</Badge>
+                  <AdminFeedbackSourceBadge source={ticket.source} />
                 </div>
                 <DialogTitle className="text-lg">{ticket.title}</DialogTitle>
                 {ticket.subject === undefined || ticket.subject.length === 0 ? null : (
@@ -90,11 +102,15 @@ export function AdminFeedbackDetailDialog({
                 <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   <AdminFeedbackMetaItem
                     label={t('feedback.admin.detail.reporter')}
-                    value={
-                      ticket.reporterName === undefined || ticket.reporterName.length === 0
-                        ? ticket.reporterEmail
-                        : `${ticket.reporterName} (${ticket.reporterEmail})`
-                    }
+                    value={reporterName ?? fallback}
+                  />
+                  <AdminFeedbackMetaItem
+                    label={t('feedback.admin.detail.email')}
+                    value={ticket.reporterEmail}
+                  />
+                  <AdminFeedbackMetaItem
+                    label={t('feedback.admin.detail.source')}
+                    value={t(feedbackSourceLabelKey(ticket.source))}
                   />
                   <AdminFeedbackMetaItem
                     label={t('feedback.admin.detail.created')}

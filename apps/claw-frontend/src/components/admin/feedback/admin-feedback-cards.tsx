@@ -2,6 +2,8 @@
 
 import { Paperclip } from 'lucide-react';
 
+import { AdminFeedbackReporter } from '@/components/admin/feedback/admin-feedback-reporter';
+import { AdminFeedbackSourceBadge } from '@/components/admin/feedback/admin-feedback-source-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,13 +48,13 @@ export function AdminFeedbackCards({ items, onSelect }: AdminFeedbackListProps) 
             <CardContent>
               <div className="space-y-2">
                 <p className="font-medium">{item.title}</p>
-                <div className="text-muted-foreground flex flex-wrap gap-2 text-sm">
-                  <span>{getTypeLabel(item.type)}</span>
-                  <span>•</span>
-                  <span>{item.reporterEmail}</span>
-                </div>
-                <div className="flex items-center justify-between pt-2">
-                  <Badge variant="outline">{getStatusLabel(item.status)}</Badge>
+                <div className="text-muted-foreground text-sm">{getTypeLabel(item.type)}</div>
+                <AdminFeedbackReporter name={item.reporterName} email={item.reporterEmail} />
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="outline">{getStatusLabel(item.status)}</Badge>
+                    <AdminFeedbackSourceBadge source={item.source} />
+                  </div>
                   <span className="text-muted-foreground text-xs">
                     {t('feedback.admin.updated')}: {formatDateTimeSafe(item.updatedAt)}
                   </span>

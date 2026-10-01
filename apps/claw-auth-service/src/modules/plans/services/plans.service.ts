@@ -606,6 +606,7 @@ export class PlansService {
       maxContextPacks: plan.maxContextPacks,
       maxMemoryItems: plan.maxMemoryItems,
       maxVideoSeconds: plan.maxVideoSeconds,
+      creditConnectorFreeRequestsPerMonth: plan.creditConnectorFreeRequestsPerMonth,
       // Both of these are ADMIN-form fields. Omitting them from the view meant
       // the edit form loaded `undefined`, rendered blank in a number input, and
       // then failed to save with "expected number, received NaN" — so an

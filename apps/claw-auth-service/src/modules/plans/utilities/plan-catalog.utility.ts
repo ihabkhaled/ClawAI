@@ -69,6 +69,7 @@ export function toCatalogEntry(
     maxContextPacks: plan.maxContextPacks,
     maxMemoryItems: plan.maxMemoryItems,
     maxVideoSeconds: plan.maxVideoSeconds,
+    creditConnectorFreeRequestsPerMonth: plan.creditConnectorFreeRequestsPerMonth,
     featureGates: {
       allowCompareMode: plan.allowCompareMode,
       allowJudgeMode: plan.allowJudgeMode,

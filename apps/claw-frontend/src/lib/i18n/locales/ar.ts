@@ -1077,6 +1077,11 @@ export const ar: TranslationDictionary = {
     regionPlaceholder: 'مثال: us-east-1',
     workspaceIdPlaceholder: 'مثال: wrkspc_01AbCd...',
     saveFirstThenTest: 'احفظ الموصّل أولًا ثم اختبره',
+    creditConnector: 'موصّل بالرصيد',
+    creditConnectorHelp:
+      'موصّل بالرصيد: يُدفع الاستخدام من رصيد المستخدم، وتحصل الخطط المجانية على الطلبات المجانية الشهرية المحددة في إعدادات الخطة.',
+    creditBadge: 'رصيد',
+    includedBadge: 'مشمول',
     gatewayHeaders: 'ترويسات البوابة (اختياري)',
     gatewayHeadersHelp:
       'ترويسات إضافية لبوابة نماذج لغوية أمام المزوّد (LiteLLM وPortkey وHelicone). تُخزَّن القيم مشفّرة ولا تُعرض مرة أخرى، ولا تحل محل مفتاح API أبدًا.',
@@ -4256,6 +4261,7 @@ export const ar: TranslationDictionary = {
     empty: 'لا توجد خطط بعد. أنشئ خطتك الأولى للبدء.',
     dailyQuota: 'الرموز اليومية',
     monthlyQuota: 'الرموز الشهرية',
+    creditFreeRequests: 'الطلبات المجانية بالرصيد',
     modelRules: 'قواعد النماذج',
     unlimited: 'غير محدود',
     defaultBadge: 'افتراضية',
@@ -4324,6 +4330,11 @@ export const ar: TranslationDictionary = {
       maxContextPacks: 'أقصى عدد حزم السياق',
       maxMemoryItems: 'أقصى عدد عناصر الذاكرة',
       maxVideoSeconds: 'أقصى طول للفيديو (بالثواني)',
+      creditConnectorFreeRequests: 'الطلبات المجانية لكل موصّل بالرصيد شهريًا',
+      creditConnectorFreeRequestsHelp:
+        'عدد الطلبات شهريًا التي يمكن لمستخدم هذه الخطة إجراؤها عبر الموصّلات بالرصيد قبل خصم رصيده. اتركه فارغًا لعدد غير محدود؛ القيمة 0 تعطّله.',
+      creditConnectorFreeRequestsInvalid:
+        'أدخل عددًا صحيحًا من 0 إلى 100000، أو اتركه فارغًا لعدد غير محدود.',
       isPublic: 'مُدرجة علنًا',
       isTrial: 'خطة تجربة مجانية',
       trialHelp: 'يمكن استخدام الفترة التجريبية مرة واحدة لكل حساب. حدّد مدتها أدناه.',
@@ -4739,6 +4750,8 @@ export const ar: TranslationDictionary = {
         CONSUMPTION: 'مستخدم',
         ADMIN_ADJUSTMENT: 'تعديل يدوي',
         PROVIDER_FAILURE_REFUND: 'استرداد بعد فشل المزوّد',
+
+        FREE_ALLOWANCE: 'طلب شهري مجاني',
       },
       title: 'رصيد الموصّلات',
       available: 'المتاح',
@@ -6478,6 +6491,16 @@ export const ar: TranslationDictionary = {
       heading: 'عنوان',
       link: 'رابط',
       inlineCode: 'شيفرة مضمّنة',
+
+      boldLabel: 'غ',
+
+      italicLabel: 'م',
+
+      headingLabel: 'ع',
+
+      listLabel: 'قائمة',
+
+      linkLabel: 'رابط',
       write: 'كتابة',
       preview: 'معاينة',
     },
@@ -6516,6 +6539,12 @@ export const ar: TranslationDictionary = {
       hasAttachments: 'يحتوي مرفقات',
       updated: 'آخر تحديث',
       type: { all: 'كل الأنواع', placeholder: 'تصفية حسب النوع' },
+      source: {
+        all: 'كل المصادر',
+        label: 'تصفية حسب المصدر',
+        authenticated: 'مسجّل الدخول',
+        public: 'زائر',
+      },
       status: {
         all: 'الكل',
         open: 'مفتوحة',
@@ -6531,6 +6560,8 @@ export const ar: TranslationDictionary = {
         imageLoading: 'جارٍ تحميل الصورة…',
         ticket: 'التذكرة {ticketNumber}',
         reporter: 'المُبلِّغ',
+        source: 'المصدر',
+        email: 'البريد الإلكتروني',
         created: 'تاريخ الإنشاء',
         updated: 'آخر تحديث',
         resolved: 'تاريخ الحل',
@@ -6553,6 +6584,7 @@ export const ar: TranslationDictionary = {
         type: 'النوع',
         title: 'العنوان',
         reporter: 'المُبلِّغ',
+        source: 'المصدر',
         status: 'الحالة',
         created: 'أُنشئت',
         updated: 'حُدِّثت',

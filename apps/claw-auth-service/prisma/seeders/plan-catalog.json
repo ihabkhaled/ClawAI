@@ -29,7 +29,14 @@
     "media (ADR-122): Free keeps the basics, paid gets image generation/edit,",
     "helper vision, text-to-speech and 600 s of video. maxVideoSeconds null would",
     "mean unlimited; 0 would switch video off. Existing installs are moved by",
-    "migration 20260925200000_add_media_plan_gates, not by this file."
+    "migration 20260925200000_add_media_plan_gates, not by this file.",
+    "",
+    "creditConnectorFreeRequestsPerMonth (ADR-142): free requests per CREDIT",
+    "connector per UTC month, absorbed by the platform when the user has no",
+    "credit. Free = 2, every paid plan = 0 (they pay with credit). null would mean",
+    "unlimited; 0 means none. Fresh installs only: existing installs got it from",
+    "migration 20261001150000_credit_connector_free_allowance, and the seeder never",
+    "rewrites a plan an administrator has edited."
   ],
   "plans": [
     {
@@ -128,6 +135,7 @@
         "textToSpeech": false,
         "maxVideoSeconds": 60
       },
+      "creditConnectorFreeRequestsPerMonth": 2,
       "isPopular": false,
       "paygCreditPercentBps": 3000
     },
@@ -227,6 +235,7 @@
         "textToSpeech": true,
         "maxVideoSeconds": 600
       },
+      "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": false,
       "paygCreditPercentBps": 3000
     },
@@ -326,6 +335,7 @@
         "textToSpeech": true,
         "maxVideoSeconds": 600
       },
+      "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": false,
       "paygCreditPercentBps": 3000
     },
@@ -425,6 +435,7 @@
         "textToSpeech": true,
         "maxVideoSeconds": 600
       },
+      "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": true,
       "paygCreditPercentBps": 2500
     },
@@ -524,6 +535,7 @@
         "textToSpeech": true,
         "maxVideoSeconds": 600
       },
+      "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": false,
       "paygCreditPercentBps": 2500
     },
@@ -623,6 +635,7 @@
         "textToSpeech": true,
         "maxVideoSeconds": 600
       },
+      "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": false,
       "paygCreditPercentBps": 2500
     },
@@ -722,6 +735,7 @@
         "textToSpeech": true,
         "maxVideoSeconds": 600
       },
+      "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": false,
       "paygCreditPercentBps": 2500
     }

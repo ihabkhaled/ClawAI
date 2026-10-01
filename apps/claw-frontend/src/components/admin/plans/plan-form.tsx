@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import {
   PAYG_CREDIT_PERCENT_BPS_MAX,
+  PLAN_CREDIT_FREE_REQUESTS_LIMIT,
   PLAN_TRIAL_MAX_DAYS,
   PLAN_TRIAL_MIN_DAYS,
 } from '@/constants/plan.constants';
@@ -278,6 +279,32 @@ export function PlanForm({
             onChange={(e) => setField('maxVideoSeconds', e.target.value)}
             placeholder={t('adminPlans.form.unlimitedPlaceholder')}
           />
+        </div>
+        <div className="grid grid-cols-1 gap-2">
+          <label htmlFor="plan-credit-free-requests" className="text-sm font-medium">
+            {t('adminPlans.form.creditConnectorFreeRequests')}
+          </label>
+          <Input
+            id="plan-credit-free-requests"
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={PLAN_CREDIT_FREE_REQUESTS_LIMIT}
+            step={1}
+            value={state.creditConnectorFreeRequestsPerMonth}
+            onChange={(e) => setField('creditConnectorFreeRequestsPerMonth', e.target.value)}
+            placeholder={t('adminPlans.form.unlimitedPlaceholder')}
+            aria-invalid={fieldErrors.creditConnectorFreeRequestsPerMonth !== undefined}
+            aria-describedby="plan-credit-free-requests-help"
+          />
+          <p id="plan-credit-free-requests-help" className="text-muted-foreground text-xs">
+            {t('adminPlans.form.creditConnectorFreeRequestsHelp')}
+          </p>
+          {fieldErrors.creditConnectorFreeRequestsPerMonth !== undefined ? (
+            <p className="text-destructive text-xs" role="alert">
+              {t(fieldErrors.creditConnectorFreeRequestsPerMonth)}
+            </p>
+          ) : null}
         </div>
         <div className="grid grid-cols-1 gap-2">
           <label htmlFor="plan-display-order" className="text-sm font-medium">

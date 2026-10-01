@@ -514,7 +514,7 @@ wrong service in production while passing every localhost test.
 
 | Route                                | Returns                                        |
 | ------------------------------------ | ---------------------------------------------- |
-| `GET /credit/me`                     | `PaygWalletSnapshot`                           |
+| `GET /credit/me`                     | `PaygWalletSnapshot` (incl. `freeAllowance`)   |
 | `GET /credit/me/ledger?cursor&limit` | `{entries: PaygLedgerEntryView[], nextCursor}` |
 | `GET /credit/packages`               | `CreditPackageView[]` — active versions only   |
 
@@ -545,6 +545,44 @@ fresh on every call; the entitlements adapter has no cache, so a top-up applies 
 next request). `hasPlanFeature` returns true for `allowImageGeneration` when it is set.
 The reservation still refuses with 402 when the balance cannot cover the hold. TTS and
 the vision helper stay plan-gated.
+
+## Free allowance on credit connectors
+
+A plan may give its users a few free requests per credit connector per UTC month
+([ADR-142](../13-adr/adr-142-free-allowance-on-credit-connectors.md)). Free ships at 2; every paid
+plan at 0. The setting is `Plan.creditConnectorFreeRequestsPerMonth` (`null` unlimited, `0` none),
+editable in the admin plan form.
+
+```
+reserve(call)
+  classify -> metered credit connector
+  credit covers the hold?  -> ordinary wallet hold (credit first, always)
+  otherwise                -> CreditFreeAllowanceService.tryAdmit
+        surface eligible and no per-unit quantity?   no -> 402
+        plan allowance > 0 or null?                  no -> 402
+        clamp output to min($0.15, plan ceiling / allowance)   too small -> 402
+        INSERT .. ON CONFLICT DO UPDATE .. WHERE used_count < limit   no row -> 402
+        -> { metered: true, heldMicroUsd: 0, freeAllowance: true }
+```
+
+- **Counter:** `credit_free_allowance_usage`, unique `(user_id, provider, period_key)`, provider
+  upper-cased, period the UTC `YYYY-MM`. The guarded upsert is the only writer that adds a slot, so
+  parallel requests cannot exceed the limit; `release` subtracts one (floor 0).
+- **Record:** a `WeightedUsageRecord` with `isPayg` and `isFreeAllowance`, zero bucket holds and the
+  absorbed worst case as `estimatedCostMicroUsd`; `finalize` stores the real cost in
+  `actualCostMicroUsd` and moves no wallet money. The sweeper reclaims an abandoned one through the
+  same `release`.
+- **Ledger:** a zero-amount `FREE_ALLOWANCE` row when used (`reason: FREE_ALLOWANCE_USED`) and a
+  compensating row when given back (`FREE_ALLOWANCE_RETURNED:<reason>`).
+- **Eligible surfaces:** CHAT, COMPARE, JUDGE, ORCHESTRATION, FILE_GENERATION, WORKSPACE_ACTION,
+  ROUTING. Per-unit surfaces (IMAGE, VIDEO, TRANSCRIPTION, TTS) are never eligible: one clip can
+  cost $1.60.
+- **Refusal:** a spent allowance is the ordinary 402 `PAYG_CREDIT_EXHAUSTED` with the user's own
+  numbers.
+- **Visible to the user:** `GET /credit/me` returns
+  `freeAllowance: [{ provider, limit, used, remaining }]` for each credit connector (`limit` and
+  `remaining` are `null` when unlimited; the list is empty for administrators, with metering off, or
+  when the plan gives none).
 
 ## Related
 

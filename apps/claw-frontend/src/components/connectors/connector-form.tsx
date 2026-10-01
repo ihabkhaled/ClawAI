@@ -48,6 +48,8 @@ export function ConnectorForm({
     accountId,
     setAccountId,
     requiresAccountId,
+    isCreditConnector,
+    setIsCreditConnector,
     fieldErrors,
     isEditing,
     pendingLabel,
@@ -86,6 +88,8 @@ export function ConnectorForm({
       accountId={accountId}
       setAccountId={setAccountId}
       requiresAccountId={requiresAccountId}
+      isCreditConnector={isCreditConnector}
+      setIsCreditConnector={setIsCreditConnector}
       defaultBaseUrl={defaultBaseUrl}
       selectedPreset={selectedPreset}
       resolvedBaseUrlPreview={resolvedBaseUrlPreview}

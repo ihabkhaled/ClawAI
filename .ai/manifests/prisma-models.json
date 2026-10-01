@@ -26,6 +26,7 @@
       "TerminalCommand"
     ],
     "claw-auth-service": [
+      "CreditFreeAllowanceUsage",
       "CreditLedgerEntry",
       "CreditPackage",
       "CreditPackageVersion",

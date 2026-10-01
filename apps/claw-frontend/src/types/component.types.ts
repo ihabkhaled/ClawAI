@@ -1445,10 +1445,18 @@ export type ConnectorFormFieldsProps = {
   accountId: string;
   setAccountId: (value: string) => void;
   requiresAccountId: boolean;
+  isCreditConnector: boolean;
+  setIsCreditConnector: (value: boolean) => void;
   defaultBaseUrl: string | null;
   selectedPreset: ConnectorPreset | undefined;
   resolvedBaseUrlPreview: string | null;
   gatewayHeaders: ConnectorGatewayHeadersState;
+};
+
+export type ConnectorCreditFieldProps = {
+  checked: boolean;
+  onCheckedChange: (value: boolean) => void;
+  error: string[] | undefined;
 };
 
 export type ConnectorGatewayHeadersFieldProps = {

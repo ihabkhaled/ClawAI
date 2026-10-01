@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
+import { CloseLabel } from '@/components/ui/close-label';
 import { cn } from '@/lib/utils';
 
 const Dialog = DialogPrimitive.Root;
@@ -50,7 +51,7 @@ const DialogContent = React.forwardRef<
       >
         <DialogPrimitive.Close>
           <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
+          <CloseLabel />
         </DialogPrimitive.Close>
       </Button>
     </DialogPrimitive.Content>

@@ -97,6 +97,8 @@ export type PlanCatalogEntry = {
   maxMemoryItems: number | null;
   /** Longest video processed, in seconds. Null = unlimited, 0 = disabled. */
   maxVideoSeconds: number | null;
+  /** Free requests per credit connector per UTC month. Null = unlimited, 0 = none. */
+  creditConnectorFreeRequestsPerMonth: number | null;
   featureGates: PlanFeatureGatesView;
   prices: PlanPriceVersionView[];
   features: PlanFeatureRuleView[];

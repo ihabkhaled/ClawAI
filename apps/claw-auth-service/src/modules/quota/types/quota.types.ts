@@ -90,6 +90,10 @@ export type WeightedReservationInput = {
   isPayg: boolean;
   creditGrantMicroUsd: bigint;
   creditPurchasedMicroUsd: bigint;
+  // True when the platform absorbs this call on the plan's free allowance
+  // (ADR-142): both credit amounts are 0 and no wallet hold exists. Absent
+  // reads as false.
+  isFreeAllowance?: boolean;
 };
 
 // UTC bucket identifiers a reservation is charged against, resolved once per

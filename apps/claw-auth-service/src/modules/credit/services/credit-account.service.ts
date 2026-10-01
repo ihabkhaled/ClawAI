@@ -16,6 +16,7 @@ import { CreditLedgerKind } from '../../../generated/prisma';
 import { AuthRepository } from '../../auth/repositories/auth.repository';
 import { SystemSettingService } from '../../system-settings/services/system-setting.service';
 import { CreditLedgerRepository } from '../repositories/credit-ledger.repository';
+import { CreditFreeAllowanceService } from './credit-free-allowance.service';
 import { CreditGrantService } from './credit-grant.service';
 import { CreditWalletService } from './credit-wallet.service';
 import { type CreditAdjustmentInput, type CreditLedgerPage } from '../types/credit.types';
@@ -38,6 +39,7 @@ export class CreditAccountService {
     private readonly ledger: CreditLedgerRepository,
     private readonly users: AuthRepository,
     private readonly settings: SystemSettingService,
+    private readonly freeAllowance: CreditFreeAllowanceService,
   ) {}
 
   /**
@@ -53,10 +55,17 @@ export class CreditAccountService {
       throw new EntityNotFoundException('User', userId);
     }
     const balances = await this.grants.ensureCurrentPeriod(userId);
-    return toWalletSnapshot(balances.wallet, {
-      adminBypass: user.role === UserRole.ADMIN,
-      meteringEnabled: await this.settings.isEnabled(PAYG_ENABLED_SETTING_KEY, false),
-    });
+    const adminBypass = user.role === UserRole.ADMIN;
+    const meteringEnabled = await this.settings.isEnabled(PAYG_ENABLED_SETTING_KEY, false);
+    return {
+      ...toWalletSnapshot(balances.wallet, { adminBypass, meteringEnabled }),
+      // Nothing is metered for an administrator or with the kill switch off, so
+      // there is no allowance to show (ADR-142).
+      freeAllowance:
+        adminBypass || !meteringEnabled
+          ? []
+          : await this.freeAllowance.getViews(userId, new Date()),
+    };
   }
 
   /**

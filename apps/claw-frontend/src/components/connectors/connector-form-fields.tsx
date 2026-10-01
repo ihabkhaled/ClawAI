@@ -1,6 +1,7 @@
 import { Info } from 'lucide-react';
 
 import { PasswordInput } from '@/components/common/password-input';
+import { ConnectorCreditField } from '@/components/connectors/connector-credit-field';
 import { ConnectorGatewayHeadersField } from '@/components/connectors/connector-gateway-headers-field';
 import { ConnectorPresetLinks } from '@/components/connectors/connector-preset-links';
 import { ConnectorProviderCombobox } from '@/components/connectors/connector-provider-combobox';
@@ -38,6 +39,8 @@ export function ConnectorFormFields({
   accountId,
   setAccountId,
   requiresAccountId,
+  isCreditConnector,
+  setIsCreditConnector,
   defaultBaseUrl,
   selectedPreset,
   resolvedBaseUrlPreview,
@@ -201,6 +204,12 @@ export function ConnectorFormFields({
           ) : null}
         </div>
       ) : null}
+
+      <ConnectorCreditField
+        checked={isCreditConnector}
+        onCheckedChange={setIsCreditConnector}
+        error={fieldErrors.isPayAsYouGo}
+      />
 
       <ConnectorGatewayHeadersField
         isEditing={isEditing}

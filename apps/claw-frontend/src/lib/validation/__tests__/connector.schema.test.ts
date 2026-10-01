@@ -192,3 +192,20 @@ describe('updateConnectorSchema', () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe('connector schema credit flag', () => {
+  const base = {
+    name: 'X',
+    provider: ConnectorProvider.OPENAI,
+    authType: 'API_KEY' as const,
+  };
+
+  it('accepts a boolean isPayAsYouGo on create and update', () => {
+    expect(createConnectorSchema.safeParse({ ...base, isPayAsYouGo: true }).success).toBe(true);
+    expect(updateConnectorSchema.safeParse({ isPayAsYouGo: false }).success).toBe(true);
+  });
+
+  it('rejects a non-boolean isPayAsYouGo', () => {
+    expect(createConnectorSchema.safeParse({ ...base, isPayAsYouGo: 'yes' }).success).toBe(false);
+  });
+});

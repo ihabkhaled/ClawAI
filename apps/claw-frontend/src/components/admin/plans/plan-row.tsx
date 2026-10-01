@@ -65,7 +65,7 @@ export function PlanRow({
           <p className="text-muted-foreground text-sm">{plan.description}</p>
         ) : null}
 
-        <div className="text-muted-foreground grid grid-cols-1 gap-1 text-xs sm:grid-cols-3">
+        <div className="text-muted-foreground grid grid-cols-1 gap-1 text-xs sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <span className="text-foreground font-medium">{t('adminPlans.dailyQuota')}</span>:{' '}
             {formatTokenCount(plan.dailyTokenQuota)}
@@ -74,6 +74,14 @@ export function PlanRow({
             <span className="text-foreground font-medium">{t('adminPlans.monthlyQuota')}</span>:{' '}
             {formatNullableLimit(plan.monthlyTokenQuota, unlimited)}
           </div>
+          {plan.creditConnectorFreeRequestsPerMonth === undefined ? null : (
+            <div>
+              <span className="text-foreground font-medium">
+                {t('adminPlans.creditFreeRequests')}
+              </span>
+              : {formatNullableLimit(plan.creditConnectorFreeRequestsPerMonth, unlimited)}
+            </div>
+          )}
           <div>
             <span className="text-foreground font-medium">{t('adminPlans.modelRules')}</span>:{' '}
             {plan.modelAccess.length}

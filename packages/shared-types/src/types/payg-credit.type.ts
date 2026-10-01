@@ -28,6 +28,24 @@ export type PaygWalletSnapshot = {
   adminBypass: boolean;
   /** False while the platform-wide kill switch is off; nothing is metered. */
   meteringEnabled: boolean;
+  /**
+   * The free requests the user's plan gives them on each credit connector this
+   * month (ADR-142). Empty when the plan gives none, metering is off, or the
+   * account is an administrator. Optional so an older auth-service that predates
+   * the field still satisfies the type.
+   */
+  freeAllowance?: PaygFreeAllowanceView[];
+};
+
+/**
+ * One credit connector's free-request allowance for the current UTC month.
+ * `limit` and `remaining` are `null` when the plan makes the allowance unlimited.
+ */
+export type PaygFreeAllowanceView = {
+  provider: string;
+  limit: number | null;
+  used: number;
+  remaining: number | null;
 };
 
 /**
@@ -101,6 +119,12 @@ export type PaygReservationOutcome =
       clamped: boolean;
       heldMicroUsd: number;
       availableAfterMicroUsd: number;
+      /**
+       * True when the call was admitted on the plan's free allowance (ADR-142):
+       * `heldMicroUsd` is 0 and finalize moves no money; a release gives the
+       * allowance count back. Absent on an ordinary wallet hold.
+       */
+      freeAllowance?: boolean;
     };
 
 /**

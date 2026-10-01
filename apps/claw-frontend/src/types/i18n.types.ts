@@ -1045,6 +1045,10 @@ export type TranslationDictionary = {
     regionPlaceholder: string;
     workspaceIdPlaceholder: string;
     saveFirstThenTest: string;
+    creditConnector: string;
+    creditConnectorHelp: string;
+    creditBadge: string;
+    includedBadge: string;
     gatewayHeaders: string;
     gatewayHeadersHelp: string;
     gatewayHeadersEditHelp: string;
@@ -4285,6 +4289,7 @@ export type TranslationDictionary = {
     empty: string;
     dailyQuota: string;
     monthlyQuota: string;
+    creditFreeRequests: string;
     modelRules: string;
     unlimited: string;
     defaultBadge: string;
@@ -4349,6 +4354,9 @@ export type TranslationDictionary = {
       maxContextPacks: string;
       maxMemoryItems: string;
       maxVideoSeconds: string;
+      creditConnectorFreeRequests: string;
+      creditConnectorFreeRequestsHelp: string;
+      creditConnectorFreeRequestsInvalid: string;
       isPublic: string;
       isTrial: string;
       trialHelp: string;
@@ -4754,6 +4762,7 @@ export type TranslationDictionary = {
         CONSUMPTION: string;
         ADMIN_ADJUSTMENT: string;
         PROVIDER_FAILURE_REFUND: string;
+        FREE_ALLOWANCE: string;
       };
       title: string;
       available: string;

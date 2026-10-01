@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { BillingErrorCode, PaygSurface } from '@claw/shared-types';
 
 import { PaygCreditExhaustedError } from '../payg-credit-exhausted.error';
@@ -128,6 +128,55 @@ describe('PaygMeter wire contract', () => {
         reservationId: 'res-1',
         heldMicroUsd: 1286,
       });
+    });
+  });
+
+  describe('the free-allowance reply (ADR-142)', () => {
+    const allowanceReply = {
+      metered: true,
+      reservationId: 'res-free',
+      maxOutputTokens: 700,
+      clamped: true,
+      heldMicroUsd: 0,
+      availableAfterMicroUsd: 0,
+      freeAllowance: true,
+    };
+
+    it('keeps the reservation id so finalize and release still reach auth', async () => {
+      respondWith(200, allowanceReply);
+
+      const hold = await meter().reserve(input());
+
+      expect(hold).toMatchObject({
+        metered: true,
+        reservationId: 'res-free',
+        heldMicroUsd: 0,
+        maxOutputTokens: 700,
+        freeAllowance: true,
+      });
+    });
+
+    it('releases the allowance hold through the ordinary release route', async () => {
+      respondWith(200, allowanceReply);
+      const hold = await meter().reserve(input());
+      const stub = respondWith(204, undefined);
+
+      await meter().release(hold, 'PROVIDER_ERROR');
+
+      expect(stub).toHaveBeenCalledWith(
+        'https://auth.test/api/v1/internal/credit/release',
+        expect.objectContaining({
+          body: JSON.stringify({ reservationId: 'res-free', reason: 'PROVIDER_ERROR' }),
+        }),
+      );
+    });
+
+    it('leaves an ordinary wallet hold without the flag', async () => {
+      respondWith(200, { ...allowanceReply, freeAllowance: undefined, heldMicroUsd: 50 });
+
+      const hold = await meter().reserve(input());
+
+      expect(hold.freeAllowance).toBeUndefined();
     });
   });
 

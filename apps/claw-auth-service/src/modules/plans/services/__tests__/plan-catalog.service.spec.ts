@@ -26,6 +26,7 @@ function makePlan(overrides: PlanRow = {}): PlanRow {
     maxContextPacks: null,
     maxMemoryItems: null,
     maxVideoSeconds: 600,
+    creditConnectorFreeRequestsPerMonth: 0,
     // Margin control. Must never reach the payment service or a customer.
     monthlyProviderCostCeilingMicroUsd: BigInt(5_000_000),
     allowCompareMode: true,
@@ -123,6 +124,24 @@ describe('PlanCatalogService', () => {
       expect(entry).toBeDefined();
       expect(JSON.stringify(entry)).not.toContain('5000000');
       expect(Object.keys(entry ?? {})).not.toContain('monthlyProviderCostCeilingMicroUsd');
+    });
+
+    it('publishes the free credit-connector allowance, keeping 0 (none) and null (unlimited) apart', async () => {
+      plans.findAll.mockResolvedValue([
+        makePlan({ id: 'free', slug: 'free', creditConnectorFreeRequestsPerMonth: 2 }),
+        makePlan({ id: 'paid', slug: 'paid', creditConnectorFreeRequestsPerMonth: 0 }),
+        makePlan({ id: 'open', slug: 'open', creditConnectorFreeRequestsPerMonth: null }),
+      ] as never);
+      billing.listActivePrices.mockResolvedValue([] as never);
+      billing.listFeatureRules.mockResolvedValue([] as never);
+
+      const entries = await service.listCatalog();
+
+      expect(entries.map((entry) => entry.creditConnectorFreeRequestsPerMonth)).toEqual([
+        2,
+        0,
+        null,
+      ]);
     });
 
     it('offers only plans that are both active and public', async () => {

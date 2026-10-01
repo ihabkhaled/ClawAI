@@ -92,6 +92,15 @@ provider default, so an unrelated rename can never silently stop metering. Every
 flip is written to the structured audit log as
 `connector_payg_enabled` / `connector_payg_disabled` with the previous value.
 
+**Admin-facing name: "credit connector" (2026-10-01).** The Connectors page labels
+`isPayAsYouGo` as a "Credit connector" switch on both create and edit, and shows a
+`Credit` / `Included` badge on every connector card. No new column or migration:
+`POST /connectors` also accepts `isPayAsYouGo` (the form always sends it, starting
+from the provider default so an OpenAI connector begins ON and Ollama OFF), and every
+list/detail response already carries it. Semantics: ON = usage is paid from the
+user's credit and free plans get `creditConnectorFreeRequestsPerMonth` free requests
+(plan setting, auth-service); OFF = included in the plan. Policy rollup unchanged.
+
 ### Internal endpoints (`/internal/connectors`)
 
 | Method | Path                     | Consumer     | Description                     |

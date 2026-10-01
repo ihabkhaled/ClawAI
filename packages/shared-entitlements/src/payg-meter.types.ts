@@ -46,6 +46,13 @@ export type PaygHold = {
   heldMicroUsd: number;
   availableAfterMicroUsd: number;
   reason: PaygUnmeteredReason | null;
+  /**
+   * True when auth-service admitted the call on the plan's free allowance
+   * (ADR-142). The hold is `metered` with a `reservationId` so finalize and
+   * release still reach auth, but `heldMicroUsd` is 0: finalize moves no money and
+   * a release gives the allowance count back. Call sites need not branch on it.
+   */
+  freeAllowance?: boolean;
 };
 
 export type PaygUnmeteredReason =

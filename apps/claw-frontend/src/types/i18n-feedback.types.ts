@@ -31,6 +31,11 @@ export type FeedbackEditorTranslation = {
   heading: string;
   link: string;
   inlineCode: string;
+  boldLabel: string;
+  italicLabel: string;
+  headingLabel: string;
+  listLabel: string;
+  linkLabel: string;
   write: string;
   preview: string;
 };
@@ -73,11 +78,19 @@ export type FeedbackAdminStatusTranslation = {
   archived: string;
 };
 
+export type FeedbackAdminSourceTranslation = {
+  all: string;
+  label: string;
+  authenticated: string;
+  public: string;
+};
+
 export type FeedbackAdminTableTranslation = {
   ticket: string;
   type: string;
   title: string;
   reporter: string;
+  source: string;
   status: string;
   created: string;
   updated: string;
@@ -100,6 +113,8 @@ export type FeedbackAdminDetailTranslation = {
   imageLoading: string;
   ticket: string;
   reporter: string;
+  source: string;
+  email: string;
   created: string;
   updated: string;
   resolved: string;
@@ -125,6 +140,7 @@ export type FeedbackAdminTranslation = {
   hasAttachments: string;
   updated: string;
   type: { all: string; placeholder: string };
+  source: FeedbackAdminSourceTranslation;
   status: FeedbackAdminStatusTranslation;
   detail: FeedbackAdminDetailTranslation;
   table: FeedbackAdminTableTranslation;

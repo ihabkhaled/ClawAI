@@ -25,6 +25,7 @@ function useDebouncedValue<T>(value: T, delay: number): T {
 export function useAdminFeedbackList() {
   const [status, setStatus] = useState<string | undefined>(undefined);
   const [type, setType] = useState<string | undefined>(undefined);
+  const [source, setSource] = useState<string | undefined>(undefined);
   const [search, setSearch] = useState<string>('');
   // Page and page-size state is the shared control's, not this page's: the
   // hard-coded limit here meant a rows-per-page choice would have changed
@@ -46,11 +47,14 @@ export function useAdminFeedbackList() {
     if (type) {
       filters.type = type;
     }
+    if (source) {
+      filters.source = source;
+    }
     if (debouncedSearch) {
       filters.search = debouncedSearch;
     }
     return filters;
-  }, [status, type, debouncedSearch, page, pageSize, sortBy, sortDir]);
+  }, [status, type, source, debouncedSearch, page, pageSize, sortBy, sortDir]);
 
   const {
     data: listData,
@@ -79,6 +83,10 @@ export function useAdminFeedbackList() {
     setType(value);
     reset();
   };
+  const updateSource = (value: string | undefined): void => {
+    setSource(value);
+    reset();
+  };
   const updateSearch = (value: string): void => {
     setSearch(value);
     reset();
@@ -96,6 +104,8 @@ export function useAdminFeedbackList() {
     setStatus: updateStatus,
     type,
     setType: updateType,
+    source,
+    setSource: updateSource,
     search,
     setSearch: updateSearch,
     counts,

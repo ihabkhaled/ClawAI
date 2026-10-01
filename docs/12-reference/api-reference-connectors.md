@@ -9,7 +9,8 @@ Base URL: `http://localhost:4000/api/v1` (via nginx) or `http://localhost:4003/a
 Create a new AI provider connector.
 
 **Auth**: Bearer token
-**Request Body**:
+**Request Body** (optional `isPayAsYouGo` boolean = "credit connector"; omitted, the provider default applies):
+
 ```json
 {
   "name": "My Gemini",
@@ -22,6 +23,7 @@ Create a new AI provider connector.
 ```
 
 **Response 201**:
+
 ```json
 {
   "id": "clconn...",
@@ -39,10 +41,12 @@ Create a new AI provider connector.
 ```
 
 **Errors**:
+
 - `400 Validation failed` — missing required fields
 - `409 DUPLICATE_ENTITY` — connector with this name exists
 
 **curl**:
+
 ```bash
 curl -X POST http://localhost:4000/api/v1/connectors \
   -H "Authorization: Bearer $TOKEN" \
@@ -58,12 +62,14 @@ List all connectors with their models.
 
 **Auth**: Bearer token
 **Query Parameters**:
+
 - `page` (int, default: 1)
 - `limit` (int, default: 20, max: 100)
 - `provider` (enum) — OPENAI, ANTHROPIC, GEMINI, AWS_BEDROCK, DEEPSEEK, OLLAMA
 - `status` (enum) — HEALTHY, DEGRADED, DOWN, UNKNOWN
 
 **Response 200**:
+
 ```json
 {
   "data": [
@@ -107,7 +113,7 @@ Get a specific connector with models.
 Update a connector.
 
 **Auth**: Bearer token
-**Request Body**: Partial fields (name, isEnabled, defaultModelId, baseUrl, apiKey)
+**Request Body**: Partial fields (name, isEnabled, defaultModelId, baseUrl, apiKey, isPayAsYouGo)
 **Response 200**: Updated ConnectorWithModels
 
 ---
@@ -127,6 +133,7 @@ Test a connector's health by making a lightweight API call.
 
 **Auth**: Bearer token
 **Response 200**:
+
 ```json
 {
   "status": "HEALTHY",
@@ -136,6 +143,7 @@ Test a connector's health by making a lightweight API call.
 ```
 
 **Error response**:
+
 ```json
 {
   "status": "DOWN",
@@ -152,6 +160,7 @@ Sync available models from the provider's API.
 
 **Auth**: Bearer token
 **Response 200**:
+
 ```json
 {
   "status": "COMPLETED",
@@ -169,6 +178,7 @@ Get all models for a specific connector.
 
 **Auth**: Bearer token
 **Response 200**:
+
 ```json
 [
   {
@@ -198,6 +208,7 @@ Get decrypted connector configuration for a provider. Internal use only (not exp
 **Auth**: Public (internal network only)
 **Query**: `?provider=GEMINI`
 **Response 200**:
+
 ```json
 {
   "apiKey": "AIzaSy...",

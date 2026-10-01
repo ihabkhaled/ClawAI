@@ -25,4 +25,5 @@ export const PRISMA_TO_SHARED_LEDGER_KIND: Record<PrismaCreditLedgerKind, Shared
     [PrismaCreditLedgerKind.ADMIN_ADJUSTMENT]: SharedCreditLedgerKind.ADMIN_ADJUSTMENT,
     [PrismaCreditLedgerKind.PROVIDER_FAILURE_REFUND]:
       SharedCreditLedgerKind.PROVIDER_FAILURE_REFUND,
+    [PrismaCreditLedgerKind.FREE_ALLOWANCE]: SharedCreditLedgerKind.FREE_ALLOWANCE,
   });

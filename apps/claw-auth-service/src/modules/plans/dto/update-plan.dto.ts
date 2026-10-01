@@ -38,6 +38,15 @@ export const updatePlanSchema = z
     allowTextToSpeech: z.boolean().optional(),
     // null = unlimited, 0 = video disabled (ADR-122). Ten hours is the bound.
     maxVideoSeconds: z.number().int().min(0).max(36_000).nullable().optional(),
+    // Free requests per credit connector per UTC month (ADR-142). null = unlimited,
+    // 0 = none. Omitted on create = 0, so a new plan never gives provider spend away.
+    creditConnectorFreeRequestsPerMonth: z
+      .number()
+      .int()
+      .min(0)
+      .max(1_000_000)
+      .nullable()
+      .optional(),
   })
   .refine(
     (value) => {

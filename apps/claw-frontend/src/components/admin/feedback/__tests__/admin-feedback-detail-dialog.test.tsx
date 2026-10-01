@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AdminFeedbackDetailDialog } from '@/components/admin/feedback/admin-feedback-detail-dialog';
+import { FeedbackSource } from '@/enums';
 import type { FeedbackTicket } from '@/types/feedback.types';
 
 const controller = vi.fn();
@@ -117,6 +118,35 @@ describe('AdminFeedbackDetailDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: /screenshot\.png/ }));
 
     expect(openImagePreview).toHaveBeenCalledWith('blob:attachment', 'screenshot.png');
+  });
+
+  it('shows the visitor badge, the name and the email as separate plain-text fields', () => {
+    renderDialog({
+      ticket: {
+        ...ticket,
+        source: FeedbackSource.PUBLIC,
+        reporterName: 'QA Visitor',
+        reporterEmail: 'qa-visitor@example.com',
+      },
+    });
+
+    expect(screen.getByTestId('feedback-source-badge')).toHaveTextContent(
+      'feedback.admin.source.public',
+    );
+    expect(screen.getByText('QA Visitor')).toBeInTheDocument();
+    expect(screen.getByText('qa-visitor@example.com')).toBeInTheDocument();
+    expect(screen.getByText('feedback.admin.detail.email')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /qa-visitor@example\.com/ })).not.toBeInTheDocument();
+  });
+
+  it('falls back for an older ticket with no name and no source', () => {
+    renderDialog({ ticket: { ...ticket, reporterName: null, source: undefined } });
+
+    expect(screen.getByTestId('feedback-source-badge')).toHaveTextContent(
+      'feedback.admin.source.authenticated',
+    );
+    expect(screen.getAllByText('feedback.admin.detail.notAvailable').length).toBeGreaterThan(0);
+    expect(screen.getByText('admin@claw-ai.co')).toBeInTheDocument();
   });
 
   // Returning null while the query ran meant a click on a table row did nothing

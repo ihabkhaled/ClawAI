@@ -1,6 +1,6 @@
 import { FeedbackStatus, FeedbackType } from '@claw/shared-types';
 
-import { ScreenCaptureStatus } from '@/enums';
+import { FeedbackSource, ScreenCaptureStatus } from '@/enums';
 
 export const FEEDBACK_TYPE_OPTIONS: readonly { value: FeedbackType; labelKey: string }[] = [
   { value: FeedbackType.BUG_REPORT, labelKey: 'feedback.types.bugReport' },
@@ -14,6 +14,11 @@ export const FEEDBACK_TYPE_OPTIONS: readonly { value: FeedbackType; labelKey: st
   { value: FeedbackType.SECURITY_CONCERN, labelKey: 'feedback.types.securityConcern' },
   { value: FeedbackType.OTHER, labelKey: 'feedback.types.other' },
 ] as const;
+
+export const FEEDBACK_SOURCE_OPTIONS: readonly { value: FeedbackSource; labelKey: string }[] = [
+  { value: FeedbackSource.AUTHENTICATED, labelKey: 'feedback.admin.source.authenticated' },
+  { value: FeedbackSource.PUBLIC, labelKey: 'feedback.admin.source.public' },
+];
 
 // Below this, an attachment rendered at its natural size reads as a blank
 // panel rather than as an image, so the viewer scales it up instead.

@@ -307,6 +307,62 @@ describe('CreditWalletService', () => {
     expectLedgerReconciles(fake);
   });
 
+  describe('recordFreeAllowance (ADR-142)', () => {
+    const trace = (reason: string) =>
+      service.recordFreeAllowance({
+        userId: 'user-1',
+        walletId: 'wallet-1',
+        reservationId: 'res-free',
+        requestId: 'req-1',
+        provider: 'GROK',
+        model: 'grok-4',
+        surface: PaygSurface.CHAT,
+        workflow: null,
+        reason,
+      });
+
+    it('writes a zero-amount FREE_ALLOWANCE row and moves no balance', async () => {
+      await seedGrant(10_000n);
+      await seedPurchased(5_000n);
+      const before = { ...fake.wallet };
+
+      await trace('FREE_ALLOWANCE_USED');
+
+      const row = fake.ledger.at(-1);
+      expect(row).toMatchObject({
+        kind: CreditLedgerKind.FREE_ALLOWANCE,
+        amountMicroUsd: 0n,
+        grantDeltaMicroUsd: 0n,
+        purchasedDeltaMicroUsd: 0n,
+        reservationId: 'res-free',
+        provider: 'GROK',
+        surface: PaygSurface.CHAT,
+        reason: 'FREE_ALLOWANCE_USED',
+      });
+      expect(fake.wallet['grantMicroUsd']).toBe(before['grantMicroUsd']);
+      expect(fake.wallet['purchasedMicroUsd']).toBe(before['purchasedMicroUsd']);
+      expect(fake.wallet['reservedMicroUsd']).toBe(before['reservedMicroUsd']);
+    });
+
+    it('keeps the wallet equal to the sum of its ledger across used and returned rows', async () => {
+      await seedGrant(10_000n);
+
+      await trace('FREE_ALLOWANCE_USED');
+      await trace('FREE_ALLOWANCE_RETURNED:PROVIDER_ERROR');
+
+      expectLedgerReconciles(fake);
+      expect(fake.ledger.filter((r) => r['kind'] === CreditLedgerKind.FREE_ALLOWANCE)).toHaveLength(
+        2,
+      );
+    });
+
+    it('works on an empty wallet: the case a Free user is actually in', async () => {
+      await trace('FREE_ALLOWANCE_USED');
+
+      expect(fake.ledger.at(-1)).toMatchObject({ balanceAfterMicroUsd: 0n });
+    });
+  });
+
   describe('applyTopupReversal — ADR-083 edge case E5', () => {
     it('reverses the full amount when the credit is still unspent', async () => {
       await seedPurchased(15_000_000n);

@@ -8130,7 +8130,7 @@
           "file": "rules/36-floating-ui-and-toast-clearance.md"
         },
         {
-          "bytes": 29864,
+          "bytes": 32020,
           "file": "rules/37-payg-credit-integrity.md"
         },
         {
@@ -8630,7 +8630,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5644
+        "value": 5666
       },
       "localeCount": 13,
       "locales": [
@@ -9726,6 +9726,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "CreditFreeAllowanceUsage"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "CreditLedgerEntry"
           },
           {
@@ -10664,7 +10669,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 123
+        "testFiles": 129
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -10688,7 +10693,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 659
+        "testFiles": 669
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -11466,7 +11471,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1893,
+    "totalTestFiles": 1909,
     "workspaceCount": 25
   }
 }

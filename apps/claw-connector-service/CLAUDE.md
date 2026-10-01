@@ -30,6 +30,7 @@ Connector microservice for the Claw platform. Manages AI provider connectors, mo
 11. **Controllers are 3-line methods**: extract params, call ONE service, return result.
 12. **All errors use BusinessException with a code**.
 13. **No default exports** -- use named exports exclusively.
+14. **Every connector row returned by a write path (create/update/delete) goes through `maskSecrets`** -- `encryptedConfig` and `encryptedGatewayHeaders` are never returned, even as ciphertext.
 
 ## No Inline Declarations Rule
 
@@ -233,6 +234,9 @@ toggle unenforceable without a six-container rebuild (ADR-082).
   `ADMIN_CONNECTORS_MANAGE`. Omit the field and the current value is untouched,
   so a rename cannot silently stop metering. Every flip is audit-logged
   (`connector_payg_enabled` / `connector_payg_disabled`) with the previous value.
+- **Admin label: "credit connector".** The frontend Connectors page shows this column as a
+  switch on create and edit (create always sends it, seeded from the provider default) and as
+  a `Credit` / `Included` badge on the list. No separate field, no migration.
 - **The read path**: `GET /internal/connectors/payg-policy` →
   `{ providers: { OPENAI: true, OLLAMA: false, … } }`. Provider grain, `true`
   when any **enabled** connector for that provider is PAYG. Rollup logic lives in

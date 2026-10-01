@@ -72,6 +72,8 @@ export type PlanView = {
   maxMemoryItems: number | null;
   /** Longest video processed, in seconds. Null = unlimited, 0 = disabled. */
   maxVideoSeconds: number | null;
+  /** Free requests per credit connector per UTC month (ADR-142). Null = unlimited, 0 = none. */
+  creditConnectorFreeRequestsPerMonth: number | null;
   /** Monthly fair-use ceiling on weighted provider spend. Null = no ceiling. */
   monthlyProviderCostCeilingMicroUsd: number | null;
   /** Share of the monthly price granted as connector credit, in basis points. */
@@ -122,6 +124,7 @@ export type CreatePlanData = {
   maxContextPacks?: number;
   maxMemoryItems?: number;
   maxVideoSeconds?: number | null;
+  creditConnectorFreeRequestsPerMonth?: number | null;
   allowCompareMode?: boolean;
   allowJudgeMode?: boolean;
   allowResearchMode?: boolean;

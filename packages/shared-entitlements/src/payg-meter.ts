@@ -29,6 +29,7 @@ type WireMetered = {
   clamped: boolean;
   heldMicroUsd: number;
   availableAfterMicroUsd: number;
+  freeAllowance?: boolean;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -169,6 +170,8 @@ export class PaygMeter {
         heldMicroUsd: payload.heldMicroUsd,
         availableAfterMicroUsd: payload.availableAfterMicroUsd,
         reason: null,
+        // Present only when true, so every existing hold keeps its exact shape.
+        ...(payload.freeAllowance === true ? { freeAllowance: true } : {}),
       };
     }
     if (isWireUnmetered(payload)) {

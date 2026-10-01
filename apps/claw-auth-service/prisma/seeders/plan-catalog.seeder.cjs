@@ -111,6 +111,16 @@ function mediaGateProjections(media) {
   };
 }
 
+// Free credit-connector requests per month (ADR-142). A missing value is 0 --
+// never null, which would mean unlimited. Fresh installs only (create/upgrade
+// branches); existing rows are moved by migration
+// 20261001150000_credit_connector_free_allowance and an administrator-edited row
+// is never rewritten. Not in the checksummed `payload`, same as the media gates.
+function creditAllowanceProjection(definition) {
+  const value = definition.creditConnectorFreeRequestsPerMonth;
+  return { creditConnectorFreeRequestsPerMonth: value === undefined ? 0 : value };
+}
+
 // Mirrors POPULAR_PLAN_KEY in src/modules/plans/constants/popular-plan.constants.ts.
 // The seeder is plain JS run by `prisma db seed` and cannot import the TS source.
 const POPULAR_PLAN_KEY = 'popular';
@@ -160,6 +170,7 @@ function planColumns(definition) {
     // by migration 20260925200000_add_media_plan_gates. Deliberately not in the
     // checksummed `payload` below, for the reason the isPopular note gives.
     ...mediaGateProjections(definition.media),
+    ...creditAllowanceProjection(definition),
   };
 }
 
@@ -327,5 +338,6 @@ module.exports = {
   booleanProjections,
   labGateProjections,
   mediaGateProjections,
+  creditAllowanceProjection,
   computeDiscountedIntervalMinor,
 };

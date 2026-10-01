@@ -68,6 +68,7 @@ Every third-party library MUST be wrapped in a dedicated module. Components, hoo
 - Each hook MUST do ONE thing. If a hook manages form state AND validation AND submission, split it.
 - Controller hooks orchestrate smaller hooks — they should not contain business logic themselves.
 - Pattern: `useConnectorFormState()` for form state, NOT one giant `useConnectorPage()` with everything.
+- Connector "credit connector" switch (`isPayAsYouGo`, `ConnectorCreditField`) lives on the create/edit form and shows as a Credit/Included badge on `ConnectorCard`; plan form carries `creditConnectorFreeRequestsPerMonth` (blank = unlimited, 0 = off, 0..100000).
 
 ### Size Limits
 

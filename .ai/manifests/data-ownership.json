@@ -45,6 +45,7 @@
       "database": "postgresql",
       "mongooseModels": [],
       "prismaModels": [
+        "CreditFreeAllowanceUsage",
         "CreditLedgerEntry",
         "CreditPackage",
         "CreditPackageVersion",

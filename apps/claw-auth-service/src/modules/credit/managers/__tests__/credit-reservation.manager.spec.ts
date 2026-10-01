@@ -9,6 +9,7 @@ import { type ConnectorPolicyClient } from '../../clients/connector-policy.clien
 import { type ModelRateClient } from '../../clients/model-rate.client';
 import { type CreditLedgerRepository } from '../../repositories/credit-ledger.repository';
 import { type CreditEventService } from '../../services/credit-event.service';
+import { type CreditFreeAllowanceService } from '../../services/credit-free-allowance.service';
 import { type CreditGrantService } from '../../services/credit-grant.service';
 import { type CreditWalletService } from '../../services/credit-wallet.service';
 import { type CreditReserveInput, type PaygRateSnapshot } from '../../types/credit.types';
@@ -79,6 +80,7 @@ const makeRecord = (overrides: Record<string, unknown> = {}) => ({
   isPayg: true,
   creditGrantMicroUsd: 50_000n,
   creditPurchasedMicroUsd: 0n,
+  isFreeAllowance: false,
   weightedTokens: 0,
   estimatedCostMicroUsd: 0n,
   actualCostMicroUsd: null,
@@ -117,7 +119,9 @@ describe('CreditReservationManager', () => {
     applyHold: Mock;
     applyRelease: Mock;
     applySettlement: Mock;
+    recordFreeAllowance: Mock;
   };
+  let freeAllowance: { tryAdmit: Mock; giveBack: Mock };
   let grants: { ensureCurrentPeriod: Mock };
   let rates: { findRate: Mock; invalidate: Mock };
   let policy: { getPolicy: Mock };
@@ -147,6 +151,7 @@ describe('CreditReservationManager', () => {
       users as unknown as AuthRepository,
       events as unknown as CreditEventService,
       ledger as unknown as CreditLedgerRepository,
+      freeAllowance as unknown as CreditFreeAllowanceService,
     );
 
   beforeEach(() => {
@@ -169,6 +174,13 @@ describe('CreditReservationManager', () => {
         availableAfterMicroUsd: 29_000n,
         periodGrantMicroUsd: 300_000n,
       }),
+      recordFreeAllowance: vi.fn().mockResolvedValue(makeWallet()),
+    };
+    // Default: the plan gives no free requests, so every existing case below is
+    // exactly the credit-only behaviour it was written against.
+    freeAllowance = {
+      tryAdmit: vi.fn().mockResolvedValue(null),
+      giveBack: vi.fn().mockResolvedValue(undefined),
     };
     grants = {
       ensureCurrentPeriod: vi.fn().mockResolvedValue({
@@ -465,6 +477,283 @@ describe('CreditReservationManager', () => {
       usage['findByReservationId'].mockResolvedValue(makeRecord({ isPayg: false }));
       await manager.release('res-1', 'CANCELLED');
       expect(wallets['applyRelease']).not.toHaveBeenCalled();
+    });
+  });
+  // ADR-142: the plan's free requests on a credit connector. Credit is spent
+  // FIRST; the allowance is only the fallback when credit cannot cover the call.
+  describe('the free allowance fallback', () => {
+    const EMPTY_WALLET = { wallet: makeWallet({ grantMicroUsd: 0n }), availableMicroUsd: 0n };
+    const ADMISSION = {
+      counter: { userId: 'user-1', provider: 'OPENAI', periodKey: '2026-08' },
+      maxOutputTokens: 14_900,
+      clamped: true,
+      worstCaseCostMicroUsd: 150_000n,
+    };
+
+    beforeEach(() => {
+      grants['ensureCurrentPeriod'].mockResolvedValue(EMPTY_WALLET);
+      freeAllowance.tryAdmit.mockResolvedValue(ADMISSION);
+    });
+
+    it('admits an empty wallet on the allowance: no hold, a zero-amount ledger trace', async () => {
+      const outcome = await manager.reserve(makeInput());
+
+      expect(outcome).toEqual({
+        metered: true,
+        reservationId: expect.any(String),
+        maxOutputTokens: 14_900,
+        clamped: true,
+        heldMicroUsd: 0,
+        availableAfterMicroUsd: 0,
+        freeAllowance: true,
+      });
+      expect(wallets['applyHold']).not.toHaveBeenCalled();
+      expect(client.eval).not.toHaveBeenCalled();
+      expect(wallets['recordFreeAllowance']).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'user-1',
+          provider: 'OPENAI',
+          model: 'gpt-5',
+          surface: PaygSurface.CHAT,
+          reason: 'FREE_ALLOWANCE_USED',
+        }),
+      );
+    });
+
+    it('writes the usage row flagged as an allowance call, holding nothing', async () => {
+      await manager.reserve(makeInput());
+
+      const [{ input }] = usage['createReservation'].mock.calls[0] as [
+        {
+          input: {
+            isFreeAllowance: boolean;
+            isPayg: boolean;
+            creditGrantMicroUsd: bigint;
+            creditPurchasedMicroUsd: bigint;
+            estimatedCostMicroUsd: bigint;
+          };
+        },
+      ];
+      expect(input.isFreeAllowance).toBe(true);
+      expect(input.isPayg).toBe(true);
+      expect(input.creditGrantMicroUsd).toBe(0n);
+      expect(input.creditPurchasedMicroUsd).toBe(0n);
+      // The absorbed worst case, so plan cost aggregates still see the spend.
+      expect(input.estimatedCostMicroUsd).toBe(150_000n);
+    });
+
+    it('CREDIT FIRST: a user whose wallet can pay is charged and never touches the allowance', async () => {
+      grants['ensureCurrentPeriod'].mockResolvedValue({
+        wallet: makeWallet(),
+        availableMicroUsd: 50_000n,
+      });
+
+      const outcome = await manager.reserve(makeInput());
+
+      expect(outcome).toMatchObject({ metered: true, heldMicroUsd: 50_000 });
+      expect(outcome).not.toHaveProperty('freeAllowance');
+      expect(freeAllowance.tryAdmit).not.toHaveBeenCalled();
+      expect(wallets['applyHold']).toHaveBeenCalledTimes(1);
+    });
+
+    it('falls back when credit cannot cover the prompt (too little, not zero)', async () => {
+      grants['ensureCurrentPeriod'].mockResolvedValue({
+        wallet: makeWallet({ grantMicroUsd: 100n }),
+        availableMicroUsd: 100n,
+      });
+
+      await expect(manager.reserve(makeInput({ promptTokens: 5000 }))).resolves.toMatchObject({
+        freeAllowance: true,
+      });
+      expect(wallets['applyHold']).not.toHaveBeenCalled();
+    });
+
+    it('falls back when a concurrent request took the credit (the atomic step refused)', async () => {
+      grants['ensureCurrentPeriod'].mockResolvedValue({
+        wallet: makeWallet(),
+        availableMicroUsd: 50_000n,
+      });
+      client.eval.mockResolvedValue([0, 'CREDIT_GRANT', '50000', '50000']);
+
+      await expect(manager.reserve(makeInput())).resolves.toMatchObject({ freeAllowance: true });
+    });
+
+    it('a spent allowance reads exactly like an empty wallet: 402 PAYG_CREDIT_EXHAUSTED', async () => {
+      freeAllowance.tryAdmit.mockResolvedValue(null);
+
+      await expect(manager.reserve(makeInput())).rejects.toMatchObject({
+        code: BillingErrorCode.PAYG_CREDIT_EXHAUSTED,
+      });
+      expect(usage['createReservation']).not.toHaveBeenCalled();
+      expect(wallets['recordFreeAllowance']).not.toHaveBeenCalled();
+    });
+
+    it('keeps PAYG_PROMPT_TOO_EXPENSIVE when the user HAS credit the prompt outgrew', async () => {
+      grants['ensureCurrentPeriod'].mockResolvedValue({
+        wallet: makeWallet({ grantMicroUsd: 100n }),
+        availableMicroUsd: 100n,
+      });
+      freeAllowance.tryAdmit.mockResolvedValue(null);
+
+      await expect(manager.reserve(makeInput({ promptTokens: 5000 }))).rejects.toMatchObject({
+        code: BillingErrorCode.PAYG_PROMPT_TOO_EXPENSIVE,
+      });
+    });
+
+    it('does not mask a real failure: a database error is not a credit refusal', async () => {
+      grants['ensureCurrentPeriod'].mockResolvedValue({
+        wallet: makeWallet(),
+        availableMicroUsd: 50_000n,
+      });
+      usage['createReservation'].mockRejectedValue(new Error('db down'));
+
+      await expect(manager.reserve(makeInput())).rejects.toThrow('db down');
+      expect(freeAllowance.tryAdmit).not.toHaveBeenCalled();
+    });
+
+    it('gives the counter slot back when the durable write fails', async () => {
+      usage['createReservation'].mockRejectedValue(new Error('db down'));
+
+      await expect(manager.reserve(makeInput())).rejects.toThrow('db down');
+
+      expect(freeAllowance.giveBack).toHaveBeenCalledWith(ADMISSION.counter);
+      expect(usage['deleteByReservationId']).toHaveBeenCalledTimes(1);
+    });
+
+    it('gives the counter slot back when the ledger trace cannot be written', async () => {
+      wallets['recordFreeAllowance'].mockRejectedValue(new Error('ledger down'));
+
+      await expect(manager.reserve(makeInput())).rejects.toThrow('ledger down');
+
+      expect(freeAllowance.giveBack).toHaveBeenCalledWith(ADMISSION.counter);
+    });
+
+    it('a retried request reuses its allowance hold instead of taking a second slot', async () => {
+      usage['findOpenPaygReservation'].mockResolvedValue(
+        makeRecord({
+          isFreeAllowance: true,
+          creditGrantMicroUsd: 0n,
+          creditPurchasedMicroUsd: 0n,
+        }),
+      );
+
+      const outcome = await manager.reserve(makeInput({ requestedMaxOutputTokens: 800 }));
+
+      expect(outcome).toEqual({
+        metered: true,
+        reservationId: 'res-1',
+        maxOutputTokens: 800,
+        clamped: false,
+        heldMicroUsd: 0,
+        availableAfterMicroUsd: 0,
+        freeAllowance: true,
+      });
+      expect(freeAllowance.tryAdmit).not.toHaveBeenCalled();
+    });
+
+    it('does not consult the allowance for an unmetered request', async () => {
+      policy['getPolicy'].mockResolvedValue({ OPENAI: false });
+
+      await manager.reserve(makeInput());
+
+      expect(freeAllowance.tryAdmit).not.toHaveBeenCalled();
+    });
+
+    describe('finalize', () => {
+      const allowanceRecord = (): ReturnType<typeof makeRecord> =>
+        makeRecord({
+          isFreeAllowance: true,
+          creditGrantMicroUsd: 0n,
+          creditPurchasedMicroUsd: 0n,
+          estimatedCostMicroUsd: 150_000n,
+        });
+      const usageReport = {
+        reservationId: 'res-1',
+        promptTokens: 1000,
+        completionTokens: 500,
+        cachedPromptTokens: 0,
+        reasoningTokens: 0,
+        toolCalls: 0,
+        searchCalls: 0,
+      };
+
+      it('moves no money: no settlement, no counter change', async () => {
+        usage['findByReservationId'].mockResolvedValue(allowanceRecord());
+
+        await manager.finalize(usageReport);
+
+        expect(usage['markFinalized']).toHaveBeenCalledTimes(1);
+        expect(wallets['applySettlement']).not.toHaveBeenCalled();
+        expect(freeAllowance.giveBack).not.toHaveBeenCalled();
+        expect(events['publishBalanceState']).not.toHaveBeenCalled();
+      });
+
+      it('records what the platform actually paid on the row', async () => {
+        usage['findByReservationId'].mockResolvedValue(allowanceRecord());
+
+        await manager.finalize(usageReport);
+
+        // 1000 in at $1/M plus 500 out at $10/M.
+        expect(usage['markFinalized']).toHaveBeenCalledWith(
+          expect.objectContaining({ actualCostMicroUsd: 6_000n }),
+        );
+      });
+
+      it('records the admission estimate, never zero, when the price lookup fails', async () => {
+        usage['findByReservationId'].mockResolvedValue(allowanceRecord());
+        rates['findRate'].mockResolvedValue(null);
+
+        await manager.finalize(usageReport);
+
+        expect(usage['markFinalized']).toHaveBeenCalledWith(
+          expect.objectContaining({ actualCostMicroUsd: 150_000n }),
+        );
+      });
+    });
+
+    describe('release', () => {
+      const allowanceRecord = (): ReturnType<typeof makeRecord> =>
+        makeRecord({
+          isFreeAllowance: true,
+          creditGrantMicroUsd: 0n,
+          creditPurchasedMicroUsd: 0n,
+          monthKey: '2026-08',
+        });
+
+      it('gives the slot back on the month it was taken in and writes a compensating row', async () => {
+        usage['findByReservationId'].mockResolvedValue(allowanceRecord());
+
+        await manager.release('res-1', 'PROVIDER_ERROR');
+
+        expect(freeAllowance.giveBack).toHaveBeenCalledWith({
+          userId: 'user-1',
+          provider: 'OPENAI',
+          periodKey: '2026-08',
+        });
+        expect(wallets['recordFreeAllowance']).toHaveBeenCalledWith(
+          expect.objectContaining({ reason: 'FREE_ALLOWANCE_RETURNED:PROVIDER_ERROR' }),
+        );
+        expect(wallets['applyRelease']).not.toHaveBeenCalled();
+      });
+
+      it('returns the slot ONCE: a double release is a no-op', async () => {
+        usage['findByReservationId'].mockResolvedValue(allowanceRecord());
+        usage['markReleased'].mockResolvedValueOnce(1).mockResolvedValueOnce(0);
+
+        await manager.release('res-1', 'CANCELLED');
+        await manager.release('res-1', 'CANCELLED');
+
+        expect(freeAllowance.giveBack).toHaveBeenCalledTimes(1);
+        expect(wallets['recordFreeAllowance']).toHaveBeenCalledTimes(1);
+      });
+
+      it('touches no Redis hold counter: nothing was held', async () => {
+        usage['findByReservationId'].mockResolvedValue(allowanceRecord());
+
+        await manager.release('res-1', 'TIMEOUT');
+
+        expect(client.eval).not.toHaveBeenCalled();
+      });
     });
   });
 });

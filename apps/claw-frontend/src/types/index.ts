@@ -440,6 +440,7 @@ export type {
   ConnectorCardProps,
   ConnectorFormProps,
   ConnectorFormFieldsProps,
+  ConnectorCreditFieldProps,
   ConnectorGatewayHeadersFieldProps,
   ModelTableProps,
   ContextPackFormProps,

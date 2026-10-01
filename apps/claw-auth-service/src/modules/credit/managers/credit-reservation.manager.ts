@@ -37,11 +37,17 @@ import { ConnectorPolicyClient } from '../clients/connector-policy.client';
 import { ModelRateClient } from '../clients/model-rate.client';
 import { CreditLedgerRepository } from '../repositories/credit-ledger.repository';
 import { CreditEventService } from '../services/credit-event.service';
+import { CreditFreeAllowanceService } from '../services/credit-free-allowance.service';
 import { CreditGrantService } from '../services/credit-grant.service';
 import { CreditWalletService } from '../services/credit-wallet.service';
 import {
+  FREE_ALLOWANCE_LEDGER_REASON_RETURNED,
+  FREE_ALLOWANCE_LEDGER_REASON_USED,
+} from '../constants/credit-free-allowance.constants';
+import {
   type CreditBucketSplit,
   type CreditFinalizeInput,
+  type CreditFreeAllowanceAdmission,
   type CreditReserveInput,
   type PaygClassification,
   type PaygRateSnapshot,
@@ -75,6 +81,8 @@ import {
  *   7. affordability clamp — the answer is shortened to fit the balance
  *   8. atomic Lua — the only place two concurrent requests are ordered
  *   9. durable write — Redis has already moved, so a failure gives it back
+ *  10. free allowance — ONLY when 7/8 refused: credit is spent first, the plan's
+ *      free requests on a credit connector are the fallback (ADR-142)
  *
  * Steps 1–4 short-circuit before the wallet is read: a local chat must not pay
  * for a Postgres round trip it does not need.
@@ -94,6 +102,7 @@ export class CreditReservationManager {
     private readonly users: AuthRepository,
     private readonly events: CreditEventService,
     private readonly ledger: CreditLedgerRepository,
+    private readonly freeAllowance: CreditFreeAllowanceService,
   ) {}
 
   async reserve(input: CreditReserveInput): Promise<PaygReservationOutcome> {
@@ -173,6 +182,13 @@ export class CreditReservationManager {
       this.logger.warn(`finalize: reservation ${input.reservationId} was already settled`);
       return;
     }
+    if (record.isFreeAllowance) {
+      // The platform absorbed this call: nothing was held, so nothing moves. The
+      // slot stays used (it was a real provider call) and `actualCostMicroUsd`
+      // on the row records what the platform paid.
+      this.logger.log(`finalize: reservation=${input.reservationId} settled on the free allowance`);
+      return;
+    }
     await this.settle(record, actualMicroUsd);
   }
 
@@ -194,7 +210,11 @@ export class CreditReservationManager {
       this.logger.error(
         `priceUsage: no price for ${record.provider}/${record.model} at finalize — charging the hold`,
       );
-      return record.creditGrantMicroUsd + record.creditPurchasedMicroUsd;
+      // An allowance call holds nothing; its worst case is the estimate taken at
+      // admission, so a pricing outage cannot record it as free.
+      return record.isFreeAllowance
+        ? record.estimatedCostMicroUsd
+        : record.creditGrantMicroUsd + record.creditPurchasedMicroUsd;
     }
     return BigInt(calculateCostMicroUsd(breakdown, rate.rates));
   }
@@ -215,6 +235,10 @@ export class CreditReservationManager {
     const moved = await this.usage.markReleased(reservationId);
     if (moved === 0) {
       this.logger.warn(`release: reservation ${reservationId} was already settled`);
+      return;
+    }
+    if (record.isFreeAllowance) {
+      await this.returnFreeAllowance(record, reason);
       return;
     }
     const wallet = await this.wallets.ensure(record.userId);
@@ -297,14 +321,44 @@ export class CreditReservationManager {
       ttsCharacters: input.ttsCharacters,
       videoSeconds: input.videoSeconds,
     });
+    if (clamp.status !== 'AFFORDABLE') {
+      return this.admitOnFreeAllowanceOr(
+        input,
+        rate,
+        CreditReservationManager.refusalFor(clamp, available),
+      );
+    }
+    try {
+      return await this.commitHold(
+        input,
+        balances.wallet,
+        BigInt(clamp.worstCaseCostMicroUsd),
+        clamp,
+      );
+    } catch (error) {
+      // The atomic check refused (a concurrent request took the credit). Same
+      // fallback as an empty wallet; anything that is not a credit refusal is a
+      // real failure and keeps propagating.
+      if (error instanceof PaygRejectionException) {
+        return this.admitOnFreeAllowanceOr(input, rate, error);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * The credit refusal a non-affordable clamp outcome maps to. An empty wallet is
+   * EXHAUSTED, not "too expensive": both refuse, but they tell the user to do
+   * different things ("shorten the conversation" cannot work at a balance of
+   * zero, and a free-tier user hits it on their very first paid message). Only
+   * report TOO_EXPENSIVE when there is real credit that this prompt outgrew.
+   */
+  private static refusalFor(
+    clamp: Exclude<ReturnType<typeof clampOutputTokensToBalance>, { status: 'AFFORDABLE' }>,
+    available: number,
+  ): PaygRejectionException {
     if (clamp.status === 'PROMPT_UNAFFORDABLE') {
-      // An empty wallet is EXHAUSTED, not "too expensive". Both refuse, but
-      // they tell the user to do different things: "shorten the conversation"
-      // is advice that cannot work at a balance of zero, and it is the case a
-      // free-tier user hits on their very first paid message. Only report
-      // TOO_EXPENSIVE when there is real credit that this particular prompt
-      // outgrew.
-      throw new PaygRejectionException(
+      return new PaygRejectionException(
         available > 0
           ? BillingErrorCode.PAYG_PROMPT_TOO_EXPENSIVE
           : BillingErrorCode.PAYG_CREDIT_EXHAUSTED,
@@ -312,10 +366,106 @@ export class CreditReservationManager {
         clamp.promptCostMicroUsd,
       );
     }
-    if (clamp.status === 'OUTPUT_UNAFFORDABLE') {
-      throw new PaygRejectionException(BillingErrorCode.PAYG_CREDIT_EXHAUSTED, available, null);
+    return new PaygRejectionException(BillingErrorCode.PAYG_CREDIT_EXHAUSTED, available, null);
+  }
+
+  // ── free allowance (ADR-142) ──────────────────────────────────────────────
+
+  /**
+   * The fallback when the wallet cannot cover the call: take one of the plan's
+   * free requests on this credit connector, or throw the ORIGINAL credit refusal
+   * (402, the user's own numbers) so a spent allowance reads exactly like an
+   * empty wallet.
+   */
+  private async admitOnFreeAllowanceOr(
+    input: CreditReserveInput,
+    rate: PaygRateSnapshot,
+    refusal: PaygRejectionException,
+  ): Promise<PaygReservationOutcome> {
+    const admission = await this.freeAllowance.tryAdmit(input, rate, new Date());
+    if (admission === null) {
+      throw refusal;
     }
-    return this.commitHold(input, balances.wallet, BigInt(clamp.worstCaseCostMicroUsd), clamp);
+    return this.persistFreeAllowance(input, admission);
+  }
+
+  /**
+   * Records an admission durably: the usage row (so finalize, release and the
+   * sweeper find it) and the audit ledger row. The counter slot is already taken,
+   * so any failure here gives it back before rethrowing.
+   */
+  private async persistFreeAllowance(
+    input: CreditReserveInput,
+    admission: CreditFreeAllowanceAdmission,
+  ): Promise<PaygReservationOutcome> {
+    const reservationId = randomUUID();
+    const periods = buildPeriodKeys(new Date());
+    try {
+      await this.usage.createReservation({
+        reservationId,
+        input: {
+          ...buildCreditReservationInput(input, { grantMicroUsd: 0n, purchasedMicroUsd: 0n }),
+          // The cost the platform may absorb, so the plan's provider-cost
+          // aggregates see free requests too.
+          estimatedCostMicroUsd: admission.worstCaseCostMicroUsd,
+          isFreeAllowance: true,
+        },
+        ...periods,
+      });
+      const wallet = await this.wallets.ensure(input.userId);
+      await this.wallets.recordFreeAllowance({
+        userId: input.userId,
+        walletId: wallet.id,
+        reservationId,
+        requestId: input.requestId,
+        provider: input.provider,
+        model: input.model,
+        surface: input.surface,
+        workflow: input.workflow,
+        reason: FREE_ALLOWANCE_LEDGER_REASON_USED,
+      });
+    } catch (error) {
+      this.logger.error(`persistFreeAllowance: failed — ${(error as Error).message}`);
+      await this.freeAllowance.giveBack(admission.counter);
+      await this.usage.deleteByReservationId(reservationId);
+      throw error;
+    }
+    return {
+      metered: true,
+      reservationId,
+      maxOutputTokens: admission.maxOutputTokens,
+      clamped: admission.clamped,
+      heldMicroUsd: 0,
+      availableAfterMicroUsd: 0,
+      freeAllowance: true,
+    };
+  }
+
+  /**
+   * Gives one allowance slot back for a released call (provider error, cancel,
+   * timeout sweep). Runs only after `markReleased` reported a row, so a double
+   * release returns the slot once. The counter key is the record's own UTC month,
+   * so a call released after midnight on the 1st returns to the month it was
+   * taken from. A compensating ledger row keeps the audit trail append-only.
+   */
+  private async returnFreeAllowance(record: WeightedUsageRecord, reason: string): Promise<void> {
+    await this.freeAllowance.giveBack({
+      userId: record.userId,
+      provider: record.provider,
+      periodKey: record.monthKey,
+    });
+    const wallet = await this.wallets.ensure(record.userId);
+    await this.wallets.recordFreeAllowance({
+      userId: record.userId,
+      walletId: wallet.id,
+      reservationId: record.reservationId,
+      requestId: record.requestId,
+      provider: record.provider,
+      model: record.model,
+      surface: null,
+      workflow: record.workflow,
+      reason: `${FREE_ALLOWANCE_LEDGER_REASON_RETURNED}:${reason}`,
+    });
   }
 
   private async commitHold(
@@ -542,6 +692,17 @@ export class CreditReservationManager {
     record: WeightedUsageRecord,
     requestedMaxOutputTokens: number,
   ): Promise<PaygReservationOutcome> {
+    if (record.isFreeAllowance) {
+      return {
+        metered: true,
+        reservationId: record.reservationId,
+        maxOutputTokens: requestedMaxOutputTokens,
+        clamped: false,
+        heldMicroUsd: 0,
+        availableAfterMicroUsd: 0,
+        freeAllowance: true,
+      };
+    }
     const balances = await this.wallets.getBalances(record.userId);
     return {
       metered: true,

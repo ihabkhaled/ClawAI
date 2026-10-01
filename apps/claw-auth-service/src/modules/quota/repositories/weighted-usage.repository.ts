@@ -35,6 +35,7 @@ export class WeightedUsageRepository {
         isPayg: params.input.isPayg,
         creditGrantMicroUsd: params.input.creditGrantMicroUsd,
         creditPurchasedMicroUsd: params.input.creditPurchasedMicroUsd,
+        isFreeAllowance: params.input.isFreeAllowance ?? false,
         state: WeightedUsageState.RESERVED,
         dayKey: params.dayKey,
         weekKey: params.weekKey,

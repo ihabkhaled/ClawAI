@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import type { FeedbackSource } from '@/enums';
 import type {
   FeedbackAttachment,
   FeedbackHistoryEntry,
@@ -55,6 +56,15 @@ export type AdminFeedbackListProps = {
   onSelect: (id: string) => void;
 };
 
+export type AdminFeedbackSourceBadgeProps = {
+  source?: FeedbackSource;
+};
+
+export type AdminFeedbackReporterProps = {
+  name?: string | null;
+  email: string;
+};
+
 export type AdminFeedbackDetailDialogProps = {
   ticketId: string;
   open: boolean;
@@ -66,6 +76,8 @@ export type AdminFeedbackFiltersProps = {
   onStatusChange: (status: string) => void;
   type: string;
   onTypeChange: (type: string) => void;
+  source: string;
+  onSourceChange: (source: string) => void;
   search: string;
   onSearchChange: (search: string) => void;
   counts: FeedbackStatusCounts;

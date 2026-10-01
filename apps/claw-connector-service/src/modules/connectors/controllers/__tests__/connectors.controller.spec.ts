@@ -46,6 +46,19 @@ describe('ConnectorsController', () => {
     });
   });
 
+  it('create returns the service result as-is, carrying no key or ciphertext', async () => {
+    serviceMock.createConnector.mockResolvedValue({ id: 'c1', encryptedConfig: '****' });
+    const result = await controller.create({
+      name: 'OpenAI',
+      provider: 'OPENAI',
+      apiKey: 'sk-secret',
+    } as never);
+    const json = JSON.stringify(result);
+    expect(result).toEqual({ id: 'c1', encryptedConfig: '****' });
+    expect(json).not.toContain('sk-secret');
+    expect(json).not.toContain('apiKey');
+  });
+
   it('findAll forwards query', async () => {
     serviceMock.getConnectors.mockResolvedValue({ data: [], meta: {} });
     await controller.findAll({ page: 1, limit: 20 } as never);
@@ -60,6 +73,15 @@ describe('ConnectorsController', () => {
   it('update forwards id and dto', async () => {
     await controller.update('c1', { name: 'New' } as never);
     expect(serviceMock.updateConnector).toHaveBeenCalledWith('c1', { name: 'New' });
+  });
+
+  it('create and update forward the credit connector flag', async () => {
+    await controller.create({ name: 'O', provider: 'OLLAMA', isPayAsYouGo: true } as never);
+    expect(serviceMock.createConnector).toHaveBeenCalledWith(
+      expect.objectContaining({ isPayAsYouGo: true }),
+    );
+    await controller.update('c1', { isPayAsYouGo: false } as never);
+    expect(serviceMock.updateConnector).toHaveBeenCalledWith('c1', { isPayAsYouGo: false });
   });
 
   it('remove forwards id', async () => {

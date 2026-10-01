@@ -84,6 +84,15 @@ describe('PlanRow', () => {
     expect(screen.getByRole('button', { name: 'adminPlans.deactivate' })).toBeInTheDocument();
   });
 
+  it('shows the free credit requests only when the plan carries the field', () => {
+    const { rerender } = render(
+      <PlanRow plan={makePlan({ creditConnectorFreeRequestsPerMonth: 2 })} {...baseProps} />,
+    );
+    expect(screen.getByText('adminPlans.creditFreeRequests')).toBeInTheDocument();
+    rerender(<PlanRow plan={makePlan()} {...baseProps} />);
+    expect(screen.queryByText('adminPlans.creditFreeRequests')).not.toBeInTheDocument();
+  });
+
   it('shows a trial badge only for a trial plan', () => {
     const { rerender } = render(
       <PlanRow plan={makePlan({ isTrial: true, trialDurationDays: 90 })} {...baseProps} />,

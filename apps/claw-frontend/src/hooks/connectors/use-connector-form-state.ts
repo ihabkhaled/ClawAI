@@ -18,6 +18,7 @@ import type {
   CreateConnectorRequest,
 } from '@/types';
 import { toFrontendConnectorAuthType } from '@/utilities';
+import { defaultCreditConnectorForProvider } from '@/utilities/connector-credit.utility';
 import { gatewayHeaderRowsToRecord } from '@/utilities/connector-gateway-headers.utility';
 
 export function useConnectorFormState({
@@ -36,6 +37,10 @@ export function useConnectorFormState({
   const [region, setRegion] = useState(connector?.region ?? '');
   const [workspaceId, setWorkspaceId] = useState(connector?.workspaceId ?? '');
   const [accountId, setAccountId] = useState('');
+  const [isCreditConnector, setIsCreditConnector] = useState(
+    connector?.isPayAsYouGo ??
+      (connector?.provider ? defaultCreditConnectorForProvider(connector.provider) : false),
+  );
   const [fieldErrors, setFieldErrors] = useState<ConnectorFormFieldErrors>({});
   const gatewayHeaders = useConnectorGatewayHeaders();
   const resetGatewayHeaders = gatewayHeaders.reset;
@@ -52,6 +57,10 @@ export function useConnectorFormState({
       setRegion(connector?.region ?? '');
       setWorkspaceId(connector?.workspaceId ?? '');
       setAccountId('');
+      setIsCreditConnector(
+        connector?.isPayAsYouGo ??
+          (connector?.provider ? defaultCreditConnectorForProvider(connector.provider) : false),
+      );
       setFieldErrors({});
       resetGatewayHeaders();
     }
@@ -71,6 +80,9 @@ export function useConnectorFormState({
   const onProviderSelect = (nextProvider: ConnectorProvider): void => {
     setProvider(nextProvider);
     setAccountId('');
+    if (!isEditing) {
+      setIsCreditConnector(defaultCreditConnectorForProvider(nextProvider));
+    }
     const preset = getConnectorPreset(nextProvider);
     if (preset) {
       setName((prev) => (prev.trim().length > 0 ? prev : preset.displayName));
@@ -86,6 +98,7 @@ export function useConnectorFormState({
       name,
       provider: provider ?? undefined,
       authType,
+      isPayAsYouGo: isCreditConnector,
     };
     if (apiKey) {
       formData.apiKey = apiKey;
@@ -154,6 +167,8 @@ export function useConnectorFormState({
     accountId,
     setAccountId,
     requiresAccountId,
+    isCreditConnector,
+    setIsCreditConnector,
     fieldErrors,
     isEditing,
     pendingLabel,

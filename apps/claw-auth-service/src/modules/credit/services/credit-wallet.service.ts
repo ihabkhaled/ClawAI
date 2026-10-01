@@ -99,6 +99,44 @@ export class CreditWalletService {
   }
 
   /**
+   * Writes the audit row for a free-allowance request (ADR-142): admitted, or
+   * given back. A FREE_ALLOWANCE row carries a ZERO amount and zero bucket deltas,
+   * so the wallet columns do not move and both ledger identities stay true. The
+   * empty wallet update still runs through `applyMovements` so the row gets its
+   * running `balanceAfterMicroUsd` from the same transaction as every other row.
+   */
+  async recordFreeAllowance(params: {
+    userId: string;
+    walletId: string;
+    reservationId: string;
+    requestId: string | null;
+    provider: string;
+    model: string;
+    surface: string | null;
+    workflow: string | null;
+    reason: string;
+  }): Promise<UserCreditWallet> {
+    this.logger.debug(`recordFreeAllowance: reservation=${params.reservationId}`);
+    return this.commit(params.walletId, [
+      {
+        walletUpdate: {},
+        ledger: {
+          ...CreditWalletService.baseLedger(params.userId, params.walletId),
+          kind: CreditLedgerKind.FREE_ALLOWANCE,
+          amountMicroUsd: 0n,
+          reservationId: params.reservationId,
+          requestId: params.requestId,
+          provider: params.provider,
+          model: params.model,
+          surface: params.surface,
+          workflow: params.workflow,
+          reason: params.reason,
+        },
+      },
+    ]);
+  }
+
+  /**
    * Gives a hold back in full.
    *
    * The refund split is capped by what each bucket lent, so a full release

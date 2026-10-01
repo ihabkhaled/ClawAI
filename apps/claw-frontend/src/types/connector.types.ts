@@ -14,6 +14,8 @@ export type Connector = {
   region: string | null;
   workspaceId: string | null;
   maskedApiKey: string | null;
+  /** Credit connector: usage is paid from the user's credit (`isPayAsYouGo` on the wire). */
+  isPayAsYouGo?: boolean;
   createdAt: string;
   updatedAt: string;
   _count?: { models: number };
@@ -50,6 +52,8 @@ export type CreateConnectorRequest = {
   region?: string;
   workspaceId?: string;
   accountId?: string;
+  /** Credit connector flag; the admin's answer wins over the provider default. */
+  isPayAsYouGo?: boolean;
   /**
    * LLM-gateway headers (F092). Write-only: omitted keeps what is stored, `{}`
    * clears it, a non-empty record replaces it.
@@ -91,6 +95,7 @@ export type ConnectorFormFieldErrors = {
   workspaceId?: string[];
   accountId?: string[];
   gatewayHeaders?: string[];
+  isPayAsYouGo?: string[];
 };
 
 /** One editable row in the connector gateway-headers editor (F092). */
@@ -148,6 +153,8 @@ export type ConnectorFormStateReturn = {
   accountId: string;
   setAccountId: (value: string) => void;
   requiresAccountId: boolean;
+  isCreditConnector: boolean;
+  setIsCreditConnector: (value: boolean) => void;
   fieldErrors: ConnectorFormFieldErrors;
   isEditing: boolean;
   pendingLabel: string;

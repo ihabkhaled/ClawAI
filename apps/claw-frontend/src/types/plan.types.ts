@@ -75,6 +75,8 @@ export type PlanView = {
   maxMemoryItems: number | null;
   /** Longest video processed, in seconds. null = unlimited, 0 = disabled (ADR-122). */
   maxVideoSeconds: number | null;
+  /** Free requests per month per credit connector. null = unlimited, 0 = off. Absent from an older auth-service. */
+  creditConnectorFreeRequestsPerMonth?: number | null;
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
   allowResearchMode: boolean;
@@ -147,6 +149,8 @@ export type CreatePlanRequest = {
   maxMemoryItems?: number;
   /** null sets unlimited; omitted leaves the plan's value untouched. */
   maxVideoSeconds?: number | null;
+  /** null sets unlimited; omitted leaves the plan's value untouched. */
+  creditConnectorFreeRequestsPerMonth?: number | null;
   allowCompareMode?: boolean;
   allowJudgeMode?: boolean;
   allowResearchMode?: boolean;
@@ -283,6 +287,7 @@ export type PlanFormState = {
   maxContextPacks: string;
   maxMemoryItems: string;
   maxVideoSeconds: string;
+  creditConnectorFreeRequestsPerMonth: string;
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
   allowResearchMode: boolean;

@@ -85,4 +85,23 @@ describe('useAdminFeedbackList', () => {
     });
     expect(result.current.page).toBe(1);
   });
+  it('sends the source filter only when one is chosen, and resets to page 1', async () => {
+    const { result } = renderHook(() => useAdminFeedbackList(), { wrapper: makeWrapper() });
+    await waitFor(() => expect(list).toHaveBeenCalled());
+    expect(list.mock.calls.at(-1)?.[0]).not.toHaveProperty('source');
+
+    act(() => {
+      result.current.setPage(3);
+    });
+    act(() => {
+      result.current.setSource('PUBLIC');
+    });
+    expect(result.current.page).toBe(1);
+    await waitFor(() => expect(list.mock.calls.at(-1)?.[0]).toMatchObject({ source: 'PUBLIC' }));
+
+    act(() => {
+      result.current.setSource(undefined);
+    });
+    await waitFor(() => expect(list.mock.calls.at(-1)?.[0]).not.toHaveProperty('source'));
+  });
 });

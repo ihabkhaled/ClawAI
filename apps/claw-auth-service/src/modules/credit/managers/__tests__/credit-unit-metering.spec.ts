@@ -17,6 +17,7 @@ import { ModelRateClient } from '../../clients/model-rate.client';
 import { CreditLedgerRepository } from '../../repositories/credit-ledger.repository';
 import { CreditWalletRepository } from '../../repositories/credit-wallet.repository';
 import { CreditEventService } from '../../services/credit-event.service';
+import { CreditFreeAllowanceService } from '../../services/credit-free-allowance.service';
 import { CreditGrantService } from '../../services/credit-grant.service';
 import { CreditWalletService } from '../../services/credit-wallet.service';
 import {
@@ -165,6 +166,7 @@ function usageRecord(overrides: Partial<WeightedUsageRecord>): WeightedUsageReco
     isPayg: true,
     creditGrantMicroUsd: 0n,
     creditPurchasedMicroUsd: 0n,
+    isFreeAllowance: false,
     weightedTokens: 0,
     estimatedCostMicroUsd: 0n,
     actualCostMicroUsd: null,
@@ -275,6 +277,8 @@ describe('CreditReservationManager — unit metering', () => {
               .mockResolvedValue({ surface: PaygSurface.IMAGE, workflow: null }),
           },
         },
+        // Per-unit surfaces are never eligible for the free allowance (ADR-142).
+        { provide: CreditFreeAllowanceService, useValue: { tryAdmit: vi.fn() } },
       ],
     }).compile();
 

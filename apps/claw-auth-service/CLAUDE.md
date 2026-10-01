@@ -451,6 +451,30 @@ the checksummed payload); existing rows from migration
 all on and `maxVideoSeconds: null`. Deploy auth-service before image-service
 and chat-service: an old payload reads as "gate off" and refuses paid users.
 
+## Free credit-connector requests (ADR-142, 2026-10-01)
+
+`Plan.creditConnectorFreeRequestsPerMonth` (`Int? DEFAULT 0`; `null` unlimited, `0` none) lets a user
+without credit make N requests per credit connector per UTC month, absorbed by the platform. Free = 2,
+every other plan = 0. Create/update plan DTOs take `0..1,000,000` or `null`; the admin plan view and
+the public catalog return it. Fresh installs: `creditAllowanceProjection` in
+`plan-catalog.seeder.cjs` (NOT in the checksummed payload; an administrator-edited row is never
+rewritten). Existing installs: migration `20261001150000_credit_connector_free_allowance`, which seeds
+Free = 2 only when it creates the column.
+
+- Lives in `modules/credit`: `CreditFreeAllowanceService` (policy, clamp, counter),
+  `CreditFreeAllowanceRepository` (the guarded single-statement upsert on
+  `credit_free_allowance_usage`), eligibility and ceiling maths in
+  `utilities/credit-free-allowance.utility.ts`, surfaces and constants in
+  `constants/credit-free-allowance.constants.ts`.
+- `CreditReservationManager` tries credit FIRST and calls the allowance only when credit cannot cover
+  the call. The record is a `WeightedUsageRecord` with `isFreeAllowance`; `finalize` moves no money;
+  `release` gives the slot back once (gated on `markReleased`) and appends a `FREE_ALLOWANCE` row.
+- Only token-priced surfaces are eligible; never image, video, transcription or TTS.
+- `GET /credit/me` adds `freeAllowance: [{ provider, limit, used, remaining }]`.
+- A new `PaygSurface` is NOT free until it is added to `FREE_ALLOWANCE_ELIGIBLE_SURFACES`.
+- Raising the allowance shrinks each free request's cost budget (`ceiling / allowance`); raise
+  `monthlyProviderCostCeilingMicroUsd` with it.
+
 ## Docker Container Rebuild Procedure
 
 When rebuilding this service (especially after shared package changes):

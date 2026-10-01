@@ -45,6 +45,7 @@ export function ConnectorCard({
   const providerName = PROVIDER_DISPLAY_NAMES[connector.provider] ?? connector.provider;
   const dotTone = getConnectorStatusDotTone(connector.status);
   const statusLabel = t(getConnectorStatusLabelKey(connector.status));
+  const isCredit = connector.isPayAsYouGo === true;
 
   return (
     <Card className="hover:border-primary/50 transition-colors">
@@ -76,6 +77,13 @@ export function ConnectorCard({
               <span aria-hidden="true">•</span>
               <span>{statusLabel}</span>
             </div>
+            <Badge
+              variant={isCredit ? 'default' : 'outline'}
+              className="mt-1 text-xs"
+              data-testid="connector-billing-badge"
+            >
+              {isCredit ? t('connectors.creditBadge') : t('connectors.includedBadge')}
+            </Badge>
           </div>
         </div>
         <div className="flex items-center gap-1">

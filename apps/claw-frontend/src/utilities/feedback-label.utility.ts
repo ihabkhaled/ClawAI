@@ -1,5 +1,7 @@
 import { FeedbackStatus, FeedbackType } from '@claw/shared-types';
 
+import { FeedbackSource } from '@/enums';
+
 // The dictionary keys are camelCase but the API speaks the enum names, so
 // interpolating the raw value produced keys like `feedback.type.SECURITY_CONCERN`
 // which have no entry and rendered as the key itself in the admin table.
@@ -23,6 +25,14 @@ const STATUS_LABEL_KEYS: Readonly<Record<string, string>> = {
   [FeedbackStatus.CLOSED]: 'feedback.admin.status.closed',
   [FeedbackStatus.ARCHIVED]: 'feedback.admin.status.archived',
 };
+
+// Rows filed before the source column existed carry no value; they were all
+// signed-in submissions, so a missing source reads as the signed-in label.
+export function feedbackSourceLabelKey(source: string | undefined): string {
+  return source === FeedbackSource.PUBLIC
+    ? 'feedback.admin.source.public'
+    : 'feedback.admin.source.authenticated';
+}
 
 export function feedbackTypeLabelKey(type: string): string {
   return TYPE_LABEL_KEYS[type] ?? 'feedback.types.other';

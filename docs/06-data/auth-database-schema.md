@@ -91,6 +91,21 @@ Key-value store for global system configuration.
 Free-for-N-days grant updates it to point at the new assignment instead of adding a row.
 See `docs/13-adr/adr-140-dynamic-trial-length.md`.
 
+### plans (free credit-connector allowance, ADR-142)
+
+| Column                                     | Type    | Notes                                                                                                                                                                                 |
+| ------------------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `credit_connector_free_requests_per_month` | integer | Free requests per credit connector per UTC month. `NULL` = unlimited, `0` = none (default). CHECK `>= 0` when set. Seeded Free = 2, every other plan 0; never overwritten on re-seed. |
+
+### credit_free_allowance_usage
+
+One row per `(user_id, provider, period_key)` (unique): `used_count` is how many free
+requests that user spent on that provider (upper-cased) in that UTC month (`YYYY-MM`).
+Incremented only by one guarded upsert (`... WHERE used_count < limit`), decremented
+(floor 0) when a call is released. `weighted_usage_records.is_free_allowance` flags the
+reservation row, and the `CreditLedgerKind` enum gains `FREE_ALLOWANCE` (zero-amount rows).
+See `docs/13-adr/adr-142-free-allowance-on-credit-connectors.md`.
+
 ## Enums
 
 ### UserRole

@@ -24,4 +24,10 @@ export enum CreditLedgerKind {
   ADMIN_ADJUSTMENT = 'ADMIN_ADJUSTMENT',
   /** Credit returned because the provider failed after money was already held. */
   PROVIDER_FAILURE_REFUND = 'PROVIDER_FAILURE_REFUND',
+  /**
+   * A request admitted on the plan's free allowance for a credit connector
+   * (ADR-142), or that allowance given back. Always a zero amount: no wallet
+   * movement. The `reason` tells the two apart.
+   */
+  FREE_ALLOWANCE = 'FREE_ALLOWANCE',
 }

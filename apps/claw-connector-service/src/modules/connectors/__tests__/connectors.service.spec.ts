@@ -139,6 +139,27 @@ describe('ConnectorsService', () => {
   });
 
   describe('createConnector', () => {
+    it('never returns the key or its ciphertext, and does not touch the stored row', async () => {
+      const stored = { ...mockConnector, encryptedGatewayHeaders: 'cipher-headers' };
+      const snapshot = { ...stored };
+      connectorsRepo.create.mockResolvedValue(stored);
+
+      const result = await service.createConnector({
+        name: 'Test OpenAI',
+        provider: ConnectorProvider.OPENAI,
+        authType: ConnectorAuthType.API_KEY,
+        apiKey: 'sk-test-key',
+      });
+
+      const json = JSON.stringify(result);
+      expect(result.encryptedConfig).toBe('****');
+      expect(result.encryptedGatewayHeaders).toBe('****');
+      expect(json).not.toContain('sk-test-key');
+      expect(json).not.toContain('encrypted-api-key');
+      expect(json).not.toContain('cipher-headers');
+      expect(stored).toEqual(snapshot);
+    });
+
     it('should create connector with encrypted API key and publish event', async () => {
       connectorsRepo.create.mockResolvedValue(mockConnector);
 
@@ -442,6 +463,16 @@ describe('ConnectorsService', () => {
   });
 
   describe('deleteConnector', () => {
+    it('masks the ciphertext in the returned row', async () => {
+      connectorsRepo.findById.mockResolvedValue(mockConnector);
+      connectorsRepo.delete.mockResolvedValue(mockConnector);
+
+      const result = await service.deleteConnector('conn-1');
+
+      expect(result.encryptedConfig).toBe('****');
+      expect(JSON.stringify(result)).not.toContain('encrypted-api-key');
+    });
+
     it('should delete connector and publish event', async () => {
       connectorsRepo.findById.mockResolvedValue(mockConnector);
       connectorsRepo.delete.mockResolvedValue(mockConnector);

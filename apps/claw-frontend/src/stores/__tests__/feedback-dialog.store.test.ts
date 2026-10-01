@@ -26,3 +26,36 @@ describe('feedback dialog store', () => {
     expect(state().isOpen).toBe(false);
   });
 });
+
+describe('feedback dialog store focus return', () => {
+  beforeEach(() => {
+    useFeedbackDialogStore.setState({ isOpen: false, returnFocusTo: null });
+    document.body.innerHTML = '<button id="opener">Send feedback</button>';
+  });
+
+  it('remembers the focused element on open and refocuses it after close', async () => {
+    const opener = document.getElementById('opener');
+    opener?.focus();
+
+    state().openFeedback();
+    expect(state().returnFocusTo).toBe(opener);
+
+    (document.activeElement as HTMLElement).blur();
+    state().setFeedbackOpen(false);
+    expect(state().returnFocusTo).toBeNull();
+    await new Promise<void>((resolve) => setTimeout(resolve, 60));
+
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it('closes cleanly when the opener is gone', async () => {
+    document.getElementById('opener')?.focus();
+    state().openFeedback();
+    document.body.innerHTML = '';
+
+    state().setFeedbackOpen(false);
+    await new Promise<void>((resolve) => setTimeout(resolve, 60));
+
+    expect(state().isOpen).toBe(false);
+  });
+});

@@ -26,6 +26,8 @@ export default function AdminFeedbackPage(): React.ReactElement {
     setStatus,
     type,
     setType,
+    source,
+    setSource,
     search,
     setSearch,
     counts,
@@ -43,6 +45,8 @@ export default function AdminFeedbackPage(): React.ReactElement {
             onStatusChange={(next) => setStatus(next === 'all' ? undefined : next)}
             type={type ?? 'all'}
             onTypeChange={(next) => setType(next === 'all' ? undefined : next)}
+            source={source ?? 'all'}
+            onSourceChange={(next) => setSource(next === 'all' ? undefined : next)}
             search={search}
             onSearchChange={setSearch}
             counts={counts ?? {}}

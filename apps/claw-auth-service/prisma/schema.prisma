@@ -68,41 +68,41 @@ enum CurrencyPreferenceMode {
 }
 
 model User {
-  id                   String                   @id @default(cuid())
-  email                String                   @unique
-  username             String                   @unique
-  passwordHash         String                   @map("password_hash")
-  role                 UserRole                 @default(USER)
+  id                     String                   @id @default(cuid())
+  email                  String                   @unique
+  username               String                   @unique
+  passwordHash           String                   @map("password_hash")
+  role                   UserRole                 @default(USER)
   // Dynamic RBAC FK (Auth/RBAC/Plans flagship). Nullable during the backfill
   // window; the resolver falls back to the `role` enum when roleId is null.
-  roleId               String?                  @map("role_id")
+  roleId                 String?                  @map("role_id")
   // Fast pointer to the user's active plan (Phase B). Nullable: ADMIN bypasses
   // plans entirely, and the column is backfilled for existing users.
-  activePlanId         String?                  @map("active_plan_id")
-  status               UserStatus               @default(PENDING)
-  isSuperAdmin         Boolean                  @default(false) @map("is_super_admin")
-  emailVerifiedAt      DateTime?                @map("email_verified_at")
-  firstName            String?                  @map("first_name")
-  lastName             String?                  @map("last_name")
-  phone                String?                  @map("phone")
-  mustChangePassword   Boolean                  @default(false) @map("must_change_password")
-  languagePreference   UserLanguagePreference   @default(EN) @map("language_preference")
-  appearancePreference UserAppearancePreference @default(SYSTEM) @map("appearance_preference")
+  activePlanId           String?                  @map("active_plan_id")
+  status                 UserStatus               @default(PENDING)
+  isSuperAdmin           Boolean                  @default(false) @map("is_super_admin")
+  emailVerifiedAt        DateTime?                @map("email_verified_at")
+  firstName              String?                  @map("first_name")
+  lastName               String?                  @map("last_name")
+  phone                  String?                  @map("phone")
+  mustChangePassword     Boolean                  @default(false) @map("must_change_password")
+  languagePreference     UserLanguagePreference   @default(EN) @map("language_preference")
+  appearancePreference   UserAppearancePreference @default(SYSTEM) @map("appearance_preference")
   // Display-currency preference. Country and currency are stored SEPARATELY:
   // a country can share a currency, hold several, or change one, so a country
   // is context for AUTO and never the financial answer by itself.
   //
   // Both are nullable and both stay set when the mode flips, so switching to
   // AUTO and back does not lose what the user had chosen.
-  currencyPreferenceMode CurrencyPreferenceMode @default(AUTO) @map("currency_preference_mode")
-  preferredCountryCode   String?                @map("preferred_country_code") @db.VarChar(2)
-  preferredCurrencyCode  String?                @map("preferred_currency_code") @db.VarChar(3)
+  currencyPreferenceMode CurrencyPreferenceMode   @default(AUTO) @map("currency_preference_mode")
+  preferredCountryCode   String?                  @map("preferred_country_code") @db.VarChar(2)
+  preferredCurrencyCode  String?                  @map("preferred_currency_code") @db.VarChar(3)
   // "Read aloud" voice (ADR-120 addendum "voice picker"). A name from
   // @claw/shared-constants TTS_VOICES_BY_PROVIDER; null = each provider's
   // default voice. Presentation state, like the display currency.
-  ttsVoice               String?                @map("tts_voice") @db.VarChar(32)
-  createdAt            DateTime                 @default(now()) @map("created_at")
-  updatedAt            DateTime                 @updatedAt @map("updated_at")
+  ttsVoice               String?                  @map("tts_voice") @db.VarChar(32)
+  createdAt              DateTime                 @default(now()) @map("created_at")
+  updatedAt              DateTime                 @updatedAt @map("updated_at")
 
   sessions                Session[]
   passwordResetTokens     PasswordResetToken[]
@@ -143,41 +143,41 @@ enum PlanRetirementMigrationStatus {
 // Admin-managed subscription plan (Phase B). Prices are modeled so billing can
 // be added later; no payment integration ships now.
 model Plan {
-  id                                 String              @id @default(cuid())
-  name                               String
-  slug                               String              @unique
-  description                        String?
-  priceMonthly                       Decimal?            @map("price_monthly") @db.Decimal(12, 2)
-  priceYearly                        Decimal?            @map("price_yearly") @db.Decimal(12, 2)
-  currency                           String?             @default("USD")
-  displayOrder                       Int                 @default(0) @map("display_order")
+  id                                  String              @id @default(cuid())
+  name                                String
+  slug                                String              @unique
+  description                         String?
+  priceMonthly                        Decimal?            @map("price_monthly") @db.Decimal(12, 2)
+  priceYearly                         Decimal?            @map("price_yearly") @db.Decimal(12, 2)
+  currency                            String?             @default("USD")
+  displayOrder                        Int                 @default(0) @map("display_order")
   // The plan a new signup is granted. Read by AuthManager.register and by
   // UsersService when an administrator creates an account.
-  isDefault                          Boolean             @default(false) @map("is_default")
+  isDefault                           Boolean             @default(false) @map("is_default")
   // The plan the public pricing page badges "Most popular". A marketing
   // decision, deliberately separate from isDefault: one flag was doing both
   // jobs, so the badge always landed on whichever plan signups happened to get.
-  isPopular                          Boolean             @default(false) @map("is_popular")
+  isPopular                           Boolean             @default(false) @map("is_popular")
   // Emulated partial-unique index, following PlanPriceVersion.activeKey:
   // carries the literal 'popular' while this plan holds the badge and NULL
   // otherwise. Postgres treats every NULL as distinct, so any number of plans
   // can be un-badged but a second popular plan is rejected by the database
   // rather than by an application-level "unset the others" that races.
-  popularKey                         String?             @unique @map("popular_key")
-  isTrial                            Boolean             @default(false) @map("is_trial")
-  trialDurationDays                  Int?                @map("trial_duration_days")
-  isActive                           Boolean             @default(true) @map("is_active")
-  isPublic                           Boolean             @default(true) @map("is_public")
-  lifecycleStatus                    PlanLifecycleStatus @default(ACTIVE) @map("lifecycle_status")
-  replacementPlanId                  String?             @map("replacement_plan_id")
-  retiredAt                          DateTime?           @map("retired_at")
-  dailyTokenQuota                    Int                 @default(0) @map("daily_token_quota")
-  weeklyTokenQuota                   Int?                @map("weekly_token_quota")
-  monthlyTokenQuota                  Int?                @map("monthly_token_quota")
+  popularKey                          String?             @unique @map("popular_key")
+  isTrial                             Boolean             @default(false) @map("is_trial")
+  trialDurationDays                   Int?                @map("trial_duration_days")
+  isActive                            Boolean             @default(true) @map("is_active")
+  isPublic                            Boolean             @default(true) @map("is_public")
+  lifecycleStatus                     PlanLifecycleStatus @default(ACTIVE) @map("lifecycle_status")
+  replacementPlanId                   String?             @map("replacement_plan_id")
+  retiredAt                           DateTime?           @map("retired_at")
+  dailyTokenQuota                     Int                 @default(0) @map("daily_token_quota")
+  weeklyTokenQuota                    Int?                @map("weekly_token_quota")
+  monthlyTokenQuota                   Int?                @map("monthly_token_quota")
   // Fair-use bound on TOTAL weighted spend in a month, across every provider
   // including local compute. Not the PAYG credit allowance — that is derived
   // from the price below. NULL means no ceiling.
-  monthlyProviderCostCeilingMicroUsd BigInt?             @map("monthly_provider_cost_ceiling_micro_usd")
+  monthlyProviderCostCeilingMicroUsd  BigInt?             @map("monthly_provider_cost_ceiling_micro_usd")
   // Share of what the user PAYS that becomes PAYG connector credit, in basis
   // points (3000 = 30%). The monthly grant is computed as
   // `activeMonthlyPrice.amountMinor * bps / 10000`, so it follows a price
@@ -187,63 +187,68 @@ model Plan {
   // nothing. That is the honest arithmetic, not an oversight — a free tier's
   // access to paid models is a separate product decision, not a side effect of
   // a percentage.
-  paygCreditPercentBps               Int                 @default(3000) @map("payg_credit_percent_bps")
+  paygCreditPercentBps                Int                 @default(3000) @map("payg_credit_percent_bps")
   // Discount off the plain monthly rate for a longer term, in basis points
   // (2000 = 20%). QUARTERLY / SEMIANNUAL / YEARLY PlanPriceVersion amounts are
   // DERIVED from the active MONTHLY price and these three numbers
   // (`monthly x months x (10000 - bps) / 10000`, rounded once), and re-minted as
   // new immutable versions whenever either input changes. Defaults: 10% / 15% /
   // 20%. 0 means "no discount", never "unlimited".
-  quarterlyDiscountBps               Int                 @default(1000) @map("quarterly_discount_bps")
-  semiannualDiscountBps              Int                 @default(1500) @map("semiannual_discount_bps")
-  yearlyDiscountBps                  Int                 @default(2000) @map("yearly_discount_bps")
+  quarterlyDiscountBps                Int                 @default(1000) @map("quarterly_discount_bps")
+  semiannualDiscountBps               Int                 @default(1500) @map("semiannual_discount_bps")
+  yearlyDiscountBps                   Int                 @default(2000) @map("yearly_discount_bps")
   // NULL = unlimited, 0 = disabled. The three are never interchangeable.
-  maxConcurrentRequests              Int?                @map("max_concurrent_requests")
-  maxChatsPerDay                     Int?                @map("max_chats_per_day")
-  maxMessagesPerDay                  Int?                @map("max_messages_per_day")
-  maxWorkspaceConnections            Int?                @map("max_workspace_connections")
-  maxContextPacks                    Int?                @map("max_context_packs")
-  maxMemoryItems                     Int?                @map("max_memory_items")
-  allowCompareMode                   Boolean             @default(false) @map("allow_compare_mode")
-  allowJudgeMode                     Boolean             @default(false) @map("allow_judge_mode")
-  allowResearchMode                  Boolean             @default(false) @map("allow_research_mode")
-  allowCriticReview                  Boolean             @default(false) @map("allow_critic_review")
-  allowWorkspaces                    Boolean             @default(true) @map("allow_workspaces")
-  allowMemory                        Boolean             @default(true) @map("allow_memory")
-  allowContextPacks                  Boolean             @default(true) @map("allow_context_packs")
+  maxConcurrentRequests               Int?                @map("max_concurrent_requests")
+  maxChatsPerDay                      Int?                @map("max_chats_per_day")
+  maxMessagesPerDay                   Int?                @map("max_messages_per_day")
+  maxWorkspaceConnections             Int?                @map("max_workspace_connections")
+  maxContextPacks                     Int?                @map("max_context_packs")
+  maxMemoryItems                      Int?                @map("max_memory_items")
+  allowCompareMode                    Boolean             @default(false) @map("allow_compare_mode")
+  allowJudgeMode                      Boolean             @default(false) @map("allow_judge_mode")
+  allowResearchMode                   Boolean             @default(false) @map("allow_research_mode")
+  allowCriticReview                   Boolean             @default(false) @map("allow_critic_review")
+  allowWorkspaces                     Boolean             @default(true) @map("allow_workspaces")
+  allowMemory                         Boolean             @default(true) @map("allow_memory")
+  allowContextPacks                   Boolean             @default(true) @map("allow_context_packs")
   // Per-lab plan-tier gates for the 9 advanced orchestration pages. Same
   // opt-in/DEFAULT(false) shape as allowCompareMode/allowJudgeMode above —
   // paired with a matching Permission (e.g. CONSENSUS_MODE_USE) so a page
   // is visible only when BOTH the user's role has the permission AND their
   // plan has the gate. Replaces the single coarse ROUTER_USE permission
   // that previously covered all 9 pages with no plan-tier distinction.
-  allowConsensusMode                 Boolean             @default(false) @map("allow_consensus_mode")
-  allowEscalationChain               Boolean             @default(false) @map("allow_escalation_chain")
-  allowRepairLab                     Boolean             @default(false) @map("allow_repair_lab")
-  allowTaskDecomposer                Boolean             @default(false) @map("allow_task_decomposer")
-  allowBestOfN                       Boolean             @default(false) @map("allow_best_of_n")
-  allowVerifier                      Boolean             @default(false) @map("allow_verifier")
-  allowPipelineLab                   Boolean             @default(false) @map("allow_pipeline_lab")
-  allowCostEnsemble                  Boolean             @default(false) @map("allow_cost_ensemble")
-  allowRolePack                      Boolean             @default(false) @map("allow_role_pack")
+  allowConsensusMode                  Boolean             @default(false) @map("allow_consensus_mode")
+  allowEscalationChain                Boolean             @default(false) @map("allow_escalation_chain")
+  allowRepairLab                      Boolean             @default(false) @map("allow_repair_lab")
+  allowTaskDecomposer                 Boolean             @default(false) @map("allow_task_decomposer")
+  allowBestOfN                        Boolean             @default(false) @map("allow_best_of_n")
+  allowVerifier                       Boolean             @default(false) @map("allow_verifier")
+  allowPipelineLab                    Boolean             @default(false) @map("allow_pipeline_lab")
+  allowCostEnsemble                   Boolean             @default(false) @map("allow_cost_ensemble")
+  allowRolePack                       Boolean             @default(false) @map("allow_role_pack")
   // Media gates (ADR-122). Free keeps the basics (image understanding, voice
   // notes, short video); these are the paid half, enforced by the service that
   // executes the work. Opt-in DEFAULT(false) like every gate above.
-  allowImageGeneration               Boolean             @default(false) @map("allow_image_generation")
-  allowHelperVision                  Boolean             @default(false) @map("allow_helper_vision")
-  allowTextToSpeech                  Boolean             @default(false) @map("allow_text_to_speech")
+  allowImageGeneration                Boolean             @default(false) @map("allow_image_generation")
+  allowHelperVision                   Boolean             @default(false) @map("allow_helper_vision")
+  allowTextToSpeech                   Boolean             @default(false) @map("allow_text_to_speech")
   // Longest video processed, in seconds. NULL = unlimited, 0 = video disabled.
   // DEFAULT 60 so a plan created without the field gets the free allowance,
   // never an accidental unlimited.
-  maxVideoSeconds                    Int?                @default(60) @map("max_video_seconds")
+  maxVideoSeconds                     Int?                @default(60) @map("max_video_seconds")
+  // Free requests per UTC calendar month, PER credit connector, that the platform
+  // absorbs when the user has no credit to cover a token-priced call (ADR-142).
+  // NULL = unlimited, 0 = none. DEFAULT 0 so a plan created without the field
+  // never gives away provider spend; Free is seeded at 2.
+  creditConnectorFreeRequestsPerMonth Int?                @default(0) @map("credit_connector_free_requests_per_month")
   // New and seeded plans expose every discovered model until an administrator
   // saves an explicit allow-list or deny-all policy.
-  modelAccessMode                    PlanModelAccessMode @default(ALLOW_ALL) @map("model_access_mode")
+  modelAccessMode                     PlanModelAccessMode @default(ALLOW_ALL) @map("model_access_mode")
   // Routing cost classes permitted under ALLOW_COST_CLASSES. Explicit per-model
   // rows still override this set.
-  allowedCostClasses                 String[]            @default([]) @map("allowed_cost_classes")
-  createdAt                          DateTime            @default(now()) @map("created_at")
-  updatedAt                          DateTime            @updatedAt @map("updated_at")
+  allowedCostClasses                  String[]            @default([]) @map("allowed_cost_classes")
+  createdAt                           DateTime            @default(now()) @map("created_at")
+  updatedAt                           DateTime            @updatedAt @map("updated_at")
 
   modelAccess      PlanModelAccess[]
   assignments      UserPlanAssignment[]
@@ -684,43 +689,46 @@ model FeatureUsageRecord {
 // provider, model and workflow cannot be represented in a daily aggregate.
 // This is the durable source Redis counters are reconciled against.
 model WeightedUsageRecord {
-  id                    String             @id @default(cuid())
-  userId                String             @map("user_id")
-  planId                String?            @map("plan_id")
-  subscriptionId        String?            @map("subscription_id")
-  reservationId         String             @unique @map("reservation_id")
-  requestId             String             @map("request_id")
-  provider              String
-  model                 String
-  workflow              String?
-  rawInputTokens        Int                @default(0) @map("raw_input_tokens")
-  rawCachedTokens       Int                @default(0) @map("raw_cached_tokens")
-  rawReasoningTokens    Int                @default(0) @map("raw_reasoning_tokens")
-  rawOutputTokens       Int                @default(0) @map("raw_output_tokens")
-  toolCallCount         Int                @default(0) @map("tool_call_count")
+  id                      String             @id @default(cuid())
+  userId                  String             @map("user_id")
+  planId                  String?            @map("plan_id")
+  subscriptionId          String?            @map("subscription_id")
+  reservationId           String             @unique @map("reservation_id")
+  requestId               String             @map("request_id")
+  provider                String
+  model                   String
+  workflow                String?
+  rawInputTokens          Int                @default(0) @map("raw_input_tokens")
+  rawCachedTokens         Int                @default(0) @map("raw_cached_tokens")
+  rawReasoningTokens      Int                @default(0) @map("raw_reasoning_tokens")
+  rawOutputTokens         Int                @default(0) @map("raw_output_tokens")
+  toolCallCount           Int                @default(0) @map("tool_call_count")
   // PAYG credit attribution (ADR-080: one reservation, not two). A non-PAYG
   // request leaves all three at their defaults, so every historical row stays
   // valid and old code keeps running against the new schema.
-  isPayg                Boolean            @default(false) @map("is_payg")
+  isPayg                  Boolean            @default(false) @map("is_payg")
   // What this hold took from each wallet bucket, in integer micro-USD. Kept
   // per-bucket rather than as one total because releasing a hold has to give
   // GRANT back as GRANT — returning perishable allowance as purchased credit
   // would mint permanent money out of an expiring one.
-  creditGrantMicroUsd     BigInt           @default(0) @map("credit_grant_micro_usd")
-  creditPurchasedMicroUsd BigInt           @default(0) @map("credit_purchased_micro_usd")
+  creditGrantMicroUsd     BigInt             @default(0) @map("credit_grant_micro_usd")
+  creditPurchasedMicroUsd BigInt             @default(0) @map("credit_purchased_micro_usd")
+  // True when the platform absorbed this call on the plan's free allowance
+  // (ADR-142): no wallet hold exists, and a release gives the count back.
+  isFreeAllowance         Boolean            @default(false) @map("is_free_allowance")
   // 1,000,000 weighted tokens == $1.00 of estimated provider cost.
-  weightedTokens        Int                @default(0) @map("weighted_tokens")
-  estimatedCostMicroUsd BigInt             @default(0) @map("estimated_cost_micro_usd")
-  actualCostMicroUsd    BigInt?            @map("actual_cost_micro_usd")
-  currency              String             @default("USD")
-  state                 WeightedUsageState @default(RESERVED)
+  weightedTokens          Int                @default(0) @map("weighted_tokens")
+  estimatedCostMicroUsd   BigInt             @default(0) @map("estimated_cost_micro_usd")
+  actualCostMicroUsd      BigInt?            @map("actual_cost_micro_usd")
+  currency                String             @default("USD")
+  state                   WeightedUsageState @default(RESERVED)
   // UTC period keys: YYYY-MM-DD, ISO week (YYYY-Www), YYYY-MM.
-  dayKey                String             @map("day_key")
-  weekKey               String             @map("week_key")
-  monthKey              String             @map("month_key")
-  billingPeriodKey      String?            @map("billing_period_key")
-  createdAt             DateTime           @default(now()) @map("created_at")
-  finalizedAt           DateTime?          @map("finalized_at")
+  dayKey                  String             @map("day_key")
+  weekKey                 String             @map("week_key")
+  monthKey                String             @map("month_key")
+  billingPeriodKey        String?            @map("billing_period_key")
+  createdAt               DateTime           @default(now()) @map("created_at")
+  finalizedAt             DateTime?          @map("finalized_at")
 
   @@index([userId, dayKey])
   @@index([userId, weekKey])
@@ -873,6 +881,9 @@ enum CreditLedgerKind {
   ADMIN_ADJUSTMENT
   /// Credit returned because the provider failed after money was already held.
   PROVIDER_FAILURE_REFUND
+  /// A request admitted on the plan's free allowance (ADR-142). Zero amount, no
+  /// wallet movement; the reason says whether it was used or given back.
+  FREE_ALLOWANCE
 }
 
 /// One user's credit balance. A materialized sum of `CreditLedgerEntry`, kept as
@@ -1015,8 +1026,8 @@ model CreditPackageVersion {
   /// What the buyer receives, in integer micro-USD.
   creditMicroUsd BigInt @map("credit_micro_usd")
 
-  version  Int
-  isActive Boolean @default(true) @map("is_active")
+  version   Int
+  isActive  Boolean @default(true) @map("is_active")
   /// Emulated partial-unique index, copied from `PlanPriceVersion.activeKey`:
   /// carries the package id while this row is the active price and NULL once
   /// retired. Postgres treats every NULL as distinct, so any number of retired
@@ -1054,4 +1065,25 @@ model OpsAccessToken {
 
   @@index([createdByUserId])
   @@map("ops_access_tokens")
+}
+
+/// Free-allowance counter (ADR-142): how many free credit-connector requests a
+/// user has spent on one provider in one UTC month. One row per
+/// (user, provider, month); incremented atomically at admission with
+/// `INSERT .. ON CONFLICT DO UPDATE .. WHERE used_count < limit`, so two parallel
+/// requests can never exceed the plan's allowance.
+model CreditFreeAllowanceUsage {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  /// Upper-cased provider key, e.g. GROK.
+  provider  String
+  /// UTC `YYYY-MM`.
+  periodKey String   @map("period_key")
+  usedCount Int      @default(0) @map("used_count")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, provider, periodKey])
+  @@index([userId, periodKey])
+  @@map("credit_free_allowance_usage")
 }

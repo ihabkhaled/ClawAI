@@ -224,3 +224,38 @@ export type CreditMonthConsumptionRow = {
   consumedMicroUsd: bigint;
   entryCount: bigint;
 };
+
+/** The unique key of one free-allowance counter row (ADR-142). */
+export type CreditFreeAllowanceCounterKey = {
+  userId: string;
+  /** Upper-cased provider, e.g. GROK. */
+  provider: string;
+  /** UTC `YYYY-MM`. */
+  periodKey: string;
+};
+
+/** One counter row as read back for the wallet snapshot. */
+export type CreditFreeAllowanceUsageRow = {
+  provider: string;
+  usedCount: number;
+};
+
+/**
+ * What the plan lets a user take on the free allowance, resolved once per
+ * request. `limit` is `null` for unlimited; the resolver returns no policy at all
+ * for a disabled (0) allowance.
+ */
+export type CreditFreeAllowancePolicy = {
+  limit: number | null;
+  /** Most one free request may cost the platform. See computeFreeRequestCeilingMicroUsd. */
+  requestCeilingMicroUsd: bigint;
+};
+
+/** A request that took a free-allowance slot, and the ceiling it was clamped to. */
+export type CreditFreeAllowanceAdmission = {
+  counter: CreditFreeAllowanceCounterKey;
+  maxOutputTokens: number;
+  clamped: boolean;
+  /** Worst-case platform cost of this one request, integer micro-USD. */
+  worstCaseCostMicroUsd: bigint;
+};

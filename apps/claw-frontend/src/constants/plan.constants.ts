@@ -44,6 +44,8 @@ export const PLAN_FORM_DEFAULTS: PlanFormState = {
   maxMemoryItems: '',
   // The free allowance, not blank: blank means unlimited video (ADR-122).
   maxVideoSeconds: '60',
+  // Mirrors the server default (2). Blank would mean unlimited.
+  creditConnectorFreeRequestsPerMonth: '2',
   allowCompareMode: true,
   allowJudgeMode: true,
   allowResearchMode: true,
@@ -119,3 +121,6 @@ export const PLAN_FEATURE_GATE_FIELDS: ReadonlyArray<{
 
 /** Upper bound on the plan editor's video length, matching the auth-service DTO (ten hours). */
 export const PLAN_MAX_VIDEO_SECONDS_LIMIT = 36_000;
+
+/** Upper bound on free credit-connector requests per month, matching the auth-service DTO. */
+export const PLAN_CREDIT_FREE_REQUESTS_LIMIT = 100_000;

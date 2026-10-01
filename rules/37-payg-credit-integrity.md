@@ -202,6 +202,21 @@ paid model, rule 1 applies to it like anything else.
     (fail closed). Adding a feature to the set is a product decision
     ([ADR-139](../docs/13-adr/adr-139-credit-unlocks-media-generation.md)).
 
+22. **A free credit-connector request is a bounded, counted, give-back-able admission, never a
+    free hold.** `Plan.creditConnectorFreeRequestsPerMonth` (`null` unlimited, `0` none; default
+    `0`) lets `CreditReservationManager` admit a call the wallet cannot cover, and ONLY then
+    (credit first, allowance as the fallback). Four things are not optional: (a) only the
+    allow-listed token-priced surfaces (`FREE_ALLOWANCE_ELIGIBLE_SURFACES`) with no per-unit
+    quantity are eligible: image, video, transcription and TTS never are, because one clip can cost
+    $1.60; (b) the slot is taken by one atomic `INSERT .. ON CONFLICT .. WHERE used_count < limit`
+    on `credit_free_allowance_usage`, never a read-then-write; (c) the output is clamped to
+    `min($0.15, plan ceiling / allowance)` so a free request is not an unbounded liability; (d) a
+    release gives the slot back once (gated on the `markReleased` row count), to the month the
+    call was taken in. An allowance call holds nothing, finalizes without moving money, and
+    leaves a zero-amount `FREE_ALLOWANCE` ledger row. A spent allowance refuses with the ordinary
+    402 `PAYG_CREDIT_EXHAUSTED`, never a new code
+    ([ADR-142](../docs/13-adr/adr-142-free-allowance-on-credit-connectors.md)).
+
 ## Prohibited patterns
 
 - Calling a paid provider with `maxTokens` set to anything but `hold.maxOutputTokens`.
@@ -232,6 +247,11 @@ paid model, rule 1 applies to it like anything else.
   count, or pricing one with a fake per-token rate ("$/image ÷ 8192").
 - Finalizing (or storing) the result of a call the owner cancelled while it was
   in flight, or falling through to the next candidate after a cancel.
+- Admitting a per-unit surface (image, video, transcription, speech) on the free
+  allowance, or taking an allowance slot with a read-then-write instead of the
+  single guarded upsert.
+- Spending the free allowance before the user's credit, or leaving an allowance
+  slot taken after the call was released.
 
 ## Correct pattern
 
@@ -289,6 +309,7 @@ rather than claiming a check that is not there.
 | 16 — clamp is visible                  | **Unit test** asserting the clamp string is **rendered and visible**, not merely mounted (frontend).                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | 20 — cancel releases, never finalizes  | **Unit tests** — chat `message-speech.service.spec.ts` "MessageSpeechService.cancel" (a late answer → RELEASE `CANCELLED`, no CONSUMPTION; watcher abort across replicas), image-service cancel specs (mid-flight → hold released, asset not stored, no successor), file-service video cancellation specs (transcription hold released, no next provider).                                                                                                                                                                                         |
 | 17 — units, not zero tokens            | **Unit tests** — `credit-unit-metering.spec.ts` (auth: RESERVATION then non-zero CONSUMPTION for an OpenAI image), `unit-metering.spec.ts` (shared-utilities: BigInt sums), `image-execution.manager.payg.spec.ts` (image: `imageUnits` on reserve and finalize), `model-cost-seed.spec.ts` (routing: per-image seed prices). **Review checklist** for new per-unit surfaces.                                                                                                                                                                      |
+| 22 — free allowance is bounded         | **Unit tests** — `credit-reservation.manager.spec.ts` "the free allowance fallback" (credit first, 402 when spent, give-back once, finalize moves no money), `credit-free-allowance.service.spec.ts` (null/0 semantics, per-provider and per-month keys, per-unit exclusion, ceiling clamp), `credit-free-allowance.utility.spec.ts`, `credit-free-allowance.repository.spec.ts` (guarded single-statement upsert, N of a parallel burst). **Live**: 16 parallel upserts on Postgres admitted exactly the limit.                                   |
 
 Plus the standing gates: **CI job** (lint → typecheck → test → build per touched
 workspace) and **knowledge check** (`npm run knowledge:coverage`, which fails if

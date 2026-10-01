@@ -36,6 +36,7 @@ export type SidebarStoreActions = {
 
 export type FeedbackDialogStore = {
   isOpen: boolean;
+  returnFocusTo: Element | null;
   openFeedback: () => void;
   setFeedbackOpen: (open: boolean) => void;
 };

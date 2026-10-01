@@ -206,6 +206,8 @@ const SYSTEM_PLANS = [
     allowHelperVision: false,
     allowTextToSpeech: false,
     maxVideoSeconds: 60,
+    // ADR-142: Free gets 2 requests per credit connector per month.
+    creditConnectorFreeRequestsPerMonth: 2,
     priceMonthly: 0,
   },
   {
@@ -278,6 +280,8 @@ async function upsertSystemPlan(def) {
       allowHelperVision: def.allowHelperVision,
       allowTextToSpeech: def.allowTextToSpeech,
       maxVideoSeconds: def.maxVideoSeconds,
+      // Paid plans omit it: 0, so they never give provider spend away (ADR-142).
+      creditConnectorFreeRequestsPerMonth: def.creditConnectorFreeRequestsPerMonth ?? 0,
       priceMonthly: def.priceMonthly,
       currency: 'USD',
     },

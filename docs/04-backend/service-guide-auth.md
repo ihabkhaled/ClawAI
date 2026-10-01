@@ -544,6 +544,17 @@ create/update plan DTOs. Migration `20260925200000_add_media_plan_gates` sets
 existing rows by slug; `plan-catalog.json` `media` feeds fresh installs.
 Business rationale: [`docs/business/plan-allowances.md`](../business/plan-allowances.md#media-features-per-plan-adr-122-2026-09-25).
 
+## Free credit-connector requests (ADR-142, 2026-10-01)
+
+`Plan.creditConnectorFreeRequestsPerMonth` (`Int?`, default 0; `null` unlimited, `0` none): free
+requests per credit connector per UTC month for a user whose credit cannot cover a token-priced call.
+Free = 2, every other plan = 0. Editable through the create/update plan DTOs (`0..1,000,000` or
+`null`), returned on the admin plan view and the public catalog. Enforcement is in
+`CreditReservationManager` (credit first, allowance as the fallback), counted in
+`credit_free_allowance_usage`, and shown to the user as `freeAllowance` on `GET /credit/me`. See
+[ADR-142](../13-adr/adr-142-free-allowance-on-credit-connectors.md) and
+[`payg-credit.md`](../03-architecture/payg-credit.md#free-allowance-on-credit-connectors).
+
 ## A revoked session is refused everywhere (ADR-112, 2026-09-20)
 
 Every revoke — logout, a family revoked for refresh-token theft, an admin

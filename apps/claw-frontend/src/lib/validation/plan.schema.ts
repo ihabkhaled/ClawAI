@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import {
   PAYG_CREDIT_PERCENT_BPS_MAX,
+  PLAN_CREDIT_FREE_REQUESTS_LIMIT,
   PLAN_MAX_VIDEO_SECONDS_LIMIT,
   PLAN_TRIAL_MAX_DAYS,
   PLAN_TRIAL_MIN_DAYS,
@@ -25,6 +26,25 @@ const optionalNonNegativeInt = z.preprocess(
   blankToUndefined,
   z.coerce.number().int().min(0).optional(),
 );
+
+const CREDIT_FREE_REQUESTS_INVALID_KEY = 'adminPlans.form.creditConnectorFreeRequestsInvalid';
+
+// Blank / null is unlimited (null); otherwise a whole number 0..100000.
+function parseCreditFreeRequests(value: unknown): number | null | undefined {
+  if (value === null || blankToUndefined(value) === undefined) {
+    return null;
+  }
+  const count = typeof value === 'string' ? Number(value) : value;
+  if (
+    typeof count === 'number' &&
+    Number.isInteger(count) &&
+    count >= 0 &&
+    count <= PLAN_CREDIT_FREE_REQUESTS_LIMIT
+  ) {
+    return count;
+  }
+  return undefined;
+}
 
 // Error text is a TRANSLATION KEY, not English: the form renders it through t().
 const TRIAL_DAYS_INVALID_KEY = 'adminPlans.form.trialDaysInvalid';
@@ -98,6 +118,13 @@ export const createPlanSchema = z.object({
     (value: unknown): unknown => (blankToUndefined(value) === undefined ? null : value),
     z.union([z.null(), z.coerce.number().int().min(0).max(PLAN_MAX_VIDEO_SECONDS_LIMIT)]),
   ),
+  // Free requests per credit connector per month. Blank is an explicit null
+  // (unlimited); 0 turns the allowance off. Error text is a translation key.
+  creditConnectorFreeRequestsPerMonth: z
+    .custom<unknown>((value) => parseCreditFreeRequests(value) !== undefined, {
+      message: CREDIT_FREE_REQUESTS_INVALID_KEY,
+    })
+    .transform((value): number | null => parseCreditFreeRequests(value) ?? null),
   allowCompareMode: z.boolean().optional(),
   allowJudgeMode: z.boolean().optional(),
   allowResearchMode: z.boolean().optional(),

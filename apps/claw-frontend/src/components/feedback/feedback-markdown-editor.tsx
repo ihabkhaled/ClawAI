@@ -37,7 +37,7 @@ export function FeedbackMarkdownEditor({ value, onChange, error }: FeedbackMarkd
           onClick={applyBold}
           aria-label={t('feedback.editor.bold')}
         >
-          <strong>B</strong>
+          <strong>{t('feedback.editor.boldLabel')}</strong>
         </Button>
         <Button
           type="button"
@@ -46,7 +46,7 @@ export function FeedbackMarkdownEditor({ value, onChange, error }: FeedbackMarkd
           onClick={applyItalic}
           aria-label={t('feedback.editor.italic')}
         >
-          <em>I</em>
+          <em>{t('feedback.editor.italicLabel')}</em>
         </Button>
         <Button
           type="button"
@@ -55,7 +55,7 @@ export function FeedbackMarkdownEditor({ value, onChange, error }: FeedbackMarkd
           onClick={applyBulletList}
           aria-label={t('feedback.editor.bulletList')}
         >
-          • List
+          {`• ${t('feedback.editor.listLabel')}`}
         </Button>
         <Button
           type="button"
@@ -64,7 +64,7 @@ export function FeedbackMarkdownEditor({ value, onChange, error }: FeedbackMarkd
           onClick={applyNumberedList}
           aria-label={t('feedback.editor.numberedList')}
         >
-          1. List
+          {`1. ${t('feedback.editor.listLabel')}`}
         </Button>
         <Button
           type="button"
@@ -73,7 +73,7 @@ export function FeedbackMarkdownEditor({ value, onChange, error }: FeedbackMarkd
           onClick={applyHeading}
           aria-label={t('feedback.editor.heading')}
         >
-          H
+          {t('feedback.editor.headingLabel')}
         </Button>
         <Button
           type="button"
@@ -82,7 +82,7 @@ export function FeedbackMarkdownEditor({ value, onChange, error }: FeedbackMarkd
           onClick={applyLink}
           aria-label={t('feedback.editor.link')}
         >
-          Link
+          {t('feedback.editor.linkLabel')}
         </Button>
         <Button
           type="button"
@@ -108,11 +108,11 @@ export function FeedbackMarkdownEditor({ value, onChange, error }: FeedbackMarkd
             onChange={(e) => onChange(e.target.value)}
             aria-invalid={error !== undefined}
             aria-describedby={errorId}
-            className={cn('min-h-[200px]', error !== undefined && 'border-destructive')}
+            className={cn('h-36 sm:h-[200px]', error !== undefined && 'border-destructive')}
           />
         </TabsContent>
         <TabsContent value={FeedbackEditorTab.PREVIEW}>
-          <div className="border-input bg-background min-h-[200px] rounded-md border p-4">
+          <div className="border-input bg-background min-h-[140px] rounded-md border p-4 sm:min-h-[200px]">
             <MarkdownRenderer content={value} />
           </div>
         </TabsContent>

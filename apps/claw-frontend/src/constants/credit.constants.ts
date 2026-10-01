@@ -111,6 +111,7 @@ export const CREDIT_LEDGER_KIND_LABEL_KEYS: Record<CreditLedgerKind, string> = {
   [CreditLedgerKind.CONSUMPTION]: 'billing.credit.kind.CONSUMPTION',
   [CreditLedgerKind.ADMIN_ADJUSTMENT]: 'billing.credit.kind.ADMIN_ADJUSTMENT',
   [CreditLedgerKind.PROVIDER_FAILURE_REFUND]: 'billing.credit.kind.PROVIDER_FAILURE_REFUND',
+  [CreditLedgerKind.FREE_ALLOWANCE]: 'billing.credit.kind.FREE_ALLOWANCE',
 };
 
 /**
