@@ -182,8 +182,8 @@ read in **UTC**, at most every 5 minutes, same grammar as the client) instead of
 for every existing row) and decides `nextRunAt` at creation and after each fire;
 `intervalMinutes` holds the 5-minute floor as an unused placeholder. A stored
 expression that no longer yields a date falls back to the interval. The signed
-webhook trigger is below ("Routine webhook"). Time zones and per-routine secrets
-isolation are open: see `docs/14-risk-debt/coding-agent-backend-decisions-2026-10.md`.
+webhook trigger is below ("Routine webhook"). Time zones are open
+(per-routine secrets are built, see "Routine secrets" below): see `docs/14-risk-debt/coding-agent-backend-decisions-2026-10.md`.
 
 ## Remote triggers, channels and runners (2026-09-29)
 
@@ -285,8 +285,22 @@ platform? }` (`runnerHeartbeatSchema`; a missing body is an empty report, so
   (GitHub has no timestamp), so call it from an Action or relay. A webhook fire
   also advances the routine's own schedule, like a manual trigger. Per-routine
   secrets the routine can READ (the isolation boundary) are step 2 and are not
-  built. Error codes (no locale text; the extension shows the code):
+  built here (see "Routine secrets" below). Error codes (no locale text; the extension shows the code):
   `routine_webhook_signature_missing|timestamp_stale|signature_invalid|rate_limited|payload_too_large|unsupported_kind`.
+- **Routine secrets (F099 step 2, 2026-10-01, [ADR-142](../13-adr/adr-142-per-routine-secrets-isolated-and-write-only.md),
+  [threat model](../03-architecture/routine-secrets-threat-model.md)):** secrets a PROMPT routine can read. Table
+  `routine_secrets` (migration `20261001120000_add_routine_secrets`, idempotent; also adds
+  `scheduled_commands.webhookSecretsEnabled` and `terminal_commands.routineId|routineRunSource`). Only ciphertext
+  is stored: AES-256-GCM with `ENCRYPTION_KEY`, a random nonce per row, AAD over routineId + userId + name
+  (`common/utilities/aes-gcm.utility.ts`). Owner routes, user JWT, a foreign routine is the same 404 as a missing
+  one: `GET agent/scheduled-commands/:id/secrets` (names and dates only), `POST .../secrets` `{name, value}`
+  (201, 409 duplicate, 422 over 20), `PUT .../secrets/:name` `{value}` (replace), `DELETE .../secrets/:name`,
+  `PUT .../secrets-policy` `{webhookRunsReceiveSecrets}`. Name `[A-Z][A-Z0-9_]{0,63}` (no `PATH`, `NODE_OPTIONS`,
+  `CLAW_*`, `LD_*` and similar), value 1 to 8192 bytes, never returned, never logged. Delivery: `claim` returns
+  `secrets: [{name, value}]` on each job when the routine grants it (SCHEDULE and MANUAL runs always; a WEBHOOK
+  run only if the owner turned the policy on, default off); nothing is stored on the job row. Output scrubbed
+  of the routine's values before stdout/stderr are saved. Error codes: `routine_secret_not_found|exists|limit_reached|unsupported_kind`.
+  The runner (extension repo) still has to export `secrets` to the SDK process: see ADR-142.
 - **Device-to-session bridge fixed (IDOR):** `CompatAgentGuard` used to bind any
   `sessionId` from the request to the device's user. It now loads the session
   and answers 403 unless the device's user owns it; a missing session gets the

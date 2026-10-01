@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { BusinessException } from '../../../common/errors/business.exception';
+import { RoutineRunSource } from '../../../common/enums/routine-run-source.enum';
 import { ScheduledCommandKind } from '../../../common/enums/scheduled-command-kind.enum';
 import { ScheduledCommandStatus } from '../../../common/enums/scheduled-command-status.enum';
 import {
@@ -125,7 +126,12 @@ export class RoutineWebhookService {
       );
     }
     try {
-      const result = await this.trigger.trigger(routine.userId, routine.id, this.keyFor(signature));
+      const result = await this.trigger.trigger(
+        routine.userId,
+        routine.id,
+        this.keyFor(signature),
+        RoutineRunSource.WEBHOOK,
+      );
       this.logger.log(`routine webhook ${routine.id} fired (replayed=${result.replayed})`);
       return { accepted: true, commandId: result.command.id, replayed: result.replayed };
     } catch (error) {

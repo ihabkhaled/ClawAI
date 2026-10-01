@@ -23,6 +23,7 @@
         "RecipeRun",
         "RecipeRunStep",
         "RefreshToken",
+        "RoutineSecret",
         "RunnerCredential",
         "ScheduledCommand",
         "TerminalCommand"

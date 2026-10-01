@@ -18,6 +18,7 @@ import { AgentTerminalInternalController } from './controllers/agent-terminal-in
 import { RuntimeProtocolController } from './controllers/runtime-protocol.controller';
 import { AgentRunnerController } from './controllers/agent-runner.controller';
 import { RoutineWebhookController } from './controllers/routine-webhook.controller';
+import { RoutineSecretController } from './controllers/routine-secret.controller';
 import { AgentSessionService } from './services/agent-session.service';
 import { AgentCommandService } from './services/agent-command.service';
 import { AgentRepoService } from './services/agent-repo.service';
@@ -44,6 +45,7 @@ import { AgentTerminalSeedService } from './services/agent-terminal-seed.service
 import { RuntimeProtocolService } from './services/runtime-protocol.service';
 import { RunnerService } from './services/runner.service';
 import { RunnerCredentialService } from './services/runner-credential.service';
+import { RoutineSecretService } from './services/routine-secret.service';
 import { RoutineWebhookService } from './services/routine-webhook.service';
 import { RoutineWebhookRateStore } from './services/routine-webhook.ports';
 import { RoutineWebhookRateRepository } from './repositories/routine-webhook-rate.repository';
@@ -65,6 +67,7 @@ import { DeviceCodeRequestRepository } from './repositories/device-code-request.
 import { PolicyRepository } from './repositories/policy.repository';
 import { ScheduledCommandRepository } from './repositories/scheduled-command.repository';
 import { CapabilityInvocationRepository } from './repositories/capability-invocation.repository';
+import { RoutineSecretRepository } from './repositories/routine-secret.repository';
 import { RunnerRepository } from './repositories/runner.repository';
 import { RunnerCredentialRepository } from './repositories/runner-credential.repository';
 import { AgentKeyGuard } from '../../common/guards/agent-key.guard';
@@ -91,6 +94,7 @@ import { RunnerTokenGuard } from '../../common/guards/runner-token.guard';
     RuntimeProtocolController,
     AgentRunnerController,
     RoutineWebhookController,
+    RoutineSecretController,
   ],
   providers: [
     AgentSessionService,
@@ -119,6 +123,7 @@ import { RunnerTokenGuard } from '../../common/guards/runner-token.guard';
     RunnerService,
     RunnerCredentialService,
     RoutineWebhookService,
+    RoutineSecretService,
     { provide: RoutineWebhookRateStore, useClass: RoutineWebhookRateRepository },
     AgentSessionManager,
     AgentCommandManager,
@@ -138,6 +143,7 @@ import { RunnerTokenGuard } from '../../common/guards/runner-token.guard';
     PolicyRepository,
     ScheduledCommandRepository,
     CapabilityInvocationRepository,
+    RoutineSecretRepository,
     RunnerRepository,
     RunnerCredentialRepository,
     AgentKeyGuard,

@@ -462,6 +462,31 @@
         "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-scheduled-command.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/agent/scheduled-commands/:id/secrets",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/routine-secret.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/scheduled-commands/:id/secrets",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/routine-secret.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/agent/scheduled-commands/:id/secrets-policy",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/routine-secret.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/agent/scheduled-commands/:id/secrets/:name",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/routine-secret.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/agent/scheduled-commands/:id/secrets/:name",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/routine-secret.controller.ts"
+      },
+      {
         "method": "PATCH",
         "route": "/agent/scheduled-commands/:id/status",
         "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-scheduled-command.controller.ts"
@@ -3848,5 +3873,5 @@
     ]
   },
   "generated": true,
-  "total": 762
+  "total": 767
 }

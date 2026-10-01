@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { RemoteTriggerService } from '../remote-trigger.service';
+import { RoutineRunSource } from '../../../../common/enums/routine-run-source.enum';
 import { RemoteJobRunner, RemoteTriggerIdempotencyStore } from '../remote-trigger.ports';
 import { REMOTE_TRIGGER_PENDING_MARKER } from '../../constants/remote-trigger.constants';
 import {
@@ -30,6 +31,7 @@ function scheduled(userId: string): ScheduledCommand {
     cron: null,
     webhookEnabled: false,
     webhookSecretVersion: 0,
+    webhookSecretsEnabled: false,
     status: ScheduledCommandStatus.ENABLED,
     lastRunAt: null,
     lastCommandId: null,
@@ -49,6 +51,8 @@ function command(id: string): TerminalCommand {
     kind: TerminalCommandKind.SHELL,
     model: null,
     repoRef: null,
+    routineId: null,
+    routineRunSource: null,
     status: TerminalCommandStatus.PENDING_APPROVAL,
     riskScore: 0,
     riskLabel: RiskLabel.LOW,
@@ -107,8 +111,11 @@ class FakeRunner extends RemoteJobRunner {
     return Promise.resolve(userId === 'user-1' && id === 'job-1' ? scheduled(userId) : null);
   }
 
-  fire(): Promise<TerminalCommand | null> {
+  readonly sources: RoutineRunSource[] = [];
+
+  fire(_scheduled: ScheduledCommand, source: RoutineRunSource): Promise<TerminalCommand | null> {
     if (!this.online) return Promise.resolve(null);
+    this.sources.push(source);
     this.fired += 1;
     const created = command(`cmd-${String(this.fired)}`);
     this.created.set(created.id, created);
@@ -147,6 +154,12 @@ describe('RemoteTriggerService', () => {
     expect(first).toMatchObject({ replayed: false, command: { id: 'cmd-1' } });
     expect(second).toMatchObject({ replayed: true, command: { id: 'cmd-1' } });
     expect(runner.fired).toBe(1);
+  });
+
+  it('tells the runner what fired the run: manual by default, otherwise the caller source', async () => {
+    await service.trigger('user-1', 'job-1', 'k-source-a');
+    await service.trigger('user-1', 'job-1', 'k-source-b', RoutineRunSource.WEBHOOK);
+    expect(runner.sources).toEqual([RoutineRunSource.MANUAL, RoutineRunSource.WEBHOOK]);
   });
 
   it('fires again for a different key', async () => {

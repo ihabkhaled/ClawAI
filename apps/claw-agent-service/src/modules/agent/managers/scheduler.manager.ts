@@ -12,6 +12,7 @@ import { ScheduledCommandRepository } from '../repositories/scheduled-command.re
 import { CommandRiskService } from '../services/command-risk.service';
 import { RunnerService } from '../services/runner.service';
 import { nextRunForStoredCron } from '../../../common/utilities/cron-expression.utility';
+import { RoutineRunSource } from '../../../common/enums/routine-run-source.enum';
 import { ScheduledCommandKind } from '../../../common/enums/scheduled-command-kind.enum';
 import type { ScheduledCommand, TerminalCommand } from '../../../generated/prisma';
 
@@ -51,9 +52,13 @@ export class SchedulerManager {
    * nothing can receive it now: no connected session on the device, or for a
    * PROMPT routine (F099) no live runner carrying its labels.
    */
-  async fireOne(scheduled: ScheduledCommand, now: Date): Promise<TerminalCommand | null> {
+  async fireOne(
+    scheduled: ScheduledCommand,
+    now: Date,
+    source: RoutineRunSource = RoutineRunSource.SCHEDULE,
+  ): Promise<TerminalCommand | null> {
     if (scheduled.kind === ScheduledCommandKind.PROMPT) {
-      return this.firePrompt(scheduled, now);
+      return this.firePrompt(scheduled, now, source);
     }
     if (scheduled.deviceId === null) {
       this.logger.warn(`scheduled ${scheduled.id}: command routine without a device; skipped`);
@@ -114,8 +119,9 @@ export class SchedulerManager {
   private async firePrompt(
     scheduled: ScheduledCommand,
     now: Date,
+    source: RoutineRunSource,
   ): Promise<TerminalCommand | null> {
-    const created = await this.runners.dispatchPrompt(scheduled);
+    const created = await this.runners.dispatchPrompt(scheduled, source);
     if (created === null) {
       this.logger.debug(`scheduled ${scheduled.id}: no live runner matches its labels; deferring`);
       return null;

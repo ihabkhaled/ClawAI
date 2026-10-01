@@ -15,6 +15,7 @@ import {
   RUNNER_HEARTBEAT_TTL_SECONDS,
   RUNNER_METADATA_KIND,
 } from '../constants/runner.constants';
+import { RoutineRunSource } from '../../../common/enums/routine-run-source.enum';
 import { RunnerRepository } from '../repositories/runner.repository';
 import { RunnerCredentialRepository } from '../repositories/runner-credential.repository';
 import { AgentCommandRepository } from '../repositories/agent-command.repository';
@@ -22,6 +23,7 @@ import { AgentCommandManager } from '../managers/agent-command.manager';
 import { AgentSessionService } from './agent-session.service';
 import { AgentCommandService } from './agent-command.service';
 import { RunnerCredentialService } from './runner-credential.service';
+import { RoutineSecretService } from './routine-secret.service';
 import { RuntimeProtocolService } from './runtime-protocol.service';
 import { RunnerPolicyService } from '../../fleet/services/runner-policy.service';
 import type {
@@ -37,6 +39,7 @@ import type {
   RunnerRow,
   RunnerView,
 } from '../types/runner.types';
+import type { ClaimedJobSecrets } from '../types/routine-secret.types';
 import type { HeartbeatResult } from '../types/agent.types';
 import type { RunnerComplianceDecision } from '../../fleet/types/runner-policy.types';
 import type { ScheduledCommand, TerminalCommand } from '../../../generated/prisma';
@@ -64,6 +67,7 @@ export class RunnerService {
     private readonly commandManager: AgentCommandManager,
     private readonly protocol: RuntimeProtocolService,
     private readonly runnerPolicy: RunnerPolicyService,
+    private readonly routineSecrets: RoutineSecretService,
   ) {}
 
   /**
@@ -162,7 +166,10 @@ export class RunnerService {
    * tick. The job is queued APPROVED because the portal cannot judge a
    * prompt: every tool call it makes is approved on the runner instead.
    */
-  async dispatchPrompt(scheduled: ScheduledCommand): Promise<TerminalCommand | null> {
+  async dispatchPrompt(
+    scheduled: ScheduledCommand,
+    source: RoutineRunSource = RoutineRunSource.SCHEDULE,
+  ): Promise<TerminalCommand | null> {
     const target = await this.pick(scheduled.userId, scheduled.runnerLabels);
     if (target === undefined) return null;
     const now = new Date();
@@ -173,6 +180,8 @@ export class RunnerService {
       command: scheduled.command,
       model: scheduled.model,
       repoRef: scheduled.repoRef,
+      routineId: scheduled.id,
+      routineRunSource: source,
       status: TerminalCommandStatus.APPROVED,
       approvedAt: now,
       riskReasons: PROMPT_JOB_APPROVAL_NOTE,
@@ -267,19 +276,26 @@ export class RunnerService {
    * runner claims nothing until it heartbeats again. The APPROVED to
    * EXECUTING transition is a guarded update, so two processes holding the
    * same token cannot both claim one job.
+   *
+   * F099 step 2: each claimed job carries `secrets`, the routine's decrypted
+   * secrets when (and only when) the routine's rules grant them to this run.
+   * They exist only in this response; they are never written to the job row.
    */
-  async claim(sessionId: string): Promise<TerminalCommand[]> {
+  async claim(sessionId: string): Promise<(TerminalCommand & ClaimedJobSecrets)[]> {
     const runner = await this.runners.findById(sessionId);
     if (runner === null || !this.isLive(runner)) {
       this.logger.debug(`runner ${sessionId} is not live; nothing claimed`);
       return [];
     }
     const pending = await this.commands.getPendingForSession(sessionId);
-    const claimed: TerminalCommand[] = [];
+    const claimed: (TerminalCommand & ClaimedJobSecrets)[] = [];
     for (const command of pending) {
       if (claimed.length >= RUNNER_CLAIM_LIMIT) break;
       const started = await this.commandManager.startExecution(command.id, sessionId);
-      if (started !== null) claimed.push(started);
+      if (started !== null) {
+        const secrets = await this.routineSecrets.resolveForRun(started, runner.userId);
+        claimed.push({ ...started, secrets });
+      }
     }
     return claimed;
   }
@@ -290,7 +306,15 @@ export class RunnerService {
     commandId: string,
     dto: CompleteCommandDto,
   ): Promise<TerminalCommand> {
-    return this.commands.complete(sessionId, commandId, dto);
+    const job = await this.commandRepo.findById(commandId);
+    if (job === null || job.sessionId !== sessionId || job.routineId === null) {
+      return this.commands.complete(sessionId, commandId, dto);
+    }
+    const output = await this.routineSecrets.redactRunOutput(job, {
+      stdout: dto.stdout,
+      stderr: dto.stderr,
+    });
+    return this.commands.complete(sessionId, commandId, { ...dto, ...output });
   }
 
   private async pick(userId: string, labels: string[]): Promise<RunnerRow | undefined> {

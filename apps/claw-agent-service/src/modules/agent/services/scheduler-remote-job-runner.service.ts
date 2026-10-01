@@ -3,6 +3,7 @@ import { SchedulerManager } from '../managers/scheduler.manager';
 import { AgentCommandRepository } from '../repositories/agent-command.repository';
 import { ScheduledCommandRepository } from '../repositories/scheduled-command.repository';
 import { RemoteJobRunner } from './remote-trigger.ports';
+import type { RoutineRunSource } from '../../../common/enums/routine-run-source.enum';
 import type { ScheduledCommand, TerminalCommand } from '../../../generated/prisma';
 
 /** The production runner: the timer's own fire path, reached on demand. */
@@ -20,8 +21,11 @@ export class SchedulerRemoteJobRunner extends RemoteJobRunner {
     return this.scheduled.findByIdForUser(id, userId);
   }
 
-  async fire(scheduled: ScheduledCommand): Promise<TerminalCommand | null> {
-    return this.scheduler.fireOne(scheduled, new Date());
+  async fire(
+    scheduled: ScheduledCommand,
+    source: RoutineRunSource,
+  ): Promise<TerminalCommand | null> {
+    return this.scheduler.fireOne(scheduled, new Date(), source);
   }
 
   async findCommand(id: string): Promise<TerminalCommand | null> {

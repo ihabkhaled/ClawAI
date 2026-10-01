@@ -1,3 +1,4 @@
+import type { RoutineRunSource } from '../../../common/enums/routine-run-source.enum';
 import type { ScheduledCommand, TerminalCommand } from '../../../generated/prisma';
 
 /**
@@ -17,6 +18,9 @@ export abstract class RemoteTriggerIdempotencyStore {
 export abstract class RemoteJobRunner {
   abstract findOwned(userId: string, id: string): Promise<ScheduledCommand | null>;
   /** Fires now; null when the device has no connected session. */
-  abstract fire(scheduled: ScheduledCommand): Promise<TerminalCommand | null>;
+  abstract fire(
+    scheduled: ScheduledCommand,
+    source: RoutineRunSource,
+  ): Promise<TerminalCommand | null>;
   abstract findCommand(id: string): Promise<TerminalCommand | null>;
 }

@@ -34,6 +34,14 @@ export class ScheduledCommandRepository {
     });
   }
 
+  /** The owner's opt-in for a webhook-fired run to receive the routine's secrets. */
+  async setWebhookSecretsEnabled(id: string, enabled: boolean): Promise<ScheduledCommand> {
+    return this.prisma.scheduledCommand.update({
+      where: { id },
+      data: { webhookSecretsEnabled: enabled },
+    });
+  }
+
   /** Retires the current webhook secret: the next one derives from the new version. */
   async rotateWebhookSecret(id: string): Promise<ScheduledCommand> {
     return this.prisma.scheduledCommand.update({

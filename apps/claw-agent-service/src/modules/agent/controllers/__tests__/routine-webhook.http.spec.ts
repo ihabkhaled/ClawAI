@@ -104,7 +104,12 @@ describe('routine webhook over HTTP (F099)', () => {
       commandId: 'cmd-http',
       replayed: false,
     });
-    expect(trigger.trigger).toHaveBeenCalledWith('user-1', 'routine-http', expect.any(String));
+    expect(trigger.trigger).toHaveBeenCalledWith(
+      'user-1',
+      'routine-http',
+      expect.any(String),
+      'WEBHOOK',
+    );
   });
 
   it('answers 401 with the documented code when the body is not what was signed', async () => {

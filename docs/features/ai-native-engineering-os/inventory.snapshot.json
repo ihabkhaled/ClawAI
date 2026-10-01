@@ -517,6 +517,31 @@
           "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-scheduled-command.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/agent/scheduled-commands/:id/secrets",
+          "source": "apps/claw-agent-service/src/modules/agent/controllers/routine-secret.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/agent/scheduled-commands/:id/secrets",
+          "source": "apps/claw-agent-service/src/modules/agent/controllers/routine-secret.controller.ts"
+        },
+        {
+          "method": "PUT",
+          "route": "/agent/scheduled-commands/:id/secrets-policy",
+          "source": "apps/claw-agent-service/src/modules/agent/controllers/routine-secret.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/agent/scheduled-commands/:id/secrets/:name",
+          "source": "apps/claw-agent-service/src/modules/agent/controllers/routine-secret.controller.ts"
+        },
+        {
+          "method": "PUT",
+          "route": "/agent/scheduled-commands/:id/secrets/:name",
+          "source": "apps/claw-agent-service/src/modules/agent/controllers/routine-secret.controller.ts"
+        },
+        {
           "method": "PATCH",
           "route": "/agent/scheduled-commands/:id/status",
           "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-scheduled-command.controller.ts"
@@ -9613,6 +9638,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-agent-service/prisma/schema.prisma",
+            "value": "RoutineSecret"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-agent-service/prisma/schema.prisma",
             "value": "RunnerCredential"
           },
           {
@@ -10567,7 +10597,7 @@
       },
       "claw-agent-service": {
         "runner": "vitest",
-        "testFiles": 47
+        "testFiles": 53
       },
       "claw-audit-service": {
         "runner": "vitest",
@@ -11365,7 +11395,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 52,
-    "endpointCount": 762,
+    "endpointCount": 767,
     "envVarCount": 360,
     "eventCount": 184,
     "frontendRouteCount": 155,
@@ -11377,7 +11407,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1877,
+    "totalTestFiles": 1883,
     "workspaceCount": 25
   }
 }

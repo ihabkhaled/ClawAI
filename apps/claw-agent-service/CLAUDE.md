@@ -32,7 +32,16 @@ Controller → Service → Repository (data access)
 - DeviceCodeRequest (Phase A)
 - AccessPolicy (Phase B)
 - ScheduledCommand (COMMAND or PROMPT routine; `deviceId` null for PROMPT, F099)
+- RoutineSecret (F099 step 2: AES-256-GCM ciphertext per routine secret; the value is write-only)
 - RunnerCredential (F100: SHA-256 of a runner token; the token itself is never stored)
+
+**Routine secrets (F099 step 2, ADR-142).** `RoutineSecret` rows hold ciphertext only (AES-GCM, `ENCRYPTION_KEY`,
+random nonce, AAD = routineId+userId+name). Every query is scoped by routine AND owner; a foreign routine is the
+same 404 as a missing one. A value is never returned, logged, put in an error or an event, or stored on a job:
+it is decrypted in exactly two places, `RoutineSecretService.resolveForRun` (handed to the runner in the `claim`
+response, only when the routine grants the run: WEBHOOK runs need `webhookSecretsEnabled`) and
+`redactRunOutput` (scrubbed from stdout/stderr on completion). Never add a route that returns a value, never log
+one, never pass one to a prompt. `terminal_commands.routineId|routineRunSource` say which routine and what fired it.
 
 `ScheduledCommand.webhookEnabled` (default false) + `webhookSecretVersion` back the F099 routine webhook:
 the secret is derived from `ENCRYPTION_KEY` + routine id + version (never stored); the receiver

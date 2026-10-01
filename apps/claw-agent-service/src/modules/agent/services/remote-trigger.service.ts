@@ -1,4 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
+import { RoutineRunSource } from '../../../common/enums/routine-run-source.enum';
 import { BusinessException } from '../../../common/errors/business.exception';
 import {
   REMOTE_TRIGGER_KEY_PREFIX,
@@ -22,7 +23,13 @@ export class RemoteTriggerService {
     private readonly idempotency: RemoteTriggerIdempotencyStore,
   ) {}
 
-  async trigger(userId: string, id: string, idempotencyKey: string): Promise<RemoteTriggerResult> {
+  /** `source` is what fired the run; it decides whether the routine's secrets are injected. */
+  async trigger(
+    userId: string,
+    id: string,
+    idempotencyKey: string,
+    source: RoutineRunSource = RoutineRunSource.MANUAL,
+  ): Promise<RemoteTriggerResult> {
     const scheduled = await this.runner.findOwned(userId, id);
     if (scheduled === null) {
       throw new BusinessException(
@@ -34,7 +41,7 @@ export class RemoteTriggerService {
     const key = `${REMOTE_TRIGGER_KEY_PREFIX}${userId}:${id}:${idempotencyKey}`;
     if (!(await this.idempotency.claim(key))) return this.replay(key);
     try {
-      const command = await this.runner.fire(scheduled);
+      const command = await this.runner.fire(scheduled, source);
       if (command === null) {
         throw new BusinessException(
           'agent.remote_trigger.device_offline',

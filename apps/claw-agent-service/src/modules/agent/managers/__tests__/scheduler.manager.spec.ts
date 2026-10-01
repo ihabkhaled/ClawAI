@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { RoutineRunSource } from '../../../../common/enums/routine-run-source.enum';
 import { SchedulerManager } from '../scheduler.manager';
 import type { AgentCommandRepository } from '../../repositories/agent-command.repository';
 import type { AgentSessionRepository } from '../../repositories/agent-session.repository';
@@ -61,6 +62,16 @@ describe('SchedulerManager.fireOne', () => {
       'job-1',
       new Date('2026-09-30T11:00:00.000Z'),
     );
+  });
+
+  it('passes the run source to the runner: schedule by default, otherwise the caller source', async () => {
+    const { manager, runners } = setup({ id: 'job-1' });
+    await manager.fireOne(routine({}), now);
+    await manager.fireOne(routine({}), now, RoutineRunSource.WEBHOOK);
+    expect(runners.dispatchPrompt.mock.calls.map((call) => call[1])).toEqual([
+      'SCHEDULE',
+      'WEBHOOK',
+    ]);
   });
 
   it('advances a cron PROMPT routine to its next UTC slot, not by the placeholder interval', async () => {

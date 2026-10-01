@@ -125,7 +125,12 @@ describe('RoutineWebhookService.receive (F099 webhook trigger)', () => {
     expect(result).toEqual({ accepted: true, commandId: 'cmd-1', replayed: false });
     const digest = createHash('sha256').update(signature).digest('hex').slice(0, 40);
     expect(trigger.trigger).toHaveBeenCalledTimes(1);
-    expect(trigger.trigger).toHaveBeenCalledWith('user-1', 'routine-1', `webhook-${digest}`);
+    expect(trigger.trigger).toHaveBeenCalledWith(
+      'user-1',
+      'routine-1',
+      `webhook-${digest}`,
+      'WEBHOOK',
+    );
     expect(JSON.stringify(trigger.trigger.mock.calls)).not.toContain('ignore previous');
   });
 

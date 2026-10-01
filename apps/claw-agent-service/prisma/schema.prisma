@@ -403,6 +403,10 @@ model TerminalCommand {
   cancelledAt     DateTime?
   cancelRequested Boolean               @default(false)
   rejectionReason String?
+  /// F099 step 2: the routine a PROMPT job came from, and what fired it (SCHEDULE, MANUAL, WEBHOOK).
+  /// Together they decide, at claim time, whether the runner is handed the routine's secrets.
+  routineId       String?
+  routineRunSource String?
   timeoutSeconds  Int                   @default(300)
   requestedAt     DateTime              @default(now())
   expiresAt       DateTime
@@ -439,6 +443,10 @@ model ScheduledCommand {
   /// F099: the webhook secret is derived from this, never stored; bumping it
   /// retires the previous secret.
   webhookSecretVersion Int     @default(0)
+  /// F099 step 2: when true a webhook-fired run also receives this routine's secrets.
+  /// Off by default: the owner opts in, because the webhook is a public entry point.
+  webhookSecretsEnabled Boolean @default(false)
+  secrets       RoutineSecret[]
   status        ScheduledCommandStatus @default(ENABLED)
   lastRunAt     DateTime?
   lastCommandId String?
@@ -449,6 +457,24 @@ model ScheduledCommand {
   @@index([deviceId, status])
   @@index([nextRunAt, status])
   @@map("scheduled_commands")
+}
+
+/// F099 step 2: a secret one routine can read. Only ciphertext is stored (AES-256-GCM, the
+/// service ENCRYPTION_KEY, per-row random nonce). The additional authenticated data binds
+/// routineId + userId + name, so a row copied to another routine fails to decrypt.
+model RoutineSecret {
+  id         String           @id @default(cuid())
+  routineId  String
+  routine    ScheduledCommand @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  userId     String
+  name       String
+  ciphertext String
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@unique([routineId, name])
+  @@index([userId])
+  @@map("routine_secrets")
 }
 
 /// F100: a runner's own credential, separate from the user's token. Only the

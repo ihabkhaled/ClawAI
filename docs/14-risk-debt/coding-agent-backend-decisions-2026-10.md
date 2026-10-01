@@ -20,7 +20,7 @@ and does not decide money, permission semantics, deletion or a breaking public c
 | F095 resume (backend)   | IMPLEMENTED `cdae9c05d`: `repositoryRef` on `createThread`, `GET agent/runners/:id/resume`                                                                                       |
 | F097 mobile token class | OWNER DECISION REQUIRED: new credential class and permission semantics                                                                                                           |
 | F098 cloud sessions     | NOT IMPLEMENTED by design: the recommended default is (b), user-hosted runners only                                                                                              |
-| F099 webhook trigger    | IMPLEMENTED `69372fc1a` (step 1). Step 2, per-routine secrets a routine can read: OWNER DECISION REQUIRED (security boundary)                                                    |
+| F099 webhook trigger    | IMPLEMENTED `69372fc1a` (step 1). Step 2, per-routine secrets: DECIDED 2026-10-01, server side built (ADR-143); runner must export `secrets`                                                    |
 | F100 runner report      | IMPLEMENTED `fdc631228` (step 1, record only) and step 2 (ADR-142): org policy + off/report/enforce, staged, fail-open, unsigned. Attestation WAITS for the signing-key decision |
 | F101 other clients      | NOT IMPLEMENTED by design: the recommended default is (b), VS Code only                                                                                                          |
 | F108 cost in events     | OWNER DECISION REQUIRED: discloses provider cost and margin, changes the finalize contract                                                                                       |
@@ -79,7 +79,7 @@ labels, platform, version, approval class, online, protocol), not a tool list; t
 
 ## F099 (remainder) Repository-event triggers and per-routine secrets
 
-**Status: step 1 implemented (`69372fc1a`), step 2 owner decision required.** Step 1 is the signed webhook:
+**Status: step 1 implemented (`69372fc1a`). Step 2 decided by the owner 2026-10-01 and built server side ([ADR-143](../13-adr/adr-143-per-routine-secrets-isolated-and-write-only.md)); the runner (extension repo) must still export the `secrets` it receives at claim.** Step 1 is the signed webhook:
 `POST agent/routines/webhook/:routineId` (public, HMAC over the raw bytes plus a 5-minute window, in the
 channels webhook's format), owner routes `GET|PUT agent/scheduled-commands/:id/webhook` and `POST .../webhook/rotate`.
 Off by default (`scheduled_commands.webhookEnabled`, migration `20261001110000_add_routine_webhook_trigger`).
@@ -87,7 +87,7 @@ The secret is derived per routine from the encryption key and `webhookSecretVers
 is never read into the prompt; unusable routines answer the same 401 as a bad signature; one accepted
 delivery per routine per 60 s, claimed only after the signature verifies; replays return the first run.
 GitHub/GitLab native deliveries cannot call it directly (different signing, GitHub has no timestamp): use an
-Action or relay. Step 2 (secrets a routine can read, encrypted store) is a security boundary and is not built.
+Action or relay. Step 2 (secrets a routine can read, encrypted store) is built: write-only, AES-GCM bound to routine+owner+name, injected only at runner claim.
 
 - Options: (a) signed webhook (GitHub/GitLab) to routine, per-routine secrets in an encrypted store; (b) cron and interval only.
 - Default: (a) in two steps: webhook trigger first (HMAC like the existing channels webhook), secrets second.

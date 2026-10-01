@@ -6,6 +6,7 @@ import { BusinessException } from '../../../../common/errors/business.exception'
 import { EntityNotFoundException } from '../../../../common/errors/entity-not-found.exception';
 import { PROMPT_JOB_APPROVAL_NOTE } from '../../constants/runner.constants';
 import { RUNTIME_PROTOCOL_DESCRIPTOR } from '../../constants/runtime-protocol.constants';
+import { RoutineRunSource } from '../../../../common/enums/routine-run-source.enum';
 import { RunnerService } from '../runner.service';
 import { RuntimeProtocolService } from '../runtime-protocol.service';
 import type { AgentCommandManager } from '../../managers/agent-command.manager';
@@ -15,6 +16,7 @@ import type { RunnerPolicyService } from '../../../fleet/services/runner-policy.
 import type { RunnerRepository } from '../../repositories/runner.repository';
 import type { AgentCommandService } from '../agent-command.service';
 import type { AgentSessionService } from '../agent-session.service';
+import type { RoutineSecretService } from '../routine-secret.service';
 import type { RunnerCredentialService } from '../runner-credential.service';
 import type { RunnerRow } from '../../types/runner.types';
 import type { ScheduledCommand, TerminalCommand } from '../../../../generated/prisma';
@@ -93,7 +95,18 @@ function setup(rows: RunnerRow[] = [row()]) {
     getPendingForSession: vi.fn().mockResolvedValue([command('a'), command('b')]),
     complete: vi.fn().mockResolvedValue(command('a')),
   };
+  const routineSecrets = {
+    resolveForRun: vi.fn().mockResolvedValue([]),
+    redactRunOutput: vi
+      .fn()
+      .mockImplementation((_job: unknown, output: unknown) => Promise.resolve(output)),
+  };
   const commandRepo = {
+    findById: vi
+      .fn()
+      .mockImplementation((id: string) =>
+        Promise.resolve({ id, sessionId: 'runner-1', userId: 'user-1', routineId: null }),
+      ),
     create: vi
       .fn()
       .mockImplementation((data: { session: { connect: { id: string } } }) =>
@@ -114,7 +127,9 @@ function setup(rows: RunnerRow[] = [row()]) {
       partial<AgentCommandManager>(manager),
       new RuntimeProtocolService(),
       partial<RunnerPolicyService>(runnerPolicy),
+      partial<RoutineSecretService>(routineSecrets),
     ),
+    routineSecrets,
     repo,
     runnerPolicy,
     credentials,
@@ -263,6 +278,20 @@ describe('RunnerService', () => {
       );
     });
 
+    it('records the routine and what fired it on the job, never a secret', async () => {
+      const { service, commandRepo } = setup();
+      await service.dispatchPrompt(promptRoutine(), RoutineRunSource.WEBHOOK);
+      await service.dispatchPrompt(promptRoutine());
+      const created = commandRepo.create.mock.calls.map(
+        (call) => call[0] as Record<string, unknown>,
+      );
+      expect(created.map((data) => [data['routineId'], data['routineRunSource']])).toEqual([
+        ['routine-1', 'WEBHOOK'],
+        ['routine-1', 'SCHEDULE'],
+      ]);
+      expect(JSON.stringify(created)).not.toContain('secret');
+    });
+
     it('defers (null) when no live runner carries the labels', async () => {
       const { service, commandRepo } = setup();
       const job = await service.dispatchPrompt(promptRoutine({ runnerLabels: ['arm64'] }));
@@ -282,6 +311,7 @@ describe('RunnerService', () => {
       const { service, manager } = setup();
       const claimed = await service.claim('runner-1');
       expect(claimed.map((c) => c.id)).toEqual(['a']);
+      expect(claimed[0]?.secrets).toEqual([]);
       expect(manager.startExecution).toHaveBeenCalledTimes(1);
     });
 
@@ -363,6 +393,53 @@ describe('RunnerService', () => {
         BusinessException,
       );
       expect(credentials.touch).not.toHaveBeenCalled();
+    });
+
+    it('hands the claimed job the secrets its routine grants, asking as the runner owner', async () => {
+      const { service, routineSecrets } = setup();
+      routineSecrets.resolveForRun.mockResolvedValueOnce([{ name: 'API_KEY', value: 'v' }]);
+      const [job] = await service.claim('runner-1');
+      expect(job?.secrets).toEqual([{ name: 'API_KEY', value: 'v' }]);
+      expect(routineSecrets.resolveForRun).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'a' }),
+        'user-1',
+      );
+    });
+
+    it('a stale runner is never asked for secrets', async () => {
+      const { service, routineSecrets } = setup([row({ lastHeartbeatAt: stale() })]);
+      await service.claim('runner-1');
+      expect(routineSecrets.resolveForRun).not.toHaveBeenCalled();
+    });
+
+    it('scrubs a routine job output through the secret layer before it is stored', async () => {
+      const { service, commands, commandRepo, routineSecrets } = setup();
+      commandRepo.findById.mockResolvedValueOnce({
+        id: 'a',
+        sessionId: 'runner-1',
+        userId: 'user-1',
+        routineId: 'routine-1',
+      });
+      routineSecrets.redactRunOutput.mockResolvedValueOnce({ stdout: 'token=[REDACTED]' });
+      await service.complete('runner-1', 'a', { exitCode: 0, stdout: 'token=abcd1234' });
+      expect(commands.complete).toHaveBeenCalledWith('runner-1', 'a', {
+        exitCode: 0,
+        stdout: 'token=[REDACTED]',
+      });
+    });
+
+    it('does not consult the secret layer for another runner or a non-routine job', async () => {
+      const { service, commands, commandRepo, routineSecrets } = setup();
+      commandRepo.findById.mockResolvedValueOnce({
+        id: 'a',
+        sessionId: 'runner-2',
+        userId: 'user-1',
+        routineId: 'routine-1',
+      });
+      await service.complete('runner-1', 'a', { exitCode: 0, stdout: 'x' });
+      await service.complete('runner-1', 'a', { exitCode: 0, stdout: 'y' });
+      expect(routineSecrets.redactRunOutput).not.toHaveBeenCalled();
+      expect(commands.complete).toHaveBeenCalledTimes(2);
     });
 
     it('reports through complete with the calling runner as the session', async () => {

@@ -49,6 +49,10 @@ import { ChannelsModule } from '../modules/channels/channels.module';
             'req.body.userCode',
             'req.body.deviceCode',
             'req.body.secret',
+            // F099 step 2: a routine secret's value, in and out. Names are not secret.
+            'req.body.value',
+            'res.body.secrets[*].value',
+            'res.body[*].secrets[*].value',
             // F083 channels — the webhook signature header and the owner's derived secret.
             'req.headers["x-claw-signature"]',
             'res.body.secret',

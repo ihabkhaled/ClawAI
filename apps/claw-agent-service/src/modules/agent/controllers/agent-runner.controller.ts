@@ -30,6 +30,7 @@ import type {
   RunnerResumeManifest,
   RunnerView,
 } from '../types/runner.types';
+import type { ClaimedJobSecrets } from '../types/routine-secret.types';
 import type { HeartbeatResult } from '../types/agent.types';
 import type { TerminalCommand } from '../../../generated/prisma';
 import type { AgentAuthContext, AuthenticatedUser } from '../../../common/types/auth.types';
@@ -94,7 +95,9 @@ export class AgentRunnerController {
   @HttpCode(HttpStatus.OK)
   @Public()
   @UseGuards(RunnerTokenGuard)
-  async claim(@AgentSession() ctx: AgentAuthContext): Promise<TerminalCommand[]> {
+  async claim(
+    @AgentSession() ctx: AgentAuthContext,
+  ): Promise<(TerminalCommand & ClaimedJobSecrets)[]> {
     return this.runners.claim(ctx.sessionId);
   }
 
