@@ -26,7 +26,8 @@ the frontend `NarrationLog`.
    the user wrote a URL; do not relax this to trust the model. What "opened"
    means is bounded by research-service's fetch invariants (ADR-121): robots.txt
    is honoured on every fetch (a Disallow is a 403 `FETCH_ROBOTS_DISALLOWED`,
-   and the failure is narrated as `RESEARCH_FAILED`, never retried another way);
+   and the failure is narrated as `RESEARCH_FAILED`, never retried another way; a
+   step that read zero items is a failure even when the run object exists);
    401/451 stop the escalation chain; a captcha is never solved; every attempt
    is bounded (≤6 strategies, ≤60 s) and every redirect hop is SSRF-checked
    before it is requested. An archived copy is always labelled as one.

@@ -188,4 +188,37 @@ describe('ResearchOrchestratorManager', () => {
     await expect(manager.run(input)).resolves.toBeNull();
     expect(kinds()).toContain(NarrationKind.RESEARCH_FAILED);
   });
+
+  it('self-crawl skips the planner and crawls the configured site', async () => {
+    mockedRunResearch.mockResolvedValue(runWith('SITE_CRAWL', ['https://claw.test/']) as never);
+
+    const run = await manager.run({
+      ...input,
+      intent: 'what is this webapp',
+      selfSiteUrl: 'https://claw.test',
+    });
+
+    expect(plan).not.toHaveBeenCalled();
+    expect(mockedRunResearch).toHaveBeenCalledWith(
+      'http://research.test',
+      expect.objectContaining({ workflow: ResearchWorkflow.SITE_CRAWL }),
+    );
+    expect(String(mockedRunResearch.mock.calls[0]?.[1].intent)).toContain('https://claw.test');
+    expect(run).not.toBeNull();
+    expect(kinds()).toEqual([
+      NarrationKind.PLANNED,
+      NarrationKind.CRAWL_STARTED,
+      NarrationKind.CRAWL_DONE,
+    ]);
+  });
+
+  it('a crawl that read nothing (robots Disallow) is RESEARCH_FAILED and returns no evidence', async () => {
+    mockedRunResearch.mockResolvedValue(runWith('SITE_CRAWL', []) as never);
+
+    await expect(
+      manager.run({ ...input, intent: 'crawl yourself', selfSiteUrl: 'https://claw.test' }),
+    ).resolves.toBeNull();
+    expect(kinds()).toContain(NarrationKind.RESEARCH_FAILED);
+    expect(kinds()).not.toContain(NarrationKind.CRAWL_DONE);
+  });
 });

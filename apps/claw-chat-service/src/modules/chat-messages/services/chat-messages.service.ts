@@ -513,7 +513,13 @@ export class ChatMessagesService implements OnModuleInit {
     // "Listen to this clip and research the person mentioned": the planner
     // sees a SHORT digest of the attachments' derived text (multimodal batch 8).
     const attachmentDigest = await this.attachmentDigest(userId, options.fileIds);
+    // A question about the platform itself crawls its own public site, even on AUTO.
+    const selfSiteUrl =
+      buildSelfInspectIntent(intent, AppConfig.get().PUBLIC_SITE_URL) === null
+        ? undefined
+        : AppConfig.get().PUBLIC_SITE_URL.trim().replace(/\/+$/u, '');
     const run = await this.researchOrchestrator.run({
+      ...(selfSiteUrl !== undefined ? { selfSiteUrl } : {}),
       userId,
       userToken,
       threadId,
@@ -556,16 +562,13 @@ export class ChatMessagesService implements OnModuleInit {
       // platform's OWN public site, so the answer comes from its pages (ADR-136).
       const selfInspect =
         commanded === null ? buildSelfInspectIntent(intent, AppConfig.get().PUBLIC_SITE_URL) : null;
-      if (
-        (commanded === null && selfInspect === null) ||
+      return (commanded === null && selfInspect === null) ||
         !(await this.accessControlService.hasResearchAccess(userId))
-      ) {
-        return null;
-      }
-      return this.runResearchForIntent(userId, userToken, threadId, selfInspect ?? intent, {
-        ...options,
-        mode: commanded ?? ResearchMode.SEARCH_FETCH,
-      });
+        ? null
+        : this.runResearchForIntent(userId, userToken, threadId, selfInspect ?? intent, {
+            ...options,
+            mode: commanded ?? ResearchMode.SEARCH_FETCH,
+          });
     }
     if (options.mode === ResearchMode.AUTO) {
       return this.runAutoResearch(userId, userToken, threadId, intent, options);

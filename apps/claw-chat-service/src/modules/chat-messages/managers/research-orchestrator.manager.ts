@@ -4,7 +4,9 @@ import { AppConfig } from '../../../app/config/app.config';
 import { NarrationKind } from '../../../common/enums/narration-kind.enum';
 import { PlannedResearchAction } from '../../../common/enums/planned-research-action.enum';
 import { ResearchWorkflow } from '../../../common/enums/research-workflow.enum';
+import { RESEARCH_PLANNER_DEFAULT_MAX_PAGES } from '../../../common/constants/research-gate.constants';
 import { runResearch } from '../../../common/utilities';
+import { SELF_CRAWL_NARRATION } from '../constants/platform-identity.constants';
 import { NarrationService } from '../services/narration.service';
 import { ResearchGateService } from '../services/research-gate.service';
 import type { ResearchRequestBase, ResearchRunResponse } from '../types/research.types';
@@ -42,6 +44,9 @@ export class ResearchOrchestratorManager {
   ) {}
 
   async run(input: ResearchOrchestrationInput): Promise<ResearchRunResponse | null> {
+    if (input.selfSiteUrl !== undefined) {
+      return this.selfCrawl(input, input.selfSiteUrl);
+    }
     const plan = await this.planner.plan(input.intent, input.attachmentDigest ?? '');
     await this.narrateThought(input.threadId, plan.thinking);
     if (plan.narration.length > 0) {
@@ -83,6 +88,22 @@ export class ResearchOrchestratorManager {
     return mergeResearchRuns(crawled, searched);
   }
 
+  /**
+   * The user asked about the platform itself: crawl its own public site, no
+   * planner. The plan gate was already checked by the caller (rule 50).
+   */
+  private async selfCrawl(
+    input: ResearchOrchestrationInput,
+    siteUrl: string,
+  ): Promise<ResearchRunResponse | null> {
+    await this.narration.append(input.threadId, {
+      kind: NarrationKind.PLANNED,
+      text: SELF_CRAWL_NARRATION,
+      params: { action: PlannedResearchAction.CRAWL, model: '' },
+    });
+    return this.crawl(input, [siteUrl], RESEARCH_PLANNER_DEFAULT_MAX_PAGES);
+  }
+
   private async crawl(
     input: ResearchOrchestrationInput,
     urls: string[],
@@ -101,8 +122,7 @@ export class ResearchOrchestratorManager {
       workflow: ResearchWorkflow.SITE_CRAWL,
       maxPages,
     });
-    await this.narrateOutcome(input.threadId, run, NarrationKind.CRAWL_DONE);
-    return run;
+    return this.narrateOutcome(input.threadId, run, NarrationKind.CRAWL_DONE);
   }
 
   private async search(
@@ -119,30 +139,32 @@ export class ResearchOrchestratorManager {
       workflow: ResearchWorkflow.SEARCH_THEN_FETCH,
       searchQuery: query ?? undefined,
     });
-    await this.narrateOutcome(input.threadId, run, NarrationKind.SEARCH_DONE);
-    return run;
+    return this.narrateOutcome(input.threadId, run, NarrationKind.SEARCH_DONE);
   }
 
   /**
    * Rule 41: every failed web step is SAID, never silent. A step that produced
    * nothing is reported as such, and the count shown is what was actually READ
-   * — never what was found.
+   * — never what was found. A run that read zero items (robots Disallow, an
+   * unreachable private host) is a failure too, and yields no evidence, so the
+   * answer cannot cite a source that was never stored.
    */
   private async narrateOutcome(
     threadId: string,
     run: ResearchRunResponse | null,
     doneKind: NarrationKind,
-  ): Promise<void> {
+  ): Promise<ResearchRunResponse | null> {
     const bundle = bundleOf(run);
-    if (run === null || bundle === null) {
-      this.logger.warn(`narrateOutcome: ${doneKind} produced no run`);
+    if (run === null || bundle === null || bundle.items.length === 0) {
+      this.logger.warn(`narrateOutcome: ${doneKind} produced no readable evidence`);
       await this.narration.append(threadId, { kind: NarrationKind.RESEARCH_FAILED });
-      return;
+      return null;
     }
     await this.narration.append(threadId, {
       kind: doneKind,
       params: { count: bundle.items.length, warnings: bundle.warnings.length },
     });
+    return run;
   }
 
   private baseRequest(input: ResearchOrchestrationInput): ResearchRequestBase {

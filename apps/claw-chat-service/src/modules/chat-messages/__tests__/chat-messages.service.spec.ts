@@ -1,3 +1,4 @@
+import { AppConfig } from '../../../app/config/app.config';
 import { type Mock, vi } from 'vitest';
 import { ChatMessagesService } from '../services/chat-messages.service';
 import { type ChatMessagesRepository } from '../repositories/chat-messages.repository';
@@ -246,7 +247,30 @@ describe('ChatMessagesService', () => {
       expect(payload).not.toHaveProperty('requiredModalities');
     });
 
+    it('AUTO crawls the platform own site when the user asks about the platform', async () => {
+      vi.spyOn(AppConfig, 'get').mockReturnValue({
+        PUBLIC_SITE_URL: 'https://claw.test/',
+      } as unknown as ReturnType<typeof AppConfig.get>);
+      const orchestrator = { run: vi.fn().mockResolvedValue(null) };
+      Object.assign(service, { researchOrchestrator: orchestrator });
+
+      await service.createMessage(
+        'user-1',
+        { threadId: 'thread-1', content: 'what is this webapp', researchMode: ResearchMode.AUTO },
+        'token',
+      );
+
+      await vi.waitFor(() => {
+        expect(orchestrator.run).toHaveBeenCalledWith(
+          expect.objectContaining({ selfSiteUrl: 'https://claw.test' }),
+        );
+      });
+    });
+
     it('hands the AUTO research planner a short digest of the attachments', async () => {
+      vi.spyOn(AppConfig, 'get').mockReturnValue({
+        PUBLIC_SITE_URL: 'https://claw.test',
+      } as unknown as ReturnType<typeof AppConfig.get>);
       const orchestrator = { run: vi.fn().mockResolvedValue(null) };
       Object.assign(service, { researchOrchestrator: orchestrator });
 

@@ -62,6 +62,11 @@ describe('asksAboutThisPlatform', () => {
     'what features does this platform offer',
     'crawl this site',
     'inspect the current website',
+    'crawl yourself',
+    'Can you crawl yourself and tell me what you are?',
+    'what can ClawAI do',
+    'what can you do for me on this platform',
+    'tell me about ClawAI',
   ])('recognises %j', (message) => {
     expect(asksAboutThisPlatform(message)).toBe(true);
   });

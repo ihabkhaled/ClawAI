@@ -1587,6 +1587,14 @@ Counted in `estimateSystemOverheadTokens`. "What is this app?" / "where are we?"
 platform's own site (`buildSelfInspectIntent`, plan-gated). No prices in the text. Coding-agent
 threads are NOT covered yet (own repo).
 
+**Self-crawl on AUTO (2026-10-01).** `runAutoResearch` passes `selfSiteUrl` (PUBLIC_SITE_URL)
+to the orchestrator when `buildSelfInspectIntent` matches ("what is this webapp", "crawl
+yourself", "what can ClawAI do"); the orchestrator crawls it directly, no planner (still behind
+`hasResearchAccess`), narrating PLANNED + CRAWL_STARTED/DONE. Any crawl/search that READ zero
+items (robots Disallow, unreachable private dev host) narrates `RESEARCH_FAILED` and returns
+null, so no empty bundle gets cited as "[1]" / "pages you provided". The extra
+`crawl_progress` lines come from research-service's progress channel, not from here.
+
 ## An explicit fetch command runs even with research off (2026-09-30)
 
 "crawl <url>" / "curl <url>" with the research toggle off answered "I have no fetched

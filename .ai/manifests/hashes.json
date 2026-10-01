@@ -8,7 +8,7 @@
     ".ai/manifests/environment-variables.json": "a9d10fb2",
     ".ai/manifests/event-graph.json": "cfeea7be",
     ".ai/manifests/frontend-routes.json": "9f8ed916",
-    ".ai/manifests/governance.json": "a35e31dc",
+    ".ai/manifests/governance.json": "fab35c1e",
     ".ai/manifests/i18n.json": "9313c6ea",
     ".ai/manifests/nginx-routes.json": "a8a129b4",
     ".ai/manifests/packages.json": "327a091b",

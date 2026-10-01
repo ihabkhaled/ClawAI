@@ -43,5 +43,13 @@ export const SELF_INSPECT_PATTERNS: readonly RegExp[] = [
   /\bwhat\s+features?\s+(?:does|do)\s+(?:this|the\s+current|claw\s?ai)\b/i,
   /\bwhat\s+does\s+(?:this|the\s+current)\s+(?:app|site|website|platform)\s+(?:do|offer|have)\b/i,
   /\b(?:crawl|scan|inspect|explore|check)\s+(?:this|the\s+current|our)\s+(?:web\s?app|web\s?site|app|site|website|platform)\b/i,
+  /\b(?:crawl|scan|inspect|explore)\s+(?:yourself|your\s+(?:own\s+)?(?:site|website|pages))\b/i,
+  /\bwhat\s+can\s+claw\s?ai\s+(?:do|offer)\b/i,
+  /\b(?:tell|explain)\b[^.?!]{0,20}\babout\s+claw\s?ai\b/i,
+  /\bwhat\s+can\s+you\s+do\b[^.?!]{0,30}\b(?:this\s+(?:app|platform|site|website)|here)\b/i,
   /\bwhich\s+(?:app|site|website|platform)\s+(?:is\s+this|are\s+we\s+(?:on|using|in))\b/i,
 ];
+
+/** Narrated when the platform's own public site is crawled for a question about it. */
+export const SELF_CRAWL_NARRATION =
+  "You asked about this platform, so I'll read its own public site.";
