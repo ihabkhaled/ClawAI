@@ -40,6 +40,7 @@ export type {
 export type { UsePlanFeaturesReturn } from './plan-feature-hook.types';
 export type {
   ChatThread,
+  ThreadRepositoryRef,
   ChatMessage,
   InThreadSearchMatch,
   ThreadMarkdownInput,

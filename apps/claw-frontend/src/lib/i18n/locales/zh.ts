@@ -965,6 +965,8 @@ export const zh: TranslationDictionary = {
     insert: '插入',
     saveFailed: '无法保存提示词。',
     deleteFailed: '无法删除提示词。',
+    limitReached: '最多可保存 {max} 个提示词。请删除一个后再保存新的。',
+    nearLimit: '已保存 {count}/{max} 个提示词。请删除不用的提示词以腾出空间。',
   },
   preview: {
     openLabel: '预览上下文',

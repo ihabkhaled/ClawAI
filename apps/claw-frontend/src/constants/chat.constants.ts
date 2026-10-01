@@ -179,6 +179,10 @@ export const ESTIMATED_COST_PER_OUTPUT_TOKEN: Record<string, number> = {
 /** Templates fetched per page in the composer's prompt library. */
 export const PROMPT_LIBRARY_PAGE_SIZE = 20;
 
+/** Matches the backend `MAX_TEMPLATES_PER_USER`; the library warns from the threshold below. */
+export const PROMPT_LIBRARY_MAX_TEMPLATES = 200;
+export const PROMPT_LIBRARY_WARN_THRESHOLD = 190;
+
 /** Matches the backend `MAX_TAGS_PER_TEMPLATE` / `MAX_TAG_LENGTH` (ADR-138). */
 export const PROMPT_LIBRARY_MAX_TAGS = 10;
 export const PROMPT_LIBRARY_MAX_TAG_LENGTH = 32;

@@ -1015,6 +1015,10 @@ export const de: TranslationDictionary = {
     insert: 'Einfügen',
     saveFailed: 'Der Prompt konnte nicht gespeichert werden.',
     deleteFailed: 'Der Prompt konnte nicht gelöscht werden.',
+    limitReached:
+      'Du kannst höchstens {max} Prompts speichern. Lösche einen, um einen weiteren zu speichern.',
+    nearLimit:
+      'Du hast {count} von {max} Prompts gespeichert. Lösche ungenutzte, um Platz zu schaffen.',
   },
   preview: {
     openLabel: 'Kontext-Vorschau',

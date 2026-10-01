@@ -983,6 +983,8 @@ export const th: TranslationDictionary = {
     insert: 'แทรก',
     saveFailed: 'บันทึกพรอมต์ไม่ได้',
     deleteFailed: 'ลบพรอมต์ไม่ได้',
+    limitReached: 'บันทึกพรอมต์ได้สูงสุด {max} รายการ ลบหนึ่งรายการเพื่อบันทึกรายการใหม่',
+    nearLimit: 'คุณบันทึกพรอมต์ไว้ {count} จาก {max} รายการ ลบรายการที่ไม่ได้ใช้เพื่อเพิ่มพื้นที่',
   },
   preview: {
     openLabel: 'ดูตัวอย่างบริบท',

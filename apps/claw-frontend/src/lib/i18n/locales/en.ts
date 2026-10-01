@@ -996,6 +996,8 @@ export const en: TranslationDictionary = {
     insert: 'Insert',
     saveFailed: 'Could not save the prompt.',
     deleteFailed: 'Could not delete the prompt.',
+    limitReached: 'You can save at most {max} prompts. Delete one to save another.',
+    nearLimit: 'You have saved {count} of {max} prompts. Delete unused ones to make room.',
   },
   preview: {
     openLabel: 'Preview context',

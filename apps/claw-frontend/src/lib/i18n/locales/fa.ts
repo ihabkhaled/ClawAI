@@ -999,6 +999,10 @@ export const fa: TranslationDictionary = {
     insert: 'درج',
     saveFailed: 'ذخیره پرامپت ممکن نشد.',
     deleteFailed: 'حذف پرامپت ممکن نشد.',
+    limitReached:
+      'حداکثر {max} پرامپت می‌توانید ذخیره کنید. برای ذخیره‌ی پرامپت جدید یکی را حذف کنید.',
+    nearLimit:
+      '{count} از {max} پرامپت را ذخیره کرده‌اید. پرامپت‌های بلااستفاده را حذف کنید تا جا باز شود.',
   },
   preview: {
     openLabel: 'پیش نمایش زمینه',

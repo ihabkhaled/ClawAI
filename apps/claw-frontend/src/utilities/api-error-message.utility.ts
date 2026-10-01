@@ -23,6 +23,7 @@ const API_ERROR_MESSAGE_KEY_BY_CODE: ReadonlyMap<string, string> = new Map([
   [ApiErrorCode.ANTIVIRUS_UNAVAILABLE, 'files.antivirusUnavailable'],
   [ApiErrorCode.IMAGE_MASK_INVALID, 'chat.maskEdit.refusal.invalid'],
   [ApiErrorCode.IMAGE_MASK_NOT_SUPPORTED, 'chat.maskEdit.refusal.notSupported'],
+  [ApiErrorCode.PROMPT_LIBRARY_FULL, 'promptLibrary.limitReached'],
   [ApiErrorCode.QUOTE_SOURCE_NOT_FOUND, 'chat.quote.sourceMissing'],
   [ApiErrorCode.CONTEXT_SAVE_NOT_PENDING, 'chat.contextSave.notPending'],
   [ApiErrorCode.CONTEXT_SAVE_UNKNOWN_PACK, 'chat.contextSave.notPending'],

@@ -1001,6 +1001,10 @@ export const ja: TranslationDictionary = {
     insert: '挿入',
     saveFailed: 'プロンプトを保存できませんでした。',
     deleteFailed: 'プロンプトを削除できませんでした。',
+    limitReached:
+      '保存できるプロンプトは最大 {max} 件です。別のプロンプトを保存するには、どれかを削除してください。',
+    nearLimit:
+      '{max} 件中 {count} 件のプロンプトを保存済みです。使っていないものを削除して空きを作りましょう。',
   },
   preview: {
     openLabel: 'コンテキストのプレビュー',

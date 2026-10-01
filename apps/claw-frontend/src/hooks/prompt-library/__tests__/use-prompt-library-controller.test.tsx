@@ -126,4 +126,23 @@ describe('usePromptLibraryController', () => {
     await waitFor(() => expect(mockRemove.mock.calls[0]?.[0]).toBe('p1'));
     await waitFor(() => expect(result.current.pendingDeleteId).toBeNull());
   });
+
+  it('keeps every known tag chip after a tag filter narrows the list', async () => {
+    const { result } = setup();
+    act(() => result.current.onOpenChange(true));
+    await waitFor(() => expect(result.current.availableTags).toEqual(['lang', 'work']));
+    mockList.mockResolvedValue({ items: [PLAIN], nextCursor: null });
+    act(() => result.current.onFiltersChange({ q: '', tag: 'work', favoriteOnly: false }));
+    await waitFor(() => expect(result.current.templates).toHaveLength(1));
+    expect(result.current.availableTags).toEqual(['lang', 'work']);
+  });
+
+  it('flags the near-limit state from 190 saved prompts', async () => {
+    const many = Array.from({ length: 190 }, (_unused, index) => ({ ...PLAIN, id: `p${index}` }));
+    mockList.mockResolvedValue({ items: many, nextCursor: null });
+    const { result } = setup();
+    act(() => result.current.onOpenChange(true));
+    await waitFor(() => expect(result.current.isNearLimit).toBe(true));
+    expect(result.current.savedCount).toBe(190);
+  });
 });

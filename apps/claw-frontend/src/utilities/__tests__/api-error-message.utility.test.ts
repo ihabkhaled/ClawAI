@@ -57,4 +57,15 @@ describe('resolveApiErrorMessage', () => {
 
     expect(message).toBe('translated:chat.quote.sourceMissing');
   });
+
+  it('maps PROMPT_LIBRARY_FULL to the translated limit message', () => {
+    const error = new ApiClientError({
+      message: 'You can save at most 200 prompts',
+      status: 409,
+      code: 'PROMPT_LIBRARY_FULL',
+    });
+    expect(resolveApiErrorMessage(error, (key) => `t:${key}`, 'fb')).toBe(
+      't:promptLibrary.limitReached',
+    );
+  });
 });

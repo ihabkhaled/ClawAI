@@ -986,6 +986,8 @@ export const ar: TranslationDictionary = {
     insert: 'إدراج',
     saveFailed: 'تعذّر حفظ الأمر.',
     deleteFailed: 'تعذّر حذف الأمر.',
+    limitReached: 'يمكنك حفظ {max} أمر كحد أقصى. احذف أمرًا لحفظ أمر آخر.',
+    nearLimit: 'لقد حفظت {count} من أصل {max} أمر. احذف الأوامر غير المستخدمة لتوفير مساحة.',
   },
   preview: {
     openLabel: 'معاينة السياق',

@@ -27,6 +27,8 @@ function props(overrides: Partial<PromptLibraryDialogProps> = {}): PromptLibrary
     onFiltersChange: vi.fn(),
     templates: [],
     availableTags: [],
+    savedCount: 0,
+    isNearLimit: false,
     isLoading: false,
     isError: false,
     hasNextPage: false,
@@ -102,5 +104,25 @@ describe('PromptLibraryDialog', () => {
     fireEvent.change(screen.getByLabelText('promptLibrary.bodyLabel'), { target: { value: 'B' } });
     fireEvent.click(save);
     expect(p.onSave).toHaveBeenCalledWith({ title: 'T', body: 'B', tags: '' });
+  });
+
+  it('never lets a save submit bubble to an enclosing form (composer draft)', () => {
+    const onOuterSubmit = vi.fn((event: React.FormEvent) => event.preventDefault());
+    const p = props({ view: PromptLibraryView.Form });
+    render(
+      <form onSubmit={onOuterSubmit}>
+        <PromptLibraryDialog {...p} />
+      </form>,
+    );
+    fireEvent.change(screen.getByLabelText('promptLibrary.titleLabel'), { target: { value: 'T' } });
+    fireEvent.change(screen.getByLabelText('promptLibrary.bodyLabel'), { target: { value: 'B' } });
+    fireEvent.click(screen.getByRole('button', { name: 'promptLibrary.save' }));
+    expect(p.onSave).toHaveBeenCalledTimes(1);
+    expect(onOuterSubmit).not.toHaveBeenCalled();
+  });
+
+  it('shows the near-limit counter only when asked', () => {
+    render(<PromptLibraryDialog {...props({ isNearLimit: true, savedCount: 191 })} />);
+    expect(screen.getByRole('status').textContent).toBe('promptLibrary.nearLimit');
   });
 });

@@ -51,9 +51,18 @@ export type ChatThread = {
   branchedFromThreadId?: string | null;
   branchedFromMessageId?: string | null;
   branchRootThreadId?: string | null;
+  /** F095 - the repository the thread was started in (credential-free). */
+  repositoryRef?: ThreadRepositoryRef | null;
   createdAt: string;
   updatedAt: string;
   _count?: { messages: number };
+};
+
+/** Mirrors chat-service `RepositoryRefDto`. */
+export type ThreadRepositoryRef = {
+  name: string;
+  remoteUrl?: string;
+  branch?: string;
 };
 
 /** One thread as a lineage view names it. */

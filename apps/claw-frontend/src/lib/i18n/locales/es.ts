@@ -1009,6 +1009,9 @@ export const es: TranslationDictionary = {
     insert: 'Insertar',
     saveFailed: 'No se pudo guardar el prompt.',
     deleteFailed: 'No se pudo eliminar el prompt.',
+    limitReached: 'Puedes guardar como máximo {max} prompts. Elimina uno para guardar otro.',
+    nearLimit:
+      'Has guardado {count} de {max} prompts. Elimina los que no uses para liberar espacio.',
   },
   preview: {
     openLabel: 'Vista previa del contexto',

@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { PROMPT_LIBRARY_WARN_THRESHOLD } from '@/constants/chat.constants';
 import { PromptLibraryView } from '@/enums/prompt-library.enum';
 import { usePromptTemplateMutations } from '@/hooks/prompt-library/use-prompt-template-mutations';
 import { usePromptTemplates } from '@/hooks/prompt-library/use-prompt-templates';
@@ -36,15 +37,31 @@ export function usePromptLibraryController(
     () => (query.data?.pages ?? []).flatMap((page) => page.items),
     [query.data],
   );
-  const availableTags = useMemo(() => {
-    const tags = new Set<string>(filters.tag === null ? [] : [filters.tag]);
-    for (const template of templates) {
-      for (const tag of template.tags) {
-        tags.add(tag);
+  // Tags seen across every loaded page. A tag filter narrows the server list,
+  // so deriving chips from the current result alone would hide all the others.
+  const [knownTags, setKnownTags] = useState<ReadonlySet<string>>(new Set());
+  useEffect(() => {
+    setKnownTags((previous) => {
+      const next = new Set(previous);
+      for (const template of templates) {
+        for (const tag of template.tags) {
+          next.add(tag);
+        }
       }
+      return next.size === previous.size ? previous : next;
+    });
+  }, [templates]);
+  const availableTags = useMemo(() => {
+    const tags = new Set<string>(knownTags);
+    if (filters.tag !== null) {
+      tags.add(filters.tag);
     }
     return [...tags].sort();
-  }, [templates, filters.tag]);
+  }, [knownTags, filters.tag]);
+  const isUnfiltered =
+    filters.q.trim().length === 0 && filters.tag === null && !filters.favoriteOnly;
+  const savedCount = isUnfiltered ? templates.length : 0;
+  const isNearLimit = savedCount >= PROMPT_LIBRARY_WARN_THRESHOLD;
 
   const backToList = useCallback((): void => {
     setView(PromptLibraryView.List);
@@ -106,6 +123,8 @@ export function usePromptLibraryController(
     onFiltersChange: setFilters,
     templates,
     availableTags,
+    savedCount,
+    isNearLimit,
     isLoading: query.isLoading,
     isError: query.isError,
     hasNextPage: query.hasNextPage,

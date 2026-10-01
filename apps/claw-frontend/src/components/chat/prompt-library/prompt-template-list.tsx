@@ -3,6 +3,7 @@ import { Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PROMPT_LIBRARY_MAX_TEMPLATES } from '@/constants/chat.constants';
 import { useTranslation } from '@/lib/i18n';
 import type { PromptTemplateListProps } from '@/types';
 
@@ -63,6 +64,15 @@ export function PromptTemplateList(props: PromptTemplateListProps): React.ReactE
             </Button>
           ))}
         </div>
+      ) : null}
+
+      {props.isNearLimit ? (
+        <p role="status" className="text-muted-foreground text-xs">
+          {t('promptLibrary.nearLimit', {
+            count: props.savedCount,
+            max: PROMPT_LIBRARY_MAX_TEMPLATES,
+          })}
+        </p>
       ) : null}
 
       {props.isLoading ? (

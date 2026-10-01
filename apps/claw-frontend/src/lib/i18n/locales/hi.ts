@@ -1000,6 +1000,9 @@ export const hi: TranslationDictionary = {
     insert: 'जोड़ें',
     saveFailed: 'प्रॉम्प्ट सहेजा नहीं जा सका।',
     deleteFailed: 'प्रॉम्प्ट हटाया नहीं जा सका।',
+    limitReached: 'आप अधिकतम {max} प्रॉम्प्ट सहेज सकते हैं। नया सहेजने के लिए एक हटाएँ।',
+    nearLimit:
+      'आपने {max} में से {count} प्रॉम्प्ट सहेजे हैं। जगह बनाने के लिए अनुपयोगी प्रॉम्प्ट हटाएँ।',
   },
   preview: {
     openLabel: 'संदर्भ पूर्वावलोकन',

@@ -8526,7 +8526,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5611
+        "value": 5613
       },
       "localeCount": 13,
       "locales": [

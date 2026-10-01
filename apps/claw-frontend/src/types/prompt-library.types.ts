@@ -61,6 +61,9 @@ export type PromptLibraryDialogProps = {
   onFiltersChange: (filters: PromptTemplateFilters) => void;
   templates: PromptTemplate[];
   availableTags: string[];
+  /** Saved prompts loaded so far (unfiltered), and whether that is near the cap. */
+  savedCount: number;
+  isNearLimit: boolean;
   isLoading: boolean;
   isError: boolean;
   hasNextPage: boolean;

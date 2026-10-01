@@ -18,7 +18,12 @@ export function PromptLibraryDialog(props: PromptLibraryDialogProps): React.Reac
 
   return (
     <Dialog open={props.isOpen} onOpenChange={props.onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto">
+      <DialogContent
+        className="max-h-[90vh] max-w-xl overflow-y-auto"
+        // The dialog is portalled but still sits inside the composer <form> in
+        // the React tree, so its submit would bubble up and send the draft.
+        onSubmit={(event) => event.stopPropagation()}
+      >
         <DialogHeader>
           <DialogTitle>{t('promptLibrary.dialogTitle')}</DialogTitle>
           <DialogDescription>{t('promptLibrary.dialogDescription')}</DialogDescription>

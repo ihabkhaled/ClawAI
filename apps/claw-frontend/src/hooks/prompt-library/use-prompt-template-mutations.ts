@@ -22,20 +22,23 @@ export function usePromptTemplateMutations() {
   const createMutation = useMutation({
     mutationFn: (input: CreatePromptTemplateInput) => promptTemplatesRepository.create(input),
     onSuccess: invalidate,
-    onError: (error: unknown) => showToast.apiError(error, t('promptLibrary.saveFailed')),
+    onError: (error: unknown) =>
+      showToast.apiError(error, t('promptLibrary.saveFailed'), { translate: t }),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, input }: UpdatePromptTemplateVariables) =>
       promptTemplatesRepository.update(id, input),
     onSuccess: invalidate,
-    onError: (error: unknown) => showToast.apiError(error, t('promptLibrary.saveFailed')),
+    onError: (error: unknown) =>
+      showToast.apiError(error, t('promptLibrary.saveFailed'), { translate: t }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => promptTemplatesRepository.remove(id),
     onSuccess: invalidate,
-    onError: (error: unknown) => showToast.apiError(error, t('promptLibrary.deleteFailed')),
+    onError: (error: unknown) =>
+      showToast.apiError(error, t('promptLibrary.deleteFailed'), { translate: t }),
   });
 
   // Usage stats are best-effort: a failure must never block inserting the text.

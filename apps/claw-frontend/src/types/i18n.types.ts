@@ -957,6 +957,8 @@ export type TranslationDictionary = {
     insert: string;
     saveFailed: string;
     deleteFailed: string;
+    limitReached: string;
+    nearLimit: string;
   };
   preview: {
     openLabel: string;
