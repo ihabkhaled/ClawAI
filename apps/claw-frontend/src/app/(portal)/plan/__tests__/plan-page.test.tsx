@@ -2,9 +2,11 @@ import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import PlanPage from '@/app/(portal)/plan/page';
+import { TrialStatus } from '@/enums/trial-status.enum';
 import { creditPageFixture } from '@/test/fixtures/credit-page.fixture';
 import type { UseEntitlementsResult, UserEntitlements } from '@/types';
 import type { UseCreditPageReturn } from '@/types/credit-hook.types';
+import type { TrialStatusBannerView } from '@/types/trial-status.types';
 
 const mockHook = vi.fn();
 
@@ -45,6 +47,7 @@ const sampleEntitlements = {
 type HookShape = UseEntitlementsResult & {
   t: (key: string) => string;
   credit: UseCreditPageReturn;
+  trial: TrialStatusBannerView;
 };
 
 function baseHook(overrides: Partial<HookShape> = {}): HookShape {
@@ -56,6 +59,7 @@ function baseHook(overrides: Partial<HookShape> = {}): HookShape {
     error: null,
     onRetry: vi.fn(),
     credit: creditPageFixture(),
+    trial: { status: TrialStatus.HIDDEN },
     ...overrides,
   };
 }
@@ -88,6 +92,25 @@ describe('PlanPage', () => {
     render(<PlanPage />);
     expect(screen.getByText('Pro')).toBeInTheDocument();
     expect(screen.getByText('userPlan.allowedModels')).toBeInTheDocument();
+  });
+
+  it('shows the days left on a running trial', () => {
+    mockHook.mockReturnValue(
+      baseHook({
+        entitlements: sampleEntitlements,
+        t: (key: string) => key,
+        trial: {
+          status: TrialStatus.ACTIVE,
+          title: '',
+          body: '',
+          upgradeLabel: '',
+          upgradeHref: '/billing',
+          daysRemaining: 41,
+        },
+      }),
+    );
+    render(<PlanPage />);
+    expect(screen.getByTestId('plan-trial-days')).toHaveTextContent('userPlan.trialDaysLeft');
   });
 
   it('renders the no-plan card when the plan is null', () => {

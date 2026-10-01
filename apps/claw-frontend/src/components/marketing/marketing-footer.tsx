@@ -4,9 +4,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { MarketingLocaleSwitcher } from '@/components/marketing/marketing-locale-switcher';
+import { Button } from '@/components/ui/button';
 import { APP_VERSION, MARKETING_GITHUB_URL, ROUTES } from '@/constants';
 import { COMPARISON_HUB_PATH } from '@/constants/public-comparison.constants';
 import { useTranslation } from '@/lib/i18n';
+import { useFeedbackDialogStore } from '@/stores/feedback-dialog.store';
 import type { MarketingFooterProps } from '@/types';
 import { getConfiguredSocialLinks } from '@/utilities/social-links.utility';
 
@@ -24,6 +26,7 @@ export function MarketingFooter({
   comparisonsHeading,
 }: MarketingFooterProps): React.ReactElement {
   const { t } = useTranslation();
+  const openFeedback = useFeedbackDialogStore((state) => state.openFeedback);
   const year = new Date().getFullYear();
   const socialLinks = getConfiguredSocialLinks();
 
@@ -133,6 +136,17 @@ export function MarketingFooter({
                 <Link href={ROUTES.CONTACT} className="hover:text-foreground">
                   {t('marketing.footer.enterpriseContact')}
                 </Link>
+              </li>
+              <li>
+                <Button
+                  type="button"
+                  variant="unstyled"
+                  size="unstyled"
+                  onClick={openFeedback}
+                  className="hover:text-foreground"
+                >
+                  {t('feedback.launcher.ariaLabel')}
+                </Button>
               </li>
             </ul>
           </div>

@@ -5,6 +5,7 @@ import { AllowedModelsList } from '@/components/account/allowed-models-list';
 import { PlanCard } from '@/components/account/plan-card';
 import { PlanFeatureGates } from '@/components/account/plan-feature-gates';
 import { UsageMeter } from '@/components/account/usage-meter';
+import { TrialStatus } from '@/enums/trial-status.enum';
 import type {
   EntitlementFeatureGates,
   EntitlementPlan,
@@ -94,7 +95,8 @@ describe('PlanCard', () => {
         memoryItems: 10,
       },
     };
-    render(<PlanCard plan={plan} t={t} />);
+    render(<PlanCard plan={plan} trial={{ status: TrialStatus.HIDDEN }} t={t} />);
+    expect(screen.queryByTestId('plan-trial-days')).not.toBeInTheDocument();
     expect(screen.getByText('Pro')).toBeInTheDocument();
     expect(screen.getByText('pro')).toBeInTheDocument();
     expect(screen.getByText('userPlan.featuresIncluded')).toBeInTheDocument();
@@ -106,6 +108,48 @@ describe('PlanCard', () => {
     expect(screen.getAllByText('10')).toHaveLength(2);
     expect(screen.getByText('adminPlans.gate.allowConsensusMode')).toBeInTheDocument();
     expect(screen.getByText('adminPlans.gate.allowRolePack')).toBeInTheDocument();
+  });
+});
+
+describe('PlanCard trial days', () => {
+  const trialPlan = {
+    id: 'p1',
+    slug: 'free',
+    name: 'Free',
+    isTrial: true,
+    trialEndsAt: '2027-01-01T00:00:00.000Z',
+    isTrialExpired: false,
+    featureGates: gates,
+    limits: {
+      dailyTokens: 1,
+      weeklyTokens: null,
+      monthlyTokens: null,
+      chatsPerDay: null,
+      messagesPerDay: null,
+      workspaceConnections: null,
+      contextPacks: null,
+      memoryItems: null,
+    },
+  } satisfies EntitlementPlan;
+  const tp = (key: string, params?: Record<string, string | number>): string =>
+    params?.days === undefined ? key : `${key}:${String(params.days)}`;
+  const banner = (status: TrialStatus.ACTIVE | TrialStatus.EXPIRED, daysRemaining: number) => ({
+    status,
+    title: '',
+    body: '',
+    upgradeLabel: '',
+    upgradeHref: '/billing',
+    daysRemaining,
+  });
+
+  it('shows the days left on a running trial, whatever its length', () => {
+    render(<PlanCard plan={trialPlan} trial={banner(TrialStatus.ACTIVE, 87)} t={tp} />);
+    expect(screen.getByTestId('plan-trial-days')).toHaveTextContent('userPlan.trialDaysLeft:87');
+  });
+
+  it('says the trial has ended once it has', () => {
+    render(<PlanCard plan={trialPlan} trial={banner(TrialStatus.EXPIRED, 0)} t={tp} />);
+    expect(screen.getByTestId('plan-trial-days')).toHaveTextContent('userPlan.trialEnded');
   });
 });
 

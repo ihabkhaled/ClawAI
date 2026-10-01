@@ -1,3 +1,4 @@
+import { VIDEO_FAILURE_MESSAGE_KEY_BY_CODE } from '@/constants/video-failure.constants';
 import {
   VIDEO_STATUS_LABEL_KEYS,
   VIDEO_STATUS_PREPARING_KEY,
@@ -48,4 +49,23 @@ export function toLatestVideoGeneration(generation: VideoGeneration): VideoGener
 export function isVideoOutputModel(connectorProvider: string, modelKey: string): boolean {
   const pattern = VIDEO_OUTPUT_MODEL_PATTERNS_BY_CONNECTOR.get(connectorProvider.toUpperCase());
   return pattern !== undefined && pattern.test(modelKey);
+}
+
+/**
+ * The failure sentence for a video card: the translation for a known failure code,
+ * otherwise the server's stored message (null when there is none, so the card
+ * shows its generic retry line).
+ */
+export function resolveVideoFailureMessage(
+  generation: Pick<VideoGeneration, 'errorCode' | 'errorMessage'> | null | undefined,
+  t: (key: string) => string,
+): string | null {
+  if (generation === null || generation === undefined) {
+    return null;
+  }
+  const key =
+    generation.errorCode === null
+      ? undefined
+      : VIDEO_FAILURE_MESSAGE_KEY_BY_CODE.get(generation.errorCode);
+  return key === undefined ? generation.errorMessage : t(key);
 }

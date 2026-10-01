@@ -14,7 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePlanPage } from '@/hooks/plans/use-plan-page';
 
 export default function PlanPage(): ReactElement {
-  const { t, locale, entitlements, isLoading, isError, error, onRetry, credit } = usePlanPage();
+  const { t, locale, entitlements, isLoading, isError, error, onRetry, credit, trial } =
+    usePlanPage();
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -43,7 +44,7 @@ export default function PlanPage(): ReactElement {
       {!isLoading && !isError && entitlements !== null ? (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {entitlements.plan !== null ? (
-            <PlanCard plan={entitlements.plan} t={t} />
+            <PlanCard plan={entitlements.plan} trial={trial} t={t} />
           ) : (
             <Card>
               <CardHeader>

@@ -38,6 +38,26 @@ describe('AssignPlanDialog', () => {
     expect(screen.getByLabelText('admin.assignPlanReasonLabel')).toBeInTheDocument();
   });
 
+  it('asks for days, not months, when the target is a trial plan', () => {
+    render(
+      <AssignPlanDialog
+        open
+        user={user}
+        targetPlanId="plan-free"
+        isTrialPlan
+        isSaving={false}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        t={t}
+      />,
+    );
+    expect(screen.getByLabelText('admin.assignPlanDurationDaysLabel')).toHaveAttribute(
+      'max',
+      '3650',
+    );
+    expect(screen.queryByLabelText('admin.assignPlanDurationLabel')).not.toBeInTheDocument();
+  });
+
   it('disables the confirm button while saving', () => {
     render(
       <AssignPlanDialog

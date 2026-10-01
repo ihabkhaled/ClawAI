@@ -90,3 +90,18 @@ export type ScreenCaptureResult = {
   status: ScreenCaptureStatus;
   dataUrl: string | null;
 };
+
+export type CreatePublicFeedbackRequest = {
+  type: FeedbackType;
+  title?: string;
+  message: string;
+  name: string;
+  email: string;
+  pageUrl: string;
+  locale: string;
+  website: string;
+};
+
+export type CreatePublicFeedbackResponse = {
+  id: string;
+};

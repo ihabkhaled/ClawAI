@@ -489,7 +489,7 @@ export const hi: TranslationDictionary = {
         'आपका प्लान प्रतिदिन एक निश्चित संख्या में संदेशों की अनुमति देता है। यह UTC आधी रात को रीसेट होता है, या आप अभी बड़े प्लान पर जा सकते हैं।',
       trialExpiredTitle: 'आपका मुफ्त ट्रायल समाप्त हो गया',
       trialExpiredBody:
-        'मुफ्त प्लान 30 दिन चलता है। जहाँ छोड़ा था वहीं से जारी रखने के लिए कोई प्लान चुनें।',
+        'निःशुल्क प्लान एक सीमित अवधि का परीक्षण है। जहाँ आपने छोड़ा था वहीं से जारी रखने के लिए कोई प्लान चुनें।',
       featureDisabledTitle: 'आपके प्लान में यह शामिल नहीं है',
       featureDisabledBody: 'इस संदेश के लिए ऐसी सुविधा चाहिए थी जो आपके मौजूदा प्लान में नहीं है।',
       upgradeCta: 'प्लान देखें',
@@ -801,6 +801,8 @@ export const hi: TranslationDictionary = {
     videoTakesMinutes: 'वीडियो बनने में कुछ मिनट लग सकते हैं। बनते समय आप चैट जारी रख सकते हैं।',
     videoLoadFailed: 'वीडियो लोड नहीं हो सका',
     videoLoadFailedHint: 'फिर से कोशिश करने के लिए पेज रीलोड करें।',
+    videoFailureSourceImageInvalid:
+      'चित्र का उपयोग नहीं हो सका: 10 MB से छोटी JPEG, PNG या WebP छवि का उपयोग करें, जो आपकी अपनी हो।',
     imageStage: {
       queued: 'छवि कतार में प्रतीक्षा',
       connecting: 'छवि रनटाइम से जुड़ रहे हैं',
@@ -1635,6 +1637,12 @@ export const hi: TranslationDictionary = {
       superAdminImmutable: 'केवल सुपर एडमिन ही सुपर एडमिन खाता बदल सकता है।',
       superAdminSelfLocked: 'सुपर एडमिन अपने ही खाते में यह बदलाव नहीं कर सकता।',
       superAdminRequired: 'यह कार्य केवल सुपर एडमिन ही कर सकता है।',
+      planTrialNotFound: 'इस उपयोगकर्ता ने कभी निःशुल्क ट्रायल नहीं लिया है।',
+      planTrialSuperseded:
+        'यह उपयोगकर्ता अब अपने निःशुल्क ट्रायल पर नहीं है। इसके बजाय उसे कुछ दिनों के लिए निःशुल्क प्लान पर सेट करें।',
+      planGrantDurationInvalid:
+        '1 से 3650 के बीच दिनों की, या 1 से 60 के बीच महीनों की पूर्ण संख्या दर्ज करें।',
+      planGrantReasonRequired: 'कारण आवश्यक है।',
     },
     title: 'एडमिन',
     description: 'उपयोगकर्ता और सिस्टम सेटिंग्स प्रबंधित करें',
@@ -1749,6 +1757,21 @@ export const hi: TranslationDictionary = {
     assignPlanReasonRequired: 'कारण आवश्यक है।',
     assignPlanCancel: 'रद्द करें',
     assignPlanConfirm: 'योजना प्रदान करें',
+    assignPlanDurationDaysLabel: 'अवधि (दिन)',
+    assignPlanDurationDaysInvalid: '1 से 3650 के बीच दिनों की पूर्ण संख्या दर्ज करें।',
+    trialActionsHeading: 'निःशुल्क ट्रायल की क्रियाएँ',
+    addTrialDaysLabel: 'जोड़े जाने वाले दिन',
+    addTrialDaysHelp:
+      'यह मौजूदा समाप्ति तिथि में जुड़ता है, या ट्रायल समाप्त हो चुका हो तो आज से गिना जाता है।',
+    addTrialDaysConfirm: 'ट्रायल दिन जोड़ें',
+    addTrialDaysSuccess: '{days} ट्रायल दिन जोड़े गए। {remaining} दिन शेष हैं।',
+    addTrialDaysFailed: 'ट्रायल दिन नहीं जोड़े जा सके।',
+    setFreeLabel: '{plan} प्लान पर दिन',
+    setFreeHelp:
+      'उपयोगकर्ता को दिए गए दिनों के लिए इस प्लान पर ले जाता है, भले ही उसने अपना ट्रायल उपयोग कर लिया हो या वह सशुल्क प्लान पर हो।',
+    setFreeConfirm: 'इन दिनों के लिए {plan} पर सेट करें',
+    setFreeSuccess: 'उपयोगकर्ता को {days} दिनों के लिए निःशुल्क प्लान पर सेट किया गया।',
+    setFreeFailed: 'उपयोगकर्ता को निःशुल्क प्लान पर सेट नहीं किया जा सका।',
     platformHealthLinkDesc: 'सिस्टम स्थिति डैशबोर्ड पर मॉनिटर की जाती है',
     platformHealthLinkBody:
       'सेवा स्थिति, लेटेंसी और अपटाइम मेट्रिक्स डैशबोर्ड पर रहते हैं। रीयल-टाइम दृश्य के लिए इसे खोलें।',
@@ -4241,8 +4264,8 @@ export const hi: TranslationDictionary = {
     },
   },
   trialStatus: {
-    activeTitle: 'आपका मुफ़्त परीक्षण सक्रिय है',
-    activeBody: '{days} दिन शेष हैं। आपका परीक्षण {date} को समाप्त होगा।',
+    activeTitle: 'आप निःशुल्क ट्रायल पर हैं: {days} दिन शेष',
+    activeBody: 'आपका ट्रायल {date} को समाप्त होगा।',
     expiredTitle: 'आपका मुफ़्त परीक्षण समाप्त हो गया है',
     expiredBody: 'AI सुविधाओं का उपयोग जारी रखने के लिए सशुल्क प्लान चुनें।',
     upgrade: 'सशुल्क प्लान देखें',
@@ -4311,6 +4334,7 @@ export const hi: TranslationDictionary = {
     deactivateFailed: 'योजना निष्क्रिय नहीं हो सकी।',
     setDefaultSucceeded: 'साइनअप योजना अपडेट हो गई।',
     signupPlanBadge: 'साइनअप प्लान',
+    trialBadge: 'ट्रायल: {days} दिन',
     popularBadge: 'सबसे लोकप्रिय',
     setSignupPlan: 'साइनअप प्लान बनाएँ',
     setMostPopular: 'सबसे लोकप्रिय बनाएँ',
@@ -4363,8 +4387,13 @@ export const hi: TranslationDictionary = {
       maxMemoryItems: 'अधिकतम मेमोरी आइटम',
       maxVideoSeconds: 'अधिकतम वीडियो अवधि (सेकंड)',
       isPublic: 'सार्वजनिक रूप से सूचीबद्ध',
-      isTrial: '30-दिन का परीक्षण',
-      trialHelp: 'परीक्षण 30 दिनों का है और प्रत्येक खाते पर केवल एक बार उपयोग किया जा सकता है।',
+      isTrial: 'निःशुल्क परीक्षण वाला प्लान',
+      trialHelp:
+        'ट्रायल एक्सेस प्रति खाता एक बार ही उपयोग किया जा सकता है। इसकी अवधि नीचे तय करें।',
+      trialDays: 'ट्रायल अवधि (दिन)',
+      trialDaysHelp:
+        '1 से 3650 तक कोई भी पूर्ण संख्या। नए ट्रायल यहाँ सहेजे गए मान का उपयोग करते हैं; पहले से चल रहे ट्रायल अपनी समाप्ति तिथि बनाए रखते हैं।',
+      trialDaysInvalid: '1 से 3650 के बीच दिनों की पूर्ण संख्या दर्ज करें।',
       featureGates: 'फ़ीचर गेट',
       orchestrationLabs: 'ऑर्केस्ट्रेशन लैब्स',
       orchestrationLabsHint:
@@ -4489,6 +4518,8 @@ export const hi: TranslationDictionary = {
     featuresIncluded: 'शामिल सुविधाएँ',
     noPlanTitle: 'कोई योजना असाइन नहीं',
     noPlanDescription: 'आप डिफ़ॉल्ट एक्सेस स्तर पर हैं।',
+    trialDaysLeft: 'निःशुल्क ट्रायल: {days} दिन शेष',
+    trialEnded: 'आपका निःशुल्क ट्रायल समाप्त हो गया है',
     modelPrimary: 'प्राथमिक',
     modelCompare: 'तुलना',
     modelOverride: 'सीमा {limit} टोकन/दिन',
@@ -5108,6 +5139,7 @@ export const hi: TranslationDictionary = {
       },
       savePercent: '{percent}% बचाएँ',
       mostPopular: 'सबसे लोकप्रिय',
+      trialLength: 'निःशुल्क ट्रायल: {days} दिन',
       dailyTokens: 'दैनिक टोकन सीमा',
       monthlyTokens: 'मासिक टोकन सीमा',
       ctaFree: 'निःशुल्क शुरू करें',
@@ -6541,8 +6573,6 @@ export const hi: TranslationDictionary = {
     launcher: {
       ariaLabel: 'प्रतिक्रिया भेजें',
       tooltip: 'बग रिपोर्ट करें या प्रतिक्रिया साझा करें',
-      hideAriaLabel: 'फ़ीडबैक बटन को किनारे पर छिपाएँ',
-      showAriaLabel: 'फ़ीडबैक बटन दिखाएँ',
     },
     dialog: {
       typeLabel: 'प्रकार',
@@ -6555,6 +6585,10 @@ export const hi: TranslationDictionary = {
       cancel: 'रद्द करें',
       submit: 'प्रतिक्रिया भेजें',
       submitting: 'भेजा जा रहा है…',
+      nameLabel: 'आपका नाम',
+      emailLabel: 'आपका ईमेल',
+      publicDescription:
+        'हमें बताइए आप क्या सोचते हैं। हम हर संदेश पढ़ते हैं और ईमेल से जवाब दे सकते हैं।',
     },
     editor: {
       bold: 'बोल्ड',
@@ -6585,6 +6619,10 @@ export const hi: TranslationDictionary = {
       titleRequired: 'शीर्षक आवश्यक है',
       contentRequired: 'विवरण आवश्यक है',
       submitFailed: 'प्रतिक्रिया नहीं भेजी जा सकी',
+      nameRequired: 'आपका नाम आवश्यक है',
+      emailInvalid: 'मान्य ईमेल पता दर्ज करें',
+      rateLimited: 'बहुत अधिक संदेश भेजे गए। कृपया बाद में पुनः प्रयास करें।',
+      checkFields: 'कृपया अपना विवरण जाँचें और पुनः प्रयास करें',
       tooManyFiles: 'बहुत अधिक फ़ाइलें',
       fileTooLarge: 'यह फ़ाइल बहुत बड़ी है',
       totalTooLarge: 'ये फ़ाइलें कुल मिलाकर बहुत बड़ी हैं',
@@ -6662,5 +6700,6 @@ export const hi: TranslationDictionary = {
     dragDropOrClickToUpload: 'छवियाँ यहाँ खींचें, या चुनने के लिए क्लिक करें',
     removeAttachment: 'अनुलग्नक हटाएँ',
     submittedWithTicket: 'प्रतिक्रिया भेजी गई — टिकट {ticketNumber}',
+    submittedPublic: 'धन्यवाद — आपकी प्रतिक्रिया भेज दी गई',
   },
 };

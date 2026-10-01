@@ -109,6 +109,42 @@ export type UserSubscriptionDialogBodyProps = {
   t: TranslateFunction;
 };
 
+export type UserSubscriptionTrialActionsProps = {
+  userId: string;
+  t: TranslateFunction;
+};
+
+/** One small reasoned-days form: how many days, why, and what is wrong with it. */
+export type TrialDaysActionForm = {
+  days: string;
+  reason: string;
+  /** Translation key of the first problem, or null when the form is valid. */
+  errorKey: string | null;
+  isPending: boolean;
+  setDays: (value: string) => void;
+  setReason: (value: string) => void;
+  submit: () => void;
+};
+
+/** Starts one trial action; calls onDone only when the server accepted it. */
+export type TrialDaysActionRunner = (days: number, reason: string, onDone: () => void) => void;
+
+export type TrialDaysActionFormViewProps = {
+  idPrefix: string;
+  form: TrialDaysActionForm;
+  daysLabel: string;
+  help: string;
+  confirmLabel: string;
+  t: TranslateFunction;
+};
+
+export type UseUserTrialActionsReturn = {
+  /** The plan "Set to Free" assigns, or null when none is configured. */
+  freePlanName: string | null;
+  addDays: TrialDaysActionForm;
+  setFree: TrialDaysActionForm;
+};
+
 export type UserSubscriptionSummaryProps = {
   planOverview: AdminUserPlanOverview;
   statistics: AdminUserSubscriptionStatistics;

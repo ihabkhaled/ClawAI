@@ -323,6 +323,7 @@ export type {
   AuthStoreActions,
   StoredSession,
   SidebarStoreState,
+  FeedbackDialogStore,
   SidebarStoreActions,
 } from './store.types';
 export type {
@@ -632,8 +633,6 @@ export type {
   UseEditUserFormReturn,
   UseAssignPlanFormReturn,
   FloatingClearanceConfig,
-  UseFeedbackLauncherReturn,
-  UseFeedbackLauncherCollapseReturn,
   UseJumpToMessageReturn,
   UseBranchThreadReturn,
   UseThreadLineageReturn,
@@ -1056,6 +1055,7 @@ export type {
   PlanRetirementResult,
   PlanRetirementCandidate,
   PlanCardProps,
+  AddTrialDaysResult,
 } from './plan.types';
 export type {
   HiddenTrialStatusBannerView,
@@ -1141,6 +1141,7 @@ export type {
   MarketingNavLink,
   UseMarketingMobileMenuReturn,
   MarketingMobileMenuProps,
+  MarketingAuthActionsProps,
   MarketingFooterLinkGroup,
   MarketingFooterProps,
   MarketingSocialLink,

@@ -1,6 +1,7 @@
 import type { UseFormReturn } from 'react-hook-form';
 
 import type { ImagePreviewStatus } from '@/enums';
+import type { PublicFeedbackFormValues } from '@/lib/validation/feedback-public.schema';
 import type { FeedbackFormValues } from '@/lib/validation/feedback.schema';
 import type { AdminFeedbackImagePreview } from '@/types/feedback-props.types';
 import type {
@@ -62,4 +63,12 @@ export type UseAttachmentPreviewReturn = {
   isTiny: boolean;
   handleLoad: (event: React.SyntheticEvent<HTMLImageElement>) => void;
   handleError: () => void;
+};
+
+export type UsePublicFeedbackFormReturn = {
+  form: UseFormReturn<PublicFeedbackFormValues>;
+  submit: (pageContext: FeedbackPageContext) => void;
+  isSubmitting: boolean;
+  /** Translation key of the failure to show, or null while there is none. */
+  submitErrorKey: string | null;
 };

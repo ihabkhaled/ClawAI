@@ -495,7 +495,7 @@ export const pt: TranslationDictionary = {
         'O seu plano permite um número definido de mensagens por dia. É reposto à meia-noite UTC, ou pode mudar já para um plano maior.',
       trialExpiredTitle: 'O seu período gratuito terminou',
       trialExpiredBody:
-        'O plano gratuito dura 30 dias. Escolha um plano para continuar onde ficou.',
+        'O plano gratuito é um teste de duração limitada. Escolha um plano para continuar de onde parou.',
       featureDisabledTitle: 'O seu plano não inclui isto',
       featureDisabledBody:
         'Esta mensagem precisava de uma funcionalidade que o seu plano atual não cobre.',
@@ -811,6 +811,8 @@ export const pt: TranslationDictionary = {
       'Um vídeo pode levar alguns minutos. Você pode continuar conversando enquanto ele é gerado.',
     videoLoadFailed: 'Não foi possível carregar o vídeo',
     videoLoadFailedHint: 'Recarregue a página para tentar novamente.',
+    videoFailureSourceImageInvalid:
+      'Não foi possível usar a imagem: use uma imagem JPEG, PNG ou WebP com menos de 10 MB que seja sua.',
     imageStage: {
       queued: 'Na fila de imagens',
       connecting: 'Conectando ao motor de imagens',
@@ -1654,6 +1656,12 @@ export const pt: TranslationDictionary = {
       superAdminSelfLocked:
         'O superadministrador não pode aplicar esta alteração à sua própria conta.',
       superAdminRequired: 'Apenas o superadministrador pode executar esta ação.',
+      planTrialNotFound: 'Este usuário nunca teve um teste gratuito.',
+      planTrialSuperseded:
+        'Este usuário não está mais no teste gratuito. Defina-o no plano gratuito por um número de dias.',
+      planGrantDurationInvalid:
+        'Informe um número inteiro de dias entre 1 e 3650, ou de meses entre 1 e 60.',
+      planGrantReasonRequired: 'O motivo é obrigatório.',
     },
     title: 'Administração',
     description: 'Gerenciar usuários e configurações do sistema',
@@ -1768,6 +1776,21 @@ export const pt: TranslationDictionary = {
     assignPlanReasonRequired: 'O motivo é obrigatório.',
     assignPlanCancel: 'Cancelar',
     assignPlanConfirm: 'Conceder plano',
+    assignPlanDurationDaysLabel: 'Duração (dias)',
+    assignPlanDurationDaysInvalid: 'Informe um número inteiro de dias entre 1 e 3650.',
+    trialActionsHeading: 'Ações do teste gratuito',
+    addTrialDaysLabel: 'Dias a adicionar',
+    addTrialDaysHelp:
+      'Somam-se à data de término atual, ou contam a partir de hoje se o teste já terminou.',
+    addTrialDaysConfirm: 'Adicionar dias de teste',
+    addTrialDaysSuccess: '{days} dias de teste adicionados. Restam {remaining} dias.',
+    addTrialDaysFailed: 'Não foi possível adicionar os dias de teste.',
+    setFreeLabel: 'Dias no plano {plan}',
+    setFreeHelp:
+      'Move o usuário para este plano pelos dias informados, mesmo que ele já tenha usado o teste ou esteja em um plano pago.',
+    setFreeConfirm: 'Definir {plan} por estes dias',
+    setFreeSuccess: 'Usuário definido no plano gratuito por {days} dias.',
+    setFreeFailed: 'Não foi possível definir o usuário no plano gratuito.',
     platformHealthLinkDesc: 'O status do sistema é monitorado no painel',
     platformHealthLinkBody:
       'O status dos serviços, latência e métricas de disponibilidade ficam no painel. Abra-o para uma visão em tempo real.',
@@ -4275,8 +4298,8 @@ export const pt: TranslationDictionary = {
     },
   },
   trialStatus: {
-    activeTitle: 'O seu teste gratuito está ativo',
-    activeBody: 'Restam {days} dias. O teste termina em {date}.',
+    activeTitle: 'Você está em um teste gratuito: restam {days} dias',
+    activeBody: 'Seu teste termina em {date}.',
     expiredTitle: 'O seu teste gratuito terminou',
     expiredBody: 'Escolha um plano pago para continuar a usar as funcionalidades de IA.',
     upgrade: 'Ver planos pagos',
@@ -4345,6 +4368,7 @@ export const pt: TranslationDictionary = {
     deactivateFailed: 'Não foi possível desativar o plano.',
     setDefaultSucceeded: 'Plano de registo atualizado.',
     signupPlanBadge: 'Plano de registo',
+    trialBadge: 'Teste: {days} dias',
     popularBadge: 'Mais popular',
     setSignupPlan: 'Definir como plano de registo',
     setMostPopular: 'Definir como mais popular',
@@ -4397,8 +4421,13 @@ export const pt: TranslationDictionary = {
       maxMemoryItems: 'Máx. de itens de memória',
       maxVideoSeconds: 'Duração máxima do vídeo (segundos)',
       isPublic: 'Listado publicamente',
-      isTrial: 'Teste de 30 dias',
-      trialHelp: 'O teste dura 30 dias e só pode ser usado uma vez por conta.',
+      isTrial: 'Plano com teste gratuito',
+      trialHelp:
+        'O acesso de teste pode ser usado uma vez por conta. Defina abaixo quanto tempo ele dura.',
+      trialDays: 'Duração do teste (dias)',
+      trialDaysHelp:
+        'Qualquer número inteiro de 1 a 3650. Novos testes usam o valor salvo aqui; os que já estão em andamento mantêm a data de término.',
+      trialDaysInvalid: 'Informe um número inteiro de dias entre 1 e 3650.',
       featureGates: 'Controles de recursos',
       orchestrationLabs: 'Laboratórios de orquestração',
       orchestrationLabsHint:
@@ -4523,6 +4552,8 @@ export const pt: TranslationDictionary = {
     featuresIncluded: 'Recursos incluídos',
     noPlanTitle: 'Nenhum plano atribuído',
     noPlanDescription: 'Você está no nível de acesso padrão.',
+    trialDaysLeft: 'Teste gratuito: {days} dias restantes',
+    trialEnded: 'Seu teste gratuito terminou',
     modelPrimary: 'Primário',
     modelCompare: 'Comparar',
     modelOverride: 'Limite {limit} tokens/dia',
@@ -5151,6 +5182,7 @@ export const pt: TranslationDictionary = {
       },
       savePercent: 'Economize {percent}%',
       mostPopular: 'Mais popular',
+      trialLength: 'Teste gratuito: {days} dias',
       dailyTokens: 'Cota diária',
       monthlyTokens: 'Cota mensal',
       ctaFree: 'Começar grátis',
@@ -6605,8 +6637,6 @@ export const pt: TranslationDictionary = {
     launcher: {
       ariaLabel: 'Enviar feedback',
       tooltip: 'Relatar um erro ou enviar feedback',
-      hideAriaLabel: 'Ocultar o botão de feedback na borda',
-      showAriaLabel: 'Mostrar o botão de feedback',
     },
     dialog: {
       typeLabel: 'Tipo',
@@ -6619,6 +6649,10 @@ export const pt: TranslationDictionary = {
       cancel: 'Cancelar',
       submit: 'Enviar feedback',
       submitting: 'Enviando…',
+      nameLabel: 'Seu nome',
+      emailLabel: 'Seu e-mail',
+      publicDescription:
+        'Conte-nos o que você pensa. Lemos todas as mensagens e podemos responder por e-mail.',
     },
     editor: {
       bold: 'Negrito',
@@ -6649,6 +6683,10 @@ export const pt: TranslationDictionary = {
       titleRequired: 'O título é obrigatório',
       contentRequired: 'A descrição é obrigatória',
       submitFailed: 'Não foi possível enviar o feedback',
+      nameRequired: 'Seu nome é obrigatório',
+      emailInvalid: 'Informe um endereço de e-mail válido',
+      rateLimited: 'Muitas mensagens enviadas. Tente novamente mais tarde.',
+      checkFields: 'Verifique seus dados e tente novamente',
       tooManyFiles: 'Ficheiros a mais',
       fileTooLarge: 'Esse ficheiro é demasiado grande',
       totalTooLarge: 'Esses ficheiros são demasiado grandes no total',
@@ -6726,5 +6764,6 @@ export const pt: TranslationDictionary = {
     dragDropOrClickToUpload: 'Arraste imagens para aqui ou clique para escolher',
     removeAttachment: 'Remover anexo',
     submittedWithTicket: 'Feedback enviado — Ticket {ticketNumber}',
+    submittedPublic: 'Obrigado — seu feedback foi enviado',
   },
 };

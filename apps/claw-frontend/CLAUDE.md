@@ -771,3 +771,31 @@ Model detection (`constants/video.constants.ts`) mirrors the regexes in
 ## Prompt library (ADR-138)
 
 Composer button `PromptLibraryButton` opens `PromptLibraryDialog` (`components/chat/prompt-library/`): list, create/edit form, fill-variables step. State lives in `usePromptLibraryController`; data via `hooks/prompt-library/` against `/chat-prompt-templates` (cursor pages, 200 templates per user -> 409 `PROMPT_LIBRARY_FULL`). Keys: `promptLibrary.*` in all 13 locales. Live-checked 375/667/768/1280 (+ landscape), `ar` RTL, fr/ja/de: no overflow, no untranslated strings. The search input must stay `w-full` below `sm:` or it collapses to ~40px beside the two buttons. The dialog is portalled but still inside the composer `<form>` in the React tree, so `PromptLibraryDialog` stops `submit` propagation on `DialogContent` (else Save sends the draft). `PROMPT_LIBRARY_FULL` maps to `promptLibrary.limitReached` via `api-error-message.utility`; the list warns (`promptLibrary.nearLimit`) from 190 loaded prompts; tag chips accumulate across loaded pages.
+
+## Public marketing: session-aware navbar and public feedback
+
+Marketing pages stay public and static. The `(marketing)` layout reads no cookies, no auth store and
+never redirects (`app/__tests__/marketing-layout-static.test.ts` enforces it), so the HTML a crawler
+gets is always the signed-out one.
+
+- **Navbar session check** — `MarketingAuthActions` uses `useIsSignedIn()` (`hooks/auth/`), a
+  `useSyncExternalStore` over the existing `useAuthStore` with a server snapshot of `false`.
+  Signed-out is the server and hydration render; the swap to a `Chat` link (`ROUTES.CHAT`, label
+  `nav.chat`) happens after hydration with no network call. On desktop the signed-out pair stays in the
+  grid cell (`invisible`, `aria-hidden`) so the bar does not shift. Footer links are unchanged.
+- **Feedback entries** — header, mobile menu and footer buttons call `useFeedbackDialogStore.openFeedback`
+  (label `feedback.launcher.ariaLabel`). `MarketingFeedbackReporter` mounts in the marketing layout and
+  loads `FeedbackReporter` through `next/dynamic` only once the store is open.
+- **One dialog, two modes** — `FeedbackDialog` picks by session: signed in renders
+  `FeedbackMemberDialog` (guarded `POST /feedback`, unchanged); signed out renders
+  `FeedbackPublicDialog`: required name and email (zod, translated errors), no screenshot or attachment
+  controls, and a `website` honeypot (aria-hidden, tabindex -1, autocomplete off).
+- **Public API** — `feedbackPublicRepository` does a bare `fetch` to `POST /api/v1/feedback/public`
+  with `credentials: 'omit'` and no Authorization header (the axios client would attach a token and
+  try a refresh/redirect on 401). `usePublicFeedbackForm` maps 429 to `feedback.errors.rateLimited`,
+  400 to `feedback.errors.checkFields`, anything else to `submitFailed`
+  (`utilities/feedback-error-key.utility.ts`). The typed email is never stored or logged.
+- **Log out in the navbar** — when signed in, `MarketingAuthActions` also shows `auth.logout` next to Chat
+  (desktop and mobile menu). It calls the portal's own `useLogout(null)` (API call, `clearAuth`, query
+  cache clear); `null` skips the redirect to `/login`, so the visitor stays on the public page and the
+  bar swaps back to Register + Sign in with no reload.

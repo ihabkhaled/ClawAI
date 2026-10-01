@@ -8,6 +8,7 @@ import type { UserRole } from '../enums/user-role.enum';
 
 import type { UseCreditPageReturn } from './credit-hook.types';
 import type { TranslateFunction } from './i18n.types';
+import type { TrialStatusBannerView } from './trial-status.types';
 
 // ─── Backend DTO mirrors (claw-auth-service plans/roles/entitlements) ─────────
 
@@ -269,6 +270,8 @@ export type PlanFormState = {
   displayOrder: string;
   isPublic: boolean;
   isTrial: boolean;
+  /** Trial length in days, as typed. Only sent when `isTrial` is on. */
+  trialDurationDays: string;
   dailyTokenQuota: string;
   weeklyTokenQuota: string;
   monthlyTokenQuota: string;
@@ -411,6 +414,7 @@ export type UseEntitlementsResult = {
  */
 export type UsePlanPageResult = UseEntitlementsResult & {
   credit: UseCreditPageReturn;
+  trial: TrialStatusBannerView;
   t: TranslateFunction;
   locale: string;
 };
@@ -508,5 +512,16 @@ export type PlanRowProps = {
 
 export type PlanCardProps = {
   plan: EntitlementPlan;
+  /** Where the free trial stands; hidden for any plan that is not a running or ended trial. */
+  trial: TrialStatusBannerView;
   t: TranslateFunction;
+};
+
+/** What the admin "Add trial days" action reports back. */
+export type AddTrialDaysResult = {
+  userId: string;
+  /** The trial's new end, ISO-8601. */
+  expiresAt: string;
+  /** Whole days from now to `expiresAt`, rounded up. */
+  daysRemaining: number;
 };

@@ -278,6 +278,8 @@ export {
   PLAN_FORM_DEFAULTS,
   PLAN_FEATURE_GATE_FIELDS,
   PLAN_TRIAL_DURATION_DAYS,
+  PLAN_TRIAL_MAX_DAYS,
+  PLAN_TRIAL_MIN_DAYS,
 } from './plan.constants';
 export { MILLISECONDS_PER_TRIAL_DAY } from './trial-status.constants';
 export { PERMISSION_GROUP_PREFIXES, PERMISSION_GROUP_ORDER } from './role.constants';

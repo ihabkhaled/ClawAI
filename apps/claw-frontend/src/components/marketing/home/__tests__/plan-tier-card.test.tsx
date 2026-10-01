@@ -190,4 +190,17 @@ describe('PlanTierCard', () => {
 
     expect(screen.getByRole('link')).toHaveAttribute('href', '/register?returnTo=%2Fchat');
   });
+
+  it('shows the trial length from the plan, and nothing for a plan with no trial', () => {
+    const { rerender } = render(
+      <PlanTierCard
+        plan={{ ...PLAN, isTrial: true, trialDurationDays: 90 }}
+        interval={BillingInterval.MONTHLY}
+      />,
+    );
+    expect(screen.getByTestId('plan-trial-length')).toBeInTheDocument();
+
+    rerender(<PlanTierCard plan={PLAN} interval={BillingInterval.MONTHLY} />);
+    expect(screen.queryByTestId('plan-trial-length')).not.toBeInTheDocument();
+  });
 });

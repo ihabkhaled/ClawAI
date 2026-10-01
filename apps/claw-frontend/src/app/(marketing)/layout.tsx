@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 
 import { AdSenseHead } from '@/components/adsense/adsense-head';
 import { SkipToContent } from '@/components/layout/skip-to-content';
+import { MarketingFeedbackReporter } from '@/components/marketing/marketing-feedback-reporter';
 import { MarketingFooter } from '@/components/marketing/marketing-footer';
 import { MarketingHeader } from '@/components/marketing/marketing-header';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
@@ -49,6 +50,7 @@ export default async function MarketingLayout({
           {children}
         </main>
         <MarketingFooter {...footerData} />
+        <MarketingFeedbackReporter />
       </div>
     </DisplayCurrencyProvider>
   );

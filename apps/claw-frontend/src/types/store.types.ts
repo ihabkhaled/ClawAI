@@ -33,3 +33,9 @@ export type SidebarStoreActions = {
   close: () => void;
   toggle: () => void;
 };
+
+export type FeedbackDialogStore = {
+  isOpen: boolean;
+  openFeedback: () => void;
+  setFeedbackOpen: (open: boolean) => void;
+};

@@ -24,6 +24,10 @@ vi.mock('@/hooks/marketing/use-marketing-locale-switcher', () => ({
     isPending: false,
   }),
 }));
+vi.mock('@/hooks/auth/use-logout', () => ({
+  useLogout: () => ({ logout: vi.fn(), isPending: false }),
+}));
+
 vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));

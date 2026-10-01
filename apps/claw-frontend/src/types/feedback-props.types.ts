@@ -27,10 +27,6 @@ export type FeedbackDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-export type FeedbackLauncherProps = {
-  onOpen: () => void;
-};
-
 export type FeedbackMarkdownEditorProps = {
   value: string;
   onChange: (value: string) => void;

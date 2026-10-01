@@ -16,6 +16,12 @@ export const PAYG_CREDIT_PERCENT_BPS_DEFAULT = '3000';
 
 // Default state for a brand-new plan in the PlanForm. Numeric inputs are kept
 // as strings (controlled inputs) and coerced by the Zod schema on submit.
+// What a NEW trial plan starts with in the form. Not a limit: the owner can set any
+// whole number of days in the range below, per plan (ADR-140).
+export const PLAN_TRIAL_DURATION_DAYS = 30;
+export const PLAN_TRIAL_MIN_DAYS = 1;
+export const PLAN_TRIAL_MAX_DAYS = 3650;
+
 export const PLAN_FORM_DEFAULTS: PlanFormState = {
   name: '',
   slug: '',
@@ -23,6 +29,7 @@ export const PLAN_FORM_DEFAULTS: PlanFormState = {
   displayOrder: '0',
   isPublic: true,
   isTrial: false,
+  trialDurationDays: String(PLAN_TRIAL_DURATION_DAYS),
   dailyTokenQuota: '100000',
   weeklyTokenQuota: '',
   monthlyTokenQuota: '',
@@ -59,8 +66,6 @@ export const PLAN_FORM_DEFAULTS: PlanFormState = {
   allowHelperVision: false,
   allowTextToSpeech: false,
 };
-
-export const PLAN_TRIAL_DURATION_DAYS = 30;
 
 export const DISABLED_PLAN_FEATURE_GATES: EntitlementFeatureGates = {
   allowCompareMode: false,

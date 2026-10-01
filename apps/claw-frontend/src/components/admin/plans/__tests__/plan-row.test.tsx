@@ -84,6 +84,15 @@ describe('PlanRow', () => {
     expect(screen.getByRole('button', { name: 'adminPlans.deactivate' })).toBeInTheDocument();
   });
 
+  it('shows a trial badge only for a trial plan', () => {
+    const { rerender } = render(
+      <PlanRow plan={makePlan({ isTrial: true, trialDurationDays: 90 })} {...baseProps} />,
+    );
+    expect(screen.getByText('adminPlans.trialBadge')).toBeInTheDocument();
+    rerender(<PlanRow plan={makePlan()} {...baseProps} />);
+    expect(screen.queryByText('adminPlans.trialBadge')).not.toBeInTheDocument();
+  });
+
   it('shows the default badge and hides the set-default button for the default plan', () => {
     render(<PlanRow plan={makePlan({ isDefault: true })} {...baseProps} />);
     expect(screen.getByText('adminPlans.signupPlanBadge')).toBeInTheDocument();

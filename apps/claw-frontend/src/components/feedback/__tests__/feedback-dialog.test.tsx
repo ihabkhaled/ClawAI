@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import { useForm } from 'react-hook-form';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { FeedbackDialog } from '@/components/feedback/feedback-dialog';
+import { useAuthStore } from '@/stores/auth.store';
 
 const submit = vi.fn();
 
@@ -43,6 +44,12 @@ vi.mock('@/lib/markdown/markdown-renderer', () => ({
 }));
 
 describe('FeedbackDialog', () => {
+  // The signed-in dialog is the guarded, member variant. The signed-out variant
+  // has its own suite (feedback-public-dialog.test.tsx).
+  beforeEach(() => {
+    useAuthStore.setState({ isAuthenticated: true, accessToken: 't', refreshToken: 'r' });
+  });
+
   // Radix already renders the dialog close; nothing inside the form may add a
   // second one, which is what made the feedback surfaces show two X glyphs.
   it('offers exactly one close control', () => {

@@ -492,7 +492,8 @@ export const ja: TranslationDictionary = {
       dailyMessagesBody:
         'ご利用のプランでは1日に送信できるメッセージ数が決まっています。UTCの深夜にリセットされます。今すぐ上位プランに変更することもできます。',
       trialExpiredTitle: '無料トライアルが終了しました',
-      trialExpiredBody: '無料プランの期間は30日です。続きから再開するにはプランをお選びください。',
+      trialExpiredBody:
+        '無料プランは期間限定のトライアルです。続きから再開するには、プランをお選びください。',
       featureDisabledTitle: 'ご利用のプランには含まれていません',
       featureDisabledBody: 'このメッセージには、現在のプランに含まれていない機能が必要でした。',
       upgradeCta: 'プランを見る',
@@ -802,6 +803,8 @@ export const ja: TranslationDictionary = {
     videoTakesMinutes: '動画の生成には数分かかることがあります。生成中もチャットを続けられます。',
     videoLoadFailed: '動画を読み込めませんでした',
     videoLoadFailedHint: 'ページを再読み込みしてもう一度お試しください。',
+    videoFailureSourceImageInvalid:
+      'この画像は使用できませんでした。ご自身の画像で、10 MB未満のJPEG、PNG、またはWebPを使用してください。',
     imageStage: {
       queued: '画像キューで待機中',
       connecting: '画像ランタイムに接続中',
@@ -1636,6 +1639,11 @@ export const ja: TranslationDictionary = {
       superAdminImmutable: 'スーパー管理者アカウントを変更できるのはスーパー管理者だけです。',
       superAdminSelfLocked: 'スーパー管理者は自分のアカウントにこの変更を適用できません。',
       superAdminRequired: 'この操作を実行できるのはスーパー管理者だけです。',
+      planTrialNotFound: 'このユーザーは無料トライアルを利用したことがありません。',
+      planTrialSuperseded:
+        'このユーザーはすでに無料トライアル中ではありません。代わりに、日数を指定して無料プランに設定してください。',
+      planGrantDurationInvalid: '1〜3650の整数の日数、または1〜60の整数の月数を入力してください。',
+      planGrantReasonRequired: '理由は必須です。',
     },
     title: '管理者',
     description: 'ユーザーとシステム設定を管理する',
@@ -1750,6 +1758,21 @@ export const ja: TranslationDictionary = {
     assignPlanReasonRequired: '理由の入力が必要です。',
     assignPlanCancel: 'キャンセル',
     assignPlanConfirm: 'プランを付与',
+    assignPlanDurationDaysLabel: '期間（日数）',
+    assignPlanDurationDaysInvalid: '1〜3650の整数で日数を入力してください。',
+    trialActionsHeading: '無料トライアルの操作',
+    addTrialDaysLabel: '追加する日数',
+    addTrialDaysHelp:
+      '現在の終了日に加算されます。トライアルがすでに終了している場合は今日から数えます。',
+    addTrialDaysConfirm: 'トライアル日数を追加',
+    addTrialDaysSuccess: 'トライアルを{days}日追加しました。残り{remaining}日です。',
+    addTrialDaysFailed: 'トライアル日数を追加できませんでした。',
+    setFreeLabel: '{plan}プランの日数',
+    setFreeHelp:
+      'すでにトライアルを使い切っている場合や有料プランの場合でも、指定した日数だけユーザーをこのプランに切り替えます。',
+    setFreeConfirm: 'この日数で{plan}に設定',
+    setFreeSuccess: 'ユーザーを{days}日間、無料プランに設定しました。',
+    setFreeFailed: 'ユーザーを無料プランに設定できませんでした。',
     platformHealthLinkDesc: 'システムステータスはダッシュボードで監視されます',
     platformHealthLinkBody:
       'サービスの健全性、遅延、稼働時間のメトリクスはダッシュボードに表示されます。リアルタイム表示するにはそれを開いてください。',
@@ -4254,8 +4277,8 @@ export const ja: TranslationDictionary = {
     },
   },
   trialStatus: {
-    activeTitle: '無料トライアルは有効です',
-    activeBody: '残り {days} 日です。トライアルは {date} に終了します。',
+    activeTitle: '無料トライアル中です：残り{days}日',
+    activeBody: 'トライアルは{date}に終了します。',
     expiredTitle: '無料トライアルは終了しました',
     expiredBody: 'AI 機能を引き続き利用するには有料プランを選択してください。',
     upgrade: '有料プランを見る',
@@ -4324,6 +4347,7 @@ export const ja: TranslationDictionary = {
     deactivateFailed: 'プランを非アクティブ化できませんでした。',
     setDefaultSucceeded: 'サインアップ プランを更新しました。',
     signupPlanBadge: '新規登録プラン',
+    trialBadge: 'トライアル：{days}日間',
     popularBadge: '人気No.1',
     setSignupPlan: '新規登録プランに設定',
     setMostPopular: '人気No.1に設定',
@@ -4376,8 +4400,12 @@ export const ja: TranslationDictionary = {
       maxMemoryItems: '最大メモリ項目数',
       maxVideoSeconds: '動画の最大長（秒）',
       isPublic: '上場',
-      isTrial: '30日間トライアル',
-      trialHelp: 'トライアル期間は30日間で、各アカウントにつき1回のみ利用できます。',
+      isTrial: '無料トライアルのプラン',
+      trialHelp: 'トライアルはアカウントごとに1回だけ利用できます。期間は下で設定してください。',
+      trialDays: 'トライアル期間（日数）',
+      trialDaysHelp:
+        '1〜3650の整数を指定できます。新しいトライアルにはここで保存した値が使われ、すでに進行中のトライアルは終了日が変わりません。',
+      trialDaysInvalid: '1〜3650の整数で日数を入力してください。',
       featureGates: 'フィーチャーゲート',
       orchestrationLabs: 'オーケストレーション ラボ',
       orchestrationLabsHint:
@@ -4502,6 +4530,8 @@ export const ja: TranslationDictionary = {
     featuresIncluded: '含まれる機能',
     noPlanTitle: 'プランが割り当てられていません',
     noPlanDescription: 'あなたはデフォルトのアクセス層にいます。',
+    trialDaysLeft: '無料トライアル：残り{days}日',
+    trialEnded: '無料トライアルは終了しました',
     modelPrimary: 'プライマリ',
     modelCompare: '比較',
     modelOverride: '1 日あたりの {limit} トークンの制限',
@@ -5123,6 +5153,7 @@ export const ja: TranslationDictionary = {
       },
       savePercent: '{percent}% お得',
       mostPopular: '最も人気のある',
+      trialLength: '無料トライアル：{days}日間',
       dailyTokens: '日当',
       monthlyTokens: '月額手当',
       ctaFree: '無料で始める',
@@ -6561,8 +6592,6 @@ export const ja: TranslationDictionary = {
     launcher: {
       ariaLabel: 'フィードバックを送る',
       tooltip: '不具合の報告やご意見を送信',
-      hideAriaLabel: 'フィードバックボタンを端に隠す',
-      showAriaLabel: 'フィードバックボタンを表示',
     },
     dialog: {
       typeLabel: '種類',
@@ -6575,6 +6604,10 @@ export const ja: TranslationDictionary = {
       cancel: 'キャンセル',
       submit: '送信',
       submitting: '送信中…',
+      nameLabel: 'お名前',
+      emailLabel: 'メールアドレス',
+      publicDescription:
+        'ご意見をお聞かせください。すべてのメッセージに目を通し、メールで返信することがあります。',
     },
     editor: {
       bold: '太字',
@@ -6605,6 +6638,10 @@ export const ja: TranslationDictionary = {
       titleRequired: 'タイトルは必須です',
       contentRequired: '説明は必須です',
       submitFailed: 'フィードバックを送信できませんでした',
+      nameRequired: 'お名前は必須です',
+      emailInvalid: '有効なメールアドレスを入力してください',
+      rateLimited: '送信が多すぎます。しばらくしてからもう一度お試しください。',
+      checkFields: '入力内容を確認してもう一度お試しください',
       tooManyFiles: 'ファイルが多すぎます',
       fileTooLarge: 'このファイルは大きすぎます',
       totalTooLarge: 'ファイルの合計サイズが大きすぎます',
@@ -6682,5 +6719,6 @@ export const ja: TranslationDictionary = {
     dragDropOrClickToUpload: '画像をここにドラッグ、またはクリックして選択',
     removeAttachment: '添付を削除',
     submittedWithTicket: 'フィードバックを送信しました — チケット {ticketNumber}',
+    submittedPublic: 'ありがとうございます — フィードバックを送信しました',
   },
 };

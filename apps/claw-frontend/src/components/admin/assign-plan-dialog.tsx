@@ -13,12 +13,15 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { PlanGrantDurationUnit } from '@/enums/plan-grant-duration-unit.enum';
 import { useAssignPlanForm } from '@/hooks/admin/use-assign-plan-form';
 import type { AssignPlanDialogProps } from '@/types/component.types';
 
 export function AssignPlanDialog(props: AssignPlanDialogProps): ReactElement {
-  const { open, user, targetPlanId, isSaving, onClose, onSave, t } = props;
-  const { form, submit } = useAssignPlanForm(user, targetPlanId, onSave);
+  const { open, user, targetPlanId, isSaving, onClose, onSave, isTrialPlan = false, t } = props;
+  const unit = isTrialPlan ? PlanGrantDurationUnit.DAYS : PlanGrantDurationUnit.MONTHS;
+  const isDays = unit === PlanGrantDurationUnit.DAYS;
+  const { form, submit } = useAssignPlanForm(user, targetPlanId, onSave, unit);
   const { errors, isValid } = form.formState;
 
   if (!user || !targetPlanId) {
@@ -36,19 +39,25 @@ export function AssignPlanDialog(props: AssignPlanDialogProps): ReactElement {
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="assign-plan-duration" className="text-sm leading-none font-medium">
-              {t('admin.assignPlanDurationLabel')}
+              {t(isDays ? 'admin.assignPlanDurationDaysLabel' : 'admin.assignPlanDurationLabel')}
             </label>
             <Input
               id="assign-plan-duration"
               type="number"
               min={1}
-              max={60}
+              max={isDays ? 3650 : 60}
               autoComplete="off"
               error={Boolean(errors.durationMonths)}
               {...form.register('durationMonths', { valueAsNumber: true })}
             />
             {errors.durationMonths ? (
-              <p className="text-destructive text-xs">{t('admin.assignPlanDurationInvalid')}</p>
+              <p className="text-destructive text-xs">
+                {t(
+                  isDays
+                    ? 'admin.assignPlanDurationDaysInvalid'
+                    : 'admin.assignPlanDurationInvalid',
+                )}
+              </p>
             ) : null}
           </div>
 

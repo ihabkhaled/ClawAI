@@ -4,7 +4,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { PlanGrantDurationUnit } from '@/enums/plan-grant-duration-unit.enum';
 import {
+  adminPlanGrantDaysSchema,
   adminPlanGrantSchema,
   type AdminPlanGrantFormValues,
 } from '@/lib/validation/admin-plan-grant.schema';
@@ -15,10 +17,19 @@ const EMPTY_VALUES: AdminPlanGrantFormValues = { planId: '', durationMonths: 1, 
 export function useAssignPlanForm(
   user: AdminUser | null,
   targetPlanId: string | null,
-  onSave: (userId: string, planId: string, durationMonths: number, grantReason: string) => void,
+  onSave: (
+    userId: string,
+    planId: string,
+    duration: number,
+    grantReason: string,
+    unit: PlanGrantDurationUnit,
+  ) => void,
+  unit: PlanGrantDurationUnit = PlanGrantDurationUnit.MONTHS,
 ): UseAssignPlanFormReturn {
   const form = useForm<AdminPlanGrantFormValues>({
-    resolver: zodResolver(adminPlanGrantSchema),
+    resolver: zodResolver(
+      unit === PlanGrantDurationUnit.DAYS ? adminPlanGrantDaysSchema : adminPlanGrantSchema,
+    ),
     mode: 'onChange',
     defaultValues: EMPTY_VALUES,
   });
@@ -29,7 +40,7 @@ export function useAssignPlanForm(
         ? { planId: targetPlanId, durationMonths: 1, grantReason: '' }
         : EMPTY_VALUES,
     );
-  }, [form, user, targetPlanId]);
+  }, [form, user, targetPlanId, unit]);
 
   return {
     form,
@@ -37,7 +48,7 @@ export function useAssignPlanForm(
       if (!user) {
         return;
       }
-      onSave(user.id, values.planId, values.durationMonths, values.grantReason.trim());
+      onSave(user.id, values.planId, values.durationMonths, values.grantReason.trim(), unit);
     }),
   };
 }

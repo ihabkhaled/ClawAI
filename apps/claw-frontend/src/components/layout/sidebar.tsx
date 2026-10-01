@@ -11,6 +11,7 @@ import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 import { GpuBadge } from './gpu-badge';
+import { SidebarFeedbackItem } from './sidebar-feedback-item';
 import { SidebarNavItem } from './sidebar-nav-item';
 
 export function Sidebar() {
@@ -43,7 +44,7 @@ export function Sidebar() {
           'bg-card duration-normal ease-expo-out fixed z-50 flex flex-col transition-transform',
           'shadow-floating inset-x-0 top-auto bottom-0 h-[85dvh] rounded-t-2xl border-t',
           'nav-rail:visible nav-rail:pointer-events-auto nav-rail:static nav-rail:inset-auto nav-rail:h-full nav-rail:w-[var(--sidebar-width)] nav-rail:translate-y-0 nav-rail:rounded-none nav-rail:border-e nav-rail:border-t-0 nav-rail:shadow-none',
-          isOpen ? 'visible translate-y-0' : 'invisible pointer-events-none translate-y-full',
+          isOpen ? 'visible translate-y-0' : 'pointer-events-none invisible translate-y-full',
         )}
       >
         <div className="flex h-16 items-center justify-between gap-2 px-4 sm:px-6">
@@ -76,6 +77,7 @@ export function Sidebar() {
           {items.map((item) => (
             <SidebarNavItem key={item.href} item={item} />
           ))}
+          <SidebarFeedbackItem />
         </nav>
         <Separator />
         <div className="safe-bottom safe-bottom-base-nav flex flex-wrap items-center justify-between gap-2 px-4 pt-3">

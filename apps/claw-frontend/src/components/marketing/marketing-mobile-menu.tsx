@@ -3,13 +3,17 @@
 import Link from 'next/link';
 
 import { CurrencySwitcher } from '@/components/common/currency-switcher';
+import { MarketingAuthActions } from '@/components/marketing/marketing-auth-actions';
 import { MarketingLocaleSwitcher } from '@/components/marketing/marketing-locale-switcher';
 import { MarketingThemeToggle } from '@/components/marketing/marketing-theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { MARKETING_GITHUB_URL, ROUTES } from '@/constants';
+import { MARKETING_GITHUB_URL } from '@/constants';
+import { MarketingAuthActionsVariant } from '@/enums';
 import { Direction } from '@/enums/direction.enum';
 import { useTranslation } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
+import { useFeedbackDialogStore } from '@/stores/feedback-dialog.store';
 import type { MarketingMobileMenuProps } from '@/types';
 
 export function MarketingMobileMenu({
@@ -19,6 +23,7 @@ export function MarketingMobileMenu({
   onNavigate,
 }: MarketingMobileMenuProps): React.ReactElement {
   const { t, dir } = useTranslation();
+  const openFeedback = useFeedbackDialogStore((state) => state.openFeedback);
   const side = dir === Direction.RTL ? 'left' : 'right';
   const navItemClass =
     'text-foreground flex min-h-11 w-full items-center rounded-lg px-3 py-2 text-base font-medium transition-colors hover:bg-accent active:bg-accent';
@@ -45,6 +50,18 @@ export function MarketingMobileMenu({
           >
             {t('marketing.header.github')}
           </a>
+          <Button
+            type="button"
+            variant="unstyled"
+            size="unstyled"
+            onClick={() => {
+              onNavigate();
+              openFeedback();
+            }}
+            className={cn(navItemClass, 'justify-start text-start')}
+          >
+            {t('feedback.launcher.ariaLabel')}
+          </Button>
         </nav>
 
         <div className="border-border mt-auto flex flex-col gap-3 border-t pt-4">
@@ -56,12 +73,10 @@ export function MarketingMobileMenu({
             <MarketingLocaleSwitcher />
             <MarketingThemeToggle />
           </div>
-          <Button variant="outline" asChild onClick={onNavigate}>
-            <Link href={ROUTES.LOGIN}>{t('marketing.header.login')}</Link>
-          </Button>
-          <Button asChild onClick={onNavigate}>
-            <Link href={ROUTES.REGISTER}>{t('marketing.header.createAccount')}</Link>
-          </Button>
+          <MarketingAuthActions
+            variant={MarketingAuthActionsVariant.MOBILE}
+            onNavigate={onNavigate}
+          />
         </div>
       </SheetContent>
     </Sheet>

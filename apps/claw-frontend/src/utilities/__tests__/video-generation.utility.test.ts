@@ -9,6 +9,7 @@ import {
   isInProgressVideoStatus,
   isTerminalVideoStatus,
   isVideoOutputModel,
+  resolveVideoFailureMessage,
   toLatestVideoGeneration,
 } from '@/utilities/video-generation.utility';
 
@@ -95,5 +96,26 @@ describe('isVideoOutputModel', () => {
     ['GROK', 'veo-3.1', false],
   ])('%s / %s -> %s', (provider, model, expected) => {
     expect(isVideoOutputModel(provider, model)).toBe(expected);
+  });
+});
+
+describe('resolveVideoFailureMessage', () => {
+  const t = (key: string): string => `translated:${key}`;
+
+  it('translates a known failure code instead of showing the stored English', () => {
+    expect(
+      resolveVideoFailureMessage(
+        { errorCode: 'VIDEO_SOURCE_IMAGE_INVALID', errorMessage: 'English' },
+        t,
+      ),
+    ).toBe('translated:chat.videoFailureSourceImageInvalid');
+  });
+
+  it('falls back to the stored message for an unmapped code, and to null for none', () => {
+    expect(
+      resolveVideoFailureMessage({ errorCode: 'VIDEO_TOO_LARGE', errorMessage: 'Stored' }, t),
+    ).toBe('Stored');
+    expect(resolveVideoFailureMessage({ errorCode: null, errorMessage: null }, t)).toBeNull();
+    expect(resolveVideoFailureMessage(undefined, t)).toBeNull();
   });
 });

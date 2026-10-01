@@ -12,7 +12,7 @@ export enum ChatLimitKind {
   MonthlyTokens = 'MONTHLY_TOKENS',
   DailyChats = 'DAILY_CHATS',
   DailyMessages = 'DAILY_MESSAGES',
-  /** The Free plan is a 30-day trial; day 31 is a wall, not a quota. */
+  /** The Free plan is a timed trial (length set per plan); its end is a wall, not a quota. */
   TrialExpired = 'TRIAL_EXPIRED',
   /** The plan does not include the feature this message needed. */
   FeatureDisabled = 'FEATURE_DISABLED',

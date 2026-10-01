@@ -17,6 +17,18 @@ import { useAdminUserSubscription } from '@/hooks/admin/use-admin-user-subscript
 import type { AdminUser } from '@/types/audit.types';
 
 vi.mock('@/hooks/admin/use-admin-user-subscription');
+vi.mock('@/hooks/admin/use-user-trial-actions', () => {
+  const form = {
+    days: '30',
+    reason: '',
+    errorKey: null,
+    isPending: false,
+    setDays: vi.fn(),
+    setReason: vi.fn(),
+    submit: vi.fn(),
+  };
+  return { useUserTrialActions: () => ({ freePlanName: 'Free', addDays: form, setFree: form }) };
+});
 vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({ t: (key: string) => key, locale: 'en', dir: 'ltr' }),
 }));

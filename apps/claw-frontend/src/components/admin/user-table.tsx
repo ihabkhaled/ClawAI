@@ -353,10 +353,11 @@ export function UserTable({
         open={assignPlanUser !== null}
         user={assignPlanUser}
         targetPlanId={assignPlanTargetId}
+        isTrialPlan={activePlans.some((plan) => plan.id === assignPlanTargetId && plan.isTrial)}
         isSaving={isAssignPlanPending}
         onClose={closeAssignPlan}
-        onSave={(userId, planId, durationMonths, grantReason) => {
-          onAssignPlan(userId, planId, durationMonths, grantReason);
+        onSave={(userId, planId, duration, grantReason, unit) => {
+          onAssignPlan(userId, planId, duration, grantReason, unit);
           closeAssignPlan();
         }}
         t={t}

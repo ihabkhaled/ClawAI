@@ -40,6 +40,7 @@ import type { CopyButtonVariant } from '@/enums/copy-button-variant.enum';
 import type { EmptyStateVariant } from '@/enums/empty-state-variant.enum';
 import type { LoadingStateVariant } from '@/enums/loading-state.enum';
 import type { Locale } from '@/enums/locale.enum';
+import type { PlanGrantDurationUnit } from '@/enums/plan-grant-duration-unit.enum';
 import type { ResearchProviderKind } from '@/enums/research-provider-kind.enum';
 import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
 import type { WorkspaceConnectorStatus } from '@/enums/workspace-connector-status.enum';
@@ -588,8 +589,9 @@ export type UserTableProps = {
   onAssignPlan: (
     userId: string,
     planId: string,
-    durationMonths: number,
+    duration: number,
     grantReason: string,
+    unit: PlanGrantDurationUnit,
   ) => void;
   onUpdateUser: (userId: string, data: AdminUserUpdateRequest) => void;
   onTemporaryPassword: (userId: string) => void;
@@ -1661,8 +1663,9 @@ export type UsersContentProps = {
   onAssignPlan: (
     userId: string,
     planId: string,
-    durationMonths: number,
+    duration: number,
     grantReason: string,
+    unit: PlanGrantDurationUnit,
   ) => void;
   onUpdateUser: (userId: string, data: AdminUserUpdateRequest) => void;
   onTemporaryPassword: (userId: string) => void;
@@ -2863,7 +2866,15 @@ export type AssignPlanDialogProps = {
   targetPlanId: string | null;
   isSaving: boolean;
   onClose: () => void;
-  onSave: (userId: string, planId: string, durationMonths: number, grantReason: string) => void;
+  onSave: (
+    userId: string,
+    planId: string,
+    duration: number,
+    grantReason: string,
+    unit: PlanGrantDurationUnit,
+  ) => void;
+  /** A trial plan is granted in days; any other plan in months. */
+  isTrialPlan?: boolean;
   t: TranslateFunction;
 };
 

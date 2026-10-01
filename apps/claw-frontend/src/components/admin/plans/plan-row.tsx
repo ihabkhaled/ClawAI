@@ -49,6 +49,11 @@ export function PlanRow({
           >
             {plan.isActive ? t('adminPlans.statusActive') : t('adminPlans.statusInactive')}
           </span>
+          {plan.isTrial && plan.trialDurationDays !== null ? (
+            <span className="border-border bg-muted text-muted-foreground rounded-full border px-2 py-0.5 text-xs">
+              {t('adminPlans.trialBadge', { days: plan.trialDurationDays })}
+            </span>
+          ) : null}
           {plan.isPublic ? null : (
             <span className="border-border bg-muted text-muted-foreground rounded-full border px-2 py-0.5 text-xs">
               {t('adminPlans.privateBadge')}

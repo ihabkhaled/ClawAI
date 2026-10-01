@@ -489,7 +489,8 @@ export const fa: TranslationDictionary = {
       dailyMessagesBody:
         'طرح شما تعداد مشخصی پیام در روز اجازه می‌دهد. نیمه‌شب به وقت UTC بازنشانی می‌شود، یا هم‌اکنون به طرح بزرگ‌تری بروید.',
       trialExpiredTitle: 'دوره آزمایشی رایگان شما پایان یافت',
-      trialExpiredBody: 'طرح رایگان ۳۰ روز است. برای ادامه از همان‌جا، یک طرح انتخاب کنید.',
+      trialExpiredBody:
+        'طرح رایگان یک دوره آزمایشی محدود است. برای ادامه از همان جایی که مانده بودید، یک طرح انتخاب کنید.',
       featureDisabledTitle: 'طرح شما شامل این مورد نیست',
       featureDisabledBody: 'این پیام به قابلیتی نیاز داشت که طرح فعلی شما پوشش نمی‌دهد.',
       upgradeCta: 'دیدن طرح‌ها',
@@ -800,6 +801,8 @@ export const fa: TranslationDictionary = {
       'ساخت ویدیو ممکن است چند دقیقه طول بکشد. می‌توانید در همین حال گفتگو را ادامه دهید.',
     videoLoadFailed: 'بارگیری ویدیو ممکن نشد',
     videoLoadFailedHint: 'برای تلاش دوباره صفحه را بازآوری کنید.',
+    videoFailureSourceImageInvalid:
+      'استفاده از تصویر ممکن نشد: تصویری با فرمت JPEG، PNG یا WebP و کمتر از ۱۰ مگابایت استفاده کنید که متعلق به خودتان باشد.',
     imageStage: {
       queued: 'در صف تولید تصویر',
       connecting: 'در حال اتصال به موتور تصویر',
@@ -1633,6 +1636,12 @@ export const fa: TranslationDictionary = {
       superAdminImmutable: 'تنها سوپر ادمین می‌تواند حساب سوپر ادمین را تغییر دهد.',
       superAdminSelfLocked: 'سوپر ادمین نمی‌تواند این تغییر را روی حساب خودش اعمال کند.',
       superAdminRequired: 'تنها سوپر ادمین می‌تواند این کار را انجام دهد.',
+      planTrialNotFound: 'این کاربر هرگز دوره آزمایشی رایگان نداشته است.',
+      planTrialSuperseded:
+        'این کاربر دیگر در دوره آزمایشی رایگان خود نیست. به‌جای آن، او را برای تعدادی روز در طرح رایگان قرار دهید.',
+      planGrantDurationInvalid:
+        'یک عدد صحیح برای روز بین ۱ و ۳۶۵۰، یا برای ماه بین ۱ و ۶۰ وارد کنید.',
+      planGrantReasonRequired: 'ذکر دلیل الزامی است.',
     },
     title: 'مدیر',
     description: 'مدیریت کاربران و تنظیمات سیستم',
@@ -1746,6 +1755,21 @@ export const fa: TranslationDictionary = {
     assignPlanReasonRequired: 'وارد کردن دلیل الزامی است.',
     assignPlanCancel: 'لغو',
     assignPlanConfirm: 'اعطای طرح',
+    assignPlanDurationDaysLabel: 'مدت (روز)',
+    assignPlanDurationDaysInvalid: 'یک عدد صحیح برای روز، بین ۱ و ۳۶۵۰ وارد کنید.',
+    trialActionsHeading: 'اقدامات دوره آزمایشی رایگان',
+    addTrialDaysLabel: 'روزهای افزوده‌شونده',
+    addTrialDaysHelp:
+      'به تاریخ پایان فعلی اضافه می‌شود، یا اگر دوره آزمایشی تمام شده باشد از امروز محاسبه می‌شود.',
+    addTrialDaysConfirm: 'افزودن روزهای آزمایشی',
+    addTrialDaysSuccess: '{days} روز آزمایشی اضافه شد. {remaining} روز باقی مانده است.',
+    addTrialDaysFailed: 'افزودن روزهای آزمایشی ممکن نشد.',
+    setFreeLabel: 'روزها در طرح {plan}',
+    setFreeHelp:
+      'کاربر را برای تعداد روز مشخص‌شده به این طرح منتقل می‌کند، حتی اگر دوره آزمایشی خود را استفاده کرده باشد یا در طرح پولی باشد.',
+    setFreeConfirm: 'تنظیم {plan} برای این تعداد روز',
+    setFreeSuccess: 'کاربر برای {days} روز در طرح رایگان قرار گرفت.',
+    setFreeFailed: 'قرار دادن کاربر در طرح رایگان ممکن نشد.',
     platformHealthLinkDesc: 'وضعیت سیستم بر روی داشبورد نظارت می شود',
     platformHealthLinkBody:
       'معیارهای سلامت، تأخیر و زمان به‌روزرسانی سرویس در داشبورد وجود دارد.آن را برای نمایش در زمان واقعی باز کنید.',
@@ -4242,8 +4266,8 @@ export const fa: TranslationDictionary = {
     },
   },
   trialStatus: {
-    activeTitle: 'دوره آزمایشی رایگان شما فعال است',
-    activeBody: '{days} روز باقی مانده است. دوره آزمایشی شما در {date} پایان می‌یابد.',
+    activeTitle: 'شما در دوره آزمایشی رایگان هستید: {days} روز باقی مانده',
+    activeBody: 'دوره آزمایشی شما در {date} به پایان می‌رسد.',
     expiredTitle: 'دوره آزمایشی رایگان شما پایان یافته است',
     expiredBody: 'برای ادامه استفاده از قابلیت‌های هوش مصنوعی یک طرح پولی انتخاب کنید.',
     upgrade: 'مشاهده طرح‌های پولی',
@@ -4312,6 +4336,7 @@ export const fa: TranslationDictionary = {
     deactivateFailed: 'نمی توان طرح را غیرفعال کرد.',
     setDefaultSucceeded: 'طرح ثبت‌نام به‌روزرسانی شد.',
     signupPlanBadge: 'طرح ثبت‌نام',
+    trialBadge: 'دوره آزمایشی: {days} روز',
     popularBadge: 'محبوب‌ترین',
     setSignupPlan: 'تعیین به‌عنوان طرح ثبت‌نام',
     setMostPopular: 'تعیین به‌عنوان محبوب‌ترین',
@@ -4364,8 +4389,13 @@ export const fa: TranslationDictionary = {
       maxMemoryItems: 'حداکثر موارد حافظه',
       maxVideoSeconds: 'حداکثر طول ویدیو (ثانیه)',
       isPublic: 'به صورت عمومی فهرست شده است',
-      isTrial: 'دوره آزمایشی ۳۰ روزه',
-      trialHelp: 'دوره آزمایشی ۳۰ روز است و هر حساب فقط یک‌بار می‌تواند از آن استفاده کند.',
+      isTrial: 'طرح با دوره آزمایشی رایگان',
+      trialHelp:
+        'دسترسی آزمایشی برای هر حساب فقط یک بار قابل استفاده است. مدت آن را در پایین تعیین کنید.',
+      trialDays: 'مدت دوره آزمایشی (روز)',
+      trialDaysHelp:
+        'هر عدد صحیح از ۱ تا ۳۶۵۰. دوره‌های آزمایشی جدید از مقدار ذخیره‌شده در اینجا استفاده می‌کنند و دوره‌های در حال اجرا تاریخ پایان خود را حفظ می‌کنند.',
+      trialDaysInvalid: 'یک عدد صحیح برای روز، بین ۱ و ۳۶۵۰ وارد کنید.',
       featureGates: 'دروازه های ویژه',
       orchestrationLabs: 'آزمایشگاه‌های ارکستراسیون',
       orchestrationLabsHint:
@@ -4490,6 +4520,8 @@ export const fa: TranslationDictionary = {
     featuresIncluded: 'ویژگی های گنجانده شده است',
     noPlanTitle: 'هیچ طرحی تعیین نشده است',
     noPlanDescription: 'شما در سطح دسترسی پیش فرض هستید.',
+    trialDaysLeft: 'دوره آزمایشی رایگان: {days} روز باقی مانده',
+    trialEnded: 'دوره آزمایشی رایگان شما به پایان رسیده است',
     modelPrimary: 'اولیه',
     modelCompare: 'مقایسه کنید',
     modelOverride: 'محدود کردن رمزهای {limit} در روز',
@@ -5110,6 +5142,7 @@ export const fa: TranslationDictionary = {
       },
       savePercent: '{percent}٪ صرفه‌جویی',
       mostPopular: 'محبوب ترین',
+      trialLength: 'دوره آزمایشی رایگان: {days} روز',
       dailyTokens: 'کمک هزینه روزانه',
       monthlyTokens: 'کمک هزینه ماهانه',
       ctaFree: 'رایگان شروع کنید',
@@ -6532,8 +6565,6 @@ export const fa: TranslationDictionary = {
     launcher: {
       ariaLabel: 'ارسال بازخورد',
       tooltip: 'گزارش خطا یا ارسال بازخورد',
-      hideAriaLabel: 'پنهان‌کردن دکمهٔ بازخورد در لبهٔ صفحه',
-      showAriaLabel: 'نمایش دکمهٔ بازخورد',
     },
     dialog: {
       typeLabel: 'نوع',
@@ -6546,6 +6577,10 @@ export const fa: TranslationDictionary = {
       cancel: 'انصراف',
       submit: 'ارسال بازخورد',
       submitting: 'در حال ارسال…',
+      nameLabel: 'نام شما',
+      emailLabel: 'ایمیل شما',
+      publicDescription:
+        'نظرتان را به ما بگویید. ما هر پیام را می‌خوانیم و ممکن است با ایمیل پاسخ دهیم.',
     },
     editor: {
       bold: 'درشت',
@@ -6576,6 +6611,10 @@ export const fa: TranslationDictionary = {
       titleRequired: 'عنوان الزامی است',
       contentRequired: 'توضیحات الزامی است',
       submitFailed: 'ارسال بازخورد ممکن نشد',
+      nameRequired: 'نام شما الزامی است',
+      emailInvalid: 'یک نشانی ایمیل معتبر وارد کنید',
+      rateLimited: 'پیام‌های زیادی ارسال شده است. لطفاً بعداً دوباره تلاش کنید.',
+      checkFields: 'لطفاً اطلاعات خود را بررسی کنید و دوباره تلاش کنید',
       tooManyFiles: 'تعداد فایل‌ها زیاد است',
       fileTooLarge: 'این فایل بسیار بزرگ است',
       totalTooLarge: 'مجموع حجم فایل‌ها بسیار زیاد است',
@@ -6653,5 +6692,6 @@ export const fa: TranslationDictionary = {
     dragDropOrClickToUpload: 'تصاویر را اینجا بکشید یا برای انتخاب کلیک کنید',
     removeAttachment: 'حذف پیوست',
     submittedWithTicket: 'بازخورد ارسال شد — تیکت {ticketNumber}',
+    submittedPublic: 'سپاس — بازخورد شما ارسال شد',
   },
 };

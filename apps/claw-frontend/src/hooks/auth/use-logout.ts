@@ -6,7 +6,9 @@ import { useTranslation } from '@/lib/i18n';
 import { authService } from '@/services/auth/auth.service';
 import { logger, showToast } from '@/utilities';
 
-export function useLogout() {
+// `redirectTo` null keeps the visitor on the current page (the public marketing
+// pages); the default sends them to the login screen as the portal always has.
+export function useLogout(redirectTo: string | null = ROUTES.LOGIN) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
@@ -21,7 +23,9 @@ export function useLogout() {
     },
     onSettled: () => {
       queryClient.clear();
-      router.push(ROUTES.LOGIN);
+      if (redirectTo !== null) {
+        router.push(redirectTo);
+      }
     },
   });
 

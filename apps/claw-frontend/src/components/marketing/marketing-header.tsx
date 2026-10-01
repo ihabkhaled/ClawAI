@@ -5,17 +5,21 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { CurrencySwitcher } from '@/components/common/currency-switcher';
+import { MarketingAuthActions } from '@/components/marketing/marketing-auth-actions';
 import { MarketingLocaleSwitcher } from '@/components/marketing/marketing-locale-switcher';
 import { MarketingMobileMenu } from '@/components/marketing/marketing-mobile-menu';
 import { MarketingThemeToggle } from '@/components/marketing/marketing-theme-toggle';
 import { Button } from '@/components/ui/button';
-import { MARKETING_GITHUB_URL, MARKETING_NAV_LINKS, ROUTES } from '@/constants';
+import { MARKETING_GITHUB_URL, MARKETING_NAV_LINKS } from '@/constants';
+import { MarketingAuthActionsVariant } from '@/enums';
 import { useMarketingMobileMenu } from '@/hooks/marketing/use-marketing-mobile-menu';
 import { useTranslation } from '@/lib/i18n';
+import { useFeedbackDialogStore } from '@/stores/feedback-dialog.store';
 
 export function MarketingHeader(): React.ReactElement {
   const { t } = useTranslation();
   const { isOpen, setIsOpen, close } = useMarketingMobileMenu();
+  const openFeedback = useFeedbackDialogStore((state) => state.openFeedback);
 
   return (
     <header
@@ -51,15 +55,13 @@ export function MarketingHeader(): React.ReactElement {
               {t('marketing.header.github')}
             </a>
           </Button>
+          <Button variant="ghost" size="sm" onClick={openFeedback}>
+            {t('feedback.launcher.ariaLabel')}
+          </Button>
           <CurrencySwitcher />
           <MarketingLocaleSwitcher />
           <MarketingThemeToggle />
-          <Button variant="ghost" size="sm" asChild>
-            <Link href={ROUTES.LOGIN}>{t('marketing.header.login')}</Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link href={ROUTES.REGISTER}>{t('marketing.header.createAccount')}</Link>
-          </Button>
+          <MarketingAuthActions variant={MarketingAuthActionsVariant.DESKTOP} />
         </div>
 
         {/* Below 1280px the whole cluster above collapses into the hamburger,

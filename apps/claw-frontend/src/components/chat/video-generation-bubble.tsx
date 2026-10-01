@@ -7,7 +7,11 @@ import { useAuthenticatedVideo } from '@/hooks/chat/use-authenticated-video';
 import { useVideoGenerationBubbleState } from '@/hooks/chat/use-video-generation-bubble-state';
 import { useTranslation } from '@/lib/i18n';
 import type { VideoGenerationBubbleProps } from '@/types';
-import { getVideoStatusLabelKey, isInProgressVideoStatus } from '@/utilities';
+import {
+  getVideoStatusLabelKey,
+  isInProgressVideoStatus,
+  resolveVideoFailureMessage,
+} from '@/utilities';
 
 export function VideoGenerationBubble({
   generationId,
@@ -42,7 +46,7 @@ export function VideoGenerationBubble({
       {status === VideoGenerationStatus.FAILED || status === VideoGenerationStatus.TIMED_OUT ? (
         <VideoErrorState
           status={t(getVideoStatusLabelKey(status))}
-          error={generation?.errorMessage}
+          error={resolveVideoFailureMessage(generation, t) ?? undefined}
           provider={generation?.provider}
           model={generation?.model}
           onRetry={handleRetry}

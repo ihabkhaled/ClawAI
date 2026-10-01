@@ -3,6 +3,8 @@ import { z } from 'zod';
 import {
   PAYG_CREDIT_PERCENT_BPS_MAX,
   PLAN_MAX_VIDEO_SECONDS_LIMIT,
+  PLAN_TRIAL_MAX_DAYS,
+  PLAN_TRIAL_MIN_DAYS,
 } from '@/constants/plan.constants';
 
 // Mirror of apps/claw-auth-service plan DTOs. Numeric inputs arrive as strings
@@ -24,6 +26,32 @@ const optionalNonNegativeInt = z.preprocess(
   z.coerce.number().int().min(0).optional(),
 );
 
+// Error text is a TRANSLATION KEY, not English: the form renders it through t().
+const TRIAL_DAYS_INVALID_KEY = 'adminPlans.form.trialDaysInvalid';
+
+function parseTrialDays(value: unknown): number | null | undefined {
+  if (value === null) {
+    return null;
+  }
+  const days = typeof value === 'string' && value.trim().length > 0 ? Number(value) : value;
+  if (
+    typeof days === 'number' &&
+    Number.isInteger(days) &&
+    days >= PLAN_TRIAL_MIN_DAYS &&
+    days <= PLAN_TRIAL_MAX_DAYS
+  ) {
+    return days;
+  }
+  return undefined;
+}
+
+// null on a plan that is not a trial; otherwise a whole number of days 1..3650.
+const trialDaysField = z
+  .custom<unknown>((value) => parseTrialDays(value) !== undefined, {
+    message: TRIAL_DAYS_INVALID_KEY,
+  })
+  .transform((value): number | null => parseTrialDays(value) ?? null);
+
 export const createPlanSchema = z.object({
   name: z
     .string()
@@ -41,7 +69,7 @@ export const createPlanSchema = z.object({
   displayOrder: optionalNonNegativeInt,
   isPublic: z.boolean().optional(),
   isTrial: z.boolean(),
-  trialDurationDays: z.union([z.literal(30), z.null()]),
+  trialDurationDays: trialDaysField,
   dailyTokenQuota: z.coerce.number().int().min(0, 'Daily token quota must be 0 or greater'),
   weeklyTokenQuota: optionalNonNegativeInt,
   monthlyTokenQuota: optionalNonNegativeInt,

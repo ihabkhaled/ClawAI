@@ -1,9 +1,5 @@
 import { FeedbackStatus, FeedbackType } from '@claw/shared-types';
 
-import {
-  FLOATING_ACTION_DESKTOP_BOTTOM,
-  FLOATING_ACTION_RAIL_SLOT_TWO,
-} from '@/constants/floating-action.constants';
 import { ScreenCaptureStatus } from '@/enums';
 
 export const FEEDBACK_TYPE_OPTIONS: readonly { value: FeedbackType; labelKey: string }[] = [
@@ -34,48 +30,6 @@ export const SCREEN_CAPTURE_FRAME_TIMEOUT_MS = 5000;
 
 export const FEEDBACK_ACCEPTED_IMAGE_TYPES = 'image/png,image/jpeg,image/webp,image/gif';
 
-// Slot two on the mobile rail. Slot one belongs to whatever action the page
-// itself pins to that corner — on the chats page that is the "new thread" FAB,
-// which this launcher used to cover exactly.
-export const FEEDBACK_LAUNCHER_CLASSES = `${FLOATING_ACTION_RAIL_SLOT_TWO} z-40 ${FLOATING_ACTION_DESKTOP_BOTTOM}`;
-
-// The handle stacks ABOVE the launcher rather than over its corner.
-//
-// Overlapping it was the bug: on a touch viewport the unlayered 44px
-// touch-target net in globals.css lifts every `button` to `min-height`/
-// `min-width: 2.75rem`, and being unlayered it outranks every Tailwind
-// utility — `h-6`, `touch:min-h-0`, anything — because those all live inside
-// `@layer utilities`. So a handle pinned to the launcher's corner grew to the
-// launcher's own size and swallowed it. Stacking removes the overlap by
-// construction, which means the handle can keep the full 44px target a finger
-// actually needs instead of being shrunk below it.
-export const FEEDBACK_LAUNCHER_STACK_CLASSES = `${FEEDBACK_LAUNCHER_CLASSES} flex flex-col items-center gap-1.5`;
-
-export const FEEDBACK_LAUNCHER_COLLAPSE_HANDLE_CLASSES =
-  'rounded-full border border-border bg-background p-0 shadow-sm hover:bg-accent';
-
-// The auto-clearance system (see floating-action.constants.ts) keeps the
-// launcher off whatever it can measure, but it can't know every element a
-// page author cares about. This is the manual escape hatch: tucked mostly off
-// the edge of the screen, it stops covering anything, and a tap or an
-// edge-inward drag brings it back. Same vertical slot as the full launcher —
-// only the horizontal `end` value differs — so it can't be composed from
-// `FLOATING_ACTION_RAIL_SLOT_TWO` (mixing two `end-*` utilities on one
-// element makes the winner a stylesheet-order accident, not a source-order
-// certainty). `end` rather than `right`: this has to mirror in Arabic and
-// Persian same as the launcher itself.
-export const FEEDBACK_LAUNCHER_EDGE_TAB_CLASSES =
-  'fixed end-[-1.6rem] bottom-[calc(max(calc(var(--mobile-bottom-nav-height)+env(safe-area-inset-bottom)),var(--rail-obstacle-clearance,0px))+5.5rem)] md:bottom-[calc(env(safe-area-inset-bottom)+1.5rem)] z-40 flex h-11 w-11 cursor-grab touch-none items-center justify-center rounded-s-full border border-border bg-background/90 p-0 opacity-70 shadow-sm backdrop-blur-sm transition-[inset-inline-end,opacity] duration-normal ease-quint-out hover:end-[-0.8rem] hover:opacity-100 active:cursor-grabbing';
-
-// Beyond this many pixels of inward drag, the edge tab counts as "pulled out"
-// and expands — the same outcome as tapping it, just reachable as a swipe.
-export const FEEDBACK_LAUNCHER_DRAG_EXPAND_THRESHOLD_PX = 24;
-
-// Whether the launcher is tucked away is a per-device preference, not
-// per-session state — a reader who hides it on a page that covers something
-// should not have to hide it again on the next page load.
-export const FEEDBACK_LAUNCHER_COLLAPSED_STORAGE_KEY = 'claw.feedbackLauncher.collapsed';
-
 // The API reports per-status counts keyed by the FeedbackStatus enum name, and
 // the status filter is sent back the same way. The tabs used lowercase labels
 // as their values, so every tab filtered on a status the server did not know
@@ -102,3 +56,15 @@ export const SCREEN_CAPTURE_ERROR_KEYS: Readonly<Record<ScreenCaptureStatus, str
   [ScreenCaptureStatus.UNSUPPORTED]: 'feedback.screenshot.unsupported',
   [ScreenCaptureStatus.FAILED]: 'feedback.screenshot.failed',
 };
+
+export const PUBLIC_FEEDBACK_MAX_NAME_LENGTH = 120;
+export const PUBLIC_FEEDBACK_MAX_EMAIL_LENGTH = 254;
+
+/** Public (signed-out) feedback endpoint, relative to the API base. */
+export const PUBLIC_FEEDBACK_PATH = '/feedback/public';
+
+/** Honeypot field name. A visitor never sees it; a form-filling bot does. */
+export const PUBLIC_FEEDBACK_HONEYPOT_FIELD = 'website';
+
+export const PUBLIC_FEEDBACK_STATUS_INVALID = 400;
+export const PUBLIC_FEEDBACK_STATUS_RATE_LIMITED = 429;

@@ -489,7 +489,7 @@ export const en: TranslationDictionary = {
         'Your plan allows a set number of messages per day. It resets at midnight UTC, or you can move to a larger plan now.',
       trialExpiredTitle: 'Your free trial has ended',
       trialExpiredBody:
-        'The free plan runs for 30 days. Choose a plan to carry on where you left off.',
+        'The free plan is a time-limited trial. Choose a plan to carry on where you left off.',
       featureDisabledTitle: 'Your plan does not include this',
       featureDisabledBody: 'This message needed a feature your current plan does not cover.',
       upgradeCta: 'See plans',
@@ -798,6 +798,8 @@ export const en: TranslationDictionary = {
     videoTakesMinutes: 'Video can take a few minutes. You can keep chatting while it renders.',
     videoLoadFailed: 'Could not load the video',
     videoLoadFailedHint: 'Reload the page to try again.',
+    videoFailureSourceImageInvalid:
+      'The picture could not be used: use a JPEG, PNG or WebP under 10 MB that is yours.',
     imageStage: {
       queued: 'Waiting in the image queue',
       connecting: 'Connecting to the image runtime',
@@ -1625,6 +1627,12 @@ export const en: TranslationDictionary = {
       superAdminImmutable: 'Only the super admin can change the super admin account.',
       superAdminSelfLocked: 'The super admin cannot make this change to their own account.',
       superAdminRequired: 'Only the super admin can perform this action.',
+      planTrialNotFound: 'This user has never had a free trial.',
+      planTrialSuperseded:
+        'This user is no longer on their free trial. Set them to the free plan for a number of days instead.',
+      planGrantDurationInvalid:
+        'Enter a whole number of days between 1 and 3650, or of months between 1 and 60.',
+      planGrantReasonRequired: 'A reason is required.',
     },
     title: 'Admin',
     description: 'Manage users and system settings',
@@ -1740,6 +1748,21 @@ export const en: TranslationDictionary = {
     assignPlanReasonRequired: 'A reason is required.',
     assignPlanCancel: 'Cancel',
     assignPlanConfirm: 'Grant plan',
+    assignPlanDurationDaysLabel: 'Duration (days)',
+    assignPlanDurationDaysInvalid: 'Enter a whole number of days between 1 and 3650.',
+    trialActionsHeading: 'Free trial actions',
+    addTrialDaysLabel: 'Days to add',
+    addTrialDaysHelp:
+      'Adds to the current end date, or counts from today if the trial has already ended.',
+    addTrialDaysConfirm: 'Add trial days',
+    addTrialDaysSuccess: 'Added {days} trial days. {remaining} days remaining.',
+    addTrialDaysFailed: 'Could not add trial days.',
+    setFreeLabel: 'Days on the {plan} plan',
+    setFreeHelp:
+      'Moves the user to this plan for the given days, even if they already used their trial or are on a paid plan.',
+    setFreeConfirm: 'Set to {plan} for these days',
+    setFreeSuccess: 'User set to the free plan for {days} days.',
+    setFreeFailed: 'Could not set the user to the free plan.',
     platformHealthLinkDesc: 'System status is monitored on the dashboard',
     platformHealthLinkBody:
       'Service health, latency, and uptime metrics live on the dashboard. Open it for a real-time view.',
@@ -4215,8 +4238,8 @@ export const en: TranslationDictionary = {
     },
   },
   trialStatus: {
-    activeTitle: 'Your free trial is active',
-    activeBody: '{days} days remaining. Your trial ends on {date}.',
+    activeTitle: 'You are on a free trial: {days} days left',
+    activeBody: 'Your trial ends on {date}.',
     expiredTitle: 'Your free trial has ended',
     expiredBody: 'Choose a paid plan to continue using AI features.',
     upgrade: 'View paid plans',
@@ -4285,6 +4308,7 @@ export const en: TranslationDictionary = {
     deactivateFailed: 'Could not deactivate the plan.',
     setDefaultSucceeded: 'Signup plan updated.',
     signupPlanBadge: 'Signup plan',
+    trialBadge: 'Trial: {days} days',
     popularBadge: 'Most popular',
     setSignupPlan: 'Set as signup plan',
     setMostPopular: 'Set as most popular',
@@ -4337,8 +4361,12 @@ export const en: TranslationDictionary = {
       maxMemoryItems: 'Max memory items',
       maxVideoSeconds: 'Max video length (seconds)',
       isPublic: 'Publicly listed',
-      isTrial: '30-day trial',
-      trialHelp: 'Trial access is fixed at 30 days and can be used once per account.',
+      isTrial: 'Free trial plan',
+      trialHelp: 'Trial access can be used once per account. Set how long it lasts below.',
+      trialDays: 'Trial length (days)',
+      trialDaysHelp:
+        'Any whole number from 1 to 3650. New trials use the value saved here; trials already running keep their end date.',
+      trialDaysInvalid: 'Enter a whole number of days between 1 and 3650.',
       featureGates: 'Feature gates',
       orchestrationLabs: 'Orchestration labs',
       orchestrationLabsHint:
@@ -4463,6 +4491,8 @@ export const en: TranslationDictionary = {
     featuresIncluded: 'Included features',
     noPlanTitle: 'No plan assigned',
     noPlanDescription: 'You are on the default access tier.',
+    trialDaysLeft: 'Free trial: {days} days left',
+    trialEnded: 'Your free trial has ended',
     modelPrimary: 'Primary',
     modelCompare: 'Compare',
     modelOverride: 'Limit {limit} tokens/day',
@@ -5081,6 +5111,7 @@ export const en: TranslationDictionary = {
       },
       savePercent: 'Save {percent}%',
       mostPopular: 'Most popular',
+      trialLength: 'Free trial: {days} days',
       dailyTokens: 'Daily allowance',
       monthlyTokens: 'Monthly allowance',
       ctaFree: 'Start free',
@@ -6525,8 +6556,6 @@ export const en: TranslationDictionary = {
     launcher: {
       ariaLabel: 'Send feedback',
       tooltip: 'Report a bug or share feedback',
-      hideAriaLabel: 'Hide feedback button to the edge',
-      showAriaLabel: 'Show feedback button',
     },
     dialog: {
       typeLabel: 'Type',
@@ -6539,6 +6568,9 @@ export const en: TranslationDictionary = {
       cancel: 'Cancel',
       submit: 'Submit feedback',
       submitting: 'Submitting…',
+      nameLabel: 'Your name',
+      emailLabel: 'Your email',
+      publicDescription: 'Tell us what you think. We read every message and may reply by email.',
     },
     editor: {
       bold: 'Bold',
@@ -6569,6 +6601,10 @@ export const en: TranslationDictionary = {
       titleRequired: 'A title is required',
       contentRequired: 'A description is required',
       submitFailed: 'Feedback could not be sent',
+      nameRequired: 'Your name is required',
+      emailInvalid: 'Enter a valid email address',
+      rateLimited: 'Too many messages sent. Please try again later.',
+      checkFields: 'Please check your details and try again',
       tooManyFiles: 'Too many files',
       fileTooLarge: 'That file is too large',
       totalTooLarge: 'Those files are too large together',
@@ -6646,5 +6682,6 @@ export const en: TranslationDictionary = {
     dragDropOrClickToUpload: 'Drag images here, or click to choose',
     removeAttachment: 'Remove attachment',
     submittedWithTicket: 'Feedback submitted — Ticket {ticketNumber}',
+    submittedPublic: 'Thank you — your feedback was sent',
   },
 };

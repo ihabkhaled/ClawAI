@@ -46,7 +46,8 @@ describe('useTrialStatusBanner', () => {
     if (result.current.status !== TrialStatus.ACTIVE) {
       throw new Error('Expected active trial banner');
     }
-    expect(result.current.body).toContain('"days":2');
+    expect(result.current.title).toContain('"days":2');
+    expect(result.current.daysRemaining).toBe(2);
     expect(result.current.upgradeHref).toBe('/billing');
   });
 

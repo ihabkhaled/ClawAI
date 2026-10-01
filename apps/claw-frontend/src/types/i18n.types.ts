@@ -740,6 +740,7 @@ export type TranslationDictionary = {
     videoTakesMinutes: string;
     videoLoadFailed: string;
     videoLoadFailedHint: string;
+    videoFailureSourceImageInvalid: string;
     /** Live runtime stage on a chat image card (ComfyUI / SD WebUI). */
     imageStage: {
       queued: string;
@@ -1573,6 +1574,10 @@ export type TranslationDictionary = {
       superAdminImmutable: string;
       superAdminSelfLocked: string;
       superAdminRequired: string;
+      planTrialNotFound: string;
+      planTrialSuperseded: string;
+      planGrantDurationInvalid: string;
+      planGrantReasonRequired: string;
     };
     title: string;
     description: string;
@@ -1682,6 +1687,19 @@ export type TranslationDictionary = {
     assignPlanReasonRequired: string;
     assignPlanCancel: string;
     assignPlanConfirm: string;
+    assignPlanDurationDaysLabel: string;
+    assignPlanDurationDaysInvalid: string;
+    trialActionsHeading: string;
+    addTrialDaysLabel: string;
+    addTrialDaysHelp: string;
+    addTrialDaysConfirm: string;
+    addTrialDaysSuccess: string;
+    addTrialDaysFailed: string;
+    setFreeLabel: string;
+    setFreeHelp: string;
+    setFreeConfirm: string;
+    setFreeSuccess: string;
+    setFreeFailed: string;
     platformHealthLinkDesc: string;
     platformHealthLinkBody: string;
     viewSystemHealth: string;
@@ -4283,6 +4301,7 @@ export type TranslationDictionary = {
     deactivateFailed: string;
     setDefaultSucceeded: string;
     signupPlanBadge: string;
+    trialBadge: string;
     popularBadge: string;
     setSignupPlan: string;
     setMostPopular: string;
@@ -4333,6 +4352,9 @@ export type TranslationDictionary = {
       isPublic: string;
       isTrial: string;
       trialHelp: string;
+      trialDays: string;
+      trialDaysHelp: string;
+      trialDaysInvalid: string;
       featureGates: string;
       orchestrationLabs: string;
       orchestrationLabsHint: string;
@@ -4456,6 +4478,8 @@ export type TranslationDictionary = {
     featuresIncluded: string;
     noPlanTitle: string;
     noPlanDescription: string;
+    trialDaysLeft: string;
+    trialEnded: string;
     modelPrimary: string;
     modelCompare: string;
     modelOverride: string;
@@ -5050,6 +5074,7 @@ export type TranslationDictionary = {
       };
       savePercent: string;
       mostPopular: string;
+      trialLength: string;
       dailyTokens: string;
       monthlyTokens: string;
       ctaFree: string;

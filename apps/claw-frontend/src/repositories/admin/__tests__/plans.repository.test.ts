@@ -150,6 +150,26 @@ describe('plans repository', () => {
     expect(result).toEqual(samplePlan);
   });
 
+  it('assignUserForDays POSTs the length in days, not months', async () => {
+    mockPost.mockResolvedValue({ data: samplePlan });
+    await plansRepository.assignUserForDays('u 1', 'pl1', 365, 'Goodwill');
+    expect(mockPost).toHaveBeenCalledWith('/admin/plans/users/u%201/assign', {
+      planId: 'pl1',
+      durationDays: 365,
+      grantReason: 'Goodwill',
+    });
+  });
+
+  it('addTrialDays POSTs days and reason to the encoded trial-days path', async () => {
+    const reply = { userId: 'u 1', expiresAt: '2027-01-01T00:00:00.000Z', daysRemaining: 90 };
+    mockPost.mockResolvedValue({ data: reply });
+    await expect(plansRepository.addTrialDays('u 1', 60, 'Support')).resolves.toEqual(reply);
+    expect(mockPost).toHaveBeenCalledWith('/admin/plans/users/u%201/trial-days', {
+      days: 60,
+      reason: 'Support',
+    });
+  });
+
   it('lists immutable price versions from the encoded plan path', async () => {
     const version = {
       id: 'price-1',

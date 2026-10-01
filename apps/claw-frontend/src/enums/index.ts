@@ -148,6 +148,7 @@ export { ComparisonRival } from './comparison-rival.enum';
 export { StructuredDataType } from './structured-data-type.enum';
 export { ContentLifecycleStatus } from './content-lifecycle-status.enum';
 export { PlanLifecycleStatus } from './plan-lifecycle-status.enum';
+export { PlanGrantDurationUnit } from './plan-grant-duration-unit.enum';
 export { ContactEmailProvider } from './contact-email-provider.enum';
 export { ContactResponseCode } from './contact-response-code.enum';
 export {
@@ -197,3 +198,4 @@ export { ContextSaveStatus } from './context-save-status.enum';
 export { SaveFailureReason } from './save-failure-reason.enum';
 export { VideoGenerationStatus } from './video-generation-status.enum';
 export { PromptLibraryView } from './prompt-library.enum';
+export { MarketingAuthActionsVariant } from './marketing-auth-actions-variant.enum';

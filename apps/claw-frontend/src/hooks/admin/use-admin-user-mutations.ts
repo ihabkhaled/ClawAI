@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { PlanGrantDurationUnit } from '@/enums/plan-grant-duration-unit.enum';
 import { useTranslation } from '@/lib/i18n';
 import { plansRepository } from '@/repositories/admin/plans.repository';
 import { auditRepository } from '@/repositories/audit/audit.repository';
@@ -76,14 +77,19 @@ function useAssignPlanMutation(setActionPending: (value: string | null) => void)
     mutationFn: ({
       userId,
       planId,
-      durationMonths,
+      duration,
       grantReason,
+      unit,
     }: {
       userId: string;
       planId: string;
-      durationMonths: number;
+      duration: number;
       grantReason: string;
-    }) => plansRepository.assignUser(userId, planId, durationMonths, grantReason),
+      unit: PlanGrantDurationUnit;
+    }) =>
+      unit === PlanGrantDurationUnit.DAYS
+        ? plansRepository.assignUserForDays(userId, planId, duration, grantReason)
+        : plansRepository.assignUser(userId, planId, duration, grantReason),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.admin.users });
       setActionPending(null);
@@ -246,8 +252,9 @@ function useAccountHandlers(
   const handleAssignPlan = (
     userId: string,
     planId: string,
-    durationMonths: number,
+    duration: number,
     grantReason: string,
+    unit: PlanGrantDurationUnit = PlanGrantDurationUnit.MONTHS,
   ): void => {
     // grantReason is deliberately omitted — it may carry free-text an admin
     // wrote about a user's account (redaction posture, rule 19).
@@ -255,10 +262,10 @@ function useAccountHandlers(
       component: 'admin',
       action: 'assign-plan',
       message: 'Assigning plan to user',
-      details: { userId, planId, durationMonths },
+      details: { userId, planId, duration, unit },
     });
     setActionPending(userId);
-    assignPlanMutation.mutate({ userId, planId, durationMonths, grantReason });
+    assignPlanMutation.mutate({ userId, planId, duration, grantReason, unit });
   };
 
   const handleUpdateUser = (userId: string, data: AdminUserUpdateRequest): void => {

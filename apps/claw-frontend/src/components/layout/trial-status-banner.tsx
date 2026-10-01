@@ -23,7 +23,7 @@ export function TrialStatusBanner(): React.ReactElement | null {
       data-testid="trial-status-banner"
     >
       <div className="min-w-0 flex-1">
-        <p className="sr-only font-semibold sm:not-sr-only">{banner.title}</p>
+        <p className="text-xs font-semibold sm:text-sm">{banner.title}</p>
         <p className="text-muted-foreground text-xs sm:text-sm">{banner.body}</p>
       </div>
       <Button asChild size="sm" className="shrink-0">

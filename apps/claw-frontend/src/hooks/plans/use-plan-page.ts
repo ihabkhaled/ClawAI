@@ -1,6 +1,7 @@
 import { useCreditPage } from '@/hooks/credit/use-credit-page';
 import { useTranslation } from '@/lib/i18n';
 import type { UsePlanPageResult } from '@/types';
+import { resolveTrialStatusBanner } from '@/utilities/trial-status.utility';
 
 import { useEntitlements } from './use-entitlements';
 
@@ -15,5 +16,9 @@ export function usePlanPage(): UsePlanPageResult {
   const entitlements = useEntitlements();
   const credit = useCreditPage();
 
-  return { ...entitlements, credit, t, locale };
+  // Same whole-days-rounded-up count the global trial banner shows, so the two
+  // can never disagree about how long is left.
+  const trial = resolveTrialStatusBanner(entitlements.entitlements, t, locale, Date.now());
+
+  return { ...entitlements, credit, trial, t, locale };
 }

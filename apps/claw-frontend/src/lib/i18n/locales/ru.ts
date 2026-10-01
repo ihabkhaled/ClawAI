@@ -495,7 +495,7 @@ export const ru: TranslationDictionary = {
         'Ваш тариф допускает определённое число сообщений в день. Счётчик обновится в полночь UTC, либо можно перейти на более крупный тариф прямо сейчас.',
       trialExpiredTitle: 'Бесплатный пробный период закончился',
       trialExpiredBody:
-        'Бесплатный тариф действует 30 дней. Выберите тариф, чтобы продолжить с того же места.',
+        'Бесплатный тариф — это пробный период с ограниченным сроком. Выберите тариф, чтобы продолжить с того места, где вы остановились.',
       featureDisabledTitle: 'Ваш тариф этого не включает',
       featureDisabledBody:
         'Для этого сообщения нужна возможность, которой нет в вашем текущем тарифе.',
@@ -809,6 +809,8 @@ export const ru: TranslationDictionary = {
       'Создание видео может занять несколько минут. Можно продолжать общение, пока оно создаётся.',
     videoLoadFailed: 'Не удалось загрузить видео',
     videoLoadFailedHint: 'Перезагрузите страницу и попробуйте снова.',
+    videoFailureSourceImageInvalid:
+      'Не удалось использовать изображение: используйте ваше собственное изображение JPEG, PNG или WebP размером менее 10 МБ.',
     imageStage: {
       queued: 'В очереди на генерацию изображения',
       connecting: 'Подключение к движку изображений',
@@ -1650,6 +1652,11 @@ export const ru: TranslationDictionary = {
       superAdminSelfLocked:
         'Суперадминистратор не может внести это изменение в собственную учётную запись.',
       superAdminRequired: 'Это действие может выполнить только суперадминистратор.',
+      planTrialNotFound: 'У этого пользователя никогда не было бесплатного пробного периода.',
+      planTrialSuperseded:
+        'Этот пользователь больше не на бесплатном пробном периоде. Вместо этого переведите его на бесплатный тариф на несколько дней.',
+      planGrantDurationInvalid: 'Введите целое число дней от 1 до 3650 или месяцев от 1 до 60.',
+      planGrantReasonRequired: 'Укажите причину.',
     },
     title: 'Администрирование',
     description: 'Управление пользователями и системными настройками',
@@ -1764,6 +1771,21 @@ export const ru: TranslationDictionary = {
     assignPlanReasonRequired: 'Необходимо указать причину.',
     assignPlanCancel: 'Отмена',
     assignPlanConfirm: 'Предоставить тариф',
+    assignPlanDurationDaysLabel: 'Длительность (дни)',
+    assignPlanDurationDaysInvalid: 'Введите целое число дней от 1 до 3650.',
+    trialActionsHeading: 'Действия с бесплатным пробным периодом',
+    addTrialDaysLabel: 'Сколько дней добавить',
+    addTrialDaysHelp:
+      'Добавляются к текущей дате окончания или отсчитываются от сегодняшнего дня, если пробный период уже закончился.',
+    addTrialDaysConfirm: 'Добавить дни пробного периода',
+    addTrialDaysSuccess: 'Добавлено дней пробного периода: {days}. Осталось дней: {remaining}.',
+    addTrialDaysFailed: 'Не удалось добавить дни пробного периода.',
+    setFreeLabel: 'Дни на тарифе «{plan}»',
+    setFreeHelp:
+      'Переводит пользователя на этот тариф на указанное число дней, даже если он уже использовал пробный период или находится на платном тарифе.',
+    setFreeConfirm: 'Установить «{plan}» на эти дни',
+    setFreeSuccess: 'Пользователь переведён на бесплатный тариф на {days} дн.',
+    setFreeFailed: 'Не удалось перевести пользователя на бесплатный тариф.',
     platformHealthLinkDesc: 'Состояние системы отслеживается на панели управления',
     platformHealthLinkBody:
       'Состояние сервисов, задержка и метрики доступности находятся на панели управления. Откройте её для просмотра в реальном времени.',
@@ -4276,8 +4298,8 @@ export const ru: TranslationDictionary = {
     },
   },
   trialStatus: {
-    activeTitle: 'Бесплатный пробный период активен',
-    activeBody: 'Осталось дней: {days}. Пробный период завершится {date}.',
+    activeTitle: 'Вы на бесплатном пробном периоде: осталось дней — {days}',
+    activeBody: 'Ваш пробный период заканчивается {date}.',
     expiredTitle: 'Бесплатный пробный период завершён',
     expiredBody: 'Выберите платный тариф, чтобы продолжить пользоваться функциями ИИ.',
     upgrade: 'Посмотреть платные тарифы',
@@ -4346,6 +4368,7 @@ export const ru: TranslationDictionary = {
     deactivateFailed: 'Не удалось деактивировать тариф.',
     setDefaultSucceeded: 'План для регистрации обновлён.',
     signupPlanBadge: 'Тариф при регистрации',
+    trialBadge: 'Пробный период: {days} дн.',
     popularBadge: 'Самый популярный',
     setSignupPlan: 'Сделать тарифом при регистрации',
     setMostPopular: 'Сделать самым популярным',
@@ -4398,8 +4421,13 @@ export const ru: TranslationDictionary = {
       maxMemoryItems: 'Макс. элементов памяти',
       maxVideoSeconds: 'Максимальная длина видео (секунды)',
       isPublic: 'В публичном списке',
-      isTrial: '30-дневный пробный период',
-      trialHelp: 'Пробный период длится 30 дней и доступен один раз для каждой учётной записи.',
+      isTrial: 'Тариф с бесплатным пробным периодом',
+      trialHelp:
+        'Пробный доступ можно использовать один раз для каждого аккаунта. Задайте его длительность ниже.',
+      trialDays: 'Длительность пробного периода (дни)',
+      trialDaysHelp:
+        'Любое целое число от 1 до 3650. Новые пробные периоды используют сохранённое здесь значение; уже идущие сохраняют свою дату окончания.',
+      trialDaysInvalid: 'Введите целое число дней от 1 до 3650.',
       featureGates: 'Ограничения функций',
       orchestrationLabs: 'Лаборатории оркестрации',
       orchestrationLabsHint:
@@ -4524,6 +4552,8 @@ export const ru: TranslationDictionary = {
     featuresIncluded: 'Включённые функции',
     noPlanTitle: 'Тариф не назначен',
     noPlanDescription: 'Вы на уровне доступа по умолчанию.',
+    trialDaysLeft: 'Бесплатный пробный период: осталось дней — {days}',
+    trialEnded: 'Ваш бесплатный пробный период закончился',
     modelPrimary: 'Основная',
     modelCompare: 'Сравнение',
     modelOverride: 'Лимит {limit} токенов/день',
@@ -5149,6 +5179,7 @@ export const ru: TranslationDictionary = {
       },
       savePercent: 'Экономия {percent}%',
       mostPopular: 'Самый популярный',
+      trialLength: 'Бесплатный пробный период: {days} дн.',
       dailyTokens: 'Дневной лимит',
       monthlyTokens: 'Месячный лимит',
       ctaFree: 'Начать бесплатно',
@@ -6602,8 +6633,6 @@ export const ru: TranslationDictionary = {
     launcher: {
       ariaLabel: 'Отправить отзыв',
       tooltip: 'Сообщить об ошибке или оставить отзыв',
-      hideAriaLabel: 'Скрыть кнопку отзыва у края экрана',
-      showAriaLabel: 'Показать кнопку отзыва',
     },
     dialog: {
       typeLabel: 'Тип',
@@ -6617,6 +6646,10 @@ export const ru: TranslationDictionary = {
       cancel: 'Отмена',
       submit: 'Отправить отзыв',
       submitting: 'Отправка…',
+      nameLabel: 'Ваше имя',
+      emailLabel: 'Ваш адрес электронной почты',
+      publicDescription:
+        'Расскажите, что вы думаете. Мы читаем каждое сообщение и можем ответить по электронной почте.',
     },
     editor: {
       bold: 'Полужирный',
@@ -6647,6 +6680,10 @@ export const ru: TranslationDictionary = {
       titleRequired: 'Укажите заголовок',
       contentRequired: 'Укажите описание',
       submitFailed: 'Не удалось отправить отзыв',
+      nameRequired: 'Укажите имя',
+      emailInvalid: 'Введите корректный адрес электронной почты',
+      rateLimited: 'Отправлено слишком много сообщений. Попробуйте позже.',
+      checkFields: 'Проверьте введённые данные и попробуйте снова',
       tooManyFiles: 'Слишком много файлов',
       fileTooLarge: 'Этот файл слишком большой',
       totalTooLarge: 'Эти файлы слишком большие в сумме',
@@ -6724,5 +6761,6 @@ export const ru: TranslationDictionary = {
     dragDropOrClickToUpload: 'Перетащите изображения сюда или нажмите для выбора',
     removeAttachment: 'Удалить вложение',
     submittedWithTicket: 'Отзыв отправлен — тикет {ticketNumber}',
+    submittedPublic: 'Спасибо — ваш отзыв отправлен',
   },
 };

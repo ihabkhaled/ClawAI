@@ -1,5 +1,6 @@
 import { apiClient } from '@/services/shared/api-client';
 import type {
+  AddTrialDaysResult,
   CreatePlanRequest,
   PlanUserIds,
   PlanRetirementResult,
@@ -111,6 +112,28 @@ export const plansRepository = {
     const response = await apiClient.post<PlanView>(
       `${PLANS_BASE}/users/${encodeURIComponent(userId)}/assign`,
       { planId, durationMonths, grantReason },
+    );
+    return response.data;
+  },
+
+  /** Admin grant measured in days — the only unit a trial plan grant uses. */
+  async assignUserForDays(
+    userId: string,
+    planId: string,
+    durationDays: number,
+    grantReason: string,
+  ): Promise<PlanView> {
+    const response = await apiClient.post<PlanView>(
+      `${PLANS_BASE}/users/${encodeURIComponent(userId)}/assign`,
+      { planId, durationDays, grantReason },
+    );
+    return response.data;
+  },
+
+  async addTrialDays(userId: string, days: number, reason: string): Promise<AddTrialDaysResult> {
+    const response = await apiClient.post<AddTrialDaysResult>(
+      `${PLANS_BASE}/users/${encodeURIComponent(userId)}/trial-days`,
+      { days, reason },
     );
     return response.data;
   },

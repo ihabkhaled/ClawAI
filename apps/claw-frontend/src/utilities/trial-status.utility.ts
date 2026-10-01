@@ -39,8 +39,8 @@ export function resolveTrialStatusBanner(
   const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(endTime);
   return {
     status: TrialStatus.ACTIVE,
-    title: t('trialStatus.activeTitle'),
-    body: t('trialStatus.activeBody', { days, date }),
+    title: t('trialStatus.activeTitle', { days }),
+    body: t('trialStatus.activeBody', { date }),
     upgradeLabel: t('trialStatus.upgrade'),
     upgradeHref: ROUTES.BILLING,
     daysRemaining: days,

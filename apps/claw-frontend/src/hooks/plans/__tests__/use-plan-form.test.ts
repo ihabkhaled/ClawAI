@@ -158,7 +158,7 @@ describe('usePlanForm', () => {
     });
   });
 
-  it('serializes an enabled trial with the fixed 30-day duration', () => {
+  it('serializes an enabled trial with the 30-day default length', () => {
     const { result } = renderHook(() => usePlanForm(null));
     act(() => {
       result.current.setField('name', 'Trial');
@@ -169,6 +169,53 @@ describe('usePlanForm', () => {
     expect(result.current.buildCreateRequest()).toMatchObject({
       isTrial: true,
       trialDurationDays: 30,
+    });
+  });
+
+  it.each(['14', '90', '365', '3650'])('serializes a %s-day trial', (days) => {
+    const { result } = renderHook(() => usePlanForm(null));
+    act(() => {
+      result.current.setField('name', 'Trial');
+      result.current.setField('slug', 'trial');
+      result.current.setField('isTrial', true);
+      result.current.setField('trialDurationDays', days);
+    });
+
+    expect(result.current.buildCreateRequest()).toMatchObject({
+      isTrial: true,
+      trialDurationDays: Number(days),
+    });
+  });
+
+  it.each(['0', '3651', '', '12.5', 'abc'])(
+    'rejects a trial length of "%s" with a translation key',
+    (days) => {
+      const { result } = renderHook(() => usePlanForm(null));
+      act(() => {
+        result.current.setField('name', 'Trial');
+        result.current.setField('slug', 'trial');
+        result.current.setField('isTrial', true);
+        result.current.setField('trialDurationDays', days);
+      });
+      let payload: ReturnType<typeof result.current.buildCreateRequest> = null;
+      act(() => {
+        payload = result.current.buildCreateRequest();
+      });
+      expect(payload).toBeNull();
+      expect(result.current.fieldErrors.trialDurationDays).toBe('adminPlans.form.trialDaysInvalid');
+    },
+  );
+
+  it('loads the stored length of an existing trial plan and sends no length for a non-trial', () => {
+    const ninetyDayPlan = { ...seedPlan, trialDurationDays: 90 };
+    const { result } = renderHook(() => usePlanForm(ninetyDayPlan));
+    expect(result.current.state.trialDurationDays).toBe('90');
+    act(() => {
+      result.current.setField('isTrial', false);
+    });
+    expect(result.current.buildUpdateRequest()).toMatchObject({
+      isTrial: false,
+      trialDurationDays: null,
     });
   });
 

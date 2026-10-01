@@ -1,5 +1,6 @@
 import type { BillingInterval } from '@/enums/billing.enum';
 import type { Locale } from '@/enums/locale.enum';
+import type { MarketingAuthActionsVariant } from '@/enums/marketing-auth-actions-variant.enum';
 import type { Theme } from '@/enums/theme.enum';
 import type { LocaleConfig } from '@/types/i18n.types';
 import type { PublicCatalogProvider } from '@/types/public-models.types';
@@ -143,4 +144,9 @@ export type MarketingFooterProps = {
   featurePages: { slug: string; canonicalPath: string; title: string }[];
   comparisons: { rival: string; path: string; summary: string }[];
   comparisonsHeading: string;
+};
+
+export type MarketingAuthActionsProps = {
+  variant: MarketingAuthActionsVariant;
+  onNavigate?: () => void;
 };

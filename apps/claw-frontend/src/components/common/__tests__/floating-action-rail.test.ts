@@ -3,7 +3,6 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { FEEDBACK_LAUNCHER_CLASSES } from '@/constants/feedback.constants';
 import {
   FLOATING_ACTION_DESKTOP_BOTTOM,
   FLOATING_ACTION_RAIL_SLOT_ONE,
@@ -46,12 +45,6 @@ describe('mobile floating action rail', () => {
       expect(slot).toContain('end-4');
       expect(slot).not.toContain('right-');
     }
-    expect(FEEDBACK_LAUNCHER_CLASSES).not.toContain('right-');
-  });
-
-  it('puts the global feedback launcher in slot two, above the page action', () => {
-    expect(FEEDBACK_LAUNCHER_CLASSES).toContain(FLOATING_ACTION_RAIL_SLOT_TWO);
-    expect(FEEDBACK_LAUNCHER_CLASSES).toContain(FLOATING_ACTION_DESKTOP_BOTTOM);
   });
 
   // Asserted against the file rather than a render: the FAB only exists inside

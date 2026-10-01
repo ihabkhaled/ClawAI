@@ -8,6 +8,7 @@ import { UserSubscriptionHistoryTable } from '@/components/admin/user-statistics
 import { UserSubscriptionInvoicesTable } from '@/components/admin/user-statistics/user-subscription-invoices-table';
 import { UserSubscriptionPlanDetails } from '@/components/admin/user-statistics/user-subscription-plan-details';
 import { UserSubscriptionSummary } from '@/components/admin/user-statistics/user-subscription-summary';
+import { UserSubscriptionTrialActions } from '@/components/admin/user-statistics/user-subscription-trial-actions';
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { Button } from '@/components/ui/button';
@@ -63,6 +64,11 @@ export function UserSubscriptionDialogBody({
       <section className="space-y-2">
         <h3 className="text-sm font-semibold">{t('admin.userSubscriptionPlanHeading')}</h3>
         <UserSubscriptionPlanDetails planOverview={planOverview} t={t} />
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="text-sm font-semibold">{t('admin.trialActionsHeading')}</h3>
+        <UserSubscriptionTrialActions userId={userId} t={t} />
       </section>
 
       <section className="space-y-2">

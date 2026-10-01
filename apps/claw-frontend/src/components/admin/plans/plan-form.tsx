@@ -6,7 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { PAYG_CREDIT_PERCENT_BPS_MAX } from '@/constants/plan.constants';
+import {
+  PAYG_CREDIT_PERCENT_BPS_MAX,
+  PLAN_TRIAL_MAX_DAYS,
+  PLAN_TRIAL_MIN_DAYS,
+} from '@/constants/plan.constants';
 import type { PlanFormProps } from '@/types';
 import { resolvePlanSubmitLabelKey } from '@/utilities';
 
@@ -314,6 +318,30 @@ export function PlanForm({
             onCheckedChange={(next) => setField('isTrial', next)}
           />
         </div>
+        {state.isTrial ? (
+          <div className="grid grid-cols-1 gap-1.5">
+            <label htmlFor="plan-trial-days" className="text-sm">
+              {t('adminPlans.form.trialDays')}
+            </label>
+            <Input
+              id="plan-trial-days"
+              type="number"
+              inputMode="numeric"
+              min={PLAN_TRIAL_MIN_DAYS}
+              max={PLAN_TRIAL_MAX_DAYS}
+              step={1}
+              value={state.trialDurationDays}
+              onChange={(e) => setField('trialDurationDays', e.target.value)}
+              aria-invalid={fieldErrors.trialDurationDays !== undefined}
+            />
+            <p className="text-muted-foreground text-xs">{t('adminPlans.form.trialDaysHelp')}</p>
+            {fieldErrors.trialDurationDays !== undefined ? (
+              <p className="text-destructive text-xs" role="alert">
+                {t(fieldErrors.trialDurationDays)}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
         <div className="flex items-center justify-between gap-2">
           <label htmlFor="plan-allow-compare" className="text-sm">
             {t('adminPlans.gate.allowCompareMode')}

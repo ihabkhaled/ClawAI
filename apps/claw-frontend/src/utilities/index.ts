@@ -292,6 +292,7 @@ export { insertSentMessageIntoCache } from './insert-sent-message-into-cache.uti
 export { mergeLatestMessagesPageIntoCache } from './merge-latest-messages-page-into-cache.utility';
 export {
   getVideoStatusLabelKey,
+  resolveVideoFailureMessage,
   isTerminalVideoStatus,
   isInProgressVideoStatus,
   getSupersedingVideoGenerationId,

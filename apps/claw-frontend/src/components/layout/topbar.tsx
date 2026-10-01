@@ -13,6 +13,7 @@ import { Breadcrumb } from './breadcrumb';
 import { GlobalSearch } from './global-search';
 import { LocaleSwitcher } from './locale-switcher';
 import { ThemeSwitcher } from './theme-switcher';
+import { TopbarFeedbackButton } from './topbar-feedback-button';
 import { UserMenu } from './user-menu';
 
 export function Topbar() {
@@ -77,6 +78,9 @@ export function Topbar() {
             the sidebar, the user menu nor the bottom navigation carries one,
             so a phone user's only route was the Settings page. */}
         <LocaleSwitcher />
+        {/* Also at every width: feedback used to float over the page, and a
+            phone has no other quick route to it besides the More sheet. */}
+        <TopbarFeedbackButton />
         <div className="hidden sm:block">
           <ThemeSwitcher />
         </div>

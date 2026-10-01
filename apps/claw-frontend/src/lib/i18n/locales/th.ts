@@ -479,7 +479,8 @@ export const th: TranslationDictionary = {
       dailyMessagesBody:
         'แพ็กเกจของคุณกำหนดจำนวนข้อความต่อวัน ระบบจะรีเซ็ตเวลาเที่ยงคืน UTC หรือจะเปลี่ยนไปใช้แพ็กเกจที่ใหญ่ขึ้นตอนนี้ก็ได้',
       trialExpiredTitle: 'ช่วงทดลองใช้ฟรีสิ้นสุดแล้ว',
-      trialExpiredBody: 'แพ็กเกจฟรีใช้ได้ 30 วัน เลือกแพ็กเกจเพื่อใช้งานต่อจากเดิม',
+      trialExpiredBody:
+        'แพ็กเกจฟรีเป็นการทดลองใช้แบบจำกัดเวลา เลือกแพ็กเกจเพื่อใช้งานต่อจากที่ค้างไว้',
       featureDisabledTitle: 'แพ็กเกจของคุณไม่รวมสิ่งนี้',
       featureDisabledBody: 'ข้อความนี้ต้องใช้ความสามารถที่แพ็กเกจปัจจุบันของคุณไม่ครอบคลุม',
       upgradeCta: 'ดูแพ็กเกจ',
@@ -785,6 +786,8 @@ export const th: TranslationDictionary = {
     videoTakesMinutes: 'วิดีโออาจใช้เวลาสองสามนาที คุณแชทต่อได้ระหว่างที่กำลังสร้าง',
     videoLoadFailed: 'ไม่สามารถโหลดวิดีโอได้',
     videoLoadFailedHint: 'โหลดหน้าใหม่แล้วลองอีกครั้ง',
+    videoFailureSourceImageInvalid:
+      'ไม่สามารถใช้รูปภาพนี้ได้: ใช้รูปภาพ JPEG, PNG หรือ WebP ขนาดไม่เกิน 10 MB ที่เป็นของคุณเอง',
     imageStage: {
       queued: 'รอคิวสร้างภาพ',
       connecting: 'กำลังเชื่อมต่อกับรันไทม์ภาพ',
@@ -1608,6 +1611,12 @@ export const th: TranslationDictionary = {
       superAdminImmutable: 'มีเพียงผู้ดูแลระบบสูงสุดเท่านั้นที่แก้ไขบัญชีผู้ดูแลระบบสูงสุดได้',
       superAdminSelfLocked: 'ผู้ดูแลระบบสูงสุดไม่สามารถทำการเปลี่ยนแปลงนี้กับบัญชีของตนเองได้',
       superAdminRequired: 'เฉพาะผู้ดูแลระบบสูงสุดเท่านั้นที่ทำสิ่งนี้ได้',
+      planTrialNotFound: 'ผู้ใช้รายนี้ไม่เคยทดลองใช้ฟรีมาก่อน',
+      planTrialSuperseded:
+        'ผู้ใช้รายนี้ไม่ได้อยู่ในช่วงทดลองใช้ฟรีแล้ว ให้ตั้งเป็นแพ็กเกจฟรีตามจำนวนวันแทน',
+      planGrantDurationInvalid:
+        'กรอกจำนวนวันเป็นจำนวนเต็มระหว่าง 1 ถึง 3650 หรือจำนวนเดือนระหว่าง 1 ถึง 60',
+      planGrantReasonRequired: 'ต้องระบุเหตุผล',
     },
     title: 'ผู้ดูแลระบบ',
     description: 'จัดการผู้ใช้และการตั้งค่าระบบ',
@@ -1720,6 +1729,20 @@ export const th: TranslationDictionary = {
     assignPlanReasonRequired: 'ต้องระบุเหตุผล',
     assignPlanCancel: 'ยกเลิก',
     assignPlanConfirm: 'มอบแผน',
+    assignPlanDurationDaysLabel: 'ระยะเวลา (วัน)',
+    assignPlanDurationDaysInvalid: 'กรอกจำนวนวันเป็นจำนวนเต็มระหว่าง 1 ถึง 3650',
+    trialActionsHeading: 'การดำเนินการกับการทดลองใช้ฟรี',
+    addTrialDaysLabel: 'จำนวนวันที่จะเพิ่ม',
+    addTrialDaysHelp: 'เพิ่มต่อจากวันสิ้นสุดปัจจุบัน หรือนับจากวันนี้หากการทดลองใช้สิ้นสุดไปแล้ว',
+    addTrialDaysConfirm: 'เพิ่มวันทดลองใช้',
+    addTrialDaysSuccess: 'เพิ่มวันทดลองใช้ {days} วันแล้ว เหลืออีก {remaining} วัน',
+    addTrialDaysFailed: 'ไม่สามารถเพิ่มวันทดลองใช้ได้',
+    setFreeLabel: 'จำนวนวันในแพ็กเกจ {plan}',
+    setFreeHelp:
+      'ย้ายผู้ใช้ไปยังแพ็กเกจนี้ตามจำนวนวันที่กำหนด แม้จะใช้สิทธิ์ทดลองไปแล้วหรืออยู่ในแพ็กเกจแบบชำระเงิน',
+    setFreeConfirm: 'ตั้งเป็น {plan} ตามจำนวนวันนี้',
+    setFreeSuccess: 'ตั้งผู้ใช้เป็นแพ็กเกจฟรีเป็นเวลา {days} วันแล้ว',
+    setFreeFailed: 'ไม่สามารถตั้งผู้ใช้เป็นแพ็กเกจฟรีได้',
     platformHealthLinkDesc: 'สถานะของระบบจะถูกตรวจสอบบนแดชบอร์ด',
     platformHealthLinkBody:
       'ตัวชี้วัดความสมบูรณ์ของบริการ เวลาแฝง และสถานะการออนไลน์อยู่บนแดชบอร์ดเปิดเพื่อดูแบบเรียลไทม์',
@@ -4195,8 +4218,8 @@ export const th: TranslationDictionary = {
     },
   },
   trialStatus: {
-    activeTitle: 'ช่วงทดลองใช้ฟรีของคุณกำลังใช้งาน',
-    activeBody: 'เหลืออีก {days} วัน ช่วงทดลองจะสิ้นสุดในวันที่ {date}',
+    activeTitle: 'คุณอยู่ในช่วงทดลองใช้ฟรี: เหลืออีก {days} วัน',
+    activeBody: 'การทดลองใช้ของคุณสิ้นสุดวันที่ {date}',
     expiredTitle: 'ช่วงทดลองใช้ฟรีของคุณสิ้นสุดแล้ว',
     expiredBody: 'เลือกแผนแบบชำระเงินเพื่อใช้ฟีเจอร์ AI ต่อ',
     upgrade: 'ดูแผนแบบชำระเงิน',
@@ -4265,6 +4288,7 @@ export const th: TranslationDictionary = {
     deactivateFailed: 'ไม่สามารถปิดใช้งานแผนได้',
     setDefaultSucceeded: 'อัปเดตแพ็กเกจสำหรับการสมัครแล้ว',
     signupPlanBadge: 'แผนเมื่อสมัคร',
+    trialBadge: 'ทดลองใช้: {days} วัน',
     popularBadge: 'ยอดนิยมที่สุด',
     setSignupPlan: 'ตั้งเป็นแผนเมื่อสมัคร',
     setMostPopular: 'ตั้งเป็นยอดนิยมที่สุด',
@@ -4317,8 +4341,12 @@ export const th: TranslationDictionary = {
       maxMemoryItems: 'รายการหน่วยความจำสูงสุด',
       maxVideoSeconds: 'ความยาววิดีโอสูงสุด (วินาที)',
       isPublic: 'จดทะเบียนในที่สาธารณะ',
-      isTrial: 'ทดลองใช้ 30 วัน',
-      trialHelp: 'ช่วงทดลองใช้มีระยะเวลา 30 วันและใช้ได้หนึ่งครั้งต่อบัญชีเท่านั้น',
+      isTrial: 'แพ็กเกจทดลองใช้ฟรี',
+      trialHelp: 'การทดลองใช้งานใช้ได้เพียงครั้งเดียวต่อบัญชี กำหนดระยะเวลาได้ด้านล่าง',
+      trialDays: 'ระยะเวลาทดลองใช้ (วัน)',
+      trialDaysHelp:
+        'จำนวนเต็มใดก็ได้ตั้งแต่ 1 ถึง 3650 การทดลองใช้ใหม่จะใช้ค่าที่บันทึกไว้ที่นี่ ส่วนที่กำลังดำเนินอยู่จะคงวันสิ้นสุดเดิม',
+      trialDaysInvalid: 'กรอกจำนวนวันเป็นจำนวนเต็มระหว่าง 1 ถึง 3650',
       featureGates: 'คุณลักษณะประตู',
       orchestrationLabs: 'ห้องปฏิบัติการประสานงาน',
       orchestrationLabsHint:
@@ -4443,6 +4471,8 @@ export const th: TranslationDictionary = {
     featuresIncluded: 'คุณสมบัติที่รวมอยู่',
     noPlanTitle: 'ไม่มีการกำหนดแผน',
     noPlanDescription: 'คุณอยู่ในระดับการเข้าถึงเริ่มต้น',
+    trialDaysLeft: 'ทดลองใช้ฟรี: เหลืออีก {days} วัน',
+    trialEnded: 'การทดลองใช้ฟรีของคุณสิ้นสุดแล้ว',
     modelPrimary: 'หลัก',
     modelCompare: 'เปรียบเทียบ',
     modelOverride: 'จำกัดโทเค็น {limit}/วัน',
@@ -5060,6 +5090,7 @@ export const th: TranslationDictionary = {
       },
       savePercent: 'ประหยัด {percent}%',
       mostPopular: 'ที่นิยมมากที่สุด',
+      trialLength: 'ทดลองใช้ฟรี: {days} วัน',
       dailyTokens: 'เบี้ยเลี้ยงรายวัน',
       monthlyTokens: 'เบี้ยเลี้ยงรายเดือน',
       ctaFree: 'เริ่มฟรี',
@@ -6477,8 +6508,6 @@ export const th: TranslationDictionary = {
     launcher: {
       ariaLabel: 'ส่งความคิดเห็น',
       tooltip: 'รายงานข้อผิดพลาดหรือส่งความคิดเห็น',
-      hideAriaLabel: 'ซ่อนปุ่มความคิดเห็นไว้ที่ขอบจอ',
-      showAriaLabel: 'แสดงปุ่มความคิดเห็น',
     },
     dialog: {
       typeLabel: 'ประเภท',
@@ -6491,6 +6520,9 @@ export const th: TranslationDictionary = {
       cancel: 'ยกเลิก',
       submit: 'ส่งความคิดเห็น',
       submitting: 'กำลังส่ง…',
+      nameLabel: 'ชื่อของคุณ',
+      emailLabel: 'อีเมลของคุณ',
+      publicDescription: 'บอกเราว่าคุณคิดอย่างไร เราอ่านทุกข้อความและอาจตอบกลับทางอีเมล',
     },
     editor: {
       bold: 'ตัวหนา',
@@ -6521,6 +6553,10 @@ export const th: TranslationDictionary = {
       titleRequired: 'ต้องระบุหัวข้อ',
       contentRequired: 'ต้องระบุรายละเอียด',
       submitFailed: 'ส่งความคิดเห็นไม่สำเร็จ',
+      nameRequired: 'ต้องระบุชื่อของคุณ',
+      emailInvalid: 'กรอกที่อยู่อีเมลที่ถูกต้อง',
+      rateLimited: 'ส่งข้อความมากเกินไป โปรดลองอีกครั้งภายหลัง',
+      checkFields: 'โปรดตรวจสอบข้อมูลของคุณแล้วลองอีกครั้ง',
       tooManyFiles: 'ไฟล์มากเกินไป',
       fileTooLarge: 'ไฟล์นี้ใหญ่เกินไป',
       totalTooLarge: 'ไฟล์เหล่านี้รวมกันใหญ่เกินไป',
@@ -6598,5 +6634,6 @@ export const th: TranslationDictionary = {
     dragDropOrClickToUpload: 'ลากรูปภาพมาที่นี่ หรือคลิกเพื่อเลือก',
     removeAttachment: 'ลบไฟล์แนบ',
     submittedWithTicket: 'ส่งความคิดเห็นแล้ว — ทิกเก็ต {ticketNumber}',
+    submittedPublic: 'ขอบคุณ — ส่งความคิดเห็นของคุณแล้ว',
   },
 };

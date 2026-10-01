@@ -193,7 +193,7 @@ describe('UserTable plan column', () => {
 
     await userEvent.click(within(dialog).getByText('admin.assignPlanConfirm'));
 
-    expect(onAssignPlan).toHaveBeenCalledWith('u1', 'pl1', 3, 'Support gesture');
+    expect(onAssignPlan).toHaveBeenCalledWith('u1', 'pl1', 3, 'Support gesture', 'months');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 

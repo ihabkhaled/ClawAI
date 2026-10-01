@@ -5,6 +5,7 @@ import type { SseConnectionHealth, MessageFeedback } from '@/enums';
 import type { EmailVerificationOutcome } from '@/enums/email-verification-outcome.enum';
 import type { FloatingClearanceEdge } from '@/enums/floating-clearance-edge.enum';
 import type { PasswordInputType } from '@/enums/password-input-type.enum';
+import type { PlanGrantDurationUnit } from '@/enums/plan-grant-duration-unit.enum';
 import type { ScrollDirection } from '@/enums/scroll-direction.enum';
 import type { AdminCreateUserFormValues } from '@/lib/validation/admin-create-user.schema';
 import type { AdminPlanGrantFormValues } from '@/lib/validation/admin-plan-grant.schema';
@@ -279,23 +280,6 @@ export type UseJumpToMessageReturn = {
   jumpToMessage: (messageId: string) => void;
 };
 
-export type UseFeedbackLauncherReturn = {
-  /** The launcher's own box, which is the column its clearance is measured for. */
-  launcherRef: React.RefObject<HTMLButtonElement | null>;
-};
-
-export type UseFeedbackLauncherCollapseReturn = {
-  /** True once the launcher has been tucked to the screen edge. */
-  isCollapsed: boolean;
-  /** Tucks the launcher to the edge and persists the choice. */
-  collapse: () => void;
-  /** Restores the full launcher and persists the choice. */
-  expand: () => void;
-  /** Starts tracking a drag on the collapsed edge tab, so pulling it toward
-   * the centre expands the launcher the same way tapping it does. */
-  onEdgeTabPointerDown: (event: React.PointerEvent<HTMLButtonElement>) => void;
-};
-
 export type UsePasswordRotationGuardReturn = {
   /** True while the account is required to replace its current password. */
   mustRotate: boolean;
@@ -408,8 +392,9 @@ export type UseAdminUserMutationsReturn = {
   handleAssignPlan: (
     userId: string,
     planId: string,
-    durationMonths: number,
+    duration: number,
     grantReason: string,
+    unit?: PlanGrantDurationUnit,
   ) => void;
   handleUpdateUser: (userId: string, data: AdminUserUpdateRequest) => void;
   handleTemporaryPassword: (userId: string) => void;

@@ -500,7 +500,7 @@ export const de: TranslationDictionary = {
         'Ihr Tarif erlaubt eine bestimmte Anzahl Nachrichten pro Tag. Zurückgesetzt wird um Mitternacht UTC, oder Sie wechseln jetzt zu einem größeren Tarif.',
       trialExpiredTitle: 'Ihre kostenlose Testphase ist beendet',
       trialExpiredBody:
-        'Der kostenlose Tarif läuft 30 Tage. Wählen Sie einen Tarif, um dort weiterzumachen, wo Sie aufgehört haben.',
+        'Der kostenlose Tarif ist eine zeitlich begrenzte Testphase. Wählen Sie einen Tarif, um dort weiterzumachen, wo Sie aufgehört haben.',
       featureDisabledTitle: 'Ihr Tarif enthält das nicht',
       featureDisabledBody:
         'Diese Nachricht benötigte eine Funktion, die Ihr aktueller Tarif nicht abdeckt.',
@@ -816,6 +816,8 @@ export const de: TranslationDictionary = {
       'Ein Video kann einige Minuten dauern. Sie können weiter chatten, während es erstellt wird.',
     videoLoadFailed: 'Das Video konnte nicht geladen werden',
     videoLoadFailedHint: 'Laden Sie die Seite neu, um es erneut zu versuchen.',
+    videoFailureSourceImageInvalid:
+      'Das Bild konnte nicht verwendet werden: Verwenden Sie ein eigenes JPEG-, PNG- oder WebP-Bild unter 10 MB.',
     imageStage: {
       queued: 'Wartet in der Bild-Warteschlange',
       connecting: 'Verbindung zur Bild-Laufzeit wird hergestellt',
@@ -1661,6 +1663,12 @@ export const de: TranslationDictionary = {
       superAdminImmutable: 'Nur der Super-Admin kann das Super-Admin-Konto ändern.',
       superAdminSelfLocked: 'Der Super-Admin kann diese Änderung nicht am eigenen Konto vornehmen.',
       superAdminRequired: 'Nur der Super-Admin darf diese Aktion ausführen.',
+      planTrialNotFound: 'Dieser Nutzer hatte noch nie eine kostenlose Testphase.',
+      planTrialSuperseded:
+        'Dieser Nutzer befindet sich nicht mehr in seiner kostenlosen Testphase. Setzen Sie ihn stattdessen für eine Anzahl von Tagen auf den kostenlosen Tarif.',
+      planGrantDurationInvalid:
+        'Geben Sie eine ganze Zahl von Tagen zwischen 1 und 3650 oder von Monaten zwischen 1 und 60 ein.',
+      planGrantReasonRequired: 'Ein Grund ist erforderlich.',
     },
     title: 'Admin',
     description: 'Benutzer und Systemeinstellungen verwalten',
@@ -1778,6 +1786,21 @@ export const de: TranslationDictionary = {
     assignPlanReasonRequired: 'Ein Grund ist erforderlich.',
     assignPlanCancel: 'Abbrechen',
     assignPlanConfirm: 'Tarif gewähren',
+    assignPlanDurationDaysLabel: 'Dauer (Tage)',
+    assignPlanDurationDaysInvalid: 'Geben Sie eine ganze Zahl von Tagen zwischen 1 und 3650 ein.',
+    trialActionsHeading: 'Aktionen für die kostenlose Testphase',
+    addTrialDaysLabel: 'Hinzuzufügende Tage',
+    addTrialDaysHelp:
+      'Wird zum aktuellen Enddatum addiert, oder ab heute gezählt, wenn die Testphase bereits beendet ist.',
+    addTrialDaysConfirm: 'Testtage hinzufügen',
+    addTrialDaysSuccess: '{days} Testtage hinzugefügt. Noch {remaining} Tage verbleibend.',
+    addTrialDaysFailed: 'Testtage konnten nicht hinzugefügt werden.',
+    setFreeLabel: 'Tage im Tarif {plan}',
+    setFreeHelp:
+      'Setzt den Nutzer für die angegebene Anzahl von Tagen auf diesen Tarif, auch wenn die Testphase bereits genutzt wurde oder ein kostenpflichtiger Tarif aktiv ist.',
+    setFreeConfirm: 'Für diese Tage auf {plan} setzen',
+    setFreeSuccess: 'Nutzer wurde für {days} Tage auf den kostenlosen Tarif gesetzt.',
+    setFreeFailed: 'Der Nutzer konnte nicht auf den kostenlosen Tarif gesetzt werden.',
     platformHealthLinkDesc: 'Der Systemstatus wird auf dem Dashboard überwacht',
     platformHealthLinkBody:
       'Dienststatus, Latenz und Verfügbarkeitsmetriken befinden sich auf dem Dashboard. Öffnen Sie es für eine Echtzeitansicht.',
@@ -4309,8 +4332,8 @@ export const de: TranslationDictionary = {
     },
   },
   trialStatus: {
-    activeTitle: 'Deine kostenlose Testphase ist aktiv',
-    activeBody: 'Noch {days} Tage. Deine Testphase endet am {date}.',
+    activeTitle: 'Sie nutzen die kostenlose Testphase: noch {days} Tage',
+    activeBody: 'Ihre Testphase endet am {date}.',
     expiredTitle: 'Deine kostenlose Testphase ist beendet',
     expiredBody: 'Wähle einen kostenpflichtigen Tarif, um die KI-Funktionen weiter zu nutzen.',
     upgrade: 'Kostenpflichtige Tarife ansehen',
@@ -4379,6 +4402,7 @@ export const de: TranslationDictionary = {
     deactivateFailed: 'Tarif konnte nicht deaktiviert werden.',
     setDefaultSucceeded: 'Registrierungstarif aktualisiert.',
     signupPlanBadge: 'Registrierungstarif',
+    trialBadge: 'Testphase: {days} Tage',
     popularBadge: 'Am beliebtesten',
     setSignupPlan: 'Als Registrierungstarif festlegen',
     setMostPopular: 'Als beliebtesten Tarif festlegen',
@@ -4431,8 +4455,13 @@ export const de: TranslationDictionary = {
       maxMemoryItems: 'Max. Speicherelemente',
       maxVideoSeconds: 'Maximale Videolänge (Sekunden)',
       isPublic: 'Öffentlich gelistet',
-      isTrial: '30-tägige Testphase',
-      trialHelp: 'Die Testphase dauert 30 Tage und kann pro Konto nur einmal genutzt werden.',
+      isTrial: 'Plan mit kostenloser Testphase',
+      trialHelp:
+        'Der Testzugang kann einmal pro Konto genutzt werden. Legen Sie unten fest, wie lange er dauert.',
+      trialDays: 'Testdauer (Tage)',
+      trialDaysHelp:
+        'Jede ganze Zahl von 1 bis 3650. Neue Tests verwenden den hier gespeicherten Wert; bereits laufende Tests behalten ihr Enddatum.',
+      trialDaysInvalid: 'Geben Sie eine ganze Zahl von Tagen zwischen 1 und 3650 ein.',
       featureGates: 'Funktionsfreigaben',
       orchestrationLabs: 'Orchestrierungs-Labore',
       orchestrationLabsHint:
@@ -4558,6 +4587,8 @@ export const de: TranslationDictionary = {
     featuresIncluded: 'Enthaltene Funktionen',
     noPlanTitle: 'Kein Tarif zugewiesen',
     noPlanDescription: 'Sie befinden sich auf der Standard-Zugriffsstufe.',
+    trialDaysLeft: 'Kostenlose Testphase: noch {days} Tage',
+    trialEnded: 'Ihre kostenlose Testphase ist beendet',
     modelPrimary: 'Primär',
     modelCompare: 'Vergleich',
     modelOverride: 'Limit {limit} Tokens/Tag',
@@ -5191,6 +5222,7 @@ export const de: TranslationDictionary = {
       },
       savePercent: '{percent} % sparen',
       mostPopular: 'Am beliebtesten',
+      trialLength: 'Kostenlose Testphase: {days} Tage',
       dailyTokens: 'Tägliches Kontingent',
       monthlyTokens: 'Monatliches Kontingent',
       ctaFree: 'Kostenlos starten',
@@ -6660,8 +6692,6 @@ export const de: TranslationDictionary = {
     launcher: {
       ariaLabel: 'Feedback senden',
       tooltip: 'Fehler melden oder Feedback geben',
-      hideAriaLabel: 'Feedback-Button an den Rand ausblenden',
-      showAriaLabel: 'Feedback-Button einblenden',
     },
     dialog: {
       typeLabel: 'Typ',
@@ -6675,6 +6705,10 @@ export const de: TranslationDictionary = {
       cancel: 'Abbrechen',
       submit: 'Feedback senden',
       submitting: 'Wird gesendet…',
+      nameLabel: 'Ihr Name',
+      emailLabel: 'Ihre E-Mail-Adresse',
+      publicDescription:
+        'Sagen Sie uns, was Sie denken. Wir lesen jede Nachricht und antworten gegebenenfalls per E-Mail.',
     },
     editor: {
       bold: 'Fett',
@@ -6705,6 +6739,10 @@ export const de: TranslationDictionary = {
       titleRequired: 'Ein Titel ist erforderlich',
       contentRequired: 'Eine Beschreibung ist erforderlich',
       submitFailed: 'Feedback konnte nicht gesendet werden',
+      nameRequired: 'Ihr Name ist erforderlich',
+      emailInvalid: 'Geben Sie eine gültige E-Mail-Adresse ein',
+      rateLimited: 'Zu viele Nachrichten gesendet. Bitte versuchen Sie es später erneut.',
+      checkFields: 'Bitte prüfen Sie Ihre Angaben und versuchen Sie es erneut',
       tooManyFiles: 'Zu viele Dateien',
       fileTooLarge: 'Diese Datei ist zu groß',
       totalTooLarge: 'Diese Dateien sind zusammen zu groß',
@@ -6783,5 +6821,6 @@ export const de: TranslationDictionary = {
     dragDropOrClickToUpload: 'Bilder hierher ziehen oder klicken zum Auswählen',
     removeAttachment: 'Anhang entfernen',
     submittedWithTicket: 'Feedback gesendet — Ticket {ticketNumber}',
+    submittedPublic: 'Vielen Dank — Ihr Feedback wurde gesendet',
   },
 };

@@ -498,7 +498,7 @@ export const fr: TranslationDictionary = {
         'Votre forfait autorise un nombre défini de messages par jour. Il se réinitialise à minuit UTC, ou vous pouvez passer à un forfait supérieur.',
       trialExpiredTitle: 'Votre essai gratuit est terminé',
       trialExpiredBody:
-        'Le forfait gratuit dure 30 jours. Choisissez un forfait pour reprendre où vous en étiez.',
+        'Le forfait gratuit est un essai de durée limitée. Choisissez un forfait pour reprendre là où vous vous êtes arrêté.',
       featureDisabledTitle: 'Votre forfait ne couvre pas cela',
       featureDisabledBody:
         'Ce message nécessitait une fonctionnalité que votre forfait actuel ne couvre pas.',
@@ -815,6 +815,8 @@ export const fr: TranslationDictionary = {
       'Une vidéo peut prendre quelques minutes. Vous pouvez continuer à discuter pendant le rendu.',
     videoLoadFailed: 'Impossible de charger la vidéo',
     videoLoadFailedHint: 'Rechargez la page pour réessayer.',
+    videoFailureSourceImageInvalid:
+      "L'image n'a pas pu être utilisée : utilisez une image JPEG, PNG ou WebP de moins de 10 Mo qui vous appartient.",
     imageStage: {
       queued: "En file d'attente d'images",
       connecting: "Connexion au moteur d'images",
@@ -1663,6 +1665,12 @@ export const fr: TranslationDictionary = {
       superAdminSelfLocked:
         'Le super administrateur ne peut pas appliquer cette modification à son propre compte.',
       superAdminRequired: 'Seul le super administrateur peut effectuer cette action.',
+      planTrialNotFound: "Cet utilisateur n'a jamais eu d'essai gratuit.",
+      planTrialSuperseded:
+        "Cet utilisateur n'est plus sur son essai gratuit. Placez-le plutôt sur le forfait gratuit pour un nombre de jours.",
+      planGrantDurationInvalid:
+        'Saisissez un nombre entier de jours entre 1 et 3650, ou de mois entre 1 et 60.',
+      planGrantReasonRequired: 'Un motif est requis.',
     },
     title: 'Administration',
     description: 'Gérez les utilisateurs et les paramètres système',
@@ -1778,6 +1786,21 @@ export const fr: TranslationDictionary = {
     assignPlanReasonRequired: 'Un motif est requis.',
     assignPlanCancel: 'Annuler',
     assignPlanConfirm: 'Attribuer le forfait',
+    assignPlanDurationDaysLabel: 'Durée (jours)',
+    assignPlanDurationDaysInvalid: 'Saisissez un nombre entier de jours compris entre 1 et 3650.',
+    trialActionsHeading: "Actions sur l'essai gratuit",
+    addTrialDaysLabel: 'Jours à ajouter',
+    addTrialDaysHelp:
+      "S'ajoutent à la date de fin actuelle, ou sont comptés à partir d'aujourd'hui si l'essai est déjà terminé.",
+    addTrialDaysConfirm: "Ajouter des jours d'essai",
+    addTrialDaysSuccess: "{days} jours d'essai ajoutés. Il reste {remaining} jours.",
+    addTrialDaysFailed: "Impossible d'ajouter des jours d'essai.",
+    setFreeLabel: 'Jours sur le forfait {plan}',
+    setFreeHelp:
+      "Place l'utilisateur sur ce forfait pour le nombre de jours indiqué, même s'il a déjà utilisé son essai ou s'il a un forfait payant.",
+    setFreeConfirm: 'Passer à {plan} pour ces jours',
+    setFreeSuccess: "L'utilisateur a été placé sur le forfait gratuit pour {days} jours.",
+    setFreeFailed: "Impossible de placer l'utilisateur sur le forfait gratuit.",
     platformHealthLinkDesc: "L'état du système est surveillé sur le tableau de bord",
     platformHealthLinkBody:
       "L'état des services, la latence et la disponibilité sont sur le tableau de bord. Ouvrez-le pour une vue en temps réel.",
@@ -4312,8 +4335,8 @@ export const fr: TranslationDictionary = {
     },
   },
   trialStatus: {
-    activeTitle: 'Votre essai gratuit est actif',
-    activeBody: 'Il reste {days} jours. Votre essai se termine le {date}.',
+    activeTitle: 'Vous êtes en essai gratuit : {days} jours restants',
+    activeBody: 'Votre essai se termine le {date}.',
     expiredTitle: 'Votre essai gratuit est terminé',
     expiredBody: 'Choisissez une offre payante pour continuer à utiliser les fonctionnalités d’IA.',
     upgrade: 'Voir les offres payantes',
@@ -4383,6 +4406,7 @@ export const fr: TranslationDictionary = {
     deactivateFailed: 'Impossible de désactiver le forfait.',
     setDefaultSucceeded: "Forfait d'inscription mis à jour.",
     signupPlanBadge: "Forfait d'inscription",
+    trialBadge: 'Essai : {days} jours',
     popularBadge: 'Le plus populaire',
     setSignupPlan: "Définir comme forfait d'inscription",
     setMostPopular: 'Définir comme le plus populaire',
@@ -4435,8 +4459,13 @@ export const fr: TranslationDictionary = {
       maxMemoryItems: 'Max. d’éléments de mémoire',
       maxVideoSeconds: 'Durée vidéo maximale (secondes)',
       isPublic: 'Répertorié publiquement',
-      isTrial: 'Essai de 30 jours',
-      trialHelp: 'L’essai dure 30 jours et ne peut être utilisé qu’une fois par compte.',
+      isTrial: 'Forfait avec essai gratuit',
+      trialHelp:
+        "L'accès d'essai peut être utilisé une fois par compte. Définissez ci-dessous sa durée.",
+      trialDays: "Durée de l'essai (jours)",
+      trialDaysHelp:
+        'Tout nombre entier de 1 à 3650. Les nouveaux essais utilisent la valeur enregistrée ici ; les essais déjà en cours conservent leur date de fin.',
+      trialDaysInvalid: 'Saisissez un nombre entier de jours compris entre 1 et 3650.',
       featureGates: 'Options de fonctionnalités',
       orchestrationLabs: 'Labos d’orchestration',
       orchestrationLabsHint:
@@ -4563,6 +4592,8 @@ export const fr: TranslationDictionary = {
     featuresIncluded: 'Fonctionnalités incluses',
     noPlanTitle: 'Aucun forfait attribué',
     noPlanDescription: 'Vous êtes sur le niveau d’accès par défaut.',
+    trialDaysLeft: 'Essai gratuit : {days} jours restants',
+    trialEnded: 'Votre essai gratuit est terminé',
     modelPrimary: 'Principal',
     modelCompare: 'Comparaison',
     modelOverride: 'Limite {limit} jetons/jour',
@@ -5199,6 +5230,7 @@ export const fr: TranslationDictionary = {
       },
       savePercent: 'Économisez {percent} %',
       mostPopular: 'Le plus populaire',
+      trialLength: 'Essai gratuit : {days} jours',
       dailyTokens: 'Quota quotidien',
       monthlyTokens: 'Quota mensuel',
       ctaFree: 'Commencer gratuitement',
@@ -6668,8 +6700,6 @@ export const fr: TranslationDictionary = {
     launcher: {
       ariaLabel: 'Envoyer un retour',
       tooltip: 'Signaler un bug ou donner votre avis',
-      hideAriaLabel: 'Masquer le bouton de retour sur le bord',
-      showAriaLabel: 'Afficher le bouton de retour',
     },
     dialog: {
       typeLabel: 'Type',
@@ -6683,6 +6713,10 @@ export const fr: TranslationDictionary = {
       cancel: 'Annuler',
       submit: 'Envoyer',
       submitting: 'Envoi…',
+      nameLabel: 'Votre nom',
+      emailLabel: 'Votre adresse e-mail',
+      publicDescription:
+        'Dites-nous ce que vous en pensez. Nous lisons chaque message et pouvons répondre par e-mail.',
     },
     editor: {
       bold: 'Gras',
@@ -6713,6 +6747,10 @@ export const fr: TranslationDictionary = {
       titleRequired: 'Un titre est requis',
       contentRequired: 'Une description est requise',
       submitFailed: 'Le retour n’a pas pu être envoyé',
+      nameRequired: 'Votre nom est requis',
+      emailInvalid: 'Saisissez une adresse e-mail valide',
+      rateLimited: 'Trop de messages envoyés. Veuillez réessayer plus tard.',
+      checkFields: 'Vérifiez vos informations et réessayez',
       tooManyFiles: 'Trop de fichiers',
       fileTooLarge: 'Ce fichier est trop volumineux',
       totalTooLarge: 'Ces fichiers sont trop volumineux au total',
@@ -6790,5 +6828,6 @@ export const fr: TranslationDictionary = {
     dragDropOrClickToUpload: 'Glissez des images ici ou cliquez pour choisir',
     removeAttachment: 'Supprimer la pièce jointe',
     submittedWithTicket: 'Retour envoyé — Ticket {ticketNumber}',
+    submittedPublic: 'Merci — votre retour a bien été envoyé',
   },
 };

@@ -5,8 +5,6 @@
 export type FeedbackLauncherTranslation = {
   ariaLabel: string;
   tooltip: string;
-  hideAriaLabel: string;
-  showAriaLabel: string;
 };
 
 export type FeedbackDialogTranslation = {
@@ -20,6 +18,9 @@ export type FeedbackDialogTranslation = {
   cancel: string;
   submit: string;
   submitting: string;
+  nameLabel: string;
+  emailLabel: string;
+  publicDescription: string;
 };
 
 export type FeedbackEditorTranslation = {
@@ -57,6 +58,10 @@ export type FeedbackErrorsTranslation = {
   totalTooLarge: string;
   unsupportedType: string;
   uploadFailed: string;
+  nameRequired: string;
+  emailInvalid: string;
+  rateLimited: string;
+  checkFields: string;
 };
 
 export type FeedbackAdminStatusTranslation = {
@@ -149,4 +154,5 @@ export type FeedbackTranslation = {
   dragDropOrClickToUpload: string;
   removeAttachment: string;
   submittedWithTicket: string;
+  submittedPublic: string;
 };

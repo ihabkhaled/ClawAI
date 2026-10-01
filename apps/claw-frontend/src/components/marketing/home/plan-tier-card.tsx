@@ -95,6 +95,12 @@ export function PlanTierCard({ plan, interval }: PublicPlanCardProps): React.Rea
         </p>
       ) : null}
 
+      {plan.isTrial && plan.trialDurationDays !== null ? (
+        <p className="text-muted-foreground mt-1 text-xs" data-testid="plan-trial-length">
+          {t('marketing.pricing.trialLength', { days: plan.trialDurationDays })}
+        </p>
+      ) : null}
+
       <dl className="text-muted-foreground mt-6 space-y-2.5 text-xs">
         <div className="flex justify-between gap-2">
           <dt>{t('userPlan.dailyLimitLabel')}</dt>
