@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import {
   type CreditPackageView,
+  type PaygFinalizeOutcome,
   type PaygReservationOutcome,
   type PaygWalletSnapshot,
 } from '@claw/shared-types';
@@ -62,14 +63,18 @@ export class CreditInternalController {
     return this.reservations.reserve(toCreditReserveInput(dto));
   }
 
-  // 204 even for an unknown reservation. The user already has their answer, and
-  // a finalize failure must never surface to them as a failed request.
+  // 200 even for an unknown reservation (`settled: false`). The user already has
+  // their answer, and a finalize failure must never surface to them as a failed
+  // request. This answered 204 with no body until F108; the reply is purely
+  // additive, so a caller that ignores it (including the old PaygMeter, which
+  // only reads a body when the status is not 204) is unaffected. The settled
+  // cost is inside it for a PAYG user only - see CreditReservationManager.finalize.
   @Post('finalize')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   async finalize(
     @Body(new ZodValidationPipe(finalizeCreditSchema)) dto: FinalizeCreditDto,
-  ): Promise<void> {
-    await this.reservations.finalize(toCreditFinalizeInput(dto));
+  ): Promise<PaygFinalizeOutcome> {
+    return this.reservations.finalize(toCreditFinalizeInput(dto));
   }
 
   @Post('release')

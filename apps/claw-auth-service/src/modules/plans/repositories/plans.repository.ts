@@ -12,6 +12,7 @@ import {
 } from '../../../generated/prisma';
 import {
   type ActiveTrialState,
+  type EffectiveAssignmentProvenance,
   type PendingPlanRetirementMigration,
   type PlanRetirementResult,
   type PlanWithAccess,
@@ -55,6 +56,32 @@ export class PlansRepository {
       include: { plan: { include: { modelAccess: true } } },
     });
     return assignment?.plan ?? null;
+  }
+
+  /**
+   * How the assignment in force was obtained, and whether its plan is a trial.
+   *
+   * Same selection as `findEffectiveForUser` (ACTIVE, not past its validity,
+   * newest first) so the answer describes the SAME plan the entitlement gate
+   * enforces. Selects two scalars only: this runs on the PAYG settlement path
+   * and must not pull the plan's model-access rows to learn a provenance.
+   */
+  async findEffectiveProvenance(
+    userId: string,
+    now: Date,
+  ): Promise<EffectiveAssignmentProvenance | null> {
+    const assignment = await this.prisma.userPlanAssignment.findFirst({
+      where: {
+        userId,
+        status: 'ACTIVE',
+        OR: [{ entitlementValidUntil: null }, { entitlementValidUntil: { gt: now } }],
+      },
+      orderBy: { startsAt: 'desc' },
+      select: { grantType: true, plan: { select: { isTrial: true } } },
+    });
+    return assignment === null
+      ? null
+      : { grantType: assignment.grantType, isTrial: assignment.plan.isTrial };
   }
 
   /**

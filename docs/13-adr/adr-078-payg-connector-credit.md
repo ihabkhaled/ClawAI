@@ -350,6 +350,59 @@ payment-service still holds `CheckoutSession` rows with `purpose = 'CREDIT_TOPUP
 referencing `creditPackageId` with no foreign key to stop you. Full procedure:
 [`docs/11-runbooks/runbook-payg-credit.md`](../11-runbooks/runbook-payg-credit.md).
 
+## Addendum (2026-10-01): F108 - the settled cost is shown back to PAYG users only
+
+**Decision (owner, 2026-10-01, the recommended default of
+[`coding-agent-backend-decisions-2026-10.md`](../14-risk-debt/coding-agent-backend-decisions-2026-10.md) section F108).**
+Settlement used to be invisible to the caller: `POST /internal/credit/finalize` answered 204
+and `PaygMeter.finalize` returned `void`. It now answers 200 with a small additive body, and
+chat-service's runtime-v2 loop turns that into a `run.usage` journal event carrying
+`costMicros`, which the coding-agent extension already exports as `clawai.cost`.
+
+**Contract.**
+
+```ts
+// POST /internal/credit/finalize -> 200   (was 204; callers that ignore the reply are unaffected)
+type PaygFinalizeOutcome = {
+  settled: boolean; // false: unknown reservation, or a replay of one already settled
+  billingMode: 'PAYG' | 'SUBSCRIPTION' | 'UNKNOWN';
+  settledCostMicroUsd?: number; // present ONLY when billingMode === 'PAYG'; integer micro-USD; 0 is valid
+};
+```
+
+**Who is PAYG.** auth-service decides (rule 37 item 9), from the assignment in force
+(`PlansRepository.findEffectiveProvenance`, the same selection the entitlement gate uses):
+`FREE_DEFAULT` and not a trial is `PAYG` (no subscription, so metered spend is drawn from
+credit the user bought); `PAID_SUBSCRIPTION` is `SUBSCRIPTION`. **Everything else is
+`UNKNOWN`** and is treated exactly like `SUBSCRIPTION`: trials (nothing is charged),
+`ADMIN_GRANT`, `PROMOTIONAL`, `MIGRATION`, a missing assignment, an administrator, a user the
+repository cannot find, a lookup that throws, and any `EntitlementGrantType` added later.
+A new grant type therefore starts hidden, never disclosed.
+
+**What number.** The amount CHARGED to the wallet (`CreditSettlement.chargedMicroUsd`), not the
+priced `actualCostMicroUsd`. They are equal unless a provider overruns the clamped ceiling, where
+the charge is capped at the hold; showing the priced figure there would reveal more than the user
+paid. This is a deliberate narrowing of the brief's wording ("return `actualCostMicroUsd`").
+
+**Fail closed on both ends.** auth omits the cost field for every non-PAYG reply and for a charge
+that is not a safe integer. `PaygMeter` independently drops the cost unless it positively sees
+`billingMode === 'PAYG'` and a non-negative safe integer, so an older or newer auth-service, an
+unrecognised mode, or a malformed body can only ever remove the disclosure. chat-service never
+copies the field anywhere but the `run.usage` event, and that event carries `costMicros` and
+nothing else: no provider, model, rate, ceiling or margin.
+
+**Disclosure analysis.** See
+[billing-threat-model.md, "Settled cost in runtime events (F108)"](../03-architecture/billing-threat-model.md).
+In short: a PAYG user is charged that number, so showing it adds nothing they do not pay; a
+subscriber would learn per-call provider cost from it, so it is withheld.
+
+**Not changed, and worth the owner's attention.** `GET /credit/me/ledger` already returns every
+user, subscribers included, one `CONSUMPTION` row per metered call with `amountMicroUsd`,
+`provider`, `model` and `surface` (`toLedgerEntryView`). That per-call debit is therefore already
+visible to subscribers outside the event stream. F108 does not widen it and does not narrow it;
+the event stream simply does not add a second door for subscribers. Whether the ledger itself
+should stay per-call for subscribers is a separate product decision.
+
 ## Related
 
 - [ADR-079](adr-079-auth-model-price-cache.md) — where auth learns prices

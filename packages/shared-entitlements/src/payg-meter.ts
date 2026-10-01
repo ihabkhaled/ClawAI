@@ -4,7 +4,12 @@ import {
   PAYG_EXEMPT_PROVIDERS,
   PAYG_RESERVATION_TTL_MS,
 } from '@claw/shared-constants';
-import { BillingErrorCode, type PaygUnitCounts } from '@claw/shared-types';
+import {
+  BillingErrorCode,
+  PaygBillingMode,
+  type PaygFinalizeOutcome,
+  type PaygUnitCounts,
+} from '@claw/shared-types';
 
 import { PaygCreditExhaustedError } from './payg-credit-exhausted.error';
 import {
@@ -68,6 +73,39 @@ function readErrorCode(payload: unknown): BillingErrorCode {
   return isRecord(payload) && typeof payload['errorCode'] === 'string'
     ? (payload['errorCode'] as BillingErrorCode)
     : BillingErrorCode.PAYG_CREDIT_EXHAUSTED;
+}
+
+/**
+ * Reads auth-service's finalize reply, failing CLOSED on the one field that
+ * discloses money (F108, ADR-078 addendum).
+ *
+ * The cost survives only when the server named the user `PAYG` AND sent a
+ * non-negative safe integer. A missing, mistyped or unrecognised billing mode
+ * becomes `UNKNOWN` and drops the cost - a client talking to a newer or older
+ * auth-service must never turn "I do not understand this" into a disclosure.
+ * Anything that is not an object (an old auth-service answers 204 with no body)
+ * yields `undefined`, which every caller reads as "no cost to show".
+ */
+function readFinalizeOutcome(payload: unknown): PaygFinalizeOutcome | undefined {
+  if (!isRecord(payload)) {
+    return undefined;
+  }
+  const billingMode =
+    payload['billingMode'] === PaygBillingMode.PAYG ||
+    payload['billingMode'] === PaygBillingMode.SUBSCRIPTION
+      ? payload['billingMode']
+      : PaygBillingMode.UNKNOWN;
+  const cost = payload['settledCostMicroUsd'];
+  const disclosable =
+    billingMode === PaygBillingMode.PAYG &&
+    typeof cost === 'number' &&
+    Number.isSafeInteger(cost) &&
+    cost >= 0;
+  return {
+    settled: payload['settled'] === true,
+    billingMode,
+    ...(disclosable ? { settledCostMicroUsd: cost } : {}),
+  };
 }
 
 function readNumber(payload: unknown, key: string): number {
@@ -196,32 +234,41 @@ export class PaygMeter {
    * turning a bookkeeping failure into a failed request would be a strictly
    * worse outcome — the sweeper reclaims an unfinalized hold after
    * `PAYG_RESERVATION_TTL_MS`.
+   *
+   * Returns what auth-service reported about the settlement, or `undefined`
+   * when there is nothing to report: an unmetered hold, a failed request, or an
+   * auth-service that predates the reply body. The cost inside it is present
+   * only for a PAYG user (see `readFinalizeOutcome`); callers that ignore the
+   * return value keep working exactly as before.
    */
   async finalize(
     hold: PaygHold,
     usage: PaygFinalizeUsage,
     calls: PaygFinalizeCalls = {},
-  ): Promise<void> {
+  ): Promise<PaygFinalizeOutcome | undefined> {
     if (!hold.metered || hold.reservationId === null) {
-      return;
+      return undefined;
     }
     try {
-      await this.request(`${CREDIT_INTERNAL_API_BASE}/finalize`, {
-        reservationId: hold.reservationId,
-        usage: {
-          promptTokens: Math.max(0, Math.floor(usage.promptTokens)),
-          completionTokens: Math.max(0, Math.floor(usage.completionTokens)),
-          cachedPromptTokens: Math.max(0, Math.floor(usage.cachedPromptTokens)),
-          reasoningTokens: Math.max(0, Math.floor(usage.reasoningTokens)),
-        },
-        toolCalls: Math.max(0, Math.floor(calls.toolCalls ?? 0)),
-        searchCalls: Math.max(0, Math.floor(calls.searchCalls ?? 0)),
-        ...PaygMeter.unitWire(calls),
-      });
+      return readFinalizeOutcome(
+        await this.request(`${CREDIT_INTERNAL_API_BASE}/finalize`, {
+          reservationId: hold.reservationId,
+          usage: {
+            promptTokens: Math.max(0, Math.floor(usage.promptTokens)),
+            completionTokens: Math.max(0, Math.floor(usage.completionTokens)),
+            cachedPromptTokens: Math.max(0, Math.floor(usage.cachedPromptTokens)),
+            reasoningTokens: Math.max(0, Math.floor(usage.reasoningTokens)),
+          },
+          toolCalls: Math.max(0, Math.floor(calls.toolCalls ?? 0)),
+          searchCalls: Math.max(0, Math.floor(calls.searchCalls ?? 0)),
+          ...PaygMeter.unitWire(calls),
+        }),
+      );
     } catch {
       // Swallowed on purpose. See the doc comment: the sweeper is the backstop,
       // and it runs well inside PAYG_RESERVATION_TTL_MS.
       void PAYG_RESERVATION_TTL_MS;
+      return undefined;
     }
   }
 

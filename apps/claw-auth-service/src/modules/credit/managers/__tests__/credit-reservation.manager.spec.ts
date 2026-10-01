@@ -1,5 +1,11 @@
 import { type Mock, vi } from 'vitest';
-import { BillingErrorCode, ModelCostClass, PaygSurface, UserRole } from '@claw/shared-types';
+import {
+  BillingErrorCode,
+  ModelCostClass,
+  PaygBillingMode,
+  PaygSurface,
+  UserRole,
+} from '@claw/shared-types';
 
 import { type RedisService } from '../../../../infrastructure/redis/redis.service';
 import { type AuthRepository } from '../../../auth/repositories/auth.repository';
@@ -8,6 +14,7 @@ import { type SystemSettingService } from '../../../system-settings/services/sys
 import { type ConnectorPolicyClient } from '../../clients/connector-policy.client';
 import { type ModelRateClient } from '../../clients/model-rate.client';
 import { type CreditLedgerRepository } from '../../repositories/credit-ledger.repository';
+import { type CreditBillingModeService } from '../../services/credit-billing-mode.service';
 import { type CreditEventService } from '../../services/credit-event.service';
 import { type CreditFreeAllowanceService } from '../../services/credit-free-allowance.service';
 import { type CreditGrantService } from '../../services/credit-grant.service';
@@ -137,6 +144,7 @@ describe('CreditReservationManager', () => {
   let users: { findUserById: Mock };
   let events: { publishBalanceState: Mock };
   let ledger: { findReservationAttribution: Mock };
+  let billingModes: { resolve: Mock };
   let manager: CreditReservationManager;
 
   const build = (): CreditReservationManager =>
@@ -152,6 +160,7 @@ describe('CreditReservationManager', () => {
       events as unknown as CreditEventService,
       ledger as unknown as CreditLedgerRepository,
       freeAllowance as unknown as CreditFreeAllowanceService,
+      billingModes as unknown as CreditBillingModeService,
     );
 
   beforeEach(() => {
@@ -206,6 +215,7 @@ describe('CreditReservationManager', () => {
         .fn()
         .mockResolvedValue({ surface: PaygSurface.CHAT, workflow: null }),
     };
+    billingModes = { resolve: vi.fn().mockResolvedValue(PaygBillingMode.PAYG) };
     manager = build();
   });
 
@@ -451,7 +461,107 @@ describe('CreditReservationManager', () => {
           toolCalls: 0,
           searchCalls: 0,
         }),
-      ).resolves.toBeUndefined();
+      ).resolves.toEqual({ settled: false, billingMode: PaygBillingMode.UNKNOWN });
+      // No reservation, no user: the billing mode is never even looked up.
+      expect(billingModes['resolve']).not.toHaveBeenCalled();
+    });
+  });
+
+  // F108: the settled cost rides back on finalize for a PAYG user ONLY. The
+  // number is internal margin for everyone else, so each non-PAYG branch is
+  // asserted to carry no cost key at all - not undefined, not zero, absent.
+  describe('finalize outcome (F108)', () => {
+    const FINALIZE_INPUT = {
+      reservationId: 'res-1',
+      promptTokens: 1000,
+      completionTokens: 2000,
+      cachedPromptTokens: 0,
+      reasoningTokens: 0,
+      toolCalls: 0,
+      searchCalls: 0,
+    };
+
+    it('returns the charged amount in integer micro-USD for a PAYG user', async () => {
+      const outcome = await manager.finalize(FINALIZE_INPUT);
+      expect(outcome).toEqual({
+        settled: true,
+        billingMode: PaygBillingMode.PAYG,
+        settledCostMicroUsd: 21_000,
+      });
+      expect(Number.isInteger(outcome.settledCostMicroUsd)).toBe(true);
+      // Resolved for the reservation's owner, after the money moved.
+      expect(billingModes['resolve']).toHaveBeenCalledWith('user-1');
+    });
+
+    it('discloses the CHARGE, not the priced cost, when the provider overran the hold', async () => {
+      wallets['applySettlement'].mockResolvedValue({
+        chargedMicroUsd: 50_000n,
+        refundedMicroUsd: 0n,
+        availableAfterMicroUsd: 0n,
+        periodGrantMicroUsd: 300_000n,
+      });
+      const outcome = await manager.finalize({ ...FINALIZE_INPUT, completionTokens: 500_000 });
+      expect(outcome.settledCostMicroUsd).toBe(50_000);
+    });
+
+    it('keeps a zero charge as zero for a PAYG user', async () => {
+      wallets['applySettlement'].mockResolvedValue({
+        chargedMicroUsd: 0n,
+        refundedMicroUsd: 50_000n,
+        availableAfterMicroUsd: 50_000n,
+        periodGrantMicroUsd: 300_000n,
+      });
+      const outcome = await manager.finalize({
+        ...FINALIZE_INPUT,
+        promptTokens: 0,
+        completionTokens: 0,
+      });
+      expect(outcome).toEqual({
+        settled: true,
+        billingMode: PaygBillingMode.PAYG,
+        settledCostMicroUsd: 0,
+      });
+    });
+
+    it.each([PaygBillingMode.SUBSCRIPTION, PaygBillingMode.UNKNOWN])(
+      'omits the cost entirely for %s',
+      async (mode) => {
+        billingModes['resolve'].mockResolvedValue(mode);
+        const outcome = await manager.finalize(FINALIZE_INPUT);
+        expect(outcome).toEqual({ settled: true, billingMode: mode });
+        expect(outcome).not.toHaveProperty('settledCostMicroUsd');
+        // The money still moved: only the DISCLOSURE is withheld.
+        expect(wallets['applySettlement']).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it('never carries a provider rate, a margin or a priced cost beside the charge', async () => {
+      const outcome = await manager.finalize(FINALIZE_INPUT);
+      expect(Object.keys(outcome).sort()).toEqual([
+        'billingMode',
+        'settled',
+        'settledCostMicroUsd',
+      ]);
+      expect(JSON.stringify(outcome)).not.toMatch(/rate|margin|provider|actual|ceiling/i);
+    });
+
+    it('withholds a charge that is not a safe integer instead of rounding it', async () => {
+      wallets['applySettlement'].mockResolvedValue({
+        chargedMicroUsd: BigInt(Number.MAX_SAFE_INTEGER) + 1n,
+        refundedMicroUsd: 0n,
+        availableAfterMicroUsd: 0n,
+        periodGrantMicroUsd: 300_000n,
+      });
+      const outcome = await manager.finalize(FINALIZE_INPUT);
+      expect(outcome.billingMode).toBe(PaygBillingMode.PAYG);
+      expect(outcome).not.toHaveProperty('settledCostMicroUsd');
+    });
+
+    it('reports a replay as not settled, with no cost and no billing-mode lookup', async () => {
+      usage['markFinalized'].mockResolvedValue(0);
+      const outcome = await manager.finalize(FINALIZE_INPUT);
+      expect(outcome).toEqual({ settled: false, billingMode: PaygBillingMode.UNKNOWN });
+      expect(billingModes['resolve']).not.toHaveBeenCalled();
     });
   });
 
@@ -676,6 +786,18 @@ describe('CreditReservationManager', () => {
         toolCalls: 0,
         searchCalls: 0,
       };
+
+      // F108: what the PLATFORM paid for an absorbed call is never shown to the
+      // user, even a PAYG one, and it never reaches the billing-mode lookup.
+      it('discloses no cost for an absorbed call (F108)', async () => {
+        usage['findByReservationId'].mockResolvedValue(allowanceRecord());
+
+        const outcome = await manager.finalize(usageReport);
+
+        expect(outcome).toEqual({ settled: true, billingMode: PaygBillingMode.UNKNOWN });
+        expect(outcome).not.toHaveProperty('settledCostMicroUsd');
+        expect(billingModes['resolve']).not.toHaveBeenCalled();
+      });
 
       it('moves no money: no settlement, no counter change', async () => {
         usage['findByReservationId'].mockResolvedValue(allowanceRecord());

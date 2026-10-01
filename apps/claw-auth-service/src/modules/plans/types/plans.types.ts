@@ -1,4 +1,5 @@
 import {
+  type EntitlementGrantType,
   type Plan,
   type PlanLifecycleStatus,
   type PlanModelAccess,
@@ -147,6 +148,12 @@ export type CreatePlanData = {
 };
 
 export type UpdatePlanData = Partial<Omit<CreatePlanData, 'slug'>>;
+
+/** How the assignment in force was obtained, for the PAYG billing-mode decision. */
+export type EffectiveAssignmentProvenance = {
+  grantType: EntitlementGrantType;
+  isTrial: boolean;
+};
 
 export type ActiveTrialState = {
   isTrial: boolean;

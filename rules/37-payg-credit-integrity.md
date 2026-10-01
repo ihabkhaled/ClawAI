@@ -217,6 +217,16 @@ paid model, rule 1 applies to it like anything else.
     402 `PAYG_CREDIT_EXHAUSTED`, never a new code
     ([ADR-142](../docs/13-adr/adr-142-free-allowance-on-credit-connectors.md)).
 
+23. **A settled cost is shown back to PAYG users only, and fails closed.** `POST
+/internal/credit/finalize` returns `{ settled, billingMode, settledCostMicroUsd? }`
+    and the cost key exists only when auth-service named the user `PAYG` (a non-trial
+    `FREE_DEFAULT` assignment). `SUBSCRIPTION`, `UNKNOWN`, an unrecognised value, a
+    malformed body, an absent body (old auth) and a non-integer all mean "no cost".
+    The figure is the amount charged, never the priced cost, rate, ceiling or margin,
+    and the only place it leaves chat-service is the `run.usage` event's `costMicros`.
+    The decision stays in auth-service (item 9): never branch on a plan in a caller
+    ([ADR-078 addendum](../docs/13-adr/adr-078-payg-connector-credit.md), F108).
+
 ## Prohibited patterns
 
 - Calling a paid provider with `maxTokens` set to anything but `hold.maxOutputTokens`.

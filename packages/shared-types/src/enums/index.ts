@@ -58,6 +58,7 @@ export { BillingInterval } from './billing-interval.enum';
 export { CheckoutPurpose } from './checkout-purpose.enum';
 export { CreditBucket } from './credit-bucket.enum';
 export { CreditLedgerKind } from './credit-ledger-kind.enum';
+export { PaygBillingMode } from './payg-billing-mode.enum';
 export { PaygSurface } from './payg-surface.enum';
 export { VideoAudioStatus } from './video-audio-status.enum';
 export { VideoProcessingFailureReason } from './video-processing-failure-reason.enum';

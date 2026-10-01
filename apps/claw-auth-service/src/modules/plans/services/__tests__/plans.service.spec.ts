@@ -53,6 +53,7 @@ const mockRepo = (): Record<keyof PlansRepository, Mock> => ({
   findBySlug: vi.fn(),
   findDefault: vi.fn(),
   findEffectiveForUser: vi.fn(),
+  findEffectiveProvenance: vi.fn(),
   findActiveTrialState: vi.fn(),
   findLatestAssignmentForUser: vi.fn(),
   findTrialRedemption: vi.fn(),

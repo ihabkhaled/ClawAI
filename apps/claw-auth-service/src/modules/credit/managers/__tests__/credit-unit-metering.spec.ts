@@ -1,6 +1,12 @@
 import { Test } from '@nestjs/testing';
 import { type Mock, vi } from 'vitest';
-import { ModelCostClass, type ModelCostRates, PaygSurface, UserRole } from '@claw/shared-types';
+import {
+  ModelCostClass,
+  type ModelCostRates,
+  PaygBillingMode,
+  PaygSurface,
+  UserRole,
+} from '@claw/shared-types';
 
 import {
   CreditLedgerKind,
@@ -16,6 +22,7 @@ import { ConnectorPolicyClient } from '../../clients/connector-policy.client';
 import { ModelRateClient } from '../../clients/model-rate.client';
 import { CreditLedgerRepository } from '../../repositories/credit-ledger.repository';
 import { CreditWalletRepository } from '../../repositories/credit-wallet.repository';
+import { CreditBillingModeService } from '../../services/credit-billing-mode.service';
 import { CreditEventService } from '../../services/credit-event.service';
 import { CreditFreeAllowanceService } from '../../services/credit-free-allowance.service';
 import { CreditGrantService } from '../../services/credit-grant.service';
@@ -268,6 +275,10 @@ describe('CreditReservationManager — unit metering', () => {
         {
           provide: CreditEventService,
           useValue: { publishBalanceState: vi.fn().mockResolvedValue(undefined) },
+        },
+        {
+          provide: CreditBillingModeService,
+          useValue: { resolve: vi.fn().mockResolvedValue(PaygBillingMode.PAYG) },
         },
         {
           provide: CreditLedgerRepository,

@@ -27,6 +27,7 @@ export type { FxQuoteSnapshot, MicroUsd, Money } from './money.type';
 export type {
   CreditBucketDelta,
   CreditPackageView,
+  PaygFinalizeOutcome,
   PaygFreeAllowanceView,
   PaygLedgerEntryView,
   PaygRejection,

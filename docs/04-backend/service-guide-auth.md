@@ -456,15 +456,15 @@ This service owns the wallet. `modules/credit/` holds `UserCreditWallet`,
 grant renewal, the reservation sweeper and the PAYG classification;
 `modules/system-settings/` holds the kill switch.
 
-| Method     | Route                                                   | Purpose                                                                        |
-| ---------- | ------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `POST`     | `/api/v1/internal/credit/reserve`                       | Place a hold. Returns the `maxOutputTokens` the caller MUST send the provider. |
-| `POST`     | `/api/v1/internal/credit/finalize`                      | Settle a hold against measured usage.                                          |
-| `POST`     | `/api/v1/internal/credit/release`                       | Give a hold back. Idempotent.                                                  |
-| `GET`      | `/api/v1/internal/credit/wallet/:userId`                | Wallet snapshot for another service.                                           |
-| `GET`      | `/api/v1/internal/credit/packages[/:id/active-version]` | Server-side pricing for a top-up.                                              |
-| `GET`      | `/api/v1/credit/me`, `/me/ledger`, `/packages`          | The user's own balance, activity and buyable packages.                         |
-| `GET/POST` | `/api/v1/admin/credit/*`                                | Wallet inspection, manual adjustment, package catalog. `ADMIN_CREDIT_MANAGE`.  |
+| Method     | Route                                                   | Purpose                                                                                                                       |
+| ---------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `POST`     | `/api/v1/internal/credit/reserve`                       | Place a hold. Returns the `maxOutputTokens` the caller MUST send the provider.                                                |
+| `POST`     | `/api/v1/internal/credit/finalize`                      | Settle a hold against measured usage. Replies `{ settled, billingMode, settledCostMicroUsd? }`; the cost is PAYG-only (F108). |
+| `POST`     | `/api/v1/internal/credit/release`                       | Give a hold back. Idempotent.                                                                                                 |
+| `GET`      | `/api/v1/internal/credit/wallet/:userId`                | Wallet snapshot for another service.                                                                                          |
+| `GET`      | `/api/v1/internal/credit/packages[/:id/active-version]` | Server-side pricing for a top-up.                                                                                             |
+| `GET`      | `/api/v1/credit/me`, `/me/ledger`, `/packages`          | The user's own balance, activity and buyable packages.                                                                        |
+| `GET/POST` | `/api/v1/admin/credit/*`                                | Wallet inspection, manual adjustment, package catalog. `ADMIN_CREDIT_MANAGE`.                                                 |
 
 Every internal route requires `buildInterServiceAuthHeader` and Zod-bounded
 input; they move dollars and deliberately do not inherit `internal/quota`'s

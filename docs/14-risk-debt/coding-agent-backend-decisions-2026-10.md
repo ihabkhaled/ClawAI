@@ -23,7 +23,7 @@ and does not decide money, permission semantics, deletion or a breaking public c
 | F099 webhook trigger    | IMPLEMENTED `69372fc1a` (step 1). Step 2, per-routine secrets: DECIDED 2026-10-01, server side built (ADR-143); runner must export `secrets`                                                    |
 | F100 runner report      | IMPLEMENTED `fdc631228` (step 1, record only) and step 2 (ADR-142): org policy + off/report/enforce, staged, fail-open, unsigned. Attestation WAITS for the signing-key decision |
 | F101 other clients      | NOT IMPLEMENTED by design: the recommended default is (b), VS Code only                                                                                                          |
-| F108 cost in events     | OWNER DECISION REQUIRED: discloses provider cost and margin, changes the finalize contract                                                                                       |
+| F108 cost in events     | DECIDED 2026-10-01 (recommended default): IMPLEMENTED, PAYG only, fail closed; see ADR-078 addendum                                                                              |
 | F030 / F067             | Extension-side release-owner decisions, no backend work                                                                                                                          |
 
 Left open inside the implemented items: F095 does not serve the runner's tool list (the server never
@@ -123,7 +123,7 @@ depends on them. A durable audit table is also open (the audit entry is a struct
 
 ## F108 Cost in runtime events (money disclosure)
 
-**Status: owner decision required.** It discloses provider cost (margin) for subscription plans and changes the finalize contract; not implemented.
+**Status: decided 2026-10-01 (option a, PAYG only) and implemented.** Finalize now answers 200 `{ settled, billingMode, settledCostMicroUsd? }` (cost for PAYG only, the charged amount); chat-service emits `run.usage` `{ costMicros }` for PAYG only. Contract, classifier and disclosure analysis: [ADR-078 addendum](../13-adr/adr-078-payg-connector-credit.md), [billing-threat-model.md](../03-architecture/billing-threat-model.md), rule 37 item 23.
 
 - Options: (a) return the settled cost (`actualCostMicroUsd`) from auth-service finalize and put `costMicros` on runtime events; (b) never expose per-call cost.
 - Default: (a) for PAYG users only (they are charged that number), omitted for subscription users.

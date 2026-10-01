@@ -287,6 +287,51 @@ describe('PlansRepository.findEffectiveForUser (admin grant expiry)', () => {
   });
 });
 
+describe('PlansRepository.findEffectiveProvenance (F108 billing mode)', () => {
+  const now = new Date('2026-10-01T00:00:00.000Z');
+
+  it('uses the same in-force selection as findEffectiveForUser', async () => {
+    const findFirst = vi.fn().mockResolvedValue(null);
+    const repository = new PlansRepository({
+      userPlanAssignment: { findFirst },
+    } as unknown as PrismaService);
+
+    await repository.findEffectiveProvenance('user-1', now);
+
+    expect(findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          userId: 'user-1',
+          status: 'ACTIVE',
+          OR: [{ entitlementValidUntil: null }, { entitlementValidUntil: { gt: now } }],
+        },
+        orderBy: { startsAt: 'desc' },
+      }),
+    );
+  });
+
+  it('flattens the grant type and the trial flag, and nothing else', async () => {
+    const findFirst = vi
+      .fn()
+      .mockResolvedValue({ grantType: 'PAID_SUBSCRIPTION', plan: { isTrial: false } });
+    const repository = new PlansRepository({
+      userPlanAssignment: { findFirst },
+    } as unknown as PrismaService);
+
+    await expect(repository.findEffectiveProvenance('user-1', now)).resolves.toEqual({
+      grantType: 'PAID_SUBSCRIPTION',
+      isTrial: false,
+    });
+  });
+
+  it('returns null when no assignment is in force', async () => {
+    const repository = new PlansRepository({
+      userPlanAssignment: { findFirst: vi.fn().mockResolvedValue(null) },
+    } as unknown as PrismaService);
+    await expect(repository.findEffectiveProvenance('user-1', now)).resolves.toBeNull();
+  });
+});
+
 describe('PlansRepository.assignTrialPlanOnce (dynamic trial length)', () => {
   const now = new Date('2026-10-01T00:00:00.000Z');
 

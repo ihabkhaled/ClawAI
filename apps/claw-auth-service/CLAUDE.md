@@ -98,6 +98,17 @@ every paid model on every install that had not armed it, which is the default.
 Pinned by the short-circuit cases in `credit-reservation.manager.spec.ts` and by
 `payg-meter-wire.spec.ts` in shared-entitlements.
 
+**Finalize reply and billing mode (F108, rule 37 item 23).** `POST internal/credit/finalize`
+answers 200 `{ settled, billingMode, settledCostMicroUsd? }` (it was a bodiless 204; callers that
+ignore the reply are unaffected). `CreditBillingModeService.resolve` names the user from
+`PlansRepository.findEffectiveProvenance` through the pure `billingModeForAssignment`: a
+non-trial `FREE_DEFAULT` is `PAYG`, `PAID_SUBSCRIPTION` is `SUBSCRIPTION`, EVERYTHING else
+(trial, admin grant, promotion, migration, no assignment, administrator, failed lookup) is
+`UNKNOWN`. `settledCostMicroUsd` is the CHARGED amount (not the priced cost), attached only for
+`PAYG` and only when a safe integer; a replay or unknown reservation answers `settled: false`
+with no cost and no lookup. Pinned by `credit-reservation.manager.spec.ts` ("finalize outcome"),
+`credit-billing-mode.{utility,service}.spec.ts`.
+
 **Unit metering (rule 37 item 17).** Reserve and finalize accept optional
 `imageUnits` (≤ 10), `audioSeconds` (≤ 7,200, seconds of INPUT audio) and
 `ttsCharacters` (≤ 100,000), defaulted to 0 in `credit-internal.dto.ts`. The

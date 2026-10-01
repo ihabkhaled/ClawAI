@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto';
 import { PAYG_ENABLED_SETTING_KEY, PAYG_MIN_VIABLE_OUTPUT_TOKENS } from '@claw/shared-constants';
 import {
   BillingErrorCode,
+  PaygBillingMode,
+  type PaygFinalizeOutcome,
   type PaygReservationOutcome,
   type RawTokenBreakdown,
   TokenUsageSource,
@@ -36,6 +38,7 @@ import { SystemSettingService } from '../../system-settings/services/system-sett
 import { ConnectorPolicyClient } from '../clients/connector-policy.client';
 import { ModelRateClient } from '../clients/model-rate.client';
 import { CreditLedgerRepository } from '../repositories/credit-ledger.repository';
+import { CreditBillingModeService } from '../services/credit-billing-mode.service';
 import { CreditEventService } from '../services/credit-event.service';
 import { CreditFreeAllowanceService } from '../services/credit-free-allowance.service';
 import { CreditGrantService } from '../services/credit-grant.service';
@@ -49,6 +52,7 @@ import {
   type CreditFinalizeInput,
   type CreditFreeAllowanceAdmission,
   type CreditReserveInput,
+  type CreditSettlement,
   type PaygClassification,
   type PaygRateSnapshot,
 } from '../types/credit.types';
@@ -103,6 +107,7 @@ export class CreditReservationManager {
     private readonly events: CreditEventService,
     private readonly ledger: CreditLedgerRepository,
     private readonly freeAllowance: CreditFreeAllowanceService,
+    private readonly billingModes: CreditBillingModeService,
   ) {}
 
   async reserve(input: CreditReserveInput): Promise<PaygReservationOutcome> {
@@ -138,11 +143,16 @@ export class CreditReservationManager {
    * Never throws for an unknown or already-settled reservation. The user has
    * their answer by this point, and turning a bookkeeping miss into a request
    * failure would show an error for a message that succeeded.
+   *
+   * Reports what happened (F108). The settled cost rides back ONLY for a user
+   * billed per use - see `outcomeFor`. An unknown or already-settled
+   * reservation answers `settled: false` with no cost, so a replay can never
+   * re-disclose a figure.
    */
-  async finalize(input: CreditFinalizeInput): Promise<void> {
+  async finalize(input: CreditFinalizeInput): Promise<PaygFinalizeOutcome> {
     const record = await this.claimRecord(input.reservationId, 'finalize');
     if (record === null) {
-      return;
+      return CreditReservationManager.notSettled();
     }
     const breakdown = toRawTokenBreakdown(
       {
@@ -180,16 +190,52 @@ export class CreditReservationManager {
     });
     if (moved === 0) {
       this.logger.warn(`finalize: reservation ${input.reservationId} was already settled`);
-      return;
+      return CreditReservationManager.notSettled();
     }
     if (record.isFreeAllowance) {
       // The platform absorbed this call: nothing was held, so nothing moves. The
       // slot stays used (it was a real provider call) and `actualCostMicroUsd`
       // on the row records what the platform paid.
       this.logger.log(`finalize: reservation=${input.reservationId} settled on the free allowance`);
-      return;
+      // F108: the user was charged nothing and the figure is what the PLATFORM
+      // paid, so no cost is disclosed. UNKNOWN is the fail-closed answer.
+      return { settled: true, billingMode: PaygBillingMode.UNKNOWN };
     }
-    await this.settle(record, actualMicroUsd);
+    return this.outcomeFor(record.userId, await this.settle(record, actualMicroUsd));
+  }
+
+  /**
+   * The finalize reply for a settlement that just moved money.
+   *
+   * The disclosed amount is what was CHARGED, not the priced `actualMicroUsd`:
+   * the two differ only when a provider overruns the clamped ceiling, where the
+   * charge is capped at the hold. The user must never be shown more than they
+   * paid, and a figure above the charge would leak provider cost.
+   *
+   * The cost is attached only on a positive PAYG answer, so SUBSCRIPTION and
+   * UNKNOWN replies carry no cost field at all, and only when it is a safe
+   * integer (an absurd amount is withheld rather than rounded). Zero is a real
+   * cost and is kept.
+   */
+  private async outcomeFor(
+    userId: string,
+    settlement: CreditSettlement,
+  ): Promise<PaygFinalizeOutcome> {
+    const billingMode = await this.billingModes.resolve(userId);
+    const charged = settlement.chargedMicroUsd;
+    const disclosable =
+      billingMode === PaygBillingMode.PAYG &&
+      charged >= 0n &&
+      charged <= BigInt(Number.MAX_SAFE_INTEGER);
+    return {
+      settled: true,
+      billingMode,
+      ...(disclosable ? { settledCostMicroUsd: Number(charged) } : {}),
+    };
+  }
+
+  private static notSettled(): PaygFinalizeOutcome {
+    return { settled: false, billingMode: PaygBillingMode.UNKNOWN };
   }
 
   /**
@@ -559,7 +605,10 @@ export class CreditReservationManager {
 
   // ── settlement ────────────────────────────────────────────────────────────
 
-  private async settle(record: WeightedUsageRecord, actualMicroUsd: bigint): Promise<void> {
+  private async settle(
+    record: WeightedUsageRecord,
+    actualMicroUsd: bigint,
+  ): Promise<CreditSettlement> {
     const wallet = await this.wallets.ensure(record.userId);
     // Carried forward from the RESERVATION row: the durable reservation record
     // has no surface column, and a CONSUMPTION line that cannot say where the
@@ -584,6 +633,7 @@ export class CreditReservationManager {
     // their answer. A broker hiccup must not turn a successful settlement into
     // a failed request. `publishBalanceState` swallows its own errors.
     void this.events.publishBalanceState(record.userId, settlement);
+    return settlement;
   }
 
   private async claimRecord(

@@ -1,5 +1,6 @@
 import type { CreditBucket } from '../enums/credit-bucket.enum';
 import type { CreditLedgerKind } from '../enums/credit-ledger-kind.enum';
+import type { PaygBillingMode } from '../enums/payg-billing-mode.enum';
 import type { PaygSurface } from '../enums/payg-surface.enum';
 
 /**
@@ -126,6 +127,27 @@ export type PaygReservationOutcome =
        */
       freeAllowance?: boolean;
     };
+
+/**
+ * What auth-service answers to `POST internal/credit/finalize` (F108, ADR-078 addendum).
+ *
+ * The route used to answer 204 with no body, and every caller discarded it, so
+ * this is purely additive: a client that ignores the response is unaffected.
+ *
+ * `settledCostMicroUsd` is PRESENT ONLY when `billingMode` is `PAYG` and the
+ * settlement actually moved money. It is the amount charged to the user's
+ * wallet in integer micro-USD (never a float, never a provider rate, never a
+ * margin), so it can equal `0` for a free call and must be tested with
+ * `!== undefined`, not truthiness. For `SUBSCRIPTION` and `UNKNOWN` the field is
+ * absent by construction on the server, and a consumer must ALSO refuse to use
+ * it unless it positively sees `billingMode === 'PAYG'`.
+ */
+export type PaygFinalizeOutcome = {
+  /** False when the reservation was unknown or already settled (a replay). */
+  settled: boolean;
+  billingMode: PaygBillingMode;
+  settledCostMicroUsd?: number;
+};
 
 /**
  * Non-token quantities a paid call is billed on, carried on the PAYG wire

@@ -17,6 +17,7 @@ import { CreditFreeAllowanceRepository } from './repositories/credit-free-allowa
 import { CreditLedgerRepository } from './repositories/credit-ledger.repository';
 import { CreditPackageRepository } from './repositories/credit-package.repository';
 import { CreditWalletRepository } from './repositories/credit-wallet.repository';
+import { CreditBillingModeService } from './services/credit-billing-mode.service';
 import { CreditAccountService } from './services/credit-account.service';
 import { CreditEventService } from './services/credit-event.service';
 import { CreditFreeAllowanceService } from './services/credit-free-allowance.service';
@@ -57,6 +58,7 @@ import { CreditWalletService } from './services/credit-wallet.service';
     CreditWalletService,
     CreditFreeAllowanceService,
     CreditGrantService,
+    CreditBillingModeService,
     CreditAccountService,
     CreditPackageService,
     CreditEventService,

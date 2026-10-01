@@ -122,6 +122,22 @@ evidence that counts is a server-side capture read or a verified webhook.
 > `requiredMicroUsd` — the user's own numbers — and never a rate.
 > Enforced by [rule 37](../../rules/37-payg-credit-integrity.md) rule 8.
 
+### Settled cost in runtime events (F108)
+
+| Attack                                                      | Control                                                                                                                                                                                          |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A subscriber learns per-call provider cost and margin       | The finalize reply carries `settledCostMicroUsd` only for `billingMode === 'PAYG'`; `SUBSCRIPTION` and `UNKNOWN` replies have no such key. `PaygMeter` re-checks and drops it otherwise.         |
+| A mis-classified user is shown a cost                       | The classifier positively names only `FREE_DEFAULT` (non-trial) as PAYG. Trials, admin grants, promotions, migrations, no assignment, administrators and failed lookups are `UNKNOWN` (no cost). |
+| Derive the rate card from many events                       | A PAYG user is charged that exact number per call, so the per-call price is theirs; the event carries no model, provider, token split or rate.                                                   |
+| Replay finalize to re-read a cost                           | A replay or unknown reservation answers `settled: false` with no cost and does no billing-mode lookup.                                                                                           |
+| Show more than was charged                                  | The figure is `chargedMicroUsd` (capped at the hold), never the priced `actualCostMicroUsd`.                                                                                                     |
+| Float or oversized amounts corrupt a total                  | Integer micro-USD only; a charge above `Number.MAX_SAFE_INTEGER` is withheld, not rounded. Zero is kept as `0` and tested with `!== undefined`.                                                  |
+| A new auth or client version silently widens the disclosure | Both ends fail closed: an unrecognised mode or malformed body can only remove the cost.                                                                                                          |
+
+**Residual (pre-existing, not introduced by F108).** `GET /credit/me/ledger` already returns each
+metered call's debit with provider and model to every user, subscribers included. The runtime
+event does not add a door; it also does not close that one.
+
 ---
 
 ## 3. What ClawAI is _not_
