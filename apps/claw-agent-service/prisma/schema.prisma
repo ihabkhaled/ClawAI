@@ -429,6 +429,12 @@ model ScheduledCommand {
   /// F099: five-field cron read in UTC (PROMPT routines). When set it decides
   /// `nextRunAt` and `intervalMinutes` is an unused placeholder.
   cron          String?
+  /// F099: when true a signed webhook can fire this PROMPT routine now. Off by
+  /// default, so no existing routine gains a public entry point.
+  webhookEnabled       Boolean @default(false)
+  /// F099: the webhook secret is derived from this, never stored; bumping it
+  /// retires the previous secret.
+  webhookSecretVersion Int     @default(0)
   status        ScheduledCommandStatus @default(ENABLED)
   lastRunAt     DateTime?
   lastCommandId String?

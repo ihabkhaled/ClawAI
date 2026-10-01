@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../../infrastructure/database/prisma/prisma.module';
 import { RedisModule } from '../../infrastructure/redis/redis.module';
+import { ChannelsModule } from '../channels/channels.module';
 import { AgentSessionController } from './controllers/agent-session.controller';
 import { AgentCommandController } from './controllers/agent-command.controller';
 import { AgentRepoController } from './controllers/agent-repo.controller';
@@ -15,6 +16,7 @@ import { CapabilityStreamController } from './controllers/capability-stream.cont
 import { AgentTerminalInternalController } from './controllers/agent-terminal-internal.controller';
 import { RuntimeProtocolController } from './controllers/runtime-protocol.controller';
 import { AgentRunnerController } from './controllers/agent-runner.controller';
+import { RoutineWebhookController } from './controllers/routine-webhook.controller';
 import { AgentSessionService } from './services/agent-session.service';
 import { AgentCommandService } from './services/agent-command.service';
 import { AgentRepoService } from './services/agent-repo.service';
@@ -41,6 +43,9 @@ import { AgentTerminalSeedService } from './services/agent-terminal-seed.service
 import { RuntimeProtocolService } from './services/runtime-protocol.service';
 import { RunnerService } from './services/runner.service';
 import { RunnerCredentialService } from './services/runner-credential.service';
+import { RoutineWebhookService } from './services/routine-webhook.service';
+import { RoutineWebhookRateStore } from './services/routine-webhook.ports';
+import { RoutineWebhookRateRepository } from './repositories/routine-webhook-rate.repository';
 import { AgentSessionManager } from './managers/agent-session.manager';
 import { AgentCommandManager } from './managers/agent-command.manager';
 import { PairingCleanupManager } from './managers/pairing-cleanup.manager';
@@ -68,7 +73,7 @@ import { CompatAgentGuard } from '../../common/guards/compat-agent.guard';
 import { RunnerTokenGuard } from '../../common/guards/runner-token.guard';
 
 @Module({
-  imports: [PrismaModule, RedisModule],
+  imports: [PrismaModule, RedisModule, ChannelsModule],
   controllers: [
     AgentSessionController,
     AgentCommandController,
@@ -84,6 +89,7 @@ import { RunnerTokenGuard } from '../../common/guards/runner-token.guard';
     AgentTerminalInternalController,
     RuntimeProtocolController,
     AgentRunnerController,
+    RoutineWebhookController,
   ],
   providers: [
     AgentSessionService,
@@ -111,6 +117,8 @@ import { RunnerTokenGuard } from '../../common/guards/runner-token.guard';
     RuntimeProtocolService,
     RunnerService,
     RunnerCredentialService,
+    RoutineWebhookService,
+    { provide: RoutineWebhookRateStore, useClass: RoutineWebhookRateRepository },
     AgentSessionManager,
     AgentCommandManager,
     PairingCleanupManager,

@@ -34,6 +34,11 @@ Controller → Service → Repository (data access)
 - ScheduledCommand (COMMAND or PROMPT routine; `deviceId` null for PROMPT, F099)
 - RunnerCredential (F100: SHA-256 of a runner token; the token itself is never stored)
 
+`ScheduledCommand.webhookEnabled` (default false) + `webhookSecretVersion` back the F099 routine webhook:
+the secret is derived from `ENCRYPTION_KEY` + routine id + version (never stored); the receiver
+(`POST agent/routines/webhook/:routineId`, `@Public()`) verifies the HMAC before it claims the
+rate window, never reads the body into the prompt, and answers one 401 for every unusable routine.
+
 ## Key Environment Variables
 
 - AGENT_DATABASE_URL

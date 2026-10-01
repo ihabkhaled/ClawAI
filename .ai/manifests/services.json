@@ -4,7 +4,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-agent-service",
-      "endpointCount": 102,
+      "endpointCount": 106,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -40,7 +40,7 @@
         "ScheduledCommand",
         "TerminalCommand"
       ],
-      "testFiles": 39,
+      "testFiles": 44,
       "testRunner": "vitest"
     },
     {

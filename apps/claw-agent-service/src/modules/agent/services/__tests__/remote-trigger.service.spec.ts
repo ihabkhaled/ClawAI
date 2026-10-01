@@ -28,6 +28,8 @@ function scheduled(userId: string): ScheduledCommand {
     workingDir: null,
     intervalMinutes: 60,
     cron: null,
+    webhookEnabled: false,
+    webhookSecretVersion: 0,
     status: ScheduledCommandStatus.ENABLED,
     lastRunAt: null,
     lastCommandId: null,

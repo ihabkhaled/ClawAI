@@ -20,5 +20,7 @@ import { ChannelKeyring } from './services/channel-keyring';
     { provide: ChannelInboxStore, useClass: ChannelInboxRepository },
     { provide: ChannelKeyring, useClass: AppConfigChannelKeyring },
   ],
+  // The routine webhook (F099) reads the same master key and public origin.
+  exports: [ChannelKeyring],
 })
 export class ChannelsModule {}

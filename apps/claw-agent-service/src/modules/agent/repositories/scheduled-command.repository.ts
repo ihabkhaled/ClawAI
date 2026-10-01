@@ -22,10 +22,29 @@ export class ScheduledCommandRepository {
     });
   }
 
+  /** Unscoped by owner: only the webhook receiver uses it, and it verifies a signature first. */
+  async findById(id: string): Promise<ScheduledCommand | null> {
+    return this.prisma.scheduledCommand.findUnique({ where: { id } });
+  }
+
+  async setWebhookEnabled(id: string, enabled: boolean): Promise<ScheduledCommand> {
+    return this.prisma.scheduledCommand.update({
+      where: { id },
+      data: { webhookEnabled: enabled },
+    });
+  }
+
+  /** Retires the current webhook secret: the next one derives from the new version. */
+  async rotateWebhookSecret(id: string): Promise<ScheduledCommand> {
+    return this.prisma.scheduledCommand.update({
+      where: { id },
+      data: { webhookSecretVersion: { increment: 1 } },
+    });
+  }
+
   async findByIdForUser(id: string, userId: string): Promise<ScheduledCommand | null> {
     const row = await this.prisma.scheduledCommand.findUnique({ where: { id } });
-    if (row?.userId !== userId) return null;
-    return row;
+    return row?.userId !== userId ? null : row;
   }
 
   async listByUser(userId: string): Promise<ScheduledCommand[]> {

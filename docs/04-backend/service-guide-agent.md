@@ -181,9 +181,9 @@ read in **UTC**, at most every 5 minutes, same grammar as the client) instead of
 `scheduled_commands.cron` (migration `20261001100000_add_prompt_routine_cron`, NULL
 for every existing row) and decides `nextRunAt` at creation and after each fire;
 `intervalMinutes` holds the 5-minute floor as an unused placeholder. A stored
-expression that no longer yields a date falls back to the interval. Time zones,
-repository-event triggers and secrets isolation are open: see
-`docs/14-risk-debt/coding-agent-backend-decisions-2026-10.md`.
+expression that no longer yields a date falls back to the interval. The signed
+webhook trigger is below ("Routine webhook"). Time zones and per-routine secrets
+isolation are open: see `docs/14-risk-debt/coding-agent-backend-decisions-2026-10.md`.
 
 ## Remote triggers, channels and runners (2026-09-29)
 
@@ -233,6 +233,31 @@ platform? }` (`runnerHeartbeatSchema`; a missing body is an empty report, so
   `AUTO_APPROVE_READ_ONLY` = reads only; writes/commands always ask).
   Omitting `kind` keeps the old COMMAND behaviour. Migration
   `20260930130000_add_prompt_routines_and_runner_credentials`.
+- **Routine webhook (F099 repository-event trigger, step 1, 2026-10-01):** a signed
+  webhook fires one PROMPT routine now, for a CI step, a GitHub Action or a relay.
+  Owner endpoints (user JWT, 404 for a routine that is not theirs, 400 on a shell
+  COMMAND routine): `GET|PUT agent/scheduled-commands/:id/webhook` (`{ enabled }`)
+  and `POST .../webhook/rotate`; they return the URL, the secret and the signing
+  format. Receiver: `POST agent/routines/webhook/:routineId` (`@Public()`, 202),
+  signed like the channels webhook (`x-claw-signature: sha256=HMAC(secret,
+"<timestamp>.<raw body>")`, `x-claw-timestamp`, 5-minute window, 16 KB cap).
+  Trust model: OFF by default (`scheduled_commands.webhookEnabled`, migration
+  `20261001110000_add_routine_webhook_trigger`); the secret is per routine and
+  derived from the encryption key plus `webhookSecretVersion`, never stored, and
+  rotate bumps the version so the old secret dies at once; the body is NEVER
+  read into the prompt (it only takes part in the signature); an unknown,
+  disabled, paused or COMMAND routine answers the same 401 as a bad signature;
+  the delivery window (one accepted delivery per routine per 60 s, Redis `SET NX`)
+  is claimed only AFTER the signature verifies, so a stranger cannot hold it
+  shut, and is released if the fire fails; the fire goes through
+  `RemoteTriggerService` keyed by a digest of the signature, so a replayed
+  request returns the first run (`replayed: true`) instead of a second. The
+  signing format is ours: GitHub and GitLab native deliveries sign differently
+  (GitHub has no timestamp), so call it from an Action or relay. A webhook fire
+  also advances the routine's own schedule, like a manual trigger. Per-routine
+  secrets the routine can READ (the isolation boundary) are step 2 and are not
+  built. Error codes (no locale text; the extension shows the code):
+  `routine_webhook_signature_missing|timestamp_stale|signature_invalid|rate_limited|payload_too_large|unsupported_kind`.
 - **Device-to-session bridge fixed (IDOR):** `CompatAgentGuard` used to bind any
   `sessionId` from the request to the device's user. It now loads the session
   and answers 403 unless the device's user owns it; a missing session gets the

@@ -382,6 +382,11 @@
         "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-repo.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/agent/routines/webhook/:routineId",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/routine-webhook.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/agent/runners",
         "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
@@ -455,6 +460,21 @@
         "method": "POST",
         "route": "/agent/scheduled-commands/:id/trigger",
         "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-scheduled-command.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/scheduled-commands/:id/webhook",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/routine-webhook.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/agent/scheduled-commands/:id/webhook",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/routine-webhook.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/scheduled-commands/:id/webhook/rotate",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/routine-webhook.controller.ts"
       },
       {
         "method": "GET",
@@ -3798,5 +3818,5 @@
     ]
   },
   "generated": true,
-  "total": 752
+  "total": 756
 }
