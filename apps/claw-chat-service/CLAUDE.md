@@ -1648,3 +1648,14 @@ chat. OpenAI has no video provider (Sora shut down).
 - **Thread memory flags reach every assembler (2026-10-01):** `ChatContextGatewayManager.extractThreadSettings` must pass `useMemory` and `useContext` (as the classic path does at `chat-messages.service`). `ContextAssemblyManager` reads them with `!== false`, so a missing field means ON. It once dropped them, so Runtime V2 runs and every lab mode injected account memories into a `useMemory:false` thread. `runtimeThreadSettings` carries them too. Not live-verified until deployed.
 
 - **Create accepts the privacy switches (2026-10-01):** `POST /chat-threads` takes `useMemory`, `useContext` and `useCrossThreadContext` (validated booleans, same semantics as PATCH). `createThreadSchema` once dropped `useMemory`, so a thread created memory-off was memory-on until PATCHed. Omitted keeps the column default (on). The coding agent can now create a memory-off thread in one call. Not live-verified until deployed.
+
+## Stop must end the run (2026-10-01)
+
+`cancel` aborts the transport, and an aborted `httpStream` surfaces as an ordinary
+provider error ("connect failed - This operation was aborted"). `runExecutor`
+(`chat-execution.manager.ts`) therefore maps `controller.signal.aborted` to a
+`finishReason: 'cancelled'` response (empty content, 0 tokens). The candidate loop
+treats that as success, so no fallback candidate runs and no deltas follow the
+cancel; the turn is stored as cancelled, not failed. Any new streaming path must
+check the abort signal in its catch before the error is read as a provider failure.
+Test: `chat-execution-stop-abort.manager.spec.ts`.

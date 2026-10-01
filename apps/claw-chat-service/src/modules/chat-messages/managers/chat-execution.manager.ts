@@ -1488,6 +1488,27 @@ export class ChatExecutionManager implements OnModuleInit {
           : {}),
         ...this.buildSpeedReport(base, result, executionOptions),
       };
+    } catch (error: unknown) {
+      // Stop aborts the transport, which surfaces as an ordinary provider error
+      // ("connect failed - This operation was aborted"). Left as-is the chain
+      // reads it as this candidate failing and falls through to the next
+      // provider, which keeps streaming after the user pressed Stop. Answer
+      // with the same cancelled response a mid-stream stop produces, so the
+      // chain ends, no tokens are billed beyond what was produced (none here),
+      // and the turn is stored as cancelled rather than failed.
+      if (controller.signal.aborted) {
+        return {
+          content: '',
+          provider: base.provider,
+          model: base.model,
+          inputTokens: 0,
+          outputTokens: 0,
+          latencyMs: Date.now() - base.startMs,
+          finishReason: 'cancelled',
+          usedFallback,
+        };
+      }
+      throw error;
     } finally {
       cancellation.release(cancelKey);
     }
