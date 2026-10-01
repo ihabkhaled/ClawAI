@@ -31,7 +31,9 @@ vi.mock('../../../common/utilities', () => ({
   // hop now builds this header.
   buildInterServiceAuthHeader: vi.fn(() => 'Service test-token'),
   recordGet: <T>(record: Record<string, T> | undefined | null, key: string): T | undefined => {
-    return !record ? undefined : (Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined);
+    return !record
+      ? undefined
+      : (Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined);
   },
 }));
 
@@ -141,11 +143,13 @@ describe('PAYG credit — the chat chokepoint', () => {
     accessControl = createFakePaygAccessControl();
     manager = build(accessControl);
     httpRequest.mockImplementation(async (args: { url: string }) => {
-      return args.url.includes('/internal/connectors/config') ? {
-          ok: true,
-          status: 200,
-          data: { baseUrl: 'https://api.openai.com/v1', apiKey: 'k' },
-        } : cloudOk();
+      return args.url.includes('/internal/connectors/config')
+        ? {
+            ok: true,
+            status: 200,
+            data: { baseUrl: 'https://api.openai.com/v1', apiKey: 'k' },
+          }
+        : cloudOk();
     });
   });
 
@@ -321,7 +325,9 @@ describe('PAYG credit — the chat chokepoint', () => {
       if (args.url.includes('/internal/connectors/config')) {
         return { ok: true, status: 200, data: { baseUrl: 'https://gemini/v1beta', apiKey: 'k' } };
       }
-      return args.url.includes('image') ? { ok: true, status: 200, data: { generationId: 'gen-1' } } : cloudOk('A serene mountain landscape, photorealistic, highly detailed.');
+      return args.url.includes('image')
+        ? { ok: true, status: 200, data: { generationId: 'gen-1' } }
+        : cloudOk('A serene mountain landscape, photorealistic, highly detailed.');
     });
 
     await manager.callProvider(
@@ -396,5 +402,77 @@ describe('PAYG credit — the chat chokepoint', () => {
       StreamEventType.PAYG_CREDIT_CLAMPED,
       expect.objectContaining({ stageId: 'payg:clamped' }),
     );
+  });
+  // ── F108: the settled cost on the response, PAYG only ────────────────────
+  // The runtime-v2 loop turns `settledCostMicroUsd` into a `run.usage` event, so
+  // this is where "subscribers never see it" is decided on the chat side. Every
+  // branch that is not a positive PAYG answer must leave the response WITHOUT
+  // the key (not undefined, not zero): fail closed.
+  describe('settled cost on the response (F108)', () => {
+    const callOnce = (access: ReturnType<typeof createFakePaygAccessControl>) =>
+      build(access).callProvider('OPENAI', 'gpt-5', makeContext('hello'), Date.now(), false);
+
+    it('carries the charged amount for a PAYG user', async () => {
+      accessControl.finalizeCredit.mockResolvedValue({
+        settled: true,
+        billingMode: 'PAYG',
+        settledCostMicroUsd: 21_000,
+      });
+      const response = await callOnce(accessControl);
+      expect(response.settledCostMicroUsd).toBe(21_000);
+    });
+
+    it('keeps a zero cost as zero, not as absent', async () => {
+      accessControl.finalizeCredit.mockResolvedValue({
+        settled: true,
+        billingMode: 'PAYG',
+        settledCostMicroUsd: 0,
+      });
+      const response = await callOnce(accessControl);
+      expect(response).toHaveProperty('settledCostMicroUsd', 0);
+    });
+
+    it.each([
+      ['a subscriber', { settled: true, billingMode: 'SUBSCRIPTION', settledCostMicroUsd: 21_000 }],
+      [
+        'an unknown billing mode',
+        { settled: true, billingMode: 'UNKNOWN', settledCostMicroUsd: 5 },
+      ],
+      [
+        'an unrecognised billing mode',
+        { settled: true, billingMode: 'ENTERPRISE', settledCostMicroUsd: 5 },
+      ],
+      ['a reply with no billing mode', { settled: true, settledCostMicroUsd: 5 }],
+      ['a PAYG reply with no cost', { settled: true, billingMode: 'PAYG' }],
+      ['a PAYG float cost', { settled: true, billingMode: 'PAYG', settledCostMicroUsd: 1.5 }],
+      ['a PAYG negative cost', { settled: true, billingMode: 'PAYG', settledCostMicroUsd: -3 }],
+      ['no settlement reply at all', undefined],
+    ])('leaves the cost off for %s', async (_label, outcome) => {
+      accessControl.finalizeCredit.mockResolvedValue(outcome);
+      const response = await callOnce(accessControl);
+      expect(response).not.toHaveProperty('settledCostMicroUsd');
+    });
+
+    it('never discloses on an unmetered hold, even if the reply claims PAYG', async () => {
+      const unmetered = createFakePaygAccessControl({ metered: false });
+      unmetered.finalizeCredit.mockResolvedValue({
+        settled: true,
+        billingMode: 'PAYG',
+        settledCostMicroUsd: 99,
+      });
+      const response = await callOnce(unmetered);
+      expect(response).not.toHaveProperty('settledCostMicroUsd');
+    });
+
+    it('never adds a provider rate, margin or priced cost to the response', async () => {
+      accessControl.finalizeCredit.mockResolvedValue({
+        settled: true,
+        billingMode: 'PAYG',
+        settledCostMicroUsd: 21_000,
+      });
+      const response = await callOnce(accessControl);
+      const costKeys = Object.keys(response).filter((key) => /cost|rate|margin|price/i.test(key));
+      expect(costKeys).toEqual(['settledCostMicroUsd']);
+    });
   });
 });

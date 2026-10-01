@@ -144,7 +144,7 @@
         "MessageAttachment",
         "PromptTemplate"
       ],
-      "testFiles": 284,
+      "testFiles": 287,
       "testRunner": "vitest"
     },
     {

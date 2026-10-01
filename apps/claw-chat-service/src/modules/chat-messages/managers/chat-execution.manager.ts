@@ -220,6 +220,7 @@ import {
   retryPaygCall,
   withOutputCeiling,
 } from '../utilities/payg-metering.utility';
+import { paygDisclosableCost } from '../utilities/payg-cost-disclosure.utility';
 import {
   PAYG_CLAMPED_NOTICE_DESCRIPTION,
   PAYG_CLAMPED_NOTICE_LABEL,
@@ -2411,8 +2412,11 @@ export class ChatExecutionManager implements OnModuleInit {
       ...this.fileDeliveryPart(context, provider, model),
     };
     this.recordChokepointUsage(context, tagged);
-    await this.settlePaygHold(hold, tagged, paygCall?.threadId);
-    return tagged;
+    const settledCost = await this.settlePaygHold(hold, tagged, paygCall?.threadId);
+    // F108: the cost rides on the response only when auth-service named the
+    // user PAYG. Absent otherwise, so a subscriber's response is byte-identical
+    // to what it was before this existed.
+    return settledCost === undefined ? tagged : { ...tagged, settledCostMicroUsd: settledCost };
   }
 
   /**
@@ -2631,13 +2635,19 @@ export class ChatExecutionManager implements OnModuleInit {
         };
   }
 
-  /** Reconciles the hold against measured usage and tells the user if we shortened the answer. */
+  /**
+   * Reconciles the hold against measured usage and tells the user if we shortened
+   * the answer.
+   *
+   * Returns the settled cost when - and only when - the user may be shown it
+   * (`paygDisclosableCost`: auth-service named them PAYG), else `undefined`.
+   */
   private async settlePaygHold(
     hold: PaygHold,
     response: LlmResponse,
     threadId?: string,
-  ): Promise<void> {
-    await this.accessControlService.finalizeCredit(
+  ): Promise<number | undefined> {
+    const outcome = await this.accessControlService.finalizeCredit(
       hold,
       {
         promptTokens: response.inputTokens ?? 0,
@@ -2648,6 +2658,9 @@ export class ChatExecutionManager implements OnModuleInit {
       { toolCalls: response.toolTranscript?.turns.length ?? response.toolCalls?.length ?? 0 },
     );
     this.emitPaygClampedNotice(hold, threadId);
+    // Unmetered (a local model, an administrator, metering off) never carries a
+    // cost, whatever a reply claims: nothing was charged.
+    return hold.metered ? paygDisclosableCost(outcome) : undefined;
   }
 
   /**

@@ -128,6 +128,17 @@ export interface RuntimeV2ModelOutputInput extends RuntimeV2BoundInput {
   readonly text: string;
 }
 
+/**
+ * One settled model-call cost, as a `run.usage` journal event (F108).
+ *
+ * Only ever built for a PAYG user; see `paygDisclosableCost`.
+ */
+export interface RuntimeV2UsageInput extends RuntimeV2BoundInput {
+  readonly claimId: string;
+  readonly idempotencyKey: string;
+  readonly costMicros: number;
+}
+
 export interface RuntimeV2DispatchInput extends RuntimeV2BoundInput {
   readonly claimId: string;
   readonly idempotencyKey: string;

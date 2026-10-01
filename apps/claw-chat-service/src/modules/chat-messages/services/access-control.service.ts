@@ -27,7 +27,7 @@ import {
   resolvePlanLimit,
   type UserEntitlements,
 } from '@claw/shared-entitlements';
-import { PaygSurface, Permission, QuotaWindow } from '@claw/shared-types';
+import { type PaygFinalizeOutcome, PaygSurface, Permission, QuotaWindow } from '@claw/shared-types';
 import { estimateTextTokens } from '@claw/shared-utilities';
 import { ModelExposureClient } from '../clients/model-exposure.client';
 import { ModelAuthorizationDenialReason } from '../enums/model-authorization-denial-reason.enum';
@@ -133,13 +133,21 @@ export class AccessControlService {
     return result;
   }
 
-  /** Settles a hold against measured usage. Never throws; the answer is already delivered. */
+  /**
+   * Settles a hold against measured usage. Never throws; the answer is already
+   * delivered.
+   *
+   * Returns what auth-service reported about the settlement, or `undefined`
+   * when there is nothing to report (an unmetered hold, a failed request, an
+   * auth-service that predates the reply). Callers that only settle ignore it;
+   * the one that shows a cost must pass it through `paygDisclosableCost`.
+   */
   async finalizeCredit(
     hold: PaygHold,
     usage: PaygFinalizeUsage,
     calls?: PaygFinalizeCalls,
-  ): Promise<void> {
-    await this.payg.finalize(hold, usage, calls);
+  ): Promise<PaygFinalizeOutcome | undefined> {
+    return this.payg.finalize(hold, usage, calls);
   }
 
   /** Gives a hold back when the user never received anything for it. */

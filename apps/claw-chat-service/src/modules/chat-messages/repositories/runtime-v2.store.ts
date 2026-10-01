@@ -40,6 +40,7 @@ import type {
   RuntimeV2StartInput,
   RuntimeV2SteeringInput,
   RuntimeV2TerminalInput,
+  RuntimeV2UsageInput,
 } from '../types/runtime-v2-store.types';
 import type {
   RuntimeV2TerminalListener,
@@ -53,6 +54,7 @@ import {
   stableRuntimeV2Json,
 } from '../utilities/runtime-v2-identity.utility';
 import { buildRuntimeV2ModelEvents } from '../utilities/runtime-v2-model-events.utility';
+import { buildRuntimeV2UsageEvent } from '../utilities/runtime-v2-usage.utility';
 import { isAutoRouteSentinel } from '../utilities/runtime-v2-routing.utility';
 import {
   runtimeV2ClientRequestKey,
@@ -657,6 +659,34 @@ export class RuntimeV2Store {
       input.claimId,
       JSON.stringify(ack),
       JSON.stringify(events),
+      ttlMilliseconds(input.ttlSeconds),
+    ]);
+  }
+
+  /**
+   * Publishes what one paid model call cost, as a single `run.usage` event.
+   *
+   * Rides the same script as `appendModelOutput` (an active run and the current
+   * claim are required, the sequence is allocated inside it), so a usage event
+   * can never land on a finished or stolen run. A malformed amount publishes
+   * nothing and reports the run's own state rather than failing the caller.
+   */
+  async appendUsage(input: RuntimeV2UsageInput): Promise<RuntimeV2MutationAck | null> {
+    const draft = buildRuntimeV2UsageEvent(input.costMicros);
+    if (draft === null) {
+      return null;
+    }
+    const ack = this.mutationDraft(input);
+    const event = JSON.parse(
+      eventJson(input, draft.type, createRuntimeV2Identity('evt'), { ...draft.payload }),
+    );
+    return this.mutationReply(RuntimeV2RedisOperation.APPEND_MODEL_OUTPUT, input, [
+      binding(input),
+      input.idempotencyKey,
+      runtimeV2Sha256(stableRuntimeV2Json(input)),
+      input.claimId,
+      JSON.stringify(ack),
+      JSON.stringify([event]),
       ttlMilliseconds(input.ttlSeconds),
     ]);
   }

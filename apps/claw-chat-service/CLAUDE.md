@@ -1641,6 +1641,38 @@ request-scoped boolean; no global state.
   cancel; a paused run that is never resumed; a Redis outage at purge time
   (logged, content kept).
 
+## Runtime V2 settled cost in the journal (F108, rule 37 item 23)
+
+- Each paid model call of a run (the ordinary turn AND every repair turn, both in
+  `RuntimeV2LoopManager`) publishes ONE `run.usage` event, `{ costMicros }`, integer
+  micro-USD, right after the call settles and before the answer or terminal event.
+  The coding agent's telemetry already reads `payload.costMicros` off any event and
+  exports it as `clawai.cost`; summing the events is the run's whole bill.
+- **PAYG only, fail closed.** `PaygMeter.finalize` returns auth-service's
+  `{ settled, billingMode, settledCostMicroUsd? }`; `paygDisclosableCost` keeps the
+  cost only for `billingMode === 'PAYG'` plus a non-negative safe integer, and
+  `settlePaygHold` also requires `hold.metered`. The chokepoint then sets
+  `LlmResponse.settledCostMicroUsd`. Subscribers, trials, administrators, unmetered
+  calls, an old auth-service (204), an unrecognised mode and a failed finalize all
+  leave the field off, so `reportSettledCost` returns before touching the store and
+  their journal is unchanged. Zero is a real cost and is published as `0`.
+- The event carries `costMicros` and nothing else: no provider, model, rate, ceiling or
+  margin (`buildRuntimeV2UsageEvent`, pinned by `runtime-v2.store.spec.ts`). It is a new
+  type on purpose: clients validate every known payload `.strict()`, so a key added to
+  `model.summary` or `run.completed` would be a rejected event, while an unknown type
+  is projected as-is.
+- `RuntimeV2Store.appendUsage` reuses the `APPEND_MODEL_OUTPUT` script (active run +
+  current claim required). `executeClaimedRun` puts the claim on the binding the model
+  calls use (`claimed`) because the claim is taken after the binding is resolved. A
+  failed publish is logged with the run id only (never an amount) and never fails the
+  turn: the money has already moved.
+- Only the buffered `callProvider` chokepoint sets the field; the streaming chokepoint
+  and the tool-loop do not (nothing reads it there).
+- Tests: `payg-credit-chokepoint.spec.ts` (shown / zero / subscription / unknown /
+  unrecognised / float / no reply / unmetered), `payg-cost-disclosure.utility.spec.ts`,
+  `runtime-v2-usage.utility.spec.ts`, `runtime-v2.store.spec.ts` (`appendUsage`),
+  `runtime-v2-loop.usage-event.spec.ts` (turn, repair, claim, ordering, store failure).
+
 ## Video generation (ADR-137)
 
 `VIDEO_GEMINI` / `VIDEO_GROK` are generation providers, treated like `IMAGE_*` everywhere

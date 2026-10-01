@@ -713,6 +713,66 @@ describe('RuntimeV2Store', () => {
       }),
     ).resolves.toMatchObject({ sequence: 4 });
   });
+  describe('appendUsage (F108)', () => {
+    const okReply = (): [string, string] => [
+      'OK',
+      JSON.stringify({
+        runId: 'runtime_run_existing1',
+        sequence: 9,
+        eventId: 'runtime_event_00009',
+      }),
+    ];
+    const usageInput = (costMicros: number) => ({
+      ...boundFixture(),
+      claimId: 'runtime_claim_00001',
+      idempotencyKey: 'runtime_usage_key_01',
+      costMicros,
+    });
+
+    it('publishes ONE run.usage event whose only payload key is costMicros', async () => {
+      const redis = new QueueRedis();
+      redis.replies.push(okReply());
+      await new RuntimeV2Store(redis).appendUsage(usageInput(21_000));
+
+      const events: {
+        type: string;
+        visibility: string;
+        turnId?: string;
+        payload: Record<string, unknown>;
+      }[] = JSON.parse(redis.commands.at(-1)?.arguments[5] ?? '[]');
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({
+        type: 'run.usage',
+        visibility: 'user',
+        payload: { costMicros: 21_000 },
+      });
+      // No provider, model, rate or margin beside the number, and no turn binding.
+      expect(Object.keys(events[0]?.payload ?? {})).toEqual(['costMicros']);
+      expect(events[0]?.turnId).toBeUndefined();
+    });
+
+    it('publishes a zero cost as zero', async () => {
+      const redis = new QueueRedis();
+      redis.replies.push(okReply());
+      await new RuntimeV2Store(redis).appendUsage(usageInput(0));
+      const events: { payload: { costMicros: number } }[] = JSON.parse(
+        redis.commands.at(-1)?.arguments[5] ?? '[]',
+      );
+      expect(events[0]?.payload.costMicros).toBe(0);
+    });
+
+    it.each([1.5, -1, Number.NaN, Number.MAX_SAFE_INTEGER + 2])(
+      'publishes nothing and touches Redis not at all for %s',
+      async (costMicros) => {
+        const redis = new QueueRedis();
+        await expect(
+          new RuntimeV2Store(redis).appendUsage(usageInput(costMicros)),
+        ).resolves.toBeNull();
+        expect(redis.commands).toHaveLength(0);
+      },
+    );
+  });
+
   it('binds every model event to its turn at the top level of the envelope', async () => {
     // A client routes and validates model events on `event.turnId`. The store
     // put the turn only inside the payload, so the first model.turn.started of

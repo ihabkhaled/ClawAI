@@ -137,6 +137,17 @@ export type LlmResponse = {
    * being empty.
    */
   paygClamped?: boolean;
+  /**
+   * What this call cost the user, in integer micro-USD, for a PAYG user only.
+   *
+   * Set by the chokepoint from auth-service's finalize reply and ONLY when that
+   * reply names the user `PAYG` (`paygDisclosableCost`); absent for subscribers,
+   * trials, administrators, unmetered calls and any failed or unrecognised
+   * settlement, and `0` is a real value. Read by the runtime-v2 loop to publish
+   * `run.usage`; never persisted on a message or copied to another surface
+   * (F108, rule 37 item 22).
+   */
+  settledCostMicroUsd?: number;
   latencyMs: number;
   finishReason?: string;
   usedFallback: boolean;

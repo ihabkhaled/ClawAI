@@ -492,7 +492,7 @@ export class RuntimeV2LoopManager {
         // sequence of independently paid completions whose transcript grows
         // every turn, so the later ones are the expensive ones; a single
         // up-front hold would have to cover a length nobody can predict.
-        return await this.execution.callProvider(
+        const response = await this.execution.callProvider(
           binding.provider,
           binding.model,
           runtimeContext,
@@ -509,6 +509,8 @@ export class RuntimeV2LoopManager {
             threadId: binding.threadId,
           },
         );
+        await this.reportSettledCost(binding, response);
+        return response;
       } catch (error: unknown) {
         const empty =
           error instanceof BusinessException && error.code === RUNTIME_V2_EMPTY_RESPONSE_CODE;
@@ -765,7 +767,7 @@ export class RuntimeV2LoopManager {
     rejection: unknown,
     attempt: number,
   ): Promise<Awaited<ReturnType<ChatExecutionManager['callProvider']>>> {
-    return this.execution.callProvider(
+    const response = await this.execution.callProvider(
       binding.provider,
       binding.model,
       {
@@ -791,6 +793,41 @@ export class RuntimeV2LoopManager {
         threadId: binding.threadId,
       },
     );
+    await this.reportSettledCost(binding, response);
+    return response;
+  }
+
+  /**
+   * Tells the client what one paid model call cost - for a PAYG user only (F108).
+   *
+   * `settledCostMicroUsd` is on the response only when auth-service named the
+   * user PAYG, so for everyone else this returns before touching the store and
+   * the journal is exactly what it was. It runs after the money has moved and
+   * the answer exists, so it can never fail the turn: a store hiccup is logged
+   * (the run id only, never an amount) and the turn carries on. Every paid call
+   * of a run goes through here - the turn AND each repair turn - so the
+   * client's total is the run's whole bill rather than its first call.
+   */
+  private async reportSettledCost(
+    binding: RuntimeV2BoundInput,
+    response: Awaited<ReturnType<ChatExecutionManager['callProvider']>>,
+  ): Promise<void> {
+    const costMicros = response.settledCostMicroUsd;
+    if (costMicros === undefined || binding.claimId === undefined) return;
+    try {
+      await this.store.appendUsage({
+        ...binding,
+        claimId: binding.claimId,
+        idempotencyKey: createRuntimeV2Identity('usage'),
+        costMicros,
+      });
+    } catch (error: unknown) {
+      this.logger.warn(
+        `Runtime V2 usage event not published for run ${binding.runId}: ${
+          error instanceof Error ? error.message : 'unknown error'
+        }`,
+      );
+    }
   }
 
   /**
@@ -862,11 +899,15 @@ export class RuntimeV2LoopManager {
 
     try {
       const runtimeContext = await this.buildFirstTurnContext(binding, payload, thread);
+      // The claim rides on the binding the model calls use so each paid call can
+      // publish its cost (F108). Everything else keeps the unclaimed binding, so
+      // no other store call changes shape.
+      const claimed: RuntimeV2BoundInput = { ...binding, claimId: claim.claimId };
       const { response, output } = await this.turnWithDriftCorrection(
-        binding,
+        claimed,
         runtimeContext,
         payload.routingMode,
-        await this.callWithRepair(binding, runtimeContext, payload.routingMode),
+        await this.callWithRepair(claimed, runtimeContext, payload.routingMode),
         true,
       );
       if (output.kind === 'tool') {
