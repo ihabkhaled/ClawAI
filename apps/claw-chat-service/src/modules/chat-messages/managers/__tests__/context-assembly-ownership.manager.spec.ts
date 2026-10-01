@@ -82,7 +82,9 @@ describe('ContextAssemblyManager attachment ownership contract', () => {
       if (url.includes('/internal/memories/')) {
         return Promise.resolve({ ok: true, status: 200, data: [] });
       }
-      return url.includes('/internal/workspace/search') ? Promise.resolve({ ok: true, status: 200, data: { results: [] } }) : Promise.resolve({ ok: false, status: 404, data: {} });
+      return url.includes('/internal/workspace/search')
+        ? Promise.resolve({ ok: true, status: 200, data: { results: [] } })
+        : Promise.resolve({ ok: false, status: 404, data: {} });
     });
   });
 
@@ -111,5 +113,52 @@ describe('ContextAssemblyManager attachment ownership contract', () => {
     expect(context.fileContents).toEqual([
       expect.objectContaining({ id: 'file-1', filename: 'private.txt' }),
     ]);
+  });
+
+  describe('cross-thread retrieval honours the thread memory switch', () => {
+    function managerWithRetrieveSpy(): { manager: ContextAssemblyManager; retrieve: Mock } {
+      const crossThread = new CrossThreadRetrievalManager(stubCrossThreadRepository());
+      const retrieve = vi.spyOn(crossThread, 'retrieve') as unknown as Mock;
+      const manager = new ContextAssemblyManager(
+        new ContextComposerManager(),
+        crossThread,
+        { needsWeb: async () => ({ needsWeb: false, reason: 'test' }) } as never,
+        { hasResearchAccess: async () => true } as never,
+      );
+      return { manager, retrieve };
+    }
+
+    it('does not read other threads when useMemory is off, even if cross-thread is on', async () => {
+      const { manager, retrieve } = managerWithRetrieveSpy();
+
+      await manager.assemble('tenant-user-1', [userMessage], {
+        useMemory: false,
+        useCrossThreadContext: true,
+      });
+
+      expect(retrieve).toHaveBeenCalledWith(expect.objectContaining({ enabled: false }));
+    });
+
+    it('still reads other threads when memory and cross-thread are both on', async () => {
+      const { manager, retrieve } = managerWithRetrieveSpy();
+
+      await manager.assemble('tenant-user-1', [userMessage], {
+        useMemory: true,
+        useCrossThreadContext: true,
+      });
+
+      expect(retrieve).toHaveBeenCalledWith(expect.objectContaining({ enabled: true }));
+    });
+
+    it('stays off when cross-thread is off, whatever useMemory says', async () => {
+      const { manager, retrieve } = managerWithRetrieveSpy();
+
+      await manager.assemble('tenant-user-1', [userMessage], {
+        useMemory: true,
+        useCrossThreadContext: false,
+      });
+
+      expect(retrieve).toHaveBeenCalledWith(expect.objectContaining({ enabled: false }));
+    });
   });
 });

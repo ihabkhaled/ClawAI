@@ -251,6 +251,12 @@ to. Branching needs no warning because nothing is lost.
   requires `useMemory` AND `useCrossThreadContext` on the CANDIDATE thread, and
   `publishMessageCompleted` sends `useMemory` so memory-service learns nothing
   from a memory-off chat.
+- **A memory-off chat is not a READER either** (2026-10-01). `useMemory:false` used to
+  clear only the memory-service block; other threads still arrived through
+  cross-thread retrieval (default on), so an agent run leaked an old chat marker
+  1 run in 3. `ContextAssemblyManager.assemble` now enables cross-thread only when
+  `useCrossThreadContext === true` AND `useMemory !== false`. Live signature: the
+  gateway debug line `memories=0 crossThread=N` with N>0 on a memory-off thread.
 - **A branch family never feeds itself.** `CrossThreadRetrievalManager`
   excludes the root and every thread sharing it, or a branch could retrieve what
   its source said AFTER the fork. Any new path that creates a thread from

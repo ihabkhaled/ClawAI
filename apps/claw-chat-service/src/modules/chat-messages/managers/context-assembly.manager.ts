@@ -208,7 +208,10 @@ export class ContextAssemblyManager {
     const crossThread = await this.crossThread.retrieve({
       userId,
       currentThreadId: threadMessages.at(-1)?.threadId ?? '',
-      enabled: threadSettings?.useCrossThreadContext === true,
+      // Other threads' messages are account memory in all but name: a stored
+      // marker from an old chat reached a `useMemory: false` agent run this way
+      // (1 in 3 runs) while the memory block itself was correctly empty.
+      enabled: threadSettings?.useCrossThreadContext === true && threadSettings.useMemory !== false,
       intent: lastUserContent,
       availableInputTokens: modelBudget.availableInputTokens,
     });
