@@ -297,6 +297,11 @@
         "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/agent/organizations/:id/runner-policy",
+        "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/agent/organizations/:slug/sso/callback",
         "source": "apps/claw-agent-service/src/modules/fleet/controllers/saml.controller.ts"
@@ -3843,5 +3848,5 @@
     ]
   },
   "generated": true,
-  "total": 761
+  "total": 762
 }

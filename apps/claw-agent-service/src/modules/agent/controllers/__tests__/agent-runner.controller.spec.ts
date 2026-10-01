@@ -18,7 +18,7 @@ function build() {
   return { controller, runners };
 }
 
-const context = { sessionId: 'runner-1' } as AgentAuthContext;
+const context = { sessionId: 'runner-1', userId: 'owner-1' } as AgentAuthContext;
 
 describe('AgentRunnerController heartbeat (F100)', () => {
   it('hands the validated report to the service under the calling runner session', async () => {
@@ -27,7 +27,7 @@ describe('AgentRunnerController heartbeat (F100)', () => {
       agentVersion: '1.90.0',
       platform: 'linux',
     });
-    expect(runners.heartbeat).toHaveBeenCalledWith('runner-1', {
+    expect(runners.heartbeat).toHaveBeenCalledWith('runner-1', 'owner-1', {
       agentVersion: '1.90.0',
       platform: 'linux',
     });

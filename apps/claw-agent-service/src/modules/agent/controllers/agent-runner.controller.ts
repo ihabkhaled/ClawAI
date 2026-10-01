@@ -87,7 +87,7 @@ export class AgentRunnerController {
     @AgentSession() ctx: AgentAuthContext,
     @Body(new ZodValidationPipe(runnerHeartbeatSchema)) dto: RunnerHeartbeatDto,
   ): Promise<HeartbeatResult> {
-    return this.runners.heartbeat(ctx.sessionId, dto);
+    return this.runners.heartbeat(ctx.sessionId, ctx.userId, dto);
   }
 
   @Post('claim')

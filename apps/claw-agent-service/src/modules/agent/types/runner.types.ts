@@ -1,6 +1,7 @@
 import type { Prisma } from '../../../generated/prisma';
 import type { RUNNER_SELECT } from '../constants/runner.constants';
 import type { RunnerApprovalPolicy } from '../../../common/enums/runner-approval-policy.enum';
+import type { RunnerComplianceDecision } from '../../fleet/types/runner-policy.types';
 import type { RuntimeProtocolDescriptor } from './runtime-protocol.types';
 
 export type RunnerRow = Prisma.AgentSessionGetPayload<{ select: typeof RUNNER_SELECT }>;
@@ -28,7 +29,16 @@ export type RunnerView = {
   agentVersion: string;
   status: string;
   lastHeartbeatAt: Date | null;
+  /**
+   * F100: the last runner-policy verdict, null when none was evaluated (policy
+   * off, or never reported against). Self-reported inputs: it flags stale
+   * runners, it does not prove who is running.
+   */
+  compliance: { status: string; reason: string | null } | null;
 };
+
+/** F100: the verdict a heartbeat or registration persists on the session. */
+export type RunnerComplianceRecord = Pick<RunnerComplianceDecision, 'status' | 'reason'>;
 
 /**
  * F095: what the server knows about a runner a session is being resumed on.

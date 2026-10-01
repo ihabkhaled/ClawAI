@@ -271,6 +271,10 @@ model AgentSession {
   connectedAt     DateTime           @default(now())
   disconnectedAt  DateTime?
   metadata        Json?
+  /// F100: last runner-policy verdict ('compliant' | 'noncompliant' | 'unknown'); NULL = not evaluated.
+  runnerCompliance       String?
+  /// F100: comma-separated reason codes for a non-compliant or unknown verdict.
+  runnerComplianceReason String?
   commands        TerminalCommand[]
   runnerCredential RunnerCredential?
   repos           LocalRepo[]
@@ -706,6 +710,15 @@ model OrganizationPolicy {
   /// F081: the only plugin marketplaces members may install from. NULL means the
   /// organization has no opinion; `[]` means none is allowed (the client's reading).
   allowedPluginMarketplaces Json?
+  /// F100: oldest runner version members' self-hosted runners may report (semver). NULL = no opinion.
+  /// Self-reported and unsigned: it detects stale runners, it does not prove identity.
+  minRunnerVersion String?
+  /// F100: runner platforms allowed (normalized names). NULL = no opinion; `[]` is refused on write.
+  allowedRunnerPlatforms Json?
+  /// F100: 'off' (default, nothing evaluated) | 'report' (flag, never refuse) | 'enforce' (refuse).
+  runnerPolicyMode String @default("off")
+  /// F100: in enforce mode, also refuse a runner that reports nothing to check against.
+  requireVersionReport Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

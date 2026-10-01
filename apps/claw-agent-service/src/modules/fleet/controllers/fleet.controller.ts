@@ -18,6 +18,7 @@ import type { Organization, OrganizationMember } from '../../../generated/prisma
 import type { AuthenticatedUser } from '../../../common/types/auth.types';
 import type { DeviceMatrixRow } from '../types/device-matrix.types';
 import type { EffectivePolicy } from '../types/organization-policy.types';
+import type { RunnerPolicy } from '../types/runner-policy.types';
 
 @Controller('agent/organizations')
 export class FleetController {
@@ -77,6 +78,15 @@ export class FleetController {
     @Param('id') id: string,
   ): Promise<EffectivePolicy> {
     return this.policies.forOrganization(id, user.id);
+  }
+
+  /** F100: the organization's runner policy; any member may read it. */
+  @Get(':id/runner-policy')
+  async runnerPolicy(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ): Promise<RunnerPolicy> {
+    return this.policies.runnerPolicyForOrganization(id, user.id);
   }
 
   @Put(':id/policy')

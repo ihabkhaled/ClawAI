@@ -6,7 +6,11 @@ import {
   RUNNER_METADATA_KIND,
   RUNNER_SELECT,
 } from '../constants/runner.constants';
-import type { RunnerHeartbeatReport, RunnerRow } from '../types/runner.types';
+import type {
+  RunnerComplianceRecord,
+  RunnerHeartbeatReport,
+  RunnerRow,
+} from '../types/runner.types';
 
 /**
  * Runner reads. Every query is owner-scoped by `userId`; the session key is
@@ -50,7 +54,11 @@ export class RunnerRepository {
    * down. The self-reported version and platform ride the same write, so a
    * refused heartbeat records nothing (F100).
    */
-  async touchHeartbeat(id: string, report: RunnerHeartbeatReport): Promise<number> {
+  async touchHeartbeat(
+    id: string,
+    report: RunnerHeartbeatReport,
+    compliance?: RunnerComplianceRecord,
+  ): Promise<number> {
     const result = await this.prisma.agentSession.updateMany({
       where: {
         id,
@@ -62,9 +70,50 @@ export class RunnerRepository {
         disconnectedAt: null,
         ...(report.agentVersion === undefined ? {} : { agentVersion: report.agentVersion }),
         ...(report.platform === undefined ? {} : { platform: report.platform }),
+        ...this.complianceData(compliance),
       },
     });
     return result.count;
+  }
+
+  /**
+   * F100 enforce mode: a refused report still records what was said and why it
+   * was refused, but never revives the runner or moves its heartbeat, so a
+   * non-compliant runner goes stale and receives nothing.
+   */
+  async recordRefusal(
+    id: string,
+    report: RunnerHeartbeatReport,
+    compliance: RunnerComplianceRecord,
+  ): Promise<void> {
+    await this.prisma.agentSession.updateMany({
+      where: {
+        id,
+        status: { in: [AgentSessionStatus.CONNECTED, AgentSessionStatus.EXPIRED] },
+      },
+      data: {
+        ...(report.agentVersion === undefined ? {} : { agentVersion: report.agentVersion }),
+        ...(report.platform === undefined ? {} : { platform: report.platform }),
+        ...this.complianceData(compliance),
+      },
+    });
+  }
+
+  /** Persists a verdict on a session; used right after a runner registers. */
+  async recordCompliance(id: string, compliance: RunnerComplianceRecord): Promise<void> {
+    await this.prisma.agentSession.update({
+      where: { id },
+      data: this.complianceData(compliance),
+    });
+  }
+
+  private complianceData(compliance: RunnerComplianceRecord | undefined): {
+    runnerCompliance?: string | null;
+    runnerComplianceReason?: string | null;
+  } {
+    return compliance === undefined
+      ? {}
+      : { runnerCompliance: compliance.status, runnerComplianceReason: compliance.reason };
   }
 
   async disconnect(id: string): Promise<void> {

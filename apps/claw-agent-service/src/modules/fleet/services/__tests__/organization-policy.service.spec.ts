@@ -40,6 +40,10 @@ const noGuardrails = {
   trust: { repositories: [], domains: [], commands: [] },
   mcpServers: { allow: [], deny: [] },
   allowedPluginMarketplaces: null,
+  minRunnerVersion: null,
+  allowedRunnerPlatforms: null,
+  runnerPolicyMode: 'off' as const,
+  requireVersionReport: false,
 };
 
 describe('OrganizationPolicyService', () => {
@@ -198,5 +202,119 @@ describe('OrganizationPolicyService', () => {
       ).rejects.toBeInstanceOf(ForbiddenException);
       expect(upsertPolicy).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('OrganizationPolicyService: runner policy (F100)', () => {
+  const base = {
+    allowedTools: [],
+    allowedModels: [],
+    maximumRisk: 'R4' as const,
+    deniedEffects: [],
+    requireApproval: [],
+    maximumRetentionDays: 3_650,
+    minimumPermissionMode: null,
+    ...noGuardrails,
+  };
+
+  it('stores the runner fields and clears the platform list to NULL when null', async () => {
+    const upsertPolicy = vi.fn().mockResolvedValue(storedPolicy);
+    const service = policyService(repository({ upsertPolicy }));
+
+    await service.update('org-1', 'user-1', {
+      ...base,
+      minRunnerVersion: '1.90.0',
+      allowedRunnerPlatforms: ['linux'],
+      runnerPolicyMode: 'report',
+      requireVersionReport: true,
+    });
+    await service.update('org-1', 'user-1', base);
+
+    expect(upsertPolicy.mock.calls[0]?.[1]).toMatchObject({
+      minRunnerVersion: '1.90.0',
+      allowedRunnerPlatforms: ['linux'],
+      runnerPolicyMode: 'report',
+      requireVersionReport: true,
+    });
+    expect(upsertPolicy.mock.calls[1]?.[1]).toMatchObject({
+      minRunnerVersion: null,
+      allowedRunnerPlatforms: Prisma.DbNull,
+      runnerPolicyMode: 'off',
+      requireVersionReport: false,
+    });
+  });
+
+  it('only an owner or admin may edit it: a plain member is refused and nothing is written', async () => {
+    const upsertPolicy = vi.fn();
+    const service = policyService(
+      repository({
+        findMembershipForUser: vi.fn().mockResolvedValue({ role: OrganizationRole.MEMBER }),
+        upsertPolicy,
+      }),
+    );
+
+    await expect(
+      service.update('org-1', 'user-1', { ...base, runnerPolicyMode: 'enforce' }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(upsertPolicy).not.toHaveBeenCalled();
+  });
+
+  it('never puts the runner policy in the payload the extension parses strictly', async () => {
+    const upsertPolicy = vi.fn().mockResolvedValue({
+      ...storedPolicy,
+      minRunnerVersion: '1.90.0',
+      runnerPolicyMode: 'enforce',
+    });
+    const service = policyService(repository({ upsertPolicy }));
+
+    const result = await service.update('org-1', 'user-1', base);
+
+    expect(Object.keys(result)).not.toEqual(
+      expect.arrayContaining(['minRunnerVersion', 'runnerPolicyMode']),
+    );
+    expect(JSON.stringify(result)).not.toContain('1.90.0');
+  });
+
+  it('lets a member read the runner policy and reports an organization without one as inert', async () => {
+    const stored = {
+      ...storedPolicy,
+      minRunnerVersion: '1.90.0',
+      allowedRunnerPlatforms: ['linux'],
+      runnerPolicyMode: 'enforce',
+      requireVersionReport: true,
+    };
+    const member = policyService(
+      repository({
+        findMembershipForUser: vi.fn().mockResolvedValue({ role: OrganizationRole.MEMBER }),
+        findPolicy: vi.fn().mockResolvedValue(stored),
+      }),
+    );
+    await expect(member.runnerPolicyForOrganization('org-1', 'user-1')).resolves.toEqual({
+      minRunnerVersion: '1.90.0',
+      allowedRunnerPlatforms: ['linux'],
+      runnerPolicyMode: 'enforce',
+      requireVersionReport: true,
+    });
+
+    await expect(
+      policyService(repository()).runnerPolicyForOrganization('org-1', 'user-1'),
+    ).resolves.toEqual({
+      minRunnerVersion: null,
+      allowedRunnerPlatforms: null,
+      runnerPolicyMode: 'off',
+      requireVersionReport: false,
+    });
+  });
+
+  it("answers 404 for another organization's runner policy (IDOR)", async () => {
+    const findPolicy = vi.fn();
+    const service = policyService(
+      repository({ findMembershipForUser: vi.fn().mockResolvedValue(null), findPolicy }),
+    );
+
+    await expect(service.runnerPolicyForOrganization('org-x', 'user-1')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    expect(findPolicy).not.toHaveBeenCalled();
   });
 });

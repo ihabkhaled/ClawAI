@@ -1,6 +1,14 @@
 import { z } from 'zod';
 
 import {
+  DEFAULT_RUNNER_POLICY_MODE,
+  RUNNER_POLICY_MODES,
+  RUNNER_POLICY_PLATFORMS,
+  RUNNER_POLICY_PLATFORMS_MAX,
+  RUNNER_VERSION_MAX_LENGTH,
+} from '../constants/runner-policy.constants';
+import { parseRunnerVersion } from '../utilities/runner-version.utility';
+import {
   mcpServerPolicySchema,
   organizationTrustListsSchema,
   policyRulesSchema,
@@ -66,6 +74,28 @@ export const updateOrganizationPolicySchema = z
       .max(100)
       .nullable()
       .default(null),
+    /**
+     * F100 oldest runner version (semver, a leading `v` is fine). Null means no
+     * opinion. Self-reported and unsigned: it detects stale runners only.
+     */
+    minRunnerVersion: z
+      .string()
+      .trim()
+      .max(RUNNER_VERSION_MAX_LENGTH)
+      .refine((value) => parseRunnerVersion(value) !== null, 'must be a semantic version')
+      .nullable()
+      .default(null),
+    /** F100 allowed runner platforms. Null means no opinion; an empty list is refused. */
+    allowedRunnerPlatforms: z
+      .array(z.enum(RUNNER_POLICY_PLATFORMS))
+      .min(1)
+      .max(RUNNER_POLICY_PLATFORMS_MAX)
+      .nullable()
+      .default(null),
+    /** F100 mode: off (default) | report | enforce. */
+    runnerPolicyMode: z.enum(RUNNER_POLICY_MODES).default(DEFAULT_RUNNER_POLICY_MODE),
+    /** F100: in enforce mode, also refuse a runner that reports nothing to check. */
+    requireVersionReport: z.boolean().default(false),
   })
   .strict();
 

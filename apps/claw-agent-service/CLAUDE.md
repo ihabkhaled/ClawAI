@@ -63,6 +63,10 @@ rate window, never reads the body into the prompt, and answers one 401 for every
   CompatAgentGuard there: a device token or session key must not claim runner jobs (F100).
   The heartbeat body (`{ agentVersion?, platform? }`, optional) is a self-reported record for
   the owner, written in the same update as the heartbeat; never authorise anything from it.
+  The F100 runner policy (ADR-142) is staged: `runnerPolicyMode` defaults to `off`, `report` never
+  rejects, `enforce` rejects only a definite violation of a set constraint, and ANY policy read
+  error fails OPEN. Never fail it closed, and never add the runner fields to `EffectivePolicy`
+  (the extension parses it strictly).
 - CompatAgentGuard bridges device tokens to agentSession by reading sessionId from
   query / body / path (/sessions/:id) so existing session-scoped controllers keep working.
 - **Organizations (`agent/organizations/*`) are gated by org membership, not RBAC.** Every

@@ -221,6 +221,26 @@ platform? }` (`runnerHeartbeatSchema`; a missing body is an empty report, so
   unsigned: it informs the owner and decides nothing. There is no organization
   runner-version policy and no enforcement yet; both need a signing-key decision
   first (`docs/14-risk-debt/coding-agent-backend-decisions-2026-10.md`). No migration.
+- **Runner version policy (F100 step 2, 2026-10-01, ADR-142):** staged, fail-open,
+  unsigned. `organization_policies` gains `minRunnerVersion` (semver), `allowedRunnerPlatforms`
+  (normalized names; `[]` refused, `null` = no opinion), `runnerPolicyMode` (`off` default |
+  `report` | `enforce`) and `requireVersionReport`; edited through
+  `PUT agent/organizations/:id/policy` (owner/admin), read by members at
+  `GET agent/organizations/:id/runner-policy`, never part of `policy/effective` (the extension
+  parses that strictly). `RunnerPolicyService.evaluate(ownerId, report)` judges each
+  organization on its own terms (worst verdict wins) and returns `compliant` /
+  `noncompliant` / `unknown` / none. `off`: nothing happens. `report`: flag on the session
+  (`runnerCompliance`, `runnerComplianceReason`, shown as `compliance` on `GET agent/runners`),
+  an audit log line `runner.policy.verdict` once per change, never rejected. `enforce`: heartbeat
+  and registration answer 403 `RUNNER_POLICY_VIOLATION` only for a definite violation of a set
+  constraint; a runner that reports nothing is `unknown` and passes unless
+  `requireVersionReport`. A refused heartbeat records the reason but does not revive the runner.
+  Any policy read error lets the runner through. Self-reported: it finds stale runners, it proves
+  nothing; real attestation waits for the signing-key decision. Migration
+  `20261001120000_add_runner_policy` (idempotent). Live recipe: PUT the policy with
+  `runnerPolicyMode: "report"` and a `minRunnerVersion` above a test runner's version, send a
+  heartbeat with `{agentVersion}`, read `compliance` on `GET agent/runners`; switch to `enforce`
+  and the next heartbeat answers 403; set `off` to roll back.
 - **Prompt routines (F099, 2026-09-30):** `POST agent/scheduled-commands` with
   `kind: PROMPT` (`prompt`, optional `model` as `PROVIDER/model`, optional
   `repoRef` = workspace folder name, `runnerLabels`) needs no device

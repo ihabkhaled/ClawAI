@@ -28,6 +28,8 @@ export const RUNNER_SELECT = {
   status: true,
   lastHeartbeatAt: true,
   metadata: true,
+  runnerCompliance: true,
+  runnerComplianceReason: true,
 } satisfies Prisma.AgentSessionSelect;
 
 /**

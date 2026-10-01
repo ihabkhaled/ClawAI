@@ -23,6 +23,7 @@ import { AgentSessionService } from './agent-session.service';
 import { AgentCommandService } from './agent-command.service';
 import { RunnerCredentialService } from './runner-credential.service';
 import { RuntimeProtocolService } from './runtime-protocol.service';
+import { RunnerPolicyService } from '../../fleet/services/runner-policy.service';
 import type {
   DispatchRunnerJobDto,
   RegisterRunnerDto,
@@ -37,6 +38,7 @@ import type {
   RunnerView,
 } from '../types/runner.types';
 import type { HeartbeatResult } from '../types/agent.types';
+import type { RunnerComplianceDecision } from '../../fleet/types/runner-policy.types';
 import type { ScheduledCommand, TerminalCommand } from '../../../generated/prisma';
 
 /**
@@ -61,6 +63,7 @@ export class RunnerService {
     private readonly commandRepo: AgentCommandRepository,
     private readonly commandManager: AgentCommandManager,
     private readonly protocol: RuntimeProtocolService,
+    private readonly runnerPolicy: RunnerPolicyService,
   ) {}
 
   /**
@@ -68,6 +71,15 @@ export class RunnerService {
    * receives it, so the only credential that reaches a runner is its own.
    */
   async register(userId: string, dto: RegisterRunnerDto): Promise<RegisterRunnerResult> {
+    // F100: judged before anything is created, so a refused runner leaves no row.
+    const decision = await this.runnerPolicy.evaluate(userId, {
+      agentVersion: dto.agentVersion,
+      platform: dto.platform,
+    });
+    if (decision.refuse) {
+      this.audit(decision, 'unregistered', userId, dto);
+      this.refuse(decision);
+    }
     const metadata: RunnerMetadata = {
       kind: RUNNER_METADATA_KIND,
       name: dto.name,
@@ -81,6 +93,13 @@ export class RunnerService {
       metadata,
     });
     const issued = await this.credentialService.issue(session.id, userId);
+    if (decision.evaluated && decision.status !== null) {
+      await this.runners.recordCompliance(session.id, {
+        status: decision.status,
+        reason: decision.reason,
+      });
+      this.audit(decision, session.id, userId, dto);
+    }
     return {
       runnerId: session.id,
       runnerToken: issued.token,
@@ -163,16 +182,84 @@ export class RunnerService {
 
   /**
    * Revives an EXPIRED runner; a revoked (DISCONNECTED) one answers 409.
-   * The optional report (F100) updates the recorded version and platform only;
-   * it is self-reported and unsigned, so nothing decides access from it.
+   * The optional report (F100) updates the recorded version and platform. It is
+   * self-reported and unsigned: the organization runner policy (default off)
+   * flags a stale runner in `report` mode and refuses it only in `enforce`
+   * mode, and a runner whose policy cannot be read is let through.
    */
-  async heartbeat(sessionId: string, report?: RunnerHeartbeatDto): Promise<HeartbeatResult> {
-    const revived = await this.runners.touchHeartbeat(sessionId, report ?? {});
+  async heartbeat(
+    sessionId: string,
+    userId: string,
+    report?: RunnerHeartbeatDto,
+  ): Promise<HeartbeatResult> {
+    const facts = report ?? {};
+    const decision = await this.runnerPolicy.evaluate(userId, facts);
+    const flagged =
+      decision.refuse || (decision.status !== null && decision.status !== 'compliant');
+    // Read before any write so "changed since last time" compares the old verdict.
+    const changed = flagged && (await this.verdictChanged(sessionId, decision));
+    if (decision.refuse) {
+      await this.runners.recordRefusal(sessionId, facts, decision);
+      if (changed) this.audit(decision, sessionId, userId, facts);
+      this.refuse(decision);
+    }
+    const record = decision.evaluated
+      ? { status: decision.status, reason: decision.reason }
+      : undefined;
+    const revived = await this.runners.touchHeartbeat(sessionId, facts, record);
     if (revived === 0) {
       throw new BusinessException('agent.runner.offline', 'RUNNER_OFFLINE', HttpStatus.CONFLICT);
     }
     await this.credentials.touch(sessionId);
+    if (changed) this.audit(decision, sessionId, userId, facts);
     return { ok: true, nextHeartbeatInSeconds: SESSION_HEARTBEAT_TIMEOUT_SECONDS / 2 };
+  }
+
+  /**
+   * True when the stored verdict differs from `decision`, so the audit entry is
+   * written once per change rather than once per heartbeat. This service has no
+   * audit table: the entry is a structured log line, and the verdict itself is
+   * persisted on the session.
+   */
+  private async verdictChanged(
+    sessionId: string,
+    decision: RunnerComplianceDecision,
+  ): Promise<boolean> {
+    const previous = await this.runners.findById(sessionId);
+    return (
+      previous === null ||
+      previous.runnerCompliance !== decision.status ||
+      previous.runnerComplianceReason !== decision.reason
+    );
+  }
+
+  private audit(
+    decision: RunnerComplianceDecision,
+    runnerId: string,
+    userId: string,
+    report: { agentVersion?: string; platform?: string },
+  ): void {
+    this.logger.warn(
+      JSON.stringify({
+        event: 'runner.policy.verdict',
+        runnerId,
+        userId,
+        status: decision.status,
+        reason: decision.reason,
+        refused: decision.refuse,
+        agentVersion: report.agentVersion ?? null,
+        platform: report.platform ?? null,
+      }),
+    );
+  }
+
+  private refuse(decision: RunnerComplianceDecision): never {
+    throw new BusinessException(
+      'agent.runner.policy_violation',
+      'RUNNER_POLICY_VIOLATION',
+      HttpStatus.FORBIDDEN,
+      { reason: decision.reason },
+    );
   }
 
   /**
@@ -274,6 +361,10 @@ export class RunnerService {
       agentVersion: row.agentVersion,
       status: row.status,
       lastHeartbeatAt: row.lastHeartbeatAt,
+      compliance:
+        row.runnerCompliance === null
+          ? null
+          : { status: row.runnerCompliance, reason: row.runnerComplianceReason },
     };
   }
 }

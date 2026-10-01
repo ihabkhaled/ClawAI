@@ -14,17 +14,17 @@ prompt routines. The "memory off still reads memories" finding was fixed by `b46
 Rule applied: implement the recommended default only when it is additive, backward-compatible
 and does not decide money, permission semantics, deletion or a breaking public contract.
 
-| Feature                 | Status                                                                                                                          |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| F093 prompt caching     | OWNER DECISION REQUIRED: decides billing (cache-write is 1.25x input; finalize contract)                                        |
-| F095 resume (backend)   | IMPLEMENTED `cdae9c05d`: `repositoryRef` on `createThread`, `GET agent/runners/:id/resume`                                      |
-| F097 mobile token class | OWNER DECISION REQUIRED: new credential class and permission semantics                                                          |
-| F098 cloud sessions     | NOT IMPLEMENTED by design: the recommended default is (b), user-hosted runners only                                             |
-| F099 webhook trigger    | IMPLEMENTED `69372fc1a` (step 1). Step 2, per-routine secrets a routine can read: OWNER DECISION REQUIRED (security boundary)   |
-| F100 runner report      | IMPLEMENTED `fdc631228` (step 1, record only). Org policy and enforcement: OWNER DECISION REQUIRED (signing key / trust anchor) |
-| F101 other clients      | NOT IMPLEMENTED by design: the recommended default is (b), VS Code only                                                         |
-| F108 cost in events     | OWNER DECISION REQUIRED: discloses provider cost and margin, changes the finalize contract                                      |
-| F030 / F067             | Extension-side release-owner decisions, no backend work                                                                         |
+| Feature                 | Status                                                                                                                                                                           |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F093 prompt caching     | OWNER DECISION REQUIRED: decides billing (cache-write is 1.25x input; finalize contract)                                                                                         |
+| F095 resume (backend)   | IMPLEMENTED `cdae9c05d`: `repositoryRef` on `createThread`, `GET agent/runners/:id/resume`                                                                                       |
+| F097 mobile token class | OWNER DECISION REQUIRED: new credential class and permission semantics                                                                                                           |
+| F098 cloud sessions     | NOT IMPLEMENTED by design: the recommended default is (b), user-hosted runners only                                                                                              |
+| F099 webhook trigger    | IMPLEMENTED `69372fc1a` (step 1). Step 2, per-routine secrets a routine can read: OWNER DECISION REQUIRED (security boundary)                                                    |
+| F100 runner report      | IMPLEMENTED `fdc631228` (step 1, record only) and step 2 (ADR-142): org policy + off/report/enforce, staged, fail-open, unsigned. Attestation WAITS for the signing-key decision |
+| F101 other clients      | NOT IMPLEMENTED by design: the recommended default is (b), VS Code only                                                                                                          |
+| F108 cost in events     | OWNER DECISION REQUIRED: discloses provider cost and margin, changes the finalize contract                                                                                       |
+| F030 / F067             | Extension-side release-owner decisions, no backend work                                                                                                                          |
 
 Left open inside the implemented items: F095 does not serve the runner's tool list (the server never
 sees it; serving it needs the runner to report its manifest, a new persisted public shape) and the
@@ -96,10 +96,16 @@ Action or relay. Step 2 (secrets a routine can read, encrypted store) is a secur
 
 ## F100 Self-hosted runners (attestation, updates, org policy)
 
-**Status: step 1 implemented (`fdc631228`), the rest owner decision required.** `POST agent/runners/heartbeat`
-takes an optional `{ agentVersion?, platform? }` and records it on the session (no migration). It is
-self-reported and unsigned, so it informs the owner and authorises nothing, which is why this is "record
-only". The organization policy table and enforcement need a signing-key decision first and are not built.
+**Status: steps 1 and 2 implemented (`fdc631228`, ADR-142), attestation waits for the signing key.**
+`POST agent/runners/heartbeat` takes an optional `{ agentVersion?, platform? }` and records it on the
+session. Owner decision 2026-10-01: yes to an organization policy for allowed runner versions, but only
+staged. Built: `minRunnerVersion`, `allowedRunnerPlatforms`, `runnerPolicyMode` (`off` default | `report` |
+`enforce`) and `requireVersionReport` on `organization_policies`; `report` flags and audits and never
+rejects, `enforce` rejects only a definite violation of a set constraint (a silent runner is `unknown` and
+passes unless `requireVersionReport`), and any policy read error fails open. It is self-reported and
+unsigned, so it detects stale runners and proves no identity. NOT built, waiting on the signing-key
+decision: a signed version/platform claim, a trust anchor, an update channel, and any enforcement that
+depends on them. A durable audit table is also open (the audit entry is a structured log line today).
 
 - Options: (a) signed version and platform report at heartbeat, update channel, organization policy table for allowed runner versions; (b) token-only identity as today.
 - Default: (a) in order: report-at-heartbeat (record only), then org policy, then enforcement.

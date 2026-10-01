@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { vi } from 'vitest';
 import { AgentSessionStatus } from '../../../../common/enums/agent-session-status.enum';
 import { RunnerApprovalPolicy } from '../../../../common/enums/runner-approval-policy.enum';
@@ -10,6 +11,7 @@ import { RuntimeProtocolService } from '../runtime-protocol.service';
 import type { AgentCommandManager } from '../../managers/agent-command.manager';
 import type { AgentCommandRepository } from '../../repositories/agent-command.repository';
 import type { RunnerCredentialRepository } from '../../repositories/runner-credential.repository';
+import type { RunnerPolicyService } from '../../../fleet/services/runner-policy.service';
 import type { RunnerRepository } from '../../repositories/runner.repository';
 import type { AgentCommandService } from '../agent-command.service';
 import type { AgentSessionService } from '../agent-session.service';
@@ -27,6 +29,8 @@ function row(overrides: Partial<RunnerRow> = {}): RunnerRow {
     status: AgentSessionStatus.CONNECTED,
     lastHeartbeatAt: new Date(),
     metadata: { kind: 'runner', name: 'Build box', labels: ['linux', 'gpu'] },
+    runnerCompliance: null,
+    runnerComplianceReason: null,
     ...overrides,
   } as RunnerRow;
 }
@@ -61,6 +65,13 @@ function setup(rows: RunnerRow[] = [row()]) {
     findOwned: vi.fn().mockResolvedValue(rows[0] ?? null),
     findById: vi.fn().mockResolvedValue(rows[0] ?? null),
     touchHeartbeat: vi.fn().mockResolvedValue(1),
+    recordRefusal: vi.fn().mockResolvedValue(undefined),
+    recordCompliance: vi.fn().mockResolvedValue(undefined),
+  };
+  const runnerPolicy = {
+    evaluate: vi
+      .fn()
+      .mockResolvedValue({ evaluated: true, status: null, reason: null, refuse: false }),
   };
   const credentials = { touch: vi.fn().mockResolvedValue(undefined) };
   const credentialService = {
@@ -102,8 +113,10 @@ function setup(rows: RunnerRow[] = [row()]) {
       partial<AgentCommandRepository>(commandRepo),
       partial<AgentCommandManager>(manager),
       new RuntimeProtocolService(),
+      partial<RunnerPolicyService>(runnerPolicy),
     ),
     repo,
+    runnerPolicy,
     credentials,
     credentialService,
     sessions,
@@ -300,44 +313,55 @@ describe('RunnerService', () => {
 
     it('heartbeat refreshes the session and the credential', async () => {
       const { service, repo, credentials } = setup();
-      const result = await service.heartbeat('runner-1');
-      expect(repo.touchHeartbeat).toHaveBeenCalledWith('runner-1', {});
+      const result = await service.heartbeat('runner-1', 'user-1');
+      expect(repo.touchHeartbeat).toHaveBeenCalledWith(
+        'runner-1',
+        {},
+        { status: null, reason: null },
+      );
       expect(credentials.touch).toHaveBeenCalledWith('runner-1');
       expect(result).toEqual({ ok: true, nextHeartbeatInSeconds: 60 });
     });
 
     it('records the version and platform a runner reports at heartbeat (F100, record only)', async () => {
       const { service, repo } = setup();
-      const result = await service.heartbeat('runner-1', {
+      const result = await service.heartbeat('runner-1', 'user-1', {
         agentVersion: '1.90.0',
         platform: 'windows',
       });
-      expect(repo.touchHeartbeat).toHaveBeenCalledWith('runner-1', {
-        agentVersion: '1.90.0',
-        platform: 'windows',
-      });
+      expect(repo.touchHeartbeat).toHaveBeenCalledWith(
+        'runner-1',
+        { agentVersion: '1.90.0', platform: 'windows' },
+        { status: null, reason: null },
+      );
       expect(result).toEqual({ ok: true, nextHeartbeatInSeconds: 60 });
     });
 
     it('a heartbeat with no report leaves the registered version and platform alone', async () => {
       const { service, repo } = setup();
-      await service.heartbeat('runner-1', undefined);
-      expect(repo.touchHeartbeat).toHaveBeenCalledWith('runner-1', {});
+      await service.heartbeat('runner-1', 'user-1', undefined);
+      expect(repo.touchHeartbeat).toHaveBeenCalledWith(
+        'runner-1',
+        {},
+        { status: null, reason: null },
+      );
     });
 
     it('a revoked runner reporting a version records nothing and is still refused', async () => {
       const { service, repo, credentials } = setup();
       repo.touchHeartbeat.mockResolvedValueOnce(0);
-      await expect(service.heartbeat('runner-1', { agentVersion: '9.9.9' })).rejects.toBeInstanceOf(
-        BusinessException,
-      );
+      await expect(
+        service.heartbeat('runner-1', 'user-1', { agentVersion: '9.9.9' }),
+      ).rejects.toBeInstanceOf(BusinessException);
       expect(credentials.touch).not.toHaveBeenCalled();
     });
 
     it('heartbeat of a revoked (disconnected) runner is refused', async () => {
       const { service, repo, credentials } = setup();
       repo.touchHeartbeat.mockResolvedValueOnce(0);
-      await expect(service.heartbeat('runner-1')).rejects.toBeInstanceOf(BusinessException);
+      await expect(service.heartbeat('runner-1', 'user-1')).rejects.toBeInstanceOf(
+        BusinessException,
+      );
       expect(credentials.touch).not.toHaveBeenCalled();
     });
 
@@ -396,5 +420,175 @@ describe('RunnerService.resumeManifest (F095 resume)', () => {
     const { service } = setup();
     const text = JSON.stringify(await service.resumeManifest('runner-1', 'user-1'));
     expect(text).not.toMatch(/sessionKey|runnerToken|tokenHash|clwr_/);
+  });
+});
+
+describe('RunnerService runner policy (F100, staged)', () => {
+  const decision = (overrides: Record<string, unknown> = {}) => ({
+    evaluated: true,
+    status: null,
+    reason: null,
+    refuse: false,
+    ...overrides,
+  });
+  const reported = { agentVersion: '1.0.0', platform: 'linux' };
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it('judges the heartbeat as the runner owner, never a body-supplied user', async () => {
+    const { service, runnerPolicy } = setup();
+    await service.heartbeat('runner-1', 'owner-7', reported);
+    expect(runnerPolicy.evaluate).toHaveBeenCalledWith('owner-7', reported);
+  });
+
+  it('mode off: nothing is flagged, nothing is audited, the heartbeat lands', async () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
+    const { service, repo } = setup();
+    await service.heartbeat('runner-1', 'user-1', reported);
+    expect(repo.touchHeartbeat).toHaveBeenCalledWith('runner-1', reported, {
+      status: null,
+      reason: null,
+    });
+    expect(repo.recordRefusal).not.toHaveBeenCalled();
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('report mode: flags and audits a non-compliant runner but never rejects it', async () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
+    const { service, repo, runnerPolicy, credentials } = setup();
+    runnerPolicy.evaluate.mockResolvedValue(
+      decision({ status: 'noncompliant', reason: 'version_below_minimum' }),
+    );
+    const result = await service.heartbeat('runner-1', 'user-1', reported);
+    expect(result.ok).toBe(true);
+    expect(repo.touchHeartbeat).toHaveBeenCalledWith('runner-1', reported, {
+      status: 'noncompliant',
+      reason: 'version_below_minimum',
+    });
+    expect(credentials.touch).toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0]?.[0])).toContain('version_below_minimum');
+  });
+
+  it('audits a verdict once per change, not once per heartbeat', async () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
+    const { service, repo, runnerPolicy } = setup();
+    runnerPolicy.evaluate.mockResolvedValue(
+      decision({ status: 'noncompliant', reason: 'version_below_minimum' }),
+    );
+    repo.findById.mockResolvedValue(
+      row({ runnerCompliance: 'noncompliant', runnerComplianceReason: 'version_below_minimum' }),
+    );
+    await service.heartbeat('runner-1', 'user-1', reported);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('enforce mode: refuses with a clear 403, records why, and does not revive the runner', async () => {
+    const { service, repo, runnerPolicy, credentials } = setup();
+    runnerPolicy.evaluate.mockResolvedValue(
+      decision({ status: 'noncompliant', reason: 'version_below_minimum', refuse: true }),
+    );
+    const failure = await service
+      .heartbeat('runner-1', 'user-1', reported)
+      .catch((e: unknown) => e);
+    expect(failure).toBeInstanceOf(BusinessException);
+    const refusal = failure as BusinessException;
+    expect(refusal.code).toBe('RUNNER_POLICY_VIOLATION');
+    expect(refusal.getStatus()).toBe(403);
+    expect(refusal.details).toEqual({ reason: 'version_below_minimum' });
+    expect(repo.recordRefusal).toHaveBeenCalledWith('runner-1', reported, expect.anything());
+    expect(repo.touchHeartbeat).not.toHaveBeenCalled();
+    expect(credentials.touch).not.toHaveBeenCalled();
+  });
+
+  it('a repeated refusal still refuses but does not repeat the audit entry', async () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
+    const { service, repo, runnerPolicy } = setup();
+    runnerPolicy.evaluate.mockResolvedValue(
+      decision({ status: 'noncompliant', reason: 'platform_not_allowed', refuse: true }),
+    );
+    repo.findById.mockResolvedValue(
+      row({ runnerCompliance: 'noncompliant', runnerComplianceReason: 'platform_not_allowed' }),
+    );
+    await expect(service.heartbeat('runner-1', 'user-1', reported)).rejects.toBeInstanceOf(
+      BusinessException,
+    );
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('fails open: no verdict lets the runner through and keeps the stored verdict', async () => {
+    const { service, repo, runnerPolicy } = setup();
+    runnerPolicy.evaluate.mockResolvedValue(decision({ evaluated: false }));
+    const result = await service.heartbeat('runner-1', 'user-1', reported);
+    expect(result.ok).toBe(true);
+    expect(repo.touchHeartbeat).toHaveBeenCalledWith('runner-1', reported, undefined);
+  });
+
+  it('a revoked runner is still refused as offline when policy passes it', async () => {
+    const { service, repo, runnerPolicy } = setup();
+    runnerPolicy.evaluate.mockResolvedValue(decision());
+    repo.touchHeartbeat.mockResolvedValueOnce(0);
+    await expect(service.heartbeat('runner-1', 'user-1', reported)).rejects.toMatchObject({
+      code: 'RUNNER_OFFLINE',
+    });
+  });
+
+  it('register: an enforced refusal creates no session and no credential', async () => {
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
+    const { service, sessions, credentialService, runnerPolicy } = setup();
+    runnerPolicy.evaluate.mockResolvedValue(
+      decision({ status: 'noncompliant', reason: 'version_below_minimum', refuse: true }),
+    );
+    await expect(
+      service.register('user-1', {
+        hostname: 'box',
+        platform: 'linux',
+        agentVersion: '0.1.0',
+        name: 'Box',
+        labels: [],
+        approvalPolicy: RunnerApprovalPolicy.ASK,
+      }),
+    ).rejects.toMatchObject({ code: 'RUNNER_POLICY_VIOLATION' });
+    expect(sessions.register).not.toHaveBeenCalled();
+    expect(credentialService.issue).not.toHaveBeenCalled();
+  });
+
+  it('register: report mode records the verdict on the new session and still registers', async () => {
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
+    const { service, repo, runnerPolicy } = setup();
+    runnerPolicy.evaluate.mockResolvedValue(
+      decision({ status: 'unknown', reason: 'version_missing' }),
+    );
+    const result = await service.register('user-1', {
+      hostname: 'box',
+      platform: 'linux',
+      agentVersion: '1.0.0',
+      name: 'Box',
+      labels: [],
+      approvalPolicy: RunnerApprovalPolicy.ASK,
+    });
+    expect(result.runnerId).toBe('runner-9');
+    expect(repo.recordCompliance).toHaveBeenCalledWith('runner-9', {
+      status: 'unknown',
+      reason: 'version_missing',
+    });
+  });
+
+  it('list is scoped to the caller and shows the verdict for the owner (IDOR)', async () => {
+    const { service, repo } = setup([
+      row({ runnerCompliance: 'noncompliant', runnerComplianceReason: 'version_below_minimum' }),
+    ]);
+    const views = await service.list('user-1');
+    expect(repo.listConnected).toHaveBeenCalledWith('user-1', expect.any(Date));
+    expect(views[0]?.compliance).toEqual({
+      status: 'noncompliant',
+      reason: 'version_below_minimum',
+    });
+  });
+
+  it('list shows no verdict when none was evaluated', async () => {
+    const { service } = setup();
+    const views = await service.list('user-1');
+    expect(views[0]?.compliance).toBeNull();
   });
 });

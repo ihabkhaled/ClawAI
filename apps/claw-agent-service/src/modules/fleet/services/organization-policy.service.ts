@@ -5,10 +5,13 @@ import { Prisma } from '../../../generated/prisma';
 import { UNCONSTRAINED_POLICY } from '../constants/organization-policy.constants';
 import { OrganizationRepository } from '../repositories/organization.repository';
 import { OrganizationAccessService } from './organization-access.service';
+import { INERT_RUNNER_POLICY } from '../constants/runner-policy.constants';
+import { readRunnerPolicy } from '../utilities/runner-compliance.utility';
 import { intersectPolicies, toEffectivePolicy } from '../utilities/policy-intersection.utility';
 
 import type { UpdateOrganizationPolicyDto } from '../dto/organization-policy.dto';
 import type { EffectivePolicy } from '../types/organization-policy.types';
+import type { RunnerPolicy } from '../types/runner-policy.types';
 
 @Injectable()
 export class OrganizationPolicyService {
@@ -39,6 +42,17 @@ export class OrganizationPolicyService {
   }
 
   /**
+   * F100: the organization's runner policy, for any member (they are entitled to
+   * know what their runners are held to). Separate from `forOrganization`
+   * because the extension parses that payload strictly.
+   */
+  async runnerPolicyForOrganization(organizationId: string, userId: string): Promise<RunnerPolicy> {
+    await this.access.requireMember(organizationId, userId);
+    const policy = await this.repo.findPolicy(organizationId);
+    return policy === null ? INERT_RUNNER_POLICY : readRunnerPolicy(policy);
+  }
+
+  /**
    * Writing a policy is an administrative act, so it needs a role rather than
    * membership. Reading the organization's own policy needs only membership:
    * a member is entitled to know the rules they are being held to.
@@ -61,6 +75,10 @@ export class OrganizationPolicyService {
       trust: dto.trust,
       mcpServers: dto.mcpServers,
       allowedPluginMarketplaces: dto.allowedPluginMarketplaces ?? Prisma.DbNull,
+      minRunnerVersion: dto.minRunnerVersion,
+      allowedRunnerPlatforms: dto.allowedRunnerPlatforms ?? Prisma.DbNull,
+      runnerPolicyMode: dto.runnerPolicyMode,
+      requireVersionReport: dto.requireVersionReport,
     });
     return toEffectivePolicy(saved);
   }

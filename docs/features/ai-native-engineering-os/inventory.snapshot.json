@@ -352,6 +352,11 @@
           "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/agent/organizations/:id/runner-policy",
+          "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/agent/organizations/:slug/sso/callback",
           "source": "apps/claw-agent-service/src/modules/fleet/controllers/saml.controller.ts"
@@ -10562,7 +10567,7 @@
       },
       "claw-agent-service": {
         "runner": "vitest",
-        "testFiles": 44
+        "testFiles": 47
       },
       "claw-audit-service": {
         "runner": "vitest",
@@ -11360,7 +11365,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 52,
-    "endpointCount": 761,
+    "endpointCount": 762,
     "envVarCount": 360,
     "eventCount": 184,
     "frontendRouteCount": 155,
@@ -11372,7 +11377,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1874,
+    "totalTestFiles": 1877,
     "workspaceCount": 25
   }
 }

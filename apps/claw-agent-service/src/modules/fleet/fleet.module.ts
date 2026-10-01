@@ -7,6 +7,7 @@ import { SamlController } from './controllers/saml.controller';
 import { OrganizationRepository } from './repositories/organization.repository';
 import { OrganizationAccessService } from './services/organization-access.service';
 import { OrganizationMembershipService } from './services/organization-membership.service';
+import { RunnerPolicyService } from './services/runner-policy.service';
 import { OrganizationPolicyService } from './services/organization-policy.service';
 import { OrganizationUsageScopeService } from './services/organization-usage-scope.service';
 import { SamlService } from './services/saml.service';
@@ -32,9 +33,10 @@ import { SamlService } from './services/saml.service';
     OrganizationAccessService,
     OrganizationMembershipService,
     OrganizationPolicyService,
+    RunnerPolicyService,
     OrganizationUsageScopeService,
     SamlService,
   ],
-  exports: [OrganizationRepository, OrganizationPolicyService, SamlService],
+  exports: [OrganizationRepository, OrganizationPolicyService, RunnerPolicyService, SamlService],
 })
 export class FleetModule {}
