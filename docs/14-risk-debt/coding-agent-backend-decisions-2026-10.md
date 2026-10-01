@@ -9,7 +9,34 @@ Done without a decision (additive, narrowing, tested): F081 `allowedPluginMarket
 the effective organization policy; F099 cron (UTC, at most every 5 minutes) for runner-hosted
 prompt routines. The "memory off still reads memories" finding was fixed by `b467fb257`.
 
+## Status (2026-10-01, owner authorised the recommended defaults where additive)
+
+Rule applied: implement the recommended default only when it is additive, backward-compatible
+and does not decide money, permission semantics, deletion or a breaking public contract.
+
+| Feature                 | Status                                                                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| F093 prompt caching     | OWNER DECISION REQUIRED: decides billing (cache-write is 1.25x input; finalize contract)                                        |
+| F095 resume (backend)   | IMPLEMENTED `cdae9c05d`: `repositoryRef` on `createThread`, `GET agent/runners/:id/resume`                                      |
+| F097 mobile token class | OWNER DECISION REQUIRED: new credential class and permission semantics                                                          |
+| F098 cloud sessions     | NOT IMPLEMENTED by design: the recommended default is (b), user-hosted runners only                                             |
+| F099 webhook trigger    | IMPLEMENTED `69372fc1a` (step 1). Step 2, per-routine secrets a routine can read: OWNER DECISION REQUIRED (security boundary)   |
+| F100 runner report      | IMPLEMENTED `fdc631228` (step 1, record only). Org policy and enforcement: OWNER DECISION REQUIRED (signing key / trust anchor) |
+| F101 other clients      | NOT IMPLEMENTED by design: the recommended default is (b), VS Code only                                                         |
+| F108 cost in events     | OWNER DECISION REQUIRED: discloses provider cost and margin, changes the finalize contract                                      |
+| F030 / F067             | Extension-side release-owner decisions, no backend work                                                                         |
+
+Left open inside the implemented items: F095 does not serve the runner's tool list (the server never
+sees it; serving it needs the runner to report its manifest, a new persisted public shape) and the
+extension does not call either new route yet. The frontend `ChatThread` type has not gained
+`repositoryRef` (the frontend cannot be built from a junctioned worktree, so the push gate could not
+prove it); add `repositoryRef?: { name; remoteUrl?; branch? } | null` to
+`apps/claw-frontend/src/types/chat.types.ts` from a normal checkout. Nothing here was exercised against the
+running dev stack.
+
 ## F093 Automatic prompt caching (billing)
+
+**Status: owner decision required.** It would change what a user is charged and how finalize reports usage; not implemented.
 
 - Options: (a) native Anthropic `/v1/messages` transport with `cache_control` plus a cache-write usage field end to end; (b) keep the OpenAI-compatible path and skip caching.
 - Default: (a), behind a per-model flag in the model catalog (DB-level), cache writes billed from `cacheWritePerMillionMicroUsd` only when the rate row is present.
@@ -18,12 +45,23 @@ prompt routines. The "memory off still reads memories" finding was fixed by `b46
 
 ## F095 Resume cloud sessions (public contract)
 
+**Status: implemented (backend), `cdae9c05d`.** Done as the default, narrowed to what the server can honestly serve:
+`POST /chat-threads` takes an optional `repositoryRef { name, remoteUrl?, branch? }` (nullable JSONB
+`chat_threads.repository_ref`, migration `20261001120000_thread_repository_ref`; remote reduced to one
+credential-free https identifier; a branch copies it; create-only). `GET agent/runners/:id/resume`
+returns `{ runner, online, protocol }`, owner-scoped (a stranger gets the same 404). Differences from the
+brief: the manifest is served by agent-service as proposed, but it carries what the server knows (name,
+labels, platform, version, approval class, online, protocol), not a tool list; there is no
+`repositoryRef` update route. Guides: `docs/04-backend/service-guide-chat.md`, `service-guide-agent.md`.
+
 - Options: (a) `repositoryRef` on `createThread` (name, optional normalised remote URL and branch) plus a resume route returning the runner's capability manifest; (b) keep workspace fit client-side.
 - Default: (a) with a stored remote URL stripped of credentials and query, nullable columns on `chat_threads`, and the manifest served by agent-service (it owns runners), not chat-service.
 - Risk: invents a public request shape and a new persisted identifier for a user's repository; a URL can carry a token, and the manifest must not leak another user's runner.
 - Ships on decision: migration, DTO, resume route with owner check, contract fixture for the client.
 
 ## F097 Mobile app integration (permissions)
+
+**Status: owner decision required.** A new token class is new permission semantics; not implemented.
 
 - Options: (a) a narrower `mobile` device token class in auth-service (read runs, approve, cancel; no shell, no policy edit); (b) reuse the device token.
 - Default: (a), scopes listed explicitly, short TTL, revocable per device.
@@ -32,12 +70,24 @@ prompt routines. The "memory off still reads memories" finding was fixed by `b46
 
 ## F098 Cloud coding sessions (infrastructure and cost)
 
+**Status: not implemented, by design.** The recommended default is (b); nothing to build until an isolation design and a cost model exist.
+
 - Options: (a) hosted runner provisioning with repository clone and teardown in agent-service; (b) stay on user-hosted runners only.
 - Default: (b) until an isolation design (container per session, egress policy, secret handling) and a cost model exist.
 - Risk: runs customer code on our hosts; unbounded compute spend; repository credentials at rest. Not safe to scaffold.
 - Ships on decision: a repository-backed session entity, provisioner, TTL teardown, quota tied to plan tier.
 
 ## F099 (remainder) Repository-event triggers and per-routine secrets
+
+**Status: step 1 implemented (`69372fc1a`), step 2 owner decision required.** Step 1 is the signed webhook:
+`POST agent/routines/webhook/:routineId` (public, HMAC over the raw bytes plus a 5-minute window, in the
+channels webhook's format), owner routes `GET|PUT agent/scheduled-commands/:id/webhook` and `POST .../webhook/rotate`.
+Off by default (`scheduled_commands.webhookEnabled`, migration `20261001110000_add_routine_webhook_trigger`).
+The secret is derived per routine from the encryption key and `webhookSecretVersion`, never stored. The body
+is never read into the prompt; unusable routines answer the same 401 as a bad signature; one accepted
+delivery per routine per 60 s, claimed only after the signature verifies; replays return the first run.
+GitHub/GitLab native deliveries cannot call it directly (different signing, GitHub has no timestamp): use an
+Action or relay. Step 2 (secrets a routine can read, encrypted store) is a security boundary and is not built.
 
 - Options: (a) signed webhook (GitHub/GitLab) to routine, per-routine secrets in an encrypted store; (b) cron and interval only.
 - Default: (a) in two steps: webhook trigger first (HMAC like the existing channels webhook), secrets second.
@@ -46,6 +96,11 @@ prompt routines. The "memory off still reads memories" finding was fixed by `b46
 
 ## F100 Self-hosted runners (attestation, updates, org policy)
 
+**Status: step 1 implemented (`fdc631228`), the rest owner decision required.** `POST agent/runners/heartbeat`
+takes an optional `{ agentVersion?, platform? }` and records it on the session (no migration). It is
+self-reported and unsigned, so it informs the owner and authorises nothing, which is why this is "record
+only". The organization policy table and enforcement need a signing-key decision first and are not built.
+
 - Options: (a) signed version and platform report at heartbeat, update channel, organization policy table for allowed runner versions; (b) token-only identity as today.
 - Default: (a) in order: report-at-heartbeat (record only), then org policy, then enforcement.
 - Risk: attestation without a trust anchor is theatre; enforcement can lock a fleet out. Needs a signing-key decision first.
@@ -53,12 +108,16 @@ prompt routines. The "memory off still reads memories" finding was fixed by `b46
 
 ## F101 Desktop, JetBrains, Slack, GitHub, GitLab
 
+**Status: not implemented, by design.** The recommended default is (b), VS Code only.
+
 - Options: (a) publish the runtime-v2 run contract as a versioned public API; (b) keep it VS Code only.
 - Default: (b) until the contract is versioned and an API-key class for third-party clients exists.
 - Risk: freezes an internal protocol as a public contract; JetBrains and Desktop are separate products.
 - Ships on decision: contract doc, key class, per-client rate limits.
 
 ## F108 Cost in runtime events (money disclosure)
+
+**Status: owner decision required.** It discloses provider cost (margin) for subscription plans and changes the finalize contract; not implemented.
 
 - Options: (a) return the settled cost (`actualCostMicroUsd`) from auth-service finalize and put `costMicros` on runtime events; (b) never expose per-call cost.
 - Default: (a) for PAYG users only (they are charged that number), omitted for subscription users.
