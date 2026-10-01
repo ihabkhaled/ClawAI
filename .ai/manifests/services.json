@@ -46,7 +46,7 @@
     {
       "database": "mongodb",
       "dir": "apps/claw-audit-service",
-      "endpointCount": 15,
+      "endpointCount": 16,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -65,13 +65,13 @@
       "port": 4007,
       "portSource": "shared-constants",
       "prismaModels": [],
-      "testFiles": 23,
+      "testFiles": 33,
       "testRunner": "vitest"
     },
     {
       "database": "postgresql",
       "dir": "apps/claw-auth-service",
-      "endpointCount": 112,
+      "endpointCount": 114,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -112,7 +112,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 121,
+      "testFiles": 123,
       "testRunner": "vitest"
     },
     {
@@ -278,7 +278,7 @@
         "VideoGeneration",
         "VideoGenerationAsset"
       ],
-      "testFiles": 47,
+      "testFiles": 48,
       "testRunner": "vitest"
     },
     {

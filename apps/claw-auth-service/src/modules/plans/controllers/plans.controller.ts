@@ -23,7 +23,12 @@ import {
   setPlanIntervalDiscountsSchema,
 } from '../dto/plan-interval-discounts.dto';
 import { type PlanIntervalPricingView } from '../types/plan-interval-pricing.types';
-import { type PlanRetirementResult, type PlanView } from '../types/plans.types';
+import {
+  type AddTrialDaysResult,
+  type PlanRetirementResult,
+  type PlanView,
+} from '../types/plans.types';
+import { type AddTrialDaysDto, addTrialDaysSchema } from '../dto/plan-trial.dto';
 import { type RetirePlanDto, retirePlanSchema } from '../dto/plan-retirement.dto';
 import { type PlanPriceVersionView } from '../types/plan-catalog.types';
 
@@ -162,6 +167,16 @@ export class PlansController {
       admin.id,
       dto.durationMonths,
       dto.grantReason,
+      dto.durationDays,
     );
+  }
+
+  @Post('users/:userId/trial-days')
+  async addTrialDays(
+    @Param('userId') userId: string,
+    @CurrentUser() admin: AuthenticatedUser,
+    @Body(new ZodValidationPipe(addTrialDaysSchema)) dto: AddTrialDaysDto,
+  ): Promise<AddTrialDaysResult> {
+    return this.plansService.extendUserTrial(userId, admin.id, dto.days, dto.reason);
   }
 }

@@ -34,6 +34,9 @@ export type UserEntitlements = {
   // The explicit mode disambiguates unrestricted access from an empty
   // allow-list or deny-all policy.
   modelAccessMode: PlanModelAccessMode;
+  // PAYG metering is on and the wallet has spendable credit (ADR-139). Lets a
+  // plan-locked media feature through; the PAYG reservation still gates spend.
+  hasPaygCredit: boolean;
   allowedModels: PlanModelAccessView[];
   allowedProviders: string[];
   quota: {

@@ -50,3 +50,15 @@ export const VIDEO_REQUEST_PATTERNS: readonly RegExp[] = [
   /\b(?:generate|create|make|produce|render|animate|imagine|film|shoot)\b\s+(?:me\s+|us\s+)?(?:(?:a|an|the|some|one|another|short|quick|small|new|cinematic|nice|cool|little|brief|\d+[- ]?(?:s|sec|secs|second|seconds))\s+)*(?:video|clip|animation|movie|film)\b(?!\s+(?:call|calls|conference|player|editor|editing|codec|format|file|files|game|games|streaming|meeting|chat|tutorial|course|url|link))/iu,
   /\btext[- ]to[- ]video\b/iu,
 ];
+
+/**
+ * Wording that asks for an ATTACHED image to be brought to life. Only read when an
+ * image is attached (image-to-video): "animate this image" with nothing attached
+ * has nothing to animate, so it is not a video request.
+ */
+export const VIDEO_ANIMATE_ATTACHED_IMAGE_PATTERNS: readonly RegExp[] = [
+  /^\s*animate\b/iu,
+  /\banimate\s+(?:this|that|these|the|my|it|him|her|them)\b/iu,
+  /\b(?:bring|turn|make)\s+(?:this|that|the|my|it)\b[^.?!]{0,40}?\b(?:to\s+life|into\s+(?:a\s+)?(?:video|clip|animation|movie))\b/iu,
+  /\b(?:image|photo|picture|pic)[- ]to[- ]video\b/iu,
+];

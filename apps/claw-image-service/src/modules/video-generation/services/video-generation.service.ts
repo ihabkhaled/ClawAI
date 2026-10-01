@@ -13,6 +13,7 @@ import {
 } from '../constants/video-generation.constants';
 import { videoFailureMessage } from '../constants/video-failure.constants';
 import { VideoExecutionManager } from '../managers/video-execution.manager';
+import { VideoSourceImageManager } from '../managers/video-source-image.manager';
 import { VideoGenerationRepository } from '../repositories/video-generation.repository';
 import type {
   CreateVideoGenerationData,
@@ -31,6 +32,7 @@ export class VideoGenerationService {
     private readonly repository: VideoGenerationRepository,
     private readonly execution: VideoExecutionManager,
     private readonly planGate: ImagePlanGateManager,
+    private readonly sourceImages: VideoSourceImageManager,
   ) {}
 
   /**
@@ -59,6 +61,7 @@ export class VideoGenerationService {
       durationSeconds: dto.durationSeconds,
       aspectRatio: dto.aspectRatio,
       isAutoMode: dto.isAutoMode,
+      sourceFileId: dto.sourceFileId ?? null,
     });
     this.logger.log(
       `enqueueGeneration: id=${row.id} provider=${row.provider} model=${row.model} seconds=${String(row.durationSeconds)} auto=${String(row.isAutoMode)}`,
@@ -156,6 +159,7 @@ export class VideoGenerationService {
       durationSeconds: row.durationSeconds,
       aspectRatio: row.aspectRatio,
       isAutoMode,
+      sourceFileId: row.sourceFileId,
     };
   }
 
@@ -217,6 +221,11 @@ export class VideoGenerationService {
       return null;
     }
     try {
+      // Before the hold: a refused image costs nothing and never reaches a provider.
+      const sourceImage =
+        row.sourceFileId === null
+          ? undefined
+          : await this.sourceImages.load(row.sourceFileId, row.userId);
       const result = await this.execution.execute({
         generationId: row.id,
         requestId: `video:${row.id}`,
@@ -226,6 +235,7 @@ export class VideoGenerationService {
         prompt: row.prompt,
         durationSeconds: row.durationSeconds,
         aspectRatio: row.aspectRatio,
+        ...(sourceImage === undefined ? {} : { sourceImage }),
         isCancelled: () => this.repository.isCancelled(row.id),
         onOperation: (operationId) => this.repository.setOperation(row.id, operationId),
         onHoldReserved: (reservationId) => this.repository.setReservation(row.id, reservationId),

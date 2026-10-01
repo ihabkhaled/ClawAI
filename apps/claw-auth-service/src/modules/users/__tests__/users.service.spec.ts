@@ -585,6 +585,33 @@ describe('UsersService', () => {
     });
   });
 
+  describe('getIdentity', () => {
+    it('returns only the first and last name', async () => {
+      repository.findById.mockResolvedValue({
+        ...mockUser,
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+      });
+      await expect(service.getIdentity('user-1')).resolves.toEqual({
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+      });
+    });
+
+    it('returns nulls when no name is saved', async () => {
+      repository.findById.mockResolvedValue({ ...mockUser, firstName: null, lastName: undefined });
+      await expect(service.getIdentity('user-1')).resolves.toEqual({
+        firstName: null,
+        lastName: null,
+      });
+    });
+
+    it('404s for an unknown user', async () => {
+      repository.findById.mockResolvedValue(null);
+      await expect(service.getIdentity('nope')).rejects.toThrow(EntityNotFoundException);
+    });
+  });
+
   describe('updatePreferences', () => {
     it('throws when user not found', async () => {
       repository.findById.mockResolvedValue(null);

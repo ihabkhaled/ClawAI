@@ -1,6 +1,7 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { FEEDBACK_TICKET_NUMBER_PAD, FEEDBACK_TICKET_PREFIX } from '@claw/shared-constants';
 
+import { FeedbackSource } from '../../../../common/enums';
 import { FeedbackRepository } from '../feedback.repository';
 
 // The repository is the only place a query is built, so the ownership filter
@@ -132,5 +133,45 @@ describe('findByIdForUser', () => {
     await repo.findByIdForUser('ticket-1', 'user-a');
 
     expect(ticketModel.findOne).toHaveBeenCalledWith({ _id: 'ticket-1', userId: 'user-a' });
+  });
+});
+
+describe('source filter and backfill', () => {
+  it('puts source in the filter so admins can separate public from signed-in tickets', async () => {
+    const { repo, lastFilter } = repository();
+
+    await repo.findPaginated({ ...base, source: FeedbackSource.PUBLIC });
+
+    expect(lastFilter()).toMatchObject({ source: 'PUBLIC' });
+  });
+
+  it('omits source when no filter is given', async () => {
+    const { repo, lastFilter } = repository();
+
+    await repo.findPaginated({ ...base });
+
+    expect(lastFilter()).not.toHaveProperty('source');
+  });
+
+  it('backfills only documents with no source, as AUTHENTICATED, and reports the count', async () => {
+    const { ticketModel, counterModel } = models();
+    const updateMany = vi.fn(() => ({ exec: vi.fn().mockResolvedValue({ modifiedCount: 4 }) }));
+    const repo = new FeedbackRepository(
+      { ...ticketModel, updateMany } as never,
+      counterModel as never,
+    );
+
+    await expect(repo.backfillSource()).resolves.toBe(4);
+
+    expect(updateMany).toHaveBeenNthCalledWith(
+      1,
+      { source: { $exists: false } },
+      { $set: { source: 'AUTHENTICATED' } },
+    );
+    expect(updateMany).toHaveBeenNthCalledWith(
+      2,
+      { reporterName: { $exists: false } },
+      { $set: { reporterName: null } },
+    );
   });
 });

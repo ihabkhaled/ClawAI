@@ -2,6 +2,7 @@ import type { AssembledContext } from '../../types/context.types';
 import {
   boundVideoPrompt,
   buildVideoPlannerPrompt,
+  firstSourceImageId,
   parsePlannedVideoPrompt,
 } from '../video-prompt.utility';
 
@@ -93,5 +94,36 @@ describe('buildVideoPlannerPrompt', () => {
     expect(prompt).toContain('User: we are building a workspace app');
     expect(prompt).toContain('Assistant: Sounds great.');
     expect(prompt.match(/make a video from that page/g)).toHaveLength(1);
+  });
+});
+
+describe('image-to-video helpers', () => {
+  it('builds a motion-only planner prompt when an image is attached', () => {
+    const prompt = buildVideoPlannerPrompt('make the waves move', contextWith(), true);
+
+    expect(prompt).toContain('image the user attached');
+    expect(prompt).toContain('never describe the image itself');
+    expect(prompt).toContain('Motion request:\nmake the waves move');
+    expect(prompt).not.toContain('Video request:');
+  });
+
+  it('keeps the shot planner without an image', () => {
+    const prompt = buildVideoPlannerPrompt('a rocket', contextWith());
+
+    expect(prompt).toContain('Video request:\na rocket');
+    expect(prompt).not.toContain('never describe the image itself');
+  });
+
+  it('picks the first image of the turn, ignoring other files', () => {
+    const context = contextWith({
+      fileContents: [
+        { id: 'a', mimeType: 'application/pdf' },
+        { id: 'b', mimeType: 'image/webp' },
+        { id: 'c', mimeType: 'image/png' },
+      ] as AssembledContext['fileContents'],
+    });
+
+    expect(firstSourceImageId(context)).toBe('b');
+    expect(firstSourceImageId(contextWith())).toBeUndefined();
   });
 });

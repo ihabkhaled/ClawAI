@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { AuthRepository } from '../auth/repositories/auth.repository';
 import { RolesModule } from '../roles/roles.module';
 import { PlansModule } from '../plans/plans.module';
+import { CreditModule } from '../credit/credit.module';
+import { SystemSettingsModule } from '../system-settings/system-settings.module';
 import { QuotaModule } from '../quota/quota.module';
 import { EntitlementsInternalController } from './controllers/entitlements-internal.controller';
 import { MeEntitlementsController } from './controllers/me-entitlements.controller';
@@ -20,7 +22,7 @@ import { RuntimeAdmissionInternalController } from './controllers/runtime-admiss
 import { RuntimeAdmissionService } from './services/runtime-admission.service';
 
 @Module({
-  imports: [RolesModule, PlansModule, QuotaModule],
+  imports: [RolesModule, PlansModule, QuotaModule, CreditModule, SystemSettingsModule],
   controllers: [
     EntitlementsInternalController,
     MeEntitlementsController,

@@ -214,5 +214,9 @@ Auth: bearer JWT, owner only (another user's id answers 404). Status is one of `
 `STARTING`, `GENERATING`, `COMPLETED`, `FAILED`, `TIMED_OUT`, `CANCELLED`. A completed
 response carries `asset: {id, url, downloadUrl, mimeType, sizeBytes}`; a failed one carries a
 fixed `errorCode` and sentence, never provider text. Retry and cancel are only valid while the
-state allows it. Clips are text-to-video, 4 to 8 seconds, 16:9 or 9:16, 720p. Design:
+state allows it. Clips are text-to-video or image-to-video, 4 to 8 seconds, 16:9 or 9:16, 720p.
+The view carries `sourceFileId` (the user's image the clip animates, else `null`). Internal
+`POST /internal/videos/generate` takes an optional `sourceFileId`: a file the `userId` owns,
+JPEG/PNG/WebP, at most 10 MB; otherwise the job fails with `VIDEO_SOURCE_IMAGE_INVALID`.
+Design:
 [ADR-137](../13-adr/adr-137-video-generation.md).

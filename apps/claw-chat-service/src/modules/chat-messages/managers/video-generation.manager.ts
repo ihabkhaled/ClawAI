@@ -20,6 +20,7 @@ import { latestUserTurnText } from '../utilities/quoted-turn.utility';
 import {
   boundVideoPrompt,
   buildVideoPlannerPrompt,
+  firstSourceImageId,
   parsePlannedVideoPrompt,
 } from '../utilities/video-prompt.utility';
 
@@ -60,7 +61,8 @@ export class VideoGenerationManager {
       return this.refusal(provider, model, startTime, usedFallback);
     }
     const originalPrompt = latestUserTurnText(context.threadMessages) ?? 'a short video';
-    const prompt = await this.planPrompt(originalPrompt, context);
+    const sourceFileId = firstSourceImageId(context);
+    const prompt = await this.planPrompt(originalPrompt, context, sourceFileId !== undefined);
     const options = readVideoRequestOptions(originalPrompt);
     const lastUser = [...context.threadMessages].reverse().find((m) => m.role === 'USER');
     const body: VideoGenerateRequest = {
@@ -73,6 +75,7 @@ export class VideoGenerationManager {
       aspectRatio: options.aspectRatio,
       threadId: lastUser?.threadId,
       userMessageId: lastUser?.id,
+      ...(sourceFileId === undefined ? {} : { sourceFileId }),
       ...(prompt === boundVideoPrompt(originalPrompt)
         ? {}
         : { originalPrompt: boundVideoPrompt(originalPrompt) }),
@@ -100,7 +103,7 @@ export class VideoGenerationManager {
       );
     }
     this.logger.log(
-      `generate: dispatched generationId=${response.data.generationId} provider=${provider} model=${model} seconds=${String(options.durationSeconds)}`,
+      `generate: dispatched generationId=${response.data.generationId} provider=${provider} model=${model} seconds=${String(options.durationSeconds)} imageToVideo=${String(sourceFileId !== undefined)}`,
     );
     return {
       content: 'Generating video…',
@@ -114,9 +117,13 @@ export class VideoGenerationManager {
   }
 
   /** The planner's shot description, or the user's own words when none answers. */
-  private async planPrompt(userText: string, context: AssembledContext): Promise<string> {
+  private async planPrompt(
+    userText: string,
+    context: AssembledContext,
+    hasSourceImage: boolean,
+  ): Promise<string> {
     const planned = await this.planner.askPlanner(
-      buildVideoPlannerPrompt(userText, context),
+      buildVideoPlannerPrompt(userText, context, hasSourceImage),
       VIDEO_PLANNER_MAX_OUTPUT_TOKENS,
       parsePlannedVideoPrompt,
     );

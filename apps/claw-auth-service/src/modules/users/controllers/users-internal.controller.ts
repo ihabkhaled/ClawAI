@@ -2,7 +2,7 @@ import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { Public } from '../../../app/decorators/public.decorator';
 import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
 import { UsersService } from '../services/users.service';
-import { type UserSpeechPreferences } from '../types/users.types';
+import { type UserIdentity, type UserSpeechPreferences } from '../types/users.types';
 
 // Service-to-service reads of a user's preferences. @Public for the JWT guard,
 // then ServiceTokenGuard requires INTER_SERVICE_AUTH_TOKEN (TD-035). nginx
@@ -17,5 +17,11 @@ export class UsersInternalController {
   @Get(':id/speech-preferences')
   async getSpeechPreferences(@Param('id') id: string): Promise<UserSpeechPreferences> {
     return this.usersService.getSpeechPreferences(id);
+  }
+
+  /** audit-service's feedback tickets: the author's name, snapshotted at submit time. */
+  @Get(':id/identity')
+  async getIdentity(@Param('id') id: string): Promise<UserIdentity> {
+    return this.usersService.getIdentity(id);
   }
 }

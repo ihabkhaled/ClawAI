@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { FeedbackSource } from '../../../common/enums';
 import { FeedbackStatus, FeedbackType } from '@claw/shared-types';
 import {
   FEEDBACK_DEFAULT_PAGE_SIZE,
@@ -9,6 +10,7 @@ import {
 export const listFeedbackQuerySchema = z.object({
   status: z.nativeEnum(FeedbackStatus).optional(),
   type: z.nativeEnum(FeedbackType).optional(),
+  source: z.nativeEnum(FeedbackSource).optional(),
   search: z.string().max(FEEDBACK_MAX_SEARCH_LENGTH).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce

@@ -41,6 +41,7 @@ function entitlement(overrides: Partial<UserEntitlements>): UserEntitlements {
     permissions: [Permission.AGENT_USE, Permission.CHAT_USE],
     plan: null,
     modelAccessMode: 'ALLOW_ALL',
+    hasPaygCredit: false,
     allowedModels: [],
     allowedProviders: [],
     quota: {

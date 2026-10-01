@@ -1,6 +1,7 @@
 import {
   VIDEO_ABOUT_THIS_APP_PATTERN,
   VIDEO_GENERATION_PROMPT_MAX_CHARACTERS,
+  VIDEO_IMAGE_PLANNER_SYSTEM_PROMPT,
   VIDEO_PLANNED_PROMPT_SCHEMA,
   VIDEO_PLANNER_EVIDENCE_ITEMS,
   VIDEO_PLANNER_EVIDENCE_SNIPPET_CHARS,
@@ -59,8 +60,14 @@ function pageFacts(context: AssembledContext): string {
  * any page facts research produced, and (only when the request is about the app the
  * user is in) the platform background, so "a video about ClawAI" is about ClawAI.
  */
-export function buildVideoPlannerPrompt(userText: string, context: AssembledContext): string {
-  const sections = [VIDEO_PLANNER_SYSTEM_PROMPT];
+export function buildVideoPlannerPrompt(
+  userText: string,
+  context: AssembledContext,
+  hasSourceImage = false,
+): string {
+  const sections = [
+    hasSourceImage ? VIDEO_IMAGE_PLANNER_SYSTEM_PROMPT : VIDEO_PLANNER_SYSTEM_PROMPT,
+  ];
   if (VIDEO_ABOUT_THIS_APP_PATTERN.test(userText)) {
     sections.push(`Background:\n${buildPlatformIdentityBlock(context.platformOrigin)}`);
   }
@@ -73,7 +80,16 @@ export function buildVideoPlannerPrompt(userText: string, context: AssembledCont
     sections.push(`Recent conversation:\n${history}`);
   }
   sections.push(
-    `Video request:\n${userText.trim().slice(0, VIDEO_GENERATION_PROMPT_MAX_CHARACTERS)}`,
+    `${hasSourceImage ? 'Motion request' : 'Video request'}:\n${userText.trim().slice(0, VIDEO_GENERATION_PROMPT_MAX_CHARACTERS)}`,
   );
   return sections.join('\n\n');
+}
+
+/**
+ * The attached image the clip animates (image-to-video): the first image of the
+ * turn. Only the id travels; image-service reads the bytes from file-service
+ * under an owner check, so chat-service never forwards a user-supplied path.
+ */
+export function firstSourceImageId(context: AssembledContext): string | undefined {
+  return context.fileContents.find((file) => file.mimeType.toLowerCase().startsWith('image/'))?.id;
 }

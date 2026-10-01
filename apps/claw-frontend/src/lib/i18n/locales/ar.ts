@@ -481,7 +481,8 @@ export const ar: TranslationDictionary = {
       dailyMessagesBody:
         'تسمح خطتك بعدد محدد من الرسائل يومياً. تُعاد ضبطها منتصف الليل بتوقيت UTC، أو يمكنك الانتقال إلى خطة أكبر الآن.',
       trialExpiredTitle: 'انتهت فترتك التجريبية المجانية',
-      trialExpiredBody: 'تستمر الخطة المجانية ٣٠ يوماً. اختر خطة لمتابعة ما بدأته.',
+      trialExpiredBody:
+        'الخطة المجانية هي فترة تجريبية محدودة المدة. اختر خطة لتواصل من حيث توقفت.',
       featureDisabledTitle: 'خطتك لا تشمل هذا',
       featureDisabledBody: 'احتاجت هذه الرسالة إلى ميزة لا تغطيها خطتك الحالية.',
       upgradeCta: 'عرض الخطط',
@@ -788,6 +789,8 @@ export const ar: TranslationDictionary = {
     videoTakesMinutes: 'قد يستغرق الفيديو بضع دقائق. يمكنك متابعة المحادثة أثناء إنشائه.',
     videoLoadFailed: 'تعذّر تحميل الفيديو',
     videoLoadFailedHint: 'أعد تحميل الصفحة للمحاولة مرة أخرى.',
+    videoFailureSourceImageInvalid:
+      'تعذّر استخدام الصورة: استخدم صورة JPEG أو PNG أو WebP أقل من 10 ميغابايت وتكون خاصة بك.',
     imageStage: {
       queued: 'في انتظار دور الصورة',
       connecting: 'جارٍ الاتصال بمحرك الصور',
@@ -1609,6 +1612,11 @@ export const ar: TranslationDictionary = {
       superAdminImmutable: 'المسؤول الأعلى وحده يمكنه تعديل حساب المسؤول الأعلى.',
       superAdminSelfLocked: 'لا يمكن للمسؤول الأعلى إجراء هذا التغيير على حسابه الخاص.',
       superAdminRequired: 'المسؤول الأعلى وحده يمكنه تنفيذ هذا الإجراء.',
+      planTrialNotFound: 'لم يحصل هذا المستخدم على فترة تجريبية مجانية من قبل.',
+      planTrialSuperseded:
+        'لم يعد هذا المستخدم في فترته التجريبية المجانية. عيّنه على الخطة المجانية لعدد من الأيام بدلًا من ذلك.',
+      planGrantDurationInvalid: 'أدخل عددًا صحيحًا من الأيام بين 1 و3650، أو من الأشهر بين 1 و60.',
+      planGrantReasonRequired: 'السبب مطلوب.',
     },
     title: 'الإدارة',
     description: 'إدارة المستخدمين وإعدادات النظام',
@@ -1722,6 +1730,21 @@ export const ar: TranslationDictionary = {
     assignPlanReasonRequired: 'السبب مطلوب.',
     assignPlanCancel: 'إلغاء',
     assignPlanConfirm: 'منح الخطة',
+    assignPlanDurationDaysLabel: 'المدة (بالأيام)',
+    assignPlanDurationDaysInvalid: 'أدخل عددًا صحيحًا من الأيام بين 1 و3650.',
+    trialActionsHeading: 'إجراءات الفترة التجريبية المجانية',
+    addTrialDaysLabel: 'الأيام المراد إضافتها',
+    addTrialDaysHelp:
+      'تُضاف إلى تاريخ الانتهاء الحالي، أو تُحسب من اليوم إذا كانت الفترة التجريبية قد انتهت بالفعل.',
+    addTrialDaysConfirm: 'إضافة أيام تجريبية',
+    addTrialDaysSuccess: 'تمت إضافة {days} يومًا تجريبيًا. المتبقي {remaining} يومًا.',
+    addTrialDaysFailed: 'تعذّرت إضافة الأيام التجريبية.',
+    setFreeLabel: 'أيام على خطة {plan}',
+    setFreeHelp:
+      'ينقل المستخدم إلى هذه الخطة للمدة المحددة بالأيام، حتى لو استخدم فترته التجريبية بالفعل أو كان على خطة مدفوعة.',
+    setFreeConfirm: 'تعيين {plan} لهذه الأيام',
+    setFreeSuccess: 'تم تعيين المستخدم على الخطة المجانية لمدة {days} يومًا.',
+    setFreeFailed: 'تعذّر تعيين المستخدم على الخطة المجانية.',
     platformHealthLinkDesc: 'تُراقَب حالة النظام من لوحة التحكم',
     platformHealthLinkBody:
       'تتوفر مقاييس حالة الخدمات والاستجابة والتشغيل في لوحة التحكم. افتحها لرؤيتها في الوقت الفعلي.',
@@ -4179,8 +4202,8 @@ export const ar: TranslationDictionary = {
     },
   },
   trialStatus: {
-    activeTitle: 'فترتك التجريبية المجانية نشطة',
-    activeBody: 'متبقٍ {days} يومًا. تنتهي فترتك التجريبية في {date}.',
+    activeTitle: 'أنت في فترة تجريبية مجانية: متبقٍ {days} يومًا',
+    activeBody: 'تنتهي فترتك التجريبية في {date}.',
     expiredTitle: 'انتهت فترتك التجريبية المجانية',
     expiredBody: 'اختر خطة مدفوعة لمواصلة استخدام ميزات الذكاء الاصطناعي.',
     upgrade: 'عرض الخطط المدفوعة',
@@ -4249,6 +4272,7 @@ export const ar: TranslationDictionary = {
     deactivateFailed: 'تعذَّر تعطيل الخطة.',
     setDefaultSucceeded: 'تم تحديث خطة التسجيل.',
     signupPlanBadge: 'خطة التسجيل',
+    trialBadge: 'تجربة: {days} يومًا',
     popularBadge: 'الأكثر شيوعاً',
     setSignupPlan: 'تعيينها كخطة التسجيل',
     setMostPopular: 'تعيينها كالأكثر شيوعاً',
@@ -4301,8 +4325,12 @@ export const ar: TranslationDictionary = {
       maxMemoryItems: 'أقصى عدد عناصر الذاكرة',
       maxVideoSeconds: 'أقصى طول للفيديو (بالثواني)',
       isPublic: 'مُدرجة علنًا',
-      isTrial: 'تجربة لمدة 30 يومًا',
-      trialHelp: 'تستمر التجربة 30 يومًا ويمكن استخدامها مرة واحدة فقط لكل حساب.',
+      isTrial: 'خطة تجربة مجانية',
+      trialHelp: 'يمكن استخدام الفترة التجريبية مرة واحدة لكل حساب. حدّد مدتها أدناه.',
+      trialDays: 'مدة الفترة التجريبية (بالأيام)',
+      trialDaysHelp:
+        'أي عدد صحيح من 1 إلى 3650. تستخدم الفترات التجريبية الجديدة القيمة المحفوظة هنا، بينما تحتفظ الفترات الجارية بتاريخ انتهائها.',
+      trialDaysInvalid: 'أدخل عددًا صحيحًا من الأيام بين 1 و3650.',
       featureGates: 'بوابات الميزات',
       orchestrationLabs: 'مختبرات التنسيق',
       orchestrationLabsHint:
@@ -4427,6 +4455,8 @@ export const ar: TranslationDictionary = {
     featuresIncluded: 'الميزات المضمَّنة',
     noPlanTitle: 'لا توجد خطة مُسندة',
     noPlanDescription: 'أنت على مستوى الوصول الافتراضي.',
+    trialDaysLeft: 'الفترة التجريبية المجانية: متبقٍ {days} يومًا',
+    trialEnded: 'انتهت فترتك التجريبية المجانية',
     modelPrimary: 'أساسي',
     modelCompare: 'مقارنة',
     modelOverride: 'الحد {limit} رمز/يوم',
@@ -5038,6 +5068,7 @@ export const ar: TranslationDictionary = {
       },
       savePercent: 'وفّر {percent}%',
       mostPopular: 'الأكثر شيوعًا',
+      trialLength: 'تجربة مجانية: {days} يومًا',
       dailyTokens: 'الرصيد اليومي',
       monthlyTokens: 'الرصيد الشهري',
       ctaFree: 'ابدأ مجانًا',
@@ -6423,8 +6454,6 @@ export const ar: TranslationDictionary = {
     launcher: {
       ariaLabel: 'إرسال ملاحظات',
       tooltip: 'أبلغ عن خطأ أو شارك ملاحظاتك',
-      hideAriaLabel: 'إخفاء زر الملاحظات عند الحافة',
-      showAriaLabel: 'إظهار زر الملاحظات',
     },
     dialog: {
       typeLabel: 'النوع',
@@ -6437,6 +6466,9 @@ export const ar: TranslationDictionary = {
       cancel: 'إلغاء',
       submit: 'إرسال الملاحظات',
       submitting: 'جارٍ الإرسال…',
+      nameLabel: 'اسمك',
+      emailLabel: 'بريدك الإلكتروني',
+      publicDescription: 'أخبرنا برأيك. نقرأ كل رسالة وقد نرد عليك عبر البريد الإلكتروني.',
     },
     editor: {
       bold: 'غامق',
@@ -6467,6 +6499,10 @@ export const ar: TranslationDictionary = {
       titleRequired: 'العنوان مطلوب',
       contentRequired: 'الوصف مطلوب',
       submitFailed: 'تعذّر إرسال الملاحظات',
+      nameRequired: 'الاسم مطلوب',
+      emailInvalid: 'أدخل عنوان بريد إلكتروني صالحًا',
+      rateLimited: 'تم إرسال رسائل كثيرة. يُرجى المحاولة لاحقًا.',
+      checkFields: 'يُرجى التحقق من بياناتك والمحاولة مرة أخرى',
       tooManyFiles: 'عدد الملفات كبير جدًا',
       fileTooLarge: 'حجم الملف كبير جدًا',
       totalTooLarge: 'الحجم الإجمالي للملفات كبير جدًا',
@@ -6544,5 +6580,6 @@ export const ar: TranslationDictionary = {
     dragDropOrClickToUpload: 'اسحب الصور هنا أو انقر للاختيار',
     removeAttachment: 'إزالة المرفق',
     submittedWithTicket: 'تم إرسال الملاحظات — التذكرة {ticketNumber}',
+    submittedPublic: 'شكرًا لك — تم إرسال ملاحظاتك',
   },
 };

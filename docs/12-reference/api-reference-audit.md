@@ -12,6 +12,7 @@ List audit log entries with filtering.
 
 **Auth**: Bearer token
 **Query Parameters**:
+
 - `page` (int, default: 1)
 - `limit` (int, default: 20, max: 100)
 - `action` (string) — filter by action type
@@ -22,6 +23,7 @@ List audit log entries with filtering.
 - `search` (string) — search in details
 
 **Response 200**:
+
 ```json
 {
   "data": [
@@ -48,6 +50,7 @@ List audit log entries with filtering.
 ```
 
 **curl**:
+
 ```bash
 curl "http://localhost:4000/api/v1/audits?page=1&limit=10&severity=HIGH" \
   -H "Authorization: Bearer $TOKEN"
@@ -61,6 +64,7 @@ Get audit log statistics.
 
 **Auth**: Bearer token
 **Response 200**:
+
 ```json
 {
   "totalEvents": 1500,
@@ -89,6 +93,7 @@ List usage ledger entries.
 
 **Auth**: Bearer token
 **Query Parameters**:
+
 - `page` (int, default: 1)
 - `limit` (int, default: 20, max: 100)
 - `provider` (string) — filter by provider
@@ -97,6 +102,7 @@ List usage ledger entries.
 - `endDate` (ISO 8601 string)
 
 **Response 200**:
+
 ```json
 {
   "data": [
@@ -131,6 +137,7 @@ Get aggregated usage summary.
 
 **Auth**: Bearer token
 **Response 200**:
+
 ```json
 {
   "totalTokens": 500000,
@@ -153,19 +160,20 @@ Get cost summary.
 
 **Auth**: Bearer token
 **Response 200**:
+
 ```json
 {
-  "totalCost": 15.50,
+  "totalCost": 15.5,
   "byProvider": {
     "anthropic": 10.25,
-    "openai": 3.50,
+    "openai": 3.5,
     "gemini": 1.75,
-    "local-ollama": 0.00
+    "local-ollama": 0.0
   },
   "byModel": {
-    "claude-sonnet-4": 8.00,
+    "claude-sonnet-4": 8.0,
     "claude-opus-4": 2.25,
-    "gpt-4o-mini": 3.50,
+    "gpt-4o-mini": 3.5,
     "gemini-2.5-flash": 1.75
   }
 }
@@ -179,6 +187,7 @@ Get latency summary.
 
 **Auth**: Bearer token
 **Response 200**:
+
 ```json
 {
   "averageLatencyMs": 1500,
@@ -197,28 +206,66 @@ Get latency summary.
 
 ## Audit Actions
 
-| Action | Severity | Source |
-|--------|----------|--------|
-| USER_LOGIN | LOW | auth |
-| USER_LOGOUT | LOW | auth |
-| USER_CREATED | MEDIUM | auth |
-| USER_ROLE_CHANGED | HIGH | auth |
-| USER_DEACTIVATED | HIGH | auth |
-| MESSAGE_SENT | LOW | chat |
-| CONNECTOR_CREATED | MEDIUM | connector |
-| CONNECTOR_UPDATED | MEDIUM | connector |
-| CONNECTOR_DELETED | HIGH | connector |
-| CONNECTOR_SYNCED | LOW | connector |
-| CONNECTOR_HEALTH_CHECKED | LOW | connector |
-| ROUTING_DECISION_MADE | LOW | routing |
-| MEMORY_EXTRACTED | LOW | memory |
-| IMAGE_GENERATED | LOW | image |
-| IMAGE_FAILED | MEDIUM | image |
-| FILE_GENERATED | LOW | file-gen |
-| FILE_GENERATION_FAILED | MEDIUM | file-gen |
+| Action                   | Severity | Source    |
+| ------------------------ | -------- | --------- |
+| USER_LOGIN               | LOW      | auth      |
+| USER_LOGOUT              | LOW      | auth      |
+| USER_CREATED             | MEDIUM   | auth      |
+| USER_ROLE_CHANGED        | HIGH     | auth      |
+| USER_DEACTIVATED         | HIGH     | auth      |
+| MESSAGE_SENT             | LOW      | chat      |
+| CONNECTOR_CREATED        | MEDIUM   | connector |
+| CONNECTOR_UPDATED        | MEDIUM   | connector |
+| CONNECTOR_DELETED        | HIGH     | connector |
+| CONNECTOR_SYNCED         | LOW      | connector |
+| CONNECTOR_HEALTH_CHECKED | LOW      | connector |
+| ROUTING_DECISION_MADE    | LOW      | routing   |
+| MEMORY_EXTRACTED         | LOW      | memory    |
+| IMAGE_GENERATED          | LOW      | image     |
+| IMAGE_FAILED             | MEDIUM   | image     |
+| FILE_GENERATED           | LOW      | file-gen  |
+| FILE_GENERATION_FAILED   | MEDIUM   | file-gen  |
 
 ---
 
 ## Data Ingestion
 
 Audit and usage data are ingested from RabbitMQ events. The audit service subscribes to relevant event patterns and creates records automatically. There is no direct POST API for creating audit logs.
+
+---
+
+## Feedback
+
+### POST /feedback (signed in)
+
+**Auth**: Bearer token, `FEEDBACK_SUBMIT`. Stores `source=AUTHENTICATED`, `userId`,
+the author's full-name snapshot and email. Response `201 {id, ticketNumber, status}`.
+
+### POST /feedback/public (no login)
+
+**Auth**: none. Body (JSON, max 16 KB at nginx):
+
+```json
+{
+  "type": "BUG",
+  "title": "optional",
+  "message": "required",
+  "name": "Ada Lovelace",
+  "email": "ada@example.com",
+  "pageUrl": "https://claw.local/pricing",
+  "locale": "en",
+  "website": ""
+}
+```
+
+`name` 1-120 chars, `email` valid and at most 255, `website` is a honeypot and must be
+empty. No file uploads. **Response 201** `{ "id": "..." }` always (a filled honeypot gets
+the same shape and nothing is saved). **400** validation. **429** `FEEDBACK_RATE_LIMITED`
+(5/hour per IP, 3/hour per email). Never echoes the email.
+
+### GET /feedback/admin and GET /feedback/admin/:id
+
+**Auth**: `ADMIN_FEEDBACK_MANAGE`. Query adds `source` (`AUTHENTICATED` | `PUBLIC`).
+Items include `source`, `reporterName`, `reporterEmail`; `userId` is null for public tickets.
+
+See [ADR-141](../13-adr/adr-141-public-and-authenticated-feedback-apis.md).

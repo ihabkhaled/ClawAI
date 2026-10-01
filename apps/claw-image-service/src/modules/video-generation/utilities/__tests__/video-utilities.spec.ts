@@ -168,6 +168,7 @@ describe('toVideoView', () => {
       durationSeconds: 4,
       aspectRatio: '16:9',
       isAutoMode: false,
+      sourceFileId: 'img-1',
       status: VideoGenerationStatus.COMPLETED,
       errorCode: null,
       errorMessage: null,
@@ -201,6 +202,8 @@ describe('toVideoView', () => {
       mimeType: 'video/mp4',
       sizeBytes: 7,
     });
+    // The source image id is shown: it is the user's own file.
+    expect(view.sourceFileId).toBe('img-1');
     expect(Object.keys(view)).not.toEqual(
       expect.arrayContaining(['userId', 'providerOperationId', 'paygReservationId', 'assets']),
     );

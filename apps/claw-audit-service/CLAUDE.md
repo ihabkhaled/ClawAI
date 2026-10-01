@@ -141,3 +141,14 @@ After completing any implementation task on this service, produce:
 All rows written under `entityType = LLAMACPP_AUDIT_ENTITY_TYPE = 'llamacpp_model'`. Wired in `audits.module.ts`.
 
 `VideoProcessAuditConsumer` (`src/modules/audits/consumers/video-process.consumer.ts`, 2026-09-29) subscribes to file-service's `file.video_process_requested` / `_completed` / `_failed` and writes `entityType = 'file'` rows (actions `file.video_process_*`, LOW / LOW / ERROR). Details hold structural facts only: never the filename, transcript, or free-text `reason` (it can echo user content) — only `reasonCode`. A failed write is logged and swallowed, like the other file handlers.
+
+## Feedback: two doors (ADR-141, 2026-10-01)
+
+`POST /feedback` is guarded and snapshots the author's full name (via auth-service
+`/internal/users/:id/identity`, `UserIdentityClient`, best effort). `POST /feedback/public`
+is `@Public`: honeypot, per-IP and per-email Redis limits (`FeedbackRateLimitRepository`,
+fails open), no attachments, uniform `201 {id}`, client address from `X-Real-IP` only.
+Never echo the email, never read a client-sent user id/role, never reveal account state
+(rule 43). Tickets carry `source`, `reporterName`, `reporterEmail`; `userId` is null for
+public ones, so any `userId`-scoped code must tolerate that. nginx zone `public_feedback`
+lives in `nginx.conf` and `nginx.distributed.conf.template`.

@@ -1,3 +1,5 @@
+import { type FeedbackSource } from '../../../common/enums';
+
 export interface FeedbackAttachment {
   fileId: string;
   filename: string;
@@ -29,6 +31,7 @@ export interface FeedbackHistoryEntry {
 
 export interface FeedbackListParams {
   userId?: string;
+  source?: FeedbackSource;
   status?: string;
   type?: string;
   search?: string;
@@ -62,4 +65,21 @@ export interface CreateFeedbackResult {
   id: string;
   ticketNumber: string;
   status: string;
+}
+
+/** The uniform answer to a public submission: an id and nothing else. */
+export interface CreatePublicFeedbackResult {
+  id: string;
+}
+
+/** What the auth-service identity route returns. */
+export interface UserIdentityResponse {
+  firstName: string | null;
+  lastName: string | null;
+}
+
+/** One hit on a rate-limit window. */
+export interface RateLimitHit {
+  count: number;
+  limit: number;
 }

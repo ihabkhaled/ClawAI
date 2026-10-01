@@ -32,6 +32,8 @@ export type VideoGenerationRecord = {
   durationSeconds: number;
   aspectRatio: string;
   isAutoMode: boolean;
+  /** The file-service id of the image the clip animates; null for text-to-video. */
+  sourceFileId: string | null;
   status: VideoGenerationStatus;
   errorCode: string | null;
   errorMessage: string | null;
@@ -78,6 +80,7 @@ export type CreateVideoGenerationData = {
   durationSeconds: number;
   aspectRatio: string;
   isAutoMode: boolean;
+  sourceFileId?: string | null;
 };
 
 export type StoreVideoResponse = { fileId: string };
@@ -90,7 +93,15 @@ export type VideoStartRequest = {
   prompt: string;
   durationSeconds: number;
   aspectRatio: string;
+  /** Image-to-video: the clip starts from this image. */
+  sourceImage?: VideoSourceImage;
 };
+
+/** A validated source image, ready for a provider body. */
+export type VideoSourceImage = { base64: string; mimeType: string };
+
+/** The slice of file-service's `GET /internal/files/:id/content` a source image needs. */
+export type VideoSourceFileResponse = { mimeType: string; content: string | null };
 
 export type VideoPollResult =
   | { state: 'PENDING' }
@@ -119,6 +130,7 @@ export type ExecuteVideoInput = {
   prompt: string;
   durationSeconds: number;
   aspectRatio: string;
+  sourceImage?: VideoSourceImage;
   isCancelled: () => Promise<boolean>;
   /** Called when the provider accepts the job (the operation / request id). */
   onOperation: (operationId: string) => Promise<void>;
@@ -171,4 +183,9 @@ export interface ConnectorConfigResponse {
   provider: string;
   apiKey: string;
   baseUrl?: string | null;
+}
+
+export interface VeoInstance {
+  prompt: string;
+  image?: { inlineData: { mimeType: string; data: string } };
 }

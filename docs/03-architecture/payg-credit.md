@@ -536,6 +536,16 @@ There is deliberately **no** completion route here: settlement reuses the
 purpose-agnostic `/billing/checkout-sessions/:id/complete-*` endpoints, so a
 top-up goes through `PaymentActivationService` like every other payment.
 
+## Credit unlocks media generation
+
+A Free-plan user with spendable credit may generate images and video, paid from that
+credit ([ADR-139](../13-adr/adr-139-credit-unlocks-media-generation.md)). Auth-service
+adds `hasPaygCredit` to the entitlements payload (metering on and available > 0, read
+fresh on every call; the entitlements adapter has no cache, so a top-up applies on the
+next request). `hasPlanFeature` returns true for `allowImageGeneration` when it is set.
+The reservation still refuses with 402 when the balance cannot cover the hold. TTS and
+the vision helper stay plan-gated.
+
 ## Related
 
 - [ADR-078](../13-adr/adr-078-payg-connector-credit.md) · [079](../13-adr/adr-079-auth-model-price-cache.md) · [080](../13-adr/adr-080-one-reservation-not-two.md) · [081](../13-adr/adr-081-retire-routing-cost-budget.md) · [082](../13-adr/adr-082-payg-classification-grain.md) · [083](../13-adr/adr-083-credit-topup-checkout-purpose.md)

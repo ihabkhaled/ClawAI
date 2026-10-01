@@ -68,9 +68,26 @@ export const VIDEO_CREDIT_FAILURE_MESSAGE =
 export const NO_FALLBACK_CODES: readonly string[] = [
   VideoFailureCode.STORAGE_FAILED,
   VideoFailureCode.VIDEO_TOO_LARGE,
+  VideoFailureCode.SOURCE_IMAGE_INVALID,
 ];
 
 /** Every read of a generation carries its output clip. */
 export const OUTPUT_ASSETS_INCLUDE = {
   assets: { where: { role: VideoAssetRole.OUTPUT }, orderBy: { createdAt: 'asc' as const } },
 } as const;
+
+/** Image-to-video: the source image formats both providers accept. */
+export const VIDEO_SOURCE_IMAGE_MIME_TYPES: readonly string[] = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+];
+
+/** Largest source image (decoded bytes) sent to a provider. */
+export const VIDEO_SOURCE_IMAGE_MAX_BYTES = 10 * 1024 * 1024;
+
+/** The same limit as base64 text, so file-service's reply is bounded before it is decoded. */
+export const VIDEO_SOURCE_IMAGE_MAX_BASE64_LENGTH =
+  Math.ceil((VIDEO_SOURCE_IMAGE_MAX_BYTES * 4) / 3) + 4;
+
+export const VIDEO_SOURCE_IMAGE_FETCH_TIMEOUT_MS = 30_000;

@@ -205,7 +205,7 @@ describe('catalog integrity', () => {
     }
   });
 
-  it('flags only Free as the fixed 30-day trial', () => {
+  it('flags only Free as a trial, seeded with 30 days as its default length', () => {
     expect(bySlug('free')).toMatchObject({ isTrial: true, trialDurationDays: 30 });
     for (const plan of catalog.filter((entry) => entry.slug !== 'free')) {
       expect(plan).toMatchObject({ isTrial: false, trialDurationDays: null });

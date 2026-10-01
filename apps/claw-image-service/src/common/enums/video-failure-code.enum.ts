@@ -23,4 +23,6 @@ export enum VideoFailureCode {
   GENERATION_INTERRUPTED = 'VIDEO_GENERATION_INTERRUPTED',
   /** The clip would exceed what file-service accepts. */
   VIDEO_TOO_LARGE = 'VIDEO_TOO_LARGE',
+  /** The attached source image is missing, not the user's, not JPEG/PNG/WebP, or too large. */
+  SOURCE_IMAGE_INVALID = 'VIDEO_SOURCE_IMAGE_INVALID',
 }

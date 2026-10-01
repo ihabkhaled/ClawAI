@@ -12,6 +12,7 @@
 | Status page: "Web scraper: Crawl4AI/FlareSolverr/Firecrawl" Down; research degraded   | [runbook-scraper-sidecar-down.md](runbook-scraper-sidecar-down.md) → enabled row but container/profile not started, missing Crawl4AI token, or OOM                                               |
 | Server unreachable / CPU 100% / disk full after deploys                               | [runbook-server-overloaded-by-builds.md](runbook-server-overloaded-by-builds.md) → `docker system df`, `.deploy/history.log`; releases no longer rebuild every image (ADR-123)                   |
 | A new API route 404s as HTML in production                                            | [runbook-nginx-stale-config.md](runbook-nginx-stale-config.md) → nginx is pinned to a stale config inode; recreate the container                                                                 |
+| Junk or a flood on the public (no-login) feedback form                                | [runbook-public-feedback-spam.md](runbook-public-feedback-spam.md) → honeypot, Redis + nginx limits, triage `source=PUBLIC`                                                                      |
 | A service fails on a symbol its source declares                                       | [runbook-stale-shared-package-dist.md](runbook-stale-shared-package-dist.md) → the container carries an image-baked `packages/*/dist`; rebuild the image                                         |
 | Requests are slow / timing out                                                        | [runbook-high-latency.md](runbook-high-latency.md)                                                                                                                                               |
 | Status page shows Degraded / Down / no history                                        | [runbook-status-page-degraded.md](runbook-status-page-degraded.md) → map the component to its services, then read the raw fan-out or Prometheus                                                  |
@@ -50,6 +51,7 @@
 - [runbook-service-crash.md](runbook-service-crash.md)
 - [runbook-clamav-unreachable.md](runbook-clamav-unreachable.md)
 - [runbook-scraper-sidecar-down.md](runbook-scraper-sidecar-down.md)
+- [runbook-public-feedback-spam.md](runbook-public-feedback-spam.md)
 - [runbook-server-overloaded-by-builds.md](runbook-server-overloaded-by-builds.md)
 - [runbook-high-latency.md](runbook-high-latency.md)
 - [runbook-database-recovery.md](runbook-database-recovery.md)

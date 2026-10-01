@@ -644,6 +644,11 @@
           "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/feedback/public",
+          "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback-public.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/health",
           "source": "apps/claw-audit-service/src/modules/health/controllers/health.controller.ts"
@@ -838,6 +843,11 @@
         {
           "method": "POST",
           "route": "/admin/plans/users/:userId/assign",
+          "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/admin/plans/users/:userId/trial-days",
           "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
         },
         {
@@ -1134,6 +1144,11 @@
           "method": "GET",
           "route": "/internal/users/:id/entitlements",
           "source": "apps/claw-auth-service/src/modules/entitlements/controllers/entitlements-internal.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/internal/users/:id/identity",
+          "source": "apps/claw-auth-service/src/modules/users/controllers/users-internal.controller.ts"
         },
         {
           "method": "GET",
@@ -8030,7 +8045,7 @@
           "file": "rules/36-floating-ui-and-toast-clearance.md"
         },
         {
-          "bytes": 29304,
+          "bytes": 29864,
           "file": "rules/37-payg-credit-integrity.md"
         },
         {
@@ -8492,7 +8507,7 @@
           "file": "skills/verify-the-research-loop-live.md"
         },
         {
-          "bytes": 2908,
+          "bytes": 3426,
           "file": "skills/verify-video-generation-live.md"
         },
         {
@@ -8955,6 +8970,12 @@
         "location": "/grafana/",
         "port": 3000,
         "service": "grafana",
+        "source": "infra/nginx/locations.conf"
+      },
+      {
+        "location": "=",
+        "port": 4007,
+        "service": "audit-service",
         "source": "infra/nginx/locations.conf"
       },
       {
@@ -10545,11 +10566,11 @@
       },
       "claw-audit-service": {
         "runner": "vitest",
-        "testFiles": 23
+        "testFiles": 33
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 121
+        "testFiles": 123
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -10581,7 +10602,7 @@
       },
       "claw-image-service": {
         "runner": "vitest",
-        "testFiles": 47
+        "testFiles": 48
       },
       "claw-llamacpp-service": {
         "runner": "vitest",
@@ -11339,19 +11360,19 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 52,
-    "endpointCount": 758,
+    "endpointCount": 761,
     "envVarCount": 360,
     "eventCount": 184,
     "frontendRouteCount": 155,
     "localeCount": 13,
-    "nginxRouteCount": 66,
+    "nginxRouteCount": 67,
     "permissionCount": 84,
     "portCount": 16,
     "portCoverageGapCount": 2,
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1849,
+    "totalTestFiles": 1862,
     "workspaceCount": 25
   }
 }

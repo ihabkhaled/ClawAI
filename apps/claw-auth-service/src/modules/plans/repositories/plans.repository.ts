@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { addCalendarMonths } from '@claw/shared-utilities';
 import { isUniqueViolationOnUser } from '../utilities/prisma-error.utility';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { POPULAR_PLAN_KEY } from '../constants/popular-plan.constants';
+import { addTrialDays } from '../utilities/trial-expiry.utility';
 import {
   PlanModelAccessMode,
   type PlanRetirementMigrationStatus,
@@ -241,11 +241,10 @@ export class PlansRepository {
     userId: string,
     planId: string,
     assignedByUserId: string | undefined,
-    durationMonths: number,
+    entitlementValidUntil: Date,
     grantReason: string,
     now: Date,
   ): Promise<void> {
-    const entitlementValidUntil = new Date(addCalendarMonths(now.getTime(), durationMonths));
     await this.prisma.$transaction([
       this.prisma.userPlanAssignment.updateMany({
         where: { userId, status: 'ACTIVE' },
@@ -275,13 +274,14 @@ export class PlansRepository {
     try {
       return await this.prisma.$transaction(async (tx) => {
         const trialPlan = await tx.plan.findFirst({
-          where: { id: planId, isActive: true, isTrial: true, trialDurationDays: 30 },
-          select: { id: true },
+          where: { id: planId, isActive: true, isTrial: true, trialDurationDays: { gte: 1 } },
+          select: { id: true, trialDurationDays: true },
         });
-        if (trialPlan === null) {
+        if (trialPlan === null || trialPlan.trialDurationDays === null) {
           return null;
         }
-        const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        // The length is the plan's own, set by the administrator — never a constant.
+        const expiresAt = addTrialDays(now, trialPlan.trialDurationDays);
         await tx.userPlanAssignment.updateMany({
           where: { userId, status: 'ACTIVE' },
           data: { status: 'EXPIRED', endsAt: now },
@@ -315,11 +315,69 @@ export class PlansRepository {
       //
       // Either way the unique violation escaped and a re-grant became a 500
       // instead of the PLAN_TRIAL_ALREADY_USED the caller is written around.
-      if (isUniqueViolationOnUser(error)) {
-        return null;
-      }
-      return Promise.reject(error);
+      return isUniqueViolationOnUser(error) ? null : Promise.reject(error);
     }
+  }
+
+  /**
+   * An administrator putting a user on a trial plan for an explicit number of
+   * days, which the one-time self-service path cannot do once a trial is spent.
+   *
+   * The lifetime redemption row is re-pointed at the new assignment rather than
+   * duplicated (it is unique per user). That is what makes the admin panel read
+   * the grant as an ACTIVE trial: the row names the assignment that created it,
+   * so it stays correct for a later Pro grant, which will name a different one.
+   * `startedAt` keeps its original value; `expiresAt` is the new end.
+   */
+  async assignAdminTrialGrant(
+    userId: string,
+    planId: string,
+    assignedByUserId: string,
+    expiresAt: Date,
+    grantReason: string,
+    now: Date,
+  ): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.userPlanAssignment.updateMany({
+        where: { userId, status: 'ACTIVE' },
+        data: { status: 'EXPIRED', endsAt: now },
+      });
+      const assignment = await tx.userPlanAssignment.create({
+        data: {
+          userId,
+          planId,
+          status: 'ACTIVE',
+          assignedByUserId,
+          grantType: 'ADMIN_GRANT',
+          grantReason,
+          startsAt: now,
+          entitlementValidUntil: expiresAt,
+        },
+      });
+      await tx.planTrialRedemption.upsert({
+        where: { userId },
+        update: { planId, assignmentId: assignment.id, expiresAt },
+        create: { userId, planId, assignmentId: assignment.id, startedAt: now, expiresAt },
+      });
+      await tx.user.update({ where: { id: userId }, data: { activePlanId: planId } });
+    });
+  }
+
+  /** Moves a trial's end — on both the redemption and the assignment that grants it. */
+  async extendTrial(
+    userId: string,
+    assignmentId: string,
+    planId: string,
+    expiresAt: Date,
+  ): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.planTrialRedemption.update({ where: { userId }, data: { expiresAt } }),
+      this.prisma.userPlanAssignment.update({
+        where: { id: assignmentId },
+        data: { status: 'ACTIVE', endsAt: null, entitlementValidUntil: expiresAt },
+      }),
+      this.prisma.user.update({ where: { id: userId }, data: { activePlanId: planId } }),
+    ]);
   }
 
   async listUserIdsOnPlan(planId: string): Promise<string[]> {
@@ -332,17 +390,18 @@ export class PlansRepository {
 
   async findRetirementReplacement(sourcePlanId: string): Promise<PlanWithAccess | null> {
     const source = await this.prisma.plan.findUnique({ where: { id: sourcePlanId } });
-    if (!source) return null;
-    return this.prisma.plan.findFirst({
-      where: {
-        id: { not: sourcePlanId },
-        lifecycleStatus: 'ACTIVE',
-        isActive: true,
-        displayOrder: { gt: source.displayOrder },
-      },
-      include: { modelAccess: true },
-      orderBy: [{ displayOrder: 'asc' }, { id: 'asc' }],
-    });
+    return !source
+      ? null
+      : this.prisma.plan.findFirst({
+          where: {
+            id: { not: sourcePlanId },
+            lifecycleStatus: 'ACTIVE',
+            isActive: true,
+            displayOrder: { gt: source.displayOrder },
+          },
+          include: { modelAccess: true },
+          orderBy: [{ displayOrder: 'asc' }, { id: 'asc' }],
+        });
   }
 
   async retirePlan(sourcePlanId: string, replacementPlanId: string): Promise<PlanRetirementResult> {

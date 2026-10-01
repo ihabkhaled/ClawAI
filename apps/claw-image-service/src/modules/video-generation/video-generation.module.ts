@@ -4,6 +4,7 @@ import { ImageGenerationModule } from '../image-generation/image-generation.modu
 import { InternalVideoController } from './controllers/internal-video.controller';
 import { VideoGenerationController } from './controllers/video-generation.controller';
 import { VideoExecutionManager } from './managers/video-execution.manager';
+import { VideoSourceImageManager } from './managers/video-source-image.manager';
 import { VideoStaleJobRecoveryManager } from './managers/video-stale-job-recovery.manager';
 import { VideoGenerationRepository } from './repositories/video-generation.repository';
 import { VideoGenerationService } from './services/video-generation.service';
@@ -19,6 +20,7 @@ import { VideoGenerationService } from './services/video-generation.service';
   providers: [
     VideoGenerationService,
     VideoExecutionManager,
+    VideoSourceImageManager,
     VideoStaleJobRecoveryManager,
     VideoGenerationRepository,
   ],

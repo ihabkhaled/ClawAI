@@ -26,8 +26,12 @@ function computeDiscountedIntervalMinor(monthlyMinor, months) {
 const catalogData = require('./plan-catalog.json');
 
 for (const plan of catalogData.plans) {
-  if (plan.isTrial === true && plan.trialDurationDays !== 30) {
-    throw new Error(`Trial plan ${plan.slug} must have exactly 30 days`);
+  // The catalog value is only the DEFAULT a fresh database starts with (30 on
+  // free). The administrator edits it per plan afterwards and re-seeding never
+  // rewrites an edited row, so any whole number of days in range is legal here.
+  const days = plan.trialDurationDays;
+  if (plan.isTrial === true && !(Number.isInteger(days) && days >= 1 && days <= 3650)) {
+    throw new Error(`Trial plan ${plan.slug} needs a trial length of 1 to 3650 days`);
   }
 }
 
@@ -231,7 +235,16 @@ async function run(prisma) {
       report.created.push(definition.slug);
     } else if (matchesLegacyFingerprint(existing)) {
       // Still the untouched pre-billing baseline → safe to bring forward.
-      await prisma.plan.update({ where: { id: existing.id }, data: planColumns(definition) });
+      // The length is the one column here an administrator may have changed
+      // without moving the legacy fingerprint, so a stored value is kept.
+      const trialDurationDays =
+        definition.isTrial && existing.isTrial && existing.trialDurationDays !== null
+          ? existing.trialDurationDays
+          : definition.trialDurationDays;
+      await prisma.plan.update({
+        where: { id: existing.id },
+        data: { ...planColumns(definition), trialDurationDays },
+      });
       planId = existing.id;
       report.upgraded.push(definition.slug);
     } else {

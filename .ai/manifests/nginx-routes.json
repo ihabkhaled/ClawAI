@@ -375,6 +375,12 @@
     },
     {
       "location": "=",
+      "port": 4007,
+      "service": "audit-service",
+      "source": "infra/nginx/locations.conf"
+    },
+    {
+      "location": "=",
       "port": 4001,
       "service": "auth-service",
       "source": "infra/nginx/locations.conf"

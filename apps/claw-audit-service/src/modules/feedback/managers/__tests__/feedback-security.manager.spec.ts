@@ -6,6 +6,7 @@ import { resetInternalHostAllowlist } from '@claw/shared-utilities';
 import { FeedbackManager } from '../feedback.manager';
 
 import type { FeedbackRepository } from '../../repositories/feedback.repository';
+import type { UserIdentityClient } from '../../clients/user-identity.client';
 
 const FILE_SERVICE_URL = 'https://file-service:4006';
 
@@ -25,6 +26,10 @@ vi.mock('../../../../app/config/app.config', () => ({
 // authorisation tests rather than unit tests of convenience. Each one describes
 // an attack: a caller reaching for another tenant's data, or a file they do not
 // own, or a state change the lifecycle forbids.
+
+const identityStub = {
+  fullName: vi.fn().mockResolvedValue('Ada Lovelace'),
+} as unknown as UserIdentityClient;
 
 type RepositoryMock = {
   [K in keyof FeedbackRepository]: Mock;
@@ -53,7 +58,7 @@ const listQuery = {
 describe('feedback authorisation — cross-tenant reads', () => {
   it('scopes the own-ticket LIST to the caller inside the query', async () => {
     const repository = repositoryMock();
-    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
 
     await manager.listOwn('user-a', listQuery);
 
@@ -67,7 +72,7 @@ describe('feedback authorisation — cross-tenant reads', () => {
   it('scopes the own-ticket READ to the caller inside the query, not after the fetch', async () => {
     const repository = repositoryMock();
     repository.findByIdForUser.mockResolvedValue(null);
-    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
 
     await expect(manager.getOwn('user-a', 'ticket-owned-by-b')).rejects.toMatchObject({
       code: 'FEEDBACK_NOT_FOUND',
@@ -80,7 +85,7 @@ describe('feedback authorisation — cross-tenant reads', () => {
   it('answers a foreign ticket id with not-found, so ids cannot be enumerated', async () => {
     const repository = repositoryMock();
     repository.findByIdForUser.mockResolvedValue(null);
-    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
 
     await expect(manager.getOwn('user-a', 'any-id')).rejects.toMatchObject({
       status: HttpStatus.NOT_FOUND,
@@ -131,7 +136,7 @@ describe('feedback authorisation — attachments', () => {
   it('refuses an attachment when the file service answers ok with an empty body', async () => {
     const repository = repositoryMock();
     mockFileServiceBody('');
-    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
 
     await expect(manager.createTicket('user-a', 'a@test', createDto())).rejects.toMatchObject({
       code: 'FEEDBACK_ATTACHMENT_INVALID',
@@ -143,7 +148,7 @@ describe('feedback authorisation — attachments', () => {
   it('refuses an attachment when the file service answers ok with a non-JSON body', async () => {
     const repository = repositoryMock();
     mockFileServiceBody('<html>gateway error</html>');
-    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
 
     await expect(manager.createTicket('user-a', 'a@test', createDto())).rejects.toMatchObject({
       code: 'FEEDBACK_ATTACHMENT_INVALID',
@@ -153,7 +158,7 @@ describe('feedback authorisation — attachments', () => {
   it('refuses an attachment when the file service answers ok with JSON null', async () => {
     const repository = repositoryMock();
     mockFileServiceBody('null');
-    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
 
     await expect(manager.createTicket('user-a', 'a@test', createDto())).rejects.toMatchObject({
       code: 'FEEDBACK_ATTACHMENT_INVALID',
@@ -168,7 +173,7 @@ describe('feedback authorisation — attachments', () => {
       mimeType: 'image/png',
       sizeBytes: 1_024,
     });
-    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
 
     await expect(manager.createTicket('user-a', 'a@test', createDto())).rejects.toMatchObject({
       code: 'FEEDBACK_ATTACHMENT_INVALID',
@@ -185,7 +190,7 @@ describe('feedback authorisation — attachments', () => {
       mimeType: 'image/png',
       sizeBytes: 1_024,
     });
-    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
 
     await expect(manager.createTicket('user-a', 'a@test', createDto())).rejects.toMatchObject({
       code: 'FEEDBACK_ATTACHMENT_INVALID',
@@ -202,7 +207,7 @@ describe('feedback authorisation — attachments', () => {
       mimeType: 'text/html',
       sizeBytes: 10,
     });
-    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
 
     await expect(manager.createTicket('user-a', 'a@test', createDto())).rejects.toMatchObject({
       code: 'FEEDBACK_ATTACHMENT_INVALID',
@@ -218,7 +223,7 @@ describe('feedback authorisation — attachments', () => {
       mimeType: 'image/png',
       sizeBytes: 500 * 1_024 * 1_024,
     });
-    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
 
     await expect(manager.createTicket('user-a', 'a@test', createDto())).rejects.toMatchObject({
       code: 'FEEDBACK_ATTACHMENT_INVALID',
@@ -234,7 +239,7 @@ describe('feedback authorisation — attachments', () => {
       mimeType: 'image/png',
       sizeBytes: 2_048,
     });
-    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
 
     await manager.createTicket(
       'user-a',
@@ -263,7 +268,7 @@ describe('feedback authorisation — attachments', () => {
       mimeType: 'image/png',
       sizeBytes: 10,
     });
-    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
 
     await manager.createTicket('user-a', 'a@test', createDto());
 
@@ -278,7 +283,7 @@ describe('feedback authorisation — attachments', () => {
   it('refuses to stream a file that is not attached to the ticket', async () => {
     const repository = repositoryMock();
     repository.findById.mockResolvedValue({ attachments: [{ fileId: 'file-1' }] });
-    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
 
     await expect(
       manager.streamAttachment('ticket-1', 'file-belonging-elsewhere', {} as never),
@@ -304,7 +309,7 @@ describe('feedback lifecycle — only declared transitions are possible', () => 
   it.each(cases)('%s -> %s allowed=%s', async (from, to, allowed) => {
     const repository = repositoryMock();
     repository.findById.mockResolvedValue({ status: from, attachments: [] });
-    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
 
     const act = manager.changeStatus('admin-1', 'admin@test', 'ticket-1', {
       status: to,
@@ -322,7 +327,7 @@ describe('feedback lifecycle — only declared transitions are possible', () => 
   it('stamps the matching timestamp and appends exactly one history entry', async () => {
     const repository = repositoryMock();
     repository.findById.mockResolvedValue({ status: FeedbackStatus.OPEN, attachments: [] });
-    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
 
     await manager.changeStatus('admin-1', 'admin@test', 'ticket-1', {
       status: FeedbackStatus.RESOLVED,
@@ -345,7 +350,7 @@ describe('feedback lifecycle — only declared transitions are possible', () => 
   it('records a reopen when a closed ticket returns to open', async () => {
     const repository = repositoryMock();
     repository.findById.mockResolvedValue({ status: FeedbackStatus.CLOSED, attachments: [] });
-    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
 
     await manager.changeStatus('admin-1', 'admin@test', 'ticket-1', {
       status: FeedbackStatus.OPEN,
@@ -360,7 +365,7 @@ describe('feedback lifecycle — only declared transitions are possible', () => 
   it('refuses a status change on a ticket that does not exist', async () => {
     const repository = repositoryMock();
     repository.findById.mockResolvedValue(null);
-    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
 
     await expect(
       manager.changeStatus('admin-1', 'admin@test', 'nope', {
@@ -374,7 +379,7 @@ describe('feedback content is sanitised before it is stored', () => {
   it('never persists raw markup, even though the renderer is already safe', async () => {
     const repository = repositoryMock();
     global.fetch = vi.fn() as unknown as typeof fetch;
-    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
 
     await manager.createTicket('user-a', 'a@test', {
       type: FeedbackType.SECURITY_CONCERN,
@@ -438,7 +443,10 @@ describe('feedback file-service calls go through the outbound URL guard', () => 
   it('reaches the configured file-service with enforcement on, and never follows a redirect', async () => {
     vi.stubEnv('ACTIONS_RESULTS_ENDPOINT', 'https://x.example');
     resetInternalHostAllowlist();
-    const manager = new FeedbackManager(repositoryMock() as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(
+      repositoryMock() as unknown as FeedbackRepository,
+      identityStub,
+    );
 
     await manager.createTicket('user-a', 'a@test', dto);
 
@@ -456,7 +464,7 @@ describe('feedback file-service calls go through the outbound URL guard', () => 
   ])('refuses %s before the token is sent', async (_label, hostile) => {
     mockConfig.FILE_SERVICE_URL = hostile;
     const repository = repositoryMock();
-    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
 
     await expect(manager.createTicket('user-a', 'a@test', dto)).rejects.toThrow(/httpRequest/);
     expect(fetchMock).not.toHaveBeenCalled();
@@ -467,11 +475,48 @@ describe('feedback file-service calls go through the outbound URL guard', () => 
     mockConfig.FILE_SERVICE_URL = 'http://169.254.169.254';
     const repository = repositoryMock();
     repository.findById.mockResolvedValue({ attachments: [attachment] });
-    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
 
     await expect(manager.streamAttachment('ticket-1', 'file-1', {} as never)).rejects.toMatchObject(
       { code: 'FEEDBACK_ATTACHMENT_UNAVAILABLE' },
     );
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('feedback authenticated submission — source and name snapshot', () => {
+  const dto = {
+    type: FeedbackType.BUG_REPORT,
+    title: 'Title',
+    contentMarkdown: 'body',
+  } as never;
+
+  it('stores source=AUTHENTICATED, the caller id, the full name and the email', async () => {
+    const repository = repositoryMock();
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, identityStub);
+
+    await manager.createTicket('user-a', 'ada@example.com', dto);
+
+    expect(identityStub.fullName).toHaveBeenCalledWith('user-a');
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'AUTHENTICATED',
+        userId: 'user-a',
+        reporterName: 'Ada Lovelace',
+        reporterEmail: 'ada@example.com',
+      }),
+    );
+  });
+
+  it('still saves the ticket, with a null name, when no name is available', async () => {
+    const repository = repositoryMock();
+    const noName = { fullName: vi.fn().mockResolvedValue(null) } as unknown as UserIdentityClient;
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository, noName);
+
+    await manager.createTicket('user-a', 'ada@example.com', dto);
+
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({ reporterName: null, source: 'AUTHENTICATED' }),
+    );
   });
 });

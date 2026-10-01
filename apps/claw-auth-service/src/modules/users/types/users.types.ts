@@ -13,6 +13,15 @@ export type UserSpeechPreferences = {
   ttsVoice: string | null;
 };
 
+/**
+ * `GET /internal/users/:id/identity` — the display name audit-service snapshots
+ * onto a feedback ticket so triage can read who wrote it without a lookup later.
+ */
+export type UserIdentity = {
+  firstName: string | null;
+  lastName: string | null;
+};
+
 export interface SafeUser {
   id: string;
   email: string;

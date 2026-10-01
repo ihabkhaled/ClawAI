@@ -1,15 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { type Response } from 'express';
 import { FeedbackManager } from '../managers/feedback.manager';
+import { FeedbackPublicManager } from '../managers/feedback-public.manager';
+import { type CreatePublicFeedbackDto } from '../dto/create-public-feedback.dto';
 import { type CreateFeedbackDto } from '../dto/create-feedback.dto';
 import { type ListFeedbackQueryDto } from '../dto/list-feedback-query.dto';
 import { type UpdateFeedbackStatusDto } from '../dto/update-feedback-status.dto';
 import { type FeedbackTicketDocument } from '../schemas/feedback-ticket.schema';
-import { type CreateFeedbackResult, type FeedbackPaginatedTickets } from '../types/feedback.types';
+import {
+  type CreateFeedbackResult,
+  type CreatePublicFeedbackResult,
+  type FeedbackPaginatedTickets,
+} from '../types/feedback.types';
 
 @Injectable()
 export class FeedbackService {
-  constructor(private readonly feedbackManager: FeedbackManager) {}
+  constructor(
+    private readonly feedbackManager: FeedbackManager,
+    private readonly publicManager: FeedbackPublicManager,
+  ) {}
 
   createTicket(
     userId: string,
@@ -17,6 +26,13 @@ export class FeedbackService {
     dto: CreateFeedbackDto,
   ): Promise<CreateFeedbackResult> {
     return this.feedbackManager.createTicket(userId, userEmail, dto);
+  }
+
+  createPublicTicket(
+    clientIp: string,
+    dto: CreatePublicFeedbackDto,
+  ): Promise<CreatePublicFeedbackResult> {
+    return this.publicManager.createTicket(clientIp, dto);
   }
 
   changeStatus(

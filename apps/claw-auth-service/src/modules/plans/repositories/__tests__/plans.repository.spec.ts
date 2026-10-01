@@ -220,7 +220,14 @@ describe('PlansRepository.assignUserToPlan (admin grant)', () => {
     const repository = new PlansRepository(prisma);
     const now = new Date('2026-01-31T00:00:00.000Z');
 
-    await repository.assignUserToPlan('user-1', 'plan-pro', 'admin-1', 3, 'Support gesture', now);
+    await repository.assignUserToPlan(
+      'user-1',
+      'plan-pro',
+      'admin-1',
+      new Date('2026-04-30T00:00:00.000Z'),
+      'Support gesture',
+      now,
+    );
 
     expect(transaction).toHaveBeenCalledTimes(1);
     expect(updateMany).toHaveBeenCalledWith({
@@ -235,7 +242,6 @@ describe('PlansRepository.assignUserToPlan (admin grant)', () => {
         assignedByUserId: 'admin-1',
         grantType: 'ADMIN_GRANT',
         grantReason: 'Support gesture',
-        // 31 Jan + 3 months = 30 Apr (April has 30 days).
         entitlementValidUntil: new Date('2026-04-30T00:00:00.000Z'),
       },
     });
@@ -278,5 +284,140 @@ describe('PlansRepository.findEffectiveForUser (admin grant expiry)', () => {
     const repository = new PlansRepository(prisma);
     const result = await repository.findEffectiveForUser('user-1', new Date());
     expect(result).toBeNull();
+  });
+});
+
+describe('PlansRepository.assignTrialPlanOnce (dynamic trial length)', () => {
+  const now = new Date('2026-10-01T00:00:00.000Z');
+
+  function build(trialPlan: { id: string; trialDurationDays: number | null } | null) {
+    const planFindFirst = vi.fn().mockResolvedValue(trialPlan);
+    const updateMany = vi.fn().mockResolvedValue({ count: 0 });
+    const create = vi.fn().mockResolvedValue({ id: 'assignment-1' });
+    const redemptionCreate = vi.fn().mockResolvedValue({});
+    const userUpdate = vi.fn().mockResolvedValue({});
+    const tx = {
+      plan: { findFirst: planFindFirst },
+      userPlanAssignment: { updateMany, create },
+      planTrialRedemption: { create: redemptionCreate },
+      user: { update: userUpdate },
+    };
+    const prisma = {
+      $transaction: vi.fn(async (fn: (client: typeof tx) => Promise<unknown>) => fn(tx)),
+    } as unknown as PrismaService;
+    return { repository: new PlansRepository(prisma), planFindFirst, create, redemptionCreate };
+  }
+
+  it.each([14, 30, 90, 365])(
+    'ends a %i-day plan trial exactly that many days out',
+    async (days) => {
+      const { repository, create, redemptionCreate } = build({
+        id: 'plan-free',
+        trialDurationDays: days,
+      });
+
+      await repository.assignTrialPlanOnce('user-1', 'plan-free', undefined, now);
+
+      const expiresAt = new Date(now.getTime() + days * 86_400_000);
+      expect(create.mock.calls[0]?.[0].data.entitlementValidUntil).toEqual(expiresAt);
+      expect(redemptionCreate.mock.calls[0]?.[0].data.expiresAt).toEqual(expiresAt);
+    },
+  );
+
+  it('does not filter on a fixed length when it looks the plan up', async () => {
+    const { repository, planFindFirst } = build({ id: 'plan-free', trialDurationDays: 90 });
+
+    await repository.assignTrialPlanOnce('user-1', 'plan-free', undefined, now);
+
+    expect(planFindFirst.mock.calls[0]?.[0].where).toEqual({
+      id: 'plan-free',
+      isActive: true,
+      isTrial: true,
+      trialDurationDays: { gte: 1 },
+    });
+  });
+
+  it('grants nothing when the plan is not a usable trial', async () => {
+    const { repository, create } = build(null);
+
+    await expect(
+      repository.assignTrialPlanOnce('user-1', 'plan-pro', undefined, now),
+    ).resolves.toBeNull();
+    expect(create).not.toHaveBeenCalled();
+  });
+});
+
+describe('PlansRepository admin trial grant and extension', () => {
+  const now = new Date('2026-10-01T00:00:00.000Z');
+  const expiresAt = new Date('2027-10-01T00:00:00.000Z');
+
+  it('re-points the lifetime redemption at a new ADMIN_GRANT assignment', async () => {
+    const updateMany = vi.fn().mockResolvedValue({ count: 1 });
+    const create = vi.fn().mockResolvedValue({ id: 'assignment-new' });
+    const upsert = vi.fn().mockResolvedValue({});
+    const userUpdate = vi.fn().mockResolvedValue({});
+    const tx = {
+      userPlanAssignment: { updateMany, create },
+      planTrialRedemption: { upsert },
+      user: { update: userUpdate },
+    };
+    const prisma = {
+      $transaction: vi.fn(async (fn: (client: typeof tx) => Promise<unknown>) => fn(tx)),
+    } as unknown as PrismaService;
+
+    await new PlansRepository(prisma).assignAdminTrialGrant(
+      'user-1',
+      'plan-free',
+      'admin-1',
+      expiresAt,
+      'Goodwill',
+      now,
+    );
+
+    expect(create.mock.calls[0]?.[0].data).toMatchObject({
+      grantType: 'ADMIN_GRANT',
+      grantReason: 'Goodwill',
+      entitlementValidUntil: expiresAt,
+    });
+    expect(upsert).toHaveBeenCalledWith({
+      where: { userId: 'user-1' },
+      update: { planId: 'plan-free', assignmentId: 'assignment-new', expiresAt },
+      create: {
+        userId: 'user-1',
+        planId: 'plan-free',
+        assignmentId: 'assignment-new',
+        startedAt: now,
+        expiresAt,
+      },
+    });
+    expect(userUpdate).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { activePlanId: 'plan-free' },
+    });
+  });
+
+  it('moves the end on both the redemption and the assignment', async () => {
+    const redemptionUpdate = vi.fn().mockReturnValue('r');
+    const assignmentUpdate = vi.fn().mockReturnValue('a');
+    const userUpdate = vi.fn().mockReturnValue('u');
+    const transaction = vi.fn(async (ops: unknown[]) => ops);
+    const prisma = {
+      planTrialRedemption: { update: redemptionUpdate },
+      userPlanAssignment: { update: assignmentUpdate },
+      user: { update: userUpdate },
+      $transaction: transaction,
+    } as unknown as PrismaService;
+
+    await new PlansRepository(prisma).extendTrial('user-1', 'a1', 'plan-free', expiresAt);
+
+    expect(redemptionUpdate).toHaveBeenCalledWith({
+      where: { userId: 'user-1' },
+      data: { expiresAt },
+    });
+    expect(assignmentUpdate).toHaveBeenCalledWith({
+      where: { id: 'a1' },
+      data: { status: 'ACTIVE', endsAt: null, entitlementValidUntil: expiresAt },
+    });
+    expect(transaction).toHaveBeenCalledWith(['r', 'a', 'u']);
   });
 });

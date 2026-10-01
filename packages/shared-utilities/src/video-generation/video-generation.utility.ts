@@ -1,4 +1,5 @@
 import {
+  VIDEO_ANIMATE_ATTACHED_IMAGE_PATTERNS,
   VIDEO_ASPECT_RATIO_DEFAULT,
   VIDEO_CAPABILITY_PROVIDER_BY_CONNECTOR,
   VIDEO_DURATION_SECONDS_DEFAULT,
@@ -34,9 +35,17 @@ export function isVideoOutputModel(connectorProvider: string, model: string): bo
   return resolveVideoCapabilityProvider(connectorProvider, model) !== undefined;
 }
 
-/** Whether the message asks for a video to be made. */
-export function classifyVideoIntent(message: string): boolean {
-  return VIDEO_REQUEST_PATTERNS.some((pattern) => pattern.test(message));
+/**
+ * Whether the message asks for a video to be made. With an image attached
+ * (`hasAttachedImage`) "animate this" and "bring it to life" also count: that is
+ * image-to-video, the attached image being the first frame.
+ */
+export function classifyVideoIntent(message: string, hasAttachedImage = false): boolean {
+  return (
+    VIDEO_REQUEST_PATTERNS.some((pattern) => pattern.test(message)) ||
+    (hasAttachedImage &&
+      VIDEO_ANIMATE_ATTACHED_IMAGE_PATTERNS.some((pattern) => pattern.test(message)))
+  );
 }
 
 /** What the words say about the clip: length and orientation, clamped to what providers accept. */

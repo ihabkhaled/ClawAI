@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { type HydratedDocument } from 'mongoose';
+import { FeedbackSource } from '../../../common/enums';
 import type {
   FeedbackAttachment,
   FeedbackHistoryEntry,
@@ -9,9 +10,19 @@ import type {
 @Schema({ collection: 'feedback_tickets', timestamps: true })
 export class FeedbackTicket {
   @Prop({ required: true, unique: true, index: true }) ticketNumber!: string;
-  @Prop({ required: true, index: true }) userId!: string;
+  // Null for a public (no-login) submission; set to the caller's id otherwise.
+  @Prop({ type: String, default: null, index: true }) userId?: string | null;
+  @Prop({
+    type: String,
+    required: true,
+    enum: Object.values(FeedbackSource),
+    index: true,
+    default: FeedbackSource.AUTHENTICATED,
+  })
+  source!: FeedbackSource;
   @Prop({ required: true }) reporterEmail!: string;
-  @Prop() reporterName?: string;
+  // Full name snapshot taken at submit time. Null when none was available.
+  @Prop({ type: String, default: null }) reporterName?: string | null;
   @Prop({ required: true, index: true }) type!: string;
   @Prop({ required: true }) title!: string;
   @Prop() subject?: string;
@@ -36,6 +47,7 @@ export const FeedbackTicketSchema = SchemaFactory.createForClass(FeedbackTicket)
 FeedbackTicketSchema.index({ status: 1, createdAt: -1 });
 FeedbackTicketSchema.index({ userId: 1, createdAt: -1 });
 FeedbackTicketSchema.index({ type: 1, createdAt: -1 });
+FeedbackTicketSchema.index({ source: 1, createdAt: -1 });
 FeedbackTicketSchema.index({
   ticketNumber: 'text',
   title: 'text',

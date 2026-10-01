@@ -194,6 +194,14 @@ paid model, rule 1 applies to it like anything else.
     `TranscriptionMeterManager`
     ([ADR-120 addendum 3](../docs/13-adr/adr-120-clawai-owns-multimodal-orchestration.md#addendum-3--user-cancellation-pack-72-2026-09-25)).
 
+21. **Credit unlocks image and video generation; nothing else.** `hasPaygCredit`
+    (auth-service entitlements: metering on and `availableMicroUsd > 0`) makes
+    `hasPlanFeature` true for the features in `CREDIT_UNLOCKABLE_FEATURES`, today only
+    `allowImageGeneration`. Never add a second balance check at the gate: the PAYG
+    reservation is the spend gate and refuses with 402. Unreadable wallet = `false`
+    (fail closed). Adding a feature to the set is a product decision
+    ([ADR-139](../docs/13-adr/adr-139-credit-unlocks-media-generation.md)).
+
 ## Prohibited patterns
 
 - Calling a paid provider with `maxTokens` set to anything but `hold.maxOutputTokens`.

@@ -40,6 +40,23 @@ describe('Gemini Veo client', () => {
     expect(config.headers).toEqual({ 'x-goog-api-key': 'g-key' });
   });
 
+  it('sends the source image as image.inlineData for image-to-video', async () => {
+    http.httpPost.mockResolvedValue({ name: 'models/veo/operations/op-2' });
+
+    await geminiVeoClient.start(gemini, {
+      ...request,
+      sourceImage: { base64: 'QUJD', mimeType: 'image/png' },
+    });
+
+    const [, body] = http.httpPost.mock.calls[0] ?? [];
+    expect(body.instances).toEqual([
+      {
+        prompt: 'A lighthouse at dusk',
+        image: { inlineData: { mimeType: 'image/png', data: 'QUJD' } },
+      },
+    ]);
+  });
+
   it('refuses a start that returns no operation name', async () => {
     http.httpPost.mockResolvedValue({});
 
@@ -136,6 +153,20 @@ describe('xAI video client', () => {
       resolution: '720p',
     });
     expect(config.headers).toEqual({ Authorization: 'Bearer x-key' });
+  });
+
+  it('sends the source image as a data URI under image.url for image-to-video', async () => {
+    http.httpPost.mockResolvedValue({ request_id: 'req-2' });
+
+    await xaiVideoClient.start(xai, {
+      ...request,
+      model: 'grok-imagine-video',
+      sourceImage: { base64: 'QUJD', mimeType: 'image/jpeg' },
+    });
+
+    const [, body] = http.httpPost.mock.calls[0] ?? [];
+    expect(body.image).toEqual({ url: 'data:image/jpeg;base64,QUJD' });
+    expect(body.prompt).toBe('A lighthouse at dusk');
   });
 
   it('polls pending, done (with the reported length), failed and expired', async () => {

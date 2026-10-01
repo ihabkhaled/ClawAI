@@ -38,6 +38,15 @@ docker exec claw-pg-images psql -U claw -d claw_images -c \
 
 - Cancel: `POST /videos/:id/cancel` mid-job, hold released. Retry: `POST /videos/:id/retry` on a `FAILED`/`TIMED_OUT` row.
 
+## 3b. Image-to-video
+
+Upload a small PNG (`POST /files/upload`, JSON with base64 `content`), then send a chat message
+with `fileIds: [id]` and a motion prompt, pinned to a video model (`routingMode MANUAL_MODEL`)
+or in AUTO with "animate this image". Expect the row's `sourceFileId` to equal the upload,
+status `COMPLETED`, and a different mp4 hash per source image. A GIF, a PDF or an oversized
+image must fail with `VIDEO_SOURCE_IMAGE_INVALID` before any hold. Pattern: `qa_i2v.py` style,
+one clip per image, 4 s.
+
 ## 4. What a failure looks like
 
 - **xAI 403** = account out of credits, not a bad key. Top up before blaming the connector.

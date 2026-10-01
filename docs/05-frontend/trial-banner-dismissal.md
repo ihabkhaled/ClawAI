@@ -8,7 +8,7 @@ Rules: `utilities/trial-banner-dismissal.utility.ts` +
 
 ## Why it is dismissible
 
-"Your free trial is active — N days remaining … View paid plans" sits on top of
+"You are on a free trial: N days left … View paid plans" (N comes from the plan's configured trial length via entitlements, never a constant) sits on top of
 every app view. On a phone it cost two lines of vertical space on every screen for
 a whole month. The X control opens a menu:
 

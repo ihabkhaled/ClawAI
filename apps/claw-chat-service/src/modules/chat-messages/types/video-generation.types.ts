@@ -9,6 +9,8 @@ export type VideoGenerateRequest = {
   aspectRatio: string;
   threadId?: string;
   userMessageId?: string;
+  /** Image-to-video: the file-service id of the attached image the clip starts from. */
+  sourceFileId?: string;
   /** The user's own words when `prompt` was rewritten by the planner. */
   originalPrompt?: string;
 };

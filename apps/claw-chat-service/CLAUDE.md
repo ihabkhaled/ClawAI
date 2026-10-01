@@ -1651,6 +1651,15 @@ request-scoped boolean; no global state.
 `classifyVideoIntent` from `@claw/shared-utilities`). Video models are never redirected to
 chat. OpenAI has no video provider (Sora shut down).
 
+**Image-to-video (2026-10-01):** a video provider plus an attached image is image-to-video.
+`firstSourceImageId(context)` sends only the first `image/*` file id as `sourceFileId`;
+image-service reads the bytes under an owner check. AUTO: `classifyVideoIntent(text, true)`
+also accepts "animate this" / "bring it to life" (the lookup of the attachment mime types
+only runs when the words alone did not already ask for a video). `detectImageFromAttachment`
+returns early for a `VIDEO_*` provider, so an attached image is never turned into an image
+edit. With an image the planner (`VIDEO_IMAGE_PLANNER_SYSTEM_PROMPT`) writes MOTION only,
+at most 300 characters, and never re-describes the picture.
+
 - **Prompt library (ADR-138):** `modules/prompt-library`, `chat-prompt-templates` routes; per-user saved prompts with `{{variables}}`, 200 cap, owner-scoped in the repository (foreign id = 404), titles/bodies never logged.
 
 - **Thread memory flags reach every assembler (2026-10-01):** `ChatContextGatewayManager.extractThreadSettings` must pass `useMemory` and `useContext` (as the classic path does at `chat-messages.service`). `ContextAssemblyManager` reads them with `!== false`, so a missing field means ON. It once dropped them, so Runtime V2 runs and every lab mode injected account memories into a `useMemory:false` thread. `runtimeThreadSettings` carries them too. Not live-verified until deployed.

@@ -139,6 +139,31 @@ describe('entitlements helpers', () => {
     });
   });
 
+  describe('hasPlanFeature with PAYG credit (ADR-139)', () => {
+    const funded: UserEntitlements = { ...base, hasPaygCredit: true };
+
+    it('credit unlocks image generation on a plan that locks it', () => {
+      expect(hasPlanFeature(funded, 'allowImageGeneration')).toBe(true);
+    });
+    it('no credit (false or absent) leaves it locked', () => {
+      expect(hasPlanFeature({ ...base, hasPaygCredit: false }, 'allowImageGeneration')).toBe(false);
+      expect(hasPlanFeature(base, 'allowImageGeneration')).toBe(false);
+    });
+    it.each(['allowHelperVision', 'allowTextToSpeech', 'allowCompareMode'] as const)(
+      'credit does not unlock %s',
+      (feature) => {
+        expect(hasPlanFeature(funded, feature)).toBe(false);
+      },
+    );
+    it('credit unlocks even with no plan, and admin stays unlocked', () => {
+      expect(hasPlanFeature({ ...funded, plan: null }, 'allowImageGeneration')).toBe(true);
+      expect(hasPlanFeature({ ...admin, hasPaygCredit: false }, 'allowImageGeneration')).toBe(true);
+    });
+    it('no plan and no credit stays locked', () => {
+      expect(hasPlanFeature({ ...base, plan: null }, 'allowImageGeneration')).toBe(false);
+    });
+  });
+
   describe('isModelAllowedForUsage', () => {
     it('ADMIN can use any model', () => {
       expect(

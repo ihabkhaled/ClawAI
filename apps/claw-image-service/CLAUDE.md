@@ -657,3 +657,13 @@ file-service `store-generated-video`.
 - Failure sentences are fixed (`video-failure.constants.ts`); provider text is never shown.
 - The plan gate is `ImagePlanGateManager`, reused (exported by `ImageGenerationModule`).
 - Sora/OpenAI is not supported: the API was shut down 2026-09-24.
+- **Image-to-video (2026-10-01):** `sourceFileId` on the generate DTO and on
+  `VideoGeneration.source_file_id` (migration `20261001100000_add_video_source_file_id`).
+  `VideoSourceImageManager.load` reads the bytes from file-service's EXISTING owner-checked
+  `GET /internal/files/:id/content?userId=` (404 for a non-owner), allows only JPEG/PNG/WebP
+  (declared type AND magic bytes), caps at 10 MB, and every miss is one code,
+  `VIDEO_SOURCE_IMAGE_INVALID` (fixed sentence, never falls back to another provider). It runs
+  BEFORE the PAYG hold. Retry and AUTO fallback copy `sourceFileId`, so they reuse the image.
+  Veo gets `instances[0].image.inlineData`, xAI gets `image: {url: <data URI>}`. Price is
+  unchanged (per second). The view shows `sourceFileId`.
+- `ImagePlanGateManager` passes a user with PAYG credit (`hasPaygCredit`) even when the plan locks image/video; the PAYG reservation is the spend gate (ADR-139).

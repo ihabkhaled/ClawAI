@@ -13,10 +13,14 @@ vi.mock('../../../../common/utilities', async (importOriginal) => ({
 
 const mockedHttp = vi.mocked(httpRequest);
 
-const context = (text: string): AssembledContext =>
+const context = (
+  text: string,
+  fileContents: Array<{ id: string; mimeType: string }> = [],
+): AssembledContext =>
   ({
     userId: 'user-1',
     threadMessages: [{ role: 'USER', content: text, id: 'm1', threadId: 't1', metadata: null }],
+    fileContents,
     researchEvidence: [],
     platformOrigin: 'https://claw-ai.co',
   }) as unknown as AssembledContext;
@@ -29,11 +33,12 @@ describe('VideoGenerationManager', () => {
   const generate = (
     text: string,
     isAutoMode = true,
+    fileContents: Array<{ id: string; mimeType: string }> = [],
   ): ReturnType<VideoGenerationManager['generate']> =>
     manager.generate({
       provider: 'VIDEO_GEMINI',
       model: 'veo-3.1-fast-generate-preview',
-      context: context(text),
+      context: context(text, fileContents),
       startTime: Date.now(),
       usedFallback: false,
       userId: 'user-1',
@@ -77,6 +82,29 @@ describe('VideoGenerationManager', () => {
         }),
       }),
     );
+  });
+
+  it('image-to-video: sends the attached image id, asks the planner for MOTION only', async () => {
+    await generate('animate this image', true, [
+      { id: 'doc-1', mimeType: 'application/pdf' },
+      { id: 'img-1', mimeType: 'image/PNG' },
+      { id: 'img-2', mimeType: 'image/jpeg' },
+    ]);
+
+    const body = mockedHttp.mock.calls[0]?.[0].body as { sourceFileId?: string };
+    expect(body.sourceFileId).toBe('img-1');
+    const plannerPrompt = askPlanner.mock.calls[0]?.[0] as string;
+    expect(plannerPrompt).toContain('animates');
+    expect(plannerPrompt).toContain('never describe the image itself');
+    expect(plannerPrompt).toContain('Motion request:\nanimate this image');
+  });
+
+  it('text-to-video sends no source image and keeps the shot planner', async () => {
+    await generate('a video of a rocket', true, [{ id: 'doc-1', mimeType: 'application/pdf' }]);
+
+    const body = mockedHttp.mock.calls[0]?.[0].body as Record<string, unknown>;
+    expect(body).not.toHaveProperty('sourceFileId');
+    expect(askPlanner.mock.calls[0]?.[0]).toContain('Video request:');
   });
 
   it('sends the user words unchanged when no planner answers, so a planner outage never blocks a video', async () => {

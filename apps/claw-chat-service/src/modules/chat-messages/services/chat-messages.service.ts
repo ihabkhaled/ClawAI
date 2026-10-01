@@ -1463,7 +1463,11 @@ export class ChatMessagesService implements OnModuleInit {
   ): Promise<MessageRoutedData> {
     let effectivePayload = this.detectImageOutputModel(payload);
     effectivePayload = this.detectVideoOutputModel(effectivePayload);
-    effectivePayload = this.detectVideoRequest(effectivePayload, chronologicalMessages);
+    effectivePayload = await this.detectVideoRequest(
+      effectivePayload,
+      chronologicalMessages,
+      thread?.userId,
+    );
     effectivePayload = this.detectImageFollowUp(effectivePayload, thread, chronologicalMessages);
     effectivePayload = this.detectFileGenerationFollowUp(
       effectivePayload,
@@ -2936,10 +2940,11 @@ export class ChatMessagesService implements OnModuleInit {
    * classifier. The cheapest capable provider leads and a failure falls through to
    * the next inside image-service.
    */
-  private detectVideoRequest(
+  private async detectVideoRequest(
     payload: MessageRoutedData,
     messages: ChatMessage[],
-  ): MessageRoutedData {
+    userId: string | undefined,
+  ): Promise<MessageRoutedData> {
     if (
       payload.routingMode !== 'AUTO' ||
       payload.selectedProvider.startsWith(VIDEO_PROVIDER_PREFIX)
@@ -2947,7 +2952,7 @@ export class ChatMessagesService implements OnModuleInit {
       return payload;
     }
     const text = this.extractLatestUserText(messages);
-    if (text === null || !classifyVideoIntent(text)) {
+    if (text === null || !(await this.asksForVideo(text, messages, userId))) {
       return payload;
     }
     const provider = VIDEO_AUTO_PROVIDER_ORDER.at(0);
@@ -2957,6 +2962,27 @@ export class ChatMessagesService implements OnModuleInit {
     }
     this.logger.log(`Video request detected in AUTO → ${provider}/${model}`);
     return { ...payload, selectedProvider: provider, selectedModel: model };
+  }
+
+  /**
+   * A video request, or "animate this" with an image attached (image-to-video, the
+   * image is the first frame). The attachment lookup only runs when the words alone
+   * did not already ask for a video, so an ordinary video request costs no extra call.
+   */
+  private async asksForVideo(
+    text: string,
+    messages: ChatMessage[],
+    userId: string | undefined,
+  ): Promise<boolean> {
+    if (classifyVideoIntent(text)) {
+      return true;
+    }
+    const turn = this.latestAttachmentTurn(messages);
+    if (turn === null || userId === undefined) {
+      return false;
+    }
+    const mimeTypes = await this.attachmentMimeTypesOf(userId, turn.fileIds);
+    return classifyVideoIntent(text, hasAttachedImageMime(mimeTypes));
   }
 
   private detectFileGenerationFollowUp(
@@ -2995,6 +3021,8 @@ export class ChatMessagesService implements OnModuleInit {
     userId: string | undefined,
   ): Promise<MessageRoutedData> {
     if (userId === undefined) return payload;
+    // A video model with an image attached is image-to-video, never an image edit.
+    if (payload.selectedProvider.startsWith(VIDEO_PROVIDER_PREFIX)) return payload;
     const turn = this.latestAttachmentTurn(messages);
     if (turn === null) return payload;
     if (keepsRoutedImageProvider(payload.selectedProvider, turn.hasMask)) return payload;

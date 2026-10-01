@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { type Model, type QueryFilter } from 'mongoose';
+import { FeedbackSource } from '../../../common/enums';
 import { FeedbackTicket } from '../schemas/feedback-ticket.schema';
 import { FeedbackCounter } from '../schemas/feedback-counter.schema';
 import { FEEDBACK_TICKET_NUMBER_PATTERN } from '../constants/feedback-sanitizer.constants';
@@ -50,13 +51,10 @@ export class FeedbackRepository {
 
     const filter: QueryFilter<FeedbackTicket> = {
       ...(p.userId && { userId: p.userId }),
+      ...(p.source && { source: p.source }),
       ...(p.status && { status: p.status }),
       ...(p.type && { type: p.type }),
-      ...(ticketNumberSearch !== undefined
-        ? { ticketNumber: ticketNumberSearch }
-        : (search
-          ? { $text: { $search: search } }
-          : {})),
+      ...this.searchClause(ticketNumberSearch, search),
     };
     const [items, total] = await Promise.all([
       this.ticketModel
@@ -70,11 +68,40 @@ export class FeedbackRepository {
     return { items, total, page: p.page, limit: p.limit };
   }
 
+  private searchClause(
+    ticketNumber: string | undefined,
+    search: string | undefined,
+  ): Record<string, unknown> {
+    if (ticketNumber !== undefined) {
+      return { ticketNumber };
+    }
+    return search ? { $text: { $search: search } } : {};
+  }
+
   async countsByStatus(): Promise<Record<string, number>> {
     const res = await this.ticketModel
       .aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }])
       .exec();
     return res.reduce<Record<string, number>>((acc, c) => ({ ...acc, [c._id]: c.count }), {});
+  }
+
+  /**
+   * Idempotent backfill for tickets written before `source` existed. Every one
+   * of them was submitted by a signed-in user, so they become AUTHENTICATED;
+   * no name was ever stored, so reporterName is set to null rather than guessed.
+   * Returns how many documents got a `source` (0 on every run after the first).
+   */
+  async backfillSource(): Promise<number> {
+    const result = await this.ticketModel
+      .updateMany(
+        { source: { $exists: false } },
+        { $set: { source: FeedbackSource.AUTHENTICATED } },
+      )
+      .exec();
+    await this.ticketModel
+      .updateMany({ reporterName: { $exists: false } }, { $set: { reporterName: null } })
+      .exec();
+    return result.modifiedCount;
   }
 
   async applyStatusChange(id: string, patch: FeedbackStatusPatch) {

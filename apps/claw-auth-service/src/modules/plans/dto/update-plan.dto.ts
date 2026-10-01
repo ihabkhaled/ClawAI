@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { trialDaysSchema } from './plan-trial.dto';
 
 export const updatePlanSchema = z
   .object({
@@ -7,7 +8,7 @@ export const updatePlanSchema = z
     displayOrder: z.number().int().min(0).max(10_000).optional(),
     isPublic: z.boolean().optional(),
     isTrial: z.boolean().optional(),
-    trialDurationDays: z.number().int().nullable().optional(),
+    trialDurationDays: trialDaysSchema.nullable().optional(),
     dailyTokenQuota: z.number().int().min(0).max(1_000_000_000).optional(),
     weeklyTokenQuota: z.number().int().min(0).max(1_000_000_000).optional(),
     monthlyTokenQuota: z.number().int().min(0).max(1_000_000_000).optional(),
@@ -40,10 +41,17 @@ export const updatePlanSchema = z
   })
   .refine(
     (value) => {
-      if (value.isTrial === undefined) return value.trialDurationDays === undefined;
-      return value.isTrial ? value.trialDurationDays === 30 : value.trialDurationDays === null;
+      // Without isTrial the length alone may change (a number); the service
+      // checks it against the stored plan. `null` needs isTrial: false.
+      if (value.isTrial === undefined) return value.trialDurationDays !== null;
+      return value.isTrial
+        ? typeof value.trialDurationDays === 'number'
+        : value.trialDurationDays === null;
     },
-    { message: 'Trial plans must have exactly 30 days', path: ['trialDurationDays'] },
+    {
+      message: 'Trial plans need a length of 1 to 3650 days; other plans must have none',
+      path: ['trialDurationDays'],
+    },
   );
 
 export type UpdatePlanDto = z.infer<typeof updatePlanSchema>;

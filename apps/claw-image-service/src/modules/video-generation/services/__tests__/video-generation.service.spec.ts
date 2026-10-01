@@ -4,6 +4,7 @@ import { VideoFailureCode } from '../../../../common/enums';
 import { BusinessException } from '../../../../common/errors';
 import { VideoGenerationStatus } from '../../../../generated/prisma';
 import type { VideoGenerationRecord } from '../../types/video-generation.types';
+import { videoFailure } from '../../utilities/video-provider-error.utility';
 import { VideoGenerationService } from '../video-generation.service';
 
 const row = (over: Partial<VideoGenerationRecord> = {}): VideoGenerationRecord => ({
@@ -19,6 +20,7 @@ const row = (over: Partial<VideoGenerationRecord> = {}): VideoGenerationRecord =
   durationSeconds: 4,
   aspectRatio: '16:9',
   isAutoMode: true,
+  sourceFileId: null,
   status: VideoGenerationStatus.QUEUED,
   errorCode: null,
   errorMessage: null,
@@ -49,6 +51,7 @@ describe('VideoGenerationService', () => {
   let repo: Record<string, ReturnType<typeof vi.fn>>;
   let execution: Record<string, ReturnType<typeof vi.fn>>;
   let planGate: { assertCanGenerate: ReturnType<typeof vi.fn> };
+  let sourceImages: { load: ReturnType<typeof vi.fn> };
   let service: VideoGenerationService;
 
   const dto = {
@@ -83,7 +86,13 @@ describe('VideoGenerationService', () => {
       releaseUnpersisted: vi.fn().mockResolvedValue(undefined),
     };
     planGate = { assertCanGenerate: vi.fn().mockResolvedValue(undefined) };
-    service = new VideoGenerationService(repo as never, execution as never, planGate as never);
+    sourceImages = { load: vi.fn().mockResolvedValue({ base64: 'QUJD', mimeType: 'image/png' }) };
+    service = new VideoGenerationService(
+      repo as never,
+      execution as never,
+      planGate as never,
+      sourceImages as never,
+    );
   });
 
   describe('enqueueGeneration', () => {
@@ -223,6 +232,68 @@ describe('VideoGenerationService', () => {
       await flush();
 
       expect(repo['fail']).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('image-to-video', () => {
+    it('stores the source file id and passes the owner-checked image to the provider call', async () => {
+      repo['create']!.mockResolvedValue(row({ sourceFileId: 'img-1' }));
+
+      await service.enqueueGeneration({ ...dto, sourceFileId: 'img-1' });
+      await flush();
+
+      expect(repo['create']).toHaveBeenCalledWith(
+        expect.objectContaining({ sourceFileId: 'img-1' }),
+      );
+      expect(sourceImages.load).toHaveBeenCalledWith('img-1', 'user-1');
+      expect(execution['execute']).toHaveBeenCalledWith(
+        expect.objectContaining({ sourceImage: { base64: 'QUJD', mimeType: 'image/png' } }),
+      );
+    });
+
+    it('does not load or send an image for a text-to-video row', async () => {
+      await service.enqueueGeneration(dto);
+      await flush();
+
+      expect(sourceImages.load).not.toHaveBeenCalled();
+      expect(execution['execute']).toHaveBeenCalledWith(
+        expect.not.objectContaining({ sourceImage: expect.anything() }),
+      );
+    });
+
+    it('fails with the fixed sentence, before any hold, and never falls back to another provider', async () => {
+      repo['create']!.mockResolvedValue(row({ sourceFileId: 'img-1' }));
+      sourceImages.load.mockRejectedValue(
+        videoFailure(VideoFailureCode.SOURCE_IMAGE_INVALID, 'refused'),
+      );
+
+      await service.enqueueGeneration({ ...dto, sourceFileId: 'img-1' });
+      await flush();
+
+      expect(execution['execute']).not.toHaveBeenCalled();
+      expect(repo['fail']).toHaveBeenCalledWith(
+        'gen-1',
+        'FAILED',
+        VideoFailureCode.SOURCE_IMAGE_INVALID,
+        expect.stringContaining('JPEG, PNG or WebP'),
+      );
+      expect(repo['createSuccessor']).not.toHaveBeenCalled();
+    });
+
+    it('a retry reuses the same source image', async () => {
+      repo['findById']!.mockResolvedValue(
+        row({ status: VideoGenerationStatus.FAILED, sourceFileId: 'img-1' }),
+      );
+      repo['createSuccessor']!.mockResolvedValue(row({ id: 'gen-3', sourceFileId: 'img-1' }));
+
+      await service.retryGenerationForUser('gen-1', 'user-1');
+      await flush();
+
+      expect(repo['createSuccessor']).toHaveBeenCalledWith(
+        'gen-1',
+        expect.objectContaining({ sourceFileId: 'img-1' }),
+      );
+      expect(sourceImages.load).toHaveBeenCalledWith('img-1', 'user-1');
     });
   });
 

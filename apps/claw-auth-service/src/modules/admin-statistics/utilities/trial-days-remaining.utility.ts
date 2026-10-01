@@ -10,13 +10,10 @@ import { MILLISECONDS_PER_DAY } from '../constants/trial-days.constants';
  * same statement rather than two subtly different ones.
  *
  * Millisecond arithmetic on absolute instants, not calendar walking: a trial is
- * a fixed 30-day duration from its grant, so no DST or month-length rule
+ * a fixed duration (the plan's configured days) from its grant, so no DST or month-length rule
  * applies, and Date subtraction is exact for this.
  */
 export function resolveTrialDaysRemaining(expiresAt: Date, now: Date): number {
   const remainingMs = expiresAt.getTime() - now.getTime();
-  if (remainingMs <= 0) {
-    return 0;
-  }
-  return Math.ceil(remainingMs / MILLISECONDS_PER_DAY);
+  return remainingMs <= 0 ? 0 : Math.ceil(remainingMs / MILLISECONDS_PER_DAY);
 }

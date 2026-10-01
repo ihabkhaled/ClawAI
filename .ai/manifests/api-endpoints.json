@@ -589,6 +589,11 @@
         "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/feedback/public",
+        "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback-public.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/health",
         "source": "apps/claw-audit-service/src/modules/health/controllers/health.controller.ts"
@@ -783,6 +788,11 @@
       {
         "method": "POST",
         "route": "/admin/plans/users/:userId/assign",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/admin/plans/users/:userId/trial-days",
         "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
       },
       {
@@ -1079,6 +1089,11 @@
         "method": "GET",
         "route": "/internal/users/:id/entitlements",
         "source": "apps/claw-auth-service/src/modules/entitlements/controllers/entitlements-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/users/:id/identity",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users-internal.controller.ts"
       },
       {
         "method": "GET",
@@ -3828,5 +3843,5 @@
     ]
   },
   "generated": true,
-  "total": 758
+  "total": 761
 }

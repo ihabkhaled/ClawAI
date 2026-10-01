@@ -1,21 +1,21 @@
 import { type Permission, PlanModelAccessMode } from '@claw/shared-types';
+import { CREDIT_UNLOCKABLE_FEATURES } from './credit-unlockable-features.constants';
 import { ModelUsageType, type PlanFeature, type UserEntitlements } from './types';
 
 const DENY_ALL_ROUTING_KEY = '__CLAW_PLAN_DENY_ALL__';
 
 // ADMIN implicitly holds every permission.
 export function hasPermission(ent: UserEntitlements, permission: Permission): boolean {
-  if (ent.isAdmin) {
-    return true;
-  }
-  return ent.permissions.includes(permission);
+  return ent.isAdmin ? true : ent.permissions.includes(permission);
 }
 
 export function hasPlanFeature(ent: UserEntitlements, feature: PlanFeature): boolean {
   if (ent.isAdmin) {
     return true;
   }
-  return ent.plan?.featureGates[feature] ?? false;
+  return ent.hasPaygCredit === true && CREDIT_UNLOCKABLE_FEATURES.has(feature)
+    ? true
+    : (ent.plan?.featureGates[feature] ?? false);
 }
 
 // Is the given provider/model allowed for a usage type? ADMIN bypasses.
@@ -103,8 +103,5 @@ export function resolvePlanLimit(
   if (ent.isAdmin) {
     return null;
   }
-  if (!ent.plan) {
-    return 0;
-  }
-  return select(ent.plan.limits);
+  return !ent.plan ? 0 : select(ent.plan.limits);
 }

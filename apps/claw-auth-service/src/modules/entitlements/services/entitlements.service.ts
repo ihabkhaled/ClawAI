@@ -1,4 +1,5 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { PAYG_ENABLED_SETTING_KEY } from '@claw/shared-constants';
 import { UserRole } from '@claw/shared-types';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { PlanModelAccessMode } from '../../../generated/prisma';
@@ -6,6 +7,8 @@ import { AuthRepository } from '../../auth/repositories/auth.repository';
 import { RolesService } from '../../roles/services/roles.service';
 import { PlansRepository } from '../../plans/repositories/plans.repository';
 import { type ActiveTrialState, type PlanWithAccess } from '../../plans/types/plans.types';
+import { CreditWalletService } from '../../credit/services/credit-wallet.service';
+import { SystemSettingService } from '../../system-settings/services/system-setting.service';
 import { QuotaService } from '../../quota/services/quota.service';
 import { type UserEntitlements } from '../types/entitlements.types';
 import { ADMIN_ENTITLEMENT_PLAN } from '../constants/admin-entitlements.constants';
@@ -19,6 +22,8 @@ export class EntitlementsService {
     private readonly rolesService: RolesService,
     private readonly plansRepository: PlansRepository,
     private readonly quotaService: QuotaService,
+    private readonly creditWallets: CreditWalletService,
+    private readonly settings: SystemSettingService,
   ) {}
 
   // Aggregates role permissions + plan + model access + quota for a user.
@@ -60,6 +65,7 @@ export class EntitlementsService {
       permissions,
       plan: this.resolveEntitlementPlan(isAdmin, plan, trial),
       modelAccessMode: this.resolveModelAccessMode(isAdmin, plan?.modelAccessMode),
+      hasPaygCredit: isAdmin ? false : await this.resolveHasPaygCredit(userId),
       allowedModels: modelAccess.map((m) => ({
         provider: m.provider,
         model: m.model,
@@ -73,6 +79,23 @@ export class EntitlementsService {
       allowedProviders: [...new Set(modelAccess.map((m) => m.provider))],
       quota,
     };
+  }
+
+  // Spendable PAYG credit with metering on. Fails closed: an unreadable wallet
+  // or setting means no unlock, never a guess (ADR-139).
+  private async resolveHasPaygCredit(userId: string): Promise<boolean> {
+    try {
+      if (!(await this.settings.isEnabled(PAYG_ENABLED_SETTING_KEY, false))) {
+        return false;
+      }
+      const balances = await this.creditWallets.getBalances(userId);
+      return balances.availableMicroUsd > 0n;
+    } catch (error) {
+      this.logger.warn(
+        `resolveHasPaygCredit: wallet unavailable for ${userId}: ${error instanceof Error ? error.message : 'unknown'}`,
+      );
+      return false;
+    }
   }
 
   async getEnforcedForUser(userId: string): Promise<UserEntitlements> {
@@ -177,7 +200,7 @@ export class EntitlementsService {
     isAdmin: boolean,
     mode: PlanModelAccessMode | undefined,
   ): PlanModelAccessMode {
-    return isAdmin ? PlanModelAccessMode.ALLOW_ALL : mode ?? PlanModelAccessMode.DENY_ALL;
+    return isAdmin ? PlanModelAccessMode.ALLOW_ALL : (mode ?? PlanModelAccessMode.DENY_ALL);
   }
 
   // Resolves the user's daily token limit for quota reservation (0 = ADMIN /

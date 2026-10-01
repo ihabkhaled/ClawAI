@@ -79,6 +79,9 @@ export type UserEntitlements = {
   // Optional during rolling upgrades; explicit modes disambiguate unrestricted
   // access from an empty allow-list or deny-all policy.
   modelAccessMode?: PlanModelAccessMode;
+  // True when PAYG metering is on and the wallet has spendable credit (ADR-139).
+  // Optional: an older auth-service omits it, which reads as false (fail closed).
+  hasPaygCredit?: boolean;
   allowedModels: AllowedModel[];
   allowedProviders: string[];
   quota: {

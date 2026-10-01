@@ -2,15 +2,24 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
 import { EventPattern, LogLevel } from '@claw/shared-types';
+import { addCalendarMonths } from '@claw/shared-utilities';
 import { PlansRepository } from '../repositories/plans.repository';
 import { ExposedModelClient } from '../clients/exposed-model.client';
 import { EXPOSED_MODEL_VALIDATION_MAX_PAIRS } from '../constants/exposed-model.constants';
 import { PLAN_QUOTA_WINDOWS_INCOHERENT } from '../constants/quota-window.constants';
 import {
   PLAN_GRANT_DURATION_INVALID,
+  PLAN_GRANT_MAX_DURATION_DAYS,
   PLAN_GRANT_MAX_DURATION_MONTHS,
   PLAN_GRANT_REASON_REQUIRED,
 } from '../constants/plan-grant.constants';
+import {
+  PLAN_TRIAL_LENGTH_MISSING,
+  PLAN_TRIAL_NOT_FOUND,
+  PLAN_TRIAL_SUPERSEDED,
+} from '../constants/plan-trial.constants';
+import { addTrialDays, resolveExtendedTrialEnd } from '../utilities/trial-expiry.utility';
+import { resolveTrialDaysRemaining } from '../../admin-statistics/utilities/trial-days-remaining.utility';
 import {
   describeQuotaWindowConflicts,
   findQuotaWindowConflicts,
@@ -22,6 +31,7 @@ import { type SetPlanModelAccessDto } from '../dto/plan-misc.dto';
 import { pendingRetirementMigrationsSchema } from '../dto/plan-retirement.dto';
 import { PlanLifecycleStatus, type PlanRetirementMigrationStatus } from '../../../generated/prisma';
 import {
+  type AddTrialDaysResult,
   type PendingPlanRetirementMigration,
   type PlanFeatureGates,
   type PlanModelAccessView,
@@ -135,9 +145,39 @@ export class PlansService {
       },
       current.slug,
     );
+    this.assertTrialLengthCoherent(dto, current);
     const plan = await this.plansRepository.update(id, dto);
     this.logger.log(`updatePlan: id=${id}`);
     return this.toView(plan);
+  }
+
+  /**
+   * A trial plan must end up with a length and a non-trial plan must end up with
+   * none. The DTO checks what was sent; this checks it against the stored row,
+   * so changing only the length of a plan that is not a trial is refused instead
+   * of tripping the database constraint as a 500.
+   */
+  private assertTrialLengthCoherent(dto: UpdatePlanDto, current: PlanView): void {
+    if (dto.isTrial === undefined && dto.trialDurationDays === undefined) {
+      return;
+    }
+    const isTrial = dto.isTrial ?? current.isTrial;
+    const days =
+      dto.trialDurationDays === undefined ? current.trialDurationDays : dto.trialDurationDays;
+    if (isTrial && days === null) {
+      throw new BusinessException(
+        'A trial plan needs a trial length in days',
+        PLAN_TRIAL_LENGTH_MISSING,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (!isTrial && days !== null) {
+      throw new BusinessException(
+        'Only a trial plan has a trial length',
+        PLAN_TRIAL_LENGTH_MISSING,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 
   async activatePlan(id: string): Promise<PlanView> {
@@ -249,6 +289,7 @@ export class PlansService {
     assignedBy: string,
     durationMonths?: number,
     grantReason?: string,
+    durationDays?: number,
   ): Promise<PlanView> {
     // The admin table already disables this control for the super administrator,
     // but the endpoint accepted any userId, so the protection was decorative.
@@ -265,6 +306,10 @@ export class PlansService {
         'PLAN_INACTIVE',
         HttpStatus.CONFLICT,
       );
+    }
+    if (plan.isTrial && durationDays !== undefined) {
+      await this.grantTrialPlanForDays(userId, plan, assignedBy, durationDays, grantReason);
+      return this.toView(plan);
     }
     if (plan.isTrial) {
       const assignment = await this.plansRepository.assignTrialPlanOnce(
@@ -285,6 +330,7 @@ export class PlansService {
         //
         // The redemption row is left exactly as it is, so a spent trial stays
         // spent and this grants only the baseline they would have had anyway.
+        // To give a spent-trial user more days, the admin passes durationDays.
         if (plan.isDefault) {
           await this.plansRepository.assignDefaultPlan(userId, planId);
           this.logger.log(
@@ -299,37 +345,166 @@ export class PlansService {
         );
       }
     } else {
-      if (
-        durationMonths === undefined ||
-        !Number.isInteger(durationMonths) ||
-        durationMonths < 1 ||
-        durationMonths > PLAN_GRANT_MAX_DURATION_MONTHS
-      ) {
-        throw new BusinessException(
-          `Grant duration must be a whole number of months between 1 and ${PLAN_GRANT_MAX_DURATION_MONTHS}`,
-          PLAN_GRANT_DURATION_INVALID,
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-      const trimmedReason = grantReason?.trim() ?? '';
-      if (trimmedReason.length === 0) {
-        throw new BusinessException(
-          'A reason is required for an admin plan grant',
-          PLAN_GRANT_REASON_REQUIRED,
-          HttpStatus.BAD_REQUEST,
-        );
-      }
+      const now = new Date();
       await this.plansRepository.assignUserToPlan(
         userId,
         planId,
         assignedBy,
-        durationMonths,
-        trimmedReason,
-        new Date(),
+        this.resolveGrantValidUntil(durationMonths, durationDays, now),
+        this.requireGrantReason(grantReason),
+        now,
       );
     }
     this.logger.log(`assignUserToPlan: user=${userId} plan=${planId}`);
     return this.toView(plan);
+  }
+
+  /**
+   * "Set to Free for N days": a reasoned admin grant of a trial plan.
+   *
+   * Unlike the one-time self-service trial, this works for a user whose lifetime
+   * trial is already spent — the admin is explicitly reopening it. The
+   * redemption row is re-pointed at the new assignment, so the trial reads as
+   * ACTIVE until a different grant (e.g. Pro) replaces it, at which point the
+   * panel reports SUPERSEDED and not "N days left".
+   */
+  private async grantTrialPlanForDays(
+    userId: string,
+    plan: PlanWithAccess,
+    assignedBy: string,
+    durationDays: number,
+    grantReason: string | undefined,
+  ): Promise<void> {
+    const now = new Date();
+    const expiresAt = this.resolveGrantValidUntil(undefined, durationDays, now);
+    const reason = this.requireGrantReason(grantReason);
+    await this.plansRepository.assignAdminTrialGrant(
+      userId,
+      plan.id,
+      assignedBy,
+      expiresAt,
+      reason,
+      now,
+    );
+    this.structuredLogger.logAction({
+      level: LogLevel.INFO,
+      message: `Admin set user ${userId} to trial plan ${plan.slug} for ${durationDays} days`,
+      action: 'plan_admin_trial_grant',
+      service: PlansService.name,
+      metadata: {
+        userId,
+        actorId: assignedBy,
+        planId: plan.id,
+        days: durationDays,
+        expiresAt: expiresAt.toISOString(),
+        reason,
+      },
+    });
+    this.logger.log(`grantTrialPlanForDays: user=${userId} plan=${plan.id} days=${durationDays}`);
+  }
+
+  /**
+   * Adds days to a user's free trial — still running or already lapsed.
+   *
+   * Refused when another grant has replaced the trial: extending a redemption
+   * row that no longer grants anything would change a date nobody can see take
+   * effect. That case is "Set to Free for N days".
+   */
+  async extendUserTrial(
+    userId: string,
+    assignedBy: string,
+    days: number,
+    reason: string,
+  ): Promise<AddTrialDaysResult> {
+    await this.assertPlanAssignable(userId, assignedBy);
+    const [redemption, assignment] = await Promise.all([
+      this.plansRepository.findTrialRedemption(userId),
+      this.plansRepository.findLatestAssignmentForUser(userId),
+    ]);
+    if (redemption === null) {
+      throw new BusinessException(
+        'This user has never had a free trial',
+        PLAN_TRIAL_NOT_FOUND,
+        HttpStatus.CONFLICT,
+      );
+    }
+    if (assignment === null || assignment.id !== redemption.assignmentId) {
+      throw new BusinessException(
+        'This user is no longer on their free trial. Set them to the free plan for a number of days instead',
+        PLAN_TRIAL_SUPERSEDED,
+        HttpStatus.CONFLICT,
+      );
+    }
+    const now = new Date();
+    const expiresAt = resolveExtendedTrialEnd(redemption.expiresAt, now, days);
+    await this.plansRepository.extendTrial(userId, assignment.id, assignment.planId, expiresAt);
+    this.structuredLogger.logAction({
+      level: LogLevel.INFO,
+      message: `Admin added ${days} trial days to user ${userId}`,
+      action: 'plan_trial_days_added',
+      service: PlansService.name,
+      metadata: {
+        userId,
+        actorId: assignedBy,
+        days,
+        previousExpiresAt: redemption.expiresAt.toISOString(),
+        expiresAt: expiresAt.toISOString(),
+        reason,
+      },
+    });
+    this.logger.log(`extendUserTrial: user=${userId} days=${days}`);
+    return {
+      userId,
+      expiresAt: expiresAt.toISOString(),
+      daysRemaining: resolveTrialDaysRemaining(expiresAt, now),
+    };
+  }
+
+  private requireGrantReason(grantReason: string | undefined): string {
+    const trimmed = grantReason?.trim() ?? '';
+    if (trimmed.length === 0) {
+      throw new BusinessException(
+        'A reason is required for an admin plan grant',
+        PLAN_GRANT_REASON_REQUIRED,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return trimmed;
+  }
+
+  /** Exactly one of months or days, each a whole number inside its ceiling. */
+  private resolveGrantValidUntil(
+    durationMonths: number | undefined,
+    durationDays: number | undefined,
+    now: Date,
+  ): Date {
+    if (durationDays !== undefined) {
+      if (
+        !Number.isInteger(durationDays) ||
+        durationDays < 1 ||
+        durationDays > PLAN_GRANT_MAX_DURATION_DAYS
+      ) {
+        throw new BusinessException(
+          `Grant duration must be a whole number of days between 1 and ${PLAN_GRANT_MAX_DURATION_DAYS}`,
+          PLAN_GRANT_DURATION_INVALID,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      return addTrialDays(now, durationDays);
+    }
+    if (
+      durationMonths === undefined ||
+      !Number.isInteger(durationMonths) ||
+      durationMonths < 1 ||
+      durationMonths > PLAN_GRANT_MAX_DURATION_MONTHS
+    ) {
+      throw new BusinessException(
+        `Grant duration must be a whole number of months between 1 and ${PLAN_GRANT_MAX_DURATION_MONTHS}`,
+        PLAN_GRANT_DURATION_INVALID,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return new Date(addCalendarMonths(now.getTime(), durationMonths));
   }
 
   // Every row is checked against real connector inventory before anything is

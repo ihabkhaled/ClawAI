@@ -61,6 +61,35 @@ describe('classifyVideoIntent', () => {
   });
 });
 
+describe('classifyVideoIntent with an attached image', () => {
+  it.each([
+    'animate this image',
+    'Animate this',
+    'animate it slowly, waves moving',
+    'please animate the photo',
+    'bring this picture to life',
+    'turn my photo into a video',
+    'image to video: slow zoom in',
+    'make a video from this',
+  ])('asks for image-to-video: %j', (message) => {
+    expect(classifyVideoIntent(message, true)).toBe(true);
+  });
+
+  it('does not treat "animate this image" as a video request when nothing is attached', () => {
+    expect(classifyVideoIntent('animate this image')).toBe(false);
+    expect(classifyVideoIntent('animate this image', false)).toBe(false);
+  });
+
+  it.each([
+    'what is in this image',
+    'describe this photo',
+    'make this image brighter',
+    'explain the animation in this picture',
+  ])('leaves a plain question or edit alone: %j', (message) => {
+    expect(classifyVideoIntent(message, true)).toBe(false);
+  });
+});
+
 describe('readVideoRequestOptions', () => {
   it('defaults to a 4 second landscape clip', () => {
     expect(readVideoRequestOptions('make a video of the sea')).toEqual({

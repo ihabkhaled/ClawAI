@@ -77,6 +77,22 @@ role and `PENDING` status; client-supplied role or status fields are ignored.
 | PATCH  | /:id | ADMIN | Update user (role, status) |
 | DELETE | /:id | ADMIN | Deactivate user            |
 
+### Trial length and admin trial actions
+
+The free-trial length is `Plan.trialDurationDays`, any whole number of days from 1 to
+3650 on a trial plan (`NULL` otherwise), edited in the admin Plans form. Fresh databases
+seed 30; re-seeding never overwrites an edited value. New trials read the length at grant
+time and running trials keep their end date.
+
+| Method | Path                                    | Role  | Purpose                                                                                                                              |
+| ------ | --------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| POST   | `/admin/plans/users/:userId/trial-days` | ADMIN | `{ days, reason }`: add days to the user's trial, from its end or from today if it lapsed. Audit: `plan_trial_days_added`.           |
+| POST   | `/admin/plans/users/:userId/assign`     | ADMIN | `durationDays` (or `durationMonths`) plus `grantReason`. On a trial plan: "Set to Free for N days". Audit: `plan_admin_trial_grant`. |
+
+An admin Free-for-N-days grant re-points the lifetime `PlanTrialRedemption` at the new
+assignment, so it reads ACTIVE; a later Pro grant makes it SUPERSEDED and no countdown is
+shown. Decision record: `docs/13-adr/adr-140-dynamic-trial-length.md`.
+
 ### Plan retirement
 
 `DELETE /api/v1/admin/plans/:id` requires the admin role and retires a plan
@@ -262,7 +278,8 @@ column cannot publish itself. Two categories:
 
 **Published, because the customer is entitled to it.** Price versions, all three
 token windows (`dailyTokenQuota` / `weeklyTokenQuota` / `monthlyTokenQuota`),
-currency, trial terms, `isPublic` / `isActive`, and `paygCreditPercentBps` — the
+currency, trial terms (`isTrial` and `trialDurationDays`, any whole number of days
+1..3650 set per plan; see `adr-140-dynamic-trial-length`), `isPublic` / `isActive`, and `paygCreditPercentBps` — the
 share of the monthly price that becomes connector credit. Rule 37 names that
 ratio as public explicitly: a customer is entitled to know what share of their
 payment becomes credit. Until it was added, the public pricing page defaulted it

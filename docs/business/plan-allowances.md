@@ -185,7 +185,7 @@ That is what made it safe to migrate a live entitlement.
 
 A conservative option showed Free at $0.00. It kept $0.30 because its seeded
 description is _"Try every frontier model with a small daily allowance"_ — $0
-makes that copy false, and Free is the only funnel the 30-day trial has.
+makes that copy false, and Free is the only funnel the free trial has (30 days by default; the length is a per-plan setting).
 
 Free's previous windows were **incoherent**: `300,000/day` against a `20,000/week`
 ceiling. The real enforced allowance was about **$0.02 a week** while the pricing

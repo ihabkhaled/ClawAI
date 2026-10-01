@@ -16,7 +16,12 @@ import type {
   VideoProviderConfig,
   VideoStartRequest,
 } from '../types/video-generation.types';
-import { veoAuthHeaders, veoBareModel, veoBase } from '../utilities/video-provider-wire.utility';
+import {
+  veoAuthHeaders,
+  veoBareModel,
+  veoBase,
+  veoInstance,
+} from '../utilities/video-provider-wire.utility';
 import { toVideoProviderException, videoFailure } from '../utilities/video-provider-error.utility';
 import { VIDEO_CONTENT_POLICY_MARKERS } from '../constants/video-failure.constants';
 
@@ -27,7 +32,8 @@ const logger = new Logger('GeminiVeoAdapter');
  *
  * Start returns an operation name, polled until `done`; the clip is then fetched
  * from `response.generateVideoResponse.generatedSamples[0].video.uri` with the
- * same key header (the file is kept for two days). Text-to-video only, at 720p:
+ * same key header (the file is kept for two days). Text-to-video, or image-to-video
+ * (the image is the first frame) when the request carries one, at 720p:
  * 1080p and 4K cost more and need an 8 second clip, and the price this service
  * meters is the 720p one (routing seed v11).
  */
@@ -42,7 +48,7 @@ export const startVeo = async (
     const response = await httpPost<VeoStartResponse>(
       `${base}/models/${encodeURIComponent(model)}:predictLongRunning`,
       {
-        instances: [{ prompt: request.prompt }],
+        instances: [veoInstance(request)],
         parameters: {
           aspectRatio: request.aspectRatio,
           resolution: VIDEO_RESOLUTION,

@@ -30,7 +30,7 @@ import {
   SUPER_ADMIN_SELF_LOCKED_MESSAGE,
 } from '../../../common/constants/super-admin.constants';
 import { CurrencyPreferenceMode, type User } from '../../../generated/prisma';
-import { type SafeUser, type UserSpeechPreferences } from '../types/users.types';
+import { type SafeUser, type UserIdentity, type UserSpeechPreferences } from '../types/users.types';
 import { toSafeUser } from '../service.utilities/to-safe-user.utility';
 import { validatePasswordStrength } from '../service.utilities/password-policy.utility';
 import { resolveSuperAdminMutability } from '../service.utilities/super-admin-mutability.utility';
@@ -361,6 +361,15 @@ export class UsersService {
       throw new EntityNotFoundException('User', userId);
     }
     return { ttsVoice: user.ttsVoice };
+  }
+
+  /** The name audit-service snapshots onto a feedback ticket (service-token route). 404 for an unknown user. */
+  async getIdentity(userId: string): Promise<UserIdentity> {
+    const user = await this.usersRepository.findById(userId);
+    if (!user) {
+      throw new EntityNotFoundException('User', userId);
+    }
+    return { firstName: user.firstName ?? null, lastName: user.lastName ?? null };
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {

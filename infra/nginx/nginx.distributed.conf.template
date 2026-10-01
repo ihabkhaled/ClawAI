@@ -72,6 +72,10 @@ http {
     # --- Request body -------------------------------------------------------
     client_max_body_size 75m;
 
+    # Anonymous feedback form budget (ADR-141).
+    limit_req_zone $binary_remote_addr zone=public_feedback:10m rate=20r/m;
+    limit_req_status 429;
+
     # --- Security headers ---------------------------------------------------
     # Services set nosniff themselves for direct access (helmet, download
     # controllers). Drop theirs here so exactly one reaches the client.
@@ -434,6 +438,18 @@ http {
 
         # --- Audit Service ---
         location /api/v1/audits {
+            set $backend https://$origin_audit;
+            proxy_pass $backend;
+        }
+
+        location = /api/v1/feedback/public {
+            set $backend https://$origin_audit;
+            proxy_pass $backend;
+            client_max_body_size 16k;
+            limit_req zone=public_feedback burst=10 nodelay;
+        }
+
+        location /api/v1/feedback {
             set $backend https://$origin_audit;
             proxy_pass $backend;
         }

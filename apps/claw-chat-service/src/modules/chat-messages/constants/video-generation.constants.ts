@@ -37,6 +37,25 @@ export const VIDEO_PLANNER_SYSTEM_PROMPT = [
   'A request that is already a good shot description may be returned almost unchanged.',
 ].join('\n');
 
+/**
+ * The image-to-video variant. The image is the first frame and the provider sees
+ * it, so the prompt describes ONLY what moves: re-describing the picture risks the
+ * clip drifting away from it.
+ */
+export const VIDEO_IMAGE_PLANNER_SYSTEM_PROMPT = [
+  'You write the prompt for an AI video generator (Veo, Grok Imagine Video) that animates an',
+  'image the user attached. The image is the first frame and the generator sees it.',
+  'Reply with ONE JSON object and nothing else: {"prompt": string}.',
+  '',
+  'Write a SHORT motion description of at most 300 characters, in English:',
+  '- what moves and how (the subject, the wind, the water, the light), and the camera move',
+  '  (slow push-in, pan, still), in one or two sentences;',
+  '- never describe the image itself, never name its subject or style, never invent new',
+  '  objects, people or text to appear;',
+  '- if the user gave no motion, choose a gentle natural one that fits a photo;',
+  '- add sound only if the user asked for it.',
+].join('\n');
+
 export const VIDEO_PLANNED_PROMPT_SCHEMA = z.object({
   prompt: z
     .string()

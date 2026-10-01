@@ -9,6 +9,7 @@ import {
   inferImageCapabilityProvider,
   MultimodalImageIntent,
   resolveImageCapabilityProvider,
+  resolveVideoCapabilityProvider,
   supportsImageEdit,
 } from '@claw/shared-utilities';
 import { RouterProvider, RoutingMode } from '../../../generated/prisma';
@@ -249,9 +250,13 @@ export class RoutingManager {
   ): boolean {
     if (context.runtimeV2 === true) return false;
     if (!manual) return true;
+    // A picked video model with an image attached is image-to-video (ADR-137), not an
+    // image edit: the user's pick stands and chat-service sends it to video generation.
     return writer === null
       ? false
-      : !writer.provider.startsWith('IMAGE_') && writer.provider !== FILE_GENERATION_PROVIDER;
+      : !writer.provider.startsWith('IMAGE_') &&
+          writer.provider !== FILE_GENERATION_PROVIDER &&
+          resolveVideoCapabilityProvider(writer.provider, writer.model) === undefined;
   }
 
   /** Image first, then file — the order handleAuto uses. */

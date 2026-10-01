@@ -19,7 +19,7 @@ import type {
   XaiVideoStartResponse,
 } from '../types/video-generation.types';
 import { toVideoProviderException, videoFailure } from '../utilities/video-provider-error.utility';
-import { xaiAuthHeaders, xaiBase } from '../utilities/video-provider-wire.utility';
+import { xaiAuthHeaders, xaiBase, xaiImageField } from '../utilities/video-provider-wire.utility';
 
 const logger = new Logger('XaiVideoAdapter');
 
@@ -46,6 +46,7 @@ export const startXaiVideo = async (
         duration: request.durationSeconds,
         aspect_ratio: request.aspectRatio,
         resolution: VIDEO_RESOLUTION,
+        ...xaiImageField(request),
       },
       { headers: xaiAuthHeaders(config), timeout: VIDEO_START_TIMEOUT_MS },
       declaredHost(xaiBase(config)),

@@ -11,6 +11,7 @@ export {
   type ReservedFeature,
   type ResearchUsageFeature,
 } from './entitlements-adapter';
+export { CREDIT_UNLOCKABLE_FEATURES } from './credit-unlockable-features.constants';
 export { describeEntitlementsFailure } from './describe-failure';
 export {
   allowedModelKeys,

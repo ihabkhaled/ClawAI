@@ -116,3 +116,18 @@ MongoDB was chosen for audit/usage data because:
 - Time-series-friendly with TTL indexes for automatic cleanup
 - Aggregation pipeline provides efficient analytics queries
 - No need for relational integrity -- audit logs are append-only
+
+## Feedback tickets (two doors, ADR-141)
+
+`src/modules/feedback`, collection `feedback_tickets`.
+
+| Route                         | Auth                    | Writes                                                                                                                                  |
+| ----------------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /feedback`              | JWT + `FEEDBACK_SUBMIT` | `source=AUTHENTICATED`, `userId`, `reporterName` (full-name snapshot from auth-service `/internal/users/:id/identity`), `reporterEmail` |
+| `POST /feedback/public`       | none (`@Public`)        | `source=PUBLIC`, `userId=null`, `reporterName`, `reporterEmail`                                                                         |
+| `GET /feedback/admin?source=` | `ADMIN_FEEDBACK_MANAGE` | read, filter by source                                                                                                                  |
+
+Public path: honeypot `website` -> Redis limits (5/h per IP, 3/h per email, fails open)
+-> store. Always `201 {id}`; over the cap `429 FEEDBACK_RATE_LIMITED`. nginx adds
+`limit_req zone=public_feedback` and a 16k body cap. Backfill: `FeedbackSourceBackfillMigration`.
+Spam handling: [runbook-public-feedback-spam.md](../11-runbooks/runbook-public-feedback-spam.md).

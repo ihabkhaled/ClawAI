@@ -13,6 +13,8 @@ import {
 import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
 import { AppConfig } from '../../../app/config/app.config';
 import { BusinessException } from '../../../common/errors';
+import { FeedbackSource } from '../../../common/enums';
+import { UserIdentityClient } from '../clients/user-identity.client';
 import { FeedbackRepository } from '../repositories/feedback.repository';
 import {
   sanitizeFeedbackMarkdown,
@@ -33,7 +35,10 @@ import {
 export class FeedbackManager {
   private readonly logger = new Logger(FeedbackManager.name);
 
-  constructor(private readonly repository: FeedbackRepository) {}
+  constructor(
+    private readonly repository: FeedbackRepository,
+    private readonly identity: UserIdentityClient,
+  ) {}
 
   async createTicket(
     actorId: string,
@@ -53,6 +58,9 @@ export class FeedbackManager {
       attachments.push(await this.verifyAttachment(actorId, attachment));
     }
 
+    // The name is a snapshot taken now: a later rename must not rewrite who
+    // wrote a ticket. actorId/actorEmail come from the verified token only.
+    const reporterName = await this.identity.fullName(actorId);
     const ticketNumber = await this.repository.nextTicketNumber();
     const now = new Date();
 
@@ -77,7 +85,9 @@ export class FeedbackManager {
       contentMarkdown: sanitizedContent,
       searchText,
       status: FeedbackStatus.OPEN,
+      source: FeedbackSource.AUTHENTICATED,
       userId: actorId,
+      reporterName,
       reporterEmail: actorEmail,
       attachments,
       // Validated by the DTO and declared on the schema, but never written — so

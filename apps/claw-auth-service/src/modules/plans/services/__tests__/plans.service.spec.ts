@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import type { RabbitMQService } from '@claw/shared-rabbitmq';
 import { PlansService } from '../plans.service';
 import { type PlansRepository } from '../../repositories/plans.repository';
@@ -68,6 +68,8 @@ const mockRepo = (): Record<keyof PlansRepository, Mock> => ({
   assignUserToPlan: vi.fn(),
   assignDefaultPlan: vi.fn(),
   assignTrialPlanOnce: vi.fn(),
+  assignAdminTrialGrant: vi.fn(),
+  extendTrial: vi.fn(),
   listUserIdsOnPlan: vi.fn(),
   findRetirementReplacement: vi.fn(),
   retirePlan: vi.fn(),
@@ -174,10 +176,161 @@ describe('PlansService', () => {
       'u1',
       'plan-pro',
       'admin',
-      3,
+      expect.any(Date),
       'Support gesture',
       expect.any(Date),
     );
+  });
+
+  it('assignUserToPlan grants a non-trial plan for a number of DAYS', async () => {
+    repo.findById.mockResolvedValue(proPlan);
+    const before = Date.now();
+    await service.assignUserToPlan('u1', 'plan-pro', 'admin', undefined, 'Pilot', 90);
+    const validUntil = repo.assignUserToPlan.mock.calls[0]?.[3] as Date;
+    expect(validUntil.getTime() - before).toBeGreaterThanOrEqual(90 * 86_400_000);
+    expect(validUntil.getTime() - before).toBeLessThan(90 * 86_400_000 + 60_000);
+  });
+
+  it('assignUserToPlan refuses a day count outside 1..3650', async () => {
+    repo.findById.mockResolvedValue(proPlan);
+    await expect(
+      service.assignUserToPlan('u1', 'plan-pro', 'admin', undefined, 'x', 3651),
+    ).rejects.toThrow(/days/i);
+    await expect(
+      service.assignUserToPlan('u1', 'plan-pro', 'admin', undefined, 'x', 0),
+    ).rejects.toThrow(/days/i);
+    expect(repo.assignUserToPlan).not.toHaveBeenCalled();
+  });
+
+  it('sets a user to the Free trial plan for N days, reopening a spent trial', async () => {
+    repo.findById.mockResolvedValue({ ...freePlan, isTrial: true, trialDurationDays: 30 });
+    const before = Date.now();
+    await service.assignUserToPlan('u1', 'plan-free', 'admin', undefined, 'Goodwill', 365);
+    expect(repo.assignAdminTrialGrant).toHaveBeenCalledWith(
+      'u1',
+      'plan-free',
+      'admin',
+      expect.any(Date),
+      'Goodwill',
+      expect.any(Date),
+    );
+    const expiresAt = repo.assignAdminTrialGrant.mock.calls[0]?.[3] as Date;
+    expect(expiresAt.getTime() - before).toBeGreaterThanOrEqual(365 * 86_400_000);
+    expect(repo.assignTrialPlanOnce).not.toHaveBeenCalled();
+    expect(repo.assignDefaultPlan).not.toHaveBeenCalled();
+  });
+
+  it('a Free-for-N-days grant needs a reason and a sane day count', async () => {
+    repo.findById.mockResolvedValue({ ...freePlan, isTrial: true, trialDurationDays: 30 });
+    await expect(
+      service.assignUserToPlan('u1', 'plan-free', 'admin', undefined, '  ', 10),
+    ).rejects.toThrow(/reason/i);
+    await expect(
+      service.assignUserToPlan('u1', 'plan-free', 'admin', undefined, 'ok', 5000),
+    ).rejects.toThrow(/days/i);
+    expect(repo.assignAdminTrialGrant).not.toHaveBeenCalled();
+  });
+
+  describe('extendUserTrial', () => {
+    const now = Date.now();
+    const redemption = (expiresAt: Date) => ({
+      id: 'r1',
+      userId: 'u1',
+      planId: 'plan-free',
+      assignmentId: 'a1',
+      startedAt: new Date(now - 10 * 86_400_000),
+      expiresAt,
+      createdAt: new Date(),
+    });
+
+    it('stacks the days onto a trial that is still running', async () => {
+      const expiresAt = new Date(now + 5 * 86_400_000);
+      repo.findTrialRedemption.mockResolvedValue(redemption(expiresAt));
+      repo.findLatestAssignmentForUser.mockResolvedValue({ id: 'a1', planId: 'plan-free' });
+
+      const result = await service.extendUserTrial('u1', 'admin', 60, 'Support');
+
+      expect(repo.extendTrial).toHaveBeenCalledWith(
+        'u1',
+        'a1',
+        'plan-free',
+        new Date(expiresAt.getTime() + 60 * 86_400_000),
+      );
+      expect(result.daysRemaining).toBe(65);
+    });
+
+    it('reopens a lapsed trial for N days from today', async () => {
+      repo.findTrialRedemption.mockResolvedValue(redemption(new Date(now - 3 * 86_400_000)));
+      repo.findLatestAssignmentForUser.mockResolvedValue({ id: 'a1', planId: 'plan-free' });
+
+      const result = await service.extendUserTrial('u1', 'admin', 14, 'Reopen');
+
+      expect(result.daysRemaining).toBe(14);
+    });
+
+    it('refuses a user who never had a trial', async () => {
+      repo.findTrialRedemption.mockResolvedValue(null);
+      repo.findLatestAssignmentForUser.mockResolvedValue(null);
+      await expect(service.extendUserTrial('u1', 'admin', 5, 'x')).rejects.toThrow(/never had/);
+      expect(repo.extendTrial).not.toHaveBeenCalled();
+    });
+
+    it('refuses a user whose trial was replaced by another grant', async () => {
+      repo.findTrialRedemption.mockResolvedValue(redemption(new Date(now + 86_400_000)));
+      repo.findLatestAssignmentForUser.mockResolvedValue({ id: 'a-pro', planId: 'plan-pro' });
+      await expect(service.extendUserTrial('u1', 'admin', 5, 'x')).rejects.toThrow(
+        /no longer on their free trial/,
+      );
+      expect(repo.extendTrial).not.toHaveBeenCalled();
+    });
+
+    it('audit-logs the action with actor, days and reason', async () => {
+      repo.findTrialRedemption.mockResolvedValue(redemption(new Date(now + 86_400_000)));
+      repo.findLatestAssignmentForUser.mockResolvedValue({ id: 'a1', planId: 'plan-free' });
+      await service.extendUserTrial('u1', 'admin', 5, 'Because');
+      const audited = rabbit.publish.mock.calls.find(
+        (call) => call[1]?.action === 'plan_trial_days_added',
+      );
+      expect(audited?.[1]?.metadata).toMatchObject({
+        userId: 'u1',
+        actorId: 'admin',
+        days: 5,
+        reason: 'Because',
+      });
+    });
+  });
+
+  describe('updatePlan trial length', () => {
+    it('refuses a length on a plan that is not a trial', async () => {
+      repo.findById.mockResolvedValue({
+        ...proPlan,
+        weeklyTokenQuota: null,
+        isTrial: false,
+        trialDurationDays: null,
+      });
+      await expect(service.updatePlan('plan-pro', { trialDurationDays: 90 })).rejects.toThrow(
+        /Only a trial plan/,
+      );
+      expect(repo.update).not.toHaveBeenCalled();
+    });
+
+    it('accepts any length on an existing trial plan', async () => {
+      repo.findById.mockResolvedValue({
+        ...freePlan,
+        weeklyTokenQuota: null,
+        isTrial: true,
+        trialDurationDays: 30,
+      });
+      repo.update.mockResolvedValue({
+        ...freePlan,
+        weeklyTokenQuota: null,
+        isTrial: true,
+        trialDurationDays: 90,
+      });
+      const view = await service.updatePlan('plan-free', { trialDurationDays: 90 });
+      expect(repo.update).toHaveBeenCalledWith('plan-free', { trialDurationDays: 90 });
+      expect(view.trialDurationDays).toBe(90);
+    });
   });
 
   it('assignUserToPlan refuses a missing duration for a non-trial grant', async () => {

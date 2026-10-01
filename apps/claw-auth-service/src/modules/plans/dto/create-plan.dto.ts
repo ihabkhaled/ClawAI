@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { trialDaysSchema } from './plan-trial.dto';
 
 export const createPlanSchema = z
   .object({
@@ -12,7 +13,7 @@ export const createPlanSchema = z
     displayOrder: z.number().int().min(0).max(10_000).optional(),
     isPublic: z.boolean().optional(),
     isTrial: z.boolean().default(false),
-    trialDurationDays: z.number().int().nullable().default(null),
+    trialDurationDays: trialDaysSchema.nullable().default(null),
     dailyTokenQuota: z.number().int().min(0).max(1_000_000_000),
     weeklyTokenQuota: z.number().int().min(0).max(1_000_000_000).optional(),
     monthlyTokenQuota: z.number().int().min(0).max(1_000_000_000).optional(),
@@ -44,9 +45,10 @@ export const createPlanSchema = z
     maxVideoSeconds: z.number().int().min(0).max(36_000).nullable().optional(),
   })
   .refine(
-    (value) => (value.isTrial ? value.trialDurationDays === 30 : value.trialDurationDays === null),
+    (value) =>
+      value.isTrial ? value.trialDurationDays !== null : value.trialDurationDays === null,
     {
-      message: 'Trial plans must have exactly 30 days',
+      message: 'Trial plans need a length of 1 to 3650 days; other plans must have none',
       path: ['trialDurationDays'],
     },
   );

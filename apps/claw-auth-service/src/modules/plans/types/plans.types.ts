@@ -166,3 +166,12 @@ export type PendingPlanRetirementMigration = {
   replacementPlanSlug: string;
   sourceSubscriptionId: string;
 };
+
+/** What the admin "Add trial days" action reports back. */
+export type AddTrialDaysResult = {
+  userId: string;
+  /** The trial's new end, ISO-8601. */
+  expiresAt: string;
+  /** Whole days from now to `expiresAt`, rounded up. */
+  daysRemaining: number;
+};

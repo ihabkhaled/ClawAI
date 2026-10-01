@@ -4,6 +4,8 @@ import { EntitlementsService } from '../entitlements.service';
 import { type AuthRepository } from '../../../auth/repositories/auth.repository';
 import { type RolesService } from '../../../roles/services/roles.service';
 import { type PlansRepository } from '../../../plans/repositories/plans.repository';
+import { type CreditWalletService } from '../../../credit/services/credit-wallet.service';
+import { type SystemSettingService } from '../../../system-settings/services/system-setting.service';
 import { type QuotaService } from '../../../quota/services/quota.service';
 import { type PlanWithAccess } from '../../../plans/types/plans.types';
 
@@ -23,6 +25,8 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
     >
   >;
   let quotaServiceMock: Mocked<Pick<QuotaService, 'getSnapshot'>>;
+  let walletMock: Mocked<Pick<CreditWalletService, 'getBalances'>>;
+  let settingsMock: Mocked<Pick<SystemSettingService, 'isEnabled'>>;
 
   const baseUser = {
     id: 'u1',
@@ -83,12 +87,16 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
       findActiveTrialState: vi.fn().mockResolvedValue(null),
     };
     quotaServiceMock = { getSnapshot: vi.fn() };
+    walletMock = { getBalances: vi.fn() };
+    settingsMock = { isEnabled: vi.fn().mockResolvedValue(true) };
 
     service = new EntitlementsService(
       authRepoMock as unknown as AuthRepository,
       rolesServiceMock as unknown as RolesService,
       plansRepoMock as unknown as PlansRepository,
       quotaServiceMock as unknown as QuotaService,
+      walletMock as unknown as CreditWalletService,
+      settingsMock as unknown as SystemSettingService,
     );
 
     authRepoMock.findUserById.mockResolvedValue(baseUser);
@@ -149,6 +157,47 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
     );
     // null stays null — it must never be coalesced into 0 (disabled).
     expect(result.plan?.limits.maxVideoSeconds).toBeNull();
+  });
+
+  describe('hasPaygCredit (ADR-139)', () => {
+    const balances = (available: bigint): Awaited<ReturnType<CreditWalletService['getBalances']>> =>
+      ({ availableMicroUsd: available }) as unknown as Awaited<
+        ReturnType<CreditWalletService['getBalances']>
+      >;
+
+    beforeEach(() => {
+      plansRepoMock.findEffectiveForUser.mockResolvedValue(freePlanWithNoModelAccess);
+    });
+
+    it('is true when metering is on and the wallet has credit', async () => {
+      walletMock.getBalances.mockResolvedValue(balances(1_000_000n));
+      expect((await service.getForUser('u1')).hasPaygCredit).toBe(true);
+    });
+
+    it('is false when the wallet is empty', async () => {
+      walletMock.getBalances.mockResolvedValue(balances(0n));
+      expect((await service.getForUser('u1')).hasPaygCredit).toBe(false);
+    });
+
+    it('is false when metering is off, without reading the wallet', async () => {
+      settingsMock.isEnabled.mockResolvedValue(false);
+      expect((await service.getForUser('u1')).hasPaygCredit).toBe(false);
+      expect(walletMock.getBalances).not.toHaveBeenCalled();
+    });
+
+    it('fails closed when the wallet read throws', async () => {
+      walletMock.getBalances.mockRejectedValue(new Error('db down'));
+      expect((await service.getForUser('u1')).hasPaygCredit).toBe(false);
+    });
+
+    it('is false for an admin without touching the wallet', async () => {
+      authRepoMock.findUserById.mockResolvedValue({
+        ...baseUser,
+        role: UserRole.ADMIN,
+      } as unknown as Awaited<ReturnType<AuthRepository['findUserById']>>);
+      expect((await service.getForUser('u1')).hasPaygCredit).toBe(false);
+      expect(walletMock.getBalances).not.toHaveBeenCalled();
+    });
   });
 
   it('returns allowedModels=[] (no restriction) when the plan has zero PlanModelAccess rows', async () => {

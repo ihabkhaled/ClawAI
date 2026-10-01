@@ -18,6 +18,8 @@ export const generateVideoSchema = z.object({
   durationSeconds: z.number().int().min(4).max(8).default(4),
   aspectRatio: z.enum(['16:9', '9:16']).default('16:9'),
   isAutoMode: z.boolean().default(false),
+  /** Image-to-video: a file-service id of an image the user owns. */
+  sourceFileId: z.string().min(1).max(100).nullish(),
 });
 
 export type GenerateVideoDto = z.infer<typeof generateVideoSchema>;

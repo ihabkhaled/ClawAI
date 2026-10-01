@@ -58,6 +58,10 @@ export const VIDEO_FAILURE_MESSAGES: ReadonlyMap<VideoFailureCode, string> = new
     VideoFailureCode.VIDEO_TOO_LARGE,
     'The generated video is too large to save. Try a shorter clip.',
   ],
+  [
+    VideoFailureCode.SOURCE_IMAGE_INVALID,
+    'The attached image cannot be used for a video. Attach a JPEG, PNG or WebP image under 10 MB and try again.',
+  ],
 ]);
 
 export function videoFailureMessage(code: VideoFailureCode): string {

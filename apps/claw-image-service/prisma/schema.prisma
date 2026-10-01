@@ -145,6 +145,8 @@ model VideoGeneration {
   aspectRatio         String                @default("16:9") @map("aspect_ratio")
   /// AUTO picked the provider, so a failure may fall through to the next one.
   isAutoMode          Boolean               @default(false) @map("is_auto_mode")
+  /// Image-to-video: the file-service id of the image the clip animates.
+  sourceFileId        String?               @map("source_file_id")
   status              VideoGenerationStatus @default(QUEUED)
   errorCode           String?               @map("error_code")
   errorMessage        String?               @map("error_message")

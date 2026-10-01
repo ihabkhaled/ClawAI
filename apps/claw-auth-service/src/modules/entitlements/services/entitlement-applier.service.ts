@@ -7,6 +7,8 @@ import {
   ENTITLEMENT_REVOKING_PATTERNS,
   FREE_PLAN_SLUG,
 } from '../constants/entitlement-inbox.constants';
+import { PLAN_TRIAL_DEFAULT_DAYS } from '../../plans/constants/plan-trial.constants';
+import { addTrialDays } from '../../plans/utilities/trial-expiry.utility';
 import { type ApplyEntitlementInput } from '../types/entitlement-inbox.types';
 
 // Applies a verified billing event to the user's plan.
@@ -100,7 +102,12 @@ export class EntitlementApplierService {
     }
 
     const trialStartedAt = new Date();
-    const newTrialExpiresAt = new Date(trialStartedAt.getTime() + 30 * 24 * 60 * 60 * 1000);
+    // The free plan's own length (ADR-140). The default only covers a free plan
+    // that is not flagged as a trial, which has no length to read.
+    const newTrialExpiresAt = addTrialDays(
+      trialStartedAt,
+      freePlan.trialDurationDays ?? PLAN_TRIAL_DEFAULT_DAYS,
+    );
 
     await this.prisma.$transaction(async (tx) => {
       if (current) {

@@ -399,6 +399,26 @@ no trial, `resolveTrialPresentation` nulls `trialEndsAt` for a non-trial plan,
 and `PLAN_TRIAL_EXPIRED` can only fire when the plan in force is itself a
 trial. The end user saw the correct thing throughout; only the admin panel lied.
 
+## Trial length is per plan; admins can extend it (adr-140-dynamic-trial-length, 2026-10-01)
+
+- `Plan.trialDurationDays` (1..3650, NULL off a trial plan) is the only source of
+  a trial's length. `assignTrialPlanOnce` reads it; there is no `30` in the grant
+  path. The seeder's 30 is a fresh-database default and an edited plan row is
+  never overwritten. DTO, plan form and the DB CHECK share the 1..3650 range.
+- `POST /admin/plans/users/:userId/trial-days { days, reason }` adds days to the
+  user's trial (`PlansService.extendUserTrial`): from the current end, or from
+  today if it lapsed. Refused with `PLAN_TRIAL_NOT_FOUND` (no redemption) or
+  `PLAN_TRIAL_SUPERSEDED` (another grant replaced it). Audit action
+  `plan_trial_days_added`.
+- `POST /admin/plans/users/:userId/assign` takes `durationDays` OR
+  `durationMonths`. `durationDays` on a trial plan is "Set to Free for N days": it
+  also works for a spent trial and re-points the lifetime `PlanTrialRedemption`
+  at the new assignment (so it reads ACTIVE). A later Pro grant names a
+  different assignment, so it reads SUPERSEDED and no countdown is shown. Audit
+  action `plan_admin_trial_grant`. A reason is required.
+- Known gap: `EntitlementApplier.revoke` still writes a 30-day trial for a user
+  with no redemption; it should read the free plan's `trialDurationDays`.
+
 Rule: [28-billing-integrity-and-api-contracts](../../rules/28-billing-integrity-and-api-contracts.md)
 §9 and §10.
 
@@ -553,3 +573,5 @@ After completing any implementation task on this service, produce:
 4. **Infrastructure changes** (env vars, Docker, Nginx, CI)
 5. **Known gaps or follow-up items**
 6. **Evidence**: typecheck output, lint output, test output
+
+- Entitlements payload carries `hasPaygCredit` (metering on and wallet available > 0, fail closed); it unlocks `allowImageGeneration` only (ADR-139, rule 37 item 21).

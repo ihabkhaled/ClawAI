@@ -116,6 +116,27 @@ describe('RoutingManager image edit intent', () => {
     expect(result.selectedModel).toBe('gpt-image-1');
   });
 
+  it.each([
+    ['GROK', 'grok-imagine-video'],
+    ['GEMINI', 'models/veo-3.1-fast-generate-preview'],
+  ])(
+    'keeps a picked video model %s/%s for an edit-sounding prompt with an image (image-to-video)',
+    async (forcedProvider, forcedModel) => {
+      const result = await manager.evaluateRoute(
+        ctx({
+          message: 'make the light shift slowly',
+          attachmentMimeTypes: ['image/png'],
+          userMode: RoutingMode.MANUAL_MODEL,
+          forcedProvider,
+          forcedModel,
+        }),
+      );
+      expect(result.selectedProvider).toBe(forcedProvider);
+      expect(result.selectedModel).toBe(forcedModel);
+      expect(result.reasonTags).not.toContain('image_edit');
+    },
+  );
+
   it('keeps a picked Grok image model for a plain generation (rule 51 item 17)', async () => {
     const result = await manager.evaluateRoute(
       ctx({
