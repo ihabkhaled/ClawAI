@@ -1,6 +1,9 @@
 import { vi } from 'vitest';
 import { BusinessException, EntityNotFoundException } from '../../../../common/errors';
-import { MAX_TEMPLATES_PER_USER } from '../../constants/prompt-library.constants';
+import {
+  MAX_TAG_SUMMARIES,
+  MAX_TEMPLATES_PER_USER,
+} from '../../constants/prompt-library.constants';
 import { PromptLibraryErrorCode } from '../../enums/prompt-library-error-code.enum';
 import type { PromptLibraryRepository } from '../../repositories/prompt-library.repository';
 import type { PromptTemplateRecord } from '../../types/prompt-library.types';
@@ -24,8 +27,8 @@ function record(overrides: Partial<PromptTemplateRecord> = {}): PromptTemplateRe
 
 function build() {
   const repo = {
-    countForUser: vi.fn().mockResolvedValue(0),
-    create: vi.fn().mockResolvedValue(record()),
+    createWithinLimit: vi.fn().mockResolvedValue(record()),
+    listTags: vi.fn().mockResolvedValue([]),
     findOwned: vi.fn().mockResolvedValue(record()),
     list: vi.fn().mockResolvedValue([]),
     update: vi.fn().mockResolvedValue(record()),
@@ -44,21 +47,24 @@ describe('PromptLibraryService', () => {
       tags: ['work'],
       isFavorite: false,
     });
-    expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ userId: 'u1' }));
+    expect(repo.createWithinLimit).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'u1' }),
+      MAX_TEMPLATES_PER_USER,
+    );
     expect(view.variables).toEqual(['name']);
     expect(view.lastUsedAt).toBeNull();
   });
 
   it('create refuses at the per-user limit with 409 PROMPT_LIBRARY_FULL', async () => {
     const { repo, service } = build();
-    repo.countForUser.mockResolvedValue(MAX_TEMPLATES_PER_USER);
+    repo.createWithinLimit.mockResolvedValue(null);
     const error = await service
       .create('u1', { title: 't', body: 'b', tags: [], isFavorite: false })
       .catch((e: unknown) => e);
     expect(error).toBeInstanceOf(BusinessException);
     expect((error as BusinessException).code).toBe(PromptLibraryErrorCode.PROMPT_LIBRARY_FULL);
     expect((error as BusinessException).getStatus()).toBe(409);
-    expect(repo.create).not.toHaveBeenCalled();
+    expect(repo.createWithinLimit).toHaveBeenCalled();
   });
 
   it('create rejects a malformed template before touching the database', async () => {
@@ -66,7 +72,7 @@ describe('PromptLibraryService', () => {
     await expect(
       service.create('u1', { title: 't', body: '{{oops', tags: [], isFavorite: false }),
     ).rejects.toMatchObject({ code: PromptLibraryErrorCode.PROMPT_TEMPLATE_INVALID });
-    expect(repo.countForUser).not.toHaveBeenCalled();
+    expect(repo.createWithinLimit).not.toHaveBeenCalled();
   });
 
   it('get, update, remove and use answer 404 for a template the caller does not own', async () => {
@@ -129,5 +135,19 @@ describe('PromptLibraryService', () => {
       offset: 0,
       limit: 5,
     });
+  });
+
+  it('tags returns the caller tag counts capped at the limit', async () => {
+    const { repo, service } = build();
+    repo.listTags.mockResolvedValue([{ tag: 'work', count: 3 }]);
+    await expect(service.tags('u1')).resolves.toEqual({ items: [{ tag: 'work', count: 3 }] });
+    expect(repo.listTags).toHaveBeenCalledWith('u1', MAX_TAG_SUMMARIES);
+  });
+
+  it('tags returns the caller tag counts capped at the limit', async () => {
+    const { repo, service } = build();
+    repo.listTags.mockResolvedValue([{ tag: 'work', count: 3 }]);
+    await expect(service.tags('u1')).resolves.toEqual({ items: [{ tag: 'work', count: 3 }] });
+    expect(repo.listTags).toHaveBeenCalledWith('u1', MAX_TAG_SUMMARIES);
   });
 });

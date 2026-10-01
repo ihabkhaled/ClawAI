@@ -43,3 +43,12 @@ export interface ListPromptTemplatesInput {
   offset: number;
   limit: number;
 }
+
+export interface PromptTagCount {
+  tag: string;
+  count: number;
+}
+
+export interface PromptTagListResult {
+  items: PromptTagCount[];
+}

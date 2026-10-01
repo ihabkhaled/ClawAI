@@ -8,9 +8,7 @@ import { createFakePromptTemplateDelegate } from './fake-prompt-template.delegat
 
 function build() {
   const fake = createFakePromptTemplateDelegate();
-  const repository = new PromptLibraryRepository({
-    promptTemplate: fake.delegate,
-  } as unknown as PrismaService);
+  const repository = new PromptLibraryRepository(fake.prisma as unknown as PrismaService);
   return { fake, service: new PromptLibraryService(repository) };
 }
 
@@ -82,5 +80,39 @@ describe('PromptLibraryService over an in-memory store', () => {
     fake.seed('u1', 'fav-never', { isFavorite: true });
     const page = await service.list('u1', { limit: 10 });
     expect(page.items.map((i) => i.title)).toEqual(['fav-never', 'plain-used', 'plain-never']);
+  });
+
+  it('parallel creates at 199 admit exactly one and never exceed the cap', async () => {
+    const { fake, service } = build();
+    for (let i = 0; i < MAX_TEMPLATES_PER_USER - 1; i += 1) {
+      fake.seed('u1', `t${i}`);
+    }
+    const results = await Promise.allSettled(
+      Array.from({ length: 6 }, (_, i) => service.create('u1', input(`race${i}`))),
+    );
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    const rejected = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+    expect(rejected).toHaveLength(5);
+    for (const r of rejected) {
+      expect((r.reason as BusinessException).code).toBe(PromptLibraryErrorCode.PROMPT_LIBRARY_FULL);
+    }
+    expect(fake.count('u1')).toBe(MAX_TEMPLATES_PER_USER);
+  });
+
+  it('parallel creates at 199 admit exactly one and never exceed the cap', async () => {
+    const { fake, service } = build();
+    for (let i = 0; i < MAX_TEMPLATES_PER_USER - 1; i += 1) {
+      fake.seed('u1', `t${i}`);
+    }
+    const results = await Promise.allSettled(
+      Array.from({ length: 6 }, (_, i) => service.create('u1', input(`race${i}`))),
+    );
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    const rejected = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+    expect(rejected).toHaveLength(5);
+    for (const r of rejected) {
+      expect((r.reason as BusinessException).code).toBe(PromptLibraryErrorCode.PROMPT_LIBRARY_FULL);
+    }
+    expect(fake.count('u1')).toBe(MAX_TEMPLATES_PER_USER);
   });
 });

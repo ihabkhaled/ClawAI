@@ -15,6 +15,7 @@ function build() {
     get: vi.fn().mockResolvedValue({ id: ID }),
     update: vi.fn().mockResolvedValue({ id: ID }),
     remove: vi.fn().mockResolvedValue(undefined),
+    tags: vi.fn().mockResolvedValue({ items: [] }),
     use: vi.fn().mockResolvedValue({ id: ID }),
   };
   return {
@@ -33,6 +34,8 @@ describe('PromptLibraryController', () => {
     await controller.update(user, { id: ID }, { title: 'x' });
     await controller.remove(user, { id: ID });
     await controller.use(user, { id: ID });
+    await controller.tags(user);
+    expect(library.tags).toHaveBeenCalledWith('caller-1');
     expect(library.list).toHaveBeenCalledWith('caller-1', { limit: 30 });
     expect(library.create).toHaveBeenCalledWith('caller-1', dto);
     expect(library.get).toHaveBeenCalledWith('caller-1', ID);

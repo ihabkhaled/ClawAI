@@ -9,6 +9,8 @@ interface Where {
 /** Just enough of the Prisma delegate to exercise the repository's where-clauses for real. */
 export interface FakePromptTemplateStore {
   delegate: Record<string, (args: never) => Promise<unknown>>;
+  /** Prisma-shaped client: `$transaction` plus a `pg_advisory_xact_lock` emulation keyed by user. */
+  prisma: Record<string, unknown>;
   seed: (
     userId: string,
     title: string,
@@ -59,10 +61,15 @@ export function createFakePromptTemplateDelegate(): FakePromptTemplateStore {
   };
 
   const delegate = {
-    count: ({ where }: { where: Where }) =>
-      Promise.resolve(rows.filter((r) => matches(r, where)).length),
-    create: ({ data }: { data: { userId: string; title: string } & Partial<Row> }) =>
-      Promise.resolve(seed(data.userId, data.title, data)),
+    // Yield to the event loop so an unlocked count-then-create races, like a real database.
+    count: async ({ where }: { where: Where }) => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      return rows.filter((r) => matches(r, where)).length;
+    },
+    create: async ({ data }: { data: { userId: string; title: string } & Partial<Row> }) => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      return seed(data.userId, data.title, data);
+    },
     findFirst: ({ where }: { where: Where }) =>
       Promise.resolve(rows.find((r) => matches(r, where)) ?? null),
     findMany: ({ where, skip, take }: { where: Where; skip: number; take: number }) =>
@@ -92,8 +99,40 @@ export function createFakePromptTemplateDelegate(): FakePromptTemplateStore {
     },
   };
 
+  const locks = new Map<string, Promise<void>>();
+  const prisma = {
+    promptTemplate: delegate,
+    $transaction: async <T>(fn: (tx: unknown) => Promise<T>): Promise<T> => {
+      const releases: Array<() => void> = [];
+      const tx = {
+        promptTemplate: delegate,
+        $executeRaw: async (_sql: TemplateStringsArray, key: string): Promise<number> => {
+          const previous = locks.get(key) ?? Promise.resolve();
+          let release: () => void = () => {};
+          locks.set(
+            key,
+            new Promise<void>((resolve) => {
+              release = resolve;
+            }),
+          );
+          releases.push(release);
+          await previous;
+          return 0;
+        },
+      };
+      try {
+        return await fn(tx);
+      } finally {
+        for (const release of releases) {
+          release();
+        }
+      }
+    },
+  };
+
   return {
     delegate,
+    prisma,
     seed,
     count: (userId: string) => rows.filter((r) => r.userId === userId).length,
   };

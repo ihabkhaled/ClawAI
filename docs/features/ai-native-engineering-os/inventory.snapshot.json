@@ -1429,6 +1429,11 @@
         },
         {
           "method": "GET",
+          "route": "/chat-prompt-templates/tags",
+          "source": "apps/claw-chat-service/src/modules/prompt-library/controllers/prompt-library.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/chat-threads",
           "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
         },
@@ -11334,7 +11339,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 52,
-    "endpointCount": 757,
+    "endpointCount": 758,
     "envVarCount": 360,
     "eventCount": 184,
     "frontendRouteCount": 155,

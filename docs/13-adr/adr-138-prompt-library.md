@@ -28,6 +28,9 @@ reuse their own, with fill-in variables.
 - List order: favourites, then last used (never-used last), then last edited. Pagination
   is an opaque offset cursor; the 200 cap makes keyset pagination unnecessary.
 - Titles and bodies are user content and are never logged.
+- Update (M3): the cap is checked inside a transaction holding a per-user advisory lock
+  (`pg_advisory_xact_lock`), not count-then-create. Search escapes LIKE wildcards. New
+  `GET /chat-prompt-templates/tags` returns the caller's distinct tags with counts (cap 100) so the UI can list every tag; the frontend does not consume it yet.
 
 ## Consequences
 

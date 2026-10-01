@@ -1,8 +1,8 @@
 {
   "generated": true,
   "hashes": {
-    ".ai/BOOTSTRAP.md": "c6cf28e3",
-    ".ai/manifests/api-endpoints.json": "d8cb50a0",
+    ".ai/BOOTSTRAP.md": "f092dbba",
+    ".ai/manifests/api-endpoints.json": "b69b15e5",
     ".ai/manifests/data-ownership.json": "42fc2333",
     ".ai/manifests/docker-services.json": "b02bddb6",
     ".ai/manifests/environment-variables.json": "a9d10fb2",
@@ -17,7 +17,7 @@
     ".ai/manifests/prisma-models.json": "1f5ff87a",
     ".ai/manifests/rabbitmq-events.json": "15fd1759",
     ".ai/manifests/repository.json": "047d93d0",
-    ".ai/manifests/services.json": "5c3b25b7",
+    ".ai/manifests/services.json": "76e0d20a",
     ".ai/manifests/tests.json": "4c62b3e5",
     ".ai/manifests/workspace-dependency-graph.json": "8592594d",
     ".ai/manifests/workspaces.json": "19f83de0",
@@ -36,7 +36,7 @@
     "apps/claw-agent-service/AGENTS.md": "cd38158e",
     "apps/claw-audit-service/AGENTS.md": "b3c4785c",
     "apps/claw-auth-service/AGENTS.md": "e2f523f6",
-    "apps/claw-chat-service/AGENTS.md": "2f1e6633",
+    "apps/claw-chat-service/AGENTS.md": "ea78eb58",
     "apps/claw-client-logs-service/AGENTS.md": "9277b87c",
     "apps/claw-connector-service/AGENTS.md": "a0c4698a",
     "apps/claw-file-generation-service/AGENTS.md": "aaa83b23",

@@ -26,6 +26,7 @@ import {
 } from '../dto/prompt-library.dto';
 import { PromptLibraryService } from '../services/prompt-library.service';
 import {
+  type PromptTagListResult,
   type PromptTemplateListResult,
   type PromptTemplateView,
 } from '../types/prompt-library.types';
@@ -42,6 +43,12 @@ export class PromptLibraryController {
     query: ListPromptTemplatesQueryDto,
   ): Promise<PromptTemplateListResult> {
     return this.library.list(user.id, query);
+  }
+
+  /** Declared before `:id` so `tags` is never read as a template id. */
+  @Get('tags')
+  async tags(@CurrentUser() user: AuthenticatedUser): Promise<PromptTagListResult> {
+    return this.library.tags(user.id);
   }
 
   @Post()

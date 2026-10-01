@@ -28,3 +28,8 @@ export function decodeCursor(cursor: string | undefined): number {
   const parsed = Number.parseInt(Buffer.from(cursor, 'base64url').toString('utf8'), 10);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : 0;
 }
+
+/** Escapes LIKE metacharacters (backslash first) so user text matches literally. */
+export function escapeLikePattern(text: string): string {
+  return text.replaceAll(/[\\%_]/g, (char) => `\\${char}`);
+}

@@ -15,3 +15,5 @@ export const PLACEHOLDER_PATTERN = /\{\{([^{}]*)\}\}/g;
 export const PROMPT_TEMPLATE_ENTITY = 'PromptTemplate';
 export const OPEN_BRACES = '{{';
 export const CLOSE_BRACES = '}}';
+/** Most distinct tags the tag summary returns (the 10-per-template x 200-template ceiling). */
+export const MAX_TAG_SUMMARIES = 100;

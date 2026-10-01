@@ -1175,6 +1175,11 @@ A picked veo/grok-video model, or an AUTO video request, routes to `VIDEO_GEMINI
   `{ items, nextCursor }`, favourites first, then last used, then last edited.
   `POST /` (201), `GET /:id`, `PATCH /:id`, `DELETE /:id` (204), `POST /:id/use`
   (bumps `usageCount`, sets `lastUsedAt`). Every view carries `variables: string[]`.
+- `GET /tags` returns `{ items: [{ tag, count }] }` for the caller (most used first, at most
+  100). Declared before `/:id`. Not consumed by the UI yet.
+- The 200 cap is atomic: `createWithinLimit` runs count + create in one transaction under
+  `pg_advisory_xact_lock(hashtext(userId))`, so parallel creates at 199 admit exactly one.
+  Search `q` escapes `%`, `_` and backslash so they match literally.
 - Rules: 200 templates per user (409 `PROMPT_LIBRARY_FULL`); title 1-120; body 1-20000;
   tags at most 10, 1-32 chars, trimmed/lowercased/deduplicated; `{{name}}` variables
   (`[a-z][a-z0-9_]{0,31}`, at most 20 distinct) or 400 `PROMPT_TEMPLATE_INVALID`.

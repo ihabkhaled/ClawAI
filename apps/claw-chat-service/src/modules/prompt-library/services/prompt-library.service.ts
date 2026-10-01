@@ -3,6 +3,7 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import {
   PROMPT_TEMPLATE_ENTITY as ENTITY,
+  MAX_TAG_SUMMARIES,
   MAX_TEMPLATES_PER_USER,
 } from '../constants/prompt-library.constants';
 import {
@@ -13,6 +14,7 @@ import {
 import { PromptLibraryErrorCode } from '../enums/prompt-library-error-code.enum';
 import { PromptLibraryRepository } from '../repositories/prompt-library.repository';
 import {
+  type PromptTagListResult,
   type PromptTemplateListResult,
   type PromptTemplateView,
 } from '../types/prompt-library.types';
@@ -46,17 +48,24 @@ export class PromptLibraryService {
     };
   }
 
+  async tags(userId: string): Promise<PromptTagListResult> {
+    return { items: await this.repository.listTags(userId, MAX_TAG_SUMMARIES) };
+  }
+
   async create(userId: string, dto: CreatePromptTemplateDto): Promise<PromptTemplateView> {
     assertValidTemplate(dto.body);
-    const count = await this.repository.countForUser(userId);
-    if (count >= MAX_TEMPLATES_PER_USER) {
+    const created = await this.repository.createWithinLimit(
+      { userId, ...dto },
+      MAX_TEMPLATES_PER_USER,
+    );
+    if (!created) {
       throw new BusinessException(
         `You can save at most ${MAX_TEMPLATES_PER_USER} prompts`,
         PromptLibraryErrorCode.PROMPT_LIBRARY_FULL,
         HttpStatus.CONFLICT,
       );
     }
-    return toView(await this.repository.create({ userId, ...dto }));
+    return toView(created);
   }
 
   async get(userId: string, id: string): Promise<PromptTemplateView> {
