@@ -1,6 +1,11 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
+import { DeviceTokenClass } from '@claw/shared-types';
 import { BusinessException } from '../../../common/errors/business.exception';
-import { devicePublic } from '../../../common/utilities/device.utility';
+import {
+  devicePublic,
+  parseDeviceTokenClass,
+  scopesFitTokenClass,
+} from '../../../common/utilities/device.utility';
 import { DeviceRepository } from '../repositories/device.repository';
 import type { ListDevicesQueryDto } from '../dto/list-devices-query.dto';
 import type { UpdateDeviceDto } from '../dto/update-device.dto';
@@ -49,6 +54,16 @@ export class DeviceService {
         'agent.device.not_found',
         'device_not_found',
         HttpStatus.NOT_FOUND,
+      );
+    }
+    // F097: a device keeps the class it was paired with. Widening a phone to shell scopes
+    // (or giving a desktop the run scopes) through the edit route is refused.
+    const tokenClass = parseDeviceTokenClass(existing.tokenClass) ?? DeviceTokenClass.MOBILE;
+    if (dto.scopes !== undefined && !scopesFitTokenClass(dto.scopes, tokenClass)) {
+      throw new BusinessException(
+        'agent.device.scope_class_mismatch',
+        'device_scope_class_mismatch',
+        HttpStatus.BAD_REQUEST,
       );
     }
     if (dto.name !== undefined) {

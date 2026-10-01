@@ -12,8 +12,9 @@ import type {
   RefreshTokenStatus,
   TerminalCommand,
 } from '../../../generated/prisma';
+import type { DeviceTokenClass } from '@claw/shared-types';
 import type { DeviceCodeError } from '../../../common/enums/device-code-error.enum';
-import type { DeviceScope } from '../../../common/enums/device-scope.enum';
+import type { AgentScope } from '../../../common/types/auth.types';
 
 export type AgentSessionPublic = Omit<AgentSession, 'sessionKey'>;
 
@@ -91,7 +92,9 @@ export type DevicePublic = {
   os: string;
   platform: string;
   agentVersion: string;
-  scopes: DeviceScope[];
+  scopes: AgentScope[];
+  /** F097: `device` (desktop agent) or `mobile` (run approval only). */
+  tokenClass: DeviceTokenClass;
   status: DeviceStatus;
   lastSeenAt: Date | null;
   lastIp: string | null;
@@ -148,8 +151,7 @@ export type DeviceCodeCreateResult = {
 };
 
 export type DeviceCodeTokenResult =
-  | { success: true; tokens: IssuedTokenPair }
-  | { success: false; code: DeviceCodeError };
+  { success: true; tokens: IssuedTokenPair } | { success: false; code: DeviceCodeError };
 
 export type DeviceCodeTokenResponse = IssuedTokenPair | { error: DeviceCodeError };
 

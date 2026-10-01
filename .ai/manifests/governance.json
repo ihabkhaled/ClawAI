@@ -159,7 +159,7 @@
       "file": "rules/15-configuration-and-environment.md"
     },
     {
-      "bytes": 6622,
+      "bytes": 7274,
       "file": "rules/16-authentication-and-authorization.md"
     },
     {
@@ -333,7 +333,7 @@
   ],
   "skills": [
     {
-      "bytes": 32278,
+      "bytes": 32558,
       "file": "skills/00-index.md"
     },
     {
@@ -365,7 +365,7 @@
       "file": "skills/07-database-toolkit.md"
     },
     {
-      "bytes": 8020,
+      "bytes": 8082,
       "file": "skills/08-event-bus-toolkit.md"
     },
     {
@@ -627,6 +627,10 @@
     {
       "bytes": 4352,
       "file": "skills/navigate-codebase.md"
+    },
+    {
+      "bytes": 6151,
+      "file": "skills/pair-and-use-a-mobile-device-token.md"
     },
     {
       "bytes": 14444,

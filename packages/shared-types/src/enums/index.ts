@@ -106,3 +106,4 @@ export {
   DISPLAY_ROUNDING_POLICY_VERSION,
   DisplayRoundingPolicy,
 } from './display-rounding-policy.enum';
+export { DeviceTokenClass, MobileDeviceScope } from './device-token-class.enum';

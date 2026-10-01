@@ -74,3 +74,4 @@ export * from './country-currency.constants';
 export * from './timezone-country.constants';
 export * from './session-revocation.constants';
 export * from './tts-voice.constants';
+export * from './device-token.constants';

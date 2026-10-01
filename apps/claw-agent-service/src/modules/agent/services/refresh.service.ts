@@ -1,15 +1,15 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
-import { EventPattern } from '@claw/shared-types';
-import { AppConfig } from '../../../app/config/app.config';
+import { DeviceTokenClass, EventPattern } from '@claw/shared-types';
+import { MOBILE_DEVICE_MAX_AGE_DAYS } from '@claw/shared-constants';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { DeviceStatus } from '../../../common/enums/device-status.enum';
 import { RefreshTokenStatus } from '../../../common/enums/refresh-token-status.enum';
+import { parseDeviceTokenClass, parseScopesCsv } from '../../../common/utilities/device.utility';
 import { DeviceRepository } from '../repositories/device.repository';
 import { RefreshTokenRepository } from '../repositories/refresh-token.repository';
 import { RevocationCacheService } from './revocation-cache.service';
 import { TokenService } from './token.service';
-import type { DeviceScope } from '../../../common/enums/device-scope.enum';
 import type { Device, RefreshToken } from '../../../generated/prisma';
 import type { IssuedTokenPair } from '../types/agent.types';
 
@@ -31,10 +31,16 @@ export class RefreshService {
     if (stored.status === RefreshTokenStatus.REVOKED) {
       throw this.unauthorized('agent.device.revoked', 'device_revoked');
     }
-    if (stored.status === RefreshTokenStatus.USED) {
-      return this.handleReuse(stored.id, stored.deviceId, device.userId, stored.jti, ip);
-    }
-    return this.rotate(stored, device, ip);
+    return stored.status === RefreshTokenStatus.USED
+      ? this.handleReuse(
+          stored.id,
+          stored.deviceId,
+          device.userId,
+          stored.jti,
+          device.tokenClass,
+          ip,
+        )
+      : this.rotate(stored, device, ip);
   }
 
   private async findStoredOrThrow(presentedToken: string): Promise<RefreshToken> {
@@ -60,11 +66,18 @@ export class RefreshService {
     device: Device,
     ip: string | null,
   ): Promise<IssuedTokenPair> {
-    const scopes = device.scopesCsv.split(',').filter((s) => s.length > 0) as DeviceScope[];
-    const issued = this.tokenService.issuePair(device.userId, device.id, scopes, device.orgId);
-    const expiresAt = new Date(
-      Date.now() + AppConfig.get().AGENT_REFRESH_TTL_DAYS * 24 * 60 * 60 * 1_000,
+    const tokenClass = parseDeviceTokenClass(device.tokenClass);
+    if (tokenClass === null) throw this.unauthorized('agent.device.revoked', 'device_revoked');
+    this.assertWithinMobileLifetime(device, tokenClass);
+    const scopes = parseScopesCsv(device.scopesCsv);
+    const issued = this.tokenService.issuePair(
+      device.userId,
+      device.id,
+      scopes,
+      device.orgId,
+      tokenClass,
     );
+    const expiresAt = this.tokenService.refreshExpiry(tokenClass);
     const newRow = await this.refreshRepo.create({
       device: { connect: { id: device.id } },
       tokenHash: issued.refreshHash,
@@ -84,11 +97,21 @@ export class RefreshService {
     return issued.pair;
   }
 
+  /** F097: a phone must be paired again after its absolute lifetime, however often it refreshed. */
+  private assertWithinMobileLifetime(device: Device, tokenClass: DeviceTokenClass): void {
+    if (tokenClass !== DeviceTokenClass.MOBILE) return;
+    const ageMs = Date.now() - device.createdAt.getTime();
+    if (ageMs > MOBILE_DEVICE_MAX_AGE_DAYS * 24 * 60 * 60 * 1_000) {
+      throw this.unauthorized('agent.refresh.expired', 'refresh_expired');
+    }
+  }
+
   private async handleReuse(
     usedId: string,
     deviceId: string,
     userId: string,
     presentedJti: string,
+    tokenClass: string,
     ip: string | null,
   ): Promise<never> {
     this.logger.warn(
@@ -107,6 +130,7 @@ export class RefreshService {
       deviceId,
       userId,
       reason: 'refresh_reuse_detected',
+      tokenClass,
     });
     throw this.unauthorized('agent.refresh.reuse_detected', 'refresh_reuse_detected');
   }
@@ -129,6 +153,7 @@ export class RefreshService {
       userId: device.userId,
       reason: reason ?? 'user_revoked',
       revokedByUserId: userId,
+      tokenClass: device.tokenClass,
     });
     this.logger.log(`Device revoked: ${deviceId} by user ${userId}`);
   }

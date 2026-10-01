@@ -42,12 +42,16 @@ export type AgentDevicePairedPayload = AgentEventTimestamp & {
   os?: string;
   platform?: string;
   agentVersion?: string;
+  /** F097: `device` (desktop) or `mobile`; absent on events from before the class existed. */
+  tokenClass?: string;
 };
 
 export type AgentDeviceRevokedPayload = AgentEventTimestamp & {
   deviceId: string;
   userId: string;
   reason: string;
+  /** F097: class of the revoked device. */
+  tokenClass?: string;
   /** present when revocation was triggered by a user (vs an internal subsystem) */
   revokedByUserId?: string;
 };
@@ -77,6 +81,22 @@ export type AgentPolicyViolatedPayload = AgentEventTimestamp & {
   riskLabel: string;
 };
 
+/**
+ * F097 — one mutating action taken with a mobile token (approve, reject,
+ * cancel), including the ones the service refused. `outcome` is `success` or
+ * `denied`; `reason` carries the refusal code. Never carries the token.
+ */
+export type AgentMobileActionPayload = AgentEventTimestamp & {
+  deviceId: string;
+  userId: string;
+  /** e.g. `command.approve`, `capability.cancel` */
+  action: string;
+  targetType: 'command' | 'capability';
+  targetId: string;
+  outcome: 'success' | 'denied';
+  reason?: string;
+};
+
 export type AgentLifecycleEventPayload =
   | AgentSessionConnectedPayload
   | AgentSessionDisconnectedPayload
@@ -84,4 +104,5 @@ export type AgentLifecycleEventPayload =
   | AgentDeviceRevokedPayload
   | AgentTokenRotatedPayload
   | AgentTokenReuseDetectedPayload
-  | AgentPolicyViolatedPayload;
+  | AgentPolicyViolatedPayload
+  | AgentMobileActionPayload;

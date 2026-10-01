@@ -131,3 +131,10 @@ Public path: honeypot `website` -> Redis limits (5/h per IP, 3/h per email, fail
 -> store. Always `201 {id}`; over the cap `429 FEEDBACK_RATE_LIMITED`. nginx adds
 `limit_req zone=public_feedback` and a 16k body cap. Backfill: `FeedbackSourceBackfillMigration`.
 Spam handling: [runbook-public-feedback-spam.md](../11-runbooks/runbook-public-feedback-spam.md).
+
+## Mobile device token audit (F097, 2026-10-01)
+
+Subscribes to `agent.mobile_action`: one `AGENT_MOBILE_ACTION` row (`agent_command` or `agent_capability` entity) per
+approve, reject or cancel taken with a mobile device token, MEDIUM on success and HIGH when refused, details
+`deviceId`, `operation`, `outcome`, `reason`. `AGENT_DEVICE_PAIRED` and `AGENT_DEVICE_REVOKED` rows now carry
+`tokenClass` (`device` for events from before the class existed). See ADR-144.

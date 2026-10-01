@@ -1,18 +1,24 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
-import { EventPattern } from '@claw/shared-types';
+import { MOBILE_MAX_ACTIVE_DEVICES_PER_USER } from '@claw/shared-constants';
+import { DeviceTokenClass, EventPattern } from '@claw/shared-types';
 import { AppConfig } from '../../../app/config/app.config';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { DeviceStatus } from '../../../common/enums/device-status.enum';
 import { PairingStatus } from '../../../common/enums/pairing-status.enum';
 import { PAIRING_CODE_BYTES, STATE_NONCE_BYTES } from '../../../common/constants/auth.constants';
 import { generateRandomBase64Url } from '../../../common/utilities/token.utility';
+import {
+  parseDeviceTokenClass,
+  parseScopesCsv,
+  scopesFitTokenClass,
+} from '../../../common/utilities/device.utility';
 import { DeviceRepository } from '../repositories/device.repository';
 import { PairingRequestRepository } from '../repositories/pairing-request.repository';
 import { RefreshTokenRepository } from '../repositories/refresh-token.repository';
 import { TokenService } from './token.service';
-import type { DeviceScope } from '../../../common/enums/device-scope.enum';
+import type { AgentScope } from '../../../common/types/auth.types';
 import type { PairInitDto } from '../dto/pair-init.dto';
 import type {
   IssuedTokenPair,
@@ -62,10 +68,12 @@ export class PairingService {
   async approve(
     userId: string,
     pairingCode: string,
-    scopes: DeviceScope[],
+    scopes: AgentScope[],
     deviceName: string | undefined,
+    tokenClass: DeviceTokenClass = DeviceTokenClass.DEVICE,
   ): Promise<PairApproveResult> {
     const request = await this.loadPendingPairingOrThrow(pairingCode);
+    await this.assertMayIssue(userId, scopes, tokenClass);
     const hint = request.deviceHint as {
       name?: string;
       hostname: string;
@@ -81,6 +89,7 @@ export class PairingService {
       platform: hint.platform,
       agentVersion: hint.agentVersion,
       scopesCsv: scopes.join(','),
+      tokenClass,
       status: DeviceStatus.ACTIVE,
       lastSeenAt: new Date(),
     });
@@ -96,6 +105,7 @@ export class PairingService {
       deviceId: device.id,
       userId,
       scopes,
+      tokenClass,
       hostname: hint.hostname,
       os: hint.os,
       platform: hint.platform,
@@ -103,6 +113,34 @@ export class PairingService {
     });
     this.logger.log(`Device paired: ${device.id} for user ${userId}`);
     return { deviceId: device.id };
+  }
+
+  /**
+   * F097. The scope list has to be legal for the class (a mobile token carries
+   * the three run scopes and nothing else, a desktop token none of them), and a
+   * user holds a bounded number of live mobile devices.
+   */
+  private async assertMayIssue(
+    userId: string,
+    scopes: AgentScope[],
+    tokenClass: DeviceTokenClass,
+  ): Promise<void> {
+    if (!scopesFitTokenClass(scopes, tokenClass)) {
+      throw new BusinessException(
+        'agent.pairing.scope_class_mismatch',
+        'pairing_scope_class_mismatch',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (tokenClass !== DeviceTokenClass.MOBILE) return;
+    const active = await this.deviceRepo.countActiveByClass(userId, tokenClass);
+    if (active >= MOBILE_MAX_ACTIVE_DEVICES_PER_USER) {
+      throw new BusinessException(
+        'agent.mobile.device_limit',
+        'mobile_device_limit',
+        HttpStatus.CONFLICT,
+      );
+    }
   }
 
   private async loadPendingPairingOrThrow(pairingCode: string): Promise<{
@@ -158,14 +196,32 @@ export class PairingService {
     if (request.status === PairingStatus.DENIED) return { status: 'denied' };
     if (request.status === PairingStatus.CONSUMED) return { status: 'expired' };
     if (request.status !== PairingStatus.APPROVED) return { status: 'pending' };
-    if (request.approvedDeviceId === null || request.approvedByUserId === null) {
-      return { status: 'pending' };
-    }
+    return request.approvedDeviceId === null || request.approvedByUserId === null
+      ? { status: 'pending' }
+      : this.pollApproved(
+          { id: request.id, scopesCsv: request.approvedScopesCsv ?? '' },
+          request.approvedByUserId,
+          request.approvedDeviceId,
+          ip,
+        );
+  }
+
+  private async pollApproved(
+    request: { id: string; scopesCsv: string },
+    userId: string,
+    deviceId: string,
+    ip: string | null,
+  ): Promise<PairPollResult> {
+    const device = await this.deviceRepo.findById(deviceId);
+    const tokenClass = device === null ? null : parseDeviceTokenClass(device.tokenClass);
+    // A row of a class we do not know is never handed a token.
+    if (tokenClass === null) return { status: 'expired' };
     const tokens = await this.issueTokensForApproval(
       request.id,
-      request.approvedByUserId,
-      request.approvedDeviceId,
-      (request.approvedScopesCsv ?? '').split(',').filter((s) => s.length > 0) as DeviceScope[],
+      userId,
+      deviceId,
+      parseScopesCsv(request.scopesCsv),
+      tokenClass,
       ip,
     );
     return { status: 'approved', tokens };
@@ -175,7 +231,8 @@ export class PairingService {
     requestId: string,
     userId: string,
     deviceId: string,
-    scopes: DeviceScope[],
+    scopes: AgentScope[],
+    tokenClass: DeviceTokenClass,
     ip: string | null,
   ): Promise<IssuedTokenPair> {
     const { pair, refreshHash, refreshJti } = this.tokenService.issuePair(
@@ -183,10 +240,9 @@ export class PairingService {
       deviceId,
       scopes,
       null,
+      tokenClass,
     );
-    const expiresAt = new Date(
-      Date.now() + AppConfig.get().AGENT_REFRESH_TTL_DAYS * 24 * 60 * 60 * 1_000,
-    );
+    const expiresAt = this.tokenService.refreshExpiry(tokenClass);
     await this.refreshRepo.create({
       device: { connect: { id: deviceId } },
       tokenHash: refreshHash,

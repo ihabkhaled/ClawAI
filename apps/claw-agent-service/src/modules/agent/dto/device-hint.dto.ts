@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const OS_VALUES = ['darwin', 'linux', 'windows'] as const;
+const OS_VALUES = ['darwin', 'linux', 'windows', 'ios', 'android'] as const;
 
 export const deviceHintSchema = z.object({
   name: z.string().min(1).max(128).optional(),

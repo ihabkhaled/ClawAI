@@ -342,3 +342,34 @@ platform? }` (`runnerHeartbeatSchema`; a missing body is an empty report, so
   no ownership evidence. A target with `managedByAgent: true` or a `jobId`
   (shell-launched jobs) is owned by the caller and is not denied by that rule.
   Matcher: `common/utilities/policy-target-matcher.utility.ts`.
+
+## Mobile device token class (F097, 2026-10-01)
+
+A phone gets a narrower device credential: `devices.tokenClass = 'mobile'`, scopes `runs:read`, `runs:approve`,
+`runs:cancel` only ([ADR-144](../13-adr/adr-144-mobile-device-token-class.md), runbook
+`skills/pair-and-use-a-mobile-device-token.md`). No native client exists yet.
+
+- **Issue.** `pair/init` (public) then the owner's `pair/approve` with `tokenClass: "mobile"` (default `device`),
+  then `pair/poll`. A scope list that does not fit the class is 400; the 6th live mobile device is 409.
+- **Lifetimes.** Access 600 s, refresh 7 d (rotates), re-pair after 30 d. `@claw/shared-constants`
+  `device-token.constants.ts`; ceilings over the desktop config.
+- **Token.** Signed with a key derived from `JWT_SECRET` (HMAC, context `claw:agent-mobile-access-token:v1`),
+  audience `claw-agent-mobile`, claim `cls: "mobile"`. Twelve services check only the signature of a
+  `JWT_SECRET` bearer, so a plainly-signed token would be accepted by them; this one is not.
+- **Routes** (`AgentMobileController`, `agent/mobile`, every call as `device.userId`, foreign id = 404):
+
+  | Route                                                                                    | Scope          |
+  | ---------------------------------------------------------------------------------------- | -------------- |
+  | `GET commands`, `GET commands/:id`, `GET capabilities`, `GET capabilities/:id`           | `runs:read`    |
+  | `POST commands/:id/approve`, `.../reject`, `POST capabilities/:id/approve`, `.../reject` | `runs:approve` |
+  | `POST commands/:id/cancel`, `POST capabilities/:id/cancel`                               | `runs:cancel`  |
+
+- **Default deny.** `@MobileRoute()` is the only way a route becomes phone-reachable (and then a desktop device
+  token is refused there). `DeviceAccessGuard` 403s a mobile token everywhere else and a mobile route with no
+  `@RequireScopes`. User routes reject it (different key and audience). Proof:
+  `src/app/__tests__/mobile-token-route-inventory.spec.ts`.
+- **Revoke / narrow.** `POST agent/devices/:id/revoke` (owner, user JWT) kills one phone; `PATCH agent/devices/:id`
+  can narrow its scopes (applied on the next call) but refuses widening past the mobile list.
+- **Audit.** `agent.mobile_action` per approve/reject/cancel (success or refused); `agent.device_paired` and
+  `agent.device_revoked` carry `tokenClass`. Consumed by claw-audit-service (`AGENT_MOBILE_ACTION`).
+- **Migration.** `20261001120000_add_device_token_class` (idempotent). No new env vars.

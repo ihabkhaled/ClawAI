@@ -50,7 +50,13 @@ export class AgentAuthController {
     @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(pairApproveSchema)) dto: PairApproveDto,
   ): Promise<PairApproveResult> {
-    return this.pairingService.approve(user.id, dto.pairingCode, dto.scopes, dto.deviceName);
+    return this.pairingService.approve(
+      user.id,
+      dto.pairingCode,
+      dto.scopes,
+      dto.deviceName,
+      dto.tokenClass,
+    );
   }
 
   @Post('pair/deny')
@@ -93,8 +99,7 @@ export class AgentAuthController {
       dto.deviceCode,
       ip ?? null,
     );
-    if (result.success) return result.tokens;
-    return { error: result.code };
+    return result.success ? result.tokens : { error: result.code };
   }
 
   @Post('device-code/approve')

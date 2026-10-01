@@ -267,3 +267,4 @@ CORRELATION="some-uuid"
 | `agent.session.connected`    | agent     | audit          |
 | `agent.session.disconnected` | agent     | audit          |
 | `agent.device_paired`        | agent     | audit          |
+| `agent.mobile_action`        | agent     | audit          |

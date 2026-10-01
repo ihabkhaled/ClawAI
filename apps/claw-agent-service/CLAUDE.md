@@ -156,3 +156,11 @@ Remaining for next sessions:
 ## Prompt routine cron (F099, 2026-10-01)
 
 PROMPT routines accept `cron` (UTC, five fields, at most every 5 minutes) XOR `intervalMinutes`. Parser: `src/common/utilities/cron-expression.utility.ts`; scheduler advances via `SchedulerManager.nextRunFor`. Guide: `docs/04-backend/service-guide-agent.md`.
+
+## Mobile device token class (F097, 2026-10-01)
+
+`devices.tokenClass` (`device` | `mobile`). A mobile token (scopes `runs:read|approve|cancel`) reaches ONLY the ten
+`agent/mobile/*` routes: `@MobileRoute()` is the allow-list and `DeviceAccessGuard` is the single choke point (default
+deny, 403). Signed with a key derived from `JWT_SECRET`, never `JWT_SECRET` itself. Adding a phone route means adding
+it to `MOBILE_ROUTES` in `mobile-token-route-inventory.spec.ts`. See ADR-144 and
+`skills/pair-and-use-a-mobile-device-token.md`.

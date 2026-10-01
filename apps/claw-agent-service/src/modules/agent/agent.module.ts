@@ -19,6 +19,7 @@ import { RuntimeProtocolController } from './controllers/runtime-protocol.contro
 import { AgentRunnerController } from './controllers/agent-runner.controller';
 import { RoutineWebhookController } from './controllers/routine-webhook.controller';
 import { RoutineSecretController } from './controllers/routine-secret.controller';
+import { AgentMobileController } from './controllers/agent-mobile.controller';
 import { AgentSessionService } from './services/agent-session.service';
 import { AgentCommandService } from './services/agent-command.service';
 import { AgentRepoService } from './services/agent-repo.service';
@@ -47,6 +48,7 @@ import { RunnerService } from './services/runner.service';
 import { RunnerCredentialService } from './services/runner-credential.service';
 import { RoutineSecretService } from './services/routine-secret.service';
 import { RoutineWebhookService } from './services/routine-webhook.service';
+import { AgentMobileService } from './services/agent-mobile.service';
 import { RoutineWebhookRateStore } from './services/routine-webhook.ports';
 import { RoutineWebhookRateRepository } from './repositories/routine-webhook-rate.repository';
 import { AgentSessionManager } from './managers/agent-session.manager';
@@ -95,6 +97,7 @@ import { RunnerTokenGuard } from '../../common/guards/runner-token.guard';
     AgentRunnerController,
     RoutineWebhookController,
     RoutineSecretController,
+    AgentMobileController,
   ],
   providers: [
     AgentSessionService,
@@ -124,6 +127,7 @@ import { RunnerTokenGuard } from '../../common/guards/runner-token.guard';
     RunnerCredentialService,
     RoutineWebhookService,
     RoutineSecretService,
+    AgentMobileService,
     { provide: RoutineWebhookRateStore, useClass: RoutineWebhookRateRepository },
     AgentSessionManager,
     AgentCommandManager,

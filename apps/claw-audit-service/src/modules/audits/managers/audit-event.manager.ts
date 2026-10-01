@@ -3,6 +3,7 @@ import { RabbitMQService } from '@claw/shared-rabbitmq';
 import {
   type AgentDevicePairedPayload,
   type AgentDeviceRevokedPayload,
+  type AgentMobileActionPayload,
   type AgentPolicyViolatedPayload,
   type AgentSessionConnectedPayload,
   type AgentSessionDisconnectedPayload,
@@ -156,6 +157,10 @@ export class AuditEventManager implements OnModuleInit {
       [
         EventPattern.AGENT_POLICY_VIOLATED,
         (d) => this.handleAgentPolicyViolated(d as AgentPolicyViolatedPayload),
+      ],
+      [
+        EventPattern.AGENT_MOBILE_ACTION,
+        (d) => this.handleAgentMobileAction(d as AgentMobileActionPayload),
       ],
     ];
   }
@@ -724,6 +729,7 @@ export class AuditEventManager implements OnModuleInit {
         platform: payload.platform,
         agentVersion: payload.agentVersion,
         scopes: payload.scopes,
+        tokenClass: payload.tokenClass ?? 'device',
       },
     });
   }
@@ -739,6 +745,27 @@ export class AuditEventManager implements OnModuleInit {
       details: {
         reason: payload.reason,
         revokedByUserId: payload.revokedByUserId,
+        tokenClass: payload.tokenClass ?? 'device',
+      },
+    });
+  }
+
+  /**
+   * F097. One row per approve / reject / cancel taken with a mobile token. A refused one is HIGH:
+   * it is a phone credential acting on something that is not its owner's, or at the wrong time.
+   */
+  async handleAgentMobileAction(payload: AgentMobileActionPayload): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.userId,
+      action: 'AGENT_MOBILE_ACTION',
+      entityType: payload.targetType === 'command' ? 'agent_command' : 'agent_capability',
+      entityId: payload.targetId,
+      severity: payload.outcome === 'denied' ? 'HIGH' : 'MEDIUM',
+      details: {
+        deviceId: payload.deviceId,
+        operation: payload.action,
+        outcome: payload.outcome,
+        reason: payload.reason,
       },
     });
   }

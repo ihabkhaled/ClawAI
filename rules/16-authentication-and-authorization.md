@@ -69,6 +69,13 @@ and the frontend feature-gate hook.
     service's `SessionRevocationGuard` reads, and fails open on a Redis error
     exactly like that guard does.
 
+11. **A device-credential class is default-deny** ([ADR-144](../docs/13-adr/adr-144-mobile-device-token-class.md)).
+    In agent-service a `mobile` device token reaches a route only if it carries `@MobileRoute()` and names a
+    mobile scope with `@RequireScopes`; `DeviceAccessGuard` refuses it everywhere else, and refuses a desktop
+    token on a `@MobileRoute()` route. A narrow credential is signed with a key DERIVED from `JWT_SECRET` under
+    its own audience, because twelve services verify a bearer by signature alone. Adding a mobile route means
+    adding it to the allow-list in `mobile-token-route-inventory.spec.ts` in the same change.
+
 ## Prohibited patterns
 
 - Decoding/verifying a JWT inline instead of via `AuthGuard`.

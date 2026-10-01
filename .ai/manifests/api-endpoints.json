@@ -263,6 +263,56 @@
       },
       {
         "method": "GET",
+        "route": "/agent/mobile/capabilities",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-mobile.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/mobile/capabilities/:id",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-mobile.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/mobile/capabilities/:id/approve",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-mobile.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/mobile/capabilities/:id/cancel",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-mobile.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/mobile/capabilities/:id/reject",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-mobile.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/mobile/commands",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-mobile.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/agent/mobile/commands/:id",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-mobile.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/mobile/commands/:id/approve",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-mobile.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/mobile/commands/:id/cancel",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-mobile.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/agent/mobile/commands/:id/reject",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-mobile.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/agent/organizations",
         "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet.controller.ts"
       },
@@ -3873,5 +3923,5 @@
     ]
   },
   "generated": true,
-  "total": 767
+  "total": 777
 }

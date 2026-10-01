@@ -27,6 +27,7 @@ export type {
   AgentTokenRotatedPayload,
   AgentTokenReuseDetectedPayload,
   AgentPolicyViolatedPayload,
+  AgentMobileActionPayload,
   AgentLifecycleEventPayload,
 } from './agent-lifecycle-events.types';
 export type {

@@ -18,10 +18,7 @@ export class DeviceRepository {
 
   async findByIdForUser(id: string, userId: string): Promise<Device | null> {
     const device = await this.prisma.device.findUnique({ where: { id } });
-    if (device?.userId !== userId) {
-      return null;
-    }
-    return device;
+    return device?.userId !== userId ? null : device;
   }
 
   async findByIdWithCounts(
@@ -52,6 +49,13 @@ export class DeviceRepository {
       this.prisma.device.count({ where }),
     ]);
     return { data, total };
+  }
+
+  /** Live (not revoked) devices of one credential class; the mobile pairing cap counts these. */
+  async countActiveByClass(userId: string, tokenClass: string): Promise<number> {
+    return this.prisma.device.count({
+      where: { userId, tokenClass, status: DeviceStatus.ACTIVE },
+    });
   }
 
   async updateName(id: string, name: string): Promise<Device> {

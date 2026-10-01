@@ -127,7 +127,7 @@ research, and workspace add `@claw/shared-auth`. All 17 non-health services publ
 - **Path:** `apps/claw-agent-service` · **Gateway:** `/api/v1/agent`
 - **Owns:** AgentSession, Device, PairingRequest, DeviceCodeRequest, RefreshToken, TerminalCommand, ScheduledCommand, CapabilityInvocation, AccessPolicy, Recipe(+Run/Step), ActivityMemoryEntry, AgentSuggestion, LocalRepo, FileWatchEvent, Marketplace(Listing/Install), Organization(+Member)
 - **Responsibility:** desktop agent — device pairing/auth, terminal command approval, capability framework (filesystem/process/…), recipes, fleet/org, marketplace, activity memory. Imports `@claw/shared-auth`.
-- **Produces:** `agent.session_connected/disconnected`, `agent.device_paired/revoked`, `agent.token_rotated/reuse_detected`, `agent.policy_violated`, `agent.command_*`, `agent.capability.*` (12 patterns).
+- **Produces:** `agent.session_connected/disconnected`, `agent.device_paired/revoked`, `agent.token_rotated/reuse_detected`, `agent.policy_violated`, `agent.command_*`, `agent.mobile_action`, `agent.capability.*` (12 patterns).
 - **Pitfalls:** every capability needs a DeviceScope + default AccessPolicy + audited event; no silently allowed actions.
 
 ## claw-research-service — :4016 · PostgreSQL

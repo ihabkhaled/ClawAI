@@ -1,15 +1,14 @@
 import { CanActivate, type ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { REQUIRE_SCOPES_METADATA_KEY } from '../decorators/require-scopes.decorator';
-import type { DeviceScope } from '../enums/device-scope.enum';
-import type { AgentRequest } from '../types/auth.types';
+import type { AgentRequest, AgentScope } from '../types/auth.types';
 
 @Injectable()
 export class ScopeGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const required = this.reflector.getAllAndOverride<DeviceScope[] | undefined>(
+    const required = this.reflector.getAllAndOverride<AgentScope[] | undefined>(
       REQUIRE_SCOPES_METADATA_KEY,
       [context.getHandler(), context.getClass()],
     );

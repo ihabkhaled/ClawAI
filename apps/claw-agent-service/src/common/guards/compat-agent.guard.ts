@@ -24,6 +24,9 @@ export class CompatAgentGuard implements CanActivate {
     try {
       deviceOk = await this.deviceGuard.canActivate(context);
     } catch (primary) {
+      // A credential the device guard recognised but refused (a mobile token on a
+      // desktop route) is final: it is not a session key, so do not try it as one.
+      if (primary instanceof ForbiddenException) throw primary;
       return this.activateLegacy(context, primary);
     }
     // Outside the try: a device that names someone else's session must be

@@ -298,6 +298,8 @@ model Device {
   platform     String
   agentVersion String
   scopesCsv    String
+  // F097: "device" (desktop agent) or "mobile" (narrow run-approval token). Fixed at pairing.
+  tokenClass   String       @default("device")
   status       DeviceStatus @default(ACTIVE)
   lastSeenAt   DateTime?
   lastIp       String?
@@ -313,6 +315,7 @@ model Device {
 
   @@index([userId, status])
   @@index([userId, lastSeenAt])
+  @@index([userId, tokenClass, status])
   @@map("devices")
 }
 

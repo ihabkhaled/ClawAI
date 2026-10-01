@@ -18,3 +18,8 @@ export const REFRESH_RETENTION_DAYS = 30;
 export const DEPRECATION_HEADER = 'Deprecation';
 export const SUNSET_HEADER = 'Sunset';
 export const LEGACY_SUNSET_DATE = '2026-07-01';
+
+export const MS_PER_DAY = 24 * 60 * 60 * 1_000;
+
+export const DEVICE_JWT_ISSUER = 'claw-agent-service';
+export const DEVICE_JWT_AUDIENCE = 'claw-agent';

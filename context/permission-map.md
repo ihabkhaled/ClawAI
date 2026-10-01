@@ -133,3 +133,35 @@ permission. `OrganizationAccessService` checks it in the service layer
 
 Platform RBAC roles grant **no** cross-organization access. A future
 remove/demote endpoint must refuse removing the last OWNER.
+
+## Agent device tokens: `device` vs `mobile` class (F097, ADR-144)
+
+A paired agent device holds a bearer signed by agent-service, not a user JWT, and
+it is verified only by `DeviceAccessGuard` on routes marked `@Public()`. The
+credential has a **class** (`devices.tokenClass`, `DeviceTokenClass` in
+`@claw/shared-types`), fixed at pairing.
+
+| Class    | Scopes                                              | Reaches                                                                                       | Access TTL / refresh / re-pair |
+| -------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------ |
+| `device` | the desktop `DeviceScope` set (shell, fs, schedule) | the existing desktop routes (`sessions/attach`, `commands/pending`, chunks, CLI capabilities) | config (900 s / 30 d)          |
+| `mobile` | `runs:read`, `runs:approve`, `runs:cancel` only     | the ten `agent/mobile/*` routes and nothing else                                              | 600 s / 7 d / 30 d absolute    |
+
+| Mobile route                                                                                             | Scope          |
+| -------------------------------------------------------------------------------------------------------- | -------------- |
+| `GET agent/mobile/commands`, `.../commands/:id`, `GET agent/mobile/capabilities`, `.../capabilities/:id` | `runs:read`    |
+| `POST .../commands/:id/approve`, `.../reject`, `POST .../capabilities/:id/approve`, `.../reject`         | `runs:approve` |
+| `POST .../commands/:id/cancel`, `POST .../capabilities/:id/cancel`                                       | `runs:cancel`  |
+
+Rules that hold the line (all in agent-service, all tested):
+
+1. **Default deny.** `@MobileRoute()` is the only thing that makes a route reachable by a phone, and it also makes
+   the route unreachable by a desktop device token. `DeviceAccessGuard` answers 403 either way, and closes a
+   mobile route that names no scope. The route inventory test enumerates every controller and proves it.
+2. **A mobile token is not a user token.** It is signed with a key derived from `JWT_SECRET` and its own audience,
+   so the global `AuthGuard` and the signature-only guards of other services cannot read it. A phone can never
+   call the web user routes (devices, runners, policies, schedules, capability propose or rollback).
+3. **Scopes are the intersection** of the token, the live device row and the fixed mobile list. Narrowing the
+   row takes effect on the next call; nothing can widen past the list (`PATCH agent/devices/:id` refuses it).
+4. **Owner only.** Every call runs as `device.userId`; someone else's command is a 404.
+5. **Issued by the owner.** Only a user JWT on `pair/approve` can mint a mobile device (max 5 live per user), and
+   only the owner (user JWT) can revoke it. A mobile token cannot pair, approve a pairing, or revoke a device.

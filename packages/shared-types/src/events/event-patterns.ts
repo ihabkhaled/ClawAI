@@ -106,6 +106,7 @@ export enum EventPattern {
   AGENT_POLICY_VIOLATED = 'agent.policy_violated',
   AGENT_COMMAND_CANCELLED = 'agent.command_cancelled',
   AGENT_COMMAND_STREAMED = 'agent.command_streamed',
+  AGENT_MOBILE_ACTION = 'agent.mobile_action',
   // === Capability framework (Stream 10 — desktop-agent flagship) ===
   AGENT_CAPABILITY_PROPOSED = 'agent.capability.proposed',
   AGENT_CAPABILITY_POLICY_MATCHED = 'agent.capability.policy_matched',

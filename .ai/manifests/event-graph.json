@@ -189,6 +189,16 @@
       "consumers": [
         "claw-audit-service"
       ],
+      "key": "AGENT_MOBILE_ACTION",
+      "pattern": "agent.mobile_action",
+      "producers": [
+        "claw-agent-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service"
+      ],
       "key": "AGENT_POLICY_VIOLATED",
       "pattern": "agent.policy_violated",
       "producers": [

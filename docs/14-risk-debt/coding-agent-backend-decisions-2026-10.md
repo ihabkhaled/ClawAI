@@ -61,12 +61,12 @@ labels, platform, version, approval class, online, protocol), not a tool list; t
 
 ## F097 Mobile app integration (permissions)
 
-**Status: owner decision required.** A new token class is new permission semantics; not implemented.
+**Status: decided 2026-10-01 (option a), backend built — [ADR-144](../13-adr/adr-144-mobile-device-token-class.md).** Built in agent-service, where device tokens already live, not auth-service. No native mobile client exists, so nothing consumes it yet.
 
 - Options: (a) a narrower `mobile` device token class in auth-service (read runs, approve, cancel; no shell, no policy edit); (b) reuse the device token.
 - Default: (a), scopes listed explicitly, short TTL, revocable per device.
 - Risk: new permission semantics and a new credential class; also needs a native mobile client before anything consumes it.
-- Ships on decision: token class, guard, scope tests, pairing flow.
+- Ships on decision: token class, guard, scope tests, pairing flow. Shipped: class + scopes in `@claw/shared-types`/`@claw/shared-constants`, `DeviceAccessGuard` allow-list, `agent/mobile/*`, owner-approved pairing, per-device revoke, audit, route-inventory default-deny test. Still open: native client, web approve screen class selector, a risk cap on phone approvals (ADR-144 "Open").
 
 ## F098 Cloud coding sessions (infrastructure and cost)
 

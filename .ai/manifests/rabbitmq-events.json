@@ -101,6 +101,11 @@
       "source": "packages/shared-types/src/events/event-patterns.ts"
     },
     {
+      "key": "AGENT_MOBILE_ACTION",
+      "pattern": "agent.mobile_action",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
       "key": "AGENT_POLICY_VIOLATED",
       "pattern": "agent.policy_violated",
       "source": "packages/shared-types/src/events/event-patterns.ts"
