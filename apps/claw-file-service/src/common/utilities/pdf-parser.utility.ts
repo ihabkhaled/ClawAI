@@ -32,7 +32,7 @@ export async function extractTextFromPdf(
       : parser.getText({ partial: pageNumbers(range) }));
     const pages = (result.pages ?? []).map((page) => ({ number: page.num, text: page.text }));
     const text = result.text;
-    const isScanned = text.length < scannedThreshold;
+    const isScanned = await looksScanned(parser, text, pages, scannedThreshold);
     logger.debug(
       `extractTextFromPdf: extracted ${String(text.length)} chars from ${String(pages.length)} of ${String(result.total)} pages isScanned=${String(isScanned)}`,
     );
@@ -40,6 +40,25 @@ export async function extractTextFromPdf(
   } finally {
     await parser.destroy();
   }
+}
+
+/**
+ * A PDF is a scanned image only when it has no real text (page text, not the "-- 1 of 1 --" markers the parser adds) AND carries image
+ * objects. Short text alone (a one-line letter, a receipt) is a real text PDF
+ * and must keep its text instead of being routed to OCR and replaced by an
+ * image placeholder. Images are looked up only when the text is short, so a
+ * normal document never pays for the extra pass.
+ */
+async function looksScanned(
+  parser: { getImage: () => Promise<{ pages: { images: unknown[] }[] }> },
+  text: string,
+  pages: { text: string }[],
+  scannedThreshold: number,
+): Promise<boolean> {
+  if (text.length >= scannedThreshold || pages.some((page) => page.text.trim().length > 0))
+    return false;
+  const images = await parser.getImage();
+  return images.pages.some((page) => page.images.length > 0);
 }
 
 /**

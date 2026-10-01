@@ -50,6 +50,8 @@ export class ChatThreadsService {
         contextPackIds: dto.contextPackIds,
         origin: dto.origin,
         useCrossThreadContext: dto.useCrossThreadContext,
+        useMemory: dto.useMemory,
+        useContext: dto.useContext,
         repositoryRef: dto.repositoryRef,
       },
       resolvePlanLimit(entitlements, (limits) => limits.chatsPerDay),

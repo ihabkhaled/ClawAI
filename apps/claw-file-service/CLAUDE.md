@@ -579,3 +579,5 @@ Labels are enums or `TRANSCRIPTION_PROVIDER_PRIORITY`; anything else is `other`.
 (`FilesService.storeGeneratedVideo`, cap in `generated-video.constants.ts`). Same ownership
 and service-auth rules as the generated-image route; the file is the user's, source
 `GENERATED`.
+
+- **Scanned PDF vs short text PDF (2026-10-01):** `extractTextFromPdf` now sets `isScanned` only when every page has no text AND `getImage()` finds an image (default 80px threshold). A PDF with under `SCANNED_PDF_CHAR_THRESHOLD` characters of real text keeps its text; it used to go to OCR and come back as `[Image file: ...]`. The parser's `-- N of M --` page markers are ignored (page text is checked, not `result.text`). Not live-verified until deployed.

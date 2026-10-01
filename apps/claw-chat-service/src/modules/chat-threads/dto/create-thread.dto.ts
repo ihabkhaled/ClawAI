@@ -20,6 +20,10 @@ export const createThreadSchema = z.object({
   // ADR-087 — "use relevant previous chats". Omitted means false: a new thread
   // never reads a user's other conversations unless it is asked to.
   useCrossThreadContext: z.boolean().optional(),
+  // Integration V2 — per-thread memory + context toggles, same semantics as the
+  // update DTO. Omitted keeps the column default (on), so old callers are unchanged.
+  useMemory: z.boolean().optional(),
+  useContext: z.boolean().optional(),
   // F095 — the repository this conversation belongs to, so a later session can
   // tell whether its workspace is the same project. Omitted means none.
   repositoryRef: repositoryRefSchema.optional(),

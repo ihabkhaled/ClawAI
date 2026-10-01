@@ -380,3 +380,10 @@ Full reasoning:
 
 [`skills/debug-an-attachment-the-model-cannot-read.md`](../skills/debug-an-attachment-the-model-cannot-read.md) ·
 voice notes: [`docs/11-runbooks/runbook-voice-note-transcription-failed.md`](../docs/11-runbooks/runbook-voice-note-transcription-failed.md)
+
+## Short-text PDFs are not scanned PDFs (2026-10-01)
+
+`extractTextFromPdf` marks a PDF scanned only when no page has text AND the PDF
+carries an image object. Under-threshold real text (a one-line letter) keeps its
+text instead of going to OCR and coming back as `[Image file: ...]`. Check page
+text, not `result.text`: the parser adds `-- N of M --` markers to it.

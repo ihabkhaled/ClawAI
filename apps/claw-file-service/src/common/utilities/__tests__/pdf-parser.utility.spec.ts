@@ -13,12 +13,14 @@ import { extractTextFromPdf } from '../pdf-parser.utility';
  */
 const spies = vi.hoisted(() => ({
   getText: vi.fn(),
+  getImage: vi.fn(async (): Promise<{ pages: { images: unknown[] }[] }> => ({ pages: [] })),
   destroy: vi.fn(async () => {}),
 }));
 
 vi.mock('pdf-parse', () => ({
   PDFParse: class {
     getText = spies.getText;
+    getImage = spies.getImage;
     destroy = spies.destroy;
   },
 }));
@@ -92,8 +94,17 @@ describe('extractTextFromPdf', () => {
     expect(result.totalPages).toBe(12);
   });
 
-  it('still marks a short document as scanned', async () => {
+  it('keeps a short document with real text as not scanned', async () => {
     answer([{ num: 1, text: 'hi' }], 1);
+
+    const result = await extractTextFromPdf(Buffer.from('%PDF'), 100);
+
+    expect(result.isScanned).toBe(false);
+  });
+
+  it('marks a short document with no text and an image as scanned', async () => {
+    answer([{ num: 1, text: '' }], 1);
+    spies.getImage.mockResolvedValueOnce({ pages: [{ images: [{}] }] });
 
     const result = await extractTextFromPdf(Buffer.from('%PDF'), 100);
 

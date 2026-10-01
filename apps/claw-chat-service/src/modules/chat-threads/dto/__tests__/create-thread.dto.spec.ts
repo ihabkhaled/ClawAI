@@ -15,6 +15,25 @@ describe('createThreadSchema', () => {
     }
   });
 
+  it('keeps useMemory, useContext and useCrossThreadContext instead of stripping them', () => {
+    const result = createThreadSchema.safeParse({
+      useMemory: false,
+      useContext: false,
+      useCrossThreadContext: true,
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.useMemory).toBe(false);
+      expect(result.data.useContext).toBe(false);
+      expect(result.data.useCrossThreadContext).toBe(true);
+    }
+  });
+
+  it('rejects a non-boolean useMemory', () => {
+    expect(createThreadSchema.safeParse({ useMemory: 'no' }).success).toBe(false);
+  });
+
   it('should validate an empty object (all fields optional)', () => {
     const result = createThreadSchema.safeParse({});
 

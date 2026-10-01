@@ -125,6 +125,22 @@ describe('ChatThreadsService', () => {
       expect((data as Record<string, unknown>)['repositoryRef']).toBeUndefined();
     });
 
+    it('persists useMemory, useContext and useCrossThreadContext sent on create', async () => {
+      await service.createThread('user-1', {
+        title: 'Memory off',
+        useMemory: false,
+        useContext: false,
+        useCrossThreadContext: true,
+      });
+
+      const [data] = threadsRepo.createWithinDailyLimit.mock.calls[0] ?? [];
+      expect(data).toMatchObject({
+        useMemory: false,
+        useContext: false,
+        useCrossThreadContext: true,
+      });
+    });
+
     it('rejects creation when the atomic daily thread limit is exhausted', async () => {
       threadsRepo.createWithinDailyLimit.mockResolvedValue(null);
 
