@@ -318,6 +318,56 @@
         },
         {
           "method": "GET",
+          "route": "/agent/mobile/capabilities",
+          "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-mobile.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/agent/mobile/capabilities/:id",
+          "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-mobile.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/agent/mobile/capabilities/:id/approve",
+          "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-mobile.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/agent/mobile/capabilities/:id/cancel",
+          "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-mobile.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/agent/mobile/capabilities/:id/reject",
+          "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-mobile.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/agent/mobile/commands",
+          "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-mobile.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/agent/mobile/commands/:id",
+          "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-mobile.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/agent/mobile/commands/:id/approve",
+          "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-mobile.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/agent/mobile/commands/:id/cancel",
+          "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-mobile.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/agent/mobile/commands/:id/reject",
+          "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-mobile.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/agent/organizations",
           "source": "apps/claw-agent-service/src/modules/fleet/controllers/fleet.controller.ts"
         },
@@ -6209,6 +6259,11 @@
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
+        "key": "AGENT_MOBILE_ACTION",
+        "pattern": "agent.mobile_action",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
         "key": "AGENT_POLICY_VIOLATED",
         "pattern": "agent.policy_violated",
         "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -7991,7 +8046,7 @@
           "file": "rules/15-configuration-and-environment.md"
         },
         {
-          "bytes": 6622,
+          "bytes": 7274,
           "file": "rules/16-authentication-and-authorization.md"
         },
         {
@@ -8165,7 +8220,7 @@
       ],
       "skills": [
         {
-          "bytes": 32278,
+          "bytes": 32558,
           "file": "skills/00-index.md"
         },
         {
@@ -8197,7 +8252,7 @@
           "file": "skills/07-database-toolkit.md"
         },
         {
-          "bytes": 8020,
+          "bytes": 8082,
           "file": "skills/08-event-bus-toolkit.md"
         },
         {
@@ -8459,6 +8514,10 @@
         {
           "bytes": 4352,
           "file": "skills/navigate-codebase.md"
+        },
+        {
+          "bytes": 6151,
+          "file": "skills/pair-and-use-a-mobile-device-token.md"
         },
         {
           "bytes": 14444,
@@ -10577,7 +10636,7 @@
       },
       "@claw/shared-constants": {
         "runner": "vitest",
-        "testFiles": 4
+        "testFiles": 5
       },
       "@claw/shared-entitlements": {
         "runner": "vitest",
@@ -10597,11 +10656,11 @@
       },
       "claw-agent-service": {
         "runner": "vitest",
-        "testFiles": 53
+        "testFiles": 61
       },
       "claw-audit-service": {
         "runner": "vitest",
-        "testFiles": 33
+        "testFiles": 34
       },
       "claw-auth-service": {
         "runner": "vitest",
@@ -11395,9 +11454,9 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 52,
-    "endpointCount": 767,
+    "endpointCount": 777,
     "envVarCount": 360,
-    "eventCount": 184,
+    "eventCount": 185,
     "frontendRouteCount": 155,
     "localeCount": 13,
     "nginxRouteCount": 67,
@@ -11407,7 +11466,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1883,
+    "totalTestFiles": 1893,
     "workspaceCount": 25
   }
 }
