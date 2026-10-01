@@ -1,6 +1,6 @@
 # ADR-137: Video generation is its own metered surface, priced per second
 
-- **Status:** Accepted (built and unit-tested; live rounds per model recorded below)
+- **Status:** Accepted (built, unit-tested and run live on 2026-09-30)
 - **Date:** 2026-09-30
 - **Deciders:** Product owner (request), engineering
 - **Related:** rule [37](../../rules/37-payg-credit-integrity.md) item 17,
@@ -68,6 +68,37 @@ prompting like images, and 5 to 10 test rounds per model.
 - **Not built.** Image-to-video (a message like "animate this image" is NOT routed to video,
   because the API path does not send the image), 1080p/4K, clips over 8 seconds, OpenAI
   (Sora is gone).
+
+## Live results (2026-09-30, dev stack, admin account, 4 s clips, 720p)
+
+| Model                           | Completed clips        | Typical time |
+| ------------------------------- | ---------------------- | ------------ |
+| `veo-3.1-lite-generate-preview` | 4                      | 48 s         |
+| `veo-3.1-fast-generate-preview` | 4, plus 1 through AUTO | 48-66 s      |
+| `veo-3.1-generate-preview`      | 4                      | 54-73 s      |
+| `grok-imagine-video`            | 4                      | 54-72 s      |
+| `grok-imagine-video-1.5`        | 4                      | 48-73 s      |
+
+Every completed clip was a real mp4 (1-6 MB). Cancel, double cancel, retry (old row superseded)
+and 404/401 checks passed. A dev restart mid-job was recovered by the stale sweep: rows timed
+out, holds released, user told they were not charged.
+
+Found live, fixed: Veo wants `durationSeconds` as a NUMBER (a string answers 400); xAI answers an
+exhausted account with 403 `permission-denied`, which is a quota failure and not a bad key.
+
+Metered user (Pro plan, $1 credit, 2026-10-01): one 4 s `grok-imagine-video` clip spent exactly
+200,000 micro-USD; the ledger shows a `VIDEO` RESERVATION then CONSUMPTION. A refused run
+(Gemini out of prepaid credit, 402) reserved 200,000 then RELEASED it, net zero.
+
+Found by that test, fixed: auth-service's `looksLikeLocalFallback` ignored `videoPerUnitMicroUsd`,
+so a video-only price (token rates 0) looked like a free local answer and a funded user was
+refused `PAYG_MODEL_UNPRICED`. The admin is unmetered, so earlier live rounds could not see it.
+
+Gate: video reuses the image plan feature (`allowImageGeneration`); Free-plan users are blocked
+for both, even with credit. A separate `allowVideoGeneration` feature is a product decision.
+
+Rounds: the 5 models ran 5 completed clips each after a top-up (one round per model was first lost
+to a dev restart), 25 in total plus 1 through AUTO.
 
 ## Consequences
 

@@ -21,6 +21,7 @@
 | A chat mode states web facts with no citations, or Consensus copies a fabricated lane | [runbook-fabricated-web-facts.md](runbook-fabricated-web-facts.md) → check whether evidence reached the prompt, then whether grounding fired for that mode                                       |
 | `ollama pull` / model download fails                                                  | [runbook-model-pull-failure.md](runbook-model-pull-failure.md)                                                                                                                                   |
 | Picking an image model always fails                                                   | [runbook-image-generation-failure.md](runbook-image-generation-failure.md) → did chat-service redirect it to image-service at all; read `image_generations.error_code`, never the stored message |
+| A video job is stuck or failed                                                        | [runbook-video-generation-failure.md](runbook-video-generation-failure.md) → read the `video_generations` row and `docker logs claw-image-service`                                               |
 | TLS / cert / `Hostname doesn't match` errors                                          | [troubleshoot-tls.md](troubleshoot-tls.md)                                                                                                                                                       |
 | Local frontier (llama.cpp) issues                                                     | [frontier-troubleshooting.md](frontier-troubleshooting.md) · [frontier-first-time-walkthrough.md](frontier-first-time-walkthrough.md)                                                            |
 | A voice note is never transcribed / "transcription service is busy"                   | [runbook-voice-note-transcription-failed.md](runbook-voice-note-transcription-failed.md) → read the ranked walk in the file-service log; `kind=` names the cause                                 |
@@ -105,3 +106,4 @@
 - [runbook-display-fx-outage.md](runbook-display-fx-outage.md)
 - [runbook-failed-billing-sweep.md](runbook-failed-billing-sweep.md)
 - [runbook-payg-credit.md](runbook-payg-credit.md) — deploying, verifying and killing PAYG connector credit
+- [runbook-video-generation-failure.md](runbook-video-generation-failure.md) — a video job stuck, timed out or failed

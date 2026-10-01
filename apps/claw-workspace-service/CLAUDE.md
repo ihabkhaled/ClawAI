@@ -258,3 +258,10 @@ the user sends in that thread, and is metered by chat-service under `CHAT`.
 **`workspace/services/workspace-entitlement.service.ts` is not the gate.** It only
 exposes `resolve()`. Quota and credit enforcement live in auth-service, reached
 through chat-service's reservation. Do not add credit logic there.
+
+## Hidden platform identity (ADR-136)
+
+One-shot AI actions (`buildAiActionPrompt`, the reviewer calls and the judge) append a short
+hidden identity block to the SYSTEM prompt only. It is a workspace-local copy of the chat-service
+text (`ai-actions/constants/platform-identity.constants.ts`, no shared package holds it): change
+both together. Never store it, never put it in the user prompt, never echo it.
