@@ -412,6 +412,11 @@
         "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/agent/runners/:id/resume",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/agent/runners/claim",
         "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
@@ -3818,5 +3823,5 @@
     ]
   },
   "generated": true,
-  "total": 756
+  "total": 757
 }

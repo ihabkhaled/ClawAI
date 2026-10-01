@@ -89,6 +89,11 @@ model ChatThread {
   branchedFromThreadId  String?  @map("branched_from_thread_id")
   branchedFromMessageId String?  @map("branched_from_message_id")
   branchRootThreadId    String?  @map("branch_root_thread_id")
+  // === F095 — the repository a coding-agent thread belongs to ===
+  // { name, remoteUrl?, branch? }. The remote is stored normalised and without
+  // credentials, query or fragment (see normalizeRepositoryRemote). Null for
+  // every thread that did not send one, which is every existing thread.
+  repositoryRef         Json?    @map("repository_ref")
   createdAt          DateTime    @default(now()) @map("created_at")
   updatedAt          DateTime    @updatedAt @map("updated_at")
 

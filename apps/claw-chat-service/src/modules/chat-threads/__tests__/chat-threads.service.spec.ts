@@ -105,6 +105,26 @@ describe('ChatThreadsService', () => {
       );
     });
 
+    it('stores the repository reference the client sent (F095)', async () => {
+      const repositoryRef = {
+        name: 'claw',
+        remoteUrl: 'https://github.com/acme/claw',
+        branch: 'main',
+      };
+
+      await service.createThread('user-1', { title: 'Resume me', repositoryRef });
+
+      const [data] = threadsRepo.createWithinDailyLimit.mock.calls[0] ?? [];
+      expect(data).toMatchObject({ userId: 'user-1', repositoryRef });
+    });
+
+    it('stores no repository reference when none was sent, so old clients are unchanged', async () => {
+      await service.createThread('user-1', { title: 'Plain' });
+
+      const [data] = threadsRepo.createWithinDailyLimit.mock.calls[0] ?? [];
+      expect((data as Record<string, unknown>)['repositoryRef']).toBeUndefined();
+    });
+
     it('rejects creation when the atomic daily thread limit is exhausted', async () => {
       threadsRepo.createWithinDailyLimit.mockResolvedValue(null);
 
@@ -230,6 +250,16 @@ describe('ChatThreadsService', () => {
 
       expect(threadsRepo.createBranchWithinDailyLimit.mock.calls[0]?.[4]).toBe(true);
       expect(threadsRepo.createBranchWithinDailyLimit.mock.calls[1]?.[4]).toBe(false);
+    });
+
+    it('carries the source repository reference onto the branch (F095)', async () => {
+      const repositoryRef = { name: 'claw', branch: 'main' };
+      threadsRepo.findById.mockResolvedValue({ ...mockThread, repositoryRef });
+
+      await service.branchThread('user-1', 'thread-1', 'msg-3');
+
+      const [data] = threadsRepo.createBranchWithinDailyLimit.mock.calls[0] ?? [];
+      expect(data).toMatchObject({ repositoryRef });
     });
 
     it('carries the source privacy switches instead of resetting them to defaults', async () => {

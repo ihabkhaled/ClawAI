@@ -1193,3 +1193,15 @@ A picked veo/grok-video model, or an AUTO video request, routes to `VIDEO_GEMINI
   Mistral error returned as a 200 body was stored as the assistant reply and the
   fallback chain did not advance. There is no Mistral adapter: Mistral goes
   through the OpenAI-compatible connector preset.
+
+- **Repository reference on a thread (F095, 2026-10-01):** `POST /chat-threads` accepts
+  `repositoryRef: { name, remoteUrl?, branch? }`; the thread row returns it unchanged.
+  Stored as nullable JSONB `chat_threads.repository_ref` (migration
+  `20261001120000_thread_repository_ref`), so every existing thread and every old client
+  is unaffected. `name` is a folder or repository name, not a path; `branch` is a git ref
+  name (no whitespace, `~ ^ : ? * [ \`); `remoteUrl` is reduced to one identifier,
+  `https://host[:port]/path` (ssh, git and scp-like forms map to it; `.git`, trailing
+  slashes, credentials, query and fragment are dropped; `file:`, `javascript:`, local
+  paths and `..` are 400). It is an identifier for matching a workspace to a thread, not
+  a clone URL. A branch copies it. Create-only: `PATCH` leaves it alone. The runner side
+  of resume is agent-service `GET agent/runners/:id/resume` (see its service guide).

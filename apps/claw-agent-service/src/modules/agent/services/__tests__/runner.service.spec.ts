@@ -4,7 +4,9 @@ import { RunnerApprovalPolicy } from '../../../../common/enums/runner-approval-p
 import { BusinessException } from '../../../../common/errors/business.exception';
 import { EntityNotFoundException } from '../../../../common/errors/entity-not-found.exception';
 import { PROMPT_JOB_APPROVAL_NOTE } from '../../constants/runner.constants';
+import { RUNTIME_PROTOCOL_DESCRIPTOR } from '../../constants/runtime-protocol.constants';
 import { RunnerService } from '../runner.service';
+import { RuntimeProtocolService } from '../runtime-protocol.service';
 import type { AgentCommandManager } from '../../managers/agent-command.manager';
 import type { AgentCommandRepository } from '../../repositories/agent-command.repository';
 import type { RunnerCredentialRepository } from '../../repositories/runner-credential.repository';
@@ -99,6 +101,7 @@ function setup(rows: RunnerRow[] = [row()]) {
       partial<AgentCommandService>(commands),
       partial<AgentCommandRepository>(commandRepo),
       partial<AgentCommandManager>(manager),
+      new RuntimeProtocolService(),
     ),
     repo,
     credentials,
@@ -346,5 +349,52 @@ describe('RunnerService', () => {
         stdout: 'done',
       });
     });
+  });
+});
+
+describe('RunnerService.resumeManifest (F095 resume)', () => {
+  it('returns what the server knows about the runner and the protocol it speaks', async () => {
+    const { service, repo } = setup();
+    const manifest = await service.resumeManifest('runner-1', 'user-1');
+    expect(repo.findOwned).toHaveBeenCalledWith('runner-1', 'user-1');
+    expect(manifest.online).toBe(true);
+    expect(manifest.runner).toMatchObject({
+      id: 'runner-1',
+      name: 'Build box',
+      labels: ['linux', 'gpu'],
+      approvalPolicy: RunnerApprovalPolicy.ASK,
+      platform: 'linux',
+      agentVersion: '1.0.0',
+    });
+    expect(manifest.protocol).toBe(RUNTIME_PROTOCOL_DESCRIPTOR);
+  });
+
+  it('says the runner is offline when its heartbeat is stale, so the client can warn', async () => {
+    const { service } = setup([row({ lastHeartbeatAt: stale() })]);
+    expect((await service.resumeManifest('runner-1', 'user-1')).online).toBe(false);
+  });
+
+  it('says offline for an EXPIRED or revoked runner, and still answers (not a 404)', async () => {
+    for (const status of [AgentSessionStatus.EXPIRED, AgentSessionStatus.DISCONNECTED]) {
+      const { service } = setup([row({ status })]);
+      const manifest = await service.resumeManifest('runner-1', 'user-1');
+      expect(manifest.online).toBe(false);
+      expect(manifest.runner.status).toBe(status);
+    }
+  });
+
+  it("answers 404 for another user's runner, exactly like a missing one (IDOR)", async () => {
+    const { service, repo } = setup();
+    repo.findOwned.mockResolvedValueOnce(null);
+    await expect(service.resumeManifest('runner-of-someone-else', 'user-1')).rejects.toBeInstanceOf(
+      EntityNotFoundException,
+    );
+    expect(repo.findOwned).toHaveBeenCalledWith('runner-of-someone-else', 'user-1');
+  });
+
+  it('never carries a credential', async () => {
+    const { service } = setup();
+    const text = JSON.stringify(await service.resumeManifest('runner-1', 'user-1'));
+    expect(text).not.toMatch(/sessionKey|runnerToken|tokenHash|clwr_/);
   });
 });

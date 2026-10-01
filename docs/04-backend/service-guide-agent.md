@@ -233,6 +233,15 @@ platform? }` (`runnerHeartbeatSchema`; a missing body is an empty report, so
   `AUTO_APPROVE_READ_ONLY` = reads only; writes/commands always ask).
   Omitting `kind` keeps the old COMMAND behaviour. Migration
   `20260930130000_add_prompt_routines_and_runner_credentials`.
+- **Resume manifest (F095, 2026-10-01):** `GET agent/runners/:id/resume` (user JWT, owner
+  only; another user's runner and a missing one are the same 404) returns
+  `{ runner: RunnerView, online, protocol }`: the runner's name, labels, platform, version
+  and approval class (`ASK` or `AUTO_APPROVE_READ_ONLY`), whether it is connected with a
+  fresh heartbeat, and the backend's runtime protocol descriptor. A revoked, expired or
+  stale runner still answers, with `online: false`, so a client can say the runner is gone
+  instead of erroring. It carries no credential. The runner's TOOL list is not in it: the
+  server never sees it, and a client reconciles tools from the runtime-v2 manifest it sends
+  with each run. The thread side is chat-service `repositoryRef` on `createThread`. No migration.
 - **Routine webhook (F099 repository-event trigger, step 1, 2026-10-01):** a signed
   webhook fires one PROMPT routine now, for a CI step, a GitHub Action or a relay.
   Owner endpoints (user JWT, 404 for a routine that is not theirs, 400 on a shell

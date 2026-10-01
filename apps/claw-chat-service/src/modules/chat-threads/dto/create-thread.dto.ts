@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { RoutingMode, ThreadOrigin } from '../../../generated/prisma';
+import { repositoryRefSchema } from './repository-ref.dto';
 
 export const createThreadSchema = z.object({
   title: z.string().max(255, 'Title must be at most 255 characters').optional(),
@@ -19,6 +20,9 @@ export const createThreadSchema = z.object({
   // ADR-087 — "use relevant previous chats". Omitted means false: a new thread
   // never reads a user's other conversations unless it is asked to.
   useCrossThreadContext: z.boolean().optional(),
+  // F095 — the repository this conversation belongs to, so a later session can
+  // tell whether its workspace is the same project. Omitted means none.
+  repositoryRef: repositoryRefSchema.optional(),
 });
 
 export type CreateThreadDto = z.infer<typeof createThreadSchema>;

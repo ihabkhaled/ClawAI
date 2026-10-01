@@ -1,3 +1,4 @@
+import { repositoryRefSchema } from '../dto/repository-ref.dto';
 import type { ChatThread } from '../../../generated/prisma';
 import type { CreateThreadData } from '../types/chat-threads.types';
 
@@ -29,5 +30,17 @@ export function copyThreadSettings(source: ChatThread): Omit<CreateThreadData, '
     useMemory: source.useMemory,
     useContext: source.useContext,
     useCrossThreadContext: source.useCrossThreadContext,
+    ...repositoryRefOf(source),
   };
+}
+
+/**
+ * The repository a branch stays in. The stored JSON is parsed rather than cast,
+ * so a value that no longer parses is left off the copy instead of being
+ * written through.
+ */
+function repositoryRefOf(source: ChatThread): Pick<CreateThreadData, 'repositoryRef'> {
+  if (source.repositoryRef === null) return {};
+  const parsed = repositoryRefSchema.safeParse(source.repositoryRef);
+  return parsed.success ? { repositoryRef: parsed.data } : {};
 }

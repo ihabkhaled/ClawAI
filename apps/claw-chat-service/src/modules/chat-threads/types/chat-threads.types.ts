@@ -1,4 +1,5 @@
 import { type ChatThread, type RoutingMode, type ThreadOrigin } from '../../../generated/prisma';
+import { type RepositoryRefDto } from '../dto/repository-ref.dto';
 
 export interface CreateThreadData {
   userId: string;
@@ -15,6 +16,8 @@ export interface CreateThreadData {
   useCrossThreadContext?: boolean;
   useMemory?: boolean;
   useContext?: boolean;
+  /** F095 — the repository this thread was started in; normalised before it gets here. */
+  repositoryRef?: RepositoryRefDto;
   /** Branch lineage — set only by `branchThread`, never from a request body. */
   branchedFromThreadId?: string;
   branchedFromMessageId?: string;

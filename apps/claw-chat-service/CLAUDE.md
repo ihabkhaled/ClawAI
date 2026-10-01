@@ -883,6 +883,14 @@ is the headless CLI. It is part of the coding-agent FAMILY: a list filtered by
 `chat-threads/utilities/thread-origin.utility.ts`. A new check that compares to
 `CODING_AGENT` alone silently hides every CLI thread.
 
+`POST /chat-threads` also takes an optional `repositoryRef` `{ name, remoteUrl?, branch? }` (F095,
+migration `20261001120000_thread_repository_ref`, nullable `chat_threads.repository_ref` JSONB, NULL for
+every older thread). `repositoryRefSchema` normalises the remote with `normalizeRepositoryRemote`
+(host, port and path only; credentials, query, fragment and `.git` never survive; `file:`,
+`javascript:` and local paths are refused) and drops unknown keys, so a token typed into a remote
+cannot reach the database. A branch copies it (`copyThreadSettings`). The field is create-only:
+`PATCH` does not change it.
+
 `GET /chat-threads/:id/active-run` (F095) answers `{ active, runId?, startedAt? }`
 from the Runtime V2 run store: newest USER message → `metadata.runtimeV2` →
 `resolveBinding` → `readEvents` past the end for the terminal flag. Owner-scoped

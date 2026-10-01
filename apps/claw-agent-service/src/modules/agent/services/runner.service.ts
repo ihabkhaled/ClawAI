@@ -22,6 +22,7 @@ import { AgentCommandManager } from '../managers/agent-command.manager';
 import { AgentSessionService } from './agent-session.service';
 import { AgentCommandService } from './agent-command.service';
 import { RunnerCredentialService } from './runner-credential.service';
+import { RuntimeProtocolService } from './runtime-protocol.service';
 import type {
   DispatchRunnerJobDto,
   RegisterRunnerDto,
@@ -31,6 +32,7 @@ import type { CompleteCommandDto } from '../dto/complete-command.dto';
 import type {
   RegisterRunnerResult,
   RunnerMetadata,
+  RunnerResumeManifest,
   RunnerRow,
   RunnerView,
 } from '../types/runner.types';
@@ -58,6 +60,7 @@ export class RunnerService {
     private readonly commands: AgentCommandService,
     private readonly commandRepo: AgentCommandRepository,
     private readonly commandManager: AgentCommandManager,
+    private readonly protocol: RuntimeProtocolService,
   ) {}
 
   /**
@@ -90,6 +93,22 @@ export class RunnerService {
   async list(userId: string): Promise<RunnerView[]> {
     const rows = await this.runners.listConnected(userId, this.freshSince());
     return rows.map((row) => this.toView(row));
+  }
+
+  /**
+   * F095: the manifest a client reads before it continues a session on this
+   * runner. Owner-scoped: another user's runner and a missing one are the same
+   * 404. A revoked or expired runner still answers, with `online: false`, so the
+   * client can say the runner is gone instead of failing with an error.
+   */
+  async resumeManifest(runnerId: string, userId: string): Promise<RunnerResumeManifest> {
+    const runner = await this.runners.findOwned(runnerId, userId);
+    if (runner === null) throw new EntityNotFoundException('Runner', runnerId);
+    return {
+      runner: this.toView(runner),
+      online: this.isLive(runner),
+      protocol: this.protocol.getDescriptor(),
+    };
   }
 
   async dispatchTo(

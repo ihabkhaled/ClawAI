@@ -1,6 +1,7 @@
 import type { Prisma } from '../../../generated/prisma';
 import type { RUNNER_SELECT } from '../constants/runner.constants';
 import type { RunnerApprovalPolicy } from '../../../common/enums/runner-approval-policy.enum';
+import type { RuntimeProtocolDescriptor } from './runtime-protocol.types';
 
 export type RunnerRow = Prisma.AgentSessionGetPayload<{ select: typeof RUNNER_SELECT }>;
 
@@ -27,6 +28,20 @@ export type RunnerView = {
   agentVersion: string;
   status: string;
   lastHeartbeatAt: Date | null;
+};
+
+/**
+ * F095: what the server knows about a runner a session is being resumed on.
+ * The runner's own tool list is not here: the server never sees it. A client
+ * reconciles tools from the runtime-v2 manifest it sends with each run, and uses
+ * this to check the runner is still up, what approval class it runs under and
+ * which protocol versions the backend speaks.
+ */
+export type RunnerResumeManifest = {
+  runner: RunnerView;
+  /** Connected with a fresh heartbeat. A revoked, expired or stale runner is false. */
+  online: boolean;
+  protocol: RuntimeProtocolDescriptor;
 };
 
 /**

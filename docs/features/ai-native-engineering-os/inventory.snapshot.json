@@ -467,6 +467,11 @@
           "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/agent/runners/:id/resume",
+          "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/agent/runners/claim",
           "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-runner.controller.ts"
@@ -10539,7 +10544,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 280
+        "testFiles": 283
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -11325,7 +11330,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 52,
-    "endpointCount": 756,
+    "endpointCount": 757,
     "envVarCount": 360,
     "eventCount": 184,
     "frontendRouteCount": 155,
@@ -11337,7 +11342,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1843,
+    "totalTestFiles": 1846,
     "workspaceCount": 25
   }
 }

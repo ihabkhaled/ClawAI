@@ -27,6 +27,7 @@ import {
 import type {
   RegisterRunnerResult,
   RotatedRunnerCredential,
+  RunnerResumeManifest,
   RunnerView,
 } from '../types/runner.types';
 import type { HeartbeatResult } from '../types/agent.types';
@@ -58,6 +59,15 @@ export class AgentRunnerController {
   @Get()
   async list(@CurrentUser() user: AuthenticatedUser): Promise<RunnerView[]> {
     return this.runners.list(user.id);
+  }
+
+  /** F095: what a client reads before it continues a session on this runner. */
+  @Get(':id/resume')
+  async resume(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ): Promise<RunnerResumeManifest> {
+    return this.runners.resumeManifest(id, user.id);
   }
 
   @Post('jobs')
