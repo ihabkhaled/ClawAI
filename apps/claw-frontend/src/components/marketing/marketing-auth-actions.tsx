@@ -52,7 +52,7 @@ export function MarketingAuthActions({
   }
 
   return (
-    <div className="grid items-center">
+    <div className="grid grid-cols-1 items-center">
       <div
         aria-hidden={isSignedIn}
         className={cn('col-start-1 row-start-1 flex items-center gap-1', isSignedIn && 'invisible')}
