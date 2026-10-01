@@ -289,7 +289,7 @@ platform? }` (`runnerHeartbeatSchema`; a missing body is an empty report, so
   `routine_webhook_signature_missing|timestamp_stale|signature_invalid|rate_limited|payload_too_large|unsupported_kind`.
 - **Routine secrets (F099 step 2, 2026-10-01, [ADR-142](../13-adr/adr-142-per-routine-secrets-isolated-and-write-only.md),
   [threat model](../03-architecture/routine-secrets-threat-model.md)):** secrets a PROMPT routine can read. Table
-  `routine_secrets` (migration `20261001120000_add_routine_secrets`, idempotent; also adds
+  `routine_secrets` (migration `20261001130000_add_routine_secrets`, idempotent; also adds
   `scheduled_commands.webhookSecretsEnabled` and `terminal_commands.routineId|routineRunSource`). Only ciphertext
   is stored: AES-256-GCM with `ENCRYPTION_KEY`, a random nonce per row, AAD over routineId + userId + name
   (`common/utilities/aes-gcm.utility.ts`). Owner routes, user JWT, a foreign routine is the same 404 as a missing
