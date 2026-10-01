@@ -98,7 +98,10 @@ export class ChatContextGatewayManager {
     );
 
     return {
-      context: this.withPersona(withEvidence, request.personaInstruction),
+      context: {
+        ...this.withPersona(withEvidence, request.personaInstruction),
+        platformSurface: request.surface,
+      },
       thread,
       threadSettings,
       messages: windowed,

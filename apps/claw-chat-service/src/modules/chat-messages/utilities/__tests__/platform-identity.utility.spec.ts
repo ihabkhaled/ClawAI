@@ -1,3 +1,4 @@
+import { ChatSurface } from '../../../../common/enums/chat-surface.enum';
 import {
   asksAboutThisPlatform,
   buildPlatformIdentityBlock,
@@ -21,6 +22,26 @@ describe('buildPlatformIdentityBlock', () => {
     );
     expect(buildPlatformIdentityBlock('https://other.example')).toContain('https://other.example');
     expect(buildPlatformIdentityBlock('   ')).not.toContain('served at');
+  });
+
+  it('gives a coding-agent turn the editor wording, not the web app line', () => {
+    const block = buildPlatformIdentityBlock('https://claw-ai.co', ChatSurface.AGENT);
+
+    expect(block).toContain('Every AI, one workspace');
+    expect(block).toContain('coding agent in their editor');
+    expect(block).not.toContain('through the ClawAI web app');
+    expect(block).toContain('served at: https://claw-ai.co');
+    expect(block).toMatch(/never deny it/i);
+  });
+
+  it('keeps the web wording for chat and for no surface, and is static per surface', () => {
+    const chat = buildPlatformIdentityBlock(undefined, ChatSurface.CHAT);
+
+    expect(chat).toBe(buildPlatformIdentityBlock(undefined));
+    expect(chat).toContain('through the ClawAI web app');
+    expect(buildPlatformIdentityBlock(undefined, ChatSurface.AGENT)).toBe(
+      buildPlatformIdentityBlock(undefined, ChatSurface.AGENT),
+    );
   });
 
   it('never states a price, a limit or a plan figure', () => {

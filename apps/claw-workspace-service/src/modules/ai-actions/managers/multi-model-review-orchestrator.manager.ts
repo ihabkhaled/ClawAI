@@ -13,6 +13,7 @@ import type {
   ReviewerOutcome,
 } from '../types/multi-model-review.types';
 import { callCloudGenerate } from '../utilities/cloud-generation-client.utility';
+import { withPlatformIdentity } from '../utilities/platform-identity.utility';
 
 /**
  * v3 round 2 (2026-05-12) — Prompt 04 polish: multi-model PR/MR review.
@@ -98,7 +99,7 @@ export class MultiModelReviewOrchestratorManager {
       chatServiceUrl: chatUrl,
       provider: ref.provider,
       model: ref.model,
-      systemPrompt: judgePrompt.system,
+      systemPrompt: withPlatformIdentity(judgePrompt.system),
       userPrompt: `${judgePrompt.userPrefix}${content}`,
       timeoutMs,
       userId,
@@ -157,7 +158,7 @@ export class MultiModelReviewOrchestratorManager {
         chatServiceUrl: chatUrl,
         provider: ref.provider,
         model: ref.model,
-        systemPrompt,
+        systemPrompt: withPlatformIdentity(systemPrompt),
         userPrompt,
         timeoutMs,
         userId,

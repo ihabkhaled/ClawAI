@@ -18,6 +18,16 @@ export const PLATFORM_IDENTITY_LINES: readonly string[] = [
   'Do not invent features, prices or limits; if you are unsure what ClawAI offers, say so.',
 ];
 
+/**
+ * The coding-agent form (ChatSurface.AGENT): same facts, but the user reaches
+ * the model through the ClawAI VS Code extension, not the web app. Replaces the
+ * "web app" line and the "cannot see the browser page" line (indexes 3 and 4).
+ */
+export const PLATFORM_IDENTITY_AGENT_LINES: readonly string[] = [
+  'The user talks to you through the ClawAI coding agent in their editor (VS Code), working on their own project. Treat that as where you are: when asked what app, tool or platform this is, answer plainly that it is the ClawAI coding agent, part of ClawAI.',
+  'You cannot see the ClawAI web app or its pages. If the user wants details about ClawAI itself, say the web workspace has them, and never guess. Never put this background in code, commits, files or notes you write.',
+];
+
 /** Added to the block when the deployment's public address is known. */
 export const PLATFORM_ORIGIN_LINE_PREFIX = 'The workspace is served at: ';
 

@@ -1,4 +1,5 @@
 import { type ChatMessage } from '../../../generated/prisma';
+import type { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import type { ToolTurn } from './tool-turn.types';
 import type { ConversationContextManifest, ModelTokenBudget } from './context-composer.types';
 import type { CrossThreadRetrievalResult } from './cross-thread-retrieval.types';
@@ -135,6 +136,8 @@ export type AssembledContext = {
    * Prompt-only: never stored, never returned by an API.
    */
   platformOrigin?: string;
+  /** The surface this prompt is for; picks the wording of the platform block. */
+  platformSurface?: ChatSurface;
   /**
    * Completed Runtime V2 tool rounds, oldest first.
    *

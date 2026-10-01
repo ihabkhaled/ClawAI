@@ -4,6 +4,7 @@ import {
   AI_ACTION_PROMPTS,
 } from '../constants/ai-action-prompts.constants';
 import type { BuiltAiActionPrompt } from '../types/ai-action.types';
+import { withPlatformIdentity } from './platform-identity.utility';
 
 export function buildAiActionPrompt(
   actionKind: AiActionKind,
@@ -17,10 +18,11 @@ export function buildAiActionPrompt(
     context.length > AI_ACTION_MAX_CONTEXT_CHARS
       ? `${context.slice(0, AI_ACTION_MAX_CONTEXT_CHARS)}\n\n[...truncated for length]`
       : context;
+  const baseSystem = withPlatformIdentity(template.system);
   const systemPrompt =
     learnedPreferences.length > 0
-      ? `${template.system}\n\nKnown preferences for this user, learned from their past decisions — follow them unless they conflict with the instructions above:\n${learnedPreferences.map((p) => `- ${p}`).join('\n')}`
-      : template.system;
+      ? `${baseSystem}\n\nKnown preferences for this user, learned from their past decisions — follow them unless they conflict with the instructions above:\n${learnedPreferences.map((p) => `- ${p}`).join('\n')}`
+      : baseSystem;
   return {
     systemPrompt,
     userPrompt: `${template.userPrefix}${trimmed}`,

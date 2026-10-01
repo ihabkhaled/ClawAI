@@ -612,7 +612,9 @@ ${evidence.snippet}`);
       context.workspaceCitations,
       currentIntent,
     );
-    const parts: string[] = [`SYSTEM: ${buildPlatformIdentityBlock(context.platformOrigin)}`];
+    const parts: string[] = [
+      `SYSTEM: ${buildPlatformIdentityBlock(context.platformOrigin, context.platformSurface)}`,
+    ];
     if (context.systemPrompt) {
       parts.push(`SYSTEM: ${context.systemPrompt}`);
     }
@@ -951,7 +953,9 @@ ${RESEARCH_GROUNDING_REMINDER}`;
   ): string[] {
     // The hidden self-awareness layer comes first, on every request, for every
     // model (ADR-136). It is not a memory or a context item and nothing lists it.
-    const parts: string[] = [buildPlatformIdentityBlock(context.platformOrigin)];
+    const parts: string[] = [
+      buildPlatformIdentityBlock(context.platformOrigin, context.platformSurface),
+    ];
     if (context.systemPrompt) parts.push(context.systemPrompt);
     if (relevantMemories.length > 0) {
       const block = relevantMemories.map((m) => `[${m.type}] ${m.content}`).join('\n');
