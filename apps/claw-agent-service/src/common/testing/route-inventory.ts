@@ -4,6 +4,7 @@ import { IS_PUBLIC_KEY } from '@claw/shared-auth';
 import { AppModule } from '../../app/app.module';
 import { MOBILE_ROUTE_METADATA_KEY } from '../decorators/mobile-route.decorator';
 import { REQUIRE_SCOPES_METADATA_KEY } from '../decorators/require-scopes.decorator';
+import { NON_CREDENTIAL_GUARD_NAMES } from './route-inventory.constants';
 import type { RouteAuthKind, RouteDescriptor } from './route-inventory.types';
 
 const PATH_METADATA = 'path';
@@ -65,7 +66,8 @@ function classify(isPublic: boolean, guardNames: string[]): RouteAuthKind {
   if (device) return 'device-token';
   if (guardNames.includes('RunnerTokenGuard')) return 'runner-token';
   if (guardNames.includes('ServiceTokenGuard')) return 'service-token';
-  return guardNames.length === 0 ? 'anonymous' : 'unclassified';
+  const credentialGuards = guardNames.filter((name) => !NON_CREDENTIAL_GUARD_NAMES.includes(name));
+  return credentialGuards.length === 0 ? 'anonymous' : 'unclassified';
 }
 
 function describeHandler(controller: new () => object, name: string): RouteDescriptor | undefined {
