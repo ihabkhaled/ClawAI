@@ -1,36 +1,30 @@
-// Extracts real File objects from a clipboard or drag DataTransfer. Handles
-// both the `.files` list (dropped files, OS clipboard files) and the `.items`
-// list (screenshots / copied images, which often appear only as items of
-// kind 'file'). De-duplicates by identity so an item that also appears in
-// `.files` is not counted twice.
-export function extractFilesFromDataTransfer(
-  source: DataTransfer | null | undefined,
-): File[] {
+// Extracts real File objects from a clipboard or drag DataTransfer.
+//
+// `.files` is the source of truth (dropped files, files copied in the OS,
+// pasted screenshots). `.items` mirrors the SAME files, but every
+// `item.getAsFile()` call returns a NEW File object, so merging the two lists
+// and de-duplicating by object identity counted one pasted screenshot twice
+// (drag and drop only fills `.files`, which is why only paste duplicated).
+// `.items` is therefore read only when `.files` is empty, which some browsers
+// do for copied images.
+export function extractFilesFromDataTransfer(source: DataTransfer | null | undefined): File[] {
   if (source === null || source === undefined) {
     return [];
   }
 
+  const files = Array.from(source.files);
+  if (files.length > 0) {
+    return files;
+  }
+
   const collected: File[] = [];
-  const seen = new Set<File>();
-
-  const add = (file: File | null): void => {
-    if (file !== null && !seen.has(file)) {
-      seen.add(file);
-      collected.push(file);
-    }
-  };
-
-  if (source.items.length > 0) {
-    for (const item of Array.from(source.items)) {
-      if (item.kind === 'file') {
-        add(item.getAsFile());
+  for (const item of Array.from(source.items)) {
+    if (item.kind === 'file') {
+      const file = item.getAsFile();
+      if (file !== null) {
+        collected.push(file);
       }
     }
   }
-
-  for (const file of Array.from(source.files)) {
-    add(file);
-  }
-
   return collected;
 }

@@ -55,4 +55,39 @@ describe('extractFilesFromDataTransfer', () => {
     );
     expect(result).toEqual([f]);
   });
+
+  it('does not double-count a pasted screenshot whose item yields a NEW File object each call', () => {
+    // Real browsers: clipboardData.files[0] and items[0].getAsFile() are the same
+    // pixels but different File instances, and getAsFile() returns a fresh one every time.
+    const inFiles = makeFile('image.png');
+    const dt = {
+      files: [inFiles] as unknown as FileList,
+      items: [
+        { kind: 'file', getAsFile: () => makeFile('image.png') },
+      ] as unknown as DataTransferItemList,
+    } as unknown as DataTransfer;
+
+    expect(extractFilesFromDataTransfer(dt)).toEqual([inFiles]);
+  });
+
+  it('keeps two different pasted files', () => {
+    const a = makeFile('a.png');
+    const b = makeFile('b.png');
+    expect(extractFilesFromDataTransfer(makeDataTransfer({ files: [a, b] }))).toEqual([a, b]);
+  });
+
+  it('falls back to items only when files is empty (copied image)', () => {
+    const a = makeFile('copied.png');
+    const b = makeFile('copied2.png');
+    expect(
+      extractFilesFromDataTransfer(
+        makeDataTransfer({
+          items: [
+            { kind: 'file', file: a },
+            { kind: 'file', file: b },
+          ],
+        }),
+      ),
+    ).toEqual([a, b]);
+  });
 });
