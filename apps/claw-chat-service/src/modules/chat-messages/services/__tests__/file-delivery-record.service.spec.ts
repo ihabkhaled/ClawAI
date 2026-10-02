@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { FileDeliveryRecordService } from '../file-delivery-record.service';
 import { type FileDeliveryRecordRepository } from '../../repositories/file-delivery-record.repository';
 import { type ChatMessagesRepository } from '../../repositories/chat-messages.repository';

@@ -23,7 +23,11 @@ import {
 } from '@claw/shared-utilities';
 import { AppConfig } from '../../../app/config/app.config';
 import { buildInterServiceAuthHeader, httpRequest, recordGet } from '../../../common/utilities';
-import { BusinessException, ProviderCreditExhaustedException } from '../../../common/errors';
+import {
+  BusinessException,
+  PickedModelFailedException,
+  ProviderCreditExhaustedException,
+} from '../../../common/errors';
 import { ModelExposureClient } from '../clients/model-exposure.client';
 import { ModelAuthorizationDenialReason } from '../enums/model-authorization-denial-reason.enum';
 import { ModelAuthorizationMetricsService } from '../services/model-authorization-metrics.service';
@@ -119,6 +123,7 @@ import {
   ToolChoiceMode,
 } from '../../../common/enums';
 import { modelRejectsSamplingParams } from '../utilities/anthropic-sampling.utility';
+import { SAMPLING_PARAMETER_TEMPERATURE } from '../constants/sampling-parameter.constants';
 import {
   modelRejectsCustomTemperature,
   modelRequiresMaxCompletionTokens,
@@ -206,6 +211,17 @@ import {
 import type { ProviderRetryPlan } from '../types/provider-retry.types';
 import { ModelOutputLimitClient } from '../clients/model-output-limit.client';
 import { ProviderCircuitBreakerManager } from './provider-circuit-breaker.manager';
+import { SamplingParameterSupportManager } from './sampling-parameter-support.manager';
+import {
+  describePickedModelFailure,
+  isPickedModelTurn,
+  isProviderWideFailure,
+  isSubstitutableFailure,
+  pickedCandidateSkipReason,
+  pickedModelCandidateChain,
+  pickedModelFallbackPart,
+  suggestedModelsAfterFailure,
+} from '../utilities/picked-model-fallback.utility';
 import {
   PROVIDER_CREDIT_MIN_OUTPUT_TOKENS,
   PROVIDER_REQUEST_FAILED_MESSAGE,
@@ -279,6 +295,8 @@ export class ChatExecutionManager implements OnModuleInit {
   // In-memory-only breaker for hand-built instances (specs); Nest injects the
   // Redis-shared one below (ADR-125 addendum).
   private readonly localProviderBreaker = new ProviderCircuitBreakerManager();
+  // Learned "model X rejects sampling parameter Y" (process-wide, TTL'd).
+  private readonly samplingSupport = new SamplingParameterSupportManager();
 
   private readonly logger = new Logger(ChatExecutionManager.name);
   private readonly modelExposure = new ModelExposureClient();
@@ -416,11 +434,26 @@ export class ChatExecutionManager implements OnModuleInit {
     // drawer can render "Attempt 1: OpenAI/gpt-4o failed (timeout, 8.1s)
     // → Attempt 2: Anthropic/claude-sonnet-4 succeeded (2.4s, q=0.92)".
     const attempts: AttemptRecord[] = [];
+    // A picked model's substitutes: how many were tried, and which providers
+    // already failed as a WHOLE (down, out of credit, rate limited), so a second
+    // model of the same provider is not dialled just to fail the same way.
+    const failedProviders = new Set<string>();
+    let substituteAttempts = 0;
 
     for (let i = 0; i < candidates.length; i++) {
       const candidate = candidates.at(i);
       if (!candidate) {
         continue;
+      }
+      if (isPickedModelTurn(payload) && i > 0) {
+        const skip = pickedCandidateSkipReason(candidate, failedProviders, substituteAttempts);
+        if (skip !== null) {
+          this.logger.debug(
+            `execute: skipping substitute ${candidate.provider}/${candidate.model} (${skip})`,
+          );
+          continue;
+        }
+        substituteAttempts++;
       }
       this.logger.debug(
         `execute: trying candidate ${String(i + 1)}/${String(candidates.length)} - ${candidate.provider}/${candidate.model}`,
@@ -446,7 +479,7 @@ export class ChatExecutionManager implements OnModuleInit {
       );
       if (outcome.kind === 'success') {
         return this.stampWorkflowMetadata(
-          { ...outcome.response, attempts },
+          { ...outcome.response, attempts, ...pickedModelFallbackPart(payload, candidate, i) },
           payload,
           searchOutcome,
         );
@@ -456,18 +489,70 @@ export class ChatExecutionManager implements OnModuleInit {
         reRouteAttempt++;
         continue;
       }
-      // A credit refusal ends the chain. Every remaining candidate would be
-      // refused for exactly the same reason - the balance does not change
-      // between them - so trying them all turns one 402 into N pointless
-      // round-trips and buries the real cause behind whichever candidate
-      // happened to be last.
-      if (this.isPaygRefusal(outcome.error)) {
+      if (this.endsCandidateChain(outcome.error, payload, i)) {
         throw outcome.error;
+      }
+      if (isPickedModelTurn(payload) && isProviderWideFailure(outcome.error)) {
+        failedProviders.add(candidate.provider.toUpperCase());
       }
       lastError = outcome.error;
     }
 
-    return this.failExecution(lastError, attempts);
+    return isPickedModelTurn(payload)
+      ? this.failPickedModelExecution(lastError, attempts, payload, failedProviders)
+      : this.failExecution(lastError, attempts);
+  }
+
+  /**
+   * Whether this failure ends the chain instead of moving to the next candidate.
+   *
+   * AUTO: a credit refusal ends it. Every remaining candidate would be refused
+   * for exactly the same reason - the balance does not change between them -
+   * so trying them all turns one 402 into N pointless round-trips and buries
+   * the real cause behind whichever candidate happened to be last.
+   *
+   * A PICKED model (MANUAL_MODEL): only a provider failure moves on to a
+   * substitute. The pick's own credit (402), plan/exposure (403) or quota (429)
+   * refusal is the user's answer and is shown as itself (the upgrade notice),
+   * never hidden behind another model. A substitute refused for credit is just
+   * skipped: the next one may be a free/local model.
+   */
+  private endsCandidateChain(error: unknown, payload: MessageRoutedData, index: number): boolean {
+    if (!isPickedModelTurn(payload)) {
+      return this.isPaygRefusal(error);
+    }
+    return index === 0 && !isSubstitutableFailure(error);
+  }
+
+  /**
+   * Every candidate of a picked-model turn failed: one translated error that
+   * names the pick and carries up to three usable models to retry with (none
+   * already tried). The English sentence stays the chain's safe sentence.
+   */
+  private failPickedModelExecution(
+    lastError: unknown,
+    attempts: AttemptRecord[],
+    payload: MessageRoutedData,
+    failedProviders: ReadonlySet<string>,
+  ): never {
+    const base = this.buildChainFailureError(lastError, attempts);
+    const suggestions = suggestedModelsAfterFailure(payload, attempts, failedProviders);
+    // Nothing was tried after the pick and nothing is on offer: the pick's own
+    // (already translated) error stands, exactly as before this feature.
+    if (attempts.length <= 1 && suggestions.length === 0) {
+      return this.failExecution(lastError, attempts);
+    }
+    const baseMessage = base instanceof Error ? base.message : PROVIDER_REQUEST_FAILED_MESSAGE;
+    const error = new PickedModelFailedException(
+      describePickedModelFailure(payload, attempts, baseMessage),
+      payload.selectedProvider,
+      payload.selectedModel,
+      suggestions,
+    );
+    this.logger.warn(
+      `failPickedModelExecution: ${payload.selectedProvider}/${payload.selectedModel} and ${String(Math.max(0, attempts.length - 1))} substitute(s) failed; suggesting ${error.suggestedModels.map((entry) => `${entry.provider}/${entry.model}`).join(',') || 'none'}`,
+    );
+    return this.failExecution(error, attempts);
   }
 
   // Phase 5 — converts the existing CandidateOutcome union into the
@@ -1656,7 +1741,13 @@ export class ChatExecutionManager implements OnModuleInit {
       args.threadSettings,
     );
 
-    if (reRouteDecision.shouldReRoute && args.candidateIndex < args.candidates.length - 1) {
+    // A picked model is never swapped for a weak-but-successful answer: its
+    // substitutes stand in for provider FAILURES only.
+    if (
+      reRouteDecision.shouldReRoute &&
+      !isPickedModelTurn(args.payload) &&
+      args.candidateIndex < args.candidates.length - 1
+    ) {
       const nextCandidate = args.candidates.at(args.candidateIndex + 1);
       this.logger.warn(
         `Weak response detected from ${args.candidate.provider}/${args.candidate.model} (score: ${String(qualityResult.score.toFixed(2))}). Reasons: ${qualityResult.reasons.join(', ')}. Escalating to ${nextCandidate?.provider ?? 'next'}/${nextCandidate?.model ?? 'next'}.`,
@@ -1862,8 +1953,10 @@ export class ChatExecutionManager implements OnModuleInit {
       { provider: payload.selectedProvider, model: payload.selectedModel },
     ];
 
+    // A picked model: the pick, then at most two substitutes routing-service
+    // ranked for it (same provider first, never a silent pricier one).
     if (routingMode === 'MANUAL_MODEL') {
-      return candidates;
+      return pickedModelCandidateChain(payload).map(({ provider, model }) => ({ provider, model }));
     }
 
     // Use the full fallback chain from the routing service when available
@@ -2263,7 +2356,11 @@ export class ChatExecutionManager implements OnModuleInit {
     return response;
   }
 
-  /** Remembers a learned output ceiling and waits out a rate limit, before the one retry. */
+  /**
+   * Before the one retry: remembers a learned output ceiling or a rejected
+   * sampling parameter (so the resent body, and every later one, leaves it
+   * out), and waits out a rate limit.
+   */
   private async prepareProviderRetry(
     provider: string,
     model: string,
@@ -2274,6 +2371,9 @@ export class ChatExecutionManager implements OnModuleInit {
     );
     if (plan.learnedMaxOutputTokens !== undefined) {
       await this.modelOutputLimits?.record(provider, model, plan.learnedMaxOutputTokens);
+    }
+    if (plan.dropSamplingParameter !== undefined) {
+      this.samplingSupport.record(model, plan.dropSamplingParameter);
     }
     if (plan.delayMs !== undefined) {
       await delay(plan.delayMs);
@@ -4344,6 +4444,10 @@ export class ChatExecutionManager implements OnModuleInit {
   // instead of passed through. Silence would be worse than the 400 it prevents,
   // hence the log line: the answer really is less deterministic than the
   // thread's setting asks for.
+  //
+  // Three sources say a model rejects it: the static family list, the OpenAI
+  // default-only list, and what a provider refusal taught this process
+  // (`samplingSupport`, recorded by the chokepoint's one retry).
   private resolveTemperature(
     model: string,
     threadSettings: ThreadSettings | undefined,
@@ -4353,7 +4457,11 @@ export class ChatExecutionManager implements OnModuleInit {
     if (temperature === null || temperature === undefined) {
       return undefined;
     }
-    if (modelRejectsSamplingParams(model) || modelRejectsCustomTemperature(model)) {
+    if (
+      modelRejectsSamplingParams(model) ||
+      modelRejectsCustomTemperature(model) ||
+      this.samplingSupport.rejects(model, SAMPLING_PARAMETER_TEMPERATURE)
+    ) {
       this.logger.debug(`${caller}: omitting temperature — ${model} rejects sampling params`);
       return undefined;
     }
@@ -4714,11 +4822,15 @@ export class ChatExecutionManager implements OnModuleInit {
     if (shape.body.systemInstruction !== undefined) {
       requestBody.systemInstruction = shape.body.systemInstruction;
     }
-    const temperature = threadSettings?.temperature;
+    const temperature = this.resolveTemperature(
+      model,
+      threadSettings,
+      'buildGeminiNativeRequestBody',
+    );
     const maxOutputTokens = this.resolveBoundedMaxTokens(threadSettings, executionOptions);
-    if ((temperature !== null && temperature !== undefined) || maxOutputTokens !== undefined) {
+    if (temperature !== undefined || maxOutputTokens !== undefined) {
       requestBody.generationConfig = {
-        ...(temperature !== null && temperature !== undefined ? { temperature } : {}),
+        ...(temperature !== undefined ? { temperature } : {}),
         ...(maxOutputTokens !== undefined ? { maxOutputTokens } : {}),
       };
     }
@@ -4783,10 +4895,15 @@ export class ChatExecutionManager implements OnModuleInit {
       stream: false,
     };
 
-    if (threadSettings?.temperature !== null && threadSettings?.temperature !== undefined) {
+    const ollamaTemperature = this.resolveTemperature(
+      model,
+      threadSettings,
+      'buildOllamaChatRequestBody',
+    );
+    if (ollamaTemperature !== undefined) {
       requestBody.options = {
         ...(requestBody.options ?? {}),
-        temperature: threadSettings.temperature,
+        temperature: ollamaTemperature,
       };
     }
 

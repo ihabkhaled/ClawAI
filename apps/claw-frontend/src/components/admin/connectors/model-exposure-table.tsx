@@ -2,158 +2,117 @@
 
 import type { ReactElement } from 'react';
 
-import { Button } from '@/components/ui/button';
+import { ModelExposureChip } from '@/components/admin/connectors/model-exposure-chip';
+import { ModelExposureRowActions } from '@/components/admin/connectors/model-exposure-row-actions';
+import { ModelLifecycleChip } from '@/components/admin/connectors/model-lifecycle-chip';
+import { ModelBillingBadge } from '@/components/admin/model-billing/model-billing-badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { ConnectorModelExposure } from '@/enums/connector-model-exposure.enum';
-import type { ModelExposureTableProps } from '@/types';
+import type { ModelExposureListProps } from '@/types/model-exposure.types';
 
+/**
+ * The mouse layout: a real table in its own scroll region, so the header row
+ * sticks while the rows scroll. Hidden on touch, where the card list takes
+ * over (the same `touch:` switch ResponsiveTable uses). Headers are
+ * `text-start` so they follow the cells in RTL.
+ */
 export function ModelExposureTable({
-  visibleRows,
-  selected,
-  toggle,
-  selectAllVisible,
-  clearSelection,
-  filters,
-  setFilter,
-  exposedCount,
-  unexposedCount,
-  impact,
-  isLoading,
+  items,
   isSaving,
-  errorMessage,
-  onApply,
+  selectAllState,
+  onToggleSelectAll,
+  onToggleRow,
+  onExpose,
+  onRequestUnexpose,
   t,
-}: ModelExposureTableProps): ReactElement {
+}: ModelExposureListProps): ReactElement {
   return (
-    <div className="grid grid-cols-1 gap-4">
-      <p className="text-muted-foreground text-sm">
-        {t('adminConnectors.exposure.counts')} {exposedCount} / {unexposedCount}
-      </p>
-
-      <div className="flex flex-wrap gap-3">
-        <Input
-          value={filters.search}
-          onChange={(e) => setFilter('search', e.target.value)}
-          placeholder={t('adminConnectors.exposure.searchPlaceholder')}
-          className="max-w-xs"
-        />
-        <select
-          className="border-input bg-background h-9 rounded-md border px-3 text-sm"
-          value={filters.exposedOnly === null ? '' : String(filters.exposedOnly)}
-          onChange={(e) => {
-            const raw = e.target.value;
-            setFilter('exposedOnly', raw === '' ? null : raw === 'true');
-          }}
-        >
-          <option value="">{t('adminConnectors.exposure.filterAll')}</option>
-          <option value="true">{t('adminConnectors.exposure.filterExposed')}</option>
-          <option value="false">{t('adminConnectors.exposure.filterUnexposed')}</option>
-        </select>
-      </div>
-
-      {errorMessage !== null ? (
-        <p className="text-destructive text-sm" role="alert">
-          {errorMessage}
-        </p>
-      ) : null}
-
-      {isLoading ? (
-        <p className="text-muted-foreground text-sm">{t('adminConnectors.exposure.loading')}</p>
-      ) : (
-        <div className="grid grid-cols-1 gap-3">
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => onApply(true)}
-              disabled={isSaving || selected.size === 0}
+    <div
+      className="touch:hidden block max-h-[70vh] overflow-auto rounded-md border"
+      data-testid="model-exposure-table"
+    >
+      <table className="w-full min-w-[56rem] text-sm">
+        <thead className="bg-muted text-muted-foreground sticky top-0 z-10 text-xs">
+          <tr className="text-start">
+            <th scope="col" className="w-10 px-3 py-2 text-start">
+              <Checkbox
+                checked={selectAllState}
+                onCheckedChange={onToggleSelectAll}
+                aria-label={t('adminConnectors.exposureUi.selectAllLabel')}
+              />
+            </th>
+            <th scope="col" className="px-3 py-2 text-start font-medium">
+              {t('adminConnectors.exposure.colModel')}
+            </th>
+            <th scope="col" className="w-36 px-3 py-2 text-start font-medium">
+              {t('adminConnectors.exposure.colProvider')}
+            </th>
+            <th scope="col" className="w-28 px-3 py-2 text-start font-medium">
+              {t('adminConnectors.exposureUi.colBilling')}
+            </th>
+            <th scope="col" className="w-28 px-3 py-2 text-start font-medium">
+              {t('adminConnectors.exposure.colExposure')}
+            </th>
+            <th scope="col" className="w-28 px-3 py-2 text-start font-medium">
+              {t('adminConnectors.exposure.colLifecycle')}
+            </th>
+            <th scope="col" className="w-44 px-3 py-2 text-start font-medium">
+              {t('adminConnectors.exposure.colLastSeen')}
+            </th>
+            <th scope="col" className="w-14 px-3 py-2 text-end font-medium">
+              <span className="sr-only">{t('adminConnectors.exposureUi.colActions')}</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((view) => (
+            <tr
+              key={view.row.modelKey}
+              className="data-[selected=true]:bg-muted/50 border-b last:border-0"
+              data-selected={view.isSelected}
             >
-              {t('adminConnectors.exposure.exposeSelected')}
-            </Button>
-            {/* Deliberately shown before the action, not after: an operator
-               cannot undo a removal for users who are mid-conversation. */}
-            {impact.length > 0 ? (
-              <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-2 text-xs">
-                <p className="font-medium">{t('adminConnectors.exposure.impactWarning')}</p>
-                <ul className="mt-1 grid grid-cols-1 gap-0.5">
-                  {impact.map((key) => (
-                    <li key={key}>{key}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => onApply(false)}
-              disabled={isSaving || selected.size === 0}
-            >
-              {t('adminConnectors.exposure.unexposeSelected')}
-            </Button>
-            <Button type="button" size="sm" variant="ghost" onClick={selectAllVisible}>
-              {t('adminConnectors.exposure.selectAllVisible')}
-            </Button>
-            <Button type="button" size="sm" variant="ghost" onClick={clearSelection}>
-              {t('adminConnectors.exposure.clearSelection')}
-            </Button>
-          </div>
-
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-border text-muted-foreground border-b text-left text-xs">
-                <th className="w-8 pb-2" />
-                <th className="pb-2">{t('adminConnectors.exposure.colModel')}</th>
-                <th className="pb-2">{t('adminConnectors.exposure.colProvider')}</th>
-                <th className="pb-2">{t('adminConnectors.exposure.colExposure')}</th>
-                <th className="pb-2">{t('adminConnectors.exposure.colLifecycle')}</th>
-                <th className="pb-2">{t('adminConnectors.exposure.colLastSeen')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visibleRows.map((row) => (
-                <tr key={row.modelKey} className="border-border/50 border-b">
-                  <td className="py-2">
-                    <Checkbox
-                      checked={selected.has(row.modelKey)}
-                      onCheckedChange={() => toggle(row.modelKey)}
-                    />
-                  </td>
-                  <td className="py-2">
-                    <span>{row.displayName}</span>{' '}
-                    {/* Two providers can offer the same display name; the
-                       operator needs the identity that actually executes. */}
-                    <span className="text-muted-foreground font-mono text-xs">{row.modelKey}</span>
-                  </td>
-                  <td className="py-2">{row.provider}</td>
-                  <td className="py-2">
-                    {row.exposure === ConnectorModelExposure.EXPOSED ? (
-                      <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-xs text-emerald-700">
-                        {t('adminConnectors.exposure.exposed')}
-                      </span>
-                    ) : (
-                      <span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-xs">
-                        {t('adminConnectors.exposure.unexposed')}
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-2">{row.lifecycle}</td>
-                  <td className="py-2">
-                    {row.lastSeenAt === null ? (
-                      <span className="text-muted-foreground text-xs">
-                        {t('adminConnectors.exposure.neverSeen')}
-                      </span>
-                    ) : (
-                      row.lastSeenAt
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              <td className="px-3 py-2 align-top">
+                <Checkbox
+                  checked={view.isSelected}
+                  onCheckedChange={() => onToggleRow(view.row.modelKey)}
+                  aria-label={t('adminConnectors.exposureUi.selectRowLabel', {
+                    model: view.row.modelKey,
+                  })}
+                />
+              </td>
+              <td className="min-w-0 px-3 py-2 align-top">
+                {/* Two providers can offer the same display name; the operator
+                    needs the identity that actually executes. */}
+                <span className="block font-medium break-words">{view.row.displayName}</span>
+                <span className="text-muted-foreground block font-mono text-xs break-all">
+                  {view.row.modelKey}
+                </span>
+              </td>
+              <td className="px-3 py-2 align-top">{view.providerLabel}</td>
+              <td className="px-3 py-2 align-top">
+                <ModelBillingBadge billing={view.billing} t={t} />
+              </td>
+              <td className="px-3 py-2 align-top">
+                <ModelExposureChip view={view} t={t} />
+              </td>
+              <td className="px-3 py-2 align-top">
+                <ModelLifecycleChip view={view} t={t} />
+              </td>
+              <td className="text-muted-foreground px-3 py-2 align-top text-xs">
+                {view.lastSeenLabel ?? t('adminConnectors.exposure.neverSeen')}
+              </td>
+              <td className="px-3 py-1 text-end align-top">
+                <ModelExposureRowActions
+                  view={view}
+                  isSaving={isSaving}
+                  onExpose={onExpose}
+                  onRequestUnexpose={onRequestUnexpose}
+                  t={t}
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

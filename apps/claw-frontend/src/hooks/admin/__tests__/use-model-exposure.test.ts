@@ -139,4 +139,48 @@ describe('useModelExposure — bulk apply', () => {
       expect(result.current.errorMessage).toContain('Applied 200 model(s) before this failed');
     });
   });
+
+  it('applies one row through applyTo and keeps the rest of the selection', async () => {
+    const rows = rowsOf(3);
+    fetchConnectorModels.mockResolvedValue(rows);
+    setModelExposure.mockResolvedValue({});
+
+    const { result } = renderHook(() => useModelExposure('connector-1'));
+    await act(async () => {
+      await result.current.load();
+    });
+    act(() => {
+      result.current.selectAllVisible();
+    });
+
+    await act(async () => {
+      await result.current.applyTo(['openrouter/model-1'], false);
+    });
+
+    expect(setModelExposure).toHaveBeenCalledWith('connector-1', {
+      modelKeys: ['openrouter/model-1'],
+      exposed: false,
+    });
+    expect([...result.current.selected].sort()).toEqual([
+      'openrouter/model-0',
+      'openrouter/model-2',
+    ]);
+  });
+
+  it('ignores applyTo with no keys and resets filters', async () => {
+    const { result } = renderHook(() => useModelExposure('connector-1'));
+
+    await act(async () => {
+      await result.current.applyTo([], true);
+    });
+    act(() => {
+      result.current.setFilter('search', 'gpt');
+    });
+    act(() => {
+      result.current.resetFilters();
+    });
+
+    expect(setModelExposure).not.toHaveBeenCalled();
+    expect(result.current.filters.search).toBe('');
+  });
 });

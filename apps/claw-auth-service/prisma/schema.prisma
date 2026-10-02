@@ -1075,7 +1075,7 @@ model OpsAccessToken {
 model CreditFreeAllowanceUsage {
   id        String   @id @default(cuid())
   userId    String   @map("user_id")
-  /// Upper-cased provider key, e.g. GROK.
+  /// Always the reserved total key "*": one counter per user and month across every credit connector (ADR-142 update 2026-10-02).
   provider  String
   /// UTC `YYYY-MM`.
   periodKey String   @map("period_key")

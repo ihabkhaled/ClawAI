@@ -3,7 +3,9 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
+import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
+import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -527,6 +529,11 @@ export const fa: TranslationDictionary = {
       paygPricingUnavailableTitle: 'موقتاً در دسترس نیست',
       paygPricingUnavailableBody:
         'دسترسی به اطلاعات قیمت ممکن نشد، بنابراین مدل‌های پولی لحظه‌ای متوقف شده‌اند. مبلغی از شما کسر نشد. مدل‌های محلی همچنان کار می‌کنند.',
+      paygFreeAllowanceExhaustedTitle: 'درخواست‌های رایگان به مدل‌های اعتباری تمام شد',
+      paygFreeAllowanceExhaustedBody:
+        'شما تمام درخواست‌های رایگان خود به مدل‌های اعتباری را در این ماه استفاده کرده‌اید. برای ادامه، به یک طرح پولی ارتقا دهید یا اعتبار اضافه کنید. مدل‌های همراه طرح همچنان کار می‌کنند.',
+      paygFreeAllowanceExhaustedBodyWithLimit:
+        'شما هر {limit} درخواست رایگان خود به مدل‌های اعتباری را در این ماه استفاده کرده‌اید. برای ادامه، به یک طرح پولی ارتقا دهید یا اعتبار اضافه کنید. مدل‌های همراه طرح همچنان کار می‌کنند.',
       dailyTokensTitle: 'توکن‌های امروز تمام شد',
       dailyTokensBody:
         'سهمیه روزانه توکن شما مصرف شده است. نیمه‌شب به وقت UTC بازنشانی می‌شود، یا هم‌اکنون به طرح بزرگ‌تری بروید.',
@@ -4271,6 +4278,7 @@ export const fa: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.fa.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.fa,
   narration: NARRATION_TRANSLATIONS.fa,
+  pickedModel: PICKED_MODEL_TRANSLATIONS.fa,
   mediaUi: MEDIA_UI_TRANSLATIONS.fa,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.fa,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.fa,
@@ -4360,6 +4368,7 @@ export const fa: TranslationDictionary = {
       clearSelection: 'پاک کردن انتخاب',
       impactWarning: 'لغو ارائه این مدل‌ها را از هر طرحی که از آن‌ها استفاده می‌کند حذف می‌کند:',
     },
+    exposureUi: MODEL_EXPOSURE_UI_TRANSLATIONS.fa,
   },
   adminPlans: {
     intervalDiscounts: {
@@ -4448,9 +4457,9 @@ export const fa: TranslationDictionary = {
       maxContextPacks: 'حداکثر بسته های زمینه',
       maxMemoryItems: 'حداکثر موارد حافظه',
       maxVideoSeconds: 'حداکثر طول ویدیو (ثانیه)',
-      creditConnectorFreeRequests: 'درخواست‌های رایگان به ازای هر کانکتور اعتباری در ماه',
+      creditConnectorFreeRequests: 'کل درخواست‌های رایگان به مدل‌های اعتباری در ماه',
       creditConnectorFreeRequestsHelp:
-        'تعداد درخواست‌هایی که کاربر این طرح در ماه می‌تواند از طریق کانکتورهای اعتباری ارسال کند، پیش از آنکه از اعتبارش کسر شود. برای نامحدود خالی بگذارید؛ ۰ آن را غیرفعال می‌کند.',
+        'تعداد کل درخواست‌هایی که کاربر این طرح در ماه می‌تواند از طریق همه کانکتورهای اعتباری ارسال کند، پیش از آنکه به اعتبار نیاز باشد. برای نامحدود خالی بگذارید؛ ۰ آن را غیرفعال می‌کند. اعتبار خریداری‌شده امکان ادامه پس از این عدد را می‌دهد.',
       creditConnectorFreeRequestsInvalid:
         'یک عدد صحیح بین ۰ تا ۱۰۰۰۰۰ وارد کنید یا برای نامحدود خالی بگذارید.',
       isPublic: 'به صورت عمومی فهرست شده است',
@@ -4926,6 +4935,8 @@ export const fa: TranslationDictionary = {
       PAYG_PROMPT_TOO_EXPENSIVE: 'هزینهٔ این گفت‌وگو از اعتبار باقی‌ماندهٔ رابط‌های شما بیشتر است.',
       PAYG_MODEL_UNPRICED: 'هنوز قیمتی برای این مدل منتشر نشده و قابل محاسبه نیست.',
       PAYG_PRICING_UNAVAILABLE: 'اطلاعات قیمت موقتاً در دسترس نیست. مبلغی از شما کسر نشد.',
+      PAYG_FREE_ALLOWANCE_EXHAUSTED:
+        'درخواست‌های رایگان شما به مدل‌های اعتباری برای این ماه تمام شده است. برای ادامه، طرح خود را ارتقا دهید یا اعتبار اضافه کنید.',
       CREDIT_PACKAGE_NOT_FOUND: 'این بستهٔ اعتبار دیگر وجود ندارد.',
       CREDIT_PACKAGE_INACTIVE: 'این بستهٔ اعتبار دیگر عرضه نمی‌شود.',
       CREDIT_ADJUSTMENT_REASON_REQUIRED: 'برای اصلاح دستی اعتبار، ذکر دلیل الزامی است.',

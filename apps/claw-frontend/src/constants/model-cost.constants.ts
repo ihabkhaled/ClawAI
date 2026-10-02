@@ -115,3 +115,7 @@ export const MODEL_COST_EMPTY_SOURCE_COUNTS: ModelCostSourceCounts = {
   [ModelPricingSource.LOCAL_FREE]: 0,
   [ModelPricingSource.UNPRICED]: 0,
 };
+
+// Rows rendered per "Show more" step. 187 cards at ~320px each made a
+// 60,000px phone page with the filters scrolled out of reach.
+export const MODEL_COST_PAGE_SIZE = 50;

@@ -33,7 +33,7 @@ export function ModelCostEditDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('adminModelCosts.form.title')}</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="[overflow-wrap:anywhere]">
             {row === null
               ? t('adminModelCosts.form.description')
               : t('adminModelCosts.form.descriptionFor', {

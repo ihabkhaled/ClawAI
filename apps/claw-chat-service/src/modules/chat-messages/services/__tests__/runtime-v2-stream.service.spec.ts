@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { firstValueFrom, type Observable, toArray } from 'rxjs';
 
 import { RUNTIME_V2_POLL_FAILURE_TOLERANCE } from '../../constants/runtime-v2-stream.constants';

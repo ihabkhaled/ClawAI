@@ -5,7 +5,7 @@ import { CreditFreeAllowanceRepository } from '../credit-free-allowance.reposito
 
 type Statement = { sql: string; values: unknown[] };
 
-const KEY = { userId: 'user-1', provider: 'GROK', periodKey: '2026-10' };
+const KEY = { userId: 'user-1', provider: '*', periodKey: '2026-10' };
 
 const asStatement = (strings: TemplateStringsArray, values: unknown[]): Statement => ({
   sql: strings.join('?').replaceAll(/\s+/g, ' ').trim(),
@@ -42,17 +42,17 @@ class FakeCounterTable {
 describe('CreditFreeAllowanceRepository', () => {
   let queryRaw: Mock;
   let executeRaw: Mock;
-  let findMany: Mock;
+  let findUnique: Mock;
   let repository: CreditFreeAllowanceRepository;
 
   beforeEach(() => {
     queryRaw = vi.fn().mockResolvedValue([{ used_count: 1 }]);
     executeRaw = vi.fn().mockResolvedValue(1);
-    findMany = vi.fn().mockResolvedValue([]);
+    findUnique = vi.fn().mockResolvedValue(null);
     repository = new CreditFreeAllowanceRepository({
       $queryRaw: queryRaw,
       $executeRaw: executeRaw,
-      creditFreeAllowanceUsage: { findMany },
+      creditFreeAllowanceUsage: { findUnique },
     } as unknown as PrismaService);
   });
 
@@ -97,7 +97,7 @@ describe('CreditFreeAllowanceRepository', () => {
       );
 
       expect(results.filter(Boolean)).toHaveLength(3);
-      expect(table.rows.get('user-1|GROK|2026-10')).toBe(3);
+      expect(table.rows.get('user-1|*|2026-10')).toBe(3);
     });
   });
 
@@ -113,17 +113,21 @@ describe('CreditFreeAllowanceRepository', () => {
     });
   });
 
-  describe('findForUserPeriod', () => {
-    it('reads one user and one month only', async () => {
-      findMany.mockResolvedValueOnce([{ provider: 'GROK', usedCount: 2 }]);
+  describe('findTotalUsed', () => {
+    it('reads the single total row of one user and one month', async () => {
+      findUnique.mockResolvedValueOnce({ usedCount: 2 });
 
-      await expect(repository.findForUserPeriod('user-1', '2026-10')).resolves.toEqual([
-        { provider: 'GROK', usedCount: 2 },
-      ]);
-      expect(findMany).toHaveBeenCalledWith({
-        where: { userId: 'user-1', periodKey: '2026-10' },
-        select: { provider: true, usedCount: true },
+      await expect(repository.findTotalUsed('user-1', '2026-10')).resolves.toBe(2);
+      expect(findUnique).toHaveBeenCalledWith({
+        where: {
+          userId_provider_periodKey: { userId: 'user-1', provider: '*', periodKey: '2026-10' },
+        },
+        select: { usedCount: true },
       });
+    });
+
+    it('is 0 when the user has not used any request this month', async () => {
+      await expect(repository.findTotalUsed('user-1', '2026-10')).resolves.toBe(0);
     });
   });
 });

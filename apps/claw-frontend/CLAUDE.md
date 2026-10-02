@@ -501,6 +501,21 @@ that 403s on every call.
   override; the help text says so, because automated sync will then never
   refresh it.
 
+## Credit / Included badge and the Model exposure panel (2026-10-02)
+
+- "Credit" on Model Prices and Model exposure is derived, never stored per model:
+  `utilities/model-billing.utility.ts` mirrors auth-service `isMeteredProvider`
+  (local exempt → connector roll-up "any ENABLED connector isPayAsYouGo" →
+  `PAYG_DEFAULT_PROVIDERS`). Change it on the provider's connector switch.
+- `useProviderCreditPolicy` reads every page of `GET /connectors` (limit 100);
+  one default call returns 20 rows and silently mislabels credit models.
+- `DataTable` passes `tableColumns` (all columns) to `ResponsiveTable`; before,
+  the mobile-title column vanished from every desktop table.
+- Model exposure = cards on `touch:`, sticky-header table on a mouse, 50 rows per
+  "Show more", filters in a bottom sheet on touch, sticky bulk bar. Copy lives in
+  `adminConnectors.exposureUi` (`locales/model-exposure-ui-translations.ts`).
+- Doc: `docs/05-frontend/admin-model-billing-and-exposure.md`.
+
 ## Admin per-user statistics modals: `/admin/users` (2026-09-06)
 
 Two per-row buttons on the users table, each opening a read-only modal.
@@ -831,3 +846,11 @@ gets is always the signed-out one.
 - Used by login (`LoginFailureReason.RATE_LIMITED`), sign-up, forgot password,
   verification resend and `/authorize/vscode` (now `useVscodeAuthorizationPage`).
   Failure copies carry `descriptionParams`; render `t(copy.descriptionKey, copy.descriptionParams)`.
+
+## A picked model that failed (2026-10-02, ADR-151)
+
+`metadata.pickedModelFallback` renders `PickedModelFallbackNotice` (translated "X failed, so Y answered", plus a
+costlier line). A stored error with `errorCode PICKED_MODEL_FAILED` (or a provider failure on a MANUAL_MODEL
+message, `offersPickedModelRecovery`) renders `PickedModelRecovery`: up to 3 buttons from `metadata.suggestedModels`
+(else the picker's own models minus the failed one) that regenerate with MANUAL_MODEL + provider + model, and a
+model picker. Copy: `pickedModel.*` in `picked-model-translations.ts` (13 locales).

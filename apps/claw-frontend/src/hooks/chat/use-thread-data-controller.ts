@@ -15,6 +15,7 @@ import type {
 import { logger, toQuoteRequest } from '@/utilities';
 import {
   resolveChatLimitNotice,
+  resolveChatLimitNoticeFromCode,
   resolveExhaustedQuotaNotice,
 } from '@/utilities/chat-limit-notice.utility';
 
@@ -52,8 +53,12 @@ export const useThreadDataController = ({
   // paragraph, and discover the wall only on submit. A live refusal still
   // wins, because it is about the message they just tried to send.
   const { entitlements } = useEntitlements();
+  // A credit refusal comes over SSE (the send was accepted), so the stream's
+  // error code is the second source, ahead of the standing quota notice.
   const limitNotice =
-    resolveChatLimitNotice(sendErrorObject) ?? resolveExhaustedQuotaNotice(entitlements?.quota);
+    resolveChatLimitNotice(sendErrorObject) ??
+    resolveChatLimitNoticeFromCode(detail.streamErrorCode) ??
+    resolveExhaustedQuotaNotice(entitlements?.quota);
   const { deleteThread, isPending: isDeleting } = useDeleteThread();
   const { setFeedback } = useMessageFeedback(threadId);
   const { regenerate } = useRegenerateMessage(threadId, detail.startWaitingForResponse);

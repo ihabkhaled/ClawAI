@@ -194,6 +194,13 @@ export class ResearchGateService {
    */
   async plan(message: string, attachmentDigest = ''): Promise<ResearchPlan> {
     const userUrls = detectPromptUrls(message);
+    // A link read out of an attachment (OCR, a document) is data about the
+    // file, not a site the user asked for: the planner may not crawl it.
+    const attachmentUrls = attachmentDigest.length > 0 ? detectPromptUrls(attachmentDigest) : [];
+    const planOptions = {
+      hasAttachments: attachmentDigest.length > 0,
+      excludedUrls: attachmentUrls.filter((url) => !userUrls.includes(url)),
+    };
     const candidates = await this.resolveCandidates();
     const digestBlock =
       attachmentDigest.length > 0
@@ -208,7 +215,7 @@ User message:
 ${message}${digestBlock}`,
         RESEARCH_PLANNER_MIN_OUTPUT_TOKENS,
       );
-      const plan = raw === null ? null : parseResearchPlan(raw, userUrls);
+      const plan = raw === null ? null : parseResearchPlan(raw, userUrls, planOptions);
       if (plan !== null) {
         this.logger.log(
           `plan: action=${plan.action} urls=${String(plan.urls.length)} maxPages=${String(plan.maxPages)} model=${candidate.modelAlias}`,

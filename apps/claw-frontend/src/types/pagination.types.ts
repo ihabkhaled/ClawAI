@@ -53,3 +53,26 @@ export type PaginationProps = {
   /** Test and accessibility handle for the whole control. */
   label?: string;
 };
+
+/** Stored "Show more" count, trusted only while its reset key still matches. */
+export type IncrementalListState = {
+  key: string;
+  count: number;
+};
+
+export type UseIncrementalListResult<T> = {
+  visible: T[];
+  shownCount: number;
+  totalCount: number;
+  hasMore: boolean;
+  showMore: () => void;
+};
+
+export type ListShowMoreProps = {
+  shownCount: number;
+  totalCount: number;
+  hasMore: boolean;
+  onShowMore: () => void;
+  showMoreLabel: string;
+  shownLabel: string;
+};

@@ -7,6 +7,12 @@ import {
   RESEARCH_ATTACHMENT_DIGEST_PER_FILE_CHARS,
   RESEARCH_DIGEST_VIDEO_PROCESSING_NOTE,
 } from '../constants/attachment-modality.constants';
+import {
+  PLANNER_MANIFEST_IMAGE_PENDING,
+  PLANNER_MANIFEST_NAME_MAX_CHARS,
+  PLANNER_MANIFEST_NO_TEXT_YET,
+} from '../constants/attachment-awareness.constants';
+import { attachmentKindOf } from './attachment-only-turn.utility';
 import { VIDEO_MIME_PREFIX } from '../../../common/constants/execution.constants';
 import { AUDIO_TRANSCRIPTION_PLACEHOLDER_PREFIX } from '../constants/voice-note.constants';
 import {
@@ -54,43 +60,57 @@ export function attachmentModalityFields(
 }
 
 /**
- * A SHORT digest of what the attachments say, for the research planner
- * (multimodal batch 8) — a transcript's opening words, an image's OCR text.
- * Bounded per file and overall; placeholders and empty rows contribute
- * nothing, except a video still processing at send time, which gets an
- * honest "not yet available" line. Framed by the caller as data, never
+ * What the research planner sees of the attachments (ADR-152): ONE line per
+ * file, whatever the user typed — kind, name, and either its derived text
+ * (transcript, OCR, document text), a vision-helper description already
+ * written for it, or an honest "read by the answering AI" state. Without it
+ * the planner knew nothing of the files and invented "I cannot view images".
+ * Bounded per file and overall. Framed by the caller as data, never
  * instructions.
  */
-export function buildAttachmentDigest(files: readonly FileContentResponse[]): string {
-  const parts: string[] = [];
+export function buildAttachmentDigest(
+  files: readonly FileContentResponse[],
+  describedImage?: (fileId: string) => string | undefined,
+): string {
+  const lines: string[] = [];
   let used = 0;
   for (const file of files) {
-    const digestText = digestTextOf(file);
-    if (digestText === null) {
-      continue;
-    }
     const room = RESEARCH_ATTACHMENT_DIGEST_MAX_CHARS - used;
     if (room <= 0) {
       break;
     }
-    const excerpt = digestText.slice(0, Math.min(RESEARCH_ATTACHMENT_DIGEST_PER_FILE_CHARS, room));
-    const safeName = file.filename.replaceAll(/[\r\n"]/g, ' ');
-    parts.push(`"${safeName}" (${file.mimeType}): ${excerpt}`);
-    used += excerpt.length;
+    const safeName = file.filename
+      .replaceAll(/[\r\n"]/g, ' ')
+      .slice(0, PLANNER_MANIFEST_NAME_MAX_CHARS);
+    const detail = digestDetailOf(file, describedImage?.(file.id));
+    const line = `- "${safeName}" (${attachmentKindOf(file)}, ${file.mimeType}): ${detail}`.slice(
+      0,
+      room,
+    );
+    lines.push(line);
+    used += line.length;
   }
-  return parts.join('\n');
+  return lines.join('\n');
 }
 
-/** What one attachment adds to the digest, or null for nothing. */
-function digestTextOf(file: FileContentResponse): string | null {
+/** What one attachment contributes to its digest line; never empty. */
+function digestDetailOf(file: FileContentResponse, described: string | undefined): string {
   const text = (file.extractedText ?? '').replaceAll(/\s+/g, ' ').trim();
   if (text.length > 0 && !isPlaceholder(text)) {
-    return text;
+    return text.slice(0, RESEARCH_ATTACHMENT_DIGEST_PER_FILE_CHARS);
   }
-  const isVideo = file.mimeType.toLowerCase().startsWith(VIDEO_MIME_PREFIX);
-  return isVideo && videoInFlight(file) && !videoProcessingFailed(file)
-    ? RESEARCH_DIGEST_VIDEO_PROCESSING_NOTE
-    : null;
+  const helperText = (described ?? '').replaceAll(/\s+/g, ' ').trim();
+  if (helperText.length > 0) {
+    return `described by a vision assistant: ${helperText.slice(0, RESEARCH_ATTACHMENT_DIGEST_PER_FILE_CHARS)}`;
+  }
+  if (file.mimeType.toLowerCase().startsWith(VIDEO_MIME_PREFIX)) {
+    return videoInFlight(file) && !videoProcessingFailed(file)
+      ? RESEARCH_DIGEST_VIDEO_PROCESSING_NOTE
+      : PLANNER_MANIFEST_NO_TEXT_YET;
+  }
+  return file.mimeType.toLowerCase().startsWith('image/')
+    ? PLANNER_MANIFEST_IMAGE_PENDING
+    : PLANNER_MANIFEST_NO_TEXT_YET;
 }
 
 function isPlaceholder(text: string): boolean {

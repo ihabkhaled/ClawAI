@@ -8,4 +8,6 @@ export type ProviderRetryPlan = {
   learnedMaxOutputTokens?: number;
   /** Wait this long before retrying (transient rate limit). */
   delayMs?: number;
+  /** Remember the model rejects this sampling parameter, and resend without it. */
+  dropSamplingParameter?: string;
 };

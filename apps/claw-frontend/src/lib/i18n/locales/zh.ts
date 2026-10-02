@@ -3,7 +3,9 @@
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
+import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
+import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -501,6 +503,11 @@ export const zh: TranslationDictionary = {
       paygPricingUnavailableTitle: '暂时不可用',
       paygPricingUnavailableBody:
         '无法获取价格信息，付费模型已暂停片刻。未向您收取任何费用。本地模型仍可正常使用。',
+      paygFreeAllowanceExhaustedTitle: '信用额度模型的免费请求已用完',
+      paygFreeAllowanceExhaustedBody:
+        '本月您对信用额度模型的免费请求已全部用完。请升级到付费套餐或充值额度以继续使用。套餐内包含的模型仍可正常使用。',
+      paygFreeAllowanceExhaustedBodyWithLimit:
+        '本月您对信用额度模型的 {limit} 次免费请求已全部用完。请升级到付费套餐或充值额度以继续使用。套餐内包含的模型仍可正常使用。',
       dailyTokensTitle: '今天的额度已用完',
       dailyTokensBody: '你今天的 token 额度已用完，将在 UTC 零点重置，也可以现在升级到更大的套餐。',
       weeklyTokensTitle: '本周的额度已用完',
@@ -4110,6 +4117,7 @@ export const zh: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.zh.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.zh,
   narration: NARRATION_TRANSLATIONS.zh,
+  pickedModel: PICKED_MODEL_TRANSLATIONS.zh,
   mediaUi: MEDIA_UI_TRANSLATIONS.zh,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.zh,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.zh,
@@ -4199,6 +4207,7 @@ export const zh: TranslationDictionary = {
       clearSelection: '清除选择',
       impactWarning: '取消开放会将这些模型从所有使用它们的套餐中移除：',
     },
+    exposureUi: MODEL_EXPOSURE_UI_TRANSLATIONS.zh,
   },
   adminPlans: {
     intervalDiscounts: {
@@ -4286,9 +4295,9 @@ export const zh: TranslationDictionary = {
       maxContextPacks: '最大上下文包',
       maxMemoryItems: '最大内存项',
       maxVideoSeconds: '最长视频时长（秒）',
-      creditConnectorFreeRequests: '每个积分连接器每月免费请求数',
+      creditConnectorFreeRequests: '每月对积分模型的免费请求总数',
       creditConnectorFreeRequestsHelp:
-        '此套餐用户每月通过积分连接器可发起多少次请求后才开始扣除积分。留空表示不限制；0 表示关闭。',
+        '此套餐用户每月通过所有积分连接器合计可发起多少次请求，超过后才需要积分。留空表示不限制；0 表示关闭。已购买的积分可在超出此数量后继续使用。',
       creditConnectorFreeRequestsInvalid: '请输入 0 到 100000 之间的整数，或留空表示不限制。',
       isPublic: '公开上市',
       isTrial: '免费试用套餐',
@@ -4747,6 +4756,8 @@ export const zh: TranslationDictionary = {
       PAYG_PROMPT_TOO_EXPENSIVE: '本次对话的费用超过了您剩余的连接器额度。',
       PAYG_MODEL_UNPRICED: '该模型尚未发布价格，无法计费。',
       PAYG_PRICING_UNAVAILABLE: '暂时无法获取价格信息。未向您收取任何费用。',
+      PAYG_FREE_ALLOWANCE_EXHAUSTED:
+        '本月对信用额度模型的免费请求已用完。请升级套餐或充值额度以继续。',
       CREDIT_PACKAGE_NOT_FOUND: '该额度套餐已不存在。',
       CREDIT_PACKAGE_INACTIVE: '该额度套餐已停售。',
       CREDIT_ADJUSTMENT_REASON_REQUIRED: '手动调整额度必须填写原因。',

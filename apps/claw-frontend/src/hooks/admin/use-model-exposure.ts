@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
+import { EMPTY_MODEL_EXPOSURE_FILTERS } from '@/constants/model-exposure.constants';
 import { ConnectorModelExposure } from '@/enums/connector-model-exposure.enum';
 import {
   fetchConnectorModels,
@@ -13,7 +14,11 @@ import type {
   ModelExposureFilters,
   UseModelExposureResult,
 } from '@/types/model-exposure.types';
-import { chunkModelKeys, describeModelExposureError } from '@/utilities/model-exposure.utility';
+import {
+  chunkModelKeys,
+  describeModelExposureError,
+  removeKeys,
+} from '@/utilities/model-exposure.utility';
 
 export function useModelExposure(connectorId: string): UseModelExposureResult {
   const [rows, setRows] = useState<ConnectorModelRow[]>([]);
@@ -22,10 +27,7 @@ export function useModelExposure(connectorId: string): UseModelExposureResult {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [filters, setFilters] = useState<ModelExposureFilters>({
-    search: '',
-    provider: null,
-    exposedOnly: null,
-    kind: null,
+    ...EMPTY_MODEL_EXPOSURE_FILTERS,
   });
 
   const load = useCallback(async () => {
@@ -93,10 +95,13 @@ export function useModelExposure(connectorId: string): UseModelExposureResult {
     [rows, selected],
   );
 
-  const apply = useCallback(
-    async (exposed: boolean) => {
-      // apply() must not fire with an empty selection.
-      if (selected.size === 0) {
+  // Applies to an explicit key list: the bulk bar passes the selection, a
+  // row's action menu passes one key. Only the applied keys leave the
+  // selection, so a single-row action keeps the operator's bulk selection.
+  const applyTo = useCallback(
+    async (modelKeys: string[], exposed: boolean) => {
+      // Must not fire with an empty key list.
+      if (modelKeys.length === 0) {
         return;
       }
       setIsSaving(true);
@@ -106,7 +111,7 @@ export function useModelExposure(connectorId: string): UseModelExposureResult {
       // shown" can pick far more than that (a connector can carry hundreds
       // of models), so a bulk apply goes out as sequential batches instead
       // of one oversized request.
-      const batches = chunkModelKeys(Array.from(selected));
+      const batches = chunkModelKeys(modelKeys);
       let appliedKeys = 0;
       try {
         for (const batch of batches) {
@@ -118,7 +123,7 @@ export function useModelExposure(connectorId: string): UseModelExposureResult {
         // did rather than what was requested.
         const refreshed = await fetchConnectorModels(connectorId);
         setRows(refreshed);
-        clearSelection();
+        setSelected((prev) => removeKeys(prev, modelKeys));
       } catch (err) {
         // A batch partway through failing still applied everything before
         // it — say so, and leave the remaining selection intact so the
@@ -136,8 +141,15 @@ export function useModelExposure(connectorId: string): UseModelExposureResult {
         setIsSaving(false);
       }
     },
-    [connectorId, selected, clearSelection],
+    [connectorId],
   );
+
+  const apply = useCallback(
+    (exposed: boolean) => applyTo(Array.from(selected), exposed),
+    [applyTo, selected],
+  );
+
+  const resetFilters = useCallback(() => setFilters({ ...EMPTY_MODEL_EXPOSURE_FILTERS }), []);
 
   return {
     rows,
@@ -156,5 +168,7 @@ export function useModelExposure(connectorId: string): UseModelExposureResult {
     impact,
     load,
     apply,
+    applyTo,
+    resetFilters,
   };
 }

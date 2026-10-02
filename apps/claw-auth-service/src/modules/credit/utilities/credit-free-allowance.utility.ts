@@ -5,7 +5,7 @@ import {
   FREE_ALLOWANCE_FALLBACK_REQUEST_CEILING_MICRO_USD,
   FREE_ALLOWANCE_UNLIMITED_COUNTER_LIMIT,
 } from '../constants/credit-free-allowance.constants';
-import { type CreditReserveInput } from '../types/credit.types';
+import { type CreditFreeAllowancePolicy, type CreditReserveInput } from '../types/credit.types';
 
 /**
  * Whether a plan's allowance setting lets a request in at all.
@@ -16,6 +16,16 @@ import { type CreditReserveInput } from '../types/credit.types';
  */
 export function isFreeAllowanceEnabled(limit: number | null): boolean {
   return limit === null || (Number.isInteger(limit) && limit > 0);
+}
+
+/**
+ * True when the plan caps the allowance at a finite number of requests a month.
+ * Only a capped allowance is enforced ahead of the wallet and with metering off:
+ * the cap is the plan's promise ("stop at N"), an unlimited allowance promises
+ * nothing to stop at (ADR-142 update 2026-10-02).
+ */
+export function isCappedAllowance(policy: CreditFreeAllowancePolicy): boolean {
+  return policy.limit !== null;
 }
 
 /** The limit handed to the atomic counter. `null` (unlimited) becomes INT4 max. */
@@ -37,9 +47,9 @@ export function isFreeAllowanceEligible(input: CreditReserveInput): boolean {
   return !perUnit && FREE_ALLOWANCE_ELIGIBLE_SURFACES.includes(input.surface);
 }
 
-/** The counter key for a provider: trimmed and upper-cased, as the policy map is read. */
-export function normalizeAllowanceProvider(provider: string): string {
-  return provider.trim().toUpperCase();
+/** First instant of the next UTC month: when the free-request counter resets. */
+export function nextUtcMonthStart(now: Date): Date {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
 }
 
 /**
@@ -66,16 +76,20 @@ export function computeFreeRequestCeilingMicroUsd(
     : FREE_ALLOWANCE_FALLBACK_REQUEST_CEILING_MICRO_USD;
 }
 
-/** One provider's row for `GET /credit/me`. `remaining` is `null` when unlimited. */
+/**
+ * The user's ONE free-request total for `GET /credit/me` (owner decision
+ * 2026-10-02: one count across every credit connector). `limit` and `remaining`
+ * are `null` when unlimited; `resetsAt` is the next UTC month start.
+ */
 export function toFreeAllowanceView(
-  provider: string,
   limit: number | null,
   used: number,
+  resetsAt: Date,
 ): PaygFreeAllowanceView {
   return {
-    provider,
     limit,
     used,
     remaining: limit === null ? null : Math.max(0, limit - used),
+    resetsAt: resetsAt.toISOString(),
   };
 }

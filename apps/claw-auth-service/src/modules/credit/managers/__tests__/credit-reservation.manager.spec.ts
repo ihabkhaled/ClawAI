@@ -128,7 +128,7 @@ describe('CreditReservationManager', () => {
     applySettlement: Mock;
     recordFreeAllowance: Mock;
   };
-  let freeAllowance: { tryAdmit: Mock; giveBack: Mock };
+  let freeAllowance: { tryAdmit: Mock; giveBack: Mock; resolvePolicy: Mock };
   let grants: { ensureCurrentPeriod: Mock };
   let rates: { findRate: Mock; invalidate: Mock };
   let policy: { getPolicy: Mock };
@@ -185,10 +185,11 @@ describe('CreditReservationManager', () => {
       }),
       recordFreeAllowance: vi.fn().mockResolvedValue(makeWallet()),
     };
-    // Default: the plan gives no free requests, so every existing case below is
-    // exactly the credit-only behaviour it was written against.
+    // Default: the plan gives no free requests (no policy), so every existing case
+    // below is exactly the credit-only behaviour it was written against.
     freeAllowance = {
-      tryAdmit: vi.fn().mockResolvedValue(null),
+      resolvePolicy: vi.fn().mockResolvedValue(null),
+      tryAdmit: vi.fn().mockResolvedValue({ status: 'SPENT', limit: 0 }),
       giveBack: vi.fn().mockResolvedValue(undefined),
     };
     grants = {
@@ -592,6 +593,7 @@ describe('CreditReservationManager', () => {
   // ADR-142: the plan's free requests on a credit connector. Credit is spent
   // FIRST; the allowance is only the fallback when credit cannot cover the call.
   describe('the free allowance fallback', () => {
+    const UNLIMITED = { limit: null, requestCeilingMicroUsd: 150_000n };
     const EMPTY_WALLET = { wallet: makeWallet({ grantMicroUsd: 0n }), availableMicroUsd: 0n };
     const ADMISSION = {
       counter: { userId: 'user-1', provider: 'OPENAI', periodKey: '2026-08' },
@@ -602,7 +604,10 @@ describe('CreditReservationManager', () => {
 
     beforeEach(() => {
       grants['ensureCurrentPeriod'].mockResolvedValue(EMPTY_WALLET);
-      freeAllowance.tryAdmit.mockResolvedValue(ADMISSION);
+      // An UNLIMITED allowance (null) stays credit-first: only a capped one is
+      // counted ahead of the wallet (see the capped describe below).
+      freeAllowance.resolvePolicy.mockResolvedValue(UNLIMITED);
+      freeAllowance.tryAdmit.mockResolvedValue({ status: 'ADMITTED', admission: ADMISSION });
     });
 
     it('admits an empty wallet on the allowance: no hold, a zero-amount ledger trace', async () => {
@@ -688,8 +693,8 @@ describe('CreditReservationManager', () => {
       await expect(manager.reserve(makeInput())).resolves.toMatchObject({ freeAllowance: true });
     });
 
-    it('a spent allowance reads exactly like an empty wallet: 402 PAYG_CREDIT_EXHAUSTED', async () => {
-      freeAllowance.tryAdmit.mockResolvedValue(null);
+    it('an unlimited allowance that cannot admit reads like an empty wallet: 402 PAYG_CREDIT_EXHAUSTED', async () => {
+      freeAllowance.tryAdmit.mockResolvedValue({ status: 'PROMPT_TOO_LARGE' });
 
       await expect(manager.reserve(makeInput())).rejects.toMatchObject({
         code: BillingErrorCode.PAYG_CREDIT_EXHAUSTED,
@@ -703,7 +708,7 @@ describe('CreditReservationManager', () => {
         wallet: makeWallet({ grantMicroUsd: 100n }),
         availableMicroUsd: 100n,
       });
-      freeAllowance.tryAdmit.mockResolvedValue(null);
+      freeAllowance.tryAdmit.mockResolvedValue({ status: 'PROMPT_TOO_LARGE' });
 
       await expect(manager.reserve(makeInput({ promptTokens: 5000 }))).rejects.toMatchObject({
         code: BillingErrorCode.PAYG_PROMPT_TOO_EXPENSIVE,
@@ -875,6 +880,260 @@ describe('CreditReservationManager', () => {
         await manager.release('res-1', 'TIMEOUT');
 
         expect(client.eval).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  // Owner decision 2026-10-02 (ADR-142 update): a plan with a finite allowance
+  // counts EVERY credit-connector request ahead of the wallet and refuses N+1 with
+  // PAYG_FREE_ALLOWANCE_EXHAUSTED, grant or no grant; purchased credit bypasses
+  // the cap; the cap holds with the metering kill switch OFF.
+  describe('the capped free allowance (N requests a month, one total)', () => {
+    const cappedPolicy = (limit: number) => ({ limit, requestCeilingMicroUsd: 60_000n });
+    const ADMISSION = {
+      counter: { userId: 'user-1', provider: '*', periodKey: '2026-08' },
+      maxOutputTokens: 14_900,
+      clamped: true,
+      worstCaseCostMicroUsd: 60_000n,
+    };
+    const GRANT_WALLET = { wallet: makeWallet(), availableMicroUsd: 50_000n };
+
+    /** An in-memory stand-in for the guarded counter: ADMITTED while below the limit. */
+    const useCounter = (limit: number): { used: () => number } => {
+      let used = 0;
+      freeAllowance.resolvePolicy.mockResolvedValue(cappedPolicy(limit));
+      freeAllowance.tryAdmit.mockImplementation(async () => {
+        if (used >= limit) {
+          return { status: 'SPENT', limit };
+        }
+        used += 1;
+        return { status: 'ADMITTED', admission: ADMISSION };
+      });
+      return { used: () => used };
+    };
+
+    beforeEach(() => {
+      freeAllowance.resolvePolicy.mockResolvedValue(cappedPolicy(5));
+      freeAllowance.tryAdmit.mockResolvedValue({ status: 'ADMITTED', admission: ADMISSION });
+    });
+
+    it('counts a grant-funded user first: the request is a free request, nothing is held', async () => {
+      grants['ensureCurrentPeriod'].mockResolvedValue(GRANT_WALLET);
+
+      const outcome = await manager.reserve(makeInput());
+
+      expect(outcome).toMatchObject({ metered: true, freeAllowance: true, heldMicroUsd: 0 });
+      expect(freeAllowance.tryAdmit).toHaveBeenCalledTimes(1);
+      expect(wallets['applyHold']).not.toHaveBeenCalled();
+      expect(client.eval).not.toHaveBeenCalled();
+    });
+
+    it('refuses with PAYG_FREE_ALLOWANCE_EXHAUSTED once the cap is spent, even with a grant that could pay', async () => {
+      grants['ensureCurrentPeriod'].mockResolvedValue(GRANT_WALLET);
+      freeAllowance.tryAdmit.mockResolvedValue({ status: 'SPENT', limit: 5 });
+
+      await expect(manager.reserve(makeInput())).rejects.toMatchObject({
+        code: BillingErrorCode.PAYG_FREE_ALLOWANCE_EXHAUSTED,
+      });
+      expect(wallets['applyHold']).not.toHaveBeenCalled();
+      expect(usage['createReservation']).not.toHaveBeenCalled();
+    });
+
+    it.each([5, 15])(
+      'a plan of %i admits exactly that many requests and refuses the next',
+      async (limit) => {
+        const counter = useCounter(limit);
+        grants['ensureCurrentPeriod'].mockResolvedValue(GRANT_WALLET);
+
+        for (let i = 0; i < limit; i += 1) {
+          await expect(
+            manager.reserve(makeInput({ requestId: `req-${i}` })),
+          ).resolves.toMatchObject({
+            freeAllowance: true,
+          });
+        }
+        await expect(manager.reserve(makeInput({ requestId: 'req-over' }))).rejects.toMatchObject({
+          code: BillingErrorCode.PAYG_FREE_ALLOWANCE_EXHAUSTED,
+        });
+        expect(counter.used()).toBe(limit);
+      },
+    );
+
+    it('is ONE total: requests on different providers draw from the same count', async () => {
+      const counter = useCounter(5);
+      policy['getPolicy'].mockResolvedValue({ OPENAI: true, ANTHROPIC: true, GROK: true });
+      grants['ensureCurrentPeriod'].mockResolvedValue(GRANT_WALLET);
+      const providers = ['OPENAI', 'ANTHROPIC', 'GROK'];
+
+      const results = await Promise.allSettled(
+        Array.from({ length: 8 }, (_, i) =>
+          manager.reserve(
+            makeInput({
+              requestId: `req-${i}`,
+              provider: providers[i % providers.length] ?? 'GROK',
+            }),
+          ),
+        ),
+      );
+
+      expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(5);
+      expect(counter.used()).toBe(5);
+    });
+
+    it('PURCHASED credit bypasses the cap: charged from the wallet, the counter untouched', async () => {
+      grants['ensureCurrentPeriod'].mockResolvedValue({
+        wallet: makeWallet({ purchasedMicroUsd: 40_000n }),
+        availableMicroUsd: 90_000n,
+      });
+      freeAllowance.tryAdmit.mockResolvedValue({ status: 'SPENT', limit: 5 });
+
+      const outcome = await manager.reserve(makeInput());
+
+      expect(outcome).toMatchObject({ metered: true });
+      expect(outcome).not.toHaveProperty('freeAllowance');
+      expect(freeAllowance.tryAdmit).not.toHaveBeenCalled();
+      expect(wallets['applyHold']).toHaveBeenCalledTimes(1);
+    });
+
+    it('a prompt the per-request ceiling cannot pay is PAYG_PROMPT_TOO_EXPENSIVE, not a spent cap', async () => {
+      grants['ensureCurrentPeriod'].mockResolvedValue(GRANT_WALLET);
+      freeAllowance.tryAdmit.mockResolvedValue({ status: 'PROMPT_TOO_LARGE' });
+
+      await expect(manager.reserve(makeInput())).rejects.toMatchObject({
+        code: BillingErrorCode.PAYG_PROMPT_TOO_EXPENSIVE,
+      });
+    });
+
+    it('a per-unit surface is not counted: the wallet decides it as before', async () => {
+      grants['ensureCurrentPeriod'].mockResolvedValue(GRANT_WALLET);
+      freeAllowance.tryAdmit.mockResolvedValue({ status: 'INELIGIBLE' });
+
+      const outcome = await manager.reserve(
+        makeInput({ surface: PaygSurface.IMAGE, imageUnits: 1 }),
+      );
+
+      expect(outcome).toMatchObject({ metered: true });
+      expect(outcome).not.toHaveProperty('freeAllowance');
+    });
+
+    it('a request that fails gives its slot back so it does not count', async () => {
+      usage['findByReservationId'].mockResolvedValue(
+        makeRecord({
+          isFreeAllowance: true,
+          creditGrantMicroUsd: 0n,
+          creditPurchasedMicroUsd: 0n,
+          monthKey: '2026-08',
+        }),
+      );
+
+      await manager.release('res-1', 'PROVIDER_ERROR');
+
+      expect(freeAllowance.giveBack).toHaveBeenCalledWith({
+        userId: 'user-1',
+        provider: 'OPENAI',
+        periodKey: '2026-08',
+      });
+    });
+
+    describe('with the metering kill switch OFF (production never had the row)', () => {
+      beforeEach(() => {
+        settings['isEnabled'].mockResolvedValue(false);
+      });
+
+      it('still counts a capped plan, and prices and holds nothing', async () => {
+        const outcome = await manager.reserve(makeInput());
+
+        expect(outcome).toMatchObject({ metered: true, freeAllowance: true, heldMicroUsd: 0 });
+        expect(freeAllowance.tryAdmit).toHaveBeenCalledWith(
+          expect.objectContaining({ provider: 'OPENAI' }),
+          null,
+          cappedPolicy(5),
+          expect.any(Date),
+        );
+        expect(rates['findRate']).not.toHaveBeenCalled();
+        expect(grants['ensureCurrentPeriod']).not.toHaveBeenCalled();
+        expect(wallets['applyHold']).not.toHaveBeenCalled();
+      });
+
+      it.each([5, 15])('stops at exactly %i requests', async (limit) => {
+        useCounter(limit);
+
+        for (let i = 0; i < limit; i += 1) {
+          await manager.reserve(makeInput({ requestId: `req-${i}` }));
+        }
+        await expect(manager.reserve(makeInput({ requestId: 'req-over' }))).rejects.toMatchObject({
+          code: BillingErrorCode.PAYG_FREE_ALLOWANCE_EXHAUSTED,
+        });
+      });
+
+      it('leaves a paid plan (no allowance policy) unmetered exactly as before', async () => {
+        freeAllowance.resolvePolicy.mockResolvedValue(null);
+
+        await expect(manager.reserve(makeInput())).resolves.toEqual({
+          metered: false,
+          reason: 'METERING_DISABLED',
+          maxOutputTokens: DEFAULT_MAX_OUTPUT,
+        });
+        expect(freeAllowance.tryAdmit).not.toHaveBeenCalled();
+      });
+
+      it('leaves an UNLIMITED allowance unmetered: there is no number to stop at', async () => {
+        freeAllowance.resolvePolicy.mockResolvedValue({ limit: null, requestCeilingMicroUsd: 1n });
+
+        await expect(manager.reserve(makeInput())).resolves.toMatchObject({ metered: false });
+        expect(freeAllowance.tryAdmit).not.toHaveBeenCalled();
+      });
+
+      it('never counts a local provider', async () => {
+        await expect(manager.reserve(makeInput({ provider: 'OLLAMA' }))).resolves.toMatchObject({
+          metered: false,
+        });
+        expect(freeAllowance.tryAdmit).not.toHaveBeenCalled();
+      });
+
+      it('never counts a provider the connector policy does not meter', async () => {
+        policy['getPolicy'].mockResolvedValue({ OPENAI: false });
+
+        await expect(manager.reserve(makeInput())).resolves.toMatchObject({ metered: false });
+        expect(freeAllowance.tryAdmit).not.toHaveBeenCalled();
+      });
+
+      it('never counts an administrator', async () => {
+        users['findUserById'].mockResolvedValue({ id: 'admin-1', role: UserRole.ADMIN });
+
+        await expect(manager.reserve(makeInput())).resolves.toMatchObject({ metered: false });
+        expect(freeAllowance.tryAdmit).not.toHaveBeenCalled();
+      });
+
+      it('counts coding-agent turns and stops them at the cap', async () => {
+        useCounter(2);
+
+        for (let i = 0; i < 2; i += 1) {
+          await manager.reserve(makeInput({ surface: PaygSurface.CODING_AGENT, requestId: `a-${i}` }));
+        }
+        await expect(
+          manager.reserve(makeInput({ surface: PaygSurface.CODING_AGENT, requestId: 'a-over' })),
+        ).rejects.toMatchObject({ code: BillingErrorCode.PAYG_FREE_ALLOWANCE_EXHAUSTED });
+      });
+
+      it('never counts a per-unit surface', async () => {
+        await expect(
+          manager.reserve(makeInput({ surface: PaygSurface.VIDEO, videoSeconds: 8 })),
+        ).resolves.toMatchObject({ metered: false });
+        expect(freeAllowance.tryAdmit).not.toHaveBeenCalled();
+      });
+
+      it('a retried request reuses its slot instead of taking a second one', async () => {
+        usage['findOpenPaygReservation'].mockResolvedValue(
+          makeRecord({
+            isFreeAllowance: true,
+            creditGrantMicroUsd: 0n,
+            creditPurchasedMicroUsd: 0n,
+          }),
+        );
+
+        await expect(manager.reserve(makeInput())).resolves.toMatchObject({ freeAllowance: true });
+        expect(freeAllowance.tryAdmit).not.toHaveBeenCalled();
       });
     });
   });

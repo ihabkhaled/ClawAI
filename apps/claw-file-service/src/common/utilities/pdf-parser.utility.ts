@@ -75,3 +75,34 @@ function pageNumbers(range: PdfPageRange): number[] {
   for (let page = from; page <= to; page += 1) numbers.push(page);
   return numbers;
 }
+
+/**
+ * The first `maxPages` pages of a PDF drawn as PNG images, so a scanned
+ * (image-only) PDF can go through the same OCR an uploaded picture does.
+ * Pages that fail to draw are skipped rather than failing the whole file.
+ */
+export async function renderPdfPages(
+  buffer: Buffer,
+  maxPages: number,
+  scale: number,
+): Promise<Buffer[]> {
+  const { PDFParse } = await import('pdf-parse');
+  const parser = new PDFParse({ data: buffer });
+  try {
+    const result = await parser.getScreenshot({
+      partial: pageNumbers({ from: 1, to: Math.max(1, maxPages) }),
+      scale,
+      imageBuffer: true,
+      imageDataUrl: false,
+    });
+    const images = result.pages.flatMap((page) =>
+      page.data.length > 0 ? [Buffer.from(page.data)] : [],
+    );
+    logger.debug(
+      `renderPdfPages: rendered ${String(images.length)} of ${String(result.total)} pages (cap ${String(maxPages)})`,
+    );
+    return images;
+  } finally {
+    await parser.destroy();
+  }
+}

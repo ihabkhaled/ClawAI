@@ -27,4 +27,9 @@ export enum ChatLimitKind {
    * is fine, and copy that blames it would sell a top-up nobody needed.
    */
   PaygPricingUnavailable = 'PAYG_PRICING_UNAVAILABLE',
+  /**
+   * The plan's free requests on credit models are used up for the month. The
+   * remedy is a paid plan OR credit, so the card offers both buttons.
+   */
+  PaygFreeAllowanceExhausted = 'PAYG_FREE_ALLOWANCE_EXHAUSTED',
 }

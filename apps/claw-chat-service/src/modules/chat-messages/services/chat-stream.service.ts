@@ -371,6 +371,9 @@ export class ChatStreamService implements OnModuleInit {
       error,
       ...(metadata.code === undefined ? {} : { code: metadata.code }),
       ...(metadata.messageKey === undefined ? {} : { messageKey: metadata.messageKey }),
+      ...(metadata.suggestedModels === undefined
+        ? {}
+        : { suggestedModels: metadata.suggestedModels }),
       label: 'Response failed',
       description: error,
       actorType: ProgressActorType.SYSTEM,

@@ -120,12 +120,15 @@ describe('ContextAssemblyManager attachment-only turns', () => {
     expect(lastContent(messages)).toContain('For an image');
   });
 
-  it('leaves a real question untouched', () => {
+  it('keeps a real question as typed and adds only the attachment pointer', () => {
     const messages = manager.buildChatMessages(
       contextWith([row('m1', 'USER', 'translate this to English')], [voiceNote]),
     );
 
-    expect(lastContent(messages)).toBe('translate this to English');
+    const text = lastContent(messages);
+    expect(text.startsWith('translate this to English')).toBe(true);
+    expect(text).not.toContain(ATTACHMENT_ONLY_TURN_MARKER);
+    expect(text).toContain('"voice-note.webm" (audio)');
   });
 
   it('leaves a trivial turn untouched when nothing is attached', () => {
@@ -143,7 +146,7 @@ describe('ContextAssemblyManager attachment-only turns', () => {
     );
 
     expect(messages.map((message) => message.content)).toContain('.');
-    expect(lastContent(messages)).toBe('and now?');
+    expect(lastContent(messages).startsWith('and now?')).toBe(true);
   });
 
   describe('a video sent with no text', () => {

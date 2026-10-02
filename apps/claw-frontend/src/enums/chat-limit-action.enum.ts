@@ -14,4 +14,6 @@ export enum ChatLimitAction {
   Upgrade = 'UPGRADE',
   /** The wallet is empty; the fix is credit, not a different plan. */
   AddCredit = 'ADD_CREDIT',
+  /** Either fixes it: a paid plan, or credit. Both buttons are shown. */
+  UpgradeOrAddCredit = 'UPGRADE_OR_ADD_CREDIT',
 }

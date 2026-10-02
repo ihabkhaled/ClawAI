@@ -289,7 +289,10 @@ describe('CreditReservationManager — unit metering', () => {
           },
         },
         // Per-unit surfaces are never eligible for the free allowance (ADR-142).
-        { provide: CreditFreeAllowanceService, useValue: { tryAdmit: vi.fn() } },
+        {
+          provide: CreditFreeAllowanceService,
+          useValue: { tryAdmit: vi.fn(), resolvePolicy: vi.fn().mockResolvedValue(null) },
+        },
       ],
     }).compile();
 

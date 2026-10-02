@@ -63,6 +63,8 @@ export const PAYG_CREDIT_ERROR_MESSAGES: Readonly<Record<string, string>> = Obje
     'This prompt costs more than the credit you have left. Add credit, shorten the prompt, or switch to a local model.',
   [BillingErrorCode.PAYG_MODEL_UNPRICED]:
     'This model has no published price yet, so it cannot be billed. Pick another model.',
+  [BillingErrorCode.PAYG_FREE_ALLOWANCE_EXHAUSTED]:
+    'You have used all your free requests to credit models this month. Upgrade to a paid plan or add credit to keep using them. Included models still work.',
   [BillingErrorCode.PAYG_PRICING_UNAVAILABLE]:
     'Credit checks are temporarily unavailable, so paid models are paused. Local models still work.',
 });

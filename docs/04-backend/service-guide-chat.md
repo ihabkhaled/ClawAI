@@ -1242,3 +1242,10 @@ A picked veo/grok-video model, or an AUTO video request, routes to `VIDEO_GEMINI
   paths and `..` are 400). It is an identifier for matching a workspace to a thread, not
   a clone URL. A branch copies it. Create-only: `PATCH` leaves it alone. The runner side
   of resume is agent-service `GET agent/runners/:id/resume` (see its service guide).
+
+## A picked model that fails (ADR-151)
+
+See [ADR-151](../13-adr/adr-151-picked-model-smart-fallback.md) and the chat-service CLAUDE.md section:
+substitutes come from routing-service (`pickedModelSubstitutes`), at most two are tried after a provider
+failure only, the answer is labelled (`metadata.pickedModelFallback`), and an all-failed turn stores
+`PICKED_MODEL_FAILED` with three `suggestedModels`.

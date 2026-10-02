@@ -71,6 +71,7 @@
 | [PWA Update Banner](05-frontend/pwa-update-banner.md)            | How a new version is offered, and why it asks only once         |
 | [Trial Banner Dismissal](05-frontend/trial-banner-dismissal.md)  | Snooze / hide-forever for the trial banner, and when it returns |
 | [Observability Page](05-frontend/observability-page.md)          | Service status (state, uptime, incidents) and usage, admin-only |
+| [Admin Model Billing and Exposure](05-frontend/admin-model-billing-and-exposure.md) | Credit / Included badge source, responsive Model exposure panel |
 
 ### Layer E: Data & Integrations
 

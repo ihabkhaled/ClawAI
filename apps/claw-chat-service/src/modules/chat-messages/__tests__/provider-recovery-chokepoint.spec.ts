@@ -3,6 +3,7 @@ import { type Mock, vi } from 'vitest';
 import { ChatExecutionManager } from '../managers/chat-execution.manager';
 import { ProviderCircuitBreakerManager } from '../managers/provider-circuit-breaker.manager';
 import { ProviderStreamExecutor } from '../managers/provider-stream-executor.manager';
+import { SamplingParameterSupportManager } from '../managers/sampling-parameter-support.manager';
 import type { ContextAssemblyManager } from '../managers/context-assembly.manager';
 import type { GeminiFilesApiManager } from '../managers/gemini-files-api.manager';
 import type { JudgeRefereeManager } from '../managers/judge-referee.manager';
@@ -13,7 +14,7 @@ import type { AccessControlService } from '../services/access-control.service';
 import type { ChatStreamService } from '../services/chat-stream.service';
 import type { StreamCancellationService } from '../services/stream-cancellation.service';
 import type { AssembledContext } from '../types/context.types';
-import type { MessageRoutedData } from '../types/execution.types';
+import type { MessageRoutedData, ThreadSettings } from '../types/execution.types';
 import { ProviderOutputLimitException, ProviderRateLimitedException } from '../../../common/errors';
 import {
   PROVIDER_CREDIT_EXHAUSTED_CODE,
@@ -94,6 +95,19 @@ const ANTHROPIC_LOW_BALANCE_400 = {
       type: 'invalid_request_error',
       message:
         'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.',
+    },
+  },
+};
+// Verbatim production body, 2026-10-02 (claude-opus-5-5 / sonnet-5-5 / fable-5-1).
+const ANTHROPIC_TEMPERATURE_400 = {
+  ok: false,
+  status: 400,
+  data: {
+    error: {
+      code: 'invalid_request_error',
+      message: '`temperature` is deprecated for this model.',
+      type: 'invalid_request_error',
+      param: null,
     },
   },
 };
@@ -229,6 +243,7 @@ describe('provider recovery at the chokepoint (ADR-125)', () => {
     vi.clearAllMocks();
     delay.mockResolvedValue(undefined);
     ProviderCircuitBreakerManager.resetAll();
+    SamplingParameterSupportManager.forgetAll();
     appConfigGet.mockReturnValue({
       CONNECTOR_SERVICE_URL: 'http://connector:4011',
       OLLAMA_GENERATE_TIMEOUT_MS: 10_000,
@@ -351,6 +366,85 @@ describe('provider recovery at the chokepoint (ADR-125)', () => {
       expect(error).toBeInstanceOf(ProviderRateLimitedException);
       expect(error.message).not.toMatch(/https?:\/\/|\{|metadata/u);
       expect(providerBodies()).toHaveLength(2);
+    });
+  });
+
+  describe('sampling-parameter refusals (temperature deprecated)', () => {
+    // Not in the static family list, so only the learned path can save it.
+    const MODEL = 'claude-haiku-5';
+    const WARM: ThreadSettings = { temperature: 0.7 };
+    const temperatures = (): Array<number | undefined> =>
+      providerBodies().map((body) => (body as { temperature?: number }).temperature);
+    const call = (manager: ChatExecutionManager): Promise<{ content: string }> =>
+      manager.callProvider('ANTHROPIC', MODEL, makeContext(), Date.now(), false, WARM);
+
+    it('resends once without temperature, with its own hold, and shows no error', async () => {
+      queueProvider(ANTHROPIC_TEMPERATURE_400, cloudOk);
+      const response = await call(build(access, limits));
+      expect(response.content).toBe('answer');
+      expect(temperatures()).toEqual([0.7, undefined]);
+      expect(access.reserveCredit).toHaveBeenCalledTimes(2);
+      expect(access.releaseCredit).toHaveBeenCalledTimes(1);
+    });
+
+    it('remembers the model: the next call omits temperature up front, one request', async () => {
+      queueProvider(ANTHROPIC_TEMPERATURE_400, cloudOk, cloudOk);
+      const manager = build(access, limits);
+      await call(manager);
+      await call(manager);
+      expect(temperatures()).toEqual([0.7, undefined, undefined]);
+    });
+
+    it('native Messages body (ENABLE_ANTHROPIC_NATIVE_PDF): same recovery', async () => {
+      appConfigGet.mockReturnValue({
+        CONNECTOR_SERVICE_URL: 'http://connector:4011',
+        OLLAMA_GENERATE_TIMEOUT_MS: 10_000,
+        ENABLE_GEMINI_FILES_API: false,
+        ENABLE_ANTHROPIC_NATIVE_PDF: true,
+      });
+      queueProvider(ANTHROPIC_TEMPERATURE_400, cloudOk);
+      const response = await call(build(access, limits));
+      expect(response.content).toBe('answer');
+      expect(temperatures()).toEqual([0.7, undefined]);
+    });
+
+    it('does not retry any other 400', async () => {
+      queueProvider(
+        { ok: false, status: 400, data: { error: { message: 'messages: field required' } } },
+        cloudOk,
+      );
+      await expect(call(build(access, limits))).rejects.toThrow('messages: field required');
+      expect(providerBodies()).toHaveLength(1);
+    });
+
+    it('never loops: a second refusal is thrown, not retried again', async () => {
+      queueProvider(ANTHROPIC_TEMPERATURE_400, ANTHROPIC_TEMPERATURE_400, cloudOk);
+      await expect(call(build(access, limits))).rejects.toThrow();
+      expect(providerBodies()).toHaveLength(2);
+    });
+
+    it('streaming: the refused stream is reopened once without temperature', async () => {
+      queueProvider();
+      httpStream
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 400,
+          errorBody: JSON.stringify(ANTHROPIC_TEMPERATURE_400.data),
+        })
+        .mockResolvedValueOnce({ ok: true, status: 200, chunks: sseChunks() });
+      const response = await build(access, limits, true).streamModelForLane(
+        'ANTHROPIC',
+        MODEL,
+        makeContext(),
+        Date.now(),
+        WARM,
+        { threadId: 'thread-1', messageId: 'msg-1' },
+      );
+      expect(response.content).toBe('streamed answer');
+      const streamed = httpStream.mock.calls.map(
+        (entry) => (entry[0] as { body: { temperature?: number } }).body.temperature,
+      );
+      expect(streamed).toEqual([0.7, undefined]);
     });
   });
 

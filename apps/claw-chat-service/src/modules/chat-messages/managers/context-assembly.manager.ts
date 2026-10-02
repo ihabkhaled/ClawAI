@@ -44,7 +44,7 @@ import {
   TOPICAL_MEMORY_OVERLAP_THRESHOLD,
   WORKSPACE_CONTEXT_LIMIT,
 } from '../../../common/constants';
-import { type ChatMessage, RoutingMode } from '../../../generated/prisma';
+import { type ChatMessage, MessageRole, RoutingMode } from '../../../generated/prisma';
 import {
   type OpenAiChatMessage,
   type OpenAiContentPart,
@@ -114,7 +114,18 @@ import {
   isTrivialUserText,
   resolveContextTurnText,
 } from '../utilities/attachment-only-turn.utility';
-import { type AttachmentTurnContext } from '../types/attachment-only-turn.types';
+import { type AttachmentUserTurnContext } from '../types/attachment-only-turn.types';
+import {
+  EARLIER_ATTACHMENT_HEADER_SUFFIX,
+  EARLIER_ATTACHMENTS_MAX_FILES,
+  UNREADABLE_DOCUMENT_NOTE,
+} from '../constants/attachment-awareness.constants';
+import {
+  collectEarlierAttachmentIds,
+  isUnreadableScannedDocument,
+  limitEarlierFile,
+  withAttachmentPointer,
+} from '../utilities/attachment-awareness.utility';
 
 @Injectable()
 export class ContextAssemblyManager {
@@ -146,8 +157,15 @@ export class ContextAssemblyManager {
     const lastUserContent = this.lastUserContentOf(threadMessages);
     const retrievalStartedAt = Date.now();
     const skipExpensiveContext = this.shouldSkipExpensiveContext(lastUserContent, fileIds ?? []);
+    // A follow-up keeps the evidence of earlier attachments (ADR-152).
+    const earlierFileIds = collectEarlierAttachmentIds(
+      threadMessages,
+      fileIds ?? [],
+      EARLIER_ATTACHMENTS_MAX_FILES,
+    );
     const fetched = await this.fetchAssembledInputs({
       userId,
+      earlierFileIds,
       lastUserContent,
       skipExpensiveContext,
       contextPackIds,
@@ -162,10 +180,14 @@ export class ContextAssemblyManager {
       memoryTokenBudget: MEMORY_RETRIEVE_TOKEN_BUDGET,
     });
     const filteredFileContents = await this.applyLocalOnlyAttachmentGate(
-      fetched.fileContents,
+      [...fetched.fileContents, ...fetched.earlierFileContents],
       routingMode,
       userId,
     );
+    const carriedEarlierIds = new Set(fetched.earlierFileContents.map((file) => file.id));
+    const earlierDelivered = filteredFileContents
+      .filter((file) => carriedEarlierIds.has(file.id))
+      .map((file) => file.id);
     const retrievalMs = Date.now() - retrievalStartedAt;
     this.logAttachmentOnlyTurn(lastUserContent, filteredFileContents, fileIds?.length ?? 0);
     this.fitFixedContext(fetched, filteredFileContents, threadSettings, lastUserContent);
@@ -264,6 +286,7 @@ export class ContextAssemblyManager {
       ...(fileIds !== undefined && fileIds.length > 0
         ? { requestedAttachmentCount: fileIds.length }
         : {}),
+      ...(earlierDelivered.length > 0 ? { earlierFileIds: earlierDelivered } : {}),
       // Shared by every lane / judge / critic that spreads this context, so a
       // helper-vision description is computed and paid for once per turn.
       turnId: randomUUID(),
@@ -394,6 +417,7 @@ ${evidence.snippet}`);
     skipExpensiveContext: boolean;
     contextPackIds: string[] | undefined;
     fileIds: string[] | undefined;
+    earlierFileIds: string[];
     research: ResearchOptions | undefined;
     lastUserMessage: ChatMessage | undefined;
     threadId: string | undefined;
@@ -404,6 +428,7 @@ ${evidence.snippet}`);
     memories: AssembledContext['memories'];
     contextPackItems: AssembledContext['contextPackItems'];
     fileContents: AssembledContext['fileContents'];
+    earlierFileContents: AssembledContext['fileContents'];
     workspaceCitations: AssembledContext['workspaceCitations'];
     researchRun: ResearchRunResponse | null;
   }> {
@@ -432,7 +457,35 @@ ${evidence.snippet}`);
           args.threadId,
         ),
       ]);
-    return { memories, contextPackItems, fileContents, workspaceCitations, researchRun };
+    const earlierFileContents = await this.fetchEarlierFileContents(
+      args.earlierFileIds,
+      args.userId,
+    );
+    return {
+      memories,
+      contextPackItems,
+      fileContents,
+      earlierFileContents,
+      workspaceCitations,
+      researchRun,
+    };
+  }
+
+  /**
+   * Files attached in earlier turns, fetched on their own so one of them
+   * failing can never cost the current turn its files (ADR-152). A video is
+   * not carried: its frames and per-frame helper calls are too heavy for a
+   * follow-up. Each file's text is shortened to leave room for the conversation.
+   */
+  private async fetchEarlierFileContents(
+    earlierFileIds: string[],
+    userId: string,
+  ): Promise<FileContentResponse[]> {
+    if (earlierFileIds.length === 0) {
+      return [];
+    }
+    const files = await this.fetchFileContents(earlierFileIds, userId);
+    return files.filter((file) => !this.isVideoFile(file)).map((file) => limitEarlierFile(file));
   }
 
   /**
@@ -657,7 +710,7 @@ ${evidence.snippet}`);
       }
       return this.isVideoFile(file) && !isSentNatively(context, file, false)
         ? this.renderVideoText(context, file)
-        : `ATTACHED FILE "${file.filename}" (use this to answer the user's questions):\n${this.renderFileText(context, file, false)}`;
+        : `ATTACHED FILE "${file.filename}"${this.earlierSuffix(context, file)} (use this to answer the user's questions):\n${this.renderFileText(context, file, false)}`;
     });
   }
 
@@ -709,7 +762,7 @@ ${evidence.snippet}`);
   private formatMessageLines(
     messages: AssembledContext['threadMessages'],
     grounded = false,
-    attachments: AttachmentTurnContext & Pick<AssembledContext, 'saveTurnNote'> = {
+    attachments: AttachmentUserTurnContext = {
       fileContents: [],
     },
   ): string[] {
@@ -725,6 +778,7 @@ ${evidence.snippet}`);
       const turnText = this.userTurnText(
         withQuotedContext(message.content, message.metadata),
         attachments,
+        message.role === MessageRole.USER,
       );
       return `${role}: ${grounded ? this.withResearchGrounding(turnText) : turnText}`;
     });
@@ -742,11 +796,21 @@ ${evidence.snippet}`);
    */
   private userTurnText(
     content: string,
-    attachments: AttachmentTurnContext & Pick<AssembledContext, 'saveTurnNote'>,
+    attachments: AttachmentUserTurnContext,
+    typedByUser = true,
   ): string {
     // Logged once per turn in assemble(), not here: the builders run several
     // times per turn (token estimates, then the real call).
-    return withSaveTurnNote(resolveContextTurnText(content, attachments), attachments.saveTurnNote);
+    const resolved = resolveContextTurnText(content, attachments);
+    // Typed words never decide whether attachments are read (ADR-152): with
+    // text, the pointer names the files and how they reached this lane; with
+    // none, the attachment-only instruction above already did.
+    // A tool result that rides back as a "user" turn is not the user's message.
+    const turnText =
+      !typedByUser || isTrivialUserText(content)
+        ? resolved
+        : withAttachmentPointer(resolved, attachments);
+    return withSaveTurnNote(turnText, attachments.saveTurnNote);
   }
 
   private logAttachmentOnlyTurn(
@@ -930,7 +994,9 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       // prompt a model attends to most. Never persisted — this is assembled
       // per request, so the stored message stays exactly what the user typed.
       const quotedContent = withQuotedContext(msg.content, msg.metadata);
-      const turnText = isLastUser ? this.userTurnText(quotedContent, context) : '';
+      const turnText = isLastUser
+        ? this.userTurnText(quotedContent, context, msg.role === MessageRole.USER)
+        : '';
       const groundedTurn = grounded ? this.withResearchGrounding(turnText) : turnText;
       const content = isLastUser ? groundedTurn : quotedContent;
       if (isLastUser && (mediaFiles.length > 0 || frameParts.length > 0)) {
@@ -1005,7 +1071,7 @@ ${RESEARCH_GROUNDING_REMINDER}`;
         parts.push(this.renderVideoText(context, file));
       } else {
         parts.push(
-          `The user has attached file "${file.filename}". Use this content to answer their questions:\n\n${this.renderFileText(context, file, includeVideo)}`,
+          `The user has attached file "${file.filename}"${this.earlierSuffix(context, file)}. Use this content to answer their questions:\n\n${this.renderFileText(context, file, includeVideo)}`,
         );
       }
     }
@@ -1060,6 +1126,13 @@ ${RESEARCH_GROUNDING_REMINDER}`;
         image_url: { url: `data:${frame.mimeType};base64,${frame.base64}` },
       },
     ]);
+  }
+
+  /** ' — attached earlier in this conversation' for a file carried from a previous turn. */
+  private earlierSuffix(context: AssembledContext, file: FileContentResponse): string {
+    return context.earlierFileIds?.includes(file.id) === true
+      ? EARLIER_ATTACHMENT_HEADER_SUFFIX
+      : '';
   }
 
   private isImageFile(file: FileContentResponse): boolean {
@@ -1636,6 +1709,12 @@ ${RESEARCH_GROUNDING_REMINDER}`;
             frameSet: undefined,
           })
         : describeUnprocessedVideo(file);
+    }
+
+    // A scanned PDF OCR could not read carries the image placeholder as its
+    // "text". It is not content; say so instead of handing it over as if read.
+    if (!this.isImageFile(file) && isUnreadableScannedDocument(file)) {
+      return UNREADABLE_DOCUMENT_NOTE.replace('{NAME}', file.filename);
     }
 
     const extracted = file.extractedText?.trim();

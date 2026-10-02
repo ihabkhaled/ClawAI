@@ -1,14 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 
+import { FREE_ALLOWANCE_TOTAL_COUNTER_KEY } from '../constants/credit-free-allowance.constants';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import {
-  type CreditFreeAllowanceCounterKey,
-  type CreditFreeAllowanceUsageRow,
-} from '../types/credit.types';
+import { type CreditFreeAllowanceCounterKey } from '../types/credit.types';
 
 /**
- * The free-allowance counter (ADR-142): one row per (user, provider, UTC month).
+ * The free-allowance counter (ADR-142): one row per (user, UTC month): provider is always the total key.
  *
  * The admission is ONE statement, `INSERT .. ON CONFLICT DO UPDATE .. WHERE
  * used_count < limit`. Postgres serialises concurrent conflicting upserts on the
@@ -60,15 +58,18 @@ export class CreditFreeAllowanceRepository {
     `;
   }
 
-  /** Every provider counter the user has touched in one month. */
-  async findForUserPeriod(
-    userId: string,
-    periodKey: string,
-  ): Promise<CreditFreeAllowanceUsageRow[]> {
-    const rows = await this.prisma.creditFreeAllowanceUsage.findMany({
-      where: { userId, periodKey },
-      select: { provider: true, usedCount: true },
+  /** The user's total for one month (the single `*` counter), 0 when no row exists. */
+  async findTotalUsed(userId: string, periodKey: string): Promise<number> {
+    const row = await this.prisma.creditFreeAllowanceUsage.findUnique({
+      where: {
+        userId_provider_periodKey: {
+          userId,
+          provider: FREE_ALLOWANCE_TOTAL_COUNTER_KEY,
+          periodKey,
+        },
+      },
+      select: { usedCount: true },
     });
-    return rows;
+    return row?.usedCount ?? 0;
   }
 }

@@ -51,6 +51,9 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
   tRef.current = t;
   const [fallbackAttempts, setFallbackAttempts] = useState<FallbackAttemptInfo[]>([]);
   const [streamError, setStreamError] = useState<string | null>(null);
+  // The backend code of the last stream error, so a credit refusal can become
+  // the upgrade card instead of a bare line of text.
+  const [streamErrorCode, setStreamErrorCode] = useState<string | null>(null);
   const [judgeEvaluating, setJudgeEvaluating] = useState(false);
   const [executingModel, setExecutingModel] = useState<string | null>(null);
   const [judgeModel, setJudgeModel] = useState<string | null>(null);
@@ -113,6 +116,7 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
     setFallbackAttempts([]);
     setStreamCompletedAt(null);
     setStreamError(null);
+    setStreamErrorCode(null);
     setJudgeEvaluating(false);
     setExecutingModel(null);
     setJudgeModel(null);
@@ -404,6 +408,7 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
               },
             });
             setStreamError(localizedError);
+            setStreamErrorCode(parsed.code ?? null);
             flushLive(parsed, false);
             upsertStage(
               { ...parsed, description: localizedError },
@@ -449,6 +454,7 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
     fallbackAttempts,
     streamCompletedAt,
     streamError,
+    streamErrorCode,
     judgeEvaluating,
     executingModel,
     judgeModel,

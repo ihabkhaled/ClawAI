@@ -1,3 +1,4 @@
+import { ModelBillingFilter } from '@/enums/model-billing.enum';
 import {
   ModelPricingSourceFilter,
   type ModelPricingSource,
@@ -16,4 +17,24 @@ export function resolveModelCostFilterCount(
   totalCount: number,
 ): number {
   return option === ModelPricingSourceFilter.ALL ? totalCount : counts[option];
+}
+
+/** How many chip filters are narrowing the list, for the touch "Filters" button. */
+export function countActiveModelCostFilters(
+  sourceFilter: ModelPricingSource | ModelPricingSourceFilter,
+  billingFilter: ModelBillingFilter,
+): number {
+  return (
+    (sourceFilter === ModelPricingSourceFilter.ALL ? 0 : 1) +
+    (billingFilter === ModelBillingFilter.ALL ? 0 : 1)
+  );
+}
+
+/** The key that resets "Show more" when any filter or the search changes. */
+export function buildModelCostListResetKey(
+  sourceFilter: ModelPricingSource | ModelPricingSourceFilter,
+  billingFilter: ModelBillingFilter,
+  search: string,
+): string {
+  return `${sourceFilter}|${billingFilter}|${search}`;
 }

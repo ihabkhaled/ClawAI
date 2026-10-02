@@ -3,7 +3,9 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
+import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
+import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -519,6 +521,11 @@ export const ar: TranslationDictionary = {
       paygPricingUnavailableTitle: 'غير متاح مؤقتًا',
       paygPricingUnavailableBody:
         'تعذّر الوصول إلى بيانات التسعير، لذا أُوقفت النماذج المدفوعة مؤقتًا. لم يُخصم منك شيء. النماذج المحلية ما زالت تعمل.',
+      paygFreeAllowanceExhaustedTitle: 'انتهت طلباتك المجانية لنماذج الرصيد',
+      paygFreeAllowanceExhaustedBody:
+        'لقد استخدمت جميع طلباتك المجانية إلى نماذج الرصيد هذا الشهر. قم بالترقية إلى خطة مدفوعة أو أضف رصيدًا لمواصلة استخدامها. النماذج المضمّنة ما زالت تعمل.',
+      paygFreeAllowanceExhaustedBodyWithLimit:
+        'لقد استخدمت جميع طلباتك المجانية البالغ عددها {limit} إلى نماذج الرصيد هذا الشهر. قم بالترقية إلى خطة مدفوعة أو أضف رصيدًا لمواصلة استخدامها. النماذج المضمّنة ما زالت تعمل.',
       dailyTokensTitle: 'لقد استهلكت رموز اليوم',
       dailyTokensBody:
         'انتهت حصتك اليومية من الرموز. تُعاد ضبطها منتصف الليل بتوقيت UTC، أو يمكنك الانتقال إلى خطة أكبر الآن.',
@@ -4207,6 +4214,7 @@ export const ar: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.ar.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.ar,
   narration: NARRATION_TRANSLATIONS.ar,
+  pickedModel: PICKED_MODEL_TRANSLATIONS.ar,
   mediaUi: MEDIA_UI_TRANSLATIONS.ar,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.ar,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.ar,
@@ -4296,6 +4304,7 @@ export const ar: TranslationDictionary = {
       clearSelection: 'امسح التحديد',
       impactWarning: 'سيؤدي الإخفاء إلى إزالة هذه النماذج من كل خطة تستخدمها:',
     },
+    exposureUi: MODEL_EXPOSURE_UI_TRANSLATIONS.ar,
   },
   adminPlans: {
     intervalDiscounts: {
@@ -4384,9 +4393,9 @@ export const ar: TranslationDictionary = {
       maxContextPacks: 'أقصى عدد حزم السياق',
       maxMemoryItems: 'أقصى عدد عناصر الذاكرة',
       maxVideoSeconds: 'أقصى طول للفيديو (بالثواني)',
-      creditConnectorFreeRequests: 'الطلبات المجانية لكل موصّل بالرصيد شهريًا',
+      creditConnectorFreeRequests: 'إجمالي الطلبات المجانية لنماذج الرصيد شهريًا',
       creditConnectorFreeRequestsHelp:
-        'عدد الطلبات شهريًا التي يمكن لمستخدم هذه الخطة إجراؤها عبر الموصّلات بالرصيد قبل خصم رصيده. اتركه فارغًا لعدد غير محدود؛ القيمة 0 تعطّله.',
+        'إجمالي عدد الطلبات شهريًا عبر جميع الموصّلات بالرصيد التي يمكن لمستخدم هذه الخطة إجراؤها قبل أن يلزم الرصيد. اتركه فارغًا لعدد غير محدود؛ القيمة 0 تعطّله. الرصيد المشترى يتيح المتابعة بعد هذا العدد.',
       creditConnectorFreeRequestsInvalid:
         'أدخل عددًا صحيحًا من 0 إلى 100000، أو اتركه فارغًا لعدد غير محدود.',
       isPublic: 'مُدرجة علنًا',
@@ -4858,6 +4867,8 @@ export const ar: TranslationDictionary = {
       PAYG_PROMPT_TOO_EXPENSIVE: 'تكلفة هذه المحادثة أعلى من رصيد الموصّلات المتبقّي لديك.',
       PAYG_MODEL_UNPRICED: 'لا يوجد سعر منشور لهذا النموذج بعد، لذا لا يمكن احتسابه.',
       PAYG_PRICING_UNAVAILABLE: 'تعذّر الوصول إلى بيانات التسعير مؤقتًا. لم يُخصم منك شيء.',
+      PAYG_FREE_ALLOWANCE_EXHAUSTED:
+        'انتهت طلباتك المجانية إلى نماذج الرصيد لهذا الشهر. قم بالترقية أو أضف رصيدًا للمتابعة.',
       CREDIT_PACKAGE_NOT_FOUND: 'لم تعد باقة الرصيد هذه موجودة.',
       CREDIT_PACKAGE_INACTIVE: 'لم تعد باقة الرصيد هذه معروضة للبيع.',
       CREDIT_ADJUSTMENT_REASON_REQUIRED: 'يلزم ذكر سبب لأي تعديل يدوي على الرصيد.',

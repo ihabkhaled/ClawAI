@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { HttpStatus } from '@nestjs/common';
 import { BillingErrorCode, PaygSurface, TokenLedgerContext } from '@claw/shared-types';
 import { PaygCreditExhaustedError, type PaygHold, type PaygMeter } from '@claw/shared-entitlements';

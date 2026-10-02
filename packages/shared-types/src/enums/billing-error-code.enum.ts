@@ -64,6 +64,11 @@ export enum BillingErrorCode {
   // not the user's empty wallet — the copy must say so, or we sell a top-up
   // that was never needed.
   PAYG_PRICING_UNAVAILABLE = 'PAYG_PRICING_UNAVAILABLE',
+  // The plan's monthly free requests on this credit connector are used up and
+  // the user has no purchased credit (ADR-142 update 2026-10-02). Its own code
+  // because the remedy is a plan upgrade or a top-up, not "wait" and not
+  // "your wallet is empty" for somebody who never had one.
+  PAYG_FREE_ALLOWANCE_EXHAUSTED = 'PAYG_FREE_ALLOWANCE_EXHAUSTED',
   CREDIT_PACKAGE_NOT_FOUND = 'CREDIT_PACKAGE_NOT_FOUND',
   CREDIT_PACKAGE_INACTIVE = 'CREDIT_PACKAGE_INACTIVE',
   // A refund or chargeback exceeds the unspent PURCHASED balance. Spent credit

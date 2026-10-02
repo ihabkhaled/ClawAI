@@ -8,9 +8,10 @@ import {
 import { type CreditReserveInput } from '../../types/credit.types';
 import {
   computeFreeRequestCeilingMicroUsd,
+  isCappedAllowance,
   isFreeAllowanceEligible,
   isFreeAllowanceEnabled,
-  normalizeAllowanceProvider,
+  nextUtcMonthStart,
   toCounterLimit,
   toFreeAllowanceView,
 } from '../credit-free-allowance.utility';
@@ -67,7 +68,6 @@ describe('isFreeAllowanceEligible', () => {
     PaygSurface.TRANSCRIPTION,
     PaygSurface.TTS,
     PaygSurface.VISION_HELPER,
-    PaygSurface.CODING_AGENT,
   ])('excludes %s (per-unit or not a user request)', (surface) => {
     expect(isFreeAllowanceEligible(request({ surface }))).toBe(false);
   });
@@ -92,9 +92,24 @@ describe('isFreeAllowanceEligible', () => {
   });
 });
 
-describe('normalizeAllowanceProvider', () => {
-  it('trims and upper-cases so grok and GROK share one counter', () => {
-    expect(normalizeAllowanceProvider('  grok ')).toBe('GROK');
+describe('nextUtcMonthStart', () => {
+  it('is the first instant of the next UTC month', () => {
+    expect(nextUtcMonthStart(new Date('2026-10-15T12:00:00Z')).toISOString()).toBe(
+      '2026-11-01T00:00:00.000Z',
+    );
+  });
+
+  it('rolls the year over in December', () => {
+    expect(nextUtcMonthStart(new Date('2026-12-31T23:59:59Z')).toISOString()).toBe(
+      '2027-01-01T00:00:00.000Z',
+    );
+  });
+});
+
+describe('isCappedAllowance', () => {
+  it('is true only for a finite limit', () => {
+    expect(isCappedAllowance({ limit: 5, requestCeilingMicroUsd: 1n })).toBe(true);
+    expect(isCappedAllowance({ limit: null, requestCeilingMicroUsd: 1n })).toBe(false);
   });
 });
 
@@ -139,22 +154,23 @@ describe('computeFreeRequestCeilingMicroUsd', () => {
 });
 
 describe('toFreeAllowanceView', () => {
-  it('reports remaining as limit minus used', () => {
-    expect(toFreeAllowanceView('GROK', 2, 1)).toEqual({
-      provider: 'GROK',
+  const resetsAt = new Date('2026-11-01T00:00:00Z');
+
+  it('reports remaining as limit minus used, and when it resets', () => {
+    expect(toFreeAllowanceView(2, 1, resetsAt)).toEqual({
       limit: 2,
       used: 1,
       remaining: 1,
+      resetsAt: '2026-11-01T00:00:00.000Z',
     });
   });
 
   it('never reports a negative remaining', () => {
-    expect(toFreeAllowanceView('GROK', 2, 5).remaining).toBe(0);
+    expect(toFreeAllowanceView(2, 5, resetsAt).remaining).toBe(0);
   });
 
   it('reports null limit and null remaining for an unlimited allowance', () => {
-    expect(toFreeAllowanceView('GROK', null, 7)).toEqual({
-      provider: 'GROK',
+    expect(toFreeAllowanceView(null, 7, resetsAt)).toMatchObject({
       limit: null,
       used: 7,
       remaining: null,

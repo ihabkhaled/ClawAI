@@ -31,6 +31,8 @@ import { MessageSpeechAction } from '@/components/chat/message-speech-action';
 import { MessageSpeechPlayer } from '@/components/chat/message-speech-player';
 import { NarrationLog } from '@/components/chat/narration-log';
 import { OllamaToolTranscriptPanel } from '@/components/chat/ollama-tool-transcript-panel';
+import { PickedModelFallbackNotice } from '@/components/chat/picked-model-fallback-notice';
+import { PickedModelRecovery } from '@/components/chat/picked-model-recovery';
 import { PlanFeatureNotice } from '@/components/chat/plan-feature-notice';
 import { RegenerateWithModel } from '@/components/chat/regenerate-with-model';
 import { ResearchRunDetails } from '@/components/chat/research-run-details';
@@ -62,6 +64,11 @@ import { resolveStoredErrorMessage } from '@/utilities/chat-stream-error.utility
 import { readFileLimit } from '@/utilities/file-limit.utility';
 import { readImageMaskRefusal } from '@/utilities/image-mask-refusal.utility';
 import { getStoredNarration } from '@/utilities/narration.utility';
+import {
+  offersPickedModelRecovery,
+  readPickedModelFallback,
+  readSuggestedModels,
+} from '@/utilities/picked-model-fallback.utility';
 import { readPlanFeatureRefusal } from '@/utilities/plan-feature-refusal.utility';
 import { describeRoute } from '@/utilities/route-label.utility';
 
@@ -128,6 +135,11 @@ function MessageBubbleBase({
       : undefined;
   const hasVisibleAssistantContent = message.content.trim().length > 0;
   const storedErrorText = resolveStoredErrorMessage(metadata, t);
+  const pickedModelFallback = isUser ? null : readPickedModelFallback(metadata);
+  const showPickedModelRecovery =
+    !isUser &&
+    onRegenerate !== undefined &&
+    offersPickedModelRecovery(metadata, message.routingMode);
   const assistantContent = hasVisibleAssistantContent ? (
     <MarkdownRenderer
       content={storedErrorText ?? message.content}
@@ -213,6 +225,15 @@ function MessageBubbleBase({
 
         {!isUser && isPaygClamped ? <CreditClampedNotice t={t} /> : null}
 
+        {/* A substitute answered because the model the user picked failed. */}
+        {pickedModelFallback === null ? null : (
+          <PickedModelFallbackNotice
+            info={pickedModelFallback}
+            answeredModel={message.model ?? 'unknown'}
+            t={t}
+          />
+        )}
+
         {/* The work log that led to this answer, ABOVE it and outside it: the
             answer stays its own bubble, and the log is collapsed so it never
             stands between the reader and the reply. */}
@@ -276,6 +297,15 @@ function MessageBubbleBase({
           {!isUser && !isImageGeneration && !isVideoGeneration && !isFileGeneration && !isNotice
             ? assistantContent
             : null}
+          {/* Every model failed: one-click retries + the model picker. */}
+          {showPickedModelRecovery && onRegenerate !== undefined ? (
+            <PickedModelRecovery
+              suggested={readSuggestedModels(metadata)}
+              failedProvider={message.provider ?? null}
+              failedModel={message.model ?? null}
+              onPick={(choice) => onRegenerate(message.id, choice)}
+            />
+          ) : null}
           {/* What a "remember this / add to context" turn saved (ADR-134). */}
           {contextSave === null ? null : (
             <ContextSaveCard

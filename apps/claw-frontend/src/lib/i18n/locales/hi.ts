@@ -3,7 +3,9 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
+import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
+import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -526,6 +528,11 @@ export const hi: TranslationDictionary = {
       paygPricingUnavailableTitle: 'अस्थायी रूप से अनुपलब्ध',
       paygPricingUnavailableBody:
         'कीमत की जानकारी नहीं मिल सकी, इसलिए सशुल्क मॉडल कुछ देर के लिए रोके गए हैं। आपसे कोई शुल्क नहीं लिया गया। स्थानीय मॉडल अब भी काम कर रहे हैं।',
+      paygFreeAllowanceExhaustedTitle: 'क्रेडिट मॉडल के मुफ़्त अनुरोध समाप्त',
+      paygFreeAllowanceExhaustedBody:
+        'आपने इस महीने क्रेडिट मॉडल के लिए अपने सभी मुफ़्त अनुरोध उपयोग कर लिए हैं। इन्हें इस्तेमाल करते रहने के लिए सशुल्क प्लान में अपग्रेड करें या क्रेडिट जोड़ें। शामिल मॉडल अब भी काम करते हैं।',
+      paygFreeAllowanceExhaustedBodyWithLimit:
+        'आपने इस महीने क्रेडिट मॉडल के लिए अपने सभी {limit} मुफ़्त अनुरोध उपयोग कर लिए हैं। इन्हें इस्तेमाल करते रहने के लिए सशुल्क प्लान में अपग्रेड करें या क्रेडिट जोड़ें। शामिल मॉडल अब भी काम करते हैं।',
       dailyTokensTitle: 'आज के टोकन खत्म हो गए',
       dailyTokensBody:
         'आपका दैनिक टोकन कोटा खत्म हो गया है। यह UTC आधी रात को रीसेट होता है, या आप अभी बड़े प्लान पर जा सकते हैं।',
@@ -4269,6 +4276,7 @@ export const hi: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.hi.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.hi,
   narration: NARRATION_TRANSLATIONS.hi,
+  pickedModel: PICKED_MODEL_TRANSLATIONS.hi,
   mediaUi: MEDIA_UI_TRANSLATIONS.hi,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.hi,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.hi,
@@ -4358,6 +4366,7 @@ export const hi: TranslationDictionary = {
       clearSelection: 'चयन साफ़ करें',
       impactWarning: 'हटाने पर ये मॉडल उन सभी प्लान से निकल जाएंगे जो इन्हें उपयोग करते हैं:',
     },
+    exposureUi: MODEL_EXPOSURE_UI_TRANSLATIONS.hi,
   },
   adminPlans: {
     intervalDiscounts: {
@@ -4446,9 +4455,9 @@ export const hi: TranslationDictionary = {
       maxContextPacks: 'अधिकतम कॉन्टेक्स्ट पैक',
       maxMemoryItems: 'अधिकतम मेमोरी आइटम',
       maxVideoSeconds: 'अधिकतम वीडियो अवधि (सेकंड)',
-      creditConnectorFreeRequests: 'प्रति क्रेडिट कनेक्टर प्रति माह निःशुल्क अनुरोध',
+      creditConnectorFreeRequests: 'क्रेडिट मॉडल के लिए प्रति माह कुल निःशुल्क अनुरोध',
       creditConnectorFreeRequestsHelp:
-        'इस प्लान का उपयोगकर्ता क्रेडिट कनेक्टर से हर महीने कितने अनुरोध कर सकता है, उसके क्रेडिट से शुल्क कटने से पहले। असीमित के लिए खाली छोड़ें; 0 इसे बंद कर देता है।',
+        'इस प्लान का उपयोगकर्ता सभी क्रेडिट कनेक्टर को मिलाकर हर महीने कुल कितने अनुरोध कर सकता है, क्रेडिट की ज़रूरत पड़ने से पहले। असीमित के लिए खाली छोड़ें; 0 इसे बंद कर देता है। खरीदा हुआ क्रेडिट इस संख्या के बाद भी जारी रखने देता है।',
       creditConnectorFreeRequestsInvalid:
         '0 से 100000 तक की पूर्ण संख्या दर्ज करें, या असीमित के लिए खाली छोड़ें।',
       isPublic: 'सार्वजनिक रूप से सूचीबद्ध',
@@ -4925,6 +4934,8 @@ export const hi: TranslationDictionary = {
       PAYG_MODEL_UNPRICED: 'इस मॉडल की कीमत अभी प्रकाशित नहीं है और इसका शुल्क नहीं लिया जा सकता।',
       PAYG_PRICING_UNAVAILABLE:
         'कीमत की जानकारी अस्थायी रूप से अनुपलब्ध है। आपसे कोई शुल्क नहीं लिया गया।',
+      PAYG_FREE_ALLOWANCE_EXHAUSTED:
+        'इस महीने के लिए क्रेडिट मॉडल के आपके मुफ़्त अनुरोध समाप्त हो गए हैं। जारी रखने के लिए अपग्रेड करें या क्रेडिट जोड़ें।',
       CREDIT_PACKAGE_NOT_FOUND: 'वह क्रेडिट पैकेज अब मौजूद नहीं है।',
       CREDIT_PACKAGE_INACTIVE: 'वह क्रेडिट पैकेज अब बिक्री पर नहीं है।',
       CREDIT_ADJUSTMENT_REASON_REQUIRED: 'मैन्युअल क्रेडिट समायोजन के लिए एक कारण आवश्यक है।',

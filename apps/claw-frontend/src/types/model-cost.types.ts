@@ -1,3 +1,4 @@
+import type { ModelBillingFilter } from '@/enums/model-billing.enum';
 import type {
   ModelPricingSource,
   ModelPricingSourceFilter,
@@ -5,6 +6,11 @@ import type {
 import type { CostClass } from '@/enums/router-models.enum';
 
 import type { TranslateFunction } from './i18n.types';
+import type {
+  ModelBillingCounts,
+  ModelBillingInfo,
+  ProviderCreditPolicy,
+} from './model-billing.types';
 
 // ─── Backend DTO mirrors (claw-routing-service router-models/costs) ──────────
 
@@ -113,13 +119,32 @@ export type UseModelCostEditDialogResult = {
   setOpen: (open: boolean) => void;
 };
 
+export type UseModelCostBillingResult = {
+  policy: ProviderCreditPolicy;
+  isPolicyError: boolean;
+  billingFilter: ModelBillingFilter;
+  setBillingFilter: (value: ModelBillingFilter) => void;
+  counts: ModelBillingCounts;
+  resolveBilling: (row: ModelCostCatalogRow) => ModelBillingInfo;
+};
+
 /** Per-source row counts, so the banner can name the work without recounting. */
 export type ModelCostSourceCounts = Record<ModelPricingSource, number>;
 
 export type UseModelCostsPageResult = {
   t: TranslateFunction;
+  // The rows on screen now ("Show more" pages through the filtered list).
   rows: ModelCostCatalogRow[];
+  filteredCount: number;
+  hasMore: boolean;
+  onShowMore: () => void;
   totalCount: number;
+  billingFilter: ModelBillingFilter;
+  onBillingFilterChange: (value: ModelBillingFilter) => void;
+  billingCounts: ModelBillingCounts;
+  resolveBilling: (row: ModelCostCatalogRow) => ModelBillingInfo;
+  isPolicyError: boolean;
+  activeFilterCount: number;
   counts: ModelCostSourceCounts;
   needsAttentionCount: number;
   sourceFilter: ModelPricingSource | ModelPricingSourceFilter;
@@ -149,7 +174,27 @@ export type ModelCostFilterBarProps = {
   search: string;
   onSourceFilterChange: (value: ModelPricingSource | ModelPricingSourceFilter) => void;
   onSearchChange: (value: string) => void;
+  billingFilter: ModelBillingFilter;
+  billingCounts: ModelBillingCounts;
+  onBillingFilterChange: (value: ModelBillingFilter) => void;
+  activeFilterCount: number;
   t: TranslateFunction;
+};
+
+/** The chip groups, shown inline on a mouse and inside a sheet on touch. */
+export type ModelCostFilterChipsProps = {
+  sourceFilter: ModelPricingSource | ModelPricingSourceFilter;
+  counts: ModelCostSourceCounts;
+  totalCount: number;
+  onSourceFilterChange: (value: ModelPricingSource | ModelPricingSourceFilter) => void;
+  billingFilter: ModelBillingFilter;
+  billingCounts: ModelBillingCounts;
+  onBillingFilterChange: (value: ModelBillingFilter) => void;
+  t: TranslateFunction;
+};
+
+export type ModelCostFilterSheetProps = ModelCostFilterChipsProps & {
+  activeFilterCount: number;
 };
 
 export type ModelCostAttentionBannerProps = {
@@ -161,6 +206,7 @@ export type ModelCostAttentionBannerProps = {
 export type ModelCostTableProps = {
   rows: ModelCostCatalogRow[];
   onEdit: (row: ModelCostCatalogRow) => void;
+  resolveBilling: (row: ModelCostCatalogRow) => ModelBillingInfo;
   t: TranslateFunction;
 };
 

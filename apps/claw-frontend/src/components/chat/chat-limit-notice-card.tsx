@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/constants';
 import { CREDIT_TOPUP_QUERY_KEY, CREDIT_TOPUP_QUERY_VALUE } from '@/constants/credit.constants';
 import { ChatLimitAction } from '@/enums/chat-limit-action.enum';
+import { useChatLimitNoticeBody } from '@/hooks/chat/use-chat-limit-notice-body';
 import { useTranslation } from '@/lib/i18n';
 import type { ChatLimitNoticeCardProps } from '@/types/component.types';
 
@@ -26,7 +27,9 @@ import type { ChatLimitNoticeCardProps } from '@/types/component.types';
  */
 export function ChatLimitNoticeCard({ notice }: ChatLimitNoticeCardProps): React.ReactElement {
   const { t } = useTranslation();
+  const body = useChatLimitNoticeBody(notice);
   const isAddCredit = notice.action === ChatLimitAction.AddCredit;
+  const isEither = notice.action === ChatLimitAction.UpgradeOrAddCredit;
 
   return (
     <section
@@ -38,14 +41,21 @@ export function ChatLimitNoticeCard({ notice }: ChatLimitNoticeCardProps): React
         <AlertTriangle className="text-warning mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <p className="font-medium">{t(notice.titleKey)}</p>
-          <p className="text-muted-foreground mt-1 text-sm leading-relaxed">{t(notice.bodyKey)}</p>
+          <p className="text-muted-foreground mt-1 text-sm leading-relaxed">{body}</p>
         </div>
       </div>
 
       {notice.showCreditDisclaimer ? <CreditDualConsumptionNotice t={t} /> : null}
 
       {notice.action === ChatLimitAction.None ? null : (
-        <div className="flex justify-end">
+        <div className="flex flex-wrap justify-end gap-2">
+          {isEither ? (
+            <Button asChild size="sm" variant="outline">
+              <Link href={`${ROUTES.PLAN}?${CREDIT_TOPUP_QUERY_KEY}=${CREDIT_TOPUP_QUERY_VALUE}`}>
+                {t('chat.limits.addCreditCta')}
+              </Link>
+            </Button>
+          ) : null}
           <Button asChild size="sm">
             <Link
               href={

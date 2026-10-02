@@ -3,7 +3,9 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
+import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
+import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -514,6 +516,11 @@ export const th: TranslationDictionary = {
       paygPricingUnavailableTitle: 'ใช้งานไม่ได้ชั่วคราว',
       paygPricingUnavailableBody:
         'ไม่สามารถดึงข้อมูลราคาได้ จึงหยุดโมเดลแบบเสียค่าใช้จ่ายไว้ชั่วครู่ ระบบไม่ได้เรียกเก็บเงินจากคุณ โมเดลในเครื่องยังใช้งานได้ตามปกติ',
+      paygFreeAllowanceExhaustedTitle: 'ใช้คำขอฟรีสำหรับโมเดลเครดิตหมดแล้ว',
+      paygFreeAllowanceExhaustedBody:
+        'คุณใช้คำขอฟรีสำหรับโมเดลเครดิตของเดือนนี้ครบทั้งหมดแล้ว อัปเกรดเป็นแพ็กเกจแบบชำระเงินหรือเติมเครดิตเพื่อใช้งานต่อ โมเดลที่รวมอยู่ในแพ็กเกจยังใช้งานได้ตามปกติ',
+      paygFreeAllowanceExhaustedBodyWithLimit:
+        'คุณใช้คำขอฟรีสำหรับโมเดลเครดิตครบทั้ง {limit} รายการของเดือนนี้แล้ว อัปเกรดเป็นแพ็กเกจแบบชำระเงินหรือเติมเครดิตเพื่อใช้งานต่อ โมเดลที่รวมอยู่ในแพ็กเกจยังใช้งานได้ตามปกติ',
       dailyTokensTitle: 'คุณใช้โทเค็นของวันนี้หมดแล้ว',
       dailyTokensBody:
         'โควตาโทเค็นรายวันของคุณหมดแล้ว ระบบจะรีเซ็ตเวลาเที่ยงคืน UTC หรือจะเปลี่ยนไปใช้แพ็กเกจที่ใหญ่ขึ้นตอนนี้ก็ได้',
@@ -4220,6 +4227,7 @@ export const th: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.th.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.th,
   narration: NARRATION_TRANSLATIONS.th,
+  pickedModel: PICKED_MODEL_TRANSLATIONS.th,
   mediaUi: MEDIA_UI_TRANSLATIONS.th,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.th,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.th,
@@ -4309,6 +4317,7 @@ export const th: TranslationDictionary = {
       clearSelection: 'ล้างการเลือก',
       impactWarning: 'การปิดจะนำโมเดลเหล่านี้ออกจากทุกแผนที่ใช้งานอยู่:',
     },
+    exposureUi: MODEL_EXPOSURE_UI_TRANSLATIONS.th,
   },
   adminPlans: {
     intervalDiscounts: {
@@ -4397,9 +4406,9 @@ export const th: TranslationDictionary = {
       maxContextPacks: 'แพ็กบริบทสูงสุด',
       maxMemoryItems: 'รายการหน่วยความจำสูงสุด',
       maxVideoSeconds: 'ความยาววิดีโอสูงสุด (วินาที)',
-      creditConnectorFreeRequests: 'คำขอฟรีต่อตัวเชื่อมต่อแบบเครดิตต่อเดือน',
+      creditConnectorFreeRequests: 'คำขอฟรีสำหรับโมเดลเครดิตต่อเดือน (รวม)',
       creditConnectorFreeRequestsHelp:
-        'จำนวนคำขอต่อเดือนที่ผู้ใช้แพ็กเกจนี้ทำผ่านตัวเชื่อมต่อแบบเครดิตได้ก่อนที่จะถูกหักเครดิต เว้นว่างไว้หมายถึงไม่จำกัด ส่วน 0 คือปิดใช้งาน',
+        'จำนวนคำขอรวมต่อเดือนผ่านตัวเชื่อมต่อแบบเครดิตทั้งหมดที่ผู้ใช้แพ็กเกจนี้ทำได้ก่อนที่จะต้องใช้เครดิต เว้นว่างไว้หมายถึงไม่จำกัด ส่วน 0 คือปิดใช้งาน เครดิตที่ซื้อไว้ช่วยให้ใช้งานต่อได้เมื่อเกินจำนวนนี้',
       creditConnectorFreeRequestsInvalid:
         'กรอกจำนวนเต็มตั้งแต่ 0 ถึง 100000 หรือเว้นว่างไว้เพื่อไม่จำกัด',
       isPublic: 'จดทะเบียนในที่สาธารณะ',
@@ -4871,6 +4880,8 @@ export const th: TranslationDictionary = {
       PAYG_MODEL_UNPRICED: 'โมเดลนี้ยังไม่มีราคาที่ประกาศไว้ จึงคิดค่าใช้จ่ายไม่ได้',
       PAYG_PRICING_UNAVAILABLE:
         'ไม่สามารถเข้าถึงข้อมูลราคาได้ชั่วคราว ระบบไม่ได้เรียกเก็บเงินจากคุณ',
+      PAYG_FREE_ALLOWANCE_EXHAUSTED:
+        'คำขอฟรีสำหรับโมเดลเครดิตของเดือนนี้หมดแล้ว อัปเกรดหรือเติมเครดิตเพื่อดำเนินการต่อ',
       CREDIT_PACKAGE_NOT_FOUND: 'ไม่มีแพ็กเกจเครดิตนี้แล้ว',
       CREDIT_PACKAGE_INACTIVE: 'แพ็กเกจเครดิตนี้ไม่เปิดจำหน่ายแล้ว',
       CREDIT_ADJUSTMENT_REASON_REQUIRED: 'ต้องระบุเหตุผลสำหรับการปรับเครดิตด้วยตนเอง',

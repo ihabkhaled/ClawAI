@@ -26,3 +26,8 @@ export const EXTRACTION_REQUIRED_MIME_TYPES = new Set<string>([
 // Comfortably above OCR_TIMEOUT_MS (30s default) so a slow-but-live extraction
 // is never reaped out from under itself.
 export const STALE_PROCESSING_TIMEOUT_MS = 10 * 60 * 1000;
+
+// A scanned PDF is drawn page by page and each page read by OCR. Capped so a
+// 300-page scan cannot hold a worker for minutes.
+export const SCANNED_PDF_OCR_MAX_PAGES = 10;
+export const SCANNED_PDF_RENDER_SCALE = 2;

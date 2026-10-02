@@ -3,7 +3,9 @@
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
+import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
+import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -526,6 +528,11 @@ export const en: TranslationDictionary = {
       paygPricingUnavailableTitle: 'Temporarily unavailable',
       paygPricingUnavailableBody:
         'Pricing could not be reached, so paid models are paused for a moment. You were not charged. Local models still work.',
+      paygFreeAllowanceExhaustedTitle: 'Free credit-model requests used up',
+      paygFreeAllowanceExhaustedBody:
+        'You have used all your free requests to credit models this month. Upgrade to a paid plan or add credit to keep using them. Included models still work.',
+      paygFreeAllowanceExhaustedBodyWithLimit:
+        'You have used all {limit} free requests to credit models this month. Upgrade to a paid plan or add credit to keep using them. Included models still work.',
       dailyTokensTitle: "You have used today's tokens",
       dailyTokensBody:
         'Your daily token allowance is spent. It resets at midnight UTC, or you can move to a larger plan now.',
@@ -4242,6 +4249,7 @@ export const en: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.en.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.en,
   narration: NARRATION_TRANSLATIONS.en,
+  pickedModel: PICKED_MODEL_TRANSLATIONS.en,
   mediaUi: MEDIA_UI_TRANSLATIONS.en,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.en,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.en,
@@ -4332,6 +4340,7 @@ export const en: TranslationDictionary = {
       clearSelection: 'Clear selection',
       impactWarning: 'Unexposing will remove these models from every plan that uses them:',
     },
+    exposureUi: MODEL_EXPOSURE_UI_TRANSLATIONS.en,
   },
   adminPlans: {
     intervalDiscounts: {
@@ -4420,9 +4429,9 @@ export const en: TranslationDictionary = {
       maxContextPacks: 'Max context packs',
       maxMemoryItems: 'Max memory items',
       maxVideoSeconds: 'Max video length (seconds)',
-      creditConnectorFreeRequests: 'Free requests per credit connector per month',
+      creditConnectorFreeRequests: 'Free credit-model requests per month (total)',
       creditConnectorFreeRequestsHelp:
-        'How many requests per month a user on this plan can make through credit connectors before their credit is charged. Leave empty for unlimited; 0 turns it off.',
+        'How many requests per month, in total across all credit connectors, a user on this plan can make before credit is needed. Leave empty for unlimited; 0 turns it off. Purchased credit continues past this number.',
       creditConnectorFreeRequestsInvalid:
         'Enter a whole number from 0 to 100000, or leave empty for unlimited.',
       isPublic: 'Publicly listed',
@@ -4898,6 +4907,8 @@ export const en: TranslationDictionary = {
         'This conversation costs more than your remaining connector credit.',
       PAYG_MODEL_UNPRICED: 'This model has no published price yet and cannot be billed.',
       PAYG_PRICING_UNAVAILABLE: 'Pricing is temporarily unreachable. You were not charged.',
+      PAYG_FREE_ALLOWANCE_EXHAUSTED:
+        'Your free requests to credit models are used up for this month. Upgrade or add credit to continue.',
       CREDIT_PACKAGE_NOT_FOUND: 'That credit package no longer exists.',
       CREDIT_PACKAGE_INACTIVE: 'That credit package is no longer on sale.',
       CREDIT_ADJUSTMENT_REASON_REQUIRED: 'A reason is required for a manual credit adjustment.',

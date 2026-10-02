@@ -6,6 +6,15 @@ export const CHAT_STREAM_ERROR_KEY_BY_CODE: ReadonlyMap<string, string> = new Ma
   // The provider's own account is out of credit (OpenRouter 402). chat-service
   // never forwards the provider's text - it carried a key-management URL.
   ['PROVIDER_CREDIT_EXHAUSTED', 'chat.errors.providerCreditExhausted'],
+  // Credit refusals (402). They arrive over SSE because the send was accepted,
+  // so without these a spent allowance read "All providers failed".
+  ['PAYG_CREDIT_EXHAUSTED', 'billing.errors.PAYG_CREDIT_EXHAUSTED'],
+  ['PAYG_PROMPT_TOO_EXPENSIVE', 'billing.errors.PAYG_PROMPT_TOO_EXPENSIVE'],
+  ['PAYG_MODEL_UNPRICED', 'billing.errors.PAYG_MODEL_UNPRICED'],
+  ['PAYG_PRICING_UNAVAILABLE', 'billing.errors.PAYG_PRICING_UNAVAILABLE'],
+  ['PAYG_FREE_ALLOWANCE_EXHAUSTED', 'billing.errors.PAYG_FREE_ALLOWANCE_EXHAUSTED'],
+  // The picked model AND its substitutes failed: the bubble adds the retry buttons.
+  ['PICKED_MODEL_FAILED', 'pickedModel.failedMessage'],
 ]);
 
 // Prefix chat-service writes before a stored error reply's text.

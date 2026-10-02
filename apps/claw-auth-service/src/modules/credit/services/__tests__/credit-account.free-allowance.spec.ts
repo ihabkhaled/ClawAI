@@ -26,18 +26,18 @@ const wallet = {
   updatedAt: new Date(),
 };
 
-const VIEWS = [{ provider: 'GROK', limit: 2, used: 1, remaining: 1 }];
+const VIEW = { limit: 2, used: 1, remaining: 1, resetsAt: '2026-11-01T00:00:00.000Z' };
 
 describe('CreditAccountService.getWallet — freeAllowance (ADR-142)', () => {
   let users: { findUserById: Mock };
   let settings: { isEnabled: Mock };
-  let freeAllowance: { getViews: Mock };
+  let freeAllowance: { getView: Mock };
   let service: CreditAccountService;
 
   beforeEach(() => {
     users = { findUserById: vi.fn().mockResolvedValue({ id: 'user-1', role: UserRole.USER }) };
     settings = { isEnabled: vi.fn().mockResolvedValue(true) };
-    freeAllowance = { getViews: vi.fn().mockResolvedValue(VIEWS) };
+    freeAllowance = { getView: vi.fn().mockResolvedValue(VIEW) };
     service = new CreditAccountService(
       {} as unknown as CreditWalletService,
       {
@@ -50,29 +50,29 @@ describe('CreditAccountService.getWallet — freeAllowance (ADR-142)', () => {
     );
   });
 
-  it('adds the per-provider allowance to the wallet snapshot', async () => {
+  it('adds the ONE free-request total to the wallet snapshot', async () => {
     const snapshot = await service.getWallet('user-1');
 
-    expect(snapshot.freeAllowance).toEqual(VIEWS);
+    expect(snapshot.freeAllowance).toEqual(VIEW);
     expect(snapshot).toMatchObject({ availableMicroUsd: 0, meteringEnabled: true });
   });
 
-  it('shows no allowance to an administrator: nothing is metered for them', async () => {
+  it('shows no allowance to an administrator: nothing is counted for them', async () => {
     users.findUserById.mockResolvedValue({ id: 'user-1', role: UserRole.ADMIN });
 
     const snapshot = await service.getWallet('user-1');
 
-    expect(snapshot.freeAllowance).toEqual([]);
-    expect(freeAllowance.getViews).not.toHaveBeenCalled();
+    expect(snapshot.freeAllowance).toBeNull();
+    expect(freeAllowance.getView).not.toHaveBeenCalled();
   });
 
-  it('shows no allowance while the metering kill switch is off', async () => {
+  it('asks for the view with the kill switch off too: a capped plan is still enforced', async () => {
     settings.isEnabled.mockResolvedValue(false);
 
     const snapshot = await service.getWallet('user-1');
 
-    expect(snapshot.freeAllowance).toEqual([]);
-    expect(freeAllowance.getViews).not.toHaveBeenCalled();
+    expect(snapshot.freeAllowance).toEqual(VIEW);
+    expect(freeAllowance.getView).toHaveBeenCalledWith('user-1', expect.any(Date), false);
   });
 
   it('refuses an unknown user', async () => {

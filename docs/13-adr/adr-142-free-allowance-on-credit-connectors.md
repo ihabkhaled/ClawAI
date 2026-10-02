@@ -1,6 +1,6 @@
 # ADR-142: Free requests on credit connectors
 
-- Status: Accepted
+- Status: Accepted (amended 2026-10-02: one total, enforced first, enforced with metering off; see the Amendment section, which wins over the original text below)
 - Date: 2026-10-01
 - Deciders: Product owner, engineering
 - Related: rule [37](../../rules/37-payg-credit-integrity.md) item 22,
@@ -79,9 +79,11 @@ Eligible surfaces are an explicit allow-list: CHAT, COMPARE, JUDGE, ORCHESTRATIO
 WORKSPACE_ACTION, ROUTING. IMAGE, VIDEO, TRANSCRIPTION and TTS are excluded because they are priced per
 unit, and one video clip can cost $1.60: "2 requests" there is an unbounded giveaway rather than a
 bounded trial. The unit check also looks at the quantities on the call, so a video call mislabelled
-CHAT is still refused. VISION_HELPER (not a request the user made) and CODING_AGENT (a hold per turn
-of a tool loop, so two "requests" would be two turns) are excluded too. A new `PaygSurface` is not
-free until someone adds it to the list.
+CHAT is still refused. VISION_HELPER (not a request the user made) is excluded too. CODING_AGENT was
+excluded at first, but update 2026-10-02: nothing gates the agent loop for a Free account, so leaving
+it out let a capped plan run unlimited credit-connector turns (kill switch off) or spend the grant
+instead of the cap. It is now eligible: each agent turn takes one slot of the total. A new
+`PaygSurface` is not free until someone adds it to the list.
 
 ## Consequences
 
@@ -124,3 +126,60 @@ free until someone adds it to the list.
 - Free accounts gaining a monthly credit grant, which would make the fallback rarely reachable.
 - The connector policy map moving away from `isMeteredProvider`, which defines "credit connector" here.
 - A second place that admits a metered call without `CreditReservationManager`.
+
+## Amendment 2026-10-02: one total, counted first, enforced with metering off
+
+Incident: on 2026-10-02 a Free account on the production install made more than 10 Claude requests and
+was never stopped. The plan said 5. Four defects, all fixed in the same change.
+
+1. **Metering off meant no cap at all.** `payg.credit.enabled` had no row in production, so
+   `classify()` answered `METERING_DISABLED` and `reserve()` returned `{ metered: false }` before the
+   allowance code ran. Every credit model was unlimited on every plan. **Decision (owner):** a plan with a
+   FINITE `creditConnectorFreeRequestsPerMonth` is enforced **whatever the switch says**.
+   `CreditReservationManager.enforceCapWhileUnmetered` counts the call (no price lookup, no wallet read, no
+   hold, the provider keeps the ceiling it asked for) and refuses N+1. Nothing else changes with the switch
+   off: a paid plan (allowance `0`), an unlimited allowance (`null`), an administrator, a local or
+   non-metered provider and every per-unit surface stay exactly as unmetered as before, and **no wallet is
+   charged**. Isolated in that one method; the switch still means "do not charge wallets".
+2. **The cap was only a fallback.** A Free user with any grant balance was paid from the grant and never
+   counted. **Decision:** for a finite allowance and a user with **no purchased credit**, the request is
+   counted FIRST (`admitOnCappedAllowance`), grant or no grant. Request N+1 is refused even if a grant
+   could pay. A user **with** purchased credit skips the cap and is charged from the wallet as usual (top-ups
+   still let a user continue past the cap). An unlimited allowance stays credit-first, as originally written.
+3. **The refusal looked like an empty wallet.** A spent cap now throws its own code,
+   `PAYG_FREE_ALLOWANCE_EXHAUSTED` (402, `BillingErrorCode`, `PaygRejection`). The remedy is "upgrade or add
+   credit", not "your wallet is empty". Other refusals keep their codes: a prompt the per-request ceiling
+   cannot pay is still `PAYG_PROMPT_TOO_EXPENSIVE`, and an empty wallet for a user with purchased credit is
+   still `PAYG_CREDIT_EXHAUSTED`.
+4. **The counter was per provider.** **Decision (owner): ONE total across ALL credit connectors.** The
+   counter row is now `(user_id, '*', period_key)`: the reserved provider key `'*'`
+   (`FREE_ALLOWANCE_TOTAL_COUNTER_KEY`) in the existing table, so the unique index and the guarded upsert
+   are unchanged. A plan of 5 means 5 requests a month in total, not 5 per provider. `giveBack` always
+   returns the slot to the total row. Migration `20261002120000_free_allowance_single_total` sums every
+   existing per-provider row into the `'*'` row (adding to one if present) and deletes the per-provider rows;
+   it is idempotent. The original text above that says "per provider" is superseded.
+
+Per-request cost ceiling: unchanged (`min($0.15, plan ceiling / allowance)`), applied only when metering is
+on (it needs a price). With metering off the call is only counted. The plan ceiling and allowance still move
+together: at a cap of 15 and a $0.30 ceiling each request may cost $0.02.
+
+**Wire.** `GET /credit/me` now returns `freeAllowance: { limit, used, remaining, resetsAt } | null` (one
+object, was a per-provider array). `limit` and `remaining` are `null` for unlimited, `resetsAt` is the next
+UTC month start. `null` for an administrator or a plan that gives none; with metering off it is shown only
+for a finite allowance, because only that is enforced.
+
+**Chat.** chat-service passes the code through (`PAYG_CREDIT_ERROR_MESSAGES` carries the English fallback). The
+refusal arrives over SSE because the send itself was accepted; the frontend maps all `PAYG_*` codes in
+`CHAT_STREAM_ERROR_KEY_BY_CODE` and turns them into the limit card through `resolveChatLimitNoticeFromCode`.
+For this code the card shows "You have used all N free requests to credit models this month. Upgrade to a
+paid plan or add credit to keep using them. Included models still work." with **See plans** and **Add
+credit** buttons (13 locales). Local and included models never reach the counter.
+
+**Deploy.** Migration and auth-service first. A stale chat-service still shows the refusal through its
+generic path. To enforce on an install whose switch row is missing, nothing else is needed.
+
+**Tests.** N = 5 and N = 15 at the service (atomic counter fake: exactly N admitted, parallel burst of 3N
+admits N, a returned slot can be retaken), at the manager (grant-funded user counted, purchased credit bypass,
+per-provider calls share one count, kill switch off enforced and still unmetered for paid, unlimited,
+administrator, local, per-unit), at the repository (one total row) and in the frontend (code to card, both
+buttons, the number in the body).

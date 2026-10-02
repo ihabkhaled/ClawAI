@@ -36,7 +36,7 @@ export const ALWAYS_TRANSFORMABLE_MODALITIES: ReadonlySet<RequiredModality> = ne
 ]);
 
 /** The research planner sees at most this much of the attachments' derived text. */
-export const RESEARCH_ATTACHMENT_DIGEST_MAX_CHARS = 1_500;
+export const RESEARCH_ATTACHMENT_DIGEST_MAX_CHARS = 2_400;
 /** …and at most this much from any one attachment. */
 export const RESEARCH_ATTACHMENT_DIGEST_PER_FILE_CHARS = 600;
 

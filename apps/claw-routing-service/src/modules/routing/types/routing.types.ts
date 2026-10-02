@@ -10,6 +10,7 @@ import {
 } from '../../../generated/prisma';
 import type { ComplexityClassification } from './complexity.types';
 import type { RoutingExplanation } from './explanation.types';
+import type { PickedModelSubstitute } from './picked-model-substitute.types';
 import type { WorkflowAvailability } from '../../workflows/types/live-workflow-selector.types';
 
 export interface RoutingContext {
@@ -119,6 +120,12 @@ export interface RoutingDecisionResult {
    * admin's FILE_WRITER list (F6, ADR-119). Undefined means "use the list".
    */
   fileWriter?: FallbackEntry;
+  /**
+   * Set only on a MANUAL_MODEL chat decision: the models chat-service may
+   * answer with when the picked one fails (at most two are tried), and the
+   * suggestions shown when every one failed. Best first.
+   */
+  pickedModelSubstitutes?: PickedModelSubstitute[];
 }
 
 export type MultiIntentResult = {

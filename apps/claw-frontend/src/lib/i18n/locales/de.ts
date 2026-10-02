@@ -3,7 +3,9 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
+import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
+import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -539,6 +541,11 @@ export const de: TranslationDictionary = {
       paygPricingUnavailableTitle: 'Vorübergehend nicht verfügbar',
       paygPricingUnavailableBody:
         'Die Preisdaten waren nicht erreichbar, daher sind kostenpflichtige Modelle kurz pausiert. Ihnen wurde nichts berechnet. Lokale Modelle funktionieren weiterhin.',
+      paygFreeAllowanceExhaustedTitle: 'Kostenlose Anfragen an Guthaben-Modelle aufgebraucht',
+      paygFreeAllowanceExhaustedBody:
+        'Sie haben in diesem Monat alle kostenlosen Anfragen an Guthaben-Modelle verbraucht. Wechseln Sie zu einem kostenpflichtigen Tarif oder laden Sie Guthaben auf, um sie weiter zu nutzen. Enthaltene Modelle funktionieren weiterhin.',
+      paygFreeAllowanceExhaustedBodyWithLimit:
+        'Sie haben in diesem Monat alle {limit} kostenlosen Anfragen an Guthaben-Modelle verbraucht. Wechseln Sie zu einem kostenpflichtigen Tarif oder laden Sie Guthaben auf, um sie weiter zu nutzen. Enthaltene Modelle funktionieren weiterhin.',
       dailyTokensTitle: 'Die heutigen Tokens sind aufgebraucht',
       dailyTokensBody:
         'Ihr Tagesbudget an Tokens ist verbraucht. Es wird um Mitternacht UTC zurückgesetzt, oder Sie wechseln jetzt zu einem größeren Tarif.',
@@ -4338,6 +4345,7 @@ export const de: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.de.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.de,
   narration: NARRATION_TRANSLATIONS.de,
+  pickedModel: PICKED_MODEL_TRANSLATIONS.de,
   mediaUi: MEDIA_UI_TRANSLATIONS.de,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.de,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.de,
@@ -4428,6 +4436,7 @@ export const de: TranslationDictionary = {
       clearSelection: 'Auswahl aufheben',
       impactWarning: 'Das Aufheben entfernt diese Modelle aus jedem Tarif, der sie nutzt:',
     },
+    exposureUi: MODEL_EXPOSURE_UI_TRANSLATIONS.de,
   },
   adminPlans: {
     intervalDiscounts: {
@@ -4516,9 +4525,9 @@ export const de: TranslationDictionary = {
       maxContextPacks: 'Max. Kontextpakete',
       maxMemoryItems: 'Max. Speicherelemente',
       maxVideoSeconds: 'Maximale Videolänge (Sekunden)',
-      creditConnectorFreeRequests: 'Gratis-Anfragen pro Guthaben-Connector und Monat',
+      creditConnectorFreeRequests: 'Gratis-Anfragen an Guthaben-Modelle pro Monat (gesamt)',
       creditConnectorFreeRequestsHelp:
-        'Wie viele Anfragen pro Monat ein Nutzer dieses Tarifs über Guthaben-Connectoren stellen kann, bevor sein Guthaben belastet wird. Leer lassen für unbegrenzt; 0 schaltet es ab.',
+        'Wie viele Anfragen pro Monat ein Nutzer dieses Tarifs insgesamt über alle Guthaben-Connectoren stellen kann, bevor Guthaben nötig ist. Leer lassen für unbegrenzt; 0 schaltet es ab. Gekauftes Guthaben ermöglicht es, darüber hinaus weiterzumachen.',
       creditConnectorFreeRequestsInvalid:
         'Geben Sie eine ganze Zahl von 0 bis 100000 ein oder lassen Sie das Feld für unbegrenzt leer.',
       isPublic: 'Öffentlich gelistet',
@@ -5001,6 +5010,8 @@ export const de: TranslationDictionary = {
         'Für dieses Modell ist noch kein Preis veröffentlicht, daher kann es nicht abgerechnet werden.',
       PAYG_PRICING_UNAVAILABLE:
         'Die Preisdaten sind vorübergehend nicht erreichbar. Ihnen wurde nichts berechnet.',
+      PAYG_FREE_ALLOWANCE_EXHAUSTED:
+        'Ihre kostenlosen Anfragen an Guthaben-Modelle sind für diesen Monat aufgebraucht. Wechseln Sie den Tarif oder laden Sie Guthaben auf, um fortzufahren.',
       CREDIT_PACKAGE_NOT_FOUND: 'Dieses Guthaben-Paket existiert nicht mehr.',
       CREDIT_PACKAGE_INACTIVE: 'Dieses Guthaben-Paket wird nicht mehr angeboten.',
       CREDIT_ADJUSTMENT_REASON_REQUIRED:

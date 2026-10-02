@@ -55,3 +55,11 @@ export type CrawlFollowUp = {
 export type OllamaCloudChatReply = {
   message?: { content?: string };
 };
+
+/** What the caller knows about the turn that the planner's reply must be checked against (ADR-152). */
+export type ResearchPlanOptions = {
+  /** Files travel with the turn: the planner's "answer" reasoning is dropped, never shown as a claim. */
+  hasAttachments?: boolean;
+  /** Links read out of an attachment; never added to the crawl by the planner. */
+  excludedUrls?: readonly string[];
+};

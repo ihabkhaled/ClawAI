@@ -2,9 +2,12 @@ import { type Mock, vi } from 'vitest';
 import { ModelCostClass, PaygSurface } from '@claw/shared-types';
 
 import { type PlansRepository } from '../../../plans/repositories/plans.repository';
-import { type ConnectorPolicyClient } from '../../clients/connector-policy.client';
 import { type CreditFreeAllowanceRepository } from '../../repositories/credit-free-allowance.repository';
-import { type CreditReserveInput, type PaygRateSnapshot } from '../../types/credit.types';
+import {
+  type CreditFreeAllowancePolicy,
+  type CreditReserveInput,
+  type PaygRateSnapshot,
+} from '../../types/credit.types';
 import { CreditFreeAllowanceService } from '../credit-free-allowance.service';
 
 // $1 per million input tokens, $10 per million output tokens.
@@ -60,9 +63,16 @@ const makePlan = (overrides: Record<string, unknown> = {}) => ({
 
 describe('CreditFreeAllowanceService', () => {
   let plans: { findEffectiveForUser: Mock; findDefault: Mock };
-  let counters: { tryConsume: Mock; giveBack: Mock; findForUserPeriod: Mock };
-  let policy: { getPolicy: Mock };
+  let counters: { tryConsume: Mock; giveBack: Mock; findTotalUsed: Mock };
   let service: CreditFreeAllowanceService;
+
+  const policyOf = async (): Promise<CreditFreeAllowancePolicy> => {
+    const policy = await service.resolvePolicy('user-1');
+    if (policy === null) {
+      throw new Error('expected a policy');
+    }
+    return policy;
+  };
 
   beforeEach(() => {
     plans = {
@@ -72,13 +82,11 @@ describe('CreditFreeAllowanceService', () => {
     counters = {
       tryConsume: vi.fn().mockResolvedValue(true),
       giveBack: vi.fn().mockResolvedValue(undefined),
-      findForUserPeriod: vi.fn().mockResolvedValue([]),
+      findTotalUsed: vi.fn().mockResolvedValue(0),
     };
-    policy = { getPolicy: vi.fn().mockResolvedValue({ GROK: true, OPENAI: true, OLLAMA: false }) };
     service = new CreditFreeAllowanceService(
       plans as unknown as PlansRepository,
       counters as unknown as CreditFreeAllowanceRepository,
-      policy as unknown as ConnectorPolicyClient,
     );
   });
 
@@ -117,56 +125,65 @@ describe('CreditFreeAllowanceService', () => {
   });
 
   describe('tryAdmit', () => {
-    it('counts against the upper-cased provider and the UTC month', async () => {
-      const admission = await service.tryAdmit(makeInput(), RATE, NOW);
+    it('counts on the ONE total key and the UTC month, whatever the provider', async () => {
+      const attempt = await service.tryAdmit(makeInput(), RATE, await policyOf(), NOW);
 
       expect(counters.tryConsume).toHaveBeenCalledWith(
-        { userId: 'user-1', provider: 'GROK', periodKey: '2026-10' },
+        { userId: 'user-1', provider: '*', periodKey: '2026-10' },
         2,
       );
-      expect(admission?.counter).toEqual({
-        userId: 'user-1',
-        provider: 'GROK',
-        periodKey: '2026-10',
+      expect(attempt).toMatchObject({
+        status: 'ADMITTED',
+        admission: { counter: { userId: 'user-1', provider: '*', periodKey: '2026-10' } },
       });
     });
 
     it('clamps the output so the worst case stays inside the per-request ceiling', async () => {
-      const admission = await service.tryAdmit(makeInput(), RATE, NOW);
+      const attempt = await service.tryAdmit(makeInput(), RATE, await policyOf(), NOW);
 
       // $0.15 ceiling minus a $0.001 prompt, at $10 per million output tokens.
-      expect(admission?.maxOutputTokens).toBe(14_900);
-      expect(admission?.clamped).toBe(true);
-      expect(admission?.worstCaseCostMicroUsd).toBeLessThanOrEqual(150_000n);
+      expect(attempt).toMatchObject({
+        status: 'ADMITTED',
+        admission: { maxOutputTokens: 14_900, clamped: true },
+      });
     });
 
     it('does not report a clamp when the request already fits', async () => {
-      const admission = await service.tryAdmit(
+      const attempt = await service.tryAdmit(
         makeInput({ requestedMaxOutputTokens: 500 }),
         RATE,
+        await policyOf(),
         NOW,
       );
-      expect(admission).toMatchObject({ maxOutputTokens: 500, clamped: false });
+      expect(attempt).toMatchObject({
+        status: 'ADMITTED',
+        admission: { maxOutputTokens: 500, clamped: false },
+      });
+    });
+
+    it('with no rate (metering off) only counts: the requested ceiling is kept, no clamp', async () => {
+      const attempt = await service.tryAdmit(makeInput(), null, await policyOf(), NOW);
+      expect(attempt).toMatchObject({
+        status: 'ADMITTED',
+        admission: { maxOutputTokens: 30_512, clamped: false, worstCaseCostMicroUsd: 0n },
+      });
+      expect(counters.tryConsume).toHaveBeenCalledTimes(1);
     });
 
     it.each([PaygSurface.IMAGE, PaygSurface.VIDEO, PaygSurface.TRANSCRIPTION, PaygSurface.TTS])(
-      'refuses the per-unit surface %s without touching the counter',
+      'is INELIGIBLE for the per-unit surface %s and never touches the counter',
       async (surface) => {
-        await expect(service.tryAdmit(makeInput({ surface }), RATE, NOW)).resolves.toBeNull();
+        await expect(
+          service.tryAdmit(makeInput({ surface }), RATE, await policyOf(), NOW),
+        ).resolves.toEqual({ status: 'INELIGIBLE' });
         expect(counters.tryConsume).not.toHaveBeenCalled();
       },
     );
 
-    it('refuses a unit-carrying call mislabelled as chat', async () => {
-      await expect(service.tryAdmit(makeInput({ videoSeconds: 8 }), RATE, NOW)).resolves.toBeNull();
-      expect(counters.tryConsume).not.toHaveBeenCalled();
-    });
-
-    it('refuses when the plan gives none (0) and never reads the counter', async () => {
-      plans.findEffectiveForUser.mockResolvedValue(
-        makePlan({ creditConnectorFreeRequestsPerMonth: 0 }),
-      );
-      await expect(service.tryAdmit(makeInput(), RATE, NOW)).resolves.toBeNull();
+    it('is INELIGIBLE for a unit-carrying call mislabelled as chat', async () => {
+      await expect(
+        service.tryAdmit(makeInput({ videoSeconds: 8 }), RATE, await policyOf(), NOW),
+      ).resolves.toEqual({ status: 'INELIGIBLE' });
       expect(counters.tryConsume).not.toHaveBeenCalled();
     });
 
@@ -174,84 +191,158 @@ describe('CreditFreeAllowanceService', () => {
       plans.findEffectiveForUser.mockResolvedValue(
         makePlan({ creditConnectorFreeRequestsPerMonth: null }),
       );
-      await service.tryAdmit(makeInput(), RATE, NOW);
+      await service.tryAdmit(makeInput(), RATE, await policyOf(), NOW);
       expect(counters.tryConsume).toHaveBeenCalledWith(expect.anything(), 2_147_483_647);
     });
 
-    it('refuses a prompt the per-request ceiling cannot pay for, without burning a slot', async () => {
+    it('says PROMPT_TOO_LARGE when the per-request ceiling cannot pay, without burning a slot', async () => {
       // 2M prompt tokens is $2.00, far above the $0.15 ceiling.
       await expect(
-        service.tryAdmit(makeInput({ promptTokens: 2_000_000 }), RATE, NOW),
-      ).resolves.toBeNull();
+        service.tryAdmit(makeInput({ promptTokens: 2_000_000 }), RATE, await policyOf(), NOW),
+      ).resolves.toEqual({ status: 'PROMPT_TOO_LARGE' });
       expect(counters.tryConsume).not.toHaveBeenCalled();
     });
 
-    it('refuses when the counter says the allowance is spent', async () => {
+    it('says SPENT, with the plan limit, when the counter refuses', async () => {
       counters.tryConsume.mockResolvedValue(false);
-      await expect(service.tryAdmit(makeInput(), RATE, NOW)).resolves.toBeNull();
+      await expect(service.tryAdmit(makeInput(), RATE, await policyOf(), NOW)).resolves.toEqual({
+        status: 'SPENT',
+        limit: 2,
+      });
     });
 
-    it('keeps providers and months apart: the key carries both', async () => {
+    it('is one total across providers and a fresh total each UTC month', async () => {
+      const policy = await policyOf();
       await service.tryAdmit(
         makeInput({ provider: 'GROK' }),
         RATE,
+        policy,
         new Date('2026-10-31T23:59:59Z'),
       );
       await service.tryAdmit(
         makeInput({ provider: 'OPENAI' }),
         RATE,
+        policy,
         new Date('2026-11-01T00:00:00Z'),
       );
 
       expect(counters.tryConsume.mock.calls.map(([key]) => key)).toEqual([
-        { userId: 'user-1', provider: 'GROK', periodKey: '2026-10' },
-        { userId: 'user-1', provider: 'OPENAI', periodKey: '2026-11' },
+        { userId: 'user-1', provider: '*', periodKey: '2026-10' },
+        { userId: 'user-1', provider: '*', periodKey: '2026-11' },
       ]);
+    });
+
+    describe.each([5, 15])('a plan that gives %i requests (atomic counter)', (limit) => {
+      let used: number;
+
+      beforeEach(() => {
+        used = 0;
+        plans.findEffectiveForUser.mockResolvedValue(
+          makePlan({ creditConnectorFreeRequestsPerMonth: limit }),
+        );
+        // Same contract as the guarded upsert: take a slot only while below the limit.
+        counters.tryConsume.mockImplementation(async (_key: unknown, max: number) => {
+          if (used >= max) {
+            return false;
+          }
+          used += 1;
+          return true;
+        });
+        counters.giveBack.mockImplementation(async () => {
+          used = Math.max(0, used - 1);
+        });
+      });
+
+      it('admits exactly N requests and refuses N+1 across providers', async () => {
+        const policy = await policyOf();
+        const providers = ['ANTHROPIC', 'OPENAI', 'GROK'];
+        const statuses: string[] = [];
+        for (let i = 0; i < limit + 3; i += 1) {
+          const attempt = await service.tryAdmit(
+            makeInput({ provider: providers[i % providers.length] ?? 'GROK' }),
+            RATE,
+            policy,
+            NOW,
+          );
+          statuses.push(attempt.status);
+        }
+        expect(statuses.slice(0, limit).every((status) => status === 'ADMITTED')).toBe(true);
+        expect(statuses.slice(limit)).toEqual(['SPENT', 'SPENT', 'SPENT']);
+      });
+
+      it('a parallel burst of 3N admits exactly N', async () => {
+        const policy = await policyOf();
+        const attempts = await Promise.all(
+          Array.from({ length: limit * 3 }, () => service.tryAdmit(makeInput(), RATE, policy, NOW)),
+        );
+        expect(attempts.filter((attempt) => attempt.status === 'ADMITTED')).toHaveLength(limit);
+      });
+
+      it('a slot given back (failed call) can be taken again', async () => {
+        const policy = await policyOf();
+        for (let i = 0; i < limit; i += 1) {
+          await service.tryAdmit(makeInput(), RATE, policy, NOW);
+        }
+        await expect(service.tryAdmit(makeInput(), RATE, policy, NOW)).resolves.toMatchObject({
+          status: 'SPENT',
+        });
+        await service.giveBack({ userId: 'user-1', provider: 'OPENAI', periodKey: '2026-10' });
+        await expect(service.tryAdmit(makeInput(), RATE, policy, NOW)).resolves.toMatchObject({
+          status: 'ADMITTED',
+        });
+      });
     });
   });
 
   describe('giveBack', () => {
-    it('returns the slot on the normalised key', async () => {
-      await service.giveBack({ userId: 'user-1', provider: ' grok', periodKey: '2026-10' });
+    it('returns the slot to the total counter whatever provider the call used', async () => {
+      await service.giveBack({ userId: 'user-1', provider: 'grok', periodKey: '2026-10' });
 
       expect(counters.giveBack).toHaveBeenCalledWith({
         userId: 'user-1',
-        provider: 'GROK',
+        provider: '*',
         periodKey: '2026-10',
       });
     });
   });
 
-  describe('getViews', () => {
-    it('lists every metered provider with the remaining count', async () => {
-      counters.findForUserPeriod.mockResolvedValue([{ provider: 'GROK', usedCount: 1 }]);
+  describe('getView', () => {
+    it('reports one total with remaining and the next UTC month start', async () => {
+      counters.findTotalUsed.mockResolvedValue(1);
 
-      await expect(service.getViews('user-1', NOW)).resolves.toEqual([
-        { provider: 'GROK', limit: 2, used: 1, remaining: 1 },
-        { provider: 'OPENAI', limit: 2, used: 0, remaining: 2 },
-      ]);
-      expect(counters.findForUserPeriod).toHaveBeenCalledWith('user-1', '2026-10');
+      await expect(service.getView('user-1', NOW, true)).resolves.toEqual({
+        limit: 2,
+        used: 1,
+        remaining: 1,
+        resetsAt: '2026-11-01T00:00:00.000Z',
+      });
+      expect(counters.findTotalUsed).toHaveBeenCalledWith('user-1', '2026-10');
     });
 
-    it('omits a provider the policy does not meter', async () => {
-      const views = await service.getViews('user-1', NOW);
-      expect(views.map((view) => view.provider)).not.toContain('OLLAMA');
-    });
-
-    it('is empty when the plan gives none', async () => {
+    it('is null when the plan gives none', async () => {
       plans.findEffectiveForUser.mockResolvedValue(
         makePlan({ creditConnectorFreeRequestsPerMonth: 0 }),
       );
-      await expect(service.getViews('user-1', NOW)).resolves.toEqual([]);
-      expect(policy.getPolicy).not.toHaveBeenCalled();
+      await expect(service.getView('user-1', NOW, true)).resolves.toBeNull();
+      expect(counters.findTotalUsed).not.toHaveBeenCalled();
     });
 
-    it('reports a null limit and null remaining for an unlimited plan', async () => {
+    it('reports a null limit and null remaining for an unlimited plan while metering is on', async () => {
       plans.findEffectiveForUser.mockResolvedValue(
         makePlan({ creditConnectorFreeRequestsPerMonth: null }),
       );
-      const [first] = await service.getViews('user-1', NOW);
-      expect(first).toMatchObject({ limit: null, remaining: null });
+      await expect(service.getView('user-1', NOW, true)).resolves.toMatchObject({
+        limit: null,
+        remaining: null,
+      });
+    });
+
+    it('with metering off shows a capped allowance (still enforced) but not an unlimited one', async () => {
+      await expect(service.getView('user-1', NOW, false)).resolves.toMatchObject({ limit: 2 });
+      plans.findEffectiveForUser.mockResolvedValue(
+        makePlan({ creditConnectorFreeRequestsPerMonth: null }),
+      );
+      await expect(service.getView('user-1', NOW, false)).resolves.toBeNull();
     });
   });
 });

@@ -99,6 +99,8 @@ See `docs/13-adr/adr-140-dynamic-trial-length.md`.
 
 ### credit_free_allowance_usage
 
+> Amended 2026-10-02: `provider` is always `'*'` (one total per user per month across all credit connectors). Migration `20261002120000_free_allowance_single_total` folds old per-provider rows into it.
+
 One row per `(user_id, provider, period_key)` (unique): `used_count` is how many free
 requests that user spent on that provider (upper-cased) in that UTC month (`YYYY-MM`).
 Incremented only by one guarded upsert (`... WHERE used_count < limit`), decremented

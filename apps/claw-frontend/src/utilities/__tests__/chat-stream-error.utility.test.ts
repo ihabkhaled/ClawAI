@@ -101,3 +101,24 @@ describe('resolveStoredErrorMessage', () => {
     ).toBeNull();
   });
 });
+
+describe('credit refusals that arrive over SSE', () => {
+  it.each([
+    ['PAYG_CREDIT_EXHAUSTED', 'billing.errors.PAYG_CREDIT_EXHAUSTED'],
+    ['PAYG_PROMPT_TOO_EXPENSIVE', 'billing.errors.PAYG_PROMPT_TOO_EXPENSIVE'],
+    ['PAYG_MODEL_UNPRICED', 'billing.errors.PAYG_MODEL_UNPRICED'],
+    ['PAYG_PRICING_UNAVAILABLE', 'billing.errors.PAYG_PRICING_UNAVAILABLE'],
+    ['PAYG_FREE_ALLOWANCE_EXHAUSTED', 'billing.errors.PAYG_FREE_ALLOWANCE_EXHAUSTED'],
+  ])('maps %s to its own message, never "all providers failed"', (code, key) => {
+    expect(resolveChatStreamError({ code } as StreamEvent, translate)).toBe(`localized:${key}`);
+  });
+
+  it('shows the spent-allowance sentence for a stored reply after a reload', () => {
+    expect(
+      resolveStoredErrorMessage(
+        { error: true, errorCode: 'PAYG_FREE_ALLOWANCE_EXHAUSTED' },
+        translate,
+      ),
+    ).toContain('billing.errors.PAYG_FREE_ALLOWANCE_EXHAUSTED');
+  });
+});

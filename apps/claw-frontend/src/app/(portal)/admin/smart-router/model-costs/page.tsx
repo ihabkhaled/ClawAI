@@ -4,11 +4,13 @@ import { CircleDollarSign } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactElement } from 'react';
 
+import { ModelBillingHelp } from '@/components/admin/model-billing/model-billing-help';
 import { ModelCostAttentionBanner } from '@/components/admin/model-costs/model-cost-attention-banner';
 import { ModelCostEditDialog } from '@/components/admin/model-costs/model-cost-edit-dialog';
 import { ModelCostFilterBar } from '@/components/admin/model-costs/model-cost-filter-bar';
 import { ModelCostTable } from '@/components/admin/model-costs/model-cost-table';
 import { EmptyState } from '@/components/common/empty-state';
+import { ListShowMore } from '@/components/common/list-show-more';
 import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,7 +22,7 @@ export default function AdminModelCostsPage(): ReactElement {
   const controller = useModelCostsPage();
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="touch:p-4 mx-auto flex w-full max-w-screen-2xl flex-col gap-6 p-6">
       <PageHeader
         title={controller.t('adminModelCosts.title')}
         description={controller.t('adminModelCosts.description')}
@@ -32,6 +34,8 @@ export default function AdminModelCostsPage(): ReactElement {
         t={controller.t}
       />
 
+      <ModelBillingHelp isPolicyError={controller.isPolicyError} t={controller.t} />
+
       <ModelCostFilterBar
         sourceFilter={controller.sourceFilter}
         counts={controller.counts}
@@ -39,6 +43,10 @@ export default function AdminModelCostsPage(): ReactElement {
         search={controller.search}
         onSourceFilterChange={controller.onSourceFilterChange}
         onSearchChange={controller.onSearchChange}
+        billingFilter={controller.billingFilter}
+        billingCounts={controller.billingCounts}
+        onBillingFilterChange={controller.onBillingFilterChange}
+        activeFilterCount={controller.activeFilterCount}
         t={controller.t}
       />
 
@@ -77,7 +85,25 @@ export default function AdminModelCostsPage(): ReactElement {
       ) : null}
 
       {!controller.isLoading && !controller.isError && controller.totalCount > 0 ? (
-        <ModelCostTable rows={controller.rows} onEdit={controller.onEdit} t={controller.t} />
+        <>
+          <ModelCostTable
+            rows={controller.rows}
+            onEdit={controller.onEdit}
+            resolveBilling={controller.resolveBilling}
+            t={controller.t}
+          />
+          <ListShowMore
+            shownCount={controller.rows.length}
+            totalCount={controller.filteredCount}
+            hasMore={controller.hasMore}
+            onShowMore={controller.onShowMore}
+            showMoreLabel={controller.t('adminModelCosts.list.showMore')}
+            shownLabel={controller.t('adminModelCosts.list.shown', {
+              shown: controller.rows.length,
+              total: controller.filteredCount,
+            })}
+          />
+        </>
       ) : null}
 
       <ModelCostEditDialog

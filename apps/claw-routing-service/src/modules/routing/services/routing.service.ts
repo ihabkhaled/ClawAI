@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
 import { EventPattern, LogLevel } from '@claw/shared-types';
 import { AppConfig } from '../../../app/config/app.config';
@@ -15,6 +15,7 @@ import { RoutingDecisionsRepository } from '../repositories/routing-decisions.re
 import { RoutingManager } from '../managers/routing.manager';
 import { ReplayManager } from '../managers/replay.manager';
 import { RouterShadowEvaluationManager } from '../managers/router-shadow-evaluation.manager';
+import { PickedModelSubstituteManager } from '../managers/picked-model-substitute.manager';
 import { AdaptiveLearningManager } from '../managers/adaptive-learning.manager';
 import { PromptBuilderManager } from '../managers/prompt-builder.manager';
 import { RouterEducationManager } from '../managers/router-education.manager';
@@ -100,6 +101,9 @@ export class RoutingService implements OnModuleInit {
     private readonly aiRoutePlanner: AIRoutePlannerManager,
     private readonly liveWorkflowSelector: LiveWorkflowSelectorManager,
     private readonly modelRegistry: RouterModelRegistryRepository,
+    // Optional: without it a picked model keeps its old single-candidate
+    // behaviour (no substitutes on message.routed).
+    @Optional() private readonly pickedModelSubstitutes?: PickedModelSubstituteManager,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -506,7 +510,16 @@ export class RoutingService implements OnModuleInit {
       );
     }
 
-    await this.storeAndPublishDecision(messageId, threadId, content, gate.decision);
+    const substitutes =
+      (await this.pickedModelSubstitutes?.resolve(gate.decision, context)) ?? [];
+    await this.storeAndPublishDecision(
+      messageId,
+      threadId,
+      content,
+      substitutes.length === 0
+        ? gate.decision
+        : { ...gate.decision, pickedModelSubstitutes: substitutes },
+    );
   }
 
   private parseMessageCreatedPayload(payload: Record<string, unknown>): {
@@ -984,6 +997,11 @@ export class RoutingService implements OnModuleInit {
       // F6 (ADR-119) — a manual pick's model writes the file it asked for.
       // Absent on every other decision; chat-service then uses FILE_WRITER.
       ...(decision.fileWriter === undefined ? {} : { fileWriter: decision.fileWriter }),
+      // A picked model's smart fallback: what chat-service may answer with when
+      // it fails, and the suggestions shown when everything failed.
+      ...(decision.pickedModelSubstitutes === undefined
+        ? {}
+        : { pickedModelSubstitutes: decision.pickedModelSubstitutes }),
       timestamp: new Date().toISOString(),
     });
   }

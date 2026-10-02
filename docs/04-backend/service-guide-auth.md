@@ -547,7 +547,7 @@ Business rationale: [`docs/business/plan-allowances.md`](../business/plan-allowa
 ## Free credit-connector requests (ADR-142, 2026-10-01)
 
 `Plan.creditConnectorFreeRequestsPerMonth` (`Int?`, default 0; `null` unlimited, `0` none): free
-requests per credit connector per UTC month for a user whose credit cannot cover a token-priced call.
+requests per UTC month, one total across all credit connectors (counted first for a finite allowance, enforced even with the metering switch off; purchased credit bypasses it), for a token-priced call.
 Free = 2, every other plan = 0. Editable through the create/update plan DTOs (`0..1,000,000` or
 `null`), returned on the admin plan view and the public catalog. Enforcement is in
 `CreditReservationManager` (credit first, allowance as the fallback), counted in

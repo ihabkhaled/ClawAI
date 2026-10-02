@@ -59,12 +59,12 @@ export class CreditAccountService {
     const meteringEnabled = await this.settings.isEnabled(PAYG_ENABLED_SETTING_KEY, false);
     return {
       ...toWalletSnapshot(balances.wallet, { adminBypass, meteringEnabled }),
-      // Nothing is metered for an administrator or with the kill switch off, so
-      // there is no allowance to show (ADR-142).
-      freeAllowance:
-        adminBypass || !meteringEnabled
-          ? []
-          : await this.freeAllowance.getViews(userId, new Date()),
+      // Nothing is counted for an administrator. With the kill switch off only a
+      // CAPPED allowance is still enforced, and getView shows only that one
+      // (ADR-142 update 2026-10-02).
+      freeAllowance: adminBypass
+        ? null
+        : await this.freeAllowance.getView(userId, new Date(), meteringEnabled),
     };
   }
 

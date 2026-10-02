@@ -3,7 +3,9 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
+import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
+import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -531,6 +533,11 @@ export const ru: TranslationDictionary = {
       paygPricingUnavailableTitle: 'Временно недоступно',
       paygPricingUnavailableBody:
         'Не удалось получить цены, поэтому платные модели ненадолго приостановлены. С вас ничего не списано. Локальные модели продолжают работать.',
+      paygFreeAllowanceExhaustedTitle: 'Бесплатные запросы к моделям за кредиты исчерпаны',
+      paygFreeAllowanceExhaustedBody:
+        'Вы использовали все бесплатные запросы к моделям за кредиты в этом месяце. Перейдите на платный тариф или пополните кредит, чтобы продолжить. Модели, включённые в тариф, по-прежнему работают.',
+      paygFreeAllowanceExhaustedBodyWithLimit:
+        'Вы использовали все {limit} бесплатных запросов к моделям за кредиты в этом месяце. Перейдите на платный тариф или пополните кредит, чтобы продолжить. Модели, включённые в тариф, по-прежнему работают.',
       dailyTokensTitle: 'Дневной запас токенов израсходован',
       dailyTokensBody:
         'Ваша дневная норма токенов исчерпана. Она обновится в полночь UTC, либо можно перейти на более крупный тариф прямо сейчас.',
@@ -4302,6 +4309,7 @@ export const ru: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.ru.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.ru,
   narration: NARRATION_TRANSLATIONS.ru,
+  pickedModel: PICKED_MODEL_TRANSLATIONS.ru,
   mediaUi: MEDIA_UI_TRANSLATIONS.ru,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.ru,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.ru,
@@ -4391,6 +4399,7 @@ export const ru: TranslationDictionary = {
       clearSelection: 'Снять выделение',
       impactWarning: 'Закрытие удалит эти модели из всех планов, которые их используют:',
     },
+    exposureUi: MODEL_EXPOSURE_UI_TRANSLATIONS.ru,
   },
   adminPlans: {
     intervalDiscounts: {
@@ -4479,9 +4488,9 @@ export const ru: TranslationDictionary = {
       maxContextPacks: 'Макс. пакетов контекста',
       maxMemoryItems: 'Макс. элементов памяти',
       maxVideoSeconds: 'Максимальная длина видео (секунды)',
-      creditConnectorFreeRequests: 'Бесплатные запросы на коннектор с кредитами в месяц',
+      creditConnectorFreeRequests: 'Бесплатные запросы к моделям за кредиты в месяц (всего)',
       creditConnectorFreeRequestsHelp:
-        'Сколько запросов в месяц пользователь этого тарифа может сделать через коннекторы с кредитами, прежде чем с него начнут списывать кредиты. Оставьте пустым для безлимита; 0 отключает.',
+        'Сколько запросов в месяц всего, по всем коннекторам с кредитами вместе, может сделать пользователь этого тарифа, прежде чем понадобятся кредиты. Оставьте пустым для безлимита; 0 отключает. Купленные кредиты позволяют продолжить сверх этого числа.',
       creditConnectorFreeRequestsInvalid:
         'Введите целое число от 0 до 100000 или оставьте поле пустым для безлимита.',
       isPublic: 'В публичном списке',
@@ -4959,6 +4968,8 @@ export const ru: TranslationDictionary = {
       PAYG_MODEL_UNPRICED:
         'Для этой модели ещё не опубликована цена, поэтому её нельзя тарифицировать.',
       PAYG_PRICING_UNAVAILABLE: 'Цены временно недоступны. С вас ничего не списано.',
+      PAYG_FREE_ALLOWANCE_EXHAUSTED:
+        'Бесплатные запросы к моделям за кредиты в этом месяце закончились. Перейдите на другой тариф или пополните кредит, чтобы продолжить.',
       CREDIT_PACKAGE_NOT_FOUND: 'Этот пакет кредита больше не существует.',
       CREDIT_PACKAGE_INACTIVE: 'Этот пакет кредита больше не продаётся.',
       CREDIT_ADJUSTMENT_REASON_REQUIRED:

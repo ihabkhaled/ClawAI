@@ -10,7 +10,12 @@ import {
   PLANNER_QUERY_MAX_CHARS,
   PLANNER_THINKING_MAX_CHARS,
 } from '../constants/research-plan.constants';
-import type { CrawlFollowUp, ResearchPlan } from '../types/research-gate.types';
+import type {
+  CrawlFollowUp,
+  ResearchPlan,
+  ResearchPlanOptions,
+} from '../types/research-gate.types';
+import { claimsCannotViewAttachment } from './attachment-awareness.utility';
 
 const ACTIONS = new Set<string>(Object.values(PlannedResearchAction));
 
@@ -28,13 +33,17 @@ const ACTIONS = new Set<string>(Object.values(PlannedResearchAction));
  * - Any URL the model adds must be a real web URL; `javascript:` and friends
  *   are dropped, because these are about to be fetched by the server.
  */
-export function parseResearchPlan(raw: string, userUrls: readonly string[]): ResearchPlan | null {
+export function parseResearchPlan(
+  raw: string,
+  userUrls: readonly string[],
+  options: ResearchPlanOptions = {},
+): ResearchPlan | null {
   const parsed = extractJsonObject(raw);
   if (parsed === null || typeof parsed['action'] !== 'string' || !ACTIONS.has(parsed['action'])) {
     return null;
   }
   let action = parsed['action'] as PlannedResearchAction;
-  const urls = mergeUrls(userUrls, parsed['urls']);
+  const urls = mergeUrls(userUrls, parsed['urls'], options.excludedUrls ?? []);
 
   if (
     userUrls.length > 0 &&
@@ -58,9 +67,22 @@ export function parseResearchPlan(raw: string, userUrls: readonly string[]): Res
     query: readQuery(parsed['query']),
     maxPages: readMaxPages(parsed['maxPages']),
     narration: readNarration(parsed['narration']),
-    thinking: readThinking(parsed['thinking']),
+    thinking: guardThinking(
+      readThinking(parsed['thinking']),
+      options.hasAttachments === true && action === PlannedResearchAction.ANSWER,
+    ),
     decidedBy: null,
   };
+}
+
+/**
+ * The planner's reasoning is shown as the assistant's thinking, so it must not
+ * claim the AI cannot view attachments (ADR-152): that is false of the
+ * answering step, which always receives them. A planner that merely decided "no
+ * web needed" for a turn with attachments has nothing to explain either.
+ */
+function guardThinking(thinking: string, dropAll: boolean): string {
+  return dropAll || claimsCannotViewAttachment(thinking) ? '' : thinking;
 }
 
 /** Reads the post-crawl re-plan, or null when it is unusable. */
@@ -92,7 +114,11 @@ function extractJsonObject(raw: string): Record<string, unknown> | null {
   }
 }
 
-function mergeUrls(userUrls: readonly string[], modelUrls: unknown): string[] {
+function mergeUrls(
+  userUrls: readonly string[],
+  modelUrls: unknown,
+  excludedUrls: readonly string[],
+): string[] {
   const merged = [...userUrls];
   if (Array.isArray(modelUrls)) {
     for (const value of modelUrls) {
@@ -102,13 +128,40 @@ function mergeUrls(userUrls: readonly string[], modelUrls: unknown): string[] {
       // Re-detected, not trusted: the same detector that reads user text, so a
       // model-written URL passes exactly the checks a user-written one does.
       for (const url of detectUrlsInText(value, { max: 1 })) {
-        if (!merged.includes(url)) {
+        if (!merged.includes(url) && !isExcluded(url, userUrls, excludedUrls)) {
           merged.push(url);
         }
       }
     }
   }
   return merged;
+}
+
+/**
+ * A planner URL that points at a site an attachment mentioned (same host as a
+ * link read out of it) is dropped, unless the user wrote a link to that host.
+ */
+function isExcluded(
+  url: string,
+  userUrls: readonly string[],
+  excludedUrls: readonly string[],
+): boolean {
+  if (excludedUrls.length === 0) {
+    return false;
+  }
+  const host = hostOf(url);
+  const userHosts = new Set(userUrls.map(hostOf));
+  return (
+    !userHosts.has(host) && excludedUrls.some((excluded) => excluded === url || hostOf(excluded) === host)
+  );
+}
+
+function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname.toLowerCase();
+  } catch {
+    return url;
+  }
 }
 
 function readQuery(value: unknown): string | null {
@@ -120,10 +173,7 @@ function readQuery(value: unknown): string | null {
 }
 
 function readMaxPages(value: unknown): number {
-  if (typeof value !== 'number' || !Number.isFinite(value) || value < 1) {
-    return RESEARCH_PLANNER_DEFAULT_MAX_PAGES;
-  }
-  return Math.min(Math.floor(value), RESEARCH_PLANNER_MAX_PAGES);
+  return typeof value !== 'number' || !Number.isFinite(value) || value < 1 ? RESEARCH_PLANNER_DEFAULT_MAX_PAGES : Math.min(Math.floor(value), RESEARCH_PLANNER_MAX_PAGES);
 }
 
 function readNarration(value: unknown): string {

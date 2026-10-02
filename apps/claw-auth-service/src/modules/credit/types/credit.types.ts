@@ -234,12 +234,6 @@ export type CreditFreeAllowanceCounterKey = {
   periodKey: string;
 };
 
-/** One counter row as read back for the wallet snapshot. */
-export type CreditFreeAllowanceUsageRow = {
-  provider: string;
-  usedCount: number;
-};
-
 /**
  * What the plan lets a user take on the free allowance, resolved once per
  * request. `limit` is `null` for unlimited; the resolver returns no policy at all
@@ -259,3 +253,15 @@ export type CreditFreeAllowanceAdmission = {
   /** Worst-case platform cost of this one request, integer micro-USD. */
   worstCaseCostMicroUsd: bigint;
 };
+
+/**
+ * The outcome of asking for one free-allowance slot. The refusals are told apart
+ * because they lead to different answers: SPENT is the plan's monthly cap
+ * (`PAYG_FREE_ALLOWANCE_EXHAUSTED`), PROMPT_TOO_LARGE is the per-request ceiling,
+ * INELIGIBLE is a per-unit surface the wallet must decide.
+ */
+export type CreditFreeAllowanceAttempt =
+  | { status: 'ADMITTED'; admission: CreditFreeAllowanceAdmission }
+  | { status: 'INELIGIBLE' }
+  | { status: 'PROMPT_TOO_LARGE' }
+  | { status: 'SPENT'; limit: number };

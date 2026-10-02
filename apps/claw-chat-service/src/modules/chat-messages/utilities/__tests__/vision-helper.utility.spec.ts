@@ -103,7 +103,8 @@ describe('vision helper utilities', () => {
       expect(at).toBeGreaterThan(begin);
       expect(at).toBeLessThan(end);
     }
-    expect(block).toContain('say that you are relying on a description');
+    expect(block).toContain('Do not tell the user you cannot view the image');
+    expect(block).not.toMatch(/You cannot see this image/u);
     expect(block).not.toMatch(/\bI can see\b/u);
   });
 

@@ -3,7 +3,9 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
+import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
+import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -531,6 +533,11 @@ export const pt: TranslationDictionary = {
       paygPricingUnavailableTitle: 'Temporariamente indisponível',
       paygPricingUnavailableBody:
         'Não foi possível consultar os preços, então os modelos pagos estão pausados por um momento. Nada foi cobrado de você. Os modelos locais continuam funcionando.',
+      paygFreeAllowanceExhaustedTitle: 'Pedidos gratuitos a modelos de crédito esgotados',
+      paygFreeAllowanceExhaustedBody:
+        'Você usou todos os seus pedidos gratuitos a modelos de crédito neste mês. Faça upgrade para um plano pago ou adicione crédito para continuar a usá-los. Os modelos incluídos continuam funcionando.',
+      paygFreeAllowanceExhaustedBodyWithLimit:
+        'Você usou todos os {limit} pedidos gratuitos a modelos de crédito deste mês. Faça upgrade para um plano pago ou adicione crédito para continuar a usá-los. Os modelos incluídos continuam funcionando.',
       dailyTokensTitle: 'Já usou os tokens de hoje',
       dailyTokensBody:
         'A sua quota diária de tokens esgotou. É reposta à meia-noite UTC, ou pode mudar já para um plano maior.',
@@ -4301,6 +4308,7 @@ export const pt: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.pt.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.pt,
   narration: NARRATION_TRANSLATIONS.pt,
+  pickedModel: PICKED_MODEL_TRANSLATIONS.pt,
   mediaUi: MEDIA_UI_TRANSLATIONS.pt,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.pt,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.pt,
@@ -4391,6 +4399,7 @@ export const pt: TranslationDictionary = {
       clearSelection: 'Limpar seleção',
       impactWarning: 'Deixar de expor removerá estes modelos de todos os planos que os usam:',
     },
+    exposureUi: MODEL_EXPOSURE_UI_TRANSLATIONS.pt,
   },
   adminPlans: {
     intervalDiscounts: {
@@ -4479,9 +4488,9 @@ export const pt: TranslationDictionary = {
       maxContextPacks: 'Máx. de pacotes de contexto',
       maxMemoryItems: 'Máx. de itens de memória',
       maxVideoSeconds: 'Duração máxima do vídeo (segundos)',
-      creditConnectorFreeRequests: 'Solicitações gratuitas por conector de crédito por mês',
+      creditConnectorFreeRequests: 'Solicitações gratuitas a modelos de crédito por mês (total)',
       creditConnectorFreeRequestsHelp:
-        'Quantas solicitações por mês um usuário deste plano pode fazer por conectores de crédito antes de o crédito ser cobrado. Deixe vazio para ilimitado; 0 desativa.',
+        'Quantas solicitações por mês, no total em todos os conectores de crédito, um usuário deste plano pode fazer antes de precisar de crédito. Deixe vazio para ilimitado; 0 desativa. O crédito comprado permite continuar além desse número.',
       creditConnectorFreeRequestsInvalid:
         'Digite um número inteiro de 0 a 100000, ou deixe vazio para ilimitado.',
       isPublic: 'Listado publicamente',
@@ -4960,6 +4969,8 @@ export const pt: TranslationDictionary = {
       PAYG_MODEL_UNPRICED: 'Este modelo ainda não tem preço publicado e não pode ser cobrado.',
       PAYG_PRICING_UNAVAILABLE:
         'Os preços estão temporariamente inacessíveis. Nada foi cobrado de você.',
+      PAYG_FREE_ALLOWANCE_EXHAUSTED:
+        'Seus pedidos gratuitos a modelos de crédito acabaram neste mês. Faça upgrade ou adicione crédito para continuar.',
       CREDIT_PACKAGE_NOT_FOUND: 'Esse pacote de crédito não existe mais.',
       CREDIT_PACKAGE_INACTIVE: 'Esse pacote de crédito não está mais à venda.',
       CREDIT_ADJUSTMENT_REASON_REQUIRED:

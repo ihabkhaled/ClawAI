@@ -67,6 +67,12 @@ export type AssembledContext = {
    * (rule 42 §18). Absent when nothing was attached.
    */
   requestedAttachmentCount?: number;
+  /**
+   * Ids in `fileContents` attached in EARLIER turns of the thread and carried
+   * into this follow-up so the model keeps the evidence (ADR-152). Never
+   * counted in `requestedAttachmentCount`.
+   */
+  earlierFileIds?: string[];
   workspaceCitations: WorkspaceCitation[];
   /** Evidence items produced by a research run (web search, fetch, etc). */
   researchEvidence: ResearchEvidenceCitation[];

@@ -27,6 +27,25 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
       all: 'All',
       searchPlaceholder: 'Search provider or model',
       clear: 'Clear filters',
+      more: 'Filters',
+      sheetTitle: 'Filter models',
+    },
+    billing: {
+      column: 'Billing',
+      credit: 'Credit',
+      included: 'Included',
+      filterLabel: 'Filter by billing',
+      help: "Credit models are paid from the user's credit wallet; free plans get the monthly free requests set in plan settings. Change it on the Connectors page.",
+      connectorsLink: 'Open Connectors',
+      editConnectorFor: 'Change billing for {provider} on its connector',
+      sourceConnector: 'Set by the "Credit connector" switch on this provider\'s connector.',
+      sourceDefault: 'No connector for this provider yet: the provider default applies.',
+      sourceLocal: 'Runs on your own hardware: never billed from credit.',
+      policyError: 'Could not load connector billing settings; badges show provider defaults.',
+    },
+    list: {
+      showMore: 'Show more',
+      shown: 'Showing {shown} of {total}',
     },
     source: {
       published: 'Published',
@@ -96,6 +115,25 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
       all: 'الكل',
       searchPlaceholder: 'ابحث عن مزود أو نموذج',
       clear: 'مسح عوامل التصفية',
+      more: 'عوامل التصفية',
+      sheetTitle: 'تصفية النماذج',
+    },
+    billing: {
+      column: 'الفوترة',
+      credit: 'رصيد',
+      included: 'مشمول',
+      filterLabel: 'التصفية حسب الفوترة',
+      help: 'نماذج الرصيد تُدفع من محفظة رصيد المستخدم؛ وتحصل الخطط المجانية على الطلبات المجانية الشهرية المحددة في إعدادات الخطة. يمكنك تغيير ذلك من صفحة الموصلات.',
+      connectorsLink: 'فتح الموصلات',
+      editConnectorFor: 'تغيير فوترة {provider} من موصله',
+      sourceConnector: 'يحدده مفتاح "موصل الرصيد" في موصل هذا المزود.',
+      sourceDefault: 'لا يوجد موصل لهذا المزود بعد: يُطبَّق الإعداد الافتراضي للمزود.',
+      sourceLocal: 'يعمل على أجهزتك الخاصة: لا يُخصم من الرصيد أبدًا.',
+      policyError: 'تعذر تحميل إعدادات فوترة الموصلات؛ تعرض الشارات الإعدادات الافتراضية للمزودين.',
+    },
+    list: {
+      showMore: 'عرض المزيد',
+      shown: 'عرض {shown} من {total}',
     },
     source: {
       published: 'منشور',
@@ -167,6 +205,27 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
       all: 'Alle',
       searchPlaceholder: 'Anbieter oder Modell suchen',
       clear: 'Filter zurücksetzen',
+      more: 'Filter',
+      sheetTitle: 'Modelle filtern',
+    },
+    billing: {
+      column: 'Abrechnung',
+      credit: 'Guthaben',
+      included: 'Inklusive',
+      filterLabel: 'Nach Abrechnung filtern',
+      help: 'Guthaben-Modelle werden aus der Guthaben-Wallet des Nutzers bezahlt; kostenlose Pläne erhalten die monatlichen Gratisanfragen aus den Planeinstellungen. Ändern lässt sich das auf der Seite „Konnektoren“.',
+      connectorsLink: 'Konnektoren öffnen',
+      editConnectorFor: 'Abrechnung für {provider} am Konnektor ändern',
+      sourceConnector:
+        'Festgelegt durch den Schalter „Guthaben-Konnektor“ am Konnektor dieses Anbieters.',
+      sourceDefault: 'Noch kein Konnektor für diesen Anbieter: Es gilt die Anbietervorgabe.',
+      sourceLocal: 'Läuft auf Ihrer eigenen Hardware: wird nie vom Guthaben abgebucht.',
+      policyError:
+        'Die Abrechnungseinstellungen der Konnektoren konnten nicht geladen werden; die Badges zeigen die Anbietervorgaben.',
+    },
+    list: {
+      showMore: 'Mehr anzeigen',
+      shown: '{shown} von {total} angezeigt',
     },
     source: {
       published: 'Veröffentlicht',
@@ -239,6 +298,28 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
       all: 'Todos',
       searchPlaceholder: 'Buscar proveedor o modelo',
       clear: 'Borrar filtros',
+      more: 'Filtros',
+      sheetTitle: 'Filtrar modelos',
+    },
+    billing: {
+      column: 'Facturación',
+      credit: 'Crédito',
+      included: 'Incluido',
+      filterLabel: 'Filtrar por facturación',
+      help: 'Los modelos de crédito se pagan desde el monedero de crédito del usuario; los planes gratuitos reciben las solicitudes gratuitas mensuales definidas en la configuración del plan. Cámbialo en la página de Conectores.',
+      connectorsLink: 'Abrir Conectores',
+      editConnectorFor: 'Cambiar la facturación de {provider} en su conector',
+      sourceConnector:
+        'Lo define el interruptor «Conector de crédito» del conector de este proveedor.',
+      sourceDefault:
+        'Aún no hay conector para este proveedor: se aplica el valor predeterminado del proveedor.',
+      sourceLocal: 'Se ejecuta en tu propio hardware: nunca se cobra del crédito.',
+      policyError:
+        'No se pudo cargar la facturación de los conectores; las insignias muestran los valores predeterminados.',
+    },
+    list: {
+      showMore: 'Mostrar más',
+      shown: 'Mostrando {shown} de {total}',
     },
     source: {
       published: 'Publicado',
@@ -309,6 +390,28 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
       all: 'همه',
       searchPlaceholder: 'جست‌وجوی ارائه‌دهنده یا مدل',
       clear: 'پاک کردن فیلترها',
+      more: 'فیلترها',
+      sheetTitle: 'فیلتر مدل‌ها',
+    },
+    billing: {
+      column: 'صورت‌حساب',
+      credit: 'اعتباری',
+      included: 'شامل',
+      filterLabel: 'فیلتر بر اساس صورت‌حساب',
+      help: 'مدل‌های اعتباری از کیف پول اعتبار کاربر پرداخت می‌شوند؛ طرح‌های رایگان درخواست‌های رایگان ماهانهٔ تعیین‌شده در تنظیمات طرح را دریافت می‌کنند. این را در صفحهٔ اتصال‌دهنده‌ها تغییر دهید.',
+      connectorsLink: 'باز کردن اتصال‌دهنده‌ها',
+      editConnectorFor: 'تغییر صورت‌حساب {provider} در اتصال‌دهندهٔ آن',
+      sourceConnector:
+        'با کلید «اتصال‌دهندهٔ اعتباری» در اتصال‌دهندهٔ این ارائه‌دهنده تعیین می‌شود.',
+      sourceDefault:
+        'هنوز اتصال‌دهنده‌ای برای این ارائه‌دهنده وجود ندارد: پیش‌فرض ارائه‌دهنده اعمال می‌شود.',
+      sourceLocal: 'روی سخت‌افزار خودتان اجرا می‌شود: هرگز از اعتبار کسر نمی‌شود.',
+      policyError:
+        'تنظیمات صورت‌حساب اتصال‌دهنده‌ها بارگیری نشد؛ نشان‌ها پیش‌فرض ارائه‌دهندگان را نشان می‌دهند.',
+    },
+    list: {
+      showMore: 'نمایش بیشتر',
+      shown: 'نمایش {shown} از {total}',
     },
     source: {
       published: 'منتشرشده',
@@ -380,6 +483,28 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
       all: 'Tous',
       searchPlaceholder: 'Rechercher un fournisseur ou un modèle',
       clear: 'Effacer les filtres',
+      more: 'Filtres',
+      sheetTitle: 'Filtrer les modèles',
+    },
+    billing: {
+      column: 'Facturation',
+      credit: 'Crédit',
+      included: 'Inclus',
+      filterLabel: 'Filtrer par facturation',
+      help: "Les modèles à crédit sont payés depuis le portefeuille de crédit de l'utilisateur ; les forfaits gratuits reçoivent les requêtes gratuites mensuelles définies dans les paramètres du forfait. Modifiez-le sur la page Connecteurs.",
+      connectorsLink: 'Ouvrir les connecteurs',
+      editConnectorFor: 'Modifier la facturation de {provider} sur son connecteur',
+      sourceConnector:
+        'Défini par l’interrupteur « Connecteur à crédit » du connecteur de ce fournisseur.',
+      sourceDefault:
+        'Aucun connecteur pour ce fournisseur : la valeur par défaut du fournisseur s’applique.',
+      sourceLocal: 'S’exécute sur votre propre matériel : jamais débité du crédit.',
+      policyError:
+        'Impossible de charger la facturation des connecteurs ; les badges affichent les valeurs par défaut.',
+    },
+    list: {
+      showMore: 'Afficher plus',
+      shown: '{shown} sur {total} affichés',
     },
     source: {
       published: 'Publié',
@@ -450,6 +575,25 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
       all: 'सभी',
       searchPlaceholder: 'प्रदाता या मॉडल खोजें',
       clear: 'फ़िल्टर हटाएँ',
+      more: 'फ़िल्टर',
+      sheetTitle: 'मॉडल फ़िल्टर करें',
+    },
+    billing: {
+      column: 'बिलिंग',
+      credit: 'क्रेडिट',
+      included: 'शामिल',
+      filterLabel: 'बिलिंग के अनुसार फ़िल्टर करें',
+      help: 'क्रेडिट मॉडल का भुगतान उपयोगकर्ता के क्रेडिट वॉलेट से होता है; मुफ़्त प्लान को प्लान सेटिंग में तय मासिक मुफ़्त अनुरोध मिलते हैं। इसे कनेक्टर पेज पर बदलें।',
+      connectorsLink: 'कनेक्टर खोलें',
+      editConnectorFor: '{provider} की बिलिंग उसके कनेक्टर पर बदलें',
+      sourceConnector: 'इस प्रदाता के कनेक्टर पर "क्रेडिट कनेक्टर" स्विच से तय होता है।',
+      sourceDefault: 'इस प्रदाता का अभी कोई कनेक्टर नहीं है: प्रदाता का डिफ़ॉल्ट लागू होता है।',
+      sourceLocal: 'आपके अपने हार्डवेयर पर चलता है: कभी क्रेडिट से नहीं कटता।',
+      policyError: 'कनेक्टर बिलिंग सेटिंग लोड नहीं हो सकीं; बैज प्रदाता के डिफ़ॉल्ट दिखा रहे हैं।',
+    },
+    list: {
+      showMore: 'और दिखाएँ',
+      shown: '{total} में से {shown} दिखाए गए',
     },
     source: {
       published: 'प्रकाशित',
@@ -521,6 +665,28 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
       all: 'Tutti',
       searchPlaceholder: 'Cerca fornitore o modello',
       clear: 'Azzera i filtri',
+      more: 'Filtri',
+      sheetTitle: 'Filtra i modelli',
+    },
+    billing: {
+      column: 'Fatturazione',
+      credit: 'Credito',
+      included: 'Incluso',
+      filterLabel: 'Filtra per fatturazione',
+      help: "I modelli a credito sono pagati dal portafoglio crediti dell'utente; i piani gratuiti ricevono le richieste gratuite mensili impostate nelle impostazioni del piano. Modificalo nella pagina Connettori.",
+      connectorsLink: 'Apri Connettori',
+      editConnectorFor: 'Modifica la fatturazione di {provider} sul suo connettore',
+      sourceConnector:
+        'Stabilito dall’interruttore «Connettore a credito» sul connettore di questo provider.',
+      sourceDefault:
+        'Nessun connettore per questo provider: vale l’impostazione predefinita del provider.',
+      sourceLocal: 'Gira sul tuo hardware: mai addebitato sul credito.',
+      policyError:
+        'Impossibile caricare la fatturazione dei connettori; i badge mostrano le impostazioni predefinite.',
+    },
+    list: {
+      showMore: 'Mostra altri',
+      shown: '{shown} di {total} mostrati',
     },
     source: {
       published: 'Pubblicato',
@@ -591,6 +757,28 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
       all: 'すべて',
       searchPlaceholder: 'プロバイダーまたはモデルを検索',
       clear: '絞り込みを解除',
+      more: '絞り込み',
+      sheetTitle: 'モデルを絞り込む',
+    },
+    billing: {
+      column: '課金',
+      credit: 'クレジット',
+      included: 'プランに含む',
+      filterLabel: '課金方法で絞り込む',
+      help: 'クレジットモデルはユーザーのクレジットウォレットから支払われます。無料プランには、プラン設定で定めた月間無料リクエストが付与されます。変更はコネクタページで行います。',
+      connectorsLink: 'コネクタを開く',
+      editConnectorFor: '{provider} の課金をコネクタで変更',
+      sourceConnector:
+        'このプロバイダーのコネクタにある「クレジットコネクタ」スイッチで決まります。',
+      sourceDefault:
+        'このプロバイダーのコネクタはまだありません。プロバイダーの既定値が適用されます。',
+      sourceLocal: '自社のハードウェアで動作するため、クレジットから差し引かれることはありません。',
+      policyError:
+        'コネクタの課金設定を読み込めませんでした。バッジはプロバイダーの既定値を表示しています。',
+    },
+    list: {
+      showMore: 'さらに表示',
+      shown: '{total} 件中 {shown} 件を表示',
     },
     source: {
       published: '公開済み',
@@ -662,6 +850,26 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
       all: 'Todos',
       searchPlaceholder: 'Pesquisar fornecedor ou modelo',
       clear: 'Limpar filtros',
+      more: 'Filtros',
+      sheetTitle: 'Filtrar modelos',
+    },
+    billing: {
+      column: 'Cobrança',
+      credit: 'Crédito',
+      included: 'Incluído',
+      filterLabel: 'Filtrar por cobrança',
+      help: 'Modelos de crédito são pagos pela carteira de crédito do usuário; planos gratuitos recebem as solicitações gratuitas mensais definidas nas configurações do plano. Altere isso na página Conectores.',
+      connectorsLink: 'Abrir Conectores',
+      editConnectorFor: 'Alterar a cobrança de {provider} no conector',
+      sourceConnector: 'Definido pela chave “Conector de crédito” no conector deste provedor.',
+      sourceDefault: 'Ainda não há conector para este provedor: vale o padrão do provedor.',
+      sourceLocal: 'Roda no seu próprio hardware: nunca é cobrado do crédito.',
+      policyError:
+        'Não foi possível carregar a cobrança dos conectores; os selos mostram os padrões dos provedores.',
+    },
+    list: {
+      showMore: 'Mostrar mais',
+      shown: 'Mostrando {shown} de {total}',
     },
     source: {
       published: 'Publicado',
@@ -733,6 +941,28 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
       all: 'Все',
       searchPlaceholder: 'Поиск поставщика или модели',
       clear: 'Сбросить фильтры',
+      more: 'Фильтры',
+      sheetTitle: 'Фильтр моделей',
+    },
+    billing: {
+      column: 'Оплата',
+      credit: 'Кредит',
+      included: 'Включено',
+      filterLabel: 'Фильтр по способу оплаты',
+      help: 'Кредитные модели оплачиваются из кредитного кошелька пользователя; бесплатные тарифы получают ежемесячные бесплатные запросы, заданные в настройках тарифа. Изменить это можно на странице «Коннекторы».',
+      connectorsLink: 'Открыть коннекторы',
+      editConnectorFor: 'Изменить оплату {provider} в его коннекторе',
+      sourceConnector:
+        'Задаётся переключателем «Кредитный коннектор» в коннекторе этого провайдера.',
+      sourceDefault:
+        'Для этого провайдера ещё нет коннектора: действует значение провайдера по умолчанию.',
+      sourceLocal: 'Работает на вашем оборудовании: никогда не списывается с кредита.',
+      policyError:
+        'Не удалось загрузить настройки оплаты коннекторов; значки показывают значения по умолчанию.',
+    },
+    list: {
+      showMore: 'Показать ещё',
+      shown: 'Показано {shown} из {total}',
     },
     source: {
       published: 'Опубликовано',
@@ -803,6 +1033,26 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
       all: 'ทั้งหมด',
       searchPlaceholder: 'ค้นหาผู้ให้บริการหรือโมเดล',
       clear: 'ล้างตัวกรอง',
+      more: 'ตัวกรอง',
+      sheetTitle: 'กรองโมเดล',
+    },
+    billing: {
+      column: 'การเรียกเก็บเงิน',
+      credit: 'เครดิต',
+      included: 'รวมในแผน',
+      filterLabel: 'กรองตามการเรียกเก็บเงิน',
+      help: 'โมเดลเครดิตชำระจากกระเป๋าเครดิตของผู้ใช้ แผนฟรีจะได้รับคำขอฟรีรายเดือนตามที่ตั้งไว้ในการตั้งค่าแผน เปลี่ยนได้ที่หน้าตัวเชื่อมต่อ',
+      connectorsLink: 'เปิดตัวเชื่อมต่อ',
+      editConnectorFor: 'เปลี่ยนการเรียกเก็บเงินของ {provider} ที่ตัวเชื่อมต่อ',
+      sourceConnector: 'กำหนดโดยสวิตช์ "ตัวเชื่อมต่อแบบเครดิต" บนตัวเชื่อมต่อของผู้ให้บริการนี้',
+      sourceDefault: 'ยังไม่มีตัวเชื่อมต่อสำหรับผู้ให้บริการนี้ จึงใช้ค่าเริ่มต้นของผู้ให้บริการ',
+      sourceLocal: 'ทำงานบนฮาร์ดแวร์ของคุณเอง ไม่หักจากเครดิตเลย',
+      policyError:
+        'โหลดการตั้งค่าการเรียกเก็บเงินของตัวเชื่อมต่อไม่ได้ ป้ายจึงแสดงค่าเริ่มต้นของผู้ให้บริการ',
+    },
+    list: {
+      showMore: 'แสดงเพิ่มเติม',
+      shown: 'แสดง {shown} จาก {total}',
     },
     source: {
       published: 'เผยแพร่แล้ว',
@@ -872,6 +1122,25 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
       all: '全部',
       searchPlaceholder: '搜索供应商或模型',
       clear: '清除筛选',
+      more: '筛选',
+      sheetTitle: '筛选模型',
+    },
+    billing: {
+      column: '计费',
+      credit: '信用额度',
+      included: '套餐内含',
+      filterLabel: '按计费方式筛选',
+      help: '信用额度模型从用户的信用钱包中扣费；免费套餐获得套餐设置中规定的每月免费请求次数。可在“连接器”页面更改。',
+      connectorsLink: '打开连接器',
+      editConnectorFor: '在连接器上更改 {provider} 的计费方式',
+      sourceConnector: '由该提供商连接器上的“信用额度连接器”开关决定。',
+      sourceDefault: '该提供商尚无连接器：采用提供商默认设置。',
+      sourceLocal: '在您自己的硬件上运行：从不扣除信用额度。',
+      policyError: '无法加载连接器计费设置；徽章显示的是提供商默认值。',
+    },
+    list: {
+      showMore: '显示更多',
+      shown: '显示 {shown} / {total}',
     },
     source: {
       published: '已发布',

@@ -211,6 +211,47 @@ describe('useChatStream', () => {
     );
   });
 
+  it('exposes the code of a credit refusal so the thread can show the upgrade card', () => {
+    const { result } = renderHook(() => useChatStream('thread-credit', true));
+
+    act(() => {
+      capturedOptions.onMessage(
+        JSON.stringify({
+          threadId: 'thread-credit',
+          type: StreamEventType.ERROR,
+          error: 'You have used all your free requests to credit models this month.',
+          code: 'PAYG_FREE_ALLOWANCE_EXHAUSTED',
+          label: 'Response failed',
+        }),
+      );
+    });
+
+    expect(result.current.streamErrorCode).toBe('PAYG_FREE_ALLOWANCE_EXHAUSTED');
+    // Not "All providers failed": the code has its own message.
+    expect(result.current.streamError).toBe('billing.errors.PAYG_FREE_ALLOWANCE_EXHAUSTED');
+  });
+
+  it('clears the error code when the stream is reset for the next send', () => {
+    const { result } = renderHook(() => useChatStream('thread-credit', true));
+
+    act(() => {
+      capturedOptions.onMessage(
+        JSON.stringify({
+          threadId: 'thread-credit',
+          type: StreamEventType.ERROR,
+          error: 'x',
+          code: 'PAYG_FREE_ALLOWANCE_EXHAUSTED',
+        }),
+      );
+    });
+    act(() => {
+      result.current.resetStream();
+    });
+
+    expect(result.current.streamErrorCode).toBeNull();
+    expect(result.current.streamError).toBeNull();
+  });
+
   it('closes the SSE connection when the stream becomes inactive', () => {
     const { rerender, unmount } = renderHook(
       ({ isActive }) => useChatStream('thread-3', isActive),

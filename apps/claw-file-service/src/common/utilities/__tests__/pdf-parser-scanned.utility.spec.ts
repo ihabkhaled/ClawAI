@@ -1,4 +1,4 @@
-import { extractTextFromPdf } from '../pdf-parser.utility';
+import { extractTextFromPdf, renderPdfPages } from '../pdf-parser.utility';
 
 /**
  * Real, tiny PDFs built in the test (no mock): the scanned/short-text
@@ -46,5 +46,14 @@ describe('extractTextFromPdf scanned detection (real PDFs)', () => {
 
     expect(result.pages.every((page) => page.text.trim() === '')).toBe(true);
     expect(result.isScanned).toBe(true);
+  });
+});
+
+describe('renderPdfPages (real PDF)', () => {
+  it('draws a page as a PNG image', async () => {
+    const pages = await renderPdfPages(shortTextPdf(), 3, 1);
+
+    expect(pages).toHaveLength(1);
+    expect(pages[0]?.subarray(1, 4).toString('latin1')).toBe('PNG');
   });
 });

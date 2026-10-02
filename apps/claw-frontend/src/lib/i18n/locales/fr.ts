@@ -3,7 +3,9 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
+import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
+import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -536,6 +538,11 @@ export const fr: TranslationDictionary = {
       paygPricingUnavailableTitle: 'Indisponible temporairement',
       paygPricingUnavailableBody:
         'Les tarifs n’ont pas pu être consultés, les modèles payants sont donc suspendus un instant. Rien ne vous a été facturé. Les modèles locaux fonctionnent toujours.',
+      paygFreeAllowanceExhaustedTitle: 'Requêtes gratuites aux modèles à crédit épuisées',
+      paygFreeAllowanceExhaustedBody:
+        'Vous avez utilisé toutes vos requêtes gratuites aux modèles à crédit ce mois-ci. Passez à un forfait payant ou ajoutez du crédit pour continuer à les utiliser. Les modèles inclus fonctionnent toujours.',
+      paygFreeAllowanceExhaustedBodyWithLimit:
+        'Vous avez utilisé les {limit} requêtes gratuites aux modèles à crédit de ce mois-ci. Passez à un forfait payant ou ajoutez du crédit pour continuer à les utiliser. Les modèles inclus fonctionnent toujours.',
       dailyTokensTitle: 'Vous avez utilisé les jetons du jour',
       dailyTokensBody:
         'Votre quota quotidien de jetons est épuisé. Il se réinitialise à minuit UTC, ou vous pouvez passer à un forfait supérieur.',
@@ -4340,6 +4347,7 @@ export const fr: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.fr.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.fr,
   narration: NARRATION_TRANSLATIONS.fr,
+  pickedModel: PICKED_MODEL_TRANSLATIONS.fr,
   mediaUi: MEDIA_UI_TRANSLATIONS.fr,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.fr,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.fr,
@@ -4430,6 +4438,7 @@ export const fr: TranslationDictionary = {
       clearSelection: 'Effacer la sélection',
       impactWarning: 'Le retrait supprimera ces modèles de tous les forfaits qui les utilisent :',
     },
+    exposureUi: MODEL_EXPOSURE_UI_TRANSLATIONS.fr,
   },
   adminPlans: {
     intervalDiscounts: {
@@ -4519,9 +4528,9 @@ export const fr: TranslationDictionary = {
       maxContextPacks: 'Max. de packs de contexte',
       maxMemoryItems: 'Max. d’éléments de mémoire',
       maxVideoSeconds: 'Durée vidéo maximale (secondes)',
-      creditConnectorFreeRequests: 'Requêtes gratuites par connecteur à crédit et par mois',
+      creditConnectorFreeRequests: 'Requêtes gratuites aux modèles à crédit par mois (total)',
       creditConnectorFreeRequestsHelp:
-        "Nombre de requêtes par mois qu'un utilisateur de ce forfait peut effectuer via des connecteurs à crédit avant que son crédit soit débité. Laissez vide pour illimité ; 0 le désactive.",
+        "Nombre total de requêtes par mois qu'un utilisateur de ce forfait peut effectuer via tous les connecteurs à crédit avant d'avoir besoin de crédit. Laissez vide pour illimité ; 0 le désactive. Le crédit acheté permet de continuer au-delà de ce nombre.",
       creditConnectorFreeRequestsInvalid:
         'Saisissez un nombre entier de 0 à 100000, ou laissez vide pour illimité.',
       isPublic: 'Répertorié publiquement',
@@ -5006,6 +5015,8 @@ export const fr: TranslationDictionary = {
       PAYG_MODEL_UNPRICED: 'Ce modèle n’a pas encore de tarif publié et ne peut pas être facturé.',
       PAYG_PRICING_UNAVAILABLE:
         'Les tarifs sont temporairement inaccessibles. Rien ne vous a été facturé.',
+      PAYG_FREE_ALLOWANCE_EXHAUSTED:
+        'Vos requêtes gratuites aux modèles à crédit sont épuisées pour ce mois-ci. Changez de forfait ou ajoutez du crédit pour continuer.',
       CREDIT_PACKAGE_NOT_FOUND: 'Ce pack de crédit n’existe plus.',
       CREDIT_PACKAGE_INACTIVE: 'Ce pack de crédit n’est plus proposé.',
       CREDIT_ADJUSTMENT_REASON_REQUIRED: 'Un motif est requis pour un ajustement manuel de crédit.',

@@ -45,6 +45,7 @@ import {
   buildAttachmentDigest,
 } from '../utilities/attachment-modality.utility';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
+import { DerivedImageDescriptionStore } from './derived-image-description-store.service';
 import { NarrationKind } from '../../../common/enums/narration-kind.enum';
 import { NarrationService } from './narration.service';
 import { ResearchOrchestratorManager } from '../managers/research-orchestrator.manager';
@@ -148,7 +149,12 @@ import { type ParallelMessageDto } from '../dto/parallel-message.dto';
 import { type VerifyMessageDto } from '../dto/verify-message.dto';
 import { type PipelineMessageDto } from '../dto/pipeline-message.dto';
 import { type RolePackMessageDto } from '../dto/role-pack-message.dto';
-import { BusinessException, EntityNotFoundException } from '../../../common/errors';
+import {
+  BusinessException,
+  EntityNotFoundException,
+  PickedModelFailedException,
+} from '../../../common/errors';
+import type { SuggestedModel } from '../types/picked-model-fallback.types';
 import {
   type ChatMessage,
   type ChatThread,
@@ -176,6 +182,7 @@ import {
 import { type SearchMessagesQueryDto } from '../dto/search-messages-query.dto';
 import { type InThreadSearchMatch } from '../types/in-thread-search.types';
 import { buildSearchSnippet } from '../utilities/search-snippet.utility';
+import { pickedModelSubstitutesField } from '../utilities/picked-model-fallback.utility';
 import { fileWriterField, rerouteFileFollowUp } from '../utilities/file-writer.utility';
 import {
   redactProviderText,
@@ -230,6 +237,9 @@ export class ChatMessagesService implements OnModuleInit {
     // Optional for the same reason. Absent → `X-Claw-Zero-Retention` is
     // ignored and every turn is kept, as before F055.
     @Optional() private readonly zeroRetention?: ZeroRetentionService,
+    // Optional for the same reason. Absent → the planner's attachment digest
+    // has no vision-helper descriptions (ADR-152), only OCR and extracted text.
+    @Optional() private readonly derivedDescriptions?: DerivedImageDescriptionStore,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -1430,15 +1440,19 @@ export class ChatMessagesService implements OnModuleInit {
     this.logger.error(
       `handleMessageRouted: failed for message ${payload.messageId} - ${redactProviderText(rawMsg)}`,
     );
+    const suggestedModels =
+      error instanceof PickedModelFailedException ? [...error.suggestedModels] : undefined;
     const errorMessage = await this.storeErrorResponse(
       payload,
       errorMsg,
       errorCode,
       errorMessageKey,
+      suggestedModels,
     );
     this.chatStreamService.emitError(payload.threadId, errorMsg, {
       ...(errorCode === undefined ? {} : { code: errorCode }),
       ...(errorMessageKey === undefined ? {} : { messageKey: errorMessageKey }),
+      ...(suggestedModels === undefined ? {} : { suggestedModels }),
     });
     this.publishMessageCompleted(
       payload,
@@ -1699,6 +1713,8 @@ export class ChatMessagesService implements OnModuleInit {
       workflowReason: (payload['workflowReason'] as string | null | undefined) ?? null,
       // F6 (ADR-119) — only on a manual FILE_GENERATION decision.
       ...fileWriterField(payload['fileWriter']),
+      // MANUAL_MODEL smart fallback: what may answer if the pick fails.
+      ...pickedModelSubstitutesField(payload['pickedModelSubstitutes']),
     };
   }
 
@@ -1781,6 +1797,7 @@ export class ChatMessagesService implements OnModuleInit {
     errorMsg: string,
     errorCode?: string,
     errorMessageKey?: string,
+    suggestedModels?: SuggestedModel[],
   ): Promise<ChatMessage> {
     return this.chatMessagesRepository.create({
       threadId: payload.threadId,
@@ -1796,6 +1813,9 @@ export class ChatMessagesService implements OnModuleInit {
         sourceMessageId: payload.messageId,
         ...(errorCode === undefined ? {} : { errorCode }),
         ...(errorMessageKey === undefined ? {} : { errorMessageKey }),
+        // The picked model and every substitute failed: the bubble renders these
+        // as one-click retries after a refresh, too.
+        ...(suggestedModels === undefined ? {} : { suggestedModels }),
       },
     });
   }
@@ -2012,6 +2032,10 @@ export class ChatMessagesService implements OnModuleInit {
       ...this.buildTruncationMetaPart(llmResponse),
       ...this.buildFileDeliveryMetaPart(llmResponse),
       ...this.buildPaygMetaPart(llmResponse),
+      // A substitute answered for the user's picked model: the bubble says so.
+      ...(llmResponse.pickedModelFallback === undefined
+        ? {}
+        : { pickedModelFallback: llmResponse.pickedModelFallback }),
       ...this.buildToolTranscriptMetaPart(llmResponse),
       ...(!hasVisibleContent ? { emptyContent: true } : {}),
       ...this.buildDisplayNameMetaPart(latestUserMetadata),
@@ -2821,7 +2845,10 @@ export class ChatMessagesService implements OnModuleInit {
     const info = this.attachmentInfo;
     return info === undefined || fileIds === undefined || fileIds.length === 0
       ? ''
-      : buildAttachmentDigest(await info.textOnly(fileIds, userId));
+      : buildAttachmentDigest(
+          await info.textOnly(fileIds, userId),
+          (fileId) => this.derivedDescriptions?.get(userId, fileId)?.text,
+        );
   }
 
   private validateOwnership(thread: ChatThread, userId: string): void {

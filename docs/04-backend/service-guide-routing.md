@@ -571,3 +571,9 @@ provider via the shared capability table; see rule 51 item 18 and
 ## Generation intent filter (2026-09-29)
 
 Image and file intent detection run on `generationRequestText()` from `@claw/shared-utilities`: negations in 13 locales, pasted-document envelopes, and save-to-memory commands are excluded before any keyword matches. See rules/57 item 10 and ADR-127.
+
+## Picked-model substitutes (ADR-151)
+
+For a `MANUAL_MODEL` chat decision `PickedModelSubstituteManager` adds `pickedModelSubstitutes` (up to 5) to
+`message.routed`: `rankPickedModelSubstitutes` over the AUTO eligible set (pool 200), same provider first, other
+providers next, pricier models last and marked `costlier`. Never throws; a failure means no substitutes.

@@ -162,6 +162,16 @@ describe('ContextAssemblyManager attachment decoding', () => {
     });
   });
 
+  describe('scanned PDF with no readable text', () => {
+    it('says the document could not be read instead of passing the placeholder as content', () => {
+      const result = decode(buildFile({ extractedText: '[Image file: resume.pdf]' }));
+
+      expect(result).toContain('scanned or image-only');
+      expect(result).toContain('resume.pdf');
+      expect(result).not.toBe('[Image file: resume.pdf]');
+    });
+  });
+
   describe('plain text files', () => {
     it('still decodes a text file from base64 when nothing was extracted', () => {
       const result = decode(

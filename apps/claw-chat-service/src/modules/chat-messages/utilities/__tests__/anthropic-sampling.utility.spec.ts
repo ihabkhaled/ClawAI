@@ -34,6 +34,24 @@ describe('modelRejectsSamplingParams', () => {
     expect(modelRejectsSamplingParams('  Claude-Opus-5  ')).toBe(true);
   });
 
+  // Production 2026-10-02: exact matching missed these point releases and
+  // every turn on them was a 400 "`temperature` is deprecated".
+  it.each(['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-fable-5-1', 'claude-mythos-5-2'])(
+    'matches the point release %s by family',
+    (model) => {
+      expect(modelRejectsSamplingParams(model)).toBe(true);
+    },
+  );
+
+  it('matches a vendor-prefixed id (OpenRouter)', () => {
+    expect(modelRejectsSamplingParams('anthropic/claude-opus-5-5')).toBe(true);
+  });
+
+  it('never matches a different number that merely starts the same', () => {
+    expect(modelRejectsSamplingParams('claude-opus-50')).toBe(false);
+    expect(modelRejectsSamplingParams('claude-sonnet-4-6')).toBe(false);
+  });
+
   it('leaves other providers alone', () => {
     expect(modelRejectsSamplingParams('gpt-5.6-sol')).toBe(false);
     expect(modelRejectsSamplingParams('llama3.1:8b')).toBe(false);

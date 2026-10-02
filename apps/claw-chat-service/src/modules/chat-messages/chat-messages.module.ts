@@ -23,6 +23,7 @@ import { ModelCapabilityClient } from './clients/model-capability.client';
 import { ModelOutputLimitClient } from './clients/model-output-limit.client';
 import { AttachmentDeliveryManager } from './managers/attachment-delivery.manager';
 import { VisionHelperManager } from './managers/vision-helper.manager';
+import { DerivedImageDescriptionStore } from './services/derived-image-description-store.service';
 import { VisionHelperCandidatesClient } from './clients/vision-helper-candidates.client';
 import { VideoFramesClient } from './clients/video-frames.client';
 import { VideoDeliveryManager } from './managers/video-delivery.manager';
@@ -136,6 +137,7 @@ import { RuntimeV2ThreadActivityService } from './services/runtime-v2-thread-act
     AttachmentDeliveryManager,
     VisionHelperCandidatesClient,
     VisionHelperManager,
+    DerivedImageDescriptionStore,
     VideoFramesClient,
     VideoDeliveryManager,
     TtsVoiceCandidatesClient,

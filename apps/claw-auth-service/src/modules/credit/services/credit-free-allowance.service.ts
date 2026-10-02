@@ -5,10 +5,10 @@ import { clampOutputTokensToBalance } from '@claw/shared-utilities';
 
 import { utcMonthKey } from '../../../common/utilities/period-key.utility';
 import { PlansRepository } from '../../plans/repositories/plans.repository';
-import { ConnectorPolicyClient } from '../clients/connector-policy.client';
+import { FREE_ALLOWANCE_TOTAL_COUNTER_KEY } from '../constants/credit-free-allowance.constants';
 import { CreditFreeAllowanceRepository } from '../repositories/credit-free-allowance.repository';
 import {
-  type CreditFreeAllowanceAdmission,
+  type CreditFreeAllowanceAttempt,
   type CreditFreeAllowanceCounterKey,
   type CreditFreeAllowancePolicy,
   type CreditReserveInput,
@@ -17,13 +17,13 @@ import {
 import { toSafeBalanceNumber } from '../utilities/credit-bucket.utility';
 import {
   computeFreeRequestCeilingMicroUsd,
+  isCappedAllowance,
   isFreeAllowanceEligible,
   isFreeAllowanceEnabled,
-  normalizeAllowanceProvider,
+  nextUtcMonthStart,
   toCounterLimit,
   toFreeAllowanceView,
 } from '../utilities/credit-free-allowance.utility';
-import { isMeteredProvider } from '../utilities/payg-classification.utility';
 
 /**
  * The plan's free requests on credit connectors (ADR-142).
@@ -31,7 +31,8 @@ import { isMeteredProvider } from '../utilities/payg-classification.utility';
  * Owns the policy half (what the plan allows, what one free request may cost, the
  * atomic counter). It never touches the wallet: whether to fall back to the
  * allowance at all, and the reservation record that backs it, belong to
- * `CreditReservationManager`, which keeps the order credit-first.
+ * `CreditReservationManager`: a CAPPED plan without purchased credit is counted
+ * first, everything else stays credit-first (ADR-142 update 2026-10-02).
  */
 @Injectable()
 export class CreditFreeAllowanceService {
@@ -40,32 +41,70 @@ export class CreditFreeAllowanceService {
   constructor(
     private readonly plans: PlansRepository,
     private readonly counters: CreditFreeAllowanceRepository,
-    private readonly policy: ConnectorPolicyClient,
   ) {}
 
   /**
-   * Tries to admit one request on the allowance. Returns `null` when it cannot:
-   * not an eligible (token-priced) surface, the plan gives none, the clamp finds
-   * the per-request ceiling too small for this prompt, or the month's slots on
-   * this provider are spent.
+   * Tries to admit one request on the allowance the caller already resolved.
    *
    * The counter is taken LAST, after every check that can say no without a write,
    * so a refused request never burns a slot. A caller that then fails to record
    * the admission must call {@link giveBack}.
+   *
+   * `rate` is `null` when the metering kill switch is off: nothing is priced then,
+   * so the call is only COUNTED (no per-request ceiling clamp) and the provider
+   * gets the ceiling it asked for. The plan's cap still holds (ADR-142 update).
    */
   async tryAdmit(
     input: CreditReserveInput,
-    rate: PaygRateSnapshot,
+    rate: PaygRateSnapshot | null,
+    allowance: CreditFreeAllowancePolicy,
     now: Date,
-  ): Promise<CreditFreeAllowanceAdmission | null> {
+  ): Promise<CreditFreeAllowanceAttempt> {
     if (!isFreeAllowanceEligible(input)) {
-      return null;
+      return { status: 'INELIGIBLE' };
     }
-    const allowance = await this.resolvePolicy(input.userId);
-    if (allowance === null) {
-      return null;
+    const ceiling = rate === null ? null : this.clampToCeiling(input, rate, allowance);
+    if (ceiling !== null && ceiling.status !== 'AFFORDABLE') {
+      this.logger.warn(
+        `tryAdmit: ${ceiling.status} against the free-request ceiling provider=${input.provider}`,
+      );
+      return { status: 'PROMPT_TOO_LARGE' };
     }
-    const clamp = clampOutputTokensToBalance({
+    const counter: CreditFreeAllowanceCounterKey = {
+      userId: input.userId,
+      provider: FREE_ALLOWANCE_TOTAL_COUNTER_KEY,
+      periodKey: utcMonthKey(now),
+    };
+    const limit = toCounterLimit(allowance.limit);
+    if (!(await this.counters.tryConsume(counter, limit))) {
+      this.logger.log(`tryAdmit: allowance spent (total) provider=${input.provider}`);
+      return { status: 'SPENT', limit };
+    }
+    return {
+      status: 'ADMITTED',
+      admission:
+        ceiling === null
+          ? {
+              counter,
+              maxOutputTokens: input.requestedMaxOutputTokens,
+              clamped: false,
+              worstCaseCostMicroUsd: 0n,
+            }
+          : {
+              counter,
+              maxOutputTokens: ceiling.maxOutputTokens,
+              clamped: ceiling.clamped,
+              worstCaseCostMicroUsd: BigInt(ceiling.worstCaseCostMicroUsd),
+            },
+    };
+  }
+
+  private clampToCeiling(
+    input: CreditReserveInput,
+    rate: PaygRateSnapshot,
+    allowance: CreditFreeAllowancePolicy,
+  ): ReturnType<typeof clampOutputTokensToBalance> {
+    return clampOutputTokensToBalance({
       rates: rate.rates,
       balanceMicroUsd: toSafeBalanceNumber(allowance.requestCeilingMicroUsd),
       promptTokens: input.promptTokens,
@@ -73,63 +112,34 @@ export class CreditFreeAllowanceService {
       requestedMaxOutputTokens: input.requestedMaxOutputTokens,
       minViableOutputTokens: PAYG_MIN_VIABLE_OUTPUT_TOKENS,
     });
-    if (clamp.status !== 'AFFORDABLE') {
-      this.logger.warn(
-        `tryAdmit: ${clamp.status} against the free-request ceiling provider=${input.provider}`,
-      );
-      return null;
-    }
-    const counter: CreditFreeAllowanceCounterKey = {
-      userId: input.userId,
-      provider: normalizeAllowanceProvider(input.provider),
-      periodKey: utcMonthKey(now),
-    };
-    if (!(await this.counters.tryConsume(counter, toCounterLimit(allowance.limit)))) {
-      this.logger.log(`tryAdmit: allowance spent provider=${counter.provider}`);
-      return null;
-    }
-    return {
-      counter,
-      maxOutputTokens: clamp.maxOutputTokens,
-      clamped: clamp.clamped,
-      worstCaseCostMicroUsd: BigInt(clamp.worstCaseCostMicroUsd),
-    };
-  }
-
-  /** Gives a taken slot back. Idempotence is the caller's job (the release row count). */
-  async giveBack(counter: CreditFreeAllowanceCounterKey): Promise<void> {
-    await this.counters.giveBack({
-      ...counter,
-      provider: normalizeAllowanceProvider(counter.provider),
-    });
   }
 
   /**
-   * The user's allowance per credit connector for the current UTC month, for
-   * `GET /credit/me`. Empty when the plan gives none. Only providers the
-   * connector policy meters are listed: an exempt local provider has no allowance
-   * to show because it never needed one.
+   * Gives a taken slot back. Idempotence is the caller's job (the release row
+   * count). The slot always lives on the user's TOTAL counter, whatever provider
+   * the released call used.
    */
-  async getViews(userId: string, now: Date): Promise<PaygFreeAllowanceView[]> {
+  async giveBack(counter: CreditFreeAllowanceCounterKey): Promise<void> {
+    await this.counters.giveBack({ ...counter, provider: FREE_ALLOWANCE_TOTAL_COUNTER_KEY });
+  }
+
+  /**
+   * The user's free credit-model requests for the current UTC month, for
+   * `GET /credit/me`: ONE total across every credit connector. `null` when the
+   * plan gives none. With metering off only a CAPPED allowance is enforced (an
+   * unlimited one is plain unmetered use), so only that is shown.
+   */
+  async getView(
+    userId: string,
+    now: Date,
+    meteringEnabled: boolean,
+  ): Promise<PaygFreeAllowanceView | null> {
     const allowance = await this.resolvePolicy(userId);
-    if (allowance === null) {
-      return [];
+    if (allowance === null || (!meteringEnabled && !isCappedAllowance(allowance))) {
+      return null;
     }
-    const policyMap = await this.policy.getPolicy();
-    const providers = Object.keys(policyMap)
-      .filter((provider) =>
-        isMeteredProvider(provider, policyMap, ConnectorPolicyClient.defaultForProvider(provider)),
-      )
-      .map((provider) => normalizeAllowanceProvider(provider));
-    const used = new Map(
-      (await this.counters.findForUserPeriod(userId, utcMonthKey(now))).map((row) => [
-        normalizeAllowanceProvider(row.provider),
-        row.usedCount,
-      ]),
-    );
-    return [...new Set(providers)]
-      .sort()
-      .map((provider) => toFreeAllowanceView(provider, allowance.limit, used.get(provider) ?? 0));
+    const used = await this.counters.findTotalUsed(userId, utcMonthKey(now));
+    return toFreeAllowanceView(allowance.limit, used, nextUtcMonthStart(now));
   }
 
   /** The plan's allowance for a user, or `null` when it is disabled or there is no plan. */

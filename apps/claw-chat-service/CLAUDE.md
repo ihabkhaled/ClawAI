@@ -1708,3 +1708,37 @@ treats that as success, so no fallback candidate runs and no deltas follow the
 cancel; the turn is stored as cancelled, not failed. Any new streaming path must
 check the abort signal in its catch before the error is read as a provider failure.
 Test: `chat-execution-stop-abort.manager.spec.ts`.
+
+## A picked model that fails gets a labelled substitute (2026-10-02, ADR-151)
+
+`MANUAL_MODEL` used to be a one-candidate chain. routing-service now adds
+`pickedModelSubstitutes` to `message.routed` (parsed by `pickedModelSubstitutesField`);
+`pickedModelCandidateChain` = the pick + at most `PICKED_MODEL_MAX_FALLBACKS` (2).
+
+- **Only a provider failure moves on** (`isSubstitutableFailure`): never after a 402/403/429 of the
+  pick or a user stop - those reach the user as themselves (`endsCandidateChain`). A substitute
+  refused for credit is skipped. The quality re-route never swaps a pick.
+- **Labelled:** a substitute's answer carries `metadata.pickedModelFallback` (`pickedModelFallbackPart`).
+- **All failed:** `PickedModelFailedException` (`PICKED_MODEL_FAILED`, key `pickedModel.failedMessage`)
+  with up to 3 untried `suggestedModels` on the SSE error and in `metadata.suggestedModels`. Nothing
+  tried after the pick and nothing to suggest keeps the pick's own error.
+- Tests: `picked-model-fallback-chokepoint.spec.ts`, `picked-model-fallback.utility.spec.ts`.
+
+## Attachments are read whatever the user typed (2026-10-02, ADR-152)
+
+A blind model said "I cannot view images" for screenshots the helper had described: the AUTO
+research planner decided with no attachment facts and its `thinking` was shown as the assistant's.
+
+- **Planner:** `buildAttachmentDigest` (one bounded line per file, any wording) +
+  `RESEARCH_PLANNER_ATTACHMENT_RULE`; `parseResearchPlan(raw, userUrls, { hasAttachments, excludedUrls })`
+  drops "cannot view" reasoning and never crawls a link read out of an attachment.
+- **Final turn:** `withAttachmentPointer` (`attachment-awareness.utility.ts`) appends `[Attachments]` to the last
+  real USER turn in `userTurnText` (not for a tool result, not for a typed-nothing turn). Blind lane with a
+  description: answer from it, never say you cannot view images. Helper failed / files unreadable: say so plainly.
+- **Follow-ups:** `assemble()` carries up to 3 earlier files (`collectEarlierAttachmentIds`, `limitEarlierFile`,
+  no video) as `earlierFileIds`; they are not `requestedAttachmentCount` and not "just sent".
+- **No second charge:** `DerivedImageDescriptionStore` (per user + file, 6 h, per replica) is read by
+  `VisionHelperManager.describeOnce` before any hold.
+- A new prompt, lab stage or plan reads these helpers; it never re-decides from the user's words.
+- Tests: `context-assembly-attachment-awareness.spec.ts`, `vision-helper-description-reuse.spec.ts`,
+  `research-gate.service.spec.ts` "attachments (ADR-152)". Rule: rules/42 item 23.

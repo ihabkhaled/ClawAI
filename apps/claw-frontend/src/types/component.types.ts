@@ -254,7 +254,12 @@ export type ResponsiveTableColumn<T> = {
 
 export type ResponsiveTableProps<T> = {
   rows: T[];
+  // Card body rows (the mobile title column is usually left out of these).
   columns: ResponsiveTableColumn<T>[];
+  // Columns for the desktop <table>. Defaults to `columns`. DataTable passes
+  // the FULL list here, so the column promoted to the card title is still a
+  // table column on a mouse-driven screen.
+  tableColumns?: ResponsiveTableColumn<T>[];
   keyExtractor: (row: T) => string;
   mobileTitle: (row: T) => React.ReactNode;
   emptyMessage?: string;

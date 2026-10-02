@@ -51,6 +51,7 @@ import {
   type CreditBucketSplit,
   type CreditFinalizeInput,
   type CreditFreeAllowanceAdmission,
+  type CreditFreeAllowancePolicy,
   type CreditReserveInput,
   type CreditSettlement,
   type PaygClassification,
@@ -65,6 +66,10 @@ import {
   parseHoldCounter,
   splitHoldAcrossBuckets,
 } from '../utilities/credit-reservation.utility';
+import {
+  isCappedAllowance,
+  isFreeAllowanceEligible,
+} from '../utilities/credit-free-allowance.utility';
 import {
   isExemptProvider,
   isMeteredProvider,
@@ -85,8 +90,14 @@ import {
  *   7. affordability clamp — the answer is shortened to fit the balance
  *   8. atomic Lua — the only place two concurrent requests are ordered
  *   9. durable write — Redis has already moved, so a failure gives it back
- *  10. free allowance — ONLY when 7/8 refused: credit is spent first, the plan's
- *      free requests on a credit connector are the fallback (ADR-142)
+ *  10. free allowance (ADR-142, updated 2026-10-02):
+ *      - a CAPPED plan (Free: N requests per credit connector per month) with no
+ *        purchased credit is COUNTED FIRST, before the wallet: request N+1 is
+ *        refused with PAYG_FREE_ALLOWANCE_EXHAUSTED whatever the grant holds;
+ *      - with purchased credit, or an unlimited allowance, credit is spent first
+ *        and the allowance is the fallback when 7/8 refused;
+ *      - with the kill switch OFF the cap is still enforced (count only), because
+ *        it is the plan's promise, not wallet metering.
  *
  * Steps 1–4 short-circuit before the wallet is read: a local chat must not pay
  * for a Postgres round trip it does not need.
@@ -115,6 +126,9 @@ export class CreditReservationManager {
       `reserve: user=${input.userId} provider=${input.provider} model=${input.model}`,
     );
     const classification = await this.classify(input.userId, input.provider, input.model);
+    if (!classification.isPayg && classification.reason === 'METERING_DISABLED') {
+      return this.enforceCapWhileUnmetered(input);
+    }
     if (!classification.isPayg) {
       // Echo the ceiling the caller asked for. An unmetered request has no
       // balance to clamp against, so the requested maximum IS the answer — and
@@ -353,6 +367,17 @@ export class CreditReservationManager {
     // job has not run yet.
     const balances = await this.grants.ensureCurrentPeriod(input.userId);
     const available = toSafeBalanceNumber(balances.availableMicroUsd);
+    const allowance = await this.freeAllowance.resolvePolicy(input.userId);
+    if (
+      allowance !== null &&
+      isCappedAllowance(allowance) &&
+      balances.wallet.purchasedMicroUsd <= 0n
+    ) {
+      const capped = await this.admitOnCappedAllowance(input, rate, allowance, available);
+      if (capped !== null) {
+        return capped;
+      }
+    }
     const clamp = clampOutputTokensToBalance({
       rates: rate.rates,
       balanceMicroUsd: available,
@@ -371,6 +396,7 @@ export class CreditReservationManager {
       return this.admitOnFreeAllowanceOr(
         input,
         rate,
+        allowance,
         CreditReservationManager.refusalFor(clamp, available),
       );
     }
@@ -386,7 +412,7 @@ export class CreditReservationManager {
       // fallback as an empty wallet; anything that is not a credit refusal is a
       // real failure and keeps propagating.
       if (error instanceof PaygRejectionException) {
-        return this.admitOnFreeAllowanceOr(input, rate, error);
+        return this.admitOnFreeAllowanceOr(input, rate, allowance, error);
       }
       throw error;
     }
@@ -418,21 +444,120 @@ export class CreditReservationManager {
   // ── free allowance (ADR-142) ──────────────────────────────────────────────
 
   /**
-   * The fallback when the wallet cannot cover the call: take one of the plan's
-   * free requests on this credit connector, or throw the ORIGINAL credit refusal
-   * (402, the user's own numbers) so a spent allowance reads exactly like an
-   * empty wallet.
+   * Cap-first admission for a plan that gives a finite number of free requests a
+   * month and a user with no purchased credit. The count is the contract: request
+   * N+1 on this connector is refused with `PAYG_FREE_ALLOWANCE_EXHAUSTED` even if
+   * a grant could pay, so a Free account stops at exactly the plan's number.
+   *
+   * Returns `null` only for a per-unit surface (image, video, audio), which the
+   * allowance never covers: the wallet decides those exactly as before (ADR-139).
+   */
+  private async admitOnCappedAllowance(
+    input: CreditReserveInput,
+    rate: PaygRateSnapshot,
+    allowance: CreditFreeAllowancePolicy,
+    available: number,
+  ): Promise<PaygReservationOutcome | null> {
+    const attempt = await this.freeAllowance.tryAdmit(input, rate, allowance, new Date());
+    switch (attempt.status) {
+      case 'ADMITTED':
+        return this.persistFreeAllowance(input, attempt.admission);
+      case 'SPENT':
+        this.logger.log(
+          `admitOnCappedAllowance: cap of ${String(attempt.limit)} spent provider=${input.provider}`,
+        );
+        throw CreditReservationManager.allowanceExhausted(available);
+      case 'PROMPT_TOO_LARGE':
+        throw new PaygRejectionException(
+          BillingErrorCode.PAYG_PROMPT_TOO_EXPENSIVE,
+          available,
+          null,
+        );
+      case 'INELIGIBLE':
+        return null;
+    }
+  }
+
+  /**
+   * The cap with the metering kill switch OFF. Nothing is priced or held, but a
+   * plan that promises "N free requests per credit connector" still stops at N:
+   * on 2026-10-02 a Free account made unlimited Claude calls in production
+   * because the switch row was missing. Only a capped plan, a metered (credit)
+   * connector, a non-administrator and an eligible surface are counted;
+   * everything else stays exactly as unmetered as before.
+   */
+  private async enforceCapWhileUnmetered(
+    input: CreditReserveInput,
+  ): Promise<PaygReservationOutcome> {
+    const unmetered: PaygReservationOutcome = {
+      metered: false,
+      reason: 'METERING_DISABLED',
+      maxOutputTokens: input.requestedMaxOutputTokens,
+    };
+    if (isExemptProvider(input.provider) || !isFreeAllowanceEligible(input)) {
+      return unmetered;
+    }
+    const allowance = await this.freeAllowance.resolvePolicy(input.userId);
+    if (allowance === null || !isCappedAllowance(allowance)) {
+      return unmetered;
+    }
+    if (!(await this.isCountedCaller(input.userId, input.provider))) {
+      return unmetered;
+    }
+    const existing = await this.usage.findOpenPaygReservation(input.userId, input.requestId);
+    if (existing !== null) {
+      return this.reuseHold(existing, input.requestedMaxOutputTokens);
+    }
+    const attempt = await this.freeAllowance.tryAdmit(input, null, allowance, new Date());
+    if (attempt.status === 'SPENT') {
+      this.logger.log(
+        `enforceCapWhileUnmetered: cap of ${String(attempt.limit)} spent provider=${input.provider}`,
+      );
+      throw CreditReservationManager.allowanceExhausted(0);
+    }
+    return attempt.status === 'ADMITTED'
+      ? this.persistFreeAllowance(input, attempt.admission)
+      : unmetered;
+  }
+
+  /** A non-administrator calling a provider the connector policy meters (a credit connector). */
+  private async isCountedCaller(userId: string, provider: string): Promise<boolean> {
+    const user = await this.users.findUserById(userId);
+    if (user !== null && user.role === UserRole.ADMIN) {
+      return false;
+    }
+    const policy = await this.policy.getPolicy();
+    return isMeteredProvider(provider, policy, ConnectorPolicyClient.defaultForProvider(provider));
+  }
+
+  /**
+   * The fallback when the wallet cannot cover the call (an unlimited allowance, or
+   * a capped one for a user who HAS purchased credit): take one of the plan's free
+   * requests on this credit connector, or throw the ORIGINAL credit refusal, so
+   * somebody who bought credit is told to add more, not to upgrade.
    */
   private async admitOnFreeAllowanceOr(
     input: CreditReserveInput,
     rate: PaygRateSnapshot,
+    allowance: CreditFreeAllowancePolicy | null,
     refusal: PaygRejectionException,
   ): Promise<PaygReservationOutcome> {
-    const admission = await this.freeAllowance.tryAdmit(input, rate, new Date());
-    if (admission === null) {
+    if (allowance === null) {
       throw refusal;
     }
-    return this.persistFreeAllowance(input, admission);
+    const attempt = await this.freeAllowance.tryAdmit(input, rate, allowance, new Date());
+    if (attempt.status !== 'ADMITTED') {
+      throw refusal;
+    }
+    return this.persistFreeAllowance(input, attempt.admission);
+  }
+
+  private static allowanceExhausted(available: number): PaygRejectionException {
+    return new PaygRejectionException(
+      BillingErrorCode.PAYG_FREE_ALLOWANCE_EXHAUSTED,
+      available,
+      null,
+    );
   }
 
   /**

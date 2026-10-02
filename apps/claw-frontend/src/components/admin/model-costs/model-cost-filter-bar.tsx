@@ -2,50 +2,34 @@
 
 import type { ReactElement } from 'react';
 
-import { Badge } from '@/components/ui/badge';
+import { ModelCostFilterChips } from '@/components/admin/model-costs/model-cost-filter-chips';
+import { ModelCostFilterSheet } from '@/components/admin/model-costs/model-cost-filter-sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  MODEL_PRICING_SOURCE_FILTER_LABEL_KEYS,
-  MODEL_PRICING_SOURCE_FILTER_OPTIONS,
-} from '@/constants/model-cost.constants';
-import { BadgeVariant } from '@/enums/badge-variant.enum';
+import { ModelBillingFilter } from '@/enums/model-billing.enum';
 import { ModelPricingSourceFilter } from '@/enums/model-pricing-source.enum';
 import type { ModelCostFilterBarProps } from '@/types/model-cost.types';
-import { resolveModelCostFilterCount } from '@/utilities/model-cost-filter.utility';
 
-/** One chip per pricing source, each carrying its own count, plus a search box. */
+/**
+ * Source chips, billing chips and a search box. On a mouse the chips sit
+ * inline; on touch they collapse into a sheet and the toolbar sticks to the
+ * top of the scroller, so filters stay reachable deep into the list.
+ */
 export function ModelCostFilterBar({
-  sourceFilter,
-  counts,
-  totalCount,
   search,
-  onSourceFilterChange,
   onSearchChange,
-  t,
+  activeFilterCount,
+  ...chips
 }: ModelCostFilterBarProps): ReactElement {
+  const { t } = chips;
+  const isFiltered = activeFilterCount > 0 || search !== '';
   return (
-    <div className="flex flex-col gap-3">
-      <div
-        className="flex flex-wrap gap-2"
-        role="group"
-        aria-label={t('adminModelCosts.filters.label')}
-      >
-        {MODEL_PRICING_SOURCE_FILTER_OPTIONS.map((option) => (
-          <Button
-            key={option}
-            type="button"
-            size="sm"
-            variant={option === sourceFilter ? 'default' : 'outline'}
-            aria-pressed={option === sourceFilter}
-            onClick={() => onSourceFilterChange(option)}
-          >
-            {t(MODEL_PRICING_SOURCE_FILTER_LABEL_KEYS[option])}
-            <Badge variant={BadgeVariant.SECONDARY} className="ms-2">
-              {resolveModelCostFilterCount(option, counts, totalCount)}
-            </Badge>
-          </Button>
-        ))}
+    <div
+      className="touch:sticky touch:top-0 touch:z-20 bg-background touch:py-2 flex flex-col gap-3"
+      data-testid="model-cost-filter-bar"
+    >
+      <div className="touch:hidden">
+        <ModelCostFilterChips {...chips} />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -55,21 +39,24 @@ export function ModelCostFilterBar({
           placeholder={t('adminModelCosts.filters.searchPlaceholder')}
           aria-label={t('adminModelCosts.filters.searchPlaceholder')}
           onChange={(event) => onSearchChange(event.target.value)}
-          className="max-w-sm"
+          className="min-w-0 flex-1 sm:max-w-sm"
         />
-        {sourceFilter === ModelPricingSourceFilter.ALL && search === '' ? null : (
+        <ModelCostFilterSheet activeFilterCount={activeFilterCount} {...chips} />
+        {isFiltered ? (
           <Button
             type="button"
             size="sm"
             variant="ghost"
+            className="touch:min-h-11"
             onClick={() => {
-              onSourceFilterChange(ModelPricingSourceFilter.ALL);
+              chips.onSourceFilterChange(ModelPricingSourceFilter.ALL);
+              chips.onBillingFilterChange(ModelBillingFilter.ALL);
               onSearchChange('');
             }}
           >
             {t('adminModelCosts.filters.clear')}
           </Button>
-        )}
+        ) : null}
       </div>
     </div>
   );

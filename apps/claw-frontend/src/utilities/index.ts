@@ -251,7 +251,10 @@ export { resolveApiErrorMessage } from './api-error-message.utility';
 export { resolveAdminUserCapability } from './admin-user-capability.utility';
 export { resolveFloatingClearance } from './floating-obstacle-clearance.utility';
 export { buildTranscriptSignature } from './transcript-signature.utility';
-export { resolveChatLimitNotice } from './chat-limit-notice.utility';
+export {
+  resolveChatLimitNotice,
+  resolveChatLimitNoticeFromCode,
+} from './chat-limit-notice.utility';
 export { getStoredReasoning } from './message-reasoning.utility';
 export { resolveThreadSearchState } from './thread-search-state.utility';
 export { buildThreadExportFilename, buildThreadMarkdown } from './thread-markdown.utility';

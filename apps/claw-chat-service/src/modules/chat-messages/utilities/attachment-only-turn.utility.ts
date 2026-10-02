@@ -21,7 +21,8 @@ export function isTrivialUserText(text: string): boolean {
   return TRIVIAL_USER_TEXT_PATTERN.test(text);
 }
 
-function kindOf(file: AttachmentDescriptor): AttachmentOnlyKind {
+/** image / audio / video / document, from the mime type. */
+export function attachmentKindOf(file: AttachmentDescriptor): AttachmentOnlyKind {
   const match = ATTACHMENT_ONLY_MIME_PREFIX_KINDS.find(([prefix]) =>
     file.mimeType.startsWith(prefix),
   );
@@ -30,7 +31,7 @@ function kindOf(file: AttachmentDescriptor): AttachmentOnlyKind {
 
 /** The user turn a model answers when the user sent only attachments. */
 export function buildAttachmentOnlyInstruction(files: readonly AttachmentDescriptor[]): string {
-  const kinds = new Set(files.map(kindOf));
+  const kinds = new Set(files.map(attachmentKindOf));
   const names = files.map((file) => `"${file.filename}"`).join(', ');
   return [
     ATTACHMENT_ONLY_TURN_MARKER,
@@ -68,11 +69,13 @@ export function resolveUserTurnText(
 
 /** `resolveUserTurnText` for an assembled context: its files and what was asked for. */
 export function resolveContextTurnText(content: string, context: AttachmentTurnContext): string {
-  return resolveUserTurnText(
-    content,
-    context.fileContents,
-    context.requestedAttachmentCount ?? context.fileContents.length,
-  );
+  // Files carried from earlier turns (ADR-152) are context, not what was just sent.
+  const earlier = new Set(context.earlierFileIds ?? []);
+  const current =
+    earlier.size === 0
+      ? context.fileContents
+      : context.fileContents.filter((file) => file.id === undefined || !earlier.has(file.id));
+  return resolveUserTurnText(content, current, context.requestedAttachmentCount ?? current.length);
 }
 
 /**

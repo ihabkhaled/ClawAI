@@ -34,7 +34,14 @@ export class CloudRouterEligibilityManager {
     private readonly exposedModels: ExposedModelsService,
   ) {}
 
-  async resolveEligibleDeployments(context: RoutingContext): Promise<EligibleDeploymentRecord[]> {
+  /**
+   * `max` defaults to the router prompt's list size; the picked-model
+   * substitute ranking asks for a larger pool (same-provider models first).
+   */
+  async resolveEligibleDeployments(
+    context: RoutingContext,
+    max: number = CLOUD_ROUTER_MAX_CANDIDATES,
+  ): Promise<EligibleDeploymentRecord[]> {
     const [routable, exposed] = await Promise.all([
       this.deployments.findRoutableForCloudRouting(),
       this.exposedModels.exposedChatModels(),
@@ -52,7 +59,7 @@ export class CloudRouterEligibilityManager {
       exposed,
       allowed,
       connectorHealth: context.connectorHealth ?? {},
-      max: CLOUD_ROUTER_MAX_CANDIDATES,
+      max,
       requiredModalities: context.requiredModalities ?? [],
       transformableModalities: context.transformableModalities ?? [],
     });

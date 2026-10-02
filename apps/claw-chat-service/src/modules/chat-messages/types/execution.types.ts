@@ -5,6 +5,7 @@ import type { AttemptRecord } from './fallback-executor.types';
 import type { FileContentCandidate } from './file-writer.types';
 import type { FileDeliveryEntry } from './file-delivery.types';
 import type { HelperExecution } from './vision-helper.types';
+import type { PickedModelFallbackNotice, PickedModelSubstitute } from './picked-model-fallback.types';
 import type { JudgeRefereeMetadata } from './judge-referee.types';
 import type {
   AnthropicCacheControl,
@@ -95,6 +96,9 @@ export type MessageRoutedData = {
   // F6 (ADR-119) — on a FILE_GENERATION decision made in MANUAL_MODEL, the
   // model the user picked; it writes the file's content first.
   fileWriter?: FileContentCandidate;
+  // MANUAL_MODEL smart fallback: what may answer when the picked model fails
+  // (at most two are tried), best first, from routing-service.
+  pickedModelSubstitutes?: PickedModelSubstitute[];
   // F055 — never on the wire. Set by chat-service itself when the turn's
   // request carried `X-Claw-Zero-Retention: 1`, so the completion event goes
   // out without content and the turn is redacted once it ends.
@@ -233,6 +237,12 @@ export type LlmResponse = {
    * as `metadata.helperExecutions`.
    */
   helperExecutions?: HelperExecution[];
+  /**
+   * Set when the user's PICKED model failed and a substitute answered instead.
+   * Persisted as `metadata.pickedModelFallback` so the bubble says which model
+   * failed and which one answered (and whether it costs more).
+   */
+  pickedModelFallback?: PickedModelFallbackNotice;
 };
 
 export type OllamaGenerateRequest = {

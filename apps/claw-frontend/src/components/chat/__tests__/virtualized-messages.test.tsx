@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { createRef, forwardRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -125,19 +126,23 @@ describe('VirtualizedMessages (pure render)', () => {
     // renders a list — so on the very first message, the most likely moment to
     // hit a wall, the refusal had nowhere to go and survived only as a toast
     // that then faded, leaving a composer that looked like it did nothing.
+    // The card reads the credit wallet to word its body, so it needs a query client.
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
-      <VirtualizedMessages
-        {...makeProps({
-          isEmpty: true,
-          limitNotice: {
-            kind: ChatLimitKind.DailyTokens,
-            titleKey: 'chat.limits.dailyTokensTitle',
-            bodyKey: 'chat.limits.dailyTokensBody',
-            action: ChatLimitAction.Upgrade,
-            showCreditDisclaimer: false,
-          },
-        })}
-      />,
+      <QueryClientProvider client={queryClient}>
+        <VirtualizedMessages
+          {...makeProps({
+            isEmpty: true,
+            limitNotice: {
+              kind: ChatLimitKind.DailyTokens,
+              titleKey: 'chat.limits.dailyTokensTitle',
+              bodyKey: 'chat.limits.dailyTokensBody',
+              action: ChatLimitAction.Upgrade,
+              showCreditDisclaimer: false,
+            },
+          })}
+        />
+      </QueryClientProvider>,
     );
 
     expect(screen.getByText('chat.limits.dailyTokensTitle')).toBeInTheDocument();

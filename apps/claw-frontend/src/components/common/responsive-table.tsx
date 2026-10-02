@@ -15,12 +15,17 @@ import type { ResponsiveTableProps } from '@/types/component.types';
 export function ResponsiveTable<T>({
   rows,
   columns,
+  tableColumns,
   keyExtractor,
   mobileTitle,
   emptyMessage,
   className,
 }: ResponsiveTableProps<T>): React.ReactElement {
   const { t } = useTranslation();
+  // The card promotes one column to its title and lists the rest; the table
+  // has no title slot, so it must render every column or the identifying one
+  // (the model name on /admin/smart-router/model-costs) silently disappears.
+  const headerColumns = tableColumns ?? columns;
 
   if (rows.length === 0) {
     return (
@@ -41,7 +46,7 @@ export function ResponsiveTable<T>({
         {rows.map((row) => (
           <li
             key={keyExtractor(row)}
-            className="bg-surface-panel shadow-soft min-w-0 overflow-hidden rounded-lg border p-4"
+            className="bg-surface-panel shadow-soft relative min-w-0 overflow-hidden rounded-lg border p-4"
           >
             <div className="text-foreground mb-2 text-sm font-medium">{mobileTitle(row)}</div>
             <dl className="space-y-2">
@@ -71,7 +76,7 @@ export function ResponsiveTable<T>({
         <Table>
           <TableHeader>
             <TableRow>
-              {columns.map((col) => (
+              {headerColumns.map((col) => (
                 <TableHead key={col.key} className={col.className}>
                   {col.header}
                 </TableHead>
@@ -81,7 +86,7 @@ export function ResponsiveTable<T>({
           <TableBody>
             {rows.map((row) => (
               <TableRow key={keyExtractor(row)}>
-                {columns.map((col) => (
+                {headerColumns.map((col) => (
                   <TableCell key={col.key} className={col.className}>
                     {col.render(row)}
                   </TableCell>

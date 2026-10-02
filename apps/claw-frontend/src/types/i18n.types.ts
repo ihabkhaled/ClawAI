@@ -482,6 +482,9 @@ export type TranslationDictionary = {
       paygModelUnpricedBody: string;
       paygPricingUnavailableTitle: string;
       paygPricingUnavailableBody: string;
+      paygFreeAllowanceExhaustedTitle: string;
+      paygFreeAllowanceExhaustedBody: string;
+      paygFreeAllowanceExhaustedBodyWithLimit: string;
       dailyTokensTitle: string;
       dailyTokensBody: string;
       weeklyTokensTitle: string;
@@ -4082,6 +4085,7 @@ export type TranslationDictionary = {
   };
   routerTrace: RouterTraceLocaleTranslation;
   narration: NarrationLocaleTranslation;
+  pickedModel: PickedModelLocaleTranslation;
   mediaUi: MediaUiLocaleTranslation;
   smartRouterAdmin: SmartRouterAdminLocaleTranslation;
   adminModelCosts: AdminModelCostsLocaleTranslation;
@@ -4320,6 +4324,7 @@ export type TranslationDictionary = {
       clearSelection: string;
       impactWarning: string;
     };
+    exposureUi: ModelExposureUiLocaleTranslation;
   };
   adminPlans: {
     intervalDiscounts: {
@@ -4862,6 +4867,7 @@ export type TranslationDictionary = {
       PAYG_PROMPT_TOO_EXPENSIVE: string;
       PAYG_MODEL_UNPRICED: string;
       PAYG_PRICING_UNAVAILABLE: string;
+      PAYG_FREE_ALLOWANCE_EXHAUSTED: string;
       CREDIT_PACKAGE_NOT_FOUND: string;
       CREDIT_PACKAGE_INACTIVE: string;
       CREDIT_ADJUSTMENT_REASON_REQUIRED: string;
@@ -6167,6 +6173,16 @@ export type DeploymentLocaleTranslation = {
  * plain string and is not checked against the dictionary, so a missing key
  * renders the raw key path to a user instead of failing a build.
  */
+/** When the user's picked model fails (see picked-model-translations.ts). */
+export type PickedModelLocaleTranslation = {
+  failedMessage: string;
+  fallbackNotice: string;
+  costlierNote: string;
+  suggestionsTitle: string;
+  tryModel: string;
+  chooseAnother: string;
+};
+
 /** The narrated work log above an answer (see narration-translations.ts). */
 export type NarrationLocaleTranslation = {
   title: string;
@@ -6252,6 +6268,25 @@ export type AdminModelCostsLocaleTranslation = {
     all: string;
     searchPlaceholder: string;
     clear: string;
+    more: string;
+    sheetTitle: string;
+  };
+  billing: {
+    column: string;
+    credit: string;
+    included: string;
+    filterLabel: string;
+    help: string;
+    connectorsLink: string;
+    editConnectorFor: string;
+    sourceConnector: string;
+    sourceDefault: string;
+    sourceLocal: string;
+    policyError: string;
+  };
+  list: {
+    showMore: string;
+    shown: string;
   };
   source: {
     published: string;
@@ -6618,4 +6653,35 @@ export type MediaUiLocaleTranslation = {
     thumbnailAlt: string;
     duration: string;
   };
+};
+
+/** adminConnectors.exposureUi — the responsive Model exposure panel. */
+export type ModelExposureUiLocaleTranslation = {
+  exposedStat: string;
+  unexposedStat: string;
+  selectedCount: string;
+  searchLabel: string;
+  filterLabel: string;
+  filtersButton: string;
+  filtersTitle: string;
+  selectAllLabel: string;
+  selectRowLabel: string;
+  rowActions: string;
+  exposeOne: string;
+  unexposeOne: string;
+  unexposeConfirmTitle: string;
+  unexposeConfirmDescription: string;
+  cancel: string;
+  emptyTitle: string;
+  emptyDescription: string;
+  noMatchTitle: string;
+  clearFilters: string;
+  showMore: string;
+  shownOf: string;
+  colBilling: string;
+  colActions: string;
+  lifecycleActive: string;
+  lifecycleDeprecated: string;
+  lifecycleSunset: string;
+  lifecycleRemoved: string;
 };

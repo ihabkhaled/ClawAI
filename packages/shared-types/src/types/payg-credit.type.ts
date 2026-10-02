@@ -30,23 +30,25 @@ export type PaygWalletSnapshot = {
   /** False while the platform-wide kill switch is off; nothing is metered. */
   meteringEnabled: boolean;
   /**
-   * The free requests the user's plan gives them on each credit connector this
-   * month (ADR-142). Empty when the plan gives none, metering is off, or the
+   * The free credit-model requests the user's plan gives them this month, one
+   * total across all credit connectors (ADR-142). Null when the plan gives none, metering is off, or the
    * account is an administrator. Optional so an older auth-service that predates
    * the field still satisfies the type.
    */
-  freeAllowance?: PaygFreeAllowanceView[];
+  freeAllowance?: PaygFreeAllowanceView | null;
 };
 
 /**
- * One credit connector's free-request allowance for the current UTC month.
- * `limit` and `remaining` are `null` when the plan makes the allowance unlimited.
+ * The user's free credit-model requests for the current UTC month: ONE total
+ * across every credit connector (ADR-142 update 2026-10-02). `limit` and
+ * `remaining` are `null` when the plan makes the allowance unlimited.
  */
 export type PaygFreeAllowanceView = {
-  provider: string;
   limit: number | null;
   used: number;
   remaining: number | null;
+  /** ISO instant the counter resets: the start of the next UTC month. */
+  resetsAt: string;
 };
 
 /**
@@ -185,7 +187,8 @@ export type PaygRejection = {
     | 'PAYG_CREDIT_EXHAUSTED'
     | 'PAYG_PROMPT_TOO_EXPENSIVE'
     | 'PAYG_MODEL_UNPRICED'
-    | 'PAYG_PRICING_UNAVAILABLE';
+    | 'PAYG_PRICING_UNAVAILABLE'
+    | 'PAYG_FREE_ALLOWANCE_EXHAUSTED';
   availableMicroUsd: number;
   requiredMicroUsd: number | null;
 };

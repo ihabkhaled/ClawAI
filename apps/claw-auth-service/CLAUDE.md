@@ -465,7 +465,7 @@ and chat-service: an old payload reads as "gate off" and refuses paid users.
 ## Free credit-connector requests (ADR-142, 2026-10-01)
 
 `Plan.creditConnectorFreeRequestsPerMonth` (`Int? DEFAULT 0`; `null` unlimited, `0` none) lets a user
-without credit make N requests per credit connector per UTC month, absorbed by the platform. Free = 2,
+make N requests per UTC month in TOTAL across all credit connectors (one counter row `(user, '*', month)`), absorbed by the platform. Amended 2026-10-02: a finite N is counted FIRST for a user with no purchased credit and is enforced even with `payg.credit.enabled` off or missing (count only, no wallet charge); a spent cap is 402 `PAYG_FREE_ALLOWANCE_EXHAUSTED`. Free = 2,
 every other plan = 0. Create/update plan DTOs take `0..1,000,000` or `null`; the admin plan view and
 the public catalog return it. Fresh installs: `creditAllowanceProjection` in
 `plan-catalog.seeder.cjs` (NOT in the checksummed payload; an administrator-edited row is never
@@ -481,7 +481,7 @@ Free = 2 only when it creates the column.
   the call. The record is a `WeightedUsageRecord` with `isFreeAllowance`; `finalize` moves no money;
   `release` gives the slot back once (gated on `markReleased`) and appends a `FREE_ALLOWANCE` row.
 - Only token-priced surfaces are eligible; never image, video, transcription or TTS.
-- `GET /credit/me` adds `freeAllowance: [{ provider, limit, used, remaining }]`.
+- `GET /credit/me` adds `freeAllowance: { limit, used, remaining, resetsAt } | null`.
 - A new `PaygSurface` is NOT free until it is added to `FREE_ALLOWANCE_ELIGIBLE_SURFACES`.
 - Raising the allowance shrinks each free request's cost budget (`ceiling / allowance`); raise
   `monthlyProviderCostCeilingMicroUsd` with it.

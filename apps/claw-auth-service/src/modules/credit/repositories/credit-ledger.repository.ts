@@ -2,10 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { type CreditLedgerEntry, CreditLedgerKind } from '../../../generated/prisma';
-import {
-  type CreditLedgerPageQuery,
-  type CreditMonthConsumptionRow,
-} from '../types/credit.types';
+import { type CreditLedgerPageQuery, type CreditMonthConsumptionRow } from '../types/credit.types';
 
 /**
  * Read access to the append-only ledger.

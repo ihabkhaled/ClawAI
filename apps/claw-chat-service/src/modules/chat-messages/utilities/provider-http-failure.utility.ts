@@ -3,7 +3,15 @@ import {
   ProviderCreditExhaustedException,
   ProviderOutputLimitException,
   ProviderRateLimitedException,
+  ProviderUnsupportedParameterException,
 } from '../../../common/errors';
+import {
+  RETRYABLE_SAMPLING_PARAMETERS,
+  SAMPLING_PARAMETER_CANONICAL_NAMES,
+  SAMPLING_PARAMETER_NAME_PATTERN,
+  SAMPLING_PARAMETER_REJECTION_PATTERN,
+  SAMPLING_PARAMETER_REJECTION_STATUSES,
+} from '../constants/sampling-parameter.constants';
 import {
   PROVIDER_ACCOUNT_EXHAUSTED_PATTERN,
   PROVIDER_AFFORDABLE_TOKENS_PATTERN,
@@ -146,9 +154,39 @@ export function providerRetryPlan(error: unknown): ProviderRetryPlan | undefined
         }
       : undefined;
   }
+  if (
+    error instanceof ProviderUnsupportedParameterException &&
+    RETRYABLE_SAMPLING_PARAMETERS.includes(error.parameter)
+  ) {
+    return {
+      reason: `rejected the ${error.parameter} parameter`,
+      dropSamplingParameter: error.parameter,
+    };
+  }
   return error instanceof ProviderRateLimitedException
     ? { reason: 'rate-limited upstream', delayMs: PROVIDER_RATE_LIMIT_BACKOFF_MS }
     : undefined;
+}
+
+/**
+ * The sampling parameter a provider refused for this model, canonically named
+ * (`temperature`, `top_p`, ...), or undefined when the response is not such a
+ * refusal. Only a 400/422 whose text both names the parameter and says it is
+ * deprecated / unsupported / not allowed counts — any other 400 is left alone.
+ */
+export function parseRejectedSamplingParameter(status: number, text: string): string | undefined {
+  if (
+    !SAMPLING_PARAMETER_REJECTION_STATUSES.includes(status) ||
+    !SAMPLING_PARAMETER_REJECTION_PATTERN.test(text)
+  ) {
+    return undefined;
+  }
+  const named = SAMPLING_PARAMETER_NAME_PATTERN.exec(text)?.[1];
+  if (named === undefined) {
+    return undefined;
+  }
+  const compact = named.toLowerCase().replaceAll(/[_ ]/gu, '');
+  return SAMPLING_PARAMETER_CANONICAL_NAMES.get(compact);
 }
 
 /** Provider text safe for a log line: every URL replaced, length bounded. */
@@ -248,5 +286,12 @@ export function toProviderHttpFailure(input: ProviderHttpFailureInput): Business
     sentence === undefined || carriesUrl(sentence) || sentence.length > PROVIDER_TEXT_MAX_CHARS
       ? input.fallbackMessage
       : sentence;
-  return new BusinessException(safe, input.failureCode);
+  const rejectedParameter = parseRejectedSamplingParameter(input.status, text);
+  // The upstream HTTP status rides along (`upstreamStatus`) so the picked-model
+  // fallback can tell a provider-wide outage (5xx) from a model-level refusal.
+  return rejectedParameter === undefined
+    ? Object.assign(new BusinessException(safe, input.failureCode), {
+        upstreamStatus: input.status,
+      })
+    : new ProviderUnsupportedParameterException(rejectedParameter, safe, input.failureCode);
 }

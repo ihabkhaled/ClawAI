@@ -13,7 +13,7 @@ import {
 } from '@claw/shared-types';
 import { type File, FileIngestionStatus } from '../../../generated/prisma';
 import { readFile } from '../../../common/utilities';
-import { extractTextFromPdf } from '../../../common/utilities/pdf-parser.utility';
+import { extractTextFromPdf, renderPdfPages } from '../../../common/utilities/pdf-parser.utility';
 import { extractTextFromDocx } from '../../../common/utilities/docx-parser.utility';
 import { extractTextFromImage } from '../../../common/utilities/ocr-parser.utility';
 import {
@@ -26,11 +26,17 @@ import { FilesRepository } from '../repositories/files.repository';
 import { FileChunksRepository } from '../repositories/file-chunks.repository';
 import { type ChunkData } from '../types/files.types';
 import {
+  type OcrExtractionOptions,
+  type OcrExtractionResult,
+} from '../../../common/types/ocr.types';
+import {
   MIME_TYPE_DOCX,
   MIME_TYPE_PDF,
   MIME_TYPE_PPTX,
   MIME_TYPE_XLSX,
   RTF_MIME_TYPES,
+  SCANNED_PDF_OCR_MAX_PAGES,
+  SCANNED_PDF_RENDER_SCALE,
 } from '../constants/file-processing.constants';
 import { isArchiveMimeType } from '../../../common/utilities/archive-format.utility';
 import { AUDIO_PLACEHOLDER_PREFIX } from '../constants/transcription.constants';
@@ -178,17 +184,17 @@ export class FileProcessingManager {
   // (possibly empty) text so existing behaviour is preserved.
   //
   // tesseract.js/leptonica in this build has no PDF codec ("Pdf reading is not
-  // supported" — logged, not thrown; see ocr-parser.utility.ts), so this
-  // branch always falls back to the placeholder for a genuinely scanned PDF.
-  // Rasterising pages to images before OCR would make it work; that is a
-  // separate, larger feature, not covered here.
+  // supported"), so a scanned PDF is drawn page by page into PNGs first
+  // (renderPdfPages) and each page goes through the same OCR an image does.
   private async extractPdfText(buffer: Buffer, file: File, storagePath: string): Promise<string> {
     const cfg = AppConfig.get();
     const { text, isScanned } = await extractTextFromPdf(buffer, cfg.SCANNED_PDF_CHAR_THRESHOLD);
     this.logger.debug(
       `extractPdfText: fileId=${file.id} chars=${String(text.length)} isScanned=${String(isScanned)} ocrEnabled=${String(cfg.OCR_ENABLED)}`,
     );
-    return !isScanned || !cfg.OCR_ENABLED ? text : this.runOcrFallback(file, storagePath, true);
+    return !isScanned || !cfg.OCR_ENABLED
+      ? text
+      : this.runOcrFallback(file, storagePath, true, buffer);
   }
 
   // Slice D backend 3 — Image OCR branch.
@@ -210,6 +216,7 @@ export class FileProcessingManager {
     file: File,
     storagePath: string,
     isScannedPdf: boolean,
+    pdfBuffer?: Buffer,
   ): Promise<string> {
     const cfg = AppConfig.get();
     const startedPayload: FileOcrStartedPayload = {
@@ -223,12 +230,16 @@ export class FileProcessingManager {
     void this.rabbitMQService.publish(EventPattern.FILE_OCR_STARTED, startedPayload);
 
     try {
-      const result = await extractTextFromImage(storagePath, file.mimeType, {
+      const ocrOptions = {
         language: cfg.OCR_LANGUAGE,
         timeoutMs: cfg.OCR_TIMEOUT_MS,
         confidenceMin: cfg.OCR_CONFIDENCE_MIN,
         workerThreads: cfg.OCR_WORKER_THREADS,
-      });
+      };
+      const result =
+        isScannedPdf && pdfBuffer !== undefined
+          ? await this.ocrPdfPages(pdfBuffer, ocrOptions)
+          : await extractTextFromImage(storagePath, file.mimeType, ocrOptions);
       const completedPayload: FileOcrCompletedPayload = {
         fileId: file.id,
         userId: file.userId,
@@ -258,6 +269,39 @@ export class FileProcessingManager {
       this.logger.error(`runOcrFallback: fileId=${file.id} stage=${stage} — ${errorMessage}`);
       return `[Image file: ${file.filename}]`;
     }
+  }
+
+  // Scanned PDF: draw the first pages, OCR each, join with page markers.
+  // Throws when no page could be drawn so the caller reports an OCR failure
+  // (and the placeholder) instead of a silently empty document.
+  private async ocrPdfPages(
+    pdfBuffer: Buffer,
+    options: OcrExtractionOptions,
+  ): Promise<OcrExtractionResult> {
+    const start = Date.now();
+    const pages = await renderPdfPages(
+      pdfBuffer,
+      SCANNED_PDF_OCR_MAX_PAGES,
+      SCANNED_PDF_RENDER_SCALE,
+    );
+    if (pages.length === 0) {
+      throw new Error('No page of the scanned PDF could be rendered for OCR');
+    }
+    const texts: string[] = [];
+    let confidenceTotal = 0;
+    for (const [index, page] of pages.entries()) {
+      const pageResult = await extractTextFromImage(page, 'image/png', options);
+      confidenceTotal += pageResult.confidence;
+      const text = pageResult.text.trim();
+      if (text.length > 0) {
+        texts.push(`-- Page ${String(index + 1)} --\n${text}`);
+      }
+    }
+    return {
+      text: texts.join('\n\n'),
+      confidence: confidenceTotal / pages.length,
+      durationMs: Date.now() - start,
+    };
   }
 
   // B6b — queue the transcription job for an audio upload.

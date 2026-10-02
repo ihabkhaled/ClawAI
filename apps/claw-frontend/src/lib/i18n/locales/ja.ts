@@ -3,7 +3,9 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
+import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
+import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -530,6 +532,11 @@ export const ja: TranslationDictionary = {
       paygPricingUnavailableTitle: '一時的に利用できません',
       paygPricingUnavailableBody:
         '価格情報を取得できなかったため、有料モデルを一時停止しています。課金は発生していません。ローカルモデルは引き続き利用できます。',
+      paygFreeAllowanceExhaustedTitle: 'クレジットモデルの無料リクエストを使い切りました',
+      paygFreeAllowanceExhaustedBody:
+        '今月のクレジットモデルへの無料リクエストをすべて使い切りました。引き続き利用するには、有料プランにアップグレードするか、クレジットを追加してください。プランに含まれるモデルは引き続きご利用いただけます。',
+      paygFreeAllowanceExhaustedBodyWithLimit:
+        '今月のクレジットモデルへの無料リクエスト{limit}件をすべて使い切りました。引き続き利用するには、有料プランにアップグレードするか、クレジットを追加してください。プランに含まれるモデルは引き続きご利用いただけます。',
       dailyTokensTitle: '本日のトークンを使い切りました',
       dailyTokensBody:
         '1日あたりのトークン枠を使い切りました。UTCの深夜にリセットされます。今すぐ上位プランに変更することもできます。',
@@ -4282,6 +4289,7 @@ export const ja: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.ja.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.ja,
   narration: NARRATION_TRANSLATIONS.ja,
+  pickedModel: PICKED_MODEL_TRANSLATIONS.ja,
   mediaUi: MEDIA_UI_TRANSLATIONS.ja,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.ja,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.ja,
@@ -4371,6 +4379,7 @@ export const ja: TranslationDictionary = {
       clearSelection: '選択を解除',
       impactWarning: '非公開にすると、これらのモデルは利用中のすべてのプランから外れます:',
     },
+    exposureUi: MODEL_EXPOSURE_UI_TRANSLATIONS.ja,
   },
   adminPlans: {
     intervalDiscounts: {
@@ -4459,9 +4468,9 @@ export const ja: TranslationDictionary = {
       maxContextPacks: '最大コンテキスト パック数',
       maxMemoryItems: '最大メモリ項目数',
       maxVideoSeconds: '動画の最大長（秒）',
-      creditConnectorFreeRequests: 'クレジットコネクタごとの月間無料リクエスト数',
+      creditConnectorFreeRequests: 'クレジットモデルへの月間無料リクエスト数（合計）',
       creditConnectorFreeRequestsHelp:
-        'このプランのユーザーが、クレジットが消費される前にクレジットコネクタ経由で毎月行えるリクエスト数です。空欄で無制限、0 で無効になります。',
+        'このプランのユーザーが、クレジットが必要になる前に、すべてのクレジットコネクタ合計で毎月行えるリクエスト数です。空欄で無制限、0 で無効になります。購入したクレジットがあれば、この数を超えても続けられます。',
       creditConnectorFreeRequestsInvalid:
         '0 から 100000 までの整数を入力するか、無制限にする場合は空欄のままにしてください。',
       isPublic: '上場',
@@ -4937,6 +4946,8 @@ export const ja: TranslationDictionary = {
       PAYG_PROMPT_TOO_EXPENSIVE: 'この会話の費用は残りのコネクタークレジットを超えています。',
       PAYG_MODEL_UNPRICED: 'このモデルはまだ価格が公開されておらず、課金できません。',
       PAYG_PRICING_UNAVAILABLE: '価格情報に一時的に接続できません。課金は発生していません。',
+      PAYG_FREE_ALLOWANCE_EXHAUSTED:
+        '今月のクレジットモデルへの無料リクエストを使い切りました。続けるにはアップグレードするか、クレジットを追加してください。',
       CREDIT_PACKAGE_NOT_FOUND: 'そのクレジットパッケージは存在しません。',
       CREDIT_PACKAGE_INACTIVE: 'そのクレジットパッケージは販売を終了しました。',
       CREDIT_ADJUSTMENT_REASON_REQUIRED: 'クレジットを手動で調整するには理由が必要です。',

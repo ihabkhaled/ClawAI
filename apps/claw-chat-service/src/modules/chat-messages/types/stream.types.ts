@@ -1,4 +1,5 @@
 import type { NarrationEntry } from './narration.types';
+import type { SuggestedModel } from './picked-model-fallback.types';
 import {
   type AiReasoningVisibility,
   type AiStreamProgressConfidence,
@@ -146,6 +147,9 @@ export type StreamEvent = {
   // Error semantics for partial-output handling.
   code?: string;
   messageKey?: string;
+  // PICKED_MODEL_FAILED: up to three usable models the bubble offers as
+  // one-click retries (never one already tried this turn).
+  suggestedModels?: SuggestedModel[];
   retryable?: boolean;
   partialContentPreserved?: boolean;
   // RESEARCH_PROGRESS payload (compare-mode research-enricher lifecycle).
@@ -205,6 +209,7 @@ export type StreamErrorEmitInput = StreamRunRef & {
 export type StreamErrorMetadata = {
   code?: string;
   messageKey?: string;
+  suggestedModels?: SuggestedModel[];
 };
 
 export type ResearchProgressEmitInput = {

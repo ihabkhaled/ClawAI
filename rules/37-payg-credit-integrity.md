@@ -205,7 +205,7 @@ paid model, rule 1 applies to it like anything else.
 22. **A free credit-connector request is a bounded, counted, give-back-able admission, never a
     free hold.** `Plan.creditConnectorFreeRequestsPerMonth` (`null` unlimited, `0` none; default
     `0`) lets `CreditReservationManager` admit a call the wallet cannot cover, and ONLY then
-    (credit first, allowance as the fallback). Four things are not optional: (a) only the
+    (credit first, allowance as the fallback) **for an unlimited allowance; a FINITE allowance is counted FIRST for a user with no purchased credit, and also with the metering switch OFF** (amended 2026-10-02: a Free account must stop at exactly the plan's number, grant or no grant, switch or no switch; no wallet is charged with the switch off). The count is ONE total across all credit connectors per user per UTC month (counter provider key `'*'`). Four things are not optional: (a) only the
     allow-listed token-priced surfaces (`FREE_ALLOWANCE_ELIGIBLE_SURFACES`) with no per-unit
     quantity are eligible: image, video, transcription and TTS never are, because one clip can cost
     $1.60; (b) the slot is taken by one atomic `INSERT .. ON CONFLICT .. WHERE used_count < limit`
@@ -213,9 +213,10 @@ paid model, rule 1 applies to it like anything else.
     `min($0.15, plan ceiling / allowance)` so a free request is not an unbounded liability; (d) a
     release gives the slot back once (gated on the `markReleased` row count), to the month the
     call was taken in. An allowance call holds nothing, finalizes without moving money, and
-    leaves a zero-amount `FREE_ALLOWANCE` ledger row. A spent allowance refuses with the ordinary
-    402 `PAYG_CREDIT_EXHAUSTED`, never a new code
-    ([ADR-142](../docs/13-adr/adr-142-free-allowance-on-credit-connectors.md)).
+    leaves a zero-amount `FREE_ALLOWANCE` ledger row. A spent cap refuses with its own
+    402 `PAYG_FREE_ALLOWANCE_EXHAUSTED` (upgrade or add credit); purchased credit bypasses it. The chat
+    shows it as a card because the refusal arrives over SSE
+    ([ADR-142](../docs/13-adr/adr-142-free-allowance-on-credit-connectors.md), amendment 2026-10-02).
 
 23. **A settled cost is shown back to PAYG users only, and fails closed.** `POST
 /internal/credit/finalize` returns `{ settled, billingMode, settledCostMicroUsd? }`
@@ -319,7 +320,7 @@ rather than claiming a check that is not there.
 | 16 — clamp is visible                  | **Unit test** asserting the clamp string is **rendered and visible**, not merely mounted (frontend).                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | 20 — cancel releases, never finalizes  | **Unit tests** — chat `message-speech.service.spec.ts` "MessageSpeechService.cancel" (a late answer → RELEASE `CANCELLED`, no CONSUMPTION; watcher abort across replicas), image-service cancel specs (mid-flight → hold released, asset not stored, no successor), file-service video cancellation specs (transcription hold released, no next provider).                                                                                                                                                                                         |
 | 17 — units, not zero tokens            | **Unit tests** — `credit-unit-metering.spec.ts` (auth: RESERVATION then non-zero CONSUMPTION for an OpenAI image), `unit-metering.spec.ts` (shared-utilities: BigInt sums), `image-execution.manager.payg.spec.ts` (image: `imageUnits` on reserve and finalize), `model-cost-seed.spec.ts` (routing: per-image seed prices). **Review checklist** for new per-unit surfaces.                                                                                                                                                                      |
-| 22 — free allowance is bounded         | **Unit tests** — `credit-reservation.manager.spec.ts` "the free allowance fallback" (credit first, 402 when spent, give-back once, finalize moves no money), `credit-free-allowance.service.spec.ts` (null/0 semantics, per-provider and per-month keys, per-unit exclusion, ceiling clamp), `credit-free-allowance.utility.spec.ts`, `credit-free-allowance.repository.spec.ts` (guarded single-statement upsert, N of a parallel burst). **Live**: 16 parallel upserts on Postgres admitted exactly the limit.                                   |
+| 22 — free allowance is bounded         | **Unit tests** — `credit-reservation.manager.spec.ts` "the free allowance fallback" (credit first, 402 when spent, give-back once, finalize moves no money), `credit-free-allowance.service.spec.ts` (null/0 semantics, one total key and per-month keys, N = 5 and N = 15, per-unit exclusion, ceiling clamp), `credit-reservation.manager.spec.ts` "the capped free allowance" (grant-funded counted, purchased bypass, kill switch off), `credit-free-allowance.utility.spec.ts`, `credit-free-allowance.repository.spec.ts` (guarded single-statement upsert, N of a parallel burst). **Live**: 16 parallel upserts on Postgres admitted exactly the limit.                                   |
 
 Plus the standing gates: **CI job** (lint → typecheck → test → build per touched
 workspace) and **knowledge check** (`npm run knowledge:coverage`, which fails if

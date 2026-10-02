@@ -16,6 +16,7 @@ const KIND_BY_CODE: ReadonlyMap<string, ChatLimitKind> = new Map([
   [ApiErrorCode.PAYG_PROMPT_TOO_EXPENSIVE, ChatLimitKind.PaygPromptTooExpensive],
   [ApiErrorCode.PAYG_MODEL_UNPRICED, ChatLimitKind.PaygModelUnpriced],
   [ApiErrorCode.PAYG_PRICING_UNAVAILABLE, ChatLimitKind.PaygPricingUnavailable],
+  [ApiErrorCode.PAYG_FREE_ALLOWANCE_EXHAUSTED, ChatLimitKind.PaygFreeAllowanceExhausted],
 ]);
 
 const TITLE_KEY_BY_KIND: Record<ChatLimitKind, string> = {
@@ -30,6 +31,7 @@ const TITLE_KEY_BY_KIND: Record<ChatLimitKind, string> = {
   [ChatLimitKind.PaygPromptTooExpensive]: 'chat.limits.paygPromptTooExpensiveTitle',
   [ChatLimitKind.PaygModelUnpriced]: 'chat.limits.paygModelUnpricedTitle',
   [ChatLimitKind.PaygPricingUnavailable]: 'chat.limits.paygPricingUnavailableTitle',
+  [ChatLimitKind.PaygFreeAllowanceExhausted]: 'chat.limits.paygFreeAllowanceExhaustedTitle',
 };
 
 const BODY_KEY_BY_KIND: Record<ChatLimitKind, string> = {
@@ -44,6 +46,7 @@ const BODY_KEY_BY_KIND: Record<ChatLimitKind, string> = {
   [ChatLimitKind.PaygPromptTooExpensive]: 'chat.limits.paygPromptTooExpensiveBody',
   [ChatLimitKind.PaygModelUnpriced]: 'chat.limits.paygModelUnpricedBody',
   [ChatLimitKind.PaygPricingUnavailable]: 'chat.limits.paygPricingUnavailableBody',
+  [ChatLimitKind.PaygFreeAllowanceExhausted]: 'chat.limits.paygFreeAllowanceExhaustedBody',
 };
 
 /**
@@ -67,6 +70,8 @@ const ACTION_BY_KIND: Record<ChatLimitKind, ChatLimitAction> = {
   // publish a price, so the button would take money and change nothing.
   [ChatLimitKind.PaygModelUnpriced]: ChatLimitAction.None,
   [ChatLimitKind.PaygPricingUnavailable]: ChatLimitAction.None,
+  // Free allowance spent: a paid plan or credit both clear it, so offer both.
+  [ChatLimitKind.PaygFreeAllowanceExhausted]: ChatLimitAction.UpgradeOrAddCredit,
 };
 
 const CREDIT_KINDS: ReadonlySet<ChatLimitKind> = new Set([
@@ -92,8 +97,19 @@ export function resolveChatLimitNotice(error: unknown): ChatLimitNotice | null {
     return null;
   }
 
-  const code = (error as ApiClientError).code;
-  if (code === undefined) {
+  return resolveChatLimitNoticeFromCode((error as ApiClientError).code);
+}
+
+/**
+ * The same notice from a bare backend code. The chat 402 for a credit refusal
+ * arrives over SSE (the send itself was accepted), so the stream hands over its
+ * `code` instead of an HTTP error. Only the limit codes qualify; anything else is
+ * null, so a provider failure never becomes a standing limit line.
+ */
+export function resolveChatLimitNoticeFromCode(
+  code: string | null | undefined,
+): ChatLimitNotice | null {
+  if (code === undefined || code === null) {
     return null;
   }
 

@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import { ApiErrorCode, QuotaWindowKind } from '@/enums';
+import { ChatLimitAction } from '@/enums/chat-limit-action.enum';
 import { ChatLimitKind } from '@/enums/chat-limit-kind.enum';
 import type { EntitlementQuota } from '@/types';
 import {
   resolveChatLimitNotice,
+  resolveChatLimitNoticeFromCode,
   resolveExhaustedQuotaNotice,
 } from '@/utilities/chat-limit-notice.utility';
 
@@ -127,5 +129,49 @@ describe('resolveExhaustedQuotaNotice', () => {
         adminBypass: false,
       })?.kind,
     ).toBe(ChatLimitKind.DailyTokens);
+  });
+});
+
+describe('spent free credit-model requests (ADR-142 update)', () => {
+  it('is its own kind with its own copy, never the empty-wallet line', () => {
+    const notice = resolveChatLimitNotice({ code: ApiErrorCode.PAYG_FREE_ALLOWANCE_EXHAUSTED });
+
+    expect(notice).toMatchObject({
+      kind: ChatLimitKind.PaygFreeAllowanceExhausted,
+      titleKey: 'chat.limits.paygFreeAllowanceExhaustedTitle',
+      bodyKey: 'chat.limits.paygFreeAllowanceExhaustedBody',
+    });
+  });
+
+  it('offers an upgrade AND credit, because either one clears it', () => {
+    expect(resolveChatLimitNoticeFromCode('PAYG_FREE_ALLOWANCE_EXHAUSTED')?.action).toBe(
+      ChatLimitAction.UpgradeOrAddCredit,
+    );
+  });
+
+  it('keeps an empty wallet on add credit only', () => {
+    expect(resolveChatLimitNoticeFromCode('PAYG_CREDIT_EXHAUSTED')?.action).toBe(
+      ChatLimitAction.AddCredit,
+    );
+  });
+});
+
+describe('resolveChatLimitNoticeFromCode (the SSE path)', () => {
+  it.each([undefined, null, 'PROVIDER_CREDIT_EXHAUSTED', 'ALL_PROVIDERS_FAILED', 'NOPE'])(
+    'is null for %s: a provider failure is not a standing limit line',
+    (code) => {
+      expect(resolveChatLimitNoticeFromCode(code)).toBeNull();
+    },
+  );
+
+  it.each([
+    ['PAYG_CREDIT_EXHAUSTED', ChatLimitKind.PaygCreditExhausted],
+    ['PAYG_PROMPT_TOO_EXPENSIVE', ChatLimitKind.PaygPromptTooExpensive],
+    ['PAYG_MODEL_UNPRICED', ChatLimitKind.PaygModelUnpriced],
+    ['PAYG_PRICING_UNAVAILABLE', ChatLimitKind.PaygPricingUnavailable],
+    ['PAYG_FREE_ALLOWANCE_EXHAUSTED', ChatLimitKind.PaygFreeAllowanceExhausted],
+    ['QUOTA_DAILY_EXCEEDED', ChatLimitKind.DailyTokens],
+  ])('turns %s into a notice', (code, kind) => {
+    expect(resolveChatLimitNoticeFromCode(code)?.kind).toBe(kind);
   });
 });

@@ -21,8 +21,7 @@ export function DataTable<T>({
   mobileTitleKey,
   className,
 }: DataTableProps<T>): React.ReactElement {
-  const titleColumn =
-    columns.find((col) => col.key === mobileTitleKey) ?? columns[0] ?? null;
+  const titleColumn = columns.find((col) => col.key === mobileTitleKey) ?? columns[0] ?? null;
   const bodyColumns: ResponsiveTableColumn<T>[] = titleColumn
     ? columns.filter((col) => col.key !== titleColumn.key)
     : columns;
@@ -38,6 +37,7 @@ export function DataTable<T>({
     <ResponsiveTable
       rows={data}
       columns={bodyColumns}
+      tableColumns={columns}
       keyExtractor={keyExtractor}
       mobileTitle={renderMobileTitle}
       emptyMessage={emptyMessage}

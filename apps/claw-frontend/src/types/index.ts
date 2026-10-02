@@ -190,6 +190,14 @@ export type { WhyThisModelRowProps } from './why-this-model-row.types';
 export type { FloatingClearanceInput, FloatingObstacleRect } from './floating-obstacle.types';
 export type { ChatLimitNotice } from './chat-limit-notice.types';
 export type {
+  PickedModelFallbackInfo,
+  PickedModelFallbackNoticeProps,
+  PickedModelRecoveryProps,
+  PickedModelRecoveryState,
+  SuggestedModelChoice,
+  SuggestedModelRef,
+} from './picked-model-fallback.types';
+export type {
   PasswordRequirementState,
   PasswordStrengthPresentation,
   PasswordStrengthResult,
@@ -1204,7 +1212,7 @@ export type {
   SetModelExposureResponse,
   ModelExposureFilters,
   UseModelExposureResult,
-  ModelExposureTableProps,
+  ModelExposureListProps,
   ModelExposureSectionProps,
 } from './model-exposure.types';
 

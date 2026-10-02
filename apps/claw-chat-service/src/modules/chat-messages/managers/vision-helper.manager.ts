@@ -25,6 +25,7 @@ import {
   VISION_HELPER_USER_PROMPT,
 } from '../constants/vision-helper.constants';
 import { AccessControlService } from '../services/access-control.service';
+import { DerivedImageDescriptionStore } from '../services/derived-image-description-store.service';
 import type { AssembledContext, FileContentResponse } from '../types/context.types';
 import type {
   VideoFrameDescriptionBatch,
@@ -76,6 +77,8 @@ export class VisionHelperManager {
     private readonly accessControl: AccessControlService,
     // Optional so hand-built specs keep their shape; the global MetricsModule provides it.
     @Optional() private readonly metrics?: ChatMediaMetricsService,
+    // Optional for the same reason. Absent → a description lives for its turn only.
+    @Optional() private readonly descriptions?: DerivedImageDescriptionStore,
   ) {}
 
   /** The lane's context with its blind images described, or unchanged when there is nothing to do. */
@@ -92,27 +95,49 @@ export class VisionHelperManager {
     ) {
       return context;
     }
-    const blind = blindImageDecisions(plan);
-    if (blind.length === 0) {
+    const allBlind = blindImageDecisions(plan);
+    // Images carried from an earlier turn are only ever REUSED from the store.
+    // The store is per replica, so a miss here is common on a multi-replica
+    // deployment; paying the helper again for every older image on every
+    // follow-up is not acceptable. A miss keeps OCR + the honest note.
+    const earlierIds = new Set(context.earlierFileIds ?? []);
+    const blind = allBlind.filter((decision) => !earlierIds.has(decision.fileId));
+    const remembered = allBlind.flatMap((decision): VisionHelperResult[] => {
+      const observation = earlierIds.has(decision.fileId)
+        ? this.descriptions?.get(context.userId, decision.fileId)
+        : undefined;
+      return observation === undefined
+        ? []
+        : [
+            {
+              fileId: decision.fileId,
+              outcome: VisionHelperOutcome.SUCCEEDED,
+              observation,
+              executions: [],
+            },
+          ];
+    });
+    if (blind.length === 0 && remembered.length === 0) {
       return context;
     }
     // Paid feature (ADR-122). Checked here, low in the turn, so a free plan's
     // ordinary chat is never refused — it simply keeps OCR + the honest note,
     // with no paid call and no hold.
-    const onPlan = await this.helperVisionOnPlan(context.userId);
+    const gated = blind.length > 0;
+    const onPlan = gated ? await this.helperVisionOnPlan(context.userId) : true;
     if (onPlan !== true) {
       return onPlan === false
         ? { ...context, attachmentDelivery: markHelperVisionNotOnPlan(plan) }
         : context;
     }
-    const candidates = await this.eligibleCandidates(context);
-    if (candidates.length === 0) {
+    const candidates = gated ? await this.eligibleCandidates(context) : [];
+    if (gated && candidates.length === 0) {
       // No helper configured or reachable: today's OCR + honest note.
       return context;
     }
     const described = blind.slice(0, VISION_HELPER_MAX_IMAGES_PER_TURN);
     const turnKey = context.turnId ?? randomUUID();
-    const results = await Promise.all(
+    const fresh = await Promise.all(
       described.map(async (decision): Promise<VisionHelperResult> => {
         const image = context.fileContents.find((candidate) => candidate.id === decision.fileId);
         return image === undefined
@@ -126,6 +151,7 @@ export class VisionHelperManager {
             );
       }),
     );
+    const results = [...remembered, ...fresh];
     const fit = fitLaneFileShare(
       context,
       results.flatMap((result) => (result.observation === undefined ? [] : [result.observation])),
@@ -245,10 +271,40 @@ export class VisionHelperManager {
     if (hit !== undefined) {
       return hit.result;
     }
-    const result = this.walk(context, turnKey, target, candidates, invoke).catch(
-      (): VisionHelperResult => ({ fileId, outcome: VisionHelperOutcome.FAILED, executions: [] }),
-    );
+    // A follow-up turn reuses what the helper already wrote about this image
+    // (ADR-152): no second paid call, and the same description the user saw.
+    const remembered =
+      target.kind === HelperExecutionKind.VISION
+        ? this.descriptions?.get(context.userId, fileId, now)
+        : undefined;
+    const result: Promise<VisionHelperResult> =
+      remembered === undefined
+        ? this.walk(context, turnKey, target, candidates, invoke)
+            .then((walked) => this.remember(context.userId, target, walked))
+            .catch((): VisionHelperResult => ({
+              fileId,
+              outcome: VisionHelperOutcome.FAILED,
+              executions: [],
+            }))
+        : Promise.resolve({
+            fileId,
+            outcome: VisionHelperOutcome.SUCCEEDED,
+            observation: remembered,
+            executions: [],
+          });
     this.results.set(key, { result, expiresAt: now + VISION_HELPER_RESULT_TTL_MS });
+    return result;
+  }
+
+  /** Keeps a successful image description for later turns; passes the result through. */
+  private remember(
+    userId: string,
+    target: VisionHelperTarget,
+    result: VisionHelperResult,
+  ): VisionHelperResult {
+    if (target.kind === HelperExecutionKind.VISION && result.observation !== undefined) {
+      this.descriptions?.set(userId, result.observation);
+    }
     return result;
   }
 

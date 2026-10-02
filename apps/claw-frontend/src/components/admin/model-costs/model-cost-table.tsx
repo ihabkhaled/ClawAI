@@ -3,6 +3,7 @@
 import { Pencil } from 'lucide-react';
 import type { ReactElement } from 'react';
 
+import { ModelBillingCell } from '@/components/admin/model-billing/model-billing-cell';
 import { ModelCostSourceBadge } from '@/components/admin/model-costs/model-cost-source-badge';
 import { DataTable } from '@/components/common/data-table';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +21,12 @@ import { formatMicroUsdPerMillionAsUsd } from '@/utilities/model-cost.utility';
  * at a glance. A missing rate renders as a dash, never as $0.00 — an unpriced
  * model is refused, not free.
  */
-export function ModelCostTable({ rows, onEdit, t }: ModelCostTableProps): ReactElement {
+export function ModelCostTable({
+  rows,
+  onEdit,
+  resolveBilling,
+  t,
+}: ModelCostTableProps): ReactElement {
   const columns: DataTableColumn<ModelCostCatalogRow>[] = [
     {
       key: 'model',
@@ -35,7 +41,16 @@ export function ModelCostTable({ rows, onEdit, t }: ModelCostTableProps): ReactE
     {
       key: 'provider',
       header: t('adminModelCosts.table.provider'),
-      render: (row) => <span className="break-all">{row.provider}</span>,
+      render: (row) => <span className="break-words">{row.provider}</span>,
+    },
+    {
+      // Credit = billed from the user's credit wallet; Included = not metered.
+      // Derived from the connector policy billing reads, never a model flag.
+      key: 'billing',
+      header: t('adminModelCosts.billing.column'),
+      render: (row) => (
+        <ModelBillingCell billing={resolveBilling(row)} provider={row.provider} t={t} />
+      ),
     },
     {
       key: 'input',
@@ -74,7 +89,7 @@ export function ModelCostTable({ rows, onEdit, t }: ModelCostTableProps): ReactE
       key: 'pricingSource',
       header: t('adminModelCosts.table.pricingSource'),
       render: (row) => (
-        <div className="flex flex-wrap items-center gap-1">
+        <div className="touch:justify-end flex flex-wrap items-center justify-start gap-1">
           <ModelCostSourceBadge source={row.pricingSource} t={t} />
           {row.isAdminOverride ? (
             <Badge variant={BadgeVariant.OUTLINE}>{t('adminModelCosts.table.override')}</Badge>

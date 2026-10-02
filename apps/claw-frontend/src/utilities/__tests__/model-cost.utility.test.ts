@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
+import { ModelBillingFilter } from '@/enums/model-billing.enum';
 import { ModelPricingSource, ModelPricingSourceFilter } from '@/enums/model-pricing-source.enum';
 import type { ModelCostCatalogRow } from '@/types/model-cost.types';
+import {
+  buildModelCostListResetKey,
+  countActiveModelCostFilters,
+} from '@/utilities/model-cost-filter.utility';
 import {
   countModelCostRowsBySource,
   dollarsPerMillionToMicroUsd,
@@ -183,5 +188,31 @@ describe('filterModelCostRows', () => {
     expect(filterModelCostRows(rows, ModelPricingSourceFilter.ALL, 'GPT-4O')).toHaveLength(1);
     expect(filterModelCostRows(rows, ModelPricingSourceFilter.ALL, 'sonnet')).toHaveLength(1);
     expect(filterModelCostRows(rows, ModelPricingSourceFilter.ALL, 'nothing')).toHaveLength(0);
+  });
+});
+
+describe('model cost filter helpers', () => {
+  it('counts the chip filters that narrow the list', () => {
+    expect(countActiveModelCostFilters(ModelPricingSourceFilter.ALL, ModelBillingFilter.ALL)).toBe(
+      0,
+    );
+    expect(
+      countActiveModelCostFilters(ModelPricingSource.UNPRICED, ModelBillingFilter.CREDIT),
+    ).toBe(2);
+  });
+
+  it('changes the list reset key when any filter or the search changes', () => {
+    const base = buildModelCostListResetKey(
+      ModelPricingSourceFilter.ALL,
+      ModelBillingFilter.ALL,
+      '',
+    );
+
+    expect(
+      buildModelCostListResetKey(ModelPricingSourceFilter.ALL, ModelBillingFilter.CREDIT, ''),
+    ).not.toBe(base);
+    expect(
+      buildModelCostListResetKey(ModelPricingSourceFilter.ALL, ModelBillingFilter.ALL, 'x'),
+    ).not.toBe(base);
   });
 });

@@ -548,15 +548,16 @@ the vision helper stay plan-gated.
 
 ## Free allowance on credit connectors
 
-A plan may give its users a few free requests per credit connector per UTC month
+A plan may give its users a few free requests on credit connectors per UTC month, **one total across all of them** (amended 2026-10-02)
 ([ADR-142](../13-adr/adr-142-free-allowance-on-credit-connectors.md)). Free ships at 2; every paid
 plan at 0. The setting is `Plan.creditConnectorFreeRequestsPerMonth` (`null` unlimited, `0` none),
 editable in the admin plan form.
 
 ```
 reserve(call)
-  classify -> metered credit connector
-  credit covers the hold?  -> ordinary wallet hold (credit first, always)
+  classify -> metered credit connector (metering off: finite allowance still counted, nothing charged)
+  finite allowance and no purchased credit -> CreditFreeAllowanceService.tryAdmit FIRST
+  credit covers the hold?  -> ordinary wallet hold (unlimited allowance / purchased credit)
   otherwise                -> CreditFreeAllowanceService.tryAdmit
         surface eligible and no per-unit quantity?   no -> 402
         plan allowance > 0 or null?                  no -> 402
@@ -565,8 +566,12 @@ reserve(call)
         -> { metered: true, heldMicroUsd: 0, freeAllowance: true }
 ```
 
-- **Counter:** `credit_free_allowance_usage`, unique `(user_id, provider, period_key)`, provider
-  upper-cased, period the UTC `YYYY-MM`. The guarded upsert is the only writer that adds a slot, so
+- **Cap-first and switch-independent (2026-10-02):** with a FINITE allowance and no purchased credit the
+  request is counted before the wallet (a grant does not bypass it), and the count is enforced even with
+  `payg.credit.enabled` off or missing (counted only, nothing priced or charged). Purchased credit bypasses
+  the cap. Unlimited (`null`) allowances stay credit-first and, with the switch off, unmetered.
+- **Counter:** `credit_free_allowance_usage`, unique `(user_id, provider, period_key)` with `provider` always
+  the reserved total key `'*'` (one row per user per month), period the UTC `YYYY-MM`. The guarded upsert is the only writer that adds a slot, so
   parallel requests cannot exceed the limit; `release` subtracts one (floor 0).
 - **Record:** a `WeightedUsageRecord` with `isPayg` and `isFreeAllowance`, zero bucket holds and the
   absorbed worst case as `estimatedCostMicroUsd`; `finalize` stores the real cost in
@@ -577,12 +582,12 @@ reserve(call)
 - **Eligible surfaces:** CHAT, COMPARE, JUDGE, ORCHESTRATION, FILE_GENERATION, WORKSPACE_ACTION,
   ROUTING. Per-unit surfaces (IMAGE, VIDEO, TRANSCRIPTION, TTS) are never eligible: one clip can
   cost $1.60.
-- **Refusal:** a spent allowance is the ordinary 402 `PAYG_CREDIT_EXHAUSTED` with the user's own
-  numbers.
+- **Refusal:** a spent cap is 402 `PAYG_FREE_ALLOWANCE_EXHAUSTED`. The chat shows a card ("You have used
+  all N free requests ... Included models still work") with See plans and Add credit buttons.
 - **Visible to the user:** `GET /credit/me` returns
-  `freeAllowance: [{ provider, limit, used, remaining }]` for each credit connector (`limit` and
-  `remaining` are `null` when unlimited; the list is empty for administrators, with metering off, or
-  when the plan gives none).
+  `freeAllowance: { limit, used, remaining, resetsAt }` (`limit` and `remaining` are `null` when
+  unlimited; `null` for administrators or when the plan gives none; with metering off only a finite
+  allowance is shown).
 
 ## Related
 
