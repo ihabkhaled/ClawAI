@@ -73,6 +73,10 @@ export const en: TranslationDictionary = {
     phoneInvalid: 'Enter a valid phone number',
   },
   auth: {
+    rateLimit: {
+      tryAgainInMinutes: 'Too many attempts. Try again in {minutes} minutes.',
+      tryAgainInOneMinute: 'Too many attempts. Try again in a minute.',
+    },
     signup: {
       firstNameRequired: 'Enter your first name.',
       firstNameTooLong: 'First name can be at most 64 characters.',

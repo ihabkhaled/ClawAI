@@ -76,6 +76,14 @@ and the frontend feature-gate hook.
     its own audience, because twelve services verify a bearer by signature alone. Adding a mobile route means
     adding it to the allow-list in `mobile-token-route-inventory.spec.ts` in the same change.
 
+12. **A route that costs compute is never `@Public()`** ([ADR-146](../docs/13-adr/adr-146-model-inference-requires-auth.md)).
+    Model inference (ollama `generate`/`chat`, llama.cpp `v1/chat/completions`/`v1/completions`)
+    takes a user JWT OR the inter-service token. In ollama-service and llamacpp-service the
+    global `AuthGuard` accepts `Authorization: Service <INTER_SERVICE_AUTH_TOKEN>` only on a
+    route marked `@AllowServiceToken()`; on any other route it is a 401. `/internal/*` there is
+    `@UseGuards(ServiceTokenGuard)` (service token only). A caller of these routes sends
+    `buildInterServiceAuthHeader()`. Only health stays public.
+
 ## Prohibited patterns
 
 - Decoding/verifying a JWT inline instead of via `AuthGuard`.
@@ -86,6 +94,8 @@ and the frontend feature-gate hook.
   refreshes of one token signed every tab out.
 - Persisting a tab's in-memory tokens from a setter that did not change them.
 - Clearing auth storage because a refresh request failed to reach the server.
+- `@Public()` on an inference, generation or other compute route "because auth
+  happens at the previous hop" — nothing stops a caller from skipping that hop.
 
 ## Correct pattern
 

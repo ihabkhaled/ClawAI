@@ -11,7 +11,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
-import { httpRequest } from '../../../common/utilities';
+import { buildInterServiceAuthHeader, httpRequest } from '../../../common/utilities';
 import {
   AI_ROUTE_PLANNER_MAX_ATTEMPTS,
   AI_ROUTE_PLANNER_MAX_CANDIDATES_IN_PROMPT,
@@ -324,6 +324,7 @@ export class AIRoutePlannerManager {
       const response = await httpRequest<OllamaGeneratePlannerResponse>({
         url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
         method: 'POST',
+        headers: { Authorization: buildInterServiceAuthHeader() },
         body: {
           model: routerModel,
           prompt,

@@ -4,7 +4,12 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { RabbitMQModule } from '@claw/shared-rabbitmq';
-import { AuthGuard, RolesGuard, SessionRevocationGuard } from '@claw/shared-auth';
+import {
+  AuthGuard,
+  buildThrottlerOptions,
+  RolesGuard,
+  SessionRevocationGuard,
+} from '@claw/shared-auth';
 import { EntitlementsModule, PermissionGuard } from '@claw/shared-entitlements';
 import type { IncomingMessage } from 'node:http';
 
@@ -47,10 +52,7 @@ import { ChainsModule } from '../modules/chains/chains.module';
           if (res.statusCode >= 500 || error !== undefined) {
             return 'error';
           }
-          if (res.statusCode >= 400) {
-            return 'warn';
-          }
-          return 'info';
+          return res.statusCode >= 400 ? 'warn' : 'info';
         },
         redact: {
           paths: [
@@ -85,12 +87,12 @@ import { ChainsModule } from '../modules/chains/chains.module';
         serviceName: 'workspace-service',
       }),
     }),
-    ThrottlerModule.forRoot([
-      {
+    ThrottlerModule.forRoot(
+      buildThrottlerOptions({
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60_000),
         limit: Number(process.env['THROTTLE_LIMIT'] ?? 2500),
-      },
-    ]),
+      }),
+    ),
     ScheduleModule.forRoot(),
     EntitlementsModule.forRoot({
       authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,

@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
+import { buildInterServiceAuthHeader } from '../../../common/utilities/inter-service-auth.utility';
 import { isLocalVisionModel } from '../constants/local-vision-heuristics.constants';
 import type {
   InstalledModelInfo,
@@ -115,14 +116,11 @@ export class LocalModelSelectionService {
       const response = await httpRequest<InstalledModelsResponse>({
         url: `${config.OLLAMA_SERVICE_URL}/api/v1/internal/ollama/installed-models`,
         method: 'GET',
+        headers: { Authorization: buildInterServiceAuthHeader() },
         timeoutMs: 5_000,
       });
 
-      if (!response.ok) {
-        return [];
-      }
-
-      return response.data.models ?? [];
+      return !response.ok ? [] : response.data.models ?? [];
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`fetchInstalledModels: ${msg}`);
@@ -134,10 +132,7 @@ export class LocalModelSelectionService {
     models: InstalledModelInfo[],
     preferredRole?: string,
   ): InstalledModelInfo | null {
-    if (models.length === 0) {
-      return null;
-    }
-    return (
+    return models.length === 0 ? null : (
       [...models].sort(
         (a, b) => this.selectionScore(b, preferredRole) - this.selectionScore(a, preferredRole),
       )[0] ?? null
@@ -172,9 +167,6 @@ export class LocalModelSelectionService {
     const raw = model.parameterCount ?? '';
     const normalized = raw.toLowerCase().replaceAll(/[^0-9.]/g, '');
     const parsed = Number.parseFloat(normalized);
-    if (!Number.isFinite(parsed)) {
-      return Number.MAX_SAFE_INTEGER;
-    }
-    return parsed;
+    return !Number.isFinite(parsed) ? Number.MAX_SAFE_INTEGER : parsed;
   }
 }

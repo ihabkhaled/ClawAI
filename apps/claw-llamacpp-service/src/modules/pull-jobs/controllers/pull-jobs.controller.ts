@@ -15,7 +15,7 @@ import { defer, EMPTY, type Observable, switchMap } from 'rxjs';
 import { RequirePermissions } from '@claw/shared-entitlements';
 import { Permission } from '@claw/shared-types';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
-import { Public } from '../../../app/decorators/public.decorator';
+import { AllowServiceToken } from '../../../app/decorators/allow-service-token.decorator';
 import { SkipLogging } from '../../../app/decorators/skip-logging.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { type AuthenticatedUser } from '../../../common/types';
@@ -81,7 +81,9 @@ export class PullJobsController {
     return this.pullJobsService.retry(id);
   }
 
-  @Public()
+  // ADR-144: used to be public. The frontend reads it with connectSse (fetch +
+  // Bearer header), so a user JWT works; the service token is allowed too.
+  @AllowServiceToken()
   @SkipLogging()
   @SkipThrottle()
   @Sse('pull-jobs/:id/progress')
@@ -91,10 +93,7 @@ export class PullJobsController {
       const last = this.progressEmitter.getLast(id);
       return subject.pipe(
         switchMap((event) => {
-          if (last && event.data.jobId === id) {
-            return [{ data: event.data }];
-          }
-          return [{ data: event.data }];
+          return last && event.data.jobId === id ? [{ data: event.data }] : [{ data: event.data }];
         }),
       );
     }).pipe(switchMap((value) => (value ? [value] : EMPTY)));

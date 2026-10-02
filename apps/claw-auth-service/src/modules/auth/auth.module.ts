@@ -22,6 +22,10 @@ import { EmailDispatchCooldownService } from './services/email-dispatch-cooldown
 import { EmailChangeManager } from './managers/email-change.manager';
 import { EmailChangeRepository } from './repositories/email-change.repository';
 import { EmailChangeService } from './services/email-change.service';
+import { AuthRateLimitRepository } from './repositories/auth-rate-limit.repository';
+import { AuthRateLimitService } from './services/auth-rate-limit.service';
+import { AuthRateLimitGuard } from './guards/auth-rate-limit.guard';
+import { AuthRateLimitSuccessInterceptor } from './interceptors/auth-rate-limit-success.interceptor';
 
 @Module({
   imports: [RolesModule, PlansModule, RedisModule],
@@ -45,6 +49,10 @@ import { EmailChangeService } from './services/email-change.service';
     EmailChangeRepository,
     EmailChangeManager,
     EmailChangeService,
+    AuthRateLimitRepository,
+    AuthRateLimitService,
+    AuthRateLimitGuard,
+    AuthRateLimitSuccessInterceptor,
   ],
   exports: [AuthService, AuthEmailAdapter, EmailChangeService],
 })

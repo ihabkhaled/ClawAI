@@ -20,10 +20,13 @@ function baseConfig(enabled: boolean) {
     OLLAMA_SERVICE_URL: 'http://ollama-service:4008',
     OLLAMA_ROUTER_MODEL: 'qwen3:1.7b',
     OLLAMA_KEEP_ALIVE: '20m',
+    INTER_SERVICE_AUTH_TOKEN: 'inter-service-token-for-routing-spec',
   };
 }
 
-function makeInput(overrides: Partial<SemanticIntentAnalyzerInput> = {}): SemanticIntentAnalyzerInput {
+function makeInput(
+  overrides: Partial<SemanticIntentAnalyzerInput> = {},
+): SemanticIntentAnalyzerInput {
   return {
     threadId: 'thread-1',
     message: 'Summarize the attached contract and highlight risky clauses.',
@@ -427,6 +430,10 @@ describe('SemanticIntentAnalyzerManager', () => {
       const call = callCall?.[0];
       expect(call.url).toBe('http://ollama-service:4008/api/v1/ollama/generate');
       expect(call.method).toBe('POST');
+      // ADR-144: ollama generate refuses an anonymous call.
+      expect(call.headers).toEqual({
+        Authorization: 'Service inter-service-token-for-routing-spec',
+      });
     });
 
     it('uses the configured router model', async () => {
@@ -514,7 +521,9 @@ describe('SemanticIntentAnalyzerManager', () => {
         status: 200,
         data: { response: sensitive },
       });
-      const record = await manager.analyze(makeInput({ message: 'I have a fever, what should I do?' }));
+      const record = await manager.analyze(
+        makeInput({ message: 'I have a fever, what should I do?' }),
+      );
       expect(record.analysis?.riskLevel).toBe('CRITICAL');
       expect(record.analysis?.privacyClass).toBe('local');
       expect(record.analysis?.requiresJudge).toBe(true);

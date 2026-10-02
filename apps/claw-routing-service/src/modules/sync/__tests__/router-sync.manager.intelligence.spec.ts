@@ -5,6 +5,12 @@ import { RouterModelRegistryManager } from '../../router-models/managers/router-
 import { RouterModelRegistryRepository } from '../../router-models/repositories/router-model-registry.repository';
 import { RouterSyncManager } from '../managers/router-sync.manager';
 
+// ADR-146: snapshot fetches carry the inter-service token; this spec does not
+// stub AppConfig, so the header builder is stubbed instead.
+vi.mock('../../../common/utilities/inter-service-auth.utility', () => ({
+  buildInterServiceAuthHeader: (): string => 'Service router-sync-spec-token',
+}));
+
 const originalFetch = globalThis.fetch;
 
 function mock200(models: unknown[]): Mock {

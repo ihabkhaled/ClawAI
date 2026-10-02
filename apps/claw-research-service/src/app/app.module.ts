@@ -3,7 +3,12 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { RabbitMQModule } from '@claw/shared-rabbitmq';
-import { AuthGuard, RolesGuard, SessionRevocationGuard } from '@claw/shared-auth';
+import {
+  AuthGuard,
+  buildThrottlerOptions,
+  RolesGuard,
+  SessionRevocationGuard,
+} from '@claw/shared-auth';
 import { EntitlementsModule, PermissionGuard } from '@claw/shared-entitlements';
 import type { IncomingMessage } from 'node:http';
 
@@ -36,10 +41,7 @@ import { ResearchUsageModule } from '../common/services/research-usage.module';
           if (res.statusCode >= 500 || error !== undefined) {
             return 'error';
           }
-          if (res.statusCode >= 400) {
-            return 'warn';
-          }
-          return 'info';
+          return res.statusCode >= 400 ? 'warn' : 'info';
         },
         redact: {
           paths: [
@@ -66,12 +68,12 @@ import { ResearchUsageModule } from '../common/services/research-usage.module';
         serviceName: 'research-service',
       }),
     }),
-    ThrottlerModule.forRoot([
-      {
+    ThrottlerModule.forRoot(
+      buildThrottlerOptions({
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60_000),
         limit: Number(process.env['THROTTLE_LIMIT'] ?? 2500),
-      },
-    ]),
+      }),
+    ),
     EntitlementsModule.forRoot({
       authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,
       interServiceToken: AppConfig.get().INTER_SERVICE_AUTH_TOKEN,

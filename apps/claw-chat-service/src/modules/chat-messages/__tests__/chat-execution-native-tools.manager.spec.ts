@@ -34,6 +34,7 @@ vi.mock('../clients/model-exposure.client', () => ({
 }));
 vi.mock('../../../common/utilities', () => ({
   httpRequest: vi.fn(),
+  buildInterServiceAuthHeader: (): string => 'Service native-tools-spec-token',
   recordGet: <T>(record: Record<string, T> | undefined | null, key: string): T | undefined => {
     return !record
       ? undefined
@@ -615,6 +616,8 @@ describe('ChatExecutionManager — native tool transport', () => {
       const call = httpRequest.mock.calls[0];
       expect(call).toBeDefined();
       expect(call?.[0].url).toContain('/api/v1/ollama/chat');
+      // ADR-144: ollama-service refuses an anonymous /ollama/chat.
+      expect(call?.[0].headers).toEqual({ Authorization: 'Service native-tools-spec-token' });
       const call2 = httpRequest.mock.calls[0];
       expect(call2).toBeDefined();
       expect(call2?.[0].url).not.toContain('/generate');
@@ -648,6 +651,8 @@ describe('ChatExecutionManager — native tool transport', () => {
       const call = httpRequest.mock.calls[0];
       expect(call).toBeDefined();
       expect(call?.[0].url).toContain('/api/v1/ollama/generate');
+      // ADR-144: ollama-service refuses an anonymous /ollama/generate.
+      expect(call?.[0].headers).toEqual({ Authorization: 'Service native-tools-spec-token' });
     });
   });
 

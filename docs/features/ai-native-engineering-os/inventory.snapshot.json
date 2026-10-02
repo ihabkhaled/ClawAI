@@ -6019,6 +6019,11 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "TRUSTED_PROXY_ADDRESSES"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "USD_TO_EGP_FALLBACK_RATE"
       },
       {
@@ -7942,7 +7947,7 @@
       "looseDocs": 23,
       "rules": [
         {
-          "bytes": 31625,
+          "bytes": 31972,
           "file": "rules/00-master-rules.md"
         },
         {
@@ -8010,7 +8015,7 @@
           "file": "rules/08-backend-managers-and-use-cases.md"
         },
         {
-          "bytes": 6046,
+          "bytes": 8574,
           "file": "rules/08-security-rules.md"
         },
         {
@@ -8046,7 +8051,7 @@
           "file": "rules/15-configuration-and-environment.md"
         },
         {
-          "bytes": 7274,
+          "bytes": 8090,
           "file": "rules/16-authentication-and-authorization.md"
         },
         {
@@ -8214,7 +8219,11 @@
           "file": "rules/57-memory-and-context-pack-integrity.md"
         },
         {
-          "bytes": 6156,
+          "bytes": 7961,
+          "file": "rules/58-auth-route-rate-limits.md"
+        },
+        {
+          "bytes": 6734,
           "file": "rules/README.md"
         }
       ],
@@ -8630,7 +8639,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5709
+        "value": 5712
       },
       "localeCount": 13,
       "locales": [
@@ -8715,6 +8724,12 @@
       },
       {
         "location": "/api/v1/agent",
+        "port": 4015,
+        "service": "agent-service",
+        "source": "infra/nginx/locations.conf"
+      },
+      {
+        "location": "/api/v1/agent/auth/",
         "port": 4015,
         "service": "agent-service",
         "source": "infra/nginx/locations.conf"
@@ -10637,7 +10652,7 @@
     "tests": {
       "@claw/shared-auth": {
         "runner": "vitest",
-        "testFiles": 3
+        "testFiles": 6
       },
       "@claw/shared-constants": {
         "runner": "vitest",
@@ -10661,7 +10676,7 @@
       },
       "claw-agent-service": {
         "runner": "vitest",
-        "testFiles": 61
+        "testFiles": 65
       },
       "claw-audit-service": {
         "runner": "vitest",
@@ -10669,7 +10684,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 133
+        "testFiles": 140
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -10693,7 +10708,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 671
+        "testFiles": 674
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -10705,15 +10720,15 @@
       },
       "claw-llamacpp-service": {
         "runner": "vitest",
-        "testFiles": 18
+        "testFiles": 22
       },
       "claw-memory-service": {
         "runner": "vitest",
-        "testFiles": 23
+        "testFiles": 24
       },
       "claw-ollama-service": {
         "runner": "vitest",
-        "testFiles": 20
+        "testFiles": 23
       },
       "claw-payment-service": {
         "runner": "vitest",
@@ -10725,7 +10740,7 @@
       },
       "claw-routing-service": {
         "runner": "vitest",
-        "testFiles": 112
+        "testFiles": 113
       },
       "claw-server-logs-service": {
         "runner": "vitest",
@@ -11460,18 +11475,18 @@
     "contradictionCount": 0,
     "dockerServiceCount": 52,
     "endpointCount": 777,
-    "envVarCount": 360,
+    "envVarCount": 361,
     "eventCount": 185,
     "frontendRouteCount": 155,
     "localeCount": 13,
-    "nginxRouteCount": 67,
+    "nginxRouteCount": 68,
     "permissionCount": 84,
     "portCount": 16,
     "portCoverageGapCount": 2,
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1915,
+    "totalTestFiles": 1941,
     "workspaceCount": 25
   }
 }

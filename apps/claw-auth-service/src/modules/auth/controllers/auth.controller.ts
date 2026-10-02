@@ -26,6 +26,8 @@ import {
   VerifyEmailDto,
   verifyEmailSchema,
 } from '../dto/email-verification.dto';
+import { AuthRateLimit } from '../decorators/auth-rate-limit.decorator';
+import { AuthRateLimitPolicy } from '../enums/auth-rate-limit-policy.enum';
 
 @Controller('auth')
 export class AuthController {
@@ -38,6 +40,7 @@ export class AuthController {
 
   @Public()
   @Post('register')
+  @AuthRateLimit(AuthRateLimitPolicy.REGISTER)
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(registerSchema))
   async register(@Body() dto: RegisterDto): Promise<RegisterResult> {
@@ -46,6 +49,7 @@ export class AuthController {
 
   @Public()
   @Post('login')
+  @AuthRateLimit(AuthRateLimitPolicy.LOGIN)
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(loginSchema))
   async login(@Body() dto: LoginDto): Promise<LoginResult> {
@@ -54,6 +58,7 @@ export class AuthController {
 
   @Public()
   @Post('refresh')
+  @AuthRateLimit(AuthRateLimitPolicy.REFRESH)
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(refreshTokenSchema))
   async refresh(@Body() dto: RefreshTokenDto): Promise<RefreshResult> {
@@ -73,6 +78,7 @@ export class AuthController {
 
   @Public()
   @Post('password-reset/request')
+  @AuthRateLimit(AuthRateLimitPolicy.PASSWORD_RESET_REQUEST)
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(requestPasswordResetSchema))
   async requestPasswordReset(
@@ -83,6 +89,7 @@ export class AuthController {
 
   @Public()
   @Post('password-reset/confirm')
+  @AuthRateLimit(AuthRateLimitPolicy.PASSWORD_RESET_CONFIRM)
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(confirmPasswordResetSchema))
   async confirmPasswordReset(@Body() dto: ConfirmPasswordResetDto): Promise<{ reset: boolean }> {
@@ -91,6 +98,7 @@ export class AuthController {
 
   @Public()
   @Post('email-verification/resend')
+  @AuthRateLimit(AuthRateLimitPolicy.EMAIL_VERIFICATION_RESEND)
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(resendVerificationSchema))
   async resendVerification(@Body() dto: ResendVerificationDto): Promise<ResendVerificationResult> {
@@ -99,6 +107,7 @@ export class AuthController {
 
   @Public()
   @Post('email-verification/confirm')
+  @AuthRateLimit(AuthRateLimitPolicy.EMAIL_VERIFICATION_CONFIRM)
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(verifyEmailSchema))
   async verifyEmail(@Body() dto: VerifyEmailDto): Promise<{ verified: boolean }> {
@@ -107,6 +116,7 @@ export class AuthController {
 
   @Public()
   @Post('email-change/confirm')
+  @AuthRateLimit(AuthRateLimitPolicy.EMAIL_CHANGE_CONFIRM)
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(confirmEmailChangeSchema))
   async confirmEmailChange(@Body() dto: ConfirmEmailChangeDto): Promise<{ changed: boolean }> {

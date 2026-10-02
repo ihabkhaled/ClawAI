@@ -10,7 +10,7 @@ import type { RouterInferenceRequest } from '../types/router-inference.types';
 import { extractProviderMessage } from '../utilities/router-adapter-response.utility';
 
 vi.mock('../../../common/utilities', async () => ({
-  ...await vi.importActual('../../../common/utilities'),
+  ...(await vi.importActual('../../../common/utilities')),
   httpRequest: vi.fn(),
 }));
 
@@ -20,6 +20,7 @@ vi.mock('../../../app/config/app.config', () => ({
       CONNECTOR_SERVICE_URL: 'http://connector:4003',
       OLLAMA_SERVICE_URL: 'http://ollama:4008',
       OLLAMA_KEEP_ALIVE: '5m',
+      INTER_SERVICE_AUTH_TOKEN: 'inter-service-token-for-router-adapter-spec',
     }),
   },
 }));
@@ -338,7 +339,9 @@ describe('LegacyLocalRouterAdapter', () => {
   });
 
   // The rollback path must not depend on a cloud connector existing.
-  it('calls ollama-service without any connector credential', async () => {
+  // ADR-144: ollama-service generate refuses an anonymous call, so the hop
+  // carries the inter-service token — and still no connector credential.
+  it('calls ollama-service with the service token and no connector credential', async () => {
     httpRequestMock.mockResolvedValue({ ok: true, status: 200, data: { response: '{}' } });
 
     await new LegacyLocalRouterAdapter().invoke(request({ providerModelId: 'qwen3:1.7b' }));
@@ -348,7 +351,9 @@ describe('LegacyLocalRouterAdapter', () => {
       headers?: Record<string, string>;
     };
     expect(call.url).toContain('http://ollama:4008');
-    expect(call.headers?.['Authorization']).toBeUndefined();
+    expect(call.headers?.['Authorization']).toBe(
+      'Service inter-service-token-for-router-adapter-spec',
+    );
   });
 
   it('reads the generate proxy response shape', async () => {

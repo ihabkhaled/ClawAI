@@ -315,6 +315,7 @@ ${message}`,
       const response = await httpRequest<ResearchGateModelReply>({
         url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
         method: 'POST',
+        headers: { Authorization: buildInterServiceAuthHeader() },
         body: {
           model: candidate.modelAlias,
           prompt,

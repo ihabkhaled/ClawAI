@@ -1522,6 +1522,14 @@ FIGMA_WEBHOOK_SECRET=$figmaWebhookSecret
 # Stream 22 - service-to-service auth (file-service /upload-internal + /download-internal)
 INTER_SERVICE_AUTH_TOKEN=$interServiceToken
 
+# Trusted reverse proxies (ADR-146, rules/58 item 3). Services believe the
+# X-Real-IP header only when the socket peer is loopback, the docker address
+# of the nginx container, or an address/CIDR listed here. Blank is right for every
+# single-host install. Set it ONLY when nginx is NOT on claw-network
+# (infra/nginx/nginx.distributed.conf.template): list nginx's egress IPs, or
+# every visitor shares one rate-limit bucket.
+TRUSTED_PROXY_ADDRESSES=
+
 # Grafana (ADR-115) - its own encryption key. Behind the admin session, so there
 # is no Grafana password anywhere.
 GRAFANA_SECRET_KEY=$grafanaSecretKey

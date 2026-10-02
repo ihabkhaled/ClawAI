@@ -8,6 +8,7 @@ import { forgotPasswordSchema } from '@/lib/validation/password-reset.schema';
 import type { ForgotPasswordFormValues } from '@/lib/validation/password-reset.schema';
 import { authService } from '@/services/auth/auth.service';
 import type { UseForgotPasswordFormReturn } from '@/types/hook.types';
+import { translateRateLimitError } from '@/utilities/rate-limit.utility';
 
 export function useForgotPasswordForm(): UseForgotPasswordFormReturn {
   const { t } = useTranslation();
@@ -29,10 +30,14 @@ export function useForgotPasswordForm(): UseForgotPasswordFormReturn {
       setForgotPasswordError(null);
       setHasSubmitted(true);
     },
-    onError: () => {
+    onError: (error: Error) => {
       // Same as onSuccess — do NOT surface a different message for
-      // non-existent addresses. Anti-enumeration requirement.
-      setForgotPasswordError(t('auth.forgotPasswordErrorGeneric'));
+      // non-existent addresses. Anti-enumeration requirement. A 429 is the one
+      // exception, and it is safe: the per-IP limit is spent identically for
+      // every address, so "try again in N minutes" reveals nothing (rules/58).
+      setForgotPasswordError(
+        translateRateLimitError(error, t) ?? t('auth.forgotPasswordErrorGeneric'),
+      );
     },
   });
 

@@ -6,6 +6,7 @@ import { ConsensusConfidenceLevel } from '../../../common/enums/consensus-confid
 import { OrchestrationStageStatus } from '../../../common/enums/orchestration-stage-status.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
+import { buildInterServiceAuthHeader } from '../../../common/utilities/inter-service-auth.utility';
 import {
   CONSENSUS_MIN_CONTENT_LENGTH,
   CONSENSUS_SYNTHESIS_TIMEOUT_MS,
@@ -409,6 +410,7 @@ export class ConsensusExecutionManager {
     const response = await httpRequest<OllamaGenerateResponse>({
       url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
       method: 'POST',
+      headers: { Authorization: buildInterServiceAuthHeader() },
       body: requestBody,
       timeoutMs: CONSENSUS_SYNTHESIS_TIMEOUT_MS,
     });

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { SessionRevocationGuard } from '@claw/shared-auth';
+import { buildThrottlerOptions, SessionRevocationGuard } from '@claw/shared-auth';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { RabbitMQModule } from '@claw/shared-rabbitmq';
@@ -42,10 +42,7 @@ import { HealthModule } from '../modules/health/health.module';
           if (res.statusCode >= 500 || error !== undefined) {
             return 'error';
           }
-          if (res.statusCode >= 400) {
-            return 'warn';
-          }
-          return 'info';
+          return res.statusCode >= 400 ? 'warn' : 'info';
         },
         redact: {
           paths: [
@@ -85,12 +82,12 @@ import { HealthModule } from '../modules/health/health.module';
     MemoryPortableModule,
     EmbeddingsModule,
     HealthModule,
-    ThrottlerModule.forRoot([
-      {
+    ThrottlerModule.forRoot(
+      buildThrottlerOptions({
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),
         limit: Number(process.env['THROTTLE_LIMIT'] ?? 2500),
-      },
-    ]),
+      }),
+    ),
   ],
   providers: [
     {

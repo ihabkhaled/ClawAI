@@ -37,24 +37,47 @@ Ollama microservice for the Claw platform. Manages local AI model lifecycle: pul
 
 ## API Endpoints
 
-| Endpoint                          | Method    | Auth   | Description                            |
-| --------------------------------- | --------- | ------ | -------------------------------------- |
-| /ollama/models                    | GET       | Yes    | List installed models (paginated)      |
-| /ollama/pull                      | POST      | Yes    | Pull model by name                     |
-| /ollama/assign-role               | POST      | Yes    | Assign role to model                   |
-| /ollama/generate                  | POST      | Public | Generate text (prompt-completion)      |
-| /ollama/chat                      | POST      | Public | Native `/api/chat` — messages + tools  |
-| /ollama/health                    | GET       | Public | Runtime health check                   |
-| /ollama/runtimes                  | GET       | Yes    | List runtime configs                   |
-| /ollama/catalog                   | GET       | Yes    | Browse model catalog with filters      |
-| /ollama/catalog/:id               | GET       | Yes    | Single catalog entry                   |
-| /ollama/catalog/:id/pull          | POST      | Yes    | Pull from catalog                      |
-| /ollama/pull-jobs                 | GET       | Yes    | List active downloads                  |
-| /ollama/pull-jobs/:id/progress    | GET (SSE) | Yes    | Real-time download progress            |
-| /ollama/pull-jobs/:id             | DELETE    | Yes    | Cancel download                        |
-| /internal/ollama/router-model     | GET       | Public | Get router model (internal)            |
-| /internal/ollama/installed-models | GET       | Public | Installed models with roles (internal) |
-| /runtime-progress/probe           | GET       | ADMIN  | Local-runtime rich-progress probe      |
+| Endpoint                            | Method    | Auth                 | Description                            |
+| ----------------------------------- | --------- | -------------------- | -------------------------------------- |
+| /ollama/models                      | GET       | Yes                  | List installed models (paginated)      |
+| /ollama/pull                        | POST      | Yes                  | Pull model by name                     |
+| /ollama/assign-role                 | POST      | Yes                  | Assign role to model                   |
+| /ollama/generate                    | POST      | JWT or service token | Generate text (prompt-completion)      |
+| /ollama/chat                        | POST      | JWT or service token | Native `/api/chat` — messages + tools  |
+| /ollama/health                      | GET       | Public               | Runtime health check                   |
+| /ollama/runtimes                    | GET       | Yes                  | List runtime configs                   |
+| /ollama/catalog                     | GET       | Yes                  | Browse model catalog with filters      |
+| /ollama/catalog/:id                 | GET       | Yes                  | Single catalog entry                   |
+| /ollama/catalog/:id/pull            | POST      | Yes                  | Pull from catalog                      |
+| /ollama/pull-jobs                   | GET       | Yes                  | List active downloads                  |
+| /ollama/pull-jobs/:id/progress      | GET (SSE) | Yes                  | Real-time download progress            |
+| /ollama/pull-jobs/:id               | DELETE    | Yes                  | Cancel download                        |
+| /internal/ollama/router-model       | GET       | Service token only   | Get router model (internal)            |
+| /internal/ollama/installed-models   | GET       | Service token only   | Installed models with roles (internal) |
+| /internal/ollama/installed-snapshot | GET       | Service token only   | Routing sync snapshot (internal)       |
+| /runtime-progress/probe             | GET       | ADMIN                | Local-runtime rich-progress probe      |
+
+## Inference requires login (ADR-146, 2026-10-02)
+
+`POST /ollama/generate` and `POST /ollama/chat` were `@Public()`, so anyone who
+reached nginx could run the GPU. Now:
+
+- **Inference** carries `@AllowServiceToken()`: the global `AuthGuard` accepts a
+  user JWT (`Bearer`) OR `Authorization: Service <INTER_SERVICE_AUTH_TOKEN>`
+  (constant-time compare). On every route WITHOUT that decorator a service
+  token is a 401 (`Service token not accepted on this route`).
+- **`/internal/ollama/*`** is `@UseGuards(ServiceTokenGuard)` (service token
+  only; `@Public()` there only skips the user-JWT guard).
+- **Health** (`/health`, `/ollama/health`) stays public.
+- **Callers** (chat, routing, memory, workspace) send
+  `buildInterServiceAuthHeader()` / `buildAuthHeader()`. A new caller that
+  forgets it gets `401 Missing authorization header`.
+- Files: `src/app/guards/auth.guard.ts`, `src/app/guards/service-token.guard.ts`,
+  `src/app/decorators/allow-service-token.decorator.ts`,
+  `src/common/utilities/constant-time-equal.utility.ts`. Tests:
+  `src/app/guards/__tests__/`.
+- No plan/quota check here: any signed-in user may call inference directly.
+  Metering still happens in chat-service.
 
 ## Runtime-progress probe (PR1 — local-runtime rich-progress)
 

@@ -2,13 +2,13 @@
 
 ## Overview
 
-| Property       | Value                          |
-| -------------- | ------------------------------ |
-| Port           | 4008                           |
-| Database       | PostgreSQL (`claw_ollama`)     |
-| ORM            | Prisma 5.22                    |
-| Env prefix     | `OLLAMA_`                      |
-| Nginx route    | `/api/v1/ollama/*`             |
+| Property    | Value                      |
+| ----------- | -------------------------- |
+| Port        | 4008                       |
+| Database    | PostgreSQL (`claw_ollama`) |
+| ORM         | Prisma 5.22                |
+| Env prefix  | `OLLAMA_`                  |
+| Nginx route | `/api/v1/ollama/*`         |
 
 The ollama service acts as a proxy and management layer for the local Ollama runtime. It manages the model catalog (30 models across 6 categories), handles model downloads with SSE progress streaming, assigns model roles, and provides generation endpoints.
 
@@ -16,48 +16,48 @@ The ollama service acts as a proxy and management layer for the local Ollama run
 
 ### LocalModel
 
-| Column       | Type          | Notes                              |
-| ------------ | ------------- | ---------------------------------- |
-| id           | String        | CUID primary key                   |
-| name         | String        | Model name (e.g., "gemma3")        |
-| tag          | String        | Tag (e.g., "4b")                   |
-| runtime      | RuntimeType   | OLLAMA, VLLM, LLAMA_CPP, etc.     |
-| sizeBytes    | BigInt?       | Model file size                    |
-| family       | String?       | Model family                       |
-| parameters   | String?       | Parameter count string             |
-| quantization | String?       | Quantization type                  |
-| category     | ModelCategory?| CODING, REASONING, THINKING, etc.  |
-| isInstalled  | Boolean       | Whether model is locally available |
+| Column       | Type           | Notes                              |
+| ------------ | -------------- | ---------------------------------- |
+| id           | String         | CUID primary key                   |
+| name         | String         | Model name (e.g., "gemma3")        |
+| tag          | String         | Tag (e.g., "4b")                   |
+| runtime      | RuntimeType    | OLLAMA, VLLM, LLAMA_CPP, etc.      |
+| sizeBytes    | BigInt?        | Model file size                    |
+| family       | String?        | Model family                       |
+| parameters   | String?        | Parameter count string             |
+| quantization | String?        | Quantization type                  |
+| category     | ModelCategory? | CODING, REASONING, THINKING, etc.  |
+| isInstalled  | Boolean        | Whether model is locally available |
 
 Unique constraint: `(name, tag, runtime)`
 
 ### LocalModelRoleAssignment
 
-| Column   | Type           | Notes                                |
-| -------- | -------------- | ------------------------------------ |
-| id       | String         | CUID primary key                     |
-| modelId  | String         | FK to LocalModel                     |
-| role     | LocalModelRole | ROUTER, LOCAL_FALLBACK_CHAT, etc.    |
-| isActive | Boolean        | Only one active assignment per role  |
+| Column   | Type           | Notes                               |
+| -------- | -------------- | ----------------------------------- |
+| id       | String         | CUID primary key                    |
+| modelId  | String         | FK to LocalModel                    |
+| role     | LocalModelRole | ROUTER, LOCAL_FALLBACK_CHAT, etc.   |
+| isActive | Boolean        | Only one active assignment per role |
 
 Unique constraint: `(role, isActive)` -- ensures one active model per role.
 
 ### ModelCatalogEntry
 
-| Column         | Type          | Notes                            |
-| -------------- | ------------- | -------------------------------- |
-| id             | String        | CUID primary key                 |
-| name           | String        | Model name                       |
-| tag            | String        | Model tag                        |
-| displayName    | String        | Human-readable name              |
-| category       | ModelCategory | CODING, REASONING, etc.          |
-| description    | String?       | Model description                |
-| sizeBytes      | BigInt?       | Expected download size           |
-| parameterCount | String?       | Parameter count                  |
-| runtime        | RuntimeType   | Target runtime                   |
-| ollamaName     | String?       | Ollama pull identifier           |
-| isRecommended  | Boolean       | Featured in catalog UI           |
-| capabilities   | String[]      | Capability tags                  |
+| Column         | Type          | Notes                   |
+| -------------- | ------------- | ----------------------- |
+| id             | String        | CUID primary key        |
+| name           | String        | Model name              |
+| tag            | String        | Model tag               |
+| displayName    | String        | Human-readable name     |
+| category       | ModelCategory | CODING, REASONING, etc. |
+| description    | String?       | Model description       |
+| sizeBytes      | BigInt?       | Expected download size  |
+| parameterCount | String?       | Parameter count         |
+| runtime        | RuntimeType   | Target runtime          |
+| ollamaName     | String?       | Ollama pull identifier  |
+| isRecommended  | Boolean       | Featured in catalog UI  |
+| capabilities   | String[]      | Capability tags         |
 
 ### PullJob
 
@@ -69,43 +69,56 @@ Per-runtime configuration (base URL, enabled flag). Ollama runtime defaults to `
 
 ## Model Roles
 
-| Role                   | Purpose                              | Default Model    |
-| ---------------------- | ------------------------------------ | ---------------- |
-| ROUTER                 | Makes routing decisions (AUTO mode)  | gemma3:4b        |
-| LOCAL_FALLBACK_CHAT    | Default local chat model             | gemma3:4b        |
-| LOCAL_CODING           | Code generation and review           | phi3:mini        |
-| LOCAL_REASONING        | Chain-of-thought reasoning           | llama3.2:3b      |
-| LOCAL_FILE_GENERATION  | Structured file content generation   | gemma3:4b        |
-| LOCAL_THINKING         | Research and analysis tasks          | gemma3:4b        |
-| LOCAL_IMAGE_GENERATION | Local diffusion model                | sdxl-turbo       |
+| Role                   | Purpose                             | Default Model |
+| ---------------------- | ----------------------------------- | ------------- |
+| ROUTER                 | Makes routing decisions (AUTO mode) | gemma3:4b     |
+| LOCAL_FALLBACK_CHAT    | Default local chat model            | gemma3:4b     |
+| LOCAL_CODING           | Code generation and review          | phi3:mini     |
+| LOCAL_REASONING        | Chain-of-thought reasoning          | llama3.2:3b   |
+| LOCAL_FILE_GENERATION  | Structured file content generation  | gemma3:4b     |
+| LOCAL_THINKING         | Research and analysis tasks         | gemma3:4b     |
+| LOCAL_IMAGE_GENERATION | Local diffusion model               | sdxl-turbo    |
 
 ## API Endpoints
 
 ### Public API
 
-| Method | Path                          | Description                         |
-| ------ | ----------------------------- | ----------------------------------- |
-| GET    | /models                       | List installed local models         |
-| GET    | /models/:id                   | Get model details                   |
-| GET    | /models/:id/roles             | Get role assignments for a model    |
-| POST   | /models/:id/roles             | Assign role to model (ADMIN)        |
-| DELETE | /models/:id/roles/:roleId     | Remove role assignment (ADMIN)      |
-| GET    | /catalog                      | Browse model catalog (filterable)   |
-| GET    | /catalog/:id                  | Get catalog entry details           |
-| POST   | /catalog/:id/pull             | Start model download                |
-| GET    | /pull-jobs                    | List active download jobs           |
-| GET    | /pull-jobs/:id/progress       | SSE stream of download progress     |
-| DELETE | /pull-jobs/:id                | Cancel a download                   |
-| POST   | /generate                     | Generate text with a local model    |
-| DELETE | /models/:id                   | Delete an installed model (ADMIN)   |
+| Method | Path                      | Description                                                      |
+| ------ | ------------------------- | ---------------------------------------------------------------- |
+| GET    | /models                   | List installed local models                                      |
+| GET    | /models/:id               | Get model details                                                |
+| GET    | /models/:id/roles         | Get role assignments for a model                                 |
+| POST   | /models/:id/roles         | Assign role to model (ADMIN)                                     |
+| DELETE | /models/:id/roles/:roleId | Remove role assignment (ADMIN)                                   |
+| GET    | /catalog                  | Browse model catalog (filterable)                                |
+| GET    | /catalog/:id              | Get catalog entry details                                        |
+| POST   | /catalog/:id/pull         | Start model download                                             |
+| GET    | /pull-jobs                | List active download jobs                                        |
+| GET    | /pull-jobs/:id/progress   | SSE stream of download progress                                  |
+| DELETE | /pull-jobs/:id            | Cancel a download                                                |
+| POST   | /generate                 | Generate text with a local model (JWT or service token, ADR-146) |
+| POST   | /chat                     | Native chat with tools (JWT or service token, ADR-146)           |
+| DELETE | /models/:id               | Delete an installed model (ADMIN)                                |
 
 ### Internal API (service-to-service)
 
-| Method | Path                             | Description                        |
-| ------ | -------------------------------- | ---------------------------------- |
-| GET    | /internal/installed-models       | List installed models for routing  |
-| GET    | /internal/model-by-role/:role    | Get active model for a given role  |
-| POST   | /internal/generate               | Generate text (no auth required)   |
+| Method | Path                          | Description                       |
+| ------ | ----------------------------- | --------------------------------- |
+| GET    | /internal/installed-models    | List installed models for routing |
+| GET    | /internal/model-by-role/:role | Get active model for a given role |
+| POST   | /internal/generate            | Generate text (no auth required)  |
+
+> **Current state (ADR-146, 2026-10-02).** The real internal routes are
+> `GET /internal/ollama/router-model`, `/internal/ollama/installed-models` and
+> `/internal/ollama/installed-snapshot`. All three are service-token only
+> (`@UseGuards(ServiceTokenGuard)`, `Authorization: Service <INTER_SERVICE_AUTH_TOKEN>`).
+> `POST /ollama/generate` and `POST /ollama/chat` take a user JWT OR the service
+> token (`@AllowServiceToken()`); anonymous calls get 401. On any route without
+> `@AllowServiceToken()` a service token is refused. Only `/health` and
+> `/ollama/health` are public. Callers: chat-service, routing-service,
+> memory-service, workspace-service — each sends its `buildInterServiceAuthHeader()`
+> (workspace: `buildAuthHeader()`). See
+> [ADR-146](../13-adr/adr-146-model-inference-requires-auth.md).
 
 ## Model Pull with SSE Progress
 
@@ -125,20 +138,20 @@ Models listed in the `AUTO_PULL_MODELS` environment variable (space-separated) a
 
 ## Events
 
-| Event          | Direction | Notes                                  |
-| -------------- | --------- | -------------------------------------- |
-| model.pulled   | Publish   | After model download completes         |
-| model.deleted  | Publish   | After model removed                    |
-| catalog.updated| Publish   | After catalog seed/update              |
+| Event           | Direction | Notes                          |
+| --------------- | --------- | ------------------------------ |
+| model.pulled    | Publish   | After model download completes |
+| model.deleted   | Publish   | After model removed            |
+| catalog.updated | Publish   | After catalog seed/update      |
 
 ## Ollama API Proxy
 
 The service wraps the Ollama HTTP API:
 
-| Ollama Endpoint   | Purpose                    |
-| ----------------- | -------------------------- |
-| GET /api/tags     | List installed models      |
-| POST /api/generate| Generate text completion   |
-| POST /api/pull    | Download model (streaming) |
-| DELETE /api/delete| Remove a model             |
-| GET /api/show     | Get model details          |
+| Ollama Endpoint    | Purpose                    |
+| ------------------ | -------------------------- |
+| GET /api/tags      | List installed models      |
+| POST /api/generate | Generate text completion   |
+| POST /api/pull     | Download model (streaming) |
+| DELETE /api/delete | Remove a model             |
+| GET /api/show      | Get model details          |

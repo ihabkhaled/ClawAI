@@ -27,6 +27,8 @@ import type {
   PairPollResult,
 } from '../types/agent.types';
 import type { AuthenticatedUser } from '../../../common/types/auth.types';
+import { AgentAuthRateLimit } from '../../auth-rate-limit/decorators/agent-auth-rate-limit.decorator';
+import { AgentAuthRateLimitPolicy } from '../../auth-rate-limit/enums/agent-auth-rate-limit-policy.enum';
 
 @Controller('agent/auth')
 export class AgentAuthController {
@@ -37,6 +39,7 @@ export class AgentAuthController {
   ) {}
 
   @Post('pair/init')
+  @AgentAuthRateLimit(AgentAuthRateLimitPolicy.PAIR_INIT)
   @HttpCode(HttpStatus.OK)
   @Public()
   async pairInit(
@@ -70,6 +73,7 @@ export class AgentAuthController {
   }
 
   @Post('pair/poll')
+  @AgentAuthRateLimit(AgentAuthRateLimitPolicy.PAIR_POLL)
   @HttpCode(HttpStatus.OK)
   @Public()
   async pairPoll(
@@ -80,6 +84,7 @@ export class AgentAuthController {
   }
 
   @Post('device-code/create')
+  @AgentAuthRateLimit(AgentAuthRateLimitPolicy.DEVICE_CODE_CREATE)
   @HttpCode(HttpStatus.OK)
   @Public()
   async deviceCodeCreate(
@@ -121,6 +126,7 @@ export class AgentAuthController {
   }
 
   @Post('refresh')
+  @AgentAuthRateLimit(AgentAuthRateLimitPolicy.REFRESH)
   @HttpCode(HttpStatus.OK)
   @Public()
   async refresh(

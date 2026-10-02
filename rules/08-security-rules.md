@@ -77,10 +77,47 @@ Failed checks → HTTP 422 with reason code. Never silently skip checks.
 ```
 1. Helmet security headers on ALL 11+ services (X-Frame-Options, CSP, HSTS, etc.)
 2. CORS restricted to CORS_ORIGINS env var list
-3. Rate limiting: @nestjs/throttler (100 req/min, configurable)
+3. Rate limiting: @nestjs/throttler (THROTTLE_LIMIT per THROTTLE_TTL, default 2500/60s),
+   wired ONLY through buildThrottlerOptions() from @claw/shared-auth (see below)
 4. @SkipThrottle() required on SSE endpoints (long-lived connections don't rate-limit correctly)
 5. X-Request-ID correlation header passed frontend → nginx → all backend services
 ```
+
+### Rate limiting: who a request is counted against
+
+Every service calls `ThrottlerModule.forRoot(buildThrottlerOptions({ ttl, limit }))`
+(`packages/shared-auth/src/throttle/`). Never pass a bare `[{ ttl, limit }]`: the
+default tracker is `req.ip`, which behind nginx is nginx's docker address, so every
+visitor on earth shared one budget (fixed 2026-10-02).
+
+1. **A valid user access token → `user:<id>`**, wherever the user connects from.
+   An invalid or expired token counts by address, like any anonymous call.
+2. **Otherwise `X-Real-IP` → `ip:<addr>`**, and only when the socket peer IS
+   nginx: loopback, the current docker address of the name `nginx`, or an
+   address/CIDR in `TRUSTED_PROXY_ADDRESSES` (distributed nginx only). "Private
+   peer" is not enough: a LAN client on a published port, or another container on
+   claw-network, is private too. nginx OVERWRITES `X-Real-IP` with `$remote_addr`
+   on every request, so a forged one never survives the edge. One implementation:
+   `resolveClientAddress` in `@claw/shared-auth`, shared with the sign-in limiters
+   (rules/58 item 3).
+3. **Otherwise the socket peer → `peer:<addr>`**: a docker-network caller with no
+   token gets its own bucket, and a direct hit on a published port is counted by its
+   real source, not by the header it sent.
+4. **`Authorization: Service <INTER_SERVICE_AUTH_TOKEN>` skips the global throttler**
+   (constant-time compare). Internal calls must never 429 each other. A wrong token
+   is counted like any other request.
+5. **Never read `X-Forwarded-For`** for a limit key. nginx APPENDS to it, so its
+   left-most entry is whatever the client typed.
+6. **An nginx `location` that sets any `proxy_set_header` must restate `X-Real-IP`**
+   (nginx drops every inherited header in that case). Pinned by
+   `tools/__tests__/nginx-real-ip-restated.test.mjs`.
+
+A published service port reached through Docker's userland proxy shows the docker
+gateway as the peer, which is not nginx, so a forged `X-Real-IP` there is counted by
+the gateway address, not believed. Production should still not expose service ports
+to the internet; nginx is the only ingress. With the distributed nginx template and
+`TRUSTED_PROXY_ADDRESSES` left blank, every visitor shares nginx's `peer:` bucket:
+set it to nginx's egress IPs there.
 
 ---
 
@@ -123,6 +160,7 @@ Failed checks → HTTP 422 with reason code. Never silently skip checks.
 - [ ] .max() on all string and array fields
 - [ ] File upload endpoints use FileSecurityManager
 - [ ] SSE endpoints have @SkipThrottle()
+- [ ] ThrottlerModule is wired with `buildThrottlerOptions()`; new nginx blocks that set headers restate `X-Real-IP`
 - [ ] No raw SQL introduced
 - [ ] No eval() or dynamic code execution introduced
 - [ ] Logs don't contain auth tokens or user secrets

@@ -1,6 +1,8 @@
 import { API_CODE_PASSTHROUGH_SERVER_STATUSES } from '@/constants/api.constants';
+import { RETRY_AFTER_HEADER } from '@/constants/rate-limit.constants';
 import { httpClient } from '@/lib/http-client';
 import type { ApiClientDeleteOptions, ApiClientRequestOptions, ApiResponse } from '@/types';
+import { parseRetryAfterSeconds } from '@/utilities/rate-limit.utility';
 
 export class ApiClientError extends Error {
   status: number;
@@ -14,6 +16,10 @@ export class ApiClientError extends Error {
   // an opaque correlation id, and it is what lets support find the one log line
   // behind "it failed" when the body itself is deliberately generic.
   requestId?: string;
+  // Seconds from the response's `Retry-After` header. Every 429 from the
+  // sign-in / sign-up limiter sends it, so the UI can say "try again in N
+  // minutes" instead of guessing (rules/58).
+  retryAfterSeconds?: number;
 
   constructor(params: {
     message: string;
@@ -21,6 +27,7 @@ export class ApiClientError extends Error {
     errors?: Record<string, string[]>;
     code?: string;
     requestId?: string;
+    retryAfterSeconds?: number;
   }) {
     super(params.message);
     this.name = 'ApiClientError';
@@ -28,6 +35,7 @@ export class ApiClientError extends Error {
     this.errors = params.errors;
     this.code = params.code;
     this.requestId = params.requestId;
+    this.retryAfterSeconds = params.retryAfterSeconds;
   }
 }
 
@@ -151,6 +159,7 @@ function toApiClientError(error: unknown): ApiClientError {
           : (axiosError.response?.data?.errorCode ?? axiosError.response?.data?.code),
       requestId:
         typeof rawRequestId === 'string' && rawRequestId.length > 0 ? rawRequestId : undefined,
+      retryAfterSeconds: parseRetryAfterSeconds(axiosError.response?.headers?.[RETRY_AFTER_HEADER]),
     });
   }
   return new ApiClientError({ message: 'Network error', status: 0 });

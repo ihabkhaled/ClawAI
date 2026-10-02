@@ -231,6 +231,63 @@ proxy_set_header Origin $http_origin;
 | `X-Forwarded-Proto` | `$scheme`                    | Indicates the original protocol (http/https) |
 | `Origin`            | `$http_origin`               | Passes the Origin header for CORS handling   |
 
+`CF-IPCountry`, `CF-Connecting-IP` and `True-Client-IP` are blanked next to them,
+so a client cannot pass one off as something the edge produced.
+
+### X-Real-IP is the throttler key — restate it in every block that sets headers
+
+Every service's global throttler counts anonymous traffic by `X-Real-IP`
+(`buildThrottlerOptions` in `@claw/shared-auth`; rule:
+[`rules/08-security-rules.md`](../../rules/08-security-rules.md) §Rate limiting).
+nginx overwrites it with `$remote_addr`, so a client cannot choose its own key.
+`X-Forwarded-For` is never used as a key: nginx appends to it, and its left-most
+entry is client-controlled.
+
+**A `location` that declares any `proxy_set_header` (an SSE `Connection ""`, a
+webhook `Content-Type`, the frontend `Upgrade`) inherits NONE of the server-level
+headers.** Until 2026-10-02 the chat/agent/image/file-generation streams, the
+llama.cpp inference and pull-progress routes, the payment webhooks, the Grafana
+auth subrequest and the frontend catch-all all dropped `X-Real-IP`, so every
+visitor of those routes landed in one bucket. Each now restates the shared set;
+the frontend block restates only the client-address ones, to leave the Host the
+Next.js server sees unchanged. `tools/__tests__/nginx-real-ip-restated.test.mjs`
+fails on any block that sets headers without `X-Real-IP $remote_addr`, in both
+`locations.conf` and `nginx.distributed.conf.template`.
+
+Verify live (forged headers must not move the counter, a second real client must
+start its own):
+
+```bash
+curl -sk -D - -o /dev/null -H 'X-Real-IP: 1.1.1.1' https://claw.local/api/v1/health | grep -i ratelimit-remaining
+curl -sk -D - -o /dev/null -H 'X-Real-IP: 2.2.2.2' https://claw.local/api/v1/health | grep -i ratelimit-remaining   # one lower
+MSYS_NO_PATHCONV=1 docker exec claw-nginx curl -sk -D - -o /dev/null -H 'Host: claw.local' https://127.0.0.1/api/v1/health | grep -i ratelimit-remaining  # fresh bucket
+```
+
+A call carrying the inter-service `Service` token gets no `X-RateLimit-*` headers:
+it skips the throttler.
+
+---
+
+## Sign-in / sign-up flood brake (`auth_routes`, rules/58)
+
+```nginx
+map $request_method $auth_post_key { default ""; POST $binary_remote_addr; }
+limit_req_zone $auth_post_key zone=auth_routes:10m rate=60r/m;
+# location /api/v1/auth  and  location /api/v1/agent/auth/
+limit_req zone=auth_routes burst=30 nodelay;
+```
+
+- **POST only.** An empty key is not counted, so `GET /auth/me` on every page load
+  never spends it.
+- **A backstop, not the limit.** The real per-route budgets (login 10 / 15 min per
+  IP + address, register 5 / h per IP, ...) live in auth-service and agent-service
+  ([rules/58](../../rules/58-auth-route-rate-limits.md), ADR-147). This zone is what
+  still limits these routes when Redis is down and the services fail open.
+- An nginx 429 has no `code` in its body and no service log line; a service 429 has
+  `code: RATE_LIMITED` and `Retry-After`. Runbook:
+  [runbook-auth-rate-limits.md](../11-runbooks/runbook-auth-rate-limits.md).
+- Same zone, same location, in `nginx.distributed.conf.template`.
+
 ---
 
 ## DNS Resolution

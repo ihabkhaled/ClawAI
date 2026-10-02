@@ -157,6 +157,21 @@ Remaining for next sessions:
 
 PROMPT routines accept `cron` (UTC, five fields, at most every 5 minutes) XOR `intervalMinutes`. Parser: `src/common/utilities/cron-expression.utility.ts`; scheduler advances via `SchedulerManager.nextRunFor`. Guide: `docs/04-backend/service-guide-agent.md`.
 
+## Device sign-in route budgets (rules/58, ADR-147, 2026-10-02)
+
+`modules/auth-rate-limit/` holds `@AgentAuthRateLimit(policy)` + guard + Redis fixed
+windows (`RedisService.incrWithTtl`, now one atomic Lua call returning count + ttl).
+Import `AuthRateLimitModule` into any module whose controller uses the decorator.
+
+- pair/init: `PAIR_INIT_RATE_LIMIT_PER_MINUTE` per IP. pair/poll: one poll per
+  `PAIR_POLL_MIN_INTERVAL_MS` per pairing code (429 + `Retry-After: 1`; the extension
+  polls every 2 s). device-code/create 10 / min, refresh 60 / min, SSO callback
+  30 / min per IP. device-code/token keeps its own `slow_down`.
+- Keys `agent:auth:rl:<policy>:<ip|pairing-code>:<hash>` (SHA-256). Fails open on a
+  Redis error or a 250 ms timeout, with a warning. 429 body code `RATE_LIMITED`.
+- IP = `resolveClientAddress` from `@claw/shared-auth` (via `resolveClientIp`): X-Real-IP
+  only when the peer IS nginx, never because the peer is private (rules/58 item 3).
+
 ## Mobile device token class (F097, 2026-10-01)
 
 `devices.tokenClass` (`device` | `mobile`). A mobile token (scopes `runs:read|approve|cancel`) reaches ONLY the ten

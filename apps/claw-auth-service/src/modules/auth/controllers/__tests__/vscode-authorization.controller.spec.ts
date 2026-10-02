@@ -1,6 +1,9 @@
 import { type Mock, vi } from 'vitest';
 import { PIPES_METADATA } from '@nestjs/common/constants';
 import { Test, type TestingModule } from '@nestjs/testing';
+import { AuthRateLimitService } from '../../services/auth-rate-limit.service';
+import { AUTH_RATE_LIMIT_METADATA_KEY } from '../../constants/auth-rate-limit.constants';
+import { AuthRateLimitPolicy } from '../../enums/auth-rate-limit-policy.enum';
 
 import { UserRole } from '../../../../common/enums';
 import { VscodeAuthorizationService } from '../../services/vscode-authorization.service';
@@ -24,7 +27,10 @@ describe('VscodeAuthorizationController', () => {
     };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [VscodeAuthorizationController],
-      providers: [{ provide: VscodeAuthorizationService, useValue: authorizationMock }],
+      providers: [
+        { provide: VscodeAuthorizationService, useValue: authorizationMock },
+        { provide: AuthRateLimitService, useValue: { consume: vi.fn() } },
+      ],
     }).compile();
     controller = module.get<VscodeAuthorizationController>(VscodeAuthorizationController);
   });
@@ -51,5 +57,15 @@ describe('VscodeAuthorizationController', () => {
       ),
     ).resolves.toBe(approval);
     expect(authorizationMock.approve).toHaveBeenCalledWith('request-id', 'user-1');
+  });
+
+  it('limits the two public VS Code routes and not the signed-in ones', () => {
+    expect(Reflect.getMetadata(AUTH_RATE_LIMIT_METADATA_KEY, controller.initialize)).toBe(
+      AuthRateLimitPolicy.VSCODE_AUTHORIZE_INIT,
+    );
+    expect(Reflect.getMetadata(AUTH_RATE_LIMIT_METADATA_KEY, controller.exchange)).toBe(
+      AuthRateLimitPolicy.VSCODE_AUTHORIZE_EXCHANGE,
+    );
+    expect(Reflect.getMetadata(AUTH_RATE_LIMIT_METADATA_KEY, controller.approve)).toBeUndefined();
   });
 });

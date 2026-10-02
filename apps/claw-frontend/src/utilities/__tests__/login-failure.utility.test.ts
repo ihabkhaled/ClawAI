@@ -73,3 +73,28 @@ describe('resolveLoginFailureCopy', () => {
     }
   });
 });
+
+describe('login rate limit', () => {
+  it('classifies a 429 as RATE_LIMITED, before any other code', () => {
+    expect(classifyLoginFailure(apiError(ApiErrorCode.RATE_LIMITED))).toBe(
+      LoginFailureReason.RATE_LIMITED,
+    );
+    expect(classifyLoginFailure({ status: 429 })).toBe(LoginFailureReason.RATE_LIMITED);
+  });
+
+  it('says how many minutes from Retry-After, rounded up', () => {
+    expect(resolveLoginFailureCopy(LoginFailureReason.RATE_LIMITED, 600)).toEqual({
+      titleKey: 'auth.signup.rateLimitedTitle',
+      descriptionKey: 'auth.rateLimit.tryAgainInMinutes',
+      descriptionParams: { minutes: 10 },
+      actionKey: null,
+      isRecoverable: false,
+    });
+    expect(resolveLoginFailureCopy(LoginFailureReason.RATE_LIMITED, 30).descriptionKey).toBe(
+      'auth.rateLimit.tryAgainInOneMinute',
+    );
+    expect(resolveLoginFailureCopy(LoginFailureReason.RATE_LIMITED).descriptionKey).toBe(
+      'auth.signup.rateLimitedDescription',
+    );
+  });
+});

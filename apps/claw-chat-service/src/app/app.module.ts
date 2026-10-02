@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { SessionRevocationGuard } from '@claw/shared-auth';
+import { buildThrottlerOptions, SessionRevocationGuard } from '@claw/shared-auth';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { RabbitMQModule } from '@claw/shared-rabbitmq';
@@ -94,12 +94,12 @@ import { ContextPreviewModule } from '../modules/context-preview/context-preview
     ChatMessagesModule,
     ContextReceiptsModule,
     ContextPreviewModule,
-    ThrottlerModule.forRoot([
-      {
+    ThrottlerModule.forRoot(
+      buildThrottlerOptions({
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),
         limit: Number(process.env['THROTTLE_LIMIT'] ?? 2500),
-      },
-    ]),
+      }),
+    ),
   ],
   providers: [
     {

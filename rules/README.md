@@ -47,6 +47,12 @@ Two rules govern proving a change works, and they compose rather than overlap:
 | [`44-live-verification-before-done.md`](44-live-verification-before-done.md)               | Whether the change was seen running at all: the API lane, the browser lane, and the stale-container traps that fake a pass   |
 | [`49-qa-team-discipline-and-test-evidence.md`](49-qa-team-discipline-and-test-evidence.md) | **Who you must be** while verifying and what you must produce: every QA hat, the device matrix, and evidence for every claim |
 
+### Abuse limits on public auth routes
+
+| Rule                                                           | Governs                                                                                                   |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [`58-auth-route-rate-limits.md`](58-auth-route-rate-limits.md) | Per-route budgets on sign-in / sign-up (auth-service + agent-service), hashed keys, fail-open, nginx zone |
+
 ## Rule file format
 
 Every numbered file uses the same sections, in this order:

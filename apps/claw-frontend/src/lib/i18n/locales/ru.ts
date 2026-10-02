@@ -73,6 +73,10 @@ export const ru: TranslationDictionary = {
     phoneInvalid: 'Введите действительный номер телефона',
   },
   auth: {
+    rateLimit: {
+      tryAgainInMinutes: 'Слишком много попыток. Повторите через {minutes} мин.',
+      tryAgainInOneMinute: 'Слишком много попыток. Повторите через минуту.',
+    },
     signup: {
       firstNameRequired: 'Введите имя.',
       firstNameTooLong: 'Имя может содержать не более 64 символов.',

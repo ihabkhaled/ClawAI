@@ -1,3 +1,4 @@
+import { RATE_LIMIT_COPY_KEYS } from '@/constants/rate-limit.constants';
 import {
   NETWORK_FAILURE_STATUS,
   PASSWORD_RULES,
@@ -16,6 +17,8 @@ import type {
   SignupFailureCopy,
   SignupFieldError,
 } from '@/types';
+
+import { resolveRateLimitMessage } from './rate-limit.utility';
 
 function readErrorShape(error: unknown): SignupErrorShape {
   if (error === null || typeof error !== 'object') {
@@ -70,7 +73,10 @@ export function classifySignupFailure(error: unknown): SignupFailureReason {
 }
 
 /** The i18n keys for one sign-up failure, and which ways out it offers. */
-export function resolveSignupFailureCopy(reason: SignupFailureReason): SignupFailureCopy {
+export function resolveSignupFailureCopy(
+  reason: SignupFailureReason,
+  retryAfterSeconds: number | null = null,
+): SignupFailureCopy {
   switch (reason) {
     case SignupFailureReason.EMAIL_TAKEN:
       return {
@@ -86,13 +92,18 @@ export function resolveSignupFailureCopy(reason: SignupFailureReason): SignupFai
         offersSignIn: false,
         showsRequestId: false,
       };
-    case SignupFailureReason.RATE_LIMITED:
+    case SignupFailureReason.RATE_LIMITED: {
+      // "Try again in N minutes" from the server's Retry-After; the old
+      // "wait a minute" copy only when no header came back.
+      const message = resolveRateLimitMessage(retryAfterSeconds);
       return {
-        titleKey: 'auth.signup.rateLimitedTitle',
-        descriptionKey: 'auth.signup.rateLimitedDescription',
+        titleKey: RATE_LIMIT_COPY_KEYS.title,
+        descriptionKey: message.key,
+        descriptionParams: message.params,
         offersSignIn: false,
         showsRequestId: false,
       };
+    }
     case SignupFailureReason.ACCOUNT_SETUP_FAILED:
       return {
         titleKey: 'auth.signup.accountSetupFailedTitle',

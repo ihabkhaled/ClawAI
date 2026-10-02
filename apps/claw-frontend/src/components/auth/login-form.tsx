@@ -137,7 +137,7 @@ export function LoginForm(): React.ReactElement {
               <Alert
                 variant={AlertVariant.Error}
                 title={t(failureCopy.titleKey)}
-                description={t(failureCopy.descriptionKey)}
+                description={t(failureCopy.descriptionKey, failureCopy.descriptionParams)}
                 action={
                   failureCopy.actionKey === null ? undefined : (
                     <Link

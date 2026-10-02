@@ -73,6 +73,10 @@ export const hi: TranslationDictionary = {
     phoneInvalid: 'मान्य फ़ोन नंबर दर्ज करें',
   },
   auth: {
+    rateLimit: {
+      tryAgainInMinutes: 'बहुत अधिक प्रयास। {minutes} मिनट बाद फिर से कोशिश करें।',
+      tryAgainInOneMinute: 'बहुत अधिक प्रयास। एक मिनट बाद फिर से कोशिश करें।',
+    },
     signup: {
       firstNameRequired: 'अपना पहला नाम दर्ज करें।',
       firstNameTooLong: 'पहला नाम अधिकतम 64 अक्षरों का हो सकता है।',

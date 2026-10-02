@@ -1236,6 +1236,8 @@ export class ChatExecutionManager implements OnModuleInit {
         provider,
         model,
         url: `${config.LLAMACPP_SERVICE_URL}/api/v1/v1/chat/completions`,
+        // ADR-144: llama.cpp inference needs a user JWT or the service token.
+        headers: { Authorization: buildInterServiceAuthHeader() },
         body: this.buildStreamingChatBody(
           provider,
           model,
@@ -3031,6 +3033,7 @@ export class ChatExecutionManager implements OnModuleInit {
     const response = await httpRequest<OllamaGenerateResponse>({
       url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
       method: 'POST',
+      headers: { Authorization: buildInterServiceAuthHeader() },
       body: requestBody,
       timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
     });
@@ -3072,6 +3075,7 @@ export class ChatExecutionManager implements OnModuleInit {
     const response = await httpRequest<OllamaChatResponse>({
       url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/chat`,
       method: 'POST',
+      headers: { Authorization: buildInterServiceAuthHeader() },
       body: { ...body, model: resolvedModel, keepAlive: config.OLLAMA_KEEP_ALIVE },
       timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
     });
@@ -3209,6 +3213,7 @@ export class ChatExecutionManager implements OnModuleInit {
     const response = await httpRequest<OpenAiChatResponse>({
       url,
       method: 'POST',
+      headers: { Authorization: buildInterServiceAuthHeader() },
       body: requestBody,
       timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
     });

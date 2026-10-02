@@ -73,6 +73,10 @@ export const fa: TranslationDictionary = {
     phoneInvalid: 'یک شماره تلفن معتبر وارد کنید',
   },
   auth: {
+    rateLimit: {
+      tryAgainInMinutes: 'تلاش‌های بیش از حد. {minutes} دقیقه دیگر دوباره تلاش کنید.',
+      tryAgainInOneMinute: 'تلاش‌های بیش از حد. یک دقیقه دیگر دوباره تلاش کنید.',
+    },
     signup: {
       firstNameRequired: 'نام خود را وارد کنید.',
       firstNameTooLong: 'نام حداکثر می‌تواند ۶۴ نویسه باشد.',

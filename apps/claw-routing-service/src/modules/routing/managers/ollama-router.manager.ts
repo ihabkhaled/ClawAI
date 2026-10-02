@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { AppConfig, type AppConfigType } from '../../../app/config/app.config';
-import { httpRequest } from '../../../common/utilities';
+import { buildInterServiceAuthHeader, httpRequest } from '../../../common/utilities';
 import {
   LOCAL_MODEL_DEFAULT,
   LOCAL_PROVIDER,
@@ -72,6 +72,7 @@ export class OllamaRouterManager implements OnModuleInit, OnModuleDestroy {
       const response = await httpRequest<OllamaGenerateResponse>({
         url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
         method: 'POST',
+        headers: { Authorization: buildInterServiceAuthHeader() },
         body: {
           model: routerModel,
           prompt,
@@ -139,6 +140,7 @@ export class OllamaRouterManager implements OnModuleInit, OnModuleDestroy {
       const response = await httpRequest<{ model: string | null }>({
         url: `${config.OLLAMA_SERVICE_URL}/api/v1/internal/ollama/router-model`,
         method: 'GET',
+        headers: { Authorization: buildInterServiceAuthHeader() },
         timeoutMs: 3_000,
       });
 
@@ -286,6 +288,7 @@ export class OllamaRouterManager implements OnModuleInit, OnModuleDestroy {
       const response = await httpRequest<OllamaGenerateResponse>({
         url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
         method: 'POST',
+        headers: { Authorization: buildInterServiceAuthHeader() },
         body: {
           model: routerModel,
           prompt: 'Reply with: OK',

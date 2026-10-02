@@ -9,6 +9,7 @@ import {
 } from '../../../common/constants/sensitivity-classifier.constants';
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest } from '../../../common/utilities/http-client.utility';
+import { buildInterServiceAuthHeader } from '../../../common/utilities/inter-service-auth.utility';
 import { classifierResponseSchema } from '../constants/sensitivity-classifier.constants';
 import type { SensitivityVerdict } from '../types/memory-sensitivity.types';
 import type { OllamaGenerateResponse } from '../types/memory.types';
@@ -82,6 +83,7 @@ export class MemorySensitivityManager {
         httpRequest<OllamaGenerateResponse>({
           url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
           method: 'POST',
+          headers: { Authorization: buildInterServiceAuthHeader() },
           body: {
             model: config.MEMORY_SENSITIVITY_MODEL,
             prompt,

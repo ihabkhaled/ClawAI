@@ -155,7 +155,7 @@ still carried a CommonJS-era `tsconfig-paths` register from the tsgo migration.
 
 ## Llamacpp execution dispatch
 
-`ChatExecutionManager.callLlamacpp()` (`src/modules/chat-messages/managers/chat-execution.manager.ts`) handles BOTH `local-llamacpp` (frontend ModelSelector option) and `LLAMACPP` (registered connector) provider strings. POSTs to `${LLAMACPP_SERVICE_URL}/api/v1/v1/chat/completions` (the OpenAI-compatible passthrough). Bypasses `resolveProviderConfig` — no API key needed. Errors with code `LLAMACPP_REQUEST_FAILED` on non-2xx. `LLAMACPP_SERVICE_URL` Zod-required in `app.config.ts` (default `http://llamacpp-service:4017`).
+`ChatExecutionManager.callLlamacpp()` (`src/modules/chat-messages/managers/chat-execution.manager.ts`) handles BOTH `local-llamacpp` (frontend ModelSelector option) and `LLAMACPP` (registered connector) provider strings. POSTs to `${LLAMACPP_SERVICE_URL}/api/v1/v1/chat/completions` (the OpenAI-compatible passthrough). Bypasses `resolveProviderConfig` — no API key needed, but since ADR-146 it MUST send `Authorization: buildInterServiceAuthHeader()` (llamacpp-service refuses an anonymous call with 401). The same applies to every `/api/v1/ollama/generate`, `/api/v1/ollama/chat` and `/api/v1/internal/ollama/*` call (`callOllama`, `callOllamaChat`, consensus synthesis, research gate, local-model selection). Errors with code `LLAMACPP_REQUEST_FAILED` on non-2xx. `LLAMACPP_SERVICE_URL` Zod-required in `app.config.ts` (default `http://llamacpp-service:4017`).
 
 ## Universal token deduction chokepoint (do not bypass)
 

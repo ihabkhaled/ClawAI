@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 
 vi.mock('../../../common/utilities/http-client.utility', () => ({
@@ -9,11 +9,12 @@ vi.mock('../../../app/config/app.config', () => ({
   AppConfig: {
     get: vi.fn(() => ({
       OLLAMA_SERVICE_URL: 'http://ollama:4008',
+      INTER_SERVICE_AUTH_TOKEN: 'local-model-selection-spec-token',
     })),
   },
 }));
 
-const { httpRequest } = await vi.importMock('../../../common/utilities/http-client.utility') as {
+const { httpRequest } = (await vi.importMock('../../../common/utilities/http-client.utility')) as {
   httpRequest: Mock;
 };
 
@@ -57,6 +58,20 @@ describe('LocalModelSelectionService', () => {
     });
 
     await expect(service.resolveDefaultModel()).resolves.toBe('gemma4:e4b');
+  });
+
+  // ADR-144: /internal/ollama/* is service-token only now.
+  it('reads installed models with the inter-service token', async () => {
+    httpRequest.mockResolvedValue({ ok: true, status: 200, data: { models: [] } });
+
+    await service.resolveDefaultModel();
+
+    const call = httpRequest.mock.calls[0]?.[0] as {
+      url: string;
+      headers?: Record<string, string>;
+    };
+    expect(call.url).toBe('http://ollama:4008/api/v1/internal/ollama/installed-models');
+    expect(call.headers).toEqual({ Authorization: 'Service local-model-selection-spec-token' });
   });
 
   it('keeps coding-specialized models eligible when an explicit role matches', async () => {

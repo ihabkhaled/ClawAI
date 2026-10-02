@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { httpRequest } from '../../../common/utilities';
+import { buildInterServiceAuthHeader, httpRequest } from '../../../common/utilities';
 import { SYNC_TIMEOUT_MS } from '../constants/sync.constants';
 import { type SnapshotFetchOutcome, type UpstreamModelSnapshot } from '../types/sync.types';
 import { normalizeSnapshotRow } from './snapshot-modality.utility';
@@ -18,6 +18,9 @@ export async function fetchSnapshot(
       url,
       ...(allowedHosts === undefined ? {} : { allowedHosts }),
       method: 'GET',
+      // ADR-144: /internal/ollama/* and /internal/llamacpp/* need the service
+      // token; connector's public snapshot route ignores it.
+      headers: { Authorization: buildInterServiceAuthHeader() },
       timeoutMs: SYNC_TIMEOUT_MS,
     });
     if (response.status === 404) {

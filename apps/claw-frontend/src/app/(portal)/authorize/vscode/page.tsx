@@ -1,48 +1,15 @@
 'use client';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { CheckCircle2, Code2 } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
 
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useTranslation } from '@/lib/i18n';
-import {
-  approveVscodeAuthorization,
-  deliverVscodeAuthorization,
-  getVscodeAuthorizationDetails,
-} from '@/repositories/auth/vscode-authorization.repository';
+import { useVscodeAuthorizationPage } from '@/hooks/vscode-authorization/use-vscode-authorization-page';
 
 export default function VscodeAuthorizationPage(): React.ReactElement {
-  const { t } = useTranslation();
-  const requestId = useSearchParams().get('requestId');
-  const [completed, setCompleted] = useState(false);
-  const details = useQuery({
-    queryKey: ['vscode-authorization', requestId],
-    queryFn: () => getVscodeAuthorizationDetails(requestId ?? ''),
-    enabled: requestId !== null,
-    retry: false,
-  });
-  const approval = useMutation({
-    mutationFn: async () => {
-      const result = await approveVscodeAuthorization(requestId ?? '');
-      await deliverVscodeAuthorization(result.redirectUri);
-    },
-    onSuccess: () => {
-      setCompleted(true);
-    },
-  });
-  useEffect(() => {
-    if (!completed) {
-      return;
-    }
-    const closeTimer = window.setTimeout(() => window.close(), 10_000);
-    return () => window.clearTimeout(closeTimer);
-  }, [completed]);
-  const error =
-    requestId === null ? new Error(t('common.error')) : (details.error ?? approval.error);
+  const { details, isLoadingDetails, isApproving, completed, errorMessage, approve, t } =
+    useVscodeAuthorizationPage();
 
   if (completed) {
     return (
@@ -66,27 +33,21 @@ export default function VscodeAuthorizationPage(): React.ReactElement {
       </CardHeader>
       <CardContent className="space-y-3 text-center">
         <p className="text-muted-foreground">{t('vscodeAuthorization.description')}</p>
-        {details.data ? (
+        {details ? (
           <p className="font-medium">
-            {t('vscodeAuthorization.requestFor', { client: details.data.clientName })}
+            {t('vscodeAuthorization.requestFor', { client: details.clientName })}
           </p>
         ) : null}
-        {details.isLoading ? <LoadingSpinner label={t('common.loading')} /> : null}
-        {error ? (
+        {isLoadingDetails ? <LoadingSpinner label={t('common.loading')} /> : null}
+        {errorMessage === null ? null : (
           <p role="alert" className="text-destructive text-sm">
-            {t('vscodeAuthorization.errorTitle')}: {error.message}
+            {t('vscodeAuthorization.errorTitle')}: {errorMessage}
           </p>
-        ) : null}
+        )}
       </CardContent>
       <CardFooter>
-        <Button
-          className="w-full"
-          disabled={!details.data || approval.isPending}
-          onClick={() => approval.mutate()}
-        >
-          {approval.isPending
-            ? t('vscodeAuthorization.approving')
-            : t('vscodeAuthorization.approve')}
+        <Button className="w-full" disabled={!details || isApproving} onClick={approve}>
+          {isApproving ? t('vscodeAuthorization.approving') : t('vscodeAuthorization.approve')}
         </Button>
       </CardFooter>
     </Card>

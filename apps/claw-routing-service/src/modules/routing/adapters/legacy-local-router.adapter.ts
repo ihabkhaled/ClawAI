@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
-import { httpRequest } from '../../../common/utilities';
+import { buildInterServiceAuthHeader, httpRequest } from '../../../common/utilities';
 import { RouterProvider } from '../../../generated/prisma';
 import {
   OLLAMA_LOCAL_GENERATE_PATH,
@@ -48,6 +48,7 @@ export class LegacyLocalRouterAdapter implements RouterInferenceProvider {
       const response = await httpRequest<OllamaGenerateProxyResponse>({
         url: `${config.OLLAMA_SERVICE_URL}${OLLAMA_LOCAL_GENERATE_PATH}`,
         method: 'POST',
+        headers: { Authorization: buildInterServiceAuthHeader() },
         body: {
           model: request.providerModelId,
           prompt,

@@ -3,6 +3,7 @@ import { PrismaModule } from '../../infrastructure/database/prisma/prisma.module
 import { RedisModule } from '../../infrastructure/redis/redis.module';
 import { ChannelsModule } from '../channels/channels.module';
 import { FleetModule } from '../fleet/fleet.module';
+import { AuthRateLimitModule } from '../auth-rate-limit/auth-rate-limit.module';
 import { AgentSessionController } from './controllers/agent-session.controller';
 import { AgentCommandController } from './controllers/agent-command.controller';
 import { AgentRepoController } from './controllers/agent-repo.controller';
@@ -79,7 +80,7 @@ import { CompatAgentGuard } from '../../common/guards/compat-agent.guard';
 import { RunnerTokenGuard } from '../../common/guards/runner-token.guard';
 
 @Module({
-  imports: [PrismaModule, RedisModule, ChannelsModule, FleetModule],
+  imports: [PrismaModule, RedisModule, ChannelsModule, FleetModule, AuthRateLimitModule],
   controllers: [
     AgentSessionController,
     AgentCommandController,

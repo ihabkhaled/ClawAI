@@ -818,3 +818,16 @@ gets is always the signed-out one.
 - `PhoneInput` now emits `''` when no digits are typed (`toOptionalE164`), so an
   untouched optional phone no longer fails as a bare dial code.
 - `verificationEmailSent: false` → `/check-email?delivery=failed` shows a warning.
+
+## A 429 on sign-in / sign-up says how long (rules/58, 2026-10-02)
+
+- `ApiClientError.retryAfterSeconds` is parsed from the `Retry-After` header
+  (`parseRetryAfterSeconds`, seconds or HTTP-date).
+- `utilities/rate-limit.utility.ts`: `isRateLimitedError` (code `RATE_LIMITED`, or a
+  bare 429 from nginx; a 429 with ANOTHER code keeps its own copy),
+  `resolveRateLimitMessage` (minutes rounded UP → `auth.rateLimit.tryAgainInMinutes`
+  / `tryAgainInOneMinute`; no header → `auth.signup.rateLimitedDescription`),
+  `translateRateLimitError`. `resolveApiErrorMessage` uses it after the code map.
+- Used by login (`LoginFailureReason.RATE_LIMITED`), sign-up, forgot password,
+  verification resend and `/authorize/vscode` (now `useVscodeAuthorizationPage`).
+  Failure copies carry `descriptionParams`; render `t(copy.descriptionKey, copy.descriptionParams)`.

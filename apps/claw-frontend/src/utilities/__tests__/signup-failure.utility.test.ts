@@ -199,3 +199,22 @@ describe('sign-up copy exists in all 13 locales', () => {
     }
   });
 });
+
+describe('signup rate limit copy', () => {
+  it('uses Retry-After for the minutes', () => {
+    expect(resolveSignupFailureCopy(SignupFailureReason.RATE_LIMITED, 3540)).toMatchObject({
+      titleKey: 'auth.signup.rateLimitedTitle',
+      descriptionKey: 'auth.rateLimit.tryAgainInMinutes',
+      descriptionParams: { minutes: 59 },
+    });
+  });
+
+  it('keeps the generic copy when no header came back', () => {
+    expect(resolveSignupFailureCopy(SignupFailureReason.RATE_LIMITED)).toMatchObject({
+      descriptionKey: 'auth.signup.rateLimitedDescription',
+    });
+    expect(
+      resolveSignupFailureCopy(SignupFailureReason.RATE_LIMITED).descriptionParams,
+    ).toBeUndefined();
+  });
+});

@@ -2,10 +2,7 @@ import { type Mock, vi } from 'vitest';
 import { AIRoutePlannerManager } from '../ai-route-planner.manager';
 import { httpRequest } from '../../../../common/utilities/http-client.utility';
 import { AppConfig } from '../../../../app/config/app.config';
-import type {
-  AIRoutePlannerInput,
-  PlannerCandidate,
-} from '../../types/ai-route-plan.types';
+import type { AIRoutePlannerInput, PlannerCandidate } from '../../types/ai-route-plan.types';
 import type { SemanticIntentAnalysis } from '../../types/semantic-intent-analysis.types';
 
 vi.mock('../../../../common/utilities/http-client.utility', () => ({
@@ -24,6 +21,7 @@ function baseConfig(enabled: boolean) {
     OLLAMA_SERVICE_URL: 'http://ollama-service:4008',
     OLLAMA_ROUTER_MODEL: 'qwen3:1.7b',
     OLLAMA_KEEP_ALIVE: '20m',
+    INTER_SERVICE_AUTH_TOKEN: 'inter-service-token-for-routing-spec',
   };
 }
 
@@ -149,7 +147,11 @@ describe('AIRoutePlannerManager', () => {
   });
 
   it('returns SUCCESS with the parsed plan when the model returns a valid pick from the candidate list', async () => {
-    mockedHttpRequest.mockResolvedValueOnce({ ok: true, status: 200, data: { response: validPlan } });
+    mockedHttpRequest.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: { response: validPlan },
+    });
     const r = await manager.plan(makeInput());
     expect(r.status).toBe('SUCCESS');
     expect(r.plan?.selectedProvider).toBe('ANTHROPIC');
@@ -240,7 +242,11 @@ describe('AIRoutePlannerManager', () => {
       isRouterOnly: false,
       isExecutionModel: true,
     }));
-    mockedHttpRequest.mockResolvedValueOnce({ ok: true, status: 200, data: { response: validPlan } });
+    mockedHttpRequest.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: { response: validPlan },
+    });
     await manager.plan(makeInput({ candidates: many }));
     const promptCall = mockedHttpRequest.mock.calls[0];
     expect(promptCall).toBeDefined();
@@ -251,7 +257,11 @@ describe('AIRoutePlannerManager', () => {
   });
 
   it('omits router-only + non-execution models from the candidate prompt', async () => {
-    mockedHttpRequest.mockResolvedValueOnce({ ok: true, status: 200, data: { response: validPlan } });
+    mockedHttpRequest.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: { response: validPlan },
+    });
     await manager.plan(makeInput());
     const promptCall = mockedHttpRequest.mock.calls[0];
     expect(promptCall).toBeDefined();
@@ -261,7 +271,11 @@ describe('AIRoutePlannerManager', () => {
   });
 
   it('lists DOWN providers when providerHealth is supplied', async () => {
-    mockedHttpRequest.mockResolvedValueOnce({ ok: true, status: 200, data: { response: validPlan } });
+    mockedHttpRequest.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: { response: validPlan },
+    });
     await manager.plan(
       makeInput({
         providerHealth: { ANTHROPIC: true, OPENAI: false, GEMINI: false },
@@ -275,7 +289,11 @@ describe('AIRoutePlannerManager', () => {
   });
 
   it('sends temperature=0 and a 1200 num_predict to Ollama', async () => {
-    mockedHttpRequest.mockResolvedValueOnce({ ok: true, status: 200, data: { response: validPlan } });
+    mockedHttpRequest.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: { response: validPlan },
+    });
     await manager.plan(makeInput());
     const bodyCall = mockedHttpRequest.mock.calls[0];
     expect(bodyCall).toBeDefined();
@@ -286,13 +304,19 @@ describe('AIRoutePlannerManager', () => {
   });
 
   it('targets the configured Ollama service URL', async () => {
-    mockedHttpRequest.mockResolvedValueOnce({ ok: true, status: 200, data: { response: validPlan } });
+    mockedHttpRequest.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: { response: validPlan },
+    });
     await manager.plan(makeInput());
     const call = mockedHttpRequest.mock.calls[0];
     expect(call).toBeDefined();
-    expect(call?.[0].url).toBe(
-      'http://ollama-service:4008/api/v1/ollama/generate',
-    );
+    expect(call?.[0].url).toBe('http://ollama-service:4008/api/v1/ollama/generate');
+    // ADR-144: ollama generate refuses an anonymous call.
+    expect(call?.[0].headers).toEqual({
+      Authorization: 'Service inter-service-token-for-routing-spec',
+    });
   });
 
   it('uses the stricter retry prompt on the second attempt', async () => {

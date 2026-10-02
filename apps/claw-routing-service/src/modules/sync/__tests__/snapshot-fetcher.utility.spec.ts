@@ -1,6 +1,14 @@
 import { vi } from 'vitest';
 import { fetchSnapshot } from '../utilities/snapshot-fetcher.utility';
 
+vi.mock('../../../app/config/app.config', () => ({
+  AppConfig: {
+    get: (): Record<string, string> => ({
+      INTER_SERVICE_AUTH_TOKEN: 'inter-service-token-for-snapshot-spec',
+    }),
+  },
+}));
+
 const originalFetch = globalThis.fetch;
 
 /**
@@ -14,6 +22,7 @@ const TEST_HOSTS: ReadonlySet<string> = new Set(['test']);
 
 describe('fetchSnapshot', () => {
   afterEach(() => {
+    vi.unstubAllGlobals();
     globalThis.fetch = originalFetch;
   });
 
@@ -30,6 +39,21 @@ describe('fetchSnapshot', () => {
       expect(result.models).toHaveLength(1);
       expect(result.models[0]!.modelKey).toBe('m');
     }
+  });
+
+  // ADR-144: /internal/ollama/* and /internal/llamacpp/* refuse an anonymous
+  // call, so every snapshot fetch carries the inter-service token.
+  it('sends the inter-service token', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ models: [] }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await fetchSnapshot('http://test/snapshot', TEST_HOSTS);
+    const init = fetchMock.mock.calls[0]?.[1] as { headers?: Record<string, string> } | undefined;
+    expect(init?.headers?.['Authorization']).toBe('Service inter-service-token-for-snapshot-spec');
   });
 
   it('returns UPSTREAM_404 when endpoint not yet implemented', async () => {

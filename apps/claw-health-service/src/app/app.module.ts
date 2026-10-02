@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { buildThrottlerOptions } from '@claw/shared-auth';
 import { LoggerModule } from 'nestjs-pino';
 import type { IncomingMessage } from 'node:http';
 import { HealthModule } from '../modules/health/health.module';
@@ -22,10 +23,7 @@ import { HealthModule } from '../modules/health/health.module';
           if (res.statusCode >= 500 || error !== undefined) {
             return 'error';
           }
-          if (res.statusCode >= 400) {
-            return 'warn';
-          }
-          return 'info';
+          return res.statusCode >= 400 ? 'warn' : 'info';
         },
         redact: {
           paths: [
@@ -46,12 +44,12 @@ import { HealthModule } from '../modules/health/health.module';
       },
     }),
     HealthModule,
-    ThrottlerModule.forRoot([
-      {
+    ThrottlerModule.forRoot(
+      buildThrottlerOptions({
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),
         limit: Number(process.env['THROTTLE_LIMIT'] ?? 2500),
-      },
-    ]),
+      }),
+    ),
   ],
   providers: [
     {

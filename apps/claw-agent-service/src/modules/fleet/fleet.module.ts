@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { PrismaModule } from '../../infrastructure/database/prisma/prisma.module';
+import { AuthRateLimitModule } from '../auth-rate-limit/auth-rate-limit.module';
 import { FleetController } from './controllers/fleet.controller';
 import { FleetInternalController } from './controllers/fleet-internal.controller';
 import { SamlController } from './controllers/saml.controller';
@@ -26,7 +27,7 @@ import { SamlService } from './services/saml.service';
  *   - Fleet-wide capability dashboard
  */
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, AuthRateLimitModule],
   controllers: [FleetController, FleetInternalController, SamlController],
   providers: [
     OrganizationRepository,

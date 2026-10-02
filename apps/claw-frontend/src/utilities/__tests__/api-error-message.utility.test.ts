@@ -69,3 +69,26 @@ describe('resolveApiErrorMessage', () => {
     );
   });
 });
+
+describe('resolveApiErrorMessage rate limit', () => {
+  it('turns a RATE_LIMITED 429 into "try again in N minutes"', () => {
+    const error = new ApiClientError({
+      message: 'Too many attempts. Please try again later.',
+      status: 429,
+      code: 'RATE_LIMITED',
+      retryAfterSeconds: 125,
+    });
+    expect(
+      resolveApiErrorMessage(error, (key, params) => `${key}:${JSON.stringify(params)}`, 'fb'),
+    ).toBe('auth.rateLimit.tryAgainInMinutes:{"minutes":3}');
+  });
+
+  it('keeps a mapped code ahead of the rate-limit copy', () => {
+    const error = new ApiClientError({
+      message: 'x',
+      status: 429,
+      code: 'PROMPT_LIBRARY_FULL',
+    });
+    expect(resolveApiErrorMessage(error, (key) => key, 'fb')).toBe('promptLibrary.limitReached');
+  });
+});

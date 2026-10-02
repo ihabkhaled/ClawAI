@@ -799,6 +799,8 @@ describe('ChatExecutionManager', () => {
       expect.objectContaining({
         url: 'http://ollama:4008/api/v1/ollama/generate',
         method: 'POST',
+        // ADR-144: ollama generate refuses an anonymous call.
+        headers: { Authorization: 'Service test-token' },
       }),
     );
     const requestBodyCall = httpRequest.mock.calls[0];
@@ -1759,6 +1761,8 @@ describe('ChatExecutionManager', () => {
       expect(urlCall).toBeDefined();
       const url = urlCall?.[0].url as string;
       expect(url).toBe('http://llamacpp-service:4017/api/v1/v1/chat/completions');
+      // ADR-144: llama.cpp inference refuses an anonymous call.
+      expect(urlCall?.[0].headers).toEqual({ Authorization: 'Service test-token' });
     });
 
     it('routes provider="LLAMACPP" connector to llamacpp-service inference endpoint', async () => {

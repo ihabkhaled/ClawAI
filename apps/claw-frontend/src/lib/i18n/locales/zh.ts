@@ -71,6 +71,10 @@ export const zh: TranslationDictionary = {
     phoneInvalid: '请输入有效的电话号码',
   },
   auth: {
+    rateLimit: {
+      tryAgainInMinutes: '尝试次数过多。请在 {minutes} 分钟后重试。',
+      tryAgainInOneMinute: '尝试次数过多。请在 1 分钟后重试。',
+    },
     signup: {
       firstNameRequired: '请输入您的名字。',
       firstNameTooLong: '名字最多 64 个字符。',

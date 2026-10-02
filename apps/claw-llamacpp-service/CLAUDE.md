@@ -70,8 +70,24 @@ Manages the full lifecycle of frontier open-weight models that exceed Ollama's p
 | Connector adapter  | `claw-connector-service/.../adapters/llamacpp.adapter.ts`                 | Calls `/api/v1/health` for status, `/api/v1/catalog?downloadStatus=READY` for sync. `LLAMACPP` enum value in `shared-types/ConnectorProvider`. Prisma migration `20260501000000_add_llamacpp_provider`.                                                                                                 |
 | Routing health     | `claw-routing-service/.../managers/llamacpp-health.manager.ts`            | Polls `/api/v1/health` every 30 s + subscribes to `llamacpp.model.{loaded,unloaded,crashed}`; populates `runtimeHealth['LLAMACPP']` consumed by `RoutingManager.isRuntimeHealthy()`.                                                                                                                    |
 | Chat dispatch      | `claw-chat-service/.../managers/chat-execution.manager.ts:callLlamacpp()` | Routes both `local-llamacpp` and `LLAMACPP` providers to `${LLAMACPP_SERVICE_URL}/api/v1/v1/chat/completions`. Bypasses connector-config fetch (no API key required).                                                                                                                                   |
-| Inference @Public  | `src/modules/inference/controllers/inference.controller.ts`               | Both `chatCompletions` and `completions` are `@Public()` for service-to-service calls. Auth happens at the chat-service hop.                                                                                                                                                                            |
+| Inference auth     | `src/modules/inference/controllers/inference.controller.ts`               | ADR-146: `chatCompletions`, `completions` and `pull-jobs/:id/progress` take a user JWT OR `Authorization: Service <INTER_SERVICE_AUTH_TOKEN>` (`@AllowServiceToken()`). chat-service sends the token. `/internal/llamacpp/*` is `ServiceTokenGuard` only (routing sync sends it). Health stays public.  |
 | Nginx prefix strip | `infra/nginx/nginx.conf`                                                  | Three location blocks (`/api/v1/llamacpp/`, `/api/v1/llamacpp/v1/`, `~ ^/api/v1/llamacpp/pull-jobs/[^/]+/progress$`) all rewrite `^/api/v1/llamacpp(/.*)$ → /api/v1$1` because controllers in this service do NOT use a `/llamacpp/` prefix (unlike ollama-service which does `@Controller('ollama')`). |
+
+## Inference requires login (ADR-146, 2026-10-02)
+
+The inference routes and the pull-progress SSE were `@Public()`; nginx exposed
+them (and `/api/v1/llamacpp/internal/llamacpp/loaded-snapshot`, because the
+llama.cpp location strips its prefix). Now:
+
+- `@AllowServiceToken()` on `v1/chat/completions`, `v1/completions`,
+  `pull-jobs/:id/progress`: the global `AuthGuard` accepts a user JWT OR the
+  service token there, and refuses a service token on every other route.
+- `CatalogInternalController` is `@UseGuards(ServiceTokenGuard)`.
+- `POST /hardware/refresh` now needs `ADMIN_MODELS_MANAGE` (it spawns GPU probes).
+- The frontend reads the pull SSE with `connectSse` (Bearer header), so no ticket is needed.
+- `@SkipThrottle` stays on the streams.
+- Files: `src/app/guards/auth.guard.ts`, `src/app/guards/service-token.guard.ts`,
+  `src/app/decorators/allow-service-token.decorator.ts`. Tests: `src/app/guards/__tests__/`.
 
 ## GPU passthrough
 

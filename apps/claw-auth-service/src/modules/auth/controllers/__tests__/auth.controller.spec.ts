@@ -8,6 +8,9 @@ import { SessionClientKind } from '../../enums/session-client-kind.enum';
 import { EmailVerificationService } from '../../services/email-verification.service';
 import { EmailChangeService } from '../../services/email-change.service';
 import { IS_PUBLIC_KEY } from '../../../../app/decorators/public.decorator';
+import { AuthRateLimitService } from '../../services/auth-rate-limit.service';
+import { AUTH_RATE_LIMIT_METADATA_KEY } from '../../constants/auth-rate-limit.constants';
+import { AuthRateLimitPolicy } from '../../enums/auth-rate-limit-policy.enum';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -47,6 +50,7 @@ describe('AuthController', () => {
           provide: EmailVerificationService,
           useValue: { resend: vi.fn(), verify: vi.fn() },
         },
+        { provide: AuthRateLimitService, useValue: { consume: vi.fn() } },
       ],
     }).compile();
     controller = module.get<AuthController>(AuthController);
@@ -137,5 +141,23 @@ describe('AuthController', () => {
     expect(Reflect.getMetadata(IS_PUBLIC_KEY, AuthController.prototype.confirmEmailChange)).toBe(
       true,
     );
+  });
+
+  it.each([
+    ['register', AuthRateLimitPolicy.REGISTER],
+    ['login', AuthRateLimitPolicy.LOGIN],
+    ['refresh', AuthRateLimitPolicy.REFRESH],
+    ['requestPasswordReset', AuthRateLimitPolicy.PASSWORD_RESET_REQUEST],
+    ['confirmPasswordReset', AuthRateLimitPolicy.PASSWORD_RESET_CONFIRM],
+    ['resendVerification', AuthRateLimitPolicy.EMAIL_VERIFICATION_RESEND],
+    ['verifyEmail', AuthRateLimitPolicy.EMAIL_VERIFICATION_CONFIRM],
+    ['confirmEmailChange', AuthRateLimitPolicy.EMAIL_CHANGE_CONFIRM],
+  ] as const)('puts %s under the %s rate-limit policy', (method, policy) => {
+    expect(Reflect.getMetadata(AUTH_RATE_LIMIT_METADATA_KEY, controller[method])).toBe(policy);
+  });
+
+  it('leaves authenticated routes outside the sign-in budgets', () => {
+    expect(Reflect.getMetadata(AUTH_RATE_LIMIT_METADATA_KEY, controller.me)).toBeUndefined();
+    expect(Reflect.getMetadata(AUTH_RATE_LIMIT_METADATA_KEY, controller.logout)).toBeUndefined();
   });
 });

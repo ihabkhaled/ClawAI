@@ -73,6 +73,10 @@ export const de: TranslationDictionary = {
     phoneInvalid: 'Gültige Telefonnummer eingeben',
   },
   auth: {
+    rateLimit: {
+      tryAgainInMinutes: 'Zu viele Versuche. Versuche es in {minutes} Minuten erneut.',
+      tryAgainInOneMinute: 'Zu viele Versuche. Versuche es in einer Minute erneut.',
+    },
     signup: {
       firstNameRequired: 'Gib deinen Vornamen ein.',
       firstNameTooLong: 'Der Vorname darf höchstens 64 Zeichen lang sein.',

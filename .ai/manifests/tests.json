@@ -2,7 +2,7 @@
   "byWorkspace": {
     "@claw/shared-auth": {
       "runner": "vitest",
-      "testFiles": 3
+      "testFiles": 6
     },
     "@claw/shared-constants": {
       "runner": "vitest",
@@ -26,7 +26,7 @@
     },
     "claw-agent-service": {
       "runner": "vitest",
-      "testFiles": 61
+      "testFiles": 65
     },
     "claw-audit-service": {
       "runner": "vitest",
@@ -34,7 +34,7 @@
     },
     "claw-auth-service": {
       "runner": "vitest",
-      "testFiles": 133
+      "testFiles": 140
     },
     "claw-chat-service": {
       "runner": "vitest",
@@ -58,7 +58,7 @@
     },
     "claw-frontend": {
       "runner": "vitest",
-      "testFiles": 671
+      "testFiles": 674
     },
     "claw-health-service": {
       "runner": "vitest",
@@ -70,15 +70,15 @@
     },
     "claw-llamacpp-service": {
       "runner": "vitest",
-      "testFiles": 18
+      "testFiles": 22
     },
     "claw-memory-service": {
       "runner": "vitest",
-      "testFiles": 23
+      "testFiles": 24
     },
     "claw-ollama-service": {
       "runner": "vitest",
-      "testFiles": 20
+      "testFiles": 23
     },
     "claw-payment-service": {
       "runner": "vitest",
@@ -90,7 +90,7 @@
     },
     "claw-routing-service": {
       "runner": "vitest",
-      "testFiles": 112
+      "testFiles": 113
     },
     "claw-server-logs-service": {
       "runner": "vitest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 1915
+  "total": 1941
 }

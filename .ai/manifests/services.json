@@ -41,7 +41,7 @@
         "ScheduledCommand",
         "TerminalCommand"
       ],
-      "testFiles": 61,
+      "testFiles": 65,
       "testRunner": "vitest"
     },
     {
@@ -114,7 +114,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 133,
+      "testFiles": 140,
       "testRunner": "vitest"
     },
     {
@@ -308,7 +308,7 @@
         "PullJob",
         "RuntimeConfig"
       ],
-      "testFiles": 18,
+      "testFiles": 22,
       "testRunner": "vitest"
     },
     {
@@ -341,7 +341,7 @@
         "MemoryUsage",
         "WorkspaceObjectEmbedding"
       ],
-      "testFiles": 23,
+      "testFiles": 24,
       "testRunner": "vitest"
     },
     {
@@ -370,7 +370,7 @@
         "PullJob",
         "RuntimeConfig"
       ],
-      "testFiles": 20,
+      "testFiles": 23,
       "testRunner": "vitest"
     },
     {
@@ -485,7 +485,7 @@
         "SeedExecution",
         "TaxonomyRole"
       ],
-      "testFiles": 112,
+      "testFiles": 113,
       "testRunner": "vitest"
     },
     {

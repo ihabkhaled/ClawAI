@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest, throughCircuit } from '../../../common/utilities';
+import { buildInterServiceAuthHeader } from '../../../common/utilities/inter-service-auth.utility';
 import {
   CIRCUIT_OLLAMA_GENERATE,
   EXTRACTION_PROMPT,
@@ -42,6 +43,7 @@ export class MemoryExtractionManager {
         httpRequest<OllamaGenerateResponse>({
           url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
           method: 'POST',
+          headers: { Authorization: buildInterServiceAuthHeader() },
           body: {
             model,
             prompt,
@@ -123,6 +125,7 @@ export class MemoryExtractionManager {
       }>({
         url: `${ollamaUrl}/api/v1/internal/ollama/installed-models`,
         method: 'GET',
+        headers: { Authorization: buildInterServiceAuthHeader() },
         timeoutMs: 5_000,
       });
 

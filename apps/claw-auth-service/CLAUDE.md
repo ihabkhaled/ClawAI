@@ -485,7 +485,7 @@ client maps each code to translated copy (`utilities/signup-failure.utility.ts`)
 | Field format (email, password rules, names, phone E.164)         | 400    | `VALIDATION_FAILED` + `errors: { field: [RegisterValidationIssue] }` |
 | Weak password (manager defence in depth)                         | 400    | `WEAK_PASSWORD`                                                      |
 | Address already registered (incl. a concurrent P2002 on `email`) | 409    | `DUPLICATE_ENTITY`                                                   |
-| Throttled                                                        | 429    | `RATE_LIMITED` (filter adds it to the throttler's 429)               |
+| Throttled (route budget or global throttler)                     | 429    | `RATE_LIMITED` + `Retry-After` header (rules/58)                     |
 | Default plan could not be assigned                               | 503    | `SIGNUP_PLAN_ASSIGNMENT_FAILED`                                      |
 | Anything else                                                    | 500    | none (client shows the generic copy + `x-request-id`)                |
 
@@ -500,7 +500,33 @@ client maps each code to translated copy (`utilities/signup-failure.utility.ts`)
 - **A failed verification email does not fail sign-up.** The account is complete;
   the response says `verificationEmailSent: false` and `/check-email` shows a
   notice beside the resend button. Phone is not unique; there is no captcha and no
-  registration toggle. Only the global throttler limits `/auth/register`.
+  registration toggle. `/auth/register` has its own budget (5/h per IP, 3/h per
+  address) on top of the global throttler — see the next section.
+
+## Sign-in / sign-up route budgets (rules/58, ADR-147, 2026-10-02)
+
+Every public route in `AuthController` and `VscodeAuthorizationController` carries
+`@AuthRateLimit(AuthRateLimitPolicy.X)` (`modules/auth/decorators/`). The guard
+counts Redis fixed windows (`RedisService.incrementWindow`, one Lua call) BEFORE the
+Zod pipe and before any account lookup, then answers 429 + `Retry-After` +
+`RATE_LIMITED`. Budgets: `constants/auth-rate-limit.constants.ts` — the only place.
+
+- Login: 10 / 15 min per IP + address, 30 / 15 min per IP. Register: 5 / h per IP,
+  3 / h per address. Confirms: 10 / 15 min per IP. Reset request and resend keep
+  `EmailDispatchCooldownService` and add 5 / h per IP. Refresh 60 / min per IP.
+- Address = trim + lowercase only (keep `+tags` and dots). Every key part is SHA-256
+  hashed: `auth:rl:<policy>:<ip|email|ip-email>:<hash>`. Never log a key or address.
+- IP = `resolveClientAddress` from `@claw/shared-auth`: X-Real-IP only when the peer
+  IS nginx (loopback, docker name `nginx`, or `TRUSTED_PROXY_ADDRESSES`), else the
+  peer. A private peer is NOT enough (LAN client on :4001). Never X-Forwarded-For.
+- **Only failed logins spend the login budget.** `AuthRateLimitSuccessInterceptor`
+  (added by the same decorator) calls `AuthRateLimitService.settle` after a 2xx:
+  rules with `onSuccess: RESET` delete their key, `REFUND` gives one hit back via
+  `RedisService.refundWindow` (never below zero). Only login sets `onSuccess`.
+- **Fails open**: Redis error or no reply in 250 ms → request allowed + warning. The
+  ioredis client has `maxRetriesPerRequest: null`; without the timeout an outage hangs login.
+- No lockout. A new public auth route needs a policy in the same commit.
+- Runbook (see 429s, raise a limit, clear a key): `docs/11-runbooks/runbook-auth-rate-limits.md`.
 
 ## Docker Container Rebuild Procedure
 

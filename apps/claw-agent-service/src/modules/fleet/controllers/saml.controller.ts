@@ -10,6 +10,8 @@ import {
 } from '../dto/saml.dto';
 import { SamlService } from '../services/saml.service';
 import type { AuthenticatedUser } from '../../../common/types/auth.types';
+import { AgentAuthRateLimit } from '../../auth-rate-limit/decorators/agent-auth-rate-limit.decorator';
+import { AgentAuthRateLimitPolicy } from '../../auth-rate-limit/enums/agent-auth-rate-limit-policy.enum';
 
 @Controller('agent/organizations/:slug/sso')
 export class SamlController {
@@ -34,6 +36,7 @@ export class SamlController {
    * claw-auth-service.
    */
   @Post('callback')
+  @AgentAuthRateLimit(AgentAuthRateLimitPolicy.SSO_CALLBACK)
   @Public()
   @HttpCode(HttpStatus.OK)
   async callback(

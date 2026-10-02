@@ -200,6 +200,8 @@ export type SignupFieldError = {
 export type SignupFailureCopy = {
   titleKey: string;
   descriptionKey: string;
+  /** Interpolation for `descriptionKey`, e.g. `{ minutes }` for a 429. */
+  descriptionParams?: Record<string, number>;
   /** A taken address: offer sign-in and password reset. */
   offersSignIn: boolean;
   /** A server fault: show the request reference so support can find it. */
@@ -222,6 +224,8 @@ export type PasswordRuleState = {
 export type LoginFailureCopy = {
   titleKey: string;
   descriptionKey: string;
+  /** Interpolation for `descriptionKey`, e.g. `{ minutes }` for a 429. */
+  descriptionParams?: Record<string, number>;
   actionKey: string | null;
   isRecoverable: boolean;
 };

@@ -5,6 +5,7 @@ import { resetInternalHostAllowlist } from '@claw/shared-utilities';
 import { AppConfig, type AppConfigType } from '../../../app/config/app.config';
 import { callCloudGenerate } from '../../../modules/ai-actions/utilities/cloud-generation-client.utility';
 import { callOllamaGenerate } from '../../../modules/ai-actions/utilities/ollama-generation-client.utility';
+import { ModelCatalogResolverManager } from '../../../modules/ai-actions/managers/model-catalog-resolver.manager';
 import { getMetadata, uploadInternal } from '../file-service-client.utility';
 
 /**
@@ -105,5 +106,43 @@ describe('internal service calls go through the outbound URL guard', () => {
       callOllamaGenerate({ baseUrl: 'file:///etc', model: 'm', prompt: 'p', timeoutMs: 5_000 }),
     ).rejects.toThrow(/protocol/);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  // ADR-144: ollama-service refuses an anonymous generate / internal call.
+  it('local generation sends the inter-service token to ollama-service', async () => {
+    await callOllamaGenerate({
+      baseUrl: 'http://ollama-service:4008',
+      model: 'm',
+      prompt: 'p',
+      timeoutMs: 5_000,
+    });
+    expect(new Headers(firstCall().init.headers).get('authorization')).toBe(
+      'Service inter-service-secret',
+    );
+  });
+
+  it('the model catalog reads installed models with the inter-service token', async () => {
+    vi.spyOn(AppConfig, 'get').mockReturnValue(
+      config({
+        OLLAMA_SERVICE_URL: 'http://ollama-service:4008',
+        CONNECTOR_SERVICE_URL: 'http://connector-service:4003',
+        AI_ACTION_MODEL_RESOLVER_TTL_SECONDS: 60,
+      }),
+    );
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ models: [] }),
+    });
+
+    await new ModelCatalogResolverManager().resolveDefaults();
+
+    const installed = fetchMock.mock.calls.find(([target]) =>
+      String(target).includes('/api/v1/internal/ollama/installed-models'),
+    ) as [string, RequestInit] | undefined;
+    expect(installed).toBeDefined();
+    expect(new Headers(installed?.[1].headers).get('authorization')).toBe(
+      'Service inter-service-secret',
+    );
   });
 });

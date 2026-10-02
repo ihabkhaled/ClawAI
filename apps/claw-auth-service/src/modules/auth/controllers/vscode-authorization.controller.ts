@@ -13,6 +13,8 @@ import {
   vscodeAuthorizationRequestSchema,
 } from '../dto/vscode-authorization.dto';
 import { VscodeAuthorizationService } from '../services/vscode-authorization.service';
+import { AuthRateLimit } from '../decorators/auth-rate-limit.decorator';
+import { AuthRateLimitPolicy } from '../enums/auth-rate-limit-policy.enum';
 import type {
   VscodeAuthorizationApproval,
   VscodeAuthorizationDetails,
@@ -26,6 +28,7 @@ export class VscodeAuthorizationController {
 
   @Public()
   @Post('authorize/init')
+  @AuthRateLimit(AuthRateLimitPolicy.VSCODE_AUTHORIZE_INIT)
   @HttpCode(HttpStatus.CREATED)
   async initialize(
     @Body(new ZodValidationPipe(vscodeAuthorizationInitSchema)) dto: VscodeAuthorizationInitDto,
@@ -54,6 +57,7 @@ export class VscodeAuthorizationController {
 
   @Public()
   @Post('authorize/exchange')
+  @AuthRateLimit(AuthRateLimitPolicy.VSCODE_AUTHORIZE_EXCHANGE)
   @HttpCode(HttpStatus.OK)
   async exchange(
     @Body(new ZodValidationPipe(vscodeAuthorizationExchangeSchema))

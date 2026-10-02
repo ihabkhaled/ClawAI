@@ -253,15 +253,16 @@ Claw uses 14 separate PostgreSQL instances, one per data-owning service.
 
 ## Frontend
 
-| Variable                   | Required   | Default                 | Description                                                 |
-| -------------------------- | ---------- | ----------------------- | ----------------------------------------------------------- |
-| `NEXT_PUBLIC_API_URL`      | Yes        | `http://localhost:4000` | API URL via Nginx (accessible from browser)                 |
-| `NEXT_PUBLIC_APP_NAME`     | No         | `Claw`                  | Application display name                                    |
-| `NEXT_PUBLIC_APP_URL`      | No         | `http://localhost:3000` | Frontend public URL                                         |
-| `FRONTEND_PORT`            | No         | `3000`                  | Port the Next.js frontend listens on                        |
-| `SITE_URL`                 | Production | —                       | Canonical HTTPS bare origin; enables crawling               |
-| `CHAT_SERVICE_URL`         | Production | —                       | Server-only chat-service origin for public shares/discovery |
-| `INTER_SERVICE_AUTH_TOKEN` | Production | —                       | Server-only credential for protected internal feeds         |
+| Variable                   | Required               | Default                 | Description                                                                                                           |
+| -------------------------- | ---------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_API_URL`      | Yes                    | `http://localhost:4000` | API URL via Nginx (accessible from browser)                                                                           |
+| `NEXT_PUBLIC_APP_NAME`     | No                     | `Claw`                  | Application display name                                                                                              |
+| `NEXT_PUBLIC_APP_URL`      | No                     | `http://localhost:3000` | Frontend public URL                                                                                                   |
+| `FRONTEND_PORT`            | No                     | `3000`                  | Port the Next.js frontend listens on                                                                                  |
+| `SITE_URL`                 | Production             | —                       | Canonical HTTPS bare origin; enables crawling                                                                         |
+| `CHAT_SERVICE_URL`         | Production             | —                       | Server-only chat-service origin for public shares/discovery                                                           |
+| `INTER_SERVICE_AUTH_TOKEN` | Production             | —                       | Server-only credential for protected internal feeds                                                                   |
+| `TRUSTED_PROXY_ADDRESSES`  | Distributed nginx only | blank                   | Comma list of IPs/CIDRs whose `X-Real-IP` services believe, besides loopback and the docker `nginx` (rules/58 item 3) |
 
 **Notes:**
 

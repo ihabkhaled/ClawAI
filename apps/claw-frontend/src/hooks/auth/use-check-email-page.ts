@@ -14,6 +14,7 @@ import { useTranslation } from '@/lib/i18n';
 import { authRepository } from '@/repositories/auth/auth.repository';
 import type { UseCheckEmailPageReturn } from '@/types';
 import { logger, showToast } from '@/utilities';
+import { translateRateLimitError } from '@/utilities/rate-limit.utility';
 
 /**
  * Controller for the screen registration lands on.
@@ -62,15 +63,18 @@ export function useCheckEmailPage(): UseCheckEmailPageReturn {
       });
       showToast.success({ title: t('auth.checkEmailResendSuccess') });
     },
-    onError: () => {
+    onError: (error: Error) => {
       logger.error({
         component: 'auth',
         action: 'resend-verification-error',
         message: 'Verification email resend failed',
       });
       // Deliberately generic: the specific reason could confirm whether the
-      // address exists, which is exactly what the endpoint refuses to say.
-      showToast.error({ title: t('auth.checkEmailResendError') });
+      // address exists, which is exactly what the endpoint refuses to say. A
+      // 429 is per IP and identical for every address, so it may say how long.
+      showToast.error({
+        title: translateRateLimitError(error, t) ?? t('auth.checkEmailResendError'),
+      });
     },
   });
 

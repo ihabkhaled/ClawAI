@@ -69,6 +69,11 @@ export type TranslationDictionary = {
     phoneInvalid: string;
   };
   auth: {
+    /** A 429 on a sign-in / sign-up route, with the server's Retry-After in minutes. */
+    rateLimit: {
+      tryAgainInMinutes: string;
+      tryAgainInOneMinute: string;
+    };
     signup: {
       firstNameRequired: string;
       firstNameTooLong: string;

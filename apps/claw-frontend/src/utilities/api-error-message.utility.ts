@@ -2,6 +2,8 @@ import { ApiErrorCode } from '@/enums';
 import type { ApiClientError } from '@/services/shared/api-client';
 import type { TranslateFunction } from '@/types';
 
+import { translateRateLimitError } from './rate-limit.utility';
+
 const API_ERROR_MESSAGE_KEY_BY_CODE: ReadonlyMap<string, string> = new Map([
   [ApiErrorCode.PLAN_TRIAL_EXPIRED, 'chat.errors.planTrialExpired'],
   [ApiErrorCode.MESSAGE_NOT_EDITABLE, 'chat.errors.messageNotEditable'],
@@ -47,6 +49,12 @@ export function resolveApiErrorMessage(
     if (messageKey !== undefined) {
       return t(messageKey);
     }
+  }
+
+  // A sign-in / sign-up 429 says how long to wait, in the reader's language.
+  const rateLimited = translateRateLimitError(error, t);
+  if (rateLimited !== null) {
+    return rateLimited;
   }
 
   if (error instanceof Error && error.message.length > 0) {

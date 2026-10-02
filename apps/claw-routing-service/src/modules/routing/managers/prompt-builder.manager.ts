@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
-import { httpRequest } from '../../../common/utilities';
+import { buildInterServiceAuthHeader, httpRequest } from '../../../common/utilities';
 import { FULL_ROUTER_PROMPT_TEMPLATE } from '../constants/prompt-templates.constants';
 import { PROMPT_CACHE_TTL_MS, ROUTER_PROMPT_TEMPLATE } from '../constants/routing.constants';
 import { AdaptiveLearningManager } from './adaptive-learning.manager';
@@ -87,6 +87,7 @@ export class PromptBuilderManager {
       const response = await httpRequest<InstalledModelsResponse>({
         url: `${config.OLLAMA_SERVICE_URL}/api/v1/internal/ollama/installed-models`,
         method: 'GET',
+        headers: { Authorization: buildInterServiceAuthHeader() },
         timeoutMs: 5_000,
       });
 
@@ -466,10 +467,7 @@ User message: {message}`;
     if (healthySet.has(provider)) {
       return 'healthy';
     }
-    if (circuitOpenUntil !== undefined && circuitOpenUntil > now) {
-      return 'circuit_open';
-    }
-    return 'unhealthy';
+    return circuitOpenUntil !== undefined && circuitOpenUntil > now ? 'circuit_open' : 'unhealthy';
   }
 
   private buildRouterEducationSection(snapshot: RoutingEducationSnapshot | null): string {
@@ -618,10 +616,7 @@ User message: {message}`;
     if (sizeBytes < 16_000_000_000) {
       return 'medium';
     }
-    if (sizeBytes < 40_000_000_000) {
-      return 'large';
-    }
-    return 'huge';
+    return sizeBytes < 40_000_000_000 ? 'large' : 'huge';
   }
 
   private computeProviderLearnedWeight(avgConfidence: number, fallbackRate: number): number {

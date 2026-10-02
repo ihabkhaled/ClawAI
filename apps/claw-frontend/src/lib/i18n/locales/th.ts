@@ -72,6 +72,10 @@ export const th: TranslationDictionary = {
     phoneInvalid: 'ป้อนหมายเลขโทรศัพท์ที่ถูกต้อง',
   },
   auth: {
+    rateLimit: {
+      tryAgainInMinutes: 'พยายามหลายครั้งเกินไป ลองอีกครั้งใน {minutes} นาที',
+      tryAgainInOneMinute: 'พยายามหลายครั้งเกินไป ลองอีกครั้งในหนึ่งนาที',
+    },
     signup: {
       firstNameRequired: 'กรอกชื่อของคุณ',
       firstNameTooLong: 'ชื่อมีได้ไม่เกิน 64 อักขระ',

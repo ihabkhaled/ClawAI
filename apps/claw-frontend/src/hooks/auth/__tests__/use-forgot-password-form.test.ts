@@ -5,6 +5,7 @@ import React from 'react';
 import { type Mock, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { authService } from '@/services/auth/auth.service';
+import { ApiClientError } from '@/services/shared/api-client';
 
 import { useForgotPasswordForm } from '../use-forgot-password-form';
 
@@ -13,7 +14,10 @@ vi.mock('@/services/auth/auth.service', () => ({
 }));
 
 vi.mock('@/lib/i18n', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({
+    t: (key: string, params?: Record<string, string | number>) =>
+      params === undefined ? key : `${key}:${JSON.stringify(params)}`,
+  }),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -92,5 +96,30 @@ describe('useForgotPasswordForm', () => {
       expect(result.current.isSuccess).toBe(true);
     });
     expect(result.current.errorMessage).toBeNull();
+  });
+
+  it('says how long to wait on a 429, and keeps the generic copy otherwise', async () => {
+    (authService.requestPasswordReset as Mock).mockRejectedValue(
+      new ApiClientError({
+        message: 'Too many attempts',
+        status: 429,
+        code: 'RATE_LIMITED',
+        retryAfterSeconds: 1800,
+      }),
+    );
+
+    const { result } = renderHook(() => useForgotPasswordForm(), {
+      wrapper: createWrapper(),
+    });
+    act(() => {
+      result.current.form.setValue('email', 'user@example.com');
+    });
+    await act(async () => {
+      await result.current.onSubmit();
+    });
+
+    await waitFor(() => {
+      expect(result.current.errorMessage).toBe('auth.rateLimit.tryAgainInMinutes:{"minutes":30}');
+    });
   });
 });

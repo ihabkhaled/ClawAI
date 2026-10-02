@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { SessionRevocationGuard } from '@claw/shared-auth';
+import { buildThrottlerOptions, SessionRevocationGuard } from '@claw/shared-auth';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
@@ -78,12 +78,12 @@ import { ArtifactsModule } from '../modules/artifacts/artifacts.module';
       authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,
       interServiceToken: AppConfig.get().INTER_SERVICE_AUTH_TOKEN,
     }),
-    ThrottlerModule.forRoot([
-      {
+    ThrottlerModule.forRoot(
+      buildThrottlerOptions({
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),
         limit: Number(process.env['THROTTLE_LIMIT'] ?? 2500),
-      },
-    ]),
+      }),
+    ),
   ],
   providers: [
     {

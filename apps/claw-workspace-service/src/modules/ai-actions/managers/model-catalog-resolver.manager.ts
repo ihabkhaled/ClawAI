@@ -17,6 +17,7 @@ import type {
 } from '../types/model-catalog.types';
 import type { ModelChoice } from '../types/ai-action.types';
 import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
+import { buildAuthHeader } from '../../../common/utilities/file-service-client.utility';
 
 @Injectable()
 export class ModelCatalogResolverManager {
@@ -199,7 +200,12 @@ export class ModelCatalogResolverManager {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), MODEL_CATALOG_FETCH_TIMEOUT_MS);
     try {
-      return await guardedFetch(declaredBase, url, { signal: controller.signal });
+      // ADR-144: /internal/ollama/* refuses an anonymous call; the internal
+      // connector routes take the same service token.
+      return await guardedFetch(declaredBase, url, {
+        headers: { Authorization: buildAuthHeader() },
+        signal: controller.signal,
+      });
     } finally {
       clearTimeout(timer);
     }

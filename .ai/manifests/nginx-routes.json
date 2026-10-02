@@ -32,6 +32,12 @@
       "source": "infra/nginx/locations.conf"
     },
     {
+      "location": "/api/v1/agent/auth/",
+      "port": 4015,
+      "service": "agent-service",
+      "source": "infra/nginx/locations.conf"
+    },
+    {
       "location": "/api/v1/artifacts",
       "port": 4006,
       "service": "file-service",

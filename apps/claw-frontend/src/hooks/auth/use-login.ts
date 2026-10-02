@@ -26,7 +26,9 @@ export function useLogin() {
     },
     onError: (error: Error) => {
       logger.error({ component: 'auth', action: 'login-error', message: 'Login failed' });
-      showToast.apiError(error, t('toast.loginFailed'));
+      // `translate` so a 429 reads "try again in N minutes" in the user's
+      // language instead of the backend's English sentence.
+      showToast.apiError(error, t('toast.loginFailed'), { translate: t });
     },
   });
 

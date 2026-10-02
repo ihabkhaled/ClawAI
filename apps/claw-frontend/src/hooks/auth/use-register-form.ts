@@ -10,6 +10,7 @@ import type { RegisterFormValues } from '@/lib/validation/register.schema';
 import type { UseRegisterFormReturn } from '@/types/hook.types';
 import { localeToLanguage, showToast } from '@/utilities';
 import { copyTextToClipboard } from '@/utilities/clipboard.utility';
+import { readRetryAfterSeconds } from '@/utilities/rate-limit.utility';
 import {
   classifySignupFailure,
   evaluatePasswordRules,
@@ -68,7 +69,9 @@ export function useRegisterForm(): UseRegisterFormReturn {
   };
 
   // The backend message is never shown (rule 43 §2): the code picks the copy.
-  const failureCopy = isError ? resolveSignupFailureCopy(classifySignupFailure(error)) : null;
+  const failureCopy = isError
+    ? resolveSignupFailureCopy(classifySignupFailure(error), readRetryAfterSeconds(error))
+    : null;
   const requestId = failureCopy?.showsRequestId === true ? readSignupRequestId(error) : null;
 
   const copyRequestId = (): void => {

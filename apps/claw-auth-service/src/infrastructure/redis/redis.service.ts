@@ -2,6 +2,11 @@ import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import Redis from 'ioredis';
 import { REDIS_CLIENT } from './constants/redis.constants';
 import { REDIS_RELEASE_LOCK_SCRIPT } from './constants/redis-lock.constants';
+import {
+  REDIS_FIXED_WINDOW_SCRIPT,
+  REDIS_REFUND_WINDOW_SCRIPT,
+} from './constants/redis-window.constants';
+import type { FixedWindowHit } from './types/redis-window.types';
 
 @Injectable()
 export class RedisService implements OnModuleDestroy {
@@ -62,6 +67,36 @@ export class RedisService implements OnModuleDestroy {
   async acquireLock(key: string, ownerToken: string, ttlSeconds: number): Promise<boolean> {
     const result = await this.client.set(key, ownerToken, 'EX', ttlSeconds, 'NX');
     return result === 'OK';
+  }
+
+  /**
+   * Count one hit on a fixed window and report what is left of it.
+   *
+   * Atomic (one Lua call), so a counter can never be left without an expiry.
+   * A malformed reply is reported as the first hit of a fresh window rather
+   * than a refusal: this backs rate limits that fail open by design.
+   */
+  async incrementWindow(key: string, windowSeconds: number): Promise<FixedWindowHit> {
+    const reply: unknown = await this.client.eval(
+      REDIS_FIXED_WINDOW_SCRIPT,
+      1,
+      key,
+      String(windowSeconds),
+    );
+    if (Array.isArray(reply)) {
+      const values: unknown[] = reply;
+      const [count, ttl] = values;
+      if (typeof count === 'number' && typeof ttl === 'number') {
+        return { count, ttlSeconds: ttl > 0 ? ttl : windowSeconds };
+      }
+    }
+    return { count: 1, ttlSeconds: windowSeconds };
+  }
+
+  /** Takes one hit back off a fixed-window counter, never below zero. */
+  async refundWindow(key: string): Promise<number> {
+    const reply: unknown = await this.client.eval(REDIS_REFUND_WINDOW_SCRIPT, 1, key);
+    return typeof reply === 'number' ? reply : 0;
   }
 
   /** Releases only if this caller still owns the lock. See the Lua script. */

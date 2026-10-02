@@ -11,6 +11,7 @@ import { loginSchema } from '@/lib/validation/login.schema';
 import type { LoginFormValues } from '@/lib/validation/login.schema';
 import type { UseLoginFormReturn } from '@/types/hook.types';
 import { classifyLoginFailure, resolveLoginFailureCopy } from '@/utilities';
+import { readRetryAfterSeconds } from '@/utilities/rate-limit.utility';
 
 // Controller hook for the login page. Owns:
 //   1. the react-hook-form instance + submit handler
@@ -99,7 +100,9 @@ export function useLoginForm(): UseLoginFormReturn {
     // says "Invalid email or password" — the exact phrasing the product has
     // decided against, because it invites the reader to guess which half was
     // wrong when the server deliberately refuses to say.
-    failureCopy: isError ? resolveLoginFailureCopy(classifyLoginFailure(error)) : null,
+    failureCopy: isError
+      ? resolveLoginFailureCopy(classifyLoginFailure(error), readRetryAfterSeconds(error))
+      : null,
     t,
   };
 }

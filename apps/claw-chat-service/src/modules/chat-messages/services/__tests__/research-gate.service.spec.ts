@@ -54,6 +54,26 @@ describe('ResearchGateService', () => {
     expect(mockedHttpRequest).toHaveBeenCalledTimes(2);
   });
 
+  // ADR-144: ollama-service refuses an anonymous /ollama/generate.
+  it('calls the local classifier with the inter-service token', async () => {
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
+      OLLAMA_SERVICE_URL: 'http://ollama.test',
+      ROUTING_SERVICE_URL: 'http://routing.test',
+      INTER_SERVICE_AUTH_TOKEN: 'research-gate-spec-token',
+    } as never);
+    mockedHttpRequest.mockResolvedValueOnce(candidatesReply() as never);
+    mockedHttpRequest.mockResolvedValueOnce(reply(true) as never);
+
+    await service.needsWeb('latest news');
+
+    const call = mockedHttpRequest.mock.calls[1]?.[0] as {
+      url: string;
+      headers?: Record<string, string>;
+    };
+    expect(call.url).toBe('http://ollama.test/api/v1/ollama/generate');
+    expect(call.headers).toEqual({ Authorization: 'Service research-gate-spec-token' });
+  });
+
   // The model is an operator choice, not a deploy-time constant.
   it('asks the model the admin configured', async () => {
     mockedHttpRequest.mockResolvedValueOnce(candidatesReply() as never);

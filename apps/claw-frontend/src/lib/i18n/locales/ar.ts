@@ -73,6 +73,10 @@ export const ar: TranslationDictionary = {
     phoneInvalid: 'أدخل رقم هاتف صالحًا',
   },
   auth: {
+    rateLimit: {
+      tryAgainInMinutes: 'محاولات كثيرة جدًا. حاول مرة أخرى بعد {minutes} دقيقة.',
+      tryAgainInOneMinute: 'محاولات كثيرة جدًا. حاول مرة أخرى بعد دقيقة.',
+    },
     signup: {
       firstNameRequired: 'أدخل اسمك الأول.',
       firstNameTooLong: 'يمكن أن يتكون الاسم الأول من 64 حرفًا كحد أقصى.',

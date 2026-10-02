@@ -51,7 +51,7 @@ type MockHandler =
         response?: {
           status: number;
           headers?: Record<string, unknown>;
-          data?: { message?: string; errors?: Record<string, string[]> };
+          data?: { message?: string; code?: string; errors?: Record<string, string[]> };
         };
       };
     };
@@ -223,5 +223,35 @@ describe('apiClient', () => {
 
     const error: unknown = await apiClient.post('/auth/register', {}).catch((c: unknown) => c);
     expect((error as ApiClientError).requestId).toBeUndefined();
+  });
+});
+
+describe('apiClient Retry-After', () => {
+  beforeEach(() => {
+    requests.length = 0;
+    mockHandlers.length = 0;
+  });
+
+  it('carries a 429 Retry-After onto the error as seconds', async () => {
+    mockHandlers.push({
+      error: {
+        response: {
+          status: 429,
+          headers: { 'retry-after': '412' },
+          data: { message: 'Too many attempts', code: 'RATE_LIMITED' },
+        },
+      },
+    });
+
+    const error: unknown = await apiClient.post('/auth/login', {}).catch((c: unknown) => c);
+    expect((error as ApiClientError).retryAfterSeconds).toBe(412);
+    expect((error as ApiClientError).code).toBe('RATE_LIMITED');
+  });
+
+  it('leaves retryAfterSeconds undefined without the header', async () => {
+    mockHandlers.push({ error: { response: { status: 401, headers: {} } } });
+
+    const error: unknown = await apiClient.post('/auth/login', {}).catch((c: unknown) => c);
+    expect((error as ApiClientError).retryAfterSeconds).toBeUndefined();
   });
 });

@@ -1,6 +1,8 @@
 import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import Redis from 'ioredis';
 import { REDIS_CLIENT } from './constants/redis.constants';
+import { REDIS_FIXED_WINDOW_SCRIPT } from './constants/redis-window.constants';
+import type { FixedWindowHit } from './types/redis-window.types';
 
 @Injectable()
 export class RedisService implements OnModuleDestroy {
@@ -30,12 +32,29 @@ export class RedisService implements OnModuleDestroy {
     return result === 1;
   }
 
-  async incrWithTtl(key: string, ttlSeconds: number): Promise<number> {
-    const value = await this.client.incr(key);
-    if (value === 1) {
-      await this.client.expire(key, ttlSeconds);
+  /**
+   * Count one hit on a fixed window of `ttlSeconds` and report what is left.
+   *
+   * One Lua call, so a counter can never be left without an expiry (the old
+   * INCR-then-EXPIRE pair could). A malformed reply is reported as the first
+   * hit of a fresh window rather than a refusal: this backs rate limits that
+   * fail open by design (rules/58).
+   */
+  async incrWithTtl(key: string, ttlSeconds: number): Promise<FixedWindowHit> {
+    const reply: unknown = await this.client.eval(
+      REDIS_FIXED_WINDOW_SCRIPT,
+      1,
+      key,
+      String(ttlSeconds),
+    );
+    if (Array.isArray(reply)) {
+      const values: unknown[] = reply;
+      const [count, ttl] = values;
+      if (typeof count === 'number' && typeof ttl === 'number') {
+        return { count, ttlSeconds: ttl > 0 ? ttl : ttlSeconds };
+      }
     }
-    return value;
+    return { count: 1, ttlSeconds };
   }
 
   async rpush(key: string, ...values: string[]): Promise<number> {

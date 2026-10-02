@@ -73,6 +73,10 @@ export const ja: TranslationDictionary = {
     phoneInvalid: '有効な電話番号を入力してください',
   },
   auth: {
+    rateLimit: {
+      tryAgainInMinutes: '試行回数が多すぎます。{minutes}分後にもう一度お試しください。',
+      tryAgainInOneMinute: '試行回数が多すぎます。1分後にもう一度お試しください。',
+    },
     signup: {
       firstNameRequired: '名を入力してください。',
       firstNameTooLong: '名は64文字以内で入力してください。',

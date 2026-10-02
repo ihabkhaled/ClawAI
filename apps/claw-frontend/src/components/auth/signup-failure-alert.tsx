@@ -29,7 +29,7 @@ export function SignupFailureAlert({
       title={t(copy.titleKey)}
       description={
         <div className="space-y-2">
-          <p>{t(copy.descriptionKey)}</p>
+          <p>{t(copy.descriptionKey, copy.descriptionParams)}</p>
           {copy.offersSignIn ? (
             <div className="flex flex-wrap gap-x-4 gap-y-1">
               <Link href={signInHref} className="text-primary font-medium hover:underline">

@@ -14,7 +14,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
-import { httpRequest } from '../../../common/utilities';
+import { buildInterServiceAuthHeader, httpRequest } from '../../../common/utilities';
 import {
   SEMANTIC_ANALYZER_KEYWORD_SIGNALS_LIMIT,
   SEMANTIC_ANALYZER_MAX_ATTEMPTS,
@@ -192,6 +192,7 @@ export class SemanticIntentAnalyzerManager {
       const response = await httpRequest<OllamaGenerateAnalyzerResponse>({
         url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
         method: 'POST',
+        headers: { Authorization: buildInterServiceAuthHeader() },
         body: {
           model: routerModel,
           prompt,

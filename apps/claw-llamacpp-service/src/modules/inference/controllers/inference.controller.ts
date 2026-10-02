@@ -1,7 +1,7 @@
 import { Body, Controller, Post, Req, Res, UsePipes } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import { type Request, type Response } from 'express';
-import { Public } from '../../../app/decorators/public.decorator';
+import { AllowServiceToken } from '../../../app/decorators/allow-service-token.decorator';
 import { SkipLogging } from '../../../app/decorators/skip-logging.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { type ChatCompletionDto, ChatCompletionSchema } from '../dto/chat-completion.dto';
@@ -15,7 +15,11 @@ export class InferenceController {
     private readonly proxy: InferenceProxyManager,
   ) {}
 
-  @Public()
+  // ADR-144: inference costs compute, so it needs a user JWT or the
+  // inter-service token (chat-service). It used to be public, so anyone who
+  // reached nginx could run the resident frontier model. @SkipThrottle stays:
+  // these are long-lived streams, like every other SSE route.
+  @AllowServiceToken()
   @SkipLogging()
   @SkipThrottle()
   @Post('chat/completions')
@@ -29,7 +33,7 @@ export class InferenceController {
     await this.proxy.proxyChat(req, res, port, body);
   }
 
-  @Public()
+  @AllowServiceToken()
   @SkipLogging()
   @SkipThrottle()
   @Post('completions')

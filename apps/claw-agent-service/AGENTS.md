@@ -21,7 +21,7 @@ npm run dev
 - Database: postgresql
 - Prisma models: AccessPolicy, ActivityMemoryEntry, AgentSession, AgentSuggestion, CapabilityInvocation, Device, DeviceCodeRequest, FileWatchEvent, LocalRepo, MarketplaceInstall, MarketplaceListing, Organization, OrganizationMember, OrganizationPolicy, PairingRequest, Recipe, RecipeRun, RecipeRunStep, RefreshToken, RoutineSecret, RunnerCredential, ScheduledCommand, TerminalCommand
 - API endpoints: 123 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 61 (vitest)
+- Test files: 65 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

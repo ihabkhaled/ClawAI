@@ -15,6 +15,7 @@ import { Permission } from '@claw/shared-types';
 import { RequirePermissions } from '@claw/shared-entitlements';
 import { type PullJob, type RuntimeConfig } from '../../generated/prisma';
 import { Public } from '../../app/decorators/public.decorator';
+import { AllowServiceToken } from '../../app/decorators/allow-service-token.decorator';
 import { SkipLogging } from '../../app/decorators/skip-logging.decorator';
 import { ZodValidationPipe } from '../../app/pipes/zod-validation.pipe';
 import { type PaginatedResult } from '../../common/types';
@@ -103,7 +104,9 @@ export class OllamaController {
     return this.ollamaService.assignRole(dto);
   }
 
-  @Public()
+  // ADR-144: inference costs compute, so it needs a user JWT or the
+  // inter-service token. It was @Public() — anyone who reached nginx could run it.
+  @AllowServiceToken()
   @Post('generate')
   async generate(
     @Body(new ZodValidationPipe(generateSchema)) dto: GenerateDto,
@@ -111,7 +114,7 @@ export class OllamaController {
     return this.ollamaService.generate(dto);
   }
 
-  @Public()
+  @AllowServiceToken()
   @Post('chat')
   async chat(@Body(new ZodValidationPipe(chatSchema)) dto: ChatDto): Promise<ChatResponse> {
     return this.ollamaService.chat(dto);

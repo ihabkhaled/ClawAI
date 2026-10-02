@@ -4,7 +4,12 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RabbitMQModule } from '@claw/shared-rabbitmq';
-import { AuthGuard, RolesGuard, SessionRevocationGuard } from '@claw/shared-auth';
+import {
+  AuthGuard,
+  buildThrottlerOptions,
+  RolesGuard,
+  SessionRevocationGuard,
+} from '@claw/shared-auth';
 import type { IncomingMessage } from 'node:http';
 
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
@@ -110,12 +115,12 @@ import { ChannelsModule } from '../modules/channels/channels.module';
         serviceName: 'agent-service',
       }),
     }),
-    ThrottlerModule.forRoot([
-      {
+    ThrottlerModule.forRoot(
+      buildThrottlerOptions({
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60_000),
         limit: Number(process.env['THROTTLE_LIMIT'] ?? 2500),
-      },
-    ]),
+      }),
+    ),
     ScheduleModule.forRoot(),
     PrismaModule,
     RedisModule,

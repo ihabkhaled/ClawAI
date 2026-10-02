@@ -1,5 +1,8 @@
+import { RATE_LIMIT_COPY_KEYS } from '@/constants/rate-limit.constants';
 import { ApiErrorCode, LoginFailureReason } from '@/enums';
 import type { LoginFailureCopy } from '@/types';
+
+import { isRateLimitedError, resolveRateLimitMessage } from './rate-limit.utility';
 
 function errorCode(error: unknown): string | null {
   if (error === null || typeof error !== 'object' || !('code' in error)) {
@@ -17,6 +20,9 @@ function errorCode(error: unknown): string | null {
  * problem was a 502 sends them to reset a password that was never broken.
  */
 export function classifyLoginFailure(error: unknown): LoginFailureReason {
+  if (isRateLimitedError(error)) {
+    return LoginFailureReason.RATE_LIMITED;
+  }
   switch (errorCode(error)) {
     case ApiErrorCode.EMAIL_NOT_VERIFIED:
       return LoginFailureReason.EMAIL_NOT_VERIFIED;
@@ -37,8 +43,22 @@ export function classifyLoginFailure(error: unknown): LoginFailureReason {
  * email or password" — which is exactly the phrasing the product has decided
  * not to use, because it invites the reader to guess which half was wrong.
  */
-export function resolveLoginFailureCopy(reason: LoginFailureReason): LoginFailureCopy {
+export function resolveLoginFailureCopy(
+  reason: LoginFailureReason,
+  retryAfterSeconds: number | null = null,
+): LoginFailureCopy {
   switch (reason) {
+    case LoginFailureReason.RATE_LIMITED: {
+      // How long, from the server's Retry-After, never a guess.
+      const message = resolveRateLimitMessage(retryAfterSeconds);
+      return {
+        titleKey: RATE_LIMIT_COPY_KEYS.title,
+        descriptionKey: message.key,
+        descriptionParams: message.params,
+        actionKey: null,
+        isRecoverable: false,
+      };
+    }
     case LoginFailureReason.EMAIL_NOT_VERIFIED:
       return {
         titleKey: 'auth.loginEmailNotVerifiedTitle',

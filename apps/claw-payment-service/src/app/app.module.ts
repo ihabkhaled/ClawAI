@@ -4,7 +4,12 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { RabbitMQModule } from '@claw/shared-rabbitmq';
-import { AuthGuard, RolesGuard, SessionRevocationGuard } from '@claw/shared-auth';
+import {
+  AuthGuard,
+  buildThrottlerOptions,
+  RolesGuard,
+  SessionRevocationGuard,
+} from '@claw/shared-auth';
 import { EntitlementsModule, PermissionGuard } from '@claw/shared-entitlements';
 import { PAYMENT_SERVICE } from '@claw/shared-constants';
 import type { IncomingMessage } from 'node:http';
@@ -49,10 +54,7 @@ import { GatewayConfigModule } from '../modules/gateway-config/gateway-config.mo
           if (res.statusCode >= 500 || error !== undefined) {
             return 'error';
           }
-          if (res.statusCode >= 400) {
-            return 'warn';
-          }
-          return 'info';
+          return res.statusCode >= 400 ? 'warn' : 'info';
         },
         // Redaction list is deliberately broad. A payment service handles more
         // secret-shaped fields than any other, and a leaked gateway token or
@@ -74,12 +76,12 @@ import { GatewayConfigModule } from '../modules/gateway-config/gateway-config.mo
         serviceName: PAYMENT_SERVICE,
       }),
     }),
-    ThrottlerModule.forRoot([
-      {
+    ThrottlerModule.forRoot(
+      buildThrottlerOptions({
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60_000),
         limit: Number(process.env['THROTTLE_LIMIT'] ?? 2500),
-      },
-    ]),
+      }),
+    ),
     ScheduleModule.forRoot(),
     EntitlementsModule.forRoot({
       authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,

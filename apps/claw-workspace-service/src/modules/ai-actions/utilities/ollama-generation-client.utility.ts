@@ -6,6 +6,7 @@ import type {
   RawGenerateResponse,
 } from '../types/ai-action.types';
 import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
+import { buildAuthHeader } from '../../../common/utilities/file-service-client.utility';
 
 const logger = new Logger('OllamaGenerationClient');
 
@@ -19,7 +20,8 @@ export async function callOllamaGenerate(
   try {
     const response = await guardedFetch(input.baseUrl, url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      // ADR-144: ollama generate needs a user JWT or the service token.
+      headers: { 'Content-Type': 'application/json', Authorization: buildAuthHeader() },
       body: JSON.stringify({ model: input.model, prompt: input.prompt, stream: false }),
       signal: controller.signal,
     });

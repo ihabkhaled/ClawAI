@@ -36,8 +36,14 @@ services:
     image: ollama/ollama:latest
     container_name: claw-ollama
     restart: unless-stopped
+    # Loopback only (ADR-146). Ollama has no authentication of its own: a port
+    # on 0.0.0.0 would let anyone on the network skip ollama-service's login
+    # guard and run /api/generate or /api/pull directly. Every service reaches
+    # it as http://ollama:11434 over claw-network; the host can still curl
+    # 127.0.0.1:11434. Same for stable-diffusion and comfyui below.
+    # tools/__tests__/local-ai-runtime-ports.test.mjs enforces it.
     ports:
-      - '11434:11434'
+      - '127.0.0.1:11434:11434'
     volumes:
       - ollama-data:/root/.ollama
     environment:
@@ -172,7 +178,7 @@ services:
     container_name: claw-stable-diffusion
     restart: unless-stopped
     ports:
-      - '7860:7860'
+      - '127.0.0.1:7860:7860'
     volumes:
       - sd-models-data:/opt/stable-diffusion-webui/models
     environment:
@@ -217,7 +223,7 @@ services:
     container_name: claw-comfyui
     restart: unless-stopped
     ports:
-      - '${COMFYUI_PORT:-8188}:8188'
+      - '127.0.0.1:${COMFYUI_PORT:-8188}:8188'
     volumes:
       - comfyui-models-data:/opt/ComfyUI/models
     environment:
