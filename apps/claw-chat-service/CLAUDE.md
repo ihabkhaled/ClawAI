@@ -792,12 +792,14 @@ text>)` again. Credit refusals → `ProviderCreditExhaustedException`
 
 ### Every provider's refusals (ADR-125)
 
+- Small shared windows (ADR-151 addendum): `applyWindowFit` clamps the output cap to `window - prompt - 256` from `knownContextWindow` (gpt-4 = 8,192). `parseContextOverrunOutputRoom` retries the "(N in the messages, M in the completion)" refusal once; the ceiling is prompt-dependent and is not recorded as the model's learned output limit.
+
 - The classifier also returns `ProviderOutputLimitException(maxOutputTokens)`
   (Groq / Ollama / OpenAI / Anthropic / Gemini wordings) and
   `ProviderRateLimitedException` (429, "rate-limited upstream"); both keep the
   caller's code (Runtime V2's transient retry still works) and add a
   translated `messageKey`. Account-wide exhaustion sets
-  `ProviderCreditExhaustedException.accountExhausted`.
+  `ProviderCreditExhaustedException.accountExhausted`. Ollama cloud's 429 "weekly usage limit / add usage credits" counts as account exhaustion (ADR-151).
 - `withProviderRecovery` = breaker check, one attempt, at most one retry by
   `providerRetryPlan`: credit N → 90% N; output limit → the stated ceiling
   (+ `ModelOutputLimitClient.record`); rate limit → 1.5 s wait. Own hold
@@ -1742,3 +1744,15 @@ research planner decided with no attachment facts and its `thinking` was shown a
 - A new prompt, lab stage or plan reads these helpers; it never re-decides from the user's words.
 - Tests: `context-assembly-attachment-awareness.spec.ts`, `vision-helper-description-reuse.spec.ts`,
   `research-gate.service.spec.ts` "attachments (ADR-152)". Rule: rules/42 item 23.
+
+## Retired model = substitutable failure (ADR-151 addendum)
+
+- `toProviderHttpFailure` turns a 404/410 (or 400) whose text is about the MODEL (`model_not_found`,
+  "has been deprecated/decommissioned", "does not exist", "not found") into
+  `ProviderModelUnavailableException` (`PROVIDER_MODEL_UNAVAILABLE`, status 404, messageKey
+  `chat.errors.providerModelUnavailable`, 13 locales). Not in `PICKED_MODEL_NON_SUBSTITUTABLE_STATUSES`
+  and not provider-wide, so a pinned retired model gets the labelled substitute, not "Provider X
+  returned 404".
+- `withProviderRecovery` reports it through `ModelUnavailableClient` (best effort) to connector-service,
+  which retires the row after 3 reports in 7 days. Tests: `provider-http-failure.utility.spec.ts`
+  "retired models", `picked-model-fallback.utility.spec.ts`, `model-unavailable.client.spec.ts`.

@@ -6,6 +6,12 @@ import {
   ModelUsageTier,
 } from '../../../generated/prisma';
 import { type NormalizedModel } from '../types/connectors.types';
+import {
+  MODEL_UNAVAILABLE_RETIRE_THRESHOLD,
+  MODEL_UNAVAILABLE_WINDOW_MS,
+} from '../constants/model-unavailable.constants';
+import { adapterKindFields } from '../utilities/adapter-kind-fields.utility';
+import { nonChatKind } from '../utilities/model-kind.utility';
 
 @Injectable()
 export class ConnectorModelsRepository {
@@ -36,6 +42,8 @@ export class ConnectorModelsRepository {
           inputUsdPerMillion: model.usage?.inputUsdPerMillion,
           cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
           outputUsdPerMillion: model.usage?.outputUsdPerMillion,
+          ...nonChatKind(model.modelKey),
+          ...adapterKindFields(model, true),
           syncedAt: new Date(),
         },
         create: {
@@ -56,6 +64,8 @@ export class ConnectorModelsRepository {
           inputUsdPerMillion: model.usage?.inputUsdPerMillion,
           cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
           outputUsdPerMillion: model.usage?.outputUsdPerMillion,
+          ...nonChatKind(model.modelKey),
+          ...adapterKindFields(model, false),
         },
       }),
     );
@@ -105,6 +115,8 @@ export class ConnectorModelsRepository {
             inputUsdPerMillion: model.usage?.inputUsdPerMillion,
             cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
             outputUsdPerMillion: model.usage?.outputUsdPerMillion,
+            ...nonChatKind(model.modelKey),
+            ...adapterKindFields(model, true),
             syncedAt: new Date(),
             lastSeenAt: new Date(),
           },
@@ -126,15 +138,30 @@ export class ConnectorModelsRepository {
             inputUsdPerMillion: model.usage?.inputUsdPerMillion,
             cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
             outputUsdPerMillion: model.usage?.outputUsdPerMillion,
+            ...nonChatKind(model.modelKey),
+            ...adapterKindFields(model, false),
             lastSeenAt: new Date(),
           },
         }),
       ),
     ];
 
+    // A model chat-service keeps seeing refused as gone stays retired: the
+    // upserts above set the provider's own lifecycle, which would bring it back.
+    operations.push(
+      this.prisma.connectorModel.updateMany({
+        where: {
+          connectorId,
+          unavailableCount: { gte: MODEL_UNAVAILABLE_RETIRE_THRESHOLD },
+          lifecycle: 'ACTIVE',
+        },
+        data: { lifecycle: 'SUNSET', exposure: 'UNEXPOSED' },
+      }),
+    );
+
     // `removed` is now models marked REMOVED rather than rows destroyed.
-    const [removed, ...upserted] = await this.prisma.$transaction(operations);
-    return { deleted: (removed as { count: number }).count, upserted: upserted.length };
+    const [removed] = await this.prisma.$transaction(operations);
+    return { deleted: (removed as { count: number }).count, upserted: uniqueModels.length };
   }
 
   async findByConnectorId(connectorId: string): Promise<ConnectorModel[]> {
@@ -197,7 +224,10 @@ export class ConnectorModelsRepository {
   ): Promise<{ updated: number }> {
     const result = await this.prisma.connectorModel.updateMany({
       where: { connectorId, modelKey: { in: modelKeys }, lifecycle: { not: 'REMOVED' } },
-      data: { exposure: exposed ? 'EXPOSED' : 'UNEXPOSED' },
+      // An administrator who re-exposes a model clears its unavailable reports.
+      data: exposed
+        ? { exposure: 'EXPOSED', unavailableCount: 0, unavailableAt: null }
+        : { exposure: 'UNEXPOSED' },
     });
     return { updated: result.count };
   }
@@ -229,6 +259,40 @@ export class ConnectorModelsRepository {
       data: { learnedMaxOutputTokens: max, learnedMaxOutputAt: new Date() },
     });
     return result.count;
+  }
+
+  // Counts one "the provider says this model does not exist" report (ADR-151)
+  // and retires the row once MODEL_UNAVAILABLE_RETIRE_THRESHOLD reports landed
+  // inside MODEL_UNAVAILABLE_WINDOW_MS. A retired row is hidden from every
+  // catalog (lifecycle is no longer ACTIVE) and a sync does not bring it back.
+  async recordUnavailable(
+    provider: ConnectorProvider,
+    modelKeys: string[],
+  ): Promise<{ counted: number; retired: number }> {
+    const now = new Date();
+    const match = { provider, modelKey: { in: modelKeys } };
+    const [, counted, retired] = await this.prisma.$transaction([
+      this.prisma.connectorModel.updateMany({
+        where: {
+          ...match,
+          unavailableAt: { lt: new Date(now.getTime() - MODEL_UNAVAILABLE_WINDOW_MS) },
+        },
+        data: { unavailableCount: 0 },
+      }),
+      this.prisma.connectorModel.updateMany({
+        where: { ...match, lifecycle: { not: 'REMOVED' } },
+        data: { unavailableCount: { increment: 1 }, unavailableAt: now },
+      }),
+      this.prisma.connectorModel.updateMany({
+        where: {
+          ...match,
+          unavailableCount: { gte: MODEL_UNAVAILABLE_RETIRE_THRESHOLD },
+          lifecycle: 'ACTIVE',
+        },
+        data: { lifecycle: 'SUNSET', exposure: 'UNEXPOSED' },
+      }),
+    ]);
+    return { counted: counted.count, retired: retired.count };
   }
 
   // Which of these (provider, model) pairs are real, exposed, chat-capable

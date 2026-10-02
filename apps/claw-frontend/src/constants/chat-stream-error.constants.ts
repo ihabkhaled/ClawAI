@@ -6,6 +6,8 @@ export const CHAT_STREAM_ERROR_KEY_BY_CODE: ReadonlyMap<string, string> = new Ma
   // The provider's own account is out of credit (OpenRouter 402). chat-service
   // never forwards the provider's text - it carried a key-management URL.
   ['PROVIDER_CREDIT_EXHAUSTED', 'chat.errors.providerCreditExhausted'],
+  // A model its provider retired (404 model_not_found): another model can answer.
+  ['PROVIDER_MODEL_UNAVAILABLE', 'chat.errors.providerModelUnavailable'],
   // Credit refusals (402). They arrive over SSE because the send was accepted,
   // so without these a spent allowance read "All providers failed".
   ['PAYG_CREDIT_EXHAUSTED', 'billing.errors.PAYG_CREDIT_EXHAUSTED'],

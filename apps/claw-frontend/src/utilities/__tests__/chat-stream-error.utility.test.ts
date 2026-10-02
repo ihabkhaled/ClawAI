@@ -49,6 +49,15 @@ describe('provider credit exhaustion', () => {
   });
 });
 
+describe('retired model (ADR-151)', () => {
+  it('maps PROVIDER_MODEL_UNAVAILABLE on the stream to its translated sentence', () => {
+    const event = { code: 'PROVIDER_MODEL_UNAVAILABLE' } as StreamEvent;
+    expect(resolveChatStreamError(event, translate)).toBe(
+      'localized:chat.errors.providerModelUnavailable',
+    );
+  });
+});
+
 describe('rate-limit and output-limit keys (ADR-125)', () => {
   it.each(['chat.errors.providerRateLimited', 'chat.errors.providerOutputLimit'])(
     'translates %s from the stream and from a stored reply',

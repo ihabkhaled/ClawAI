@@ -73,6 +73,7 @@ enum ModelKind {
   EMBEDDING
   RERANKER
   TOOL
+  AUDIO
 }
 
 // ─── Models ──────────────────────────────────────────────
@@ -159,6 +160,10 @@ model ConnectorModel {
   exposure                 ModelExposure     @default(UNEXPOSED)
   kind                     ModelKind         @default(CHAT)
   lastSeenAt               DateTime?         @map("last_seen_at")
+  // Provider answers of "model does not exist" reported by chat-service inside
+  // the retire window (ADR-151). A sync never resets it.
+  unavailableCount         Int               @default(0) @map("unavailable_count")
+  unavailableAt            DateTime?         @map("unavailable_at")
 
   connector Connector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
 

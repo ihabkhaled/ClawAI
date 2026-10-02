@@ -661,6 +661,8 @@ export const fr: TranslationDictionary = {
         'Les vidéos jointes ne sont pas disponibles en mode Local uniquement ou Confidentialité d’abord, car aucun modèle local compatible avec la vidéo n’est configuré.',
       providerCreditExhausted:
         'Le fournisseur de ce modèle n’a plus de crédit pour le moment. Choisissez un autre modèle ou réessayez plus tard.',
+      providerModelUnavailable:
+        'Ce modèle n’est plus disponible chez son fournisseur. Choisissez un autre modèle.',
       providerRateLimited:
         'Ce modèle est actuellement saturé chez son fournisseur. Réessayez dans un instant ou choisissez un autre modèle.',
       providerOutputLimit:

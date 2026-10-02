@@ -50,8 +50,12 @@ import { type ModelCostSeedEntry } from '../types/model-cost-seed.types';
 /// v11 (2026-09-30): video generation priced per SECOND (`videoPerUnitMicroUsd`):
 /// Veo 3.1 Lite/Fast/Standard and grok-imagine-video(-1.5). New keys — they fill
 /// gaps. OpenAI Sora is not seeded (API shut down 2026-09-24).
-export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v11';
-export const MODEL_COST_SEED_VERSION = 11;
+///
+/// v12 (2026-10-02): Gemini `nano-banana-pro-preview` (an alias of Gemini 3 Pro Image) at
+/// the `gemini-3-pro-image-preview` price. A new key — it fills a gap, flagged
+/// `replacesFallbackRate` so auth's cached fallback answer for it is busted.
+export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v12';
+export const MODEL_COST_SEED_VERSION = 12;
 
 /// Next in routing-service's 740_040_00N advisory-lock block (001 = deployment
 /// backfill, 002 = router chain). Distinct from payment-service's 740_018_001
@@ -394,6 +398,21 @@ export const MODEL_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.fre
     reasoningPerMillionMicroUsd: null,
     cacheWritePerMillionMicroUsd: null,
     costClass: CostClass.PREMIUM,
+  }),
+  // `nano-banana-pro-preview` is Google's name for Gemini 3 Pro Image (seed v12): same
+  // model, same list price as `gemini-3-pro-image-preview`. It carries no `image` in
+  // its id, so without its own row an image generation pinned to it is unpriced and
+  // therefore blocked (rule 37 item 5).
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'nano-banana-pro-preview',
+    inputPerMillionMicroUsd: 2_000_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 120_000_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.PREMIUM,
+    replacesFallbackRate: true,
   }),
   // ── OpenAI images: PER-IMAGE list prices (unit metering, seed v4) ────────
   //

@@ -147,6 +147,10 @@ Models arrive `UNEXPOSED` by design. They reach users only after an
 administrator exposes them — a successful sync alone changes nothing
 user-visible.
 
+## Re-running a "say hi" sweep safely
+
+To check that every exposed model answers as itself, pin each one (`routingMode: MANUAL_MODEL`) with a one-word prompt and compare the model that answered with the model pinned. Always run a filtered list of `{provider, modelKey}` taken from `GET /api/v1/connectors/available-models`, never the whole catalog. Skip paid media: any `kind` other than CHAT, and any name containing image, imagen, veo, tts, transcribe, whisper, dall-e, embedding or sora, because a pinned image or video model goes to media generation and costs real money. Read the result from the assistant message `metadata.pickedModelFallback` in `claw-pg-chat`: when it is present, the pinned model failed and a substitute answered; it names both models and the failure reason. HTTP 402 means the provider's prepaid credit is spent and 429 means a rate or weekly limit. Both are external, so top up or wait. Any other reason (400 on a parameter, model not found, wrong endpoint) is ours: fix the adapter or the catalog flag, restart `claw-connector-service` and `claw-chat-service-1`, and re-run only those models.
+
 ## Related
 
 - [service-guide-connector.md](../04-backend/service-guide-connector.md)

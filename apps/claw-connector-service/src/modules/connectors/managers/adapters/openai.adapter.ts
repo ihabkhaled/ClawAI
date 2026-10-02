@@ -4,6 +4,7 @@ import { ConnectorStatus, ModelLifecycle } from '../../../../generated/prisma';
 import { type HealthCheckResult, type NormalizedModel } from '../../types/connectors.types';
 import { type OpenAIModelsResponse } from '../../types/provider-api.types';
 import { declaredHost } from '@claw/shared-utilities';
+import { classifyOpenAiModelKind } from '../../utilities/openai-model-kind.utility';
 import { httpGet } from '../../../../common/utilities/http.utility';
 import {
   type ConnectorConfig,
@@ -14,6 +15,7 @@ import {
   OPENAI_CHAT_MODEL_PREFIXES,
   OPENAI_DEFAULT_BASE_URL,
 } from '../../constants/openai.constants';
+import { isRetiredOpenAiModel } from '../../utilities/retired-model.utility';
 import {
   isOpenAiVisionCapableModel,
   resolveOpenAiAudioFlags,
@@ -123,7 +125,10 @@ export class OpenAIAdapter implements ProviderAdapter {
     return chatModels.map((model) => ({
       modelKey: model.id,
       displayName: OpenAIAdapter.formatDisplayName(model.id),
-      lifecycle: ModelLifecycle.ACTIVE,
+      // Listed but retired (404 model_not_found): recorded, never offered (ADR-151).
+      lifecycle: isRetiredOpenAiModel(model.id) ? ModelLifecycle.SUNSET : ModelLifecycle.ACTIVE,
+      // Responses-only models (*-pro, *-codex) are TOOL: chat-service cannot call them.
+      kind: classifyOpenAiModelKind(model.id),
       capabilities: {
         supportsStreaming: true,
         supportsTools: true,

@@ -17,6 +17,7 @@ import {
   extractGeminiUsage,
   extractOllamaUsage,
   extractOpenAiCompatibleUsage,
+  knownContextWindow,
   SPEED_PATH_ANTHROPIC_SPEED,
   SPEED_PATH_OPENAI_SERVICE_TIER,
   withObservedSpeed,
@@ -27,6 +28,7 @@ import {
   BusinessException,
   PickedModelFailedException,
   ProviderCreditExhaustedException,
+  ProviderModelUnavailableException,
 } from '../../../common/errors';
 import { ModelExposureClient } from '../clients/model-exposure.client';
 import { ModelAuthorizationDenialReason } from '../enums/model-authorization-denial-reason.enum';
@@ -172,7 +174,10 @@ import {
   MIN_OUTPUT_TOKENS,
   STANDARD_TARGET_LATENCY_MS,
 } from '../constants/execution-fast-path.constants';
-import { computeDefaultMaxTokensForProvider } from '../constants/output-token-bounds.constants';
+import {
+  computeDefaultMaxTokensForProvider,
+  computeWindowFitMaxTokens,
+} from '../constants/output-token-bounds.constants';
 import type { ExecutionOptions } from '../types/execution-options.types';
 import { OLLAMA_TOOL_LOOP_WRAPUP_INSTRUCTION } from '../constants/agentic-loop.constants';
 import {
@@ -210,6 +215,7 @@ import {
 } from '../utilities/provider-http-failure.utility';
 import type { ProviderRetryPlan } from '../types/provider-retry.types';
 import { ModelOutputLimitClient } from '../clients/model-output-limit.client';
+import { ModelUnavailableClient } from '../clients/model-unavailable.client';
 import { ProviderCircuitBreakerManager } from './provider-circuit-breaker.manager';
 import { SamplingParameterSupportManager } from './sampling-parameter-support.manager';
 import {
@@ -333,6 +339,9 @@ export class ChatExecutionManager implements OnModuleInit {
     // Optional for the same reason. Without it a VIDEO_* provider falls through to
     // the chat path (ADR-137).
     @Optional() private readonly videoGeneration?: VideoGenerationManager,
+    // Optional for the same reason. Without it a retired model is still
+    // substituted, just never reported to connector-service (ADR-151).
+    @Optional() private readonly modelUnavailable?: ModelUnavailableClient,
   ) {}
 
   private get providerBreaker(): ProviderCircuitBreakerManager {
@@ -2330,6 +2339,9 @@ export class ChatExecutionManager implements OnModuleInit {
       return await this.trackBreaker(provider, await attempt(executionOptions, paygCall));
     } catch (error: unknown) {
       await this.providerBreaker.recordOutcome(provider, isAccountExhaustion(error));
+      if (error instanceof ProviderModelUnavailableException) {
+        await this.modelUnavailable?.record(provider, model);
+      }
       const plan = providerRetryPlan(error);
       if (plan === undefined) {
         throw error;
@@ -2391,7 +2403,30 @@ export class ChatExecutionManager implements OnModuleInit {
     executionOptions: ExecutionOptions | undefined,
   ): Promise<ExecutionOptions | undefined> {
     const clamped = await this.applyModelOutputLimit(provider, model, context, executionOptions);
-    return this.applyProviderCreditCap(provider, model, context, clamped);
+    const fitted = this.applyWindowFit(provider, model, context, clamped);
+    return this.applyProviderCreditCap(provider, model, context, fitted);
+  }
+
+  /** Never asks for more output than the model's shared window leaves after the prompt. */
+  private applyWindowFit(
+    provider: string,
+    model: string,
+    context: AssembledContext,
+    executionOptions: ExecutionOptions | undefined,
+  ): ExecutionOptions | undefined {
+    const requested = this.paygRequestedMaxOutputTokens(provider, context, executionOptions);
+    const fit = computeWindowFitMaxTokens(
+      knownContextWindow(provider, model),
+      this.estimatePromptTokens(context),
+      requested,
+    );
+    if (fit === undefined) {
+      return executionOptions;
+    }
+    this.logger.log(
+      `applyWindowFit: ${provider}/${model} output cap ${String(requested)} -> ${String(fit)} (context window)`,
+    );
+    return withOutputCeiling(executionOptions, fit);
   }
 
   /** Never sends a model more `max_tokens` than it is known to accept. */

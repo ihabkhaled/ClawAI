@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   BusinessException,
   ProviderCreditExhaustedException,
+  ProviderModelUnavailableException,
   ProviderRateLimitedException,
 } from '../../../../common/errors';
 import type { MessageRoutedData } from '../../types/execution.types';
@@ -112,6 +113,12 @@ describe('isSubstitutableFailure', () => {
       isSubstitutableFailure(new BusinessException('bad', 'LLM_FAILED', HttpStatus.BAD_REQUEST)),
     ).toBe(true);
     expect(isSubstitutableFailure(new Error('socket hang up'))).toBe(true);
+  });
+
+  it('substitutes after a retired model (404) and does not call it a provider outage', () => {
+    const error = new ProviderModelUnavailableException();
+    expect(isSubstitutableFailure(error)).toBe(true);
+    expect(isProviderWideFailure(error)).toBe(false);
   });
 });
 

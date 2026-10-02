@@ -1,6 +1,7 @@
 import {
   BusinessException,
   ProviderCreditExhaustedException,
+  ProviderModelUnavailableException,
   ProviderOutputLimitException,
   ProviderRateLimitedException,
   ProviderUnsupportedParameterException,
@@ -12,9 +13,11 @@ import {
   SAMPLING_PARAMETER_REJECTION_PATTERN,
   SAMPLING_PARAMETER_REJECTION_STATUSES,
 } from '../constants/sampling-parameter.constants';
+import { OUTPUT_BOUNDS_SAFETY_MARGIN } from '../constants/output-token-bounds.constants';
 import {
   PROVIDER_ACCOUNT_EXHAUSTED_PATTERN,
   PROVIDER_AFFORDABLE_TOKENS_PATTERN,
+  PROVIDER_CONTEXT_OVERRUN_PATTERN,
   PROVIDER_CREDIT_MIN_OUTPUT_TOKENS,
   PROVIDER_CREDIT_SAFETY_DENOMINATOR,
   PROVIDER_CREDIT_SAFETY_NUMERATOR,
@@ -29,6 +32,10 @@ import {
   PROVIDER_TEXT_URL_PATTERN,
   PROVIDER_TEXT_URL_REPLACEMENT,
 } from '../constants/provider-credit.constants';
+import {
+  PROVIDER_MODEL_UNAVAILABLE_PATTERN,
+  PROVIDER_MODEL_UNAVAILABLE_STATUSES,
+} from '../constants/provider-model-unavailable.constants';
 import { type ProviderHttpFailureInput } from '../types/provider-http-failure.types';
 import { type ProviderRetryPlan } from '../types/provider-retry.types';
 
@@ -146,13 +153,18 @@ export function providerRetryPlan(error: unknown): ProviderRetryPlan | undefined
     return { reason: 'refused for provider-key credit', ceiling: creditCeiling };
   }
   if (error instanceof ProviderOutputLimitException) {
-    return error.maxOutputTokens >= PROVIDER_OUTPUT_LIMIT_MIN_RETRY_TOKENS
-      ? {
+    if (error.maxOutputTokens < PROVIDER_OUTPUT_LIMIT_MIN_RETRY_TOKENS) {
+      return undefined;
+    }
+    // A window overrun depends on this prompt's size, so it is retried but never
+    // remembered as the model's fixed output ceiling.
+    return error.promptDependent
+      ? { reason: 'refused the requested output length', ceiling: error.maxOutputTokens }
+      : {
           reason: 'refused the requested output length',
           ceiling: error.maxOutputTokens,
           learnedMaxOutputTokens: error.maxOutputTokens,
-        }
-      : undefined;
+        };
   }
   if (
     error instanceof ProviderUnsupportedParameterException &&
@@ -252,8 +264,28 @@ export function parseProviderOutputLimit(text: string): number | undefined {
 }
 
 /**
+ * The output room left when a request's own completion cap pushed it over the
+ * model's shared window ("maximum context length is 8192 tokens ... (433 in the
+ * messages, 16384 in the completion)"): window - prompt - safety margin. Only
+ * that form matches. A prompt that alone overflows reports no completion share,
+ * and one that leaves no useful room is not worth a retry, so both stay unmatched.
+ */
+export function parseContextOverrunOutputRoom(text: string): number | undefined {
+  const match = PROVIDER_CONTEXT_OVERRUN_PATTERN.exec(text);
+  const window = parsePositiveInteger(match?.[1]);
+  const prompt = parsePositiveInteger(match?.[2]);
+  const completion = parsePositiveInteger(match?.[3]);
+  if (window === undefined || prompt === undefined || completion === undefined) {
+    return undefined;
+  }
+  const room = window - prompt - OUTPUT_BOUNDS_SAFETY_MARGIN;
+  return room >= PROVIDER_OUTPUT_LIMIT_MIN_RETRY_TOKENS ? room : undefined;
+}
+
+/**
  * Order matters: credit first (OpenRouter's credit sentence also says
- * "fewer max_tokens"), then the output cap, then a rate limit (Gemini's
+ * "fewer max_tokens"), then the output cap, then a retired model (ADR-151),
+ * then a rate limit (Gemini's
  * quota sentence links a "rate-limits" page, so it must already be credit).
  */
 function classifyKnownFailure(
@@ -269,6 +301,16 @@ function classifyKnownFailure(
   const outputLimit = parseProviderOutputLimit(text);
   if (outputLimit !== undefined) {
     return new ProviderOutputLimitException(outputLimit, input.failureCode);
+  }
+  const overrunRoom = parseContextOverrunOutputRoom(text);
+  if (overrunRoom !== undefined) {
+    return new ProviderOutputLimitException(overrunRoom, input.failureCode, true);
+  }
+  if (
+    PROVIDER_MODEL_UNAVAILABLE_STATUSES.includes(input.status) &&
+    PROVIDER_MODEL_UNAVAILABLE_PATTERN.test(text)
+  ) {
+    return new ProviderModelUnavailableException();
   }
   return input.status === 429 || PROVIDER_RATE_LIMIT_PATTERN.test(text)
     ? new ProviderRateLimitedException(input.failureCode)

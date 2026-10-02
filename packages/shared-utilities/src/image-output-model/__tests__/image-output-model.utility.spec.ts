@@ -12,6 +12,9 @@ describe('resolveImageCapabilityProvider', () => {
     ['GEMINI', 'models/gemini-3.1-flash-image-preview', 'IMAGE_GEMINI'],
     ['GEMINI', 'models/imagen-4.0-ultra-generate-001', 'IMAGE_GEMINI'],
     ['GEMINI', 'gemini-2.5-flash-image', 'IMAGE_GEMINI'],
+    // Google's marketing name for Gemini 3 Pro Image: an image-output model with no `image` in its id.
+    ['GEMINI', 'models/nano-banana-pro-preview', 'IMAGE_GEMINI'],
+    ['GEMINI', 'nano-banana-pro-preview', 'IMAGE_GEMINI'],
     ['GROK', 'grok-imagine-image', 'IMAGE_GROK'],
     ['GROK', 'grok-imagine-image-2.0', 'IMAGE_GROK'],
     ['GROK', 'grok-imagine-image-quality', 'IMAGE_GROK'],

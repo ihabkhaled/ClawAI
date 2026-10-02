@@ -18,6 +18,20 @@ function mockListing(ids: string[]): void {
   });
 }
 
+describe('OpenAIAdapter retired models (ADR-151)', () => {
+  it('records models OpenAI lists but no longer serves as SUNSET, the rest ACTIVE', async () => {
+    mockListing(['gpt-4o-mini', 'gpt-5-chat-latest', 'gpt-4o-search-preview', 'gpt-5.1-codex']);
+
+    const models = await new OpenAIAdapter().syncModels(config);
+    const lifecycle = (key: string) => models.find((m) => m.modelKey === key)?.lifecycle;
+
+    expect(lifecycle('gpt-4o-mini')).toBe('ACTIVE');
+    expect(lifecycle('gpt-5-chat-latest')).toBe('SUNSET');
+    expect(lifecycle('gpt-4o-search-preview')).toBe('SUNSET');
+    expect(lifecycle('gpt-5.1-codex')).toBe('SUNSET');
+  });
+});
+
 describe('OpenAIAdapter media capability flags', () => {
   it('marks gpt-5 / o-series as vision and speech models as not', async () => {
     mockListing(['gpt-5', 'o3', 'o4-mini', 'gpt-4o-transcribe', 'gpt-3.5-turbo', 'whisper-1']);
@@ -60,5 +74,20 @@ describe('OpenAIAdapter media capability flags', () => {
     const models = await new OpenAIAdapter().syncModels(config);
 
     expect(models.every((m) => !m.capabilities.supportsVideoInput)).toBe(true);
+  });
+});
+
+describe('OpenAIAdapter responses-only classification', () => {
+  it('syncs *-pro and *-codex as TOOL and ordinary models as CHAT', async () => {
+    mockListing(['gpt-5', 'gpt-5-pro', 'o1-pro-2025-03-19', 'gpt-5.3-codex', 'gpt-4o-mini']);
+
+    const models = await new OpenAIAdapter().syncModels(config);
+    const kind = (key: string) => models.find((m) => m.modelKey === key)?.kind;
+
+    expect(kind('gpt-5')).toBe('CHAT');
+    expect(kind('gpt-4o-mini')).toBe('CHAT');
+    expect(kind('gpt-5-pro')).toBe('TOOL');
+    expect(kind('o1-pro-2025-03-19')).toBe('TOOL');
+    expect(kind('gpt-5.3-codex')).toBe('TOOL');
   });
 });

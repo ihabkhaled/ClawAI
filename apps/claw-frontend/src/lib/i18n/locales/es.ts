@@ -659,6 +659,8 @@ export const es: TranslationDictionary = {
         'Los archivos de vídeo adjuntos no están disponibles en los modos Solo local o Privacidad primero porque no hay ningún modelo local compatible con vídeo configurado.',
       providerCreditExhausted:
         'El proveedor de este modelo se ha quedado sin crédito por ahora. Elige otro modelo o inténtalo de nuevo más tarde.',
+      providerModelUnavailable:
+        'Este modelo ya no está disponible en su proveedor. Elige otro modelo.',
       providerRateLimited:
         'Este modelo está saturado en su proveedor en este momento. Inténtalo de nuevo en un momento o elige otro modelo.',
       providerOutputLimit:

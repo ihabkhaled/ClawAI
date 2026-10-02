@@ -363,9 +363,24 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
     expect(Number.isInteger(find('gpt-4o-mini-transcribe')?.audioPerUnitMicroUsd)).toBe(true);
   });
 
-  it('is version 11, so installs that ran v10 pick up the video prices', () => {
-    expect(MODEL_COST_SEED_VERSION).toBe(11);
-    expect(MODEL_COST_SEED_NAME).toBe('model-cost-list-prices-2026-v11');
+  it('is version 12, so installs that ran v11 pick up the nano-banana price', () => {
+    expect(MODEL_COST_SEED_VERSION).toBe(12);
+    expect(MODEL_COST_SEED_NAME).toBe('model-cost-list-prices-2026-v12');
+  });
+
+  it('prices nano-banana-pro-preview like gemini-3-pro-image-preview (v12)', () => {
+    const find = (modelKey: string): ModelCostSeedEntry | undefined =>
+      MODEL_COST_SEED_ENTRIES.find((e) => e.provider === 'GEMINI' && e.modelKey === modelKey);
+    const alias = find('nano-banana-pro-preview');
+    const base = find('gemini-3-pro-image-preview');
+    expect(alias).toBeDefined();
+    expect(alias).toMatchObject({
+      inputPerMillionMicroUsd: base?.inputPerMillionMicroUsd,
+      outputPerMillionMicroUsd: base?.outputPerMillionMicroUsd,
+      costClass: base?.costClass,
+      replacesFallbackRate: true,
+    });
+    expect(alias?.supersedesSeededPrice ?? false).toBe(false);
   });
 
   // Video is billed per SECOND of clip (ADR-137). Figures are the providers' own

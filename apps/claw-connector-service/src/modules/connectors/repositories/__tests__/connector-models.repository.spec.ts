@@ -78,6 +78,30 @@ describe('ConnectorModelsRepository', () => {
     });
   });
 
+  describe('non-chat model kind', () => {
+    it('writes kind TOOL on create and update for the xAI multi-agent model', async () => {
+      await repository.upsertMany('c1', 'GROK' as never, [
+        buildModel('grok-4.20-multi-agent-0309') as never,
+      ]);
+      const arg = prismaMock.connectorModel.upsert.mock.calls[0]?.[0] as {
+        create: { kind?: string };
+        update: { kind?: string };
+      };
+      expect(arg.create.kind).toBe('TOOL');
+      expect(arg.update.kind).toBe('TOOL');
+    });
+
+    it('leaves kind untouched for an ordinary chat model', async () => {
+      await repository.upsertMany('c1', 'GROK' as never, [buildModel('grok-4.3') as never]);
+      const arg = prismaMock.connectorModel.upsert.mock.calls[0]?.[0] as {
+        create: Record<string, unknown>;
+        update: Record<string, unknown>;
+      };
+      expect('kind' in arg.create).toBe(false);
+      expect('kind' in arg.update).toBe(false);
+    });
+  });
+
   describe('replaceMany', () => {
     it('marks models missing from the sync as REMOVED instead of deleting them', async () => {
       prismaMock.$transaction = vi

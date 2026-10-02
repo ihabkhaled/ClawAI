@@ -647,6 +647,8 @@ export const en: TranslationDictionary = {
         'Video attachments are not available in local-only or privacy-first mode because no local video-capable model is configured.',
       providerCreditExhausted:
         'This model’s provider is out of credit right now. Choose another model or try again later.',
+      providerModelUnavailable:
+        'This model is no longer available from its provider. Choose another model.',
       providerRateLimited:
         'This model is busy at its provider right now. Try again in a moment or choose another model.',
       providerOutputLimit:

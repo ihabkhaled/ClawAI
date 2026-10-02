@@ -6,6 +6,8 @@ import { CreditHeadroomInternalController } from './controllers/credit-headroom-
 import { CreditHeadroomService } from './services/credit-headroom.service';
 import { ModelOutputLimitInternalController } from './controllers/model-output-limit-internal.controller';
 import { ModelOutputLimitService } from './services/model-output-limit.service';
+import { ModelUnavailableInternalController } from './controllers/model-unavailable-internal.controller';
+import { ModelUnavailableService } from './services/model-unavailable.service';
 import { CreditHeadroomManager } from './managers/credit-headroom.manager';
 import { PublicModelCatalogService } from './services/public-model-catalog.service';
 import { ConnectorsService } from './services/connectors.service';
@@ -23,10 +25,12 @@ import { SyncRunsRepository } from './repositories/sync-runs.repository';
     PublicModelCatalogController,
     CreditHeadroomInternalController,
     ModelOutputLimitInternalController,
+    ModelUnavailableInternalController,
   ],
   providers: [
     PublicModelCatalogService,
     ModelOutputLimitService,
+    ModelUnavailableService,
     CreditHeadroomService,
     CreditHeadroomManager,
     ConnectorsService,

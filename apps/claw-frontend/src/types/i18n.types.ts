@@ -590,6 +590,7 @@ export type TranslationDictionary = {
       videoAttachmentProviderUnsupported: string;
       videoAttachmentLocalModelUnavailable: string;
       providerCreditExhausted: string;
+      providerModelUnavailable: string;
       providerRateLimited: string;
       providerOutputLimit: string;
     };

@@ -619,6 +619,8 @@ export const zh: TranslationDictionary = {
       videoAttachmentLocalModelUnavailable:
         '视频附件在仅本地或隐私优先模式下不可用，因为没有配置支持本地视频的模型。',
       providerCreditExhausted: '该模型的提供商账户目前额度不足。请选择其他模型或稍后重试。',
+      providerModelUnavailable:
+        '该模型已不再由其提供商提供。请选择其他模型。',
       providerRateLimited: '该模型的提供商当前繁忙。请稍后重试或选择其他模型。',
       providerOutputLimit: '该模型无法生成所请求长度的回答。请重试。',
     },

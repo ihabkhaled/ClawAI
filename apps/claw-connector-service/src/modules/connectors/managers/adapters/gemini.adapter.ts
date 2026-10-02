@@ -20,6 +20,10 @@ import { formatModelDisplayName } from '../../utilities/model-display-name.utili
 import { isPositiveInteger, isPositiveNumber } from '../../utilities/model-output-limit.utility';
 import { isGeminiAudioCapableModel } from '../../constants/gemini-audio-heuristics.constants';
 import { isGeminiVideoCapableModel } from '../../constants/gemini-video-heuristics.constants';
+import {
+  classifyGeminiModelKind,
+  readGenerationMethods,
+} from '../../utilities/gemini-model-kind.utility';
 
 const logger = new Logger('GeminiAdapter');
 
@@ -94,11 +98,15 @@ export class GeminiAdapter implements ProviderAdapter {
     const models = response.data.data ?? [];
     logger.log(`syncModels: received ${String(models.length)} Gemini models`);
 
-    const limits = await this.fetchNativeLimits(baseUrl, config.apiKey);
+    const methods = new Map<string, string[]>();
+    const limits = await this.fetchNativeLimits(baseUrl, config.apiKey, methods);
     return models.map((model) => ({
       modelKey: model.id,
       displayName: formatModelDisplayName(model.id),
       lifecycle: ModelLifecycle.ACTIVE,
+      // Embedding and aqa models are listed beside chat models but do not
+      // support generateContent; classifying them keeps them out of the picker.
+      kind: classifyGeminiModelKind(methods.get(model.id)),
       capabilities: {
         supportsStreaming: true,
         supportsTools: true,
@@ -131,6 +139,7 @@ export class GeminiAdapter implements ProviderAdapter {
   private async fetchNativeLimits(
     baseUrl: string,
     apiKey: string,
+    methodsOut: Map<string, string[]>,
   ): Promise<Map<string, GeminiNativeModelLimits>> {
     const limits = new Map<string, GeminiNativeModelLimits>();
     // The same operator-configured host as the OpenAI-compatible base: this
@@ -148,6 +157,10 @@ export class GeminiAdapter implements ProviderAdapter {
         return limits;
       }
       for (const model of response.data.models ?? []) {
+        const supported = readGenerationMethods(model.supportedGenerationMethods);
+        if (supported !== undefined) {
+          methodsOut.set(model.name, supported);
+        }
         const entry: GeminiNativeModelLimits = {
           ...(isPositiveNumber(model.inputTokenLimit)
             ? { maxContextTokens: model.inputTokenLimit }

@@ -5,4 +5,5 @@ export enum ConnectorModelKind {
   EMBEDDING = 'EMBEDDING',
   RERANKER = 'RERANKER',
   TOOL = 'TOOL',
+  AUDIO = 'AUDIO',
 }

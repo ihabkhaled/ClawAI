@@ -35,9 +35,11 @@ export const PROVIDER_RETRY_REQUEST_SUFFIX = ':provider-retry';
 // OpenAI: "You have no credits remaining" / insufficient_quota; Anthropic:
 // "Your credit balance is too low"; Gemini / OpenAI: "You exceeded your current
 // quota"; DeepSeek: "Insufficient Balance"; xAI: "used all available credits"
-// / "monthly spending limit".
+// / "monthly spending limit"; Ollama cloud: "you have reached your weekly usage
+// limit, upgrade for higher limits or add usage credits" (one account behind every
+// Ollama cloud model, so it is provider-wide).
 export const PROVIDER_ACCOUNT_EXHAUSTED_PATTERN =
-  /insufficient[_ ](?:credits?|quota|balance)|credit[_ ]balance(?:[_ ]is[_ ]too[_ ]low|[_ ]exhausted)|no credits remaining|out of credits?|exceeded your current quota|used all available credits|spending limit/iu;
+  /insufficient[_ ](?:credits?|quota|balance)|credit[_ ]balance(?:[_ ]is[_ ]too[_ ]low|[_ ]exhausted)|no credits remaining|out of credits?|exceeded your current quota|used all available credits|spending limit|weekly usage limit|add usage credits/iu;
 
 // THIS request cannot be paid for, but a smaller or cheaper one could
 // (OpenRouter: "requires more credits, or fewer max_tokens ... can only afford
@@ -114,6 +116,15 @@ export const PROVIDER_OUTPUT_LIMIT_PATTERNS: readonly RegExp[] = [
 // 1 (inclusive) to 65537 (exclusive)." — the ceiling is the bound minus one.
 export const PROVIDER_OUTPUT_LIMIT_EXCLUSIVE_PATTERN =
   /supported range is from\s*\d+\s*\(inclusive\)\s*to\s*(\d[\d,]*)\s*\(exclusive\)/iu;
+
+// OpenAI, models with a small shared window (gpt-4, 8192): the completion cap
+// plus the prompt overran the window. "This model's maximum context length is
+// 8192 tokens. However, you requested 16817 tokens (433 in the messages, 16384
+// in the completion)." Capture 1 = window, 2 = prompt tokens, 3 = completion
+// cap. Only this form (a completion share > 0) is recoverable by shrinking the
+// cap; a prompt that is itself too long reports no completion share.
+export const PROVIDER_CONTEXT_OVERRUN_PATTERN =
+  /maximum context length is\s+(\d[\d,]*)\s+tokens.{0,80}?\(\s*(\d[\d,]*)\s+in the messages,\s*(\d[\d,]*)\s+in the completion\)/iu;
 
 // connector-service: remembers a learned ceiling on the model row.
 export const PROVIDER_OUTPUT_LIMIT_RECORD_PATH = '/api/v1/internal/connectors/models/output-limit';

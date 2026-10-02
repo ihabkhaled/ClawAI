@@ -2,9 +2,15 @@ import { HttpStatus } from '@nestjs/common';
 import {
   BusinessException,
   ProviderCreditExhaustedException,
+  ProviderModelUnavailableException,
   ProviderOutputLimitException,
   ProviderRateLimitedException,
 } from '../../../../common/errors';
+import { OUTPUT_BOUNDS_SAFETY_MARGIN } from '../../constants/output-token-bounds.constants';
+import {
+  PROVIDER_MODEL_UNAVAILABLE_CODE,
+  PROVIDER_MODEL_UNAVAILABLE_MESSAGE_KEY,
+} from '../../constants/provider-model-unavailable.constants';
 import {
   PROVIDER_CREDIT_EXHAUSTED_CODE,
   PROVIDER_CREDIT_EXHAUSTED_MESSAGE_KEY,
@@ -16,6 +22,7 @@ import {
   creditRetryCeiling,
   isAccountExhaustion,
   parseAffordableOutputTokens,
+  parseContextOverrunOutputRoom,
   parseProviderOutputLimit,
   providerRetryPlan,
   redactProviderText,
@@ -314,6 +321,37 @@ describe('output-limit refusals (ADR-125)', () => {
     expect(error).not.toBeInstanceOf(ProviderOutputLimitException);
   });
 
+  describe('context overrun caused by our own completion cap (gpt-4, 8192 window)', () => {
+    const OVERRUN =
+      "This model's maximum context length is 8192 tokens. However, you requested 16817 tokens (433 in the messages, 16384 in the completion). Please reduce the length of the messages or completion.";
+
+    it('reads the room left: window - prompt - margin', () => {
+      expect(parseContextOverrunOutputRoom(OVERRUN)).toBe(8192 - 433 - OUTPUT_BOUNDS_SAFETY_MARGIN);
+    });
+
+    it('classifies as a prompt-dependent output-limit refusal that is retried but not learned', () => {
+      const error = classify({ status: 400, body: { error: { message: OVERRUN } } });
+      expect(error).toBeInstanceOf(ProviderOutputLimitException);
+      expect((error as ProviderOutputLimitException).maxOutputTokens).toBe(7503);
+      const plan = providerRetryPlan(error);
+      expect(plan?.ceiling).toBe(7503);
+      expect(plan?.learnedMaxOutputTokens).toBeUndefined();
+    });
+
+    it('leaves a prompt that alone overflows unmatched', () => {
+      expect(
+        parseContextOverrunOutputRoom(
+          'maximum context length is 8192 tokens. However, you requested 9000 tokens (9000 in the messages, 0 in the completion).',
+        ),
+      ).toBeUndefined();
+      expect(
+        parseContextOverrunOutputRoom(
+          'maximum context length is 8192 tokens. However, you requested 9000 tokens (8100 in the messages, 900 in the completion).',
+        ),
+      ).toBeUndefined();
+    });
+  });
+
   it('parseProviderOutputLimit ignores text without a max_tokens subject', () => {
     expect(parseProviderOutputLimit('value must be less than or equal to `5`')).toBeUndefined();
   });
@@ -328,6 +366,18 @@ describe('account-level credit exhaustion (ADR-125)', () => {
     const error = classify(sample) as ProviderCreditExhaustedException;
     expect(error).toBeInstanceOf(ProviderCreditExhaustedException);
     expect(error.code).toBe(PROVIDER_CREDIT_EXHAUSTED_CODE);
+    expect(error.accountExhausted).toBe(true);
+  });
+
+  it('Ollama cloud 429 weekly usage limit → account-wide credit exhaustion, not "busy"', () => {
+    const error = classify({
+      status: 429,
+      body: {
+        error:
+          'you (someone) have reached your weekly usage limit, upgrade for higher limits: <url> or add usage credits: <url> (ref: dc8abde5)',
+      },
+    }) as ProviderCreditExhaustedException;
+    expect(error).toBeInstanceOf(ProviderCreditExhaustedException);
     expect(error.accountExhausted).toBe(true);
   });
 
@@ -432,5 +482,57 @@ describe('sanitizeUserFacingErrorMessage', () => {
     expect(sanitizeUserFacingErrorMessage(JSON.stringify(OPENROUTER_402), 'fallback')).toBe(
       'fallback',
     );
+  });
+});
+
+describe('retired models (ADR-151)', () => {
+  it.each([
+    [
+      'OpenAI model_not_found / deprecated',
+      404,
+      {
+        error: {
+          message: 'The model `gpt-5-chat-latest` has been deprecated, learn more here: https://x',
+          type: 'invalid_request_error',
+          code: 'model_not_found',
+        },
+      },
+    ],
+    [
+      'OpenAI does not exist',
+      404,
+      { error: { message: 'The model `gpt-x` does not exist or you do not have access to it.' } },
+    ],
+    ['Ollama not found', 404, { error: "model 'kimi-k3' not found" }],
+    [
+      'Groq decommissioned (400)',
+      400,
+      { error: { message: 'The model `x` has been decommissioned and is no longer supported.', code: 'model_decommissioned' } },
+    ],
+  ])('%s becomes a substitutable ProviderModelUnavailableException', (_name, status, body) => {
+    const error = classify({ status, body }, 'CLOUD_PROVIDER_UNAVAILABLE');
+    expect(error).toBeInstanceOf(ProviderModelUnavailableException);
+    expect(error.code).toBe(PROVIDER_MODEL_UNAVAILABLE_CODE);
+    expect((error as ProviderModelUnavailableException).messageKey).toBe(
+      PROVIDER_MODEL_UNAVAILABLE_MESSAGE_KEY,
+    );
+    expect(error.getStatus()).toBe(HttpStatus.NOT_FOUND);
+    expect(error.message).not.toContain('http');
+  });
+
+  it('a 404 that is not about the model stays a plain failure', () => {
+    const error = classify({ status: 404, body: { error: 'Not Found' } });
+    expect(error).not.toBeInstanceOf(ProviderModelUnavailableException);
+    expect(error.code).toBe('CODE');
+  });
+
+  it('a 400 about something else stays a plain failure', () => {
+    const error = classify({ status: 400, body: { error: { message: 'file does not exist' } } });
+    expect(error).not.toBeInstanceOf(ProviderModelUnavailableException);
+  });
+
+  it('a 500 mentioning a model is not a retired model', () => {
+    const error = classify({ status: 500, body: { error: 'model not found in cache' } });
+    expect(error).not.toBeInstanceOf(ProviderModelUnavailableException);
   });
 });

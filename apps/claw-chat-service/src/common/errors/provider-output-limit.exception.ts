@@ -14,6 +14,8 @@ export class ProviderOutputLimitException extends BusinessException {
   constructor(
     public readonly maxOutputTokens: number,
     code: string,
+    /** True when the cap only overran the window for THIS prompt — not a fixed model ceiling. */
+    public readonly promptDependent = false,
   ) {
     super(PROVIDER_OUTPUT_LIMIT_MESSAGE, code, undefined, PROVIDER_OUTPUT_LIMIT_MESSAGE_KEY);
   }

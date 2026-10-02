@@ -308,3 +308,66 @@ it sits behind `ServiceTokenGuard`.
 - Gemini: native `outputTokenLimit` read at sync (`fetchNativeLimits`, positive
   integers only). Ollama / Ollama Cloud: no trustworthy field exists (`/api/show`
   has only input `context_length`; `num_predict` is a default) — learned instead.
+
+## Non-chat model ids are classified at sync (2026-10-02)
+
+`utilities/model-kind.utility.ts` (`nonChatKindForModelKey`) names ids that look like chat
+models but are refused by chat completions (xAI `grok-*-multi-agent-*`: `/v1/responses` only,
+HTTP 400 otherwise). `ConnectorModelsRepository` writes `kind: TOOL` for them on create AND
+update, so every sync repairs a row; catalog, router and picker all filter `kind = CHAT`.
+Migration `20261002120000_reclassify_multi_agent_models` fixes existing rows (kind TOOL,
+exposure UNEXPOSED). Add a new pattern there, never a UI special case. ADR-151 addendum.
+
+## OpenAI responses-only models are TOOL (2026-10-02)
+
+`*-pro` (gpt-5-pro, o1-pro, o3-pro, dated variants), `*-codex` and `deep-research` models
+answer only `POST /v1/responses`; chat-service speaks `/v1/chat/completions` only, so a pin
+404'd and a substitute answered. `OpenAIAdapter.syncModels` sets `kind` via
+`classifyOpenAiModelKind` (`OPENAI_RESPONSES_ONLY_PATTERNS` in `openai.constants.ts`);
+non-CHAT is written on create and update. Migration
+`20261002121000_openai_responses_only_models_are_tool` fixes existing rows. Delete a pattern
+only when chat-service gains a `/v1/responses` client. ADR-151 addendum.
+
+## Model kind (what a synced model is FOR)
+
+`ModelKind` = `CHAT | EMBEDDING | RERANKER | TOOL | AUDIO`. Only `CHAT` reaches the picker,
+the catalog and the router (`findExposedForCatalog`, `findExposedPairs`, routing
+`exposed-models`). Both repository upsert paths spread `nonChatKind(modelKey)` on create AND
+update, so one resync repairs existing rows. Rules live in `constants/model-kind.constants.ts`
+(word-boundary id patterns: tts, transcribe, whisper, realtime, live, native-audio, lyria,
+embed, rerank, moderation, computer-use, deep-research, aqa, multi-agent, and the id suffix
+`-streaming-preview`: Gemini WebSocket-only models 400 on chat). `gpt-4o-audio-preview`
+is chat. A new non-chat family is a pattern edit plus a test AND the same regex in a new
+reclassify migration. `supportsAudio` is untouched: file-service transcription still needs it.
+
+## Gemini model kind comes from `supportedGenerationMethods` (ADR-151)
+
+`GeminiAdapter.syncModels` reads each model's `supportedGenerationMethods` from the native list and
+sets `NormalizedModel.kind` via `classifyGeminiModelKind`: `generateContent` or an unreadable list
+is `CHAT` (no objection), embed methods are `EMBEDDING`, anything else (aqa) is `TOOL`.
+`adapterKindFields` writes a non-chat kind on create and update and, on update, sets
+`exposure = UNEXPOSED`. Catalog, router and picker filter `kind = CHAT`, so these never reach a user.
+
+## Gemini agents and image aliases (2026-10-02)
+
+`antigravity` joins `deep-research` and `computer-use` in `MODEL_KIND_TOOL_PATTERN` (tool-driven
+agents; migration `20261002140000_reclassify_antigravity_agent_models`). Gemini TTS and Lyria are
+`AUDIO`. `nano-banana-pro-preview` is NOT hidden: like every Gemini image model it stays a
+chat-listed `CHAT` row and chat-service redirects a pin to `IMAGE_GEMINI`
+(`IMAGE_OUTPUT_MODEL_PATTERNS_BY_CONNECTOR` in shared-utilities); routing-service seed v12 prices it
+(unpriced means blocked).
+
+## Retired models the provider still lists (ADR-151 addendum)
+
+- OpenAI keeps listing models it no longer serves (404 `model_not_found`, "has been deprecated", or
+  legacy completions / responses-only deployments). `OPENAI_RETIRED_MODEL_PATTERNS`
+  (`constants/openai.constants.ts`, `isRetiredOpenAiModel`) makes the OpenAI sync record them as
+  `SUNSET`; every catalog query filters `lifecycle: ACTIVE`, so they are never offered to chat.
+- Learned path: chat-service POSTs `internal/connectors/models/unavailable` (service token) on each
+  "model does not exist" answer. `recordUnavailable` counts it (`unavailable_count`/`unavailable_at`,
+  reports older than 7 days reset); at 3 the row becomes `SUNSET` + `UNEXPOSED`. `replaceMany`
+  re-applies that after every sync, so the provider's own listing cannot resurrect it. An admin
+  re-exposing the model clears the count (`setExposure`).
+- Data fix for already-known rows: migration `20261002130000_retire_unavailable_openai_models`
+  (idempotent, same patterns). Tests: `retired-model.utility.spec.ts`, `openai.adapter.spec.ts`,
+  `connector-models.unavailable.spec.ts`, `model-unavailable.service.spec.ts`.

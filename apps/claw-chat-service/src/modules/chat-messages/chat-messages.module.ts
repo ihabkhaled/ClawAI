@@ -21,6 +21,7 @@ import { ContextSaveController } from './controllers/context-save.controller';
 import { ModelContextWindowClient } from './clients/model-context-window.client';
 import { ModelCapabilityClient } from './clients/model-capability.client';
 import { ModelOutputLimitClient } from './clients/model-output-limit.client';
+import { ModelUnavailableClient } from './clients/model-unavailable.client';
 import { AttachmentDeliveryManager } from './managers/attachment-delivery.manager';
 import { VisionHelperManager } from './managers/vision-helper.manager';
 import { DerivedImageDescriptionStore } from './services/derived-image-description-store.service';
@@ -134,6 +135,7 @@ import { RuntimeV2ThreadActivityService } from './services/runtime-v2-thread-act
     ModelContextWindowClient,
     ModelCapabilityClient,
     ModelOutputLimitClient,
+    ModelUnavailableClient,
     AttachmentDeliveryManager,
     VisionHelperCandidatesClient,
     VisionHelperManager,

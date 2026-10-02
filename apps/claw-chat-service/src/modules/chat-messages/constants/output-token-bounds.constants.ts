@@ -60,6 +60,23 @@ export const computeDefaultMaxTokens = (ctxSize: number, promptTokens: number): 
   return available < OUTPUT_BOUNDS_MIN_OUTPUT_TOKENS ? OUTPUT_BOUNDS_MIN_OUTPUT_TOKENS : available;
 };
 
+// The most output a model with a SMALL shared window (gpt-4: 8_192 for prompt +
+// completion) can be asked for. The hosted default below is 16_384, larger than
+// that whole window, so OpenAI refused every gpt-4 turn with "maximum context
+// length is 8192 tokens ... 16384 in the completion". `undefined` when the
+// window is unknown or the request already fits.
+export const computeWindowFitMaxTokens = (
+  windowTokens: number | undefined,
+  promptTokens: number,
+  requested: number,
+): number | undefined => {
+  if (windowTokens === undefined) {
+    return undefined;
+  }
+  const fit = computeDefaultMaxTokens(windowTokens, promptTokens);
+  return fit < requested ? fit : undefined;
+};
+
 // The default output budget for a HOSTED model when nobody asked for a length
 // (2026-09-25). Before this, the ctx-derived default above sent ~32_768 minus
 // the prompt — effectively "the model's maximum" — on every ordinary turn.

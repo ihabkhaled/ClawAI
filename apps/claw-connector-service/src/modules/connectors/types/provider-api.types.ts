@@ -113,7 +113,12 @@ export type PresetModelListEntry = {
  * Typed `unknown` where the value is checked before use: it is Google's JSON.
  */
 export type GeminiNativeModelsResponse = {
-  models?: Array<{ name: string; inputTokenLimit?: unknown; outputTokenLimit?: unknown }>;
+  models?: Array<{
+    name: string;
+    inputTokenLimit?: unknown;
+    outputTokenLimit?: unknown;
+    supportedGenerationMethods?: unknown;
+  }>;
 };
 
 /** The token limits the native Gemini list published for one model. */

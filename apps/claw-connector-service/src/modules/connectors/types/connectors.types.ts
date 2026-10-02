@@ -3,6 +3,7 @@ import {
   type ConnectorAuthType,
   type ConnectorProvider,
   type ConnectorStatus,
+  type ModelKind,
   type ModelLifecycle,
   type ModelSyncStatus,
   type ModelUsageTier,
@@ -68,6 +69,8 @@ export interface NormalizedModel {
   lifecycle: ModelLifecycle;
   capabilities: ModelCapabilities;
   usage?: ModelUsageMetadata;
+  /** Set only by adapters that can tell; absent keeps the stored kind (CHAT on create). */
+  kind?: ModelKind;
 }
 
 export interface ModelUsageMetadata {

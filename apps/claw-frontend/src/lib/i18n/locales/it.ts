@@ -661,6 +661,8 @@ export const it: TranslationDictionary = {
         'Gli allegati video non sono disponibili nelle modalità Solo locale o Privacy prima di tutto perché non è configurato alcun modello locale compatibile con i video.',
       providerCreditExhausted:
         'Il fornitore di questo modello ha esaurito il credito al momento. Scegli un altro modello o riprova più tardi.',
+      providerModelUnavailable:
+        'Questo modello non è più disponibile presso il suo provider. Scegli un altro modello.',
       providerRateLimited:
         'Questo modello è al momento sovraccarico presso il suo fornitore. Riprova tra poco o scegli un altro modello.',
       providerOutputLimit:
