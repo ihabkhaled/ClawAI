@@ -26,10 +26,31 @@ import {
   RUNTIME_V2_TOOL_NAME_PATTERN,
 } from '../constants/runtime-v2.constants';
 import {
+  RUNTIME_V2_TOOL_CATALOG_TOO_LARGE_CODE,
+  RUNTIME_V2_TOOL_DUPLICATE_IDENTITY_CODE,
+  RUNTIME_V2_TOOL_NAME_COLLISION_CODE,
+  RUNTIME_V2_TOOL_RISK_CLASS_UNKNOWN_CODE,
+} from '../constants/runtime-v2-admission.constants';
+import {
   RUNTIME_V2_MAX_RESULT_FILE_IDS,
   RUNTIME_V2_RESULT_FILE_ID_CHARACTERS,
 } from '../constants/runtime-v2-result-files.constants';
 import type { RuntimeV2JsonObject, RuntimeV2JsonValue } from '../types/runtime-v2.types';
+import { sanitizeNativeToolName } from '../utilities/native-tool-name.utility';
+
+type RuntimeV2RiskClass = (typeof RUNTIME_V2_RISK_CLASSES)[number];
+
+// z.enum would answer "Invalid option" and no code. The accepted values are
+// listed instead, because a client holding a class the platform has no name
+// for (`vision`) can only fix it by knowing the fixed set.
+const riskClassSchema = z.custom<RuntimeV2RiskClass>(
+  (value) => (RUNTIME_V2_RISK_CLASSES as readonly unknown[]).includes(value),
+  {
+    error: (issue) =>
+      `Unknown risk class ${JSON.stringify(issue.input)}. Accepted: ${RUNTIME_V2_RISK_CLASSES.join(', ')}`,
+    params: { code: RUNTIME_V2_TOOL_RISK_CLASS_UNKNOWN_CODE },
+  },
+);
 
 const utf8Bytes = (value: string): number => new TextEncoder().encode(value).byteLength;
 const boundedText = (maxBytes: number): z.ZodString =>
@@ -87,12 +108,18 @@ export const toolDefinitionSchema = z
     schemaVersion: z.literal(RUNTIME_V2_SCHEMA_VERSION),
     name: z.string().min(2).max(80).regex(RUNTIME_V2_TOOL_NAME_PATTERN),
     version: z.string().min(1).max(40),
-    description: z.string().trim().min(1).max(2_000),
+    // Deliberately NOT trimmed: the client hashes the description it sent, and
+    // a server that trimmed before re-hashing failed every catalog with
+    // trailing whitespace as an opaque 500. Blank is still rejected.
+    description: z
+      .string()
+      .max(2_000)
+      .refine((value) => value.trim().length > 0, 'Tool description must not be blank'),
     operations: z
       .array(z.string().min(1).max(80).regex(RUNTIME_V2_OPERATION_PATTERN))
       .min(1)
       .max(100),
-    riskClasses: z.array(z.enum(RUNTIME_V2_RISK_CLASSES)).min(1).max(13),
+    riskClasses: z.array(riskClassSchema).min(1).max(13),
     targetIds: z.array(z.string().regex(RUNTIME_V2_ID_PATTERN)).min(1).max(32),
     inputSchema: boundedJsonObject(RUNTIME_V2_ARGUMENT_BYTES),
     // F028 deferred tool: this entry is a stub (name + short description) and
@@ -124,10 +151,34 @@ const toolCatalogSchema = z
   .superRefine((definitions, context) => {
     const identities = definitions.map((definition) => `${definition.name}@${definition.version}`);
     if (new Set(identities).size !== identities.length) {
-      context.addIssue({ code: 'custom', message: 'Duplicate tool catalog identity' });
+      context.addIssue({
+        code: 'custom',
+        message: 'Duplicate tool catalog identity',
+        params: { code: RUNTIME_V2_TOOL_DUPLICATE_IDENTITY_CODE },
+      });
+    }
+    // Provider tool names allow only [a-zA-Z0-9_-], so `a.b` and `a_b` become
+    // the same native name and the run would die later. Refused here instead.
+    const byNative = new Map<string, string>();
+    for (const definition of definitions) {
+      const native = sanitizeNativeToolName(definition.name);
+      const existing = byNative.get(native);
+      if (existing !== undefined) {
+        context.addIssue({
+          code: 'custom',
+          message: `Tool names "${existing}" and "${definition.name}" both normalise to "${native}"; rename one`,
+          params: { code: RUNTIME_V2_TOOL_NAME_COLLISION_CODE },
+        });
+      } else {
+        byNative.set(native, definition.name);
+      }
     }
     if (utf8Bytes(JSON.stringify(definitions)) > RUNTIME_V2_TOOL_CATALOG_BYTES) {
-      context.addIssue({ code: 'custom', message: 'Tool catalog exceeds its byte limit' });
+      context.addIssue({
+        code: 'custom',
+        message: 'Tool catalog exceeds its byte limit',
+        params: { code: RUNTIME_V2_TOOL_CATALOG_TOO_LARGE_CODE },
+      });
     }
   });
 

@@ -7,6 +7,8 @@ import {
 } from '@nestjs/common';
 import { ZodError, ZodSchema } from 'zod';
 
+import { VALIDATION_FAILED_CODE } from './zod-validation.constants';
+
 @Injectable()
 export class ZodValidationPipe implements PipeTransform {
   private readonly logger = new Logger(ZodValidationPipe.name);
@@ -23,7 +25,17 @@ export class ZodValidationPipe implements PipeTransform {
       // validation failure anywhere on the platform showed only the generic
       // "Validation failed" with no detail (2026-09-24).
       const errors: Record<string, string[]> = {};
+      // A schema may tag an issue with `params: { code }`; the first one wins
+      // and becomes the body's stable `code`, so a client switches on it
+      // instead of parsing prose.
+      let code: string = VALIDATION_FAILED_CODE;
+      let codeFound = false;
       for (const issue of (result.error as ZodError).issues) {
+        const issueCode = 'params' in issue ? issue.params?.code : undefined;
+        if (!codeFound && typeof issueCode === 'string') {
+          code = issueCode;
+          codeFound = true;
+        }
         const field = issue.path.join('.') || '<root>';
         (errors[field] ??= []).push(issue.message);
       }
@@ -39,6 +51,7 @@ export class ZodValidationPipe implements PipeTransform {
       );
       throw new BadRequestException({
         message: 'Validation failed',
+        code,
         errors,
       });
     }

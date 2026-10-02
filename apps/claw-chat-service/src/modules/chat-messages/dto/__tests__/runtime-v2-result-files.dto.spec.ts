@@ -54,4 +54,14 @@ describe('toolResultSchema fileIds', () => {
       expect(toolResultSchema.safeParse({ ...result, fileIds }).success).toBe(false);
     }
   });
+
+  it('pins the contract: at most 4 images, and the ids survive parsing untouched', () => {
+    expect(RUNTIME_V2_MAX_RESULT_FILE_IDS).toBe(4);
+    const fileIds = ['img-a', 'img-b', 'img-c', 'img-d'];
+    const parsed = toolResultSchema.parse({ ...result, fileIds });
+    expect(parsed.fileIds).toEqual(fileIds);
+    expect(toolResultSchema.safeParse({ ...result, fileIds: [...fileIds, 'img-e'] }).success).toBe(
+      false,
+    );
+  });
 });

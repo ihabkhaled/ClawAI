@@ -1756,3 +1756,17 @@ research planner decided with no attachment facts and its `thinking` was shown a
 - `withProviderRecovery` reports it through `ModelUnavailableClient` (best effort) to connector-service,
   which retires the row after 3 reports in 7 days. Tests: `provider-http-failure.utility.spec.ts`
   "retired models", `picked-model-fallback.utility.spec.ts`, `model-unavailable.client.spec.ts`.
+
+## Runtime V2 start: attachments and catalog admission (2026-10)
+
+- `ChatMessagesRepository.updateMetadata` REPLACES the whole metadata object. `RuntimeV2RunService.markPublished`
+  now merges the `runtimeV2` mark over the stored metadata (replay) or the request's `fileIds`, so images attached
+  at run start still reach the context assembler. Never write `{ runtimeV2 }` alone. Test:
+  `runtime-v2-run.file-ids.spec.ts`. Tool results carry up to 4 image `fileIds` (pinned in `runtime-v2-result-files.dto.spec.ts`).
+- Tool `description` is NOT trimmed server-side (the client hashes it as sent). A wrong `toolCatalogHash` is a 422
+  `RUNTIME_TOOL_CATALOG_HASH_MISMATCH`, not a 500.
+- Admission 400s carry a stable `code` (`ZodValidationPipe` lifts the first issue `params.code`; default
+  `VALIDATION_FAILED`; `GlobalExceptionFilter` now passes `code` for any HttpException body). Codes live in
+  `constants/runtime-v2-admission.constants.ts`: `RUNTIME_TOOL_NAME_COLLISION` (names equal after
+  `sanitizeNativeToolName`, both listed), `RUNTIME_TOOL_RISK_CLASS_UNKNOWN` (lists the 13 accepted classes),
+  `RUNTIME_TOOL_DUPLICATE_IDENTITY`, `RUNTIME_TOOL_CATALOG_TOO_LARGE`.

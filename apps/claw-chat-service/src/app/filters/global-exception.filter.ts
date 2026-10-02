@@ -39,6 +39,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         const responseObj = exResponse as Record<string, unknown>;
         message = (responseObj['message'] as string) ?? exception.message;
         errors = responseObj['errors'] as unknown[] | undefined;
+        const bodyCode = responseObj['code'];
+        if (typeof bodyCode === 'string') code = bodyCode;
       } else {
         message = exception.message;
       }

@@ -41,9 +41,6 @@ import {
   ANTHROPIC_TEXT_BLOCK_TYPE,
   ANTHROPIC_TOOL_RESULT_BLOCK_TYPE,
   ANTHROPIC_TOOL_USE_BLOCK_TYPE,
-  NATIVE_TOOL_NAME_ILLEGAL_PATTERN,
-  NATIVE_TOOL_NAME_MAX_LENGTH,
-  NATIVE_TOOL_NAME_REPLACEMENT,
   PROVIDER_TOOL_FUNCTION_TYPE,
   PROVIDER_TOOL_SCHEMA_TYPE_OBJECT,
   PROVIDER_TOOL_SCHEMA_TYPE_STRING,
@@ -57,17 +54,9 @@ import {
   TOOL_RESULT_TRUNCATION_MARKER,
   TOOL_TARGET_ID_PROPERTY,
 } from '../constants/provider-tool.constants';
+import { sanitizeNativeToolName } from './native-tool-name.utility';
 
-// Maps a Runtime tool name onto the strictest provider charset
-// (`^[a-zA-Z0-9_-]{1,64}$`). This is intentionally lossy — `workspace.files`
-// and a hypothetical `workspace_files` both become `workspace_files` — which
-// is exactly why translateToolCatalog asserts uniqueness and why the reverse
-// trip goes through the lookup table instead of a string replacement.
-export function sanitizeNativeToolName(toolName: string): string {
-  return toolName
-    .replaceAll(NATIVE_TOOL_NAME_ILLEGAL_PATTERN, NATIVE_TOOL_NAME_REPLACEMENT)
-    .slice(0, NATIVE_TOOL_NAME_MAX_LENGTH);
-}
+export { sanitizeNativeToolName };
 
 export function translateToolCatalog(
   definitions: readonly ToolDefinitionDto[],

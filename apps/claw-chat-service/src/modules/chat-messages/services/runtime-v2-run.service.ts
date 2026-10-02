@@ -4,7 +4,7 @@ import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { randomBytes } from 'node:crypto';
 
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
-import { MessageRole } from '../../../generated/prisma';
+import { MessageRole, type Prisma } from '../../../generated/prisma';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { RUNTIME_V2_ACTIVE_TTL_SECONDS } from '../constants/runtime-v2-run.constants';
 import type { RuntimeStartDto } from '../dto/runtime-v2.dto';
@@ -73,21 +73,13 @@ export class RuntimeV2RunService {
         routingMode: routing.routingMode,
         ...(routing.provider === undefined ? {} : { provider: routing.provider }),
         ...(routing.model === undefined ? {} : { model: routing.model }),
+        // `fileIds` is stored where every other surface already looks for
+        // attachments: the context assembler reads `metadata.fileIds` off the
+        // latest user message, so this is what makes an agent run see the
+        // file the user dropped in.
         metadata: {
-          runtimeV2: {
-            runId: acknowledgement.runId,
-            generation: acknowledgement.generation,
-            clientRequestId: request.clientRequestId,
-            publicationState: 'pending',
-          },
-          // Stored where every other surface already looks for attachments.
-          // The context assembler reads `metadata.fileIds` off the latest user
-          // message, so putting them here is what makes an agent run see the
-          // file the user dropped in, with no second lookup path to keep in
-          // step with chat's.
-          ...(request.fileIds === undefined || request.fileIds.length === 0
-            ? {}
-            : { fileIds: request.fileIds }),
+          ...this.runtimeMetadata(acknowledgement, request, false),
+          ...this.attachmentMetadata(request),
         },
       });
     } catch (error) {
@@ -106,7 +98,7 @@ export class RuntimeV2RunService {
       );
     }
     try {
-      await this.markPublished(acknowledgement, request);
+      await this.markPublished(acknowledgement, request, this.attachmentMetadata(request));
     } catch {
       throw new BusinessException(
         'Runtime start publication state is uncertain',
@@ -148,7 +140,7 @@ export class RuntimeV2RunService {
     }
     if (metadata.data.runtimeV2.publicationState === 'pending') {
       await this.publish(ownerId, request, acknowledgement, routing);
-      await this.markPublished(acknowledgement, request);
+      await this.markPublished(acknowledgement, request, this.storedMetadata(existing.metadata));
     }
     return acknowledgement;
   }
@@ -177,18 +169,48 @@ export class RuntimeV2RunService {
     });
   }
 
-  private markPublished(
+  private runtimeMetadata(
     acknowledgement: RuntimeV2StartAck,
     request: RuntimeStartDto,
-  ): Promise<void> {
-    return this.messages.updateMetadata(acknowledgement.messageId, {
+    confirmed: boolean,
+  ): { runtimeV2: Record<string, string> } {
+    return {
       runtimeV2: {
         runId: acknowledgement.runId,
         generation: acknowledgement.generation,
         clientRequestId: request.clientRequestId,
-        publicationState: 'confirmed',
+        publicationState: confirmed ? 'confirmed' : 'pending',
       },
-    });
+    };
+  }
+
+  private attachmentMetadata(request: RuntimeStartDto): { fileIds?: string[] } {
+    return request.fileIds === undefined || request.fileIds.length === 0
+      ? {}
+      : { fileIds: request.fileIds };
+  }
+
+  private storedMetadata(stored: unknown): Record<string, unknown> {
+    return typeof stored === 'object' && stored !== null && !Array.isArray(stored)
+      ? { ...stored }
+      : {};
+  }
+
+  /**
+   * `updateMetadata` REPLACES the whole object. Writing only `{ runtimeV2 }`
+   * here wiped the `fileIds` stored at create time, so an image attached to a
+   * run never reached the model. The mark is merged over `base`: the stored
+   * metadata on a replay, or the attachments this request carried.
+   */
+  private markPublished(
+    acknowledgement: RuntimeV2StartAck,
+    request: RuntimeStartDto,
+    base: Record<string, unknown>,
+  ): Promise<void> {
+    return this.messages.updateMetadata(acknowledgement.messageId, {
+      ...base,
+      ...this.runtimeMetadata(acknowledgement, request, true),
+    } as Prisma.InputJsonObject);
   }
 
   private binding(

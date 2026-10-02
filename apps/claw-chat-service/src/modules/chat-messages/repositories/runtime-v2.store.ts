@@ -1,6 +1,10 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { BusinessException } from '../../../common/errors';
 import {
+  RUNTIME_V2_CATALOG_HASH_MISMATCH_CODE,
+  RUNTIME_V2_CATALOG_HASH_MISMATCH_MESSAGE,
+} from '../constants/runtime-v2-admission.constants';
+import {
   RUNTIME_V2_RECEIPT_MISMATCH_CODE,
   RUNTIME_V2_RECEIPT_MISMATCH_MESSAGE,
 } from '../constants/runtime-v2-result-files.constants';
@@ -274,7 +278,11 @@ export class RuntimeV2Store {
   async start(input: RuntimeV2StartInput): Promise<RuntimeV2StartAck> {
     const request = runtimeStartSchema.parse(input.request);
     if (runtimeV2Sha256(JSON.stringify(request.toolDefinitions)) !== request.toolCatalogHash) {
-      throw new Error('Runtime V2 tool catalog hash does not match its definitions');
+      throw new BusinessException(
+        RUNTIME_V2_CATALOG_HASH_MISMATCH_MESSAGE,
+        RUNTIME_V2_CATALOG_HASH_MISMATCH_CODE,
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
     }
     let proposed = {
       runId: createRuntimeV2Identity('run'),

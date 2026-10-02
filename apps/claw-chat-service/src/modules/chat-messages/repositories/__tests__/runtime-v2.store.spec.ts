@@ -82,6 +82,7 @@ const boundFixture = () => ({
 describe('RuntimeV2Store', () => {
   it('rejects a tool catalog whose digest does not match the admitted hash', async () => {
     const redis = new QueueRedis();
+    // A client-fixable 422 with a stable code, never an opaque 500.
     await expect(
       new RuntimeV2Store(redis).start({
         ownerId: 'runtime_owner_000001',
@@ -89,7 +90,11 @@ describe('RuntimeV2Store', () => {
         request: { ...startRequest, toolCatalogHash: hash },
         ttlSeconds: 900,
       }),
-    ).rejects.toThrow('tool catalog hash');
+    ).rejects.toMatchObject({
+      code: 'RUNTIME_TOOL_CATALOG_HASH_MISMATCH',
+      status: 422,
+      message: expect.stringContaining('JSON.stringify'),
+    });
     expect(redis.commands).toHaveLength(0);
   });
 

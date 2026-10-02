@@ -69,3 +69,13 @@ change. The extension needs no release for this.
 - **Send gpt-oss a reasoning level instead of `think: false`.** Untested, model
   specific, and it would leave every other reasoning model on the fragile text
   lane.
+
+## Addendum 2026-10: start-request admission and attachment delivery
+
+A live audit found four Runtime V2 defects, all fixed in chat-service: (1) `markPublished` replaced the message
+metadata and wiped `fileIds`, so run-start images never reached any model; the mark is now merged. (2) The server
+trimmed a tool `description` before re-hashing the catalog, so trailing whitespace gave an opaque 500; the schema
+no longer trims (blank is still refused) and a genuine hash mismatch is a 422 `RUNTIME_TOOL_CATALOG_HASH_MISMATCH`.
+(3) Tool names colliding after native-name normalisation (`a.b`, `a_b`) are rejected at admission with
+`RUNTIME_TOOL_NAME_COLLISION` instead of failing the run later. (4) An unknown risk class (for example `vision`)
+returns `RUNTIME_TOOL_RISK_CLASS_UNKNOWN` listing the 13 accepted values. Admission 400s now carry a stable `code`.
