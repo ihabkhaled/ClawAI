@@ -20,6 +20,7 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { FetchModule } from '../modules/fetch/fetch.module';
 import { HealthModule } from '../modules/health/health.module';
 import { ResearchModule } from '../modules/research/research.module';
+import { RuntimeCrawlModule } from '../modules/runtime-crawl/runtime-crawl.module';
 import { ScrapeModule } from '../modules/scrape/scrape.module';
 import { SearchModule } from '../modules/search/search.module';
 import { ResearchUsageModule } from '../common/services/research-usage.module';
@@ -86,6 +87,7 @@ import { ResearchUsageModule } from '../common/services/research-usage.module';
     FetchModule,
     ScrapeModule,
     ResearchModule,
+    RuntimeCrawlModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

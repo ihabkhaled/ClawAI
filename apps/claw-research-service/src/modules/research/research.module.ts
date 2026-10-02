@@ -23,6 +23,6 @@ import { ResearchService } from './services/research.service';
     SiteAuditManager,
     ResearchService,
   ],
-  exports: [ResearchManager, ResearchService],
+  exports: [ResearchManager, ResearchService, SiteCrawlManager],
 })
 export class ResearchModule {}

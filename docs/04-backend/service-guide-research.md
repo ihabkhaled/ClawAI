@@ -387,3 +387,44 @@ Documented in `.claude/Integrations/search-orchestration__MASTER_PLAN.md`. Summa
   hosts are still refused.
 - `detectUrlsInText` now delegates to `@claw/shared-utilities` and accepts bare
   domains; `isFetchableUrl` is still the gate on what is returned.
+
+## Update 2026-10-02 - runtime crawl for authenticated clients (ADR-150)
+
+User-scoped, plan-gated crawl and single-page extract, for runtime clients such as the coding agent.
+Module: `src/modules/runtime-crawl/`. Decision: [ADR-150](../13-adr/adr-150-runtime-crawl-for-authenticated-clients.md).
+Threats: [runtime-crawl-threat-model.md](../03-architecture/runtime-crawl-threat-model.md).
+
+| Method | Path                                    | Notes                                                                                                                                 |
+| ------ | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | `/api/v1/research/crawl/runs`           | Body `{url, profile: crawl or extract, maxPages?, maxDepth?, intent?}`. 202. `crawl` returns RUNNING; `extract` returns `{run, page}` |
+| GET    | `/api/v1/research/crawl/runs`           | The caller's runs, newest first (`?limit`, max 50)                                                                                    |
+| GET    | `/api/v1/research/crawl/runs/:id`       | Run status, pages read, warnings, error code. Another user's id is 404                                                                |
+| GET    | `/api/v1/research/crawl/runs/:id/pages` | `?after=<ordinal>&limit=<=25`; `nextAfter` is the cursor, `null` at the end                                                           |
+| GET    | `/api/v1/research/runtime-crawl/config` | Admin only                                                                                                                            |
+| PATCH  | `/api/v1/research/runtime-crawl/config` | Admin only. Partial update of the limits; `enabled: false` is the kill switch                                                         |
+
+- Order: `RESEARCH_USE` permission, then the plan's `allowResearchMode`, then validation. 403
+  `PLAN_FEATURE_DISABLED`, 503 `ENTITLEMENTS_UNAVAILABLE`.
+- Errors a client switches on: 429 `RUNTIME_CRAWL_CONCURRENCY_EXCEEDED` / `_DAILY_RUNS_EXCEEDED` /
+  `_DAILY_BUDGET_EXCEEDED`, 503 `RUNTIME_CRAWL_DISABLED`, 400 `UNSAFE_URL`. A finished run that failed carries
+  `errorCode`: `FETCH_ROBOTS_DISALLOWED`, `DOMAIN_BLOCKED`, `RUNTIME_CRAWL_NO_PAGES_READ`, `RUNTIME_CRAWL_TIMEOUT`,
+  `RUNTIME_CRAWL_INTERRUPTED`, `RUNTIME_CRAWL_FAILED`.
+- Tables: `runtime_crawl_runs`, `runtime_crawl_pages` (cascade), `runtime_crawl_configs` (singleton `default`,
+  defaults 50 pages, depth 2, 1 concurrent run, 200 pages and 20 runs per day, 16 000 chars and 50 links per page,
+  300 s). Seeded idempotently on boot; no env var.
+- Metering is the existing one: `FetchService` records `WEB_FETCH` per live page. No new price or feature key.
+- `extract` returns title, bounded text and bounded http(s) links for ONE page. A `crawl` page carries title, text and
+  discovery method (no links).
+
+Try it (needs a plan with research, or an admin token):
+
+```bash
+TOKEN=<user access token>
+RUN=$(curl -sk -X POST https://claw.local/api/v1/research/crawl/runs \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"url":"https://example.com","profile":"crawl","maxPages":10}' | jq -r '.run.id')
+curl -sk -H "Authorization: Bearer $TOKEN" https://claw.local/api/v1/research/crawl/runs/$RUN
+curl -sk -H "Authorization: Bearer $TOKEN" "https://claw.local/api/v1/research/crawl/runs/$RUN/pages?limit=5"
+curl -sk -X POST https://claw.local/api/v1/research/crawl/runs -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' -d '{"url":"https://example.com","profile":"extract"}'
+```

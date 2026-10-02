@@ -33,4 +33,6 @@ export type CrawlLinkFollowContext = {
   trace: ResearchTraceEntry[];
   warnings: string[];
   correlationId: string | undefined;
+  /** Link hops past the first wave this crawl may follow. */
+  maxLinkDepth: number;
 };

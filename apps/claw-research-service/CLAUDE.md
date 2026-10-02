@@ -85,6 +85,23 @@ docker rmi claw-research-service
 | GET    | `/api/v1/research/fetch-strategies`          | Admin-only. Escalation-layer status (ADR-121) |
 | PATCH  | `/api/v1/research/fetch-strategies/:kind`    | Admin-only. Enable/tune a strategy            |
 
+## Runtime crawl (ADR-150, 2026-10-02)
+
+User-scoped crawl and single-page extract for runtime clients (the coding agent), in
+`src/modules/runtime-crawl/`. Plan-gated (`ResearchAccessGuard`: `allowResearchMode`, before any pipe or row),
+owner-scoped (foreign id = 404), capped by the DB singleton `runtime_crawl_configs` (no env var), metered by the
+existing `FetchService` `WEB_FETCH` record. Never fetches on its own: it calls `SiteCrawlManager.crawl` and
+`FetchService.fetchPage`. Owned tables: `RuntimeCrawlRun`, `RuntimeCrawlPage`, `RuntimeCrawlConfig`.
+
+| Method    | Path                                    | Notes                             |
+| --------- | --------------------------------------- | --------------------------------- |
+| POST      | `/api/v1/research/crawl/runs`           | `profile` crawl or extract. 202   |
+| GET       | `/api/v1/research/crawl/runs[/:id]`     | Owner only                        |
+| GET       | `/api/v1/research/crawl/runs/:id/pages` | Cursor paging (`after`, `limit`)  |
+| GET/PATCH | `/api/v1/research/runtime-crawl/config` | Admin-only limits and kill switch |
+
+Do not add a second fetch path here, and do not widen `/research/runs` instead (rule 50 item 6).
+
 Future phases add: `/research/fetch`, `/research/evidence`, `/research/workflows`, `/research/runs` (research run, not just search).
 
 ## Rules That Apply (per root CLAUDE.md)

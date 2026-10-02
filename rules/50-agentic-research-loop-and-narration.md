@@ -38,7 +38,9 @@ the frontend `NarrationLog`.
    waiting for an answer that never comes when research throws.
 6. **Chat → research uses the internal route with the service token.** Never
    forward the user's bearer to `/research/runs` (admin-only) and never widen
-   that route: research-service does not enforce the plan.
+   that route: research-service does not enforce the plan. The one user-token
+   crawl surface is `/research/crawl/runs` ([ADR-150](../docs/13-adr/adr-150-runtime-crawl-for-authenticated-clients.md)),
+   which enforces the plan itself in `ResearchAccessGuard` before anything else.
 7. **Every step is narrated through `NarrationService.append`**, never by
    emitting a frame directly — the append is what stores it for after a
    refresh. A tick every replica receives passes a `dedupeKey`.

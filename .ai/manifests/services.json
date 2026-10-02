@@ -114,7 +114,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 140,
+      "testFiles": 142,
       "testRunner": "vitest"
     },
     {
@@ -417,7 +417,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-research-service",
-      "endpointCount": 19,
+      "endpointCount": 25,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -436,10 +436,13 @@
         "HostStrategyMemory",
         "PageCache",
         "ResearchRun",
+        "RuntimeCrawlConfig",
+        "RuntimeCrawlPage",
+        "RuntimeCrawlRun",
         "SearchProvider",
         "SearchRun"
       ],
-      "testFiles": 56,
+      "testFiles": 60,
       "testRunner": "vitest"
     },
     {

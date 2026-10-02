@@ -2865,6 +2865,26 @@
         "source": "apps/claw-research-service/src/modules/research/controllers/research-internal.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/research/crawl/runs",
+        "source": "apps/claw-research-service/src/modules/runtime-crawl/controllers/runtime-crawl.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/research/crawl/runs",
+        "source": "apps/claw-research-service/src/modules/runtime-crawl/controllers/runtime-crawl.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/research/crawl/runs/:id",
+        "source": "apps/claw-research-service/src/modules/runtime-crawl/controllers/runtime-crawl.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/research/crawl/runs/:id/pages",
+        "source": "apps/claw-research-service/src/modules/runtime-crawl/controllers/runtime-crawl.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/research/fetch",
         "source": "apps/claw-research-service/src/modules/fetch/controllers/fetch.controller.ts"
@@ -2903,6 +2923,16 @@
         "method": "GET",
         "route": "/research/runs/:id",
         "source": "apps/claw-research-service/src/modules/research/controllers/research.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/research/runtime-crawl/config",
+        "source": "apps/claw-research-service/src/modules/runtime-crawl/controllers/runtime-crawl-config.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/research/runtime-crawl/config",
+        "source": "apps/claw-research-service/src/modules/runtime-crawl/controllers/runtime-crawl-config.controller.ts"
       },
       {
         "method": "POST",
@@ -3923,5 +3953,5 @@
     ]
   },
   "generated": true,
-  "total": 777
+  "total": 783
 }

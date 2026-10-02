@@ -227,6 +227,9 @@
         "HostStrategyMemory",
         "PageCache",
         "ResearchRun",
+        "RuntimeCrawlConfig",
+        "RuntimeCrawlPage",
+        "RuntimeCrawlRun",
         "SearchProvider",
         "SearchRun"
       ],

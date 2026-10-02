@@ -238,3 +238,83 @@ model HostStrategyMemory {
   @@index([updatedAt])
   @@map("host_strategy_memory")
 }
+
+// ─── Runtime crawl (user-scoped, plan-gated; ADR-143) ─────
+
+enum RuntimeCrawlProfile {
+  CRAWL
+  EXTRACT
+}
+
+enum RuntimeCrawlStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+/// One crawl or single-page extract requested by an authenticated runtime
+/// client (the coding agent). Always owner-scoped: every read filters on
+/// `userId`, so another user's id is a 404, never a 403.
+model RuntimeCrawlRun {
+  id           String              @id @default(cuid())
+  userId       String
+  profile      RuntimeCrawlProfile
+  startUrl     String
+  intent       String              @default("")
+  status       RuntimeCrawlStatus  @default(RUNNING)
+  /// The caps this run actually ran under (request clamped to config).
+  maxPages     Int
+  maxDepth     Int
+  pagesFetched Int                 @default(0)
+  errorCode    String?
+  errorMessage String?
+  /// Truthful per-page notes (failed fetches, robots skips), bounded.
+  warnings     Json                @default("[]")
+  startedAt    DateTime            @default(now())
+  completedAt  DateTime?
+  pages        RuntimeCrawlPage[]
+
+  @@index([userId, startedAt])
+  @@index([userId, status])
+  @@map("runtime_crawl_runs")
+}
+
+/// One page a run actually read. Never written for a page that failed.
+model RuntimeCrawlPage {
+  id              String          @id @default(cuid())
+  runId           String
+  run             RuntimeCrawlRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  ordinal         Int
+  url             String
+  title           String?
+  text            String
+  textTruncated   Boolean         @default(false)
+  links           Json            @default("[]")
+  discoveryMethod String
+  /// Ids of prompt-injection patterns found in the text (text is still returned, flagged).
+  injectionFlags  Json            @default("[]")
+  createdAt       DateTime        @default(now())
+
+  @@unique([runId, ordinal])
+  @@map("runtime_crawl_pages")
+}
+
+/// Singleton (id = 'default') DB-level limits for the runtime crawl, edited by
+/// an admin, seeded idempotently on boot. No .env var carries any of these.
+/// `0` on a count disables that dimension; there is no "unlimited" value.
+model RuntimeCrawlConfig {
+  id                       String   @id
+  enabled                  Boolean  @default(true)
+  maxPagesPerRun           Int      @default(50)
+  maxLinkDepth             Int      @default(2)
+  maxConcurrentRunsPerUser Int      @default(1)
+  dailyPageBudgetPerUser   Int      @default(200)
+  maxRunsPerUserPerDay     Int      @default(20)
+  maxTextCharsPerPage      Int      @default(16000)
+  maxLinksPerPage          Int      @default(50)
+  runTimeoutSeconds        Int      @default(300)
+  updatedBy                String?
+  updatedAt                DateTime @updatedAt
+
+  @@map("runtime_crawl_configs")
+}

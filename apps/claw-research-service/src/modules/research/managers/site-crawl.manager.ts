@@ -63,6 +63,7 @@ export class SiteCrawlManager {
     correlationId: string | undefined,
     maxPages: number = CRAWL_DEFAULT_MAX_PAGES,
     intent = '',
+    maxLinkDepth: number = CRAWL_MAX_LINK_DEPTH,
   ): Promise<EvidenceItem[]> {
     const origin = this.safeOrigin(startUrl);
     if (origin === null) {
@@ -125,7 +126,7 @@ export class SiteCrawlManager {
         items,
         [homepage.finalUrl, ...discovery.candidates.map((candidate) => candidate.url)],
         [...homepage.links, ...first.links],
-        { siteOrigin, intent, pageBudget, robots, trace, warnings, correlationId },
+        { siteOrigin, intent, pageBudget, robots, trace, warnings, correlationId, maxLinkDepth },
       ));
 
     if (skippedByRobots > 0) {
@@ -471,7 +472,7 @@ export class SiteCrawlManager {
     let frontier = firstFrontier;
     for (
       let depth = 1;
-      depth <= CRAWL_MAX_LINK_DEPTH && items.length < context.pageBudget;
+      depth <= context.maxLinkDepth && items.length < context.pageBudget;
       depth += 1
     ) {
       const next: CrawlCandidate[] = [];
@@ -549,7 +550,9 @@ export class SiteCrawlManager {
     try {
       const candidate = new URL(rawUrl);
       const site = new URL(origin);
-      return candidate.protocol !== 'http:' && candidate.protocol !== 'https:' ? false : stripWww(candidate.hostname) === stripWww(site.hostname);
+      return candidate.protocol !== 'http:' && candidate.protocol !== 'https:'
+        ? false
+        : stripWww(candidate.hostname) === stripWww(site.hostname);
     } catch {
       return false;
     }

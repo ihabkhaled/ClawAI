@@ -2920,6 +2920,26 @@
           "source": "apps/claw-research-service/src/modules/research/controllers/research-internal.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/research/crawl/runs",
+          "source": "apps/claw-research-service/src/modules/runtime-crawl/controllers/runtime-crawl.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/research/crawl/runs",
+          "source": "apps/claw-research-service/src/modules/runtime-crawl/controllers/runtime-crawl.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/research/crawl/runs/:id",
+          "source": "apps/claw-research-service/src/modules/runtime-crawl/controllers/runtime-crawl.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/research/crawl/runs/:id/pages",
+          "source": "apps/claw-research-service/src/modules/runtime-crawl/controllers/runtime-crawl.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/research/fetch",
           "source": "apps/claw-research-service/src/modules/fetch/controllers/fetch.controller.ts"
@@ -2958,6 +2978,16 @@
           "method": "GET",
           "route": "/research/runs/:id",
           "source": "apps/claw-research-service/src/modules/research/controllers/research.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/research/runtime-crawl/config",
+          "source": "apps/claw-research-service/src/modules/runtime-crawl/controllers/runtime-crawl-config.controller.ts"
+        },
+        {
+          "method": "PATCH",
+          "route": "/research/runtime-crawl/config",
+          "source": "apps/claw-research-service/src/modules/runtime-crawl/controllers/runtime-crawl-config.controller.ts"
         },
         {
           "method": "POST",
@@ -8135,7 +8165,7 @@
           "file": "rules/36-floating-ui-and-toast-clearance.md"
         },
         {
-          "bytes": 32020,
+          "bytes": 32778,
           "file": "rules/37-payg-credit-integrity.md"
         },
         {
@@ -8187,7 +8217,7 @@
           "file": "rules/49-qa-team-discipline-and-test-evidence.md"
         },
         {
-          "bytes": 6715,
+          "bytes": 6938,
           "file": "rules/50-agentic-research-loop-and-narration.md"
         },
         {
@@ -10351,6 +10381,21 @@
           {
             "confidence": "verified",
             "source": "apps/claw-research-service/prisma/schema.prisma",
+            "value": "RuntimeCrawlConfig"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-research-service/prisma/schema.prisma",
+            "value": "RuntimeCrawlPage"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-research-service/prisma/schema.prisma",
+            "value": "RuntimeCrawlRun"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-research-service/prisma/schema.prisma",
             "value": "SearchProvider"
           },
           {
@@ -10660,7 +10705,7 @@
       },
       "@claw/shared-entitlements": {
         "runner": "vitest",
-        "testFiles": 10
+        "testFiles": 11
       },
       "@claw/shared-rabbitmq": {
         "runner": "vitest",
@@ -10684,7 +10729,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 140
+        "testFiles": 142
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -10736,7 +10781,7 @@
       },
       "claw-research-service": {
         "runner": "vitest",
-        "testFiles": 56
+        "testFiles": 60
       },
       "claw-routing-service": {
         "runner": "vitest",
@@ -11474,7 +11519,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 52,
-    "endpointCount": 777,
+    "endpointCount": 783,
     "envVarCount": 361,
     "eventCount": 185,
     "frontendRouteCount": 155,
@@ -11486,7 +11531,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1941,
+    "totalTestFiles": 1951,
     "workspaceCount": 25
   }
 }
