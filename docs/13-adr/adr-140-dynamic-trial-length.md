@@ -52,3 +52,19 @@ other value was refused at every layer.
 - `EntitlementApplier.revoke` (entitlements module) still writes a 30-day trial for a
   user downgraded by a billing event with no prior trial. It does not read the plan
   yet; until it does, that one path ignores an edited length.
+
+## Incident 2026-10-01: a 90-day Free plan broke signup
+
+The first ADR-140 migration widened `plans_trial_duration_check` but missed the
+second rule from `20260809120000`: `plan_trial_redemptions_duration_check` still
+required `expires_at = started_at + 30 days`. When the owner set the Free trial to
+90 days in production, every signup and every admin "Set to Free" / "Add trial
+days" failed with HTTP 500 (Postgres 23514). Dev never failed because the dev
+database had drifted and lacked that constraint.
+
+Fix: `20261002090000_trial_redemption_any_length` replaces it with
+`expires_at > started_at`. Guard: `trial-length-constraints.spec.ts` reads the
+migration history and fails if the current definition of either trial constraint
+pins a day count. Lesson: when a rule moves from a constant to a setting, grep the
+migrations for every CHECK that encoded the constant, and verify against a database
+built from migrations, not a drifted dev copy.

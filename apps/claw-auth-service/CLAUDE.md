@@ -599,3 +599,11 @@ After completing any implementation task on this service, produce:
 6. **Evidence**: typecheck output, lint output, test output
 
 - Entitlements payload carries `hasPaygCredit` (metering on and wallet available > 0, fail closed); it unlocks `allowImageGeneration` only (ADR-139, rule 37 item 21).
+
+## Trial length has no database constant (incident 2026-10-01)
+
+No CHECK may pin a trial day count: `plan_trial_redemptions_duration_check` is now
+`expires_at > started_at` (migration `20261002090000`). The guard spec
+`src/modules/plans/__tests__/trial-length-constraints.spec.ts` enforces it. The dev
+database had drifted and lacked the old constraint, so test schema changes against
+a migrated database, not only the dev one.
