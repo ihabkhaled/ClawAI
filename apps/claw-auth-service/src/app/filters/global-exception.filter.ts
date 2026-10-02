@@ -42,8 +42,15 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         const responseObj = exResponse as Record<string, unknown>;
         message = (responseObj['message'] as string) ?? exception.message;
         errors = responseObj['errors'] as unknown[] | undefined;
+        const rawCode = responseObj['code'];
+        code = typeof rawCode === 'string' ? rawCode : undefined;
       } else {
         message = exception.message;
+      }
+      // The throttler's 429 carries no code of its own; give it one so a
+      // client can say "too many attempts" instead of a generic failure.
+      if (status === HttpStatus.TOO_MANY_REQUESTS && code === undefined) {
+        code = 'RATE_LIMITED';
       }
     } else if (isClientHttpError(exception)) {
       // Thrown by body-parser before the request reaches Nest: an oversized or

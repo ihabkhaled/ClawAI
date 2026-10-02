@@ -7,6 +7,8 @@ import { useRegister } from '@/hooks/auth/use-register';
 
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
+  apiError: vi.fn(),
+  errorToast: vi.fn(),
   register: vi.fn(),
   saveCredential: vi.fn(),
   search: 'returnTo=%2Fbilling%2Fcheckout%3Fplan%3Dpro%26interval%3Dyearly',
@@ -31,7 +33,7 @@ vi.mock('@/utilities/credential-storage.utility', () => ({
 
 vi.mock('@/utilities', () => ({
   logger: { info: vi.fn(), error: vi.fn() },
-  showToast: { success: vi.fn(), apiError: vi.fn() },
+  showToast: { success: vi.fn(), apiError: mocks.apiError, error: mocks.errorToast },
 }));
 
 function makeWrapper(): React.ComponentType<{ children: React.ReactNode }> {
@@ -103,5 +105,46 @@ describe('useRegister', () => {
 
     expect(mocks.push).toHaveBeenCalledWith('/check-email?email=ada%40example.com');
     expect(mocks.push).not.toHaveBeenCalledWith(expect.stringContaining('/login'));
+  });
+
+  // The account exists but its confirmation email did not go out: the next
+  // screen has to say so instead of telling the user to wait.
+  it('flags a failed confirmation email for the check-email screen', async () => {
+    mocks.search = '';
+    mocks.register.mockResolvedValue({ user: { id: 'u1' }, verificationEmailSent: false });
+    const { result } = renderHook(() => useRegister(), { wrapper: makeWrapper() });
+
+    await act(() =>
+      result.current.registerAsync({
+        email: 'ada@example.com',
+        password: 'Secret123!',
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+      }),
+    );
+
+    expect(mocks.push).toHaveBeenCalledWith('/check-email?email=ada%40example.com&delivery=failed');
+  });
+
+  // One error surface: the register form's inline alert. A toast repeating it
+  // was the duplicate "An unexpected server error occurred" users saw twice.
+  it('shows no toast when registration fails', async () => {
+    mocks.register.mockRejectedValue(Object.assign(new Error('x'), { status: 500 }));
+    const { result } = renderHook(() => useRegister(), { wrapper: makeWrapper() });
+
+    await act(async () => {
+      await result.current
+        .registerAsync({
+          email: 'ada@example.com',
+          password: 'Secret123!',
+          firstName: 'Ada',
+          lastName: 'Lovelace',
+        })
+        .catch(() => undefined);
+    });
+
+    expect(mocks.apiError).not.toHaveBeenCalled();
+    expect(mocks.errorToast).not.toHaveBeenCalled();
+    expect(mocks.push).not.toHaveBeenCalled();
   });
 });

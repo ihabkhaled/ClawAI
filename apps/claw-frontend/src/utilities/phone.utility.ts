@@ -14,6 +14,15 @@ export function toE164(dialCode: string, nationalNumber: string): string {
   return `${dialCode}${digitsOnly}`;
 }
 
+/**
+ * Like toE164, but no digits typed means no phone at all. Emitting the bare
+ * dial code ("+20") made an untouched optional field fail validation on submit
+ * with an error the user had no way to understand.
+ */
+export function toOptionalE164(dialCode: string, nationalNumber: string): string {
+  return nationalNumber.replaceAll(/\D/gu, '').length === 0 ? '' : toE164(dialCode, nationalNumber);
+}
+
 export function isE164(value: string): boolean {
   return E164_PATTERN.test(value);
 }

@@ -39,6 +39,24 @@ describe('usePhoneInput', () => {
 
     expect(onChange).toHaveBeenCalledWith('+20101234567');
   });
+
+  // An optional phone the user never filled must stay empty, not become a bare
+  // dial code that fails validation on submit.
+  it('emits an empty value when no digits are typed', () => {
+    const onChange = vi.fn();
+    const { result } = renderHook(() => usePhoneInput('', onChange));
+
+    act(() => result.current.setNationalNumber('12'));
+    act(() => result.current.setNationalNumber(''));
+    expect(onChange).toHaveBeenLastCalledWith('');
+
+    const egypt = COUNTRY_DIAL_CODES.find((country) => country.iso2 === 'EG');
+    if (!egypt) {
+      throw new Error('Egypt fixture is missing');
+    }
+    act(() => result.current.setSelectedCountry(egypt));
+    expect(onChange).toHaveBeenLastCalledWith('');
+  });
 });
 
 describe('usePhoneInput — region default vs a saved number', () => {

@@ -14,7 +14,9 @@ vi.mock('@/hooks/auth/use-verify-email-page', () => ({
     outcome: state.outcome,
     t: (key: string): string => {
       const section = key.slice('auth.'.length) as keyof typeof en.auth;
-      return en.auth[section];
+      // auth now also holds the nested `signup` group; only leaf strings apply.
+      const value = en.auth[section];
+      return typeof value === 'string' ? value : key;
     },
   }),
 }));

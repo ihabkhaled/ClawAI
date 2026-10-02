@@ -50,6 +50,7 @@ type MockHandler =
       error: {
         response?: {
           status: number;
+          headers?: Record<string, unknown>;
           data?: { message?: string; errors?: Record<string, string[]> };
         };
       };
@@ -197,5 +198,30 @@ describe('apiClient', () => {
       expect(apiError.status).toBe(0);
       expect(apiError.message).toBe('Network error');
     }
+  });
+
+  // The reference a support ticket needs. Kept even on a 5xx, where the body
+  // and code are scrubbed: an opaque correlation id leaks nothing.
+  it('carries the x-request-id header onto the error, including on a 5xx', async () => {
+    mockHandlers.push({
+      error: {
+        response: {
+          status: 500,
+          headers: { 'x-request-id': 'req-123' },
+          data: { message: 'boom' },
+        },
+      },
+    });
+
+    const error: unknown = await apiClient.post('/auth/register', {}).catch((c: unknown) => c);
+    expect((error as ApiClientError).requestId).toBe('req-123');
+    expect((error as ApiClientError).message).not.toContain('boom');
+  });
+
+  it('leaves requestId undefined when the header is absent or blank', async () => {
+    mockHandlers.push({ error: { response: { status: 409, headers: { 'x-request-id': '' } } } });
+
+    const error: unknown = await apiClient.post('/auth/register', {}).catch((c: unknown) => c);
+    expect((error as ApiClientError).requestId).toBeUndefined();
   });
 });

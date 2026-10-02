@@ -1,5 +1,6 @@
 import type { EmailChangeStage } from '@/enums/email-change-stage.enum';
 import type { UserLanguagePreference } from '@/enums/user-language-preference.enum';
+import type { RegisterFormValues } from '@/lib/validation/register.schema';
 
 import type { UserProfile } from './user.types';
 
@@ -36,6 +37,9 @@ export type LoginResponse = {
 export type RegisterResponse = {
   user: UserProfile;
   verificationRequired: true;
+  // false: the account exists but the confirmation email could not be sent.
+  // Optional so a response from an older auth-service still type-checks.
+  verificationEmailSent?: boolean;
 };
 
 export type RefreshResponse = {
@@ -172,6 +176,49 @@ export type EmailVerificationCopyKeys = {
  * unverified address — because offering a button that cannot help is worse
  * than offering none.
  */
+/** The register-form fields the API can report a problem against. */
+export type RegisterServerField = Exclude<keyof RegisterFormValues, 'confirmPassword'>;
+
+/** The parts of a failed sign-up response the classifier reads. */
+export type SignupErrorShape = {
+  code: string | null;
+  status: number | null;
+  errors: Record<string, unknown> | null;
+  requestId: string | null;
+};
+
+/** One server-reported field problem, already mapped to an i18n key. */
+export type SignupFieldError = {
+  field: RegisterServerField;
+  messageKey: string;
+};
+
+/**
+ * The i18n keys for one sign-up failure, plus which ways out it offers.
+ * The backend message is never shown (rule 43 §2).
+ */
+export type SignupFailureCopy = {
+  titleKey: string;
+  descriptionKey: string;
+  /** A taken address: offer sign-in and password reset. */
+  offersSignIn: boolean;
+  /** A server fault: show the request reference so support can find it. */
+  showsRequestId: boolean;
+};
+
+/** One live password rule shown under the field while the user types. */
+export type PasswordRule = {
+  id: string;
+  labelKey: string;
+  pattern: RegExp;
+};
+
+export type PasswordRuleState = {
+  id: string;
+  labelKey: string;
+  isMet: boolean;
+};
+
 export type LoginFailureCopy = {
   titleKey: string;
   descriptionKey: string;

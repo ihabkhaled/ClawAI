@@ -9,7 +9,9 @@ import {
   DuplicateEntityException,
   EmailNotVerifiedException,
   InvalidCredentialsException,
+  SignupPlanAssignmentFailedException,
 } from '../../../common/errors';
+import { isUniqueViolationOn } from '../utilities/unique-violation.utility';
 import { RolesService } from '../../roles/services/roles.service';
 import { PlansRepository } from '../../plans/repositories/plans.repository';
 import { AuthRepository } from '../repositories/auth.repository';
@@ -19,7 +21,7 @@ import {
   AuthUserSummary,
   LoginResult,
   RefreshResult,
-  RegisterResult,
+  RegisteredAccount,
   UserProfile,
 } from '../types/auth.types';
 import type { SessionClient } from '../types/token-session.types';
@@ -39,7 +41,12 @@ export class AuthManager {
   // Self-registration: always creates a pending USER on the default
   // role. Any client-supplied role is impossible to inject — the DTO only
   // accepts email+password and we hard-code role here.
-  async register(dto: RegisterDto): Promise<RegisterResult> {
+  //
+  // Every expected refusal leaves with a stable code (docs: the sign-up failure
+  // table in apps/claw-auth-service/CLAUDE.md): WEAK_PASSWORD, DUPLICATE_ENTITY
+  // (the one enumeration surface ADR-096 deliberately keeps), and
+  // SIGNUP_PLAN_ASSIGNMENT_FAILED. Only a genuinely unexpected fault is a 500.
+  async register(dto: RegisterDto): Promise<RegisteredAccount> {
     this.logger.log(`register: attempting registration for email=${dto.email}`);
     const strength = validatePasswordStrength(dto.password);
     if (!strength.valid) {
@@ -51,38 +58,79 @@ export class AuthManager {
       throw new DuplicateEntityException('User', 'email');
     }
 
+    const user = await this.createPendingUser(dto);
+    const planSlug = await this.assignDefaultPlanOrUndo(user);
+
+    this.logger.log(`register: created user ${user.id} role=USER plan=${planSlug ?? 'none'}`);
+    return { verificationRequired: true, user: await this.toUserSummary(user) };
+  }
+
+  // Two sign-ups for the same address can both pass the lookup above; the
+  // loser hits the unique index. That is still "address taken", not a 500.
+  private async createPendingUser(dto: RegisterDto): Promise<User> {
     const username = await this.deriveUniqueUsername(dto.email);
     const passwordHash = await hashPassword(dto.password);
     const roleId = await this.rolesService.getDefaultUserRoleId();
+    try {
+      return await this.authRepository.createUser({
+        email: dto.email,
+        username,
+        passwordHash,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        ...(dto.phone ? { phone: dto.phone } : {}),
+        role: UserRole.USER,
+        ...(roleId ? { roleRef: { connect: { id: roleId } } } : {}),
+        status: UserStatus.PENDING,
+        mustChangePassword: false,
+        ...(dto.languagePreference ? { languagePreference: dto.languagePreference } : {}),
+      });
+    } catch (error: unknown) {
+      if (isUniqueViolationOn(error, 'email')) {
+        throw new DuplicateEntityException('User', 'email');
+      }
+      throw error;
+    }
+  }
 
-    const user = await this.authRepository.createUser({
-      email: dto.email,
-      username,
-      passwordHash,
-      firstName: dto.firstName,
-      lastName: dto.lastName,
-      ...(dto.phone ? { phone: dto.phone } : {}),
-      role: UserRole.USER,
-      ...(roleId ? { roleRef: { connect: { id: roleId } } } : {}),
-      status: UserStatus.PENDING,
-      mustChangePassword: false,
-      ...(dto.languagePreference ? { languagePreference: dto.languagePreference } : {}),
-    });
-
-    // Assign the default (Free) plan if one is configured. Non-fatal: a user
-    // without a plan is still created (ADMIN-style unrestricted fallback is
-    // handled downstream), but normally the default plan exists from seed.
+  // The user row and the plan are written by two repositories, so this is a
+  // compensating step rather than one transaction: if the plan cannot be
+  // assigned, the half-made account is deleted before the error leaves. A user
+  // row with no plan used to survive here, and the retry then failed with
+  // "address already registered" for an account nobody could use.
+  // No default plan configured is not a failure (downstream treats it as
+  // unrestricted); the seed always provides one.
+  private async assignDefaultPlanOrUndo(user: User): Promise<string | null> {
     const defaultPlan = await this.plansRepository.findDefault();
-    if (defaultPlan) {
+    if (!defaultPlan) {
+      return null;
+    }
+    try {
       await (defaultPlan.isTrial
         ? this.plansRepository.assignTrialPlanOnce(user.id, defaultPlan.id, undefined, new Date())
         : this.plansRepository.assignDefaultPlan(user.id, defaultPlan.id));
+      return defaultPlan.slug;
+    } catch (error: unknown) {
+      this.logger.error(
+        `register: plan '${defaultPlan.slug}' could not be assigned to user ${user.id}; removing the account`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      await this.undoUserCreation(user.id);
+      throw new SignupPlanAssignmentFailedException();
     }
+  }
 
-    this.logger.log(
-      `register: created user ${user.id} role=USER plan=${defaultPlan?.slug ?? 'none'}`,
-    );
-    return { verificationRequired: true, user: await this.toUserSummary(user) };
+  private async undoUserCreation(userId: string): Promise<void> {
+    try {
+      await this.authRepository.deleteUserById(userId);
+    } catch (error: unknown) {
+      // Logged loudly because it leaves an orphan an operator must remove; the
+      // user still gets the specific code, not a generic 500.
+      this.logger.error(
+        `register: compensation failed, user ${userId} left without a plan`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
   }
 
   async login(

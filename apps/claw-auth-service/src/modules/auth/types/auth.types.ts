@@ -23,9 +23,17 @@ export interface LoginResult {
   user: AuthUserSummary;
 }
 
-export interface RegisterResult {
+// What the manager hands back once the account and its plan both exist.
+export interface RegisteredAccount {
   user: AuthUserSummary;
   verificationRequired: true;
+}
+
+// What the endpoint returns. `verificationEmailSent: false` means the account
+// is real and complete but the confirmation email could not be sent; the web
+// client says so on /check-email, where the resend button is the remedy.
+export interface RegisterResult extends RegisteredAccount {
+  verificationEmailSent: boolean;
 }
 
 export interface RefreshResult {

@@ -13,28 +13,32 @@ import { EmailVerificationService } from '../email-verification.service';
 describe('AuthService', () => {
   let service: AuthService;
   let managerMock: {
+    register: Mock;
     login: Mock;
     refresh: Mock;
     logout: Mock;
     getProfile: Mock;
   };
   let rabbitMock: { publish: Mock };
+  let sendForUser: Mock;
 
   beforeEach(async () => {
     managerMock = {
+      register: vi.fn(),
       login: vi.fn(),
       refresh: vi.fn(),
       logout: vi.fn(),
       getProfile: vi.fn(),
     };
     rabbitMock = { publish: vi.fn().mockResolvedValue(null) };
+    sendForUser = vi.fn().mockResolvedValue(undefined);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
         { provide: AuthManager, useValue: managerMock },
         { provide: RabbitMQService, useValue: rabbitMock },
-        { provide: EmailVerificationService, useValue: { sendForUser: vi.fn() } },
+        { provide: EmailVerificationService, useValue: { sendForUser } },
       ],
     }).compile();
 
@@ -43,6 +47,59 @@ describe('AuthService', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  describe('register', () => {
+    const account = {
+      verificationRequired: true as const,
+      user: { id: 'u1', email: 'new@example.com', role: UserRole.USER },
+    };
+    const dto = {
+      email: 'new@example.com',
+      password: 'Str0ngPass',
+      firstName: 'Jane',
+      lastName: 'Doe',
+    };
+
+    it('reports verificationEmailSent=true when the email goes out', async () => {
+      managerMock.register.mockResolvedValue(account);
+
+      const out = await service.register(dto);
+
+      expect(out).toEqual({ ...account, verificationEmailSent: true });
+      expect(sendForUser).toHaveBeenCalledWith('u1', 'new@example.com');
+      expect(rabbitMock.publish).toHaveBeenCalledWith(
+        EventPattern.USER_CREATED,
+        expect.objectContaining({ userId: 'u1' }),
+      );
+    });
+
+    // The account is complete; failing the request here would make the retry
+    // answer DUPLICATE_ENTITY for an address the user already owns.
+    it('keeps the account and reports verificationEmailSent=false when the email fails', async () => {
+      managerMock.register.mockResolvedValue(account);
+      sendForUser.mockRejectedValue(new Error('smtp down'));
+      vi.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
+
+      const out = await service.register(dto);
+
+      expect(out.verificationEmailSent).toBe(false);
+      expect(rabbitMock.publish).toHaveBeenCalledWith(
+        EventPattern.USER_CREATED,
+        expect.objectContaining({ userId: 'u1' }),
+      );
+    });
+
+    it('rethrows a manager refusal and publishes no USER_CREATED', async () => {
+      managerMock.register.mockRejectedValue(new Error('taken'));
+
+      await expect(service.register(dto)).rejects.toThrow('taken');
+      expect(sendForUser).not.toHaveBeenCalled();
+      const created = rabbitMock.publish.mock.calls.filter(
+        (c) => c[0] === EventPattern.USER_CREATED,
+      );
+      expect(created).toHaveLength(0);
+    });
   });
 
   describe('login', () => {

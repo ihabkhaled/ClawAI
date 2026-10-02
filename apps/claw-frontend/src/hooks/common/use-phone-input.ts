@@ -7,6 +7,7 @@ import {
   isE164,
   parseE164,
   toE164,
+  toOptionalE164,
 } from '@/utilities/phone.utility';
 
 import type { UsePhoneInputReturn } from '../../types/hook.types';
@@ -76,12 +77,12 @@ export function usePhoneInput(
 
   const setNationalNumber = (next: string): void => {
     setNationalNumberState(next);
-    onChange(toE164(selectedCountry.dialCode, next));
+    onChange(toOptionalE164(selectedCountry.dialCode, next));
   };
   const setSelectedCountry = (country: CountryDialCode): void => {
     hasExplicitCountryRef.current = true;
     setSelectedCountryState(country);
-    onChange(toE164(country.dialCode, nationalNumber));
+    onChange(toOptionalE164(country.dialCode, nationalNumber));
   };
   return {
     selectedCountry,

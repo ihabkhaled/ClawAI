@@ -23,6 +23,13 @@ export class AuthRepository {
     return this.prisma.user.create({ data });
   }
 
+  // Compensation for a sign-up that could not finish. Every relation a fresh
+  // account can have by then (plan trial redemption, verification token)
+  // cascades on the user row, so one delete removes the whole attempt.
+  async deleteUserById(id: string): Promise<void> {
+    await this.prisma.user.delete({ where: { id } });
+  }
+
   async createSession(data: CreateSessionInput): Promise<Session> {
     return this.prisma.session.create({ data });
   }

@@ -7,4 +7,5 @@ export {
   EmailNotVerifiedException,
   InvalidRefreshTokenException,
   PaygRejectionException,
+  SignupPlanAssignmentFailedException,
 } from './business.exception';

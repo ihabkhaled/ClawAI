@@ -38,4 +38,35 @@ describe('registerSchema', () => {
       false,
     );
   });
+
+  // Messages are i18n keys the form renders through t(); an English sentence
+  // here was shown untranslated to every non-English reader.
+  it.each([
+    ['email', 'nope', 'auth.signup.emailInvalid'],
+    ['email', '', 'auth.signup.emailRequired'],
+    ['password', 'Ab1', 'auth.signup.passwordTooShort'],
+    ['password', 'lowercase1', 'auth.signup.passwordNeedsUppercase'],
+    ['password', 'UPPERCASE1', 'auth.signup.passwordNeedsLowercase'],
+    ['password', 'NoDigitsHere', 'auth.signup.passwordNeedsNumber'],
+    ['phone', '+20', 'auth.signup.phoneInvalid'],
+    ['firstName', ' ', 'auth.signup.firstNameRequired'],
+  ])('reports %s=%j with the key %s', (field, value, key) => {
+    const extra = field === 'password' ? { confirmPassword: value } : {};
+    const result = registerSchema.safeParse({ ...base, ...extra, [field]: value });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.message)).toContain(key);
+  });
+
+  it('reports a mismatched confirmation on confirmPassword with a translated key', () => {
+    const result = registerSchema.safeParse({ ...base, confirmPassword: 'Password2!' });
+    const issue = result.error?.issues.find((entry) => entry.path[0] === 'confirmPassword');
+    expect(issue?.message).toBe('auth.signup.passwordsDoNotMatch');
+  });
+
+  it('asks for the confirmation when it is left empty', () => {
+    const result = registerSchema.safeParse({ ...base, confirmPassword: '' });
+    expect(result.error?.issues.map((issue) => issue.message)).toContain(
+      'auth.signup.confirmPasswordRequired',
+    );
+  });
 });

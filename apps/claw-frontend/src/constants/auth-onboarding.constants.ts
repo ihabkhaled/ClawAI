@@ -30,3 +30,11 @@ export const CHECK_EMAIL_TROUBLESHOOTING_KEYS: readonly string[] = [
  * and a slower one would visibly skip.
  */
 export const RESEND_COOLDOWN_TICK_MS = 1000;
+
+/**
+ * Query flag registration adds when the account was created but the
+ * confirmation email could not be sent. /check-email reads it to say so
+ * instead of telling the user to wait for a message that is not coming.
+ */
+export const CHECK_EMAIL_DELIVERY_PARAM = 'delivery';
+export const CHECK_EMAIL_DELIVERY_FAILED = 'failed';

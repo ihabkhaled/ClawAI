@@ -800,3 +800,21 @@ gets is always the signed-out one.
   (desktop and mobile menu). It calls the portal's own `useLogout(null)` (API call, `clearAuth`, query
   cache clear); `null` skips the redirect to `/login`, so the visitor stays on the public page and the
   bar swaps back to Register + Sign in with no reload.
+
+## Sign-up errors: one surface, one code each (2026-10-02)
+
+- `classifySignupFailure` / `resolveSignupFailureCopy` / `resolveSignupFieldErrors`
+  (`utilities/signup-failure.utility.ts`) map every `/auth/register` code (table in
+  `apps/claw-auth-service/CLAUDE.md`) to `auth.signup.*` keys. The backend message is
+  never rendered (rules/43 §2). Unknown codes and 5xx are `UNKNOWN`.
+- **One error surface:** `SignupFailureAlert` inline. `useRegister` shows no error
+  toast. Do not add one back — the toast plus the box was the duplicated message.
+- Server field errors land on the field via `form.setError(field, { type: 'server' })`.
+  Phone's live format check is `PhoneInput`'s own `invalidLabel`; only a `server`
+  phone error renders below it, so the same problem never shows twice.
+- `register.schema.ts` messages are i18n **keys**; the form renders `t(message)`.
+- `ApiClientError.requestId` carries `x-request-id` (kept on 5xx too). The alert shows
+  it small and copyable only for `UNKNOWN` and `ACCOUNT_SETUP_FAILED`.
+- `PhoneInput` now emits `''` when no digits are typed (`toOptionalE164`), so an
+  untouched optional phone no longer fails as a bare dial code.
+- `verificationEmailSent: false` → `/check-email?delivery=failed` shows a warning.

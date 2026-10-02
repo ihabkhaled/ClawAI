@@ -475,6 +475,33 @@ Free = 2 only when it creates the column.
 - Raising the allowance shrinks each free request's cost budget (`ceiling / allowance`); raise
   `monthlyProviderCostCeilingMicroUsd` with it.
 
+## Sign-up failures have stable codes (2026-10-02)
+
+`POST /auth/register` never answers an expected failure with a raw 500. The web
+client maps each code to translated copy (`utilities/signup-failure.utility.ts`).
+
+| Failure                                                          | Status | Code                                                                 |
+| ---------------------------------------------------------------- | ------ | -------------------------------------------------------------------- |
+| Field format (email, password rules, names, phone E.164)         | 400    | `VALIDATION_FAILED` + `errors: { field: [RegisterValidationIssue] }` |
+| Weak password (manager defence in depth)                         | 400    | `WEAK_PASSWORD`                                                      |
+| Address already registered (incl. a concurrent P2002 on `email`) | 409    | `DUPLICATE_ENTITY`                                                   |
+| Throttled                                                        | 429    | `RATE_LIMITED` (filter adds it to the throttler's 429)               |
+| Default plan could not be assigned                               | 503    | `SIGNUP_PLAN_ASSIGNMENT_FAILED`                                      |
+| Anything else                                                    | 500    | none (client shows the generic copy + `x-request-id`)                |
+
+- **Duplicate email stays `DUPLICATE_ENTITY`.** It is the one enumeration surface
+  ADR-096 / rules/43 §1 keep on purpose. Do not add a second.
+- **Zod messages in `register.dto.ts` are `RegisterValidationIssue` codes, not prose.**
+  The frontend mirrors the enum in `src/enums/register-validation-issue.enum.ts`.
+- **Plan assignment is compensated, not transactional:** the user row and the plan
+  are written by two repositories, so on failure `AuthManager` deletes the user
+  (`AuthRepository.deleteUserById`, relations cascade) and throws the 503. A retry
+  can never hit `DUPLICATE_ENTITY` on a half-made account.
+- **A failed verification email does not fail sign-up.** The account is complete;
+  the response says `verificationEmailSent: false` and `/check-email` shows a
+  notice beside the resend button. Phone is not unique; there is no captcha and no
+  registration toggle. Only the global throttler limits `/auth/register`.
+
 ## Docker Container Rebuild Procedure
 
 When rebuilding this service (especially after shared package changes):

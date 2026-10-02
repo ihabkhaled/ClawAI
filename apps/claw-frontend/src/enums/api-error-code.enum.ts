@@ -47,6 +47,16 @@ export enum ApiErrorCode {
   INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
   EMAIL_NOT_VERIFIED = 'EMAIL_NOT_VERIFIED',
   ACCOUNT_SUSPENDED = 'ACCOUNT_SUSPENDED',
+  // Sign-up refusals (auth-service POST /auth/register). DUPLICATE_ENTITY for a
+  // taken address is the one enumeration surface ADR-096 deliberately keeps.
+  // VALIDATION_FAILED carries a per-field `errors` map of RegisterValidationIssue
+  // codes; RATE_LIMITED is the throttler's 429; SIGNUP_PLAN_ASSIGNMENT_FAILED is
+  // a 503 after which the half-made account was already removed.
+  DUPLICATE_ENTITY = 'DUPLICATE_ENTITY',
+  WEAK_PASSWORD = 'WEAK_PASSWORD',
+  VALIDATION_FAILED = 'VALIDATION_FAILED',
+  RATE_LIMITED = 'RATE_LIMITED',
+  SIGNUP_PLAN_ASSIGNMENT_FAILED = 'SIGNUP_PLAN_ASSIGNMENT_FAILED',
   // The generic 404 every service's BusinessException uses for a missing row;
   // read aloud names it because the reply can be deleted while the player is open.
   ENTITY_NOT_FOUND = 'ENTITY_NOT_FOUND',

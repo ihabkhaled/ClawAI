@@ -23,7 +23,7 @@ import type {
 import type { ProfileIdentityFormValues } from '@/lib/validation/profile.schema';
 import type { RegisterFormValues } from '@/lib/validation/register.schema';
 import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
-import type { LoginFailureCopy } from '@/types/auth.types';
+import type { LoginFailureCopy, PasswordRuleState, SignupFailureCopy } from '@/types/auth.types';
 import type {
   ComposerUploadEntry,
   ComposerAttachmentChipsProps,
@@ -118,8 +118,17 @@ export type UseRegisterFormReturn = {
   form: UseFormReturn<RegisterFormValues>;
   onSubmit: (event?: React.BaseSyntheticEvent) => Promise<void>;
   isPending: boolean;
-  isError: boolean;
-  errorMessage: string | null;
+  /** The one explanation the form shows for a failed attempt; null when none. */
+  failureCopy: SignupFailureCopy | null;
+  /** The response's x-request-id, only for failures support may need to trace. */
+  requestId: string | null;
+  copyRequestId: () => void;
+  /** Live state of each password rule for the typed password. */
+  passwordRules: PasswordRuleState[];
+  /** i18n key of an API-reported phone problem (the live check is PhoneInput's own). */
+  phoneServerErrorKey: string | null;
+  signInHref: string;
+  resetPasswordHref: string;
   t: TranslateFunction;
 };
 
@@ -161,6 +170,8 @@ export type UseCheckEmailPageReturn = {
   cooldownSeconds: number;
   /** Resolved button label: countdown, "again", or the first-time wording. */
   resendLabel: string;
+  /** Registration created the account but could not send the confirmation email. */
+  emailDeliveryFailed: boolean;
   t: TranslateFunction;
 };
 

@@ -34,8 +34,14 @@ export class AuthService {
   async register(dto: RegisterDto): Promise<RegisterResult> {
     this.logger.log(`register: attempting registration for email=${dto.email}`);
     try {
-      const result = await this.authManager.register(dto);
-      await this.emailVerificationService.sendForUser(result.user.id, result.user.email);
+      const account = await this.authManager.register(dto);
+      const result: RegisterResult = {
+        ...account,
+        verificationEmailSent: await this.sendVerificationEmail(
+          account.user.id,
+          account.user.email,
+        ),
+      };
       this.structuredLogger.logAction({
         level: LogLevel.INFO,
         message: `User registered: ${result.user.email}`,
@@ -59,6 +65,23 @@ export class AuthService {
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
       });
       throw error;
+    }
+  }
+
+  // The account is complete by the time this runs, so a mail failure must not
+  // turn into a failed sign-up: the user would retry, hit DUPLICATE_ENTITY,
+  // and be locked out of an address that is already theirs. Report it instead;
+  // /check-email says so and offers the resend endpoint.
+  private async sendVerificationEmail(userId: string, email: string): Promise<boolean> {
+    try {
+      await this.emailVerificationService.sendForUser(userId, email);
+      return true;
+    } catch (error: unknown) {
+      this.logger.error(
+        `register: verification email could not be sent for user ${userId}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      return false;
     }
   }
 

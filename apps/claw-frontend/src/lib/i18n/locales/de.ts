@@ -73,6 +73,58 @@ export const de: TranslationDictionary = {
     phoneInvalid: 'Gültige Telefonnummer eingeben',
   },
   auth: {
+    signup: {
+      firstNameRequired: 'Gib deinen Vornamen ein.',
+      firstNameTooLong: 'Der Vorname darf höchstens 64 Zeichen lang sein.',
+      lastNameRequired: 'Gib deinen Nachnamen ein.',
+      lastNameTooLong: 'Der Nachname darf höchstens 64 Zeichen lang sein.',
+      emailRequired: 'Gib deine E-Mail-Adresse ein.',
+      emailInvalid: 'Gib eine gültige E-Mail-Adresse ein, zum Beispiel name@example.com.',
+      emailTooLong: 'Die E-Mail-Adresse darf höchstens 255 Zeichen lang sein.',
+      phoneInvalid:
+        'Diese Telefonnummer scheint nicht zu stimmen. Prüfe das Land und die Ziffern oder lass das Feld leer. Es ist optional.',
+      passwordTooShort: 'Das Passwort muss mindestens 8 Zeichen lang sein.',
+      passwordTooLong: 'Das Passwort darf höchstens 128 Zeichen lang sein.',
+      passwordNeedsUppercase: 'Füge mindestens einen Großbuchstaben hinzu (A-Z).',
+      passwordNeedsLowercase: 'Füge mindestens einen Kleinbuchstaben hinzu (a-z).',
+      passwordNeedsNumber: 'Füge mindestens eine Ziffer hinzu (0-9).',
+      passwordWeak:
+        'Wähle ein stärkeres Passwort: mindestens 8 Zeichen mit einem Großbuchstaben, einem Kleinbuchstaben und einer Ziffer.',
+      confirmPasswordRequired: 'Gib dein Passwort zur Bestätigung erneut ein.',
+      passwordsDoNotMatch:
+        'Die beiden Passwörter stimmen nicht überein. Gib in beiden Feldern dasselbe Passwort ein.',
+      passwordRulesTitle: 'Dein Passwort braucht:',
+      ruleLength: '8 oder mehr Zeichen',
+      ruleUppercase: 'Einen Großbuchstaben',
+      ruleLowercase: 'Einen Kleinbuchstaben',
+      ruleNumber: 'Eine Ziffer',
+      ruleMet: 'erfüllt',
+      ruleNotMet: 'noch nicht erfüllt',
+      emailTakenTitle: 'Für diese E-Mail-Adresse gibt es bereits ein Konto',
+      emailTakenDescription:
+        'Melde dich stattdessen damit an. Wenn du das Passwort vergessen hast, kannst du es zurücksetzen.',
+      actionSignIn: 'Anmelden',
+      actionResetPassword: 'Passwort zurücksetzen',
+      invalidDetailsTitle: 'Einige Angaben müssen korrigiert werden',
+      invalidDetailsDescription:
+        'Prüfe die markierten Felder, korrigiere sie und versuche es erneut.',
+      rateLimitedTitle: 'Zu viele Versuche',
+      rateLimitedDescription: 'Bitte warte eine Minute und versuche es dann erneut.',
+      accountSetupFailedTitle: 'Wir konnten die Einrichtung deines Kontos nicht abschließen',
+      accountSetupFailedDescription:
+        'Es wurde nichts gespeichert, du kannst es also in ein paar Minuten gefahrlos erneut versuchen. Wenn es weiterhin passiert, wende dich an den Support.',
+      networkTitle: 'ClawAI ist nicht erreichbar',
+      networkDescription: 'Prüfe deine Internetverbindung und versuche es erneut.',
+      unknownTitle: 'Wir konnten dein Konto gerade nicht erstellen',
+      unknownDescription:
+        'Bitte versuche es in ein paar Minuten erneut. Wenn es weiterhin passiert, wende dich an den Support.',
+      requestIdLabel: 'Referenz: {id}',
+      copyRequestId: 'Referenz kopieren',
+      requestIdCopied: 'Referenz kopiert',
+      emailNotSentTitle: 'Dein Konto ist bereit, aber die E-Mail wurde nicht gesendet',
+      emailNotSentDescription:
+        'Wir konnten deine Bestätigungs-E-Mail nicht senden. Nutze unten die Schaltfläche zum erneuten Senden.',
+    },
     login: 'Anmelden',
     logout: 'Abmelden',
     email: 'E-Mail',

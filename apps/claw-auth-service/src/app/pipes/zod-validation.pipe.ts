@@ -19,8 +19,11 @@ export class ZodValidationPipe implements PipeTransform {
         const field = issue.path.join('.') || '<root>';
         (errors[field] ??= []).push(issue.message);
       }
+      // `code` lets a client tell "fix these fields" apart from every other
+      // 400 without parsing the English message.
       throw new BadRequestException({
         message: 'Validation failed',
+        code: 'VALIDATION_FAILED',
         errors,
       });
     }

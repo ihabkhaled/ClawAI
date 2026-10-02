@@ -7,8 +7,10 @@ import { type PlansRepository } from '../../../plans/repositories/plans.reposito
 import { UserRole, UserStatus } from '../../../../common/enums';
 import {
   AccountSuspendedException,
+  DuplicateEntityException,
   EmailNotVerifiedException,
   InvalidCredentialsException,
+  SignupPlanAssignmentFailedException,
 } from '../../../../common/errors';
 import { SessionClientKind } from '../../enums/session-client-kind.enum';
 import * as utilities from '@common/utilities';
@@ -43,6 +45,7 @@ const mockRepository = (): Record<keyof AuthRepository, Mock> => ({
   findUserByUsername: vi.fn(),
   findUserById: vi.fn(),
   createUser: vi.fn(),
+  deleteUserById: vi.fn().mockResolvedValue(void 0),
   createSession: vi.fn().mockResolvedValue({ id: 'session-1' }),
   findSessionByRefreshTokenHash: vi.fn(),
   findSessionById: vi.fn(),
@@ -194,6 +197,116 @@ describe('AuthManager', () => {
 
       const created = repository.createUser.mock.calls[0]?.[0];
       expect(created.username).toBe('taken1');
+    });
+
+    describe('failure codes', () => {
+      const dto = {
+        email: 'new@example.com',
+        password: 'Str0ng!Pass',
+        firstName: 'Jane',
+        lastName: 'Doe',
+      };
+
+      beforeEach(() => {
+        repository.findUserByEmail.mockResolvedValue(null);
+        repository.findUserByUsername.mockResolvedValue(null);
+        repository.createUser.mockResolvedValue({
+          ...mockUser,
+          id: 'new-user',
+          role: UserRole.USER,
+        });
+      });
+
+      it('reports a weak password as WEAK_PASSWORD (400)', async () => {
+        const error = await manager.register({ ...dto, password: 'alllowercase1' }).catch((e) => e);
+        expect(error.code).toBe('WEAK_PASSWORD');
+        expect(error.getStatus()).toBe(400);
+      });
+
+      it('reports a taken address as DUPLICATE_ENTITY (409), the ADR-096 exception', async () => {
+        repository.findUserByEmail.mockResolvedValue(mockUser);
+        const error = await manager.register(dto).catch((e) => e);
+        expect(error).toBeInstanceOf(DuplicateEntityException);
+        expect(error.code).toBe('DUPLICATE_ENTITY');
+        expect(error.getStatus()).toBe(409);
+      });
+
+      it('maps a concurrent sign-up losing the email unique index to DUPLICATE_ENTITY, not a 500', async () => {
+        repository.createUser.mockRejectedValue({ code: 'P2002', meta: { target: ['email'] } });
+        await expect(manager.register(dto)).rejects.toBeInstanceOf(DuplicateEntityException);
+      });
+
+      it('rethrows a unique violation on another column untouched', async () => {
+        const raw = { code: 'P2002', meta: { target: ['username'] } };
+        repository.createUser.mockRejectedValue(raw);
+        await expect(manager.register(dto)).rejects.toBe(raw);
+      });
+
+      it('deletes the half-made account and throws SIGNUP_PLAN_ASSIGNMENT_FAILED (503) when the plan fails', async () => {
+        plansRepository.findDefault.mockResolvedValue({
+          id: 'plan-free',
+          slug: 'free',
+          isTrial: true,
+        });
+        plansRepository.assignTrialPlanOnce.mockRejectedValue(new Error('check constraint'));
+
+        const error = await manager.register(dto).catch((e) => e);
+
+        expect(error).toBeInstanceOf(SignupPlanAssignmentFailedException);
+        expect(error.code).toBe('SIGNUP_PLAN_ASSIGNMENT_FAILED');
+        expect(error.getStatus()).toBe(503);
+        expect(repository.deleteUserById).toHaveBeenCalledWith('new-user');
+      });
+
+      it('compensates a failed non-trial default plan the same way', async () => {
+        plansRepository.findDefault.mockResolvedValue({
+          id: 'plan-free',
+          slug: 'free',
+          isTrial: false,
+        });
+        plansRepository.assignDefaultPlan.mockRejectedValue(new Error('db down'));
+
+        await expect(manager.register(dto)).rejects.toBeInstanceOf(
+          SignupPlanAssignmentFailedException,
+        );
+        expect(repository.deleteUserById).toHaveBeenCalledWith('new-user');
+      });
+
+      it('still returns the specific code when the compensating delete itself fails', async () => {
+        plansRepository.findDefault.mockResolvedValue({
+          id: 'plan-free',
+          slug: 'free',
+          isTrial: true,
+        });
+        plansRepository.assignTrialPlanOnce.mockRejectedValue(new Error('check constraint'));
+        repository.deleteUserById.mockRejectedValue(new Error('fk'));
+
+        await expect(manager.register(dto)).rejects.toBeInstanceOf(
+          SignupPlanAssignmentFailedException,
+        );
+      });
+
+      it('does not delete anything when the plan is assigned', async () => {
+        plansRepository.findDefault.mockResolvedValue({
+          id: 'plan-free',
+          slug: 'free',
+          isTrial: true,
+        });
+        plansRepository.assignTrialPlanOnce.mockResolvedValue({ id: 'assignment' });
+
+        await manager.register(dto);
+
+        expect(repository.deleteUserById).not.toHaveBeenCalled();
+      });
+
+      it('creates the account without a plan when none is configured', async () => {
+        plansRepository.findDefault.mockResolvedValue(null);
+
+        const result = await manager.register(dto);
+
+        expect(result.verificationRequired).toBe(true);
+        expect(repository.deleteUserById).not.toHaveBeenCalled();
+      });
     });
   });
 

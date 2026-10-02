@@ -5,7 +5,11 @@ import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 import { ROUTES } from '@/constants';
-import { RESEND_COOLDOWN_TICK_MS } from '@/constants/auth-onboarding.constants';
+import {
+  CHECK_EMAIL_DELIVERY_FAILED,
+  CHECK_EMAIL_DELIVERY_PARAM,
+  RESEND_COOLDOWN_TICK_MS,
+} from '@/constants/auth-onboarding.constants';
 import { useTranslation } from '@/lib/i18n';
 import { authRepository } from '@/repositories/auth/auth.repository';
 import type { UseCheckEmailPageReturn } from '@/types';
@@ -107,6 +111,11 @@ export function useCheckEmailPage(): UseCheckEmailPageReturn {
     hasResent,
     cooldownSeconds,
     resendLabel,
+    // Set by registration when the account was created but the confirmation
+    // email could not be sent. Display-only, like the address: the remedy is
+    // the resend button, which behaves the same either way.
+    emailDeliveryFailed:
+      searchParams.get(CHECK_EMAIL_DELIVERY_PARAM) === CHECK_EMAIL_DELIVERY_FAILED,
     t,
   };
 }

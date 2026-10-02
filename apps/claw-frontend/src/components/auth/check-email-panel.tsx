@@ -3,6 +3,7 @@
 import { MailCheck, RefreshCw, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ROUTES } from '@/constants';
@@ -10,6 +11,7 @@ import {
   CHECK_EMAIL_STEPS,
   CHECK_EMAIL_TROUBLESHOOTING_KEYS,
 } from '@/constants/auth-onboarding.constants';
+import { AlertVariant } from '@/enums/alert-variant.enum';
 import { useCheckEmailPage } from '@/hooks/auth/use-check-email-page';
 
 /**
@@ -35,6 +37,7 @@ export function CheckEmailPanel(): React.ReactElement {
     hasResent,
     cooldownSeconds,
     resendLabel,
+    emailDeliveryFailed,
     t,
   } = useCheckEmailPage();
 
@@ -62,6 +65,13 @@ export function CheckEmailPanel(): React.ReactElement {
       </CardHeader>
 
       <CardContent className="space-y-6">
+        {emailDeliveryFailed ? (
+          <Alert
+            variant={AlertVariant.Warning}
+            title={t('auth.signup.emailNotSentTitle')}
+            description={t('auth.signup.emailNotSentDescription')}
+          />
+        ) : null}
         {/* The blocking fact, stated once, unmissably. Everything else on this
             page is detail; this is the reason the page exists at all. */}
         <div className="border-warning/40 bg-warning/10 flex gap-3 rounded-xl border p-3 sm:p-4">

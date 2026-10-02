@@ -10,18 +10,24 @@ export class ApiClientError extends Error {
   // specific error to a tailored UX (e.g. plan upgrade CTA) instead of a
   // generic toast.
   code?: string;
+  // The `x-request-id` the service stamped on the response. Safe to show: it is
+  // an opaque correlation id, and it is what lets support find the one log line
+  // behind "it failed" when the body itself is deliberately generic.
+  requestId?: string;
 
   constructor(params: {
     message: string;
     status: number;
     errors?: Record<string, string[]>;
     code?: string;
+    requestId?: string;
   }) {
     super(params.message);
     this.name = 'ApiClientError';
     this.status = params.status;
     this.errors = params.errors;
     this.code = params.code;
+    this.requestId = params.requestId;
   }
 }
 
@@ -116,6 +122,7 @@ function toApiClientError(error: unknown): ApiClientError {
     const axiosError = error as {
       response?: {
         status: number;
+        headers?: Record<string, unknown>;
         data?: {
           message?: string;
           code?: string;
@@ -127,6 +134,7 @@ function toApiClientError(error: unknown): ApiClientError {
 
     const status = axiosError.response?.status ?? 500;
     const isServerError = status >= 500;
+    const rawRequestId = axiosError.response?.headers?.['x-request-id'];
 
     return new ApiClientError({
       message: isServerError
@@ -141,6 +149,8 @@ function toApiClientError(error: unknown): ApiClientError {
         isServerError && !API_CODE_PASSTHROUGH_SERVER_STATUSES.has(status)
           ? undefined
           : (axiosError.response?.data?.errorCode ?? axiosError.response?.data?.code),
+      requestId:
+        typeof rawRequestId === 'string' && rawRequestId.length > 0 ? rawRequestId : undefined,
     });
   }
   return new ApiClientError({ message: 'Network error', status: 0 });

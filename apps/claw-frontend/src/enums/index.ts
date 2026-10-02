@@ -176,6 +176,8 @@ export { ThreadSearchState } from './thread-search-state.enum';
 export { ModelPricingSource, ModelPricingSourceFilter } from './model-pricing-source.enum';
 export { SseConnectionHealth } from './sse-connection-health.enum';
 export { LoginFailureReason } from './login-failure-reason.enum';
+export { RegisterValidationIssue } from './register-validation-issue.enum';
+export { SignupFailureReason } from './signup-failure-reason.enum';
 export { EmailVerificationTone } from './email-verification-tone.enum';
 export { ModelRecencyTier } from './model-recency-tier.enum';
 export { AnswerExportFormat } from './answer-export-format.enum';

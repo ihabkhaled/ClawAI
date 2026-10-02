@@ -79,6 +79,24 @@ export class AccountSuspendedException extends BusinessException {
   }
 }
 
+/**
+ * Sign-up created the account but could not give it its default plan.
+ *
+ * The account row is deleted before this is thrown, so "try again" is honest:
+ * nothing was kept, and a retry cannot hit DUPLICATE_ENTITY on an address the
+ * user never got to use. 503 because the fault is ours and transient, and
+ * because 503 is the one 5xx whose `code` the web client is allowed to read.
+ */
+export class SignupPlanAssignmentFailedException extends BusinessException {
+  constructor() {
+    super(
+      'Account setup could not be completed',
+      'SIGNUP_PLAN_ASSIGNMENT_FAILED',
+      HttpStatus.SERVICE_UNAVAILABLE,
+    );
+  }
+}
+
 export class InvalidRefreshTokenException extends BusinessException {
   constructor() {
     super('Invalid or expired refresh token', 'INVALID_REFRESH_TOKEN', HttpStatus.UNAUTHORIZED);

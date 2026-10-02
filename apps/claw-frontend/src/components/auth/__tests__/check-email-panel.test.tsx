@@ -121,4 +121,16 @@ describe('CheckEmailPanel', () => {
 
     expect(await screen.findByRole('button', { name: /17/ })).toBeInTheDocument();
   });
+
+  it('says so when registration could not send the confirmation email', () => {
+    searchParams.value = new URLSearchParams({ email: 'ada@example.com', delivery: 'failed' });
+    renderPanel();
+    expect(screen.getByText(en.auth.signup.emailNotSentTitle)).toBeInTheDocument();
+    expect(screen.getByText(en.auth.signup.emailNotSentDescription)).toBeInTheDocument();
+  });
+
+  it('shows no delivery warning on a normal arrival', () => {
+    renderPanel();
+    expect(screen.queryByText(en.auth.signup.emailNotSentTitle)).not.toBeInTheDocument();
+  });
 });

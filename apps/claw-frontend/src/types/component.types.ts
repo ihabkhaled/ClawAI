@@ -74,6 +74,8 @@ import type {
   AdminCreateUserRequest,
   AdminUserUpdateRequest,
   EmailChangePendingState,
+  PasswordRuleState,
+  SignupFailureCopy,
 } from './auth.types';
 import type { BestOfNResultState, CandidateResult } from './best-of-n.types';
 import type { DownloadStats, ModelCatalogEntry, PullJobResponse } from './catalog.types';
@@ -257,6 +259,23 @@ export type ResponsiveTableProps<T> = {
   mobileTitle: (row: T) => React.ReactNode;
   emptyMessage?: string;
   className?: string;
+};
+
+export type SignupFailureAlertProps = {
+  copy: SignupFailureCopy;
+  /** Shown small and copyable when the failure is ours; null hides it. */
+  requestId: string | null;
+  onCopyRequestId: () => void;
+  signInHref: string;
+  resetPasswordHref: string;
+  t: TranslateFunction;
+};
+
+export type PasswordRulesChecklistProps = {
+  rules: PasswordRuleState[];
+  /** Id the password input points at with aria-describedby. */
+  id: string;
+  t: TranslateFunction;
 };
 
 export type AlertProps = {
@@ -2820,6 +2839,8 @@ export type PublicSharedChatFooterProps = {
 
 export type PasswordInputProps = Omit<React.ComponentPropsWithoutRef<'input'>, 'type'> & {
   id: string;
+  /** Forwarded to Input: error styling plus aria-invalid. */
+  error?: boolean;
 };
 
 export type ThreadSearchPanelProps = {
