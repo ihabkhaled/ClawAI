@@ -98,18 +98,9 @@ const EXEMPT_WORKSPACES = ['apps/claw-frontend/', 'apps/claw-coding-agent/'];
 /**
  * Individual files with a DIFFERENT, stronger control of their own.
  */
+// http-fetch.adapter.ts used to be exempt; since TD-031 it connects through
+// `pinnedFetch` (one validated IP per hop) and no longer calls `fetch`.
 const EXEMPT_FILES = new Map([
-  [
-    'apps/claw-research-service/src/modules/fetch/adapters/http-fetch.adapter.ts',
-    // The crawler. Its URL is typed by a USER, so a static host allowlist is
-    // exactly the wrong shape — it must accept any public host and refuse every
-    // private one, which is the opposite question. It calls
-    // `assertSafeOutboundUrl` with an operator-managed allowlist for private
-    // hosts, and re-checks the destination AFTER redirects, which the shared
-    // guard does not do. Swapping that for `assertSafeRequestUrl` would be a
-    // downgrade.
-    'uses assertSafeOutboundUrl + post-redirect re-check (stronger, user-supplied URLs)',
-  ],
 ]);
 
 /**
