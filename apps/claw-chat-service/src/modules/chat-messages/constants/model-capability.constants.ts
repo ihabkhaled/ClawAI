@@ -64,6 +64,9 @@ export const modelsSnapshotResponseSchema = z.object({
       maxOutputTokens: z.number().int().positive().nullish(),
       exposure: z.string().optional(),
       kind: z.string().optional(),
+      // F093: the administrator's per-model prompt-caching switch. Absent (an
+      // older connector-service) reads as off.
+      promptCaching: z.boolean().optional(),
     }),
   ),
 });

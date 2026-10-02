@@ -81,6 +81,7 @@ const makeRecord = (overrides: Record<string, unknown> = {}) => ({
   workflow: null,
   rawInputTokens: 0,
   rawCachedTokens: 0,
+  rawCacheWriteTokens: 0,
   rawReasoningTokens: 0,
   rawOutputTokens: 0,
   toolCallCount: 0,
@@ -1109,7 +1110,9 @@ describe('CreditReservationManager', () => {
         useCounter(2);
 
         for (let i = 0; i < 2; i += 1) {
-          await manager.reserve(makeInput({ surface: PaygSurface.CODING_AGENT, requestId: `a-${i}` }));
+          await manager.reserve(
+            makeInput({ surface: PaygSurface.CODING_AGENT, requestId: `a-${i}` }),
+          );
         }
         await expect(
           manager.reserve(makeInput({ surface: PaygSurface.CODING_AGENT, requestId: 'a-over' })),

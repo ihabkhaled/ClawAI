@@ -262,18 +262,32 @@ Bearer auth, response parsing through the real dispatch path).
 
 ## Anthropic prompt caching and gateway headers (F093 / F092, 2026-09-29)
 
-**Prompt caching.** `buildAnthropicMessagesRequestBody` ends in
-`applyAnthropicPromptCache` (`utilities/anthropic-prompt-cache.utility.ts`): the
-system prompt becomes one text block with `cache_control: ephemeral`, and one
-automatic top-level `cache_control` follows the conversation tail — two of
-Anthropic's four breakpoints. Billing needed no change: `extractAnthropicUsage`
-already reports `cache_read_input_tokens` as `cachedPromptTokens`. Limits, stated
-honestly: this is the ENABLE_ANTHROPIC_NATIVE_PDF body only (the default
-Anthropic path is the OpenAI-shaped body, which carries no breakpoints); that
-body is posted to `${baseUrl}/chat/completions`, so breakpoints only take
-effect where that URL serves the Messages API; and a cache WRITE is still billed
-at the plain input rate (under by the 25% write premium) until
-`cacheWritePerMillionMicroUsd` is wired into the credit calculator.
+**Prompt caching ([ADR-153](../13-adr/adr-153-anthropic-prompt-caching-with-cache-write-billing.md),
+2026-10-01).** Default OFF, per model. The administrator's switch
+(`connector_models.prompt_caching`) reaches this service on the models snapshot
+(`ModelCapabilityClient.resolvePromptCaching`, false on any doubt). Both chat
+chokepoints (`callProviderOnce`, `streamCandidateOnce`) call
+`applyPromptCaching` BEFORE the PAYG hold: `PromptCachePolicyService` →
+`isPromptCacheEligible` (ANTHROPIC, switch ON, no native tool catalog, no
+caller-supplied hold) sets `ExecutionOptions.anthropicPromptCache`. When set:
+
+- `reservePaygHold` adds `cacheWritePromptTokens` (the estimated prompt) so auth holds
+  the premium; settlement is capped at the hold, so an unsized premium is margin loss.
+- The call is Anthropic's own `POST {baseUrl}/messages`: `x-api-key` +
+  `anthropic-version` (`buildAnthropicNativeHeaders`), `max_tokens` always set, and
+  `applyAnthropicPromptCache` marks the system block plus the automatic top-level
+  breakpoint (two of four). Buffered replies go through
+  `parseAnthropicMessagesResponse` + `extractAnthropicUsage`; streams use
+  `AiStreamProtocol.ANTHROPIC_SSE` (`AnthropicStreamFrameReader` merges `message_start`
+  and `message_delta` usage into ONE fragment).
+- `LlmResponse.cacheCreationPromptTokens` flows to `settlePaygHold` →
+  `finalizeCredit`, which sends it on the wire only when positive.
+
+Not cached, on purpose: a tool-carrying turn (no `tool_use` reader), a compare lane
+(its hold is taken before the call, unsized), every other provider. The legacy
+`ENABLE_ANTHROPIC_NATIVE_PDF` body no longer carries breakpoints (nothing reads its
+cache usage). Tests: `__tests__/payg-credit-anthropic-cache.spec.ts`,
+`__tests__/anthropic-stream-protocol.spec.ts`, `utilities/__tests__/anthropic-*.spec.ts`.
 
 **Gateway headers.** `resolveProviderConfig` returns the connector's
 `gatewayHeaders`; `withConnectorGatewayHeaders` merges them under the provider

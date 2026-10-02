@@ -42,6 +42,8 @@ export type CreditReserveInput = {
   workflow: string | null;
   promptTokens: number;
   cachedPromptTokens: number;
+  /** Most of the prompt that could be billed as a cache write; absent means zero (F093). */
+  cacheWritePromptTokens?: number;
   requestedMaxOutputTokens: number;
   /** Expected per-unit quantities; absent means zero. Sizes the hold. */
   imageUnits?: number;
@@ -55,6 +57,8 @@ export type CreditFinalizeInput = {
   promptTokens: number;
   completionTokens: number;
   cachedPromptTokens: number;
+  /** Prompt tokens the provider wrote into its cache; absent means zero (F093). */
+  cacheCreationPromptTokens?: number;
   reasoningTokens: number;
   toolCalls: number;
   searchCalls: number;

@@ -1770,3 +1770,15 @@ research planner decided with no attachment facts and its `thinking` was shown a
   `constants/runtime-v2-admission.constants.ts`: `RUNTIME_TOOL_NAME_COLLISION` (names equal after
   `sanitizeNativeToolName`, both listed), `RUNTIME_TOOL_RISK_CLASS_UNKNOWN` (lists the 13 accepted classes),
   `RUNTIME_TOOL_DUPLICATE_IDENTITY`, `RUNTIME_TOOL_CATALOG_TOO_LARGE`.
+
+## Anthropic prompt caching is per model, default OFF, and sized into the hold (2026-10-01, ADR-153)
+
+- The switch is `connector_models.prompt_caching`, read from the models snapshot via
+  `ModelCapabilityClient.resolvePromptCaching`. Never an env var; unknown means OFF.
+- `applyPromptCaching` runs in BOTH chokepoints, BEFORE `reservePaygHold`, so the hold carries
+  `cacheWritePromptTokens`. Setting `anthropicPromptCache` anywhere else, or after the hold, lets
+  the write premium slip past a hold that was sized without it.
+- The native Messages transport has no `tool_use` reader and compare lanes arrive with a hold: both
+  stay uncached (`isPromptCacheEligible`). Do not widen it without a hold sized for the premium.
+- `applyAnthropicPromptCache` is applied ONLY when `promptCache` is true; the legacy
+  `ENABLE_ANTHROPIC_NATIVE_PDF` body must not carry breakpoints (its usage is read as OpenAI).

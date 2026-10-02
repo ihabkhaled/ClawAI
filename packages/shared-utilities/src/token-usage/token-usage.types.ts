@@ -15,6 +15,12 @@ export type NormalizeTokenUsageInput = {
    */
   cachedPromptTokens?: number;
   /**
+   * Subset of `promptTokens` the provider WROTE into its prompt cache
+   * (Anthropic `cache_creation_input_tokens`). Clamped to whatever of the
+   * prompt is not already a cache read, so the two can never sum past it.
+   */
+  cacheCreationPromptTokens?: number;
+  /**
    * Subset of `completionTokens` spent on reasoning / thinking. Clamped the
    * same way.
    */

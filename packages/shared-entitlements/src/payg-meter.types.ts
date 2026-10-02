@@ -24,6 +24,13 @@ export type PaygReserveInput = {
   workflow?: string;
   promptTokens: number;
   cachedPromptTokens?: number;
+  /**
+   * The most of the prompt that could be billed as a prompt-cache WRITE (F093).
+   * Set ONLY when the request actually asks the provider to cache — auth holds
+   * those tokens at the write rate, because settlement is capped at the hold and
+   * an under-sized hold silently absorbs the write premium. Omit otherwise.
+   */
+  cacheWritePromptTokens?: number;
   requestedMaxOutputTokens: number;
 } & PaygUnitCounts;
 
@@ -67,6 +74,12 @@ export type PaygFinalizeUsage = {
   promptTokens: number;
   completionTokens: number;
   cachedPromptTokens: number;
+  /**
+   * Subset of `promptTokens` the provider WROTE into its prompt cache (F093).
+   * Disjoint from `cachedPromptTokens`. Optional: absent means zero, and it is
+   * sent on the wire only when positive.
+   */
+  cacheCreationPromptTokens?: number;
   reasoningTokens: number;
 };
 

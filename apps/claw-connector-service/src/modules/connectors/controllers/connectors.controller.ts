@@ -9,6 +9,10 @@ import { CreateConnectorDto, createConnectorSchema } from '../dto/create-connect
 import { UpdateConnectorDto, updateConnectorSchema } from '../dto/update-connector.dto';
 import { SetModelExposureDto, setModelExposureSchema } from '../dto/set-model-exposure.dto';
 import {
+  SetModelPromptCachingDto,
+  setModelPromptCachingSchema,
+} from '../dto/set-model-prompt-caching.dto';
+import {
   ListConnectorsQueryDto,
   listConnectorsQuerySchema,
 } from '../dto/list-connectors-query.dto';
@@ -110,5 +114,17 @@ export class ConnectorsController {
     @Body(new ZodValidationPipe(setModelExposureSchema)) dto: SetModelExposureDto,
   ): Promise<{ updated: number; previouslyExposed: string[] }> {
     return this.connectorsService.setModelExposure(id, dto.modelKeys, dto.exposed);
+  }
+
+  // F093: switch Anthropic prompt caching on or off for a bounded set of models.
+  // Default is OFF everywhere. A cache write is billed at a premium over input,
+  // so this is administrator-only and never inferred from a sync.
+  @Put(':id/models/prompt-caching')
+  @RequirePermissions(Permission.ADMIN_CONNECTORS_MANAGE)
+  async setModelPromptCaching(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(setModelPromptCachingSchema)) dto: SetModelPromptCachingDto,
+  ): Promise<{ updated: number }> {
+    return this.connectorsService.setModelPromptCaching(id, dto.modelKeys, dto.enabled);
   }
 }

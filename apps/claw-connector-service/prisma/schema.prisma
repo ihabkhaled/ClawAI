@@ -164,6 +164,13 @@ model ConnectorModel {
   // the retire window (ADR-151). A sync never resets it.
   unavailableCount         Int               @default(0) @map("unavailable_count")
   unavailableAt            DateTime?         @map("unavailable_at")
+  // F093: ask the provider to cache this model's prompt (Anthropic Messages API
+  // `cache_control`). DEFAULT OFF and never touched by a sync. Turning it on
+  // changes what a request costs, because a cache WRITE is billed at the
+  // model's `cacheWritePerMillionMicroUsd` rate in routing-service, so it is an
+  // administrator decision per model, never inferred. Only ANTHROPIC rows can
+  // carry it.
+  promptCaching            Boolean           @default(false) @map("prompt_caching")
 
   connector Connector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
 

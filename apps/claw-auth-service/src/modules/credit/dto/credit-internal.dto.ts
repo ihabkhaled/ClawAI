@@ -43,6 +43,10 @@ export const reserveCreditSchema = z.object({
   workflow: z.string().min(1).max(CREDIT_WORKFLOW_MAX_LENGTH).nullish(),
   promptTokens: z.number().int().min(0).max(CREDIT_TOKEN_COUNT_MAX),
   cachedPromptTokens: z.number().int().min(0).max(CREDIT_TOKEN_COUNT_MAX),
+  // F093: the most of the prompt that could be billed as a prompt-cache WRITE.
+  // Sent only when the request asks the provider to cache; absent means zero,
+  // so a caller that predates it is unchanged. Held at the write rate.
+  cacheWritePromptTokens: z.number().int().min(0).max(CREDIT_TOKEN_COUNT_MAX).default(0),
   requestedMaxOutputTokens: z.number().int().min(1).max(CREDIT_MAX_OUTPUT_TOKENS_MAX),
   // EXPECTED units: the hold is sized on them.
   ...unitCountFields,
@@ -59,6 +63,11 @@ export const finalizeCreditSchema = z.object({
     // place (`toRawTokenBreakdown`) rather than at each caller — doing it here
     // would double-charge every cached and reasoning token.
     cachedPromptTokens: z.number().int().min(0).max(CREDIT_TOKEN_COUNT_MAX),
+    // F093, additive and optional: the subset of `promptTokens` the provider
+    // wrote into its prompt cache (Anthropic `cache_creation_input_tokens`).
+    // Disjoint from `cachedPromptTokens`; priced at the write rate only when
+    // the model's rate row publishes one. Absent means zero.
+    cacheCreationPromptTokens: z.number().int().min(0).max(CREDIT_TOKEN_COUNT_MAX).default(0),
     reasoningTokens: z.number().int().min(0).max(CREDIT_TOKEN_COUNT_MAX),
   }),
   toolCalls: z.number().int().min(0).max(CREDIT_CALL_COUNT_MAX).default(0),

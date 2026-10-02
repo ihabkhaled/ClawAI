@@ -16,6 +16,8 @@ export type ModelsSnapshotEntry = {
   maxOutputTokens?: number | null;
   exposure?: string;
   kind?: string;
+  /** F093: prompt caching switched on for this model by an administrator. */
+  promptCaching?: boolean;
 };
 
 /** The snapshot keyed by `modelMatchKey(provider, modelKey)`. */

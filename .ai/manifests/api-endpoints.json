@@ -1692,6 +1692,11 @@
         "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
       },
       {
+        "method": "PUT",
+        "route": "/connectors/:id/models/prompt-caching",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/connectors/:id/sync",
         "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
@@ -3958,5 +3963,5 @@
     ]
   },
   "generated": true,
-  "total": 784
+  "total": 785
 }

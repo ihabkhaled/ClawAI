@@ -20,6 +20,7 @@ import { ContextSaveChoiceService } from './services/context-save-choice.service
 import { ContextSaveController } from './controllers/context-save.controller';
 import { ModelContextWindowClient } from './clients/model-context-window.client';
 import { ModelCapabilityClient } from './clients/model-capability.client';
+import { PromptCachePolicyService } from './services/prompt-cache-policy.service';
 import { ModelOutputLimitClient } from './clients/model-output-limit.client';
 import { ModelUnavailableClient } from './clients/model-unavailable.client';
 import { AttachmentDeliveryManager } from './managers/attachment-delivery.manager';
@@ -134,6 +135,7 @@ import { RuntimeV2ThreadActivityService } from './services/runtime-v2-thread-act
     AttachmentInfoClient,
     ModelContextWindowClient,
     ModelCapabilityClient,
+    PromptCachePolicyService,
     ModelOutputLimitClient,
     ModelUnavailableClient,
     AttachmentDeliveryManager,

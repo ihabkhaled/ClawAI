@@ -476,6 +476,19 @@ allowance, not a hidden margin control — a reversal of
 identical to `monthlyTokenQuota` by construction, and `plan-catalog.spec.ts`
 fails if they drift.
 
+**Prompt-cache writes ([ADR-153](../13-adr/adr-153-anthropic-prompt-caching-with-cache-write-billing.md)).**
+`reserve` takes an optional `cacheWritePromptTokens` (default 0): the most of the
+prompt that could be billed as a cache write. `clampOutputTokensToBalance` holds those
+tokens at the dearer of `cacheWritePerMillionMicroUsd` and the input rate, because
+`applySettlement` charges `min(actual, held)` and an unsized premium would be
+absorbed. `finalize` takes an optional `usage.cacheCreationPromptTokens` (default 0, a
+subset of `promptTokens` disjoint from `cachedPromptTokens`);
+`calculateCostMicroUsd` bills it at the write rate ONLY when that rate row is
+positive, else as ordinary input. The count is persisted on
+`weighted_usage_records.raw_cache_write_tokens`. Tests:
+`credit/managers/__tests__/credit-cache-write.spec.ts`,
+`credit/dto/__tests__/credit-internal-cache-write.dto.spec.ts`.
+
 `RESERVE_QUOTA_LUA` has **nine** windows. See
 `apps/claw-auth-service/CLAUDE.md` for the four things that are easy to break,
 and `docs/03-architecture/payg-credit.md` for the mechanism end to end.

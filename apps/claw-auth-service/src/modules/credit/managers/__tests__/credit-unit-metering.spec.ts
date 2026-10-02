@@ -167,6 +167,7 @@ function usageRecord(overrides: Partial<WeightedUsageRecord>): WeightedUsageReco
     workflow: null,
     rawInputTokens: 0,
     rawCachedTokens: 0,
+    rawCacheWriteTokens: 0,
     rawReasoningTokens: 0,
     rawOutputTokens: 0,
     toolCallCount: 0,

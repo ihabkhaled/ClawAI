@@ -64,3 +64,26 @@ describe('extractAnthropicUsage', () => {
     expect(usage.source).toBe(TokenUsageSource.ESTIMATED);
   });
 });
+
+describe('extractAnthropicUsage: cache fields (F093)', () => {
+  it('reassembles the prompt and reports the write separately from the read', () => {
+    const usage = extractAnthropicUsage({
+      usage: {
+        input_tokens: 40,
+        cache_creation_input_tokens: 1200,
+        cache_read_input_tokens: 6800,
+        output_tokens: 90,
+      },
+    });
+    expect(usage.promptTokens).toBe(8040);
+    expect(usage.cachedPromptTokens).toBe(6800);
+    expect(usage.cacheCreationPromptTokens).toBe(1200);
+    expect(usage.completionTokens).toBe(90);
+  });
+
+  it('leaves the write out when the payload has none, so older shapes are unchanged', () => {
+    const usage = extractAnthropicUsage({ usage: { input_tokens: 10, output_tokens: 2 } });
+    expect(usage).not.toHaveProperty('cacheCreationPromptTokens');
+    expect(usage.promptTokens).toBe(10);
+  });
+});

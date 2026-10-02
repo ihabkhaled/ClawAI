@@ -54,6 +54,7 @@ export class ModelsSnapshotManager {
       maxOutputTokens: effectiveMaxOutputTokens(row.maxOutputTokens, row.learnedMaxOutputTokens),
       exposure: row.exposure,
       kind: row.kind,
+      promptCaching: row.promptCaching,
     };
   }
 }

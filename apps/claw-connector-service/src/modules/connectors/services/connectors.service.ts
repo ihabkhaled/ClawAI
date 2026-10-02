@@ -464,6 +464,39 @@ export class ConnectorsService implements OnApplicationBootstrap {
     return { updated, previouslyExposed };
   }
 
+  // F093: administrator switch for Anthropic prompt caching, per model. The
+  // connector is verified first (a bad id is NOT FOUND, not a silent no-op) and
+  // the change is logged with who-and-what, because it changes what a request
+  // costs: a cache write is billed at a premium. The new value reaches
+  // chat-service through the models snapshot's cache window.
+  async setModelPromptCaching(
+    connectorId: string,
+    modelKeys: string[],
+    enabled: boolean,
+  ): Promise<{ updated: number }> {
+    const connector = await this.connectorsRepository.findById(connectorId);
+    if (!connector) {
+      throw new EntityNotFoundException('Connector', connectorId);
+    }
+    const { updated } = await this.connectorModelsRepository.setPromptCaching(
+      connectorId,
+      modelKeys,
+      enabled,
+    );
+    this.logger.log(
+      `setModelPromptCaching: connector=${connectorId} enabled=${String(enabled)} requested=${String(modelKeys.length)} updated=${String(updated)}`,
+    );
+    this.structuredLogger.logAction({
+      level: LogLevel.INFO,
+      message: `Prompt caching ${enabled ? 'enabled' : 'disabled'} on connector ${connectorId}`,
+      action: enabled ? 'model_prompt_caching_enabled' : 'model_prompt_caching_disabled',
+      service: ConnectorsService.name,
+      connectorId,
+      metadata: { requestedModelKeys: modelKeys, updated },
+    });
+    return { updated };
+  }
+
   // Internal contract for auth-service. Returns only the pairs that are
   // currently offerable. It deliberately does not say WHY a pair was rejected:
   // this endpoint is reachable service-to-service and must not become a way to

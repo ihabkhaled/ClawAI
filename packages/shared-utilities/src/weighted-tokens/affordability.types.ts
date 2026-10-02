@@ -13,6 +13,12 @@ export type AffordabilityInput = {
   balanceMicroUsd: number;
   promptTokens: number;
   cachedPromptTokens: number;
+  /**
+   * The most of the prompt that could be billed as a prompt-cache write (F093),
+   * priced at the dearer of the write and input rates so the hold covers the
+   * premium. Absent means zero — the request does not ask the provider to cache.
+   */
+  cacheWritePromptTokens?: number;
   /** The ceiling the caller would have used if money were no object. */
   requestedMaxOutputTokens: number;
   /**

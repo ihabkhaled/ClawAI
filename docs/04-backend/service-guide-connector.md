@@ -74,17 +74,18 @@ Tracks model sync operations with counts of models found, added, and removed per
 
 ## API Endpoints
 
-| Method | Path        | Auth   | Description                 |
-| ------ | ----------- | ------ | --------------------------- |
-| GET    | /           | Bearer | List connectors             |
-| POST   | /           | ADMIN  | Create connector            |
-| GET    | /:id        | Bearer | Get connector details       |
-| PATCH  | /:id        | ADMIN  | Update connector            |
-| DELETE | /:id        | ADMIN  | Delete connector            |
-| POST   | /:id/test   | ADMIN  | Test connector connectivity |
-| POST   | /:id/sync   | ADMIN  | Trigger model sync          |
-| GET    | /:id/models | Bearer | List models for a connector |
-| GET    | /:id/health | Bearer | Get health history          |
+| Method | Path                       | Auth   | Description                                             |
+| ------ | -------------------------- | ------ | ------------------------------------------------------- |
+| GET    | /                          | Bearer | List connectors                                         |
+| POST   | /                          | ADMIN  | Create connector                                        |
+| GET    | /:id                       | Bearer | Get connector details                                   |
+| PATCH  | /:id                       | ADMIN  | Update connector                                        |
+| DELETE | /:id                       | ADMIN  | Delete connector                                        |
+| POST   | /:id/test                  | ADMIN  | Test connector connectivity                             |
+| POST   | /:id/sync                  | ADMIN  | Trigger model sync                                      |
+| GET    | /:id/models                | Bearer | List models for a connector                             |
+| PUT    | /:id/models/prompt-caching | ADMIN  | Switch Anthropic prompt caching per model (default OFF) |
+| GET    | /:id/health                | Bearer | Get health history                                      |
 
 `PATCH /:id` accepts `isPayAsYouGo` (`ADMIN_CONNECTORS_MANAGE`). Omitting the
 field leaves the current classification alone rather than resetting it to the
@@ -320,6 +321,19 @@ known balance wins. The adapter method is `getCreditHeadroom()` (optional on
 endpoints time out at 2.5 s, and every failure is `known: false` so chat-service
 falls back to no pre-flight cap. USD floats are converted to integer micro-USD
 by truncation (`usdAmountToMicroUsdFloor`).
+
+## Prompt-caching switch (ADR-153, 2026-10-01)
+
+`connector_models.prompt_caching` (default `false`) asks Anthropic to cache a model's
+prompt. It changes what a request costs (a cache write is billed at a premium in
+routing-service's `ModelCostVersion.cacheWritePerMillionMicroUsd`), so it is an
+administrator decision per model: `PUT /connectors/:id/models/prompt-caching`
+`{ modelKeys (1..200), enabled }`, `ADMIN_CONNECTORS_MANAGE`, audit-logged as
+`model_prompt_caching_enabled` / `_disabled`, ANTHROPIC rows only (a forged or foreign key
+updates nothing). A sync never writes it; `replaceMany` resets it to OFF when it marks a
+model REMOVED, like exposure. It is published as `promptCaching` on the models snapshot,
+which chat-service caches for 60 s, so a flip takes effect inside a minute. Publish the
+model's write AND read rates before flipping it on.
 
 ## Model output ceilings (ADR-125, 2026-09-25)
 

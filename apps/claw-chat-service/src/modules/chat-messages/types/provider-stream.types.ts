@@ -69,6 +69,12 @@ export type NormalizedStreamFragment =
        * provider reported nothing, which is not the same as a measured zero.
        */
       cachedPromptTokens?: number;
+      /**
+       * The subset of `promptTokens` the provider WROTE into its prompt cache
+       * (Anthropic `cache_creation_input_tokens`, F093). Billed at the write
+       * rate when the model's rate row publishes one. Absent means none.
+       */
+      cacheCreationPromptTokens?: number;
       reasoningTokens?: number;
     }
   // Emitted ONCE per stream, immediately before the terminal `done` fragment,

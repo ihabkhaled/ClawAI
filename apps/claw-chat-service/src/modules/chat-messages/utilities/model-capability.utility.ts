@@ -38,6 +38,19 @@ export function snapshotMaxOutputTokens(
 }
 
 /**
+ * F093: true ONLY when the catalog row says so. No row, no snapshot, or an
+ * older connector-service all read as OFF — caching changes what a request costs,
+ * so an unknown answer must never turn it on.
+ */
+export function snapshotPromptCaching(
+  index: ModelsSnapshotIndex | null,
+  provider: string,
+  model: string,
+): boolean {
+  return index?.get(modelMatchKey(provider, model))?.promptCaching === true;
+}
+
+/**
  * What (provider, model) can take natively.
  *
  * Unknown-capability policy (ADR-120):

@@ -536,6 +536,18 @@ There is deliberately **no** completion route here: settlement reuses the
 purpose-agnostic `/billing/checkout-sessions/:id/complete-*` endpoints, so a
 top-up goes through `PaymentActivationService` like every other payment.
 
+## Prompt-cache writes
+
+Anthropic bills a prompt-cache WRITE at 1.25x input and a READ at 0.1x, and its
+`input_tokens` excludes both. The prompt is therefore three disjoint slices: fresh
+input, cache read (`cachedPromptTokens`), cache write (`cacheCreationPromptTokens`,
+`RawTokenBreakdown.cacheWriteInputTokens`). The write slice is priced at
+`cacheWritePerMillionMicroUsd` only when that row is positive, else as input
+(`effectiveCacheWriteRate`). Because settlement is `min(actual, held)`, a request that asks
+for caching reserves with `cacheWritePromptTokens` and the clamp holds those tokens at the
+dearer of the two rates. The per-model switch is `connector_models.prompt_caching`
+(default OFF). See [ADR-153](../13-adr/adr-153-anthropic-prompt-caching-with-cache-write-billing.md).
+
 ## Credit unlocks media generation
 
 A Free-plan user with spendable credit may generate images and video, paid from that

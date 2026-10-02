@@ -13,6 +13,13 @@ export type TokenUsage = {
   // Priced separately because a cached input token can cost a tenth of a fresh
   // one; treating the whole prompt as fresh over-charges a long conversation.
   cachedPromptTokens: number;
+  // Subset of `promptTokens` the provider WROTE into its prompt cache on this
+  // call (Anthropic `cache_creation_input_tokens`, F093). Disjoint from
+  // `cachedPromptTokens` (a read) and, like it, never added on top of
+  // `promptTokens`. Billed at the model's cache-write rate ONLY when that rate
+  // row is published; otherwise it stays ordinary input. Optional and omitted
+  // when zero, so every usage built before F093 is unchanged.
+  cacheCreationPromptTokens?: number;
   // Subset of `completionTokens` the model spent thinking rather than
   // answering. On o-series, Gemini thinking and DeepSeek-reasoner this is
   // routinely the LARGER half of the completion and is the single most

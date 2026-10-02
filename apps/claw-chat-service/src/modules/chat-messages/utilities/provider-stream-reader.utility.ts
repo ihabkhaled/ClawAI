@@ -7,6 +7,7 @@ import {
   type ProviderStreamFinalTimings,
   type StreamToolCallPayload,
 } from '../types/provider-stream.types';
+import { AnthropicStreamFrameReader } from './anthropic-stream-frame.utility';
 
 // Stateful, chunk-boundary-safe reader that normalizes a provider's raw stream
 // text into NormalizedStreamFragment[]. Supports the two wire formats ClawAI
@@ -23,6 +24,9 @@ export class ProviderStreamReader {
   // is not stable across frames.
   private readonly pendingToolCalls = new Map<number, MutableToolCall>();
   private releasedToolCalls = false;
+  // Anthropic's Messages stream (F093). Stateful because usage is split across
+  // `message_start` and `message_delta`; unused by every other protocol.
+  private readonly anthropic = new AnthropicStreamFrameReader();
 
   constructor(private readonly protocol: AiStreamProtocol) {}
 
@@ -45,6 +49,9 @@ export class ProviderStreamReader {
     this.buffer = '';
     if (remainder.length > 0) {
       this.parseLine(remainder, fragments);
+    }
+    if (this.protocol === AiStreamProtocol.ANTHROPIC_SSE) {
+      this.anthropic.flush(fragments);
     }
     // Safety net: a provider that ends the stream without `[DONE]` or a
     // finish_reason would otherwise strand fully-assembled tool calls in the
@@ -77,8 +84,22 @@ export class ProviderStreamReader {
     }
     if (this.protocol === AiStreamProtocol.OPENAI_SSE) {
       this.parseOpenAiLine(line, out);
+    } else if (this.protocol === AiStreamProtocol.ANTHROPIC_SSE) {
+      this.parseAnthropicLine(line, out);
     } else {
       this.parseOllamaLine(line, out);
+    }
+  }
+
+  // Anthropic frames carry their own `type`, so the `event:` line that names
+  // it adds nothing and is skipped; only `data:` lines are read.
+  private parseAnthropicLine(line: string, out: NormalizedStreamFragment[]): void {
+    if (!line.startsWith('data:')) {
+      return;
+    }
+    const frame = safeParseJson(line.slice('data:'.length).trim());
+    if (frame !== null) {
+      this.anthropic.read(frame, out);
     }
   }
 

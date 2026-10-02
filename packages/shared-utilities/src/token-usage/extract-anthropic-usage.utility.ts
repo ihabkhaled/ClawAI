@@ -19,8 +19,10 @@ import type { ExtractUsageOptions } from './token-usage.types';
  *
  * Only `cache_read_input_tokens` counts as `cachedPromptTokens`. A cache WRITE
  * is billed at a premium over normal input, not a discount, so folding it into
- * the cheap bucket would under-charge it; it stays at the standard input rate
- * until `cacheWritePerMillionMicroUsd` is wired into the cost calculator.
+ * the cheap bucket would under-charge it. It is reported separately as
+ * `cacheCreationPromptTokens` (F093); the cost calculator prices it at
+ * `cacheWritePerMillionMicroUsd` when that rate is published and at the plain
+ * input rate when it is not, so an unpublished rate never makes a write free.
  *
  * Extended thinking is billed inside `output_tokens` with no separate field, so
  * `reasoningTokens` is left unreported rather than guessed.
@@ -28,15 +30,13 @@ import type { ExtractUsageOptions } from './token-usage.types';
 export function extractAnthropicUsage(response: unknown, opts?: ExtractUsageOptions): TokenUsage {
   const usage = asRecord(asRecord(response)?.['usage']);
   const cacheRead = readCount(usage, 'cache_read_input_tokens');
+  const cacheWrite = readCount(usage, 'cache_creation_input_tokens');
 
   return normalizeTokenUsage({
-    promptTokens: sumDefinedCounts(
-      readCount(usage, 'input_tokens'),
-      cacheRead,
-      readCount(usage, 'cache_creation_input_tokens'),
-    ),
+    promptTokens: sumDefinedCounts(readCount(usage, 'input_tokens'), cacheRead, cacheWrite),
     completionTokens: readCount(usage, 'output_tokens'),
     cachedPromptTokens: cacheRead,
+    cacheCreationPromptTokens: cacheWrite,
     promptText: opts?.promptText,
     completionText: opts?.completionText,
   });

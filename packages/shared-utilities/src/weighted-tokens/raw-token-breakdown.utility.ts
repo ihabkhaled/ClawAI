@@ -19,6 +19,12 @@ import type { BillableCallCounts } from './weighted-tokens.types';
  *   "completion tokens that were NOT reasoning" — otherwise the cached and
  *   reasoning tokens are billed twice.
  *
+ * A cache WRITE (`cacheCreationPromptTokens`, F093) is a third disjoint slice of
+ * the prompt: `inputTokens = promptTokens - cached - written`. It is carried as
+ * `cacheWriteInputTokens` only when positive, and the calculator decides its
+ * price — at the published write rate, or at the plain input rate when there is
+ * none — so this function never needs to know a rate.
+ *
  * Subtraction cannot go negative: `normalizeTokenUsage` clamps each subset to
  * its parent. `Math.max(0, …)` is kept as a second guard so a hand-built
  * `TokenUsage` from a test or an older persisted row cannot produce a negative
@@ -30,10 +36,17 @@ export function toRawTokenBreakdown(
 ): RawTokenBreakdown {
   const cachedInputTokens = Math.max(0, usage.cachedPromptTokens);
   const reasoningTokens = Math.max(0, usage.reasoningTokens);
+  // Clamped to what the read left over, so the three prompt slices can never
+  // sum past `promptTokens` even for a hand-built or malformed usage.
+  const cacheWriteInputTokens = Math.min(
+    Math.max(0, usage.cacheCreationPromptTokens ?? 0),
+    Math.max(0, usage.promptTokens - cachedInputTokens),
+  );
 
   return {
-    inputTokens: Math.max(0, usage.promptTokens - cachedInputTokens),
+    inputTokens: Math.max(0, usage.promptTokens - cachedInputTokens - cacheWriteInputTokens),
     cachedInputTokens,
+    ...(cacheWriteInputTokens > 0 ? { cacheWriteInputTokens } : {}),
     reasoningTokens,
     outputTokens: Math.max(0, usage.completionTokens - reasoningTokens),
     toolCalls: Math.max(0, calls.toolCalls ?? 0),

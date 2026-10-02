@@ -20,7 +20,7 @@ and does not decide money, permission semantics, deletion or a breaking public c
 | F095 resume (backend)   | IMPLEMENTED `cdae9c05d`: `repositoryRef` on `createThread`, `GET agent/runners/:id/resume`                                                                                       |
 | F097 mobile token class | OWNER DECISION REQUIRED: new credential class and permission semantics                                                                                                           |
 | F098 cloud sessions     | NOT IMPLEMENTED by design: the recommended default is (b), user-hosted runners only                                                                                              |
-| F099 webhook trigger    | IMPLEMENTED `69372fc1a` (step 1). Step 2, per-routine secrets: DECIDED 2026-10-01, server side built (ADR-143); runner must export `secrets`                                                    |
+| F099 webhook trigger    | IMPLEMENTED `69372fc1a` (step 1). Step 2, per-routine secrets: DECIDED 2026-10-01, server side built (ADR-143); runner must export `secrets`                                     |
 | F100 runner report      | IMPLEMENTED `fdc631228` (step 1, record only) and step 2 (ADR-142): org policy + off/report/enforce, staged, fail-open, unsigned. Attestation WAITS for the signing-key decision |
 | F101 other clients      | NOT IMPLEMENTED by design: the recommended default is (b), VS Code only                                                                                                          |
 | F108 cost in events     | DECIDED 2026-10-01 (recommended default): IMPLEMENTED, PAYG only, fail closed; see ADR-078 addendum                                                                              |
@@ -36,7 +36,12 @@ running dev stack.
 
 ## F093 Automatic prompt caching (billing)
 
-**Status: owner decision required.** It would change what a user is charged and how finalize reports usage; not implemented.
+**Status: implemented (backend), default OFF — owner decided (a) on 2026-10-01.** See
+[ADR-153](../13-adr/adr-153-anthropic-prompt-caching-with-cache-write-billing.md). Built: native
+`/v1/messages` transport behind `connector_models.prompt_caching`, `cacheCreationPromptTokens`
+end to end, cache writes billed from `cacheWritePerMillionMicroUsd` only when that row exists,
+and the hold sized for the premium. Not built: caching for tool turns and compare lanes; not run
+against the live Anthropic API. (Original decision text follows.)
 
 - Options: (a) native Anthropic `/v1/messages` transport with `cache_control` plus a cache-write usage field end to end; (b) keep the OpenAI-compatible path and skip caching.
 - Default: (a), behind a per-model flag in the model catalog (DB-level), cache writes billed from `cacheWritePerMillionMicroUsd` only when the rate row is present.

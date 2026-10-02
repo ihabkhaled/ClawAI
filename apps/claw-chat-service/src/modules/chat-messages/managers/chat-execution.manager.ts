@@ -14,6 +14,7 @@ import type { PaygHold } from '@claw/shared-entitlements';
 import { randomUUID } from 'node:crypto';
 import {
   declaredHost,
+  extractAnthropicUsage,
   extractGeminiUsage,
   extractOllamaUsage,
   extractOpenAiCompatibleUsage,
@@ -137,6 +138,13 @@ import { buildReferenceImagePrompt } from '../utilities/image-reference-prompt.u
 import { transformOpenAiMessagesToOllama } from '../utilities/ollama-message-shape.utility';
 import { transformOpenAiMessagesToAnthropic } from '../utilities/anthropic-message-shape.utility';
 import { applyAnthropicPromptCache } from '../utilities/anthropic-prompt-cache.utility';
+import { PromptCachePolicyService } from '../services/prompt-cache-policy.service';
+import type { AnthropicMessagesResponse } from '../types/anthropic-message-shape.types';
+import {
+  buildAnthropicMessagesUrl,
+  buildAnthropicNativeHeaders,
+  readAnthropicMessageContent,
+} from '../utilities/anthropic-messages-response.utility';
 import { withConnectorGatewayHeaders } from '../utilities/connector-gateway-headers.utility';
 import { buildGeminiRequestBody } from '../utilities/gemini-request-builder.utility';
 import {
@@ -342,6 +350,9 @@ export class ChatExecutionManager implements OnModuleInit {
     // Optional for the same reason. Without it a retired model is still
     // substituted, just never reported to connector-service (ADR-151).
     @Optional() private readonly modelUnavailable?: ModelUnavailableClient,
+    // Optional for the same reason. Without it no call is ever sent for prompt
+    // caching (F093): every Anthropic call keeps the OpenAI-compatible path.
+    @Optional() private readonly promptCachePolicy?: PromptCachePolicyService,
   ) {}
 
   private get providerBreaker(): ProviderCircuitBreakerManager {
@@ -527,10 +538,9 @@ export class ChatExecutionManager implements OnModuleInit {
    * skipped: the next one may be a free/local model.
    */
   private endsCandidateChain(error: unknown, payload: MessageRoutedData, index: number): boolean {
-    if (!isPickedModelTurn(payload)) {
-      return this.isPaygRefusal(error);
-    }
-    return index === 0 && !isSubstitutableFailure(error);
+    return !isPickedModelTurn(payload)
+      ? this.isPaygRefusal(error)
+      : index === 0 && !isSubstitutableFailure(error);
   }
 
   /**
@@ -1072,11 +1082,16 @@ export class ChatExecutionManager implements OnModuleInit {
     tokenContext: TokenLedgerContext | undefined,
     paygCall: PaygCallOptions | undefined,
   ): Promise<LlmResponse> {
-    const executionOptions = await this.applyProviderLimits(
+    const executionOptions = await this.applyPromptCaching(
       candidate.provider,
       candidate.model,
-      context,
-      requestedOptions,
+      await this.applyProviderLimits(
+        candidate.provider,
+        candidate.model,
+        context,
+        requestedOptions,
+      ),
+      paygCall,
     );
     const ledgerContext = tokenContext ?? TokenLedgerContext.CHAT;
     const requestedMax = this.paygRequestedMaxOutputTokens(
@@ -1091,6 +1106,7 @@ export class ChatExecutionManager implements OnModuleInit {
       ledgerContext,
       requestedMax,
       paygCall,
+      executionOptions,
     });
     let dispatched: LlmResponse;
     try {
@@ -1281,6 +1297,23 @@ export class ChatExecutionManager implements OnModuleInit {
         },
         protocol: AiStreamProtocol.OLLAMA_NDJSON,
         headers: { Authorization: `Bearer ${apiKey}` },
+      };
+    }
+    if (this.usesAnthropicNativeTransport(provider, executionOptions)) {
+      // F093: Anthropic's own Messages stream, with prompt-cache breakpoints.
+      return {
+        url: buildAnthropicMessagesUrl(baseUrl),
+        allowedHosts,
+        body: this.buildAnthropicMessagesRequestBody(
+          model,
+          context,
+          threadSettings,
+          executionOptions,
+          true,
+          true,
+        ),
+        protocol: AiStreamProtocol.ANTHROPIC_SSE,
+        headers: buildAnthropicNativeHeaders(apiKey),
       };
     }
     return provider === ANTHROPIC_PROVIDER && config.ENABLE_ANTHROPIC_NATIVE_PDF
@@ -1529,9 +1562,7 @@ export class ChatExecutionManager implements OnModuleInit {
       const toolCalls = this.extractNativeToolCalls(
         result.toolCalls,
         base.provider,
-        base.protocol === AiStreamProtocol.OLLAMA_NDJSON
-          ? ProviderToolDialect.OLLAMA
-          : ProviderToolDialect.OPENAI,
+        this.toolDialectForProtocol(base.protocol),
         executionOptions,
       );
       // A tool-call turn streams NO content — the model is requesting a tool,
@@ -1568,6 +1599,9 @@ export class ChatExecutionManager implements OnModuleInit {
         ...(result.cachedPromptTokens === undefined
           ? {}
           : { cachedPromptTokens: result.cachedPromptTokens }),
+        ...(result.cacheCreationPromptTokens === undefined
+          ? {}
+          : { cacheCreationPromptTokens: result.cacheCreationPromptTokens }),
         ...(result.reasoningTokens === undefined
           ? {}
           : { reasoningTokens: result.reasoningTokens }),
@@ -2500,11 +2534,11 @@ export class ChatExecutionManager implements OnModuleInit {
     paygCall: PaygCallOptions | undefined,
   ): Promise<LlmResponse> {
     const { provider, model, context, startTime, usedFallback, threadSettings, routingMode } = call;
-    const executionOptions = await this.applyProviderLimits(
+    const executionOptions = await this.applyPromptCaching(
       provider,
       model,
-      context,
-      requestedOptions,
+      await this.applyProviderLimits(provider, model, context, requestedOptions),
+      paygCall,
     );
     const ledgerContext = tokenContext ?? TokenLedgerContext.CHAT;
     const requestedMax = this.paygRequestedMaxOutputTokens(provider, context, executionOptions);
@@ -2515,6 +2549,7 @@ export class ChatExecutionManager implements OnModuleInit {
       ledgerContext,
       requestedMax,
       paygCall,
+      executionOptions,
     });
     let response: LlmResponse;
     try {
@@ -2675,6 +2710,7 @@ export class ChatExecutionManager implements OnModuleInit {
     ledgerContext: TokenLedgerContext;
     requestedMax: number;
     paygCall: PaygCallOptions | undefined;
+    executionOptions?: ExecutionOptions;
   }): Promise<PaygHold> {
     if (args.paygCall?.hold !== undefined) {
       return args.paygCall.hold;
@@ -2704,8 +2740,54 @@ export class ChatExecutionManager implements OnModuleInit {
           workflow: args.paygCall?.workflow ?? paygWorkflowForTokenContext(args.ledgerContext),
           promptTokens: this.estimatePromptTokens(args.context),
           cachedPromptTokens: 0,
+          // F093: a call that asks Anthropic to cache could be billed the whole
+          // prompt as a cache WRITE. Settlement is capped at the hold, so the
+          // hold must already cover that premium or it is silently absorbed.
+          ...(args.executionOptions?.anthropicPromptCache === true
+            ? { cacheWritePromptTokens: this.estimatePromptTokens(args.context) }
+            : {}),
           requestedMaxOutputTokens: args.requestedMax,
         });
+  }
+
+  /**
+   * Switches a call onto the native Anthropic transport with prompt-cache
+   * breakpoints (F093), or leaves it exactly as it was.
+   *
+   * Runs BEFORE the hold so the reservation is sized for the cache-write
+   * premium. Fails safe: any doubt (no policy, an unreadable catalog, a thrown
+   * lookup) is "no caching", never a request that errors.
+   */
+  private async applyPromptCaching(
+    provider: string,
+    model: string,
+    executionOptions: ExecutionOptions | undefined,
+    paygCall: PaygCallOptions | undefined,
+  ): Promise<ExecutionOptions | undefined> {
+    if (this.promptCachePolicy === undefined) {
+      return executionOptions;
+    }
+    try {
+      const armed = await this.promptCachePolicy.shouldCache({
+        provider,
+        model,
+        carriesTools: this.hasNativeToolCatalog(executionOptions),
+        holdSuppliedByCaller: paygCall?.hold !== undefined,
+      });
+      return armed
+        ? {
+            fastPathEnabled: false,
+            applyShortResponseConstraint: false,
+            ...executionOptions,
+            anthropicPromptCache: true,
+          }
+        : executionOptions;
+    } catch (error: unknown) {
+      this.logger.warn(
+        `applyPromptCaching: ${provider}/${model} policy lookup failed, running uncached — ${error instanceof Error ? error.message : 'unknown'}`,
+      );
+      return executionOptions;
+    }
   }
 
   /**
@@ -2788,6 +2870,11 @@ export class ChatExecutionManager implements OnModuleInit {
         promptTokens: response.inputTokens ?? 0,
         completionTokens: response.outputTokens ?? 0,
         cachedPromptTokens: response.cachedPromptTokens ?? 0,
+        // F093: absent unless the provider reported a cache write; sent on the
+        // wire only when positive.
+        ...(response.cacheCreationPromptTokens === undefined
+          ? {}
+          : { cacheCreationPromptTokens: response.cacheCreationPromptTokens }),
         reasoningTokens: response.reasoningTokens ?? 0,
       },
       { toolCalls: response.toolTranscript?.turns.length ?? response.toolCalls?.length ?? 0 },
@@ -3427,7 +3514,10 @@ export class ChatExecutionManager implements OnModuleInit {
       isOllamaConnector,
       abortSignal,
     });
-    const url = this.resolveCloudProviderUrl(baseUrl, model, isOllamaConnector, isNativeGemini);
+    const isNativeAnthropic = this.usesAnthropicNativeTransport(provider, executionOptions);
+    const url = isNativeAnthropic
+      ? buildAnthropicMessagesUrl(baseUrl)
+      : this.resolveCloudProviderUrl(baseUrl, model, isOllamaConnector, isNativeGemini);
     this.logger.debug(
       `callCloudProvider: request body built — messageCount=${String(this.countCloudRequestMessages(requestBody))}`,
     );
@@ -3444,6 +3534,7 @@ export class ChatExecutionManager implements OnModuleInit {
       config.OLLAMA_GENERATE_TIMEOUT_MS,
       abortSignal,
       gatewayHeaders,
+      isNativeAnthropic,
     );
     this.logger.debug('callCloudProvider: parsing cloud response');
     const promptText = this.buildPromptTextForEstimate(context);
@@ -3496,17 +3587,24 @@ export class ChatExecutionManager implements OnModuleInit {
     timeoutMs: number,
     abortSignal?: AbortSignal,
     gatewayHeaders?: Record<string, string>,
-  ): Promise<OpenAiChatResponse | OllamaChatResponse | GeminiGenerateContentResponse> {
+    isNativeAnthropic = false,
+  ): Promise<
+    | OpenAiChatResponse
+    | OllamaChatResponse
+    | GeminiGenerateContentResponse
+    | AnthropicMessagesResponse
+  > {
+    const providerHeaders = this.cloudAuthHeaders(apiKey, isNativeGemini, isNativeAnthropic);
     const response = await httpRequest<
-      OpenAiChatResponse | OllamaChatResponse | GeminiGenerateContentResponse
+      | OpenAiChatResponse
+      | OllamaChatResponse
+      | GeminiGenerateContentResponse
+      | AnthropicMessagesResponse
     >({
       url,
       allowedHosts,
       method: 'POST',
-      headers: withConnectorGatewayHeaders(
-        isNativeGemini ? { 'x-goog-api-key': apiKey } : { Authorization: `Bearer ${apiKey}` },
-        gatewayHeaders,
-      ),
+      headers: withConnectorGatewayHeaders(providerHeaders, gatewayHeaders),
       body: requestBody,
       timeoutMs,
       signal: abortSignal,
@@ -3525,8 +3623,25 @@ export class ChatExecutionManager implements OnModuleInit {
     return response.data;
   }
 
+  // Auth headers per wire shape: Anthropic's own Messages API takes x-api-key,
+  // native Gemini x-goog-api-key, everything else a Bearer token.
+  private cloudAuthHeaders(
+    apiKey: string,
+    isNativeGemini: boolean,
+    isNativeAnthropic: boolean,
+  ): Record<string, string> {
+    if (isNativeAnthropic) {
+      return buildAnthropicNativeHeaders(apiKey);
+    }
+    return isNativeGemini ? { 'x-goog-api-key': apiKey } : { Authorization: `Bearer ${apiKey}` };
+  }
+
   private parseCloudProviderResponse(
-    data: OpenAiChatResponse | OllamaChatResponse | GeminiGenerateContentResponse,
+    data:
+      | OpenAiChatResponse
+      | OllamaChatResponse
+      | GeminiGenerateContentResponse
+      | AnthropicMessagesResponse,
     isNativeGemini: boolean,
     provider: string,
     model: string,
@@ -3535,6 +3650,16 @@ export class ChatExecutionManager implements OnModuleInit {
     promptText: string,
     executionOptions?: ExecutionOptions,
   ): LlmResponse {
+    if (this.usesAnthropicNativeTransport(provider, executionOptions)) {
+      return this.parseAnthropicMessagesResponse(
+        data as AnthropicMessagesResponse,
+        provider,
+        model,
+        startTime,
+        usedFallback,
+        promptText,
+      );
+    }
     if (isNativeGemini) {
       return this.parseGeminiResponse(
         data as GeminiGenerateContentResponse,
@@ -4443,7 +4568,7 @@ export class ChatExecutionManager implements OnModuleInit {
   ): { speed?: ResolvedSpeed } {
     const resolved = resolveExecutionSpeed(
       executionOptions,
-      base.protocol === AiStreamProtocol.OLLAMA_NDJSON ? undefined : SPEED_PATH_OPENAI_SERVICE_TIER,
+      this.speedPathForProtocol(base.protocol),
     );
     if (resolved === undefined) {
       return {};
@@ -4645,6 +4770,19 @@ export class ChatExecutionManager implements OnModuleInit {
       return this.buildOllamaChatRequestBody(model, context, threadSettings, executionOptions);
     }
     const carriesTools = this.hasNativeToolCatalog(executionOptions);
+    if (this.usesAnthropicNativeTransport(provider, executionOptions)) {
+      // F093: the real Messages API, with prompt-cache breakpoints. Only reached
+      // for a model an administrator switched caching on for, after the chokepoint
+      // sized the PAYG hold for the cache-write premium.
+      return this.buildAnthropicMessagesRequestBody(
+        model,
+        context,
+        threadSettings,
+        executionOptions,
+        false,
+        true,
+      );
+    }
     if (provider === ANTHROPIC_PROVIDER && config.ENABLE_ANTHROPIC_NATIVE_PDF) {
       if (carriesTools) {
         // The Anthropic-native branch posts a Messages-shaped body to
@@ -4667,6 +4805,7 @@ export class ChatExecutionManager implements OnModuleInit {
         context,
         threadSettings,
         executionOptions,
+        false,
         false,
       );
     }
@@ -4696,6 +4835,7 @@ export class ChatExecutionManager implements OnModuleInit {
     threadSettings: ThreadSettings | undefined,
     executionOptions: ExecutionOptions | undefined,
     stream: boolean,
+    promptCache: boolean,
   ): AnthropicMessagesRequest {
     const openAiMessages = this.contextAssembly.buildChatMessages(context);
     const baseMessages = this.applyShortConstraintToOpenAiMessages(
@@ -4738,6 +4878,13 @@ export class ChatExecutionManager implements OnModuleInit {
       // Anthropic rejects any Messages request that omits max_tokens, and a
       // tool-loop continuation must never be the request that discovers this.
       requestBody.max_tokens = ANTHROPIC_TOOL_DEFAULT_MAX_TOKENS;
+    } else if (promptCache) {
+      // The real Messages endpoint REQUIRES max_tokens. Same default the PAYG
+      // hold was sized on, so what is sent is what was reserved.
+      requestBody.max_tokens = computeDefaultMaxTokensForProvider(
+        ANTHROPIC_PROVIDER,
+        this.estimatePromptTokens(context),
+      );
     }
     const anthropicEffort = effortLevelForRequest(
       this.resolveEffortForDialect(executionOptions, ProviderToolDialect.ANTHROPIC),
@@ -4751,8 +4898,72 @@ export class ChatExecutionManager implements OnModuleInit {
     if (anthropicSpeed !== undefined) {
       requestBody.speed = anthropicSpeed;
     }
-    // F093: the one insertion point for Anthropic prompt-cache breakpoints.
-    return applyAnthropicPromptCache(requestBody);
+    // F093: the one insertion point for Anthropic prompt-cache breakpoints, and
+    // only for the cached native transport: the legacy flag-gated body above has
+    // no reader for cache usage, so a breakpoint there would be an unbilled write.
+    return promptCache ? applyAnthropicPromptCache(requestBody) : requestBody;
+  }
+
+  // F093: true when this call goes to Anthropic's own Messages endpoint. Set by
+  // the chokepoints (applyPromptCaching), never by the provider name alone.
+  private usesAnthropicNativeTransport(
+    provider: string,
+    executionOptions: ExecutionOptions | undefined,
+  ): boolean {
+    return provider === ANTHROPIC_PROVIDER && executionOptions?.anthropicPromptCache === true;
+  }
+
+  // Buffered Messages API response -> LlmResponse. Usage goes through the shared
+  // extractAnthropicUsage, which reassembles the prompt total (input_tokens
+  // EXCLUDES both cache counters) and carries the cache WRITE separately.
+  private parseAnthropicMessagesResponse(
+    data: AnthropicMessagesResponse,
+    provider: string,
+    model: string,
+    startTime: number,
+    usedFallback: boolean,
+    promptText: string,
+  ): LlmResponse {
+    const message = readAnthropicMessageContent(data);
+    if (!message.hasContent) {
+      this.logger.error(`parseAnthropicMessagesResponse: ${provider} returned no content`);
+      throw new BusinessException(
+        `Cloud provider ${provider} returned no content`,
+        'CLOUD_PROVIDER_EMPTY_RESPONSE',
+      );
+    }
+    const usage = extractAnthropicUsage(data, { promptText, completionText: message.text });
+    this.logger.debug(
+      `parseAnthropicMessagesResponse: inputTokens=${String(usage.promptTokens)} cacheRead=${String(usage.cachedPromptTokens)} cacheWrite=${String(usage.cacheCreationPromptTokens ?? 0)} outputTokens=${String(usage.completionTokens)}`,
+    );
+    return {
+      content: message.text,
+      provider,
+      model,
+      ...this.buildTokenUsageFields(usage),
+      latencyMs: Date.now() - startTime,
+      finishReason: message.finishReason,
+      usedFallback,
+      ...(message.reasoning.trim().length > 0 ? { reasoning: message.reasoning } : {}),
+    };
+  }
+
+  private toolDialectForProtocol(protocol: AiStreamProtocol): ProviderToolDialect {
+    if (protocol === AiStreamProtocol.OLLAMA_NDJSON) {
+      return ProviderToolDialect.OLLAMA;
+    }
+    return protocol === AiStreamProtocol.ANTHROPIC_SSE
+      ? ProviderToolDialect.ANTHROPIC
+      : ProviderToolDialect.OPENAI;
+  }
+
+  private speedPathForProtocol(protocol: AiStreamProtocol): string | undefined {
+    if (protocol === AiStreamProtocol.OLLAMA_NDJSON) {
+      return undefined;
+    }
+    return protocol === AiStreamProtocol.ANTHROPIC_SSE
+      ? SPEED_PATH_ANTHROPIC_SPEED
+      : SPEED_PATH_OPENAI_SERVICE_TIER;
   }
 
   private buildAnthropicNativeStreamingBody(
@@ -4767,6 +4978,7 @@ export class ChatExecutionManager implements OnModuleInit {
       threadSettings,
       executionOptions,
       true,
+      false,
     );
   }
 
@@ -5231,6 +5443,7 @@ export class ChatExecutionManager implements OnModuleInit {
     inputTokens: number;
     outputTokens: number;
     cachedPromptTokens: number;
+    cacheCreationPromptTokens?: number;
     reasoningTokens: number;
     tokenEstimated: boolean;
     tokenSource: TokenUsageSource;
@@ -5243,6 +5456,10 @@ export class ChatExecutionManager implements OnModuleInit {
       // reasoning. The shared extractors already clamp each sub-count to the
       // side it belongs to, so these can never exceed their parent.
       cachedPromptTokens: usage.cachedPromptTokens,
+      // F093: omitted unless positive, so every non-Anthropic response keeps its shape.
+      ...(usage.cacheCreationPromptTokens === undefined
+        ? {}
+        : { cacheCreationPromptTokens: usage.cacheCreationPromptTokens }),
       reasoningTokens: usage.reasoningTokens,
       tokenEstimated: usage.estimated,
       tokenSource: usage.source,

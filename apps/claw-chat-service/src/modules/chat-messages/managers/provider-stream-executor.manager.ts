@@ -221,6 +221,8 @@ export class ProviderStreamExecutor {
       // zero. Coercing to 0 here would make a cache hit indistinguishable from
       // a cache miss.
       state.cachedPromptTokens = fragment.cachedPromptTokens ?? state.cachedPromptTokens;
+      state.cacheCreationPromptTokens =
+        fragment.cacheCreationPromptTokens ?? state.cacheCreationPromptTokens;
       state.reasoningTokens = fragment.reasoningTokens ?? state.reasoningTokens;
       return;
     }
@@ -437,6 +439,9 @@ export class ProviderStreamExecutor {
       inputTokens: state.inputTokens,
       outputTokens: state.outputTokens,
       cachedPromptTokens: state.cachedPromptTokens,
+      ...(state.cacheCreationPromptTokens === undefined
+        ? {}
+        : { cacheCreationPromptTokens: state.cacheCreationPromptTokens }),
       reasoningTokens: state.reasoningTokens,
       finishReason: state.finishReason,
       cancelled: state.cancelled,

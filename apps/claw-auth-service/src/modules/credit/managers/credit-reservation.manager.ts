@@ -174,6 +174,11 @@ export class CreditReservationManager {
         completionTokens: input.completionTokens,
         totalTokens: input.promptTokens + input.completionTokens,
         cachedPromptTokens: input.cachedPromptTokens,
+        // Priced at the write rate only when the rate row publishes one
+        // (`calculateCostMicroUsd`); otherwise it stays ordinary input.
+        ...(input.cacheCreationPromptTokens === undefined
+          ? {}
+          : { cacheCreationPromptTokens: input.cacheCreationPromptTokens }),
         reasoningTokens: input.reasoningTokens,
         estimated: false,
         // Settlement prices what the provider actually reported, so the counts
@@ -196,6 +201,7 @@ export class CreditReservationManager {
       reservationId: input.reservationId,
       rawInputTokens: breakdown.inputTokens,
       rawCachedTokens: breakdown.cachedInputTokens,
+      rawCacheWriteTokens: breakdown.cacheWriteInputTokens ?? 0,
       rawReasoningTokens: breakdown.reasoningTokens,
       rawOutputTokens: breakdown.outputTokens,
       toolCallCount: breakdown.toolCalls,
@@ -383,6 +389,8 @@ export class CreditReservationManager {
       balanceMicroUsd: available,
       promptTokens: input.promptTokens,
       cachedPromptTokens: input.cachedPromptTokens,
+      // F093: held at the write rate, because settlement is capped at the hold.
+      cacheWritePromptTokens: input.cacheWritePromptTokens,
       requestedMaxOutputTokens: input.requestedMaxOutputTokens,
       minViableOutputTokens: PAYG_MIN_VIABLE_OUTPUT_TOKENS,
       // EXPECTED units, fixed before the call: held up front like the prompt,

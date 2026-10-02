@@ -1,3 +1,5 @@
+import type { ANTHROPIC_USAGE_FIELDS } from '../constants/anthropic-native-transport.constants';
+
 // Anthropic native Messages API content blocks. The wire format is documented
 // at https://docs.anthropic.com/en/api/messages — each user/assistant message
 // carries a `content` array of typed blocks (text / image / document). PDFs ride
@@ -101,3 +103,33 @@ export type AnthropicSystemTextBlock = {
   text: string;
   cache_control?: AnthropicCacheControl;
 };
+
+// One content block of a Messages API response. Only the fields the transport
+// reads are typed; tool_use / redacted_thinking blocks are carried as `type`.
+export type AnthropicResponseBlock = {
+  type: string;
+  text?: string;
+  thinking?: string;
+};
+
+// Messages API response (non-streaming). `usage` stays `unknown` on purpose:
+// it is handed to the shared `extractAnthropicUsage`, which is the one reader
+// of Anthropic's usage fields (input_tokens EXCLUDES the cache counters).
+export type AnthropicMessagesResponse = {
+  id?: string;
+  content?: AnthropicResponseBlock[];
+  stop_reason?: string | null;
+  usage?: unknown;
+};
+
+// What a buffered Messages response says, with thinking separated from the answer.
+export type AnthropicMessageContent = {
+  text: string;
+  reasoning: string;
+  finishReason: string;
+  /** False when the response carried no `content` array at all. */
+  hasContent: boolean;
+};
+
+// One of the usage counters named in ANTHROPIC_USAGE_FIELDS.
+export type AnthropicUsageField = (typeof ANTHROPIC_USAGE_FIELDS)[number];

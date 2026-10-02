@@ -11,10 +11,9 @@ import type { NormalizeTokenUsageInput, ResolvedTokenSide } from './token-usage.
  */
 function resolveSide(nativeCount: number | undefined, text: string | undefined): ResolvedTokenSide {
   const safeNative = toTokenCount(nativeCount);
-  if (safeNative !== undefined) {
-    return { tokens: safeNative, estimated: false };
-  }
-  return { tokens: estimateTextTokens(text), estimated: true };
+  return safeNative !== undefined
+    ? { tokens: safeNative, estimated: false }
+    : { tokens: estimateTextTokens(text), estimated: true };
 }
 
 /**
@@ -25,10 +24,9 @@ function resolveSource(promptEstimated: boolean, completionEstimated: boolean): 
   if (!promptEstimated && !completionEstimated) {
     return TokenUsageSource.NATIVE;
   }
-  if (promptEstimated && completionEstimated) {
-    return TokenUsageSource.ESTIMATED;
-  }
-  return TokenUsageSource.MIXED;
+  return promptEstimated && completionEstimated
+    ? TokenUsageSource.ESTIMATED
+    : TokenUsageSource.MIXED;
 }
 
 /**
@@ -64,10 +62,7 @@ function resolveSubCount(reported: number | undefined, whole: ResolvedTokenSide)
     return 0;
   }
   const safe = toTokenCount(reported);
-  if (safe === undefined) {
-    return 0;
-  }
-  return Math.min(safe, whole.tokens);
+  return safe === undefined ? 0 : Math.min(safe, whole.tokens);
 }
 
 export function normalizeTokenUsage(input: NormalizeTokenUsageInput): TokenUsage {
@@ -77,11 +72,21 @@ export function normalizeTokenUsage(input: NormalizeTokenUsageInput): TokenUsage
   const source = resolveSource(prompt.estimated, completion.estimated);
   const estimated = prompt.estimated || completion.estimated;
 
+  const cachedPromptTokens = resolveSubCount(input.cachedPromptTokens, prompt);
+  // A cache write is a part of the prompt that is NOT a cache read, so it is
+  // clamped to what is left after the read. Present only when positive: every
+  // usage built before F093 keeps its exact shape.
+  const cacheCreationPromptTokens = Math.min(
+    resolveSubCount(input.cacheCreationPromptTokens, prompt),
+    prompt.tokens - cachedPromptTokens,
+  );
+
   return {
     promptTokens: prompt.tokens,
     completionTokens: completion.tokens,
     totalTokens: prompt.tokens + completion.tokens,
-    cachedPromptTokens: resolveSubCount(input.cachedPromptTokens, prompt),
+    cachedPromptTokens,
+    ...(cacheCreationPromptTokens > 0 ? { cacheCreationPromptTokens } : {}),
     reasoningTokens: resolveSubCount(input.reasoningTokens, completion),
     estimated,
     source,

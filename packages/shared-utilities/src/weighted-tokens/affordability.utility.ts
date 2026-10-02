@@ -4,7 +4,7 @@ import type { ModelCostRates } from '@claw/shared-types';
 import { MoneyError } from '../money/money-error';
 import { MoneyErrorCode } from '../money/money-error-code.enum';
 import type { AffordabilityInput, AffordabilityOutcome } from './affordability.types';
-import { calculateUnitCostMicroUsd } from './weighted-tokens.utility';
+import { calculateUnitCostMicroUsd, effectiveCacheWriteRate } from './weighted-tokens.utility';
 
 /**
  * Worst-case cost of the prompt half of a request, in integer micro-USD.
@@ -15,19 +15,30 @@ import { calculateUnitCostMicroUsd } from './weighted-tokens.utility';
  *
  * A cached token falls back to the full input rate when the provider publishes
  * no cache rate — "we don't know" must never round down to free.
+ *
+ * `cacheWritePromptTokens` (F093) is the most of the fresh prompt that could be
+ * billed as a prompt-cache WRITE. Settlement caps the charge at the hold, so a
+ * hold sized at the plain input rate would silently absorb the write premium —
+ * a margin loss no ledger row shows. Those tokens are therefore held at the
+ * dearer of the write rate and the input rate. With no published write rate the
+ * premium is zero and the figure is exactly what it was before F093.
  */
 export function estimateInputCostMicroUsd(
   promptTokens: number,
   cachedPromptTokens: number,
   rates: ModelCostRates,
+  cacheWritePromptTokens = 0,
 ): number {
   const inputRate = rates.inputPerMillionMicroUsd ?? 0;
   const cachedRate = rates.cachedInputPerMillionMicroUsd ?? rates.inputPerMillionMicroUsd ?? 0;
   const cached = Math.min(Math.max(0, cachedPromptTokens), Math.max(0, promptTokens));
   const fresh = Math.max(0, promptTokens) - cached;
+  const written = Math.min(Math.max(0, cacheWritePromptTokens), fresh);
+  const writeRate = Math.max(effectiveCacheWriteRate(rates) ?? 0, inputRate);
 
   return (
-    Math.ceil((fresh * inputRate) / TOKENS_PER_PRICING_UNIT) +
+    Math.ceil(((fresh - written) * inputRate) / TOKENS_PER_PRICING_UNIT) +
+    Math.ceil((written * writeRate) / TOKENS_PER_PRICING_UNIT) +
     Math.ceil((cached * cachedRate) / TOKENS_PER_PRICING_UNIT)
   );
 }
@@ -85,7 +96,12 @@ export function clampOutputTokensToBalance(input: AffordabilityInput): Affordabi
   // Per-unit artifacts are charged whether or not a single token is produced,
   // so they join the prompt on the fixed side of the ledger.
   const fixedCostMicroUsd =
-    estimateInputCostMicroUsd(input.promptTokens, input.cachedPromptTokens, input.rates) +
+    estimateInputCostMicroUsd(
+      input.promptTokens,
+      input.cachedPromptTokens,
+      input.rates,
+      input.cacheWritePromptTokens,
+    ) +
     calculateUnitCostMicroUsd(
       {
         imageUnits: input.imageUnits,

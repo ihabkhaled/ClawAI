@@ -371,3 +371,10 @@ chat-listed `CHAT` row and chat-service redirects a pin to `IMAGE_GEMINI`
 - Data fix for already-known rows: migration `20261002130000_retire_unavailable_openai_models`
   (idempotent, same patterns). Tests: `retired-model.utility.spec.ts`, `openai.adapter.spec.ts`,
   `connector-models.unavailable.spec.ts`, `model-unavailable.service.spec.ts`.
+
+## Prompt-caching switch (2026-10-01, ADR-153)
+
+`connector_models.prompt_caching` defaults `false`, is set only by
+`PUT /connectors/:id/models/prompt-caching` (ANTHROPIC rows, audit-logged), published on the models
+snapshot as `promptCaching`, and reset to OFF when `replaceMany` marks a model REMOVED. A sync must
+never write it: it changes what a request costs.

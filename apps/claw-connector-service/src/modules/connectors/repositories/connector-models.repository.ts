@@ -86,6 +86,8 @@ export class ConnectorModelsRepository {
     // erase inventory permanently, taking with it the identity that plan entitlements
     // and audit history point at. Marking REMOVED keeps the row and its id, and forcing
     // exposure back to UNEXPOSED means a model that disappears cannot keep serving users.
+    // The prompt-caching switch (F093) goes back to OFF for the same reason: it changes
+    // what a request costs, so a model that returns must be switched on again on purpose.
     const operations = [
       this.prisma.connectorModel.updateMany({
         where: {
@@ -93,7 +95,7 @@ export class ConnectorModelsRepository {
           ...(modelKeys.length > 0 ? { modelKey: { notIn: modelKeys } } : {}),
           lifecycle: { not: 'REMOVED' },
         },
-        data: { lifecycle: 'REMOVED', exposure: 'UNEXPOSED' },
+        data: { lifecycle: 'REMOVED', exposure: 'UNEXPOSED', promptCaching: false },
       }),
       ...uniqueModels.map((model) =>
         this.prisma.connectorModel.upsert({
@@ -228,6 +230,27 @@ export class ConnectorModelsRepository {
       data: exposed
         ? { exposure: 'EXPOSED', unavailableCount: 0, unavailableAt: null }
         : { exposure: 'UNEXPOSED' },
+    });
+    return { updated: result.count };
+  }
+
+  // F093: switches Anthropic prompt caching for a bounded set of one connector's
+  // models. Same safety as setExposure (existing, non-REMOVED rows only), and
+  // ANTHROPIC-only: the flag is meaningless on every other provider, so a
+  // forged key for one changes nothing rather than storing a dead switch.
+  async setPromptCaching(
+    connectorId: string,
+    modelKeys: string[],
+    enabled: boolean,
+  ): Promise<{ updated: number }> {
+    const result = await this.prisma.connectorModel.updateMany({
+      where: {
+        connectorId,
+        provider: 'ANTHROPIC',
+        modelKey: { in: modelKeys },
+        lifecycle: { not: 'REMOVED' },
+      },
+      data: { promptCaching: enabled },
     });
     return { updated: result.count };
   }

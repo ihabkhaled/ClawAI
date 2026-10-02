@@ -81,6 +81,7 @@ export class WeightedUsageRepository {
       data: {
         rawInputTokens: input.rawInputTokens,
         rawCachedTokens: input.rawCachedTokens,
+        rawCacheWriteTokens: input.rawCacheWriteTokens ?? 0,
         rawReasoningTokens: input.rawReasoningTokens,
         rawOutputTokens: input.rawOutputTokens,
         toolCallCount: input.toolCallCount,
@@ -111,6 +112,7 @@ export class WeightedUsageRepository {
       data: {
         rawInputTokens: input.rawInputTokens,
         rawCachedTokens: input.rawCachedTokens,
+        rawCacheWriteTokens: input.rawCacheWriteTokens ?? 0,
         rawReasoningTokens: input.rawReasoningTokens,
         rawOutputTokens: input.rawOutputTokens,
         toolCallCount: input.toolCallCount,

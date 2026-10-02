@@ -6,6 +6,11 @@ import type { QuotaWindow } from '../enums/quota-window.enum';
 export type RawTokenBreakdown = {
   inputTokens: number;
   cachedInputTokens: number;
+  // Prompt tokens written into the provider's prompt cache (F093). DISJOINT from
+  // `inputTokens` and `cachedInputTokens`, like every other bucket here. Priced
+  // at `cacheWritePerMillionMicroUsd` when that rate is published, else at the
+  // plain input rate. Optional: absent means zero.
+  cacheWriteInputTokens?: number;
   reasoningTokens: number;
   outputTokens: number;
   toolCalls: number;

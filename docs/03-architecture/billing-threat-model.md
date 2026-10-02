@@ -98,17 +98,18 @@ evidence that counts is a server-side capture read or a verified webhook.
 
 ### Data exposure
 
-| Attack                               | Control                                                                                                                  |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| Read another user's invoices         | Owner resolved from the JWT; user id never accepted from the client                                                      |
-| Rewrite an issued invoice            | PostgreSQL triggers reject header/line mutation; refunds may only increase a bounded total with the matching status      |
-| Leak a token or internal id in a PDF | Renderer accepts a customer-safe projection with no id, provider reference, token or card field                          |
-| Turn an attachment into SSRF/LFI     | Shared SMTP adapter accepts in-memory bytes and disables URL/file attachment access                                      |
-| Lose an invoice during SMTP outage   | Delivery intent commits with the invoice and retries under an owner-safe scheduled job; owned download remains available |
-| Harvest card data from logs          | No PAN/CVV ever enters the system; response bodies are never logged                                                      |
-| Learn margins from an error          | Provider RATE CARD is internal; error payloads carry stable codes plus the user's own balance only (narrowed by ADR-078) |
-| Steal a vaulted token                | AES-256-GCM with AAD bound to `userId\|gateway\|paymentMethodId`, key-versioned                                          |
-| Extract secrets from a gateway error | Failures log status codes, never provider bodies                                                                         |
+| Attack                                | Control                                                                                                                                                                                                                                                   |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Read another user's invoices          | Owner resolved from the JWT; user id never accepted from the client                                                                                                                                                                                       |
+| Rewrite an issued invoice             | PostgreSQL triggers reject header/line mutation; refunds may only increase a bounded total with the matching status                                                                                                                                       |
+| Leak a token or internal id in a PDF  | Renderer accepts a customer-safe projection with no id, provider reference, token or card field                                                                                                                                                           |
+| Turn an attachment into SSRF/LFI      | Shared SMTP adapter accepts in-memory bytes and disables URL/file attachment access                                                                                                                                                                       |
+| Lose an invoice during SMTP outage    | Delivery intent commits with the invoice and retries under an owner-safe scheduled job; owned download remains available                                                                                                                                  |
+| Harvest card data from logs           | No PAN/CVV ever enters the system; response bodies are never logged                                                                                                                                                                                       |
+| Learn margins from an error           | Provider RATE CARD is internal; error payloads carry stable codes plus the user's own balance only (narrowed by ADR-078)                                                                                                                                  |
+| Steal a vaulted token                 | AES-256-GCM with AAD bound to `userId\|gateway\|paymentMethodId`, key-versioned                                                                                                                                                                           |
+| Extract secrets from a gateway error  | Failures log status codes, never provider bodies                                                                                                                                                                                                          |
+| Absorb the prompt-cache write premium | Hold sized at the write rate when a call asks to cache (settlement is capped at the hold); write billed only from a published rate, else as input; switch default OFF ([ADR-153](../13-adr/adr-153-anthropic-prompt-caching-with-cache-write-billing.md)) |
 
 > **Narrowed by [ADR-078](../13-adr/adr-078-payg-connector-credit.md)
 > (2026-08-29).** "Cost ceilings are internal" no longer holds: the per-plan
@@ -160,13 +161,15 @@ section exists to prevent.
 
 Honest list of what is _not_ fully mitigated today:
 
-| Risk                                    | Status                                                                                                  |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Saved-card merchant approval            | Hosted tokenization is implemented, but must not be advertised until each gateway approves the merchant |
-| Durable publish of `runtime.progress.*` | SSE only; RabbitMQ publishing is future work                                                            |
-| FX provider outage with no fallback     | Fails the checkout by design; no degraded-rate path                                                     |
-| Chargeback dispute automation           | Manual — the reconciliation dashboard surfaces cases, a human answers them                              |
-| Gateway-side fraud scoring              | Delegated to PayPal/Paymob; ClawAI adds rate limiting only                                              |
+| Risk                                        | Status                                                                                                                                                   |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Saved-card merchant approval                | Hosted tokenization is implemented, but must not be advertised until each gateway approves the merchant                                                  |
+| Durable publish of `runtime.progress.*`     | SSE only; RabbitMQ publishing is future work                                                                                                             |
+| FX provider outage with no fallback         | Fails the checkout by design; no degraded-rate path                                                                                                      |
+| Chargeback dispute automation               | Manual — the reconciliation dashboard surfaces cases, a human answers them                                                                               |
+| Gateway-side fraud scoring                  | Delegated to PayPal/Paymob; ClawAI adds rate limiting only                                                                                               |
+| Cached model with no published write rate   | The write is billed as plain input (25% under Anthropic's charge) and no read discount is given; publish the rates before switching a model on (ADR-153) |
+| Compare lanes and tool turns are not cached | Their hold is taken before the call / the native transport has no `tool_use` reader; they run uncached, never mis-billed (ADR-153)                       |
 
 ---
 

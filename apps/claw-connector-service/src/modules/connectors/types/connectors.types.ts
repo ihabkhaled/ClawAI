@@ -186,6 +186,11 @@ export interface UpstreamModelSnapshotEntry {
   exposure?: string;
   /** CHAT, IMAGE, AUDIO... Only CHAT models can answer a chat turn. */
   kind?: string;
+  /**
+   * F093: an administrator asked for this model's prompt to be cached (Anthropic
+   * `cache_control`). chat-service reads it from here; absent means off.
+   */
+  promptCaching?: boolean;
 }
 
 export interface ConnectorModelsSnapshotResult {

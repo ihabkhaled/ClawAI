@@ -39,6 +39,9 @@ export type LoopState = {
    * if it never thought, which is wrong by the largest component of its bill.
    */
   cachedPromptTokens?: number;
+  // F093: prompt tokens written into the provider's cache. Absent until the
+  // provider reports one; carried to the PAYG finalize so the write is billed.
+  cacheCreationPromptTokens?: number;
   reasoningTokens?: number;
   finishReason?: string;
   sawContent: boolean;

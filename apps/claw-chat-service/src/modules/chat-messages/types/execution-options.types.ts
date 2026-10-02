@@ -56,4 +56,10 @@ export type ExecutionOptions = {
   // manual user picked goes first, and a local-only mode forbids hosted
   // writers. Undefined keeps the admin FILE_WRITER list, as AUTO always had.
   fileWriters?: FileContentCandidateOptions;
+  // F093: send this call to Anthropic's native Messages API with prompt-cache
+  // breakpoints. Set ONLY by the two chat chokepoints, after the per-model
+  // catalog switch and the eligibility checks pass and BEFORE the PAYG hold is
+  // taken (the hold is sized for the cache-write premium when this is true). A
+  // caller must never set it itself. Undefined = no caching.
+  anthropicPromptCache?: boolean;
 };

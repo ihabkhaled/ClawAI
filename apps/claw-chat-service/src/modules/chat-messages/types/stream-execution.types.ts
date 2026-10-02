@@ -48,6 +48,8 @@ export type StreamExecutionResult = {
    * if it never thought, which is wrong by the largest component of its bill.
    */
   cachedPromptTokens?: number;
+  // F093: prompt tokens written into the provider's cache, for the PAYG finalize.
+  cacheCreationPromptTokens?: number;
   reasoningTokens?: number;
   finishReason?: string;
   cancelled: boolean;

@@ -689,20 +689,24 @@ model FeatureUsageRecord {
 // provider, model and workflow cannot be represented in a daily aggregate.
 // This is the durable source Redis counters are reconciled against.
 model WeightedUsageRecord {
-  id                      String             @id @default(cuid())
-  userId                  String             @map("user_id")
-  planId                  String?            @map("plan_id")
-  subscriptionId          String?            @map("subscription_id")
-  reservationId           String             @unique @map("reservation_id")
-  requestId               String             @map("request_id")
-  provider                String
-  model                   String
-  workflow                String?
-  rawInputTokens          Int                @default(0) @map("raw_input_tokens")
-  rawCachedTokens         Int                @default(0) @map("raw_cached_tokens")
-  rawReasoningTokens      Int                @default(0) @map("raw_reasoning_tokens")
-  rawOutputTokens         Int                @default(0) @map("raw_output_tokens")
-  toolCallCount           Int                @default(0) @map("tool_call_count")
+  id                    String             @id @default(cuid())
+  userId                String             @map("user_id")
+  planId                String?            @map("plan_id")
+  subscriptionId        String?            @map("subscription_id")
+  reservationId         String             @unique @map("reservation_id")
+  requestId             String             @map("request_id")
+  provider              String
+  model                 String
+  workflow              String?
+  rawInputTokens        Int                @default(0) @map("raw_input_tokens")
+  rawCachedTokens       Int                @default(0) @map("raw_cached_tokens")
+  // F093: prompt tokens WRITTEN into the provider's cache, billed at the model's
+  // cache-write rate when one is published. Disjoint from raw_input_tokens and
+  // raw_cached_tokens, so a settled row attributes every prompt token once.
+  rawCacheWriteTokens   Int                @default(0) @map("raw_cache_write_tokens")
+  rawReasoningTokens    Int                @default(0) @map("raw_reasoning_tokens")
+  rawOutputTokens       Int                @default(0) @map("raw_output_tokens")
+  toolCallCount         Int                @default(0) @map("tool_call_count")
   // PAYG credit attribution (ADR-080: one reservation, not two). A non-PAYG
   // request leaves all three at their defaults, so every historical row stays
   // valid and old code keeps running against the new schema.

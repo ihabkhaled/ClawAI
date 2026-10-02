@@ -109,3 +109,42 @@ describe('normalizeTokenUsage', () => {
     expect(usage.source).toBe(TokenUsageSource.NATIVE);
   });
 });
+
+describe('normalizeTokenUsage: cache writes (F093)', () => {
+  it('carries a write as a subset of the prompt, omitted when zero', () => {
+    const wrote = normalizeTokenUsage({
+      promptTokens: 1000,
+      completionTokens: 10,
+      cacheCreationPromptTokens: 800,
+    });
+    expect(wrote.cacheCreationPromptTokens).toBe(800);
+    const none = normalizeTokenUsage({ promptTokens: 1000, completionTokens: 10 });
+    expect(none).not.toHaveProperty('cacheCreationPromptTokens');
+    const zero = normalizeTokenUsage({
+      promptTokens: 1000,
+      completionTokens: 10,
+      cacheCreationPromptTokens: 0,
+    });
+    expect(zero).not.toHaveProperty('cacheCreationPromptTokens');
+  });
+
+  it('clamps a write to what the cache read left of the prompt', () => {
+    const usage = normalizeTokenUsage({
+      promptTokens: 1000,
+      completionTokens: 10,
+      cachedPromptTokens: 900,
+      cacheCreationPromptTokens: 700,
+    });
+    expect(usage.cachedPromptTokens).toBe(900);
+    expect(usage.cacheCreationPromptTokens).toBe(100);
+  });
+
+  it('reports no write for an estimated prompt (nothing was measured)', () => {
+    const usage = normalizeTokenUsage({
+      promptText: 'abcd',
+      completionTokens: 5,
+      cacheCreationPromptTokens: 100,
+    });
+    expect(usage).not.toHaveProperty('cacheCreationPromptTokens');
+  });
+});

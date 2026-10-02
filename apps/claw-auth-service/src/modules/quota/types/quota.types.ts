@@ -133,6 +133,9 @@ export type WeightedFinalizeInput = {
   reservationId: string;
   rawInputTokens: number;
   rawCachedTokens: number;
+  // F093: prompt tokens written into the provider's cache. Defaulted to 0 so a
+  // finalize that predates the column still validates.
+  rawCacheWriteTokens?: number;
   rawReasoningTokens: number;
   rawOutputTokens: number;
   toolCallCount: number;

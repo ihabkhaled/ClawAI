@@ -163,3 +163,74 @@ describe('ModelCapabilityClient', () => {
     expect(await new ModelCapabilityClient().listVideoCapableModels()).toBeNull();
   });
 });
+
+describe('ModelCapabilityClient.resolvePromptCaching (F093)', () => {
+  const cachingSnapshot = {
+    generatedAt: '2026-10-01T00:00:00.000Z',
+    models: [
+      {
+        provider: 'ANTHROPIC',
+        modelKey: 'claude-sonnet-4',
+        exposure: 'EXPOSED',
+        kind: 'CHAT',
+        promptCaching: true,
+      },
+      {
+        provider: 'ANTHROPIC',
+        modelKey: 'claude-haiku-4-5',
+        exposure: 'EXPOSED',
+        kind: 'CHAT',
+        promptCaching: false,
+      },
+      { provider: 'ANTHROPIC', modelKey: 'claude-opus-4', exposure: 'EXPOSED', kind: 'CHAT' },
+    ],
+  };
+
+  beforeEach(() => {
+    ModelCapabilityClient.invalidate();
+    httpRequest.mockReset();
+    appConfigGet.mockReturnValue({ CONNECTOR_SERVICE_URL: 'http://connector:4003' });
+  });
+
+  it('is true only for a model whose catalog row says so', async () => {
+    httpRequest.mockResolvedValue({ ok: true, status: 200, data: cachingSnapshot });
+    const client = new ModelCapabilityClient();
+    expect(await client.resolvePromptCaching('ANTHROPIC', 'claude-sonnet-4')).toBe(true);
+    expect(await client.resolvePromptCaching('anthropic', 'Claude-Sonnet-4')).toBe(true);
+    expect(await client.resolvePromptCaching('ANTHROPIC', 'claude-haiku-4-5')).toBe(false);
+  });
+
+  it('reads an older connector-service row with no field as OFF', async () => {
+    httpRequest.mockResolvedValue({ ok: true, status: 200, data: cachingSnapshot });
+    expect(
+      await new ModelCapabilityClient().resolvePromptCaching('ANTHROPIC', 'claude-opus-4'),
+    ).toBe(false);
+  });
+
+  it('is OFF for a model with no catalog row', async () => {
+    httpRequest.mockResolvedValue({ ok: true, status: 200, data: cachingSnapshot });
+    expect(
+      await new ModelCapabilityClient().resolvePromptCaching('ANTHROPIC', 'claude-unknown'),
+    ).toBe(false);
+  });
+
+  it('is OFF, never an error, while the snapshot is unavailable', async () => {
+    httpRequest.mockRejectedValue(new Error('connector down'));
+    expect(
+      await new ModelCapabilityClient().resolvePromptCaching('ANTHROPIC', 'claude-sonnet-4'),
+    ).toBe(false);
+  });
+
+  it('is OFF when the snapshot fails its schema check', async () => {
+    httpRequest.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        models: [{ provider: 'ANTHROPIC', modelKey: 'claude-sonnet-4', promptCaching: 'yes' }],
+      },
+    });
+    expect(
+      await new ModelCapabilityClient().resolvePromptCaching('ANTHROPIC', 'claude-sonnet-4'),
+    ).toBe(false);
+  });
+});

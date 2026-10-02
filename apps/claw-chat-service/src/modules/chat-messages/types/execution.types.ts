@@ -5,7 +5,10 @@ import type { AttemptRecord } from './fallback-executor.types';
 import type { FileContentCandidate } from './file-writer.types';
 import type { FileDeliveryEntry } from './file-delivery.types';
 import type { HelperExecution } from './vision-helper.types';
-import type { PickedModelFallbackNotice, PickedModelSubstitute } from './picked-model-fallback.types';
+import type {
+  PickedModelFallbackNotice,
+  PickedModelSubstitute,
+} from './picked-model-fallback.types';
 import type { JudgeRefereeMetadata } from './judge-referee.types';
 import type {
   AnthropicCacheControl,
@@ -131,6 +134,12 @@ export type LlmResponse = {
    * cost (ADR-078).
    */
   cachedPromptTokens?: number;
+  /**
+   * The subset of `inputTokens` the provider WROTE into its prompt cache
+   * (Anthropic `cache_creation_input_tokens`, F093). Carried so the PAYG
+   * finalize bills the write at the model's cache-write rate; absent means none.
+   */
+  cacheCreationPromptTokens?: number;
   reasoningTokens?: number;
   /**
    * True when the output ceiling was cut down to what the remaining PAYG credit

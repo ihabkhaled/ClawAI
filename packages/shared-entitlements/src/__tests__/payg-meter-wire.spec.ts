@@ -3,6 +3,7 @@ import { BillingErrorCode, PaygSurface } from '@claw/shared-types';
 
 import { PaygCreditExhaustedError } from '../payg-credit-exhausted.error';
 import { PaygMeter } from '../payg-meter';
+import type { PaygHold } from '../payg-meter.types';
 
 /**
  * The wire contract between auth-service's `/internal/credit/reserve` and this
@@ -239,5 +240,67 @@ describe('PaygMeter wire contract', () => {
         headers: expect.objectContaining({ Authorization: 'Service tok' }),
       }),
     );
+  });
+});
+
+describe('PaygMeter wire: prompt-cache fields (F093)', () => {
+  const realFetch = globalThis.fetch;
+  afterEach(() => {
+    globalThis.fetch = realFetch;
+    vi.restoreAllMocks();
+  });
+
+  function sentBody(stub: Mock): Record<string, unknown> {
+    const call = stub.mock.calls[0] as [string, { body: string }];
+    return JSON.parse(call[1].body) as Record<string, unknown>;
+  }
+
+  it('sends cacheWritePromptTokens on reserve only when positive', async () => {
+    const stub = respondWith(200, { metered: false, reason: 'NOT_PAYG' });
+    await meter().reserve(input({ cacheWritePromptTokens: 8000.9 }));
+    expect(sentBody(stub).cacheWritePromptTokens).toBe(8000);
+
+    const plain = respondWith(200, { metered: false, reason: 'NOT_PAYG' });
+    await meter().reserve(input());
+    expect(sentBody(plain)).not.toHaveProperty('cacheWritePromptTokens');
+
+    const zero = respondWith(200, { metered: false, reason: 'NOT_PAYG' });
+    await meter().reserve(input({ cacheWritePromptTokens: 0 }));
+    expect(sentBody(zero)).not.toHaveProperty('cacheWritePromptTokens');
+
+    const negative = respondWith(200, { metered: false, reason: 'NOT_PAYG' });
+    await meter().reserve(input({ cacheWritePromptTokens: -4 }));
+    expect(sentBody(negative)).not.toHaveProperty('cacheWritePromptTokens');
+  });
+
+  const HOLD: PaygHold = {
+    metered: true,
+    maxOutputTokens: 100,
+    clamped: false,
+    reservationId: 'res-1',
+    heldMicroUsd: 10,
+    availableAfterMicroUsd: 90,
+    reason: null,
+  };
+
+  it('sends cacheCreationPromptTokens on finalize only when positive', async () => {
+    const stub = respondWith(204, {});
+    await meter().finalize(HOLD, {
+      promptTokens: 9000,
+      completionTokens: 40,
+      cachedPromptTokens: 0,
+      cacheCreationPromptTokens: 8000,
+      reasoningTokens: 0,
+    });
+    expect((sentBody(stub).usage as Record<string, unknown>).cacheCreationPromptTokens).toBe(8000);
+
+    const plain = respondWith(204, {});
+    await meter().finalize(HOLD, {
+      promptTokens: 9000,
+      completionTokens: 40,
+      cachedPromptTokens: 0,
+      reasoningTokens: 0,
+    });
+    expect(sentBody(plain).usage).not.toHaveProperty('cacheCreationPromptTokens');
   });
 });

@@ -671,3 +671,13 @@ No CHECK may pin a trial day count: `plan_trial_redemptions_duration_check` is n
 `src/modules/plans/__tests__/trial-length-constraints.spec.ts` enforces it. The dev
 database had drifted and lacked the old constraint, so test schema changes against
 a migrated database, not only the dev one.
+
+## Prompt-cache writes in the credit path (2026-10-01, ADR-153)
+
+- `reserve` `cacheWritePromptTokens` and `finalize` `usage.cacheCreationPromptTokens` are additive,
+  default 0. The write is priced by `calculateCostMicroUsd` from `cacheWritePerMillionMicroUsd` ONLY
+  when that rate is positive, else as ordinary input. Never bill a write at zero or at a guessed premium.
+- `applySettlement` is `min(actual, held)`: the hold MUST be sized for the premium
+  (`estimateInputCostMicroUsd` 4th argument) or it is absorbed. `credit-cache-write.spec.ts` proves
+  both directions; keep it green.
+- `weighted_usage_records.raw_cache_write_tokens` attributes the write slice per settled row.

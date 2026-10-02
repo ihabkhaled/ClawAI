@@ -3,6 +3,7 @@ export {
   calculateUnitCostMicroUsd,
   calculateWeightedTokens,
   costMicroUsdToWeightedTokens,
+  effectiveCacheWriteRate,
   estimateWeightedTokens,
   hasUsablePricing,
   isPerUnitPriced,

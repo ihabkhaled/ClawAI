@@ -185,6 +185,12 @@ export class PaygMeter {
         workflow: input.workflow ?? null,
         promptTokens: Math.max(0, Math.floor(input.promptTokens)),
         cachedPromptTokens: Math.max(0, Math.floor(input.cachedPromptTokens ?? 0)),
+        // Present only when positive, so a call that does not ask for caching
+        // sends byte-for-byte the body it sent before F093.
+        ...PaygMeter.positiveField(
+          'cacheWritePromptTokens',
+          Math.floor(input.cacheWritePromptTokens ?? 0),
+        ),
         requestedMaxOutputTokens: Math.max(1, Math.floor(input.requestedMaxOutputTokens)),
         ...PaygMeter.unitWire(input),
       });
@@ -257,6 +263,10 @@ export class PaygMeter {
             promptTokens: Math.max(0, Math.floor(usage.promptTokens)),
             completionTokens: Math.max(0, Math.floor(usage.completionTokens)),
             cachedPromptTokens: Math.max(0, Math.floor(usage.cachedPromptTokens)),
+            ...PaygMeter.positiveField(
+              'cacheCreationPromptTokens',
+              Math.floor(usage.cacheCreationPromptTokens ?? 0),
+            ),
             reasoningTokens: Math.max(0, Math.floor(usage.reasoningTokens)),
           },
           toolCalls: Math.max(0, Math.floor(calls.toolCalls ?? 0)),
@@ -295,6 +305,11 @@ export class PaygMeter {
   private isExempt(provider: string): boolean {
     const normalized = provider.toUpperCase();
     return this.exemptProviders.some((exempt) => exempt.toUpperCase() === normalized);
+  }
+
+  /** `{ [name]: value }` when `value` is a positive integer, else `{}`. */
+  private static positiveField(name: string, value: number): Record<string, number> {
+    return Number.isSafeInteger(value) && value > 0 ? { [name]: value } : {};
   }
 
   /**

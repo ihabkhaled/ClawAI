@@ -88,6 +88,23 @@ function unitCostMicroUsd(units: BillableUnitCounts, rates: ModelCostRates): big
   );
 }
 
+/**
+ * The rate a prompt-cache WRITE is billed at (F093).
+ *
+ * Billed from `cacheWritePerMillionMicroUsd` ONLY when that rate row is
+ * published and positive. Anything else — null ("not published"), zero, or a
+ * non-finite value — falls back to the plain input rate: the written tokens are
+ * still prompt tokens the provider charged for, so they are never free and never
+ * priced at a guess of a premium. A zero write rate is treated as absent on
+ * purpose; "free to write" is not something a catalog row can assert here.
+ */
+export function effectiveCacheWriteRate(rates: ModelCostRates): number | null {
+  const write = rates.cacheWritePerMillionMicroUsd;
+  return write !== null && Number.isFinite(write) && write > 0
+    ? write
+    : rates.inputPerMillionMicroUsd;
+}
+
 // Total estimated provider cost of one execution, in integer micro-USD.
 //
 // Cached input is billed at its own (cheaper) rate when the provider publishes
@@ -99,11 +116,13 @@ function unitCostMicroUsd(units: BillableUnitCounts, rates: ModelCostRates): big
 // converted back to a number once, at the end.
 export function calculateCostMicroUsd(raw: RawTokenBreakdown, rates: ModelCostRates): number {
   const cachedRate = rates.cachedInputPerMillionMicroUsd ?? rates.inputPerMillionMicroUsd;
+  const cacheWriteRate = effectiveCacheWriteRate(rates);
   const reasoningRate = rates.reasoningPerMillionMicroUsd ?? rates.outputPerMillionMicroUsd;
 
   const tokens =
     BigInt(costForUnits(raw.inputTokens, rates.inputPerMillionMicroUsd)) +
     BigInt(costForUnits(raw.cachedInputTokens, cachedRate)) +
+    BigInt(costForUnits(raw.cacheWriteInputTokens ?? 0, cacheWriteRate)) +
     BigInt(costForUnits(raw.reasoningTokens, reasoningRate)) +
     BigInt(costForUnits(raw.outputTokens, rates.outputPerMillionMicroUsd));
   const calls =

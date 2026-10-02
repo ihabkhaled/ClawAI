@@ -118,7 +118,7 @@ describe('ConnectorModelsRepository', () => {
           modelKey: { notIn: ['gpt-4', 'gpt-3.5'] },
           lifecycle: { not: 'REMOVED' },
         },
-        data: { lifecycle: 'REMOVED', exposure: 'UNEXPOSED' },
+        data: { lifecycle: 'REMOVED', exposure: 'UNEXPOSED', promptCaching: false },
       });
       expect(prismaMock.connectorModel.deleteMany).not.toHaveBeenCalled();
     });
@@ -142,7 +142,7 @@ describe('ConnectorModelsRepository', () => {
           connectorId: 'c1',
           lifecycle: { not: 'REMOVED' },
         },
-        data: { lifecycle: 'REMOVED', exposure: 'UNEXPOSED' },
+        data: { lifecycle: 'REMOVED', exposure: 'UNEXPOSED', promptCaching: false },
       });
       const updateManyCall = prismaMock.connectorModel.updateMany.mock.calls[0];
       expect(updateManyCall).toBeDefined();
