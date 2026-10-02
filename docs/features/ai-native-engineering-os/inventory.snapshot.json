@@ -1747,6 +1747,11 @@
           "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
         },
         {
+          "method": "PUT",
+          "route": "/connectors/:id/models/prompt-caching",
+          "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/connectors/:id/sync",
           "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
@@ -8170,7 +8175,7 @@
           "file": "rules/36-floating-ui-and-toast-clearance.md"
         },
         {
-          "bytes": 33452,
+          "bytes": 36452,
           "file": "rules/37-payg-credit-integrity.md"
         },
         {
@@ -10722,7 +10727,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "vitest",
-        "testFiles": 49
+        "testFiles": 50
       },
       "claw-agent-service": {
         "runner": "vitest",
@@ -10734,11 +10739,11 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 142
+        "testFiles": 144
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 302
+        "testFiles": 307
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10746,7 +10751,7 @@
       },
       "claw-connector-service": {
         "runner": "vitest",
-        "testFiles": 47
+        "testFiles": 48
       },
       "claw-file-generation-service": {
         "runner": "vitest",
@@ -11524,7 +11529,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 52,
-    "endpointCount": 784,
+    "endpointCount": 785,
     "envVarCount": 361,
     "eventCount": 185,
     "frontendRouteCount": 155,
@@ -11536,7 +11541,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1989,
+    "totalTestFiles": 1998,
     "workspaceCount": 25
   }
 }
