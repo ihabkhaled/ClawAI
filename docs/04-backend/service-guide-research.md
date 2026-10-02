@@ -174,10 +174,15 @@ rather than the whole private network.
 proves nothing about where the body actually came from: a public page that 302s
 to a metadata endpoint passes the first check and fails the second.
 
-**What this does not do.** It does not resolve DNS, so a hostname an attacker
-controls can resolve to loopback and pass. That is written down as TD-031 rather
-than left implied; the fix is a socket-level guard that checks resolved
-addresses and pins the connection against rebinding.
+**DNS rebinding (TD-031, closed).** `followRedirectsSafely` resolves each hop's
+host once (`dns-guard.utility`), refuses it when any answer is non-public
+(`ip-address.utility` works on address bytes, so every IPv4-mapped spelling,
+CGNAT, link-local, multicast and metadata address is covered), and gives the
+send function that exact address. `pinnedFetch` connects to it with a custom
+`lookup`, keeping `Host` and TLS SNI. Tests replace `hostResolution.resolve`;
+the vitest setup stubs it so unit tests never touch DNS. **Residual:** the
+`impit` TLS-impersonation tier cannot pin the socket and only validates at
+resolve time.
 
 ## Head metadata extraction
 

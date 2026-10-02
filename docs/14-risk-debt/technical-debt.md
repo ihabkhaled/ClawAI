@@ -347,7 +347,13 @@ Last updated: 2026-09-10
   workspace-service and file-generation-service set one. The other 13 use the
   100 kB default, which is only safe while every DTO of theirs stays small.
 
-### TD-031: Outbound fetch has no DNS-level SSRF guard (2026-09-11)
+### TD-031: Outbound fetch has no DNS-level SSRF guard (2026-09-11) — FIXED (2026-10-02)
+
+- **Fixed**: every redirect hop resolves once, validates every answer (IPv4, IPv6,
+  IPv4-mapped, CGNAT, link-local, multicast, metadata incl. fd00:ec2::254) and
+  connects to the pinned IP (`dns-guard.utility`, `ip-address.utility`,
+  `pinned-fetch.utility`). Residual: the `impit` TLS-impersonation tier validates
+  but cannot pin the socket. The text below is the original entry.
 
 - **Severity**: High · **Effort**: Medium · **Priority**: Next
 - **Detail**: `assertSafeOutboundUrl` is a **syntactic** check. It now rejects

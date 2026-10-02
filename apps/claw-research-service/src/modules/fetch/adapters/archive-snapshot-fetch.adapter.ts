@@ -20,6 +20,7 @@ import {
 import { readLimitedBody } from '../utilities/limited-body.utility';
 import { extractPageContent } from '../utilities/page-content.utility';
 import { assertPublicThirdPartyUrl } from '../utilities/public-url.utility';
+import { pinnedFetch } from '../utilities/pinned-fetch.utility';
 import { followRedirectsSafely } from '../utilities/safe-redirect.utility';
 import { toRawSnapshotUrl, waybackTimestampToIso } from '../utilities/wayback-snapshot.utility';
 import type { FetchStrategyAdapter } from './fetch-strategy-adapter.interface';
@@ -57,10 +58,9 @@ export class ArchiveSnapshotFetchAdapter implements FetchStrategyAdapter {
 
     const { response, finalUrl } = await followRedirectsSafely(
       toRawSnapshotUrl(snapshot.url, snapshot.timestamp),
-      async (url) => {
+      async (url, pin) => {
         assertSafeRequestUrl(url, ARCHIVE_SNAPSHOT_HOSTS);
-        const hop = await fetch(url, {
-          redirect: 'manual',
+        const hop = await pinnedFetch(url, pin, {
           signal,
           headers: { 'User-Agent': RESEARCH_BOT_USER_AGENT },
         });

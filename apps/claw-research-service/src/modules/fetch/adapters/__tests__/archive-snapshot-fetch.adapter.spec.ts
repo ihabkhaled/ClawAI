@@ -1,6 +1,10 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
+
 import { AppConfig } from '../../../../app/config/app.config';
 import { ArchiveSnapshotFetchAdapter } from '../archive-snapshot-fetch.adapter';
+
+const pinnedFetchMock = vi.hoisted(() => vi.fn());
+vi.mock('../../utilities/pinned-fetch.utility', () => ({ pinnedFetch: pinnedFetchMock }));
 
 vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: { get: vi.fn() },
@@ -38,16 +42,16 @@ describe('ArchiveSnapshotFetchAdapter', () => {
   }
 
   it('reads the raw id_ snapshot over HTTPS and labels it as an archived copy', async () => {
-    global.fetch = vi
-      .fn()
-      .mockResolvedValueOnce(
-        availability({
-          status: '200',
-          available: true,
-          url: snapshotUrl,
-          timestamp: '20200102030405',
-        }),
-      )
+    global.fetch = vi.fn().mockResolvedValueOnce(
+      availability({
+        status: '200',
+        available: true,
+        url: snapshotUrl,
+        timestamp: '20200102030405',
+      }),
+    );
+    pinnedFetchMock
+      .mockReset()
       .mockResolvedValueOnce(
         htmlResponse(
           '<html><head><title>Old</title></head><body><p>Archived text</p></body></html>',
@@ -58,9 +62,10 @@ describe('ArchiveSnapshotFetchAdapter', () => {
       url: 'https://example.com/',
     });
 
-    expect(global.fetch).toHaveBeenLastCalledWith(
+    expect(pinnedFetchMock).toHaveBeenLastCalledWith(
       'https://web.archive.org/web/20200102030405id_/https://example.com/',
-      expect.objectContaining({ redirect: 'manual' }),
+      expect.anything(),
+      expect.objectContaining({ headers: expect.anything() }),
     );
     expect(result.content.startsWith('Archived copy, captured 2020-01-02')).toBe(true);
     expect(result.content).toContain('Archived text');
@@ -96,16 +101,16 @@ describe('ArchiveSnapshotFetchAdapter', () => {
   });
 
   it('throws when the snapshot answers an error', async () => {
-    global.fetch = vi
-      .fn()
-      .mockResolvedValueOnce(
-        availability({
-          status: '200',
-          available: true,
-          url: snapshotUrl,
-          timestamp: '20200102030405',
-        }),
-      )
+    global.fetch = vi.fn().mockResolvedValueOnce(
+      availability({
+        status: '200',
+        available: true,
+        url: snapshotUrl,
+        timestamp: '20200102030405',
+      }),
+    );
+    pinnedFetchMock
+      .mockReset()
       .mockResolvedValueOnce({ ok: false, status: 503, headers: { get: () => null }, body: null });
 
     await expect(

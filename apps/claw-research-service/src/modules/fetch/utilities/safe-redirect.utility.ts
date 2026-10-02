@@ -1,8 +1,10 @@
 import { REDIRECT_STATUS_CODES } from '../../../common/constants/fetch.constants';
+import { resolvePinnedAddress } from '../../../common/utilities/dns-guard.utility';
 import {
   assertSafeOutboundUrl,
   isHostExplicitlyAllowlisted,
 } from '../../../common/utilities/url-safety.utility';
+import type { PinnedAddress } from '../../../common/types/ip-address.types';
 import type {
   RedirectHop,
   SafeRedirectOptions,
@@ -18,21 +20,27 @@ import type {
  * URL; a public page that 302s to `http://169.254.169.254/` has made the
  * request before a post-hoc check can refuse it. Here the request is never
  * sent. `send` must NOT follow redirects on its own.
+ *
+ * Every hop also resolves its host exactly once and passes the validated
+ * address to `send`; a client that re-resolves the name instead of connecting
+ * to that address reopens DNS rebinding.
  */
 export async function followRedirectsSafely<T>(
   startUrl: string,
-  send: (url: string) => Promise<RedirectHop<T>>,
+  send: (url: string, pin: PinnedAddress) => Promise<RedirectHop<T>>,
   options: SafeRedirectOptions,
 ): Promise<SafeRedirectResult<T>> {
   const chain: string[] = [];
   let currentUrl = startUrl;
 
   for (let hop = 0; hop <= options.maxRedirects; hop += 1) {
-    const safe = assertSafeOutboundUrl(currentUrl, {
-      allowPrivateHosts: isHostExplicitlyAllowlisted(currentUrl, options.allowlist),
-    });
+    const allowPrivate = isHostExplicitlyAllowlisted(currentUrl, options.allowlist);
+    const safe = assertSafeOutboundUrl(currentUrl, { allowPrivateHosts: allowPrivate });
+    // Resolve ONCE, validate every answer, and hand the checked address to
+    // `send`, which must connect to exactly it (TD-031, DNS rebinding).
+    const pin = await resolvePinnedAddress(safe.hostname, { allowPrivate });
     chain.push(safe.href);
-    const exchange = await send(safe.href);
+    const exchange = await send(safe.href, pin);
     if (!REDIRECT_STATUS_CODES.has(exchange.status) || exchange.location === null) {
       return { response: exchange.response, finalUrl: safe.href, chain };
     }

@@ -8,8 +8,9 @@ import {
   RESEARCH_BOT_USER_AGENT,
 } from '../../../common/constants/fetch.constants';
 import { FetchStrategyKind } from '../../../generated/prisma';
-import { readLimitedBody, parseMimeType } from '../utilities/limited-body.utility';
+import { parseMimeType, readLimitedBody } from '../utilities/limited-body.utility';
 import { buildResultFromRawBody } from '../utilities/raw-body-result.utility';
+import { pinnedFetch } from '../utilities/pinned-fetch.utility';
 import { followRedirectsSafely } from '../utilities/safe-redirect.utility';
 import type { FetchStrategyAdapter } from './fetch-strategy-adapter.interface';
 import type { FetchRequest, FetchResult } from '../types/fetch.types';
@@ -34,9 +35,8 @@ export class HttpFetchAdapter implements FetchStrategyAdapter {
     const signal = AbortSignal.timeout(timeoutMs);
     const { response, finalUrl } = await followRedirectsSafely(
       request.url,
-      async (url) => {
-        const hop = await fetch(url, {
-          redirect: 'manual',
+      async (url, pin) => {
+        const hop = await pinnedFetch(url, pin, {
           signal,
           headers: {
             'User-Agent': RESEARCH_BOT_USER_AGENT,

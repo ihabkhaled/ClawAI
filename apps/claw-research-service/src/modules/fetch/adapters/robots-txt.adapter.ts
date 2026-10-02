@@ -14,6 +14,7 @@ import {
   ROBOTS_RETRY_IMPERSONATED_STATUSES,
 } from '../constants/robots-policy.constants';
 import { readBodyPrefix } from '../utilities/limited-body.utility';
+import { pinnedFetch } from '../utilities/pinned-fetch.utility';
 import { followRedirectsSafely } from '../utilities/safe-redirect.utility';
 import type { RobotsFetchOutcome } from '../types/robots-policy.types';
 
@@ -43,10 +44,9 @@ export class RobotsTxtAdapter {
       const signal = AbortSignal.timeout(ROBOTS_FETCH_TIMEOUT_MS);
       const { response } = await followRedirectsSafely(
         robotsUrl,
-        async (url) => {
+        async (url, pin) => {
           assertSafeRequestUrl(url, declaredHost(url));
-          const hop = await fetch(url, {
-            redirect: 'manual',
+          const hop = await pinnedFetch(url, pin, {
             signal,
             headers: { 'User-Agent': RESEARCH_BOT_USER_AGENT, Accept: 'text/plain' },
           });

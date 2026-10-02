@@ -16,6 +16,7 @@ import { readLimitedBody } from '../utilities/limited-body.utility';
 import { formatOfficialApiDocument } from '../utilities/official-api-format.utility';
 import { officialApiAllowedHosts } from '../utilities/official-api-hosts.utility';
 import { resolveOfficialApiTarget } from '../utilities/official-api-resolver.utility';
+import { pinnedFetch } from '../utilities/pinned-fetch.utility';
 import { followRedirectsSafely } from '../utilities/safe-redirect.utility';
 import type { FetchStrategyAdapter } from './fetch-strategy-adapter.interface';
 import type { FetchRequest, FetchResult } from '../types/fetch.types';
@@ -49,10 +50,9 @@ export class OfficialApiFetchAdapter implements FetchStrategyAdapter {
     const allowedHosts = officialApiAllowedHosts(target.apiUrl);
     const { response } = await followRedirectsSafely(
       target.apiUrl,
-      async (url) => {
+      async (url, pin) => {
         assertSafeRequestUrl(url, allowedHosts);
-        const hop = await fetch(url, {
-          redirect: 'manual',
+        const hop = await pinnedFetch(url, pin, {
           signal,
           headers: { 'User-Agent': RESEARCH_BOT_USER_AGENT, Accept: target.accept },
         });

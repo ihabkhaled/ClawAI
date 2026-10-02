@@ -1,7 +1,9 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { AppConfig } from '../../../../app/config/app.config';
 import { OfficialApiFetchAdapter } from '../official-api-fetch.adapter';
 
+const pinnedFetchMock = vi.hoisted(() => vi.fn());
+vi.mock('../../utilities/pinned-fetch.utility', () => ({ pinnedFetch: pinnedFetchMock }));
 vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: { get: vi.fn() },
 }));
@@ -36,13 +38,14 @@ describe('OfficialApiFetchAdapter', () => {
   });
 
   it('reads a GitHub README through the API and titles it with the repo', async () => {
-    global.fetch = vi.fn().mockResolvedValue(response('# impit\n\nBrowser impersonation'));
+    pinnedFetchMock.mockReset().mockResolvedValue(response('# impit\n\nBrowser impersonation'));
 
     const result = await adapter.fetchPage({ url: 'https://github.com/apify/impit' });
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(pinnedFetchMock).toHaveBeenCalledWith(
       'https://api.github.com/repos/apify/impit/readme',
-      expect.objectContaining({ redirect: 'manual' }),
+      expect.anything(),
+      expect.objectContaining({ headers: expect.anything() }),
     );
     expect(result.title).toBe('apify/impit');
     expect(result.content).toContain('Browser impersonation');
@@ -50,7 +53,7 @@ describe('OfficialApiFetchAdapter', () => {
   });
 
   it('throws on a non-2xx API answer so the chain moves on', async () => {
-    global.fetch = vi.fn().mockResolvedValue(response('{"message":"Not Found"}', 404));
+    pinnedFetchMock.mockReset().mockResolvedValue(response('{"message":"Not Found"}', 404));
 
     await expect(adapter.fetchPage({ url: 'https://github.com/apify/no-readme' })).rejects.toThrow(
       /GITHUB API answered HTTP 404/u,
@@ -64,7 +67,7 @@ describe('OfficialApiFetchAdapter', () => {
   });
 
   it('refuses an API redirect to a loopback host before requesting it', async () => {
-    global.fetch = vi.fn().mockResolvedValueOnce({
+    pinnedFetchMock.mockReset().mockResolvedValueOnce({
       ok: false,
       status: 302,
       headers: {
@@ -74,6 +77,6 @@ describe('OfficialApiFetchAdapter', () => {
     });
 
     await expect(adapter.fetchPage({ url: 'https://github.com/apify/impit' })).rejects.toThrow();
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(pinnedFetchMock).toHaveBeenCalledTimes(1);
   });
 });

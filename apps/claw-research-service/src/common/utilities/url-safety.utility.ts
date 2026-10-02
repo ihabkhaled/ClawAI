@@ -21,6 +21,7 @@ import {
   PRIVATE_HOST_SUFFIXES,
   PRIVATE_HOSTNAMES,
 } from '../constants/url-safety.constants';
+import { isNonPublicIpv4, isNonPublicIpv6 } from './ip-address.utility';
 import type { UrlSafetyOptions } from '../types/url-safety.types';
 
 /** Whether the host is a cloud metadata endpoint. Never allowed, anywhere. */
@@ -51,10 +52,7 @@ export function isPrivateOrLoopbackHost(host: string): boolean {
     return true;
   }
   const octets = parseIpv4(normalized);
-  if (octets === null) {
-    return false;
-  }
-  return isPrivateIpv4(octets);
+  return octets === null ? false : isPrivateIpv4(octets);
 }
 
 function stripBrackets(host: string): string {
@@ -117,71 +115,19 @@ function parseIpPart(part: string): number | null {
 }
 
 function isPrivateIpv4(octets: number[]): boolean {
-  const [a, b] = octets;
-  if (a === undefined || b === undefined) {
-    return true;
-  }
-  // 0.0.0.0/8 "this network", 10/8, 127/8 loopback.
-  if (a === 0 || a === 10 || a === 127) {
-    return true;
-  }
-  // 169.254/16 link-local, which includes every cloud metadata address.
-  if (a === 169 && b === 254) {
-    return true;
-  }
-  if (a === 172 && b >= 16 && b <= 31) {
-    return true;
-  }
-  if (a === 192 && b === 168) {
-    return true;
-  }
-  // 100.64/10 carrier-grade NAT — reaches other tenants on shared hosting.
-  if (a === 100 && b >= 64 && b <= 127) {
-    return true;
-  }
-  // 192.0.0/24 IETF protocol assignments, 192.0.2/24 TEST-NET-1.
-  if (a === 192 && b === 0) {
-    return true;
-  }
-  // 198.18/15 benchmarking range.
-  if (a === 198 && (b === 18 || b === 19)) {
-    return true;
-  }
-  // 224/4 multicast and 240/4 reserved, which includes 255.255.255.255.
-  if (a >= 224) {
-    return true;
-  }
-  return false;
+  return isNonPublicIpv4(octets);
 }
 
 /**
- * IPv6 ranges that are never public.
+ * IPv6 literals that are never public, judged on the address bytes.
  *
  * `http://[::1]/` is loopback and `http://[::ffff:127.0.0.1]/` is loopback
- * wearing an IPv4 costume — the second gets past anything checking for IPv4
- * shapes, because the host is not one.
+ * wearing an IPv4 costume; the URL parser rewrites the latter to
+ * `[::ffff:7f00:1]`, which a dotted-quad regex never matched.
  */
 function isPrivateIpv6(host: string): boolean {
   const bare = stripBrackets(host);
-  if (!bare.includes(':')) {
-    return false;
-  }
-  const lower = bare.toLowerCase();
-  if (lower === '::1' || lower === '::') {
-    return true;
-  }
-  // IPv4-mapped and IPv4-compatible forms carry a dotted quad in the tail.
-  const mapped = /^::(?:ffff:)?(\d{1,3}(?:\.\d{1,3}){3})$/u.exec(lower);
-  const mappedIpv4 = mapped?.[1];
-  if (mappedIpv4 !== undefined) {
-    const octets = parseIpv4(mappedIpv4);
-    return octets === null ? true : isPrivateIpv4(octets);
-  }
-  // fc00::/7 unique-local and fe80::/10 link-local.
-  if (/^f[cd][0-9a-f]{2}:/u.test(lower) || /^fe[89ab][0-9a-f]:/u.test(lower)) {
-    return true;
-  }
-  return false;
+  return bare.includes(':') && isNonPublicIpv6(bare);
 }
 
 function hostMatchesAllowlist(host: string, allowed: readonly string[]): boolean {

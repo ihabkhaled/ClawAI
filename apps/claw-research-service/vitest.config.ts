@@ -32,7 +32,7 @@ export default defineConfig({
     // Nest reads decorator metadata through reflect-metadata's global shim.
     // Loading it here rather than relying on some import pulling it in first is
     // what the old Jest setupFiles entry was for.
-    setupFiles: ['reflect-metadata'],
+    setupFiles: ['reflect-metadata', './src/test-setup/dns-stub.setup.ts'],
     testTimeout: 30_000,
     coverage: {
       provider: 'v8',
@@ -47,7 +47,7 @@ export default defineConfig({
         'src/**/*.enum.ts',
         'src/**/index.ts',
       ],
-      thresholds: {"branches":70,"functions":70,"lines":70,"statements":70},
+      thresholds: { branches: 70, functions: 70, lines: 70, statements: 70 },
     },
   },
   resolve: {

@@ -1,7 +1,9 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { AppConfig } from '../../../../app/config/app.config';
 import { HttpFetchAdapter } from '../http-fetch.adapter';
 
+const pinnedFetchMock = vi.hoisted(() => vi.fn());
+vi.mock('../../utilities/pinned-fetch.utility', () => ({ pinnedFetch: pinnedFetchMock }));
 vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: { get: vi.fn() },
 }));
@@ -26,7 +28,7 @@ describe('HttpFetchAdapter.fetchPage', () => {
   function mockHtmlResponse(html: string): void {
     const body = Buffer.from(html, 'utf8');
     let sent = false;
-    global.fetch = vi.fn().mockResolvedValue({
+    pinnedFetchMock.mockReset().mockResolvedValue({
       ok: true,
       status: 200,
       url: 'https://example.com/',
@@ -70,7 +72,7 @@ describe('HttpFetchAdapter.fetchPage', () => {
 
   it('leaves metadata undefined for a non-HTML response', async () => {
     let sent = false;
-    global.fetch = vi.fn().mockResolvedValue({
+    pinnedFetchMock.mockReset().mockResolvedValue({
       ok: true,
       status: 200,
       url: 'https://example.com/data.json',
@@ -102,12 +104,12 @@ describe('HttpFetchAdapter.fetchPage', () => {
   }
 
   it('refuses a redirect to a private host BEFORE requesting it', async () => {
-    global.fetch = vi
-      .fn()
+    pinnedFetchMock
+      .mockReset()
       .mockResolvedValueOnce(redirectTo('http://169.254.169.254/latest/meta-data'));
 
     await expect(adapter.fetchPage({ url: 'https://example.com/' })).rejects.toThrow();
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(pinnedFetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('follows a safe redirect hop by hop and reports the final URL', async () => {
@@ -115,8 +117,8 @@ describe('HttpFetchAdapter.fetchPage', () => {
       '<html><head><title>Moved</title></head><body>moved here</body></html>',
     );
     let sent = false;
-    global.fetch = vi
-      .fn()
+    pinnedFetchMock
+      .mockReset()
       .mockResolvedValueOnce(redirectTo('/new-home'))
       .mockResolvedValueOnce({
         ok: true,
@@ -136,14 +138,15 @@ describe('HttpFetchAdapter.fetchPage', () => {
 
     expect(result.finalUrl).toBe('https://example.com/new-home');
     expect(result.title).toBe('Moved');
-    expect(global.fetch).toHaveBeenLastCalledWith(
+    expect(pinnedFetchMock).toHaveBeenLastCalledWith(
       'https://example.com/new-home',
-      expect.objectContaining({ redirect: 'manual' }),
+      expect.anything(),
+      expect.objectContaining({ headers: expect.anything() }),
     );
   });
 
   it('gives up after too many redirects', async () => {
-    global.fetch = vi.fn().mockResolvedValue(redirectTo('/loop'));
+    pinnedFetchMock.mockReset().mockResolvedValue(redirectTo('/loop'));
 
     await expect(adapter.fetchPage({ url: 'https://example.com/loop' })).rejects.toThrow(
       /Too many redirects/u,

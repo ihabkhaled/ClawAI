@@ -1,7 +1,9 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { AppConfig } from '../../../../app/config/app.config';
 import { RobotsTxtAdapter } from '../robots-txt.adapter';
 
+const pinnedFetchMock = vi.hoisted(() => vi.fn());
+vi.mock('../../utilities/pinned-fetch.utility', () => ({ pinnedFetch: pinnedFetchMock }));
 vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: { get: vi.fn() },
 }));
@@ -38,7 +40,9 @@ describe('RobotsTxtAdapter', () => {
   });
 
   it('returns the plain body on 200', async () => {
-    global.fetch = vi.fn().mockResolvedValue(plainResponse(200, 'User-agent: *\nDisallow: /x'));
+    pinnedFetchMock
+      .mockReset()
+      .mockResolvedValue(plainResponse(200, 'User-agent: *\nDisallow: /x'));
 
     const outcome = await new RobotsTxtAdapter().fetchRobotsTxt('https://example.com/robots.txt');
 
@@ -47,7 +51,7 @@ describe('RobotsTxtAdapter', () => {
   });
 
   it('retries a 403 with the impersonating client so a WAF cannot hide the rules', async () => {
-    global.fetch = vi.fn().mockResolvedValue(plainResponse(403));
+    pinnedFetchMock.mockReset().mockResolvedValue(plainResponse(403));
     impersonatedGet.mockResolvedValue({
       status: 200,
       location: null,
@@ -66,7 +70,7 @@ describe('RobotsTxtAdapter', () => {
   });
 
   it('keeps the plain answer when the impersonated retry fails to connect', async () => {
-    global.fetch = vi.fn().mockResolvedValue(plainResponse(403));
+    pinnedFetchMock.mockReset().mockResolvedValue(plainResponse(403));
     impersonatedGet.mockRejectedValue(new Error('tls'));
 
     const outcome = await new RobotsTxtAdapter().fetchRobotsTxt('https://example.com/robots.txt');
@@ -75,7 +79,7 @@ describe('RobotsTxtAdapter', () => {
   });
 
   it('reports an unreachable host as status null', async () => {
-    global.fetch = vi.fn().mockRejectedValue(new Error('getaddrinfo ENOTFOUND'));
+    pinnedFetchMock.mockReset().mockRejectedValue(new Error('getaddrinfo ENOTFOUND'));
 
     const outcome = await new RobotsTxtAdapter().fetchRobotsTxt('https://gone.example/robots.txt');
 
@@ -83,23 +87,23 @@ describe('RobotsTxtAdapter', () => {
   });
 
   it('never requests a loopback robots.txt (both guards refuse it before any fetch)', async () => {
-    global.fetch = vi.fn();
+    pinnedFetchMock.mockReset();
 
     const outcome = await new RobotsTxtAdapter().fetchRobotsTxt('http://127.0.0.1/robots.txt');
 
     expect(outcome.status).toBeNull();
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(pinnedFetchMock).not.toHaveBeenCalled();
     expect(impersonatedGet).not.toHaveBeenCalled();
   });
 
   it('refuses a robots.txt URL with embedded credentials before any fetch', async () => {
-    global.fetch = vi.fn();
+    pinnedFetchMock.mockReset();
 
     const outcome = await new RobotsTxtAdapter().fetchRobotsTxt(
       'https://user:pw@example.com/robots.txt',
     );
 
     expect(outcome.status).toBeNull();
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(pinnedFetchMock).not.toHaveBeenCalled();
   });
 });
