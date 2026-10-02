@@ -7947,7 +7947,7 @@
       "looseDocs": 23,
       "rules": [
         {
-          "bytes": 31972,
+          "bytes": 33111,
           "file": "rules/00-master-rules.md"
         },
         {
@@ -8219,11 +8219,11 @@
           "file": "rules/57-memory-and-context-pack-integrity.md"
         },
         {
-          "bytes": 7961,
+          "bytes": 8079,
           "file": "rules/58-auth-route-rate-limits.md"
         },
         {
-          "bytes": 6734,
+          "bytes": 6722,
           "file": "rules/README.md"
         }
       ],

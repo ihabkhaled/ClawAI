@@ -55,7 +55,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 31625,
+      "bytes": 33111,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -123,7 +123,7 @@
       "file": "rules/08-backend-managers-and-use-cases.md"
     },
     {
-      "bytes": 6046,
+      "bytes": 8574,
       "file": "rules/08-security-rules.md"
     },
     {
@@ -159,7 +159,7 @@
       "file": "rules/15-configuration-and-environment.md"
     },
     {
-      "bytes": 7274,
+      "bytes": 8090,
       "file": "rules/16-authentication-and-authorization.md"
     },
     {
@@ -327,7 +327,11 @@
       "file": "rules/57-memory-and-context-pack-integrity.md"
     },
     {
-      "bytes": 6156,
+      "bytes": 8079,
+      "file": "rules/58-auth-route-rate-limits.md"
+    },
+    {
+      "bytes": 6722,
       "file": "rules/README.md"
     }
   ],
