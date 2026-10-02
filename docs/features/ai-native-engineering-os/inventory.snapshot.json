@@ -1793,6 +1793,11 @@
         },
         {
           "method": "POST",
+          "route": "/internal/connectors/models/unavailable",
+          "source": "apps/claw-connector-service/src/modules/connectors/controllers/model-unavailable-internal.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/internal/connectors/models/validate-exposed",
           "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
         },
@@ -8669,7 +8674,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5718
+        "value": 5719
       },
       "localeCount": 13,
       "locales": [
@@ -10733,7 +10738,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 296
+        "testFiles": 298
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10741,7 +10746,7 @@
       },
       "claw-connector-service": {
         "runner": "vitest",
-        "testFiles": 39
+        "testFiles": 47
       },
       "claw-file-generation-service": {
         "runner": "vitest",
@@ -11519,7 +11524,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 52,
-    "endpointCount": 783,
+    "endpointCount": 784,
     "envVarCount": 361,
     "eventCount": 185,
     "frontendRouteCount": 155,
@@ -11531,7 +11536,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1975,
+    "totalTestFiles": 1985,
     "workspaceCount": 25
   }
 }

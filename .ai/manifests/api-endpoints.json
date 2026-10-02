@@ -1738,6 +1738,11 @@
       },
       {
         "method": "POST",
+        "route": "/internal/connectors/models/unavailable",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/model-unavailable-internal.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/internal/connectors/models/validate-exposed",
         "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
       },
@@ -3953,5 +3958,5 @@
     ]
   },
   "generated": true,
-  "total": 783
+  "total": 784
 }
