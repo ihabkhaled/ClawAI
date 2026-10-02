@@ -144,7 +144,7 @@
         "MessageAttachment",
         "PromptTemplate"
       ],
-      "testFiles": 287,
+      "testFiles": 296,
       "testRunner": "vitest"
     },
     {
@@ -237,7 +237,7 @@
         "FileChunk",
         "PublishedArtifact"
       ],
-      "testFiles": 80,
+      "testFiles": 81,
       "testRunner": "vitest"
     },
     {
@@ -488,7 +488,7 @@
         "SeedExecution",
         "TaxonomyRole"
       ],
-      "testFiles": 113,
+      "testFiles": 114,
       "testRunner": "vitest"
     },
     {

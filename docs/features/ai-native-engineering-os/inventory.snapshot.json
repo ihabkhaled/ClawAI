@@ -8165,7 +8165,7 @@
           "file": "rules/36-floating-ui-and-toast-clearance.md"
         },
         {
-          "bytes": 32778,
+          "bytes": 33452,
           "file": "rules/37-payg-credit-integrity.md"
         },
         {
@@ -8185,7 +8185,7 @@
           "file": "rules/41-web-evidence-truthfulness.md"
         },
         {
-          "bytes": 37185,
+          "bytes": 39481,
           "file": "rules/42-attachment-understanding.md"
         },
         {
@@ -8669,7 +8669,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5712
+        "value": 5718
       },
       "localeCount": 13,
       "locales": [
@@ -10733,7 +10733,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 287
+        "testFiles": 296
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10749,11 +10749,11 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 80
+        "testFiles": 81
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 674
+        "testFiles": 687
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -10785,7 +10785,7 @@
       },
       "claw-routing-service": {
         "runner": "vitest",
-        "testFiles": 113
+        "testFiles": 114
       },
       "claw-server-logs-service": {
         "runner": "vitest",
@@ -11531,7 +11531,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1951,
+    "totalTestFiles": 1975,
     "workspaceCount": 25
   }
 }
