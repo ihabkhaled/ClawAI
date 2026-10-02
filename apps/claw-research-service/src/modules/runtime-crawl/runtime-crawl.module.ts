@@ -11,6 +11,7 @@ import { RuntimeCrawlPageRepository } from './repositories/runtime-crawl-page.re
 import { RuntimeCrawlRunRepository } from './repositories/runtime-crawl-run.repository';
 import { RuntimeCrawlBootstrapService } from './services/runtime-crawl-bootstrap.service';
 import { RuntimeCrawlConfigService } from './services/runtime-crawl-config.service';
+import { RuntimeCrawlRetentionService } from './services/runtime-crawl-retention.service';
 import { RuntimeCrawlLimitsService } from './services/runtime-crawl-limits.service';
 
 @Module({
@@ -24,6 +25,7 @@ import { RuntimeCrawlLimitsService } from './services/runtime-crawl-limits.servi
     RuntimeCrawlConfigService,
     RuntimeCrawlLimitsService,
     RuntimeCrawlBootstrapService,
+    RuntimeCrawlRetentionService,
     RuntimeCrawlManager,
   ],
 })

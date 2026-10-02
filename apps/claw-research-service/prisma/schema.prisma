@@ -313,6 +313,9 @@ model RuntimeCrawlConfig {
   maxTextCharsPerPage      Int      @default(16000)
   maxLinksPerPage          Int      @default(50)
   runTimeoutSeconds        Int      @default(300)
+  /// Days finished runs and their pages are kept. null = keep forever (unlimited);
+  /// 0 = keep nothing past the 24 h daily-cap window. A RUNNING run is never purged.
+  retentionDays            Int?     @default(7)
   updatedBy                String?
   updatedAt                DateTime @updatedAt
 

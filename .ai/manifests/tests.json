@@ -86,7 +86,7 @@
     },
     "claw-research-service": {
       "runner": "vitest",
-      "testFiles": 63
+      "testFiles": 64
     },
     "claw-routing-service": {
       "runner": "vitest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 2001
+  "total": 2002
 }

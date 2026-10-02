@@ -29,5 +29,5 @@ research unlock, the platform's outbound fetch budget, and the model that later 
 
 1. The plan's `WEB_FETCH` allowance is counted, not enforced (same as chat). Enforcing it needs a reserve-then-release
    probe, which means widening `ReservedFeature` in `@claw/shared-entitlements` to include `WEB_FETCH`.
-2. Stored page text has no retention purge. Runs are small and owner-only; a purge job needs a scheduler.
+2. Retention is a DB-level `retentionDays` on `runtime_crawl_configs` (default 7; admin `PATCH /research/runtime-crawl/config`; `null` = keep forever, `0` = keep nothing beyond the 24 h cap window). `RuntimeCrawlRetentionService` purges finished runs hourly, idempotently; a RUNNING run is never deleted; pages go by FK cascade.
 3. The `impit` TLS-impersonation tier (and its robots.txt fallback) cannot pin the socket; it resolves and validates just before connecting, so a sub-second rebind window remains on that one tier.

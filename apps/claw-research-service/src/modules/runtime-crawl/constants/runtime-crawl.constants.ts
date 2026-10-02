@@ -16,6 +16,7 @@ export const RUNTIME_CRAWL_DEFAULTS = {
   maxTextCharsPerPage: 16_000,
   maxLinksPerPage: 50,
   runTimeoutSeconds: 300,
+  retentionDays: 7,
 } as const;
 
 /**
@@ -37,6 +38,12 @@ export const RUNTIME_CRAWL_STALE_RUN_FACTOR = 2;
 
 /** Window for the daily budget and the daily run count. */
 export const RUNTIME_CRAWL_DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Highest retention an admin can set (ten years); null is the explicit "forever". */
+export const RUNTIME_CRAWL_MAX_RETENTION_DAYS = 3650;
+
+/** How often the purge sweeps; it is idempotent, so a missed or doubled tick is harmless. */
+export const RUNTIME_CRAWL_PURGE_INTERVAL_MS = 60 * 60 * 1000;
 
 export const RUNTIME_CRAWL_DEFAULT_PAGES_PAGE_SIZE = 10;
 export const RUNTIME_CRAWL_MAX_PAGES_PAGE_SIZE = 25;

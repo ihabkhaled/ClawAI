@@ -57,6 +57,21 @@ export class RuntimeCrawlRunRepository {
     };
   }
 
+  /**
+   * Retention purge. Never touches a RUNNING run; its pages go with it (FK
+   * cascade). A finished run is aged by when it finished, falling back to when
+   * it started for a row that never recorded a completion.
+   */
+  async deleteFinishedBefore(cutoff: Date): Promise<number> {
+    const result = await this.prisma.runtimeCrawlRun.deleteMany({
+      where: {
+        status: { not: RuntimeCrawlStatus.RUNNING },
+        OR: [{ completedAt: { lt: cutoff } }, { completedAt: null, startedAt: { lt: cutoff } }],
+      },
+    });
+    return result.count;
+  }
+
   /** Boot sweep: a RUNNING row that outlived its timeout died with its process. */
   async failStale(staleBefore: Date, errorCode: string, errorMessage: string): Promise<number> {
     const result = await this.prisma.runtimeCrawlRun.updateMany({

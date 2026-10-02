@@ -414,6 +414,7 @@ Threats: [runtime-crawl-threat-model.md](../03-architecture/runtime-crawl-threat
   `_DAILY_BUDGET_EXCEEDED`, 503 `RUNTIME_CRAWL_DISABLED`, 400 `UNSAFE_URL`. A finished run that failed carries
   `errorCode`: `FETCH_ROBOTS_DISALLOWED`, `DOMAIN_BLOCKED`, `RUNTIME_CRAWL_NO_PAGES_READ`, `RUNTIME_CRAWL_TIMEOUT`,
   `RUNTIME_CRAWL_INTERRUPTED`, `RUNTIME_CRAWL_FAILED`.
+- Retention: `retentionDays` (default 7, `null` forever, `0` = 24 h floor) purged hourly by `RuntimeCrawlRetentionService`; never deletes a RUNNING run.
 - Tables: `runtime_crawl_runs`, `runtime_crawl_pages` (cascade), `runtime_crawl_configs` (singleton `default`,
   defaults 50 pages, depth 2, 1 concurrent run, 200 pages and 20 runs per day, 16 000 chars and 50 links per page,
   300 s). Seeded idempotently on boot; no env var.

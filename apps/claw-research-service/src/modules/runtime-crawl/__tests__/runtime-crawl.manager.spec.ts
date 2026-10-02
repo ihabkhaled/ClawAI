@@ -25,6 +25,7 @@ const CONFIG: RuntimeCrawlConfig = {
   maxTextCharsPerPage: 100,
   maxLinksPerPage: 2,
   runTimeoutSeconds: 300,
+  retentionDays: 7,
   updatedBy: null,
   updatedAt: new Date(0),
 };
