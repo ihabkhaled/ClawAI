@@ -69,6 +69,7 @@ Before release: `npm run release:preflight`.
 - NEVER ship a change with no knowledge delta — docs/skills/rules/context ship in the SAME commit (rules/33).
 - NEVER gate per-commit or all-workspace; gate once at the end, scoped. Never re-prove an unchanged tree (rules/34).
 - NEVER change normal chat alone: Compare, Consensus, Escalation, the seven labs and the judge/critic are surfaces over it and must get the same code, context, uploads, tools and buttons (rules/59; skill `propagate-a-chat-change-to-every-mode`; map `context/chat-surface-parity-map.md`).
+- NEVER call anything done on unit tests alone: walk all 15 QA lanes (manual API + manual browser are L03/L04) and record `docs/qa-evidence/<date>-<slug>.md`; CI checks it (rules/60; start at QA-WORKFLOW.md).
   real code. If a fact is missing, run `knowledge:context` or read the source.
 - NEVER call a change done without the whole QA-team walk and real evidence — Playwright
   browser lane, `curl` API lane, RBAC across roles AND plan tiers (free included), UAT,

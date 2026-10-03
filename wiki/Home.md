@@ -49,3 +49,5 @@ Welcome to the **ClawAI engineering and product Wiki**. This Wiki is generated f
 > Source of truth remains the code and generated manifests on `main`. Wiki pages that mirror repo docs include their source path at the top.
 
 _Last verified against `main` on 2026-09-19; product and business section 2026-09-26._
+
+- **Testing (mandatory):** [[QA-Workflow]]

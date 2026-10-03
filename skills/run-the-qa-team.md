@@ -125,3 +125,11 @@ In the batch report, per claim: the command or action, and its real result.
 
 A lane you could not run is reported as not run, naming what is therefore
 unproven. Never write a result you did not observe.
+
+## 0a. The record is mandatory (added 2026-10-03, rules/60)
+
+Before the first lane: `npm run qa:evidence:new -- <slug>`. After the last: fill all fifteen lanes (PASS with the
+real command and output, FAIL, NOT_RUN or NOT_APPLICABLE with a reason) and run
+`npm run qa:evidence:check -- docs/qa-evidence/<file>.md`. CI rejects a feat/fix/perf push without a valid
+record. Plain-language version for anyone: [QA-WORKFLOW.md](../QA-WORKFLOW.md). The lane ids map to this
+skill: L03 = section 1, L04 = section 3, L06 = section 2, L07 = section 4. A change with only unit tests is PARTIAL.

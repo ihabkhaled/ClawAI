@@ -291,3 +291,7 @@ Every code change must consider updating:
 16. `CLAUDE.md` -- new patterns or rules
 
 A feature is incomplete if any applicable item is missing.
+
+## QA evidence record (2026-10-03)
+
+Every batch carries `docs/qa-evidence/<date>-<slug>.md` with the fifteen lanes, checked by `npm run qa:evidence:check` and by CI: [rules/60](../../rules/60-qa-evidence-is-mandatory-and-machine-checked.md), [QA-WORKFLOW.md](../../QA-WORKFLOW.md).

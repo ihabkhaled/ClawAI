@@ -94,3 +94,7 @@ npm run affected:test
 Never run the all-workspace `npm run test` for a scoped change (see
 [stack-and-toolchain.md](stack-and-toolchain.md)). Frontend tests may fail on the
 host due to rollup native-binary issues on newer Node — run inside Docker if so.
+
+## QA evidence protocol (2026-10-03)
+
+The testing lanes are not optional and are recorded: 15 lanes L01-L15, one record per batch in `docs/qa-evidence/`, validated by `tools/qa/evidence.mjs` and the CI job `qa-evidence`. Read [QA-WORKFLOW.md](../QA-WORKFLOW.md) first, then [rules/60](../rules/60-qa-evidence-is-mandatory-and-machine-checked.md) and [skills/run-the-qa-team.md](../skills/run-the-qa-team.md).

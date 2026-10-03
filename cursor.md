@@ -63,6 +63,11 @@ These are DELIVERY BLOCKERS — a PR without them is rejected:
 
 Do not deviate from those rules. Do not invent new patterns. Do not bypass tests.
 
+## QA evidence is mandatory (rules/60)
+
+- Unit tests are lane L01 of 15. Manual API (curl + log line) and manual browser (Playwright, screenshots) are L03/L04.
+  Record every lane in `docs/qa-evidence/<date>-<slug>.md` (`npm run qa:evidence:new`); CI checks it. Start at `QA-WORKFLOW.md`.
+
 ## Chat surfaces are one pipeline (rules/59)
 
 - Compare, Consensus, Escalation, the seven labs and the judge/critic are surfaces over normal chat.

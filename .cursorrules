@@ -65,3 +65,4 @@ test run, trial failed. Never batch and report at the end.
 **Granularity:** report every file touched, every patch (including failures), every command and
 its result, every test count, every retry, every mini-operation, every wait. One line each.
 Never change normal chat alone: Compare, Consensus, Escalation, the labs and the judge/critic are surfaces over it (rules/59, skills/propagate-a-chat-change-to-every-mode.md).
+Never call anything done on unit tests alone: walk all 15 QA lanes and record docs/qa-evidence/<date>-<slug>.md (rules/60, QA-WORKFLOW.md); CI checks it.

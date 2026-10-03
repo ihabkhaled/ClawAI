@@ -119,3 +119,5 @@ What that means in practice: **a batch report with no observed outputs in it is
 an incomplete batch**, and the next agent should treat its claims as unverified.
 
 Runbook: [skills/verify-a-batch-live.md](../skills/verify-a-batch-live.md)
+
+See also [rules/60](60-qa-evidence-is-mandatory-and-machine-checked.md): the live verification is recorded lane by lane and checked by CI.

@@ -93,3 +93,7 @@ No silent bypasses: an undocumented `eslint-disable`, `@ts-expect-error`, or
 ## Rule 59 - every chat surface is one pipeline
 
 Compare, Consensus, Escalation, the seven labs and the judge/critic are surfaces over normal chat; a change to chat is not done until it reaches all of them. [rules/59](https://github.com/ihabkhaled/ClawAI/blob/main/rules/59-chat-surfaces-are-one-pipeline.md), [parity map](https://github.com/ihabkhaled/ClawAI/blob/main/context/chat-surface-parity-map.md).
+
+## Rule 60 - QA evidence is mandatory
+
+Fifteen lanes per batch, recorded and CI-checked: [rules/60](https://github.com/ihabkhaled/ClawAI/blob/main/rules/60-qa-evidence-is-mandatory-and-machine-checked.md), [QA-WORKFLOW.md](https://github.com/ihabkhaled/ClawAI/blob/main/QA-WORKFLOW.md).

@@ -43,6 +43,27 @@ jobs:
       - name: knowledge:coverage
         run: node tools/knowledge/coverage.mjs
 
+  qa-evidence:
+    name: 'QA evidence (rules/60, no feat or fix lands without its record)'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - name: Every feat/fix/perf product commit has a valid docs/qa-evidence record
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            RANGE="origin/${{ github.base_ref }}...HEAD"
+          elif [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            echo 'new branch push, nothing to compare'; exit 0
+          else
+            RANGE="${{ github.event.before }}..${{ github.sha }}"
+          fi
+          node tools/qa/evidence.mjs check --range "$RANGE"
+
   tooling-tests:
     name: Tooling tests (audit, knowledge, affected)
     runs-on: ubuntu-latest

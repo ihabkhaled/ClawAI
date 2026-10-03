@@ -9,6 +9,8 @@
 
 # ClawAI
 
+> **Contributing? Testing is not optional.** Read [QA-WORKFLOW.md](QA-WORKFLOW.md): fifteen QA lanes, an evidence record per change, checked by CI.
+
 **Every AI, one workspace.**
 
 Every frontier AI model in one workspace that sees, hears, researches and builds.

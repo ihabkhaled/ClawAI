@@ -1,23 +1,23 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 38197,
+      "bytes": 39938,
       "file": "CLAUDE.md"
     },
     {
-      "bytes": 7160,
+      "bytes": 7369,
       "file": "CODEX.md"
     },
     {
-      "bytes": 28767,
+      "bytes": 29057,
       "file": "cursor.md"
     },
     {
-      "bytes": 10761,
+      "bytes": 10970,
       "file": "AGENTS.md"
     },
     {
-      "bytes": 3758,
+      "bytes": 3911,
       "file": ".cursorrules"
     }
   ],
@@ -46,6 +46,7 @@
     "docs/exceptions",
     "docs/features",
     "docs/implementation",
+    "docs/qa-evidence",
     "docs/research",
     "docs/security",
     "docs/superpowers",
@@ -55,7 +56,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 33541,
+      "bytes": 33902,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -271,7 +272,7 @@
       "file": "rules/43-account-state-disclosure-and-transactional-email.md"
     },
     {
-      "bytes": 5393,
+      "bytes": 5533,
       "file": "rules/44-live-verification-before-done.md"
     },
     {
@@ -291,7 +292,7 @@
       "file": "rules/48-lint-and-test-only-what-changed.md"
     },
     {
-      "bytes": 7222,
+      "bytes": 7520,
       "file": "rules/49-qa-team-discipline-and-test-evidence.md"
     },
     {
@@ -335,7 +336,11 @@
       "file": "rules/59-chat-surfaces-are-one-pipeline.md"
     },
     {
-      "bytes": 6999,
+      "bytes": 4128,
+      "file": "rules/60-qa-evidence-is-mandatory-and-machine-checked.md"
+    },
+    {
+      "bytes": 7325,
       "file": "rules/README.md"
     }
   ],
@@ -685,7 +690,7 @@
       "file": "skills/run-the-file-model-matrix.md"
     },
     {
-      "bytes": 5211,
+      "bytes": 5796,
       "file": "skills/run-the-qa-team.md"
     },
     {

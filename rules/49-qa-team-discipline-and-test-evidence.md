@@ -125,3 +125,9 @@ is about _paying for the gates once_. They do not conflict:
 
 Re-running a proven-green gate is waste. Skipping the QA walk is not a saving —
 it is the defect reaching the user.
+
+## 7. The record and the checker (2026-10-03)
+
+The evidence this rule asks for now lives in `docs/qa-evidence/<date>-<slug>.md`, one per batch, with fifteen
+fixed lanes and a machine check in CI: [rules/60](60-qa-evidence-is-mandatory-and-machine-checked.md),
+[QA-WORKFLOW.md](../QA-WORKFLOW.md).
