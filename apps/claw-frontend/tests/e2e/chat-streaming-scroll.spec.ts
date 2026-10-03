@@ -33,6 +33,9 @@ const VIEWPORTS = [
 
 test.use({ ignoreHTTPSErrors: true, baseURL: BASE });
 
+// The answer length comes from a live model, so one short answer is not a product failure.
+test.describe.configure({ retries: 2 });
+
 async function login(page: Page): Promise<void> {
   await page.goto(`${BASE}/login`);
   await page.getByRole('textbox', { name: /email/i }).fill(EMAIL);
