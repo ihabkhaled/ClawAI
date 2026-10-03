@@ -49,6 +49,48 @@ describe('resolveAutoResearchMode', () => {
   });
 });
 
+describe('resolveAutoResearchMode — the 13 locales and whole words', () => {
+  it.each([
+    ['en', 'what is the newest iPhone'],
+    ['de', 'Was sind die neuesten Nachrichten über Tesla?'],
+    ['es', 'dame las últimas noticias de hoy'],
+    ['fr', "quelles sont les actualités d'aujourd'hui"],
+    ['it', 'quali sono le ultime notizie'],
+    ['pt', 'quais são as últimas notícias de hoje'],
+    ['ru', 'какие сегодня новости про Tesla'],
+    ['ar', 'ما هي آخر الأخبار اليوم'],
+    ['fa', 'آخرین اخبار امروز چیست'],
+    ['hi', 'आज की ताज़ा खबर क्या है'],
+    ['ja', 'テスラの最新ニュースを教えて'],
+    ['th', 'ข่าวล่าสุดของเทสลาคืออะไร'],
+    ['zh', '请告诉我特斯拉的最新消息'],
+  ])('%s: a freshness question searches', (_locale, prompt) => {
+    expect(resolveAutoResearchMode(prompt)).toBe(ResearchMode.SEARCH);
+  });
+
+  it.each([
+    ['es', 'busca en internet el precio del cobre'],
+    ['fr', 'cherche sur le web les avis sur ce produit'],
+    ['de', 'bitte im Internet suchen'],
+    ['zh', '请上网搜索这个问题'],
+    ['ja', 'ネットで調べてください'],
+  ])('%s: an explicit request for the web searches', (_locale, prompt) => {
+    expect(resolveAutoResearchMode(prompt)).toBe(ResearchMode.SEARCH);
+  });
+
+  it.each([
+    'write the newsletter intro for our launch',
+    'recentering the divs with flexbox',
+    'the nowhere man lyrics, explain the metaphor',
+    'rewrite this paragraph so it reads better',
+    'Das ist ein Hochhaus in Berlin',
+    'Ich habe heutzutage keine Zeit für Hobbys',
+    'आजादी का अर्थ समझाइए',
+  ])('"%s" stays NONE (a marker inside a longer word is not a marker)', (prompt) => {
+    expect(resolveAutoResearchMode(prompt)).toBe(ResearchMode.NONE);
+  });
+});
+
 describe('resolveEffectiveResearchMode', () => {
   it.each([ResearchMode.AUTO, ResearchMode.SEARCH, ResearchMode.SEARCH_FETCH])(
     'resolves %s to NONE when there is no typed text (attachment-only send)',

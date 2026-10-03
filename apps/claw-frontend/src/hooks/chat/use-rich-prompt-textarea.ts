@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
+  IME_PROCESS_KEY_CODE,
   RICH_PROMPT_DEFAULT_MAX_ROWS,
   RICH_PROMPT_DEFAULT_MIN_ROWS,
 } from '@/constants/chat.constants';
+import { MEDIA_QUERY_COARSE_POINTER } from '@/constants/media-query.constants';
+import { useMediaQuery } from '@/hooks/ui/use-media-query';
 import type { UseRichPromptTextareaParams, UseRichPromptTextareaReturn } from '@/types';
+import { insertNewlineAtSelection } from '@/utilities/composer-newline.utility';
 
 /**
  * Owns the keyboard + autosize + IME glue for the shared RichPromptTextarea.
@@ -20,8 +24,10 @@ import type { UseRichPromptTextareaParams, UseRichPromptTextareaReturn } from '@
  *     scrollHeight after every value change. Past maxRows the textarea
  *     keeps its capped height and scrolls internally.
  *   - Provide a stable onKeyDown handler that runs the submit contract:
- *     plain Enter → onSubmit (if value non-empty after trim and !disabled),
- *     Shift+Enter → default newline, anything during composition → default.
+ *     desktop: plain Enter → onSubmit (if value non-empty after trim and
+ *     !disabled), Shift+Enter → native newline, Ctrl+Enter → newline inserted
+ *     by hand (browsers do not). Touch (coarse pointer): Enter is ALWAYS a
+ *     newline — the send button sends. Anything during composition → default.
  *   - ArrowUp / ArrowDown walk `recallHistory` (the user's own past messages,
  *     most recent first) the way a shell does: up goes older, down goes newer,
  *     and down past the newest restores the empty composer.
@@ -48,6 +54,7 @@ export function useRichPromptTextarea(
     allowEmptySubmit = false,
   } = params;
 
+  const isTouchInput = useMediaQuery(MEDIA_QUERY_COARSE_POINTER);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const isComposingRef = useRef(false);
   // How far back in the user's own history the composer is currently showing.
@@ -154,7 +161,10 @@ export function useRichPromptTextarea(
       // React surfaces a synthetic `isComposing` flag on KeyboardEvent in some
       // browsers, but it isn't universal. We also keep our own ref toggled by
       // compositionStart/End for full coverage.
-      const composing = isComposingRef.current || e.nativeEvent.isComposing;
+      const composing =
+        isComposingRef.current ||
+        e.nativeEvent.isComposing ||
+        e.nativeEvent.keyCode === IME_PROCESS_KEY_CODE;
       if (composing) {
         return;
       }
@@ -220,6 +230,27 @@ export function useRichPromptTextarea(
       if (e.key !== 'Enter' || e.shiftKey) {
         return;
       }
+      if (isTouchInput) {
+        // Soft keyboard: Enter is a new line, the button sends.
+        return;
+      }
+      if (e.ctrlKey) {
+        e.preventDefault();
+        if (disabled) {
+          return;
+        }
+        const target = e.currentTarget;
+        const inserted = insertNewlineAtSelection(
+          value,
+          target.selectionStart,
+          target.selectionEnd,
+        );
+        onChange(inserted.value);
+        globalThis.requestAnimationFrame(() => {
+          target.setSelectionRange(inserted.caret, inserted.caret);
+        });
+        return;
+      }
       if (disabled) {
         // Don't submit when disabled, and don't let the textarea insert a
         // newline either — the field is supposed to be inert.
@@ -239,7 +270,7 @@ export function useRichPromptTextarea(
       e.preventDefault();
       onSubmit();
     },
-    [allowEmptySubmit, disabled, onChange, onSubmit, recallHistory, value],
+    [allowEmptySubmit, disabled, isTouchInput, onChange, onSubmit, recallHistory, value],
   );
 
   const handleCompositionStart = useCallback((): void => {

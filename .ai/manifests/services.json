@@ -120,7 +120,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-chat-service",
-      "endpointCount": 68,
+      "endpointCount": 69,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -488,7 +488,7 @@
         "SeedExecution",
         "TaxonomyRole"
       ],
-      "testFiles": 114,
+      "testFiles": 116,
       "testRunner": "vitest"
     },
     {

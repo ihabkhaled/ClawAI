@@ -24,6 +24,7 @@ import { ImageDetectionManager } from './image-detection.manager';
 import { CloudRouterManager } from './cloud-router.manager';
 import { CloudRouterEligibilityManager } from './cloud-router-eligibility.manager';
 import { CloudRouterPromptManager } from './cloud-router-prompt.manager';
+import { NamedModelRequestManager } from './named-model-request.manager';
 import type { EligibleDeploymentRecord } from '../types/model-deployment.types';
 import type { RouterDecisionPayload } from '../types/router-inference.types';
 import { PROVIDER_INFERENCE_RULES } from '../constants/provider-inference.constants';
@@ -124,6 +125,7 @@ export class RoutingManager {
     private readonly cloudRouter: CloudRouterManager,
     private readonly cloudRouterEligibility: CloudRouterEligibilityManager,
     private readonly cloudRouterPrompt: CloudRouterPromptManager,
+    private readonly namedModelRequest: NamedModelRequestManager,
   ) {}
 
   async evaluateRoute(context: RoutingContext): Promise<RoutingDecisionResult> {
@@ -576,6 +578,12 @@ export class RoutingManager {
     this.logSensitiveContentDetections(context.message);
 
     if (!localEnforcementDomain) {
+      // The user named a model in the prompt ("use nano banana to …"): that
+      // model gets the request, before any keyword or router guess.
+      const named = await this.tryNamedModel(context);
+      if (named) {
+        return named;
+      }
       const earlyContent = this.tryImageOrFileGeneration(context);
       if (earlyContent) {
         return earlyContent;
@@ -663,6 +671,43 @@ export class RoutingManager {
         this.logger.log(`handleAuto: ${label} detected — forcing local routing`);
       }
     }
+  }
+
+  /**
+   * "Use nano banana to make X", "ask grok …": the catalog resolves the named
+   * model (`NamedModelRequestManager`) and the decision is built exactly as a
+   * manual pick is — an image-output model goes to its `IMAGE_*` provider
+   * (rule 51 item 17), an edit goes to an edit-capable one (item 18). Privacy
+   * enforcement ran first; this never overrides it.
+   */
+  private async tryNamedModel(context: RoutingContext): Promise<RoutingDecisionResult | null> {
+    const named = await this.namedModelRequest.resolve(context);
+    if (named === null) return null;
+    const picked = this.resolveManualPick({
+      ...context,
+      forcedProvider: named.provider,
+      forcedModel: named.model,
+    });
+    if (picked === null) return null;
+    const primary = this.editCapablePick(picked, context);
+    this.logger.log(
+      `handleAuto: user named "${named.phrase}" → ${primary.provider}/${primary.model}`,
+    );
+    return {
+      selectedProvider: primary.provider,
+      selectedModel: primary.model,
+      routingMode: RoutingMode.AUTO,
+      confidence: 0.97,
+      reasonTags: [
+        'auto',
+        'user_named_model',
+        `named_model_${named.capability.toLowerCase()}`,
+        ...(primary.provider.startsWith('IMAGE_') ? ['image_generation'] : []),
+      ],
+      privacyClass: 'cloud',
+      costClass: 'medium',
+      fallbackChain: this.buildFallbackChain(primary, context),
+    };
   }
 
   private tryImageOrFileGeneration(context: RoutingContext): RoutingDecisionResult | null {

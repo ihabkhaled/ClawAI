@@ -43,6 +43,7 @@ describe('RoutingManager image edit intent', () => {
       cloudRouter as never,
       cloudRouterEligibility as never,
       cloudRouterPrompt as never,
+      { resolve: vi.fn().mockResolvedValue(null) } as never,
     );
   });
 

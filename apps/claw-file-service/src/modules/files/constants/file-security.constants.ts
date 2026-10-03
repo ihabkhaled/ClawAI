@@ -70,7 +70,77 @@ export const VIDEO_MIME_DETECTION_ALIASES: Readonly<Record<string, readonly stri
   'video/x-msvideo': ['video/vnd.avi'],
   'video/avi': ['video/vnd.avi'],
   'video/mpeg': ['video/mpeg'],
+  // Container-compatible families: a 3GP or an iTunes M4V is an ISO base-media
+  // file, which the detector reports as mp4.
+  'video/3gpp': ['video/mp4'],
+  'video/3gpp2': ['video/mp4'],
+  'video/x-m4v': ['video/mp4'],
+  'video/x-matroska': ['video/x-matroska'],
+  'video/hevc': ['video/hevc'],
+  'video/h265': ['video/hevc'],
 };
+
+// Stills converted to JPEG at upload. Each declared label may really be one of
+// these detected containers (HEIF and AVIF share the ISO base-media shape, and
+// the major brand does not always match the extension).
+export const IMAGE_MIME_DETECTION_ALIASES: Readonly<Record<string, readonly string[]>> = {
+  'image/heic': ['image/heic', 'image/heif'],
+  'image/heif': ['image/heic', 'image/heif'],
+  'image/heic-sequence': ['image/heic', 'image/heif'],
+  'image/heif-sequence': ['image/heic', 'image/heif'],
+  'image/avif': ['image/avif', 'image/heif'],
+  'image/tiff': ['image/tiff'],
+  'image/bmp': ['image/bmp'],
+  'image/x-ms-bmp': ['image/bmp'],
+};
+
+// ISO base-media major brands. mif1 / msf1 are the generic HEIF brands and are
+// also what some AVIF writers use.
+export const HEIC_MAJOR_BRANDS = new Set([
+  'heic',
+  'heix',
+  'heim',
+  'heis',
+  'hevc',
+  'hevx',
+  'hevm',
+  'hevs',
+]);
+export const HEIF_GENERIC_MAJOR_BRANDS = new Set(['mif1', 'msf1']);
+export const AVIF_MAJOR_BRANDS = new Set(['avif', 'avis']);
+
+export const TIFF_LITTLE_ENDIAN_SIGNATURE = Buffer.from([0x49, 0x49, 0x2a, 0x00]);
+export const TIFF_BIG_ENDIAN_SIGNATURE = Buffer.from([0x4d, 0x4d, 0x00, 0x2a]);
+export const BMP_SIGNATURE = Buffer.from('BM');
+
+/** What a browser sends for an extension its OS has no type for. */
+export const UNLABELLED_UPLOAD_MIME_TYPE = 'application/octet-stream';
+
+/**
+ * Detected types an octet-stream upload is re-labelled as, so it reaches the
+ * validator, the converter and the extractor as the media it is.
+ */
+export const RELABELLABLE_MEDIA_MIME_TYPES: ReadonlySet<string> = new Set([
+  'image/heic',
+  'image/heif',
+  'image/avif',
+  'image/tiff',
+  'image/bmp',
+  'video/x-matroska',
+]);
+
+export const EBML_HEADER = Buffer.from([0x1a, 0x45, 0xdf, 0xa3]);
+export const MATROSKA_DOCTYPE = Buffer.from('matroska');
+export const WEBM_DOCTYPE = Buffer.from('webm');
+export const EBML_DOCTYPE_SCAN_BYTES = 4096;
+
+// Raw HEVC (Annex B) starts with a 3 or 4 byte start code, then a VPS (32),
+// SPS (33) or PPS (34) NAL unit: the type is bits 1-6 of the first NAL byte.
+export const ANNEX_B_START_CODE_SHORT = Buffer.from([0x00, 0x00, 0x01]);
+export const ANNEX_B_START_CODE_LONG = Buffer.from([0x00, 0x00, 0x00, 0x01]);
+export const HEVC_PARAMETER_SET_NAL_TYPES = new Set([32, 33, 34]);
+export const HEVC_NAL_TYPE_SHIFT = 1;
+export const HEVC_NAL_TYPE_MASK = 0x3f;
 
 // B6a — audio container detection.
 //

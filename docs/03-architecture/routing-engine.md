@@ -719,3 +719,41 @@ After the LLM responds, the `QualityCheckManager` (in `claw-chat-service`) score
 - Frontend shows an amber "Re-routed from {provider}/{model}" badge
 
 See [Auto Re-Routing Spec](../02-business-product/auto-rerouting-spec.md) for full details.
+
+---
+
+## A model named in the prompt (2026-10-03, rule 51 item 20)
+
+In AUTO, `handleAuto` calls `NamedModelRequestManager.resolve` right after the privacy
+check and before image/file/capability/cloud routing. It reads only when the prompt
+contains a directive word (`use`, `ask`, `with`, `@` …), loads routing's own
+`ModelDeployment` catalog, drops providers known down and models the plan does not allow, then
+`findNamedModelRequest` matches catalog ids (separators read as spaces, date and
+`preview` suffixes optional, longest name wins) and `NAMED_MODEL_ALIASES` ("nano banana",
+"veo", "grok imagine", provider names). `resolveNamedModel` picks the model that fits what is
+asked (picture, video or chat, via `classifyImageIntent` / `classifyVideoIntent`). The
+decision carries `user_named_model` and `named_model_<capability>`; an image-output model is
+moved to its `IMAGE_*` provider exactly as a manual pick is.
+
+Not routed: a bare mention, a comparison ("GPT vs Gemini"), a negated clause, a name inside a pasted body,
+a habit ("I use claude"), a model the plan does not allow, a local runtime. The directive words stay in
+the prompt the model receives; no rewrite step exists between routing and the model.
+
+## Image intent guards (2026-10-03, rule 51 item 21)
+
+`detectImageGenerationSignals` is whole-word (Unicode lookarounds) and proximity-based
+(verb and image word within 6 words). A supplementary note or a writing task takes the strict
+path (`isExplicitImageRequest`). Regression: the LinkedIn-post context paste.
+
+## Pre-model and multi-stage inventory (audited 2026-10-03)
+
+| Stage                                                                       | Where                                                                   | Status                                                                             |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Research planner (plan, crawl/search, follow-up, answer)                    | chat-service `ResearchOrchestratorManager`, `ResearchGateService`       | Live on `researchMode=AUTO`; gathers evidence, the user's (or named) model answers |
+| Vision helper (understand, then generate)                                   | chat-service `VisionHelperManager`                                      | Live, images only                                                                  |
+| Pipeline / decompose / escalation chain                                     | chat-service managers, `POST pipeline`, `decompose`, `escalation-chain` | Live only when the user picks the mode; routing never selects them                 |
+| Live workflow selector                                                      | routing `LiveWorkflowSelectorManager`                                   | Live: `SEARCH_FIRST` or `DIRECT_LLM` only                                          |
+| Workflow orchestrator and handlers, AI route planner, multi-intent splitter | routing `workflows/`, `intelligence/`                                   | Scaffolding or shadow only; no live caller                                         |
+
+A named-model turn composes with the planner by order, not by a new stage: research runs before routing,
+then the named model answers with the evidence attached.

@@ -94,3 +94,20 @@ describe('buildSelfInspectIntent', () => {
     expect(buildSelfInspectIntent('what is this app?', ' ')).toBeNull();
   });
 });
+
+describe('the saving line (a model must not say saving is impossible)', () => {
+  it('points the model at the Save buttons when no platform action ran', () => {
+    const block = buildPlatformIdentityBlock(undefined);
+
+    expect(block).toMatch(/cannot write the user's memory or context packs yourself/i);
+    expect(block).toContain('Save as context pack');
+    expect(block).toContain('Save to memory');
+  });
+
+  it('keeps the coding-agent swap on the same lines (indexes 3 and 4)', () => {
+    const block = buildPlatformIdentityBlock(undefined, ChatSurface.AGENT);
+
+    expect(block).toContain('coding agent in their editor');
+    expect(block).not.toContain('cannot see the browser page itself');
+  });
+});

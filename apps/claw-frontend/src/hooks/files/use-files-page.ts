@@ -5,6 +5,7 @@ import { useTranslation } from '@/lib/i18n';
 import { uploadFileSchema } from '@/lib/validation/file.schema';
 import type { UploadFileRequest } from '@/types';
 import { logger } from '@/utilities';
+import { resolveUploadMimeType } from '@/utilities/upload-mime.utility';
 
 import { useDeleteFile } from './use-delete-file';
 import { useFiles } from './use-files';
@@ -34,7 +35,7 @@ export function useFilesPage() {
       });
       const metadata = {
         filename: file.name,
-        mimeType: file.type || 'application/octet-stream',
+        mimeType: resolveUploadMimeType(file),
         sizeBytes: file.size,
       };
 

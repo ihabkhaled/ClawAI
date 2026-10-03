@@ -505,3 +505,7 @@ chat-service prompt templates ([ADR-138](../13-adr/adr-138-prompt-library.md)).
 - [`skills/verify-responsive-layout-in-browser.md`](../../skills/verify-responsive-layout-in-browser.md) — how to check the above in a real browser
 - [`docs/05-frontend/component-architecture.md`](component-architecture.md)
 - [`docs/05-frontend/styling-guide.md`](styling-guide.md)
+
+## Context packs and memory in the composer (2026-10-03)
+
+`composer-context-controls.tsx` renders `ComposerContextPackPicker` (`useComposerContextPacks`: saves `thread.contextPackIds` through `useUpdateThread`, optimistic, capped at `COMPOSER_CONTEXT_PACKS_MAX` = 10), `ComposerContextPacksView` and `ComposerMemoryView` (both `useComposerContextPreview` → `usePreviewContext`, the server dry-run). `MessageSaveAction` under each answer calls `POST /chat-messages/:id/save-to-context`. i18n: `chat.composerContext.*`, `chat.saveMessage.*` (13 locales).

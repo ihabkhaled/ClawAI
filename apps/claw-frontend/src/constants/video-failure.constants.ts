@@ -4,4 +4,5 @@
  */
 export const VIDEO_FAILURE_MESSAGE_KEY_BY_CODE: ReadonlyMap<string, string> = new Map([
   ['VIDEO_SOURCE_IMAGE_INVALID', 'chat.videoFailureSourceImageInvalid'],
+  ['VIDEO_PROVIDER_CREDITS_DEPLETED', 'chat.videoFailureCreditsDepleted'],
 ]);

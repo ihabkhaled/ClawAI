@@ -470,3 +470,10 @@ Both detectors scan `generationRequestText(message)` (`@claw/shared-utilities` `
 ## Enforced-local domains need a healthy Ollama (2026-09-29, rules/57 item 14)
 
 `handleAuto` keeps medical/legal/finance/privacy content on local-ollama only when `isRuntimeHealthy('OLLAMA', context)` is true. With no healthy runtime (production has no ollama-service) the domain is downgraded with a WARN and the turn goes cloud router → `applyHeuristicRules` (best available cloud), never `detectCategoryRoute`/the Ollama router, which would pick local again. Test: `routing.manager.spec.ts` "privacy-enforced routing with no reachable local runtime". German and Chinese generation phrases were added to `IMAGE_GENERATION_KEYWORDS` as verb+noun phrases only.
+
+## A model named in the prompt, and image intent (2026-10-03, rule 51 items 20-21)
+
+`managers/named-model-request.manager.ts` + `utilities/named-model-request.utility.ts` + `constants/named-model-request.constants.ts`.
+Catalog read is routing's own (`ModelDeploymentRepository.findRoutableForCloudRouting`); no directive word means no read.
+`RoutingManager` takes it as its 10th constructor argument; specs that build it by hand pass a mock with `resolve`.
+Image-intent tables are in `@claw/shared-utilities` (rebuild its `dist` before routing specs see a change).

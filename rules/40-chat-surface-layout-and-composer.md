@@ -234,6 +234,8 @@ today, and any future page built as header + transcript + input.
     in dvh, and the textarea is capped in dvh (`.composer-textarea-short-cap`).
     CSS only. Pinned by `chat-surface-layout-contract.test.ts`.
 
+23. **Context packs and memory are in the toolbar, not only in settings.** `ComposerContextControls` adds a pack picker (popover, multi-select, count badge), a pack view and a memory view (dialogs) beside the attachment buttons. Each is an icon-only `shrink-0` control with an accessible name (rule 11, 19), shown only when the thread exists. Behaviour: rules/57 item 18.
+
 ## Prohibited patterns
 
 - A pixel height, or a ratio-of-window height, for a composer or a transcript.

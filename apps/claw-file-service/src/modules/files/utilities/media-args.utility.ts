@@ -53,6 +53,9 @@ export function buildProbeArgs(
     'json',
     '-show_format',
     '-show_streams',
+    // A raw HEVC stream (.hevc / .h265) carries no duration; the packet count
+    // lets the probe derive one from the frame rate.
+    '-count_packets',
     '-i',
     inputPath,
   ];

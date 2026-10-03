@@ -83,6 +83,70 @@ describe('classifyImageIntent — no attached image', () => {
   });
 });
 
+describe('classifyImageIntent — supplementary context and writing tasks are not image requests', () => {
+  it.each([
+    // The exact pasted text that generated an image for a LinkedIn post.
+    'Say also talk to models with audio/video, create files... add more 5 6 features, 1-2 words each',
+    'Also: talk to models with audio and video, create files, add 5 more features, 1-2 words each',
+    'Additional context: the app can create files, talk to voice models and show a diagram view',
+    'More context: we support audio, video, files and a logo gallery, keep each point to 2 words',
+    'Say also we have a new logo and icon set, add 4 more features, 1-2 words each',
+    'Add more points about our poster and banner designs, short ones',
+    'btw the post should mention our graphic templates and cover pages',
+    'Write a LinkedIn post about our new logo and banner designs',
+    'Draft a LinkedIn post announcing our poster launch',
+    'Write a caption for this photo',
+    'Summarize the article about the new avatar feature',
+    'Write a blog post about how designers draw a conclusion from user research',
+  ])('"%s" → NONE', (message) => {
+    expect(classifyImageIntent(message, false)).toBe(NONE);
+    expect(detectImageGenerationSignals(message).matched).toBe(false);
+  });
+
+  it.each([
+    'Also create an image for the post',
+    'Say also make me a logo for it',
+    'Write a LinkedIn post and draw a cat to go with it',
+    'Draft the post, then generate a picture of a rocket',
+  ])('"%s" → GENERATE (an explicit image request still counts)', (message) => {
+    expect(classifyImageIntent(message, false)).toBe(GENERATE);
+  });
+
+  it('a caption request with an image attached stays ANALYZE, not EDIT', () => {
+    expect(classifyImageIntent('Write a caption for this photo', true)).toBe(ANALYZE);
+  });
+});
+
+describe('detectImageGenerationSignals — whole words only', () => {
+  it.each([
+    'We will discover new markets and recover costs',
+    'Economic forecasts for the next quarter',
+    'Please withdraw a payment from the account',
+    'An obscene amount of silicon was shipped',
+    'Make the report geographic in scope',
+  ])('"%s" matches nothing', (message) => {
+    expect(detectImageGenerationSignals(message).matched).toBe(false);
+  });
+
+  it.each([
+    ['draw a cat', true],
+    ['Create a poster for my band', true],
+    ['generate logos for three brands', true],
+    ['please sketch me a house', true],
+    ['render ', false],
+  ])('"%s" → %s', (message, expected) => {
+    expect(detectImageGenerationSignals(message).matched).toBe(expected);
+  });
+
+  it('a verb far from every image word is not a request', () => {
+    expect(
+      detectImageGenerationSignals(
+        'create a spreadsheet of last quarter results for every region and also review the scene notes',
+      ).verbPlusImageWord,
+    ).toBe(false);
+  });
+});
+
 describe('detectImageGenerationSignals', () => {
   it('explains which signal fired', () => {
     expect(detectImageGenerationSignals('Create a poster for my band')).toEqual({

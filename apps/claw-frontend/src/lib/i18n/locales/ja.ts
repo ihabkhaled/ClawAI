@@ -438,6 +438,34 @@ export const ja: TranslationDictionary = {
       trigger: '別のモデルで再試行…',
       auto: 'AUTO に任せる',
     },
+    composerContext: {
+      pickLabel: 'コンテキストパックを選択',
+      pickEmpty: 'コンテキストパックはまだありません。',
+      pickCount: '{value} 件選択中',
+      pickManage: 'コンテキストパックを管理',
+      pickLimit: '1 つのチャットに最大 {value} 個までです。',
+      viewLabel: '添付中のコンテキストパックを表示',
+      viewTitle: 'このチャットのコンテキストパック',
+      viewDescription: '次のメッセージと一緒に送られるパックの内容です。',
+      viewNone: '次のメッセージにコンテキストパックの内容は送られません。',
+      viewDisabled: 'このチャットではコンテキストがオフのため、パックは送られません。',
+      viewItems: '{value} 件の項目',
+      memoryLabel: 'このチャットで使われるメモリを表示',
+      memoryTitle: 'このチャットのメモリ',
+      memoryDescription: 'アシスタントがあなたについて覚えていて、次のメッセージに使う内容です。',
+      memoryOn: 'このチャットではメモリがオンです。',
+      memoryOff: 'このチャットではメモリがオフです。読み取りも学習も行われません。',
+      memoryNone: 'このメッセージに当てはまる記憶はまだありません。',
+      memoryManage: 'メモリを管理',
+    },
+    saveMessage: {
+      menuLabel: 'この回答を保存',
+      pack: 'コンテキストパックとして保存',
+      memory: 'メモリに保存',
+      savedPack: 'コンテキストパック「{name}」として保存しました。',
+      savedMemory: 'メモリに保存しました。',
+      open: '開く',
+    },
     contextSave: {
       title: 'このチャットから保存',
       savedMemory: 'メモリに保存しました',
@@ -866,6 +894,11 @@ export const ja: TranslationDictionary = {
     videoTakesMinutes: '動画の生成には数分かかることがあります。生成中もチャットを続けられます。',
     videoLoadFailed: '動画を読み込めませんでした',
     videoLoadFailedHint: 'ページを再読み込みしてもう一度お試しください。',
+    videoStatusUnknown: '動画の状態を確認できません',
+    videoStatusUnknownHint:
+      'この動画の確認を停止しました。ページを再読み込みして完了したか確認するか、もう一度リクエストを送信してください。',
+    videoFailureCreditsDepleted:
+      '動画プロバイダーのアカウントにプリペイド残高がなく、リクエストが拒否されました。管理者がそのアカウントにチャージする必要があります。',
     videoFailureSourceImageInvalid:
       'この画像は使用できませんでした。ご自身の画像で、10 MB未満のJPEG、PNG、またはWebPを使用してください。',
     imageStage: {

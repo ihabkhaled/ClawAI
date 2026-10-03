@@ -21,6 +21,7 @@ import { RouterWorkspacePriorManager } from './managers/router-workspace-prior.m
 import { ComplexityClassifierManager } from './managers/complexity-classifier.manager';
 import { CapabilityRouterManager } from './managers/capability-router.manager';
 import { ImageDetectionManager } from './managers/image-detection.manager';
+import { NamedModelRequestManager } from './managers/named-model-request.manager';
 import { LlamacppHealthManager } from './managers/llamacpp-health.manager';
 import { RouterAttemptRepository } from './repositories/router-attempt.repository';
 import { RouterConfigurationRepository } from './repositories/router-configuration.repository';
@@ -75,6 +76,7 @@ import { RouterShadowEvaluationManager } from './managers/router-shadow-evaluati
     ComplexityClassifierManager,
     CapabilityRouterManager,
     ImageDetectionManager,
+    NamedModelRequestManager,
     LlamacppHealthManager,
     RoutingPoliciesRepository,
     RoutingDecisionsRepository,

@@ -111,6 +111,15 @@ describe('resolveVideoFailureMessage', () => {
     ).toBe('translated:chat.videoFailureSourceImageInvalid');
   });
 
+  it('translates the depleted-credit code to its own sentence', () => {
+    expect(
+      resolveVideoFailureMessage(
+        { errorCode: 'VIDEO_PROVIDER_CREDITS_DEPLETED', errorMessage: 'English' },
+        t,
+      ),
+    ).toBe('translated:chat.videoFailureCreditsDepleted');
+  });
+
   it('falls back to the stored message for an unmapped code, and to null for none', () => {
     expect(
       resolveVideoFailureMessage({ errorCode: 'VIDEO_TOO_LARGE', errorMessage: 'Stored' }, t),

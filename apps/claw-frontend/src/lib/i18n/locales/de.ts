@@ -444,6 +444,35 @@ export const de: TranslationDictionary = {
       trigger: 'Erneut versuchen mit…',
       auto: 'AUTO wählen lassen',
     },
+    composerContext: {
+      pickLabel: 'Kontextpakete auswählen',
+      pickEmpty: 'Es gibt noch keine Kontextpakete.',
+      pickCount: '{value} ausgewählt',
+      pickManage: 'Kontextpakete verwalten',
+      pickLimit: 'Bis zu {value} Pakete pro Chat.',
+      viewLabel: 'Angehängte Kontextpakete ansehen',
+      viewTitle: 'Kontextpakete in diesem Chat',
+      viewDescription: 'Der Paketinhalt, den die nächste Nachricht mitsendet.',
+      viewNone: 'Mit der nächsten Nachricht wird kein Kontextpaket-Inhalt gesendet.',
+      viewDisabled: 'Kontext ist für diesen Chat ausgeschaltet, daher wird kein Paket gesendet.',
+      viewItems: '{value} Einträge',
+      memoryLabel: 'In diesem Chat genutzten Speicher ansehen',
+      memoryTitle: 'Speicher für diesen Chat',
+      memoryDescription: 'Was sich der Assistent merkt und für die nächste Nachricht nutzen würde.',
+      memoryOn: 'Der Speicher ist für diesen Chat eingeschaltet.',
+      memoryOff:
+        'Der Speicher ist für diesen Chat ausgeschaltet: Nichts wird gelesen oder gelernt.',
+      memoryNone: 'Für diese Nachricht gibt es noch keine passenden Erinnerungen.',
+      memoryManage: 'Speicher verwalten',
+    },
+    saveMessage: {
+      menuLabel: 'Diese Antwort speichern',
+      pack: 'Als Kontextpaket speichern',
+      memory: 'Im Speicher ablegen',
+      savedPack: 'Als Kontextpaket „{name}“ gespeichert.',
+      savedMemory: 'Im Speicher abgelegt.',
+      open: 'Öffnen',
+    },
     contextSave: {
       title: 'Aus diesem Chat gespeichert',
       savedMemory: 'Im Gedächtnis gespeichert',
@@ -881,6 +910,11 @@ export const de: TranslationDictionary = {
       'Ein Video kann einige Minuten dauern. Sie können weiter chatten, während es erstellt wird.',
     videoLoadFailed: 'Das Video konnte nicht geladen werden',
     videoLoadFailedHint: 'Laden Sie die Seite neu, um es erneut zu versuchen.',
+    videoStatusUnknown: 'Videostatus nicht verfügbar',
+    videoStatusUnknownHint:
+      'Wir prüfen dieses Video nicht mehr. Laden Sie die Seite neu, um zu sehen, ob es fertig ist, oder senden Sie die Anfrage erneut.',
+    videoFailureCreditsDepleted:
+      'Das Konto des Videoanbieters hat kein Guthaben mehr und hat die Anfrage abgelehnt. Ein Administrator muss das Konto aufladen.',
     videoFailureSourceImageInvalid:
       'Das Bild konnte nicht verwendet werden: Verwenden Sie ein eigenes JPEG-, PNG- oder WebP-Bild unter 10 MB.',
     imageStage: {

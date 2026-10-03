@@ -4,14 +4,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useVideoGenerationBubbleState } from '@/hooks/chat/use-video-generation-bubble-state';
 import type { VideoGeneration } from '@/types/video-generation.types';
 
-const { mockListener, mockRetry, mockCancel } = vi.hoisted(() => ({
+const { mockListener, mockRetry, mockCancel, stopRef } = vi.hoisted(() => ({
+  stopRef: { current: undefined as (() => void) | undefined },
   mockListener: vi.fn(),
   mockRetry: vi.fn(),
   mockCancel: vi.fn(),
 }));
 
 vi.mock('@/hooks/chat/use-video-generation-listener', () => ({
-  useVideoGenerationListener: (id: string, token: number) => mockListener(id, token),
+  useVideoGenerationListener: (id: string, token: number, onStopped?: () => void) => {
+    stopRef.current = onStopped;
+    return mockListener(id, token);
+  },
 }));
 
 vi.mock('@/repositories/video-generation/video-generation.repository', () => ({
@@ -58,6 +62,27 @@ describe('useVideoGenerationBubbleState', () => {
     rerender();
     expect(result.current.canCancel).toBe(false);
     expect(result.current.activeGenId).toBe('vid-1');
+  });
+
+  it('says the status is unknown once polling gave up on a job that never ended', () => {
+    mockListener.mockReturnValue(shown());
+    const { result } = renderHook(() => useVideoGenerationBubbleState({ generationId: 'vid-1' }));
+    expect(result.current.isStatusUnknown).toBe(false);
+
+    act(() => {
+      stopRef.current?.();
+    });
+    expect(result.current.isStatusUnknown).toBe(true);
+  });
+
+  it('does not call a finished job unknown just because polling stopped', () => {
+    mockListener.mockReturnValue(shown({ status: 'FAILED' as VideoGeneration['status'] }));
+    const { result } = renderHook(() => useVideoGenerationBubbleState({ generationId: 'vid-1' }));
+
+    act(() => {
+      stopRef.current?.();
+    });
+    expect(result.current.isStatusUnknown).toBe(false);
   });
 
   it('retries the row the card is SHOWING (the chain head), then re-reads it', async () => {

@@ -17,6 +17,7 @@ import { SaveToContextManager } from './managers/save-to-context.manager';
 import { ContextSaveOrchestratorManager } from './managers/context-save-orchestrator.manager';
 import { ContextSaveClient } from './clients/context-save.client';
 import { ContextSaveChoiceService } from './services/context-save-choice.service';
+import { MessageSaveToContextService } from './services/message-save-to-context.service';
 import { ContextSaveController } from './controllers/context-save.controller';
 import { ModelContextWindowClient } from './clients/model-context-window.client';
 import { ModelCapabilityClient } from './clients/model-capability.client';
@@ -127,6 +128,7 @@ import { RuntimeV2ThreadActivityService } from './services/runtime-v2-thread-act
     ContextSaveClient,
     ContextSaveOrchestratorManager,
     ContextSaveChoiceService,
+    MessageSaveToContextService,
     // Registered because ChatContextGatewayManager injects it. Everywhere
     // else in this service it is built with `new` — its cache is static, so an
     // instance carries no state — and it had therefore never needed to be a

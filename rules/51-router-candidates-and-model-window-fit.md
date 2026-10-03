@@ -147,3 +147,23 @@ model was sent a 16.7k-token prompt.
     the image path. Without it the cloud router picked `chatgpt-image-latest`
     for "what happens at 0:02 in this video?" and no reply ever arrived. Pinned
     by `cloud-router-candidates.utility.spec.ts`.
+
+## Added 2026-10-03 (named model in the prompt; image intent reads the request)
+
+20. **A model the user names in the prompt gets the request.** "use nano banana to
+    make X" / "ask grok …" / "@veo …" in AUTO is resolved by
+    `NamedModelRequestManager` against routing's own deployment catalog (health +
+    plan filtered; privacy enforcement still runs first and wins). The name must
+    follow a directive word, never sit in a comparison, a negated clause, a pasted
+    body or a habit ("I use claude"). Aliases that differ from catalog ids live in
+    `NAMED_MODEL_ALIASES` and are resolved AGAINST the catalog; a new model whose id
+    is what people say needs no change. An image model goes to its `IMAGE_*`
+    provider as a manual pick does (item 17). Add every new alias or false positive
+    to `named-model-request.utility.spec.ts` first. Not done: the directive words are
+    not stripped from the prompt the model sees.
+21. **An image word is not an image request.** `detectImageGenerationSignals`
+    matches whole words only ("discover" is not "cover", "withdraw a" is not
+    "draw a"), and a supplementary note ("say also …", "additional context: …") or a
+    writing task ("write a LinkedIn post about our logo") needs an unmistakable
+    request ("draw a cat", "create an image") to count. Add the false positive to
+    `image-intent.utility.spec.ts` before widening any table.

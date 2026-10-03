@@ -13,6 +13,7 @@ import type { PendingComposerUpload } from '@/types/composer-attachment.types';
 import { logger, showToast } from '@/utilities';
 import { resolveApiErrorMessage } from '@/utilities/api-error-message.utility';
 import { classifyUploadError } from '@/utilities/composer-attachment.utility';
+import { resolveUploadMimeType } from '@/utilities/upload-mime.utility';
 
 // Shared paste / drop / file-input / recorder ingestion for every composer
 // surface (main chat, Compare, and all nine orchestration labs — they all
@@ -151,7 +152,7 @@ export function useComposerAttachments({
         const localId = begin(file.name);
         const metadata = {
           filename: file.name,
-          mimeType: file.type.length > 0 ? file.type : 'application/octet-stream',
+          mimeType: resolveUploadMimeType(file),
           sizeBytes: file.size,
         };
         const parsed = uploadFileSchema.safeParse(metadata);

@@ -21,16 +21,20 @@ export function useFollowStreamingTokens({
   lastMessageId,
   lastContentLength,
   lastIndex,
+  pinnedRef,
+  progressSignal = 0,
 }: UseFollowStreamingTokensParams): void {
   const previousIdRef = useRef<string | null>(null);
   const previousLengthRef = useRef<number>(0);
   const hasMountedRef = useRef<boolean>(false);
+  const previousSignalRef = useRef<number>(progressSignal);
 
   useIsomorphicLayoutEffect(() => {
     const previousId = previousIdRef.current;
     const previousLength = previousLengthRef.current;
     const isNewMessage = previousId !== lastMessageId;
-    const grew = lastContentLength > previousLength;
+    const grew = lastContentLength > previousLength || progressSignal !== previousSignalRef.current;
+    previousSignalRef.current = progressSignal;
 
     // Always commit the latest snapshot before any early return so subsequent
     // re-renders compare against the correct previous values.
@@ -52,7 +56,10 @@ export function useFollowStreamingTokens({
       return;
     }
 
-    if (!isAtBottom) {
+    // The controller's pin (reader has not scrolled up) wins over the distance
+    // test, which a tall block of new content trips with no user action.
+    const following = pinnedRef === undefined ? isAtBottom : pinnedRef.current;
+    if (!following) {
       return;
     }
     if (lastIndex < 0) {
@@ -61,10 +68,20 @@ export function useFollowStreamingTokens({
     if (!isNewMessage && !grew) {
       return;
     }
+    // 'LAST' includes the footer (progress stages, narration), which sits
+    // below the final row and used to stay out of view.
     virtuosoRef.current?.scrollToIndex({
-      index: lastIndex,
+      index: 'LAST',
       behavior: 'auto',
       align: 'end',
     });
-  }, [virtuosoRef, isAtBottom, lastMessageId, lastContentLength, lastIndex]);
+  }, [
+    virtuosoRef,
+    isAtBottom,
+    lastMessageId,
+    lastContentLength,
+    lastIndex,
+    pinnedRef,
+    progressSignal,
+  ]);
 }

@@ -19,6 +19,10 @@ export const VIDEO_FAILURE_MESSAGES: ReadonlyMap<VideoFailureCode, string> = new
     'The video provider refused the request because the account quota or billing limit was reached.',
   ],
   [
+    VideoFailureCode.PROVIDER_CREDITS_DEPLETED,
+    'The video provider account has no prepaid credit left, so it refused the request. An administrator needs to top up that account.',
+  ],
+  [
     VideoFailureCode.PROVIDER_REJECTED,
     'The video provider rejected the request for this model. Try another video model.',
   ],
@@ -95,6 +99,17 @@ export const VIDEO_AUTH_FAILURE_MARKERS: readonly string[] = [
   'api_key_invalid',
   'invalid api key',
   'incorrect api key',
+];
+
+/**
+ * Lower-cased fragments that say the prepaid balance is EMPTY (as opposed to a
+ * rate or spending cap). Gemini answers 402 "Your prepayment credits are
+ * depleted"; xAI answers 403 "used all available credits".
+ */
+export const VIDEO_CREDITS_DEPLETED_MARKERS: readonly string[] = [
+  'prepayment credits',
+  'credits are depleted',
+  'used all available credits',
 ];
 
 /**

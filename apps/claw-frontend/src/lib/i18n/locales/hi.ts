@@ -434,6 +434,35 @@ export const hi: TranslationDictionary = {
       trigger: 'इससे फिर से आज़माएँ…',
       auto: 'AUTO को चुनने दें',
     },
+    composerContext: {
+      pickLabel: 'संदर्भ पैक चुनें',
+      pickEmpty: 'आपके पास अभी कोई संदर्भ पैक नहीं है।',
+      pickCount: '{value} चुने गए',
+      pickManage: 'संदर्भ पैक प्रबंधित करें',
+      pickLimit: 'प्रति चैट अधिकतम {value} पैक।',
+      viewLabel: 'जुड़े हुए संदर्भ पैक देखें',
+      viewTitle: 'इस चैट में संदर्भ पैक',
+      viewDescription: 'पैक की वह सामग्री जो अगला संदेश साथ ले जाएगा।',
+      viewNone: 'अगले संदेश के साथ किसी संदर्भ पैक की सामग्री नहीं भेजी जाएगी।',
+      viewDisabled: 'इस चैट के लिए संदर्भ बंद है, इसलिए कोई पैक नहीं भेजा जाता।',
+      viewItems: '{value} आइटम',
+      memoryLabel: 'इस चैट में उपयोग हुई मेमोरी देखें',
+      memoryTitle: 'इस चैट की मेमोरी',
+      memoryDescription:
+        'असिस्टेंट आपके बारे में क्या याद रखता है और अगले संदेश के लिए क्या उपयोग करेगा।',
+      memoryOn: 'इस चैट के लिए मेमोरी चालू है।',
+      memoryOff: 'इस चैट के लिए मेमोरी बंद है: कुछ भी पढ़ा या सीखा नहीं जाता।',
+      memoryNone: 'इस संदेश पर अभी कोई स्मृति लागू नहीं होती।',
+      memoryManage: 'मेमोरी प्रबंधित करें',
+    },
+    saveMessage: {
+      menuLabel: 'इस उत्तर को सहेजें',
+      pack: 'संदर्भ पैक के रूप में सहेजें',
+      memory: 'मेमोरी में सहेजें',
+      savedPack: 'संदर्भ पैक "{name}" के रूप में सहेजा गया।',
+      savedMemory: 'मेमोरी में सहेजा गया।',
+      open: 'खोलें',
+    },
     contextSave: {
       title: 'इस चैट से सहेजा गया',
       savedMemory: 'मेमोरी में सहेजा गया',
@@ -864,6 +893,11 @@ export const hi: TranslationDictionary = {
     videoTakesMinutes: 'वीडियो बनने में कुछ मिनट लग सकते हैं। बनते समय आप चैट जारी रख सकते हैं।',
     videoLoadFailed: 'वीडियो लोड नहीं हो सका',
     videoLoadFailedHint: 'फिर से कोशिश करने के लिए पेज रीलोड करें।',
+    videoStatusUnknown: 'वीडियो की स्थिति उपलब्ध नहीं',
+    videoStatusUnknownHint:
+      'हमने इस वीडियो की जाँच बंद कर दी। पेज रीलोड करके देखें कि वह पूरा हुआ या नहीं, या अनुरोध फिर भेजें।',
+    videoFailureCreditsDepleted:
+      'वीडियो प्रदाता खाते में प्रीपेड क्रेडिट नहीं बचा, इसलिए उसने अनुरोध अस्वीकार कर दिया। किसी व्यवस्थापक को उस खाते में क्रेडिट जोड़ना होगा।',
     videoFailureSourceImageInvalid:
       'चित्र का उपयोग नहीं हो सका: 10 MB से छोटी JPEG, PNG या WebP छवि का उपयोग करें, जो आपकी अपनी हो।',
     imageStage: {

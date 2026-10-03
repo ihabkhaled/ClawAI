@@ -4,14 +4,30 @@ import type { FileValidationResult } from '../../modules/files/types/file-securi
 import { acceptedArchiveFormats, sniffArchiveFormat } from './archive-format.utility';
 import {
   AAC_ADTS_SECOND_BYTES,
+  ANNEX_B_START_CODE_LONG,
+  ANNEX_B_START_CODE_SHORT,
   AUDIO_MIME_DETECTION_ALIASES,
+  AVIF_MAJOR_BRANDS,
+  BMP_SIGNATURE,
   DANGEROUS_EXTENSIONS,
+  EBML_DOCTYPE_SCAN_BYTES,
+  EBML_HEADER,
+  HEIC_MAJOR_BRANDS,
+  HEIF_GENERIC_MAJOR_BRANDS,
+  HEVC_NAL_TYPE_MASK,
+  HEVC_NAL_TYPE_SHIFT,
+  HEVC_PARAMETER_SET_NAL_TYPES,
+  IMAGE_MIME_DETECTION_ALIASES,
   M4A_MAJOR_BRANDS,
+  MATROSKA_DOCTYPE,
   MAX_FILENAME_LENGTH,
   MIME_TO_MAGIC_BYTES,
   MP3_FRAME_SYNC_SECOND_BYTES,
   MP4_MAJOR_BRANDS,
+  TIFF_BIG_ENDIAN_SIGNATURE,
+  TIFF_LITTLE_ENDIAN_SIGNATURE,
   VIDEO_MIME_DETECTION_ALIASES,
+  WEBM_DOCTYPE,
 } from '../../modules/files/constants/file-security.constants';
 
 const logger = new Logger('FileValidator');
@@ -57,6 +73,9 @@ export async function validateMagicBytes(
 ): Promise<FileValidationResult> {
   if (declaredMimeType.startsWith('video/')) {
     return validateDetectedVideoContainer(buffer, declaredMimeType);
+  }
+  if (Object.hasOwn(IMAGE_MIME_DETECTION_ALIASES, declaredMimeType)) {
+    return validateDetectedImageContainer(buffer, declaredMimeType);
   }
   // B6a — without this, "audio/wav" is an unchecked MIME and any bytes at all
   // ride in under that name.
@@ -122,6 +141,43 @@ async function validateDetectedVideoContainer(
   return { valid: false, reason: `mime_magic_mismatch: declared ${declaredMimeType}` };
 }
 
+// HEIC / HEIF / AVIF / TIFF / BMP: detect what the bytes really are, then check
+// the declared MIME is allowed to be that (the same shape as video and audio).
+function validateDetectedImageContainer(
+  buffer: Buffer,
+  declaredMimeType: string,
+): FileValidationResult {
+  const acceptedDetectedMimes = Object.entries(IMAGE_MIME_DETECTION_ALIASES).find(
+    ([mimeType]) => mimeType === declaredMimeType,
+  )?.[1];
+  const detectedMime = detectImageMimeType(buffer);
+  if (acceptedDetectedMimes?.includes(detectedMime ?? '') === true) {
+    return { valid: true, reason: 'magic_bytes_match' };
+  }
+  logger.warn(
+    `validateMagicBytes: MISMATCH — declared ${declaredMimeType} but magic bytes don't match`,
+  );
+  return { valid: false, reason: `mime_magic_mismatch: declared ${declaredMimeType}` };
+}
+
+function detectImageMimeType(buffer: Buffer): string | undefined {
+  if (buffer.length >= 12 && buffer.toString('ascii', 4, 8) === 'ftyp') {
+    const brand = buffer.toString('ascii', 8, 12).toLowerCase();
+    if (HEIC_MAJOR_BRANDS.has(brand)) {
+      return 'image/heic';
+    }
+    if (AVIF_MAJOR_BRANDS.has(brand)) {
+      return 'image/avif';
+    }
+    return HEIF_GENERIC_MAJOR_BRANDS.has(brand) ? 'image/heif' : undefined;
+  }
+  const head = buffer.subarray(0, TIFF_LITTLE_ENDIAN_SIGNATURE.length);
+  if (head.equals(TIFF_LITTLE_ENDIAN_SIGNATURE) || head.equals(TIFF_BIG_ENDIAN_SIGNATURE)) {
+    return 'image/tiff';
+  }
+  return buffer.subarray(0, BMP_SIGNATURE.length).equals(BMP_SIGNATURE) ? 'image/bmp' : undefined;
+}
+
 function detectVideoMimeType(buffer: Buffer): string | undefined {
   if (isIsoBaseMedia(buffer)) {
     return buffer.toString('ascii', 8, 12).toLowerCase() === 'qt  '
@@ -134,7 +190,42 @@ function detectVideoMimeType(buffer: Buffer): string | undefined {
   if (isAvi(buffer)) {
     return 'video/vnd.avi';
   }
-  return isMpeg(buffer) ? 'video/mpeg' : undefined;
+  if (isMatroska(buffer)) {
+    return 'video/x-matroska';
+  }
+  if (isMpeg(buffer)) {
+    return 'video/mpeg';
+  }
+  return isRawHevc(buffer) ? 'video/hevc' : undefined;
+}
+
+// EBML header whose DocType is "matroska" (a WebM carries "webm" instead).
+function isMatroska(buffer: Buffer): boolean {
+  const head = buffer.subarray(0, EBML_DOCTYPE_SCAN_BYTES);
+  return (
+    head.subarray(0, EBML_HEADER.length).equals(EBML_HEADER) &&
+    head.includes(MATROSKA_DOCTYPE) &&
+    !head.includes(WEBM_DOCTYPE)
+  );
+}
+
+// A raw HEVC elementary stream (.hevc / .h265): an Annex B start code and then a
+// VPS, SPS or PPS NAL unit. H.264 shares the start code but not the NAL types.
+function isRawHevc(buffer: Buffer): boolean {
+  let nalOffset: number;
+  if (buffer.subarray(0, ANNEX_B_START_CODE_LONG.length).equals(ANNEX_B_START_CODE_LONG)) {
+    nalOffset = ANNEX_B_START_CODE_LONG.length;
+  } else if (buffer.subarray(0, ANNEX_B_START_CODE_SHORT.length).equals(ANNEX_B_START_CODE_SHORT)) {
+    nalOffset = ANNEX_B_START_CODE_SHORT.length;
+  } else {
+    return false;
+  }
+  return (
+    buffer.length > nalOffset &&
+    HEVC_PARAMETER_SET_NAL_TYPES.has(
+      (buffer.readUInt8(nalOffset) >> HEVC_NAL_TYPE_SHIFT) & HEVC_NAL_TYPE_MASK,
+    )
+  );
 }
 
 function isIsoBaseMedia(buffer: Buffer): boolean {

@@ -440,6 +440,35 @@ export const it: TranslationDictionary = {
       trigger: 'Riprova con…',
       auto: 'Lascia scegliere ad AUTO',
     },
+    composerContext: {
+      pickLabel: 'Scegli i pacchetti di contesto',
+      pickEmpty: 'Non hai ancora pacchetti di contesto.',
+      pickCount: '{value} selezionati',
+      pickManage: 'Gestisci i pacchetti di contesto',
+      pickLimit: 'Fino a {value} pacchetti per chat.',
+      viewLabel: 'Vedi i pacchetti di contesto allegati',
+      viewTitle: 'Pacchetti di contesto in questa chat',
+      viewDescription: 'Il contenuto dei pacchetti che il prossimo messaggio porterà con sé.',
+      viewNone: 'Il prossimo messaggio non includerà contenuto dei pacchetti di contesto.',
+      viewDisabled:
+        'Il contesto è disattivato per questa chat, quindi non viene inviato nessun pacchetto.',
+      viewItems: '{value} elementi',
+      memoryLabel: 'Vedi la memoria usata in questa chat',
+      memoryTitle: 'Memoria di questa chat',
+      memoryDescription: 'Ciò che l’assistente ricorda di te e userebbe per il prossimo messaggio.',
+      memoryOn: 'La memoria è attiva per questa chat.',
+      memoryOff: 'La memoria è disattivata per questa chat: non viene letto né appreso nulla.',
+      memoryNone: 'Nessun ricordo si applica ancora a questo messaggio.',
+      memoryManage: 'Gestisci la memoria',
+    },
+    saveMessage: {
+      menuLabel: 'Salva questa risposta',
+      pack: 'Salva come pacchetto di contesto',
+      memory: 'Salva nella memoria',
+      savedPack: 'Salvato come pacchetto di contesto «{name}».',
+      savedMemory: 'Salvato nella memoria.',
+      open: 'Apri',
+    },
     contextSave: {
       title: 'Salvato da questa chat',
       savedMemory: 'Salvato in memoria',
@@ -881,6 +910,11 @@ export const it: TranslationDictionary = {
       'Un video può richiedere alcuni minuti. Puoi continuare a chattare durante l’elaborazione.',
     videoLoadFailed: 'Impossibile caricare il video',
     videoLoadFailedHint: 'Ricarica la pagina per riprovare.',
+    videoStatusUnknown: 'Stato del video non disponibile',
+    videoStatusUnknownHint:
+      'Abbiamo smesso di controllare questo video. Ricarica la pagina per vedere se è finito, oppure invia di nuovo la richiesta.',
+    videoFailureCreditsDepleted:
+      "L'account del fornitore video non ha più credito prepagato e ha rifiutato la richiesta. Un amministratore deve ricaricare quell'account.",
     videoFailureSourceImageInvalid:
       "Impossibile usare l'immagine: usa un'immagine JPEG, PNG o WebP sotto i 10 MB che sia tua.",
     imageStage: {

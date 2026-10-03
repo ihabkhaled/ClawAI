@@ -55,6 +55,7 @@ export function VirtualizedMessages(props: VirtualizedMessagesProps): React.Reac
         alignToBottom
         followOutput={props.handleFollowOutput}
         atBottomStateChange={props.onAtBottomStateChange}
+        scrollerRef={props.scrollerRef}
         atBottomThreshold={STICKY_BOTTOM_THRESHOLD_PX}
         startReached={props.handleStartReached}
         increaseViewportBy={props.increaseViewportBy}

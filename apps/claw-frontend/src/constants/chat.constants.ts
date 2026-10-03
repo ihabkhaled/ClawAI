@@ -90,6 +90,18 @@ export const THREAD_MAX_REROUTE_ATTEMPTS_MAX = 5;
 // bubble; anything more would pin too eagerly when the user is reading.
 export const STICKY_BOTTOM_THRESHOLD_PX = 80;
 
+// A scrollTop decrease larger than this is the reader scrolling up. Sub-pixel
+// layout corrections stay below it.
+// Safari fires compositionend BEFORE the keydown that confirms an IME
+// candidate, so isComposing is already false there; keyCode 229 is the tell.
+export const IME_PROCESS_KEY_CODE = 229;
+
+export const SCROLL_UP_INTENT_DELTA_PX = 2;
+
+// Within this distance of the true bottom the reader is back at the live edge
+// and following resumes.
+export const SCROLL_PIN_TOLERANCE_PX = 4;
+
 // Virtuoso `increaseViewportBy` for the VirtualizedMessages list. Pre-renders
 // extra rows above so scrolling back to read recent history feels instant,
 // and a smaller window below so the streaming footer + ThinkingIndicator

@@ -16,6 +16,7 @@ export const ffprobeStreamSchema = z.object({
   avg_frame_rate: z.string().max(32).optional(),
   r_frame_rate: z.string().max(32).optional(),
   duration: z.string().max(32).optional(),
+  nb_read_packets: z.string().max(16).optional(),
 });
 
 export const ffprobeOutputSchema = z.object({

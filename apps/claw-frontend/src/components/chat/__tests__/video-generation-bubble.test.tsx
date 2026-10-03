@@ -84,6 +84,19 @@ describe('VideoGenerationBubble', () => {
     expect(screen.queryByTestId('video-generation-cancel')).toBeNull();
   });
 
+  it('says so when polling gave up, instead of spinning on "Generating video" forever', () => {
+    setState(generation(), { isStatusUnknown: true });
+    render(<VideoGenerationBubble generationId="vid-1" prompt="a fox" />);
+
+    expect(screen.getByTestId('video-generation-error')).toHaveTextContent(
+      en.chat.videoStatusUnknown,
+    );
+    expect(screen.getByTestId('video-generation-error')).toHaveTextContent(
+      en.chat.videoStatusUnknownHint,
+    );
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
   it('shows the stage, provider/model and a working Cancel while generating', () => {
     setState(generation());
     render(<VideoGenerationBubble generationId="vid-1" prompt="a fox" />);

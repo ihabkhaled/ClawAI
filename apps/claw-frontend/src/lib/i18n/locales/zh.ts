@@ -413,6 +413,34 @@ export const zh: TranslationDictionary = {
       trigger: '换个模型重试…',
       auto: '让 AUTO 选择',
     },
+    composerContext: {
+      pickLabel: '选择上下文包',
+      pickEmpty: '你还没有上下文包。',
+      pickCount: '已选 {value} 个',
+      pickManage: '管理上下文包',
+      pickLimit: '每个对话最多 {value} 个包。',
+      viewLabel: '查看已附加的上下文包',
+      viewTitle: '此对话中的上下文包',
+      viewDescription: '下一条消息将携带的包内容。',
+      viewNone: '下一条消息不会携带任何上下文包内容。',
+      viewDisabled: '此对话已关闭上下文，因此不会发送任何包。',
+      viewItems: '{value} 项',
+      memoryLabel: '查看此对话使用的记忆',
+      memoryTitle: '此对话的记忆',
+      memoryDescription: '助手记得的关于你的内容，以及下一条消息会用到的部分。',
+      memoryOn: '此对话已开启记忆。',
+      memoryOff: '此对话已关闭记忆：不会读取也不会学习任何内容。',
+      memoryNone: '目前没有适用于这条消息的记忆。',
+      memoryManage: '管理记忆',
+    },
+    saveMessage: {
+      menuLabel: '保存此回答',
+      pack: '另存为上下文包',
+      memory: '保存到记忆',
+      savedPack: '已保存为上下文包“{name}”。',
+      savedMemory: '已保存到记忆。',
+      open: '打开',
+    },
     contextSave: {
       title: '已从此聊天保存',
       savedMemory: '已保存到记忆',
@@ -619,8 +647,7 @@ export const zh: TranslationDictionary = {
       videoAttachmentLocalModelUnavailable:
         '视频附件在仅本地或隐私优先模式下不可用，因为没有配置支持本地视频的模型。',
       providerCreditExhausted: '该模型的提供商账户目前额度不足。请选择其他模型或稍后重试。',
-      providerModelUnavailable:
-        '该模型已不再由其提供商提供。请选择其他模型。',
+      providerModelUnavailable: '该模型已不再由其提供商提供。请选择其他模型。',
       providerRateLimited: '该模型的提供商当前繁忙。请稍后重试或选择其他模型。',
       providerOutputLimit: '该模型无法生成所请求长度的回答。请重试。',
     },
@@ -826,6 +853,10 @@ export const zh: TranslationDictionary = {
     videoTakesMinutes: '视频可能需要几分钟。生成期间您可以继续聊天。',
     videoLoadFailed: '无法加载视频',
     videoLoadFailedHint: '请刷新页面后重试。',
+    videoStatusUnknown: '无法获取视频状态',
+    videoStatusUnknownHint: '我们已停止检查此视频。请刷新页面查看是否已完成，或重新发送请求。',
+    videoFailureCreditsDepleted:
+      '视频提供商账户的预付额度已用完，因此拒绝了该请求。需要管理员为该账户充值。',
     videoFailureSourceImageInvalid:
       '无法使用该图片：请使用属于您自己的、小于 10 MB 的 JPEG、PNG 或 WebP 图片。',
     imageStage: {

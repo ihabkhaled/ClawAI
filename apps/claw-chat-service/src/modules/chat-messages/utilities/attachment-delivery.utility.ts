@@ -16,7 +16,10 @@ import {
   DELIVERY_REASON_VIDEO_PLAN_LIMIT,
   DELIVERY_REASON_VIDEO_PROCESSING_CANCELLED,
 } from '../constants/attachment-delivery.constants';
-import { NATIVE_VIDEO_MAX_DURATION_MS } from '../constants/video-delivery.constants';
+import {
+  NATIVE_VIDEO_MAX_DURATION_MS,
+  NATIVE_VIDEO_MIME_TYPES,
+} from '../constants/video-delivery.constants';
 import { TEXT_BUDGET_SHORTENED_MARKER } from '../constants/evidence-fit.constants';
 import { MAX_FILE_CONTENT_LENGTH } from '../constants/file-content.constants';
 import { NATIVE_AUDIO_MAX_BYTES } from '../constants/native-audio.constants';
@@ -206,6 +209,7 @@ function resolveVideo(
     options.nativeVideoTransport &&
     capabilities.videoInput !== MediaCapabilityState.UNSUPPORTED &&
     hasBytes(file) &&
+    NATIVE_VIDEO_MIME_TYPES.has((file.mimeType ?? '').toLowerCase()) &&
     !planRefused &&
     !cancelled &&
     nativeVideoAllowed(file, options.videoPlan);

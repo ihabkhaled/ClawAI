@@ -430,6 +430,34 @@ export const ar: TranslationDictionary = {
       trigger: 'أعد المحاولة باستخدام…',
       auto: 'دع AUTO يختار',
     },
+    composerContext: {
+      pickLabel: 'اختيار حزم السياق',
+      pickEmpty: 'ليست لديك حزم سياق بعد.',
+      pickCount: 'المحدد: {value}',
+      pickManage: 'إدارة حزم السياق',
+      pickLimit: 'حتى {value} حزم لكل محادثة.',
+      viewLabel: 'عرض حزم السياق المرفقة',
+      viewTitle: 'حزم السياق في هذه المحادثة',
+      viewDescription: 'محتوى الحزم الذي ستحمله الرسالة التالية.',
+      viewNone: 'لن يُرسل أي محتوى من حزم السياق مع الرسالة التالية.',
+      viewDisabled: 'السياق متوقف لهذه المحادثة، لذلك لا تُرسل أي حزمة.',
+      viewItems: '{value} عناصر',
+      memoryLabel: 'عرض الذاكرة المستخدمة في هذه المحادثة',
+      memoryTitle: 'ذاكرة هذه المحادثة',
+      memoryDescription: 'ما يتذكره المساعد عنك وسيستخدمه في الرسالة التالية.',
+      memoryOn: 'الذاكرة مفعّلة لهذه المحادثة.',
+      memoryOff: 'الذاكرة متوقفة لهذه المحادثة: لا يُقرأ ولا يُتعلَّم شيء.',
+      memoryNone: 'لا توجد ذكريات مناسبة لهذه الرسالة بعد.',
+      memoryManage: 'إدارة الذاكرة',
+    },
+    saveMessage: {
+      menuLabel: 'حفظ هذه الإجابة',
+      pack: 'حفظ كحزمة سياق',
+      memory: 'حفظ في الذاكرة',
+      savedPack: 'تم الحفظ كحزمة سياق «{name}».',
+      savedMemory: 'تم الحفظ في الذاكرة.',
+      open: 'فتح',
+    },
     contextSave: {
       title: 'محفوظ من هذه المحادثة',
       savedMemory: 'حُفظ في الذاكرة',
@@ -641,8 +669,7 @@ export const ar: TranslationDictionary = {
         'مرفقات الفيديو غير متاحة في وضع التشغيل المحلي فقط أو وضع الخصوصية أولاً لعدم إعداد نموذج محلي يدعم الفيديو.',
       providerCreditExhausted:
         'نفد رصيد مزوّد هذا النموذج حاليًا. اختر نموذجًا آخر أو حاول مرة أخرى لاحقًا.',
-      providerModelUnavailable:
-        'هذا النموذج لم يعد متاحًا لدى مزوّده. اختر نموذجًا آخر.',
+      providerModelUnavailable: 'هذا النموذج لم يعد متاحًا لدى مزوّده. اختر نموذجًا آخر.',
       providerRateLimited:
         'هذا النموذج مشغول لدى مزوّده حاليًا. حاول مرة أخرى بعد قليل أو اختر نموذجًا آخر.',
       providerOutputLimit:
@@ -852,6 +879,11 @@ export const ar: TranslationDictionary = {
     videoTakesMinutes: 'قد يستغرق الفيديو بضع دقائق. يمكنك متابعة المحادثة أثناء إنشائه.',
     videoLoadFailed: 'تعذّر تحميل الفيديو',
     videoLoadFailedHint: 'أعد تحميل الصفحة للمحاولة مرة أخرى.',
+    videoStatusUnknown: 'حالة الفيديو غير متاحة',
+    videoStatusUnknownHint:
+      'توقفنا عن متابعة هذا الفيديو. أعد تحميل الصفحة لمعرفة ما إذا اكتمل، أو أرسل الطلب مرة أخرى.',
+    videoFailureCreditsDepleted:
+      'لا يوجد رصيد مدفوع مسبقًا في حساب مزوّد الفيديو، لذلك رفض الطلب. يحتاج المسؤول إلى شحن هذا الحساب.',
     videoFailureSourceImageInvalid:
       'تعذّر استخدام الصورة: استخدم صورة JPEG أو PNG أو WebP أقل من 10 ميغابايت وتكون خاصة بك.',
     imageStage: {

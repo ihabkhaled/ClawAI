@@ -5,6 +5,7 @@ import {
 } from '../../../common/constants/auto-research.constants';
 import { detectPromptUrls } from '../../../common/utilities/prompt-url.utility';
 import { isTrivialUserText } from './attachment-only-turn.utility';
+import { containsResearchMarker } from './research-marker-match.utility';
 
 /**
  * What research this prompt needs, when the user has not said.
@@ -24,23 +25,17 @@ import { isTrivialUserText } from './attachment-only-turn.utility';
  * is also the case the old flow handled worst — the page was simply ignored
  * unless the user had pre-selected a fetch mode.
  *
- * The keyword lists are English-only, which is a real limitation for a
- * thirteen-locale product: a Japanese prompt asking for today's news resolves
- * to NONE and answers exactly as it does today. The URL rule still covers every
- * locale, and widening the markers is a translation task, not a redesign.
+ * The marker lists cover the 13 UI locales and match whole words only ("news"
+ * never fires on "newsletter"). They are a hint for the lab/parallel lanes that
+ * pick a research mode themselves; the main chat turn asks the RESEARCH_GATE
+ * model instead, which reads the sentence in any language.
  */
 export function resolveAutoResearchMode(prompt: string): ResearchMode {
-  const normalized = prompt.toLowerCase();
-
   if (detectPromptUrls(prompt).length > 0) {
     return ResearchMode.SEARCH_FETCH;
   }
-  const wantsCurrentInfo = AUTO_RESEARCH_RECENCY_MARKERS.some((marker) =>
-    normalized.includes(marker),
-  );
-  const asksForResearch = AUTO_RESEARCH_REQUEST_MARKERS.some((marker) =>
-    normalized.includes(marker),
-  );
+  const wantsCurrentInfo = containsResearchMarker(prompt, AUTO_RESEARCH_RECENCY_MARKERS);
+  const asksForResearch = containsResearchMarker(prompt, AUTO_RESEARCH_REQUEST_MARKERS);
   return wantsCurrentInfo || asksForResearch ? ResearchMode.SEARCH : ResearchMode.NONE;
 }
 

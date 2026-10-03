@@ -197,6 +197,15 @@ model answers from frames + transcript. Check the decision's `reasonTags` for
 No `required=` value → chat-service did not send the modalities (look for
 `AttachmentInfoClient` warnings). Rule 51 item 13.
 
+## Video GENERATION failed (not an attachment)
+
+`select error_code, left(error_message,120) from video_generations order by created_at desc limit 10;`
+in `claw-pg-images`. `VIDEO_PROVIDER_CREDITS_DEPLETED` is the provider account's
+prepaid balance (Gemini 402 "prepayment credits are depleted", xAI "used all
+available credits"): top up the account, no code change helps. The card stops
+polling after 15 minutes or five failed reads and then says the status is
+unknown (`chat.videoStatusUnknown`) instead of spinning on "Generating video…".
+
 ## Never
 
 - Bulk-migrate video rows to re-run them (rule 42 item 10) — they heal on poll.

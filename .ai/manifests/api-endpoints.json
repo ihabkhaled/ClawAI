@@ -1318,6 +1318,11 @@
         "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/chat-messages/:id/save-to-context",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/context-save.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/chat-messages/:id/speech",
         "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-speech.controller.ts"
@@ -3963,5 +3968,5 @@
     ]
   },
   "generated": true,
-  "total": 785
+  "total": 786
 }

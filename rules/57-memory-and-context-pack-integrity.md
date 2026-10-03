@@ -75,6 +75,10 @@ retrieval, internal routes) and `apps/claw-chat-service`
     read per request, so a new domain needs no edit. Covered by
     `platform-identity.utility.spec.ts` and `context-assembly-save-turn-note.spec.ts`.
 
+17. **A save must never depend on a model understanding the request** (2026-10-03). Every assistant answer carries a "Save as context pack / Save to memory" action (`POST /chat-messages/:id/save-to-context`, owner-only, idempotent on the message id). A request that names no material ("save all info about ClawAI as a context pack") is NOT saved as the command text: the planner answers save=false, the answering model writes the material, and the user saves the answer. The platform identity block tells every model it may not claim saving is impossible.
+
+18. **Packs and memory are visible in the composer** (2026-10-03). The toolbar carries three fixed-width controls beside the attachment buttons: a pack picker (writes `thread.contextPackIds`, the field `fetchContextPackItems` sends to `for-chat`, so a pick is the real attachment, max 10), a pack view and a memory view (both read the server dry-run `POST /chat-threads/:id/preview-context`, so they show what the next message will carry; `useContext=false` / `useMemory=false` are stated, not hidden). Pinned by `composer-context-controls.test.tsx`.
+
 ## How to check
 
 ```bash

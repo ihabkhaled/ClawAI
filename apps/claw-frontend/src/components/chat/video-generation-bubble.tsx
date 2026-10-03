@@ -18,7 +18,7 @@ export function VideoGenerationBubble({
   prompt,
 }: VideoGenerationBubbleProps): React.ReactElement {
   const { t } = useTranslation();
-  const { generation, canCancel, isCancelling, handleCancel, handleRetry } =
+  const { generation, canCancel, isCancelling, isStatusUnknown, handleCancel, handleRetry } =
     useVideoGenerationBubbleState({ generationId });
   const isCompleted = generation?.status === VideoGenerationStatus.COMPLETED;
   const assetPath = isCompleted
@@ -30,7 +30,15 @@ export function VideoGenerationBubble({
 
   return (
     <div className="my-2 w-full max-w-full">
-      {!generation || isInProgressVideoStatus(generation.status) ? (
+      {isStatusUnknown ? (
+        <VideoErrorState
+          status={t('chat.videoStatusUnknown')}
+          error={t('chat.videoStatusUnknownHint')}
+          provider={generation?.provider}
+          model={generation?.model}
+        />
+      ) : null}
+      {!isStatusUnknown && (!generation || isInProgressVideoStatus(generation.status)) ? (
         <VideoLoadingState
           stageText={t(getVideoStatusLabelKey(status))}
           prompt={prompt}

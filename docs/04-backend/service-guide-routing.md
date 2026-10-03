@@ -577,3 +577,10 @@ Image and file intent detection run on `generationRequestText()` from `@claw/sha
 For a `MANUAL_MODEL` chat decision `PickedModelSubstituteManager` adds `pickedModelSubstitutes` (up to 5) to
 `message.routed`: `rankPickedModelSubstitutes` over the AUTO eligible set (pool 200), same provider first, other
 providers next, pricier models last and marked `costlier`. Never throws; a failure means no substitutes.
+
+## A model named in the prompt (2026-10-03)
+
+See [routing-engine.md](../03-architecture/routing-engine.md) "A model named in the prompt". Files:
+`named-model-request.{manager,utility,constants,types}.ts`, enum `NamedModelCapability`. Tests:
+`utilities/__tests__/named-model-request.utility.spec.ts`, `managers/__tests__/named-model-request.manager.spec.ts`,
+`routing.manager.spec.ts` "a model named in the prompt".

@@ -375,6 +375,24 @@ Full reasoning:
     so it is not paid for twice. A new place that builds a prompt, a plan or a
     lab stage reads these helpers; it never re-decides from the words.
 
+24. **A still no vision provider reads is converted at upload, not at send.**
+    HEIC / HEIF / AVIF / TIFF / BMP are accepted (`CONVERTED_IMAGE_MIME_TYPES`),
+    checked against their real bytes (`IMAGE_MIME_DETECTION_ALIASES`), scanned as
+    sent, then stored as a JPEG with a `.jpg` name by `normalizeImageUpload`
+    (`image-normalization.utility.ts`, the only importer of `heic-convert`,
+    `sharp` and `bmp-js`). Every reader (OCR, vision lanes, browser preview) sees
+    JPEG; the original bytes are not kept. A file that will not decode is a 422
+    `IMAGE_DECODE_FAILED` that says so, never a stored row no model can read. An
+    `application/octet-stream` upload whose bytes are one of these is re-labelled
+    first (`resolveUploadMimeType`), and the browser labels by extension when it
+    has no type (`resolveUploadMimeType` in the frontend, Windows `.heic`).
+    Videos added with it: Matroska, 3GPP/3GPP2, M4V and raw HEVC (`.hevc`/`.h265`,
+    duration from `-count_packets` / fps because the stream carries none). Only
+    `NATIVE_VIDEO_MIME_TYPES` ride to Gemini as bytes; the rest reach a lane as
+    transcript + frames (item 16), never as a request Gemini would 400.
+    Tests: `image-normalization.utility.spec.ts`, `file-validator.utility.spec.ts`,
+    `video-probe.utility.spec.ts`, `attachment-delivery.utility.spec.ts`.
+
 ## How this is enforced
 
 | Rule    | Mechanism                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
@@ -398,7 +416,7 @@ Full reasoning:
 | 19      | `attachment-only-send.dto.spec.ts` — every send schema × (empty + files → valid, empty + no files → invalid, 11 files → invalid, whitespace fuzz); `chat-messages.service.spec.ts` "stores an attachment-only send empty but routes it on a hint"; frontend `composer-attachment.constants.test.ts` pins the cap to chat-service's constant; `use-*-page-attachments.spec.ts` (all 9 labs), `use-parallel-compare-page-attachments.spec.ts` and `use-in-thread-compare.test.tsx` send files with empty text and refuse empty text alone                                                                                           |
 | 21      | file-service video cancellation specs (flag between steps, child kill, conditional save, stale re-queue skips a cancelled row); chat `attachment-delivery.utility.spec.ts` (cancelled video → `FAILED_PROCESSING`, reason `video_processing_cancelled`, never native); frontend `composer-attachment.utility.test.ts` (Cancelled state)                                                                                                                                                                                                                                                                                           |
 | 20      | `transcription-candidates.utility.spec.ts` (a 19-row sample of prod's GEMINI rows → stable flash-lite first, preview never first, OpenAI once, preview only when nothing stable); `transcription-error.utility.spec.ts` "classifyTranscriptionFailure" (real 429 / 404 / modality bodies); `transcription.manager.spec.ts` "bounded candidate walk" (same-provider fall-through, prod replay, one backoff, provider skip, busy message, call ceiling, one hold per call); connector `models-snapshot.manager.spec.ts` "stale GEMINI rows synced before the fail-closed heuristic"                                                 |
-| 23      | `context-assembly-attachment-awareness.spec.ts` (pointer for six wordings, blind with description, helper failed, unreadable, vision lane, tool turn, earlier files and `assemble()` carry); `vision-helper-description-reuse.spec.ts` + `derived-image-description-store.service.spec.ts` (one paid description across turns); `research-gate.service.spec.ts` "attachments (ADR-152)" (manifest and rule in the prompt, no crawl of an OCR link, cannot-view reasoning dropped); `attachment-modality.utility.spec.ts` (digest); `attachment-awareness.utility.spec.ts` |
+| 23      | `context-assembly-attachment-awareness.spec.ts` (pointer for six wordings, blind with description, helper failed, unreadable, vision lane, tool turn, earlier files and `assemble()` carry); `vision-helper-description-reuse.spec.ts` + `derived-image-description-store.service.spec.ts` (one paid description across turns); `research-gate.service.spec.ts` "attachments (ADR-152)" (manifest and rule in the prompt, no crawl of an OCR link, cannot-view reasoning dropped); `attachment-modality.utility.spec.ts` (digest); `attachment-awareness.utility.spec.ts`                                                         |
 
 ## Runbook
 

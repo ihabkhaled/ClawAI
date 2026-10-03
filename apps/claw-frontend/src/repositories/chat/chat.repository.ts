@@ -33,6 +33,7 @@ import type {
   SendVerifyResult,
   ThreadsListResponse,
 } from '@/types';
+import type { SaveMessageToContextRequest } from '@/types/composer-context.types';
 
 export const chatRepository = {
   async createThread(data: CreateThreadRequest): Promise<ChatThread> {
@@ -93,6 +94,18 @@ export const chatRepository = {
   /** Where this thread sits in its branch family: its source and its branches. */
   async getThreadLineage(threadId: string): Promise<ThreadLineage> {
     const response = await apiClient.get<ThreadLineage>(`/chat-threads/${threadId}/lineage`);
+    return response.data;
+  },
+
+  /** One-click "Save as context pack / Save to memory" on a message. */
+  async saveMessageToContext(
+    messageId: string,
+    request: SaveMessageToContextRequest,
+  ): Promise<ContextSaveRecord> {
+    const response = await apiClient.post<ContextSaveRecord>(
+      `/chat-messages/${messageId}/save-to-context`,
+      request,
+    );
     return response.data;
   },
 

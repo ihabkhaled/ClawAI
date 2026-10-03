@@ -176,3 +176,93 @@ describe('validateMagicBytes archive formats', () => {
     });
   });
 });
+
+// HEIC / HEIF / AVIF / TIFF / BMP and the video containers added with them
+// (Matroska, 3GPP, M4V, raw HEVC). Byte strings are real file heads.
+const HEIC_BYTES = Buffer.from('0000001c6674797068656963000000006d696631686569630000', 'hex');
+const MIF1_BYTES = Buffer.from('0000001c667479706d696631000000006d696631', 'hex');
+const AVIF_BYTES = Buffer.from('0000001c6674797061766966000000006d696631617669660000', 'hex');
+const TIFF_LE_BYTES = Buffer.from('49492a0008000000', 'hex');
+const TIFF_BE_BYTES = Buffer.from('4d4d002a00000008', 'hex');
+const BMP_BYTES = Buffer.concat([Buffer.from('BM'), Buffer.alloc(52)]);
+const MATROSKA_BYTES = Buffer.concat([
+  Buffer.from('1a45dfa39f4286810142f7810142f2810442f3810842828862', 'hex'),
+  Buffer.from('matroska'),
+  Buffer.alloc(16),
+]);
+const THREE_GP_BYTES = Buffer.from('000000146674797033677034000000003367703400', 'hex');
+const M4V_BYTES = Buffer.from('0000001c667479706d3476200000000069736f6d6d3476', 'hex');
+// 00 00 00 01 then a VPS (0x40 = type 32): what ffmpeg writes for `-f hevc`.
+const HEVC_BYTES = Buffer.from('000000014001 0c01ffff04080000030000'.replace(' ', ''), 'hex');
+const HEVC_SHORT_START_BYTES = Buffer.from('0000014201010160', 'hex');
+// 00 00 00 01 then an H.264 SPS (0x67 = type 7): same start code, different codec.
+const H264_BYTES = Buffer.from('0000000167640028acd940', 'hex');
+
+describe('validateMagicBytes converted image formats', () => {
+  it.each([
+    ['image/heic', HEIC_BYTES],
+    ['image/heic', MIF1_BYTES],
+    ['image/heif', HEIC_BYTES],
+    ['image/heif', MIF1_BYTES],
+    ['image/heic-sequence', HEIC_BYTES],
+    ['image/heif-sequence', MIF1_BYTES],
+    ['image/avif', AVIF_BYTES],
+    ['image/avif', MIF1_BYTES],
+    ['image/tiff', TIFF_LE_BYTES],
+    ['image/tiff', TIFF_BE_BYTES],
+    ['image/bmp', BMP_BYTES],
+    ['image/x-ms-bmp', BMP_BYTES],
+  ])('accepts a detected %s', async (mimeType, buffer) => {
+    await expect(validateMagicBytes(buffer, mimeType)).resolves.toEqual({
+      valid: true,
+      reason: 'magic_bytes_match',
+    });
+  });
+
+  it.each([
+    ['image/heic', AVIF_BYTES],
+    ['image/heic', TIFF_LE_BYTES],
+    ['image/avif', HEIC_BYTES],
+    ['image/tiff', BMP_BYTES],
+    ['image/bmp', TIFF_LE_BYTES],
+    ['image/heic', MP4_BYTES],
+    ['image/heic', Buffer.from('%PDF-1.7 not an image')],
+    ['image/bmp', Buffer.from('<?xml version="1.0"?>')],
+  ])('rejects %s declared over the wrong bytes', async (mimeType, buffer) => {
+    await expect(validateMagicBytes(buffer, mimeType)).resolves.toEqual({
+      valid: false,
+      reason: `mime_magic_mismatch: declared ${mimeType}`,
+    });
+  });
+});
+
+describe('validateMagicBytes added video formats', () => {
+  it.each([
+    ['video/x-matroska', MATROSKA_BYTES],
+    ['video/3gpp', THREE_GP_BYTES],
+    ['video/3gpp2', THREE_GP_BYTES],
+    ['video/x-m4v', M4V_BYTES],
+    ['video/hevc', HEVC_BYTES],
+    ['video/h265', HEVC_BYTES],
+    ['video/hevc', HEVC_SHORT_START_BYTES],
+  ])('accepts a detected %s', async (mimeType, buffer) => {
+    await expect(validateMagicBytes(buffer, mimeType)).resolves.toEqual({
+      valid: true,
+      reason: 'magic_bytes_match',
+    });
+  });
+
+  it.each([
+    ['video/x-matroska', WEBM_BYTES],
+    ['video/webm', MATROSKA_BYTES],
+    ['video/hevc', H264_BYTES],
+    ['video/hevc', MP4_BYTES],
+    ['video/x-matroska', MP4_BYTES],
+    ['video/x-m4v', WEBM_BYTES],
+  ])('rejects %s declared over the wrong bytes', async (mimeType, buffer) => {
+    await expect(validateMagicBytes(buffer, mimeType)).resolves.toEqual({
+      valid: false,
+      reason: `mime_magic_mismatch: declared ${mimeType}`,
+    });
+  });
+});

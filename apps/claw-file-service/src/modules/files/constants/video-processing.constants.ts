@@ -26,7 +26,7 @@ export const MEDIA_PROTOCOL_WHITELIST = 'file,pipe';
  * bookworm's ffmpeg 5.1: `[hls] Format not on whitelist`.
  */
 export const MEDIA_FORMAT_WHITELIST =
-  'mov,mp4,m4a,3gp,3g2,mj2,matroska,webm,avi,mpeg,mpegts,mpegvideo';
+  'mov,mp4,m4a,3gp,3g2,mj2,matroska,webm,avi,mpeg,mpegts,mpegvideo,hevc';
 
 /**
  * The duration probe of a plain audio upload: the video demuxers plus the audio

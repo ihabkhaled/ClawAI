@@ -435,6 +435,35 @@ export const en: TranslationDictionary = {
       trigger: 'Try again with…',
       auto: 'Let AUTO choose',
     },
+    composerContext: {
+      pickLabel: 'Choose context packs',
+      pickEmpty: 'You have no context packs yet.',
+      pickCount: '{value} selected',
+      pickManage: 'Manage context packs',
+      pickLimit: 'Up to {value} packs per chat.',
+      viewLabel: 'View attached context packs',
+      viewTitle: 'Context packs in this chat',
+      viewDescription: 'The pack content the next message will carry.',
+      viewNone: 'No context pack content will be sent with the next message.',
+      viewDisabled: 'Context is switched off for this chat, so no pack is sent.',
+      viewItems: '{value} items',
+      memoryLabel: 'View memory used in this chat',
+      memoryTitle: 'Memory for this chat',
+      memoryDescription:
+        'What the assistant remembers about you and would use for the next message.',
+      memoryOn: 'Memory is on for this chat.',
+      memoryOff: 'Memory is off for this chat: nothing is read or learned.',
+      memoryNone: 'No memories apply to this message yet.',
+      memoryManage: 'Manage memory',
+    },
+    saveMessage: {
+      menuLabel: 'Save this answer',
+      pack: 'Save as context pack',
+      memory: 'Save to memory',
+      savedPack: 'Saved as context pack "{name}".',
+      savedMemory: 'Saved to memory.',
+      open: 'Open',
+    },
     contextSave: {
       title: 'Saved from this chat',
       savedMemory: 'Saved to memory',
@@ -861,6 +890,11 @@ export const en: TranslationDictionary = {
     videoTakesMinutes: 'Video can take a few minutes. You can keep chatting while it renders.',
     videoLoadFailed: 'Could not load the video',
     videoLoadFailedHint: 'Reload the page to try again.',
+    videoStatusUnknown: 'Video status unavailable',
+    videoStatusUnknownHint:
+      'We stopped checking on this video. Reload the page to see whether it finished, or send the request again.',
+    videoFailureCreditsDepleted:
+      'The video provider account has no prepaid credit left, so it refused the request. An administrator needs to top up that account.',
     videoFailureSourceImageInvalid:
       'The picture could not be used: use a JPEG, PNG or WebP under 10 MB that is yours.',
     imageStage: {

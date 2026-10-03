@@ -27,6 +27,15 @@ export function parseFrameRate(value: string | undefined): number | null {
   return usable ? Math.round((numerator / denominator) * 1000) / 1000 : null;
 }
 
+/**
+ * A raw elementary stream has no container duration, so it is packets / fps.
+ * Used ONLY when the container states none; a timed container is never second-guessed.
+ */
+export function durationFromPackets(packets: string | undefined, fps: number | null): number {
+  const count = packets === undefined ? Number.NaN : Number.parseInt(packets, 10);
+  return fps !== null && Number.isFinite(count) && count > 0 ? Math.round((count / fps) * 1000) : 0;
+}
+
 function firstStream(streams: FfprobeStream[], codecType: string): FfprobeStream | undefined {
   return streams.find((stream) => stream.codec_type === codecType);
 }
@@ -51,12 +60,15 @@ export function parseProbeOutput(stdout: string): VideoProbeSummary | null {
   const video = firstStream(streams, 'video');
   const audio = firstStream(streams, 'audio');
   const formatDuration = secondsStringToMs(format?.duration);
+  const fps = parseFrameRate(video?.avg_frame_rate) ?? parseFrameRate(video?.r_frame_rate);
+  const declaredDuration = formatDuration > 0 ? formatDuration : secondsStringToMs(video?.duration);
   return {
     hasVideo: video !== undefined,
-    durationMs: formatDuration > 0 ? formatDuration : secondsStringToMs(video?.duration),
+    durationMs:
+      declaredDuration > 0 ? declaredDuration : durationFromPackets(video?.nb_read_packets, fps),
     width: video?.width ?? 0,
     height: video?.height ?? 0,
-    fps: parseFrameRate(video?.avg_frame_rate) ?? parseFrameRate(video?.r_frame_rate),
+    fps,
     videoCodec: video?.codec_name ?? null,
     audioCodec: audio?.codec_name ?? null,
     hasAudio: audio !== undefined,

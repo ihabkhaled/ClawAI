@@ -30,6 +30,23 @@ export const VIDEO_FRAME_EDGE_OFFSET_MS = 500;
  */
 export const NATIVE_VIDEO_MAX_DURATION_MS = 60 * 60_000;
 
+/**
+ * The video MIME types Gemini accepts as inline or Files API bytes. file-service
+ * also stores Matroska, 3GPP2, iTunes M4V and raw HEVC; ffmpeg reads them for the
+ * transcript and frames, but Gemini would answer 400 to their bytes, so those
+ * lanes get frames + transcript instead (never a failed request).
+ */
+export const NATIVE_VIDEO_MIME_TYPES: ReadonlySet<string> = new Set([
+  'video/mp4',
+  'video/mpeg',
+  'video/mov',
+  'video/quicktime',
+  'video/avi',
+  'video/x-msvideo',
+  'video/webm',
+  'video/3gpp',
+]);
+
 /** file-service's frames endpoint (multimodal batch 7). `{FILE_ID}` is replaced. */
 export const VIDEO_FRAMES_PATH = '/api/v1/internal/files/{FILE_ID}/video-frames';
 

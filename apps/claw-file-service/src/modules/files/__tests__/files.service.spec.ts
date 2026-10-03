@@ -1,3 +1,5 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { type Mock, vi } from 'vitest';
 import { FilesService } from '../services/files.service';
 import { type FilesRepository } from '../repositories/files.repository';
@@ -25,6 +27,8 @@ vi.mock('../../../app/config/app.config', () => ({
     })),
   },
 }));
+
+const FIXTURE_DIR = path.join(__dirname, '../../../common/utilities/__tests__/__fixtures__');
 
 const mockFile = {
   id: 'file-1',
@@ -165,19 +169,89 @@ describe('FilesService', () => {
       );
     });
 
-    it.each(['video/x-matroska', 'video/ogg'])(
-      'rejects the Gemini-unsupported video MIME type %s',
+    it.each([
+      'video/x-matroska',
+      'video/3gpp',
+      'video/3gpp2',
+      'video/x-m4v',
+      'video/hevc',
+      'video/h265',
+    ])(
+      'accepts the video MIME type %s (ffmpeg reads it; chat-service sends it as frames + transcript)',
       async (mimeType) => {
+        filesRepo.create.mockResolvedValue({ ...mockFile, mimeType, content: 'AAAA' });
+
+        await service.uploadFile('user-1', {
+          filename: 'clip.bin',
+          mimeType,
+          sizeBytes: 3,
+          content: 'AAAA',
+        });
+
+        expect(filesRepo.create).toHaveBeenCalledWith(expect.objectContaining({ mimeType }));
+      },
+    );
+
+    it.each(['image/heic', 'image/heif', 'image/avif', 'image/tiff', 'image/bmp'])(
+      'accepts the image MIME type %s at the validation gate',
+      async (mimeType) => {
+        // Bytes that are not that image: the gate passes, the converter then refuses them
+        // with its own readable 422 (covered below), never a vague MIME rejection.
         await expect(
           service.uploadFile('user-1', {
-            filename: 'clip.bin',
+            filename: 'photo.bin',
             mimeType,
             sizeBytes: 3,
             content: 'AAAA',
           }),
-        ).rejects.toThrow(BusinessException);
+        ).rejects.toMatchObject({ code: 'IMAGE_DECODE_FAILED' });
       },
     );
+
+    it('stores an iPhone HEIC as the JPEG every model can read', async () => {
+      const heic = fs.readFileSync(path.join(FIXTURE_DIR, 'sample.heic'));
+      filesRepo.create.mockImplementation((data: Record<string, unknown>) =>
+        Promise.resolve({ ...mockFile, ...data, id: 'file-heic' }),
+      );
+
+      const result = await service.uploadFile('user-1', {
+        filename: 'IMG_0001.HEIC',
+        mimeType: 'image/heic',
+        sizeBytes: heic.length,
+        content: heic.toString('base64'),
+      });
+
+      expect(result.mimeType).toBe('image/jpeg');
+      expect(result.filename).toBe('IMG_0001.jpg');
+      const created = filesRepo.create.mock.calls[0]?.[0] as { content: string; sizeBytes: number };
+      expect(Buffer.from(created.content, 'base64').subarray(0, 3)).toEqual(
+        Buffer.from([0xff, 0xd8, 0xff]),
+      );
+      expect(created.sizeBytes).toBe(Buffer.from(created.content, 'base64').length);
+    });
+
+    it('answers a corrupt HEIC with a readable 422, not a stored unreadable row', async () => {
+      await expect(
+        service.uploadFile('user-1', {
+          filename: 'broken.heic',
+          mimeType: 'image/heic',
+          sizeBytes: 11,
+          content: Buffer.from('not a heic!').toString('base64'),
+        }),
+      ).rejects.toMatchObject({ code: 'IMAGE_DECODE_FAILED' });
+      expect(filesRepo.create).not.toHaveBeenCalled();
+    });
+
+    it.each(['video/ogg'])('rejects the unsupported video MIME type %s', async (mimeType) => {
+      await expect(
+        service.uploadFile('user-1', {
+          filename: 'clip.bin',
+          mimeType,
+          sizeBytes: 3,
+          content: 'AAAA',
+        }),
+      ).rejects.toThrow(BusinessException);
+    });
 
     it('should upload a file and publish event', async () => {
       filesRepo.create.mockResolvedValue(mockFile);

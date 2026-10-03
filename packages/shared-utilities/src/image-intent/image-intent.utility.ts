@@ -1,11 +1,13 @@
 import {
   IMAGE_EDIT_PATTERNS,
+  IMAGE_INTENT_COMBO_WINDOW,
   IMAGE_INTENT_DOCUMENT_FORMAT,
   IMAGE_INTENT_POLITE_PREFIX,
   IMAGE_INTENT_POLITE_PREFIX_PASSES,
   IMAGE_MIME_TYPE_PREFIX,
   IMAGE_QUESTION_MARKS,
   IMAGE_QUESTION_START,
+  NO_IMAGE_SIGNALS,
 } from './image-intent.constants';
 import {
   IMAGE_GENERATION_ART_STYLES,
@@ -17,6 +19,13 @@ import {
   IMAGE_GENERATION_WORDS,
 } from './image-generation-keywords.constants';
 import { generationRequestText } from '../generation-request/generation-request.utility';
+import {
+  containsAnyImageTerm,
+  hasTermPairWithin,
+  isExplicitImageRequest,
+  isSupplementOrWritingText,
+  normaliseImageText,
+} from './image-term-match.utility';
 import { type ImageGenerationSignals } from './image-intent.types';
 import { MultimodalImageIntent } from './multimodal-image-intent.enum';
 
@@ -29,13 +38,25 @@ export function detectImageGenerationSignals(message: string): ImageGenerationSi
   // Only the part that can be a request: no negated clauses ("do not
   // generate an image"), no pasted-document body, nothing for a "save this
   // as memory" command. A pasted context pack generated an image before.
-  const lower = generationRequestText(message).toLowerCase();
-  const has = (words: readonly string[]): boolean => words.some((w) => lower.includes(w));
-  const hasVerb = has(IMAGE_GENERATION_VERBS);
-  const hasWord = has(IMAGE_GENERATION_WORDS);
+  const lower = normaliseImageText(generationRequestText(message));
+  if (isSupplementOrWritingText(lower)) {
+    // "Say also talk to models with audio/video, create files … 1-2 words each"
+    // is material for a post, not a drawing request; so is "write a post about
+    // our logo". Only an unmistakable request counts here.
+    const explicit = isExplicitImageRequest(lower);
+    return { ...NO_IMAGE_SIGNALS, matched: explicit, verbPlusImageWord: explicit };
+  }
+  const has = (words: readonly string[]): boolean => containsAnyImageTerm(lower, words);
   const exactKeyword = has(IMAGE_GENERATION_KEYWORDS);
-  const verbPlusImageWord = hasVerb && hasWord;
-  const strongImageNoun = has(IMAGE_GENERATION_STRONG_NOUNS) && (hasWord || hasVerb);
+  const verbPlusImageWord = hasTermPairWithin(
+    lower,
+    IMAGE_GENERATION_VERBS,
+    IMAGE_GENERATION_WORDS,
+    IMAGE_INTENT_COMBO_WINDOW,
+  );
+  const strongImageNoun =
+    has(IMAGE_GENERATION_STRONG_NOUNS) &&
+    (has(IMAGE_GENERATION_WORDS) || has(IMAGE_GENERATION_VERBS));
   const artStyle = has(IMAGE_GENERATION_ART_STYLES);
   const reference = has(IMAGE_GENERATION_REFERENCE_VERBS) && has(IMAGE_GENERATION_REFERENCE_NOUNS);
   return {

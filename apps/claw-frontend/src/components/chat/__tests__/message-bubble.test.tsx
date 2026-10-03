@@ -32,6 +32,7 @@ vi.mock('@/components/chat/message-edit-action', () => ({
   MessageEditAction: () => <div>edit-action</div>,
 }));
 
+vi.mock('@/components/chat/message-save-action', () => ({ MessageSaveAction: () => null }));
 vi.mock('@/components/chat/message-branch-action', () => ({
   MessageBranchAction: () => <div>branch-action</div>,
 }));

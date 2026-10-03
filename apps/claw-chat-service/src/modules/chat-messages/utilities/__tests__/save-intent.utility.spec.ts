@@ -7,7 +7,10 @@ import {
   parseSaveIntentVerdict,
 } from '../save-intent.utility';
 import { withContextSaveNote, withSaveTurnNote } from '../context-save-note.utility';
-import { CONTEXT_SAVE_TURN_MARKER } from '../../constants/save-intent.constants';
+import {
+  CONTEXT_SAVE_TURN_MARKER,
+  SAVE_INTENT_SYSTEM_PROMPT,
+} from '../../constants/save-intent.constants';
 import { type AssembledContext } from '../../types/context.types';
 
 describe('mightBeSaveRequest — the recall net, not the decision', () => {
@@ -124,5 +127,12 @@ NOTE`);
     expect(withContextSaveNote(base, 'NOTE').systemPrompt).toBe('Be concise.\n\nNOTE');
     expect(withContextSaveNote({ ...base, systemPrompt: null }, 'NOTE').systemPrompt).toBe('NOTE');
     expect(withContextSaveNote(base, 'NOTE').saveTurnNote).toBe('NOTE');
+  });
+});
+
+describe('the planner prompt on material-less save requests', () => {
+  it('tells the planner not to save the command itself as the material', () => {
+    expect(SAVE_INTENT_SYSTEM_PROMPT).toContain('answer save=false');
+    expect(SAVE_INTENT_SYSTEM_PROMPT).toContain('Never save the command itself');
   });
 });

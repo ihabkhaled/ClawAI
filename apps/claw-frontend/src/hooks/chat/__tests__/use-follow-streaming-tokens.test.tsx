@@ -51,11 +51,13 @@ describe('useFollowStreamingTokens', () => {
     rerender({ isAtBottom: true, lastMessageId: 'm1', lastContentLength: 25, lastIndex: 0 });
     // First call on mount when isAtBottom, then again on growth.
     expect(scrollToIndex).toHaveBeenLastCalledWith({
-      index: 0,
+      index: 'LAST',
       behavior: 'auto',
       align: 'end',
     });
-    expect((scrollToIndex as unknown as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThanOrEqual(2);
+    expect(
+      (scrollToIndex as unknown as ReturnType<typeof vi.fn>).mock.calls.length,
+    ).toBeGreaterThanOrEqual(2);
   });
 
   it('does NOT scroll when the user has scrolled up (isAtBottom === false)', () => {
@@ -90,7 +92,66 @@ describe('useFollowStreamingTokens', () => {
     });
     (scrollToIndex as unknown as ReturnType<typeof vi.fn>).mockClear();
     rerender({ isAtBottom: true, lastMessageId: 'm2', lastContentLength: 5, lastIndex: 1 });
-    expect(scrollToIndex).toHaveBeenCalledWith({ index: 1, behavior: 'auto', align: 'end' });
+    expect(scrollToIndex).toHaveBeenCalledWith({ index: 'LAST', behavior: 'auto', align: 'end' });
+  });
+
+  it('follows while pinned even when isAtBottom flipped false (tall block of new content)', () => {
+    const pinnedRef = { current: true };
+    const { rerender, scrollToIndex } = harness({
+      isAtBottom: false,
+      lastMessageId: 'm1',
+      lastContentLength: 10,
+      lastIndex: 0,
+      pinnedRef,
+    });
+    (scrollToIndex as unknown as ReturnType<typeof vi.fn>).mockClear();
+    rerender({
+      isAtBottom: false,
+      lastMessageId: 'm1',
+      lastContentLength: 900,
+      lastIndex: 0,
+      pinnedRef,
+    });
+    expect(scrollToIndex).toHaveBeenCalledWith({ index: 'LAST', behavior: 'auto', align: 'end' });
+  });
+
+  it('stops following once the reader unpinned, even if isAtBottom is still true', () => {
+    const pinnedRef = { current: false };
+    const { rerender, scrollToIndex } = harness({
+      isAtBottom: true,
+      lastMessageId: 'm1',
+      lastContentLength: 10,
+      lastIndex: 0,
+      pinnedRef,
+    });
+    (scrollToIndex as unknown as ReturnType<typeof vi.fn>).mockClear();
+    rerender({
+      isAtBottom: true,
+      lastMessageId: 'm1',
+      lastContentLength: 50,
+      lastIndex: 0,
+      pinnedRef,
+    });
+    expect(scrollToIndex).not.toHaveBeenCalled();
+  });
+
+  it('follows a progress update (footer growth) with no new message tokens', () => {
+    const { rerender, scrollToIndex } = harness({
+      isAtBottom: true,
+      lastMessageId: 'm1',
+      lastContentLength: 10,
+      lastIndex: 0,
+      progressSignal: 1,
+    });
+    (scrollToIndex as unknown as ReturnType<typeof vi.fn>).mockClear();
+    rerender({
+      isAtBottom: true,
+      lastMessageId: 'm1',
+      lastContentLength: 10,
+      lastIndex: 0,
+      progressSignal: 2,
+    });
+    expect(scrollToIndex).toHaveBeenCalledTimes(1);
   });
 
   it('does nothing when there are no rows (lastIndex < 0)', () => {

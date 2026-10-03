@@ -24,6 +24,7 @@ import { type StoreGeneratedVideoDto } from '../dto/store-generated-video.dto';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { deleteFile, readFile, saveFile } from '../../../common/utilities';
 import { resolveUploadMimeType } from '../../../common/utilities/archive-format.utility';
+import { normalizeImageUpload } from '../../../common/utilities/image-normalization.utility';
 import {
   MAX_PUBLISHED_COPY_BYTES,
   PUBLISHABLE_COPY_MIME_PREFIX,
@@ -97,17 +98,23 @@ export class FilesService {
     this.validateMimeType(body.mimeType);
     const buffer = Buffer.from(body.contentBase64, 'base64');
     this.validateFileSize(buffer.length);
-    const mimeType = await resolveUploadMimeType(body.mimeType, buffer);
-    await this.runSecurityChecks(body.filename, mimeType, buffer);
-    const safeName = this.fileSecurityManager.getSanitizedFilename(body.filename);
-    const storagePath = saveFile(`${String(Date.now())}-${safeName}`, buffer);
+    const declaredMimeType = await resolveUploadMimeType(body.mimeType, buffer);
+    await this.runSecurityChecks(body.filename, declaredMimeType, buffer);
+    // HEIC / AVIF / TIFF / BMP are stored as the JPEG every model can read.
+    const stored = await normalizeImageUpload({
+      filename: body.filename,
+      mimeType: declaredMimeType,
+      buffer,
+    });
+    const safeName = this.fileSecurityManager.getSanitizedFilename(stored.filename);
+    const storagePath = saveFile(`${String(Date.now())}-${safeName}`, stored.buffer);
     const file = await this.filesRepository.create({
       userId: body.userId,
       filename: safeName,
-      mimeType,
-      sizeBytes: buffer.length,
+      mimeType: stored.mimeType,
+      sizeBytes: stored.buffer.length,
       storagePath,
-      content: body.contentBase64,
+      content: stored.converted ? stored.buffer.toString('base64') : body.contentBase64,
       retentionExpiresAt: this.computeRetentionExpiry(),
     });
     this.publishUploadCompleted(file);
@@ -200,19 +207,27 @@ export class FilesService {
     // An archive labelled octet-stream is stored, checked and expanded as the
     // archive it is; a declared archive MIME the bytes contradict is rejected
     // by the magic-byte check below.
-    const mimeType = await resolveUploadMimeType(declaredMimeType, contentBuffer);
-    await this.runSecurityChecks(filename, mimeType, contentBuffer);
+    const resolvedMimeType = await resolveUploadMimeType(declaredMimeType, contentBuffer);
+    await this.runSecurityChecks(filename, resolvedMimeType, contentBuffer);
 
-    const safeName = this.fileSecurityManager.getSanitizedFilename(filename);
-    const storagePath = saveFile(`${String(Date.now())}-${safeName}`, contentBuffer);
+    // The bytes were scanned as sent; a HEIC / AVIF / TIFF / BMP is then stored
+    // as the JPEG every vision provider and browser can read (rule 42 item 8).
+    const stored = await normalizeImageUpload({
+      filename,
+      mimeType: resolvedMimeType,
+      buffer: contentBuffer,
+    });
+    const mimeType = stored.mimeType;
+    const safeName = this.fileSecurityManager.getSanitizedFilename(stored.filename);
+    const storagePath = saveFile(`${String(Date.now())}-${safeName}`, stored.buffer);
 
     const file = await this.filesRepository.create({
       userId,
       filename: safeName,
       mimeType,
-      sizeBytes: contentBuffer.length,
+      sizeBytes: stored.buffer.length,
       storagePath,
-      content: contentBuffer.length > 0 ? contentBuffer.toString('base64') : null,
+      content: stored.buffer.length > 0 ? stored.buffer.toString('base64') : null,
       retentionExpiresAt: this.computeRetentionExpiry(),
     });
 

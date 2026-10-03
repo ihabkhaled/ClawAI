@@ -6,6 +6,7 @@ import { VirtualizedMessagesHeader } from '@/components/chat/virtualized-message
 import { VIRTUALIZED_MESSAGES_VIEWPORT_BUFFER } from '@/constants';
 import { MessageRole } from '@/enums';
 import { useFollowStreamingTokens } from '@/hooks/chat/use-follow-streaming-tokens';
+import { useScrollUpIntent } from '@/hooks/chat/use-scroll-up-intent';
 import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
 import type {
   MessageRenderItem,
@@ -55,12 +56,22 @@ export function useVirtualizedMessagesController(
     [renderItems],
   );
 
+  const { pinnedRef, scrollerRef, pin } = useScrollUpIntent();
+  // Any growth of the footer (a new stage, a narration line, a new label) is
+  // an update the reader should be carried down to, same as a token.
+  const progressSignal =
+    params.progressStages.length +
+    (params.narration?.length ?? 0) +
+    (params.currentStageLabel?.length ?? 0);
+
   useFollowStreamingTokens({
     virtuosoRef,
     isAtBottom,
     lastMessageId,
     lastContentLength,
     lastIndex,
+    pinnedRef,
+    progressSignal,
   });
 
   // Sending re-pins the viewport to the bottom.
@@ -81,9 +92,20 @@ export function useVirtualizedMessagesController(
     if (!startedWaiting || lastIndex < 0) {
       return;
     }
+    pin();
     setIsAtBottom(true);
-    virtuosoRef.current?.scrollToIndex({ index: lastIndex, behavior: 'auto', align: 'end' });
-  }, [params.isWaitingForResponse, lastIndex]);
+    virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto', align: 'end' });
+  }, [params.isWaitingForResponse, lastIndex, pin]);
+
+  const handleAtBottomStateChange = useCallback(
+    (atBottom: boolean): void => {
+      setIsAtBottom(atBottom);
+      if (atBottom) {
+        pin();
+      }
+    },
+    [pin],
+  );
 
   // Reset the unread-water-mark whenever the user is back at the bottom so a
   // future scroll-away starts the count fresh.
@@ -114,12 +136,13 @@ export function useVirtualizedMessagesController(
     if (lastIndex < 0) {
       return;
     }
+    pin();
     virtuosoRef.current?.scrollToIndex({
-      index: lastIndex,
+      index: 'LAST',
       behavior: 'smooth',
       align: 'end',
     });
-  }, [lastIndex]);
+  }, [lastIndex, pin]);
 
   /**
    * Scrolls to a message by id, reporting whether it could.
@@ -216,7 +239,8 @@ export function useVirtualizedMessagesController(
     headerContent,
     footerContent,
     handleFollowOutput,
-    onAtBottomStateChange: setIsAtBottom,
+    onAtBottomStateChange: handleAtBottomStateChange,
+    scrollerRef,
     handleStartReached,
     initialTopMostItemIndex: Math.max(0, renderItems.length - 1),
     increaseViewportBy: VIRTUALIZED_MESSAGES_VIEWPORT_BUFFER,

@@ -754,6 +754,11 @@ export type UseRichPromptTextareaParams = {
   recallHistory?: readonly string[];
 };
 
+export type InsertedNewline = {
+  value: string;
+  caret: number;
+};
+
 export type UseRichPromptTextareaReturn = {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   handleChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -1200,6 +1205,7 @@ export type UseVirtualizedMessagesControllerReturn = {
   footerContent: () => React.ReactElement | null;
   handleFollowOutput: FollowOutputCallback;
   onAtBottomStateChange: (atBottom: boolean) => void;
+  scrollerRef: (element: HTMLElement | Window | null) => void;
   handleStartReached: () => void;
   initialTopMostItemIndex: number;
   increaseViewportBy: { top: number; bottom: number };
@@ -1227,6 +1233,20 @@ export type UseFollowStreamingTokensParams = {
   lastMessageId: string | null;
   lastContentLength: number;
   lastIndex: number;
+  /**
+   * Set by the controller: true until the reader scrolls UP. When provided it
+   * replaces `isAtBottom` as the follow gate, because a tall block of new
+   * content flips `isAtBottom` to false with no user action.
+   */
+  pinnedRef?: React.RefObject<boolean>;
+  /** Changes whenever the footer (progress stages, narration) grows. */
+  progressSignal?: number;
+};
+
+export type UseScrollUpIntentReturn = {
+  pinnedRef: React.RefObject<boolean>;
+  scrollerRef: (element: HTMLElement | Window | null) => void;
+  pin: () => void;
 };
 
 // ─── UI primitive hook returns (Phase 1 design-system foundation) ───────────
@@ -1326,6 +1346,8 @@ export type UseVideoGenerationBubbleStateReturn = {
   /** A cancel request is in flight (the button is disabled meanwhile). */
   isCancelling: boolean;
   handleCancel: () => void;
+  /** Polling gave up before the job reached an end state: the card says so, never spins forever. */
+  isStatusUnknown: boolean;
 };
 
 export type UseAuthenticatedVideoReturn = {

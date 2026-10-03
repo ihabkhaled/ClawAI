@@ -27,6 +27,7 @@ import { MessageEditAction } from '@/components/chat/message-edit-action';
 import { MessageProvenance } from '@/components/chat/message-provenance';
 import { MessageQuotes } from '@/components/chat/message-quotes';
 import { MessageReasoningPanel } from '@/components/chat/message-reasoning-panel';
+import { MessageSaveAction } from '@/components/chat/message-save-action';
 import { MessageSpeechAction } from '@/components/chat/message-speech-action';
 import { MessageSpeechPlayer } from '@/components/chat/message-speech-player';
 import { NarrationLog } from '@/components/chat/narration-log';
@@ -436,6 +437,7 @@ function MessageBubbleBase({
                 <AnswerExpandDialog content={message.content} t={t} />
                 <AnswerExportMenu content={message.content} t={t} />
                 <MessageSpeechAction messageId={message.id} />
+                <MessageSaveAction messageId={message.id} threadId={message.threadId} />
               </>
             ) : null}
             {onRegenerate ? (

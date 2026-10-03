@@ -90,7 +90,7 @@
     },
     "claw-routing-service": {
       "runner": "vitest",
-      "testFiles": 114
+      "testFiles": 116
     },
     "claw-server-logs-service": {
       "runner": "vitest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 2002
+  "total": 2004
 }

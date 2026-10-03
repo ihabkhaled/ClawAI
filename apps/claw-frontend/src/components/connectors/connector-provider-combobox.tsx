@@ -34,7 +34,12 @@ export function ConnectorProviderCombobox({
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    // `modal` is what makes the list scrollable inside the Add Connector
+    // dialog/sheet. That surface locks body scroll and swallows wheel + touch
+    // on anything portaled outside its own content, which is exactly where
+    // this popover renders. A modal popover registers its own scroll lock
+    // layer, so the list inside it can scroll again.
+    <Popover modal open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           id="connector-provider"
@@ -50,10 +55,13 @@ export function ConnectorProviderCombobox({
           <ChevronsUpDown className="text-muted-foreground h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className={cn('w-[min(420px,calc(100vw-2rem))] p-0')} align="start">
+      <PopoverContent
+        className={cn('w-[min(420px,calc(100vw-2rem))] overflow-hidden p-0')}
+        align="start"
+      >
         <Command className="flex max-h-[min(24rem,60dvh)] flex-col">
           <CommandInput placeholder={t('connectors.searchProviderPlaceholder')} />
-          <CommandList className="max-h-none min-h-0 flex-1">
+          <CommandList className="max-h-none min-h-0 flex-1 touch-pan-y overscroll-contain">
             <CommandEmpty>{t('connectors.noProviderResults')}</CommandEmpty>
             {groups.map((group) =>
               group.options.length > 0 ? (

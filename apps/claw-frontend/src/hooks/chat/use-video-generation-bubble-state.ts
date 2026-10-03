@@ -23,7 +23,10 @@ export const useVideoGenerationBubbleState = ({
   const [isCancelling, setCancelling] = useState(false);
   // A ref, not the state: two presses in one render must still send ONE cancel.
   const cancelInFlight = useRef(false);
-  const generation = useVideoGenerationListener(activeGenId, restartToken);
+  const [pollStopped, setPollStopped] = useState(false);
+  const generation = useVideoGenerationListener(activeGenId, restartToken, () => {
+    setPollStopped(true);
+  });
   const displayedId = generation?.id ?? activeGenId;
 
   const handleRetry = (): void => {
@@ -39,6 +42,7 @@ export const useVideoGenerationBubbleState = ({
         if (result.generationId !== displayedId) {
           setActiveGenId(result.generationId);
         }
+        setPollStopped(false);
         setRestartToken((token) => token + 1);
       })
       .catch(() => {
@@ -89,5 +93,7 @@ export const useVideoGenerationBubbleState = ({
     canCancel: generation !== null && isInProgressVideoStatus(generation.status),
     isCancelling,
     handleCancel,
+    isStatusUnknown:
+      pollStopped && (generation === null || isInProgressVideoStatus(generation.status)),
   };
 };

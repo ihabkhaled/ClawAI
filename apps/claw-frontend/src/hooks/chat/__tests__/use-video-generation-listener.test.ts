@@ -73,6 +73,32 @@ describe('useVideoGenerationListener', () => {
     expect(mockGetById).toHaveBeenCalledTimes(VIDEO_GENERATION_MAX_POLLS);
   });
 
+  it('reports it stopped when the poll budget ran out on a job that never ended', async () => {
+    mockGetById.mockResolvedValue(row('vid-1', 'GENERATING'));
+    const onStopped = vi.fn();
+
+    renderHook(() => useVideoGenerationListener('vid-1', 0, onStopped));
+    await tick(VIDEO_GENERATION_POLL_INTERVAL_MS * (VIDEO_GENERATION_MAX_POLLS + 5));
+
+    expect(onStopped).toHaveBeenCalled();
+  });
+
+  it('reports it stopped after five failed reads, and not while the job is finishing', async () => {
+    const onStopped = vi.fn();
+    mockGetById.mockRejectedValue(new Error('network'));
+
+    renderHook(() => useVideoGenerationListener('vid-1', 0, onStopped));
+    await tick(VIDEO_GENERATION_POLL_INTERVAL_MS * 20);
+    expect(onStopped).toHaveBeenCalledTimes(1);
+
+    const finished = vi.fn();
+    mockGetById.mockReset();
+    mockGetById.mockResolvedValue(row('vid-2', 'COMPLETED'));
+    renderHook(() => useVideoGenerationListener('vid-2', 0, finished));
+    await tick(VIDEO_GENERATION_POLL_INTERVAL_MS * 3);
+    expect(finished).not.toHaveBeenCalled();
+  });
+
   it('follows latest to the fallback row and keeps polling that row', async () => {
     mockGetById
       .mockResolvedValueOnce(

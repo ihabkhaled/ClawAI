@@ -287,6 +287,26 @@ describe('resolveAttachmentDelivery', () => {
       );
     });
 
+    it.each(['video/x-matroska', 'video/hevc', 'video/h265', 'video/x-m4v', 'video/3gpp2'])(
+      'sends a processed %s as frames + transcript, never as bytes Gemini would refuse',
+      (mimeType) => {
+        const unusual = { ...processed, mimeType };
+        expect(one(unusual, caps(SUPPORTED, SUPPORTED), 'GEMINI', true, PAID)).toMatchObject({
+          mode: FileDeliveryMode.VIDEO_FRAMES_AND_TRANSCRIPT,
+          sendNative: false,
+        });
+      },
+    );
+
+    it.each(['video/mp4', 'video/quicktime', 'video/webm', 'video/3gpp'])(
+      'still sends a processed %s natively',
+      (mimeType) => {
+        expect(
+          one({ ...processed, mimeType }, caps(SUPPORTED, SUPPORTED), 'GEMINI', true, PAID).mode,
+        ).toBe(FileDeliveryMode.NATIVE_VIDEO);
+      },
+    );
+
     it('keeps a native lane native when the video is processed and inside the limits', () => {
       expect(one(processed, caps(SUPPORTED, SUPPORTED), 'GEMINI', true, PAID)).toMatchObject({
         mode: FileDeliveryMode.NATIVE_VIDEO,

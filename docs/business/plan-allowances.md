@@ -285,10 +285,11 @@ Until then these are estimates that were reviewed, not measurements.
 
 ## Free requests on credit connectors (ADR-142, 2026-10-01)
 
-A user with no credit may still try each cloud provider: **Free gets 2 requests per credit
-connector per UTC month; every paid plan gets 0** (they pay with credit). The platform absorbs the
+A user with no credit may still try the cloud providers: **Free gets 2 requests per UTC month, one
+total across all credit connectors (amended 2026-10-02, ADR-142); every paid plan gets 0** (they pay
+with credit). The window is monthly, never daily. The platform absorbs the
 provider cost, bounded per request by `min($0.15, monthlyProviderCostCeiling / allowance)`, so
-Free's worst case on one provider is $0.30 a month. `null` = unlimited, `0` = none. Only token-priced
+Free's worst case across all providers is $0.30 a month. `null` = unlimited, `0` = none. Only token-priced
 surfaces qualify; image, video, transcription and speech never do. Edit it per plan in the admin plan
 form (`creditConnectorFreeRequestsPerMonth`); raise the plan's provider-cost ceiling with it, because
 each request's budget shrinks as the count grows.

@@ -10,8 +10,7 @@ import type { RichPromptTextareaProps } from '@/types';
  * in-thread compare panel. Wraps shadcn <Textarea> with:
  *
  *   - Auto-resize from minRows to maxRows (then internal scroll)
- *   - Enter → onSubmit (when value non-empty after trim AND !disabled)
- *   - Shift+Enter → default newline behaviour
+ *   - Desktop: Enter → onSubmit; Shift+Enter / Ctrl+Enter → newline. Touch: Enter → newline
  *   - ArrowUp/ArrowDown walk `recallHistory` (opt-in per consumer)
  *   - IME-safe composition: never submit while a CJK/IME composition is in
  *     flight (tracked via compositionStart/End + nativeEvent.isComposing)

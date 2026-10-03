@@ -435,6 +435,34 @@ export const pt: TranslationDictionary = {
       trigger: 'Tentar novamente com…',
       auto: 'Deixar o AUTO escolher',
     },
+    composerContext: {
+      pickLabel: 'Escolher pacotes de contexto',
+      pickEmpty: 'Você ainda não tem pacotes de contexto.',
+      pickCount: '{value} selecionados',
+      pickManage: 'Gerenciar pacotes de contexto',
+      pickLimit: 'Até {value} pacotes por conversa.',
+      viewLabel: 'Ver pacotes de contexto anexados',
+      viewTitle: 'Pacotes de contexto nesta conversa',
+      viewDescription: 'O conteúdo dos pacotes que a próxima mensagem levará.',
+      viewNone: 'Nenhum conteúdo de pacote de contexto será enviado com a próxima mensagem.',
+      viewDisabled: 'O contexto está desativado nesta conversa, então nenhum pacote é enviado.',
+      viewItems: '{value} itens',
+      memoryLabel: 'Ver a memória usada nesta conversa',
+      memoryTitle: 'Memória desta conversa',
+      memoryDescription: 'O que o assistente lembra sobre você e usaria na próxima mensagem.',
+      memoryOn: 'A memória está ativada nesta conversa.',
+      memoryOff: 'A memória está desativada nesta conversa: nada é lido nem aprendido.',
+      memoryNone: 'Ainda não há lembranças aplicáveis a esta mensagem.',
+      memoryManage: 'Gerenciar memória',
+    },
+    saveMessage: {
+      menuLabel: 'Salvar esta resposta',
+      pack: 'Salvar como pacote de contexto',
+      memory: 'Salvar na memória',
+      savedPack: 'Salvo como pacote de contexto "{name}".',
+      savedMemory: 'Salvo na memória.',
+      open: 'Abrir',
+    },
     contextSave: {
       title: 'Guardado a partir deste chat',
       savedMemory: 'Guardado na memória',
@@ -873,6 +901,11 @@ export const pt: TranslationDictionary = {
       'Um vídeo pode levar alguns minutos. Você pode continuar conversando enquanto ele é gerado.',
     videoLoadFailed: 'Não foi possível carregar o vídeo',
     videoLoadFailedHint: 'Recarregue a página para tentar novamente.',
+    videoStatusUnknown: 'Estado do vídeo indisponível',
+    videoStatusUnknownHint:
+      'Paramos de verificar este vídeo. Recarregue a página para ver se terminou ou envie o pedido novamente.',
+    videoFailureCreditsDepleted:
+      'A conta do fornecedor de vídeo não tem mais crédito pré-pago e recusou o pedido. Um administrador precisa recarregar essa conta.',
     videoFailureSourceImageInvalid:
       'Não foi possível usar a imagem: use uma imagem JPEG, PNG ou WebP com menos de 10 MB que seja sua.',
     imageStage: {

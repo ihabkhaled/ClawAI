@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { VideoProcessingFailureReason } from '@claw/shared-types';
 import {
+  durationFromPackets,
   parseFrameRate,
   parseProbeOutput,
   secondsStringToMs,
@@ -88,6 +89,52 @@ describe('parseProbeOutput', () => {
       format: { format_name: 'avi' },
     });
     expect(parseProbeOutput(json)?.durationMs).toBe(0);
+  });
+
+  it('derives a raw HEVC stream duration from its packet count and frame rate', () => {
+    // Real ffprobe output for a 2 s 25 fps .hevc: no duration anywhere, 50 packets.
+    const json = JSON.stringify({
+      streams: [
+        {
+          codec_type: 'video',
+          codec_name: 'hevc',
+          width: 320,
+          height: 240,
+          r_frame_rate: '25/1',
+          avg_frame_rate: '25/1',
+          nb_read_packets: '50',
+        },
+      ],
+      format: { format_name: 'hevc' },
+    });
+    expect(parseProbeOutput(json)).toMatchObject({ durationMs: 2_000, container: 'hevc' });
+  });
+
+  it('never second-guesses a duration the container states', () => {
+    const json = probeJson({
+      streams: [
+        {
+          codec_type: 'video',
+          width: 10,
+          height: 10,
+          avg_frame_rate: '30/1',
+          nb_read_packets: '9000',
+        },
+      ],
+      format: { format_name: 'mov,mp4', duration: '5.000000' },
+    });
+    expect(parseProbeOutput(json)?.durationMs).toBe(5_000);
+  });
+
+  it.each([
+    ['50', 25, 2_000],
+    ['75', 30000 / 1001, 2_503],
+    [undefined, 25, 0],
+    ['0', 25, 0],
+    ['abc', 25, 0],
+    ['50', null, 0],
+  ])('durationFromPackets(%s, %s) is %s ms', (packets, fps, expected) => {
+    expect(durationFromPackets(packets, fps)).toBe(expected);
   });
 
   it('reports hasVideo=false for an audio-only container', () => {

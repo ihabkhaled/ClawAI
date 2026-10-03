@@ -19,7 +19,11 @@ import {
   TAR_MAGIC,
   TAR_MAGIC_OFFSET,
 } from '../../modules/files/constants/archive-formats.constants';
-import { MIME_TO_MAGIC_BYTES } from '../../modules/files/constants/file-security.constants';
+import {
+  MIME_TO_MAGIC_BYTES,
+  RELABELLABLE_MEDIA_MIME_TYPES,
+  UNLABELLED_UPLOAD_MIME_TYPE,
+} from '../../modules/files/constants/file-security.constants';
 import { detectMimeTypeFromBytes } from './file-type-detection.utility';
 
 // What an archive IS, decided from its bytes — never from the extension or the
@@ -105,9 +109,16 @@ export async function resolveUploadMimeType(
   }
   const detected = await detectMimeTypeFromBytes(buffer);
   const format = detected === null ? undefined : DETECTED_MIME_TO_ARCHIVE_FORMAT.get(detected);
-  return format === undefined
-    ? declaredMimeType
-    : (CANONICAL_ARCHIVE_MIME_BY_FORMAT.get(format) ?? declaredMimeType);
+  if (format !== undefined) {
+    return CANONICAL_ARCHIVE_MIME_BY_FORMAT.get(format) ?? declaredMimeType;
+  }
+  // Windows without the HEIF codec, and any OS for .hevc / .mkv, sends such a
+  // file as octet-stream: its bytes say what it is.
+  return declaredMimeType === UNLABELLED_UPLOAD_MIME_TYPE &&
+    detected !== null &&
+    RELABELLABLE_MEDIA_MIME_TYPES.has(detected)
+    ? detected
+    : declaredMimeType;
 }
 
 // A MIME with its own signature check (PDF, the OOXML family, images, video,

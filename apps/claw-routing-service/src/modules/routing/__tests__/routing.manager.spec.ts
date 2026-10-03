@@ -9,6 +9,7 @@ import { ImageDetectionManager } from '../managers/image-detection.manager';
 import { type CloudRouterManager } from '../managers/cloud-router.manager';
 import { type CloudRouterEligibilityManager } from '../managers/cloud-router-eligibility.manager';
 import { type CloudRouterPromptManager } from '../managers/cloud-router-prompt.manager';
+import { type NamedModelRequestManager } from '../managers/named-model-request.manager';
 import { RouterErrorCode } from '../../../common/enums';
 import { RouterProvider, RoutingMode } from '../../../generated/prisma';
 import { ComplexityClass } from '../../../common/enums/complexity-class.enum';
@@ -60,9 +61,11 @@ describe('RoutingManager', () => {
   let cloudRouterEligibility: { resolveEligibleDeployments: Mock; rankDecisionByModalityFit: Mock };
   let cloudRouterPrompt: { buildPrompt: Mock };
   let ollamaRouter: { route: Mock };
+  let namedModelRequest: { resolve: Mock };
 
   beforeEach(() => {
     policiesRepo = mockPoliciesRepo();
+    namedModelRequest = { resolve: vi.fn().mockResolvedValue(null) };
     ollamaRouter = { route: vi.fn().mockResolvedValue(null) };
     promptBuilder = {
       fetchInstalledModels: vi.fn().mockResolvedValue([]),
@@ -84,7 +87,68 @@ describe('RoutingManager', () => {
       cloudRouter as unknown as CloudRouterManager,
       cloudRouterEligibility as unknown as CloudRouterEligibilityManager,
       cloudRouterPrompt as unknown as CloudRouterPromptManager,
+      namedModelRequest as unknown as NamedModelRequestManager,
     );
+  });
+
+  describe('evaluateRoute - AUTO, a model named in the prompt', () => {
+    const autoContext: RoutingContext = {
+      ...baseContext,
+      userMode: RoutingMode.AUTO,
+      connectorHealth: { OPENAI: true, ANTHROPIC: true, GEMINI: true, GROK: true },
+    };
+
+    it('routes "use nano banana" to the Gemini image provider with that model', async () => {
+      namedModelRequest.resolve.mockResolvedValue({
+        provider: 'GEMINI',
+        model: 'gemini-2.5-flash-image',
+        capability: 'IMAGE',
+        phrase: 'nano banana',
+      });
+      const result = await manager.evaluateRoute({
+        ...autoContext,
+        message: 'use nano banana to make a poster of a lighthouse',
+      });
+      expect(result.selectedProvider).toBe('IMAGE_GEMINI');
+      expect(result.selectedModel).toBe('gemini-2.5-flash-image');
+      expect(result.routingMode).toBe(RoutingMode.AUTO);
+      expect(result.reasonTags).toEqual(
+        expect.arrayContaining(['user_named_model', 'named_model_image', 'image_generation']),
+      );
+    });
+
+    it('routes "ask grok" to the named chat model, not to the router pick', async () => {
+      namedModelRequest.resolve.mockResolvedValue({
+        provider: 'GROK',
+        model: 'grok-3-mini',
+        capability: 'CHAT',
+        phrase: 'grok',
+      });
+      const result = await manager.evaluateRoute({
+        ...autoContext,
+        message: 'ask grok what changed in the news today',
+      });
+      expect(result.selectedProvider).toBe('GROK');
+      expect(result.selectedModel).toBe('grok-3-mini');
+      expect(result.reasonTags).toEqual(expect.arrayContaining(['user_named_model']));
+      expect(result.reasonTags).not.toContain('image_generation');
+      expect(cloudRouter.route).not.toHaveBeenCalled();
+    });
+
+    it('routes normally when no model is named', async () => {
+      const result = await manager.evaluateRoute({ ...autoContext, message: 'hello there' });
+      expect(namedModelRequest.resolve).toHaveBeenCalledTimes(1);
+      expect(result.reasonTags).not.toContain('user_named_model');
+    });
+
+    it('never overrides privacy enforcement: an enforced-local domain skips the name', async () => {
+      const result = await manager.evaluateRoute({
+        ...autoContext,
+        message: 'use grok to analyze my patient diagnosis records and lab results',
+      });
+      expect(namedModelRequest.resolve).not.toHaveBeenCalled();
+      expect(result.reasonTags).not.toContain('user_named_model');
+    });
   });
 
   describe('evaluateRoute - AUTO', () => {
@@ -1529,6 +1593,7 @@ describe('RoutingManager', () => {
           privacyCloudRouter as unknown as CloudRouterManager,
           privacyEligibility as unknown as CloudRouterEligibilityManager,
           privacyPrompt as unknown as CloudRouterPromptManager,
+          { resolve: vi.fn().mockResolvedValue(null) } as never,
         );
 
         const result = await privacyManager.evaluateRoute({
@@ -1576,6 +1641,7 @@ describe('RoutingManager', () => {
         privacyCloudRouter as unknown as CloudRouterManager,
         privacyEligibility as unknown as CloudRouterEligibilityManager,
         privacyPrompt as unknown as CloudRouterPromptManager,
+        { resolve: vi.fn().mockResolvedValue(null) } as never,
       );
 
       const result = await privacyManager.evaluateRoute({

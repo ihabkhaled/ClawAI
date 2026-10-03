@@ -27,10 +27,15 @@ import {
  * the job when nothing superseded it.
  *
  * `restartToken` re-reads the tracked row, for a same-row retry or a cancel.
+ *
+ * `onStopped` fires when the listener gives up on a job it never saw finish (the
+ * poll budget ran out, or the reads kept failing), so the card can say so
+ * instead of spinning on "Generating video…" forever.
  */
 export function useVideoGenerationListener(
   generationId: string | undefined,
   restartToken = 0,
+  onStopped?: () => void,
 ): VideoGeneration | null {
   const [generation, setGeneration] = useState<VideoGeneration | null>(null);
   const [follow, setFollow] = useState<VideoGenerationFollowState>({
@@ -39,6 +44,10 @@ export function useVideoGenerationListener(
   });
   const pollsRef = useRef(0);
   const hopsRef = useRef(0);
+  const onStoppedRef = useRef(onStopped);
+  useEffect(() => {
+    onStoppedRef.current = onStopped;
+  }, [onStopped]);
   // A new card (or a retry that got a new row) restarts the follow from its own row.
   const trackedId = follow.rootId === generationId ? follow.trackedId : generationId;
 
@@ -57,7 +66,11 @@ export function useVideoGenerationListener(
     let errorCount = 0;
 
     const schedule = (): void => {
-      if (disposed || pollsRef.current >= VIDEO_GENERATION_MAX_POLLS) {
+      if (disposed) {
+        return;
+      }
+      if (pollsRef.current >= VIDEO_GENERATION_MAX_POLLS) {
+        onStoppedRef.current?.();
         return;
       }
       timer = setTimeout(poll, VIDEO_GENERATION_POLL_INTERVAL_MS);
@@ -101,6 +114,8 @@ export function useVideoGenerationListener(
           });
           if (errorCount < VIDEO_GENERATION_MAX_CONSECUTIVE_ERRORS) {
             schedule();
+          } else {
+            onStoppedRef.current?.();
           }
         });
     }

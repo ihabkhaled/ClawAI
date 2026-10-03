@@ -104,4 +104,19 @@ describe('ConnectorProviderCombobox', () => {
     );
     expect(screen.getByRole('combobox')).toBeDisabled();
   });
+
+  it('opens as a modal popover with its own scroll layer, so it scrolls inside a dialog', () => {
+    // Inside the Add Connector dialog the list is portaled outside the
+    // dialog's content and its scroll lock swallowed wheel/touch. A modal
+    // popover owns a scroll-lock layer of its own and hides the rest of the
+    // page from assistive tech — the observable marker of that mode.
+    render(<ConnectorProviderCombobox value={null} onChange={vi.fn()} />);
+    const trigger = screen.getByRole('combobox');
+    fireEvent.click(trigger);
+    expect(trigger.closest('[aria-hidden="true"]')).not.toBeNull();
+    const list = document.querySelector('[cmdk-list]') as HTMLElement;
+    expect(list.className).toContain('overflow-y-auto');
+    expect(list.className).toContain('overscroll-contain');
+    expect(list.className).toContain('touch-pan-y');
+  });
 });

@@ -1,3 +1,5 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import * as zlib from 'node:zlib';
 import JSZip from 'jszip';
 import {
@@ -101,6 +103,23 @@ describe('resolveUploadMimeType', () => {
     ['gzip', zlib.gzipSync(TAR), 'application/gzip'],
   ])('re-labels an octet-stream %s', async (_label, bytes, expected) => {
     await expect(resolveUploadMimeType('application/octet-stream', bytes)).resolves.toBe(expected);
+  });
+
+  it('re-labels an octet-stream HEIC (Windows without the HEIF codec) as image/heic', async () => {
+    const heic = fs.readFileSync(path.join(__dirname, '__fixtures__', 'sample.heic'));
+
+    await expect(resolveUploadMimeType('application/octet-stream', heic)).resolves.toBe(
+      'image/heic',
+    );
+  });
+
+  it('keeps a declared image MIME and an octet-stream it cannot identify', async () => {
+    const heic = fs.readFileSync(path.join(__dirname, '__fixtures__', 'sample.heic'));
+
+    await expect(resolveUploadMimeType('image/heic', heic)).resolves.toBe('image/heic');
+    await expect(
+      resolveUploadMimeType('application/octet-stream', Buffer.from('plain bytes')),
+    ).resolves.toBe('application/octet-stream');
   });
 
   it('re-labels a wrong text MIME too', async () => {

@@ -25,6 +25,7 @@ import {
 } from '@/utilities/chunked-upload.utility';
 import { readFileAsBase64 } from '@/utilities/file-read.utility';
 import { logger } from '@/utilities/logger.utility';
+import { resolveUploadMimeType } from '@/utilities/upload-mime.utility';
 
 /**
  * Uploads a `File` through the same secure pipeline every attachment uses,
@@ -116,7 +117,7 @@ export function useChunkedUpload({
           const session = await filesRepository.initChunkedUpload(
             {
               filename: file.name,
-              mimeType: file.type.length > 0 ? file.type : 'application/octet-stream',
+              mimeType: resolveUploadMimeType(file),
               sizeBytes: file.size,
               totalChunks,
             },
@@ -181,7 +182,7 @@ export function useChunkedUpload({
       const uploaded = await filesRepository.uploadFile(
         {
           filename: file.name,
-          mimeType: file.type.length > 0 ? file.type : 'application/octet-stream',
+          mimeType: resolveUploadMimeType(file),
           sizeBytes: file.size,
           storagePath: `/uploads/${file.name}`,
           content,

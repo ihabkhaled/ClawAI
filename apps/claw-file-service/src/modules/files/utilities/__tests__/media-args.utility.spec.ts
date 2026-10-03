@@ -53,6 +53,11 @@ describe('media argument arrays', () => {
     }
   });
 
+  it('lets a raw HEVC stream through the whitelist and counts its packets for a duration', () => {
+    expect(MEDIA_FORMAT_WHITELIST.split(',')).toContain('hevc');
+    expect(buildProbeArgs(INPUT)).toContain('-count_packets');
+  });
+
   it('allows no network protocol and no playlist/concat demuxer', () => {
     expect(MEDIA_PROTOCOL_WHITELIST.split(',')).toEqual(['file', 'pipe']);
     for (const banned of [

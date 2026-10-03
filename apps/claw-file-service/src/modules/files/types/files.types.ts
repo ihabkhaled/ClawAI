@@ -48,6 +48,26 @@ export const VIDEO_MIME_TYPES = [
   'video/x-msvideo',
   'video/avi',
   'video/mpeg',
+  // Matroska, 3GPP, iTunes-style MP4 and raw HEVC (.hevc / .h265).
+  'video/x-matroska',
+  'video/3gpp',
+  'video/3gpp2',
+  'video/x-m4v',
+  'video/hevc',
+  'video/h265',
+] as const;
+
+// Stills that are converted to JPEG at upload (see image-normalization.utility.ts):
+// iPhone HEIC/HEIF, AVIF, TIFF and BMP. No vision provider reads them as uploaded.
+export const CONVERTED_IMAGE_MIME_TYPES = [
+  'image/heic',
+  'image/heif',
+  'image/heic-sequence',
+  'image/heif-sequence',
+  'image/avif',
+  'image/tiff',
+  'image/bmp',
+  'image/x-ms-bmp',
 ] as const;
 
 // B6a — audio uploads. The bytes are stored and marked as audio; transcription
@@ -122,6 +142,7 @@ export const ALLOWED_MIME_TYPES = [
   'image/webp',
   'image/gif',
   'image/svg+xml',
+  ...CONVERTED_IMAGE_MIME_TYPES,
   ...VIDEO_MIME_TYPES,
   ...AUDIO_MIME_TYPES,
   // Archives (expanded server-side via ZipExpansionManager — Slice C backend 2;

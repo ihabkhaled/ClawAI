@@ -61,3 +61,13 @@ export const MEDIA_QUERY_BELOW_MD = '(max-width: 767px)';
  */
 export const MEDIA_QUERY_NAV_RAIL =
   '(min-width: 768px) and (min-height: 600px), (hover: hover) and (pointer: fine) and (min-width: 768px)';
+
+/**
+ * The primary input is a finger: no hover, coarse pointer.
+ *
+ * Enter on a phone keyboard means "new line" — the send button sends. This is
+ * the same test globals.css uses for its touch rules (minus the width clause,
+ * which would misread a narrow desktop window as a phone). Evaluated through
+ * `useMediaQuery`, so it follows a tablet docked to a keyboard and mouse.
+ */
+export const MEDIA_QUERY_COARSE_POINTER = '(hover: none) and (pointer: coarse)';

@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { RoutingMode } from '../../../generated/prisma';
 import { CapabilityRouterManager } from '../managers/capability-router.manager';
 import { type CloudRouterManager } from '../managers/cloud-router.manager';
@@ -48,6 +48,7 @@ describe('RoutingManager semantic guard', () => {
       cloudRouter as unknown as CloudRouterManager,
       cloudRouterEligibility as unknown as CloudRouterEligibilityManager,
       cloudRouterPrompt as unknown as CloudRouterPromptManager,
+      { resolve: vi.fn().mockResolvedValue(null) } as never,
     );
   });
 

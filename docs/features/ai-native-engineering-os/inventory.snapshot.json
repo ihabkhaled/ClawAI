@@ -1373,6 +1373,11 @@
           "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/chat-messages/:id/save-to-context",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/context-save.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/chat-messages/:id/speech",
           "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-speech.controller.ts"
@@ -8187,7 +8192,7 @@
           "file": "rules/39-worktree-branch-completion-pr-and-release-notes.md"
         },
         {
-          "bytes": 25104,
+          "bytes": 25477,
           "file": "rules/40-chat-surface-layout-and-composer.md"
         },
         {
@@ -8195,7 +8200,7 @@
           "file": "rules/41-web-evidence-truthfulness.md"
         },
         {
-          "bytes": 39481,
+          "bytes": 40887,
           "file": "rules/42-attachment-understanding.md"
         },
         {
@@ -8231,7 +8236,7 @@
           "file": "rules/50-agentic-research-loop-and-narration.md"
         },
         {
-          "bytes": 8840,
+          "bytes": 10240,
           "file": "rules/51-router-candidates-and-model-window-fit.md"
         },
         {
@@ -8255,7 +8260,7 @@
           "file": "rules/56-model-reasoning-never-in-the-answer.md"
         },
         {
-          "bytes": 7568,
+          "bytes": 8677,
           "file": "rules/57-memory-and-context-pack-integrity.md"
         },
         {
@@ -8497,7 +8502,7 @@
           "file": "skills/debug-a-stuck-scheduled-job.md"
         },
         {
-          "bytes": 11233,
+          "bytes": 11775,
           "file": "skills/debug-a-video-the-model-cannot-read.md"
         },
         {
@@ -8679,7 +8684,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5719
+        "value": 5748
       },
       "localeCount": 13,
       "locales": [
@@ -10795,7 +10800,7 @@
       },
       "claw-routing-service": {
         "runner": "vitest",
-        "testFiles": 114
+        "testFiles": 116
       },
       "claw-server-logs-service": {
         "runner": "vitest",
@@ -11529,7 +11534,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 52,
-    "endpointCount": 785,
+    "endpointCount": 786,
     "envVarCount": 361,
     "eventCount": 185,
     "frontendRouteCount": 155,
@@ -11541,7 +11546,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2002,
+    "totalTestFiles": 2004,
     "workspaceCount": 25
   }
 }

@@ -1277,6 +1277,7 @@ export type VirtualizedMessagesProps = {
   footerContent: () => React.ReactElement | null;
   handleFollowOutput: FollowOutputCallback;
   onAtBottomStateChange: (atBottom: boolean) => void;
+  scrollerRef?: (element: HTMLElement | Window | null) => void;
   handleStartReached: () => void;
   firstItemIndex: number;
   initialTopMostItemIndex: number;

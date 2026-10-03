@@ -1,3 +1,4 @@
+import { ComposerContextControls } from '@/components/chat/composer-context-controls';
 import { CreditIndicator } from '@/components/chat/credit-indicator';
 import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { ModelSelector } from '@/components/chat/model-selector';
@@ -78,6 +79,10 @@ export function ComposerToolbar({
         onRecorded={onRecorded}
         disabled={disabled}
       />
+      {/* Context packs and memory, made visible: pick, view, and the memory in use. */}
+      {threadId !== null ? (
+        <ComposerContextControls threadId={threadId} draft={draft} disabled={disabled} />
+      ) : null}
       {canResearch ? (
         <ResearchToggle
           value={research}

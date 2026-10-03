@@ -395,6 +395,34 @@ export type TranslationDictionary = {
       trigger: string;
       auto: string;
     };
+    composerContext: {
+      pickLabel: string;
+      pickEmpty: string;
+      pickCount: string;
+      pickManage: string;
+      pickLimit: string;
+      viewLabel: string;
+      viewTitle: string;
+      viewDescription: string;
+      viewNone: string;
+      viewDisabled: string;
+      viewItems: string;
+      memoryLabel: string;
+      memoryTitle: string;
+      memoryDescription: string;
+      memoryOn: string;
+      memoryOff: string;
+      memoryNone: string;
+      memoryManage: string;
+    };
+    saveMessage: {
+      menuLabel: string;
+      pack: string;
+      memory: string;
+      savedPack: string;
+      savedMemory: string;
+      open: string;
+    };
     contextSave: {
       title: string;
       savedMemory: string;
@@ -793,6 +821,9 @@ export type TranslationDictionary = {
     videoTakesMinutes: string;
     videoLoadFailed: string;
     videoLoadFailedHint: string;
+    videoStatusUnknown: string;
+    videoStatusUnknownHint: string;
+    videoFailureCreditsDepleted: string;
     videoFailureSourceImageInvalid: string;
     /** Live runtime stage on a chat image card (ComfyUI / SD WebUI). */
     imageStage: {

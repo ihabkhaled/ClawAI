@@ -440,6 +440,35 @@ export const fr: TranslationDictionary = {
       trigger: 'Réessayer avec…',
       auto: 'Laisser AUTO choisir',
     },
+    composerContext: {
+      pickLabel: 'Choisir des packs de contexte',
+      pickEmpty: 'Vous n’avez pas encore de pack de contexte.',
+      pickCount: '{value} sélectionné(s)',
+      pickManage: 'Gérer les packs de contexte',
+      pickLimit: 'Jusqu’à {value} packs par discussion.',
+      viewLabel: 'Voir les packs de contexte joints',
+      viewTitle: 'Packs de contexte de cette discussion',
+      viewDescription: 'Le contenu des packs que le prochain message transportera.',
+      viewNone: 'Aucun contenu de pack de contexte ne sera envoyé avec le prochain message.',
+      viewDisabled: 'Le contexte est désactivé pour cette discussion : aucun pack n’est envoyé.',
+      viewItems: '{value} éléments',
+      memoryLabel: 'Voir la mémoire utilisée dans cette discussion',
+      memoryTitle: 'Mémoire de cette discussion',
+      memoryDescription:
+        'Ce que l’assistant retient sur vous et utiliserait pour le prochain message.',
+      memoryOn: 'La mémoire est activée pour cette discussion.',
+      memoryOff: 'La mémoire est désactivée pour cette discussion : rien n’est lu ni appris.',
+      memoryNone: 'Aucun souvenir ne s’applique encore à ce message.',
+      memoryManage: 'Gérer la mémoire',
+    },
+    saveMessage: {
+      menuLabel: 'Enregistrer cette réponse',
+      pack: 'Enregistrer comme pack de contexte',
+      memory: 'Enregistrer dans la mémoire',
+      savedPack: 'Enregistré comme pack de contexte « {name} ».',
+      savedMemory: 'Enregistré dans la mémoire.',
+      open: 'Ouvrir',
+    },
     contextSave: {
       title: 'Enregistré depuis ce chat',
       savedMemory: 'Enregistré en mémoire',
@@ -879,6 +908,11 @@ export const fr: TranslationDictionary = {
       'Une vidéo peut prendre quelques minutes. Vous pouvez continuer à discuter pendant le rendu.',
     videoLoadFailed: 'Impossible de charger la vidéo',
     videoLoadFailedHint: 'Rechargez la page pour réessayer.',
+    videoStatusUnknown: 'État de la vidéo indisponible',
+    videoStatusUnknownHint:
+      'Nous avons cessé de suivre cette vidéo. Rechargez la page pour voir si elle est terminée, ou renvoyez la demande.',
+    videoFailureCreditsDepleted:
+      "Le compte du fournisseur vidéo n'a plus de crédit prépayé et a refusé la demande. Un administrateur doit recharger ce compte.",
     videoFailureSourceImageInvalid:
       "L'image n'a pas pu être utilisée : utilisez une image JPEG, PNG ou WebP de moins de 10 Mo qui vous appartient.",
     imageStage: {

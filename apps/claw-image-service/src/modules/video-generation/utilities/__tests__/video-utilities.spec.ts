@@ -104,11 +104,42 @@ describe('failure vocabulary', () => {
       'xAI',
     );
 
-    expect(error.code).toBe(VideoFailureCode.PROVIDER_QUOTA_EXCEEDED);
+    expect(error.code).toBe(VideoFailureCode.PROVIDER_CREDITS_DEPLETED);
     expect(
       toVideoProviderException({ response: { status: 403, data: { error: 'forbidden' } } }, 'xAI')
         .code,
     ).toBe(VideoFailureCode.PROVIDER_AUTH_FAILED);
+  });
+
+  it('reads Gemini 402 "prepayment credits are depleted" as a depleted balance, with a specific sentence', () => {
+    const error = toVideoProviderException(
+      {
+        response: {
+          status: 402,
+          data: {
+            error: {
+              message:
+                'Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing.',
+            },
+          },
+        },
+      },
+      'Gemini',
+    );
+
+    expect(error.code).toBe(VideoFailureCode.PROVIDER_CREDITS_DEPLETED);
+    expect(videoFailureMessage(error.code as VideoFailureCode)).toContain('no prepaid credit');
+  });
+
+  it('keeps a plain 402 or 429 with no balance wording as a quota refusal', () => {
+    for (const status of [402, 429]) {
+      expect(
+        toVideoProviderException(
+          { response: { status, data: { error: { message: 'slow down' } } } },
+          'Gemini',
+        ).code,
+      ).toBe(VideoFailureCode.PROVIDER_QUOTA_EXCEEDED);
+    }
   });
 
   it('classifies transport errors as unavailable and a policy block as content rejected', () => {
