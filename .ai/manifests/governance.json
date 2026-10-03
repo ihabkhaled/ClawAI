@@ -287,7 +287,7 @@
       "file": "rules/47-client-bundle-weight-and-barrel-boundaries.md"
     },
     {
-      "bytes": 2935,
+      "bytes": 5614,
       "file": "rules/48-lint-and-test-only-what-changed.md"
     },
     {
@@ -669,7 +669,7 @@
       "file": "skills/run-coding-agent-release-rounds.md"
     },
     {
-      "bytes": 3693,
+      "bytes": 4632,
       "file": "skills/run-gates-once-and-land.md"
     },
     {

@@ -63,3 +63,37 @@ If you need to raise the compiler, raise the `typescript7` alias. Leave
 `typescript` on 6.x until typescript-eslint ships TS 7 support.
 
 Related: [`rules/34-gate-economy-and-machine-resources.md`](34-gate-economy-and-machine-resources.md)
+
+## Lessons from the 2026-10-03 landing (a 14-item batch, red CI, high agent spend)
+
+6. **Test the change, not the suite.** `npx vitest related <changed files>` runs only the
+   specs that import what you touched; `git diff --name-only HEAD` feeds it. One workspace
+   suite at the end, and only when `related` is not enough. Never `npm test` at the root.
+7. **A CI job that runs only when one workspace changed must build the shared packages.**
+   `runtime-v2-coverage` and `runtime-v2-redis` were skipped for weeks, then a chat change
+   woke them and they failed with "Failed to resolve entry for @claw/shared-utilities" (no
+   `dist`). Any new `needs.changes`-gated job copies the "Build shared packages" step.
+8. **After `git pull`, rebuild before you trust a gate.** Upstream moved `shared-types`,
+   `shared-utilities` and the Prisma schemas; the stale local `dist` and Prisma clients made
+   pre-commit typecheck fail in services nobody touched. Run
+   `npm run build --workspace=@claw/shared-types` (then constants, utilities) and
+   `npx prisma generate` in the services that fail, then retry once.
+9. **Change a seed value, grep for the old number.** Free allowance 2 -> 10 left one spec
+   asserting the catalog still said 2 and turned CI red. `rg` the old value across specs,
+   docs and ADRs in the same change.
+10. **Agents are not free.** Delegate only work that is large and independent; at most two
+    agents at once, foreground, each with a stated scope and a "report in 15 lines" cap;
+    follow up any agent that has run past ~10 minutes. A 3-command job is done by hand.
+    Several agents editing one tree also contaminates each other's gates.
+11. **Prefer the cheap proof.** A headless probe that prints a time series (scrollTop vs
+    height every 500 ms) found the streaming-scroll bug faster than four full e2e rounds.
+    A live-model e2e asserts relative properties (moved up at least 40 px), not absolute
+    ones that depend on how long the model happens to answer.
+12. **A headed browser cannot open in the agent session.** Run Playwright headless, keep
+    screenshots, and tell the user to run `npx playwright test --headed` themselves.
+13. **Commit subjects stay under 100 characters** (commitlint) and end with the attribution
+    line. A too-long subject fails after the 4-minute hook run, so check length first.
+14. **`--no-verify` follows rule 5.** When the user explicitly asks for it, regenerate the
+    knowledge layer first (`npm run knowledge:build`, stage the generated files), say so in
+    the commit body, and still read CI. The hooks are scoped and normally pass in minutes,
+    so do not reach for the bypass just to save time.

@@ -98,3 +98,16 @@ Prisma-schema change earns the full stop → rm → rmi → build cycle.
 - [ ] No hook was bypassed.
 - [ ] The push's real exit code was checked, and nothing is left unpushed.
 - [ ] Every scratch container, volume and background job you started is gone.
+
+## Landing a big batch cheaply (added 2026-10-03)
+
+1. `git pull --rebase --autostash`, then rebuild shared `dist` and run `prisma generate`
+   in any service that fails typecheck ([rules/48](../rules/48-lint-and-test-only-what-changed.md) item 8).
+2. `git diff --name-only HEAD` -> `npx eslint <files>` and `npx vitest related <files>`;
+   `npm run typecheck` only in touched workspaces. No root-level gates.
+3. `npm run knowledge:build`, then stage the generated `.ai/**` and workspace `AGENTS.md`.
+4. Commit in 2-4 coherent batches with explicit paths, subjects under 100 characters.
+5. Push once. Read `gh run list --branch main`; on red, `gh run view <id> --log-failed`
+   and fix the cause (a stale seed value in a spec, a CI job missing the shared build).
+6. A coding-agent change ships through its own repo's `npm run ship` (its CI bumps the
+   version); the ClawAI repo then takes one pointer commit for `apps/claw-coding-agent`.
