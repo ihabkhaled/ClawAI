@@ -25,9 +25,9 @@ const MIGRATION = readFileSync(
 );
 
 describe('plan catalog free-allowance seed', () => {
-  it('seeds Free at 2 requests per credit connector per month', () => {
+  it('seeds Free at 10 requests per credit connector per month', () => {
     expect(catalog.find((plan) => plan.slug === 'free')?.creditConnectorFreeRequestsPerMonth).toBe(
-      2,
+      10,
     );
   });
 
