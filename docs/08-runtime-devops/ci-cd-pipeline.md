@@ -282,3 +282,10 @@ npm run test --workspace=apps/claw-frontend
 - Module resolution issues or circular imports
 - Missing re-exports from shared packages
 - Shared package build order incorrect
+
+### Jobs gated on `needs.changes`
+
+`runtime-v2-coverage` and `runtime-v2-redis` run only when chat-service changes and, like every
+test job, must build `shared-constants`, `shared-types` and `shared-utilities` first (they failed
+on 2026-10-03 with "Failed to resolve entry for @claw/shared-utilities" until the build step was
+added). Copy the "Build shared packages" step into any new gated job.

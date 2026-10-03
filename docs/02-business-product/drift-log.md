@@ -84,3 +84,13 @@ page the entry names. This log is the history between them.
   AI intelligence").
 - **Who:** owner; implemented by the coding agent.
 - **Touched:** REQ-CHAT-006, ADR-134, ADR-127 addendum, rule 57 §11.
+
+## DRIFT-004 - Draft social post claims do not match the plans (2026-10-03)
+
+- **Area:** business/marketing.
+- **Before:** the draft LinkedIn post said "10 requests per day" on top models, 1M tokens a day, a 90-day trial.
+- **Now (code):** Free credit-connector allowance is one monthly total, set to 10 by the owner on 2026-10-03 (was 2); Free is 20k tokens a day; the trial is 30 days; paid plans pay from wallet credit. Copy in all 13 locales already says "per month".
+- **Why:** owner asked to verify the post against the code.
+- **Who:** owner; audited by the coding agent.
+- **Touched:** ADR-142, `docs/business/plan-allowances.md`, `plan-catalog.json`, `seed.cjs`.
+- **Status:** done (code and docs); the post text is the owner's to correct. **Priority:** medium

@@ -8,6 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **One Context button in the composer** (packs, attached packs, memory) that stays on screen on phones and in right-to-left; a Save menu on every answer saves it as a context pack or memory. Enter sends on desktop and inserts a newline on touch devices; Shift+Enter or Ctrl+Enter is a newline on desktop.
+- **More upload formats:** HEIC, HEIF, AVIF, TIFF and BMP images (stored as JPEG) and mkv, 3gp, m4v and raw HEVC video.
+- **"Use <model> to ..."** sends the request to the named model without the directive words, or says why it could not.
+- **Veo falls back to another Veo model** on a model-specific refusal, and image-to-video works again (request shape fixed).
+
+### Fixed
+
+- The chat follows a streaming answer to the bottom until the reader scrolls up.
+- Words like "create images" inside a note no longer trigger image, file or video generation ([ADR-154](13-adr/adr-154-inline-generation-mentions-and-named-model-directives.md)).
+- The coding agent ends a rate-limited run with a clear message and can switch to a fallback model.
+- Free plan seeds 10 credit-connector requests a month (fresh installs; existing plans untouched).
+
 ### Changed
 
 - **New positioning: "Every AI, one workspace."** ClawAI is now described as a

@@ -452,3 +452,12 @@ Use before releases. Every item must be checked.
 
 Both runbooks are in
 [`skills/run-the-file-model-matrix.md`](../../skills/run-the-file-model-matrix.md).
+
+## Test only what changed (2026-10)
+
+`git diff --name-only HEAD` -> `npx eslint <files>` and `npx vitest related <files>`;
+typecheck only in touched workspaces; one workspace suite at the end if `related` is not
+enough. Live-model e2e specs (for example `tests/e2e/chat-streaming-scroll.spec.ts`) assert
+relative properties because answer length varies, and simulate the reader with real input
+(`page.mouse.wheel`). Headless Playwright only in agent sessions. Full rules:
+[rules/48](../../rules/48-lint-and-test-only-what-changed.md).

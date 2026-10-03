@@ -35,3 +35,11 @@ docker logs --since 30m claw-image-service | grep -i video
 
 - Retry: `POST /api/v1/videos/:id/retry` (UI retry button). Cancel: `POST /api/v1/videos/:id/cancel`; the hold is released.
 - A stuck non-terminal row older than 17 min is cleaned by the sweep within a minute; if it is not, image-service is down.
+
+## Veo model and credit failures (added 2026-10-03)
+
+- `VIDEO_PROVIDER_CREDITS_DEPLETED` - the provider account has no prepaid credit (Gemini 402, "prepayment credits are depleted"). Top up; no code change helps. It never triggers the model fallback.
+- `VIDEO_PROVIDER_REJECTED` / `VIDEO_MODEL_UNAVAILABLE` - model-specific. The service already tried the next model in `VEO_MODEL_FALLBACK_CHAIN` (each once). For these two codes only, the stored message ends with `Provider said: <reason>` (key shapes redacted, 200 characters); every other code keeps the fixed sentence.
+- Image-to-video must send `image: { bytesBase64Encoded, mimeType }`. A 400 "`inlineData` isn't supported by this model" meant the old shape.
+- Prove the key without printing it: models.list from inside the container returns 200 and lists `veo-*` with `predictLongRunning` (the key had only the 3.1 family on 2026-10-03).
+- A card stuck on the spinner means the browser stopped polling: it now shows "Video status unavailable" after 15 minutes or five failed reads. The `video_generations` row is the truth.

@@ -111,3 +111,5 @@
 - [runbook-failed-billing-sweep.md](runbook-failed-billing-sweep.md)
 - [runbook-payg-credit.md](runbook-payg-credit.md) — deploying, verifying and killing PAYG connector credit
 - [runbook-video-generation-failure.md](runbook-video-generation-failure.md) — a video job stuck, timed out or failed
+- [runbook-video-generation-failure.md](runbook-video-generation-failure.md)
+- [runbook-stale-shared-dist-after-pull.md](runbook-stale-shared-dist-after-pull.md)

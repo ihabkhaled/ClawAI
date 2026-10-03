@@ -57,3 +57,7 @@ one-file PR.
 
 A change is release-ready only when its affected-lane gates are green AND
 `release:preflight` is green on the branch before merge to `main`.
+
+## Cheap landing (2026-10-03)
+
+Test only what changed: `npx eslint <files>`, `npx vitest related <files>`, typecheck per touched workspace, one push, then read GitHub CI. After a pull, rebuild shared `dist` and run `prisma generate` before trusting a gate. Every CI job gated on a changed workspace must build the shared packages first. Details: [rules/48](https://github.com/ihabkhaled/ClawAI/blob/main/rules/48-lint-and-test-only-what-changed.md), [skills/run-gates-once-and-land.md](https://github.com/ihabkhaled/ClawAI/blob/main/skills/run-gates-once-and-land.md).

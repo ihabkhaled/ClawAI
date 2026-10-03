@@ -518,3 +518,12 @@ attachment as the REFERENCE asset.
 The image service also generates video. See [ADR-137](../13-adr/adr-137-video-generation.md)
 for the design and `apps/claw-image-service/CLAUDE.md` for the invariants. Tables:
 `video_generations`, `video_generation_assets` (migration `20260930140000_add_video_generations`).
+
+## Veo behaviour (2026-10)
+
+`VEO_MODEL_FALLBACK_CHAIN` (`common/constants/video.constants.ts`): a model-specific refusal
+(`VIDEO_PROVIDER_REJECTED`, `VIDEO_MODEL_UNAVAILABLE`) tries the next Veo model once each;
+`VIDEO_PROVIDER_CREDITS_DEPLETED` never does. The stored message ends with "Provider said: ..."
+(redacted, 200 chars). Image-to-video sends `image: { bytesBase64Encoded, mimeType }`. Live
+2026-10-03: fast, lite and standard 3.1 all completed text- and image-to-video. See
+[runbook-video-generation-failure.md](../11-runbooks/runbook-video-generation-failure.md).
