@@ -431,6 +431,7 @@ export const ar: TranslationDictionary = {
       auto: 'دع AUTO يختار',
     },
     composerContext: {
+      menuLabel: 'السياق',
       pickLabel: 'اختيار حزم السياق',
       pickEmpty: 'ليست لديك حزم سياق بعد.',
       pickCount: 'المحدد: {value}',

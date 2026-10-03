@@ -436,6 +436,7 @@ export const en: TranslationDictionary = {
       auto: 'Let AUTO choose',
     },
     composerContext: {
+      menuLabel: 'Context',
       pickLabel: 'Choose context packs',
       pickEmpty: 'You have no context packs yet.',
       pickCount: '{value} selected',

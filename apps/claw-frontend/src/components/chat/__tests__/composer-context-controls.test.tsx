@@ -66,8 +66,16 @@ const renderControls = (): void => {
 };
 
 const openPicker = (): void => {
-  fireEvent.click(screen.getByRole('button', { name: 'chat.composerContext.pickLabel' }));
+  fireEvent.click(screen.getByRole('button', { name: 'chat.composerContext.menuLabel' }));
 };
+
+const openDialog = (label: string): void => {
+  openPicker();
+  fireEvent.click(screen.getByRole('button', { name: label }));
+};
+
+const VIEW = 'chat.composerContext.viewLabel';
+const MEMORY = 'chat.composerContext.memoryLabel';
 
 describe('ComposerContextControls', () => {
   beforeEach(() => {
@@ -85,26 +93,30 @@ describe('ComposerContextControls', () => {
     preview = closedPreview();
   });
 
-  it('renders the three controls, each with an accessible name', () => {
+  it('renders ONE always-visible Context button with an accessible name', () => {
     renderControls();
 
     expect(
-      screen.getByRole('button', { name: 'chat.composerContext.pickLabel' }),
+      screen.getByRole('button', { name: 'chat.composerContext.menuLabel' }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'chat.composerContext.viewLabel' }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'chat.composerContext.memoryLabel' }),
-    ).toBeInTheDocument();
+    expect(screen.getAllByRole('button')).toHaveLength(1);
   });
 
-  it('shows how many packs are attached on the picker', () => {
+  it('shows how many packs are attached on the Context button', () => {
     renderControls();
 
     expect(
-      screen.getByRole('button', { name: 'chat.composerContext.pickLabel' }),
+      screen.getByRole('button', { name: 'chat.composerContext.menuLabel' }),
     ).toHaveTextContent('1');
+  });
+
+  it('offers pick, view and memory inside the menu', () => {
+    renderControls();
+    openPicker();
+
+    expect(screen.getByText('chat.composerContext.pickLabel')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: VIEW })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: MEMORY })).toBeInTheDocument();
   });
 
   it('lists every pack with its checked state and toggles on click', () => {
@@ -140,17 +152,26 @@ describe('ComposerContextControls', () => {
     expect(screen.getByText('chat.composerContext.pickLimit:10')).toBeInTheDocument();
   });
 
-  it('asks for a fresh preview when the pack view opens', () => {
+  it('asks for a fresh preview when the view row is chosen, and opens the pack dialog', () => {
+    preview = { ...closedPreview(), bundle: emptyBundle };
     renderControls();
-    fireEvent.click(screen.getByRole('button', { name: 'chat.composerContext.viewLabel' }));
+    openDialog(VIEW);
 
     expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(screen.getByText('chat.composerContext.viewTitle')).toBeInTheDocument();
+  });
+
+  it('asks for a fresh preview when the memory row is chosen, and opens the memory dialog', () => {
+    renderControls();
+    openDialog(MEMORY);
+
+    expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(screen.getByText('chat.composerContext.memoryTitle')).toBeInTheDocument();
   });
 
   it('shows the pack content that would be sent, grouped under its pack', () => {
     preview = {
       ...closedPreview(),
-      open: true,
       bundle: emptyBundle,
       packGroups: [
         {
@@ -161,6 +182,7 @@ describe('ComposerContextControls', () => {
       ],
     };
     renderControls();
+    openDialog(VIEW);
 
     expect(screen.getAllByText('ClawAI').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Every AI, one workspace.').length).toBeGreaterThan(0);
@@ -168,46 +190,54 @@ describe('ComposerContextControls', () => {
   });
 
   it('says context is off instead of listing packs that would not be sent', () => {
-    preview = { ...closedPreview(), open: true, useContext: false, bundle: null };
+    preview = { ...closedPreview(), useContext: false, bundle: null };
     renderControls();
+    openDialog(VIEW);
 
     expect(screen.getAllByText('chat.composerContext.viewDisabled').length).toBeGreaterThan(0);
   });
 
   it('says there is no pack content when the preview has none', () => {
-    preview = { ...closedPreview(), open: true, bundle: emptyBundle };
+    preview = { ...closedPreview(), bundle: emptyBundle };
     renderControls();
+    openDialog(VIEW);
 
     expect(screen.getAllByText('chat.composerContext.viewNone').length).toBeGreaterThan(0);
   });
 
   it('shows memory on and the memories that apply, masking a redacted one', () => {
-    preview = { ...closedPreview(), open: true, bundle: bundleWithMemory(null) };
+    preview = { ...closedPreview(), bundle: bundleWithMemory(null) };
     renderControls();
+    openDialog(MEMORY);
 
     expect(screen.getAllByText('chat.composerContext.memoryOn').length).toBeGreaterThan(0);
     expect(screen.getAllByText('preview.redactedPlaceholder').length).toBeGreaterThan(0);
   });
 
   it('says memory is off, and lists nothing, when the chat has it switched off', () => {
-    preview = {
-      ...closedPreview(),
-      open: true,
-      useMemory: false,
-      bundle: bundleWithMemory('secret fact'),
-    };
+    preview = { ...closedPreview(), useMemory: false, bundle: bundleWithMemory('secret fact') };
     renderControls();
+    openDialog(MEMORY);
 
     expect(screen.getAllByText('chat.composerContext.memoryOff').length).toBeGreaterThan(0);
     expect(screen.queryByText('secret fact')).not.toBeInTheDocument();
   });
 
   it('links memory to the memory page', () => {
-    preview = { ...closedPreview(), open: true };
     renderControls();
+    openDialog(MEMORY);
 
     expect(
       screen.getAllByRole('link', { name: 'chat.composerContext.memoryManage', hidden: true })[0],
     ).toHaveAttribute('href', '/memory');
+  });
+
+  it('closes the dialog and drops the preview when it is dismissed', () => {
+    renderControls();
+    openDialog(MEMORY);
+    onOpenChange.mockReset();
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });

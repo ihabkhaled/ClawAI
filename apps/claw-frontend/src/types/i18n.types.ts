@@ -396,6 +396,7 @@ export type TranslationDictionary = {
       auto: string;
     };
     composerContext: {
+      menuLabel: string;
       pickLabel: string;
       pickEmpty: string;
       pickCount: string;

@@ -435,6 +435,7 @@ export const hi: TranslationDictionary = {
       auto: 'AUTO को चुनने दें',
     },
     composerContext: {
+      menuLabel: 'संदर्भ',
       pickLabel: 'संदर्भ पैक चुनें',
       pickEmpty: 'आपके पास अभी कोई संदर्भ पैक नहीं है।',
       pickCount: '{value} चुने गए',

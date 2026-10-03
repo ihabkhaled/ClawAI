@@ -1,3 +1,4 @@
+import type { ComposerContextDialog } from '@/enums/composer-context-dialog.enum';
 import type { SaveToContextTarget } from '@/enums/save-to-context-target.enum';
 
 import type { ChatThread } from './chat.types';
@@ -56,4 +57,26 @@ export type MessageSaveActionProps = {
 export type UseMessageSaveActionReturn = {
   save: (target: SaveToContextTarget, packId?: string) => void;
   isPending: boolean;
+};
+
+export type UseComposerContextMenuReturn = {
+  picker: UseComposerContextPacksReturn;
+  preview: UseComposerContextPreviewReturn;
+  menuOpen: boolean;
+  onMenuOpenChange: (open: boolean) => void;
+  dialog: ComposerContextDialog | null;
+  /** Closes the menu and opens the chosen dialog, asking for a fresh preview. */
+  openDialog: (target: ComposerContextDialog) => void;
+  closeDialog: () => void;
+};
+
+export type ComposerContextPackListProps = {
+  picker: UseComposerContextPacksReturn;
+};
+
+/** A read-only dialog driven by the shared menu hook. */
+export type ComposerContextDialogProps = {
+  preview: UseComposerContextPreviewReturn;
+  open: boolean;
+  onClose: () => void;
 };

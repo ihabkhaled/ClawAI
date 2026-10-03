@@ -58,6 +58,11 @@ export function ComposerToolbar({
 }: ComposerToolbarProps): React.ReactElement {
   return (
     <div className="scroll-fade-inline-end flex min-w-0 flex-1 scrollbar-none items-center gap-1.5 overflow-x-auto py-0.5 sm:gap-2">
+      {/* ONE Context button, FIRST in the row so it is on screen at phone widths and in RTL
+          without scrolling (rules/40 §11); packs, view and memory live behind it. */}
+      {threadId !== null ? (
+        <ComposerContextControls threadId={threadId} draft={draft} disabled={disabled} />
+      ) : null}
       <ModelSelector
         value={selectedModel}
         onChange={onModelChange}
@@ -79,10 +84,6 @@ export function ComposerToolbar({
         onRecorded={onRecorded}
         disabled={disabled}
       />
-      {/* Context packs and memory, made visible: pick, view, and the memory in use. */}
-      {threadId !== null ? (
-        <ComposerContextControls threadId={threadId} draft={draft} disabled={disabled} />
-      ) : null}
       {canResearch ? (
         <ResearchToggle
           value={research}

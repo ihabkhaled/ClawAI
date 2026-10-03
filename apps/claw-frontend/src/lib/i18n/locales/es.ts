@@ -440,6 +440,7 @@ export const es: TranslationDictionary = {
       auto: 'Dejar que AUTO elija',
     },
     composerContext: {
+      menuLabel: 'Contexto',
       pickLabel: 'Elegir paquetes de contexto',
       pickEmpty: 'Aún no tienes paquetes de contexto.',
       pickCount: '{value} seleccionados',

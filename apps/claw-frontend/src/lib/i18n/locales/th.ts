@@ -426,6 +426,7 @@ export const th: TranslationDictionary = {
       auto: 'ให้ AUTO เลือก',
     },
     composerContext: {
+      menuLabel: 'บริบท',
       pickLabel: 'เลือกแพ็กบริบท',
       pickEmpty: 'คุณยังไม่มีแพ็กบริบท',
       pickCount: 'เลือกแล้ว {value}',

@@ -414,6 +414,7 @@ export const zh: TranslationDictionary = {
       auto: '让 AUTO 选择',
     },
     composerContext: {
+      menuLabel: '上下文',
       pickLabel: '选择上下文包',
       pickEmpty: '你还没有上下文包。',
       pickCount: '已选 {value} 个',

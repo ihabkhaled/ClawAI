@@ -439,6 +439,7 @@ export const ru: TranslationDictionary = {
       auto: 'Пусть выберет AUTO',
     },
     composerContext: {
+      menuLabel: 'Контекст',
       pickLabel: 'Выбрать пакеты контекста',
       pickEmpty: 'У вас пока нет пакетов контекста.',
       pickCount: 'Выбрано: {value}',

@@ -1,20 +1,15 @@
 'use client';
 
-import { FolderOpen } from 'lucide-react';
-
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
-import { useComposerContextPreview } from '@/hooks/chat/use-composer-context-preview';
 import { useTranslation } from '@/lib/i18n';
-import type { ComposerContextControlProps } from '@/types/composer-context.types';
+import type { ComposerContextDialogProps } from '@/types/composer-context.types';
 
 /**
  * Shows the context-pack content the next message will carry, grouped by pack.
@@ -22,28 +17,21 @@ import type { ComposerContextControlProps } from '@/types/composer-context.types
  * a switched-off context says so instead of listing packs that would not go.
  */
 export function ComposerContextPacksView({
-  threadId,
-  draft,
-  disabled,
-}: ComposerContextControlProps): React.ReactElement {
+  preview: view,
+  open,
+  onClose,
+}: ComposerContextDialogProps): React.ReactElement {
   const { t } = useTranslation();
-  const view = useComposerContextPreview(threadId, draft);
 
   return (
-    <Dialog open={view.open} onOpenChange={view.onOpenChange}>
-      <DialogTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          disabled={disabled}
-          aria-label={t('chat.composerContext.viewLabel')}
-          title={t('chat.composerContext.viewLabel')}
-          className="touch:h-11 touch:w-11 h-9 w-9 shrink-0"
-        >
-          <FolderOpen className="h-4 w-4" aria-hidden="true" />
-        </Button>
-      </DialogTrigger>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) {
+          onClose();
+        }
+      }}
+    >
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t('chat.composerContext.viewTitle')}</DialogTitle>

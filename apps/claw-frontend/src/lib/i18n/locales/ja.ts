@@ -439,6 +439,7 @@ export const ja: TranslationDictionary = {
       auto: 'AUTO に任せる',
     },
     composerContext: {
+      menuLabel: 'コンテキスト',
       pickLabel: 'コンテキストパックを選択',
       pickEmpty: 'コンテキストパックはまだありません。',
       pickCount: '{value} 件選択中',

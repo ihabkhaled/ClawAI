@@ -1,51 +1,40 @@
 'use client';
 
-import { Brain } from 'lucide-react';
 import Link from 'next/link';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { ROUTES } from '@/constants/routes.constants';
-import { useComposerContextPreview } from '@/hooks/chat/use-composer-context-preview';
 import { useTranslation } from '@/lib/i18n';
-import type { ComposerContextControlProps } from '@/types/composer-context.types';
+import type { ComposerContextDialogProps } from '@/types/composer-context.types';
 
 /**
  * The memory this chat is using: whether memory is on at all, and which
  * memories the next message would pull in. Same server dry-run as the pack view.
  */
 export function ComposerMemoryView({
-  threadId,
-  draft,
-  disabled,
-}: ComposerContextControlProps): React.ReactElement {
+  preview: view,
+  open,
+  onClose,
+}: ComposerContextDialogProps): React.ReactElement {
   const { t } = useTranslation();
-  const view = useComposerContextPreview(threadId, draft);
   const memories = view.bundle?.memories ?? [];
 
   return (
-    <Dialog open={view.open} onOpenChange={view.onOpenChange}>
-      <DialogTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          disabled={disabled}
-          aria-label={t('chat.composerContext.memoryLabel')}
-          title={t('chat.composerContext.memoryLabel')}
-          className="touch:h-11 touch:w-11 h-9 w-9 shrink-0"
-        >
-          <Brain className="h-4 w-4" aria-hidden="true" />
-        </Button>
-      </DialogTrigger>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) {
+          onClose();
+        }
+      }}
+    >
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t('chat.composerContext.memoryTitle')}</DialogTitle>

@@ -437,6 +437,7 @@ export const fa: TranslationDictionary = {
       auto: 'بگذار AUTO انتخاب کند',
     },
     composerContext: {
+      menuLabel: 'زمینه',
       pickLabel: 'انتخاب بسته‌های زمینه',
       pickEmpty: 'هنوز بسته زمینه‌ای ندارید.',
       pickCount: '{value} مورد انتخاب شده',
