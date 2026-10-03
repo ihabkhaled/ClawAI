@@ -83,3 +83,11 @@ Where a model _is_ used (routing AUTO mode), always ship a heuristic fallback so
 system degrades instead of failing when the model is unavailable.
 
 **Related.** ADR-057 deterministic-context-resolver; [testing-strategy](testing-strategy.md).
+### Runtime-managed compatible providers (2026-10-03)
+
+Custom OpenAI-compatible provider definitions live in connector-service and use
+the generic adapter. Connector credentials stay separately encrypted. The
+provider key is carried into routing as a runtime string next to the generic
+provider enum, so provider identity does not collapse to the implementation
+adapter. Preserve each service's database boundary. See ADR-157. Built-in
+presets remain in their existing code registry until explicitly migrated.

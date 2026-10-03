@@ -202,3 +202,15 @@ benchmark: [`chat-competitive-benchmark-2026-09.md`](chat-competitive-benchmark-
 - **Current state:** ADR-134. Changing a memory's type happens on the Memory
   page (the card's link opens the editor), not on the card.
 - **History:** 2026-09-30 created and delivered (Batch 6).
+
+### REQ-CONNECTOR-001
+
+- **Statement:** An administrator can register an OpenAI-compatible provider
+  and configure encrypted connector credentials; synced model identity remains
+  distinct through model catalog and routing.
+- **Status:** partial · **Priority:** high
+- **Source:** owner prompt packs, 2026-10-03.
+- **Current state:** ADR-157, `docs/features/runtime-managed-connector-providers/`.
+  Custom definitions are implemented. Built-in registry controls and live QA
+  remain open. NVIDIA NIM's protocol path is mocked; no live call is claimed.
+- **Who:** owner; implemented and evidence-recorded by the coding agent.

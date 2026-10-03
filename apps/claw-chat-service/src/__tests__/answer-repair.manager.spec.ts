@@ -110,6 +110,9 @@ describe('AnswerRepairManager', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockChatThreadsRepository.findById.mockImplementation((id: string) =>
+      Promise.resolve({ id, userId: 'user-1' }),
+    );
     mockResearchEnricherManager.enrichForOrchestration.mockResolvedValue({
       transcript: null,
       systemPrompt: '',

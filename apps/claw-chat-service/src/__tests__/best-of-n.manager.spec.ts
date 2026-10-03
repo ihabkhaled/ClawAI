@@ -155,6 +155,11 @@ describe('BestOfNManager', () => {
   beforeEach(() => {
     messagesRepo = mockMessagesRepository();
     threadsRepo = mockThreadsRepository();
+    (
+      threadsRepo as unknown as {
+        findById: { mockImplementation: (fn: (id: string) => Promise<unknown>) => void };
+      }
+    ).findById.mockImplementation((id: string) => Promise.resolve({ id, userId: 'user-1' }));
     streamService = mockStreamService();
     qualityManager = mockQualityCheckManager();
     mockResearchEnricherManager.enrichForOrchestration.mockResolvedValue({
