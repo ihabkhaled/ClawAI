@@ -1,5 +1,19 @@
 # ClawAI AI Provider Integration Catalog
 
+## Runtime-managed OpenAI-compatible providers (ADR-157)
+
+Admins with `ADMIN_CONNECTORS_MANAGE` can register a custom compatible provider
+and toggle built-in provider availability in Connectors > Providers. Built-ins
+are status-only: compatible runtime settings remain in `CONNECTOR_PRESETS`, and
+bespoke providers keep their current adapters. Existing connector rows link to
+their built-in definitions without rewriting credentials or model history.
+Custom definitions use the generic adapter for OpenAI chat completions and
+OpenAI-shaped model listing. NVIDIA NIM's hosted service uses
+`https://integrate.api.nvidia.com`; a mocked `/v1/models` response is covered by
+the compatibility acceptance test. No live provider call or free-tier claim is
+made by this feature. Hugging Face task APIs, Pollinations media, and AI Horde's
+asynchronous protocol need separate adapter implementations.
+
 This document catalogs all AI providers integrated with ClawAI, including setup instructions, available models, capability flags, and classification metadata.
 
 ---

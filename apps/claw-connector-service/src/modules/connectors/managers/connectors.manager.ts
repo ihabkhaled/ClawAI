@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import type { ModelBehaviorProbeResult } from '@claw/shared-types';
 import { getConnectorPreset, resolvePresetBaseUrl } from '@claw/shared-utilities';
 import { type Connector, ModelSyncStatus } from '../../../generated/prisma';
@@ -16,7 +16,10 @@ import { ConnectorsRepository } from '../repositories/connectors.repository';
 import { withKnownContextWindows } from '../utilities/model-context-window.utility';
 import { parseGatewayHeaders } from '../utilities/gateway-headers.utility';
 import { getAdapter } from './adapters/adapter-factory';
-import { type ConnectorConfig } from './provider-adapter.interface';
+import { OpenAICompatibleAdapter } from './adapters/openai-compatible.adapter';
+import { ProviderDefinitionsService } from '../services/provider-definitions.service';
+import { toRuntimeConnectorPreset } from '../utilities/runtime-provider-preset.utility';
+import { type ConnectorConfig, type ProviderAdapter } from './provider-adapter.interface';
 import { type HealthCheckResult, type SyncModelsResult } from '../types/connectors.types';
 
 @Injectable()
@@ -28,6 +31,7 @@ export class ConnectorsManager {
     private readonly connectorModelsRepository: ConnectorModelsRepository,
     private readonly healthEventsRepository: HealthEventsRepository,
     private readonly syncRunsRepository: SyncRunsRepository,
+    @Optional() private readonly providerDefinitionsService?: ProviderDefinitionsService,
   ) {}
 
   /**
@@ -42,7 +46,7 @@ export class ConnectorsManager {
     modelKey: string,
   ): Promise<ModelBehaviorProbeResult> {
     const config = this.getDecryptedConfig(connector);
-    const adapter = getAdapter(connector.provider);
+    const adapter = await this.getAdapter(connector);
     if (typeof adapter.probeToolCapability !== 'function') {
       this.logger.warn(
         `probeModelToolCapability: provider ${connector.provider} has no probe implementation`,
@@ -65,7 +69,7 @@ export class ConnectorsManager {
     this.logger.debug('testConnector: decrypting connector config');
     const config = this.getDecryptedConfig(connector);
     this.logger.debug(`testConnector: getting adapter for provider=${connector.provider}`);
-    const adapter = getAdapter(connector.provider);
+    const adapter = await this.getAdapter(connector);
     this.logger.debug('testConnector: running health check');
     const result = await adapter.healthCheck(config);
 
@@ -93,7 +97,7 @@ export class ConnectorsManager {
     this.logger.debug('syncModels: decrypting connector config');
     const config = this.getDecryptedConfig(connector);
     this.logger.debug(`syncModels: getting adapter for provider=${connector.provider}`);
-    const adapter = getAdapter(connector.provider);
+    const adapter = await this.getAdapter(connector);
 
     this.logger.debug('syncModels: creating sync run record');
     const syncRun = await this.syncRunsRepository.create({
@@ -187,14 +191,26 @@ export class ConnectorsManager {
    * Bespoke providers pass through unchanged; chat-service keeps its own
    * defaults for those.
    */
-  getExecutionConfig(connector: Connector): ConnectorConfig {
-    const config = this.getDecryptedConfig(connector);
-    const preset = getConnectorPreset(connector.provider);
+  async getExecutionConfig(connector: Connector): Promise<ConnectorConfig> {
+    const [config, definition] = await Promise.all([
+      Promise.resolve(this.getDecryptedConfig(connector)),
+      connector.providerDefinitionId
+        ? this.providerDefinitionsService?.findActiveById(connector.providerDefinitionId)
+        : Promise.resolve(null),
+    ]);
+    const preset =
+      definition && !definition.isBuiltIn
+        ? toRuntimeConnectorPreset(definition)
+        : getConnectorPreset(connector.provider);
     if (preset === undefined) {
       return config;
     }
     try {
-      return { ...config, baseUrl: resolvePresetBaseUrl(preset, config.baseUrl, config.accountId) };
+      return {
+        ...config,
+        provider: definition && !definition.isBuiltIn ? definition.key : config.provider,
+        baseUrl: resolvePresetBaseUrl(preset, config.baseUrl, config.accountId),
+      };
     } catch (error: unknown) {
       const reason = error instanceof Error ? error.message : 'unresolvable base URL';
       throw new BusinessException(
@@ -202,5 +218,18 @@ export class ConnectorsManager {
         'CONNECTOR_BASE_URL_UNRESOLVED',
       );
     }
+  }
+
+  private async getAdapter(connector: Connector): Promise<ProviderAdapter> {
+    if (!connector.providerDefinitionId) return getAdapter(connector.provider);
+    const definition = await this.providerDefinitionsService?.findActiveById(
+      connector.providerDefinitionId,
+    );
+    if (!definition) {
+      throw new BusinessException('Provider definition unavailable', 'PROVIDER_INACTIVE');
+    }
+    return definition.isBuiltIn
+      ? getAdapter(connector.provider)
+      : new OpenAICompatibleAdapter(toRuntimeConnectorPreset(definition));
   }
 }

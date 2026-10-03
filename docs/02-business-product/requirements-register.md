@@ -211,6 +211,7 @@ benchmark: [`chat-competitive-benchmark-2026-09.md`](chat-competitive-benchmark-
 - **Status:** partial · **Priority:** high
 - **Source:** owner prompt packs, 2026-10-03.
 - **Current state:** ADR-157, `docs/features/runtime-managed-connector-providers/`.
-  Custom definitions are implemented. Built-in registry controls and live QA
-  remain open. NVIDIA NIM's protocol path is mocked; no live call is claimed.
+  Custom definitions and protected built-in status controls are implemented.
+  Live migration, RBAC and product QA remain open. NVIDIA NIM's protocol path
+  is mocked; no live call is claimed.
 - **Who:** owner; implemented and evidence-recorded by the coding agent.

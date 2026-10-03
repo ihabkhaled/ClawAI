@@ -1,11 +1,10 @@
 import { z } from 'zod';
-import { ConnectorAuthType, ConnectorProvider } from '../../../generated/prisma';
+import { ConnectorAuthType } from '../../../generated/prisma';
 import { connectorAccountIdSchema } from './create-connector.dto';
 import { gatewayHeadersSchema } from './gateway-headers.dto';
 
 export const updateConnectorSchema = z.object({
   name: z.string().min(1).max(100, 'Name must be at most 100 characters').optional(),
-  provider: z.nativeEnum(ConnectorProvider).optional(),
   authType: z.nativeEnum(ConnectorAuthType).optional(),
   apiKey: z.string().max(500, 'API key must be at most 500 characters').optional(),
   baseUrl: z.string().max(500, 'Base URL must be at most 500 characters').optional(),

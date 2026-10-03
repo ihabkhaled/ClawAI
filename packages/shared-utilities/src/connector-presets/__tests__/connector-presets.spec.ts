@@ -28,7 +28,7 @@ import {
 
 const ACCOUNT_ID = '0123456789abcdef0123456789abcdef';
 
-const BESPOKE_PROVIDERS = new Set<string>([
+const NON_PRESET_PROVIDERS = new Set<string>([
   ConnectorProvider.OPENAI,
   ConnectorProvider.ANTHROPIC,
   ConnectorProvider.GEMINI,
@@ -37,6 +37,7 @@ const BESPOKE_PROVIDERS = new Set<string>([
   ConnectorProvider.OLLAMA,
   ConnectorProvider.GROK,
   ConnectorProvider.LLAMACPP,
+  ConnectorProvider.CUSTOM_OPENAI_COMPATIBLE,
 ]);
 
 function presetFor(provider: ConnectorProvider): (typeof CONNECTOR_PRESETS)[number] {
@@ -48,8 +49,8 @@ function presetFor(provider: ConnectorProvider): (typeof CONNECTOR_PRESETS)[numb
 }
 
 describe('CONNECTOR_PRESETS registry', () => {
-  it('has one preset for every non-bespoke ConnectorProvider value, and nothing else', () => {
-    const expected = Object.values(ConnectorProvider).filter((p) => !BESPOKE_PROVIDERS.has(p));
+  it('has one preset for every built-in compatible provider, and nothing else', () => {
+    const expected = Object.values(ConnectorProvider).filter((p) => !NON_PRESET_PROVIDERS.has(p));
     expect(CONNECTOR_PRESETS.map((preset) => preset.key).sort()).toEqual([...expected].sort());
   });
 

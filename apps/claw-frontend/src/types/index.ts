@@ -141,6 +141,7 @@ export type {
   ConnectorProviderComboboxItemProps,
   ConnectorPresetLinksProps,
 } from './connector.types';
+export type { ProviderDefinition, CreateProviderDefinition } from './provider-definition.types';
 export type {
   ExplanationFactor,
   RejectedEntry,

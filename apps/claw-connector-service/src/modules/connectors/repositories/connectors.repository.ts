@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import { type Connector, Prisma } from '../../../generated/prisma';
+import { type Connector, type ConnectorStatus, Prisma } from '../../../generated/prisma';
 import {
   type ConnectorFilters,
   type ConnectorPaygPolicyRow,
-  type ConnectorWithModels,
+  type ConnectorWithProviderDefinition,
   type CreateConnectorData,
   type UpdateConnectorData,
 } from '../types/connectors.types';
@@ -15,18 +15,33 @@ export class ConnectorsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: CreateConnectorData): Promise<Connector> {
-    return this.prisma.connector.create({ data });
+    return this.prisma.$transaction(async (transaction) => {
+      const connector = await transaction.connector.create({ data });
+      if (data.providerDefinitionId !== undefined) {
+        await transaction.connectorProviderDefinition.update({
+          where: { id: data.providerDefinitionId },
+          data: { everConnected: true },
+        });
+      }
+      return connector;
+    });
   }
 
-  async findById(id: string): Promise<Connector | null> {
-    return this.prisma.connector.findUnique({ where: { id } });
+  async findById(id: string): Promise<ConnectorWithProviderDefinition | null> {
+    return this.prisma.connector.findUnique({
+      where: { id },
+      include: {
+        _count: { select: { models: true } },
+        providerDefinition: { select: { key: true, displayName: true } },
+      },
+    }) as Promise<ConnectorWithProviderDefinition | null>;
   }
 
   async findAll(
     filters: ConnectorFilters,
     page: number,
     limit: number,
-  ): Promise<ConnectorWithModels[]> {
+  ): Promise<ConnectorWithProviderDefinition[]> {
     const where = this.buildWhereClause(filters);
     const skip = (page - 1) * limit;
 
@@ -35,8 +50,11 @@ export class ConnectorsRepository {
       skip,
       take: limit,
       orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { models: true } } },
-    }) as Promise<ConnectorWithModels[]>;
+      include: {
+        _count: { select: { models: true } },
+        providerDefinition: { select: { key: true, displayName: true } },
+      },
+    }) as Promise<ConnectorWithProviderDefinition[]>;
   }
 
   async update(id: string, data: UpdateConnectorData): Promise<Connector> {
@@ -49,19 +67,53 @@ export class ConnectorsRepository {
     // that surfaced as an opaque 500. An unknown provider simply has no
     // connector.
     if (!isConnectorProvider(provider)) {
-      return null;
+      return this.prisma.connector.findFirst({
+        where: {
+          isEnabled: true,
+          providerDefinition: { key: provider.toUpperCase(), isActive: true },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
     }
     return this.prisma.connector.findFirst({
-      where: { provider, isEnabled: true },
+      where: {
+        provider,
+        isEnabled: true,
+        OR: [{ providerDefinitionId: null }, { providerDefinition: { isActive: true } }],
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
 
   async findEnabled(): Promise<Connector[]> {
     return this.prisma.connector.findMany({
-      where: { isEnabled: true },
+      where: {
+        isEnabled: true,
+        OR: [{ providerDefinitionId: null }, { providerDefinition: { isActive: true } }],
+      },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async findEnabledHealthSnapshotRows(): Promise<
+    Array<{
+      provider: string;
+      status: ConnectorStatus;
+      isLocal: boolean;
+    }>
+  > {
+    const rows = await this.prisma.connector.findMany({
+      where: {
+        isEnabled: true,
+        OR: [{ providerDefinitionId: null }, { providerDefinition: { isActive: true } }],
+      },
+      select: { provider: true, status: true, providerDefinition: { select: { key: true } } },
+    });
+    return rows.map((row) => ({
+      provider: row.providerDefinition?.key ?? row.provider,
+      status: row.status,
+      isLocal: row.provider === 'OLLAMA' || row.provider === 'LLAMACPP',
+    }));
   }
 
   /**
@@ -76,10 +128,20 @@ export class ConnectorsRepository {
    * conditional aggregate would need.
    */
   async findPaygPolicyRows(): Promise<ConnectorPaygPolicyRow[]> {
-    return this.prisma.connector.findMany({
-      select: { provider: true, isEnabled: true, isPayAsYouGo: true },
+    const rows = await this.prisma.connector.findMany({
+      select: {
+        provider: true,
+        isEnabled: true,
+        isPayAsYouGo: true,
+        providerDefinition: { select: { key: true, isActive: true } },
+      },
       orderBy: { provider: 'asc' },
     });
+    return rows.map(({ provider, isEnabled, isPayAsYouGo, providerDefinition }) => ({
+      provider: providerDefinition?.key ?? provider,
+      isEnabled: isEnabled && (providerDefinition?.isActive ?? true),
+      isPayAsYouGo,
+    }));
   }
 
   async delete(id: string): Promise<Connector> {

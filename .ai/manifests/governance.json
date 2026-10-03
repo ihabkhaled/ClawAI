@@ -43,6 +43,7 @@
     "docs/adrs",
     "docs/architecture",
     "docs/business",
+    "docs/changes",
     "docs/exceptions",
     "docs/features",
     "docs/implementation",
@@ -50,6 +51,7 @@
     "docs/research",
     "docs/security",
     "docs/superpowers",
+    "docs/wiki",
     "docs/workspace"
   ],
   "generated": true,
@@ -470,7 +472,7 @@
       "file": "skills/add-prisma-model.md"
     },
     {
-      "bytes": 5018,
+      "bytes": 5969,
       "file": "skills/add-provider-connector.md"
     },
     {

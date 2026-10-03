@@ -37,6 +37,7 @@ Welcome to the **ClawAI engineering and product Wiki**. This Wiki is generated f
 - **Market:** [competitive analysis](https://github.com/ihabkhaled/ClawAI/blob/main/docs/01-executive-context/competitive-analysis.md)
 - **Requirements and drift:** [[Requirements Register|Requirements-Register]] · [[Drift Log|Drift-Log]]
 - **Decisions and changes:** [[ADR Index|ADR-Index]] · [changelog](https://github.com/ihabkhaled/ClawAI/blob/main/docs/CHANGELOG.md)
+- **Runtime provider management:** [[Runtime-Managed-Connector-Providers]] — admin-managed compatible providers, current scope and QA status
 
 ## Deep-dive areas
 

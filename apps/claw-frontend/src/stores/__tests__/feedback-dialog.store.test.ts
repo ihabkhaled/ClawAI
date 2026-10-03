@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useFeedbackDialogStore } from '@/stores/feedback-dialog.store';
 
@@ -43,9 +43,7 @@ describe('feedback dialog store focus return', () => {
     (document.activeElement as HTMLElement).blur();
     state().setFeedbackOpen(false);
     expect(state().returnFocusTo).toBeNull();
-    await new Promise<void>((resolve) => setTimeout(resolve, 60));
-
-    expect(document.activeElement).toBe(opener);
+    await vi.waitFor(() => expect(document.activeElement).toBe(opener));
   });
 
   it('closes cleanly when the opener is gone', async () => {

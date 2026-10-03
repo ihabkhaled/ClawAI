@@ -198,7 +198,16 @@ describe('mobile token default-deny route inventory (F097)', () => {
     expect(userRoutes.length).toBeGreaterThan(40);
     for (const route of userRoutes) {
       const { context } = contextFor(route, mobileBearer());
-      expect(() => guard.canActivate(context), route.signature).toThrow(UnauthorizedException);
+      let error: unknown;
+      try {
+        guard.canActivate(context);
+      } catch (caught) {
+        error = caught;
+      }
+      expect(error, route.signature).toMatchObject({
+        name: 'UnauthorizedException',
+        status: 401,
+      });
     }
   });
 

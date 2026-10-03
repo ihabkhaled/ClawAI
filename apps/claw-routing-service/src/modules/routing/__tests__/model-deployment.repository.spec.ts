@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { DeploymentActivationState, PrivacyClass, RouterProvider } from '../../../generated/prisma';
 import { type PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { ModelDeploymentRepository } from '../repositories/model-deployment.repository';
@@ -24,7 +24,7 @@ describe('ModelDeploymentRepository.findEligibleForCloudRouting', () => {
         privacyClass: { in: [PrivacyClass.PUBLIC_OK, PrivacyClass.CLOUD_PERMITTED] },
         activationState: DeploymentActivationState.ACTIVE,
       },
-      select: { id: true, provider: true, providerModelId: true },
+      select: { id: true, provider: true, providerModelId: true, runtimeProviderKey: true },
     });
   });
 

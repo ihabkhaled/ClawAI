@@ -12,8 +12,9 @@ import type { ModalityKind, RouterProvider } from '../../../generated/prisma';
  */
 export interface EligibleDeploymentRecord {
   id: string;
-  provider: RouterProvider;
+  provider: RouterProvider | string;
   providerModelId: string;
+  runtimeProviderKey?: string | null;
   /**
    * How this candidate fits the turn's attachments (multimodal batch 8). Set
    * by the cloud router's candidate selection; absent on other paths.

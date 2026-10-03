@@ -18,6 +18,7 @@ export const ROUTES = {
   CHAT: '/chat',
   CHAT_THREAD: (threadId: string) => `/chat/${threadId}` as const,
   CONNECTORS: '/connectors',
+  CONNECTOR_PROVIDERS: '/connectors/providers',
   CONNECTOR_DETAIL: (connectorId: string) => `/connectors/${connectorId}` as const,
   CONNECTOR_MODELS: (connectorId: string) => `/connectors/${connectorId}/models` as const,
   MODELS: '/models',

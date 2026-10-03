@@ -47,7 +47,9 @@ export class ConnectorsController {
   // so the static segment is not captured as an :id param.
   @Get('available-models')
   @RequirePermissions(Permission.MODEL_USE_ALLOWED)
-  async getAvailableModels(): Promise<ConnectorModel[]> {
+  async getAvailableModels(): Promise<
+    Array<Omit<ConnectorModel, 'provider'> & { provider: string }>
+  > {
     return this.connectorsService.getAvailableModels();
   }
 

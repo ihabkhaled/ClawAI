@@ -35,6 +35,8 @@ export { RetrievalReason } from './retrieval-reason.enum';
 export { VersionDiffStatus } from './version-diff-status.enum';
 export { BadgeVariant } from './badge-variant.enum';
 export { ConnectorAuthType } from './connector-auth-type.enum';
+export { ProviderAdapterFamily } from './provider-adapter-family.enum';
+export { ProviderModelsResponseFormat } from './provider-models-response-format.enum';
 export { ModelLifecycle } from './model-lifecycle.enum';
 export { UserLanguagePreference } from './user-language-preference.enum';
 export { UserAppearancePreference } from './user-appearance-preference.enum';

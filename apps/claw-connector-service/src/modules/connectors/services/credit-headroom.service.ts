@@ -35,7 +35,7 @@ export class CreditHeadroomService {
       return UNKNOWN_CREDIT_HEADROOM;
     }
     try {
-      const config = this.connectorsManager.getExecutionConfig(connector);
+      const config = await this.connectorsManager.getExecutionConfig(connector);
       return await this.creditHeadroomManager.read(connector.id, connector.provider, config);
     } catch (error: unknown) {
       const reason = error instanceof Error ? error.name : 'unknown';

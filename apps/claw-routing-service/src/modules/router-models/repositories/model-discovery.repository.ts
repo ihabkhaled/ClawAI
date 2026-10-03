@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { recordGet } from '../../../common/utilities';
-import { DeploymentType, type RouterProvider } from '../../../generated/prisma';
+import { DeploymentType, RouterProvider } from '../../../generated/prisma';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import {
   CONNECTOR_PROVIDER_TO_ROUTER_PROVIDER,
@@ -37,10 +37,13 @@ export class ModelDiscoveryRepository {
     let skipped = 0;
 
     for (const model of models) {
-      const provider = recordGet(
+      const mappedProvider = recordGet(
         CONNECTOR_PROVIDER_TO_ROUTER_PROVIDER,
         model.provider.toUpperCase(),
       );
+      const isRuntimeCompatible = model.adapterFamily === 'OPENAI_COMPATIBLE';
+      const provider =
+        mappedProvider ?? (isRuntimeCompatible ? RouterProvider.CUSTOM_OPENAI_COMPATIBLE : null);
       if (!provider || model.modelKey.trim().length === 0) {
         skipped += 1;
         continue;
@@ -64,7 +67,10 @@ export class ModelDiscoveryRepository {
         definitionsCreated += 1;
       }
 
-      const deploymentKey = [provider, model.modelKey, 'connector'].join(DEPLOYMENT_KEY_SEPARATOR);
+      const runtimeProviderKey = isRuntimeCompatible ? model.provider.toUpperCase() : null;
+      const deploymentKey = [provider, runtimeProviderKey ?? '', model.modelKey, 'connector'].join(
+        DEPLOYMENT_KEY_SEPARATOR,
+      );
 
       await this.prisma.modelDeployment.upsert({
         where: { deploymentKey },
@@ -72,13 +78,14 @@ export class ModelDiscoveryRepository {
           definitionId: definition.id,
           deploymentKey,
           provider,
+          runtimeProviderKey,
           providerModelId: model.modelKey,
           deploymentType: DeploymentType.CLOUD_API,
           contextWindowTokens: model.contextWindowTokens ?? null,
           maxOutputTokens: model.maxOutputTokens ?? null,
           metadataSource: DISCOVERY_METADATA_SOURCE,
         },
-        update: {},
+        update: { runtimeProviderKey },
       });
       deploymentsCreated += 1;
     }

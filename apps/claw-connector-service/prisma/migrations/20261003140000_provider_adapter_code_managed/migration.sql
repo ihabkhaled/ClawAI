@@ -1,0 +1,1 @@
+ALTER TYPE "ProviderAdapterFamily" ADD VALUE 'CODE_MANAGED';

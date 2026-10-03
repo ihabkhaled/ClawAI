@@ -10,7 +10,7 @@
 | Env prefix  | `CONNECTOR_`                   |
 | Nginx route | `/api/v1/connectors/*`         |
 
-The connector service manages AI provider connections (OpenAI, Anthropic, Gemini, DeepSeek, AWS Bedrock, Ollama, Grok/xAI). It stores encrypted API keys, syncs available models from each provider, and runs periodic health checks.
+The connector service manages built-in AI provider connections and runtime-managed OpenAI-compatible providers. It stores encrypted API keys, syncs available models from each provider, and runs periodic health checks.
 
 ## Database Schema
 
@@ -31,6 +31,27 @@ The connector service manages AI provider connections (OpenAI, Anthropic, Gemini
 | workspaceId             | String?           | Anthropic workspace header                   |
 | encryptedGatewayHeaders | String?           | Encrypted JSON of LLM-gateway headers (F092) |
 | isPayAsYouGo            | Boolean           | Debits PAYG credit (default false)           |
+
+### Runtime provider definitions (ADR-157)
+
+`ConnectorProviderDefinition` stores administrator-created OpenAI-compatible
+provider metadata and the managed status for every built-in provider. A custom connector uses the generic
+`CUSTOM_OPENAI_COMPATIBLE` enum plus `providerDefinitionId`; credentials remain
+on the connector and encrypted in `encryptedConfig`. Built-in compatible runtime
+settings still come from ADR-117; bespoke providers retain their specialized
+adapters. Existing connectors link to their seeded built-in definition by enum.
+
+Definition CRUD is available at `/connectors/provider-definitions` to callers
+with `ADMIN_CONNECTORS_MANAGE`. Custom keys cannot change; endpoint and protocol
+fields lock after the first linked connector. Built-ins only allow status
+changes and cannot be deleted. Deactivation prevents new connections, catalog
+exposure, health startup checks, and runtime config lookup while retaining history.
+A custom definition with `everConnected=true` cannot be deleted.
+
+Provider URLs must use HTTPS and pass syntax/private-host validation. Model and
+health requests also use the shared outbound host guard, timeout, and redirect
+rejection. DNS rebinding is not pinned; restrict outbound network access when
+administrators are not fully trusted.
 
 **`isPayAsYouGo` is the runtime authority for PAYG classification**, not
 `PAYG_DEFAULT_PROVIDERS` in `@claw/shared-constants`. That constant is only the

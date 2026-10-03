@@ -80,6 +80,19 @@ describe('dictionary parity', () => {
       expect(localModelMessage).not.toBe(getTranslation(Locale.EN, localModelKey));
     }
   });
+
+  it.each(Object.values(Locale))('%s includes provider management translations', (locale) => {
+    expect(getTranslation(locale, 'providerManagement.title')).not.toBe('providerManagement.title');
+    expect(placeholders(getTranslation(locale, 'providerManagement.dependencies'))).toEqual([
+      'connectors',
+      'models',
+    ]);
+    if (locale !== Locale.EN) {
+      expect(getTranslation(locale, 'providerManagement.title')).not.toBe(
+        getTranslation(Locale.EN, 'providerManagement.title'),
+      );
+    }
+  });
 });
 
 describe('getTranslation', () => {

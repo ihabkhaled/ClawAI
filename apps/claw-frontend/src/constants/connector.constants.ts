@@ -28,6 +28,12 @@ export const PROVIDER_DISPLAY_NAMES: Record<ConnectorProvider, string> = Object.
   ]),
 ) as Record<ConnectorProvider, string>;
 
+export function providerDisplayName(provider: string): string {
+  return Object.hasOwn(PROVIDER_DISPLAY_NAMES, provider)
+    ? PROVIDER_DISPLAY_NAMES[provider as ConnectorProvider]
+    : provider;
+}
+
 const BESPOKE_PROVIDER_ICON_COLORS: Record<string, string> = {
   [ConnectorProvider.OPENAI]:
     'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',

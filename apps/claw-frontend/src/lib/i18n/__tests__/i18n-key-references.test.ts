@@ -3,7 +3,9 @@ import { join, relative, resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { Locale } from '@/enums/locale.enum';
 import { en } from '@/lib/i18n/locales/en';
+import { PROVIDER_MANAGEMENT_TRANSLATIONS } from '@/lib/i18n/locales/provider-management-translations';
 
 // Guards the failure mode that shipped `marketing.architecturePage.hero.title`
 // as visible UI text.
@@ -57,7 +59,11 @@ function flattenKeys(value: unknown, prefix: string, out: Set<string>): Set<stri
 }
 
 describe('i18n key references', () => {
-  const known = flattenKeys(en, '', new Set<string>());
+  const known = flattenKeys(
+    { ...en, providerManagement: PROVIDER_MANAGEMENT_TRANSLATIONS[Locale.EN] },
+    '',
+    new Set<string>(),
+  );
   const files = collectSourceFiles(SRC);
 
   it('finds source files and dictionary keys to compare', () => {

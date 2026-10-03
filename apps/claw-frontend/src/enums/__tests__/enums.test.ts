@@ -48,8 +48,9 @@ describe('RoutingMode enum', () => {
 });
 
 describe('ConnectorProvider enum', () => {
-  it('has all 23 providers: 8 bespoke adapters + 15 OpenAI-compatible presets', () => {
-    expect(Object.keys(ConnectorProvider)).toHaveLength(23);
+  it('has 23 built-in providers and the custom-provider identity sentinel', () => {
+    expect(Object.keys(ConnectorProvider)).toHaveLength(24);
+    expect(ConnectorProvider.CUSTOM_OPENAI_COMPATIBLE).toBe('CUSTOM_OPENAI_COMPATIBLE');
   });
 
   it('contains expected providers', () => {

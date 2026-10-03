@@ -6,6 +6,7 @@ export type Connector = {
   id: string;
   name: string;
   provider: ConnectorProvider;
+  providerDisplayName?: string;
   status: ConnectorStatus;
   authType: string;
   isEnabled: boolean;
@@ -24,7 +25,8 @@ export type Connector = {
 export type ConnectorModel = {
   id: string;
   connectorId: string;
-  provider: ConnectorProvider;
+  provider: string;
+  providerDisplayName?: string;
   modelKey: string;
   displayName: string;
   lifecycle: string;
@@ -46,6 +48,7 @@ export type ConnectorModel = {
 export type CreateConnectorRequest = {
   name: string;
   provider: ConnectorProvider;
+  providerDefinitionId?: string;
   authType: string;
   apiKey?: string;
   baseUrl?: string;

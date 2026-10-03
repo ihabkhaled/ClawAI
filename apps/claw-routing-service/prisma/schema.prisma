@@ -203,6 +203,7 @@ enum RouterProvider {
   VERCEL_AI_GATEWAY
   PERPLEXITY
   COHERE
+  CUSTOM_OPENAI_COMPATIBLE
 }
 
 enum DeploymentType {
@@ -747,6 +748,8 @@ model ModelDeployment {
   /// composite unique would silently permit duplicate local deployments.
   deploymentKey   String         @unique @map("deployment_key")
   provider        RouterProvider
+  /// Custom provider key carried from connector-service; null for built-ins.
+  runtimeProviderKey String? @map("runtime_provider_key")
   /// The id the provider itself expects on the wire, which is not always the
   /// definition's modelKey (aliases, dated snapshots, ":cloud" suffixes).
   providerModelId String         @map("provider_model_id")

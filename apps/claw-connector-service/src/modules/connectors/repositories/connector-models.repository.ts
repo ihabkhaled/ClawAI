@@ -4,6 +4,7 @@ import {
   type ConnectorModel,
   type ConnectorProvider,
   ModelUsageTier,
+  type Prisma,
 } from '../../../generated/prisma';
 import { type NormalizedModel } from '../types/connectors.types';
 import {
@@ -12,6 +13,7 @@ import {
 } from '../constants/model-unavailable.constants';
 import { adapterKindFields } from '../utilities/adapter-kind-fields.utility';
 import { nonChatKind } from '../utilities/model-kind.utility';
+import { isConnectorProvider } from '../utilities/connector-provider.utility';
 
 @Injectable()
 export class ConnectorModelsRepository {
@@ -185,16 +187,35 @@ export class ConnectorModelsRepository {
   }
 
   async findAllForSnapshot(): Promise<
-    Array<ConnectorModel & { connector: { status: string; isEnabled: boolean } }>
+    Array<
+      ConnectorModel & {
+        connector: {
+          status: string;
+          isEnabled: boolean;
+          providerDefinition: { key: string; displayName: string; adapterFamily: string } | null;
+        };
+      }
+    >
   > {
     return this.prisma.connectorModel.findMany({
       where: {
-        connector: { isEnabled: true },
+        connector: {
+          isEnabled: true,
+          OR: [{ providerDefinitionId: null }, { providerDefinition: { isActive: true } }],
+        },
         lifecycle: 'ACTIVE',
       },
-      include: { connector: { select: { status: true, isEnabled: true } } },
+      include: {
+        connector: {
+          select: {
+            status: true,
+            isEnabled: true,
+            providerDefinition: { select: { key: true, displayName: true, adapterFamily: true } },
+          },
+        },
+      },
       orderBy: [{ provider: 'asc' }, { displayName: 'asc' }],
-    }) as Promise<Array<ConnectorModel & { connector: { status: string; isEnabled: boolean } }>>;
+    });
   }
 
   // User-facing catalog: a model reaches a user only if its connector is enabled,
@@ -203,18 +224,37 @@ export class ConnectorModelsRepository {
   // (findAllForSnapshot) stays unfiltered on purpose because the router needs
   // infrastructure models that are never user-executable.
   async findExposedForCatalog(): Promise<
-    Array<ConnectorModel & { connector: { status: string; isEnabled: boolean } }>
+    Array<
+      ConnectorModel & {
+        connector: {
+          status: string;
+          isEnabled: boolean;
+          providerDefinition: { key: string; displayName: string; adapterFamily: string } | null;
+        };
+      }
+    >
   > {
     return this.prisma.connectorModel.findMany({
       where: {
-        connector: { isEnabled: true },
+        connector: {
+          isEnabled: true,
+          OR: [{ providerDefinitionId: null }, { providerDefinition: { isActive: true } }],
+        },
         lifecycle: 'ACTIVE',
         exposure: 'EXPOSED',
         kind: 'CHAT',
       },
-      include: { connector: { select: { status: true, isEnabled: true } } },
+      include: {
+        connector: {
+          select: {
+            status: true,
+            isEnabled: true,
+            providerDefinition: { select: { key: true, displayName: true, adapterFamily: true } },
+          },
+        },
+      },
       orderBy: [{ provider: 'asc' }, { displayName: 'asc' }],
-    }) as Promise<Array<ConnectorModel & { connector: { status: string; isEnabled: boolean } }>>;
+    });
   }
 
   // Only a model that already exists on this connector and is not REMOVED may be
@@ -324,16 +364,34 @@ export class ConnectorModelsRepository {
   async findExposedPairs(
     pairs: Array<{ provider: string; model: string }>,
   ): Promise<Array<{ provider: string; model: string }>> {
+    const pairFilters: Prisma.ConnectorModelWhereInput[] = [];
+    for (const pair of pairs) {
+      pairFilters.push(
+        isConnectorProvider(pair.provider)
+          ? { provider: pair.provider, modelKey: pair.model }
+          : {
+              modelKey: pair.model,
+              connector: { providerDefinition: { key: pair.provider, isActive: true } },
+            },
+      );
+    }
     const rows = await this.prisma.connectorModel.findMany({
       where: {
-        OR: pairs.map((pair) => ({ provider: pair.provider as never, modelKey: pair.model })),
+        OR: pairFilters,
         exposure: 'EXPOSED',
         kind: 'CHAT',
         lifecycle: 'ACTIVE',
         connector: { isEnabled: true },
       },
-      select: { provider: true, modelKey: true },
+      select: {
+        provider: true,
+        modelKey: true,
+        connector: { select: { providerDefinition: { select: { key: true } } } },
+      },
     });
-    return rows.map((row) => ({ provider: row.provider, model: row.modelKey }));
+    return rows.map((row) => ({
+      provider: row.connector.providerDefinition?.key ?? row.provider,
+      model: row.modelKey,
+    }));
   }
 }

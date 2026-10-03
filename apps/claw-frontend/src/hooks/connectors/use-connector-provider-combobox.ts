@@ -22,7 +22,9 @@ export function useConnectorProviderCombobox(): ConnectorProviderComboboxState {
 
   const groups = useMemo<ConnectorProviderComboboxGroup[]>(() => {
     const connectedProviders = Object.values(ConnectorProvider).filter(
-      (provider) => !PRESET_PROVIDER_KEYS.has(provider),
+      (provider) =>
+        provider !== ConnectorProvider.CUSTOM_OPENAI_COMPATIBLE &&
+        !PRESET_PROVIDER_KEYS.has(provider),
     );
 
     const connectedGroup: ConnectorProviderComboboxGroup = {
@@ -39,7 +41,7 @@ export function useConnectorProviderCombobox(): ConnectorProviderComboboxState {
       key: group,
       label: t(connectorPresetGroupLabelKey(group)),
       options: CONNECTOR_PRESETS.filter((preset) => preset.group === group).map((preset) => ({
-        value: preset.key,
+        value: preset.key as ConnectorProvider,
         label: preset.displayName,
         hasFreeTier: preset.hasFreeTier,
       })),

@@ -1718,6 +1718,36 @@
       },
       {
         "method": "GET",
+        "route": "/connectors/provider-definitions",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/provider-definitions.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/connectors/provider-definitions",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/provider-definitions.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/connectors/provider-definitions/:id",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/provider-definitions.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/connectors/provider-definitions/:id",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/provider-definitions.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/connectors/provider-definitions/:id",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/provider-definitions.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/connectors/provider-definitions/:id/status",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/provider-definitions.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/health",
         "source": "apps/claw-connector-service/src/modules/health/controllers/health.controller.ts"
       },
@@ -3968,5 +3998,5 @@
     ]
   },
   "generated": true,
-  "total": 786
+  "total": 792
 }

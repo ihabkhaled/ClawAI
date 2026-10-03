@@ -19,9 +19,9 @@ npm run dev
 ## Ownership (generated)
 - Port: 4003
 - Database: postgresql
-- Prisma models: Connector, ConnectorHealthEvent, ConnectorModel, ModelSyncRun
-- API endpoints: 23 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 48 (vitest)
+- Prisma models: Connector, ConnectorHealthEvent, ConnectorModel, ConnectorProviderDefinition, ModelSyncRun
+- API endpoints: 29 (see `.ai/manifests/api-endpoints.json`)
+- Test files: 50 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

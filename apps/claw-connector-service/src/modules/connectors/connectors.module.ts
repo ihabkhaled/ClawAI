@@ -17,9 +17,13 @@ import { ConnectorsRepository } from './repositories/connectors.repository';
 import { ConnectorModelsRepository } from './repositories/connector-models.repository';
 import { HealthEventsRepository } from './repositories/health-events.repository';
 import { SyncRunsRepository } from './repositories/sync-runs.repository';
+import { ProviderDefinitionsController } from './controllers/provider-definitions.controller';
+import { ProviderDefinitionsService } from './services/provider-definitions.service';
+import { ProviderDefinitionsRepository } from './repositories/provider-definitions.repository';
 
 @Module({
   controllers: [
+    ProviderDefinitionsController,
     ConnectorsController,
     ConnectorsInternalController,
     PublicModelCatalogController,
@@ -34,12 +38,14 @@ import { SyncRunsRepository } from './repositories/sync-runs.repository';
     CreditHeadroomService,
     CreditHeadroomManager,
     ConnectorsService,
+    ProviderDefinitionsService,
     ConnectorsManager,
     ModelsSnapshotManager,
     ConnectorsRepository,
     ConnectorModelsRepository,
     HealthEventsRepository,
     SyncRunsRepository,
+    ProviderDefinitionsRepository,
   ],
   exports: [ConnectorsService],
 })
