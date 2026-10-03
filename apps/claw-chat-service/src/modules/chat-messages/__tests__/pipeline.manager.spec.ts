@@ -114,6 +114,7 @@ describe('PipelineManager', () => {
     vi.clearAllMocks();
     messagesRepo = mockMessagesRepo();
     threadsRepo = mockThreadsRepo();
+    threadsRepo.findById!.mockResolvedValue({ id: 'thread-1', userId: 'user-1' });
     streamService = mockStreamService();
     contextGateway = mockContextGateway();
     modeGateway = mockModeGateway();

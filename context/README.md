@@ -90,3 +90,4 @@ from memory. Re-derive from:
 
 If a fact here disagrees with a freshly regenerated manifest, the manifest wins
 and this file is stale — fix it. See [generated-file-map.md](generated-file-map.md).
+| [chat-surface-parity-map.md](chat-surface-parity-map.md) | The ten orchestration surfaces plus judge/critic as surfaces over normal chat: shared code, entry points, exceptions, guards (rule 59) |

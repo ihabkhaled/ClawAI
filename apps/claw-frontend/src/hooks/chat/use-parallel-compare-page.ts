@@ -30,6 +30,8 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
   const [research, setResearch] = useState<ResearchOptions>(DEFAULT_RESEARCH_OPTIONS);
   const researchProviderQuery = useResearchProviders();
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
+  // Same pack choice the labs hold; stored on the thread this compare creates (rules/59).
+  const [contextPackIds, setContextPackIds] = useState<string[]>([]);
   const attachments = useComposerAttachments({
     selectedFileIds,
     onChange: setSelectedFileIds,
@@ -113,6 +115,7 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
       // Only attach file IDs when the user picked at least one; omit
       // entirely on the empty path so the BE DTO stays clean.
       ...(selectedFileIds.length > 0 ? { fileIds: selectedFileIds } : {}),
+      ...(contextPackIds.length > 0 ? { contextPackIds } : {}),
     });
     setSelectedFileIds([]);
   }, [
@@ -130,6 +133,8 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
 
   return {
     t,
+    contextPackIds,
+    setContextPackIds,
     selectedModels,
     prompt,
     setPrompt,

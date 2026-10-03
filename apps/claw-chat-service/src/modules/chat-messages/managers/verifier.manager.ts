@@ -32,6 +32,8 @@ import { RoutingMode } from '../../../generated/prisma';
 import { OLLAMA_PROVIDER } from '../../../common/constants';
 import { PAYG_WORKFLOW_VERIFIER } from '../constants/payg.constants';
 
+import { resolveOrchestrationThread } from '../utilities/orchestration-thread.utility';
+
 /**
  * Draft an answer, judge it, repair it.
  *
@@ -519,13 +521,11 @@ Return ONLY the improved response. Do not explain changes.`;
   }
 
   private async resolveThreadId(userId: string, dto: VerifyMessageDto): Promise<string> {
-    if (dto.threadId && dto.threadId.length > 0) {
-      return dto.threadId;
-    }
-    const thread = await this.chatThreadsRepository.create({
-      userId,
+    const thread = await resolveOrchestrationThread(this.chatThreadsRepository, userId, {
+      threadId: dto.threadId,
       title: `Verify: ${dto.content.slice(0, 50)}`,
       routingMode: RoutingMode.AUTO,
+      contextPackIds: dto.contextPackIds,
     });
     return thread.id;
   }

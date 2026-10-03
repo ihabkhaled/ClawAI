@@ -56,7 +56,8 @@ export function useChatPage(): ChatPageReturn {
 
   const toggleShowArchived = useCallback((): void => {
     setActiveTab((prev) => {
-      const next = prev === ChatThreadListTab.ARCHIVED ? ChatThreadListTab.ALL : ChatThreadListTab.ARCHIVED;
+      const next =
+        prev === ChatThreadListTab.ARCHIVED ? ChatThreadListTab.ALL : ChatThreadListTab.ARCHIVED;
       logger.debug({
         component: 'chat',
         action: 'toggle-archived',
@@ -68,7 +69,11 @@ export function useChatPage(): ChatPageReturn {
   }, []);
 
   const handleNewChat = useCallback((): void => {
-    logger.info({ component: 'chat', action: 'new-chat', message: 'User creating new chat thread' });
+    logger.info({
+      component: 'chat',
+      action: 'new-chat',
+      message: 'User creating new chat thread',
+    });
     createThread({});
   }, [createThread]);
 

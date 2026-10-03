@@ -35,8 +35,8 @@ bug to be fixed. Resolve up, never down.
 
 Two rules govern the paths that move money, and they compose rather than overlap:
 
-| Rule                                                                                     | Governs                                                                                                                         |
-| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Rule                                                                                                                                          | Governs                                                                                                                         |
+| --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | [`28-billing-integrity-and-api-contracts.md`](https://github.com/ihabkhaled/ClawAI/blob/main/rules/28-billing-integrity-and-api-contracts.md) | Charging for something already delivered: prices, invoices, refunds, subscription entitlement, quota windows                    |
 | [`37-payg-credit-integrity.md`](https://github.com/ihabkhaled/ClawAI/blob/main/rules/37-payg-credit-integrity.md)                             | Spending a customer's money **before** they see a result: PAYG reservation, the affordability clamp, the credit ledger, top-ups |
 
@@ -44,8 +44,8 @@ Two rules govern the paths that move money, and they compose rather than overlap
 
 Two rules govern proving a change works, and they compose rather than overlap:
 
-| Rule                                                                                       | Governs                                                                                                                      |
-| ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| Rule                                                                                                                                            | Governs                                                                                                                      |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | [`44-live-verification-before-done.md`](https://github.com/ihabkhaled/ClawAI/blob/main/rules/44-live-verification-before-done.md)               | Whether the change was seen running at all: the API lane, the browser lane, and the stale-container traps that fake a pass   |
 | [`49-qa-team-discipline-and-test-evidence.md`](https://github.com/ihabkhaled/ClawAI/blob/main/rules/49-qa-team-discipline-and-test-evidence.md) | **Who you must be** while verifying and what you must produce: every QA hat, the device matrix, and evidence for every claim |
 
@@ -89,3 +89,7 @@ Rules are strict but not infinite. When a rule genuinely cannot be met, follow
 the documented waiver process in [`25-exceptions-and-waivers.md`](https://github.com/ihabkhaled/ClawAI/blob/main/rules/25-exceptions-and-waivers.md).
 No silent bypasses: an undocumented `eslint-disable`, `@ts-expect-error`, or
 `--no-verify` is a defect, not a waiver.
+
+## Rule 59 - every chat surface is one pipeline
+
+Compare, Consensus, Escalation, the seven labs and the judge/critic are surfaces over normal chat; a change to chat is not done until it reaches all of them. [rules/59](https://github.com/ihabkhaled/ClawAI/blob/main/rules/59-chat-surfaces-are-one-pipeline.md), [parity map](https://github.com/ihabkhaled/ClawAI/blob/main/context/chat-surface-parity-map.md).

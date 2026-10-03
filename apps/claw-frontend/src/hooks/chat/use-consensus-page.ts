@@ -119,7 +119,7 @@ export function useConsensusPage(): UseConsensusPageReturn {
       ...(composer.selectedFileIds.length > 0 ? { fileIds: composer.selectedFileIds } : {}),
       // Web research. Empty object when the mode is NONE, so "no research"
       // reaches the DTO as an absent field, exactly like `fileIds`.
-      ...composer.researchPayload,
+      ...composer.sharedPayload,
     });
     composer.clear();
   }, [canSubmit, send, trimmedPrompt, selectedModel, selectedModels, composer]);

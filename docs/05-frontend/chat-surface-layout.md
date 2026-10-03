@@ -509,3 +509,12 @@ chat-service prompt templates ([ADR-138](../13-adr/adr-138-prompt-library.md)).
 ## Context packs and memory in the composer (2026-10-03)
 
 `composer-context-controls.tsx` is ONE always-visible "Context" button (first in the toolbar; `useComposerContextMenu` owns menu + dialog state, one shared preview) whose popover holds `ComposerContextPackPicker` (`useComposerContextPacks`: saves `thread.contextPackIds` through `useUpdateThread`, optimistic, capped at `COMPOSER_CONTEXT_PACKS_MAX` = 10), and two rows opening `ComposerContextPacksView` and `ComposerMemoryView` dialogs (fed by `useComposerContextPreview` → `usePreviewContext`, the server dry-run). `MessageSaveAction` under each answer calls `POST /chat-messages/:id/save-to-context`. i18n: `chat.composerContext.*`, `chat.saveMessage.*` (13 locales).
+
+## Labs and Compare use the chat composer's controls (2026-10-03)
+
+`OrchestrationPageShell` (labs), `compare/page.tsx` and `in-thread-compare-panel.tsx` render the same
+Context button, Prompt library, attach, voice/video and research controls as the chat composer, and the
+same Enter-to-send prompt box (`RichPromptTextarea`). A lab has no thread until it runs, so
+`OrchestrationContextButton` holds the pack choice (`useDraftContextPacks`) and
+`useOrchestrationComposer().sharedPayload` sends it as `contextPackIds`. New composer controls go to all
+three places in the same commit ([rule 59](../../rules/59-chat-surfaces-are-one-pipeline.md)).

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { advancedModelSelectionFields } from './advanced-model-selection-fields.dto';
 import { attachmentFields } from './attachment-fields.dto';
+import { contextPackFields } from './context-pack-fields.dto';
 import { researchFields } from './research-fields.dto';
 import { requireContentOrAttachments } from '../validators/content-or-attachments.validator';
 
@@ -13,6 +14,7 @@ export const bestOfNMessageSchema = z
     models: z.array(z.string().max(255)).max(5).optional(),
     ...advancedModelSelectionFields,
     ...researchFields,
+    ...contextPackFields,
     ...attachmentFields,
   })
   .superRefine(requireContentOrAttachments());

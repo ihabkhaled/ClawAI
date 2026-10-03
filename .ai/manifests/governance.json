@@ -1,23 +1,23 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 34644,
+      "bytes": 38197,
       "file": "CLAUDE.md"
     },
     {
-      "bytes": 6872,
+      "bytes": 7160,
       "file": "CODEX.md"
     },
     {
-      "bytes": 28408,
+      "bytes": 28767,
       "file": "cursor.md"
     },
     {
-      "bytes": 10473,
+      "bytes": 10761,
       "file": "AGENTS.md"
     },
     {
-      "bytes": 3583,
+      "bytes": 3758,
       "file": ".cursorrules"
     }
   ],
@@ -55,7 +55,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 33111,
+      "bytes": 33541,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -331,13 +331,17 @@
       "file": "rules/58-auth-route-rate-limits.md"
     },
     {
-      "bytes": 6722,
+      "bytes": 4326,
+      "file": "rules/59-chat-surfaces-are-one-pipeline.md"
+    },
+    {
+      "bytes": 6999,
       "file": "rules/README.md"
     }
   ],
   "skills": [
     {
-      "bytes": 32838,
+      "bytes": 33073,
       "file": "skills/00-index.md"
     },
     {
@@ -601,7 +605,7 @@
       "file": "skills/frontend-architecture-review.md"
     },
     {
-      "bytes": 3887,
+      "bytes": 4131,
       "file": "skills/give-a-surface-the-same-context-as-chat.md"
     },
     {
@@ -639,6 +643,10 @@
     {
       "bytes": 6151,
       "file": "skills/pair-and-use-a-mobile-device-token.md"
+    },
+    {
+      "bytes": 4992,
+      "file": "skills/propagate-a-chat-change-to-every-mode.md"
     },
     {
       "bytes": 14444,

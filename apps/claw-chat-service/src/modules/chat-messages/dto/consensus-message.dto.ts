@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { attachmentFields } from './attachment-fields.dto';
+import { contextPackFields } from './context-pack-fields.dto';
 import { researchFields } from './research-fields.dto';
 import { requireContentOrAttachments } from '../validators/content-or-attachments.validator';
 
@@ -19,6 +20,7 @@ export const consensusMessageSchema = z
       .max(5, 'At most 5 models are allowed'),
     ...attachmentFields,
     ...researchFields,
+    ...contextPackFields,
   })
   .superRefine(requireContentOrAttachments());
 

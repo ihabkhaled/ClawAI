@@ -63,6 +63,12 @@ These are DELIVERY BLOCKERS — a PR without them is rejected:
 
 Do not deviate from those rules. Do not invent new patterns. Do not bypass tests.
 
+## Chat surfaces are one pipeline (rules/59)
+
+- Compare, Consensus, Escalation, the seven labs and the judge/critic are surfaces over normal chat.
+  A change to chat is not done until it reaches all of them (same code, context, uploads, tools, buttons).
+  Walk `context/chat-surface-parity-map.md`; runbook `skills/propagate-a-chat-change-to-every-mode.md`.
+
 ## Knowledge and gate discipline (rules/33, rules/34)
 
 - Every change ships its knowledge delta in the SAME commit: docs, skills,

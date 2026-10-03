@@ -2025,6 +2025,8 @@ export type ConsensusMetadataProps = {
 };
 
 export type InThreadComparePanelProps = {
+  /** The thread Compare runs in; its context packs and memory apply, so chat's Context button is here too. */
+  threadId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedModels: ParallelModelTarget[];

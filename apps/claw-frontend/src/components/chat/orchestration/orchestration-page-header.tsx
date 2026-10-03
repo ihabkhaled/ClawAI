@@ -28,16 +28,16 @@ export function OrchestrationPageHeader({
   return (
     <header
       className={cn(
-        'relative mb-4 overflow-hidden rounded-2xl border border-border/60 bg-card p-5 shadow-soft sm:p-6',
+        'border-border/60 bg-card shadow-soft relative mb-4 overflow-hidden rounded-2xl border p-5 sm:p-6',
         // Subtle radial wash in the top-right that mirrors the dashboard
         // hero so orchestration pages feel part of the same surface.
-        "before:pointer-events-none before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.18),transparent_55%)]",
+        'before:pointer-events-none before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.18),transparent_55%)]',
         className,
       )}
     >
       <div className="relative flex items-start gap-4">
         <div
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-primary-foreground shadow-soft"
+          className="text-primary-foreground shadow-soft flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
           style={{ backgroundImage: 'var(--gradient-brand)' }}
           aria-hidden="true"
         >
@@ -45,14 +45,12 @@ export function OrchestrationPageHeader({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+            <h1 className="text-foreground text-xl font-semibold tracking-tight sm:text-2xl">
               {title}
             </h1>
-            {badge !== undefined && badge !== null ? (
-              <div className="shrink-0">{badge}</div>
-            ) : null}
+            {badge !== undefined && badge !== null ? <div className="shrink-0">{badge}</div> : null}
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+          <p className="text-muted-foreground mt-1 text-sm">{description}</p>
         </div>
       </div>
     </header>

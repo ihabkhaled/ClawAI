@@ -8,6 +8,14 @@ import type { OrchestrationPageShellProps } from '@/types/orchestration.types';
 
 // The shell's other children pull react-query and the file catalog; this test is
 // about one wire: a recorded note reaching the composer's ingestFiles.
+vi.mock('@/components/chat/orchestration/orchestration-context-button', () => ({
+  OrchestrationContextButton: () => <div data-testid="orchestration-context-button" />,
+}));
+
+vi.mock('@/components/chat/prompt-library/prompt-library-button', () => ({
+  PromptLibraryButton: () => <div data-testid="prompt-library-button" />,
+}));
+
 vi.mock('@/components/chat/file-attachment-picker', () => ({
   FileAttachmentPicker: () => <div data-testid="picker" />,
 }));
@@ -87,6 +95,10 @@ function renderShell(ingestFiles: (files: File[] | FileList) => void): void {
       researchProviders: [],
       isResearchProvidersLoading: false,
       researchPayload: { researchMode: ResearchMode.AUTO },
+      contextPackIds: [],
+      setContextPackIds: vi.fn(),
+      contextPackPayload: {},
+      sharedPayload: { researchMode: ResearchMode.AUTO },
       clear: vi.fn(),
     },
     prompt: '',
@@ -107,6 +119,12 @@ describe('OrchestrationPageShell — voice/video notes', () => {
     expect(screen.getByTestId('orchestration-attachments')).toBeInTheDocument();
     expect(screen.getByTestId('voice-video-recorder-audio')).toBeInTheDocument();
     expect(screen.getByTestId('voice-video-recorder-video')).toBeInTheDocument();
+  });
+
+  it('gives every lab the same Context button and Prompt library as chat (rules/59)', () => {
+    renderShell(vi.fn());
+    expect(screen.getByTestId('orchestration-context-button')).toBeInTheDocument();
+    expect(screen.getByTestId('prompt-library-button')).toBeInTheDocument();
   });
 
   it('sends a finished recording through the composer ingestFiles pipeline', async () => {

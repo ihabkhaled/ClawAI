@@ -85,3 +85,7 @@ Then the live lane per [`rules/49`](../rules/49-qa-team-discipline-and-test-evid
 attach a file, say something a previous thread answered, and confirm from the
 service log line (`build: surface=… files=… memories=… crossThread=…`) that your
 surface actually received them. The log exists for exactly this check.
+
+## See also
+
+The whole-surface version (thread, DTO fragments, composer controls, guard test): [propagate-a-chat-change-to-every-mode.md](propagate-a-chat-change-to-every-mode.md) and [rules/59](../rules/59-chat-surfaces-are-one-pipeline.md).

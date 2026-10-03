@@ -9,10 +9,13 @@ import { ComposerAttachmentTray } from '@/components/chat/composer-attachment-tr
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
 import { DailyTokenIndicator } from '@/components/chat/daily-token-indicator';
 import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
+import { OrchestrationContextButton } from '@/components/chat/orchestration/orchestration-context-button';
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
 import { ParallelResultsGrid } from '@/components/chat/parallel-results-grid';
 import { ParallelSummaryBar } from '@/components/chat/parallel-summary-bar';
+import { PromptLibraryButton } from '@/components/chat/prompt-library/prompt-library-button';
 import { ResearchToggle } from '@/components/chat/research-toggle';
+import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
 import { ParallelLaneCard } from '@/components/chat/stream/parallel-lane-card';
 import { UpgradeCtaBanner } from '@/components/chat/upgrade-cta-banner';
 import { VoiceVideoRecorder } from '@/components/chat/voice-video-recorder';
@@ -22,15 +25,18 @@ import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
+import { ORCHESTRATION_PROMPT_MAX_ROWS, ORCHESTRATION_PROMPT_MIN_ROWS } from '@/constants';
 import { AlertVariant, PlanFeature } from '@/enums';
 import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
 import { useModelMediaCapabilities } from '@/hooks/chat/use-model-media-capabilities';
 import { useParallelComparePage } from '@/hooks/chat/use-parallel-compare-page';
+import { appendToDraft } from '@/utilities/prompt-template.utility';
 
 export default function ComparePage() {
   const {
     t,
+    contextPackIds,
+    setContextPackIds,
     selectedModels,
     prompt,
     setPrompt,
@@ -133,14 +139,31 @@ export default function ComparePage() {
             <CardContent className="pt-4">
               <ComposerAttachmentTray {...attachmentTray} />
               <ComposerAttachmentChips {...attachmentChips} />
-              <Textarea
+              {/* RichPromptTextarea, not a bare Textarea: Enter sends on desktop and is a
+                  newline on touch, with the IME guard (rules/40, rules/59). */}
+              <RichPromptTextarea
                 value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
+                onChange={setPrompt}
+                onSubmit={canSend ? handleSend : undefined}
+                allowEmptySubmit={selectedFileIds.length > 0}
                 placeholder={t('compare.sendPrompt')}
-                className="min-h-[100px] resize-y"
+                ariaLabel={t('compare.sendPrompt')}
+                disabled={isPending || isPolling}
+                minRows={ORCHESTRATION_PROMPT_MIN_ROWS}
+                maxRows={ORCHESTRATION_PROMPT_MAX_ROWS}
+                className="min-h-[100px]"
               />
               <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:flex sm:items-center sm:justify-between">
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <OrchestrationContextButton
+                    selectedIds={contextPackIds}
+                    onChange={setContextPackIds}
+                    disabled={isPending || isPolling}
+                  />
+                  <PromptLibraryButton
+                    onInsert={(text: string) => setPrompt(appendToDraft(prompt, text))}
+                    disabled={isPending || isPolling}
+                  />
                   {selectedModels.length > 0 ? (
                     <FileAttachmentPicker
                       selectedFileIds={selectedFileIds}

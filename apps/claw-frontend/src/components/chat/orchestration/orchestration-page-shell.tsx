@@ -4,9 +4,11 @@ import { ComposerAttachmentChips } from '@/components/chat/composer-attachment-c
 import { ComposerAttachmentTray } from '@/components/chat/composer-attachment-tray';
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
 import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
+import { OrchestrationContextButton } from '@/components/chat/orchestration/orchestration-context-button';
 import { OrchestrationPageHeader } from '@/components/chat/orchestration/orchestration-page-header';
 import { OrchestrationSingleModelSelect } from '@/components/chat/orchestration/orchestration-single-model-select';
 import { OrchestrationStageTimeline } from '@/components/chat/orchestration/orchestration-stage-timeline';
+import { PromptLibraryButton } from '@/components/chat/prompt-library/prompt-library-button';
 import { ResearchToggle } from '@/components/chat/research-toggle';
 import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
 import { VoiceVideoRecorder } from '@/components/chat/voice-video-recorder';
@@ -25,6 +27,7 @@ import { useModelMediaCapabilities } from '@/hooks/chat/use-model-media-capabili
 import { cn } from '@/lib/utils';
 import type { OrchestrationPageShellProps } from '@/types/orchestration.types';
 import { hasSendableInput } from '@/utilities/composer-send.utility';
+import { appendToDraft } from '@/utilities/prompt-template.utility';
 
 // Shared shell every orchestration lab page composes around.
 //
@@ -175,6 +178,17 @@ export function OrchestrationPageShell({
                     data-testid="orchestration-attachments"
                     className="flex flex-wrap items-center gap-2"
                   >
+                    {/* The same Context button and Prompt library chat has: a lab is a
+                        surface over chat, not a second product (rules/59). */}
+                    <OrchestrationContextButton
+                      selectedIds={composer.contextPackIds}
+                      onChange={composer.setContextPackIds}
+                      disabled={isPending}
+                    />
+                    <PromptLibraryButton
+                      onInsert={(text: string) => onPromptChange(appendToDraft(prompt, text))}
+                      disabled={isPending}
+                    />
                     <FileAttachmentPicker
                       selectedFileIds={composer.selectedFileIds}
                       onChange={composer.setSelectedFileIds}

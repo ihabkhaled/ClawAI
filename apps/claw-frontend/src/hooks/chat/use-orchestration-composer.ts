@@ -5,6 +5,7 @@ import { ResearchMode } from '@/enums/research-mode.enum';
 import { useComposerAttachmentSurface } from '@/hooks/chat/use-composer-attachment-surface';
 import { useComposerAttachments } from '@/hooks/files/use-composer-attachments';
 import { useResearchProviders } from '@/hooks/research/use-research-providers';
+import type { OrchestrationContextPackPayload } from '@/types/composer-context.types';
 import type { UseOrchestrationComposerReturn } from '@/types/hook.types';
 import type { OrchestrationResearchPayload, ResearchOptions } from '@/types/research.types';
 
@@ -38,6 +39,8 @@ import type { OrchestrationResearchPayload, ResearchOptions } from '@/types/rese
 export function useOrchestrationComposer(disabled = false): UseOrchestrationComposerReturn {
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const [research, setResearch] = useState<ResearchOptions>(DEFAULT_RESEARCH_OPTIONS);
+  // Like research, the pack choice is a session preference: it survives clear().
+  const [contextPackIds, setContextPackIds] = useState<string[]>([]);
   const providerQuery = useResearchProviders();
   const attachments = useComposerAttachments({
     selectedFileIds,
@@ -67,6 +70,19 @@ export function useOrchestrationComposer(disabled = false): UseOrchestrationComp
     };
   }, [research]);
 
+  const contextPackPayload = useMemo<OrchestrationContextPackPayload>(
+    () => (contextPackIds.length === 0 ? {} : { contextPackIds }),
+    [contextPackIds],
+  );
+
+  // EVERY request fragment a lab shares with chat, in one spread: a lab hook writes
+  // `...composer.sharedPayload` and a new shared fragment reaches all ten pages by
+  // being added here, not by editing ten hooks (rules/59).
+  const sharedPayload = useMemo(
+    () => ({ ...researchPayload, ...contextPackPayload }),
+    [researchPayload, contextPackPayload],
+  );
+
   const clear = useCallback((): void => {
     setSelectedFileIds([]);
   }, []);
@@ -85,6 +101,10 @@ export function useOrchestrationComposer(disabled = false): UseOrchestrationComp
     researchProviders: providerQuery.providers,
     isResearchProvidersLoading: providerQuery.isLoading,
     researchPayload,
+    contextPackIds,
+    setContextPackIds,
+    contextPackPayload,
+    sharedPayload,
     clear,
   };
 }

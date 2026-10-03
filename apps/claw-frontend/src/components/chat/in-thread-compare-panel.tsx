@@ -4,9 +4,11 @@ import { CompareCriticControls } from '@/components/chat/compare-critic-controls
 import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
 import { ComposerAttachmentChips } from '@/components/chat/composer-attachment-chips';
 import { ComposerAttachmentTray } from '@/components/chat/composer-attachment-tray';
+import { ComposerContextControls } from '@/components/chat/composer-context-controls';
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
 import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
+import { PromptLibraryButton } from '@/components/chat/prompt-library/prompt-library-button';
 import { ResearchToggle } from '@/components/chat/research-toggle';
 import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
 import { VoiceVideoRecorder } from '@/components/chat/voice-video-recorder';
@@ -15,8 +17,10 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useModelMediaCapabilities } from '@/hooks/chat/use-model-media-capabilities';
 import type { InThreadComparePanelProps } from '@/types';
+import { appendToDraft } from '@/utilities/prompt-template.utility';
 
 export function InThreadComparePanel({
+  threadId,
   open,
   onOpenChange,
   selectedModels,
@@ -111,6 +115,12 @@ export function InThreadComparePanel({
 
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
+              {/* The same Context button and Prompt library as the chat composer (rules/59). */}
+              <ComposerContextControls threadId={threadId} draft={prompt} disabled={isPending} />
+              <PromptLibraryButton
+                onInsert={(text: string) => onPromptChange(appendToDraft(prompt, text))}
+                disabled={isPending}
+              />
               <FileAttachmentPicker
                 selectedFileIds={selectedFileIds}
                 onChange={onSelectedFileIdsChange}

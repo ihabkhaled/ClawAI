@@ -80,3 +80,21 @@ export type ComposerContextDialogProps = {
   open: boolean;
   onClose: () => void;
 };
+
+/** A surface with no thread yet owns the pack choice and passes it in. */
+export type UseDraftContextPacksParams = {
+  selectedIds: string[];
+  onChange: (next: string[]) => void;
+};
+
+/** What a lab's Context button needs: the packs the next run will carry. */
+export type OrchestrationContextButtonProps = {
+  selectedIds: string[];
+  onChange: (next: string[]) => void;
+  disabled?: boolean;
+};
+
+/** Ready-to-spread request fragment; empty when no pack is picked. */
+export type OrchestrationContextPackPayload = {
+  contextPackIds?: string[];
+};

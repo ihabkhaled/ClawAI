@@ -238,3 +238,4 @@ overwritten on the next build and hides the real problem.
 
 - [ ] Every rule file in `rules/` appears in this catalog or in `rules/README.md`.
 - [ ] Each entry's one-line description still matches the rule's Purpose.
+      | `59-chat-surfaces-are-one-pipeline.md` | Every chat surface (Compare, Consensus, Escalation, Repair, Decompose, Best-of-N, Verifier, Pipeline, Cost-Ensemble, Role Pack, judge/critic) is one pipeline: shared context + execution gateways, `resolveOrchestrationThread`, shared DTO fragments, `sharedPayload`; a normal-chat change is not done until it reaches all of them; `orchestration-parity.spec.ts` guards it (ADR-155) |

@@ -142,6 +142,7 @@ export function useEscalationPage(): UseEscalationPageReturn {
       content: prompt.trim(),
       chain: fullChain,
       ...(composer.selectedFileIds.length > 0 ? { fileIds: composer.selectedFileIds } : {}),
+      ...composer.contextPackPayload,
     });
     composer.clear();
   }, [canSubmit, send, prompt, selectedModel, additionalChainModels, composer]);

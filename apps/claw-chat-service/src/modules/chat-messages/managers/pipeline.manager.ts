@@ -23,9 +23,11 @@ import type { AdvancedModelSelectionResolution } from '../types/advanced-model-s
 import type { ChatContextBundle } from '../types/chat-context-gateway.types';
 import type { PipelineResponse, PipelineStage, PipelineStageResult } from '../types/pipeline.types';
 import type { ResearchTranscript } from '../types/research-transcript.types';
-import { type Prisma, type RoutingMode } from '../../../generated/prisma';
+import { type Prisma } from '../../../generated/prisma';
 import { OLLAMA_PROVIDER } from '../../../common/constants';
 import { PAYG_WORKFLOW_PIPELINE } from '../constants/payg.constants';
+
+import { resolveOrchestrationThread } from '../utilities/orchestration-thread.utility';
 
 /**
  * Runs a multi-stage specialist pipeline (analyze → reason → format by default,
@@ -480,13 +482,11 @@ export class PipelineManager {
   }
 
   private async resolveThreadId(userId: string, dto: PipelineMessageDto): Promise<string> {
-    if (dto.threadId && dto.threadId.length > 0) {
-      return dto.threadId;
-    }
-    const thread = await this.chatThreadsRepository.create({
-      userId,
+    const thread = await resolveOrchestrationThread(this.chatThreadsRepository, userId, {
+      threadId: dto.threadId,
       title: `Pipeline: ${dto.content.slice(0, 50)}`,
-      routingMode: 'MANUAL_MODEL' as RoutingMode,
+      routingMode: 'MANUAL_MODEL',
+      contextPackIds: dto.contextPackIds,
     });
     return thread.id;
   }

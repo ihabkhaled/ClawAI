@@ -168,6 +168,7 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
     shareButtonProps: share.buttonProps,
     shareDialogProps: share.dialogProps,
     inThreadComparePanelProps: {
+      threadId,
       open: activePanel === ActiveThreadPanel.COMPARE,
       onOpenChange: handleDialogOpenChange,
       selectedModels: compare.selectedModels,

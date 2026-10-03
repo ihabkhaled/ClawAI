@@ -21,6 +21,14 @@ vi.mock('@/lib/i18n', () => ({
 vi.mock('@/lib/i18n/use-translation', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
+vi.mock('@/components/chat/orchestration/orchestration-context-button', () => ({
+  OrchestrationContextButton: () => <div data-testid="orchestration-context-button" />,
+}));
+
+vi.mock('@/components/chat/prompt-library/prompt-library-button', () => ({
+  PromptLibraryButton: () => <div data-testid="prompt-library-button" />,
+}));
+
 vi.mock('@/components/chat/file-attachment-picker', () => ({
   FileAttachmentPicker: () => <div data-testid="picker" />,
 }));
@@ -50,6 +58,8 @@ let mockPendingUploads: PendingComposerUpload[] = [];
 
 vi.mock('@/hooks/chat/use-parallel-compare-page', () => ({
   useParallelComparePage: () => ({
+    contextPackIds: [],
+    setContextPackIds: vi.fn(),
     t: (key: string) => key,
     selectedModels: [],
     prompt: '',
@@ -101,6 +111,12 @@ describe('ComparePage — composer controls', () => {
     render(<ComparePage />);
     expect(screen.getByTestId('voice-video-recorder-audio')).toBeInTheDocument();
     expect(screen.getByTestId('voice-video-recorder-video')).toBeInTheDocument();
+  });
+
+  it('has the same Context button and Prompt library as chat (rules/59)', () => {
+    render(<ComparePage />);
+    expect(screen.getByTestId('orchestration-context-button')).toBeInTheDocument();
+    expect(screen.getByTestId('prompt-library-button')).toBeInTheDocument();
   });
 
   it('renders the SHARED research toggle, not the old compare-only control', () => {

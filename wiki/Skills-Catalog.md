@@ -99,8 +99,8 @@ grep/knowledge commands that verify the finding.
 
 ### Navigation (read-only tracing)
 
-| Skill                                                                | Purpose                                                                   |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Skill                                                                                                                    | Purpose                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
 | [`resolve-task-context.md`](https://github.com/ihabkhaled/ClawAI/blob/main/skills/resolve-task-context.md)               | **Step 1 of every task** — run the resolver, scope affected folders       |
 | [`navigate-codebase.md`](https://github.com/ihabkhaled/ClawAI/blob/main/skills/navigate-codebase.md)                     | Find files/flows; grep recipes for endpoints/enums/events                 |
 | [`trace-request-end-to-end.md`](https://github.com/ihabkhaled/ClawAI/blob/main/skills/trace-request-end-to-end.md)       | Trace an HTTP request FE repository → nginx → controller → service → repo |
@@ -154,3 +154,7 @@ navigation skills above:
 When you discover a technique, shortcut, or trigger term the resolver should
 rank on, add it to the relevant skill's `task_keywords` and body. Stale skills
 route agents wrong.
+
+## Propagate a chat change to every mode
+
+Walk the ten surfaces before calling a chat change done: [skill](https://github.com/ihabkhaled/ClawAI/blob/main/skills/propagate-a-chat-change-to-every-mode.md).

@@ -41,6 +41,8 @@ import {
   PAYG_WORKFLOW_COST_ENSEMBLE_CLASSIFY,
 } from '../constants/payg.constants';
 
+import { resolveOrchestrationThread } from '../utilities/orchestration-thread.utility';
+
 /**
  * Classifies the request (complexity/risk/ambiguity), picks an ensemble tier
  * (single / duo / trio), runs the tier in parallel, and returns the best candidate.
@@ -498,13 +500,11 @@ export class CostEnsembleManager {
   }
 
   private async resolveThreadId(userId: string, dto: CostEnsembleMessageDto): Promise<string> {
-    if (dto.threadId && dto.threadId.length > 0) {
-      return dto.threadId;
-    }
-    const thread = await this.chatThreadsRepository.create({
-      userId,
+    const thread = await resolveOrchestrationThread(this.chatThreadsRepository, userId, {
+      threadId: dto.threadId,
       title: `Cost Ensemble: ${dto.content.slice(0, 50)}`,
       routingMode: RoutingMode.AUTO,
+      contextPackIds: dto.contextPackIds,
     });
     return thread.id;
   }

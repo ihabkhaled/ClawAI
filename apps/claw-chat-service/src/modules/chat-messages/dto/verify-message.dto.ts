@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { advancedModelSelectionFields } from './advanced-model-selection-fields.dto';
 import { attachmentFields } from './attachment-fields.dto';
+import { contextPackFields } from './context-pack-fields.dto';
 import { researchFields } from './research-fields.dto';
 import { requireContentOrAttachments } from '../validators/content-or-attachments.validator';
 
@@ -12,6 +13,7 @@ export const verifyMessageSchema = z
     maxRevisions: z.number().int().min(0).max(3).default(1),
     ...advancedModelSelectionFields,
     ...researchFields,
+    ...contextPackFields,
     ...attachmentFields,
   })
   .superRefine(requireContentOrAttachments());

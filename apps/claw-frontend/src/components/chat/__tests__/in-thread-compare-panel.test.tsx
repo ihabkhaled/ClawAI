@@ -11,6 +11,14 @@ import { ResearchMode } from '@/enums';
 // the `onIngestFiles` prop in baseProps below, not a hook FileAttachmentPicker
 // opens on its own — see use-file-attachment-picker.ts.
 // In this unit test we don't render a LocaleProvider, so mock those modules.
+vi.mock('@/components/chat/composer-context-controls', () => ({
+  ComposerContextControls: () => <div data-testid="composer-context-controls" />,
+}));
+
+vi.mock('@/components/chat/prompt-library/prompt-library-button', () => ({
+  PromptLibraryButton: () => <div data-testid="prompt-library-button" />,
+}));
+
 vi.mock('@/lib/i18n/use-translation', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
 }));
@@ -44,6 +52,7 @@ vi.mock('@/hooks/chat/use-available-connector-models', () => ({
 const t = (key: string): string => key;
 
 const baseProps = {
+  threadId: 'thread-1',
   open: true,
   onOpenChange: vi.fn(),
   selectedModels: [],
@@ -85,6 +94,14 @@ function withQueryClient(children: ReactNode): ReactElement {
 }
 
 describe('InThreadComparePanel — plan-feature gates', () => {
+  it('has the same Context button and Prompt library as the chat composer', () => {
+    render(
+      withQueryClient(<InThreadComparePanel {...baseProps} allowJudgeMode allowResearchMode />),
+    );
+    expect(screen.getByTestId('composer-context-controls')).toBeInTheDocument();
+    expect(screen.getByTestId('prompt-library-button')).toBeInTheDocument();
+  });
+
   it('hides judge controls when allowJudgeMode is false', () => {
     render(
       withQueryClient(

@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Every chat mode shares normal chat.** The labs and Compare now have the same Context (packs) button and Prompt library as chat, Compare has Enter-to-send, packs picked in a lab or Compare reach the model, and supplying another user's thread to a lab is refused. One thread resolver replaced ten copies ([ADR-155](13-adr/adr-155-chat-surfaces-are-one-pipeline.md)).
 - **One Context button in the composer** (packs, attached packs, memory) that stays on screen on phones and in right-to-left; a Save menu on every answer saves it as a context pack or memory. Enter sends on desktop and inserts a newline on touch devices; Shift+Enter or Ctrl+Enter is a newline on desktop.
 - **More upload formats:** HEIC, HEIF, AVIF, TIFF and BMP images (stored as JPEG) and mkv, 3gp, m4v and raw HEVC video.
 - **"Use <model> to ..."** sends the request to the named model without the directive words, or says why it could not.

@@ -93,3 +93,4 @@ Rules are strict but not infinite. When a rule genuinely cannot be met, follow
 the documented waiver process in [`25-exceptions-and-waivers.md`](25-exceptions-and-waivers.md).
 No silent bypasses: an undocumented `eslint-disable`, `@ts-expect-error`, or
 `--no-verify` is a defect, not a waiver.
+| [`59-chat-surfaces-are-one-pipeline.md`](59-chat-surfaces-are-one-pipeline.md) | Compare/Consensus/Escalation/labs/judge are surfaces over normal chat: shared gateways, thread resolver, DTO fragments, composer spread; a chat change is not done until propagated; guard spec |

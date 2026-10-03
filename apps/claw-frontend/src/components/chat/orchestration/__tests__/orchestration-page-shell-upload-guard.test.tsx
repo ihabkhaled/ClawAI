@@ -7,6 +7,14 @@ import { ResearchMode } from '@/enums/research-mode.enum';
 import type { UseOrchestrationComposerReturn } from '@/types/hook.types';
 import type { OrchestrationPageShellProps } from '@/types/orchestration.types';
 
+vi.mock('@/components/chat/orchestration/orchestration-context-button', () => ({
+  OrchestrationContextButton: () => <div data-testid="orchestration-context-button" />,
+}));
+
+vi.mock('@/components/chat/prompt-library/prompt-library-button', () => ({
+  PromptLibraryButton: () => <div data-testid="prompt-library-button" />,
+}));
+
 vi.mock('@/components/chat/file-attachment-picker', () => ({
   FileAttachmentPicker: () => <div data-testid="picker" />,
 }));
@@ -49,6 +57,10 @@ function buildComposer(
     researchProviders: [],
     isResearchProvidersLoading: false,
     researchPayload: { researchMode: ResearchMode.AUTO },
+    contextPackIds: [],
+    setContextPackIds: vi.fn(),
+    contextPackPayload: {},
+    sharedPayload: { researchMode: ResearchMode.AUTO },
     clear: vi.fn(),
     ...overrides,
   };

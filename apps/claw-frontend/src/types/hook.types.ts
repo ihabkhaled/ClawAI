@@ -70,6 +70,7 @@ import type {
   ModelSelection,
   VirtualizedMessagesProps,
 } from './component.types';
+import type { OrchestrationContextPackPayload } from './composer-context.types';
 import type { CostEnsembleResult as CostEnsembleResultType } from './cost-ensemble.types';
 import type { AggregatedHealth } from './health.types';
 import type { TranslateFunction } from './i18n.types';
@@ -1328,6 +1329,12 @@ export type UseOrchestrationComposerReturn = {
    * "omit, never send NONE" rule lives in exactly one place.
    */
   researchPayload: OrchestrationResearchPayload;
+  /** Context packs the next run carries (a lab has no thread until it runs). */
+  contextPackIds: string[];
+  setContextPackIds: (next: string[]) => void;
+  contextPackPayload: OrchestrationContextPackPayload;
+  /** research + context packs, the one spread every lab hook uses. */
+  sharedPayload: OrchestrationResearchPayload & OrchestrationContextPackPayload;
   /** Called after a successful send; a lab run is one question. */
   clear: () => void;
 };

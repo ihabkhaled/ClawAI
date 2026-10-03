@@ -147,6 +147,10 @@ import { type RolePackResponse } from '../types/role-pack.types';
 import { type ParallelMessageDto } from '../dto/parallel-message.dto';
 import { type VerifyMessageDto } from '../dto/verify-message.dto';
 import { type PipelineMessageDto } from '../dto/pipeline-message.dto';
+import {
+  orchestrationThreadTitle,
+  resolveOrchestrationThread,
+} from '../utilities/orchestration-thread.utility';
 import { type RolePackMessageDto } from '../dto/role-pack-message.dto';
 import {
   BusinessException,
@@ -710,13 +714,12 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   private async resolveCompareThread(userId: string, dto: ParallelMessageDto): Promise<ChatThread> {
-    return dto.threadId && dto.threadId.length > 0
-      ? this.getThreadForMessage(dto.threadId, userId)
-      : this.chatThreadsRepository.create({
-          userId,
-          title: `Compare: ${dto.content.slice(0, 50)}`,
-          routingMode: RoutingMode.MANUAL_MODEL,
-        });
+    return resolveOrchestrationThread(this.chatThreadsRepository, userId, {
+      threadId: dto.threadId,
+      title: orchestrationThreadTitle('Compare', dto.content),
+      routingMode: RoutingMode.MANUAL_MODEL,
+      contextPackIds: dto.contextPackIds,
+    });
   }
 
   async createConsensusMessage(
@@ -729,14 +732,12 @@ export class ChatMessagesService implements OnModuleInit {
       requireFeature: 'allowConsensusMode',
     });
     await this.assertOrchestrationResearchGate(userId, dto.researchMode);
-    const thread =
-      dto.threadId && dto.threadId.length > 0
-        ? await this.getThreadForMessage(dto.threadId, userId)
-        : await this.chatThreadsRepository.create({
-            userId,
-            title: `Consensus: ${dto.content.slice(0, 50)}`,
-            routingMode: RoutingMode.MANUAL_MODEL,
-          });
+    const thread = await resolveOrchestrationThread(this.chatThreadsRepository, userId, {
+      threadId: dto.threadId,
+      title: orchestrationThreadTitle('Consensus', dto.content),
+      routingMode: RoutingMode.MANUAL_MODEL,
+      contextPackIds: dto.contextPackIds,
+    });
 
     return this.consensusExecutionManager.executeConsensus(
       userId,
@@ -767,14 +768,12 @@ export class ChatMessagesService implements OnModuleInit {
       requireFeature: 'allowEscalationChain',
     });
     await this.assertOrchestrationResearchGate(userId, chainResearchMode);
-    const thread =
-      dto.threadId && dto.threadId.length > 0
-        ? await this.getThreadForMessage(dto.threadId, userId)
-        : await this.chatThreadsRepository.create({
-            userId,
-            title: `Escalation: ${dto.content.slice(0, 50)}`,
-            routingMode: RoutingMode.MANUAL_MODEL,
-          });
+    const thread = await resolveOrchestrationThread(this.chatThreadsRepository, userId, {
+      threadId: dto.threadId,
+      title: orchestrationThreadTitle('Escalation', dto.content),
+      routingMode: RoutingMode.MANUAL_MODEL,
+      contextPackIds: dto.contextPackIds,
+    });
 
     return this.escalationChainManager.executeEscalationChain(
       userId,

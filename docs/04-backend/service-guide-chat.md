@@ -1264,3 +1264,11 @@ See [ADR-151](../13-adr/adr-151-picked-model-smart-fallback.md) and the chat-ser
 substitutes come from routing-service (`pickedModelSubstitutes`), at most two are tried after a provider
 failure only, the answer is labelled (`metadata.pickedModelFallback`), and an all-failed turn stores
 `PICKED_MODEL_FAILED` with three `suggestedModels`.
+
+## Surface parity (2026-10-03)
+
+Every orchestration surface shares chat's pipeline: [rule 59](../../rules/59-chat-surfaces-are-one-pipeline.md),
+[ADR-155](../13-adr/adr-155-chat-surfaces-are-one-pipeline.md), [parity map](../../context/chat-surface-parity-map.md).
+`resolveOrchestrationThread` replaced ten copies of thread creation; a supplied `threadId` that is not
+the caller's is a 403 `FORBIDDEN_THREAD_ACCESS`. `contextPackIds` on a lab/compare/consensus/escalation
+request is stored on the thread it creates. Guard: `orchestration-parity.spec.ts`.

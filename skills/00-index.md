@@ -239,3 +239,4 @@ regeneration is step 2.
 If a generated file is wrong, fix the **generator or its input**, then
 regenerate. Editing `.ai/manifests/*.json` or a workspace `AGENTS.md` by hand is
 overwritten on the next build and hides the real problem.
+| Propagate a Chat Change to Every Mode | `propagate-a-chat-change-to-every-mode.md` | You change ANYTHING in normal chat (button, upload type, tool, context source, detector, DTO field): walk the ten surfaces before calling it done |

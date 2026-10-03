@@ -1789,3 +1789,15 @@ research planner decided with no attachment facts and its `thinking` was shown a
 (`research-marker-match.utility.ts`; CJK and Thai stay substrings). They only drive the lab/parallel lanes
 (`resolveEffectiveResearchMode` from the research enricher). The main chat turn uses the RESEARCH_GATE model
 (`needsWeb`, `plan`) and a pasted URL is always crawled when the plan has research access.
+
+## Chat surfaces are one pipeline (2026-10-03, rule 59)
+
+Compare, Consensus, Escalation, the seven labs and the judge/critic are surfaces over normal chat.
+They get context from `ChatContextGatewayManager`, call models through `ModeExecutionGatewayManager`
+(`callProvider`), get their thread from `resolveOrchestrationThread` (ownership-checked; new threads
+carry `contextPackIds`) and spread the shared DTO fragments (`researchFields`, `attachmentFields`,
+`contextPackFields`). `__tests__/orchestration-parity.spec.ts` fails if a manager grows its own
+`chatThreadsRepository.create(`, a raw Ollama post (only Consensus synthesis is allowed, TD-044), or a
+DTO misses a fragment. Changing normal chat? Walk
+[context/chat-surface-parity-map.md](../../context/chat-surface-parity-map.md) and
+[skills/propagate-a-chat-change-to-every-mode.md](../../skills/propagate-a-chat-change-to-every-mode.md).

@@ -331,3 +331,16 @@ Last updated: 2026-09-10
 
 - **Added**: 2026-10-03 · **Severity**: High (two critical) · None introduced by the 2026-10-03 batch; all dated 2026-09-15 to 09-29.
   Open: #66 command-line injection and #65 disabled certificate validation in `scripts/qa-lab/video-restart-live.mjs`; #63 incomplete sanitization in `scripts/qa-lab/multimodal-matrix.mjs`; #64 and #61 polynomial ReDoS in `generation-request.utility.ts` (save-intent patterns) and `connector-presets.utility.ts`; #58 request forgery in `fetch-client.utility.ts`; #62 URL-scheme check in a markdown test. Fix: QA-lab scripts take arguments as arrays and keep TLS on; bound the input length or rewrite the two regexes; route `fetch-client` through the private-host guard (TD-040/TD-041). Check: `gh api repos/ihabkhaled/ClawAI/code-scanning/alerts?state=open`.
+
+### TD-044: Consensus synthesis posts to the local Ollama route (2026-10-03)
+
+- **Added**: 2026-10-03 - **Severity**: Low - Allowed exception in `orchestration-parity.spec.ts`.
+  `consensus-execution.manager.ts` `runOllamaSynthesis` builds an `OllamaGenerateRequest` and posts it
+  to `/api/v1/ollama/generate`, metering itself with `recordUsage`. Moving it onto `ModeExecutionGatewayManager`
+  would let a connector model synthesise, which changes who pays, so it needs an owner billing decision first.
+
+### TD-045: Labs have no preview-context or memory dialog (2026-10-03)
+
+- **Added**: 2026-10-03 - **Severity**: Low - A lab run creates its thread, so before the first run there is
+  nothing to preview. Labs have the pack picker; those two dialogs are chat and in-thread Compare only.
+  Fix when a lab gets a "draft thread" (create the thread when the page opens).

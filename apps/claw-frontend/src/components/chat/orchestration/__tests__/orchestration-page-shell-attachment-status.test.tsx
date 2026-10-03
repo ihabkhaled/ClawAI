@@ -13,6 +13,14 @@ import type { OrchestrationPageShellProps } from '@/types/orchestration.types';
 // show "Uploading… (N)" and a progress bar; it now renders the chat
 // composer's own tray (with a cancel on a file still uploading) and chip strip.
 
+vi.mock('@/components/chat/orchestration/orchestration-context-button', () => ({
+  OrchestrationContextButton: () => <div data-testid="orchestration-context-button" />,
+}));
+
+vi.mock('@/components/chat/prompt-library/prompt-library-button', () => ({
+  PromptLibraryButton: () => <div data-testid="prompt-library-button" />,
+}));
+
 vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({
     t: (key: string, params?: Record<string, string | number>) =>
@@ -79,6 +87,10 @@ function buildComposer(onCancelUpload: (key: string) => void): UseOrchestrationC
     researchProviders: [],
     isResearchProvidersLoading: false,
     researchPayload: { researchMode: ResearchMode.AUTO },
+    contextPackIds: [],
+    setContextPackIds: vi.fn(),
+    contextPackPayload: {},
+    sharedPayload: { researchMode: ResearchMode.AUTO },
     clear: vi.fn(),
   };
 }

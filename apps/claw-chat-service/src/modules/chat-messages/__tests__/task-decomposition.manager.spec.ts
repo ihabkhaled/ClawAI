@@ -104,6 +104,7 @@ describe('TaskDecompositionManager', () => {
     vi.clearAllMocks();
     messagesRepo = mockMessagesRepo();
     threadsRepo = mockThreadsRepo();
+    threadsRepo.findById!.mockResolvedValue({ id: 'thread-1', userId: 'user-1' });
     streamService = mockStreamService();
     researchEnricher = mockResearchEnricher();
     bundle = makeBundle();

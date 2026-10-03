@@ -27,6 +27,8 @@ import { RoutingMode } from '../../../generated/prisma';
 import { OLLAMA_PROVIDER } from '../../../common/constants';
 import { PAYG_WORKFLOW_BEST_OF_N } from '../constants/payg.constants';
 
+import { resolveOrchestrationThread } from '../utilities/orchestration-thread.utility';
+
 /**
  * Generates N candidate answers and picks the best via quality scoring.
  *
@@ -386,13 +388,11 @@ export class BestOfNManager {
   }
 
   private async resolveThreadId(userId: string, dto: BestOfNMessageDto): Promise<string> {
-    if (dto.threadId && dto.threadId.length > 0) {
-      return dto.threadId;
-    }
-    const thread = await this.chatThreadsRepository.create({
-      userId,
+    const thread = await resolveOrchestrationThread(this.chatThreadsRepository, userId, {
+      threadId: dto.threadId,
       title: `Best-of-N: ${dto.content.slice(0, 50)}`,
       routingMode: RoutingMode.AUTO,
+      contextPackIds: dto.contextPackIds,
     });
     return thread.id;
   }

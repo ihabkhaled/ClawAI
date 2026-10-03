@@ -31,9 +31,11 @@ import type {
   TaskDecompositionResponse,
 } from '../types/task-decomposition.types';
 import type { ResearchTranscript } from '../types/research-transcript.types';
-import { type Prisma, type RoutingMode } from '../../../generated/prisma';
+import { type Prisma } from '../../../generated/prisma';
 import { OLLAMA_PROVIDER } from '../../../common/constants';
 import { PAYG_WORKFLOW_TASK_DECOMPOSITION } from '../constants/payg.constants';
+
+import { resolveOrchestrationThread } from '../utilities/orchestration-thread.utility';
 
 /**
  * Splits a task into sub-tasks, runs them, and merges the answers.
@@ -606,13 +608,11 @@ Provide a unified, coherent response that integrates all sub-task results into a
   }
 
   private async resolveThreadId(userId: string, dto: DecomposeTaskDto): Promise<string> {
-    if (dto.threadId && dto.threadId.length > 0) {
-      return dto.threadId;
-    }
-    const thread = await this.chatThreadsRepository.create({
-      userId,
+    const thread = await resolveOrchestrationThread(this.chatThreadsRepository, userId, {
+      threadId: dto.threadId,
       title: `Decompose: ${dto.content.slice(0, 50)}`,
-      routingMode: 'MANUAL_MODEL' as RoutingMode,
+      routingMode: 'MANUAL_MODEL',
+      contextPackIds: dto.contextPackIds,
     });
     return thread.id;
   }

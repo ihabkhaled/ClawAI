@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { attachmentFields } from './attachment-fields.dto';
+import { contextPackFields } from './context-pack-fields.dto';
+import { researchFields } from './research-fields.dto';
 import { requireContentOrAttachments } from '../validators/content-or-attachments.validator';
 
 export const parallelMessageSchema = z
@@ -34,17 +35,14 @@ export const parallelMessageSchema = z
       .optional()
       .nullable(),
     ...attachmentFields,
+    ...contextPackFields,
     // Compare-mode research enricher (added 2026-05-30). The user picks ONE of
     // four modes; the chat-service calls research-service before parallel lane
     // execution and pre-pends formatted evidence to the shared system prompt so
     // every lane sees the same web evidence. NONE preserves v1 behavior.
     // Distinct from the per-message ResearchWorkflow on createMessageSchema.
-    researchMode: z.nativeEnum(ResearchMode).default(ResearchMode.NONE).optional(),
+    ...researchFields,
     researchQuery: z.string().max(500, 'Research query must be at most 500 characters').optional(),
-    researchProviderId: z
-      .string()
-      .max(64, 'Research provider id must be at most 64 characters')
-      .optional(),
   })
   .superRefine((value, ctx) => {
     requireContentOrAttachments()(value, ctx);

@@ -102,6 +102,8 @@ export type UseParallelCompareReturn = {
 
 export type UseParallelComparePageReturn = {
   t: (key: string, params?: Record<string, string | number>) => string;
+  contextPackIds: string[];
+  setContextPackIds: (next: string[]) => void;
   selectedModels: ParallelModelTarget[];
   prompt: string;
   setPrompt: (value: string) => void;

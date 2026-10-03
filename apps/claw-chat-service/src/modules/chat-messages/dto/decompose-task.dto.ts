@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { advancedModelSelectionFields } from './advanced-model-selection-fields.dto';
 import { attachmentFields } from './attachment-fields.dto';
+import { contextPackFields } from './context-pack-fields.dto';
 import { researchFields } from './research-fields.dto';
 import { requireContentOrAttachments } from '../validators/content-or-attachments.validator';
 
@@ -12,6 +13,7 @@ export const decomposeTaskSchema = z
     maxSubTasks: z.number().int().min(2).max(5).default(3),
     ...advancedModelSelectionFields,
     ...researchFields,
+    ...contextPackFields,
     ...attachmentFields,
   })
   .superRefine(requireContentOrAttachments(10));
