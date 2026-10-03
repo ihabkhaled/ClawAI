@@ -27,6 +27,13 @@ export const FILE_FOLLOW_UP_PREFIXES: ReadonlyArray<string> = ['another', 'one m
 
 export const SHORT_FOLLOW_UP_MAX_LENGTH = 100;
 
+/**
+ * "another thing: …" / "another point is …" opens a new thought, not a repeat of
+ * the last image or file; the follow-up prefixes would otherwise re-run it.
+ */
+export const FOLLOW_UP_NEW_THOUGHT =
+  /^another\s+(?:thing|point|question|idea|example|option|case|issue|reason|note|detail)(?![\p{L}\p{N}])/u;
+
 // IMAGE_INTENT_PHRASES was removed 2026-09-26: an attached-image edit is now
 // decided by `classifyImageIntent` in `@claw/shared-utilities` (image-intent/),
 // shared with routing-service.

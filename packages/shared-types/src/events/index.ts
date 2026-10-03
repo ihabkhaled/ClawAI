@@ -92,6 +92,8 @@ export type {
   UserTemporaryPasswordIssuedPayload,
   MessageCreatedPayload,
   MessageRoutedPayload,
+  NamedModelNoticePayload,
+  NamedModelNoticeReason,
   MessageCompletedPayload,
   MessageFeedbackSetPayload,
   ConnectorCreatedPayload,

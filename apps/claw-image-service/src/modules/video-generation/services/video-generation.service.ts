@@ -1,6 +1,11 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 
-import { VIDEO_FALLBACK_CHAIN, VIDEO_PROVIDER_CONNECTORS } from '../../../common/constants';
+import {
+  VEO_MODEL_FALLBACK_CHAIN,
+  VIDEO_FALLBACK_CHAIN,
+  VIDEO_PROVIDER_CONNECTORS,
+  VIDEO_PROVIDER_GEMINI,
+} from '../../../common/constants';
 import { VideoFailureCode } from '../../../common/enums';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { VideoGenerationStatus } from '../../../generated/prisma';
@@ -8,6 +13,7 @@ import { ImagePlanGateManager } from '../../image-generation/managers/image-plan
 import { type GenerateVideoDto } from '../dto/generate-video.dto';
 import {
   NO_FALLBACK_CODES,
+  VEO_MODEL_FALLBACK_CODES,
   VIDEO_CHAIN_MAX_HOPS,
   VIDEO_CREDIT_FAILURE_MESSAGE,
 } from '../constants/video-generation.constants';
@@ -21,7 +27,11 @@ import type {
   VideoGenerationWithLatest,
 } from '../types/video-generation.types';
 import { isVideoCancelledError } from '../utilities/video-cancel.utility';
-import { videoFailureCodeOf } from '../utilities/video-provider-error.utility';
+import {
+  storedVideoFailureMessage,
+  videoFailureCodeOf,
+} from '../utilities/video-provider-error.utility';
+import { videoPriceKey } from '../utilities/video-price-key.utility';
 import { toVideoView } from '../utilities/video-view.utility';
 
 @Injectable()
@@ -184,9 +194,27 @@ export class VideoGenerationService {
   }
 
   /** Runs one attempt; an AUTO request that fails falls through to the next provider. */
-  private async processWithFallback(row: VideoGenerationRecord): Promise<void> {
+  private async processWithFallback(
+    row: VideoGenerationRecord,
+    tried: readonly string[] = [videoPriceKey(row.model)],
+  ): Promise<void> {
     const failure = await this.processJob(row);
-    if (failure === null || !row.isAutoMode) {
+    if (failure === null) {
+      return;
+    }
+    const sibling = this.nextVeoModel(row, failure.code, tried);
+    if (sibling !== null) {
+      this.logger.warn(
+        `processWithFallback: id=${row.id} ${row.model} refused (${failure.code}) — trying ${sibling}`,
+      );
+      const successor = await this.repository.createSuccessor(row.id, {
+        ...this.copyOf(row, row.isAutoMode),
+        model: sibling,
+      });
+      await this.processWithFallback(successor, [...tried, sibling]);
+      return;
+    }
+    if (!row.isAutoMode) {
       return;
     }
     const next = this.nextCandidate(row.provider, failure.code);
@@ -202,6 +230,20 @@ export class VideoGenerationService {
       model: next.model,
     });
     await this.processWithFallback(successor);
+  }
+
+  /**
+   * Another Veo model to try when this one was refused for a model-specific reason,
+   * manual pick or AUTO alike. Credit exhaustion (a different code) never gets here.
+   */
+  private nextVeoModel(
+    row: VideoGenerationRecord,
+    code: string,
+    tried: readonly string[],
+  ): string | null {
+    return row.provider !== VIDEO_PROVIDER_GEMINI || !VEO_MODEL_FALLBACK_CODES.includes(code)
+      ? null
+      : (VEO_MODEL_FALLBACK_CHAIN.find((model) => !tried.includes(model)) ?? null);
   }
 
   private nextCandidate(
@@ -272,7 +314,7 @@ export class VideoGenerationService {
     const known = Object.values(VideoFailureCode).find((value) => value === code);
     const message = isCredit
       ? VIDEO_CREDIT_FAILURE_MESSAGE
-      : videoFailureMessage(known ?? VideoFailureCode.PROVIDER_FAILURE);
+      : storedVideoFailureMessage(known ?? VideoFailureCode.PROVIDER_FAILURE, error);
     const detail = error instanceof Error ? error.message : 'unknown error';
     this.logger.error(
       `processJob: id=${row.id} provider=${row.provider} FAILED code=${code} — ${detail}`,

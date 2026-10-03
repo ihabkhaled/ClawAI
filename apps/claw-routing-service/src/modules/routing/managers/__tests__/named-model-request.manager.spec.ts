@@ -47,34 +47,83 @@ describe('NamedModelRequestManager', () => {
     await expect(
       manager.resolve(ctx('use nano banana to make a poster of a fox')),
     ).resolves.toEqual({
-      provider: 'GEMINI',
-      model: 'models/gemini-2.5-flash-image',
-      capability: NamedModelCapability.IMAGE,
-      phrase: 'nano banana',
+      resolution: {
+        provider: 'GEMINI',
+        model: 'models/gemini-2.5-flash-image',
+        capability: NamedModelCapability.IMAGE,
+        phrase: 'nano banana',
+      },
+      // What the image model receives: the task, without "use nano banana to".
+      prompt: 'Make a poster of a fox',
+      notice: null,
     });
   });
 
   it('"use grok to draw a cat" picks the Grok image model; "use grok" alone a chat model', async () => {
     const { manager } = build();
     await expect(manager.resolve(ctx('use grok to draw a cat'))).resolves.toMatchObject({
-      provider: 'GROK',
-      model: 'grok-imagine-image',
-      capability: NamedModelCapability.IMAGE,
+      resolution: {
+        provider: 'GROK',
+        model: 'grok-imagine-image',
+        capability: NamedModelCapability.IMAGE,
+      },
+      prompt: 'Draw a cat',
     });
     await expect(manager.resolve(ctx('use grok to explain recursion'))).resolves.toMatchObject({
-      provider: 'GROK',
-      model: 'grok-3-mini',
-      capability: NamedModelCapability.CHAT,
+      resolution: {
+        provider: 'GROK',
+        model: 'grok-3-mini',
+        capability: NamedModelCapability.CHAT,
+      },
+      prompt: 'Explain recursion',
     });
   });
 
-  it('skips a provider known to be down', async () => {
+  it('a provider known to be down is skipped and the notice says why', async () => {
     const { manager } = build();
     await expect(
       manager.resolve(
         ctx('use nano banana to make a poster', { connectorHealth: { GEMINI: false, GROK: true } }),
       ),
-    ).resolves.toBeNull();
+    ).resolves.toEqual({
+      resolution: null,
+      prompt: null,
+      notice: { phrase: 'nano banana', provider: 'GEMINI', reason: 'CONNECTOR_DOWN' },
+    });
+  });
+
+  it('"use grok" with no Grok model set up says NOT_CONFIGURED, never a silent fallback', async () => {
+    const { manager, find } = build();
+    find.mockResolvedValue(ROWS.filter((row) => row.provider !== 'GROK'));
+    await expect(manager.resolve(ctx('use grok to explain recursion'))).resolves.toEqual({
+      resolution: null,
+      prompt: null,
+      notice: { phrase: 'grok', provider: 'GROK', reason: 'NOT_CONFIGURED' },
+    });
+  });
+
+  it('"use grok" when the plan has no Grok model says NOT_IN_PLAN', async () => {
+    const { manager } = build();
+    await expect(
+      manager.resolve(
+        ctx('use grok to explain recursion', {
+          allowedModels: ['OPENAI/gpt-4o-mini'],
+          modelAccessAllowAll: false,
+        }),
+      ),
+    ).resolves.toMatchObject({
+      resolution: null,
+      notice: { provider: 'GROK', reason: 'NOT_IN_PLAN' },
+    });
+  });
+
+  it('"use grok" for a picture when it has only chat models says NO_FITTING_MODEL', async () => {
+    const { manager, find } = build();
+    find.mockResolvedValue(ROWS.filter((row) => row.providerModelId !== 'grok-imagine-image'));
+    await expect(manager.resolve(ctx('use grok to draw a cat'))).resolves.toMatchObject({
+      resolution: null,
+      notice: { provider: 'GROK', reason: 'NO_FITTING_MODEL' },
+    });
   });
 
   it('skips a model the user plan does not allow (normal routing carries on)', async () => {
@@ -83,14 +132,17 @@ describe('NamedModelRequestManager', () => {
       allowedModels: ['OPENAI/gpt-4o-mini', 'GEMINI/gemini-2.5-flash'],
       modelAccessAllowAll: false,
     });
-    await expect(manager.resolve(restricted)).resolves.toBeNull();
+    await expect(manager.resolve(restricted)).resolves.toMatchObject({
+      resolution: null,
+      notice: { reason: 'NOT_IN_PLAN' },
+    });
     await expect(
       manager.resolve({ ...restricted, allowedModels: ['GEMINI/gemini-2.5-flash-image'] }),
-    ).resolves.toMatchObject({ provider: 'GEMINI' });
+    ).resolves.toMatchObject({ resolution: { provider: 'GEMINI' } });
     await expect(
       manager.resolve({ ...restricted, modelAccessAllowAll: true }),
     ).resolves.toMatchObject({
-      provider: 'GEMINI',
+      resolution: { provider: 'GEMINI' },
     });
   });
 

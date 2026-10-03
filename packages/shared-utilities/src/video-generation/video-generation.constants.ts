@@ -49,6 +49,11 @@ export const VIDEO_ASPECT_RATIO_DEFAULT = '16:9';
 export const VIDEO_REQUEST_PATTERNS: readonly RegExp[] = [
   /\b(?:generate|create|make|produce|render|animate|imagine|film|shoot)\b\s+(?:me\s+|us\s+)?(?:(?:a|an|the|some|one|another|short|quick|small|new|cinematic|nice|cool|little|brief|\d+[- ]?(?:s|sec|secs|second|seconds))\s+)*(?:video|clip|animation|movie|film)\b(?!\s+(?:call|calls|conference|player|editor|editing|codec|format|file|files|game|games|streaming|meeting|chat|tutorial|course|url|link))/iu,
   /\btext[- ]to[- ]video\b/iu,
+  // fr / es / de / ar: the same shape, a making verb then a video noun.
+  /(?<![\p{L}\p{N}])(?:génère|genere|crée|cree|créer|fais|fabrique|produis)(?:[- ](?:moi|nous))?\s+(?:(?:une?|la|des|quelques?|courte?|petite?)\s+)*(?:vidéo|video|clip|animation)(?![\p{L}\p{N}])/iu,
+  /(?<![\p{L}\p{N}])(?:genera|crea|haz|produce|hazme)\s+(?:(?:un|una|el|la|algún|breve|corto|corta)\s+)*(?:vídeo|video|clip|animación)(?![\p{L}\p{N}])/iu,
+  /(?<![\p{L}\p{N}])(?:erstelle|generiere|mach|mache|produziere|erzeuge)\s+(?:mir\s+)?(?:(?:ein|einen|eine|kurzes|kurzen|das)\s+)*(?:video|videoclip|clip|animation)(?![\p{L}\p{N}])/iu,
+  /(?:أنشئ|انشئ|اصنع|ولّد|ولد|اعمل|صمم|أنتج)\s+(?:لي\s+)?(?:\S+\s+){0,2}?(?:فيديو|مقطع|فديو)/u,
 ];
 
 /**

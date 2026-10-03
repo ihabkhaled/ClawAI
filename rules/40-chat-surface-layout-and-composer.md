@@ -344,5 +344,12 @@ the live edge. Code: `hooks/chat/use-scroll-up-intent.ts`. Proof:
 `tests/e2e/chat-streaming-scroll.spec.ts` simulates the reader with `page.mouse.wheel`
 (a programmatic `scrollBy` is not the reader). The spec depends on the live model's answer
 length, so it can miss on a short answer; 7 of 8 runs passed on 2026-10-03 (390 and 1366).
-Open: the context-pack/memory buttons sit inside the horizontally scrolling composer toolbar
-and are off-screen at 360/390 until scrolled.
+Closed 2026-10-03: context packs, "view attached" and memory are ONE "Context" button
+(`ComposerContextControls`, state in `use-composer-context-menu.ts`), placed FIRST in the
+horizontally scrolling composer toolbar so it is on screen at 360/390/768/1366 and in RTL without
+scrolling. The pack picker and the two dialog rows live in its popover; the dialogs are siblings of
+the popover so closing the menu does not unmount them. Do not add another icon-only control ahead
+of it, and do not move it back among the scrolling controls. Proof:
+`tests/e2e/composer-context-menu.spec.ts` (360, 390, 768, 844x390 landscape, 1366, Arabic RTL at
+390 and 360: button on screen and unobstructed, pick, view, memory). The language switch is saved
+on the account, so that spec sets it per case and restores English.

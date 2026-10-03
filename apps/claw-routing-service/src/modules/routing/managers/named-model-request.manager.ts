@@ -9,12 +9,14 @@ import { DeploymentActivationState } from '../../../generated/prisma';
 import { NamedModelCapability } from '../../../common/enums/named-model-capability.enum';
 import { NAMED_MODEL_UNROUTABLE_PROVIDERS } from '../constants/named-model-request.constants';
 import { ModelDeploymentRepository } from '../repositories/model-deployment.repository';
-import type { NamedModelCandidate, NamedModelResolution } from '../types/named-model-request.types';
+import type { NamedModelCatalogEntry, NamedModelOutcome } from '../types/named-model-request.types';
 import type { RoutingContext } from '../types/routing.types';
 import {
   findNamedModelRequest,
   hasModelDirective,
+  namedModelUnavailableReason,
   resolveNamedModel,
+  stripNamedModelDirective,
 } from '../utilities/named-model-request.utility';
 
 /**
@@ -25,7 +27,8 @@ import {
  * cross-database read), filtered the way every AUTO candidate is: the
  * connector must not be known-down and the user's plan must allow the model.
  * A model the plan does not allow is skipped (normal routing carries on) rather
- * than being routed to and refused later. The catalog is read only when the
+ * than being routed to and refused later, and the outcome carries the reason so
+ * the answer tells the user instead of silently using another model. The catalog is read only when the
  * prompt contains a directive word, so an ordinary turn costs nothing.
  */
 @Injectable()
@@ -34,19 +37,34 @@ export class NamedModelRequestManager {
 
   constructor(private readonly deployments: ModelDeploymentRepository) {}
 
-  async resolve(context: RoutingContext): Promise<NamedModelResolution | null> {
+  async resolve(context: RoutingContext): Promise<NamedModelOutcome | null> {
     if (!hasModelDirective(context.message)) return null;
     try {
-      const candidates = await this.candidatesFor(context);
-      const match = findNamedModelRequest(context.message, candidates);
+      const catalog = await this.catalogFor(context);
+      const match = findNamedModelRequest(context.message, catalog);
       if (match === null) return null;
-      const resolution = resolveNamedModel(match, candidates, this.wantedCapability(context));
+      const usable = catalog.filter((entry) => entry.allowed && entry.healthy);
+      const wanted = this.wantedCapability(context);
+      const resolution = resolveNamedModel(match, usable, wanted);
+      if (resolution === null) {
+        const reason = namedModelUnavailableReason(match, catalog, wanted);
+        this.logger.log(
+          `resolve: "${match.phrase}" named ${match.provider} but it cannot answer (${reason}) — normal routing, the answer will say so`,
+        );
+        return {
+          resolution: null,
+          prompt: null,
+          notice: { phrase: match.phrase, provider: match.provider, reason },
+        };
+      }
       this.logger.log(
-        resolution === null
-          ? `resolve: "${match.phrase}" named ${match.provider} but no fitting model is routable — normal routing`
-          : `resolve: "${match.phrase}" → ${resolution.provider}/${resolution.model} (${resolution.capability})`,
+        `resolve: "${match.phrase}" → ${resolution.provider}/${resolution.model} (${resolution.capability})`,
       );
-      return resolution;
+      return {
+        resolution,
+        prompt: stripNamedModelDirective(context.message, match.phrase),
+        notice: null,
+      };
     } catch (error: unknown) {
       this.logger.warn(`resolve: catalog read failed — ${(error as Error).message}`);
       return null;
@@ -63,7 +81,8 @@ export class NamedModelRequestManager {
       : NamedModelCapability.CHAT;
   }
 
-  private async candidatesFor(context: RoutingContext): Promise<NamedModelCandidate[]> {
+  /** Every routable model with whether this user's plan and the connector's health allow it. */
+  private async catalogFor(context: RoutingContext): Promise<NamedModelCatalogEntry[]> {
     const routable = await this.deployments.findRoutableForCloudRouting();
     const allowed =
       context.modelAccessAllowAll === true || context.allowedModels === undefined
@@ -75,16 +94,13 @@ export class NamedModelRequestManager {
             }),
           );
     return routable
-      .filter(
-        (row) =>
-          !NAMED_MODEL_UNROUTABLE_PROVIDERS.includes(row.provider) &&
-          context.connectorHealth?.[row.provider] !== false &&
-          (allowed === null || allowed.has(modelMatchKey(row.provider, row.providerModelId))),
-      )
+      .filter((row) => !NAMED_MODEL_UNROUTABLE_PROVIDERS.includes(row.provider))
       .map((row) => ({
         provider: row.provider,
         providerModelId: row.providerModelId,
         isActive: row.activationState === DeploymentActivationState.ACTIVE,
+        allowed: allowed === null || allowed.has(modelMatchKey(row.provider, row.providerModelId)),
+        healthy: context.connectorHealth?.[row.provider] !== false,
       }));
   }
 }

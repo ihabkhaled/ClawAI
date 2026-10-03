@@ -26,3 +26,15 @@ export const VIDEO_FALLBACK_CHAIN: ReadonlyArray<{ provider: string; model: stri
   { provider: VIDEO_PROVIDER_GEMINI, model: VIDEO_MODEL_GEMINI_AUTO },
   { provider: VIDEO_PROVIDER_GROK, model: VIDEO_MODEL_GROK_AUTO },
 ];
+
+/**
+ * The Veo models tried, in order, when the one asked for is refused for a reason
+ * specific to that model (retired, or "not supported by this model"). Cheapest
+ * first, so a fallback never costs more than the clip the user was already
+ * willing to pay for. Credit exhaustion is account-wide and never walks this list.
+ */
+export const VEO_MODEL_FALLBACK_CHAIN: readonly string[] = [
+  'veo-3.1-fast-generate-preview',
+  'veo-3.1-lite-generate-preview',
+  'veo-3.1-generate-preview',
+];

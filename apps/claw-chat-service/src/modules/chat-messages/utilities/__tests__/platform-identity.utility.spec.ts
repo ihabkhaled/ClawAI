@@ -111,3 +111,19 @@ describe('the saving line (a model must not say saving is impossible)', () => {
     expect(block).not.toContain('cannot see the browser page itself');
   });
 });
+
+describe('platform identity — the same behaviour from every model (2026-10-03)', () => {
+  const block = buildPlatformIdentityBlock(undefined);
+
+  it('a generation word inside material is a topic, not an order', () => {
+    expect(block).toContain('only when the user directly asks the assistant to make one');
+    expect(block).toContain('do the text task and do not announce or start a generation');
+  });
+
+  it('a save request gets the material in full, then one Save-button sentence, never a claim of saving', () => {
+    expect(block).toContain('IN FULL');
+    expect(block).toContain('Save as context pack');
+    expect(block).toContain('Never claim you saved it yourself');
+    expect(block).toContain('never mention saving or the Save buttons');
+  });
+});

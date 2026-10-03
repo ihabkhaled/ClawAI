@@ -1,3 +1,4 @@
+import { generationRequestText } from '../generation-request/generation-request.utility';
 import {
   VIDEO_ANIMATE_ATTACHED_IMAGE_PATTERNS,
   VIDEO_ASPECT_RATIO_DEFAULT,
@@ -36,15 +37,18 @@ export function isVideoOutputModel(connectorProvider: string, model: string): bo
 }
 
 /**
- * Whether the message asks for a video to be made. With an image attached
+ * Whether the message asks for a video to be made (a mention of video generation is not a request). With an image attached
  * (`hasAttachedImage`) "animate this" and "bring it to life" also count: that is
  * image-to-video, the attached image being the first frame.
  */
 export function classifyVideoIntent(message: string, hasAttachedImage = false): boolean {
+  // Only the part that can be a request: a feature list, a supplementary note
+  // or a writing task that merely mentions "create videos" never spends money.
+  const request = generationRequestText(message);
   return (
-    VIDEO_REQUEST_PATTERNS.some((pattern) => pattern.test(message)) ||
+    VIDEO_REQUEST_PATTERNS.some((pattern) => pattern.test(request)) ||
     (hasAttachedImage &&
-      VIDEO_ANIMATE_ATTACHED_IMAGE_PATTERNS.some((pattern) => pattern.test(message)))
+      VIDEO_ANIMATE_ATTACHED_IMAGE_PATTERNS.some((pattern) => pattern.test(request)))
   );
 }
 

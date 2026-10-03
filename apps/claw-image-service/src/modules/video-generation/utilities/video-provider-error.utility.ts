@@ -16,9 +16,16 @@ import {
   VIDEO_CONTENT_POLICY_MARKERS,
   VIDEO_CREDITS_DEPLETED_MARKERS,
   VIDEO_MODEL_MISSING_MARKERS,
+  VIDEO_PROVIDER_ERROR_PREFIX,
   VIDEO_QUOTA_MARKERS,
+  VIDEO_SECRET_SHAPES,
   videoFailureMessage,
 } from '../constants/video-failure.constants';
+
+import {
+  VEO_MODEL_FALLBACK_CODES,
+  VIDEO_REJECTION_REASON_MAX_CHARACTERS,
+} from '../constants/video-generation.constants';
 
 function includesAny(text: string, markers: readonly string[]): boolean {
   const lower = text.toLowerCase();
@@ -92,4 +99,39 @@ export function videoFailure(code: VideoFailureCode, detail?: string): BusinessE
 /** The failure code a stored error carries, or the generic one for an unknown throw. */
 export function videoFailureCodeOf(error: unknown): string {
   return error instanceof BusinessException ? error.code : VideoFailureCode.PROVIDER_FAILURE;
+}
+
+/**
+ * The provider's own reason for a refusal, made safe to store: the log prefix is
+ * stripped, key-shaped tokens are redacted, whitespace is collapsed and the text
+ * is capped. `undefined` when the error carries nothing worth showing.
+ */
+export function videoRejectionReason(error: unknown): string | undefined {
+  if (!(error instanceof Error)) {
+    return undefined;
+  }
+  const reason = error.message
+    .replaceAll(VIDEO_PROVIDER_ERROR_PREFIX, '')
+    .replaceAll(VIDEO_SECRET_SHAPES, '[redacted]')
+    .replaceAll(/\s+/gu, ' ')
+    .trim();
+  return reason.length === 0 ? undefined : reason.slice(0, VIDEO_REJECTION_REASON_MAX_CHARACTERS);
+}
+
+/**
+ * The sentence stored on a failed row. A generic rejection or a missing model says
+ * nothing a user can act on by itself, so it carries the provider's reason too;
+ * every other code keeps its fixed sentence.
+ */
+export function storedVideoFailureMessage(code: VideoFailureCode, error: unknown): string {
+  const base = videoFailureMessage(code);
+  if (!VEO_MODEL_FALLBACK_CODES.includes(code)) {
+    return base;
+  }
+  // A poll-time failure arrives as "<base> (<detail>)"; keep only the detail.
+  const own = videoRejectionReason(error)
+    ?.replace(base, '')
+    .replace(/^\s*\((.*)\)\s*$/u, '$1')
+    .trim();
+  return own === undefined || own.length === 0 ? base : `${base} Provider said: ${own}`;
 }

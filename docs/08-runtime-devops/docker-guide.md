@@ -539,3 +539,7 @@ llamacpp-service were down with the same cause, all three on `1.63.0` images.
 search and fetch in chat. **A crash-looping dev container is a config-drift
 suspect before it is a code suspect** — check the container's config against the
 host's before reading the source.
+
+### Root `overrides` must equal the workspace pin (react-hook-form, 2026-10-03)
+
+A dependency pinned in `overrides` (root `package.json`) at a different version than the workspace that uses it (`react-hook-form` 7.88.0 vs 7.89.0) leaves a stale nested copy in `package-lock.json` (`apps/claw-frontend/node_modules/react-hook-form`). The dev image then has the package only under the app, so a hoisted dependency such as `@hookform/resolvers` fails with `Can't resolve 'react-hook-form'` and `/login` returns 500. Keep the override and the workspace pin identical and delete the nested lock entry. Never fix it with a symlink inside the container.

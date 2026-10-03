@@ -510,8 +510,7 @@ export class RoutingService implements OnModuleInit {
       );
     }
 
-    const substitutes =
-      (await this.pickedModelSubstitutes?.resolve(gate.decision, context)) ?? [];
+    const substitutes = (await this.pickedModelSubstitutes?.resolve(gate.decision, context)) ?? [];
     await this.storeAndPublishDecision(
       messageId,
       threadId,
@@ -1002,6 +1001,14 @@ export class RoutingService implements OnModuleInit {
       ...(decision.pickedModelSubstitutes === undefined
         ? {}
         : { pickedModelSubstitutes: decision.pickedModelSubstitutes }),
+      // "use grok to …": the request without the directive for the target model,
+      // or the notice that the named model could not be used.
+      ...(decision.namedModelPrompt === undefined
+        ? {}
+        : { namedModelPrompt: decision.namedModelPrompt }),
+      ...(decision.namedModelNotice === undefined
+        ? {}
+        : { namedModelNotice: decision.namedModelNotice }),
       timestamp: new Date().toISOString(),
     });
   }

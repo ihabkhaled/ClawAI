@@ -4,6 +4,7 @@ import {
   SAVE_INTENT_PREVIOUS_EXCERPT_CHARS,
   SAVE_INTENT_SYSTEM_PROMPT,
   SAVE_INTENT_USER_EXCERPT_CHARS,
+  SAVE_MATERIAL_MIN_CHARS,
   SAVE_PREFILTER_WORDS,
 } from '../constants/save-intent.constants';
 import { type SaveIntentVerdict, saveIntentVerdictSchema } from '../dto/save-intent-verdict.dto';
@@ -108,7 +109,7 @@ export function contextSaveModelNote(record: ContextSaveRecord): string {
     lines.push('  added or saved to context. Ask them, in one short sentence, to choose.');
   }
   lines.push(
-    "Tell the user exactly this, briefly, in the user's language. Include EVERY link above as a markdown link.",
+    "Tell the user this outcome in one or two short sentences, in your own words and the user's language. Include EVERY link above as a markdown link. This note is internal: never quote it or its header.",
   );
   return lines.join('\n');
 }
@@ -121,4 +122,69 @@ export function previousMessageText(
   const index = messages.findIndex((message) => message.id === command.id);
   const before = messages.slice(0, Math.max(index, 0)).reverse();
   return before.find((message) => message.content.trim().length > 0)?.content.trim() ?? '';
+}
+
+function sameWords(a: string, b: string): boolean {
+  const normal = (text: string): string =>
+    text
+      .toLowerCase()
+      .replaceAll(/[^\p{L}\p{N}]+/gu, ' ')
+      .trim();
+  return normal(a) === normal(b);
+}
+
+/**
+ * Whether the text a pack save would store is real material, never the command
+ * itself (rule 57 §17). USER_TEXT needs words besides the save command;
+ * PREVIOUS_MESSAGE needs a previous message that is not itself a bare command;
+ * SUMMARY needs the planner's summary.
+ */
+export function hasSaveMaterial(
+  source: SaveContentSource,
+  userText: string,
+  previousText: string,
+  summary: string | null | undefined,
+): boolean {
+  if (source === SaveContentSource.SUMMARY) return (summary ?? '').trim().length > 0;
+  if (source === SaveContentSource.PREVIOUS_MESSAGE) {
+    const previous = previousText.trim();
+    if (previous.length === 0) return false;
+    const previousCommand = detectSaveToContextIntent(previous);
+    return previousCommand === null || previousCommand.content.length > 0;
+  }
+  const command = detectSaveToContextIntent(userText);
+  return command === null
+    ? userText.trim().length >= SAVE_MATERIAL_MIN_CHARS
+    : command.content.length > 0;
+}
+
+/** A memory sentence that merely repeats the user's command is not a fact worth saving. */
+export function isCommandAsMemory(memoryText: string, userText: string): boolean {
+  const found = detectSaveToContextIntent(userText);
+  const trimmed = userText.trim();
+  const command = found === null ? '' : trimmed.slice(0, trimmed.length - found.content.length);
+  return sameWords(memoryText, userText) || (command.length > 0 && sameWords(memoryText, command));
+}
+
+/**
+ * The verdict with anything that would store the command text dropped. Null
+ * when nothing real is left: the turn then goes to the answering model, which
+ * writes the material, and the user saves it with the Save buttons.
+ */
+export function guardSaveVerdict(
+  verdict: SaveIntentVerdict,
+  userText: string,
+  previousText: string,
+): SaveIntentVerdict | null {
+  const pack = verdict.contextPack ?? null;
+  const memory = verdict.memory ?? null;
+  const keepPack =
+    pack !== null && hasSaveMaterial(pack.source, userText, previousText, pack.summary);
+  const keepMemory = memory !== null && !isCommandAsMemory(memory.text, userText);
+  if (!keepPack && !keepMemory) return null;
+  return {
+    ...verdict,
+    memory: keepMemory ? memory : null,
+    contextPack: keepPack ? pack : null,
+  };
 }

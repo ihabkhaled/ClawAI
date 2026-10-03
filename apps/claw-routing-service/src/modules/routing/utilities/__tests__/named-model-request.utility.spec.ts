@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { NamedModelCapability } from '../../../../common/enums/named-model-capability.enum';
-import type { NamedModelCandidate } from '../../types/named-model-request.types';
+import type {
+  NamedModelCandidate,
+  NamedModelCatalogEntry,
+} from '../../types/named-model-request.types';
 import {
   findNamedModelRequest,
   hasModelDirective,
   namedModelCapabilityOf,
+  namedModelUnavailableReason,
   resolveNamedModel,
+  stripNamedModelDirective,
 } from '../named-model-request.utility';
 
 const model = (
@@ -165,5 +170,75 @@ describe('namedModelCapabilityOf', () => {
     ['OPENAI', 'gpt-4o', NamedModelCapability.CHAT],
   ])('%s/%s → %s', (provider, id, expected) => {
     expect(namedModelCapabilityOf(model(provider, id))).toBe(expected);
+  });
+});
+
+describe('stripNamedModelDirective', () => {
+  it.each([
+    ['use nano banana to make a poster of cats', 'nano banana', 'Make a poster of cats'],
+    ['Use Nano-Banana: a red fox in snow', 'nano banana', 'A red fox in snow'],
+    ['ask grok about relativity', 'grok', 'Tell me about relativity'],
+    ['ask grok to explain recursion', 'grok', 'Explain recursion'],
+    ['Draw a cat with nano banana', 'nano banana', 'Draw a cat'],
+    ['@veo a sunset over the sea', 'veo', 'A sunset over the sea'],
+    ['I want you to use claude to write a poem', 'claude', 'I want you to write a poem'],
+    ['try gpt-4o-mini: summarise this', 'gpt 4o mini', 'Summarise this'],
+  ])('"%s" → "%s"', (message, phrase, expected) => {
+    expect(stripNamedModelDirective(message, phrase)).toBe(expected);
+  });
+
+  it('is null when nothing would be left, or the phrase is not in the message', () => {
+    expect(stripNamedModelDirective('use grok', 'grok')).toBeNull();
+    expect(stripNamedModelDirective('write a poem', 'grok')).toBeNull();
+  });
+});
+
+describe('namedModelUnavailableReason', () => {
+  const entry = (
+    provider: string,
+    providerModelId: string,
+    allowed: boolean,
+    healthy: boolean,
+  ): NamedModelCatalogEntry => ({ provider, providerModelId, isActive: true, allowed, healthy });
+  const grok = { phrase: 'grok', provider: 'GROK', model: null, modelPattern: null };
+
+  it('NOT_CONFIGURED when the provider has no deployment at all', () => {
+    expect(
+      namedModelUnavailableReason(
+        grok,
+        [entry('OPENAI', 'gpt-4o', true, true)],
+        NamedModelCapability.CHAT,
+      ),
+    ).toBe('NOT_CONFIGURED');
+  });
+
+  it('NOT_IN_PLAN when the fitting model exists but the plan excludes it', () => {
+    expect(
+      namedModelUnavailableReason(
+        grok,
+        [entry('GROK', 'grok-3-mini', false, true)],
+        NamedModelCapability.CHAT,
+      ),
+    ).toBe('NOT_IN_PLAN');
+  });
+
+  it('CONNECTOR_DOWN when the fitting model is allowed but its connector is down', () => {
+    expect(
+      namedModelUnavailableReason(
+        grok,
+        [entry('GROK', 'grok-3-mini', true, false)],
+        NamedModelCapability.CHAT,
+      ),
+    ).toBe('CONNECTOR_DOWN');
+  });
+
+  it('NO_FITTING_MODEL when the provider has nothing for what is asked', () => {
+    expect(
+      namedModelUnavailableReason(
+        grok,
+        [entry('GROK', 'grok-3-mini', true, true)],
+        NamedModelCapability.IMAGE,
+      ),
+    ).toBe('NO_FITTING_MODEL');
   });
 });

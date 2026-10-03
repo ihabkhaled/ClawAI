@@ -17,7 +17,10 @@ export function withContextSaveNote(context: AssembledContext, note: string): As
     context.systemPrompt === null || context.systemPrompt.trim().length === 0
       ? note
       : `${context.systemPrompt}\n\n${note}`;
-  return { ...context, systemPrompt, saveTurnNote: note };
+  // A turn can carry two notes (a save and a named-model notice): keep both.
+  const saveTurnNote =
+    context.saveTurnNote === undefined ? note : `${context.saveTurnNote}\n\n${note}`;
+  return { ...context, systemPrompt, saveTurnNote };
 }
 
 /** The final user turn with the save note after it; unchanged when there is none. */

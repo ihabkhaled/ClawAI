@@ -1,4 +1,4 @@
-import type { RequiredModality } from '@claw/shared-types';
+import type { NamedModelNoticePayload, RequiredModality } from '@claw/shared-types';
 import {
   type Prisma,
   type ComplexityClass as PrismaComplexityClass,
@@ -10,11 +10,14 @@ import {
 } from '../../../generated/prisma';
 import type { ComplexityClassification } from './complexity.types';
 import type { RoutingExplanation } from './explanation.types';
+import type { NamedModelSlot } from './named-model-request.types';
 import type { PickedModelSubstitute } from './picked-model-substitute.types';
 import type { WorkflowAvailability } from '../../workflows/types/live-workflow-selector.types';
 
 export interface RoutingContext {
   message: string;
+  /** Written by the named-model step; read by evaluateRoute to attach a notice. */
+  namedModelSlot?: NamedModelSlot;
   threadId?: string;
   threadHistory?: string[];
   memory?: string[];
@@ -126,6 +129,14 @@ export interface RoutingDecisionResult {
    * suggestions shown when every one failed. Best first.
    */
   pickedModelSubstitutes?: PickedModelSubstitute[];
+  /**
+   * Set when the user named a model in the prompt and it was honoured: the
+   * request with the directive words ("use nano banana to") removed. This is
+   * what the target model receives instead of the user's raw text.
+   */
+  namedModelPrompt?: string;
+  /** Set when the user named a model that could not answer (never a silent fallback). */
+  namedModelNotice?: NamedModelNoticePayload;
 }
 
 export type MultiIntentResult = {

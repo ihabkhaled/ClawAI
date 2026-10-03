@@ -29,8 +29,10 @@ export function xaiAuthHeaders(config: VideoProviderConfig): Record<string, stri
 }
 
 /**
- * One Veo instance: the prompt, plus the source image as `image.inlineData`
- * (the Gemini API shape; `bytesBase64Encoded` is the Vertex one) when given.
+ * One Veo instance: the prompt, plus the source image as
+ * `image.{bytesBase64Encoded, mimeType}` when given. `predictLongRunning`
+ * rejects `inlineData` ("isn't supported by this model"): that is the
+ * generateContent shape, not the Veo one.
  */
 export function veoInstance(request: VideoStartRequest): VeoInstance {
   return request.sourceImage === undefined
@@ -38,7 +40,8 @@ export function veoInstance(request: VideoStartRequest): VeoInstance {
     : {
         prompt: request.prompt,
         image: {
-          inlineData: { mimeType: request.sourceImage.mimeType, data: request.sourceImage.base64 },
+          bytesBase64Encoded: request.sourceImage.base64,
+          mimeType: request.sourceImage.mimeType,
         },
       };
 }

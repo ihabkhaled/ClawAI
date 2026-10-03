@@ -95,7 +95,9 @@ Healthy providers: {healthyProviders}
 
 ROUTING RULES (follow strictly, in priority order):
 
-IMAGE GENERATION (highest priority — detect these first):
+MENTION VS REQUEST (applies to image, file and video generation): generate only when the user directly asks the assistant to make it. Words like "create files", "create videos", "generate images" inside a feature list, notes, a brief, or a post being drafted ("Say also … create files, pdf …") are topics: treat the message as a TEXT TASK.
+
+IMAGE GENERATION (highest priority — detect these first, but only for a direct request):
 - Any request to generate, create, draw, make, paint, render, design an image/picture/photo/portrait/illustration/sketch/art/logo/poster → IMAGE_GEMINI / gemini-2.5-flash-image
 - "generate similar to this", "recreate this image", "make one like this" (referencing attached files) → IMAGE_GEMINI / gemini-2.5-flash-image
 - "generate image", "create picture", "draw me", "make a photo" → IMAGE_GEMINI / gemini-2.5-flash-image

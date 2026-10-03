@@ -114,3 +114,9 @@ export const NAMED_MODEL_UNROUTABLE_PROVIDERS: readonly string[] = [
   'LLAMACPP',
   'AWS_BEDROCK',
 ];
+
+/**
+ * A model id that is a coding, build or agent variant: "use grok" means the
+ * provider's general chat model unless one of these is named outright.
+ */
+export const NAMED_MODEL_SPECIALISED_ID = /(?:build|code|coder|agent|search)/u;

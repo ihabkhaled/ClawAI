@@ -175,4 +175,11 @@ export const CONTEXT_SAVE_FAILURE_ERRORS: Record<
  * answered "I've added it to your context" while the pack choice was still
  * pending — so the note rides where the model looks most (rule 41 pattern).
  */
-export const CONTEXT_SAVE_TURN_MARKER = '[ClawAI save status — the truth about this turn:]';
+export const CONTEXT_SAVE_TURN_MARKER = '[ClawAI platform status — the truth about this turn:]';
+
+/**
+ * A message with no recognisable save command still counts as carrying its own
+ * material for a pack only from this length: "save all info about ClawAI as a
+ * context pack" (44 chars) is a command, not content (rule 57 §17).
+ */
+export const SAVE_MATERIAL_MIN_CHARS = 120;

@@ -1,3 +1,4 @@
+import type { NamedModelNoticeReason } from '@claw/shared-types';
 import {
   generationRequestText,
   modelMatchKey,
@@ -13,10 +14,12 @@ import {
   NAMED_MODEL_MIN_PHRASE_LENGTH,
   NAMED_MODEL_PROVIDER_DEFAULTS,
   NAMED_MODEL_SEPARATORS,
+  NAMED_MODEL_SPECIALISED_ID,
   NAMED_MODEL_TAIL_CHARS,
 } from '../constants/named-model-request.constants';
 import type {
   NamedModelCandidate,
+  NamedModelCatalogEntry,
   NamedModelMatch,
   NamedModelPhraseEntry,
   NamedModelResolution,
@@ -118,7 +121,8 @@ export function findNamedModelRequest(
   message: string,
   candidates: readonly NamedModelCandidate[],
 ): NamedModelMatch | null {
-  const request = generationRequestText(message).toLowerCase();
+  // A directive is not a generation request: only negation and pasted material are filtered.
+  const request = generationRequestText(message, { dropMentions: false }).toLowerCase();
   if (request.length === 0 || NAMED_MODEL_COMPARISON_PATTERN.test(request)) return null;
   const tails = directiveTails(request);
   if (tails.length === 0) return null;
@@ -142,9 +146,14 @@ function preferredFirst(
   provider: string,
 ): NamedModelCandidate | undefined {
   const fallback = NAMED_MODEL_PROVIDER_DEFAULTS.get(provider);
+  // Proven first, a general chat model before a coding/agent variant, then the
+  // newest id (numeric-aware: "grok-4.10" is newer than "grok-4.9").
   const sorted = [...pool].sort(
     (a, b) =>
-      Number(b.isActive) - Number(a.isActive) || b.providerModelId.localeCompare(a.providerModelId),
+      Number(b.isActive) - Number(a.isActive) ||
+      Number(NAMED_MODEL_SPECIALISED_ID.test(a.providerModelId)) -
+        Number(NAMED_MODEL_SPECIALISED_ID.test(b.providerModelId)) ||
+      b.providerModelId.localeCompare(a.providerModelId, undefined, { numeric: true }),
   );
   return (
     sorted.find(
@@ -202,4 +211,58 @@ export function resolveNamedModel(
   // A marketing alias means what it says whatever is asked ("nano banana" is a picture model).
   const pickFrom = fitting.length > 0 || match.modelPattern === null ? fitting : selected;
   return done(preferredFirst(pickFrom, match.provider));
+}
+
+function escapeRegExp(text: string): string {
+  return text.replaceAll(/[|\\{}()[\]^$+*?.]/gu, String.raw`\$&`);
+}
+
+/**
+ * The request with the directive removed: "use nano banana to make a poster of
+ * cats" becomes "Make a poster of cats", "ask grok about relativity" becomes
+ * "Tell me about relativity". The target model should read the task, not the
+ * routing instruction that picked it. Null when nothing would change or
+ * nothing would be left ("use grok").
+ */
+export function stripNamedModelDirective(message: string, phrase: string): string | null {
+  const name = phrase
+    .split(' ')
+    .filter((word) => word.length > 0)
+    .map(escapeRegExp)
+    .join(String.raw`[-_./:\s]+`);
+  const pattern = new RegExp(
+    String.raw`(?:${NAMED_MODEL_DIRECTIVE_PATTERN.source})(?:the\s+)?(?:model\s+)?${name}(?![\p{L}\p{N}])(?:\s*(?:to(?![\p{L}\p{N}])|:|,|-|—))?`,
+    'iu',
+  );
+  const found = pattern.exec(message);
+  if (found === null) return null;
+  const rest = `${message.slice(0, found.index)} ${message.slice(found.index + found[0].length)}`
+    .replaceAll(/\s+/gu, ' ')
+    .replaceAll(/\s+([.,!?;:])/gu, '$1')
+    .replaceAll(/^[\s,;:-]+|[\s,;:-]+$/gu, '')
+    .replaceAll(/\s+(?:and|then|please)$/giu, '');
+  if (rest.length === 0) return null;
+  const sentence = /^about(?![\p{L}\p{N}])/iu.test(rest) ? `Tell me ${rest}` : rest;
+  return `${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}`;
+}
+
+/**
+ * Why a named model cannot answer: nothing of its provider is set up, it has no
+ * model for what is asked, the model fitting the ask is outside the user's plan,
+ * or its connector is down.
+ */
+export function namedModelUnavailableReason(
+  match: NamedModelMatch,
+  catalog: readonly NamedModelCatalogEntry[],
+  wanted: NamedModelCapability,
+): NamedModelNoticeReason {
+  const pool = catalog.filter((entry) => entry.provider === match.provider);
+  if (pool.length === 0) return 'NOT_CONFIGURED';
+  const fitting = resolveNamedModel(match, pool, wanted);
+  if (fitting === null) return 'NO_FITTING_MODEL';
+  const entry = pool.find(
+    (candidate) =>
+      candidate.provider === fitting.provider && candidate.providerModelId === fitting.model,
+  );
+  return entry?.allowed === false ? 'NOT_IN_PLAN' : 'CONNECTOR_DOWN';
 }

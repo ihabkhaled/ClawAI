@@ -664,6 +664,14 @@ file-service `store-generated-video`.
   (declared type AND magic bytes), caps at 10 MB, and every miss is one code,
   `VIDEO_SOURCE_IMAGE_INVALID` (fixed sentence, never falls back to another provider). It runs
   BEFORE the PAYG hold. Retry and AUTO fallback copy `sourceFileId`, so they reuse the image.
-  Veo gets `instances[0].image.inlineData`, xAI gets `image: {url: <data URI>}`. Price is
+  Veo gets `instances[0].image.{bytesBase64Encoded,mimeType}` (`inlineData` is refused by predictLongRunning: "isn't supported by this model"), xAI gets `image: {url: <data URI>}`. Price is
   unchanged (per second). The view shows `sourceFileId`.
 - `ImagePlanGateManager` passes a user with PAYG credit (`hasPaygCredit`) even when the plan locks image/video; the PAYG reservation is the spend gate (ADR-139).
+
+**Veo model fallback and stored reasons.** A refusal coded `VIDEO_PROVIDER_REJECTED` or
+`VIDEO_MODEL_UNAVAILABLE` on a Gemini row walks `VEO_MODEL_FALLBACK_CHAIN` (fast, lite,
+standard; each model once, manual picks included) via `createSuccessor`. Credit exhaustion
+(`VIDEO_PROVIDER_CREDITS_DEPLETED`) never does. Those two codes also store
+`Provider said: <reason>` (key shapes redacted, 200 chars) beside the fixed sentence.
+Live-verified 2026-10-03: `veo-3.1-{fast,lite,}generate-preview` are the only Veo models the
+key lists; all three do text-to-video, fast and lite do image-to-video.

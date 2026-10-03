@@ -736,8 +736,33 @@ decision carries `user_named_model` and `named_model_<capability>`; an image-out
 moved to its `IMAGE_*` provider exactly as a manual pick is.
 
 Not routed: a bare mention, a comparison ("GPT vs Gemini"), a negated clause, a name inside a pasted body,
-a habit ("I use claude"), a model the plan does not allow, a local runtime. The directive words stay in
-the prompt the model receives; no rewrite step exists between routing and the model.
+a habit ("I use claude"), a model the plan does not allow, a local runtime.
+
+**The target model reads the task, not the instruction** (2026-10-03). `stripNamedModelDirective`
+removes "use nano banana to" / "ask grok about" (and a trailing "with X"), and the decision carries
+`namedModelPrompt` on `message.routed`. chat-service replaces the final user turn in the assembled
+context with it (`withNamedModelPrompt`), so chat, `callImageService`, file and video prompts all read
+the stripped text; the stored message stays what the user typed.
+
+**A named model that cannot answer is never a silent fallback.** `resolve` returns an outcome with a
+`notice` (`NOT_CONFIGURED` no deployment of that provider, `NOT_IN_PLAN` the fitting model is outside
+the plan, `CONNECTOR_DOWN`, `NO_FITTING_MODEL` e.g. grok asked for a picture and has none). It rides the
+decision as `namedModelNotice`; chat-service tells the answering model (system prompt plus the final
+user turn, `withNamedModelNotice`) to open with one short sentence in the user's language saying the
+named model was not used and why. A bare provider name picks the provider's general chat model over a
+build/code/agent variant, newest id first.
+
+## Mentions are not requests (2026-10-03, rule 57 item 19)
+
+`generationRequestText` (shared-utilities) also drops sentences that only MENTION generation: a
+supplementary opener ("say also …", "dis aussi …", "قل أيضا …"), an ability description ("our app can
+create files", "supports generating images"), a verb list ("create files, documents, pdf … create
+videos"), the topic of a writing task ("write a post about how teams create videos"), and bullet items
+under such a line. Image, file (`detectFileIntent`) and video (`classifyVideoIntent`) detection all
+read this filtered text, so one guard covers the three; a keyword hit is only a candidate and a
+genuine imperative ("can you generate …", "also create an image …", "write a post and draw a cat")
+survives. No extra model call: the deterministic guard decides, and every LLM that reads the message
+(cloud router, Ollama router prompts, the platform identity block) is told a mention is a text task.
 
 ## Image intent guards (2026-10-03, rule 51 item 21)
 

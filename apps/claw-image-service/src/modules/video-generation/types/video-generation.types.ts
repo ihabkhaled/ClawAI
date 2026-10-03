@@ -187,5 +187,6 @@ export interface ConnectorConfigResponse {
 
 export interface VeoInstance {
   prompt: string;
-  image?: { inlineData: { mimeType: string; data: string } };
+  /** Gemini API Veo shape: base64 bytes plus mimeType; `inlineData` is rejected by Veo. */
+  image?: { bytesBase64Encoded: string; mimeType: string };
 }

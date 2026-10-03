@@ -114,6 +114,18 @@ export interface MessageCreatedPayload extends BaseEventPayload {
   transformableModalities?: RequiredModality[];
 }
 
+/** Why a model the user named in the prompt ("use grok") could not answer it. */
+export type NamedModelNoticeReason =
+  'NOT_CONFIGURED' | 'NOT_IN_PLAN' | 'CONNECTOR_DOWN' | 'NO_FITTING_MODEL';
+
+/** A named model that could not be used; the answer tells the user so, never silently falls back. */
+export interface NamedModelNoticePayload {
+  /** What the user wrote, e.g. "grok". */
+  phrase: string;
+  provider: string;
+  reason: NamedModelNoticeReason;
+}
+
 export interface MessageRoutedPayload extends BaseEventPayload {
   messageId: string;
   threadId: string;
@@ -122,6 +134,14 @@ export interface MessageRoutedPayload extends BaseEventPayload {
   routingMode: RoutingMode;
   fallbackProvider?: string;
   fallbackModel?: string;
+  /**
+   * Set when the user named a model in the prompt ("use nano banana to …") and
+   * it was honoured: the request with the directive words removed, which is
+   * what the target model receives. Absent otherwise.
+   */
+  namedModelPrompt?: string;
+  /** Set when the user named a model that could not be used (see the reason). */
+  namedModelNotice?: NamedModelNoticePayload;
 }
 
 export interface MessageCompletedPayload extends BaseEventPayload {

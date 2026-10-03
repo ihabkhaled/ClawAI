@@ -362,6 +362,87 @@ describe('VideoGenerationService', () => {
     });
   });
 
+  describe('Veo model fallback', () => {
+    const rejected = () =>
+      new BusinessException(
+        'Gemini video generation failed: unsupported',
+        VideoFailureCode.PROVIDER_REJECTED,
+        502,
+      );
+
+    it('tries the next Veo model when one is refused, for a manual pick too', async () => {
+      repo['create']!.mockResolvedValue(
+        row({ isAutoMode: false, model: 'veo-3.1-generate-preview' }),
+      );
+      repo['createSuccessor']!.mockResolvedValue(
+        row({ id: 'gen-2', isAutoMode: false, model: 'veo-3.1-fast-generate-preview' }),
+      );
+      execution['execute']!.mockRejectedValueOnce(rejected());
+
+      await service.enqueueGeneration({
+        ...dto,
+        isAutoMode: false,
+        model: 'models/veo-3.1-generate-preview',
+      });
+      await flush();
+      await flush();
+
+      expect(repo['createSuccessor']).toHaveBeenCalledWith(
+        'gen-1',
+        expect.objectContaining({
+          provider: 'VIDEO_GEMINI',
+          model: 'veo-3.1-fast-generate-preview',
+          isAutoMode: false,
+        }),
+      );
+      expect(execution['execute']).toHaveBeenCalledTimes(2);
+    });
+
+    it('never revisits a model and stops after the chain for a manual pick', async () => {
+      repo['create']!.mockResolvedValue(row({ isAutoMode: false }));
+      repo['createSuccessor']!.mockResolvedValueOnce(
+        row({ id: 'gen-2', isAutoMode: false, model: 'veo-3.1-lite-generate-preview' }),
+      ).mockResolvedValueOnce(
+        row({ id: 'gen-3', isAutoMode: false, model: 'veo-3.1-generate-preview' }),
+      );
+      execution['execute']!.mockRejectedValue(rejected());
+
+      await service.enqueueGeneration({ ...dto, isAutoMode: false });
+      for (let i = 0; i < 4; i += 1) {
+        await flush();
+      }
+
+      expect(repo['createSuccessor']).toHaveBeenCalledTimes(2);
+      expect(execution['execute']).toHaveBeenCalledTimes(3);
+    });
+
+    it('does not walk the Veo list after a credit refusal', async () => {
+      execution['execute']!.mockRejectedValueOnce(
+        new BusinessException('no credit', VideoFailureCode.PROVIDER_CREDITS_DEPLETED, 502),
+      );
+      repo['create']!.mockResolvedValue(row({ isAutoMode: false }));
+      await service.enqueueGeneration({ ...dto, isAutoMode: false });
+      await flush();
+      expect(repo['createSuccessor']).not.toHaveBeenCalled();
+    });
+
+    it('stores the provider reason beside a generic rejection', async () => {
+      repo['create']!.mockResolvedValue(
+        row({ isAutoMode: false, model: 'veo-3.1-generate-preview' }),
+      );
+      repo['createSuccessor']!.mockResolvedValue(row({ id: 'gen-2', isAutoMode: false }));
+      execution['execute']!.mockRejectedValueOnce(rejected());
+      await service.enqueueGeneration({ ...dto, isAutoMode: false });
+      await flush();
+      expect(repo['fail']).toHaveBeenCalledWith(
+        'gen-1',
+        'FAILED',
+        VideoFailureCode.PROVIDER_REJECTED,
+        expect.stringContaining('Provider said: unsupported'),
+      );
+    });
+  });
+
   describe('reading, cancelling, retrying', () => {
     it('hides another user generation behind the same 404 as a missing one', async () => {
       repo['findById']!.mockResolvedValue(row({ userId: 'someone-else' }));

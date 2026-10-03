@@ -40,7 +40,7 @@ describe('Gemini Veo client', () => {
     expect(config.headers).toEqual({ 'x-goog-api-key': 'g-key' });
   });
 
-  it('sends the source image as image.inlineData for image-to-video', async () => {
+  it('sends the source image as image.bytesBase64Encoded for image-to-video', async () => {
     http.httpPost.mockResolvedValue({ name: 'models/veo/operations/op-2' });
 
     await geminiVeoClient.start(gemini, {
@@ -52,7 +52,7 @@ describe('Gemini Veo client', () => {
     expect(body.instances).toEqual([
       {
         prompt: 'A lighthouse at dusk',
-        image: { inlineData: { mimeType: 'image/png', data: 'QUJD' } },
+        image: { bytesBase64Encoded: 'QUJD', mimeType: 'image/png' },
       },
     ]);
   });

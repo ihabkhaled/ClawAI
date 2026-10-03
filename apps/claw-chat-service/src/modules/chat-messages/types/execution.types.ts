@@ -1,6 +1,11 @@
 import type { PlanFeature } from '@claw/shared-entitlements';
 import type { ImageMaskRefusalCode } from '../../../common/enums';
-import type { ResolvedSpeed, TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
+import type {
+  NamedModelNoticePayload,
+  ResolvedSpeed,
+  TokenLedgerContext,
+  TokenUsageSource,
+} from '@claw/shared-types';
 import type { AttemptRecord } from './fallback-executor.types';
 import type { FileContentCandidate } from './file-writer.types';
 import type { FileDeliveryEntry } from './file-delivery.types';
@@ -102,6 +107,11 @@ export type MessageRoutedData = {
   // MANUAL_MODEL smart fallback: what may answer when the picked model fails
   // (at most two are tried), best first, from routing-service.
   pickedModelSubstitutes?: PickedModelSubstitute[];
+  // The user named a model in the prompt ("use nano banana to …"): the task with
+  // the directive words removed, which the target model receives instead.
+  namedModelPrompt?: string;
+  // The user named a model that could not be used; the answer says so.
+  namedModelNotice?: NamedModelNoticePayload;
   // F055 — never on the wire. Set by chat-service itself when the turn's
   // request carried `X-Claw-Zero-Retention: 1`, so the completion event goes
   // out without content and the turn is redacted once it ends.

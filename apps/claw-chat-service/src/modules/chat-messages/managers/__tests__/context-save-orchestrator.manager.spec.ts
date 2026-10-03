@@ -260,3 +260,91 @@ describe('ContextSaveOrchestratorManager (ADR-134)', () => {
     expect(client.createPack).not.toHaveBeenCalled();
   });
 });
+
+describe('ContextSaveOrchestratorManager — the command is never the material (rule 57 §17)', () => {
+  const packVerdict = (source: SaveContentSource): SaveIntentVerdict => ({
+    save: true,
+    memory: null,
+    contextPack: { source, summary: null, packName: null, newPackName: 'ClawAI' },
+  });
+
+  it('save all info about X as a context pack: nothing is saved, the model writes the material', async () => {
+    const { manager, client } = setup({ verdict: packVerdict(SaveContentSource.USER_TEXT) });
+
+    const result = await manager.handle('u1', 't1', [
+      row('m1', 'USER', 'save all info about ClawAI as a context pack'),
+    ]);
+
+    expect(result).toBeNull();
+    expect(client.createPack).not.toHaveBeenCalled();
+    expect(client.addToPack).not.toHaveBeenCalled();
+  });
+
+  it('a bare "save this" with no previous message saves nothing', async () => {
+    const { manager, client } = setup({ verdict: packVerdict(SaveContentSource.PREVIOUS_MESSAGE) });
+
+    const result = await manager.handle('u1', 't1', [
+      row('m1', 'USER', 'save this as a context pack'),
+    ]);
+
+    expect(result).toBeNull();
+    expect(client.createPack).not.toHaveBeenCalled();
+  });
+
+  it('a memory sentence that only repeats the command is dropped', async () => {
+    const { manager, client } = setup({
+      verdict: {
+        save: true,
+        memory: { type: MemoryRecordType.FACT, text: 'Save all info about ClawAI to memory' },
+        contextPack: null,
+      },
+    });
+
+    const result = await manager.handle('u1', 't1', [
+      row('m1', 'USER', 'save all info about ClawAI to memory'),
+    ]);
+
+    expect(result).toBeNull();
+    expect(client.saveMemory).not.toHaveBeenCalled();
+  });
+
+  it('saves the previous assistant answer when there is one', async () => {
+    const { manager, client } = setup({ verdict: packVerdict(SaveContentSource.PREVIOUS_MESSAGE) });
+
+    const result = await manager.handle('u1', 't1', [
+      row('m1', 'USER', 'tell me about ClawAI'),
+      row('m2', 'ASSISTANT', 'ClawAI is a workspace where one person uses many AI models.'),
+      row('m3', 'USER', 'save this as a context pack'),
+    ]);
+
+    expect(result?.kind).toBe('AI');
+    expect(client.createPack).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: 'ClawAI is a workspace where one person uses many AI models.',
+      }),
+    );
+  });
+
+  it('keeps the memory half when only the pack half has no material', async () => {
+    const { manager, client } = setup({
+      verdict: {
+        save: true,
+        memory: { type: MemoryRecordType.PREFERENCE, text: 'The user is vegetarian.' },
+        contextPack: {
+          source: SaveContentSource.PREVIOUS_MESSAGE,
+          summary: null,
+          packName: null,
+          newPackName: 'Diet',
+        },
+      },
+    });
+
+    const result = await manager.handle('u1', 't1', [
+      row('m1', 'USER', 'remember I am vegetarian and save it as a context pack'),
+    ]);
+
+    expect(result?.kind).toBe('AI');
+    expect(client.saveMemory).toHaveBeenCalledTimes(1);
+    expect(client.createPack).not.toHaveBeenCalled();
+  });
+});

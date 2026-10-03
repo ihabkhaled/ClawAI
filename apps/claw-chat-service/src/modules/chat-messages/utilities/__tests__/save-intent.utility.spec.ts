@@ -2,6 +2,7 @@ import { ContextSaveStatus, MemoryRecordType, SaveContentSource } from '../../..
 import {
   buildSaveIntentPrompt,
   contextSaveModelNote,
+  guardSaveVerdict,
   mightBeSaveRequest,
   packContentFor,
   parseSaveIntentVerdict,
@@ -12,6 +13,7 @@ import {
   SAVE_INTENT_SYSTEM_PROMPT,
 } from '../../constants/save-intent.constants';
 import { type AssembledContext } from '../../types/context.types';
+import type { SaveIntentVerdict } from '../../dto/save-intent-verdict.dto';
 
 describe('mightBeSaveRequest — the recall net, not the decision', () => {
   it.each([
@@ -134,5 +136,75 @@ describe('the planner prompt on material-less save requests', () => {
   it('tells the planner not to save the command itself as the material', () => {
     expect(SAVE_INTENT_SYSTEM_PROMPT).toContain('answer save=false');
     expect(SAVE_INTENT_SYSTEM_PROMPT).toContain('Never save the command itself');
+  });
+});
+
+describe('guardSaveVerdict (rule 57 §17)', () => {
+  const pack = (source: SaveContentSource): SaveIntentVerdict => ({
+    save: true,
+    memory: null,
+    contextPack: { source, summary: null, packName: null, newPackName: 'X' },
+  });
+
+  it('a pack save with only the command and no previous message is dropped', () => {
+    expect(
+      guardSaveVerdict(
+        pack(SaveContentSource.USER_TEXT),
+        'save all info about ClawAI as a context pack',
+        '',
+      ),
+    ).toBeNull();
+    expect(
+      guardSaveVerdict(pack(SaveContentSource.PREVIOUS_MESSAGE), 'save this as a context pack', ''),
+    ).toBeNull();
+  });
+
+  it('a previous message that is itself a bare command is not material', () => {
+    expect(
+      guardSaveVerdict(
+        pack(SaveContentSource.PREVIOUS_MESSAGE),
+        'save this as a context pack',
+        'save this as memory',
+      ),
+    ).toBeNull();
+  });
+
+  it('keeps a pack save whose text is in the message or the previous answer', () => {
+    expect(
+      guardSaveVerdict(
+        pack(SaveContentSource.USER_TEXT),
+        'save this as context: ClawAI routes every prompt to the best model.',
+        '',
+      ),
+    ).not.toBeNull();
+    expect(
+      guardSaveVerdict(
+        pack(SaveContentSource.PREVIOUS_MESSAGE),
+        'save this as a context pack',
+        'ClawAI is a workspace for many AI models.',
+      ),
+    ).not.toBeNull();
+  });
+
+  it('a long message with no recognisable command counts as its own material', () => {
+    expect(guardSaveVerdict(pack(SaveContentSource.USER_TEXT), 'x'.repeat(200), '')).not.toBeNull();
+  });
+
+  it('a memory that repeats the command is dropped, a real fact is kept', () => {
+    const memory = (text: string): SaveIntentVerdict => ({
+      save: true,
+      memory: { type: MemoryRecordType.FACT, text },
+      contextPack: null,
+    });
+    expect(
+      guardSaveVerdict(
+        memory('Save all info about ClawAI to memory'),
+        'save all info about ClawAI to memory',
+        '',
+      ),
+    ).toBeNull();
+    expect(
+      guardSaveVerdict(memory('The user works at ClawAI.'), 'remember that I work at ClawAI', ''),
+    ).not.toBeNull();
   });
 });

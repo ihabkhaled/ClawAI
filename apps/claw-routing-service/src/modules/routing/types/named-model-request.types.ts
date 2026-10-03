@@ -1,3 +1,4 @@
+import type { NamedModelNoticePayload } from '@claw/shared-types';
 import type { NamedModelCapability } from '../../../common/enums/named-model-capability.enum';
 
 /** One model the catalog holds and the AUTO router could answer with. */
@@ -45,4 +46,32 @@ export interface NamedModelPhraseEntry {
   provider: string;
   model: string | null;
   modelPattern: RegExp | null;
+}
+
+/** A model the catalog holds, with what decides whether this user can be routed to it. */
+export interface NamedModelCatalogEntry extends NamedModelCandidate {
+  /** The user's plan includes this model. */
+  allowed: boolean;
+  /** Its connector is not known to be down. */
+  healthy: boolean;
+}
+
+/**
+ * What a prompt that names a model came to: the model that will answer (with
+ * the request minus the directive words), or the reason it cannot, which the
+ * answer must tell the user instead of silently using another model.
+ */
+export interface NamedModelOutcome {
+  resolution: NamedModelResolution | null;
+  /** The request without "use X to" — only when a model was resolved and the words changed. */
+  prompt: string | null;
+  notice: NamedModelNoticePayload | null;
+}
+
+/**
+ * Written by the named-model step so the notice can reach the final decision
+ * even when the step falls through to normal routing.
+ */
+export interface NamedModelSlot {
+  notice?: NamedModelNoticePayload;
 }

@@ -17,6 +17,8 @@ import {
   STRUCTURAL_PARAGRAPH,
   TYPE_HINT_PAYLOAD_CHARS,
 } from './generation-request.constants';
+import { MENTION_SENTENCE_SPLIT } from './generation-mention.constants';
+import { requestSentences } from './generation-mention.utility';
 import type { SaveIntentMemoryType, SaveToContextIntent } from './generation-request.types';
 import { SaveIntentTarget } from './save-intent-target.enum';
 
@@ -128,12 +130,27 @@ export function detectSaveToContextIntent(message: string): SaveToContextIntent 
  * 3. Clauses carrying a negation ("do not generate an image") are removed, in
  *    the 13 UI locales; the positive clause beside one survives.
  */
-export function generationRequestText(message: string): string {
+export function generationRequestText(
+  message: string,
+  options: { dropMentions?: boolean } = {},
+): string {
   if (detectSaveToContextIntent(message) !== null) return '';
   const candidate = isPastedDocument(message) ? requestEnvelope(message) : message;
-  return candidate
-    .split(CLAUSE_SPLIT)
-    .filter((clause) => clause.trim().length > 0 && !isNegated(clause))
+  const sentences =
+    options.dropMentions === false
+      ? candidate.split(MENTION_SENTENCE_SPLIT).filter((sentence) => sentence.trim().length > 0)
+      : requestSentences(candidate);
+  return sentences
+    .map(withoutNegatedClauses)
+    .filter((sentence) => sentence.length > 0)
     .join('. ')
     .trim();
+}
+
+/** A sentence kept whole unless one clause is negated; then only its positive clauses. */
+function withoutNegatedClauses(sentence: string): string {
+  const clauses = sentence.split(CLAUSE_SPLIT).filter((clause) => clause.trim().length > 0);
+  return clauses.some((clause) => isNegated(clause))
+    ? clauses.filter((clause) => !isNegated(clause)).join('. ')
+    : sentence;
 }

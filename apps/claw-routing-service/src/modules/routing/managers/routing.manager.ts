@@ -25,6 +25,7 @@ import { CloudRouterManager } from './cloud-router.manager';
 import { CloudRouterEligibilityManager } from './cloud-router-eligibility.manager';
 import { CloudRouterPromptManager } from './cloud-router-prompt.manager';
 import { NamedModelRequestManager } from './named-model-request.manager';
+import type { NamedModelSlot } from '../types/named-model-request.types';
 import type { EligibleDeploymentRecord } from '../types/model-deployment.types';
 import type { RouterDecisionPayload } from '../types/router-inference.types';
 import { PROVIDER_INFERENCE_RULES } from '../constants/provider-inference.constants';
@@ -131,12 +132,15 @@ export class RoutingManager {
   async evaluateRoute(context: RoutingContext): Promise<RoutingDecisionResult> {
     const start = Date.now();
     const complexity = this.complexityClassifier.classify(context.message);
-    const enrichedContext = { ...context, complexity };
+    const namedModelSlot: NamedModelSlot = {};
+    const enrichedContext = { ...context, complexity, namedModelSlot };
 
     const result = await this.doEvaluate(enrichedContext);
 
     return {
       ...result,
+      // A model the user named that could not answer: the answer says so.
+      ...(namedModelSlot.notice === undefined ? {} : { namedModelNotice: namedModelSlot.notice }),
       complexityClass: complexity.class,
       explanation: this.buildExplanation(result, complexity),
       routingDurationMs: Date.now() - start,
@@ -681,14 +685,30 @@ export class RoutingManager {
    * enforcement ran first; this never overrides it.
    */
   private async tryNamedModel(context: RoutingContext): Promise<RoutingDecisionResult | null> {
-    const named = await this.namedModelRequest.resolve(context);
-    if (named === null) return null;
+    const outcome = await this.namedModelRequest.resolve(context);
+    if (outcome === null) return null;
+    const named = outcome.resolution;
+    if (named === null) {
+      if (outcome.notice !== null && context.namedModelSlot !== undefined) {
+        context.namedModelSlot.notice = outcome.notice;
+      }
+      return null;
+    }
     const picked = this.resolveManualPick({
       ...context,
       forcedProvider: named.provider,
       forcedModel: named.model,
     });
-    if (picked === null) return null;
+    if (picked === null) {
+      if (context.namedModelSlot !== undefined) {
+        context.namedModelSlot.notice = {
+          phrase: named.phrase,
+          provider: named.provider,
+          reason: 'NO_FITTING_MODEL',
+        };
+      }
+      return null;
+    }
     const primary = this.editCapablePick(picked, context);
     this.logger.log(
       `handleAuto: user named "${named.phrase}" → ${primary.provider}/${primary.model}`,
@@ -707,6 +727,7 @@ export class RoutingManager {
       privacyClass: 'cloud',
       costClass: 'medium',
       fallbackChain: this.buildFallbackChain(primary, context),
+      ...(outcome.prompt === null ? {} : { namedModelPrompt: outcome.prompt }),
     };
   }
 

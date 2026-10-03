@@ -13,9 +13,11 @@ import {
 } from '../video-cancel.utility';
 import { videoPriceKey } from '../video-price-key.utility';
 import {
+  storedVideoFailureMessage,
   toVideoProviderException,
   videoFailure,
   videoFailureCodeOf,
+  videoRejectionReason,
 } from '../video-provider-error.utility';
 import { abandonedVideoHold, videoSettlement } from '../video-settlement.utility';
 import { toVideoView } from '../video-view.utility';
@@ -238,5 +240,32 @@ describe('toVideoView', () => {
     expect(Object.keys(view)).not.toEqual(
       expect.arrayContaining(['userId', 'providerOperationId', 'paygReservationId', 'assets']),
     );
+  });
+});
+
+describe('provider reason on a stored failure', () => {
+  it('names the real reason for a generic rejection, with keys redacted and length capped', () => {
+    const error = new BusinessException(
+      "Gemini video generation failed: `inlineData` isn't supported key=AIzaSyA1234567890abcdefgh",
+      VideoFailureCode.PROVIDER_REJECTED,
+      502,
+    );
+    const message = storedVideoFailureMessage(VideoFailureCode.PROVIDER_REJECTED, error);
+    expect(message).toContain("Provider said: `inlineData` isn't supported");
+    expect(message).not.toContain('AIza');
+    expect(videoRejectionReason(new Error('x'.repeat(500)))?.length).toBe(200);
+  });
+
+  it('unwraps a poll-time detail and keeps fixed sentences for other codes', () => {
+    const polled = videoFailure(VideoFailureCode.PROVIDER_REJECTED, 'resolution not allowed');
+    expect(storedVideoFailureMessage(VideoFailureCode.PROVIDER_REJECTED, polled)).toBe(
+      `${videoFailureMessage(VideoFailureCode.PROVIDER_REJECTED)} Provider said: resolution not allowed`,
+    );
+    expect(
+      storedVideoFailureMessage(
+        VideoFailureCode.PROVIDER_CREDITS_DEPLETED,
+        new Error('402 prepayment'),
+      ),
+    ).toBe(videoFailureMessage(VideoFailureCode.PROVIDER_CREDITS_DEPLETED));
   });
 });

@@ -122,3 +122,10 @@ export const VIDEO_QUOTA_MARKERS: readonly string[] = [
   'insufficient credit',
   'exceeded your current quota',
 ];
+
+/** The log prefix `toVideoProviderException` puts before the provider's own words. */
+export const VIDEO_PROVIDER_ERROR_PREFIX = /^[^:]{1,40} video generation failed:\s*/gu;
+
+/** API-key and bearer shapes scrubbed from a provider reason before it is stored. */
+export const VIDEO_SECRET_SHAPES =
+  /\b(?:AIza[\w-]{10,}|sk-[\w-]{10,}|xai-[\w-]{10,}|Bearer\s+\S+)/gu;

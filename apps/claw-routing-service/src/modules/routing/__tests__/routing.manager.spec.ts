@@ -100,10 +100,14 @@ describe('RoutingManager', () => {
 
     it('routes "use nano banana" to the Gemini image provider with that model', async () => {
       namedModelRequest.resolve.mockResolvedValue({
-        provider: 'GEMINI',
-        model: 'gemini-2.5-flash-image',
-        capability: 'IMAGE',
-        phrase: 'nano banana',
+        resolution: {
+          provider: 'GEMINI',
+          model: 'gemini-2.5-flash-image',
+          capability: 'IMAGE',
+          phrase: 'nano banana',
+        },
+        prompt: 'Make a poster of a lighthouse',
+        notice: null,
       });
       const result = await manager.evaluateRoute({
         ...autoContext,
@@ -115,14 +119,40 @@ describe('RoutingManager', () => {
       expect(result.reasonTags).toEqual(
         expect.arrayContaining(['user_named_model', 'named_model_image', 'image_generation']),
       );
+      // The target model receives the task, not the routing instruction.
+      expect(result.namedModelPrompt).toBe('Make a poster of a lighthouse');
+      expect(result.namedModelNotice).toBeUndefined();
+    });
+
+    it('a named model that cannot answer is never a silent fallback: the notice rides the decision', async () => {
+      namedModelRequest.resolve.mockResolvedValue({
+        resolution: null,
+        prompt: null,
+        notice: { phrase: 'grok', provider: 'GROK', reason: 'NOT_IN_PLAN' },
+      });
+      const result = await manager.evaluateRoute({
+        ...autoContext,
+        message: 'use grok to explain recursion',
+      });
+      expect(result.reasonTags).not.toContain('user_named_model');
+      expect(result.namedModelNotice).toStrictEqual({
+        phrase: 'grok',
+        provider: 'GROK',
+        reason: 'NOT_IN_PLAN',
+      });
+      expect(result.namedModelPrompt).toBeUndefined();
     });
 
     it('routes "ask grok" to the named chat model, not to the router pick', async () => {
       namedModelRequest.resolve.mockResolvedValue({
-        provider: 'GROK',
-        model: 'grok-3-mini',
-        capability: 'CHAT',
-        phrase: 'grok',
+        resolution: {
+          provider: 'GROK',
+          model: 'grok-3-mini',
+          capability: 'CHAT',
+          phrase: 'grok',
+        },
+        prompt: 'What changed in the news today',
+        notice: null,
       });
       const result = await manager.evaluateRoute({
         ...autoContext,

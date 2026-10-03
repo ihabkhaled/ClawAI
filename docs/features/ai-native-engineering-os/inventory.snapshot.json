@@ -8192,7 +8192,7 @@
           "file": "rules/39-worktree-branch-completion-pr-and-release-notes.md"
         },
         {
-          "bytes": 26373,
+          "bytes": 27037,
           "file": "rules/40-chat-surface-layout-and-composer.md"
         },
         {
@@ -8260,7 +8260,7 @@
           "file": "rules/56-model-reasoning-never-in-the-answer.md"
         },
         {
-          "bytes": 8677,
+          "bytes": 10451,
           "file": "rules/57-memory-and-context-pack-integrity.md"
         },
         {
@@ -8274,7 +8274,7 @@
       ],
       "skills": [
         {
-          "bytes": 32558,
+          "bytes": 32838,
           "file": "skills/00-index.md"
         },
         {
@@ -8520,6 +8520,10 @@
         {
           "bytes": 6197,
           "file": "skills/execute-prompt-pack.md"
+        },
+        {
+          "bytes": 3517,
+          "file": "skills/expose-models-for-local-testing.md"
         },
         {
           "bytes": 4194,
@@ -10732,7 +10736,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "vitest",
-        "testFiles": 50
+        "testFiles": 51
       },
       "claw-agent-service": {
         "runner": "vitest",
@@ -10748,7 +10752,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 308
+        "testFiles": 310
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10800,7 +10804,7 @@
       },
       "claw-routing-service": {
         "runner": "vitest",
-        "testFiles": 116
+        "testFiles": 117
       },
       "claw-server-logs-service": {
         "runner": "vitest",
@@ -11546,7 +11550,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2016,
+    "totalTestFiles": 2020,
     "workspaceCount": 25
   }
 }

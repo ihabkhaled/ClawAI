@@ -91,3 +91,12 @@ export const VIDEO_SOURCE_IMAGE_MAX_BASE64_LENGTH =
   Math.ceil((VIDEO_SOURCE_IMAGE_MAX_BYTES * 4) / 3) + 4;
 
 export const VIDEO_SOURCE_IMAGE_FETCH_TIMEOUT_MS = 30_000;
+
+/** Refusals that name the MODEL, so a sibling Veo model may still accept the same request. */
+export const VEO_MODEL_FALLBACK_CODES: readonly string[] = [
+  VideoFailureCode.MODEL_UNAVAILABLE,
+  VideoFailureCode.PROVIDER_REJECTED,
+];
+
+/** The longest provider reason stored beside a generic rejection. */
+export const VIDEO_REJECTION_REASON_MAX_CHARACTERS = 200;

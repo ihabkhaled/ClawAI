@@ -59,9 +59,8 @@ import {
 import {
   FILE_FOLLOW_UP_PREFIXES,
   IMAGE_FOLLOW_UP_PREFIXES,
-  SHORT_FOLLOW_UP_EXACT_MATCHES,
-  SHORT_FOLLOW_UP_MAX_LENGTH,
 } from '../constants/follow-up-detection.constants';
+import { isFollowUpPhrase } from '../utilities/follow-up-phrase.utility';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { type CursorPaginatedResult } from '../types/chat-messages.types';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
@@ -183,6 +182,11 @@ import { type SearchMessagesQueryDto } from '../dto/search-messages-query.dto';
 import { type InThreadSearchMatch } from '../types/in-thread-search.types';
 import { buildSearchSnippet } from '../utilities/search-snippet.utility';
 import { pickedModelSubstitutesField } from '../utilities/picked-model-fallback.utility';
+import {
+  namedModelFields,
+  withNamedModelNotice,
+  withNamedModelPrompt,
+} from '../utilities/named-model.utility';
 import { fileWriterField, rerouteFileFollowUp } from '../utilities/file-writer.utility';
 import {
   redactProviderText,
@@ -1352,10 +1356,18 @@ export class ChatMessagesService implements OnModuleInit {
         undefined,
         payload.routingMode as RoutingMode,
       );
+      // A model named in the prompt reads the task without "use X to"; one that
+      // could not be used is announced by the answer, never swapped silently.
+      const namedContext = withNamedModelNotice(
+        withNamedModelPrompt(context, payload.namedModelPrompt),
+        payload.namedModelNotice,
+      );
       await this.runLlmAndStore(
         effectivePayload,
         payload,
-        contextSave?.kind === 'AI' ? withContextSaveNote(context, contextSave.modelNote) : context,
+        contextSave?.kind === 'AI'
+          ? withContextSaveNote(namedContext, contextSave.modelNote)
+          : namedContext,
         threadSettings,
         fileIds,
         thread,
@@ -1715,6 +1727,8 @@ export class ChatMessagesService implements OnModuleInit {
       ...fileWriterField(payload['fileWriter']),
       // MANUAL_MODEL smart fallback: what may answer if the pick fails.
       ...pickedModelSubstitutesField(payload['pickedModelSubstitutes']),
+      // "use grok to …": the task without the directive, or why the named model was not used.
+      ...namedModelFields(payload['namedModelPrompt'], payload['namedModelNotice']),
     };
   }
 
@@ -2867,10 +2881,7 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   private matchesFollowUp(lower: string, prefixes: ReadonlyArray<string>): boolean {
-    if (lower.length >= SHORT_FOLLOW_UP_MAX_LENGTH) return false;
-    return SHORT_FOLLOW_UP_EXACT_MATCHES.includes(lower)
-      ? true
-      : prefixes.some((prefix) => lower.startsWith(prefix));
+    return isFollowUpPhrase(lower, prefixes);
   }
 
   private detectImageFollowUp(

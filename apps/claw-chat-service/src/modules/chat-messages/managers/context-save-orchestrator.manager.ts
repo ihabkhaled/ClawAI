@@ -19,6 +19,7 @@ import { previewOf, savedPackName } from '../utilities/save-confirmation.utility
 import {
   buildSaveIntentPrompt,
   contextSaveModelNote,
+  guardSaveVerdict,
   mightBeSaveRequest,
   packContentFor,
   parseSaveIntentVerdict,
@@ -83,7 +84,24 @@ export class ContextSaveOrchestratorManager {
     ) {
       return null;
     }
-    const record = await this.execute({ userId, threadId, lastUser, previousText, packs, verdict });
+    // Never store the command itself as the material (rule 57 §17): with nothing
+    // real to save the turn goes to the answering model, which writes the
+    // material, and the user saves it with the Save buttons.
+    const guarded = guardSaveVerdict(verdict, lastUser.content, previousText);
+    if (guarded === null) {
+      this.logger.warn(
+        `handle: thread=${threadId} planner said save=true but the message names no material — falling through to the model`,
+      );
+      return null;
+    }
+    const record = await this.execute({
+      userId,
+      threadId,
+      lastUser,
+      previousText,
+      packs,
+      verdict: guarded,
+    });
     return { kind: 'AI', record, modelNote: contextSaveModelNote(record) };
   }
 
