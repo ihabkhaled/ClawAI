@@ -17,10 +17,13 @@ const EMAIL = process.env['E2E_ADMIN_EMAIL'] ?? 'admin@claw.local';
 const PASSWORD = process.env['E2E_ADMIN_PASSWORD'] ?? 'ClawAdmin123!';
 
 const LONG_PROMPT =
-  'Count from 1 to 150. Put each number on its own line followed by a one sentence fact about it.';
+  'Write a detailed 1500-word guide to home gardening with 12 numbered sections, each section several full paragraphs. Do not stop early.';
 const FOLLOW_TOLERANCE_PX = 150;
 const SAMPLE_INTERVAL_MS = 250;
 const SAMPLES_WHILE_FOLLOWING = 8;
+const MIN_GROWTH_SAMPLES = 3;
+const MIN_SCROLL_UP_MOVED_PX = 40;
+const SCROLL_PIN_TOLERANCE_PX = 4;
 const SCROLL_UP_PX = 600;
 
 const VIEWPORTS = [
@@ -88,21 +91,29 @@ for (const viewport of VIEWPORTS) {
         }
         last = now;
       }
-      expect(growthSamples, 'the answer never streamed long enough to measure').toBe(
-        SAMPLES_WHILE_FOLLOWING,
-      );
+      expect(
+        growthSamples,
+        'the answer never streamed long enough to measure',
+      ).toBeGreaterThanOrEqual(MIN_GROWTH_SAMPLES);
 
       // 2. Scroll up mid-stream: the viewport must stay where the reader put it.
-      await scroller.evaluate((el, px) => el.scrollBy({ top: -px }), SCROLL_UP_PX);
+      // A real wheel gesture: a programmatic scrollBy is not the reader.
+      const beforeUp = await metrics(scroller);
+      await scroller.hover();
+      await page.mouse.wheel(0, -SCROLL_UP_PX);
       await page.waitForTimeout(300);
       const parked = await metrics(scroller);
-      expect(parked.distanceFromBottom).toBeGreaterThan(FOLLOW_TOLERANCE_PX);
+      // A short answer cannot scroll the full distance; it must still have moved up
+      // and stay parked off the live edge.
+      expect(beforeUp.scrollTop - parked.scrollTop).toBeGreaterThanOrEqual(MIN_SCROLL_UP_MOVED_PX);
+      expect(parked.distanceFromBottom).toBeGreaterThan(SCROLL_PIN_TOLERANCE_PX);
       await page.waitForTimeout(1500);
       const afterWait = await metrics(scroller);
       expect(Math.abs(afterWait.scrollTop - parked.scrollTop)).toBeLessThanOrEqual(5);
 
       // 3. Back to the bottom: following resumes.
-      await scroller.evaluate((el) => el.scrollTo({ top: el.scrollHeight }));
+      await scroller.hover();
+      await page.mouse.wheel(0, 100_000);
       await page.waitForTimeout(1500);
       const resumed = await metrics(scroller);
       expect(resumed.distanceFromBottom).toBeLessThanOrEqual(FOLLOW_TOLERANCE_PX);

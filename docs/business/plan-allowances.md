@@ -285,7 +285,7 @@ Until then these are estimates that were reviewed, not measurements.
 
 ## Free requests on credit connectors (ADR-142, 2026-10-01)
 
-A user with no credit may still try the cloud providers: **Free gets 2 requests per UTC month, one
+A user with no credit may still try the cloud providers: **Free gets 10 requests per UTC month, one
 total across all credit connectors (amended 2026-10-02, ADR-142); every paid plan gets 0** (they pay
 with credit). The window is monthly, never daily. The platform absorbs the
 provider cost, bounded per request by `min($0.15, monthlyProviderCostCeiling / allowance)`, so

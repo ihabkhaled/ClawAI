@@ -10,7 +10,10 @@ function makeScroller(): HTMLDivElement {
   return el;
 }
 
-function scrollTo(el: HTMLElement, top: number): void {
+function scrollTo(el: HTMLElement, top: number, withInput = true): void {
+  if (withInput) {
+    el.dispatchEvent(new Event('wheel'));
+  }
   el.scrollTop = top;
   el.dispatchEvent(new Event('scroll'));
 }
@@ -32,6 +35,15 @@ describe('useScrollUpIntent', () => {
     scrollTo(el, 400);
     expect(result.current.pinnedRef.current).toBe(false);
     scrollTo(el, 600);
+    expect(result.current.pinnedRef.current).toBe(true);
+  });
+
+  it('a scrollTop decrease with no user input (Virtuoso re-measure) never unpins', () => {
+    const { result } = renderHook(() => useScrollUpIntent());
+    const el = makeScroller();
+    result.current.scrollerRef(el);
+    scrollTo(el, 600, false);
+    scrollTo(el, 300, false);
     expect(result.current.pinnedRef.current).toBe(true);
   });
 

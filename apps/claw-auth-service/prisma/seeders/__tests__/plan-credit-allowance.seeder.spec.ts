@@ -100,7 +100,7 @@ describe('plan-catalog seeder run() and the free allowance', () => {
     await planCatalog.run(prisma);
 
     const bySlug = Object.fromEntries(created.map((row) => [String(row['slug']), row]));
-    expect(bySlug['free']?.['creditConnectorFreeRequestsPerMonth']).toBe(2);
+    expect(bySlug['free']?.['creditConnectorFreeRequestsPerMonth']).toBe(10);
     for (const slug of PAID_SLUGS) {
       expect(bySlug[slug]?.['creditConnectorFreeRequestsPerMonth']).toBe(0);
     }

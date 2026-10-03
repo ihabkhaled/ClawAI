@@ -333,3 +333,16 @@ Two refusals hold it together, and both protect work an undo cannot recover:
 
 ArrowDown in a composer that is not recalling is a no-op — swallowing the key to
 do nothing takes the arrow away from the caret for no gain.
+
+## Streaming follow is gated on real input (2026-10-03)
+
+A `scrollTop` decrease unpins the transcript ONLY when a wheel, touch, scroll-up key or
+scrollbar drag happened within `USER_SCROLL_INPUT_WINDOW_MS`. Virtuoso lowers `scrollTop`
+itself when it re-measures a row; treating that as the reader scrolling up stopped following
+mid-answer. While pinned, a subtree `MutationObserver` (rAF-throttled) keeps the viewport on
+the live edge. Code: `hooks/chat/use-scroll-up-intent.ts`. Proof:
+`tests/e2e/chat-streaming-scroll.spec.ts` simulates the reader with `page.mouse.wheel`
+(a programmatic `scrollBy` is not the reader). The spec depends on the live model's answer
+length, so it can miss on a short answer; 7 of 8 runs passed on 2026-10-03 (390 and 1366).
+Open: the context-pack/memory buttons sit inside the horizontally scrolling composer toolbar
+and are off-screen at 360/390 until scrolled.

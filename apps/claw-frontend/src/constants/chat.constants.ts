@@ -98,6 +98,14 @@ export const IME_PROCESS_KEY_CODE = 229;
 
 export const SCROLL_UP_INTENT_DELTA_PX = 2;
 
+// A scrollTop decrease only counts as the reader scrolling up when a real input
+// (wheel, touch, key, scrollbar drag) happened this recently. Virtuoso lowers
+// scrollTop by itself when it re-measures a row, and that must not unpin.
+export const USER_SCROLL_INPUT_WINDOW_MS = 1000;
+
+// Keys that move a scroller upward.
+export const SCROLL_UP_KEYS: readonly string[] = ['PageUp', 'ArrowUp', 'Home'];
+
 // Within this distance of the true bottom the reader is back at the live edge
 // and following resumes.
 export const SCROLL_PIN_TOLERANCE_PX = 4;

@@ -206,8 +206,8 @@ const SYSTEM_PLANS = [
     allowHelperVision: false,
     allowTextToSpeech: false,
     maxVideoSeconds: 60,
-    // ADR-142: Free gets 2 requests per credit connector per month.
-    creditConnectorFreeRequestsPerMonth: 2,
+    // ADR-142: Free gets 10 requests per credit connector per month.
+    creditConnectorFreeRequestsPerMonth: 10,
     priceMonthly: 0,
   },
   {

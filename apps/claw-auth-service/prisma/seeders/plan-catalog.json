@@ -135,7 +135,7 @@
         "textToSpeech": false,
         "maxVideoSeconds": 60
       },
-      "creditConnectorFreeRequestsPerMonth": 2,
+      "creditConnectorFreeRequestsPerMonth": 10,
       "isPopular": false,
       "paygCreditPercentBps": 3000
     },

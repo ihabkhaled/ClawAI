@@ -12,7 +12,7 @@
 A Free account has no credit, so every cloud connector (a "credit connector": a provider the
 platform meters with PAYG credit, classified by `isMeteredProvider` from the connector policy map)
 answered its first message with `PAYG_CREDIT_EXHAUSTED`. The owner wants a Free user to be able to try
-each cloud provider before paying: **2 requests per credit connector per month**, editable in
+each cloud provider before paying: **10 requests per credit connector per month**, editable in
 plan settings.
 
 ## Decision
@@ -20,7 +20,7 @@ plan settings.
 **A plan setting.** `Plan.creditConnectorFreeRequestsPerMonth` (`Int?`, column
 `credit_connector_free_requests_per_month`). `null` = unlimited, `0` = none; never interchangeable
 (rule 46 item 4). The column default is `0`, so a plan created without the field gives nothing away.
-Seeded Free = 2, every other plan = 0 (they pay with credit). Create and update plan DTOs accept
+Seeded Free = 10 (owner direction 2026-10-03, was 2; fresh installs only, existing rows untouched), every other plan = 0 (they pay with credit). Create and update plan DTOs accept
 `0..1,000,000` or `null`; the admin plan view and the public catalog carry it.
 
 **Enforcement in the reservation chokepoint.** `CreditReservationManager.takeHold` runs the normal
