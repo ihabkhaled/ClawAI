@@ -1,5 +1,8 @@
+import { createHash } from 'node:crypto';
+
 import { ResearchClient } from '../research.client';
 import { AppConfig } from '../../../app/config/app.config';
+import { stableJson } from '../../generation/utilities/stable-json.utility';
 
 describe('ResearchClient', () => {
   beforeEach(() => {
@@ -19,16 +22,29 @@ describe('ResearchClient', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ id: 'run-1', status: 'COMPLETED', bundle: { items: [] } }), {
-          status: 200,
-        }),
+        new Response(
+          JSON.stringify({
+            id: 'run-1',
+            status: 'COMPLETED',
+            bundle: { metadata: { z: 1, a: 2 }, items: [] },
+          }),
+          {
+            status: 200,
+          },
+        ),
       ),
     );
 
     const result = await new ResearchClient().run('owner-1', 'Explain this topic', 'corr-1');
 
-    expect(result).toMatchObject({ researchRunId: 'run-1', bundle: { items: [] }, version: 1 });
-    expect(result.sha256).toMatch(/^[a-f0-9]{64}$/u);
+    expect(result).toMatchObject({
+      researchRunId: 'run-1',
+      bundle: { metadata: { z: 1, a: 2 }, items: [] },
+      version: 1,
+    });
+    expect(result.sha256).toBe(
+      createHash('sha256').update(stableJson(result.bundle)).digest('hex'),
+    );
   });
 
   it('does not accept an incomplete evidence response', async () => {

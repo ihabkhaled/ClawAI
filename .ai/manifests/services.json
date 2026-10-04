@@ -535,10 +535,11 @@
         "ThreadGenerationAttempt",
         "ThreadGenerationCheckpoint",
         "ThreadGenerationJob",
+        "ThreadGenerationWorkerSlot",
         "ThreadModelCommunication",
         "ThreadRevisionDraft"
       ],
-      "testFiles": 10,
+      "testFiles": 11,
       "testRunner": "vitest"
     },
     {

@@ -1,0 +1,7 @@
+export enum GenerationJobAttemptOutcome {
+  WAITING_FOR_REVIEW = 'WAITING_FOR_REVIEW',
+  RETRY = 'RETRY',
+  CANCELLED = 'CANCELLED',
+  FAILED = 'FAILED',
+  WORKER_LOST = 'WORKER_LOST',
+}

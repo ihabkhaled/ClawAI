@@ -1,5 +1,6 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
+import { z } from 'zod';
 
 import {
   MAX_GENERATION_ROUNDS,
@@ -11,6 +12,8 @@ import { ResearchClient } from '../../research/research.client';
 import { resolveAuthorConsensus } from '../utilities/author-consensus.utility';
 import { GenerationJobsRepository } from '../repositories/generation-jobs.repository';
 import { ThreadGenerationCancelledError } from '../utilities/thread-generation-cancelled.error';
+import { ThreadGenerationLeaseLostError } from '../utilities/thread-generation-lease-lost.error';
+import { stableJson } from '../utilities/stable-json.utility';
 import { ReviewerRole } from '../types/reviewer-role.enum';
 import {
   type AuthorDraft,
@@ -32,8 +35,31 @@ export class GenerationPipelineManager {
 
   async generate(input: GenerationPipelineInput): Promise<GenerationPipelineResult> {
     const job = this.validateRoles(input);
-    const evidence = await this.research.run(job.ownerId, job.topic, job.correlationId);
-    await this.jobs.saveResearchEvidence(job.jobId, evidence);
+    const saved = await this.jobs.loadResumeState(job.jobId);
+    const savedBundle = z.record(z.string(), z.unknown()).safeParse(saved.evidenceBundle);
+    if (saved.evidenceBundle !== null && saved.evidenceBundle !== undefined && (
+        !savedBundle.success ||
+        !saved.evidenceBundleHash ||
+        (this.hash(JSON.stringify(savedBundle.data)) !== saved.evidenceBundleHash &&
+          this.hash(stableJson(savedBundle.data)) !== saved.evidenceBundleHash)
+      )) {
+        throw new ServiceUnavailableException(
+          'Saved research checkpoint failed integrity validation',
+        );
+      }
+    const evidence =
+      savedBundle.success && saved.evidenceBundleHash
+        ? {
+            researchRunId: '',
+            bundle: savedBundle.data,
+            sha256: saved.evidenceBundleHash,
+            version: 1 as const,
+          }
+        : await this.research.run(job.ownerId, job.topic, job.correlationId);
+    if (!savedBundle.success) {
+      const savedEvidence = await this.jobs.saveResearchEvidence(job.jobId, job.attempt, evidence);
+      if (!savedEvidence) throw new ThreadGenerationLeaseLostError();
+    }
     const evidenceItems = this.evidenceItems(evidence.bundle);
     await this.throwIfCancelled(job);
     const sharedMaterial = JSON.stringify({
@@ -171,6 +197,18 @@ export class GenerationPipelineManager {
         'Write the requested publication. Use only the supplied source and research evidence. Return JSON with markdown and citations [{evidenceId,url}]. Do not include analysis or hidden reasoning.',
       userPrompt: `${sharedMaterial}\nRevision brief: ${revisionBrief || 'Create a complete first draft.'}`,
     };
+    const saved = await this.jobs.findCommunication(
+      input.jobId,
+      role.id,
+      round,
+      evidenceHash,
+      this.hash(`${prompts.systemPrompt}\n${prompts.userPrompt}`),
+    );
+    if (saved !== null) {
+      const parsed = authorDraftSchema.safeParse(saved);
+      if (!parsed.success) throw new ServiceUnavailableException('A saved author draft is invalid');
+      return parsed.data;
+    }
     const response = await this.callRole(input, role, `author-${role.id}`, round, {
       ...prompts,
     });
@@ -202,6 +240,19 @@ export class GenerationPipelineManager {
       systemPrompt: `Review the draft independently as ${reviewer}. Return JSON with score 0-100, blockers, up to five findings, and a short revisionBrief. Do not include chain-of-thought.`,
       userPrompt: `${sharedMaterial}\nDraft:\n${JSON.stringify(draft)}`,
     };
+    const saved = await this.jobs.findCommunication(
+      input.jobId,
+      role.id,
+      round,
+      evidenceHash,
+      this.hash(`${prompts.systemPrompt}\n${prompts.userPrompt}`),
+    );
+    if (saved !== null) {
+      const parsed = reviewSchema.safeParse(saved);
+      if (!parsed.success)
+        throw new ServiceUnavailableException(`${reviewer} has a saved invalid review`);
+      return parsed.data;
+    }
     const response = await this.callRole(input, role, reviewer.toLowerCase(), round, {
       ...prompts,
     });
@@ -229,8 +280,9 @@ export class GenerationPipelineManager {
     response: Awaited<ReturnType<ChatModelClient['generate']>>,
     output: Record<string, unknown>,
   ): Promise<void> {
-    await this.jobs.saveCommunication({
+    const saved = await this.jobs.saveCommunication({
       jobId: input.jobId,
+      attempt: input.attempt,
       role: role.id,
       round,
       inputHash: this.hash(`${prompts.systemPrompt}\n${prompts.userPrompt}`),
@@ -238,6 +290,7 @@ export class GenerationPipelineManager {
       response,
       output,
     });
+    if (!saved) throw new ThreadGenerationLeaseLostError();
   }
 
   private async callRole(

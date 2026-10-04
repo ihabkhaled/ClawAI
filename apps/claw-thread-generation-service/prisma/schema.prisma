@@ -28,40 +28,46 @@ enum ThreadGenerationStage {
 }
 
 model ThreadGenerationJob {
-  id                  String                       @id @default(cuid())
-  ownerId             String                       @map("owner_id")
-  correlationId       String                       @map("correlation_id")
-  idempotencyKey      String                       @unique @map("idempotency_key")
-  status              ThreadGenerationStatus       @default(QUEUED)
-  stage               ThreadGenerationStage        @default(SNAPSHOT)
-  sourceThreadId      String                       @map("source_thread_id")
-  sourceSnapshot      Json                         @map("source_snapshot")
-  sourceSnapshotHash  String                       @map("source_snapshot_hash")
-  evidenceBundle      Json?                        @map("evidence_bundle")
-  evidenceBundleHash  String?                      @map("evidence_bundle_hash")
-  evidenceVersion     Int?                         @map("evidence_version")
-  request             Json
-  spendCapMicroUsd    BigInt                       @map("spend_cap_micro_usd")
-  budgetId            String                       @map("budget_id")
-  spentMicroCredits   BigInt                       @default(0) @map("spent_micro_credits")
-  round               Int                          @default(0)
-  attemptCount        Int                          @default(0) @map("attempt_count")
-  leaseOwner          String?                      @map("lease_owner")
-  leaseExpiresAt      DateTime?                    @map("lease_expires_at")
-  cancelRequestedAt   DateTime?                    @map("cancel_requested_at")
-  safeErrorCode       String?                      @map("safe_error_code")
-  publicIntentVersion String                       @map("public_intent_version")
-  publicIntentAt      DateTime                     @map("public_intent_at")
-  createdAt           DateTime                     @default(now()) @map("created_at")
-  updatedAt           DateTime                     @updatedAt @map("updated_at")
-  completedAt         DateTime?                    @map("completed_at")
-  attempts            ThreadGenerationAttempt[]
-  checkpoints         ThreadGenerationCheckpoint[]
-  communications      ThreadModelCommunication[]
-  revisions           ThreadRevisionDraft[]
+  id                     String                       @id @default(cuid())
+  ownerId                String                       @map("owner_id")
+  correlationId          String                       @map("correlation_id")
+  idempotencyKey         String                       @unique @map("idempotency_key")
+  status                 ThreadGenerationStatus       @default(QUEUED)
+  stage                  ThreadGenerationStage        @default(SNAPSHOT)
+  sourceThreadId         String                       @map("source_thread_id")
+  sourceSnapshot         Json                         @map("source_snapshot")
+  sourceSnapshotHash     String                       @map("source_snapshot_hash")
+  evidenceBundle         Json?                        @map("evidence_bundle")
+  evidenceBundleHash     String?                      @map("evidence_bundle_hash")
+  evidenceVersion        Int?                         @map("evidence_version")
+  request                Json
+  spendCapMicroUsd       BigInt                       @map("spend_cap_micro_usd")
+  budgetId               String                       @map("budget_id")
+  budgetCloseStatus      String?                      @map("budget_close_status")
+  budgetClosedAt         DateTime?                    @map("budget_closed_at")
+  spentMicroCredits      BigInt                       @default(0) @map("spent_micro_credits")
+  round                  Int                          @default(0)
+  attemptCount           Int                          @default(0) @map("attempt_count")
+  nextAttemptAt          DateTime                     @default(now()) @map("next_attempt_at")
+  dispatchLeaseExpiresAt DateTime?                    @map("dispatch_lease_expires_at")
+  leaseOwner             String?                      @map("lease_owner")
+  leaseExpiresAt         DateTime?                    @map("lease_expires_at")
+  cancelRequestedAt      DateTime?                    @map("cancel_requested_at")
+  safeErrorCode          String?                      @map("safe_error_code")
+  publicIntentVersion    String                       @map("public_intent_version")
+  publicIntentAt         DateTime                     @map("public_intent_at")
+  createdAt              DateTime                     @default(now()) @map("created_at")
+  updatedAt              DateTime                     @updatedAt @map("updated_at")
+  completedAt            DateTime?                    @map("completed_at")
+  attempts               ThreadGenerationAttempt[]
+  checkpoints            ThreadGenerationCheckpoint[]
+  communications         ThreadModelCommunication[]
+  revisions              ThreadRevisionDraft[]
 
   @@index([status, createdAt])
   @@index([status, leaseExpiresAt])
+  @@index([status, nextAttemptAt, createdAt])
+  @@index([status, dispatchLeaseExpiresAt])
   @@index([ownerId, createdAt])
   @@map("thread_generation_jobs")
 }
@@ -112,8 +118,20 @@ model ThreadModelCommunication {
   usage              Json?
   createdAt          DateTime            @default(now()) @map("created_at")
 
+  @@unique([jobId, role, round])
   @@index([jobId, round, role])
   @@map("thread_model_communications")
+}
+
+model ThreadGenerationWorkerSlot {
+  slotId         String    @id @map("slot_id")
+  jobId          String?   @unique @map("job_id")
+  workerId       String?   @map("worker_id")
+  leaseExpiresAt DateTime? @map("lease_expires_at")
+  heartbeatAt    DateTime? @map("heartbeat_at")
+
+  @@index([leaseExpiresAt])
+  @@map("thread_generation_worker_slots")
 }
 
 model ThreadRevisionDraft {

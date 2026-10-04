@@ -29,6 +29,13 @@ between provider calls.
   surface is added.
 - The queue is dedicated to generation work and has prefetch one. Prisma
   migrations run from development and production container entrypoints.
+- A database-backed pair of worker slots caps concurrency across replicas.
+  Heartbeats extend leases; periodic recovery retries expired jobs up to the
+  bounded attempt limit with backoff. Resume reuses persisted research and role
+  outputs only when input and evidence hashes match.
+- Queue reconciliation dispatches ready jobs FIFO and retries pending Auth
+  budget closure from persisted status. Do not manually replay a provider call
+  or close a budget outside the idempotent service path.
 - The service has no owner or public read API. Generation-to-publication result
   transfer is not wired yet; Threads-service owns that lifecycle in a later
   batch.

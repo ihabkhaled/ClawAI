@@ -4,6 +4,7 @@ import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
 import { z } from 'zod';
 
 import { AppConfig } from '../../app/config/app.config';
+import { stableJson } from '../generation/utilities/stable-json.utility';
 
 const researchRunSchema = z.object({
   id: z.string(),
@@ -55,11 +56,10 @@ export class ResearchClient {
     if (!parsed.success || parsed.data.status !== 'COMPLETED') {
       throw new ServiceUnavailableException('Research evidence response is invalid');
     }
-    const serialized = JSON.stringify(parsed.data.bundle);
     return {
       researchRunId: parsed.data.id,
       bundle: parsed.data.bundle,
-      sha256: createHash('sha256').update(serialized).digest('hex'),
+      sha256: createHash('sha256').update(stableJson(parsed.data.bundle)).digest('hex'),
       version: 1,
     };
   }

@@ -39,6 +39,7 @@ export type GenerationPipelineInput = {
   jobId: string;
   ownerId: string;
   budgetId: string;
+  attempt: number;
   correlationId: string;
   topic: string;
   publicationType: 'article' | 'research-article' | 'guide' | 'technical-explanation';

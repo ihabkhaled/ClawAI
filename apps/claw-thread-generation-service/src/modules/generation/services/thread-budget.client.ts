@@ -2,10 +2,11 @@ import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
+import { GenerationBudgetCloseStatus } from '../../../common/enums/generation-budget-close-status.enum';
 
 @Injectable()
 export class ThreadBudgetClient {
-  async close(budgetId: string, status: 'FINALIZED' | 'RELEASED'): Promise<void> {
+  async close(budgetId: string, status: GenerationBudgetCloseStatus): Promise<void> {
     const config = AppConfig.get();
     const url = `${config.AUTH_SERVICE_URL}/api/v1/internal/threads/budgets/close`;
     assertSafeRequestUrl(url, declaredHost(config.AUTH_SERVICE_URL));

@@ -285,6 +285,7 @@
         "ThreadGenerationAttempt",
         "ThreadGenerationCheckpoint",
         "ThreadGenerationJob",
+        "ThreadGenerationWorkerSlot",
         "ThreadModelCommunication",
         "ThreadRevisionDraft"
       ],

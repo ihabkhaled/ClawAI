@@ -51,6 +51,13 @@ path and carry a stable per-call idempotency key plus the Auth-owned aggregate
 budget ID. Idempotency prevents duplicate enqueue and charges. Persisted job
 state is authoritative; queue delivery and live progress are transport only.
 The generation consumer uses its own durable RabbitMQ queue with prefetch one.
+Database-backed worker slots cap active generation at two across replicas.
+Workers renew leases while running; recovery requeues expired work with bounded
+attempts and backoff. Persisted research evidence and role outputs are reused
+only when their canonical evidence and input hashes still match. Dispatch is
+FIFO among jobs whose retry delay has elapsed. Auth budget closure is retried
+from persisted pending state, so a temporary close failure does not lose the
+settlement operation.
 
 ## Public data and deletion
 

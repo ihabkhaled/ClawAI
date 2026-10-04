@@ -51,5 +51,9 @@ The generation service persists queued jobs, attempt records, source and
 research checkpoints, structured author/Judge/Critic responses, and the private
 final revision in its own PostgreSQL database. Jobs run on the dedicated
 `claw.threads.generation` RabbitMQ queue, with a service-token-only enqueue and
-cancel API. Publication retrieval and owner approval wiring remain in the next
-implementation batch; generated drafts are not public by generation alone.
+cancel API. Two database-backed worker slots cap cross-replica concurrency.
+Heartbeats renew leases; bounded retries recover expired jobs with backoff and
+reuse only hash-matched checkpoints. FIFO dispatch and persisted idempotent
+budget closure are reconciled periodically. Publication retrieval and owner
+approval wiring remain in the next implementation batch; generated drafts are
+not public by generation alone.

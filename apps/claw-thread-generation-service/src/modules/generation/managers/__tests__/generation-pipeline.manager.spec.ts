@@ -1,4 +1,5 @@
 import { GenerationPipelineManager } from '../generation-pipeline.manager';
+import { createHash } from 'node:crypto';
 import type { GenerationPipelineInput, ModelRole } from '../../types/generation-pipeline.types';
 
 const evidenceBundle = {
@@ -19,6 +20,7 @@ const input: GenerationPipelineInput = {
   jobId: 'job-1',
   ownerId: 'owner-1',
   budgetId: 'budget-1',
+  attempt: 1,
   correlationId: 'correlation-1',
   topic: 'A sufficiently detailed topic',
   publicationType: 'article',
@@ -50,7 +52,12 @@ function build(modelResponses: string[]) {
       };
     }),
   };
-  const jobs = { saveResearchEvidence: vi.fn(), saveCommunication: vi.fn() };
+  const jobs = {
+    loadResumeState: vi.fn().mockResolvedValue({ evidenceBundle: null, evidenceBundleHash: null }),
+    findCommunication: vi.fn().mockResolvedValue(null),
+    saveResearchEvidence: vi.fn().mockResolvedValue(true),
+    saveCommunication: vi.fn().mockResolvedValue(true),
+  };
   return {
     manager: new GenerationPipelineManager(research as never, models as never, jobs as never),
     research,
@@ -92,6 +99,27 @@ describe('GenerationPipelineManager', () => {
     expect(prompts.every((prompt) => prompt.includes(JSON.stringify(input.sourceSnapshot)))).toBe(
       true,
     );
+  });
+
+  it('resumes from the persisted evidence and completed role outputs without another model call', async () => {
+    const harness = build([]);
+    const hash = createHash('sha256').update(JSON.stringify(evidenceBundle)).digest('hex');
+    harness.jobs.loadResumeState.mockResolvedValue({
+      evidenceBundle,
+      evidenceBundleHash: hash,
+    });
+    harness.jobs.findCommunication
+      .mockResolvedValueOnce(JSON.parse(draft('grounded article')))
+      .mockResolvedValueOnce(JSON.parse(draft('grounded article')))
+      .mockResolvedValueOnce(JSON.parse(draft('grounded article')))
+      .mockResolvedValueOnce(JSON.parse(review(80)))
+      .mockResolvedValueOnce(JSON.parse(review(75)));
+
+    const result = await harness.manager.generate(input);
+
+    expect(result.rounds).toBe(1);
+    expect(harness.research.run).not.toHaveBeenCalled();
+    expect(harness.models.generate).not.toHaveBeenCalled();
   });
 
   it('restarts the round when author hashes disagree', async () => {

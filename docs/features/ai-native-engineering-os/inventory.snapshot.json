@@ -8793,7 +8793,7 @@
           "file": "skills/run-the-qa-team.md"
         },
         {
-          "bytes": 3155,
+          "bytes": 3639,
           "file": "skills/run-threads-generation-queue.md"
         },
         {
@@ -10823,6 +10823,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-thread-generation-service/prisma/schema.prisma",
+            "value": "ThreadGenerationWorkerSlot"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-thread-generation-service/prisma/schema.prisma",
             "value": "ThreadModelCommunication"
           },
           {
@@ -11086,7 +11091,7 @@
       },
       "claw-thread-generation-service": {
         "runner": "vitest",
-        "testFiles": 10
+        "testFiles": 11
       },
       "claw-threads-service": {
         "runner": "vitest",
@@ -11886,7 +11891,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2057,
+    "totalTestFiles": 2058,
     "workspaceCount": 27
   }
 }

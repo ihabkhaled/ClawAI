@@ -32,7 +32,11 @@ cap, persists a job in `claw_thread_generation`, then publishes
 queue. Confirmed dispatch failures leave a recoverable queued row. The worker
 claims queued jobs atomically, records research and role checkpoints, and closes
 the Auth aggregate budget when the job ends. Cancellation is checked between
-provider calls. Drafts stay private; there is not yet a result read or publication
+provider calls. Two database-backed worker slots cap concurrency across service
+replicas. Heartbeats renew leases; reconciliation recovers expired jobs with a
+bounded attempt count and backoff, resuming only hash-matched research and role
+outputs. Ready jobs dispatch FIFO, and pending budget closure is retried
+idempotently. Drafts stay private; there is not yet a result read or publication
 approval endpoint.
 
 ## Deploy and inspect
@@ -60,9 +64,11 @@ npm run build
 For a code change, lint only touched TypeScript paths using the repository ESLint
 configuration. Do not run the full monorepo test or lint suite for this service.
 
-## Known recovery limit
+## Recovery limits
 
-The current worker has durable checkpoints but does not yet have periodic lease
-renewal, automatic stale-job recovery, or checkpoint-based resume. Do not mark a
-stuck job successful or replay provider calls manually; preserve the job and
-budget state for owner-safe recovery work in a later batch.
+Automatic recovery is bounded to three attempts. A slot is released on terminal
+completion, cancellation, or lease loss. Inspect safe job IDs, status, attempt
+count, and stable failure codes when investigating recovery. Never mark a stuck
+job successful or replay provider calls manually; persisted job and budget state
+is authoritative. Recovery and slot behavior have focused unit coverage, while
+live multi-replica/database failure injection remains an integration QA lane.

@@ -25,9 +25,10 @@ describe('GenerationJobsService', () => {
         order.push('persist');
         return {
           result: GenerationJobStorageResult.SUCCESS,
-          job: { id: 'job-1', status: 'QUEUED' },
+          job: { id: 'job-1', status: 'QUEUED', correlationId: 'correlation-1' },
         };
       }),
+      leaseDispatch: vi.fn().mockResolvedValue(true),
     };
     const rabbit = {
       publishConfirmed: vi.fn().mockImplementation(async () => order.push('publish')),
@@ -66,5 +67,57 @@ describe('GenerationJobsService', () => {
       expect.objectContaining({ jobId: 'job-1', correlationId: 'correlation-1' }),
     );
     expect(order).toEqual(['persist', 'publish']);
+  });
+
+  it('keeps the parent budget held when a bounded attempt is retried', async () => {
+    let handler: ((event: unknown) => Promise<void>) | undefined;
+    const job = {
+      id: 'job-1',
+      ownerId: 'owner-1',
+      budgetId: 'budget-1',
+      attemptCount: 1,
+      request: {
+        ownerId: 'owner-1',
+        sourceThreadId: 'thread-1',
+        idempotencyKey: 'request-1',
+        correlationId: 'correlation-1',
+        budgetId: 'budget-1',
+        spendCapMicroUsd: '5000000',
+        topic: 'A detailed topic for a publication',
+        publicationType: 'article',
+        publicIntentVersion: 'threads-public-v1',
+        authors: [role('author-1'), role('author-2'), role('author-3')],
+        judge: role('judge'),
+        critic: role('critic'),
+      },
+      sourceSnapshot: { messages: [] },
+    };
+    const repository = {
+      claim: vi.fn().mockResolvedValue(job),
+      isCancellationRequested: vi.fn().mockResolvedValue(false),
+      retryOrFail: vi.fn().mockResolvedValue('RETRY'),
+    };
+    const rabbit = {
+      subscribe: vi.fn().mockImplementation(async (_pattern, callback) => {
+        handler = callback;
+      }),
+    };
+    const pipeline = {
+      generate: vi.fn().mockRejectedValue(new Error('temporary provider outage')),
+    };
+    const budgets = { close: vi.fn() };
+    const service = new GenerationJobsService(
+      {} as never,
+      repository as never,
+      rabbit as never,
+      pipeline as never,
+      budgets as never,
+    );
+
+    await service.subscribe();
+    await handler?.({ jobId: 'job-1', correlationId: 'correlation-1' });
+
+    expect(repository.retryOrFail).toHaveBeenCalledWith('job-1', 1);
+    expect(budgets.close).not.toHaveBeenCalled();
   });
 });
