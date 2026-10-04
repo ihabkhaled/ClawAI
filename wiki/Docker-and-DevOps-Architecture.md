@@ -83,6 +83,8 @@ starting or replacing them (`--no-deps`).
 
 The GPU overlay workflow validates the service overlay together with both the
 database and service Compose files, so service dependencies resolve in CI.
+It captures Compose's service list before matching it so `pipefail` does not
+turn `grep -q`'s early close into a false workflow failure.
 
 ### What Install Scripts Do
 

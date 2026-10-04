@@ -146,12 +146,13 @@ jobs:
           set -euo pipefail
           # llamacpp-service sits behind the local-ai profile; without the
           # profile `config --services` omits it and this check always failed.
-          docker compose \
+          services="$(docker compose \
             --profile local-ai \
             -f docker/docker-compose.dev.databases.yml \
             -f docker/docker-compose.dev.services.yml \
             -f "${{ matrix.scenario.expect_overlay }}" \
-            config --services | grep -q "^llamacpp-service$"
+            config --services)"
+          grep -q "^llamacpp-service$" <<<"$services"
           echo "✓ overlay merges cleanly into the llamacpp-service definition"
 
   detection-macos:
