@@ -30,8 +30,8 @@ lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (
 ## Findings
 
 One Nginx assertion initially failed because its regex treated $origin_threads as an end anchor. Escaping the dollar sign fixed the assertion; the focused test then passed.
-The Akinator strict repository scan exited 1 with 5,459 baseline findings, including hook-policy, stale-link, and context-map findings. The first push hook also found missing service guides and Docker shared-package build commands; focused knowledge-coverage (4 tests) and Dockerfile-completeness (1 test) now pass after those fixes. No unrelated repository-wide cleanup was included.
+The Akinator strict repository scan exited 1 with 5,459 baseline findings, including hook-policy, stale-link, and context-map findings. The first push hook found missing service guides and Docker shared-package build commands; focused knowledge-coverage (4 tests) and Dockerfile-completeness (1 test) now pass. A second hook passed knowledge and architecture checks but started the broad affected workspace test/build lane; it was stopped after 4,168 unrelated tests passed to honor the owner?s changed-file limit. The remote v1.174.3 release required rebasing and aligning the new service manifests. No hook was bypassed.
 
 ## Open gaps
 
-L15 GitHub CI and release/deployment result; retry push after the focused hook fixes, then close before Batch 2.
+L15 CI, release, and deployment result; the push hook passed tooling checks but its affected workspace test/build pass was intentionally stopped after 4,168 unrelated tests; retry with the exact-tree receipt after aligning v1.174.3 service metadata.

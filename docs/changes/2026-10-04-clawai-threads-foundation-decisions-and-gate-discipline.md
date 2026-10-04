@@ -119,6 +119,9 @@
 - `wiki/Testing-and-QA.md` (M)
 - `wiki/Workspace-Map.md` (M)
 
+- `apps/claw-threads-service/package.json` (M)
+- `apps/claw-thread-generation-service/package.json` (M)
+- `package-lock.json` (M)
 - `apps/claw-threads-service/Dockerfile` (M)
 - `apps/claw-threads-service/Dockerfile.dev` (M)
 - `apps/claw-thread-generation-service/Dockerfile` (M)
