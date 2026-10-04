@@ -6,6 +6,8 @@ const appConfigSchema = z.object({
   JWT_SECRET: z.string().min(32),
   CORS_ORIGINS: z.string().optional(),
   CLAW_HOSTNAME: z.string().default('claw.local'),
+  CHAT_SERVICE_URL: z.string().url().default('https://chat-service:4002'),
+  INTER_SERVICE_AUTH_TOKEN: z.string().min(32),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

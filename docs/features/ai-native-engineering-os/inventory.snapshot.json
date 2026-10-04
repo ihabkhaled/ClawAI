@@ -1658,6 +1658,11 @@
           "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads-internal.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/internal/thread-snapshots/:threadId",
+          "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/thread-snapshot-internal.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/metrics",
           "source": "apps/claw-chat-service/src/modules/metrics/controllers/metrics.controller.ts"
@@ -10871,7 +10876,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 312
+        "testFiles": 317
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -10931,7 +10936,7 @@
       },
       "claw-thread-generation-service": {
         "runner": "vitest",
-        "testFiles": 2
+        "testFiles": 4
       },
       "claw-threads-service": {
         "runner": "vitest",
@@ -11715,7 +11720,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 54,
-    "endpointCount": 794,
+    "endpointCount": 795,
     "envVarCount": 365,
     "eventCount": 185,
     "frontendRouteCount": 156,
@@ -11727,7 +11732,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2040,
+    "totalTestFiles": 2047,
     "workspaceCount": 27
   }
 }

@@ -1,5 +1,9 @@
 # Service Dependency Map
 
+**Regenerate when:** a service adds or removes a package, event, or internal
+HTTP edge; refresh the generated views with `npm run knowledge:context` and
+`python <skill>/scripts/extract_platform.py --write`.
+
 How services reach each other. There are three channels — **shared packages**
 (compile-time), **RabbitMQ events** (async), and **HTTP internal endpoints**
 (sync). Ground truth: `.ai/manifests/workspace-dependency-graph.json` (package
@@ -55,23 +59,24 @@ consumes `message.routed`** to continue execution.
 Services expose `/internal/*` endpoints (service-token protected) for
 synchronous data other services need at request time:
 
-| Caller    | Callee           | Endpoint (purpose)                                                 |
-| --------- | ---------------- | ------------------------------------------------------------------ |
-| chat      | memory           | `/internal/memories/retrieve` (retrieval bundle)                   |
-| chat      | memory           | context-pack items for assembly                                    |
-| chat      | file             | `/internal/files/:id/content`, `/chunks` (attachments)             |
-| chat      | connector        | `/internal/connectors/config`, `/models-snapshot`                  |
-| chat      | auth             | `/internal/quota/reserve`/`finalize`/`release`                     |
-| image     | file             | `/internal/files/store-image`                                      |
-| routing   | connector        | `/internal/connectors/models-snapshot`                             |
-| routing   | llamacpp         | `/internal/llamacpp/loaded-snapshot`                               |
-| routing   | ollama           | installed models (dynamic router prompt)                           |
-| workspace | chat             | `/internal/chat/generate`, `/internal/chat/threads/seeded`         |
-| workspace | file-gen / image | `/internal/file-generations/generate`, `/internal/images/generate` |
-| agent     | chat             | `/internal/agent/terminal/seed-command`                            |
-| payment   | auth             | `/internal/plans/*`, `/internal/billing-metrics/provider-costs`    |
-| auth      | payment          | `/internal/payments/users/:userId/entitlement`                     |
-| health    | all              | `/health` aggregation                                              |
+| Caller            | Callee           | Endpoint (purpose)                                                     |
+| ----------------- | ---------------- | ---------------------------------------------------------------------- |
+| chat              | memory           | `/internal/memories/retrieve` (retrieval bundle)                       |
+| chat              | memory           | context-pack items for assembly                                        |
+| chat              | file             | `/internal/files/:id/content`, `/chunks` (attachments)                 |
+| chat              | connector        | `/internal/connectors/config`, `/models-snapshot`                      |
+| chat              | auth             | `/internal/quota/reserve`/`finalize`/`release`                         |
+| image             | file             | `/internal/files/store-image`                                          |
+| routing           | connector        | `/internal/connectors/models-snapshot`                                 |
+| routing           | llamacpp         | `/internal/llamacpp/loaded-snapshot`                                   |
+| routing           | ollama           | installed models (dynamic router prompt)                               |
+| workspace         | chat             | `/internal/chat/generate`, `/internal/chat/threads/seeded`             |
+| thread-generation | chat             | `/internal/thread-snapshots/:threadId` (owner-checked source snapshot) |
+| workspace         | file-gen / image | `/internal/file-generations/generate`, `/internal/images/generate`     |
+| agent             | chat             | `/internal/agent/terminal/seed-command`                                |
+| payment           | auth             | `/internal/plans/*`, `/internal/billing-metrics/provider-costs`        |
+| auth              | payment          | `/internal/payments/users/:userId/entitlement`                         |
+| health            | all              | `/health` aggregation                                                  |
 
 Internal endpoints are discovered in `.ai/manifests/api-endpoints.json` (routes
 starting `/internal/`). Inter-service base URLs come from `*_SERVICE_URL` env

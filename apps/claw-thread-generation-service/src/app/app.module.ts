@@ -12,6 +12,7 @@ import { LoggerModule } from 'nestjs-pino';
 
 import { AppConfig } from './config/app.config';
 import { HealthModule } from '../modules/health/health.module';
+import { SourceSnapshotsModule } from '../modules/source-snapshots/source-snapshots.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { HealthModule } from '../modules/health/health.module';
     }),
     ThrottlerModule.forRoot(buildThrottlerOptions({ ttl: 60_000, limit: 2500 })),
     HealthModule,
+    SourceSnapshotsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },

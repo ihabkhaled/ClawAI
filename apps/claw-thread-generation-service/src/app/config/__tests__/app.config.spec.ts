@@ -9,6 +9,7 @@ describe('AppConfig', () => {
     vi.stubEnv('JWT_SECRET', 'x'.repeat(32));
     vi.stubEnv('THREAD_GENERATION_SERVICE_PORT', '4020');
     vi.stubEnv('CLAW_HOSTNAME', 'generation.test');
+    vi.stubEnv('INTER_SERVICE_AUTH_TOKEN', 't'.repeat(40));
 
     expect(AppConfig.validate()).toMatchObject({
       THREAD_GENERATION_SERVICE_PORT: 4020,
@@ -19,6 +20,7 @@ describe('AppConfig', () => {
   it('rejects a malformed service port', () => {
     vi.stubEnv('JWT_SECRET', 'x'.repeat(32));
     vi.stubEnv('THREAD_GENERATION_SERVICE_PORT', 'invalid');
+    vi.stubEnv('INTER_SERVICE_AUTH_TOKEN', 't'.repeat(40));
 
     expect(() => AppConfig.validate()).toThrow('Invalid environment configuration');
   });

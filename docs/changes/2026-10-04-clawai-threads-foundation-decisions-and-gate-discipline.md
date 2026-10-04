@@ -143,7 +143,7 @@ The owner approved a two-service Threads architecture, the launch and privacy ru
 
 ## Now
 
-Two health-only services are registered as workspaces 26 and 27. Two production rollouts failed health verification because probes did not match the HTTPS-enabled service runtime and slim image. The current correction uses a built-in Node HTTPS request to loopback and awaits another deployment. Threads launch remains disabled; publication behavior and generation pipeline are planned in later batches.
+Two health-only services are registered as workspaces 26 and 27. Two production rollouts failed health verification because probes did not match the HTTPS-enabled service runtime and slim image. The corrected loopback HTTPS probes passed release/deploy run 37215068639; both services are healthy on v1.175.2 (`cd2b1134d`). Threads launch remains disabled; publication behavior and generation pipeline are planned in later batches.
 
 ## Why
 
@@ -151,6 +151,32 @@ This creates safe deployment seams and records the owner decisions before domain
 
 ## Deployment health-probe repair
 
-Production run 37210254048 failed because its HTTPS probes depended on `wget`, absent from the Node 26 slim images. Run 37212580265 showed the first repair still used HTTP while production TLS was enabled from `/certs`; both services started and mapped `/api/v1/health`, but remained unhealthy. The current repair uses Node's built-in HTTPS client for a loopback request and disables certificate verification only on that health probe. No new reusable skill or rule is needed.
+Production run 37210254048 failed because its HTTPS probes depended on `wget`, absent from the Node 26 slim images. Run 37212580265 showed the first repair still used HTTP while production TLS was enabled from `/certs`; both services started and mapped `/api/v1/health`, but remained unhealthy. The correction uses Node's built-in HTTPS client for a loopback request and disables certificate verification only on that health probe. CI 37214571065 passed, and release/deploy run 37215068639 reported both services healthy. No new reusable skill or rule is needed.
 
 Changed for this repair: `docker/docker-compose.dev.services.yml`, `docker/docker-compose.prod.services.yml`, `tools/__tests__/threads-compose-healthcheck.test.mjs`, `docs/03-architecture/clawai-threads-architecture.md`, `wiki/Threads.md`, `docs/superpowers/plans/2026-10-04-clawai-threads-implementation-plan.md`, `docs/qa-evidence/2026-10-04-threads-service-foundation.md`, and this trace. Knowledge delta: architecture, wiki, plan, QA evidence, and trace paths above.
+
+## Batch 2 — Owner-scoped source snapshots and exports
+
+Chat now serves `POST /api/v1/internal/thread-snapshots/:threadId` behind
+`ServiceTokenGuard`. Its repository matches the supplied owner and thread,
+reads both records and ordered messages in one serializable transaction, and
+selects only fields required for filtering and snapshot construction. The
+snapshot allow-list excludes system/tool roles, failure/abort/placeholder/
+duplicate markers, known secret patterns, and metadata such as attachment IDs,
+provider, and model. It rejects more than 2,000 source messages or 2 MiB rather
+than returning a truncated transcript. The digest covers deterministic
+versioned source data. Generation validates source identity, byte count, and
+digest before returning it; JSON and Markdown exports are implemented. TOON is
+explicitly unavailable because no verified codec and token-savings evidence
+exist. Durable job pinning and role context-fit checks remain in later batches.
+
+The same-batch knowledge delta is the Threads architecture and product privacy
+spec, `wiki/Threads.md`, `wiki/Memory-and-Context-Architecture.md`,
+`context/service-dependency-map.md`, the implementation plan, QA evidence, and
+this change record. No new skill or rule was warranted. Targeted specs cover
+filtering, determinism, size refusal, owner scoping, transaction isolation,
+service-token HTTP enforcement, integrity validation, and exporter behavior.
+
+Touched implementation paths: `apps/claw-chat-service/src/modules/chat-threads/chat-threads.module.ts`, `apps/claw-chat-service/src/modules/chat-threads/controllers/thread-snapshot-internal.controller.ts`, `apps/claw-chat-service/src/modules/chat-threads/controllers/__tests__/thread-snapshot-internal.controller.spec.ts`, `apps/claw-chat-service/src/modules/chat-threads/controllers/__tests__/thread-snapshot-internal.controller.integration.spec.ts`, `apps/claw-chat-service/src/modules/chat-threads/dto/thread-snapshot.dto.ts`, `apps/claw-chat-service/src/modules/chat-threads/repositories/chat-threads.repository.ts`, `apps/claw-chat-service/src/modules/chat-threads/repositories/__tests__/thread-snapshot.repository.spec.ts`, `apps/claw-chat-service/src/modules/chat-threads/services/thread-snapshot.service.ts`, `apps/claw-chat-service/src/modules/chat-threads/services/__tests__/thread-snapshot.service.spec.ts`, `apps/claw-chat-service/src/modules/chat-threads/constants/thread-snapshot.constants.ts`, `apps/claw-chat-service/src/modules/chat-threads/types/thread-snapshot.types.ts`, `apps/claw-chat-service/src/modules/chat-threads/utilities/thread-snapshot.utility.ts`, `apps/claw-chat-service/src/modules/chat-threads/utilities/__tests__/thread-snapshot.utility.spec.ts`, and `apps/claw-chat-service/src/modules/chat-threads/__tests__/chat-threads.service.spec.ts`.
+
+Generation paths: `apps/claw-thread-generation-service/src/app/app.module.ts`, `apps/claw-thread-generation-service/src/app/config/app.config.ts`, `apps/claw-thread-generation-service/src/app/config/__tests__/app.config.spec.ts`, `apps/claw-thread-generation-service/src/modules/source-snapshots/chat-snapshot.client.ts`, `apps/claw-thread-generation-service/src/modules/source-snapshots/snapshot-exporters.ts`, `apps/claw-thread-generation-service/src/modules/source-snapshots/source-snapshots.module.ts`, `apps/claw-thread-generation-service/src/modules/source-snapshots/types/thread-snapshot.types.ts`, and the snapshot client/exporter specs in that module. Knowledge paths: `docs/03-architecture/clawai-threads-architecture.md`, `docs/02-business-product/clawai-threads-product-spec.md`, `wiki/Threads.md`, `wiki/Memory-and-Context-Architecture.md`, `context/service-dependency-map.md`, `docs/wiki/index.md`, `docs/wiki/security/sensitive-data.md`, `docs/superpowers/plans/2026-10-04-clawai-threads-implementation-plan.md`, `docs/qa-evidence/2026-10-04-threads-snapshots.md`, the generated `.ai/**` and touched service `AGENTS.md` files, the inventory snapshot, and this change record.

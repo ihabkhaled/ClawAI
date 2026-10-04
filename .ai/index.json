@@ -1,0 +1,887 @@
+{
+  "budget": 12000,
+  "items": [
+    {
+      "in_brief": true,
+      "path": "rules/00-master-rules.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "ClawAI \u2014 Master Rules",
+      "tokens": 31
+    },
+    {
+      "in_brief": true,
+      "path": "rules/00-non-negotiable-rules.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "00 \u2014 Non-Negotiable Rules",
+      "tokens": 79
+    },
+    {
+      "in_brief": true,
+      "path": "rules/01-planning-rules.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "ClawAI \u2014 Planning Rules (Phase 0 + 0g)",
+      "tokens": 30
+    },
+    {
+      "in_brief": true,
+      "path": "rules/01-task-intake-and-planning.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "01 \u2014 Task Intake and Planning",
+      "tokens": 81
+    },
+    {
+      "in_brief": true,
+      "path": "rules/02-backend-rules.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "ClawAI \u2014 Backend Architecture Rules",
+      "tokens": 80
+    },
+    {
+      "in_brief": true,
+      "path": "rules/02-monorepo-and-workspace-ownership.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "02 \u2014 Monorepo and Workspace Ownership",
+      "tokens": 85
+    },
+    {
+      "in_brief": true,
+      "path": "rules/03-frontend-rules.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "ClawAI \u2014 Frontend Architecture Rules",
+      "tokens": 80
+    },
+    {
+      "in_brief": true,
+      "path": "rules/03-microservice-boundaries.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "03 \u2014 Microservice Boundaries",
+      "tokens": 81
+    },
+    {
+      "in_brief": true,
+      "path": "rules/04-nextjs-app-router.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "04 \u2014 Next.js App Router",
+      "tokens": 57
+    },
+    {
+      "in_brief": true,
+      "path": "rules/04-testing-rules.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "ClawAI \u2014 Testing Rules (Mandatory)",
+      "tokens": 34
+    },
+    {
+      "in_brief": true,
+      "path": "rules/05-frontend-components-and-hooks.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "05 \u2014 Frontend Components and Hooks",
+      "tokens": 80
+    },
+    {
+      "in_brief": true,
+      "path": "rules/05-infra-rules.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "ClawAI \u2014 Infrastructure Rules",
+      "tokens": 28
+    },
+    {
+      "in_brief": true,
+      "path": "rules/06-docs-rules.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "ClawAI \u2014 Documentation Rules",
+      "tokens": 29
+    },
+    {
+      "in_brief": true,
+      "path": "rules/06-frontend-queries-and-cache.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "06 \u2014 Frontend Queries and Cache",
+      "tokens": 79
+    },
+    {
+      "in_brief": true,
+      "path": "rules/07-backend-controllers-and-transport.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "07 \u2014 Backend Controllers and Transport",
+      "tokens": 83
+    },
+    {
+      "in_brief": true,
+      "path": "rules/07-commit-rules.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "ClawAI \u2014 Commit and PR Rules",
+      "tokens": 78
+    },
+    {
+      "in_brief": true,
+      "path": "rules/08-backend-managers-and-use-cases.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "08 \u2014 Backend Managers and Use Cases",
+      "tokens": 84
+    },
+    {
+      "in_brief": true,
+      "path": "rules/08-security-rules.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "ClawAI \u2014 Security Rules",
+      "tokens": 77
+    },
+    {
+      "in_brief": true,
+      "path": "rules/09-backend-services.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "09 \u2014 Backend Services",
+      "tokens": 70
+    },
+    {
+      "in_brief": true,
+      "path": "rules/09-refactor-rules.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "ClawAI \u2014 Refactor Rules (Mandatory)",
+      "tokens": 70
+    },
+    {
+      "in_brief": true,
+      "path": "rules/10-repositories-and-persistence.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "10 \u2014 Repositories and Persistence",
+      "tokens": 76
+    },
+    {
+      "in_brief": true,
+      "path": "rules/11-dtos-and-validation.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "11 \u2014 DTOs and Validation",
+      "tokens": 71
+    },
+    {
+      "in_brief": true,
+      "path": "rules/12-types-enums-constants-and-declaration-ownership.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "12 \u2014 Types, Enums, Constants, and Declaration Ownership",
+      "tokens": 90
+    },
+    {
+      "in_brief": true,
+      "path": "rules/13-external-library-wrappers-and-adapters.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "13 \u2014 External Library Wrappers and Adapters",
+      "tokens": 88
+    },
+    {
+      "in_brief": true,
+      "path": "rules/14-shared-packages.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "14 \u2014 Shared Packages",
+      "tokens": 77
+    },
+    {
+      "in_brief": true,
+      "path": "rules/15-configuration-and-environment.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "15 \u2014 Configuration and Environment",
+      "tokens": 84
+    },
+    {
+      "in_brief": true,
+      "path": "rules/16-authentication-and-authorization.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "16 \u2014 Authentication and Authorization",
+      "tokens": 77
+    },
+    {
+      "in_brief": true,
+      "path": "rules/17-rabbitmq-events-and-jobs.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "17 \u2014 RabbitMQ Events and Jobs",
+      "tokens": 80
+    },
+    {
+      "in_brief": true,
+      "path": "rules/18-error-handling-and-reliability.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "18 \u2014 Error Handling and Reliability",
+      "tokens": 84
+    },
+    {
+      "in_brief": true,
+      "path": "rules/19-logging-observability-and-redaction.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "19 \u2014 Logging, Observability, and Redaction",
+      "tokens": 80
+    },
+    {
+      "in_brief": true,
+      "path": "rules/20-i18n-and-user-facing-messages.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "20 \u2014 i18n and User-Facing Messages",
+      "tokens": 84
+    },
+    {
+      "in_brief": true,
+      "path": "rules/21-security-and-secrets.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "21 \u2014 Security and Secrets",
+      "tokens": 71
+    },
+    {
+      "in_brief": false,
+      "path": "rules/22-testing-and-coverage.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "22 \u2014 Testing and Coverage",
+      "tokens": 74
+    },
+    {
+      "in_brief": false,
+      "path": "rules/23-git-commits-hooks-and-release-gates.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "23 \u2014 Git Commits, Hooks, and Release Gates",
+      "tokens": 87
+    },
+    {
+      "in_brief": false,
+      "path": "rules/24-generated-files-and-knowledge-freshness.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "24 \u2014 Generated Files and Knowledge Freshness",
+      "tokens": 88
+    },
+    {
+      "in_brief": false,
+      "path": "rules/25-exceptions-and-waivers.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "25 \u2014 Exceptions and Waivers",
+      "tokens": 80
+    },
+    {
+      "in_brief": false,
+      "path": "rules/26-prompt-pack-intake-protocol.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "Rule 26 \u2014 Prompt-pack and execution-prompt intake protocol",
+      "tokens": 60
+    },
+    {
+      "in_brief": false,
+      "path": "rules/27-engineering-mindsets.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "Rule 27 \u2014 The ClawAI engineering mindsets",
+      "tokens": 83
+    },
+    {
+      "in_brief": false,
+      "path": "rules/28-billing-integrity-and-api-contracts.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "28 \u2014 Billing Integrity and API Contracts",
+      "tokens": 87
+    },
+    {
+      "in_brief": false,
+      "path": "rules/29-communication-style.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "29 \u2014 Communication style (MANDATORY)",
+      "tokens": 38
+    },
+    {
+      "in_brief": false,
+      "path": "rules/30-agent-self-regulation-and-loop-prevention.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "30 \u2014 Agent Self-Regulation and Loop Prevention",
+      "tokens": 90
+    },
+    {
+      "in_brief": false,
+      "path": "rules/31-anti-gaming-and-semantic-compliance.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "31 \u2014 Anti-Gaming and Semantic Compliance",
+      "tokens": 87
+    },
+    {
+      "in_brief": false,
+      "path": "rules/32-underthinking-and-reasoning-balance.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "32 \u2014 Underthinking and Reasoning Balance",
+      "tokens": 87
+    },
+    {
+      "in_brief": false,
+      "path": "rules/33-knowledge-compounding-and-context-velocity.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "33 \u2014 Knowledge Compounding and Context Velocity",
+      "tokens": 90
+    },
+    {
+      "in_brief": false,
+      "path": "rules/34-gate-economy-and-machine-resources.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "34 \u2014 Gate Economy and Machine Resource Discipline",
+      "tokens": 89
+    },
+    {
+      "in_brief": false,
+      "path": "rules/37-payg-credit-integrity.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "37 \u2014 PAYG Credit Integrity",
+      "tokens": 80
+    },
+    {
+      "in_brief": false,
+      "path": "rules/38-adsense-eligibility-and-low-value-content.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "38 \u2014 AdSense Eligibility and Low-Value-Content Policy",
+      "tokens": 91
+    },
+    {
+      "in_brief": false,
+      "path": "rules/39-worktree-branch-completion-pr-and-release-notes.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "39 \u2014 Worktree/Branch Completion: PR and Release Notes",
+      "tokens": 93
+    },
+    {
+      "in_brief": false,
+      "path": "rules/40-chat-surface-layout-and-composer.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "40 \u2014 Chat Surface Layout and the Composer",
+      "tokens": 77
+    },
+    {
+      "in_brief": false,
+      "path": "rules/41-web-evidence-truthfulness.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "41 \u2014 Web Evidence Truthfulness",
+      "tokens": 56
+    },
+    {
+      "in_brief": false,
+      "path": "rules/43-account-state-disclosure-and-transactional-email.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "Rule 43 \u2014 Account-state disclosure, and transactional email",
+      "tokens": 52
+    },
+    {
+      "in_brief": false,
+      "path": "rules/44-live-verification-before-done.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "Rule 44 \u2014 Nothing is done until it has been seen running",
+      "tokens": 38
+    },
+    {
+      "in_brief": false,
+      "path": "rules/50-agentic-research-loop-and-narration.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "Rule 50 \u2014 The research loop: plan first, open what the user named, narrate everything",
+      "tokens": 44
+    },
+    {
+      "in_brief": false,
+      "path": "rules/54-evidence-and-completion-honesty.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "54 \u2014 A completion claim needs observable evidence",
+      "tokens": 41
+    },
+    {
+      "in_brief": false,
+      "path": "rules/55-akinator-station-discipline.md",
+      "score": 0.81,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "55 \u2014 Akinator station discipline",
+      "tokens": 83
+    },
+    {
+      "in_brief": true,
+      "path": "docs/business/credit-refund-and-reversal.md",
+      "score": 0.8,
+      "section": "business",
+      "tags": [
+        "business"
+      ],
+      "title": "Credit Refund and Reversal",
+      "tokens": 48
+    },
+    {
+      "in_brief": true,
+      "path": "docs/business/credit-terms.md",
+      "score": 0.8,
+      "section": "business",
+      "tags": [
+        "business"
+      ],
+      "title": "Credit Terms",
+      "tokens": 18
+    },
+    {
+      "in_brief": true,
+      "path": "docs/business/margin-model.md",
+      "score": 0.8,
+      "section": "business",
+      "tags": [
+        "business"
+      ],
+      "title": "Margin Model",
+      "tokens": 67
+    },
+    {
+      "in_brief": true,
+      "path": "docs/business/plan-allowances.md",
+      "score": 0.8,
+      "section": "business",
+      "tags": [
+        "business"
+      ],
+      "title": "> **AMENDED 2026-08-29 (ADR-078 amendment).** The connector-credit allowance is",
+      "tokens": 52
+    },
+    {
+      "in_brief": true,
+      "path": "docs/business/rollout-and-notice.md",
+      "score": 0.8,
+      "section": "business",
+      "tags": [
+        "business"
+      ],
+      "title": "Rollout and Notice",
+      "tokens": 35
+    },
+    {
+      "in_brief": true,
+      "path": "docs/business/topup-pricing.md",
+      "score": 0.8,
+      "section": "business",
+      "tags": [
+        "business"
+      ],
+      "title": "> **SUPERSEDED in part, 2026-08-29 (ADR-078 amendment).** The 0.60 ratio this",
+      "tokens": 48
+    },
+    {
+      "in_brief": true,
+      "path": "rules/README.md",
+      "score": 0.7,
+      "section": "map",
+      "tags": [
+        "index"
+      ],
+      "title": "Constraints you must not break",
+      "tokens": 15
+    },
+    {
+      "in_brief": true,
+      "path": "docs/README.md",
+      "score": 0.63,
+      "section": "map",
+      "tags": [
+        "index"
+      ],
+      "title": "Architecture, decisions, compatibility",
+      "tokens": 17
+    },
+    {
+      "in_brief": true,
+      "path": "context/README.md",
+      "score": 0.595,
+      "section": "map",
+      "tags": [
+        "index"
+      ],
+      "title": "Structural facts, generated",
+      "tokens": 15
+    },
+    {
+      "in_brief": false,
+      "path": "rules/35-super-administrator-and-privilege-boundaries.md",
+      "score": 0.54,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "35 \u2014 The Super Administrator and Privilege Boundaries",
+      "tokens": 92
+    },
+    {
+      "in_brief": false,
+      "path": "rules/36-floating-ui-and-toast-clearance.md",
+      "score": 0.54,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "36 \u2014 Floating UI and Toast Clearance",
+      "tokens": 66
+    },
+    {
+      "in_brief": false,
+      "path": "rules/42-attachment-understanding.md",
+      "score": 0.54,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "42 \u2014 Attachment Understanding",
+      "tokens": 71
+    },
+    {
+      "in_brief": false,
+      "path": "rules/45-display-currency-versus-settlement-currency.md",
+      "score": 0.54,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "45 \u2014 Display currency is never settlement currency",
+      "tokens": 90
+    },
+    {
+      "in_brief": false,
+      "path": "rules/46-token-quota-enforcement-and-window-integrity.md",
+      "score": 0.54,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "46 \u2014 Token quota enforcement and window integrity",
+      "tokens": 48
+    },
+    {
+      "in_brief": false,
+      "path": "rules/47-client-bundle-weight-and-barrel-boundaries.md",
+      "score": 0.54,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "47 \u2014 Client bundle weight and barrel boundaries",
+      "tokens": 48
+    },
+    {
+      "in_brief": false,
+      "path": "rules/48-lint-and-test-only-what-changed.md",
+      "score": 0.54,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "48 \u2014 Lint and test only what changed",
+      "tokens": 59
+    },
+    {
+      "in_brief": false,
+      "path": "rules/49-qa-team-discipline-and-test-evidence.md",
+      "score": 0.54,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "Rule 49 \u2014 You are the whole QA team, and you produce evidence",
+      "tokens": 79
+    },
+    {
+      "in_brief": false,
+      "path": "rules/51-router-candidates-and-model-window-fit.md",
+      "score": 0.54,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "Rule 51 \u2014 Router candidates come from admin exposure; every prompt fits its model",
+      "tokens": 84
+    },
+    {
+      "in_brief": false,
+      "path": "rules/52-every-schema-ships-a-migration.md",
+      "score": 0.54,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "Rule 52 \u2014 Every Prisma schema ships its migrations",
+      "tokens": 88
+    },
+    {
+      "in_brief": false,
+      "path": "rules/53-coding-agent-release-rounds.md",
+      "score": 0.54,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "53 \u2014 Every coding-agent release is proven by live rounds",
+      "tokens": 89
+    },
+    {
+      "in_brief": false,
+      "path": "rules/56-model-reasoning-never-in-the-answer.md",
+      "score": 0.54,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "56 \u2014 A model's reasoning never reaches the answer",
+      "tokens": 60
+    },
+    {
+      "in_brief": false,
+      "path": "rules/57-memory-and-context-pack-integrity.md",
+      "score": 0.54,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "57 \u2014 Memory and context packs are stored whole and retrieved by relevance",
+      "tokens": 68
+    },
+    {
+      "in_brief": false,
+      "path": "rules/58-auth-route-rate-limits.md",
+      "score": 0.54,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "58 \u2014 Sign-in and sign-up routes carry per-route rate limits",
+      "tokens": 67
+    },
+    {
+      "in_brief": false,
+      "path": "rules/59-chat-surfaces-are-one-pipeline.md",
+      "score": 0.54,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "59 - Every chat surface is one pipeline: a change to normal chat reaches all of them",
+      "tokens": 96
+    },
+    {
+      "in_brief": false,
+      "path": "rules/60-qa-evidence-is-mandatory-and-machine-checked.md",
+      "score": 0.54,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "60 - No change is done without walking every QA lane and recording the evidence",
+      "tokens": 99
+    }
+  ],
+  "tier": "standard",
+  "used": 3863
+}

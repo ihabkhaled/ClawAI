@@ -30,6 +30,15 @@ participation is open to authenticated users under existing moderation rules.
 
 ## Launch boundary
 
+Generation obtains source text from Chat through an owner-scoped internal
+snapshot request. Chat returns a deterministic versioned snapshot containing
+only eligible user/assistant text, with a digest and explicit complete-transcript
+limits. The snapshot endpoint and generation client are implemented; durable job
+pinning lands with the job aggregate in a later batch. Every job will retain its
+own snapshot version and digest, and a new generation takes a new snapshot.
+JSON and Markdown are supported exports. TOON remains unavailable until a codec
+proves semantic round-trip and useful measured token savings.
+
 The public reader shows only approved, safety-checked fields. It does not show a
 reader identity list. Unpublishing removes the revision from public reads and
 discovery. Rollout remains disabled until generation, publication, moderation,

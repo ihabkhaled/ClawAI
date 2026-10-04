@@ -41,6 +41,7 @@ const mockThreadsRepository = (): Record<keyof ChatThreadsRepository, Mock> => (
   createWithinDailyLimit: vi.fn(),
   createBranchWithinDailyLimit: vi.fn(),
   findById: vi.fn(),
+  findOwnedSnapshotThread: vi.fn(),
   findLineageEntry: vi.fn(),
   findDirectBranches: vi.fn(),
   findAll: vi.fn(),

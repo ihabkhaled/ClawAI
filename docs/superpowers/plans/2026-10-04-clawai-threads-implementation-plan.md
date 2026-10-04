@@ -63,23 +63,34 @@ Each batch is independently deployable and ends with one scoped validation pass,
 
 **Validation:** changed-file lint and the health/service specs for each new service; touched-service typecheck/build; validate compose/YAML/config; run `npm run knowledge:verify`, `npm run audit:check`, and the changed-workspace CI jobs. QA record: `docs/qa-evidence/2026-10-04-threads-service-foundation.md`.
 
-**Deployment repair:** Two production rollouts showed both new containers unhealthy. The HTTPS services run without `wget`; the first probe depended on `wget`, and the first correction used HTTP despite TLS being enabled from `/certs`. Keep this within Batch 1: probe HTTPS on loopback with Node's built-in `node:https` client, disable certificate verification only for that local health request, add a focused regression spec, update `docs/03-architecture/clawai-threads-architecture.md`, `wiki/Threads.md`, the Batch 1 QA evidence, and the Akinator trace, then retry the normal release/deployment gates.
+**Deployment repair — complete:** Two rollouts exposed the missing `wget` dependency and the HTTPS/HTTP mismatch from `/certs`. The final probe uses Node's built-in `node:https` client on loopback and disables certificate verification only for that request. The 4-case spec, changed-file ESLint, local TLS smoke probes (HTTP 200 on ports 4019 and 4020), dev/prod Compose config checks, knowledge/audit/QA checks passed. Full CI 37214571065 passed; release/deploy run 37215068639 deployed v1.175.2 and reported both services healthy. QA evidence and the Akinator trace record the result.
 
 ### Batch 2 — Immutable full-context source snapshots and exports
 
-**Outcome:** A Threads job can request a deterministic, immutable, safe chat snapshot and obtain canonical JSON/Markdown plus a round-trip-verified TOON export without exposing chat database ownership.
+**Implementation status:** Code and targeted documentation are in place. Chat
+exposes an owner-scoped version-1 snapshot through a service-token-protected
+internal endpoint, with a serializable read, explicit filtering, fail-closed
+message/byte caps, and a SHA-256 digest. Generation has a validating client and
+canonical JSON/Markdown exporters. TOON returns an explicit unavailable result:
+no official codec or measured savings test exists in this workspace. Job
+persistence and role-specific context-fit checks remain in their later planned
+batches; this batch does not claim durable pinning.
+
+**Outcome:** Generation can request a deterministic, immutable, filtered chat
+snapshot and obtain canonical JSON/Markdown without exposing chat database
+ownership.
 
 **Code:**
 
 - Extend `apps/claw-chat-service/src/modules/chat-threads/` with an internal service-token-protected snapshot endpoint and focused DTO/repository mapping.
 - Add snapshot version/hash/count/byte-count metadata and filtering tests for system/tool/developer messages, failed/placeholder/aborted/duplicate chunks, hidden metadata, secrets, and attachments.
 - Add snapshot client, canonical JSON exporter, Markdown exporter, and TOON adapter in `apps/claw-thread-generation-service/src/modules/source-snapshots/`.
-- Add TOON only if the official codec passes semantic round-trip and adversarial-size tests and a measured fixture shows useful token savings; otherwise retain the adapter contract with an explicit unsupported/unavailable response and use JSON/Markdown until that evidence exists.
-- Keep source snapshot data private and job-pinned; regenerate means taking a new version.
+- TOON remains unavailable with an explicit reason until an official codec passes semantic round-trip/adversarial-size tests and measured fixtures show useful token savings.
+- The internal API returns private source only to a service-token caller. Durable job pinning is deferred until the job aggregate lands; regeneration will take a new snapshot version.
 
-**Knowledge delta in the same commit:** Update `docs/03-architecture/clawai-threads-architecture.md`, `wiki/Threads.md`, `wiki/Memory-and-Context-Architecture.md`, `context/service-dependency-map.md`, and the Threads privacy section in `docs/02-business-product/clawai-threads-product-spec.md`. Update `memory/2026-10-04-clawai-threads-product-decisions.md` only if implementation reveals a durable new decision. No new rule unless an enforceable invariant test is added.
+**Knowledge delta in the same commit:** Update `docs/03-architecture/clawai-threads-architecture.md`, `wiki/Threads.md`, `wiki/Memory-and-Context-Architecture.md`, `context/service-dependency-map.md`, `docs/wiki/index.md`, the Threads privacy section in `docs/02-business-product/clawai-threads-product-spec.md`, and this file with verified implementation status. Update `docs/changes/2026-10-04-clawai-threads-foundation-decisions-and-gate-discipline.md` and create the Akinator trace record at `docs/changes/2026-10-04-threads-batch-2-source-snapshots-and-exports.md`. The Akinator sensitive register created `docs/wiki/security/sensitive-data.md`; Akinator classified the repeated automated release subject as `neither` in `.ai/ledger/decision/distil-repeat-subject-819bfd0a55d6.md`. Repository generators must also refresh `.ai/**`, touched service `AGENTS.md` files, and `docs/features/ai-native-engineering-os/inventory.snapshot.json`. Update product memory only if implementation reveals a durable new decision. No new product skill/rule: no reusable procedure or separately enforced invariant was added.
 
-**Validation:** changed chat snapshot specs and generation exporter specs only; changed-file lint; touched `claw-chat-service` and generation-service typecheck/build; test complete-context fit per supported role. QA record `docs/qa-evidence/2026-10-04-threads-snapshots.md`.
+**Validation:** changed snapshot/repository/controller/exporter specs only; changed-file lint; touched `claw-chat-service` and generation-service typecheck/build. Role-specific context fit is deferred with job execution, as no roles are wired in this batch. QA record `docs/qa-evidence/2026-10-04-threads-snapshots.md`.
 
 ### Batch 3 — Entitlement, credit reservation, and aggregate job cap
 

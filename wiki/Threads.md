@@ -30,5 +30,14 @@ and [ADR-159](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-159
 The existing `/api/v1/threads` route remains the chat-thread alias. Publication
 APIs use `/api/v1/thread-publications`.
 
+Generation requests a versioned snapshot from Chat's internal endpoint.
+Ownership is checked in Chat by matching the requested owner and thread in one
+serializable read. Snapshots include ordered user/assistant text and a SHA-256
+digest, while excluding system/tool rows, failures, placeholders, duplicate
+chunks, attachment metadata, and messages matching known secret patterns. An
+over-limit transcript (2,000 messages or 2 MiB) is rejected whole. JSON and
+Markdown exports are available; TOON stays unavailable until a verified codec
+shows semantic round-trip and useful token savings.
+
 The two service containers probe `/api/v1/health` over loopback HTTPS with
 Node's built-in HTTPS client; see the [deployment architecture](https://github.com/ihabkhaled/ClawAI/blob/main/docs/03-architecture/clawai-threads-architecture.md#deployment).

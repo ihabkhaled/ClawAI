@@ -120,7 +120,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-chat-service",
-      "endpointCount": 69,
+      "endpointCount": 70,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -144,7 +144,7 @@
         "MessageAttachment",
         "PromptTemplate"
       ],
-      "testFiles": 312,
+      "testFiles": 317,
       "testRunner": "vitest"
     },
     {
@@ -529,7 +529,7 @@
       "port": 4020,
       "portSource": "shared-constants",
       "prismaModels": [],
-      "testFiles": 2,
+      "testFiles": 4,
       "testRunner": "vitest"
     },
     {

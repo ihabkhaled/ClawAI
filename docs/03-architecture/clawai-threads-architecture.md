@@ -18,6 +18,17 @@ Publication APIs use `/api/v1/thread-publications`; the existing
 `/api/v1/threads` chat alias is preserved. Public pages use opaque IDs under
 `/threads/<id>`. Internal worker APIs stay off the public gateway.
 
+Generation obtains source through Chat's service-token-protected
+`POST /api/v1/internal/thread-snapshots/:threadId` endpoint. Chat checks
+`threadId` and `userId` together and reads the thread plus ordered messages in
+one serializable transaction. Version-1 snapshots keep only non-empty user and
+assistant text; system/tool messages, failed/aborted/placeholder or duplicate
+records, attachment metadata, and messages matching known secret patterns are
+excluded. Provider, model, file ID, user ID, and raw metadata are not exposed.
+More than 2,000 source messages or 2 MiB of canonical snapshot data fails
+explicitly; the endpoint never returns a partial transcript. A SHA-256 digest
+pins the snapshot body for later job persistence.
+
 ## Data and execution
 
 Persist canonical JSON snapshots and structured drafts. Pin snapshots and

@@ -115,6 +115,39 @@ export class ChatThreadsRepository {
     return this.prisma.chatThread.findUnique({ where: { id } });
   }
 
+  async findOwnedSnapshotThread(
+    userId: string,
+    threadId: string,
+    take: number,
+  ): Promise<{
+    thread: { id: string; title: string | null; createdAt: Date };
+    messages: Array<{
+      id: string;
+      role: string;
+      content: string;
+      createdAt: Date;
+      metadata: Prisma.JsonValue | null;
+    }>;
+  } | null> {
+    return this.prisma.$transaction(
+      async (transaction) => {
+        const thread = await transaction.chatThread.findFirst({
+          where: { id: threadId, userId },
+          select: { id: true, title: true, createdAt: true },
+        });
+        if (!thread) return null;
+        const messages = await transaction.chatMessage.findMany({
+          where: { threadId },
+          select: { id: true, role: true, content: true, createdAt: true, metadata: true },
+          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+          take,
+        });
+        return { thread, messages };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+  }
+
   /** One lineage entry, owner-scoped. Null when absent or someone else's. */
   async findLineageEntry(userId: string, threadId: string): Promise<ThreadLineageEntry | null> {
     return this.prisma.chatThread.findFirst({
