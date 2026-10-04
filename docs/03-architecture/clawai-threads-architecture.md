@@ -47,3 +47,6 @@ Threads and generation services use ports 4019 and 4020. Both begin as
 health-only services; databases and queue contracts arrive with their first
 domain batches. Feature routes and indexing remain disabled until the complete
 product passes scoped gates and the 15-lane QA workflow.
+
+Their container health checks use Node's built-in `fetch` over loopback HTTP
+against `/api/v1/health`; the services do not serve HTTPS or depend on `wget`.

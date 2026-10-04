@@ -143,8 +143,14 @@ The owner approved a two-service Threads architecture, the launch and privacy ru
 
 ## Now
 
-Two deployable health-only services are registered as workspaces 26 and 27. Threads launch remains disabled; approved publication behavior and generation pipeline are planned in later batches. Local scoped checks and generated knowledge gates pass.
+Two health-only services are registered as workspaces 26 and 27. Their first production rollout failed health verification because the container probes did not match the HTTP service runtime; the corrected probes pass focused local checks and await the next deployment. Threads launch remains disabled; publication behavior and generation pipeline are planned in later batches.
 
 ## Why
 
 This creates safe deployment seams and records the owner decisions before domain code lands. Scoped receipts avoid duplicate pre-push test/build work for an unchanged tree while all hooks and integrity gates remain active.
+
+## Deployment health-probe repair
+
+Production run 37210254048 built and started both new services, and their logs showed `/api/v1/health` mapped, but the rollout failed because both Compose health checks used HTTPS plus `wget` against plain-HTTP Nest services in Node 26 slim images. The repair uses Node's built-in `fetch` on loopback HTTP in dev and prod, with a focused test covering both services in both Compose files. No new reusable skill or rule is needed.
+
+Changed for this repair: `docker/docker-compose.dev.services.yml`, `docker/docker-compose.prod.services.yml`, `tools/__tests__/threads-compose-healthcheck.test.mjs`, `docs/03-architecture/clawai-threads-architecture.md`, `wiki/Threads.md`, `docs/superpowers/plans/2026-10-04-clawai-threads-implementation-plan.md`, `docs/qa-evidence/2026-10-04-threads-service-foundation.md`, and this trace. Knowledge delta: architecture, wiki, plan, QA evidence, and trace paths above.

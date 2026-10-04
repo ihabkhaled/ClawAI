@@ -820,8 +820,10 @@ services:
     healthcheck:
       test:
         [
-          'CMD-SHELL',
-          'wget --no-check-certificate -qO- https://localhost:4019/api/v1/health || exit 1',
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4019/api/v1/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
         ]
       interval: 15s
       timeout: 10s
@@ -855,8 +857,10 @@ services:
     healthcheck:
       test:
         [
-          'CMD-SHELL',
-          'wget --no-check-certificate -qO- https://localhost:4020/api/v1/health || exit 1',
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4020/api/v1/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
         ]
       interval: 15s
       timeout: 10s
