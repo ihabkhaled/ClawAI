@@ -48,5 +48,6 @@ health-only services; databases and queue contracts arrive with their first
 domain batches. Feature routes and indexing remain disabled until the complete
 product passes scoped gates and the 15-lane QA workflow.
 
-Their container health checks use Node's built-in `fetch` over loopback HTTP
-against `/api/v1/health`; the services do not serve HTTPS or depend on `wget`.
+Their container health checks use Node's built-in `node:https` client against
+loopback `/api/v1/health`. TLS verification is disabled for this loopback-only
+probe so both mkcert and self-signed internal certificates work without `wget`.

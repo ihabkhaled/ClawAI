@@ -63,7 +63,7 @@ Each batch is independently deployable and ends with one scoped validation pass,
 
 **Validation:** changed-file lint and the health/service specs for each new service; touched-service typecheck/build; validate compose/YAML/config; run `npm run knowledge:verify`, `npm run audit:check`, and the changed-workspace CI jobs. QA record: `docs/qa-evidence/2026-10-04-threads-service-foundation.md`.
 
-**Deployment repair:** The first production rollout showed both new containers unhealthy because the Compose probes used HTTPS and `wget`, while these HTTP services use Node 26 slim images without `wget`. Keep this within Batch 1: use Node's built-in `fetch` against loopback HTTP in dev/prod Compose, add a focused regression spec, update `docs/03-architecture/clawai-threads-architecture.md`, `wiki/Threads.md`, the Batch 1 QA evidence, and the Akinator trace, then retry the normal release/deployment gates.
+**Deployment repair:** Two production rollouts showed both new containers unhealthy. The HTTPS services run without `wget`; the first probe depended on `wget`, and the first correction used HTTP despite TLS being enabled from `/certs`. Keep this within Batch 1: probe HTTPS on loopback with Node's built-in `node:https` client, disable certificate verification only for that local health request, add a focused regression spec, update `docs/03-architecture/clawai-threads-architecture.md`, `wiki/Threads.md`, the Batch 1 QA evidence, and the Akinator trace, then retry the normal release/deployment gates.
 
 ### Batch 2 — Immutable full-context source snapshots and exports
 

@@ -669,13 +669,15 @@ services:
       - '4019:4019'
     volumes:
       - ../certs:/certs:ro
+    # TLS is enabled inside the service container. Its loopback probe accepts
+    # the local certificate and uses Node because this image has no wget.
     healthcheck:
       test:
         [
           'CMD',
           'node',
           '-e',
-          "fetch('http://127.0.0.1:4019/api/v1/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
+          "require('node:https').get('https://localhost:4019/api/v1/health', { rejectUnauthorized: false }, (response) => process.exit(response.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
         ]
       interval: 15s
       timeout: 10s
@@ -701,13 +703,15 @@ services:
       - '4020:4020'
     volumes:
       - ../certs:/certs:ro
+    # TLS is enabled inside the service container. Its loopback probe accepts
+    # the local certificate and uses Node because this image has no wget.
     healthcheck:
       test:
         [
           'CMD',
           'node',
           '-e',
-          "fetch('http://127.0.0.1:4020/api/v1/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
+          "require('node:https').get('https://localhost:4020/api/v1/health', { rejectUnauthorized: false }, (response) => process.exit(response.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
         ]
       interval: 15s
       timeout: 10s

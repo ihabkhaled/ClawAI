@@ -27,12 +27,15 @@ function readServiceBlock(composeFile, serviceName) {
 
 for (const composeFile of composeFiles) {
   for (const [serviceName, port] of serviceDefinitions) {
-    test(`${composeFile} ${serviceName} probes its plain HTTP health route`, () => {
+    test(`${composeFile} ${serviceName} probes its HTTPS health route without wget`, () => {
       const serviceBlock = readServiceBlock(composeFile, serviceName);
+      const healthcheck = serviceBlock.slice(serviceBlock.indexOf('healthcheck:'));
 
       assert.match(serviceBlock, /'CMD',\s*'node',\s*'-e'/);
-      assert.match(serviceBlock, new RegExp(`http://127\\.0\\.0\\.1:${port}/api/v1/health`));
-      assert.doesNotMatch(serviceBlock, /https:\/\/|wget/);
+      assert.match(serviceBlock, new RegExp(`https://localhost:${port}/api/v1/health`));
+      assert.match(serviceBlock, /node:https/);
+      assert.match(serviceBlock, /rejectUnauthorized:\s*false/);
+      assert.doesNotMatch(healthcheck, /wget/);
     });
   }
 }

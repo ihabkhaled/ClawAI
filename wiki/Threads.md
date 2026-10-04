@@ -30,5 +30,5 @@ and [ADR-159](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-159
 The existing `/api/v1/threads` route remains the chat-thread alias. Publication
 APIs use `/api/v1/thread-publications`.
 
-The two service containers probe `/api/v1/health` over loopback HTTP with
-Node's built-in `fetch`; see the [deployment architecture](https://github.com/ihabkhaled/ClawAI/blob/main/docs/03-architecture/clawai-threads-architecture.md#deployment).
+The two service containers probe `/api/v1/health` over loopback HTTPS with
+Node's built-in HTTPS client; see the [deployment architecture](https://github.com/ihabkhaled/ClawAI/blob/main/docs/03-architecture/clawai-threads-architecture.md#deployment).
