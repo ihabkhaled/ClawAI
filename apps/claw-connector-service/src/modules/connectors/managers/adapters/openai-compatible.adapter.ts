@@ -5,11 +5,13 @@ import { declaredHost, resolvePresetBaseUrl, resolvePresetEndpoint } from '@claw
 import { ConnectorStatus } from '../../../../generated/prisma';
 import { httpGet, httpPost } from '../../../../common/utilities/http.utility';
 import {
-  PRESET_BEARER_PREFIX,
   PRESET_CHAT_COMPLETIONS_PATH,
   PRESET_HEALTH_PROBE_MAX_TOKENS,
   PRESET_HEALTH_PROBE_PROMPT,
 } from '../../constants/openai-compatible.constants';
+import { DEFAULT_PROVIDER_AUTH_HEADER } from '../../constants/provider-auth-header.constants';
+import { type ProviderAuthHeader } from '../../types/provider-auth-header.types';
+import { buildAuthHeaderValue } from '../../utilities/provider-auth-header.utility';
 import { type HealthCheckResult, type NormalizedModel } from '../../types/connectors.types';
 import { type ProviderCreditHeadroom } from '../../types/credit-headroom.types';
 import {
@@ -47,7 +49,10 @@ const logger = new Logger('OpenAICompatibleAdapter');
  * choice, the manager reports these models as unprobed rather than proven.
  */
 export class OpenAICompatibleAdapter implements ProviderAdapter {
-  constructor(private readonly preset: ConnectorPreset) {}
+  constructor(
+    private readonly preset: ConnectorPreset,
+    private readonly authHeader: ProviderAuthHeader = DEFAULT_PROVIDER_AUTH_HEADER,
+  ) {}
 
   async healthCheck(config: ConnectorConfig): Promise<HealthCheckResult> {
     const start = Date.now();
@@ -203,7 +208,9 @@ export class OpenAICompatibleAdapter implements ProviderAdapter {
   // correct health result for a connector saved without a key.
   private authHeaders(config: ConnectorConfig): Record<string, string> {
     return withGatewayHeaders(
-      config.apiKey.length > 0 ? { Authorization: `${PRESET_BEARER_PREFIX}${config.apiKey}` } : {},
+      config.apiKey.length > 0
+        ? { [this.authHeader.name]: buildAuthHeaderValue(this.authHeader, config.apiKey) }
+        : {},
       config.gatewayHeaders,
     );
   }

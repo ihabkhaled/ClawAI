@@ -1,3 +1,6 @@
 export enum ProviderModelsResponseFormat {
   OPENAI_LIST = 'OPENAI_LIST',
+  BARE_ARRAY = 'BARE_ARRAY',
+  COHERE_MODELS = 'COHERE_MODELS',
+  CLOUDFLARE_SEARCH = 'CLOUDFLARE_SEARCH',
 }

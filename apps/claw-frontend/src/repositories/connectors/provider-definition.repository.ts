@@ -37,20 +37,7 @@ export const providerDefinitionRepository = {
   },
   async update(
     id: string,
-    data: Partial<
-      Pick<
-        CreateProviderDefinition,
-        | 'displayName'
-        | 'description'
-        | 'defaultBaseUrl'
-        | 'modelsEndpoint'
-        | 'healthCheckEndpoint'
-        | 'supportsNativeTools'
-        | 'supportsVision'
-        | 'defaultIsPayAsYouGo'
-        | 'hasFreeTier'
-      >
-    >,
+    data: Partial<Omit<CreateProviderDefinition, 'key'>>,
   ): Promise<ProviderDefinition> {
     const response = await apiClient.patch<ProviderDefinition>(
       `/connectors/provider-definitions/${id}`,

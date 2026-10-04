@@ -10,8 +10,8 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { PROVIDER_DISPLAY_NAMES } from '@/constants';
-import type { ConnectorProvider } from '@/enums';
+import { CUSTOM_PROVIDER_OPTION_PREFIX, PROVIDER_DISPLAY_NAMES } from '@/constants';
+import { ConnectorProvider } from '@/enums';
 import { useConnectorProviderCombobox } from '@/hooks/connectors/use-connector-provider-combobox';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -19,17 +19,30 @@ import type { ConnectorProviderComboboxProps } from '@/types';
 
 export function ConnectorProviderCombobox({
   value,
+  customDefinition,
   onChange,
   disabled,
 }: ConnectorProviderComboboxProps): React.ReactElement {
   const { t } = useTranslation();
-  const { open, setOpen, groups } = useConnectorProviderCombobox();
+  const { open, setOpen, groups, definitions } = useConnectorProviderCombobox();
 
   const triggerLabel =
-    value !== null ? PROVIDER_DISPLAY_NAMES[value] : t('connectors.selectProvider');
+    customDefinition?.displayName ??
+    (value !== null ? PROVIDER_DISPLAY_NAMES[value] : t('connectors.selectProvider'));
+  const selectedOption = customDefinition
+    ? `${CUSTOM_PROVIDER_OPTION_PREFIX}${customDefinition.id}`
+    : value;
 
   const handleSelect = (optionValue: string): void => {
-    onChange(optionValue as ConnectorProvider);
+    if (optionValue.startsWith(CUSTOM_PROVIDER_OPTION_PREFIX)) {
+      const id = optionValue.slice(CUSTOM_PROVIDER_OPTION_PREFIX.length);
+      const definition = definitions.find((item) => item.id === id);
+      if (definition) {
+        onChange(ConnectorProvider.CUSTOM_OPENAI_COMPATIBLE, definition);
+      }
+    } else {
+      onChange(optionValue as ConnectorProvider);
+    }
     setOpen(false);
   };
 
@@ -70,7 +83,7 @@ export function ConnectorProviderCombobox({
                     <ConnectorProviderComboboxItem
                       key={option.value}
                       option={option}
-                      isSelected={value === option.value}
+                      isSelected={selectedOption === option.value}
                       onSelect={handleSelect}
                     />
                   ))}

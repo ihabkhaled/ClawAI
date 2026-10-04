@@ -4,6 +4,12 @@ import { describe, expect, it, vi } from 'vitest';
 import { ConnectorProviderCombobox } from '@/components/connectors/connector-provider-combobox';
 import { ConnectorProvider } from '@/enums';
 
+const mockDefinitions: unknown[] = [];
+
+vi.mock('@tanstack/react-query', () => ({
+  useQuery: () => ({ data: { data: mockDefinitions } }),
+}));
+
 vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({
     t: (key: string) => {

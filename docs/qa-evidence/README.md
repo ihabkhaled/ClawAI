@@ -8,6 +8,7 @@ the plain-language walkthrough is [QA-WORKFLOW.md](../../QA-WORKFLOW.md), the pe
 A record is the proof a change was tested by hand, not only by unit tests. PARTIAL records are normal and
 honest; they list their open gaps. CI checks every `feat`/`fix`/`perf` push for a valid record.
 
-| Record                                                              | Verdict |
-| ------------------------------------------------------------------- | ------- |
-| [2026-10-03-chat-surface-parity](2026-10-03-chat-surface-parity.md) | PARTIAL |
+| Record                                                                          | Verdict |
+| ------------------------------------------------------------------------------- | ------- |
+| [2026-10-03-chat-surface-parity](2026-10-03-chat-surface-parity.md)             | PARTIAL |
+| [2026-10-04-provider-management-fixes](2026-10-04-provider-management-fixes.md) | PARTIAL |

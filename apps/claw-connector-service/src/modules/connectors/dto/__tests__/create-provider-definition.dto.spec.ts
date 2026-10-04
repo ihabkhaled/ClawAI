@@ -74,4 +74,33 @@ describe('createProviderDefinitionSchema', () => {
       }).success,
     ).toBe(false);
   });
+
+  it('accepts hyphenated and spaced keys and stores them with underscores', () => {
+    const hyphen = createProviderDefinitionSchema.safeParse({
+      ...validDefinition,
+      key: 'ai-horde',
+    });
+    const spaced = createProviderDefinitionSchema.safeParse({
+      ...validDefinition,
+      key: 'Hugging Face',
+    });
+
+    expect(hyphen.success && hyphen.data.key).toBe('AI_HORDE');
+    expect(spaced.success && spaced.data.key).toBe('HUGGING_FACE');
+  });
+
+  it('defaults the key header to Authorization: Bearer and accepts a raw apikey header', () => {
+    const defaults = createProviderDefinitionSchema.safeParse(validDefinition);
+    const horde = createProviderDefinitionSchema.safeParse({
+      ...validDefinition,
+      authHeaderName: 'apikey',
+      authHeaderScheme: '',
+      healthCheckEndpoint: '',
+    });
+
+    expect(
+      defaults.success && [defaults.data.authHeaderName, defaults.data.authHeaderScheme],
+    ).toEqual(['Authorization', 'Bearer']);
+    expect(horde.success && horde.data.authHeaderScheme).toBe('');
+  });
 });

@@ -157,14 +157,31 @@ function expectEnvelope<T>(result: { success: true; data: T } | { success: false
 
 function parseOpenAIEntries(rows: readonly unknown[]): PresetModelListEntry[] {
   return rows.flatMap((row) => {
-    const parsed = openAICompatibleModelEntrySchema.safeParse(row);
+    const parsed = openAICompatibleModelEntrySchema.safeParse(withIdFallback(row));
     return parsed.success ? [fromOpenAIEntry(parsed.data)] : [];
   });
+}
+
+// Some lists name a model with `name` only and call a chat model `type: "text"`
+// (AI Horde); map both onto the shape the rest of the parser knows.
+function withIdFallback(row: unknown): unknown {
+  if (typeof row !== 'object' || row === null) {
+    return row;
+  }
+  const name: unknown = 'name' in row ? row.name : undefined;
+  const type: unknown = 'type' in row ? row.type : undefined;
+  return {
+    ...row,
+    ...('id' in row || typeof name !== 'string' ? {} : { id: name }),
+    ...(type === 'text' ? { type: 'chat' } : {}),
+  };
 }
 
 function fromOpenAIEntry(entry: OpenAICompatibleModelEntry): PresetModelListEntry {
   const contextWindow =
     entry.context_length ?? entry.context_window ?? entry.metadata?.context_length ?? undefined;
+  const capabilityObject = Array.isArray(entry.capabilities) ? undefined : entry.capabilities;
+  const capabilityList = Array.isArray(entry.capabilities) ? entry.capabilities : [];
   const maxOutputTokens =
     entry.top_provider?.max_completion_tokens ?? entry.max_completion_tokens ?? undefined;
   return {
@@ -174,12 +191,21 @@ function fromOpenAIEntry(entry: OpenAICompatibleModelEntry): PresetModelListEntr
     tags: [...(entry.tags ?? []), ...(entry.metadata?.tags ?? [])],
     contextWindow,
     ...(maxOutputTokens === undefined ? {} : { maxOutputTokens }),
-    inputModalities: entry.architecture?.input_modalities ?? entry.modalities?.input ?? [],
-    outputModalities: entry.architecture?.output_modalities ?? entry.modalities?.output ?? [],
+    inputModalities:
+      entry.architecture?.input_modalities ??
+      entry.modalities?.input ??
+      entry.input_modalities ??
+      [],
+    outputModalities:
+      entry.architecture?.output_modalities ??
+      entry.modalities?.output ??
+      entry.output_modalities ??
+      [],
     supportedParameters: entry.supported_parameters ?? [],
-    completionChat: entry.capabilities?.completion_chat ?? undefined,
-    functionCalling: entry.capabilities?.function_calling ?? undefined,
-    vision: entry.capabilities?.vision ?? undefined,
+    completionChat: capabilityObject?.completion_chat ?? undefined,
+    functionCalling:
+      capabilityObject?.function_calling ?? (capabilityList.includes('tool_calling') || undefined),
+    vision: capabilityObject?.vision ?? undefined,
     active: entry.active ?? undefined,
   };
 }

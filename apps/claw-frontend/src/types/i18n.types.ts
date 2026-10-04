@@ -6313,6 +6313,10 @@ export type ProviderManagementLocaleTranslation = {
   error: string;
   success: string;
   search: string;
+  providerDescription: string;
+  authHeaderName: string;
+  authHeaderScheme: string;
+  modelsFormat: string;
 };
 
 export type AdminModelCostsLocaleTranslation = {

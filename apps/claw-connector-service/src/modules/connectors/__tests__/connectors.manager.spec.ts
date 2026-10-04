@@ -395,6 +395,8 @@ describe('ConnectorsManager', () => {
       modelsResponseFormat: ConnectorModelsResponseFormat.OPENAI_LIST,
       healthCheckEndpoint: '/v1/models',
       authType: ConnectorAuthType.API_KEY,
+      authHeaderName: 'Authorization',
+      authHeaderScheme: 'Bearer',
       supportsNativeTools: true,
       supportsVision: true,
       registerUrl: null,

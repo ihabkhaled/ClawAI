@@ -4,10 +4,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
 import { PageHeader } from '@/components/common/page-header';
+import { ProviderDefinitionForm } from '@/components/connectors/provider-definition-form';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ConnectorProvider, ProviderAdapterFamily, ProviderModelsResponseFormat } from '@/enums';
+import { ConnectorProvider } from '@/enums';
 import { useTranslation } from '@/lib/i18n';
 import { connectorRepository } from '@/repositories/connectors/connector.repository';
 import { providerDefinitionRepository } from '@/repositories/connectors/provider-definition.repository';
@@ -22,6 +23,7 @@ export default function ConnectorProvidersPage(): React.ReactElement {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<ProviderDefinition | null>(null);
+  const [formResets, setFormResets] = useState(0);
   const [connectingId, setConnectingId] = useState<string | null>(null);
   const providers = useQuery({
     queryKey: ['connector-provider-definitions', search],
@@ -35,6 +37,7 @@ export default function ConnectorProvidersPage(): React.ReactElement {
     onSuccess: () => {
       refresh();
       setEditing(null);
+      setFormResets((count) => count + 1);
       showToast.success({ title: t('providerManagement.success') });
     },
     onError: (error: Error) =>
@@ -79,45 +82,11 @@ export default function ConnectorProvidersPage(): React.ReactElement {
       showToast.apiError(error, resolveApiErrorMessage(error, t, t('providerManagement.error'))),
   });
 
-  const submit = (event: FormEvent<HTMLFormElement>): void => {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const data: CreateProviderDefinition = {
-      key: String(form.get('key') ?? '')
-        .trim()
-        .toUpperCase(),
-      displayName: String(form.get('displayName') ?? '').trim(),
-      adapterFamily: ProviderAdapterFamily.OPENAI_COMPATIBLE,
-      defaultBaseUrl: String(form.get('defaultBaseUrl') ?? '').trim(),
-      modelsEndpoint: String(form.get('modelsEndpoint') ?? '').trim(),
-      modelsResponseFormat: ProviderModelsResponseFormat.OPENAI_LIST,
-      authType: String(form.get('authType') ?? 'API_KEY') as CreateProviderDefinition['authType'],
-      supportsNativeTools: form.has('supportsNativeTools'),
-      supportsVision: form.has('supportsVision'),
-      defaultIsPayAsYouGo: form.has('defaultIsPayAsYouGo'),
-      hasFreeTier: form.has('hasFreeTier'),
-      ...(String(form.get('description') ?? '').trim()
-        ? { description: String(form.get('description')).trim() }
-        : {}),
-      ...(String(form.get('healthCheckEndpoint') ?? '').trim()
-        ? { healthCheckEndpoint: String(form.get('healthCheckEndpoint')).trim() }
-        : {}),
-    };
+  const submit = (data: CreateProviderDefinition): void => {
     if (editing) {
-      update.mutate({
-        id: editing.id,
-        data: {
-          displayName: data.displayName,
-          description: data.description,
-          defaultBaseUrl: data.defaultBaseUrl,
-          modelsEndpoint: data.modelsEndpoint,
-          healthCheckEndpoint: data.healthCheckEndpoint,
-          supportsNativeTools: data.supportsNativeTools,
-          supportsVision: data.supportsVision,
-          defaultIsPayAsYouGo: data.defaultIsPayAsYouGo,
-          hasFreeTier: data.hasFreeTier,
-        },
-      });
+      const changes: Partial<CreateProviderDefinition> = { ...data };
+      delete changes.key;
+      update.mutate({ id: editing.id, data: changes });
     } else {
       create.mutate(data);
     }
@@ -146,93 +115,13 @@ export default function ConnectorProvidersPage(): React.ReactElement {
         title={t('providerManagement.title')}
         description={t('providerManagement.description')}
       />
-      <Card>
-        <CardHeader>
-          <CardTitle>{editing ? t('common.edit') : t('providerManagement.create')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={submit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {!editing ? (
-              <Field
-                label={t('providerManagement.key')}
-                name="key"
-                required
-                pattern="[A-Za-z][A-Za-z0-9_]{1,62}"
-              />
-            ) : null}
-            <Field
-              label={t('providerManagement.name')}
-              name="displayName"
-              required
-              defaultValue={editing?.displayName}
-            />
-            <Field
-              label={t('providerManagement.baseUrl')}
-              name="defaultBaseUrl"
-              type="url"
-              required
-              defaultValue={editing?.defaultBaseUrl}
-            />
-            <Field
-              label={t('providerManagement.modelsPath')}
-              name="modelsEndpoint"
-              required
-              defaultValue={editing?.modelsEndpoint ?? '/v1/models'}
-            />
-            <Field
-              label={t('providerManagement.healthPath')}
-              name="healthCheckEndpoint"
-              defaultValue={editing?.healthCheckEndpoint ?? '/v1/models'}
-            />
-            {!editing ? (
-              <label className="grid grid-cols-1 gap-2 text-sm font-medium">
-                {t('providerManagement.authType')}
-                <select
-                  name="authType"
-                  defaultValue="API_KEY"
-                  className="border-input bg-background h-10 rounded-md border px-3"
-                >
-                  <option value="API_KEY">API key</option>
-                  <option value="NONE">None</option>
-                  <option value="OAUTH2">OAuth2</option>
-                </select>
-              </label>
-            ) : null}
-            <div className="flex flex-wrap gap-4 sm:col-span-2">
-              <Toggle
-                name="supportsNativeTools"
-                label={t('providerManagement.tools')}
-                checked={editing?.supportsNativeTools}
-              />
-              <Toggle
-                name="supportsVision"
-                label={t('providerManagement.vision')}
-                checked={editing?.supportsVision}
-              />
-              <Toggle
-                name="defaultIsPayAsYouGo"
-                label={t('providerManagement.payg')}
-                checked={editing?.defaultIsPayAsYouGo}
-              />
-              <Toggle
-                name="hasFreeTier"
-                label={t('providerManagement.freeTier')}
-                checked={editing?.hasFreeTier}
-              />
-            </div>
-            <div className="flex gap-2 sm:col-span-2">
-              <Button type="submit" disabled={busy}>
-                {editing ? t('common.save') : t('providerManagement.save')}
-              </Button>
-              {editing ? (
-                <Button type="button" variant="outline" onClick={() => setEditing(null)}>
-                  {t('providerManagement.cancel')}
-                </Button>
-              ) : null}
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+      <ProviderDefinitionForm
+        key={`${editing?.id ?? 'new'}-${formResets}`}
+        editing={editing}
+        busy={busy}
+        onSubmit={submit}
+        onCancel={() => setEditing(null)}
+      />
 
       <div className="flex flex-col gap-3 sm:flex-row">
         <Input
@@ -341,36 +230,5 @@ export default function ConnectorProvidersPage(): React.ReactElement {
         ))}
       </section>
     </main>
-  );
-}
-
-function Field(props: {
-  label: string;
-  name: string;
-  type?: string;
-  required?: boolean;
-  pattern?: string;
-  defaultValue?: string | null;
-}): React.ReactElement {
-  return (
-    <label className="grid grid-cols-1 gap-2 text-sm font-medium">
-      {props.label}
-      <Input
-        name={props.name}
-        type={props.type ?? 'text'}
-        required={props.required}
-        pattern={props.pattern}
-        defaultValue={props.defaultValue ?? ''}
-      />
-    </label>
-  );
-}
-
-function Toggle(props: { name: string; label: string; checked?: boolean }): React.ReactElement {
-  return (
-    <label className="flex min-h-10 items-center gap-2 text-sm">
-      <input type="checkbox" name={props.name} defaultChecked={props.checked} />
-      {props.label}
-    </label>
   );
 }

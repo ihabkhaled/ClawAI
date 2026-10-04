@@ -10815,7 +10815,7 @@
       },
       "claw-connector-service": {
         "runner": "vitest",
-        "testFiles": 50
+        "testFiles": 53
       },
       "claw-file-generation-service": {
         "runner": "vitest",
@@ -10827,7 +10827,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 701
+        "testFiles": 702
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -11605,7 +11605,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2028,
+    "totalTestFiles": 2032,
     "workspaceCount": 25
   }
 }

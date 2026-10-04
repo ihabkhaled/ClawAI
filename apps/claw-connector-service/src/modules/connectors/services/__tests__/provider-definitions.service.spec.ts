@@ -109,3 +109,82 @@ describe('ProviderDefinitionsService built-in lifecycle', () => {
     expect(repository.update).not.toHaveBeenCalled();
   });
 });
+
+describe('ProviderDefinitionsService custom provider lifecycle', () => {
+  const custom = (connectorCount: number): ProviderDefinitionRecord =>
+    ({
+      ...builtInDefinition,
+      id: 'custom-1',
+      key: 'AI_HORDE',
+      isBuiltIn: false,
+      everConnected: true,
+      adapterFamily: ProviderAdapterFamily.OPENAI_COMPATIBLE,
+      connectors: Array.from({ length: connectorCount }, () => ({ _count: { models: 3 } })),
+      _count: { connectors: connectorCount },
+    }) as unknown as ProviderDefinitionRecord;
+  let repository: ReturnType<typeof repositoryMock>;
+  let service: ProviderDefinitionsService;
+
+  beforeEach(() => {
+    repository = repositoryMock();
+    service = new ProviderDefinitionsService(
+      repository as unknown as ProviderDefinitionsRepository,
+      {} as never,
+    );
+    repository.update.mockResolvedValue(custom(1));
+  });
+
+  it('deletes a provider whose connectors were all removed, even if it once connected', async () => {
+    repository.findById.mockResolvedValue(custom(0));
+
+    await service.remove('custom-1', { id: 'admin-1' });
+
+    expect(repository.delete).toHaveBeenCalledWith('custom-1');
+  });
+
+  it('refuses to delete a provider that still has connectors', async () => {
+    repository.findById.mockResolvedValue(custom(1));
+
+    await expect(service.remove('custom-1', { id: 'admin-1' })).rejects.toThrow(
+      'Provider is in use',
+    );
+    expect(repository.delete).not.toHaveBeenCalled();
+  });
+
+  it('lets execution settings change while connectors use the provider', async () => {
+    repository.findById.mockResolvedValue(custom(2));
+
+    await service.update(
+      'custom-1',
+      {
+        modelsEndpoint: '/v2/status/models?type=text',
+        authHeaderName: 'apikey',
+        authHeaderScheme: '',
+      },
+      { id: 'admin-1' },
+    );
+
+    expect(repository.update).toHaveBeenCalledWith(
+      'custom-1',
+      expect.objectContaining({
+        modelsEndpoint: '/v2/status/models?type=text',
+        authHeaderName: 'apikey',
+      }),
+    );
+  });
+
+  it('stores blank optional fields as null', async () => {
+    repository.findById.mockResolvedValue(custom(0));
+
+    await service.update(
+      'custom-1',
+      { healthCheckEndpoint: '', description: '' },
+      { id: 'admin-1' },
+    );
+
+    expect(repository.update).toHaveBeenCalledWith(
+      'custom-1',
+      expect.objectContaining({ healthCheckEndpoint: null, description: null }),
+    );
+  });
+});

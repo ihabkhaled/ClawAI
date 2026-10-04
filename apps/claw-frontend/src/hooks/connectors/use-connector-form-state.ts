@@ -17,6 +17,7 @@ import type {
   ConnectorFormStateReturn,
   CreateConnectorRequest,
 } from '@/types';
+import type { ProviderDefinition } from '@/types/provider-definition.types';
 import { toFrontendConnectorAuthType } from '@/utilities';
 import { defaultCreditConnectorForProvider } from '@/utilities/connector-credit.utility';
 import { gatewayHeaderRowsToRecord } from '@/utilities/connector-gateway-headers.utility';
@@ -29,6 +30,7 @@ export function useConnectorFormState({
 }: ConnectorFormStateParams): ConnectorFormStateReturn {
   const [name, setName] = useState(connector?.name ?? '');
   const [provider, setProvider] = useState<ConnectorProvider | null>(connector?.provider ?? null);
+  const [customDefinition, setCustomDefinition] = useState<ProviderDefinition | null>(null);
   const [authType, setAuthType] = useState<ConnectorAuthType>(
     (connector?.authType as ConnectorAuthType) ?? ConnectorAuthType.API_KEY,
   );
@@ -51,6 +53,7 @@ export function useConnectorFormState({
     if (open) {
       setName(connector?.name ?? '');
       setProvider(connector?.provider ?? null);
+      setCustomDefinition(null);
       setAuthType((connector?.authType as ConnectorAuthType) ?? ConnectorAuthType.API_KEY);
       setApiKey('');
       setBaseUrl(connector?.baseUrl ?? '');
@@ -77,9 +80,22 @@ export function useConnectorFormState({
   // base URL, auth type — while leaving every field editable afterward. The
   // name is only filled when the admin has not already typed one, so a
   // second click through the combobox never clobbers custom input.
-  const onProviderSelect = (nextProvider: ConnectorProvider): void => {
+  const onProviderSelect = (
+    nextProvider: ConnectorProvider,
+    definition?: ProviderDefinition,
+  ): void => {
     setProvider(nextProvider);
+    setCustomDefinition(definition ?? null);
     setAccountId('');
+    if (definition) {
+      setName((prev) => (prev.trim().length > 0 ? prev : definition.displayName));
+      setBaseUrl(definition.defaultBaseUrl ?? '');
+      setAuthType((definition.authType as ConnectorAuthType | null) ?? ConnectorAuthType.API_KEY);
+      if (!isEditing) {
+        setIsCreditConnector(definition.defaultIsPayAsYouGo);
+      }
+      return;
+    }
     if (!isEditing) {
       setIsCreditConnector(defaultCreditConnectorForProvider(nextProvider));
     }
@@ -97,6 +113,7 @@ export function useConnectorFormState({
     const formData: Record<string, unknown> = {
       name,
       provider: provider ?? undefined,
+      ...(customDefinition ? { providerDefinitionId: customDefinition.id } : {}),
       authType,
       isPayAsYouGo: isCreditConnector,
     };
@@ -153,6 +170,7 @@ export function useConnectorFormState({
     name,
     setName,
     provider,
+    customDefinition,
     onProviderSelect,
     authType,
     setAuthType,

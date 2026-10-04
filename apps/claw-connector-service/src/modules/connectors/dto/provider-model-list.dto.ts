@@ -26,13 +26,19 @@ export const openAICompatibleModelEntrySchema = z.object({
   supported_parameters: stringList,
   architecture: z.object({ input_modalities: stringList, output_modalities: stringList }).nullish(),
   modalities: z.object({ input: stringList, output: stringList }).nullish(),
+  // Pollinations reports capabilities as a string list, others as an object.
   capabilities: z
-    .object({
-      completion_chat: z.boolean().nullish(),
-      function_calling: z.boolean().nullish(),
-      vision: z.boolean().nullish(),
-    })
+    .union([
+      z.object({
+        completion_chat: z.boolean().nullish(),
+        function_calling: z.boolean().nullish(),
+        vision: z.boolean().nullish(),
+      }),
+      z.array(z.string()),
+    ])
     .nullish(),
+  input_modalities: stringList,
+  output_modalities: stringList,
   metadata: z
     .object({ context_length: z.number().int().positive().nullish(), tags: stringList })
     .nullish(),

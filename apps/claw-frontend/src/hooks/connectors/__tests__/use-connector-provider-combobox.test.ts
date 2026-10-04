@@ -4,6 +4,12 @@ import { describe, expect, it, vi } from 'vitest';
 import { ConnectorProvider } from '@/enums';
 import { useConnectorProviderCombobox } from '@/hooks/connectors/use-connector-provider-combobox';
 
+const mockDefinitions: unknown[] = [];
+
+vi.mock('@tanstack/react-query', () => ({
+  useQuery: () => ({ data: { data: mockDefinitions } }),
+}));
+
 vi.mock('@/lib/i18n', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 describe('useConnectorProviderCombobox', () => {
@@ -77,5 +83,32 @@ describe('useConnectorProviderCombobox', () => {
     const { result } = renderHook(() => useConnectorProviderCombobox());
     expect(result.current.open).toBe(false);
     result.current.setOpen(true);
+  });
+
+  it('adds an active custom provider as its own group with a custom: option', () => {
+    mockDefinitions.push({
+      id: 'd1',
+      displayName: 'AI Horde',
+      isBuiltIn: false,
+      isActive: true,
+      hasFreeTier: true,
+    });
+    const { result } = renderHook(() => useConnectorProviderCombobox());
+    mockDefinitions.length = 0;
+
+    const custom = result.current.groups.at(-1);
+    expect(custom?.key).toBe('custom');
+    expect(custom?.options).toEqual([{ value: 'custom:d1', label: 'AI Horde', hasFreeTier: true }]);
+  });
+
+  it('leaves out inactive and built-in definitions', () => {
+    mockDefinitions.push(
+      { id: 'd2', displayName: 'Off', isBuiltIn: false, isActive: false, hasFreeTier: false },
+      { id: 'd3', displayName: 'Built', isBuiltIn: true, isActive: true, hasFreeTier: false },
+    );
+    const { result } = renderHook(() => useConnectorProviderCombobox());
+    mockDefinitions.length = 0;
+
+    expect(result.current.groups.map((group) => group.key)).not.toContain('custom');
   });
 });

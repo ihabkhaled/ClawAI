@@ -2,6 +2,9 @@ import type { ConnectorPreset } from '@claw/shared-types';
 
 import type { ConnectorAuthType, ConnectorProvider, ConnectorStatus } from '@/enums';
 
+import type { ProviderDefinition } from './provider-definition.types';
+
+
 export type Connector = {
   id: string;
   name: string;
@@ -142,7 +145,8 @@ export type ConnectorFormStateReturn = {
   name: string;
   setName: (value: string) => void;
   provider: ConnectorProvider | null;
-  onProviderSelect: (value: ConnectorProvider) => void;
+  customDefinition: ProviderDefinition | null;
+  onProviderSelect: (value: ConnectorProvider, definition?: ProviderDefinition) => void;
   authType: ConnectorAuthType;
   setAuthType: (value: ConnectorAuthType) => void;
   apiKey: string;
@@ -173,7 +177,8 @@ export type ConnectorFormStateReturn = {
 
 /** One provider row in the searchable connector-provider combobox. */
 export type ConnectorProviderComboboxOption = {
-  value: ConnectorProvider;
+  /** A ConnectorProvider key, or `custom:<definitionId>` for an admin-defined provider. */
+  value: string;
   label: string;
   hasFreeTier: boolean;
 };
@@ -189,11 +194,14 @@ export type ConnectorProviderComboboxState = {
   open: boolean;
   setOpen: (open: boolean) => void;
   groups: ConnectorProviderComboboxGroup[];
+  definitions: ProviderDefinition[];
 };
 
 export type ConnectorProviderComboboxProps = {
   value: ConnectorProvider | null;
-  onChange: (value: ConnectorProvider) => void;
+  /** Set when `value` is the custom-provider slot; names which definition. */
+  customDefinition?: ProviderDefinition | null;
+  onChange: (value: ConnectorProvider, definition?: ProviderDefinition) => void;
   disabled?: boolean;
 };
 

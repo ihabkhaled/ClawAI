@@ -18,7 +18,11 @@ import { parseGatewayHeaders } from '../utilities/gateway-headers.utility';
 import { getAdapter } from './adapters/adapter-factory';
 import { OpenAICompatibleAdapter } from './adapters/openai-compatible.adapter';
 import { ProviderDefinitionsService } from '../services/provider-definitions.service';
-import { toRuntimeConnectorPreset } from '../utilities/runtime-provider-preset.utility';
+import { withCustomAuthHeader } from '../utilities/provider-auth-header.utility';
+import {
+  toProviderAuthHeader,
+  toRuntimeConnectorPreset,
+} from '../utilities/runtime-provider-preset.utility';
 import { type ConnectorConfig, type ProviderAdapter } from './provider-adapter.interface';
 import { type HealthCheckResult, type SyncModelsResult } from '../types/connectors.types';
 
@@ -208,6 +212,7 @@ export class ConnectorsManager {
     try {
       return {
         ...config,
+        gatewayHeaders: withCustomAuthHeader(config, definition),
         provider: definition && !definition.isBuiltIn ? definition.key : config.provider,
         baseUrl: resolvePresetBaseUrl(preset, config.baseUrl, config.accountId),
       };
@@ -230,6 +235,9 @@ export class ConnectorsManager {
     }
     return definition.isBuiltIn
       ? getAdapter(connector.provider)
-      : new OpenAICompatibleAdapter(toRuntimeConnectorPreset(definition));
+      : new OpenAICompatibleAdapter(
+          toRuntimeConnectorPreset(definition),
+          toProviderAuthHeader(definition),
+        );
   }
 }

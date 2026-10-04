@@ -25,6 +25,7 @@ export function ConnectorFormFields({
   name,
   setName,
   provider,
+  customDefinition,
   onProviderSelect,
   authType,
   setAuthType,
@@ -71,6 +72,7 @@ export function ConnectorFormFields({
         </label>
         <ConnectorProviderCombobox
           value={provider}
+          customDefinition={customDefinition}
           onChange={onProviderSelect}
           disabled={isEditing}
         />

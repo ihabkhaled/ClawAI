@@ -81,6 +81,8 @@ export class ProviderDefinitionsService {
     }
     const data: Prisma.ConnectorProviderDefinitionCreateInput = {
       ...dto,
+      healthCheckEndpoint: dto.healthCheckEndpoint || null,
+      description: dto.description || null,
       adapterFamily: ProviderAdapterFamily.OPENAI_COMPATIBLE,
       isBuiltIn: false,
       createdBy: actor.id,
@@ -110,15 +112,12 @@ export class ProviderDefinitionsService {
         'PROVIDER_BUILT_IN',
       );
     }
-    if (current._count.connectors > 0 && this.changesExecutionConfig(current, dto)) {
-      throw new BusinessException(
-        'Execution settings cannot change while connectors use this provider',
-        'PROVIDER_IN_USE',
-        HttpStatus.CONFLICT,
-      );
-    }
     const data: Prisma.ConnectorProviderDefinitionUpdateInput = {
       ...dto,
+      ...(dto.healthCheckEndpoint === undefined
+        ? {}
+        : { healthCheckEndpoint: dto.healthCheckEndpoint || null }),
+      ...(dto.description === undefined ? {} : { description: dto.description || null }),
       updatedBy: actor.id,
     };
     const row = await this.repository.update(id, data);
@@ -151,7 +150,9 @@ export class ProviderDefinitionsService {
       );
     }
     const dependencies = this.dependencies(current);
-    if (current.everConnected || dependencies.connectorCount > 0 || dependencies.modelCount > 0) {
+    // Only live connectors block a delete; a provider whose connectors were all
+    // removed (and so its models) is free to go.
+    if (dependencies.connectorCount > 0) {
       throw new HttpException(
         { message: 'Provider is in use', code: 'PROVIDER_IN_USE', statusCode: 409, dependencies },
         HttpStatus.CONFLICT,
@@ -205,6 +206,8 @@ export class ProviderDefinitionsService {
       modelsResponseFormat: row.modelsResponseFormat,
       healthCheckEndpoint: row.healthCheckEndpoint,
       authType: row.authType,
+      authHeaderName: row.authHeaderName,
+      authHeaderScheme: row.authHeaderScheme,
       supportsNativeTools: row.supportsNativeTools,
       supportsVision: row.supportsVision,
       registerUrl: row.registerUrl,
@@ -224,19 +227,6 @@ export class ProviderDefinitionsService {
       connectorCount: row._count.connectors,
       modelCount: row.connectors.reduce((total, connector) => total + connector._count.models, 0),
     };
-  }
-
-  private changesExecutionConfig(
-    current: ProviderDefinitionRecord,
-    dto: UpdateProviderDefinitionDto,
-  ): boolean {
-    return (
-      (dto.adapterFamily !== undefined && dto.adapterFamily !== current.adapterFamily) ||
-      (dto.defaultBaseUrl !== undefined && dto.defaultBaseUrl !== current.defaultBaseUrl) ||
-      (dto.modelsEndpoint !== undefined && dto.modelsEndpoint !== current.modelsEndpoint) ||
-      (dto.modelsResponseFormat !== undefined &&
-        dto.modelsResponseFormat !== current.modelsResponseFormat)
-    );
   }
 
   private dependencies(row: ProviderDefinitionRecord): ProviderDefinitionDependencies {

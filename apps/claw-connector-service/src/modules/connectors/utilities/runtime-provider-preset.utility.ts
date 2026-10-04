@@ -7,6 +7,7 @@ import {
   ConnectorAuthType as SharedConnectorAuthType,
 } from '@claw/shared-types';
 import { ConnectorAuthType, type ConnectorProviderDefinition } from '../../../generated/prisma';
+import { type ProviderAuthHeader } from '../types/provider-auth-header.types';
 import { BusinessException } from '../../../common/errors';
 
 export function toRuntimeConnectorPreset(definition: ConnectorProviderDefinition): ConnectorPreset {
@@ -51,6 +52,10 @@ export function toRuntimeConnectorPreset(definition: ConnectorProviderDefinition
       docs: definition.docsUrl ?? '',
     },
   };
+}
+
+export function toProviderAuthHeader(definition: ConnectorProviderDefinition): ProviderAuthHeader {
+  return { name: definition.authHeaderName, scheme: definition.authHeaderScheme };
 }
 
 function toSharedAuthType(value: ConnectorAuthType): SharedConnectorAuthType {

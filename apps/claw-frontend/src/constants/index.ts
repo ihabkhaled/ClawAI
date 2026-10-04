@@ -80,7 +80,14 @@ export {
   CONNECTOR_AUTH_TYPE_OPTIONS,
   PROVIDER_DEFAULT_BASE_URLS,
 } from './connector.constants';
-export { PRESET_PROVIDER_KEYS, PRESET_GROUP_ORDER } from './connector-provider-combobox.constants';
+export {
+  CUSTOM_PROVIDER_OPTION_PREFIX,
+  PROVIDER_AUTH_TYPE_OPTIONS,
+  PROVIDER_SELECT_CLASS,
+  PROVIDER_MODELS_FORMAT_OPTIONS,
+  PRESET_PROVIDER_KEYS,
+  PRESET_GROUP_ORDER,
+} from './connector-provider-combobox.constants';
 export {
   ROUTING_MODE_OPTIONS,
   RUNTIME_TYPE_LABELS,

@@ -159,6 +159,7 @@ import type {
 import type { PasswordStrengthResult } from './password-strength.types';
 import type { PipelineResult, PipelineStageResult } from './pipeline.types';
 import type { PlanView } from './plan.types';
+import type { ProviderDefinition } from './provider-definition.types';
 import type { ProviderFailureStat, RecentFallback } from './recovery.types';
 import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './replay-run.types';
 import type { ReplayBatchResult, ReplayResult } from './replay.types';
@@ -1456,7 +1457,8 @@ export type ConnectorFormFieldsProps = {
   name: string;
   setName: (value: string) => void;
   provider: ConnectorProvider | null;
-  onProviderSelect: (value: ConnectorProvider) => void;
+  customDefinition: ProviderDefinition | null;
+  onProviderSelect: (value: ConnectorProvider, definition?: ProviderDefinition) => void;
   authType: ConnectorAuthType;
   setAuthType: (value: ConnectorAuthType) => void;
   apiKey: string;

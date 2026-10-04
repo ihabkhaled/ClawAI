@@ -28,6 +28,7 @@ const connectorFieldsSchema = z.object({
   provider: z.enum(connectorProviderValues, {
     error: 'Please select a valid provider',
   }),
+  providerDefinitionId: z.string().optional(),
   authType: z.enum(authTypeValues, {
     error: 'Please select a valid auth type',
   }),
