@@ -1331,6 +1331,14 @@
       "producers": []
     },
     {
+      "consumers": [],
+      "key": "THREAD_GENERATION_REQUESTED",
+      "pattern": "threads.generation_requested",
+      "producers": [
+        "claw-thread-generation-service"
+      ]
+    },
+    {
       "consumers": [
         "claw-audit-service"
       ],

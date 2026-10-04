@@ -7,6 +7,10 @@ describe('AppConfig', () => {
 
   it('loads the configured service port and host', () => {
     vi.stubEnv('JWT_SECRET', 'x'.repeat(32));
+    vi.stubEnv(
+      'THREAD_GENERATION_DATABASE_URL',
+      'postgresql://claw:secret@localhost:5432/thread_generation',
+    );
     vi.stubEnv('THREAD_GENERATION_SERVICE_PORT', '4020');
     vi.stubEnv('CLAW_HOSTNAME', 'generation.test');
     vi.stubEnv('INTER_SERVICE_AUTH_TOKEN', 't'.repeat(40));
@@ -19,6 +23,10 @@ describe('AppConfig', () => {
 
   it('rejects a malformed service port', () => {
     vi.stubEnv('JWT_SECRET', 'x'.repeat(32));
+    vi.stubEnv(
+      'THREAD_GENERATION_DATABASE_URL',
+      'postgresql://claw:secret@localhost:5432/thread_generation',
+    );
     vi.stubEnv('THREAD_GENERATION_SERVICE_PORT', 'invalid');
     vi.stubEnv('INTER_SERVICE_AUTH_TOKEN', 't'.repeat(40));
 

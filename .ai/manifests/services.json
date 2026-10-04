@@ -146,7 +146,7 @@
         "MessageAttachment",
         "PromptTemplate"
       ],
-      "testFiles": 317,
+      "testFiles": 319,
       "testRunner": "vitest"
     },
     {
@@ -517,12 +517,13 @@
       "testRunner": "vitest"
     },
     {
-      "database": "none",
+      "database": "postgresql",
       "dir": "apps/claw-thread-generation-service",
-      "endpointCount": 1,
+      "endpointCount": 3,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
+        "@claw/shared-rabbitmq",
         "@claw/shared-types",
         "@claw/shared-utilities"
       ],
@@ -530,8 +531,14 @@
       "name": "claw-thread-generation-service",
       "port": 4020,
       "portSource": "shared-constants",
-      "prismaModels": [],
-      "testFiles": 4,
+      "prismaModels": [
+        "ThreadGenerationAttempt",
+        "ThreadGenerationCheckpoint",
+        "ThreadGenerationJob",
+        "ThreadModelCommunication",
+        "ThreadRevisionDraft"
+      ],
+      "testFiles": 10,
       "testRunner": "vitest"
     },
     {

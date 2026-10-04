@@ -4917,6 +4917,7 @@ export const ja: TranslationDictionary = {
         ROUTING: 'ルーティング',
         TRANSCRIPTION: '文字起こし',
         VISION_HELPER: '画像説明ヘルパー',
+        THREADS: 'Threads の投稿',
         TTS: '読み上げ（音声合成）',
       },
       kind: {

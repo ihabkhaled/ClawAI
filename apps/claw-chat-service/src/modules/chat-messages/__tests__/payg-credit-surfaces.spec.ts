@@ -445,7 +445,9 @@ describe('F092 — gateway headers reach internal-generate and the Ollama tool l
 
     const result = await manager.generateOnce({
       userId: 'user-1',
-      surface: PaygSurface.CHAT,
+      requestId: 'thread-job-1:author-1:round-1',
+      threadJobBudgetId: 'budget-1',
+      surface: PaygSurface.THREADS,
       provider: 'OPENAI',
       model: 'gpt-5',
       systemPrompt: 'sys',
@@ -453,6 +455,13 @@ describe('F092 — gateway headers reach internal-generate and the Ollama tool l
     });
 
     expect(result.content).toBe('ok');
+    expect(accessControl.reserveCredit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requestId: 'thread-job-1:author-1:round-1',
+        threadJobBudgetId: 'budget-1',
+        surface: PaygSurface.THREADS,
+      }),
+    );
     const providerCall = httpRequest.mock.calls[1]?.[0];
     expect(providerCall.url).toBe('https://gateway.example.com/v1/chat/completions');
     expect(providerCall.headers).toEqual({

@@ -33,15 +33,24 @@ pins the snapshot body for later job persistence.
 
 Persist canonical JSON snapshots and structured drafts. Pin snapshots and
 evidence by version and hash; every author, Judge, and Critic receives the same
-complete bundle. Resolve context capacity before enqueue and never silently
-truncate. Store review outcomes and scores, not hidden chain-of-thought. Use
-Markdown for user export; add TOON only after semantic round-trip tests and
-measured savings.
+complete bundle. Research runs through research-service. The generation worker
+checks each complete role prompt against routing-service's context window plus
+the output reserve; unknown or oversized windows fail closed without
+truncation.
+
+Three to five authors must agree on one canonical exact draft hash. Judge and
+Critic produce independent structured results, using thresholds of 80 and 75,
+with at most three rounds. Persist evidence, structured role outputs,
+checkpoints, and review scores, not hidden chain-of-thought. Use Markdown for
+user export; add TOON only after semantic round-trip tests and measured savings.
 
 Use the existing plan entitlement and credit hold/finalize/release flow. A
 user-selected job ceiling bounds all provider calls, retries, and concurrent
-work. Idempotency prevents duplicate charges. Persisted job state is
-authoritative; queue delivery and live progress are transport only.
+work. Provider calls go through chat-service's existing wallet hold/finalize
+path and carry a stable per-call idempotency key plus the Auth-owned aggregate
+budget ID. Idempotency prevents duplicate enqueue and charges. Persisted job
+state is authoritative; queue delivery and live progress are transport only.
+The generation consumer uses its own durable RabbitMQ queue with prefetch one.
 
 ## Public data and deletion
 
@@ -54,10 +63,12 @@ private requests.
 
 ## Deployment
 
-Threads and generation services use ports 4019 and 4020. Both begin as
-health-only services; databases and queue contracts arrive with their first
-domain batches. Feature routes and indexing remain disabled until the complete
-product passes scoped gates and the 15-lane QA workflow.
+Threads and generation services use ports 4019 and 4020. Generation owns the
+`claw_thread_generation` PostgreSQL database, and its dev and production
+entrypoints run Prisma migrations. Enqueue and cancellation APIs require a
+service token and stay off the public gateway. Publication routes and indexing
+remain disabled until the complete product passes scoped gates and the 15-lane
+QA workflow.
 
 Their container health checks use Node's built-in `node:https` client against
 loopback `/api/v1/health`. TLS verification is disabled for this loopback-only

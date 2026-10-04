@@ -1,5 +1,7 @@
 # Workspace Map
 
+Review when root workspaces or service/package manifests change. Last verified: 2026-10-04.
+
 The npm-workspace inventory. Ground truth: root `package.json`
 (`"workspaces": ["packages/*", "apps/*"]`), `.ai/manifests/services.json`,
 `.ai/manifests/packages.json`, `.ai/manifests/tests.json`.
@@ -43,7 +45,7 @@ edges: `.ai/manifests/workspace-dependency-graph.json`.
 | claw-llamacpp-service          | 4017            | Postgres | 16         | 26        |
 | claw-payment-service           | 4018            | Postgres | 76         | 26        |
 | claw-threads-service           | 4019            | none     | 2          | 1         |
-| claw-thread-generation-service | 4020            | none     | 2          | 1         |
+| claw-thread-generation-service | 4020            | Postgres | 2          | 1         |
 
 Counts from `.ai/manifests/services.json` + `tests.json`. The
 env-only-port note for client-logs/server-logs is expanded in

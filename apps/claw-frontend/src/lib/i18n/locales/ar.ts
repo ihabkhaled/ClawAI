@@ -4836,6 +4836,7 @@ export const ar: TranslationDictionary = {
         ROUTING: 'توجيه',
         TRANSCRIPTION: 'النسخ الصوتي',
         VISION_HELPER: 'مساعد وصف الصور',
+        THREADS: 'منشورات ثريدز',
         TTS: 'القراءة بصوت عالٍ (تحويل النص إلى كلام)',
       },
       kind: {

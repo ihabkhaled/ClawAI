@@ -438,6 +438,10 @@
     },
     {
       "from": "claw-thread-generation-service",
+      "to": "@claw/shared-rabbitmq"
+    },
+    {
+      "from": "claw-thread-generation-service",
       "to": "@claw/shared-types"
     },
     {

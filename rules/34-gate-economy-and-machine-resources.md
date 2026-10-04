@@ -34,9 +34,11 @@ runs, and the git hooks in `.husky/`.
    affected workspace only when required by its validation lane. All-workspace
    runs are prohibitively expensive and false-fail on unchanged siblings.
 3. **Never pay for the same proof twice.** If the scoped gates were just run
-   green over exactly the tree being committed, the hooks must not re-run them.
-   Record the proof with `npm run gates:receipt` and the hooks will honour it for
-   that tree only (see _Correct pattern_).
+   green over exactly the tree being committed, pre-commit skips its affected
+   typecheck and pre-push skips its affected test/build pass. Record the proof
+   with `npm run gates:receipt`; lint-staged and knowledge/inventory integrity
+   checks still run, and any formatting or generated-file change invalidates the
+   receipt (see _Correct pattern_).
 4. **A receipt is bound to a tree, never to a session.** It records the hash of
    the staged content it proved. Any edit invalidates it and the hooks run in
    full again. There is no "trust me" mode.

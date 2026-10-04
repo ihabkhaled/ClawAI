@@ -29,8 +29,12 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nestjs && adduser --system --uid 1001 nestjs
 COPY --from=builder --chown=nestjs:nestjs /app/apps/claw-thread-generation-service/dist ./dist
 COPY --from=builder --chown=nestjs:nestjs /app/apps/claw-thread-generation-service/package.json ./package.json
+COPY --from=builder --chown=nestjs:nestjs /app/apps/claw-thread-generation-service/prisma ./prisma
+COPY --from=builder --chown=nestjs:nestjs /app/apps/claw-thread-generation-service/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages /app/packages
+COPY scripts/docker-entrypoint.prod.sh /app/docker-entrypoint.prod.sh
+RUN chmod +x /app/docker-entrypoint.prod.sh
 USER nestjs
 EXPOSE 4020
-CMD ["node", "dist/main.js"]
+CMD ["sh", "/app/docker-entrypoint.prod.sh"]

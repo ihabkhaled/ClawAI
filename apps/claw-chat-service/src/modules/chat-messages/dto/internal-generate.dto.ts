@@ -14,6 +14,8 @@ import { z } from 'zod';
 export const internalGenerateSchema = z
   .object({
     userId: z.string().min(1).max(64),
+    requestId: z.string().min(1).max(200).optional(),
+    threadJobBudgetId: z.string().min(1).max(64).optional(),
     surface: z.nativeEnum(PaygSurface),
     provider: z.string().min(1).max(100),
     model: z.string().min(1).max(200),
@@ -22,6 +24,20 @@ export const internalGenerateSchema = z
     maxTokens: z.number().int().positive().max(32_768).optional(),
     workflow: z.string().min(1).max(64).optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    if (value.surface === PaygSurface.THREADS && (!value.requestId || !value.threadJobBudgetId)) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Threads model calls require an idempotency request and active job budget',
+      });
+    }
+    if (value.surface !== PaygSurface.THREADS && value.threadJobBudgetId) {
+      context.addIssue({
+        code: 'custom',
+        message: 'A Threads job budget can only be used by the Threads surface',
+      });
+    }
+  });
 
 export type InternalGenerateDto = z.infer<typeof internalGenerateSchema>;

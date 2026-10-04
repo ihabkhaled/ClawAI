@@ -584,6 +584,7 @@
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
+        "@claw/shared-rabbitmq",
         "@claw/shared-types",
         "@claw/shared-utilities"
       ],
@@ -595,6 +596,9 @@
         "format:check",
         "lint",
         "lint:strict",
+        "migrate",
+        "migrate:dev",
+        "prisma:generate",
         "start",
         "start:prod",
         "test",

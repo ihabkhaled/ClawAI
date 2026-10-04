@@ -13,4 +13,5 @@ RUN cd /app/packages/shared-constants && npm run build \
  && cd /app/packages/shared-utilities && npm run build \
  && cd /app/packages/shared-auth && npm run build
 WORKDIR /app/apps/claw-thread-generation-service
-CMD ["npm", "run", "dev"]
+RUN chmod +x docker-entrypoint.dev.sh
+CMD ["./docker-entrypoint.dev.sh"]

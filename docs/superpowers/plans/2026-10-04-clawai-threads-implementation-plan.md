@@ -114,9 +114,9 @@ open; this batch does not enable the feature.
 
 **Validation:** changed credit/entitlement specs only; changed-file lint; touched shared packages/auth/generation typecheck/build; concurrency, duplicate idempotency, release/refund, plan-role matrix tests. QA record `docs/qa-evidence/2026-10-04-threads-job-budget.md`.
 
-### Batch 4 — Isolated generation worker and research/review pipeline
+### Batch 4 — Isolated generation worker and research/review pipeline (4a/4b)
 
-**Outcome:** A durable job completes research, author drafting, exact-hash unanimous consensus, Judge, Critic, bounded revisions, and owner-review readiness without running inside chat-service.
+**Outcome:** A durable job completes research, author drafting, exact-hash unanimous consensus, Judge, Critic, bounded revisions, and owner-review readiness without running inside chat-service. This work is split into two pushed commits so the persisted pipeline can land before worker-recovery safeguards.
 
 **Code:**
 
@@ -125,12 +125,13 @@ open; this batch does not enable the feature.
 - Add dedicated RabbitMQ queues/routing keys and typed events under `packages/shared-types/`; persist state before acknowledging dispatch.
 - Add research-service client using existing internal HTTP/service-token patterns; store evidence URL/hash/version/role/correlation/budget metadata and pass the identical evidence bundle to every role.
 - Reuse existing connector model snapshots, entitlements, `ChatContextGatewayManager`/context-sizing utilities, and provider billing paths. Prove each complete role payload fits its actual model window including instructions and output reserve.
-- Add 3–5 author roles, same-hash unanimous agreement, Judge ≥80, independent Critic ≥75, max three rounds, eligible provider-diverse fallbacks, bounded retries, checkpoints, heartbeats, stale-worker recovery, cancellation, DLQ, fairness, concurrency limits, and idempotency.
+- **4a (this commit):** Add 3–5 author roles, same-hash unanimous agreement, Judge ≥80, independent Critic ≥75, max three rounds, provider-diverse fallbacks, persisted checkpoints, cancellation, the existing shared RabbitMQ retry/DLQ behavior, and enqueue idempotency. The internal result remains private and has no publication handoff.
+- **4b (next):** Add bounded job attempts, checkpoint-based resume, heartbeats, stale-worker recovery, fairness, and explicit concurrency limits. Add failure-injection tests for worker loss, provider outage, retry exhaustion, cancellation races, and recovery without duplicate charges.
 - Store only structured concise findings; do not request or retain hidden chain-of-thought. No UI/public read path is enabled yet.
 
-**Knowledge delta in the same commit:** Update `docs/03-architecture/clawai-threads-architecture.md`, `wiki/Threads.md`, `context/event-flow-map.md`, `context/service-dependency-map.md`, `docs/04-backend/services-index.md`, root `CLAUDE.md` event/service tables, and add `docs/04-backend/claw-thread-generation-service.md` plus `skills/run-threads-generation-queue.md`. Add enforceable `rules/61-threads-generation-invariants.md` only alongside architecture tests that check the service boundary, exact-hash consensus, full-context path, and dedicated queue. No new skill duplicating existing research/model gateway runbooks.
+**Knowledge delta in the same commit:** Update `docs/03-architecture/clawai-threads-architecture.md`, existing `docs/04-backend/service-guide-thread-generation.md` (adopt the repository's canonical guide instead of adding a duplicate), `docs/06-data/environment-variables.md`, `wiki/Threads.md`, generated `docs/wiki/index.md`, `context/event-flow-map.md`, `context/service-dependency-map.md`, `context/database-ownership-map.md`, `context/port-and-service-map.md`, `context/service-catalog.md`, `context/workspace-map.md`, `docs/04-backend/services-index.md`, root `CLAUDE.md` router, service `CLAUDE.md`, and the `skills/00-index.md` entry; add `skills/run-threads-generation-queue.md`. Add enforceable `rules/61-threads-generation-invariants.md` only alongside architecture tests that check the service boundary, exact-hash consensus, full-context path, and dedicated queue. No new skill duplicating existing research/model gateway runbooks.
 
-**Validation:** changed generation/research integration specs only; changed-file lint; touched generation-service, shared-types, and research-service typecheck/build; tests cover restart/resume, retries, cancellation, worker loss, provider outage, author replacement and no-fallback-under-three. QA record `docs/qa-evidence/2026-10-04-threads-generation-pipeline.md`.
+**4a validation:** changed generation/research specs; changed-file lint; generation and Chat typecheck/build; Docker generation image build (including shared-types); shared-types typecheck; installer and Compose config validation; focused billing/i18n regression. Frontend production build and restart/resume/worker-loss behavior are explicitly deferred. QA record `docs/qa-evidence/2026-10-04-threads-generation-pipeline.md`.
 
 ### Batch 5 — Publication lifecycle, social, moderation, and deletion
 

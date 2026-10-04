@@ -274,6 +274,32 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  pg-thread-generation:
+    labels:
+      claw.service: pg-thread-generation
+    logging: *claw-logging
+    image: pgvector/pgvector:pg16
+    container_name: claw-pg-thread-generation
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_THREAD_GENERATION_USER:-claw}
+      POSTGRES_PASSWORD: ${PG_THREAD_GENERATION_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${PG_THREAD_GENERATION_DB:-claw_thread_generation}
+    ports:
+      - '${PG_THREAD_GENERATION_PORT:-5457}:5432'
+    volumes:
+      - pg-thread-generation-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${PG_THREAD_GENERATION_USER:-claw} -d ${PG_THREAD_GENERATION_DB:-claw_thread_generation}',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
   # PostgreSQL (Payment Service)
   #
   # Owns billing customers, subscriptions, checkout sessions, transactions,
@@ -539,6 +565,7 @@ volumes:
   file-storage-data:
   ollama-data:
   clamav-data:
+  pg-thread-generation-data:
 
 networks:
   claw-network:

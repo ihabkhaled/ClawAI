@@ -4849,6 +4849,7 @@ export const th: TranslationDictionary = {
         ROUTING: 'การกำหนดเส้นทาง',
         TRANSCRIPTION: 'การถอดเสียง',
         VISION_HELPER: 'ผู้ช่วยอธิบายรูปภาพ',
+        THREADS: 'โพสต์ Threads',
         TTS: 'อ่านออกเสียง (แปลงข้อความเป็นเสียงพูด)',
       },
       kind: {

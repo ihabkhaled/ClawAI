@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 3 identical headings (40361 vs 7369 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 3 identical headings (50060 vs 7369 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and cursor.md share 1 identical headings (40361 vs 29057 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and cursor.md share 1 identical headings (50060 vs 29057 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -3544,6 +3544,16 @@
           "method": "GET",
           "route": "/health",
           "source": "apps/claw-thread-generation-service/src/modules/health/controllers/health.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/threads/generations",
+          "source": "apps/claw-thread-generation-service/src/modules/generation/controllers/generation-jobs-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/threads/generations/:jobId/cancel",
+          "source": "apps/claw-thread-generation-service/src/modules/generation/controllers/generation-jobs-internal.controller.ts"
         }
       ],
       "claw-threads-service": [
@@ -4402,6 +4412,13 @@
           "docker/docker-compose.prod.databases.yml"
         ],
         "name": "pg-routing"
+      },
+      {
+        "files": [
+          "docker/docker-compose.dev.databases.yml",
+          "docker/docker-compose.prod.databases.yml"
+        ],
+        "name": "pg-thread-generation"
       },
       {
         "files": [
@@ -5897,6 +5914,26 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "PG_THREAD_GENERATION_DB"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PG_THREAD_GENERATION_PASSWORD"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PG_THREAD_GENERATION_PORT"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PG_THREAD_GENERATION_USER"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "PG_WORKSPACE_DB"
       },
       {
@@ -6148,6 +6185,11 @@
         "confidence": "verified",
         "source": ".env.example",
         "value": "THREADS_SERVICE_URL"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "THREAD_GENERATION_DATABASE_URL"
       },
       {
         "confidence": "verified",
@@ -7039,6 +7081,11 @@
       {
         "key": "ROUTING_PROFILE_UPDATED",
         "pattern": "routing.profile.updated",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "THREAD_GENERATION_REQUESTED",
+        "pattern": "threads.generation_requested",
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
@@ -8052,7 +8099,7 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 40361,
+          "bytes": 50060,
           "file": "CLAUDE.md"
         },
         {
@@ -8284,7 +8331,7 @@
           "file": "rules/33-knowledge-compounding-and-context-velocity.md"
         },
         {
-          "bytes": 6893,
+          "bytes": 7041,
           "file": "rules/34-gate-economy-and-machine-resources.md"
         },
         {
@@ -8398,7 +8445,7 @@
       ],
       "skills": [
         {
-          "bytes": 33073,
+          "bytes": 33353,
           "file": "skills/00-index.md"
         },
         {
@@ -8734,7 +8781,7 @@
           "file": "skills/run-coding-agent-release-rounds.md"
         },
         {
-          "bytes": 4837,
+          "bytes": 4882,
           "file": "skills/run-gates-once-and-land.md"
         },
         {
@@ -8744,6 +8791,10 @@
         {
           "bytes": 5791,
           "file": "skills/run-the-qa-team.md"
+        },
+        {
+          "bytes": 3155,
+          "file": "skills/run-threads-generation-queue.md"
         },
         {
           "bytes": 4455,
@@ -8816,7 +8867,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5749
+        "value": 5750
       },
       "localeCount": 13,
       "locales": [
@@ -10752,6 +10803,40 @@
           "value": "postgresql"
         }
       },
+      "claw-thread-generation-service": {
+        "models": [
+          {
+            "confidence": "verified",
+            "source": "apps/claw-thread-generation-service/prisma/schema.prisma",
+            "value": "ThreadGenerationAttempt"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-thread-generation-service/prisma/schema.prisma",
+            "value": "ThreadGenerationCheckpoint"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-thread-generation-service/prisma/schema.prisma",
+            "value": "ThreadGenerationJob"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-thread-generation-service/prisma/schema.prisma",
+            "value": "ThreadModelCommunication"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-thread-generation-service/prisma/schema.prisma",
+            "value": "ThreadRevisionDraft"
+          }
+        ],
+        "provider": {
+          "confidence": "verified",
+          "source": "apps/claw-thread-generation-service/prisma/schema.prisma",
+          "value": "postgresql"
+        }
+      },
       "claw-workspace-service": {
         "models": [
           {
@@ -10941,7 +11026,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 317
+        "testFiles": 319
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -11001,7 +11086,7 @@
       },
       "claw-thread-generation-service": {
         "runner": "vitest",
-        "testFiles": 4
+        "testFiles": 10
       },
       "claw-threads-service": {
         "runner": "vitest",
@@ -11596,6 +11681,7 @@
         "internalDeps": [
           "@claw/shared-auth",
           "@claw/shared-constants",
+          "@claw/shared-rabbitmq",
           "@claw/shared-types",
           "@claw/shared-utilities"
         ],
@@ -11607,6 +11693,9 @@
           "format:check",
           "lint",
           "lint:strict",
+          "migrate",
+          "migrate:dev",
+          "prisma:generate",
           "start",
           "start:prod",
           "test",
@@ -11784,10 +11873,10 @@
   "summary": {
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
-    "dockerServiceCount": 54,
-    "endpointCount": 800,
-    "envVarCount": 365,
-    "eventCount": 185,
+    "dockerServiceCount": 55,
+    "endpointCount": 802,
+    "envVarCount": 370,
+    "eventCount": 186,
     "frontendRouteCount": 156,
     "localeCount": 13,
     "nginxRouteCount": 69,
@@ -11797,7 +11886,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2049,
+    "totalTestFiles": 2057,
     "workspaceCount": 27
   }
 }

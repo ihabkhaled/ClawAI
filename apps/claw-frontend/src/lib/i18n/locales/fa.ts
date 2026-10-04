@@ -4905,6 +4905,7 @@ export const fa: TranslationDictionary = {
         ROUTING: 'مسیریابی',
         TRANSCRIPTION: 'رونویسی صوتی',
         VISION_HELPER: 'دستیار توصیف تصویر',
+        THREADS: 'نوشته‌های تردز',
         TTS: 'بلندخوانی (تبدیل متن به گفتار)',
       },
       kind: {

@@ -3489,6 +3489,16 @@
         "method": "GET",
         "route": "/health",
         "source": "apps/claw-thread-generation-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/threads/generations",
+        "source": "apps/claw-thread-generation-service/src/modules/generation/controllers/generation-jobs-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/threads/generations/:jobId/cancel",
+        "source": "apps/claw-thread-generation-service/src/modules/generation/controllers/generation-jobs-internal.controller.ts"
       }
     ],
     "claw-threads-service": [
@@ -4042,5 +4052,5 @@
     ]
   },
   "generated": true,
-  "total": 800
+  "total": 802
 }

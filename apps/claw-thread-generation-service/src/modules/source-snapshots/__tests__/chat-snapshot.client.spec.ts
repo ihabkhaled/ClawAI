@@ -31,6 +31,7 @@ describe('ChatSnapshotClient', () => {
 
   it('sends service auth, owner identity, and rejects mismatched source ids', async () => {
     vi.stubEnv('JWT_SECRET', 'j'.repeat(40));
+    vi.stubEnv('THREAD_GENERATION_DATABASE_URL', 'postgresql://claw:secret@localhost:5432/db');
     vi.stubEnv('INTER_SERVICE_AUTH_TOKEN', 't'.repeat(40));
     vi.stubEnv('CHAT_SERVICE_URL', 'https://chat.internal');
     AppConfig.validate();
@@ -53,6 +54,7 @@ describe('ChatSnapshotClient', () => {
 
   it('rejects a snapshot with a bad digest or byte count', async () => {
     vi.stubEnv('JWT_SECRET', 'j'.repeat(40));
+    vi.stubEnv('THREAD_GENERATION_DATABASE_URL', 'postgresql://claw:secret@localhost:5432/db');
     vi.stubEnv('INTER_SERVICE_AUTH_TOKEN', 't'.repeat(40));
     AppConfig.validate();
     vi.stubGlobal(
@@ -71,6 +73,7 @@ describe('ChatSnapshotClient', () => {
 
   it('rejects a snapshot whose declared message count does not match its content', async () => {
     vi.stubEnv('JWT_SECRET', 'j'.repeat(40));
+    vi.stubEnv('THREAD_GENERATION_DATABASE_URL', 'postgresql://claw:secret@localhost:5432/db');
     vi.stubEnv('INTER_SERVICE_AUTH_TOKEN', 't'.repeat(40));
     AppConfig.validate();
     vi.stubGlobal(

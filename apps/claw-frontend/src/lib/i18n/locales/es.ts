@@ -4961,6 +4961,7 @@ export const es: TranslationDictionary = {
         ROUTING: 'Enrutamiento',
         TRANSCRIPTION: 'Transcripción',
         VISION_HELPER: 'Asistente de descripción de imágenes',
+        THREADS: 'Publicaciones de Threads',
         TTS: 'Lectura en voz alta (texto a voz)',
       },
       kind: {

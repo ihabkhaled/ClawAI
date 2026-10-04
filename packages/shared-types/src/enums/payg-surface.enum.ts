@@ -57,6 +57,8 @@ export enum PaygSurface {
    * speech in are different products with different prices.
    */
   TTS = 'TTS',
+  /** Model calls made for a user-capped Threads generation job. */
+  THREADS = 'THREADS',
 }
 
 // Deliberately NOT a member: RESEARCH. Research enrichment reaches search SaaS

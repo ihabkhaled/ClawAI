@@ -4838,6 +4838,7 @@ export type TranslationDictionary = {
         ROUTING: string;
         TRANSCRIPTION: string;
         VISION_HELPER: string;
+        THREADS: string;
         TTS: string;
       };
       kind: {

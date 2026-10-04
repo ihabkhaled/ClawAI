@@ -4937,6 +4937,7 @@ export const ru: TranslationDictionary = {
         ROUTING: 'Маршрутизация',
         TRANSCRIPTION: 'Транскрипция',
         VISION_HELPER: 'Помощник описания изображений',
+        THREADS: 'Публикации Threads',
         TTS: 'Чтение вслух (синтез речи)',
       },
       kind: {

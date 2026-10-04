@@ -3076,6 +3076,8 @@ export class ChatExecutionManager implements OnModuleInit {
    */
   async generateOnce(args: {
     userId: string;
+    requestId?: string;
+    threadJobBudgetId?: string;
     surface: PaygSurface;
     provider: string;
     model: string;
@@ -3113,7 +3115,8 @@ export class ChatExecutionManager implements OnModuleInit {
     const promptTextForEstimate = `${systemPrompt}\n${userPrompt}`;
     const hold = await this.accessControlService.reserveCredit({
       userId: args.userId,
-      requestId: randomUUID(),
+      requestId: args.requestId ?? randomUUID(),
+      ...(args.threadJobBudgetId ? { threadJobBudgetId: args.threadJobBudgetId } : {}),
       provider: normalizePaygProvider(provider),
       model,
       surface: args.surface,

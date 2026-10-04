@@ -4,6 +4,8 @@
 HTTP edge; refresh the generated views with `npm run knowledge:context` and
 `python <skill>/scripts/extract_platform.py --write`.
 
+Last verified: 2026-10-04.
+
 How services reach each other. There are three channels — **shared packages**
 (compile-time), **RabbitMQ events** (async), and **HTTP internal endpoints**
 (sync). Ground truth: `.ai/manifests/workspace-dependency-graph.json` (package
@@ -72,6 +74,10 @@ synchronous data other services need at request time:
 | routing           | ollama           | installed models (dynamic router prompt)                               |
 | workspace         | chat             | `/internal/chat/generate`, `/internal/chat/threads/seeded`             |
 | thread-generation | chat             | `/internal/thread-snapshots/:threadId` (owner-checked source snapshot) |
+| thread-generation | research         | `/internal/research/runs` (versioned evidence bundle)                  |
+| thread-generation | routing          | `/internal/router-models/context-window/:provider/:model`              |
+| thread-generation | auth             | `/internal/threads/budgets/close` (finalize or release parent budget)  |
+| thread-generation | chat             | `/internal/chat/generate` (budget-bound provider calls)                |
 | workspace         | file-gen / image | `/internal/file-generations/generate`, `/internal/images/generate`     |
 | agent             | chat             | `/internal/agent/terminal/seed-command`                                |
 | payment           | auth             | `/internal/plans/*`, `/internal/billing-metrics/provider-costs`        |

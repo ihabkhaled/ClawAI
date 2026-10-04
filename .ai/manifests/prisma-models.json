@@ -186,6 +186,13 @@
       "SeedExecution",
       "TaxonomyRole"
     ],
+    "claw-thread-generation-service": [
+      "ThreadGenerationAttempt",
+      "ThreadGenerationCheckpoint",
+      "ThreadGenerationJob",
+      "ThreadModelCommunication",
+      "ThreadRevisionDraft"
+    ],
     "claw-workspace-service": [
       "AiActionApprovalQueue",
       "AiActionPolicy",

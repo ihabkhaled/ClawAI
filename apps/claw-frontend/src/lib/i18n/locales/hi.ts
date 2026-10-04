@@ -4905,6 +4905,7 @@ export const hi: TranslationDictionary = {
         ROUTING: 'रूटिंग',
         TRANSCRIPTION: 'ट्रांसक्रिप्शन',
         VISION_HELPER: 'छवि विवरण सहायक',
+        THREADS: 'थ्रेड्स पोस्ट',
         TTS: 'पढ़कर सुनाना (टेक्स्ट-टू-स्पीच)',
       },
       kind: {

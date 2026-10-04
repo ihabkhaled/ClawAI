@@ -4726,6 +4726,7 @@ export const zh: TranslationDictionary = {
         ROUTING: '路由',
         TRANSCRIPTION: '语音转写',
         VISION_HELPER: '图像描述助手',
+        THREADS: 'Threads 文章',
         TTS: '朗读（文本转语音）',
       },
       kind: {

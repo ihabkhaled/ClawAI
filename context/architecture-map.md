@@ -1,5 +1,7 @@
 # Architecture Map (CANONICAL)
 
+Review when the service topology, data ownership boundary, or gateway routing changes. Last verified: 2026-10-04.
+
 > Authority level 3 — below `CLAUDE.md` and `rules/00-non-negotiable-rules.md`,
 > above everything else structural. This is the single source of truth for the
 > **shape** of the system. Facts (ports/events/routes) are machine-readable in
@@ -69,28 +71,28 @@ port is env-only** (`CLIENT_LOGS_PORT` / `SERVER_LOGS_PORT`). This gap is called
 out by the inventory audit (`portCoverageGaps`) and detailed in
 [port-and-service-map.md](port-and-service-map.md).
 
-| Service           | Port            | DB                             |
-| ----------------- | --------------- | ------------------------------ |
-| auth              | 4001            | PostgreSQL                     |
-| chat              | 4002            | PostgreSQL                     |
-| connector         | 4003            | PostgreSQL                     |
-| routing           | 4004            | PostgreSQL                     |
-| memory            | 4005            | PostgreSQL                     |
-| file              | 4006            | PostgreSQL                     |
-| audit             | 4007            | MongoDB                        |
-| ollama            | 4008            | PostgreSQL                     |
-| health            | 4009            | none                           |
-| client-logs       | 4010 (env-only) | MongoDB                        |
-| server-logs       | 4011 (env-only) | MongoDB                        |
-| image             | 4012            | PostgreSQL                     |
-| file-generation   | 4013            | PostgreSQL                     |
-| workspace         | 4014            | PostgreSQL                     |
-| agent             | 4015            | PostgreSQL                     |
-| research          | 4016            | PostgreSQL                     |
-| llamacpp          | 4017            | PostgreSQL (Debian base image) |
-| payment           | 4018            | PostgreSQL                     |
-| threads           | 4019            | none (health-only foundation)  |
-| thread-generation | 4020            | none (health-only foundation)  |
+| Service           | Port            | DB                                    |
+| ----------------- | --------------- | ------------------------------------- |
+| auth              | 4001            | PostgreSQL                            |
+| chat              | 4002            | PostgreSQL                            |
+| connector         | 4003            | PostgreSQL                            |
+| routing           | 4004            | PostgreSQL                            |
+| memory            | 4005            | PostgreSQL                            |
+| file              | 4006            | PostgreSQL                            |
+| audit             | 4007            | MongoDB                               |
+| ollama            | 4008            | PostgreSQL                            |
+| health            | 4009            | none                                  |
+| client-logs       | 4010 (env-only) | MongoDB                               |
+| server-logs       | 4011 (env-only) | MongoDB                               |
+| image             | 4012            | PostgreSQL                            |
+| file-generation   | 4013            | PostgreSQL                            |
+| workspace         | 4014            | PostgreSQL                            |
+| agent             | 4015            | PostgreSQL                            |
+| research          | 4016            | PostgreSQL                            |
+| llamacpp          | 4017            | PostgreSQL (Debian base image)        |
+| payment           | 4018            | PostgreSQL                            |
+| threads           | 4019            | none (health-only foundation)         |
+| thread-generation | 4020            | PostgreSQL (`claw_thread_generation`) |
 
 Most PostgreSQL services use **Prisma 7.8**; the three Mongo services (audit,
 client-logs, server-logs) use **Mongoose**. `health` has no database.

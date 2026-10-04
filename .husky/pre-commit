@@ -69,11 +69,16 @@ else
   echo "pre-commit 2/3: knowledge + inventory (skipped — no generated-source changes)"
 fi
 
-# Typecheck only the workspaces this commit's STAGED changes touch (root/
-# governance changes stay local-scoped; the full pass runs in CI +
-# release:preflight). --staged means unrelated in-flight work in the tree
-# never blocks a commit that doesn't include it.
-echo "pre-commit 3/3: typecheck affected (staged) workspaces"
-node tools/affected/index.mjs typecheck --staged || exit 1
+# Typecheck only workspaces this commit's STAGED changes touch unless the
+# exact staged tree already has a scoped gate receipt. Shared package edits can
+# fan out to nearly every workspace; repeating their typechecks after the
+# changed modules already passed adds cost without new evidence. A formatter or
+# generator change invalidates the tree hash and takes the full affected path.
+if node tools/gates/receipt.mjs check --staged >/dev/null 2>&1; then
+  echo "pre-commit 3/3: typecheck skipped -- exact staged tree has a gate receipt"
+else
+  echo "pre-commit 3/3: typecheck affected (staged) workspaces"
+  node tools/affected/index.mjs typecheck --staged || exit 1
+fi
 
 echo "pre-commit OK"

@@ -5,6 +5,8 @@ One entry per backend service. Derived from `.ai/manifests/services.json`
 `api-endpoints.json` (routes), and `nginx-routes.json` (gateway prefix). When any
 of these drift, regenerate the manifests and update this file.
 
+Last verified: 2026-10-04.
+
 Every service depends on `@claw/shared-constants`, `@claw/shared-types`,
 `@claw/shared-utilities` (health depends on shared-utilities only); most also on
 `@claw/shared-rabbitmq` and `@claw/shared-entitlements`. Only agent, payment,
@@ -159,8 +161,8 @@ research, and workspace add `@claw/shared-auth`. All 17 non-health services publ
 - **Owns:** no domain data in the foundation batch.
 - **Responsibility:** planned owner-approved publications and community actions; see [Threads architecture](../docs/03-architecture/clawai-threads-architecture.md).
 
-## claw-thread-generation-service — :4020 · health-only foundation
+## claw-thread-generation-service — :4020 · isolated generation pipeline
 
 - **Path:** `apps/claw-thread-generation-service` · **Gateway:** internal only
-- **Owns:** no domain data in the foundation batch.
-- **Responsibility:** planned isolated generation jobs and workers; no public API is enabled.
+- **Owns:** `claw_thread_generation` PostgreSQL; durable jobs, attempts, checkpoints, evidence, model outputs, and private revision drafts.
+- **Responsibility:** service-token-only enqueue/cancel routes; dedicated `claw.threads.generation` worker; research, author consensus, Judge, and Critic pipeline. Publication read/approval handoff is pending.

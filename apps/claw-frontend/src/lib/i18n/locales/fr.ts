@@ -4985,6 +4985,7 @@ export const fr: TranslationDictionary = {
         ROUTING: 'Routage',
         TRANSCRIPTION: 'Transcription',
         VISION_HELPER: "Assistant de description d'images",
+        THREADS: 'Publications Threads',
         TTS: 'Lecture à voix haute (synthèse vocale)',
       },
       kind: {

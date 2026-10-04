@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { Public } from '@claw/shared-auth';
 
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
@@ -6,6 +6,7 @@ import { ChatExecutionManager } from '../managers/chat-execution.manager';
 import { type InternalGenerateDto, internalGenerateSchema } from '../dto/internal-generate.dto';
 import type { InternalGenerateResponse } from '../types/internal-generate.types';
 import { ModelAuthorizationMetricsService } from '../services/model-authorization-metrics.service';
+import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
 import type { ModelAuthorizationMetricsSnapshot } from '../types/model-authorization-metrics.types';
 
 @Controller('internal/chat')
@@ -26,6 +27,7 @@ export class ChatInternalController {
   }
 
   @Public()
+  @UseGuards(ServiceTokenGuard)
   @Post('generate')
   @HttpCode(HttpStatus.OK)
   async generate(

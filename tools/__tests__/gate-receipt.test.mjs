@@ -94,3 +94,10 @@ test('the pre-push hook consults the receipt instead of bypassing the hook', () 
     assert.ok(!line.includes('--no-verify'), `hook must not invoke a bypass: ${line.trim()}`);
   }
 });
+
+test('the pre-commit hook skips affected typecheck only for the exact staged receipt', () => {
+  const hook = readFileSync(repoPath('.husky/pre-commit'), 'utf8');
+  assert.match(hook, /tools\/gates\/receipt\.mjs check --staged/);
+  assert.match(hook, /affected\/index\.mjs typecheck --staged/);
+  assert.match(hook, /else[\s\S]*affected\/index\.mjs typecheck --staged/);
+});

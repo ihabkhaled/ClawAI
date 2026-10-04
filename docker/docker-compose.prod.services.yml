@@ -699,6 +699,9 @@ services:
     container_name: claw-thread-generation-service
     restart: unless-stopped
     env_file: ../.env
+    depends_on:
+      pg-thread-generation:
+        condition: service_healthy
     ports:
       - '4020:4020'
     volumes:

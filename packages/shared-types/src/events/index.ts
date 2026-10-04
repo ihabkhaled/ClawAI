@@ -1,5 +1,10 @@
 export { EventPattern } from './event-patterns';
 export type {
+  ThreadGenerationRequestedPayload,
+  ThreadGenerationCompletedPayload,
+  ThreadGenerationFailedPayload,
+} from './thread-generation-events.types';
+export type {
   BillingEventEnvelope,
   BillingEventPayload,
   BillingSubscriptionEventBase,

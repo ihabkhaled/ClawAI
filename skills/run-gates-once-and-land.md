@@ -46,9 +46,10 @@ git add <explicit paths>        # never -A, never .
 npm run gates:receipt           # hashes the staged tree into .ai/local/gate-receipt.json
 ```
 
-The receipt names the exact tree it proved. `pre-push` sees it and skips the
-affected test/build pass for that tree only — the cheap integrity checks still
-run. Change a single byte and the receipt is void and the full pass returns.
+The receipt names the exact tree it proved. `pre-commit` skips the affected
+typecheck and `pre-push` skips the affected test/build pass for that tree only;
+lint-staged and cheap integrity checks still run. Change a single byte and the
+receipt is void and the full pass returns.
 
 **This is the sanctioned way to avoid duplicate work.** Do not reach for
 `--no-verify`: it is prohibited by

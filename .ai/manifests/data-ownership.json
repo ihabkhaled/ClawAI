@@ -282,6 +282,18 @@
       "database": "postgresql",
       "mongooseModels": [],
       "prismaModels": [
+        "ThreadGenerationAttempt",
+        "ThreadGenerationCheckpoint",
+        "ThreadGenerationJob",
+        "ThreadModelCommunication",
+        "ThreadRevisionDraft"
+      ],
+      "service": "claw-thread-generation-service"
+    },
+    {
+      "database": "postgresql",
+      "mongooseModels": [],
+      "prismaModels": [
         "AiActionApprovalQueue",
         "AiActionPolicy",
         "AutoSuggestRun",

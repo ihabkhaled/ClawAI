@@ -69,80 +69,85 @@ and the page hides the controls; it does not half-enable them. A blank value in
 
 ## PostgreSQL Instances
 
-Claw uses 14 separate PostgreSQL instances, one per data-owning service.
+Claw uses 15 separate PostgreSQL instances, one per data-owning service.
 
-| Variable                       | Required | Default                    | Description                         |
-| ------------------------------ | -------- | -------------------------- | ----------------------------------- |
-| `PG_AUTH_HOST`                 | Yes      | `claw-pg-auth`             | Auth database host                  |
-| `PG_AUTH_PORT`                 | Yes      | `5432`                     | Auth database port (internal)       |
-| `PG_AUTH_USER`                 | Yes      | `claw`                     | Auth database username              |
-| `PG_AUTH_PASSWORD`             | Yes      | `claw_secret`              | Auth database password              |
-| `PG_AUTH_DB`                   | Yes      | `claw_auth`                | Auth database name                  |
-| `PG_CHAT_HOST`                 | Yes      | `claw-pg-chat`             | Chat database host                  |
-| `PG_CHAT_PORT`                 | Yes      | `5432`                     | Chat database port                  |
-| `PG_CHAT_USER`                 | Yes      | `claw`                     | Chat database username              |
-| `PG_CHAT_PASSWORD`             | Yes      | `claw_secret`              | Chat database password              |
-| `PG_CHAT_DB`                   | Yes      | `claw_chat`                | Chat database name                  |
-| `PG_CONNECTORS_HOST`           | Yes      | `claw-pg-connector`        | Connector database host             |
-| `PG_CONNECTORS_PORT`           | Yes      | `5432`                     | Connector database port             |
-| `PG_CONNECTORS_USER`           | Yes      | `claw`                     | Connector database username         |
-| `PG_CONNECTORS_PASSWORD`       | Yes      | `claw_secret`              | Connector database password         |
-| `PG_CONNECTORS_DB`             | Yes      | `claw_connectors`          | Connector database name             |
-| `PG_ROUTING_HOST`              | Yes      | `claw-pg-routing`          | Routing database host               |
-| `PG_ROUTING_PORT`              | Yes      | `5432`                     | Routing database port               |
-| `PG_ROUTING_USER`              | Yes      | `claw`                     | Routing database username           |
-| `PG_ROUTING_PASSWORD`          | Yes      | `claw_secret`              | Routing database password           |
-| `PG_ROUTING_DB`                | Yes      | `claw_routing`             | Routing database name               |
-| `PG_MEMORY_HOST`               | Yes      | `claw-pg-memory`           | Memory database host                |
-| `PG_MEMORY_PORT`               | Yes      | `5432`                     | Memory database port                |
-| `PG_MEMORY_USER`               | Yes      | `claw`                     | Memory database username            |
-| `PG_MEMORY_PASSWORD`           | Yes      | `claw_secret`              | Memory database password            |
-| `PG_MEMORY_DB`                 | Yes      | `claw_memory`              | Memory database name                |
-| `PG_FILES_HOST`                | Yes      | `claw-pg-files`            | File database host                  |
-| `PG_FILES_PORT`                | Yes      | `5432`                     | File database port                  |
-| `PG_FILES_USER`                | Yes      | `claw`                     | File database username              |
-| `PG_FILES_PASSWORD`            | Yes      | `claw_secret`              | File database password              |
-| `PG_FILES_DB`                  | Yes      | `claw_files`               | File database name                  |
-| `PG_OLLAMA_HOST`               | Yes      | `claw-pg-ollama`           | Ollama service database host        |
-| `PG_OLLAMA_PORT`               | Yes      | `5432`                     | Ollama service database port        |
-| `PG_OLLAMA_USER`               | Yes      | `claw`                     | Ollama service database username    |
-| `PG_OLLAMA_PASSWORD`           | Yes      | `claw_secret`              | Ollama service database password    |
-| `PG_OLLAMA_DB`                 | Yes      | `claw_ollama`              | Ollama service database name        |
-| `PG_IMAGES_HOST`               | Yes      | `claw-pg-images`           | Image service database host         |
-| `PG_IMAGES_PORT`               | Yes      | `5432`                     | Image service database port         |
-| `PG_IMAGES_USER`               | Yes      | `claw`                     | Image service database username     |
-| `PG_IMAGES_PASSWORD`           | Yes      | `claw_secret`              | Image service database password     |
-| `PG_IMAGES_DB`                 | Yes      | `claw_images`              | Image service database name         |
-| `PG_FILE_GENERATIONS_HOST`     | Yes      | `claw-pg-file-generations` | File gen database host              |
-| `PG_FILE_GENERATIONS_PORT`     | Yes      | `5432`                     | File gen database port              |
-| `PG_FILE_GENERATIONS_USER`     | Yes      | `claw`                     | File gen database username          |
-| `PG_FILE_GENERATIONS_PASSWORD` | Yes      | `claw_secret`              | File gen database password          |
-| `PG_FILE_GENERATIONS_DB`       | Yes      | `claw_file_generations`    | File gen database name              |
-| `PG_AGENT_HOST`                | Yes      | `claw-pg-agent`            | Agent service database host         |
-| `PG_AGENT_PORT`                | Yes      | `5432`                     | Agent service database port         |
-| `PG_AGENT_USER`                | Yes      | `claw`                     | Agent service database username     |
-| `PG_AGENT_PASSWORD`            | Yes      | `claw_secret`              | Agent service database password     |
-| `PG_AGENT_DB`                  | Yes      | `claw_agent`               | Agent service database name         |
-| `PG_RESEARCH_HOST`             | Yes      | `claw-pg-research`         | Research service database host      |
-| `PG_RESEARCH_PORT`             | Yes      | `5432`                     | Research service database port      |
-| `PG_RESEARCH_USER`             | Yes      | `claw`                     | Research service database username  |
-| `PG_RESEARCH_PASSWORD`         | Yes      | `claw_secret`              | Research service database password  |
-| `PG_RESEARCH_DB`               | Yes      | `claw_research`            | Research service database name      |
-| `PG_WORKSPACE_HOST`            | Yes      | `claw-pg-workspace`        | Workspace service database host     |
-| `PG_WORKSPACE_PORT`            | Yes      | `5432`                     | Workspace service database port     |
-| `PG_WORKSPACE_USER`            | Yes      | `claw`                     | Workspace service database username |
-| `PG_WORKSPACE_PASSWORD`        | Yes      | `claw_secret`              | Workspace service database password |
-| `PG_WORKSPACE_DB`              | Yes      | `claw_workspace`           | Workspace service database name     |
-| `PG_PAYMENTS_PORT`             | Yes      | `5453`                     | Payment database host port          |
-| `PG_PAYMENTS_USER`             | Yes      | `claw`                     | Payment database username           |
-| `PG_PAYMENTS_PASSWORD`         | Yes      | `claw_secret`              | Payment database password           |
-| `PG_PAYMENTS_DB`               | Yes      | `claw_payments`            | Payment database name               |
+| Variable                        | Required | Default                    | Description                           |
+| ------------------------------- | -------- | -------------------------- | ------------------------------------- |
+| `PG_AUTH_HOST`                  | Yes      | `claw-pg-auth`             | Auth database host                    |
+| `PG_AUTH_PORT`                  | Yes      | `5432`                     | Auth database port (internal)         |
+| `PG_AUTH_USER`                  | Yes      | `claw`                     | Auth database username                |
+| `PG_AUTH_PASSWORD`              | Yes      | `claw_secret`              | Auth database password                |
+| `PG_AUTH_DB`                    | Yes      | `claw_auth`                | Auth database name                    |
+| `PG_CHAT_HOST`                  | Yes      | `claw-pg-chat`             | Chat database host                    |
+| `PG_CHAT_PORT`                  | Yes      | `5432`                     | Chat database port                    |
+| `PG_CHAT_USER`                  | Yes      | `claw`                     | Chat database username                |
+| `PG_CHAT_PASSWORD`              | Yes      | `claw_secret`              | Chat database password                |
+| `PG_CHAT_DB`                    | Yes      | `claw_chat`                | Chat database name                    |
+| `PG_CONNECTORS_HOST`            | Yes      | `claw-pg-connector`        | Connector database host               |
+| `PG_CONNECTORS_PORT`            | Yes      | `5432`                     | Connector database port               |
+| `PG_CONNECTORS_USER`            | Yes      | `claw`                     | Connector database username           |
+| `PG_CONNECTORS_PASSWORD`        | Yes      | `claw_secret`              | Connector database password           |
+| `PG_CONNECTORS_DB`              | Yes      | `claw_connectors`          | Connector database name               |
+| `PG_ROUTING_HOST`               | Yes      | `claw-pg-routing`          | Routing database host                 |
+| `PG_ROUTING_PORT`               | Yes      | `5432`                     | Routing database port                 |
+| `PG_ROUTING_USER`               | Yes      | `claw`                     | Routing database username             |
+| `PG_ROUTING_PASSWORD`           | Yes      | `claw_secret`              | Routing database password             |
+| `PG_ROUTING_DB`                 | Yes      | `claw_routing`             | Routing database name                 |
+| `PG_MEMORY_HOST`                | Yes      | `claw-pg-memory`           | Memory database host                  |
+| `PG_MEMORY_PORT`                | Yes      | `5432`                     | Memory database port                  |
+| `PG_MEMORY_USER`                | Yes      | `claw`                     | Memory database username              |
+| `PG_MEMORY_PASSWORD`            | Yes      | `claw_secret`              | Memory database password              |
+| `PG_MEMORY_DB`                  | Yes      | `claw_memory`              | Memory database name                  |
+| `PG_FILES_HOST`                 | Yes      | `claw-pg-files`            | File database host                    |
+| `PG_FILES_PORT`                 | Yes      | `5432`                     | File database port                    |
+| `PG_FILES_USER`                 | Yes      | `claw`                     | File database username                |
+| `PG_FILES_PASSWORD`             | Yes      | `claw_secret`              | File database password                |
+| `PG_FILES_DB`                   | Yes      | `claw_files`               | File database name                    |
+| `PG_OLLAMA_HOST`                | Yes      | `claw-pg-ollama`           | Ollama service database host          |
+| `PG_OLLAMA_PORT`                | Yes      | `5432`                     | Ollama service database port          |
+| `PG_OLLAMA_USER`                | Yes      | `claw`                     | Ollama service database username      |
+| `PG_OLLAMA_PASSWORD`            | Yes      | `claw_secret`              | Ollama service database password      |
+| `PG_OLLAMA_DB`                  | Yes      | `claw_ollama`              | Ollama service database name          |
+| `PG_IMAGES_HOST`                | Yes      | `claw-pg-images`           | Image service database host           |
+| `PG_IMAGES_PORT`                | Yes      | `5432`                     | Image service database port           |
+| `PG_IMAGES_USER`                | Yes      | `claw`                     | Image service database username       |
+| `PG_IMAGES_PASSWORD`            | Yes      | `claw_secret`              | Image service database password       |
+| `PG_IMAGES_DB`                  | Yes      | `claw_images`              | Image service database name           |
+| `PG_FILE_GENERATIONS_HOST`      | Yes      | `claw-pg-file-generations` | File gen database host                |
+| `PG_FILE_GENERATIONS_PORT`      | Yes      | `5432`                     | File gen database port                |
+| `PG_FILE_GENERATIONS_USER`      | Yes      | `claw`                     | File gen database username            |
+| `PG_FILE_GENERATIONS_PASSWORD`  | Yes      | `claw_secret`              | File gen database password            |
+| `PG_FILE_GENERATIONS_DB`        | Yes      | `claw_file_generations`    | File gen database name                |
+| `PG_AGENT_HOST`                 | Yes      | `claw-pg-agent`            | Agent service database host           |
+| `PG_AGENT_PORT`                 | Yes      | `5432`                     | Agent service database port           |
+| `PG_AGENT_USER`                 | Yes      | `claw`                     | Agent service database username       |
+| `PG_AGENT_PASSWORD`             | Yes      | `claw_secret`              | Agent service database password       |
+| `PG_AGENT_DB`                   | Yes      | `claw_agent`               | Agent service database name           |
+| `PG_RESEARCH_HOST`              | Yes      | `claw-pg-research`         | Research service database host        |
+| `PG_RESEARCH_PORT`              | Yes      | `5432`                     | Research service database port        |
+| `PG_RESEARCH_USER`              | Yes      | `claw`                     | Research service database username    |
+| `PG_RESEARCH_PASSWORD`          | Yes      | `claw_secret`              | Research service database password    |
+| `PG_RESEARCH_DB`                | Yes      | `claw_research`            | Research service database name        |
+| `PG_WORKSPACE_HOST`             | Yes      | `claw-pg-workspace`        | Workspace service database host       |
+| `PG_WORKSPACE_PORT`             | Yes      | `5432`                     | Workspace service database port       |
+| `PG_WORKSPACE_USER`             | Yes      | `claw`                     | Workspace service database username   |
+| `PG_WORKSPACE_PASSWORD`         | Yes      | `claw_secret`              | Workspace service database password   |
+| `PG_WORKSPACE_DB`               | Yes      | `claw_workspace`           | Workspace service database name       |
+| `PG_PAYMENTS_PORT`              | Yes      | `5453`                     | Payment database host port            |
+| `PG_PAYMENTS_USER`              | Yes      | `claw`                     | Payment database username             |
+| `PG_PAYMENTS_PASSWORD`          | Yes      | `claw_secret`              | Payment database password             |
+| `PG_PAYMENTS_DB`                | Yes      | `claw_payments`            | Payment database name                 |
+| `PG_THREAD_GENERATION_PORT`     | Yes      | `5457`                     | Threads generation database host port |
+| `PG_THREAD_GENERATION_USER`     | Yes      | `claw`                     | Threads generation database username  |
+| `PG_THREAD_GENERATION_PASSWORD` | Yes      | generated by installer     | Threads generation database password  |
+| `PG_THREAD_GENERATION_DB`       | Yes      | `claw_thread_generation`   | Threads generation database name      |
 
 **Notes:**
 
 - Inside Docker Compose, services use Docker service names as hosts (e.g., `claw-pg-auth`) with internal port `5432`.
 - When running services locally (outside Docker), use `localhost` with the host port (e.g., `5441` for auth).
 - Each PostgreSQL instance is a separate Docker container for fault isolation.
+- The generation service uses `THREAD_GENERATION_DATABASE_URL`; the installer derives its password from `PG_THREAD_GENERATION_PASSWORD`.
 - Memory service uses pgvector extension for embedding similarity search.
 
 ---

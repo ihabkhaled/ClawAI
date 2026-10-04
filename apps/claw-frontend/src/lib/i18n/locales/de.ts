@@ -4979,6 +4979,7 @@ export const de: TranslationDictionary = {
         ROUTING: 'Routing',
         TRANSCRIPTION: 'Transkription',
         VISION_HELPER: 'Bildbeschreibungs-Helfer',
+        THREADS: 'Threads',
         TTS: 'Vorlesen (Text-zu-Sprache)',
       },
       kind: {

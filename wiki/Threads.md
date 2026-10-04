@@ -46,3 +46,10 @@ shows semantic round-trip and useful token savings.
 
 The two service containers probe `/api/v1/health` over loopback HTTPS with
 Node's built-in HTTPS client; see the [deployment architecture](https://github.com/ihabkhaled/ClawAI/blob/main/docs/03-architecture/clawai-threads-architecture.md#deployment).
+
+The generation service persists queued jobs, attempt records, source and
+research checkpoints, structured author/Judge/Critic responses, and the private
+final revision in its own PostgreSQL database. Jobs run on the dedicated
+`claw.threads.generation` RabbitMQ queue, with a service-token-only enqueue and
+cancel API. Publication retrieval and owner approval wiring remain in the next
+implementation batch; generated drafts are not public by generation alone.

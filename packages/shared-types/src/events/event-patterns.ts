@@ -59,6 +59,7 @@ export enum EventPattern {
   FILE_VIDEO_PROCESS_REQUESTED = 'file.video_process_requested',
   FILE_VIDEO_PROCESS_COMPLETED = 'file.video_process_completed',
   FILE_VIDEO_PROCESS_FAILED = 'file.video_process_failed',
+  THREAD_GENERATION_REQUESTED = 'threads.generation_requested',
   MEMORY_EXTRACTED = 'memory.extracted',
   AUDIT_EVENT = 'audit.event',
   HEALTH_CHECK = 'health.check',
