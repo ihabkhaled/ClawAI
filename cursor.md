@@ -54,7 +54,7 @@ These are DELIVERY BLOCKERS — a PR without them is rejected:
 
 **Follow `CLAUDE.md` and `rules/` exactly.** `CLAUDE.md` defines:
 
-- Architecture (18 NestJS microservices + Next.js + Ollama + 14 PostgreSQL + MongoDB + Redis + RabbitMQ)
+- Architecture (20 NestJS microservices + Next.js + Ollama + 14 PostgreSQL + MongoDB + Redis + RabbitMQ)
 - Layer boundaries (Controller → Service → Repository → Manager)
 - ESLint rules (no `any`, no inline types, strict enums, no string literal unions)
 - The 18-item delivery checklist
@@ -302,7 +302,7 @@ When you add a new package under `packages/`, the CI workflow needs an extra bui
     cd ../<new-shared-package> && npx tsgo -p tsconfig.build.json   # MUST add for any new shared package
 ```
 
-Update all four jobs (`lint`, `typecheck`, `test`, `build`) — they each have their own copy of the step. Each job is a ~24-entry matrix (18 services + frontend + 6 shared packages).
+Update all four jobs (`lint`, `typecheck`, `test`, `build`) — they each have their own copy of the step. Each job is a ~26-entry matrix (20 services + frontend + 6 shared packages).
 
 **SECOND required edit (added 2026-05-29):** also add the package to the per-package `strategy.matrix.include` in all four jobs, or its OWN lint/typecheck/test never runs in CI (it's only built as a dependency):
 

@@ -13,19 +13,19 @@
 **The rule — for ANY change, in ANY folder:**
 
 1. Identify which workspace folder(s) you edited: `apps/claw-<service>/`, `apps/claw-frontend/`, or `packages/<shared-pkg>/`.
-2. Run the four gates INSIDE each touched folder ONLY:
+2. Lint changed files and run only the matching spec for changed TypeScript.
+   Typecheck/build the affected workspace only when its validation lane requires it.
 
 ```bash
 cd apps/claw-<service>      # or apps/claw-frontend, or packages/<pkg>
-npx tsgo --noEmit          # 0 errors  (frontend: npm run typecheck)
-npm run lint               # 0 errors on touched files (pre-existing warnings on untouched files OK)
-npm test                   # all tests pass; coverage may not drop
-npm run build              # success
+npx eslint <changed files>
+npx vitest run <matching spec>
+npm run typecheck          # only when required by the scoped validation lane
 ```
 
-3. Multi-folder change → run the gates for EACH touched folder, never for the untouched ones.
+3. Multi-folder change → run scoped gates only for affected files/workspaces.
 4. Non-workspace files with no gate (`scripts/**`, `infra/**`, plain `*.mjs`) → do the cheapest equivalent check (`node --check <file>`, JSON/schema validate). Do NOT trigger an all-workspace run "to be safe".
-5. When ALL gates for the touched folders are green, commit and let the hook run (it re-verifies the scoped subset), then **push immediately**:
+5. When required scoped gates are green, commit and let the hook run, then **push immediately**. A valid exact-tree receipt can avoid redundant checks only where the hook supports it; hooks remain enabled:
 
 ```bash
 git commit -m "<conventional-commit-message>"

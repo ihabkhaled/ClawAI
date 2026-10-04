@@ -290,7 +290,7 @@ means anywhere else it's read:
   chat-service keeps its own copy of the same literal
   (`AUDIO_TRANSCRIPTION_PLACEHOLDER_PREFIX` in `voice-note.constants.ts`)
   rather than importing it from `@claw/shared-constants`: touching that shared
-  package marks every one of the 18 services "affected" for the pre-commit
+  package marks every one of the 20 services "affected" for the pre-commit
   gate, which then needs a generated Prisma client for services this change
   has nothing to do with — not worth it for a one-line string. Each copy is
   pinned by a test on its own side, so a future rename on one breaks a test
@@ -424,7 +424,7 @@ And the user now reads a fixed sentence (`TRANSCRIPTION_PROVIDER_BUSY_MESSAGE`,
 `…_PROVIDER_FAILED_MESSAGE`); the raw provider text stays in the log.
 
 **Deliberately not done:** no new `FileTranscribeFailureReasonCode`. The event
-has no consumer, and editing `@claw/shared-types` marks all 18 services
+has no consumer, and editing `@claw/shared-types` marks all 20 services
 affected. The event still says `PROVIDER_ERROR`; the `kind=` in the log and
 the sentence in `reason` carry the detail. No frontend string either — no UI
 renders `extractionError` for audio; the model relays it in the user's own
@@ -471,7 +471,7 @@ text stays `TERMINAL` — only the typed error retries.
 
 **Deliberately not done — silence detection for video.** `volumedetect` is
 cheap, but the honest outcome needs a new `VideoAudioStatus` in
-`@claw/shared-types` (all 18 services affected), and reusing `TRANSCRIBED`
+`@claw/shared-types` (all 20 services affected), and reusing `TRANSCRIBED`
 with no provider would mislead the UI and the model. A silent track still ends
 `TRANSCRIPTION_FAILED` after two released holds.
 

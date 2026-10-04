@@ -3,7 +3,7 @@
 ## Overview
 
 ClawAI runs as a fully containerized development environment using split Docker
-Compose files. The complete profile contains 18 backend services, their owned
+Compose files. The complete profile contains 20 backend services, their owned
 databases, shared infrastructure, a reverse proxy, the frontend, and optional
 local-AI runtimes.
 
@@ -140,7 +140,7 @@ Layer 2 (depends on Layer 1 being healthy):
   health-service    → redis, rabbitmq
 
 Layer 3 (depends on all services being healthy):
-  nginx → all 18 backend services
+  nginx → all 20 backend services
 
 Layer 4:
   frontend → nginx (service_started, not health check)
@@ -370,7 +370,7 @@ docker exec claw-file-service sh -c "ffmpeg -version | head -1; ffprobe -version
 | Redis                | ~50 MB    | ~10 MB     |
 | RabbitMQ             | ~200 MB   | ~50 MB     |
 | Ollama (5 models)    | ~2-6 GB   | ~10 GB     |
-| 18 NestJS services   | ~2.6 GB   | ~500 MB    |
+| 20 NestJS services   | ~2.6 GB   | ~500 MB    |
 | Nginx                | ~10 MB    | ~5 MB      |
 | Next.js frontend     | ~500 MB   | ~300 MB    |
 

@@ -24,12 +24,16 @@ failure and provokes another run.
 npm run affected:list
 ```
 
-Run the gates **only** in those folders. All-workspace runs are prohibitively
-expensive and false-fail on unchanged siblings.
+Run lint on changed files and run the matching spec for each changed TypeScript
+implementation or spec. Do not run a whole workspace test suite for a scoped
+change. All-workspace runs are prohibitively expensive and false-fail on
+unchanged siblings.
 
 ```bash
-cd apps/<touched-workspace>
-npx tsgo --noEmit && npm run lint && npm test && npm run build
+npx eslint <changed files>
+npx vitest run <matching spec>
+# Typecheck/build only the affected workspace when its validation lane requires it.
+npm run typecheck
 ```
 
 One workspace at a time. Concurrency does not shorten wall-clock time here; it
@@ -103,7 +107,7 @@ Prisma-schema change earns the full stop → rm → rmi → build cycle.
 
 1. `git pull --rebase --autostash`, then rebuild shared `dist` and run `prisma generate`
    in any service that fails typecheck ([rules/48](../rules/48-lint-and-test-only-what-changed.md) item 8).
-2. `git diff --name-only HEAD` -> `npx eslint <files>` and `npx vitest related <files>`;
+2. `git diff --name-only HEAD` -> `npx eslint <changed files>` and `npx vitest run <matching spec>`;
    `npm run typecheck` only in touched workspaces. No root-level gates.
 3. `npm run knowledge:build`, then stage the generated `.ai/**` and workspace `AGENTS.md`.
 4. Commit in 2-4 coherent batches with explicit paths, subjects under 100 characters.

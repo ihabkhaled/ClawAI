@@ -29,10 +29,10 @@ runs, and the git hooks in `.husky/`.
 1. **Gate at the end of a batch, not per file and not per commit.** While
    implementing a large feature or flagship, do not run the full lint/test/build
    loop after each edit. Implement the coherent batch, then gate it once.
-2. **Gate only the workspaces you touched.** Use `npm run affected:list` and run
-   `npx tsgo --noEmit && npm run lint && npm test && npm run build` inside those
-   folders only. All-workspace runs are prohibitively expensive and false-fail on
-   unchanged siblings.
+2. **Gate only changed files and affected workspaces.** Run lint on changed
+   files and the matching spec for changed TypeScript. Typecheck/build the
+   affected workspace only when required by its validation lane. All-workspace
+   runs are prohibitively expensive and false-fail on unchanged siblings.
 3. **Never pay for the same proof twice.** If the scoped gates were just run
    green over exactly the tree being committed, the hooks must not re-run them.
    Record the proof with `npm run gates:receipt` and the hooks will honour it for

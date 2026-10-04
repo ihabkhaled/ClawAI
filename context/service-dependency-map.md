@@ -15,7 +15,9 @@ Every service imports `@claw/shared-constants`, `@claw/shared-types`,
 - **`@claw/shared-rabbitmq`** — all services except `health`.
 - **`@claw/shared-entitlements`** — audit, chat, connector, file, llamacpp,
   memory, ollama, payment, research, routing, server-logs, workspace.
-- **`@claw/shared-auth`** — only agent, payment, research, workspace.
+- **`@claw/shared-auth`** — agent, payment, research, workspace, and both Threads
+  services. Threads also import shared constants, types, and utilities; queue,
+  entitlement, and domain edges arrive with later batches.
 - **`health`** — depends on `@claw/shared-utilities` **only**.
 
 Package-to-package: `shared-auth` → `shared-types` + `shared-utilities`;

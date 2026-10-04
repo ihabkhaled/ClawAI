@@ -4,7 +4,7 @@ This page maps the **entire repository surface**, including directories that are
 
 | Area         | Current files | Purpose                                                                     |
 | ------------ | ------------: | --------------------------------------------------------------------------- |
-| `apps/`      |          7153 | 18 backend services, frontend, and the Coding Agent gitlink                 |
+| `apps/`      |          7153 | 20 backend services, frontend, and the Coding Agent gitlink                 |
 | `packages/`  |           343 | Six shared npm workspaces                                                   |
 | `docs/`      |           583 | Architecture, product, API, runbook, ADR, audit, risk, AI-context docs      |
 | `.ai/`       |            33 | Generated manifests, bootstrap, task packs                                  |

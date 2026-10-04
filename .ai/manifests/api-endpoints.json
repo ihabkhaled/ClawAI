@@ -3454,6 +3454,20 @@
         "source": "apps/claw-server-logs-service/src/modules/server-logs/controllers/server-logs.controller.ts"
       }
     ],
+    "claw-thread-generation-service": [
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-thread-generation-service/src/modules/health/controllers/health.controller.ts"
+      }
+    ],
+    "claw-threads-service": [
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-threads-service/src/modules/health/controllers/health.controller.ts"
+      }
+    ],
     "claw-workspace-service": [
       {
         "method": "GET",
@@ -3998,5 +4012,5 @@
     ]
   },
   "generated": true,
-  "total": 792
+  "total": 794
 }

@@ -1,37 +1,39 @@
 # Port & Service Map
 
-The canonical port table. Ground truth: `.ai/manifests/ports.json` (the 16
+The canonical port table. Ground truth: `.ai/manifests/ports.json` (the 18
 `*_SERVICE_PORT` constants in `@claw/shared-constants`) and
 `.ai/manifests/services.json` (per-service `port` + `portSource`).
 
 ## Port table
 
-| Service         | Port     | Port source                       | DB                                 |
-| --------------- | -------- | --------------------------------- | ---------------------------------- |
-| frontend        | 3000     | env (`FRONTEND_PORT`)             | —                                  |
-| auth            | 4001     | shared-constants                  | Postgres                           |
-| chat            | 4002     | shared-constants                  | Postgres                           |
-| connector       | 4003     | shared-constants                  | Postgres                           |
-| routing         | 4004     | shared-constants                  | Postgres                           |
-| memory          | 4005     | shared-constants                  | Postgres                           |
-| file            | 4006     | shared-constants                  | Postgres                           |
-| audit           | 4007     | shared-constants                  | Mongo                              |
-| ollama          | 4008     | shared-constants                  | Postgres                           |
-| health          | 4009     | shared-constants                  | none                               |
-| _prometheus_    | _9090_   | _image only, never published_     | _own TSDB volume_                  |
-| _grafana_       | _3000_   | _image only, never published_     | _own volume (dashboards are code)_ |
-| **client-logs** | **4010** | **env-only (`CLIENT_LOGS_PORT`)** | Mongo                              |
-| **server-logs** | **4011** | **env-only (`SERVER_LOGS_PORT`)** | Mongo                              |
-| image           | 4012     | shared-constants                  | Postgres                           |
-| file-generation | 4013     | shared-constants                  | Postgres                           |
-| workspace       | 4014     | shared-constants                  | Postgres                           |
-| agent           | 4015     | shared-constants                  | Postgres                           |
-| research        | 4016     | shared-constants                  | Postgres                           |
-| llamacpp        | 4017     | shared-constants                  | Postgres (Debian base)             |
-| payment         | 4018     | shared-constants                  | Postgres                           |
+| Service           | Port     | Port source                       | DB                                 |
+| ----------------- | -------- | --------------------------------- | ---------------------------------- |
+| frontend          | 3000     | env (`FRONTEND_PORT`)             | —                                  |
+| auth              | 4001     | shared-constants                  | Postgres                           |
+| chat              | 4002     | shared-constants                  | Postgres                           |
+| connector         | 4003     | shared-constants                  | Postgres                           |
+| routing           | 4004     | shared-constants                  | Postgres                           |
+| memory            | 4005     | shared-constants                  | Postgres                           |
+| file              | 4006     | shared-constants                  | Postgres                           |
+| audit             | 4007     | shared-constants                  | Mongo                              |
+| ollama            | 4008     | shared-constants                  | Postgres                           |
+| health            | 4009     | shared-constants                  | none                               |
+| _prometheus_      | _9090_   | _image only, never published_     | _own TSDB volume_                  |
+| _grafana_         | _3000_   | _image only, never published_     | _own volume (dashboards are code)_ |
+| **client-logs**   | **4010** | **env-only (`CLIENT_LOGS_PORT`)** | Mongo                              |
+| **server-logs**   | **4011** | **env-only (`SERVER_LOGS_PORT`)** | Mongo                              |
+| image             | 4012     | shared-constants                  | Postgres                           |
+| file-generation   | 4013     | shared-constants                  | Postgres                           |
+| workspace         | 4014     | shared-constants                  | Postgres                           |
+| agent             | 4015     | shared-constants                  | Postgres                           |
+| research          | 4016     | shared-constants                  | Postgres                           |
+| llamacpp          | 4017     | shared-constants                  | Postgres (Debian base)             |
+| payment           | 4018     | shared-constants                  | Postgres                           |
+| threads           | 4019     | shared-constants                  | none (health-only foundation)      |
+| thread-generation | 4020     | shared-constants                  | none (health-only foundation)      |
 
-Backend services occupy **4001–4018** contiguously. The next new backend service
-takes **4019** — add its constant to `@claw/shared-constants`.
+Backend services occupy **4001–4020** contiguously, except the existing
+client-logs/server-logs env-only ports 4010–4011. New services continue at 4021.
 
 ## ⚠️ The client-logs / server-logs env-only gap
 

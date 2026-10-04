@@ -16,8 +16,8 @@ research work across cloud AI providers and local runtimes (Ollama, llama.cpp,
 ComfyUI, Stable Diffusion), with memory, context packs, workspace connectors,
 and a desktop agent — all behind one authenticated gateway.
 
-It is an **npm-workspace monorepo**: **18 NestJS microservices + 1 Next.js
-frontend + 6 shared packages** = 25 workspaces (25 with a `package.json` under
+It is an **npm-workspace monorepo**: **20 NestJS microservices + 1 Next.js
+frontend + 6 shared packages** = 27 workspaces (25 with a `package.json` under
 `apps/`/`packages/`; the frontend counts as an app). See
 [workspace-map.md](https://github.com/ihabkhaled/ClawAI/blob/main/context/workspace-map.md).
 
@@ -41,7 +41,7 @@ frontend + 6 shared packages** = 25 workspaces (25 with a `package.json` under
                 │  HTTP/HTTPS to service:port
                 ▼
 ┌──────────────────────────────────────────────────────────────────────┐
-│  18 NestJS services (ports 4001–4018)                                  │
+│  20 NestJS services (ports 4001-4020)                                  │
 │  Controller (3-line) → Service (≤30 ln) → Repository (no throw)        │
 │                     ↘ Manager (≤80 ln orchestration)                   │
 │                     ↘ Adapter (wraps vendor SDKs)                       │

@@ -2,7 +2,7 @@
 
 > **Every AI, one workspace.** Every frontier AI model in one workspace that sees, hears, researches and builds — pay as you go, bring your team, or run it on your own hardware. Positioning: [Product Vision](01-executive-context/product-vision.md) · flagships: [Flagship Features](02-business-product/flagship-features.md).
 >
-> Architecture: a local-first AI orchestration platform -- 18 NestJS backend services + Next.js frontend + 14 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama + ClamAV
+> Architecture: a local-first AI orchestration platform -- 20 NestJS backend services + Next.js frontend + 14 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama + ClamAV
 
 ---
 

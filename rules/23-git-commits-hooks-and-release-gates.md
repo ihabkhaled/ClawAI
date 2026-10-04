@@ -13,15 +13,16 @@ Every commit and push in the repo; the git hooks; `.github/workflows/ci.yml`.
 
 ## Mandatory rules
 
-1. **Per-folder gates before commit.** Identify the workspace(s) you edited, then
-   run the four gates **inside those folders only**: `npx tsgo --noEmit`
-   (frontend: `npm run typecheck`), `npm run lint`, `npm test`, `npm run build`.
-   Never run the all-workspace gate for a scoped change.
+1. **Scoped gates before commit.** Lint changed files and run the matching spec
+   for changed TypeScript files. Typecheck/build only the touched workspace when
+   its validation lane requires it. Never run whole-workspace or all-workspace
+   lint/tests for a scoped change.
 2. **Green then commit.** When touched-folder gates pass, commit and let the
    hook run. The pre-commit hook is now scoped + fast (lint-staged + knowledge
    freshness + `affected typecheck --staged`), so there is no reason to bypass it.
    **`--no-verify` is banned** ([ADR-061](../docs/13-adr/adr-061-git-hook-policy-no-bypass.md));
    a hook failure is a real problem in something you staged — fix it, never skip it.
+   A valid exact-tree receipt may prevent only redundant checks supported by the hook.
 3. **Non-workspace files** (`scripts/**`, `infra/**`, plain `*.mjs`) → cheapest
    equivalent check (`node --check`, JSON/schema validate). Do not escalate to the
    full gate "to be safe."
@@ -54,7 +55,7 @@ origin/<branch>..HEAD` must be empty before you stage the next change. The only
 
 ```bash
 cd apps/claw-chat-service
-npx tsgo --noEmit && npm run lint && npm test && npm run build   # touched folder only
+npx eslint <changed files> && npx vitest run <matching spec>
 git add apps/claw-chat-service/src/modules/chat/…                # explicit paths
 git commit -m "feat(chat): add criticModel to compare DTO"       # hook runs (scoped + fast)
 git push origin <branch>
@@ -82,7 +83,7 @@ git push origin <branch>
 - [ ] Conventional commit; explicit paths; reversible actions.
 - [ ] `--no-verify` not used at all (banned by ADR-061).
 - [ ] Every commit pushed before the next was started; `git log --oneline
-    origin/<branch>..HEAD` is empty.
+origin/<branch>..HEAD` is empty.
 
 ## Generated artifacts are a HARD GATE (never optional)
 

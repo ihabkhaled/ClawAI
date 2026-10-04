@@ -1,0 +1,51 @@
+{
+  "name": "claw-thread-generation-service",
+  "version": "1.174.2",
+  "private": true,
+  "description": "ClawAI Threads isolated generation worker service",
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "nodemon --legacy-watch --watch src --ext ts,json --delay 1500ms --signal SIGTERM --exec \"npm run build && node dist/main.js\"",
+    "build": "node ../../tools/typescript/run-ts7.mjs -p tsconfig.build.json && tsc-alias -p tsconfig.build.json -f",
+    "start": "node dist/main.js",
+    "start:prod": "node dist/main.js",
+    "lint": "eslint src/ --concurrency=4",
+    "lint:strict": "eslint src/ --max-warnings 0",
+    "format": "prettier --write 'src/**/*.ts'",
+    "format:check": "prettier --check 'src/**/*.ts'",
+    "typecheck": "node ../../tools/typescript/run-ts7.mjs --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@claw/shared-auth": "*",
+    "@claw/shared-constants": "*",
+    "@claw/shared-types": "*",
+    "@claw/shared-utilities": "*",
+    "@nestjs/common": "^12.1.0",
+    "@nestjs/core": "^12.1.0",
+    "@nestjs/platform-express": "^12.1.0",
+    "@nestjs/throttler": "^6.7.1",
+    "helmet": "^8.3.0",
+    "nestjs-pino": "^5.2.1",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "^12.1.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.3",
+    "eslint": "^10.11.0",
+    "nodemon": "^3.1.14",
+    "prettier": "^3.9.9",
+    "tsc-alias": "^1.9.5",
+    "typescript": "6.0.3",
+    "typescript-eslint": "^8.70.1",
+    "unplugin-swc": "^2.0.0",
+    "vitest": "5.0.2"
+  },
+  "type": "module"
+}

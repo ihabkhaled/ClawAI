@@ -1600,6 +1600,8 @@ WORKSPACE_SERVICE_URL=https://workspace-service:4014
 AGENT_SERVICE_URL=https://agent-service:4015
 RESEARCH_SERVICE_URL=https://research-service:4016
 PAYMENT_SERVICE_URL=https://payment-service:4018
+THREADS_SERVICE_URL=https://threads-service:4019
+THREAD_GENERATION_SERVICE_URL=https://thread-generation-service:4020
 LLAMACPP_SERVICE_URL=https://llamacpp-service:4017
 
 # =============================================================================
@@ -1631,6 +1633,8 @@ WORKSPACE_PORT=4014
 AGENT_PORT=4015
 RESEARCH_PORT=4016
 PAYMENT_SERVICE_PORT=4018
+THREADS_SERVICE_PORT=4019
+THREAD_GENERATION_SERVICE_PORT=4020
 LLAMACPP_PORT=4017
 
 # Research service: headless-browser fallback (ADR-094).

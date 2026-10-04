@@ -68,9 +68,9 @@ Drive the real flow. Assert on the **computed style / served class list**, never
 on the `.tsx` source.
 
 ```bash
-cd apps/claw-frontend && npx playwright test          # the suite
-npx playwright test --headed                          # watch it happen
-npx playwright test --debug                           # step through a failure
+cd apps/claw-frontend && npx playwright test <matching-spec>
+npx playwright test <matching-spec> --headed          # watch it happen
+npx playwright test <matching-spec> --debug           # step through a failure
 ```
 
 For exploratory work, drive the browser directly (Playwright MCP or

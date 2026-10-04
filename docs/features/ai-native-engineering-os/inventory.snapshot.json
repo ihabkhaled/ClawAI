@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 3 identical headings (39938 vs 7369 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 3 identical headings (40361 vs 7369 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and cursor.md share 1 identical headings (39938 vs 29057 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and cursor.md share 1 identical headings (40361 vs 29057 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -3509,6 +3509,20 @@
           "source": "apps/claw-server-logs-service/src/modules/server-logs/controllers/server-logs.controller.ts"
         }
       ],
+      "claw-thread-generation-service": [
+        {
+          "method": "GET",
+          "route": "/health",
+          "source": "apps/claw-thread-generation-service/src/modules/health/controllers/health.controller.ts"
+        }
+      ],
+      "claw-threads-service": [
+        {
+          "method": "GET",
+          "route": "/health",
+          "source": "apps/claw-threads-service/src/modules/health/controllers/health.controller.ts"
+        }
+      ],
       "claw-workspace-service": [
         {
           "method": "GET",
@@ -4421,6 +4435,20 @@
           "docker/docker-compose.prod.ollama.yml"
         ],
         "name": "stable-diffusion"
+      },
+      {
+        "files": [
+          "docker/docker-compose.dev.services.yml",
+          "docker/docker-compose.prod.services.yml"
+        ],
+        "name": "thread-generation-service"
+      },
+      {
+        "files": [
+          "docker/docker-compose.dev.services.yml",
+          "docker/docker-compose.prod.services.yml"
+        ],
+        "name": "threads-service"
       },
       {
         "files": [
@@ -6080,6 +6108,26 @@
         "confidence": "verified",
         "source": ".env.example",
         "value": "TESSERACT_BIN_PATH"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "THREADS_SERVICE_PORT"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "THREADS_SERVICE_URL"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "THREAD_GENERATION_SERVICE_PORT"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "THREAD_GENERATION_SERVICE_URL"
       },
       {
         "confidence": "verified",
@@ -7974,7 +8022,7 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 39938,
+          "bytes": 40361,
           "file": "CLAUDE.md"
         },
         {
@@ -8090,7 +8138,7 @@
           "file": "rules/07-backend-controllers-and-transport.md"
         },
         {
-          "bytes": 11920,
+          "bytes": 11935,
           "file": "rules/07-commit-rules.md"
         },
         {
@@ -8162,7 +8210,7 @@
           "file": "rules/22-testing-and-coverage.md"
         },
         {
-          "bytes": 6717,
+          "bytes": 6756,
           "file": "rules/23-git-commits-hooks-and-release-gates.md"
         },
         {
@@ -8206,7 +8254,7 @@
           "file": "rules/33-knowledge-compounding-and-context-velocity.md"
         },
         {
-          "bytes": 6856,
+          "bytes": 6893,
           "file": "rules/34-gate-economy-and-machine-resources.md"
         },
         {
@@ -8262,7 +8310,7 @@
           "file": "rules/47-client-bundle-weight-and-barrel-boundaries.md"
         },
         {
-          "bytes": 5614,
+          "bytes": 5347,
           "file": "rules/48-lint-and-test-only-what-changed.md"
         },
         {
@@ -8656,7 +8704,7 @@
           "file": "skills/run-coding-agent-release-rounds.md"
         },
         {
-          "bytes": 4632,
+          "bytes": 4837,
           "file": "skills/run-gates-once-and-land.md"
         },
         {
@@ -8664,7 +8712,7 @@
           "file": "skills/run-the-file-model-matrix.md"
         },
         {
-          "bytes": 5796,
+          "bytes": 5791,
           "file": "skills/run-the-qa-team.md"
         },
         {
@@ -9131,6 +9179,12 @@
         "location": "/api/v1/server-logs",
         "port": 4011,
         "service": "server-logs-service",
+        "source": "infra/nginx/locations.conf"
+      },
+      {
+        "location": "/api/v1/thread-publications",
+        "port": 4019,
+        "service": "threads-service",
         "source": "infra/nginx/locations.conf"
       },
       {
@@ -9703,6 +9757,16 @@
         "confidence": "verified",
         "source": "packages/shared-constants/src/index.ts",
         "value": 4004
+      },
+      "THREADS_SERVICE_PORT": {
+        "confidence": "verified",
+        "source": "packages/shared-constants/src/index.ts",
+        "value": 4019
+      },
+      "THREAD_GENERATION_SERVICE_PORT": {
+        "confidence": "verified",
+        "source": "packages/shared-constants/src/index.ts",
+        "value": 4020
       },
       "WORKSPACE_SERVICE_PORT": {
         "confidence": "verified",
@@ -10831,7 +10895,7 @@
       },
       "claw-health-service": {
         "runner": "vitest",
-        "testFiles": 13
+        "testFiles": 14
       },
       "claw-image-service": {
         "runner": "vitest",
@@ -10864,6 +10928,14 @@
       "claw-server-logs-service": {
         "runner": "vitest",
         "testFiles": 11
+      },
+      "claw-thread-generation-service": {
+        "runner": "vitest",
+        "testFiles": 2
+      },
+      "claw-threads-service": {
+        "runner": "vitest",
+        "testFiles": 2
       },
       "claw-workspace-service": {
         "runner": "vitest",
@@ -11450,6 +11522,56 @@
         "type": "nestjs-service"
       },
       {
+        "dir": "apps/claw-thread-generation-service",
+        "internalDeps": [
+          "@claw/shared-auth",
+          "@claw/shared-constants",
+          "@claw/shared-types",
+          "@claw/shared-utilities"
+        ],
+        "name": "claw-thread-generation-service",
+        "scripts": [
+          "build",
+          "dev",
+          "format",
+          "format:check",
+          "lint",
+          "lint:strict",
+          "start",
+          "start:prod",
+          "test",
+          "test:watch",
+          "typecheck"
+        ],
+        "source": "apps/claw-thread-generation-service/package.json",
+        "type": "nestjs-service"
+      },
+      {
+        "dir": "apps/claw-threads-service",
+        "internalDeps": [
+          "@claw/shared-auth",
+          "@claw/shared-constants",
+          "@claw/shared-types",
+          "@claw/shared-utilities"
+        ],
+        "name": "claw-threads-service",
+        "scripts": [
+          "build",
+          "dev",
+          "format",
+          "format:check",
+          "lint",
+          "lint:strict",
+          "start",
+          "start:prod",
+          "test",
+          "test:watch",
+          "typecheck"
+        ],
+        "source": "apps/claw-threads-service/package.json",
+        "type": "nestjs-service"
+      },
+      {
         "dir": "apps/claw-workspace-service",
         "internalDeps": [
           "@claw/shared-auth",
@@ -11592,20 +11714,20 @@
   "summary": {
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
-    "dockerServiceCount": 52,
-    "endpointCount": 792,
-    "envVarCount": 361,
+    "dockerServiceCount": 54,
+    "endpointCount": 794,
+    "envVarCount": 365,
     "eventCount": 185,
     "frontendRouteCount": 156,
     "localeCount": 13,
-    "nginxRouteCount": 68,
+    "nginxRouteCount": 69,
     "permissionCount": 84,
-    "portCount": 16,
+    "portCount": 18,
     "portCoverageGapCount": 2,
-    "serviceCount": 18,
+    "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2035,
-    "workspaceCount": 25
+    "totalTestFiles": 2040,
+    "workspaceCount": 27
   }
 }

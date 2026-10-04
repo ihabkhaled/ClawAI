@@ -580,6 +580,56 @@
       "type": "nestjs-service"
     },
     {
+      "dir": "apps/claw-thread-generation-service",
+      "internalDeps": [
+        "@claw/shared-auth",
+        "@claw/shared-constants",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-thread-generation-service",
+      "scripts": [
+        "build",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:strict",
+        "start",
+        "start:prod",
+        "test",
+        "test:watch",
+        "typecheck"
+      ],
+      "source": "apps/claw-thread-generation-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
+      "dir": "apps/claw-threads-service",
+      "internalDeps": [
+        "@claw/shared-auth",
+        "@claw/shared-constants",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-threads-service",
+      "scripts": [
+        "build",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:strict",
+        "start",
+        "start:prod",
+        "test",
+        "test:watch",
+        "typecheck"
+      ],
+      "source": "apps/claw-threads-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
       "dir": "apps/claw-workspace-service",
       "internalDeps": [
         "@claw/shared-auth",

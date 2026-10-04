@@ -136,6 +136,7 @@ http {
     # a typo is a start-up failure rather than a 502 discovered in production.
     map $host $origin_auth            { default "${CLAW_AUTH_ORIGIN}"; }
     map $host $origin_payment         { default "${CLAW_PAYMENT_ORIGIN}"; }
+    map $host $origin_threads         { default "${CLAW_THREADS_ORIGIN}"; }
     map $host $origin_chat            { default "${CLAW_CHAT_ORIGIN}"; }
     map $host $origin_connector       { default "${CLAW_CONNECTOR_ORIGIN}"; }
     map $host $origin_routing         { default "${CLAW_ROUTING_ORIGIN}"; }
@@ -281,6 +282,12 @@ http {
 
         location /api/v1/chat-threads {
             set $backend https://$origin_chat;
+            proxy_pass $backend;
+        }
+
+        # Keep publication routes distinct from /api/v1/threads (chat threads).
+        location /api/v1/thread-publications {
+            set $backend https://$origin_threads;
             proxy_pass $backend;
         }
 

@@ -374,6 +374,20 @@
         "docker/docker-compose.dev.services.yml",
         "docker/docker-compose.prod.services.yml"
       ],
+      "name": "thread-generation-service"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "threads-service"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
       "name": "workspace-service"
     }
   ]

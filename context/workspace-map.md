@@ -4,7 +4,7 @@ The npm-workspace inventory. Ground truth: root `package.json`
 (`"workspaces": ["packages/*", "apps/*"]`), `.ai/manifests/services.json`,
 `.ai/manifests/packages.json`, `.ai/manifests/tests.json`.
 
-**Total workspaces: 25** = 6 shared packages + 18 backend services + 1 frontend.
+**Total workspaces: 27** = 6 shared packages + 20 backend services + 1 frontend.
 
 ## Shared packages (`packages/`)
 
@@ -22,26 +22,28 @@ edges: `.ai/manifests/workspace-dependency-graph.json`.
 
 ## Backend services (`apps/`)
 
-| Service                      | Port            | DB       | Test files | Endpoints |
-| ---------------------------- | --------------- | -------- | ---------- | --------- |
-| claw-auth-service            | 4001            | Postgres | 36         | 45        |
-| claw-chat-service            | 4002            | Postgres | 64         | 37        |
-| claw-connector-service       | 4003            | Postgres | 16         | 13        |
-| claw-routing-service         | 4004            | Postgres | 50         | 63        |
-| claw-memory-service          | 4005            | Postgres | 12         | 46        |
-| claw-file-service            | 4006            | Postgres | 15         | 14        |
-| claw-audit-service           | 4007            | Mongo    | 15         | 7         |
-| claw-ollama-service          | 4008            | Postgres | 17         | 34        |
-| claw-health-service          | 4009            | none     | 4          | 1         |
-| claw-client-logs-service     | 4010 (env-only) | Mongo    | 6          | 5         |
-| claw-server-logs-service     | 4011 (env-only) | Mongo    | 7          | 7         |
-| claw-image-service           | 4012            | Postgres | 9          | 9         |
-| claw-file-generation-service | 4013            | Postgres | 7          | 7         |
-| claw-workspace-service       | 4014            | Postgres | 66         | 103       |
-| claw-agent-service           | 4015            | Postgres | 9          | 83        |
-| claw-research-service        | 4016            | Postgres | 14         | 16        |
-| claw-llamacpp-service        | 4017            | Postgres | 16         | 26        |
-| claw-payment-service         | 4018            | Postgres | 76         | 26        |
+| Service                        | Port            | DB       | Test files | Endpoints |
+| ------------------------------ | --------------- | -------- | ---------- | --------- |
+| claw-auth-service              | 4001            | Postgres | 36         | 45        |
+| claw-chat-service              | 4002            | Postgres | 64         | 37        |
+| claw-connector-service         | 4003            | Postgres | 16         | 13        |
+| claw-routing-service           | 4004            | Postgres | 50         | 63        |
+| claw-memory-service            | 4005            | Postgres | 12         | 46        |
+| claw-file-service              | 4006            | Postgres | 15         | 14        |
+| claw-audit-service             | 4007            | Mongo    | 15         | 7         |
+| claw-ollama-service            | 4008            | Postgres | 17         | 34        |
+| claw-health-service            | 4009            | none     | 4          | 1         |
+| claw-client-logs-service       | 4010 (env-only) | Mongo    | 6          | 5         |
+| claw-server-logs-service       | 4011 (env-only) | Mongo    | 7          | 7         |
+| claw-image-service             | 4012            | Postgres | 9          | 9         |
+| claw-file-generation-service   | 4013            | Postgres | 7          | 7         |
+| claw-workspace-service         | 4014            | Postgres | 66         | 103       |
+| claw-agent-service             | 4015            | Postgres | 9          | 83        |
+| claw-research-service          | 4016            | Postgres | 14         | 16        |
+| claw-llamacpp-service          | 4017            | Postgres | 16         | 26        |
+| claw-payment-service           | 4018            | Postgres | 76         | 26        |
+| claw-threads-service           | 4019            | none     | 2          | 1         |
+| claw-thread-generation-service | 4020            | none     | 2          | 1         |
 
 Counts from `.ai/manifests/services.json` + `tests.json`. The
 env-only-port note for client-logs/server-logs is expanded in

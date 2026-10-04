@@ -8,7 +8,7 @@ Welcome to the **ClawAI engineering and product Wiki**. This Wiki is generated f
 
 ## Current repository snapshot
 
-- **25 npm workspaces**: 18 backend services + 1 frontend + 6 shared packages.
+- **27 npm workspaces**: 20 backend services + 1 frontend + 6 shared packages.
 - **1283 test files** tracked by the generated test manifest.
 - **669 API endpoints** in the generated endpoint manifest.
 - **178 RabbitMQ event definitions** in the event graph.
@@ -31,8 +31,9 @@ Welcome to the **ClawAI engineering and product Wiki**. This Wiki is generated f
 
 ## Product and business
 
+- **Threads:** [[Threads]] — product decisions and two-service architecture.
 - **Positioning:** [[Product Vision|Product-Vision]] (canonical) and the decision, [ADR-126](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-126-every-ai-one-workspace-positioning.md)
-- **What ships:** [[Flagship Features|Flagship-Features]] — 15 flagships, each traced to code, with limits and gaps
+- **Flagships:** [[Flagship Features|Flagship-Features]] — shipped capabilities plus planned Threads, with status and evidence
 - **Business:** [[Business Overview|Business-Overview]], and the numbers in [`docs/business/`](https://github.com/ihabkhaled/ClawAI/blob/main/docs/business/README.md)
 - **Market:** [competitive analysis](https://github.com/ihabkhaled/ClawAI/blob/main/docs/01-executive-context/competitive-analysis.md)
 - **Requirements and drift:** [[Requirements Register|Requirements-Register]] · [[Drift Log|Drift-Log]]

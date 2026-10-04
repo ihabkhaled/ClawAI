@@ -215,3 +215,17 @@ benchmark: [`chat-competitive-benchmark-2026-09.md`](chat-competitive-benchmark-
   Live migration, RBAC and product QA remain open. NVIDIA NIM's protocol path
   is mocked; no live call is claimed.
 - **Who:** owner; implemented and evidence-recorded by the coding agent.
+
+## ClawAI Threads
+
+### REQ-THREADS-001
+
+- **Statement:** A user can turn a private chat into a sourced publication through
+  bounded multi-model review, then approve it before it becomes public; approved
+  work supports moderated community participation and independent discovery.
+- **Status:** current · **Priority:** high
+- **Source:** owner-approved prompt pack decisions, 2026-10-04.
+- **Acceptance:** see the [Threads product spec](clawai-threads-product-spec.md)
+  for content types, disclosure, approval, citations, spend cap, moderation,
+  deletion, and indexing requirements. The feature is planned, not shipped.
+- **History:** 2026-10-04 created for the ClawAI Threads delivery plan.

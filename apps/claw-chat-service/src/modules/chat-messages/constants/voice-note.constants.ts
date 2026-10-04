@@ -21,7 +21,7 @@ export const VOICE_NOTE_TRANSCRIPT_FRAME =
  * `apps/claw-file-service/src/modules/files/constants/transcription.constants.ts`.
  *
  * Not imported from a shared package on purpose: touching `@claw/shared-constants`
- * marks every one of the 18 services "affected" by the pre-commit gate, which
+ * marks every one of the 20 services "affected" by the pre-commit gate, which
  * then needs a generated Prisma client for services this change has nothing to
  * do with. A one-line string literal is not worth that. Each copy is pinned by
  * a test (`context-assembly-attachments.spec.ts` here,

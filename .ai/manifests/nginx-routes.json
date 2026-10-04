@@ -338,6 +338,12 @@
       "source": "infra/nginx/locations.conf"
     },
     {
+      "location": "/api/v1/thread-publications",
+      "port": 4019,
+      "service": "threads-service",
+      "source": "infra/nginx/locations.conf"
+    },
+    {
       "location": "/api/v1/threads",
       "port": 4002,
       "service": "chat-service",

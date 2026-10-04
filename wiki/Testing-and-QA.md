@@ -1,36 +1,37 @@
 # Testing and QA
 
-Current generated test-file count: **1273** across **25 workspaces**.
+Current generated test-file count: **1273** across **27 workspaces**.
 
-| Workspace | Runner | Test files |
-| --- | --- | --- |
-| @claw/shared-auth | vitest | 1 |
-| @claw/shared-constants | vitest | 3 |
-| @claw/shared-entitlements | vitest | 8 |
-| @claw/shared-rabbitmq | vitest | 0 |
-| @claw/shared-types | vitest | 3 |
-| @claw/shared-utilities | vitest | 37 |
-| claw-agent-service | vitest | 13 |
-| claw-audit-service | vitest | 21 |
-| claw-auth-service | vitest | 96 |
-| claw-chat-service | vitest | 151 |
-| claw-client-logs-service | vitest | 6 |
-| claw-connector-service | vitest | 25 |
-| claw-file-generation-service | vitest | 7 |
-| claw-file-service | vitest | 20 |
-| claw-frontend | vitest | 474 |
-| claw-health-service | vitest | 4 |
-| claw-image-service | vitest | 12 |
-| claw-llamacpp-service | vitest | 17 |
-| claw-memory-service | vitest | 14 |
-| claw-ollama-service | vitest | 18 |
-| claw-payment-service | vitest | 110 |
-| claw-research-service | vitest | 31 |
-| claw-routing-service | vitest | 99 |
-| claw-server-logs-service | vitest | 7 |
-| claw-workspace-service | vitest | 96 |
+| Workspace                    | Runner | Test files |
+| ---------------------------- | ------ | ---------- |
+| @claw/shared-auth            | vitest | 1          |
+| @claw/shared-constants       | vitest | 3          |
+| @claw/shared-entitlements    | vitest | 8          |
+| @claw/shared-rabbitmq        | vitest | 0          |
+| @claw/shared-types           | vitest | 3          |
+| @claw/shared-utilities       | vitest | 37         |
+| claw-agent-service           | vitest | 13         |
+| claw-audit-service           | vitest | 21         |
+| claw-auth-service            | vitest | 96         |
+| claw-chat-service            | vitest | 151        |
+| claw-client-logs-service     | vitest | 6          |
+| claw-connector-service       | vitest | 25         |
+| claw-file-generation-service | vitest | 7          |
+| claw-file-service            | vitest | 20         |
+| claw-frontend                | vitest | 474        |
+| claw-health-service          | vitest | 4          |
+| claw-image-service           | vitest | 12         |
+| claw-llamacpp-service        | vitest | 17         |
+| claw-memory-service          | vitest | 14         |
+| claw-ollama-service          | vitest | 18         |
+| claw-payment-service         | vitest | 110        |
+| claw-research-service        | vitest | 31         |
+| claw-routing-service         | vitest | 99         |
+| claw-server-logs-service     | vitest | 7          |
+| claw-workspace-service       | vitest | 96         |
 
 ## Test architecture
+
 - Vitest is the workspace unit/integration runner.
 - Playwright covers browser/E2E flows.
 - Coverage is risk-based, with high global floors and stricter branch expectations for critical pure logic.

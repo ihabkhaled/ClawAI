@@ -429,6 +429,38 @@
       "to": "@claw/shared-utilities"
     },
     {
+      "from": "claw-thread-generation-service",
+      "to": "@claw/shared-auth"
+    },
+    {
+      "from": "claw-thread-generation-service",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-thread-generation-service",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "claw-thread-generation-service",
+      "to": "@claw/shared-utilities"
+    },
+    {
+      "from": "claw-threads-service",
+      "to": "@claw/shared-auth"
+    },
+    {
+      "from": "claw-threads-service",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-threads-service",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "claw-threads-service",
+      "to": "@claw/shared-utilities"
+    },
+    {
       "from": "claw-workspace-service",
       "to": "@claw/shared-auth"
     },

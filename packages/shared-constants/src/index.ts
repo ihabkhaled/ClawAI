@@ -21,6 +21,8 @@ export const AGENT_SERVICE_PORT = 4015;
 export const RESEARCH_SERVICE_PORT = 4016;
 export const LLAMACPP_SERVICE_PORT = 4017;
 export const PAYMENT_SERVICE_PORT = 4018;
+export const THREADS_SERVICE_PORT = 4019;
+export const THREAD_GENERATION_SERVICE_PORT = 4020;
 
 // ---- Service Names ----
 
@@ -40,6 +42,8 @@ export const AGENT_SERVICE = 'agent-service';
 export const RESEARCH_SERVICE = 'research-service';
 export const LLAMACPP_SERVICE = 'llamacpp-service';
 export const PAYMENT_SERVICE = 'payment-service';
+export const THREADS_SERVICE = 'threads-service';
+export const THREAD_GENERATION_SERVICE = 'thread-generation-service';
 
 // ---- API ----
 

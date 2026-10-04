@@ -10,7 +10,7 @@
 // whose notes omit real work.
 //
 // The bump is applied to EVERY workspace, not just the root: tools/__tests__/
-// workspace-versions.test.mjs enforces that all 25 workspaces and every
+// workspace-versions.test.mjs enforces that all 27 workspaces and every
 // internal @claw/* dependency pin carry the root version. Bumping the root
 // alone turns that test red on the next push.
 //

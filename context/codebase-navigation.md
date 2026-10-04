@@ -8,7 +8,7 @@ Where to look for any given kind of code. Grounded in the real tree under
 ```
 apps/
   claw-frontend/              # Next.js 16 app
-  claw-<service>-service/     # 18 NestJS services (see service-catalog.md)
+  claw-<service>-service/     # 20 NestJS services (see service-catalog.md)
 packages/
   shared-auth/ shared-constants/ shared-entitlements/
   shared-rabbitmq/ shared-types/ shared-utilities/

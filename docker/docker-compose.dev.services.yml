@@ -796,6 +796,76 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  threads-service:
+    labels:
+      claw.service: threads-service
+    logging: *claw-logging
+    build:
+      context: ..
+      dockerfile: apps/claw-threads-service/Dockerfile.dev
+    container_name: claw-threads-service
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      <<: *development-watch-environment
+    ports:
+      - '4019:4019'
+    volumes:
+      - ../apps/claw-threads-service/package.json:/app/apps/claw-threads-service/package.json:ro
+      - ../apps/claw-threads-service/tsconfig.json:/app/apps/claw-threads-service/tsconfig.json:ro
+      - ../apps/claw-threads-service/tsconfig.build.json:/app/apps/claw-threads-service/tsconfig.build.json:ro
+      - ../apps/claw-threads-service/src:/app/apps/claw-threads-service/src
+      - ../tools:/app/tools:ro
+      - ../certs:/certs:ro
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4019/api/v1/health || exit 1',
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
+  thread-generation-service:
+    labels:
+      claw.service: thread-generation-service
+    logging: *claw-logging
+    build:
+      context: ..
+      dockerfile: apps/claw-thread-generation-service/Dockerfile.dev
+    container_name: claw-thread-generation-service
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      <<: *development-watch-environment
+    ports:
+      - '4020:4020'
+    volumes:
+      - ../apps/claw-thread-generation-service/package.json:/app/apps/claw-thread-generation-service/package.json:ro
+      - ../apps/claw-thread-generation-service/tsconfig.json:/app/apps/claw-thread-generation-service/tsconfig.json:ro
+      - ../apps/claw-thread-generation-service/tsconfig.build.json:/app/apps/claw-thread-generation-service/tsconfig.build.json:ro
+      - ../apps/claw-thread-generation-service/src:/app/apps/claw-thread-generation-service/src
+      - ../tools:/app/tools:ro
+      - ../certs:/certs:ro
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4020/api/v1/health || exit 1',
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
   frontend:
     labels:
       claw.service: frontend

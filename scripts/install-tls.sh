@@ -91,6 +91,8 @@ HOSTS=(
   research-service
   llamacpp-service
   payment-service
+  threads-service
+  thread-generation-service
 )
 
 # Append the user-configured hostname. mkcert handles both DNS names and

@@ -18,6 +18,8 @@ export const SERVICE_URLS: Record<string, string> = {
   'research-service': 'https://research-service:4016/api/v1/health',
   'llamacpp-service': 'https://llamacpp-service:4017/api/v1/health',
   'payment-service': 'https://payment-service:4018/api/v1/health',
+  'threads-service': 'https://threads-service:4019/api/v1/health',
+  'thread-generation-service': 'https://thread-generation-service:4020/api/v1/health',
 };
 
 export const HEALTH_CHECK_TIMEOUT_MS = 5000;

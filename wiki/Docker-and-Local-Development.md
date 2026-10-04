@@ -5,7 +5,7 @@
 ## Overview
 
 ClawAI runs as a fully containerized development environment using split Docker
-Compose files. The complete profile contains 18 backend services, their owned
+Compose files. The complete profile contains 20 backend services, their owned
 databases, shared infrastructure, a reverse proxy, the frontend, and optional
 local-AI runtimes.
 
@@ -142,7 +142,7 @@ Layer 2 (depends on Layer 1 being healthy):
   health-service    → redis, rabbitmq
 
 Layer 3 (depends on all services being healthy):
-  nginx → all 18 backend services
+  nginx → all 20 backend services
 
 Layer 4:
   frontend → nginx (service_started, not health check)
@@ -336,7 +336,7 @@ or any other internal payment contract.
 | Redis                | ~50 MB    | ~10 MB     |
 | RabbitMQ             | ~200 MB   | ~50 MB     |
 | Ollama (5 models)    | ~2-6 GB   | ~10 GB     |
-| 18 NestJS services   | ~2.6 GB   | ~500 MB    |
+| 20 NestJS services   | ~2.6 GB   | ~500 MB    |
 | Nginx                | ~10 MB    | ~5 MB      |
 | Next.js frontend     | ~500 MB   | ~300 MB    |
 
@@ -505,4 +505,3 @@ llamacpp-service were down with the same cause, all three on `1.63.0` images.
 search and fetch in chat. **A crash-looping dev container is a config-drift
 suspect before it is a code suspect** — check the container's config against the
 host's before reading the source.
-

@@ -6,7 +6,7 @@ The npm-workspace inventory. Ground truth: root `package.json`
 (`"workspaces": ["packages/*", "apps/*"]`), `.ai/manifests/services.json`,
 `.ai/manifests/packages.json`, `.ai/manifests/tests.json`.
 
-**Total workspaces: 25** = 6 shared packages + 18 backend services + 1 frontend.
+**Total workspaces: 27** = 6 shared packages + 20 backend services + 1 frontend.
 
 ## Shared packages (`packages/`)
 

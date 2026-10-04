@@ -652,6 +652,66 @@ services:
     networks:
       - claw-network
 
+  # ---------------------------------------------------------------------------
+  # Threads Service
+  # ---------------------------------------------------------------------------
+  threads-service:
+    labels:
+      claw.service: threads-service
+    logging: *claw-logging
+    build:
+      context: ..
+      dockerfile: apps/claw-threads-service/Dockerfile
+    container_name: claw-threads-service
+    restart: unless-stopped
+    env_file: ../.env
+    ports:
+      - '4019:4019'
+    volumes:
+      - ../certs:/certs:ro
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4019/api/v1/health || exit 1',
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
+  # Thread Generation Service
+  # ---------------------------------------------------------------------------
+  thread-generation-service:
+    labels:
+      claw.service: thread-generation-service
+    logging: *claw-logging
+    build:
+      context: ..
+      dockerfile: apps/claw-thread-generation-service/Dockerfile
+    container_name: claw-thread-generation-service
+    restart: unless-stopped
+    env_file: ../.env
+    ports:
+      - '4020:4020'
+    volumes:
+      - ../certs:/certs:ro
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4020/api/v1/health || exit 1',
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
   # Frontend
   # ---------------------------------------------------------------------------
   frontend:

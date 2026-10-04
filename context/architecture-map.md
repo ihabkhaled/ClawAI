@@ -17,8 +17,8 @@ research work across cloud AI providers and local runtimes (Ollama, llama.cpp,
 ComfyUI, Stable Diffusion), with memory, context packs, workspace connectors,
 and a desktop agent — all behind one authenticated gateway.
 
-It is an **npm-workspace monorepo**: **18 NestJS microservices + 1 Next.js
-frontend + 6 shared packages** = 25 workspaces (25 with a `package.json` under
+It is an **npm-workspace monorepo**: **20 NestJS microservices + 1 Next.js
+frontend + 6 shared packages** = 27 workspaces (27 with a `package.json` under
 `apps/`/`packages/`; the frontend counts as an app). See
 [workspace-map.md](workspace-map.md).
 
@@ -42,7 +42,7 @@ frontend + 6 shared packages** = 25 workspaces (25 with a `package.json` under
                 │  HTTP/HTTPS to service:port
                 ▼
 ┌──────────────────────────────────────────────────────────────────────┐
-│  18 NestJS services (ports 4001–4018)                                  │
+│  20 NestJS services (ports 4001-4020)                                  │
 │  Controller (3-line) → Service (≤30 ln) → Repository (no throw)        │
 │                     ↘ Manager (≤80 ln orchestration)                   │
 │                     ↘ Adapter (wraps vendor SDKs)                       │
@@ -69,26 +69,28 @@ port is env-only** (`CLIENT_LOGS_PORT` / `SERVER_LOGS_PORT`). This gap is called
 out by the inventory audit (`portCoverageGaps`) and detailed in
 [port-and-service-map.md](port-and-service-map.md).
 
-| Service         | Port            | DB                             |
-| --------------- | --------------- | ------------------------------ |
-| auth            | 4001            | PostgreSQL                     |
-| chat            | 4002            | PostgreSQL                     |
-| connector       | 4003            | PostgreSQL                     |
-| routing         | 4004            | PostgreSQL                     |
-| memory          | 4005            | PostgreSQL                     |
-| file            | 4006            | PostgreSQL                     |
-| audit           | 4007            | MongoDB                        |
-| ollama          | 4008            | PostgreSQL                     |
-| health          | 4009            | none                           |
-| client-logs     | 4010 (env-only) | MongoDB                        |
-| server-logs     | 4011 (env-only) | MongoDB                        |
-| image           | 4012            | PostgreSQL                     |
-| file-generation | 4013            | PostgreSQL                     |
-| workspace       | 4014            | PostgreSQL                     |
-| agent           | 4015            | PostgreSQL                     |
-| research        | 4016            | PostgreSQL                     |
-| llamacpp        | 4017            | PostgreSQL (Debian base image) |
-| payment         | 4018            | PostgreSQL                     |
+| Service           | Port            | DB                             |
+| ----------------- | --------------- | ------------------------------ |
+| auth              | 4001            | PostgreSQL                     |
+| chat              | 4002            | PostgreSQL                     |
+| connector         | 4003            | PostgreSQL                     |
+| routing           | 4004            | PostgreSQL                     |
+| memory            | 4005            | PostgreSQL                     |
+| file              | 4006            | PostgreSQL                     |
+| audit             | 4007            | MongoDB                        |
+| ollama            | 4008            | PostgreSQL                     |
+| health            | 4009            | none                           |
+| client-logs       | 4010 (env-only) | MongoDB                        |
+| server-logs       | 4011 (env-only) | MongoDB                        |
+| image             | 4012            | PostgreSQL                     |
+| file-generation   | 4013            | PostgreSQL                     |
+| workspace         | 4014            | PostgreSQL                     |
+| agent             | 4015            | PostgreSQL                     |
+| research          | 4016            | PostgreSQL                     |
+| llamacpp          | 4017            | PostgreSQL (Debian base image) |
+| payment           | 4018            | PostgreSQL                     |
+| threads           | 4019            | none (health-only foundation)  |
+| thread-generation | 4020            | none (health-only foundation)  |
 
 Most PostgreSQL services use **Prisma 7.8**; the three Mongo services (audit,
 client-logs, server-logs) use **Mongoose**. `health` has no database.
@@ -103,6 +105,8 @@ client-logs, server-logs) use **Mongoose**. `health` has no database.
    `/api/v1/memories` → memory:4005, `/api/v1/agent` → agent:4015, and
    `/api/v1/payments` or `/api/v1/billing` → payment:4018. Internal payment
    contracts are deliberately absent from nginx.
+   `/api/v1/thread-publications` -> threads:4019; the legacy
+   `/api/v1/threads` alias remains routed to chat:4002.
    nginx also **blanks** `CF-IPCountry`, `CF-Connecting-IP` and `True-Client-IP`
    on every proxied request. ClawAI is not behind a CDN, so those headers reach
    the origin only if a client sent them. `X-Real-IP` is the one address a

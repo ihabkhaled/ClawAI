@@ -5,7 +5,7 @@ to canonical sources. **Canonical wins on conflict** (see below).
 
 ## Identity
 
-ClawAI: 18 NestJS services + Next.js 16 frontend + 6 shared packages (npm
+ClawAI: 20 NestJS services + Next.js 16 frontend + 6 shared packages (npm
 workspaces). RabbitMQ `claw.events`; nginx proxies `/api/v1/*`.
 
 Product: **"Every AI, one workspace."** Positioning is canonical in

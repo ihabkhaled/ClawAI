@@ -120,6 +120,13 @@ ClawAI is a fully functional local-first AI orchestration platform with 17 NestJ
 
 ## Planned Features (Not Yet Started)
 
+### ClawAI Threads (Owner-approved plan, 2026-10-04)
+
+Research-backed articles from private chat, isolated multi-model generation,
+owner-approved publishing, moderated community actions, and independent
+discovery. The eight-batch delivery plan and launch gates are in
+[`docs/superpowers/plans/2026-10-04-clawai-threads-implementation-plan.md`](../superpowers/plans/2026-10-04-clawai-threads-implementation-plan.md).
+
 ### Short-Term (Next Quarter)
 
 | Feature                | Priority | Description                                           |

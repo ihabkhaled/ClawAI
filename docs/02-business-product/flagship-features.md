@@ -229,6 +229,14 @@ The status page is **not public**.
 
 Decision: [ADR-076](../13-adr/adr-076-chat-stream-durability.md).
 
+## 16. ClawAI Threads — Planned
+
+Research-backed publications and community workflows are specified in the
+[Threads product spec](clawai-threads-product-spec.md) and
+[ADR-159](../13-adr/adr-159-clawai-threads-two-service-architecture.md).
+Implementation is in progress; do not describe Threads as shipped until its
+generation, publication, safety, discovery, and QA paths are verified.
+
 ---
 
 ## Known documentation drift found by this audit

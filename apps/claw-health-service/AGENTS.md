@@ -21,7 +21,7 @@ npm run dev
 - Database: none
 - Prisma models: none
 - API endpoints: 3 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 13 (vitest)
+- Test files: 14 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

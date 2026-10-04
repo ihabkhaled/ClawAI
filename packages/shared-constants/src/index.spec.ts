@@ -6,6 +6,8 @@ import {
   LLAMACPP_SERVICE_PORT,
   PAYMENT_SERVICE_PORT,
   RABBITMQ_QUEUE_PREFIX,
+  THREAD_GENERATION_SERVICE_PORT,
+  THREADS_SERVICE_PORT,
 } from './index';
 import * as constants from './index';
 
@@ -15,14 +17,14 @@ describe('shared-constants', () => {
     expect(RABBITMQ_QUEUE_PREFIX).toBe('claw');
   });
 
-  it('assigns each service a unique port in the 4001-4018 range', () => {
+  it('assigns each service a unique port in the 4001-4020 range', () => {
     const portEntries = Object.entries(constants).filter(([key]) => key.endsWith('_SERVICE_PORT'));
     const ports = portEntries.map(([, value]) => value as number);
 
     expect(ports.length).toBeGreaterThanOrEqual(16);
     for (const port of ports) {
       expect(port).toBeGreaterThanOrEqual(4001);
-      expect(port).toBeLessThanOrEqual(4018);
+      expect(port).toBeLessThanOrEqual(4020);
     }
     expect(new Set(ports).size).toBe(ports.length);
   });
@@ -33,5 +35,7 @@ describe('shared-constants', () => {
     expect(HEALTH_SERVICE_PORT).toBe(4009);
     expect(LLAMACPP_SERVICE_PORT).toBe(4017);
     expect(PAYMENT_SERVICE_PORT).toBe(4018);
+    expect(THREADS_SERVICE_PORT).toBe(4019);
+    expect(THREAD_GENERATION_SERVICE_PORT).toBe(4020);
   });
 });

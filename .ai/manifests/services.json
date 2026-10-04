@@ -255,7 +255,7 @@
       "port": 4009,
       "portSource": "shared-constants",
       "prismaModels": [],
-      "testFiles": 13,
+      "testFiles": 14,
       "testRunner": "vitest"
     },
     {
@@ -512,6 +512,42 @@
       "portSource": "env-only (no constant)",
       "prismaModels": [],
       "testFiles": 11,
+      "testRunner": "vitest"
+    },
+    {
+      "database": "none",
+      "dir": "apps/claw-thread-generation-service",
+      "endpointCount": 1,
+      "internalDeps": [
+        "@claw/shared-auth",
+        "@claw/shared-constants",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [],
+      "name": "claw-thread-generation-service",
+      "port": 4020,
+      "portSource": "shared-constants",
+      "prismaModels": [],
+      "testFiles": 2,
+      "testRunner": "vitest"
+    },
+    {
+      "database": "none",
+      "dir": "apps/claw-threads-service",
+      "endpointCount": 1,
+      "internalDeps": [
+        "@claw/shared-auth",
+        "@claw/shared-constants",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [],
+      "name": "claw-threads-service",
+      "port": 4019,
+      "portSource": "shared-constants",
+      "prismaModels": [],
+      "testFiles": 2,
       "testRunner": "vitest"
     },
     {

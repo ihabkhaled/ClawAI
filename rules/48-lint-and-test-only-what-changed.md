@@ -7,23 +7,20 @@ instead of with the change is a gate people start bypassing.
 
 ## The rules
 
-1. **Lint FILES, not workspaces.** `npx eslint <the files you changed> --fix`.
-   Never `npm run lint` to check your own edit — that lints every file in the
-   workspace to tell you about three.
-2. **Test the workspace you touched, and prefer the file.**
-   `npx vitest run <spec>` while iterating; the workspace suite once, at the end.
-   Never all workspaces.
+1. **Lint changed files only.** Run npx eslint on changed files; use --fix only
+   when formatting is intended. Never lint a whole workspace for a file edit.
+2. **Run only matching tests.** For a changed TypeScript implementation, run
+   its matching spec; when a spec is created or changed, run that spec. Never
+   run all workspace or repository tests for a scoped change.
 3. **Typecheck the workspace you touched.** `npm run typecheck` is per-workspace
    already; run it in that folder, not at the root.
-4. **Do not re-prove what the hooks are about to prove.** `lint-staged` already
-   runs eslint --fix and prettier on staged files; pre-push already runs the
-   affected workspaces' tests and builds. Running the same gates by hand first
-   pays for them twice.
-5. **`--no-verify` still needs a reason and an instruction.** Scoped gates make
-   the hooks cheap enough that skipping them is rarely worth it —
-   [ADR-061](../docs/13-adr/adr-061-git-hook-policy-no-bypass.md) stands. When the
-   user explicitly asks for it, say so in the commit body so the next reader
-   knows the tree was not gated.
+4. **Do not re-prove an unchanged tree.** Use a valid exact-tree gate receipt
+   when it proves the same scoped checks already passed for the staged tree.
+   Hooks remain enabled; receipts may avoid duplicate work only where the hook
+   supports that behavior.
+5. **Never bypass hooks.** --no-verify and other hook bypasses are prohibited
+   by ADR-061, even when a user asks. Reduce cost with changed-file checks and
+   tree-bound receipts.
 
 ## What this costs when ignored
 
@@ -35,11 +32,11 @@ of both — three times the work for one edit, most of it on files nobody touche
 
 ```bash
 # after editing
-npx eslint path/to/changed.ts path/to/other.ts --fix
+npx eslint path/to/changed.ts path/to/other.ts
 npx vitest run path/to/changed.spec.ts
 
-# once, before committing, in the touched workspace only
-npm run typecheck && npx vitest run
+# typecheck the touched workspace when required by its validation lane
+npm run typecheck
 
 # then
 git add <explicit paths> && git commit && git push
@@ -93,7 +90,6 @@ Related: [`rules/34-gate-economy-and-machine-resources.md`](34-gate-economy-and-
     screenshots, and tell the user to run `npx playwright test --headed` themselves.
 13. **Commit subjects stay under 100 characters** (commitlint) and end with the attribution
     line. A too-long subject fails after the 4-minute hook run, so check length first.
-14. **`--no-verify` follows rule 5.** When the user explicitly asks for it, regenerate the
-    knowledge layer first (`npm run knowledge:build`, stage the generated files), say so in
-    the commit body, and still read CI. The hooks are scoped and normally pass in minutes,
-    so do not reach for the bypass just to save time.
+14. **Hooks stay enabled.** Never use --no-verify. Use exact-tree receipts only
+    for checks they directly cover; do not treat receipts as permission to skip
+    hooks, knowledge generation, or required CI gates.

@@ -4,7 +4,7 @@
  * error shape, same reason for declaring it rather than reading off
  * `unknown` with casts: `error.message` is a nested object for Gemini and
  * OpenAI, never usable directly. Declared locally instead of shared because a
- * @claw/shared-* edit marks every one of the 18 services "affected" for the
+ * @claw/shared-* edit marks every one of the 20 services "affected" for the
  * pre-commit gate — not worth it for a two-field read model each service
  * already has its own copy of.
  */
