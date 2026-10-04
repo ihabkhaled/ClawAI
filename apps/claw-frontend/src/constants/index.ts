@@ -71,6 +71,7 @@ export {
 } from './chat.constants';
 export {
   PROVIDER_DISPLAY_NAMES,
+  providerDisplayName,
   PROVIDER_ICON_COLORS,
   AUTH_TYPE_LABELS,
   CONNECTOR_STATUS_LABELS,

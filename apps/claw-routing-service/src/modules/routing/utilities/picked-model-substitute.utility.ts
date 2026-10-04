@@ -3,11 +3,11 @@ import type { ModelCostClass } from '@claw/shared-types';
 
 import {
   PICKED_MODEL_COST_CLASS_ORDER,
-  PICKED_MODEL_NON_CHAT_ID_PATTERN,
-  PICKED_MODEL_SAME_PROVIDER_SHARE,
   PICKED_MODEL_GROUP_COSTLIER,
   PICKED_MODEL_GROUP_OTHER_PROVIDER,
   PICKED_MODEL_GROUP_SAME_PROVIDER,
+  PICKED_MODEL_NON_CHAT_ID_PATTERN,
+  PICKED_MODEL_SAME_PROVIDER_SHARE,
   PICKED_MODEL_UNKNOWN_COST_RANK,
 } from '../constants/picked-model-substitute.constants';
 import type {
@@ -47,13 +47,14 @@ export function rankPickedModelSubstitutes(
   const pickRank = costClassRank(input.costClassOf(input.pick.provider, input.pick.model));
   const seen = new Set<string>([modelMatchKey(input.pick.provider, input.pick.model)]);
   const scored: ScoredPickedModelSubstitute[] = [];
-  input.eligible.forEach((deployment, order) => {
-    const key = modelMatchKey(deployment.provider, deployment.providerModelId);
+  for (const [order, deployment] of input.eligible.entries()) {
+    const provider = deployment.runtimeProviderKey ?? deployment.provider;
+    const key = modelMatchKey(provider, deployment.providerModelId);
     if (seen.has(key) || PICKED_MODEL_NON_CHAT_ID_PATTERN.test(deployment.providerModelId)) {
-      return;
+      continue;
     }
     seen.add(key);
-    const rank = costClassRank(input.costClassOf(deployment.provider, deployment.providerModelId));
+    const rank = costClassRank(input.costClassOf(provider, deployment.providerModelId));
     // An unpriced pick (every local/included model, any unseeded cloud model) is
     // the cheapest thing there is, so any cloud substitute may cost more and must
     // say so. With a priced pick an unpriced substitute is not called costlier.
@@ -61,10 +62,10 @@ export function rankPickedModelSubstitutes(
       pickRank === PICKED_MODEL_UNKNOWN_COST_RANK
         ? true
         : rank !== PICKED_MODEL_UNKNOWN_COST_RANK && rank > pickRank;
-    const sameProvider = deployment.provider.trim().toUpperCase() === pickProvider;
+    const sameProvider = provider.trim().toUpperCase() === pickProvider;
     scored.push({
       substitute: {
-        provider: deployment.provider,
+        provider,
         model: deployment.providerModelId,
         sameProvider,
         costlier,
@@ -74,7 +75,7 @@ export function rankPickedModelSubstitutes(
       distance: pickRank === PICKED_MODEL_UNKNOWN_COST_RANK ? rank : Math.abs(rank - pickRank),
       order,
     });
-  });
+  }
   scored.sort((a, b) => a.group - b.group || a.distance - b.distance || a.order - b.order);
   return diversify(scored, Math.max(0, input.limit)).map((entry) => entry.substitute);
 }
@@ -98,11 +99,13 @@ function diversify(
   };
   let sameTaken = 0;
   for (const entry of sorted) {
-    if (entry.substitute.sameProvider && !entry.substitute.costlier) {
-      if (sameTaken < PICKED_MODEL_SAME_PROVIDER_SHARE) {
-        take(entry);
-        sameTaken++;
-      }
+    if (
+      entry.substitute.sameProvider &&
+      !entry.substitute.costlier &&
+      sameTaken < PICKED_MODEL_SAME_PROVIDER_SHARE
+    ) {
+      take(entry);
+      sameTaken++;
     }
   }
   const providersSeen = new Set<string>();

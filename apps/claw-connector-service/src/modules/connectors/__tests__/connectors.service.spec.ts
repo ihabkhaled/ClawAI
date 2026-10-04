@@ -5,7 +5,7 @@ import { type ConnectorModelsRepository } from '../repositories/connector-models
 import { type ConnectorsManager } from '../managers/connectors.manager';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
-import { EntityNotFoundException } from '../../../common/errors';
+import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { ConnectorAuthType, ConnectorProvider, ConnectorStatus } from '../../../generated/prisma';
 
 vi.mock('../../../app/config/app.config', () => ({
@@ -51,6 +51,7 @@ const mockConnectorsRepository = (): Record<keyof ConnectorsRepository, Mock> =>
   findById: vi.fn(),
   findByProvider: vi.fn(),
   findEnabled: vi.fn(),
+  findEnabledHealthSnapshotRows: vi.fn(),
   findAll: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
@@ -128,9 +129,9 @@ describe('ConnectorsService', () => {
   });
 
   it('returns enabled cloud connector health for routing startup hydration', async () => {
-    connectorsRepo.findEnabled.mockResolvedValue([
-      { ...mockConnector, status: ConnectorStatus.HEALTHY },
-      { ...mockConnector, id: 'local', provider: ConnectorProvider.OLLAMA },
+    connectorsRepo.findEnabledHealthSnapshotRows.mockResolvedValue([
+      { provider: ConnectorProvider.OPENAI, status: ConnectorStatus.HEALTHY, isLocal: false },
+      { provider: ConnectorProvider.OLLAMA, status: ConnectorStatus.UNKNOWN, isLocal: true },
     ]);
 
     await expect(service.getHealthSnapshot()).resolves.toMatchObject({
@@ -139,6 +140,67 @@ describe('ConnectorsService', () => {
   });
 
   describe('createConnector', () => {
+    it('links a new built-in connector to its managed provider definition', async () => {
+      const providerDefinition = {
+        id: 'builtin-openai',
+        key: ConnectorProvider.OPENAI,
+        isBuiltIn: true,
+        isActive: true,
+        authType: null,
+        defaultIsPayAsYouGo: true,
+      };
+      const providerDefinitions = {
+        findBuiltInByProvider: vi.fn().mockResolvedValue(providerDefinition),
+      };
+      const serviceWithDefinitions = new ConnectorsService(
+        connectorsRepo as unknown as ConnectorsRepository,
+        modelsRepo as unknown as ConnectorModelsRepository,
+        manager as unknown as ConnectorsManager,
+        rabbitMQ as unknown as RabbitMQService,
+        providerDefinitions as never,
+      );
+      connectorsRepo.create.mockResolvedValue(mockConnector);
+
+      await serviceWithDefinitions.createConnector({
+        name: 'Test OpenAI',
+        provider: ConnectorProvider.OPENAI,
+        authType: ConnectorAuthType.API_KEY,
+      });
+
+      expect(connectorsRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ providerDefinitionId: 'builtin-openai' }),
+      );
+    });
+
+    it('refuses a new connector for an inactive built-in provider', async () => {
+      const providerDefinitions = {
+        findBuiltInByProvider: vi.fn().mockResolvedValue({
+          id: 'builtin-openai',
+          key: ConnectorProvider.OPENAI,
+          isBuiltIn: true,
+          isActive: false,
+          authType: null,
+          defaultIsPayAsYouGo: true,
+        }),
+      };
+      const serviceWithDefinitions = new ConnectorsService(
+        connectorsRepo as unknown as ConnectorsRepository,
+        modelsRepo as unknown as ConnectorModelsRepository,
+        manager as unknown as ConnectorsManager,
+        rabbitMQ as unknown as RabbitMQService,
+        providerDefinitions as never,
+      );
+
+      await expect(
+        serviceWithDefinitions.createConnector({
+          name: 'Test OpenAI',
+          provider: ConnectorProvider.OPENAI,
+          authType: ConnectorAuthType.API_KEY,
+        }),
+      ).rejects.toBeInstanceOf(BusinessException);
+      expect(connectorsRepo.create).not.toHaveBeenCalled();
+    });
+
     it('never returns the key or its ciphertext, and does not touch the stored row', async () => {
       const stored = { ...mockConnector, encryptedGatewayHeaders: 'cipher-headers' };
       const snapshot = { ...stored };

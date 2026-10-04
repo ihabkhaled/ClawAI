@@ -27,6 +27,19 @@ validation_lane: cd apps/claw-connector-service && npm run typecheck && npm run 
 
 connector-service owns the 7 providers (OPENAI, ANTHROPIC, GEMINI, AWS_BEDROCK, DEEPSEEK, OLLAMA, GROK). Each provider is an adapter under `apps/claw-connector-service/src/modules/connectors/managers/adapters/`. API keys are AES-256-GCM encrypted (`encryptedConfig`) and never returned in responses.
 
+For an administrator-created OpenAI-compatible service, use the runtime provider
+definition flow documented in [ADR-157](../docs/13-adr/adr-157-runtime-managed-connector-providers.md)
+and [the feature dossier](../docs/features/runtime-managed-connector-providers/00-intake.md).
+It stores validated endpoint/capability metadata in connector-service, links a
+generic connector row to that definition, and resolves it through the existing
+OpenAI-compatible adapter. The provider catalog also lists built-ins; their
+identity and adapter settings are protected, and admins can only toggle status.
+Do not add a provider enum or custom protocol to
+onboard a compatible service. Protocol changes, non-OpenAI chat APIs, async jobs,
+and media generation still require code and the full adapter delivery in this
+skill. Built-in compatible providers continue to resolve from the shared preset
+registry; bespoke providers continue to use their existing adapters.
+
 ## When to use
 
 - Onboarding a new upstream AI provider with its own auth, model list, and health semantics.

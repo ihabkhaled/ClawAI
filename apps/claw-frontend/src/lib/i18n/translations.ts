@@ -11,13 +11,14 @@ import { fr } from './locales/fr';
 import { hi } from './locales/hi';
 import { it } from './locales/it';
 import { ja } from './locales/ja';
+import { PROVIDER_MANAGEMENT_TRANSLATIONS } from './locales/provider-management-translations';
 import { pt } from './locales/pt';
 import { ru } from './locales/ru';
 import { th } from './locales/th';
 import { zh } from './locales/zh';
 import { resolveTranslation } from './translation-resolver';
 
-const dictionaries: Record<Locale, TranslationDictionary> = {
+const baseDictionaries: Record<Locale, Omit<TranslationDictionary, 'providerManagement'>> = {
   [Locale.EN]: en,
   [Locale.AR]: ar,
   [Locale.FR]: fr,
@@ -32,6 +33,13 @@ const dictionaries: Record<Locale, TranslationDictionary> = {
   [Locale.FA]: fa,
   [Locale.ZH]: zh,
 };
+
+const dictionaries = Object.fromEntries(
+  Object.entries(baseDictionaries).map(([locale, dictionary]) => [
+    locale,
+    { ...dictionary, providerManagement: PROVIDER_MANAGEMENT_TRANSLATIONS[locale as Locale] },
+  ]),
+) as Record<Locale, TranslationDictionary>;
 
 /**
  * Get a dictionary for a given locale.

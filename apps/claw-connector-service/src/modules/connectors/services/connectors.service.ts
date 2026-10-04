@@ -1,12 +1,18 @@
-import { Injectable, Logger, type OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger, type OnApplicationBootstrap, Optional } from '@nestjs/common';
 import { expandExposurePairs, requestedPairsMatching } from '../utilities/exposure-pair.utility';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
 import { EventPattern, LogLevel, type ModelBehaviorProbeResult } from '@claw/shared-types';
-import { type Connector, type ConnectorModel, ConnectorProvider } from '../../../generated/prisma';
+import {
+  type Connector,
+  type ConnectorAuthType,
+  type ConnectorModel,
+  ConnectorProvider,
+  type ConnectorProviderDefinition,
+} from '../../../generated/prisma';
 import { AppConfig } from '../../../app/config/app.config';
 import { encrypt } from '../../../common/utilities';
 import { serializeGatewayHeaders } from '../utilities/gateway-headers.utility';
-import { EntityNotFoundException } from '../../../common/errors';
+import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { type PaginatedResult } from '../../../common/types';
 import { ConnectorsRepository } from '../repositories/connectors.repository';
 import { ConnectorModelsRepository } from '../repositories/connector-models.repository';
@@ -24,6 +30,7 @@ import {
 } from '../types/connectors.types';
 import { paygDefaultForProvider, rollUpPaygPolicy } from '../utilities/payg-policy.utility';
 import { formatModelDisplayName } from '../utilities/model-display-name.utility';
+import { ProviderDefinitionsService } from './provider-definitions.service';
 
 @Injectable()
 export class ConnectorsService implements OnApplicationBootstrap {
@@ -35,6 +42,7 @@ export class ConnectorsService implements OnApplicationBootstrap {
     private readonly connectorModelsRepository: ConnectorModelsRepository,
     private readonly connectorsManager: ConnectorsManager,
     private readonly rabbitMQService: RabbitMQService,
+    @Optional() private readonly providerDefinitionsService?: ProviderDefinitionsService,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -69,13 +77,10 @@ export class ConnectorsService implements OnApplicationBootstrap {
   }
 
   async getHealthSnapshot(): Promise<ConnectorHealthSnapshotResult> {
-    const connectors = await this.connectorsRepository.findEnabled();
+    const connectors = await this.connectorsRepository.findEnabledHealthSnapshotRows();
     return {
       connectors: connectors
-        .filter(
-          ({ provider }) =>
-            provider !== ConnectorProvider.OLLAMA && provider !== ConnectorProvider.LLAMACPP,
-        )
+        .filter(({ isLocal }) => !isLocal)
         .map(({ provider, status }) => ({ provider, status })),
       generatedAt: new Date().toISOString(),
     };
@@ -83,6 +88,7 @@ export class ConnectorsService implements OnApplicationBootstrap {
 
   async createConnector(dto: CreateConnectorDto): Promise<ConnectorWithModels> {
     this.logger.log(`createConnector: creating connector "${dto.name}" provider=${dto.provider}`);
+    const providerDefinition = await this.resolveProviderDefinition(dto);
     const encryptedConfig = dto.apiKey
       ? encrypt(dto.apiKey, AppConfig.get().ENCRYPTION_KEY)
       : undefined;
@@ -91,6 +97,7 @@ export class ConnectorsService implements OnApplicationBootstrap {
     const connector = await this.connectorsRepository.create({
       name: dto.name,
       provider: dto.provider,
+      providerDefinitionId: providerDefinition?.id,
       authType: dto.authType,
       encryptedConfig,
       baseUrl: dto.baseUrl,
@@ -102,7 +109,10 @@ export class ConnectorsService implements OnApplicationBootstrap {
       // default decides. Without this, a connector added after the backfill
       // migration would arrive at the column default of `false` and serve paid
       // OpenAI traffic for free (ADR-082).
-      isPayAsYouGo: dto.isPayAsYouGo ?? paygDefaultForProvider(dto.provider),
+      isPayAsYouGo:
+        dto.isPayAsYouGo ??
+        providerDefinition?.defaultIsPayAsYouGo ??
+        paygDefaultForProvider(dto.provider),
     });
 
     this.structuredLogger.logAction({
@@ -123,7 +133,11 @@ export class ConnectorsService implements OnApplicationBootstrap {
     this.logger.log(
       `createConnector: completed — connectorId=${connector.id}, provider=${dto.provider}`,
     );
-    return this.maskSecrets({ ...connector, _count: { models: 0 } });
+    return this.maskSecrets({
+      ...connector,
+      providerDisplayName: providerDefinition?.displayName,
+      _count: { models: 0 },
+    });
   }
 
   async getConnectors(
@@ -144,7 +158,9 @@ export class ConnectorsService implements OnApplicationBootstrap {
       this.connectorsRepository.countAll(filters),
     ]);
 
-    const safeConnectors = connectors.map((c) => this.maskSecrets(c));
+    const safeConnectors = connectors.map(({ providerDefinition, ...connector }) =>
+      this.maskSecrets({ ...connector, providerDisplayName: providerDefinition?.displayName }),
+    );
 
     return {
       data: safeConnectors,
@@ -166,7 +182,11 @@ export class ConnectorsService implements OnApplicationBootstrap {
     this.logger.debug(
       `getConnector: found connector ${id} "${connector.name}" (${connector.provider})`,
     );
-    return this.maskSecrets({ ...connector, _count: { models: 0 } });
+    return this.maskSecrets({
+      ...connector,
+      providerDisplayName: connector.providerDefinition?.displayName,
+      _count: connector._count,
+    });
   }
 
   async updateConnector(id: string, dto: UpdateConnectorDto): Promise<ConnectorWithModels> {
@@ -184,7 +204,6 @@ export class ConnectorsService implements OnApplicationBootstrap {
 
     const updated = await this.connectorsRepository.update(id, {
       name: dto.name,
-      provider: dto.provider,
       authType: dto.authType,
       encryptedConfig,
       baseUrl: dto.baseUrl,
@@ -394,7 +413,9 @@ export class ConnectorsService implements OnApplicationBootstrap {
   // ThreadSettings and MessageComposer model selectors both consume this list
   // unmodified; plan features (compare/judge/critic/research) gate WORKFLOWS,
   // never which model the user can pick.
-  async getAvailableModels(): Promise<ConnectorModel[]> {
+  async getAvailableModels(): Promise<
+    Array<Omit<ConnectorModel, 'provider'> & { provider: string }>
+  > {
     this.logger.debug('getAvailableModels: listing exposed chat models');
     const rows = await this.connectorModelsRepository.findExposedForCatalog();
     // The display name is re-formatted on READ, exactly as the public catalog
@@ -404,8 +425,10 @@ export class ConnectorsService implements OnApplicationBootstrap {
     // formatter existed still hold the mangled name, and a user must not have
     // to wait for an administrator to re-sync a connector before the list stops
     // looking broken. The formatter is idempotent, so a clean name is untouched.
-    return rows.map(({ connector: _connector, ...model }) => ({
+    return rows.map(({ connector, ...model }) => ({
       ...model,
+      provider: connector.providerDefinition?.key ?? model.provider,
+      providerDisplayName: connector.providerDefinition?.displayName,
       displayName: formatModelDisplayName(model.displayName),
     }));
   }
@@ -520,6 +543,52 @@ export class ConnectorsService implements OnApplicationBootstrap {
     return typeof plaintext === 'string'
       ? encrypt(plaintext, AppConfig.get().ENCRYPTION_KEY)
       : plaintext;
+  }
+
+  private async resolveProviderDefinition(
+    dto: CreateConnectorDto,
+  ): Promise<ConnectorProviderDefinition | null | undefined> {
+    const definition = await this.findProviderDefinition(dto);
+    if (!definition && dto.provider === ConnectorProvider.CUSTOM_OPENAI_COMPATIBLE) {
+      throw new BusinessException(
+        'Custom provider definition is unavailable',
+        'PROVIDER_DEFINITION_REQUIRED',
+        409,
+      );
+    }
+    if (definition && !definition.isBuiltIn) {
+      this.assertProviderAuthMatches(definition, dto.authType);
+    }
+    if (definition?.isBuiltIn && !definition.isActive) {
+      throw new BusinessException('Provider is inactive', 'PROVIDER_INACTIVE', 409);
+    }
+    return definition;
+  }
+
+  private findProviderDefinition(
+    dto: CreateConnectorDto,
+  ): Promise<ConnectorProviderDefinition | null | undefined> {
+    if (dto.providerDefinitionId) {
+      return this.providerDefinitionsService
+        ? this.providerDefinitionsService.findActiveById(dto.providerDefinitionId)
+        : Promise.resolve(null);
+    }
+    return dto.provider === ConnectorProvider.CUSTOM_OPENAI_COMPATIBLE
+      ? Promise.resolve(null)
+      : (this.providerDefinitionsService?.findBuiltInByProvider(dto.provider) ??
+          Promise.resolve(null));
+  }
+
+  private assertProviderAuthMatches(
+    definition: ConnectorProviderDefinition,
+    authType: ConnectorAuthType,
+  ): void {
+    if (definition.authType !== authType) {
+      throw new BusinessException(
+        'Connector auth does not match its provider definition',
+        'PROVIDER_AUTH_MISMATCH',
+      );
+    }
   }
 
   // Gateway header values are credentials too (F092); the ciphertext is masked

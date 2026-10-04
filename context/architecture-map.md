@@ -218,3 +218,16 @@ by **`scripts/claw.sh`**. Exact commands are canonical in
 | Package dependency edges           | `.ai/manifests/workspace-dependency-graph.json`          |
 | Permissions (38)                   | `.ai/manifests/permissions.json`                         |
 | Env vars (335)                     | `.ai/manifests/environment-variables.json`               |
+
+# Runtime provider definitions (ADR-157)
+
+Connector-service owns custom OpenAI-compatible provider definitions, seeded
+built-in provider status, and connector credentials. Built-in identities and
+adapter settings are protected; compatible presets still resolve through the
+ADR-117 registry, and bespoke providers keep their existing adapters. It
+resolves a definition for runtime adapter settings,
+publishes provider identity with synced models, and exposes config over its
+existing internal API. Routing keeps dynamic provider keys in
+`ModelDeployment.runtimeProviderKey`; services communicate over existing HTTP
+boundaries and do not read each other's databases. Existing connectors are
+linked to their built-in definitions without rewriting connector or model data.

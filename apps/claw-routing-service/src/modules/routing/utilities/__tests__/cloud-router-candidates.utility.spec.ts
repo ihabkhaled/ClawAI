@@ -96,6 +96,30 @@ describe('selectCloudRouterCandidates', () => {
       selectCloudRouterCandidates(rows, { exposed, allowed: null, connectorHealth: {}, max: 5 }),
     ).toHaveLength(1);
   });
+
+  it('keeps a runtime compatible provider key in AUTO candidates', () => {
+    const rows = [
+      {
+        ...row(
+          'nim',
+          RouterProvider.CUSTOM_OPENAI_COMPATIBLE,
+          'nvidia/llama-3.1-nemotron-70b-instruct',
+        ),
+        runtimeProviderKey: 'NVIDIA_NIM',
+      },
+    ];
+    const exposed = new Set(['NVIDIA_NIM/nvidia/llama-3.1-nemotron-70b-instruct']);
+
+    const result = selectCloudRouterCandidates(rows, { ...unfiltered, exposed, max: 5 });
+
+    expect(result).toEqual([
+      {
+        id: 'nim',
+        provider: 'NVIDIA_NIM',
+        providerModelId: 'nvidia/llama-3.1-nemotron-70b-instruct',
+      },
+    ]);
+  });
 });
 
 // Multimodal batch 8 (rule 51 item 13): with attachments, AUTO ranks by

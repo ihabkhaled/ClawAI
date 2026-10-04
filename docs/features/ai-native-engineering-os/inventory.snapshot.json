@@ -1773,6 +1773,36 @@
         },
         {
           "method": "GET",
+          "route": "/connectors/provider-definitions",
+          "source": "apps/claw-connector-service/src/modules/connectors/controllers/provider-definitions.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/connectors/provider-definitions",
+          "source": "apps/claw-connector-service/src/modules/connectors/controllers/provider-definitions.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/connectors/provider-definitions/:id",
+          "source": "apps/claw-connector-service/src/modules/connectors/controllers/provider-definitions.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/connectors/provider-definitions/:id",
+          "source": "apps/claw-connector-service/src/modules/connectors/controllers/provider-definitions.controller.ts"
+        },
+        {
+          "method": "PATCH",
+          "route": "/connectors/provider-definitions/:id",
+          "source": "apps/claw-connector-service/src/modules/connectors/controllers/provider-definitions.controller.ts"
+        },
+        {
+          "method": "PATCH",
+          "route": "/connectors/provider-definitions/:id/status",
+          "source": "apps/claw-connector-service/src/modules/connectors/controllers/provider-definitions.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/health",
           "source": "apps/claw-connector-service/src/modules/health/controllers/health.controller.ts"
         },
@@ -7656,6 +7686,11 @@
         "route": "/connectors"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/connectors/providers/page.tsx",
+        "kind": "page",
+        "route": "/connectors/providers"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/context/page.tsx",
         "kind": "page",
         "route": "/context"
@@ -7981,6 +8016,7 @@
         "docs/adrs",
         "docs/architecture",
         "docs/business",
+        "docs/changes",
         "docs/exceptions",
         "docs/features",
         "docs/implementation",
@@ -7988,6 +8024,7 @@
         "docs/research",
         "docs/security",
         "docs/superpowers",
+        "docs/wiki",
         "docs/workspace"
       ],
       "looseDocs": 23,
@@ -8407,7 +8444,7 @@
           "file": "skills/add-prisma-model.md"
         },
         {
-          "bytes": 5018,
+          "bytes": 5969,
           "file": "skills/add-provider-connector.md"
         },
         {
@@ -10021,6 +10058,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-connector-service/prisma/schema.prisma",
+            "value": "ConnectorProviderDefinition"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-connector-service/prisma/schema.prisma",
             "value": "ModelSyncRun"
           }
         ],
@@ -10773,7 +10815,7 @@
       },
       "claw-connector-service": {
         "runner": "vitest",
-        "testFiles": 48
+        "testFiles": 50
       },
       "claw-file-generation-service": {
         "runner": "vitest",
@@ -10785,7 +10827,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 700
+        "testFiles": 701
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -11551,10 +11593,10 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 52,
-    "endpointCount": 786,
+    "endpointCount": 792,
     "envVarCount": 361,
     "eventCount": 185,
-    "frontendRouteCount": 155,
+    "frontendRouteCount": 156,
     "localeCount": 13,
     "nginxRouteCount": 68,
     "permissionCount": 84,
@@ -11563,7 +11605,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2025,
+    "totalTestFiles": 2028,
     "workspaceCount": 25
   }
 }

@@ -19,13 +19,13 @@ export interface CreateConnectorData {
   region?: string;
   workspaceId?: string;
   accountId?: string;
+  providerDefinitionId?: string;
   isPayAsYouGo?: boolean;
   encryptedGatewayHeaders?: string;
 }
 
 export interface UpdateConnectorData {
   name?: string;
-  provider?: ConnectorProvider;
   authType?: ConnectorAuthType;
   encryptedConfig?: string;
   baseUrl?: string;
@@ -49,6 +49,12 @@ export interface ConnectorFilters {
 
 export interface ConnectorWithModels extends Connector {
   _count: { models: number };
+  providerDisplayName?: string;
+}
+
+export interface ConnectorWithProviderDefinition extends Connector {
+  _count: { models: number };
+  providerDefinition: { key: string; displayName: string } | null;
 }
 
 export interface SyncModelsResult {
@@ -170,6 +176,8 @@ export interface ConnectorHealthSnapshotResult {
 
 export interface UpstreamModelSnapshotEntry {
   provider: string;
+  providerDisplayName?: string;
+  adapterFamily?: string;
   modelKey: string;
   displayName: string;
   family?: string;

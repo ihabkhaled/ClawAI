@@ -3,6 +3,8 @@ import 'server-only';
 import { Locale } from '@/enums/locale.enum';
 import type { TranslationDictionary } from '@/types/i18n.types';
 
+import { PROVIDER_MANAGEMENT_TRANSLATIONS } from './locales/provider-management-translations';
+
 type DictionaryModule = Record<string, TranslationDictionary>;
 type DictionaryLoader = () => Promise<DictionaryModule>;
 
@@ -28,5 +30,8 @@ export async function loadDictionary(locale: Locale): Promise<TranslationDiction
   if (dictionary === undefined) {
     throw new Error(`Dictionary module does not export locale "${locale}"`);
   }
-  return dictionary;
+  return {
+    ...dictionary,
+    providerManagement: PROVIDER_MANAGEMENT_TRANSLATIONS[locale],
+  };
 }

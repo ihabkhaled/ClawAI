@@ -6,6 +6,7 @@ import { PrismaService } from '../../../../infrastructure/database/prisma/prisma
 describe('ConnectorsRepository', () => {
   let repository: ConnectorsRepository;
   let prismaMock: {
+    $transaction: Mock;
     connector: {
       create: Mock;
       findUnique: Mock;
@@ -19,6 +20,12 @@ describe('ConnectorsRepository', () => {
 
   beforeEach(async () => {
     prismaMock = {
+      $transaction: vi.fn(async (operation: (transaction: unknown) => Promise<unknown>) =>
+        operation({
+          connector: { create: (...args: unknown[]) => prismaMock.connector.create(...args) },
+          connectorProviderDefinition: { update: vi.fn() },
+        }),
+      ),
       connector: {
         create: vi.fn().mockResolvedValue({ id: 'c1' }),
         findUnique: vi.fn().mockResolvedValue({ id: 'c1' }),
@@ -47,7 +54,7 @@ describe('ConnectorsRepository', () => {
   // vanishing from the map. A `where` clause here would silently break that.
   it('findPaygPolicyRows projects three columns and filters nothing', async () => {
     prismaMock.connector.findMany.mockResolvedValue([
-      { provider: 'OPENAI', isEnabled: true, isPayAsYouGo: true },
+      { provider: 'OPENAI', isEnabled: true, isPayAsYouGo: true, providerDefinition: null },
     ]);
 
     const rows = await repository.findPaygPolicyRows();
@@ -56,13 +63,24 @@ describe('ConnectorsRepository', () => {
     expect(argsCall).toBeDefined();
     const args = argsCall?.[0];
     expect(args.where).toBeUndefined();
-    expect(args.select).toEqual({ provider: true, isEnabled: true, isPayAsYouGo: true });
+    expect(args.select).toEqual({
+      provider: true,
+      isEnabled: true,
+      isPayAsYouGo: true,
+      providerDefinition: { select: { key: true, isActive: true } },
+    });
     expect(rows).toEqual([{ provider: 'OPENAI', isEnabled: true, isPayAsYouGo: true }]);
   });
 
   it('findById uses prisma findUnique', async () => {
     await repository.findById('c1');
-    expect(prismaMock.connector.findUnique).toHaveBeenCalledWith({ where: { id: 'c1' } });
+    expect(prismaMock.connector.findUnique).toHaveBeenCalledWith({
+      where: { id: 'c1' },
+      include: {
+        _count: { select: { models: true } },
+        providerDefinition: { select: { key: true, displayName: true } },
+      },
+    });
   });
 
   describe('findAll', () => {
@@ -132,7 +150,10 @@ describe('ConnectorsRepository', () => {
     await repository.findEnabled();
 
     expect(prismaMock.connector.findMany).toHaveBeenCalledWith({
-      where: { isEnabled: true },
+      where: {
+        isEnabled: true,
+        OR: [{ providerDefinitionId: null }, { providerDefinition: { isActive: true } }],
+      },
       orderBy: { createdAt: 'desc' },
     });
   });

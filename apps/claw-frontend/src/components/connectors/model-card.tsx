@@ -6,7 +6,7 @@ import { Check } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { LIFECYCLE_LABELS, PROVIDER_DISPLAY_NAMES } from '@/constants';
+import { LIFECYCLE_LABELS, providerDisplayName } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { ModelCardProps } from '@/types';
@@ -62,7 +62,7 @@ export function ModelCard({ model, selected, onToggleSelect }: ModelCardProps): 
 
       <div className="flex flex-wrap items-center gap-1.5">
         <Badge variant="outline" className="touch:text-xs text-[10px]">
-          {PROVIDER_DISPLAY_NAMES[model.provider] ?? model.provider}
+          {model.providerDisplayName ?? providerDisplayName(model.provider)}
         </Badge>
         <Badge
           variant={getLifecycleBadgeVariant(model.lifecycle)}

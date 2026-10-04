@@ -107,6 +107,7 @@
         "Connector",
         "ConnectorHealthEvent",
         "ConnectorModel",
+        "ConnectorProviderDefinition",
         "ModelSyncRun"
       ],
       "service": "claw-connector-service"

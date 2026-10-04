@@ -1,10 +1,9 @@
-import type { ConnectorProvider } from '../enums/connector-provider.enum';
 import type { ModelAvailabilityStatus } from '../enums/model-availability-status.enum';
 import type { ModelCapability } from '../enums/model-capability.enum';
 import type { ModelRuntime } from '../enums/model-runtime.enum';
 
 export type AvailableModelOption = {
-  provider: ConnectorProvider;
+  provider: string;
   runtime: ModelRuntime;
   connectorId?: string;
   model: string;

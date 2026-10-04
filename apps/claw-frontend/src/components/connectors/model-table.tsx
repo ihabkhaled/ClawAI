@@ -1,7 +1,7 @@
 import { DataTable } from '@/components/common/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { LIFECYCLE_LABELS, PROVIDER_DISPLAY_NAMES } from '@/constants';
+import { LIFECYCLE_LABELS, providerDisplayName } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import type { ConnectorModel, DataTableColumn, ModelTableProps } from '@/types';
 import { formatContextTokens, getLifecycleBadgeVariant } from '@/utilities';
@@ -38,7 +38,7 @@ export function ModelTable({
     render: (model) => (
       <div>
         <span className="font-medium">{model.displayName}</span>
-        <p className="text-xs text-muted-foreground">{model.modelKey}</p>
+        <p className="text-muted-foreground text-xs">{model.modelKey}</p>
       </div>
     ),
   });
@@ -48,7 +48,9 @@ export function ModelTable({
       key: 'provider',
       header: t('connectors.provider'),
       render: (model) => (
-        <span className="text-sm">{PROVIDER_DISPLAY_NAMES[model.provider] ?? model.provider}</span>
+        <span className="text-sm">
+          {model.providerDisplayName ?? providerDisplayName(model.provider)}
+        </span>
       ),
     });
   }
@@ -91,7 +93,7 @@ export function ModelTable({
       header: t('models.context'),
       className: 'text-end',
       render: (model) => (
-        <span className="text-sm text-muted-foreground">
+        <span className="text-muted-foreground text-sm">
           {formatContextTokens(model.maxContextTokens)}
         </span>
       ),

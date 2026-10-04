@@ -171,7 +171,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-connector-service",
-      "endpointCount": 23,
+      "endpointCount": 29,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -188,9 +188,10 @@
         "Connector",
         "ConnectorHealthEvent",
         "ConnectorModel",
+        "ConnectorProviderDefinition",
         "ModelSyncRun"
       ],
-      "testFiles": 48,
+      "testFiles": 50,
       "testRunner": "vitest"
     },
     {

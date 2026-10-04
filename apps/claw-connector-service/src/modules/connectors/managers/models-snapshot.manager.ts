@@ -32,7 +32,13 @@ export class ModelsSnapshotManager {
     };
   }
 
-  private toSnapshotEntry(row: ConnectorModel): UpstreamModelSnapshotEntry {
+  private toSnapshotEntry(
+    row: ConnectorModel & {
+      connector?: {
+        providerDefinition: { key: string; displayName: string; adapterFamily: string } | null;
+      };
+    },
+  ): UpstreamModelSnapshotEntry {
     const modalitiesIn: string[] = ['TEXT'];
     const modalitiesOut: string[] = ['TEXT'];
     if (row.supportsVision) modalitiesIn.push('IMAGE_INPUT');
@@ -43,7 +49,13 @@ export class ModelsSnapshotManager {
     // 'VIDEO' is not a member and would fail that row's registry upsert.
     if (snapshotSupportsVideoInput(row)) modalitiesIn.push(SNAPSHOT_VIDEO_INPUT_MODALITY);
     return {
-      provider: row.provider,
+      provider: row.connector?.providerDefinition?.key ?? row.provider,
+      ...(row.connector?.providerDefinition
+        ? { providerDisplayName: row.connector.providerDefinition.displayName }
+        : {}),
+      ...(row.connector?.providerDefinition
+        ? { adapterFamily: row.connector.providerDefinition.adapterFamily }
+        : {}),
       modelKey: row.modelKey,
       displayName: row.displayName,
       isLocal: false,

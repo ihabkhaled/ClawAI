@@ -42,7 +42,10 @@ export function ConnectorCard({
   const providerColor =
     PROVIDER_ICON_COLORS[connector.provider] ??
     'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400';
-  const providerName = PROVIDER_DISPLAY_NAMES[connector.provider] ?? connector.provider;
+  const providerName =
+    connector.providerDisplayName ??
+    PROVIDER_DISPLAY_NAMES[connector.provider] ??
+    connector.provider;
   const dotTone = getConnectorStatusDotTone(connector.status);
   const statusLabel = t(getConnectorStatusLabelKey(connector.status));
   const isCredit = connector.isPayAsYouGo === true;

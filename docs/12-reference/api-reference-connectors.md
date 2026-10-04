@@ -2,6 +2,28 @@
 
 Base URL: `http://localhost:4000/api/v1` (via nginx) or `http://localhost:4003/api/v1` (direct)
 
+## Runtime provider definitions (ADR-157)
+
+These endpoints require `ADMIN_CONNECTORS_MANAGE`.
+
+- `GET /connectors/provider-definitions?search=<text>&status=<ACTIVE|INACTIVE>` lists
+  custom and built-in definitions with dependency counts.
+- `POST /connectors/provider-definitions` creates an OpenAI-compatible definition
+  with a normalized unique key, HTTPS base URL, model-list endpoint, auth type,
+  capability flags, and billing defaults.
+- `PATCH /connectors/provider-definitions/:id` updates custom metadata. Built-in
+  identity and configuration are protected.
+- `PATCH /connectors/provider-definitions/:id/status` activates or deactivates a
+  custom or built-in definition.
+- `DELETE /connectors/provider-definitions/:id` removes unused definitions only;
+  built-ins and definitions that were ever connected are retained for history.
+
+Create a custom connector through `POST /connectors` with
+`provider: "CUSTOM_OPENAI_COMPATIBLE"`, `providerDefinitionId`, and credentials
+matching the definition's auth type. Responses never include credentials or
+`encryptedConfig`. These database-backed definitions cover the OpenAI-compatible
+chat and model-list protocol; specialized async/media/task APIs are unsupported.
+
 ---
 
 ## POST /connectors

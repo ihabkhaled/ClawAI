@@ -1,6 +1,7 @@
 'use client';
 
 import { Plus, Plug } from 'lucide-react';
+import Link from 'next/link';
 
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
@@ -9,6 +10,7 @@ import { ConnectorCard } from '@/components/connectors/connector-card';
 import { ConnectorForm } from '@/components/connectors/connector-form';
 import { SkippedProvidersCard } from '@/components/connectors/skipped-providers-card';
 import { Button } from '@/components/ui/button';
+import { ROUTES } from '@/constants/routes.constants';
 import { useConnectorsPage } from '@/hooks/connectors/use-connectors-page';
 import { useSkippedProviders } from '@/hooks/connectors/use-skipped-providers';
 import { useTranslation } from '@/lib/i18n';
@@ -115,10 +117,15 @@ export default function ConnectorsPage() {
         title={t('connectors.title')}
         description={t('connectors.description')}
         actions={
-          <Button onClick={handleOpenCreate}>
-            <Plus className="me-2 h-4 w-4" />
-            {t('connectors.addConnector')}
-          </Button>
+          <>
+            <Button asChild variant="outline">
+              <Link href={ROUTES.CONNECTOR_PROVIDERS}>{t('providerManagement.title')}</Link>
+            </Button>
+            <Button onClick={handleOpenCreate}>
+              <Plus className="me-2 h-4 w-4" />
+              {t('connectors.addConnector')}
+            </Button>
+          </>
         }
       />
 

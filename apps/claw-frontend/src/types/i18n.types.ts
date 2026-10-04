@@ -4122,6 +4122,7 @@ export type TranslationDictionary = {
   mediaUi: MediaUiLocaleTranslation;
   smartRouterAdmin: SmartRouterAdminLocaleTranslation;
   adminModelCosts: AdminModelCostsLocaleTranslation;
+  providerManagement?: ProviderManagementLocaleTranslation;
   skippedProviders: SkippedProvidersLocaleTranslation;
   adminDeployment: {
     title: string;
@@ -6285,6 +6286,33 @@ export type SkippedProvidersLocaleTranslation = {
   reasons: {
     accountCreditExhausted: string;
   };
+};
+
+export type ProviderManagementLocaleTranslation = {
+  title: string;
+  description: string;
+  builtIn: string;
+  create: string;
+  key: string;
+  name: string;
+  baseUrl: string;
+  modelsPath: string;
+  healthPath: string;
+  authType: string;
+  tools: string;
+  vision: string;
+  payg: string;
+  freeTier: string;
+  save: string;
+  cancel: string;
+  activate: string;
+  deactivate: string;
+  delete: string;
+  dependencies: string;
+  empty: string;
+  error: string;
+  success: string;
+  search: string;
 };
 
 export type AdminModelCostsLocaleTranslation = {

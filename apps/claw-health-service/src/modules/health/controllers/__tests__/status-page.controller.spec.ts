@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { type ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { type ExecutionContext } from '@nestjs/common';
 import { GUARDS_METADATA, HEADERS_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
@@ -48,7 +48,14 @@ describe('StatusPageController', () => {
     const module = await Test.createTestingModule({
       controllers: [StatusPageController],
       providers: [{ provide: StatusPageService, useValue: { getStatus } }],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard)
+      .useValue({ canActivate: vi.fn().mockReturnValue(true) })
+      .overrideGuard(SessionRevocationGuard)
+      .useValue({ canActivate: vi.fn().mockReturnValue(true) })
+      .overrideGuard(RolesGuard)
+      .useValue({ canActivate: vi.fn().mockReturnValue(true) })
+      .compile();
 
     await expect(module.get(StatusPageController).status()).resolves.toBe(response);
     expect(getStatus).toHaveBeenCalledOnce();
@@ -73,7 +80,13 @@ describe('StatusPageController', () => {
 
   it('refuses a request with no token', () => {
     const guard = new AuthGuard(new Reflector());
-    expect(() => guard.canActivate(contextFor({ headers: {} }))).toThrow(UnauthorizedException);
+    let error: unknown;
+    try {
+      guard.canActivate(contextFor({ headers: {} }));
+    } catch (caught) {
+      error = caught;
+    }
+    expect(error).toMatchObject({ name: 'UnauthorizedException', status: 401 });
   });
 
   it('refuses a signed-in user who is not an admin, and admits an admin', () => {

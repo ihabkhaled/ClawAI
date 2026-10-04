@@ -93,7 +93,9 @@ export function presetModelSupportsVision(
     entry.inputModalities.includes('image') ||
     hasAny(entry.tags, CONNECTOR_PRESET_VISION_TAGS)
     ? true
-    : (preset.visionModelPattern?.test(entry.id.toLowerCase()) ?? false);
+    : (preset.visionModelPattern?.test(entry.id.toLowerCase()) ??
+        preset.defaultSupportsVision ??
+        false);
 }
 
 /**
@@ -109,7 +111,8 @@ export function presetModelSupportsTools(
     ? false
     : entry.functionCalling === true ||
         entry.supportedParameters.includes('tools') ||
-        hasAny(entry.tags, CONNECTOR_PRESET_TOOL_TAGS);
+        hasAny(entry.tags, CONNECTOR_PRESET_TOOL_TAGS) ||
+        preset.defaultSupportsTools === true;
 }
 
 /** One listed chat model as a ConnectorModel row. */

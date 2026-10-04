@@ -10,6 +10,7 @@ export interface AliasMatchCandidate {
 /** One model as connector-service reports it. */
 export interface DiscoveredModel {
   provider: string;
+  adapterFamily?: string;
   modelKey: string;
   displayName: string;
   family?: string;

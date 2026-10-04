@@ -31,7 +31,7 @@ export class ModelDeploymentRepository {
         privacyClass: { in: [...CLOUD_ROUTER_ELIGIBLE_PRIVACY_CLASSES] },
         activationState: DeploymentActivationState.ACTIVE,
       },
-      select: { id: true, provider: true, providerModelId: true },
+      select: { id: true, provider: true, providerModelId: true, runtimeProviderKey: true },
     });
     this.logger.debug(`findEligibleForCloudRouting: ${String(rows.length)} eligible deployment(s)`);
     return rows;
@@ -53,6 +53,7 @@ export class ModelDeploymentRepository {
         id: true,
         provider: true,
         providerModelId: true,
+        runtimeProviderKey: true,
         activationState: true,
         // Multimodal batch 8: what modality-fit ranking reads (rule 51 item 13).
         supportsVision: true,
@@ -95,13 +96,19 @@ export class ModelDeploymentRepository {
           ],
         },
       },
-      select: { id: true, provider: true, providerModelId: true, activationState: true },
+      select: {
+        id: true,
+        provider: true,
+        runtimeProviderKey: true,
+        providerModelId: true,
+        activationState: true,
+      },
       orderBy: [{ provider: 'asc' }, { providerModelId: 'asc' }],
     });
     this.logger.debug(`findAllForChainSelection: ${String(rows.length)} deployment(s)`);
     return rows.map((row) => ({
       id: row.id,
-      provider: row.provider,
+      provider: row.runtimeProviderKey ?? row.provider,
       providerModelId: row.providerModelId,
       isValidated: row.activationState === DeploymentActivationState.ACTIVE,
     }));

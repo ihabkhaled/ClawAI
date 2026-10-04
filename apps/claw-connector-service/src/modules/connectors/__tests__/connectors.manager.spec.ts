@@ -10,7 +10,10 @@ import {
   ConnectorProvider,
   ConnectorStatus,
   ModelSyncStatus,
+  ProviderAdapterFamily,
 } from '../../../generated/prisma';
+import { ConnectorModelsResponseFormat } from '@claw/shared-types';
+import { type ProviderDefinitionsService } from '../services/provider-definitions.service';
 
 vi.mock('../../../app/config/app.config', () => ({
   AppConfig: {
@@ -87,6 +90,7 @@ const mockConnector = {
   id: 'conn-1',
   name: 'Test OpenAI',
   provider: ConnectorProvider.OPENAI,
+  providerDefinitionId: null,
   status: ConnectorStatus.UNKNOWN,
   authType: ConnectorAuthType.API_KEY,
   encryptedConfig: 'encrypted-api-key',
@@ -127,17 +131,20 @@ describe('ConnectorsManager', () => {
   let modelsRepo: ReturnType<typeof mockModelsRepo>;
   let healthEventsRepo: ReturnType<typeof mockHealthEventsRepo>;
   let syncRunsRepo: ReturnType<typeof mockSyncRunsRepo>;
+  let providerDefinitions: { findActiveById: Mock };
 
   beforeEach(() => {
     connectorsRepo = mockConnectorsRepo();
     modelsRepo = mockModelsRepo();
     healthEventsRepo = mockHealthEventsRepo();
     syncRunsRepo = mockSyncRunsRepo();
+    providerDefinitions = { findActiveById: vi.fn() };
     manager = new ConnectorsManager(
       connectorsRepo as unknown as ConnectorsRepository,
       modelsRepo as unknown as ConnectorModelsRepository,
       healthEventsRepo as unknown as HealthEventsRepository,
       syncRunsRepo as unknown as SyncRunsRepository,
+      providerDefinitions as unknown as ProviderDefinitionsService,
     );
     mockFetchForProvider(ConnectorProvider.OPENAI);
   });
@@ -309,14 +316,14 @@ describe('ConnectorsManager', () => {
   describe('getExecutionConfig', () => {
     const accountId = '0123456789abcdef0123456789abcdef';
 
-    it('leaves a bespoke provider untouched, so chat-service keeps its own default', () => {
-      const config = manager.getExecutionConfig(mockConnector);
+    it('leaves a bespoke provider untouched, so chat-service keeps its own default', async () => {
+      const config = await manager.getExecutionConfig(mockConnector);
 
       expect(config.baseUrl).toBeUndefined();
     });
 
-    it('fills a preset connector with the preset default base URL', () => {
-      const config = manager.getExecutionConfig({
+    it('fills a preset connector with the preset default base URL', async () => {
+      const config = await manager.getExecutionConfig({
         ...mockConnector,
         provider: ConnectorProvider.GROQ,
       });
@@ -324,8 +331,8 @@ describe('ConnectorsManager', () => {
       expect(config.baseUrl).toBe('https://api.groq.com/openai/v1');
     });
 
-    it('keeps an administrator-edited preset base URL', () => {
-      const config = manager.getExecutionConfig({
+    it('keeps an administrator-edited preset base URL', async () => {
+      const config = await manager.getExecutionConfig({
         ...mockConnector,
         provider: ConnectorProvider.MOONSHOT,
         baseUrl: 'https://api.moonshot.cn/v1/',
@@ -334,8 +341,8 @@ describe('ConnectorsManager', () => {
       expect(config.baseUrl).toBe('https://api.moonshot.cn/v1');
     });
 
-    it('substitutes the Cloudflare account id into the base URL', () => {
-      const config = manager.getExecutionConfig({
+    it('substitutes the Cloudflare account id into the base URL', async () => {
+      const config = await manager.getExecutionConfig({
         ...mockConnector,
         provider: ConnectorProvider.CLOUDFLARE,
         accountId,
@@ -346,10 +353,10 @@ describe('ConnectorsManager', () => {
       );
     });
 
-    it('refuses a Cloudflare connector with no account id instead of leaking a template', () => {
-      expect(() =>
+    it('refuses a Cloudflare connector with no account id instead of leaking a template', async () => {
+      await expect(
         manager.getExecutionConfig({ ...mockConnector, provider: ConnectorProvider.CLOUDFLARE }),
-      ).toThrow(BusinessException);
+      ).rejects.toBeInstanceOf(BusinessException);
     });
   });
 
@@ -374,5 +381,75 @@ describe('ConnectorsManager', () => {
       expect(result.modelsRemoved).toBe(7);
       expect(result.modelsAdded).toBe(0);
     });
+  });
+
+  it('resolves the NVIDIA NIM runtime definition through the generic adapter configuration', async () => {
+    const definition = {
+      id: 'nim-id',
+      key: 'NVIDIA_NIM',
+      displayName: 'NVIDIA NIM',
+      description: null,
+      adapterFamily: ProviderAdapterFamily.OPENAI_COMPATIBLE,
+      defaultBaseUrl: 'https://integrate.api.nvidia.com',
+      modelsEndpoint: '/v1/models',
+      modelsResponseFormat: ConnectorModelsResponseFormat.OPENAI_LIST,
+      healthCheckEndpoint: '/v1/models',
+      authType: ConnectorAuthType.API_KEY,
+      supportsNativeTools: true,
+      supportsVision: true,
+      registerUrl: null,
+      apiKeyUrl: null,
+      pricingUrl: null,
+      docsUrl: null,
+      defaultIsPayAsYouGo: false,
+      hasFreeTier: true,
+      isActive: true,
+      isBuiltIn: false,
+      everConnected: true,
+      capabilityDefaults: {},
+      createdBy: 'admin-1',
+      updatedBy: 'admin-1',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    providerDefinitions.findActiveById.mockResolvedValue(definition);
+
+    const connector = {
+      ...mockConnector,
+      provider: ConnectorProvider.CUSTOM_OPENAI_COMPATIBLE,
+      providerDefinitionId: 'nim-id',
+    };
+    const config = await manager.getExecutionConfig(connector);
+
+    expect(config).toMatchObject({
+      provider: 'NVIDIA_NIM',
+      baseUrl: 'https://integrate.api.nvidia.com',
+    });
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: () =>
+        Promise.resolve(
+          JSON.stringify({
+            object: 'list',
+            data: [{ id: 'nvidia/llama-3.1-nemotron-70b-instruct', object: 'model' }],
+          }),
+        ),
+    });
+    const sync = await manager.syncModels(connector);
+    expect(sync.modelsFound).toBe(1);
+    expect(global.fetch).toHaveBeenCalledOnce();
+    const fetchCall = vi.mocked(global.fetch).mock.calls[0];
+    expect(fetchCall?.[0]).toBeInstanceOf(URL);
+    expect(fetchCall?.[0]?.toString()).toBe('https://integrate.api.nvidia.com/v1/models');
+    expect(fetchCall?.[1]?.redirect).toBe('error');
+    expect(modelsRepo.replaceMany).toHaveBeenCalledWith(
+      'conn-1',
+      ConnectorProvider.CUSTOM_OPENAI_COMPATIBLE,
+      expect.arrayContaining([
+        expect.objectContaining({ modelKey: 'nvidia/llama-3.1-nemotron-70b-instruct' }),
+      ]),
+    );
   });
 });

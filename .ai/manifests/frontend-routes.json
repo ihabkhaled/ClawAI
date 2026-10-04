@@ -512,6 +512,11 @@
       "route": "/connectors"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/connectors/providers/page.tsx",
+      "kind": "page",
+      "route": "/connectors/providers"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/context/page.tsx",
       "kind": "page",
       "route": "/context"

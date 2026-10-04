@@ -21,7 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ALL_FILTER, LIFECYCLE_LABELS, PROVIDER_DISPLAY_NAMES } from '@/constants';
+import {
+  ALL_FILTER,
+  LIFECYCLE_LABELS,
+  PROVIDER_DISPLAY_NAMES,
+  providerDisplayName,
+} from '@/constants';
 import { ConnectorProvider, ModelCatalogViewMode } from '@/enums';
 import { useAllModels } from '@/hooks/connectors/use-all-models';
 import { useTranslation } from '@/lib/i18n';
@@ -216,7 +221,7 @@ export default function ModelsPage() {
                   <div className="min-w-0">
                     <p className="truncate font-medium">{model.displayName}</p>
                     <p className="text-muted-foreground truncate text-xs">
-                      {PROVIDER_DISPLAY_NAMES[model.provider] ?? model.provider}
+                      {model.providerDisplayName ?? providerDisplayName(model.provider)}
                     </p>
                   </div>
                   <Badge variant="outline" className="shrink-0">

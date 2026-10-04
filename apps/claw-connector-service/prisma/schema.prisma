@@ -35,6 +35,13 @@ enum ConnectorProvider {
   VERCEL_AI_GATEWAY
   PERPLEXITY
   COHERE
+  // Custom provider identity is resolved through its linked database definition.
+  CUSTOM_OPENAI_COMPATIBLE
+}
+
+enum ProviderAdapterFamily {
+  OPENAI_COMPATIBLE
+  CODE_MANAGED
 }
 
 enum ConnectorStatus {
@@ -82,6 +89,7 @@ model Connector {
   id              String            @id @default(cuid())
   name            String
   provider        ConnectorProvider
+  providerDefinitionId String?           @map("provider_definition_id")
   status          ConnectorStatus   @default(UNKNOWN)
   authType        ConnectorAuthType @map("auth_type")
   encryptedConfig String?           @map("encrypted_config")
@@ -122,6 +130,7 @@ model Connector {
   createdAt       DateTime          @default(now()) @map("created_at")
   updatedAt       DateTime          @updatedAt @map("updated_at")
 
+  providerDefinition ConnectorProviderDefinition? @relation(fields: [providerDefinitionId], references: [id], onDelete: Restrict)
   models       ConnectorModel[]
   healthEvents ConnectorHealthEvent[]
   syncRuns     ModelSyncRun[]
@@ -129,7 +138,44 @@ model Connector {
   @@index([provider])
   @@index([status])
   @@index([isEnabled])
+  @@index([providerDefinitionId])
   @@map("connectors")
+}
+
+model ConnectorProviderDefinition {
+  id                       String                @id @default(cuid())
+  key                      String                @unique
+  displayName              String                @map("display_name")
+  description              String?
+  adapterFamily             ProviderAdapterFamily @map("adapter_family")
+  defaultBaseUrl            String?               @map("default_base_url")
+  modelsEndpoint            String?               @map("models_endpoint")
+  modelsResponseFormat      String?               @map("models_response_format")
+  healthCheckEndpoint       String?               @map("health_check_endpoint")
+  authType                  ConnectorAuthType?    @map("auth_type")
+  supportsNativeTools       Boolean               @default(false) @map("supports_native_tools")
+  supportsVision            Boolean               @default(false) @map("supports_vision")
+  registerUrl               String?               @map("register_url")
+  apiKeyUrl                 String?               @map("api_key_url")
+  pricingUrl                String?               @map("pricing_url")
+  docsUrl                   String?               @map("docs_url")
+  defaultIsPayAsYouGo       Boolean               @default(false) @map("default_is_pay_as_you_go")
+  hasFreeTier               Boolean               @default(false) @map("has_free_tier")
+  isActive                  Boolean               @default(true) @map("is_active")
+  isBuiltIn                 Boolean               @default(false) @map("is_built_in")
+  connectorProvider         ConnectorProvider?    @unique @map("connector_provider")
+  everConnected             Boolean               @default(false) @map("ever_connected")
+  capabilityDefaults        Json                  @default("{}") @map("capability_defaults")
+  createdBy                 String?               @map("created_by")
+  updatedBy                 String?               @map("updated_by")
+  createdAt                 DateTime              @default(now()) @map("created_at")
+  updatedAt                 DateTime              @updatedAt @map("updated_at")
+
+  connectors Connector[]
+
+  @@index([isActive, updatedAt])
+  @@index([adapterFamily, isActive])
+  @@map("connector_provider_definitions")
 }
 
 model ConnectorModel {

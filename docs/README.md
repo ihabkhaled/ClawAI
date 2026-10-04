@@ -31,18 +31,21 @@
 
 ### Layer B: Business & Product Context
 
-| Document                                                                                | Purpose                                                                                                       |
-| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| [Product Vision](01-executive-context/product-vision.md)                                | Mission, goals, KPIs, positioning                                                                             |
-| [Business Overview](01-executive-context/business-overview.md)                          | Problem, market, personas, business rules, glossary                                                           |
-| [Business Numbers](business/README.md)                                                  | Plan allowances, margin model, credit terms, top-up pricing, refund policy — the authoritative dollar figures |
-| [Flagship Features](02-business-product/flagship-features.md)                           | The 15 flagships, each traced to wired code, with limits and gaps (canonical)                                 |
-| [Chat Competitive Benchmark](02-business-product/chat-competitive-benchmark-2026-09.md) | First-party chat-feature matrix vs ChatGPT, Claude, Gemini, Kimi, Perplexity — checked 2026-09-29, perishable |
-| [Requirements Register](02-business-product/requirements-register.md)                   | Positioning and cross-cutting requirements: current, changed, missing, dropped                                |
-| [Drift Log](02-business-product/drift-log.md)                                           | Every change of product or business direction, append-only                                                    |
-| [User Personas](02-business-product/user-personas.md)                                   | 5 personas with workflows and RBAC mapping                                                                    |
-| [Feature Inventory](02-business-product/feature-inventory.md)                           | Current feature domains with stories and acceptance criteria                                                  |
-| [User Journeys](02-business-product/user-journeys.md)                                   | End-to-end user journeys with error paths                                                                     |
+| Document                                                                                         | Purpose                                                                                                       |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| [Product Vision](01-executive-context/product-vision.md)                                         | Mission, goals, KPIs, positioning                                                                             |
+| [Business Overview](01-executive-context/business-overview.md)                                   | Problem, market, personas, business rules, glossary                                                           |
+| [Business Numbers](business/README.md)                                                           | Plan allowances, margin model, credit terms, top-up pricing, refund policy — the authoritative dollar figures |
+| [Flagship Features](02-business-product/flagship-features.md)                                    | The 15 flagships, each traced to wired code, with limits and gaps (canonical)                                 |
+| [Runtime Managed Connector Providers](features/runtime-managed-connector-providers/00-intake.md) | Admin-managed OpenAI-compatible providers, runtime identity, acceptance scope and open release lanes          |
+| [Provider Management Change Record](changes/2026-10-03-runtime-managed-connector-providers.md)   | Before/after decision, traced paths and verification evidence for the provider-management batch               |
+| [Knowledge Wiki Index](wiki/index.md)                                                            | Category index linking product, architecture, operations and delivery knowledge to canonical homes            |
+| [Chat Competitive Benchmark](02-business-product/chat-competitive-benchmark-2026-09.md)          | First-party chat-feature matrix vs ChatGPT, Claude, Gemini, Kimi, Perplexity — checked 2026-09-29, perishable |
+| [Requirements Register](02-business-product/requirements-register.md)                            | Positioning and cross-cutting requirements: current, changed, missing, dropped                                |
+| [Drift Log](02-business-product/drift-log.md)                                                    | Every change of product or business direction, append-only                                                    |
+| [User Personas](02-business-product/user-personas.md)                                            | 5 personas with workflows and RBAC mapping                                                                    |
+| [Feature Inventory](02-business-product/feature-inventory.md)                                    | Current feature domains with stories and acceptance criteria                                                  |
+| [User Journeys](02-business-product/user-journeys.md)                                            | End-to-end user journeys with error paths                                                                     |
 
 ### Layer C: Technical Architecture
 
@@ -58,19 +61,19 @@
 
 ### Layer D: Backend & Frontend
 
-| Document                                                         | Purpose                                                         |
-| ---------------------------------------------------------------- | --------------------------------------------------------------- |
-| [Services Index](04-backend/services-index.md)                   | All 17 services: ports, DBs, controllers, events, dependencies  |
-| [Controllers Reference](04-backend/controllers-reference.md)     | Every route across all services                                 |
-| [Backend Coding Standards](04-backend/coding-standards.md)       | Layer rules, ESLint, extraction, error handling                 |
-| [Shared Packages](04-backend/shared-packages.md)                 | shared-types, shared-constants, shared-rabbitmq, shared-auth    |
-| [Workspace Service Guide](04-backend/service-guide-workspace.md) | Workspace sync, search, actions, OAuth                          |
-| [Agent Service Guide](04-backend/service-guide-agent.md)         | Local agent sessions, approvals, repos, file events             |
-| [Frontend Architecture](05-frontend/frontend-architecture.md)    | Page->Hook->Service->Repo pattern, state management, i18n       |
-| [Frontend Coding Standards](05-frontend/coding-standards.md)     | Component/hook/query patterns                                   |
-| [PWA Update Banner](05-frontend/pwa-update-banner.md)            | How a new version is offered, and why it asks only once         |
-| [Trial Banner Dismissal](05-frontend/trial-banner-dismissal.md)  | Snooze / hide-forever for the trial banner, and when it returns |
-| [Observability Page](05-frontend/observability-page.md)          | Service status (state, uptime, incidents) and usage, admin-only |
+| Document                                                                            | Purpose                                                         |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| [Services Index](04-backend/services-index.md)                                      | All 17 services: ports, DBs, controllers, events, dependencies  |
+| [Controllers Reference](04-backend/controllers-reference.md)                        | Every route across all services                                 |
+| [Backend Coding Standards](04-backend/coding-standards.md)                          | Layer rules, ESLint, extraction, error handling                 |
+| [Shared Packages](04-backend/shared-packages.md)                                    | shared-types, shared-constants, shared-rabbitmq, shared-auth    |
+| [Workspace Service Guide](04-backend/service-guide-workspace.md)                    | Workspace sync, search, actions, OAuth                          |
+| [Agent Service Guide](04-backend/service-guide-agent.md)                            | Local agent sessions, approvals, repos, file events             |
+| [Frontend Architecture](05-frontend/frontend-architecture.md)                       | Page->Hook->Service->Repo pattern, state management, i18n       |
+| [Frontend Coding Standards](05-frontend/coding-standards.md)                        | Component/hook/query patterns                                   |
+| [PWA Update Banner](05-frontend/pwa-update-banner.md)                               | How a new version is offered, and why it asks only once         |
+| [Trial Banner Dismissal](05-frontend/trial-banner-dismissal.md)                     | Snooze / hide-forever for the trial banner, and when it returns |
+| [Observability Page](05-frontend/observability-page.md)                             | Service status (state, uptime, incidents) and usage, admin-only |
 | [Admin Model Billing and Exposure](05-frontend/admin-model-billing-and-exposure.md) | Credit / Included badge source, responsive Model exposure panel |
 
 ### Layer E: Data & Integrations

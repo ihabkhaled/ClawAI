@@ -5,7 +5,6 @@ import type { ConnectorPresetAuthHeader } from '../enums/connector-preset-auth-h
 import type { ConnectorPresetCategory } from '../enums/connector-preset-category.enum';
 import type { ConnectorPresetExtraField } from '../enums/connector-preset-extra-field.enum';
 import type { ConnectorPresetGroup } from '../enums/connector-preset-group.enum';
-import type { ConnectorProvider } from '../enums/connector-provider.enum';
 
 /**
  * Where a provider reports how much credit its API key can still spend.
@@ -38,7 +37,7 @@ export type ConnectorPresetLinks = {
  * routing-service admits its models by its key.
  */
 export type ConnectorPreset = {
-  key: ConnectorProvider;
+  key: string;
   displayName: string;
   category: ConnectorPresetCategory;
   group: ConnectorPresetGroup;
@@ -77,6 +76,9 @@ export type ConnectorPreset = {
   hasFreeTier: boolean;
   /** Whether chat-service may send native OpenAI `tools` to this provider. */
   supportsNativeTools: boolean;
+  /** Admin-asserted defaults for dynamic definitions with sparse model metadata. */
+  defaultSupportsTools?: boolean;
+  defaultSupportsVision?: boolean;
   /**
    * Model ids known to accept images, for providers whose list reports no
    * modality. Narrow on purpose: a false positive sends images to a text model.

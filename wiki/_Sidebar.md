@@ -11,6 +11,7 @@
 - [[Business-Overview]]
 - [[Requirements-Register]]
 - [[Drift-Log]]
+- [[Runtime-Managed-Connector-Providers]]
 - [[ADR-Index]]
 
 **Architecture**

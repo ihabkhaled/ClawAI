@@ -76,9 +76,10 @@ function roundRobin(
 ): EligibleDeploymentRecord[] {
   const byProvider = new Map<string, Array<RankedDeploymentRecord>>();
   for (const deployment of fit) {
-    const list = byProvider.get(deployment.provider) ?? [];
+    const provider = runtimeProvider(deployment);
+    const list = byProvider.get(provider) ?? [];
     list.push(deployment);
-    byProvider.set(deployment.provider, list);
+    byProvider.set(provider, list);
   }
   for (const list of byProvider.values()) {
     list.sort((a, b) => rank(a) - rank(b) || a.providerModelId.localeCompare(b.providerModelId));
@@ -92,7 +93,7 @@ function roundRobin(
       if (next !== undefined && picked.length < max) {
         picked.push({
           id: next.id,
-          provider: next.provider,
+          provider: runtimeProvider(next),
           providerModelId: next.providerModelId,
           ...(tagFit ? { modalityFit: next.modalityFit } : {}),
         });
@@ -103,19 +104,24 @@ function roundRobin(
 }
 
 function isFit(deployment: RoutableDeploymentRecord, filter: CloudRouterCandidateFilter): boolean {
-  const key = modelMatchKey(deployment.provider, deployment.providerModelId);
+  const provider = runtimeProvider(deployment);
+  const key = modelMatchKey(provider, deployment.providerModelId);
   const exposedOk =
     filter.exposed === null
       ? deployment.activationState === DeploymentActivationState.ACTIVE
       : filter.exposed.has(key);
-  const healthy = filter.connectorHealth[deployment.provider] !== false;
+  const healthy = filter.connectorHealth[provider] !== false;
   const allowed = filter.allowed === null || filter.allowed.has(key);
   // An image-OUTPUT model (chatgpt-image-latest, gpt-image-1, …) cannot answer a
   // chat turn; image requests take their own path. 2026-09-29: the cloud router
   // picked chatgpt-image-latest for "what happens at 0:02 in this video?".
   const chatCapable =
-    resolveImageCapabilityProvider(deployment.provider, deployment.providerModelId) === undefined;
+    resolveImageCapabilityProvider(provider, deployment.providerModelId) === undefined;
   return exposedOk && healthy && allowed && chatCapable;
+}
+
+function runtimeProvider(deployment: RoutableDeploymentRecord): string {
+  return deployment.runtimeProviderKey ?? deployment.provider;
 }
 
 function rank(deployment: RoutableDeploymentRecord): number {
