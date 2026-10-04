@@ -130,6 +130,8 @@
 - `docs/04-backend/service-guide-thread-generation.md` (A)
 - `docs/04-backend/services-index.md` (M)
 
+- `package-lock.json` (M)
+
 ## Before
 
 Before this batch, ClawAI had 18 backend services (25 workspaces), no Threads service boundary, and no documented Threads product decisions or machine-scoped gate receipt policy.
