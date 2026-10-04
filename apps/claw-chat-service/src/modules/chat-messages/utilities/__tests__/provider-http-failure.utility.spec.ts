@@ -505,9 +505,19 @@ describe('retired models (ADR-151)', () => {
     ],
     ['Ollama not found', 404, { error: "model 'kimi-k3' not found" }],
     [
+      'NVIDIA NIM listed but not callable for this key',
+      404,
+      { status: 404, title: 'Not Found', detail: "Function 'a1b2': Not found for account 'x9'" },
+    ],
+    [
       'Groq decommissioned (400)',
       400,
-      { error: { message: 'The model `x` has been decommissioned and is no longer supported.', code: 'model_decommissioned' } },
+      {
+        error: {
+          message: 'The model `x` has been decommissioned and is no longer supported.',
+          code: 'model_decommissioned',
+        },
+      },
     ],
   ])('%s becomes a substitutable ProviderModelUnavailableException', (_name, status, body) => {
     const error = classify({ status, body }, 'CLOUD_PROVIDER_UNAVAILABLE');

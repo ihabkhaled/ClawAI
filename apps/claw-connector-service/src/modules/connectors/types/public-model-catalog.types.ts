@@ -1,5 +1,3 @@
-import { type ConnectorProvider } from '../../../generated/prisma';
-
 /**
  * One model, as the PUBLIC marketing pages may describe it.
  *
@@ -37,7 +35,8 @@ export type PublicCatalogModel = {
  * model users have is a missed sale.
  */
 export type PublicCatalogProvider = {
-  provider: ConnectorProvider;
+  /** A ConnectorProvider key, or a custom provider definition key. */
+  provider: string;
   /** Human-facing provider name, e.g. "OpenAI" rather than "OPENAI". */
   displayName: string;
   modelCount: number;

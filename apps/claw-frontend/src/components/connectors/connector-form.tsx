@@ -76,6 +76,7 @@ export function ConnectorForm({
       setName={setName}
       provider={provider}
       customDefinition={customDefinition}
+      providerDisplayName={connector?.providerDisplayName}
       onProviderSelect={onProviderSelect}
       authType={authType}
       setAuthType={setAuthType}

@@ -208,6 +208,7 @@ export class ProviderDefinitionsService {
       authType: row.authType,
       authHeaderName: row.authHeaderName,
       authHeaderScheme: row.authHeaderScheme,
+      chatCompletionsPath: row.chatCompletionsPath,
       supportsNativeTools: row.supportsNativeTools,
       supportsVision: row.supportsVision,
       registerUrl: row.registerUrl,

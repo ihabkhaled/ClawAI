@@ -20,6 +20,7 @@ import type { ConnectorProviderComboboxProps } from '@/types';
 export function ConnectorProviderCombobox({
   value,
   customDefinition,
+  displayName,
   onChange,
   disabled,
 }: ConnectorProviderComboboxProps): React.ReactElement {
@@ -28,6 +29,7 @@ export function ConnectorProviderCombobox({
 
   const triggerLabel =
     customDefinition?.displayName ??
+    displayName ??
     (value !== null ? PROVIDER_DISPLAY_NAMES[value] : t('connectors.selectProvider'));
   const selectedOption = customDefinition
     ? `${CUSTOM_PROVIDER_OPTION_PREFIX}${customDefinition.id}`

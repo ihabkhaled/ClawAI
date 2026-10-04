@@ -32,6 +32,7 @@ export const PROVIDER_MANAGEMENT_TRANSLATIONS: Record<Locale, ProviderManagement
       authHeaderName: 'Key header name',
       authHeaderScheme: 'Key prefix (empty = raw key)',
       modelsFormat: 'Model list format',
+      chatPath: 'Chat path (ends with /chat/completions)',
     },
     [Locale.AR]: {
       title: 'موفرو الموصلات',
@@ -62,6 +63,7 @@ export const PROVIDER_MANAGEMENT_TRANSLATIONS: Record<Locale, ProviderManagement
       authHeaderName: 'اسم ترويسة المفتاح',
       authHeaderScheme: 'بادئة المفتاح (فارغ = المفتاح كما هو)',
       modelsFormat: 'تنسيق قائمة النماذج',
+      chatPath: 'مسار المحادثة (ينتهي بـ /chat/completions)',
     },
     [Locale.DE]: {
       title: 'Connector-Anbieter',
@@ -92,6 +94,7 @@ export const PROVIDER_MANAGEMENT_TRANSLATIONS: Record<Locale, ProviderManagement
       authHeaderName: 'Name des Schlüssel-Headers',
       authHeaderScheme: 'Schlüssel-Präfix (leer = roher Schlüssel)',
       modelsFormat: 'Format der Modellliste',
+      chatPath: 'Chat-Pfad (endet auf /chat/completions)',
     },
     [Locale.ES]: {
       title: 'Proveedores de conectores',
@@ -122,6 +125,7 @@ export const PROVIDER_MANAGEMENT_TRANSLATIONS: Record<Locale, ProviderManagement
       authHeaderName: 'Nombre del encabezado de la clave',
       authHeaderScheme: 'Prefijo de la clave (vacío = clave sin prefijo)',
       modelsFormat: 'Formato de la lista de modelos',
+      chatPath: 'Ruta del chat (termina en /chat/completions)',
     },
     [Locale.FR]: {
       title: 'Fournisseurs de connecteurs',
@@ -152,6 +156,7 @@ export const PROVIDER_MANAGEMENT_TRANSLATIONS: Record<Locale, ProviderManagement
       authHeaderName: 'Nom de l’en-tête de la clé',
       authHeaderScheme: 'Préfixe de la clé (vide = clé brute)',
       modelsFormat: 'Format de la liste des modèles',
+      chatPath: 'Chemin du chat (se termine par /chat/completions)',
     },
     [Locale.FA]: {
       title: 'ارائه‌دهندگان اتصال‌دهنده',
@@ -182,6 +187,7 @@ export const PROVIDER_MANAGEMENT_TRANSLATIONS: Record<Locale, ProviderManagement
       authHeaderName: 'نام هدر کلید',
       authHeaderScheme: 'پیشوند کلید (خالی = کلید خام)',
       modelsFormat: 'قالب فهرست مدل‌ها',
+      chatPath: 'مسیر گفتگو (با /chat/completions پایان می‌یابد)',
     },
     [Locale.HI]: {
       title: 'कनेक्टर प्रदाता',
@@ -212,6 +218,7 @@ export const PROVIDER_MANAGEMENT_TRANSLATIONS: Record<Locale, ProviderManagement
       authHeaderName: 'कुंजी हेडर का नाम',
       authHeaderScheme: 'कुंजी उपसर्ग (खाली = सीधी कुंजी)',
       modelsFormat: 'मॉडल सूची का प्रारूप',
+      chatPath: 'चैट पाथ (/chat/completions पर समाप्त)',
     },
     [Locale.IT]: {
       title: 'Provider dei connettori',
@@ -242,6 +249,7 @@ export const PROVIDER_MANAGEMENT_TRANSLATIONS: Record<Locale, ProviderManagement
       authHeaderName: 'Nome dell’header della chiave',
       authHeaderScheme: 'Prefisso della chiave (vuoto = chiave semplice)',
       modelsFormat: 'Formato dell’elenco dei modelli',
+      chatPath: 'Percorso della chat (termina con /chat/completions)',
     },
     [Locale.JA]: {
       title: 'コネクタープロバイダー',
@@ -272,6 +280,7 @@ export const PROVIDER_MANAGEMENT_TRANSLATIONS: Record<Locale, ProviderManagement
       authHeaderName: 'キーのヘッダー名',
       authHeaderScheme: 'キーのプレフィックス（空 = キーのみ）',
       modelsFormat: 'モデル一覧の形式',
+      chatPath: 'チャットのパス（/chat/completions で終わる）',
     },
     [Locale.PT]: {
       title: 'Provedores de conectores',
@@ -302,6 +311,7 @@ export const PROVIDER_MANAGEMENT_TRANSLATIONS: Record<Locale, ProviderManagement
       authHeaderName: 'Nome do cabeçalho da chave',
       authHeaderScheme: 'Prefixo da chave (vazio = chave pura)',
       modelsFormat: 'Formato da lista de modelos',
+      chatPath: 'Caminho do chat (termina em /chat/completions)',
     },
     [Locale.RU]: {
       title: 'Провайдеры коннекторов',
@@ -332,6 +342,7 @@ export const PROVIDER_MANAGEMENT_TRANSLATIONS: Record<Locale, ProviderManagement
       authHeaderName: 'Имя заголовка ключа',
       authHeaderScheme: 'Префикс ключа (пусто = ключ как есть)',
       modelsFormat: 'Формат списка моделей',
+      chatPath: 'Путь чата (оканчивается на /chat/completions)',
     },
     [Locale.TH]: {
       title: 'ผู้ให้บริการคอนเนกเตอร์',
@@ -362,6 +373,7 @@ export const PROVIDER_MANAGEMENT_TRANSLATIONS: Record<Locale, ProviderManagement
       authHeaderName: 'ชื่อเฮดเดอร์ของคีย์',
       authHeaderScheme: 'คำนำหน้าคีย์ (ว่าง = ส่งคีย์ตรง ๆ)',
       modelsFormat: 'รูปแบบรายการโมเดล',
+      chatPath: 'พาธแชต (ลงท้ายด้วย /chat/completions)',
     },
     [Locale.ZH]: {
       title: '连接器提供商',
@@ -392,5 +404,6 @@ export const PROVIDER_MANAGEMENT_TRANSLATIONS: Record<Locale, ProviderManagement
       authHeaderName: '密钥请求头名称',
       authHeaderScheme: '密钥前缀（留空 = 原始密钥）',
       modelsFormat: '模型列表格式',
+      chatPath: '聊天路径（以 /chat/completions 结尾）',
     },
   };

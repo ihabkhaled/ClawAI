@@ -4,7 +4,6 @@ import type { ConnectorAuthType, ConnectorProvider, ConnectorStatus } from '@/en
 
 import type { ProviderDefinition } from './provider-definition.types';
 
-
 export type Connector = {
   id: string;
   name: string;
@@ -199,6 +198,8 @@ export type ConnectorProviderComboboxState = {
 
 export type ConnectorProviderComboboxProps = {
   value: ConnectorProvider | null;
+  /** Name to show when it differs from the enum, e.g. an existing custom connector. */
+  displayName?: string | null;
   /** Set when `value` is the custom-provider slot; names which definition. */
   customDefinition?: ProviderDefinition | null;
   onChange: (value: ConnectorProvider, definition?: ProviderDefinition) => void;

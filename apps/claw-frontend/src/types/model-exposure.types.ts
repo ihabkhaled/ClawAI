@@ -13,6 +13,8 @@ import type { ModelBillingInfo } from './model-billing.types';
  * lifecycle which is what the provider says about the model.
  */
 export interface ConnectorModelRow {
+  /** A custom provider's own name; absent for built-in providers. */
+  providerDisplayName?: string;
   id: string;
   connectorId: string;
   provider: string;

@@ -1,7 +1,11 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import type { ModelBehaviorProbeResult } from '@claw/shared-types';
 import { getConnectorPreset, resolvePresetBaseUrl } from '@claw/shared-utilities';
-import { type Connector, ModelSyncStatus } from '../../../generated/prisma';
+import {
+  type Connector,
+  type ConnectorProviderDefinition,
+  ModelSyncStatus,
+} from '../../../generated/prisma';
 import {
   CAPABILITY_PROBE_UNSUPPORTED_CODE,
   CAPABILITY_PROBE_UNSUPPORTED_ID,
@@ -18,6 +22,7 @@ import { parseGatewayHeaders } from '../utilities/gateway-headers.utility';
 import { getAdapter } from './adapters/adapter-factory';
 import { OpenAICompatibleAdapter } from './adapters/openai-compatible.adapter';
 import { ProviderDefinitionsService } from '../services/provider-definitions.service';
+import { chatBaseUrlWithPrefix } from '../utilities/chat-path.utility';
 import { withCustomAuthHeader } from '../utilities/provider-auth-header.utility';
 import {
   toProviderAuthHeader,
@@ -214,7 +219,10 @@ export class ConnectorsManager {
         ...config,
         gatewayHeaders: withCustomAuthHeader(config, definition),
         provider: definition && !definition.isBuiltIn ? definition.key : config.provider,
-        baseUrl: resolvePresetBaseUrl(preset, config.baseUrl, config.accountId),
+        baseUrl: this.withChatPrefix(
+          resolvePresetBaseUrl(preset, config.baseUrl, config.accountId),
+          definition,
+        ),
       };
     } catch (error: unknown) {
       const reason = error instanceof Error ? error.message : 'unresolvable base URL';
@@ -223,6 +231,17 @@ export class ConnectorsManager {
         'CONNECTOR_BASE_URL_UNRESOLVED',
       );
     }
+  }
+
+  // chat-service posts to <baseUrl>/chat/completions; a custom provider that serves
+  // chat under a prefix (/v1/chat/completions) gets the prefix folded into the base.
+  private withChatPrefix(
+    baseUrl: string,
+    definition: ConnectorProviderDefinition | null | undefined,
+  ): string {
+    return definition && !definition.isBuiltIn
+      ? chatBaseUrlWithPrefix(baseUrl, definition.chatCompletionsPath)
+      : baseUrl;
   }
 
   private async getAdapter(connector: Connector): Promise<ProviderAdapter> {

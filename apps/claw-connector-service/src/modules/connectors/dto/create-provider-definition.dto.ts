@@ -2,6 +2,7 @@ import { ConnectorModelsResponseFormat } from '@claw/shared-types';
 import { z } from 'zod';
 import { ConnectorAuthType, ProviderAdapterFamily } from '../../../generated/prisma';
 import { GATEWAY_HEADER_NAME_PATTERN } from '../constants/gateway-headers.constants';
+import { isValidChatCompletionsPath } from '../utilities/chat-path.utility';
 import { isAllowedCloudProviderUrl, isSafeEndpointPath } from '../utilities/provider-url.utility';
 
 const providerLinkSchema = z
@@ -41,6 +42,13 @@ export const createProviderDefinitionSchema = z
     // e.g. AI Horde's `apikey` header).
     authHeaderName: z.string().trim().regex(GATEWAY_HEADER_NAME_PATTERN).default('Authorization'),
     authHeaderScheme: z.string().trim().max(50).default('Bearer'),
+    // Where chat is served, relative to the base URL (e.g. /v1/chat/completions).
+    chatCompletionsPath: z
+      .string()
+      .trim()
+      .max(255)
+      .refine(isValidChatCompletionsPath, 'Chat path must be a path ending in /chat/completions')
+      .default('/chat/completions'),
     supportsNativeTools: z.boolean().default(false),
     supportsVision: z.boolean().default(false),
     registerUrl: providerLinkSchema.optional(),

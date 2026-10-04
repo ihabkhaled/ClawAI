@@ -2,6 +2,7 @@ import { ConnectorModelsResponseFormat } from '@claw/shared-types';
 import { z } from 'zod';
 import { ProviderAdapterFamily } from '../../../generated/prisma';
 import { GATEWAY_HEADER_NAME_PATTERN } from '../constants/gateway-headers.constants';
+import { isValidChatCompletionsPath } from '../utilities/chat-path.utility';
 import { isAllowedCloudProviderUrl, isSafeEndpointPath } from '../utilities/provider-url.utility';
 import { createProviderDefinitionSchema } from './create-provider-definition.dto';
 
@@ -22,6 +23,12 @@ export const updateProviderDefinitionSchema = createProviderDefinitionSchema
     // omitted field would otherwise be reset on every PATCH.
     authHeaderName: z.string().trim().regex(GATEWAY_HEADER_NAME_PATTERN).optional(),
     authHeaderScheme: z.string().trim().max(50).optional(),
+    chatCompletionsPath: z
+      .string()
+      .trim()
+      .max(255)
+      .refine(isValidChatCompletionsPath, 'Chat path must be a path ending in /chat/completions')
+      .optional(),
     supportsNativeTools: z.boolean().optional(),
     supportsVision: z.boolean().optional(),
     defaultIsPayAsYouGo: z.boolean().optional(),

@@ -238,3 +238,12 @@ Get decrypted connector configuration for a provider. Internal use only (not exp
   "provider": "GEMINI"
 }
 ```
+
+## Provider definition settings (2026-10-04)
+
+`POST/PATCH /connectors/provider-definitions` also accept `authHeaderName`,
+`authHeaderScheme` (empty = raw key), `chatCompletionsPath` (must end in
+`/chat/completions`), a `modelsEndpoint` with a query string, and
+`modelsResponseFormat`. `healthCheckEndpoint` and `description` accept `""` to
+clear. PATCH changes only the fields sent. `GET /connectors/:id/models` rows carry
+`providerDisplayName` for custom providers.

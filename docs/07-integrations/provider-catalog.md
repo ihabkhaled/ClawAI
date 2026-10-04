@@ -396,3 +396,20 @@ Ollama is a local AI runtime that runs models on the user's hardware. No data le
 | OpenAI / gpt-4o             | $2.50      | $10.00      | Medium        |
 | Anthropic / claude-sonnet-4 | $3.00      | $15.00      | Medium-High   |
 | Anthropic / claude-opus-4   | $15.00     | $75.00      | High          |
+
+### Custom provider recipes (verified 2026-10-04 on the local stack)
+
+Create under Connector providers; every value is data, no code. Keys are stored
+as `UPPER_SNAKE`. Chat path is relative to the base URL.
+
+| Provider        | Base URL                         | Models path / format    | Chat path            | Key header           | Result                                                     |
+| --------------- | -------------------------------- | ----------------------- | -------------------- | -------------------- | ---------------------------------------------------------- |
+| Pollinations AI | https://gen.pollinations.ai      | /v1/models, OPENAI_LIST | /v1/chat/completions | Authorization Bearer | 96 chat models, 4 of 4 sampled chats answered              |
+| Hugging Face    | https://router.huggingface.co    | /v1/models, OPENAI_LIST | /v1/chat/completions | Authorization Bearer | 134 models, 4 of 4 sampled chats answered                  |
+| NVIDIA NIM      | https://integrate.api.nvidia.com | /v1/models, OPENAI_LIST | /v1/chat/completions | Authorization Bearer | 70 listed, 1 of 8 sampled callable (key-scoped, see guide) |
+| AI Horde        | https://oai.aihorde.net          | /v1/models, OPENAI_LIST | /v1/chat/completions | Authorization Bearer | healthy, 27 models; chats over 512 tokens need kudos       |
+
+AI Horde's native API (`https://aihorde.net/api`, `/v2/status/models?type=text`,
+`apikey` header) syncs models but has no `/chat/completions`; use the OpenAI
+gateway above for chat. `type=text` is the whole live text set (28); there is no
+single route for text and image together, and image models cannot chat.

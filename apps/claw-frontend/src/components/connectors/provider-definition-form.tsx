@@ -35,14 +35,14 @@ export function ProviderDefinitionForm({
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {editing ? null : (
-            <ProviderField
-              label={t('providerManagement.key')}
-              name="key"
-              required
-              pattern="[A-Za-z][A-Za-z0-9_\- ]{1,62}"
-            />
-          )}
+          <ProviderField
+            label={t('providerManagement.key')}
+            name="key"
+            required
+            pattern="[A-Za-z][A-Za-z0-9_ \-]{1,62}"
+            defaultValue={editing?.key}
+            readOnly={editing !== null}
+          />
           <ProviderField
             label={t('providerManagement.name')}
             name="displayName"
@@ -100,6 +100,12 @@ export function ProviderDefinitionForm({
               ))}
             </select>
           </label>
+          <ProviderField
+            label={t('providerManagement.chatPath')}
+            name="chatCompletionsPath"
+            required
+            defaultValue={editing?.chatCompletionsPath ?? '/v1/chat/completions'}
+          />
           <ProviderField
             label={t('providerManagement.authHeaderName')}
             name="authHeaderName"

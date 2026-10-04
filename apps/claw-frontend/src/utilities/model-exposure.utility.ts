@@ -152,7 +152,7 @@ export function buildModelExposureRowViews(
     row,
     isSelected: selected.has(row.modelKey),
     isExposed: row.exposure === ConnectorModelExposure.EXPOSED,
-    providerLabel: resolveProviderDisplayName(row.provider),
+    providerLabel: row.providerDisplayName ?? resolveProviderDisplayName(row.provider),
     billing: resolveModelBilling(row.provider, policy),
     lastSeenLabel: formatModelLastSeen(row.lastSeenAt, locale),
     lifecycleLabelKey: resolveLifecycleLabelKey(row.lifecycle),

@@ -39,9 +39,16 @@ export class PublicModelCatalogService {
   async getCatalog(): Promise<PublicModelCatalog> {
     const rows = await this.connectorModels.findExposedForCatalog();
 
-    const byProvider = new Map<ConnectorProvider, PublicCatalogModel[]>();
+    // A custom provider groups under its own key and name, not under the
+    // shared CUSTOM_OPENAI_COMPATIBLE enum every one of them is stored with.
+    const byProvider = new Map<string, PublicCatalogModel[]>();
+    const customNames = new Map<string, string>();
     for (const row of rows) {
-      const models = byProvider.get(row.provider) ?? [];
+      const key = row.connector.providerDefinition?.key ?? row.provider;
+      if (row.connector.providerDefinition) {
+        customNames.set(key, row.connector.providerDefinition.displayName);
+      }
+      const models = byProvider.get(key) ?? [];
       models.push({
         modelKey: row.modelKey,
         // Re-formatted on read, not just on write. Rows synced before the
@@ -58,7 +65,7 @@ export class PublicModelCatalogService {
         supportsStructuredOutput: row.supportsStructuredOutput,
         usageTier: row.usageTier,
       });
-      byProvider.set(row.provider, models);
+      byProvider.set(key, models);
     }
 
     const providers = this.orderProviders([...byProvider.keys()]).map(
@@ -66,7 +73,10 @@ export class PublicModelCatalogService {
         const models = byProvider.get(provider) ?? [];
         return {
           provider,
-          displayName: PUBLIC_PROVIDER_DISPLAY_NAMES[provider] ?? provider,
+          displayName:
+            customNames.get(provider) ??
+            PUBLIC_PROVIDER_DISPLAY_NAMES[provider as ConnectorProvider] ??
+            provider,
           modelCount: models.length,
           models,
         };
@@ -90,10 +100,12 @@ export class PublicModelCatalogService {
    * the enum but not yet to the order list still appears, at the end, rather
    * than silently vanishing.
    */
-  private orderProviders(present: ConnectorProvider[]): ConnectorProvider[] {
+  private orderProviders(present: string[]): string[] {
+    // Widened: custom provider keys are plain strings, not ConnectorProvider.
+    const orderedKeys: readonly string[] = PUBLIC_PROVIDER_ORDER;
     const ranked = PUBLIC_PROVIDER_ORDER.filter((provider) => present.includes(provider));
     const unranked = present
-      .filter((provider) => !PUBLIC_PROVIDER_ORDER.includes(provider))
+      .filter((provider) => !orderedKeys.includes(provider))
       .sort((left, right) => left.localeCompare(right));
     return [...ranked, ...unranked];
   }

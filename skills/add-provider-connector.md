@@ -93,6 +93,15 @@ registry; bespoke providers continue to use their existing adapters.
 - Importing the vendor SDK directly in a service → violates the wrapping rule.
 - Health/sync events not emitted → routing can't learn the provider's model health.
 
+## An OpenAI-compatible provider needs no code
+
+Create it under Connector providers (`/connectors/providers`), not as an adapter.
+Fill base URL, models path and list format, health path, chat path (usually
+`/v1/chat/completions` when the base URL is host-only), auth type and key header
+and prefix. Then add a connector from the Add Connector dropdown, sync, expose a
+few models and chat with each: a 404 on chat means the chat path, a 401/403 the
+key header, 0 models the list format or path. Recipes: provider-catalog.md.
+
 ## Validation commands
 
 ```bash

@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { ConnectorProvider } from '../../../../generated/prisma';
 import { PublicModelCatalogService } from '../public-model-catalog.service';
 import type { ConnectorModelsRepository } from '../../repositories/connector-models.repository';
@@ -17,6 +17,7 @@ type Row = {
   inputUsdPerMillion: string | null;
   outputUsdPerMillion: string | null;
   connectorId: string;
+  connector: { providerDefinition: { key: string; displayName: string } | null };
 };
 
 function row(provider: ConnectorProvider, modelKey: string, overrides: Partial<Row> = {}): Row {
@@ -34,6 +35,7 @@ function row(provider: ConnectorProvider, modelKey: string, overrides: Partial<R
     inputUsdPerMillion: '1.250000',
     outputUsdPerMillion: '10.000000',
     connectorId: 'connector-secret-id',
+    connector: { providerDefinition: null },
     ...overrides,
   };
 }
@@ -156,5 +158,23 @@ describe('PublicModelCatalogService', () => {
     expect(catalog.totalModelCount).toBe(0);
     expect(catalog.providerCount).toBe(0);
     expect(catalog.generatedAt).toEqual(expect.any(String));
+  });
+
+  it('lists a custom provider under its own key and name, not the shared enum', async () => {
+    const ctx = build([
+      row(ConnectorProvider.CUSTOM_OPENAI_COMPATIBLE, 'koboldcpp/Magidonia', {
+        connector: { providerDefinition: { key: 'AI_HORDE', displayName: 'AI Horde' } },
+      }),
+      row(ConnectorProvider.CUSTOM_OPENAI_COMPATIBLE, 'openai/gpt-5.6-sol', {
+        connector: { providerDefinition: { key: 'POLLINATIONS', displayName: 'Pollinations AI' } },
+      }),
+    ]);
+
+    const catalog = await ctx.service.getCatalog();
+
+    expect(catalog.providers.map((entry) => [entry.provider, entry.displayName])).toEqual([
+      ['AI_HORDE', 'AI Horde'],
+      ['POLLINATIONS', 'Pollinations AI'],
+    ]);
   });
 });

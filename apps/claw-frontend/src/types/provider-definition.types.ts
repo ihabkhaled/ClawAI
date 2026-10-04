@@ -16,6 +16,7 @@ export type ProviderDefinition = {
   authType: ConnectorAuthType | null;
   authHeaderName: string;
   authHeaderScheme: string;
+  chatCompletionsPath: string;
   adapterFamily: ProviderAdapterFamily;
   supportsNativeTools: boolean;
   supportsVision: boolean;
@@ -40,6 +41,7 @@ export type CreateProviderDefinition = {
   authType: ConnectorAuthType;
   authHeaderName: string;
   authHeaderScheme: string;
+  chatCompletionsPath: string;
   supportsNativeTools: boolean;
   supportsVision: boolean;
   defaultIsPayAsYouGo: boolean;
@@ -53,6 +55,7 @@ export type ProviderFieldProps = {
   required?: boolean;
   pattern?: string;
   defaultValue?: string | null;
+  readOnly?: boolean;
 };
 
 export type ProviderToggleProps = { name: string; label: string; checked?: boolean };

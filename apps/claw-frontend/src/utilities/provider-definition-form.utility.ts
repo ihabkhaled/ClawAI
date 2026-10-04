@@ -19,6 +19,7 @@ export function readProviderDefinitionForm(form: FormData): CreateProviderDefini
     authType: (text(form, 'authType') || 'API_KEY') as CreateProviderDefinition['authType'],
     authHeaderName: text(form, 'authHeaderName') || 'Authorization',
     authHeaderScheme: text(form, 'authHeaderScheme'),
+    chatCompletionsPath: text(form, 'chatCompletionsPath') || '/v1/chat/completions',
     supportsNativeTools: form.has('supportsNativeTools'),
     supportsVision: form.has('supportsVision'),
     defaultIsPayAsYouGo: form.has('defaultIsPayAsYouGo'),

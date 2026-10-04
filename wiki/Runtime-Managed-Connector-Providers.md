@@ -13,7 +13,9 @@ Custom model identity is carried from connector discovery through routing.
 - [API reference](https://github.com/ihabkhaled/ClawAI/blob/main/docs/12-reference/api-reference-connectors.md)
 - [QA evidence and open release lanes](https://github.com/ihabkhaled/ClawAI/blob/main/docs/qa-evidence/2026-10-03-runtime-managed-connector-providers.md)
 
-Release is currently NO-GO while DB migration, RBAC, accessibility/performance,
-built-in UI UAT, live NIM and GitHub CI lanes remain open. NVIDIA NIM was tested
-only with mocked model-list responses. Hugging Face, Pollinations and AI Horde
-require separate adapters.
+Update 2026-10-04: Hugging Face, Pollinations, NVIDIA NIM and AI Horde run as data
+on a definition (base URL, list format, chat path, key header), not as adapters;
+recipes are in the provider catalog. Custom providers show their own name
+everywhere. Open: RBAC, device matrix, accessibility/performance and GitHub CI
+lanes; production was not reachable from the work machine, so the production
+fix is the same chat-path setting applied there after deploy.

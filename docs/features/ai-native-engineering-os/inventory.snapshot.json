@@ -8444,7 +8444,7 @@
           "file": "skills/add-prisma-model.md"
         },
         {
-          "bytes": 5969,
+          "bytes": 6494,
           "file": "skills/add-provider-connector.md"
         },
         {
@@ -10815,7 +10815,7 @@
       },
       "claw-connector-service": {
         "runner": "vitest",
-        "testFiles": 53
+        "testFiles": 54
       },
       "claw-file-generation-service": {
         "runner": "vitest",
@@ -11605,7 +11605,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2032,
+    "totalTestFiles": 2033,
     "workspaceCount": 25
   }
 }

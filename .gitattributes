@@ -18,3 +18,6 @@ docker/*.yml text eol=lf
 
 # Keep other text files cross-platform-friendly.
 * text=auto
+
+# Vitest writes snapshots with LF; a CRLF checkout made them show as modified after every run.
+*.snap text eol=lf

@@ -6317,6 +6317,7 @@ export type ProviderManagementLocaleTranslation = {
   authHeaderName: string;
   authHeaderScheme: string;
   modelsFormat: string;
+  chatPath: string;
 };
 
 export type AdminModelCostsLocaleTranslation = {

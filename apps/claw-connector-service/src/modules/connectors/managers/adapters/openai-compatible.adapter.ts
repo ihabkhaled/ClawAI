@@ -8,6 +8,7 @@ import {
   PRESET_CHAT_COMPLETIONS_PATH,
   PRESET_HEALTH_PROBE_MAX_TOKENS,
   PRESET_HEALTH_PROBE_PROMPT,
+  PRESET_MODEL_KEY_MAX_LENGTH,
 } from '../../constants/openai-compatible.constants';
 import { DEFAULT_PROVIDER_AUTH_HEADER } from '../../constants/provider-auth-header.constants';
 import { type ProviderAuthHeader } from '../../types/provider-auth-header.types';
@@ -102,7 +103,9 @@ export class OpenAICompatibleAdapter implements ProviderAdapter {
       );
     }
     const entries = parsePresetModelList(this.preset.modelsResponseFormat, response.data);
-    const chatModels = entries.filter((entry) => isPresetChatModel(entry));
+    const chatModels = entries.filter(
+      (entry) => isPresetChatModel(entry) && entry.id.length <= PRESET_MODEL_KEY_MAX_LENGTH,
+    );
     logger.log(
       `syncModels: ${this.preset.key} listed ${String(entries.length)} models, ${String(chatModels.length)} chat`,
     );

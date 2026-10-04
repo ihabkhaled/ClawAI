@@ -386,7 +386,9 @@ export class ConnectorsService implements OnApplicationBootstrap {
     return this.connectorsManager.getExecutionConfig(connector);
   }
 
-  async getModels(connectorId: string): Promise<ConnectorModel[]> {
+  async getModels(
+    connectorId: string,
+  ): Promise<Array<ConnectorModel & { providerDisplayName?: string }>> {
     this.logger.debug(`getModels: fetching models for connector ${connectorId}`);
     const connector = await this.connectorsRepository.findById(connectorId);
     if (!connector) {
@@ -396,7 +398,11 @@ export class ConnectorsService implements OnApplicationBootstrap {
     this.logger.debug(
       `getModels: returned ${String(models.length)} models for connector ${connectorId}`,
     );
-    return models;
+    // A custom provider shows its own name, not the shared enum it is stored with.
+    const providerDisplayName = connector.providerDefinition?.displayName;
+    return providerDisplayName
+      ? models.map((model) => ({ ...model, providerDisplayName }))
+      : models;
   }
 
   // USER-facing model catalog for the chat picker: every ACTIVE model from

@@ -1458,6 +1458,7 @@ export type ConnectorFormFieldsProps = {
   setName: (value: string) => void;
   provider: ConnectorProvider | null;
   customDefinition: ProviderDefinition | null;
+  providerDisplayName?: string | null;
   onProviderSelect: (value: ConnectorProvider, definition?: ProviderDefinition) => void;
   authType: ConnectorAuthType;
   setAuthType: (value: ConnectorAuthType) => void;

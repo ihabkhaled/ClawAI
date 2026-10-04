@@ -397,6 +397,7 @@ describe('ConnectorsManager', () => {
       authType: ConnectorAuthType.API_KEY,
       authHeaderName: 'Authorization',
       authHeaderScheme: 'Bearer',
+      chatCompletionsPath: '/v1/chat/completions',
       supportsNativeTools: true,
       supportsVision: true,
       registerUrl: null,
@@ -425,7 +426,8 @@ describe('ConnectorsManager', () => {
 
     expect(config).toMatchObject({
       provider: 'NVIDIA_NIM',
-      baseUrl: 'https://integrate.api.nvidia.com',
+      // The provider's chat prefix is folded into the base chat-service posts to.
+      baseUrl: 'https://integrate.api.nvidia.com/v1',
     });
 
     global.fetch = vi.fn().mockResolvedValue({

@@ -55,15 +55,25 @@ Everything a provider needs is data on the definition, never code:
 `modelsEndpoint` (a query string is allowed, e.g. AI Horde `?type=text`),
 `modelsResponseFormat` (`OPENAI_LIST`, `BARE_ARRAY`, `COHERE_MODELS`,
 `CLOUDFLARE_SEARCH`), `authHeaderName` and `authHeaderScheme` (`apikey` plus an
-empty scheme sends the raw key). The adapter sends the key under that header;
-chat-service always sends `Authorization: Bearer`, so a non-standard header is
-also added to the execution config's gateway headers (`withCustomAuthHeader`).
-Keys accept hyphens and spaces and are stored as `UPPER_SNAKE`. The model-list
-parser tolerates `name`-only entries, `type: text` and a `capabilities` string
-list (Pollinations). Known gap: the chat path is still `/chat/completions` for
-every provider, so non-OpenAI chat protocols (AI Horde) can sync models but not
-chat. Pitfall: zod `.partial()` keeps a field's `.default()`, so an update schema
-must re-declare defaulted fields without the default or a PATCH resets them.
+empty scheme sends the raw key) and `chatCompletionsPath` (where chat is served,
+e.g. `/v1/chat/completions`). The adapter sends the key under that header;
+chat-service always sends `Authorization: Bearer` and posts to
+`<baseUrl>/chat/completions`, so `getExecutionConfig` adds a non-standard key
+header to the gateway headers (`withCustomAuthHeader`) and folds the chat-path
+prefix into the base URL it hands out (`chatBaseUrlWithPrefix`). A host-only base
+URL with the default chat path therefore 404s on chat (the 2026-10-04 production
+failure of Pollinations, NIM and Hugging Face): set the chat path. Keys accept
+hyphens and spaces and are stored as `UPPER_SNAKE`. The model-list parser
+tolerates `name`-only entries, `type: text` and a `capabilities` string list
+(Pollinations); sync leaves out model ids over 128 characters because exposure,
+plan access and quota tables are 128 wide. Custom providers show their own name
+everywhere (connector list/detail, model rows, exposure table, public catalog)
+through `providerDisplayName`, never the shared `CUSTOM_OPENAI_COMPATIBLE` enum.
+A model the provider lists but the key cannot call (NVIDIA NIM `Function ...
+Not found for account`) is classified as model-unavailable and retired after three
+reports (ADR-151). Pitfall: zod `.partial()` keeps a field's `.default()`, so an
+update schema must re-declare defaulted fields without the default or a PATCH
+resets them.
 
 Provider URLs must use HTTPS and pass syntax/private-host validation. Model and
 health requests also use the shared outbound host guard, timeout, and redirect

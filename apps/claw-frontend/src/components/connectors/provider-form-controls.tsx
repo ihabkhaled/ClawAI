@@ -8,6 +8,7 @@ export function ProviderField({
   required,
   pattern,
   defaultValue,
+  readOnly,
 }: ProviderFieldProps): React.ReactElement {
   return (
     <label className="grid grid-cols-1 gap-2 text-sm font-medium">
@@ -17,6 +18,7 @@ export function ProviderField({
         type={type ?? 'text'}
         required={required}
         pattern={pattern}
+        readOnly={readOnly}
         defaultValue={defaultValue ?? ''}
       />
     </label>

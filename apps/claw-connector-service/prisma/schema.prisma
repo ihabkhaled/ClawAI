@@ -155,6 +155,7 @@ model ConnectorProviderDefinition {
   authType                  ConnectorAuthType?    @map("auth_type")
   authHeaderName            String                @default("Authorization") @map("auth_header_name")
   authHeaderScheme          String                @default("Bearer") @map("auth_header_scheme")
+  chatCompletionsPath       String                @default("/chat/completions") @map("chat_completions_path")
   supportsNativeTools      Boolean               @default(false) @map("supports_native_tools")
   supportsVision            Boolean               @default(false) @map("supports_vision")
   registerUrl               String?               @map("register_url")

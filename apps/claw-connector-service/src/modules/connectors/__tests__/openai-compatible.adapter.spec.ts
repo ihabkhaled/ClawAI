@@ -174,6 +174,23 @@ describe('OpenAICompatibleAdapter.healthCheck', () => {
 });
 
 describe('OpenAICompatibleAdapter.syncModels', () => {
+  it('leaves out a model id longer than the platform stores, and sends a custom key header', async () => {
+    const fetchMock = mockFetch(200, [
+      { name: 'koboldcpp/ok-model', type: 'text' },
+      { name: `Swarm_Test/${'x'.repeat(130)}`, type: 'text' },
+      { name: 'some-image-model', type: 'image' },
+    ]);
+    const preset = { ...getConnectorPreset('GROQ'), modelsResponseFormat: 'BARE_ARRAY' } as never;
+
+    const models = await new OpenAICompatibleAdapter(preset, {
+      name: 'apikey',
+      scheme: '',
+    }).syncModels(config('GROQ'));
+
+    expect(models.map((model) => model.modelKey)).toEqual(['koboldcpp/ok-model']);
+    expect(calledInit(fetchMock).headers).toMatchObject({ apikey: 'test-key' });
+  });
+
   it('keeps only chat models from an OpenAI-shaped list and reads reported windows', async () => {
     mockFetch(200, {
       object: 'list',
