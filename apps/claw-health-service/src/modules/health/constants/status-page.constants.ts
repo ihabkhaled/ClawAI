@@ -31,7 +31,13 @@ export const COMPONENT_MEMBERS: readonly ComponentMembers[] = [
   { component: StatusComponent.LOCAL_MODELS, services: ['ollama-service', 'llamacpp-service'] },
   {
     component: StatusComponent.PLATFORM,
-    services: ['audit-service', 'client-logs-service', 'server-logs-service'],
+    services: [
+      'audit-service',
+      'client-logs-service',
+      'server-logs-service',
+      'threads-service',
+      'thread-generation-service',
+    ],
   },
 ];
 
