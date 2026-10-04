@@ -148,6 +148,7 @@ jobs:
           # profile `config --services` omits it and this check always failed.
           docker compose \
             --profile local-ai \
+            -f docker/docker-compose.dev.databases.yml \
             -f docker/docker-compose.dev.services.yml \
             -f "${{ matrix.scenario.expect_overlay }}" \
             config --services | grep -q "^llamacpp-service$"

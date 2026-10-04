@@ -81,6 +81,9 @@ Targeted `service:recreate` and `service:rebuild` commands load both split
 Compose files so `depends_on` services in the database file resolve without
 starting or replacing them (`--no-deps`).
 
+The GPU overlay workflow validates the service overlay together with both the
+database and service Compose files, so service dependencies resolve in CI.
+
 ### What Install Scripts Do
 
 1. Check prerequisites (Docker, Node.js, npm)
