@@ -24,6 +24,11 @@ test('service:recreate and service:rebuild stay scoped to one service', () => {
     assert.match(block, /--no-deps/u, `${command} must pass --no-deps`);
     assert.match(block, /--force-recreate/u, `${command} must force the recreate`);
     assert.match(block, /"\$\{@:2\}"/u, `${command} must act on the named services`);
+    assert.match(
+      block,
+      /-f "\$DB_FILE" \$SVC_FLAGS/u,
+      `${command} must include dependency definitions`,
+    );
   }
 });
 

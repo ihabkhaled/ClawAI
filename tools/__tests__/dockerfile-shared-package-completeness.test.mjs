@@ -79,3 +79,17 @@ test('every service Dockerfile builds every shared package the service declares'
     `Dockerfiles that copy a stale host dist instead of building the package:\n  ${violations.join('\n  ')}`,
   );
 });
+
+test('Threads generation runner can resolve Prisma migration engines as non-root', () => {
+  const dockerfilePath = repoPath('apps/claw-thread-generation-service/Dockerfile');
+  const source = readFileSync(dockerfilePath, 'utf8');
+  const nodeModulesCopy = source.indexOf('COPY --from=builder /app/node_modules ./node_modules');
+  const enginesOwnerChange = source.indexOf(
+    'RUN chown -R nestjs:nestjs /app/node_modules/@prisma/engines',
+  );
+  const nonRootUser = source.indexOf('USER nestjs');
+
+  assert.ok(nodeModulesCopy >= 0, 'production image must include installed Prisma engines');
+  assert.ok(enginesOwnerChange > nodeModulesCopy, 'grant engine write access after copying dependencies');
+  assert.ok(nonRootUser > enginesOwnerChange, 'grant engine write access before dropping root');
+});

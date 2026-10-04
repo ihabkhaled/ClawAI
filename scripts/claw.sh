@@ -465,7 +465,7 @@ case "$1" in
     # everything the service depends on, which on this stack reaches the
     # databases.
     # shellcheck disable=SC2086
-    docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS up -d --no-deps --force-recreate --no-build "${@:2}"
+    docker compose $ENV_FILE_FLAG -p claw -f "$DB_FILE" $SVC_FLAGS up -d --no-deps --force-recreate --no-build "${@:2}"
     ;;
   service:rebuild)
     # Rebuild ONE service's image, then recreate it.
@@ -484,10 +484,10 @@ case "$1" in
     SVC_FLAGS=$(build_svc_compose_flags)
     echo "Rebuilding ${*:2} ($MODE mode, gpu=$GPU_VENDOR)..."
     # shellcheck disable=SC2086
-    docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS build --progress plain "${@:2}"
+    docker compose $ENV_FILE_FLAG -p claw -f "$DB_FILE" $SVC_FLAGS build --progress plain "${@:2}"
     echo "Recreating ${*:2}..."
     # shellcheck disable=SC2086
-    docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS up -d --no-deps --force-recreate --no-build "${@:2}"
+    docker compose $ENV_FILE_FLAG -p claw -f "$DB_FILE" $SVC_FLAGS up -d --no-deps --force-recreate --no-build "${@:2}"
     ensure_public_tls
     ;;
   ollama:up)

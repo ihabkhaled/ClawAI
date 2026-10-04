@@ -73,6 +73,12 @@ error anywhere to say so.
 
 Add `--prod` before the command on a production box.
 
+The targeted service commands include both the service and database Compose
+files so Compose can resolve `depends_on` entries such as
+`thread-generation-service` → `pg-thread-generation`. Their `--no-deps` flag
+still limits recreation to the named service; it does not start or replace its
+database.
+
 **`claw.sh up` takes no service argument.** `./scripts/claw.sh up -d frontend`
 does not act on the frontend — the argument is ignored and the _entire stack_
 comes up, recreating containers you did not intend to touch. Use

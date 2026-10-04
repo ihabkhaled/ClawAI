@@ -33,6 +33,7 @@ COPY --from=builder --chown=nestjs:nestjs /app/apps/claw-thread-generation-servi
 COPY --from=builder --chown=nestjs:nestjs /app/apps/claw-thread-generation-service/prisma ./prisma
 COPY --from=builder --chown=nestjs:nestjs /app/apps/claw-thread-generation-service/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/node_modules ./node_modules
+RUN chown -R nestjs:nestjs /app/node_modules/@prisma/engines
 COPY --from=builder /app/packages /app/packages
 COPY scripts/docker-entrypoint.prod.sh /app/docker-entrypoint.prod.sh
 RUN chmod +x /app/docker-entrypoint.prod.sh

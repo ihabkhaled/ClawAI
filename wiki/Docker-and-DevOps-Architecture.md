@@ -77,6 +77,10 @@ Claw runs as a fully Dockerized development environment with ~24 containers orch
 | `scripts/setup.sh`    | Linux/macOS | Environment setup     |
 | `scripts/claw.sh`     | Linux/macOS | CLI management tool   |
 
+Targeted `service:recreate` and `service:rebuild` commands load both split
+Compose files so `depends_on` services in the database file resolve without
+starting or replacing them (`--no-deps`).
+
 ### What Install Scripts Do
 
 1. Check prerequisites (Docker, Node.js, npm)
@@ -119,6 +123,9 @@ Health checks enforce startup order via `depends_on` with `condition: service_he
 - Service entrypoints run `npx prisma migrate deploy` before starting
 - Migrations applied automatically on container start
 - Prisma client generated at build time via `npx prisma generate`
+- The Threads generation image keeps the app non-root and grants that user
+  ownership only of Prisma's engine directory, which its migration CLI may need
+  to update at startup.
 
 ---
 
