@@ -18,6 +18,8 @@ import type { PaygSurface, PaygUnitCounts } from '@claw/shared-types';
 export type PaygReserveInput = {
   userId: string;
   requestId: string;
+  /** Present only for a Threads generation call with an active aggregate cap. */
+  threadJobBudgetId?: string;
   provider: string;
   model: string;
   surface: PaygSurface;
@@ -60,6 +62,8 @@ export type PaygHold = {
    * a release gives the allowance count back. Call sites need not branch on it.
    */
   freeAllowance?: boolean;
+  threadJobBudgetId?: string;
+  threadJobRequestId?: string;
 };
 
 export type PaygUnmeteredReason =

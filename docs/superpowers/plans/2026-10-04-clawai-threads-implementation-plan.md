@@ -96,6 +96,12 @@ ownership.
 
 **Outcome:** Enqueue requires an eligible plan and explicit maximum spend; no job can exceed its selected aggregate ceiling, including retries and concurrent provider calls.
 
+**Status (2026-10-04):** Partial foundation implemented on `main`: Threads
+permissions/defaults, Auth-owned budget and call ledger schema, plan-use holds,
+service-token budget endpoints, and optional `PaygMeter` aggregate call fences.
+Generation enqueue/worker wiring and live/concurrent database validation remain
+open; this batch does not enable the feature.
+
 **Code:**
 
 - Extend existing feature/permission catalog and defaults through `packages/shared-types/`, `packages/shared-entitlements/`, `apps/claw-auth-service/prisma/schema.prisma`, and the owning auth plan/credit modules.

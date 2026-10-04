@@ -62,3 +62,9 @@ product passes scoped gates and the 15-lane QA workflow.
 Their container health checks use Node's built-in `node:https` client against
 loopback `/api/v1/health`. TLS verification is disabled for this loopback-only
 probe so both mkcert and self-signed internal certificates work without `wget`.
+
+Auth owns the durable job budget and per-call sub-holds. Its internal
+service-token routes reserve the cap and each existing PAYG wallet hold; call
+settlement moves measured cost into the cap ledger. The cap adds no provider
+prices or wallet balance. Generation closes the budget only after all provider
+calls settle or release.

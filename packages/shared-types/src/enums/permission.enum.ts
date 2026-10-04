@@ -59,6 +59,15 @@ export enum Permission {
   RESEARCH_USE = 'RESEARCH_USE',
   AGENT_USE = 'AGENT_USE',
 
+  // Threads generation and publication ownership. Public contribution and
+  // moderation stay independent from the plan gate for generation.
+  THREAD_GENERATION_USE = 'THREAD_GENERATION_USE',
+  THREAD_PUBLICATIONS_READ = 'THREAD_PUBLICATIONS_READ',
+  THREAD_PUBLICATIONS_CREATE = 'THREAD_PUBLICATIONS_CREATE',
+  THREAD_PUBLICATIONS_UPDATE = 'THREAD_PUBLICATIONS_UPDATE',
+  THREAD_PUBLICATIONS_PUBLISH = 'THREAD_PUBLICATIONS_PUBLISH',
+  THREAD_PUBLICATIONS_MODERATE = 'THREAD_PUBLICATIONS_MODERATE',
+
   // The coding agent's individual surfaces, so a role can be given the agent
   // without being given the terminal.
   //

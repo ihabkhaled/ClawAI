@@ -206,6 +206,50 @@ export class PaygMeter {
     }
 
     if (isWireMetered(payload)) {
+      if (input.threadJobBudgetId) {
+        let reserved = false;
+        try {
+          reserved = await this.reserveThreadCall(
+            input.threadJobBudgetId,
+            input.requestId,
+            payload.reservationId,
+            payload.heldMicroUsd,
+          );
+        } catch {
+          await this.release(
+            {
+              metered: true,
+              reservationId: payload.reservationId,
+              maxOutputTokens: payload.maxOutputTokens,
+              clamped: payload.clamped,
+              heldMicroUsd: payload.heldMicroUsd,
+              availableAfterMicroUsd: payload.availableAfterMicroUsd,
+              reason: null,
+            },
+            'CANCELLED',
+          );
+          throw new PaygCreditExhaustedError(BillingErrorCode.PAYG_PRICING_UNAVAILABLE, 0, null);
+        }
+        if (!reserved) {
+          await this.release(
+            {
+              metered: true,
+              reservationId: payload.reservationId,
+              maxOutputTokens: payload.maxOutputTokens,
+              clamped: payload.clamped,
+              heldMicroUsd: payload.heldMicroUsd,
+              availableAfterMicroUsd: payload.availableAfterMicroUsd,
+              reason: null,
+            },
+            'CANCELLED',
+          );
+          throw new PaygCreditExhaustedError(
+            BillingErrorCode.PAYG_CREDIT_EXHAUSTED,
+            0,
+            payload.heldMicroUsd,
+          );
+        }
+      }
       return {
         metered: true,
         maxOutputTokens: payload.maxOutputTokens,
@@ -216,6 +260,9 @@ export class PaygMeter {
         reason: null,
         // Present only when true, so every existing hold keeps its exact shape.
         ...(payload.freeAllowance === true ? { freeAllowance: true } : {}),
+        ...(input.threadJobBudgetId
+          ? { threadJobBudgetId: input.threadJobBudgetId, threadJobRequestId: input.requestId }
+          : {}),
       };
     }
     if (isWireUnmetered(payload)) {
@@ -256,7 +303,7 @@ export class PaygMeter {
       return undefined;
     }
     try {
-      return readFinalizeOutcome(
+      const outcome = readFinalizeOutcome(
         await this.request(`${CREDIT_INTERNAL_API_BASE}/finalize`, {
           reservationId: hold.reservationId,
           usage: {
@@ -274,6 +321,18 @@ export class PaygMeter {
           ...PaygMeter.unitWire(calls),
         }),
       );
+      if (hold.threadJobBudgetId && hold.threadJobRequestId) {
+        const settled =
+          outcome?.billingMode === PaygBillingMode.SUBSCRIPTION
+            ? 0
+            : (outcome?.settledCostMicroUsd ?? hold.heldMicroUsd);
+        await this.request('/internal/threads/budgets/calls/finalize', {
+          budgetId: hold.threadJobBudgetId,
+          requestId: hold.threadJobRequestId,
+          settledMicroUsd: settled,
+        });
+      }
+      return outcome;
     } catch {
       // Swallowed on purpose. See the doc comment: the sweeper is the backstop,
       // and it runs well inside PAYG_RESERVATION_TTL_MS.
@@ -297,6 +356,12 @@ export class PaygMeter {
         reservationId: hold.reservationId,
         reason,
       });
+      if (hold.threadJobBudgetId && hold.threadJobRequestId) {
+        await this.request('/internal/threads/budgets/calls/release', {
+          budgetId: hold.threadJobBudgetId,
+          requestId: hold.threadJobRequestId,
+        });
+      }
     } catch {
       void reason;
     }
@@ -305,6 +370,21 @@ export class PaygMeter {
   private isExempt(provider: string): boolean {
     const normalized = provider.toUpperCase();
     return this.exemptProviders.some((exempt) => exempt.toUpperCase() === normalized);
+  }
+
+  private async reserveThreadCall(
+    budgetId: string,
+    requestId: string,
+    creditReservationId: string,
+    amountMicroUsd: number,
+  ): Promise<boolean> {
+    const result = await this.request('/internal/threads/budgets/calls/reserve', {
+      budgetId,
+      requestId,
+      creditReservationId,
+      amountMicroUsd,
+    });
+    return result === true;
   }
 
   /** `{ [name]: value }` when `value` is a positive integer, else `{}`. */

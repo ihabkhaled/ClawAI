@@ -27,6 +27,11 @@ immutable snapshots and research-service provides evidence. Read
 [the architecture](https://github.com/ihabkhaled/ClawAI/blob/main/docs/03-architecture/clawai-threads-architecture.md)
 and [ADR-159](https://github.com/ihabkhaled/ClawAI/blob/main/docs/13-adr/adr-159-clawai-threads-two-service-architecture.md).
 
+Generation uses Auth's aggregate cap ledger. Existing research, Judge, and
+Critic plan uses are reserved once at enqueue; each provider wallet hold is
+sub-held before the call. Settlement counts measured cost, and a job cannot
+close with an unresolved sub-hold. The cap introduces no new PAYG price.
+
 The existing `/api/v1/threads` route remains the chat-thread alias. Publication
 APIs use `/api/v1/thread-publications`.
 

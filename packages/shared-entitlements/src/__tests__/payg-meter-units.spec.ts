@@ -2,6 +2,7 @@ import { type Mock, vi } from 'vitest';
 import { PaygSurface } from '@claw/shared-types';
 
 import { PaygMeter } from '../payg-meter';
+import { PaygCreditExhaustedError } from '../payg-credit-exhausted.error';
 import { type PaygHold } from '../payg-meter.types';
 
 /**
@@ -82,6 +83,106 @@ describe('PaygMeter unit metering', () => {
     });
 
     expect(sentBody(stub)).toMatchObject({ imageUnits: 1 });
+  });
+
+  it('reserves each PAYG call inside its Threads aggregate cap before returning the hold', async () => {
+    const stub = vi
+      .fn()
+      .mockResolvedValueOnce({
+        status: 200,
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            metered: true,
+            reservationId: 'res-1',
+            maxOutputTokens: 8192,
+            clamped: false,
+            heldMicroUsd: 167_000,
+            availableAfterMicroUsd: 833_000,
+          }),
+      })
+      .mockResolvedValueOnce({ status: 200, ok: true, json: () => Promise.resolve(true) });
+    vi.stubGlobal('fetch', stub);
+
+    const hold = await meter().reserve({
+      userId: 'user-1',
+      requestId: 'gen-1',
+      threadJobBudgetId: '00000000-0000-4000-8000-000000000001',
+      provider: 'OPENAI',
+      model: 'gpt-4.1',
+      surface: PaygSurface.ORCHESTRATION,
+      promptTokens: 10,
+      requestedMaxOutputTokens: 100,
+    });
+
+    expect(hold.threadJobRequestId).toBe('gen-1');
+    expect(stub.mock.calls[1]?.[0]).toContain('/internal/threads/budgets/calls/reserve');
+    expect(JSON.parse(String(stub.mock.calls[1]?.[1]?.body))).toMatchObject({
+      requestId: 'gen-1',
+      amountMicroUsd: 167_000,
+    });
+  });
+
+  it('releases the wallet hold and fails closed when the aggregate service is unavailable', async () => {
+    const stub = vi
+      .fn()
+      .mockResolvedValueOnce({
+        status: 200,
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            metered: true,
+            reservationId: 'res-1',
+            maxOutputTokens: 8192,
+            clamped: false,
+            heldMicroUsd: 167_000,
+            availableAfterMicroUsd: 833_000,
+          }),
+      })
+      .mockRejectedValueOnce(new Error('auth unavailable'))
+      .mockResolvedValueOnce({ status: 204, ok: true, json: () => Promise.resolve(undefined) });
+    vi.stubGlobal('fetch', stub);
+
+    await expect(
+      meter().reserve({
+        userId: 'user-1',
+        requestId: 'gen-1',
+        threadJobBudgetId: '00000000-0000-4000-8000-000000000001',
+        provider: 'OPENAI',
+        model: 'gpt-4.1',
+        surface: PaygSurface.ORCHESTRATION,
+        promptTokens: 10,
+        requestedMaxOutputTokens: 100,
+      }),
+    ).rejects.toBeInstanceOf(PaygCreditExhaustedError);
+    expect(stub).toHaveBeenCalledTimes(3);
+    expect(stub.mock.calls[2]?.[0]).toContain('/internal/credit/release');
+  });
+
+  it('charges an unresolved PAYG finalize conservatively against the job cap', async () => {
+    const stub = vi
+      .fn()
+      .mockResolvedValueOnce({ status: 204, ok: true, json: () => Promise.resolve(undefined) })
+      .mockResolvedValueOnce({ status: 200, ok: true, json: () => Promise.resolve(true) });
+    vi.stubGlobal('fetch', stub);
+
+    await meter().finalize(
+      {
+        ...METERED_HOLD,
+        threadJobBudgetId: '00000000-0000-4000-8000-000000000001',
+        threadJobRequestId: 'gen-1',
+      },
+      {
+        promptTokens: 10,
+        completionTokens: 20,
+        cachedPromptTokens: 0,
+        reasoningTokens: 0,
+      },
+    );
+
+    expect(JSON.parse(String(stub.mock.calls[1]?.[1]?.body))).toMatchObject({
+      settledMicroUsd: METERED_HOLD.heldMicroUsd,
+    });
   });
 
   it('sends the measured units on finalize, floored', async () => {

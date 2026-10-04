@@ -1221,6 +1221,31 @@
           "source": "apps/claw-auth-service/src/modules/entitlements/controllers/runtime-admission-internal.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/internal/threads/budgets/calls/finalize",
+          "source": "apps/claw-auth-service/src/modules/entitlements/controllers/thread-job-budget-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/threads/budgets/calls/release",
+          "source": "apps/claw-auth-service/src/modules/entitlements/controllers/thread-job-budget-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/threads/budgets/calls/reserve",
+          "source": "apps/claw-auth-service/src/modules/entitlements/controllers/thread-job-budget-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/threads/budgets/close",
+          "source": "apps/claw-auth-service/src/modules/entitlements/controllers/thread-job-budget-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/threads/budgets/reserve",
+          "source": "apps/claw-auth-service/src/modules/entitlements/controllers/thread-job-budget-internal.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/internal/users/:id/entitlements",
           "source": "apps/claw-auth-service/src/modules/entitlements/controllers/entitlements-internal.controller.ts"
@@ -8665,7 +8690,7 @@
           "file": "skills/measure-chat-network-baseline.md"
         },
         {
-          "bytes": 19382,
+          "bytes": 19585,
           "file": "skills/meter-a-paid-provider-call.md"
         },
         {
@@ -9559,6 +9584,36 @@
       {
         "confidence": "verified",
         "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "THREAD_GENERATION_USE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "THREAD_PUBLICATIONS_CREATE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "THREAD_PUBLICATIONS_MODERATE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "THREAD_PUBLICATIONS_PUBLISH"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "THREAD_PUBLICATIONS_READ"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "THREAD_PUBLICATIONS_UPDATE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
         "value": "VERIFIER_USE"
       },
       {
@@ -10020,6 +10075,16 @@
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "SystemSetting"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "ThreadJobBudget"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "ThreadJobBudgetCall"
           },
           {
             "confidence": "verified",
@@ -10872,7 +10937,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 144
+        "testFiles": 146
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -11720,19 +11785,19 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 54,
-    "endpointCount": 795,
+    "endpointCount": 800,
     "envVarCount": 365,
     "eventCount": 185,
     "frontendRouteCount": 156,
     "localeCount": 13,
     "nginxRouteCount": 69,
-    "permissionCount": 84,
+    "permissionCount": 90,
     "portCount": 18,
     "portCoverageGapCount": 2,
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2047,
+    "totalTestFiles": 2049,
     "workspaceCount": 27
   }
 }

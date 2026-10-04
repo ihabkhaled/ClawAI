@@ -1166,6 +1166,31 @@
         "source": "apps/claw-auth-service/src/modules/entitlements/controllers/runtime-admission-internal.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/internal/threads/budgets/calls/finalize",
+        "source": "apps/claw-auth-service/src/modules/entitlements/controllers/thread-job-budget-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/threads/budgets/calls/release",
+        "source": "apps/claw-auth-service/src/modules/entitlements/controllers/thread-job-budget-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/threads/budgets/calls/reserve",
+        "source": "apps/claw-auth-service/src/modules/entitlements/controllers/thread-job-budget-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/threads/budgets/close",
+        "source": "apps/claw-auth-service/src/modules/entitlements/controllers/thread-job-budget-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/threads/budgets/reserve",
+        "source": "apps/claw-auth-service/src/modules/entitlements/controllers/thread-job-budget-internal.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/internal/users/:id/entitlements",
         "source": "apps/claw-auth-service/src/modules/entitlements/controllers/entitlements-internal.controller.ts"
@@ -4017,5 +4042,5 @@
     ]
   },
   "generated": true,
-  "total": 795
+  "total": 800
 }

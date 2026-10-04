@@ -342,6 +342,9 @@ docker exec claw-pg-auth psql -U claw -d claw_auth -tAF'|' -c "
       wrapper rather than `PaygMeter` directly.
 - [ ] The provider receives `hold.maxOutputTokens`.
 - [ ] `requestId` is unique per **paid call**, proven by a fan-out test.
+- [ ] For a capped async job, pass its budget id into `PaygMeter.reserve`; the
+      aggregate sub-hold must succeed before provider execution and must settle
+      or release alongside the wallet hold.
 - [ ] The 402 is mapped to `PAYMENT_REQUIRED` with a stable code and no rate,
       ceiling or margin in the body.
 - [ ] An exempt (Ollama) call produces zero ledger rows.

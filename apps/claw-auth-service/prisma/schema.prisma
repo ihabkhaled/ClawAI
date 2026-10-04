@@ -112,6 +112,7 @@ model User {
   planAssignments         UserPlanAssignment[]
   trialRedemption         PlanTrialRedemption?
   emailChangeRequests     EmailChangeRequest[]
+  threadJobBudgets        ThreadJobBudget[]
 
   @@index([email])
   @@index([status])
@@ -603,6 +604,18 @@ enum WeightedUsageState {
   RELEASED
 }
 
+enum ThreadJobBudgetState {
+  ACTIVE
+  FINALIZED
+  RELEASED
+}
+
+enum ThreadJobBudgetCallState {
+  RESERVED
+  FINALIZED
+  RELEASED
+}
+
 enum EntitlementInboxStatus {
   PENDING
   PROCESSED
@@ -682,6 +695,48 @@ model FeatureUsageRecord {
   @@unique([userId, feature, requestId])
   @@index([userId, feature, periodKey, state])
   @@map("feature_usage_records")
+}
+
+/// User-selected aggregate credit ceiling for one Threads generation job.
+/// Provider prices remain in the existing model-rate catalog; this row stores
+/// only the user's cap and the amounts held/settled against it.
+model ThreadJobBudget {
+  id                    String               @id @default(cuid())
+  userId                String               @map("user_id")
+  requestId             String               @db.VarChar(200) @map("request_id")
+  capMicroUsd           BigInt               @map("cap_micro_usd")
+  reservedMicroUsd      BigInt               @default(0) @map("reserved_micro_usd")
+  spentMicroUsd         BigInt               @default(0) @map("spent_micro_usd")
+  status                ThreadJobBudgetState @default(ACTIVE)
+  featureReservationIds String[]             @default([]) @map("feature_reservation_ids")
+  createdAt             DateTime             @default(now()) @map("created_at")
+  settledAt             DateTime?            @map("settled_at")
+
+  user  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  calls ThreadJobBudgetCall[]
+
+  @@unique([userId, requestId])
+  @@index([userId, status, createdAt])
+  @@map("thread_job_budgets")
+}
+
+/// Idempotent sub-hold for one provider request inside an aggregate job cap.
+model ThreadJobBudgetCall {
+  id                  String                   @id @default(cuid())
+  budgetId            String                   @map("budget_id")
+  requestId           String                   @db.VarChar(200) @map("request_id")
+  creditReservationId String?                  @unique @map("credit_reservation_id")
+  reservedMicroUsd    BigInt                   @map("reserved_micro_usd")
+  settledMicroUsd     BigInt?                  @map("settled_micro_usd")
+  status              ThreadJobBudgetCallState @default(RESERVED)
+  createdAt           DateTime                 @default(now()) @map("created_at")
+  settledAt           DateTime?                @map("settled_at")
+
+  budget ThreadJobBudget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  @@unique([budgetId, requestId])
+  @@index([budgetId, status])
+  @@map("thread_job_budget_calls")
 }
 
 // Per-execution weighted-token ledger. Deliberately a different grain from

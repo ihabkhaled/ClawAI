@@ -20,6 +20,9 @@ import { PaymentEntitlementClient } from './clients/payment-entitlement.client';
 import { FeatureUsageConsumptionService } from '../quota/services/feature-usage-consumption.service';
 import { RuntimeAdmissionInternalController } from './controllers/runtime-admission-internal.controller';
 import { RuntimeAdmissionService } from './services/runtime-admission.service';
+import { ThreadJobBudgetInternalController } from './controllers/thread-job-budget-internal.controller';
+import { ThreadJobBudgetRepository } from './repositories/thread-job-budget.repository';
+import { ThreadJobBudgetService } from '../credit/services/thread-job-budget.service';
 
 @Module({
   imports: [RolesModule, PlansModule, QuotaModule, CreditModule, SystemSettingsModule],
@@ -28,6 +31,7 @@ import { RuntimeAdmissionService } from './services/runtime-admission.service';
     MeEntitlementsController,
     QuotaInternalController,
     RuntimeAdmissionInternalController,
+    ThreadJobBudgetInternalController,
   ],
   providers: [
     EntitlementsService,
@@ -42,6 +46,8 @@ import { RuntimeAdmissionService } from './services/runtime-admission.service';
     PaymentEntitlementClient,
     FeatureUsageConsumptionService,
     RuntimeAdmissionService,
+    ThreadJobBudgetRepository,
+    ThreadJobBudgetService,
   ],
   exports: [EntitlementsService, EntitlementInboxService, UsageViewService],
 })

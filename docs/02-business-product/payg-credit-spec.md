@@ -152,3 +152,11 @@ authority for any of them.
 - [`docs/11-runbooks/runbook-payg-credit.md`](../11-runbooks/runbook-payg-credit.md) — deploying it
 - [`rules/37-payg-credit-integrity.md`](../../rules/37-payg-credit-integrity.md)
 - [`docs/06-data/plan-and-quota-specification.md`](../06-data/plan-and-quota-specification.md)
+
+## Threads aggregate cap
+
+Threads keeps the existing provider-rate catalog and wallet ledger. Auth adds a
+per-job ceiling plus idempotent sub-holds linked to existing credit reservation
+IDs. A provider call is admitted only when its hold fits the remaining job cap;
+settlement moves actual charged cost from reserved to spent, while release
+returns the reserved amount. The job cap is not a separate wallet or PAYG price.

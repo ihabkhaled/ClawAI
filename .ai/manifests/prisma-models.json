@@ -49,6 +49,8 @@
       "SeedExecution",
       "Session",
       "SystemSetting",
+      "ThreadJobBudget",
+      "ThreadJobBudgetCall",
       "TokenUsageLedger",
       "User",
       "UserCreditWallet",

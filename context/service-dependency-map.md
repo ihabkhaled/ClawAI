@@ -91,3 +91,7 @@ between hops is verified against the local CA.
 3. Is it a **type/value/function** both sides share? → a shared package.
 4. Never reach into another DB. Never duplicate a shared utility per service
    (extend-don't-parallelize).
+
+Thread generation calls service-token guarded Auth endpoints for the aggregate
+job cap and provider-call sub-holds. Auth owns this ledger; provider rates and
+wallet reservations stay in the existing credit system.

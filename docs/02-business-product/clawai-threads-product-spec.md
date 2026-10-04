@@ -28,6 +28,14 @@ participation is open to authenticated users under existing moderation rules.
   attribution; delete private snapshots and generation artifacts, remove
   reactions, anonymize public comments, and delete pending private requests.
 
+## Budget and plan enforcement
+
+Reserve the existing research, judge, and critic plan allowances once per job.
+Each paid model call reserves its existing wallet hold against the selected job
+cap before provider execution. A denied sub-hold releases the wallet hold. A
+successful call settles actual cost into the aggregate; failed calls release
+both holds. A job cannot close while a call reservation is unresolved.
+
 ## Launch boundary
 
 Generation obtains source text from Chat through an owner-scoped internal

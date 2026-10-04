@@ -165,3 +165,7 @@ Rules that hold the line (all in agent-service, all tested):
 4. **Owner only.** Every call runs as `device.userId`; someone else's command is a 404.
 5. **Issued by the owner.** Only a user JWT on `pair/approve` can mint a mobile device (max 5 live per user), and
    only the owner (user JWT) can revoke it. A mobile token cannot pair, approve a pairing, or revoke a device.
+
+Threads generation requires `THREAD_GENERATION_USE` and existing research,
+Judge, and Critic plan reservations. Publication read/create/update/publish are
+user permissions; moderation is admin-only.

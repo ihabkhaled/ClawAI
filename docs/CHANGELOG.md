@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
+## [1.177.0] - 2026-10-04
+
+### Added
+
+- **Threads job budget foundation:** Auth now owns an aggregate integer
+  micro-USD cap with per-call sub-holds, existing plan reservations, and a
+  service-token API. Generation integration and live QA remain in progress.
+
 ## [Unreleased]
 
 ### Added
