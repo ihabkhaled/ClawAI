@@ -11,16 +11,17 @@
 Percentage and `flex-1` heights only work if every ancestor has a definite one.
 The chain, top to bottom, is:
 
-| Element                                       | File                                       | What it contributes                                                                               |
-| --------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `div.h-dvh`                                   | `components/layout/portal-shell.tsx`       | The definite height everything else divides up. `dvh`, not `vh`, so a mobile keyboard shrinks it. |
-| `div.flex-1.flex-col`                         | same                                       | The content column beside the sidebar. Carries the bottom-nav margin on phones.                   |
-| `main.flex-1.overflow-y-auto`                 | same                                       | Definite height from flex. Its padding is what insets the chat page.                              |
-| `div.flex.h-full.min-h-0.flex-col`            | `components/chat/chat-thread-shell.tsx`    | The chat page column.                                                                             |
-| header `shrink-0` · body row `flex-1 min-h-0` | same                                       | The split. Only the body row grows.                                                               |
-| `div.chat-thread-row` (flex row)              | same                                       | Reading column + action rail. The rail is `self-start`, so it never stretches.                    |
-| `div.min-h-0.flex-1.overflow-hidden`          | same                                       | The transcript frame.                                                                             |
-| `Virtuoso style={{height:'100%'}}`            | `components/chat/virtualized-messages.tsx` | The scroller.                                                                                     |
+| Element                                                                | File                                       | What it contributes                                                                               |
+| ---------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `div.h-dvh`                                                            | `components/layout/portal-shell.tsx`       | The definite height everything else divides up. `dvh`, not `vh`, so a mobile keyboard shrinks it. |
+| `div.flex-1.flex-col`                                                  | same                                       | The content column beside the sidebar. Carries the bottom-nav margin on phones.                   |
+| `main.flex-1.overflow-y-auto`                                          | same                                       | Definite height from flex. Its padding is what insets the chat page.                              |
+| `div.flex.h-full.min-h-0.flex-col`                                     | `components/chat/chat-thread-shell.tsx`    | The chat page column.                                                                             |
+| header `shrink-0` · body row `flex-1 min-h-0`                          | same                                       | The split. Only the body row grows.                                                               |
+| `div.chat-thread-row` (flex row)                                       | same                                       | Reading column + action rail. The rail is `self-start`, so it never stretches.                    |
+| `div.min-h-0.flex-1.overflow-hidden`                                   | same                                       | The transcript frame.                                                                             |
+| `Virtuoso style={{height:'100%'}}`                                     | `components/chat/virtualized-messages.tsx` | The scroller.                                                                                     |
+| `Virtuoso style={{height: min(rows x 36px, 320px, available - 7rem)}}` | `components/chat/model-picker-list.tsx`    | The model picker list; windows ~900 models to ~36 DOM rows (ADR-158).                             |
 
 Break any `min-h-0` in that chain and the symptom is always the same: the
 transcript refuses to shrink below its content and pushes the composer off the

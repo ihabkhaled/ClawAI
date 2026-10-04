@@ -1,25 +1,42 @@
 import { Check } from 'lucide-react';
 
 import { ModelCapabilityBadges } from '@/components/chat/model-capability-badges';
-import { CommandItem } from '@/components/ui/command';
 import type { ModelPickerItemProps } from '@/types';
 import { cn } from '@/utilities';
 
 export function ModelPickerItem({
+  id,
   option,
   isSelected,
+  isActive,
   onSelect,
+  onHover,
 }: ModelPickerItemProps): React.ReactElement {
   return (
-    // The cmdk value MUST be the option's own value, not its label: it is the
-    // identity the picker seeds the highlight with so the list opens at the
-    // current choice, and two providers can ship the same display name. The
-    // label moves to `keywords`, which is what cmdk searches alongside the
-    // value, so typing a model name still finds it.
-    <CommandItem
-      value={option.value}
-      keywords={[option.label]}
-      onSelect={() => onSelect(option.value)}
+    // A listbox option, not a cmdk item: the list is virtualised, so only the
+    // rows near the viewport are mounted and the picker owns the highlight.
+    <div
+      id={id}
+      role="option"
+      aria-selected={isSelected}
+      tabIndex={-1}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onSelect(option.value);
+        }
+      }}
+      data-active={isActive}
+      onClick={() => onSelect(option.value)}
+      onMouseMove={() => {
+        if (!isActive) {
+          onHover(option.value);
+        }
+      }}
+      className={cn(
+        'touch:min-h-11 touch:text-base relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none',
+        isActive && 'bg-accent text-accent-foreground',
+      )}
     >
       <Check className={cn('h-3.5 w-3.5 shrink-0', isSelected ? 'opacity-100' : 'opacity-0')} />
       <span className="min-w-0 flex-1 truncate">{option.label}</span>
@@ -38,6 +55,6 @@ export function ModelPickerItem({
           ))}
         </span>
       ) : null}
-    </CommandItem>
+    </div>
   );
 }

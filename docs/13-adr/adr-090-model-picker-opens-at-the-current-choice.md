@@ -1,6 +1,6 @@
 # ADR-090: The model picker opens at the current choice, and its trigger always names it
 
-- **Status**: Accepted
+- **Status**: Accepted (mechanism superseded by [ADR-158](adr-158-virtualised-model-picker.md): the list is virtualised, so the picker seeds its own highlight instead of cmdk's)
 - **Date**: 2026-09-10
 - **Deciders**: Frontend
 - **Related**: [ADR-088](adr-088-composer-auto-height-replaces-drag-resize.md) ·

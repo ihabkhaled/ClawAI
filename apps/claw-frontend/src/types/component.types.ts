@@ -49,7 +49,7 @@ import type {
   ConfirmOtpFormValues,
   RequestEmailChangeFormValues,
 } from '@/lib/validation/email-change.schema';
-import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
+import type { VirtuosoHandle, FollowOutputCallback } from '@/lib/virtuoso';
 import type {
   OwnerChatShare,
   PublicChatShareAsset,
@@ -830,9 +830,86 @@ export type ModelPickerGroup = {
 };
 
 export type ModelPickerItemProps = {
+  id?: string;
   option: ModelPickerOption;
   isSelected: boolean;
+  // The keyboard/mouse highlight, which is NOT the selection.
+  isActive: boolean;
   onSelect: (value: string) => void;
+  onHover: (value: string) => void;
+};
+
+/** One row of the flattened, virtualised model list. */
+export type ModelPickerRow =
+  { kind: 'group'; key: string; label: string } | { kind: 'option'; option: ModelPickerOption };
+
+/** One row of the flattened Compare model list. */
+export type ParallelModelRow =
+  { kind: 'group'; key: string; label: string } | { kind: 'model'; model: ModelSelection };
+
+export type ParallelModelRowViewProps = {
+  row: ParallelModelRow;
+  isChecked: boolean;
+  isDisabled: boolean;
+  onToggle: (provider: string, model: string, checked: boolean) => void;
+};
+
+export type UseParallelModelListParams = {
+  groupedModels: GroupedModels[];
+  selectedModels: ParallelModelTarget[];
+  onToggleModel: (provider: string, model: string, checked: boolean) => void;
+};
+
+export type UseParallelModelListResult = {
+  query: string;
+  setQuery: (query: string) => void;
+  rows: ParallelModelRow[];
+  hasNoSearchResults: boolean;
+  itemContent: (index: number, row: ParallelModelRow) => React.ReactNode;
+};
+
+export type ModelPickerRowViewProps = {
+  row: ModelPickerRow;
+  isActive: boolean;
+  isSelected: boolean;
+  onSelect: (value: string) => void;
+  onHover: (value: string) => void;
+};
+
+export type UseModelPickerListParams = {
+  groups: ModelPickerGroup[];
+  autoOption?: ModelPickerOption;
+  value: string | null;
+  highlightedValue: string | undefined;
+  onHighlightChange: (value: string) => void;
+  onSelect: (value: string) => void;
+  isMobile: boolean;
+};
+
+export type UseModelPickerListResult = {
+  query: string;
+  onQueryChange: (query: string) => void;
+  rows: ModelPickerRow[];
+  hasOptions: boolean;
+  activeRowIndex: number;
+  initialRowIndex: number;
+  listRef: React.RefObject<VirtuosoHandle | null>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  itemContent: (index: number, row: ModelPickerRow) => React.ReactNode;
+  listHeight: string;
+  onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+};
+
+export type ModelPickerListProps = {
+  groups: ModelPickerGroup[];
+  autoOption?: ModelPickerOption;
+  value: string | null;
+  highlightedValue: string | undefined;
+  onHighlightChange: (value: string) => void;
+  onSelect: (value: string) => void;
+  isMobile: boolean;
+  searchPlaceholder: string;
+  noResultsLabel: string;
 };
 
 export type ModelPickerProps = {

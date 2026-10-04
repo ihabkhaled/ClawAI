@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom/vitest';
+import { vi } from 'vitest';
 
 // jsdom does not ship ResizeObserver. Hooks like use-rich-prompt-textarea
 // (which latches manual textarea resize via ResizeObserver) instantiate one
@@ -35,3 +36,34 @@ if (typeof Element.prototype.setPointerCapture === 'undefined') {
 if (typeof Element.prototype.releasePointerCapture === 'undefined') {
   Element.prototype.releasePointerCapture = (): void => {};
 }
+
+// jsdom has no layout, so the real Virtuoso measures a 0px viewport and renders
+// nothing. Default to a stand-in that renders EVERY item through itemContent,
+// which is what the picker and list tests assert against. A test that needs the
+// real wiring (virtualized-messages) mocks '@/lib/virtuoso' itself.
+vi.mock('@/lib/virtuoso', async () => {
+  const { createElement, forwardRef, useImperativeHandle } = await import('react');
+  type MockProps = {
+    data?: readonly unknown[];
+    itemContent?: (index: number, item: unknown) => unknown;
+    computeItemKey?: (index: number, item: unknown) => string;
+  };
+  const Virtuoso = forwardRef<unknown, MockProps>((props, ref) => {
+    useImperativeHandle(ref, () => ({
+      scrollIntoView: () => undefined,
+      scrollToIndex: () => undefined,
+    }));
+    return createElement(
+      'div',
+      { 'data-testid': 'virtuoso-mock' },
+      (props.data ?? []).map((item, index) =>
+        createElement(
+          'div',
+          { key: props.computeItemKey ? props.computeItemKey(index, item) : index },
+          props.itemContent?.(index, item) as never,
+        ),
+      ),
+    );
+  });
+  return { Virtuoso };
+});

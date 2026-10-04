@@ -1,14 +1,7 @@
 import { Bot } from 'lucide-react';
 
-import { ModelPickerItem } from '@/components/chat/model-picker-item';
+import { ModelPickerList } from '@/components/chat/model-picker-list';
 import { Button } from '@/components/ui/button';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandList,
-} from '@/components/ui/command';
 import {
   Dialog,
   DialogContent,
@@ -90,50 +83,25 @@ export function ModelPicker({
   );
 
   const picker = (
-    // `value` here is cmdk's HIGHLIGHT, not the selection. Seeding it with the
-    // current choice on open is what makes cmdk scroll that row into view — the
-    // list is ~180 rows and used to open at the top every single time.
-    <Command
-      value={highlightedValue}
-      onValueChange={onHighlightChange}
-      className="flex h-full min-h-0 flex-col"
-    >
-      <CommandInput placeholder={searchPlaceholder} />
-      {/* `flex-1 min-h-0`, never a `dvh` fraction. A viewport-relative cap does
-          not know about the header, the search box or the footer above and
-          below it, so on a short viewport the list claimed its 55% and pushed
-          the footer out through the bottom of the dialog. */}
-      <CommandList className="max-h-none min-h-0 flex-1">
-        <CommandEmpty>{noResultsLabel}</CommandEmpty>
-        {autoOption ? (
-          <CommandGroup>
-            <ModelPickerItem
-              option={autoOption}
-              isSelected={value === autoOption.value}
-              onSelect={handleSelect}
-            />
-          </CommandGroup>
-        ) : null}
-        {groups.map((group) => (
-          <CommandGroup key={group.key} heading={group.label || undefined}>
-            {group.options.map((option) => (
-              <ModelPickerItem
-                key={option.value}
-                option={option}
-                isSelected={value === option.value}
-                onSelect={handleSelect}
-              />
-            ))}
-          </CommandGroup>
-        ))}
-      </CommandList>
+    <div className="bg-popover text-popover-foreground flex h-full min-h-0 w-full flex-col overflow-hidden rounded-md">
+      <ModelPickerList
+        groups={groups}
+        autoOption={autoOption}
+        value={value}
+        highlightedValue={highlightedValue}
+        onHighlightChange={onHighlightChange}
+        onSelect={handleSelect}
+        isMobile={isMobile}
+        searchPlaceholder={searchPlaceholder}
+        noResultsLabel={noResultsLabel}
+      />
       {/* Pinned below the scrolling list, not inside it: the disclaimer has to
           stay readable while the user scrolls through providers, which is
           exactly when it matters. */}
       {footer === undefined ? null : (
         <div className="border-border shrink-0 border-t p-2">{footer}</div>
       )}
-    </Command>
+    </div>
   );
 
   if (isMobile) {

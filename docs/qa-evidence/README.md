@@ -12,3 +12,4 @@ honest; they list their open gaps. CI checks every `feat`/`fix`/`perf` push for 
 | ------------------------------------------------------------------------------- | ------- |
 | [2026-10-03-chat-surface-parity](2026-10-03-chat-surface-parity.md)             | PARTIAL |
 | [2026-10-04-provider-management-fixes](2026-10-04-provider-management-fixes.md) | PARTIAL |
+| [2026-10-04-virtualised-model-picker](2026-10-04-virtualised-model-picker.md)   | PARTIAL |

@@ -143,12 +143,12 @@ describe('ModelPicker', () => {
   it('opens with the current choice highlighted, not the top of the list', () => {
     // The reason this matters: the real list is ~180 rows. It used to open at
     // scroll position zero every time, so a model near the bottom had to be
-    // scrolled back to on every visit. cmdk scrolls its highlighted row into
+    // scrolled back to on every visit. the list scrolls its highlighted row into
     // view, so seeding the highlight IS the scroll behaviour.
     render(<ModelPicker {...baseProps} value="OPENAI::gpt-4.1" />);
     fireEvent.click(screen.getByRole('combobox'));
 
-    const highlighted = document.querySelector('[cmdk-item][data-selected="true"]');
+    const highlighted = document.querySelector('[role="option"][data-active="true"]');
     expect(highlighted).toHaveTextContent('GPT-4.1');
   });
 
@@ -162,7 +162,7 @@ describe('ModelPicker', () => {
     );
     fireEvent.click(screen.getByRole('combobox'));
 
-    const highlighted = document.querySelector('[cmdk-item][data-selected="true"]');
+    const highlighted = document.querySelector('[role="option"][data-active="true"]');
     expect(highlighted).toHaveTextContent('Auto (routing decides)');
   });
 
@@ -171,11 +171,11 @@ describe('ModelPicker', () => {
     const trigger = screen.getByRole('combobox');
 
     fireEvent.click(trigger);
-    fireEvent.keyDown(document.querySelector('[cmdk-input]') as Element, { key: 'ArrowDown' });
+    fireEvent.keyDown(screen.getByPlaceholderText('Search'), { key: 'ArrowDown' });
     fireEvent.keyDown(trigger, { key: 'Escape' });
     fireEvent.click(trigger);
 
-    const highlighted = document.querySelector('[cmdk-item][data-selected="true"]');
+    const highlighted = document.querySelector('[role="option"][data-active="true"]');
     expect(highlighted).toHaveTextContent('gemma3:4b');
   });
 
@@ -219,5 +219,91 @@ describe('ModelPicker', () => {
     render(<ModelPicker {...baseProps} value="OPENAI::gpt-4.1" useShortTriggerLabel />);
 
     expect(screen.getByRole('combobox')).toHaveTextContent('GPT-4.1');
+  });
+
+  describe('keyboard and large catalogues', () => {
+    const activeText = (): string | null =>
+      document.querySelector('[role="option"][data-active="true"]')?.textContent ?? null;
+
+    it('moves the highlight with the arrow keys across group headings and wraps', () => {
+      render(<ModelPicker {...baseProps} value="local-ollama::qwen3:1.7b" />);
+      fireEvent.click(screen.getByRole('combobox'));
+      const input = screen.getByPlaceholderText('Search');
+
+      fireEvent.keyDown(input, { key: 'ArrowDown' });
+      expect(activeText()).toContain('gemma3:4b');
+      fireEvent.keyDown(input, { key: 'ArrowDown' });
+      expect(activeText()).toContain('GPT-4.1');
+      fireEvent.keyDown(input, { key: 'ArrowDown' });
+      expect(activeText()).toContain('qwen3:1.7b');
+      fireEvent.keyDown(input, { key: 'ArrowUp' });
+      expect(activeText()).toContain('GPT-4.1');
+    });
+
+    it('jumps to the first and last model with Home and End', () => {
+      render(<ModelPicker {...baseProps} value="local-ollama::gemma3:4b" />);
+      fireEvent.click(screen.getByRole('combobox'));
+      const input = screen.getByPlaceholderText('Search');
+
+      fireEvent.keyDown(input, { key: 'End' });
+      expect(activeText()).toContain('GPT-4.1');
+      fireEvent.keyDown(input, { key: 'Home' });
+      expect(activeText()).toContain('qwen3:1.7b');
+    });
+
+    it('selects the highlighted model with Enter and closes', () => {
+      const onChange = vi.fn();
+      render(<ModelPicker {...baseProps} onChange={onChange} value="local-ollama::gemma3:4b" />);
+      fireEvent.click(screen.getByRole('combobox'));
+      const input = screen.getByPlaceholderText('Search');
+
+      fireEvent.keyDown(input, { key: 'ArrowDown' });
+      fireEvent.keyDown(input, { key: 'Enter' });
+
+      expect(onChange).toHaveBeenCalledWith('OPENAI::gpt-4.1');
+      expect(screen.queryByPlaceholderText('Search')).not.toBeInTheDocument();
+    });
+
+    it('highlights the first match while typing so Enter picks it', () => {
+      const onChange = vi.fn();
+      render(<ModelPicker {...baseProps} onChange={onChange} />);
+      fireEvent.click(screen.getByRole('combobox'));
+      const input = screen.getByPlaceholderText('Search');
+
+      fireEvent.change(input, { target: { value: 'gemma' } });
+      fireEvent.keyDown(input, { key: 'Enter' });
+
+      expect(onChange).toHaveBeenCalledWith('local-ollama::gemma3:4b');
+    });
+
+    it('matches on the provider name and every typed word', () => {
+      render(<ModelPicker {...baseProps} />);
+      fireEvent.click(screen.getByRole('combobox'));
+      const input = screen.getByPlaceholderText('Search');
+
+      fireEvent.change(input, { target: { value: 'ollama qwen' } });
+      expect(screen.getByText('qwen3:1.7b')).toBeInTheDocument();
+      expect(screen.queryByText('gemma3:4b')).not.toBeInTheDocument();
+      expect(screen.queryByText('GPT-4.1')).not.toBeInTheDocument();
+    });
+
+    it('lists 900 models and still filters to one', () => {
+      const many: ModelPickerGroup[] = [
+        {
+          key: 'BIG',
+          label: 'Big provider',
+          options: Array.from({ length: 900 }, (_unused, index) => ({
+            value: `BIG::model-${String(index)}`,
+            label: `model-${String(index)}`,
+          })),
+        },
+      ];
+      render(<ModelPicker {...baseProps} groups={many} />);
+      fireEvent.click(screen.getByRole('combobox'));
+
+      expect(screen.getAllByRole('option')).toHaveLength(900);
+      fireEvent.change(screen.getByPlaceholderText('Search'), { target: { value: 'model-899' } });
+      expect(screen.getAllByRole('option')).toHaveLength(1);
+    });
   });
 });
