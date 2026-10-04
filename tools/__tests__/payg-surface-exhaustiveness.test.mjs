@@ -25,6 +25,7 @@ const LABEL_MAP = 'apps/claw-frontend/src/constants/credit.constants.ts';
 /** Files that emit a surface into a reservation. */
 const PRODUCERS = [
   'apps/claw-chat-service/src/modules/chat-messages/constants/payg.constants.ts',
+  'apps/claw-thread-generation-service/src/modules/models/chat-model.client.ts',
   'apps/claw-chat-service/src/modules/chat-messages/managers/chat-execution.manager.ts',
   'apps/claw-chat-service/src/modules/chat-messages/managers/parallel-execution.manager.ts',
   'apps/claw-chat-service/src/modules/chat-messages/managers/runtime-v2-loop.manager.ts',

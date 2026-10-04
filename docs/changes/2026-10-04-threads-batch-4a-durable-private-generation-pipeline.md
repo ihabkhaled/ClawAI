@@ -150,6 +150,7 @@ without creating a new PAYG price or crossing service database ownership.
 - `docs/superpowers/plans/2026-10-04-clawai-threads-implementation-plan.md`
 - `docs/qa-evidence/2026-10-04-threads-generation-pipeline.md`
 - `.husky/pre-commit`, `rules/34-gate-economy-and-machine-resources.md`, `rules/48-lint-and-test-only-what-changed.md`, `skills/run-gates-once-and-land.md`, `tools/__tests__/gate-receipt.test.mjs` (exact-tree receipts now avoid duplicate affected typecheck while preserving hooks and cheap checks)
+- `tools/__tests__/payg-surface-exhaustiveness.test.mjs` (tracks the real Threads billing call site)
 - this change record
 
 ## Decisions and deviations
@@ -159,6 +160,7 @@ without creating a new PAYG price or crossing service database ownership.
 - No `rules/61` was added because this batch did not add an architecture test enforcing such invariants.
 - Git hook bypasses remain prohibited by repository policy; normal hooks and remote gates will be used.
 - Added a receipt-gated pre-commit typecheck fast path. Six focused receipt tests pass; lint-staged and knowledge/inventory checks still run, and a changed tree falls back to affected typecheck.
+- The first pre-push architecture run exposed missing shared-rabbitmq Docker builds and an unregistered Threads billing producer; both integration checks were corrected before retrying push.
 - Release versions use the repository's `tools/release/version.mjs`, which synchronizes every workspace after each conventional commit; no root-only version bump was applied.
 
 ## Verification

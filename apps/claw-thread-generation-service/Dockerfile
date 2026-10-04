@@ -19,6 +19,7 @@ COPY apps/claw-thread-generation-service/ ./apps/claw-thread-generation-service/
 RUN cd /app/packages/shared-constants && npm run build \
  && cd /app/packages/shared-types && npm run build \
  && cd /app/packages/shared-utilities && npm run build \
+ && cd /app/packages/shared-rabbitmq && npm run build \
  && cd /app/packages/shared-auth && npm run build
 WORKDIR /app/apps/claw-thread-generation-service
 RUN npm run build
