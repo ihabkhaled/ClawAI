@@ -10,6 +10,7 @@ import { repoPath } from '../lib/repo.mjs';
 const script = readFileSync(repoPath('scripts/deploy-prod.sh'), 'utf8');
 const gitignore = readFileSync(repoPath('.gitignore'), 'utf8');
 const prodCompose = readFileSync(repoPath('docker/docker-compose.prod.services.yml'), 'utf8');
+const prodDatabaseCompose = readFileSync(repoPath('docker/docker-compose.prod.databases.yml'), 'utf8');
 const devCompose = readFileSync(repoPath('docker/docker-compose.dev.services.yml'), 'utf8');
 const bashInstaller = readFileSync(repoPath('scripts/install.sh'), 'utf8');
 const powershellInstaller = readFileSync(repoPath('scripts/install.ps1'), 'utf8');
@@ -21,6 +22,16 @@ test('deploy-prod.sh is syntactically valid bash', () => {
     cwd: repoPath(),
   });
   assert.equal(result.status, 0, result.stderr);
+});
+
+test('deploy-prod composes production databases with services for dependency validation', () => {
+  assert.match(script, /DB_COMPOSE_REL="docker\/docker-compose\.prod\.databases\.yml"/u);
+  assert.match(
+    script,
+    /-f "\$PROJECT_ROOT\/\$DB_COMPOSE_REL"\s+-f "\$PROJECT_ROOT\/\$SVC_COMPOSE_REL"/u,
+  );
+  assert.match(prodDatabaseCompose, /^  pg-thread-generation:/mu);
+  assert.match(prodCompose, /^      pg-thread-generation:/mu);
 });
 
 test('deploy-prod.sh runs under a strict shell mode', () => {

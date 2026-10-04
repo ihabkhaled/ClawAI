@@ -151,6 +151,7 @@ without creating a new PAYG price or crossing service database ownership.
 - `docs/qa-evidence/2026-10-04-threads-generation-pipeline.md`
 - `.husky/pre-commit`, `rules/34-gate-economy-and-machine-resources.md`, `rules/48-lint-and-test-only-what-changed.md`, `skills/run-gates-once-and-land.md`, `tools/__tests__/gate-receipt.test.mjs` (exact-tree receipts now avoid duplicate affected typecheck while preserving hooks and cheap checks)
 - `tools/__tests__/payg-surface-exhaustiveness.test.mjs` (tracks the real Threads billing call site)
+- `scripts/deploy-prod.sh`, `tools/__tests__/deploy-prod.test.mjs` (load both production Compose files so database dependencies resolve during deploy)
 - this change record
 
 ## Decisions and deviations
@@ -161,6 +162,8 @@ without creating a new PAYG price or crossing service database ownership.
 - Git hook bypasses remain prohibited by repository policy; normal hooks and remote gates will be used.
 - Added a receipt-gated pre-commit typecheck fast path. Six focused receipt tests pass; lint-staged and knowledge/inventory checks still run, and a changed tree falls back to affected typecheck.
 - The first pre-push architecture run exposed missing shared-rabbitmq Docker builds and an unregistered Threads billing producer; both integration checks were corrected before retrying push.
+- CI, Lighthouse, knowledge, and wiki publication passed. Automated deployment caught that deploy-prod loaded only the services Compose file while the new database was defined separately; production stayed on the previously deployed commit. A focused regression and combined-file validation cover the repair.
+- Deployment fix verification: `deploy-prod.test.mjs` focused regression passed; `bash -n` and combined production Compose config passed. The whole deploy test file has four Windows-only subprocess/helper failures unrelated to the changed case; its Unix end-to-end rehearsal is skipped on Windows by design.
 - Release versions use the repository's `tools/release/version.mjs`, which synchronizes every workspace after each conventional commit; no root-only version bump was applied.
 
 ## Verification

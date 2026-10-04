@@ -124,6 +124,7 @@ LOCK_FILE="$STATE_DIR/deploy.lock"
 LOCK_DIR="$STATE_DIR/deploy.lock.d"
 
 SVC_COMPOSE_REL="docker/docker-compose.prod.services.yml"
+DB_COMPOSE_REL="docker/docker-compose.prod.databases.yml"
 DEP_GRAPH_REL=".ai/manifests/workspace-dependency-graph.json"
 
 LOCK_WAIT_SECONDS="${CLAW_DEPLOY_LOCK_WAIT:-1800}"
@@ -1800,7 +1801,12 @@ main() {
 
   # ─── Compose invocation ────────────────────────────────────────────────────
   resolve_gpu_overlay
-  COMPOSE_ARGS=(--env-file "$ENV_FILE" -p claw -f "$PROJECT_ROOT/$SVC_COMPOSE_REL")
+  COMPOSE_ARGS=(
+    --env-file "$ENV_FILE"
+    -p claw
+    -f "$PROJECT_ROOT/$DB_COMPOSE_REL"
+    -f "$PROJECT_ROOT/$SVC_COMPOSE_REL"
+  )
   if [ -n "$GPU_OVERLAY_FILE" ]; then
     COMPOSE_ARGS+=(-f "$GPU_OVERLAY_FILE")
     log "GPU overlay: $GPU_VENDOR"
