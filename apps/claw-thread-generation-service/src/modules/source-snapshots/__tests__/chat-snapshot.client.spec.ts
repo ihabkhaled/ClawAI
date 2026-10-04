@@ -46,6 +46,7 @@ describe('ChatSnapshotClient', () => {
     expect((init as RequestInit).headers).toMatchObject({
       Authorization: `Service ${'t'.repeat(40)}`,
     });
+    expect((init as RequestInit).redirect).toBe('error');
     expect(JSON.parse(String((init as RequestInit).body))).toEqual({ userId: 'owner-1' });
     expect(result.sourceThreadId).toBe('thread-1');
   });

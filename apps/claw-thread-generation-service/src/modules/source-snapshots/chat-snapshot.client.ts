@@ -1,5 +1,6 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
+import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
 import { z } from 'zod';
 
 import { AppConfig } from '../../app/config/app.config';
@@ -31,20 +32,20 @@ const snapshotSchema = z
 export class ChatSnapshotClient {
   async getOwnedSnapshot(userId: string, threadId: string): Promise<ThreadSnapshot> {
     const config = AppConfig.get();
+    const url = `${config.CHAT_SERVICE_URL}/api/v1/internal/thread-snapshots/${encodeURIComponent(threadId)}`;
+    assertSafeRequestUrl(url, declaredHost(config.CHAT_SERVICE_URL));
     let response: Response;
     try {
-      response = await fetch(
-        `${config.CHAT_SERVICE_URL}/api/v1/internal/thread-snapshots/${encodeURIComponent(threadId)}`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Service ${config.INTER_SERVICE_AUTH_TOKEN}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ userId }),
-          signal: AbortSignal.timeout(15_000),
+      response = await fetch(url, {
+        method: 'POST',
+        redirect: 'error',
+        headers: {
+          Authorization: `Service ${config.INTER_SERVICE_AUTH_TOKEN}`,
+          'Content-Type': 'application/json',
         },
-      );
+        body: JSON.stringify({ userId }),
+        signal: AbortSignal.timeout(15_000),
+      });
     } catch {
       throw new ServiceUnavailableException('Chat snapshot service is unavailable');
     }

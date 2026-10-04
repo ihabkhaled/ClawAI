@@ -60,6 +60,11 @@ canonical JSON and Markdown. TOON reports unavailable until a verified codec
 and useful measured savings are demonstrated. Updated the product/architecture
 docs, wiki, dependency map, plan, and QA evidence in the same batch.
 
+The initial pre-push gate found that the configured Chat destination lacked the
+required shared URL guard. The generation client now validates it against the
++declared Chat host and refuses redirects before sending service credentials.
+The focused URL-guard suite passes 11/11 and the changed client spec passes 3/3.
+
 ## Now
 
 Threads can obtain safe source through Chat without direct DB access. Batch 2
@@ -67,7 +72,8 @@ does not create durable generation jobs or publish anything. Job pinning,
 context fit, billing, and the owner-facing workflow remain in later batches.
 Focused tests, lint, typecheck, builds, a live synthetic API smoke, and a small
 before/after payload and latency comparison passed. Post-push GitHub gates
-remain to be recorded.
+remain to be recorded. The first push attempt was stopped by the required hook;
+the URL-guard finding is fixed and is being re-run through normal hooks.
 
 ## Why
 
