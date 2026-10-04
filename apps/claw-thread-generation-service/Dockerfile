@@ -16,10 +16,10 @@ RUN npm install --ignore-scripts --legacy-peer-deps --no-save \
 FROM base AS builder
 COPY --from=deps /app /app
 COPY apps/claw-thread-generation-service/ ./apps/claw-thread-generation-service/
-RUN cd packages/shared-constants && npm run build \
- && cd ../shared-types && npm run build \
- && cd ../shared-utilities && npm run build \
- && cd ../shared-auth && npm run build
+RUN cd /app/packages/shared-constants && npm run build \
+ && cd /app/packages/shared-types && npm run build \
+ && cd /app/packages/shared-utilities && npm run build \
+ && cd /app/packages/shared-auth && npm run build
 WORKDIR /app/apps/claw-thread-generation-service
 RUN npm run build
 

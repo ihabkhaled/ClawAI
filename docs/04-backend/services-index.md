@@ -6,28 +6,28 @@ Reference for ClawAI NestJS backend services; newer services are appended as the
 
 ## Quick Reference Table
 
-| #   | Service           | App Name                         | Port | Database                             | Primary Purpose                                             |
-| --- | ----------------- | -------------------------------- | ---- | ------------------------------------ | ----------------------------------------------------------- |
-| 1   | Auth              | `claw-auth-service`              | 4001 | PostgreSQL (`claw_auth`)             | Authentication, user management, sessions, RBAC             |
-| 2   | Chat              | `claw-chat-service`              | 4002 | PostgreSQL (`claw_chat`)             | Threads, messages, context assembly, AI execution           |
-| 3   | Connector         | `claw-connector-service`         | 4003 | PostgreSQL (`claw_connectors`)       | Cloud AI provider management, model sync, health            |
-| 4   | Routing           | `claw-routing-service`           | 4004 | PostgreSQL (`claw_routing`)          | Intelligent model routing, policies, decisions              |
-| 5   | Memory            | `claw-memory-service`            | 4005 | PostgreSQL (`claw_memory`, pgvector) | Memory CRUD, extraction, context packs                      |
-| 6   | File              | `claw-file-service`              | 4006 | PostgreSQL (`claw_files`)            | File upload, storage, chunking, download                    |
-| 7   | Audit             | `claw-audit-service`             | 4007 | MongoDB (`claw_audit`)               | Audit trail, usage ledger, cost/latency analytics           |
-| 8   | Ollama            | `claw-ollama-service`            | 4008 | PostgreSQL (`claw_ollama`)           | Local model management, pull, generate, roles               |
-| 9   | Health            | `claw-health-service`            | 4009 | None                                 | Aggregated health checks across downstream services         |
-| 10  | Client Logs       | `claw-client-logs-service`       | 4010 | MongoDB (`claw_client_logs`)         | Frontend log ingestion, search, stats (TTL 30d)             |
-| 11  | Server Logs       | `claw-server-logs-service`       | 4011 | MongoDB (`claw_server_logs`)         | Backend structured logs, search, stats (TTL 30d)            |
-| 12  | Image             | `claw-image-service`             | 4012 | PostgreSQL (`claw_images`)           | Image generation orchestration (DALL-E, Gemini, SD)         |
-| 13  | File Generation   | `claw-file-generation-service`   | 4013 | PostgreSQL (`claw_file_generations`) | File format conversion (PDF, DOCX, CSV, HTML, etc.)         |
-| 14  | Workspace         | `claw-workspace-service`         | 4014 | PostgreSQL (`claw_workspace`)        | Workspace connectors, sync, search, objects, actions        |
-| 15  | Agent             | `claw-agent-service`             | 4015 | PostgreSQL (`claw_agent`)            | Desktop agent sessions, terminal approval, repos, FS events |
-| 16  | Research          | `claw-research-service`          | 4016 | PostgreSQL                           | Search, fetch, and research evidence                        |
-| 17  | llama.cpp         | `claw-llamacpp-service`          | 4017 | PostgreSQL                           | Local llama.cpp runtime                                     |
-| 18  | Payment           | `claw-payment-service`           | 4018 | PostgreSQL                           | Checkout, subscriptions, invoices, refunds                  |
-| 19  | Threads           | `claw-threads-service`           | 4019 | None (health-only foundation)        | Planned publications and community                          |
-| 20  | Thread Generation | `claw-thread-generation-service` | 4020 | None (health-only foundation)        | Planned isolated generation jobs                            |
+| #   | Service                                                 | App Name                         | Port | Database                             | Primary Purpose                                             |
+| --- | ------------------------------------------------------- | -------------------------------- | ---- | ------------------------------------ | ----------------------------------------------------------- |
+| 1   | Auth                                                    | `claw-auth-service`              | 4001 | PostgreSQL (`claw_auth`)             | Authentication, user management, sessions, RBAC             |
+| 2   | Chat                                                    | `claw-chat-service`              | 4002 | PostgreSQL (`claw_chat`)             | Threads, messages, context assembly, AI execution           |
+| 3   | Connector                                               | `claw-connector-service`         | 4003 | PostgreSQL (`claw_connectors`)       | Cloud AI provider management, model sync, health            |
+| 4   | Routing                                                 | `claw-routing-service`           | 4004 | PostgreSQL (`claw_routing`)          | Intelligent model routing, policies, decisions              |
+| 5   | Memory                                                  | `claw-memory-service`            | 4005 | PostgreSQL (`claw_memory`, pgvector) | Memory CRUD, extraction, context packs                      |
+| 6   | File                                                    | `claw-file-service`              | 4006 | PostgreSQL (`claw_files`)            | File upload, storage, chunking, download                    |
+| 7   | Audit                                                   | `claw-audit-service`             | 4007 | MongoDB (`claw_audit`)               | Audit trail, usage ledger, cost/latency analytics           |
+| 8   | Ollama                                                  | `claw-ollama-service`            | 4008 | PostgreSQL (`claw_ollama`)           | Local model management, pull, generate, roles               |
+| 9   | Health                                                  | `claw-health-service`            | 4009 | None                                 | Aggregated health checks across downstream services         |
+| 10  | Client Logs                                             | `claw-client-logs-service`       | 4010 | MongoDB (`claw_client_logs`)         | Frontend log ingestion, search, stats (TTL 30d)             |
+| 11  | Server Logs                                             | `claw-server-logs-service`       | 4011 | MongoDB (`claw_server_logs`)         | Backend structured logs, search, stats (TTL 30d)            |
+| 12  | Image                                                   | `claw-image-service`             | 4012 | PostgreSQL (`claw_images`)           | Image generation orchestration (DALL-E, Gemini, SD)         |
+| 13  | File Generation                                         | `claw-file-generation-service`   | 4013 | PostgreSQL (`claw_file_generations`) | File format conversion (PDF, DOCX, CSV, HTML, etc.)         |
+| 14  | Workspace                                               | `claw-workspace-service`         | 4014 | PostgreSQL (`claw_workspace`)        | Workspace connectors, sync, search, objects, actions        |
+| 15  | Agent                                                   | `claw-agent-service`             | 4015 | PostgreSQL (`claw_agent`)            | Desktop agent sessions, terminal approval, repos, FS events |
+| 16  | Research                                                | `claw-research-service`          | 4016 | PostgreSQL                           | Search, fetch, and research evidence                        |
+| 17  | llama.cpp                                               | `claw-llamacpp-service`          | 4017 | PostgreSQL                           | Local llama.cpp runtime                                     |
+| 18  | Payment                                                 | `claw-payment-service`           | 4018 | PostgreSQL                           | Checkout, subscriptions, invoices, refunds                  |
+| 19  | [Threads](service-guide-threads.md)                     | `claw-threads-service`           | 4019 | None (health-only foundation)        | Planned publications and community                          |
+| 20  | [Thread Generation](service-guide-thread-generation.md) | `claw-thread-generation-service` | 4020 | None (health-only foundation)        | Planned isolated generation jobs                            |
 
 ---
 

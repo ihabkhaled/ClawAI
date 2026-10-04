@@ -119,6 +119,14 @@
 - `wiki/Testing-and-QA.md` (M)
 - `wiki/Workspace-Map.md` (M)
 
+- `apps/claw-threads-service/Dockerfile` (M)
+- `apps/claw-threads-service/Dockerfile.dev` (M)
+- `apps/claw-thread-generation-service/Dockerfile` (M)
+- `apps/claw-thread-generation-service/Dockerfile.dev` (M)
+- `docs/04-backend/service-guide-threads.md` (A)
+- `docs/04-backend/service-guide-thread-generation.md` (A)
+- `docs/04-backend/services-index.md` (M)
+
 ## Before
 
 Before this batch, ClawAI had 18 backend services (25 workspaces), no Threads service boundary, and no documented Threads product decisions or machine-scoped gate receipt policy.
