@@ -16,6 +16,7 @@
 - `apps/claw-threads-service/src/modules/publications/dto/set-publication-reaction.dto.ts` (A)
 - `apps/claw-threads-service/src/modules/publications/repositories/__tests__/publication-community.repository.spec.ts` (A)
 - `apps/claw-threads-service/src/modules/publications/services/__tests__/publication-community.service.spec.ts` (A)
+- `apps/claw-threads-service/src/modules/publications/services/__tests__/threads-generation.client.spec.ts` (M)
 - `apps/claw-threads-service/src/modules/publications/services/publication-community.service.ts` (A)
 - `apps/claw-threads-service/src/modules/publications/types/publication-community.types.ts` (A)
 - `docs/changes/2026-10-05-threads-community-contributions-and-moderation.md` (A)

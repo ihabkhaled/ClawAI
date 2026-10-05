@@ -5,6 +5,7 @@ describe('ThreadsGenerationClient', () => {
   beforeEach(() => {
     vi.stubEnv('JWT_SECRET', 'j'.repeat(32));
     vi.stubEnv('THREADS_DATABASE_URL', 'postgresql://threads:secret@localhost:5432/threads');
+    vi.stubEnv('AUTH_SERVICE_URL', 'https://auth-service:4001');
     vi.stubEnv('THREAD_GENERATION_SERVICE_URL', 'https://thread-generation-service:4020');
     vi.stubEnv('INTER_SERVICE_AUTH_TOKEN', 't'.repeat(32));
     AppConfig.validate();
