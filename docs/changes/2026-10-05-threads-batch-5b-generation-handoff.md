@@ -1,7 +1,7 @@
 # Change - Threads batch 5b-a: authenticated generation handoff
 
 Date: 2026-10-05
-Status: Implemented locally; runtime and release gates pending
+Status: Deployed in release 1.183.0; remaining flagship sub-batches are still pending
 Decision: Continue ADR-159 two-service ownership and approved Threads consent, cap, and owner-approval policy.
 
 ## Before
@@ -64,6 +64,5 @@ URLs/token values already exist in `.env.example` and deployment environments.
 
 ## Verification
 
-See the linked QA evidence. This record must remain `PARTIAL` until the local
-HTTP probe, normal hook commit/push, GitHub CI, and production rollout results
-are recorded. Public content behavior is explicitly outside this subbatch.
+See the linked QA evidence for local HTTP probes, normal hooks, GitHub CI, and
+production rollout. Public content behavior is explicitly outside this subbatch.

@@ -1,7 +1,7 @@
 # QA evidence - Threads generation handoff
 
 Batch: threads-generation-handoff (5b-a)
-Commit: pending
+Feature commit: `6d20f796b`; release: `1.183.0` (`63f3817a9e72fa1f5b7ec63f28aca63052d8117f`)
 Verdict: PARTIAL
 
 | Lane | Role                                   | Status         | Evidence / reason                                                                                                                                                          |
@@ -20,7 +20,7 @@ Verdict: PARTIAL
 | L12  | Security                               | NOT_RUN        | Owner-scoped repository query and service check are unit-tested; live IDOR and role/rate-limit probes remain.                                                              |
 | L13  | Performance/accessibility              | NOT_RUN        | No measured queue load; no UI changed.                                                                                                                                     |
 | L14  | i18n/RTL                               | NOT_APPLICABLE | No user-facing UI strings changed.                                                                                                                                         |
-| L15  | Docs, knowledge, hooks, GitHub, deploy | NOT_RUN        | Knowledge checks and normal hooks passed and push succeeded; the required GitHub CI and production rollout are still pending.                                              |
+| L15  | Docs, knowledge, hooks, GitHub, deploy | PASS           | Normal hooks, knowledge/inventory checks, GitHub CI, and release deployment passed; server status records release 1.183.0 completed at the deployed SHA.                   |
 
 ## Commands and observed output
 
@@ -32,6 +32,9 @@ Verdict: PARTIAL
 - `node --test tools/__tests__/esm-namespace-import-bindings.test.mjs`: 2 tests passed. On Windows, the guard now recognizes the Application Control block by its message because its error code varies by host policy.
 - Local Docker health: `threads-service`, `thread-generation-service`, `pg-threads`, and `pg-thread-generation` are healthy; both databases accept connections. `nginx -t` exits 0.
 - Through local Nginx: `POST https://127.0.0.1/api/v1/thread-publications/generations` and `GET https://127.0.0.1/api/v1/thread-publications/test-id/generation-state` each return HTTP 401 without credentials. `curl.exe --insecure` used the local development TLS certificate.
+- Feature commit `6d20f796b` is on `main`; normal pre-commit and pre-push hooks passed. The QA evidence workflow passed after lane statuses were normalized to the accepted vocabulary.
+- GitHub CI passed for the evidence-correction commit; release workflow `37256302836` completed successfully and deployed SHA `63f3817a9e72fa1f5b7ec63f28aca63052d8117f` as version `1.183.0`.
+- Production `.deploy/status.json` records `state: completed`; Threads service, generation service, and both databases report healthy, and both PostgreSQL readiness probes accept connections.
 
 No browser, screenshot, live authenticated API, credit-ledger, load, or full
 role/plan result is claimed. Update this report with exact final gate output
