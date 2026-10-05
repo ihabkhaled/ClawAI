@@ -665,6 +665,9 @@ services:
     container_name: claw-threads-service
     restart: unless-stopped
     env_file: ../.env
+    depends_on:
+      pg-threads:
+        condition: service_healthy
     ports:
       - '4019:4019'
     volumes:

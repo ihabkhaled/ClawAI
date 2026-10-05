@@ -756,7 +756,7 @@ PAYMENT_TOKEN_ENCRYPTION_KEY=$(gen_secret_hex)
 # written to .env below, which are exactly the variables each container reads
 # as POSTGRES_PASSWORD in docker/docker-compose.*.databases.yml. Adding a
 # database means adding its key here and in all three places.
-PG_DB_KEYS="AUTH CHAT CONNECTOR ROUTING MEMORY FILES OLLAMA IMAGES FILE_GENERATIONS WORKSPACE AGENT RESEARCH PAYMENTS LLAMACPP THREAD_GENERATION"
+PG_DB_KEYS="AUTH CHAT CONNECTOR ROUTING MEMORY FILES OLLAMA IMAGES FILE_GENERATIONS WORKSPACE AGENT RESEARCH PAYMENTS LLAMACPP THREAD_GENERATION THREADS"
 for pg_key in $PG_DB_KEYS; do
   printf -v "PG_PW_${pg_key}" '%s' "$(gen_password)"
 done
@@ -1281,6 +1281,10 @@ PG_THREAD_GENERATION_USER=claw
 PG_THREAD_GENERATION_PASSWORD=${PG_PW_THREAD_GENERATION}
 PG_THREAD_GENERATION_DB=claw_thread_generation
 PG_THREAD_GENERATION_PORT=5457
+PG_THREADS_USER=claw
+PG_THREADS_PASSWORD=${PG_PW_THREADS}
+PG_THREADS_DB=claw_threads
+PG_THREADS_PORT=5458
 
 # =============================================================================
 # MongoDB
@@ -1742,6 +1746,7 @@ RESEARCH_DATABASE_URL=postgresql://claw:${PG_PW_RESEARCH}@pg-research:5432/claw_
 PAYMENT_DATABASE_URL=postgresql://claw:${PG_PW_PAYMENTS}@pg-payments:5432/claw_payments?schema=public
 LLAMACPP_DATABASE_URL=postgresql://claw:${PG_PW_LLAMACPP}@pg-llamacpp:5432/claw_llamacpp?schema=public
 THREAD_GENERATION_DATABASE_URL=postgresql://claw:${PG_PW_THREAD_GENERATION}@pg-thread-generation:5432/claw_thread_generation?schema=public
+THREADS_DATABASE_URL=postgresql://claw:${PG_PW_THREADS}@pg-threads:5432/claw_threads?schema=public
 
 # claw-llamacpp-service (Local Frontier LLM runtime)
 # Path matches the `llamacpp-data` Docker named volume so binary + weights

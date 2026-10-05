@@ -543,9 +543,9 @@
       "testRunner": "vitest"
     },
     {
-      "database": "none",
+      "database": "postgresql",
       "dir": "apps/claw-threads-service",
-      "endpointCount": 1,
+      "endpointCount": 2,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -556,8 +556,11 @@
       "name": "claw-threads-service",
       "port": 4019,
       "portSource": "shared-constants",
-      "prismaModels": [],
-      "testFiles": 2,
+      "prismaModels": [
+        "ThreadPublication",
+        "ThreadPublicationRevision"
+      ],
+      "testFiles": 4,
       "testRunner": "vitest"
     },
     {

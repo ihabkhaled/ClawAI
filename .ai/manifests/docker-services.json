@@ -318,6 +318,13 @@
         "docker/docker-compose.dev.databases.yml",
         "docker/docker-compose.prod.databases.yml"
       ],
+      "name": "pg-threads"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.databases.yml",
+        "docker/docker-compose.prod.databases.yml"
+      ],
       "name": "pg-workspace"
     },
     {

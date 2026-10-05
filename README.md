@@ -80,6 +80,9 @@ with pooled billing — see the [requirements register](docs/02-business-product
 15. **Reliability** — chat-service scales horizontally, dropped streams resume,
     Stop works across replicas, rolling deploys.
 
+16. **ClawAI Threads (in development)** â€” sourced public articles from deep
+    conversations, with owner approval before publication.
+
 Also: memory and context packs, workspace connectors and automations, routing
 transparency on every answer, audit logging, and 13 interface languages with
 right-to-left support.

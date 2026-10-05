@@ -18,10 +18,10 @@ npm run dev
 
 ## Ownership (generated)
 - Port: 4019
-- Database: none
-- Prisma models: none
-- API endpoints: 1 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 2 (vitest)
+- Database: postgresql
+- Prisma models: ThreadPublication, ThreadPublicationRevision
+- API endpoints: 2 (see `.ai/manifests/api-endpoints.json`)
+- Test files: 4 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

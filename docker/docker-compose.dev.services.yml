@@ -806,12 +806,17 @@ services:
     container_name: claw-threads-service
     restart: unless-stopped
     env_file: ../.env
+    depends_on:
+      pg-threads:
+        condition: service_healthy
     environment:
       <<: *development-watch-environment
     ports:
       - '4019:4019'
     volumes:
       - ../apps/claw-threads-service/package.json:/app/apps/claw-threads-service/package.json:ro
+      - ../apps/claw-threads-service/prisma:/app/apps/claw-threads-service/prisma:ro
+      - ../apps/claw-threads-service/prisma.config.ts:/app/apps/claw-threads-service/prisma.config.ts:ro
       - ../apps/claw-threads-service/tsconfig.json:/app/apps/claw-threads-service/tsconfig.json:ro
       - ../apps/claw-threads-service/tsconfig.build.json:/app/apps/claw-threads-service/tsconfig.build.json:ro
       - ../apps/claw-threads-service/src:/app/apps/claw-threads-service/src

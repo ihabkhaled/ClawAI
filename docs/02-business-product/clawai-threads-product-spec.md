@@ -51,3 +51,8 @@ The public reader shows only approved, safety-checked fields. It does not show a
 reader identity list. Unpublishing removes the revision from public reads and
 discovery. Rollout remains disabled until generation, publication, moderation,
 internationalization, and public discovery paths pass their release checks.
+
+The publication service now owns an isolated PostgreSQL database and an
+atomic owner-approval transition for review-ready revisions. Generation-result
+handoff, draft creation/listing, and public reader APIs remain unfinished; the
+approval route alone does not make the product launch-ready.

@@ -3506,6 +3506,11 @@
         "method": "GET",
         "route": "/health",
         "source": "apps/claw-threads-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/thread-publications/:publicationId/publish",
+        "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-owner.controller.ts"
       }
     ],
     "claw-workspace-service": [
@@ -4052,5 +4057,5 @@
     ]
   },
   "generated": true,
-  "total": 802
+  "total": 803
 }

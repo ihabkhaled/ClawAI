@@ -300,6 +300,29 @@ services:
       retries: 5
     networks:
       - claw-network
+
+  pg-threads:
+    labels:
+      claw.service: pg-threads
+    image: pgvector/pgvector:pg16
+    container_name: claw-pg-threads
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_THREADS_USER:-claw}
+      POSTGRES_PASSWORD: ${PG_THREADS_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${PG_THREADS_DB:-claw_threads}
+    ports:
+      - '${PG_THREADS_PORT:-5458}:5432'
+    volumes:
+      - pg-threads-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'pg_isready -U ${PG_THREADS_USER:-claw} -d ${PG_THREADS_DB:-claw_threads}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
   # PostgreSQL (Payment Service)
   #
   # Owns billing customers, subscriptions, checkout sessions, transactions,
@@ -566,6 +589,7 @@ volumes:
   ollama-data:
   clamav-data:
   pg-thread-generation-data:
+  pg-threads-data:
 
 networks:
   claw-network:

@@ -54,6 +54,7 @@ final revision in its own PostgreSQL database. Jobs run on the dedicated
 cancel API. Two database-backed worker slots cap cross-replica concurrency.
 Heartbeats renew leases; bounded retries recover expired jobs with backoff and
 reuse only hash-matched checkpoints. FIFO dispatch and persisted idempotent
-budget closure are reconciled periodically. Publication retrieval and owner
-approval wiring remain in the next implementation batch; generated drafts are
-not public by generation alone.
+budget closure are reconciled periodically. The Threads service now owns its
+separate `claw_threads` database and has an atomic owner approval transition
+for review-ready revisions. Generation-result handoff and public read APIs
+remain unfinished, so this does not enable public publication yet.

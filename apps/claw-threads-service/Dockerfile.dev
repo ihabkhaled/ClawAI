@@ -7,10 +7,11 @@ COPY tools/typescript/ ./tools/typescript/
 COPY .npmrc ./.npmrc
 COPY packages/ ./packages/
 COPY apps/claw-threads-service/ ./apps/claw-threads-service/
+COPY scripts/docker-entrypoint.prod.sh ./scripts/docker-entrypoint.prod.sh
 RUN npm install --ignore-scripts --legacy-peer-deps
 RUN cd /app/packages/shared-constants && npm run build \
  && cd /app/packages/shared-types && npm run build \
  && cd /app/packages/shared-utilities && npm run build \
  && cd /app/packages/shared-auth && npm run build
 WORKDIR /app/apps/claw-threads-service
-CMD ["npm", "run", "dev"]
+CMD ["sh", "docker-entrypoint.dev.sh"]

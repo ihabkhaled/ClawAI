@@ -3561,6 +3561,11 @@
           "method": "GET",
           "route": "/health",
           "source": "apps/claw-threads-service/src/modules/health/controllers/health.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/thread-publications/:publicationId/publish",
+          "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-owner.controller.ts"
         }
       ],
       "claw-workspace-service": [
@@ -4419,6 +4424,13 @@
           "docker/docker-compose.prod.databases.yml"
         ],
         "name": "pg-thread-generation"
+      },
+      {
+        "files": [
+          "docker/docker-compose.dev.databases.yml",
+          "docker/docker-compose.prod.databases.yml"
+        ],
+        "name": "pg-threads"
       },
       {
         "files": [
@@ -5914,6 +5926,26 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "PG_THREADS_DB"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PG_THREADS_PASSWORD"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PG_THREADS_PORT"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PG_THREADS_USER"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "PG_THREAD_GENERATION_DB"
       },
       {
@@ -6175,6 +6207,11 @@
         "confidence": "verified",
         "source": ".env.example",
         "value": "TESSERACT_BIN_PATH"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "THREADS_DATABASE_URL"
       },
       {
         "confidence": "verified",
@@ -10842,6 +10879,25 @@
           "value": "postgresql"
         }
       },
+      "claw-threads-service": {
+        "models": [
+          {
+            "confidence": "verified",
+            "source": "apps/claw-threads-service/prisma/schema.prisma",
+            "value": "ThreadPublication"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-threads-service/prisma/schema.prisma",
+            "value": "ThreadPublicationRevision"
+          }
+        ],
+        "provider": {
+          "confidence": "verified",
+          "source": "apps/claw-threads-service/prisma/schema.prisma",
+          "value": "postgresql"
+        }
+      },
       "claw-workspace-service": {
         "models": [
           {
@@ -11095,7 +11151,7 @@
       },
       "claw-threads-service": {
         "runner": "vitest",
-        "testFiles": 2
+        "testFiles": 4
       },
       "claw-workspace-service": {
         "runner": "vitest",
@@ -11726,6 +11782,9 @@
           "format:check",
           "lint",
           "lint:strict",
+          "migrate",
+          "migrate:dev",
+          "prisma:generate",
           "start",
           "start:prod",
           "test",
@@ -11878,9 +11937,9 @@
   "summary": {
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
-    "dockerServiceCount": 55,
-    "endpointCount": 802,
-    "envVarCount": 370,
+    "dockerServiceCount": 56,
+    "endpointCount": 803,
+    "envVarCount": 375,
     "eventCount": 186,
     "frontendRouteCount": 156,
     "localeCount": 13,
@@ -11891,7 +11950,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2058,
+    "totalTestFiles": 2060,
     "workspaceCount": 27
   }
 }

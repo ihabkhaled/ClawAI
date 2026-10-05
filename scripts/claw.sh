@@ -315,7 +315,7 @@ case "$1" in
     echo "Waiting for databases to become healthy..."
     sleep 10
     # shellcheck disable=SC2086
-    docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS up -d
+    docker compose $ENV_FILE_FLAG -p claw -f "$DB_FILE" $SVC_FLAGS up -d
     if [ "$LOCAL_AI" = "true" ]; then
       OLLAMA_FLAGS=$(build_ollama_compose_flags)
       echo "Starting local-AI runtime (Ollama / ComfyUI / Stable Diffusion)..."
@@ -339,7 +339,7 @@ case "$1" in
     SVC_FLAGS=$(build_svc_compose_flags)
     OLLAMA_FLAGS=$(build_ollama_compose_flags)
     # shellcheck disable=SC2086
-    docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS down
+    docker compose $ENV_FILE_FLAG -p claw -f "$DB_FILE" $SVC_FLAGS down
     # shellcheck disable=SC2086
     docker compose $ENV_FILE_FLAG -p claw $OLLAMA_FLAGS down
     docker compose $ENV_FILE_FLAG -p claw -f "$DB_FILE" down
@@ -413,7 +413,7 @@ case "$1" in
     SVC_FLAGS=$(build_svc_compose_flags)
     echo "Starting backend + frontend services ($MODE mode, gpu=$GPU_VENDOR)..."
     # shellcheck disable=SC2086
-    docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS up -d
+    docker compose $ENV_FILE_FLAG -p claw -f "$DB_FILE" $SVC_FLAGS up -d
     ensure_public_tls
     ;;
   services:down)
@@ -434,10 +434,10 @@ case "$1" in
     # invocation passes no service list so every service in the stitched
     # compose files is included.
     # shellcheck disable=SC2086
-    docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS build --progress plain
+    docker compose $ENV_FILE_FLAG -p claw -f "$DB_FILE" $SVC_FLAGS build --progress plain
     echo "Starting backend + frontend services..."
     # shellcheck disable=SC2086
-    docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS up -d --no-build
+    docker compose $ENV_FILE_FLAG -p claw -f "$DB_FILE" $SVC_FLAGS up -d --no-build
     ensure_public_tls
     ;;
   service:recreate)
@@ -521,7 +521,7 @@ case "$1" in
     echo ""
     echo "--- Backend + Frontend Services ---"
     # shellcheck disable=SC2086
-    docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS ps
+    docker compose $ENV_FILE_FLAG -p claw -f "$DB_FILE" $SVC_FLAGS ps
     echo ""
     echo "--- Ollama Runtime ---"
     # shellcheck disable=SC2086

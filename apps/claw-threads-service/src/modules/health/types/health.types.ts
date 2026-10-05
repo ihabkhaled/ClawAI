@@ -4,4 +4,5 @@ export type HealthStatus = {
   status: HealthCheckStatus;
   timestamp: string;
   service: string;
+  database: 'up' | 'down';
 };

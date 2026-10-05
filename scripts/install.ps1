@@ -687,7 +687,7 @@ if ([string]::IsNullOrWhiteSpace($paymentTokenEncryptionKey)) {
 $pgDbKeys = @(
     'AUTH', 'CHAT', 'CONNECTOR', 'ROUTING', 'MEMORY', 'FILES', 'OLLAMA',
     'IMAGES', 'FILE_GENERATIONS', 'WORKSPACE', 'AGENT', 'RESEARCH',
-    'PAYMENTS', 'LLAMACPP', 'THREAD_GENERATION'
+    'PAYMENTS', 'LLAMACPP', 'THREAD_GENERATION', 'THREADS'
 )
 $pgPasswords = @{}
 $pgPreservedCount = 0
@@ -1114,6 +1114,10 @@ PG_THREAD_GENERATION_USER=claw
 PG_THREAD_GENERATION_PASSWORD=$($pgPasswords.THREAD_GENERATION)
 PG_THREAD_GENERATION_DB=claw_thread_generation
 PG_THREAD_GENERATION_PORT=5457
+PG_THREADS_USER=claw
+PG_THREADS_PASSWORD=$($pgPasswords.THREADS)
+PG_THREADS_DB=claw_threads
+PG_THREADS_PORT=5458
 
 # =============================================================================
 # MongoDB
@@ -1575,6 +1579,7 @@ RESEARCH_DATABASE_URL=postgresql://claw:$($pgPasswords.RESEARCH)@pg-research:543
 PAYMENT_DATABASE_URL=postgresql://claw:$($pgPasswords.PAYMENTS)@pg-payments:5432/claw_payments?schema=public
 LLAMACPP_DATABASE_URL=postgresql://claw:$($pgPasswords.LLAMACPP)@pg-llamacpp:5432/claw_llamacpp?schema=public
 THREAD_GENERATION_DATABASE_URL=postgresql://claw:$($pgPasswords.THREAD_GENERATION)@pg-thread-generation:5432/claw_thread_generation?schema=public
+THREADS_DATABASE_URL=postgresql://claw:$($pgPasswords.THREADS)@pg-threads:5432/claw_threads?schema=public
 
 # claw-llamacpp-service (Local Frontier LLM runtime)
 # Path matches the `llamacpp-data` Docker named volume so binary + weights

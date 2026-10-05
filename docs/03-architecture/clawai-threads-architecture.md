@@ -18,6 +18,13 @@ Publication APIs use `/api/v1/thread-publications`; the existing
 `/api/v1/threads` chat alias is preserved. Public pages use opaque IDs under
 `/threads/<id>`. Internal worker APIs stay off the public gateway.
 
+Threads has its own PostgreSQL database (`claw_threads`) and migration history;
+generation retains its separate database. The initial publication lifecycle
+allows an authenticated owner to approve a `READY_FOR_REVIEW` revision. Owner
+approval changes publication and revision state in one transaction, and the
+response is an explicit public-field allow-list. Generation-to-publication
+handoff and public reads are not wired yet.
+
 Generation obtains source through Chat's service-token-protected
 `POST /api/v1/internal/thread-snapshots/:threadId` endpoint. Chat checks
 `threadId` and `userId` together and reads the thread plus ordered messages in
@@ -70,9 +77,9 @@ private requests.
 
 ## Deployment
 
-Threads and generation services use ports 4019 and 4020. Generation owns the
-`claw_thread_generation` PostgreSQL database, and its dev and production
-entrypoints run Prisma migrations. Enqueue and cancellation APIs require a
+Threads and generation services use ports 4019 and 4020. Threads owns the
+`claw_threads` PostgreSQL database; generation owns `claw_thread_generation`.
+Both dev and production entrypoints run Prisma migrations. Enqueue and cancellation APIs require a
 service token and stay off the public gateway. Publication routes and indexing
 remain disabled until the complete product passes scoped gates and the 15-lane
 QA workflow.

@@ -48,12 +48,13 @@ Names and locations only - this page never holds a value.
 - `PG_AGENT_PASSWORD` - declared in `.env.example`, `docker/docker-compose.dev.databases.yml`, `docker/docker-compose.prod.databases.yml`
 - `PG_AUTH_DB` - declared in `.env.example`, `docker/docker-compose.dev.databases.yml`, `docker/docker-compose.prod.databases.yml`
 - `PG_AUTH_PASSWORD` - declared in `.env.example`, `docker/docker-compose.dev.databases.yml`, `docker/docker-compose.prod.databases.yml`
-- ... and 26 more
+- ... and 28 more
 
 ### Secret-bearing files
 
 | File                                                                          | Tracked | Gitignored | Severity |
 | ----------------------------------------------------------------------------- | ------- | ---------- | -------- |
+| `.claude/worktrees/agent-a429695a74cf1981a/infra/nginx/.env.distributed`      | no      | yes        | ok       |
 | `.claude/worktrees/agent-a457c98a264467b5b/infra/nginx/.env.distributed`      | no      | yes        | ok       |
 | `.claude/worktrees/agent-a89078518adbd7ef1/infra/nginx/.env.distributed`      | no      | yes        | ok       |
 | `.env`                                                                        | no      | yes        | ok       |
@@ -93,9 +94,8 @@ Names and locations only - this page never holds a value.
 | `.worktrees/x10/infra/nginx/.env.distributed`                                 | no      | yes        | ok       |
 | `.worktrees/z1/infra/nginx/.env.distributed`                                  | no      | yes        | ok       |
 | `.worktrees/z3/infra/nginx/.env.distributed`                                  | no      | yes        | ok       |
-| `.worktrees/z4/infra/nginx/.env.distributed`                                  | no      | yes        | ok       |
 
-- ... and 3 more
+- ... and 4 more
 
 ### PII-ish and credential fields in schemas
 

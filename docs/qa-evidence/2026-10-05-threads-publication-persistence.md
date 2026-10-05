@@ -1,0 +1,40 @@
+# QA evidence - Threads publication persistence
+
+Batch: threads-publication-persistence (5a)
+Date: 2026-10-05
+Commits: pending
+Verdict: PARTIAL
+
+| Lane | What                                           | Status         | Evidence or reason                                                                                                                                                                                                                                                            |
+| ---- | ---------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L01  | Focused automated specs                        | PASS           | Threads service Vitest: 4 files, 10 tests passed.                                                                                                                                                                                                                             |
+| L02  | Service typecheck/lint/build                   | PASS           | Threads service typecheck/build and changed-file ESLint passed; Prisma schema is valid. Dev and production images built. Production image applied migrations as UID 1001; no pending migrations.                                                                              |
+| L03  | Manual API with branch log                     | PASS           | Nginx forwarded `POST /api/v1/thread-publications/test-id/publish`; unauthenticated request returned 401. Startup log mapped the route; `/health` returned 200 with `database: up`. The 401 proves auth gating, not the authenticated publish path.                           |
+| L04  | Manual browser/screenshots                     | NOT_APPLICABLE | No frontend changed in this batch.                                                                                                                                                                                                                                            |
+| L05  | Automated end-to-end                           | NOT_RUN        | Publication owner flow is not yet integrated with generation handoff.                                                                                                                                                                                                         |
+| L06  | RBAC across roles and plans                    | NOT_RUN        | Owner isolation has a focused service spec; full role/plan matrix remains open.                                                                                                                                                                                               |
+| L07  | Device matrix                                  | NOT_APPLICABLE | No frontend changed in this batch.                                                                                                                                                                                                                                            |
+| L08  | User acceptance                                | NOT_RUN        | Draft creation and owner review UI are not implemented.                                                                                                                                                                                                                       |
+| L09  | Product verification                           | NOT_RUN        | Only the atomic approval boundary exists; end-to-end product flow is incomplete.                                                                                                                                                                                              |
+| L10  | Business verification                          | NOT_APPLICABLE | This batch does not call billing or alter cost behavior.                                                                                                                                                                                                                      |
+| L11  | Regression                                     | PASS           | Four focused specs passed (10 tests); wider regression remains open.                                                                                                                                                                                                          |
+| L12  | Security                                       | NOT_RUN        | Unauthenticated route returned 401 and owner ID comes from authenticated context, but live owner-IDOR and publication safety checks remain open.                                                                                                                              |
+| L13  | Performance/accessibility                      | NOT_RUN        | No measured API load in this batch; no UI changed.                                                                                                                                                                                                                            |
+| L14  | i18n/RTL                                       | NOT_APPLICABLE | No user-facing UI strings changed.                                                                                                                                                                                                                                            |
+| L15  | Docs, generated knowledge, hooks, GitHub gates | FAIL           | Knowledge and inventory verification passed. Akinator strict coverage failed on 5,562 repository-wide findings (7 critical, 2,443 high, 3,112 medium), mostly existing hooks/rules/docs. Production `.env` is ready; DB startup, hooks, push, CI, and rollout remain pending. |
+
+## Observed evidence
+
+- `npm exec prisma validate`: exit 0, schema valid.
+- `npm test -- --run src/modules/publications/services/__tests__/publication-lifecycle.service.spec.ts src/modules/publications/repositories/__tests__/publications.repository.spec.ts src/modules/health/services/__tests__/health.service.spec.ts src/app/config/__tests__/app.config.spec.ts`: 4 files and 10 tests passed.
+- Threads service `npm run typecheck`, `npm run build`, and changed-file `npx eslint`: exit 0.
+- Production Docker image built successfully. As UID 1001, Prisma engine write access passed and `npx prisma migrate deploy` reported no pending migrations. Prisma emitted a non-fatal OpenSSL detection warning despite OpenSSL being installed.
+- `docker exec claw-pg-threads pg_isready -U claw -d claw_threads`: accepting connections; `_prisma_migrations` shows `20261005130000_threads_publications` applied and both publication tables exist.
+- Threads and generation containers are healthy. Threads `/api/v1/health` returns HTTP 200 with `database: up` through Nginx.
+- Dev/prod Compose config validation exited 0; Nginx `nginx -t` passed.
+- Production `.env` key counts were validated without reading values; file owner/mode stayed `root:600`, and the new database bind is `127.0.0.1:5458`.
+- The production certificate currently includes both Threads service SANs; the existing Nginx publication route is unchanged and already targets Threads service.
+- `akinator_coverage.py . --strict` exited 1 with 5,562 findings. Critical examples concern existing hook and rules files; this batch did not edit those paths. This whole-repository baseline audit remains a final-governance risk.
+
+Do not mark this batch or the flagship complete until pending lanes are run or
+truthfully documented as unavailable at final release review.

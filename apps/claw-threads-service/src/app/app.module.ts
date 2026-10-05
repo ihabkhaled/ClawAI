@@ -12,6 +12,8 @@ import { LoggerModule } from 'nestjs-pino';
 
 import { AppConfig } from './config/app.config';
 import { HealthModule } from '../modules/health/health.module';
+import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
+import { PublicationsModule } from '../modules/publications/publications.module';
 
 @Module({
   imports: [
@@ -37,6 +39,8 @@ import { HealthModule } from '../modules/health/health.module';
     }),
     ThrottlerModule.forRoot(buildThrottlerOptions({ ttl: 60_000, limit: 2500 })),
     HealthModule,
+    PrismaModule,
+    PublicationsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },

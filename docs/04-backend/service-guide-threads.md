@@ -2,20 +2,26 @@
 
 ## Overview
 
-| Property     | Value                              |
-| ------------ | ---------------------------------- |
-| Port         | 4019                               |
-| Database     | None in the health-only foundation |
-| Public route | `/api/v1/thread-publications`      |
+| Property     | Value                         |
+| ------------ | ----------------------------- |
+| Port         | 4019                          |
+| Database     | `claw_threads` PostgreSQL     |
+| Public route | `/api/v1/thread-publications` |
 
-This service is the future owner of publication revisions, owner approval, public reads, comments, reactions, change requests, and moderation state. The current foundation exposes only the authenticated service shell and public health endpoint.
+This service owns publication revisions and community state. It exposes an authenticated owner approval transition for review-ready publications; generation handoff and public read APIs remain unfinished.
+
+Prisma migrations run from the container entrypoint. For local schema work,
+use `npm run migrate:dev`; for deployment, `npm run migrate` applies committed
+migrations.
 
 ## Boundaries
 
 - Chat remains the owner of chat threads and messages; `/api/v1/threads` keeps its legacy chat alias.
 - Generation jobs and private source snapshots belong to `claw-thread-generation-service`.
+- Publication records and revisions belong to this service's isolated PostgreSQL database.
 - Research evidence remains owned by `claw-research-service`.
 - Cross-service data uses service APIs or RabbitMQ, never another service's database.
+- Approval changes publication and revision state atomically and returns only public-safe fields.
 
 ## References
 

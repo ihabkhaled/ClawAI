@@ -139,6 +139,17 @@ open; this batch does not enable the feature.
 
 **Outcome:** Owners can review, approve, publish, revise, unpublish, and export; authenticated readers can participate; moderation and account deletion follow the approved policy.
 
+**Execution split:** 5a provisions the Threads-owned database and atomic owner
+approval transition. 5b wires generation handoff, private draft/revision
+management, public reads, unpublish, and exports. 5c adds social, moderation,
+reports, and account-deletion handling. Do not enable public endpoints until
+5b safety checks are complete.
+
+**5a status:** Prisma publication/revision persistence and the owner approval
+transaction are implemented locally. Dev database migration and auth-gated HTTP
+health/route probes passed; generated knowledge, normal commit/push, CI, and
+production migration remain the current batch's unfinished gates.
+
 **Code:**
 
 - Add publication/revision/comment/reaction/change-request/report/moderation models and migration to `apps/claw-threads-service/prisma/schema.prisma`.

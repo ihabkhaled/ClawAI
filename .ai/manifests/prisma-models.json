@@ -194,6 +194,10 @@
       "ThreadModelCommunication",
       "ThreadRevisionDraft"
     ],
+    "claw-threads-service": [
+      "ThreadPublication",
+      "ThreadPublicationRevision"
+    ],
     "claw-workspace-service": [
       "AiActionApprovalQueue",
       "AiActionPolicy",
