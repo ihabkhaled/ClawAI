@@ -32,7 +32,7 @@
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.10.0",
     "helmet": "^8.3.0",
-    "nestjs-pino": "^5.2.1",
+    "nestjs-pino": "^5.3.0",
     "pino": "^10.3.1",
     "pino-http": "^11.0.0",
     "reflect-metadata": "^0.2.2",
