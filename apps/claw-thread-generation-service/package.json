@@ -1,6 +1,6 @@
 {
   "name": "claw-thread-generation-service",
-  "version": "1.190.0",
+  "version": "1.190.1",
   "private": true,
   "description": "ClawAI Threads isolated generation worker service",
   "license": "UNLICENSED",
