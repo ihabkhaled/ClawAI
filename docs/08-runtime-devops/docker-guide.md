@@ -475,6 +475,10 @@ docker volume prune
 `Cannot find module '/app/packages/shared-<x>/dist/<file>' imported from
 /app/packages/shared-<x>/dist/index.js`, while prod and CI are fine.
 
+If `npm run build` reports `Cannot find module '@claw/shared-<x>'` inside a
+service image instead, check that the workspace is declared in the service
+`package.json` and built in both of that service's Dockerfiles.
+
 **Cause**: Root `.dockerignore` copies the host's `packages/*/dist` into the
 image on purpose, and that service's `Dockerfile.dev` never runs
 `npm run build` for `shared-<x>`. The container is running whatever stale dist

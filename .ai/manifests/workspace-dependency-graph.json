@@ -462,6 +462,10 @@
     },
     {
       "from": "claw-threads-service",
+      "to": "@claw/shared-rabbitmq"
+    },
+    {
+      "from": "claw-threads-service",
       "to": "@claw/shared-types"
     },
     {
