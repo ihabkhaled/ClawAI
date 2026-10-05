@@ -2,7 +2,7 @@
 
 Batch: threads-public-discovery
 Date: 2026-10-05
-Commits: `2c2fd9071`, `b29ea2229`, `61183bf65`
+Commits: `2c2fd9071`, `b29ea2229`, `61183bf65`, `5763f0595`
 Verdict: PARTIAL
 
 Every lane is filled in. PASS needs the command and its real output (or a path, a count, a
@@ -29,8 +29,8 @@ lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (
 
 ## Findings
 
-Pre-push exposed four frontend regressions: launch-surface expectations, Japanese metadata length, and implicit grid columns. Updated registry expectations, copy, and grid style; focused specs now pass 18/18. The browser sweep initially exposed a JSON-LD script hydration warning; using the existing Next Script pattern removed it. The discovery route now renders JSON-LD in server HTML. The pre-push tooling scanner ignores generated .next, dist, and node_modules directories; its focused test passes.
+Pre-push exposed four frontend regressions: launch-surface expectations, Japanese metadata length, and implicit grid columns. Updated registry expectations, copy, and grid style; focused specs now pass 18/18. The browser sweep initially exposed a JSON-LD script hydration warning; using the existing Next Script pattern removed it. The discovery route now renders JSON-LD in server HTML. The pre-push tooling scanner ignores generated .next, dist, and node_modules directories; its focused test passes. Production audit: all 14 Threads env keys are non-empty, both Threads services and databases are healthy, nginx contains the publication route. The current production endpoint still returns the old 404 response; release/deployment has not happened.
 
 ## Open gaps
 
-L06 RBAC/plan tiers; L08 UAT; L13 Lighthouse/accessibility/performance; L15 remote GitHub gates. Close with available CI/browser fixtures before release sign-off.
+L06 RBAC/plan tiers; L08 UAT; L13 Lighthouse/accessibility/performance; L15 remote GitHub gates, release and production deployment. Close with available CI/browser fixtures before release sign-off.
