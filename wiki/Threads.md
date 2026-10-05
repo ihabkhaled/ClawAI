@@ -74,8 +74,9 @@ frontend portal now supports generation from an owner-selected chat, a required
 user-selected spend cap, public/indexing intent disclosure, status polling,
 draft and citation preview, and a separate owner approval action before
 publication. The workflow uses the existing model catalog and stays separate
-from the legacy chat-thread API. Revision editing and community contribution UI
-remain unfinished.
+from the legacy chat-thread API. Owners can submit capped private revisions for
+fresh review, export Markdown or JSON, and unpublish a live publication.
+Community contribution UI remains unfinished.
 Authenticated readers can comment, react, request changes, and report content.
 Public comment responses omit author IDs. Owners can accept a change request by
 creating a newly capped immutable revision that goes through the usual fresh

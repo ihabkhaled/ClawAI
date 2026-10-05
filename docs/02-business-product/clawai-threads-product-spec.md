@@ -89,5 +89,7 @@ through the existing entitlement and credit-hold path. The portal polls only
 owner-scoped generation state and previews the private draft and citations.
 The publish action appears only when the publication is marked
 `READY_FOR_REVIEW`; generation completion by itself never makes a publication
-public. This is a partial Batch 6 delivery. Owner editing, exports, community
-controls, and the full browser/accessibility/device QA walk remain open.
+public. Owners can submit edited content with a user-selected revision cap;
+revisions stay private while they pass fresh safety and model review. Owners can
+export Markdown or JSON and unpublish a live item. Community controls and the
+full browser/accessibility/device QA walk remain open.

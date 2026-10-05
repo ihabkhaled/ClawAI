@@ -13,7 +13,7 @@ _Budget: standard tier, 12,000 tokens. Anything that did not fit is listed as a 
 
 Every frontier AI model in one workspace that sees, hears, researches and builds. Pay as you go, bring your team, or run it on your own hardware.
 
-Current version: `1.189.0`. A shipped change bumps it in every manifest (`akinator_version.py`).
+Current version: `1.190.0`. A shipped change bumps it in every manifest (`akinator_version.py`).
 
 ## Constraints that must not break
 

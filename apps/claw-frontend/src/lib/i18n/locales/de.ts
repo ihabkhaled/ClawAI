@@ -674,6 +674,22 @@ export const de: TranslationDictionary = {
     threadDraftNotEligible:
       'Der Entwurf ist nach der Sicherheitsprüfung nicht zur Veröffentlichung freigegeben.',
     threadGenerationCancelled: 'Die Erstellung wurde abgebrochen.',
+    threadEditDraft: 'Entwurf bearbeiten',
+    threadRevisionContent: 'Überarbeiteter Artikel',
+    threadRevisionCap: 'Maximale Überarbeitungskosten (USD)',
+    threadRevisionReviewDisclosure:
+      'Deine Änderungen bleiben privat und werden vor der Veröffentlichung geprüft.',
+    threadSubmitRevision: 'Überarbeitung zur Prüfung senden',
+    threadRevisionStatus: 'Prüfung der Überarbeitung',
+    threadRevisionReady:
+      'Die Überarbeitung hat die Prüfung bestanden und wartet auf deine Freigabe.',
+    threadRevisionPending: 'Die Überarbeitung wird geprüft.',
+    threadRevisionNeedsChanges:
+      'Die Überarbeitung hat die Prüfung nicht bestanden. Bearbeite sie und versuche es erneut.',
+    threadUnpublish: 'Veröffentlichung zurückziehen',
+    threadUnpublished: 'Die Veröffentlichung ist nicht mehr öffentlich.',
+    threadExportMarkdown: 'Markdown exportieren',
+    threadExportJson: 'JSON exportieren',
     threadTypeArticle: 'Artikel',
     threadTypeResearchArticle: 'Forschungsartikel',
     threadTypeGuide: 'Anleitung',

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, type FormEvent, type ReactElement } from 
 
 import { Button } from '@/components/ui/button';
 import { THREAD_PUBLICATION_OPTIONS } from '@/constants/thread-publication.constants';
+import { ThreadPublicationExportFormat } from '@/enums/thread-publication-export-format.enum';
 import { useAvailableModels } from '@/hooks/chat/use-available-models';
 import { useThreads } from '@/hooks/chat/use-threads';
 import { useThreadPublications } from '@/hooks/threads/use-thread-publications';
@@ -12,6 +13,7 @@ import { useTranslation } from '@/lib/i18n';
 import { threadPublicationsRepository } from '@/repositories/threads/thread-publications.repository';
 import type { ModelSelection, ThreadPublicationType } from '@/types';
 import { createThreadGenerationRequest } from '@/utilities/thread-generation-request.utility';
+import { createThreadRevisionRequest } from '@/utilities/thread-revision-request.utility';
 
 export default function ThreadPublicationsPage(): ReactElement {
   const { t } = useTranslation();
@@ -32,7 +34,16 @@ export default function ThreadPublicationsPage(): ReactElement {
   const [spendCapUsd, setSpendCapUsd] = useState('');
   const [selectedModels, setSelectedModels] = useState<ModelSelection[]>([]);
   const [activePublicationId, setActivePublicationId] = useState('');
+  const [editingRevision, setEditingRevision] = useState(false);
+  const [revisionMarkdown, setRevisionMarkdown] = useState('');
+  const [revisionCapUsd, setRevisionCapUsd] = useState('');
+  const [revisionRequestIds, setRevisionRequestIds] = useState({
+    idempotencyKey: '',
+    correlationId: '',
+  });
+  const [activeRevisionId, setActiveRevisionId] = useState('');
   const [requestError, setRequestError] = useState(false);
+  const selectedPublication = publications.find(({ id }) => id === activePublicationId);
   const generation = useQuery({
     queryKey: ['thread-publications', activePublicationId, 'generation-state'],
     queryFn: () => threadPublicationsRepository.getGenerationState(activePublicationId),
@@ -44,10 +55,30 @@ export default function ThreadPublicationsPage(): ReactElement {
         ? false
         : 3000,
   });
+  const revisionReview = useQuery({
+    queryKey: ['thread-publications', activePublicationId, 'revisions', activeRevisionId],
+    queryFn: () =>
+      threadPublicationsRepository.getRevisionReviewState(activePublicationId, activeRevisionId),
+    enabled: activePublicationId !== '' && activeRevisionId !== '',
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      return query.state.data?.ready ||
+        ['FAILED', 'CANCELLED', 'STALE', 'REVIEW_REQUIRED'].includes(status ?? '')
+        ? false
+        : 3000;
+    },
+  });
   const start = useMutation({
     mutationFn: (request: ReturnType<typeof createThreadGenerationRequest>) =>
       threadPublicationsRepository.startGeneration(request),
     onSuccess: async ({ publicationId }) => {
+      publish.reset();
+      cancel.reset();
+      editRevision.reset();
+      unpublish.reset();
+      exportPublication.reset();
+      setActiveRevisionId('');
+      setEditingRevision(false);
       setActivePublicationId(publicationId);
       await queryClient.invalidateQueries({ queryKey: ['thread-publications', 'mine'] });
     },
@@ -69,6 +100,57 @@ export default function ThreadPublicationsPage(): ReactElement {
       });
     },
   });
+  const editRevision = useMutation({
+    mutationFn: () => {
+      const draft = generation.data?.draft;
+      if (!draft) {
+        throw new Error('The draft is unavailable');
+      }
+      const request = createThreadRevisionRequest({
+        markdown: revisionMarkdown,
+        citations: draft.citations,
+        spendCapUsd: Number(revisionCapUsd),
+        idempotencyKey: revisionRequestIds.idempotencyKey,
+        correlationId: revisionRequestIds.correlationId,
+      });
+      return threadPublicationsRepository.editRevision(activePublicationId, request);
+    },
+    onSuccess: async ({ revisionId }) => {
+      setActiveRevisionId(revisionId);
+      setEditingRevision(false);
+      setRevisionRequestIds({ idempotencyKey: '', correlationId: '' });
+      publish.reset();
+      await queryClient.invalidateQueries({ queryKey: ['thread-publications', 'mine'] });
+    },
+  });
+  const unpublish = useMutation({
+    mutationFn: () => threadPublicationsRepository.unpublish(activePublicationId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['thread-publications', 'mine'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['thread-publications', activePublicationId, 'generation-state'],
+      });
+    },
+  });
+  const exportPublication = useMutation({
+    mutationFn: (format: ThreadPublicationExportFormat) =>
+      threadPublicationsRepository.export(activePublicationId, format),
+    onSuccess: ({ format, content }) => {
+      const body = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
+      const blob = new Blob([body], {
+        type:
+          format === ThreadPublicationExportFormat.Markdown
+            ? 'text/markdown;charset=utf-8'
+            : 'application/json;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `thread-publication.${format === ThreadPublicationExportFormat.Markdown ? 'md' : 'json'}`;
+      link.click();
+      URL.revokeObjectURL(url);
+    },
+  });
 
   useEffect(() => {
     if (selectedModels.length === 0 && availableModels.length > 0) {
@@ -83,6 +165,24 @@ export default function ThreadPublicationsPage(): ReactElement {
   const generationFailed = generation.data?.status === 'FAILED';
   const generationCancelled = generation.data?.status === 'CANCELLED';
   const publicationReady = generation.data?.publicationStatus === 'READY_FOR_REVIEW';
+  const revisionIsTerminal = Boolean(
+    revisionReview.data?.ready ||
+    ['FAILED', 'CANCELLED', 'STALE', 'REVIEW_REQUIRED'].includes(revisionReview.data?.status ?? ''),
+  );
+
+  function getRevisionReviewMessage(): string {
+    const reviewStatus = revisionReview.data?.status;
+    if (revisionReview.isPending) {
+      return t('common.loading');
+    }
+    if (revisionReview.data?.ready) {
+      return t('threadRevisionReady');
+    }
+    if (['FAILED', 'CANCELLED', 'STALE', 'REVIEW_REQUIRED'].includes(reviewStatus ?? '')) {
+      return t('threadRevisionNeedsChanges');
+    }
+    return t('threadRevisionPending');
+  }
 
   function submitGeneration(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -109,6 +209,12 @@ export default function ThreadPublicationsPage(): ReactElement {
   function selectPublication(publicationId: string): void {
     cancel.reset();
     publish.reset();
+    editRevision.reset();
+    unpublish.reset();
+    exportPublication.reset();
+    queryClient.removeQueries({ queryKey: ['thread-publications', publicationId, 'revisions'] });
+    setActiveRevisionId('');
+    setEditingRevision(false);
     setActivePublicationId(publicationId);
   }
 
@@ -303,6 +409,91 @@ export default function ThreadPublicationsPage(): ReactElement {
               </ul>
             </>
           ) : null}
+          {generation.data.draft &&
+          !editingRevision &&
+          (!activeRevisionId || revisionIsTerminal || revisionReview.isError) ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-fit"
+              onClick={() => {
+                editRevision.reset();
+                setActiveRevisionId('');
+                setRevisionMarkdown(generation.data?.draft?.markdown ?? '');
+                setRevisionRequestIds({
+                  idempotencyKey: crypto.randomUUID(),
+                  correlationId: crypto.randomUUID(),
+                });
+                setEditingRevision(true);
+              }}
+            >
+              {t('threadEditDraft')}
+            </Button>
+          ) : null}
+          {editingRevision ? (
+            <form
+              className="flex flex-col gap-3"
+              onSubmit={(event) => {
+                event.preventDefault();
+                editRevision.mutate();
+              }}
+            >
+              <label className="flex flex-col gap-1 text-sm">
+                {t('threadRevisionContent')}
+                <textarea
+                  required
+                  maxLength={100000}
+                  value={revisionMarkdown}
+                  onChange={(event) => {
+                    setRevisionMarkdown(event.target.value);
+                    setRevisionRequestIds({
+                      idempotencyKey: crypto.randomUUID(),
+                      correlationId: crypto.randomUUID(),
+                    });
+                  }}
+                  className="border-input bg-background min-h-64 rounded-md border px-3 py-2"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                {t('threadRevisionCap')}
+                <input
+                  required
+                  min="0.01"
+                  step="0.01"
+                  type="number"
+                  value={revisionCapUsd}
+                  onChange={(event) => {
+                    setRevisionCapUsd(event.target.value);
+                    setRevisionRequestIds({
+                      idempotencyKey: crypto.randomUUID(),
+                      correlationId: crypto.randomUUID(),
+                    });
+                  }}
+                  className="border-input bg-background rounded-md border px-3 py-2"
+                />
+              </label>
+              <p className="text-muted-foreground text-sm">{t('threadRevisionReviewDisclosure')}</p>
+              {editRevision.isError ? <p role="alert">{t('threadCreateFailed')}</p> : null}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="submit"
+                  disabled={editRevision.isPending}
+                  isLoading={editRevision.isPending}
+                >
+                  {t('threadSubmitRevision')}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setEditingRevision(false)}>
+                  {t('common.cancel')}
+                </Button>
+              </div>
+            </form>
+          ) : null}
+          {activeRevisionId ? (
+            <p role="status">
+              {t('threadRevisionStatus')}: {getRevisionReviewMessage()}
+            </p>
+          ) : null}
+          {revisionReview.isError ? <p role="alert">{t('threadCreateFailed')}</p> : null}
           {generation.data.status === 'WAITING_FOR_REVIEW' &&
           generation.data.draft &&
           !publicationReady ? (
@@ -325,7 +516,7 @@ export default function ThreadPublicationsPage(): ReactElement {
           {publish.isSuccess ? <p role="status">{t('threadPublished')}</p> : null}
           {generation.data.status === 'WAITING_FOR_REVIEW' &&
           generation.data.draft &&
-          publicationReady &&
+          (activeRevisionId ? revisionReview.data?.ready : publicationReady) &&
           !publish.isSuccess ? (
             <Button
               type="button"
@@ -336,6 +527,42 @@ export default function ThreadPublicationsPage(): ReactElement {
             >
               {t('threadApproveAndPublish')}
             </Button>
+          ) : null}
+          {selectedPublication?.status === 'PUBLISHED' && !unpublish.isSuccess ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-fit"
+              onClick={() => unpublish.mutate()}
+              disabled={unpublish.isPending}
+              isLoading={unpublish.isPending}
+            >
+              {t('threadUnpublish')}
+            </Button>
+          ) : null}
+          {selectedPublication ? (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => exportPublication.mutate(ThreadPublicationExportFormat.Markdown)}
+                disabled={exportPublication.isPending}
+              >
+                {t('threadExportMarkdown')}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => exportPublication.mutate(ThreadPublicationExportFormat.Json)}
+                disabled={exportPublication.isPending}
+              >
+                {t('threadExportJson')}
+              </Button>
+            </div>
+          ) : null}
+          {unpublish.isSuccess ? <p role="status">{t('threadUnpublished')}</p> : null}
+          {unpublish.isError || exportPublication.isError ? (
+            <p role="alert">{t('threadCreateFailed')}</p>
           ) : null}
           {publish.isError || cancel.isError ? <p role="alert">{t('threadCreateFailed')}</p> : null}
         </section>
