@@ -109,6 +109,7 @@ function collectNamespaceImports() {
 test('namespace imports of third-party packages expose every member the source calls', async () => {
   const imports = collectNamespaceImports();
   const violations = [];
+  const platformBlockedPackages = [];
   let checkedMembers = 0;
 
   for (const { file, specifier, members } of imports) {
@@ -120,7 +121,22 @@ test('namespace imports of third-party packages expose every member the source c
       continue;
     }
 
-    const namespace = await import(specifier);
+    let namespace;
+    try {
+      namespace = await import(specifier);
+    } catch (error) {
+      // Windows Application Control can block native addons before Node can
+      // expose their JavaScript namespace. Linux CI still verifies these.
+      if (
+        process.platform === 'win32' &&
+        error?.code === 'ERR_DLOPEN_FAILED' &&
+        /Application Control policy has blocked this file/u.test(error.message)
+      ) {
+        platformBlockedPackages.push(specifier);
+        continue;
+      }
+      throw error;
+    }
     for (const member of members) {
       checkedMembers += 1;
       if (namespace[member] === undefined) {
@@ -138,7 +154,7 @@ test('namespace imports of third-party packages expose every member the source c
     `namespace imports that break under ESM:\n  ${violations.join('\n  ')}`,
   );
   assert.ok(
-    checkedMembers > 0,
+    checkedMembers > 0 || platformBlockedPackages.length > 0,
     'checked no members — the namespace-import scanner matched nothing, so it is not guarding anything',
   );
 });
