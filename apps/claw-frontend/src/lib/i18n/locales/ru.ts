@@ -308,6 +308,7 @@ export const ru: TranslationDictionary = {
   nav: {
     dashboard: 'Панель управления',
     chat: 'Чат',
+    threads: 'Публикации Threads',
     compareModels: 'Сравнение моделей',
     consensusMode: 'Режим консенсуса',
     escalationChain: 'Цепочка эскалации',
@@ -646,6 +647,7 @@ export const ru: TranslationDictionary = {
     },
     newThread: 'Новый чат',
     threads: 'Чаты',
+    threadPublicationsLoadFailed: 'Не удалось загрузить ваши публикаções.',
     searchThreads: 'Поиск чатов...',
     noThreads: 'Чатов пока нет',
     noThreadsDesc: 'Начните новый разговор, чтобы продолжить',

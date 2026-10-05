@@ -304,6 +304,7 @@ export const hi: TranslationDictionary = {
   nav: {
     dashboard: 'डैशबोर्ड',
     chat: 'चैट',
+    threads: 'थ्रेड प्रकाशन',
     compareModels: 'मॉडल तुलना',
     consensusMode: 'सहमति मोड',
     escalationChain: 'एस्केलेशन चेन',
@@ -641,6 +642,7 @@ export const hi: TranslationDictionary = {
     },
     newThread: 'नई चैट',
     threads: 'थ्रेड्स',
+    threadPublicationsLoadFailed: 'आपकी पोस्ट लोड नहीं हो सकीं।',
     searchThreads: 'थ्रेड्स खोजें...',
     noThreads: 'अभी तक कोई थ्रेड नहीं',
     noThreadsDesc: 'शुरू करने के लिए नई बातचीत प्रारंभ करें',

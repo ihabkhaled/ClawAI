@@ -309,6 +309,7 @@ export const it: TranslationDictionary = {
   nav: {
     dashboard: 'Dashboard',
     chat: 'Chat',
+    threads: 'Pubblicazioni Threads',
     compareModels: 'Confronta modelli',
     consensusMode: 'Modalità consenso',
     escalationChain: 'Catena di escalation',
@@ -652,6 +653,7 @@ export const it: TranslationDictionary = {
     },
     newThread: 'Nuova chat',
     threads: 'Conversazioni',
+    threadPublicationsLoadFailed: 'Impossibile caricare le tue pubblicazioni.',
     searchThreads: 'Cerca conversazioni...',
     noThreads: 'Nessuna conversazione',
     noThreadsDesc: 'Avvia una nuova conversazione per iniziare',

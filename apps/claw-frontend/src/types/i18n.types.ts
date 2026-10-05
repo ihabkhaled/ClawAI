@@ -265,6 +265,7 @@ export type TranslationDictionary = {
   nav: {
     dashboard: string;
     chat: string;
+    threads: string;
     compareModels: string;
     consensusMode: string;
     escalationChain: string;
@@ -584,6 +585,7 @@ export type TranslationDictionary = {
     };
     newThread: string;
     threads: string;
+    threadPublicationsLoadFailed: string;
     searchThreads: string;
     noThreads: string;
     noThreadsDesc: string;
@@ -4828,6 +4830,7 @@ export type TranslationDictionary = {
       grantShareNote: string;
       surface: {
         CHAT: string;
+        THREADS: string;
         COMPARE: string;
         JUDGE: string;
         ORCHESTRATION: string;
@@ -4839,7 +4842,6 @@ export type TranslationDictionary = {
         ROUTING: string;
         TRANSCRIPTION: string;
         VISION_HELPER: string;
-        THREADS: string;
         TTS: string;
       };
       kind: {

@@ -300,6 +300,7 @@ export const ar: TranslationDictionary = {
   nav: {
     dashboard: 'لوحة التحكم',
     chat: 'المحادثة',
+    threads: 'منشورات Threads',
     compareModels: 'مقارنة النماذج',
     consensusMode: 'وضع الإجماع',
     escalationChain: 'سلسلة التصعيد',
@@ -632,6 +633,7 @@ export const ar: TranslationDictionary = {
     },
     newThread: 'محادثة جديدة',
     threads: 'المحادثات',
+    threadPublicationsLoadFailed: 'تعذّر تحميل منشوراتك.',
     searchThreads: 'بحث في المحادثات...',
     noThreads: 'لا توجد محادثات بعد',
     noThreadsDesc: 'ابدأ محادثة جديدة للانطلاق',

@@ -69,6 +69,7 @@ export type SidebarItem = {
 
 export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
   { labelKey: 'nav.dashboard', href: ROUTES.DASHBOARD, icon: LayoutDashboard },
+  { labelKey: 'nav.threads', href: ROUTES.THREAD_PUBLICATIONS, icon: Newspaper },
   {
     labelKey: 'nav.chat',
     href: ROUTES.CHAT,

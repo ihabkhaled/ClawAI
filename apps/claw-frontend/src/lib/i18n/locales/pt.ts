@@ -305,6 +305,7 @@ export const pt: TranslationDictionary = {
   nav: {
     dashboard: 'Painel',
     chat: 'Chat',
+    threads: 'Publicações do Threads',
     compareModels: 'Comparar Modelos',
     consensusMode: 'Modo Consenso',
     escalationChain: 'Cadeia de Escalonamento',
@@ -646,6 +647,7 @@ export const pt: TranslationDictionary = {
     },
     newThread: 'Novo Chat',
     threads: 'Conversas',
+    threadPublicationsLoadFailed: 'Não foi possível carregar suas publicações.',
     searchThreads: 'Pesquisar conversas...',
     noThreads: 'Nenhuma conversa ainda',
     noThreadsDesc: 'Inicie uma nova conversa para começar',

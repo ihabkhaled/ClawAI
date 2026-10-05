@@ -67,6 +67,11 @@ for owner approval; this is not automatic publication. Owners can create
 immutable text edits with a fresh spend cap and idempotency key. Generation
 revalidates the exact content against the parent's pinned source and evidence;
 the current public version stays live until the owner approves the passing edit.
+The owner portal now has an authenticated list endpoint at
+`GET /api/v1/thread-publications/mine`; it returns at most 50 newest owned
+publication summaries without generation IDs or source snapshots. The frontend
+Threads portal reads this endpoint. Generation creation, draft review, and
+community contribution screens remain unfinished.
 Authenticated readers can comment, react, request changes, and report content.
 Public comment responses omit author IDs. Owners can accept a change request by
 creating a newly capped immutable revision that goes through the usual fresh

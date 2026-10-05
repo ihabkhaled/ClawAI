@@ -308,6 +308,7 @@ export const ja: TranslationDictionary = {
   nav: {
     dashboard: 'ダッシュボード',
     chat: 'チャット',
+    threads: 'スレッド記事',
     compareModels: 'モデルの比較',
     consensusMode: 'コンセンサスモード',
     escalationChain: 'エスカレーション チェーン',
@@ -644,6 +645,7 @@ export const ja: TranslationDictionary = {
     },
     newThread: '新しいチャット',
     threads: 'スレッド',
+    threadPublicationsLoadFailed: '公開記事を読み込めませんでした。',
     searchThreads: 'スレッドを検索...',
     noThreads: 'まだスレッドがありません',
     noThreadsDesc: '新しい会話を開始して始めてください',

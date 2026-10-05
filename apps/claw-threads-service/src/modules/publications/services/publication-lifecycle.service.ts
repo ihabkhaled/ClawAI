@@ -33,6 +33,10 @@ export class PublicationLifecycleService {
     private readonly generation: ThreadsGenerationClient,
   ) {}
 
+  listOwned(ownerId: string): ReturnType<PublicationsRepository['findOwnedPublications']> {
+    return this.publications.findOwnedPublications(ownerId);
+  }
+
   async enqueueGeneration(
     ownerId: string,
     input: StartThreadGenerationDto,

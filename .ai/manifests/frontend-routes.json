@@ -647,6 +647,11 @@
       "route": "/settings"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/threads/page.tsx",
+      "kind": "page",
+      "route": "/threads"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/usage/page.tsx",
       "kind": "page",
       "route": "/usage"

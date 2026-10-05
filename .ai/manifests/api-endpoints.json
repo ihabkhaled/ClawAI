@@ -3594,6 +3594,11 @@
       },
       {
         "method": "GET",
+        "route": "/thread-publications/mine",
+        "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-list.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/thread-publications/public/:slug",
         "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-public.controller.ts"
       },
@@ -4177,5 +4182,5 @@
     ]
   },
   "generated": true,
-  "total": 827
+  "total": 828
 }

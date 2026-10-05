@@ -306,6 +306,7 @@ export const fa: TranslationDictionary = {
   nav: {
     dashboard: 'داشبورد',
     chat: 'چت کنید',
+    threads: 'نوشته‌های Threads',
     compareModels: 'مقایسه مدل ها',
     consensusMode: 'حالت اجماع',
     escalationChain: 'زنجیره افزایش',
@@ -641,6 +642,7 @@ export const fa: TranslationDictionary = {
     },
     newThread: 'چت جدید',
     threads: 'موضوعات',
+    threadPublicationsLoadFailed: 'بارگذاری نوشته‌های شما ممکن نشد.',
     searchThreads: 'جستجوی موضوعات...',
     noThreads: 'هنوز هیچ موضوعی وجود ندارد',
     noThreadsDesc: 'برای شروع یک مکالمه جدید شروع کنید',

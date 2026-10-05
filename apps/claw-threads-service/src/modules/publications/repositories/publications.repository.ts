@@ -43,6 +43,31 @@ import { evaluatePublicationSafety } from '../utilities/publication-safety.utili
 export class PublicationsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findOwnedPublications(ownerId: string): Promise<
+    Array<{
+      id: string;
+      status: PublicationStatus;
+      title: string | null;
+      updatedAt: Date;
+    }>
+  > {
+    const publications = await this.prisma.threadPublication.findMany({
+      where: { ownerId },
+      orderBy: { updatedAt: 'desc' },
+      take: 50,
+      select: {
+        id: true,
+        status: true,
+        updatedAt: true,
+        revisions: { orderBy: { revision: 'desc' }, take: 1, select: { title: true } },
+      },
+    });
+    return publications.map(({ revisions, ...publication }) => ({
+      ...publication,
+      title: revisions[0]?.title ?? null,
+    }));
+  }
+
   async createQueuedPublication(
     ownerId: string,
     generationJobId: string,

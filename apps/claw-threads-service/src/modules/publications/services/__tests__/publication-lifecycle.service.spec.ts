@@ -4,6 +4,16 @@ import { PublicationLifecycleService } from '../publication-lifecycle.service';
 import type { PublicationsRepository } from '../../repositories/publications.repository';
 
 describe('PublicationLifecycleService', () => {
+  it('lists only publications owned by the authenticated account', async () => {
+    const publications = {
+      findOwnedPublications: vi.fn().mockResolvedValue([{ id: 'private-1' }]),
+    };
+    const service = new PublicationLifecycleService(publications as never, {} as never);
+
+    await expect(service.listOwned('owner-1')).resolves.toEqual([{ id: 'private-1' }]);
+    expect(publications.findOwnedPublications).toHaveBeenCalledWith('owner-1');
+  });
+
   const publication = {
     id: 'pub_opaque',
     slug: 'research-note',

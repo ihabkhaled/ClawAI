@@ -3649,6 +3649,11 @@
         },
         {
           "method": "GET",
+          "route": "/thread-publications/mine",
+          "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-list.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/thread-publications/public/:slug",
           "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-public.controller.ts"
         },
@@ -8118,6 +8123,11 @@
         "route": "/settings"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/threads/page.tsx",
+        "kind": "page",
+        "route": "/threads"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/usage/page.tsx",
         "kind": "page",
         "route": "/usage"
@@ -9041,7 +9051,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5751
+        "value": 5753
       },
       "localeCount": 13,
       "locales": [
@@ -12112,10 +12122,10 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 56,
-    "endpointCount": 827,
+    "endpointCount": 828,
     "envVarCount": 375,
     "eventCount": 187,
-    "frontendRouteCount": 156,
+    "frontendRouteCount": 157,
     "localeCount": 13,
     "nginxRouteCount": 69,
     "permissionCount": 90,

@@ -296,6 +296,7 @@ export const th: TranslationDictionary = {
   nav: {
     dashboard: 'แดชบอร์ด',
     chat: 'แชท',
+    threads: 'บทความ Threads',
     compareModels: 'เปรียบเทียบรุ่น',
     consensusMode: 'โหมดฉันทามติ',
     escalationChain: 'ห่วงโซ่การยกระดับ',
@@ -627,6 +628,7 @@ export const th: TranslationDictionary = {
     },
     newThread: 'แชทใหม่',
     threads: 'กระทู้',
+    threadPublicationsLoadFailed: 'โหลดบทความของคุณไม่สำเร็จ',
     searchThreads: 'ค้นหากระทู้...',
     noThreads: 'ยังไม่มีกระทู้',
     noThreadsDesc: 'เริ่มการสนทนาใหม่เพื่อเริ่มต้น',

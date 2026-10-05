@@ -10,6 +10,7 @@ import { PublicationPublicController } from './controllers/publication-public.co
 import { PublicationCommunityController } from './controllers/publication-community.controller';
 import { PublicationModerationController } from './controllers/publication-moderation.controller';
 import { PublicationCommunityService } from './services/publication-community.service';
+import { PublicationListController } from './controllers/publication-list.controller';
 
 @Module({
   imports: [PrismaModule],
@@ -19,6 +20,7 @@ import { PublicationCommunityService } from './services/publication-community.se
     PublicationPublicController,
     PublicationCommunityController,
     PublicationModerationController,
+    PublicationListController,
   ],
   providers: [
     PublicationLifecycleService,

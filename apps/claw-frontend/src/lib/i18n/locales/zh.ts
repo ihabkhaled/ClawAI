@@ -1,4 +1,4 @@
-﻿import type { TranslationDictionary } from '@/types/i18n.types';
+import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
@@ -284,6 +284,7 @@ export const zh: TranslationDictionary = {
   nav: {
     dashboard: '仪表板',
     chat: '聊天',
+    threads: 'Threads 文章',
     compareModels: '比较型号',
     consensusMode: '共识模式',
     escalationChain: '升级链',
@@ -612,6 +613,7 @@ export const zh: TranslationDictionary = {
     },
     newThread: '新聊天',
     threads: '线程数',
+    threadPublicationsLoadFailed: '无法加载你的文章。',
     searchThreads: '搜索主题...',
     noThreads: '还没有话题',
     noThreadsDesc: '开始新的对话',

@@ -1,4 +1,4 @@
-﻿import type { TranslationDictionary } from '@/types/i18n.types';
+import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
@@ -305,6 +305,7 @@ export const en: TranslationDictionary = {
   nav: {
     dashboard: 'Dashboard',
     chat: 'Chat',
+    threads: 'Thread publications',
     compareModels: 'Compare Models',
     consensusMode: 'Consensus Mode',
     escalationChain: 'Escalation Chain',
@@ -640,6 +641,7 @@ export const en: TranslationDictionary = {
     },
     newThread: 'New Chat',
     threads: 'Threads',
+    threadPublicationsLoadFailed: 'Could not load your publications.',
     searchThreads: 'Search threads...',
     noThreads: 'No threads yet',
     noThreadsDesc: 'Start a new conversation to get going',
