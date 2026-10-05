@@ -169,6 +169,7 @@ export class GenerationJobsRepository {
       ...input,
       topic: originalRequest.data.topic,
       publicationType: originalRequest.data.publicationType,
+      contentLocale: originalRequest.data.contentLocale,
       authors: originalRequest.data.authors,
       judge: originalRequest.data.judge,
       critic: originalRequest.data.critic,

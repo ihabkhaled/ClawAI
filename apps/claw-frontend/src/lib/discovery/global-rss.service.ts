@@ -10,6 +10,7 @@ import type { Locale } from '@/enums/locale.enum';
 import { listPublicChatRssEntries } from '@/lib/chat-shares/public-chat-share.service';
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl, shouldNoIndexEverything } from '@/lib/site/site-config';
+import { listPublicThreadFeedEntries } from '@/lib/threads/public-thread-api';
 import type { RssFeedItem } from '@/types/seo-discovery.types';
 import { getFeedPagesForLocale } from '@/utilities/content-registry.utility';
 import { resolveFeedContentType } from '@/utilities/discovery-content-type.utility';
@@ -26,7 +27,13 @@ import { buildRssXml } from '@/utilities/xml.utility';
 async function collectLocaleItems(
   locale: Locale,
   siteUrl: string,
-): Promise<{ pageItems: RssFeedItem[]; chatItems: RssFeedItem[]; degraded: boolean }> {
+): Promise<{
+  pageItems: RssFeedItem[];
+  chatItems: RssFeedItem[];
+  threadItems: RssFeedItem[];
+  chatDegraded: boolean;
+  threadsDegraded: boolean;
+}> {
   const language = getHtmlLanguage(locale);
   const pageItems: RssFeedItem[] = getFeedPagesForLocale(locale).map((page) => ({
     title: page.metadata.title,
@@ -52,8 +59,24 @@ async function collectLocaleItems(
     category: 'public-chat',
     language: getHtmlLanguage(entry.contentLocale),
   }));
+  const threadEntries = await listPublicThreadFeedEntries(locale);
+  const threadItems: RssFeedItem[] = (threadEntries ?? []).map((entry) => ({
+    title: entry.title,
+    description: entry.excerpt,
+    url: `${siteUrl}/${entry.contentLocale}/threads/${entry.slug}`,
+    guid: `${siteUrl}/${entry.contentLocale}/threads/${entry.slug}`,
+    publishedAt: entry.publishedAt,
+    category: 'public-thread',
+    language: getHtmlLanguage(entry.contentLocale as Locale),
+  }));
 
-  return { pageItems, chatItems, degraded: chatEntries === null };
+  return {
+    pageItems,
+    chatItems,
+    threadItems,
+    chatDegraded: chatEntries === null,
+    threadsDegraded: threadEntries === null,
+  };
 }
 
 export async function buildGlobalRssResponse(request: Request): Promise<Response> {
@@ -67,7 +90,9 @@ export async function buildGlobalRssResponse(request: Request): Promise<Response
   const collected = await Promise.all(
     SUPPORTED_LOCALES.map(async ({ locale }) => collectLocaleItems(locale, siteUrl)),
   );
-  const degraded = collected.some((entry) => entry.degraded);
+  const chatDegraded = collected.some((entry) => entry.chatDegraded);
+  const threadsDegraded = collected.some((entry) => entry.threadsDegraded);
+  const degraded = chatDegraded || threadsDegraded;
   // Pages first, then chats fill whatever is left.
   //
   // A single sort-then-slice looks equivalent and is not. Page items carry
@@ -81,7 +106,10 @@ export async function buildGlobalRssResponse(request: Request): Promise<Response
   const chats = collected
     .flatMap((entry) => entry.chatItems)
     .sort((left, right) => Date.parse(right.publishedAt) - Date.parse(left.publishedAt));
-  const items = [...pages, ...chats].slice(0, RSS_GLOBAL_MAX_ITEMS);
+  const threads = collected
+    .flatMap((entry) => entry.threadItems)
+    .sort((left, right) => Date.parse(right.publishedAt) - Date.parse(left.publishedAt));
+  const items = [...pages, ...threads, ...chats].slice(0, RSS_GLOBAL_MAX_ITEMS);
 
   const lastBuildDate = items[0]?.publishedAt ?? new Date().toISOString();
   const xml = buildRssXml({
@@ -112,7 +140,16 @@ export async function buildGlobalRssResponse(request: Request): Promise<Response
       ETag: etag,
       'Last-Modified': new Date(lastBuildDate).toUTCString(),
       'X-Content-Type-Options': 'nosniff',
-      ...(degraded ? { 'X-Claw-Discovery-Degraded': 'chat-feed-unavailable' } : {}),
+      ...(degraded
+        ? {
+            'X-Claw-Discovery-Degraded': [
+              chatDegraded ? 'chat-feed-unavailable' : '',
+              threadsDegraded ? 'threads-feed-unavailable' : '',
+            ]
+              .filter(Boolean)
+              .join(','),
+          }
+        : {}),
     },
   });
 }

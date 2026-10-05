@@ -1,5 +1,7 @@
+import type { ThreadPublicationType } from '@claw/shared-types';
 import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 
+import type { Locale } from '@/enums/locale.enum';
 import type { ThreadPublicationChangeRequestStatus } from '@/enums/thread-publication-change-request-status.enum';
 import type { ThreadPublicationCommunityAction } from '@/enums/thread-publication-community-action.enum';
 import type { ThreadPublicationExportFormat } from '@/enums/thread-publication-export-format.enum';
@@ -73,9 +75,10 @@ export type ThreadPublicationChangeRequestResolution = {
 };
 
 export type PublicThreadPublication = {
-  id: string;
   slug: string;
   title: string;
+  contentLocale: Locale;
+  publicationType: ThreadPublicationType;
   content: { markdown: string; citations: Array<{ url: string }> };
   publishedAt: string;
 };

@@ -10,6 +10,7 @@ import {
   RevisionReviewStatus,
 } from '../../../generated/prisma';
 import { z } from 'zod';
+import type { Locale } from '@claw/shared-types';
 
 import { PublicationReportResolution } from '../../../common/enums/publication-report-resolution.enum';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
@@ -19,9 +20,12 @@ import {
 } from '../constants/publication-review.constants';
 import type {
   EditedRevisionRecord,
+  NewPublicationMetadata,
   OwnedRevisionReviewRecord,
   PublicationExport,
   PublicPublication,
+  PublicPublicationDiscoveryItem,
+  PublicPublicationSitemapItem,
   PublishedPublication,
 } from '../types/publication.types';
 import type { EditPublicationRevisionDto } from '../dto/edit-publication-revision.dto';
@@ -38,6 +42,7 @@ import type {
   PublicPublicationComment,
 } from '../types/publication-community.types';
 import { evaluatePublicationSafety } from '../utilities/publication-safety.utility';
+import { publicationExcerpt } from '../utilities/publication-excerpt.utility';
 
 @Injectable()
 export class PublicationsRepository {
@@ -71,6 +76,7 @@ export class PublicationsRepository {
   async createQueuedPublication(
     ownerId: string,
     generationJobId: string,
+    metadata: NewPublicationMetadata,
   ): Promise<{ id: string; slug: string; ownerId: string } | null> {
     return this.prisma.$transaction(
       async (transaction) => {
@@ -83,7 +89,13 @@ export class PublicationsRepository {
 
         const publication = await transaction.threadPublication.upsert({
           where: { generationJobId },
-          create: { ownerId, generationJobId, slug: randomUUID() },
+          create: {
+            ownerId,
+            generationJobId,
+            slug: randomUUID(),
+            contentLocale: metadata.contentLocale,
+            publicationType: metadata.publicationType,
+          },
           update: {},
           select: { id: true, slug: true, ownerId: true },
         });
@@ -489,8 +501,9 @@ export class PublicationsRepository {
         },
       },
       select: {
-        id: true,
         slug: true,
+        contentLocale: true,
+        publicationType: true,
         publishedAt: true,
         revisions: {
           where: {
@@ -513,13 +526,104 @@ export class PublicationsRepository {
       .safeParse(revision?.content);
     return publication?.publishedAt && revision && content.success
       ? {
-          id: publication.id,
           slug: publication.slug,
           title: revision.title,
+          contentLocale: publication.contentLocale as Locale,
+          publicationType: publication.publicationType as PublicPublication['publicationType'],
           content: content.data,
           publishedAt: publication.publishedAt,
         }
       : null;
+  }
+
+  async countPublicDiscoveries(contentLocale: Locale): Promise<number> {
+    return this.prisma.threadPublication.count({ where: this.publicIndexFilter(contentLocale) });
+  }
+
+  async findPublicDiscoveries(
+    contentLocale: Locale,
+    cursor: { slug: string; publishedAt: Date } | null,
+    take: number,
+  ): Promise<PublicPublicationDiscoveryItem[]> {
+    const rows = await this.prisma.threadPublication.findMany({
+      where: {
+        ...this.publicIndexFilter(contentLocale),
+        ...(cursor
+          ? {
+              OR: [
+                { publishedAt: { lt: cursor.publishedAt } },
+                { publishedAt: cursor.publishedAt, slug: { lt: cursor.slug } },
+              ],
+            }
+          : {}),
+      },
+      orderBy: [{ publishedAt: 'desc' }, { slug: 'desc' }],
+      take,
+      select: {
+        slug: true,
+        contentLocale: true,
+        publicationType: true,
+        publishedAt: true,
+        revisions: {
+          where: {
+            reviewStatus: RevisionReviewStatus.OWNER_APPROVED,
+            safetyStatus: PublicationSafetyStatus.APPROVED,
+            indexEligible: true,
+          },
+          orderBy: { revision: 'desc' },
+          take: 1,
+          select: { title: true, content: true },
+        },
+      },
+    });
+
+    return rows.flatMap((row) => {
+      const revision = row.revisions[0];
+      const content = z.object({ markdown: z.string() }).safeParse(revision?.content);
+      if (!revision || !row.publishedAt || !content.success) return [];
+      return [
+        {
+          slug: row.slug,
+          title: revision.title,
+          excerpt: publicationExcerpt(content.data.markdown),
+          contentLocale: row.contentLocale as Locale,
+          publicationType: row.publicationType as PublicPublication['publicationType'],
+          publishedAt: row.publishedAt,
+        },
+      ];
+    });
+  }
+
+  async findPublicSitemapItems(
+    contentLocale: Locale,
+    skip: number,
+    take: number,
+  ): Promise<PublicPublicationSitemapItem[]> {
+    const rows = await this.prisma.threadPublication.findMany({
+      where: this.publicIndexFilter(contentLocale),
+      orderBy: [{ publishedAt: 'desc' }, { slug: 'desc' }],
+      skip,
+      take,
+      select: { slug: true, publishedAt: true },
+    });
+    return rows.flatMap((row) =>
+      row.publishedAt ? [{ slug: row.slug, publishedAt: row.publishedAt }] : [],
+    );
+  }
+
+  private publicIndexFilter(contentLocale: Locale): Prisma.ThreadPublicationWhereInput {
+    return {
+      status: PublicationStatus.PUBLISHED,
+      contentLocale,
+      publishedAt: { not: null },
+      revisions: {
+        some: {
+          reviewStatus: RevisionReviewStatus.OWNER_APPROVED,
+          safetyStatus: PublicationSafetyStatus.APPROVED,
+          indexEligible: true,
+        },
+      },
+    };
   }
 
   async unpublishOwned(publicationId: string, ownerId: string): Promise<boolean> {

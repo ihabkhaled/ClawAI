@@ -634,6 +634,12 @@ export const th: TranslationDictionary = {
     threadSourceChat: 'แชตต้นทาง',
     threadTopic: 'หัวข้อหรือคำถามวิจัย',
     threadPublicationType: 'ประเภทบทความ',
+    threadContentLocale: 'ภาษาของบทความ',
+    threadContentLocaleHelp: 'บทความจะเขียนและจัดทำดัชนีด้วยภาษานี้',
+    threadDiscoveryTitle: 'Threads สาธารณะ',
+    threadDiscoveryDescription:
+      'สำรวจบทความ คู่มือ และคำอธิบายทางเทคนิคที่ผ่านการค้นคว้าและเผยแพร่โดยชุมชน ClawAI',
+    threadDiscoveryEmpty: 'ยังไม่มี Threads สาธารณะในภาษานี้',
     threadSpendCapUsd: 'วงเงินสูงสุด (USD)',
     threadAuthorModel: 'รุ่นผู้เขียน',
     threadJudgeModel: 'รุ่นผู้ตัดสิน',

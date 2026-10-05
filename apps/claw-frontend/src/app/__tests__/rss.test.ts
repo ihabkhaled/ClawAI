@@ -6,6 +6,9 @@ const mockListPublicChatRssEntries = vi.fn();
 vi.mock('@/lib/chat-shares/public-chat-share.service', () => ({
   listPublicChatRssEntries: (locale: string): unknown => mockListPublicChatRssEntries(locale),
 }));
+vi.mock('@/lib/threads/public-thread-api', () => ({
+  listPublicThreadFeedEntries: async (): Promise<[]> => [],
+}));
 
 // The per-locale feeds take their language from a request header, so a reader
 // who subscribes to one of them gets a single language and never learns the

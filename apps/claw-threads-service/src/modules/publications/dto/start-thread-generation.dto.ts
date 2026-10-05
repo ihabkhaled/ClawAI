@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Locale, ThreadPublicationType } from '@claw/shared-types';
 
 const modelRoleSchema = z.object({
   id: z.string().min(1).max(64),
@@ -18,8 +19,9 @@ export const startThreadGenerationSchema = z
     idempotencyKey: z.string().min(1).max(200),
     correlationId: z.string().min(1).max(200),
     publicIntentVersion: z.literal('threads-public-v1'),
+    contentLocale: z.nativeEnum(Locale),
     topic: z.string().min(10).max(10_000),
-    publicationType: z.enum(['article', 'research-article', 'guide', 'technical-explanation']),
+    publicationType: z.nativeEnum(ThreadPublicationType),
     authors: z.array(modelRoleSchema).min(3).max(5),
     judge: modelRoleSchema,
     critic: modelRoleSchema,

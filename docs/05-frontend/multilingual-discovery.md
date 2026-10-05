@@ -15,9 +15,12 @@ and local storage never override a locale already present in the URL.
 - Human pages: `/{locale}/...`
 - Comparison cluster: `/{locale}/compare` and `/{locale}/compare/{rival}`
 - Public shares: `/{contentLocale}/share/chat/{publicShareId}`
+- Public Threads: `/{contentLocale}/threads/{slug}` and
+  `/{locale}/threads/discover`
 - Sitemap index: `/sitemap.xml`
-- Child sitemaps: `/sitemaps/{locale}/pages-{chunk}.xml` and
-  `/sitemaps/{locale}/chats-{chunk}.xml`
+- Child sitemaps: `/sitemaps/{locale}/pages-{chunk}.xml`,
+  `/sitemaps/{locale}/chats-{chunk}.xml`, and
+  `/sitemaps/{locale}/threads-{chunk}.xml`
 - Per-locale RSS: `/{locale}/feed.xml`, `/{locale}/feeds/topics.xml`, and
   `/{locale}/feeds/chats.xml`
 - Global RSS: `/rss.xml`
@@ -246,6 +249,21 @@ service token by updating callers and the chat service in one deployment.
    the snapshot contained secret or personal data.
 6. Preserve only non-content audit evidence: timestamps, share database id,
    state transitions and remediation actions.
+
+## Threads public discovery
+
+Threads is a separate live source. A publication stores the owner's selected
+locale, and only a published owner-approved revision that passes safety and
+index-eligibility checks is returned by public detail, discovery, sitemap, and
+feed APIs. Public list fields omit owner and publication IDs. `/threads/discover`
+is registered as localized content and server-renders title/excerpt links to
+canonical `/{contentLocale}/threads/{slug}` routes.
+
+Threads sitemap chunks contain at most 10,000 URLs. RSS/Atom feed builders add
+approved Threads independently of the chat-share lockdown; the lockdown still
+excludes chats from their sitemap and feeds. Revoke a Thread by unpublishing it,
+then confirm it disappears from detail, discovery, RSS, and subsequent sitemap
+responses. Feed API failure degrades feed caching and never fabricates entries.
 
 ## Verification
 

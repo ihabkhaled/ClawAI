@@ -64,6 +64,8 @@ model ThreadPublication {
   slug            String                           @unique
   status          PublicationStatus                @default(DRAFT)
   generationJobId String?                          @unique @map("generation_job_id")
+  contentLocale   String                           @default("en") @map("content_locale")
+  publicationType String                           @default("article") @map("publication_type")
   sourceSnapshot  Json?                            @map("source_snapshot")
   sourceHash      String?                          @map("source_hash")
   publishedAt     DateTime?                        @map("published_at")

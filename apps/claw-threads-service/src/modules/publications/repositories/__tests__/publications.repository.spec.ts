@@ -1,5 +1,6 @@
 import { PublicationsRepository } from '../publications.repository';
 import { RevisionReviewStatus } from '../../../../generated/prisma';
+import { Locale, ThreadPublicationType } from '@claw/shared-types';
 
 describe('PublicationsRepository', () => {
   const readyRecord = {
@@ -42,8 +43,37 @@ describe('PublicationsRepository', () => {
     };
     const repository = new PublicationsRepository(prisma as never);
 
-    await expect(repository.createQueuedPublication('deleted-user', 'job-1')).resolves.toBeNull();
+    await expect(
+      repository.createQueuedPublication('deleted-user', 'job-1', {
+        contentLocale: Locale.EN,
+        publicationType: ThreadPublicationType.ARTICLE,
+      }),
+    ).resolves.toBeNull();
     expect(transaction.threadPublication.upsert).not.toHaveBeenCalled();
+  });
+
+  it('persists the selected content language and type on the new publication', async () => {
+    const transaction = {
+      threadDeletedAccount: { findUnique: vi.fn().mockResolvedValue(null) },
+      threadPublication: {
+        upsert: vi.fn().mockResolvedValue({ id: 'pub-1', slug: 'slug-1', ownerId: 'owner-1' }),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback: (tx: unknown) => unknown) => callback(transaction)),
+    };
+    const repository = new PublicationsRepository(prisma as never);
+
+    await repository.createQueuedPublication('owner-1', 'job-1', {
+      contentLocale: Locale.JA,
+      publicationType: ThreadPublicationType.GUIDE,
+    });
+
+    expect(transaction.threadPublication.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ contentLocale: 'ja', publicationType: 'guide' }),
+      }),
+    );
   });
 
   it('publishes an owned ready revision and returns public fields only', async () => {
@@ -156,8 +186,9 @@ describe('PublicationsRepository', () => {
   it('resolves only published owner-approved safety-cleared fields', async () => {
     const threadPublication = {
       findFirst: vi.fn().mockResolvedValue({
-        id: 'publication-1',
         slug: 'opaque-slug',
+        contentLocale: 'ar',
+        publicationType: 'article',
         publishedAt: new Date('2026-10-05T12:00:00.000Z'),
         ownerId: 'private-owner',
         revisions: [
@@ -192,9 +223,10 @@ describe('PublicationsRepository', () => {
       }),
     );
     expect(publication).toEqual({
-      id: 'publication-1',
       slug: 'opaque-slug',
       title: 'Public article',
+      contentLocale: 'ar',
+      publicationType: 'article',
       content: {
         markdown: '# Public article',
         citations: [{ url: 'https://example.test/source' }],
@@ -203,6 +235,54 @@ describe('PublicationsRepository', () => {
     });
     expect(publication).not.toHaveProperty('ownerId');
     expect(JSON.stringify(publication)).not.toContain('private-evidence-id');
+  });
+
+  it('lists only index-eligible publications in the requested locale without owner ids', async () => {
+    const row = {
+      slug: 'public-article',
+      contentLocale: 'ar',
+      publicationType: 'research-article',
+      publishedAt: new Date('2026-10-05T12:00:00.000Z'),
+      revisions: [
+        {
+          title: 'Public article',
+          content: { markdown: '# Public article\n\nA sourced summary.', citations: [] },
+        },
+      ],
+    };
+    const threadPublication = {
+      findMany: vi.fn().mockResolvedValue([row]),
+    };
+    const repository = new PublicationsRepository({ threadPublication } as never);
+
+    const publications = await repository.findPublicDiscoveries(Locale.AR, null, 10);
+
+    expect(threadPublication.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          status: 'PUBLISHED',
+          contentLocale: 'ar',
+          revisions: {
+            some: {
+              reviewStatus: 'OWNER_APPROVED',
+              safetyStatus: 'APPROVED',
+              indexEligible: true,
+            },
+          },
+        }),
+      }),
+    );
+    expect(publications).toEqual([
+      {
+        slug: 'public-article',
+        title: 'Public article',
+        excerpt: 'A sourced summary.',
+        contentLocale: 'ar',
+        publicationType: 'research-article',
+        publishedAt: row.publishedAt,
+      },
+    ]);
+    expect(JSON.stringify(publications)).not.toContain('ownerId');
   });
 
   it('unpublishes only an owned currently published record', async () => {

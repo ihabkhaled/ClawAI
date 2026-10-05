@@ -639,6 +639,12 @@ export const ar: TranslationDictionary = {
     threadSourceChat: 'المحادثة المصدر',
     threadTopic: 'الموضوع أو سؤال البحث',
     threadPublicationType: 'نوع المنشور',
+    threadContentLocale: 'لغة المقال',
+    threadContentLocaleHelp: 'سيُكتب المقال ويُفهرس بهذه اللغة.',
+    threadDiscoveryTitle: 'منشورات Threads العامة',
+    threadDiscoveryDescription:
+      'استكشف المقالات والأدلة والشروحات التقنية المدعومة بالبحث والمنشورة من مجتمع ClawAI.',
+    threadDiscoveryEmpty: 'لا توجد منشورات عامة بهذه اللغة حاليًا.',
     threadSpendCapUsd: 'الحد الأقصى للإنفاق (دولار أمريكي)',
     threadAuthorModel: 'نموذج الكاتب',
     threadJudgeModel: 'نموذج الحكم',

@@ -4,9 +4,11 @@ import {
   SITEMAP_URL_CHUNK_SIZE,
   XML_CONTENT_TYPE,
 } from '@/constants/seo-discovery.constants';
+import { THREAD_PUBLIC_SITEMAP_PAGE_SIZE } from '@/constants/thread-public-api.constants';
 import { countIndexableChatShares } from '@/lib/chat-shares/public-chat-share.service';
 import { SUPPORTED_LOCALES } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl, shouldNoIndexEverything } from '@/lib/site/site-config';
+import { countPublicThreads } from '@/lib/threads/public-thread-api';
 import { getIndexablePagesForLocale } from '@/utilities/content-registry.utility';
 import { buildSitemapIndexXml } from '@/utilities/xml.utility';
 
@@ -29,6 +31,12 @@ export async function GET(): Promise<Response> {
     : await Promise.all(
         SUPPORTED_LOCALES.map(async ({ locale }) => countIndexableChatShares(locale)),
       );
+  const threadCounts = await Promise.all(
+    SUPPORTED_LOCALES.map(async ({ locale }) => ({
+      locale,
+      count: await countPublicThreads(locale),
+    })),
+  );
   const childUrls: string[] = [];
   for (const { locale } of SUPPORTED_LOCALES) {
     // Page chunks are counted rather than assumed. Hardcoding `pages-1.xml`
@@ -42,6 +50,14 @@ export async function GET(): Promise<Response> {
     const count = counts.find((entry) => entry?.locale === locale)?.count ?? 0;
     for (let chunk = 1; chunk <= Math.ceil(count / SITEMAP_URL_CHUNK_SIZE); chunk += 1) {
       childUrls.push(`${siteUrl}/sitemaps/${locale}/chats-${String(chunk)}.xml`);
+    }
+    const threadCount = threadCounts.find((entry) => entry.locale === locale)?.count ?? 0;
+    for (
+      let chunk = 1;
+      chunk <= Math.ceil(threadCount / THREAD_PUBLIC_SITEMAP_PAGE_SIZE);
+      chunk += 1
+    ) {
+      childUrls.push(`${siteUrl}/sitemaps/${locale}/threads-${String(chunk)}.xml`);
     }
   }
   return new Response(buildSitemapIndexXml(childUrls), {

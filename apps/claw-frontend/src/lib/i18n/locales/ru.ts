@@ -653,6 +653,12 @@ export const ru: TranslationDictionary = {
     threadSourceChat: 'Исходный чат',
     threadTopic: 'Тема или исследовательский вопрос',
     threadPublicationType: 'Тип публикации',
+    threadContentLocale: 'Язык статьи',
+    threadContentLocaleHelp: 'Статья будет написана и проиндексирована на этом языке.',
+    threadDiscoveryTitle: 'Публичные Threads',
+    threadDiscoveryDescription:
+      'Изучайте статьи, руководства и технические объяснения на основе исследований от сообщества ClawAI.',
+    threadDiscoveryEmpty: 'На этом языке пока нет публичных Threads.',
     threadSpendCapUsd: 'Максимальные расходы (USD)',
     threadAuthorModel: 'Модель автора',
     threadJudgeModel: 'Модель судьи',

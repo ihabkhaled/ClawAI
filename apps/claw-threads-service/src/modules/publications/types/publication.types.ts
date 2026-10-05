@@ -1,3 +1,5 @@
+import type { Locale, ThreadPublicationType } from '@claw/shared-types';
+
 export type PublishedPublication = {
   id: string;
   slug: string;
@@ -7,11 +9,27 @@ export type PublishedPublication = {
 };
 
 export type PublicPublication = {
-  id: string;
   slug: string;
   title: string;
+  contentLocale: Locale;
+  publicationType: ThreadPublicationType;
   content: { markdown: string; citations: Array<{ url: string }> };
   publishedAt: Date;
+};
+
+export type PublicPublicationDiscoveryItem = {
+  slug: string;
+  title: string;
+  excerpt: string;
+  contentLocale: Locale;
+  publicationType: ThreadPublicationType;
+  publishedAt: Date;
+};
+
+export type PublicPublicationSitemapItem = { slug: string; publishedAt: Date };
+export type NewPublicationMetadata = {
+  contentLocale: Locale;
+  publicationType: ThreadPublicationType;
 };
 
 export type PublicationExport = {

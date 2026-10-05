@@ -1,4 +1,7 @@
+import { ThreadPublicationType } from '@claw/shared-types';
 import { describe, expect, it } from 'vitest';
+
+import { Locale } from '@/enums/locale.enum';
 
 import { createThreadGenerationRequest } from '../thread-generation-request.utility';
 
@@ -13,7 +16,8 @@ describe('createThreadGenerationRequest', () => {
     const request = createThreadGenerationRequest({
       sourceThreadId: 'chat-1',
       topic: '  Explain database indexes  ',
-      publicationType: 'technical-explanation',
+      publicationType: ThreadPublicationType.TECHNICAL_EXPLANATION,
+      contentLocale: Locale.AR,
       spendCapUsd: 1.25,
       models,
       idempotencyKey: 'request-1',
@@ -24,6 +28,7 @@ describe('createThreadGenerationRequest', () => {
       capMicroUsd: 1_250_000,
       topic: 'Explain database indexes',
       publicIntentVersion: 'threads-public-v1',
+      contentLocale: Locale.AR,
       authors: [{ id: 'author-1' }, { id: 'author-2' }, { id: 'author-3' }],
       judge: { id: 'judge' },
       critic: { id: 'critic' },
@@ -35,7 +40,8 @@ describe('createThreadGenerationRequest', () => {
       createThreadGenerationRequest({
         sourceThreadId: 'chat-1',
         topic: 'Explain indexes',
-        publicationType: 'article',
+        publicationType: ThreadPublicationType.ARTICLE,
+        contentLocale: Locale.EN,
         spendCapUsd: 0,
         models,
         idempotencyKey: 'request-1',
@@ -46,7 +52,8 @@ describe('createThreadGenerationRequest', () => {
       createThreadGenerationRequest({
         sourceThreadId: 'chat-1',
         topic: 'Explain indexes',
-        publicationType: 'article',
+        publicationType: ThreadPublicationType.ARTICLE,
+        contentLocale: Locale.EN,
         spendCapUsd: 1,
         models: models.slice(0, 4),
         idempotencyKey: 'request-1',

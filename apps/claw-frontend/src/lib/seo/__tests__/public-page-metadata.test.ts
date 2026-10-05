@@ -71,4 +71,15 @@ describe('buildPublicPageMetadata', () => {
     expect(metadata.keywords).toEqual(expect.arrayContaining([expect.any(String)]));
     expect(metadata.robots).toEqual(expect.objectContaining({ index: true, follow: true }));
   });
+
+  it('registers the public Threads hub with localized metadata and feed discovery', async () => {
+    const { buildPublicPageMetadata } = await import('@/lib/seo/public-page-metadata');
+    const metadata = buildPublicPageMetadata('threads/discover', Locale.AR);
+
+    expect(metadata.title).toContain('Threads');
+    expect(metadata.alternates).toEqual(
+      expect.objectContaining({ canonical: 'https://claw.example/ar/threads/discover' }),
+    );
+    expect(metadata.robots).toEqual(expect.objectContaining({ index: true, follow: true }));
+  });
 });

@@ -1,6 +1,7 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 
 import { PublicationLifecycleService } from '../publication-lifecycle.service';
+import { Locale, ThreadPublicationType } from '@claw/shared-types';
 import type { PublicationsRepository } from '../../repositories/publications.repository';
 
 describe('PublicationLifecycleService', () => {
@@ -80,7 +81,8 @@ describe('PublicationLifecycleService', () => {
         publicIntentVersion: 'threads-public-v1',
         capMicroUsd: 1000000,
         topic: 'A sufficiently detailed topic for research',
-        publicationType: 'article',
+        publicationType: ThreadPublicationType.ARTICLE,
+        contentLocale: Locale.FR,
         authors: [
           {
             id: 'author-1',
@@ -128,7 +130,11 @@ describe('PublicationLifecycleService', () => {
         publicIntentVersion: 'threads-public-v1',
       }),
     );
-    expect(publications.createQueuedPublication).toHaveBeenCalledWith('owner-1', 'job-private');
+    expect(publications.createQueuedPublication).toHaveBeenCalledWith(
+      'owner-1',
+      'job-private',
+      expect.objectContaining({ contentLocale: 'fr', publicationType: 'article' }),
+    );
   });
 
   it('persists completed generation output as a private review draft', async () => {

@@ -11,12 +11,15 @@ import { PublicationCommunityController } from './controllers/publication-commun
 import { PublicationModerationController } from './controllers/publication-moderation.controller';
 import { PublicationCommunityService } from './services/publication-community.service';
 import { PublicationListController } from './controllers/publication-list.controller';
+import { PublicationDiscoveryController } from './controllers/publication-discovery.controller';
+import { PublicationDiscoveryService } from './services/publication-discovery.service';
 
 @Module({
   imports: [PrismaModule],
   controllers: [
     PublicationOwnerController,
     PublicationGenerationController,
+    PublicationDiscoveryController,
     PublicationPublicController,
     PublicationCommunityController,
     PublicationModerationController,
@@ -27,6 +30,7 @@ import { PublicationListController } from './controllers/publication-list.contro
     PublicationCommunityService,
     PublicationsRepository,
     ThreadsGenerationClient,
+    PublicationDiscoveryService,
   ],
 })
 export class PublicationsModule {}

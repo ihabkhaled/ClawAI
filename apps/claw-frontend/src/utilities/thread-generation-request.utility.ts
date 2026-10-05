@@ -1,10 +1,12 @@
 import type { ThreadPublicationType } from '@/constants/thread-publication.constants';
+import type { Locale } from '@/enums/locale.enum';
 import type { ModelSelection } from '@/types';
 
 export type ThreadGenerationRequestInput = {
   sourceThreadId: string;
   topic: string;
   publicationType: ThreadPublicationType;
+  contentLocale: Locale;
   spendCapUsd: number;
   models: ModelSelection[];
   idempotencyKey: string;
@@ -19,6 +21,7 @@ export type ThreadGenerationRequest = {
   publicIntentVersion: 'threads-public-v1';
   topic: string;
   publicationType: ThreadPublicationType;
+  contentLocale: Locale;
   authors: Array<{
     id: string;
     provider: string;
@@ -76,6 +79,7 @@ export function createThreadGenerationRequest(
     publicIntentVersion: 'threads-public-v1' as const,
     topic: input.topic.trim(),
     publicationType: input.publicationType,
+    contentLocale: input.contentLocale,
     authors: [authorOne, authorTwo, authorThree].map((model, index) =>
       toRole(model, `author-${index + 1}`),
     ),

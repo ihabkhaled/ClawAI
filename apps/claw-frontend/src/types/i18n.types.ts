@@ -590,6 +590,11 @@ export type TranslationDictionary = {
     threadSourceChat: string;
     threadTopic: string;
     threadPublicationType: string;
+    threadContentLocale: string;
+    threadContentLocaleHelp: string;
+    threadDiscoveryTitle: string;
+    threadDiscoveryDescription: string;
+    threadDiscoveryEmpty: string;
     threadSpendCapUsd: string;
     threadAuthorModel: string;
     threadJudgeModel: string;

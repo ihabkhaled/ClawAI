@@ -267,8 +267,7 @@ export class GenerationPipelineManager {
     revisionBrief: string,
   ): Promise<AuthorDraft> {
     const prompts = {
-      systemPrompt:
-        'Write the requested publication. Use only the supplied source and research evidence. Return JSON with markdown and citations [{evidenceId,url}]. Do not include analysis or hidden reasoning.',
+      systemPrompt: `Write the requested publication in ${new Intl.DisplayNames(['en'], { type: 'language' }).of(input.contentLocale) ?? input.contentLocale} (${input.contentLocale}). Use only the supplied source and research evidence. Return JSON with markdown and citations [{evidenceId,url}]. Do not include analysis or hidden reasoning.`,
       userPrompt: `${sharedMaterial}\nRevision brief: ${revisionBrief || 'Create a complete first draft.'}`,
     };
     const saved = await this.jobs.findCommunication(

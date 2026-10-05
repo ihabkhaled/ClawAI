@@ -2,6 +2,7 @@ import { GenerationPipelineManager } from '../generation-pipeline.manager';
 import { createHash } from 'node:crypto';
 import type { GenerationPipelineInput, ModelRole } from '../../types/generation-pipeline.types';
 import { revisionDraftHash } from '../../utilities/revision-review.utility';
+import { Locale, ThreadPublicationType } from '@claw/shared-types';
 
 const evidenceBundle = {
   items: [{ id: 'source-1', url: 'https://example.org/source' }],
@@ -23,8 +24,9 @@ const input: GenerationPipelineInput = {
   budgetId: 'budget-1',
   attempt: 1,
   correlationId: 'correlation-1',
+  contentLocale: Locale.AR,
   topic: 'A sufficiently detailed topic',
-  publicationType: 'article',
+  publicationType: ThreadPublicationType.ARTICLE,
   sourceSnapshot: { messages: [{ role: 'USER', content: 'Explain this subject.' }] },
   authors: [role('author-1'), role('author-2', 'ANTHROPIC'), role('author-3', 'GEMINI')],
   judge: role('judge', 'MISTRAL'),
@@ -76,6 +78,22 @@ const review = (score: number) =>
   JSON.stringify({ score, blockers: [], findings: [], revisionBrief: '' });
 
 describe('GenerationPipelineManager', () => {
+  it('requires every generated author draft to use the selected publication language', async () => {
+    const harness = build([
+      draft('# Draft'),
+      draft('# Draft'),
+      draft('# Draft'),
+      review(80),
+      review(75),
+    ]);
+
+    await harness.manager.generate(input);
+
+    expect(harness.models.generate).toHaveBeenCalledWith(
+      expect.objectContaining({ systemPrompt: expect.stringContaining('Arabic (ar)') }),
+    );
+  });
+
   it('passes identical source and evidence to every role and accepts threshold boundaries', async () => {
     const harness = build([
       draft('grounded article'),

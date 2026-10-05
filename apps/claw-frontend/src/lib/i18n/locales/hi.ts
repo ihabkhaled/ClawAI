@@ -648,6 +648,12 @@ export const hi: TranslationDictionary = {
     threadSourceChat: 'स्रोत चैट',
     threadTopic: 'विषय या शोध प्रश्न',
     threadPublicationType: 'प्रकाशन का प्रकार',
+    threadContentLocale: 'लेख की भाषा',
+    threadContentLocaleHelp: 'लेख इसी भाषा में लिखा और इंडेक्स किया जाएगा।',
+    threadDiscoveryTitle: 'सार्वजनिक Threads',
+    threadDiscoveryDescription:
+      'ClawAI समुदाय द्वारा प्रकाशित शोध-आधारित लेख, मार्गदर्शिकाएँ और तकनीकी व्याख्याएँ देखें।',
+    threadDiscoveryEmpty: 'इस भाषा में अभी कोई सार्वजनिक Thread उपलब्ध नहीं है।',
     threadSpendCapUsd: 'अधिकतम खर्च (USD)',
     threadAuthorModel: 'लेखक मॉडल',
     threadJudgeModel: 'निर्णायक मॉडल',

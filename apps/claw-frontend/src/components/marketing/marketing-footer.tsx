@@ -69,6 +69,11 @@ export function MarketingFooter({
                   {t('marketing.footer.documentation')}
                 </a>
               </li>
+              <li>
+                <Link href="/threads/discover" className="hover:text-foreground">
+                  {t('chat.threadDiscoveryTitle')}
+                </Link>
+              </li>
               {explorePages.map((page) => (
                 <li key={page.slug}>
                   <Link href={page.canonicalPath} className="hover:text-foreground">

@@ -1,16 +1,19 @@
 'use client';
 
+import { ThreadPublicationType as ThreadPublicationTypeEnum } from '@claw/shared-types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState, type FormEvent, type ReactElement } from 'react';
 
 import { ThreadChangeRequests } from '@/components/threads/thread-change-requests';
 import { Button } from '@/components/ui/button';
 import { THREAD_PUBLICATION_OPTIONS } from '@/constants/thread-publication.constants';
+import type { Locale } from '@/enums/locale.enum';
 import { ThreadPublicationExportFormat } from '@/enums/thread-publication-export-format.enum';
 import { useAvailableModels } from '@/hooks/chat/use-available-models';
 import { useThreads } from '@/hooks/chat/use-threads';
 import { useThreadPublications } from '@/hooks/threads/use-thread-publications';
-import { useTranslation } from '@/lib/i18n';
+import { useTranslation, useLocale } from '@/lib/i18n';
+import { SUPPORTED_LOCALES } from '@/lib/i18n/i18n.constants';
 import { threadPublicationsRepository } from '@/repositories/threads/thread-publications.repository';
 import type { ModelSelection, ThreadPublicationType } from '@/types';
 import { createThreadGenerationRequest } from '@/utilities/thread-generation-request.utility';
@@ -18,6 +21,7 @@ import { createThreadRevisionRequest } from '@/utilities/thread-revision-request
 
 export default function ThreadPublicationsPage(): ReactElement {
   const { t } = useTranslation();
+  const { locale } = useLocale();
   const queryClient = useQueryClient();
   const { data: publications = [], isLoading, isError } = useThreadPublications();
   const { threads, isLoading: isLoadingThreads } = useThreads();
@@ -31,7 +35,10 @@ export default function ThreadPublicationsPage(): ReactElement {
   );
   const [sourceThreadId, setSourceThreadId] = useState('');
   const [topic, setTopic] = useState('');
-  const [publicationType, setPublicationType] = useState<ThreadPublicationType>('article');
+  const [publicationType, setPublicationType] = useState<ThreadPublicationType>(
+    ThreadPublicationTypeEnum.ARTICLE,
+  );
+  const [contentLocale, setContentLocale] = useState<Locale>(locale);
   const [spendCapUsd, setSpendCapUsd] = useState('');
   const [selectedModels, setSelectedModels] = useState<ModelSelection[]>([]);
   const [activePublicationId, setActivePublicationId] = useState('');
@@ -195,6 +202,7 @@ export default function ThreadPublicationsPage(): ReactElement {
         sourceThreadId,
         topic,
         publicationType,
+        contentLocale,
         spendCapUsd: Number(spendCapUsd),
         models: selectedModels,
         idempotencyKey: crypto.randomUUID(),
@@ -276,6 +284,24 @@ export default function ThreadPublicationsPage(): ReactElement {
                   </option>
                 ))}
               </select>
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              {t('threadContentLocale')}
+              <select
+                value={contentLocale}
+                onChange={(event) => setContentLocale(event.target.value as Locale)}
+                className="border-input bg-background rounded-md border px-3 py-2"
+                aria-describedby="thread-content-locale-help"
+              >
+                {SUPPORTED_LOCALES.map(({ locale: supportedLocale, label }) => (
+                  <option key={supportedLocale} value={supportedLocale}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <span id="thread-content-locale-help" className="text-muted-foreground text-xs">
+                {t('threadContentLocaleHelp')}
+              </span>
             </label>
             <label className="flex flex-col gap-1 text-sm">
               {t('threadSpendCapUsd')}

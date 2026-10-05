@@ -88,6 +88,14 @@ approved revisions anonymously while deleting private snapshots and generation
 artifacts, removing reactions, anonymizing comments, and deleting pending
 private requests.
 
+Each publication stores the selected shared `Locale` and publication type at
+enqueue. Threads-service exposes public detail, locale-filtered discovery, and
+bounded sitemap pages; public DTOs omit publication IDs, owner IDs, and evidence
+IDs. The frontend renders the approved revision server-side, uses the locale for
+its canonical URL, and adds the localized discovery hub to the existing public
+content registry. Threads have their own sitemap chunks and RSS entries. The
+chat-share lockdown flag continues to gate only chat-share discovery.
+
 ## Deployment
 
 Threads and generation services use ports 4019 and 4020. Threads owns the

@@ -12,6 +12,8 @@ participation is open to authenticated users under existing moderation rules.
 ## Launch decisions
 
 - Content types: article, research article, guide, and technical explanation.
+- The owner selects one of the thirteen supported content languages; generation,
+  canonical metadata, hub results, and discovery feeds use that stored locale.
 - Generation begins only after a clear disclosure that it records intent to
   publish and may be indexed. The draft stays private until the owner approves.
 - Require a selected maximum spend before enqueue. Existing plan entitlement and
@@ -57,8 +59,9 @@ The public reader shows only approved, safety-checked fields. It does not show a
 reader identity list. Public reads require a published, owner-approved,
 safety-approved, index-eligible revision. Secret or PII matches remain private
 and store only machine-readable reason codes. Owners can export JSON or Markdown
-and unpublish approved work. Full rollout still depends on the remaining
-community, internationalization, and discovery paths.
+and unpublish approved work. Public community UI, localization, and discovery
+integration are implemented; full browser, role, device, and production evidence
+remains a release gate.
 
 The publication service owns an isolated PostgreSQL database and an atomic
 owner-approval transition. Generation-result handoff stores output as a private
@@ -76,8 +79,9 @@ Owners resolve change requests; accepting one creates a fresh capped immutable
 revision and sends it through the existing paid review flow. The current approved
 revision stays public until the owner approves a passing replacement. Moderation
 report review requires `THREAD_PUBLICATIONS_MODERATE`; moderators can hide a
-reported comment. Account deletion live QA and public-community UI remain unfinished.
-Internationalization and public discovery integration also remain unfinished.
+reported comment. Account deletion, browser, access-control, device, and
+production QA remain open. Internationalization and public discovery are
+implemented; generation authors are prompted to use the persisted locale.
 Generation intent or a private draft alone does not make content public.
 
 ## Owner creation flow delivery

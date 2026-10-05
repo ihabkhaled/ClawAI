@@ -6,12 +6,17 @@ import { useThreadPublicActions } from '@/hooks/threads/use-thread-public-action
 import { useThreadPublicQueries } from '@/hooks/threads/use-thread-public-queries';
 import { ApiClientError } from '@/services/shared/api-client';
 import { useAuthStore } from '@/stores/auth.store';
-import type { ThreadPublicPageController } from '@/types/thread-publication.types';
+import type {
+  ThreadPublicPageController,
+  PublicThreadPublication,
+} from '@/types/thread-publication.types';
 
-export function useThreadPublicPage(): ThreadPublicPageController {
+export function useThreadPublicPage(
+  initialPublication: PublicThreadPublication,
+): ThreadPublicPageController {
   const params = useParams<{ slug: string }>();
   const slug = params.slug ?? '';
-  const queries = useThreadPublicQueries(slug);
+  const queries = useThreadPublicQueries(slug, initialPublication);
   const actions = useThreadPublicActions(slug);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const error = queries.publication.error;

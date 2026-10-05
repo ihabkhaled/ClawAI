@@ -3691,6 +3691,16 @@
           "method": "POST",
           "route": "/thread-publications/public/:slug/reports",
           "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-community.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/thread-publications/public/discover",
+          "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-discovery.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/thread-publications/public/sitemap",
+          "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-discovery.controller.ts"
         }
       ],
       "claw-workspace-service": [
@@ -7713,6 +7723,11 @@
         "route": "/threads/[slug]"
       },
       {
+        "file": "apps/claw-frontend/src/app/(marketing)/threads/discover/page.tsx",
+        "kind": "page",
+        "route": "/threads/discover"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(marketing)/use-cases/[task]/page.tsx",
         "kind": "page",
         "route": "/use-cases/[task]"
@@ -9056,7 +9071,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5831
+        "value": 5836
       },
       "localeCount": 13,
       "locales": [
@@ -11294,7 +11309,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 717
+        "testFiles": 718
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -11338,7 +11353,7 @@
       },
       "claw-threads-service": {
         "runner": "vitest",
-        "testFiles": 16
+        "testFiles": 19
       },
       "claw-workspace-service": {
         "runner": "vitest",
@@ -12127,10 +12142,10 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 56,
-    "endpointCount": 828,
+    "endpointCount": 830,
     "envVarCount": 375,
     "eventCount": 187,
-    "frontendRouteCount": 158,
+    "frontendRouteCount": 159,
     "localeCount": 13,
     "nginxRouteCount": 69,
     "permissionCount": 90,
@@ -12139,7 +12154,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2102,
+    "totalTestFiles": 2106,
     "workspaceCount": 27
   }
 }

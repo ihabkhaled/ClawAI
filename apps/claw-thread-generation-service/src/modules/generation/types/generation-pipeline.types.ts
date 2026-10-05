@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { Locale, ThreadPublicationType } from '@claw/shared-types';
 
 export const modelRoleSchema = z.object({
   id: z.string().min(1).max(64),
@@ -42,7 +43,8 @@ export type GenerationPipelineInput = {
   attempt: number;
   correlationId: string;
   topic: string;
-  publicationType: 'article' | 'research-article' | 'guide' | 'technical-explanation';
+  publicationType: ThreadPublicationType;
+  contentLocale: Locale;
   sourceSnapshot: Record<string, unknown>;
   authors: ModelRole[];
   judge: ModelRole;

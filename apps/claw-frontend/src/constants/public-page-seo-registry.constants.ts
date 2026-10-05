@@ -6,6 +6,7 @@ import { MODEL_FIT_PAGE_SEO_BY_LOCALE } from '@/constants/model-fit-seo.constant
 import { MODELS_PAGE_SEO_BY_LOCALE } from '@/constants/models-seo.constants';
 import { PROMPT_GUIDE_PAGE_SEO_BY_LOCALE } from '@/constants/prompt-guide-seo.constants';
 import { PUBLIC_PAGE_SEO_BY_LOCALE } from '@/constants/public-page-seo.constants';
+import { THREADS_DISCOVERY_SEO_BY_LOCALE } from '@/constants/threads-discovery-seo.constants';
 import { USE_CASES_CLUSTER_PAGE_SEO_BY_LOCALE } from '@/constants/use-cases-cluster-seo.constants';
 import type { Locale } from '@/enums/locale.enum';
 import type { PublicPageSeoCopy } from '@/types/content-registry.types';
@@ -53,6 +54,7 @@ const CLUSTER_SEO_SOURCES: ReadonlyArray<LocaleSeoSource> = [
   MODEL_FIT_PAGE_SEO_BY_LOCALE,
   COMPARE_MODELS_PAGE_SEO_BY_LOCALE,
   USE_CASES_CLUSTER_PAGE_SEO_BY_LOCALE,
+  THREADS_DISCOVERY_SEO_BY_LOCALE,
   FEATURES_CLUSTER_PAGE_SEO_BY_LOCALE,
   PROMPT_GUIDE_PAGE_SEO_BY_LOCALE,
 ];

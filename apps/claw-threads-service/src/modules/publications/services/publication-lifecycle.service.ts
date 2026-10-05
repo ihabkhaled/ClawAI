@@ -42,7 +42,7 @@ export class PublicationLifecycleService {
     input: StartThreadGenerationDto,
   ): Promise<{ publicationId: string; jobId: string; status: string }> {
     const job = await this.generation.enqueue(ownerId, input);
-    const publication = await this.publications.createQueuedPublication(ownerId, job.jobId);
+    const publication = await this.publications.createQueuedPublication(ownerId, job.jobId, input);
     if (!publication) throw new ConflictException('Generation job owner mismatch');
     return { publicationId: publication.id, jobId: job.jobId, status: job.status };
   }

@@ -55,6 +55,7 @@ export class ThreadsGenerationClient {
       spendCapMicroUsd: String(input.capMicroUsd),
       topic: input.topic,
       publicationType: input.publicationType,
+      contentLocale: input.contentLocale,
       publicIntentVersion: input.publicIntentVersion,
       authors: input.authors,
       judge: input.judge,

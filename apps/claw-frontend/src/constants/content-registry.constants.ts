@@ -128,6 +128,16 @@ const PUBLISHED_CONTENT_CONFIGS: ReadonlyArray<PublishedContentConfig> = [
     relatedSlugs: ['about', 'features', 'pricing'],
   },
   {
+    slug: 'threads/discover',
+    path: '/threads/discover',
+    category: ContentCategory.GUIDE,
+    adEligibility: AdEligibility.INELIGIBLE,
+    feedEligibility: FeedEligibility.PUBLISHABLE,
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: ['features', 'how-it-works'],
+    reviewDate: '2026-10-05',
+  },
+  {
     slug: LaunchPublicPageSlug.ABOUT,
     path: '/about',
     category: ContentCategory.ABOUT,

@@ -1,4 +1,4 @@
-import { EventPattern } from '@claw/shared-types';
+import { EventPattern, Locale, ThreadPublicationType } from '@claw/shared-types';
 import { createHash } from 'node:crypto';
 
 import { GenerationJobsService } from '../generation-jobs.service';
@@ -39,7 +39,8 @@ describe('GenerationJobsService', () => {
         correlationId: 'correlation-1',
         spendCapMicroUsd: '5000000',
         topic: 'A detailed topic for a publication',
-        publicationType: 'article',
+        publicationType: ThreadPublicationType.ARTICLE,
+        contentLocale: Locale.EN,
         publicIntentVersion: 'threads-public-v1',
         authors: [role('author-1'), role('author-2'), role('author-3')],
         judge: role('judge'),
@@ -143,8 +144,9 @@ describe('GenerationJobsService', () => {
       correlationId: 'correlation-1',
       spendCapMicroUsd: '5000000',
       topic: 'A detailed topic for a publication',
-      publicationType: 'article',
+      publicationType: ThreadPublicationType.ARTICLE,
       publicIntentVersion: 'threads-public-v1',
+      contentLocale: Locale.EN,
       authors: [role('author-1'), role('author-2'), role('author-3')],
       judge: role('judge'),
       critic: role('critic'),
@@ -187,7 +189,8 @@ describe('GenerationJobsService', () => {
         correlationId: 'correlation-2',
         spendCapMicroUsd: '5000000',
         topic: 'A detailed topic for a publication',
-        publicationType: 'article',
+        publicationType: ThreadPublicationType.ARTICLE,
+        contentLocale: Locale.EN,
         publicIntentVersion: 'threads-public-v1',
         authors: [role('author-1'), role('author-2'), role('author-3')],
         judge: role('judge'),
@@ -211,6 +214,7 @@ describe('GenerationJobsService', () => {
         spendCapMicroUsd: '5000000',
         topic: 'A detailed topic for a publication',
         publicationType: 'article',
+        contentLocale: Locale.EN,
         publicIntentVersion: 'threads-public-v1',
         authors: [role('author-1'), role('author-2'), role('author-3')],
         judge: role('judge'),
@@ -288,6 +292,7 @@ describe('GenerationJobsService', () => {
       },
       topic: 'A detailed topic for a publication',
       publicationType: 'article',
+      contentLocale: Locale.EN,
       authors: [role('author-1'), role('author-2'), role('author-3')],
       judge: role('judge'),
       critic: role('critic'),
@@ -373,6 +378,7 @@ describe('GenerationJobsService', () => {
         spendCapMicroUsd: '5000000',
         topic: 'A detailed topic for a publication',
         publicationType: 'article',
+        contentLocale: Locale.EN,
         publicIntentVersion: 'threads-public-v1',
         authors: [role('author-1'), role('author-2'), role('author-3')],
         judge: role('judge'),

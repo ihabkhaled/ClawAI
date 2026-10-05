@@ -350,6 +350,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       budgetId: job.budgetId,
       attempt: job.attemptCount,
       correlationId: event.correlationId,
+      contentLocale: request.contentLocale,
       sourceSnapshot: source,
       authors: request.authors,
       judge: request.judge,

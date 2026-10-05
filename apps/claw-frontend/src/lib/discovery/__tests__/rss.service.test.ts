@@ -3,13 +3,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
 import { RssFeedKind } from '@/enums/rss-feed-kind.enum';
 
-const { listPublicChatRssEntries } = vi.hoisted(() => ({
+const { listPublicChatRssEntries, listPublicThreadFeedEntries } = vi.hoisted(() => ({
   listPublicChatRssEntries: vi.fn(),
+  listPublicThreadFeedEntries: vi.fn(),
 }));
 
 vi.mock('@/lib/chat-shares/public-chat-share.service', () => ({
   listPublicChatRssEntries,
 }));
+vi.mock('@/lib/threads/public-thread-api', () => ({ listPublicThreadFeedEntries }));
 vi.mock('@/lib/site/site-config', () => ({
   getSiteUrl: (): string => 'https://claw.example',
   shouldNoIndexEverything: (): boolean => false,
@@ -31,6 +33,7 @@ function feedRequest(): Request {
 describe('buildLocalizedRssResponse failure behavior', () => {
   beforeEach(() => {
     listPublicChatRssEntries.mockReset();
+    listPublicThreadFeedEntries.mockReset().mockResolvedValue([]);
   });
 
   it('keeps topic feeds available without calling the chat service', async () => {
@@ -105,5 +108,24 @@ describe('buildLocalizedRssResponse failure behavior', () => {
 
     expect(second.status).toBe(304);
     expect(second.headers.get('etag')).toBe(etag);
+  });
+
+  it('includes approved Threads independently in the locale topics feed', async () => {
+    listPublicThreadFeedEntries.mockResolvedValue([
+      {
+        slug: 'approved-thread',
+        title: 'Approved research',
+        excerpt: 'A public summary',
+        contentLocale: 'en',
+        publishedAt: '2026-10-05T12:00:00.000Z',
+      },
+    ]);
+    const { buildLocalizedRssResponse } = await import('@/lib/discovery/rss.service');
+    const response = await buildLocalizedRssResponse(feedRequest(), RssFeedKind.TOPICS);
+    const xml = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(xml).toContain('https://claw.example/en/threads/approved-thread');
+    expect(xml).toContain('Approved research');
   });
 });

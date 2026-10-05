@@ -11,6 +11,7 @@ import { RssFeedKind } from '@/enums/rss-feed-kind.enum';
 import { listPublicChatRssEntries } from '@/lib/chat-shares/public-chat-share.service';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl, shouldNoIndexEverything } from '@/lib/site/site-config';
+import { listPublicThreadFeedEntries } from '@/lib/threads/public-thread-api';
 import type { RssFeedItem } from '@/types/seo-discovery.types';
 import { getFeedPagesForLocale } from '@/utilities/content-registry.utility';
 import { resolveFeedContentType } from '@/utilities/discovery-content-type.utility';
@@ -45,6 +46,7 @@ export async function buildLocalizedRssResponse(
     kind === RssFeedKind.TOPICS || CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED
       ? []
       : await listPublicChatRssEntries(locale);
+  const threadEntries = kind === RssFeedKind.CHATS ? [] : await listPublicThreadFeedEntries(locale);
   if (kind === RssFeedKind.CHATS && chatEntries === null) {
     return new Response(null, {
       status: 503,
@@ -56,6 +58,7 @@ export async function buildLocalizedRssResponse(
     });
   }
   const chatFeedDegraded = chatEntries === null;
+  const threadFeedDegraded = threadEntries === null;
   const chatItems: RssFeedItem[] = (chatEntries ?? []).map((entry) => ({
     title: entry.title,
     description: entry.description ?? '',
@@ -64,7 +67,15 @@ export async function buildLocalizedRssResponse(
     publishedAt: entry.publishedAt,
     category: 'public-chat',
   }));
-  const items = [...topicItems, ...chatItems].sort(
+  const threadItems: RssFeedItem[] = (threadEntries ?? []).map((entry) => ({
+    title: entry.title,
+    description: entry.excerpt,
+    url: `${siteUrl}/${entry.contentLocale}/threads/${entry.slug}`,
+    guid: `${siteUrl}/${entry.contentLocale}/threads/${entry.slug}`,
+    publishedAt: entry.publishedAt,
+    category: 'public-thread',
+  }));
+  const feedItems = [...topicItems, ...chatItems, ...threadItems].sort(
     (left, right) => Date.parse(right.publishedAt) - Date.parse(left.publishedAt),
   );
   const feedPathByKind: Readonly<Record<RssFeedKind, string>> = {
@@ -74,7 +85,7 @@ export async function buildLocalizedRssResponse(
   };
   const feedPath = feedPathByKind[kind];
   const feedUrl = `${siteUrl}/${locale}/${feedPath}`;
-  const lastBuildDate = items[0]?.publishedAt ?? new Date().toISOString();
+  const lastBuildDate = feedItems[0]?.publishedAt ?? new Date().toISOString();
   const xml = buildRssXml({
     title: `ClawAI — ${locale.toUpperCase()}`,
     description: `ClawAI public updates in ${getHtmlLanguage(locale)}`,
@@ -82,7 +93,7 @@ export async function buildLocalizedRssResponse(
     siteUrl: `${siteUrl}/${locale}`,
     language: getHtmlLanguage(locale),
     lastBuildDate,
-    items,
+    items: feedItems,
   });
   const etag = `"${createHash('sha256').update(xml).digest('base64url')}"`;
   if (request.headers.get('if-none-match') === etag) {
@@ -98,10 +109,16 @@ export async function buildLocalizedRssResponse(
       ETag: etag,
       'Last-Modified': new Date(lastBuildDate).toUTCString(),
       'X-Content-Type-Options': 'nosniff',
-      ...(chatFeedDegraded
+      ...(chatFeedDegraded || threadFeedDegraded
         ? {
             'Cache-Control': DEGRADED_RSS_CACHE_CONTROL,
-            'X-Claw-Discovery-Degraded': 'chat-feed-unavailable',
+            'X-Claw-Discovery-Degraded': [
+              chatFeedDegraded ? 'chat' : '',
+              threadFeedDegraded ? 'threads' : '',
+            ]
+              .filter(Boolean)
+              .map((source) => `${source}-feed-unavailable`)
+              .join(','),
           }
         : {}),
     },

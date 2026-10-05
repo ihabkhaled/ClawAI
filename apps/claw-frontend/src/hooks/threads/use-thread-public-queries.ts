@@ -1,12 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { threadPublicationsRepository } from '@/repositories/threads/thread-publications.repository';
-import type { ThreadPublicQueries } from '@/types/thread-publication.types';
+import type {
+  PublicThreadPublication,
+  ThreadPublicQueries,
+} from '@/types/thread-publication.types';
 
-export function useThreadPublicQueries(slug: string): ThreadPublicQueries {
+export function useThreadPublicQueries(
+  slug: string,
+  initialPublication: PublicThreadPublication,
+): ThreadPublicQueries {
   const publication = useQuery({
     queryKey: ['thread-publications', 'public', slug],
     queryFn: () => threadPublicationsRepository.getPublic(slug),
+    initialData: initialPublication,
     enabled: slug !== '',
   });
   const comments = useQuery({

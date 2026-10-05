@@ -3636,6 +3636,16 @@
         "method": "POST",
         "route": "/thread-publications/public/:slug/reports",
         "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-community.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/thread-publications/public/discover",
+        "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-discovery.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/thread-publications/public/sitemap",
+        "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-discovery.controller.ts"
       }
     ],
     "claw-workspace-service": [
@@ -4182,5 +4192,5 @@
     ]
   },
   "generated": true,
-  "total": 828
+  "total": 830
 }

@@ -659,6 +659,12 @@ export const fr: TranslationDictionary = {
     threadSourceChat: 'Discussion source',
     threadTopic: 'Sujet ou question de recherche',
     threadPublicationType: 'Type de publication',
+    threadContentLocale: 'Langue de l’article',
+    threadContentLocaleHelp: 'L’article sera rédigé et indexé dans cette langue.',
+    threadDiscoveryTitle: 'Threads publics',
+    threadDiscoveryDescription:
+      'Découvrez les articles documentés, guides et explications techniques publiés par la communauté ClawAI.',
+    threadDiscoveryEmpty: 'Aucun Thread public n’est encore disponible dans cette langue.',
     threadSpendCapUsd: 'Dépense maximale (USD)',
     threadAuthorModel: 'Modèle auteur',
     threadJudgeModel: 'Modèle juge',

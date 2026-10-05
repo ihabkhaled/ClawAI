@@ -16,6 +16,8 @@ the draft remains private until its owner approves publication.
 - Authenticated users can comment, react, and request changes under existing
   moderation controls.
 - Approved publications are independently indexable. Chat-share lockdown stays.
+- Owners select the content language; articles, canonical URLs, discovery, and
+  feeds use that locale.
 - Approved revisions remain public anonymously after account deletion; private
   snapshots and generation artifacts are erased.
 
@@ -81,10 +83,11 @@ from the legacy chat-thread API. Owners can submit capped private revisions for
 fresh review, export Markdown or JSON, and unpublish a live publication.
 The owner portal now lists reader change requests. Owners can reject with an
 optional response or submit an edited, user-capped revision for fresh review.
-The public reader displays only approved articles, filters citation links to
+The public reader server-renders approved articles, filters citation links to
 absolute HTTP(S), and supports authenticated comments, reactions, change
-requests, and reports. Comments remain identity-free. The reader is noindex
-until the public discovery and canonical metadata work in Batch 7.
+requests, and reports. Comments remain identity-free. The localized discovery
+hub, canonical metadata, sitemap chunks, RSS/Atom, and `llms.txt` use the existing
+public-content registry. Chat-share lockdown remains separate.
 Authenticated readers can comment, react, request changes, and report content.
 Public comment responses omit author IDs. Owners can accept a change request by
 creating a newly capped immutable revision that goes through the usual fresh
@@ -92,6 +95,5 @@ review and owner-approval flow. Moderation endpoints require
 `THREAD_PUBLICATIONS_MODERATE`. Auth deletion uses a transactional outbox and
 `user.deleted` event. Threads keeps eligible approved work public anonymously,
 removes private snapshots and account links, and records a hashed tombstone;
-Generation removes private jobs and rejects later enqueue. UI and discovery
-integration for community moderation and anonymous deletion remain unfinished.
-Live deletion-flow QA remains open.
+Generation removes private jobs and rejects later enqueue. Live deletion,
+browser, access-control, device, and production QA remain open.

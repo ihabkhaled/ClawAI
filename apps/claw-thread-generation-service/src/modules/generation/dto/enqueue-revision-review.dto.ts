@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Locale, ThreadPublicationType } from '@claw/shared-types';
 
 import { authorDraftSchema, modelRoleSchema } from '../types/generation-pipeline.types';
 
@@ -22,7 +23,8 @@ export const revisionReviewJobRequestSchema = enqueueRevisionReviewSchema
   .extend({
     kind: z.literal('revision-review'),
     topic: z.string().min(10).max(10_000),
-    publicationType: z.enum(['article', 'research-article', 'guide', 'technical-explanation']),
+    publicationType: z.nativeEnum(ThreadPublicationType),
+    contentLocale: z.nativeEnum(Locale),
     authors: z.array(modelRoleSchema).min(3).max(5),
     judge: modelRoleSchema,
     critic: modelRoleSchema,

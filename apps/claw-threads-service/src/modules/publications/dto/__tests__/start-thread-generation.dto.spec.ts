@@ -14,6 +14,7 @@ const validRequest = {
   idempotencyKey: 'request-1',
   correlationId: 'correlation-1',
   publicIntentVersion: 'threads-public-v1',
+  contentLocale: 'ar',
   topic: 'A detailed research subject that is at least ten characters',
   publicationType: 'article',
   authors: [role('author-1'), role('author-2'), role('author-3')],
@@ -42,6 +43,13 @@ describe('startThreadGenerationSchema', () => {
         ...validRequest,
         capMicroUsd: Number.MAX_SAFE_INTEGER + 1,
       }).success,
+    ).toBe(false);
+  });
+
+  it('requires one supported content locale for correct indexing', () => {
+    expect(startThreadGenerationSchema.safeParse(validRequest).success).toBe(true);
+    expect(
+      startThreadGenerationSchema.safeParse({ ...validRequest, contentLocale: 'xx' }).success,
     ).toBe(false);
   });
 });

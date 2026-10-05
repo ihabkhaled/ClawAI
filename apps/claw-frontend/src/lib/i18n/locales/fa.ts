@@ -648,6 +648,12 @@ export const fa: TranslationDictionary = {
     threadSourceChat: 'گفت‌وگوی منبع',
     threadTopic: 'موضوع یا پرسش پژوهشی',
     threadPublicationType: 'نوع مطلب',
+    threadContentLocale: 'زبان مقاله',
+    threadContentLocaleHelp: 'مقاله به این زبان نوشته و نمایه می‌شود.',
+    threadDiscoveryTitle: 'Threads عمومی',
+    threadDiscoveryDescription:
+      'مقاله‌ها، راهنماها و توضیحات فنی پژوهش‌محور منتشرشده توسط جامعه ClawAI را ببینید.',
+    threadDiscoveryEmpty: 'هنوز Thread عمومی به این زبان موجود نیست.',
     threadSpendCapUsd: 'حداکثر هزینه (دلار آمریکا)',
     threadAuthorModel: 'مدل نویسنده',
     threadJudgeModel: 'مدل داور',

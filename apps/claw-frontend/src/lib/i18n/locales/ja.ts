@@ -651,6 +651,12 @@ export const ja: TranslationDictionary = {
     threadSourceChat: '元のチャット',
     threadTopic: 'トピックまたは調査の質問',
     threadPublicationType: '記事の種類',
+    threadContentLocale: '記事の言語',
+    threadContentLocaleHelp: '記事はこの言語で作成され、検索インデックスに登録されます。',
+    threadDiscoveryTitle: '公開 Threads',
+    threadDiscoveryDescription:
+      'ClawAI コミュニティが公開した調査記事、ガイド、技術解説をご覧ください。',
+    threadDiscoveryEmpty: 'この言語の公開 Threads はまだありません。',
     threadSpendCapUsd: '最大支出額（USD）',
     threadAuthorModel: '執筆モデル',
     threadJudgeModel: '判定モデル',

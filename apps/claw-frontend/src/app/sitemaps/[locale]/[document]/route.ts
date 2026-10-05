@@ -7,6 +7,7 @@ import {
 } from '@/constants/seo-discovery.constants';
 import { getIndexableChatSharePage } from '@/lib/chat-shares/public-chat-share.service';
 import { getSiteUrl, shouldNoIndexEverything } from '@/lib/site/site-config';
+import { getPublicThreadSitemapPage } from '@/lib/threads/public-thread-api';
 import type { DiscoveryRouteContext, SitemapUrlEntry } from '@/types/seo-discovery.types';
 import {
   getIndexablePagesForLocale,
@@ -28,6 +29,7 @@ export async function GET(_request: Request, context: DiscoveryRouteContext): Pr
   }
   const pageMatch = /^pages-(\d+)\.xml$/u.exec(document);
   const chatMatch = /^chats-(\d+)\.xml$/u.exec(document);
+  const threadMatch = /^threads-(\d+)\.xml$/u.exec(document);
   const siteUrl = getSiteUrl();
   let entries: SitemapUrlEntry[] = [];
 
@@ -97,6 +99,19 @@ export async function GET(_request: Request, context: DiscoveryRouteContext): Pr
         break;
       }
     }
+  } else if (threadMatch?.[1] !== undefined) {
+    const chunk = Number(threadMatch[1]);
+    if (!Number.isSafeInteger(chunk) || chunk < 1) {
+      return new Response(null, { status: 404 });
+    }
+    const page = await getPublicThreadSitemapPage(localeValue, chunk - 1);
+    if (page === null || (page.items.length === 0 && chunk > 1)) {
+      return new Response(null, { status: 404 });
+    }
+    entries = page.items.map((item) => ({
+      url: `${siteUrl}/${localeValue}/threads/${item.slug}`,
+      lastModified: item.publishedAt,
+    }));
   } else {
     return new Response(null, { status: 404 });
   }
