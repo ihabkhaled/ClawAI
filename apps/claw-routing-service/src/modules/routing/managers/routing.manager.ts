@@ -990,8 +990,46 @@ export class RoutingManager {
     if (localResult) {
       return localResult;
     }
+    const includedResult = this.tryIncludedCloudRoute(context, state);
+    if (includedResult) {
+      return includedResult;
+    }
     const cloudResult = this.tryCloudRoute(context, state);
     return cloudResult ? cloudResult : this.buildNoReachableModelDecision();
+  }
+
+  /**
+   * Cost-aware AUTO: an easy turn goes to the included Ollama Cloud model, which
+   * spends no credit, and only COMPLEX/EXPERT work (or a missing, unconfirmed or
+   * circuit-open Ollama Cloud) reaches a credit model. Needs a CONFIRMED healthy
+   * connector so an unknown state never swaps a working paid route for a guess.
+   */
+  private tryIncludedCloudRoute(
+    context: RoutingContext,
+    state: HeuristicState,
+  ): RoutingDecisionResult | null {
+    const complexity = state.complexity?.class;
+    const isHard = complexity === ComplexityClass.COMPLEX || complexity === ComplexityClass.EXPERT;
+    if (
+      isHard ||
+      !this.isConnectorConfirmedHealthy(CLOUD_PROVIDER_OLLAMA, context) ||
+      this.isProviderCircuitOpen(CLOUD_PROVIDER_OLLAMA, context)
+    ) {
+      return null;
+    }
+    this.logger.log('handleAutoHeuristic: easy turn — routing to the included Ollama Cloud model');
+    const primary = { provider: CLOUD_PROVIDER_OLLAMA, model: CLOUD_MODEL_OLLAMA_DEFAULT };
+    return {
+      selectedProvider: primary.provider,
+      selectedModel: primary.model,
+      routingMode: RoutingMode.AUTO,
+      confidence: 0.72,
+      reasonTags: ['auto', 'cost_efficient', 'included_model_preferred'],
+      privacyClass: 'cloud',
+      costClass: 'free',
+      fallbackChain: this.buildFallbackChain(primary, context),
+      estimatedCostPer1M: 0,
+    };
   }
 
   private tryExpertComplexityRoute(

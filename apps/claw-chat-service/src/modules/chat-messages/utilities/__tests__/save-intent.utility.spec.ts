@@ -24,6 +24,10 @@ describe('mightBeSaveRequest — the recall net, not the decision', () => {
     '私がベジタリアンだと覚えておいて',
     'запомни, что я вегетарианец',
     '记住我是素食者',
+    'add this to clawai',
+    'from now on call me Sam',
+    'store that for later',
+    'write this down: my sister is Mona',
   ])('asks the planner about %s', (text) => {
     expect(mightBeSaveRequest(text)).toBe(true);
   });

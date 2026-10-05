@@ -254,7 +254,7 @@ describe('RoutingManager', () => {
         ...baseContext,
         message: 'hi',
         userMode: RoutingMode.AUTO,
-        connectorHealth: { OPENAI: true, GEMINI: true, OLLAMA: true },
+        connectorHealth: { OPENAI: true, GEMINI: true },
         runtimeHealth: { OLLAMA: false, LLAMACPP: false },
       });
 
@@ -357,6 +357,63 @@ describe('RoutingManager', () => {
       expect(result.routingMode).toBe(RoutingMode.AUTO);
       expect(result.selectedProvider).toBe('ANTHROPIC');
       expect(result.reasonTags).toContain('cloud_preferred');
+    });
+
+    describe('cost-aware AUTO: included model first, credit model for hard work', () => {
+      const EASY_MESSAGE = 'word '.repeat(40).trim();
+      const noLocal = { OLLAMA: false };
+      const allHealthy = { ANTHROPIC: true, OPENAI: true, OLLAMA: true };
+
+      it('routes an easy turn to Ollama Cloud when it is confirmed healthy', async () => {
+        const result = await manager.evaluateRoute({
+          ...baseContext,
+          message: EASY_MESSAGE,
+          userMode: RoutingMode.AUTO,
+          runtimeHealth: noLocal,
+          connectorHealth: allHealthy,
+        });
+        expect(result.selectedProvider).toBe('OLLAMA');
+        expect(result.costClass).toBe('free');
+        expect(result.reasonTags).toContain('included_model_preferred');
+        expect(result.fallbackChain.some((entry) => entry.provider === 'ANTHROPIC')).toBe(true);
+      });
+
+      it('keeps a credit model for expert-size work', async () => {
+        const result = await manager.evaluateRoute({
+          ...baseContext,
+          message: 'word '.repeat(600).trim(),
+          userMode: RoutingMode.AUTO,
+          runtimeHealth: noLocal,
+          connectorHealth: allHealthy,
+        });
+
+        expect(result.selectedProvider).not.toBe('OLLAMA');
+      });
+
+      it('does not guess: an unconfirmed Ollama Cloud keeps the credit route', async () => {
+        const result = await manager.evaluateRoute({
+          ...baseContext,
+          message: EASY_MESSAGE,
+          userMode: RoutingMode.AUTO,
+          runtimeHealth: noLocal,
+          connectorHealth: { ANTHROPIC: true, OPENAI: true },
+        });
+
+        expect(result.selectedProvider).toBe('ANTHROPIC');
+      });
+
+      it('skips Ollama Cloud when its circuit is open', async () => {
+        const result = await manager.evaluateRoute({
+          ...baseContext,
+          message: EASY_MESSAGE,
+          userMode: RoutingMode.AUTO,
+          runtimeHealth: noLocal,
+          connectorHealth: allHealthy,
+          providerCircuitOpenUntil: { OLLAMA: Date.now() + 60_000 },
+        });
+
+        expect(result.selectedProvider).toBe('ANTHROPIC');
+      });
     });
 
     it('should default to AUTO when no userMode specified', async () => {

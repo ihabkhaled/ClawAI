@@ -187,6 +187,8 @@ Stage 5: Ollama Router + Heuristic Fallback
   → Sends message to Ollama router model with dynamic prompt
   → If Ollama responds with valid JSON in 10s: use its decision
   → If Ollama fails: heuristic fallback (short messages → local, else cloud priority)
+  → Heuristic order: EXPERT → Anthropic reasoning; healthy local; then Ollama Cloud (included, no credit) for
+    non-COMPLEX/EXPERT turns when its connector is CONFIRMED healthy; else the credit-model priority list
 ```
 
 ---
