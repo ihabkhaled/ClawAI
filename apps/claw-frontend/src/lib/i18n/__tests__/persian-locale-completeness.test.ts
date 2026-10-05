@@ -10,6 +10,9 @@ const PERSIAN_LETTER_PATTERN = /[\u0621-\u063A\u0641-\u064A\u067E\u0686\u0698\u0
 const PLACEHOLDER_PATTERN = /\{([^}]+)\}/gu;
 const TECHNICAL_VALUE_ALLOWLIST = new Set([
   'API',
+  'Crawl4AI',
+  'FlareSolverr',
+  'Firecrawl',
   'Anthropic',
   'AWS Bedrock',
   'ClawAI',

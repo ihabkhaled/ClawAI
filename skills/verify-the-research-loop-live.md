@@ -62,6 +62,13 @@ Then send a message and sample `[data-testid="narration-log"]` every ~300 ms:
 `LIVE:n` rising while the turn runs, then `stored:n` on the answer. Reload the
 page: the stored log must still be there, collapsed, above a separate answer.
 
+## 3b. The page-read line (ADR-121 addendum 2)
+
+With a sidecar profile enabled and a page the plain fetch cannot read, the log must contain
+"Read <host> via <tier> after <tier> was blocked" and the Show-sources dialog a "Read via" chip
+per fetched source. With every tier plain-served there is no such line (that is correct, not
+a bug); a cached page has no chip. Check the API too: `metadata.research.bundle.items[].fetch`.
+
 ## 4. The plan gate
 
 As a user whose plan lacks research, a message with a URL must produce no

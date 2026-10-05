@@ -132,12 +132,17 @@ export class ChatStreamService implements OnModuleInit {
     this.logger.debug(`Emitted research_started for thread ${threadId}: ${workflow}`);
   }
 
-  emitResearchCompleted(threadId: string, itemCount: number, toolsUsed: string[]): void {
+  emitResearchCompleted(
+    threadId: string,
+    itemCount: number,
+    toolsUsed: string[],
+    fetchStrategies: string[] = [],
+  ): void {
     this.emit({
       threadId,
       type: StreamEventType.RESEARCH_COMPLETED,
       label: 'Evidence ready',
-      description: `Collected ${String(itemCount)} evidence items using ${toolsUsed.join(', ') || 'research tools'}.`,
+      description: `Collected ${String(itemCount)} evidence items using ${toolsUsed.join(', ') || 'research tools'}.${fetchStrategies.length > 0 ? ` Pages read via ${fetchStrategies.join(', ')}.` : ''}`,
       actorType: ProgressActorType.SYSTEM,
       actorName: 'Research workflow',
       stageId: 'research:evidence',
@@ -279,10 +284,7 @@ export class ChatStreamService implements OnModuleInit {
     if (status === OrchestrationStageStatus.COMPLETED) {
       return 'completed';
     }
-    if (status === OrchestrationStageStatus.ERROR) {
-      return 'error';
-    }
-    return 'active';
+    return status === OrchestrationStageStatus.ERROR ? 'error' : 'active';
   }
 
   emitCompletion(threadId: string, provider: string, model: string): void {

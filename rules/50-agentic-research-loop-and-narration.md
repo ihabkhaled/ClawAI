@@ -49,6 +49,11 @@ the frontend `NarrationLog`.
    its sentence to describe exactly the chosen action (a small model once
    copied an example sentence promising a search it never ran).
 
+9. **Say how a page was read, from what was measured.** A page an escalated fetch tier
+   served is narrated (`PAGE_READ`, built by `pageReadNarrations` from `EvidenceItem.fetch`),
+   on every research path. Kind and outcome only: no URL, status, body or error text. A cache
+   hit has no provenance and gets no claim (ADR-121 addendum 2).
+
 ## Prohibited
 
 - A URL regex outside `url-detection.utility.ts`.
@@ -75,6 +80,7 @@ the frontend `NarrationLog`.
 | Unit      | `auto-research-resolution.spec.ts` — plan gate before everything, including a URL                                                                                             |
 | Unit      | `research-progress-bridge.service.spec.ts` — one dedupe key per tick across replicas                                                                                          |
 | Unit      | `research-client.utility.spec.ts` — internal route, service token, no user bearer                                                                                             |
+| Unit      | `research-fetch-provenance.utility.spec.ts` + `evidence-builder.spec.ts` (`fetchProvenanceOf`) — provenance is kind/outcome only, capped, absent on cache hits                |
 | Unit      | `escalation-policy.utility.spec.ts` — refusals stop, captcha/429/404 go archive-only, FlareSolverr only after a JS challenge                                                  |
 | Unit      | `fetch-strategy-orchestrator.service.spec.ts` — attempt ceiling, wall clock, thin fallback, `fetch.served` line has no query string                                           |
 | Unit      | `fetch.service.escalation.spec.ts` + `robots-policy.service.spec.ts` — robots Disallow refuses before any strategy; RFC 9309 wildcards                                        |

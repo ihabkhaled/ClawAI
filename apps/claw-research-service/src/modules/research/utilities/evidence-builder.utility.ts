@@ -4,9 +4,12 @@ import {
   EVIDENCE_MAX_ITEMS,
 } from '../../../common/constants/evidence.constants';
 import { sanitizeForLlm } from '../../../common/utilities/content-safety.utility';
+import type { FetchStrategyKind } from '../../../generated/prisma';
+import type { FetchAttemptSummary } from '../../fetch/types/fetch.types';
 import type {
   BuildEvidenceInput,
   EvidenceBundle,
+  EvidenceFetchProvenance,
   EvidenceItem,
   ResearchTraceEntry,
 } from '../types/evidence-bundle.types';
@@ -88,6 +91,26 @@ export function pushFetchToolMarker(
   result: { renderedWithHeadlessBrowser?: true },
 ): void {
   toolsUsed.push(result.renderedWithHeadlessBrowser === true ? 'web_fetch:headless' : 'web_fetch');
+}
+
+/**
+ * The `fetch` field of an evidence item, from a live fetch result. `{}` when the
+ * result carries no `servedBy` (a cache hit): the strategy was not measured
+ * this time, so none is claimed. Spread it into the item.
+ */
+export function fetchProvenanceOf(result: {
+  servedBy?: FetchStrategyKind;
+  attempts?: readonly FetchAttemptSummary[];
+}): { fetch?: EvidenceFetchProvenance } {
+  if (result.servedBy === undefined) {
+    return {};
+  }
+  return {
+    fetch: {
+      strategy: result.servedBy,
+      attempts: (result.attempts ?? []).map((a) => ({ kind: a.kind, outcome: a.outcome })),
+    },
+  };
 }
 
 function dedupeByUrl(items: EvidenceItem[]): EvidenceItem[] {

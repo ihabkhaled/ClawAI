@@ -6,6 +6,12 @@
 
 import type { ResearchWorkflow } from '../../../common/enums/research-workflow.enum';
 
+/** How a page was read (research-service `EvidenceFetchProvenance`): tier kind + trail of kind/outcome. */
+export type ResearchFetchProvenance = {
+  strategy: string;
+  attempts: Array<{ kind: string; outcome: string }>;
+};
+
 export type ResearchEvidenceItem = {
   id: string;
   title: string | null;
@@ -16,6 +22,8 @@ export type ResearchEvidenceItem = {
   publishedAt: string | null;
   fetchedAt: string | null;
   confidence: number;
+  /** Which fetch tier served this page; absent for search hits and cache hits. */
+  fetch?: ResearchFetchProvenance;
 };
 
 export type ResearchEvidenceBundle = {

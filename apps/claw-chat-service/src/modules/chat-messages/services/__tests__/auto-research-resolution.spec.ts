@@ -27,6 +27,7 @@ describe('ChatMessagesService research modes', () => {
   let hasResearchAccess: ReturnType<typeof vi.fn>;
   let orchestratorRun: ReturnType<typeof vi.fn>;
   let emitResearchCompleted: ReturnType<typeof vi.fn>;
+  let narratePagesRead: ReturnType<typeof vi.fn>;
   let service: ChatMessagesService;
 
   const run = (intent: string, mode: ResearchMode = ResearchMode.AUTO): Promise<unknown> =>
@@ -43,12 +44,13 @@ describe('ChatMessagesService research modes', () => {
     hasResearchAccess = vi.fn().mockResolvedValue(true);
     orchestratorRun = vi.fn().mockResolvedValue(RUN);
     emitResearchCompleted = vi.fn();
+    narratePagesRead = vi.fn().mockResolvedValue(undefined);
 
     const ctor = ChatMessagesService as unknown as new (...args: unknown[]) => ChatMessagesService;
     const args: unknown[] = new Array(22).fill({});
     args[14] = { emitResearchStarted: vi.fn(), emitResearchCompleted, emitResearchFailed: vi.fn() };
     args[18] = { hasResearchAccess };
-    args[20] = { run: orchestratorRun };
+    args[20] = { run: orchestratorRun, narratePagesRead };
     args[21] = { reset: vi.fn(), append: vi.fn(), read: vi.fn().mockResolvedValue([]) };
     service = new ctor(...args);
   });
@@ -86,6 +88,8 @@ describe('ChatMessagesService research modes', () => {
     await expect(run('test', ResearchMode.SEARCH)).resolves.not.toBeNull();
     expect(orchestratorRun).not.toHaveBeenCalled();
     expect(mockedRunResearch).toHaveBeenCalledTimes(1);
+    // An explicit mode narrates how pages were read, same as AUTO (rule 59).
+    expect(narratePagesRead).toHaveBeenCalledWith('thread-1', RUN);
   });
 
   it('does nothing when research is off', async () => {

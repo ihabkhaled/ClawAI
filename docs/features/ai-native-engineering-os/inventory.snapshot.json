@@ -8432,7 +8432,7 @@
           "file": "rules/49-qa-team-discipline-and-test-evidence.md"
         },
         {
-          "bytes": 6938,
+          "bytes": 7469,
           "file": "rules/50-agentic-research-loop-and-narration.md"
         },
         {
@@ -8866,7 +8866,7 @@
           "file": "skills/verify-responsive-layout-in-browser.md"
         },
         {
-          "bytes": 3043,
+          "bytes": 3469,
           "file": "skills/verify-the-research-loop-live.md"
         },
         {
@@ -11087,7 +11087,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 319
+        "testFiles": 320
       },
       "claw-client-logs-service": {
         "runner": "vitest",

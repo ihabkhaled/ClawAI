@@ -5,6 +5,7 @@ import { ExternalLink, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { EvidenceViewerProps } from '@/types';
+import { describeFetchStrategy } from '@/utilities/narration.utility';
 
 export function EvidenceViewer({ bundle, t }: EvidenceViewerProps): React.ReactElement | null {
   if (bundle === null) {
@@ -62,6 +63,15 @@ export function EvidenceViewer({ bundle, t }: EvidenceViewerProps): React.ReactE
                 <div className="text-muted-foreground text-xs break-words">{item.snippet}</div>
                 <div className="text-muted-foreground touch:text-xs flex flex-wrap gap-2 text-[10px]">
                   <span>{item.source}</span>
+                  {item.fetch !== undefined ? (
+                    <Badge
+                      variant="outline"
+                      className="touch:text-xs text-[10px]"
+                      data-testid="fetch-strategy-chip"
+                    >
+                      {t('narration.strategyLabel')} {describeFetchStrategy(item.fetch.strategy, t)}
+                    </Badge>
+                  ) : null}
                   {item.providerKind !== null ? <span>• {item.providerKind}</span> : null}
                   <span>
                     • {t('research.evidence.confidence')}: {(item.confidence * 100).toFixed(0)}%

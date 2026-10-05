@@ -1597,6 +1597,18 @@ items (robots Disallow, unreachable private dev host) narrates `RESEARCH_FAILED`
 null, so no empty bundle gets cited as "[1]" / "pages you provided". The extra
 `crawl_progress` lines come from research-service's progress channel, not from here.
 
+**How a page was read (2026-10-05, ADR-121 addendum 2).** Evidence items carry `fetch`
+(`{strategy, attempts[kind,outcome]}`) from research-service. `pageReadNarrations`
+(`research-orchestration.utility.ts`) turns each page an ESCALATED tier served (anything but a plain
+GET that worked) into one `PAGE_READ` narration line (host, strategy, first blocked tier; capped at
+`NARRATION_MAX_PAGE_READ_LINES`, no URL). It runs on every research path: AUTO
+(`narrateOutcome`), explicit modes (`runResearchForIntent` -> `narratePagesRead`) and the
+context-gateway research Compare/Consensus/Escalation/labs use (`ContextAssemblyManager`, optional
+`NarrationService`). `emitResearchCompleted` and the stored progress step name the strategies
+("Pages read via CRAWL4AI"); the full `fetch` field persists in the user message's
+`metadata.research.bundle`. The frontend renders a chip per source in `EvidenceViewer`
+(`research-run-details`) and the line in `NarrationLog`.
+
 ## An explicit fetch command runs even with research off (2026-09-30)
 
 "crawl <url>" / "curl <url>" with the research toggle off answered "I have no fetched

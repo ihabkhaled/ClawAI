@@ -1,6 +1,16 @@
+import type { FetchStrategyKind } from '../../../generated/prisma';
 import type { ProviderSelectionMode } from '../../../common/enums/provider-selection-mode.enum';
 import type { ResearchWorkflowKind } from '../../../common/enums/research-workflow-kind.enum';
 import type { AuditFinding } from './audit-finding.types';
+
+/**
+ * How a fetched page was actually read (ADR-121): the tier that served it and
+ * the trail before it. Kind and outcome only: never a URL, a body or an error text.
+ */
+export type EvidenceFetchProvenance = {
+  strategy: FetchStrategyKind;
+  attempts: Array<{ kind: FetchStrategyKind; outcome: 'SUCCESS' | 'BLOCKED' | 'ERROR' }>;
+};
 
 /** Single citation unit that gets passed to the final answering model. */
 export type EvidenceItem = {
@@ -24,6 +34,8 @@ export type EvidenceItem = {
    * plain search/fetch items.
    */
   structured?: Record<string, unknown>;
+  /** Which fetch tier served this page. Absent for search hits and cache hits (not measured, so not claimed). */
+  fetch?: EvidenceFetchProvenance;
 };
 
 /** A trace entry describing a phase of the research run. */

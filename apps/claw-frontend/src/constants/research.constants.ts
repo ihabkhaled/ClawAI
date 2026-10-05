@@ -82,3 +82,16 @@ export const INITIAL_RESEARCH_PROVIDER_FORM = {
   baseUrl: RESEARCH_PROVIDER_DEFAULT_BASE_URLS[ResearchProviderKind.EXA],
   apiKey: '',
 };
+
+/** Fetch tier kind (research-service `FetchStrategyKind`) -> i18n key of its display name. */
+export const FETCH_STRATEGY_KEYS: Record<string, string> = {
+  OFFICIAL_API: 'narration.strategyOfficialApi',
+  HTTP_PLAIN: 'narration.strategyHttpPlain',
+  HTTP_TLS_IMPERSONATE: 'narration.strategyTlsImpersonate',
+  HEADLESS_BROWSER: 'narration.strategyHeadlessBrowser',
+  CRAWL4AI: 'narration.strategyCrawl4ai',
+  FLARESOLVERR: 'narration.strategyFlaresolverr',
+  FIRECRAWL: 'narration.strategyFirecrawl',
+  READER_PROXY: 'narration.strategyReaderProxy',
+  ARCHIVE_SNAPSHOT: 'narration.strategyArchiveSnapshot',
+};

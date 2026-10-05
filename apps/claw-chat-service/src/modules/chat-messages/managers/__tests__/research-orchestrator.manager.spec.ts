@@ -212,6 +212,36 @@ describe('ResearchOrchestratorManager', () => {
     ]);
   });
 
+  it('narrates how an escalated page was read, before the done line', async () => {
+    const run = runWith('SITE_CRAWL', ['https://example.com/']) as {
+      bundle: { items: Array<Record<string, unknown>> };
+    };
+    run.bundle.items[0] = {
+      ...run.bundle.items[0],
+      fetch: {
+        strategy: 'CRAWL4AI',
+        attempts: [
+          { kind: 'HTTP_PLAIN', outcome: 'BLOCKED' },
+          { kind: 'CRAWL4AI', outcome: 'SUCCESS' },
+        ],
+      },
+    };
+    mockedRunResearch.mockResolvedValue(run as never);
+
+    await manager.run({ ...input, intent: 'crawl yourself', selfSiteUrl: 'https://example.com' });
+
+    expect(kinds()).toEqual([
+      NarrationKind.PLANNED,
+      NarrationKind.CRAWL_STARTED,
+      NarrationKind.PAGE_READ,
+      NarrationKind.CRAWL_DONE,
+    ]);
+    expect(append).toHaveBeenCalledWith('th1', {
+      kind: NarrationKind.PAGE_READ,
+      params: { host: 'example.com', strategy: 'CRAWL4AI', blocked: 'HTTP_PLAIN' },
+    });
+  });
+
   it('a crawl that read nothing (robots Disallow) is RESEARCH_FAILED and returns no evidence', async () => {
     mockedRunResearch.mockResolvedValue(runWith('SITE_CRAWL', []) as never);
 

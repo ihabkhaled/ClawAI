@@ -17,6 +17,7 @@ import { ResearchRunRepository } from '../repositories/research-run.repository';
 import { ResearchUsageService } from '../../../common/services/research-usage.service';
 import {
   buildEvidenceBundle,
+  fetchProvenanceOf,
   pushFetchToolMarker,
   traceEntry,
 } from '../utilities/evidence-builder.utility';
@@ -547,6 +548,7 @@ export class ResearchManager {
       publishedAt: null,
       fetchedAt: new Date().toISOString(),
       confidence: DIRECT_FETCH_CONFIDENCE,
+      ...fetchProvenanceOf(result),
     };
   }
 
@@ -561,6 +563,7 @@ export class ResearchManager {
       publishedAt: searchItem.publishedAt,
       fetchedAt: new Date().toISOString(),
       confidence: Math.min(1, searchItem.confidence + 0.05),
+      ...fetchProvenanceOf(result),
     };
   }
 }

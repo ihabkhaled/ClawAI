@@ -1,3 +1,4 @@
+import { FETCH_STRATEGY_KEYS } from '@/constants/research.constants';
 import { NarrationKind } from '@/enums/narration-kind.enum';
 import type { TranslateFunction } from '@/types/i18n.types';
 import type { NarrationEntry } from '@/types/narration.types';
@@ -48,6 +49,18 @@ export function describeNarrationEntry(entry: NarrationEntry, t: TranslateFuncti
       return t('narration.searchDone', { count: Number(params['count'] ?? 0) });
     case NarrationKind.RESEARCH_FAILED:
       return t('narration.researchFailed');
+    case NarrationKind.PAGE_READ: {
+      const host = String(params['host'] ?? '');
+      const strategy = describeFetchStrategy(String(params['strategy'] ?? ''), t);
+      const blocked = String(params['blocked'] ?? '');
+      return blocked.length > 0
+        ? t('narration.pageReadAfter', {
+            host,
+            strategy,
+            blocked: describeFetchStrategy(blocked, t),
+          })
+        : t('narration.pageRead', { host, strategy });
+    }
     case NarrationKind.AI_THINKING: {
       const model = String(params['model'] ?? '');
       return model.length > 0
@@ -57,6 +70,12 @@ export function describeNarrationEntry(entry: NarrationEntry, t: TranslateFuncti
     default:
       return '';
   }
+}
+
+/** A fetch tier's name in the reader's language; an unknown kind is shown as-is (a newer server). */
+export function describeFetchStrategy(kind: string, t: TranslateFunction): string {
+  const key = FETCH_STRATEGY_KEYS[kind];
+  return key === undefined ? kind : t(key);
 }
 
 function describeCrawlProgress(

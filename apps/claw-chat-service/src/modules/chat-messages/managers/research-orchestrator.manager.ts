@@ -15,6 +15,7 @@ import {
   appendMissingUrls,
   bundleOf,
   mergeResearchRuns,
+  pageReadNarrations,
   summariseCrawl,
 } from '../utilities/research-orchestration.utility';
 
@@ -160,11 +161,28 @@ export class ResearchOrchestratorManager {
       await this.narration.append(threadId, { kind: NarrationKind.RESEARCH_FAILED });
       return null;
     }
+    await this.narratePagesRead(threadId, run);
     await this.narration.append(threadId, {
       kind: doneKind,
       params: { count: bundle.items.length, warnings: bundle.warnings.length },
     });
     return run;
+  }
+
+  /**
+   * One line per page an escalated fetch tier served ("Read example.com via
+   * Crawl4AI after Plain fetch was blocked"). Public because the explicit
+   * research modes (not AUTO) reach the same bundle through
+   * `runResearchForIntent`, and must narrate it the same way (rule 59).
+   */
+  async narratePagesRead(threadId: string, run: ResearchRunResponse | null): Promise<void> {
+    const bundle = bundleOf(run);
+    if (bundle === null) {
+      return;
+    }
+    for (const line of pageReadNarrations(bundle.items)) {
+      await this.narration.append(threadId, line);
+    }
   }
 
   private baseRequest(input: ResearchOrchestrationInput): ResearchRequestBase {

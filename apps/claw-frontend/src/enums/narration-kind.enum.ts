@@ -14,6 +14,8 @@ export enum NarrationKind {
   SEARCH_STARTED = 'search_started',
   SEARCH_DONE = 'search_done',
   RESEARCH_FAILED = 'research_failed',
+  /** A page was read by an escalated fetch tier; params: host, strategy, blocked. */
+  PAGE_READ = 'page_read',
   AI_THINKING = 'ai_thinking',
   /** The planner's own reasoning, model-written text shown as the AI speaking. */
   AI_THOUGHT = 'ai_thought',

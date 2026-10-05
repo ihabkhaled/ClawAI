@@ -23,6 +23,8 @@ import { type RetrievalBundle } from '@claw/shared-types';
 import { ResearchWorkflow } from '../../../common/enums/research-workflow.enum';
 import { detectPromptUrls } from '../../../common/utilities/prompt-url.utility';
 import { ResearchGateService } from '../services/research-gate.service';
+import { NarrationService } from '../services/narration.service';
+import { bundleOf, pageReadNarrations } from '../utilities/research-orchestration.utility';
 import { AccessControlService } from '../services/access-control.service';
 import { AppConfig } from '../../../app/config/app.config';
 import {
@@ -137,6 +139,7 @@ export class ContextAssemblyManager {
     private readonly researchGate: ResearchGateService,
     private readonly accessControl: AccessControlService,
     @Optional() private readonly localModelSelection?: LocalModelSelectionService,
+    @Optional() private readonly narration?: NarrationService,
   ) {}
 
   async assemble(
@@ -602,6 +605,14 @@ ${evidence.snippet}`);
       return null;
     }
     this.logger.log(`research: run ${run.id} completed status=${run.status}`);
+    // Compare / Consensus / Escalation / the labs research here (rule 59): they
+    // say how each page was read the same way normal chat does.
+    const bundle = bundleOf(run);
+    if (threadId !== undefined && bundle !== null) {
+      for (const line of pageReadNarrations(bundle.items)) {
+        await this.narration?.append(threadId, line);
+      }
+    }
     return run;
   }
 

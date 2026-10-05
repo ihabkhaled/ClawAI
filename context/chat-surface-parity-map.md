@@ -6,15 +6,16 @@ Walk this table before calling a chat change done.
 
 ## Shared code (a change here reaches every surface)
 
-| Concern                                                                           | Shared piece                                                                                                            |
-| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| What a model sees (history, files, memory, packs, cross-thread, research, window) | `ChatContextGatewayManager` -> `ContextAssemblyManager`                                                                 |
-| Calling a model (request shape, hold/ceiling/release, ledger, fallback, sampling) | `ModeExecutionGatewayManager` -> `ChatExecutionManager.callProvider`                                                    |
-| The thread (ownership, context packs)                                             | `resolveOrchestrationThread` (`utilities/orchestration-thread.utility.ts`)                                              |
-| Request fields                                                                    | Zod fragments: `researchFields`, `attachmentFields`, `contextPackFields` (`dto/`)                                       |
-| Generation-intent guard, named model, platform identity                           | `generationRequestText` (shared-utilities), `named-model.utility.ts`, `platform-identity` block                         |
-| UI request spread                                                                 | `useOrchestrationComposer().sharedPayload`                                                                              |
-| UI controls                                                                       | `OrchestrationPageShell` (labs), `compare/page.tsx`, `in-thread-compare-panel.tsx`, from the chat composer's components |
+| Concern                                                                           | Shared piece                                                                                                               |
+| --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| What a model sees (history, files, memory, packs, cross-thread, research, window) | `ChatContextGatewayManager` -> `ContextAssemblyManager`                                                                    |
+| Calling a model (request shape, hold/ceiling/release, ledger, fallback, sampling) | `ModeExecutionGatewayManager` -> `ChatExecutionManager.callProvider`                                                       |
+| The thread (ownership, context packs)                                             | `resolveOrchestrationThread` (`utilities/orchestration-thread.utility.ts`)                                                 |
+| Request fields                                                                    | Zod fragments: `researchFields`, `attachmentFields`, `contextPackFields` (`dto/`)                                          |
+| Generation-intent guard, named model, platform identity                           | `generationRequestText` (shared-utilities), `named-model.utility.ts`, `platform-identity` block                            |
+| Research evidence narration (how each page was read, `PAGE_READ`)                 | `pageReadNarrations` via `ResearchOrchestratorManager` (AUTO + explicit modes) and `ContextAssemblyManager` (gateway path) |
+| UI request spread                                                                 | `useOrchestrationComposer().sharedPayload`                                                                                 |
+| UI controls                                                                       | `OrchestrationPageShell` (labs), `compare/page.tsx`, `in-thread-compare-panel.tsx`, from the chat composer's components    |
 
 ## Surfaces
 
