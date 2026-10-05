@@ -1,6 +1,5 @@
 import { type Mock, vi } from 'vitest';
 import { UsersService } from '../services/users.service';
-import { type UserDeletionOutboxRepository } from '../repositories/user-deletion-outbox.repository';
 import { type UsersRepository } from '../repositories/users.repository';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
@@ -106,7 +105,7 @@ describe('UsersService', () => {
       authEmailAdapter as unknown as AuthEmailAdapter,
       rolesService as unknown as RolesService,
       plansRepository as unknown as PlansRepository,
-      userDeletionOutbox as UserDeletionOutboxRepository,
+      userDeletionOutbox,
     );
   });
 

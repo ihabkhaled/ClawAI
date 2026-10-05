@@ -69,11 +69,11 @@ Auth deleted accounts without durable cross-service propagation. A failed or del
 
 ## Change
 
-Added Auth's transactional outbox and typed RabbitMQ event, idempotent Threads and Generation consumers, hashed tombstones, anonymous retention of eligible public work, private data cleanup, and enqueue guards. Fixed Windows deployment-test shell selection for Git Bash.
+Added Auth's transactional outbox and typed RabbitMQ event, idempotent Threads and Generation consumers, hashed tombstones, anonymous retention of eligible public work, private data cleanup, and enqueue guards. Fixed Windows deployment-test shell selection for Git Bash. Follow-up CI correction narrows the Auth service dependency to `Pick<UserDeletionOutboxRepository, 'deleteAccount'>` while injecting the repository class token explicitly.
 
 ## Now
 
-Auth, Threads, Generation, and shared-types focused tests pass; touched workspaces typecheck/build; Prisma schemas validate; knowledge and inventory checks pass. Full live QA, GitHub CI, and deployment evidence remain pending.
+Auth, Threads, Generation, and shared-types focused tests pass; touched workspaces typecheck/build; Prisma schemas validate; knowledge and inventory checks pass. The first GitHub CI run failed only Auth typecheck on the pre-fix test double cast. The follow-up correction passes local Auth typecheck, ESLint, and 69 focused tests; follow-up CI and deployment evidence remain pending.
 
 ## Why
 

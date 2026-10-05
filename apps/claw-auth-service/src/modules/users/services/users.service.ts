@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { UsersRepository } from '../repositories/users.repository';
@@ -50,7 +50,8 @@ export class UsersService {
     private readonly authEmailAdapter: AuthEmailAdapter,
     private readonly rolesService: RolesService,
     private readonly plansRepository: PlansRepository,
-    private readonly userDeletionOutbox: UserDeletionOutboxRepository,
+    @Inject(UserDeletionOutboxRepository)
+    private readonly userDeletionOutbox: Pick<UserDeletionOutboxRepository, 'deleteAccount'>,
   ) {}
 
   async create(dto: CreateUserDto, actorId: string): Promise<SafeUser> {
