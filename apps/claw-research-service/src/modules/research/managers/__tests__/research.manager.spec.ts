@@ -2,6 +2,7 @@ import { type Mock, vi } from 'vitest';
 import { ProviderSelectionMode } from '../../../../common/enums/provider-selection-mode.enum';
 import { ResearchWorkflowKind } from '../../../../common/enums/research-workflow-kind.enum';
 import { SearchProviderKind } from '../../../../common/enums/search-provider-kind.enum';
+import { FetchRenderHint } from '../../../fetch/enums/fetch-render-hint.enum';
 import { ResearchManager } from '../research.manager';
 import type { SiteAuditManager } from '../site-audit.manager';
 import type { SiteCrawlManager } from '../site-crawl.manager';
@@ -368,6 +369,8 @@ describe('ResearchManager', () => {
         undefined,
         undefined,
         expect.any(String),
+        undefined,
+        undefined,
       );
       expect(search.execute).not.toHaveBeenCalled();
       expect(lastBundle().items).toEqual([
@@ -393,6 +396,31 @@ describe('ResearchManager', () => {
         'thread-42',
         undefined,
         expect.any(String),
+        undefined,
+        undefined,
+      );
+    });
+
+    it('forwards the planner render hint to the crawl (tier ordering only)', async () => {
+      siteCrawlManager.crawl.mockResolvedValue([]);
+
+      await manager.run('u1', {
+        intent: 'crawl https://example.com/',
+        workflow: ResearchWorkflowKind.SITE_CRAWL,
+        render: FetchRenderHint.JS,
+      });
+
+      expect(siteCrawlManager.crawl).toHaveBeenCalledWith(
+        'u1',
+        'https://example.com/',
+        expect.any(Array),
+        expect.any(Array),
+        expect.any(Array),
+        undefined,
+        undefined,
+        expect.any(String),
+        undefined,
+        FetchRenderHint.JS,
       );
     });
 

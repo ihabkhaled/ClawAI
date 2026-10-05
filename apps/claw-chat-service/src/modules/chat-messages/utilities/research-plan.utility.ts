@@ -5,6 +5,7 @@ import {
   RESEARCH_PLANNER_MAX_PAGES,
 } from '../../../common/constants/research-gate.constants';
 import { PlannedResearchAction } from '../../../common/enums/planned-research-action.enum';
+import { ResearchRenderHint } from '../../../common/enums/research-render-hint.enum';
 import {
   PLANNER_NARRATION_MAX_CHARS,
   PLANNER_QUERY_MAX_CHARS,
@@ -66,6 +67,7 @@ export function parseResearchPlan(
         : urls,
     query: readQuery(parsed['query']),
     maxPages: readMaxPages(parsed['maxPages']),
+    ...readRenderHint(parsed['render'], action),
     narration: readNarration(parsed['narration']),
     thinking: guardThinking(
       readThinking(parsed['thinking']),
@@ -152,7 +154,8 @@ function isExcluded(
   const host = hostOf(url);
   const userHosts = new Set(userUrls.map(hostOf));
   return (
-    !userHosts.has(host) && excludedUrls.some((excluded) => excluded === url || hostOf(excluded) === host)
+    !userHosts.has(host) &&
+    excludedUrls.some((excluded) => excluded === url || hostOf(excluded) === host)
   );
 }
 
@@ -173,7 +176,29 @@ function readQuery(value: unknown): string | null {
 }
 
 function readMaxPages(value: unknown): number {
-  return typeof value !== 'number' || !Number.isFinite(value) || value < 1 ? RESEARCH_PLANNER_DEFAULT_MAX_PAGES : Math.min(Math.floor(value), RESEARCH_PLANNER_MAX_PAGES);
+  return typeof value !== 'number' || !Number.isFinite(value) || value < 1
+    ? RESEARCH_PLANNER_DEFAULT_MAX_PAGES
+    : Math.min(Math.floor(value), RESEARCH_PLANNER_MAX_PAGES);
+}
+
+/**
+ * The planner's optional tier-ordering hint. Only the two known values are
+ * accepted (anything else is dropped, not guessed), and only for actions that
+ * open pages: a "search"/"answer" plan has no page to render.
+ */
+function readRenderHint(
+  value: unknown,
+  action: PlannedResearchAction,
+): { render?: ResearchRenderHint } {
+  const opensPages =
+    action === PlannedResearchAction.CRAWL || action === PlannedResearchAction.CRAWL_THEN_SEARCH;
+  if (!opensPages || typeof value !== 'string') {
+    return {};
+  }
+  const hint = value.trim().toLowerCase();
+  return hint === ResearchRenderHint.JS || hint === ResearchRenderHint.STEALTH
+    ? { render: hint }
+    : {};
 }
 
 function readNarration(value: unknown): string {

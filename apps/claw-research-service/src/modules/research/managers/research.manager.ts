@@ -177,6 +177,8 @@ export class ResearchManager {
           dto.correlationId,
           dto.maxPages,
           dto.intent,
+          undefined,
+          dto.render,
         );
         items.push(...crawled);
       }
@@ -327,7 +329,7 @@ export class ResearchManager {
     for (const url of urls) {
       const start = Date.now();
       try {
-        const result = await this.fetchService.fetchPage(userId, { url });
+        const result = await this.fetchService.fetchPage(userId, { url, render: dto.render });
         pushFetchToolMarker(toolsUsed, result);
         toolsUsed.push('web_fetch:user_url');
         const evidence = this.directFetchResultToEvidence(result);

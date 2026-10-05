@@ -1,4 +1,5 @@
 import { FetchStrategyKind } from '../../../generated/prisma';
+import { FetchRenderHint } from '../enums/fetch-render-hint.enum';
 import type { SidecarHealthProbe } from '../types/sidecar.types';
 
 /**
@@ -94,6 +95,29 @@ export const SIDECAR_HEALTH_PROBES: readonly SidecarHealthProbe[] = [
  * the probes run in parallel, so 2 s leaves room for the DB read and the reply.
  */
 export const SIDECAR_HEALTH_TIMEOUT_MS = 2_000;
+
+/**
+ * Tiers a render hint pulls to the FRONT of the chain, in this order. Only
+ * tiers already in the (enabled, eligible) chain move; the official API stays
+ * first, and the reader and archive never move up (they are third parties and
+ * stale). FlareSolverr is listed for `stealth` but is still gated by the
+ * escalation policy (JS challenge only), so a hint cannot summon it early.
+ */
+export const FETCH_RENDER_HINT_PREFERRED_KINDS: Readonly<
+  Record<FetchRenderHint, readonly FetchStrategyKind[]>
+> = {
+  [FetchRenderHint.JS]: [
+    FetchStrategyKind.HEADLESS_BROWSER,
+    FetchStrategyKind.CRAWL4AI,
+    FetchStrategyKind.FIRECRAWL,
+  ],
+  [FetchRenderHint.STEALTH]: [
+    FetchStrategyKind.HTTP_TLS_IMPERSONATE,
+    FetchStrategyKind.HEADLESS_BROWSER,
+    FetchStrategyKind.FLARESOLVERR,
+    FetchStrategyKind.CRAWL4AI,
+  ],
+};
 
 /** How long one sidecar report is reused, in ms: `/health` is polled, the probes are not free. */
 export const SIDECAR_HEALTH_CACHE_TTL_MS = 15_000;

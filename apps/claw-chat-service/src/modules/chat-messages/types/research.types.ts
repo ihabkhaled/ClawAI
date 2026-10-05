@@ -4,6 +4,7 @@
  * — we only type the fields the chat layer actually reads.
  */
 
+import type { ResearchRenderHint } from '../../../common/enums/research-render-hint.enum';
 import type { ResearchWorkflow } from '../../../common/enums/research-workflow.enum';
 
 /** How a page was read (research-service `EvidenceFetchProvenance`): tier kind + trail of kind/outcome. */
@@ -87,6 +88,8 @@ export type ResearchRequest = {
   correlationId?: string;
   /** Pages a SITE_CRAWL may read, chosen by the planner. */
   maxPages?: number;
+  /** The planner's tier-ordering hint for the pages it opens (ADR-121 addendum 3). */
+  render?: ResearchRenderHint;
   /** A planner-written search query, used instead of the raw prompt. */
   searchQuery?: string;
 };

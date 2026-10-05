@@ -30,6 +30,7 @@ import { ResearchProgressPublisher } from './research-progress-publisher.service
 import type { FeedEntry } from '../../../common/types/feed.types';
 import type { RobotsTxtResult } from '../../../common/types/robots-txt.types';
 import type { SitemapUrlEntry } from '../../../common/types/sitemap.types';
+import type { FetchRenderHint } from '../../fetch/enums/fetch-render-hint.enum';
 import type { FetchResult } from '../../fetch/types/fetch.types';
 import type {
   CrawlCandidate,
@@ -68,6 +69,7 @@ export class SiteCrawlManager {
     maxPages: number = CRAWL_DEFAULT_MAX_PAGES,
     intent = '',
     maxLinkDepth: number = CRAWL_MAX_LINK_DEPTH,
+    render?: FetchRenderHint,
   ): Promise<EvidenceItem[]> {
     const origin = this.safeOrigin(startUrl);
     if (origin === null) {
@@ -80,7 +82,9 @@ export class SiteCrawlManager {
     const robots = await this.fetchRobotsTxt(userId, origin, trace, toolsUsed);
     this.progressPublisher.publish(correlationId, 'robots', `Checked ${origin}/robots.txt`, 0, 0);
 
-    const homepage = await this.fetchOne(userId, startUrl, trace, warnings, 'homepage');
+    // The hint applies to the page the user named. If a renderer wins there, host
+    // memory moves it to the front for the rest of this site's pages as well.
+    const homepage = await this.fetchOne(userId, startUrl, trace, warnings, 'homepage', render);
     if (homepage === null) {
       // Nothing to crawl from if even the page the user named cannot be
       // read - matches runDirectFetch naming the page that failed.
@@ -438,10 +442,11 @@ export class SiteCrawlManager {
     trace: ResearchTraceEntry[],
     warnings: string[],
     phase: string,
+    render?: FetchRenderHint,
   ): Promise<FetchResult | null> {
     const start = Date.now();
     try {
-      const result = await this.fetchService.fetchPage(userId, { url });
+      const result = await this.fetchService.fetchPage(userId, { url, render });
       trace.push(
         traceEntry(
           phase,

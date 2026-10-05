@@ -212,6 +212,39 @@ describe('ResearchOrchestratorManager', () => {
     ]);
   });
 
+  it('passes the planner render hint to research-service, and omits it when unset', async () => {
+    plan.mockResolvedValue({
+      action: PlannedResearchAction.CRAWL,
+      urls: ['https://app.example.com/'],
+      query: null,
+      maxPages: 3,
+      render: 'js',
+      narration: '',
+      thinking: '',
+      decidedBy: 'm1',
+    });
+    mockedRunResearch.mockResolvedValue(
+      runWith('SITE_CRAWL', ['https://app.example.com/']) as never,
+    );
+    await manager.run(input);
+    expect(mockedRunResearch).toHaveBeenLastCalledWith(
+      'http://research.test',
+      expect.objectContaining({ render: 'js' }),
+    );
+
+    plan.mockResolvedValue({
+      action: PlannedResearchAction.CRAWL,
+      urls: ['https://app.example.com/'],
+      query: null,
+      maxPages: 3,
+      narration: '',
+      thinking: '',
+      decidedBy: 'm1',
+    });
+    await manager.run(input);
+    expect(mockedRunResearch.mock.calls.at(-1)?.[1]).not.toHaveProperty('render');
+  });
+
   it('narrates how an escalated page was read, before the done line', async () => {
     const run = runWith('SITE_CRAWL', ['https://example.com/']) as {
       bundle: { items: Array<Record<string, unknown>> };

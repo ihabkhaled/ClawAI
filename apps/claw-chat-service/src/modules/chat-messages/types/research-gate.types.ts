@@ -1,4 +1,5 @@
 import type { PlannedResearchAction } from '../../../common/enums/planned-research-action.enum';
+import type { ResearchRenderHint } from '../../../common/enums/research-render-hint.enum';
 
 /** The classifier's decision about one user message. */
 export type ResearchGateVerdict = {
@@ -35,6 +36,8 @@ export type ResearchPlan = {
   query: string | null;
   /** Pages to read per crawled site, already bounded. */
   maxPages: number;
+  /** The planner's tier-ordering hint for the crawled pages; undefined when it set none. */
+  render?: ResearchRenderHint;
   /** One short first-person sentence shown to the user, e.g. "I'll read that site first." */
   narration: string;
   /** The planner's reasoning in its own words, shown as the AI thinking; '' when absent. */

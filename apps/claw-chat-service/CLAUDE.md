@@ -1609,6 +1609,13 @@ context-gateway research Compare/Consensus/Escalation/labs use (`ContextAssembly
 `metadata.research.bundle`. The frontend renders a chip per source in `EvidenceViewer`
 (`research-run-details`) and the line in `NarrationLog`.
 
+**Planner render hint (2026-10-05, ADR-121 addendum 3).** The planner JSON may carry
+`"render": "js"|"stealth"|null` (`RESEARCH_PLANNER_SYSTEM_PROMPT` tells it to judge the site, not
+match keywords). `parseResearchPlan` keeps only the two values and only on crawl actions;
+`ResearchOrchestratorManager.crawl` sends it as `ResearchRequest.render`. It is a tier-ordering
+hint in research-service; it can never override robots/SSRF/refusals. The context-gateway URL
+crawl (no planner) sends none.
+
 ## An explicit fetch command runs even with research off (2026-09-30)
 
 "crawl <url>" / "curl <url>" with the research toggle off answered "I have no fetched

@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
 import { NarrationKind } from '../../../common/enums/narration-kind.enum';
 import { PlannedResearchAction } from '../../../common/enums/planned-research-action.enum';
+import type { ResearchRenderHint } from '../../../common/enums/research-render-hint.enum';
 import { ResearchWorkflow } from '../../../common/enums/research-workflow.enum';
 import { RESEARCH_PLANNER_DEFAULT_MAX_PAGES } from '../../../common/constants/research-gate.constants';
 import { runResearch } from '../../../common/utilities';
@@ -65,7 +66,7 @@ export class ResearchOrchestratorManager {
       return this.search(input, plan.query);
     }
 
-    const crawled = await this.crawl(input, plan.urls, plan.maxPages);
+    const crawled = await this.crawl(input, plan.urls, plan.maxPages, plan.render);
     if (plan.action === PlannedResearchAction.CRAWL) {
       return crawled;
     }
@@ -109,6 +110,7 @@ export class ResearchOrchestratorManager {
     input: ResearchOrchestrationInput,
     urls: string[],
     maxPages: number,
+    render?: ResearchRenderHint,
   ): Promise<ResearchRunResponse | null> {
     await this.narration.append(input.threadId, {
       kind: NarrationKind.CRAWL_STARTED,
@@ -122,6 +124,7 @@ export class ResearchOrchestratorManager {
       intent,
       workflow: ResearchWorkflow.SITE_CRAWL,
       maxPages,
+      ...(render === undefined ? {} : { render }),
     });
     return this.narrateOutcome(input.threadId, run, NarrationKind.CRAWL_DONE);
   }

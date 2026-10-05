@@ -75,7 +75,7 @@ export class FetchService {
     try {
       const { result } = await this.orchestrator.fetchWithEscalation(
         { url: normalized, timeoutMs: dto.timeoutMs },
-        this.escalationOptions(purpose, robots),
+        { ...this.escalationOptions(purpose, robots), renderHint: dto.render },
       );
       await this.persist(job.id, result, cacheKey);
       return result;

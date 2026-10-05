@@ -23,6 +23,7 @@ import {
   hostOf,
   loggablePath,
   longerThin,
+  orderChainForHint,
   publicConfigOf,
   summariseAttempts,
 } from '../utilities/escalation-helpers.utility';
@@ -82,7 +83,8 @@ export class FetchStrategyOrchestratorService {
     const attempts: FetchStrategyAttempt[] = [];
     let bestThin: ThinCandidate | null = null;
 
-    for (const config of await this.buildChain(host)) {
+    const chain = orderChainForHint(await this.buildChain(host), options.renderHint);
+    for (const config of chain) {
       if (attempts.length >= FETCH_STRATEGY_MAX_ATTEMPTS || hasTerminalSignal(observed)) {
         break;
       }

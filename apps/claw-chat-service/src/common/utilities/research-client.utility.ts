@@ -48,6 +48,7 @@ export async function runResearch(
         maxResults: request.maxResults ?? inferDefaultMaxResults(request.workflow),
         correlationId: request.correlationId,
         maxPages: request.maxPages,
+        render: request.render,
         searchQuery: request.searchQuery,
       },
       timeoutMs:

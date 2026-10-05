@@ -1,4 +1,5 @@
 import { PlannedResearchAction } from '../../../../common/enums/planned-research-action.enum';
+import { ResearchRenderHint } from '../../../../common/enums/research-render-hint.enum';
 import { parseCrawlFollowUp, parseResearchPlan } from '../research-plan.utility';
 
 describe('parseResearchPlan', () => {
@@ -18,6 +19,35 @@ describe('parseResearchPlan', () => {
       action: PlannedResearchAction.SEARCH,
       query: 'ceasefire news today',
       narration: 'I will check the news.',
+    });
+  });
+
+  describe('render hint', () => {
+    const crawl = (render: unknown) =>
+      plan({ action: 'crawl', urls: ['https://app.example.com/'], render }, [
+        'https://app.example.com/',
+      ]);
+
+    it('keeps a valid js/stealth hint on a crawl', () => {
+      expect(crawl('js')?.render).toBe(ResearchRenderHint.JS);
+      expect(crawl(' Stealth ')?.render).toBe(ResearchRenderHint.STEALTH);
+    });
+
+    it('drops anything else instead of guessing (null, unknown word, wrong type)', () => {
+      expect(crawl(null)?.render).toBeUndefined();
+      expect(crawl('turbo')?.render).toBeUndefined();
+      expect(crawl(1)?.render).toBeUndefined();
+    });
+
+    it('ignores a hint on a plan that opens no page', () => {
+      expect(plan({ action: 'search', query: 'news today', render: 'js' })?.render).toBeUndefined();
+      expect(plan({ action: 'answer', render: 'stealth' })?.render).toBeUndefined();
+    });
+
+    it('does not change the rule that a user link is always opened', () => {
+      const overruled = plan({ action: 'answer', render: 'js' }, ['https://a.example.com/']);
+      expect(overruled?.action).toBe(PlannedResearchAction.CRAWL_THEN_SEARCH);
+      expect(overruled?.urls).toEqual(['https://a.example.com/']);
     });
   });
 

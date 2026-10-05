@@ -1,6 +1,30 @@
-import type { FetchStrategyConfig } from '../../../generated/prisma';
+import { type FetchStrategyConfig, FetchStrategyKind } from '../../../generated/prisma';
+import { FETCH_RENDER_HINT_PREFERRED_KINDS } from '../constants/fetch-strategy.constants';
+import type { FetchRenderHint } from '../enums/fetch-render-hint.enum';
 import type { FetchStrategyAttempt, ThinCandidate } from '../types/fetch-strategy.types';
 import type { FetchAttemptSummary, FetchResult } from '../types/fetch.types';
+
+/**
+ * Reorders an already enabled chain for a render hint: the hint's preferred
+ * tiers move to the front (in the hint's order, after OFFICIAL_API), everything
+ * else keeps its relative order. A pure reorder: it never adds or removes a
+ * tier, so eligibility, robots and the stop rules are decided exactly as before.
+ */
+export function orderChainForHint(
+  chain: readonly FetchStrategyConfig[],
+  hint: FetchRenderHint | undefined,
+): FetchStrategyConfig[] {
+  if (hint === undefined) {
+    return [...chain];
+  }
+  const preferredKinds = FETCH_RENDER_HINT_PREFERRED_KINDS[hint];
+  const official = chain.filter((config) => config.kind === FetchStrategyKind.OFFICIAL_API);
+  const preferred = preferredKinds.flatMap((kind) =>
+    chain.filter((config) => config.kind === kind),
+  );
+  const rest = chain.filter((config) => !official.includes(config) && !preferred.includes(config));
+  return [...official, ...preferred, ...rest];
+}
 
 /** The attempt trail reduced to kind + outcome: nothing a URL, body, status or error text could leak through. */
 export function summariseAttempts(

@@ -54,6 +54,11 @@ the frontend `NarrationLog`.
    on every research path. Kind and outcome only: no URL, status, body or error text. A cache
    hit has no provenance and gets no claim (ADR-121 addendum 2).
 
+10. **The planner's `render` hint is an ordering hint, nothing more.** It is model-judged
+    (the prompt says so; no keyword list), validated to `js`/`stealth`, and only reorders tiers
+    that are already enabled and eligible. It never skips robots, SSRF or the refusal stops
+    (ADR-121 addendum 3). Do not use it to enable a tier or lift a bound.
+
 ## Prohibited
 
 - A URL regex outside `url-detection.utility.ts`.

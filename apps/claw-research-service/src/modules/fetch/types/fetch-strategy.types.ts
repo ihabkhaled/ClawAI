@@ -1,5 +1,6 @@
 import type { FetchStrategyConfig, FetchStrategyKind } from '../../../generated/prisma';
 import type { BlockSignalKind } from '../../../common/enums/block-signal-kind.enum';
+import type { FetchRenderHint } from '../enums/fetch-render-hint.enum';
 import type { FetchResult } from './fetch.types';
 
 /** One row's worth of strategy configuration, as read by the orchestrator. */
@@ -53,4 +54,6 @@ export type EscalationOptions = {
   minHostIntervalMs?: number | null;
   /** Strategies this call must not use (an operator kill switch, for example). */
   excludeKinds?: readonly FetchStrategyKind[];
+  /** A caller's/planner's guess at how the page must be read: reorders the chain only. */
+  renderHint?: FetchRenderHint;
 };

@@ -6,6 +6,7 @@ import {
   SEARCH_MAX_MAX_RESULTS,
   SEARCH_MIN_QUERY_LENGTH,
 } from '../../../common/constants/search.constants';
+import { FetchRenderHint } from '../../fetch/enums/fetch-render-hint.enum';
 import { ExtractionProfile } from '../../scrape/enums/extraction-profile.enum';
 import { CRAWL_MAX_PAGES_CEILING } from '../../../common/constants/crawl.constants';
 
@@ -55,6 +56,12 @@ export const executeResearchSchema = z.object({
    * A prompt is not a query: "compare what example.com charges with its
    * competitors" searches far better as "example.com competitors pricing".
    */
+  /**
+   * The planner model's guess that the named page needs JS rendering or
+   * anti-bot handling. Reorders fetch tiers for the pages the user named only;
+   * every robots/SSRF/refusal invariant still applies (ADR-121 addendum 3).
+   */
+  render: z.nativeEnum(FetchRenderHint).optional(),
   searchQuery: z.string().min(SEARCH_MIN_QUERY_LENGTH).max(500).optional(),
 });
 

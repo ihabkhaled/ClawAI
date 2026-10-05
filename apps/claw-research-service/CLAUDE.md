@@ -54,6 +54,10 @@ Controller → Service → Repository (data access)
   copied onto `EvidenceItem.fetch` by `fetchProvenanceOf` (evidence-builder utility) in the
   three evidence converters (direct fetch, search fetch, site crawl). A cache hit has no
   `servedBy`, so its item has no `fetch`: not measured, not claimed. chat-service narrates it.
+- **Render hint (ADR-121 addendum 3).** `render: 'js'|'stealth'` (`FetchRenderHint`) on the
+  research DTO / `FetchRequestDto` reaches `EscalationOptions.renderHint`;
+  `orderChainForHint` only reorders the enabled chain. Never use it to enable a tier or skip
+  a gate.
 - How to add/enable/prove a tier: `skills/add-a-fetch-strategy.md`.
 - _(future)_ `EvidenceBundle`, `ScrapeProfile`, `CloneJob`.
 

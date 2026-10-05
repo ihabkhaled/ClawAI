@@ -155,6 +155,23 @@ trail stopped at research-service. Now:
   migration); the planner `render` hint and routing chat `web_fetch` through this chain are
   batches 2 and 3 of the same programme.
 
+## Addendum 3 (2026-10-05): the planner may hint how a page must be read
+
+The planner model decides, from its own reading of the request (not keywords), whether the
+named site needs JavaScript rendering or anti-bot handling, and emits `"render": "js" | "stealth" | null`
+in the plan JSON (`parseResearchPlan` keeps only those two values, only on crawl actions).
+
+- It travels chat-service `ResearchRequest.render` -> `executeResearchSchema.render` ->
+  `FetchRequestDto.render` -> `EscalationOptions.renderHint`.
+- Effect: `orderChainForHint` moves the hint's preferred tiers (`FETCH_RENDER_HINT_PREFERRED_KINDS`)
+  to the front, after the official API. It is a pure reorder of the chain that is already
+  enabled: it adds no tier, enables no sidecar, and `excludeKinds`, `isStrategyEligible`
+  (FlareSolverr only after a JS interstitial), robots.txt, SSRF checks, 401/451/captcha stops,
+  the 6-attempt and 60 s bounds all apply unchanged. Reader and archive never move up.
+- Scope: user-named pages (direct fetch, crawl homepage). The homepage winner is recorded by
+  host memory, which then promotes it for the rest of that crawl. Pages found by search and
+  discovered crawl pages are not hinted.
+
 ## Addendum (2026-09-25): sidecar health
 
 health-service still never connects to a sidecar (it is not on
