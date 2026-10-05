@@ -22,6 +22,17 @@ Browser (https://claw.local)
 Never a JWT in a URL query param (leaks in logs/history/Referer). Auth is always
 a Bearer header.
 
+## Threads generation and publication
+
+The `/threads` portal submits an owner-selected chat ID, topic, publication
+type, selected maximum spend, model roles, and `threads-public-v1` intent to
+`POST /api/v1/thread-publications/generations`. Threads verifies ownership and
+hands an immutable snapshot request to the isolated generation service. The UI
+polls `GET /api/v1/thread-publications/:id/generation-state`; generation
+results stay private and the owner must separately approve publication. Public
+intent is displayed before enqueue, and private chat IDs/snapshots are never
+included in the public publication contract.
+
 ## nginx routing (longest-prefix)
 
 nginx routes by longest prefix, so specific routes must precede generic ones.

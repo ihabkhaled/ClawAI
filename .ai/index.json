@@ -880,8 +880,19 @@
       ],
       "title": "60 - No change is done without walking every QA lane and recording the evidence",
       "tokens": 99
+    },
+    {
+      "in_brief": false,
+      "path": "rules/61-threads-account-deletion.md",
+      "score": 0.54,
+      "section": "constraints",
+      "tags": [
+        "rule"
+      ],
+      "title": "Threads account deletion is durable and anonymous",
+      "tokens": 75
     }
   ],
   "tier": "standard",
-  "used": 3863
+  "used": 3886
 }

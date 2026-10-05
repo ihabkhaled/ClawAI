@@ -13,7 +13,7 @@ _Budget: standard tier, 12,000 tokens. Anything that did not fit is listed as a 
 
 Every frontier AI model in one workspace that sees, hears, researches and builds. Pay as you go, bring your team, or run it on your own hardware.
 
-Current version: `1.175.2`. A shipped change bumps it in every manifest (`akinator_version.py`).
+Current version: `1.189.0`. A shipped change bumps it in every manifest (`akinator_version.py`).
 
 ## Constraints that must not break
 
@@ -165,4 +165,5 @@ _Did not fit the budget. Read on demand - the corpus is complete even when the b
 - 58 — Sign-in and sign-up routes carry per-route rate limits - `rules/58-auth-route-rate-limits.md`
 - 59 - Every chat surface is one pipeline: a change to normal chat reaches all of them - `rules/59-chat-surfaces-are-one-pipeline.md`
 - 60 - No change is done without walking every QA lane and recording the evidence - `rules/60-qa-evidence-is-mandatory-and-machine-checked.md`
+- Threads account deletion is durable and anonymous - `rules/61-threads-account-deletion.md`
 

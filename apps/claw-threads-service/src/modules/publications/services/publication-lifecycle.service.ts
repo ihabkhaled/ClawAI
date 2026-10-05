@@ -52,6 +52,7 @@ export class PublicationLifecycleService {
     ownerId: string,
   ): Promise<{
     publicationId: string;
+    publicationStatus: string;
     jobId: string;
     status: string;
     stage: string;
@@ -70,7 +71,7 @@ export class PublicationLifecycleService {
     if (state.status === 'WAITING_FOR_REVIEW' && state.draft) {
       await this.publications.savePrivateDraft(publicationId, state.draft);
     }
-    return { publicationId, ...state };
+    return { publicationId, publicationStatus: publication.status, ...state };
   }
 
   async cancelGeneration(

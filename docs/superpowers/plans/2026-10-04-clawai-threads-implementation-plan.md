@@ -251,6 +251,10 @@ cross-service QA, lint/typecheck/build, generated knowledge, and CI remain open.
 
 **Outcome:** Users can configure generation, review its cost/status, manage drafts/publications, contribute, report abuse, and review change requests in an accessible responsive interface.
 
+**Progress:** Owner creation now chooses a source chat, one of the four publication types, five model roles, and a required spend cap. A visible disclosure records public/indexing intent before enqueue. The portal polls owner state, previews the private draft and citations, and exposes the separate approval action. Revision editing, cancellation recovery UX, exports, owner/community moderation controls, device/accessibility verification, and the complete QA lane walk remain open.
+
+**Knowledge delta for this owner-flow slice:** `docs/02-business-product/clawai-threads-product-spec.md`, `docs/05-frontend/frontend-architecture.md`, `context/request-flow-map.md`, `wiki/Threads.md`, this plan, `docs/changes/2026-10-05-threads-batch-6-generation-owner-ui.md`, and `docs/qa-evidence/2026-10-05-threads-generation-owner-ui.md`. Generated `.ai/**`, workspace `AGENTS.md`, and the inventory snapshot are regenerated. No new skill (existing prompt-pack, frontend/i18n, metered-credit, and QA runbooks apply), rule (no new invariant or gate was introduced), ADR or memory entry (approved product decisions did not change), or router (canonical indexes already point to these docs) is needed. `context/chat-surface-parity-map.md` is unchanged because chat and its shared modes were not modified.
+
 **Code:**
 
 - Add Threads repository/hooks/components/pages under existing `apps/claw-frontend/src/lib/`, `src/hooks/`, `src/components/`, and `(portal)` route conventions; use `/api/v1/thread-publications`, never the legacy `/api/v1/threads` alias.

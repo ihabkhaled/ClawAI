@@ -139,7 +139,10 @@ describe('PublicationLifecycleService', () => {
       criticScore: 79,
     };
     const publications = {
-      findOwnedGeneration: vi.fn().mockResolvedValue({ generationJobId: 'job-private' }),
+      findOwnedGeneration: vi.fn().mockResolvedValue({
+        generationJobId: 'job-private',
+        status: 'READY_FOR_REVIEW',
+      }),
       savePrivateDraft: vi.fn().mockResolvedValue(undefined),
     };
     const generation = {
@@ -156,6 +159,7 @@ describe('PublicationLifecycleService', () => {
 
     await expect(service.getGenerationState('pub-1', 'owner-1')).resolves.toMatchObject({
       publicationId: 'pub-1',
+      publicationStatus: 'READY_FOR_REVIEW',
       status: 'WAITING_FOR_REVIEW',
       draft,
     });

@@ -127,6 +127,17 @@ queryKeys.threads.messages(id); // ["threads", "messages", "abc123"]
 
 Domains with key factories: `auth`, `threads`, `connectors`, `models`, `routing`, `localModels`, `runtimes`, `clientLogs`, `serverLogs`, `audits`, `usage`, `admin`, `memory`, `contextPacks`, `files`, `health`, `dashboard`.
 
+## Threads publication portal
+
+The authenticated `/threads` portal uses `threadPublicationsRepository` and
+TanStack Query for publication lists and owner generation state. Generation
+uses a filtered chat-thread list, the existing available-model catalog, and a
+required owner-entered spend cap. The visible public/indexing disclosure is
+shown before enqueue; the private draft and citations are shown before the
+separate owner publish action. Calls use `/api/v1/thread-publications`, never
+the legacy `/api/v1/threads` chat alias. Community controls and revision edits
+remain follow-up Batch 6 work.
+
 **Patterns:**
 
 - All `GET` requests use `useQuery` wrapped in a custom hook.

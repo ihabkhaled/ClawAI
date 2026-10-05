@@ -6,3 +6,19 @@ export type OwnedThreadPublication = {
   title: string | null;
   updatedAt: string;
 };
+
+export type ThreadGenerationState = {
+  publicationId: string;
+  publicationStatus: string;
+  jobId: string;
+  status: string;
+  stage: string;
+  round: number;
+  safeErrorCode: string | null;
+  draft: {
+    markdown: string;
+    citations: Array<{ evidenceId: string; url: string }>;
+    judgeScore: number;
+    criticScore: number;
+  } | null;
+};

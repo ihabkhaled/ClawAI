@@ -116,6 +116,7 @@ export type {
   QuotableSelection,
   QuoteDraftStore,
 } from './chat.types';
+export type { ThreadPublicationType } from '@/constants/thread-publication.constants';
 export type { UseDailyTokenIndicatorResult } from './daily-token.types';
 export type {
   Connector,

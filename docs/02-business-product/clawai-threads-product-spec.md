@@ -78,3 +78,16 @@ report review requires `THREAD_PUBLICATIONS_MODERATE`; moderators can hide a
 reported comment. Account deletion processing and community UI remain unfinished.
 Internationalization and public discovery integration also remain unfinished.
 Generation intent or a private draft alone does not make content public.
+
+## Owner creation flow delivery
+
+The `/threads` portal now lets an authenticated owner select a source chat,
+topic, publication type, author/Judge/Critic models, and a required maximum
+spend. Before enqueue, it presents the approved public/indexing intent; the
+generation request carries `threads-public-v1` and the selected micro-USD cap
+through the existing entitlement and credit-hold path. The portal polls only
+owner-scoped generation state and previews the private draft and citations.
+The publish action appears only when the publication is marked
+`READY_FOR_REVIEW`; generation completion by itself never makes a publication
+public. This is a partial Batch 6 delivery. Owner editing, exports, community
+controls, and the full browser/accessibility/device QA walk remain open.

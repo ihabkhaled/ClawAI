@@ -67,11 +67,15 @@ for owner approval; this is not automatic publication. Owners can create
 immutable text edits with a fresh spend cap and idempotency key. Generation
 revalidates the exact content against the parent's pinned source and evidence;
 the current public version stays live until the owner approves the passing edit.
-The owner portal now has an authenticated list endpoint at
+The owner portal has an authenticated list endpoint at
 `GET /api/v1/thread-publications/mine`; it returns at most 50 newest owned
-publication summaries without generation IDs or source snapshots. The frontend
-Threads portal reads this endpoint. Generation creation, draft review, and
-community contribution screens remain unfinished.
+publication summaries without generation IDs or source snapshots. The
+frontend portal now supports generation from an owner-selected chat, a required
+user-selected spend cap, public/indexing intent disclosure, status polling,
+draft and citation preview, and a separate owner approval action before
+publication. The workflow uses the existing model catalog and stays separate
+from the legacy chat-thread API. Revision editing and community contribution UI
+remain unfinished.
 Authenticated readers can comment, react, request changes, and report content.
 Public comment responses omit author IDs. Owners can accept a change request by
 creating a newly capped immutable revision that goes through the usual fresh
@@ -80,4 +84,5 @@ review and owner-approval flow. Moderation endpoints require
 `user.deleted` event. Threads keeps eligible approved work public anonymously,
 removes private snapshots and account links, and records a hashed tombstone;
 Generation removes private jobs and rejects later enqueue. UI and discovery
-integration remain unfinished. Live deletion-flow QA remains open.
+integration for community moderation and anonymous deletion remain unfinished.
+Live deletion-flow QA remains open.
