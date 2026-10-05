@@ -2,7 +2,7 @@
 
 Batch: threads-public-discovery
 Date: 2026-10-05
-Commits: (fill in after committing)
+Commits: `2c2fd9071`, `b29ea2229`, `61183bf65`
 Verdict: PARTIAL
 
 Every lane is filled in. PASS needs the command and its real output (or a path, a count, a
