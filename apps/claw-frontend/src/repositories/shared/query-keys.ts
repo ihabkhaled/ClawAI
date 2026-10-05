@@ -460,6 +460,9 @@ export const queryKeys = {
     list: () => ['researchProviders', 'list'] as const,
     detail: (id: string) => ['researchProviders', 'detail', id] as const,
   },
+  researchFetchStrategies: {
+    all: ['researchFetchStrategies'] as const,
+  },
   researchRuns: {
     all: ['researchRuns'] as const,
     list: (limit: number) => ['researchRuns', 'list', limit] as const,

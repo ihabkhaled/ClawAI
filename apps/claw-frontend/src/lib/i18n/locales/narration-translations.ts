@@ -40,6 +40,11 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
     strategyFirecrawl: 'Firecrawl',
     strategyReaderProxy: 'Reader service',
     strategyArchiveSnapshot: 'Archived copy',
+    strategiesTitle: 'Page readers',
+    strategiesDescription:
+      'Which tiers can read a web page right now. "Off" means switched off, not that a page did not need it.',
+    strategyAvailable: 'Available',
+    strategyOff: 'Off',
   },
   [Locale.AR]: {
     title: 'كيف عملت على هذا',
@@ -70,6 +75,11 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
     strategyFirecrawl: 'Firecrawl',
     strategyReaderProxy: 'خدمة القراءة',
     strategyArchiveSnapshot: 'نسخة مؤرشفة',
+    strategiesTitle: 'قارئات الصفحات',
+    strategiesDescription:
+      'أي المستويات يمكنها قراءة صفحة ويب الآن. "متوقف" يعني أنه مُعطَّل، وليس أن الصفحة لم تحتجه.',
+    strategyAvailable: 'متاح',
+    strategyOff: 'متوقف',
   },
   [Locale.DE]: {
     title: 'So habe ich daran gearbeitet',
@@ -100,6 +110,11 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
     strategyFirecrawl: 'Firecrawl',
     strategyReaderProxy: 'Reader-Dienst',
     strategyArchiveSnapshot: 'Archivierte Kopie',
+    strategiesTitle: 'Seitenleser',
+    strategiesDescription:
+      'Welche Stufen gerade eine Webseite lesen können. „Aus“ heißt abgeschaltet, nicht dass eine Seite sie nicht brauchte.',
+    strategyAvailable: 'Verfügbar',
+    strategyOff: 'Aus',
   },
   [Locale.ES]: {
     title: 'Cómo trabajé en esto',
@@ -130,6 +145,11 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
     strategyFirecrawl: 'Firecrawl',
     strategyReaderProxy: 'Servicio de lectura',
     strategyArchiveSnapshot: 'Copia archivada',
+    strategiesTitle: 'Lectores de páginas',
+    strategiesDescription:
+      'Qué niveles pueden leer una página web ahora. "Apagado" significa desactivado, no que una página no lo necesitara.',
+    strategyAvailable: 'Disponible',
+    strategyOff: 'Apagado',
   },
   [Locale.FA]: {
     title: 'چگونه روی این کار کردم',
@@ -160,6 +180,11 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
     strategyFirecrawl: 'Firecrawl',
     strategyReaderProxy: 'سرویس خواندن',
     strategyArchiveSnapshot: 'نسخه بایگانی‌شده',
+    strategiesTitle: 'خوانندگان صفحه',
+    strategiesDescription:
+      'کدام سطوح اکنون می‌توانند یک صفحه وب را بخوانند. «خاموش» یعنی غیرفعال شده، نه اینکه صفحه‌ای به آن نیاز نداشته.',
+    strategyAvailable: 'در دسترس',
+    strategyOff: 'خاموش',
   },
   [Locale.FR]: {
     title: "Comment j'ai travaillé là-dessus",
@@ -190,6 +215,11 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
     strategyFirecrawl: 'Firecrawl',
     strategyReaderProxy: 'Service de lecture',
     strategyArchiveSnapshot: 'Copie archivée',
+    strategiesTitle: 'Lecteurs de pages',
+    strategiesDescription:
+      'Quels niveaux peuvent lire une page web en ce moment. « Désactivé » signifie coupé, pas qu’une page n’en avait pas besoin.',
+    strategyAvailable: 'Disponible',
+    strategyOff: 'Désactivé',
   },
   [Locale.HI]: {
     title: 'मैंने इस पर कैसे काम किया',
@@ -220,6 +250,11 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
     strategyFirecrawl: 'Firecrawl',
     strategyReaderProxy: 'रीडर सेवा',
     strategyArchiveSnapshot: 'संग्रहीत प्रति',
+    strategiesTitle: 'पेज रीडर',
+    strategiesDescription:
+      'अभी कौन से स्तर वेब पेज पढ़ सकते हैं। "बंद" का मतलब बंद किया गया है, यह नहीं कि किसी पेज को इसकी जरूरत नहीं थी।',
+    strategyAvailable: 'उपलब्ध',
+    strategyOff: 'बंद',
   },
   [Locale.IT]: {
     title: 'Come ci ho lavorato',
@@ -250,6 +285,11 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
     strategyFirecrawl: 'Firecrawl',
     strategyReaderProxy: 'Servizio di lettura',
     strategyArchiveSnapshot: 'Copia archiviata',
+    strategiesTitle: 'Lettori di pagine',
+    strategiesDescription:
+      'Quali livelli possono leggere una pagina web in questo momento. "Spento" significa disattivato, non che una pagina non ne avesse bisogno.',
+    strategyAvailable: 'Disponibile',
+    strategyOff: 'Spento',
   },
   [Locale.JA]: {
     title: 'この回答の作業手順',
@@ -280,6 +320,11 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
     strategyFirecrawl: 'Firecrawl',
     strategyReaderProxy: 'リーダーサービス',
     strategyArchiveSnapshot: 'アーカイブされたコピー',
+    strategiesTitle: 'ページリーダー',
+    strategiesDescription:
+      '現在どの段階でウェブページを読み取れるかを示します。「オフ」は無効化されている意味で、ページに不要だったという意味ではありません。',
+    strategyAvailable: '利用可能',
+    strategyOff: 'オフ',
   },
   [Locale.PT]: {
     title: 'Como trabalhei nisto',
@@ -310,6 +355,11 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
     strategyFirecrawl: 'Firecrawl',
     strategyReaderProxy: 'Serviço de leitura',
     strategyArchiveSnapshot: 'Cópia arquivada',
+    strategiesTitle: 'Leitores de páginas',
+    strategiesDescription:
+      'Quais níveis podem ler uma página web agora. "Desligado" significa desativado, não que uma página não precisou dele.',
+    strategyAvailable: 'Disponível',
+    strategyOff: 'Desligado',
   },
   [Locale.RU]: {
     title: 'Как я над этим работал',
@@ -340,6 +390,11 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
     strategyFirecrawl: 'Firecrawl',
     strategyReaderProxy: 'Сервис чтения',
     strategyArchiveSnapshot: 'Архивная копия',
+    strategiesTitle: 'Читатели страниц',
+    strategiesDescription:
+      'Какие уровни сейчас могут прочитать веб-страницу. «Выкл.» означает, что уровень отключён, а не то, что странице он не понадобился.',
+    strategyAvailable: 'Доступно',
+    strategyOff: 'Выкл.',
   },
   [Locale.TH]: {
     title: 'ขั้นตอนที่ฉันใช้ทำงานนี้',
@@ -370,6 +425,11 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
     strategyFirecrawl: 'Firecrawl',
     strategyReaderProxy: 'บริการอ่านหน้าเว็บ',
     strategyArchiveSnapshot: 'สำเนาที่เก็บถาวร',
+    strategiesTitle: 'ตัวอ่านหน้าเว็บ',
+    strategiesDescription:
+      'ระดับใดที่อ่านหน้าเว็บได้ในขณะนี้ "ปิด" หมายถึงถูกปิดใช้งาน ไม่ได้หมายความว่าหน้านั้นไม่จำเป็นต้องใช้',
+    strategyAvailable: 'พร้อมใช้งาน',
+    strategyOff: 'ปิด',
   },
   [Locale.ZH]: {
     title: '我是如何完成的',
@@ -400,5 +460,9 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
     strategyFirecrawl: 'Firecrawl',
     strategyReaderProxy: '阅读服务',
     strategyArchiveSnapshot: '存档副本',
+    strategiesTitle: '页面读取器',
+    strategiesDescription: '当前哪些层级可以读取网页。“关闭”表示已被停用，而不是某个页面不需要它。',
+    strategyAvailable: '可用',
+    strategyOff: '关闭',
   },
 };

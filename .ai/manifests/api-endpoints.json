@@ -2936,6 +2936,11 @@
       },
       {
         "method": "POST",
+        "route": "/internal/research/fetch",
+        "source": "apps/claw-research-service/src/modules/fetch/controllers/fetch-internal.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/internal/research/runs",
         "source": "apps/claw-research-service/src/modules/research/controllers/research-internal.controller.ts"
       },

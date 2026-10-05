@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { declaredHost } from '@claw/shared-utilities';
 import { BusinessException } from '../../../common/errors';
-import { httpRequest } from '../../../common/utilities';
+import { fetchPageViaResearch, httpRequest } from '../../../common/utilities';
 import { OLLAMA_TOOL_RESULT_MAX_CHARS } from '../constants/agentic-loop.constants';
 import {
   OLLAMA_CLOUD_TOOL_DEFINITIONS,
@@ -10,6 +10,7 @@ import {
 } from '../constants/ollama-cloud-tools.constants';
 import type {
   ExecuteOllamaCloudToolCallOptions,
+  ExecuteResearchWebFetchOptions,
   OllamaCloudToolCall,
 } from '../types/ollama-cloud-tool.types';
 
@@ -85,10 +86,53 @@ export async function executeOllamaCloudToolCall(
   return truncateResult(serialized);
 }
 
+// The `web_fetch` tool, read through research-service instead of Ollama Cloud's
+// hosted fetch, so domain policy, robots.txt, the escalation tiers (Crawl4AI,
+// FlareSolverr, Firecrawl when enabled) and the SSRF checks apply (ADR-121,
+// rule 50). Same result contract as the hosted call (a truncated JSON string);
+// throws OLLAMA_TOOL_CALL_FAILED when the page is refused or cannot be read,
+// and never falls back to the hosted fetch, which would bypass robots.txt.
+export async function executeResearchWebFetch(
+  call: OllamaCloudToolCall,
+  options: ExecuteResearchWebFetchOptions,
+): Promise<string> {
+  const { url } = buildPayload(TOOL_WEB_FETCH, call.function.arguments) as { url: string };
+  try {
+    await options.onDispatch?.();
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'unknown';
+    logger.warn(`executeResearchWebFetch: accounting failed - ${message}`);
+  }
+  const outcome = await fetchPageViaResearch(options.researchServiceUrl, {
+    userId: options.userId,
+    url,
+    timeoutMs: options.timeoutMs,
+  });
+  if (!outcome.ok) {
+    logger.warn(`executeResearchWebFetch: refused or failed status=${String(outcome.status)}`);
+    throw new BusinessException(
+      `web_fetch could not read the page (status ${String(outcome.status)}): ${outcome.message}`.trim(),
+      'OLLAMA_TOOL_CALL_FAILED',
+    );
+  }
+  const serialized = stringifyResult({
+    title: outcome.view.title,
+    content: outcome.view.content,
+    links: outcome.view.links,
+    ...(outcome.view.archivedAt === null ? {} : { archivedAt: outcome.view.archivedAt }),
+  });
+  logger.log(
+    `executeResearchWebFetch: ok servedBy=${outcome.view.servedBy ?? 'unknown'} resultChars=${String(serialized.length)}`,
+  );
+  return truncateResult(serialized);
+}
+
 // Hard-truncates a stringified tool result to OLLAMA_TOOL_RESULT_MAX_CHARS.
 // Public for test coverage of the truncation contract.
 export function truncateResult(text: string): string {
-  return text.length <= OLLAMA_TOOL_RESULT_MAX_CHARS ? text : `${text.slice(0, OLLAMA_TOOL_RESULT_MAX_CHARS)}\n[truncated: result exceeded ${String(OLLAMA_TOOL_RESULT_MAX_CHARS)} chars]`;
+  return text.length <= OLLAMA_TOOL_RESULT_MAX_CHARS
+    ? text
+    : `${text.slice(0, OLLAMA_TOOL_RESULT_MAX_CHARS)}\n[truncated: result exceeded ${String(OLLAMA_TOOL_RESULT_MAX_CHARS)} chars]`;
 }
 
 function resolveEndpointPath(toolName: string): string {

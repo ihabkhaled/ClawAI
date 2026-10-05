@@ -11,6 +11,7 @@ import { ReaderProxyFetchAdapter } from './adapters/reader-proxy-fetch.adapter';
 import { RobotsTxtAdapter } from './adapters/robots-txt.adapter';
 import { TlsImpersonateFetchAdapter } from './adapters/tls-impersonate-fetch.adapter';
 import { FetchController } from './controllers/fetch.controller';
+import { FetchInternalController } from './controllers/fetch-internal.controller';
 import { FetchStrategyController } from './controllers/fetch-strategy.controller';
 import { FetchJobRepository } from './repositories/fetch-job.repository';
 import { FetchStrategyConfigRepository } from './repositories/fetch-strategy-config.repository';
@@ -25,7 +26,7 @@ import { RobotsPolicyService } from './services/robots-policy.service';
 import { SidecarHealthService } from './services/sidecar-health.service';
 
 @Module({
-  controllers: [FetchController, FetchStrategyController],
+  controllers: [FetchController, FetchInternalController, FetchStrategyController],
   providers: [
     OfficialApiFetchAdapter,
     HttpFetchAdapter,

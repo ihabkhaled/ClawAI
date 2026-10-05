@@ -6248,6 +6248,10 @@ export type NarrationLocaleTranslation = {
   strategyFirecrawl: string;
   strategyReaderProxy: string;
   strategyArchiveSnapshot: string;
+  strategiesTitle: string;
+  strategiesDescription: string;
+  strategyAvailable: string;
+  strategyOff: string;
 };
 
 export type RouterTraceLocaleTranslation = {

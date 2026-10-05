@@ -5,6 +5,7 @@ import { Globe, Plus } from 'lucide-react';
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
+import { FetchStrategiesCard } from '@/components/research/fetch-strategies-card';
 import { ResearchProviderForm } from '@/components/research/research-provider-form';
 import { ResearchProviderRow } from '@/components/research/research-provider-row';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,8 @@ export default function ResearchProvidersPage(): React.ReactElement {
         isPending={ctrl.isCreatePending}
         error={ctrl.createError}
       />
+
+      <FetchStrategiesCard />
 
       {ctrl.lastTestMessage !== null ? (
         <div className="border-muted bg-muted/50 rounded border p-3 text-sm">

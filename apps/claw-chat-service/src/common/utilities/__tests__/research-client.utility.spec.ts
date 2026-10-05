@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import { ResearchWorkflow } from '../../enums/research-workflow.enum';
-import { runResearch } from '../research-client.utility';
+import { fetchPageViaResearch, runResearch } from '../research-client.utility';
 import { httpRequest } from '../http-client.utility';
 
 vi.mock('../http-client.utility', () => ({
@@ -126,5 +126,50 @@ describe('runResearch', () => {
     });
 
     expect(result).toBeNull();
+  });
+});
+
+describe('fetchPageViaResearch', () => {
+  beforeEach(() => {
+    mockedHttpRequest.mockReset();
+  });
+
+  it('uses the internal service-token fetch route, names the user, sends no bearer', async () => {
+    mockedHttpRequest.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { url: 'https://example.com/', title: null, content: 'c', links: [] },
+    } as never);
+
+    const outcome = await fetchPageViaResearch('http://localhost:4016', {
+      userId: 'u1',
+      url: 'https://example.com/',
+    });
+
+    const call = mockedHttpRequest.mock.calls[0]?.[0];
+    expect(call?.url).toBe('http://localhost:4016/api/v1/internal/research/fetch');
+    expect(call?.headers).toEqual({ Authorization: 'Service test-token' });
+    expect(call?.body).toEqual({ userId: 'u1', url: 'https://example.com/' });
+    expect(outcome.ok).toBe(true);
+  });
+
+  it('reports a refusal with its status and message instead of throwing', async () => {
+    mockedHttpRequest.mockResolvedValue({
+      ok: false,
+      status: 403,
+      data: { message: 'disallowed by robots.txt' },
+    } as never);
+
+    await expect(
+      fetchPageViaResearch('http://localhost:4016', { userId: 'u1', url: 'https://a.example/' }),
+    ).resolves.toEqual({ ok: false, status: 403, message: 'disallowed by robots.txt' });
+  });
+
+  it('reports a transport failure as status 0', async () => {
+    mockedHttpRequest.mockRejectedValue(new Error('ECONNREFUSED'));
+
+    await expect(
+      fetchPageViaResearch('http://localhost:4016', { userId: 'u1', url: 'https://a.example/' }),
+    ).resolves.toMatchObject({ ok: false, status: 0 });
   });
 });

@@ -62,6 +62,15 @@ export type OllamaCloudToolDefinition = {
   };
 };
 
+// Options for the research-service-backed web_fetch (executeResearchWebFetch).
+export type ExecuteResearchWebFetchOptions = {
+  researchServiceUrl: string;
+  userId: string;
+  timeoutMs?: number;
+  /** Called immediately before a validated fetch is requested (feature-usage accounting). */
+  onDispatch?: () => Promise<void>;
+};
+
 // Options bag for executeOllamaCloudToolCall — passes the connector
 // base URL, decrypted apiKey, and per-call timeout into the runner so
 // it can dispatch the tool against /api/web_search or /api/web_fetch.

@@ -62,6 +62,10 @@ the frontend `NarrationLog`.
     and prompt-injection reachable. It never skips robots, SSRF or the refusal stops
     (ADR-121 addendum 3). Do not use it to enable a tier or lift a bound.
 
+11. **No second fetch path for tools.** The chat `web_fetch` tool reads pages through
+    research-service's internal fetch route (robots, SSRF, escalation tiers apply) and never
+    falls back to a hosted fetch (ADR-121 addendum 4).
+
 ## Prohibited
 
 - A URL regex outside `url-detection.utility.ts`.

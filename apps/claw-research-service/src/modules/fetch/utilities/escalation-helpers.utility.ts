@@ -8,9 +8,9 @@ import type { FetchStrategyAttempt, ThinCandidate } from '../types/fetch-strateg
 import type { FetchAttemptSummary, FetchResult } from '../types/fetch.types';
 
 /**
- * Reorders an already enabled chain for a render hint: the hint's preferred
- * tiers move to the front (in the hint's order, after OFFICIAL_API), everything
- * else keeps its relative order. A pure reorder: it never adds or removes a
+ * Reorders an already enabled chain for a render hint: OFFICIAL_API and
+ * HTTP_PLAIN stay first, then the hint's preferred tiers (in the hint's order),
+ * everything else keeps its relative order. A pure reorder: it never adds or removes a
  * tier, so eligibility, robots and the stop rules are decided exactly as before.
  */
 export function orderChainForHint(

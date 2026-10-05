@@ -146,7 +146,7 @@
         "MessageAttachment",
         "PromptTemplate"
       ],
-      "testFiles": 320,
+      "testFiles": 321,
       "testRunner": "vitest"
     },
     {
@@ -420,7 +420,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-research-service",
-      "endpointCount": 25,
+      "endpointCount": 26,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -445,7 +445,7 @@
         "SearchProvider",
         "SearchRun"
       ],
-      "testFiles": 65,
+      "testFiles": 66,
       "testRunner": "vitest"
     },
     {

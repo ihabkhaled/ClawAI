@@ -190,6 +190,7 @@ import type { ExecutionOptions } from '../types/execution-options.types';
 import { OLLAMA_TOOL_LOOP_WRAPUP_INSTRUCTION } from '../constants/agentic-loop.constants';
 import {
   executeOllamaCloudToolCall,
+  executeResearchWebFetch,
   truncateResult,
 } from '../utilities/ollama-cloud-tool-runner.utility';
 import {
@@ -4290,6 +4291,18 @@ export class ChatExecutionManager implements OnModuleInit {
       return args.crawlRetrieval === undefined
         ? truncateResult(JSON.stringify({ error: 'No crawled pages are available for this turn.' }))
         : executeGetCrawledPage(call, args.crawlRetrieval);
+    }
+    if (toolName === TOOL_WEB_FETCH) {
+      return executeResearchWebFetch(call, {
+        researchServiceUrl: AppConfig.get().RESEARCH_SERVICE_URL,
+        userId: args.userId,
+        onDispatch: async () =>
+          this.accessControlService.recordFeatureUsage(
+            args.userId,
+            'WEB_FETCH',
+            `${args.usageRunId}:${String(args.iteration)}:${callId}`,
+          ),
+      });
     }
     return executeOllamaCloudToolCall(call, {
       baseUrl: args.baseUrl,

@@ -5,6 +5,7 @@ import { buildInterServiceAuthHeader } from './inter-service-auth.utility';
 import {
   RESEARCH_CRAWL_REQUEST_TIMEOUT_MS,
   RESEARCH_REQUEST_TIMEOUT_MS,
+  RESEARCH_TOOL_FETCH_TIMEOUT_MS,
   SEARCH_FETCH_EXTRACT_DEFAULT_MAX_RESULTS,
   SEARCH_ONLY_DEFAULT_MAX_RESULTS,
   SEARCH_THEN_FETCH_DEFAULT_MAX_RESULTS,
@@ -12,6 +13,8 @@ import {
 import type {
   ResearchRequest,
   ResearchRunResponse,
+  ResearchToolFetchOutcome,
+  ResearchToolFetchView,
 } from '../../modules/chat-messages/types/research.types';
 import { ResearchWorkflow } from '../enums/research-workflow.enum';
 
@@ -69,6 +72,37 @@ export async function runResearch(
     const message = error instanceof Error ? error.message : 'Unknown error';
     logger.warn(`runResearch: failed for user=${request.userId}: ${message}`);
     return null;
+  }
+}
+
+/**
+ * One page for the `web_fetch` tool, read by research-service on the internal
+ * service-token route so the same chain applies as to every other fetch: domain
+ * policy, robots.txt, the escalation tiers and the SSRF checks (ADR-121). The
+ * plan gate is the caller's; a refusal comes back as `ok: false` and is never
+ * retried another way (rule 50).
+ */
+export async function fetchPageViaResearch(
+  baseUrl: string,
+  request: { userId: string; url: string; timeoutMs?: number },
+): Promise<ResearchToolFetchOutcome> {
+  try {
+    const response = await httpRequest<ResearchToolFetchView & { message?: unknown }>({
+      url: `${baseUrl}/api/v1/internal/research/fetch`,
+      method: 'POST',
+      headers: { Authorization: buildInterServiceAuthHeader() },
+      body: { userId: request.userId, url: request.url },
+      timeoutMs: request.timeoutMs ?? RESEARCH_TOOL_FETCH_TIMEOUT_MS,
+    });
+    if (!response.ok) {
+      const message = typeof response.data.message === 'string' ? response.data.message : '';
+      return { ok: false, status: response.status, message };
+    }
+    return { ok: true, view: response.data };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    logger.warn(`fetchPageViaResearch: failed for user=${request.userId}: ${message}`);
+    return { ok: false, status: 0, message };
   }
 }
 

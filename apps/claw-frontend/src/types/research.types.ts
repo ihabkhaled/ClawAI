@@ -46,6 +46,13 @@ export type SanitizedResearchProvider = {
   updatedAt: string;
 };
 
+/** One page-reading tier as the admin API reports it (`GET /research/fetch-strategies`). */
+export type FetchStrategyStatus = {
+  kind: string;
+  enabled: boolean;
+  tier: number;
+};
+
 /** How a page was read: the fetch tier that served it and the trail before it (kind + outcome only). */
 export type ResearchFetchProvenance = {
   strategy: string;

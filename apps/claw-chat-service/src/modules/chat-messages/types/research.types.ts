@@ -69,6 +69,20 @@ export type ResearchRunResponse = {
   completedAt: string | null;
 };
 
+/** research-service `ToolFetchView`: one page as a tool-calling model is shown it. */
+export type ResearchToolFetchView = {
+  url: string;
+  title: string | null;
+  content: string;
+  links: string[];
+  servedBy: string | null;
+  archivedAt: string | null;
+};
+
+/** Result of `fetchPageViaResearch`: the page, or why research-service refused or failed it. */
+export type ResearchToolFetchOutcome =
+  { ok: true; view: ResearchToolFetchView } | { ok: false; status: number; message: string };
+
 export type ResearchRequest = {
   userToken: string;
   userId: string;

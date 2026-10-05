@@ -997,6 +997,7 @@ export type {
   OrchestrationResearchPayload,
   SanitizedResearchProvider,
   ResearchEvidenceItem,
+  FetchStrategyStatus,
   ResearchEvidenceBundle,
   ResearchTraceEntry,
   ResearchRun,

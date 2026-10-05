@@ -21,7 +21,7 @@ import { FetchStrategyOrchestratorService } from './fetch-strategy-orchestrator.
 import { RobotsPolicyService } from './robots-policy.service';
 import { type FetchJob, FetchJobStatus, FetchStrategyKind } from '../../../generated/prisma';
 import type { EscalationOptions } from '../types/fetch-strategy.types';
-import type { FetchResult } from '../types/fetch.types';
+import type { FetchResult, ToolFetchView } from '../types/fetch.types';
 import type { RobotsDecision } from '../types/robots-policy.types';
 import type { FetchRequestDto } from '../dto/fetch-request.dto';
 
@@ -104,6 +104,19 @@ export class FetchService {
     } finally {
       await this.researchUsage.record(userId, 'WEB_FETCH', job.id);
     }
+  }
+
+  /** `fetchPage`, reduced to what a tool-calling model may see (no raw HTML). */
+  async fetchPageForTool(userId: string, dto: FetchRequestDto): Promise<ToolFetchView> {
+    const result = await this.fetchPage(userId, dto);
+    return {
+      url: result.finalUrl,
+      title: result.title,
+      content: result.content,
+      links: result.links,
+      servedBy: result.servedBy ?? null,
+      archivedAt: result.archivedAt ?? null,
+    };
   }
 
   async getJob(id: string, userId: string): Promise<FetchJob> {

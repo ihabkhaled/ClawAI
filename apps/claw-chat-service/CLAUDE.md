@@ -1616,6 +1616,12 @@ match keywords). `parseResearchPlan` keeps only the two values and only on crawl
 hint in research-service; it can never override robots/SSRF/refusals. The context-gateway URL
 crawl (no planner) sends none.
 
+**`web_fetch` tool via research-service (2026-10-05, ADR-121 addendum 4).** In the tool loop,
+`dispatchOneToolCall` sends `web_fetch` to `executeResearchWebFetch` (`fetchPageViaResearch` ->
+`/internal/research/fetch`, service token) instead of Ollama Cloud's hosted fetch, so robots.txt,
+SSRF and the escalation tiers apply. A refusal fails the tool call; there is no fallback to the
+hosted fetch. `web_search` is unchanged (hosted).
+
 ## An explicit fetch command runs even with research off (2026-09-30)
 
 "crawl <url>" / "curl <url>" with the research toggle off answered "I have no fetched

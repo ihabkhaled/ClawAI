@@ -176,6 +176,22 @@ in the plan JSON (`parseResearchPlan` keeps only those two values, only on crawl
   host memory, which then promotes it for the rest of that crawl. Pages found by search and
   discovered crawl pages are not hinted.
 
+## Addendum 4 (2026-10-05): chat `web_fetch` goes through the chain; tier state is visible
+
+- The `web_fetch` tool of the tool-calling loop used to POST to Ollama Cloud's hosted
+  `/api/web_fetch`: no robots.txt, no sidecars, none of our SSRF checks. It now calls
+  research-service's `POST /internal/research/fetch` (`FetchInternalController`, service token,
+  user named explicitly, plan gate already applied by chat) which runs `FetchService.fetchPageForTool`:
+  domain policy, robots.txt, cache, escalation chain. The model receives `{title, content, links}`
+  (+ `archivedAt` for an archive copy), never raw HTML.
+- No fallback to the hosted fetch: a robots Disallow, a refusal or a failure fails the tool call
+  (`OLLAMA_TOOL_CALL_FAILED`), because the hosted route would bypass robots. `web_search` still
+  uses the hosted endpoint. Feature-usage accounting (`WEB_FETCH`) is unchanged.
+- The admin UI (Research providers page) shows a "Page readers" card from the existing
+  `GET /research/fetch-strategies`: each tier **Available** or **Off**. So an operator can tell a
+  sidecar that is switched off from one that was merely not needed for a page. Status page and
+  health-service already showed a disabled sidecar as Disabled (addendum 1).
+
 ## Addendum (2026-09-25): sidecar health
 
 health-service still never connects to a sidecar (it is not on

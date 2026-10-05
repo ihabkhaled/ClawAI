@@ -6,7 +6,7 @@ export {
   httpStreamBinary,
   httpPostBinary,
 } from './http-client.utility';
-export { runResearch } from './research-client.utility';
+export { fetchPageViaResearch, runResearch } from './research-client.utility';
 export { mapResearchModeToWorkflow } from './research-mode-mapping.utility';
 export { classifyResearchWorkflow } from './research-intent-classifier.utility';
 export { resolveExplicitFetchMode } from './explicit-fetch-intent.utility';

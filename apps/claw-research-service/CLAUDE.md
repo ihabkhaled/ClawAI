@@ -59,6 +59,9 @@ Controller → Service → Repository (data access)
   `orderChainForHint` only reorders the enabled chain, AFTER `PINNED_FIRST_KINDS`
   (`OFFICIAL_API`, `HTTP_PLAIN`): an evasion-class tier never runs before plain. Never use it
   to enable a tier or skip a gate.
+- **Tool fetch (ADR-121 addendum 4).** `POST /internal/research/fetch` (`FetchInternalController`,
+  `ServiceTokenGuard`, `{userId, url, render?}`) -> `FetchService.fetchPageForTool`: same chain,
+  returns `ToolFetchView` (no raw HTML). Caller is chat-service's `web_fetch` tool.
 - How to add/enable/prove a tier: `skills/add-a-fetch-strategy.md`.
 - _(future)_ `EvidenceBundle`, `ScrapeProfile`, `CloneJob`.
 

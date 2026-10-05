@@ -15,6 +15,21 @@ export type FetchRequest = {
   strategyConfig?: Record<string, unknown>;
 };
 
+/**
+ * What a tool-calling model is shown for one page: readable text and links, and
+ * which tier read it. Never the raw HTML. Mirrors the shape of Ollama's hosted
+ * `web_fetch` (`title`, `content`, `links`) plus the provenance (ADR-121).
+ */
+export type ToolFetchView = {
+  url: string;
+  title: string | null;
+  content: string;
+  links: string[];
+  servedBy: FetchStrategyKind | null;
+  /** Set only for an archived copy; the content also starts with a visible label. */
+  archivedAt: string | null;
+};
+
 /** One escalation attempt, reduced to what may leave the service: which tier, and how it ended. No URL, body or error text. */
 export type FetchAttemptSummary = {
   kind: FetchStrategyKind;

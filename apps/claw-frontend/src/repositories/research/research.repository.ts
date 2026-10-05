@@ -1,6 +1,7 @@
 import { apiClient } from '@/services/shared/api-client';
 import type {
   CreateResearchProviderRequest,
+  FetchStrategyStatus,
   ProviderHealthResult,
   ResearchRun,
   SanitizedResearchProvider,
@@ -38,6 +39,11 @@ export const researchRepository = {
       `${BASE}/search-providers/${id}/test`,
       {},
     );
+    return response.data;
+  },
+
+  async listFetchStrategies(): Promise<FetchStrategyStatus[]> {
+    const response = await apiClient.get<FetchStrategyStatus[]>(`${BASE}/fetch-strategies`);
     return response.data;
   },
 
