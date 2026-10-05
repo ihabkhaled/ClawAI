@@ -56,7 +56,10 @@ the frontend `NarrationLog`.
 
 10. **The planner's `render` hint is an ordering hint, nothing more.** It is model-judged
     (the prompt says so; no keyword list), validated to `js`/`stealth`, and only reorders tiers
-    that are already enabled and eligible. It never skips robots, SSRF or the refusal stops
+    that are already enabled and eligible, AFTER the pinned honest tiers: `OFFICIAL_API` and
+    `HTTP_PLAIN` always run first, so no evasion-class tier (TLS impersonation, FlareSolverr,
+    a browser) can run before the plain fetch was tried and did not serve. It is model output
+    and prompt-injection reachable. It never skips robots, SSRF or the refusal stops
     (ADR-121 addendum 3). Do not use it to enable a tier or lift a bound.
 
 ## Prohibited

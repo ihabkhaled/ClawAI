@@ -96,12 +96,18 @@ export const SIDECAR_HEALTH_PROBES: readonly SidecarHealthProbe[] = [
  */
 export const SIDECAR_HEALTH_TIMEOUT_MS = 2_000;
 
+/** Tiers that always run first whatever a render hint says: the honest ones. */
+export const PINNED_FIRST_KINDS: ReadonlySet<FetchStrategyKind> = new Set([
+  FetchStrategyKind.OFFICIAL_API,
+  FetchStrategyKind.HTTP_PLAIN,
+]);
+
 /**
- * Tiers a render hint pulls to the FRONT of the chain, in this order. Only
- * tiers already in the (enabled, eligible) chain move; the official API stays
- * first, and the reader and archive never move up (they are third parties and
- * stale). FlareSolverr is listed for `stealth` but is still gated by the
- * escalation policy (JS challenge only), so a hint cannot summon it early.
+ * Tiers a render hint moves to just AFTER the pinned honest tiers, in this
+ * order. Only tiers already in the (enabled, eligible) chain move, so they still
+ * run only once the plain fetch did not serve the page. The reader and archive
+ * never move up (third parties, stale). FlareSolverr is also gated by the
+ * escalation policy (JS challenge only).
  */
 export const FETCH_RENDER_HINT_PREFERRED_KINDS: Readonly<
   Record<FetchRenderHint, readonly FetchStrategyKind[]>

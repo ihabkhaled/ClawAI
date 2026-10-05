@@ -1,5 +1,8 @@
-import { type FetchStrategyConfig, FetchStrategyKind } from '../../../generated/prisma';
-import { FETCH_RENDER_HINT_PREFERRED_KINDS } from '../constants/fetch-strategy.constants';
+import type { FetchStrategyConfig } from '../../../generated/prisma';
+import {
+  FETCH_RENDER_HINT_PREFERRED_KINDS,
+  PINNED_FIRST_KINDS,
+} from '../constants/fetch-strategy.constants';
 import type { FetchRenderHint } from '../enums/fetch-render-hint.enum';
 import type { FetchStrategyAttempt, ThinCandidate } from '../types/fetch-strategy.types';
 import type { FetchAttemptSummary, FetchResult } from '../types/fetch.types';
@@ -18,12 +21,16 @@ export function orderChainForHint(
     return [...chain];
   }
   const preferredKinds = FETCH_RENDER_HINT_PREFERRED_KINDS[hint];
-  const official = chain.filter((config) => config.kind === FetchStrategyKind.OFFICIAL_API);
+  // The honest tiers always run first, hint or not: the hint is model output
+  // (prompt-injection reachable) and must never put an evasion-class tier ahead
+  // of the plain fetch. A tier after the plain one only runs when the plain one
+  // did not serve the page, i.e. after a block or failure was observed.
+  const pinned = chain.filter((config) => PINNED_FIRST_KINDS.has(config.kind));
   const preferred = preferredKinds.flatMap((kind) =>
-    chain.filter((config) => config.kind === kind),
+    chain.filter((config) => config.kind === kind && !pinned.includes(config)),
   );
-  const rest = chain.filter((config) => !official.includes(config) && !preferred.includes(config));
-  return [...official, ...preferred, ...rest];
+  const rest = chain.filter((config) => !pinned.includes(config) && !preferred.includes(config));
+  return [...pinned, ...preferred, ...rest];
 }
 
 /** The attempt trail reduced to kind + outcome: nothing a URL, body, status or error text could leak through. */

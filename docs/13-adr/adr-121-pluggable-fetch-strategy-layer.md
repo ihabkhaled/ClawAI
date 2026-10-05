@@ -164,8 +164,12 @@ in the plan JSON (`parseResearchPlan` keeps only those two values, only on crawl
 - It travels chat-service `ResearchRequest.render` -> `executeResearchSchema.render` ->
   `FetchRequestDto.render` -> `EscalationOptions.renderHint`.
 - Effect: `orderChainForHint` moves the hint's preferred tiers (`FETCH_RENDER_HINT_PREFERRED_KINDS`)
-  to the front, after the official API. It is a pure reorder of the chain that is already
-  enabled: it adds no tier, enables no sidecar, and `excludeKinds`, `isStrategyEligible`
+  up, but only AMONG the tiers after the pinned honest ones: `OFFICIAL_API` and `HTTP_PLAIN`
+  (`PINNED_FIRST_KINDS`) always run first, hint or not. The hint is model output and so
+  prompt-injection reachable; it must never put an evasion-class tier (TLS impersonation,
+  FlareSolverr, a browser) ahead of the plain fetch. A hinted tier therefore runs only after
+  the plain fetch did not serve the page, exactly as without a hint. It is a pure reorder of
+  the chain that is already enabled: it adds no tier, enables no sidecar, and `excludeKinds`, `isStrategyEligible`
   (FlareSolverr only after a JS interstitial), robots.txt, SSRF checks, 401/451/captcha stops,
   the 6-attempt and 60 s bounds all apply unchanged. Reader and archive never move up.
 - Scope: user-named pages (direct fetch, crawl homepage). The homepage winner is recorded by

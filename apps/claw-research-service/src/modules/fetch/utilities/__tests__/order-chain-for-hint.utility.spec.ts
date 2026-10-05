@@ -20,12 +20,12 @@ describe('orderChainForHint', () => {
     expect(kindsOf(orderChainForHint(chain, undefined))).toEqual(kindsOf(chain));
   });
 
-  it('js: renderers first after the official API; reader and archive stay last', () => {
+  it('js: renderers right after the honest tiers; reader and archive stay last', () => {
     expect(kindsOf(orderChainForHint(chain, FetchRenderHint.JS))).toEqual([
       FetchStrategyKind.OFFICIAL_API,
+      FetchStrategyKind.HTTP_PLAIN,
       FetchStrategyKind.HEADLESS_BROWSER,
       FetchStrategyKind.CRAWL4AI,
-      FetchStrategyKind.HTTP_PLAIN,
       FetchStrategyKind.HTTP_TLS_IMPERSONATE,
       FetchStrategyKind.READER_PROXY,
       FetchStrategyKind.ARCHIVE_SNAPSHOT,
@@ -34,8 +34,9 @@ describe('orderChainForHint', () => {
 
   it('stealth: browser-like tiers first; never adds or drops a tier', () => {
     const ordered = orderChainForHint(chain, FetchRenderHint.STEALTH);
-    expect(kindsOf(ordered).slice(0, 3)).toEqual([
+    expect(kindsOf(ordered).slice(0, 4)).toEqual([
       FetchStrategyKind.OFFICIAL_API,
+      FetchStrategyKind.HTTP_PLAIN,
       FetchStrategyKind.HTTP_TLS_IMPERSONATE,
       FetchStrategyKind.HEADLESS_BROWSER,
     ]);

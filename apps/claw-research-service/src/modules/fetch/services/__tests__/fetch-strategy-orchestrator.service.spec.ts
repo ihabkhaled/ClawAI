@@ -219,12 +219,14 @@ describe('FetchStrategyOrchestratorService', () => {
   });
 
   describe('render hint (tier ordering only)', () => {
-    it('js hint tries the renderer before plain HTTP and serves from it', async () => {
+    it('js hint: plain is still tried first; the renderer follows only when plain was blocked', async () => {
       configs.listEnabledByTier.mockResolvedValue([
         config(FetchStrategyKind.HTTP_PLAIN, 10),
+        config(FetchStrategyKind.HTTP_TLS_IMPERSONATE, 20),
         config(FetchStrategyKind.HEADLESS_BROWSER, 30),
       ]);
-      const plain = adapter(FetchStrategyKind.HTTP_PLAIN, page());
+      adapter(FetchStrategyKind.HTTP_PLAIN, page({ httpStatus: 403, content: 'Forbidden' }));
+      const tls = adapter(FetchStrategyKind.HTTP_TLS_IMPERSONATE, page());
       adapter(FetchStrategyKind.HEADLESS_BROWSER, page());
 
       const escalation = await orchestrator.fetchWithEscalation(
@@ -232,8 +234,35 @@ describe('FetchStrategyOrchestratorService', () => {
         { renderHint: FetchRenderHint.JS },
       );
 
-      expect(escalation.winningStrategy).toBe(FetchStrategyKind.HEADLESS_BROWSER);
-      expect(plain.fetchPage).not.toHaveBeenCalled();
+      expect(escalation.attempts.map((a) => a.kind)).toEqual([
+        FetchStrategyKind.HTTP_PLAIN,
+        FetchStrategyKind.HEADLESS_BROWSER,
+      ]);
+      expect(tls.fetchPage).not.toHaveBeenCalled();
+    });
+
+    it('stealth hint with no block observed never attempts an evasion tier: plain serves', async () => {
+      configs.listEnabledByTier.mockResolvedValue([
+        config(FetchStrategyKind.HTTP_PLAIN, 10),
+        config(FetchStrategyKind.HTTP_TLS_IMPERSONATE, 20),
+        config(FetchStrategyKind.HEADLESS_BROWSER, 30),
+        config(FetchStrategyKind.FLARESOLVERR, 50),
+      ]);
+      adapter(FetchStrategyKind.HTTP_PLAIN, page());
+      const tls = adapter(FetchStrategyKind.HTTP_TLS_IMPERSONATE, page());
+      const headless = adapter(FetchStrategyKind.HEADLESS_BROWSER, page());
+      const flare = adapter(FetchStrategyKind.FLARESOLVERR, page());
+
+      const escalation = await orchestrator.fetchWithEscalation(
+        { url: 'https://example.com/' },
+        { renderHint: FetchRenderHint.STEALTH },
+      );
+
+      expect(escalation.winningStrategy).toBe(FetchStrategyKind.HTTP_PLAIN);
+      expect(escalation.attempts).toHaveLength(1);
+      for (const evasion of [tls, headless, flare]) {
+        expect(evasion.fetchPage).not.toHaveBeenCalled();
+      }
     });
 
     it('never enables a disabled sidecar and keeps excludeKinds: the hint cannot add a tier', async () => {
@@ -254,16 +283,13 @@ describe('FetchStrategyOrchestratorService', () => {
       expect(escalation.winningStrategy).toBe(FetchStrategyKind.HTTP_PLAIN);
     });
 
-    it('still stops on a refusal: a 401 after a hinted attempt ends the chain', async () => {
+    it('still stops on a refusal: a 401 ends the chain, no hinted tier runs after it', async () => {
       configs.listEnabledByTier.mockResolvedValue([
         config(FetchStrategyKind.HTTP_PLAIN, 10),
         config(FetchStrategyKind.HEADLESS_BROWSER, 30),
       ]);
-      const plain = adapter(FetchStrategyKind.HTTP_PLAIN, page());
-      adapter(
-        FetchStrategyKind.HEADLESS_BROWSER,
-        page({ httpStatus: 401, content: 'Unauthorized' }),
-      );
+      adapter(FetchStrategyKind.HTTP_PLAIN, page({ httpStatus: 401, content: 'Unauthorized' }));
+      const headless = adapter(FetchStrategyKind.HEADLESS_BROWSER, page());
 
       await expect(
         orchestrator.fetchWithEscalation(
@@ -271,7 +297,7 @@ describe('FetchStrategyOrchestratorService', () => {
           { renderHint: FetchRenderHint.JS },
         ),
       ).rejects.toBeInstanceOf(FetchEscalationError);
-      expect(plain.fetchPage).not.toHaveBeenCalled();
+      expect(headless.fetchPage).not.toHaveBeenCalled();
     });
   });
 

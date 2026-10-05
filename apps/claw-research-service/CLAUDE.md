@@ -56,8 +56,9 @@ Controller → Service → Repository (data access)
   `servedBy`, so its item has no `fetch`: not measured, not claimed. chat-service narrates it.
 - **Render hint (ADR-121 addendum 3).** `render: 'js'|'stealth'` (`FetchRenderHint`) on the
   research DTO / `FetchRequestDto` reaches `EscalationOptions.renderHint`;
-  `orderChainForHint` only reorders the enabled chain. Never use it to enable a tier or skip
-  a gate.
+  `orderChainForHint` only reorders the enabled chain, AFTER `PINNED_FIRST_KINDS`
+  (`OFFICIAL_API`, `HTTP_PLAIN`): an evasion-class tier never runs before plain. Never use it
+  to enable a tier or skip a gate.
 - How to add/enable/prove a tier: `skills/add-a-fetch-strategy.md`.
 - _(future)_ `EvidenceBundle`, `ScrapeProfile`, `CloneJob`.
 
