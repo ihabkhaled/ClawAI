@@ -14,8 +14,11 @@ service-token-only enqueue route obtains a filtered owner snapshot from
 chat-service, persists the job, then publishes a confirmed dispatch event. The
 worker runs research, three to five authors, exact-hash consensus, Judge and
 Critic reviews, and at most three rounds before it marks a private draft ready
-for owner review. Its cancel route cancels queued jobs or requests cancellation
-between provider calls.
+for owner review. After verifying the source snapshot, it reserves the selected
+Auth entitlement cap with the same idempotency key before storing and dispatching
+the job. A repeated matching key returns the pinned job before taking another
+snapshot or budget; a reused key with changed input conflicts. Its cancel route
+cancels queued jobs or requests cancellation between provider calls.
 
 ## Boundaries
 
@@ -36,9 +39,11 @@ between provider calls.
 - Queue reconciliation dispatches ready jobs FIFO and retries pending Auth
   budget closure from persisted status. Do not manually replay a provider call
   or close a budget outside the idempotent service path.
-- The service has no owner or public read API. Generation-to-publication result
-  transfer is not wired yet; Threads-service owns that lifecycle in a later
-  batch.
+- The service has no public owner or reader API. Its internal service-token
+  `POST /api/v1/internal/threads/generations/:jobId/owner-state` returns only
+  safe status and the completed draft when the supplied owner matches. The
+  Threads service verifies publication ownership before using this handoff and
+  stores the result as a private pending revision.
 
 ## References
 

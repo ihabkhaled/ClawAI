@@ -3,6 +3,10 @@ import { Public } from '@claw/shared-auth';
 
 import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
+import {
+  type GenerationOwnerStateDto,
+  generationOwnerStateSchema,
+} from '../dto/generation-owner-state.dto';
 import { type EnqueueGenerationDto, enqueueGenerationSchema } from '../dto/enqueue-generation.dto';
 import { GenerationJobsService } from '../services/generation-jobs.service';
 
@@ -14,13 +18,24 @@ export class GenerationJobsInternalController {
 
   @Post()
   @HttpCode(HttpStatus.ACCEPTED)
-  enqueue(@Body(new ZodValidationPipe(enqueueGenerationSchema)) body: EnqueueGenerationDto) {
+  enqueue(
+    @Body(new ZodValidationPipe(enqueueGenerationSchema)) body: EnqueueGenerationDto,
+  ): ReturnType<GenerationJobsService['enqueue']> {
     return this.jobs.enqueue(body);
   }
 
   @Post(':jobId/cancel')
   @HttpCode(HttpStatus.OK)
-  cancel(@Param('jobId') jobId: string) {
+  cancel(@Param('jobId') jobId: string): ReturnType<GenerationJobsService['cancel']> {
     return this.jobs.cancel(jobId);
+  }
+
+  @Post(':jobId/owner-state')
+  getOwnerState(
+    @Param('jobId') jobId: string,
+    @Body(new ZodValidationPipe(generationOwnerStateSchema)) body: GenerationOwnerStateDto,
+  ): ReturnType<GenerationJobsService['getOwnerState']> {
+    const { ownerId } = body;
+    return this.jobs.getOwnerState(jobId, ownerId);
   }
 }

@@ -8,7 +8,10 @@ import type { GenerationPipelineResult } from '../types/generation-pipeline.type
 import type { ChatModelResponse } from '../../models/chat-model.client';
 import { stableJson } from '../utilities/stable-json.utility';
 import { GenerationJobStorageResult } from '../../../common/enums/generation-job-storage-result.enum';
-import type { GenerationJobStorageResponse } from '../types/generation-job-storage.types';
+import type {
+  GenerationJobIdempotencyResponse,
+  GenerationJobStorageResponse,
+} from '../types/generation-job-storage.types';
 import { GenerationBudgetCloseStatus } from '../../../common/enums/generation-budget-close-status.enum';
 import { GenerationJobAttemptOutcome } from '../../../common/enums/generation-job-attempt-outcome.enum';
 import { GenerationJobRecoveryOutcome } from '../../../common/enums/generation-job-recovery-outcome.enum';
@@ -24,17 +27,30 @@ import {
 export class GenerationJobsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findByIdempotencyKey(
+    input: EnqueueGenerationDto,
+  ): Promise<GenerationJobIdempotencyResponse | null> {
+    const existing = await this.prisma.threadGenerationJob.findUnique({
+      where: { idempotencyKey: input.idempotencyKey },
+      select: { id: true, ownerId: true, request: true, status: true, correlationId: true },
+    });
+    if (!existing) return null;
+    return existing.ownerId === input.ownerId && stableJson(existing.request) === stableJson(input)
+      ? { result: GenerationJobStorageResult.SUCCESS, job: existing }
+      : { result: GenerationJobStorageResult.CONFLICT };
+  }
+
   async createQueued(
     input: EnqueueGenerationDto,
     sourceSnapshot: Record<string, unknown>,
     hash: string,
+    budgetId: string,
   ): Promise<GenerationJobStorageResponse> {
     const existing = await this.prisma.threadGenerationJob.findUnique({
       where: { idempotencyKey: input.idempotencyKey },
     });
     if (existing) {
       return existing.ownerId !== input.ownerId ||
-        existing.sourceSnapshotHash !== hash ||
         stableJson(existing.request) !== stableJson(input)
         ? { result: GenerationJobStorageResult.CONFLICT }
         : { result: GenerationJobStorageResult.SUCCESS, job: existing };
@@ -49,7 +65,7 @@ export class GenerationJobsRepository {
           sourceSnapshot: sourceSnapshot as Prisma.InputJsonValue,
           sourceSnapshotHash: hash,
           request: JSON.parse(JSON.stringify(input)) as Prisma.InputJsonValue,
-          budgetId: input.budgetId,
+          budgetId,
           spendCapMicroUsd: BigInt(input.spendCapMicroUsd),
           publicIntentVersion: input.publicIntentVersion,
           publicIntentAt: new Date(),
@@ -65,7 +81,6 @@ export class GenerationJobsRepository {
       });
       return raced &&
         raced.ownerId === input.ownerId &&
-        raced.sourceSnapshotHash === hash &&
         stableJson(raced.request) === stableJson(input)
         ? { result: GenerationJobStorageResult.SUCCESS, job: raced }
         : { result: GenerationJobStorageResult.CONFLICT };
@@ -75,6 +90,24 @@ export class GenerationJobsRepository {
   async findQueued(id: string) {
     return this.prisma.threadGenerationJob.findFirst({
       where: { id, status: ThreadGenerationStatus.QUEUED },
+    });
+  }
+
+  async findOwnerState(id: string, ownerId: string) {
+    return this.prisma.threadGenerationJob.findFirst({
+      where: { id, ownerId },
+      select: {
+        id: true,
+        status: true,
+        stage: true,
+        round: true,
+        safeErrorCode: true,
+        revisions: {
+          orderBy: { revision: 'desc' },
+          take: 1,
+          select: { content: true },
+        },
+      },
     });
   }
 

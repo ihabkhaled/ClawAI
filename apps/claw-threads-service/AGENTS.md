@@ -20,8 +20,8 @@ npm run dev
 - Port: 4019
 - Database: postgresql
 - Prisma models: ThreadPublication, ThreadPublicationRevision
-- API endpoints: 2 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 4 (vitest)
+- API endpoints: 5 (see `.ai/manifests/api-endpoints.json`)
+- Test files: 5 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

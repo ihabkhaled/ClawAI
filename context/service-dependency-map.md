@@ -4,7 +4,7 @@
 HTTP edge; refresh the generated views with `npm run knowledge:context` and
 `python <skill>/scripts/extract_platform.py --write`.
 
-Last verified: 2026-10-04.
+Last verified: 2026-10-05.
 
 How services reach each other. There are three channels — **shared packages**
 (compile-time), **RabbitMQ events** (async), and **HTTP internal endpoints**
@@ -22,8 +22,7 @@ Every service imports `@claw/shared-constants`, `@claw/shared-types`,
 - **`@claw/shared-entitlements`** — audit, chat, connector, file, llamacpp,
   memory, ollama, payment, research, routing, server-logs, workspace.
 - **`@claw/shared-auth`** — agent, payment, research, workspace, and both Threads
-  services. Threads also import shared constants, types, and utilities; queue,
-  entitlement, and domain edges arrive with later batches.
+  services. Both Threads services also use shared constants, types, and utilities.
 - **`health`** — depends on `@claw/shared-utilities` **only**.
 
 Package-to-package: `shared-auth` → `shared-types` + `shared-utilities`;
@@ -61,28 +60,29 @@ consumes `message.routed`** to continue execution.
 Services expose `/internal/*` endpoints (service-token protected) for
 synchronous data other services need at request time:
 
-| Caller            | Callee           | Endpoint (purpose)                                                     |
-| ----------------- | ---------------- | ---------------------------------------------------------------------- |
-| chat              | memory           | `/internal/memories/retrieve` (retrieval bundle)                       |
-| chat              | memory           | context-pack items for assembly                                        |
-| chat              | file             | `/internal/files/:id/content`, `/chunks` (attachments)                 |
-| chat              | connector        | `/internal/connectors/config`, `/models-snapshot`                      |
-| chat              | auth             | `/internal/quota/reserve`/`finalize`/`release`                         |
-| image             | file             | `/internal/files/store-image`                                          |
-| routing           | connector        | `/internal/connectors/models-snapshot`                                 |
-| routing           | llamacpp         | `/internal/llamacpp/loaded-snapshot`                                   |
-| routing           | ollama           | installed models (dynamic router prompt)                               |
-| workspace         | chat             | `/internal/chat/generate`, `/internal/chat/threads/seeded`             |
-| thread-generation | chat             | `/internal/thread-snapshots/:threadId` (owner-checked source snapshot) |
-| thread-generation | research         | `/internal/research/runs` (versioned evidence bundle)                  |
-| thread-generation | routing          | `/internal/router-models/context-window/:provider/:model`              |
-| thread-generation | auth             | `/internal/threads/budgets/close` (finalize or release parent budget)  |
-| thread-generation | chat             | `/internal/chat/generate` (budget-bound provider calls)                |
-| workspace         | file-gen / image | `/internal/file-generations/generate`, `/internal/images/generate`     |
-| agent             | chat             | `/internal/agent/terminal/seed-command`                                |
-| payment           | auth             | `/internal/plans/*`, `/internal/billing-metrics/provider-costs`        |
-| auth              | payment          | `/internal/payments/users/:userId/entitlement`                         |
-| health            | all              | `/health` aggregation                                                  |
+| Caller            | Callee            | Endpoint (purpose)                                                       |
+| ----------------- | ----------------- | ------------------------------------------------------------------------ |
+| chat              | memory            | `/internal/memories/retrieve` (retrieval bundle)                         |
+| chat              | memory            | context-pack items for assembly                                          |
+| chat              | file              | `/internal/files/:id/content`, `/chunks` (attachments)                   |
+| chat              | connector         | `/internal/connectors/config`, `/models-snapshot`                        |
+| chat              | auth              | `/internal/quota/reserve`/`finalize`/`release`                           |
+| image             | file              | `/internal/files/store-image`                                            |
+| routing           | connector         | `/internal/connectors/models-snapshot`                                   |
+| routing           | llamacpp          | `/internal/llamacpp/loaded-snapshot`                                     |
+| routing           | ollama            | installed models (dynamic router prompt)                                 |
+| workspace         | chat              | `/internal/chat/generate`, `/internal/chat/threads/seeded`               |
+| thread-generation | chat              | `/internal/thread-snapshots/:threadId` (owner-checked source snapshot)   |
+| thread-generation | research          | `/internal/research/runs` (versioned evidence bundle)                    |
+| thread-generation | routing           | `/internal/router-models/context-window/:provider/:model`                |
+| thread-generation | auth              | `/internal/threads/budgets/reserve`, `/close` (existing entitlement cap) |
+| thread-generation | chat              | `/internal/chat/generate` (budget-bound provider calls)                  |
+| threads           | thread-generation | `/internal/threads/generations`, owner-state and cancel                  |
+| workspace         | file-gen / image  | `/internal/file-generations/generate`, `/internal/images/generate`       |
+| agent             | chat              | `/internal/agent/terminal/seed-command`                                  |
+| payment           | auth              | `/internal/plans/*`, `/internal/billing-metrics/provider-costs`          |
+| auth              | payment           | `/internal/payments/users/:userId/entitlement`                           |
+| health            | all               | `/health` aggregation                                                    |
 
 Internal endpoints are discovered in `.ai/manifests/api-endpoints.json` (routes
 starting `/internal/`). Inter-service base URLs come from `*_SERVICE_URL` env

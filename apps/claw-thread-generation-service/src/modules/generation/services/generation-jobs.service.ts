@@ -3,6 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
   type OnModuleDestroy,
   type OnModuleInit,
 } from '@nestjs/common';
@@ -17,6 +18,7 @@ import { type EnqueueGenerationDto, enqueueGenerationSchema } from '../dto/enque
 import { ThreadBudgetClient } from './thread-budget.client';
 import { ThreadGenerationCancelledError } from '../utilities/thread-generation-cancelled.error';
 import { ThreadGenerationLeaseLostError } from '../utilities/thread-generation-lease-lost.error';
+import type { PrivateGenerationState } from '../types/generation-pipeline.types';
 
 import {
   GENERATION_HEARTBEAT_MS,
@@ -55,12 +57,32 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     if (this.recoveryTimer) clearInterval(this.recoveryTimer);
   }
 
-  async enqueue(input: EnqueueGenerationDto) {
+  async enqueue(input: EnqueueGenerationDto): Promise<{ jobId: string; status: string }> {
+    const existing = await this.repository.findByIdempotencyKey(input);
+    if (existing) {
+      switch (existing.result) {
+        case GenerationJobStorageResult.CONFLICT:
+          throw new ConflictException(
+            'Idempotency key was already used for a different generation',
+          );
+        case GenerationJobStorageResult.SUCCESS:
+          if (existing.job.status === 'QUEUED') {
+            await this.dispatchJob(existing.job.id, existing.job.correlationId);
+          }
+          return { jobId: existing.job.id, status: existing.job.status };
+      }
+    }
     const snapshot = await this.snapshots.getOwnedSnapshot(input.ownerId, input.sourceThreadId);
+    const budget = await this.budgets.reserve(
+      input.ownerId,
+      input.idempotencyKey,
+      Number(input.spendCapMicroUsd),
+    );
     const stored = await this.repository.createQueued(
       input,
       JSON.parse(JSON.stringify(snapshot)) as Record<string, unknown>,
       snapshot.sha256,
+      budget.id,
     );
     switch (stored.result) {
       case GenerationJobStorageResult.CONFLICT:
@@ -75,13 +97,47 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     return { jobId: job.id, status: job.status };
   }
 
-  async cancel(jobId: string) {
+  async cancel(jobId: string): Promise<{ jobId: string; status: string }> {
     const result = await this.repository.requestCancellation(jobId);
     if (!result) return { jobId, status: 'NOT_FOUND' };
     if (result.queued && result.budgetId) {
       await this.closeBudget(jobId, result.budgetId, GenerationBudgetCloseStatus.RELEASED);
     }
     return { jobId, status: result.status };
+  }
+
+  async getOwnerState(jobId: string, ownerId: string): Promise<PrivateGenerationState> {
+    const job = await this.repository.findOwnerState(jobId, ownerId);
+    if (!job) throw new NotFoundException('Generation job not found');
+    const revision = job.status === 'WAITING_FOR_REVIEW' ? job.revisions[0] : undefined;
+    const parsed = revision
+      ? z
+          .object({
+            markdown: z.string(),
+            citations: z.array(z.object({ evidenceId: z.string(), url: z.string().url() })),
+            judge: z.object({ score: z.number().int().min(0).max(100) }),
+            critic: z.object({ score: z.number().int().min(0).max(100) }),
+          })
+          .safeParse(revision.content)
+      : undefined;
+    if (parsed && !parsed.success) {
+      throw new InternalServerErrorException('Generation result is invalid');
+    }
+    return {
+      jobId: job.id,
+      status: job.status,
+      stage: job.stage,
+      round: job.round,
+      safeErrorCode: job.safeErrorCode,
+      draft: parsed?.success
+        ? {
+            markdown: parsed.data.markdown,
+            citations: parsed.data.citations,
+            judgeScore: parsed.data.judge.score,
+            criticScore: parsed.data.critic.score,
+          }
+        : null,
+    };
   }
 
   async subscribe(): Promise<void> {

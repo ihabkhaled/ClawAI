@@ -8,7 +8,6 @@ export const enqueueGenerationSchema = z
     sourceThreadId: z.string().min(1).max(64),
     idempotencyKey: z.string().min(1).max(200),
     correlationId: z.string().min(1).max(200),
-    budgetId: z.string().min(1).max(64),
     spendCapMicroUsd: z
       .string()
       .regex(/^\d{1,16}$/u)

@@ -3559,6 +3559,11 @@
           "method": "POST",
           "route": "/internal/threads/generations/:jobId/cancel",
           "source": "apps/claw-thread-generation-service/src/modules/generation/controllers/generation-jobs-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/threads/generations/:jobId/owner-state",
+          "source": "apps/claw-thread-generation-service/src/modules/generation/controllers/generation-jobs-internal.controller.ts"
         }
       ],
       "claw-threads-service": [
@@ -3569,8 +3574,23 @@
         },
         {
           "method": "POST",
+          "route": "/thread-publications/:publicationId/cancel-generation",
+          "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-owner.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/thread-publications/:publicationId/generation-state",
+          "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-owner.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/thread-publications/:publicationId/publish",
           "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-owner.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/thread-publications/generations",
+          "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-generation.controller.ts"
         }
       ],
       "claw-workspace-service": [
@@ -8835,7 +8855,7 @@
           "file": "skills/run-the-qa-team.md"
         },
         {
-          "bytes": 3639,
+          "bytes": 4213,
           "file": "skills/run-threads-generation-queue.md"
         },
         {
@@ -11152,11 +11172,11 @@
       },
       "claw-thread-generation-service": {
         "runner": "vitest",
-        "testFiles": 11
+        "testFiles": 12
       },
       "claw-threads-service": {
         "runner": "vitest",
-        "testFiles": 4
+        "testFiles": 5
       },
       "claw-workspace-service": {
         "runner": "vitest",
@@ -11943,7 +11963,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 56,
-    "endpointCount": 804,
+    "endpointCount": 808,
     "envVarCount": 375,
     "eventCount": 186,
     "frontendRouteCount": 156,
@@ -11955,7 +11975,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2065,
+    "totalTestFiles": 2067,
     "workspaceCount": 27
   }
 }

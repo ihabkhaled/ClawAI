@@ -1,6 +1,6 @@
 # Architecture Map (CANONICAL)
 
-Review when the service topology, data ownership boundary, or gateway routing changes. Last verified: 2026-10-04.
+Review when the service topology, data ownership boundary, or gateway routing changes. Last verified: 2026-10-05.
 
 > Authority level 3 — below `CLAUDE.md` and `rules/00-non-negotiable-rules.md`,
 > above everything else structural. This is the single source of truth for the
@@ -91,7 +91,7 @@ out by the inventory audit (`portCoverageGaps`) and detailed in
 | research          | 4016            | PostgreSQL                            |
 | llamacpp          | 4017            | PostgreSQL (Debian base image)        |
 | payment           | 4018            | PostgreSQL                            |
-| threads           | 4019            | none (health-only foundation)         |
+| threads           | 4019            | PostgreSQL (`claw_threads`)           |
 | thread-generation | 4020            | PostgreSQL (`claw_thread_generation`) |
 
 Most PostgreSQL services use **Prisma 7.8**; the three Mongo services (audit,

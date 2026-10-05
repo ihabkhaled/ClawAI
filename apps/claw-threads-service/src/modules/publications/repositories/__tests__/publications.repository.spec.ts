@@ -61,4 +61,39 @@ describe('PublicationsRepository', () => {
     expect(transaction.threadPublication.updateMany).toHaveBeenCalledTimes(2);
     expect(transaction.threadPublicationRevision.updateMany).toHaveBeenCalledTimes(1);
   });
+
+  it('stores a completed generation as a private pending revision', async () => {
+    const transaction = {
+      threadPublication: {
+        findUnique: vi.fn().mockResolvedValue({ status: 'DRAFT' }),
+        updateMany: vi.fn(),
+      },
+      threadPublicationRevision: { upsert: vi.fn().mockResolvedValue({}) },
+    };
+    const prisma = {
+      $transaction: vi.fn((operation: (tx: unknown) => unknown) => operation(transaction)),
+    };
+    const repository = new PublicationsRepository(prisma as never);
+    const draft = {
+      markdown: '# Private draft\n\nDraft text',
+      citations: [{ evidenceId: 'source-1', url: 'https://example.test/source' }],
+      judgeScore: 86,
+      criticScore: 79,
+    };
+
+    await repository.savePrivateDraft('pub-1', draft);
+
+    expect(transaction.threadPublicationRevision.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          title: 'Private draft',
+          reviewStatus: 'PENDING',
+          judgeScore: 86,
+          criticScore: 79,
+        }),
+        update: {},
+      }),
+    );
+    expect(transaction.threadPublication.updateMany).not.toHaveBeenCalled();
+  });
 });

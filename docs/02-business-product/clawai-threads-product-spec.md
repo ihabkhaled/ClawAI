@@ -41,9 +41,12 @@ both holds. A job cannot close while a call reservation is unresolved.
 Generation obtains source text from Chat through an owner-scoped internal
 snapshot request. Chat returns a deterministic versioned snapshot containing
 only eligible user/assistant text, with a digest and explicit complete-transcript
-limits. The snapshot endpoint and generation client are implemented; durable job
-pinning lands with the job aggregate in a later batch. Every job will retain its
-own snapshot version and digest, and a new generation takes a new snapshot.
+limits. Every durable job retains its own snapshot version and digest, and a
+new generation takes a new snapshot. The authenticated Threads API passes the
+selected cap and starts the job; generation validates snapshot ownership before
+reserving it through the existing Auth entitlement system. Threads allows
+owner-scoped progress/cancellation and persists ready output as a private
+pending revision.
 JSON and Markdown are supported exports. TOON remains unavailable until a codec
 proves semantic round-trip and useful measured token savings.
 
@@ -52,7 +55,9 @@ reader identity list. Unpublishing removes the revision from public reads and
 discovery. Rollout remains disabled until generation, publication, moderation,
 internationalization, and public discovery paths pass their release checks.
 
-The publication service now owns an isolated PostgreSQL database and an
-atomic owner-approval transition for review-ready revisions. Generation-result
-handoff, draft creation/listing, and public reader APIs remain unfinished; the
-approval route alone does not make the product launch-ready.
+The publication service owns an isolated PostgreSQL database and an atomic
+owner-approval transition. Generation-result handoff now stores output as a
+private pending revision. Safety scanning, editable/revalidated revisions,
+public reads, unpublish, exports, community features, internationalization, and
+public discovery remain unfinished. Generation intent or a private draft alone
+does not make content public.

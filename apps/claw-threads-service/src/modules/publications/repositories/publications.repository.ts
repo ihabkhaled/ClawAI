@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { createHash, randomUUID } from 'node:crypto';
 import { PublicationStatus, RevisionReviewStatus } from '../../../generated/prisma';
 import { z } from 'zod';
 
@@ -8,6 +9,73 @@ import type { PublishedPublication } from '../types/publication.types';
 @Injectable()
 export class PublicationsRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  async createQueuedPublication(
+    ownerId: string,
+    generationJobId: string,
+  ): Promise<{ id: string; slug: string; ownerId: string } | null> {
+    const publication = await this.prisma.threadPublication.upsert({
+      where: { generationJobId },
+      create: { ownerId, generationJobId, slug: randomUUID() },
+      update: {},
+      select: { id: true, slug: true, ownerId: true },
+    });
+    return publication.ownerId === ownerId
+      ? { id: publication.id, slug: publication.slug, ownerId }
+      : null;
+  }
+
+  async findOwnedGeneration(
+    publicationId: string,
+    ownerId: string,
+  ): Promise<{
+    id: string;
+    ownerId: string;
+    generationJobId: string | null;
+    status: PublicationStatus;
+  } | null> {
+    const publication = await this.prisma.threadPublication.findFirst({
+      where: { id: publicationId, ownerId },
+      select: { id: true, ownerId: true, generationJobId: true, status: true },
+    });
+    return publication?.ownerId === ownerId ? { ...publication, ownerId } : null;
+  }
+
+  async savePrivateDraft(
+    publicationId: string,
+    draft: {
+      markdown: string;
+      citations: Array<{ evidenceId: string; url: string }>;
+      judgeScore: number;
+      criticScore: number;
+    },
+  ): Promise<void> {
+    await this.prisma.$transaction(async (transaction) => {
+      const publication = await transaction.threadPublication.findUnique({
+        where: { id: publicationId },
+        select: { status: true },
+      });
+      if (publication?.status !== PublicationStatus.DRAFT) return;
+      const title = draft.markdown.match(/^#\s+(.+)$/mu)?.[1]?.trim() ?? 'Untitled draft';
+      await transaction.threadPublicationRevision.upsert({
+        where: { publicationId_revision: { publicationId, revision: 1 } },
+        create: {
+          publicationId,
+          revision: 1,
+          title,
+          content: { markdown: draft.markdown, citations: draft.citations },
+          contentHash: createHash('sha256')
+            .update(JSON.stringify({ markdown: draft.markdown, citations: draft.citations }))
+            .digest('hex'),
+          reviewStatus: RevisionReviewStatus.PENDING,
+          judgeScore: draft.judgeScore,
+          criticScore: draft.criticScore,
+          validatedAt: new Date(),
+        },
+        update: {},
+      });
+    });
+  }
 
   async publishReadyRevision(
     publicationId: string,

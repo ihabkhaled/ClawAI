@@ -26,7 +26,7 @@ Reference for ClawAI NestJS backend services; newer services are appended as the
 | 16  | Research                                                | `claw-research-service`          | 4016 | PostgreSQL                            | Search, fetch, and research evidence                        |
 | 17  | llama.cpp                                               | `claw-llamacpp-service`          | 4017 | PostgreSQL                            | Local llama.cpp runtime                                     |
 | 18  | Payment                                                 | `claw-payment-service`           | 4018 | PostgreSQL                            | Checkout, subscriptions, invoices, refunds                  |
-| 19  | [Threads](service-guide-threads.md)                     | `claw-threads-service`           | 4019 | None (health-only foundation)         | Planned publications and community                          |
+| 19  | [Threads](service-guide-threads.md)                     | `claw-threads-service`           | 4019 | PostgreSQL (`claw_threads`)           | Owner generation handoff and private publication revisions  |
 | 20  | [Thread Generation](service-guide-thread-generation.md) | `claw-thread-generation-service` | 4020 | PostgreSQL (`claw_thread_generation`) | Durable isolated generation jobs and review pipeline        |
 
 ---

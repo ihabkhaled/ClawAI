@@ -45,7 +45,7 @@ Full compact bootstrap: **`.ai/BOOTSTRAP.md`** (generated, ~800 tokens).
 - Durable pitfalls/lessons → `memory/` · Task packs → `.ai/packs/`
 - SDLC templates → `docs/features/_template/` · ADRs → `docs/13-adr/`
 
-## Validation (touched folders only — never all 24 workspaces)
+## Validation (touched folders only — never all 27 workspaces)
 
 ```bash
 npm run affected:list                                   # what your diff touches + why

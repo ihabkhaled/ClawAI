@@ -22,8 +22,14 @@ Threads has its own PostgreSQL database (`claw_threads`) and migration history;
 generation retains its separate database. The initial publication lifecycle
 allows an authenticated owner to approve a `READY_FOR_REVIEW` revision. Owner
 approval changes publication and revision state in one transaction, and the
-response is an explicit public-field allow-list. Generation-to-publication
-handoff and public reads are not wired yet.
+response is an explicit public-field allow-list. Threads passes the
+owner-selected cap and idempotency key to generation-service. After validating
+the immutable Chat snapshot, generation-service reserves the existing Auth
+entitlement budget and persists the job before dispatch. Owners poll their own
+publication; Threads copies a completed result into a private `PENDING`
+revision. Generation state and draft content never cross to public reads. Safety
+scanning, owner revision controls, public reads, unpublish, and exports remain
+gated for the next batch.
 
 Generation obtains source through Chat's service-token-protected
 `POST /api/v1/internal/thread-snapshots/:threadId` endpoint. Chat checks
@@ -79,10 +85,11 @@ private requests.
 
 Threads and generation services use ports 4019 and 4020. Threads owns the
 `claw_threads` PostgreSQL database; generation owns `claw_thread_generation`.
-Both dev and production entrypoints run Prisma migrations. Enqueue and cancellation APIs require a
-service token and stay off the public gateway. Publication routes and indexing
-remain disabled until the complete product passes scoped gates and the 15-lane
-QA workflow.
+Both dev and production entrypoints run Prisma migrations. Generation enqueue,
+cancellation, and owner-state routes require a service token and stay off the
+public gateway. Authenticated Threads owner APIs are routed through the existing
+gateway. Public reads and indexing remain gated until content safety scanning
+and the owner approval path are complete.
 
 Their container health checks use Node's built-in `node:https` client against
 loopback `/api/v1/health`. TLS verification is disabled for this loopback-only

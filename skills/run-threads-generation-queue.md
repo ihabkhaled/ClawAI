@@ -36,8 +36,15 @@ provider calls. Two database-backed worker slots cap concurrency across service
 replicas. Heartbeats renew leases; reconciliation recovers expired jobs with a
 bounded attempt count and backoff, resuming only hash-matched research and role
 outputs. Ready jobs dispatch FIFO, and pending budget closure is retried
-idempotently. Drafts stay private; there is not yet a result read or publication
-approval endpoint.
+idempotently. Threads passes the user-selected cap, explicit public-intent
+version, and authenticated owner ID. Generation validates the source snapshot
+before reserving the Auth budget, then links the idempotent job to an
+owner-private publication. A repeated request returns the pinned job before
+another snapshot or budget call; a different request using the same key
+conflicts. Threads may poll the internal owner-state endpoint; only a matching
+owner receives status or a ready draft. Threads stores that output as a
+`PENDING` revision. Do not treat this as owner approval or make it public: safety
+scanning, edits, public reads, unpublish, and export are still gated.
 
 ## Deploy and inspect
 

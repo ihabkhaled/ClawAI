@@ -139,16 +139,39 @@ open; this batch does not enable the feature.
 
 **Outcome:** Owners can review, approve, publish, revise, unpublish, and export; authenticated readers can participate; moderation and account deletion follow the approved policy.
 
-**Execution split:** 5a provisions the Threads-owned database and atomic owner
-approval transition. 5b wires generation handoff, private draft/revision
-management, public reads, unpublish, and exports. 5c adds social, moderation,
-reports, and account-deletion handling. Do not enable public endpoints until
-5b safety checks are complete.
+**Execution split (safety gate):** 5a provisions the Threads-owned database
+and atomic owner approval transition. 5b-a wires authenticated generation
+handoff, snapshot-first reservation of the existing entitlement cap,
+cancellation, and private draft synchronization. 5b-b adds safety scanning and validated owner revisions before
+public reads, unpublish, and exports. 5c adds social, moderation, reports, and
+account-deletion handling. Do not publish or expose public content before 5b-b.
 
-**5a status:** Prisma publication/revision persistence and the owner approval
-transaction are implemented locally. Dev database migration and auth-gated HTTP
-health/route probes passed; generated knowledge, normal commit/push, CI, and
-production migration remain the current batch's unfinished gates.
+**5a status:** Implemented, normally committed/pushed, CI-green, and deployed
+to production in release `v1.182.1` (`5f7cdc9`). Production Threads and
+generation containers are healthy; `pg-threads` accepts connections. The
+production `.env` is `deploy:deploy` mode `600` and readable by the deploy user.
+Production route probing returned the expected unauthenticated 401.
+
+**5b-a knowledge delta:** `docs/03-architecture/clawai-threads-architecture.md`,
+`docs/04-backend/service-guide-threads.md`,
+`docs/04-backend/service-guide-thread-generation.md`,
+`skills/run-threads-generation-queue.md`, `wiki/Threads.md`, this plan,
+`docs/changes/2026-10-05-threads-batch-5b-generation-handoff.md`, and
+`docs/qa-evidence/2026-10-05-threads-generation-handoff.md`. No new rule or
+skill: the existing billing, service-boundary, generation-queue, and QA rules
+cover this API seam. Regenerate generated knowledge and inventory artifacts.
+Also refresh the directly affected product spec, `docs/04-backend/services-index.md`,
+`context/architecture-map.md`, `context/service-dependency-map.md`, root
+`AGENTS.md` workspace count, and the earlier 5a QA evidence now that its release
+and production deployment have completed.
+The implementation is incomplete until normal hooks, push, CI, local runtime
+probe, and deployment complete.
+
+**5b-b scope:** Publication safety scanning, owner text edits/revalidation,
+public read allow-lists, unpublish, and exports are deferred together. Existing
+code has no publication scanner; making results publicly readable before that
+control and the owner approval UI exist would violate the approved public
+contract. This is a sequencing change, not an opt-out.
 
 **Code:**
 

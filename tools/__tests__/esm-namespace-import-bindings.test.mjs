@@ -23,6 +23,7 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import process from 'node:process';
 import { test } from 'node:test';
 
 import { repoPath } from '../lib/repo.mjs';
@@ -129,7 +130,6 @@ test('namespace imports of third-party packages expose every member the source c
       // expose their JavaScript namespace. Linux CI still verifies these.
       if (
         process.platform === 'win32' &&
-        error?.code === 'ERR_DLOPEN_FAILED' &&
         /Application Control policy has blocked this file/u.test(error.message)
       ) {
         platformBlockedPackages.push(specifier);

@@ -26,6 +26,57 @@ function buildRepository(overrides: Record<string, unknown> = {}) {
 }
 
 describe('GenerationJobsRepository recovery', () => {
+  it('returns the pinned job for the same owner request without comparing a fresh snapshot', async () => {
+    const { repository, tx } = buildRepository();
+    const input = { ownerId: 'owner-1', idempotencyKey: 'request-1', topic: 'original' };
+    tx.threadGenerationJob.findUnique.mockResolvedValue({
+      id: 'job-1',
+      ownerId: 'owner-1',
+      request: input,
+      status: ThreadGenerationStatus.RUNNING,
+    });
+
+    await expect(repository.findByIdempotencyKey(input as never)).resolves.toMatchObject({
+      result: 'SUCCESS',
+      job: { id: 'job-1', status: ThreadGenerationStatus.RUNNING },
+    });
+    expect(tx.threadGenerationJob.findUnique).toHaveBeenCalledWith({
+      where: { idempotencyKey: 'request-1' },
+      select: { id: true, ownerId: true, request: true, status: true, correlationId: true },
+    });
+  });
+
+  it('rejects another owner or a changed request using an existing idempotency key', async () => {
+    const { repository, tx } = buildRepository();
+    tx.threadGenerationJob.findUnique.mockResolvedValue({
+      id: 'job-1',
+      ownerId: 'owner-2',
+      request: { ownerId: 'owner-2', idempotencyKey: 'request-1', topic: 'other' },
+    });
+
+    await expect(
+      repository.findByIdempotencyKey({
+        ownerId: 'owner-1',
+        idempotencyKey: 'request-1',
+        topic: 'other',
+      } as never),
+    ).resolves.toEqual({ result: 'CONFLICT' });
+  });
+
+  it('loads only the requesting owner’s safe job state and completed draft', async () => {
+    const { repository, tx } = buildRepository();
+
+    await repository.findOwnerState('job-1', 'owner-1');
+
+    expect(tx.threadGenerationJob.findFirst).toHaveBeenCalledWith({
+      where: { id: 'job-1', ownerId: 'owner-1' },
+      select: expect.objectContaining({
+        safeErrorCode: true,
+        revisions: expect.any(Object),
+      }),
+    });
+  });
+
   it('claims a durable slot and records an incremented attempt', async () => {
     const { repository, tx } = buildRepository();
 

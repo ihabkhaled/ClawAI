@@ -61,3 +61,17 @@ export type GenerationPipelineResult = {
   judgeReview: StructuredReview;
   criticReview: StructuredReview;
 };
+
+export type PrivateGenerationState = {
+  jobId: string;
+  status: string;
+  stage: string;
+  round: number;
+  safeErrorCode: string | null;
+  draft: {
+    markdown: string;
+    citations: AuthorDraft['citations'];
+    judgeScore: number;
+    criticScore: number;
+  } | null;
+};
