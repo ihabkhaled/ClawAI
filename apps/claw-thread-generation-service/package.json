@@ -42,7 +42,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@nestjs/testing": "^12.1.0",
+    "@nestjs/testing": "^12.1.2",
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.3",
     "eslint": "^10.11.0",
