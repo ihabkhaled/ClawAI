@@ -560,9 +560,9 @@ export const en: TranslationDictionary = {
         'Pricing could not be reached, so paid models are paused for a moment. You were not charged. Local models still work.',
       paygFreeAllowanceExhaustedTitle: 'Free credit-model requests used up',
       paygFreeAllowanceExhaustedBody:
-        'You have used all your free requests to credit models this month. Upgrade to a paid plan or add credit to keep using them. Included models still work.',
+        'You have used all your free requests to credit models this month. Upgrade to a paid plan or add credit to keep using them. Or choose a non-credit model instead. Included models still work.',
       paygFreeAllowanceExhaustedBodyWithLimit:
-        'You have used all {limit} free requests to credit models this month. Upgrade to a paid plan or add credit to keep using them. Included models still work.',
+        'You have used all {limit} free requests to credit models this month. Upgrade to a paid plan or add credit to keep using them. Or choose a non-credit model instead. Included models still work.',
       dailyTokensTitle: "You have used today's tokens",
       dailyTokensBody:
         'Your daily token allowance is spent. It resets at midnight UTC, or you can move to a larger plan now.',
@@ -4946,7 +4946,7 @@ export const en: TranslationDictionary = {
       PAYG_MODEL_UNPRICED: 'This model has no published price yet and cannot be billed.',
       PAYG_PRICING_UNAVAILABLE: 'Pricing is temporarily unreachable. You were not charged.',
       PAYG_FREE_ALLOWANCE_EXHAUSTED:
-        'Your free requests to credit models are used up for this month. Upgrade or add credit to continue.',
+        'Your free requests to credit models are used up for this month. Upgrade or add credit to continue. Or choose a non-credit model instead.',
       CREDIT_PACKAGE_NOT_FOUND: 'That credit package no longer exists.',
       CREDIT_PACKAGE_INACTIVE: 'That credit package is no longer on sale.',
       CREDIT_ADJUSTMENT_REASON_REQUIRED: 'A reason is required for a manual credit adjustment.',

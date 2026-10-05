@@ -534,9 +534,9 @@ export const zh: TranslationDictionary = {
         '无法获取价格信息，付费模型已暂停片刻。未向您收取任何费用。本地模型仍可正常使用。',
       paygFreeAllowanceExhaustedTitle: '信用额度模型的免费请求已用完',
       paygFreeAllowanceExhaustedBody:
-        '本月您对信用额度模型的免费请求已全部用完。请升级到付费套餐或充值额度以继续使用。套餐内包含的模型仍可正常使用。',
+        '本月您对信用额度模型的免费请求已全部用完。请升级到付费套餐或充值额度以继续使用。或选择不消耗额度的模型。 套餐内包含的模型仍可正常使用。',
       paygFreeAllowanceExhaustedBodyWithLimit:
-        '本月您对信用额度模型的 {limit} 次免费请求已全部用完。请升级到付费套餐或充值额度以继续使用。套餐内包含的模型仍可正常使用。',
+        '本月您对信用额度模型的 {limit} 次免费请求已全部用完。请升级到付费套餐或充值额度以继续使用。或选择不消耗额度的模型。 套餐内包含的模型仍可正常使用。',
       dailyTokensTitle: '今天的额度已用完',
       dailyTokensBody: '你今天的 token 额度已用完，将在 UTC 零点重置，也可以现在升级到更大的套餐。',
       weeklyTokensTitle: '本周的额度已用完',
@@ -4792,7 +4792,7 @@ export const zh: TranslationDictionary = {
       PAYG_MODEL_UNPRICED: '该模型尚未发布价格，无法计费。',
       PAYG_PRICING_UNAVAILABLE: '暂时无法获取价格信息。未向您收取任何费用。',
       PAYG_FREE_ALLOWANCE_EXHAUSTED:
-        '本月对信用额度模型的免费请求已用完。请升级套餐或充值额度以继续。',
+        '本月对信用额度模型的免费请求已用完。请升级套餐或充值额度以继续。 或选择不消耗额度的模型。',
       CREDIT_PACKAGE_NOT_FOUND: '该额度套餐已不存在。',
       CREDIT_PACKAGE_INACTIVE: '该额度套餐已停售。',
       CREDIT_ADJUSTMENT_REASON_REQUIRED: '手动调整额度必须填写原因。',

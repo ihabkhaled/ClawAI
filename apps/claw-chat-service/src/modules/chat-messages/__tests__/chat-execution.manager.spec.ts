@@ -240,6 +240,54 @@ describe('ChatExecutionManager', () => {
     expect(requestBody.prompt).toContain('Respond briefly in 2-4 sentences');
   });
 
+  describe('AUTO and a credit refusal (free requests used up)', () => {
+    const refusal = (): BusinessException =>
+      new BusinessException(
+        'You have used all your free requests to credit models this month.',
+        'PAYG_FREE_ALLOWANCE_EXHAUSTED',
+        402,
+      );
+    const autoPayload = {
+      messageId: 'msg-credit',
+      threadId: 'thread-1',
+      selectedProvider: 'GROQ',
+      selectedModel: 'openai/gpt-oss-120b',
+      routingMode: 'AUTO',
+      fallbackChain: [{ provider: 'local-ollama', model: 'qwen3:1.7b' }],
+      timestamp: new Date().toISOString(),
+    };
+    const refuseGroq = (): void => {
+      accessControl.reserveCredit.mockImplementation(async (call: { provider?: string }) => {
+        if (call.provider === 'GROQ') {
+          throw refusal();
+        }
+        return accessControl.hold;
+      });
+    };
+
+    it('moves on to a non-credit model instead of ending the turn', async () => {
+      refuseGroq();
+      httpRequest.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: { model: 'qwen3:1.7b', response: 'Local answer.', done: true },
+      });
+
+      const result = await manager.execute(autoPayload, makeContext('explain closures'));
+
+      expect(result.content).toBe('Local answer.');
+      expect(result.provider).not.toBe('GROQ');
+    });
+
+    it('still shows the credit refusal when no candidate can answer', async () => {
+      accessControl.reserveCredit.mockRejectedValue(refusal());
+
+      await expect(
+        manager.execute(autoPayload, makeContext('explain closures')),
+      ).rejects.toMatchObject({ code: 'PAYG_FREE_ALLOWANCE_EXHAUSTED' });
+    });
+  });
+
   // The fast path trims context to 1k tokens and caps output at 512: a turn
   // grounded in crawled pages lost the pages it was asked about.
   it('never uses the fast path on a turn carrying research evidence', async () => {

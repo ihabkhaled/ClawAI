@@ -564,9 +564,9 @@ export const pt: TranslationDictionary = {
         'Não foi possível consultar os preços, então os modelos pagos estão pausados por um momento. Nada foi cobrado de você. Os modelos locais continuam funcionando.',
       paygFreeAllowanceExhaustedTitle: 'Pedidos gratuitos a modelos de crédito esgotados',
       paygFreeAllowanceExhaustedBody:
-        'Você usou todos os seus pedidos gratuitos a modelos de crédito neste mês. Faça upgrade para um plano pago ou adicione crédito para continuar a usá-los. Os modelos incluídos continuam funcionando.',
+        'Você usou todos os seus pedidos gratuitos a modelos de crédito neste mês. Faça upgrade para um plano pago ou adicione crédito para continuar a usá-los. Ou escolha um modelo que não use crédito. Os modelos incluídos continuam funcionando.',
       paygFreeAllowanceExhaustedBodyWithLimit:
-        'Você usou todos os {limit} pedidos gratuitos a modelos de crédito deste mês. Faça upgrade para um plano pago ou adicione crédito para continuar a usá-los. Os modelos incluídos continuam funcionando.',
+        'Você usou todos os {limit} pedidos gratuitos a modelos de crédito deste mês. Faça upgrade para um plano pago ou adicione crédito para continuar a usá-los. Ou escolha um modelo que não use crédito. Os modelos incluídos continuam funcionando.',
       dailyTokensTitle: 'Já usou os tokens de hoje',
       dailyTokensBody:
         'A sua quota diária de tokens esgotou. É reposta à meia-noite UTC, ou pode mudar já para um plano maior.',
@@ -5007,7 +5007,7 @@ export const pt: TranslationDictionary = {
       PAYG_PRICING_UNAVAILABLE:
         'Os preços estão temporariamente inacessíveis. Nada foi cobrado de você.',
       PAYG_FREE_ALLOWANCE_EXHAUSTED:
-        'Seus pedidos gratuitos a modelos de crédito acabaram neste mês. Faça upgrade ou adicione crédito para continuar.',
+        'Seus pedidos gratuitos a modelos de crédito acabaram neste mês. Faça upgrade ou adicione crédito para continuar. Ou escolha um modelo que não use crédito.',
       CREDIT_PACKAGE_NOT_FOUND: 'Esse pacote de crédito não existe mais.',
       CREDIT_PACKAGE_INACTIVE: 'Esse pacote de crédito não está mais à venda.',
       CREDIT_ADJUSTMENT_REASON_REQUIRED:

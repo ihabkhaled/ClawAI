@@ -570,9 +570,9 @@ export const it: TranslationDictionary = {
         'Non è stato possibile leggere i prezzi, quindi i modelli a pagamento sono sospesi per un momento. Non ti è stato addebitato nulla. I modelli locali funzionano ancora.',
       paygFreeAllowanceExhaustedTitle: 'Richieste gratuite ai modelli a credito esaurite',
       paygFreeAllowanceExhaustedBody:
-        'Hai usato tutte le tue richieste gratuite ai modelli a credito questo mese. Passa a un piano a pagamento o aggiungi credito per continuare a usarli. I modelli inclusi continuano a funzionare.',
+        'Hai usato tutte le tue richieste gratuite ai modelli a credito questo mese. Passa a un piano a pagamento o aggiungi credito per continuare a usarli. Oppure scegli un modello che non usa credito. I modelli inclusi continuano a funzionare.',
       paygFreeAllowanceExhaustedBodyWithLimit:
-        'Hai usato tutte le {limit} richieste gratuite ai modelli a credito di questo mese. Passa a un piano a pagamento o aggiungi credito per continuare a usarli. I modelli inclusi continuano a funzionare.',
+        'Hai usato tutte le {limit} richieste gratuite ai modelli a credito di questo mese. Passa a un piano a pagamento o aggiungi credito per continuare a usarli. Oppure scegli un modello che non usa credito. I modelli inclusi continuano a funzionare.',
       dailyTokensTitle: 'Hai usato i token di oggi',
       dailyTokensBody:
         'Il tuo budget giornaliero di token è esaurito. Si azzera a mezzanotte UTC, oppure puoi passare subito a un piano più ampio.',
@@ -5028,7 +5028,7 @@ export const it: TranslationDictionary = {
       PAYG_PRICING_UNAVAILABLE:
         'I prezzi sono temporaneamente irraggiungibili. Non ti è stato addebitato nulla.',
       PAYG_FREE_ALLOWANCE_EXHAUSTED:
-        'Le tue richieste gratuite ai modelli a credito sono esaurite per questo mese. Passa a un piano superiore o aggiungi credito per continuare.',
+        'Le tue richieste gratuite ai modelli a credito sono esaurite per questo mese. Passa a un piano superiore o aggiungi credito per continuare. Oppure scegli un modello che non usa credito.',
       CREDIT_PACKAGE_NOT_FOUND: 'Quel pacchetto di credito non esiste più.',
       CREDIT_PACKAGE_INACTIVE: 'Quel pacchetto di credito non è più in vendita.',
       CREDIT_ADJUSTMENT_REASON_REQUIRED:

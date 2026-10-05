@@ -570,9 +570,9 @@ export const fr: TranslationDictionary = {
         'Les tarifs n’ont pas pu être consultés, les modèles payants sont donc suspendus un instant. Rien ne vous a été facturé. Les modèles locaux fonctionnent toujours.',
       paygFreeAllowanceExhaustedTitle: 'Requêtes gratuites aux modèles à crédit épuisées',
       paygFreeAllowanceExhaustedBody:
-        'Vous avez utilisé toutes vos requêtes gratuites aux modèles à crédit ce mois-ci. Passez à un forfait payant ou ajoutez du crédit pour continuer à les utiliser. Les modèles inclus fonctionnent toujours.',
+        'Vous avez utilisé toutes vos requêtes gratuites aux modèles à crédit ce mois-ci. Passez à un forfait payant ou ajoutez du crédit pour continuer à les utiliser. Ou choisissez un modèle sans crédit. Les modèles inclus fonctionnent toujours.',
       paygFreeAllowanceExhaustedBodyWithLimit:
-        'Vous avez utilisé les {limit} requêtes gratuites aux modèles à crédit de ce mois-ci. Passez à un forfait payant ou ajoutez du crédit pour continuer à les utiliser. Les modèles inclus fonctionnent toujours.',
+        'Vous avez utilisé les {limit} requêtes gratuites aux modèles à crédit de ce mois-ci. Passez à un forfait payant ou ajoutez du crédit pour continuer à les utiliser. Ou choisissez un modèle sans crédit. Les modèles inclus fonctionnent toujours.',
       dailyTokensTitle: 'Vous avez utilisé les jetons du jour',
       dailyTokensBody:
         'Votre quota quotidien de jetons est épuisé. Il se réinitialise à minuit UTC, ou vous pouvez passer à un forfait supérieur.',
@@ -5054,7 +5054,7 @@ export const fr: TranslationDictionary = {
       PAYG_PRICING_UNAVAILABLE:
         'Les tarifs sont temporairement inaccessibles. Rien ne vous a été facturé.',
       PAYG_FREE_ALLOWANCE_EXHAUSTED:
-        'Vos requêtes gratuites aux modèles à crédit sont épuisées pour ce mois-ci. Changez de forfait ou ajoutez du crédit pour continuer.',
+        'Vos requêtes gratuites aux modèles à crédit sont épuisées pour ce mois-ci. Changez de forfait ou ajoutez du crédit pour continuer. Ou choisissez un modèle sans crédit.',
       CREDIT_PACKAGE_NOT_FOUND: 'Ce pack de crédit n’existe plus.',
       CREDIT_PACKAGE_INACTIVE: 'Ce pack de crédit n’est plus proposé.',
       CREDIT_ADJUSTMENT_REASON_REQUIRED: 'Un motif est requis pour un ajustement manuel de crédit.',
