@@ -11,6 +11,7 @@ import type { ThreadGenerationRequest } from '@/utilities/thread-generation-requ
 import type { ThreadRevisionRequest } from '@/utilities/thread-revision-request.utility';
 
 type StartGenerationResponse = { publicationId: string; jobId: string; status: string };
+type CancelGenerationResponse = { publicationId: string; status: 'CANCEL_REQUESTED' };
 
 export const threadPublicationsRepository = {
   async listMine(): Promise<OwnedThreadPublication[]> {
@@ -30,8 +31,12 @@ export const threadPublicationsRepository = {
     );
     return response.data;
   },
-  async cancelGeneration(publicationId: string): Promise<void> {
-    await apiClient.post(`/thread-publications/${publicationId}/cancel-generation`, {});
+  async cancelGeneration(publicationId: string): Promise<CancelGenerationResponse> {
+    const response = await apiClient.post<CancelGenerationResponse>(
+      `/thread-publications/${publicationId}/cancel-generation`,
+      {},
+    );
+    return response.data;
   },
   async publish(publicationId: string): Promise<void> {
     await apiClient.post(`/thread-publications/${publicationId}/publish`, {});

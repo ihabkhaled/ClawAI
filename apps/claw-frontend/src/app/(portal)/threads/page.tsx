@@ -383,6 +383,9 @@ export default function ThreadPublicationsPage(): ReactElement {
           {generationCancelled && !hasDraft ? (
             <p role="status">{t('threadGenerationCancelled')}</p>
           ) : null}
+          {cancel.isPending ? <p role="status">{t('threadCancellationRequesting')}</p> : null}
+          {cancel.isSuccess ? <p role="status">{t('threadCancellationRequested')}</p> : null}
+          {cancel.isError ? <p role="alert">{t('threadCancellationFailed')}</p> : null}
           {!generationFailed && !generationCancelled && !hasDraft ? (
             <p role="status">{t('common.loading')}</p>
           ) : null}
@@ -506,7 +509,7 @@ export default function ThreadPublicationsPage(): ReactElement {
               type="button"
               variant="outline"
               onClick={() => cancel.mutate()}
-              disabled={cancel.isPending}
+              disabled={cancel.isPending || cancel.isSuccess}
               className="w-fit"
               isLoading={cancel.isPending}
             >

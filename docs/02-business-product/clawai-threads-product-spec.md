@@ -93,3 +93,8 @@ public. Owners can submit edited content with a user-selected revision cap;
 revisions stay private while they pass fresh safety and model review. Owners can
 export Markdown or JSON and unpublish a live item. Community controls and the
 full browser/accessibility/device QA walk remain open.
+
+Generation cancellation is owner-scoped. The portal shows a request in
+progress, confirms when the service accepts it, and prevents duplicate requests
+while accepted. A failed request stays retryable; accepted cancellation is not
+presented as complete until the worker reports the terminal cancelled state.

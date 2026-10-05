@@ -605,6 +605,9 @@ export type TranslationDictionary = {
     threadPublished: string;
     threadDraftNotEligible: string;
     threadGenerationCancelled: string;
+    threadCancellationRequesting: string;
+    threadCancellationRequested: string;
+    threadCancellationFailed: string;
     threadEditDraft: string;
     threadRevisionContent: string;
     threadRevisionCap: string;

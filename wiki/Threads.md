@@ -61,7 +61,10 @@ budget closure are reconciled periodically. Threads-service passes the
 owner-selected cap to generation-service, which validates the source snapshot,
 then reserves the existing Auth entitlement budget before idempotent job
 persistence. Threads links that job to a private publication and exposes
-owner-checked status/cancellation. It copies a ready result into a private
+owner-checked status/cancellation. The portal surfaces cancellation request
+progress and acceptance, disables duplicate requests after acceptance, and
+keeps retry available if the request fails. Terminal cancellation comes from
+worker status. It copies a ready result into a private
 revision. Passing Judge/Critic thresholds and the safety scan makes it eligible
 for owner approval; this is not automatic publication. Owners can create
 immutable text edits with a fresh spend cap and idempotency key. Generation

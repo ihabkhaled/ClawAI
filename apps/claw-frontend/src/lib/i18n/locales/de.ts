@@ -674,6 +674,10 @@ export const de: TranslationDictionary = {
     threadDraftNotEligible:
       'Der Entwurf ist nach der Sicherheitsprüfung nicht zur Veröffentlichung freigegeben.',
     threadGenerationCancelled: 'Die Erstellung wurde abgebrochen.',
+    threadCancellationRequesting: 'Abbruch wird angefordert …',
+    threadCancellationRequested:
+      'Abbruch angefordert. Der Vorgang stoppt nach dem aktuellen Schritt.',
+    threadCancellationFailed: 'Abbruch konnte nicht angefordert werden. Bitte erneut versuchen.',
     threadEditDraft: 'Entwurf bearbeiten',
     threadRevisionContent: 'Überarbeiteter Artikel',
     threadRevisionCap: 'Maximale Überarbeitungskosten (USD)',
