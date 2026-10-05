@@ -126,6 +126,19 @@ describe('ChatStreamService', () => {
     });
   });
 
+  it('names the fetch strategies that served the pages in the completion line', () => {
+    const nextSpy = vi.spyOn(service.eventBus, 'next');
+
+    service.emitResearchCompleted('thread-3', 2, ['web_fetch'], ['CRAWL4AI', 'HTTP_PLAIN']);
+
+    expect(nextSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        description:
+          'Collected 2 evidence items using web_fetch. Pages read via CRAWL4AI, HTTP_PLAIN.',
+      }),
+    );
+  });
+
   it('sanitizes unsafe progress text and emits ordered visible progress metadata', () => {
     const nextSpy = vi.spyOn(service.eventBus, 'next');
 

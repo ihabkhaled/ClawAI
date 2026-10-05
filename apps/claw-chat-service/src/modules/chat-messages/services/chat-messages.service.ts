@@ -108,6 +108,7 @@ import { resolveRegenerateRouting } from '../utilities/regenerate-routing.utilit
 import { type MessageQuote } from '../types/message-quote.types';
 import { type StoredContextMetadata } from '../types/message-citation.types';
 import { toStoredCitations } from '../utilities/stored-citations.utility';
+import { fetchStrategiesOf } from '../utilities/research-orchestration.utility';
 import { type ContextSaveDecision, type ContextSaveRecord } from '../types/context-save.types';
 import { ContextSaveOrchestratorManager } from '../managers/context-save-orchestrator.manager';
 import { hasContextSave, withContextSaveNote } from '../utilities/context-save-note.utility';
@@ -549,7 +550,12 @@ export class ChatMessagesService implements OnModuleInit {
     });
     if (run !== null) {
       const bundle = this.extractResearchBundle(run);
-      this.chatStreamService.emitResearchCompleted(threadId, bundle.itemCount, bundle.toolsUsed);
+      this.chatStreamService.emitResearchCompleted(
+        threadId,
+        bundle.itemCount,
+        bundle.toolsUsed,
+        bundle.fetchStrategies,
+      );
     }
     return run;
   }
@@ -616,7 +622,13 @@ export class ChatMessagesService implements OnModuleInit {
     } else {
       this.logger.log(`research: run ${run.id} completed (${resolvedMode})`);
       const bundle = this.extractResearchBundle(run);
-      this.chatStreamService.emitResearchCompleted(threadId, bundle.itemCount, bundle.toolsUsed);
+      await this.researchOrchestrator.narratePagesRead(threadId, run);
+      this.chatStreamService.emitResearchCompleted(
+        threadId,
+        bundle.itemCount,
+        bundle.toolsUsed,
+        bundle.fetchStrategies,
+      );
     }
     return run;
   }
@@ -2387,7 +2399,7 @@ export class ChatMessagesService implements OnModuleInit {
   private buildResearchStep(researchSummary: ResearchExecutionSummary): StoredProgressSummaryStep {
     return {
       label: 'Gathering evidence',
-      description: `${String(researchSummary.itemCount)} evidence items collected with ${researchSummary.toolsUsed.join(', ') || 'research tools'}.`,
+      description: `${String(researchSummary.itemCount)} evidence items collected with ${researchSummary.toolsUsed.join(', ') || 'research tools'}.${researchSummary.fetchStrategies.length > 0 ? ` Pages read via ${researchSummary.fetchStrategies.join(', ')}.` : ''}`,
       actorType: 'system',
       actorName: 'Research workflow',
       status: 'completed',
@@ -2446,12 +2458,18 @@ export class ChatMessagesService implements OnModuleInit {
           helperModels: this.readStringArray(bundleRecord, 'helperModels'),
           itemCount: this.readArrayLength(bundleRecord, 'items'),
           warningCount: this.readArrayLength(bundleRecord, 'warnings'),
+          fetchStrategies: fetchStrategiesOf(this.readUnknownArray(bundleRecord, 'items')),
         };
   }
 
   private readStringArray(source: Record<string, unknown>, key: string): string[] {
     const value = recordGet(source, key);
     return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
+  }
+
+  private readUnknownArray(source: Record<string, unknown>, key: string): unknown[] {
+    const value = recordGet(source, key);
+    return Array.isArray(value) ? value : [];
   }
 
   private readArrayLength(source: Record<string, unknown>, key: string): number {
@@ -2484,6 +2502,7 @@ export class ChatMessagesService implements OnModuleInit {
       helperModels,
       itemCount: Array.isArray(bundle['items']) ? bundle['items'].length : 0,
       warningCount: Array.isArray(bundle['warnings']) ? bundle['warnings'].length : 0,
+      fetchStrategies: fetchStrategiesOf(Array.isArray(bundle['items']) ? bundle['items'] : []),
     };
   }
 

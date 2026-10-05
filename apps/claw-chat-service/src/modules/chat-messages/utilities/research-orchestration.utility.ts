@@ -1,12 +1,95 @@
 import { RESEARCH_REPLAN_SUMMARY_MAX_CHARS } from '../../../common/constants/research-gate.constants';
-import type { ResearchEvidenceBundle, ResearchRunResponse } from '../types/research.types';
+import { NarrationKind } from '../../../common/enums/narration-kind.enum';
+import {
+  NARRATION_MAX_PAGE_READ_LINES,
+  NARRATION_UNREMARKABLE_STRATEGY,
+} from '../constants/narration.constants';
+import type { NarrationInput } from '../types/narration.types';
+import type {
+  ResearchEvidenceBundle,
+  ResearchEvidenceItem,
+  ResearchFetchProvenance,
+  ResearchRunResponse,
+} from '../types/research.types';
 
 /** The run's evidence bundle, or null when the run failed or came back empty-shaped. */
 export function bundleOf(run: ResearchRunResponse | null): ResearchEvidenceBundle | null {
-  if (run === null || !('items' in run.bundle) || !Array.isArray(run.bundle.items)) {
-    return null;
+  return run === null || !('items' in run.bundle) || !Array.isArray(run.bundle.items) ? null : (run.bundle as ResearchEvidenceBundle);
+}
+
+/** The distinct fetch strategies that served this evidence, in first-seen order. Reads untyped JSON defensively (stored metadata). */
+export function fetchStrategiesOf(items: readonly unknown[]): string[] {
+  const seen = new Set<string>();
+  for (const item of items) {
+    const strategy = provenanceOf(item)?.strategy;
+    if (strategy !== undefined) {
+      seen.add(strategy);
+    }
   }
-  return run.bundle as ResearchEvidenceBundle;
+  return [...seen];
+}
+
+/**
+ * One narration line per page an ESCALATED tier served (anything but a plain
+ * GET that worked), capped. Truthful by construction: each line is built from
+ * the measured provenance of that page; pages with none (search hits, cache
+ * hits) say nothing. Host only, never a URL.
+ */
+export function pageReadNarrations(items: readonly ResearchEvidenceItem[]): NarrationInput[] {
+  const lines: NarrationInput[] = [];
+  for (const item of items) {
+    const provenance = provenanceOf(item);
+    if (provenance === undefined || provenance.strategy === NARRATION_UNREMARKABLE_STRATEGY) {
+      continue;
+    }
+    const failed = provenance.attempts.find((attempt) => attempt.outcome !== 'SUCCESS');
+    lines.push({
+      kind: NarrationKind.PAGE_READ,
+      params: {
+        host: hostOf(item.url),
+        strategy: provenance.strategy,
+        blocked: failed?.kind ?? '',
+      },
+    });
+    if (lines.length >= NARRATION_MAX_PAGE_READ_LINES) {
+      break;
+    }
+  }
+  return lines;
+}
+
+function provenanceOf(item: unknown): ResearchFetchProvenance | undefined {
+  if (typeof item !== 'object' || item === null) {
+    return undefined;
+  }
+  const fetch: unknown = (item as { fetch?: unknown }).fetch;
+  if (typeof fetch !== 'object' || fetch === null) {
+    return undefined;
+  }
+  const { strategy, attempts } = fetch as { strategy?: unknown; attempts?: unknown };
+  if (typeof strategy !== 'string' || strategy.length === 0) {
+    return undefined;
+  }
+  return {
+    strategy,
+    attempts: Array.isArray(attempts)
+      ? attempts.filter(
+          (a): a is { kind: string; outcome: string } =>
+            typeof a === 'object' &&
+            a !== null &&
+            typeof (a as { kind?: unknown }).kind === 'string' &&
+            typeof (a as { outcome?: unknown }).outcome === 'string',
+        )
+      : [],
+  };
+}
+
+function hostOf(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return '';
+  }
 }
 
 /** What the planner is shown after a crawl: titles and the start of each page. */

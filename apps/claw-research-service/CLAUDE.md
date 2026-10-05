@@ -49,6 +49,11 @@ Controller → Service → Repository (data access)
   hop SSRF-checked before it is sent). HTML ends in `extractPageContent`.
 - Third parties (reader, archive) get public, token-free URLs only.
 - Log lines: `fetch.attempt`, `fetch.served`, `fetch.failed`, `fetch.refused`.
+- **Provenance leaves the service (ADR-121 addendum 2).** `FetchResult.servedBy` + `attempts`
+  (`FetchAttemptSummary`: kind + outcome ONLY — never a URL, status, body or error text) are
+  copied onto `EvidenceItem.fetch` by `fetchProvenanceOf` (evidence-builder utility) in the
+  three evidence converters (direct fetch, search fetch, site crawl). A cache hit has no
+  `servedBy`, so its item has no `fetch`: not measured, not claimed. chat-service narrates it.
 - How to add/enable/prove a tier: `skills/add-a-fetch-strategy.md`.
 - _(future)_ `EvidenceBundle`, `ScrapeProfile`, `CloneJob`.
 

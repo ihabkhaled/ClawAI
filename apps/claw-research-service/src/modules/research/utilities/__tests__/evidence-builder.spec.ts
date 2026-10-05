@@ -1,6 +1,7 @@
 import { ProviderSelectionMode } from '../../../../common/enums/provider-selection-mode.enum';
 import { ResearchWorkflowKind } from '../../../../common/enums/research-workflow-kind.enum';
-import { buildEvidenceBundle, traceEntry } from '../evidence-builder.utility';
+import { FetchStrategyKind } from '../../../../generated/prisma';
+import { buildEvidenceBundle, fetchProvenanceOf, traceEntry } from '../evidence-builder.utility';
 import type { EvidenceItem } from '../../types/evidence-bundle.types';
 
 function makeItem(overrides: Partial<EvidenceItem> = {}): EvidenceItem {
@@ -130,5 +131,44 @@ describe('traceEntry', () => {
     expect(entry.latencyMs).toBe(42);
     expect(entry.message).toBe('done');
     expect(new Date(entry.timestamp).getTime()).toBeGreaterThan(0);
+  });
+});
+
+describe('fetchProvenanceOf', () => {
+  it('returns the serving strategy and a kind+outcome-only trail', () => {
+    expect(
+      fetchProvenanceOf({
+        servedBy: FetchStrategyKind.CRAWL4AI,
+        attempts: [
+          { kind: FetchStrategyKind.HTTP_PLAIN, outcome: 'BLOCKED' },
+          { kind: FetchStrategyKind.CRAWL4AI, outcome: 'SUCCESS' },
+        ],
+      }),
+    ).toEqual({
+      fetch: {
+        strategy: FetchStrategyKind.CRAWL4AI,
+        attempts: [
+          { kind: FetchStrategyKind.HTTP_PLAIN, outcome: 'BLOCKED' },
+          { kind: FetchStrategyKind.CRAWL4AI, outcome: 'SUCCESS' },
+        ],
+      },
+    });
+  });
+
+  it('claims nothing for a cache hit (no servedBy)', () => {
+    expect(fetchProvenanceOf({})).toEqual({});
+  });
+
+  it('copies only kind and outcome, dropping any extra field on an attempt', () => {
+    const noisy = {
+      kind: FetchStrategyKind.HTTP_PLAIN,
+      outcome: 'ERROR',
+      errorMessage: 'https://secret.example/?token=abc',
+    } as const;
+    const provenance = fetchProvenanceOf({
+      servedBy: FetchStrategyKind.HTTP_PLAIN,
+      attempts: [noisy],
+    });
+    expect(JSON.stringify(provenance)).not.toContain('secret');
   });
 });

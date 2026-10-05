@@ -50,6 +50,8 @@ export type ResearchExecutionSummary = {
   helperModels: string[];
   itemCount: number;
   warningCount: number;
+  /** Distinct fetch tiers that served the pages (research-service `servedBy`), e.g. CRAWL4AI. Empty when none was measured. */
+  fetchStrategies: string[];
 };
 
 export type StoredProgressSummaryStep = {

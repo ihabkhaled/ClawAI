@@ -1,3 +1,12 @@
+/**
+ * Page-read lines per research step. Only pages an escalated tier served are
+ * narrated, and a 150-page crawl behind a WAF must not bury the rest of the log.
+ */
+export const NARRATION_MAX_PAGE_READ_LINES = 10;
+
+/** The strategy that needs no remark: a plain GET that simply worked. */
+export const NARRATION_UNREMARKABLE_STRATEGY = 'HTTP_PLAIN';
+
 /** The running log for a thread's current turn. */
 export const NARRATION_LOG_KEY_PREFIX = 'claw:chat:narration:';
 

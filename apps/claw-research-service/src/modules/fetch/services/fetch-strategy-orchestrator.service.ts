@@ -24,6 +24,7 @@ import {
   loggablePath,
   longerThin,
   publicConfigOf,
+  summariseAttempts,
 } from '../utilities/escalation-helpers.utility';
 import { HostRateLimiter } from '../utilities/host-rate-limiter.utility';
 import { FetchStrategyRegistryService } from './fetch-strategy-registry.service';
@@ -109,7 +110,11 @@ export class FetchStrategyOrchestratorService {
         await this.hostMemory.recordSuccess(host, config.kind);
         this.logServed(request.url, config, attempts, observed, attempt.result);
         return {
-          result: { ...attempt.result, servedBy: config.kind },
+          result: {
+            ...attempt.result,
+            servedBy: config.kind,
+            attempts: summariseAttempts(attempts),
+          },
           winningStrategy: config.kind,
           attempts,
         };
@@ -127,7 +132,11 @@ export class FetchStrategyOrchestratorService {
     if (bestThin !== null && !hasTerminalSignal(observed)) {
       this.logServed(request.url, bestThin.config, attempts, observed, bestThin.result);
       return {
-        result: { ...bestThin.result, servedBy: bestThin.config.kind },
+        result: {
+          ...bestThin.result,
+          servedBy: bestThin.config.kind,
+          attempts: summariseAttempts(attempts),
+        },
         winningStrategy: bestThin.config.kind,
         attempts,
       };
@@ -179,7 +188,9 @@ export class FetchStrategyOrchestratorService {
       return enabled;
     }
     const preferred = enabled.find((config) => config.kind === memory.preferredKind);
-    return preferred === undefined ? enabled : [preferred, ...enabled.filter((config) => config !== preferred)];
+    return preferred === undefined
+      ? enabled
+      : [preferred, ...enabled.filter((config) => config !== preferred)];
   }
 
   private async tryStrategy(

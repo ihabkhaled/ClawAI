@@ -38,6 +38,27 @@ const bundle: ResearchEvidenceBundle = {
   mode: 'standard',
 };
 
+describe('EvidenceViewer fetch strategy chip', () => {
+  it('shows the tier that served a fetched page, and nothing for a search hit', () => {
+    const [base] = bundle.items;
+    if (base === undefined) {
+      throw new Error('fixture has no item');
+    }
+    const withFetch: ResearchEvidenceBundle = {
+      ...bundle,
+      items: [
+        { ...base, id: 'a', fetch: { strategy: 'FIRECRAWL', attempts: [] } },
+        { ...base, id: 'b' },
+      ],
+    };
+    render(<EvidenceViewer bundle={withFetch} t={(key) => key} />);
+
+    const chips = screen.getAllByTestId('fetch-strategy-chip');
+    expect(chips).toHaveLength(1);
+    expect(chips[0]).toHaveTextContent('narration.strategyLabel narration.strategyFirecrawl');
+  });
+});
+
 describe('EvidenceViewer mobile layout', () => {
   it('contains long source URLs inside shrinkable evidence cards', () => {
     const { container } = render(<EvidenceViewer bundle={bundle} t={(key) => key} />);

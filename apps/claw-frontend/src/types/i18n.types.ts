@@ -6236,6 +6236,18 @@ export type NarrationLocaleTranslation = {
   researchFailed: string;
   aiThinking: string;
   aiThinkingWithModel: string;
+  pageRead: string;
+  pageReadAfter: string;
+  strategyLabel: string;
+  strategyOfficialApi: string;
+  strategyHttpPlain: string;
+  strategyTlsImpersonate: string;
+  strategyHeadlessBrowser: string;
+  strategyCrawl4ai: string;
+  strategyFlaresolverr: string;
+  strategyFirecrawl: string;
+  strategyReaderProxy: string;
+  strategyArchiveSnapshot: string;
 };
 
 export type RouterTraceLocaleTranslation = {

@@ -21,7 +21,11 @@ import { parseSitemapXml } from '../../../common/utilities/sitemap.utility';
 import { CrawlDiscoveryMethod } from '../../../common/enums/crawl-discovery-method.enum';
 import { FetchPurpose } from '../../fetch/enums/fetch-purpose.enum';
 import { FetchService } from '../../fetch/services/fetch.service';
-import { pushFetchToolMarker, traceEntry } from '../utilities/evidence-builder.utility';
+import {
+  fetchProvenanceOf,
+  pushFetchToolMarker,
+  traceEntry,
+} from '../utilities/evidence-builder.utility';
 import { ResearchProgressPublisher } from './research-progress-publisher.service';
 import type { FeedEntry } from '../../../common/types/feed.types';
 import type { RobotsTxtResult } from '../../../common/types/robots-txt.types';
@@ -535,6 +539,7 @@ export class SiteCrawlManager {
       // slightly below it but still above an ordinary search hit.
       confidence: discoveryMethod === CrawlDiscoveryMethod.USER ? 0.95 : 0.7,
       structured: { crawlDiscoveryMethod: discoveryMethod, metadata: result.metadata },
+      ...fetchProvenanceOf(result),
     };
   }
 

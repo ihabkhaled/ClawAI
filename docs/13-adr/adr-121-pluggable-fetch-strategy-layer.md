@@ -132,6 +132,29 @@ The owner approved a set on 2026-09-25 (see "Per-tool status").
 `rules/13-external-library-wrappers-and-adapters.md` ·
 `rules/15-configuration-and-environment.md`
 
+## Addendum 2 (2026-10-05): which tier read the page is shown, not hidden
+
+The audit found the escalation worked but nobody could see it: `servedBy` and the attempt
+trail stopped at research-service. Now:
+
+- `FetchResult.attempts` (kind + outcome only) rides with `servedBy`; `EvidenceItem.fetch`
+  (`{strategy, attempts}`) carries both to chat-service inside the evidence bundle. No URL,
+  status, body or error text is ever included. A cache hit carries neither (unmeasured).
+- chat-service appends one `PAGE_READ` narration line per page an escalated tier served
+  ("Read example.com via Crawl4AI after Plain fetch was blocked"), capped at 10 per step, on
+  every research path including the context-gateway path Compare/Consensus/Escalation/labs use
+  (rule 59). The strategies also appear in the research-completed progress frame and the
+  stored progress summary; the full field persists in `metadata.research.bundle`.
+- The frontend renders it in `NarrationLog` (live and stored) and as a chip per source in
+  `EvidenceViewer` (research-run-details). Strings: `narration.pageRead*`, `narration.strategy*`,
+  13 locales.
+- Deviation: no `shared-types` entry. research and chat each mirror the bundle shape today
+  (see `research.types.ts`); a shared type would force every dev container to rebuild
+  baked packages for a display field.
+- Not done here: `runtime-crawl` (ADR-150) page rows do not store the strategy (needs a
+  migration); the planner `render` hint and routing chat `web_fetch` through this chain are
+  batches 2 and 3 of the same programme.
+
 ## Addendum (2026-09-25): sidecar health
 
 health-service still never connects to a sidecar (it is not on

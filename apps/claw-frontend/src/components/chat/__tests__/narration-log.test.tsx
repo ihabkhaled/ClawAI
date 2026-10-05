@@ -37,6 +37,35 @@ describe('NarrationLog', () => {
     expect(screen.getByText('narration.backToAi')).toBeInTheDocument();
   });
 
+  // The strategy line names the tier in the reader's language and says what was blocked first.
+  it('renders a page-read line with the strategy and what was blocked before it', () => {
+    render(
+      <NarrationLog
+        entries={[
+          entry(NarrationKind.PAGE_READ, {
+            params: { host: 'shop.example.com', strategy: 'CRAWL4AI', blocked: 'HTTP_PLAIN' },
+          }),
+          entry(NarrationKind.PAGE_READ, {
+            params: { host: 'a.example.com', strategy: 'OFFICIAL_API', blocked: '' },
+          }),
+        ]}
+        isLive={false}
+        t={t}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        'narration.pageReadAfter {"host":"shop.example.com","strategy":"narration.strategyCrawl4ai","blocked":"narration.strategyHttpPlain"}',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'narration.pageRead {"host":"a.example.com","strategy":"narration.strategyOfficialApi"}',
+      ),
+    ).toBeInTheDocument();
+  });
+
   // The planner's thinking is stored with the answer, so the AI's own words
   // survive a refresh - not only a line saying it was thinking.
   it("shows the planner's thinking in the AI's voice", () => {

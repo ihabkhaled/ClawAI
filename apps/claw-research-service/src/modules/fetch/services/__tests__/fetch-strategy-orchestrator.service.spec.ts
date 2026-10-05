@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { BlockSignalKind } from '../../../../common/enums/block-signal-kind.enum';
 import { FetchStrategyKind } from '../../../../generated/prisma';
 import { FETCH_STRATEGY_MAX_ATTEMPTS } from '../../constants/fetch-strategy.constants';
@@ -80,7 +80,7 @@ describe('FetchStrategyOrchestratorService', () => {
     );
     logSpy = vi.fn();
     vi.spyOn(Logger.prototype, 'log').mockImplementation(logSpy);
-    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -112,6 +112,10 @@ describe('FetchStrategyOrchestratorService', () => {
     const escalation = await orchestrator.fetchWithEscalation({ url: 'https://example.com/' });
 
     expect(escalation.winningStrategy).toBe(FetchStrategyKind.HTTP_TLS_IMPERSONATE);
+    expect(escalation.result.attempts).toEqual([
+      { kind: FetchStrategyKind.HTTP_PLAIN, outcome: 'BLOCKED' },
+      { kind: FetchStrategyKind.HTTP_TLS_IMPERSONATE, outcome: 'SUCCESS' },
+    ]);
     expect(hostMemory.recordFailure).toHaveBeenCalledWith(
       'example.com',
       FetchStrategyKind.HTTP_PLAIN,

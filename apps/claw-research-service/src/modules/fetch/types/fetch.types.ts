@@ -15,6 +15,12 @@ export type FetchRequest = {
   strategyConfig?: Record<string, unknown>;
 };
 
+/** One escalation attempt, reduced to what may leave the service: which tier, and how it ended. No URL, body or error text. */
+export type FetchAttemptSummary = {
+  kind: FetchStrategyKind;
+  outcome: 'SUCCESS' | 'BLOCKED' | 'ERROR';
+};
+
 export type FetchResult = {
   url: string;
   finalUrl: string;
@@ -59,6 +65,11 @@ export type FetchResult = {
    * orchestrator on every live fetch; absent on cache hits and legacy rows.
    */
   servedBy?: FetchStrategyKind;
+  /**
+   * The escalation trail that led to `servedBy`, in order (kind + outcome only).
+   * Set with `servedBy` on every live fetch; absent on cache hits.
+   */
+  attempts?: readonly FetchAttemptSummary[];
   /**
    * ISO timestamp of the archive capture, set ONLY when the text is an
    * archived copy (Wayback), never a live fetch. The content itself also

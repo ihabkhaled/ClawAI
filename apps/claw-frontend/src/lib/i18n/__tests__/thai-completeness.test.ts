@@ -26,6 +26,9 @@ function flatten(
 
 const LEGITIMATE_UNCHANGED_VALUES = new Set([
   'Markdown',
+  'Crawl4AI',
+  'FlareSolverr',
+  'Firecrawl',
   '+14155550123',
   'you@example.com',
   'Gmail',

@@ -46,6 +46,12 @@ export type SanitizedResearchProvider = {
   updatedAt: string;
 };
 
+/** How a page was read: the fetch tier that served it and the trail before it (kind + outcome only). */
+export type ResearchFetchProvenance = {
+  strategy: string;
+  attempts: Array<{ kind: string; outcome: string }>;
+};
+
 export type ResearchEvidenceItem = {
   id: string;
   title: string | null;
@@ -56,6 +62,8 @@ export type ResearchEvidenceItem = {
   publishedAt: string | null;
   fetchedAt: string | null;
   confidence: number;
+  /** Absent for search hits and cached pages. */
+  fetch?: ResearchFetchProvenance;
 };
 
 export type ResearchEvidenceBundle = {

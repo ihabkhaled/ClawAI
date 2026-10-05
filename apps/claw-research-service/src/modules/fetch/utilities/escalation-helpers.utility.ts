@@ -1,6 +1,13 @@
 import type { FetchStrategyConfig } from '../../../generated/prisma';
-import type { ThinCandidate } from '../types/fetch-strategy.types';
-import type { FetchResult } from '../types/fetch.types';
+import type { FetchStrategyAttempt, ThinCandidate } from '../types/fetch-strategy.types';
+import type { FetchAttemptSummary, FetchResult } from '../types/fetch.types';
+
+/** The attempt trail reduced to kind + outcome: nothing a URL, body, status or error text could leak through. */
+export function summariseAttempts(
+  attempts: readonly FetchStrategyAttempt[],
+): readonly FetchAttemptSummary[] {
+  return attempts.map((attempt) => ({ kind: attempt.kind, outcome: attempt.outcome }));
+}
 
 /** Keeps whichever thin live result carries more text. */
 export function longerThin(current: ThinCandidate | null, next: ThinCandidate): ThinCandidate {
