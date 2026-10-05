@@ -79,7 +79,8 @@ export const THREADS_DISCOVERY_SEO_BY_LOCALE: Readonly<
   [Locale.JA]: {
     'threads/discover': {
       title: '公開 Threads | ClawAI',
-      description: 'ClawAI コミュニティが公開した調査記事、ガイド、技術解説をご覧ください。',
+      description:
+        'ClawAI コミュニティが公開した調査記事、ガイド、技術解説をご覧ください。各記事では出典を確認し、内容を詳しく学べます。幅広いテーマの新しい知見や実践例も紹介します。',
       keywords: ['AI 調査記事', 'AI ガイド', '技術解説'],
     },
   },
@@ -102,7 +103,8 @@ export const THREADS_DISCOVERY_SEO_BY_LOCALE: Readonly<
   [Locale.ZH]: {
     'threads/discover': {
       title: '公开 Threads | ClawAI',
-      description: '浏览 ClawAI 社区发布的研究文章、指南和技术说明。',
+      description:
+        '浏览 ClawAI 社区发布的研究文章、指南和技术说明，阅读经过审核并获得作者批准的公开内容。每篇文章都提供清晰的主题和来源信息，并帮助读者了解相关方法、背景和实际应用。',
       keywords: ['AI 研究文章', 'AI 指南', '技术说明'],
     },
   },

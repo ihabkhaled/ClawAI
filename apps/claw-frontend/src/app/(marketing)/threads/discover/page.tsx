@@ -51,7 +51,7 @@ export default async function ThreadDiscoveryPage(): Promise<React.ReactElement>
           {dictionary.chat.threadDiscoveryEmpty}
         </p>
       ) : (
-        <ul className="mt-8 grid gap-5 md:grid-cols-2">
+        <ul className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
           {items.map((item) => (
             <li key={item.slug} className="border-border bg-card rounded-lg border p-5">
               <article>

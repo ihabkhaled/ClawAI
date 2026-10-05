@@ -122,6 +122,7 @@ describe('content registry integrity', () => {
       '/security-and-privacy',
       '/supported-models',
       '/terms',
+      '/threads/discover',
       '/use-cases',
     ].sort();
     expect(paths).toEqual(expected);
@@ -210,7 +211,7 @@ describe('localized publication boundary', () => {
     // launch pages, unchanged by this cluster) + the /compare/models hub +
     // one page per family pair.
     const expectedCount =
-      29 +
+      30 +
       LEARN_TOPIC_ORDER.length +
       1 +
       INTEGRATION_TOPIC_ORDER.length +
@@ -242,7 +243,7 @@ describe('localized publication boundary', () => {
     for (const locale of Object.values(Locale)) {
       for (const page of getPublishedPagesForLocale(locale)) {
         expect(page.title.trim().length).toBeGreaterThan(0);
-        expect(page.description.trim().length).toBeGreaterThan(80);
+        expect(page.description.trim().length, `${locale}:${page.slug}`).toBeGreaterThan(80);
         expect(page.keywords.length).toBeGreaterThanOrEqual(3);
         expect(page.title.match(/ClawAI.*ClawAI/)).toBeNull();
 

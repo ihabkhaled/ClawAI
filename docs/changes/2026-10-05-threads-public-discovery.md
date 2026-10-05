@@ -103,3 +103,10 @@ packages/shared-types/src/enums/index.ts
 packages/shared-types/src/enums/thread-publication-type.enum.ts
 wiki/Threads.md
 apps/claw-threads-service/src/modules/publications/constants/publication-discovery.constants.ts
+
+The pre-push frontend suite surfaced four reviewed-surface regressions. The localized SEO records now meet the existing description threshold, the discovery grid declares base columns, and the registry test includes the new page. The focused regression specs pass after these fixes.
+
+apps/claw-frontend/src/app/(marketing)/threads/discover/page.tsx
+apps/claw-frontend/src/constants/threads-discovery-seo.constants.ts
+apps/claw-frontend/src/utilities/**tests**/content-registry.utility.test.ts
+apps/claw-frontend/src/components/common/**tests**/bounded-grid-tracks.test.ts
