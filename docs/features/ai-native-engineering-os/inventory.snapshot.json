@@ -3579,6 +3579,11 @@
         },
         {
           "method": "GET",
+          "route": "/thread-publications/:publicationId/export",
+          "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-owner.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/thread-publications/:publicationId/generation-state",
           "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-owner.controller.ts"
         },
@@ -3589,8 +3594,18 @@
         },
         {
           "method": "POST",
+          "route": "/thread-publications/:publicationId/unpublish",
+          "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-owner.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/thread-publications/generations",
           "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-generation.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/thread-publications/public/:slug",
+          "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-public.controller.ts"
         }
       ],
       "claw-workspace-service": [
@@ -11176,7 +11191,7 @@
       },
       "claw-threads-service": {
         "runner": "vitest",
-        "testFiles": 5
+        "testFiles": 6
       },
       "claw-workspace-service": {
         "runner": "vitest",
@@ -11963,7 +11978,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 56,
-    "endpointCount": 808,
+    "endpointCount": 811,
     "envVarCount": 375,
     "eventCount": 186,
     "frontendRouteCount": 156,
@@ -11975,7 +11990,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2067,
+    "totalTestFiles": 2068,
     "workspaceCount": 27
   }
 }

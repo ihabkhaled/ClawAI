@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { CurrentUser } from '@claw/shared-auth';
 import type { AuthenticatedUser } from '@claw/shared-types';
 
@@ -31,5 +31,22 @@ export class PublicationOwnerController {
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<{ publicationId: string; status: 'CANCEL_REQUESTED' }> {
     return this.lifecycle.cancelGeneration(publicationId, user.id);
+  }
+
+  @Post('unpublish')
+  unpublish(
+    @Param('publicationId') publicationId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<{ unpublished: true }> {
+    return this.lifecycle.unpublish(publicationId, user.id);
+  }
+
+  @Get('export')
+  export(
+    @Param('publicationId') publicationId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('format') format: string | undefined,
+  ): ReturnType<PublicationLifecycleService['export']> {
+    return this.lifecycle.export(publicationId, user.id, format);
   }
 }

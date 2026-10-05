@@ -8,7 +8,7 @@
 | Database     | `claw_threads` PostgreSQL     |
 | Public route | `/api/v1/thread-publications` |
 
-This service owns publication revisions and community state. Authenticated owners can start a generation with an explicit public-intent version and user-selected cap, poll their own job, cancel it, and persist its finished result as a private pending revision. Publication safety scanning, owner edit/approval controls, public reads, unpublish, and exports are still gated.
+This service owns publication revisions and community state. Authenticated owners can start a generation with an explicit public-intent version and user-selected cap, poll their own job, cancel it, and persist its finished result as a private revision. A bounded secret/PII scan gates owner review; owners can publish, unpublish, and export JSON or Markdown. Public reads resolve only published, owner-approved, safety-approved, index-eligible revisions. Owner text edits and paid revalidation remain unfinished.
 
 Prisma migrations run from the container entrypoint. For local schema work,
 use `npm run migrate:dev`; for deployment, `npm run migrate` applies committed
@@ -25,6 +25,10 @@ migrations.
 - `POST /api/v1/thread-publications/generations` passes the selected cap, explicit public-intent version, and server-derived owner ID to the generation service with a service token. Generation reserves Auth entitlements after snapshot ownership validation.
 - `GET /api/v1/thread-publications/:publicationId/generation-state` verifies publication ownership before fetching job state; completed drafts are persisted privately with `PENDING` review status.
 - `POST /api/v1/thread-publications/:publicationId/cancel-generation` checks ownership before forwarding cancellation.
+- `GET /api/v1/thread-publications/public/:slug` is unauthenticated but resolves only published, owner-approved, safety-approved, index-eligible content; it returns citation URLs, not evidence IDs.
+- `POST /api/v1/thread-publications/:publicationId/unpublish` requires owner identity and removes the record from public resolution.
+- `GET /api/v1/thread-publications/:publicationId/export?format=json|markdown` requires owner identity and exports article content and citation URLs.
+- Secret/PII matches store machine-readable reason codes without matched text and keep the revision pending.
 - Threads validates `THREAD_GENERATION_SERVICE_URL` and `INTER_SERVICE_AUTH_TOKEN`; generation validates `AUTH_SERVICE_URL` and the same token. These values already exist in `.env.example` and deployment configuration.
 
 ## References

@@ -1,10 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
-import { PublicationStatus, RevisionReviewStatus } from '../../../generated/prisma';
+import {
+  PublicationSafetyStatus,
+  PublicationStatus,
+  RevisionReviewStatus,
+} from '../../../generated/prisma';
 import { z } from 'zod';
 
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import type { PublishedPublication } from '../types/publication.types';
+import {
+  MIN_PUBLICATION_CRITIC_SCORE,
+  MIN_PUBLICATION_JUDGE_SCORE,
+} from '../constants/publication-review.constants';
+import type {
+  PublicationExport,
+  PublicPublication,
+  PublishedPublication,
+} from '../types/publication.types';
+import { evaluatePublicationSafety } from '../utilities/publication-safety.utility';
 
 @Injectable()
 export class PublicationsRepository {
@@ -50,6 +63,17 @@ export class PublicationsRepository {
       criticScore: number;
     },
   ): Promise<void> {
+    const serializedContent = JSON.stringify({
+      markdown: draft.markdown,
+      citations: draft.citations,
+    });
+    const safety = evaluatePublicationSafety(
+      [draft.markdown, ...draft.citations.map(({ url }) => url)].join('\n'),
+    );
+    const reviewReady =
+      safety.approved &&
+      draft.judgeScore >= MIN_PUBLICATION_JUDGE_SCORE &&
+      draft.criticScore >= MIN_PUBLICATION_CRITIC_SCORE;
     await this.prisma.$transaction(async (transaction) => {
       const publication = await transaction.threadPublication.findUnique({
         where: { id: publicationId },
@@ -64,16 +88,27 @@ export class PublicationsRepository {
           revision: 1,
           title,
           content: { markdown: draft.markdown, citations: draft.citations },
-          contentHash: createHash('sha256')
-            .update(JSON.stringify({ markdown: draft.markdown, citations: draft.citations }))
-            .digest('hex'),
-          reviewStatus: RevisionReviewStatus.PENDING,
+          contentHash: createHash('sha256').update(serializedContent).digest('hex'),
+          reviewStatus: reviewReady
+            ? RevisionReviewStatus.READY_FOR_REVIEW
+            : RevisionReviewStatus.PENDING,
           judgeScore: draft.judgeScore,
           criticScore: draft.criticScore,
           validatedAt: new Date(),
+          safetyStatus: safety.approved
+            ? PublicationSafetyStatus.APPROVED
+            : PublicationSafetyStatus.REVIEW_REQUIRED,
+          safetyReasons: safety.reasons,
+          indexEligible: reviewReady,
         },
         update: {},
       });
+      if (reviewReady) {
+        await transaction.threadPublication.updateMany({
+          where: { id: publicationId, status: PublicationStatus.DRAFT },
+          data: { status: PublicationStatus.READY_FOR_REVIEW },
+        });
+      }
     });
   }
 
@@ -87,16 +122,24 @@ export class PublicationsRepository {
           id: publicationId,
           ownerId,
           status: PublicationStatus.READY_FOR_REVIEW,
-          revisions: { some: { reviewStatus: RevisionReviewStatus.READY_FOR_REVIEW } },
+          revisions: {
+            some: {
+              reviewStatus: RevisionReviewStatus.READY_FOR_REVIEW,
+              safetyStatus: PublicationSafetyStatus.APPROVED,
+            },
+          },
         },
         select: {
           id: true,
           slug: true,
           revisions: {
-            where: { reviewStatus: RevisionReviewStatus.READY_FOR_REVIEW },
+            where: {
+              reviewStatus: RevisionReviewStatus.READY_FOR_REVIEW,
+              safetyStatus: PublicationSafetyStatus.APPROVED,
+            },
             orderBy: { revision: 'desc' },
             take: 1,
-            select: { id: true, title: true, content: true },
+            select: { id: true, title: true, content: true, indexEligible: true },
           },
         },
       });
@@ -135,5 +178,87 @@ export class PublicationsRepository {
         publishedAt: new Date(),
       };
     });
+  }
+
+  async findPublic(slug: string): Promise<PublicPublication | null> {
+    const publication = await this.prisma.threadPublication.findFirst({
+      where: {
+        slug,
+        status: PublicationStatus.PUBLISHED,
+        revisions: {
+          some: {
+            reviewStatus: RevisionReviewStatus.OWNER_APPROVED,
+            safetyStatus: PublicationSafetyStatus.APPROVED,
+            indexEligible: true,
+          },
+        },
+      },
+      select: {
+        id: true,
+        slug: true,
+        publishedAt: true,
+        revisions: {
+          where: {
+            reviewStatus: RevisionReviewStatus.OWNER_APPROVED,
+            safetyStatus: PublicationSafetyStatus.APPROVED,
+            indexEligible: true,
+          },
+          orderBy: { revision: 'desc' },
+          take: 1,
+          select: { title: true, content: true },
+        },
+      },
+    });
+    const revision = publication?.revisions[0];
+    const content = z
+      .object({
+        markdown: z.string(),
+        citations: z.array(z.object({ url: z.string().url() })).default([]),
+      })
+      .safeParse(revision?.content);
+    return publication?.publishedAt && revision && content.success
+      ? {
+          id: publication.id,
+          slug: publication.slug,
+          title: revision.title,
+          content: content.data,
+          publishedAt: publication.publishedAt,
+        }
+      : null;
+  }
+
+  async unpublishOwned(publicationId: string, ownerId: string): Promise<boolean> {
+    const result = await this.prisma.threadPublication.updateMany({
+      where: { id: publicationId, ownerId, status: PublicationStatus.PUBLISHED },
+      data: { status: PublicationStatus.UNPUBLISHED, publishedAt: null },
+    });
+    return result.count === 1;
+  }
+
+  async findOwnedExport(publicationId: string, ownerId: string): Promise<PublicationExport | null> {
+    const publication = await this.prisma.threadPublication.findFirst({
+      where: { id: publicationId, ownerId },
+      select: {
+        revisions: {
+          orderBy: { revision: 'desc' },
+          take: 1,
+          select: { title: true, content: true },
+        },
+      },
+    });
+    const revision = publication?.revisions[0];
+    const content = z
+      .object({
+        markdown: z.string(),
+        citations: z.array(z.object({ url: z.string().url() })).default([]),
+      })
+      .safeParse(revision?.content);
+    return !revision || !content.success
+      ? null
+      : {
+          title: revision.title,
+          markdown: content.data.markdown,
+          citations: content.data.citations,
+        };
   }
 }

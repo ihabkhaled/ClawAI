@@ -1,9 +1,19 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
 import { PublicationsRepository } from '../repositories/publications.repository';
 import { ThreadsGenerationClient } from './threads-generation.client';
 import type { StartThreadGenerationDto } from '../dto/start-thread-generation.dto';
-import type { PublishedPublication } from '../types/publication.types';
+import { PublicationExportFormat } from '../../../common/enums/publication-export-format.enum';
+import type {
+  PublicationExport,
+  PublicPublication,
+  PublishedPublication,
+} from '../types/publication.types';
 
 @Injectable()
 export class PublicationLifecycleService {
@@ -62,5 +72,40 @@ export class PublicationLifecycleService {
     const publication = await this.publications.publishReadyRevision(publicationId, ownerId);
     if (!publication) throw new NotFoundException('Publication not found');
     return publication;
+  }
+
+  async getPublicPublication(slug: string): Promise<PublicPublication> {
+    const publication = await this.publications.findPublic(slug);
+    if (!publication) throw new NotFoundException('Publication not found');
+    return publication;
+  }
+
+  async unpublish(publicationId: string, ownerId: string): Promise<{ unpublished: true }> {
+    if (!(await this.publications.unpublishOwned(publicationId, ownerId))) {
+      throw new NotFoundException('Publication not found');
+    }
+    return { unpublished: true };
+  }
+
+  async export(
+    publicationId: string,
+    ownerId: string,
+    requestedFormat: string | undefined,
+  ): Promise<{ format: PublicationExportFormat; content: PublicationExport | string }> {
+    if (
+      requestedFormat !== PublicationExportFormat.JSON &&
+      requestedFormat !== PublicationExportFormat.MARKDOWN
+    ) {
+      throw new BadRequestException('Export format must be json or markdown');
+    }
+    const format = requestedFormat;
+    const content = await this.publications.findOwnedExport(publicationId, ownerId);
+    if (!content) throw new NotFoundException('Publication not found');
+    if (format === PublicationExportFormat.JSON) return { format, content };
+    const citationList = content.citations.map(({ url }) => `- ${url}`).join('\n');
+    return {
+      format,
+      content: `${content.markdown}\n\n## Sources\n\n${citationList}\n`,
+    };
   }
 }

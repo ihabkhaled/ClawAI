@@ -12,3 +12,7 @@ Owner decisions recorded 2026-10-04; canonical product details live in
 - Keep chat-share lockdown; approved Threads use independent discovery rules.
 - Use two services, work directly on `main`, and gate changed files with normal
   hooks and valid tree-bound receipts.
+- Publication safety keeps secret/PII matches private using reason codes only.
+  Public reads require owner approval, safety approval, and index eligibility;
+  owners can unpublish and export JSON/Markdown. Text edits need a separate
+  owner-selected cap and durable Generation-service revalidation before launch.

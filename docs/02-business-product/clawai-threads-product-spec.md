@@ -51,13 +51,15 @@ JSON and Markdown are supported exports. TOON remains unavailable until a codec
 proves semantic round-trip and useful measured token savings.
 
 The public reader shows only approved, safety-checked fields. It does not show a
-reader identity list. Unpublishing removes the revision from public reads and
-discovery. Rollout remains disabled until generation, publication, moderation,
-internationalization, and public discovery paths pass their release checks.
+reader identity list. Public reads require a published, owner-approved,
+safety-approved, index-eligible revision. Secret or PII matches remain private
+and store only machine-readable reason codes. Owners can export JSON or Markdown
+and unpublish approved work. Full rollout still depends on the remaining
+community, internationalization, and discovery paths.
 
 The publication service owns an isolated PostgreSQL database and an atomic
-owner-approval transition. Generation-result handoff now stores output as a
-private pending revision. Safety scanning, editable/revalidated revisions,
-public reads, unpublish, exports, community features, internationalization, and
-public discovery remain unfinished. Generation intent or a private draft alone
-does not make content public.
+owner-approval transition. Generation-result handoff stores output as a private
+revision; automated review thresholds and safety checks make it eligible for
+owner approval. Owner text edits with revalidation, community features,
+internationalization, and public discovery integration remain unfinished.
+Generation intent or a private draft alone does not make content public.

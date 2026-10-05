@@ -22,6 +22,11 @@ enum RevisionReviewStatus {
   STALE
 }
 
+enum PublicationSafetyStatus {
+  APPROVED
+  REVIEW_REQUIRED
+}
+
 model ThreadPublication {
   id              String                      @id @default(cuid())
   ownerId         String?                     @map("owner_id")
@@ -41,19 +46,22 @@ model ThreadPublication {
 }
 
 model ThreadPublicationRevision {
-  id              String               @id @default(cuid())
-  publicationId   String               @map("publication_id")
-  publication     ThreadPublication    @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  id              String                  @id @default(cuid())
+  publicationId   String                  @map("publication_id")
+  publication     ThreadPublication       @relation(fields: [publicationId], references: [id], onDelete: Cascade)
   revision        Int
   title           String
   content         Json
-  contentHash     String               @map("content_hash")
-  reviewStatus    RevisionReviewStatus @default(PENDING) @map("review_status")
-  judgeScore      Int?                 @map("judge_score")
-  criticScore     Int?                 @map("critic_score")
-  validatedAt     DateTime?            @map("validated_at")
-  ownerApprovedAt DateTime?            @map("owner_approved_at")
-  createdAt       DateTime             @default(now()) @map("created_at")
+  contentHash     String                  @map("content_hash")
+  reviewStatus    RevisionReviewStatus    @default(PENDING) @map("review_status")
+  judgeScore      Int?                    @map("judge_score")
+  criticScore     Int?                    @map("critic_score")
+  validatedAt     DateTime?               @map("validated_at")
+  ownerApprovedAt DateTime?               @map("owner_approved_at")
+  safetyStatus    PublicationSafetyStatus @default(REVIEW_REQUIRED) @map("safety_status")
+  safetyReasons   Json                    @default("[]") @map("safety_reasons")
+  indexEligible   Boolean                 @default(false) @map("index_eligible")
+  createdAt       DateTime                @default(now()) @map("created_at")
 
   @@unique([publicationId, revision])
   @@index([publicationId, reviewStatus])

@@ -3524,6 +3524,11 @@
       },
       {
         "method": "GET",
+        "route": "/thread-publications/:publicationId/export",
+        "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-owner.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/thread-publications/:publicationId/generation-state",
         "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-owner.controller.ts"
       },
@@ -3534,8 +3539,18 @@
       },
       {
         "method": "POST",
+        "route": "/thread-publications/:publicationId/unpublish",
+        "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-owner.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/thread-publications/generations",
         "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-generation.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/thread-publications/public/:slug",
+        "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-public.controller.ts"
       }
     ],
     "claw-workspace-service": [
@@ -4082,5 +4097,5 @@
     ]
   },
   "generated": true,
-  "total": 808
+  "total": 811
 }

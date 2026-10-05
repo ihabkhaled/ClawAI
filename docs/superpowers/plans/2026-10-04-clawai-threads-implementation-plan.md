@@ -167,11 +167,22 @@ and production deployment have completed.
 The implementation is incomplete until normal hooks, push, CI, local runtime
 probe, and deployment complete.
 
-**5b-b scope:** Publication safety scanning, owner text edits/revalidation,
-public read allow-lists, unpublish, and exports are deferred together. Existing
-code has no publication scanner; making results publicly readable before that
-control and the owner approval UI exist would violate the approved public
-contract. This is a sequencing change, not an opt-out.
+**5b-b progress:** The first deployable slice adds publication safety scanning,
+fail-closed public read allow-lists, owner unpublish, and JSON/Markdown exports.
+Safety findings are machine codes only; a secret/PII match stays private.
+Public resolution requires PUBLISHED, OWNER_APPROVED, safety APPROVED, and
+indexEligible in the database query. Owner text edits and revalidation remain a
+separate required slice: revalidation must use a new owner-selected cap and a
+durable idempotent Generation-service operation before an edit can become
+review-ready. UI and discovery integration remain separate later batches.
+
+**5b-b knowledge delta:** `docs/02-business-product/clawai-threads-product-spec.md`,
+`docs/03-architecture/clawai-threads-architecture.md`,
+`docs/04-backend/service-guide-threads.md`, `wiki/Threads.md`, this plan,
+`memory/2026-10-04-clawai-threads-product-decisions.md`,
+`docs/changes/2026-10-05-threads-publication-safety-reads.md`, and
+`docs/qa-evidence/2026-10-05-threads-publication-safety-reads.md`. No new skill
+or rule: current service, security, and QA runbooks cover this implementation.
 
 **Code:**
 

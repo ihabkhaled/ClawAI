@@ -6,10 +6,15 @@ import { PublicationsRepository } from './repositories/publications.repository';
 import { PublicationLifecycleService } from './services/publication-lifecycle.service';
 import { ThreadsGenerationClient } from './services/threads-generation.client';
 import { PublicationGenerationController } from './controllers/publication-generation.controller';
+import { PublicationPublicController } from './controllers/publication-public.controller';
 
 @Module({
   imports: [PrismaModule],
-  controllers: [PublicationOwnerController, PublicationGenerationController],
+  controllers: [
+    PublicationOwnerController,
+    PublicationGenerationController,
+    PublicationPublicController,
+  ],
   providers: [PublicationLifecycleService, PublicationsRepository, ThreadsGenerationClient],
 })
 export class PublicationsModule {}

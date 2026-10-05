@@ -66,7 +66,7 @@ describe('PublicationsRepository', () => {
     const transaction = {
       threadPublication: {
         findUnique: vi.fn().mockResolvedValue({ status: 'DRAFT' }),
-        updateMany: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
       threadPublicationRevision: { upsert: vi.fn().mockResolvedValue({}) },
     };
@@ -87,13 +87,115 @@ describe('PublicationsRepository', () => {
       expect.objectContaining({
         create: expect.objectContaining({
           title: 'Private draft',
-          reviewStatus: 'PENDING',
+          reviewStatus: 'READY_FOR_REVIEW',
           judgeScore: 86,
           criticScore: 79,
+          safetyStatus: 'APPROVED',
+          safetyReasons: [],
+          indexEligible: true,
         }),
         update: {},
       }),
     );
+    expect(transaction.threadPublication.updateMany).toHaveBeenCalledWith({
+      where: { id: 'pub-1', status: 'DRAFT' },
+      data: { status: 'READY_FOR_REVIEW' },
+    });
+  });
+
+  it('keeps a safety flagged draft private and unpublishable', async () => {
+    const transaction = {
+      threadPublication: {
+        findUnique: vi.fn().mockResolvedValue({ status: 'DRAFT' }),
+        updateMany: vi.fn(),
+      },
+      threadPublicationRevision: { upsert: vi.fn().mockResolvedValue({}) },
+    };
+    const prisma = {
+      $transaction: vi.fn((operation: (tx: unknown) => unknown) => operation(transaction)),
+    };
+    const repository = new PublicationsRepository(prisma as never);
+
+    await repository.savePrivateDraft('pub-1', {
+      markdown: `# Private draft\n\napi_key=${'A'.repeat(20)}`,
+      citations: [],
+      judgeScore: 90,
+      criticScore: 80,
+    });
+
+    expect(transaction.threadPublicationRevision.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          reviewStatus: 'PENDING',
+          safetyStatus: 'REVIEW_REQUIRED',
+          safetyReasons: ['POSSIBLE_SECRET'],
+          indexEligible: false,
+        }),
+      }),
+    );
     expect(transaction.threadPublication.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('resolves only published owner-approved safety-cleared fields', async () => {
+    const threadPublication = {
+      findFirst: vi.fn().mockResolvedValue({
+        id: 'publication-1',
+        slug: 'opaque-slug',
+        publishedAt: new Date('2026-10-05T12:00:00.000Z'),
+        ownerId: 'private-owner',
+        revisions: [
+          {
+            title: 'Public article',
+            content: {
+              markdown: '# Public article',
+              citations: [
+                { evidenceId: 'private-evidence-id', url: 'https://example.test/source' },
+              ],
+            },
+          },
+        ],
+      }),
+    };
+    const repository = new PublicationsRepository({ threadPublication } as never);
+
+    const publication = await repository.findPublic('opaque-slug');
+
+    expect(threadPublication.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          status: 'PUBLISHED',
+          revisions: {
+            some: {
+              reviewStatus: 'OWNER_APPROVED',
+              safetyStatus: 'APPROVED',
+              indexEligible: true,
+            },
+          },
+        }),
+      }),
+    );
+    expect(publication).toEqual({
+      id: 'publication-1',
+      slug: 'opaque-slug',
+      title: 'Public article',
+      content: {
+        markdown: '# Public article',
+        citations: [{ url: 'https://example.test/source' }],
+      },
+      publishedAt: new Date('2026-10-05T12:00:00.000Z'),
+    });
+    expect(publication).not.toHaveProperty('ownerId');
+    expect(JSON.stringify(publication)).not.toContain('private-evidence-id');
+  });
+
+  it('unpublishes only an owned currently published record', async () => {
+    const threadPublication = { updateMany: vi.fn().mockResolvedValue({ count: 1 }) };
+    const repository = new PublicationsRepository({ threadPublication } as never);
+
+    await expect(repository.unpublishOwned('publication-1', 'owner-1')).resolves.toBe(true);
+    expect(threadPublication.updateMany).toHaveBeenCalledWith({
+      where: { id: 'publication-1', ownerId: 'owner-1', status: 'PUBLISHED' },
+      data: { status: 'UNPUBLISHED', publishedAt: null },
+    });
   });
 });

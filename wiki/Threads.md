@@ -33,7 +33,10 @@ sub-held before the call. Settlement counts measured cost, and a job cannot
 close with an unresolved sub-hold. The cap introduces no new PAYG price.
 
 The existing `/api/v1/threads` route remains the chat-thread alias. Publication
-APIs use `/api/v1/thread-publications`.
+APIs use `/api/v1/thread-publications`. Public reads require an approved,
+safety-cleared, index-eligible revision. Owner APIs can unpublish and export JSON
+or Markdown. Secret/PII matches keep drafts private; matched text is not stored
+in safety reasons or returned.
 
 Generation requests a versioned snapshot from Chat's internal endpoint.
 Ownership is checked in Chat by matching the requested owner and thread in one
@@ -58,7 +61,7 @@ budget closure are reconciled periodically. Threads-service passes the
 owner-selected cap to generation-service, which validates the source snapshot,
 then reserves the existing Auth entitlement budget before idempotent job
 persistence. Threads links that job to a private publication and exposes
-owner-checked status/cancellation. It copies a ready result into a `PENDING`
-publication revision; this is not approval or public publication. Content
-safety, owner edits/revalidation, public reads, unpublish, and export remain
-gated for the next batch.
+owner-checked status/cancellation. It copies a ready result into a private
+revision. Passing Judge/Critic thresholds and the safety scan makes it eligible
+for owner approval; this is not automatic publication. Owner edits/revalidation,
+community controls, and discovery integration remain unfinished.

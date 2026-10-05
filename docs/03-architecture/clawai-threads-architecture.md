@@ -27,9 +27,11 @@ owner-selected cap and idempotency key to generation-service. After validating
 the immutable Chat snapshot, generation-service reserves the existing Auth
 entitlement budget and persists the job before dispatch. Owners poll their own
 publication; Threads copies a completed result into a private `PENDING`
-revision. Generation state and draft content never cross to public reads. Safety
-scanning, owner revision controls, public reads, unpublish, and exports remain
-gated for the next batch.
+revision. Generation state and draft content never cross to public reads. A
+bounded secret/PII scan gates review readiness; only owner-approved, safety-
+approved, index-eligible revisions resolve publicly. The response omits owner
+IDs, evidence IDs, and internal scores. Owners can unpublish and export JSON or
+Markdown. Text edits and review revalidation remain unfinished.
 
 Generation obtains source through Chat's service-token-protected
 `POST /api/v1/internal/thread-snapshots/:threadId` endpoint. Chat checks
@@ -87,9 +89,9 @@ Threads and generation services use ports 4019 and 4020. Threads owns the
 `claw_threads` PostgreSQL database; generation owns `claw_thread_generation`.
 Both dev and production entrypoints run Prisma migrations. Generation enqueue,
 cancellation, and owner-state routes require a service token and stay off the
-public gateway. Authenticated Threads owner APIs are routed through the existing
-gateway. Public reads and indexing remain gated until content safety scanning
-and the owner approval path are complete.
+public gateway. Authenticated Threads owner APIs and the public publication read
+route use the existing gateway. Public reads remain fail-closed on publication
+state, owner approval, safety status, and index eligibility.
 
 Their container health checks use Node's built-in `node:https` client against
 loopback `/api/v1/health`. TLS verification is disabled for this loopback-only
