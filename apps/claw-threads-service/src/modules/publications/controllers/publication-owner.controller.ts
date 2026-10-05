@@ -1,9 +1,14 @@
-import { Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { CurrentUser } from '@claw/shared-auth';
 import type { AuthenticatedUser } from '@claw/shared-types';
 
 import { PublicationLifecycleService } from '../services/publication-lifecycle.service';
+import {
+  type EditPublicationRevisionDto,
+  editPublicationRevisionSchema,
+} from '../dto/edit-publication-revision.dto';
 import type { PublishedPublication } from '../types/publication.types';
+import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 
 @Controller('thread-publications/:publicationId')
 export class PublicationOwnerController {
@@ -15,6 +20,24 @@ export class PublicationOwnerController {
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<PublishedPublication> {
     return this.lifecycle.approveAndPublish(publicationId, user.id);
+  }
+
+  @Post('revisions')
+  editRevision(
+    @Param('publicationId') publicationId: string,
+    @Body(new ZodValidationPipe(editPublicationRevisionSchema)) body: EditPublicationRevisionDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): ReturnType<PublicationLifecycleService['editRevision']> {
+    return this.lifecycle.editRevision(publicationId, user.id, body);
+  }
+
+  @Get('revisions/:revisionId/revalidation-state')
+  getRevisionReviewState(
+    @Param('publicationId') publicationId: string,
+    @Param('revisionId') revisionId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): ReturnType<PublicationLifecycleService['getRevisionReviewState']> {
+    return this.lifecycle.getRevisionReviewState(publicationId, revisionId, user.id);
   }
 
   @Get('generation-state')

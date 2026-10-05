@@ -184,6 +184,16 @@ review-ready. UI and discovery integration remain separate later batches.
 `docs/qa-evidence/2026-10-05-threads-publication-safety-reads.md`. No new skill
 or rule: current service, security, and QA runbooks cover this implementation.
 
+**5b-c plan — owner text edits and exact-text revalidation:**
+
+- **Code paths:** `apps/claw-threads-service/src/modules/publications/{controllers/publication-owner.controller.ts,services/publication-lifecycle.service.ts,repositories/publications.repository.ts,services/threads-generation.client.ts,dto/}`, `apps/claw-threads-service/prisma/schema.prisma` and its additive migration; `apps/claw-thread-generation-service/src/modules/generation/{dto/,services/generation-jobs.service.ts,repositories/generation-jobs.repository.ts,managers/generation-pipeline.manager.ts,types/}` and its schema/migration; focused specs beside each changed module.
+- **Callers/contracts:** authenticated owner edit route → Threads lifecycle → service-token generation request → durable generation queue → owner-state poll. The public reader continues serving the prior owner-approved revision until explicit approval atomically activates the validated candidate.
+- **Data/money:** immutable revision rows; each edit uses a fresh idempotency key and owner-selected cap; generation reserves a new aggregate budget and reuses the parent job's immutable source snapshot and saved evidence. No fresh research, no closed-budget reuse, no direct cross-database reads.
+- **Knowledge delta in the same batch:** update `docs/02-business-product/clawai-threads-product-spec.md`, `docs/03-architecture/clawai-threads-architecture.md`, `docs/04-backend/service-guide-threads.md`, `docs/04-backend/service-guide-thread-generation.md`, `wiki/Threads.md`, this implementation plan, `memory/2026-10-04-clawai-threads-product-decisions.md`, and create `docs/changes/2026-10-05-threads-owner-edit-revalidation.md` plus `docs/qa-evidence/2026-10-05-threads-owner-edit-revalidation.md`. Regenerate `.ai/**`, workspace `AGENTS.md`, and `docs/features/ai-native-engineering-os/inventory.snapshot.json`. No new skill/rule: existing metering, generation queue, service-boundary, and QA runbooks cover the procedure and invariants.
+- **Deployment:** additive migrations only; keep routes internal/authenticated, default private, and safe for automatic production rollout.
+- **Scoped gate, once at the end:** changed-file ESLint/Prettier; focused Threads and generation specs; both services' typecheck/build; migration/schema validation; QA evidence, knowledge, and inventory validators; normal hooks, push, CI, release, and production health/API verification.
+- **Assumptions:** a revalidation uses the roles and evidence pinned to the original generation, but a new user-selected cap/idempotency key; reviewer outputs are valid only for the exact candidate hash; failed validation leaves the candidate private and the currently published revision unchanged.
+
 **Code:**
 
 - Add publication/revision/comment/reaction/change-request/report/moderation models and migration to `apps/claw-threads-service/prisma/schema.prisma`.

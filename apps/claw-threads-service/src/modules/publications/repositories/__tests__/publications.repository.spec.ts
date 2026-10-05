@@ -1,9 +1,12 @@
 import { PublicationsRepository } from '../publications.repository';
+import { RevisionReviewStatus } from '../../../../generated/prisma';
 
 describe('PublicationsRepository', () => {
   const readyRecord = {
     id: 'pub_opaque',
     slug: 'research-note',
+    status: 'READY_FOR_REVIEW',
+    publishedAt: null,
     revisions: [
       {
         id: 'revision-1',
@@ -197,5 +200,151 @@ describe('PublicationsRepository', () => {
       where: { id: 'publication-1', ownerId: 'owner-1', status: 'PUBLISHED' },
       data: { status: 'UNPUBLISHED', publishedAt: null },
     });
+  });
+
+  it('creates a private immutable edit revision with exact-content hashes', async () => {
+    const transaction = {
+      threadPublicationRevision: {
+        findUnique: vi.fn().mockResolvedValue(null),
+        findFirst: vi.fn().mockResolvedValue({ revision: 1 }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        create: vi.fn().mockImplementation(async ({ data }) => ({
+          id: 'revision-2',
+          revision: data.revision,
+          reviewStatus: data.reviewStatus,
+          safetyStatus: data.safetyStatus,
+          safetyReasons: data.safetyReasons,
+        })),
+      },
+      threadPublication: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: 'publication-1',
+          ownerId: 'owner-1',
+          generationJobId: 'generation-1',
+          status: 'READY_FOR_REVIEW',
+        }),
+      },
+    };
+    const repository = new PublicationsRepository({
+      $transaction: vi.fn((operation: (tx: unknown) => unknown) => operation(transaction)),
+    } as never);
+    const input = {
+      markdown: '# Updated article',
+      citations: [{ evidenceId: 'evidence-1', url: 'https://example.test/source' }],
+      capMicroUsd: 2_000_000,
+      idempotencyKey: 'edit-key',
+      correlationId: 'edit-correlation',
+    };
+
+    await expect(
+      repository.createEditedRevision('publication-1', 'owner-1', input, {
+        approved: true,
+        reasons: [],
+      }),
+    ).resolves.toMatchObject({
+      id: 'revision-2',
+      revision: 2,
+      generationJobId: 'generation-1',
+      revalidationJobId: null,
+      reviewStatus: RevisionReviewStatus.PENDING,
+      safetyApproved: true,
+      requestMatches: true,
+    });
+    expect(transaction.threadPublicationRevision.updateMany).toHaveBeenCalledWith({
+      where: { publicationId: 'publication-1', reviewStatus: 'READY_FOR_REVIEW' },
+      data: { reviewStatus: 'STALE', indexEligible: false },
+    });
+    expect(transaction.threadPublicationRevision.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          publicationId: 'publication-1',
+          revision: 2,
+          editIdempotencyKey: 'edit-key',
+          reviewStatus: 'PENDING',
+          indexEligible: false,
+        }),
+      }),
+    );
+  });
+
+  it('marks only the matching private candidate ready after exact-hash validation', async () => {
+    const transaction = {
+      threadPublicationRevision: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+      threadPublication: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+    };
+    const repository = new PublicationsRepository({
+      $transaction: vi.fn((operation: (tx: unknown) => unknown) => operation(transaction)),
+    } as never);
+
+    await repository.completeRevisionReview('publication-1', 'owner-1', 'revision-2', {
+      contentHash: 'a'.repeat(64),
+      ready: true,
+      judgeScore: 85,
+      criticScore: 78,
+    });
+
+    expect(transaction.threadPublicationRevision.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          id: 'revision-2',
+          publicationId: 'publication-1',
+          contentHash: 'a'.repeat(64),
+          reviewStatus: 'PENDING',
+        }),
+        data: expect.objectContaining({
+          reviewStatus: 'READY_FOR_REVIEW',
+          judgeScore: 85,
+          criticScore: 78,
+          safetyStatus: 'APPROVED',
+          indexEligible: true,
+        }),
+      }),
+    );
+    expect(transaction.threadPublication.updateMany).toHaveBeenCalledWith({
+      where: { id: 'publication-1', ownerId: 'owner-1', status: 'READY_FOR_REVIEW' },
+      data: { status: 'READY_FOR_REVIEW' },
+    });
+  });
+
+  it('prevents a second paid edit review while the latest candidate is pending', async () => {
+    const transaction = {
+      threadPublicationRevision: {
+        findUnique: vi.fn().mockResolvedValue(null),
+        findFirst: vi.fn().mockResolvedValue({
+          id: 'revision-2',
+          revision: 2,
+          reviewStatus: RevisionReviewStatus.PENDING,
+          revalidationJobId: 'review-job',
+        }),
+        create: vi.fn(),
+      },
+      threadPublication: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: 'publication-1',
+          ownerId: 'owner-1',
+          generationJobId: 'generation-1',
+          status: 'PUBLISHED',
+        }),
+      },
+    };
+    const repository = new PublicationsRepository({
+      $transaction: vi.fn((operation: (tx: unknown) => unknown) => operation(transaction)),
+    } as never);
+
+    await expect(
+      repository.createEditedRevision(
+        'publication-1',
+        'owner-1',
+        {
+          markdown: '# Another edit',
+          citations: [{ evidenceId: 'evidence-1', url: 'https://example.test/source' }],
+          capMicroUsd: 2_000_000,
+          idempotencyKey: 'second-edit',
+          correlationId: 'second-correlation',
+        },
+        { approved: true, reasons: [] },
+      ),
+    ).resolves.toMatchObject({ editInProgress: true, id: 'revision-2' });
+    expect(transaction.threadPublicationRevision.create).not.toHaveBeenCalled();
   });
 });

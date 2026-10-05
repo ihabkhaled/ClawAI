@@ -44,6 +44,13 @@ cancels queued jobs or requests cancellation between provider calls.
   safe status and the completed draft when the supplied owner matches. The
   Threads service verifies publication ownership before using this handoff and
   stores the result as a private pending revision.
+- The service-token-only `POST /api/v1/internal/threads/generations/revision-reviews`
+  creates durable paid reviews for owner edits. It pins the parent's source
+  snapshot, evidence bundle, and reviewer configuration, but evaluates the exact
+  submitted markdown and citations with fresh author/Judge/Critic calls. The
+  private owner-state response includes the candidate hash and review outcome;
+  Threads verifies that hash before making a revision eligible for owner
+  approval.
 
 ## References
 

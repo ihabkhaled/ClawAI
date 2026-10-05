@@ -14,5 +14,7 @@ Owner decisions recorded 2026-10-04; canonical product details live in
   hooks and valid tree-bound receipts.
 - Publication safety keeps secret/PII matches private using reason codes only.
   Public reads require owner approval, safety approval, and index eligibility;
-  owners can unpublish and export JSON/Markdown. Text edits need a separate
-  owner-selected cap and durable Generation-service revalidation before launch.
+  owners can unpublish and export JSON/Markdown. Each immutable text edit uses a
+  fresh owner-selected cap and durable Generation-service revalidation against
+  the original pinned source and evidence. The old approved revision stays
+  public until explicit owner approval of the hash-matched replacement.

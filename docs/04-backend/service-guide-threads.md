@@ -8,7 +8,7 @@
 | Database     | `claw_threads` PostgreSQL     |
 | Public route | `/api/v1/thread-publications` |
 
-This service owns publication revisions and community state. Authenticated owners can start a generation with an explicit public-intent version and user-selected cap, poll their own job, cancel it, and persist its finished result as a private revision. A bounded secret/PII scan gates owner review; owners can publish, unpublish, and export JSON or Markdown. Public reads resolve only published, owner-approved, safety-approved, index-eligible revisions. Owner text edits and paid revalidation remain unfinished.
+This service owns publication revisions and community state. Authenticated owners can start a generation with an explicit public-intent version and user-selected cap, poll their own job, cancel it, and persist its finished result as a private revision. A bounded secret/PII scan gates owner review; owners can publish, unpublish, and export JSON or Markdown. Public reads resolve only published, owner-approved, safety-approved, index-eligible revisions. `POST /api/v1/thread-publications/:publicationId/revisions` creates an immutable edit using a fresh cap and idempotency key; `GET /api/v1/thread-publications/:publicationId/revisions/:revisionId/revalidation-state` returns owner-scoped review status. Only a passing review of the exact candidate hash becomes eligible for owner approval; the approved revision remains public until replacement approval.
 
 Prisma migrations run from the container entrypoint. For local schema work,
 use `npm run migrate:dev`; for deployment, `npm run migrate` applies committed

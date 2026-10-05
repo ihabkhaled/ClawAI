@@ -11,7 +11,11 @@ import { z } from 'zod';
 
 import { AppConfig } from '../../../app/config/app.config';
 import type { StartThreadGenerationDto } from '../dto/start-thread-generation.dto';
-import type { GenerationEnqueueInput, PrivateGenerationState } from '../types/generation.types';
+import type {
+  GenerationEnqueueInput,
+  PrivateGenerationState,
+  RevisionReviewEnqueueInput,
+} from '../types/generation.types';
 
 const enqueueResponseSchema = z.object({ jobId: z.string(), status: z.string() });
 const privateStateSchema = z.object({
@@ -20,6 +24,14 @@ const privateStateSchema = z.object({
   stage: z.string(),
   round: z.number().int().nonnegative(),
   safeErrorCode: z.string().nullable(),
+  review: z
+    .object({
+      draftHash: z.string().length(64),
+      authorConsensus: z.boolean(),
+      ready: z.boolean(),
+      reasons: z.array(z.string()),
+    })
+    .nullable(),
   draft: z
     .object({
       markdown: z.string(),
@@ -63,6 +75,19 @@ export class ThreadsGenerationClient {
       { method: 'POST', body: JSON.stringify({ ownerId }) },
     );
     const parsed = privateStateSchema.safeParse(result);
+    if (!parsed.success) throw new ServiceUnavailableException('Generation response is invalid');
+    return parsed.data;
+  }
+
+  async enqueueRevisionReview(
+    ownerId: string,
+    input: RevisionReviewEnqueueInput,
+  ): Promise<{ jobId: string; status: string }> {
+    const result = await this.request('/api/v1/internal/threads/generations/revision-reviews', {
+      method: 'POST',
+      body: JSON.stringify({ ...input, ownerId }),
+    });
+    const parsed = enqueueResponseSchema.safeParse(result);
     if (!parsed.success) throw new ServiceUnavailableException('Generation response is invalid');
     return parsed.data;
   }

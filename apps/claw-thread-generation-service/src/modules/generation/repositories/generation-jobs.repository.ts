@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { Prisma, ThreadGenerationStage, ThreadGenerationStatus } from '../../../generated/prisma';
+import { z } from 'zod';
 
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import type { EnqueueGenerationDto } from '../dto/enqueue-generation.dto';
+import { type EnqueueGenerationDto, enqueueGenerationSchema } from '../dto/enqueue-generation.dto';
+import type { EnqueueRevisionReviewDto } from '../dto/enqueue-revision-review.dto';
 import type { GenerationPipelineResult } from '../types/generation-pipeline.types';
 import type { ChatModelResponse } from '../../models/chat-model.client';
 import { stableJson } from '../utilities/stable-json.utility';
@@ -82,6 +84,109 @@ export class GenerationJobsRepository {
       return raced &&
         raced.ownerId === input.ownerId &&
         stableJson(raced.request) === stableJson(input)
+        ? { result: GenerationJobStorageResult.SUCCESS, job: raced }
+        : { result: GenerationJobStorageResult.CONFLICT };
+    }
+  }
+
+  async findRevisionReviewByIdempotencyKey(
+    input: EnqueueRevisionReviewDto,
+  ): Promise<GenerationJobIdempotencyResponse | null> {
+    const existing = await this.prisma.threadGenerationJob.findUnique({
+      where: { idempotencyKey: input.idempotencyKey },
+      select: { id: true, ownerId: true, request: true, status: true, correlationId: true },
+    });
+    if (!existing) return null;
+    const expected = { kind: 'revision-review', ...input };
+    return existing.ownerId === input.ownerId &&
+      stableJson(this.revisionRequestForIdempotency(existing.request)) === stableJson(expected)
+      ? { result: GenerationJobStorageResult.SUCCESS, job: existing }
+      : { result: GenerationJobStorageResult.CONFLICT };
+  }
+
+  async findRevisionParent(parentJobId: string, ownerId: string) {
+    return this.prisma.threadGenerationJob.findFirst({
+      where: {
+        id: parentJobId,
+        ownerId,
+        status: ThreadGenerationStatus.WAITING_FOR_REVIEW,
+      },
+      select: {
+        id: true,
+        ownerId: true,
+        sourceThreadId: true,
+        sourceSnapshot: true,
+        sourceSnapshotHash: true,
+        evidenceBundle: true,
+        evidenceBundleHash: true,
+        evidenceVersion: true,
+        request: true,
+        publicIntentVersion: true,
+        publicIntentAt: true,
+      },
+    });
+  }
+
+  async createRevisionReviewQueued(
+    input: EnqueueRevisionReviewDto,
+    budgetId: string,
+  ): Promise<GenerationJobStorageResponse> {
+    const parent = await this.findRevisionParent(input.parentJobId, input.ownerId);
+    if (!parent || parent.evidenceBundle === null || !parent.evidenceBundleHash) {
+      return { result: GenerationJobStorageResult.STORAGE_ERROR };
+    }
+    const originalRequest = enqueueGenerationSchema.safeParse(parent.request);
+    if (!originalRequest.success) return { result: GenerationJobStorageResult.STORAGE_ERROR };
+    const request = {
+      kind: 'revision-review' as const,
+      ...input,
+      topic: originalRequest.data.topic,
+      publicationType: originalRequest.data.publicationType,
+      authors: originalRequest.data.authors,
+      judge: originalRequest.data.judge,
+      critic: originalRequest.data.critic,
+    };
+    const existing = await this.prisma.threadGenerationJob.findUnique({
+      where: { idempotencyKey: input.idempotencyKey },
+    });
+    if (existing) {
+      return existing.ownerId !== input.ownerId ||
+        stableJson(this.revisionRequestForIdempotency(existing.request)) !==
+          stableJson(this.revisionRequestForIdempotency(request))
+        ? { result: GenerationJobStorageResult.CONFLICT }
+        : { result: GenerationJobStorageResult.SUCCESS, job: existing };
+    }
+    try {
+      const job = await this.prisma.threadGenerationJob.create({
+        data: {
+          ownerId: input.ownerId,
+          sourceThreadId: parent.sourceThreadId,
+          idempotencyKey: input.idempotencyKey,
+          correlationId: input.correlationId,
+          sourceSnapshot: parent.sourceSnapshot as Prisma.InputJsonValue,
+          sourceSnapshotHash: parent.sourceSnapshotHash,
+          evidenceBundle: parent.evidenceBundle as Prisma.InputJsonValue,
+          evidenceBundleHash: parent.evidenceBundleHash,
+          evidenceVersion: parent.evidenceVersion,
+          request: JSON.parse(JSON.stringify(request)) as Prisma.InputJsonValue,
+          budgetId,
+          spendCapMicroUsd: BigInt(input.spendCapMicroUsd),
+          publicIntentVersion: parent.publicIntentVersion,
+          publicIntentAt: parent.publicIntentAt,
+        },
+      });
+      return { result: GenerationJobStorageResult.SUCCESS, job };
+    } catch (error: unknown) {
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+        return { result: GenerationJobStorageResult.STORAGE_ERROR };
+      }
+      const raced = await this.prisma.threadGenerationJob.findUnique({
+        where: { idempotencyKey: input.idempotencyKey },
+      });
+      return raced &&
+        raced.ownerId === input.ownerId &&
+        stableJson(this.revisionRequestForIdempotency(raced.request)) ===
+          stableJson(this.revisionRequestForIdempotency(request))
         ? { result: GenerationJobStorageResult.SUCCESS, job: raced }
         : { result: GenerationJobStorageResult.CONFLICT };
     }
@@ -561,6 +666,12 @@ export class GenerationJobsRepository {
       citations: result.citations,
       judge: result.judgeReview,
       critic: result.criticReview,
+      review: {
+        draftHash: result.draftHash,
+        authorConsensus: result.authorConsensus,
+        ready: result.reviewReady,
+        reasons: result.reviewReasons,
+      },
     } as Prisma.InputJsonValue;
     return this.prisma.$transaction(async (tx) => {
       const saved = await tx.threadGenerationJob.updateMany({
@@ -636,5 +747,19 @@ export class GenerationJobsRepository {
       where: { jobId },
       data: { jobId: null, workerId: null, leaseExpiresAt: null, heartbeatAt: null },
     });
+  }
+
+  private revisionRequestForIdempotency(value: unknown): Record<string, unknown> {
+    const parsed = z.record(z.string(), z.unknown()).safeParse(value);
+    if (!parsed.success) return {};
+    return {
+      kind: parsed.data['kind'],
+      ownerId: parsed.data['ownerId'],
+      parentJobId: parsed.data['parentJobId'],
+      idempotencyKey: parsed.data['idempotencyKey'],
+      correlationId: parsed.data['correlationId'],
+      spendCapMicroUsd: parsed.data['spendCapMicroUsd'],
+      draft: parsed.data['draft'],
+    };
   }
 }

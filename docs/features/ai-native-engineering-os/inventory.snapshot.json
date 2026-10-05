@@ -3574,6 +3574,11 @@
           "method": "POST",
           "route": "/internal/threads/generations/:jobId/owner-state",
           "source": "apps/claw-thread-generation-service/src/modules/generation/controllers/generation-jobs-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/threads/generations/revision-reviews",
+          "source": "apps/claw-thread-generation-service/src/modules/generation/controllers/generation-jobs-internal.controller.ts"
         }
       ],
       "claw-threads-service": [
@@ -3600,6 +3605,16 @@
         {
           "method": "POST",
           "route": "/thread-publications/:publicationId/publish",
+          "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-owner.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/thread-publications/:publicationId/revisions",
+          "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-owner.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/thread-publications/:publicationId/revisions/:revisionId/revalidation-state",
           "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-owner.controller.ts"
         },
         {
@@ -11201,11 +11216,11 @@
       },
       "claw-thread-generation-service": {
         "runner": "vitest",
-        "testFiles": 12
+        "testFiles": 13
       },
       "claw-threads-service": {
         "runner": "vitest",
-        "testFiles": 6
+        "testFiles": 8
       },
       "claw-workspace-service": {
         "runner": "vitest",
@@ -11992,7 +12007,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 56,
-    "endpointCount": 813,
+    "endpointCount": 816,
     "envVarCount": 375,
     "eventCount": 186,
     "frontendRouteCount": 156,
@@ -12004,7 +12019,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2078,
+    "totalTestFiles": 2081,
     "workspaceCount": 27
   }
 }

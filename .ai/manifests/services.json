@@ -519,7 +519,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-thread-generation-service",
-      "endpointCount": 4,
+      "endpointCount": 5,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -539,13 +539,13 @@
         "ThreadModelCommunication",
         "ThreadRevisionDraft"
       ],
-      "testFiles": 12,
+      "testFiles": 13,
       "testRunner": "vitest"
     },
     {
       "database": "postgresql",
       "dir": "apps/claw-threads-service",
-      "endpointCount": 8,
+      "endpointCount": 10,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -560,7 +560,7 @@
         "ThreadPublication",
         "ThreadPublicationRevision"
       ],
-      "testFiles": 6,
+      "testFiles": 8,
       "testRunner": "vitest"
     },
     {

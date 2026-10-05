@@ -24,6 +24,8 @@ import {
   modelRoleSchema,
   reviewSchema,
 } from '../types/generation-pipeline.types';
+import { revisionAuthorResponseSchema } from '../types/revision-review.types';
+import { evaluateRevisionReview, revisionDraftHash } from '../utilities/revision-review.utility';
 
 @Injectable()
 export class GenerationPipelineManager {
@@ -37,16 +39,18 @@ export class GenerationPipelineManager {
     const job = this.validateRoles(input);
     const saved = await this.jobs.loadResumeState(job.jobId);
     const savedBundle = z.record(z.string(), z.unknown()).safeParse(saved.evidenceBundle);
-    if (saved.evidenceBundle !== null && saved.evidenceBundle !== undefined && (
-        !savedBundle.success ||
+    if (
+      saved.evidenceBundle !== null &&
+      saved.evidenceBundle !== undefined &&
+      (!savedBundle.success ||
         !saved.evidenceBundleHash ||
         (this.hash(JSON.stringify(savedBundle.data)) !== saved.evidenceBundleHash &&
-          this.hash(stableJson(savedBundle.data)) !== saved.evidenceBundleHash)
-      )) {
-        throw new ServiceUnavailableException(
-          'Saved research checkpoint failed integrity validation',
-        );
-      }
+          this.hash(stableJson(savedBundle.data)) !== saved.evidenceBundleHash))
+    ) {
+      throw new ServiceUnavailableException(
+        'Saved research checkpoint failed integrity validation',
+      );
+    }
     const evidence =
       savedBundle.success && saved.evidenceBundleHash
         ? {
@@ -137,11 +141,81 @@ export class GenerationPipelineManager {
         authorDrafts: drafts,
         judgeReview: judge,
         criticReview: critic,
+        authorConsensus: true,
+        reviewReady: true,
+        reviewReasons: [],
       };
     }
     throw new ServiceUnavailableException(
       'Generation did not pass consensus and reviews in three rounds',
     );
+  }
+
+  async reviewRevision(
+    input: GenerationPipelineInput,
+    draft: AuthorDraft,
+    evidenceBundle: Record<string, unknown>,
+    evidenceHash: string,
+  ): Promise<GenerationPipelineResult> {
+    const job = this.validateRoles(input);
+    const evidenceItems = this.evidenceItems(evidenceBundle);
+    this.validateCitations([draft], evidenceItems);
+    const draftHash = revisionDraftHash(draft);
+    const sharedMaterial = JSON.stringify({
+      version: 1,
+      topic: job.topic,
+      publicationType: job.publicationType,
+      sourceSnapshot: job.sourceSnapshot,
+      researchEvidence: evidenceBundle,
+      exactCandidateHash: draftHash,
+    });
+    const authorVotes = await Promise.allSettled(
+      job.authors.map((role) =>
+        this.callRevisionVote(job, role, draft, draftHash, sharedMaterial, evidenceHash),
+      ),
+    );
+    const votes = this.requireFulfilled(authorVotes, 'An author role failed to review the edit');
+    await this.throwIfCancelled(job);
+    const judge = await this.callReview(
+      job,
+      job.judge,
+      ReviewerRole.JUDGE,
+      1,
+      sharedMaterial,
+      draft,
+      evidenceHash,
+    );
+    const critic = await this.callReview(
+      job,
+      job.critic,
+      ReviewerRole.CRITIC,
+      1,
+      sharedMaterial,
+      draft,
+      evidenceHash,
+    );
+    const evaluation = evaluateRevisionReview({
+      draft,
+      expectedAuthorIds: job.authors.map(({ id }) => id),
+      votes,
+      judge,
+      critic,
+      evidence: evidenceItems,
+    });
+    return {
+      markdown: draft.markdown,
+      citations: draft.citations,
+      draftHash: evaluation.draftHash,
+      evidenceBundle,
+      evidenceHash,
+      rounds: 1,
+      authorDrafts: [],
+      judgeReview: judge,
+      criticReview: critic,
+      authorConsensus: !evaluation.reasons.includes('AUTHOR_CONSENSUS_FAILED'),
+      reviewReady: evaluation.ready,
+      reviewReasons: evaluation.reasons,
+    };
   }
 
   private callAuthors(
@@ -177,9 +251,9 @@ export class GenerationPipelineManager {
     const critic = roles[input.authors.length + 1];
     if (!judge || !critic)
       throw new ServiceUnavailableException('Judge and Critic roles are required');
-    const authorIds = authors.map((role) => role.id);
-    if (new Set(authorIds).size !== authorIds.length) {
-      throw new ServiceUnavailableException('Author role identifiers must be unique');
+    const roleIds = roles.map((role) => role.id);
+    if (new Set(roleIds).size !== roleIds.length) {
+      throw new ServiceUnavailableException('Generation role identifiers must be unique');
     }
     return { ...input, authors, judge, critic };
   }
@@ -269,6 +343,52 @@ export class GenerationPipelineManager {
       parsed.data,
     );
     return parsed.data;
+  }
+
+  private async callRevisionVote(
+    input: GenerationPipelineInput,
+    role: ModelRole,
+    draft: AuthorDraft,
+    draftHash: string,
+    sharedMaterial: string,
+    evidenceHash: string,
+  ) {
+    const communicationRole = { ...role, id: `revision-author-${role.id}` };
+    const prompts = {
+      systemPrompt:
+        'Review the exact owner-edited draft for factual support, coherence, and safety. Do not rewrite it. Return JSON with agrees (boolean) and draftHash copied exactly from the supplied candidate hash. Do not include chain-of-thought.',
+      userPrompt: `${sharedMaterial}\nExact candidate hash: ${draftHash}\nDraft:\n${JSON.stringify(draft)}`,
+    };
+    const saved = await this.jobs.findCommunication(
+      input.jobId,
+      communicationRole.id,
+      1,
+      evidenceHash,
+      this.hash(`${prompts.systemPrompt}\n${prompts.userPrompt}`),
+    );
+    const response =
+      saved === null ? await this.callRole(input, role, communicationRole.id, 1, prompts) : null;
+    const parsed = revisionAuthorResponseSchema.safeParse(
+      saved ?? this.parseJson(response?.content ?? ''),
+    );
+    if (!parsed.success) {
+      throw new ServiceUnavailableException('An author returned an invalid edit review');
+    }
+    if (saved === null) {
+      if (!response) throw new ServiceUnavailableException('An author response is missing');
+      const persisted = await this.jobs.saveCommunication({
+        jobId: input.jobId,
+        attempt: input.attempt,
+        role: communicationRole.id,
+        round: 1,
+        inputHash: this.hash(`${prompts.systemPrompt}\n${prompts.userPrompt}`),
+        evidenceHash,
+        response,
+        output: parsed.data,
+      });
+      if (!persisted) throw new ThreadGenerationLeaseLostError();
+    }
+    return { roleId: role.id, ...parsed.data };
   }
 
   private async persistCommunication(

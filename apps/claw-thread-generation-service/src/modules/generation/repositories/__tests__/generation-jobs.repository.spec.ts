@@ -63,6 +63,142 @@ describe('GenerationJobsRepository recovery', () => {
     ).resolves.toEqual({ result: 'CONFLICT' });
   });
 
+  it('persists review jobs with the parent snapshot and saved evidence bundle', async () => {
+    const parent = {
+      id: 'parent-job',
+      ownerId: 'owner-1',
+      sourceThreadId: 'thread-1',
+      sourceSnapshot: { messages: [{ role: 'USER', content: 'Original source' }] },
+      sourceSnapshotHash: 'a'.repeat(64),
+      evidenceBundle: { items: [{ id: 'source-1', url: 'https://example.test/source' }] },
+      evidenceBundleHash: 'b'.repeat(64),
+      evidenceVersion: 1,
+      publicIntentVersion: 'threads-public-v1',
+      publicIntentAt: new Date('2026-10-05T12:00:00.000Z'),
+      request: {
+        ownerId: 'owner-1',
+        sourceThreadId: 'thread-1',
+        idempotencyKey: 'generation-key',
+        correlationId: 'generation-correlation',
+        spendCapMicroUsd: '5000000',
+        topic: 'A sufficiently detailed topic',
+        publicationType: 'article',
+        publicIntentVersion: 'threads-public-v1',
+        authors: [
+          {
+            id: 'author-1',
+            provider: 'OPENAI',
+            model: 'gpt-5',
+            maxOutputTokens: 1024,
+            fallbacks: [],
+          },
+          {
+            id: 'author-2',
+            provider: 'ANTHROPIC',
+            model: 'claude',
+            maxOutputTokens: 1024,
+            fallbacks: [],
+          },
+          {
+            id: 'author-3',
+            provider: 'GEMINI',
+            model: 'gemini',
+            maxOutputTokens: 1024,
+            fallbacks: [],
+          },
+        ],
+        judge: {
+          id: 'judge',
+          provider: 'MISTRAL',
+          model: 'mistral',
+          maxOutputTokens: 1024,
+          fallbacks: [],
+        },
+        critic: {
+          id: 'critic',
+          provider: 'DEEPSEEK',
+          model: 'deepseek',
+          maxOutputTokens: 1024,
+          fallbacks: [],
+        },
+      },
+    };
+    const jobDelegate = {
+      findFirst: vi.fn().mockResolvedValue(parent),
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi
+        .fn()
+        .mockResolvedValue({ id: 'review-job', status: ThreadGenerationStatus.QUEUED }),
+    };
+    const repository = new GenerationJobsRepository({ threadGenerationJob: jobDelegate } as never);
+    const input = {
+      ownerId: 'owner-1',
+      parentJobId: 'parent-job',
+      idempotencyKey: 'edit-key',
+      correlationId: 'edit-correlation',
+      spendCapMicroUsd: '2500000',
+      draft: {
+        markdown: '# Edited draft',
+        citations: [{ evidenceId: 'source-1', url: 'https://example.test/source' }],
+      },
+    };
+
+    await expect(
+      repository.createRevisionReviewQueued(input, 'review-budget'),
+    ).resolves.toMatchObject({
+      result: 'SUCCESS',
+      job: { id: 'review-job', status: ThreadGenerationStatus.QUEUED },
+    });
+    expect(jobDelegate.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        sourceThreadId: 'thread-1',
+        sourceSnapshot: parent.sourceSnapshot,
+        sourceSnapshotHash: parent.sourceSnapshotHash,
+        evidenceBundle: parent.evidenceBundle,
+        evidenceBundleHash: parent.evidenceBundleHash,
+        budgetId: 'review-budget',
+        spendCapMicroUsd: 2500000n,
+        request: expect.objectContaining({
+          kind: 'revision-review',
+          parentJobId: 'parent-job',
+          authors: parent.request.authors,
+          judge: parent.request.judge,
+          critic: parent.request.critic,
+        }),
+      }),
+    });
+  });
+
+  it('treats changed owner edit requests as idempotency conflicts', async () => {
+    const request = {
+      kind: 'revision-review',
+      ownerId: 'owner-1',
+      parentJobId: 'parent-job',
+      idempotencyKey: 'edit-key',
+      correlationId: 'edit-correlation',
+      spendCapMicroUsd: '2500000',
+      draft: {
+        markdown: '# First',
+        citations: [{ evidenceId: 'e-1', url: 'https://example.test/e' }],
+      },
+    };
+    const { repository, tx } = buildRepository();
+    tx.threadGenerationJob.findUnique.mockResolvedValue({
+      id: 'review-job',
+      ownerId: 'owner-1',
+      request: { ...request, topic: 'saved topic', authors: [], judge: {}, critic: {} },
+      status: ThreadGenerationStatus.QUEUED,
+      correlationId: 'edit-correlation',
+    });
+
+    await expect(
+      repository.findRevisionReviewByIdempotencyKey({
+        ...request,
+        spendCapMicroUsd: '3000000',
+      } as never),
+    ).resolves.toEqual({ result: 'CONFLICT' });
+  });
+
   it('loads only the requesting owner’s safe job state and completed draft', async () => {
     const { repository, tx } = buildRepository();
 

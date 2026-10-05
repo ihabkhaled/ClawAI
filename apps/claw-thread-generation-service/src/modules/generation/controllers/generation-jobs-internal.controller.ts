@@ -8,6 +8,10 @@ import {
   generationOwnerStateSchema,
 } from '../dto/generation-owner-state.dto';
 import { type EnqueueGenerationDto, enqueueGenerationSchema } from '../dto/enqueue-generation.dto';
+import {
+  type EnqueueRevisionReviewDto,
+  enqueueRevisionReviewSchema,
+} from '../dto/enqueue-revision-review.dto';
 import { GenerationJobsService } from '../services/generation-jobs.service';
 
 @Public()
@@ -22,6 +26,14 @@ export class GenerationJobsInternalController {
     @Body(new ZodValidationPipe(enqueueGenerationSchema)) body: EnqueueGenerationDto,
   ): ReturnType<GenerationJobsService['enqueue']> {
     return this.jobs.enqueue(body);
+  }
+
+  @Post('revision-reviews')
+  @HttpCode(HttpStatus.ACCEPTED)
+  enqueueRevisionReview(
+    @Body(new ZodValidationPipe(enqueueRevisionReviewSchema)) body: EnqueueRevisionReviewDto,
+  ): ReturnType<GenerationJobsService['enqueueRevisionReview']> {
+    return this.jobs.enqueueRevisionReview(body);
   }
 
   @Post(':jobId/cancel')

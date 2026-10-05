@@ -1,6 +1,7 @@
 import { GenerationPipelineManager } from '../generation-pipeline.manager';
 import { createHash } from 'node:crypto';
 import type { GenerationPipelineInput, ModelRole } from '../../types/generation-pipeline.types';
+import { revisionDraftHash } from '../../utilities/revision-review.utility';
 
 const evidenceBundle = {
   items: [{ id: 'source-1', url: 'https://example.org/source' }],
@@ -162,5 +163,64 @@ describe('GenerationPipelineManager', () => {
       harness.manager.generate({ ...input, authors: input.authors.slice(0, 2) }),
     ).rejects.toThrow('Generation requires three to five author roles');
     expect(harness.research.run).not.toHaveBeenCalled();
+  });
+
+  it('rejects duplicate author, Judge, or Critic role identifiers', async () => {
+    const harness = build([]);
+
+    await expect(
+      harness.manager.generate({ ...input, judge: role('author-1', 'MISTRAL') }),
+    ).rejects.toThrow('Generation role identifiers must be unique');
+    expect(harness.research.run).not.toHaveBeenCalled();
+  });
+
+  it('revalidates the exact edited text against saved evidence without running new research', async () => {
+    const edited = {
+      markdown: '# Owner edit\n\nEvidence-backed statement.',
+      citations: [{ evidenceId: 'source-1', url: 'https://example.org/source' }],
+    };
+    const draftHash = revisionDraftHash(edited);
+    const vote = JSON.stringify({ agrees: true, draftHash });
+    const harness = build([vote, vote, vote, review(80), review(75)]);
+
+    const result = await harness.manager.reviewRevision(
+      input,
+      edited,
+      evidenceBundle,
+      'a'.repeat(64),
+    );
+
+    expect(result).toMatchObject({
+      markdown: edited.markdown,
+      citations: edited.citations,
+      draftHash,
+      authorConsensus: true,
+      reviewReady: true,
+      reviewReasons: [],
+    });
+    expect(harness.research.run).not.toHaveBeenCalled();
+    expect(harness.models.generate).toHaveBeenCalledTimes(5);
+    expect(
+      harness.models.generate.mock.calls.every((call) =>
+        call[0].userPrompt.includes(JSON.stringify(edited)),
+      ),
+    ).toBe(true);
+  });
+
+  it('fails closed when an owner edit cites evidence outside the saved bundle', async () => {
+    const harness = build([]);
+
+    await expect(
+      harness.manager.reviewRevision(
+        input,
+        {
+          markdown: '# Edit',
+          citations: [{ evidenceId: 'other', url: 'https://bad.example/source' }],
+        },
+        evidenceBundle,
+        'a'.repeat(64),
+      ),
+    ).rejects.toThrow('A draft cited a URL outside its evidence bundle');
+    expect(harness.models.generate).not.toHaveBeenCalled();
   });
 });

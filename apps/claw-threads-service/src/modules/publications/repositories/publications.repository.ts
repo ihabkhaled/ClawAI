@@ -13,10 +13,14 @@ import {
   MIN_PUBLICATION_JUDGE_SCORE,
 } from '../constants/publication-review.constants';
 import type {
+  EditedRevisionRecord,
+  OwnedRevisionReviewRecord,
   PublicationExport,
   PublicPublication,
   PublishedPublication,
 } from '../types/publication.types';
+import type { EditPublicationRevisionDto } from '../dto/edit-publication-revision.dto';
+import type { PublicationSafetyResult } from '../types/publication-safety.types';
 import { evaluatePublicationSafety } from '../utilities/publication-safety.utility';
 
 @Injectable()
@@ -121,21 +125,31 @@ export class PublicationsRepository {
         where: {
           id: publicationId,
           ownerId,
-          status: PublicationStatus.READY_FOR_REVIEW,
+          status: {
+            in: [
+              PublicationStatus.READY_FOR_REVIEW,
+              PublicationStatus.PUBLISHED,
+              PublicationStatus.UNPUBLISHED,
+            ],
+          },
           revisions: {
             some: {
               reviewStatus: RevisionReviewStatus.READY_FOR_REVIEW,
               safetyStatus: PublicationSafetyStatus.APPROVED,
+              indexEligible: true,
             },
           },
         },
         select: {
           id: true,
           slug: true,
+          status: true,
+          publishedAt: true,
           revisions: {
             where: {
               reviewStatus: RevisionReviewStatus.READY_FOR_REVIEW,
               safetyStatus: PublicationSafetyStatus.APPROVED,
+              indexEligible: true,
             },
             orderBy: { revision: 'desc' },
             take: 1,
@@ -152,7 +166,13 @@ export class PublicationsRepository {
         where: {
           id: publicationId,
           ownerId,
-          status: PublicationStatus.READY_FOR_REVIEW,
+          status: {
+            in: [
+              PublicationStatus.READY_FOR_REVIEW,
+              PublicationStatus.PUBLISHED,
+              PublicationStatus.UNPUBLISHED,
+            ],
+          },
         },
         data: { status: PublicationStatus.PUBLISHED, publishedAt: new Date() },
       });
@@ -165,7 +185,10 @@ export class PublicationsRepository {
       if (approved.count !== 1) {
         await transaction.threadPublication.updateMany({
           where: { id: publicationId, ownerId, status: PublicationStatus.PUBLISHED },
-          data: { status: PublicationStatus.READY_FOR_REVIEW, publishedAt: null },
+          data: {
+            status: ready.status,
+            publishedAt: ready.status === PublicationStatus.PUBLISHED ? ready.publishedAt : null,
+          },
         });
         return null;
       }
@@ -177,6 +200,225 @@ export class PublicationsRepository {
         content: { markdown: content.data.markdown },
         publishedAt: new Date(),
       };
+    });
+  }
+
+  async createEditedRevision(
+    publicationId: string,
+    ownerId: string,
+    input: EditPublicationRevisionDto,
+    safety: PublicationSafetyResult,
+  ): Promise<EditedRevisionRecord | null> {
+    return this.prisma.$transaction(async (transaction) => {
+      const priorRequest = await transaction.threadPublicationRevision.findUnique({
+        where: { editIdempotencyKey: input.idempotencyKey },
+        select: {
+          id: true,
+          revision: true,
+          reviewStatus: true,
+          safetyStatus: true,
+          safetyReasons: true,
+          editRequestHash: true,
+          revalidationJobId: true,
+          publication: {
+            select: { id: true, ownerId: true, generationJobId: true },
+          },
+        },
+      });
+      if (priorRequest) {
+        return priorRequest.publication.id === publicationId &&
+          priorRequest.publication.ownerId === ownerId &&
+          priorRequest.publication.generationJobId
+          ? {
+              id: priorRequest.id,
+              revision: priorRequest.revision,
+              generationJobId: priorRequest.publication.generationJobId,
+              revalidationJobId: priorRequest.revalidationJobId,
+              reviewStatus: priorRequest.reviewStatus,
+              safetyApproved: priorRequest.safetyStatus === PublicationSafetyStatus.APPROVED,
+              safetyReasons: z.array(z.string()).catch([]).parse(priorRequest.safetyReasons),
+              requestMatches: priorRequest.editRequestHash === this.hashEditRequest(input),
+              editInProgress: false,
+            }
+          : null;
+      }
+
+      const publication = await transaction.threadPublication.findFirst({
+        where: {
+          id: publicationId,
+          ownerId,
+          status: {
+            in: [
+              PublicationStatus.READY_FOR_REVIEW,
+              PublicationStatus.PUBLISHED,
+              PublicationStatus.UNPUBLISHED,
+            ],
+          },
+          generationJobId: { not: null },
+        },
+        select: { id: true, ownerId: true, generationJobId: true, status: true },
+      });
+      if (!publication?.generationJobId) return null;
+      const latest = await transaction.threadPublicationRevision.findFirst({
+        where: { publicationId },
+        orderBy: { revision: 'desc' },
+        select: { id: true, revision: true, reviewStatus: true, revalidationJobId: true },
+      });
+      if (!latest) return null;
+      if (
+        latest.reviewStatus === RevisionReviewStatus.PENDING &&
+        latest.revalidationJobId !== null
+      ) {
+        return {
+          id: latest.id,
+          revision: latest.revision,
+          generationJobId: publication.generationJobId,
+          revalidationJobId: latest.revalidationJobId,
+          reviewStatus: latest.reviewStatus,
+          safetyApproved: true,
+          safetyReasons: [],
+          requestMatches: false,
+          editInProgress: true,
+        };
+      }
+      if (publication.status !== PublicationStatus.PUBLISHED) {
+        await transaction.threadPublicationRevision.updateMany({
+          where: {
+            publicationId,
+            reviewStatus: RevisionReviewStatus.READY_FOR_REVIEW,
+          },
+          data: { reviewStatus: RevisionReviewStatus.STALE, indexEligible: false },
+        });
+      }
+      const content = { markdown: input.markdown, citations: input.citations };
+      const title = input.markdown.match(/^#\s+(.+)$/mu)?.[1]?.trim() ?? 'Untitled draft';
+      const revision = await transaction.threadPublicationRevision.create({
+        data: {
+          publicationId,
+          revision: latest.revision + 1,
+          title,
+          content,
+          contentHash: this.hashPublicationContent(content),
+          editIdempotencyKey: input.idempotencyKey,
+          editRequestHash: this.hashEditRequest(input),
+          reviewStatus: RevisionReviewStatus.PENDING,
+          safetyStatus: safety.approved
+            ? PublicationSafetyStatus.APPROVED
+            : PublicationSafetyStatus.REVIEW_REQUIRED,
+          safetyReasons: safety.reasons,
+          indexEligible: false,
+        },
+        select: {
+          id: true,
+          revision: true,
+          reviewStatus: true,
+          safetyStatus: true,
+          safetyReasons: true,
+        },
+      });
+      return {
+        id: revision.id,
+        revision: revision.revision,
+        generationJobId: publication.generationJobId,
+        revalidationJobId: null,
+        reviewStatus: revision.reviewStatus,
+        safetyApproved: revision.safetyStatus === PublicationSafetyStatus.APPROVED,
+        safetyReasons: z.array(z.string()).catch([]).parse(revision.safetyReasons),
+        requestMatches: true,
+        editInProgress: false,
+      };
+    });
+  }
+
+  async attachRevalidationJob(
+    publicationId: string,
+    ownerId: string,
+    revisionId: string,
+    revalidationJobId: string,
+  ): Promise<boolean> {
+    const attached = await this.prisma.threadPublicationRevision.updateMany({
+      where: {
+        id: revisionId,
+        publicationId,
+        reviewStatus: RevisionReviewStatus.PENDING,
+        revalidationJobId: null,
+        publication: { ownerId },
+      },
+      data: { revalidationJobId },
+    });
+    if (attached.count === 1) return true;
+    const current = await this.prisma.threadPublicationRevision.findFirst({
+      where: { id: revisionId, publicationId, publication: { ownerId } },
+      select: { revalidationJobId: true },
+    });
+    return current?.revalidationJobId === revalidationJobId;
+  }
+
+  async findOwnedRevisionReview(
+    publicationId: string,
+    revisionId: string,
+    ownerId: string,
+  ): Promise<OwnedRevisionReviewRecord | null> {
+    const revision = await this.prisma.threadPublicationRevision.findFirst({
+      where: { id: revisionId, publicationId, publication: { ownerId } },
+      select: {
+        contentHash: true,
+        reviewStatus: true,
+        safetyStatus: true,
+        safetyReasons: true,
+        revalidationJobId: true,
+      },
+    });
+    return revision
+      ? {
+          ...revision,
+          safetyApproved: revision.safetyStatus === PublicationSafetyStatus.APPROVED,
+          safetyReasons: z.array(z.string()).catch([]).parse(revision.safetyReasons),
+        }
+      : null;
+  }
+
+  async completeRevisionReview(
+    publicationId: string,
+    ownerId: string,
+    revisionId: string,
+    result: {
+      contentHash: string;
+      ready: boolean;
+      judgeScore: number | null;
+      criticScore: number | null;
+    },
+  ): Promise<void> {
+    await this.prisma.$transaction(async (transaction) => {
+      const updated = await transaction.threadPublicationRevision.updateMany({
+        where: {
+          id: revisionId,
+          publicationId,
+          contentHash: result.contentHash,
+          reviewStatus: RevisionReviewStatus.PENDING,
+          publication: { ownerId },
+        },
+        data: {
+          reviewStatus: result.ready
+            ? RevisionReviewStatus.READY_FOR_REVIEW
+            : RevisionReviewStatus.STALE,
+          judgeScore: result.judgeScore,
+          criticScore: result.criticScore,
+          validatedAt: new Date(),
+          safetyStatus: PublicationSafetyStatus.APPROVED,
+          indexEligible: result.ready,
+        },
+      });
+      if (updated.count === 1 && result.ready) {
+        await transaction.threadPublication.updateMany({
+          where: {
+            id: publicationId,
+            ownerId,
+            status: PublicationStatus.READY_FOR_REVIEW,
+          },
+          data: { status: PublicationStatus.READY_FOR_REVIEW },
+        });
+      }
     });
   }
 
@@ -260,5 +502,32 @@ export class PublicationsRepository {
           markdown: content.data.markdown,
           citations: content.data.citations,
         };
+  }
+
+  private hashPublicationContent(content: {
+    markdown: string;
+    citations: Array<{ evidenceId: string; url: string }>;
+  }): string {
+    return createHash('sha256')
+      .update(
+        JSON.stringify({
+          markdown: content.markdown,
+          citations: content.citations.map(({ evidenceId, url }) => ({ evidenceId, url })),
+        }),
+      )
+      .digest('hex');
+  }
+
+  private hashEditRequest(input: EditPublicationRevisionDto): string {
+    return createHash('sha256')
+      .update(
+        JSON.stringify({
+          markdown: input.markdown,
+          citations: input.citations.map(({ evidenceId, url }) => ({ evidenceId, url })),
+          capMicroUsd: input.capMicroUsd,
+          correlationId: input.correlationId,
+        }),
+      )
+      .digest('hex');
   }
 }

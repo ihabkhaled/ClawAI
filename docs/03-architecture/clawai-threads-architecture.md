@@ -31,7 +31,12 @@ revision. Generation state and draft content never cross to public reads. A
 bounded secret/PII scan gates review readiness; only owner-approved, safety-
 approved, index-eligible revisions resolve publicly. The response omits owner
 IDs, evidence IDs, and internal scores. Owners can unpublish and export JSON or
-Markdown. Text edits and review revalidation remain unfinished.
+Markdown. An owner edit creates an immutable private revision and a durable
+generation job with a fresh cap and idempotency key. The job reuses the parent's
+pinned source snapshot and research evidence, then obtains fresh author
+consensus and Judge/Critic review for the exact edit. Only hash-matched passing
+review can transition the candidate to owner approval; the current public
+revision remains active until approval.
 
 Generation obtains source through Chat's service-token-protected
 `POST /api/v1/internal/thread-snapshots/:threadId` endpoint. Chat checks

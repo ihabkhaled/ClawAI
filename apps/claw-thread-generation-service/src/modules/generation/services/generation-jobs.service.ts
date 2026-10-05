@@ -7,6 +7,8 @@ import {
   type OnModuleDestroy,
   type OnModuleInit,
 } from '@nestjs/common';
+import { createHash } from 'node:crypto';
+import type { ThreadGenerationJob } from '../../../generated/prisma';
 import { EventPattern, type ThreadGenerationRequestedPayload } from '@claw/shared-types';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { z } from 'zod';
@@ -15,10 +17,19 @@ import { ChatSnapshotClient } from '../../source-snapshots/chat-snapshot.client'
 import { GenerationPipelineManager } from '../managers/generation-pipeline.manager';
 import { GenerationJobsRepository } from '../repositories/generation-jobs.repository';
 import { type EnqueueGenerationDto, enqueueGenerationSchema } from '../dto/enqueue-generation.dto';
+import {
+  type EnqueueRevisionReviewDto,
+  type RevisionReviewJobRequest,
+  revisionReviewJobRequestSchema,
+} from '../dto/enqueue-revision-review.dto';
 import { ThreadBudgetClient } from './thread-budget.client';
 import { ThreadGenerationCancelledError } from '../utilities/thread-generation-cancelled.error';
 import { ThreadGenerationLeaseLostError } from '../utilities/thread-generation-lease-lost.error';
-import type { PrivateGenerationState } from '../types/generation-pipeline.types';
+import type {
+  GenerationPipelineResult,
+  PrivateGenerationState,
+} from '../types/generation-pipeline.types';
+import { stableJson } from '../utilities/stable-json.utility';
 
 import {
   GENERATION_HEARTBEAT_MS,
@@ -97,6 +108,51 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     return { jobId: job.id, status: job.status };
   }
 
+  async enqueueRevisionReview(
+    input: EnqueueRevisionReviewDto,
+  ): Promise<{ jobId: string; status: string }> {
+    const existing = await this.repository.findRevisionReviewByIdempotencyKey(input);
+    if (existing) {
+      if (existing.result === GenerationJobStorageResult.CONFLICT) {
+        throw new ConflictException('Idempotency key was already used for a different edit review');
+      }
+      if (existing.job.status === 'QUEUED') {
+        await this.dispatchJob(existing.job.id, existing.job.correlationId);
+      }
+      return { jobId: existing.job.id, status: existing.job.status };
+    }
+
+    const parent = await this.repository.findRevisionParent(input.parentJobId, input.ownerId);
+    const parentRequest = parent ? enqueueGenerationSchema.safeParse(parent.request) : null;
+    if (
+      !parent ||
+      !parentRequest?.success ||
+      !parent.evidenceBundle ||
+      !parent.evidenceBundleHash
+    ) {
+      throw new NotFoundException('Parent generation review not found');
+    }
+
+    const budget = await this.budgets.reserve(
+      input.ownerId,
+      input.idempotencyKey,
+      Number(input.spendCapMicroUsd),
+    );
+    const stored = await this.repository.createRevisionReviewQueued(input, budget.id);
+    switch (stored.result) {
+      case GenerationJobStorageResult.CONFLICT:
+        throw new ConflictException('Idempotency key was already used for a different edit review');
+      case GenerationJobStorageResult.STORAGE_ERROR:
+        await this.budgets.close(budget.id, GenerationBudgetCloseStatus.RELEASED);
+        throw new InternalServerErrorException('Revision review job could not be stored');
+      case GenerationJobStorageResult.SUCCESS:
+        break;
+    }
+    const job = stored.job;
+    if (job.status === 'QUEUED') await this.dispatchJob(job.id, job.correlationId);
+    return { jobId: job.id, status: job.status };
+  }
+
   async cancel(jobId: string): Promise<{ jobId: string; status: string }> {
     const result = await this.repository.requestCancellation(jobId);
     if (!result) return { jobId, status: 'NOT_FOUND' };
@@ -117,6 +173,14 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
             citations: z.array(z.object({ evidenceId: z.string(), url: z.string().url() })),
             judge: z.object({ score: z.number().int().min(0).max(100) }),
             critic: z.object({ score: z.number().int().min(0).max(100) }),
+            review: z
+              .object({
+                draftHash: z.string().length(64),
+                authorConsensus: z.boolean(),
+                ready: z.boolean(),
+                reasons: z.array(z.string()),
+              })
+              .optional(),
           })
           .safeParse(revision.content)
       : undefined;
@@ -129,6 +193,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       stage: job.stage,
       round: job.round,
       safeErrorCode: job.safeErrorCode,
+      review: parsed?.success ? (parsed.data.review ?? null) : null,
       draft: parsed?.success
         ? {
             markdown: parsed.data.markdown,
@@ -150,7 +215,10 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     const event = generationEventSchema.parse(raw);
     const job = await this.repository.claim(event.jobId, GENERATION_WORKER_ID);
     if (!job) return;
-    const request = enqueueGenerationSchema.parse(job.request);
+    const revisionReview = revisionReviewJobRequestSchema.safeParse(job.request);
+    const request = revisionReview.success
+      ? revisionReview.data
+      : enqueueGenerationSchema.parse(job.request);
     let leaseLost = false;
     let heartbeatRunning = false;
     const heartbeat = setInterval(() => {
@@ -170,22 +238,8 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     }, GENERATION_HEARTBEAT_MS);
     heartbeat.unref();
     try {
-      const source = z.record(z.string(), z.unknown()).parse(job.sourceSnapshot);
-      const result = await this.pipeline.generate({
-        jobId: job.id,
-        ownerId: job.ownerId,
-        budgetId: job.budgetId,
-        attempt: job.attemptCount,
-        correlationId: event.correlationId,
-        topic: request.topic,
-        publicationType: request.publicationType,
-        sourceSnapshot: source,
-        authors: request.authors,
-        judge: request.judge,
-        critic: request.critic,
-        isCancellationRequested: async () =>
-          leaseLost || (await this.repository.isCancellationRequested(job.id)),
-      });
+      const requestData = revisionReview.success ? revisionReview.data : request;
+      const result = await this.runPipeline(job, event, requestData, () => leaseLost);
       if (leaseLost) return;
       if (await this.repository.isCancellationRequested(job.id)) {
         throw new ThreadGenerationCancelledError();
@@ -277,5 +331,59 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     } catch {
       this.logger.error(`Generation budget close failed (${status})`);
     }
+  }
+
+  private async runPipeline(
+    job: ThreadGenerationJob,
+    event: z.infer<typeof generationEventSchema>,
+    request: EnqueueGenerationDto | RevisionReviewJobRequest,
+    isLeaseLost: () => boolean,
+  ): Promise<GenerationPipelineResult> {
+    const source = z.record(z.string(), z.unknown()).parse(job.sourceSnapshot);
+    const pipelineInput = {
+      jobId: job.id,
+      ownerId: job.ownerId,
+      budgetId: job.budgetId,
+      attempt: job.attemptCount,
+      correlationId: event.correlationId,
+      sourceSnapshot: source,
+      authors: request.authors,
+      judge: request.judge,
+      critic: request.critic,
+      isCancellationRequested: async () =>
+        isLeaseLost() || (await this.repository.isCancellationRequested(job.id)),
+    };
+    if ('kind' in request) {
+      const evidence = z.record(z.string(), z.unknown()).safeParse(job.evidenceBundle);
+      if (
+        !evidence.success ||
+        !job.evidenceBundleHash ||
+        (this.hash(JSON.stringify(evidence.data)) !== job.evidenceBundleHash &&
+          this.hash(stableJson(evidence.data)) !== job.evidenceBundleHash)
+      ) {
+        throw new InternalServerErrorException(
+          'Saved research evidence failed integrity validation',
+        );
+      }
+      return this.pipeline.reviewRevision(
+        {
+          ...pipelineInput,
+          topic: request.topic,
+          publicationType: request.publicationType,
+        },
+        request.draft,
+        evidence.data,
+        job.evidenceBundleHash,
+      );
+    }
+    return this.pipeline.generate({
+      ...pipelineInput,
+      topic: request.topic,
+      publicationType: request.publicationType,
+    });
+  }
+
+  private hash(value: string): string {
+    return createHash('sha256').update(value).digest('hex');
   }
 }

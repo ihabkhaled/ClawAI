@@ -63,5 +63,8 @@ then reserves the existing Auth entitlement budget before idempotent job
 persistence. Threads links that job to a private publication and exposes
 owner-checked status/cancellation. It copies a ready result into a private
 revision. Passing Judge/Critic thresholds and the safety scan makes it eligible
-for owner approval; this is not automatic publication. Owner edits/revalidation,
-community controls, and discovery integration remain unfinished.
+for owner approval; this is not automatic publication. Owners can create
+immutable text edits with a fresh spend cap and idempotency key. Generation
+revalidates the exact content against the parent's pinned source and evidence;
+the current public version stays live until the owner approves the passing edit.
+Community controls and discovery integration remain unfinished.

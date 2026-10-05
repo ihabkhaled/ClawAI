@@ -60,6 +60,12 @@ community, internationalization, and discovery paths.
 The publication service owns an isolated PostgreSQL database and an atomic
 owner-approval transition. Generation-result handoff stores output as a private
 revision; automated review thresholds and safety checks make it eligible for
-owner approval. Owner text edits with revalidation, community features,
-internationalization, and public discovery integration remain unfinished.
+owner approval. Owners can submit immutable edited revisions with a fresh
+user-selected cap and idempotency key. Generation rechecks the exact text and
+citation URLs against the parent's pinned source and evidence, using fresh
+author consensus plus Judge/Critic thresholds. A revision becomes eligible
+only after its exact content hash matches the completed review and the owner
+approves it. The previously approved revision remains public until then.
+Community features, internationalization, and public discovery integration
+remain unfinished.
 Generation intent or a private draft alone does not make content public.

@@ -60,6 +60,9 @@ export type GenerationPipelineResult = {
   authorDrafts: AuthorDraft[];
   judgeReview: StructuredReview;
   criticReview: StructuredReview;
+  authorConsensus: boolean;
+  reviewReady: boolean;
+  reviewReasons: string[];
 };
 
 export type PrivateGenerationState = {
@@ -68,6 +71,12 @@ export type PrivateGenerationState = {
   stage: string;
   round: number;
   safeErrorCode: string | null;
+  review: {
+    draftHash: string;
+    authorConsensus: boolean;
+    ready: boolean;
+    reasons: string[];
+  } | null;
   draft: {
     markdown: string;
     citations: AuthorDraft['citations'];
