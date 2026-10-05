@@ -643,3 +643,17 @@ than quietly showing an older run.
 - `GET /auth/me/organizations/:id/usage`: per-member and per-model totals for
   an org owner/admin. Membership comes from agent-service's internal
   usage-scope route (`AGENT_SERVICE_URL`), never from its database.
+
+## Admin usage analytics (2026-10-05)
+
+`modules/admin-statistics/` also serves per-user model/tool/credit-connector
+breakdowns (`GET /admin/users/:userId/usage-breakdown`) and the platform-wide
+Observability view (`GET /admin/usage-analytics`). Audit result: the per-request
+owner is `weighted_usage_records` (provider, model, workflow, input/output tokens,
+`tool_call_count`, `is_payg`, `is_free_allowance`, wallet micro-USD, actual/estimated
+cost); gated tools live in `feature_usage_records`; the free-request counter in
+`credit_free_allowance_usage` (one `*` row per user and month). No new data is
+stored; migration `20261005090000` adds indexes only. Range cap 90 days, hourly up
+to 7 days, daily beyond, `limit` max 50. Missing dimension: per-tool names for
+in-turn tool calls (only a count) and image generation as a named tool; the
+`workflow` column is the closest proxy.

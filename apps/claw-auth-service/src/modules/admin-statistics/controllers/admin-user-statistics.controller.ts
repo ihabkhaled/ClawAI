@@ -1,6 +1,7 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import {
   type AdminUserPlanOverview,
+  type AdminUserUsageBreakdown,
   type AdminUserUsageStatistics,
   Permission,
 } from '@claw/shared-types';
@@ -13,6 +14,11 @@ import {
   type AdminUserStatisticsParamDto,
   adminUserStatisticsParamSchema,
 } from '../dto/admin-user-statistics.dto';
+import {
+  type AdminUsageRangeQueryDto,
+  adminUsageRangeQuerySchema,
+} from '../dto/admin-usage-analytics.dto';
+import { AdminUsageAnalyticsService } from '../services/admin-usage-analytics.service';
 import { AdminUserPlanService } from '../services/admin-user-plan.service';
 import { AdminUserStatisticsService } from '../services/admin-user-statistics.service';
 
@@ -36,6 +42,7 @@ export class AdminUserStatisticsController {
   constructor(
     private readonly statistics: AdminUserStatisticsService,
     private readonly plans: AdminUserPlanService,
+    private readonly analytics: AdminUsageAnalyticsService,
   ) {}
 
   @Get(':userId/usage-statistics')
@@ -44,6 +51,21 @@ export class AdminUserStatisticsController {
     params: AdminUserStatisticsParamDto,
   ): Promise<AdminUserUsageStatistics> {
     return this.statistics.getUsageForUser(params.userId);
+  }
+
+  /**
+   * Which models, connectors and tools one user used, and how much of the free
+   * credit-connector allowance is spent. Bounded: range capped at 90 days,
+   * hourly/daily by span, model list capped. Same permission as the sibling.
+   */
+  @Get(':userId/usage-breakdown')
+  async getUsageBreakdown(
+    @Param(new ZodValidationPipe(adminUserStatisticsParamSchema))
+    params: AdminUserStatisticsParamDto,
+    @Query(new ZodValidationPipe(adminUsageRangeQuerySchema))
+    query: AdminUsageRangeQueryDto,
+  ): Promise<AdminUserUsageBreakdown> {
+    return this.analytics.getUserBreakdown(params.userId, query);
   }
 
   // Overrides the controller's ADMIN_USAGE_VIEW (RolesGuard resolves permissions

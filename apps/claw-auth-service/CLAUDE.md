@@ -145,6 +145,23 @@ together, and neither module owns the pair.
   ISO week and calendar month, plus settled credit spend per month.
 - `GET /api/v1/admin/users/:userId/plan-overview` → plan, entitlement grant and
   free-trial standing.
+- `GET /api/v1/admin/users/:userId/usage-breakdown?hours|from&to` → models
+  (provider/connector, requests, input/output tokens, micro-USD cost), gated tools
+  (`feature_usage_records`, CONSUMED), workflows, credit-connector use and the
+  free allowance (`limit`/`used`/`remaining`, `null` = unlimited, `0` = disabled).
+- `GET /api/v1/admin/usage-analytics?hours|from&to&userId&limit` → platform-wide
+  totals, `today` (UTC), hourly/daily series, models, top users (masked email),
+  tools, workflows. Both are `ADMIN_USAGE_VIEW`, admin-only.
+
+Usage analytics rules (2026-10-05): everything aggregates EXISTING rows
+(`weighted_usage_records`, `feature_usage_records`, `credit_free_allowance_usage`);
+nothing new is stored except three indexes. Range hard cap 90 days (rejected, not
+clamped), hourly grain up to 7 days else daily, every GROUP BY has a LIMIT (max
+50). RELEASED rows are excluded; cost is `COALESCE(actual, estimated)` in integer
+micro-USD, shipped as a string. Known gap: tools are counted only for
+`PlanFeatureKey` features (web search/fetch/extract, file generation, compare...);
+image and other in-turn tool calls appear only as `toolCallCount` and by
+`workflow`, never named per tool.
 
 Three things here are easy to get wrong:
 

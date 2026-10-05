@@ -80,6 +80,8 @@ import { CreditWalletService } from './services/credit-wallet.service';
     CreditWalletService,
     CreditGrantService,
     CreditLedgerRepository,
+    CreditFreeAllowanceService,
+    CreditFreeAllowanceRepository,
   ],
 })
 export class CreditModule {}

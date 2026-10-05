@@ -3,7 +3,10 @@ import { Module } from '@nestjs/common';
 import { CreditModule } from '../credit/credit.module';
 import { PlansModule } from '../plans/plans.module';
 import { QuotaModule } from '../quota/quota.module';
+import { AdminUsageAnalyticsController } from './controllers/admin-usage-analytics.controller';
 import { AdminUserStatisticsController } from './controllers/admin-user-statistics.controller';
+import { AdminUsageAnalyticsRepository } from './repositories/admin-usage-analytics.repository';
+import { AdminUsageAnalyticsService } from './services/admin-usage-analytics.service';
 import { AdminUserPlanService } from './services/admin-user-plan.service';
 import { AdminUserStatisticsService } from './services/admin-user-statistics.service';
 
@@ -18,7 +21,12 @@ import { AdminUserStatisticsService } from './services/admin-user-statistics.ser
  */
 @Module({
   imports: [QuotaModule, CreditModule, PlansModule],
-  controllers: [AdminUserStatisticsController],
-  providers: [AdminUserStatisticsService, AdminUserPlanService],
+  controllers: [AdminUserStatisticsController, AdminUsageAnalyticsController],
+  providers: [
+    AdminUserStatisticsService,
+    AdminUserPlanService,
+    AdminUsageAnalyticsService,
+    AdminUsageAnalyticsRepository,
+  ],
 })
 export class AdminStatisticsModule {}

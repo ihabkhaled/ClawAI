@@ -927,7 +927,17 @@
       },
       {
         "method": "GET",
+        "route": "/admin/usage-analytics",
+        "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-usage-analytics.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/admin/users/:userId/plan-overview",
+        "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-user-statistics.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/users/:userId/usage-breakdown",
         "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-user-statistics.controller.ts"
       },
       {
@@ -4097,5 +4107,5 @@
     ]
   },
   "generated": true,
-  "total": 811
+  "total": 813
 }

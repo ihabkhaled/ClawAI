@@ -694,6 +694,8 @@ model FeatureUsageRecord {
   // reservation instead of burning a second trial.
   @@unique([userId, feature, requestId])
   @@index([userId, feature, periodKey, state])
+  // Admin analytics: tools delivered in a time window.
+  @@index([state, consumedAt])
   @@map("feature_usage_records")
 }
 
@@ -794,6 +796,11 @@ model WeightedUsageRecord {
   @@index([userId, monthKey])
   @@index([state, createdAt])
   @@index([requestId])
+  // Admin analytics: a per-user arbitrary window (hours, custom range) and an
+  // all-users window both filter on created_at, which the day/week/month key
+  // indexes above cannot serve.
+  @@index([userId, createdAt])
+  @@index([createdAt])
   @@map("weighted_usage_records")
 }
 

@@ -100,6 +100,8 @@ statistics panels it opens are **not**:
 | Endpoint                                               | Service | Permission           |
 | ------------------------------------------------------ | ------- | -------------------- |
 | `GET /api/v1/admin/users/:userId/usage-statistics`     | auth    | `ADMIN_USAGE_VIEW`   |
+| `GET /api/v1/admin/users/:userId/usage-breakdown`      | auth    | `ADMIN_USAGE_VIEW`   |
+| `GET /api/v1/admin/usage-analytics`                    | auth    | `ADMIN_USAGE_VIEW`   |
 | `GET /api/v1/admin/users/:userId/plan-overview`        | auth    | `ADMIN_PLANS_MANAGE` |
 | `GET /api/v1/admin/billing/users/:userId/subscription` | payment | `ADMIN_PLANS_MANAGE` |
 

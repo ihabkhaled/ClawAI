@@ -982,7 +982,17 @@
         },
         {
           "method": "GET",
+          "route": "/admin/usage-analytics",
+          "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-usage-analytics.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/admin/users/:userId/plan-overview",
+          "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-user-statistics.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/users/:userId/usage-breakdown",
           "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-user-statistics.controller.ts"
         },
         {
@@ -11123,7 +11133,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 146
+        "testFiles": 151
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -11978,7 +11988,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 56,
-    "endpointCount": 811,
+    "endpointCount": 813,
     "envVarCount": 375,
     "eventCount": 186,
     "frontendRouteCount": 156,
@@ -11990,7 +12000,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2068,
+    "totalTestFiles": 2073,
     "workspaceCount": 27
   }
 }

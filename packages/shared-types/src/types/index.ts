@@ -42,6 +42,19 @@ export type {
   AdminUserUsageStatistics,
 } from './admin-user-usage.type';
 export type {
+  AdminCreditConnectorUsage,
+  AdminFreeAllowanceUsage,
+  AdminUsageAnalytics,
+  AdminUsageBucketGrain,
+  AdminUsageModelLine,
+  AdminUsageSeriesPoint,
+  AdminUsageToolLine,
+  AdminUsageTotals,
+  AdminUsageUserLine,
+  AdminUsageWorkflowLine,
+  AdminUserUsageBreakdown,
+} from './admin-usage-analytics.type';
+export type {
   AdminUserInvoiceEntry,
   AdminUserPaidTotal,
   AdminUserSubscriptionHistoryEntry,
