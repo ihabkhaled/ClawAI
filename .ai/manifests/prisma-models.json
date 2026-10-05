@@ -196,6 +196,10 @@
     ],
     "claw-threads-service": [
       "ThreadPublication",
+      "ThreadPublicationChangeRequest",
+      "ThreadPublicationComment",
+      "ThreadPublicationReaction",
+      "ThreadPublicationReport",
       "ThreadPublicationRevision"
     ],
     "claw-workspace-service": [

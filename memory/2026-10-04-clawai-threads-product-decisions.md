@@ -18,3 +18,8 @@ Owner decisions recorded 2026-10-04; canonical product details live in
   fresh owner-selected cap and durable Generation-service revalidation against
   the original pinned source and evidence. The old approved revision stays
   public until explicit owner approval of the hash-matched replacement.
+- Community contribution behavior is now implemented in the Threads backend:
+  authenticated comments, per-user reactions, change requests, and reports;
+  report moderation uses `THREAD_PUBLICATIONS_MODERATE`. Account-deletion
+  propagation is still pending, so the anonymous-retention decision is not yet
+  delivered end to end.

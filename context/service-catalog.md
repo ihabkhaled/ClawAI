@@ -155,11 +155,11 @@ research, and workspace add `@claw/shared-auth`. All 17 non-health services publ
 - **Calls:** auth internal plan/entitlement and provider-cost contracts; auth consumes payment events to project subscription state and revoke entitlements.
 - **Pitfalls:** keep money in integer minor units or microUSD, keep `/internal/*` off nginx, use owner-token locks for scheduled jobs, and treat prices, refunds, and invoice snapshots as immutable records.
 
-## claw-threads-service — :4019 · health-only foundation
+## claw-threads-service — :4019 · publication and community API
 
-- **Path:** `apps/claw-threads-service` · **Gateway:** `/api/v1/thread-publications` (feature API is not enabled yet)
-- **Owns:** no domain data in the foundation batch.
-- **Responsibility:** planned owner-approved publications and community actions; see [Threads architecture](../docs/03-architecture/clawai-threads-architecture.md).
+- **Path:** `apps/claw-threads-service` · **Gateway:** `/api/v1/thread-publications`
+- **Owns:** `claw_threads` PostgreSQL; publications, immutable revisions, comments, reactions, change requests, and reports.
+- **Responsibility:** owner publication lifecycle and authenticated community actions; report moderation requires `THREAD_PUBLICATIONS_MODERATE`. Account deletion cleanup and community UI remain pending; see [Threads architecture](../docs/03-architecture/clawai-threads-architecture.md).
 
 ## claw-thread-generation-service — :4020 · isolated generation pipeline
 

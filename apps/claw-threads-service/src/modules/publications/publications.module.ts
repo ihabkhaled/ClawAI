@@ -7,6 +7,9 @@ import { PublicationLifecycleService } from './services/publication-lifecycle.se
 import { ThreadsGenerationClient } from './services/threads-generation.client';
 import { PublicationGenerationController } from './controllers/publication-generation.controller';
 import { PublicationPublicController } from './controllers/publication-public.controller';
+import { PublicationCommunityController } from './controllers/publication-community.controller';
+import { PublicationModerationController } from './controllers/publication-moderation.controller';
+import { PublicationCommunityService } from './services/publication-community.service';
 
 @Module({
   imports: [PrismaModule],
@@ -14,7 +17,14 @@ import { PublicationPublicController } from './controllers/publication-public.co
     PublicationOwnerController,
     PublicationGenerationController,
     PublicationPublicController,
+    PublicationCommunityController,
+    PublicationModerationController,
   ],
-  providers: [PublicationLifecycleService, PublicationsRepository, ThreadsGenerationClient],
+  providers: [
+    PublicationLifecycleService,
+    PublicationCommunityService,
+    PublicationsRepository,
+    ThreadsGenerationClient,
+  ],
 })
 export class PublicationsModule {}

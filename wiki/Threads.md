@@ -67,4 +67,9 @@ for owner approval; this is not automatic publication. Owners can create
 immutable text edits with a fresh spend cap and idempotency key. Generation
 revalidates the exact content against the parent's pinned source and evidence;
 the current public version stays live until the owner approves the passing edit.
-Community controls and discovery integration remain unfinished.
+Authenticated readers can comment, react, request changes, and report content.
+Public comment responses omit author IDs. Owners can accept a change request by
+creating a newly capped immutable revision that goes through the usual fresh
+review and owner-approval flow. Moderation endpoints require
+`THREAD_PUBLICATIONS_MODERATE`. Account deletion processing, UI, and discovery
+integration remain unfinished.

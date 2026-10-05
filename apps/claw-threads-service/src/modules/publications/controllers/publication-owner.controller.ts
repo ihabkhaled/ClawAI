@@ -9,10 +9,18 @@ import {
 } from '../dto/edit-publication-revision.dto';
 import type { PublishedPublication } from '../types/publication.types';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
+import {
+  type ResolvePublicationChangeRequestDto,
+  resolvePublicationChangeRequestSchema,
+} from '../dto/resolve-publication-change-request.dto';
+import { PublicationCommunityService } from '../services/publication-community.service';
 
 @Controller('thread-publications/:publicationId')
 export class PublicationOwnerController {
-  constructor(private readonly lifecycle: PublicationLifecycleService) {}
+  constructor(
+    private readonly lifecycle: PublicationLifecycleService,
+    private readonly community: PublicationCommunityService,
+  ) {}
 
   @Post('publish')
   approveAndPublish(
@@ -71,5 +79,24 @@ export class PublicationOwnerController {
     @Query('format') format: string | undefined,
   ): ReturnType<PublicationLifecycleService['export']> {
     return this.lifecycle.export(publicationId, user.id, format);
+  }
+
+  @Get('change-requests')
+  listChangeRequests(
+    @Param('publicationId') publicationId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): ReturnType<PublicationCommunityService['listOwnerChangeRequests']> {
+    return this.community.listOwnerChangeRequests(publicationId, user.id);
+  }
+
+  @Post('change-requests/:requestId')
+  resolveChangeRequest(
+    @Param('publicationId') publicationId: string,
+    @Param('requestId') requestId: string,
+    @Body(new ZodValidationPipe(resolvePublicationChangeRequestSchema))
+    body: ResolvePublicationChangeRequestDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): ReturnType<PublicationCommunityService['resolveOwnerChangeRequest']> {
+    return this.community.resolveOwnerChangeRequest(publicationId, user.id, requestId, body);
   }
 }

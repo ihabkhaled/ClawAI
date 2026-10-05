@@ -28,6 +28,10 @@ migrations.
 - `GET /api/v1/thread-publications/public/:slug` is unauthenticated but resolves only published, owner-approved, safety-approved, index-eligible content; it returns citation URLs, not evidence IDs.
 - `POST /api/v1/thread-publications/:publicationId/unpublish` requires owner identity and removes the record from public resolution.
 - `GET /api/v1/thread-publications/:publicationId/export?format=json|markdown` requires owner identity and exports article content and citation URLs.
+- `GET/POST /api/v1/thread-publications/public/:slug/comments` lists visible comments publicly and accepts authenticated comments.
+- `GET/POST/DELETE /api/v1/thread-publications/public/:slug/reactions` reads counts publicly and lets authenticated readers set or remove their own reaction.
+- `POST /api/v1/thread-publications/public/:slug/change-requests` and `/reports` accept authenticated suggestions and reports; owners resolve requests through the publication owner route, with acceptance creating a capped revision for review.
+- `/api/v1/thread-publications-moderation/reports` requires `THREAD_PUBLICATIONS_MODERATE`; resolving a report can hide its comment.
 - Secret/PII matches store machine-readable reason codes without matched text and keep the revision pending.
 - Threads validates `THREAD_GENERATION_SERVICE_URL` and `INTER_SERVICE_AUTH_TOKEN`; generation validates `AUTH_SERVICE_URL` and the same token. These values already exist in `.env.example` and deployment configuration.
 

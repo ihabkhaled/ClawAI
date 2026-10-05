@@ -296,6 +296,10 @@
       "mongooseModels": [],
       "prismaModels": [
         "ThreadPublication",
+        "ThreadPublicationChangeRequest",
+        "ThreadPublicationComment",
+        "ThreadPublicationReaction",
+        "ThreadPublicationReport",
         "ThreadPublicationRevision"
       ],
       "service": "claw-threads-service"

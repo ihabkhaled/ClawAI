@@ -545,7 +545,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-threads-service",
-      "endpointCount": 10,
+      "endpointCount": 21,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -558,9 +558,13 @@
       "portSource": "shared-constants",
       "prismaModels": [
         "ThreadPublication",
+        "ThreadPublicationChangeRequest",
+        "ThreadPublicationComment",
+        "ThreadPublicationReaction",
+        "ThreadPublicationReport",
         "ThreadPublicationRevision"
       ],
-      "testFiles": 8,
+      "testFiles": 12,
       "testRunner": "vitest"
     },
     {

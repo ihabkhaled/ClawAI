@@ -107,3 +107,10 @@ service-token routes reserve the cap and each existing PAYG wallet hold; call
 settlement moves measured cost into the cap ledger. The cap adds no provider
 prices or wallet balance. Generation closes the budget only after all provider
 calls settle or release.
+
+Community comments, reactions, change requests, and reports are stored in the
+Threads database. Public comment responses omit author identifiers. Owner
+change acceptance creates an immutable revision through generation-service;
+moderation routes require `THREAD_PUBLICATIONS_MODERATE`. Account-deletion
+processing is a separate unfinished integration and must complete before the
+anonymous-retention policy is considered delivered.

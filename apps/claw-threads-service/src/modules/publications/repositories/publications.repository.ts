@@ -1,12 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
 import {
+  type Prisma,
+  PublicationCommentStatus,
+  PublicationReactionValue,
+  PublicationReportStatus,
   PublicationSafetyStatus,
   PublicationStatus,
   RevisionReviewStatus,
 } from '../../../generated/prisma';
 import { z } from 'zod';
 
+import { PublicationReportResolution } from '../../../common/enums/publication-report-resolution.enum';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import {
   MIN_PUBLICATION_CRITIC_SCORE,
@@ -21,6 +26,17 @@ import type {
 } from '../types/publication.types';
 import type { EditPublicationRevisionDto } from '../dto/edit-publication-revision.dto';
 import type { PublicationSafetyResult } from '../types/publication-safety.types';
+import type { CreatePublicationChangeRequestDto } from '../dto/create-publication-change-request.dto';
+import type { CreatePublicationCommentDto } from '../dto/create-publication-comment.dto';
+import type { CreatePublicationReportDto } from '../dto/create-publication-report.dto';
+import type { ResolvePublicationChangeRequestDto } from '../dto/resolve-publication-change-request.dto';
+import type { SetPublicationReactionDto } from '../dto/set-publication-reaction.dto';
+import type {
+  ModerationReportView,
+  PublicationChangeRequestView,
+  PublicationReactionSummary,
+  PublicPublicationComment,
+} from '../types/publication-community.types';
 import { evaluatePublicationSafety } from '../utilities/publication-safety.utility';
 
 @Injectable()
@@ -502,6 +518,309 @@ export class PublicationsRepository {
           markdown: content.data.markdown,
           citations: content.data.citations,
         };
+  }
+
+  async createPublicComment(
+    slug: string,
+    authorId: string,
+    input: CreatePublicationCommentDto,
+  ): Promise<PublicPublicationComment | null> {
+    return this.prisma.$transaction(async (transaction) => {
+      const publication = await transaction.threadPublication.findFirst({
+        where: this.publicPublicationWhere(slug),
+        select: { id: true },
+      });
+      if (!publication) return null;
+      return transaction.threadPublicationComment.create({
+        data: { publicationId: publication.id, authorId, content: input.content },
+        select: { id: true, content: true, createdAt: true },
+      });
+    });
+  }
+
+  async findPublicComments(slug: string): Promise<PublicPublicationComment[] | null> {
+    const publication = await this.prisma.threadPublication.findFirst({
+      where: this.publicPublicationWhere(slug),
+      select: { id: true },
+    });
+    if (!publication) return null;
+    const comments = await this.prisma.threadPublicationComment.findMany({
+      where: { publicationId: publication.id, status: PublicationCommentStatus.VISIBLE },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: { id: true, content: true, createdAt: true },
+    });
+    return comments.reverse();
+  }
+
+  async setPublicReaction(
+    slug: string,
+    userId: string,
+    input: SetPublicationReactionDto,
+  ): Promise<PublicationReactionSummary | null> {
+    return this.prisma.$transaction(async (transaction) => {
+      const publication = await transaction.threadPublication.findFirst({
+        where: this.publicPublicationWhere(slug),
+        select: { id: true },
+      });
+      if (!publication) return null;
+      const value = input.value as PublicationReactionValue;
+      await transaction.threadPublicationReaction.upsert({
+        where: { publicationId_userId: { publicationId: publication.id, userId } },
+        create: { publicationId: publication.id, userId, value },
+        update: { value },
+      });
+      const [likes, dislikes] = await Promise.all([
+        transaction.threadPublicationReaction.count({
+          where: { publicationId: publication.id, value: PublicationReactionValue.LIKE },
+        }),
+        transaction.threadPublicationReaction.count({
+          where: { publicationId: publication.id, value: PublicationReactionValue.DISLIKE },
+        }),
+      ]);
+      return { likes, dislikes, viewerReaction: input.value };
+    });
+  }
+
+  async removePublicReaction(
+    slug: string,
+    userId: string,
+  ): Promise<PublicationReactionSummary | null> {
+    return this.prisma.$transaction(async (transaction) => {
+      const publication = await transaction.threadPublication.findFirst({
+        where: this.publicPublicationWhere(slug),
+        select: { id: true },
+      });
+      if (!publication) return null;
+      await transaction.threadPublicationReaction.deleteMany({
+        where: { publicationId: publication.id, userId },
+      });
+      const [likes, dislikes] = await Promise.all([
+        transaction.threadPublicationReaction.count({
+          where: { publicationId: publication.id, value: PublicationReactionValue.LIKE },
+        }),
+        transaction.threadPublicationReaction.count({
+          where: { publicationId: publication.id, value: PublicationReactionValue.DISLIKE },
+        }),
+      ]);
+      return { likes, dislikes, viewerReaction: null };
+    });
+  }
+
+  async findPublicReactionSummary(
+    slug: string,
+    viewerId: string | undefined,
+  ): Promise<PublicationReactionSummary | null> {
+    const publication = await this.prisma.threadPublication.findFirst({
+      where: this.publicPublicationWhere(slug),
+      select: { id: true },
+    });
+    if (!publication) return null;
+    const [likes, dislikes, viewer] = await Promise.all([
+      this.prisma.threadPublicationReaction.count({
+        where: { publicationId: publication.id, value: PublicationReactionValue.LIKE },
+      }),
+      this.prisma.threadPublicationReaction.count({
+        where: { publicationId: publication.id, value: PublicationReactionValue.DISLIKE },
+      }),
+      viewerId
+        ? this.prisma.threadPublicationReaction.findUnique({
+            where: { publicationId_userId: { publicationId: publication.id, userId: viewerId } },
+            select: { value: true },
+          })
+        : null,
+    ]);
+    return { likes, dislikes, viewerReaction: viewer?.value ?? null };
+  }
+
+  async createPublicChangeRequest(
+    slug: string,
+    requesterId: string,
+    input: CreatePublicationChangeRequestDto,
+  ): Promise<PublicationChangeRequestView | null> {
+    return this.prisma.$transaction(async (transaction) => {
+      const publication = await transaction.threadPublication.findFirst({
+        where: this.publicPublicationWhere(slug),
+        select: { id: true },
+      });
+      if (!publication) return null;
+      return transaction.threadPublicationChangeRequest.create({
+        data: { publicationId: publication.id, requesterId, suggestion: input.suggestion },
+        select: {
+          id: true,
+          suggestion: true,
+          status: true,
+          ownerResponse: true,
+          acceptedRevisionId: true,
+          createdAt: true,
+        },
+      });
+    });
+  }
+
+  async findOwnedChangeRequests(
+    publicationId: string,
+    ownerId: string,
+  ): Promise<PublicationChangeRequestView[] | null> {
+    const publication = await this.prisma.threadPublication.findFirst({
+      where: { id: publicationId, ownerId },
+      select: { id: true },
+    });
+    if (!publication) return null;
+    return this.prisma.threadPublicationChangeRequest.findMany({
+      where: { publicationId },
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        suggestion: true,
+        status: true,
+        ownerResponse: true,
+        acceptedRevisionId: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  async findOwnedChangeRequest(
+    publicationId: string,
+    ownerId: string,
+    requestId: string,
+  ): Promise<PublicationChangeRequestView | null> {
+    return this.prisma.threadPublicationChangeRequest.findFirst({
+      where: { id: requestId, publicationId, publication: { ownerId } },
+      select: {
+        id: true,
+        suggestion: true,
+        status: true,
+        ownerResponse: true,
+        acceptedRevisionId: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  async resolveOwnedChangeRequest(
+    publicationId: string,
+    ownerId: string,
+    requestId: string,
+    input: ResolvePublicationChangeRequestDto,
+    acceptedRevisionId: string | null,
+  ): Promise<boolean> {
+    const result = await this.prisma.threadPublicationChangeRequest.updateMany({
+      where: {
+        id: requestId,
+        publicationId,
+        status: 'PENDING',
+        publication: { ownerId },
+      },
+      data: {
+        status: input.status,
+        ownerResponse: input.ownerResponse ?? null,
+        acceptedRevisionId,
+      },
+    });
+    return result.count === 1;
+  }
+
+  async createPublicReport(
+    slug: string,
+    reporterId: string,
+    input: CreatePublicationReportDto,
+  ): Promise<{ id: string; status: 'OPEN' } | null> {
+    return this.prisma.$transaction(async (transaction) => {
+      const publication = await transaction.threadPublication.findFirst({
+        where: this.publicPublicationWhere(slug),
+        select: { id: true },
+      });
+      if (!publication) return null;
+      if (input.commentId) {
+        const comment = await transaction.threadPublicationComment.findFirst({
+          where: {
+            id: input.commentId,
+            publicationId: publication.id,
+            status: PublicationCommentStatus.VISIBLE,
+          },
+          select: { id: true },
+        });
+        if (!comment) return null;
+      }
+      const report = await transaction.threadPublicationReport.create({
+        data: {
+          publicationId: publication.id,
+          commentId: input.commentId,
+          reporterId,
+          reason: input.reason,
+          details: input.details,
+        },
+        select: { id: true, status: true },
+      });
+      return { id: report.id, status: 'OPEN' as const };
+    });
+  }
+
+  async findOpenModerationReports(limit = 100): Promise<ModerationReportView[]> {
+    return this.prisma.threadPublicationReport.findMany({
+      where: { status: PublicationReportStatus.OPEN },
+      orderBy: { createdAt: 'asc' },
+      take: limit,
+      select: {
+        id: true,
+        publicationId: true,
+        commentId: true,
+        reason: true,
+        details: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  async resolveModerationReport(
+    reportId: string,
+    moderatorId: string,
+    status: PublicationReportResolution,
+    hideComment: boolean,
+  ): Promise<boolean> {
+    return this.prisma.$transaction(async (transaction) => {
+      const report = await transaction.threadPublicationReport.findFirst({
+        where: { id: reportId, status: PublicationReportStatus.OPEN },
+        select: { id: true, commentId: true },
+      });
+      if (!report) return false;
+      const updated = await transaction.threadPublicationReport.updateMany({
+        where: { id: reportId, status: PublicationReportStatus.OPEN },
+        data: {
+          status:
+            status === PublicationReportResolution.RESOLVED
+              ? PublicationReportStatus.RESOLVED
+              : PublicationReportStatus.DISMISSED,
+          moderatedBy: moderatorId,
+          moderatedAt: new Date(),
+        },
+      });
+      if (updated.count !== 1) return false;
+      if (hideComment && report.commentId) {
+        await transaction.threadPublicationComment.updateMany({
+          where: { id: report.commentId, status: PublicationCommentStatus.VISIBLE },
+          data: { status: PublicationCommentStatus.HIDDEN },
+        });
+      }
+      return true;
+    });
+  }
+
+  private publicPublicationWhere(slug: string): Prisma.ThreadPublicationWhereInput {
+    return {
+      slug,
+      status: PublicationStatus.PUBLISHED,
+      revisions: {
+        some: {
+          reviewStatus: RevisionReviewStatus.OWNER_APPROVED,
+          safetyStatus: PublicationSafetyStatus.APPROVED,
+          indexEligible: true,
+        },
+      },
+    };
   }
 
   private hashPublicationContent(content: {

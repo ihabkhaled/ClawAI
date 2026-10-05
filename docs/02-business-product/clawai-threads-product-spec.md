@@ -66,6 +66,12 @@ citation URLs against the parent's pinned source and evidence, using fresh
 author consensus plus Judge/Critic thresholds. A revision becomes eligible
 only after its exact content hash matches the completed review and the owner
 approves it. The previously approved revision remains public until then.
-Community features, internationalization, and public discovery integration
-remain unfinished.
+Authenticated readers can comment, react once per publication, request changes,
+and report publications or visible comments. Public comments omit reader identity.
+Owners resolve change requests; accepting one creates a fresh capped immutable
+revision and sends it through the existing paid review flow. The current approved
+revision stays public until the owner approves a passing replacement. Moderation
+report review requires `THREAD_PUBLICATIONS_MODERATE`; moderators can hide a
+reported comment. Account deletion processing and community UI remain unfinished.
+Internationalization and public discovery integration also remain unfinished.
 Generation intent or a private draft alone does not make content public.

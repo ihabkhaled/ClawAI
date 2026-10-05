@@ -170,4 +170,5 @@ Rules that hold the line (all in agent-service, all tested):
 
 Threads generation requires `THREAD_GENERATION_USE` and existing research,
 Judge, and Critic plan reservations. Publication read/create/update/publish are
-user permissions; moderation is admin-only.
+user permissions; report moderation requires `THREAD_PUBLICATIONS_MODERATE`.
+Authenticated public contributions do not require generation entitlement.

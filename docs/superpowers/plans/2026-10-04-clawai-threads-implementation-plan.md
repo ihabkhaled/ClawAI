@@ -1,4 +1,4 @@
-# ClawAI Threads Implementation Plan
+﻿# ClawAI Threads Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` to implement this plan task-by-task. Work serially on `main`, as requested by the owner; do not create a worktree.
 
@@ -16,7 +16,7 @@
 - Generation records public intent after a visible disclosure; drafts remain private until owner approval.
 - Keep approved publication revisions public after account deletion with anonymous attribution; erase private snapshots and generation artifacts, remove reactions, anonymize public comments, and delete pending private change requests.
 - Enforce the user-selected aggregate spend cap across every model call; use existing credits and entitlements and add no PAYG pricing.
-- Require 3–5 authors, exact-hash unanimous agreement, Judge score ≥80, Critic score ≥75, and no more than three rounds by default.
+- Require 3â€“5 authors, exact-hash unanimous agreement, Judge score â‰¥80, Critic score â‰¥75, and no more than three rounds by default.
 - Never silently truncate source/evidence context or expose hidden chain-of-thought, secrets, account identifiers, or private chat metadata.
 - Add no user-facing string without all 13 locales and RTL handling.
 - Every code batch carries its knowledge delta and one QA evidence record; every batch is committed and pushed normally before the next starts.
@@ -35,7 +35,7 @@
 
 Each batch is independently deployable and ends with one scoped validation pass, a valid QA record, one conventional commit, and an immediate push. Code stays disabled or internal-only until its required dependencies land. Wait for CI, release, and deployment results before beginning the next batch. Use a staged-tree gate receipt when its exact hash remains unchanged; normal hooks still run.
 
-### Batch 1 — Contracts, service skeletons, infra, and product knowledge
+### Batch 1 â€” Contracts, service skeletons, infra, and product knowledge
 
 **Outcome:** Both health-only service shells build and pass health checks; feature APIs, queues, and databases are not exposed yet. All required service, gateway, health, and CI discovery paths know about them.
 
@@ -63,9 +63,9 @@ Each batch is independently deployable and ends with one scoped validation pass,
 
 **Validation:** changed-file lint and the health/service specs for each new service; touched-service typecheck/build; validate compose/YAML/config; run `npm run knowledge:verify`, `npm run audit:check`, and the changed-workspace CI jobs. QA record: `docs/qa-evidence/2026-10-04-threads-service-foundation.md`.
 
-**Deployment repair — complete:** Two rollouts exposed the missing `wget` dependency and the HTTPS/HTTP mismatch from `/certs`. The final probe uses Node's built-in `node:https` client on loopback and disables certificate verification only for that request. The 4-case spec, changed-file ESLint, local TLS smoke probes (HTTP 200 on ports 4019 and 4020), dev/prod Compose config checks, knowledge/audit/QA checks passed. Full CI 37214571065 passed; release/deploy run 37215068639 deployed v1.175.2 and reported both services healthy. QA evidence and the Akinator trace record the result.
+**Deployment repair â€” complete:** Two rollouts exposed the missing `wget` dependency and the HTTPS/HTTP mismatch from `/certs`. The final probe uses Node's built-in `node:https` client on loopback and disables certificate verification only for that request. The 4-case spec, changed-file ESLint, local TLS smoke probes (HTTP 200 on ports 4019 and 4020), dev/prod Compose config checks, knowledge/audit/QA checks passed. Full CI 37214571065 passed; release/deploy run 37215068639 deployed v1.175.2 and reported both services healthy. QA evidence and the Akinator trace record the result.
 
-### Batch 2 — Immutable full-context source snapshots and exports
+### Batch 2 â€” Immutable full-context source snapshots and exports
 
 **Implementation status:** Code and targeted documentation are in place. Chat
 exposes an owner-scoped version-1 snapshot through a service-token-protected
@@ -92,7 +92,7 @@ ownership.
 
 **Validation:** changed snapshot/repository/controller/exporter specs only; changed-file lint; touched `claw-chat-service` and generation-service typecheck/build. Role-specific context fit is deferred with job execution, as no roles are wired in this batch. QA record `docs/qa-evidence/2026-10-04-threads-snapshots.md`.
 
-### Batch 3 — Entitlement, credit reservation, and aggregate job cap
+### Batch 3 â€” Entitlement, credit reservation, and aggregate job cap
 
 **Outcome:** Enqueue requires an eligible plan and explicit maximum spend; no job can exceed its selected aggregate ceiling, including retries and concurrent provider calls.
 
@@ -114,7 +114,7 @@ open; this batch does not enable the feature.
 
 **Validation:** changed credit/entitlement specs only; changed-file lint; touched shared packages/auth/generation typecheck/build; concurrency, duplicate idempotency, release/refund, plan-role matrix tests. QA record `docs/qa-evidence/2026-10-04-threads-job-budget.md`.
 
-### Batch 4 — Isolated generation worker and research/review pipeline (4a/4b)
+### Batch 4 â€” Isolated generation worker and research/review pipeline (4a/4b)
 
 **Outcome:** A durable job completes research, author drafting, exact-hash unanimous consensus, Judge, Critic, bounded revisions, and owner-review readiness without running inside chat-service. This work is split into two pushed commits so the persisted pipeline can land before worker-recovery safeguards.
 
@@ -125,7 +125,7 @@ open; this batch does not enable the feature.
 - Add dedicated RabbitMQ queues/routing keys and typed events under `packages/shared-types/`; persist state before acknowledging dispatch.
 - Add research-service client using existing internal HTTP/service-token patterns; store evidence URL/hash/version/role/correlation/budget metadata and pass the identical evidence bundle to every role.
 - Reuse existing connector model snapshots, entitlements, `ChatContextGatewayManager`/context-sizing utilities, and provider billing paths. Prove each complete role payload fits its actual model window including instructions and output reserve.
-- **4a (this commit):** Add 3–5 author roles, same-hash unanimous agreement, Judge ≥80, independent Critic ≥75, max three rounds, provider-diverse fallbacks, persisted checkpoints, cancellation, the existing shared RabbitMQ retry/DLQ behavior, and enqueue idempotency. The internal result remains private and has no publication handoff.
+- **4a (this commit):** Add 3â€“5 author roles, same-hash unanimous agreement, Judge â‰¥80, independent Critic â‰¥75, max three rounds, provider-diverse fallbacks, persisted checkpoints, cancellation, the existing shared RabbitMQ retry/DLQ behavior, and enqueue idempotency. The internal result remains private and has no publication handoff.
 - **4b (implemented locally; production rollout pending):** Add bounded job attempts, checkpoint-based resume, database-backed two-slot concurrency, periodic heartbeats, stale-worker recovery, FIFO dispatch with retry backoff, and idempotent budget closure. Focused tests cover slot contention, retry exhaustion, lease-expiry/heartbeat races, checkpoint resume, retry preserving the aggregate budget, and canonical evidence hashes. Live production migration remains subject to the repository's manual database-change procedure.
 - Store only structured concise findings; do not request or retain hidden chain-of-thought. No UI/public read path is enabled yet.
 
@@ -135,7 +135,7 @@ open; this batch does not enable the feature.
 
 **4b validation and knowledge delta:** changed-file ESLint; four focused specs (15 tests); generation-service typecheck; Prisma schema validation. Update `docs/03-architecture/clawai-threads-architecture.md`, `docs/04-backend/service-guide-thread-generation.md`, `wiki/Threads.md`, `skills/run-threads-generation-queue.md`, this plan, and create `docs/changes/2026-10-05-threads-batch-4b-worker-recovery.md` plus `docs/qa-evidence/2026-10-05-threads-generation-recovery.md`. Regenerate `.ai/**`, workspace `AGENTS.md`, and `docs/features/ai-native-engineering-os/inventory.snapshot.json`. No new rule or skill: the existing queue runbook and scoped-gate/QA rules cover the recovery procedure. Live DB migration, API/browser integration, full QA lanes, commit, push, CI, and deployment remain pending; do not represent them as passed.
 
-### Batch 5 — Publication lifecycle, social, moderation, and deletion
+### Batch 5 â€” Publication lifecycle, social, moderation, and deletion
 
 **Outcome:** Owners can review, approve, publish, revise, unpublish, and export; authenticated readers can participate; moderation and account deletion follow the approved policy.
 
@@ -184,15 +184,31 @@ review-ready. UI and discovery integration remain separate later batches.
 `docs/qa-evidence/2026-10-05-threads-publication-safety-reads.md`. No new skill
 or rule: current service, security, and QA runbooks cover this implementation.
 
-**5b-c plan — owner text edits and exact-text revalidation:**
+**5b-c plan â€” owner text edits and exact-text revalidation:**
 
 - **Code paths:** `apps/claw-threads-service/src/modules/publications/{controllers/publication-owner.controller.ts,services/publication-lifecycle.service.ts,repositories/publications.repository.ts,services/threads-generation.client.ts,dto/}`, `apps/claw-threads-service/prisma/schema.prisma` and its additive migration; `apps/claw-thread-generation-service/src/modules/generation/{dto/,services/generation-jobs.service.ts,repositories/generation-jobs.repository.ts,managers/generation-pipeline.manager.ts,types/}` and its schema/migration; focused specs beside each changed module.
-- **Callers/contracts:** authenticated owner edit route → Threads lifecycle → service-token generation request → durable generation queue → owner-state poll. The public reader continues serving the prior owner-approved revision until explicit approval atomically activates the validated candidate.
+- **Callers/contracts:** authenticated owner edit route â†’ Threads lifecycle â†’ service-token generation request â†’ durable generation queue â†’ owner-state poll. The public reader continues serving the prior owner-approved revision until explicit approval atomically activates the validated candidate.
 - **Data/money:** immutable revision rows; each edit uses a fresh idempotency key and owner-selected cap; generation reserves a new aggregate budget and reuses the parent job's immutable source snapshot and saved evidence. No fresh research, no closed-budget reuse, no direct cross-database reads.
 - **Knowledge delta in the same batch:** update `docs/02-business-product/clawai-threads-product-spec.md`, `docs/03-architecture/clawai-threads-architecture.md`, `docs/04-backend/service-guide-threads.md`, `docs/04-backend/service-guide-thread-generation.md`, `wiki/Threads.md`, this implementation plan, `memory/2026-10-04-clawai-threads-product-decisions.md`, and create `docs/changes/2026-10-05-threads-owner-edit-revalidation.md` plus `docs/qa-evidence/2026-10-05-threads-owner-edit-revalidation.md`. Regenerate `.ai/**`, workspace `AGENTS.md`, and `docs/features/ai-native-engineering-os/inventory.snapshot.json`. No new skill/rule: existing metering, generation queue, service-boundary, and QA runbooks cover the procedure and invariants.
 - **Deployment:** additive migrations only; keep routes internal/authenticated, default private, and safe for automatic production rollout.
 - **Scoped gate, once at the end:** changed-file ESLint/Prettier; focused Threads and generation specs; both services' typecheck/build; migration/schema validation; QA evidence, knowledge, and inventory validators; normal hooks, push, CI, release, and production health/API verification.
 - **Assumptions:** a revalidation uses the roles and evidence pinned to the original generation, but a new user-selected cap/idempotency key; reviewer outputs are valid only for the exact candidate hash; failed validation leaves the candidate private and the currently published revision unchanged.
+
+**5c-a plan â€” authenticated community contributions and reports:**
+
+- **Code paths:** `apps/claw-threads-service/prisma/schema.prisma` plus additive migration; `apps/claw-threads-service/src/modules/publications/{controllers,dto,repositories,services,types}` and focused tests. Extend public reads through explicit DTO allow-lists only.
+- **Callers/contracts:** public read â†’ authenticated comment/reaction/change-request/report routes. Require an authenticated account, but do not gate contributions on generation entitlements. Publication owners review change requests; existing moderators resolve reports and hide violating comments.
+- **Data/security:** unique per-user reactions, bounded comment/request text, publication must be currently public, no author identity list in public reads, no cross-owner mutation, and report details remain moderator-only. Reuse existing global rate limits; do not add a second limiter.
+- **Knowledge delta in the same batch:** update this plan, `docs/02-business-product/clawai-threads-product-spec.md`, `docs/03-architecture/clawai-threads-architecture.md`, `docs/04-backend/service-guide-threads.md`, `wiki/Threads.md`, and add `docs/changes/2026-10-05-threads-community-contributions-and-moderation.md` plus `docs/qa-evidence/2026-10-05-threads-community-contributions.md`; refresh generated `.ai/**`, service `AGENTS.md`, `docs/wiki/index.md`, and inventory snapshot. No new rule or skill: existing RBAC, service-boundary, and whole-team QA runbooks apply.
+- **Deferred within 5c:** Auth-owned account deletion and cross-service erasure/anonymous retention are a separate 5c-b batch because Auth currently hard-deletes the user without a durable event/outbox. Do not claim deletion compliance until that path is durable and verified.
+- **Scoped gate, once at the end:** changed-file ESLint/Prettier; focused Threads specs; Threads typecheck/build; additive migration, authenticated/unauthenticated API probes, IDOR checks, QA evidence, generated knowledge/inventory; normal hooks, push, CI, release, and production health.
+- **Assumptions:** the owner decision permits anonymous public comment attribution after deletion; this batch does not change deletion behavior. Contribution and report controls use existing authentication/RBAC infrastructure.
+
+**5c-a implementation status:** Backend contribution/report APIs, owner
+resolution through a fresh capped revision review, moderator resolution, schema
+migration, docs, and focused tests are implemented. The batch remains partial:
+account-deletion processing, UI, internationalization, and integrated role
+fixtures are follow-up work. See `docs/changes/2026-10-05-threads-community-contributions-and-moderation.md`.
 
 **Code:**
 
@@ -208,7 +224,7 @@ or rule: current service, security, and QA runbooks cover this implementation.
 
 **Validation:** changed service/account deletion specs only; changed-file lint; touched Threads, generation, and auth services typecheck/build; migration and data-retention tests; IDOR/RBAC matrix and public anonymous deletion proof. QA record `docs/qa-evidence/2026-10-04-threads-publication-domain.md`.
 
-### Batch 6 — Owner and community UI, all locales
+### Batch 6 â€” Owner and community UI, all locales
 
 **Outcome:** Users can configure generation, review its cost/status, manage drafts/publications, contribute, report abuse, and review change requests in an accessible responsive interface.
 
@@ -223,7 +239,7 @@ or rule: current service, security, and QA runbooks cover this implementation.
 
 **Validation:** lint changed TS/TSX/i18n files only; run matching unit specs and focused Playwright tests; frontend typecheck/build; capture product screenshots and evidence at mobile/tablet/desktop and both orientations, including RTL. QA record `docs/qa-evidence/2026-10-04-threads-owner-ui.md`.
 
-### Batch 7 — Public reading, hub, SEO, sitemap, feeds, and marketing
+### Batch 7 â€” Public reading, hub, SEO, sitemap, feeds, and marketing
 
 **Outcome:** Approved, safety-approved, index-eligible Threads are independently discoverable without lifting chat-share lockdown.
 
@@ -238,7 +254,7 @@ or rule: current service, security, and QA runbooks cover this implementation.
 
 **Validation:** changed discovery and route specs only; changed-file lint; focused Playwright/public route snapshots; independent proof that locked chat shares remain absent while eligible Threads appear; Lighthouse on each new public marketing URL, including accessibility/color contrast. QA record `docs/qa-evidence/2026-10-04-threads-public-discovery.md`.
 
-### Batch 8 — Enablement, integrated QA, and release readiness
+### Batch 8 â€” Enablement, integrated QA, and release readiness
 
 **Outcome:** The whole product is enabled only after all prior batches are deployed and verified; launch readiness includes the whole repository QA team and real evidence.
 
@@ -254,7 +270,7 @@ The 40 rounds below are the pack's distinct verification concerns, distributed i
 
 | Round | Verification                                                                                            | Owning batch                                                                                                                                   |
 | ----- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | Requirement → implementation path → automated test → live evidence traceability                         | All; consolidate in 8                                                                                                                          |
+| 1     | Requirement â†’ implementation path â†’ automated test â†’ live evidence traceability                   | All; consolidate in 8                                                                                                                          |
 | 2     | Clean install, upgrades, constraints, indexes, foreign keys, revision/job integrity                     | 1 and 5                                                                                                                                        |
 | 3     | Exact snapshot filtering across success, failure, abort, placeholders, attachments, citations, branches | 2                                                                                                                                              |
 | 4     | Deterministic JSON/Markdown/TOON, round-trip, Unicode, huge input                                       | 2                                                                                                                                              |
@@ -268,28 +284,28 @@ The 40 rounds below are the pack's distinct verification concerns, distributed i
 | 12    | Research dedupe, crawl/fetch fallback, robots/unsafe URL, provenance, citation, outage                  | 4                                                                                                                                              |
 | 13    | 202 enqueue, pickup, fairness, idempotency, cancellation, crash/restart/recovery/DLQ                    | 4                                                                                                                                              |
 | 14    | Rate limit, timeout, 500, malformed output, provider/role outages, fallback                             | 4                                                                                                                                              |
-| 15    | Exhausted fallback → final failure, notification/ticket, no public content, released credits            | 4                                                                                                                                              |
+| 15    | Exhausted fallback â†’ final failure, notification/ticket, no public content, released credits          | 4                                                                                                                                              |
 | 16    | Credit sufficiency, cap, hold, partial failure, actual finalize, cancel/crash release, no double charge | 3 and 4                                                                                                                                        |
 | 17    | Anonymous/user/custom/contributor/moderator/admin direct API access                                     | 3 and 5                                                                                                                                        |
 | 18    | Dynamic plan enable/disable; generation gate while contributions remain available                       | 3 and 6                                                                                                                                        |
 | 19    | Public hub/detail/pagination/search/social/change-request APIs                                          | 5 and 7                                                                                                                                        |
 | 20    | Like/dislike, comments, accept/reject, publish/revoke/read concurrency                                  | 5                                                                                                                                              |
 | 21    | Anonymous/authenticated readers, crawler/bot filtering, rate abuse, deleted owner                       | 5 and 7                                                                                                                                        |
-| 22    | IDOR, injection/XSS/SSRF, prompt injection, CSRF, mass assignment, secrets, PII, spam, enumeration      | 5–7                                                                                                                                            |
+| 22    | IDOR, injection/XSS/SSRF, prompt injection, CSRF, mass assignment, secrets, PII, spam, enumeration      | 5â€“7                                                                                                                                          |
 | 23    | Credential/PII fixtures and block/warn/redact behavior                                                  | 2 and 5                                                                                                                                        |
 | 24    | Sitemap/RSS eligibility, revoke, lastmod, locale/chunking, AI discovery, chat-share lockdown            | 7                                                                                                                                              |
-| 25    | Ready/published/failure notifications and denied/invalid/duplicate delivery                             | 4–6                                                                                                                                            |
+| 25    | Ready/published/failure notifications and denied/invalid/duplicate delivery                             | 4â€“6                                                                                                                                          |
 | 26    | One admin incident ticket with safe diagnostics and no raw thread/auth data                             | 4 and 5                                                                                                                                        |
-| 27    | Full browser journey: create → queue → resume → revise → approve → publish → contribute                 | 6 and 8                                                                                                                                        |
-| 28    | Several real 15–25-turn topic threads with full provenance evidence                                     | 8; use local/lowest-cost available models and each job's user-selected cap; otherwise record NOT_RUN with the exact credential/runtime blocker |
-| 29    | Mobile/tablet/desktop widths, both mobile/tablet orientations, Arabic RTL, overflow/overlap             | 6–8                                                                                                                                            |
-| 30    | Keyboard, focus, labels, dialogs, live progress, contrast, reduced motion                               | 6–8                                                                                                                                            |
-| 31    | All locales, no missing keys, localized marketing/email/push, RTL                                       | 6–8                                                                                                                                            |
+| 27    | Full browser journey: create â†’ queue â†’ resume â†’ revise â†’ approve â†’ publish â†’ contribute     | 6 and 8                                                                                                                                        |
+| 28    | Several real 15â€“25-turn topic threads with full provenance evidence                                   | 8; use local/lowest-cost available models and each job's user-selected cap; otherwise record NOT_RUN with the exact credential/runtime blocker |
+| 29    | Mobile/tablet/desktop widths, both mobile/tablet orientations, Arabic RTL, overflow/overlap             | 6â€“8                                                                                                                                          |
+| 30    | Keyboard, focus, labels, dialogs, live progress, contrast, reduced motion                               | 6â€“8                                                                                                                                          |
+| 31    | All locales, no missing keys, localized marketing/email/push, RTL                                       | 6â€“8                                                                                                                                          |
 | 32    | Public latency, queue/stage timings, query shape/N+1, discovery latency                                 | 4, 7, and 8                                                                                                                                    |
 | 33    | Bounded queue/read/social/sitemap load and proof that queue pressure does not harm normal chat          | 4, 5, and 7                                                                                                                                    |
 | 34    | Worker termination, research/provider/RabbitMQ/database outage and recovery                             | 4                                                                                                                                              |
 | 35    | Dev/prod compose, health, env, nginx, installers, migrations                                            | 1 and 8                                                                                                                                        |
-| 36    | Normal chat/share, auth, plans, billing, research, orchestration, sitemap/RSS regressions               | 2–8                                                                                                                                            |
+| 36    | Normal chat/share, auth, plans, billing, research, orchestration, sitemap/RSS regressions               | 2â€“8                                                                                                                                          |
 | 37    | Marketing routes, content registry, translations, real screenshots, SEO, Lighthouse/accessibility       | 7 and 8                                                                                                                                        |
 | 38    | Generated knowledge freshness/integrity and inventory after formatting                                  | Every batch                                                                                                                                    |
 | 39    | Changed-file lint/spec, touched-workspace typecheck/build, exact-tree receipt, no hook bypass           | Every batch                                                                                                                                    |

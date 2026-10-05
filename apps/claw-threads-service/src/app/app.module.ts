@@ -9,6 +9,7 @@ import {
 import { THREADS_SERVICE } from '@claw/shared-constants';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
+import { EntitlementsModule, PermissionGuard } from '@claw/shared-entitlements';
 
 import { AppConfig } from './config/app.config';
 import { HealthModule } from '../modules/health/health.module';
@@ -38,6 +39,10 @@ import { PublicationsModule } from '../modules/publications/publications.module'
       },
     }),
     ThrottlerModule.forRoot(buildThrottlerOptions({ ttl: 60_000, limit: 2500 })),
+    EntitlementsModule.forRoot({
+      authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,
+      interServiceToken: AppConfig.get().INTER_SERVICE_AUTH_TOKEN,
+    }),
     HealthModule,
     PrismaModule,
     PublicationsModule,
@@ -46,6 +51,7 @@ import { PublicationsModule } from '../modules/publications/publications.module'
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_GUARD, useClass: SessionRevocationGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useExisting: PermissionGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })

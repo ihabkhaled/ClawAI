@@ -27,18 +27,53 @@ enum PublicationSafetyStatus {
   REVIEW_REQUIRED
 }
 
+enum PublicationCommentStatus {
+  VISIBLE
+  HIDDEN
+  DELETED
+}
+
+enum PublicationReactionValue {
+  LIKE
+  DISLIKE
+}
+
+enum PublicationChangeRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum PublicationReportReason {
+  SPAM
+  ABUSE
+  PRIVATE_INFORMATION
+  UNSAFE_CONTENT
+  OTHER
+}
+
+enum PublicationReportStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
 model ThreadPublication {
-  id              String                      @id @default(cuid())
-  ownerId         String?                     @map("owner_id")
-  slug            String                      @unique
-  status          PublicationStatus           @default(DRAFT)
-  generationJobId String?                     @unique @map("generation_job_id")
-  sourceSnapshot  Json?                       @map("source_snapshot")
-  sourceHash      String?                     @map("source_hash")
-  publishedAt     DateTime?                   @map("published_at")
-  createdAt       DateTime                    @default(now()) @map("created_at")
-  updatedAt       DateTime                    @updatedAt @map("updated_at")
+  id              String                           @id @default(cuid())
+  ownerId         String?                          @map("owner_id")
+  slug            String                           @unique
+  status          PublicationStatus                @default(DRAFT)
+  generationJobId String?                          @unique @map("generation_job_id")
+  sourceSnapshot  Json?                            @map("source_snapshot")
+  sourceHash      String?                          @map("source_hash")
+  publishedAt     DateTime?                        @map("published_at")
+  createdAt       DateTime                         @default(now()) @map("created_at")
+  updatedAt       DateTime                         @updatedAt @map("updated_at")
   revisions       ThreadPublicationRevision[]
+  comments        ThreadPublicationComment[]
+  reactions       ThreadPublicationReaction[]
+  changeRequests  ThreadPublicationChangeRequest[]
+  reports         ThreadPublicationReport[]
 
   @@index([ownerId, createdAt])
   @@index([status, publishedAt])
@@ -46,27 +81,93 @@ model ThreadPublication {
 }
 
 model ThreadPublicationRevision {
-  id              String                  @id @default(cuid())
-  publicationId   String                  @map("publication_id")
-  publication     ThreadPublication       @relation(fields: [publicationId], references: [id], onDelete: Cascade)
-  revision        Int
-  title           String
-  content         Json
-  contentHash     String                  @map("content_hash")
-  reviewStatus    RevisionReviewStatus    @default(PENDING) @map("review_status")
-  judgeScore      Int?                    @map("judge_score")
-  criticScore     Int?                    @map("critic_score")
-  validatedAt     DateTime?               @map("validated_at")
-  ownerApprovedAt DateTime?               @map("owner_approved_at")
-  editIdempotencyKey String?               @unique @map("edit_idempotency_key")
-  editRequestHash    String?                @map("edit_request_hash")
-  revalidationJobId String?                 @map("revalidation_job_id")
-  safetyStatus    PublicationSafetyStatus @default(REVIEW_REQUIRED) @map("safety_status")
-  safetyReasons   Json                    @default("[]") @map("safety_reasons")
-  indexEligible   Boolean                 @default(false) @map("index_eligible")
-  createdAt       DateTime                @default(now()) @map("created_at")
+  id                 String                  @id @default(cuid())
+  publicationId      String                  @map("publication_id")
+  publication        ThreadPublication       @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  revision           Int
+  title              String
+  content            Json
+  contentHash        String                  @map("content_hash")
+  reviewStatus       RevisionReviewStatus    @default(PENDING) @map("review_status")
+  judgeScore         Int?                    @map("judge_score")
+  criticScore        Int?                    @map("critic_score")
+  validatedAt        DateTime?               @map("validated_at")
+  ownerApprovedAt    DateTime?               @map("owner_approved_at")
+  editIdempotencyKey String?                 @unique @map("edit_idempotency_key")
+  editRequestHash    String?                 @map("edit_request_hash")
+  revalidationJobId  String?                 @map("revalidation_job_id")
+  safetyStatus       PublicationSafetyStatus @default(REVIEW_REQUIRED) @map("safety_status")
+  safetyReasons      Json                    @default("[]") @map("safety_reasons")
+  indexEligible      Boolean                 @default(false) @map("index_eligible")
+  createdAt          DateTime                @default(now()) @map("created_at")
 
   @@unique([publicationId, revision])
   @@index([publicationId, reviewStatus])
   @@map("thread_publication_revisions")
+}
+
+model ThreadPublicationComment {
+  id            String                    @id @default(cuid())
+  publicationId String                    @map("publication_id")
+  publication   ThreadPublication         @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  authorId      String?                   @map("author_id")
+  content       String                    @db.VarChar(5000)
+  status        PublicationCommentStatus  @default(VISIBLE)
+  createdAt     DateTime                  @default(now()) @map("created_at")
+  updatedAt     DateTime                  @updatedAt @map("updated_at")
+  reports       ThreadPublicationReport[]
+
+  @@index([publicationId, status, createdAt])
+  @@index([authorId, createdAt])
+  @@map("thread_publication_comments")
+}
+
+model ThreadPublicationReaction {
+  id            String                   @id @default(cuid())
+  publicationId String                   @map("publication_id")
+  publication   ThreadPublication        @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  userId        String                   @map("user_id")
+  value         PublicationReactionValue
+  createdAt     DateTime                 @default(now()) @map("created_at")
+  updatedAt     DateTime                 @updatedAt @map("updated_at")
+
+  @@unique([publicationId, userId])
+  @@index([publicationId, value])
+  @@map("thread_publication_reactions")
+}
+
+model ThreadPublicationChangeRequest {
+  id            String                         @id @default(cuid())
+  publicationId String                         @map("publication_id")
+  publication   ThreadPublication              @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  requesterId   String?                        @map("requester_id")
+  suggestion    String                         @db.VarChar(5000)
+  status        PublicationChangeRequestStatus @default(PENDING)
+  ownerResponse String?                        @map("owner_response") @db.VarChar(2000)
+  acceptedRevisionId String?                   @map("accepted_revision_id")
+  createdAt     DateTime                       @default(now()) @map("created_at")
+  updatedAt     DateTime                       @updatedAt @map("updated_at")
+
+  @@index([publicationId, status, createdAt])
+  @@index([requesterId, createdAt])
+  @@map("thread_publication_change_requests")
+}
+
+model ThreadPublicationReport {
+  id            String                    @id @default(cuid())
+  publicationId String                    @map("publication_id")
+  publication   ThreadPublication         @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  commentId     String?                   @map("comment_id")
+  comment       ThreadPublicationComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  reporterId    String?                   @map("reporter_id")
+  reason        PublicationReportReason
+  details       String?                   @db.VarChar(1000)
+  status        PublicationReportStatus   @default(OPEN)
+  moderatedBy   String?                   @map("moderated_by")
+  moderatedAt   DateTime?                 @map("moderated_at")
+  createdAt     DateTime                  @default(now()) @map("created_at")
+
+  @@index([status, createdAt])
+  @@index([publicationId, createdAt])
+  @@map("thread_publication_reports")
 }
