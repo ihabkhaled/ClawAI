@@ -251,7 +251,7 @@ cross-service QA, lint/typecheck/build, generated knowledge, and CI remain open.
 
 **Outcome:** Users can configure generation, review its cost/status, manage drafts/publications, contribute, report abuse, and review change requests in an accessible responsive interface.
 
-**Progress:** Owner generation, approval, community controls, and deletion handling are implemented. Batch 7 adds persisted content locale, language-specific author prompts, public server rendering and metadata, a localized discovery hub, independent sitemap chunks, and RSS/Atom entries. Scoped tests and typechecks pass; production/browser/role/device QA remains open because the local Threads database has no approved publication fixture.
+**Progress:** Owner generation, approval, community controls, and deletion handling are implemented. Batch 7 adds persisted content locale, language-specific author prompts, public server rendering and metadata, a localized discovery hub, independent sitemap chunks, and RSS/Atom entries. Scoped tests, typechecks, production build, and browser/device checks pass. Role-tier, approved-publication UAT, Lighthouse, and remote CI/release evidence remain open.
 
 **Knowledge delta for public reader UI:** `docs/02-business-product/clawai-threads-product-spec.md`, this plan, `wiki/Threads.md`, `docs/changes/2026-10-05-threads-public-reader-community-ui.md`, and `docs/qa-evidence/2026-10-05-threads-public-reader-community.md`. Generated `.ai/**`, workspace `AGENTS.md`, and the inventory snapshot are regenerated. No new rule, skill, ADR, or memory entry is needed: existing public-content safety, i18n, and QA rules apply; approved product decisions did not change.
 

@@ -111,3 +111,4 @@ apps/claw-frontend/src/constants/threads-discovery-seo.constants.ts
 apps/claw-frontend/src/utilities/**tests**/content-registry.utility.test.ts
 apps/claw-frontend/src/components/common/**tests**/bounded-grid-tracks.test.ts
 tools/**tests**/shared-package-build-order.test.mjs
+apps/claw-frontend/tests/e2e/threads-discovery-responsive.spec.ts

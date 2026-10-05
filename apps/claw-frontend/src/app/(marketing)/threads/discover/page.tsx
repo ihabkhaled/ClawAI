@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import Link from 'next/link';
+import Script from 'next/script';
 
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
 import { Locale } from '@/enums/locale.enum';
@@ -45,7 +46,9 @@ export default async function ThreadDiscoveryPage(): Promise<React.ReactElement>
       <p className="text-muted-foreground mt-3 max-w-3xl">
         {dictionary.chat.threadDiscoveryDescription}
       </p>
-      <script type="application/ld+json">{serializeJsonLd(structuredData)}</script>
+      <Script id="threads-discovery-jsonld" type="application/ld+json" strategy="beforeInteractive">
+        {serializeJsonLd(structuredData)}
+      </Script>
       {items.length === 0 ? (
         <p className="mt-8" role="status">
           {dictionary.chat.threadDiscoveryEmpty}
