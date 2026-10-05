@@ -2991,6 +2991,11 @@
         },
         {
           "method": "POST",
+          "route": "/internal/research/fetch",
+          "source": "apps/claw-research-service/src/modules/fetch/controllers/fetch-internal.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/internal/research/runs",
           "source": "apps/claw-research-service/src/modules/research/controllers/research-internal.controller.ts"
         },
@@ -8432,7 +8437,7 @@
           "file": "rules/49-qa-team-discipline-and-test-evidence.md"
         },
         {
-          "bytes": 7469,
+          "bytes": 8331,
           "file": "rules/50-agentic-research-loop-and-narration.md"
         },
         {
@@ -11087,7 +11092,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 320
+        "testFiles": 321
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -11107,7 +11112,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 704
+        "testFiles": 705
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -11135,7 +11140,7 @@
       },
       "claw-research-service": {
         "runner": "vitest",
-        "testFiles": 64
+        "testFiles": 66
       },
       "claw-routing-service": {
         "runner": "vitest",
@@ -11938,7 +11943,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 56,
-    "endpointCount": 803,
+    "endpointCount": 804,
     "envVarCount": 375,
     "eventCount": 186,
     "frontendRouteCount": 156,
@@ -11950,7 +11955,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2061,
+    "totalTestFiles": 2065,
     "workspaceCount": 27
   }
 }
