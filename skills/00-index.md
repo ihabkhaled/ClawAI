@@ -240,4 +240,5 @@ regeneration is step 2.
 If a generated file is wrong, fix the **generator or its input**, then
 regenerate. Editing `.ai/manifests/*.json` or a workspace `AGENTS.md` by hand is
 overwritten on the next build and hides the real problem.
+| Add an Admin Usage Dimension | `add-an-admin-usage-dimension.md` | You add a figure to the admin per-user usage modal or the Observability "Platform usage" section: where each dimension is stored, what is missing, the bounded-query rules |
 | Propagate a Chat Change to Every Mode | `propagate-a-chat-change-to-every-mode.md` | You change ANYTHING in normal chat (button, upload type, tool, context source, detector, DTO field): walk the ten surfaces before calling it done |

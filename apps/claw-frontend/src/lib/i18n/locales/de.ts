@@ -9,6 +9,7 @@ import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
+import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const de: TranslationDictionary = {
   pagination: {
@@ -4387,6 +4388,7 @@ export const de: TranslationDictionary = {
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.de,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.de,
   skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.de,
+  usageAnalytics: USAGE_ANALYTICS_TRANSLATIONS.de,
   adminBilling: {
     credit: {
       packageCreated: 'Guthaben-Paket erstellt.',

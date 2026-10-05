@@ -9,6 +9,7 @@ import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
+import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const th: TranslationDictionary = {
   pagination: {
@@ -4267,6 +4268,7 @@ export const th: TranslationDictionary = {
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.th,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.th,
   skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.th,
+  usageAnalytics: USAGE_ANALYTICS_TRANSLATIONS.th,
   adminBilling: {
     credit: {
       packageCreated: 'สร้างแพ็กเกจเครดิตแล้ว',

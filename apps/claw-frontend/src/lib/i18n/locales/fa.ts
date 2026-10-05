@@ -9,6 +9,7 @@ import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
+import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const fa: TranslationDictionary = {
   pagination: {
@@ -4319,6 +4320,7 @@ export const fa: TranslationDictionary = {
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.fa,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.fa,
   skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.fa,
+  usageAnalytics: USAGE_ANALYTICS_TRANSLATIONS.fa,
   adminBilling: {
     credit: {
       packageCreated: 'بستهٔ اعتبار ایجاد شد.',

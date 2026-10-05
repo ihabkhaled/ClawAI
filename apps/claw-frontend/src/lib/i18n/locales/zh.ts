@@ -9,6 +9,7 @@ import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
+import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const zh: TranslationDictionary = {
   pagination: {
@@ -4156,6 +4157,7 @@ export const zh: TranslationDictionary = {
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.zh,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.zh,
   skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.zh,
+  usageAnalytics: USAGE_ANALYTICS_TRANSLATIONS.zh,
   adminBilling: {
     credit: {
       packageCreated: '额度套餐已创建。',

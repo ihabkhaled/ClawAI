@@ -348,7 +348,7 @@
   ],
   "skills": [
     {
-      "bytes": 33353,
+      "bytes": 33595,
       "file": "skills/00-index.md"
     },
     {
@@ -422,6 +422,10 @@
     {
       "bytes": 32865,
       "file": "skills/add-a-voice-note-or-transcription-path.md"
+    },
+    {
+      "bytes": 2917,
+      "file": "skills/add-an-admin-usage-dimension.md"
     },
     {
       "bytes": 3125,

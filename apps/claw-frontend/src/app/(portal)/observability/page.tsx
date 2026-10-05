@@ -3,6 +3,7 @@
 import { PageHeader } from '@/components/common/page-header';
 import { OpenGrafanaButton } from '@/components/observability/open-grafana-button';
 import { ServiceStatusSection } from '@/components/observability/service-status-section';
+import { UsageAnalyticsSection } from '@/components/observability/usage-analytics/usage-analytics-section';
 import { UsageOverview } from '@/components/observability/usage-overview';
 import { useObservabilityPage } from '@/hooks/observability/use-observability-page';
 import { useServiceStatus } from '@/hooks/observability/use-service-status';
@@ -21,6 +22,7 @@ export default function ObservabilityPage() {
         actions={<OpenGrafanaButton />}
       />
       <ServiceStatusSection {...serviceStatus} />
+      <UsageAnalyticsSection />
       <UsageOverview {...usage} />
     </div>
   );

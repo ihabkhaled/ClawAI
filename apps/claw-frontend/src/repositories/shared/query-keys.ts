@@ -130,6 +130,14 @@ export const queryKeys = {
     // opening the modal on a second user cannot serve the first user's cache.
     userUsageStatistics: (userId: string) =>
       ['admin', 'users', 'usage-statistics', userId] as const,
+    // Models/tools/credit-connector breakdown, keyed by user AND preset so a
+    // period switch never serves another period's figures.
+    userUsageBreakdown: (userId: string, preset: string) =>
+      ['admin', 'users', 'usage-breakdown', userId, preset] as const,
+    // Platform-wide analytics. The key holds the SELECTION, not the computed
+    // dates: each refetch rebuilds the window from the current time.
+    usageAnalytics: (selection: Record<string, unknown>, userId: string) =>
+      ['admin', 'usage-analytics', selection, userId] as const,
     userPlanOverview: (userId: string) => ['admin', 'users', 'plan-overview', userId] as const,
     userSubscriptionStatistics: (userId: string) =>
       ['admin', 'users', 'subscription-statistics', userId] as const,

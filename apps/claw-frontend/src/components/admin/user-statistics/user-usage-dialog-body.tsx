@@ -3,6 +3,7 @@
 import { AlertTriangle } from 'lucide-react';
 import type { ReactElement } from 'react';
 
+import { UserUsageBreakdownSection } from '@/components/admin/usage-analytics/user-usage-breakdown-section';
 import { UserUsageCreditsTable } from '@/components/admin/user-statistics/user-usage-credits-table';
 import { UserUsageTokenWindowCard } from '@/components/admin/user-statistics/user-usage-token-window-card';
 import { EmptyState } from '@/components/common/empty-state';
@@ -72,6 +73,8 @@ export function UserUsageDialogBody({ userId, t }: UserUsageDialogBodyProps): Re
         <h3 className="text-sm font-semibold">{t('admin.userUsageCreditsHeading')}</h3>
         <UserUsageCreditsTable months={statistics.creditsByMonth} t={t} />
       </section>
+
+      <UserUsageBreakdownSection userId={userId} t={t} />
 
       <p className="text-muted-foreground text-xs">
         {t('admin.userStatisticsGeneratedAt', {

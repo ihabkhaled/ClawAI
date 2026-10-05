@@ -4124,6 +4124,7 @@ export type TranslationDictionary = {
   adminModelCosts: AdminModelCostsLocaleTranslation;
   providerManagement?: ProviderManagementLocaleTranslation;
   skippedProviders: SkippedProvidersLocaleTranslation;
+  usageAnalytics: UsageAnalyticsLocaleTranslation;
   adminDeployment: {
     title: string;
     description: string;
@@ -6303,6 +6304,101 @@ export type SkippedProvidersLocaleTranslation = {
   reasons: {
     accountCreditExhausted: string;
   };
+};
+
+/**
+ * Admin usage analytics: the per-user "Usage and consumption" breakdown and the
+ * "Platform usage" section of /observability. Placeholders: {count}, {period},
+ * {used}, {limit}, {remaining}, {date}, {from}, {to}, {grain}, {user}, {input},
+ * {output}.
+ */
+export type UsageAnalyticsLocaleTranslation = {
+  rangeLabel: string;
+  presetToday: string;
+  presetHours: string;
+  presetWeek: string;
+  presetMonth: string;
+  presetCustom: string;
+  loading: string;
+  errorTitle: string;
+  errorDescription: string;
+  empty: string;
+  breakdownHeading: string;
+  modelsHeading: string;
+  modelsEmpty: string;
+  modelsTruncated: string;
+  colModel: string;
+  colConnector: string;
+  colRequests: string;
+  colInput: string;
+  colOutput: string;
+  colCost: string;
+  colCredit: string;
+  colFree: string;
+  colBucket: string;
+  colUser: string;
+  colTokens: string;
+  toolsHeading: string;
+  toolsEmpty: string;
+  toolCallsTotal: string;
+  workflowsHeading: string;
+  creditHeading: string;
+  creditUsedYes: string;
+  creditUsedNo: string;
+  creditRequests: string;
+  freeRequests: string;
+  creditWallet: string;
+  freeHeading: string;
+  freeUsage: string;
+  freeUnlimited: string;
+  freeDisabled: string;
+  freeResets: string;
+  freeMeter: string;
+  tools: {
+    WEB_SEARCH: string;
+    WEB_FETCH: string;
+    WEB_EXTRACT: string;
+    FILE_GENERATION: string;
+    COMPARE_MODE: string;
+    JUDGE_MODE: string;
+    RESEARCH_MODE: string;
+    CRITIC_REVIEW: string;
+    WORKSPACES: string;
+    MEMORY: string;
+    CONTEXT_PACKS: string;
+  };
+  sectionTitle: string;
+  sectionDescription: string;
+  hoursLabel: string;
+  fromLabel: string;
+  toLabel: string;
+  userLabel: string;
+  userHint: string;
+  apply: string;
+  clearUser: string;
+  errorHours: string;
+  errorRangeOrder: string;
+  errorRangeTooWide: string;
+  errorRangeMissing: string;
+  rangeSummary: string;
+  grainHour: string;
+  grainDay: string;
+  userFiltered: string;
+  cardToday: string;
+  cardTodayHint: string;
+  cardCost: string;
+  cardRequests: string;
+  cardTokens: string;
+  cardTokensHint: string;
+  cardUsers: string;
+  seriesHeading: string;
+  seriesInput: string;
+  seriesOutput: string;
+  seriesAria: string;
+  seriesEmpty: string;
+  modelsAllHeading: string;
+  topUsersHeading: string;
+  topToolsHeading: string;
 };
 
 export type ProviderManagementLocaleTranslation = {

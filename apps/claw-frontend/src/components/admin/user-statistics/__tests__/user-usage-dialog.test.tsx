@@ -7,6 +7,10 @@ import { useAdminUserUsage } from '@/hooks/admin/use-admin-user-usage';
 import type { AdminUser } from '@/types/audit.types';
 
 vi.mock('@/hooks/admin/use-admin-user-usage');
+// The breakdown section owns its own query; it has its own tests.
+vi.mock('@/components/admin/usage-analytics/user-usage-breakdown-section', () => ({
+  UserUsageBreakdownSection: () => <div data-testid="breakdown-section" />,
+}));
 vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({ t: (key: string) => key, locale: 'en', dir: 'ltr' }),
 }));

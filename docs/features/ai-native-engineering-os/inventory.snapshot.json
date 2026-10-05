@@ -8532,7 +8532,7 @@
       ],
       "skills": [
         {
-          "bytes": 33353,
+          "bytes": 33595,
           "file": "skills/00-index.md"
         },
         {
@@ -8606,6 +8606,10 @@
         {
           "bytes": 32865,
           "file": "skills/add-a-voice-note-or-transcription-path.md"
+        },
+        {
+          "bytes": 2917,
+          "file": "skills/add-an-admin-usage-dimension.md"
         },
         {
           "bytes": 3125,
@@ -8954,7 +8958,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5750
+        "value": 5751
       },
       "localeCount": 13,
       "locales": [
@@ -11157,7 +11161,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 705
+        "testFiles": 710
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -12000,7 +12004,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2073,
+    "totalTestFiles": 2078,
     "workspaceCount": 27
   }
 }

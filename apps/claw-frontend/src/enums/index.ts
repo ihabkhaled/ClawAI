@@ -134,6 +134,7 @@ export { ResponsivePageWidth } from './responsive-page-width.enum';
 export { ResponsiveGridColumns } from './responsive-grid-columns.enum';
 export { AlertVariant } from './alert-variant.enum';
 export { EmptyStateVariant } from './empty-state-variant.enum';
+export { UsageRangePreset } from './usage-range-preset.enum';
 export { ComposerControlVariant } from './composer-control-variant.enum';
 export { CopyButtonVariant } from './copy-button-variant.enum';
 export { ScrollDirection } from './scroll-direction.enum';

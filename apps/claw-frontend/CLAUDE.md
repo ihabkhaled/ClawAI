@@ -854,3 +854,16 @@ costlier line). A stored error with `errorCode PICKED_MODEL_FAILED` (or a provid
 message, `offersPickedModelRecovery`) renders `PickedModelRecovery`: up to 3 buttons from `metadata.suggestedModels`
 (else the picker's own models minus the failed one) that regenerate with MANUAL_MODEL + provider + model, and a
 model picker. Copy: `pickedModel.*` in `picked-model-translations.ts` (13 locales).
+
+## Admin usage analytics UI (2026-10-05)
+
+Two surfaces read auth-service `GET /admin/users/:userId/usage-breakdown` and
+`GET /admin/usage-analytics` (both `ADMIN_USAGE_VIEW`): the new section inside the per-user
+"Usage and consumption" modal (`components/admin/usage-analytics/`) and "Platform usage" on
+`/observability` (`components/observability/usage-analytics/`, rendered only when
+`can(ADMIN_USAGE_VIEW)`). Period logic lives in `utilities/usage-analytics.utility.ts`: presets
+apply at once, hours/custom dates/user id are a draft sent on Apply, the 90-day cap is validated
+client-side AND enforced by the server. The query key holds the SELECTION, not computed dates,
+so every refetch rebuilds the window from the clock. Text is under `usageAnalytics.*`
+(`lib/i18n/locales/usage-analytics-translations.ts`, 13 locales). Runbook:
+`skills/add-an-admin-usage-dimension.md`.
