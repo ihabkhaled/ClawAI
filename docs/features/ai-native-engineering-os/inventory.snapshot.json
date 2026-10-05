@@ -8567,7 +8567,7 @@
           "file": "rules/49-qa-team-discipline-and-test-evidence.md"
         },
         {
-          "bytes": 8331,
+          "bytes": 8763,
           "file": "rules/50-agentic-research-loop-and-narration.md"
         },
         {
@@ -11269,7 +11269,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 321
+        "testFiles": 322
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -12134,7 +12134,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2095,
+    "totalTestFiles": 2096,
     "workspaceCount": 27
   }
 }

@@ -22,6 +22,7 @@ import {
 } from '../../../common/constants/research-gate.constants';
 import { PlannedResearchAction } from '../../../common/enums/planned-research-action.enum';
 import { resolveOllamaCloudBaseUrl } from '../../../common/utilities/ollama-cloud-base-url.utility';
+import { isExplicitWebRequest } from '../../../common/utilities/explicit-web-request.utility';
 import { detectPromptUrls } from '../../../common/utilities/prompt-url.utility';
 import { buildInterServiceAuthHeader, httpRequest } from '../../../common/utilities';
 import type { ConnectorConfigResponse } from '../types/execution.types';
@@ -93,7 +94,9 @@ export class ResearchGateService {
       // No configured candidate is not an error: an admin may have switched the
       // gate off by emptying the list, and that means "never research", which
       // is the same answer failing closed gives.
-      const verdict: ResearchGateVerdict = { needsWeb: false, reason: 'no classifier configured' };
+      const verdict: ResearchGateVerdict = isExplicitWebRequest(message)
+        ? { needsWeb: true, reason: 'explicit web request, no classifier configured' }
+        : { needsWeb: false, reason: 'no classifier configured' };
       this.writeCache(message, verdict);
       return verdict;
     }
@@ -107,11 +110,15 @@ export class ResearchGateService {
         return verdict;
       }
     }
-    // Every candidate refused or timed out. Fail closed: no web access.
+    // Every candidate refused or timed out. Fail closed, except for a plain
+    // order to use the internet: refusing that is the "I cannot search" bug.
+    const explicit = isExplicitWebRequest(message);
     this.logger.warn(
-      `needsWeb: no classifier answered (tried ${candidates.map((c) => c.modelAlias).join(', ')}) - assuming no`,
+      `needsWeb: no classifier answered (tried ${candidates.map((c) => c.modelAlias).join(', ')}) - assuming ${explicit ? 'yes (explicit request)' : 'no'}`,
     );
-    const verdict: ResearchGateVerdict = { needsWeb: false, reason: 'no classifier reachable' };
+    const verdict: ResearchGateVerdict = explicit
+      ? { needsWeb: true, reason: 'explicit web request, no classifier reachable' }
+      : { needsWeb: false, reason: 'no classifier reachable' };
     // Cached too: if no classifier is reachable for this message, the second
     // caller in the same turn will not reach one either, and re-proving that
     // costs another full round of timeouts.
@@ -227,10 +234,23 @@ ${message}${digestBlock}`,
     this.logger.warn(
       `plan: no planner answered (tried ${String(candidates.length)}) - falling back to the user's own URLs`,
     );
+    return this.unansweredPlan(message, userUrls);
+  }
+
+  /** Nobody planned: crawl the user's own links, search a plain order to search, else answer. */
+  private unansweredPlan(message: string, userUrls: readonly string[]): ResearchPlan {
+    const hasLinks = userUrls.length > 0;
+    const searches = !hasLinks && isExplicitWebRequest(message);
+    let action = PlannedResearchAction.ANSWER;
+    if (hasLinks) {
+      action = PlannedResearchAction.CRAWL;
+    } else if (searches) {
+      action = PlannedResearchAction.SEARCH;
+    }
     return {
-      action: userUrls.length > 0 ? PlannedResearchAction.CRAWL : PlannedResearchAction.ANSWER,
-      urls: userUrls,
-      query: null,
+      action,
+      urls: [...userUrls],
+      query: searches ? message : null,
       maxPages: RESEARCH_PLANNER_DEFAULT_MAX_PAGES,
       narration: '',
       thinking: '',

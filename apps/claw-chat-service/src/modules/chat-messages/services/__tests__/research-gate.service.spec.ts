@@ -121,6 +121,26 @@ describe('ResearchGateService', () => {
   });
 
   // One turn asks twice: where research starts, and again in context assembly.
+  // The "I cannot search the internet" bug: a down classifier must not turn a
+  // plain order to search into a refusal.
+  it('still researches a plain order to search when no classifier answers', async () => {
+    mockedHttpRequest.mockResolvedValueOnce(candidatesReply() as never);
+    mockedHttpRequest.mockRejectedValue(new Error('unreachable'));
+
+    await expect(service.needsWeb('please search internet for node 26 release')).resolves.toEqual({
+      needsWeb: true,
+      reason: 'explicit web request, no classifier reachable',
+    });
+  });
+
+  it('still researches a plain order to search when no classifier is configured', async () => {
+    mockedHttpRequest.mockResolvedValueOnce(candidatesReply([]) as never);
+
+    await expect(service.needsWeb('search the web for exa pricing')).resolves.toMatchObject({
+      needsWeb: true,
+    });
+  });
+
   it('answers the same message twice without asking the model twice', async () => {
     mockedHttpRequest.mockResolvedValueOnce(candidatesReply() as never);
     mockedHttpRequest.mockResolvedValueOnce(reply(true) as never);
@@ -268,7 +288,9 @@ describe('ResearchGateService.plan', () => {
 
     await service.plan('hello');
 
-    expect(JSON.stringify(mockedHttpRequest.mock.calls[1]?.[0])).not.toContain('Attached files (type');
+    expect(JSON.stringify(mockedHttpRequest.mock.calls[1]?.[0])).not.toContain(
+      'Attached files (type',
+    );
   });
 
   // ADR-152: the planner decided blind and its "thinking" was shown to the
@@ -280,22 +302,28 @@ describe('ResearchGateService.plan', () => {
     it.each([
       ['an empty-ish message', '.'],
       ['a bare question', 'where do I press to send?'],
-      ['the owner wording', 'here is a screenshot for postman on mac, check it and tell me where to press'],
+      [
+        'the owner wording',
+        'here is a screenshot for postman on mac, check it and tell me where to press',
+      ],
       ['a non-English message', 'où dois-je appuyer pour envoyer ?'],
       ['a plain request', 'summarise'],
-    ])('puts the attachment manifest and the never-cannot-view rule in the prompt for %s', async (_label, message) => {
-      mockedHttpRequest.mockResolvedValueOnce(candidatesReply() as never);
-      mockedHttpRequest.mockResolvedValueOnce(
-        planReply({ action: 'answer', urls: [], narration: 'x' }) as never,
-      );
+    ])(
+      'puts the attachment manifest and the never-cannot-view rule in the prompt for %s',
+      async (_label, message) => {
+        mockedHttpRequest.mockResolvedValueOnce(candidatesReply() as never);
+        mockedHttpRequest.mockResolvedValueOnce(
+          planReply({ action: 'answer', urls: [], narration: 'x' }) as never,
+        );
 
-      await service.plan(message, DIGEST);
+        await service.plan(message, DIGEST);
 
-      const prompt = JSON.stringify(mockedHttpRequest.mock.calls[1]?.[0]);
-      expect(prompt).toContain('Attached files (type, name, and derived text');
-      expect(prompt).toContain('shot.png');
-      expect(prompt).toContain('Never say or think that you cannot view attachments');
-    });
+        const prompt = JSON.stringify(mockedHttpRequest.mock.calls[1]?.[0]);
+        expect(prompt).toContain('Attached files (type, name, and derived text');
+        expect(prompt).toContain('shot.png');
+        expect(prompt).toContain('Never say or think that you cannot view attachments');
+      },
+    );
 
     it('does not crawl a link that came out of an attachment, even when the planner returns it', async () => {
       mockedHttpRequest.mockResolvedValueOnce(candidatesReply() as never);
@@ -371,6 +399,16 @@ describe('ResearchGateService.plan', () => {
     await expect(service.plan('summarise example.com/pricing')).resolves.toMatchObject({
       action: 'crawl',
       urls: ['https://example.com/pricing'],
+    });
+  });
+
+  it('searches the words they typed when no model answers and they ordered a web search', async () => {
+    mockedHttpRequest.mockResolvedValueOnce(candidatesReply() as never);
+    mockedHttpRequest.mockRejectedValue(new Error('unreachable'));
+
+    await expect(service.plan('search the internet for exa pricing')).resolves.toMatchObject({
+      action: 'search',
+      query: 'search the internet for exa pricing',
     });
   });
 

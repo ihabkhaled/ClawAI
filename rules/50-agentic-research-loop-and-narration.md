@@ -49,6 +49,12 @@ the frontend `NarrationLog`.
    its sentence to describe exactly the chosen action (a small model once
    copied an example sentence promising a search it never ran).
 
+8a. **A down gate still obeys a plain order to search.** When no classifier or planner
+answers, `isExplicitWebRequest` (a lookup verb AND a web word, or "google it") turns
+`needsWeb` to yes and `plan` to a search of the user's own words. It is a backstop for
+an outage, never a second detector: a model verdict, yes or no, always wins. Without it
+the model answers "I cannot search the internet" to "please search internet for X".
+
 9. **Say how a page was read, from what was measured.** A page an escalated fetch tier
    served is narrated (`PAGE_READ`, built by `pageReadNarrations` from `EvidenceItem.fetch`),
    on every research path. Kind and outcome only: no URL, status, body or error text. A cache
