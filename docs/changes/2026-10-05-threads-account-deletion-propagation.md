@@ -65,6 +65,10 @@
 - `apps/claw-threads-service/package.json` (M)
 - `apps/claw-threads-service/Dockerfile` (M)
 - `apps/claw-threads-service/Dockerfile.dev` (M)
+- `apps/claw-threads-service/src/app/app.module.ts` (M)
+- `apps/claw-threads-service/src/app/config/app.config.ts` (M)
+- `apps/claw-threads-service/src/app/__tests__/app.module.spec.ts` (A)
+- `apps/claw-threads-service/src/app/config/__tests__/app.config.spec.ts` (M)
 - `package-lock.json` (M)
 - `tools/__tests__/dockerfile-shared-package-completeness.test.mjs` (verified; unchanged regression test)
 - `docs/08-runtime-devops/docker-guide.md` (M)
@@ -78,12 +82,12 @@ Auth deleted accounts without durable cross-service propagation. A failed or del
 
 ## Change
 
-Added Auth's transactional outbox and typed RabbitMQ event, idempotent Threads and Generation consumers, hashed tombstones, anonymous retention of eligible public work, private data cleanup, and enqueue guards. Fixed Windows deployment-test shell selection for Git Bash. Follow-up CI correction narrows the Auth service dependency to `Pick<UserDeletionOutboxRepository, 'deleteAccount'>` while injecting the repository class token explicitly. Production deployment exposed a missing `@claw/shared-rabbitmq` declaration and Docker build step in Threads; this follow-up adds both and records it in focused Docker regression coverage.
+Added Auth's transactional outbox and typed RabbitMQ event, idempotent Threads and Generation consumers, hashed tombstones, anonymous retention of eligible public work, private data cleanup, and enqueue guards. Fixed Windows deployment-test shell selection for Git Bash. Follow-up CI correction narrows the Auth service dependency to `Pick<UserDeletionOutboxRepository, 'deleteAccount'>` while injecting the repository class token explicitly. Production deployment first exposed a missing `@claw/shared-rabbitmq` package declaration and Docker build steps; after fixing that, runtime health checks exposed missing RabbitMQ module registration in Threads `AppModule`. The second fix adds the configured module, validates the existing `RABBITMQ_URL`, and adds a startup wiring regression test.
 
 ## Now
 
-Auth, Threads, Generation, and shared-types focused tests pass; touched workspaces typecheck/build; Prisma schemas validate; knowledge and inventory checks pass. CI run 37299284689 passed and release v1.188.0 published. Its production deployment failed while building Threads because the consumer's RabbitMQ workspace dependency was absent from the manifest and both Dockerfiles. The focused completeness test reproduced the gap before the Dockerfile fix and passes after it; the Threads build passes. Follow-up push, CI, and deployment evidence remain pending.
+The focused Docker completeness regression failed before the package/build fix and passes after it. Deployment run 37304305178 passed image builds but failed Threads health checks because `AppModule` omitted `RabbitMQModule`; sanitized logs confirm Nest could not resolve `RabbitMQService`. Production `.env`, local `.env`, and `.env.example` all contain `RABBITMQ_URL`. The new module/config regression tests now pass locally; the corrected fix still needs typecheck/build, push, CI, and redeployment.
 
 ## Why
 
-Account deletion previously hard-deleted Auth data without durable cross-service propagation. The approved retention policy now has a recoverable, idempotent implementation and explicit repository guidance. Release v1.188.0 is published; this follow-up fixes its production image build and awaits the normal release workflow.
+Account deletion previously hard-deleted Auth data without durable cross-service propagation. The approved retention policy now has a recoverable, idempotent implementation and explicit repository guidance. The existing RabbitMQ URL was present, but the new Threads consumer lacked runtime provider wiring. This follow-up keeps the service composition and configuration aligned with the working Generation service.

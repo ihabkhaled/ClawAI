@@ -7,6 +7,7 @@ import {
   SessionRevocationGuard,
 } from '@claw/shared-auth';
 import { THREADS_SERVICE } from '@claw/shared-constants';
+import { RabbitMQModule } from '@claw/shared-rabbitmq';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { EntitlementsModule, PermissionGuard } from '@claw/shared-entitlements';
@@ -40,6 +41,14 @@ import { AccountDeletionModule } from '../modules/account-deletion/account-delet
       },
     }),
     ThrottlerModule.forRoot(buildThrottlerOptions({ ttl: 60_000, limit: 2500 })),
+    RabbitMQModule.forRootAsync({
+      useFactory: () => ({
+        url: AppConfig.get().RABBITMQ_URL,
+        serviceName: 'threads-service',
+        queuePrefix: 'claw.threads',
+        prefetchCount: 1,
+      }),
+    }),
     EntitlementsModule.forRoot({
       authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,
       interServiceToken: AppConfig.get().INTER_SERVICE_AUTH_TOKEN,

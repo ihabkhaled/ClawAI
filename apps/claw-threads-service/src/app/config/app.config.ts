@@ -4,6 +4,7 @@ const appConfigSchema = z.object({
   NODE_ENV: z.string().default('development'),
   THREADS_SERVICE_PORT: z.coerce.number().int().positive().default(4019),
   THREADS_DATABASE_URL: z.string().min(1),
+  RABBITMQ_URL: z.string().url(),
   AUTH_SERVICE_URL: z.string().url(),
   THREAD_GENERATION_SERVICE_URL: z.string().url(),
   INTER_SERVICE_AUTH_TOKEN: z.string().min(32),

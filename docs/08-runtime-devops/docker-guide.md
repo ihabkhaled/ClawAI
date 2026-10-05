@@ -469,6 +469,13 @@ docker volume prune
 ./scripts/claw.sh service:rebuild <service>
 ```
 
+### `Nest can't resolve dependencies of ... RabbitMQService`
+
+**Cause**: A consumer injects `RabbitMQService`, but the service's `AppModule`
+does not configure `RabbitMQModule.forRootAsync`. Add the root module using the
+service's `RABBITMQ_URL` from `.env`; the variable is shared across services and
+is already declared in `.env.example`.
+
 ### `ERR_MODULE_NOT_FOUND` for `packages/shared-*/dist/<file>` (no `.js` extension)
 
 **Symptom**: A dev container crashes at boot with
