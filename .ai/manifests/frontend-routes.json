@@ -242,6 +242,11 @@
       "route": "/terms"
     },
     {
+      "file": "apps/claw-frontend/src/app/(marketing)/threads/[slug]/page.tsx",
+      "kind": "page",
+      "route": "/threads/[slug]"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(marketing)/use-cases/[task]/page.tsx",
       "kind": "page",
       "route": "/use-cases/[task]"

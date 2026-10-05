@@ -81,7 +81,10 @@ from the legacy chat-thread API. Owners can submit capped private revisions for
 fresh review, export Markdown or JSON, and unpublish a live publication.
 The owner portal now lists reader change requests. Owners can reject with an
 optional response or submit an edited, user-capped revision for fresh review.
-Public reader contribution and moderation UI remain unfinished.
+The public reader displays only approved articles, filters citation links to
+absolute HTTP(S), and supports authenticated comments, reactions, change
+requests, and reports. Comments remain identity-free. The reader is noindex
+until the public discovery and canonical metadata work in Batch 7.
 Authenticated readers can comment, react, request changes, and report content.
 Public comment responses omit author IDs. Owners can accept a change request by
 creating a newly capped immutable revision that goes through the usual fresh

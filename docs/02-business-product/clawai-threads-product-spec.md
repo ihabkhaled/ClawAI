@@ -70,7 +70,8 @@ author consensus plus Judge/Critic thresholds. A revision becomes eligible
 only after its exact content hash matches the completed review and the owner
 approves it. The previously approved revision remains public until then.
 Authenticated readers can comment, react once per publication, request changes,
-and report publications or visible comments. Public comments omit reader identity.
+and report publications or visible comments from the public reader page. Public
+comments omit reader identity; citation links accept only absolute HTTP(S) URLs.
 Owners resolve change requests; accepting one creates a fresh capped immutable
 revision and sends it through the existing paid review flow. The current approved
 revision stays public until the owner approves a passing replacement. Moderation
@@ -94,9 +95,9 @@ revisions stay private while they pass fresh safety and model review. Owners can
 export Markdown or JSON and unpublish a live item. Owners can review reader
 change requests from the same portal. Rejection can include a private response;
 acceptance requires an edited revision, selected spend cap, and fresh paid review.
-The accepted revision stays private until the owner approves it. Public-reader
-contribution controls and the full browser/accessibility/device QA walk remain
-open.
+The accepted revision stays private until the owner approves it. The public
+reader page and contribution controls are implemented; browser/accessibility/
+device QA remains open.
 
 Generation cancellation is owner-scoped. The portal shows a request in
 progress, confirms when the service accepts it, and prevents duplicate requests

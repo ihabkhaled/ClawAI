@@ -1,5 +1,10 @@
+import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
+
 import type { ThreadPublicationChangeRequestStatus } from '@/enums/thread-publication-change-request-status.enum';
+import type { ThreadPublicationCommunityAction } from '@/enums/thread-publication-community-action.enum';
 import type { ThreadPublicationExportFormat } from '@/enums/thread-publication-export-format.enum';
+import type { ThreadPublicationReaction } from '@/enums/thread-publication-reaction.enum';
+import type { ThreadPublicationReportReason } from '@/enums/thread-publication-report-reason.enum';
 import type { ThreadPublicationStatus } from '@/enums/thread-publication-status.enum';
 import type { ThreadRevisionRequest } from '@/utilities/thread-revision-request.utility';
 
@@ -66,6 +71,111 @@ export type ThreadPublicationChangeRequestResolution = {
   resolved: true;
   edit: ThreadRevisionRequestResult | null;
 };
+
+export type PublicThreadPublication = {
+  id: string;
+  slug: string;
+  title: string;
+  content: { markdown: string; citations: Array<{ url: string }> };
+  publishedAt: string;
+};
+
+export type PublicThreadComment = {
+  id: string;
+  content: string;
+  createdAt: string;
+};
+
+export type ThreadReactionSummary = {
+  likes: number;
+  dislikes: number;
+  viewerReaction: ThreadPublicationReaction | null;
+};
+
+export type ThreadReportReason = ThreadPublicationReportReason;
+
+export type ThreadPublicAction =
+  | { kind: ThreadPublicationCommunityAction.Comment; content: string }
+  | { kind: ThreadPublicationCommunityAction.ChangeRequest; suggestion: string }
+  | {
+      kind: ThreadPublicationCommunityAction.Report;
+      commentId?: string;
+      reason: ThreadReportReason;
+      details?: string;
+    }
+  | { kind: ThreadPublicationCommunityAction.Reaction; value: ThreadPublicationReaction | null };
+
+export type ThreadCommunityActionState = {
+  comment: string;
+  suggestion: string;
+  reportTarget: string | null;
+  reportReason: ThreadReportReason;
+  reportDetails: string;
+  isSubmitting: boolean;
+  actionComplete: boolean;
+  actionFailed: boolean;
+  setComment: (value: string) => void;
+  setSuggestion: (value: string) => void;
+  setReportTarget: (value: string | null) => void;
+  setReportReason: (value: ThreadReportReason) => void;
+  setReportDetails: (value: string) => void;
+  submitComment: () => void;
+  submitChangeRequest: () => void;
+  submitReport: () => void;
+  setReaction: (value: ThreadPublicationReaction | null) => void;
+};
+
+export type ThreadPublicPageController = {
+  publication: PublicThreadPublication | undefined;
+  comments: PublicThreadComment[];
+  reactions: ThreadReactionSummary | undefined;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  isNotFound: boolean;
+  isError: boolean;
+  communityLoading: boolean;
+  communityError: boolean;
+  loginHref: string;
+  actions: ThreadCommunityActionState;
+};
+
+export type ThreadCommunityPanelProps = {
+  comments: PublicThreadComment[];
+  reactions: ThreadReactionSummary | undefined;
+  isAuthenticated: boolean;
+  communityLoading: boolean;
+  communityError: boolean;
+  loginHref: string;
+  actions: ThreadCommunityActionState;
+};
+
+export type ThreadPublicArticleProps = {
+  publication: PublicThreadPublication;
+  truncatedLabel: string;
+  citationsLabel: string;
+  publishedLabel: string;
+};
+
+export type ThreadPublicPageViewProps = {
+  state: ThreadPublicPageController;
+};
+
+export type ThreadPublicReportFormProps = {
+  commentId: string;
+  actions: ThreadCommunityActionState;
+};
+
+export type ThreadPublicQueries = {
+  publication: UseQueryResult<PublicThreadPublication>;
+  comments: UseQueryResult<PublicThreadComment[]>;
+  reactions: UseQueryResult<ThreadReactionSummary>;
+};
+
+export type ThreadPublicMutation = UseMutationResult<
+  ThreadReactionSummary | null,
+  Error,
+  ThreadPublicAction
+>;
 
 export type ThreadChangeRequestsProps = {
   publicationId: string;
