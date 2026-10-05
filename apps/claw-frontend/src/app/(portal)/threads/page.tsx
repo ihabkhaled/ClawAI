@@ -153,7 +153,7 @@ export default function ThreadPublicationsPage(): ReactElement {
               className="border-input bg-background min-h-28 rounded-md border px-3 py-2"
             />
           </label>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="flex flex-col gap-1 text-sm">
               {t('threadPublicationType')}
               <select
@@ -183,7 +183,7 @@ export default function ThreadPublicationsPage(): ReactElement {
               />
             </label>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {selectedModels.map((model, index) => {
               let roleLabel = t('threadCriticModel');
               if (index < 3) {

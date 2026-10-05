@@ -28,7 +28,7 @@ The owner-state API now reports publication status so the UI only offers publish
 approval for a `READY_FOR_REVIEW` publication. Generation output remains private
 until the separate approval request succeeds. This record deliberately remains
 PARTIAL because browser, live API, RBAC, device, accessibility, full regression,
-and GitHub CI lanes are not yet proven. The sensitive-data guard flagged two
+and GitHub CI lanes are not yet proven. Normal pre-push hooks reported one repository-wide frontend test failure in the bounded-grid-tracks test because this new page used implicit mobile tracks; both grids now declare grid-cols-1 and the matching spec passes after the fix. The same hook's production build stopped while parsing BOM-prefixed package.json files in installed @radix-ui/react-slot and react-hook-form dependencies; the build remains unverified. The sensitive-data guard flagged two
 pre-existing high-entropy Japanese password-validation examples in `ja.ts`; the
 diff adds only localized Threads labels and contains no credentials or tokens.
 
