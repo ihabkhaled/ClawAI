@@ -22,7 +22,7 @@ npm run dev
 - Prisma models: ThreadPublication, ThreadPublicationChangeRequest, ThreadPublicationComment, ThreadPublicationReaction, ThreadPublicationReport, ThreadPublicationRevision
 - API endpoints: 21 (see `.ai/manifests/api-endpoints.json`)
 - Test files: 12 (vitest)
-- Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-types, @claw/shared-utilities
+- Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing
 1. `npm run knowledge:context -- --task="<task>" --service=threads-service`

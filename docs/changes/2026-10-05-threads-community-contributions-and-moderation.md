@@ -2,6 +2,10 @@
 
 ## Files
 
+- `apps/claw-threads-service/package.json` (M)
+- `apps/claw-threads-service/Dockerfile` (M)
+- `apps/claw-threads-service/Dockerfile.dev` (M)
+- `package-lock.json` (M)
 - `apps/claw-threads-service/prisma/migrations/20261005170000_threads_community/migration.sql` (A)
 - `apps/claw-threads-service/src/common/enums/publication-report-resolution.enum.ts` (A)
 - `apps/claw-threads-service/src/modules/publications/controllers/__tests__/publication-community.controllers.spec.ts` (A)
@@ -51,7 +55,9 @@
 
 Threads supported owner-managed publications and immutable revisions but had
 no contribution or report endpoints. The accepted account-deletion policy had
-no durable cross-service implementation.
+no durable cross-service implementation. The initial release build also
+revealed that Threads Docker builds require explicit workspace dependencies;
+production remained on the previous release when that build failed.
 
 ## Change
 
@@ -59,13 +65,18 @@ Added authenticated comments, reactions, change requests, and reports with
 moderator-only report resolution. Accepting a change request creates a fresh
 capped revision through the existing review workflow. Added the community
 tables/migration, service/controller/repository coverage, docs and QA record.
+Added the missing `@claw/shared-entitlements` workspace dependency, lockfile
+entry, and shared-package builds in both Threads Dockerfiles after the
+production image build exposed the undeclared import.
 
 ## Now
 
 Community backend actions are available and gated by authentication, owner
 checks, publication visibility, and moderator permission. Public comments omit
 author IDs. Account deletion, community UI, internationalization and integrated
-authenticated role verification remain unimplemented.
+authenticated role verification remain unimplemented. The failed release build
+did not recreate production containers; the corrected dependency and Docker
+build steps are queued for the next release build.
 
 ## Why
 
@@ -94,10 +105,15 @@ still serves them. No public API previously existed for these actions.
 
 ## Verification
 
-Six focused specs passed (30 tests); Threads typecheck, changed-file ESLint,
-Prettier, build, Prisma schema validation and migration status passed. Local API
-probes confirmed unauthenticated comment/moderation denial; QA evidence records
-remaining role, e2e, UI and UAT gaps. Knowledge and inventory checks passed.
+Six focused specs passed (30 tests), and the corrected generation-client spec
+passed (1 test); CI later passed all 53 affected service tests. Threads
+typecheck, changed-file ESLint, Prettier, build, Prisma schema validation and
+migration status passed. Local API probes confirmed unauthenticated
+comment/moderation denial. The first production image build failed on the
+undeclared entitlements import before containers were recreated. Package and
+Dockerfile fixes are included; local dev and production image builds passed
+with both shared packages. Production deployment retry remains pending.
+Knowledge and inventory checks passed.
 
 ## Stale when
 

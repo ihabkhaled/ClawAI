@@ -458,6 +458,10 @@
     },
     {
       "from": "claw-threads-service",
+      "to": "@claw/shared-entitlements"
+    },
+    {
+      "from": "claw-threads-service",
       "to": "@claw/shared-types"
     },
     {
