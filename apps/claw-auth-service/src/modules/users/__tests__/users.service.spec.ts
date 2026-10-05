@@ -1,5 +1,6 @@
 import { type Mock, vi } from 'vitest';
 import { UsersService } from '../services/users.service';
+import { type UserDeletionOutboxRepository } from '../repositories/user-deletion-outbox.repository';
 import { type UsersRepository } from '../repositories/users.repository';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
@@ -86,6 +87,7 @@ describe('UsersService', () => {
     assignDefaultPlan: Mock;
     assignTrialPlanOnce: Mock;
   };
+  let userDeletionOutbox: { deleteAccount: Mock };
 
   beforeEach(() => {
     repository = mockRepository();
@@ -97,12 +99,14 @@ describe('UsersService', () => {
       assignDefaultPlan: vi.fn(),
       assignTrialPlanOnce: vi.fn(),
     };
+    userDeletionOutbox = { deleteAccount: vi.fn() };
     service = new UsersService(
       repository as unknown as UsersRepository,
       rabbitMQ as unknown as RabbitMQService,
       authEmailAdapter as unknown as AuthEmailAdapter,
       rolesService as unknown as RolesService,
       plansRepository as unknown as PlansRepository,
+      userDeletionOutbox as UserDeletionOutboxRepository,
     );
   });
 
@@ -255,12 +259,9 @@ describe('UsersService', () => {
     it('verifies the current password, revokes sessions, and deletes the user', async () => {
       repository.findById.mockResolvedValue(mockUser);
       vi.mocked(verifyPassword).mockResolvedValue(true);
-      repository.deleteById.mockResolvedValue(mockUser);
-
       await service.deleteOwnAccount('user-1', { currentPassword: 'CurrentPass1!' });
 
-      expect(repository.revokeSessionsByUserId).toHaveBeenCalledWith('user-1');
-      expect(repository.deleteById).toHaveBeenCalledWith('user-1');
+      expect(userDeletionOutbox.deleteAccount).toHaveBeenCalledWith('user-1');
     });
 
     it('rejects an incorrect password without deleting the user', async () => {
@@ -270,7 +271,7 @@ describe('UsersService', () => {
       await expect(
         service.deleteOwnAccount('user-1', { currentPassword: 'WrongPass1!' }),
       ).rejects.toMatchObject({ code: 'INVALID_CURRENT_PASSWORD' });
-      expect(repository.deleteById).not.toHaveBeenCalled();
+      expect(userDeletionOutbox.deleteAccount).not.toHaveBeenCalled();
     });
   });
 

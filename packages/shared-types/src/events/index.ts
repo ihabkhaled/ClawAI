@@ -1,4 +1,5 @@
 export { EventPattern } from './event-patterns';
+export type { UserDeletedPayload } from './event-payloads.type';
 export type {
   ThreadGenerationRequestedPayload,
   ThreadGenerationCompletedPayload,

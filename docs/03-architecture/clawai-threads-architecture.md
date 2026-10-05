@@ -112,5 +112,14 @@ Community comments, reactions, change requests, and reports are stored in the
 Threads database. Public comment responses omit author identifiers. Owner
 change acceptance creates an immutable revision through generation-service;
 moderation routes require `THREAD_PUBLICATIONS_MODERATE`. Account-deletion
-processing is a separate unfinished integration and must complete before the
-anonymous-retention policy is considered delivered.
+propagation is implemented through Auth's durable outbox and idempotent service
+consumers; full live cross-service QA remains open.
+
+# Account deletion propagation
+
+Auth writes a `user.deleted` outbox event in the same transaction that deletes
+the account. A scheduled publisher retries delivery. Threads and Thread
+Generation consume the shared event independently and apply their service-owned
+retention policy with idempotent transactions and SHA-256 tombstones. Threads
+retains only eligible approved public revisions anonymously; generation rejects
+future enqueue for deleted accounts. See [ADR-160](../13-adr/adr-160-threads-account-deletion-propagation.md).

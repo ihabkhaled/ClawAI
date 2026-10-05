@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
 import {
-  type Prisma,
+  Prisma,
   PublicationCommentStatus,
   PublicationReactionValue,
   PublicationReportStatus,
@@ -47,15 +47,27 @@ export class PublicationsRepository {
     ownerId: string,
     generationJobId: string,
   ): Promise<{ id: string; slug: string; ownerId: string } | null> {
-    const publication = await this.prisma.threadPublication.upsert({
-      where: { generationJobId },
-      create: { ownerId, generationJobId, slug: randomUUID() },
-      update: {},
-      select: { id: true, slug: true, ownerId: true },
-    });
-    return publication.ownerId === ownerId
-      ? { id: publication.id, slug: publication.slug, ownerId }
-      : null;
+    return this.prisma.$transaction(
+      async (transaction) => {
+        const accountHash = createHash('sha256').update(ownerId).digest('hex');
+        const deleted = await transaction.threadDeletedAccount.findUnique({
+          where: { accountHash },
+          select: { accountHash: true },
+        });
+        if (deleted) return null;
+
+        const publication = await transaction.threadPublication.upsert({
+          where: { generationJobId },
+          create: { ownerId, generationJobId, slug: randomUUID() },
+          update: {},
+          select: { id: true, slug: true, ownerId: true },
+        });
+        return publication.ownerId === ownerId
+          ? { id: publication.id, slug: publication.slug, ownerId }
+          : null;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   async findOwnedGeneration(

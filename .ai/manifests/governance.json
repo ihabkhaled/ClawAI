@@ -342,7 +342,11 @@
       "file": "rules/60-qa-evidence-is-mandatory-and-machine-checked.md"
     },
     {
-      "bytes": 7325,
+      "bytes": 1001,
+      "file": "rules/61-threads-account-deletion.md"
+    },
+    {
+      "bytes": 7539,
       "file": "rules/README.md"
     }
   ],
@@ -388,7 +392,7 @@
       "file": "skills/09-refactor-toolkit.md"
     },
     {
-      "bytes": 7410,
+      "bytes": 7503,
       "file": "skills/README.md"
     },
     {
@@ -658,6 +662,10 @@
     {
       "bytes": 4992,
       "file": "skills/propagate-a-chat-change-to-every-mode.md"
+    },
+    {
+      "bytes": 2566,
+      "file": "skills/propagate-account-deletion.md"
     },
     {
       "bytes": 14444,

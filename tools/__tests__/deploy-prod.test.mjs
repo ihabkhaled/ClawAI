@@ -1,23 +1,29 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import process from 'node:process';
 import { test } from 'node:test';
 
 import { repoPath } from '../lib/repo.mjs';
 
-const script = readFileSync(repoPath('scripts/deploy-prod.sh'), 'utf8');
+const script = readFileSync(repoPath('scripts/deploy-prod.sh'), 'utf8').replaceAll('\r\n', '\n');
+const gitBash = 'C:/Program Files/Git/bin/bash.exe';
+const bashBinary = process.platform === 'win32' && existsSync(gitBash) ? gitBash : 'bash';
 const gitignore = readFileSync(repoPath('.gitignore'), 'utf8');
 const prodCompose = readFileSync(repoPath('docker/docker-compose.prod.services.yml'), 'utf8');
-const prodDatabaseCompose = readFileSync(repoPath('docker/docker-compose.prod.databases.yml'), 'utf8');
+const prodDatabaseCompose = readFileSync(
+  repoPath('docker/docker-compose.prod.databases.yml'),
+  'utf8',
+);
 const devCompose = readFileSync(repoPath('docker/docker-compose.dev.services.yml'), 'utf8');
 const bashInstaller = readFileSync(repoPath('scripts/install.sh'), 'utf8');
 const powershellInstaller = readFileSync(repoPath('scripts/install.ps1'), 'utf8');
 const envExample = readFileSync(repoPath('.env.example'), 'utf8');
 
 test('deploy-prod.sh is syntactically valid bash', () => {
-  const result = spawnSync('bash', ['-n', 'scripts/deploy-prod.sh'], {
+  const result = spawnSync(bashBinary, ['-n', 'scripts/deploy-prod.sh'], {
     encoding: 'utf8',
     cwd: repoPath(),
   });
@@ -30,8 +36,8 @@ test('deploy-prod composes production databases with services for dependency val
     script,
     /-f "\$PROJECT_ROOT\/\$DB_COMPOSE_REL"\s+-f "\$PROJECT_ROOT\/\$SVC_COMPOSE_REL"/u,
   );
-  assert.match(prodDatabaseCompose, /^  pg-thread-generation:/mu);
-  assert.match(prodCompose, /^      pg-thread-generation:/mu);
+  assert.match(prodDatabaseCompose, /^ {2}pg-thread-generation:/mu);
+  assert.match(prodCompose, /^ {6}pg-thread-generation:/mu);
 });
 
 test('deploy-prod.sh runs under a strict shell mode', () => {
@@ -230,7 +236,7 @@ function versionOnly(before, after) {
     writeFileSync(join(dir, 'before.json'), JSON.stringify(before, null, 2));
     writeFileSync(join(dir, 'after.json'), JSON.stringify(after, null, 2));
     const result = spawnSync(
-      'bash',
+      bashBinary,
       [
         '-c',
         `${bashFunction('manifest_differs_only_in_versions')}\nmanifest_differs_only_in_versions "$1" "$2" "$3"`,
@@ -457,7 +463,7 @@ test(
         : false,
   },
   () => {
-    const result = spawnSync('bash', ['tools/__tests__/deploy-prod-e2e.sh'], {
+    const result = spawnSync(bashBinary, ['tools/__tests__/deploy-prod-e2e.sh'], {
       encoding: 'utf8',
       cwd: repoPath(),
     });
@@ -585,7 +591,7 @@ function bashFunction(name) {
 }
 
 function runBash(source) {
-  const result = spawnSync('bash', ['-c', source], { encoding: 'utf8' });
+  const result = spawnSync(bashBinary, ['-c', source], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
   return result.stdout.replaceAll('\r', '');
 }

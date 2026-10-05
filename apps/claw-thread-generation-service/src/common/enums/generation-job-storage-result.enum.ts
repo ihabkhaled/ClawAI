@@ -2,4 +2,5 @@ export enum GenerationJobStorageResult {
   SUCCESS = 'SUCCESS',
   CONFLICT = 'CONFLICT',
   STORAGE_ERROR = 'STORAGE_ERROR',
+  ACCOUNT_DELETED = 'ACCOUNT_DELETED',
 }

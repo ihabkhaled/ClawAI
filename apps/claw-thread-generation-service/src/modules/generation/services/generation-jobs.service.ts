@@ -100,6 +100,8 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
         throw new ConflictException('Idempotency key was already used for a different generation');
       case GenerationJobStorageResult.STORAGE_ERROR:
         throw new InternalServerErrorException('Generation job could not be stored');
+      case GenerationJobStorageResult.ACCOUNT_DELETED:
+        throw new ConflictException('Deleted accounts cannot enqueue Threads generation');
       case GenerationJobStorageResult.SUCCESS:
         break;
     }
@@ -145,6 +147,8 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       case GenerationJobStorageResult.STORAGE_ERROR:
         await this.budgets.close(budget.id, GenerationBudgetCloseStatus.RELEASED);
         throw new InternalServerErrorException('Revision review job could not be stored');
+      case GenerationJobStorageResult.ACCOUNT_DELETED:
+        throw new ConflictException('Deleted accounts cannot request a Threads revision');
       case GenerationJobStorageResult.SUCCESS:
         break;
     }

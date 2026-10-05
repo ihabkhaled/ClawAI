@@ -46,6 +46,12 @@ export interface UserLogoutPayload extends BaseEventPayload {
   userId: string;
 }
 
+export interface UserDeletedPayload extends BaseEventPayload {
+  eventId: string;
+  userId: string;
+  deletedAt: string;
+}
+
 export interface UserRoleChangedPayload extends BaseEventPayload {
   userId: string;
   previousRole: UserRole;

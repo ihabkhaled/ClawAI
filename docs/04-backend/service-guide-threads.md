@@ -37,6 +37,11 @@ migrations.
 
 ## References
 
+- Account deletion is consumed from Auth's `user.deleted` outbox event. The
+  service writes a hashed tombstone, retains only eligible approved public
+  revisions anonymously, and removes private snapshots and account-linked
+  interactions. See rule 61 and ADR-160.
+
 - [Threads product spec](../02-business-product/clawai-threads-product-spec.md)
 - [Threads architecture](../03-architecture/clawai-threads-architecture.md)
 - [Backend service index](services-index.md)

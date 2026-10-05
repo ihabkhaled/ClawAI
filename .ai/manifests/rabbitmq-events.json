@@ -746,6 +746,11 @@
       "source": "packages/shared-types/src/events/event-patterns.ts"
     },
     {
+      "key": "USER_DELETED",
+      "pattern": "user.deleted",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
       "key": "USER_LOGIN",
       "pattern": "user.login",
       "source": "packages/shared-types/src/events/event-patterns.ts"

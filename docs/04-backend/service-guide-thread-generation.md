@@ -54,6 +54,10 @@ cancels queued jobs or requests cancellation between provider calls.
 
 ## References
 
+- Account deletion consumes Auth's `user.deleted` event, removes private jobs,
+  and stores a hashed tombstone. Enqueue rejects deleted accounts. See rule 61
+  and ADR-160.
+
 - [Threads product spec](../02-business-product/clawai-threads-product-spec.md)
 - [Threads architecture](../03-architecture/clawai-threads-architecture.md)
 - [Backend service index](services-index.md)

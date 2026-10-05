@@ -80,6 +80,16 @@ model ThreadPublication {
   @@map("thread_publications")
 }
 
+/// Hashed tombstone prevents late queued work from recreating deleted account data.
+model ThreadDeletedAccount {
+  accountHash String   @id @map("account_hash")
+  eventId     String   @unique @map("event_id")
+  deletedAt   DateTime @map("deleted_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("thread_deleted_accounts")
+}
+
 model ThreadPublicationRevision {
   id                 String                  @id @default(cuid())
   publicationId      String                  @map("publication_id")
@@ -137,16 +147,16 @@ model ThreadPublicationReaction {
 }
 
 model ThreadPublicationChangeRequest {
-  id            String                         @id @default(cuid())
-  publicationId String                         @map("publication_id")
-  publication   ThreadPublication              @relation(fields: [publicationId], references: [id], onDelete: Cascade)
-  requesterId   String?                        @map("requester_id")
-  suggestion    String                         @db.VarChar(5000)
-  status        PublicationChangeRequestStatus @default(PENDING)
-  ownerResponse String?                        @map("owner_response") @db.VarChar(2000)
-  acceptedRevisionId String?                   @map("accepted_revision_id")
-  createdAt     DateTime                       @default(now()) @map("created_at")
-  updatedAt     DateTime                       @updatedAt @map("updated_at")
+  id                 String                         @id @default(cuid())
+  publicationId      String                         @map("publication_id")
+  publication        ThreadPublication              @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  requesterId        String?                        @map("requester_id")
+  suggestion         String                         @db.VarChar(5000)
+  status             PublicationChangeRequestStatus @default(PENDING)
+  ownerResponse      String?                        @map("owner_response") @db.VarChar(2000)
+  acceptedRevisionId String?                        @map("accepted_revision_id")
+  createdAt          DateTime                       @default(now()) @map("created_at")
+  updatedAt          DateTime                       @updatedAt @map("updated_at")
 
   @@index([publicationId, status, createdAt])
   @@index([requesterId, createdAt])

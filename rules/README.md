@@ -95,3 +95,4 @@ No silent bypasses: an undocumented `eslint-disable`, `@ts-expect-error`, or
 `--no-verify` is a defect, not a waiver.
 | [`59-chat-surfaces-are-one-pipeline.md`](59-chat-surfaces-are-one-pipeline.md) | Compare/Consensus/Escalation/labs/judge are surfaces over normal chat: shared gateways, thread resolver, DTO fragments, composer spread; a chat change is not done until propagated; guard spec |
 | [`60-qa-evidence-is-mandatory-and-machine-checked.md`](60-qa-evidence-is-mandatory-and-machine-checked.md) | STRICT: fifteen QA lanes (unit, manual API, manual browser, e2e, RBAC+plans, device matrix, UAT, product, business, regression, security, perf, i18n, docs) recorded per batch in docs/qa-evidence and checked by CI |
+| [`61-threads-account-deletion.md`](61-threads-account-deletion.md) | Auth outbox, typed deletion event, idempotent service consumers, hashed tombstones, anonymous public retention, and private artifact erasure |

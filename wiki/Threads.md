@@ -71,5 +71,8 @@ Authenticated readers can comment, react, request changes, and report content.
 Public comment responses omit author IDs. Owners can accept a change request by
 creating a newly capped immutable revision that goes through the usual fresh
 review and owner-approval flow. Moderation endpoints require
-`THREAD_PUBLICATIONS_MODERATE`. Account deletion processing, UI, and discovery
-integration remain unfinished.
+`THREAD_PUBLICATIONS_MODERATE`. Auth deletion uses a transactional outbox and
+`user.deleted` event. Threads keeps eligible approved work public anonymously,
+removes private snapshots and account links, and records a hashed tombstone;
+Generation removes private jobs and rejects later enqueue. UI and discovery
+integration remain unfinished. Live deletion-flow QA remains open.

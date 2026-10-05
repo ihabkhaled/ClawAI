@@ -3,6 +3,7 @@ import { ThreadGenerationStatus } from '../../../../generated/prisma';
 
 function buildRepository(overrides: Record<string, unknown> = {}) {
   const tx = {
+    threadDeletedAccount: { findUnique: vi.fn().mockResolvedValue(null) },
     threadGenerationJob: {
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       findUnique: vi.fn().mockResolvedValue({ id: 'job-1', attemptCount: 1 }),
@@ -130,7 +131,17 @@ describe('GenerationJobsRepository recovery', () => {
         .fn()
         .mockResolvedValue({ id: 'review-job', status: ThreadGenerationStatus.QUEUED }),
     };
-    const repository = new GenerationJobsRepository({ threadGenerationJob: jobDelegate } as never);
+    const transaction = {
+      threadDeletedAccount: { findUnique: vi.fn().mockResolvedValue(null) },
+      threadGenerationJob: jobDelegate,
+    };
+    const prisma = {
+      ...transaction,
+      $transaction: vi.fn(async (operation: (client: typeof transaction) => unknown) =>
+        operation(transaction),
+      ),
+    };
+    const repository = new GenerationJobsRepository(prisma as never);
     const input = {
       ownerId: 'owner-1',
       parentJobId: 'parent-job',

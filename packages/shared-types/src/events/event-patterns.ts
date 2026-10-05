@@ -6,6 +6,7 @@ export enum EventPattern {
   USER_DEACTIVATED = 'user.deactivated',
   USER_UPDATED = 'user.updated',
   USER_REACTIVATED = 'user.reactivated',
+  USER_DELETED = 'user.deleted',
   USER_ACTIVATED = 'user.activated',
   USER_TEMPORARY_PASSWORD_ISSUED = 'user.temporary_password_issued',
   MESSAGE_CREATED = 'message.created',

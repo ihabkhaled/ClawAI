@@ -1366,6 +1366,17 @@
     },
     {
       "consumers": [
+        "claw-thread-generation-service",
+        "claw-threads-service"
+      ],
+      "key": "USER_DELETED",
+      "pattern": "user.deleted",
+      "producers": [
+        "claw-auth-service"
+      ]
+    },
+    {
+      "consumers": [
         "claw-audit-service"
       ],
       "key": "USER_LOGIN",

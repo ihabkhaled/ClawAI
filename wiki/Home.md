@@ -42,6 +42,8 @@ Welcome to the **ClawAI engineering and product Wiki**. This Wiki is generated f
 
 ## Deep-dive areas
 
+- **Threads:** [[Threads]] — publication lifecycle, generation, community, and account deletion policy
+
 - **AI orchestration:** [[Routing-Engine]], [[Provider-Catalog]], [[Memory-and-Context-Architecture]], [[File-Support-Architecture]]
 - **Runtime:** [[Docker-and-DevOps-Architecture]], [[Nginx-Reference]], [[CI-CD-Pipeline]], [[Logging-and-Observability]]
 - **Quality:** [[Testing-and-QA-Architecture]], [[Quality-Gates]], [[UAT-Guide]], [[Reviewer-Roles]]

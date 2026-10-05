@@ -210,6 +210,29 @@ migration, docs, and focused tests are implemented. The batch remains partial:
 account-deletion processing, UI, internationalization, and integrated role
 fixtures are follow-up work. See `docs/changes/2026-10-05-threads-community-contributions-and-moderation.md`.
 
+**5c-a production result (2026-10-05):** Release `v1.187.1` at
+`0a7df7e590e9ac4c1d7abff444148a8dd40897b9` is deployed. The deployment status
+file records `completed` at that SHA; Threads API and generation containers
+report healthy; production nginx passes `nginx -t`; the generation API returns
+401 without credentials through nginx and `/api/v1/health` returns 200. The
+corrected production image build includes `@claw/shared-entitlements` in both
+Threads Docker build stages. See the updated community QA evidence.
+
+**5c-b plan — durable account deletion and anonymous retention:**
+
+**Status (2026-10-05):** Implemented in this working batch. Auth writes a
+transactional outbox event; Threads and Generation consume it idempotently with
+hashed tombstones and the approved retention policy. Focused specs pass; live
+cross-service QA, lint/typecheck/build, generated knowledge, and CI remain open.
+
+- **Code paths:** add `USER_DELETED` to `packages/shared-types/src/events/event-patterns.ts` and its payload to `event-payloads.type.ts`; add an Auth-owned deletion outbox model/migration in `apps/claw-auth-service/prisma/` plus `users.repository.ts`, `users.service.ts`, `users.module.ts`, a deletion-outbox repository/publisher and focused specs. Add deletion tombstones/migrations and layered account-deletion consumer/service/repository/specs to `apps/claw-threads-service/src/modules/account-deletion/` and `apps/claw-thread-generation-service/src/modules/account-deletion/`; guard publication/job creation in their existing repositories against a tombstoned account. No new public route or environment variable.
+- **Callers/contracts:** Auth account deletion transaction -> durable outbox -> typed RabbitMQ event -> independent idempotent consumers in Threads and Thread Generation. Keep service database ownership; do not synchronously fan out HTTP or cross-read a database.
+- **Data/deletion:** retain only Threads revisions already owner-approved and public, clear source snapshots and owner identity, delete private/unapproved publications and all generation jobs/artifacts, remove publication reactions, anonymize visible comments, delete pending change requests, and clear deleted reporter/moderator identity from retained moderation records. Persist a one-way account digest plus event ID as a tombstone, never the raw account ID, in each consumer database. Outbox payload is cleared after successful publish; delivery is at least once and consumers are idempotent.
+- **Knowledge delta in the same commit:** update this plan, `docs/02-business-product/clawai-threads-product-spec.md`, `docs/03-architecture/clawai-threads-architecture.md`, `docs/03-architecture/data-ownership.md`, `docs/04-backend/service-guide-threads.md`, `docs/04-backend/service-guide-thread-generation.md`, `wiki/Threads.md`, `docs/wiki/index.md`, `context/database-ownership-map.md`, `context/service-dependency-map.md`, `memory/2026-10-04-clawai-threads-product-decisions.md`, `docs/13-adr/adr-index.md`; add ADR-160, `rules/61-threads-account-deletion.md`, `skills/handle-cross-service-account-deletion.md`, `docs/changes/2026-10-05-threads-account-deletion.md`, and `docs/qa-evidence/2026-10-05-threads-account-deletion.md`; update the existing community QA record with the successful release/deployment proof and register the new rule in `rules/README.md`. Regenerate `.ai/**`, service `AGENTS.md` files, and `docs/features/ai-native-engineering-os/inventory.snapshot.json` from their sources.
+- **Why no other knowledge:** no new public behavior, plan permission, model role, or user-facing string is introduced. No `.env.example`, installer, nginx, README, or locale edit is needed; the new delivery uses existing RabbitMQ configuration and the launch UI is a later batch.
+- **Scoped gate, once at the end:** changed-file ESLint/Prettier and matching specs; Auth, shared-types, Threads, and Thread Generation workspace typecheck/build; validate and apply the three additive local migrations; focused data-retention/idempotency probes; run the QA evidence checker and Akinator path/sensitive/version checks; then normal hooks, push, CI, release, deploy, and production health verification.
+- **Assumptions:** Auth's existing self-delete endpoint remains the sole initiator; event delivery is at least once; anonymized approved publication content remains public by the owner's decision. If account IDs become reusable or a legal retention rule requires a different record policy, the digest/tombstone and cleanup policy must be revisited.
+
 **Code:**
 
 - Add publication/revision/comment/reaction/change-request/report/moderation models and migration to `apps/claw-threads-service/prisma/schema.prisma`.

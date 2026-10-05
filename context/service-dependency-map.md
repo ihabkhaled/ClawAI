@@ -101,3 +101,10 @@ between hops is verified against the local CA.
 Thread generation calls service-token guarded Auth endpoints for the aggregate
 job cap and provider-call sub-holds. Auth owns this ledger; provider rates and
 wallet reservations stay in the existing credit system.
+
+# Account deletion event flow
+
+`claw-auth-service` publishes `user.deleted` from its transactional outbox.
+`claw-threads-service` and `claw-thread-generation-service` consume independently
+and write hashed tombstones in their own databases. No cross-service database
+access is allowed. See ADR-160 and rule 61.

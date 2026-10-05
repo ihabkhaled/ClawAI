@@ -247,3 +247,9 @@ generation, publication, safety, discovery, and QA paths are verified.
   (migration `20260929100000_team_plan_description_drops_pooling_claim`, seed text
   now "A large monthly allowance for heavy daily use."); the feature itself is
   still REQ-POS-005.
+
+# ClawAI Threads
+
+Threads turns private chat into sourced publications using an isolated
+generation workflow. Owners approve before publication; approved work remains
+public anonymously after account deletion. See [[Threads]] and the product spec.

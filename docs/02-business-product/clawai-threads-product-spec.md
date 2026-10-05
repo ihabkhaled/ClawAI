@@ -27,6 +27,9 @@ participation is open to authenticated users under existing moderation rules.
 - On account deletion, keep approved revisions public with anonymous
   attribution; delete private snapshots and generation artifacts, remove
   reactions, anonymize public comments, and delete pending private requests.
+  Auth records a durable outbox event with deletion; each Threads service applies
+  this policy in its own database. Delayed and duplicate delivery is safe, and
+  tombstones prevent later jobs from restoring deleted account data.
 
 ## Budget and plan enforcement
 

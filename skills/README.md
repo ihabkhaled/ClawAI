@@ -145,6 +145,10 @@ navigation skills above:
 - [`meter-a-paid-provider-call.md`](./meter-a-paid-provider-call.md)
 - [`deploy-payg-credit.md`](./deploy-payg-credit.md)
 
+### Account lifecycle
+
+- [`propagate-account-deletion.md`](./propagate-account-deletion.md)
+
 ---
 
 ## Keeping skills current

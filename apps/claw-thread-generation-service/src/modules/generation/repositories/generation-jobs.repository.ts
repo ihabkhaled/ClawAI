@@ -48,6 +48,9 @@ export class GenerationJobsRepository {
     hash: string,
     budgetId: string,
   ): Promise<GenerationJobStorageResponse> {
+    if (await this.isAccountDeleted(input.ownerId)) {
+      return { result: GenerationJobStorageResult.ACCOUNT_DELETED };
+    }
     const existing = await this.prisma.threadGenerationJob.findUnique({
       where: { idempotencyKey: input.idempotencyKey },
     });
@@ -58,21 +61,34 @@ export class GenerationJobsRepository {
         : { result: GenerationJobStorageResult.SUCCESS, job: existing };
     }
     try {
-      const job = await this.prisma.threadGenerationJob.create({
-        data: {
-          ownerId: input.ownerId,
-          sourceThreadId: input.sourceThreadId,
-          idempotencyKey: input.idempotencyKey,
-          correlationId: input.correlationId,
-          sourceSnapshot: sourceSnapshot as Prisma.InputJsonValue,
-          sourceSnapshotHash: hash,
-          request: JSON.parse(JSON.stringify(input)) as Prisma.InputJsonValue,
-          budgetId,
-          spendCapMicroUsd: BigInt(input.spendCapMicroUsd),
-          publicIntentVersion: input.publicIntentVersion,
-          publicIntentAt: new Date(),
+      const created = await this.prisma.$transaction(
+        async (transaction) => {
+          const deleted = await transaction.threadDeletedAccount.findUnique({
+            where: { accountHash: this.hashUserId(input.ownerId) },
+            select: { accountHash: true },
+          });
+          if (deleted) return { accountDeleted: true as const };
+          const job = await transaction.threadGenerationJob.create({
+            data: {
+              ownerId: input.ownerId,
+              sourceThreadId: input.sourceThreadId,
+              idempotencyKey: input.idempotencyKey,
+              correlationId: input.correlationId,
+              sourceSnapshot: sourceSnapshot as Prisma.InputJsonValue,
+              sourceSnapshotHash: hash,
+              request: JSON.parse(JSON.stringify(input)) as Prisma.InputJsonValue,
+              budgetId,
+              spendCapMicroUsd: BigInt(input.spendCapMicroUsd),
+              publicIntentVersion: input.publicIntentVersion,
+              publicIntentAt: new Date(),
+            },
+          });
+          return { accountDeleted: false as const, job };
         },
-      });
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+      if (created.accountDeleted) return { result: GenerationJobStorageResult.ACCOUNT_DELETED };
+      const { job } = created;
       return { result: GenerationJobStorageResult.SUCCESS, job };
     } catch (error: unknown) {
       if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
@@ -87,6 +103,14 @@ export class GenerationJobsRepository {
         ? { result: GenerationJobStorageResult.SUCCESS, job: raced }
         : { result: GenerationJobStorageResult.CONFLICT };
     }
+  }
+
+  private async isAccountDeleted(userId: string): Promise<boolean> {
+    const tombstone = await this.prisma.threadDeletedAccount.findUnique({
+      where: { accountHash: this.hashUserId(userId) },
+      select: { accountHash: true },
+    });
+    return tombstone !== null;
   }
 
   async findRevisionReviewByIdempotencyKey(
@@ -131,6 +155,9 @@ export class GenerationJobsRepository {
     input: EnqueueRevisionReviewDto,
     budgetId: string,
   ): Promise<GenerationJobStorageResponse> {
+    if (await this.isAccountDeleted(input.ownerId)) {
+      return { result: GenerationJobStorageResult.ACCOUNT_DELETED };
+    }
     const parent = await this.findRevisionParent(input.parentJobId, input.ownerId);
     if (!parent || parent.evidenceBundle === null || !parent.evidenceBundleHash) {
       return { result: GenerationJobStorageResult.STORAGE_ERROR };
@@ -157,24 +184,37 @@ export class GenerationJobsRepository {
         : { result: GenerationJobStorageResult.SUCCESS, job: existing };
     }
     try {
-      const job = await this.prisma.threadGenerationJob.create({
-        data: {
-          ownerId: input.ownerId,
-          sourceThreadId: parent.sourceThreadId,
-          idempotencyKey: input.idempotencyKey,
-          correlationId: input.correlationId,
-          sourceSnapshot: parent.sourceSnapshot as Prisma.InputJsonValue,
-          sourceSnapshotHash: parent.sourceSnapshotHash,
-          evidenceBundle: parent.evidenceBundle as Prisma.InputJsonValue,
-          evidenceBundleHash: parent.evidenceBundleHash,
-          evidenceVersion: parent.evidenceVersion,
-          request: JSON.parse(JSON.stringify(request)) as Prisma.InputJsonValue,
-          budgetId,
-          spendCapMicroUsd: BigInt(input.spendCapMicroUsd),
-          publicIntentVersion: parent.publicIntentVersion,
-          publicIntentAt: parent.publicIntentAt,
+      const created = await this.prisma.$transaction(
+        async (transaction) => {
+          const deleted = await transaction.threadDeletedAccount.findUnique({
+            where: { accountHash: this.hashUserId(input.ownerId) },
+            select: { accountHash: true },
+          });
+          if (deleted) return { accountDeleted: true as const };
+          const job = await transaction.threadGenerationJob.create({
+            data: {
+              ownerId: input.ownerId,
+              sourceThreadId: parent.sourceThreadId,
+              idempotencyKey: input.idempotencyKey,
+              correlationId: input.correlationId,
+              sourceSnapshot: parent.sourceSnapshot as Prisma.InputJsonValue,
+              sourceSnapshotHash: parent.sourceSnapshotHash,
+              evidenceBundle: parent.evidenceBundle as Prisma.InputJsonValue,
+              evidenceBundleHash: parent.evidenceBundleHash,
+              evidenceVersion: parent.evidenceVersion,
+              request: JSON.parse(JSON.stringify(request)) as Prisma.InputJsonValue,
+              budgetId,
+              spendCapMicroUsd: BigInt(input.spendCapMicroUsd),
+              publicIntentVersion: parent.publicIntentVersion,
+              publicIntentAt: parent.publicIntentAt,
+            },
+          });
+          return { accountDeleted: false as const, job };
         },
-      });
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+      if (created.accountDeleted) return { result: GenerationJobStorageResult.ACCOUNT_DELETED };
+      const { job } = created;
       return { result: GenerationJobStorageResult.SUCCESS, job };
     } catch (error: unknown) {
       if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
@@ -761,5 +801,9 @@ export class GenerationJobsRepository {
       spendCapMicroUsd: parsed.data['spendCapMicroUsd'],
       draft: parsed.data['draft'],
     };
+  }
+
+  private hashUserId(userId: string): string {
+    return createHash('sha256').update(userId).digest('hex');
   }
 }

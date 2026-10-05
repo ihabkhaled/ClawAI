@@ -32,6 +32,20 @@ describe('PublicationsRepository', () => {
     return { repository: new PublicationsRepository(prisma as never), transaction };
   }
 
+  it('refuses to create a publication after the account deletion tombstone exists', async () => {
+    const transaction = {
+      threadDeletedAccount: { findUnique: vi.fn().mockResolvedValue({ accountHash: 'digest' }) },
+      threadPublication: { upsert: vi.fn() },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback: (tx: unknown) => unknown) => callback(transaction)),
+    };
+    const repository = new PublicationsRepository(prisma as never);
+
+    await expect(repository.createQueuedPublication('deleted-user', 'job-1')).resolves.toBeNull();
+    expect(transaction.threadPublication.upsert).not.toHaveBeenCalled();
+  });
+
   it('publishes an owned ready revision and returns public fields only', async () => {
     const { repository, transaction } = createRepository(readyRecord);
 

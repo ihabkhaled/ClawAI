@@ -705,7 +705,7 @@ model FeatureUsageRecord {
 model ThreadJobBudget {
   id                    String               @id @default(cuid())
   userId                String               @map("user_id")
-  requestId             String               @db.VarChar(200) @map("request_id")
+  requestId             String               @map("request_id") @db.VarChar(200)
   capMicroUsd           BigInt               @map("cap_micro_usd")
   reservedMicroUsd      BigInt               @default(0) @map("reserved_micro_usd")
   spentMicroUsd         BigInt               @default(0) @map("spent_micro_usd")
@@ -726,7 +726,7 @@ model ThreadJobBudget {
 model ThreadJobBudgetCall {
   id                  String                   @id @default(cuid())
   budgetId            String                   @map("budget_id")
-  requestId           String                   @db.VarChar(200) @map("request_id")
+  requestId           String                   @map("request_id") @db.VarChar(200)
   creditReservationId String?                  @unique @map("credit_reservation_id")
   reservedMicroUsd    BigInt                   @map("reserved_micro_usd")
   settledMicroUsd     BigInt?                  @map("settled_micro_usd")
@@ -746,24 +746,24 @@ model ThreadJobBudgetCall {
 // provider, model and workflow cannot be represented in a daily aggregate.
 // This is the durable source Redis counters are reconciled against.
 model WeightedUsageRecord {
-  id                    String             @id @default(cuid())
-  userId                String             @map("user_id")
-  planId                String?            @map("plan_id")
-  subscriptionId        String?            @map("subscription_id")
-  reservationId         String             @unique @map("reservation_id")
-  requestId             String             @map("request_id")
-  provider              String
-  model                 String
-  workflow              String?
-  rawInputTokens        Int                @default(0) @map("raw_input_tokens")
-  rawCachedTokens       Int                @default(0) @map("raw_cached_tokens")
+  id                      String             @id @default(cuid())
+  userId                  String             @map("user_id")
+  planId                  String?            @map("plan_id")
+  subscriptionId          String?            @map("subscription_id")
+  reservationId           String             @unique @map("reservation_id")
+  requestId               String             @map("request_id")
+  provider                String
+  model                   String
+  workflow                String?
+  rawInputTokens          Int                @default(0) @map("raw_input_tokens")
+  rawCachedTokens         Int                @default(0) @map("raw_cached_tokens")
   // F093: prompt tokens WRITTEN into the provider's cache, billed at the model's
   // cache-write rate when one is published. Disjoint from raw_input_tokens and
   // raw_cached_tokens, so a settled row attributes every prompt token once.
-  rawCacheWriteTokens   Int                @default(0) @map("raw_cache_write_tokens")
-  rawReasoningTokens    Int                @default(0) @map("raw_reasoning_tokens")
-  rawOutputTokens       Int                @default(0) @map("raw_output_tokens")
-  toolCallCount         Int                @default(0) @map("tool_call_count")
+  rawCacheWriteTokens     Int                @default(0) @map("raw_cache_write_tokens")
+  rawReasoningTokens      Int                @default(0) @map("raw_reasoning_tokens")
+  rawOutputTokens         Int                @default(0) @map("raw_output_tokens")
+  toolCallCount           Int                @default(0) @map("tool_call_count")
   // PAYG credit attribution (ADR-080: one reservation, not two). A non-PAYG
   // request leaves all three at their defaults, so every historical row stays
   // valid and old code keeps running against the new schema.
@@ -1152,4 +1152,24 @@ model CreditFreeAllowanceUsage {
   @@unique([userId, provider, periodKey])
   @@index([userId, periodKey])
   @@map("credit_free_allowance_usage")
+}
+
+/// Durable delivery record for the cross-service account deletion event.
+/// The raw user ID is cleared after publish; the digest is retained for reconciliation.
+model UserDeletionOutboxEvent {
+  id            String    @id @default(cuid())
+  eventId       String    @unique @default(cuid()) @map("event_id")
+  userId        String?   @map("user_id")
+  userIdDigest  String?   @map("user_id_digest")
+  deletedAt     DateTime  @map("deleted_at")
+  status        String    @default("PENDING")
+  attempts      Int       @default(0)
+  lastErrorCode String?   @map("last_error_code")
+  availableAt   DateTime  @default(now()) @map("available_at")
+  publishedAt   DateTime? @map("published_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@index([status, availableAt])
+  @@map("user_deletion_outbox_events")
 }

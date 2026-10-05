@@ -7,7 +7,12 @@ export type GenerationJobStorageResponse =
       result: GenerationJobStorageResult.SUCCESS;
       job: Prisma.ThreadGenerationJobGetPayload<object>;
     }
-  | { result: GenerationJobStorageResult.CONFLICT | GenerationJobStorageResult.STORAGE_ERROR };
+  | {
+      result:
+        | GenerationJobStorageResult.CONFLICT
+        | GenerationJobStorageResult.STORAGE_ERROR
+        | GenerationJobStorageResult.ACCOUNT_DELETED;
+    };
 
 export type GenerationJobIdempotencyResponse =
   | {

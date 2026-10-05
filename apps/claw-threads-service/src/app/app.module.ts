@@ -15,6 +15,7 @@ import { AppConfig } from './config/app.config';
 import { HealthModule } from '../modules/health/health.module';
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
 import { PublicationsModule } from '../modules/publications/publications.module';
+import { AccountDeletionModule } from '../modules/account-deletion/account-deletion.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { PublicationsModule } from '../modules/publications/publications.module'
     HealthModule,
     PrismaModule,
     PublicationsModule,
+    AccountDeletionModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },

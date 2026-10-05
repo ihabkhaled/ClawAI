@@ -113,10 +113,11 @@
         "TokenUsageLedger",
         "User",
         "UserCreditWallet",
+        "UserDeletionOutboxEvent",
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 151,
+      "testFiles": 153,
       "testRunner": "vitest"
     },
     {
@@ -532,6 +533,7 @@
       "port": 4020,
       "portSource": "shared-constants",
       "prismaModels": [
+        "ThreadDeletedAccount",
         "ThreadGenerationAttempt",
         "ThreadGenerationCheckpoint",
         "ThreadGenerationJob",
@@ -539,7 +541,7 @@
         "ThreadModelCommunication",
         "ThreadRevisionDraft"
       ],
-      "testFiles": 13,
+      "testFiles": 16,
       "testRunner": "vitest"
     },
     {
@@ -558,6 +560,7 @@
       "port": 4019,
       "portSource": "shared-constants",
       "prismaModels": [
+        "ThreadDeletedAccount",
         "ThreadPublication",
         "ThreadPublicationChangeRequest",
         "ThreadPublicationComment",
@@ -565,7 +568,7 @@
         "ThreadPublicationReport",
         "ThreadPublicationRevision"
       ],
-      "testFiles": 12,
+      "testFiles": 15,
       "testRunner": "vitest"
     },
     {

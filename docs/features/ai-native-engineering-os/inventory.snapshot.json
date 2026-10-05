@@ -7261,6 +7261,11 @@
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
+        "key": "USER_DELETED",
+        "pattern": "user.deleted",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
         "key": "USER_LOGIN",
         "pattern": "user.login",
         "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -8596,7 +8601,11 @@
           "file": "rules/60-qa-evidence-is-mandatory-and-machine-checked.md"
         },
         {
-          "bytes": 7325,
+          "bytes": 1001,
+          "file": "rules/61-threads-account-deletion.md"
+        },
+        {
+          "bytes": 7539,
           "file": "rules/README.md"
         }
       ],
@@ -8642,7 +8651,7 @@
           "file": "skills/09-refactor-toolkit.md"
         },
         {
-          "bytes": 7410,
+          "bytes": 7503,
           "file": "skills/README.md"
         },
         {
@@ -8912,6 +8921,10 @@
         {
           "bytes": 4992,
           "file": "skills/propagate-a-chat-change-to-every-mode.md"
+        },
+        {
+          "bytes": 2566,
+          "file": "skills/propagate-account-deletion.md"
         },
         {
           "bytes": 14444,
@@ -10316,6 +10329,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "UserDeletionOutboxEvent"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "UserPlanAssignment"
           },
           {
@@ -10969,6 +10987,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-thread-generation-service/prisma/schema.prisma",
+            "value": "ThreadDeletedAccount"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-thread-generation-service/prisma/schema.prisma",
             "value": "ThreadGenerationAttempt"
           },
           {
@@ -11005,6 +11028,11 @@
       },
       "claw-threads-service": {
         "models": [
+          {
+            "confidence": "verified",
+            "source": "apps/claw-threads-service/prisma/schema.prisma",
+            "value": "ThreadDeletedAccount"
+          },
           {
             "confidence": "verified",
             "source": "apps/claw-threads-service/prisma/schema.prisma",
@@ -11227,7 +11255,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 151
+        "testFiles": 153
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -11291,11 +11319,11 @@
       },
       "claw-thread-generation-service": {
         "runner": "vitest",
-        "testFiles": 13
+        "testFiles": 16
       },
       "claw-threads-service": {
         "runner": "vitest",
-        "testFiles": 12
+        "testFiles": 15
       },
       "claw-workspace-service": {
         "runner": "vitest",
@@ -12085,7 +12113,7 @@
     "dockerServiceCount": 56,
     "endpointCount": 827,
     "envVarCount": 375,
-    "eventCount": 186,
+    "eventCount": 187,
     "frontendRouteCount": 156,
     "localeCount": 13,
     "nginxRouteCount": 69,
@@ -12095,7 +12123,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2085,
+    "totalTestFiles": 2093,
     "workspaceCount": 27
   }
 }

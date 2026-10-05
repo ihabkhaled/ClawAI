@@ -6,6 +6,8 @@ import { UsersRepository } from './repositories/users.repository';
 import { AuthModule } from '../auth/auth.module';
 import { RolesModule } from '../roles/roles.module';
 import { PlansModule } from '../plans/plans.module';
+import { UserDeletionOutboxRepository } from './repositories/user-deletion-outbox.repository';
+import { UserDeletionOutboxPublisher } from './services/user-deletion-outbox.publisher';
 
 @Module({
   // Roles and plans are imported for one reason each: an administrator-created
@@ -15,7 +17,12 @@ import { PlansModule } from '../plans/plans.module';
   // super-administrator target check, and the pair would form a cycle.
   imports: [AuthModule, RolesModule, PlansModule],
   controllers: [UsersController, UsersInternalController],
-  providers: [UsersService, UsersRepository],
+  providers: [
+    UsersService,
+    UsersRepository,
+    UserDeletionOutboxRepository,
+    UserDeletionOutboxPublisher,
+  ],
   exports: [UsersService],
 })
 export class UsersModule {}

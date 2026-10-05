@@ -2,6 +2,7 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { UsersRepository } from '../repositories/users.repository';
+import { UserDeletionOutboxRepository } from '../repositories/user-deletion-outbox.repository';
 import { hashPassword, verifyPassword } from '@common/utilities';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { type ChangePasswordDto } from '../dto/change-password.dto';
@@ -49,6 +50,7 @@ export class UsersService {
     private readonly authEmailAdapter: AuthEmailAdapter,
     private readonly rolesService: RolesService,
     private readonly plansRepository: PlansRepository,
+    private readonly userDeletionOutbox: UserDeletionOutboxRepository,
   ) {}
 
   async create(dto: CreateUserDto, actorId: string): Promise<SafeUser> {
@@ -235,9 +237,8 @@ export class UsersService {
     // unique index guarantees at most one, and nothing re-creates it except a
     // fresh seed against an empty admin table.
     this.assertMutable(user, userId, SuperAdminMutationScope.DELETE);
-    await this.usersRepository.revokeSessionsByUserId(userId);
-    await this.usersRepository.deleteById(userId);
-    this.logger.log(`deleteOwnAccount: deleted user ${userId}`);
+    await this.userDeletionOutbox.deleteAccount(userId);
+    this.logger.log('deleteOwnAccount: account deletion committed with propagation event');
   }
 
   async deactivateUser(id: string, actorId: string): Promise<SafeUser> {

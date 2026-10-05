@@ -54,6 +54,7 @@
       "TokenUsageLedger",
       "User",
       "UserCreditWallet",
+      "UserDeletionOutboxEvent",
       "UserPlanAssignment",
       "WeightedUsageRecord"
     ],
@@ -187,6 +188,7 @@
       "TaxonomyRole"
     ],
     "claw-thread-generation-service": [
+      "ThreadDeletedAccount",
       "ThreadGenerationAttempt",
       "ThreadGenerationCheckpoint",
       "ThreadGenerationJob",
@@ -195,6 +197,7 @@
       "ThreadRevisionDraft"
     ],
     "claw-threads-service": [
+      "ThreadDeletedAccount",
       "ThreadPublication",
       "ThreadPublicationChangeRequest",
       "ThreadPublicationComment",

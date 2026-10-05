@@ -16,6 +16,7 @@ import { HealthModule } from '../modules/health/health.module';
 import { SourceSnapshotsModule } from '../modules/source-snapshots/source-snapshots.module';
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
 import { GenerationModule } from '../modules/generation/generation.module';
+import { AccountDeletionModule } from '../modules/account-deletion/account-deletion.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { GenerationModule } from '../modules/generation/generation.module';
     }),
     PrismaModule,
     GenerationModule,
+    AccountDeletionModule,
     HealthModule,
     SourceSnapshotsModule,
   ],
