@@ -459,10 +459,24 @@ export class ChatExecutionManager implements OnModuleInit {
     // model of the same provider is not dialled just to fail the same way.
     const failedProviders = new Set<string>();
     let substituteAttempts = 0;
+    // AUTO: a credit refusal (free requests used up, balance empty) is about
+    // THAT credit model only. Included and local models still work, so the chain
+    // moves on; the first refusal is kept to explain a chain that ends empty.
+    const creditRefusedProviders = new Set<string>();
+    let creditRefusal: unknown = null;
 
     for (let i = 0; i < candidates.length; i++) {
       const candidate = candidates.at(i);
       if (!candidate) {
+        continue;
+      }
+      if (
+        !isPickedModelTurn(payload) &&
+        creditRefusedProviders.has(candidate.provider.toUpperCase())
+      ) {
+        this.logger.debug(
+          `execute: skipping ${candidate.provider}/${candidate.model} (credit already refused for this provider)`,
+        );
         continue;
       }
       if (isPickedModelTurn(payload) && i > 0) {
@@ -509,6 +523,12 @@ export class ChatExecutionManager implements OnModuleInit {
         reRouteAttempt++;
         continue;
       }
+      if (!isPickedModelTurn(payload) && this.isPaygRefusal(outcome.error)) {
+        creditRefusal ??= outcome.error;
+        creditRefusedProviders.add(candidate.provider.toUpperCase());
+        lastError = outcome.error;
+        continue;
+      }
       if (this.endsCandidateChain(outcome.error, payload, i)) {
         throw outcome.error;
       }
@@ -520,16 +540,16 @@ export class ChatExecutionManager implements OnModuleInit {
 
     return isPickedModelTurn(payload)
       ? this.failPickedModelExecution(lastError, attempts, payload, failedProviders)
-      : this.failExecution(lastError, attempts);
+      : this.failExecution(creditRefusal ?? lastError, attempts);
   }
 
   /**
    * Whether this failure ends the chain instead of moving to the next candidate.
    *
-   * AUTO: a credit refusal ends it. Every remaining candidate would be refused
-   * for exactly the same reason - the balance does not change between them -
-   * so trying them all turns one 402 into N pointless round-trips and buries
-   * the real cause behind whichever candidate happened to be last.
+   * AUTO: a credit refusal does NOT end it (handled in the loop): the next
+   * candidate may be an included or local model that needs no credit. When the
+   * whole chain fails, the first refusal is the error shown, so the upgrade
+   * notice is not buried behind whichever candidate happened to be last.
    *
    * A PICKED model (MANUAL_MODEL): only a provider failure moves on to a
    * substitute. The pick's own credit (402), plan/exposure (403) or quota (429)
@@ -538,9 +558,7 @@ export class ChatExecutionManager implements OnModuleInit {
    * skipped: the next one may be a free/local model.
    */
   private endsCandidateChain(error: unknown, payload: MessageRoutedData, index: number): boolean {
-    return !isPickedModelTurn(payload)
-      ? this.isPaygRefusal(error)
-      : index === 0 && !isSubstitutableFailure(error);
+    return isPickedModelTurn(payload) && index === 0 && !isSubstitutableFailure(error);
   }
 
   /**

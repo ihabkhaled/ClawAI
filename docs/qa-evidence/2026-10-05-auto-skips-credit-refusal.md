@@ -1,0 +1,36 @@
+# QA evidence - auto-skips-credit-refusal
+
+Batch: auto-skips-credit-refusal
+Date: 2026-10-05
+Commits: (fill in after committing)
+Verdict: PARTIAL
+
+Every lane is filled in. PASS needs the command and its real output (or a path, a count, a
+screenshot name). NOT_RUN and NOT_APPLICABLE need a reason. Verdict DONE is allowed only when no
+lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (rules/60, rules/49).
+
+| Lane | What                                                                    | Status         | Evidence or reason                                                                                                                                                                                           |
+| ---- | ----------------------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| L01  | Unit and integration tests (only the changed files)                     | PASS           | vitest chat-service: chat-execution.manager + payg specs 4 files 116 passed (2 new AUTO credit-refusal tests); frontend chat-limit-notice + use-chat-stream 20 passed; frontend lib/i18n 18 files 304 passed |
+| L02  | Typecheck, lint and build (touched workspaces)                          | PASS           | chat-service `npm run typecheck` clean; eslint 0 errors (8 pre-existing warnings, execute() complexity/length already over limit); build left to CI                                                          |
+| L03  | Manual API test (curl) with the log line proving the branch ran         | NOT_RUN        | no live free-plan account with 0 free requests was driven through /chat against the stack in this batch                                                                                                      |
+| L04  | Manual browser test (Playwright against the real UI) with screenshots   | NOT_RUN        | no Playwright walk of the upgrade card in this batch                                                                                                                                                         |
+| L05  | Automation e2e (a committed or existing spec was run)                   | NOT_RUN        | no e2e spec exists for this path; not added in this batch                                                                                                                                                    |
+| L06  | RBAC across roles and plan tiers (admin, paid, FREE)                    | NOT_RUN        | FREE vs paid tiers not exercised live; unit double refuses by provider only                                                                                                                                  |
+| L07  | Device matrix (3+ widths, both orientations, RTL)                       | NOT_RUN        | text-only change to an existing card; no layout change, matrix not walked                                                                                                                                    |
+| L08  | UAT (acceptance criteria walked as the user would)                      | NOT_RUN        | owner has not yet re-tried AUTO after the free 10 are used                                                                                                                                                   |
+| L09  | Product verification (it does what the owner asked, edge cases decided) | PASS           | AUTO now continues past a credit refusal to the next candidate; chain-end refusal still surfaces the first refusal (unit tests)                                                                              |
+| L10  | Business verification (money, limits, copy and claims match the code)   | PASS           | no price or limit changed; refusal still comes from auth-service meter, only chat-side chain handling changed                                                                                                |
+| L11  | Regression (neighbouring features still work)                           | PASS           | payg-credit-chokepoint, provider-credit-chokepoint and payg-credit-error-messages specs green; picked-model (MANUAL_MODEL) path unchanged and still shows its own refusal                                    |
+| L12  | Security (authz and IDOR, secrets, injection)                           | NOT_APPLICABLE | no authz, data exposure or input handling changed                                                                                                                                                            |
+| L13  | Performance and accessibility                                           | NOT_APPLICABLE | no render or query path changed; at most one extra reserve RPC per refused provider                                                                                                                          |
+| L14  | i18n (13 locales, RTL)                                                  | PASS           | 13 locales updated with real translations (3 strings each); frontend i18n suites 304 passed                                                                                                                  |
+| L15  | Docs, knowledge delta and GitHub gates read                             | NOT_RUN        | chat-service CLAUDE.md note added; GitHub gates not yet read for this commit                                                                                                                                 |
+
+## Findings
+
+Bug: AUTO stopped the whole chain on the first credit refusal (a free-allowance 402 from a credit model), so a free user with 10 used requests got an error while included/local models were available. Fixed in chat-execution.manager execute(): refusal skips that provider and continues; first refusal shown if nothing answers. Message text now also suggests choosing a non-credit model (13 locales).
+
+## Open gaps
+
+L03-L08: live API/browser/RBAC/device/UAT lanes not run; owner to retry AUTO on a free account with 0 free requests left. routing-service still ranks credit models first; ordering them last once the allowance is spent is a follow-up.

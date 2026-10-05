@@ -573,9 +573,9 @@ export const de: TranslationDictionary = {
         'Die Preisdaten waren nicht erreichbar, daher sind kostenpflichtige Modelle kurz pausiert. Ihnen wurde nichts berechnet. Lokale Modelle funktionieren weiterhin.',
       paygFreeAllowanceExhaustedTitle: 'Kostenlose Anfragen an Guthaben-Modelle aufgebraucht',
       paygFreeAllowanceExhaustedBody:
-        'Sie haben in diesem Monat alle kostenlosen Anfragen an Guthaben-Modelle verbraucht. Wechseln Sie zu einem kostenpflichtigen Tarif oder laden Sie Guthaben auf, um sie weiter zu nutzen. Enthaltene Modelle funktionieren weiterhin.',
+        'Sie haben in diesem Monat alle kostenlosen Anfragen an Guthaben-Modelle verbraucht. Wechseln Sie zu einem kostenpflichtigen Tarif oder laden Sie Guthaben auf, um sie weiter zu nutzen. Oder wählen Sie ein Modell ohne Guthaben. Enthaltene Modelle funktionieren weiterhin.',
       paygFreeAllowanceExhaustedBodyWithLimit:
-        'Sie haben in diesem Monat alle {limit} kostenlosen Anfragen an Guthaben-Modelle verbraucht. Wechseln Sie zu einem kostenpflichtigen Tarif oder laden Sie Guthaben auf, um sie weiter zu nutzen. Enthaltene Modelle funktionieren weiterhin.',
+        'Sie haben in diesem Monat alle {limit} kostenlosen Anfragen an Guthaben-Modelle verbraucht. Wechseln Sie zu einem kostenpflichtigen Tarif oder laden Sie Guthaben auf, um sie weiter zu nutzen. Oder wählen Sie ein Modell ohne Guthaben. Enthaltene Modelle funktionieren weiterhin.',
       dailyTokensTitle: 'Die heutigen Tokens sind aufgebraucht',
       dailyTokensBody:
         'Ihr Tagesbudget an Tokens ist verbraucht. Es wird um Mitternacht UTC zurückgesetzt, oder Sie wechseln jetzt zu einem größeren Tarif.',
@@ -5049,7 +5049,7 @@ export const de: TranslationDictionary = {
       PAYG_PRICING_UNAVAILABLE:
         'Die Preisdaten sind vorübergehend nicht erreichbar. Ihnen wurde nichts berechnet.',
       PAYG_FREE_ALLOWANCE_EXHAUSTED:
-        'Ihre kostenlosen Anfragen an Guthaben-Modelle sind für diesen Monat aufgebraucht. Wechseln Sie den Tarif oder laden Sie Guthaben auf, um fortzufahren.',
+        'Ihre kostenlosen Anfragen an Guthaben-Modelle sind für diesen Monat aufgebraucht. Wechseln Sie den Tarif oder laden Sie Guthaben auf, um fortzufahren. Oder wählen Sie ein Modell ohne Guthaben.',
       CREDIT_PACKAGE_NOT_FOUND: 'Dieses Guthaben-Paket existiert nicht mehr.',
       CREDIT_PACKAGE_INACTIVE: 'Dieses Guthaben-Paket wird nicht mehr angeboten.',
       CREDIT_ADJUSTMENT_REASON_REQUIRED:

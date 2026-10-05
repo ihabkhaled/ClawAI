@@ -1813,3 +1813,10 @@ carry `contextPackIds`) and spread the shared DTO fragments (`researchFields`, `
 DTO misses a fragment. Changing normal chat? Walk
 [context/chat-surface-parity-map.md](../../context/chat-surface-parity-map.md) and
 [skills/propagate-a-chat-change-to-every-mode.md](../../skills/propagate-a-chat-change-to-every-mode.md).
+
+## AUTO keeps going past a credit refusal (2026-10-05)
+
+In AUTO (not a picked model) a PAYG refusal (`402`, e.g. `PAYG_FREE_ALLOWANCE_EXHAUSTED`) is about that credit
+model only: `ChatExecutionManager.execute` skips that provider and tries the next candidate (included or local
+models need no credit). The first refusal is thrown only if the whole chain fails, so the upgrade notice still
+shows. Never end an AUTO chain on a 402 again. A picked model still shows its own refusal.
