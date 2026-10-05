@@ -8,9 +8,13 @@ import { repoPath } from '../lib/repo.mjs';
 const SHARED_PACKAGE_PREFIX = '@claw/shared-';
 const BUILD_COMMAND_PATTERN = /npm run build(?: --workspace=)?/u;
 const SHARED_PACKAGE_PATTERN = /(?:packages\/|\.\.\/|@claw\/)(shared-[a-z-]+)/gu;
+const GENERATED_DIRECTORY_NAMES = new Set(['.next', 'dist', 'node_modules']);
 
 function listDockerfiles(directory) {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    if (entry.isDirectory() && GENERATED_DIRECTORY_NAMES.has(entry.name)) {
+      return [];
+    }
     const path = join(directory, entry.name);
     if (entry.isDirectory()) {
       return listDockerfiles(path);
