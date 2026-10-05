@@ -129,6 +129,33 @@ describe('ChatMessagesService research modes', () => {
     });
   });
 
+  describe('a search provider picked while the mode says no research', () => {
+    const withProvider = (providerId: string | undefined): Promise<unknown> =>
+      service.runResearchForIntent('user-1', 'token', 'thread-1', 'what is new in node 26', {
+        mode: ResearchMode.NONE,
+        providerId,
+      });
+
+    it('collects the web first with the picked provider', async () => {
+      await expect(withProvider('exa')).resolves.toBe(RUN);
+      expect(mockedRunResearch).toHaveBeenCalledWith(
+        'http://research.test',
+        expect.objectContaining({ workflow: 'SEARCH_THEN_FETCH', searchProviderId: 'exa' }),
+      );
+    });
+
+    it.each([undefined, '', '   '])('does nothing for provider %j (Auto Provider)', async (id) => {
+      await expect(withProvider(id)).resolves.toBeNull();
+      expect(mockedRunResearch).not.toHaveBeenCalled();
+    });
+
+    it('still keeps a plan without the research unlock off the web', async () => {
+      hasResearchAccess.mockResolvedValue(false);
+      await expect(withProvider('exa')).resolves.toBeNull();
+      expect(mockedRunResearch).not.toHaveBeenCalled();
+    });
+  });
+
   describe('a question about the app itself, with research off', () => {
     it('crawls the platform own site so the answer comes from its pages', async () => {
       await expect(run('what is the current webapp ?', ResearchMode.NONE)).resolves.toBe(RUN);

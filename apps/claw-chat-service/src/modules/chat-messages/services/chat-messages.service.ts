@@ -561,6 +561,17 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   /**
+   * A search provider was picked but the mode says "no research". Picking a
+   * provider is an instruction to use it, so the web is collected first rather
+   * than leaving a model that then answers "I cannot search the internet".
+   */
+  private modeForPickedProvider(providerId: string | undefined): ResearchMode | null {
+    return providerId !== undefined && providerId.trim().length > 0
+      ? ResearchMode.SEARCH_FETCH
+      : null;
+  }
+
+  /**
    * Shared research runner used by every chat flow (main + compare +
    * consensus + escalation + …). Callers pass the intent + an optional
    * mode; a falsy mode or empty token short-circuits to null.
@@ -581,7 +592,8 @@ export class ChatMessagesService implements OnModuleInit {
     if (options.mode === undefined || options.mode === ResearchMode.NONE) {
       // Research is off, but the user COMMANDED a page to be read ("crawl <url>",
       // "curl <url>"). Do what was asked, unless the plan has no research unlock.
-      const commanded = resolveExplicitFetchMode(intent);
+      const commanded =
+        resolveExplicitFetchMode(intent) ?? this.modeForPickedProvider(options.providerId);
       // A question about the app itself ("what is the current webapp?") crawls the
       // platform's OWN public site, so the answer comes from its pages (ADR-136).
       const selfInspect =
