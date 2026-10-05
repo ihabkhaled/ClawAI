@@ -79,7 +79,9 @@ draft and citation preview, and a separate owner approval action before
 publication. The workflow uses the existing model catalog and stays separate
 from the legacy chat-thread API. Owners can submit capped private revisions for
 fresh review, export Markdown or JSON, and unpublish a live publication.
-Community contribution UI remains unfinished.
+The owner portal now lists reader change requests. Owners can reject with an
+optional response or submit an edited, user-capped revision for fresh review.
+Public reader contribution and moderation UI remain unfinished.
 Authenticated readers can comment, react, request changes, and report content.
 Public comment responses omit author IDs. Owners can accept a change request by
 creating a newly capped immutable revision that goes through the usual fresh

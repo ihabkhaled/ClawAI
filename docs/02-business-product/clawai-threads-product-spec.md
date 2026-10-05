@@ -75,7 +75,7 @@ Owners resolve change requests; accepting one creates a fresh capped immutable
 revision and sends it through the existing paid review flow. The current approved
 revision stays public until the owner approves a passing replacement. Moderation
 report review requires `THREAD_PUBLICATIONS_MODERATE`; moderators can hide a
-reported comment. Account deletion processing and community UI remain unfinished.
+reported comment. Account deletion live QA and public-community UI remain unfinished.
 Internationalization and public discovery integration also remain unfinished.
 Generation intent or a private draft alone does not make content public.
 
@@ -91,8 +91,12 @@ The publish action appears only when the publication is marked
 `READY_FOR_REVIEW`; generation completion by itself never makes a publication
 public. Owners can submit edited content with a user-selected revision cap;
 revisions stay private while they pass fresh safety and model review. Owners can
-export Markdown or JSON and unpublish a live item. Community controls and the
-full browser/accessibility/device QA walk remain open.
+export Markdown or JSON and unpublish a live item. Owners can review reader
+change requests from the same portal. Rejection can include a private response;
+acceptance requires an edited revision, selected spend cap, and fresh paid review.
+The accepted revision stays private until the owner approves it. Public-reader
+contribution controls and the full browser/accessibility/device QA walk remain
+open.
 
 Generation cancellation is owner-scoped. The portal shows a request in
 progress, confirms when the service accepts it, and prevents duplicate requests

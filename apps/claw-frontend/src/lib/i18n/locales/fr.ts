@@ -688,6 +688,23 @@ export const fr: TranslationDictionary = {
     threadUnpublished: 'Cette publication est masquée au public.',
     threadExportMarkdown: 'Exporter en Markdown',
     threadExportJson: 'Exporter en JSON',
+    threadChangeRequests: 'Suggestions des lecteurs',
+    threadChangeRequestsFailed: 'Impossible de charger les suggestions.',
+    threadChangeRequestsEmpty: 'Aucune suggestion pour le moment.',
+    threadChangeDecisionFailed: 'Impossible d’enregistrer la décision. Réessayez.',
+    threadChangeRequestPENDING: 'En attente',
+    threadChangeRequestACCEPTED: 'Acceptée',
+    threadChangeRequestREJECTED: 'Refusée',
+    threadResponseToRequester: 'Réponse au lecteur (facultative)',
+    threadChangeAcceptDisclosure:
+      'En acceptant, l’article révisé sera soumis à une vérification payante de sécurité et par des modèles. Il restera privé jusqu’à votre approbation.',
+    threadChangeAcceptUnavailable:
+      'La source de révision est indisponible. Vous pouvez refuser la demande ou réessayer plus tard.',
+    threadChangeRevisionUnchanged:
+      'Modifiez le brouillon pour répondre à la suggestion avant de l’envoyer.',
+    threadChangeAccept: 'Accepter et réviser',
+    threadChangeReject: 'Refuser la demande',
+    threadSubmitChangeDecision: 'Envoyer le brouillon révisé en vérification',
     threadTypeArticle: 'Article',
     threadTypeResearchArticle: 'Article de recherche',
     threadTypeGuide: 'Guide',

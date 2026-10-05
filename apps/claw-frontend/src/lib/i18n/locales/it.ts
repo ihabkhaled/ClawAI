@@ -688,6 +688,23 @@ export const it: TranslationDictionary = {
     threadUnpublished: 'La pubblicazione non è più pubblica.',
     threadExportMarkdown: 'Esporta Markdown',
     threadExportJson: 'Esporta JSON',
+    threadChangeRequests: 'Suggerimenti dei lettori',
+    threadChangeRequestsFailed: 'Impossibile caricare i suggerimenti.',
+    threadChangeRequestsEmpty: 'Ancora nessun suggerimento.',
+    threadChangeDecisionFailed: 'Impossibile salvare la decisione. Riprova.',
+    threadChangeRequestPENDING: 'In attesa',
+    threadChangeRequestACCEPTED: 'Accettata',
+    threadChangeRequestREJECTED: 'Rifiutata',
+    threadResponseToRequester: 'Risposta al lettore (facoltativa)',
+    threadChangeAcceptDisclosure:
+      'Accettando, l’articolo rivisto sarà sottoposto a una revisione a pagamento di sicurezza e dei modelli. Resterà privato finché non ne approvi la pubblicazione.',
+    threadChangeAcceptUnavailable:
+      'La revisione sorgente non è disponibile. Puoi rifiutare la richiesta o riprovare più tardi.',
+    threadChangeRevisionUnchanged:
+      'Modifica la bozza per rispondere al suggerimento prima di inviarla.',
+    threadChangeAccept: 'Accetta e modifica',
+    threadChangeReject: 'Rifiuta richiesta',
+    threadSubmitChangeDecision: 'Invia la bozza modificata per la revisione',
     threadTypeArticle: 'Articolo',
     threadTypeResearchArticle: 'Articolo di ricerca',
     threadTypeGuide: 'Guida',

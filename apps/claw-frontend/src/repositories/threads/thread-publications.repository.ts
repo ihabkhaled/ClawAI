@@ -6,6 +6,9 @@ import type {
   ThreadRevisionRequestResult,
   ThreadRevisionReviewState,
   ThreadGenerationState,
+  ThreadPublicationChangeRequest,
+  ThreadPublicationChangeRequestResolution,
+  ResolveThreadPublicationChangeRequest,
 } from '@/types/thread-publication.types';
 import type { ThreadGenerationRequest } from '@/utilities/thread-generation-request.utility';
 import type { ThreadRevisionRequest } from '@/utilities/thread-revision-request.utility';
@@ -57,6 +60,23 @@ export const threadPublicationsRepository = {
   ): Promise<ThreadRevisionReviewState> {
     const response = await apiClient.get<ThreadRevisionReviewState>(
       `/thread-publications/${publicationId}/revisions/${revisionId}/revalidation-state`,
+    );
+    return response.data;
+  },
+  async listChangeRequests(publicationId: string): Promise<ThreadPublicationChangeRequest[]> {
+    const response = await apiClient.get<ThreadPublicationChangeRequest[]>(
+      `/thread-publications/${publicationId}/change-requests`,
+    );
+    return response.data;
+  },
+  async resolveChangeRequest(
+    publicationId: string,
+    requestId: string,
+    request: ResolveThreadPublicationChangeRequest,
+  ): Promise<ThreadPublicationChangeRequestResolution> {
+    const response = await apiClient.post<ThreadPublicationChangeRequestResolution>(
+      `/thread-publications/${publicationId}/change-requests/${requestId}`,
+      request,
     );
     return response.data;
   },

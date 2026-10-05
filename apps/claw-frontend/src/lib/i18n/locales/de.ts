@@ -694,6 +694,23 @@ export const de: TranslationDictionary = {
     threadUnpublished: 'Die Veröffentlichung ist nicht mehr öffentlich.',
     threadExportMarkdown: 'Markdown exportieren',
     threadExportJson: 'JSON exportieren',
+    threadChangeRequests: 'Leservorschläge',
+    threadChangeRequestsFailed: 'Leservorschläge konnten nicht geladen werden.',
+    threadChangeRequestsEmpty: 'Noch keine Leservorschläge.',
+    threadChangeDecisionFailed: 'Entscheidung konnte nicht gespeichert werden. Erneut versuchen.',
+    threadChangeRequestPENDING: 'Ausstehend',
+    threadChangeRequestACCEPTED: 'Angenommen',
+    threadChangeRequestREJECTED: 'Abgelehnt',
+    threadResponseToRequester: 'Antwort an Leser (optional)',
+    threadChangeAcceptDisclosure:
+      'Beim Annehmen wird der überarbeitete Artikel kostenpflichtig auf Sicherheit und durch Modelle geprüft. Er bleibt privat, bis du ihn freigibst.',
+    threadChangeAcceptUnavailable:
+      'Die Überarbeitungsvorlage ist nicht verfügbar. Du kannst ablehnen oder es später erneut versuchen.',
+    threadChangeRevisionUnchanged:
+      'Bearbeite den Entwurf passend zum Vorschlag, bevor du ihn sendest.',
+    threadChangeAccept: 'Annehmen und überarbeiten',
+    threadChangeReject: 'Vorschlag ablehnen',
+    threadSubmitChangeDecision: 'Überarbeiteten Entwurf zur Prüfung senden',
     threadTypeArticle: 'Artikel',
     threadTypeResearchArticle: 'Forschungsartikel',
     threadTypeGuide: 'Anleitung',

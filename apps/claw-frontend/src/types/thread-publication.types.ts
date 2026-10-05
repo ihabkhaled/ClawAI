@@ -1,5 +1,7 @@
+import type { ThreadPublicationChangeRequestStatus } from '@/enums/thread-publication-change-request-status.enum';
 import type { ThreadPublicationExportFormat } from '@/enums/thread-publication-export-format.enum';
 import type { ThreadPublicationStatus } from '@/enums/thread-publication-status.enum';
+import type { ThreadRevisionRequest } from '@/utilities/thread-revision-request.utility';
 
 export type OwnedThreadPublication = {
   id: string;
@@ -41,4 +43,32 @@ export type ThreadRevisionRequestResult = {
 export type ThreadPublicationExport = {
   format: ThreadPublicationExportFormat;
   content: string | { title: string; markdown: string; citations: Array<{ url: string }> };
+};
+
+export type ThreadPublicationChangeRequest = {
+  id: string;
+  suggestion: string;
+  status: ThreadPublicationChangeRequestStatus;
+  ownerResponse: string | null;
+  acceptedRevisionId: string | null;
+  createdAt: string;
+};
+
+export type ResolveThreadPublicationChangeRequest =
+  | { status: ThreadPublicationChangeRequestStatus.Rejected; ownerResponse?: string }
+  | {
+      status: ThreadPublicationChangeRequestStatus.Accepted;
+      ownerResponse?: string;
+      revision: ThreadRevisionRequest;
+    };
+
+export type ThreadPublicationChangeRequestResolution = {
+  resolved: true;
+  edit: ThreadRevisionRequestResult | null;
+};
+
+export type ThreadChangeRequestsProps = {
+  publicationId: string;
+  revisionSource: NonNullable<ThreadGenerationState['draft']> | null;
+  onRevisionStarted: (revisionId: string) => void;
 };

@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState, type FormEvent, type ReactElement } from 'react';
 
+import { ThreadChangeRequests } from '@/components/threads/thread-change-requests';
 import { Button } from '@/components/ui/button';
 import { THREAD_PUBLICATION_OPTIONS } from '@/constants/thread-publication.constants';
 import { ThreadPublicationExportFormat } from '@/enums/thread-publication-export-format.enum';
@@ -568,6 +569,16 @@ export default function ThreadPublicationsPage(): ReactElement {
             <p role="alert">{t('threadCreateFailed')}</p>
           ) : null}
           {publish.isError || cancel.isError ? <p role="alert">{t('threadCreateFailed')}</p> : null}
+          {selectedPublication?.status === 'PUBLISHED' ? (
+            <ThreadChangeRequests
+              publicationId={activePublicationId}
+              revisionSource={generation.data.draft}
+              onRevisionStarted={(revisionId) => {
+                setActiveRevisionId(revisionId);
+                publish.reset();
+              }}
+            />
+          ) : null}
         </section>
       ) : null}
     </div>
