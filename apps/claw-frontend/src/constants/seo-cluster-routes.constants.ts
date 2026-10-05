@@ -50,4 +50,7 @@ export const SEO_CLUSTER_ROUTE_EXPANSIONS: Readonly<Record<string, ReadonlyArray
  * Listed explicitly rather than inferred, so a new data-driven route forces
  * somebody to decide deliberately whether its URLs reach the sitemap.
  */
-export const DATA_DRIVEN_MARKETING_ROUTES: ReadonlyArray<string> = ['/share/chat/[publicShareId]'];
+export const DATA_DRIVEN_MARKETING_ROUTES: ReadonlyArray<string> = [
+  '/share/chat/[publicShareId]',
+  '/threads/[slug]',
+];

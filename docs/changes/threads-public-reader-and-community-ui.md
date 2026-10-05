@@ -8,6 +8,8 @@
 - `apps/claw-frontend/src/hooks/threads/`
 - `apps/claw-frontend/src/repositories/threads/`
 - `apps/claw-frontend/src/constants/thread-publication.constants.ts`
+- `apps/claw-frontend/src/constants/seo-cluster-routes.constants.ts`
+- `apps/claw-frontend/src/app/__tests__/sitemap-coverage.test.ts`
 - `apps/claw-frontend/src/types/thread-publication.types.ts`
 - `apps/claw-frontend/src/types/i18n.types.ts`
 - `apps/claw-frontend/src/utilities/thread-citation.utility.ts`

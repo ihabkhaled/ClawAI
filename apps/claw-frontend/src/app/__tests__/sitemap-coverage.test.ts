@@ -54,6 +54,8 @@ function isDynamicRoute(route: string): boolean {
  *   registry entry would mean inventing one for a path never requested. Those
  *   URLs still reach the sitemap via the dynamic half asserted in
  *   `sitemap.test.ts`.
+ * - **Data-driven** — `/threads/[slug]` is also slug-driven and remains noindex
+ *   until its discovery feed lands in the next delivery batch.
  * - **Cluster** — `/learn/[topic]` is ONE file standing for eighteen reviewed
  *   pages that each have a registry entry (ADR-084). Exempting it would reopen
  *   this file's hole in both directions at once: a registry entry with no route
