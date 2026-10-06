@@ -433,42 +433,51 @@ record_completed_deployment_status() {
 }
 
 build_services() {
-  local output_file="$TMP_DIR/build-output"
-  local attempt status delay
+  local service output_file attempt status delay elapsed remaining
+  local build_started_at="$SECONDS"
 
-  for attempt in 1 2 3; do
-    : >"$output_file"
-    set +e
-    compose_build_bounded "${PLAN_SERVICES[@]}" \
-      2>&1 | tee "$output_file"
-    status="${PIPESTATUS[0]}"
-    set -e
+  for service in "${PLAN_SERVICES[@]}"; do
+    output_file="$TMP_DIR/build-output-$service"
 
-    if [ "$status" -eq 0 ]; then
-      return 0
-    fi
+    for attempt in 1 2 3; do
+      : >"$output_file"
+      elapsed=$((SECONDS - build_started_at))
+      remaining=$((BUILD_TIMEOUT_SECONDS - elapsed))
+      if [ "$remaining" -lt 1 ]; then
+        err "production image builds exceeded ${BUILD_TIMEOUT_SECONDS}s; refusing to continue."
+        return 124
+      fi
 
-    # 124 is `timeout` expiring; 137 is the follow-up SIGKILL landing. A build
-    # that produces nothing for an hour is wedged, not slow, and a wedged build
-    # is deterministic — retrying it only holds the deploy lock longer.
-    if [ "$status" -eq 124 ] || [ "$status" -eq 137 ]; then
-      err "docker compose build exceeded ${BUILD_TIMEOUT_SECONDS}s and was aborted; refusing to retry."
-      return "$status"
-    fi
+      set +e
+      compose_build_bounded "$remaining" "$service" 2>&1 | tee "$output_file"
+      status="${PIPESTATUS[0]}"
+      set -e
 
-    if ! grep -Eqi 'ECONNRESET|ETIMEDOUT|EAI_AGAIN|network (is )?unreachable|temporary failure in name resolution|TLS handshake timeout|connection reset by peer' "$output_file"; then
-      err "docker compose build failed with a non-transient error; refusing to retry."
-      return "$status"
-    fi
+      if [ "$status" -eq 0 ]; then
+        break
+      fi
 
-    if [ "$attempt" -eq 3 ]; then
-      err "docker compose build exhausted 3 attempts after transient network failures."
-      return "$status"
-    fi
+      # 124 is the shared build deadline; 137 is its follow-up SIGKILL. Both
+      # are deterministic and must not be retried.
+      if [ "$status" -eq 124 ] || [ "$status" -eq 137 ]; then
+        err "docker compose build for $service exceeded the ${BUILD_TIMEOUT_SECONDS}s deployment limit; refusing to retry."
+        return "$status"
+      fi
 
-    delay="${BUILD_RETRY_DELAYS[$((attempt - 1))]}"
-    err "docker compose build hit a transient network failure; retrying in ${delay}s."
-    sleep "$delay"
+      if ! grep -Eqi 'ECONNRESET|ETIMEDOUT|EAI_AGAIN|network (is )?unreachable|temporary failure in name resolution|TLS handshake timeout|connection reset by peer' "$output_file"; then
+        err "docker compose build failed for $service with a non-transient error; refusing to retry."
+        return "$status"
+      fi
+
+      if [ "$attempt" -eq 3 ]; then
+        err "docker compose build for $service exhausted 3 attempts after transient network failures."
+        return "$status"
+      fi
+
+      delay="${BUILD_RETRY_DELAYS[$((attempt - 1))]}"
+      err "docker compose build for $service hit a transient network failure; retrying in ${delay}s."
+      sleep "$delay"
+    done
   done
 }
 
@@ -1079,13 +1088,15 @@ compose() {
 # a single RUN layer with no output and no worker process, and the deployment
 # holds the lock for as long as compose refuses to return.
 #
-# --parallel caps Compose's service work explicitly; the environment variable
-# alone still let BuildKit bake several service targets together on production.
+# BuildKit bakes all requested services as one graph, so this function receives
+# exactly one service. Keep Compose's service parallelism explicit as well.
 # --foreground keeps the build in this deployment's process group. Without it
 # `timeout` moves the build into a group of its own, where the orphan guard's
 # group signal cannot reach it.
 compose_build_bounded() {
-  timeout --foreground --kill-after=60 "$BUILD_TIMEOUT_SECONDS" \
+  local timeout_seconds="$1"
+  shift
+  timeout --foreground --kill-after=60 "$timeout_seconds" \
     docker compose --parallel "$BUILD_PARALLEL_LIMIT" "${COMPOSE_ARGS[@]}" build "$@" 200>&-
 }
 

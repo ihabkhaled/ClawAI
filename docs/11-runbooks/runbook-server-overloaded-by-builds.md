@@ -61,9 +61,11 @@ treats every manifest as a real change.
    [runbook-clamav-unreachable.md](runbook-clamav-unreachable.md).
 4. Deploy once more if needed with a lower build concurrency:
    `COMPOSE_PARALLEL_LIMIT=1` (default 1, range 1–4). The deploy script passes
-   this as Docker Compose's explicit `--parallel` limit. Setting the environment
-   variable alone did not stop Compose/BuildKit from scheduling several service
-   targets together on the production host.
+   this as Docker Compose's explicit `--parallel` limit and invokes one service
+   build per Compose command. Compose/BuildKit still scheduled the full target
+   graph together when all services were passed to one command, even with the
+   explicit limit. The script keeps the one-hour deadline across all service
+   builds and retries only the service whose build hit a transient network error.
 
 Never run `docker system prune` or `docker volume prune` here — they can
 delete database volumes.

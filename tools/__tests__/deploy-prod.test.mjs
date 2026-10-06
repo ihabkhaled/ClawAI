@@ -94,17 +94,23 @@ test('deploy-prod.sh recreates containers with --no-deps so unrelated healthy se
 test('deploy-prod.sh applies an explicit Docker Compose build concurrency limit', () => {
   assert.match(script, /BUILD_PARALLEL_LIMIT="\$\{COMPOSE_PARALLEL_LIMIT:-1\}"/u);
   assert.match(script, /docker compose --parallel "\$BUILD_PARALLEL_LIMIT"[^\n]* build/u);
+  assert.match(script, /compose_build_bounded "\$remaining" "\$service"/u);
+  assert.match(script, /for service in "\$\{PLAN_SERVICES\[@\]\}"; do/u);
   assert.match(deploymentRehearsal, /--env-file \| --parallel \| -p \| -f\) shift 2/u);
   assert.match(script, /must be an integer from 1 to 4/u);
 });
 
 test('deploy-prod.sh bounds the whole image build so a wedged BuildKit step cannot hold the lock', () => {
   assert.match(script, /BUILD_TIMEOUT_SECONDS="\$\{CLAW_DEPLOY_BUILD_TIMEOUT:-3600\}"/u);
-  assert.match(script, /timeout --foreground --kill-after=60 "\$BUILD_TIMEOUT_SECONDS"/u);
+  assert.match(script, /timeout --foreground --kill-after=60 "\$timeout_seconds"/u);
+  assert.match(script, /remaining=\$\(\(BUILD_TIMEOUT_SECONDS - elapsed\)\)/u);
   assert.match(script, /command -v timeout >\/dev\/null 2>&1 \|\| die/u);
   // 124 is `timeout` expiring, 137 the follow-up SIGKILL; neither may be retried.
   assert.match(script, /\[ "\$status" -eq 124 \] \|\| \[ "\$status" -eq 137 \]/u);
-  assert.match(script, /exceeded \$\{BUILD_TIMEOUT_SECONDS\}s and was aborted; refusing to retry/u);
+  assert.match(
+    script,
+    /exceeded the \$\{BUILD_TIMEOUT_SECONDS\}s deployment limit; refusing to retry/u,
+  );
 });
 
 test('deploy-prod.sh never lets a child process inherit the deploy lock', () => {
@@ -167,7 +173,7 @@ test('deploy-prod.sh retries only transient build-network failures with bounded 
   assert.match(script, /BUILD_RETRY_DELAYS=\(10 30\)/u);
   assert.match(script, /for attempt in 1 2 3/u);
   assert.match(script, /ECONNRESET\|ETIMEDOUT\|EAI_AGAIN/u);
-  assert.match(script, /docker compose build failed with a non-transient error/u);
+  assert.match(script, /docker compose build failed for \$service with a non-transient error/u);
   assert.match(script, /transient network failure; retrying in/u);
 });
 
