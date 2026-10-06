@@ -9,6 +9,10 @@ import { test } from 'node:test';
 import { repoPath } from '../lib/repo.mjs';
 
 const script = readFileSync(repoPath('scripts/deploy-prod.sh'), 'utf8').replaceAll('\r\n', '\n');
+const deploymentRehearsal = readFileSync(
+  repoPath('tools/__tests__/deploy-prod-e2e.sh'),
+  'utf8',
+).replaceAll('\r\n', '\n');
 const gitBash = 'C:/Program Files/Git/bin/bash.exe';
 const bashBinary = process.platform === 'win32' && existsSync(gitBash) ? gitBash : 'bash';
 const gitignore = readFileSync(repoPath('.gitignore'), 'utf8');
@@ -90,6 +94,7 @@ test('deploy-prod.sh recreates containers with --no-deps so unrelated healthy se
 test('deploy-prod.sh applies an explicit Docker Compose build concurrency limit', () => {
   assert.match(script, /BUILD_PARALLEL_LIMIT="\$\{COMPOSE_PARALLEL_LIMIT:-1\}"/u);
   assert.match(script, /docker compose --parallel "\$BUILD_PARALLEL_LIMIT"[^\n]* build/u);
+  assert.match(deploymentRehearsal, /--env-file \| --parallel \| -p \| -f\) shift 2/u);
   assert.match(script, /must be an integer from 1 to 4/u);
 });
 

@@ -4,6 +4,7 @@
 
 - `scripts/deploy-prod.sh` (M)
 - `tools/__tests__/deploy-prod.test.mjs` (M)
+- `tools/__tests__/deploy-prod-e2e.sh` (M)
 - `docs/11-runbooks/runbook-server-overloaded-by-builds.md` (M)
 - `docs/qa-evidence/2026-10-05-threads-public-discovery.md` (M)
 - `docs/superpowers/plans/2026-10-04-clawai-threads-implementation-plan.md` (M)
@@ -19,15 +20,17 @@ use during image building.
 
 Pass Compose's explicit `--parallel` limit to the bounded build command and set
 the default to 1 for both manual and automatic releases. Add a focused
-regression assertion and record the observed behavior in the existing
-build-overload runbook, implementation plan, and Threads QA evidence.
+regression assertion, update the rehearsal's Docker stub to consume the global
+option, and record the observed behavior in the existing build-overload runbook,
+implementation plan, and Threads QA evidence.
 
 ## Now
 
 The script regression suite passes (42 passed, 1 platform-only rehearsal
-skipped), shell syntax passes, and production Compose accepts `--parallel 1`
-while resolving all 41 configured services. No image build was started by that
-read-only configuration check. Production remains on SHA
+skipped on Windows); the WSL Ubuntu end-to-end rehearsal passes 130/130. Shell
+syntax passes, and production Compose accepts `--parallel 1` while resolving
+all 41 configured services. No image build was started by that read-only
+configuration check. Production remains on SHA
 `0ff0c059ce9b444a9af7f63721edabc57963eba8`; the rollout has not yet completed.
 
 ## Why
@@ -51,9 +54,13 @@ the same scheduling behavior.
 ## Verification and stale condition
 
 Verified with `node --test tools/__tests__/deploy-prod.test.mjs` (42 passed,
-1 skipped), `bash -n scripts/deploy-prod.sh`, and a remote `docker compose
---parallel 1 ... config --services` check (41 services). This record is stale if
-the production build command, Compose parallelism behavior, or rollout changes.
+1 skipped on Windows), `bash -n scripts/deploy-prod.sh`,
+`bash tools/__tests__/deploy-prod-e2e.sh` in WSL Ubuntu (130 passed), and a
+remote `docker compose --parallel 1 ... config --services` check (41 services).
+CI run `37500995207` exposed that the Unix test stub did not parse the new global
+option; the stub now consumes `--parallel`, and the full rehearsal passes. This
+record is stale if the production build command, Compose parallelism behavior,
+or rollout changes.
 
 knowledge delta: documented the production concurrency finding and remediation
 in this change record, the existing overload runbook, rollout plan, and QA

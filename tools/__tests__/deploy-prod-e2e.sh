@@ -95,7 +95,7 @@ case "${1:-}" in
     shift
     while [ $# -gt 0 ]; do
       case "$1" in
-        --env-file | -p | -f) shift 2 ;;
+        --env-file | --parallel | -p | -f) shift 2 ;;
         *) break ;;
       esac
     done

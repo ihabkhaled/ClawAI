@@ -303,6 +303,8 @@ cross-service QA, lint/typecheck/build, generated knowledge, and CI remain open.
 
 **Production build concurrency follow-up:** Release `v1.194.1` fixed the frontend base image, but the 19-service rollout still overloaded the 8-core VPS during one Compose build despite `COMPOSE_PARALLEL_LIMIT=1`. The environment variable alone did not serialize BuildKit targets. Update `scripts/deploy-prod.sh` to pass Docker Compose's explicit `--parallel` limit and default to 1 for both manual and automatic deploys; add a focused deployment-script regression test, and record the host incident in `docs/11-runbooks/runbook-server-overloaded-by-builds.md` and the QA evidence. Both attempts stopped during image building; no production containers were recreated, and the prior deployed SHA remained active.
 
+**CI follow-up:** The Linux end-to-end deployment rehearsal's Docker stub parsed Compose options before the `build` subcommand but did not consume the new global `--parallel` option. This made the stub mistake a failed build for a successful deploy and invalidated its downstream assertions. Update `tools/__tests__/deploy-prod-e2e.sh` to parse the option and assert the fixture behavior from `tools/__tests__/deploy-prod.test.mjs`; run the rehearsal in WSL Ubuntu on Windows.
+
 ### Batch 8 â€” Enablement, integrated QA, and release readiness
 
 **Outcome:** The whole product is enabled only after all prior batches are deployed and verified; launch readiness includes the whole repository QA team and real evidence.
