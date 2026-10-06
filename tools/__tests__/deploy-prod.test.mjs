@@ -87,9 +87,9 @@ test('deploy-prod.sh recreates containers with --no-deps so unrelated healthy se
   assert.match(script, /compose up -d --no-deps --no-build/u);
 });
 
-test('deploy-prod.sh bounds Docker Compose build concurrency with a conservative override', () => {
-  assert.match(script, /BUILD_PARALLEL_LIMIT="\$\{COMPOSE_PARALLEL_LIMIT:-2\}"/u);
-  assert.match(script, /COMPOSE_PARALLEL_LIMIT="\$BUILD_PARALLEL_LIMIT" compose_build_bounded/u);
+test('deploy-prod.sh applies an explicit Docker Compose build concurrency limit', () => {
+  assert.match(script, /BUILD_PARALLEL_LIMIT="\$\{COMPOSE_PARALLEL_LIMIT:-1\}"/u);
+  assert.match(script, /docker compose --parallel "\$BUILD_PARALLEL_LIMIT"[^\n]* build/u);
   assert.match(script, /must be an integer from 1 to 4/u);
 });
 
@@ -109,7 +109,10 @@ test('deploy-prod.sh never lets a child process inherit the deploy lock', () => 
   // wrapper, the bounded build, the health inspection, the cache prune. The
   // `docker version` probes in preflight run before the lock is ever opened.
   assert.match(script, /docker compose "\$\{COMPOSE_ARGS\[@\]\}" "\$@" 200>&-/u);
-  assert.match(script, /docker compose "\$\{COMPOSE_ARGS\[@\]\}" build "\$@" 200>&-/u);
+  assert.match(
+    script,
+    /docker compose --parallel "\$BUILD_PARALLEL_LIMIT" "\$\{COMPOSE_ARGS\[@\]\}" build "\$@" 200>&-/u,
+  );
   assert.match(script, /docker inspect[\s\S]{0,240}?2>\/dev\/null 200>&-/u);
   assert.match(script, /docker builder prune[^\n]*200>&-/u);
   // `docker logs` on a crash-looping container streams from a live container

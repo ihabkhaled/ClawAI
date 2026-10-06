@@ -301,6 +301,8 @@ cross-service QA, lint/typecheck/build, generated knowledge, and CI remain open.
 
 **CI follow-up:** Full CI selected all workspaces and exposed a stale generation repository fixture missing `contentLocale`. Add the selected locale and assert it is preserved by revision-review requests in `apps/claw-thread-generation-service/src/modules/generation/repositories/__tests__/generation-jobs.repository.spec.ts`. The focused spec passes 11/11; push this test correction with the QA/change-record update and wait for the scoped CI rerun before production release.
 
+**Production build concurrency follow-up:** Release `v1.194.1` fixed the frontend base image, but the 19-service rollout still overloaded the 8-core VPS during one Compose build despite `COMPOSE_PARALLEL_LIMIT=1`. The environment variable alone did not serialize BuildKit targets. Update `scripts/deploy-prod.sh` to pass Docker Compose's explicit `--parallel` limit and default to 1 for both manual and automatic deploys; add a focused deployment-script regression test, and record the host incident in `docs/11-runbooks/runbook-server-overloaded-by-builds.md` and the QA evidence. Both attempts stopped during image building; no production containers were recreated, and the prior deployed SHA remained active.
+
 ### Batch 8 â€” Enablement, integrated QA, and release readiness
 
 **Outcome:** The whole product is enabled only after all prior batches are deployed and verified; launch readiness includes the whole repository QA team and real evidence.

@@ -30,7 +30,7 @@
 #                               progress lines (default 15)
 #   CLAW_DEPLOY_ALLOW_ROLLBACK  1 = permit deploying a commit older than the one
 #                               currently deployed (emergency rollback)
-#   COMPOSE_PARALLEL_LIMIT      concurrent service image builds (default 2,
+#   COMPOSE_PARALLEL_LIMIT      concurrent service image builds (default 1,
 #                               accepted range 1-4)
 #   CLAW_LOCAL_AI               true|false override for the local-AI profile;
 #                               default reads the production .env, the same
@@ -135,7 +135,7 @@ HEALTH_TIMEOUT_SECONDS="${CLAW_DEPLOY_HEALTH_TIMEOUT:-420}"
 # ~30s, so this is what keeps a doomed rollout from burning the full timeout.
 CRASH_LOOP_RESTARTS="${CLAW_DEPLOY_CRASH_LOOP_RESTARTS:-3}"
 BUILD_TIMEOUT_SECONDS="${CLAW_DEPLOY_BUILD_TIMEOUT:-3600}"
-BUILD_PARALLEL_LIMIT="${COMPOSE_PARALLEL_LIMIT:-2}"
+BUILD_PARALLEL_LIMIT="${COMPOSE_PARALLEL_LIMIT:-1}"
 BUILD_RETRY_DELAYS=(10 30)
 
 # A blocked deployer must keep talking. Total silence on the SSH channel is what
@@ -439,7 +439,7 @@ build_services() {
   for attempt in 1 2 3; do
     : >"$output_file"
     set +e
-    COMPOSE_PARALLEL_LIMIT="$BUILD_PARALLEL_LIMIT" compose_build_bounded "${PLAN_SERVICES[@]}" \
+    compose_build_bounded "${PLAN_SERVICES[@]}" \
       2>&1 | tee "$output_file"
     status="${PIPESTATUS[0]}"
     set -e
@@ -1079,12 +1079,14 @@ compose() {
 # a single RUN layer with no output and no worker process, and the deployment
 # holds the lock for as long as compose refuses to return.
 #
+# --parallel caps Compose's service work explicitly; the environment variable
+# alone still let BuildKit bake several service targets together on production.
 # --foreground keeps the build in this deployment's process group. Without it
 # `timeout` moves the build into a group of its own, where the orphan guard's
 # group signal cannot reach it.
 compose_build_bounded() {
   timeout --foreground --kill-after=60 "$BUILD_TIMEOUT_SECONDS" \
-    docker compose "${COMPOSE_ARGS[@]}" build "$@" 200>&-
+    docker compose --parallel "$BUILD_PARALLEL_LIMIT" "${COMPOSE_ARGS[@]}" build "$@" 200>&-
 }
 
 container_state() {

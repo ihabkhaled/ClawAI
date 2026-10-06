@@ -60,7 +60,10 @@ treats every manifest as a real change.
 3. Restart clamd if it was OOM-killed: see
    [runbook-clamav-unreachable.md](runbook-clamav-unreachable.md).
 4. Deploy once more if needed with a lower build concurrency:
-   `COMPOSE_PARALLEL_LIMIT=1` (default 2, range 1–4).
+   `COMPOSE_PARALLEL_LIMIT=1` (default 1, range 1–4). The deploy script passes
+   this as Docker Compose's explicit `--parallel` limit. Setting the environment
+   variable alone did not stop Compose/BuildKit from scheduling several service
+   targets together on the production host.
 
 Never run `docker system prune` or `docker volume prune` here — they can
 delete database volumes.
