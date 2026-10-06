@@ -660,6 +660,7 @@ export const de: TranslationDictionary = {
     threadPublicIntentDisclosure:
       'Mit dem Start hältst du deine Absicht fest, diesen Beitrag öffentlich zu veröffentlichen und für Suchindizes freizugeben. Der Entwurf bleibt privat, bis du zustimmst.',
     threadSourceChat: 'Quellchat',
+    threadCreateTitle: 'Öffentlichen Thread erstellen',
     threadTopic: 'Thema oder Recherchefrage',
     threadPublicationType: 'Beitragsart',
     threadContentLocale: 'Sprache des Artikels',

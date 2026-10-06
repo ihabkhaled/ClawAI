@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   buildComparisonHubJsonLd,
   buildComparisonJsonLd,
+  buildThreadArticleJsonLd,
+  buildThreadDescription,
   buildPublicPageJsonLd,
   serializeJsonLd,
 } from '@/utilities/structured-data.utility';
@@ -124,5 +126,29 @@ describe('comparison structured data', () => {
         url: 'https://claw.example/en/compare/claude',
       },
     ]);
+  });
+});
+
+describe('thread article structured data', () => {
+  it('describes an approved Thread as a plain Article with its real sources', () => {
+    const jsonLd = buildThreadArticleJsonLd({
+      canonicalUrl: 'https://claw.example/en/threads/a',
+      title: 'A',
+      description: 'About A',
+      publishedAt: '2026-10-06T00:00:00.000Z',
+      language: 'en',
+      sourceUrls: ['https://example.com/s'],
+    });
+    expect(jsonLd['@type']).toBe('Article');
+    expect(jsonLd['citation']).toEqual(['https://example.com/s']);
+    expect(JSON.stringify(jsonLd)).not.toMatch(/ScholarlyArticle|peer/iu);
+  });
+
+  it('builds a heading-free description capped at 160 characters', () => {
+    const text = buildThreadDescription(`# Title
+
+${'word '.repeat(80)}`);
+    expect(text.startsWith('word')).toBe(true);
+    expect(text).toHaveLength(160);
   });
 });

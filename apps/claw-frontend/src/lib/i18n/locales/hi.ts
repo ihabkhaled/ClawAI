@@ -646,6 +646,7 @@ export const hi: TranslationDictionary = {
     threadPublicIntentDisclosure:
       'जनरेशन शुरू करने पर इस कार्य को सार्वजनिक रूप से प्रकाशित करने और खोज में अनुक्रमित होने देने का आपका इरादा दर्ज होता है। आपकी मंज़ूरी तक मसौदा निजी रहेगा।',
     threadSourceChat: 'स्रोत चैट',
+    threadCreateTitle: 'सार्वजनिक Thread बनाएँ',
     threadTopic: 'विषय या शोध प्रश्न',
     threadPublicationType: 'प्रकाशन का प्रकार',
     threadContentLocale: 'लेख की भाषा',

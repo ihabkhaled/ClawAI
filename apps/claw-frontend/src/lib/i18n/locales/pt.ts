@@ -651,6 +651,7 @@ export const pt: TranslationDictionary = {
     threadPublicIntentDisclosure:
       'Ao iniciar a geração, você registra a intenção de publicar este trabalho e permitir sua indexação em buscas. O rascunho permanece privado até sua aprovação.',
     threadSourceChat: 'Conversa de origem',
+    threadCreateTitle: 'Criar um Thread público',
     threadTopic: 'Tema ou pergunta de pesquisa',
     threadPublicationType: 'Tipo de publicação',
     threadContentLocale: 'Idioma do artigo',

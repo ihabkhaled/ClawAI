@@ -588,6 +588,7 @@ export type TranslationDictionary = {
     threadPublicationsLoadFailed: string;
     threadPublicIntentDisclosure: string;
     threadSourceChat: string;
+    threadCreateTitle: string;
     threadTopic: string;
     threadPublicationType: string;
     threadContentLocale: string;

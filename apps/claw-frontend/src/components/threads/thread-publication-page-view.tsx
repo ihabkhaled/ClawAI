@@ -19,14 +19,14 @@ export function ThreadPublicPageView({ state }: ThreadPublicPageViewProps): Reac
   if (state.isNotFound) {
     return (
       <p className="p-6" role="alert">
-        {t('threadPublicUnavailable')}
+        {t('chat.threadPublicUnavailable')}
       </p>
     );
   }
   if (state.isError || !state.publication) {
     return (
       <p className="p-6" role="alert">
-        {t('threadPublicLoadFailed')}
+        {t('chat.threadPublicLoadFailed')}
       </p>
     );
   }
@@ -35,9 +35,9 @@ export function ThreadPublicPageView({ state }: ThreadPublicPageViewProps): Reac
     <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-8 sm:px-6">
       <ThreadPublicArticle
         publication={state.publication}
-        truncatedLabel={t('threadPublicTruncated')}
-        citationsLabel={t('threadPublicCitations')}
-        publishedLabel={t('threadPublicPublished')}
+        truncatedLabel={t('chat.threadPublicTruncated')}
+        citationsLabel={t('chat.threadPublicCitations')}
+        publishedLabel={t('chat.threadPublicPublished')}
       />
       <ThreadPublicCommunity
         comments={state.comments}

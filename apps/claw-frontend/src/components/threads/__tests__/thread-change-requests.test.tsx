@@ -63,8 +63,11 @@ describe('ThreadChangeRequests', () => {
     renderRequests();
 
     await screen.findByText('Clarify the conclusion');
-    await user.type(screen.getByLabelText('threadResponseToRequester'), 'Outside this article');
-    await user.click(screen.getByRole('button', { name: 'threadChangeReject' }));
+    await user.type(
+      screen.getByLabelText('chat.threadResponseToRequester'),
+      'Outside this article',
+    );
+    await user.click(screen.getByRole('button', { name: 'chat.threadChangeReject' }));
 
     await waitFor(() =>
       expect(threadPublicationsRepository.resolveChangeRequest).toHaveBeenCalledWith(
@@ -93,16 +96,16 @@ describe('ThreadChangeRequests', () => {
     renderRequests(onRevisionStarted);
 
     await screen.findByText('Clarify the conclusion');
-    await user.click(screen.getByRole('button', { name: 'threadChangeAccept' }));
-    const submit = screen.getByRole('button', { name: 'threadSubmitChangeDecision' });
+    await user.click(screen.getByRole('button', { name: 'chat.threadChangeAccept' }));
+    const submit = screen.getByRole('button', { name: 'chat.threadSubmitChangeDecision' });
     expect(submit).toBeDisabled();
-    await user.clear(screen.getByLabelText('threadRevisionContent'));
+    await user.clear(screen.getByLabelText('chat.threadRevisionContent'));
     await user.type(
-      screen.getByLabelText('threadRevisionContent'),
+      screen.getByLabelText('chat.threadRevisionContent'),
       '# Article\n\nClarified conclusion.',
     );
-    await user.clear(screen.getByLabelText('threadRevisionCap'));
-    await user.type(screen.getByLabelText('threadRevisionCap'), '0.50');
+    await user.clear(screen.getByLabelText('chat.threadRevisionCap'));
+    await user.type(screen.getByLabelText('chat.threadRevisionCap'), '0.50');
     await user.click(submit);
 
     await waitFor(() =>

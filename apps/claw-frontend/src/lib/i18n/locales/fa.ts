@@ -646,6 +646,7 @@ export const fa: TranslationDictionary = {
     threadPublicIntentDisclosure:
       'با شروع تولید، قصد خود را برای انتشار عمومی این اثر و واجد شرایط‌بودن آن برای نمایه‌سازی ثبت می‌کنید. پیش‌نویس تا زمان تأیید شما خصوصی می‌ماند.',
     threadSourceChat: 'گفت‌وگوی منبع',
+    threadCreateTitle: 'ایجاد Thread عمومی',
     threadTopic: 'موضوع یا پرسش پژوهشی',
     threadPublicationType: 'نوع مطلب',
     threadContentLocale: 'زبان مقاله',

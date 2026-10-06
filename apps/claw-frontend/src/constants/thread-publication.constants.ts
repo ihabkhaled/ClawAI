@@ -4,12 +4,15 @@ import { ThreadPublicationReportReason } from '@/enums/thread-publication-report
 import type { ThreadReportReason } from '@/types/thread-publication.types';
 
 export const THREAD_PUBLICATION_OPTIONS = [
-  { value: ThreadPublicationType.ARTICLE, translationKey: 'threadTypeArticle' },
-  { value: ThreadPublicationType.RESEARCH_ARTICLE, translationKey: 'threadTypeResearchArticle' },
-  { value: ThreadPublicationType.GUIDE, translationKey: 'threadTypeGuide' },
+  { value: ThreadPublicationType.ARTICLE, translationKey: 'chat.threadTypeArticle' },
+  {
+    value: ThreadPublicationType.RESEARCH_ARTICLE,
+    translationKey: 'chat.threadTypeResearchArticle',
+  },
+  { value: ThreadPublicationType.GUIDE, translationKey: 'chat.threadTypeGuide' },
   {
     value: ThreadPublicationType.TECHNICAL_EXPLANATION,
-    translationKey: 'threadTypeTechnicalExplanation',
+    translationKey: 'chat.threadTypeTechnicalExplanation',
   },
 ] as const;
 

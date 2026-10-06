@@ -657,6 +657,7 @@ export const fr: TranslationDictionary = {
     threadPublicIntentDisclosure:
       'Le lancement de la génération enregistre votre intention de publier ce travail et de le rendre indexable. Le brouillon reste privé jusqu’à votre approbation.',
     threadSourceChat: 'Discussion source',
+    threadCreateTitle: 'Créer un Thread public',
     threadTopic: 'Sujet ou question de recherche',
     threadPublicationType: 'Type de publication',
     threadContentLocale: 'Langue de l’article',

@@ -28,7 +28,7 @@ export function ThreadPublicReportForm({
         actions.submitReport();
       }}
     >
-      <label htmlFor={`thread-report-reason-${target}`}>{t('threadPublicReportReason')}</label>
+      <label htmlFor={`thread-report-reason-${target}`}>{t('chat.threadPublicReportReason')}</label>
       <Select
         value={actions.reportReason}
         onValueChange={(value) => actions.setReportReason(value as typeof actions.reportReason)}
@@ -44,7 +44,9 @@ export function ThreadPublicReportForm({
           ))}
         </SelectContent>
       </Select>
-      <label htmlFor={`thread-report-details-${target}`}>{t('threadPublicReportDetails')}</label>
+      <label htmlFor={`thread-report-details-${target}`}>
+        {t('chat.threadPublicReportDetails')}
+      </label>
       <Textarea
         id={`thread-report-details-${target}`}
         maxLength={1000}
@@ -54,7 +56,7 @@ export function ThreadPublicReportForm({
       />
       <div className="flex gap-2">
         <Button type="submit" disabled={actions.isSubmitting} isLoading={actions.isSubmitting}>
-          {t('threadPublicSubmitReport')}
+          {t('chat.threadPublicSubmitReport')}
         </Button>
         <Button
           type="button"

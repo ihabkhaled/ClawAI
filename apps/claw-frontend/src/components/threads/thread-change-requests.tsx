@@ -102,13 +102,13 @@ export function ThreadChangeRequests({
       className="border-border bg-card flex flex-col gap-4 rounded-lg border p-5"
     >
       <h2 id="thread-change-requests-title" className="text-lg font-semibold">
-        {t('threadChangeRequests')}
+        {t('chat.threadChangeRequests')}
       </h2>
       {requests.isLoading ? <p role="status">{t('common.loading')}</p> : null}
-      {requests.isError ? <p role="alert">{t('threadChangeRequestsFailed')}</p> : null}
-      {resolve.isError ? <p role="alert">{t('threadChangeDecisionFailed')}</p> : null}
+      {requests.isError ? <p role="alert">{t('chat.threadChangeRequestsFailed')}</p> : null}
+      {resolve.isError ? <p role="alert">{t('chat.threadChangeDecisionFailed')}</p> : null}
       {requests.data?.length === 0 ? (
-        <p className="text-muted-foreground text-sm">{t('threadChangeRequestsEmpty')}</p>
+        <p className="text-muted-foreground text-sm">{t('chat.threadChangeRequestsEmpty')}</p>
       ) : null}
       {requests.data?.map((request) => (
         <article
@@ -128,7 +128,7 @@ export function ThreadChangeRequests({
             <>
               <div className="flex flex-col gap-2">
                 <label htmlFor={`thread-response-${request.id}`}>
-                  {t('threadResponseToRequester')}
+                  {t('chat.threadResponseToRequester')}
                 </label>
                 <Textarea
                   id={`thread-response-${request.id}`}
@@ -156,14 +156,14 @@ export function ThreadChangeRequests({
                   }}
                 >
                   <p className="text-muted-foreground text-sm">
-                    {t('threadChangeAcceptDisclosure')}
+                    {t('chat.threadChangeAcceptDisclosure')}
                   </p>
                   {!revisionSource ? (
-                    <p role="alert">{t('threadChangeAcceptUnavailable')}</p>
+                    <p role="alert">{t('chat.threadChangeAcceptUnavailable')}</p>
                   ) : null}
                   <div className="flex flex-col gap-2">
                     <label htmlFor={`thread-change-revision-${request.id}`}>
-                      {t('threadRevisionContent')}
+                      {t('chat.threadRevisionContent')}
                     </label>
                     <Textarea
                       id={`thread-change-revision-${request.id}`}
@@ -176,12 +176,12 @@ export function ThreadChangeRequests({
                   </div>
                   {!revisionChanged ? (
                     <p className="text-muted-foreground text-sm">
-                      {t('threadChangeRevisionUnchanged')}
+                      {t('chat.threadChangeRevisionUnchanged')}
                     </p>
                   ) : null}
                   <div className="flex flex-col gap-2">
                     <label htmlFor={`thread-change-cap-${request.id}`}>
-                      {t('threadRevisionCap')}
+                      {t('chat.threadRevisionCap')}
                     </label>
                     <Input
                       id={`thread-change-cap-${request.id}`}
@@ -200,7 +200,7 @@ export function ThreadChangeRequests({
                       disabled={resolve.isPending || !revisionSource || !revisionChanged}
                       isLoading={resolve.isPending}
                     >
-                      {t('threadSubmitChangeDecision')}
+                      {t('chat.threadSubmitChangeDecision')}
                     </Button>
                     <Button
                       type="button"
@@ -219,7 +219,7 @@ export function ThreadChangeRequests({
                     onClick={() => beginAcceptance(request.id)}
                     disabled={!revisionSource || resolve.isPending}
                   >
-                    {t('threadChangeAccept')}
+                    {t('chat.threadChangeAccept')}
                   </Button>
                   <Button
                     type="button"
@@ -234,7 +234,7 @@ export function ThreadChangeRequests({
                     disabled={resolve.isPending}
                     isLoading={resolve.isPending}
                   >
-                    {t('threadChangeReject')}
+                    {t('chat.threadChangeReject')}
                   </Button>
                 </div>
               )}

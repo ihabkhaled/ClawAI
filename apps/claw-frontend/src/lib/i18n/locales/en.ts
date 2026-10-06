@@ -645,6 +645,7 @@ export const en: TranslationDictionary = {
     threadPublicIntentDisclosure:
       'Starting generation records your intent to publish this work publicly and make it eligible for search indexing. Your draft stays private until you approve it.',
     threadSourceChat: 'Source chat',
+    threadCreateTitle: 'Create a public Thread',
     threadTopic: 'Topic or research question',
     threadPublicationType: 'Publication type',
     threadContentLocale: 'Article language',

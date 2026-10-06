@@ -617,6 +617,7 @@ export const zh: TranslationDictionary = {
     threadPublicIntentDisclosure:
       '开始生成即记录您公开发布此作品并允许搜索索引的意图。获得您的批准前，草稿将保持私密。',
     threadSourceChat: '来源对话',
+    threadCreateTitle: '创建公开 Thread',
     threadTopic: '主题或研究问题',
     threadPublicationType: '文章类型',
     threadContentLocale: '文章语言',

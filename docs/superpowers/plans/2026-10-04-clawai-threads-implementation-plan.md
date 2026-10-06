@@ -317,6 +317,8 @@ cross-service QA, lint/typecheck/build, generated knowledge, and CI remain open.
 
 **Validation:** run the full QA team across all 15 lanes with `docs/qa-evidence/2026-10-04-clawai-threads-launch.md`; run each relevant changed-file spec, touched-workspace typecheck/lint/build, QA evidence checker, `npm run knowledge:verify`, `npm run audit:check`, focused Playwright, real curl/API with branch-log proof, free/paid/admin RBAC matrix, device/orientation/RTL screenshots, security, performance/accessibility, all-locale review, UAT, CI/release/deploy checks. Run no all-workspace `npm test` or lint. Report any unavailable lane as NOT_RUN and do not claim DONE until closed.
 
+**Batch 8 progress (2026-10-06):** live API, browser, device and RBAC lanes ran on the local stack and are recorded in `docs/qa-evidence/2026-10-06-clawai-threads-launch.md` (PARTIAL). They found and fixed raw translation keys across the Threads UI and a missing article JSON-LD (`docs/changes/2026-10-06-threads-live-qa-fixes.md`). The 18 SDLC files are replaced by `docs/features/clawai-threads/README.md`. Still open: capped live generation UAT, paid/custom-role matrix, Lighthouse, and the production rollout. Pack items outside this plan (views counter, push/email, auto incident ticket, TOON, marketing pages) await an owner scope decision.
+
 ## Prompt-pack 40-round verification map
 
 The 40 rounds below are the pack's distinct verification concerns, distributed into the owning batches. They supplement the repository's 15 QA evidence lanes; they do not replace them. Record exact command/action, output, screenshots/logs where relevant, and data cleanup. Use the per-batch QA record as the index to its round evidence.

@@ -11,6 +11,7 @@ import type {
   LearnTopicJsonLdInput,
   PublicFaqJsonLdInput,
   PublicPageJsonLdInput,
+  ThreadArticleJsonLdInput,
 } from '@/types/structured-data.types';
 import { formatPriceDecimal } from '@/utilities/pricing-catalog.utility';
 
@@ -276,6 +277,31 @@ export function buildSharedChatJsonLd(input: SharedChatJsonLdInput): JsonLdObjec
     jsonLd['description'] = input.description;
   }
   return jsonLd;
+}
+
+// An approved Thread is an AI-assisted article, never "peer reviewed": it is
+// typed as a plain Article and cites only the real sources stored with it.
+export function buildThreadArticleJsonLd(input: ThreadArticleJsonLdInput): JsonLdObject {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: input.title,
+    description: input.description,
+    url: input.canonicalUrl,
+    mainEntityOfPage: input.canonicalUrl,
+    datePublished: input.publishedAt,
+    inLanguage: input.language,
+    isAccessibleForFree: true,
+    citation: input.sourceUrls,
+  };
+}
+
+export function buildThreadDescription(markdown: string): string {
+  return markdown
+    .replaceAll(/^#{1,6}\s+.*$/gmu, '')
+    .replaceAll(/\s+/gu, ' ')
+    .trim()
+    .slice(0, 160);
 }
 
 /**

@@ -632,6 +632,7 @@ export const th: TranslationDictionary = {
     threadPublicIntentDisclosure:
       'การเริ่มสร้างจะบันทึกความตั้งใจของคุณที่จะเผยแพร่ผลงานนี้ต่อสาธารณะและให้ค้นหาได้ ร่างจะยังเป็นส่วนตัวจนกว่าคุณจะอนุมัติ',
     threadSourceChat: 'แชตต้นทาง',
+    threadCreateTitle: 'สร้าง Thread สาธารณะ',
     threadTopic: 'หัวข้อหรือคำถามวิจัย',
     threadPublicationType: 'ประเภทบทความ',
     threadContentLocale: 'ภาษาของบทความ',

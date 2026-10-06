@@ -184,12 +184,12 @@ export default function ThreadPublicationsPage(): ReactElement {
       return t('common.loading');
     }
     if (revisionReview.data?.ready) {
-      return t('threadRevisionReady');
+      return t('chat.threadRevisionReady');
     }
     if (['FAILED', 'CANCELLED', 'STALE', 'REVIEW_REQUIRED'].includes(reviewStatus ?? '')) {
-      return t('threadRevisionNeedsChanges');
+      return t('chat.threadRevisionNeedsChanges');
     }
-    return t('threadRevisionPending');
+    return t('chat.threadRevisionPending');
   }
 
   function submitGeneration(event: FormEvent<HTMLFormElement>): void {
@@ -229,36 +229,38 @@ export default function ThreadPublicationsPage(): ReactElement {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <h1 className="text-2xl font-semibold">{t('threads')}</h1>
+      <h1 className="text-2xl font-semibold">{t('chat.threads')}</h1>
       <section
         className="border-border bg-card rounded-lg border p-5"
         aria-labelledby="threads-create-title"
       >
         <h2 id="threads-create-title" className="mb-4 text-lg font-semibold">
-          {t('newThread')}
+          {t('chat.threadCreateTitle')}
         </h2>
         <p className="bg-muted/30 mb-5 rounded-md p-3 text-sm" role="note">
-          {t('threadPublicIntentDisclosure')}
+          {t('chat.threadPublicIntentDisclosure')}
         </p>
         <form className="flex flex-col gap-4" onSubmit={submitGeneration}>
           <label className="flex flex-col gap-1 text-sm">
-            {t('threadSourceChat')}
+            {t('chat.threadSourceChat')}
             <select
               required
               value={sourceThreadId}
               onChange={(event) => setSourceThreadId(event.target.value)}
               className="border-input bg-background rounded-md border px-3 py-2"
             >
-              <option value="">{isLoadingThreads ? t('loadingThreads') : t('noThreads')}</option>
+              <option value="">
+                {isLoadingThreads ? t('chat.loadingThreads') : t('chat.noThreads')}
+              </option>
               {threads.map((thread) => (
                 <option key={thread.id} value={thread.id}>
-                  {thread.title ?? t('noThreads')}
+                  {thread.title ?? t('chat.noThreads')}
                 </option>
               ))}
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            {t('threadTopic')}
+            {t('chat.threadTopic')}
             <textarea
               required
               minLength={10}
@@ -270,7 +272,7 @@ export default function ThreadPublicationsPage(): ReactElement {
           </label>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="flex flex-col gap-1 text-sm">
-              {t('threadPublicationType')}
+              {t('chat.threadPublicationType')}
               <select
                 value={publicationType}
                 onChange={(event) =>
@@ -286,7 +288,7 @@ export default function ThreadPublicationsPage(): ReactElement {
               </select>
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              {t('threadContentLocale')}
+              {t('chat.threadContentLocale')}
               <select
                 value={contentLocale}
                 onChange={(event) => setContentLocale(event.target.value as Locale)}
@@ -300,11 +302,11 @@ export default function ThreadPublicationsPage(): ReactElement {
                 ))}
               </select>
               <span id="thread-content-locale-help" className="text-muted-foreground text-xs">
-                {t('threadContentLocaleHelp')}
+                {t('chat.threadContentLocaleHelp')}
               </span>
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              {t('threadSpendCapUsd')}
+              {t('chat.threadSpendCapUsd')}
               <input
                 type="number"
                 min="0.01"
@@ -318,11 +320,11 @@ export default function ThreadPublicationsPage(): ReactElement {
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {selectedModels.map((model, index) => {
-              let roleLabel = t('threadCriticModel');
+              let roleLabel = t('chat.threadCriticModel');
               if (index < 3) {
-                roleLabel = `${t('threadAuthorModel')} ${index + 1}`;
+                roleLabel = `${t('chat.threadAuthorModel')} ${index + 1}`;
               } else if (index === 3) {
-                roleLabel = t('threadJudgeModel');
+                roleLabel = t('chat.threadJudgeModel');
               }
               return (
                 <label
@@ -361,22 +363,24 @@ export default function ThreadPublicationsPage(): ReactElement {
               );
             })}
           </div>
-          {start.isError || requestError ? <p role="alert">{t('threadCreateFailed')}</p> : null}
+          {start.isError || requestError ? (
+            <p role="alert">{t('chat.threadCreateFailed')}</p>
+          ) : null}
           <Button
             type="submit"
             disabled={start.isPending || isLoadingModels || availableModels.length === 0}
             className="w-fit"
             isLoading={start.isPending}
           >
-            {start.isPending ? t('common.loading') : t('threadStartGeneration')}
+            {start.isPending ? t('common.loading') : t('chat.threadStartGeneration')}
           </Button>
         </form>
       </section>
-      {isLoading ? <p role="status">{t('loadingThreads')}</p> : null}
-      {isError ? <p role="alert">{t('threadPublicationsLoadFailed')}</p> : null}
+      {isLoading ? <p role="status">{t('chat.loadingThreads')}</p> : null}
+      {isError ? <p role="alert">{t('chat.threadPublicationsLoadFailed')}</p> : null}
       {!isLoading && !isError && publications.length === 0 ? (
         <p className="border-border bg-muted/20 text-muted-foreground rounded-lg border p-6 text-center text-sm">
-          {t('noThreads')}
+          {t('chat.noThreads')}
         </p>
       ) : null}
       {publications.length > 0 ? (
@@ -389,7 +393,9 @@ export default function ThreadPublicationsPage(): ReactElement {
                 className="h-auto text-start"
                 onClick={() => selectPublication(publication.id)}
               >
-                <span className="block font-medium">{publication.title ?? t('noThreads')}</span>
+                <span className="block font-medium">
+                  {publication.title ?? t('chat.noThreads')}
+                </span>
                 <time className="text-muted-foreground text-xs" dateTime={publication.updatedAt}>
                   {new Date(publication.updatedAt).toLocaleString()}
                 </time>
@@ -399,30 +405,34 @@ export default function ThreadPublicationsPage(): ReactElement {
         </ul>
       ) : null}
       {generation.isFetching ? <p role="status">{t('common.loading')}</p> : null}
-      {generation.isError ? <p role="alert">{t('threadCreateFailed')}</p> : null}
+      {generation.isError ? <p role="alert">{t('chat.threadCreateFailed')}</p> : null}
       {generation.data ? (
         <section
           className="border-border bg-card flex flex-col gap-3 rounded-lg border p-5"
           aria-live="polite"
         >
-          {hasDraft ? <h2 className="text-lg font-semibold">{t('threadDraftPreview')}</h2> : null}
-          {generationFailed && !hasDraft ? <p role="alert">{t('threadCreateFailed')}</p> : null}
-          {generationCancelled && !hasDraft ? (
-            <p role="status">{t('threadGenerationCancelled')}</p>
+          {hasDraft ? (
+            <h2 className="text-lg font-semibold">{t('chat.threadDraftPreview')}</h2>
           ) : null}
-          {cancel.isPending ? <p role="status">{t('threadCancellationRequesting')}</p> : null}
-          {cancel.isSuccess ? <p role="status">{t('threadCancellationRequested')}</p> : null}
-          {cancel.isError ? <p role="alert">{t('threadCancellationFailed')}</p> : null}
+          {generationFailed && !hasDraft ? (
+            <p role="alert">{t('chat.threadCreateFailed')}</p>
+          ) : null}
+          {generationCancelled && !hasDraft ? (
+            <p role="status">{t('chat.threadGenerationCancelled')}</p>
+          ) : null}
+          {cancel.isPending ? <p role="status">{t('chat.threadCancellationRequesting')}</p> : null}
+          {cancel.isSuccess ? <p role="status">{t('chat.threadCancellationRequested')}</p> : null}
+          {cancel.isError ? <p role="alert">{t('chat.threadCancellationFailed')}</p> : null}
           {!generationFailed && !generationCancelled && !hasDraft ? (
             <p role="status">{t('common.loading')}</p>
           ) : null}
           {generation.data.draft ? (
             <>
-              <h3 className="font-medium">{t('threadDraftPreview')}</h3>
+              <h3 className="font-medium">{t('chat.threadDraftPreview')}</h3>
               <pre className="bg-muted/30 max-h-[32rem] overflow-auto rounded-md p-4 text-sm whitespace-pre-wrap">
                 {generation.data.draft.markdown}
               </pre>
-              <h3 className="font-medium">{t('threadCitations')}</h3>
+              <h3 className="font-medium">{t('chat.threadCitations')}</h3>
               <ul className="list-inside list-disc">
                 {generation.data.draft.citations.map(({ evidenceId, url }) => (
                   <li key={evidenceId}>
@@ -457,7 +467,7 @@ export default function ThreadPublicationsPage(): ReactElement {
                 setEditingRevision(true);
               }}
             >
-              {t('threadEditDraft')}
+              {t('chat.threadEditDraft')}
             </Button>
           ) : null}
           {editingRevision ? (
@@ -469,7 +479,7 @@ export default function ThreadPublicationsPage(): ReactElement {
               }}
             >
               <label className="flex flex-col gap-1 text-sm">
-                {t('threadRevisionContent')}
+                {t('chat.threadRevisionContent')}
                 <textarea
                   required
                   maxLength={100000}
@@ -485,7 +495,7 @@ export default function ThreadPublicationsPage(): ReactElement {
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                {t('threadRevisionCap')}
+                {t('chat.threadRevisionCap')}
                 <input
                   required
                   min="0.01"
@@ -502,15 +512,17 @@ export default function ThreadPublicationsPage(): ReactElement {
                   className="border-input bg-background rounded-md border px-3 py-2"
                 />
               </label>
-              <p className="text-muted-foreground text-sm">{t('threadRevisionReviewDisclosure')}</p>
-              {editRevision.isError ? <p role="alert">{t('threadCreateFailed')}</p> : null}
+              <p className="text-muted-foreground text-sm">
+                {t('chat.threadRevisionReviewDisclosure')}
+              </p>
+              {editRevision.isError ? <p role="alert">{t('chat.threadCreateFailed')}</p> : null}
               <div className="flex flex-wrap gap-2">
                 <Button
                   type="submit"
                   disabled={editRevision.isPending}
                   isLoading={editRevision.isPending}
                 >
-                  {t('threadSubmitRevision')}
+                  {t('chat.threadSubmitRevision')}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setEditingRevision(false)}>
                   {t('common.cancel')}
@@ -520,14 +532,14 @@ export default function ThreadPublicationsPage(): ReactElement {
           ) : null}
           {activeRevisionId ? (
             <p role="status">
-              {t('threadRevisionStatus')}: {getRevisionReviewMessage()}
+              {t('chat.threadRevisionStatus')}: {getRevisionReviewMessage()}
             </p>
           ) : null}
-          {revisionReview.isError ? <p role="alert">{t('threadCreateFailed')}</p> : null}
+          {revisionReview.isError ? <p role="alert">{t('chat.threadCreateFailed')}</p> : null}
           {generation.data.status === 'WAITING_FOR_REVIEW' &&
           generation.data.draft &&
           !publicationReady ? (
-            <p role="status">{t('threadDraftNotEligible')}</p>
+            <p role="status">{t('chat.threadDraftNotEligible')}</p>
           ) : null}
           {generation.data.status !== 'WAITING_FOR_REVIEW' &&
           generation.data.status !== 'FAILED' &&
@@ -543,7 +555,7 @@ export default function ThreadPublicationsPage(): ReactElement {
               {t('common.cancel')}
             </Button>
           ) : null}
-          {publish.isSuccess ? <p role="status">{t('threadPublished')}</p> : null}
+          {publish.isSuccess ? <p role="status">{t('chat.threadPublished')}</p> : null}
           {generation.data.status === 'WAITING_FOR_REVIEW' &&
           generation.data.draft &&
           (activeRevisionId ? revisionReview.data?.ready : publicationReady) &&
@@ -555,7 +567,7 @@ export default function ThreadPublicationsPage(): ReactElement {
               className="w-fit"
               isLoading={publish.isPending}
             >
-              {t('threadApproveAndPublish')}
+              {t('chat.threadApproveAndPublish')}
             </Button>
           ) : null}
           {selectedPublication?.status === 'PUBLISHED' && !unpublish.isSuccess ? (
@@ -567,7 +579,7 @@ export default function ThreadPublicationsPage(): ReactElement {
               disabled={unpublish.isPending}
               isLoading={unpublish.isPending}
             >
-              {t('threadUnpublish')}
+              {t('chat.threadUnpublish')}
             </Button>
           ) : null}
           {selectedPublication ? (
@@ -578,7 +590,7 @@ export default function ThreadPublicationsPage(): ReactElement {
                 onClick={() => exportPublication.mutate(ThreadPublicationExportFormat.Markdown)}
                 disabled={exportPublication.isPending}
               >
-                {t('threadExportMarkdown')}
+                {t('chat.threadExportMarkdown')}
               </Button>
               <Button
                 type="button"
@@ -586,15 +598,17 @@ export default function ThreadPublicationsPage(): ReactElement {
                 onClick={() => exportPublication.mutate(ThreadPublicationExportFormat.Json)}
                 disabled={exportPublication.isPending}
               >
-                {t('threadExportJson')}
+                {t('chat.threadExportJson')}
               </Button>
             </div>
           ) : null}
-          {unpublish.isSuccess ? <p role="status">{t('threadUnpublished')}</p> : null}
+          {unpublish.isSuccess ? <p role="status">{t('chat.threadUnpublished')}</p> : null}
           {unpublish.isError || exportPublication.isError ? (
-            <p role="alert">{t('threadCreateFailed')}</p>
+            <p role="alert">{t('chat.threadCreateFailed')}</p>
           ) : null}
-          {publish.isError || cancel.isError ? <p role="alert">{t('threadCreateFailed')}</p> : null}
+          {publish.isError || cancel.isError ? (
+            <p role="alert">{t('chat.threadCreateFailed')}</p>
+          ) : null}
           {selectedPublication?.status === 'PUBLISHED' ? (
             <ThreadChangeRequests
               publicationId={activePublicationId}

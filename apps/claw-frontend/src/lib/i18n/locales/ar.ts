@@ -637,6 +637,7 @@ export const ar: TranslationDictionary = {
     threadPublicIntentDisclosure:
       'بدء الإنشاء يسجّل نيتك في نشر هذا العمل للعامة وإتاحته للفهرسة في البحث. تظل المسودة خاصة حتى توافق على نشرها.',
     threadSourceChat: 'المحادثة المصدر',
+    threadCreateTitle: 'إنشاء منشور Thread عام',
     threadTopic: 'الموضوع أو سؤال البحث',
     threadPublicationType: 'نوع المنشور',
     threadContentLocale: 'لغة المقال',

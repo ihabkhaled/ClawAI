@@ -23,11 +23,11 @@ export function ThreadPublicCommunity({
   return (
     <section aria-labelledby="thread-public-community-title" className="flex flex-col gap-5">
       <h2 id="thread-public-community-title" className="text-xl font-semibold">
-        {t('threadPublicComments')} ({comments.length})
+        {t('chat.threadPublicComments')} ({comments.length})
       </h2>
       <section aria-labelledby="thread-public-reactions-title" className="flex flex-col gap-3">
         <h3 id="thread-public-reactions-title" className="text-lg font-semibold">
-          {t('threadPublicReactions')}
+          {t('chat.threadPublicReactions')}
         </h3>
         {reactions ? (
           <div className="flex flex-wrap items-center gap-2">
@@ -46,7 +46,7 @@ export function ThreadPublicCommunity({
                 )
               }
             >
-              {t('threadPublicLike')} ({reactions.likes})
+              {t('chat.threadPublicLike')} ({reactions.likes})
             </Button>
             <Button
               type="button"
@@ -65,7 +65,7 @@ export function ThreadPublicCommunity({
                 )
               }
             >
-              {t('threadPublicDislike')} ({reactions.dislikes})
+              {t('chat.threadPublicDislike')} ({reactions.dislikes})
             </Button>
             <Button
               type="button"
@@ -73,15 +73,15 @@ export function ThreadPublicCommunity({
               disabled={!isAuthenticated || actions.isSubmitting}
               onClick={() => actions.setReaction(null)}
             >
-              {t('threadPublicRemoveReaction')}
+              {t('chat.threadPublicRemoveReaction')}
             </Button>
           </div>
         ) : null}
       </section>
       {communityLoading ? <p role="status">{t('common.loading')}</p> : null}
-      {communityError ? <p role="alert">{t('threadPublicCommunityFailed')}</p> : null}
+      {communityError ? <p role="alert">{t('chat.threadPublicCommunityFailed')}</p> : null}
       {comments.length === 0 && !communityLoading ? (
-        <p className="text-muted-foreground">{t('threadPublicNoComments')}</p>
+        <p className="text-muted-foreground">{t('chat.threadPublicNoComments')}</p>
       ) : null}
       {comments.map((comment) => (
         <article
@@ -98,7 +98,7 @@ export function ThreadPublicCommunity({
               variant="ghost"
               onClick={() => actions.setReportTarget(comment.id)}
             >
-              {t('threadPublicReportComment')}
+              {t('chat.threadPublicReportComment')}
             </Button>
           ) : null}
           {actions.reportTarget === comment.id ? (
@@ -115,7 +115,7 @@ export function ThreadPublicCommunity({
               actions.submitComment();
             }}
           >
-            <label htmlFor="thread-public-comment">{t('threadPublicAddComment')}</label>
+            <label htmlFor="thread-public-comment">{t('chat.threadPublicAddComment')}</label>
             <Textarea
               id="thread-public-comment"
               required
@@ -125,7 +125,7 @@ export function ThreadPublicCommunity({
               disabled={actions.isSubmitting}
             />
             <Button type="submit" disabled={actions.isSubmitting} isLoading={actions.isSubmitting}>
-              {t('threadPublicPostComment')}
+              {t('chat.threadPublicPostComment')}
             </Button>
           </form>
           <form
@@ -135,7 +135,9 @@ export function ThreadPublicCommunity({
               actions.submitChangeRequest();
             }}
           >
-            <label htmlFor="thread-public-change-request">{t('threadPublicChangeRequest')}</label>
+            <label htmlFor="thread-public-change-request">
+              {t('chat.threadPublicChangeRequest')}
+            </label>
             <Textarea
               id="thread-public-change-request"
               required
@@ -145,7 +147,7 @@ export function ThreadPublicCommunity({
               disabled={actions.isSubmitting}
             />
             <Button type="submit" disabled={actions.isSubmitting} isLoading={actions.isSubmitting}>
-              {t('threadPublicSubmitChange')}
+              {t('chat.threadPublicSubmitChange')}
             </Button>
           </form>
           <Button
@@ -154,17 +156,19 @@ export function ThreadPublicCommunity({
             onClick={() => actions.setReportTarget('')}
             disabled={actions.isSubmitting}
           >
-            {t('threadPublicReportArticle')}
+            {t('chat.threadPublicReportArticle')}
           </Button>
           {actions.reportTarget === '' ? (
             <ThreadPublicReportForm commentId="" actions={actions} />
           ) : null}
-          {actions.actionComplete ? <p role="status">{t('threadPublicActionComplete')}</p> : null}
-          {actions.actionFailed ? <p role="alert">{t('threadPublicActionFailed')}</p> : null}
+          {actions.actionComplete ? (
+            <p role="status">{t('chat.threadPublicActionComplete')}</p>
+          ) : null}
+          {actions.actionFailed ? <p role="alert">{t('chat.threadPublicActionFailed')}</p> : null}
         </>
       ) : (
         <Link className="text-primary w-fit underline" href={loginHref}>
-          {t('threadPublicSignInToJoin')}
+          {t('chat.threadPublicSignInToJoin')}
         </Link>
       )}
     </section>

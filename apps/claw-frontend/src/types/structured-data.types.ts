@@ -56,3 +56,13 @@ export type LearnHubJsonLdInput = Omit<PublicPageJsonLdInput, 'lastReviewed'> & 
   lastReviewed: string;
   items: ReadonlyArray<{ name: string; url: string }>;
 };
+
+/** Input to the public Thread article JSON-LD builder. */
+export type ThreadArticleJsonLdInput = {
+  canonicalUrl: string;
+  title: string;
+  description: string;
+  publishedAt: string;
+  language: string;
+  sourceUrls: string[];
+};
