@@ -4,7 +4,7 @@
 # every stage below works from the repo root — the same reason Dockerfile.dev
 # and every service Dockerfile do. Build context is `..` (see
 # docker/docker-compose.prod.services.yml).
-FROM node:26-alpine AS base
+FROM node:26-bookworm-slim AS base
 WORKDIR /app
 
 # Install dependencies from the monorepo root so npm resolves @claw/* to the

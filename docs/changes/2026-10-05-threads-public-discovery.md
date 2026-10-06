@@ -15,8 +15,20 @@ discovery, sitemap, and feeds. Current tests/typechecks are recorded in
 browser, role, and device QA remains open because there is no approved local
 publication fixture.
 
+## Production deployment correction
+
+Release `v1.194.0` failed during the frontend Docker build before container
+recreation. On the Alpine image, Turbopack could not resolve the existing
+`next/font/google` module. The production frontend now uses the repository's
+canonical `node:26-bookworm-slim` base. Deployment and live endpoint recovery
+remain unverified until the focused build and release workflow complete.
+
 ## Code paths traced
 
+apps/claw-frontend/Dockerfile
+tools/**tests**/deploy-workflow.test.mjs
+wiki/Build-System.md
+docs/wiki/index.md
 .ai/BOOTSTRAP.md
 .ai/manifests/api-endpoints.json
 .ai/manifests/frontend-routes.json

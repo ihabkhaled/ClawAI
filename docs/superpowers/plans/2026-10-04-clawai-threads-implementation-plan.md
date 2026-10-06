@@ -1,4 +1,4 @@
-﻿# ClawAI Threads Implementation Plan
+# ClawAI Threads Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` to implement this plan task-by-task. Work serially on `main`, as requested by the owner; do not create a worktree.
 
@@ -286,6 +286,18 @@ cross-service QA, lint/typecheck/build, generated knowledge, and CI remain open.
 **Knowledge delta in the same commit:** Update `docs/03-architecture/clawai-threads-architecture.md`, `docs/02-business-product/clawai-threads-product-spec.md`, `wiki/Threads.md`, SEO/discovery docs, `context/request-flow-map.md`, `docs/01-executive-context/` only where positioning requires a link, and the flagship/marketing page registries. Update sitemap/feed docs and operational discovery runbooks.
 
 **Validation:** changed discovery and route specs only; changed-file lint; focused Playwright/public route snapshots; independent proof that locked chat shares remain absent while eligible Threads appear; Lighthouse on each new public marketing URL, including accessibility/color contrast. QA record `docs/qa-evidence/2026-10-04-threads-public-discovery.md`.
+
+### Batch 7 deployment correction - production frontend image
+
+**Outcome:** The release deployment builds and serves the Threads discovery frontend on the production image.
+
+**Evidence:** Release `v1.194.0` reached production deployment, but the frontend Docker build failed before any containers were recreated. `next build --turbopack` on `node:26-alpine` could not resolve `@vercel/turbopack-next/internal/font/google/font` for the existing `next/font/google` imports. CI's frontend build used Ubuntu and passed. The canonical stack and all other production images use `node:26-bookworm-slim`.
+
+**Code:** Change only `apps/claw-frontend/Dockerfile` to use the canonical Debian/glibc base. Add a regression assertion in `tools/__tests__/deploy-workflow.test.mjs`. Keep the existing fonts and Turbopack build command.
+
+**Knowledge delta in the same batch:** Update `wiki/Build-System.md`, `docs/changes/2026-10-05-threads-public-discovery.md`, and this plan. Update the L15/findings/open-gaps in `docs/qa-evidence/2026-10-05-threads-public-discovery.md` with the deploy failure and actual recovery evidence. No new skill, rule, context, memory entry, ADR, or router: the existing canonical stack already requires Bookworm, and this fix introduces no new operational procedure or product contract.
+
+**Validation:** Run only `node --test tools/__tests__/deploy-workflow.test.mjs` and a production frontend Docker build, then run the end-of-batch knowledge/audit gates. Push through normal hooks. Verify the release workflow's production health checks and the live Threads discovery endpoint before Batch 8.
 
 ### Batch 8 â€” Enablement, integrated QA, and release readiness
 

@@ -162,3 +162,9 @@ test('deploy-production constrains the trigger lane before interpolating it into
 test('deploy-production reports the trigger lane in the job summary', () => {
   assert.match(workflow, /\| Trigger \| \$TRIGGER_SOURCE \|/u);
 });
+
+test('production frontend uses the canonical Debian runtime required by Turbopack', () => {
+  const frontendDockerfile = readFileSync(repoPath('apps/claw-frontend/Dockerfile'), 'utf8');
+  assert.match(frontendDockerfile, /^FROM node:26-bookworm-slim AS base$/mu);
+  assert.doesNotMatch(frontendDockerfile, /^FROM node:\d+-alpine(?:\s|$)/mu);
+});
