@@ -299,6 +299,8 @@ cross-service QA, lint/typecheck/build, generated knowledge, and CI remain open.
 
 **Validation:** Run only `node --test tools/__tests__/deploy-workflow.test.mjs` and a production frontend Docker build, then run the end-of-batch knowledge/audit gates. Push through normal hooks. Verify the release workflow's production health checks and the live Threads discovery endpoint before Batch 8.
 
+**CI follow-up:** Full CI selected all workspaces and exposed a stale generation repository fixture missing `contentLocale`. Add the selected locale and assert it is preserved by revision-review requests in `apps/claw-thread-generation-service/src/modules/generation/repositories/__tests__/generation-jobs.repository.spec.ts`. The focused spec passes 11/11; push this test correction with the QA/change-record update and wait for the scoped CI rerun before production release.
+
 ### Batch 8 â€” Enablement, integrated QA, and release readiness
 
 **Outcome:** The whole product is enabled only after all prior batches are deployed and verified; launch readiness includes the whole repository QA team and real evidence.

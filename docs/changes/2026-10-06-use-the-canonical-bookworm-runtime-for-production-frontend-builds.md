@@ -3,6 +3,7 @@
 ## Files
 
 - `apps/claw-frontend/Dockerfile` (M)
+- `apps/claw-thread-generation-service/src/modules/generation/repositories/__tests__/generation-jobs.repository.spec.ts` (M)
 - `docs/changes/2026-10-05-threads-public-discovery.md` (M)
 - `docs/qa-evidence/2026-10-05-threads-public-discovery.md` (M)
 - `docs/superpowers/plans/2026-10-04-clawai-threads-implementation-plan.md` (M)
@@ -25,9 +26,11 @@ test and updated the build wiki, Threads change record, plan, and QA evidence.
 
 ## Now
 
-The source fix and regression test are present. The focused test passes 21/21;
-knowledge verification, inventory audit, evidence validation, trace, and changed
-file secret guard pass. Production image build and redeployment are pending.
+The Dockerfile fix and regression test are present. Full CI exposed a stale
+generation repository fixture missing `contentLocale`; adding the locale and
+asserting it in the review request makes the targeted spec pass 11/11. Lighthouse,
+AI-native, and wiki publish gates pass. CI rerun, production image build, and
+redeployment remain pending.
 
 ## Why
 
@@ -48,8 +51,9 @@ from the existing frontend build setup.
 ## Verification and stale condition
 
 Verified locally by `node --test tools/__tests__/deploy-workflow.test.mjs`
-(21/21), `npm run knowledge:verify`, `npm run audit:check`, and the focused QA
+(21/21), `npx vitest run src/modules/generation/repositories/__tests__/generation-jobs.repository.spec.ts`
+(11/11), `npm run knowledge:verify`, `npm run audit:check`, and the focused QA
 evidence, trace, and secret-guard checks. This record is stale if the production
-base image or the root cause changes before redeployment completes.
+base image, locale schema, or either failure cause changes before redeployment completes.
 
-knowledge delta: documented deployment findings and canonical frontend image requirement in wiki and QA record.
+knowledge delta: documented deployment findings, CI fixture correction, and canonical frontend image requirement in wiki and QA record.

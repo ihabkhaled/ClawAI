@@ -84,6 +84,7 @@ describe('GenerationJobsRepository recovery', () => {
         spendCapMicroUsd: '5000000',
         topic: 'A sufficiently detailed topic',
         publicationType: 'article',
+        contentLocale: 'en',
         publicIntentVersion: 'threads-public-v1',
         authors: [
           {
@@ -172,6 +173,7 @@ describe('GenerationJobsRepository recovery', () => {
         request: expect.objectContaining({
           kind: 'revision-review',
           parentJobId: 'parent-job',
+          contentLocale: 'en',
           authors: parent.request.authors,
           judge: parent.request.judge,
           critic: parent.request.critic,
