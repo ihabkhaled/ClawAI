@@ -6744,6 +6744,7 @@ export const ar: TranslationDictionary = {
         label: 'تصفية حسب المصدر',
         authenticated: 'مسجّل الدخول',
         public: 'زائر',
+        system: 'النظام',
       },
       status: {
         all: 'الكل',

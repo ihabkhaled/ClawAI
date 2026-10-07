@@ -6789,6 +6789,7 @@ export const th: TranslationDictionary = {
         label: 'กรองตามแหล่งที่มา',
         authenticated: 'เข้าสู่ระบบแล้ว',
         public: 'ผู้เยี่ยมชม',
+        system: 'ระบบ',
       },
       status: {
         all: 'ทั้งหมด',

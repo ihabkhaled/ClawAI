@@ -25,6 +25,9 @@ export class FeedbackRepository {
   async create(doc: Partial<FeedbackTicket>) {
     return new this.ticketModel(doc).save();
   }
+  async findByExternalKey(externalKey: string) {
+    return this.ticketModel.findOne({ externalKey }).exec();
+  }
   async findById(id: string) {
     return this.ticketModel.findById(id).exec();
   }

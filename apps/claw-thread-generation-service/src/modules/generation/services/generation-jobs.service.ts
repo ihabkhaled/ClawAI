@@ -31,6 +31,7 @@ import type {
 } from '../types/generation-pipeline.types';
 import { stableJson } from '../utilities/stable-json.utility';
 import { describeFailure } from '../utilities/describe-failure.utility';
+import { toFailedPayload } from '../utilities/failure-report.utility';
 
 import {
   GENERATION_HEARTBEAT_MS,
@@ -271,7 +272,11 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       }
       // Operators need the failing step; never log prompts, drafts or provider bodies.
       this.logger.warn(`Generation attempt failed: ${describeFailure(error)}`);
-      const outcome = await this.repository.retryOrFail(job.id, job.attemptCount);
+      const outcome = await this.repository.retryOrFail(
+        job.id,
+        job.attemptCount,
+        describeFailure(error),
+      );
       if (outcome === GenerationJobRecoveryOutcome.FAILED) {
         await this.closeBudget(job.id, job.budgetId, GenerationBudgetCloseStatus.RELEASED);
       } else if (outcome === GenerationJobRecoveryOutcome.RETRY) {
@@ -315,6 +320,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
             : GenerationBudgetCloseStatus.RELEASED;
         await this.closeBudget(job.id, job.budgetId, status);
       }
+      await this.reportFailedJobs();
       const queued = await this.repository.findDispatchable(10);
       for (const job of queued) {
         const record = await this.repository.findQueued(job.id);
@@ -324,6 +330,22 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       this.logger.warn('Generation recovery pass failed; it will retry on the next interval');
     } finally {
       this.recoveryRunning = false;
+    }
+  }
+
+  /** Publishes one operator report per FAILED job; the marker makes a retry safe. */
+  private async reportFailedJobs(): Promise<void> {
+    for (const job of await this.repository.findUnreportedFailures(10)) {
+      try {
+        await this.rabbit.publishConfirmed(
+          EventPattern.THREAD_GENERATION_FAILED,
+          toFailedPayload(job),
+        );
+        await this.repository.markFailureReported(job.id);
+      } catch {
+        this.logger.warn('Generation failure report is pending retry by the recovery scheduler');
+        return;
+      }
     }
   }
 

@@ -29,8 +29,11 @@ const STATUS_LABEL_KEYS: Readonly<Record<string, string>> = {
 // Rows filed before the source column existed carry no value; they were all
 // signed-in submissions, so a missing source reads as the signed-in label.
 export function feedbackSourceLabelKey(source: string | undefined): string {
-  return source === FeedbackSource.PUBLIC
-    ? 'feedback.admin.source.public'
+  if (source === FeedbackSource.PUBLIC) {
+    return 'feedback.admin.source.public';
+  }
+  return source === FeedbackSource.SYSTEM
+    ? 'feedback.admin.source.system'
     : 'feedback.admin.source.authenticated';
 }
 

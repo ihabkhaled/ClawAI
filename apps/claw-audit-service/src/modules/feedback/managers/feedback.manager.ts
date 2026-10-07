@@ -14,6 +14,7 @@ import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
 import { AppConfig } from '../../../app/config/app.config';
 import { BusinessException } from '../../../common/errors';
 import { FeedbackSource } from '../../../common/enums';
+import { SYSTEM_REPORTER_EMAIL, SYSTEM_REPORTER_NAME } from '../constants/system-ticket.constants';
 import { UserIdentityClient } from '../clients/user-identity.client';
 import { FeedbackRepository } from '../repositories/feedback.repository';
 import {
@@ -99,6 +100,48 @@ export class FeedbackManager {
     });
 
     return { id: created.id, ticketNumber: created.ticketNumber, status: created.status };
+  }
+
+  /**
+   * A ticket raised by the platform, not a person. Idempotent on `externalKey`: a
+   * redelivered event returns the ticket it already opened.
+   */
+  async createSystemTicket(input: {
+    externalKey: string;
+    type: string;
+    title: string;
+    contentMarkdown: string;
+  }): Promise<{ id: string; ticketNumber: string; created: boolean }> {
+    const existing = await this.repository.findByExternalKey(input.externalKey);
+    if (existing) return { id: existing.id, ticketNumber: existing.ticketNumber, created: false };
+    const contentMarkdown = sanitizeFeedbackMarkdown(input.contentMarkdown);
+    const created = await this.repository.create({
+      ticketNumber: await this.repository.nextTicketNumber(),
+      externalKey: input.externalKey,
+      type: input.type,
+      title: sanitizeFeedbackPlainText(input.title, FEEDBACK_MAX_TITLE_LENGTH),
+      contentMarkdown,
+      searchText: toSearchText(contentMarkdown),
+      status: FeedbackStatus.OPEN,
+      source: FeedbackSource.SYSTEM,
+      userId: null,
+      reporterName: SYSTEM_REPORTER_NAME,
+      reporterEmail: SYSTEM_REPORTER_EMAIL,
+      attachments: [],
+      history: [
+        {
+          action: 'CREATED',
+          fromStatus: null,
+          toStatus: FeedbackStatus.OPEN,
+          actorId: 'system',
+          actorEmail: SYSTEM_REPORTER_EMAIL,
+          note: null,
+          at: new Date(),
+        },
+      ],
+      lastActorId: 'system',
+    });
+    return { id: created.id, ticketNumber: created.ticketNumber, created: true };
   }
 
   async changeStatus(

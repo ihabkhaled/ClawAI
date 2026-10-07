@@ -6952,6 +6952,7 @@ export const es: TranslationDictionary = {
         label: 'Filtrar por origen',
         authenticated: 'Con sesión iniciada',
         public: 'Visitante',
+        system: 'Sistema',
       },
       status: {
         all: 'Todos',

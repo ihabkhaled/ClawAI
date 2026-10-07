@@ -18,6 +18,7 @@ export const FEEDBACK_TYPE_OPTIONS: readonly { value: FeedbackType; labelKey: st
 export const FEEDBACK_SOURCE_OPTIONS: readonly { value: FeedbackSource; labelKey: string }[] = [
   { value: FeedbackSource.AUTHENTICATED, labelKey: 'feedback.admin.source.authenticated' },
   { value: FeedbackSource.PUBLIC, labelKey: 'feedback.admin.source.public' },
+  { value: FeedbackSource.SYSTEM, labelKey: 'feedback.admin.source.system' },
 ];
 
 // Below this, an attachment rendered at its natural size reads as a blank

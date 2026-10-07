@@ -310,6 +310,38 @@ export class GenerationJobsRepository {
     });
   }
 
+  /** Failed jobs not yet reported to operators, oldest first. */
+  async findUnreportedFailures(limit: number) {
+    return this.prisma.threadGenerationJob.findMany({
+      where: { status: ThreadGenerationStatus.FAILED, failureReportedAt: null },
+      orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
+      take: limit,
+      select: {
+        id: true,
+        ownerId: true,
+        correlationId: true,
+        stage: true,
+        attemptCount: true,
+        safeErrorCode: true,
+        failureSummary: true,
+        sourceSnapshotHash: true,
+        budgetCloseStatus: true,
+        request: true,
+        createdAt: true,
+        completedAt: true,
+        updatedAt: true,
+        attempts: { orderBy: { startedAt: 'asc' }, take: 1, select: { startedAt: true } },
+      },
+    });
+  }
+
+  async markFailureReported(jobId: string): Promise<void> {
+    await this.prisma.threadGenerationJob.updateMany({
+      where: { id: jobId, failureReportedAt: null },
+      data: { failureReportedAt: new Date() },
+    });
+  }
+
   async markBudgetClosed(jobId: string, status: GenerationBudgetCloseStatus): Promise<void> {
     await this.prisma.threadGenerationJob.updateMany({
       where: { id: jobId, budgetClosedAt: null },
@@ -556,7 +588,11 @@ export class GenerationJobsRepository {
     return true;
   }
 
-  async retryOrFail(jobId: string, attempt: number): Promise<GenerationJobRecoveryOutcome> {
+  async retryOrFail(
+    jobId: string,
+    attempt: number,
+    failureSummary: string | null = null,
+  ): Promise<GenerationJobRecoveryOutcome> {
     const now = new Date();
     return this.prisma.$transaction(async (tx) => {
       const job = await tx.threadGenerationJob.findFirst({
@@ -596,6 +632,7 @@ export class GenerationJobsRepository {
         jobUpdate = {
           status: ThreadGenerationStatus.FAILED,
           safeErrorCode,
+          failureSummary: failureSummary?.slice(0, 400) ?? null,
           completedAt: now,
           leaseOwner: null,
           leaseExpiresAt: null,

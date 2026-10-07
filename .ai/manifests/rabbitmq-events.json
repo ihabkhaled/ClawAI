@@ -726,6 +726,11 @@
       "source": "packages/shared-types/src/events/event-patterns.ts"
     },
     {
+      "key": "THREAD_GENERATION_FAILED",
+      "pattern": "threads.generation_failed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
       "key": "THREAD_GENERATION_REQUESTED",
       "pattern": "threads.generation_requested",
       "source": "packages/shared-types/src/events/event-patterns.ts"

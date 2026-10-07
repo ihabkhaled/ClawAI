@@ -106,7 +106,7 @@ describe('AdminFeedbackFilters source filter', () => {
     totalCount: 0,
   };
 
-  it('offers all sources, signed in and visitor, and reports the chosen value', async () => {
+  it('offers all sources, signed in, visitor and system, and reports the chosen value', async () => {
     const onSourceChange = vi.fn();
     render(<AdminFeedbackFilters {...base} onSourceChange={onSourceChange} />);
 
@@ -120,6 +120,7 @@ describe('AdminFeedbackFilters source filter', () => {
       'feedback.admin.source.all',
       'feedback.admin.source.authenticated',
       'feedback.admin.source.public',
+      'feedback.admin.source.system',
     ]);
 
     await userEvent.click(within(listbox).getByText('feedback.admin.source.public'));

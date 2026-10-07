@@ -411,7 +411,69 @@ describe('GenerationJobsService', () => {
     await service.subscribe();
     await handler?.({ jobId: 'job-1', correlationId: 'correlation-1' });
 
-    expect(repository.retryOrFail).toHaveBeenCalledWith('job-1', 1);
+    expect(repository.retryOrFail).toHaveBeenCalledWith('job-1', 1, expect.any(String));
     expect(budgets.close).not.toHaveBeenCalled();
+  });
+
+  describe('failure reports', () => {
+    const failedJob = {
+      id: 'job-failed',
+      ownerId: 'owner-1',
+      correlationId: 'corr-1',
+      stage: 'AUTHOR_DRAFTS',
+      attemptCount: 3,
+      safeErrorCode: 'GENERATION_FAILED',
+      failureSummary: 'ServiceUnavailableException: An author role failed',
+      sourceSnapshotHash: 'a'.repeat(64),
+      budgetCloseStatus: 'RELEASED',
+      request: { authors: [], judge: role('judge'), critic: role('critic') },
+      createdAt: new Date('2026-10-07T10:00:00.000Z'),
+      completedAt: new Date('2026-10-07T10:05:00.000Z'),
+      updatedAt: new Date('2026-10-07T10:05:00.000Z'),
+      attempts: [],
+    };
+    const build = (publish: ReturnType<typeof vi.fn>) => {
+      const repository = {
+        recoverExpiredLeases: vi.fn().mockResolvedValue([]),
+        findPendingBudgetClosures: vi.fn().mockResolvedValue([]),
+        findUnreportedFailures: vi.fn().mockResolvedValue([failedJob]),
+        markFailureReported: vi.fn().mockResolvedValue(undefined),
+        findDispatchable: vi.fn().mockResolvedValue([]),
+      };
+      const service = new GenerationJobsService(
+        {} as never,
+        repository as never,
+        { publishConfirmed: publish } as never,
+        {} as never,
+        {} as never,
+      );
+      return { repository, reconcile: () => service['reconcileQueue']() };
+    };
+
+    it('publishes one safe report for a failed job and marks it reported', async () => {
+      const publish = vi.fn().mockResolvedValue(undefined);
+      const { repository, reconcile } = build(publish);
+
+      await reconcile();
+
+      expect(publish).toHaveBeenCalledWith(
+        EventPattern.THREAD_GENERATION_FAILED,
+        expect.objectContaining({
+          jobId: 'job-failed',
+          ownerId: 'owner-1',
+          failedStage: 'AUTHOR_DRAFTS',
+        }),
+      );
+      expect(repository.markFailureReported).toHaveBeenCalledWith('job-failed');
+    });
+
+    it('leaves the job unreported when publishing fails, so the next pass retries', async () => {
+      const publish = vi.fn().mockRejectedValue(new Error('broker down'));
+      const { repository, reconcile } = build(publish);
+
+      await reconcile();
+
+      expect(repository.markFailureReported).not.toHaveBeenCalled();
+    });
   });
 });

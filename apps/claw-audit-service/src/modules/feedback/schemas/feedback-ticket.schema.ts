@@ -12,6 +12,9 @@ export class FeedbackTicket {
   @Prop({ required: true, unique: true, index: true }) ticketNumber!: string;
   // Null for a public (no-login) submission; set to the caller's id otherwise.
   @Prop({ type: String, default: null, index: true }) userId?: string | null;
+  // Set only on platform-raised tickets: the stable key that makes a redelivered event
+  // find its ticket instead of opening a second one.
+  @Prop({ type: String, unique: true, sparse: true }) externalKey?: string | null;
   @Prop({
     type: String,
     required: true,

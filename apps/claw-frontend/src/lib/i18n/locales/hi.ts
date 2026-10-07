@@ -6862,6 +6862,7 @@ export const hi: TranslationDictionary = {
         label: 'स्रोत के अनुसार फ़िल्टर करें',
         authenticated: 'साइन इन',
         public: 'विज़िटर',
+        system: 'सिस्टम',
       },
       status: {
         all: 'सभी',

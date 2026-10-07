@@ -6990,6 +6990,7 @@ export const de: TranslationDictionary = {
         label: 'Nach Quelle filtern',
         authenticated: 'Angemeldet',
         public: 'Besucher',
+        system: 'System',
       },
       status: {
         all: 'Alle',

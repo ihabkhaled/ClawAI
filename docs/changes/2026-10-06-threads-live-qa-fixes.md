@@ -52,6 +52,13 @@ publication has `/threads/review/<id>`. The old one-page portal was split: detai
 to `useThreadPublicationDetail`, render to `ThreadPublicationDetail`. The role selectors are
 the chat's `ModelPicker` (`ThreadModelPicker`), not plain selects.
 
+**Automatic admin ticket on final failure.** `threads.generation_failed` (outbox-backed,
+published once per FAILED job) opens one `SYSTEM` `BUG_REPORT` ticket in audit-service with
+safe diagnostics. New columns `failure_summary` and `failure_reported_at`
+(migration `20261007100000_threads_generation_failure_report`); `FeedbackSource.SYSTEM`
+and a unique sparse `externalKey` on tickets; a System filter and label in the admin
+feedback list (13 locales).
+
 Local-only findings (no repo change): a stale `claw_threads` schema missed
 `accepted_revision_id`, and host-generated `src/generated/prisma/package.json`
 files carried a UTF-8 BOM that broke the Docker `prisma generate` step.

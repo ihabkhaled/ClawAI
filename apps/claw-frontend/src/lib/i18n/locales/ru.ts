@@ -6923,6 +6923,7 @@ export const ru: TranslationDictionary = {
         label: 'Фильтр по источнику',
         authenticated: 'Вошёл в аккаунт',
         public: 'Посетитель',
+        system: 'Система',
       },
       status: {
         all: 'Все',

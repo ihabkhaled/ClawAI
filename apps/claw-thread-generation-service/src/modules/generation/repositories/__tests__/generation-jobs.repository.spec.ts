@@ -352,4 +352,43 @@ describe('GenerationJobsRepository recovery', () => {
     expect(tx.threadGenerationAttempt.updateMany).not.toHaveBeenCalled();
     expect(tx.threadGenerationWorkerSlot.updateMany).not.toHaveBeenCalled();
   });
+
+  it('keeps a short safe summary of the final failure on the job', async () => {
+    const { repository, tx } = buildRepository();
+
+    await repository.retryOrFail('job-1', 3, 'x'.repeat(900));
+
+    expect(tx.threadGenerationJob.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: ThreadGenerationStatus.FAILED,
+          failureSummary: 'x'.repeat(400),
+        }),
+      }),
+    );
+  });
+
+  it('lists only failed jobs that were not reported yet, oldest first', async () => {
+    const { repository, tx } = buildRepository();
+
+    await repository.findUnreportedFailures(5);
+
+    expect(tx.threadGenerationJob.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { status: ThreadGenerationStatus.FAILED, failureReportedAt: null },
+        take: 5,
+      }),
+    );
+  });
+
+  it('marks a failure reported only once', async () => {
+    const { repository, tx } = buildRepository();
+
+    await repository.markFailureReported('job-1');
+
+    expect(tx.threadGenerationJob.updateMany).toHaveBeenCalledWith({
+      where: { id: 'job-1', failureReportedAt: null },
+      data: { failureReportedAt: expect.any(Date) },
+    });
+  });
 });

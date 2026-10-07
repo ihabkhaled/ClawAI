@@ -54,6 +54,8 @@ model ThreadGenerationJob {
   leaseExpiresAt         DateTime?                    @map("lease_expires_at")
   cancelRequestedAt      DateTime?                    @map("cancel_requested_at")
   safeErrorCode          String?                      @map("safe_error_code")
+  failureSummary         String?                      @map("failure_summary") @db.VarChar(400)
+  failureReportedAt      DateTime?                    @map("failure_reported_at")
   publicIntentVersion    String                       @map("public_intent_version")
   publicIntentAt         DateTime                     @map("public_intent_at")
   createdAt              DateTime                     @default(now()) @map("created_at")
@@ -68,6 +70,7 @@ model ThreadGenerationJob {
   @@index([status, leaseExpiresAt])
   @@index([status, nextAttemptAt, createdAt])
   @@index([status, dispatchLeaseExpiresAt])
+  @@index([status, failureReportedAt])
   @@index([ownerId, createdAt])
   @@map("thread_generation_jobs")
 }

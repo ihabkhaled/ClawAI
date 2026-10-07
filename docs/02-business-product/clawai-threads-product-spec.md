@@ -85,6 +85,14 @@ production QA remain open. Internationalization and public discovery are
 implemented; generation authors are prompted to use the persisted locale.
 Generation intent or a private draft alone does not make content public.
 
+## Operations: failed jobs
+
+A job that exhausts its retries and fallbacks ends FAILED with no public content and its
+credit reservation released. Admins automatically get one ticket in the feedback queue
+(source System) with the failed stage, error summary, attempts, queue wait, duration, the
+models and fallbacks configured, the credit reservation state and the correlation id. No
+conversation text or secret is ever in it.
+
 ## Owner creation flow delivery
 
 Where things live: **creating** a Thread is a modal (from the chat header, or the **Create a

@@ -79,6 +79,7 @@ export type FeedbackAdminStatusTranslation = {
 };
 
 export type FeedbackAdminSourceTranslation = {
+  system: string;
   all: string;
   label: string;
   authenticated: string;

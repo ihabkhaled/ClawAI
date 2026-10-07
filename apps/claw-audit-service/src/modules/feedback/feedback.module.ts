@@ -9,6 +9,7 @@ import { UserIdentityClient } from './clients/user-identity.client';
 import { FeedbackPublicManager } from './managers/feedback-public.manager';
 import { FeedbackSourceBackfillMigration } from './migrations/feedback-source-backfill.migration';
 import { FeedbackPublicController } from './controllers/feedback-public.controller';
+import { ThreadGenerationFailedConsumer } from './consumers/thread-generation-failed.consumer';
 import { FeedbackManager } from './managers/feedback.manager';
 import { FeedbackService } from './services/feedback.service';
 import { FeedbackController } from './controllers/feedback.controller';
@@ -27,6 +28,7 @@ import { FeedbackAdminController } from './controllers/feedback-admin.controller
     FeedbackRateLimitRepository,
     UserIdentityClient,
     FeedbackManager,
+    ThreadGenerationFailedConsumer,
     FeedbackPublicManager,
     FeedbackService,
     FeedbackSourceBackfillMigration,

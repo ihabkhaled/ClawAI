@@ -6852,6 +6852,7 @@ export const fa: TranslationDictionary = {
         label: 'فیلتر بر اساس منبع',
         authenticated: 'واردشده',
         public: 'بازدیدکننده',
+        system: 'سیستم',
       },
       status: {
         all: 'همه',

@@ -6845,6 +6845,7 @@ export const en: TranslationDictionary = {
         label: 'Filter by source',
         authenticated: 'Signed in',
         public: 'Visitor',
+        system: 'System',
       },
       status: {
         all: 'All',

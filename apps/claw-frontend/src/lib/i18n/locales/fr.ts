@@ -6994,6 +6994,7 @@ export const fr: TranslationDictionary = {
         label: 'Filtrer par source',
         authenticated: 'Connecté',
         public: 'Visiteur',
+        system: 'Système',
       },
       status: {
         all: 'Tous',

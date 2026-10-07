@@ -6963,6 +6963,7 @@ export const it: TranslationDictionary = {
         label: 'Filtra per fonte',
         authenticated: 'Accesso effettuato',
         public: 'Visitatore',
+        system: 'Sistema',
       },
       status: {
         all: 'Tutti',

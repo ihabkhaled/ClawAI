@@ -2,4 +2,5 @@
 export enum FeedbackSource {
   AUTHENTICATED = 'AUTHENTICATED',
   PUBLIC = 'PUBLIC',
+  SYSTEM = 'SYSTEM',
 }

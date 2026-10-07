@@ -87,6 +87,16 @@ FIFO among jobs whose retry delay has elapsed. Auth budget closure is retried
 from persisted pending state, so a temporary close failure does not lose the
 settlement operation.
 
+## Failure tickets
+
+When a job ends FAILED, generation-service publishes `threads.generation_failed` exactly
+once (an outbox marker, `failure_reported_at`, is set only after a confirmed publish, so a
+crash or broker outage retries on the next 15-second recovery pass). The event carries only
+ids, hashes, counts, timings, the models configured for each role and a short safe error
+summary, never conversation text, evidence, drafts or prompts. Audit-service opens one
+`BUG_REPORT` ticket per job (source `SYSTEM`, keyed `threads-generation:<jobId>`, so a
+redelivery finds the existing ticket) in the admin feedback queue.
+
 ## Public data and deletion
 
 Public DTOs use an explicit allow-list. Only published, owner-approved,

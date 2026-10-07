@@ -6500,6 +6500,7 @@ export const zh: TranslationDictionary = {
         label: '按来源筛选',
         authenticated: '已登录',
         public: '访客',
+        system: '系统',
       },
       status: {
         all: '全部',

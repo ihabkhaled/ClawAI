@@ -22,7 +22,7 @@ npm run dev
 - Prisma models: none
 - Mongoose models: AuditLog, FeedbackCounter, FeedbackTicket, UsageLedger
 - API endpoints: 16 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 34 (vitest)
+- Test files: 37 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

@@ -6880,6 +6880,7 @@ export const ja: TranslationDictionary = {
         label: 'ソースで絞り込む',
         authenticated: 'ログイン済み',
         public: '訪問者',
+        system: 'システム',
       },
       status: {
         all: 'すべて',

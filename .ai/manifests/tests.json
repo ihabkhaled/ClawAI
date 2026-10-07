@@ -30,7 +30,7 @@
     },
     "claw-audit-service": {
       "runner": "vitest",
-      "testFiles": 34
+      "testFiles": 37
     },
     "claw-auth-service": {
       "runner": "vitest",
@@ -98,7 +98,7 @@
     },
     "claw-thread-generation-service": {
       "runner": "vitest",
-      "testFiles": 18
+      "testFiles": 19
     },
     "claw-threads-service": {
       "runner": "vitest",
@@ -110,5 +110,5 @@
     }
   },
   "generated": true,
-  "total": 2119
+  "total": 2123
 }

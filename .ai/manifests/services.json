@@ -66,7 +66,7 @@
       "port": 4007,
       "portSource": "shared-constants",
       "prismaModels": [],
-      "testFiles": 34,
+      "testFiles": 37,
       "testRunner": "vitest"
     },
     {
@@ -541,7 +541,7 @@
         "ThreadModelCommunication",
         "ThreadRevisionDraft"
       ],
-      "testFiles": 18,
+      "testFiles": 19,
       "testRunner": "vitest"
     },
     {

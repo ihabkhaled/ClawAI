@@ -4,6 +4,7 @@ export type {
   ThreadGenerationRequestedPayload,
   ThreadGenerationCompletedPayload,
   ThreadGenerationFailedPayload,
+  ThreadGenerationFailedRole,
 } from './thread-generation-events.types';
 export type {
   BillingEventEnvelope,
