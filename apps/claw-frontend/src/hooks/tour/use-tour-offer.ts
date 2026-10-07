@@ -14,7 +14,7 @@ import { tourAppliesToPath } from '@/utilities/tour-route.utility';
  */
 export function useTourOffer(): TourOfferController {
   const pathname = usePathname();
-  const path = stripLocaleFromPathname(pathname);
+  const path = stripLocaleFromPathname(pathname ?? '/');
   const activeTourId = useTourStore((state) => state.activeTourId);
   const progress = useTourStore((state) => state.progress);
   const start = useTourStore((state) => state.start);

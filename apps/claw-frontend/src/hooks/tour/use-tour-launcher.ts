@@ -11,7 +11,7 @@ import { tourAppliesToPath } from '@/utilities/tour-route.utility';
 /** The tours a person can start from the help button: this page's first, then the rest. */
 export function useTourLauncher(): TourLauncherController {
   const pathname = usePathname();
-  const path = stripLocaleFromPathname(pathname);
+  const path = stripLocaleFromPathname(pathname ?? '/');
   const content = useTourContent();
   const completed = useTourStore((state) => state.progress.completed);
   const start = useTourStore((state) => state.start);
