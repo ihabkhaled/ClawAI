@@ -12,6 +12,7 @@ import { useThreadGenerationForm } from '@/hooks/threads/use-thread-generation-f
 import { useThreadPublications } from '@/hooks/threads/use-thread-publications';
 import { useTranslation } from '@/lib/i18n';
 import { threadPublicationsRepository } from '@/repositories/threads/thread-publications.repository';
+import { downloadThreadExport } from '@/utilities/thread-export-download.utility';
 import { parsePublicationIdParam } from '@/utilities/thread-publication-id-param.utility';
 import { createThreadRevisionRequest } from '@/utilities/thread-revision-request.utility';
 
@@ -109,21 +110,7 @@ export default function ThreadPublicationsPage(): ReactElement {
   const exportPublication = useMutation({
     mutationFn: (format: ThreadPublicationExportFormat) =>
       threadPublicationsRepository.export(activePublicationId, format),
-    onSuccess: ({ format, content }) => {
-      const body = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
-      const blob = new Blob([body], {
-        type:
-          format === ThreadPublicationExportFormat.Markdown
-            ? 'text/markdown;charset=utf-8'
-            : 'application/json;charset=utf-8',
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `thread-publication.${format === ThreadPublicationExportFormat.Markdown ? 'md' : 'json'}`;
-      link.click();
-      URL.revokeObjectURL(url);
-    },
+    onSuccess: ({ format, content }) => downloadThreadExport(format, content),
   });
 
   const hasDraft = Boolean(generation.data?.draft);
@@ -407,6 +394,14 @@ export default function ThreadPublicationsPage(): ReactElement {
                 disabled={exportPublication.isPending}
               >
                 {t('chat.threadExportJson')}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => exportPublication.mutate(ThreadPublicationExportFormat.Toon)}
+                disabled={exportPublication.isPending}
+              >
+                {t('chat.threadExportToon')}
               </Button>
             </div>
           ) : null}

@@ -687,6 +687,7 @@ export const hi: TranslationDictionary = {
     threadUnpublished: 'यह प्रकाशन अब सार्वजनिक नहीं है।',
     threadExportMarkdown: 'Markdown निर्यात करें',
     threadExportJson: 'JSON निर्यात करें',
+    threadExportToon: 'TOON निर्यात करें',
     threadChangeRequests: 'पाठकों के सुझाव',
     threadPublicUnavailable: 'यह प्रकाशन उपलब्ध नहीं है।',
     threadPublicLoadFailed: 'यह प्रकाशन लोड नहीं हो सका।',

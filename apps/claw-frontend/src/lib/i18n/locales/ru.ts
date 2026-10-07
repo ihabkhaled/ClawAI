@@ -694,6 +694,7 @@ export const ru: TranslationDictionary = {
     threadUnpublished: 'Публикация больше не общедоступна.',
     threadExportMarkdown: 'Экспортировать Markdown',
     threadExportJson: 'Экспортировать JSON',
+    threadExportToon: 'Экспорт TOON',
     threadChangeRequests: 'Предложения читателей',
     threadPublicUnavailable: 'Эта публикация недоступна.',
     threadPublicLoadFailed: 'Не удалось загрузить публикацию.',

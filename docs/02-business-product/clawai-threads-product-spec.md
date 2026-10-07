@@ -52,8 +52,9 @@ selected cap and starts the job; generation validates snapshot ownership before
 reserving it through the existing Auth entitlement system. Threads allows
 owner-scoped progress/cancellation and persists ready output as a private
 pending revision.
-JSON and Markdown are supported exports. TOON remains unavailable until a codec
-proves semantic round-trip and useful measured token savings.
+JSON, Markdown and TOON (Token-Oriented Object Notation) are supported owner exports. TOON is
+verified to decode back to the canonical JSON before it is returned; prompts to models keep
+canonical JSON.
 
 The public reader shows only approved, safety-checked fields. It does not show a
 reader identity list. Public reads require a published, owner-approved,

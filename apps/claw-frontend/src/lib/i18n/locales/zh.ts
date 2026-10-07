@@ -656,6 +656,7 @@ export const zh: TranslationDictionary = {
     threadUnpublished: '该内容已不再公开。',
     threadExportMarkdown: '导出 Markdown',
     threadExportJson: '导出 JSON',
+    threadExportToon: '导出 TOON',
     threadChangeRequests: '读者建议',
     threadPublicUnavailable: '此公开文章不可用。',
     threadPublicLoadFailed: '无法加载此公开文章。',

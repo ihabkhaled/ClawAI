@@ -630,6 +630,7 @@ export type TranslationDictionary = {
     threadUnpublished: string;
     threadExportMarkdown: string;
     threadExportJson: string;
+    threadExportToon: string;
     threadChangeRequests: string;
     threadChangeRequestsFailed: string;
     threadChangeRequestsEmpty: string;

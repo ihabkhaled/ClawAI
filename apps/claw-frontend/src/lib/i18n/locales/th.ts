@@ -672,6 +672,7 @@ export const th: TranslationDictionary = {
     threadUnpublished: 'เนื้อหานี้ไม่เปิดเผยต่อสาธารณะแล้ว',
     threadExportMarkdown: 'ส่งออก Markdown',
     threadExportJson: 'ส่งออก JSON',
+    threadExportToon: 'ส่งออก TOON',
     threadChangeRequests: 'ข้อเสนอจากผู้อ่าน',
     threadPublicUnavailable: 'ไม่พบบทความที่เผยแพร่',
     threadPublicLoadFailed: 'โหลดบทความนี้ไม่สำเร็จ',

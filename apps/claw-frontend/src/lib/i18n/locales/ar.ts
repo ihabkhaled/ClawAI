@@ -677,6 +677,7 @@ export const ar: TranslationDictionary = {
     threadUnpublished: 'لم يعد المنشور متاحًا للعامة.',
     threadExportMarkdown: 'تصدير Markdown',
     threadExportJson: 'تصدير JSON',
+    threadExportToon: 'تصدير TOON',
     threadChangeRequests: 'اقتراحات القراء',
     threadPublicUnavailable: 'هذا المنشور غير متاح.',
     threadPublicLoadFailed: 'تعذر تحميل هذا المنشور.',

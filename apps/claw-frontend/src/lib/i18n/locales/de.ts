@@ -706,6 +706,7 @@ export const de: TranslationDictionary = {
     threadUnpublished: 'Die Veröffentlichung ist nicht mehr öffentlich.',
     threadExportMarkdown: 'Markdown exportieren',
     threadExportJson: 'JSON exportieren',
+    threadExportToon: 'TOON exportieren',
     threadChangeRequests: 'Leservorschläge',
     threadPublicUnavailable: 'Diese Veröffentlichung ist nicht verfügbar.',
     threadPublicLoadFailed: 'Diese Veröffentlichung konnte nicht geladen werden.',

@@ -1,4 +1,6 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+
+import { decodeToon } from '../../../../common/utilities/toon.utility';
 
 import { PublicationLifecycleService } from '../publication-lifecycle.service';
 import { Locale, ThreadPublicationType } from '@claw/shared-types';
@@ -385,5 +387,42 @@ describe('PublicationLifecycleService', () => {
       }),
     ).rejects.toBeInstanceOf(ConflictException);
     expect(generation.enqueueRevisionReview).not.toHaveBeenCalled();
+  });
+
+  describe('export', () => {
+    const exported = {
+      title: 'Local-first AI',
+      markdown: '# Local-first AI\n\nعربي 👩‍💻',
+      citations: [{ url: 'https://example.org/source' }],
+    };
+    const build = (found: unknown = exported) =>
+      new PublicationLifecycleService(
+        { findOwnedExport: vi.fn().mockResolvedValue(found) } as never,
+        {} as never,
+      );
+
+    it('returns the canonical JSON untouched', async () => {
+      await expect(build().export('pub-1', 'owner-1', 'json')).resolves.toEqual({
+        format: 'json',
+        content: exported,
+      });
+    });
+
+    it('returns TOON that decodes back to the canonical JSON', async () => {
+      const result = await build().export('pub-1', 'owner-1', 'toon');
+
+      expect(result.format).toBe('toon');
+      expect(typeof result.content).toBe('string');
+      expect(decodeToon(result.content as string)).toEqual(exported);
+    });
+
+    it('rejects an unknown format and a publication the caller does not own', async () => {
+      await expect(build().export('pub-1', 'owner-1', 'xml')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      await expect(build(null).export('pub-1', 'owner-2', 'toon')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
   });
 });

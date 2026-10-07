@@ -66,8 +66,11 @@ A model whose answer is not the requested JSON shape, or whose citations fall
 outside the evidence bundle, gets one more try before its cross-provider fallback. Judge and
 Critic produce independent structured results, using thresholds of 80 and 75,
 with at most three rounds. Persist evidence, structured role outputs,
-checkpoints, and review scores, not hidden chain-of-thought. Use Markdown for
-user export; add TOON only after semantic round-trip tests and measured savings.
+checkpoints, and review scores, not hidden chain-of-thought. Owner exports are
+Markdown, canonical JSON and TOON (`@toon-format/toon`, wrapped in
+`common/utilities/toon.utility.ts`); a TOON export is encoded, decoded and compared to the
+canonical JSON before it is returned, so a lossy encode is refused. Model prompts still carry
+canonical JSON, so every role receives identical context.
 
 Use the existing plan entitlement and credit hold/finalize/release flow. A
 user-selected job ceiling bounds all provider calls, retries, and concurrent

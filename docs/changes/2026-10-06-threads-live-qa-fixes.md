@@ -40,6 +40,12 @@ first model), on-device models excluded, `?publication=` opens the portal on a
 publication. 3 strings added in 13 locales; tests for the form, dialog, menu item and
 defaults.
 
+**TOON export.** Owners can export a publication as TOON as well as JSON and Markdown
+(`GET /thread-publications/:id/export?format=toon`, button in the portal, 13 locales). The
+threads service wraps `@toon-format/toon` in one utility, and encodes, decodes and compares
+every export to the canonical JSON before returning it. Tests cover code blocks, tables,
+tabs, newlines, Arabic, emoji, TOON-like text, a 4,000-line article and determinism.
+
 Local-only findings (no repo change): a stale `claw_threads` schema missed
 `accepted_revision_id`, and host-generated `src/generated/prisma/package.json`
 files carried a UTF-8 BOM that broke the Docker `prisma generate` step.

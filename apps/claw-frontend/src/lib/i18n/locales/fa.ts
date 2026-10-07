@@ -686,6 +686,7 @@ export const fa: TranslationDictionary = {
     threadUnpublished: 'این مطلب دیگر عمومی نیست.',
     threadExportMarkdown: 'خروجی Markdown',
     threadExportJson: 'خروجی JSON',
+    threadExportToon: 'خروجی TOON',
     threadChangeRequests: 'پیشنهادهای خوانندگان',
     threadPublicUnavailable: 'این انتشار در دسترس نیست.',
     threadPublicLoadFailed: 'بارگیری این انتشار ممکن نشد.',

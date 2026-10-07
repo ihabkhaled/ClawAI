@@ -700,6 +700,7 @@ export const fr: TranslationDictionary = {
     threadUnpublished: 'Cette publication est masquée au public.',
     threadExportMarkdown: 'Exporter en Markdown',
     threadExportJson: 'Exporter en JSON',
+    threadExportToon: 'Exporter en TOON',
     threadChangeRequests: 'Suggestions des lecteurs',
     threadPublicUnavailable: 'Cette publication est indisponible.',
     threadPublicLoadFailed: 'Impossible de charger cette publication.',

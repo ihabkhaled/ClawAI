@@ -9,6 +9,7 @@ import { PublicationsRepository } from '../repositories/publications.repository'
 import { ThreadsGenerationClient } from './threads-generation.client';
 import type { EditPublicationRevisionDto } from '../dto/edit-publication-revision.dto';
 import type { StartThreadGenerationDto } from '../dto/start-thread-generation.dto';
+import { encodeVerifiedToon } from '../../../common/utilities/toon.utility';
 import { PublicationExportFormat } from '../../../common/enums/publication-export-format.enum';
 import type {
   EditedRevisionRecord,
@@ -299,14 +300,18 @@ export class PublicationLifecycleService {
   ): Promise<{ format: PublicationExportFormat; content: PublicationExport | string }> {
     if (
       requestedFormat !== PublicationExportFormat.JSON &&
-      requestedFormat !== PublicationExportFormat.MARKDOWN
+      requestedFormat !== PublicationExportFormat.MARKDOWN &&
+      requestedFormat !== PublicationExportFormat.TOON
     ) {
-      throw new BadRequestException('Export format must be json or markdown');
+      throw new BadRequestException('Export format must be json, markdown or toon');
     }
     const format = requestedFormat;
     const content = await this.publications.findOwnedExport(publicationId, ownerId);
     if (!content) throw new NotFoundException('Publication not found');
     if (format === PublicationExportFormat.JSON) return { format, content };
+    if (format === PublicationExportFormat.TOON) {
+      return { format, content: encodeVerifiedToon(content) };
+    }
     const citationList = content.citations.map(({ url }) => `- ${url}`).join('\n');
     return {
       format,

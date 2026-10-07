@@ -690,6 +690,7 @@ export const ja: TranslationDictionary = {
     threadUnpublished: 'この記事は公開されていません。',
     threadExportMarkdown: 'Markdown をエクスポート',
     threadExportJson: 'JSON をエクスポート',
+    threadExportToon: 'TOON をエクスポート',
     threadChangeRequests: '読者からの提案',
     threadPublicUnavailable: 'この公開記事は利用できません。',
     threadPublicLoadFailed: '公開記事を読み込めませんでした。',

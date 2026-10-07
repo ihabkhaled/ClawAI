@@ -41,6 +41,8 @@ lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (
 
 8. Security review of the new `?publication=` param found it could reach API paths unchecked. It is now accepted only when shaped like an id (`parsePublicationIdParam`, tested with `../x`, slashes, long and empty values), and the publication API client encodes every id, revision id and request id it puts in a path (192 repository and utility tests pass).
 
+9. TOON export (pack item): live `GET /thread-publications/qa_pub_t/export?format=toon` returned TOON that matches the JSON (`citations[2]{url}:` table form), `json` and `markdown` unchanged, `xml` rejected 400. Service rebuilt for the new dependency; adapter, lifecycle export and frontend download specs pass (threads-service 81, frontend 350).
+
 ## Open gaps
 
 L06 paid and custom-role accounts and a live plan toggle; L08 a live run that passes the Judge and Critic, then owner approve, publish and community steps (needs better evidence or tuned thresholds, an owner decision); L13 Lighthouse for the changed article page; L15 CI and production deployment (release v1.194.2/3 builds were stopped by VPS memory pressure). Also not built from the pack and not in the approved plan: views/readers counter, web push and email notification on ready, automatic admin incident ticket on final failure, TOON export, dedicated marketing pages. Close by owner decision on scope, then a capped live run.

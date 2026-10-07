@@ -22,6 +22,13 @@ export const THREAD_REPORT_REASONS: ThreadReportReason[] = Object.values(
   ThreadPublicationReportReason,
 );
 
+/** File type and extension for each owner export. */
+export const THREAD_EXPORT_FILES = {
+  markdown: { mime: 'text/markdown;charset=utf-8', extension: 'md' },
+  json: { mime: 'application/json;charset=utf-8', extension: 'json' },
+  toon: { mime: 'text/plain;charset=utf-8', extension: 'toon' },
+} as const;
+
 /** Stable React keys for the three authors, the Judge and the Critic. */
 export const THREAD_GENERATION_ROLE_KEYS = ['author-1', 'author-2', 'author-3', 'judge', 'critic'];
 

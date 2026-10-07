@@ -692,6 +692,7 @@ export const pt: TranslationDictionary = {
     threadUnpublished: 'A publicação não está mais pública.',
     threadExportMarkdown: 'Exportar Markdown',
     threadExportJson: 'Exportar JSON',
+    threadExportToon: 'Exportar TOON',
     threadChangeRequests: 'Sugestões de leitores',
     threadPublicUnavailable: 'Esta publicação não está disponível.',
     threadPublicLoadFailed: 'Não foi possível carregar esta publicação.',
