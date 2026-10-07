@@ -2,7 +2,7 @@
 
 Batch: clawai-threads-launch
 Date: 2026-10-06
-Commits: (fill in after committing)
+Commits: `4eedb6e5d`, `c101f610e`, `37a73b35b`, `731b0170f`
 Verdict: PARTIAL
 
 Every lane is filled in. PASS needs the command and its real output (or a path, a count, a
