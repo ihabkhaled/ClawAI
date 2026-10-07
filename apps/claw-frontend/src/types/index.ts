@@ -193,6 +193,8 @@ export type { FloatingClearanceInput, FloatingObstacleRect } from './floating-ob
 export type { ChatLimitNotice } from './chat-limit-notice.types';
 export type {
   PickedModelFallbackInfo,
+  CreditFallbackInfo,
+  CreditFallbackNoticeProps,
   PickedModelFallbackNoticeProps,
   PickedModelRecoveryProps,
   PickedModelRecoveryState,

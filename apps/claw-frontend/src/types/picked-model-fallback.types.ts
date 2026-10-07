@@ -1,3 +1,4 @@
+import type { CreditFallbackReason } from '@/enums/credit-fallback-reason.enum';
 import type { RegenerateMessageRequest } from '@/types/chat.types';
 import type { ModelPickerProps } from '@/types/component.types';
 import type { TranslateFunction } from '@/types/i18n.types';
@@ -43,4 +44,22 @@ export type PickedModelRecoveryProps = {
 export type PickedModelRecoveryState = {
   suggestions: SuggestedModelChoice[];
   pickerProps: ModelPickerProps;
+};
+
+/**
+ * `metadata.creditFallback`, written by chat-service when a credit model was
+ * refused (connector credit or free requests used up) and an included model
+ * answered instead, so no credit was spent.
+ */
+export type CreditFallbackInfo = {
+  originalProvider: string;
+  originalModel: string;
+  reason: CreditFallbackReason;
+};
+
+export type CreditFallbackNoticeProps = {
+  info: CreditFallbackInfo;
+  /** The model that actually answered (the message's own model). */
+  answeredModel: string;
+  t: TranslateFunction;
 };

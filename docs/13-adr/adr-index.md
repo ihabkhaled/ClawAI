@@ -452,3 +452,4 @@ Use the `fetch` API with `ReadableStream` to consume SSE streams instead of the 
 | 158 | [The model list is virtualised and the picker owns its highlight](adr-158-virtualised-model-picker.md)                                                       | Accepted                                     |
 | 159 | [ClawAI Threads uses publication and generation services](adr-159-clawai-threads-two-service-architecture.md)                                                | Accepted                                     |
 | 160 | [Threads account deletion propagates through a durable event](adr-160-threads-account-deletion-propagation.md)                                               | Accepted                                     |
+| 161 | [A used-up credit model falls back to an included model, with a notice](adr-161-used-up-credit-falls-back-to-an-included-model.md)                           | Accepted                                     |

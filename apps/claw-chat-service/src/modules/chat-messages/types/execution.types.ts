@@ -14,6 +14,7 @@ import type {
   PickedModelFallbackNotice,
   PickedModelSubstitute,
 } from './picked-model-fallback.types';
+import type { CreditFallbackNotice } from './credit-fallback.types';
 import type { JudgeRefereeMetadata } from './judge-referee.types';
 import type {
   AnthropicCacheControl,
@@ -264,6 +265,11 @@ export type LlmResponse = {
    * failed and which one answered (and whether it costs more).
    */
   pickedModelFallback?: PickedModelFallbackNotice;
+  /**
+   * Set when a credit model was refused (credit or free requests used up) and an
+   * included model answered instead. Persisted as `metadata.creditFallback`.
+   */
+  creditFallback?: CreditFallbackNotice;
 };
 
 export type OllamaGenerateRequest = {

@@ -2073,6 +2073,10 @@ export class ChatMessagesService implements OnModuleInit {
       ...(llmResponse.pickedModelFallback === undefined
         ? {}
         : { pickedModelFallback: llmResponse.pickedModelFallback }),
+      // A credit model was refused and an included one answered: the bubble says so.
+      ...(llmResponse.creditFallback === undefined
+        ? {}
+        : { creditFallback: llmResponse.creditFallback }),
       ...this.buildToolTranscriptMetaPart(llmResponse),
       ...(!hasVisibleContent ? { emptyContent: true } : {}),
       ...this.buildDisplayNameMetaPart(latestUserMetadata),

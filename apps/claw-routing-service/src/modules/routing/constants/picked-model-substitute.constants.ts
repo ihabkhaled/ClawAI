@@ -39,7 +39,7 @@ export const PICKED_MODEL_GROUP_COSTLIER = 2;
  * chat turn. The id is matched on word boundaries (`-`, `/`, `.`, `_`, `:`).
  */
 export const PICKED_MODEL_NON_CHAT_ID_PATTERN =
-  /(?:^|[^a-z0-9])(?:tts|veo|imagen|embedding|embed|whisper|transcribe|moderation|realtime|native-audio|audio|live|robotics|computer-use|aqa|deep-research|image|dall-e|sora|search-preview)(?:[^a-z0-9]|$)/iu;
+  /(?:^|[^a-z0-9])(?:tts|veo|imagen|embedding|embed|whisper|transcribe|moderation|realtime|native-audio|audio|live|robotics|computer-use|aqa|deep-research|image|dall-e|imagine|video|sora|search-preview)(?:[^a-z0-9]|$)/iu;
 
 /**
  * How many same-provider models the first pass keeps. A provider-wide outage

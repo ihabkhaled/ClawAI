@@ -11,6 +11,8 @@ export type FakePaygAccessControlOptions = {
   heldMicroUsd?: number;
   /** When set, `reserveCredit` throws this instead of returning a hold. */
   refuseWith?: unknown;
+  /** Limits `refuseWith` to these providers (upper-case); every other provider is held. */
+  refuseProviders?: readonly string[];
   /** When set, the AI-file allowance is used up (ADR-110). */
   fileLimit?: { used: number; limit: number };
   /** Plan features the user's plan does NOT include (ADR-122). Default: none. */
@@ -62,8 +64,11 @@ export function createFakePaygAccessControl(
     availableAfterMicroUsd: 0,
     reason: options.metered === false ? 'NOT_PAYG' : null,
   };
-  const reserveCredit = vi.fn(async () => {
-    if (options.refuseWith !== undefined) {
+  const reserveCredit = vi.fn(async (args?: { provider?: string }) => {
+    const refusesThisProvider =
+      options.refuseProviders === undefined ||
+      options.refuseProviders.includes((args?.provider ?? '').toUpperCase());
+    if (options.refuseWith !== undefined && refusesThisProvider) {
       throw options.refuseWith;
     }
     return hold;

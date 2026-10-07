@@ -4212,6 +4212,7 @@ export type TranslationDictionary = {
   routerTrace: RouterTraceLocaleTranslation;
   narration: NarrationLocaleTranslation;
   pickedModel: PickedModelLocaleTranslation;
+  creditFallback: CreditFallbackLocaleTranslation;
   mediaUi: MediaUiLocaleTranslation;
   smartRouterAdmin: SmartRouterAdminLocaleTranslation;
   adminModelCosts: AdminModelCostsLocaleTranslation;
@@ -6302,6 +6303,14 @@ export type DeploymentLocaleTranslation = {
  * plain string and is not checked against the dictionary, so a missing key
  * renders the raw key path to a user instead of failing a build.
  */
+/** When a credit model is refused and an included one answers (credit-fallback-translations.ts). */
+export type CreditFallbackLocaleTranslation = {
+  creditExhausted: string;
+  freeAllowanceExhausted: string;
+  promptTooExpensive: string;
+  topUp: string;
+};
+
 /** When the user's picked model fails (see picked-model-translations.ts). */
 export type PickedModelLocaleTranslation = {
   failedMessage: string;

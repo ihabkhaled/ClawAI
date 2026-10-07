@@ -49,6 +49,18 @@ const cloudOk = {
     usage: { prompt_tokens: 10, completion_tokens: 5 },
   },
 };
+// OLLAMA (an included provider) answers in the native Ollama chat shape.
+const ollamaOk = {
+  ok: true,
+  status: 200,
+  data: {
+    message: { content: 'answer' },
+    done: true,
+    done_reason: 'stop',
+    prompt_eval_count: 10,
+    eval_count: 5,
+  },
+};
 const connectorConfig = {
   ok: true,
   status: 200,
@@ -164,11 +176,7 @@ describe('picked-model smart fallback at the chokepoint', () => {
   });
 
   it('flags a pricier substitute as costlier', async () => {
-    queueProvider(
-      PROVIDER_DOWN,
-      PROVIDER_DOWN,
-      cloudOk,
-    );
+    queueProvider(PROVIDER_DOWN, PROVIDER_DOWN, cloudOk);
     const response = await build(access).execute(
       pickedPayload([SUBSTITUTES[0], SUBSTITUTES[1]].filter((s) => s !== undefined)),
       makeContext(),
@@ -220,20 +228,110 @@ describe('picked-model smart fallback at the chokepoint', () => {
     expect(response.pickedModelFallback?.originalModel).toBe('claude-opus-5');
   });
 
-  it('never falls back after a credit refusal (402): the refusal reaches the user', async () => {
-    const refusal = new BusinessException(
-      'Not enough credit',
-      'PAYG_CREDIT_EXHAUSTED',
-      HttpStatus.PAYMENT_REQUIRED,
-    );
-    access = createFakePaygAccessControl({ refuseWith: refusal });
-    queueProvider(cloudOk, cloudOk);
-    const error = await build(access)
-      .execute(pickedPayload(), makeContext())
-      .catch((caught: unknown) => caught);
-    expect(error).toBe(refusal);
-    expect(providerCalls()).toBe(0);
-    expect(access.reserveCredit).toHaveBeenCalledTimes(1);
+  describe('credit refusal (402)', () => {
+    const INCLUDED = {
+      provider: 'OLLAMA',
+      model: 'gpt-oss:120b',
+      sameProvider: false,
+      costlier: false,
+    };
+    const refuse = (code: string) =>
+      new BusinessException('Not enough credit', code, HttpStatus.PAYMENT_REQUIRED);
+    const METERED = ['ANTHROPIC', 'GROQ', 'OPENAI', 'GEMINI', 'MISTRAL', 'DEEPSEEK'];
+
+    it('moves to an included model and says the credit was not used', async () => {
+      access = createFakePaygAccessControl({
+        refuseWith: refuse('PAYG_CREDIT_EXHAUSTED'),
+        refuseProviders: METERED,
+      });
+      queueProvider(ollamaOk);
+
+      const response = await build(access).execute(
+        pickedPayload([...SUBSTITUTES, INCLUDED]),
+        makeContext(),
+      );
+
+      expect(response.provider).toBe('OLLAMA');
+      expect(response.creditFallback).toEqual({
+        originalProvider: 'ANTHROPIC',
+        originalModel: 'claude-opus-5',
+        reason: 'CREDIT_EXHAUSTED',
+      });
+      expect(providerCalls()).toBe(1);
+    });
+
+    it('does not dial other credit models once the credit is used up', async () => {
+      access = createFakePaygAccessControl({
+        refuseWith: refuse('PAYG_CREDIT_EXHAUSTED'),
+        refuseProviders: METERED,
+      });
+      queueProvider(ollamaOk);
+
+      await build(access).execute(pickedPayload([...SUBSTITUTES, INCLUDED]), makeContext());
+
+      const reserved = access.reserveCredit.mock.calls.map((call) =>
+        (call[0] as { provider: string }).provider.toUpperCase(),
+      );
+      expect(reserved).toEqual(['ANTHROPIC', 'OLLAMA']);
+    });
+
+    it('names the used-up free requests as the reason', async () => {
+      access = createFakePaygAccessControl({
+        refuseWith: refuse('PAYG_FREE_ALLOWANCE_EXHAUSTED'),
+        refuseProviders: METERED,
+      });
+      queueProvider(ollamaOk);
+
+      const response = await build(access).execute(
+        pickedPayload([...SUBSTITUTES, INCLUDED]),
+        makeContext(),
+      );
+
+      expect(response.creditFallback?.reason).toBe('FREE_ALLOWANCE_EXHAUSTED');
+    });
+
+    it('still tries a cheaper credit model when only this prompt was too expensive', async () => {
+      access = createFakePaygAccessControl({
+        refuseWith: refuse('PAYG_PROMPT_TOO_EXPENSIVE'),
+        refuseProviders: ['ANTHROPIC'],
+      });
+      queueProvider(cloudOk);
+
+      const response = await build(access).execute(pickedPayload(), makeContext());
+
+      expect(response.provider).toBe('GROQ');
+      expect(response.creditFallback).toBeUndefined();
+    });
+
+    it('does not count refused models against the substitute allowance, and shows one notice', async () => {
+      access = createFakePaygAccessControl({
+        refuseWith: refuse('PAYG_PROMPT_TOO_EXPENSIVE'),
+        refuseProviders: ['ANTHROPIC', 'GROQ', 'OPENAI', 'GEMINI'],
+      });
+      queueProvider(ollamaOk);
+
+      const response = await build(access).execute(
+        pickedPayload([SUBSTITUTES[0]!, SUBSTITUTES[1]!, SUBSTITUTES[2]!, INCLUDED]),
+        makeContext(),
+      );
+
+      expect(response.provider).toBe('OLLAMA');
+      expect(response.creditFallback?.reason).toBe('PROMPT_TOO_EXPENSIVE');
+      expect(response.pickedModelFallback).toBeUndefined();
+    });
+
+    it('shows the refusal itself when no included model is on offer', async () => {
+      const refusal = refuse('PAYG_CREDIT_EXHAUSTED');
+      access = createFakePaygAccessControl({ refuseWith: refusal, refuseProviders: METERED });
+      queueProvider(cloudOk);
+
+      const error = await build(access)
+        .execute(pickedPayload(), makeContext())
+        .catch((caught: unknown) => caught);
+
+      expect(error).toBe(refusal);
+      expect(providerCalls()).toBe(0);
+    });
   });
 
   it('never falls back after a plan refusal (403)', async () => {

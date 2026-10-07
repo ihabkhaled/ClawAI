@@ -237,6 +237,14 @@ import {
   pickedModelFallbackPart,
   suggestedModelsAfterFailure,
 } from '../utilities/picked-model-fallback.utility';
+import { CreditFallbackReason } from '../enums/credit-fallback-reason.enum';
+import {
+  creditFallbackPart,
+  creditFallbackReason,
+  noteCreditRefusal,
+  skipsMeteredAfterRefusal,
+} from '../utilities/credit-fallback.utility';
+import type { CreditRefusalRecord } from '../types/credit-fallback.types';
 import {
   PROVIDER_CREDIT_MIN_OUTPUT_TOKENS,
   PROVIDER_REQUEST_FAILED_MESSAGE,
@@ -465,18 +473,26 @@ export class ChatExecutionManager implements OnModuleInit {
     // moves on; the first refusal is kept to explain a chain that ends empty.
     const creditRefusedProviders = new Set<string>();
     let creditRefusal: unknown = null;
+    // The credit model the user wanted, once one is refused, so an included model
+    // that answers instead can say so (metadata.creditFallback).
+    let creditRefusalRecord: CreditRefusalRecord | null = null;
+    // True once a refusal says the credit itself is gone (not just this prompt's price).
+    let creditGone = false;
 
     for (let i = 0; i < candidates.length; i++) {
       const candidate = candidates.at(i);
       if (!candidate) {
         continue;
       }
-      if (
-        !isPickedModelTurn(payload) &&
-        creditRefusedProviders.has(candidate.provider.toUpperCase())
-      ) {
+      if (creditRefusedProviders.has(candidate.provider.toUpperCase())) {
         this.logger.debug(
           `execute: skipping ${candidate.provider}/${candidate.model} (credit already refused for this provider)`,
+        );
+        continue;
+      }
+      if (skipsMeteredAfterRefusal(creditGone, candidate)) {
+        this.logger.debug(
+          `execute: skipping ${candidate.provider}/${candidate.model} (credit already refused, only included models can answer)`,
         );
         continue;
       }
@@ -513,8 +529,17 @@ export class ChatExecutionManager implements OnModuleInit {
         this.buildAttemptRecord(candidate, i, attemptStartedAt, attemptStartMs, outcome),
       );
       if (outcome.kind === 'success') {
+        const creditAnswer = creditFallbackPart(creditRefusalRecord, candidate);
         return this.stampWorkflowMetadata(
-          { ...outcome.response, attempts, ...pickedModelFallbackPart(payload, candidate, i) },
+          {
+            ...outcome.response,
+            attempts,
+            // The credit notice already says why this model answered; a second
+            // "X failed" notice would only repeat it.
+            ...(creditAnswer.creditFallback === undefined
+              ? pickedModelFallbackPart(payload, candidate, i)
+              : creditAnswer),
+          },
           payload,
           searchOutcome,
         );
@@ -524,8 +549,15 @@ export class ChatExecutionManager implements OnModuleInit {
         reRouteAttempt++;
         continue;
       }
-      if (!isPickedModelTurn(payload) && this.isPaygRefusal(outcome.error)) {
+      if (this.isPaygRefusal(outcome.error)) {
         creditRefusal ??= outcome.error;
+        creditRefusalRecord = noteCreditRefusal(creditRefusalRecord, candidate, outcome.error);
+        creditGone ||=
+          creditFallbackReason(outcome.error) !== CreditFallbackReason.PROMPT_TOO_EXPENSIVE;
+        // A refusal costs nothing, so it must not use up the substitute allowance.
+        if (isPickedModelTurn(payload) && i > 0) {
+          substituteAttempts--;
+        }
         creditRefusedProviders.add(candidate.provider.toUpperCase());
         lastError = outcome.error;
         continue;
@@ -539,7 +571,9 @@ export class ChatExecutionManager implements OnModuleInit {
       lastError = outcome.error;
     }
 
-    return isPickedModelTurn(payload)
+    // A chain that ended on a credit refusal shows that refusal (the upgrade
+    // notice), not a list of models to retry: none of them was the problem.
+    return isPickedModelTurn(payload) && creditRefusal === null
       ? this.failPickedModelExecution(lastError, attempts, payload, failedProviders)
       : this.failExecution(creditRefusal ?? lastError, attempts);
   }
@@ -552,11 +586,13 @@ export class ChatExecutionManager implements OnModuleInit {
    * whole chain fails, the first refusal is the error shown, so the upgrade
    * notice is not buried behind whichever candidate happened to be last.
    *
-   * A PICKED model (MANUAL_MODEL): only a provider failure moves on to a
-   * substitute. The pick's own credit (402), plan/exposure (403) or quota (429)
-   * refusal is the user's answer and is shown as itself (the upgrade notice),
-   * never hidden behind another model. A substitute refused for credit is just
-   * skipped: the next one may be a free/local model.
+   * A PICKED model (MANUAL_MODEL): a provider failure moves on to a substitute,
+   * and so does a credit refusal (402, decided 2026-10-07): when the credit or
+   * free requests are used up the turn moves to an included (no-credit) model and
+   * the answer carries `creditFallback` so the user is told. Plan/exposure (403)
+   * and quota (429) refusals are still the user's answer and are shown as
+   * themselves. If no included model is on offer the credit refusal is what the
+   * user sees, as before.
    */
   private endsCandidateChain(error: unknown, payload: MessageRoutedData, index: number): boolean {
     return isPickedModelTurn(payload) && index === 0 && !isSubstitutableFailure(error);

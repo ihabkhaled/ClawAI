@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
+import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
@@ -4488,6 +4489,7 @@ export const fr: TranslationDictionary = {
   routerTrace: ROUTER_TRACE_TRANSLATIONS.fr,
   narration: NARRATION_TRANSLATIONS.fr,
   pickedModel: PICKED_MODEL_TRANSLATIONS.fr,
+  creditFallback: CREDIT_FALLBACK_TRANSLATIONS.fr,
   mediaUi: MEDIA_UI_TRANSLATIONS.fr,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.fr,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.fr,

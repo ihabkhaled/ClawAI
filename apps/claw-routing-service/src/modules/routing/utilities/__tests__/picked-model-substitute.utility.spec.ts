@@ -158,4 +158,48 @@ describe('rankPickedModelSubstitutes', () => {
     expect(rankPickedModelSubstitutes({ pick, eligible: [], costClassOf, limit: 2 })).toEqual([]);
     expect(rankPickedModelSubstitutes({ pick, eligible, costClassOf, limit: 0 })).toEqual([]);
   });
+
+  describe('included safety net', () => {
+    it('ends the list with a model that needs no credit when the ranking had none', () => {
+      const result = rankPickedModelSubstitutes({
+        pick,
+        eligible: [
+          dep(RouterProvider.ANTHROPIC, 'claude-sonnet-5'),
+          dep(RouterProvider.GEMINI, 'gemini-3.6-flash'),
+          dep(RouterProvider.OPENAI, 'gpt-5.6-sol'),
+          dep(RouterProvider.OLLAMA, 'gpt-oss:120b'),
+        ],
+        costClassOf,
+        limit: 3,
+      });
+
+      expect(result).toHaveLength(3);
+      expect(result.at(-1)?.provider).toBe('OLLAMA');
+    });
+
+    it('leaves the list alone when an included model is already in it', () => {
+      const result = rankPickedModelSubstitutes({
+        pick,
+        eligible: [
+          dep(RouterProvider.OLLAMA, 'gpt-oss:120b'),
+          dep(RouterProvider.GEMINI, 'gemini-3.6-flash'),
+        ],
+        costClassOf,
+        limit: 5,
+      });
+
+      expect(result.filter((entry) => entry.provider === 'OLLAMA')).toHaveLength(1);
+    });
+
+    it('adds nothing when no included model is eligible', () => {
+      const result = rankPickedModelSubstitutes({
+        pick,
+        eligible: [dep(RouterProvider.GEMINI, 'gemini-3.6-flash')],
+        costClassOf,
+        limit: 5,
+      });
+
+      expect(result.map((entry) => entry.provider)).toEqual(['GEMINI']);
+    });
+  });
 });

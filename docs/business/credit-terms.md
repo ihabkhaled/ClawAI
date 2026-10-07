@@ -33,6 +33,13 @@ money, not a deposit, not a gift card, and not stored value.
 | **Denominated in USD**              | Credit is micro-USD regardless of the currency the customer paid in.            | FX changes what the bank charges; it never changes how much credit the wallet receives. Enforced in `CreditChargeResolverService`.                                                             |
 | **Consumed at our rates**           | Credit is drawn down at the platform's per-model rates, which may change.       | Provider prices move. The allowance is denominated in dollars, so a provider price rise costs the platform, not the customer's balance.                                                        |
 
+## When the credit runs out (ADR-161, 2026-10-07)
+
+A turn on a credit model that is refused for lack of credit (or of free credit-model requests) is
+not an error: it is answered by a model that needs no credit, and the answer says so, which model
+answered, that no credit was used, and how to get the model back. Included models are never metered,
+so the fallback spends nothing. If no included model is on offer the user sees the refusal instead.
+
 ## The two buckets, and their very different expiry
 
 This is the distinction with the largest legal and reputational weight, so it is

@@ -23,4 +23,4 @@ export const PICKED_MODEL_RECOVERABLE_ERROR_CODES: ReadonlySet<string> = new Set
  * Mirrors routing-service `PICKED_MODEL_NON_CHAT_ID_PATTERN`.
  */
 export const PICKED_MODEL_NON_CHAT_ID_PATTERN =
-  /(?:^|[^a-z0-9])(?:tts|veo|imagen|embedding|embed|whisper|transcribe|moderation|realtime|native-audio|audio|live|robotics|computer-use|aqa|deep-research|image|dall-e|sora|search-preview)(?:[^a-z0-9]|$)/iu;
+  /(?:^|[^a-z0-9])(?:tts|veo|imagen|embedding|embed|whisper|transcribe|moderation|realtime|native-audio|audio|live|robotics|computer-use|aqa|deep-research|image|dall-e|imagine|video|sora|search-preview)(?:[^a-z0-9]|$)/iu;

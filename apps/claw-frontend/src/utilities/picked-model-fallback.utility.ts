@@ -4,9 +4,10 @@ import {
   PICKED_MODEL_MAX_SUGGESTIONS,
   PICKED_MODEL_RECOVERABLE_ERROR_CODES,
 } from '@/constants/picked-model-fallback.constants';
-import { RoutingMode } from '@/enums';
+import { CreditFallbackReason, RoutingMode } from '@/enums';
 import type { ModelPickerGroup } from '@/types/component.types';
 import type {
+  CreditFallbackInfo,
   PickedModelFallbackInfo,
   SuggestedModelChoice,
   SuggestedModelRef,
@@ -117,4 +118,25 @@ export function chooseRecoverySuggestions(
     .filter((ref) => !isFailed(ref))
     .slice(0, PICKED_MODEL_MAX_SUGGESTIONS)
     .map((ref) => ({ ...ref, label: labelFor(groups, ref) }));
+}
+
+/** `metadata.creditFallback`, or null when no credit model was refused. */
+export function readCreditFallback(
+  metadata: Record<string, unknown> | null,
+): CreditFallbackInfo | null {
+  const record = asRecord(metadata?.['creditFallback']);
+  if (record === null) {
+    return null;
+  }
+  const originalProvider = record['originalProvider'];
+  const originalModel = record['originalModel'];
+  const reason = record['reason'];
+  if (!nonEmpty(originalProvider) || !nonEmpty(originalModel)) {
+    return null;
+  }
+  const known = Object.values(CreditFallbackReason).find((value) => value === reason);
+  if (known === undefined) {
+    return null;
+  }
+  return { originalProvider, originalModel, reason: known };
 }

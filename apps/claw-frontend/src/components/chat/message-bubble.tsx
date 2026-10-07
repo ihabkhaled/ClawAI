@@ -16,6 +16,7 @@ import { AttachmentDeliveryChip } from '@/components/chat/attachments/attachment
 import { ContextReceiptButton } from '@/components/chat/context-receipt-button';
 import { ContextSaveCard } from '@/components/chat/context-save-card';
 import { CreditClampedNotice } from '@/components/chat/credit-clamped-notice';
+import { CreditFallbackNotice } from '@/components/chat/credit-fallback-notice';
 import { FileGenerationBubble } from '@/components/chat/file-generation-bubble';
 import { FileLimitNotice } from '@/components/chat/file-limit-notice';
 import { ImageGenerationBubble } from '@/components/chat/image-generation-bubble';
@@ -67,6 +68,7 @@ import { readImageMaskRefusal } from '@/utilities/image-mask-refusal.utility';
 import { getStoredNarration } from '@/utilities/narration.utility';
 import {
   offersPickedModelRecovery,
+  readCreditFallback,
   readPickedModelFallback,
   readSuggestedModels,
 } from '@/utilities/picked-model-fallback.utility';
@@ -137,6 +139,7 @@ function MessageBubbleBase({
   const hasVisibleAssistantContent = message.content.trim().length > 0;
   const storedErrorText = resolveStoredErrorMessage(metadata, t);
   const pickedModelFallback = isUser ? null : readPickedModelFallback(metadata);
+  const creditFallback = isUser ? null : readCreditFallback(metadata);
   const showPickedModelRecovery =
     !isUser &&
     onRegenerate !== undefined &&
@@ -225,6 +228,15 @@ function MessageBubbleBase({
         ) : null}
 
         {!isUser && isPaygClamped ? <CreditClampedNotice t={t} /> : null}
+
+        {/* Credit (or free requests) ran out, so an included model answered. */}
+        {creditFallback === null ? null : (
+          <CreditFallbackNotice
+            info={creditFallback}
+            answeredModel={message.model ?? 'unknown'}
+            t={t}
+          />
+        )}
 
         {/* A substitute answered because the model the user picked failed. */}
         {pickedModelFallback === null ? null : (

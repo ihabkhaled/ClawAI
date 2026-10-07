@@ -1,3 +1,4 @@
+import { PAYG_EXEMPT_PROVIDERS } from '@claw/shared-constants';
 import { modelMatchKey } from '@claw/shared-utilities';
 import type { ModelCostClass } from '@claw/shared-types';
 
@@ -77,7 +78,32 @@ export function rankPickedModelSubstitutes(
     });
   }
   scored.sort((a, b) => a.group - b.group || a.distance - b.distance || a.order - b.order);
-  return diversify(scored, Math.max(0, input.limit)).map((entry) => entry.substitute);
+  const chosen = diversify(scored, Math.max(0, input.limit));
+  return withIncludedSafetyNet(chosen, scored, Math.max(0, input.limit)).map(
+    (entry) => entry.substitute,
+  );
+}
+
+function isIncludedProvider(provider: string): boolean {
+  return PAYG_EXEMPT_PROVIDERS.some((exempt) => exempt.toUpperCase() === provider.toUpperCase());
+}
+
+/**
+ * A user whose credit is used up (or whose free requests are) is refused by every
+ * credit model, so the list must always end with a model that needs no credit.
+ * When the ranking left none in, the best included one takes the last place, and
+ * the pick's own order is otherwise untouched.
+ */
+function withIncludedSafetyNet(
+  chosen: readonly ScoredPickedModelSubstitute[],
+  all: readonly ScoredPickedModelSubstitute[],
+  limit: number,
+): ScoredPickedModelSubstitute[] {
+  if (limit === 0 || chosen.some((entry) => isIncludedProvider(entry.substitute.provider))) {
+    return [...chosen];
+  }
+  const included = all.find((entry) => isIncludedProvider(entry.substitute.provider));
+  return included === undefined ? [...chosen] : [...chosen.slice(0, limit - 1), included];
 }
 
 /**
