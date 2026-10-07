@@ -655,7 +655,7 @@ export const ru: TranslationDictionary = {
     threadCreateTitle: 'Создать публичный Thread',
     threadCreateButton: 'Создать Thread',
     threadPlanRequired:
-      'Ваш тариф не включает создание Threads. Для Thread нужны проверки исследования, Judge и Critic, они входят в более высокие тарифы. Перейдите на другой тариф, чтобы создавать публичные Threads.',
+      'Сейчас нельзя создать Thread: ваш тариф его не включает или лимит Threads исчерпан. Выберите тариф выше или попробуйте после обновления лимита.',
     threadChooseChat: 'Выберите чат',
     threadBackToList: 'Назад к Threads',
     threadTurnIntoThread: 'Превратить в публичный Thread',

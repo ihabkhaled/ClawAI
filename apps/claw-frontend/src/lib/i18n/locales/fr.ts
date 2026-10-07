@@ -661,7 +661,7 @@ export const fr: TranslationDictionary = {
     threadCreateTitle: 'Créer un Thread public',
     threadCreateButton: 'Créer un Thread',
     threadPlanRequired:
-      'Votre offre n’inclut pas la création de Threads. Un Thread demande des revues de recherche, Judge et Critic, incluses dans les offres supérieures. Passez à une offre supérieure pour créer des Threads publics.',
+      "Vous ne pouvez pas créer de Thread pour l'instant : votre offre ne l'inclut pas ou son quota de Threads est épuisé. Passez à une offre supérieure ou réessayez au renouvellement.",
     threadChooseChat: 'Choisissez une conversation',
     threadBackToList: 'Retour aux Threads',
     threadTurnIntoThread: 'Transformer en Thread public',

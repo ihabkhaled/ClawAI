@@ -650,7 +650,7 @@ export const fa: TranslationDictionary = {
     threadCreateTitle: 'ایجاد Thread عمومی',
     threadCreateButton: 'ایجاد Thread',
     threadPlanRequired:
-      'طرح شما ایجاد Thread را شامل نمی‌شود. هر Thread به بررسی‌های پژوهش، داور و منتقد نیاز دارد که در طرح‌های بالاتر موجود است. برای ایجاد Threadهای عمومی طرح خود را ارتقا دهید.',
+      'اکنون نمی‌توانید Thread بسازید: طرح شما آن را شامل نمی‌شود یا سهمیه Thread مصرف شده است. طرح بالاتری انتخاب کنید یا پس از تمدید دوباره تلاش کنید.',
     threadChooseChat: 'یک گفتگو را انتخاب کنید',
     threadBackToList: 'بازگشت به Threads',
     threadTurnIntoThread: 'تبدیل به Thread عمومی',

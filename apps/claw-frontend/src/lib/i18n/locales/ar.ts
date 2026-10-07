@@ -641,7 +641,7 @@ export const ar: TranslationDictionary = {
     threadCreateTitle: 'إنشاء منشور Thread عام',
     threadCreateButton: 'إنشاء Thread',
     threadPlanRequired:
-      'خطتك لا تشمل إنشاء Threads. يحتاج كل Thread إلى مراجعات البحث والحَكَم والناقد، وهي متوفرة في الخطط الأعلى. رقِّ خطتك لإنشاء Threads عامة.',
+      'لا يمكنك إنشاء Thread الآن: خطتك لا تتضمنه أو استنفدت حصتك منه. اختر خطة أعلى أو حاول مجدداً عند التجديد.',
     threadChooseChat: 'اختر محادثة',
     threadBackToList: 'العودة إلى Threads',
     threadTurnIntoThread: 'تحويل إلى Thread عام',

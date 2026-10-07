@@ -659,7 +659,7 @@ export const es: TranslationDictionary = {
     threadCreateTitle: 'Crear un Thread público',
     threadCreateButton: 'Crear un Thread',
     threadPlanRequired:
-      'Tu plan no incluye crear Threads. Un Thread necesita revisiones de investigación, Judge y Critic, que vienen con planes superiores. Mejora tu plan para crear Threads públicos.',
+      'Ahora no puedes crear un Thread: tu plan no lo incluye o ya usaste su cupo de Threads. Elige un plan superior o inténtalo cuando se renueve.',
     threadChooseChat: 'Elige un chat',
     threadBackToList: 'Volver a Threads',
     threadTurnIntoThread: 'Convertir en Thread público',

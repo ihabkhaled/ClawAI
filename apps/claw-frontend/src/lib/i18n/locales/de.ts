@@ -664,7 +664,7 @@ export const de: TranslationDictionary = {
     threadCreateTitle: 'Öffentlichen Thread erstellen',
     threadCreateButton: 'Thread erstellen',
     threadPlanRequired:
-      'Dein Tarif enthält das Erstellen von Threads nicht. Ein Thread braucht Recherche-, Judge- und Critic-Prüfungen, die in höheren Tarifen enthalten sind. Wechsle den Tarif, um öffentliche Threads zu erstellen.',
+      'Du kannst gerade keinen Thread erstellen: Dein Tarif enthält ihn nicht oder das Thread-Kontingent ist aufgebraucht. Wähle einen höheren Tarif oder versuche es nach dem Zurücksetzen erneut.',
     threadChooseChat: 'Chat auswählen',
     threadBackToList: 'Zurück zu Threads',
     threadTurnIntoThread: 'In öffentlichen Thread umwandeln',

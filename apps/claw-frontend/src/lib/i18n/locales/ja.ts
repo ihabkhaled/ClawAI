@@ -653,7 +653,7 @@ export const ja: TranslationDictionary = {
     threadCreateTitle: '公開 Thread を作成',
     threadCreateButton: 'Thread を作成',
     threadPlanRequired:
-      'お使いのプランには Thread の作成が含まれていません。Thread にはリサーチ、Judge、Critic のレビューが必要で、上位プランに含まれます。公開 Thread を作成するにはプランをアップグレードしてください。',
+      '現在 Thread を作成できません。プランに含まれていないか、Thread の利用枠を使い切りました。上位プランを選ぶか、リセット後にお試しください。',
     threadChooseChat: 'チャットを選択',
     threadBackToList: 'Threads に戻る',
     threadTurnIntoThread: '公開 Thread にする',

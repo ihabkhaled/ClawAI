@@ -636,7 +636,7 @@ export const th: TranslationDictionary = {
     threadCreateTitle: 'สร้าง Thread สาธารณะ',
     threadCreateButton: 'สร้าง Thread',
     threadPlanRequired:
-      'แพ็กเกจของคุณไม่รวมการสร้าง Threads โดย Thread ต้องมีการตรวจสอบด้านการค้นคว้า Judge และ Critic ซึ่งมีในแพ็กเกจที่สูงกว่า อัปเกรดเพื่อสร้าง Threads สาธารณะ',
+      'ตอนนี้ไม่สามารถสร้าง Thread ได้: แพ็กเกจของคุณไม่รวมฟีเจอร์นี้หรือใช้โควตา Thread หมดแล้ว เลือกแพ็กเกจที่สูงขึ้นหรือลองใหม่เมื่อโควตารีเซ็ต',
     threadChooseChat: 'เลือกแชต',
     threadBackToList: 'กลับไปที่ Threads',
     threadTurnIntoThread: 'เปลี่ยนเป็น Thread สาธารณะ',

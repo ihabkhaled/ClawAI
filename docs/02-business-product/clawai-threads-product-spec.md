@@ -87,10 +87,13 @@ Generation intent or a private draft alone does not make content public.
 
 ## Plans
 
-Creating a Thread reserves one research, one Judge and one Critic review from the plan, so only plans
-that include those reviews can start one; in the seeded database that is Pro and above. Anyone else
-who starts one sees that their plan does not include it, with a link to the plans page. Reading,
-commenting, reacting and suggesting changes are open to every signed-in account.
+Threads is open to every plan and to administrators (owner decision 2026-10-07). Creating one
+reserves one research, one Judge and one Critic review from the plan's Threads allowance, which is
+the catalog's: Free 1 for life, Starter 2 a month (1 Critic), Plus 10 a month (5 Critic), Pro and
+above by their own rules. Administrators are not counted. A person who has used the allowance sees
+that the plan does not include (or has used up) Threads, with a link to the plans page. Chat's own
+Research, Judge and Critic switches are unchanged. Reading, commenting, reacting and suggesting
+changes are open to every signed-in account.
 
 ## Operations: failed jobs
 
