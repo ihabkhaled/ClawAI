@@ -21,7 +21,11 @@ export function ThreadPublicCommunity({
   const { t } = useTranslation();
 
   return (
-    <section aria-labelledby="thread-public-community-title" className="flex flex-col gap-5">
+    <section
+      data-no-print
+      aria-labelledby="thread-public-community-title"
+      className="flex flex-col gap-5"
+    >
       <h2 id="thread-public-community-title" className="text-xl font-semibold">
         {t('chat.threadPublicComments')} ({comments.length})
       </h2>

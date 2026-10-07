@@ -1,6 +1,6 @@
-import type { ThreadPublicationExportFormat } from '@/enums/thread-publication-export-format.enum';
 import type { ThreadPublicationReaction } from '@/enums/thread-publication-reaction.enum';
 import { apiClient } from '@/services/shared/api-client';
+import type { ThreadServerExportFormat } from '@/types/thread-export.types';
 import type {
   OwnedThreadPublication,
   ThreadPublicationExport,
@@ -158,7 +158,7 @@ export const threadPublicationsRepository = {
   },
   async export(
     publicationId: string,
-    format: ThreadPublicationExportFormat,
+    format: ThreadServerExportFormat,
   ): Promise<ThreadPublicationExport> {
     const response = await apiClient.get<ThreadPublicationExport>(
       `/thread-publications/${encodeURIComponent(publicationId)}/export`,

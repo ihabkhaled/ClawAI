@@ -33,6 +33,33 @@ describe('PublicationsRepository', () => {
     return { repository: new PublicationsRepository(prisma as never), transaction };
   }
 
+  it('lists the owner publications with the latest title and the address slug', async () => {
+    const findMany = vi.fn().mockResolvedValue([
+      {
+        id: 'pub-1',
+        status: 'PUBLISHED',
+        slug: 'vector-search',
+        updatedAt: new Date('2026-10-07T10:00:00.000Z'),
+        revisions: [{ title: 'Vector search' }],
+      },
+      { id: 'pub-2', status: 'DRAFT', slug: 'uuid-2', updatedAt: new Date(), revisions: [] },
+    ]);
+    const repository = new PublicationsRepository({ threadPublication: { findMany } } as never);
+
+    const owned = await repository.findOwnedPublications('owner-1');
+
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { ownerId: 'owner-1' },
+        select: expect.objectContaining({ slug: true }),
+      }),
+    );
+    expect(owned.map(({ id, slug, title }) => [id, slug, title])).toEqual([
+      ['pub-1', 'vector-search', 'Vector search'],
+      ['pub-2', 'uuid-2', null],
+    ]);
+  });
+
   it('refuses to create a publication after the account deletion tombstone exists', async () => {
     const transaction = {
       threadDeletedAccount: { findUnique: vi.fn().mockResolvedValue({ accountHash: 'digest' }) },

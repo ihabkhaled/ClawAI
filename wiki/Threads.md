@@ -111,6 +111,14 @@ Chat header menu -> **Turn into public Thread** opens a modal for that chat (sam
 form as the `/threads` portal, with a required public-and-indexable consent
 checkbox). Starting generation opens the portal on the new publication.
 
+## Public page, export and share
+
+`/features/threads` is the public page (announcement, six steps with screenshots, safeguards, FAQ,
+13 locales) and the home page has a four-step band. A running Thread shows its stage and round.
+Owners and readers can download several formats at once (Markdown, JSON, TOON for owners, HTML,
+plain text) as one ZIP, save a PDF through the print dialog, and share by link, device share sheet,
+WhatsApp, Facebook, LinkedIn, X, Telegram, Reddit or email.
+
 ## Launch status (2026-10-06)
 
 Live QA of the reader and owner portal fixed raw translation keys and added Article

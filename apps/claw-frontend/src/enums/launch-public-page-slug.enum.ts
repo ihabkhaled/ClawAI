@@ -27,4 +27,5 @@ export enum LaunchPublicPageSlug {
   COMPARE_DEEPSEEK = 'compare/deepseek',
   CODING_AGENT = 'coding-agent',
   CODING_AGENT_INSTALL = 'coding-agent/install',
+  THREADS = 'features/threads',
 }

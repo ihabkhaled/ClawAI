@@ -8,6 +8,7 @@ import {
   MIN_CRITIC_SCORE,
   MIN_JUDGE_SCORE,
 } from '../constants/generation.constants';
+import { ThreadGenerationStage } from '../../../generated/prisma';
 import { ChatModelClient } from '../../models/chat-model.client';
 import { ResearchClient } from '../../research/research.client';
 import { resolveAuthorConsensus } from '../utilities/author-consensus.utility';
@@ -78,6 +79,12 @@ export class GenerationPipelineManager {
     let revisionBrief = '';
 
     for (let round = 1; round <= MAX_GENERATION_ROUNDS; round += 1) {
+      await this.jobs.saveProgress(
+        job.jobId,
+        job.attempt,
+        ThreadGenerationStage.AUTHOR_DRAFTS,
+        round,
+      );
       const authorResults = await this.callAuthors(
         job,
         round,
@@ -102,6 +109,7 @@ export class GenerationPipelineManager {
         researchEvidence: evidence.bundle,
         exactCandidateHash: candidateHash,
       });
+      await this.jobs.saveProgress(job.jobId, job.attempt, ThreadGenerationStage.CONSENSUS, round);
       const voteResults = await Promise.allSettled(
         job.authors.map((role) =>
           this.callRevisionVote(
@@ -131,6 +139,7 @@ export class GenerationPipelineManager {
       }
 
       const draft = candidate;
+      await this.jobs.saveProgress(job.jobId, job.attempt, ThreadGenerationStage.JUDGE, round);
       const judge = await this.callReview(
         job,
         job.judge,
@@ -145,6 +154,7 @@ export class GenerationPipelineManager {
         continue;
       }
 
+      await this.jobs.saveProgress(job.jobId, job.attempt, ThreadGenerationStage.CRITIC, round);
       const critic = await this.callReview(
         job,
         job.critic,

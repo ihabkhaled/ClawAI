@@ -1918,3 +1918,32 @@
     font-size: var(--text-xs);
   }
 }
+
+/*
+ * Printing, and "Save as PDF", a Thread: keep the article, drop the chrome. The marketing header and
+ * the portal top bar both carry data-top-obstacle; the footer, the share menu, the export panel
+ * and the community controls carry data-no-print; the portal sidebar is an aside.
+ */
+@media print {
+  [data-top-obstacle],
+  [data-no-print],
+  aside,
+  nav {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  main {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+
+  article a[href]::after {
+    content: ' (' attr(href) ')';
+    font-size: 0.85em;
+    overflow-wrap: anywhere;
+  }
+}

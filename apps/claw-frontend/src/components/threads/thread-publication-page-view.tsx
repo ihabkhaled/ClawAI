@@ -2,8 +2,11 @@
 
 import type { ReactElement } from 'react';
 
+import { ThreadExportPanel } from '@/components/threads/thread-export-panel';
 import { ThreadPublicArticle } from '@/components/threads/thread-public-article';
 import { ThreadPublicCommunity } from '@/components/threads/thread-public-community';
+import { ThreadShareMenu } from '@/components/threads/thread-share-menu';
+import { THREAD_PUBLIC_EXPORT_OPTIONS } from '@/constants/thread-publication.constants';
 import { useTranslation } from '@/lib/i18n';
 import type { ThreadPublicPageViewProps } from '@/types/thread-publication.types';
 
@@ -42,6 +45,15 @@ export function ThreadPublicPageView({ state }: ThreadPublicPageViewProps): Reac
           views: String(state.publication.viewCount),
           readers: String(state.publication.readerCount),
         })}
+      />
+      {state.shareUrl === null ? null : (
+        <ThreadShareMenu url={state.shareUrl} title={state.publication.title} />
+      )}
+      <ThreadExportPanel
+        baseName={state.publication.slug}
+        options={THREAD_PUBLIC_EXPORT_OPTIONS}
+        buildFile={state.buildExportFile}
+        showPdf
       />
       <ThreadPublicCommunity
         comments={state.comments}

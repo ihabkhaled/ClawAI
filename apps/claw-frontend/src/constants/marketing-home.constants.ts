@@ -50,6 +50,26 @@ export const MARKETING_CODING_AGENT_POINTS: ReadonlyArray<MarketingPageSection> 
   },
 ];
 
+/** The four steps of the Threads band on the homepage, in order. */
+export const MARKETING_THREADS_STEPS: ReadonlyArray<MarketingPageSection> = [
+  {
+    titleKey: 'marketing.home.threads.step1Title',
+    bodyKey: 'marketing.home.threads.step1Body',
+  },
+  {
+    titleKey: 'marketing.home.threads.step2Title',
+    bodyKey: 'marketing.home.threads.step2Body',
+  },
+  {
+    titleKey: 'marketing.home.threads.step3Title',
+    bodyKey: 'marketing.home.threads.step3Body',
+  },
+  {
+    titleKey: 'marketing.home.threads.step4Title',
+    bodyKey: 'marketing.home.threads.step4Body',
+  },
+];
+
 export const MARKETING_ENTERPRISE_POINTS: ReadonlyArray<MarketingPageSection> = [
   {
     titleKey: 'marketing.home.enterprise.point1Title',

@@ -25,6 +25,7 @@ function flatten(
 }
 
 const LEGITIMATE_UNCHANGED_VALUES = new Set([
+  'HTML',
   'Markdown',
   'Crawl4AI',
   'FlareSolverr',

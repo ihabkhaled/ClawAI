@@ -110,6 +110,7 @@ describe('content registry integrity', () => {
       '/cookies',
       '/faq',
       '/features',
+      '/features/threads',
       '/how-it-works',
       '/integrations',
       '/learn',
@@ -159,6 +160,7 @@ describe('getIndexablePages / getAdEligiblePages defense in depth', () => {
         '/coding-agent/install',
         '/faq',
         '/features',
+        '/features/threads',
         '/how-it-works',
         '/learn',
         '/prompts',
@@ -221,6 +223,7 @@ describe('localized publication boundary', () => {
       MODEL_FIT_TASK_ORDER.length +
       USE_CASES_TASK_ORDER.length +
       FEATURES_CAPABILITY_ORDER.length +
+      1 +
       1 +
       PROMPT_GUIDE_TOPIC_ORDER.length +
       1 +

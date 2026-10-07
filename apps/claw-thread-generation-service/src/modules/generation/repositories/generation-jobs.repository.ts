@@ -433,6 +433,22 @@ export class GenerationJobsRepository {
     });
   }
 
+  /**
+   * Records which stage and round the running attempt is in, so the owner can follow it.
+   * Fenced on the attempt number like every other write: a superseded worker changes nothing.
+   */
+  async saveProgress(
+    jobId: string,
+    attempt: number,
+    stage: ThreadGenerationStage,
+    round: number,
+  ): Promise<void> {
+    await this.prisma.threadGenerationJob.updateMany({
+      where: { id: jobId, status: ThreadGenerationStatus.RUNNING, attemptCount: attempt },
+      data: { stage, round },
+    });
+  }
+
   async saveCommunication(input: {
     jobId: string;
     attempt: number;

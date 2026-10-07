@@ -59,6 +59,7 @@ function build(modelResponses: string[]) {
     loadResumeState: vi.fn().mockResolvedValue({ evidenceBundle: null, evidenceBundleHash: null }),
     findCommunication: vi.fn().mockResolvedValue(null),
     saveResearchEvidence: vi.fn().mockResolvedValue(true),
+    saveProgress: vi.fn().mockResolvedValue(undefined),
     saveCommunication: vi.fn().mockResolvedValue(true),
   };
   return {
@@ -185,6 +186,12 @@ ${text}
     ]);
     expect(harness.research.run).toHaveBeenCalledOnce();
     expect(harness.jobs.saveResearchEvidence).toHaveBeenCalledOnce();
+    expect(harness.jobs.saveProgress.mock.calls.map((call) => [call[2], call[3]])).toEqual([
+      ['AUTHOR_DRAFTS', 1],
+      ['CONSENSUS', 1],
+      ['JUDGE', 1],
+      ['CRITIC', 1],
+    ]);
     expect(harness.jobs.saveCommunication).toHaveBeenCalledTimes(8);
     const prompts = harness.models.generate.mock.calls.map((call) => call[0].userPrompt);
     expect(prompts).toHaveLength(8);

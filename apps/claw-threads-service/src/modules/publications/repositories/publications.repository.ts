@@ -53,6 +53,7 @@ export class PublicationsRepository {
       id: string;
       status: PublicationStatus;
       title: string | null;
+      slug: string;
       updatedAt: Date;
     }>
   > {
@@ -63,6 +64,7 @@ export class PublicationsRepository {
       select: {
         id: true,
         status: true,
+        slug: true,
         updatedAt: true,
         revisions: { orderBy: { revision: 'desc' }, take: 1, select: { title: true } },
       },

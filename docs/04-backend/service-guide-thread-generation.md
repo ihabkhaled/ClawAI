@@ -62,3 +62,10 @@ cancels queued jobs or requests cancellation between provider calls.
 - [Threads architecture](../03-architecture/clawai-threads-architecture.md)
 - [Backend service index](services-index.md)
 - [Generation queue runbook](../../skills/run-threads-generation-queue.md)
+
+## Stage and round progress
+
+The worker writes the job's `stage` and `round` as it moves (`saveProgress`, fenced on the attempt
+number): AUTHOR_DRAFTS, CONSENSUS, JUDGE, CRITIC, then READY_FOR_REVIEW. The review page reads them
+from `generation-state` and says what is happening. Before 2026-10-07 the stage stayed
+AUTHOR_DRAFTS until the end.

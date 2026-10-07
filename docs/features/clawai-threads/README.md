@@ -33,6 +33,20 @@ on the article. Live cloud-model generation ran through research, authors, conse
    pressure; production still runs the earlier SHA. Prove host load first.
 4. Lighthouse on the article page with JSON-LD (L13).
 
+## First end-to-end run (2026-10-07)
+
+A real run on the included cloud model (glm-5.2 on every role) passed research, three authors,
+consensus, the Judge and the Critic in round 1, waited for the owner, was approved from the review
+page and went live. The public page showed the article, sources, JSON-LD, a view and reader
+count, the share menu and the export panel. That clears blocker 1 for included models. It does not
+prove the credit models (Claude, GPT, Grok), which were out of credit or at their provider limit.
+
+## Public pages and tours
+
+Public page `/features/threads`, the home band, export, share and live stages:
+[change record](../../changes/2026-10-07-threads-marketing-export-share.md). Screenshots and how to
+retake them: [marketing-screenshots.md](marketing-screenshots.md).
+
 ## Shipped from the pack
 
 TOON export, automatic admin ticket on final failure, and the views/signed-in readers
@@ -41,8 +55,7 @@ reader-identity modal waits on a privacy decision).
 
 ## Pack items outside the approved plan (owner decision needed)
 
-Web push and email on "ready for review", dedicated marketing pages with
-real screenshots, and a separate plan flag for generation. Each changes scope,
+Web push and email on "ready for review" and a separate plan flag for generation. Each changes scope,
 privacy or money, so none was added silently.
 
 ## Rollback

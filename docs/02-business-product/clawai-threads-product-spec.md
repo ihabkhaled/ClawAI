@@ -95,6 +95,14 @@ that the plan does not include (or has used up) Threads, with a link to the plan
 Research, Judge and Critic switches are unchanged. Reading, commenting, reacting and suggesting
 changes are open to every signed-in account.
 
+## Export and sharing
+
+An owner can download a Thread as Markdown, JSON, TOON, HTML or plain text, one at a time or
+several together as one ZIP, and can save a PDF through the browser's print dialog. A reader of a
+public Thread can download Markdown, JSON, HTML or plain text and save a PDF. Anyone can share a
+published Thread by copying its link, through the device share sheet, or to WhatsApp, Facebook,
+LinkedIn, X, Telegram, Reddit or email. Sharing sends nothing anywhere until the person clicks.
+
 ## Operations: failed jobs
 
 A job that exhausts its retries and fallbacks ends FAILED with no public content and its

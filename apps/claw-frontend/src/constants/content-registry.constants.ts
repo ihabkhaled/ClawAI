@@ -61,6 +61,7 @@ import {
   COMPARISON_SLUG_BY_RIVAL,
 } from '@/constants/public-comparison.constants';
 import { resolvePublicPageSeo } from '@/constants/public-page-seo-registry.constants';
+import { THREADS_MARKETING_PATH } from '@/constants/threads-marketing.constants';
 import {
   USE_CASES_REVIEW_DATE,
   USE_CASES_TASK_ORDER,
@@ -293,6 +294,18 @@ const PUBLISHED_CONTENT_CONFIGS: ReadonlyArray<PublishedContentConfig> = [
     feedEligibility: FeedEligibility.PUBLISHABLE,
     structuredDataType: StructuredDataType.FAQ_PAGE,
     relatedSlugs: ['coding-agent', 'features', 'pricing'],
+  },
+  // ClawAI Threads: the public introduction to the feature. `/threads` itself is the signed-in
+  // owner portal, so the landing page lives under /features.
+  {
+    slug: LaunchPublicPageSlug.THREADS,
+    path: THREADS_MARKETING_PATH,
+    category: ContentCategory.FEATURES,
+    adEligibility: AdEligibility.ELIGIBLE,
+    feedEligibility: FeedEligibility.PUBLISHABLE,
+    structuredDataType: StructuredDataType.FAQ_PAGE,
+    relatedSlugs: ['threads/discover', 'features', 'how-it-works', 'pricing'],
+    reviewDate: '2026-10-07',
   },
   // Comparison hub and its rival pages. Ad-ineligible on purpose: a page whose
   // job is to be a fair, checkable comparison of named competitors does not

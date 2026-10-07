@@ -179,6 +179,16 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'AI coding assistant setup',
       ],
     },
+    'features/threads': {
+      title: 'ClawAI Threads: turn a chat into a cited public article',
+      description:
+        'Create a researched, cited, public article from any chat. Several models write it, a Judge and a Critic review it, and nothing goes public until you approve. Open to every plan.',
+      keywords: [
+        'ClawAI Threads',
+        'AI generated articles with sources',
+        'turn a chat into an article',
+      ],
+    },
   },
   [Locale.AR]: {
     home: {
@@ -352,6 +362,12 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
       description:
         'اتبع خطوات تثبيت إضافة ClawAI من Visual Studio Marketplace أو من سطر الأوامر، ثم تسجيل الدخول واختيار عنوان الخادم، مع حلول للمشكلات الشائعة.',
       keywords: ['تثبيت وكيل البرمجة من ClawAI', 'تثبيت إضافة VS Code', 'دليل تثبيت الإضافة'],
+    },
+    'features/threads': {
+      title: 'ClawAI Threads: حوّل محادثة إلى مقال عام موثّق',
+      description:
+        'أنشئ مقالاً عاماً موثّقاً ومبنياً على البحث من أي محادثة. تكتبه عدة نماذج ويراجعه حَكَم وناقد، ولا يُنشر شيء قبل موافقتك. متاح لكل الخطط.',
+      keywords: ['ClawAI Threads', 'مقالات بالذكاء الاصطناعي بمصادر', 'تحويل محادثة إلى مقال'],
     },
   },
   [Locale.FR]: {
@@ -551,6 +567,12 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'connexion depuis VS Code',
       ],
     },
+    'features/threads': {
+      title: 'ClawAI Threads : transformez un chat en article public sourcé',
+      description:
+        'Créez un article public documenté et sourcé à partir de n’importe quel chat. Plusieurs modèles l’écrivent, un juge et un critique le relisent, et rien n’est public sans votre accord. Ouvert à toutes les offres.',
+      keywords: ['ClawAI Threads', 'articles IA avec sources', 'transformer un chat en article'],
+    },
   },
   [Locale.IT]: {
     home: {
@@ -729,6 +751,12 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'Segui i tre passaggi per installare l’estensione dal Marketplace o da riga di comando, accedere al tuo account ClawAI e indicare l’indirizzo del backend.',
       keywords: ['installare ClawAI Coding Agent', 'estensione VS Code', 'guida all’installazione'],
     },
+    'features/threads': {
+      title: 'ClawAI Threads: trasforma una chat in un articolo pubblico con fonti',
+      description:
+        'Crea un articolo pubblico documentato e con fonti da qualsiasi chat. Più modelli lo scrivono, un giudice e un critico lo esaminano e nulla è pubblico senza la tua approvazione. Aperto a ogni piano.',
+      keywords: ['ClawAI Threads', 'articoli IA con fonti', 'trasformare una chat in articolo'],
+    },
   },
   [Locale.DE]: {
     home: {
@@ -906,6 +934,12 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'VS Code Erweiterung installieren',
         'KI-Assistent im Editor einrichten',
       ],
+    },
+    'features/threads': {
+      title: 'ClawAI Threads: aus einem Chat einen belegten öffentlichen Artikel machen',
+      description:
+        'Erstelle aus jedem Chat einen recherchierten, belegten öffentlichen Artikel. Mehrere Modelle schreiben ihn, Bewerter und Kritiker prüfen ihn, und ohne deine Freigabe wird nichts öffentlich. Offen für jeden Tarif.',
+      keywords: ['ClawAI Threads', 'KI-Artikel mit Quellen', 'Chat in Artikel umwandeln'],
     },
   },
   [Locale.ES]: {
@@ -1125,6 +1159,12 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'Marketplace de Visual Studio',
       ],
     },
+    'features/threads': {
+      title: 'ClawAI Threads: convierte un chat en un artículo público con fuentes',
+      description:
+        'Crea un artículo público investigado y con fuentes a partir de cualquier chat. Varios modelos lo escriben, un juez y un crítico lo revisan y nada es público sin tu aprobación. Abierto a todos los planes.',
+      keywords: ['ClawAI Threads', 'artículos con IA y fuentes', 'convertir un chat en artículo'],
+    },
   },
   [Locale.RU]: {
     home: {
@@ -1318,6 +1358,12 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'установить расширение VS Code',
         'вход в ClawAI из VS Code',
       ],
+    },
+    'features/threads': {
+      title: 'ClawAI Threads: превратите чат в публичную статью с источниками',
+      description:
+        'Создайте исследованную публичную статью с источниками из любого чата. Её пишут несколько моделей, проверяют судья и критик, и ничего не публикуется без вашего одобрения. Доступно на всех тарифах.',
+      keywords: ['ClawAI Threads', 'статьи ИИ с источниками', 'превратить чат в статью'],
     },
   },
   [Locale.PT]: {
@@ -1529,6 +1575,12 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'instalação a partir do Marketplace',
       ],
     },
+    'features/threads': {
+      title: 'ClawAI Threads: transforme um chat em um artigo público com fontes',
+      description:
+        'Crie um artigo público pesquisado e com fontes a partir de qualquer chat. Vários modelos o escrevem, um juiz e um crítico o revisam e nada é público sem a sua aprovação. Aberto a todos os planos.',
+      keywords: ['ClawAI Threads', 'artigos com IA e fontes', 'transformar um chat em artigo'],
+    },
   },
   [Locale.HI]: {
     home: {
@@ -1702,6 +1754,12 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'VS Code एक्सटेंशन इंस्टॉल',
         'AI कोडिंग एक्सटेंशन सेटअप',
       ],
+    },
+    'features/threads': {
+      title: 'ClawAI Threads: चैट को स्रोतों वाले सार्वजनिक लेख में बदलें',
+      description:
+        'किसी भी चैट से शोध-आधारित, स्रोतों वाला सार्वजनिक लेख बनाएँ। कई मॉडल इसे लिखते हैं, निर्णायक और आलोचक इसकी समीक्षा करते हैं, और आपकी मंज़ूरी के बिना कुछ सार्वजनिक नहीं होता। हर प्लान के लिए खुला।',
+      keywords: ['ClawAI Threads', 'स्रोतों वाले AI लेख', 'चैट को लेख में बदलें'],
     },
   },
   [Locale.JA]: {
@@ -1877,6 +1935,12 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'コーディングエージェント 導入',
       ],
     },
+    'features/threads': {
+      title: 'ClawAI Threads: チャットを出典付きの公開記事に',
+      description:
+        '任意のチャットから、調査済みで出典付きの公開記事を作成。複数のモデルが執筆し、ジャッジとクリティックが審査し、あなたが承認するまで何も公開されません。すべてのプランで利用可能。',
+      keywords: ['ClawAI Threads', '出典付き AI 記事', 'チャットを記事にする'],
+    },
   },
   [Locale.TH]: {
     home: {
@@ -2046,6 +2110,12 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
       description:
         'ขั้นตอนติดตั้งส่วนขยายจาก Marketplace หรือจากบรรทัดคำสั่ง การลงชื่อเข้าใช้ การตั้ง URL ของหลังบ้านเมื่อคุณโฮสต์เอง และวิธีแก้ปัญหาที่พบบ่อย',
       keywords: ['ติดตั้งส่วนขยาย VS Code', 'ClawAI Coding Agent', 'การลงชื่อเข้าใช้ส่วนขยาย'],
+    },
+    'features/threads': {
+      title: 'ClawAI Threads: เปลี่ยนแชตเป็นบทความสาธารณะที่มีแหล่งอ้างอิง',
+      description:
+        'สร้างบทความสาธารณะที่ค้นคว้าแล้วและมีแหล่งอ้างอิงจากแชตใดก็ได้ หลายโมเดลเป็นผู้เขียน ผู้ตัดสินและผู้วิจารณ์ตรวจ และไม่มีอะไรเป็นสาธารณะจนกว่าคุณจะอนุมัติ เปิดให้ทุกแพ็กเกจ',
+      keywords: ['ClawAI Threads', 'บทความ AI พร้อมแหล่งอ้างอิง', 'เปลี่ยนแชตเป็นบทความ'],
     },
   },
   [Locale.FA]: {
@@ -2217,6 +2287,12 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'نصب افزونه از درون VS Code یا از خط فرمان، ورود به حساب، انتخاب میان سرویس میزبانی‌شده و نمونهٔ خودمیزبان، و رفع مشکل‌های رایج نصب.',
       keywords: ['نصب افزونهٔ ClawAI', 'نصب افزونه VS Code', 'ورود به عامل کدنویسی'],
     },
+    'features/threads': {
+      title: 'ClawAI Threads: چت را به مقاله عمومی منبع‌دار تبدیل کنید',
+      description:
+        'از هر چتی یک مقاله عمومی پژوهش‌شده و منبع‌دار بسازید. چند مدل آن را می‌نویسند، داور و منتقد بررسی می‌کنند و بدون تأیید شما چیزی عمومی نمی‌شود. برای همه طرح‌ها باز است.',
+      keywords: ['ClawAI Threads', 'مقاله هوش مصنوعی با منبع', 'تبدیل چت به مقاله'],
+    },
   },
   [Locale.ZH]: {
     home: {
@@ -2386,6 +2462,12 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
       description:
         '按步骤在 VS Code 中安装 ClawAI 编程助手：从扩展面板或命令行安装、在浏览器中登录并填写后端地址（使用 ClawAI 托管平台或自己的部署），并查看安装与登录出问题时的排查方法。',
       keywords: ['ClawAI 编程助手安装', 'VS Code 扩展安装', 'AI 编程助手设置'],
+    },
+    'features/threads': {
+      title: 'ClawAI Threads：把聊天变成附来源的公开文章',
+      description:
+        '从任意聊天生成经过调研、附有来源的公开文章。多个模型各自独立撰写并就同一份草稿达成一致，评审和评论者逐项审阅，你阅读每一个字并批准之后，内容才会公开。所有套餐和管理员都可使用，支出上限由你设定。',
+      keywords: ['ClawAI Threads', '带来源的 AI 文章', '把聊天变成文章'],
     },
   },
 };

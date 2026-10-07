@@ -692,6 +692,30 @@ export const de: TranslationDictionary = {
     threadDraftNotEligible:
       'Der Entwurf ist nach der Sicherheitsprüfung nicht zur Veröffentlichung freigegeben.',
     threadGenerationCancelled: 'Die Erstellung wurde abgebrochen.',
+    threadStageSnapshot: 'Chat wird eingefroren',
+    threadStageResearch: 'Thema wird recherchiert',
+    threadStageAuthorDrafts: 'Autoren schreiben Entwürfe',
+    threadStageConsensus: 'Autoren einigen sich auf einen Entwurf',
+    threadStageJudge: 'Der Bewerter beurteilt den Entwurf',
+    threadStageCritic: 'Der Kritiker prüft den Entwurf',
+    threadStageReady: 'Bereit für deine Prüfung',
+    threadStageRound: 'Runde {round}',
+    threadExportPanelTitle: 'Diesen Thread herunterladen',
+    threadExportHtml: 'HTML',
+    threadExportText: 'Reiner Text',
+    threadExportDownloadOne: 'Datei herunterladen',
+    threadExportDownloadZip: '{count} Dateien als ZIP herunterladen',
+    threadExportPdf: 'Als PDF speichern',
+    threadExportPdfHint:
+      'Öffnet das Druckfenster deines Browsers. Wähle „Als PDF speichern“ als Drucker.',
+    threadExportSelectOne: 'Wähle mindestens ein Format.',
+    threadExportFailed: 'Der Export konnte nicht erstellt werden. Versuche es erneut.',
+    threadShareTitle: 'Teilen',
+    threadShareCopy: 'Link kopieren',
+    threadShareCopied: 'Link kopiert',
+    threadShareCopyFailed: 'Kopieren nicht möglich. Kopiere die Adresse aus der Browserleiste.',
+    threadShareNative: 'In einer anderen App teilen…',
+    threadShareOn: 'Auf {platform} teilen',
     threadCancellationRequesting: 'Abbruch wird angefordert …',
     threadCancellationRequested:
       'Abbruch angefordert. Der Vorgang stoppt nach dem aktuellen Schritt.',
@@ -5542,6 +5566,26 @@ export const de: TranslationDictionary = {
         ctaInstall: 'Im Marketplace installieren',
         ctaLearnMore: 'Was sie kann',
         ctaInstallGuide: 'Installationsanleitung',
+      },
+      threads: {
+        eyebrow: 'Neu: ClawAI Threads',
+        title: 'Aus einem Chat wird ein recherchierter, belegter, öffentlicher Artikel',
+        body: 'Mehrere Modelle schreiben ihn, Bewerter und Kritiker prüfen ihn, und ohne deine Freigabe wird nichts öffentlich. Offen für jeden Tarif, ab Free.',
+        step1Title: 'Chat wählen',
+        step1Body:
+          'Wähle „In öffentlichen Thread umwandeln“ in einem beliebigen Chat oder starte auf der Threads-Seite.',
+        step2Title: 'Modelle und Ausgabenlimit wählen',
+        step2Body:
+          'Wähle Autoren, Bewerter und Kritiker mit der Chat-Modellauswahl und setze das Maximum, das es kosten darf.',
+        step3Title: 'Entwurf prüfen',
+        step3Body:
+          'Lies ihn mit seinen Quellen. Bitte um Änderungen, bearbeite ihn oder lehne ihn ab.',
+        step4Title: 'Freigeben und veröffentlichen',
+        step4Body:
+          'Nur ein freigegebener Entwurf wird zur öffentlichen Seite. Jederzeit zurückziehbar.',
+        ctaLearnMore: 'Was Threads kann',
+        ctaCreate: 'Thread erstellen',
+        ctaDiscover: 'Veröffentlichte Threads lesen',
       },
       hero: {
         title: 'Jede KI, ein Arbeitsbereich',

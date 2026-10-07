@@ -147,6 +147,11 @@
       "route": "/features"
     },
     {
+      "file": "apps/claw-frontend/src/app/(marketing)/features/threads/page.tsx",
+      "kind": "page",
+      "route": "/features/threads"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(marketing)/how-it-works/page.tsx",
       "kind": "page",
       "route": "/how-it-works"

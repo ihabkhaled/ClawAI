@@ -1,14 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { THREAD_REVISION_TERMINAL_STATUSES } from '@/constants/thread-publication.constants';
-import type { ThreadPublicationExportFormat } from '@/enums/thread-publication-export-format.enum';
+import {
+  THREAD_EXPORT_FILES,
+  THREAD_REVISION_TERMINAL_STATUSES,
+} from '@/constants/thread-publication.constants';
+import { ThreadPublicationExportFormat } from '@/enums/thread-publication-export-format.enum';
 import { ThreadRevisionField } from '@/enums/thread-revision-field.enum';
 import { useThreadPublications } from '@/hooks/threads/use-thread-publications';
 import { useTranslation } from '@/lib/i18n';
 import { threadPublicationsRepository } from '@/repositories/threads/thread-publications.repository';
+import type { ThreadExportFile } from '@/types/thread-export.types';
 import type { ThreadPublicationDetailController } from '@/types/thread-publication.types';
-import { downloadThreadExport } from '@/utilities/thread-export-download.utility';
+import {
+  buildThreadHtmlDocument,
+  buildThreadTextDocument,
+} from '@/utilities/thread-document-export.utility';
+import { threadExportBody } from '@/utilities/thread-export-download.utility';
 import { createThreadRevisionRequest } from '@/utilities/thread-revision-request.utility';
 
 /**
@@ -104,11 +112,39 @@ export function useThreadPublicationDetail(
     },
   });
 
-  const exportPublication = useMutation({
-    mutationFn: (format: ThreadPublicationExportFormat) =>
-      threadPublicationsRepository.export(publicationId, format),
-    onSuccess: ({ format, content }) => downloadThreadExport(format, content),
-  });
+  const publicUrl =
+    selectedPublication?.status === 'PUBLISHED' && typeof window !== 'undefined'
+      ? `${window.location.origin}/threads/${encodeURIComponent(selectedPublication.slug)}`
+      : null;
+
+  async function buildExportFile(format: ThreadPublicationExportFormat): Promise<ThreadExportFile> {
+    const file = THREAD_EXPORT_FILES[format];
+    const name = `thread-${publicationId}.${file.extension}`;
+    if (
+      format === ThreadPublicationExportFormat.Html ||
+      format === ThreadPublicationExportFormat.Text
+    ) {
+      const draft = generation.data?.draft;
+      if (!draft) {
+        throw new Error('The draft is not ready to export yet');
+      }
+      const source = {
+        title: selectedPublication?.title ?? publicationId,
+        markdown: draft.markdown,
+        citations: draft.citations,
+        url: publicUrl,
+        language: document.documentElement.lang || 'en',
+      };
+      const sourcesLabel = t('chat.threadCitations');
+      const content =
+        format === ThreadPublicationExportFormat.Html
+          ? buildThreadHtmlDocument(source, sourcesLabel)
+          : buildThreadTextDocument(source, sourcesLabel);
+      return { format, name, mime: file.mime, content };
+    }
+    const result = await threadPublicationsRepository.export(publicationId, format);
+    return { format, name, mime: file.mime, content: threadExportBody(result.content) };
+  }
 
   const revisionIsTerminal = Boolean(
     revisionReview.data?.ready ||
@@ -165,7 +201,8 @@ export function useThreadPublicationDetail(
     publish,
     editRevision,
     unpublish,
-    exportPublication,
+    buildExportFile,
+    publicUrl,
     editingRevision,
     setEditingRevision,
     revisionMarkdown,

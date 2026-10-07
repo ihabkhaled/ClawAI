@@ -10,6 +10,7 @@ import { HomeValueBandSection } from '@/components/marketing/home/home-value-ban
 import { HowItWorksSection } from '@/components/marketing/home/how-it-works-section';
 import { ModelRosterSection } from '@/components/marketing/home/model-roster-section';
 import { PricingSection } from '@/components/marketing/home/pricing-section';
+import { ThreadsBandSection } from '@/components/marketing/home/threads-band-section';
 import {
   MARKETING_HOME_PAYG_BAND,
   MARKETING_HOME_TEAMS_BAND,
@@ -75,6 +76,7 @@ export default async function HomePage(): Promise<React.ReactElement> {
       <HomeValueBandSection band={MARKETING_HOME_PAYG_BAND} />
       <HowItWorksSection />
       <FeaturesSection />
+      <ThreadsBandSection />
       <CodingAgentBandSection />
       <HomeValueBandSection band={MARKETING_HOME_TEAMS_BAND} />
       <EnterpriseBandSection />

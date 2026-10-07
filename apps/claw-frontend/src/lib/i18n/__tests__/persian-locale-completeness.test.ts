@@ -24,6 +24,7 @@ const TECHNICAL_VALUE_ALLOWLIST = new Set([
   'GLM',
   'GPT',
   'HTTP',
+  'HTML',
   'JSON',
   'Kimi',
   'Llama',

@@ -11,12 +11,14 @@ import type { ThreadPublicationReportReason } from '@/enums/thread-publication-r
 import type { ThreadPublicationStatus } from '@/enums/thread-publication-status.enum';
 import type { ThreadRevisionField } from '@/enums/thread-revision-field.enum';
 import type { ModelSelection } from '@/types/component.types';
+import type { ThreadExportFile } from '@/types/thread-export.types';
 import type { ThreadRevisionRequest } from '@/utilities/thread-revision-request.utility';
 
 export type OwnedThreadPublication = {
   id: string;
   status: ThreadPublicationStatus;
   title: string | null;
+  slug: string;
   updatedAt: string;
 };
 
@@ -134,6 +136,8 @@ export type ThreadCommunityActionState = {
 };
 
 export type ThreadPublicPageController = {
+  shareUrl: string | null;
+  buildExportFile: (format: ThreadPublicationExportFormat) => Promise<ThreadExportFile>;
   publication: PublicThreadPublication | undefined;
   comments: PublicThreadComment[];
   reactions: ThreadReactionSummary | undefined;
@@ -235,11 +239,8 @@ export type ThreadPublicationDetailController = {
   publish: UseMutationResult<void, Error, void>;
   editRevision: UseMutationResult<ThreadRevisionRequestResult, Error, void>;
   unpublish: UseMutationResult<void, Error, void>;
-  exportPublication: UseMutationResult<
-    ThreadPublicationExport,
-    Error,
-    ThreadPublicationExportFormat
-  >;
+  buildExportFile: (format: ThreadPublicationExportFormat) => Promise<ThreadExportFile>;
+  publicUrl: string | null;
   editingRevision: boolean;
   setEditingRevision: (value: boolean) => void;
   revisionMarkdown: string;

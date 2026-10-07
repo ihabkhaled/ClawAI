@@ -1,11 +1,14 @@
 import type { ReactElement } from 'react';
 
 import { ThreadChangeRequests } from '@/components/threads/thread-change-requests';
+import { ThreadExportPanel } from '@/components/threads/thread-export-panel';
+import { ThreadShareMenu } from '@/components/threads/thread-share-menu';
 import { Button } from '@/components/ui/button';
-import { ThreadPublicationExportFormat } from '@/enums/thread-publication-export-format.enum';
+import { THREAD_OWNER_EXPORT_OPTIONS } from '@/constants/thread-publication.constants';
 import { ThreadRevisionField } from '@/enums/thread-revision-field.enum';
 import { useTranslation } from '@/lib/i18n';
 import type { ThreadPublicationDetailController } from '@/types/thread-publication.types';
+import { threadStageLabelKey } from '@/utilities/thread-generation-stage.utility';
 
 /**
  * One publication, after generation starts: progress, draft preview, capped
@@ -25,12 +28,12 @@ export function ThreadPublicationDetail({
     publish,
     editRevision,
     unpublish,
-    exportPublication,
     selectedPublication,
     editingRevision,
     activeRevisionId,
   } = detail;
   const draft = generation.data?.draft;
+  const stageLabelKey = generation.data ? threadStageLabelKey(generation.data.stage) : null;
 
   return (
     <>
@@ -56,7 +59,12 @@ export function ThreadPublicationDetail({
           {cancel.isSuccess ? <p role="status">{t('chat.threadCancellationRequested')}</p> : null}
           {cancel.isError ? <p role="alert">{t('chat.threadCancellationFailed')}</p> : null}
           {!detail.generationFailed && !detail.generationCancelled && !detail.hasDraft ? (
-            <p role="status">{t('common.loading')}</p>
+            <p role="status" data-testid="thread-generation-stage">
+              {stageLabelKey === null ? t('common.loading') : t(stageLabelKey)}
+              {generation.data.round > 0
+                ? ` · ${t('chat.threadStageRound', { round: String(generation.data.round) })}`
+                : ''}
+            </p>
           ) : null}
           {draft ? (
             <>
@@ -150,7 +158,10 @@ export function ThreadPublicationDetail({
             </p>
           ) : null}
           {revisionReview.isError ? <p role="alert">{t('chat.threadCreateFailed')}</p> : null}
-          {generation.data.status === 'WAITING_FOR_REVIEW' && draft && !detail.publicationReady ? (
+          {generation.data.status === 'WAITING_FOR_REVIEW' &&
+          draft &&
+          !detail.publicationReady &&
+          !publish.isSuccess ? (
             <p role="status">{t('chat.threadDraftNotEligible')}</p>
           ) : null}
           {generation.data.status !== 'WAITING_FOR_REVIEW' &&
@@ -194,29 +205,18 @@ export function ThreadPublicationDetail({
               {t('chat.threadUnpublish')}
             </Button>
           ) : null}
-          {selectedPublication ? (
-            <div className="flex flex-wrap gap-2">
-              {[
-                [ThreadPublicationExportFormat.Markdown, 'chat.threadExportMarkdown'],
-                [ThreadPublicationExportFormat.Json, 'chat.threadExportJson'],
-                [ThreadPublicationExportFormat.Toon, 'chat.threadExportToon'],
-              ].map(([format, labelKey]) => (
-                <Button
-                  key={format}
-                  type="button"
-                  variant="outline"
-                  onClick={() => exportPublication.mutate(format as ThreadPublicationExportFormat)}
-                  disabled={exportPublication.isPending}
-                >
-                  {t(labelKey ?? '')}
-                </Button>
-              ))}
-            </div>
+          {selectedPublication && (draft || selectedPublication.status === 'PUBLISHED') ? (
+            <ThreadExportPanel
+              baseName={`thread-${detail.publicationId}`}
+              options={THREAD_OWNER_EXPORT_OPTIONS}
+              buildFile={detail.buildExportFile}
+              showPdf={Boolean(draft)}
+            />
           ) : null}
-          {unpublish.isSuccess ? <p role="status">{t('chat.threadUnpublished')}</p> : null}
-          {unpublish.isError || exportPublication.isError ? (
-            <p role="alert">{t('chat.threadCreateFailed')}</p>
+          {detail.publicUrl !== null ? (
+            <ThreadShareMenu url={detail.publicUrl} title={selectedPublication?.title ?? ''} />
           ) : null}
+          {unpublish.isError ? <p role="alert">{t('chat.threadCreateFailed')}</p> : null}
           {publish.isError || cancel.isError ? (
             <p role="alert">{t('chat.threadCreateFailed')}</p>
           ) : null}
