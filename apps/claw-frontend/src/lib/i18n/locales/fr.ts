@@ -660,6 +660,8 @@ export const fr: TranslationDictionary = {
     threadSourceChat: 'Discussion source',
     threadCreateTitle: 'Créer un Thread public',
     threadCreateButton: 'Créer un Thread',
+    threadPlanRequired:
+      'Votre offre n’inclut pas la création de Threads. Un Thread demande des revues de recherche, Judge et Critic, incluses dans les offres supérieures. Passez à une offre supérieure pour créer des Threads publics.',
     threadChooseChat: 'Choisissez une conversation',
     threadBackToList: 'Retour aux Threads',
     threadTurnIntoThread: 'Transformer en Thread public',

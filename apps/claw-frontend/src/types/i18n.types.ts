@@ -590,6 +590,7 @@ export type TranslationDictionary = {
     threadSourceChat: string;
     threadCreateTitle: string;
     threadCreateButton: string;
+    threadPlanRequired: string;
     threadChooseChat: string;
     threadBackToList: string;
     threadTurnIntoThread: string;

@@ -1,8 +1,10 @@
+import Link from 'next/link';
 import type { ReactElement } from 'react';
 
 import { ThreadModelPicker } from '@/components/threads/thread-model-picker';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ROUTES } from '@/constants/routes.constants';
 import {
   THREAD_GENERATION_ROLE_KEYS,
   THREAD_PUBLICATION_OPTIONS,
@@ -130,6 +132,17 @@ export function ThreadGenerationForm({
         />
         <span>{t('chat.threadConsentCheckbox')}</span>
       </label>
+      {form.isPlanBlocked ? (
+        <p
+          role="alert"
+          className="border-warning/40 bg-warning-surface text-warning rounded-md border p-3 text-sm"
+        >
+          {t('chat.threadPlanRequired')}{' '}
+          <Link href={ROUTES.PLAN} className="underline">
+            {t('trialStatus.upgrade')}
+          </Link>
+        </p>
+      ) : null}
       {form.hasError ? <p role="alert">{t('chat.threadCreateFailed')}</p> : null}
       <Button
         type="submit"

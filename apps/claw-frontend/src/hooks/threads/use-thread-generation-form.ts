@@ -2,12 +2,14 @@ import { ThreadPublicationType as ThreadPublicationTypeEnum } from '@claw/shared
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 
+import { HTTP_STATUS_FORBIDDEN } from '@/constants/http-status.constants';
 import { THREAD_GENERATION_MODEL_COUNT } from '@/constants/thread-publication.constants';
 import type { Locale } from '@/enums/locale.enum';
 import { useAvailableModels } from '@/hooks/chat/use-available-models';
 import { useThreads } from '@/hooks/chat/use-threads';
 import { useLocale } from '@/lib/i18n';
 import { threadPublicationsRepository } from '@/repositories/threads/thread-publications.repository';
+import { ApiClientError } from '@/services/shared/api-client';
 import type { ModelSelection, ThreadPublicationType } from '@/types';
 import type {
   ThreadGenerationFormController,
@@ -60,6 +62,10 @@ export function useThreadGenerationForm({
       onStarted(publicationId);
     },
   });
+
+  // 403: the plan or role does not include Thread generation (research, Judge and Critic).
+  const isPlanBlocked =
+    start.error instanceof ApiClientError && start.error.status === HTTP_STATUS_FORBIDDEN;
 
   useEffect(() => {
     if (selectedModels.length === 0 && availableModels.length > 0) {
@@ -116,7 +122,8 @@ export function useThreadGenerationForm({
     changeModel,
     hasAcknowledgedPublic,
     setHasAcknowledgedPublic,
-    hasError: start.isError || requestError,
+    hasError: (start.isError && !isPlanBlocked) || requestError,
+    isPlanBlocked,
     isStarting: start.isPending,
     submit,
   };

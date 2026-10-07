@@ -640,6 +640,8 @@ export const ar: TranslationDictionary = {
     threadSourceChat: 'المحادثة المصدر',
     threadCreateTitle: 'إنشاء منشور Thread عام',
     threadCreateButton: 'إنشاء Thread',
+    threadPlanRequired:
+      'خطتك لا تشمل إنشاء Threads. يحتاج كل Thread إلى مراجعات البحث والحَكَم والناقد، وهي متوفرة في الخطط الأعلى. رقِّ خطتك لإنشاء Threads عامة.',
     threadChooseChat: 'اختر محادثة',
     threadBackToList: 'العودة إلى Threads',
     threadTurnIntoThread: 'تحويل إلى Thread عام',

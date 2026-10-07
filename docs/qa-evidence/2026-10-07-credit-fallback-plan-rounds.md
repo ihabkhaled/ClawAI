@@ -32,7 +32,8 @@ lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (
 1. A picked credit model with no credit ended in an error ("This prompt costs more than the credit you have left...") and AUTO silently skipped credit models with no notice. Both now route to an included model with a notice (ADR-161).
 2. The substitute list sometimes held a non-chat model (a Grok video model) because the non-chat id pattern missed `imagine` and `video`; fixed in routing and the frontend mirror.
 3. A refused substitute used up the substitute allowance, so the included model at the end of the list was never reached; refusals no longer count.
-4. The credit fallback and the generic "X failed" notice would have both shown; the credit notice now replaces it.
+4. Threads as the Starter user (real UI, chat menu and `/threads` modal, five cloud models chosen in the chat-style picker, cap 0.50, consent ticked): the plan has Research, Judge and Critic disabled in this database, so the start is refused with 403 and the modal said only "Failed to create thread". It now says the plan does not include creating Threads (research, Judge and Critic reviews) with a View paid plans link to `/plan` (`.playwright-mcp/threads-plan-required-starter.png`). Free (same plan limits) and admin (generation works, see the Threads QA record) were walked too; Pro and above can create Threads.
+5. The credit fallback and the generic "X failed" notice would have both shown; the credit notice now replaces it.
 
 ## Open gaps
 

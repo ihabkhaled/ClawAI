@@ -620,6 +620,8 @@ export const zh: TranslationDictionary = {
     threadSourceChat: '来源对话',
     threadCreateTitle: '创建公开 Thread',
     threadCreateButton: '创建 Thread',
+    threadPlanRequired:
+      '你的套餐不包含创建 Thread。Thread 需要研究、Judge 和 Critic 审核，更高档套餐才包含。升级套餐即可创建公开 Thread。',
     threadChooseChat: '选择一个对话',
     threadBackToList: '返回 Threads',
     threadTurnIntoThread: '转为公开 Thread',

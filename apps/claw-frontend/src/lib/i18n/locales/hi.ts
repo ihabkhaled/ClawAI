@@ -649,6 +649,8 @@ export const hi: TranslationDictionary = {
     threadSourceChat: 'स्रोत चैट',
     threadCreateTitle: 'सार्वजनिक Thread बनाएँ',
     threadCreateButton: 'Thread बनाएँ',
+    threadPlanRequired:
+      'आपके प्लान में Threads बनाना शामिल नहीं है। हर Thread के लिए रिसर्च, Judge और Critic समीक्षा चाहिए, जो ऊँचे प्लान में मिलती हैं। सार्वजनिक Threads बनाने के लिए प्लान अपग्रेड करें।',
     threadChooseChat: 'एक चैट चुनें',
     threadBackToList: 'Threads पर वापस जाएँ',
     threadTurnIntoThread: 'सार्वजनिक Thread में बदलें',

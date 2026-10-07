@@ -85,6 +85,13 @@ production QA remain open. Internationalization and public discovery are
 implemented; generation authors are prompted to use the persisted locale.
 Generation intent or a private draft alone does not make content public.
 
+## Plans
+
+Creating a Thread reserves one research, one Judge and one Critic review from the plan, so only plans
+that include those reviews can start one; in the seeded database that is Pro and above. Anyone else
+who starts one sees that their plan does not include it, with a link to the plans page. Reading,
+commenting, reacting and suggesting changes are open to every signed-in account.
+
 ## Operations: failed jobs
 
 A job that exhausts its retries and fallbacks ends FAILED with no public content and its

@@ -217,6 +217,8 @@ export type ThreadGenerationFormController = {
   hasAcknowledgedPublic: boolean;
   setHasAcknowledgedPublic: (value: boolean) => void;
   hasError: boolean;
+  /** The plan or role does not include Thread generation (403). */
+  isPlanBlocked: boolean;
   isStarting: boolean;
   submit: (event: FormEvent<HTMLFormElement>) => void;
 };

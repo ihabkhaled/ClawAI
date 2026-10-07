@@ -648,6 +648,8 @@ export const en: TranslationDictionary = {
     threadSourceChat: 'Source chat',
     threadCreateTitle: 'Create a public Thread',
     threadCreateButton: 'Create a Thread',
+    threadPlanRequired:
+      "Your plan doesn't include creating Threads. A Thread needs research, Judge and Critic reviews, which come with higher plans. Upgrade to create public Threads.",
     threadChooseChat: 'Choose a chat',
     threadBackToList: 'Back to Threads',
     threadTurnIntoThread: 'Turn into public Thread',

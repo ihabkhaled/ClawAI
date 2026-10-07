@@ -38,6 +38,7 @@ function makeForm(
     hasAcknowledgedPublic: false,
     setHasAcknowledgedPublic: vi.fn(),
     hasError: false,
+    isPlanBlocked: false,
     isStarting: false,
     submit: vi.fn(),
     ...overrides,
@@ -84,5 +85,23 @@ describe('ThreadGenerationForm', () => {
     expect(screen.getByText('chat.threadJudgeModel')).toBeInTheDocument();
     expect(screen.getByText('chat.threadCriticModel')).toBeInTheDocument();
     expect(screen.getByText('chat.threadAuthorModel 3')).toBeInTheDocument();
+  });
+
+  it('explains a plan that does not include Threads, with a way to upgrade', () => {
+    render(<ThreadGenerationForm form={makeForm({ isPlanBlocked: true })} />);
+
+    expect(screen.getByText(/chat\.threadPlanRequired/u)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'trialStatus.upgrade' })).toHaveAttribute(
+      'href',
+      '/plan',
+    );
+    expect(screen.queryByText('chat.threadCreateFailed')).not.toBeInTheDocument();
+  });
+
+  it('shows the generic failure for any other error', () => {
+    render(<ThreadGenerationForm form={makeForm({ hasError: true })} />);
+
+    expect(screen.getByText('chat.threadCreateFailed')).toBeInTheDocument();
+    expect(screen.queryByText(/chat\.threadPlanRequired/u)).not.toBeInTheDocument();
   });
 });
