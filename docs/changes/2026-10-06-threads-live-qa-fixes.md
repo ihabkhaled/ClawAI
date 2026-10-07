@@ -30,6 +30,16 @@ blockers in `apps/claw-thread-generation-service`, all fixed here:
 - **Silent failures.** Attempt failures are now logged with the failing step and an
   allow-listed gateway error code (never prompts, drafts or provider text).
 
+**Create from chat.** The pack puts the action inside the chat, but Threads could only
+be started from the `/threads` portal. The chat header menu now has **Turn into
+public Thread**, opening `ThreadCreateDialog` for that chat. Portal and modal share
+`useThreadGenerationForm` and `ThreadGenerationForm`, so consent, spend cap and model
+roles cannot drift. New: an explicit consent checkbox (the form only had a note),
+defaults spread across established cloud providers (they were five copies of the
+first model), on-device models excluded, `?publication=` opens the portal on a
+publication. 3 strings added in 13 locales; tests for the form, dialog, menu item and
+defaults.
+
 Local-only findings (no repo change): a stale `claw_threads` schema missed
 `accepted_revision_id`, and host-generated `src/generated/prisma/package.json`
 files carried a UTF-8 BOM that broke the Docker `prisma generate` step.

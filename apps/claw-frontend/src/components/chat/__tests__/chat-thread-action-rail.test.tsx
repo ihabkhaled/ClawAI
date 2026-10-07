@@ -37,6 +37,8 @@ function makeProps(overrides: Partial<ChatThreadActionRailProps> = {}): ChatThre
       exportLabel: 'Export',
       onExport: vi.fn(),
       canExport: true,
+      turnIntoThreadLabel: 'Turn into public Thread',
+      onTurnIntoThread: vi.fn(),
       settingsLabel: 'Thread settings',
       onOpenSettings: vi.fn(),
       deleteLabel: 'Delete',

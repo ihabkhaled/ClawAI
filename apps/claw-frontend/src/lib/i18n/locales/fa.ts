@@ -647,6 +647,10 @@ export const fa: TranslationDictionary = {
       'با شروع تولید، قصد خود را برای انتشار عمومی این اثر و واجد شرایط‌بودن آن برای نمایه‌سازی ثبت می‌کنید. پیش‌نویس تا زمان تأیید شما خصوصی می‌ماند.',
     threadSourceChat: 'گفت‌وگوی منبع',
     threadCreateTitle: 'ایجاد Thread عمومی',
+    threadTurnIntoThread: 'تبدیل به Thread عمومی',
+    threadConsentCheckbox: 'می‌دانم که این انتشار قرار است عمومی و قابل نمایه‌سازی شود.',
+    threadCreateDialogDescription:
+      'این گفتگو را به مقاله‌ای مستند تبدیل کنید که چند مدل هوش مصنوعی آن را بررسی می‌کنند. تا تأیید شما هیچ چیز عمومی نمی‌شود.',
     threadTopic: 'موضوع یا پرسش پژوهشی',
     threadPublicationType: 'نوع مطلب',
     threadContentLocale: 'زبان مقاله',

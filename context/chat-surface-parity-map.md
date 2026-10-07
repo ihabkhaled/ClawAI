@@ -42,6 +42,10 @@ Service entry points that create threads for Compare/Consensus/Escalation: `chat
 - **TD-045** A lab has no thread before it runs, so its Context button has the pack picker but not the
   "what will be sent" / memory dialogs. Compare in a thread has all three.
 
+- **Turn into public Thread** is a thread-level action in the normal chat header menu (`chat-thread-header-menu.tsx`
+  -> `ThreadCreateDialog`), not a message mode: the labs have no saved thread to publish, so they do not carry it.
+  The same form (`useThreadGenerationForm`) backs the `/threads` portal, so the two cannot drift.
+
 ## Guards
 
 `orchestration-parity.spec.ts` (chat-service), `orchestration-page-shell-recorder.test.tsx`,

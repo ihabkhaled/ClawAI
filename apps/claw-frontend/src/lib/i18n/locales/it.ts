@@ -658,6 +658,11 @@ export const it: TranslationDictionary = {
       'Avviando la generazione registri l’intenzione di pubblicare questo lavoro e renderlo idoneo all’indicizzazione. La bozza resta privata finché non la approvi.',
     threadSourceChat: 'Chat sorgente',
     threadCreateTitle: 'Crea un Thread pubblico',
+    threadTurnIntoThread: 'Trasforma in Thread pubblico',
+    threadConsentCheckbox:
+      'Capisco che questa pubblicazione è destinata a diventare pubblica e indicizzabile.',
+    threadCreateDialogDescription:
+      'Trasforma questa conversazione in un articolo con fonti, revisionato da più modelli di IA. Nulla è pubblico finché non lo approvi.',
     threadTopic: 'Argomento o domanda di ricerca',
     threadPublicationType: 'Tipo di pubblicazione',
     threadContentLocale: 'Lingua dell’articolo',

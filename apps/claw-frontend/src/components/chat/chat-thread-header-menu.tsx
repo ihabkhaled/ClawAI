@@ -5,6 +5,7 @@ import {
   MoreHorizontal,
   Search,
   Settings,
+  Newspaper,
   Share2,
   Trash2,
 } from 'lucide-react';
@@ -52,6 +53,8 @@ export function ChatThreadHeaderMenu({
   exportLabel,
   onExport,
   canExport,
+  turnIntoThreadLabel,
+  onTurnIntoThread,
   settingsLabel,
   onOpenSettings,
   deleteLabel,
@@ -94,6 +97,10 @@ export function ChatThreadHeaderMenu({
         <DropdownMenuItem onSelect={onExport} disabled={!canExport}>
           <Download className="me-2 h-4 w-4" />
           {exportLabel}
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={onTurnIntoThread}>
+          <Newspaper className="me-2 h-4 w-4" />
+          {turnIntoThreadLabel}
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={onOpenSettings}>
           <Settings className="me-2 h-4 w-4" />

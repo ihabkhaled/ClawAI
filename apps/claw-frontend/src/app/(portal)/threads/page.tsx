@@ -1,47 +1,28 @@
 'use client';
 
-import { ThreadPublicationType as ThreadPublicationTypeEnum } from '@claw/shared-types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState, type FormEvent, type ReactElement } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useState, type ReactElement } from 'react';
 
 import { ThreadChangeRequests } from '@/components/threads/thread-change-requests';
+import { ThreadGenerationForm } from '@/components/threads/thread-generation-form';
 import { Button } from '@/components/ui/button';
-import { THREAD_PUBLICATION_OPTIONS } from '@/constants/thread-publication.constants';
-import type { Locale } from '@/enums/locale.enum';
 import { ThreadPublicationExportFormat } from '@/enums/thread-publication-export-format.enum';
-import { useAvailableModels } from '@/hooks/chat/use-available-models';
-import { useThreads } from '@/hooks/chat/use-threads';
+import { useThreadGenerationForm } from '@/hooks/threads/use-thread-generation-form';
 import { useThreadPublications } from '@/hooks/threads/use-thread-publications';
-import { useTranslation, useLocale } from '@/lib/i18n';
-import { SUPPORTED_LOCALES } from '@/lib/i18n/i18n.constants';
+import { useTranslation } from '@/lib/i18n';
 import { threadPublicationsRepository } from '@/repositories/threads/thread-publications.repository';
-import type { ModelSelection, ThreadPublicationType } from '@/types';
-import { createThreadGenerationRequest } from '@/utilities/thread-generation-request.utility';
 import { createThreadRevisionRequest } from '@/utilities/thread-revision-request.utility';
 
 export default function ThreadPublicationsPage(): ReactElement {
   const { t } = useTranslation();
-  const { locale } = useLocale();
   const queryClient = useQueryClient();
   const { data: publications = [], isLoading, isError } = useThreadPublications();
-  const { threads, isLoading: isLoadingThreads } = useThreads();
-  const { groupedModels, isLoading: isLoadingModels } = useAvailableModels();
-  const availableModels = useMemo(
-    () =>
-      groupedModels
-        .filter(({ provider }) => !provider.startsWith('IMAGE_'))
-        .flatMap(({ models }) => models),
-    [groupedModels],
+  const form = useThreadGenerationForm({ onStarted: handleStarted });
+  const searchParams = useSearchParams();
+  const [activePublicationId, setActivePublicationId] = useState(
+    searchParams.get('publication') ?? '',
   );
-  const [sourceThreadId, setSourceThreadId] = useState('');
-  const [topic, setTopic] = useState('');
-  const [publicationType, setPublicationType] = useState<ThreadPublicationType>(
-    ThreadPublicationTypeEnum.ARTICLE,
-  );
-  const [contentLocale, setContentLocale] = useState<Locale>(locale);
-  const [spendCapUsd, setSpendCapUsd] = useState('');
-  const [selectedModels, setSelectedModels] = useState<ModelSelection[]>([]);
-  const [activePublicationId, setActivePublicationId] = useState('');
   const [editingRevision, setEditingRevision] = useState(false);
   const [revisionMarkdown, setRevisionMarkdown] = useState('');
   const [revisionCapUsd, setRevisionCapUsd] = useState('');
@@ -50,7 +31,6 @@ export default function ThreadPublicationsPage(): ReactElement {
     correlationId: '',
   });
   const [activeRevisionId, setActiveRevisionId] = useState('');
-  const [requestError, setRequestError] = useState(false);
   const selectedPublication = publications.find(({ id }) => id === activePublicationId);
   const generation = useQuery({
     queryKey: ['thread-publications', activePublicationId, 'generation-state'],
@@ -74,21 +54,6 @@ export default function ThreadPublicationsPage(): ReactElement {
         ['FAILED', 'CANCELLED', 'STALE', 'REVIEW_REQUIRED'].includes(status ?? '')
         ? false
         : 3000;
-    },
-  });
-  const start = useMutation({
-    mutationFn: (request: ReturnType<typeof createThreadGenerationRequest>) =>
-      threadPublicationsRepository.startGeneration(request),
-    onSuccess: async ({ publicationId }) => {
-      publish.reset();
-      cancel.reset();
-      editRevision.reset();
-      unpublish.reset();
-      exportPublication.reset();
-      setActiveRevisionId('');
-      setEditingRevision(false);
-      setActivePublicationId(publicationId);
-      await queryClient.invalidateQueries({ queryKey: ['thread-publications', 'mine'] });
     },
   });
   const cancel = useMutation({
@@ -160,15 +125,6 @@ export default function ThreadPublicationsPage(): ReactElement {
     },
   });
 
-  useEffect(() => {
-    if (selectedModels.length === 0 && availableModels.length > 0) {
-      const firstModel = availableModels[0];
-      if (firstModel) {
-        setSelectedModels(Array.from({ length: 5 }, () => firstModel));
-      }
-    }
-  }, [availableModels, selectedModels.length]);
-
   const hasDraft = Boolean(generation.data?.draft);
   const generationFailed = generation.data?.status === 'FAILED';
   const generationCancelled = generation.data?.status === 'CANCELLED';
@@ -192,27 +148,15 @@ export default function ThreadPublicationsPage(): ReactElement {
     return t('chat.threadRevisionPending');
   }
 
-  function submitGeneration(event: FormEvent<HTMLFormElement>): void {
-    event.preventDefault();
-    if (!sourceThreadId) {
-      return;
-    }
-    try {
-      const request = createThreadGenerationRequest({
-        sourceThreadId,
-        topic,
-        publicationType,
-        contentLocale,
-        spendCapUsd: Number(spendCapUsd),
-        models: selectedModels,
-        idempotencyKey: crypto.randomUUID(),
-        correlationId: crypto.randomUUID(),
-      });
-      setRequestError(false);
-      start.mutate(request);
-    } catch {
-      setRequestError(true);
-    }
+  function handleStarted(publicationId: string): void {
+    publish.reset();
+    cancel.reset();
+    editRevision.reset();
+    unpublish.reset();
+    exportPublication.reset();
+    setActiveRevisionId('');
+    setEditingRevision(false);
+    setActivePublicationId(publicationId);
   }
 
   function selectPublication(publicationId: string): void {
@@ -237,144 +181,7 @@ export default function ThreadPublicationsPage(): ReactElement {
         <h2 id="threads-create-title" className="mb-4 text-lg font-semibold">
           {t('chat.threadCreateTitle')}
         </h2>
-        <p className="bg-muted/30 mb-5 rounded-md p-3 text-sm" role="note">
-          {t('chat.threadPublicIntentDisclosure')}
-        </p>
-        <form className="flex flex-col gap-4" onSubmit={submitGeneration}>
-          <label className="flex flex-col gap-1 text-sm">
-            {t('chat.threadSourceChat')}
-            <select
-              required
-              value={sourceThreadId}
-              onChange={(event) => setSourceThreadId(event.target.value)}
-              className="border-input bg-background rounded-md border px-3 py-2"
-            >
-              <option value="">
-                {isLoadingThreads ? t('chat.loadingThreads') : t('chat.noThreads')}
-              </option>
-              {threads.map((thread) => (
-                <option key={thread.id} value={thread.id}>
-                  {thread.title ?? t('chat.noThreads')}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            {t('chat.threadTopic')}
-            <textarea
-              required
-              minLength={10}
-              maxLength={10000}
-              value={topic}
-              onChange={(event) => setTopic(event.target.value)}
-              className="border-input bg-background min-h-28 rounded-md border px-3 py-2"
-            />
-          </label>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label className="flex flex-col gap-1 text-sm">
-              {t('chat.threadPublicationType')}
-              <select
-                value={publicationType}
-                onChange={(event) =>
-                  setPublicationType(event.target.value as ThreadPublicationType)
-                }
-                className="border-input bg-background rounded-md border px-3 py-2"
-              >
-                {THREAD_PUBLICATION_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {t(option.translationKey)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              {t('chat.threadContentLocale')}
-              <select
-                value={contentLocale}
-                onChange={(event) => setContentLocale(event.target.value as Locale)}
-                className="border-input bg-background rounded-md border px-3 py-2"
-                aria-describedby="thread-content-locale-help"
-              >
-                {SUPPORTED_LOCALES.map(({ locale: supportedLocale, label }) => (
-                  <option key={supportedLocale} value={supportedLocale}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-              <span id="thread-content-locale-help" className="text-muted-foreground text-xs">
-                {t('chat.threadContentLocaleHelp')}
-              </span>
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              {t('chat.threadSpendCapUsd')}
-              <input
-                type="number"
-                min="0.01"
-                step="0.01"
-                required
-                value={spendCapUsd}
-                onChange={(event) => setSpendCapUsd(event.target.value)}
-                className="border-input bg-background rounded-md border px-3 py-2"
-              />
-            </label>
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {selectedModels.map((model, index) => {
-              let roleLabel = t('chat.threadCriticModel');
-              if (index < 3) {
-                roleLabel = `${t('chat.threadAuthorModel')} ${index + 1}`;
-              } else if (index === 3) {
-                roleLabel = t('chat.threadJudgeModel');
-              }
-              return (
-                <label
-                  className="flex flex-col gap-1 text-sm"
-                  key={['author-1', 'author-2', 'author-3', 'judge', 'critic'][index]}
-                >
-                  {roleLabel}
-                  <select
-                    aria-label={roleLabel}
-                    required
-                    value={`${model.provider}/${model.model}`}
-                    onChange={(event) => {
-                      const selected = availableModels.find(
-                        (entry) => `${entry.provider}/${entry.model}` === event.target.value,
-                      );
-                      if (selected) {
-                        setSelectedModels((current) =>
-                          current.map((entry, roleIndex) =>
-                            roleIndex === index ? selected : entry,
-                          ),
-                        );
-                      }
-                    }}
-                    className="border-input bg-background rounded-md border px-3 py-2"
-                  >
-                    {availableModels.map((entry) => (
-                      <option
-                        key={`${entry.provider}/${entry.model}`}
-                        value={`${entry.provider}/${entry.model}`}
-                      >
-                        {entry.displayName}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              );
-            })}
-          </div>
-          {start.isError || requestError ? (
-            <p role="alert">{t('chat.threadCreateFailed')}</p>
-          ) : null}
-          <Button
-            type="submit"
-            disabled={start.isPending || isLoadingModels || availableModels.length === 0}
-            className="w-fit"
-            isLoading={start.isPending}
-          >
-            {start.isPending ? t('common.loading') : t('chat.threadStartGeneration')}
-          </Button>
-        </form>
+        <ThreadGenerationForm form={form} />
       </section>
       {isLoading ? <p role="status">{t('chat.loadingThreads')}</p> : null}
       {isError ? <p role="alert">{t('chat.threadPublicationsLoadFailed')}</p> : null}

@@ -656,6 +656,11 @@ export const es: TranslationDictionary = {
       'Al iniciar la generación, registras tu intención de publicar este trabajo y permitir su indexación en búsquedas. El borrador seguirá siendo privado hasta que lo apruebes.',
     threadSourceChat: 'Chat de origen',
     threadCreateTitle: 'Crear un Thread público',
+    threadTurnIntoThread: 'Convertir en Thread público',
+    threadConsentCheckbox:
+      'Entiendo que esta publicación está pensada para ser pública e indexable.',
+    threadCreateDialogDescription:
+      'Convierte esta conversación en un artículo con fuentes revisado por varios modelos de IA. Nada es público hasta que lo apruebes.',
     threadTopic: 'Tema o pregunta de investigación',
     threadPublicationType: 'Tipo de publicación',
     threadContentLocale: 'Idioma del artículo',

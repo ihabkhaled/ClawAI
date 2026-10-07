@@ -638,6 +638,10 @@ export const ar: TranslationDictionary = {
       'بدء الإنشاء يسجّل نيتك في نشر هذا العمل للعامة وإتاحته للفهرسة في البحث. تظل المسودة خاصة حتى توافق على نشرها.',
     threadSourceChat: 'المحادثة المصدر',
     threadCreateTitle: 'إنشاء منشور Thread عام',
+    threadTurnIntoThread: 'تحويل إلى Thread عام',
+    threadConsentCheckbox: 'أفهم أن هذا المنشور مُعدّ ليصبح عامًا وقابلًا للفهرسة.',
+    threadCreateDialogDescription:
+      'حوّل هذه المحادثة إلى مقال موثّق بالمصادر تراجعه عدة نماذج ذكاء اصطناعي. لن يكون شيء عامًا قبل موافقتك.',
     threadTopic: 'الموضوع أو سؤال البحث',
     threadPublicationType: 'نوع المنشور',
     threadContentLocale: 'لغة المقال',

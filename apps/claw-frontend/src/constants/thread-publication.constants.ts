@@ -21,3 +21,19 @@ export type { ThreadPublicationType } from '@claw/shared-types';
 export const THREAD_REPORT_REASONS: ThreadReportReason[] = Object.values(
   ThreadPublicationReportReason,
 );
+
+/** Stable React keys for the three authors, the Judge and the Critic. */
+export const THREAD_GENERATION_ROLE_KEYS = ['author-1', 'author-2', 'author-3', 'judge', 'critic'];
+
+/** Providers tried first when choosing default Thread models, for provider diversity. */
+export const THREAD_PREFERRED_PROVIDERS = [
+  'ANTHROPIC',
+  'OPENAI',
+  'GEMINI',
+  'GROK',
+  'OLLAMA',
+  'OPENROUTER',
+];
+
+/** Three authors, one Judge and one Critic. */
+export const THREAD_GENERATION_MODEL_COUNT = 5;

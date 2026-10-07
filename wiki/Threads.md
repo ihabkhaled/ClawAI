@@ -98,6 +98,12 @@ removes private snapshots and account links, and records a hashed tombstone;
 Generation removes private jobs and rejects later enqueue. Live deletion,
 browser, access-control, device, and production QA remain open.
 
+## Create from chat
+
+Chat header menu -> **Turn into public Thread** opens a modal for that chat (same
+form as the `/threads` portal, with a required public-and-indexable consent
+checkbox). Starting generation opens the portal on the new publication.
+
 ## Launch status (2026-10-06)
 
 Live QA of the reader and owner portal fixed raw translation keys and added Article

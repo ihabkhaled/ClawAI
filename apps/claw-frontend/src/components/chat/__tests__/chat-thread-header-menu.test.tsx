@@ -22,6 +22,8 @@ function makeProps(overrides: Partial<ChatThreadHeaderMenuProps> = {}): ChatThre
     exportLabel: 'Export',
     onExport: vi.fn(),
     canExport: true,
+    turnIntoThreadLabel: 'Turn into public Thread',
+    onTurnIntoThread: vi.fn(),
     settingsLabel: 'Thread settings',
     onOpenSettings: vi.fn(),
     deleteLabel: 'Delete',
@@ -49,6 +51,15 @@ describe('ChatThreadHeaderMenu', () => {
     expect(screen.getByRole('menuitem', { name: 'Export' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Thread settings' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeInTheDocument();
+  });
+
+  it('offers turning the chat into a public Thread, and invokes it', async () => {
+    const onTurnIntoThread = vi.fn();
+    render(<ChatThreadHeaderMenu {...makeProps({ onTurnIntoThread })} />);
+    await openMenu();
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Turn into public Thread' }));
+
+    expect(onTurnIntoThread).toHaveBeenCalledOnce();
   });
 
   it('invokes the action behind each item', async () => {

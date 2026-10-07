@@ -24,6 +24,7 @@ const SOURCE_FILES = [
     .map((name) => join('src/components/threads', name)),
   'src/app/(portal)/threads/page.tsx',
   'src/constants/thread-publication.constants.ts',
+  'src/hooks/chat/use-thread-detail-page.ts',
 ];
 
 const LOCALES = { ar, de, en, es, fa, fr, hi, it: itLocale, ja, pt, ru, th, zh };

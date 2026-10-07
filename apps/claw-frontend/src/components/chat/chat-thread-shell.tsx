@@ -20,6 +20,7 @@ import { VirtualizedMessages } from '@/components/chat/virtualized-messages';
 import { ShareChatDialog } from '@/components/chat-shares/share-chat-dialog';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
+import { ThreadCreateDialog } from '@/components/threads/thread-create-dialog';
 import { Button } from '@/components/ui/button';
 import type { ChatThreadShellProps } from '@/types';
 
@@ -165,6 +166,8 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
       <SelectionQuoteButton {...props.selectionQuoteProps} />
 
       <ShareChatDialog {...props.shareDialogProps} />
+
+      <ThreadCreateDialog {...props.threadCreateDialogProps} />
 
       <ConfirmDialog
         open={props.deleteConfirmOpen}

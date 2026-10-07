@@ -1,5 +1,6 @@
 import type { ThreadPublicationType } from '@claw/shared-types';
 import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
+import type { FormEvent } from 'react';
 
 import type { Locale } from '@/enums/locale.enum';
 import type { ThreadPublicationChangeRequestStatus } from '@/enums/thread-publication-change-request-status.enum';
@@ -8,6 +9,7 @@ import type { ThreadPublicationExportFormat } from '@/enums/thread-publication-e
 import type { ThreadPublicationReaction } from '@/enums/thread-publication-reaction.enum';
 import type { ThreadPublicationReportReason } from '@/enums/thread-publication-report-reason.enum';
 import type { ThreadPublicationStatus } from '@/enums/thread-publication-status.enum';
+import type { ModelSelection } from '@/types/component.types';
 import type { ThreadRevisionRequest } from '@/utilities/thread-revision-request.utility';
 
 export type OwnedThreadPublication = {
@@ -184,4 +186,49 @@ export type ThreadChangeRequestsProps = {
   publicationId: string;
   revisionSource: NonNullable<ThreadGenerationState['draft']> | null;
   onRevisionStarted: (revisionId: string) => void;
+};
+
+export type ThreadGenerationFormOptions = {
+  /** Set when the form opens from a chat: the source chat is then not a choice. */
+  fixedSourceThreadId?: string;
+  defaultTopic?: string;
+  onStarted: (publicationId: string) => void;
+};
+
+export type ThreadGenerationFormController = {
+  threads: Array<{ id: string; title: string | null }>;
+  isLoadingThreads: boolean;
+  isLoadingModels: boolean;
+  availableModels: ModelSelection[];
+  fixedSourceThreadId: string | null;
+  sourceThreadId: string;
+  setSourceThreadId: (value: string) => void;
+  topic: string;
+  setTopic: (value: string) => void;
+  publicationType: ThreadPublicationType;
+  setPublicationType: (value: ThreadPublicationType) => void;
+  contentLocale: Locale;
+  setContentLocale: (value: Locale) => void;
+  spendCapUsd: string;
+  setSpendCapUsd: (value: string) => void;
+  selectedModels: ModelSelection[];
+  changeModel: (index: number, selected: ModelSelection) => void;
+  hasAcknowledgedPublic: boolean;
+  setHasAcknowledgedPublic: (value: boolean) => void;
+  hasError: boolean;
+  isStarting: boolean;
+  submit: (event: FormEvent<HTMLFormElement>) => void;
+};
+
+export type ThreadCreateDialogBodyProps = {
+  threadId: string;
+  threadTitle: string;
+  onClose: () => void;
+};
+
+export type ThreadCreateDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  threadId: string;
+  threadTitle: string;
 };

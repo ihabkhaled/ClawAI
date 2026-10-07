@@ -661,6 +661,11 @@ export const de: TranslationDictionary = {
       'Mit dem Start hältst du deine Absicht fest, diesen Beitrag öffentlich zu veröffentlichen und für Suchindizes freizugeben. Der Entwurf bleibt privat, bis du zustimmst.',
     threadSourceChat: 'Quellchat',
     threadCreateTitle: 'Öffentlichen Thread erstellen',
+    threadTurnIntoThread: 'In öffentlichen Thread umwandeln',
+    threadConsentCheckbox:
+      'Ich verstehe, dass diese Veröffentlichung öffentlich und indexierbar werden soll.',
+    threadCreateDialogDescription:
+      'Wandle dieses Gespräch in einen quellenbasierten Artikel um, den mehrere KI-Modelle prüfen. Nichts wird öffentlich, bevor du es freigibst.',
     threadTopic: 'Thema oder Recherchefrage',
     threadPublicationType: 'Beitragsart',
     threadContentLocale: 'Sprache des Artikels',

@@ -61,6 +61,7 @@ import type {
   ResearchOptions,
   SanitizedResearchProvider,
 } from '@/types/research.types';
+import type { ThreadCreateDialogProps } from '@/types/thread-publication.types';
 
 import type {
   AdaptiveLearningInsights,
@@ -1068,6 +1069,8 @@ export type ChatThreadHeaderMenuProps = {
   exportLabel: string;
   onExport: () => void;
   canExport: boolean;
+  turnIntoThreadLabel: string;
+  onTurnIntoThread: () => void;
   settingsLabel: string;
   onOpenSettings: () => void;
   deleteLabel: string;
@@ -2213,6 +2216,8 @@ export type ChatThreadShellProps = {
   // Public-share management: header entry point + its dialog.
   shareButtonProps: ShareChatButtonProps;
   shareDialogProps: ShareChatDialogProps;
+  /** "Turn into a public Thread" modal, opened from the header menu. */
+  threadCreateDialogProps: ThreadCreateDialogProps;
   // In-thread compare dialog (mounted when canCompare; its own `open` prop
   // gates visibility). Mutually exclusive with the quality/settings dialogs.
   inThreadComparePanelProps: InThreadComparePanelProps;

@@ -77,6 +77,7 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
   const canCritic = planFeatures.has(PlanFeature.ALLOW_CRITIC_REVIEW);
   const title = data.thread?.title ?? t('chat.untitled');
   const deleteConfirm = useToggle(false);
+  const threadCreate = useToggle(false);
   const share = useShareChatController(threadId.length > 0 ? threadId : null);
   const exportThread = useExportThread(threadId, title, data.messages);
   const search = useInThreadSearch(threadId);
@@ -111,6 +112,8 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
     exportLabel: t('chat.export.action'),
     onExport: exportThread.exportThread,
     canExport: exportThread.canExport,
+    turnIntoThreadLabel: t('chat.threadTurnIntoThread'),
+    onTurnIntoThread: threadCreate.open,
     settingsLabel: t('chat.threadSettings'),
     onOpenSettings: () => togglePanel(ActiveThreadPanel.SETTINGS),
     deleteLabel: t('common.delete'),
@@ -167,6 +170,18 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
     qualityControlsLabel: t('chat.judgeReferee'),
     shareButtonProps: share.buttonProps,
     shareDialogProps: share.dialogProps,
+    threadCreateDialogProps: {
+      open: threadCreate.isOpen,
+      onOpenChange: (open: boolean): void => {
+        if (open) {
+          threadCreate.open();
+        } else {
+          threadCreate.close();
+        }
+      },
+      threadId,
+      threadTitle: title,
+    },
     inThreadComparePanelProps: {
       threadId,
       open: activePanel === ActiveThreadPanel.COMPARE,

@@ -86,6 +86,14 @@ Generation intent or a private draft alone does not make content public.
 
 ## Owner creation flow delivery
 
+The primary entry point is the chat itself: the chat header menu has **Turn into
+public Thread**, which opens a modal for that chat (source chat fixed, topic
+pre-filled from the title). It uses the same form as the `/threads` portal, adds an
+explicit unchecked consent checkbox ("I understand this publication is intended to
+become public and indexable") that must be ticked before generation can start, and
+sends the owner to the portal on that publication once it starts. Default models
+spread across established cloud providers; on-device models are not offered.
+
 The `/threads` portal now lets an authenticated owner select a source chat,
 topic, publication type, author/Judge/Critic models, and a required maximum
 spend. Before enqueue, it presents the approved public/indexing intent; the
