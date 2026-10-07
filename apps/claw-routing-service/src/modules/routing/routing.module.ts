@@ -32,6 +32,7 @@ import { ReplayRunsRepository } from './repositories/replay-runs.repository';
 import { ReplayCasesRepository } from './repositories/replay-cases.repository';
 import { ModelDeploymentRepository } from './repositories/model-deployment.repository';
 import { CloudRouterEligibilityManager } from './managers/cloud-router-eligibility.manager';
+import { ModelOutputPriceService } from './services/model-output-price.service';
 import { ExposedModelsService } from './services/exposed-models.service';
 import { PickedModelSubstituteManager } from './managers/picked-model-substitute.manager';
 import { CloudRouterPromptManager } from './managers/cloud-router-prompt.manager';
@@ -55,6 +56,7 @@ import { RouterShadowEvaluationManager } from './managers/router-shadow-evaluati
     RouterInferenceCoordinatorManager,
     CloudRouterManager,
     CloudRouterEligibilityManager,
+    ModelOutputPriceService,
     PickedModelSubstituteManager,
     ExposedModelsService,
     CloudRouterPromptManager,

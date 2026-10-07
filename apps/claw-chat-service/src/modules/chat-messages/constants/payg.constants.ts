@@ -65,6 +65,8 @@ export const PAYG_CREDIT_ERROR_MESSAGES: Readonly<Record<string, string>> = Obje
     'This model has no published price yet, so it cannot be billed. Pick another model.',
   [BillingErrorCode.PAYG_FREE_ALLOWANCE_EXHAUSTED]:
     'You have used all your free requests to credit models this month. Upgrade to a paid plan or add credit to keep using them, or choose a non-credit model. Included models still work.',
+  [BillingErrorCode.PAYG_MODEL_NOT_IN_FREE_ALLOWANCE]:
+    'Your free requests do not cover this model because it costs more than the free plan allows. Choose a lower-cost or included model, add credit, or upgrade your plan.',
   [BillingErrorCode.PAYG_PRICING_UNAVAILABLE]:
     'Credit checks are temporarily unavailable, so paid models are paused. Local models still work.',
 });

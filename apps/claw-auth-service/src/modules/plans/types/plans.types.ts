@@ -75,6 +75,8 @@ export type PlanView = {
   maxVideoSeconds: number | null;
   /** Free requests per credit connector per UTC month (ADR-142). Null = unlimited, 0 = none. */
   creditConnectorFreeRequestsPerMonth: number | null;
+  creditConnectorFreeBudgetMicroUsd: number | null;
+  creditConnectorFreeMaxModelOutputMicroUsd: number | null;
   /** Monthly fair-use ceiling on weighted provider spend. Null = no ceiling. */
   monthlyProviderCostCeilingMicroUsd: number | null;
   /** Share of the monthly price granted as connector credit, in basis points. */
@@ -126,6 +128,8 @@ export type CreatePlanData = {
   maxMemoryItems?: number;
   maxVideoSeconds?: number | null;
   creditConnectorFreeRequestsPerMonth?: number | null;
+  creditConnectorFreeBudgetMicroUsd?: number | null;
+  creditConnectorFreeMaxModelOutputMicroUsd?: number | null;
   allowCompareMode?: boolean;
   allowJudgeMode?: boolean;
   allowResearchMode?: boolean;

@@ -4566,6 +4566,8 @@ export const ja: TranslationDictionary = {
     dailyQuota: 'デイリートークン',
     monthlyQuota: '月次トークン',
     creditFreeRequests: '無料クレジットリクエスト',
+    creditFreeBudget: '無料クレジットメーター',
+    creditFreeMaxModel: '無料の対象モデル上限',
     modelRules: 'モデルのルール',
     unlimited: '無制限',
     defaultBadge: 'デフォルト',
@@ -4639,6 +4641,14 @@ export const ja: TranslationDictionary = {
         'このプランのユーザーが、クレジットが必要になる前に、すべてのクレジットコネクタ合計で毎月行えるリクエスト数です。空欄で無制限、0 で無効になります。購入したクレジットがあれば、この数を超えても続けられます。',
       creditConnectorFreeRequestsInvalid:
         '0 から 100000 までの整数を入力するか、無制限にする場合は空欄のままにしてください。',
+      creditConnectorFreeBudget: '無料クレジットメーター（プロバイダー費用、USD／月）',
+      creditConnectorFreeBudgetHelp:
+        '1 か月の無料クレジットモデル利用が合計で達してよいプロバイダー費用の上限です。使い切ると、回数が残っていても無料利用は止まります。メーターを使わない場合は空欄にします。',
+      creditConnectorFreeMaxModel:
+        '無料利用が対象とするモデル（出力 100 万トークンあたり USD）の上限',
+      creditConnectorFreeMaxModelHelp:
+        '出力価格がこれを超えるモデルは無料利用の対象外で、AUTO ルーティングも避けます。上限を設けない場合は空欄にします。',
+      creditConnectorFreeUsdInvalid: 'USD の金額を小数 6 桁まで入力するか、空欄にしてください。',
       isPublic: '上場',
       isTrial: '無料トライアルのプラン',
       trialHelp: 'トライアルはアカウントごとに1回だけ利用できます。期間は下で設定してください。',
@@ -5070,6 +5080,14 @@ export const ja: TranslationDictionary = {
       reservedHint: '実行中のリクエスト用に確保されています。完了すると解放されます。',
       resetsOn: '{date} にリセット',
       neverExpires: '有効期限なし',
+      freeMeter: {
+        title: '今月の無料クレジット',
+        requests: '無料リクエスト {limit} 回中 {used} 回を使用',
+        percent: '無料クレジットの {percent}% を使用',
+        resets: '{date} にリセット',
+        coversLowerCost:
+          '無料クレジットは低コストのモデルが対象です。高コストのモデルにはクレジットか上位プランが必要です。',
+      },
       percentUsed: '{percent}% 使用済み',
       noAllowance: 'このプランにはコネクタークレジットが含まれていません。',
       addCredit: 'クレジットを追加',
@@ -5113,6 +5131,8 @@ export const ja: TranslationDictionary = {
       PAYG_PROMPT_TOO_EXPENSIVE: 'この会話の費用は残りのコネクタークレジットを超えています。',
       PAYG_MODEL_UNPRICED: 'このモデルはまだ価格が公開されておらず、課金できません。',
       PAYG_PRICING_UNAVAILABLE: '価格情報に一時的に接続できません。課金は発生していません。',
+      PAYG_MODEL_NOT_IN_FREE_ALLOWANCE:
+        'このモデルは無料プランの対象を超える費用がかかります。低コストまたは含まれるモデルを選ぶか、クレジットを追加するか、プランをアップグレードしてください。',
       PAYG_FREE_ALLOWANCE_EXHAUSTED:
         '今月のクレジットモデルへの無料リクエストを使い切りました。続けるにはアップグレードするか、クレジットを追加してください。 またはクレジットを使わないモデルを選んでください。',
       CREDIT_PACKAGE_NOT_FOUND: 'そのクレジットパッケージは存在しません。',

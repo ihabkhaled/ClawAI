@@ -69,6 +69,8 @@ export enum BillingErrorCode {
   // because the remedy is a plan upgrade or a top-up, not "wait" and not
   // "your wallet is empty" for somebody who never had one.
   PAYG_FREE_ALLOWANCE_EXHAUSTED = 'PAYG_FREE_ALLOWANCE_EXHAUSTED',
+  /** The free allowance does not cover this model: it costs more than the plan's price limit (ADR-162). */
+  PAYG_MODEL_NOT_IN_FREE_ALLOWANCE = 'PAYG_MODEL_NOT_IN_FREE_ALLOWANCE',
   CREDIT_PACKAGE_NOT_FOUND = 'CREDIT_PACKAGE_NOT_FOUND',
   CREDIT_PACKAGE_INACTIVE = 'CREDIT_PACKAGE_INACTIVE',
   // A refund or chargeback exceeds the unspent PURCHASED balance. Spent credit

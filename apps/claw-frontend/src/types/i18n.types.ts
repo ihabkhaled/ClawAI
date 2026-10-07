@@ -4498,6 +4498,8 @@ export type TranslationDictionary = {
     dailyQuota: string;
     monthlyQuota: string;
     creditFreeRequests: string;
+    creditFreeBudget: string;
+    creditFreeMaxModel: string;
     modelRules: string;
     unlimited: string;
     defaultBadge: string;
@@ -4565,6 +4567,11 @@ export type TranslationDictionary = {
       creditConnectorFreeRequests: string;
       creditConnectorFreeRequestsHelp: string;
       creditConnectorFreeRequestsInvalid: string;
+      creditConnectorFreeBudget: string;
+      creditConnectorFreeBudgetHelp: string;
+      creditConnectorFreeMaxModel: string;
+      creditConnectorFreeMaxModelHelp: string;
+      creditConnectorFreeUsdInvalid: string;
       isPublic: string;
       isTrial: string;
       trialHelp: string;
@@ -4981,6 +4988,13 @@ export type TranslationDictionary = {
       reservedHint: string;
       resetsOn: string;
       neverExpires: string;
+      freeMeter: {
+        title: string;
+        requests: string;
+        percent: string;
+        resets: string;
+        coversLowerCost: string;
+      };
       percentUsed: string;
       noAllowance: string;
       addCredit: string;
@@ -5023,6 +5037,7 @@ export type TranslationDictionary = {
       PAYG_MODEL_UNPRICED: string;
       PAYG_PRICING_UNAVAILABLE: string;
       PAYG_FREE_ALLOWANCE_EXHAUSTED: string;
+      PAYG_MODEL_NOT_IN_FREE_ALLOWANCE: string;
       CREDIT_PACKAGE_NOT_FOUND: string;
       CREDIT_PACKAGE_INACTIVE: string;
       CREDIT_ADJUSTMENT_REASON_REQUIRED: string;
@@ -6349,6 +6364,7 @@ export type CreditFallbackLocaleTranslation = {
   creditExhausted: string;
   freeAllowanceExhausted: string;
   promptTooExpensive: string;
+  modelNotInFreeAllowance: string;
   topUp: string;
 };
 

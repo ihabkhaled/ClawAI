@@ -1,3 +1,4 @@
+import { type CreditReserveInput, type PaygRateSnapshot } from '../../types/credit.types';
 import { PaygSurface } from '@claw/shared-types';
 
 import {
@@ -5,12 +6,13 @@ import {
   FREE_ALLOWANCE_FALLBACK_REQUEST_CEILING_MICRO_USD,
   FREE_ALLOWANCE_UNLIMITED_COUNTER_LIMIT,
 } from '../../constants/credit-free-allowance.constants';
-import { type CreditReserveInput } from '../../types/credit.types';
 import {
   computeFreeRequestCeilingMicroUsd,
   isCappedAllowance,
   isFreeAllowanceEligible,
   isFreeAllowanceEnabled,
+  isModelAboveFreeCap,
+  meterUsedPercent,
   nextUtcMonthStart,
   toCounterLimit,
   toFreeAllowanceView,
@@ -108,8 +110,9 @@ describe('nextUtcMonthStart', () => {
 
 describe('isCappedAllowance', () => {
   it('is true only for a finite limit', () => {
-    expect(isCappedAllowance({ limit: 5, requestCeilingMicroUsd: 1n })).toBe(true);
-    expect(isCappedAllowance({ limit: null, requestCeilingMicroUsd: 1n })).toBe(false);
+    const base = { requestCeilingMicroUsd: 1n, budgetMicroUsd: null, maxModelOutputMicroUsd: null };
+    expect(isCappedAllowance({ ...base, limit: 5 })).toBe(true);
+    expect(isCappedAllowance({ ...base, limit: null })).toBe(false);
   });
 });
 
@@ -157,23 +160,74 @@ describe('toFreeAllowanceView', () => {
   const resetsAt = new Date('2026-11-01T00:00:00Z');
 
   it('reports remaining as limit minus used, and when it resets', () => {
-    expect(toFreeAllowanceView(2, 1, resetsAt)).toEqual({
+    expect(toFreeAllowanceView(2, 1, resetsAt, 40)).toEqual({
       limit: 2,
       used: 1,
       remaining: 1,
       resetsAt: '2026-11-01T00:00:00.000Z',
+      meterUsedPercent: 40,
     });
   });
 
   it('never reports a negative remaining', () => {
-    expect(toFreeAllowanceView(2, 5, resetsAt).remaining).toBe(0);
+    expect(toFreeAllowanceView(2, 5, resetsAt, null).remaining).toBe(0);
   });
 
   it('reports null limit and null remaining for an unlimited allowance', () => {
-    expect(toFreeAllowanceView(null, 7, resetsAt)).toMatchObject({
+    expect(toFreeAllowanceView(null, 7, resetsAt, null)).toMatchObject({
       limit: null,
       used: 7,
       remaining: null,
     });
+  });
+});
+
+describe('meterUsedPercent', () => {
+  it('is null when the plan has no meter', () => {
+    expect(meterUsedPercent(100n, null)).toBeNull();
+  });
+
+  it('is a whole percentage of the budget, rounded down', () => {
+    expect(meterUsedPercent(0n, 250_000n)).toBe(0);
+    expect(meterUsedPercent(62_500n, 250_000n)).toBe(25);
+    expect(meterUsedPercent(124_999n, 250_000n)).toBe(49);
+  });
+
+  it('shows anything spent as at least 1%, so used credit never reads 0%', () => {
+    expect(meterUsedPercent(2_424n, 250_000n)).toBe(1);
+    expect(meterUsedPercent(1n, 250_000n)).toBe(1);
+    expect(meterUsedPercent(0n, 250_000n)).toBe(0);
+  });
+
+  it('never goes past 100, and a zero budget is already spent', () => {
+    expect(meterUsedPercent(900_000n, 250_000n)).toBe(100);
+    expect(meterUsedPercent(0n, 0n)).toBe(100);
+  });
+});
+
+describe('isModelAboveFreeCap', () => {
+  const rateWithOutput = (output: number | null): PaygRateSnapshot =>
+    ({ rates: { outputPerMillionMicroUsd: output } }) as unknown as PaygRateSnapshot;
+
+  it('covers every model when the plan sets no limit', () => {
+    expect(isModelAboveFreeCap(rateWithOutput(75_000_000), { maxModelOutputMicroUsd: null })).toBe(
+      false,
+    );
+  });
+
+  it('refuses a model whose output price is above the limit', () => {
+    const policy = { maxModelOutputMicroUsd: 5_000_000n };
+    expect(isModelAboveFreeCap(rateWithOutput(25_000_000), policy)).toBe(true);
+    expect(isModelAboveFreeCap(rateWithOutput(10_000_000), policy)).toBe(true);
+  });
+
+  it('covers a model exactly at the limit and anything cheaper', () => {
+    const policy = { maxModelOutputMicroUsd: 5_000_000n };
+    expect(isModelAboveFreeCap(rateWithOutput(5_000_000), policy)).toBe(false);
+    expect(isModelAboveFreeCap(rateWithOutput(400_000), policy)).toBe(false);
+  });
+
+  it('does not judge a rate that has no output price', () => {
+    expect(isModelAboveFreeCap(rateWithOutput(null), { maxModelOutputMicroUsd: 1n })).toBe(false);
   });
 });

@@ -33,6 +33,8 @@ export function resolveBillingErrorMessage(
       return t('billing.errors.PAYG_PRICING_UNAVAILABLE');
     case 'PAYG_FREE_ALLOWANCE_EXHAUSTED':
       return t('billing.errors.PAYG_FREE_ALLOWANCE_EXHAUSTED');
+    case 'PAYG_MODEL_NOT_IN_FREE_ALLOWANCE':
+      return t('billing.errors.PAYG_MODEL_NOT_IN_FREE_ALLOWANCE');
     case 'CREDIT_PACKAGE_NOT_FOUND':
       return t('billing.errors.CREDIT_PACKAGE_NOT_FOUND');
     case 'CREDIT_PACKAGE_INACTIVE':

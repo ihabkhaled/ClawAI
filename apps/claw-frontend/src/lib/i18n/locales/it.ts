@@ -4605,6 +4605,8 @@ export const it: TranslationDictionary = {
     dailyQuota: 'Token giornalieri',
     monthlyQuota: 'Token mensili',
     creditFreeRequests: 'Richieste gratuite a credito',
+    creditFreeBudget: 'Contatore del credito gratuito',
+    creditFreeMaxModel: 'Il gratuito copre i modelli fino a',
     modelRules: 'Regole dei modelli',
     unlimited: 'Illimitato',
     defaultBadge: 'Predefinito',
@@ -4678,6 +4680,16 @@ export const it: TranslationDictionary = {
         'Quante richieste al mese in totale un utente di questo piano può effettuare tramite tutti i connettori a credito prima che serva credito. Lascia vuoto per illimitato; 0 lo disattiva. Il credito acquistato permette di continuare oltre questo numero.',
       creditConnectorFreeRequestsInvalid:
         'Inserisci un numero intero da 0 a 100000, oppure lascia vuoto per illimitato.',
+      creditConnectorFreeBudget:
+        'Contatore del credito gratuito (USD di costo del fornitore al mese)',
+      creditConnectorFreeBudgetHelp:
+        'Il costo massimo del fornitore a cui possono arrivare le richieste gratuite a modelli a credito in un mese. Quando è esaurito le richieste gratuite si fermano anche se ne restano. Lascia vuoto per non avere un contatore.',
+      creditConnectorFreeMaxModel:
+        'Le richieste gratuite coprono i modelli fino a (USD per milione di token in uscita)',
+      creditConnectorFreeMaxModelHelp:
+        'I modelli il cui prezzo in uscita supera questo valore non sono coperti dalle richieste gratuite, e il routing AUTO li evita. Lascia vuoto per nessun limite.',
+      creditConnectorFreeUsdInvalid:
+        'Inserisci un importo in USD con al massimo 6 decimali, oppure lascia vuoto.',
       isPublic: 'Elencato pubblicamente',
       isTrial: 'Piano con prova gratuita',
       trialHelp:
@@ -5114,6 +5126,14 @@ export const it: TranslationDictionary = {
       reservedHint: 'Bloccato per richieste ancora in corso. Rilasciato al loro termine.',
       resetsOn: 'Si azzera il {date}',
       neverExpires: 'Non scade mai',
+      freeMeter: {
+        title: 'Credito gratuito di questo mese',
+        requests: '{used} richieste gratuite usate su {limit}',
+        percent: '{percent}% del tuo credito gratuito usato',
+        resets: 'Si azzera il {date}',
+        coversLowerCost:
+          'Il credito gratuito copre i modelli a costo più basso. I modelli più costosi richiedono credito o un piano superiore.',
+      },
       percentUsed: '{percent}% utilizzato',
       noAllowance: 'Questo piano non include credito connettori.',
       addCredit: 'Aggiungi credito',
@@ -5160,6 +5180,8 @@ export const it: TranslationDictionary = {
         'Questo modello non ha ancora un prezzo pubblicato e non può essere addebitato.',
       PAYG_PRICING_UNAVAILABLE:
         'I prezzi sono temporaneamente irraggiungibili. Non ti è stato addebitato nulla.',
+      PAYG_MODEL_NOT_IN_FREE_ALLOWANCE:
+        'Questo modello costa più di quanto copre il tuo piano gratuito. Scegli un modello più economico o incluso, aggiungi credito o passa a un piano superiore.',
       PAYG_FREE_ALLOWANCE_EXHAUSTED:
         'Le tue richieste gratuite ai modelli a credito sono esaurite per questo mese. Passa a un piano superiore o aggiungi credito per continuare. Oppure scegli un modello che non usa credito.',
       CREDIT_PACKAGE_NOT_FOUND: 'Quel pacchetto di credito non esiste più.',

@@ -409,6 +409,147 @@ describe('RoutingService', () => {
       );
     });
 
+    describe('the free plan price limit (ADR-162)', () => {
+      const AUTO_DECISION = {
+        selectedProvider: 'ANTHROPIC',
+        selectedModel: 'claude-opus-5-5',
+        routingMode: RoutingMode.AUTO,
+        confidence: 0.8,
+        reasonTags: ['auto'],
+        privacyClass: 'cloud',
+        costClass: 'ultra',
+        fallbackChain: [
+          { provider: 'GEMINI', model: 'models/gemini-2.5-flash' },
+          { provider: 'OLLAMA', model: 'glm-5.2' },
+        ],
+      };
+
+      const buildWithPrices = (isAbove: (provider: string, model: string) => boolean) => {
+        const buildChecker = vi.fn().mockResolvedValue(isAbove);
+        const priced = new RoutingService(
+          policiesRepo as unknown as RoutingPoliciesRepository,
+          decisionsRepo as unknown as RoutingDecisionsRepository,
+          routingManager as unknown as RoutingManager,
+          replayMgr as unknown as ReplayManager,
+          {} as any,
+          {} as any,
+          routerEducationManager as any,
+          rabbitMQ as unknown as RabbitMQService,
+          {
+            invalidateCache: vi.fn(),
+            fetchInstalledModels: vi.fn(),
+            getInstalledModels: vi.fn(),
+          } as any,
+          { isFrontierAvailable: () => false } as any,
+          { analyze: vi.fn() } as any,
+          { plan: vi.fn() } as any,
+          liveWorkflowSelector as any,
+          { findExecutionCandidates: vi.fn().mockResolvedValue([]) } as never,
+          undefined,
+          { buildChecker } as never,
+        );
+        return { priced, buildChecker };
+      };
+
+      const handlerOf = async (target: RoutingService) => {
+        await target.onModuleInit();
+        const call = rabbitMQ.subscribe.mock.calls.find(
+          ([pattern]) => pattern === EventPattern.MESSAGE_CREATED,
+        );
+        return call?.[1] as (data: unknown) => Promise<void>;
+      };
+
+      const publishedDecision = () =>
+        rabbitMQ.publish.mock.calls.find(
+          ([pattern]) => pattern === EventPattern.MESSAGE_ROUTED,
+        )?.[1];
+
+      it('swaps a dear AUTO pick for the first fallback the plan covers', async () => {
+        routingManager.evaluateRoute?.mockResolvedValueOnce(AUTO_DECISION);
+        const { priced, buildChecker } = buildWithPrices((provider) => provider === 'ANTHROPIC');
+        const handler = await handlerOf(priced);
+
+        await handler({
+          messageId: 'm-free',
+          threadId: 't-free',
+          content: 'explain vector search',
+          routingMode: RoutingMode.AUTO,
+          modelAccessMode: 'ALLOW_ALL',
+          freeModelPriceCap: 5_000_000,
+        });
+
+        expect(buildChecker).toHaveBeenCalledWith(5_000_000);
+        expect(publishedDecision()).toMatchObject({
+          selectedProvider: 'GEMINI',
+          selectedModel: 'models/gemini-2.5-flash',
+        });
+      });
+
+      it('never swaps a model the user picked', async () => {
+        routingManager.evaluateRoute?.mockResolvedValueOnce({
+          ...AUTO_DECISION,
+          routingMode: RoutingMode.MANUAL_MODEL,
+        });
+        const { priced, buildChecker } = buildWithPrices((provider) => provider === 'ANTHROPIC');
+        const handler = await handlerOf(priced);
+
+        await handler({
+          messageId: 'm-picked',
+          threadId: 't-picked',
+          content: 'explain vector search',
+          routingMode: RoutingMode.MANUAL_MODEL,
+          forcedProvider: 'ANTHROPIC',
+          forcedModel: 'claude-opus-5-5',
+          modelAccessMode: 'ALLOW_ALL',
+          freeModelPriceCap: 5_000_000,
+        });
+
+        expect(buildChecker).not.toHaveBeenCalled();
+        expect(publishedDecision()).toMatchObject({ selectedProvider: 'ANTHROPIC' });
+      });
+
+      it.each([
+        ['absent', undefined],
+        ['null', null],
+        ['negative', -1],
+        ['a string', '5000000'],
+      ])('applies no limit when the cap is %s', async (_label, cap) => {
+        routingManager.evaluateRoute?.mockResolvedValueOnce(AUTO_DECISION);
+        const { priced, buildChecker } = buildWithPrices(() => true);
+        const handler = await handlerOf(priced);
+
+        await handler({
+          messageId: 'm-nocap',
+          threadId: 't-nocap',
+          content: 'explain vector search',
+          routingMode: RoutingMode.AUTO,
+          modelAccessMode: 'ALLOW_ALL',
+          freeModelPriceCap: cap,
+        });
+
+        expect(buildChecker).not.toHaveBeenCalled();
+        expect(publishedDecision()).toMatchObject({ selectedProvider: 'ANTHROPIC' });
+      });
+
+      it('hands the cap to the router so its candidates are limited too', async () => {
+        const { priced } = buildWithPrices(() => false);
+        const handler = await handlerOf(priced);
+
+        await handler({
+          messageId: 'm-ctx',
+          threadId: 't-ctx',
+          content: 'explain vector search',
+          routingMode: RoutingMode.AUTO,
+          modelAccessMode: 'ALLOW_ALL',
+          freeModelPriceCap: 5_000_000,
+        });
+
+        expect(routingManager.evaluateRoute).toHaveBeenCalledWith(
+          expect.objectContaining({ freeModelPriceCap: 5_000_000 }),
+        );
+      });
+    });
+
     it('publishes the preferred file writer of a manual file request (F6)', async () => {
       routingManager.evaluateRoute?.mockResolvedValueOnce({
         selectedProvider: 'FILE_GENERATION',

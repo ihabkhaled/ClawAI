@@ -129,7 +129,7 @@ describe('CreditReservationManager', () => {
     applySettlement: Mock;
     recordFreeAllowance: Mock;
   };
-  let freeAllowance: { tryAdmit: Mock; giveBack: Mock; resolvePolicy: Mock };
+  let freeAllowance: { tryAdmit: Mock; giveBack: Mock; settleSpend: Mock; resolvePolicy: Mock };
   let grants: { ensureCurrentPeriod: Mock };
   let rates: { findRate: Mock; invalidate: Mock };
   let policy: { getPolicy: Mock };
@@ -192,6 +192,7 @@ describe('CreditReservationManager', () => {
       resolvePolicy: vi.fn().mockResolvedValue(null),
       tryAdmit: vi.fn().mockResolvedValue({ status: 'SPENT', limit: 0 }),
       giveBack: vi.fn().mockResolvedValue(undefined),
+      settleSpend: vi.fn().mockResolvedValue(undefined),
     };
     grants = {
       ensureCurrentPeriod: vi.fn().mockResolvedValue({
@@ -732,7 +733,7 @@ describe('CreditReservationManager', () => {
 
       await expect(manager.reserve(makeInput())).rejects.toThrow('db down');
 
-      expect(freeAllowance.giveBack).toHaveBeenCalledWith(ADMISSION.counter);
+      expect(freeAllowance.giveBack).toHaveBeenCalledWith(ADMISSION.counter, 150_000n);
       expect(usage['deleteByReservationId']).toHaveBeenCalledTimes(1);
     });
 
@@ -741,7 +742,7 @@ describe('CreditReservationManager', () => {
 
       await expect(manager.reserve(makeInput())).rejects.toThrow('ledger down');
 
-      expect(freeAllowance.giveBack).toHaveBeenCalledWith(ADMISSION.counter);
+      expect(freeAllowance.giveBack).toHaveBeenCalledWith(ADMISSION.counter, 150_000n);
     });
 
     it('a retried request reuses its allowance hold instead of taking a second slot', async () => {
@@ -827,6 +828,19 @@ describe('CreditReservationManager', () => {
         );
       });
 
+      it('settles the meter to what the call really cost, freeing the rest of its hold', async () => {
+        usage['findByReservationId'].mockResolvedValue(allowanceRecord());
+
+        await manager.finalize(usageReport);
+
+        // Held $0.15 at admission; the call cost $0.006.
+        expect(freeAllowance.settleSpend).toHaveBeenCalledWith(
+          expect.objectContaining({ userId: 'user-1' }),
+          150_000n,
+          6_000n,
+        );
+      });
+
       it('records the admission estimate, never zero, when the price lookup fails', async () => {
         usage['findByReservationId'].mockResolvedValue(allowanceRecord());
         rates['findRate'].mockResolvedValue(null);
@@ -853,11 +867,14 @@ describe('CreditReservationManager', () => {
 
         await manager.release('res-1', 'PROVIDER_ERROR');
 
-        expect(freeAllowance.giveBack).toHaveBeenCalledWith({
-          userId: 'user-1',
-          provider: 'OPENAI',
-          periodKey: '2026-08',
-        });
+        expect(freeAllowance.giveBack).toHaveBeenCalledWith(
+          {
+            userId: 'user-1',
+            provider: 'OPENAI',
+            periodKey: '2026-08',
+          },
+          expect.any(BigInt),
+        );
         expect(wallets['recordFreeAllowance']).toHaveBeenCalledWith(
           expect.objectContaining({ reason: 'FREE_ALLOWANCE_RETURNED:PROVIDER_ERROR' }),
         );
@@ -1005,6 +1022,16 @@ describe('CreditReservationManager', () => {
       });
     });
 
+    it('refuses a model the free allowance does not cover with its own code, taking no slot', async () => {
+      grants['ensureCurrentPeriod'].mockResolvedValue(GRANT_WALLET);
+      freeAllowance.tryAdmit.mockResolvedValue({ status: 'MODEL_NOT_COVERED' });
+
+      await expect(manager.reserve(makeInput())).rejects.toMatchObject({
+        code: BillingErrorCode.PAYG_MODEL_NOT_IN_FREE_ALLOWANCE,
+      });
+      expect(freeAllowance.giveBack).not.toHaveBeenCalled();
+    });
+
     it('a per-unit surface is not counted: the wallet decides it as before', async () => {
       grants['ensureCurrentPeriod'].mockResolvedValue(GRANT_WALLET);
       freeAllowance.tryAdmit.mockResolvedValue({ status: 'INELIGIBLE' });
@@ -1029,11 +1056,14 @@ describe('CreditReservationManager', () => {
 
       await manager.release('res-1', 'PROVIDER_ERROR');
 
-      expect(freeAllowance.giveBack).toHaveBeenCalledWith({
-        userId: 'user-1',
-        provider: 'OPENAI',
-        periodKey: '2026-08',
-      });
+      expect(freeAllowance.giveBack).toHaveBeenCalledWith(
+        {
+          userId: 'user-1',
+          provider: 'OPENAI',
+          periodKey: '2026-08',
+        },
+        expect.any(BigInt),
+      );
     });
 
     describe('with the metering kill switch OFF (production never had the row)', () => {

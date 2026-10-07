@@ -82,6 +82,9 @@ export type UserEntitlements = {
   // True when PAYG metering is on and the wallet has spendable credit (ADR-139).
   // Optional: an older auth-service omits it, which reads as false (fail closed).
   hasPaygCredit?: boolean;
+  // The dearest model the plan's free credit-connector requests cover (output price, micro-USD
+  // per million tokens). AUTO routing avoids anything dearer. Optional and null = no limit.
+  freeCreditMaxModelOutputMicroUsd?: number | null;
   allowedModels: AllowedModel[];
   allowedProviders: string[];
   quota: {

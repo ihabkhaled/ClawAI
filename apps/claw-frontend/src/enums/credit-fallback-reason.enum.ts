@@ -3,4 +3,5 @@ export enum CreditFallbackReason {
   CreditExhausted = 'CREDIT_EXHAUSTED',
   FreeAllowanceExhausted = 'FREE_ALLOWANCE_EXHAUSTED',
   PromptTooExpensive = 'PROMPT_TOO_EXPENSIVE',
+  ModelNotInFreeAllowance = 'MODEL_NOT_IN_FREE_ALLOWANCE',
 }

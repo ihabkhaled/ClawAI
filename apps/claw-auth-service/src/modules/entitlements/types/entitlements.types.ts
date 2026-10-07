@@ -37,6 +37,10 @@ export type UserEntitlements = {
   // PAYG metering is on and the wallet has spendable credit (ADR-139). Lets a
   // plan-locked media feature through; the PAYG reservation still gates spend.
   hasPaygCredit: boolean;
+  // The dearest model the plan's free credit-connector requests cover: its OUTPUT price in
+  // micro-USD per million tokens. AUTO routing avoids anything dearer. null = no limit, and always
+  // null for an administrator (ADR-162).
+  freeCreditMaxModelOutputMicroUsd: number | null;
   allowedModels: PlanModelAccessView[];
   allowedProviders: string[];
   quota: {

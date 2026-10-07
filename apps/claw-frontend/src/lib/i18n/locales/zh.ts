@@ -4388,6 +4388,8 @@ export const zh: TranslationDictionary = {
     dailyQuota: '每日代币',
     monthlyQuota: '每月代币',
     creditFreeRequests: '免费积分请求',
+    creditFreeBudget: '免费额度计量',
+    creditFreeMaxModel: '免费覆盖的模型上限',
     modelRules: '模型规则',
     unlimited: '无限',
     defaultBadge: '默认',
@@ -4459,6 +4461,13 @@ export const zh: TranslationDictionary = {
       creditConnectorFreeRequestsHelp:
         '此套餐用户每月通过所有积分连接器合计可发起多少次请求，超过后才需要积分。留空表示不限制；0 表示关闭。已购买的积分可在超出此数量后继续使用。',
       creditConnectorFreeRequestsInvalid: '请输入 0 到 100000 之间的整数，或留空表示不限制。',
+      creditConnectorFreeBudget: '免费额度计量（服务商成本，美元/月）',
+      creditConnectorFreeBudgetHelp:
+        '一个月内免费的额度模型请求合计最多可达到的服务商成本。用完后，即使还剩请求次数，免费请求也会停止。留空表示不使用计量。',
+      creditConnectorFreeMaxModel: '免费请求覆盖的模型上限（美元/百万输出 token）',
+      creditConnectorFreeMaxModelHelp:
+        '输出价格高于此值的模型不在免费请求覆盖范围内，AUTO 路由也会避开它们。留空表示不设上限。',
+      creditConnectorFreeUsdInvalid: '请输入美元金额，最多 6 位小数，或留空。',
       isPublic: '公开上市',
       isTrial: '免费试用套餐',
       trialHelp: '每个账户只能使用一次试用。请在下方设置试用时长。',
@@ -4875,6 +4884,13 @@ export const zh: TranslationDictionary = {
       reservedHint: '为正在执行的请求预留，完成后自动释放。',
       resetsOn: '{date} 重置',
       neverExpires: '永不过期',
+      freeMeter: {
+        title: '本月免费额度',
+        requests: '已使用 {used}/{limit} 次免费请求',
+        percent: '已使用免费额度的 {percent}%',
+        resets: '将于 {date} 重置',
+        coversLowerCost: '免费额度覆盖成本较低的模型。成本较高的模型需要额度或更高套餐。',
+      },
       percentUsed: '已使用 {percent}%',
       noAllowance: '此套餐不含连接器额度。',
       addCredit: '充值额度',
@@ -4917,6 +4933,8 @@ export const zh: TranslationDictionary = {
       PAYG_PROMPT_TOO_EXPENSIVE: '本次对话的费用超过了您剩余的连接器额度。',
       PAYG_MODEL_UNPRICED: '该模型尚未发布价格，无法计费。',
       PAYG_PRICING_UNAVAILABLE: '暂时无法获取价格信息。未向您收取任何费用。',
+      PAYG_MODEL_NOT_IN_FREE_ALLOWANCE:
+        '此模型的费用超出您的免费套餐覆盖范围。请选择成本更低或已包含的模型、添加额度或升级套餐。',
       PAYG_FREE_ALLOWANCE_EXHAUSTED:
         '本月对信用额度模型的免费请求已用完。请升级套餐或充值额度以继续。 或选择不消耗额度的模型。',
       CREDIT_PACKAGE_NOT_FOUND: '该额度套餐已不存在。',

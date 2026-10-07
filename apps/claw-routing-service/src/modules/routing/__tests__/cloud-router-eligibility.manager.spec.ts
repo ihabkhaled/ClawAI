@@ -139,6 +139,63 @@ describe('CloudRouterEligibilityManager.resolveEligibleDeployments', () => {
   });
 });
 
+describe('CloudRouterEligibilityManager free plan price limit (ADR-162)', () => {
+  // Output prices, micro-USD per million tokens.
+  const PRICES: Record<string, number> = {
+    'models/gemini-3.6-flash': 2_500_000,
+    'models/gemini-2.5-flash-lite': 400_000,
+    'claude-sonnet-5': 15_000_000,
+    'gpt-5.5': 30_000_000,
+    'glm-5.2': 0,
+  };
+  const buildPriced = (exposed: ReadonlySet<string> | null) =>
+    new CloudRouterEligibilityManager(
+      { findRoutableForCloudRouting: vi.fn().mockResolvedValue(ROUTABLE) } as never,
+      { exposedChatModels: vi.fn().mockResolvedValue(exposed) } as never,
+      {
+        buildChecker: vi.fn(
+          async (cap: number | null | undefined) => (_provider: string, model: string) =>
+            typeof cap === 'number' && (PRICES[model] ?? 0) > cap,
+        ),
+      } as never,
+    );
+
+  it('leaves out models above the limit, and offers the cheap and included ones', async () => {
+    const result = await buildPriced(EXPOSED).resolveEligibleDeployments({
+      ...baseContext,
+      freeModelPriceCap: 5_000_000,
+    });
+
+    expect(result.map((d) => d.id).sort()).toEqual(['g1', 'g2', 'l1']);
+  });
+
+  it('offers everything exposed when the plan has no limit', async () => {
+    const result = await buildPriced(EXPOSED).resolveEligibleDeployments(baseContext);
+
+    expect(providers(result)).toEqual(['ANTHROPIC', 'GEMINI', 'OLLAMA', 'OPENAI']);
+  });
+
+  it('is exactly the old behaviour when no price service is wired in', async () => {
+    const result = await build(EXPOSED).resolveEligibleDeployments({
+      ...baseContext,
+      freeModelPriceCap: 1,
+    });
+
+    expect(providers(result)).toEqual(['ANTHROPIC', 'GEMINI', 'OLLAMA', 'OPENAI']);
+  });
+
+  it('combines with the plan allow-list: a model must pass both', async () => {
+    const result = await buildPriced(EXPOSED).resolveEligibleDeployments({
+      ...baseContext,
+      allowedModels: ['GEMINI/models/gemini-3.6-flash', 'ANTHROPIC/claude-sonnet-5'],
+      modelAccessAllowAll: false,
+      freeModelPriceCap: 5_000_000,
+    });
+
+    expect(result.map((d) => d.id)).toEqual(['g1']);
+  });
+});
+
 describe('CloudRouterEligibilityManager.rankDecisionByModalityFit', () => {
   const vision = {
     ...row('g1', RouterProvider.GEMINI, 'models/gemini-3.6-flash', 'ACTIVE'),

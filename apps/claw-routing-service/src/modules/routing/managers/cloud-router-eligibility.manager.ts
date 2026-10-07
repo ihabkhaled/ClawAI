@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { CLOUD_ROUTER_MAX_CANDIDATES } from '../constants/cloud-router-eligibility.constants';
 import { ModelDeploymentRepository } from '../repositories/model-deployment.repository';
 import { ExposedModelsService } from '../services/exposed-models.service';
+import { ModelOutputPriceService } from '../services/model-output-price.service';
 import {
   catalogMatchKey,
   modelMatchKey,
@@ -32,6 +33,8 @@ export class CloudRouterEligibilityManager {
   constructor(
     private readonly deployments: ModelDeploymentRepository,
     private readonly exposedModels: ExposedModelsService,
+    // Optional: without it the free plan's price limit is simply not applied here.
+    @Optional() private readonly modelPrices?: ModelOutputPriceService,
   ) {}
 
   /**
@@ -42,10 +45,15 @@ export class CloudRouterEligibilityManager {
     context: RoutingContext,
     max: number = CLOUD_ROUTER_MAX_CANDIDATES,
   ): Promise<EligibleDeploymentRecord[]> {
-    const [routable, exposed] = await Promise.all([
+    const [allRoutable, exposed, isAboveCap] = await Promise.all([
       this.deployments.findRoutableForCloudRouting(),
       this.exposedModels.exposedChatModels(),
+      this.modelPrices?.buildChecker(context.freeModelPriceCap) ?? (() => false),
     ]);
+    // ADR-162: a free plan's AUTO choice leaves out models above its price limit.
+    const routable = allRoutable.filter(
+      (deployment) => !isAboveCap(deployment.provider, deployment.providerModelId),
+    );
     const allowed =
       context.modelAccessAllowAll === true || context.allowedModels === undefined
         ? null
@@ -110,4 +118,3 @@ export class CloudRouterEligibilityManager {
     return ranking.decision;
   }
 }
-

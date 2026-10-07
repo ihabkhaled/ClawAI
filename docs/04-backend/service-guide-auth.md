@@ -657,3 +657,7 @@ stored; migration `20261005090000` adds indexes only. Range cap 90 days, hourly 
 to 7 days, daily beyond, `limit` max 50. Missing dimension: per-tool names for
 in-turn tool calls (only a count) and image generation as a named tool; the
 `workflow` column is the closest proxy.
+
+## Free allowance meter (ADR-162)
+
+`CreditFreeAllowanceService.tryAdmit` now also refuses a model above the plan's price limit (`MODEL_NOT_COVERED`, thrown as `PAYG_MODEL_NOT_IN_FREE_ALLOWANCE`) and holds a request's worst-case cost against the month's meter in the same atomic statement as the count (`CreditFreeAllowanceRepository.tryConsume(key, limit, hold, budget)`). `finalize` settles the hold to the real cost (`settleSpend` -> `adjustSpend`); `release` gives count and hold back (`giveBack`). `GET /credit/me` carries `freeAllowance.meterUsedPercent`. Entitlements expose `freeCreditMaxModelOutputMicroUsd` for AUTO routing.

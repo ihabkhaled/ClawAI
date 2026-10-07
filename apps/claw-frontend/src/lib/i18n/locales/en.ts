@@ -4528,6 +4528,8 @@ export const en: TranslationDictionary = {
     dailyQuota: 'Daily tokens',
     monthlyQuota: 'Monthly tokens',
     creditFreeRequests: 'Free credit requests',
+    creditFreeBudget: 'Free credit meter',
+    creditFreeMaxModel: 'Free covers models up to',
     modelRules: 'Model rules',
     unlimited: 'Unlimited',
     defaultBadge: 'Default',
@@ -4601,6 +4603,15 @@ export const en: TranslationDictionary = {
         'How many requests per month, in total across all credit connectors, a user on this plan can make before credit is needed. Leave empty for unlimited; 0 turns it off. Purchased credit continues past this number.',
       creditConnectorFreeRequestsInvalid:
         'Enter a whole number from 0 to 100000, or leave empty for unlimited.',
+      creditConnectorFreeBudget: 'Free credit meter (USD of provider cost per month)',
+      creditConnectorFreeBudgetHelp:
+        'The most provider cost the free credit-model requests of one month may add up to. When it is used up the free requests stop even if some are left. Leave empty for no meter.',
+      creditConnectorFreeMaxModel:
+        'Free requests cover models up to (USD per million output tokens)',
+      creditConnectorFreeMaxModelHelp:
+        'Models whose output price is above this are not covered by the free requests, and AUTO routing avoids them. Leave empty for no limit.',
+      creditConnectorFreeUsdInvalid:
+        'Enter an amount in USD with up to 6 decimals, or leave empty.',
       isPublic: 'Publicly listed',
       isTrial: 'Free trial plan',
       trialHelp: 'Trial access can be used once per account. Set how long it lasts below.',
@@ -5031,6 +5042,14 @@ export const en: TranslationDictionary = {
       reservedHint: 'Held for requests still running. Released when they finish.',
       resetsOn: 'Resets on {date}',
       neverExpires: 'Never expires',
+      freeMeter: {
+        title: 'Free credit this month',
+        requests: '{used} of {limit} free requests used',
+        percent: '{percent}% of your free credit used',
+        resets: 'Resets on {date}',
+        coversLowerCost:
+          'Free credit covers lower-cost models. Higher-cost models need credit or a higher plan.',
+      },
       percentUsed: '{percent}% used',
       noAllowance: 'This plan includes no connector credit.',
       addCredit: 'Add credit',
@@ -5075,6 +5094,8 @@ export const en: TranslationDictionary = {
         'This conversation costs more than your remaining connector credit.',
       PAYG_MODEL_UNPRICED: 'This model has no published price yet and cannot be billed.',
       PAYG_PRICING_UNAVAILABLE: 'Pricing is temporarily unreachable. You were not charged.',
+      PAYG_MODEL_NOT_IN_FREE_ALLOWANCE:
+        'This model costs more than your free plan covers. Pick a lower-cost or included model, add credit, or upgrade.',
       PAYG_FREE_ALLOWANCE_EXHAUSTED:
         'Your free requests to credit models are used up for this month. Upgrade or add credit to continue. Or choose a non-credit model instead.',
       CREDIT_PACKAGE_NOT_FOUND: 'That credit package no longer exists.',

@@ -560,6 +560,8 @@ the vision helper stay plan-gated.
 
 ## Free allowance on credit connectors
 
+> Update 2026-10-07 ([ADR-162](../13-adr/adr-162-free-allowance-is-a-meter-and-skips-expensive-models.md)): the allowance is also a monthly money meter (`creditConnectorFreeBudgetMicroUsd`) and does not cover models whose output price is above `creditConnectorFreeMaxModelOutputMicroUsd`. A dearer model is refused with `PAYG_MODEL_NOT_IN_FREE_ALLOWANCE` and AUTO routing leaves it out. Shown to users as a percentage only.
+
 A plan may give its users a few free requests on credit connectors per UTC month, **one total across all of them** (amended 2026-10-02)
 ([ADR-142](../13-adr/adr-142-free-allowance-on-credit-connectors.md)). Free ships at 2; every paid
 plan at 0. The setting is `Plan.creditConnectorFreeRequestsPerMonth` (`null` unlimited, `0` none),

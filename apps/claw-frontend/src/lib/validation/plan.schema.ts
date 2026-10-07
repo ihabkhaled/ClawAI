@@ -7,6 +7,7 @@ import {
   PLAN_TRIAL_MAX_DAYS,
   PLAN_TRIAL_MIN_DAYS,
 } from '@/constants/plan.constants';
+import { usdInputToMicroUsd } from '@/utilities/micro-usd-input.utility';
 
 // Mirror of apps/claw-auth-service plan DTOs. Numeric inputs arrive as strings
 // from controlled inputs; optional numerics are blank strings → undefined.
@@ -28,6 +29,7 @@ const optionalNonNegativeInt = z.preprocess(
 );
 
 const CREDIT_FREE_REQUESTS_INVALID_KEY = 'adminPlans.form.creditConnectorFreeRequestsInvalid';
+const CREDIT_FREE_USD_INVALID_KEY = 'adminPlans.form.creditConnectorFreeUsdInvalid';
 
 // Blank / null is unlimited (null); otherwise a whole number 0..100000.
 function parseCreditFreeRequests(value: unknown): number | null | undefined {
@@ -125,6 +127,18 @@ export const createPlanSchema = z.object({
       message: CREDIT_FREE_REQUESTS_INVALID_KEY,
     })
     .transform((value): number | null => parseCreditFreeRequests(value) ?? null),
+  // The free allowance's money meter and model price limit, typed in dollars and sent as integer
+  // micro-USD. Blank is none (null).
+  creditConnectorFreeBudgetMicroUsd: z
+    .custom<unknown>((value) => usdInputToMicroUsd(value) !== undefined, {
+      message: CREDIT_FREE_USD_INVALID_KEY,
+    })
+    .transform((value): number | null => usdInputToMicroUsd(value) ?? null),
+  creditConnectorFreeMaxModelOutputMicroUsd: z
+    .custom<unknown>((value) => usdInputToMicroUsd(value) !== undefined, {
+      message: CREDIT_FREE_USD_INVALID_KEY,
+    })
+    .transform((value): number | null => usdInputToMicroUsd(value) ?? null),
   allowCompareMode: z.boolean().optional(),
   allowJudgeMode: z.boolean().optional(),
   allowResearchMode: z.boolean().optional(),

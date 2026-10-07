@@ -237,11 +237,11 @@ import {
   pickedModelFallbackPart,
   suggestedModelsAfterFailure,
 } from '../utilities/picked-model-fallback.utility';
-import { CreditFallbackReason } from '../enums/credit-fallback-reason.enum';
 import {
   creditFallbackPart,
   creditFallbackReason,
   noteCreditRefusal,
+  refusalSparesCheaperModels,
   skipsMeteredAfterRefusal,
 } from '../utilities/credit-fallback.utility';
 import type { CreditRefusalRecord } from '../types/credit-fallback.types';
@@ -552,8 +552,7 @@ export class ChatExecutionManager implements OnModuleInit {
       if (this.isPaygRefusal(outcome.error)) {
         creditRefusal ??= outcome.error;
         creditRefusalRecord = noteCreditRefusal(creditRefusalRecord, candidate, outcome.error);
-        creditGone ||=
-          creditFallbackReason(outcome.error) !== CreditFallbackReason.PROMPT_TOO_EXPENSIVE;
+        creditGone ||= !refusalSparesCheaperModels(creditFallbackReason(outcome.error));
         // A refusal costs nothing, so it must not use up the substitute allowance.
         if (isPickedModelTurn(payload) && i > 0) {
           substituteAttempts--;

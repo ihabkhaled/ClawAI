@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { PLAN_FORM_DEFAULTS, PLAN_TRIAL_DURATION_DAYS } from '@/constants/plan.constants';
+import {
+  PLAN_FORM_DEFAULTS,
+  PLAN_FORM_ERROR_ALIASES,
+  PLAN_TRIAL_DURATION_DAYS,
+} from '@/constants/plan.constants';
 import { createPlanSchema, updatePlanSchema } from '@/lib/validation/plan.schema';
 import type {
   CreatePlanRequest,
@@ -10,6 +14,7 @@ import type {
   UpdatePlanRequest,
   UsePlanFormResult,
 } from '@/types';
+import { microUsdToUsdInput } from '@/utilities/micro-usd-input.utility';
 
 const numToStr = (value: number | null): string => (value === null ? '' : String(value));
 
@@ -33,6 +38,10 @@ const fromPlan = (plan: PlanView): PlanFormState => ({
   maxMemoryItems: numToStr(plan.maxMemoryItems),
   maxVideoSeconds: numToStr(plan.maxVideoSeconds),
   creditConnectorFreeRequestsPerMonth: numToStr(plan.creditConnectorFreeRequestsPerMonth ?? null),
+  creditConnectorFreeBudgetUsd: microUsdToUsdInput(plan.creditConnectorFreeBudgetMicroUsd),
+  creditConnectorFreeMaxModelOutputUsd: microUsdToUsdInput(
+    plan.creditConnectorFreeMaxModelOutputMicroUsd,
+  ),
   allowCompareMode: plan.allowCompareMode,
   allowJudgeMode: plan.allowJudgeMode,
   allowResearchMode: plan.allowResearchMode,
@@ -74,6 +83,9 @@ const buildPayload = (state: PlanFormState): Record<string, unknown> => ({
   maxMemoryItems: state.maxMemoryItems,
   maxVideoSeconds: state.maxVideoSeconds,
   creditConnectorFreeRequestsPerMonth: state.creditConnectorFreeRequestsPerMonth,
+  // Typed in dollars; the schema turns them into integer micro-USD under the API's own names.
+  creditConnectorFreeBudgetMicroUsd: state.creditConnectorFreeBudgetUsd,
+  creditConnectorFreeMaxModelOutputMicroUsd: state.creditConnectorFreeMaxModelOutputUsd,
   allowCompareMode: state.allowCompareMode,
   allowJudgeMode: state.allowJudgeMode,
   allowResearchMode: state.allowResearchMode,
@@ -110,11 +122,15 @@ export function usePlanForm(initial: PlanView | null): UsePlanFormResult {
     <K extends keyof PlanFormState>(field: K, value: PlanFormState[K]): void => {
       setState((prev) => ({ ...prev, [field]: value }));
       setFieldErrors((prev) => {
-        if (prev[field] === undefined) {
+        const alias = PLAN_FORM_ERROR_ALIASES[field] as keyof PlanFormFieldErrors | undefined;
+        if (prev[field] === undefined && (alias === undefined || prev[alias] === undefined)) {
           return prev;
         }
         const next = { ...prev };
         delete next[field];
+        if (alias !== undefined) {
+          delete next[alias];
+        }
         return next;
       });
     },
@@ -124,7 +140,7 @@ export function usePlanForm(initial: PlanView | null): UsePlanFormResult {
   const collectErrors = useCallback((issues: { path: PropertyKey[]; message: string }[]): void => {
     const errors: PlanFormFieldErrors = {};
     for (const issue of issues) {
-      const key = issue.path[0] as keyof PlanFormState;
+      const key = issue.path[0] as keyof PlanFormFieldErrors;
       if (errors[key] === undefined) {
         errors[key] = issue.message;
       }

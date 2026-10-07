@@ -58,12 +58,14 @@ const makePlan = (overrides: Record<string, unknown> = {}) => ({
   slug: 'free',
   creditConnectorFreeRequestsPerMonth: 2,
   monthlyProviderCostCeilingMicroUsd: 300_000n,
+  creditConnectorFreeBudgetMicroUsd: null,
+  creditConnectorFreeMaxModelOutputMicroUsd: null,
   ...overrides,
 });
 
 describe('CreditFreeAllowanceService', () => {
   let plans: { findEffectiveForUser: Mock; findDefault: Mock };
-  let counters: { tryConsume: Mock; giveBack: Mock; findTotalUsed: Mock };
+  let counters: { tryConsume: Mock; giveBack: Mock; adjustSpend: Mock; findTotals: Mock };
   let service: CreditFreeAllowanceService;
 
   const policyOf = async (): Promise<CreditFreeAllowancePolicy> => {
@@ -82,7 +84,8 @@ describe('CreditFreeAllowanceService', () => {
     counters = {
       tryConsume: vi.fn().mockResolvedValue(true),
       giveBack: vi.fn().mockResolvedValue(undefined),
-      findTotalUsed: vi.fn().mockResolvedValue(0),
+      adjustSpend: vi.fn().mockResolvedValue(undefined),
+      findTotals: vi.fn().mockResolvedValue({ usedCount: 0, spentMicroUsd: 0n }),
     };
     service = new CreditFreeAllowanceService(
       plans as unknown as PlansRepository,
@@ -95,6 +98,8 @@ describe('CreditFreeAllowanceService', () => {
       await expect(service.resolvePolicy('user-1')).resolves.toEqual({
         limit: 2,
         requestCeilingMicroUsd: 150_000n,
+        budgetMicroUsd: null,
+        maxModelOutputMicroUsd: null,
       });
     });
 
@@ -131,6 +136,8 @@ describe('CreditFreeAllowanceService', () => {
       expect(counters.tryConsume).toHaveBeenCalledWith(
         { userId: 'user-1', provider: '*', periodKey: '2026-10' },
         2,
+        expect.any(BigInt),
+        null,
       );
       expect(attempt).toMatchObject({
         status: 'ADMITTED',
@@ -192,7 +199,12 @@ describe('CreditFreeAllowanceService', () => {
         makePlan({ creditConnectorFreeRequestsPerMonth: null }),
       );
       await service.tryAdmit(makeInput(), RATE, await policyOf(), NOW);
-      expect(counters.tryConsume).toHaveBeenCalledWith(expect.anything(), 2_147_483_647);
+      expect(counters.tryConsume).toHaveBeenCalledWith(
+        expect.anything(),
+        2_147_483_647,
+        expect.any(BigInt),
+        null,
+      );
     });
 
     it('says PROMPT_TOO_LARGE when the per-request ceiling cannot pay, without burning a slot', async () => {
@@ -286,7 +298,7 @@ describe('CreditFreeAllowanceService', () => {
         await expect(service.tryAdmit(makeInput(), RATE, policy, NOW)).resolves.toMatchObject({
           status: 'SPENT',
         });
-        await service.giveBack({ userId: 'user-1', provider: 'OPENAI', periodKey: '2026-10' });
+        await service.giveBack({ userId: 'user-1', provider: 'OPENAI', periodKey: '2026-10' }, 0n);
         await expect(service.tryAdmit(makeInput(), RATE, policy, NOW)).resolves.toMatchObject({
           status: 'ADMITTED',
         });
@@ -296,27 +308,27 @@ describe('CreditFreeAllowanceService', () => {
 
   describe('giveBack', () => {
     it('returns the slot to the total counter whatever provider the call used', async () => {
-      await service.giveBack({ userId: 'user-1', provider: 'grok', periodKey: '2026-10' });
+      await service.giveBack({ userId: 'user-1', provider: 'grok', periodKey: '2026-10' }, 30_000n);
 
-      expect(counters.giveBack).toHaveBeenCalledWith({
-        userId: 'user-1',
-        provider: '*',
-        periodKey: '2026-10',
-      });
+      expect(counters.giveBack).toHaveBeenCalledWith(
+        { userId: 'user-1', provider: '*', periodKey: '2026-10' },
+        30_000n,
+      );
     });
   });
 
   describe('getView', () => {
     it('reports one total with remaining and the next UTC month start', async () => {
-      counters.findTotalUsed.mockResolvedValue(1);
+      counters.findTotals.mockResolvedValue({ usedCount: 1, spentMicroUsd: 0n });
 
       await expect(service.getView('user-1', NOW, true)).resolves.toEqual({
         limit: 2,
         used: 1,
         remaining: 1,
         resetsAt: '2026-11-01T00:00:00.000Z',
+        meterUsedPercent: null,
       });
-      expect(counters.findTotalUsed).toHaveBeenCalledWith('user-1', '2026-10');
+      expect(counters.findTotals).toHaveBeenCalledWith('user-1', '2026-10');
     });
 
     it('is null when the plan gives none', async () => {
@@ -324,7 +336,7 @@ describe('CreditFreeAllowanceService', () => {
         makePlan({ creditConnectorFreeRequestsPerMonth: 0 }),
       );
       await expect(service.getView('user-1', NOW, true)).resolves.toBeNull();
-      expect(counters.findTotalUsed).not.toHaveBeenCalled();
+      expect(counters.findTotals).not.toHaveBeenCalled();
     });
 
     it('reports a null limit and null remaining for an unlimited plan while metering is on', async () => {
@@ -343,6 +355,134 @@ describe('CreditFreeAllowanceService', () => {
         makePlan({ creditConnectorFreeRequestsPerMonth: null }),
       );
       await expect(service.getView('user-1', NOW, false)).resolves.toBeNull();
+    });
+  });
+
+  describe('the money meter and the price limit (ADR-162)', () => {
+    const metered = (overrides: Record<string, unknown> = {}) =>
+      makePlan({
+        creditConnectorFreeRequestsPerMonth: 10,
+        creditConnectorFreeBudgetMicroUsd: 250_000n,
+        creditConnectorFreeMaxModelOutputMicroUsd: 5_000_000n,
+        ...overrides,
+      });
+
+    beforeEach(() => {
+      plans.findEffectiveForUser.mockResolvedValue(metered());
+    });
+
+    it('resolves the meter and the limit into the policy', async () => {
+      await expect(service.resolvePolicy('user-1')).resolves.toMatchObject({
+        budgetMicroUsd: 250_000n,
+        maxModelOutputMicroUsd: 5_000_000n,
+      });
+    });
+
+    it('does not cover a model whose output price is above the limit, and takes no slot', async () => {
+      // RATE is $10 per million output tokens, above the $5 limit.
+      const attempt = await service.tryAdmit(makeInput(), RATE, await policyOf(), NOW);
+
+      expect(attempt).toEqual({ status: 'MODEL_NOT_COVERED' });
+      expect(counters.tryConsume).not.toHaveBeenCalled();
+    });
+
+    it('covers a cheaper model and holds its worst-case cost against the meter', async () => {
+      const cheap: PaygRateSnapshot = {
+        ...RATE,
+        rates: {
+          ...RATE.rates,
+          outputPerMillionMicroUsd: 400_000,
+          inputPerMillionMicroUsd: 100_000,
+        },
+      };
+
+      const attempt = await service.tryAdmit(makeInput(), cheap, await policyOf(), NOW);
+
+      expect(attempt.status).toBe('ADMITTED');
+      const hold = counters.tryConsume.mock.calls[0]?.[2] as bigint;
+      expect(hold).toBeGreaterThan(0n);
+      expect(hold).toBeLessThanOrEqual(25_000n);
+      expect(counters.tryConsume.mock.calls[0]?.[3]).toBe(250_000n);
+    });
+
+    it('is spent once the month has used its whole budget, before any slot is taken', async () => {
+      counters.findTotals.mockResolvedValue({ usedCount: 3, spentMicroUsd: 250_000n });
+      const cheap: PaygRateSnapshot = {
+        ...RATE,
+        rates: { ...RATE.rates, outputPerMillionMicroUsd: 400_000 },
+      };
+
+      const attempt = await service.tryAdmit(makeInput(), cheap, await policyOf(), NOW);
+
+      expect(attempt).toMatchObject({ status: 'SPENT' });
+      expect(counters.tryConsume).not.toHaveBeenCalled();
+    });
+
+    it('clamps a request to what is left of the month, so the last request still fits', async () => {
+      counters.findTotals.mockResolvedValue({ usedCount: 9, spentMicroUsd: 240_000n });
+      const cheap: PaygRateSnapshot = {
+        ...RATE,
+        rates: {
+          ...RATE.rates,
+          outputPerMillionMicroUsd: 400_000,
+          inputPerMillionMicroUsd: 100_000,
+        },
+      };
+
+      const attempt = await service.tryAdmit(makeInput(), cheap, await policyOf(), NOW);
+
+      expect(attempt.status).toBe('ADMITTED');
+      const hold = counters.tryConsume.mock.calls[0]?.[2] as bigint;
+      expect(hold).toBeLessThanOrEqual(10_000n);
+    });
+
+    it('with no meter and no limit behaves exactly as before', async () => {
+      plans.findEffectiveForUser.mockResolvedValue(
+        makePlan({ creditConnectorFreeRequestsPerMonth: 2 }),
+      );
+      const attempt = await service.tryAdmit(makeInput(), RATE, await policyOf(), NOW);
+
+      expect(attempt.status).toBe('ADMITTED');
+      expect(counters.findTotals).not.toHaveBeenCalled();
+      expect(counters.tryConsume.mock.calls[0]?.[3]).toBeNull();
+    });
+
+    it('the unmetered path (no price) is only counted, never refused for the model', async () => {
+      const attempt = await service.tryAdmit(makeInput(), null, await policyOf(), NOW);
+
+      expect(attempt.status).toBe('ADMITTED');
+      expect(counters.tryConsume.mock.calls[0]?.[2]).toBe(0n);
+    });
+
+    it('settles a finished call to what it really cost', async () => {
+      await service.settleSpend(
+        { userId: 'user-1', provider: 'grok', periodKey: '2026-10' },
+        30_000n,
+        4_000n,
+      );
+
+      expect(counters.adjustSpend).toHaveBeenCalledWith(
+        { userId: 'user-1', provider: '*', periodKey: '2026-10' },
+        -26_000n,
+      );
+    });
+
+    it('does nothing when the call cost exactly what it held', async () => {
+      await service.settleSpend(
+        { userId: 'user-1', provider: 'grok', periodKey: '2026-10' },
+        5n,
+        5n,
+      );
+      expect(counters.adjustSpend).not.toHaveBeenCalled();
+    });
+
+    it('reports how much of the meter is used as a percentage, never a price', async () => {
+      counters.findTotals.mockResolvedValue({ usedCount: 4, spentMicroUsd: 125_000n });
+
+      const view = await service.getView('user-1', NOW, true);
+
+      expect(view).toMatchObject({ used: 4, remaining: 6, meterUsedPercent: 50 });
+      expect(JSON.stringify(view)).not.toContain('125000');
     });
   });
 });

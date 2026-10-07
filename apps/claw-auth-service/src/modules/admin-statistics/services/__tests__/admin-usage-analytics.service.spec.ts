@@ -50,7 +50,9 @@ describe('AdminUsageAnalyticsService', () => {
         .fn()
         .mockResolvedValue(policyLimit === 'none' ? null : { limit: policyLimit }),
     };
-    const counters = { findTotalUsed: vi.fn().mockResolvedValue(used) };
+    const counters = {
+      findTotals: vi.fn().mockResolvedValue({ usedCount: used, spentMicroUsd: 0n }),
+    };
     const service = new AdminUsageAnalyticsService(
       repository as never,
       allowance as never,

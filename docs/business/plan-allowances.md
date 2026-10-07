@@ -293,3 +293,7 @@ Free's worst case across all providers is $0.30 a month. `null` = unlimited, `0`
 surfaces qualify; image, video, transcription and speech never do. Edit it per plan in the admin plan
 form (`creditConnectorFreeRequestsPerMonth`); raise the plan's provider-cost ceiling with it, because
 each request's budget shrinks as the count grows.
+
+## Free allowance meter and price limit (ADR-162)
+
+Free's 10 credit-connector requests a month are also bounded by a **$0.25 monthly provider-cost meter** and a **$5.00 per million output tokens price limit** (`creditConnectorFreeBudgetMicroUsd`, `creditConnectorFreeMaxModelOutputMicroUsd`). The meter sits inside the plan's $0.30 provider-cost ceiling, so it can only tighten it. A dearer model is not covered and AUTO routing avoids it. Paid plans have neither (no free allowance). Edit both per plan in the admin plan form, in dollars.

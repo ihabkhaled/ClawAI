@@ -5,6 +5,7 @@ import { Wallet } from 'lucide-react';
 import type { ReactElement } from 'react';
 
 import { CreditDualConsumptionNotice } from '@/components/billing/credit-dual-consumption-notice';
+import { FreeAllowanceMeter } from '@/components/billing/free-allowance-meter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -176,6 +177,10 @@ export function CreditBalanceCard({
             <p className="text-muted-foreground text-xs">
               {t('billing.credit.percentUsed', { percent: String(percentConsumed) })}
             </p>
+
+            {wallet.freeAllowance === undefined || wallet.freeAllowance === null ? null : (
+              <FreeAllowanceMeter allowance={wallet.freeAllowance} locale={locale} t={t} />
+            )}
 
             {hasNoCreditAllowance(wallet) ? (
               <p className="text-muted-foreground text-sm">{t('billing.credit.noAllowance')}</p>

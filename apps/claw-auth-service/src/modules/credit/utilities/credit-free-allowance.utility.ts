@@ -5,7 +5,11 @@ import {
   FREE_ALLOWANCE_FALLBACK_REQUEST_CEILING_MICRO_USD,
   FREE_ALLOWANCE_UNLIMITED_COUNTER_LIMIT,
 } from '../constants/credit-free-allowance.constants';
-import { type CreditFreeAllowancePolicy, type CreditReserveInput } from '../types/credit.types';
+import {
+  type CreditFreeAllowancePolicy,
+  type CreditReserveInput,
+  type PaygRateSnapshot,
+} from '../types/credit.types';
 
 /**
  * Whether a plan's allowance setting lets a request in at all.
@@ -85,11 +89,47 @@ export function toFreeAllowanceView(
   limit: number | null,
   used: number,
   resetsAt: Date,
+  meterUsedPercent: number | null,
 ): PaygFreeAllowanceView {
   return {
     limit,
     used,
     remaining: limit === null ? null : Math.max(0, limit - used),
     resetsAt: resetsAt.toISOString(),
+    meterUsedPercent,
   };
+}
+
+/**
+ * How much of the month's meter is used, as a whole percentage from 0 to 100, or `null` when the
+ * plan has no meter. A percentage on purpose: it tells the user how much free credit is left
+ * without disclosing what the platform pays a provider (rule 28).
+ */
+export function meterUsedPercent(
+  spentMicroUsd: bigint,
+  budgetMicroUsd: bigint | null,
+): number | null {
+  if (budgetMicroUsd === null) {
+    return null;
+  }
+  if (budgetMicroUsd <= 0n) {
+    return 100;
+  }
+  const percent = Number((spentMicroUsd * 100n) / budgetMicroUsd);
+  // Anything spent shows as at least 1%, so a user who has used the free credit never reads "0% used".
+  return Math.min(100, Math.max(spentMicroUsd > 0n ? 1 : 0, percent));
+}
+
+/**
+ * True when the model's OUTPUT price is above the plan's free-allowance limit, so the allowance
+ * does not cover it. No limit set, or no output price on the rate, means it is covered (an
+ * unpriced model never reaches here: the meter refuses it earlier).
+ */
+export function isModelAboveFreeCap(
+  rate: PaygRateSnapshot,
+  policy: Pick<CreditFreeAllowancePolicy, 'maxModelOutputMicroUsd'>,
+): boolean {
+  const cap = policy.maxModelOutputMicroUsd;
+  const output = rate.rates.outputPerMillionMicroUsd;
+  return cap !== null && output !== null && BigInt(output) > cap;
 }

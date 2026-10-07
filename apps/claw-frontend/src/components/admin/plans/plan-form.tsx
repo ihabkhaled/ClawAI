@@ -307,6 +307,50 @@ export function PlanForm({
           ) : null}
         </div>
         <div className="grid grid-cols-1 gap-2">
+          <label htmlFor="plan-credit-free-budget" className="text-sm font-medium">
+            {t('adminPlans.form.creditConnectorFreeBudget')}
+          </label>
+          <Input
+            id="plan-credit-free-budget"
+            type="text"
+            inputMode="decimal"
+            value={state.creditConnectorFreeBudgetUsd}
+            onChange={(e) => setField('creditConnectorFreeBudgetUsd', e.target.value)}
+            aria-invalid={fieldErrors.creditConnectorFreeBudgetMicroUsd !== undefined}
+            aria-describedby="plan-credit-free-budget-help"
+          />
+          <p id="plan-credit-free-budget-help" className="text-muted-foreground text-xs">
+            {t('adminPlans.form.creditConnectorFreeBudgetHelp')}
+          </p>
+          {fieldErrors.creditConnectorFreeBudgetMicroUsd !== undefined ? (
+            <p className="text-destructive text-xs" role="alert">
+              {t(fieldErrors.creditConnectorFreeBudgetMicroUsd)}
+            </p>
+          ) : null}
+        </div>
+        <div className="grid grid-cols-1 gap-2">
+          <label htmlFor="plan-credit-free-max-model" className="text-sm font-medium">
+            {t('adminPlans.form.creditConnectorFreeMaxModel')}
+          </label>
+          <Input
+            id="plan-credit-free-max-model"
+            type="text"
+            inputMode="decimal"
+            value={state.creditConnectorFreeMaxModelOutputUsd}
+            onChange={(e) => setField('creditConnectorFreeMaxModelOutputUsd', e.target.value)}
+            aria-invalid={fieldErrors.creditConnectorFreeMaxModelOutputMicroUsd !== undefined}
+            aria-describedby="plan-credit-free-max-model-help"
+          />
+          <p id="plan-credit-free-max-model-help" className="text-muted-foreground text-xs">
+            {t('adminPlans.form.creditConnectorFreeMaxModelHelp')}
+          </p>
+          {fieldErrors.creditConnectorFreeMaxModelOutputMicroUsd !== undefined ? (
+            <p className="text-destructive text-xs" role="alert">
+              {t(fieldErrors.creditConnectorFreeMaxModelOutputMicroUsd)}
+            </p>
+          ) : null}
+        </div>
+        <div className="grid grid-cols-1 gap-2">
           <label htmlFor="plan-display-order" className="text-sm font-medium">
             {t('adminPlans.form.displayOrder')}
           </label>

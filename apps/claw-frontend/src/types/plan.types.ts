@@ -77,6 +77,10 @@ export type PlanView = {
   maxVideoSeconds: number | null;
   /** Free requests per month per credit connector. null = unlimited, 0 = off. Absent from an older auth-service. */
   creditConnectorFreeRequestsPerMonth?: number | null;
+  /** The free allowance's monthly money meter, micro-USD. null = no meter. Absent from an older auth-service. */
+  creditConnectorFreeBudgetMicroUsd?: number | null;
+  /** The dearest model the free allowance covers: output price, micro-USD per million tokens. null = no limit. */
+  creditConnectorFreeMaxModelOutputMicroUsd?: number | null;
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
   allowResearchMode: boolean;
@@ -151,6 +155,10 @@ export type CreatePlanRequest = {
   maxVideoSeconds?: number | null;
   /** null sets unlimited; omitted leaves the plan's value untouched. */
   creditConnectorFreeRequestsPerMonth?: number | null;
+  /** null clears the meter; omitted leaves it untouched. */
+  creditConnectorFreeBudgetMicroUsd?: number | null;
+  /** null clears the price limit; omitted leaves it untouched. */
+  creditConnectorFreeMaxModelOutputMicroUsd?: number | null;
   allowCompareMode?: boolean;
   allowJudgeMode?: boolean;
   allowResearchMode?: boolean;
@@ -288,6 +296,10 @@ export type PlanFormState = {
   maxMemoryItems: string;
   maxVideoSeconds: string;
   creditConnectorFreeRequestsPerMonth: string;
+  /** Dollars, as typed. Blank = no meter. */
+  creditConnectorFreeBudgetUsd: string;
+  /** Dollars per million output tokens, as typed. Blank = no limit. */
+  creditConnectorFreeMaxModelOutputUsd: string;
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
   allowResearchMode: boolean;
@@ -309,7 +321,18 @@ export type PlanFormState = {
   allowTextToSpeech: boolean;
 };
 
-export type PlanFormFieldErrors = Partial<Record<keyof PlanFormState, string>>;
+/**
+ * Field errors by form field. The two free-allowance dollar fields are checked under the names the
+ * API uses for the converted amounts (micro-USD), so an error can arrive under either spelling.
+ */
+export type PlanFormAliasFields = {
+  creditConnectorFreeBudgetMicroUsd: string;
+  creditConnectorFreeMaxModelOutputMicroUsd: string;
+};
+
+export type PlanFormFieldErrors = Partial<
+  Record<keyof PlanFormState | keyof PlanFormAliasFields, string>
+>;
 
 /**
  * What a basis-point rate means in money, for the plan form.

@@ -136,6 +136,8 @@
         "maxVideoSeconds": 60
       },
       "creditConnectorFreeRequestsPerMonth": 10,
+      "creditConnectorFreeBudgetMicroUsd": 250000,
+      "creditConnectorFreeMaxModelOutputMicroUsd": 5000000,
       "isPopular": false,
       "paygCreditPercentBps": 3000
     },

@@ -66,6 +66,12 @@ export class EntitlementsService {
       plan: this.resolveEntitlementPlan(isAdmin, plan, trial),
       modelAccessMode: this.resolveModelAccessMode(isAdmin, plan?.modelAccessMode),
       hasPaygCredit: isAdmin ? false : await this.resolveHasPaygCredit(userId),
+      freeCreditMaxModelOutputMicroUsd:
+        isAdmin ||
+        plan?.creditConnectorFreeMaxModelOutputMicroUsd === null ||
+        plan?.creditConnectorFreeMaxModelOutputMicroUsd === undefined
+          ? null
+          : Number(plan.creditConnectorFreeMaxModelOutputMicroUsd),
       allowedModels: modelAccess.map((m) => ({
         provider: m.provider,
         model: m.model,

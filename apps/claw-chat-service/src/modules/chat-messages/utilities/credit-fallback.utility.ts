@@ -11,7 +11,12 @@ export function creditFallbackReason(error: unknown): CreditFallbackReason {
   if (code === String(BillingErrorCode.PAYG_FREE_ALLOWANCE_EXHAUSTED)) {
     return CreditFallbackReason.FREE_ALLOWANCE_EXHAUSTED;
   }
-  return code === String(BillingErrorCode.PAYG_PROMPT_TOO_EXPENSIVE) ? CreditFallbackReason.PROMPT_TOO_EXPENSIVE : CreditFallbackReason.CREDIT_EXHAUSTED;
+  if (code === String(BillingErrorCode.PAYG_MODEL_NOT_IN_FREE_ALLOWANCE)) {
+    return CreditFallbackReason.MODEL_NOT_IN_FREE_ALLOWANCE;
+  }
+  return code === String(BillingErrorCode.PAYG_PROMPT_TOO_EXPENSIVE)
+    ? CreditFallbackReason.PROMPT_TOO_EXPENSIVE
+    : CreditFallbackReason.CREDIT_EXHAUSTED;
 }
 
 /**
@@ -41,7 +46,21 @@ export function creditFallbackPart(
   refusal: CreditRefusalRecord | null,
   answered: { provider: string },
 ): { creditFallback?: CreditFallbackNotice } {
-  return refusal === null || !isPaygExemptProvider(answered.provider) ? {} : { creditFallback: { ...refusal } };
+  return refusal === null || !isPaygExemptProvider(answered.provider)
+    ? {}
+    : { creditFallback: { ...refusal } };
+}
+
+/**
+ * True when the refusal is about THIS model or prompt only, so a cheaper credit model may still
+ * be allowed: a prompt that is dear, or a model above the free plan's price limit. Credit or free
+ * requests being gone refuses every credit model, so those are not.
+ */
+export function refusalSparesCheaperModels(reason: CreditFallbackReason): boolean {
+  return (
+    reason === CreditFallbackReason.PROMPT_TOO_EXPENSIVE ||
+    reason === CreditFallbackReason.MODEL_NOT_IN_FREE_ALLOWANCE
+  );
 }
 
 /**

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { PlanRowProps } from '@/types';
 import { formatNullableLimit, formatTokenCount } from '@/utilities';
+import { microUsdToUsdInput } from '@/utilities/micro-usd-input.utility';
 
 export function PlanRow({
   plan,
@@ -80,6 +81,24 @@ export function PlanRow({
                 {t('adminPlans.creditFreeRequests')}
               </span>
               : {formatNullableLimit(plan.creditConnectorFreeRequestsPerMonth, unlimited)}
+            </div>
+          )}
+          {plan.creditConnectorFreeBudgetMicroUsd === undefined ||
+          plan.creditConnectorFreeBudgetMicroUsd === null ? null : (
+            <div>
+              <span className="text-foreground font-medium">
+                {t('adminPlans.creditFreeBudget')}
+              </span>
+              : ${microUsdToUsdInput(plan.creditConnectorFreeBudgetMicroUsd)}
+            </div>
+          )}
+          {plan.creditConnectorFreeMaxModelOutputMicroUsd === undefined ||
+          plan.creditConnectorFreeMaxModelOutputMicroUsd === null ? null : (
+            <div>
+              <span className="text-foreground font-medium">
+                {t('adminPlans.creditFreeMaxModel')}
+              </span>
+              : ${microUsdToUsdInput(plan.creditConnectorFreeMaxModelOutputMicroUsd)}
             </div>
           )}
           <div>

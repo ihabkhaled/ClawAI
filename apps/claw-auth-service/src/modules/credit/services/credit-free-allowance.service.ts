@@ -20,6 +20,8 @@ import {
   isCappedAllowance,
   isFreeAllowanceEligible,
   isFreeAllowanceEnabled,
+  isModelAboveFreeCap,
+  meterUsedPercent,
   nextUtcMonthStart,
   toCounterLimit,
   toFreeAllowanceView,
@@ -63,12 +65,11 @@ export class CreditFreeAllowanceService {
     if (!isFreeAllowanceEligible(input)) {
       return { status: 'INELIGIBLE' };
     }
-    const ceiling = rate === null ? null : this.clampToCeiling(input, rate, allowance);
-    if (ceiling !== null && ceiling.status !== 'AFFORDABLE') {
-      this.logger.warn(
-        `tryAdmit: ${ceiling.status} against the free-request ceiling provider=${input.provider}`,
+    if (rate !== null && isModelAboveFreeCap(rate, allowance)) {
+      this.logger.log(
+        `tryAdmit: model not covered by the free allowance provider=${input.provider} model=${input.model}`,
       );
-      return { status: 'PROMPT_TOO_LARGE' };
+      return { status: 'MODEL_NOT_COVERED' };
     }
     const counter: CreditFreeAllowanceCounterKey = {
       userId: input.userId,
@@ -76,7 +77,28 @@ export class CreditFreeAllowanceService {
       periodKey: utcMonthKey(now),
     };
     const limit = toCounterLimit(allowance.limit);
-    if (!(await this.counters.tryConsume(counter, limit))) {
+    const remaining = await this.remainingBudgetMicroUsd(
+      input.userId,
+      counter.periodKey,
+      allowance,
+    );
+    if (remaining !== null && remaining <= 0n) {
+      this.logger.log(`tryAdmit: free budget spent provider=${input.provider}`);
+      return { status: 'SPENT', limit };
+    }
+    const ceiling = rate === null ? null : this.clampToCeiling(input, rate, allowance, remaining);
+    if (ceiling !== null && ceiling.status !== 'AFFORDABLE') {
+      this.logger.warn(
+        `tryAdmit: ${ceiling.status} against the free-request ceiling provider=${input.provider}`,
+      );
+      // The prompt does not fit what is LEFT of the month's budget: that is the meter, not the
+      // size of the prompt, so it is told apart from a prompt too large for any request.
+      return remaining !== null && remaining < allowance.requestCeilingMicroUsd
+        ? { status: 'SPENT', limit }
+        : { status: 'PROMPT_TOO_LARGE' };
+    }
+    const hold = ceiling === null ? 0n : BigInt(ceiling.worstCaseCostMicroUsd);
+    if (!(await this.counters.tryConsume(counter, limit, hold, allowance.budgetMicroUsd))) {
       this.logger.log(`tryAdmit: allowance spent (total) provider=${input.provider}`);
       return { status: 'SPENT', limit };
     }
@@ -94,19 +116,39 @@ export class CreditFreeAllowanceService {
               counter,
               maxOutputTokens: ceiling.maxOutputTokens,
               clamped: ceiling.clamped,
-              worstCaseCostMicroUsd: BigInt(ceiling.worstCaseCostMicroUsd),
+              worstCaseCostMicroUsd: hold,
             },
     };
+  }
+
+  /** What is left of the month's meter, or `null` when the plan has no meter. */
+  private async remainingBudgetMicroUsd(
+    userId: string,
+    periodKey: string,
+    allowance: CreditFreeAllowancePolicy,
+  ): Promise<bigint | null> {
+    if (allowance.budgetMicroUsd === null) {
+      return null;
+    }
+    const { spentMicroUsd } = await this.counters.findTotals(userId, periodKey);
+    const left = allowance.budgetMicroUsd - spentMicroUsd;
+    return left > 0n ? left : 0n;
   }
 
   private clampToCeiling(
     input: CreditReserveInput,
     rate: PaygRateSnapshot,
     allowance: CreditFreeAllowancePolicy,
+    remainingBudgetMicroUsd: bigint | null,
   ): ReturnType<typeof clampOutputTokensToBalance> {
+    // One request may cost at most the per-request ceiling AND at most what is left of the month.
+    const ceiling =
+      remainingBudgetMicroUsd !== null && remainingBudgetMicroUsd < allowance.requestCeilingMicroUsd
+        ? remainingBudgetMicroUsd
+        : allowance.requestCeilingMicroUsd;
     return clampOutputTokensToBalance({
       rates: rate.rates,
-      balanceMicroUsd: toSafeBalanceNumber(allowance.requestCeilingMicroUsd),
+      balanceMicroUsd: toSafeBalanceNumber(ceiling),
       promptTokens: input.promptTokens,
       cachedPromptTokens: input.cachedPromptTokens,
       requestedMaxOutputTokens: input.requestedMaxOutputTokens,
@@ -119,8 +161,29 @@ export class CreditFreeAllowanceService {
    * count). The slot always lives on the user's TOTAL counter, whatever provider
    * the released call used.
    */
-  async giveBack(counter: CreditFreeAllowanceCounterKey): Promise<void> {
-    await this.counters.giveBack({ ...counter, provider: FREE_ALLOWANCE_TOTAL_COUNTER_KEY });
+  async giveBack(counter: CreditFreeAllowanceCounterKey, heldMicroUsd: bigint): Promise<void> {
+    await this.counters.giveBack(
+      { ...counter, provider: FREE_ALLOWANCE_TOTAL_COUNTER_KEY },
+      heldMicroUsd,
+    );
+  }
+
+  /**
+   * A finished free call: the cost it held becomes what it really cost, so a cheap answer frees
+   * budget for the next one and a dearer one (never beyond its clamp) is charged to the meter.
+   */
+  async settleSpend(
+    counter: CreditFreeAllowanceCounterKey,
+    heldMicroUsd: bigint,
+    actualMicroUsd: bigint,
+  ): Promise<void> {
+    if (actualMicroUsd === heldMicroUsd) {
+      return;
+    }
+    await this.counters.adjustSpend(
+      { ...counter, provider: FREE_ALLOWANCE_TOTAL_COUNTER_KEY },
+      actualMicroUsd - heldMicroUsd,
+    );
   }
 
   /**
@@ -138,8 +201,13 @@ export class CreditFreeAllowanceService {
     if (allowance === null || (!meteringEnabled && !isCappedAllowance(allowance))) {
       return null;
     }
-    const used = await this.counters.findTotalUsed(userId, utcMonthKey(now));
-    return toFreeAllowanceView(allowance.limit, used, nextUtcMonthStart(now));
+    const totals = await this.counters.findTotals(userId, utcMonthKey(now));
+    return toFreeAllowanceView(
+      allowance.limit,
+      totals.usedCount,
+      nextUtcMonthStart(now),
+      meterUsedPercent(totals.spentMicroUsd, allowance.budgetMicroUsd),
+    );
   }
 
   /** The plan's allowance for a user, or `null` when it is disabled or there is no plan. */
@@ -156,6 +224,8 @@ export class CreditFreeAllowanceService {
         plan.monthlyProviderCostCeilingMicroUsd,
         plan.creditConnectorFreeRequestsPerMonth,
       ),
+      budgetMicroUsd: plan.creditConnectorFreeBudgetMicroUsd,
+      maxModelOutputMicroUsd: plan.creditConnectorFreeMaxModelOutputMicroUsd,
     };
   }
 }

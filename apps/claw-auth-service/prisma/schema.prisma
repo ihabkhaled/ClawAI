@@ -242,6 +242,12 @@ model Plan {
   // NULL = unlimited, 0 = none. DEFAULT 0 so a plan created without the field
   // never gives away provider spend; Free is seeded at 2.
   creditConnectorFreeRequestsPerMonth Int?                @default(0) @map("credit_connector_free_requests_per_month")
+  // The free allowance is a count AND a meter (ADR-162). Budget: the most provider cost, in
+  // micro-USD, the free requests of one UTC month may add up to. NULL = no meter (count only).
+  creditConnectorFreeBudgetMicroUsd   BigInt?             @map("credit_connector_free_budget_micro_usd")
+  // Dearest model the free allowance covers: its OUTPUT price in micro-USD per million tokens.
+  // A dearer model is not covered (and AUTO routing avoids it). NULL = no price limit.
+  creditConnectorFreeMaxModelOutputMicroUsd BigInt?       @map("credit_connector_free_max_model_output_micro_usd")
   // New and seeded plans expose every discovered model until an administrator
   // saves an explicit allow-list or deny-all policy.
   modelAccessMode                     PlanModelAccessMode @default(ALLOW_ALL) @map("model_access_mode")
@@ -1146,6 +1152,8 @@ model CreditFreeAllowanceUsage {
   /// UTC `YYYY-MM`.
   periodKey String   @map("period_key")
   usedCount Int      @default(0) @map("used_count")
+  /// Provider cost the free requests of this month hold or have used, micro-USD (ADR-162 meter).
+  spentMicroUsd BigInt @default(0) @map("spent_micro_usd")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

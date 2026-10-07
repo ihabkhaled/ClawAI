@@ -4630,6 +4630,8 @@ export const de: TranslationDictionary = {
     dailyQuota: 'Tägliche Tokens',
     monthlyQuota: 'Monatliche Tokens',
     creditFreeRequests: 'Gratis-Guthaben-Anfragen',
+    creditFreeBudget: 'Zähler für kostenloses Guthaben',
+    creditFreeMaxModel: 'Kostenlos deckt Modelle bis',
     modelRules: 'Modellregeln',
     unlimited: 'Unbegrenzt',
     defaultBadge: 'Standard',
@@ -4703,6 +4705,15 @@ export const de: TranslationDictionary = {
         'Wie viele Anfragen pro Monat ein Nutzer dieses Tarifs insgesamt über alle Guthaben-Connectoren stellen kann, bevor Guthaben nötig ist. Leer lassen für unbegrenzt; 0 schaltet es ab. Gekauftes Guthaben ermöglicht es, darüber hinaus weiterzumachen.',
       creditConnectorFreeRequestsInvalid:
         'Geben Sie eine ganze Zahl von 0 bis 100000 ein oder lassen Sie das Feld für unbegrenzt leer.',
+      creditConnectorFreeBudget: 'Zähler für kostenloses Guthaben (USD Anbieterkosten pro Monat)',
+      creditConnectorFreeBudgetHelp:
+        'Die höchsten Anbieterkosten, auf die sich die kostenlosen Credit-Modell-Anfragen eines Monats summieren dürfen. Ist er aufgebraucht, enden die kostenlosen Anfragen, auch wenn noch welche übrig sind. Leer lassen für keinen Zähler.',
+      creditConnectorFreeMaxModel:
+        'Kostenlose Anfragen decken Modelle bis (USD pro Million Ausgabe-Tokens)',
+      creditConnectorFreeMaxModelHelp:
+        'Modelle, deren Ausgabepreis darüber liegt, werden von den kostenlosen Anfragen nicht abgedeckt, und AUTO-Routing meidet sie. Leer lassen für keine Grenze.',
+      creditConnectorFreeUsdInvalid:
+        'Gib einen USD-Betrag mit bis zu 6 Nachkommastellen ein oder lass das Feld leer.',
       isPublic: 'Öffentlich gelistet',
       isTrial: 'Plan mit kostenloser Testphase',
       trialHelp:
@@ -5138,6 +5149,14 @@ export const de: TranslationDictionary = {
       reservedHint: 'Für laufende Anfragen reserviert. Wird nach deren Abschluss freigegeben.',
       resetsOn: 'Wird am {date} zurückgesetzt',
       neverExpires: 'Verfällt nie',
+      freeMeter: {
+        title: 'Kostenloses Guthaben in diesem Monat',
+        requests: '{used} von {limit} kostenlosen Anfragen genutzt',
+        percent: '{percent} % deines kostenlosen Guthabens genutzt',
+        resets: 'Wird am {date} zurückgesetzt',
+        coversLowerCost:
+          'Kostenloses Guthaben deckt günstigere Modelle. Teurere Modelle brauchen Guthaben oder einen höheren Tarif.',
+      },
       percentUsed: '{percent}% verbraucht',
       noAllowance: 'Dieser Tarif enthält kein Connector-Guthaben.',
       addCredit: 'Guthaben aufladen',
@@ -5184,6 +5203,8 @@ export const de: TranslationDictionary = {
         'Für dieses Modell ist noch kein Preis veröffentlicht, daher kann es nicht abgerechnet werden.',
       PAYG_PRICING_UNAVAILABLE:
         'Die Preisdaten sind vorübergehend nicht erreichbar. Ihnen wurde nichts berechnet.',
+      PAYG_MODEL_NOT_IN_FREE_ALLOWANCE:
+        'Dieses Modell kostet mehr, als dein kostenloser Tarif abdeckt. Wähle ein günstigeres oder enthaltenes Modell, lade Guthaben auf oder wechsle den Tarif.',
       PAYG_FREE_ALLOWANCE_EXHAUSTED:
         'Ihre kostenlosen Anfragen an Guthaben-Modelle sind für diesen Monat aufgebraucht. Wechseln Sie den Tarif oder laden Sie Guthaben auf, um fortzufahren. Oder wählen Sie ein Modell ohne Guthaben.',
       CREDIT_PACKAGE_NOT_FOUND: 'Dieses Guthaben-Paket existiert nicht mehr.',

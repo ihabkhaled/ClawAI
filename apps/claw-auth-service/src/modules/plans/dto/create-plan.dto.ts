@@ -52,6 +52,22 @@ export const createPlanSchema = z
       .max(1_000_000)
       .nullable()
       .optional(),
+    // The free allowance is also a money meter and a price limit (ADR-162), both integer micro-USD.
+    // null = none. Omitted on create = none, so a new plan never gives provider spend away.
+    creditConnectorFreeBudgetMicroUsd: z
+      .number()
+      .int()
+      .min(0)
+      .max(1_000_000_000)
+      .nullable()
+      .optional(),
+    creditConnectorFreeMaxModelOutputMicroUsd: z
+      .number()
+      .int()
+      .min(0)
+      .max(1_000_000_000)
+      .nullable()
+      .optional(),
   })
   .refine(
     (value) =>

@@ -15,6 +15,7 @@ export const CHAT_STREAM_ERROR_KEY_BY_CODE: ReadonlyMap<string, string> = new Ma
   ['PAYG_MODEL_UNPRICED', 'billing.errors.PAYG_MODEL_UNPRICED'],
   ['PAYG_PRICING_UNAVAILABLE', 'billing.errors.PAYG_PRICING_UNAVAILABLE'],
   ['PAYG_FREE_ALLOWANCE_EXHAUSTED', 'billing.errors.PAYG_FREE_ALLOWANCE_EXHAUSTED'],
+  ['PAYG_MODEL_NOT_IN_FREE_ALLOWANCE', 'billing.errors.PAYG_MODEL_NOT_IN_FREE_ALLOWANCE'],
   // The picked model AND its substitutes failed: the bubble adds the retry buttons.
   ['PICKED_MODEL_FAILED', 'pickedModel.failedMessage'],
 ]);

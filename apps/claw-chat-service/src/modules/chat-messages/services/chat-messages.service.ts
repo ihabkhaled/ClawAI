@@ -296,6 +296,8 @@ export class ChatMessagesService implements OnModuleInit {
     // sends an empty list as a fast path, from a restricted plan whose list is
     // genuinely empty and therefore grants nothing.
     const modelAccessMode = entitlements?.modelAccessMode;
+    // The free plan's price limit for AUTO routing (ADR-162). Absent means no limit.
+    const freeModelPriceCap = entitlements?.freeCreditMaxModelOutputMicroUsd ?? null;
 
     this.chatStreamService.emitRequestAccepted(dto.threadId);
     // A fresh work log for this turn; the previous turn's log is already stored
@@ -344,6 +346,7 @@ export class ChatMessagesService implements OnModuleInit {
         forcedModel,
         allowedModels,
         modelAccessMode,
+        freeModelPriceCap,
         modality,
       );
 
@@ -2829,6 +2832,7 @@ export class ChatMessagesService implements OnModuleInit {
     forcedModel: string | undefined,
     allowedModels: string[],
     modelAccessMode: string | undefined,
+    freeModelPriceCap: number | null,
     modality: AttachmentModalityFields,
   ): void {
     void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
@@ -2846,6 +2850,9 @@ export class ChatMessagesService implements OnModuleInit {
       // other plan an empty list grants nothing, so the mode has to travel too.
       allowedModels,
       modelAccessMode,
+      // ADR-162: the dearest model (output price, micro-USD per million tokens) the plan's free
+      // requests cover. null = no limit. The router leaves dearer models out of AUTO.
+      freeModelPriceCap,
       ...modality,
       timestamp: new Date().toISOString(),
     });

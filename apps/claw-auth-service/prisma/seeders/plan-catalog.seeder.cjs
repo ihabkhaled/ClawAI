@@ -118,7 +118,14 @@ function mediaGateProjections(media) {
 // is never rewritten. Not in the checksummed `payload`, same as the media gates.
 function creditAllowanceProjection(definition) {
   const value = definition.creditConnectorFreeRequestsPerMonth;
-  return { creditConnectorFreeRequestsPerMonth: value === undefined ? 0 : value };
+  // The meter and the price limit (ADR-162): a missing value is null (none), never a number.
+  const budget = definition.creditConnectorFreeBudgetMicroUsd;
+  const modelCap = definition.creditConnectorFreeMaxModelOutputMicroUsd;
+  return {
+    creditConnectorFreeRequestsPerMonth: value === undefined ? 0 : value,
+    creditConnectorFreeBudgetMicroUsd: budget === undefined ? null : budget,
+    creditConnectorFreeMaxModelOutputMicroUsd: modelCap === undefined ? null : modelCap,
+  };
 }
 
 // Mirrors POPULAR_PLAN_KEY in src/modules/plans/constants/popular-plan.constants.ts.

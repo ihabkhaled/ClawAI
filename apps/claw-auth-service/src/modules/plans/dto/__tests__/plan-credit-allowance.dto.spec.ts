@@ -67,3 +67,35 @@ describe('creditConnectorFreeRequestsPerMonth DTO', () => {
     });
   });
 });
+
+// ADR-162: the free allowance is also a money meter and a model price limit, integer micro-USD.
+describe('free allowance meter and price limit DTO', () => {
+  const base = { name: 'Plan', slug: 'plan', dailyTokenQuota: 1 };
+
+  it.each([
+    ['creditConnectorFreeBudgetMicroUsd', 250_000],
+    ['creditConnectorFreeMaxModelOutputMicroUsd', 5_000_000],
+  ])('accepts %s as an integer, zero and null', (field, value) => {
+    expect(createPlanSchema.safeParse({ ...base, [field]: value }).success).toBe(true);
+    expect(createPlanSchema.safeParse({ ...base, [field]: 0 }).success).toBe(true);
+    expect(createPlanSchema.safeParse({ ...base, [field]: null }).success).toBe(true);
+    expect(updatePlanSchema.safeParse({ [field]: value }).success).toBe(true);
+  });
+
+  it.each(['creditConnectorFreeBudgetMicroUsd', 'creditConnectorFreeMaxModelOutputMicroUsd'])(
+    'rejects a negative, fractional, string or absurd %s',
+    (field) => {
+      for (const bad of [-1, 1.5, '250000', 1_000_000_001]) {
+        expect(createPlanSchema.safeParse({ ...base, [field]: bad }).success, String(bad)).toBe(
+          false,
+        );
+      }
+    },
+  );
+
+  it('may be omitted: a new plan has no meter and no limit', () => {
+    const parsed = createPlanSchema.safeParse(base);
+    expect(parsed.success).toBe(true);
+    expect(parsed.data?.creditConnectorFreeBudgetMicroUsd).toBeUndefined();
+  });
+});

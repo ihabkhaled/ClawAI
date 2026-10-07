@@ -35,6 +35,25 @@ describe('plan catalog free-allowance seed', () => {
     expect(catalog.find((plan) => plan.slug === slug)?.creditConnectorFreeRequestsPerMonth).toBe(0);
   });
 
+  it('seeds Free with a $0.25 monthly meter and a $5 per million output price limit (ADR-162)', () => {
+    const free = catalog.find((plan) => plan.slug === 'free') as Record<string, unknown>;
+    expect(free['creditConnectorFreeBudgetMicroUsd']).toBe(250_000);
+    expect(free['creditConnectorFreeMaxModelOutputMicroUsd']).toBe(5_000_000);
+  });
+
+  it.each(PAID_SLUGS)('seeds %s with no meter and no price limit', (slug) => {
+    const plan = catalog.find((entry) => entry.slug === slug) as Record<string, unknown>;
+    expect(plan['creditConnectorFreeBudgetMicroUsd']).toBeUndefined();
+    expect(plan['creditConnectorFreeMaxModelOutputMicroUsd']).toBeUndefined();
+  });
+
+  it('keeps the meter inside the plan provider-cost ceiling, so it can only tighten it', () => {
+    const free = catalog.find((plan) => plan.slug === 'free') as Record<string, unknown>;
+    expect(BigInt(String(free['creditConnectorFreeBudgetMicroUsd']))).toBeLessThanOrEqual(
+      BigInt(String(free['costCeilingMicroUsd'])),
+    );
+  });
+
   it('never seeds null (unlimited) for any plan', () => {
     for (const plan of catalog) {
       expect(plan.creditConnectorFreeRequestsPerMonth).not.toBeNull();
@@ -49,12 +68,30 @@ describe('creditAllowanceProjection', () => {
       planCatalog.creditAllowanceProjection({ creditConnectorFreeRequestsPerMonth: 2 }),
     ).toEqual({
       creditConnectorFreeRequestsPerMonth: 2,
+      creditConnectorFreeBudgetMicroUsd: null,
+      creditConnectorFreeMaxModelOutputMicroUsd: null,
     });
   });
 
   it('projects a missing value to 0, never null (which would mean unlimited)', () => {
     expect(planCatalog.creditAllowanceProjection({})).toEqual({
       creditConnectorFreeRequestsPerMonth: 0,
+      creditConnectorFreeBudgetMicroUsd: null,
+      creditConnectorFreeMaxModelOutputMicroUsd: null,
+    });
+  });
+
+  it('projects the meter and the price limit (ADR-162), and a missing one to null (none)', () => {
+    expect(
+      planCatalog.creditAllowanceProjection({
+        creditConnectorFreeRequestsPerMonth: 10,
+        creditConnectorFreeBudgetMicroUsd: 250_000,
+        creditConnectorFreeMaxModelOutputMicroUsd: 5_000_000,
+      }),
+    ).toEqual({
+      creditConnectorFreeRequestsPerMonth: 10,
+      creditConnectorFreeBudgetMicroUsd: 250_000,
+      creditConnectorFreeMaxModelOutputMicroUsd: 5_000_000,
     });
   });
 });

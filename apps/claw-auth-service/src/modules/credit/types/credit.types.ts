@@ -247,6 +247,10 @@ export type CreditFreeAllowancePolicy = {
   limit: number | null;
   /** Most one free request may cost the platform. See computeFreeRequestCeilingMicroUsd. */
   requestCeilingMicroUsd: bigint;
+  /** The month's provider-cost meter, micro-USD. `null` = no meter, the count alone (ADR-162). */
+  budgetMicroUsd: bigint | null;
+  /** Dearest model covered: output price, micro-USD per million tokens. `null` = no limit (ADR-162). */
+  maxModelOutputMicroUsd: bigint | null;
 };
 
 /** A request that took a free-allowance slot, and the ceiling it was clamped to. */
@@ -268,4 +272,5 @@ export type CreditFreeAllowanceAttempt =
   | { status: 'ADMITTED'; admission: CreditFreeAllowanceAdmission }
   | { status: 'INELIGIBLE' }
   | { status: 'PROMPT_TOO_LARGE' }
-  | { status: 'SPENT'; limit: number };
+  | { status: 'SPENT'; limit: number }
+  | { status: 'MODEL_NOT_COVERED' };

@@ -303,6 +303,35 @@ describe('picked-model smart fallback at the chokepoint', () => {
       expect(response.creditFallback).toBeUndefined();
     });
 
+    it('still tries a cheaper credit model when the picked model is above the free plan price limit', async () => {
+      access = createFakePaygAccessControl({
+        refuseWith: refuse('PAYG_MODEL_NOT_IN_FREE_ALLOWANCE'),
+        refuseProviders: ['ANTHROPIC'],
+      });
+      queueProvider(cloudOk);
+
+      const response = await build(access).execute(pickedPayload(), makeContext());
+
+      expect(response.provider).toBe('GROQ');
+      expect(response.creditFallback).toBeUndefined();
+    });
+
+    it('says the model is not covered when an included model answers instead', async () => {
+      access = createFakePaygAccessControl({
+        refuseWith: refuse('PAYG_MODEL_NOT_IN_FREE_ALLOWANCE'),
+        refuseProviders: ['ANTHROPIC', 'GROQ', 'OPENAI', 'GEMINI'],
+      });
+      queueProvider(ollamaOk);
+
+      const response = await build(access).execute(
+        pickedPayload([SUBSTITUTES[0]!, SUBSTITUTES[1]!, SUBSTITUTES[2]!, INCLUDED]),
+        makeContext(),
+      );
+
+      expect(response.provider).toBe('OLLAMA');
+      expect(response.creditFallback?.reason).toBe('MODEL_NOT_IN_FREE_ALLOWANCE');
+    });
+
     it('does not count refused models against the substitute allowance, and shows one notice', async () => {
       access = createFakePaygAccessControl({
         refuseWith: refuse('PAYG_PROMPT_TOO_EXPENSIVE'),

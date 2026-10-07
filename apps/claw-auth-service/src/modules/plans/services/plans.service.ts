@@ -19,6 +19,7 @@ import {
   PLAN_TRIAL_SUPERSEDED,
 } from '../constants/plan-trial.constants';
 import { addTrialDays, resolveExtendedTrialEnd } from '../utilities/trial-expiry.utility';
+import { toNumberOrNull } from '../utilities/plan-bigint.utility';
 import { resolveTrialDaysRemaining } from '../../admin-statistics/utilities/trial-days-remaining.utility';
 import {
   describeQuotaWindowConflicts,
@@ -607,6 +608,10 @@ export class PlansService {
       maxMemoryItems: plan.maxMemoryItems,
       maxVideoSeconds: plan.maxVideoSeconds,
       creditConnectorFreeRequestsPerMonth: plan.creditConnectorFreeRequestsPerMonth,
+      creditConnectorFreeBudgetMicroUsd: toNumberOrNull(plan.creditConnectorFreeBudgetMicroUsd),
+      creditConnectorFreeMaxModelOutputMicroUsd: toNumberOrNull(
+        plan.creditConnectorFreeMaxModelOutputMicroUsd,
+      ),
       // Both of these are ADMIN-form fields. Omitting them from the view meant
       // the edit form loaded `undefined`, rendered blank in a number input, and
       // then failed to save with "expected number, received NaN" — so an

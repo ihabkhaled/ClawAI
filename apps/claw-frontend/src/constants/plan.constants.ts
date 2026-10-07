@@ -46,6 +46,9 @@ export const PLAN_FORM_DEFAULTS: PlanFormState = {
   maxVideoSeconds: '60',
   // Mirrors the server default (2). Blank would mean unlimited.
   creditConnectorFreeRequestsPerMonth: '2',
+  // A new plan has no meter and no price limit, so it never gives provider spend away by omission.
+  creditConnectorFreeBudgetUsd: '',
+  creditConnectorFreeMaxModelOutputUsd: '',
   allowCompareMode: true,
   allowJudgeMode: true,
   allowResearchMode: true,
@@ -124,3 +127,9 @@ export const PLAN_MAX_VIDEO_SECONDS_LIMIT = 36_000;
 
 /** Upper bound on free credit-connector requests per month, matching the auth-service DTO. */
 export const PLAN_CREDIT_FREE_REQUESTS_LIMIT = 100_000;
+
+/** The schema reports the dollar fields under the API's micro-USD names; this maps each form field to it. */
+export const PLAN_FORM_ERROR_ALIASES: Readonly<Record<string, string>> = {
+  creditConnectorFreeBudgetUsd: 'creditConnectorFreeBudgetMicroUsd',
+  creditConnectorFreeMaxModelOutputUsd: 'creditConnectorFreeMaxModelOutputMicroUsd',
+};

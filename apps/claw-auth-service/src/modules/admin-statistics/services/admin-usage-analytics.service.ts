@@ -133,10 +133,15 @@ export class AdminUsageAnalyticsService {
   /** A disabled plan yields no policy and is reported as `limit: 0`, never as unlimited. */
   private async readFreeAllowance(userId: string, now: Date): Promise<AdminFreeAllowanceUsage> {
     const periodKey = utcMonthKey(now);
-    const [policy, used] = await Promise.all([
+    const [policy, totals] = await Promise.all([
       this.allowance.resolvePolicy(userId),
-      this.counters.findTotalUsed(userId, periodKey),
+      this.counters.findTotals(userId, periodKey),
     ]);
-    return toFreeAllowanceUsage(policy === null ? 0 : policy.limit, used, periodKey, now);
+    return toFreeAllowanceUsage(
+      policy === null ? 0 : policy.limit,
+      totals.usedCount,
+      periodKey,
+      now,
+    );
   }
 }

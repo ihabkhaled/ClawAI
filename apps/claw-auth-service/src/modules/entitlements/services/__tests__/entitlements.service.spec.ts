@@ -159,6 +159,40 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
     expect(result.plan?.limits.maxVideoSeconds).toBeNull();
   });
 
+  describe('freeCreditMaxModelOutputMicroUsd (ADR-162)', () => {
+    beforeEach(() => {
+      walletMock.getBalances.mockResolvedValue({ availableMicroUsd: 0n } as never);
+    });
+
+    it('carries the plan price limit as a number', async () => {
+      plansRepoMock.findEffectiveForUser.mockResolvedValue({
+        ...freePlanWithNoModelAccess,
+        creditConnectorFreeMaxModelOutputMicroUsd: 5_000_000n,
+      } as unknown as PlanWithAccess);
+      expect((await service.getForUser('u1')).freeCreditMaxModelOutputMicroUsd).toBe(5_000_000);
+    });
+
+    it('is null when the plan sets no limit', async () => {
+      plansRepoMock.findEffectiveForUser.mockResolvedValue({
+        ...freePlanWithNoModelAccess,
+        creditConnectorFreeMaxModelOutputMicroUsd: null,
+      } as unknown as PlanWithAccess);
+      expect((await service.getForUser('u1')).freeCreditMaxModelOutputMicroUsd).toBeNull();
+    });
+
+    it('is always null for an administrator, whatever the plan says', async () => {
+      plansRepoMock.findEffectiveForUser.mockResolvedValue({
+        ...freePlanWithNoModelAccess,
+        creditConnectorFreeMaxModelOutputMicroUsd: 5_000_000n,
+      } as unknown as PlanWithAccess);
+      authRepoMock.findUserById.mockResolvedValue({
+        ...baseUser,
+        role: UserRole.ADMIN,
+      } as unknown as Awaited<ReturnType<AuthRepository['findUserById']>>);
+      expect((await service.getForUser('u1')).freeCreditMaxModelOutputMicroUsd).toBeNull();
+    });
+  });
+
   describe('hasPaygCredit (ADR-139)', () => {
     const balances = (available: bigint): Awaited<ReturnType<CreditWalletService['getBalances']>> =>
       ({ availableMicroUsd: available }) as unknown as Awaited<

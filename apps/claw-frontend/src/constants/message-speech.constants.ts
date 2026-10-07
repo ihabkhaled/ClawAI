@@ -53,6 +53,8 @@ export const MESSAGE_SPEECH_ERROR_KEYS: Readonly<Partial<Record<ApiErrorCode, st
   [ApiErrorCode.PAYG_PROMPT_TOO_EXPENSIVE]: 'billing.errors.PAYG_PROMPT_TOO_EXPENSIVE',
   [ApiErrorCode.PAYG_MODEL_UNPRICED]: 'billing.errors.PAYG_MODEL_UNPRICED',
   [ApiErrorCode.PAYG_PRICING_UNAVAILABLE]: 'billing.errors.PAYG_PRICING_UNAVAILABLE',
+  [ApiErrorCode.PAYG_MODEL_NOT_IN_FREE_ALLOWANCE]:
+    'billing.errors.PAYG_MODEL_NOT_IN_FREE_ALLOWANCE',
 };
 
 /** Why the dimmed button cannot run, in the user's words. One per reason. */

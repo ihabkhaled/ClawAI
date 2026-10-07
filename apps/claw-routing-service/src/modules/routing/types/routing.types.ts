@@ -36,6 +36,11 @@ export interface RoutingContext {
    */
   allowedModels?: string[];
   modelAccessAllowAll?: boolean;
+  /**
+   * The dearest model, as its OUTPUT price in micro-USD per million tokens, that the plan's free
+   * credit requests cover (ADR-162). AUTO leaves out anything dearer. Absent or null = no limit.
+   */
+  freeModelPriceCap?: number | null;
   forcedModel?: string;
   forcedProvider?: string;
   complexity?: ComplexityClassification;

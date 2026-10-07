@@ -4586,6 +4586,8 @@ export const pt: TranslationDictionary = {
     dailyQuota: 'Tokens diários',
     monthlyQuota: 'Tokens mensais',
     creditFreeRequests: 'Solicitações gratuitas de crédito',
+    creditFreeBudget: 'Medidor de crédito grátis',
+    creditFreeMaxModel: 'O grátis cobre modelos até',
     modelRules: 'Regras de modelos',
     unlimited: 'Ilimitado',
     defaultBadge: 'Padrão',
@@ -4659,6 +4661,15 @@ export const pt: TranslationDictionary = {
         'Quantas solicitações por mês, no total em todos os conectores de crédito, um usuário deste plano pode fazer antes de precisar de crédito. Deixe vazio para ilimitado; 0 desativa. O crédito comprado permite continuar além desse número.',
       creditConnectorFreeRequestsInvalid:
         'Digite um número inteiro de 0 a 100000, ou deixe vazio para ilimitado.',
+      creditConnectorFreeBudget: 'Medidor de crédito grátis (USD de custo do provedor por mês)',
+      creditConnectorFreeBudgetHelp:
+        'O custo máximo do provedor a que as solicitações grátis a modelos de crédito de um mês podem chegar. Quando acaba, as solicitações grátis param mesmo que sobrem algumas. Deixe vazio para não usar medidor.',
+      creditConnectorFreeMaxModel:
+        'As solicitações grátis cobrem modelos até (USD por milhão de tokens de saída)',
+      creditConnectorFreeMaxModelHelp:
+        'Modelos com preço de saída acima disso não são cobertos pelas solicitações grátis, e o roteamento AUTO os evita. Deixe vazio para não ter limite.',
+      creditConnectorFreeUsdInvalid:
+        'Informe um valor em USD com até 6 casas decimais, ou deixe vazio.',
       isPublic: 'Listado publicamente',
       isTrial: 'Plano com teste gratuito',
       trialHelp:
@@ -5091,6 +5102,14 @@ export const pt: TranslationDictionary = {
       reservedHint: 'Retido para solicitações ainda em execução. Liberado quando terminarem.',
       resetsOn: 'Renova em {date}',
       neverExpires: 'Nunca expira',
+      freeMeter: {
+        title: 'Crédito grátis deste mês',
+        requests: '{used} de {limit} solicitações grátis usadas',
+        percent: '{percent}% do seu crédito grátis usado',
+        resets: 'Renova em {date}',
+        coversLowerCost:
+          'O crédito grátis cobre modelos de menor custo. Os de maior custo precisam de crédito ou de um plano superior.',
+      },
       percentUsed: '{percent}% usado',
       noAllowance: 'Este plano não inclui crédito de conectores.',
       addCredit: 'Adicionar crédito',
@@ -5136,6 +5155,8 @@ export const pt: TranslationDictionary = {
       PAYG_MODEL_UNPRICED: 'Este modelo ainda não tem preço publicado e não pode ser cobrado.',
       PAYG_PRICING_UNAVAILABLE:
         'Os preços estão temporariamente inacessíveis. Nada foi cobrado de você.',
+      PAYG_MODEL_NOT_IN_FREE_ALLOWANCE:
+        'Este modelo custa mais do que o seu plano grátis cobre. Escolha um modelo mais barato ou incluído, adicione crédito ou faça upgrade.',
       PAYG_FREE_ALLOWANCE_EXHAUSTED:
         'Seus pedidos gratuitos a modelos de crédito acabaram neste mês. Faça upgrade ou adicione crédito para continuar. Ou escolha um modelo que não use crédito.',
       CREDIT_PACKAGE_NOT_FOUND: 'Esse pacote de crédito não existe mais.',

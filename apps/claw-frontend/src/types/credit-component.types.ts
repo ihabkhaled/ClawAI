@@ -1,5 +1,6 @@
 import type {
   CreditPackageView,
+  PaygFreeAllowanceView,
   PaygLedgerEntryView,
   PaygWalletSnapshot,
 } from '@claw/shared-types';
@@ -127,5 +128,12 @@ export type CreditAdjustmentFormProps = {
   ) => void;
   onSubmit: () => void;
   isPending: boolean;
+  t: TranslateFunction;
+};
+
+/** The plan's free credit for the month: the request count and the percentage meter. */
+export type FreeAllowanceMeterProps = {
+  allowance: PaygFreeAllowanceView;
+  locale: string;
   t: TranslateFunction;
 };

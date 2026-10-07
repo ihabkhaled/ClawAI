@@ -219,6 +219,8 @@ const SYSTEM_PLANS = [
     maxVideoSeconds: 60,
     // ADR-142: Free gets 10 requests per credit connector per month.
     creditConnectorFreeRequestsPerMonth: 10,
+    creditConnectorFreeBudgetMicroUsd: 250000,
+    creditConnectorFreeMaxModelOutputMicroUsd: 5000000,
     priceMonthly: 0,
   },
   {
@@ -293,6 +295,8 @@ async function upsertSystemPlan(def) {
       maxVideoSeconds: def.maxVideoSeconds,
       // Paid plans omit it: 0, so they never give provider spend away (ADR-142).
       creditConnectorFreeRequestsPerMonth: def.creditConnectorFreeRequestsPerMonth ?? 0,
+      creditConnectorFreeBudgetMicroUsd: def.creditConnectorFreeBudgetMicroUsd ?? null,
+      creditConnectorFreeMaxModelOutputMicroUsd: def.creditConnectorFreeMaxModelOutputMicroUsd ?? null,
       priceMonthly: def.priceMonthly,
       currency: 'USD',
     },

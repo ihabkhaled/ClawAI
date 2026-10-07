@@ -4630,6 +4630,8 @@ export const fr: TranslationDictionary = {
     dailyQuota: 'Jetons quotidiens',
     monthlyQuota: 'Jetons mensuels',
     creditFreeRequests: 'Requêtes gratuites à crédit',
+    creditFreeBudget: 'Compteur de crédit gratuit',
+    creditFreeMaxModel: 'Le gratuit couvre les modèles jusqu’à',
     modelRules: 'Règles de modèles',
     unlimited: 'Illimité',
     defaultBadge: 'Par défaut',
@@ -4703,6 +4705,15 @@ export const fr: TranslationDictionary = {
         "Nombre total de requêtes par mois qu'un utilisateur de ce forfait peut effectuer via tous les connecteurs à crédit avant d'avoir besoin de crédit. Laissez vide pour illimité ; 0 le désactive. Le crédit acheté permet de continuer au-delà de ce nombre.",
       creditConnectorFreeRequestsInvalid:
         'Saisissez un nombre entier de 0 à 100000, ou laissez vide pour illimité.',
+      creditConnectorFreeBudget: 'Compteur de crédit gratuit (USD de coût fournisseur par mois)',
+      creditConnectorFreeBudgetHelp:
+        'Le coût fournisseur maximal auquel peuvent s’additionner les requêtes gratuites vers des modèles à crédit sur un mois. Une fois atteint, les requêtes gratuites s’arrêtent même s’il en reste. Laissez vide pour aucun compteur.',
+      creditConnectorFreeMaxModel:
+        'Les requêtes gratuites couvrent les modèles jusqu’à (USD par million de jetons de sortie)',
+      creditConnectorFreeMaxModelHelp:
+        'Les modèles dont le prix de sortie dépasse cette valeur ne sont pas couverts par les requêtes gratuites, et le routage AUTO les évite. Laissez vide pour aucune limite.',
+      creditConnectorFreeUsdInvalid:
+        'Saisissez un montant en USD avec au plus 6 décimales, ou laissez vide.',
       isPublic: 'Répertorié publiquement',
       isTrial: 'Forfait avec essai gratuit',
       trialHelp:
@@ -5141,6 +5152,14 @@ export const fr: TranslationDictionary = {
       reservedHint: 'Réservé pour des requêtes en cours. Libéré à leur terme.',
       resetsOn: 'Réinitialisé le {date}',
       neverExpires: 'N’expire jamais',
+      freeMeter: {
+        title: 'Crédit gratuit ce mois-ci',
+        requests: '{used} requêtes gratuites utilisées sur {limit}',
+        percent: '{percent} % de votre crédit gratuit utilisé',
+        resets: 'Réinitialisation le {date}',
+        coversLowerCost:
+          'Le crédit gratuit couvre les modèles les moins chers. Les modèles plus coûteux demandent du crédit ou une offre supérieure.',
+      },
       percentUsed: '{percent} % utilisés',
       noAllowance: 'Ce forfait ne comprend aucun crédit connecteurs.',
       addCredit: 'Ajouter du crédit',
@@ -5186,6 +5205,8 @@ export const fr: TranslationDictionary = {
       PAYG_MODEL_UNPRICED: 'Ce modèle n’a pas encore de tarif publié et ne peut pas être facturé.',
       PAYG_PRICING_UNAVAILABLE:
         'Les tarifs sont temporairement inaccessibles. Rien ne vous a été facturé.',
+      PAYG_MODEL_NOT_IN_FREE_ALLOWANCE:
+        'Ce modèle coûte plus que ce que couvre votre offre gratuite. Choisissez un modèle moins cher ou inclus, ajoutez du crédit ou passez à une offre supérieure.',
       PAYG_FREE_ALLOWANCE_EXHAUSTED:
         'Vos requêtes gratuites aux modèles à crédit sont épuisées pour ce mois-ci. Changez de forfait ou ajoutez du crédit pour continuer. Ou choisissez un modèle sans crédit.',
       CREDIT_PACKAGE_NOT_FOUND: 'Ce pack de crédit n’existe plus.',

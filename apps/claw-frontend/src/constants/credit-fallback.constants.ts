@@ -5,4 +5,5 @@ export const CREDIT_FALLBACK_REASON_KEYS: Record<CreditFallbackReason, string> =
   [CreditFallbackReason.CreditExhausted]: 'creditFallback.creditExhausted',
   [CreditFallbackReason.FreeAllowanceExhausted]: 'creditFallback.freeAllowanceExhausted',
   [CreditFallbackReason.PromptTooExpensive]: 'creditFallback.promptTooExpensive',
+  [CreditFallbackReason.ModelNotInFreeAllowance]: 'creditFallback.modelNotInFreeAllowance',
 };

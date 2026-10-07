@@ -31,6 +31,8 @@ import {
   toPlannerCandidate,
 } from '../utilities/planner-candidate.utility';
 import { applyPlanModelGate } from '../utilities/plan-model-gate.utility';
+import { applyFreeModelPriceGuard } from '../utilities/free-model-price-guard.utility';
+import { ModelOutputPriceService } from './model-output-price.service';
 import type {
   AIRoutePlannerInput,
   PlannerCandidate,
@@ -104,6 +106,8 @@ export class RoutingService implements OnModuleInit {
     // Optional: without it a picked model keeps its old single-candidate
     // behaviour (no substitutes on message.routed).
     @Optional() private readonly pickedModelSubstitutes?: PickedModelSubstituteManager,
+    // Optional: without it the free plan's price limit is not applied to AUTO decisions.
+    @Optional() private readonly modelPrices?: ModelOutputPriceService,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -455,6 +459,7 @@ export class RoutingService implements OnModuleInit {
       forcedModel,
       allowedModels,
       modelAccessMode,
+      freeModelPriceCap,
       runtimeV2,
     } = parsed;
 
@@ -474,6 +479,7 @@ export class RoutingService implements OnModuleInit {
       ),
       allowedModels,
       modelAccessAllowAll: modelAccessMode === 'ALLOW_ALL',
+      freeModelPriceCap,
       runtimeV2,
       ...attachments,
     };
@@ -510,15 +516,36 @@ export class RoutingService implements OnModuleInit {
       );
     }
 
-    const substitutes = (await this.pickedModelSubstitutes?.resolve(gate.decision, context)) ?? [];
+    // ADR-162: an AUTO choice for a plan with a free-request price limit leaves out models above it.
+    // A model the user picked is theirs to pick, so it is never swapped here; auth-service answers
+    // for it when the request is reserved.
+    const priced = await this.applyFreePriceLimit(gate.decision, forcedModel, freeModelPriceCap);
+
+    const substitutes = (await this.pickedModelSubstitutes?.resolve(priced, context)) ?? [];
     await this.storeAndPublishDecision(
       messageId,
       threadId,
       content,
-      substitutes.length === 0
-        ? gate.decision
-        : { ...gate.decision, pickedModelSubstitutes: substitutes },
+      substitutes.length === 0 ? priced : { ...priced, pickedModelSubstitutes: substitutes },
     );
+  }
+
+  private async applyFreePriceLimit(
+    decision: RoutingDecisionResult,
+    forcedModel: string | undefined,
+    freeModelPriceCap: number | null,
+  ): Promise<RoutingDecisionResult> {
+    if (forcedModel !== undefined || freeModelPriceCap === null || this.modelPrices === undefined) {
+      return decision;
+    }
+    const isAboveCap = await this.modelPrices.buildChecker(freeModelPriceCap);
+    const guarded = applyFreeModelPriceGuard(decision, isAboveCap);
+    if (guarded.excludedCandidates > 0) {
+      this.logger.log(
+        `freeModelPriceGuard: excluded=${String(guarded.excludedCandidates)} promoted=${String(guarded.promoted)}`,
+      );
+    }
+    return guarded.decision;
   }
 
   private parseMessageCreatedPayload(payload: Record<string, unknown>): {
@@ -531,6 +558,7 @@ export class RoutingService implements OnModuleInit {
     forcedModel: string | undefined;
     allowedModels: string[];
     modelAccessMode: string | undefined;
+    freeModelPriceCap: number | null;
     runtimeV2: boolean;
   } | null {
     const threadId = payload['threadId'] as string | undefined;
@@ -568,6 +596,14 @@ export class RoutingService implements OnModuleInit {
       forcedModel: payload['forcedModel'] as string | undefined,
       allowedModels,
       modelAccessMode,
+      // ADR-162. Anything that is not a non-negative number means no limit: an older publisher
+      // must not make AUTO refuse everything.
+      freeModelPriceCap:
+        typeof payload['freeModelPriceCap'] === 'number' &&
+        Number.isFinite(payload['freeModelPriceCap']) &&
+        payload['freeModelPriceCap'] >= 0
+          ? payload['freeModelPriceCap']
+          : null,
       runtimeV2: payload['runtimeV2'] === true,
     };
   }

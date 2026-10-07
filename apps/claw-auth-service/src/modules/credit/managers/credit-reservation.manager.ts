@@ -217,6 +217,12 @@ export class CreditReservationManager {
       // slot stays used (it was a real provider call) and `actualCostMicroUsd`
       // on the row records what the platform paid.
       this.logger.log(`finalize: reservation=${input.reservationId} settled on the free allowance`);
+      // The meter held the worst case at admission; it now carries what the call really cost.
+      await this.freeAllowance.settleSpend(
+        { userId: record.userId, provider: record.provider, periodKey: record.monthKey },
+        record.estimatedCostMicroUsd,
+        actualMicroUsd,
+      );
       // F108: the user was charged nothing and the figure is what the PLATFORM
       // paid, so no cost is disclosed. UNKNOWN is the fail-closed answer.
       return { settled: true, billingMode: PaygBillingMode.UNKNOWN };
@@ -481,6 +487,12 @@ export class CreditReservationManager {
           available,
           null,
         );
+      case 'MODEL_NOT_COVERED':
+        throw new PaygRejectionException(
+          BillingErrorCode.PAYG_MODEL_NOT_IN_FREE_ALLOWANCE,
+          available,
+          null,
+        );
       case 'INELIGIBLE':
         return null;
     }
@@ -605,7 +617,7 @@ export class CreditReservationManager {
       });
     } catch (error) {
       this.logger.error(`persistFreeAllowance: failed — ${(error as Error).message}`);
-      await this.freeAllowance.giveBack(admission.counter);
+      await this.freeAllowance.giveBack(admission.counter, admission.worstCaseCostMicroUsd);
       await this.usage.deleteByReservationId(reservationId);
       throw error;
     }
@@ -628,11 +640,14 @@ export class CreditReservationManager {
    * taken from. A compensating ledger row keeps the audit trail append-only.
    */
   private async returnFreeAllowance(record: WeightedUsageRecord, reason: string): Promise<void> {
-    await this.freeAllowance.giveBack({
-      userId: record.userId,
-      provider: record.provider,
-      periodKey: record.monthKey,
-    });
+    await this.freeAllowance.giveBack(
+      {
+        userId: record.userId,
+        provider: record.provider,
+        periodKey: record.monthKey,
+      },
+      record.estimatedCostMicroUsd,
+    );
     const wallet = await this.wallets.ensure(record.userId);
     await this.wallets.recordFreeAllowance({
       userId: record.userId,

@@ -49,6 +49,11 @@ export type PaygFreeAllowanceView = {
   remaining: number | null;
   /** ISO instant the counter resets: the start of the next UTC month. */
   resetsAt: string;
+  /**
+   * The meter (ADR-162): how much of this month's free credit is used, as a whole percentage.
+   * `null` when the plan has no meter. A percentage, not a price: provider cost is never shown.
+   */
+  meterUsedPercent: number | null;
 };
 
 /**
@@ -188,7 +193,8 @@ export type PaygRejection = {
     | 'PAYG_PROMPT_TOO_EXPENSIVE'
     | 'PAYG_MODEL_UNPRICED'
     | 'PAYG_PRICING_UNAVAILABLE'
-    | 'PAYG_FREE_ALLOWANCE_EXHAUSTED';
+    | 'PAYG_FREE_ALLOWANCE_EXHAUSTED'
+    | 'PAYG_MODEL_NOT_IN_FREE_ALLOWANCE';
   availableMicroUsd: number;
   requiredMicroUsd: number | null;
 };

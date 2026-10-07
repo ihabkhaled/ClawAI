@@ -28,9 +28,15 @@ declare module '*/plan-catalog.seeder.cjs' {
   export function mediaGateProjections(media: PlanCatalogMediaBlock | undefined): PlanMediaColumns;
 
   /** The Plan column the free credit-connector allowance projects to (ADR-142). */
-  export type PlanCreditAllowanceColumn = { creditConnectorFreeRequestsPerMonth: number | null };
+  export type PlanCreditAllowanceColumn = {
+    creditConnectorFreeRequestsPerMonth: number | null;
+    creditConnectorFreeBudgetMicroUsd: number | null;
+    creditConnectorFreeMaxModelOutputMicroUsd: number | null;
+  };
 
   export function creditAllowanceProjection(definition: {
     creditConnectorFreeRequestsPerMonth?: number | null;
+    creditConnectorFreeBudgetMicroUsd?: number | null;
+    creditConnectorFreeMaxModelOutputMicroUsd?: number | null;
   }): PlanCreditAllowanceColumn;
 }

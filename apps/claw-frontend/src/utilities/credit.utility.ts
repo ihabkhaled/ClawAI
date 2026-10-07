@@ -353,3 +353,18 @@ export function sortCreditPackages(packages: readonly CreditPackageView[]): Cred
 export function microUsdToMinor(microUsd: number): number {
   return Math.round(microUsd / 10_000);
 }
+
+/** "Resets on <date>" for the free allowance counter, or an empty string for an unreadable date. */
+export function formatFreeAllowanceReset(
+  resetsAt: string,
+  locale: string,
+  t: TranslateFunction,
+): string {
+  const parsed = new Date(resetsAt);
+  if (Number.isNaN(parsed.getTime())) {
+    return '';
+  }
+  return t('billing.credit.freeMeter.resets', {
+    date: new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(parsed),
+  });
+}
