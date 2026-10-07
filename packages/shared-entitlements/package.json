@@ -1,6 +1,6 @@
 {
   "name": "@claw/shared-entitlements",
-  "version": "1.199.0",
+  "version": "1.200.0",
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
