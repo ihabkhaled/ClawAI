@@ -39,6 +39,7 @@ export function ComposerContextControls({
             disabled={disabled}
             aria-label={t('chat.composerContext.menuLabel')}
             title={t('chat.composerContext.menuLabel')}
+            data-tour="composer-context"
             className="touch:h-11 relative h-9 shrink-0 gap-1.5 px-2.5"
           >
             <Layers className="h-4 w-4" aria-hidden="true" />

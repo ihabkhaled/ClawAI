@@ -40,6 +40,7 @@ export function PreviewContextButton(props: PreviewContextButtonProps): React.Re
           size="sm"
           className="h-9 shrink-0 gap-1 px-2 lg:px-3"
           aria-label={t('preview.openLabel')}
+          data-tour="composer-preview-context"
           title={t('preview.openLabel')}
         >
           <Eye className="h-3 w-3" />

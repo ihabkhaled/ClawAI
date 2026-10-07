@@ -46,6 +46,7 @@ export function ChatThreadActionRail(props: ChatThreadActionRailProps): React.Re
       // WHERE it lands (inline-end, inside the row, never past the viewport
       // edge), and that can only be asserted by measuring the real element.
       data-chat-action-rail
+      data-tour="chat-rail"
       className="bg-card/40 flex shrink-0 flex-col items-center gap-0.5 self-start rounded-xl border p-1"
     >
       {props.canCompare ? (

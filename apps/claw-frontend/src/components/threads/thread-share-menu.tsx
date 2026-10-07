@@ -17,6 +17,7 @@ export function ThreadShareMenu({ url, title }: ThreadShareMenuProps): ReactElem
   return (
     <section
       data-no-print
+      data-tour="thread-review-share"
       data-testid="thread-share-menu"
       aria-label={t('chat.threadShareTitle')}
       className="flex flex-wrap items-center gap-2"

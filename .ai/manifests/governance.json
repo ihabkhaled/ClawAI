@@ -352,7 +352,7 @@
   ],
   "skills": [
     {
-      "bytes": 33595,
+      "bytes": 33875,
       "file": "skills/00-index.md"
     },
     {
@@ -414,6 +414,10 @@
     {
       "bytes": 4010,
       "file": "skills/add-a-payment-gateway-flow.md"
+    },
+    {
+      "bytes": 2239,
+      "file": "skills/add-a-product-tour.md"
     },
     {
       "bytes": 2352,

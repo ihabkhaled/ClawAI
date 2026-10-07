@@ -54,7 +54,7 @@ export function ThreadGenerationForm({
           </select>
         </label>
       ) : null}
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="flex flex-col gap-1 text-sm" data-tour="thread-create-topic">
         {t('chat.threadTopic')}
         <textarea
           required
@@ -66,7 +66,7 @@ export function ThreadGenerationForm({
         />
       </label>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-sm" data-tour="thread-create-kind">
           {t('chat.threadPublicationType')}
           <select
             value={form.publicationType}
@@ -100,7 +100,7 @@ export function ThreadGenerationForm({
             {t('chat.threadContentLocaleHelp')}
           </span>
         </label>
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-sm" data-tour="thread-create-cap">
           {t('chat.threadSpendCapUsd')}
           <input
             type="number"
@@ -113,7 +113,7 @@ export function ThreadGenerationForm({
           />
         </label>
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2" data-tour="thread-create-models">
         {form.selectedModels.map((model, index) => (
           <ThreadModelPicker
             key={THREAD_GENERATION_ROLE_KEYS[index]}
@@ -124,7 +124,10 @@ export function ThreadGenerationForm({
           />
         ))}
       </div>
-      <label className="flex cursor-pointer items-start gap-2 text-sm">
+      <label
+        className="flex cursor-pointer items-start gap-2 text-sm"
+        data-tour="thread-create-consent"
+      >
         <Checkbox
           checked={form.hasAcknowledgedPublic}
           onCheckedChange={(checked) => form.setHasAcknowledgedPublic(checked === true)}
@@ -154,6 +157,7 @@ export function ThreadGenerationForm({
         }
         className="w-fit"
         isLoading={form.isStarting}
+        data-tour="thread-create-start"
       >
         {form.isStarting ? t('common.loading') : t('chat.threadStartGeneration')}
       </Button>

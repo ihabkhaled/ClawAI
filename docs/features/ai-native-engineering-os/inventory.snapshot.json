@@ -8666,7 +8666,7 @@
       ],
       "skills": [
         {
-          "bytes": 33595,
+          "bytes": 33875,
           "file": "skills/00-index.md"
         },
         {
@@ -8728,6 +8728,10 @@
         {
           "bytes": 4010,
           "file": "skills/add-a-payment-gateway-flow.md"
+        },
+        {
+          "bytes": 2239,
+          "file": "skills/add-a-product-tour.md"
         },
         {
           "bytes": 2352,
@@ -11344,7 +11348,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 737
+        "testFiles": 741
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -12189,7 +12193,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2140,
+    "totalTestFiles": 2144,
     "workspaceCount": 27
   }
 }

@@ -57,6 +57,7 @@ export function FileAttachmentPicker({
             className={triggerClass}
             disabled={disabled || ctrl.isLoading}
             aria-label={isCompact && !showLabel ? t('chat.attachFiles') : undefined}
+            data-tour="composer-attach"
           >
             <Paperclip className={cn('shrink-0', isCompact ? 'h-4 w-4' : 'h-3.5 w-3.5')} />
             {renderTriggerLabel ? (

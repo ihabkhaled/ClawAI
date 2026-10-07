@@ -160,7 +160,7 @@ export default function ContextPage() {
         title={t('context.title')}
         description={t('context.description')}
         actions={
-          <Button onClick={() => setIsCreateFormOpen(true)}>
+          <Button onClick={() => setIsCreateFormOpen(true)} data-tour="context-create">
             <Plus className="me-2 h-4 w-4" />
             {t('context.createPack')}
           </Button>

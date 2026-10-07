@@ -55,26 +55,28 @@ export function MessageComposer(props: MessageComposerProps): React.ReactElement
         <ComposerAttachmentChips {...composer.attachmentChips} />
         <ComposerQuoteChips {...composer.quoteChips} />
 
-        <RichPromptTextarea
-          value={composer.content}
-          onChange={composer.onValueChange}
-          onSubmit={composer.onSubmitValue}
-          placeholder={composer.placeholder}
-          ariaLabel={composer.placeholder}
-          disabled={composer.isPending}
-          minRows={composer.minRows}
-          maxRows={composer.maxRows}
-          recallHistory={composer.recallHistory}
-          allowEmptySubmit={composer.allowEmptySubmit}
-          // Strips the shadcn field frame — the card around it is the frame
-          // now — and turns off the native drag handle. Dragging is what let
-          // the old composer be left in a state the user could not undo, and
-          // it fights the autosize latch in useRichPromptTextarea. One text
-          // size at every breakpoint on purpose: the autosize pass measures
-          // line-height once, so a responsive font would leave the row cap
-          // computed against the wrong line.
-          className="composer-textarea-short-cap min-h-0 resize-none border-0 bg-transparent px-2 py-1.5 text-base shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-        />
+        <div data-tour="composer-input">
+          <RichPromptTextarea
+            value={composer.content}
+            onChange={composer.onValueChange}
+            onSubmit={composer.onSubmitValue}
+            placeholder={composer.placeholder}
+            ariaLabel={composer.placeholder}
+            disabled={composer.isPending}
+            minRows={composer.minRows}
+            maxRows={composer.maxRows}
+            recallHistory={composer.recallHistory}
+            allowEmptySubmit={composer.allowEmptySubmit}
+            // Strips the shadcn field frame — the card around it is the frame
+            // now — and turns off the native drag handle. Dragging is what let
+            // the old composer be left in a state the user could not undo, and
+            // it fights the autosize latch in useRichPromptTextarea. One text
+            // size at every breakpoint on purpose: the autosize pass measures
+            // line-height once, so a responsive font would leave the row cap
+            // computed against the wrong line.
+            className="composer-textarea-short-cap min-h-0 resize-none border-0 bg-transparent px-2 py-1.5 text-base shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+          />
+        </div>
 
         <div className="flex items-center gap-2">
           <ComposerToolbar {...composer.toolbarProps} />
@@ -82,6 +84,7 @@ export function MessageComposer(props: MessageComposerProps): React.ReactElement
             type="submit"
             size="icon"
             aria-label={composer.sendLabel}
+            data-tour="composer-send"
             className="duration-fast touch:h-11 touch:w-11 h-9 w-9 shrink-0 rounded-xl transition-transform hover:scale-105 active:scale-95"
             disabled={!composer.canSubmit}
           >

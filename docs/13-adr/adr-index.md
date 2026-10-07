@@ -454,3 +454,4 @@ Use the `fetch` API with `ReadableStream` to consume SSE streams instead of the 
 | 160 | [Threads account deletion propagates through a durable event](adr-160-threads-account-deletion-propagation.md)                                               | Accepted                                     |
 | 161 | [A used-up credit model falls back to an included model, with a notice](adr-161-used-up-credit-falls-back-to-an-included-model.md)                           | Accepted                                     |
 | 162 | [The free allowance is a count and a meter, and it does not cover expensive models](adr-162-free-allowance-is-a-meter-and-skips-expensive-models.md)         | Accepted                                     |
+| 163 | [Product tours are data, point at `data-tour` elements, and never act for the person](adr-163-product-tours-are-data-driven-and-never-act-for-the-user.md)   | Accepted                                     |

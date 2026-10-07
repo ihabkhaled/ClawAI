@@ -59,7 +59,7 @@ export function ThreadPublicationDetail({
           {cancel.isSuccess ? <p role="status">{t('chat.threadCancellationRequested')}</p> : null}
           {cancel.isError ? <p role="alert">{t('chat.threadCancellationFailed')}</p> : null}
           {!detail.generationFailed && !detail.generationCancelled && !detail.hasDraft ? (
-            <p role="status" data-testid="thread-generation-stage">
+            <p role="status" data-testid="thread-generation-stage" data-tour="thread-review-status">
               {stageLabelKey === null ? t('common.loading') : t(stageLabelKey)}
               {generation.data.round > 0
                 ? ` · ${t('chat.threadStageRound', { round: String(generation.data.round) })}`
@@ -68,7 +68,9 @@ export function ThreadPublicationDetail({
           ) : null}
           {draft ? (
             <>
-              <h3 className="font-medium">{t('chat.threadDraftPreview')}</h3>
+              <h3 className="font-medium" data-tour="thread-review-draft">
+                {t('chat.threadDraftPreview')}
+              </h3>
               <pre className="bg-muted/30 max-h-[32rem] overflow-auto rounded-md p-4 text-sm whitespace-pre-wrap">
                 {draft.markdown}
               </pre>
@@ -189,6 +191,7 @@ export function ThreadPublicationDetail({
               disabled={publish.isSuccess}
               className="w-fit"
               isLoading={publish.isPending}
+              data-tour="thread-review-approve"
             >
               {t('chat.threadApproveAndPublish')}
             </Button>

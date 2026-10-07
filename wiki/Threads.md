@@ -124,3 +124,7 @@ WhatsApp, Facebook, LinkedIn, X, Telegram, Reddit or email.
 Live QA of the reader and owner portal fixed raw translation keys and added Article
 JSON-LD. Launch readiness, blockers and out-of-plan pack items:
 [docs/features/clawai-threads](https://github.com/ihabkhaled/ClawAI/blob/main/docs/features/clawai-threads/README.md).
+
+## Product tours
+
+Ten guided tours (Threads page, create, review, chat basics, choosing models, research, adding context, turning a chat into a Thread, compare, context packs) open from the help button in the top bar and are offered once on a first visit. They never click for the person. See ADR-163 and `skills/add-a-product-tour.md`.

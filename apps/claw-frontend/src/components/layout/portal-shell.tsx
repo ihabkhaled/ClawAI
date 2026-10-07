@@ -10,10 +10,13 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { SkipToContent } from '@/components/layout/skip-to-content';
 import { Topbar } from '@/components/layout/topbar';
 import { TrialStatusBanner } from '@/components/layout/trial-status-banner';
+import { TourHost } from '@/components/tour/tour-host';
+import { TourOffer } from '@/components/tour/tour-offer';
 import { ComponentSize } from '@/enums';
 import { useAuthGuard } from '@/hooks/auth/use-auth-guard';
 import { useLayoutShortcuts } from '@/hooks/layout/use-layout-shortcuts';
 import { usePreferenceBootstrap } from '@/hooks/settings/use-preference-bootstrap';
+import { useTourProgressSync } from '@/hooks/tour/use-tour-progress-sync';
 import { useTranslation } from '@/lib/i18n';
 
 // Owns every hook, auth gate, and interactive shell element for the
@@ -26,6 +29,7 @@ export function PortalShell({ children }: { children: React.ReactNode }): React.
   const { t } = useTranslation();
   usePreferenceBootstrap();
   useLayoutShortcuts();
+  useTourProgressSync();
 
   if (!isReady) {
     return (
@@ -74,6 +78,8 @@ export function PortalShell({ children }: { children: React.ReactNode }): React.
       </div>
       <MobileBottomNav />
       <FeedbackReporter />
+      <TourHost />
+      <TourOffer />
     </div>
   );
 }

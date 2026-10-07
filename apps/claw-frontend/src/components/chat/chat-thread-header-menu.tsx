@@ -64,7 +64,13 @@ export function ChatThreadHeaderMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label={menuLabel} className="shrink-0">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={menuLabel}
+          className="shrink-0"
+          data-tour="chat-more"
+        >
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>

@@ -70,29 +70,31 @@ export function ModelSelector({
     : 'h-9 w-[220px] text-xs sm:w-[260px]';
 
   return (
-    <ModelPicker
-      groups={groups}
-      value={selectedValue}
-      onChange={handleChange}
-      disabled={disabled}
-      isLoading={isLoading}
-      autoOption={{
-        value: MODEL_AUTO_VALUE,
-        label: t('chat.modelSelector.autoLabel'),
-        shortLabel: t('chat.modelSelector.autoShortLabel'),
-      }}
-      placeholder={t('chat.modelSelector.autoShortLabel')}
-      loadingPlaceholder={t('chat.modelSelector.loading')}
-      emptyPlaceholder={t('chat.modelSelector.empty')}
-      searchPlaceholder={t('chat.modelSelector.search')}
-      noResultsLabel={t('chat.modelSelector.noResults')}
-      triggerClassName={triggerClass}
-      useShortTriggerLabel={isNarrow}
-      // The disclaimer belongs where the money decision is made. A cloud model
-      // spends BOTH the dollar wallet and the daily token allowance; a local one
-      // spends tokens only, and that is the single most useful thing to know
-      // while choosing between them.
-      footer={<CreditDualConsumptionNotice t={t} className="border-0 bg-transparent px-0 py-0" />}
-    />
+    <span data-tour="composer-model" className="inline-flex shrink-0">
+      <ModelPicker
+        groups={groups}
+        value={selectedValue}
+        onChange={handleChange}
+        disabled={disabled}
+        isLoading={isLoading}
+        autoOption={{
+          value: MODEL_AUTO_VALUE,
+          label: t('chat.modelSelector.autoLabel'),
+          shortLabel: t('chat.modelSelector.autoShortLabel'),
+        }}
+        placeholder={t('chat.modelSelector.autoShortLabel')}
+        loadingPlaceholder={t('chat.modelSelector.loading')}
+        emptyPlaceholder={t('chat.modelSelector.empty')}
+        searchPlaceholder={t('chat.modelSelector.search')}
+        noResultsLabel={t('chat.modelSelector.noResults')}
+        triggerClassName={triggerClass}
+        useShortTriggerLabel={isNarrow}
+        // The disclaimer belongs where the money decision is made. A cloud model
+        // spends BOTH the dollar wallet and the daily token allowance; a local one
+        // spends tokens only, and that is the single most useful thing to know
+        // while choosing between them.
+        footer={<CreditDualConsumptionNotice t={t} className="border-0 bg-transparent px-0 py-0" />}
+      />
+    </span>
   );
 }

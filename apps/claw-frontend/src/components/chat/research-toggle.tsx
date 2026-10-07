@@ -60,6 +60,7 @@ export function ResearchToggle({
             button with no accessible name. */}
         <SelectTrigger
           aria-label={t('research.toggle.modeLabel')}
+          data-tour="composer-research"
           className="truncate-fixed h-9 w-[8.5rem] shrink-0 px-2 text-xs sm:w-[10rem]"
         >
           <SelectValue placeholder={t('research.toggle.placeholder')} />
@@ -96,6 +97,7 @@ export function ResearchToggle({
         >
           <SelectTrigger
             aria-label={t('research.toggle.providerLabel')}
+            data-tour="composer-research-provider"
             className="truncate-fixed h-9 w-[9.5rem] shrink-0 px-2 text-xs sm:w-[12rem]"
           >
             <SelectValue

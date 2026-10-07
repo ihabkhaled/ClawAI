@@ -103,22 +103,26 @@ export default function ComparePage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1">
           <div className="space-y-4">
-            <ParallelModelSelector
-              selectedModels={selectedModels}
-              onToggleModel={handleToggleModel}
-              selectionError={selectionError}
-              t={t}
-            />
-            {canJudge ? (
-              <CompareJudgeControls
-                judgeEnabled={judgeEnabled}
-                onJudgeEnabledChange={setJudgeEnabled}
-                judgeModel={judgeModel}
-                onJudgeModelChange={setJudgeModel}
-                judgeModelOptions={judgeModelOptions}
-                judgeModelOptionsLoading={isJudgeModelOptionsLoading}
+            <div data-tour="compare-models">
+              <ParallelModelSelector
+                selectedModels={selectedModels}
+                onToggleModel={handleToggleModel}
+                selectionError={selectionError}
                 t={t}
               />
+            </div>
+            {canJudge ? (
+              <div data-tour="compare-judge">
+                <CompareJudgeControls
+                  judgeEnabled={judgeEnabled}
+                  onJudgeEnabledChange={setJudgeEnabled}
+                  judgeModel={judgeModel}
+                  onJudgeModelChange={setJudgeModel}
+                  judgeModelOptions={judgeModelOptions}
+                  judgeModelOptionsLoading={isJudgeModelOptionsLoading}
+                  t={t}
+                />
+              </div>
             ) : null}
             {canJudge && canCritic && judgeEnabled ? (
               <CompareCriticControls
@@ -141,18 +145,20 @@ export default function ComparePage() {
               <ComposerAttachmentChips {...attachmentChips} />
               {/* RichPromptTextarea, not a bare Textarea: Enter sends on desktop and is a
                   newline on touch, with the IME guard (rules/40, rules/59). */}
-              <RichPromptTextarea
-                value={prompt}
-                onChange={setPrompt}
-                onSubmit={canSend ? handleSend : undefined}
-                allowEmptySubmit={selectedFileIds.length > 0}
-                placeholder={t('compare.sendPrompt')}
-                ariaLabel={t('compare.sendPrompt')}
-                disabled={isPending || isPolling}
-                minRows={ORCHESTRATION_PROMPT_MIN_ROWS}
-                maxRows={ORCHESTRATION_PROMPT_MAX_ROWS}
-                className="min-h-[100px]"
-              />
+              <div data-tour="compare-prompt">
+                <RichPromptTextarea
+                  value={prompt}
+                  onChange={setPrompt}
+                  onSubmit={canSend ? handleSend : undefined}
+                  allowEmptySubmit={selectedFileIds.length > 0}
+                  placeholder={t('compare.sendPrompt')}
+                  ariaLabel={t('compare.sendPrompt')}
+                  disabled={isPending || isPolling}
+                  minRows={ORCHESTRATION_PROMPT_MIN_ROWS}
+                  maxRows={ORCHESTRATION_PROMPT_MAX_ROWS}
+                  className="min-h-[100px]"
+                />
+              </div>
               <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:flex sm:items-center sm:justify-between">
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
                   <OrchestrationContextButton

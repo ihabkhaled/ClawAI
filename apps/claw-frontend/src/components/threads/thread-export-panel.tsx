@@ -25,6 +25,7 @@ export function ThreadExportPanel({
   return (
     <fieldset
       data-no-print
+      data-tour="thread-review-export"
       data-testid="thread-export-panel"
       className="border-border flex flex-col gap-3 rounded-lg border p-4"
     >

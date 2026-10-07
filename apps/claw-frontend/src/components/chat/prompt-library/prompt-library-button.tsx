@@ -20,6 +20,7 @@ export function PromptLibraryButton(props: PromptLibraryButtonProps): React.Reac
         className="h-9 shrink-0 gap-1 px-2 lg:px-3"
         disabled={props.disabled}
         aria-label={t('promptLibrary.openLabel')}
+        data-tour="composer-prompts"
         title={t('promptLibrary.openLabel')}
         onClick={() => dialog.onOpenChange(true)}
       >
