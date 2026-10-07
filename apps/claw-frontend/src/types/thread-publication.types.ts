@@ -9,6 +9,7 @@ import type { ThreadPublicationExportFormat } from '@/enums/thread-publication-e
 import type { ThreadPublicationReaction } from '@/enums/thread-publication-reaction.enum';
 import type { ThreadPublicationReportReason } from '@/enums/thread-publication-report-reason.enum';
 import type { ThreadPublicationStatus } from '@/enums/thread-publication-status.enum';
+import type { ThreadRevisionField } from '@/enums/thread-revision-field.enum';
 import type { ModelSelection } from '@/types/component.types';
 import type { ThreadRevisionRequest } from '@/utilities/thread-revision-request.utility';
 
@@ -220,15 +221,53 @@ export type ThreadGenerationFormController = {
   submit: (event: FormEvent<HTMLFormElement>) => void;
 };
 
+export type ThreadPublicationDetailController = {
+  publicationId: string;
+  selectedPublication: OwnedThreadPublication | undefined;
+  generation: UseQueryResult<ThreadGenerationState>;
+  revisionReview: UseQueryResult<ThreadRevisionReviewState>;
+  cancel: UseMutationResult<{ publicationId: string; status: string }, Error, void>;
+  publish: UseMutationResult<void, Error, void>;
+  editRevision: UseMutationResult<ThreadRevisionRequestResult, Error, void>;
+  unpublish: UseMutationResult<void, Error, void>;
+  exportPublication: UseMutationResult<
+    ThreadPublicationExport,
+    Error,
+    ThreadPublicationExportFormat
+  >;
+  editingRevision: boolean;
+  setEditingRevision: (value: boolean) => void;
+  revisionMarkdown: string;
+  revisionCapUsd: string;
+  activeRevisionId: string;
+  hasDraft: boolean;
+  generationFailed: boolean;
+  generationCancelled: boolean;
+  publicationReady: boolean;
+  revisionIsTerminal: boolean;
+  revisionReviewMessage: string;
+  startEditing: () => void;
+  changeRevisionField: (field: ThreadRevisionField, value: string) => void;
+  startRevisionFromChangeRequest: (revisionId: string) => void;
+};
+
+export type ThreadModelPickerProps = {
+  id: string;
+  label: string;
+  value: ModelSelection;
+  onChange: (selection: ModelSelection) => void;
+};
+
 export type ThreadCreateDialogBodyProps = {
-  threadId: string;
-  threadTitle: string;
+  threadId?: string;
+  threadTitle?: string;
   onClose: () => void;
 };
 
 export type ThreadCreateDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  threadId: string;
-  threadTitle: string;
+  /** Set when opened from a chat; the list page leaves it out and the owner picks a chat. */
+  threadId?: string;
+  threadTitle?: string;
 };

@@ -46,6 +46,12 @@ threads service wraps `@toon-format/toon` in one utility, and encodes, decodes a
 every export to the canonical JSON before returning it. Tests cover code blocks, tables,
 tabs, newlines, Arabic, emoji, TOON-like text, a 4,000-line article and determinism.
 
+**Separate list, detail and create.** `/threads` is now only the list; creating is the modal
+(chat header menu, or the Create a Thread button on the list, with a chat picker); each
+publication has `/threads/review/<id>`. The old one-page portal was split: detail logic moved
+to `useThreadPublicationDetail`, render to `ThreadPublicationDetail`. The role selectors are
+the chat's `ModelPicker` (`ThreadModelPicker`), not plain selects.
+
 Local-only findings (no repo change): a stale `claw_threads` schema missed
 `accepted_revision_id`, and host-generated `src/generated/prisma/package.json`
 files carried a UTF-8 BOM that broke the Docker `prisma generate` step.

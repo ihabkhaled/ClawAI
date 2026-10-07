@@ -8148,6 +8148,11 @@
         "route": "/threads"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/threads/review/[publicationId]/page.tsx",
+        "kind": "page",
+        "route": "/threads/review/[publicationId]"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/usage/page.tsx",
         "kind": "page",
         "route": "/usage"
@@ -9071,7 +9076,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5841
+        "value": 5844
       },
       "localeCount": 13,
       "locales": [
@@ -11309,7 +11314,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 725
+        "testFiles": 728
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -12145,7 +12150,7 @@
     "endpointCount": 830,
     "envVarCount": 375,
     "eventCount": 187,
-    "frontendRouteCount": 159,
+    "frontendRouteCount": 160,
     "localeCount": 13,
     "nginxRouteCount": 69,
     "permissionCount": 90,
@@ -12154,7 +12159,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2116,
+    "totalTestFiles": 2119,
     "workspaceCount": 27
   }
 }

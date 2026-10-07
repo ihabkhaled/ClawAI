@@ -87,6 +87,14 @@ Generation intent or a private draft alone does not make content public.
 
 ## Owner creation flow delivery
 
+Where things live: **creating** a Thread is a modal (from the chat header, or the **Create a
+Thread** button on the list page, where the owner picks the source chat). `/threads` is only
+the list of the owner's publications. Each publication has its own page at
+`/threads/review/<id>` for progress, draft preview, capped edits, approve and publish,
+unpublish, export and reader suggestions. The five model roles use the chat's grouped,
+searchable model picker (providers, capability and credit badges); on-device and image
+providers are not offered.
+
 The primary entry point is the chat itself: the chat header menu has **Turn into
 public Thread**, which opens a modal for that chat (source chat fixed, topic
 pre-filled from the title). It uses the same form as the `/threads` portal, adds an

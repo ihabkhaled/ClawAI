@@ -98,6 +98,13 @@ removes private snapshots and account links, and records a hashed tombstone;
 Generation removes private jobs and rejects later enqueue. Live deletion,
 browser, access-control, device, and production QA remain open.
 
+## Pages
+
+`/threads` lists your publications and has **Create a Thread** (modal with a chat picker).
+`/threads/review/<id>` is one publication: progress, draft, edit, publish, export, reader
+suggestions. The modal also opens from a chat's header menu. Role models use the chat's
+grouped model picker.
+
 ## Create from chat
 
 Chat header menu -> **Turn into public Thread** opens a modal for that chat (same

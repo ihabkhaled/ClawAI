@@ -14,7 +14,10 @@ import type {
   ThreadGenerationFormOptions,
 } from '@/types/thread-publication.types';
 import { createThreadGenerationRequest } from '@/utilities/thread-generation-request.utility';
-import { pickDistinctModels } from '@/utilities/thread-model-defaults.utility';
+import {
+  isThreadModelGroupKey,
+  pickDistinctModels,
+} from '@/utilities/thread-model-defaults.utility';
 
 /**
  * State and submit for "create a public Thread", shared by the owner portal and
@@ -33,8 +36,7 @@ export function useThreadGenerationForm({
   const availableModels = useMemo(
     () =>
       groupedModels
-        // Threads is a long, capped, cloud workload: image and on-device runtimes cannot serve it.
-        .filter(({ provider }) => !provider.startsWith('IMAGE_') && !provider.startsWith('local-'))
+        .filter(({ provider }) => isThreadModelGroupKey(provider))
         .flatMap(({ models }) => models),
     [groupedModels],
   );

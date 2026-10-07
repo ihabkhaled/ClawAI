@@ -22,6 +22,14 @@ export const THREAD_REPORT_REASONS: ThreadReportReason[] = Object.values(
   ThreadPublicationReportReason,
 );
 
+/** Revision review states after which the owner can edit or publish again. */
+export const THREAD_REVISION_TERMINAL_STATUSES: string[] = [
+  'FAILED',
+  'CANCELLED',
+  'STALE',
+  'REVIEW_REQUIRED',
+];
+
 /** File type and extension for each owner export. */
 export const THREAD_EXPORT_FILES = {
   markdown: { mime: 'text/markdown;charset=utf-8', extension: 'md' },

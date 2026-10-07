@@ -650,6 +650,9 @@ export const ja: TranslationDictionary = {
       '生成を開始すると、この記事を公開し検索対象にする意思が記録されます。公開を承認するまで下書きは非公開です。',
     threadSourceChat: '元のチャット',
     threadCreateTitle: '公開 Thread を作成',
+    threadCreateButton: 'Thread を作成',
+    threadChooseChat: 'チャットを選択',
+    threadBackToList: 'Threads に戻る',
     threadTurnIntoThread: '公開 Thread にする',
     threadConsentCheckbox:
       'この投稿が公開され、検索エンジンにインデックスされる前提であることを理解しています。',

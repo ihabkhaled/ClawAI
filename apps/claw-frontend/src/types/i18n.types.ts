@@ -589,6 +589,9 @@ export type TranslationDictionary = {
     threadPublicIntentDisclosure: string;
     threadSourceChat: string;
     threadCreateTitle: string;
+    threadCreateButton: string;
+    threadChooseChat: string;
+    threadBackToList: string;
     threadTurnIntoThread: string;
     threadConsentCheckbox: string;
     threadCreateDialogDescription: string;

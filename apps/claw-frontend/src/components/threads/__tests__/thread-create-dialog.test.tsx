@@ -54,6 +54,6 @@ describe('ThreadCreateDialog', () => {
     capturedOptions?.onStarted('pub 1');
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
-    expect(push).toHaveBeenCalledWith('/threads?publication=pub%201');
+    expect(push).toHaveBeenCalledWith('/threads/review/pub%201');
   });
 });

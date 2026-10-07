@@ -6,6 +6,9 @@ import type { ThreadGenerationFormController } from '@/types/thread-publication.
 
 import { ThreadGenerationForm } from '../thread-generation-form';
 
+vi.mock('../thread-model-picker', () => ({
+  ThreadModelPicker: ({ label }: { label: string }) => <div data-testid="role-picker">{label}</div>,
+}));
 vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
@@ -74,11 +77,12 @@ describe('ThreadGenerationForm', () => {
     expect(screen.getByText('chat.threadSourceChat')).toBeInTheDocument();
   });
 
-  it('gives one selector to each of the five model roles', () => {
+  it('gives one grouped model picker to each of the five roles', () => {
     render(<ThreadGenerationForm form={makeForm()} />);
 
-    expect(screen.getByLabelText('chat.threadJudgeModel')).toBeInTheDocument();
-    expect(screen.getByLabelText('chat.threadCriticModel')).toBeInTheDocument();
-    expect(screen.getByLabelText('chat.threadAuthorModel 3')).toBeInTheDocument();
+    expect(screen.getAllByTestId('role-picker')).toHaveLength(5);
+    expect(screen.getByText('chat.threadJudgeModel')).toBeInTheDocument();
+    expect(screen.getByText('chat.threadCriticModel')).toBeInTheDocument();
+    expect(screen.getByText('chat.threadAuthorModel 3')).toBeInTheDocument();
   });
 });

@@ -25,6 +25,7 @@ const SOURCE_FILES = [
   'src/app/(portal)/threads/page.tsx',
   'src/constants/thread-publication.constants.ts',
   'src/hooks/chat/use-thread-detail-page.ts',
+  'src/hooks/threads/use-thread-publication-detail.ts',
 ];
 
 const LOCALES = { ar, de, en, es, fa, fr, hi, it: itLocale, ja, pt, ru, th, zh };
@@ -34,7 +35,7 @@ function collectKeys(): string[] {
   for (const file of SOURCE_FILES) {
     const source = readFileSync(join(process.cwd(), file), 'utf8');
     for (const match of source.matchAll(/\bt\('([A-Za-z.]+)'|translationKey: '([A-Za-z.]+)'/gu)) {
-      keys.add(match[1] ?? match[2] ?? '');
+      keys.add(match[1] ?? match[2] ?? match[3] ?? '');
     }
   }
   return [...keys];

@@ -9,13 +9,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { ROUTES } from '@/constants/routes.constants';
 import { useThreadGenerationForm } from '@/hooks/threads/use-thread-generation-form';
 import { useTranslation } from '@/lib/i18n';
 import type {
   ThreadCreateDialogBodyProps,
   ThreadCreateDialogProps,
 } from '@/types/thread-publication.types';
+import { threadReviewPath } from '@/utilities/thread-review-path.utility';
 
 function ThreadCreateDialogBody({
   threadId,
@@ -28,7 +28,7 @@ function ThreadCreateDialogBody({
     defaultTopic: threadTitle,
     onStarted: (publicationId) => {
       onClose();
-      router.push(`${ROUTES.THREAD_PUBLICATIONS}?publication=${encodeURIComponent(publicationId)}`);
+      router.push(threadReviewPath(publicationId));
     },
   });
   return <ThreadGenerationForm form={form} />;

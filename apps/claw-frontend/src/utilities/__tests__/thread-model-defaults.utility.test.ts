@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ModelSelection } from '@/types';
-import { pickDistinctModels } from '@/utilities/thread-model-defaults.utility';
+import {
+  isThreadModelGroupKey,
+  pickDistinctModels,
+} from '@/utilities/thread-model-defaults.utility';
 
 const model = (provider: string, key: string): ModelSelection => ({
   provider,
@@ -43,5 +46,15 @@ describe('pickDistinctModels', () => {
 
   it('returns nothing when no model is available', () => {
     expect(pickDistinctModels([], 5)).toEqual([]);
+  });
+});
+
+describe('isThreadModelGroupKey', () => {
+  it.each([['ANTHROPIC'], ['OLLAMA'], ['GEMINI']])('offers %s models', (key) => {
+    expect(isThreadModelGroupKey(key)).toBe(true);
+  });
+
+  it.each([['local-ollama'], ['local-llamacpp'], ['IMAGE_OPENAI']])('hides %s', (key) => {
+    expect(isThreadModelGroupKey(key)).toBe(false);
   });
 });

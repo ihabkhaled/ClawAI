@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react';
 
+import { ThreadModelPicker } from '@/components/threads/thread-model-picker';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -41,11 +42,11 @@ export function ThreadGenerationForm({
             className="border-input bg-background rounded-md border px-3 py-2"
           >
             <option value="">
-              {form.isLoadingThreads ? t('chat.loadingThreads') : t('chat.noThreads')}
+              {form.isLoadingThreads ? t('chat.loadingThreads') : t('chat.threadChooseChat')}
             </option>
             {form.threads.map((thread) => (
               <option key={thread.id} value={thread.id}>
-                {thread.title ?? t('chat.noThreads')}
+                {thread.title ?? t('chat.untitled')}
               </option>
             ))}
           </select>
@@ -112,32 +113,13 @@ export function ThreadGenerationForm({
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {form.selectedModels.map((model, index) => (
-          <label className="flex flex-col gap-1 text-sm" key={THREAD_GENERATION_ROLE_KEYS[index]}>
-            {roleLabel(index)}
-            <select
-              aria-label={roleLabel(index)}
-              required
-              value={`${model.provider}/${model.model}`}
-              onChange={(event) => {
-                const selected = form.availableModels.find(
-                  (entry) => `${entry.provider}/${entry.model}` === event.target.value,
-                );
-                if (selected) {
-                  form.changeModel(index, selected);
-                }
-              }}
-              className="border-input bg-background rounded-md border px-3 py-2"
-            >
-              {form.availableModels.map((entry) => (
-                <option
-                  key={`${entry.provider}/${entry.model}`}
-                  value={`${entry.provider}/${entry.model}`}
-                >
-                  {entry.displayName}
-                </option>
-              ))}
-            </select>
-          </label>
+          <ThreadModelPicker
+            key={THREAD_GENERATION_ROLE_KEYS[index]}
+            id={`thread-role-${THREAD_GENERATION_ROLE_KEYS[index] ?? String(index)}`}
+            label={roleLabel(index)}
+            value={model}
+            onChange={(selected) => form.changeModel(index, selected)}
+          />
         ))}
       </div>
       <label className="flex cursor-pointer items-start gap-2 text-sm">

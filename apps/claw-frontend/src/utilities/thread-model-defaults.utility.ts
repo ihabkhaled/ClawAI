@@ -31,3 +31,11 @@ export function pickDistinctModels(available: ModelSelection[], count: number): 
     (entry): entry is ModelSelection => entry !== undefined,
   );
 }
+
+/**
+ * Threads is a long, capped, cloud workload: image models and on-device runtimes
+ * cannot serve it, so their provider groups are never offered.
+ */
+export function isThreadModelGroupKey(providerKey: string): boolean {
+  return !providerKey.startsWith('IMAGE_') && !providerKey.startsWith('local-');
+}

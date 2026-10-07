@@ -652,6 +652,9 @@ export const ru: TranslationDictionary = {
       'Запуск генерации фиксирует ваше намерение опубликовать эту работу и сделать её доступной для поисковой индексации. Черновик останется приватным до вашего одобрения.',
     threadSourceChat: 'Исходный чат',
     threadCreateTitle: 'Создать публичный Thread',
+    threadCreateButton: 'Создать Thread',
+    threadChooseChat: 'Выберите чат',
+    threadBackToList: 'Назад к Threads',
     threadTurnIntoThread: 'Превратить в публичный Thread',
     threadConsentCheckbox:
       'Я понимаю, что эта публикация предназначена стать общедоступной и индексируемой.',

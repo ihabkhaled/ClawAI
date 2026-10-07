@@ -662,6 +662,11 @@
       "route": "/threads"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/threads/review/[publicationId]/page.tsx",
+      "kind": "page",
+      "route": "/threads/review/[publicationId]"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/usage/page.tsx",
       "kind": "page",
       "route": "/usage"
