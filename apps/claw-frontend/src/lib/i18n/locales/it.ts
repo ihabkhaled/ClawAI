@@ -712,6 +712,7 @@ export const it: TranslationDictionary = {
     threadPublicLoadFailed: 'Impossibile caricare questa pubblicazione.',
     threadPublicTruncated: 'L’articolo è abbreviato per la visualizzazione.',
     threadPublicPublished: 'Pubblicato',
+    threadPublicViews: '{views} visualizzazioni · {readers} lettori registrati',
     threadPublicCitations: 'Fonti',
     threadPublicReactions: 'Reazioni',
     threadPublicLike: 'Mi piace',

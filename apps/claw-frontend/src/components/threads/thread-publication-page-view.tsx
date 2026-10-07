@@ -38,6 +38,10 @@ export function ThreadPublicPageView({ state }: ThreadPublicPageViewProps): Reac
         truncatedLabel={t('chat.threadPublicTruncated')}
         citationsLabel={t('chat.threadPublicCitations')}
         publishedLabel={t('chat.threadPublicPublished')}
+        viewsLabel={t('chat.threadPublicViews', {
+          views: String(state.publication.viewCount),
+          readers: String(state.publication.readerCount),
+        })}
       />
       <ThreadPublicCommunity
         comments={state.comments}

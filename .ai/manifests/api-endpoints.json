@@ -3634,8 +3634,18 @@
       },
       {
         "method": "POST",
+        "route": "/thread-publications/public/:slug/reader-view",
+        "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-views.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/thread-publications/public/:slug/reports",
         "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-community.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/thread-publications/public/:slug/view",
+        "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-views.controller.ts"
       },
       {
         "method": "GET",
@@ -4192,5 +4202,5 @@
     ]
   },
   "generated": true,
-  "total": 830
+  "total": 832
 }

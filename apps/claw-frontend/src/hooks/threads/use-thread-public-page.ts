@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 
 import { useThreadPublicActions } from '@/hooks/threads/use-thread-public-actions';
 import { useThreadPublicQueries } from '@/hooks/threads/use-thread-public-queries';
+import { useThreadPublicView } from '@/hooks/threads/use-thread-public-view';
 import { ApiClientError } from '@/services/shared/api-client';
 import { useAuthStore } from '@/stores/auth.store';
 import type {
@@ -19,6 +20,7 @@ export function useThreadPublicPage(
   const queries = useThreadPublicQueries(slug, initialPublication);
   const actions = useThreadPublicActions(slug);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  useThreadPublicView(slug, isAuthenticated);
   const error = queries.publication.error;
   const isNotFound = error instanceof ApiClientError && error.status === 404;
 

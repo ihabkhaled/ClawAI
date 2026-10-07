@@ -684,6 +684,7 @@ export const th: TranslationDictionary = {
     threadPublicLoadFailed: 'โหลดบทความนี้ไม่สำเร็จ',
     threadPublicTruncated: 'ย่อบทความเพื่อแสดงผล',
     threadPublicPublished: 'เผยแพร่เมื่อ',
+    threadPublicViews: '{views} ครั้ง · ผู้อ่านที่ลงชื่อเข้าใช้ {readers} คน',
     threadPublicCitations: 'แหล่งอ้างอิง',
     threadPublicReactions: 'การตอบสนอง',
     threadPublicLike: 'ถูกใจ',

@@ -69,8 +69,14 @@ model ThreadPublication {
   sourceSnapshot  Json?                            @map("source_snapshot")
   sourceHash      String?                          @map("source_hash")
   publishedAt     DateTime?                        @map("published_at")
+  /// Human views (crawlers and repeats inside the dedupe window are not counted).
+  viewCount       Int                              @default(0) @map("view_count")
+  /// Distinct signed-in readers. A count only: who they are is never exposed.
+  readerCount     Int                              @default(0) @map("reader_count")
   createdAt       DateTime                         @default(now()) @map("created_at")
   updatedAt       DateTime                         @updatedAt @map("updated_at")
+  views           ThreadPublicationView[]
+  readers         ThreadPublicationReader[]
   revisions       ThreadPublicationRevision[]
   comments        ThreadPublicationComment[]
   reactions       ThreadPublicationReaction[]
@@ -80,6 +86,32 @@ model ThreadPublication {
   @@index([ownerId, createdAt])
   @@index([status, publishedAt])
   @@map("thread_publications")
+}
+
+/// One counted view. `viewerHash` is a keyed hash of the visitor, kept only to dedupe repeats
+/// inside a short window; rows are purged after 30 days and the counters stay.
+model ThreadPublicationView {
+  id            String            @id @default(cuid())
+  publicationId String            @map("publication_id")
+  publication   ThreadPublication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  viewerHash    String            @map("viewer_hash")
+  createdAt     DateTime          @default(now()) @map("created_at")
+
+  @@index([publicationId, viewerHash, createdAt])
+  @@index([createdAt])
+  @@map("thread_publication_views")
+}
+
+/// A distinct signed-in reader of one publication, by keyed hash only (deleted with the account).
+model ThreadPublicationReader {
+  publicationId String            @map("publication_id")
+  publication   ThreadPublication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  readerHash    String            @map("reader_hash")
+  firstSeenAt   DateTime          @default(now()) @map("first_seen_at")
+
+  @@id([publicationId, readerHash])
+  @@index([readerHash])
+  @@map("thread_publication_readers")
 }
 
 /// Hashed tombstone prevents late queued work from recreating deleted account data.

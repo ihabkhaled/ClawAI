@@ -699,6 +699,7 @@ export const en: TranslationDictionary = {
     threadPublicLoadFailed: 'Could not load this publication.',
     threadPublicTruncated: 'The article is shortened for display.',
     threadPublicPublished: 'Published',
+    threadPublicViews: '{views} views · {readers} signed-in readers',
     threadPublicCitations: 'Citations',
     threadPublicReactions: 'Reactions',
     threadPublicLike: 'Like',

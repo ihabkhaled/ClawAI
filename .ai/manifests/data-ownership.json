@@ -302,8 +302,10 @@
         "ThreadPublicationChangeRequest",
         "ThreadPublicationComment",
         "ThreadPublicationReaction",
+        "ThreadPublicationReader",
         "ThreadPublicationReport",
-        "ThreadPublicationRevision"
+        "ThreadPublicationRevision",
+        "ThreadPublicationView"
       ],
       "service": "claw-threads-service"
     },

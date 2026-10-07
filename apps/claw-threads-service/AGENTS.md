@@ -19,9 +19,9 @@ npm run dev
 ## Ownership (generated)
 - Port: 4019
 - Database: postgresql
-- Prisma models: ThreadDeletedAccount, ThreadPublication, ThreadPublicationChangeRequest, ThreadPublicationComment, ThreadPublicationReaction, ThreadPublicationReport, ThreadPublicationRevision
-- API endpoints: 24 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 20 (vitest)
+- Prisma models: ThreadDeletedAccount, ThreadPublication, ThreadPublicationChangeRequest, ThreadPublicationComment, ThreadPublicationReaction, ThreadPublicationReader, ThreadPublicationReport, ThreadPublicationRevision, ThreadPublicationView
+- API endpoints: 26 (see `.ai/manifests/api-endpoints.json`)
+- Test files: 24 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

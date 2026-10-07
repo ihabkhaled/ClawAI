@@ -33,6 +33,17 @@ export const threadPublicationsRepository = {
     );
     return response.data;
   },
+  /** Counts one human view. Signed-in readers use the authenticated route. */
+  async recordPublicView(
+    slug: string,
+    isAuthenticated: boolean,
+  ): Promise<Pick<PublicThreadPublication, 'viewCount' | 'readerCount'>> {
+    const route = isAuthenticated ? 'reader-view' : 'view';
+    const response = await apiClient.post<
+      Pick<PublicThreadPublication, 'viewCount' | 'readerCount'>
+    >(`/thread-publications/public/${encodeURIComponent(slug)}/${route}`);
+    return response.data;
+  },
   async listPublicComments(slug: string): Promise<PublicThreadComment[]> {
     const response = await apiClient.get<PublicThreadComment[]>(
       `/thread-publications/public/${encodeURIComponent(slug)}/comments`,

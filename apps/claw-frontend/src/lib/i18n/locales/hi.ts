@@ -699,6 +699,7 @@ export const hi: TranslationDictionary = {
     threadPublicLoadFailed: 'यह प्रकाशन लोड नहीं हो सका।',
     threadPublicTruncated: 'दिखाने के लिए लेख छोटा किया गया है।',
     threadPublicPublished: 'प्रकाशित',
+    threadPublicViews: '{views} दृश्य · {readers} साइन-इन पाठक',
     threadPublicCitations: 'स्रोत',
     threadPublicReactions: 'प्रतिक्रियाएँ',
     threadPublicLike: 'पसंद',

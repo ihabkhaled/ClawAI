@@ -202,8 +202,10 @@
       "ThreadPublicationChangeRequest",
       "ThreadPublicationComment",
       "ThreadPublicationReaction",
+      "ThreadPublicationReader",
       "ThreadPublicationReport",
-      "ThreadPublicationRevision"
+      "ThreadPublicationRevision",
+      "ThreadPublicationView"
     ],
     "claw-workspace-service": [
       "AiActionApprovalQueue",

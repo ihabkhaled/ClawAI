@@ -698,6 +698,7 @@ export const fa: TranslationDictionary = {
     threadPublicLoadFailed: 'بارگیری این انتشار ممکن نشد.',
     threadPublicTruncated: 'مقاله برای نمایش کوتاه شده است.',
     threadPublicPublished: 'تاریخ انتشار',
+    threadPublicViews: '{views} بازدید · {readers} خواننده واردشده',
     threadPublicCitations: 'منابع',
     threadPublicReactions: 'واکنش‌ها',
     threadPublicLike: 'پسندیدن',

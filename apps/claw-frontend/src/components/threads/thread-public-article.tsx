@@ -9,6 +9,7 @@ export function ThreadPublicArticle({
   truncatedLabel,
   citationsLabel,
   publishedLabel,
+  viewsLabel,
 }: ThreadPublicArticleProps): ReactElement {
   const citations = publication.content.citations
     .map((citation) => ({ ...citation, safeUrl: safeThreadCitationUrl(citation.url) }))
@@ -21,6 +22,8 @@ export function ThreadPublicArticle({
         <p className="text-muted-foreground text-sm">
           {publishedLabel}{' '}
           <time dateTime={publication.publishedAt}>{publication.publishedAt.slice(0, 10)}</time>
+          {' · '}
+          <span data-testid="thread-public-views">{viewsLabel}</span>
         </p>
       </header>
       <div className="thread-publication-content min-w-0 break-words">

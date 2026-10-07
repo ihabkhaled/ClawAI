@@ -547,7 +547,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-threads-service",
-      "endpointCount": 24,
+      "endpointCount": 26,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -566,10 +566,12 @@
         "ThreadPublicationChangeRequest",
         "ThreadPublicationComment",
         "ThreadPublicationReaction",
+        "ThreadPublicationReader",
         "ThreadPublicationReport",
-        "ThreadPublicationRevision"
+        "ThreadPublicationRevision",
+        "ThreadPublicationView"
       ],
-      "testFiles": 20,
+      "testFiles": 24,
       "testRunner": "vitest"
     },
     {

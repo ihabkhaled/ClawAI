@@ -653,6 +653,7 @@ export type TranslationDictionary = {
     threadPublicLoadFailed: string;
     threadPublicTruncated: string;
     threadPublicPublished: string;
+    threadPublicViews: string;
     threadPublicCitations: string;
     threadPublicReactions: string;
     threadPublicLike: string;

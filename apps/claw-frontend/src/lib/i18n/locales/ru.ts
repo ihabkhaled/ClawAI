@@ -706,6 +706,7 @@ export const ru: TranslationDictionary = {
     threadPublicLoadFailed: 'Не удалось загрузить публикацию.',
     threadPublicTruncated: 'Статья сокращена для отображения.',
     threadPublicPublished: 'Опубликовано',
+    threadPublicViews: '{views} просмотров · {readers} вошедших читателей',
     threadPublicCitations: 'Источники',
     threadPublicReactions: 'Реакции',
     threadPublicLike: 'Нравится',

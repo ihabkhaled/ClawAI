@@ -13,6 +13,9 @@ import { PublicationCommunityService } from './services/publication-community.se
 import { PublicationListController } from './controllers/publication-list.controller';
 import { PublicationDiscoveryController } from './controllers/publication-discovery.controller';
 import { PublicationDiscoveryService } from './services/publication-discovery.service';
+import { PublicationViewsController } from './controllers/publication-views.controller';
+import { PublicationViewsRepository } from './repositories/publication-views.repository';
+import { PublicationViewsService } from './services/publication-views.service';
 
 @Module({
   imports: [PrismaModule],
@@ -24,6 +27,7 @@ import { PublicationDiscoveryService } from './services/publication-discovery.se
     PublicationCommunityController,
     PublicationModerationController,
     PublicationListController,
+    PublicationViewsController,
   ],
   providers: [
     PublicationLifecycleService,
@@ -31,6 +35,8 @@ import { PublicationDiscoveryService } from './services/publication-discovery.se
     PublicationsRepository,
     ThreadsGenerationClient,
     PublicationDiscoveryService,
+    PublicationViewsRepository,
+    PublicationViewsService,
   ],
 })
 export class PublicationsModule {}

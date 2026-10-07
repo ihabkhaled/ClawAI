@@ -15,6 +15,9 @@ export type PublicPublication = {
   publicationType: ThreadPublicationType;
   content: { markdown: string; citations: Array<{ url: string }> };
   publishedAt: Date;
+  /** Human views and distinct signed-in readers: counts only, never who. */
+  viewCount: number;
+  readerCount: number;
 };
 
 export type PublicPublicationDiscoveryItem = {

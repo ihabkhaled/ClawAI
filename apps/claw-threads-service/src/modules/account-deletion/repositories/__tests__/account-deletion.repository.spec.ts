@@ -1,5 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { hashReader } from '../../../publications/utilities/publication-viewer.utility';
 import { AccountDeletionRepository } from '../account-deletion.repository';
+
+const SECRET = 's'.repeat(40);
+
+vi.mock('../../../../app/config/app.config', () => ({
+  AppConfig: { get: () => ({ INTER_SERVICE_AUTH_TOKEN: 's'.repeat(40) }) },
+}));
 
 type MockMethod = ReturnType<typeof vi.fn>;
 type TransactionMock = {
@@ -8,6 +15,7 @@ type TransactionMock = {
   threadPublicationRevision: { deleteMany: MockMethod };
   threadPublicationComment: { updateMany: MockMethod };
   threadPublicationReaction: { deleteMany: MockMethod };
+  threadPublicationReader: { findMany: MockMethod; deleteMany: MockMethod };
   threadPublicationChangeRequest: { deleteMany: MockMethod; updateMany: MockMethod };
   threadPublicationReport: { updateMany: MockMethod };
 };
@@ -27,6 +35,10 @@ describe('Threads AccountDeletionRepository', () => {
       threadPublicationRevision: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
       threadPublicationComment: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
       threadPublicationReaction: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
+      threadPublicationReader: {
+        findMany: vi.fn().mockResolvedValue([{ publicationId: 'pub-read' }]),
+        deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
       threadPublicationChangeRequest: {
         deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
@@ -92,5 +104,27 @@ describe('Threads AccountDeletionRepository', () => {
       repository.applyDeletion('account-private-1', 'event-1', new Date()),
     ).resolves.toBe(false);
     expect(tx.threadPublication.findMany).not.toHaveBeenCalled();
+  });
+
+  it('removes the reader hash of the account and lowers the reader count of what it read', async () => {
+    await repository.applyDeletion('account-private-1', 'event-1', new Date());
+
+    const readerHash = hashReader(SECRET, 'account-private-1');
+    expect(tx.threadPublicationReader.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { readerHash } }),
+    );
+    expect(tx.threadPublicationReader.deleteMany).toHaveBeenCalledWith({ where: { readerHash } });
+    expect(tx.threadPublication.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: ['pub-read'] } },
+      data: { readerCount: { decrement: 1 } },
+    });
+  });
+
+  it('touches no reader counts for an account that read nothing', async () => {
+    tx.threadPublicationReader.findMany.mockResolvedValue([]);
+
+    await repository.applyDeletion('account-private-1', 'event-1', new Date());
+
+    expect(tx.threadPublicationReader.deleteMany).not.toHaveBeenCalled();
   });
 });

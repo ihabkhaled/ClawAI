@@ -33,10 +33,15 @@ on the article. Live cloud-model generation ran through research, authors, conse
    pressure; production still runs the earlier SHA. Prove host load first.
 4. Lighthouse on the article page with JSON-LD (L13).
 
+## Shipped from the pack
+
+TOON export, automatic admin ticket on final failure, and the views/signed-in readers
+counter ([change record](../../changes/2026-10-07-threads-views-counter.md); the
+reader-identity modal waits on a privacy decision).
+
 ## Pack items outside the approved plan (owner decision needed)
 
-Views/readers counter, web push and email on "ready for review", automatic admin
-incident ticket after final failure, TOON export, dedicated marketing pages with
+Web push and email on "ready for review", dedicated marketing pages with
 real screenshots, and a separate plan flag for generation. Each changes scope,
 privacy or money, so none was added silently.
 

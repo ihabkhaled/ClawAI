@@ -84,6 +84,8 @@ export type PublicThreadPublication = {
   publicationType: ThreadPublicationType;
   content: { markdown: string; citations: Array<{ url: string }> };
   publishedAt: string;
+  viewCount: number;
+  readerCount: number;
 };
 
 export type PublicThreadComment = {
@@ -160,6 +162,7 @@ export type ThreadPublicArticleProps = {
   truncatedLabel: string;
   citationsLabel: string;
   publishedLabel: string;
+  viewsLabel: string;
 };
 
 export type ThreadPublicPageViewProps = {

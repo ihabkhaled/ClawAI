@@ -505,6 +505,8 @@ export class PublicationsRepository {
         contentLocale: true,
         publicationType: true,
         publishedAt: true,
+        viewCount: true,
+        readerCount: true,
         revisions: {
           where: {
             reviewStatus: RevisionReviewStatus.OWNER_APPROVED,
@@ -532,6 +534,8 @@ export class PublicationsRepository {
           publicationType: publication.publicationType as PublicPublication['publicationType'],
           content: content.data,
           publishedAt: publication.publishedAt,
+          viewCount: publication.viewCount,
+          readerCount: publication.readerCount,
         }
       : null;
   }

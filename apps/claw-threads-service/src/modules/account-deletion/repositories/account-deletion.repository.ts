@@ -6,7 +6,9 @@ import {
   PublicationStatus,
   RevisionReviewStatus,
 } from '../../../generated/prisma';
+import { AppConfig } from '../../../app/config/app.config';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { hashReader } from '../../publications/utilities/publication-viewer.utility';
 
 @Injectable()
 export class AccountDeletionRepository {
@@ -52,6 +54,20 @@ export class AccountDeletionRepository {
           data: { authorId: null },
         });
         await transaction.threadPublicationReaction.deleteMany({ where: { userId } });
+        // A reader is only a keyed hash, but it is still removed with the account, and the
+        // distinct-reader count of each publication they read goes down by one.
+        const readerHash = hashReader(AppConfig.get().INTER_SERVICE_AUTH_TOKEN, userId);
+        const read = await transaction.threadPublicationReader.findMany({
+          where: { readerHash },
+          select: { publicationId: true },
+        });
+        if (read.length > 0) {
+          await transaction.threadPublicationReader.deleteMany({ where: { readerHash } });
+          await transaction.threadPublication.updateMany({
+            where: { id: { in: read.map(({ publicationId }) => publicationId) } },
+            data: { readerCount: { decrement: 1 } },
+          });
+        }
         await transaction.threadPublicationReport.updateMany({
           where: { OR: [{ reporterId: userId }, { moderatedBy: userId }] },
           data: { reporterId: null, moderatedBy: null, details: null },

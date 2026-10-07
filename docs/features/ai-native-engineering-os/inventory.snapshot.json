@@ -3689,8 +3689,18 @@
         },
         {
           "method": "POST",
+          "route": "/thread-publications/public/:slug/reader-view",
+          "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-views.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/thread-publications/public/:slug/reports",
           "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-community.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/thread-publications/public/:slug/view",
+          "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-views.controller.ts"
         },
         {
           "method": "GET",
@@ -9081,7 +9091,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5847
+        "value": 5848
       },
       "localeCount": 13,
       "locales": [
@@ -11096,12 +11106,22 @@
           {
             "confidence": "verified",
             "source": "apps/claw-threads-service/prisma/schema.prisma",
+            "value": "ThreadPublicationReader"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-threads-service/prisma/schema.prisma",
             "value": "ThreadPublicationReport"
           },
           {
             "confidence": "verified",
             "source": "apps/claw-threads-service/prisma/schema.prisma",
             "value": "ThreadPublicationRevision"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-threads-service/prisma/schema.prisma",
+            "value": "ThreadPublicationView"
           }
         ],
         "provider": {
@@ -11319,7 +11339,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 729
+        "testFiles": 730
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -11363,7 +11383,7 @@
       },
       "claw-threads-service": {
         "runner": "vitest",
-        "testFiles": 20
+        "testFiles": 24
       },
       "claw-workspace-service": {
         "runner": "vitest",
@@ -12152,7 +12172,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 56,
-    "endpointCount": 830,
+    "endpointCount": 832,
     "envVarCount": 375,
     "eventCount": 188,
     "frontendRouteCount": 160,
@@ -12164,7 +12184,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2125,
+    "totalTestFiles": 2130,
     "workspaceCount": 27
   }
 }

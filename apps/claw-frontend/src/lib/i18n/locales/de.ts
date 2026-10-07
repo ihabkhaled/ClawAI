@@ -718,6 +718,7 @@ export const de: TranslationDictionary = {
     threadPublicLoadFailed: 'Diese Veröffentlichung konnte nicht geladen werden.',
     threadPublicTruncated: 'Der Artikel wurde für die Anzeige gekürzt.',
     threadPublicPublished: 'Veröffentlicht',
+    threadPublicViews: '{views} Aufrufe · {readers} angemeldete Leser',
     threadPublicCitations: 'Quellen',
     threadPublicReactions: 'Reaktionen',
     threadPublicLike: 'Gefällt mir',

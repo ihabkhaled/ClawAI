@@ -689,6 +689,7 @@ export const ar: TranslationDictionary = {
     threadPublicLoadFailed: 'تعذر تحميل هذا المنشور.',
     threadPublicTruncated: 'تم اختصار المقالة للعرض.',
     threadPublicPublished: 'تاريخ النشر',
+    threadPublicViews: '{views} مشاهدة · {readers} قارئ مسجّل',
     threadPublicCitations: 'المراجع',
     threadPublicReactions: 'التفاعلات',
     threadPublicLike: 'أعجبني',

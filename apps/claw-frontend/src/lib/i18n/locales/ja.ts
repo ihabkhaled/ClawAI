@@ -702,6 +702,7 @@ export const ja: TranslationDictionary = {
     threadPublicLoadFailed: '公開記事を読み込めませんでした。',
     threadPublicTruncated: '表示用に記事を短縮しています。',
     threadPublicPublished: '公開日',
+    threadPublicViews: '{views} 回表示 · ログイン読者 {readers} 人',
     threadPublicCitations: '出典',
     threadPublicReactions: 'リアクション',
     threadPublicLike: 'いいね',

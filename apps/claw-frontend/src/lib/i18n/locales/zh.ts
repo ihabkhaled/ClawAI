@@ -668,6 +668,7 @@ export const zh: TranslationDictionary = {
     threadPublicLoadFailed: '无法加载此公开文章。',
     threadPublicTruncated: '文章已缩短以便显示。',
     threadPublicPublished: '发布时间',
+    threadPublicViews: '{views} 次浏览 · {readers} 位登录读者',
     threadPublicCitations: '引用来源',
     threadPublicReactions: '反馈',
     threadPublicLike: '赞',

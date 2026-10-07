@@ -709,6 +709,7 @@ export const es: TranslationDictionary = {
     threadPublicLoadFailed: 'No se pudo cargar esta publicación.',
     threadPublicTruncated: 'El artículo se ha acortado para mostrarlo.',
     threadPublicPublished: 'Publicado',
+    threadPublicViews: '{views} vistas · {readers} lectores con sesión',
     threadPublicCitations: 'Fuentes',
     threadPublicReactions: 'Reacciones',
     threadPublicLike: 'Me gusta',
