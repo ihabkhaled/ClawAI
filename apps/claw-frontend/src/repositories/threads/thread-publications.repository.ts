@@ -95,26 +95,26 @@ export const threadPublicationsRepository = {
   },
   async getGenerationState(publicationId: string): Promise<ThreadGenerationState> {
     const response = await apiClient.get<ThreadGenerationState>(
-      `/thread-publications/${publicationId}/generation-state`,
+      `/thread-publications/${encodeURIComponent(publicationId)}/generation-state`,
     );
     return response.data;
   },
   async cancelGeneration(publicationId: string): Promise<CancelGenerationResponse> {
     const response = await apiClient.post<CancelGenerationResponse>(
-      `/thread-publications/${publicationId}/cancel-generation`,
+      `/thread-publications/${encodeURIComponent(publicationId)}/cancel-generation`,
       {},
     );
     return response.data;
   },
   async publish(publicationId: string): Promise<void> {
-    await apiClient.post(`/thread-publications/${publicationId}/publish`, {});
+    await apiClient.post(`/thread-publications/${encodeURIComponent(publicationId)}/publish`, {});
   },
   async editRevision(
     publicationId: string,
     request: ThreadRevisionRequest,
   ): Promise<ThreadRevisionRequestResult> {
     const response = await apiClient.post<ThreadRevisionRequestResult>(
-      `/thread-publications/${publicationId}/revisions`,
+      `/thread-publications/${encodeURIComponent(publicationId)}/revisions`,
       request,
     );
     return response.data;
@@ -124,13 +124,13 @@ export const threadPublicationsRepository = {
     revisionId: string,
   ): Promise<ThreadRevisionReviewState> {
     const response = await apiClient.get<ThreadRevisionReviewState>(
-      `/thread-publications/${publicationId}/revisions/${revisionId}/revalidation-state`,
+      `/thread-publications/${encodeURIComponent(publicationId)}/revisions/${encodeURIComponent(revisionId)}/revalidation-state`,
     );
     return response.data;
   },
   async listChangeRequests(publicationId: string): Promise<ThreadPublicationChangeRequest[]> {
     const response = await apiClient.get<ThreadPublicationChangeRequest[]>(
-      `/thread-publications/${publicationId}/change-requests`,
+      `/thread-publications/${encodeURIComponent(publicationId)}/change-requests`,
     );
     return response.data;
   },
@@ -140,7 +140,7 @@ export const threadPublicationsRepository = {
     request: ResolveThreadPublicationChangeRequest,
   ): Promise<ThreadPublicationChangeRequestResolution> {
     const response = await apiClient.post<ThreadPublicationChangeRequestResolution>(
-      `/thread-publications/${publicationId}/change-requests/${requestId}`,
+      `/thread-publications/${encodeURIComponent(publicationId)}/change-requests/${encodeURIComponent(requestId)}`,
       request,
     );
     return response.data;
@@ -150,12 +150,12 @@ export const threadPublicationsRepository = {
     format: ThreadPublicationExportFormat,
   ): Promise<ThreadPublicationExport> {
     const response = await apiClient.get<ThreadPublicationExport>(
-      `/thread-publications/${publicationId}/export`,
+      `/thread-publications/${encodeURIComponent(publicationId)}/export`,
       { format },
     );
     return response.data;
   },
   async unpublish(publicationId: string): Promise<void> {
-    await apiClient.post(`/thread-publications/${publicationId}/unpublish`, {});
+    await apiClient.post(`/thread-publications/${encodeURIComponent(publicationId)}/unpublish`, {});
   },
 };

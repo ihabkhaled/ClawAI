@@ -12,6 +12,7 @@ import { useThreadGenerationForm } from '@/hooks/threads/use-thread-generation-f
 import { useThreadPublications } from '@/hooks/threads/use-thread-publications';
 import { useTranslation } from '@/lib/i18n';
 import { threadPublicationsRepository } from '@/repositories/threads/thread-publications.repository';
+import { parsePublicationIdParam } from '@/utilities/thread-publication-id-param.utility';
 import { createThreadRevisionRequest } from '@/utilities/thread-revision-request.utility';
 
 export default function ThreadPublicationsPage(): ReactElement {
@@ -21,7 +22,7 @@ export default function ThreadPublicationsPage(): ReactElement {
   const form = useThreadGenerationForm({ onStarted: handleStarted });
   const searchParams = useSearchParams();
   const [activePublicationId, setActivePublicationId] = useState(
-    searchParams.get('publication') ?? '',
+    parsePublicationIdParam(searchParams.get('publication')),
   );
   const [editingRevision, setEditingRevision] = useState(false);
   const [revisionMarkdown, setRevisionMarkdown] = useState('');

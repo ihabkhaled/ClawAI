@@ -39,6 +39,8 @@ lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (
 
 7. The pack's primary entry point (an action inside the chat) did not exist; added and walked live: chat header menu -> modal (source fixed, topic from the chat title, consent box, start disabled until ticked, cloud models only) -> Start generation -> portal opened on `?publication=<id>` with the live Cancel control; cancel requested and acknowledged. Mobile 390: menu lists the action, no overflow. Screenshots `.playwright-mcp/thread-modal-{desktop,filled,mobile}.png`, `thread-portal-after-modal.png`. The ClawAI "Install" prompt (fixed, z-120) can sit over the modal's Start button on short viewports; not changed here.
 
+8. Security review of the new `?publication=` param found it could reach API paths unchecked. It is now accepted only when shaped like an id (`parsePublicationIdParam`, tested with `../x`, slashes, long and empty values), and the publication API client encodes every id, revision id and request id it puts in a path (192 repository and utility tests pass).
+
 ## Open gaps
 
 L06 paid and custom-role accounts and a live plan toggle; L08 a live run that passes the Judge and Critic, then owner approve, publish and community steps (needs better evidence or tuned thresholds, an owner decision); L13 Lighthouse for the changed article page; L15 CI and production deployment (release v1.194.2/3 builds were stopped by VPS memory pressure). Also not built from the pack and not in the approved plan: views/readers counter, web push and email notification on ready, automatic admin incident ticket on final failure, TOON export, dedicated marketing pages. Close by owner decision on scope, then a capped live run.
