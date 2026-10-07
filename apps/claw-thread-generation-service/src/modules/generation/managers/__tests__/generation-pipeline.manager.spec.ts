@@ -74,6 +74,8 @@ const draft = (markdown: string) =>
     markdown,
     citations: [{ evidenceId: 'source-1', url: 'https://example.org/source' }],
   });
+const vote = (markdown: string, agrees = true) =>
+  JSON.stringify({ agrees, draftHash: revisionDraftHash(JSON.parse(draft(markdown))) });
 const review = (score: number) =>
   JSON.stringify({ score, blockers: [], findings: [], revisionBrief: '' });
 
@@ -83,6 +85,9 @@ describe('GenerationPipelineManager', () => {
       draft('# Draft'),
       draft('# Draft'),
       draft('# Draft'),
+      vote('# Draft'),
+      vote('# Draft'),
+      vote('# Draft'),
       review(80),
       review(75),
     ]);
@@ -94,11 +99,80 @@ describe('GenerationPipelineManager', () => {
     );
   });
 
+  it('accepts a valid JSON answer wrapped in a code fence', async () => {
+    const fenced = (text: string) => `\`\`\`json
+${text}
+\`\`\``;
+    const harness = build([
+      fenced(draft('grounded article')),
+      fenced(draft('grounded article')),
+      fenced(draft('grounded article')),
+      fenced(vote('grounded article')),
+      fenced(vote('grounded article')),
+      fenced(vote('grounded article')),
+      fenced(review(80)),
+      fenced(review(75)),
+    ]);
+
+    const result = await harness.manager.generate(input);
+
+    expect(result.rounds).toBe(1);
+  });
+
+  it('tells authors and reviewers the exact JSON shape to return', async () => {
+    const harness = build([
+      draft('grounded article'),
+      draft('grounded article'),
+      draft('grounded article'),
+      vote('grounded article'),
+      vote('grounded article'),
+      vote('grounded article'),
+      review(80),
+      review(75),
+    ]);
+
+    await harness.manager.generate(input);
+
+    const systemPrompts = harness.models.generate.mock.calls.map((call) => call[0].systemPrompt);
+    expect(systemPrompts[0]).toContain('"citations": [{"evidenceId": string, "url": string}]');
+    expect(systemPrompts[6]).toContain('"score": integer 0-100');
+  });
+
+  it('retries a model once when its answer is not the requested JSON shape', async () => {
+    const harness = build([
+      'not json at all',
+      draft('grounded article'),
+      draft('grounded article'),
+      draft('grounded article'),
+      vote('grounded article'),
+      vote('grounded article'),
+      vote('grounded article'),
+      review(80),
+      review(75),
+    ]);
+
+    const result = await harness.manager.generate(input);
+
+    expect(result.rounds).toBe(1);
+    expect(harness.models.generate).toHaveBeenCalledTimes(9);
+    const requestIds = harness.models.generate.mock.calls.map((call) => call[0].requestId);
+    expect(requestIds.filter((id) => id.endsWith(':try-2'))).toHaveLength(1);
+  });
+
+  it('fails the attempt when a model keeps answering in the wrong shape', async () => {
+    const harness = build(['nope', 'still nope', draft('x'), draft('x')]);
+
+    await expect(harness.manager.generate(input)).rejects.toThrow('An author role failed');
+  });
+
   it('passes identical source and evidence to every role and accepts threshold boundaries', async () => {
     const harness = build([
       draft('grounded article'),
       draft('grounded article'),
       draft('grounded article'),
+      vote('grounded article'),
+      vote('grounded article'),
+      vote('grounded article'),
       review(80),
       review(75),
     ]);
@@ -111,9 +185,9 @@ describe('GenerationPipelineManager', () => {
     ]);
     expect(harness.research.run).toHaveBeenCalledOnce();
     expect(harness.jobs.saveResearchEvidence).toHaveBeenCalledOnce();
-    expect(harness.jobs.saveCommunication).toHaveBeenCalledTimes(5);
+    expect(harness.jobs.saveCommunication).toHaveBeenCalledTimes(8);
     const prompts = harness.models.generate.mock.calls.map((call) => call[0].userPrompt);
-    expect(prompts).toHaveLength(5);
+    expect(prompts).toHaveLength(8);
     expect(prompts.every((prompt) => prompt.includes(JSON.stringify(evidenceBundle)))).toBe(true);
     expect(prompts.every((prompt) => prompt.includes(JSON.stringify(input.sourceSnapshot)))).toBe(
       true,
@@ -131,6 +205,9 @@ describe('GenerationPipelineManager', () => {
       .mockResolvedValueOnce(JSON.parse(draft('grounded article')))
       .mockResolvedValueOnce(JSON.parse(draft('grounded article')))
       .mockResolvedValueOnce(JSON.parse(draft('grounded article')))
+      .mockResolvedValueOnce(JSON.parse(vote('grounded article')))
+      .mockResolvedValueOnce(JSON.parse(vote('grounded article')))
+      .mockResolvedValueOnce(JSON.parse(vote('grounded article')))
       .mockResolvedValueOnce(JSON.parse(review(80)))
       .mockResolvedValueOnce(JSON.parse(review(75)));
 
@@ -141,14 +218,20 @@ describe('GenerationPipelineManager', () => {
     expect(harness.models.generate).not.toHaveBeenCalled();
   });
 
-  it('restarts the round when author hashes disagree', async () => {
+  it('restarts the round when an author votes against the exact candidate hash', async () => {
     const harness = build([
       draft('draft A'),
       draft('draft B'),
       draft('draft A'),
+      vote('draft A'),
+      vote('draft A', false),
+      vote('draft A'),
       draft('draft C'),
       draft('draft C'),
       draft('draft C'),
+      vote('draft C'),
+      vote('draft C'),
+      vote('draft C'),
       review(80),
       review(75),
     ]);
@@ -156,22 +239,65 @@ describe('GenerationPipelineManager', () => {
     const result = await harness.manager.generate(input);
 
     expect(result.rounds).toBe(2);
-    expect(harness.models.generate).toHaveBeenCalledTimes(8);
+    expect(harness.models.generate).toHaveBeenCalledTimes(14);
+    const roundTwoBrief = harness.models.generate.mock.calls[6]?.[0].userPrompt;
+    expect(roundTwoBrief).toContain('Authors did not all agree');
+    expect(roundTwoBrief).toContain('draft A');
   });
 
-  it('rejects citations that are not in the shared evidence bundle', async () => {
+  it('does not accept an agreement that names a different draft hash', async () => {
     const harness = build([
-      JSON.stringify({
-        markdown: 'not grounded',
-        citations: [{ evidenceId: 'other', url: 'https://bad.example' }],
-      }),
-      draft('grounded'),
-      draft('grounded'),
+      ...Array.from({ length: 3 }, () => draft('draft A')),
+      vote('draft A'),
+      vote('draft A'),
+      vote('another draft'),
+      ...Array.from({ length: 3 }, () => draft('draft A')),
+      vote('draft A'),
+      vote('draft A'),
+      vote('another draft'),
+      ...Array.from({ length: 3 }, () => draft('draft A')),
+      vote('draft A'),
+      vote('draft A'),
+      vote('another draft'),
     ]);
 
     await expect(harness.manager.generate(input)).rejects.toThrow(
-      'A draft cited a URL outside its evidence bundle',
+      'Generation did not pass consensus and reviews in three rounds',
     );
+  });
+
+  it('does not accept citations that are not in the shared evidence bundle', async () => {
+    const ungrounded = JSON.stringify({
+      markdown: 'not grounded',
+      citations: [{ evidenceId: 'other', url: 'https://bad.example' }],
+    });
+    const harness = build([ungrounded, draft('grounded'), draft('grounded'), ungrounded]);
+
+    await expect(harness.manager.generate(input)).rejects.toThrow('An author role failed');
+  });
+
+  it('retries an author whose first draft cites outside the evidence bundle', async () => {
+    const ungrounded = JSON.stringify({
+      markdown: 'not grounded',
+      citations: [{ evidenceId: 'other', url: 'https://bad.example' }],
+    });
+    const harness = build([
+      ungrounded,
+      draft('grounded'),
+      draft('grounded'),
+      draft('grounded'),
+      vote('grounded'),
+      vote('grounded'),
+      vote('grounded'),
+      review(80),
+      review(75),
+    ]);
+
+    const result = await harness.manager.generate(input);
+
+    expect(result.citations).toEqual([
+      { evidenceId: 'source-1', url: 'https://example.org/source' },
+    ]);
   });
 
   it('requires at least three authors before running research', async () => {

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const MAX_GENERATION_ROUNDS = 3;
+export const FORMAT_ATTEMPTS_PER_MODEL = 2;
 export const MAX_GENERATION_ATTEMPTS = 3;
 export const GENERATION_WORKER_SLOT_IDS = ['threads-worker-1', 'threads-worker-2'] as const;
 export const GENERATION_LEASE_MS = 90_000;

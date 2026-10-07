@@ -21,7 +21,7 @@ npm run dev
 - Database: postgresql
 - Prisma models: ThreadDeletedAccount, ThreadGenerationAttempt, ThreadGenerationCheckpoint, ThreadGenerationJob, ThreadGenerationWorkerSlot, ThreadModelCommunication, ThreadRevisionDraft
 - API endpoints: 5 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 16 (vitest)
+- Test files: 18 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

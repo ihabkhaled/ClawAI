@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { z } from 'zod';
 
 import {
+  FORMAT_ATTEMPTS_PER_MODEL,
   MAX_GENERATION_ROUNDS,
   MIN_CRITIC_SCORE,
   MIN_JUDGE_SCORE,
@@ -14,6 +15,7 @@ import { GenerationJobsRepository } from '../repositories/generation-jobs.reposi
 import { ThreadGenerationCancelledError } from '../utilities/thread-generation-cancelled.error';
 import { ThreadGenerationLeaseLostError } from '../utilities/thread-generation-lease-lost.error';
 import { stableJson } from '../utilities/stable-json.utility';
+import { stripCodeFence } from '../utilities/strip-code-fence.utility';
 import { ReviewerRole } from '../types/reviewer-role.enum';
 import {
   type AuthorDraft,
@@ -82,28 +84,53 @@ export class GenerationPipelineManager {
         sharedMaterial,
         evidence.sha256,
         revisionBrief,
+        evidenceItems,
       );
       const drafts = this.requireFulfilled(authorResults, 'An author role failed');
       this.validateCitations(drafts, evidenceItems);
-      const consensus = resolveAuthorConsensus(
-        drafts.map((draft, index) => ({
-          role: job.authors[index]?.id ?? `author-${String(index + 1)}`,
-          draftHash: this.hash(
-            JSON.stringify({
-              markdown: draft.markdown,
-              citations: draft.citations.map(({ evidenceId, url }) => ({ evidenceId, url })),
-            }),
+      // Independent models never write byte-identical drafts, so consensus is a vote:
+      // one candidate, and every author must agree with its exact hash.
+      const candidate = drafts[0];
+      if (!candidate)
+        throw new ServiceUnavailableException('Author consensus did not produce a draft');
+      const candidateHash = revisionDraftHash(candidate);
+      const voteMaterial = JSON.stringify({
+        version: 1,
+        topic: job.topic,
+        publicationType: job.publicationType,
+        sourceSnapshot: job.sourceSnapshot,
+        researchEvidence: evidence.bundle,
+        exactCandidateHash: candidateHash,
+      });
+      const voteResults = await Promise.allSettled(
+        job.authors.map((role) =>
+          this.callRevisionVote(
+            job,
+            role,
+            candidate,
+            candidateHash,
+            voteMaterial,
+            evidence.sha256,
+            {
+              communicationPrefix: 'consensus-author',
+              round,
+            },
           ),
+        ),
+      );
+      const votes = this.requireFulfilled(voteResults, 'An author role failed to vote');
+      const consensus = resolveAuthorConsensus(
+        votes.map((vote) => ({
+          role: vote.roleId,
+          draftHash: vote.agrees ? vote.draftHash : `dissent:${vote.roleId}`,
         })),
       );
-      if (consensus.status !== 'consensus') {
-        revisionBrief =
-          'Resolve author differences and return one consistent, evidence-backed draft.';
+      if (consensus.status !== 'consensus' || consensus.draftHash !== candidateHash) {
+        revisionBrief = `Authors did not all agree. Improve this candidate for factual support, coherence and evidence use, then return the complete improved draft: ${JSON.stringify(candidate)}`;
         continue;
       }
 
-      const draft = drafts[0];
-      if (!draft) throw new ServiceUnavailableException('Author consensus did not produce a draft');
+      const draft = candidate;
       const judge = await this.callReview(
         job,
         job.judge,
@@ -224,10 +251,19 @@ export class GenerationPipelineManager {
     sharedMaterial: string,
     evidenceHash: string,
     revisionBrief: string,
+    evidenceItems: Map<string, string>,
   ) {
     return Promise.allSettled(
       job.authors.map((role) =>
-        this.callAuthor(job, role, round, sharedMaterial, evidenceHash, revisionBrief),
+        this.callAuthor(
+          job,
+          role,
+          round,
+          sharedMaterial,
+          evidenceHash,
+          revisionBrief,
+          evidenceItems,
+        ),
       ),
     );
   }
@@ -265,9 +301,10 @@ export class GenerationPipelineManager {
     sharedMaterial: string,
     evidenceHash: string,
     revisionBrief: string,
+    evidenceItems: Map<string, string>,
   ): Promise<AuthorDraft> {
     const prompts = {
-      systemPrompt: `Write the requested publication in ${new Intl.DisplayNames(['en'], { type: 'language' }).of(input.contentLocale) ?? input.contentLocale} (${input.contentLocale}). Use only the supplied source and research evidence. Return JSON with markdown and citations [{evidenceId,url}]. Do not include analysis or hidden reasoning.`,
+      systemPrompt: `Write the requested publication in ${new Intl.DisplayNames(['en'], { type: 'language' }).of(input.contentLocale) ?? input.contentLocale} (${input.contentLocale}). Use only the supplied source and research evidence. Return only one JSON object shaped {"markdown": string, "citations": [{"evidenceId": string, "url": string}]} with no code fences and no other keys. Cite only evidence items from researchEvidence.items, using their id and url. Do not include analysis or hidden reasoning.`,
       userPrompt: `${sharedMaterial}\nRevision brief: ${revisionBrief || 'Create a complete first draft.'}`,
     };
     const saved = await this.jobs.findCommunication(
@@ -282,9 +319,17 @@ export class GenerationPipelineManager {
       if (!parsed.success) throw new ServiceUnavailableException('A saved author draft is invalid');
       return parsed.data;
     }
-    const response = await this.callRole(input, role, `author-${role.id}`, round, {
-      ...prompts,
-    });
+    const response = await this.callRole(
+      input,
+      role,
+      `author-${role.id}`,
+      round,
+      prompts,
+      // A draft citing anything outside the evidence bundle is a wrong answer, so retry it.
+      authorDraftSchema.refine((draft) =>
+        draft.citations.every(({ evidenceId, url }) => evidenceItems.get(evidenceId) === url),
+      ),
+    );
     const parsed = authorDraftSchema.safeParse(this.parseJson(response.content));
     if (!parsed.success)
       throw new ServiceUnavailableException('An author returned an invalid draft');
@@ -310,7 +355,7 @@ export class GenerationPipelineManager {
     evidenceHash: string,
   ) {
     const prompts = {
-      systemPrompt: `Review the draft independently as ${reviewer}. Return JSON with score 0-100, blockers, up to five findings, and a short revisionBrief. Do not include chain-of-thought.`,
+      systemPrompt: `Review the draft independently as ${reviewer}. Return only one JSON object shaped {"score": integer 0-100, "blockers": string[], "findings": string[] (at most five), "revisionBrief": string} with no code fences. Do not include chain-of-thought.`,
       userPrompt: `${sharedMaterial}\nDraft:\n${JSON.stringify(draft)}`,
     };
     const saved = await this.jobs.findCommunication(
@@ -326,9 +371,14 @@ export class GenerationPipelineManager {
         throw new ServiceUnavailableException(`${reviewer} has a saved invalid review`);
       return parsed.data;
     }
-    const response = await this.callRole(input, role, reviewer.toLowerCase(), round, {
-      ...prompts,
-    });
+    const response = await this.callRole(
+      input,
+      role,
+      reviewer.toLowerCase(),
+      round,
+      prompts,
+      reviewSchema,
+    );
     const parsed = reviewSchema.safeParse(this.parseJson(response.content));
     if (!parsed.success)
       throw new ServiceUnavailableException(`${reviewer} returned an invalid review`);
@@ -351,22 +401,35 @@ export class GenerationPipelineManager {
     draftHash: string,
     sharedMaterial: string,
     evidenceHash: string,
+    { communicationPrefix, round }: { communicationPrefix: string; round: number } = {
+      communicationPrefix: 'revision-author',
+      round: 1,
+    },
   ) {
-    const communicationRole = { ...role, id: `revision-author-${role.id}` };
+    const communicationRole = { ...role, id: `${communicationPrefix}-${role.id}` };
     const prompts = {
       systemPrompt:
-        'Review the exact owner-edited draft for factual support, coherence, and safety. Do not rewrite it. Return JSON with agrees (boolean) and draftHash copied exactly from the supplied candidate hash. Do not include chain-of-thought.',
+        'Review the exact candidate draft for factual support, coherence, and safety. Do not rewrite it. Return JSON with agrees (boolean) and draftHash copied exactly from the supplied candidate hash. Do not include chain-of-thought.',
       userPrompt: `${sharedMaterial}\nExact candidate hash: ${draftHash}\nDraft:\n${JSON.stringify(draft)}`,
     };
     const saved = await this.jobs.findCommunication(
       input.jobId,
       communicationRole.id,
-      1,
+      round,
       evidenceHash,
       this.hash(`${prompts.systemPrompt}\n${prompts.userPrompt}`),
     );
     const response =
-      saved === null ? await this.callRole(input, role, communicationRole.id, 1, prompts) : null;
+      saved === null
+        ? await this.callRole(
+            input,
+            role,
+            communicationRole.id,
+            round,
+            prompts,
+            revisionAuthorResponseSchema,
+          )
+        : null;
     const parsed = revisionAuthorResponseSchema.safeParse(
       saved ?? this.parseJson(response?.content ?? ''),
     );
@@ -379,7 +442,7 @@ export class GenerationPipelineManager {
         jobId: input.jobId,
         attempt: input.attempt,
         role: communicationRole.id,
-        round: 1,
+        round,
         inputHash: this.hash(`${prompts.systemPrompt}\n${prompts.userPrompt}`),
         evidenceHash,
         response,
@@ -418,29 +481,35 @@ export class GenerationPipelineManager {
     roleKey: string,
     round: number,
     prompt: { systemPrompt: string; userPrompt: string },
+    accepts: z.ZodType,
   ) {
     const candidates = [{ provider: role.provider, model: role.model }, ...role.fallbacks];
     const outputReserve = role.maxOutputTokens;
     let lastError: unknown;
     for (const [index, candidate] of candidates.entries()) {
-      await this.throwIfCancelled(input);
-      const requestId = `${input.jobId}:${roleKey}:round-${String(round)}:attempt-${String(index + 1)}`;
-      try {
-        const response = await this.models.generate({
-          ownerId: input.ownerId,
-          requestId,
-          budgetId: input.budgetId,
-          provider: candidate.provider,
-          model: candidate.model,
-          systemPrompt: prompt.systemPrompt,
-          userPrompt: prompt.userPrompt,
-          maxOutputTokens: outputReserve,
-        });
+      // A model that answers in the wrong shape gets one more try before its fallback.
+      for (let attempt = 1; attempt <= FORMAT_ATTEMPTS_PER_MODEL; attempt += 1) {
         await this.throwIfCancelled(input);
-        return response;
-      } catch (error: unknown) {
-        if (error instanceof ThreadGenerationCancelledError) throw error;
-        lastError = error;
+        const requestId = `${input.jobId}:${roleKey}:round-${String(round)}:attempt-${String(index + 1)}${attempt > 1 ? `:try-${String(attempt)}` : ''}`;
+        try {
+          const response = await this.models.generate({
+            ownerId: input.ownerId,
+            requestId,
+            budgetId: input.budgetId,
+            provider: candidate.provider,
+            model: candidate.model,
+            systemPrompt: prompt.systemPrompt,
+            userPrompt: prompt.userPrompt,
+            maxOutputTokens: outputReserve,
+          });
+          await this.throwIfCancelled(input);
+          if (accepts.safeParse(this.tryParseJson(response.content)).success) return response;
+          lastError = new ServiceUnavailableException('A model returned invalid structured output');
+        } catch (error: unknown) {
+          if (error instanceof ThreadGenerationCancelledError) throw error;
+          lastError = error;
+          break;
+        }
       }
     }
     throw lastError instanceof Error
@@ -486,7 +555,9 @@ export class GenerationPipelineManager {
     ) {
       throw rejected.reason;
     }
-    if (rejected?.status === 'rejected') throw new ServiceUnavailableException(message);
+    if (rejected?.status === 'rejected') {
+      throw new ServiceUnavailableException(message, { cause: rejected.reason });
+    }
     return results.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : []));
   }
 
@@ -502,12 +573,20 @@ export class GenerationPipelineManager {
     });
   }
 
-  private parseJson(content: string): unknown {
+  private tryParseJson(content: string): unknown {
     try {
-      return JSON.parse(content);
+      return JSON.parse(stripCodeFence(content));
     } catch {
+      return undefined;
+    }
+  }
+
+  private parseJson(content: string): unknown {
+    const parsed = this.tryParseJson(content);
+    if (parsed === undefined) {
       throw new ServiceUnavailableException('A model returned invalid structured output');
     }
+    return parsed;
   }
 
   private hash(value: string): string {

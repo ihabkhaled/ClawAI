@@ -28,6 +28,13 @@ export type ChatModelRequest = {
   maxOutputTokens: number;
 };
 
+const gatewayErrorSchema = z.object({
+  code: z
+    .string()
+    .regex(/^[A-Z][A-Z0-9_]{2,59}$/u)
+    .optional(),
+});
+
 export type ChatModelResponse = z.infer<typeof modelResponseSchema>;
 
 @Injectable()
@@ -80,7 +87,7 @@ export class ChatModelClient {
     }
     if (!response.ok) {
       throw new ServiceUnavailableException(
-        `Chat model request failed (${String(response.status)})`,
+        `Chat model request failed (${String(response.status)}${await describeGatewayError(response)})`,
       );
     }
     const parsed = modelResponseSchema.safeParse(await response.json());
@@ -89,4 +96,11 @@ export class ChatModelClient {
     }
     return parsed.data;
   }
+}
+
+// Only a machine code (e.g. CLOUD_PROVIDER_EMPTY_RESPONSE) is kept: upstream free text
+// could echo provider output, so it is dropped before it reaches an exception or a log.
+async function describeGatewayError(response: Response): Promise<string> {
+  const parsed = gatewayErrorSchema.safeParse(await response.json().catch(() => null));
+  return parsed.success && parsed.data.code ? `: ${parsed.data.code}` : '';
 }

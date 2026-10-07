@@ -30,6 +30,7 @@ import type {
   PrivateGenerationState,
 } from '../types/generation-pipeline.types';
 import { stableJson } from '../utilities/stable-json.utility';
+import { describeFailure } from '../utilities/describe-failure.utility';
 
 import {
   GENERATION_HEARTBEAT_MS,
@@ -268,6 +269,8 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
         }
         return;
       }
+      // Operators need the failing step; never log prompts, drafts or provider bodies.
+      this.logger.warn(`Generation attempt failed: ${describeFailure(error)}`);
       const outcome = await this.repository.retryOrFail(job.id, job.attemptCount);
       if (outcome === GenerationJobRecoveryOutcome.FAILED) {
         await this.closeBudget(job.id, job.budgetId, GenerationBudgetCloseStatus.RELEASED);

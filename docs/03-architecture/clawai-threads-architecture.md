@@ -58,7 +58,12 @@ checks each complete role prompt against routing-service's context window plus
 the output reserve; unknown or oversized windows fail closed without
 truncation.
 
-Three to five authors must agree on one canonical exact draft hash. Judge and
+Three to five authors draft independently; the first author's draft becomes the
+candidate, and every author must return `agrees: true` with that candidate's exact
+draft hash (a vote, because independent models never write byte-identical drafts).
+A dissent or a different hash restarts the round with the candidate as the brief.
+A model whose answer is not the requested JSON shape, or whose citations fall
+outside the evidence bundle, gets one more try before its cross-provider fallback. Judge and
 Critic produce independent structured results, using thresholds of 80 and 75,
 with at most three rounds. Persist evidence, structured role outputs,
 checkpoints, and review scores, not hidden chain-of-thought. Use Markdown for

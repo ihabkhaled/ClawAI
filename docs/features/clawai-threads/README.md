@@ -22,12 +22,12 @@ change requests, comments, reactions, reports, moderation, account deletion,
 
 Public read, community and owner APIs; anonymous/admin/FREE access; IDOR 404s;
 XSS inertness; reaction uniqueness under concurrency; 11 widths plus Arabic RTL
-on the article. Two defects found and fixed (see
+on the article. Live cloud-model generation ran through research, authors, consensus vote and Judge. Defects found and fixed (see
 [change record](../../changes/2026-10-06-threads-live-qa-fixes.md)).
 
 ## Not done - go/no-go blockers
 
-1. A real create-to-publish run with capped models (lane L08).
+1. A live run that passes the Judge and Critic and reaches owner approval and publication (lane L08). Runs reach the Judge and are rejected on citation quality; see the QA record for the tuning questions.
 2. Paid-tier and custom-role matrix and a live plan toggle (L06).
 3. Production rollout: v1.194.2 and v1.194.3 builds were stopped by VPS memory
    pressure; production still runs the earlier SHA. Prove host load first.

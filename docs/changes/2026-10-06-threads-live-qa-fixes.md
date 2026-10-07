@@ -13,6 +13,23 @@ defects, both fixed in `apps/claw-frontend`:
   (headline, description, canonical URL, publish date, language, real sources as
   `citation`). It is never `ScholarlyArticle` and never claims peer review.
 
+Live generation with cloud models (Ollama Cloud, Gemini fallback) found four launch
+blockers in `apps/claw-thread-generation-service`, all fixed here:
+
+- **Schema/migration mismatch.** The first migration created
+  `spend_cap_micro_credits`; the schema and queries read `spend_cap_micro_usd`, so a
+  database built from migrations failed every job. New migration
+  `20261006120000_threads_generation_spend_cap_usd` renames it where needed;
+  `tools/__tests__/threads-schema-migrations.test.mjs` fails when a mapped column or
+  table is missing from a Threads service's migrations.
+- **Impossible consensus.** Consensus required byte-identical independent drafts.
+  It is now one candidate plus an exact-hash vote by every author.
+- **Brittle model output.** Fenced JSON, wrong keys and ungrounded citations failed a
+  whole attempt. Prompts now state the exact JSON shape; fences are stripped; a wrong
+  or ungrounded answer is retried once per model before its fallback.
+- **Silent failures.** Attempt failures are now logged with the failing step and an
+  allow-listed gateway error code (never prompts, drafts or provider text).
+
 Local-only findings (no repo change): a stale `claw_threads` schema missed
 `accepted_revision_id`, and host-generated `src/generated/prisma/package.json`
 files carried a UTF-8 BOM that broke the Docker `prisma generate` step.
