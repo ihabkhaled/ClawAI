@@ -272,6 +272,12 @@
       "source": "infra/nginx/locations.conf"
     },
     {
+      "location": "/api/v1/notifications",
+      "port": 4001,
+      "service": "auth-service",
+      "source": "infra/nginx/locations.conf"
+    },
+    {
       "location": "/api/v1/ollama",
       "port": 4008,
       "service": "ollama-service",

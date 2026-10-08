@@ -2,10 +2,12 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 
 import { PublicationsRepository } from '../repositories/publications.repository';
+import { ThreadNotificationService } from './thread-notification.service';
 import { ThreadsGenerationClient } from './threads-generation.client';
 import type { EditPublicationRevisionDto } from '../dto/edit-publication-revision.dto';
 import type { StartThreadGenerationDto } from '../dto/start-thread-generation.dto';
@@ -29,9 +31,12 @@ import {
 
 @Injectable()
 export class PublicationLifecycleService {
+  private readonly logger = new Logger(PublicationLifecycleService.name);
+
   constructor(
     private readonly publications: PublicationsRepository,
     private readonly generation: ThreadsGenerationClient,
+    private readonly notifications: ThreadNotificationService,
   ) {}
 
   listOwned(ownerId: string): ReturnType<PublicationsRepository['findOwnedPublications']> {
@@ -88,6 +93,12 @@ export class PublicationLifecycleService {
   async approveAndPublish(publicationId: string, ownerId: string): Promise<PublishedPublication> {
     const publication = await this.publications.publishReadyRevision(publicationId, ownerId);
     if (!publication) throw new NotFoundException('Publication not found');
+    // The article is live either way; a lost notice must not turn an approval into an error.
+    try {
+      await this.notifications.notifyPublished(ownerId, publication);
+    } catch {
+      this.logger.warn('Publish notification could not be sent');
+    }
     return publication;
   }
 

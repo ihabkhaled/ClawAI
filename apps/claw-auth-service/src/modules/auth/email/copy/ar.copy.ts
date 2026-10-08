@@ -106,5 +106,46 @@ export const AR_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'إذا لم تكن أنت من أجرى هذا التغيير، يُرجى التواصل مع فريق الدعم لدينا على الفور، إذ قد يكون شخص آخر قادرًا على الوصول إلى حسابك.',
     },
+    [AuthEmailKind.THREAD_READY_FOR_REVIEW]: {
+      subject: 'مسودة Thread الخاصة بك جاهزة لمراجعتك',
+      preheader: 'اقرأها، ثم وافق عليها للنشر أو اطلب تعديلات.',
+      heading: 'Thread الخاص بك جاهز للمراجعة',
+      intro:
+        'أنهى المؤلفون والحَكَم والناقد العمل على Thread الخاص بك. وهو محفوظ بشكل خاص ولم يُنشر شيء بعد.',
+      bodyLines: ['افتحه لقراءة المسودة ومصادرها. ولا يُنشر إلا بعد موافقتك.'],
+      actionLabel: 'مراجعة Thread الخاص بي',
+      fallbackNote: 'إذا لم يعمل الزر، يُرجى نسخ العنوان التالي ولصقه في متصفحك:',
+      expiryNote: null,
+      securityNote:
+        'تصلك هذه الرسالة لأنك بدأت Thread على ClawAI. يمكنك إيقاف هذه الرسائل من إعدادات الإشعارات.',
+    },
+    [AuthEmailKind.THREAD_PUBLISHED]: {
+      subject: 'أصبح Thread الخاص بك عامًا',
+      preheader: 'يمكن للقرّاء فتحه الآن.',
+      heading: 'Thread الخاص بك منشور',
+      intro: 'نُشر «{value}» الآن على ClawAI. ويمكن لأي شخص لديه الرابط قراءته.',
+      bodyLines: [
+        'يمكنك مشاركته، ومعرفة عدد من قرأوه، أو إلغاء نشره في أي وقت من صفحة Threads الخاصة بك.',
+      ],
+      actionLabel: 'فتح Thread الخاص بي',
+      fallbackNote: 'إذا لم يعمل الزر، يُرجى نسخ العنوان التالي ولصقه في متصفحك:',
+      expiryNote: null,
+      securityNote:
+        'تصلك هذه الرسالة لأنك بدأت Thread على ClawAI. يمكنك إيقاف هذه الرسائل من إعدادات الإشعارات.',
+    },
+    [AuthEmailKind.THREAD_FAILED]: {
+      subject: 'تعذّر إكمال Thread الخاص بك',
+      preheader: 'أُفرج عن المبلغ المحجوز له. يمكنك المحاولة مرة أخرى.',
+      heading: 'تعذّر إكمال Thread الخاص بك',
+      intro: 'حدث خطأ أثناء كتابة Thread الخاص بك، وتعذّر إكماله.',
+      bodyLines: [
+        'أُفرج عن المبلغ المحجوز له، وتم إبلاغ فريقنا. يمكنك بدءه من جديد من صفحة Threads الخاصة بك.',
+      ],
+      actionLabel: 'الذهاب إلى Threads الخاصة بي',
+      fallbackNote: 'إذا لم يعمل الزر، يُرجى نسخ العنوان التالي ولصقه في متصفحك:',
+      expiryNote: null,
+      securityNote:
+        'تصلك هذه الرسالة لأنك بدأت Thread على ClawAI. يمكنك إيقاف هذه الرسائل من إعدادات الإشعارات.',
+    },
   },
 };

@@ -1217,6 +1217,31 @@
       },
       {
         "method": "GET",
+        "route": "/notifications",
+        "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/notifications/:id/read",
+        "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/notifications/preferences",
+        "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/notifications/preferences",
+        "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/notifications/read-all",
+        "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/users",
         "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
       },
@@ -4202,5 +4227,5 @@
     ]
   },
   "generated": true,
-  "total": 832
+  "total": 837
 }

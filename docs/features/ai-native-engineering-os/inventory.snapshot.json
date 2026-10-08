@@ -1272,6 +1272,31 @@
         },
         {
           "method": "GET",
+          "route": "/notifications",
+          "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/notifications/:id/read",
+          "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/notifications/preferences",
+          "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
+        },
+        {
+          "method": "PUT",
+          "route": "/notifications/preferences",
+          "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/notifications/read-all",
+          "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/users",
           "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
         },
@@ -7266,6 +7291,11 @@
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
+        "key": "THREAD_GENERATION_COMPLETED",
+        "pattern": "threads.generation_completed",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
         "key": "THREAD_GENERATION_FAILED",
         "pattern": "threads.generation_failed",
         "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -7303,6 +7333,11 @@
       {
         "key": "USER_LOGOUT",
         "pattern": "user.logout",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "USER_NOTIFICATION_REQUESTED",
+        "pattern": "user.notification_requested",
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
@@ -9430,6 +9465,12 @@
         "source": "infra/nginx/locations.conf"
       },
       {
+        "location": "/api/v1/notifications",
+        "port": 4001,
+        "service": "auth-service",
+        "source": "infra/nginx/locations.conf"
+      },
+      {
         "location": "/api/v1/ollama",
         "port": 4008,
         "service": "ollama-service",
@@ -10393,6 +10434,16 @@
           {
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "UserNotification"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "UserNotificationPreference"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "UserPlanAssignment"
           },
           {
@@ -11324,7 +11375,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 154
+        "testFiles": 160
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -11392,7 +11443,7 @@
       },
       "claw-threads-service": {
         "runner": "vitest",
-        "testFiles": 24
+        "testFiles": 27
       },
       "claw-workspace-service": {
         "runner": "vitest",
@@ -12181,19 +12232,19 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 56,
-    "endpointCount": 832,
+    "endpointCount": 837,
     "envVarCount": 375,
-    "eventCount": 188,
+    "eventCount": 190,
     "frontendRouteCount": 161,
     "localeCount": 13,
-    "nginxRouteCount": 69,
+    "nginxRouteCount": 70,
     "permissionCount": 90,
     "portCount": 18,
     "portCoverageGapCount": 2,
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2146,
+    "totalTestFiles": 2155,
     "workspaceCount": 27
   }
 }

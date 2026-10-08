@@ -319,6 +319,7 @@ describe('GenerationJobsService', () => {
       subscribe: vi.fn().mockImplementation(async (_pattern, callback) => {
         handler = callback;
       }),
+      publishConfirmed: vi.fn(),
     };
     const reviewed = { markdown: '# Exact edit', citations: reviewRequest.draft.citations };
     const pipeline = {
@@ -361,6 +362,80 @@ describe('GenerationJobsService', () => {
       }),
     );
     expect(budgets.close).toHaveBeenCalledWith('review-budget', 'FINALIZED');
+    expect(rabbit.publishConfirmed).not.toHaveBeenCalled();
+  });
+
+  describe('draft ready notice', () => {
+    const newJob = {
+      id: 'job-9',
+      ownerId: 'owner-9',
+      budgetId: 'budget-9',
+      correlationId: 'corr-9',
+      attemptCount: 1,
+      request: {
+        ownerId: 'owner-9',
+        sourceThreadId: 'thread-9',
+        idempotencyKey: 'key-9',
+        correlationId: 'corr-9',
+        spendCapMicroUsd: '2500000',
+        topic: 'A detailed topic for a publication',
+        publicationType: ThreadPublicationType.ARTICLE,
+        contentLocale: Locale.EN,
+        publicIntentVersion: 'v1',
+        authors: [role('a1'), role('a2'), role('a3')],
+        judge: role('judge'),
+        critic: role('critic'),
+      },
+      sourceSnapshot: { messages: [{ role: 'USER', content: 'source' }] },
+    };
+
+    async function runNewJob(publishConfirmed: ReturnType<typeof vi.fn>) {
+      let handler: ((event: unknown) => Promise<void>) | undefined;
+      const repository = {
+        claim: vi.fn().mockResolvedValue(newJob),
+        heartbeat: vi.fn().mockResolvedValue(true),
+        isCancellationRequested: vi.fn().mockResolvedValue(false),
+        saveResult: vi.fn().mockResolvedValue(true),
+        completeAttempt: vi.fn(),
+        markBudgetClosed: vi.fn(),
+      };
+      const rabbit = {
+        subscribe: vi.fn().mockImplementation(async (_pattern, callback) => {
+          handler = callback;
+        }),
+        publishConfirmed,
+      };
+      const pipeline = {
+        generate: vi.fn().mockResolvedValue({ markdown: '# done' }),
+        reviewRevision: vi.fn(),
+      };
+      const service = new GenerationJobsService(
+        {} as never,
+        repository as never,
+        rabbit as never,
+        pipeline as never,
+        { close: vi.fn() } as never,
+      );
+      await service.subscribe();
+      await handler?.({ jobId: 'job-9', correlationId: 'corr-9' });
+      return repository;
+    }
+
+    it('tells the owner once the draft is saved', async () => {
+      const publish = vi.fn();
+      await runNewJob(publish);
+      expect(publish).toHaveBeenCalledExactlyOnceWith(EventPattern.THREAD_GENERATION_COMPLETED, {
+        jobId: 'job-9',
+        correlationId: 'corr-9',
+        ownerId: 'owner-9',
+      });
+    });
+
+    it('does not fail the job when the notice cannot be published', async () => {
+      const publish = vi.fn().mockRejectedValue(new Error('broker down'));
+      const repository = await runNewJob(publish);
+      expect(repository.completeAttempt).toHaveBeenCalledOnce();
+    });
   });
 
   it('keeps the parent budget held when a bounded attempt is retried', async () => {

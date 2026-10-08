@@ -18,6 +18,7 @@ import {
   MIN_PUBLICATION_CRITIC_SCORE,
   MIN_PUBLICATION_JUDGE_SCORE,
 } from '../constants/publication-review.constants';
+import type { NotificationPublicationTarget } from '../types/thread-notification.types';
 import type {
   EditedRevisionRecord,
   NewPublicationMetadata,
@@ -107,6 +108,17 @@ export class PublicationsRepository {
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
+  }
+
+  async findByGenerationJobId(
+    generationJobId: string,
+  ): Promise<NotificationPublicationTarget | null> {
+    const publication = await this.prisma.threadPublication.findUnique({
+      where: { generationJobId },
+      select: { id: true, ownerId: true, slug: true },
+    });
+    // A deleted account has no owner left to tell.
+    return publication?.ownerId ? { ...publication, ownerId: publication.ownerId } : null;
   }
 
   async findOwnedGeneration(

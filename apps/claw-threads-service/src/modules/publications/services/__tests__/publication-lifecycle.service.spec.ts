@@ -11,7 +11,11 @@ describe('PublicationLifecycleService', () => {
     const publications = {
       findOwnedPublications: vi.fn().mockResolvedValue([{ id: 'private-1' }]),
     };
-    const service = new PublicationLifecycleService(publications as never, {} as never);
+    const service = new PublicationLifecycleService(
+      publications as never,
+      {} as never,
+      {} as never,
+    );
 
     await expect(service.listOwned('owner-1')).resolves.toEqual([{ id: 'private-1' }]);
     expect(publications.findOwnedPublications).toHaveBeenCalledWith('owner-1');
@@ -32,6 +36,7 @@ describe('PublicationLifecycleService', () => {
     const service = new PublicationLifecycleService(
       repository as unknown as PublicationsRepository,
       {} as never,
+      {} as never,
     );
 
     await expect(service.approveAndPublish('pub_opaque', 'owner-1')).resolves.toEqual(publication);
@@ -43,11 +48,38 @@ describe('PublicationLifecycleService', () => {
     const service = new PublicationLifecycleService(
       repository as unknown as PublicationsRepository,
       {} as never,
+      {} as never,
     );
 
     await expect(service.approveAndPublish('pub_opaque', 'owner-2')).rejects.toBeInstanceOf(
       NotFoundException,
     );
+  });
+
+  it('tells the owner once the article is live', async () => {
+    const repository = { publishReadyRevision: vi.fn().mockResolvedValue(publication) };
+    const notifications = { notifyPublished: vi.fn().mockResolvedValue(undefined) };
+    const service = new PublicationLifecycleService(
+      repository as unknown as PublicationsRepository,
+      {} as never,
+      notifications as never,
+    );
+
+    await service.approveAndPublish('pub_opaque', 'owner-1');
+
+    expect(notifications.notifyPublished).toHaveBeenCalledExactlyOnceWith('owner-1', publication);
+  });
+
+  it('does not turn an approval into an error when the notice cannot be sent', async () => {
+    const repository = { publishReadyRevision: vi.fn().mockResolvedValue(publication) };
+    const notifications = { notifyPublished: vi.fn().mockRejectedValue(new Error('down')) };
+    const service = new PublicationLifecycleService(
+      repository as unknown as PublicationsRepository,
+      {} as never,
+      notifications as never,
+    );
+
+    await expect(service.approveAndPublish('pub_opaque', 'owner-1')).resolves.toEqual(publication);
   });
 
   it('keeps public response fields in the repository allow-list', async () => {
@@ -56,6 +88,7 @@ describe('PublicationLifecycleService', () => {
     };
     const service = new PublicationLifecycleService(
       repository as unknown as PublicationsRepository,
+      {} as never,
       {} as never,
     );
 
@@ -73,7 +106,11 @@ describe('PublicationLifecycleService', () => {
     const generation = {
       enqueue: vi.fn().mockResolvedValue({ jobId: 'job-private', status: 'QUEUED' }),
     };
-    const service = new PublicationLifecycleService(publications as never, generation as never);
+    const service = new PublicationLifecycleService(
+      publications as never,
+      generation as never,
+      {} as never,
+    );
 
     await expect(
       service.enqueueGeneration('owner-1', {
@@ -163,7 +200,11 @@ describe('PublicationLifecycleService', () => {
         draft,
       }),
     };
-    const service = new PublicationLifecycleService(publications as never, generation as never);
+    const service = new PublicationLifecycleService(
+      publications as never,
+      generation as never,
+      {} as never,
+    );
 
     await expect(service.getGenerationState('pub-1', 'owner-1')).resolves.toMatchObject({
       publicationId: 'pub-1',
@@ -179,7 +220,11 @@ describe('PublicationLifecycleService', () => {
   it('does not query a generation job when the caller does not own its publication', async () => {
     const publications = { findOwnedGeneration: vi.fn().mockResolvedValue(null) };
     const generation = { getPrivateState: vi.fn() };
-    const service = new PublicationLifecycleService(publications as never, generation as never);
+    const service = new PublicationLifecycleService(
+      publications as never,
+      generation as never,
+      {} as never,
+    );
 
     await expect(service.getGenerationState('pub-other', 'owner-1')).rejects.toBeInstanceOf(
       NotFoundException,
@@ -206,7 +251,11 @@ describe('PublicationLifecycleService', () => {
     const generation = {
       enqueueRevisionReview: vi.fn().mockResolvedValue({ jobId: 'review-1', status: 'QUEUED' }),
     };
-    const service = new PublicationLifecycleService(publications as never, generation as never);
+    const service = new PublicationLifecycleService(
+      publications as never,
+      generation as never,
+      {} as never,
+    );
     const input = {
       ...draft,
       capMicroUsd: 2_000_000,
@@ -251,7 +300,11 @@ describe('PublicationLifecycleService', () => {
       }),
     };
     const generation = { enqueueRevisionReview: vi.fn() };
-    const service = new PublicationLifecycleService(publications as never, generation as never);
+    const service = new PublicationLifecycleService(
+      publications as never,
+      generation as never,
+      {} as never,
+    );
 
     await expect(
       service.editRevision('pub-1', 'owner-1', {
@@ -293,7 +346,11 @@ describe('PublicationLifecycleService', () => {
         },
       }),
     };
-    const service = new PublicationLifecycleService(publications as never, generation as never);
+    const service = new PublicationLifecycleService(
+      publications as never,
+      generation as never,
+      {} as never,
+    );
 
     await expect(service.getRevisionReviewState('pub-1', 'revision-2', 'owner-1')).resolves.toEqual(
       {
@@ -333,7 +390,11 @@ describe('PublicationLifecycleService', () => {
         draft: null,
       }),
     };
-    const service = new PublicationLifecycleService(publications as never, generation as never);
+    const service = new PublicationLifecycleService(
+      publications as never,
+      generation as never,
+      {} as never,
+    );
 
     await expect(service.getRevisionReviewState('pub-1', 'revision-2', 'owner-1')).resolves.toEqual(
       {
@@ -354,7 +415,11 @@ describe('PublicationLifecycleService', () => {
   it('does not query a review job when the caller does not own the revision', async () => {
     const publications = { findOwnedRevisionReview: vi.fn().mockResolvedValue(null) };
     const generation = { getPrivateState: vi.fn() };
-    const service = new PublicationLifecycleService(publications as never, generation as never);
+    const service = new PublicationLifecycleService(
+      publications as never,
+      generation as never,
+      {} as never,
+    );
 
     await expect(
       service.getRevisionReviewState('pub-other', 'revision-1', 'owner-1'),
@@ -375,7 +440,11 @@ describe('PublicationLifecycleService', () => {
       }),
     };
     const generation = { enqueueRevisionReview: vi.fn() };
-    const service = new PublicationLifecycleService(publications as never, generation as never);
+    const service = new PublicationLifecycleService(
+      publications as never,
+      generation as never,
+      {} as never,
+    );
 
     await expect(
       service.editRevision('pub-1', 'owner-1', {
@@ -398,6 +467,7 @@ describe('PublicationLifecycleService', () => {
     const build = (found: unknown = exported) =>
       new PublicationLifecycleService(
         { findOwnedExport: vi.fn().mockResolvedValue(found) } as never,
+        {} as never,
         {} as never,
       );
 

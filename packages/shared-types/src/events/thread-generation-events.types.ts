@@ -7,6 +7,7 @@ export interface ThreadGenerationRequestedPayload {
 export interface ThreadGenerationCompletedPayload {
   jobId: string;
   correlationId: string;
+  ownerId: string;
 }
 
 /** A model role as the job was configured. Never a key, prompt or response. */

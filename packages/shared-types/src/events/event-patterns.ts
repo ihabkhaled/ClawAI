@@ -63,6 +63,10 @@ export enum EventPattern {
   THREAD_GENERATION_REQUESTED = 'threads.generation_requested',
   // Published once per job that ends FAILED (generation-service -> audit-service, auth-service).
   THREAD_GENERATION_FAILED = 'threads.generation_failed',
+  // Published once when a job's draft is ready (generation-service -> threads-service).
+  THREAD_GENERATION_COMPLETED = 'threads.generation_completed',
+  // Any service asks auth-service to tell one user something: in-app, email and push.
+  USER_NOTIFICATION_REQUESTED = 'user.notification_requested',
   MEMORY_EXTRACTED = 'memory.extracted',
   AUDIT_EVENT = 'audit.event',
   HEALTH_CHECK = 'health.check',

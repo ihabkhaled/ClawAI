@@ -455,3 +455,4 @@ Use the `fetch` API with `ReadableStream` to consume SSE streams instead of the 
 | 161 | [A used-up credit model falls back to an included model, with a notice](adr-161-used-up-credit-falls-back-to-an-included-model.md)                           | Accepted                                     |
 | 162 | [The free allowance is a count and a meter, and it does not cover expensive models](adr-162-free-allowance-is-a-meter-and-skips-expensive-models.md)         | Accepted                                     |
 | 163 | [Product tours are data, point at `data-tour` elements, and never act for the person](adr-163-product-tours-are-data-driven-and-never-act-for-the-user.md)   | Accepted                                     |
+| 164 | [User notifications live in auth-service and are requested by event](adr-164-user-notifications-live-in-auth-service-and-are-requested-by-event.md)          | Accepted                                     |

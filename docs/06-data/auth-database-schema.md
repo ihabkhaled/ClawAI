@@ -162,3 +162,11 @@ status: ACTIVE
 - Refresh tokens stored as unique strings (rotation on each refresh)
 - Expired sessions should be cleaned up periodically
 - Password hash is never exposed in API responses (SafeUser type omits it)
+
+### user_notifications
+
+One notification for one user (ADR-164). `user_id` (FK users, cascade), `kind`, `link` (portal path, max 300), `params` (JSON of short strings), `dedupe_key` (max 200), `read_at`, `created_at`. Unique `(user_id, dedupe_key)` is the idempotency ledger; indexes on `(user_id, created_at desc)` and `(user_id, read_at)`.
+
+### user_notification_preferences
+
+One row per user, created on first change: `in_app_enabled` (default true), `email_enabled` (default true), `push_enabled` (default false), `updated_at`. No row means those defaults.

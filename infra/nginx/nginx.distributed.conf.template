@@ -262,6 +262,13 @@ http {
         client_max_body_size 64k;
     }
 
+    # In-app notifications: auth-service owns them (same reason as /api/v1/credit).
+    location /api/v1/notifications {
+        set $notifications_backend https://auth-service:4001;
+        proxy_pass $notifications_backend;
+        client_max_body_size 16k;
+    }
+
         location /api/v1/admin {
             set $backend https://$origin_auth;
             proxy_pass $backend;

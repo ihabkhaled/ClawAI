@@ -114,5 +114,51 @@ export const ES_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'Si no ha realizado este cambio, póngase en contacto con nuestro equipo de asistencia de inmediato: es posible que otra persona tenga acceso a su cuenta.',
     },
+    [AuthEmailKind.THREAD_READY_FOR_REVIEW]: {
+      subject: 'El borrador de tu Thread está listo para que lo revises',
+      preheader: 'Léelo y apruébalo para publicarlo, o pide cambios.',
+      heading: 'Tu Thread está listo para revisión',
+      intro:
+        'Los autores, el Judge y el Critic han terminado tu Thread. Está guardado en privado y todavía no hay nada público.',
+      bodyLines: [
+        'Ábrelo para leer el borrador y sus fuentes. Solo se publica cuando tú lo apruebas.',
+      ],
+      actionLabel: 'Revisar mi Thread',
+      fallbackNote:
+        'Si el botón no funciona, copie la dirección que figura a continuación en su navegador:',
+      expiryNote: null,
+      securityNote:
+        'Recibes este mensaje porque iniciaste un Thread en ClawAI. Puedes desactivar estos correos en los ajustes de notificaciones.',
+    },
+    [AuthEmailKind.THREAD_PUBLISHED]: {
+      subject: 'Tu Thread ya es público',
+      preheader: 'Los lectores ya pueden abrirlo.',
+      heading: 'Tu Thread está publicado',
+      intro: '«{value}» ya está publicado en ClawAI. Cualquiera que tenga el enlace puede leerlo.',
+      bodyLines: [
+        'Puedes compartirlo, ver cuántas personas lo han leído o dejar de publicarlo cuando quieras desde tu página de Threads.',
+      ],
+      actionLabel: 'Abrir mi Thread',
+      fallbackNote:
+        'Si el botón no funciona, copie la dirección que figura a continuación en su navegador:',
+      expiryNote: null,
+      securityNote:
+        'Recibes este mensaje porque iniciaste un Thread en ClawAI. Puedes desactivar estos correos en los ajustes de notificaciones.',
+    },
+    [AuthEmailKind.THREAD_FAILED]: {
+      subject: 'No se pudo terminar tu Thread',
+      preheader: 'Se liberó el gasto reservado. Puedes intentarlo de nuevo.',
+      heading: 'No se pudo terminar tu Thread',
+      intro: 'Algo salió mal mientras se escribía tu Thread y no se pudo completar.',
+      bodyLines: [
+        'Se liberó el gasto reservado y nuestro equipo ha sido avisado. Puedes empezarlo de nuevo desde tu página de Threads.',
+      ],
+      actionLabel: 'Ir a mis Threads',
+      fallbackNote:
+        'Si el botón no funciona, copie la dirección que figura a continuación en su navegador:',
+      expiryNote: null,
+      securityNote:
+        'Recibes este mensaje porque iniciaste un Thread en ClawAI. Puedes desactivar estos correos en los ajustes de notificaciones.',
+    },
   },
 };

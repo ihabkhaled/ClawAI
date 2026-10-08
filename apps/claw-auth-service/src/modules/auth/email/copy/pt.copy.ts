@@ -112,5 +112,46 @@ export const PT_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'Se não efetuou esta alteração, contacte imediatamente a nossa equipa de apoio ao cliente — outra pessoa poderá ter acesso à sua conta.',
     },
+    [AuthEmailKind.THREAD_READY_FOR_REVIEW]: {
+      subject: 'O rascunho do seu Thread está pronto para revisão',
+      preheader: 'Leia-o e aprove para publicar, ou peça alterações.',
+      heading: 'O seu Thread está pronto para revisão',
+      intro:
+        'Os autores, o Judge e o Critic concluíram o seu Thread. Está guardado em privado e ainda não há nada público.',
+      bodyLines: ['Abra-o para ler o rascunho e as fontes. Só é publicado quando o aprovar.'],
+      actionLabel: 'Rever o meu Thread',
+      fallbackNote: 'Se o botão não funcionar, copie o endereço abaixo para o seu navegador:',
+      expiryNote: null,
+      securityNote:
+        'Recebe esta mensagem porque iniciou um Thread no ClawAI. Pode desativar estes e-mails nas definições de notificações.',
+    },
+    [AuthEmailKind.THREAD_PUBLISHED]: {
+      subject: 'O seu Thread já é público',
+      preheader: 'Os leitores já o podem abrir.',
+      heading: 'O seu Thread está publicado',
+      intro: '«{value}» já está publicado no ClawAI. Qualquer pessoa com a ligação pode lê-lo.',
+      bodyLines: [
+        'Pode partilhá-lo, ver quantas pessoas o leram ou cancelar a publicação a qualquer momento na sua página de Threads.',
+      ],
+      actionLabel: 'Abrir o meu Thread',
+      fallbackNote: 'Se o botão não funcionar, copie o endereço abaixo para o seu navegador:',
+      expiryNote: null,
+      securityNote:
+        'Recebe esta mensagem porque iniciou um Thread no ClawAI. Pode desativar estes e-mails nas definições de notificações.',
+    },
+    [AuthEmailKind.THREAD_FAILED]: {
+      subject: 'Não foi possível concluir o seu Thread',
+      preheader: 'O valor reservado foi libertado. Pode tentar novamente.',
+      heading: 'Não foi possível concluir o seu Thread',
+      intro: 'Ocorreu um problema enquanto o seu Thread era escrito e não foi possível concluí-lo.',
+      bodyLines: [
+        'O valor reservado foi libertado e a nossa equipa foi avisada. Pode iniciá-lo de novo na sua página de Threads.',
+      ],
+      actionLabel: 'Ir para os meus Threads',
+      fallbackNote: 'Se o botão não funcionar, copie o endereço abaixo para o seu navegador:',
+      expiryNote: null,
+      securityNote:
+        'Recebe esta mensagem porque iniciou um Thread no ClawAI. Pode desativar estes e-mails nas definições de notificações.',
+    },
   },
 };

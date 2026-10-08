@@ -99,5 +99,41 @@ export const ZH_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         '如果此次变更并非由您本人进行，请立即联系我们的支持团队：可能已有他人能够访问您的账户。',
     },
+    [AuthEmailKind.THREAD_READY_FOR_REVIEW]: {
+      subject: '你的 Thread 草稿已可供审阅',
+      preheader: '请先阅读，然后批准发布或提出修改。',
+      heading: '你的 Thread 已准备好审阅',
+      intro: '作者、Judge 和 Critic 已完成你的 Thread。它以私密方式保存，目前尚未公开任何内容。',
+      bodyLines: ['打开即可阅读草稿及其来源。只有你批准后才会发布。'],
+      actionLabel: '审阅我的 Thread',
+      fallbackNote: '如果按钮无法使用，请复制下方地址并粘贴至您的浏览器中打开。',
+      expiryNote: null,
+      securityNote:
+        '你收到此邮件，是因为你在 ClawAI 上发起了 Thread。你可以在通知设置中关闭这些邮件。',
+    },
+    [AuthEmailKind.THREAD_PUBLISHED]: {
+      subject: '你的 Thread 现已公开',
+      preheader: '读者现在即可打开阅读。',
+      heading: '你的 Thread 已发布',
+      intro: '“{value}”已在 ClawAI 发布。任何拥有链接的人都可以阅读。',
+      bodyLines: ['你可以在 Threads 页面分享它、查看有多少人阅读，或随时取消发布。'],
+      actionLabel: '打开我的 Thread',
+      fallbackNote: '如果按钮无法使用，请复制下方地址并粘贴至您的浏览器中打开。',
+      expiryNote: null,
+      securityNote:
+        '你收到此邮件，是因为你在 ClawAI 上发起了 Thread。你可以在通知设置中关闭这些邮件。',
+    },
+    [AuthEmailKind.THREAD_FAILED]: {
+      subject: '你的 Thread 未能完成',
+      preheader: '为其预留的费用已释放。你可以再试一次。',
+      heading: '你的 Thread 未能完成',
+      intro: '撰写你的 Thread 时出了问题，未能完成。',
+      bodyLines: ['为其预留的费用已释放，我们的团队也已收到通知。你可以在 Threads 页面重新开始。'],
+      actionLabel: '前往我的 Threads',
+      fallbackNote: '如果按钮无法使用，请复制下方地址并粘贴至您的浏览器中打开。',
+      expiryNote: null,
+      securityNote:
+        '你收到此邮件，是因为你在 ClawAI 上发起了 Thread。你可以在通知设置中关闭这些邮件。',
+    },
   },
 };

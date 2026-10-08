@@ -114,5 +114,53 @@ export const DE_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'Falls Sie diese Änderung nicht vorgenommen haben, wenden Sie sich umgehend an unser Support-Team — möglicherweise hat eine andere Person Zugriff auf Ihr Konto.',
     },
+    [AuthEmailKind.THREAD_READY_FOR_REVIEW]: {
+      subject: 'Der Entwurf Ihres Threads wartet auf Ihre Prüfung',
+      preheader:
+        'Lesen Sie ihn und genehmigen Sie ihn zur Veröffentlichung oder fordern Sie Änderungen an.',
+      heading: 'Ihr Thread ist bereit zur Prüfung',
+      intro:
+        'Die Autoren, der Judge und der Critic haben Ihren Thread fertiggestellt. Er ist privat gespeichert, noch ist nichts öffentlich.',
+      bodyLines: [
+        'Öffnen Sie ihn, um den Entwurf und seine Quellen zu lesen. Veröffentlicht wird er erst, wenn Sie ihn genehmigen.',
+      ],
+      actionLabel: 'Meinen Thread prüfen',
+      fallbackNote:
+        'Falls die Schaltfläche nicht funktioniert, kopieren Sie die untenstehende Adresse in Ihren Browser:',
+      expiryNote: null,
+      securityNote:
+        'Sie erhalten diese Nachricht, weil Sie auf ClawAI einen Thread gestartet haben. In Ihren Benachrichtigungseinstellungen können Sie diese E-Mails abschalten.',
+    },
+    [AuthEmailKind.THREAD_PUBLISHED]: {
+      subject: 'Ihr Thread ist jetzt öffentlich',
+      preheader: 'Leser können ihn jetzt öffnen.',
+      heading: 'Ihr Thread ist veröffentlicht',
+      intro: '„{value}“ ist jetzt auf ClawAI veröffentlicht. Jeder mit dem Link kann ihn lesen.',
+      bodyLines: [
+        'Sie können ihn teilen, sehen, wie viele Personen ihn gelesen haben, oder die Veröffentlichung jederzeit auf Ihrer Threads-Seite zurücknehmen.',
+      ],
+      actionLabel: 'Meinen Thread öffnen',
+      fallbackNote:
+        'Falls die Schaltfläche nicht funktioniert, kopieren Sie die untenstehende Adresse in Ihren Browser:',
+      expiryNote: null,
+      securityNote:
+        'Sie erhalten diese Nachricht, weil Sie auf ClawAI einen Thread gestartet haben. In Ihren Benachrichtigungseinstellungen können Sie diese E-Mails abschalten.',
+    },
+    [AuthEmailKind.THREAD_FAILED]: {
+      subject: 'Ihr Thread konnte nicht fertiggestellt werden',
+      preheader: 'Der dafür reservierte Betrag wurde freigegeben. Sie können es erneut versuchen.',
+      heading: 'Ihr Thread konnte nicht fertiggestellt werden',
+      intro:
+        'Beim Schreiben Ihres Threads ist etwas schiefgegangen, und er konnte nicht abgeschlossen werden.',
+      bodyLines: [
+        'Der dafür reservierte Betrag wurde freigegeben, und unser Team wurde informiert. Sie können ihn auf Ihrer Threads-Seite erneut starten.',
+      ],
+      actionLabel: 'Zu meinen Threads',
+      fallbackNote:
+        'Falls die Schaltfläche nicht funktioniert, kopieren Sie die untenstehende Adresse in Ihren Browser:',
+      expiryNote: null,
+      securityNote:
+        'Sie erhalten diese Nachricht, weil Sie auf ClawAI einen Thread gestartet haben. In Ihren Benachrichtigungseinstellungen können Sie diese E-Mails abschalten.',
+    },
   },
 };

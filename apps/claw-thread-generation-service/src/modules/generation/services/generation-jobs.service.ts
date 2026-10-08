@@ -9,7 +9,11 @@ import {
 } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import type { ThreadGenerationJob } from '../../../generated/prisma';
-import { EventPattern, type ThreadGenerationRequestedPayload } from '@claw/shared-types';
+import {
+  EventPattern,
+  type ThreadGenerationCompletedPayload,
+  type ThreadGenerationRequestedPayload,
+} from '@claw/shared-types';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { z } from 'zod';
 
@@ -257,6 +261,8 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       }
       await this.closeBudget(job.id, job.budgetId, GenerationBudgetCloseStatus.FINALIZED);
       await this.repository.completeAttempt(job.id, job.attemptCount);
+      // A revision review is an edit the owner already asked for and is waiting on in the page.
+      if (!revisionReview.success) await this.announceCompleted(job);
     } catch (error: unknown) {
       if (leaseLost) {
         this.logger.warn('Expired generation worker stopped after lease loss');
@@ -284,6 +290,24 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       }
     } finally {
       clearInterval(heartbeat);
+    }
+  }
+
+  /** Best effort: the owner is told the draft is ready; a lost message never fails the job. */
+  private async announceCompleted(job: {
+    id: string;
+    ownerId: string;
+    correlationId: string;
+  }): Promise<void> {
+    const payload: ThreadGenerationCompletedPayload = {
+      jobId: job.id,
+      correlationId: job.correlationId,
+      ownerId: job.ownerId,
+    };
+    try {
+      await this.rabbit.publishConfirmed(EventPattern.THREAD_GENERATION_COMPLETED, payload);
+    } catch {
+      this.logger.warn('Generation completed notice could not be published');
     }
   }
 

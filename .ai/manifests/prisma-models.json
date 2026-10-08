@@ -55,6 +55,8 @@
       "User",
       "UserCreditWallet",
       "UserDeletionOutboxEvent",
+      "UserNotification",
+      "UserNotificationPreference",
       "UserPlanAssignment",
       "WeightedUsageRecord"
     ],

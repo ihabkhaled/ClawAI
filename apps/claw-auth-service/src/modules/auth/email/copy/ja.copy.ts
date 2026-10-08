@@ -111,5 +111,49 @@ export const JA_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'この変更にお心当たりがない場合は、直ちにサポートチームまでご連絡ください。第三者がお客様のアカウントにアクセスしている可能性がございます。',
     },
+    [AuthEmailKind.THREAD_READY_FOR_REVIEW]: {
+      subject: 'Thread の下書きが確認できる状態になりました',
+      preheader: '内容を読み、承認して公開するか、修正を依頼してください。',
+      heading: 'Thread の確認準備ができました',
+      intro:
+        '執筆者、Judge、Critic があなたの Thread を仕上げました。非公開で保存されており、まだ何も公開されていません。',
+      bodyLines: ['開いて下書きと出典をご確認ください。あなたが承認するまで公開されません。'],
+      actionLabel: 'Thread を確認する',
+      fallbackNote:
+        'ボタンが機能しない場合は、下記のアドレスをコピーしてブラウザーに貼り付けてください。',
+      expiryNote: null,
+      securityNote:
+        'このメールは、ClawAI で Thread を開始したためお送りしています。通知設定でこのメールを停止できます。',
+    },
+    [AuthEmailKind.THREAD_PUBLISHED]: {
+      subject: 'Thread が公開されました',
+      preheader: '読者がすぐに開けるようになりました。',
+      heading: 'Thread を公開しました',
+      intro: '「{value}」が ClawAI で公開されました。リンクを知っている人は誰でも読めます。',
+      bodyLines: [
+        'Threads ページから、共有したり、読まれた人数を確認したり、いつでも公開を取り下げたりできます。',
+      ],
+      actionLabel: 'Thread を開く',
+      fallbackNote:
+        'ボタンが機能しない場合は、下記のアドレスをコピーしてブラウザーに貼り付けてください。',
+      expiryNote: null,
+      securityNote:
+        'このメールは、ClawAI で Thread を開始したためお送りしています。通知設定でこのメールを停止できます。',
+    },
+    [AuthEmailKind.THREAD_FAILED]: {
+      subject: 'Thread を完成できませんでした',
+      preheader: '確保していた利用額は解放されました。もう一度お試しください。',
+      heading: 'Thread を完成できませんでした',
+      intro: 'Thread の作成中に問題が発生し、完了できませんでした。',
+      bodyLines: [
+        '確保していた利用額は解放され、担当チームにも通知されました。Threads ページからもう一度開始できます。',
+      ],
+      actionLabel: 'Threads を開く',
+      fallbackNote:
+        'ボタンが機能しない場合は、下記のアドレスをコピーしてブラウザーに貼り付けてください。',
+      expiryNote: null,
+      securityNote:
+        'このメールは、ClawAI で Thread を開始したためお送りしています。通知設定でこのメールを停止できます。',
+    },
   },
 };

@@ -661,3 +661,7 @@ in-turn tool calls (only a count) and image generation as a named tool; the
 ## Free allowance meter (ADR-162)
 
 `CreditFreeAllowanceService.tryAdmit` now also refuses a model above the plan's price limit (`MODEL_NOT_COVERED`, thrown as `PAYG_MODEL_NOT_IN_FREE_ALLOWANCE`) and holds a request's worst-case cost against the month's meter in the same atomic statement as the count (`CreditFreeAllowanceRepository.tryConsume(key, limit, hold, budget)`). `finalize` settles the hold to the real cost (`settleSpend` -> `adjustSpend`); `release` gives count and hold back (`giveBack`). `GET /credit/me` carries `freeAllowance.meterUsedPercent`. Entitlements expose `freeCreditMaxModelOutputMicroUsd` for AUTO routing.
+
+## Notifications (ADR-164, 2026-10-08)
+
+`modules/notifications`: consumes `user.notification_requested`, writes `user_notifications` (idempotent on user + dedupe key), emails through `AuthEmailAdapter.sendThreadNotification` in the person's language, and serves the signed-in person's list, read marks and channel preferences under `/api/v1/notifications` (own nginx location). Email kinds `THREAD_READY_FOR_REVIEW`, `THREAD_PUBLISHED`, `THREAD_FAILED` exist in all 13 copy files. See ADR-164.

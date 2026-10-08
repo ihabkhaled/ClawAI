@@ -16,6 +16,8 @@ import { PublicationDiscoveryService } from './services/publication-discovery.se
 import { PublicationViewsController } from './controllers/publication-views.controller';
 import { PublicationViewsRepository } from './repositories/publication-views.repository';
 import { PublicationViewsService } from './services/publication-views.service';
+import { ThreadGenerationEventsConsumer } from './consumers/thread-generation-events.consumer';
+import { ThreadNotificationService } from './services/thread-notification.service';
 
 @Module({
   imports: [PrismaModule],
@@ -30,6 +32,8 @@ import { PublicationViewsService } from './services/publication-views.service';
     PublicationViewsController,
   ],
   providers: [
+    ThreadNotificationService,
+    ThreadGenerationEventsConsumer,
     PublicationLifecycleService,
     PublicationCommunityService,
     PublicationsRepository,

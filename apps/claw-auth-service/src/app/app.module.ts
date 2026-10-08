@@ -27,6 +27,7 @@ import { DeploymentModule } from '../modules/deployment/deployment.module';
 import { SystemSettingsModule } from '../modules/system-settings/system-settings.module';
 import { OpsTokensModule } from '../modules/ops-tokens/ops-tokens.module';
 import { CreditModule } from '../modules/credit/credit.module';
+import { NotificationsModule } from '../modules/notifications/notifications.module';
 import { AdminStatisticsModule } from '../modules/admin-statistics/admin-statistics.module';
 import { GrafanaAccessModule } from '../modules/grafana-access/grafana-access.module';
 import { UsageAttributionModule } from '../modules/usage-attribution/usage-attribution.module';
@@ -90,6 +91,7 @@ import { UsageAttributionModule } from '../modules/usage-attribution/usage-attri
     SystemSettingsModule,
     OpsTokensModule,
     CreditModule,
+    NotificationsModule,
     AdminStatisticsModule,
     GrafanaAccessModule,
     UsageAttributionModule,

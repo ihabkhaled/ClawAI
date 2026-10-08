@@ -106,6 +106,25 @@ export class AuthEmailAdapter {
     });
   }
 
+  /**
+   * A Threads notification (draft ready, published, failed). `title` fills {value} where the copy
+   * uses it; `link` is a portal path already validated by the notification module.
+   */
+  async sendThreadNotification(
+    recipient: AuthEmailRecipient,
+    kind: AuthEmailKind,
+    title: string | null,
+    link: string,
+  ): Promise<void> {
+    const config = this.requireSmtpConfigWithApp();
+    await this.deliver(config, recipient, {
+      kind,
+      value: title,
+      expiry: null,
+      actionUrl: new URL(link, config.app.PUBLIC_SITE_URL).toString(),
+    });
+  }
+
   async sendEmailChangeCompletedNotice(recipient: AuthEmailRecipient): Promise<void> {
     const config = this.requireSmtpConfigWithApp();
     await this.deliver(config, recipient, {

@@ -22,6 +22,7 @@ export { LocalModelRole } from './local-model-role.enum';
 export { UserLanguagePreference } from './user-language-preference.enum';
 export { Locale } from './locale.enum';
 export { ThreadPublicationType } from './thread-publication-type.enum';
+export { UserNotificationKind } from './user-notification-kind.enum';
 export { UserAppearancePreference } from './user-appearance-preference.enum';
 export { LogLevel } from './log-level.enum';
 export { WorkspaceProvider } from './workspace-provider.enum';

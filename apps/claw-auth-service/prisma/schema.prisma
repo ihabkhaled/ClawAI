@@ -105,6 +105,8 @@ model User {
   updatedAt              DateTime                 @updatedAt @map("updated_at")
 
   sessions                Session[]
+  notifications           UserNotification[]
+  notificationPreference  UserNotificationPreference?
   passwordResetTokens     PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
   roleRef                 Role?                    @relation(fields: [roleId], references: [id])
@@ -1180,4 +1182,40 @@ model UserDeletionOutboxEvent {
 
   @@index([status, availableAt])
   @@map("user_deletion_outbox_events")
+}
+
+// A message for one user, shown in the in-app list and mirrored by email. The (user, dedupe key)
+// pair is the idempotency ledger: a redelivered event finds the row it already made and neither
+// shows nor emails twice. `params` holds short, non-secret values only (a title); the words are
+// chosen from `kind` in the user's own language.
+model UserNotification {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  kind      String    @db.VarChar(64)
+  link      String    @db.VarChar(300)
+  params    Json      @default("{}")
+  dedupeKey String    @map("dedupe_key") @db.VarChar(200)
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dedupeKey])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, readAt])
+  @@map("user_notifications")
+}
+
+// Which channels a user wants. One row per user, created on first change; no row means the
+// defaults below (in-app and email on, push off until the browser grants permission).
+model UserNotificationPreference {
+  userId       String   @id @map("user_id")
+  inAppEnabled Boolean  @default(true) @map("in_app_enabled")
+  emailEnabled Boolean  @default(true) @map("email_enabled")
+  pushEnabled  Boolean  @default(false) @map("push_enabled")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_notification_preferences")
 }

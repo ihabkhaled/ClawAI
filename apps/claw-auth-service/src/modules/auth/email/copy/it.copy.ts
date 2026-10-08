@@ -109,5 +109,49 @@ export const IT_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'Se non ha effettuato Lei questa modifica, contatti immediatamente il nostro servizio di assistenza: qualcun altro potrebbe avere accesso al Suo account.',
     },
+    [AuthEmailKind.THREAD_READY_FOR_REVIEW]: {
+      subject: 'La bozza del tuo Thread è pronta per la revisione',
+      preheader: 'Leggila, poi approvala per pubblicarla o chiedi modifiche.',
+      heading: 'Il tuo Thread è pronto per la revisione',
+      intro:
+        'Gli autori, il Judge e il Critic hanno completato il tuo Thread. È salvato in privato e non è ancora pubblico nulla.',
+      bodyLines: [
+        'Aprilo per leggere la bozza e le sue fonti. Viene pubblicato solo quando lo approvi.',
+      ],
+      actionLabel: 'Rivedi il mio Thread',
+      fallbackNote: 'Se il pulsante non funziona, copi il seguente indirizzo nel Suo browser:',
+      expiryNote: null,
+      securityNote:
+        'Ricevi questo messaggio perché hai avviato un Thread su ClawAI. Puoi disattivare queste e-mail nelle impostazioni delle notifiche.',
+    },
+    [AuthEmailKind.THREAD_PUBLISHED]: {
+      subject: 'Il tuo Thread è ora pubblico',
+      preheader: 'I lettori possono aprirlo adesso.',
+      heading: 'Il tuo Thread è online',
+      intro: '«{value}» è ora pubblicato su ClawAI. Chiunque abbia il link può leggerlo.',
+      bodyLines: [
+        'Puoi condividerlo, vedere quante persone lo hanno letto o rimuoverlo dalla pubblicazione in qualsiasi momento dalla tua pagina Threads.',
+      ],
+      actionLabel: 'Apri il mio Thread',
+      fallbackNote: 'Se il pulsante non funziona, copi il seguente indirizzo nel Suo browser:',
+      expiryNote: null,
+      securityNote:
+        'Ricevi questo messaggio perché hai avviato un Thread su ClawAI. Puoi disattivare queste e-mail nelle impostazioni delle notifiche.',
+    },
+    [AuthEmailKind.THREAD_FAILED]: {
+      subject: 'Non è stato possibile completare il tuo Thread',
+      preheader: 'La spesa riservata è stata rilasciata. Puoi riprovare.',
+      heading: 'Non è stato possibile completare il tuo Thread',
+      intro:
+        'Qualcosa è andato storto durante la scrittura del tuo Thread e non è stato possibile completarlo.',
+      bodyLines: [
+        'La spesa riservata è stata rilasciata e il nostro team è stato avvisato. Puoi riavviarlo dalla tua pagina Threads.',
+      ],
+      actionLabel: 'Vai ai miei Threads',
+      fallbackNote: 'Se il pulsante non funziona, copi il seguente indirizzo nel Suo browser:',
+      expiryNote: null,
+      securityNote:
+        'Ricevi questo messaggio perché hai avviato un Thread su ClawAI. Puoi disattivare queste e-mail nelle impostazioni delle notifiche.',
+    },
   },
 };

@@ -1332,7 +1332,18 @@
     },
     {
       "consumers": [
-        "claw-audit-service"
+        "claw-threads-service"
+      ],
+      "key": "THREAD_GENERATION_COMPLETED",
+      "pattern": "threads.generation_completed",
+      "producers": [
+        "claw-thread-generation-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
+        "claw-threads-service"
       ],
       "key": "THREAD_GENERATION_FAILED",
       "pattern": "threads.generation_failed",
@@ -1403,6 +1414,16 @@
       "pattern": "user.logout",
       "producers": [
         "claw-auth-service"
+      ]
+    },
+    {
+      "consumers": [
+        "claw-auth-service"
+      ],
+      "key": "USER_NOTIFICATION_REQUESTED",
+      "pattern": "user.notification_requested",
+      "producers": [
+        "claw-threads-service"
       ]
     },
     {

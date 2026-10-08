@@ -726,6 +726,11 @@
       "source": "packages/shared-types/src/events/event-patterns.ts"
     },
     {
+      "key": "THREAD_GENERATION_COMPLETED",
+      "pattern": "threads.generation_completed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
       "key": "THREAD_GENERATION_FAILED",
       "pattern": "threads.generation_failed",
       "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -763,6 +768,11 @@
     {
       "key": "USER_LOGOUT",
       "pattern": "user.logout",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "USER_NOTIFICATION_REQUESTED",
+      "pattern": "user.notification_requested",
       "source": "packages/shared-types/src/events/event-patterns.ts"
     },
     {

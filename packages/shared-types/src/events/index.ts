@@ -6,6 +6,7 @@ export type {
   ThreadGenerationFailedPayload,
   ThreadGenerationFailedRole,
 } from './thread-generation-events.types';
+export type { UserNotificationRequestedPayload } from './user-notification-events.types';
 export type {
   BillingEventEnvelope,
   BillingEventPayload,

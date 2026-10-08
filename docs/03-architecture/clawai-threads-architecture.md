@@ -97,6 +97,10 @@ summary, never conversation text, evidence, drafts or prompts. Audit-service ope
 `BUG_REPORT` ticket per job (source `SYSTEM`, keyed `threads-generation:<jobId>`, so a
 redelivery finds the existing ticket) in the admin feedback queue.
 
+## Owner notifications
+
+Generation-service publishes `threads.generation_completed` (ownerId, jobId) once a draft is saved; revision reviews do not. Threads-service consumes it and `threads.generation_failed`, checks the publication belongs to that owner, and publishes `user.notification_requested` (ready, failed); approving a publication requests a "published" notice. Auth-service stores it, emails it and shows it in the portal (ADR-164).
+
 ## Public data and deletion
 
 Public DTOs use an explicit allow-list. Only published, owner-approved,

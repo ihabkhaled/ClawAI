@@ -106,5 +106,49 @@ export const EN_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'If you did not make this change, contact our support team immediately — someone else may have access to your account.',
     },
+    [AuthEmailKind.THREAD_READY_FOR_REVIEW]: {
+      subject: 'Your Thread draft is ready for your review',
+      preheader: 'Read it, then approve it to publish or ask for changes.',
+      heading: 'Your Thread is ready for review',
+      intro:
+        'The authors, the Judge and the Critic have finished your Thread. It is saved privately and nothing is public yet.',
+      bodyLines: [
+        'Open it to read the draft and its sources. It is published only when you approve it.',
+      ],
+      actionLabel: 'Review my Thread',
+      fallbackNote: 'If the button does not work, copy the address below into your browser:',
+      expiryNote: null,
+      securityNote:
+        'You are getting this because you started a Thread on ClawAI. You can turn these emails off in your notification settings.',
+    },
+    [AuthEmailKind.THREAD_PUBLISHED]: {
+      subject: 'Your Thread is now public',
+      preheader: 'Readers can open it now.',
+      heading: 'Your Thread is live',
+      intro: '“{value}” is now published on ClawAI. Anyone with the link can read it.',
+      bodyLines: [
+        'You can share it, see how many people read it, or unpublish it at any time from your Threads page.',
+      ],
+      actionLabel: 'Open my Thread',
+      fallbackNote: 'If the button does not work, copy the address below into your browser:',
+      expiryNote: null,
+      securityNote:
+        'You are getting this because you started a Thread on ClawAI. You can turn these emails off in your notification settings.',
+    },
+    [AuthEmailKind.THREAD_FAILED]: {
+      subject: 'Your Thread could not be finished',
+      preheader: 'The spend reserved for it was released. You can try again.',
+      heading: 'Your Thread could not be finished',
+      intro:
+        'Something went wrong while your Thread was being written, and it could not be completed.',
+      bodyLines: [
+        'The spend reserved for it was released, and our team has been told. You can start it again from your Threads page.',
+      ],
+      actionLabel: 'Go to my Threads',
+      fallbackNote: 'If the button does not work, copy the address below into your browser:',
+      expiryNote: null,
+      securityNote:
+        'You are getting this because you started a Thread on ClawAI. You can turn these emails off in your notification settings.',
+    },
   },
 };
