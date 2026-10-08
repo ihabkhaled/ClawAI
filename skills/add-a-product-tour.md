@@ -40,3 +40,10 @@ Use when a page or flow needs a walkthrough, or an existing tour's steps change.
 - Make a step click, type or navigate. The person does the action.
 - Auto-start a tour. `autoOffer` only shows the small offer.
 - Point at an element that only exists in a closed dialog and expect a highlight; it falls back to a centered card.
+
+## Where a tour shows
+
+- The help menu lists only tours whose `routes` match the current page. Do not expect a tour to be startable from elsewhere.
+- `autoOffer: true` tours are offered once on a first visit; a person can stop all offers (`offersDisabled`). Use `autoOffer: false` for deep or secondary tours so one page never stacks offers.
+- A page-level `data-tour="page-header"` exists on `PageHeader` and the dashboard hero: reuse it for a page's first step.
+- Dialog content (share, thread settings) is not on screen until opened: highlight the opener, then explain with `target: null` steps.

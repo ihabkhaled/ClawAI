@@ -16,8 +16,16 @@ describe('tour progress storage', () => {
   });
 
   it('round-trips progress', () => {
-    writeTourProgress(KEY, { completed: { a: true }, dismissedOffers: { b: true } });
-    expect(readTourProgress(KEY)).toEqual({ completed: { a: true }, dismissedOffers: { b: true } });
+    writeTourProgress(KEY, {
+      completed: { a: true },
+      dismissedOffers: { b: true },
+      offersDisabled: true,
+    });
+    expect(readTourProgress(KEY)).toEqual({
+      completed: { a: true },
+      dismissedOffers: { b: true },
+      offersDisabled: true,
+    });
   });
 
   it('treats corrupt or wrong-shaped data as nothing', () => {
@@ -25,6 +33,13 @@ describe('tour progress storage', () => {
     expect(readTourProgress(KEY)).toEqual(EMPTY_TOUR_PROGRESS);
     window.localStorage.setItem(KEY, '"text"');
     expect(readTourProgress(KEY)).toEqual(EMPTY_TOUR_PROGRESS);
+  });
+
+  it('reads offersDisabled only when it is exactly true', () => {
+    window.localStorage.setItem(KEY, JSON.stringify({ offersDisabled: 'yes' }));
+    expect(readTourProgress(KEY).offersDisabled).toBe(false);
+    window.localStorage.setItem(KEY, JSON.stringify({ offersDisabled: true }));
+    expect(readTourProgress(KEY).offersDisabled).toBe(true);
   });
 
   it('keeps only true flags', () => {

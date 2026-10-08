@@ -101,7 +101,7 @@ export default function MemoryPage(): React.ReactElement {
         onValueChange={(value) => setActiveTab(value as MemoryTab)}
         className="mt-6 flex flex-col gap-4"
       >
-        <TabsList className="self-start">
+        <TabsList className="self-start" data-tour="memory-tabs">
           <TabsTrigger value={MemoryTab.SAVED}>{t('memory.tabSaved')}</TabsTrigger>
           <TabsTrigger value={MemoryTab.SUGGESTIONS} className="gap-2">
             {t('memory.tabSuggestions')}

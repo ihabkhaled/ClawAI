@@ -1,6 +1,10 @@
 import type { TourProgress } from '@/types/tour.types';
 
-export const EMPTY_TOUR_PROGRESS: TourProgress = { completed: {}, dismissedOffers: {} };
+export const EMPTY_TOUR_PROGRESS: TourProgress = {
+  completed: {},
+  dismissedOffers: {},
+  offersDisabled: false,
+};
 
 function onlyTrueFlags(value: unknown): Record<string, true> {
   if (typeof value !== 'object' || value === null) {
@@ -30,6 +34,7 @@ export function readTourProgress(storageKey: string): TourProgress {
     return {
       completed: onlyTrueFlags(record['completed']),
       dismissedOffers: onlyTrueFlags(record['dismissedOffers']),
+      offersDisabled: record['offersDisabled'] === true,
     };
   } catch {
     return EMPTY_TOUR_PROGRESS;

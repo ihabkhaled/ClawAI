@@ -40,13 +40,17 @@ export type TourUiContent = {
   launcherTitle: string;
   launcherHint: string;
   launcherHere: string;
-  launcherMore: string;
   launcherDone: string;
   launcherStart: string;
   launcherRestart: string;
   offerTitle: string;
   offerStart: string;
   offerLater: string;
+  offerNever: string;
+  launcherNoneHere: string;
+  launcherStopOffers: string;
+  launcherResumeOffers: string;
+  launcherOffersStopped: string;
   missingTarget: string;
 };
 
@@ -59,6 +63,8 @@ export type TourDictionary = {
 export type TourProgress = {
   completed: Readonly<Record<string, true>>;
   dismissedOffers: Readonly<Record<string, true>>;
+  /** The person chose "don't show tours again": no offers anywhere, replay still works. */
+  offersDisabled: boolean;
 };
 
 export type TourStore = {
@@ -75,6 +81,8 @@ export type TourStore = {
   /** Ends the tour without marking it completed. */
   skip: () => void;
   dismissOffer: (tourId: TourId) => void;
+  /** Turns the first-visit offers off (or back on) everywhere. Replaying a tour still works. */
+  setOffersDisabled: (value: boolean) => void;
 };
 
 export type TourViewport = { width: number; height: number };
@@ -102,12 +110,13 @@ export type TourLauncherEntry = {
   title: string;
   description: string;
   isCompleted: boolean;
-  isHere: boolean;
 };
 
 export type TourLauncherController = {
+  /** Only the tours of the page the person is on: a tour of another page cannot be shown here. */
   here: readonly TourLauncherEntry[];
-  more: readonly TourLauncherEntry[];
+  offersDisabled: boolean;
+  setOffersDisabled: (value: boolean) => void;
   start: (tourId: TourId) => void;
 };
 
@@ -115,6 +124,8 @@ export type TourOfferController = {
   offeredTourId: TourId | null;
   accept: () => void;
   decline: () => void;
+  /** "Don't show tours again": turns offers off everywhere. */
+  never: () => void;
 };
 
 export type TourHostViewController = {

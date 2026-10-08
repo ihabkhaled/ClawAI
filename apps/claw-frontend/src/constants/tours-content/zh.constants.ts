@@ -13,13 +13,17 @@ export const ZH_TOURS_CONTENT: TourDictionary = {
     launcherTitle: '产品导览',
     launcherHint: '简要带你看看这个页面上的内容。',
     launcherHere: '本页',
-    launcherMore: '更多导览',
     launcherDone: '已完成',
     launcherStart: '开始',
     launcherRestart: '重看',
     offerTitle: '第一次来？花 1 分钟看看导览',
     offerStart: '带我看看',
     offerLater: '以后再说',
+    offerNever: '不再显示导览',
+    launcherNoneHere: '本页暂时没有导览。',
+    launcherStopOffers: '不再推荐导览',
+    launcherResumeOffers: '重新推荐导览',
+    launcherOffersStopped: '导览推荐已关闭。你仍可在这里重看本页的任何导览。',
     missingTarget: '这一部分目前不在屏幕上。请先打开它，再重新开始导览。',
   },
   tours: {
@@ -242,6 +246,212 @@ export const ZH_TOURS_CONTENT: TourDictionary = {
         use: {
           title: '在任意聊天中使用',
           body: '在聊天中打开上下文按钮并附加该包。之后模型会在看着这些资料的情况下回答。',
+        },
+      },
+    },
+    [TourId.ChatList]: {
+      title: '你的聊天',
+      description: '查找、开始并整理你的对话。',
+      steps: {
+        new: { title: '开始聊天', body: '开始一段新对话。在手机上请使用底部的圆形按钮。' },
+        search: { title: '搜索聊天', body: '输入文字，按标题查找聊天。' },
+        tabs: {
+          title: '全部、已置顶、已归档',
+          body: '置顶的聊天会保留在最上方。归档聊天可整理列表而不删除它。',
+        },
+        items: { title: '你的对话', body: '打开一个对话即可继续。使用每行的菜单可置顶或归档。' },
+      },
+    },
+    [TourId.ChatMessages]: {
+      title: '消息与回答',
+      description: '每条消息和每个回答都能做什么。',
+      steps: {
+        yours: {
+          title: '你的消息',
+          body: '将鼠标悬停或聚焦在消息上，可复制、编辑，或从这里分出新的聊天分支。',
+        },
+        meta: {
+          title: '哪个模型回答的',
+          body: '每个回答都会显示撰写它的模型、选择方式，以及它用到的内容，例如记忆或文件。',
+        },
+        actions: {
+          title: '处理回答',
+          body: '可复制、评价、用同一模型或其他模型重新生成、朗读、存入记忆、导出，或放大查看。',
+        },
+        more: {
+          title: '回答背后',
+          body: '打开“为什么选这个模型”可查看选择原因；当回答用到研究时，可查看来源面板。选中回答中的任意文字，即可在下一条消息中引用。',
+        },
+      },
+    },
+    [TourId.ChatHeader]: {
+      title: '聊天标题栏和工具',
+      description: '搜索、质量、导出等。',
+      steps: {
+        more: {
+          title: '更多操作',
+          body: '可在此聊天中搜索、检查质量、比较模型、分享、导出、转成 Thread，或打开设置。',
+        },
+        rail: {
+          title: '快捷操作',
+          body: '最常用的在这里：比较模型、检查质量，以及在此聊天内搜索。',
+        },
+        keep: {
+          title: '保留一份副本',
+          body: '导出会把这段对话保存为文件。分支出来的聊天会显示一个返回原聊天的栏。',
+        },
+      },
+    },
+    [TourId.ChatShare]: {
+      title: '分享聊天',
+      description: '安全地发布一个只读链接。',
+      steps: {
+        open: {
+          title: '分享聊天',
+          body: '打开“更多操作”并选择“分享”，即可把这段对话的只读副本发布到公开链接。',
+        },
+        warning: {
+          title: '发布前请阅读',
+          body: '任何拥有链接的人无需登录即可阅读。副本包含对话当前的样子；之后的消息仍然保持私密。切勿分享机密或个人数据。',
+        },
+        link: {
+          title: '链接与搜索引擎',
+          body: '复制公开链接，或在新标签页中打开。只有希望被搜索到时才允许搜索引擎收录；否则只有拿到链接的人才能找到。',
+        },
+        manage: {
+          title: '更新或停止',
+          body: '更新共享版本以发布较新的消息；旧链接泄露时生成新链接；或停止分享，立即让链接失效。',
+        },
+      },
+    },
+    [TourId.ChatSettings]: {
+      title: '会话设置',
+      description: '调整单个聊天：模型、提示词和上下文。',
+      steps: {
+        open: { title: '会话设置', body: '打开“更多操作”并选择“设置”，即可只改变这个聊天的行为。' },
+        model: {
+          title: '模型与指令',
+          body: '为此聊天选择偏好的模型，并撰写系统提示词来设定其角色和语气。',
+        },
+        tuning: {
+          title: '创造力与长度',
+          body: '温度让回答更可预测或更多样。最大令牌数限制回答的长度。',
+        },
+        context: {
+          title: '此聊天的上下文',
+          body: '附加上下文包，并仅为这段对话开启或关闭记忆、聊天上下文和其他聊天的上下文。',
+        },
+      },
+    },
+    [TourId.CompareResults]: {
+      title: '阅读比较结果',
+      description: '卡片、Judge，以及你能对回答做什么。',
+      steps: {
+        results: { title: '并排查看', body: '每个模型在自己的卡片中回答，方便你并排阅读。' },
+        judge: {
+          title: 'Judge 和 Critic',
+          body: '开启 Judge 可为回答排序并解释原因。加上 Critic 可质疑 Judge 的选择。',
+        },
+        actions: {
+          title: '使用回答',
+          body: '每张卡片上都可以在格式化文本和原始文本之间切换、复制、导出为 Markdown，或放大查看。',
+        },
+      },
+    },
+    [TourId.LabsIntro]: {
+      title: '编排实验室',
+      description: '让一个提示词按固定模式依次经过多个模型。',
+      steps: {
+        what: {
+          title: '实验室做什么',
+          body: '每个实验室都会让你的提示词按固定模式经过多个模型：共识、升级、N 选最佳、成本组合、拆解、流水线、修复、角色包或核验。',
+        },
+        how: {
+          title: '如何使用',
+          body: '选择模型，写下提示词并发送。可像普通聊天一样附加文件、上下文包和已保存的提示词。结果会以卡片形式显示在下方。',
+        },
+      },
+    },
+    [TourId.DashboardIntro]: {
+      title: '你的仪表盘',
+      description: '快速了解你的工作区。',
+      steps: {
+        header: { title: '仪表盘', body: '你的总览：你有多少、连接了什么，以及一切是否正常。' },
+        stats: { title: '关键数字', body: '聊天总数、已启用的连接器和本地模型一目了然。' },
+        actions: { title: '快捷操作', body: '一键开始聊天、添加连接器或设置路由。' },
+      },
+    },
+    [TourId.PlanIntro]: {
+      title: '你的套餐',
+      description: '你的订阅包含什么。',
+      steps: {
+        header: { title: '我的套餐', body: '你当前的套餐、其功能以及你可以使用的模型。' },
+        quota: { title: '每日令牌额度', body: '你每天的使用额度。' },
+        models: { title: '可用模型', body: '你的套餐允许使用的模型。升级可解锁更多。' },
+      },
+    },
+    [TourId.BillingIntro]: {
+      title: '账单',
+      description: '套餐、价格和付款。',
+      steps: {
+        header: { title: '账单', body: '管理你的订阅，并查看各套餐的价格。' },
+        plans: { title: '选择套餐', body: '比较套餐，并在按月和按年计费之间切换。' },
+      },
+    },
+    [TourId.UsageIntro]: {
+      title: '用量',
+      description: '查看你用了多少。',
+      steps: {
+        header: { title: '用量', body: '对照你的套餐，查看每日令牌用量。' },
+        card: {
+          title: '每日令牌用量',
+          body: '进度条显示你已用掉今日额度的多少；如果你的套餐含连接器额度，也会一并显示。',
+        },
+      },
+    },
+    [TourId.FilesIntro]: {
+      title: '你的文件',
+      description: '上传文件，为 AI 提供上下文。',
+      steps: {
+        header: { title: '文件', body: '你上传的所有内容都在这里，随时可在聊天中用作上下文。' },
+        upload: {
+          title: '上传文件',
+          body: '把文件拖到这里，或点击选择。文件在使用前会先经过扫描。',
+        },
+      },
+    },
+    [TourId.SettingsIntro]: {
+      title: '设置',
+      description: '你的账户和偏好。',
+      steps: {
+        header: { title: '设置', body: '管理你的个人资料、安全、语言和外观。' },
+        language: { title: '语言', body: '选择整个应用的语言。' },
+        appearance: { title: '外观', body: '在浅色、深色和跟随系统主题之间切换。' },
+        danger: { title: '删除账户', body: '永久删除你的账户，并退出所有会话。此操作无法撤销。' },
+      },
+    },
+    [TourId.MemoryIntro]: {
+      title: '记忆',
+      description: 'AI 记住了你的哪些信息。',
+      steps: {
+        header: { title: '记忆', body: '记忆记录为 AI 提供关于你和你工作的长期上下文。' },
+        tabs: {
+          title: '已保存与建议',
+          body: '已保存的记忆会用于你的聊天。建议是 AI 提出、供你审阅的新记忆。',
+        },
+      },
+    },
+    [TourId.ConnectorsIntro]: {
+      title: '连接器',
+      description: '你与 AI 提供商的连接。',
+      steps: {
+        header: {
+          title: '连接器',
+          body: '连接器使用你自己的密钥，把 ClawAI 与某个 AI 提供商连接起来。',
+        },
+        actions: {
+          title: '添加连接器',
+          body: '创建一个，即可使用该提供商的模型。之后可以测试连接并同步其模型。',
         },
       },
     },

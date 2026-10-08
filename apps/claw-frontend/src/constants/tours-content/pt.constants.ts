@@ -13,13 +13,18 @@ export const PT_TOURS_CONTENT: TourDictionary = {
     launcherTitle: 'Tours do produto',
     launcherHint: 'Um passeio curto pelo que você vê nesta página.',
     launcherHere: 'Nesta página',
-    launcherMore: 'Mais tours',
     launcherDone: 'Concluído',
     launcherStart: 'Iniciar',
     launcherRestart: 'Rever',
     offerTitle: 'Novo por aqui? Faça um tour de 1 minuto',
     offerStart: 'Mostre-me',
     offerLater: 'Agora não',
+    offerNever: 'Não mostrar tours novamente',
+    launcherNoneHere: 'Esta página ainda não tem tour.',
+    launcherStopOffers: 'Não oferecer tours novamente',
+    launcherResumeOffers: 'Oferecer tours novamente',
+    launcherOffersStopped:
+      'As ofertas de tour estão desativadas. Você ainda pode rever aqui qualquer tour desta página.',
     missingTarget: 'Esta parte não está na tela agora. Abra-a e inicie o tour de novo.',
   },
   tours: {
@@ -248,6 +253,266 @@ export const PT_TOURS_CONTENT: TourDictionary = {
         use: {
           title: 'Use em qualquer chat',
           body: 'Abra o botão Contexto em um chat e anexe o pacote. O modelo então responde com esse material à vista.',
+        },
+      },
+    },
+    [TourId.ChatList]: {
+      title: 'Seus chats',
+      description: 'Encontre, inicie e organize suas conversas.',
+      steps: {
+        new: {
+          title: 'Inicie um chat',
+          body: 'Comece uma nova conversa. No celular, use o botão redondo na parte de baixo.',
+        },
+        search: {
+          title: 'Pesquise seus chats',
+          body: 'Digite para encontrar um chat pelo título.',
+        },
+        tabs: {
+          title: 'Todos, Fixados, Arquivados',
+          body: 'Chats fixados ficam no topo. Arquive um chat para organizar a lista sem apagá-lo.',
+        },
+        items: {
+          title: 'Suas conversas',
+          body: 'Abra uma para continuar. Use o menu de uma linha para fixá-la ou arquivá-la.',
+        },
+      },
+    },
+    [TourId.ChatMessages]: {
+      title: 'Mensagens e respostas',
+      description: 'O que cada mensagem e cada resposta permite fazer.',
+      steps: {
+        yours: {
+          title: 'Sua mensagem',
+          body: 'Passe o cursor ou foque uma mensagem para copiá-la, editá-la ou criar uma ramificação do chat a partir dela.',
+        },
+        meta: {
+          title: 'Qual modelo respondeu',
+          body: 'Cada resposta mostra o modelo que a escreveu, como foi escolhido e o que usou, como memória ou arquivos.',
+        },
+        actions: {
+          title: 'Trabalhe com uma resposta',
+          body: 'Copie, avalie, gere de novo com o mesmo modelo ou outro, ouça em voz alta, salve na memória, exporte ou abra em tamanho maior.',
+        },
+        more: {
+          title: 'Por trás da resposta',
+          body: 'Abra «Por que este modelo» para ver o motivo da escolha e o painel de fontes quando a resposta usou pesquisa. Selecione qualquer texto de uma resposta para citá-lo na próxima mensagem.',
+        },
+      },
+    },
+    [TourId.ChatHeader]: {
+      title: 'Cabeçalho do chat e ferramentas',
+      description: 'Busca, qualidade, exportação e mais.',
+      steps: {
+        more: {
+          title: 'Mais ações',
+          body: 'Pesquise neste chat, verifique sua qualidade, compare modelos, compartilhe, exporte, transforme em Thread ou abra as configurações.',
+        },
+        rail: {
+          title: 'Ações rápidas',
+          body: 'As mais usadas ficam aqui: comparar modelos, verificar a qualidade e pesquisar neste chat.',
+        },
+        keep: {
+          title: 'Guarde uma cópia',
+          body: 'Exportar salva esta conversa em um arquivo. Um chat ramificado mostra uma barra que leva ao chat de origem.',
+        },
+      },
+    },
+    [TourId.ChatShare]: {
+      title: 'Compartilhe um chat',
+      description: 'Publique um link somente leitura, com segurança.',
+      steps: {
+        open: {
+          title: 'Compartilhe um chat',
+          body: 'Abra «Mais ações» e escolha «Compartilhar» para publicar uma cópia somente leitura desta conversa em um link público.',
+        },
+        warning: {
+          title: 'Leia antes de publicar',
+          body: 'Qualquer pessoa com o link pode lê-la sem entrar. A cópia contém a conversa como está agora; as mensagens seguintes continuam privadas. Nunca compartilhe segredos nem dados pessoais.',
+        },
+        link: {
+          title: 'O link e os buscadores',
+          body: 'Copie o link público ou abra-o em uma nova aba. Permita a indexação por buscadores só se quiser que apareça nas pesquisas; caso contrário, só quem tem o link o encontra.',
+        },
+        manage: {
+          title: 'Atualizar ou parar',
+          body: 'Atualize a versão compartilhada para publicar mensagens mais novas, gere um novo link se o antigo vazou ou pare de compartilhar para desativar o link na hora.',
+        },
+      },
+    },
+    [TourId.ChatSettings]: {
+      title: 'Configurações do thread',
+      description: 'Ajuste um chat: modelo, prompt e contexto.',
+      steps: {
+        open: {
+          title: 'Configurações do thread',
+          body: 'Abra «Mais ações» e escolha «Configurações» para mudar o comportamento só deste chat.',
+        },
+        model: {
+          title: 'Modelo e instruções',
+          body: 'Escolha um modelo preferido para este chat e escreva um prompt de sistema que defina seu papel e tom.',
+        },
+        tuning: {
+          title: 'Criatividade e tamanho',
+          body: 'A temperatura deixa as respostas mais previsíveis ou mais variadas. O máximo de tokens limita o tamanho de uma resposta.',
+        },
+        context: {
+          title: 'Contexto deste chat',
+          body: 'Anexe pacotes de contexto e ative ou desative a memória, o contexto do chat e o de outros chats só para esta conversa.',
+        },
+      },
+    },
+    [TourId.CompareResults]: {
+      title: 'Lendo os resultados da comparação',
+      description: 'Cartões, Judge e o que você pode fazer com as respostas.',
+      steps: {
+        results: {
+          title: 'Lado a lado',
+          body: 'Cada modelo responde em seu próprio cartão, para você ler uma ao lado da outra.',
+        },
+        judge: {
+          title: 'Judge e Critic',
+          body: 'Ative o Judge para ordenar as respostas e explicar o porquê. Adicione o Critic para questionar a escolha do Judge.',
+        },
+        actions: {
+          title: 'Use uma resposta',
+          body: 'Em cada cartão você pode alternar entre texto formatado e bruto, copiar, exportar em Markdown ou abrir em tamanho maior.',
+        },
+      },
+    },
+    [TourId.LabsIntro]: {
+      title: 'Laboratórios de orquestração',
+      description: 'Passe um prompt por vários modelos em um padrão fixo.',
+      steps: {
+        what: {
+          title: 'O que os laboratórios fazem',
+          body: 'Cada laboratório passa seu prompt por vários modelos em um padrão fixo: consenso, escalonamento, melhor de N, conjunto de custo, decomposição, pipeline, reparo, pacote de papéis ou verificação.',
+        },
+        how: {
+          title: 'Como usar um',
+          body: 'Escolha os modelos, escreva seu prompt e envie. Anexe arquivos, pacotes de contexto e prompts salvos como em um chat normal. Os resultados aparecem abaixo em cartões.',
+        },
+      },
+    },
+    [TourId.DashboardIntro]: {
+      title: 'Seu painel',
+      description: 'Uma olhada rápida no seu espaço de trabalho.',
+      steps: {
+        header: {
+          title: 'Painel',
+          body: 'Sua visão geral: o que você tem, o que está conectado e se tudo está saudável.',
+        },
+        stats: {
+          title: 'Números principais',
+          body: 'Total de chats, conectores ativos e modelos locais de relance.',
+        },
+        actions: {
+          title: 'Ações rápidas',
+          body: 'Inicie um chat, adicione um conector ou configure o roteamento com um clique.',
+        },
+      },
+    },
+    [TourId.PlanIntro]: {
+      title: 'Seu plano',
+      description: 'O que sua assinatura inclui.',
+      steps: {
+        header: {
+          title: 'Meu plano',
+          body: 'Seu plano atual, seus recursos e os modelos que você pode usar.',
+        },
+        quota: { title: 'Cota diária de tokens', body: 'Sua franquia para cada dia.' },
+        models: {
+          title: 'Modelos permitidos',
+          body: 'Os modelos que seu plano permite usar. Faça upgrade para liberar mais.',
+        },
+      },
+    },
+    [TourId.BillingIntro]: {
+      title: 'Cobrança',
+      description: 'Planos, preços e pagamentos.',
+      steps: {
+        header: {
+          title: 'Cobrança',
+          body: 'Gerencie sua assinatura e veja quanto custa cada plano.',
+        },
+        plans: {
+          title: 'Escolha um plano',
+          body: 'Compare planos e alterne entre cobrança mensal e anual.',
+        },
+      },
+    },
+    [TourId.UsageIntro]: {
+      title: 'Uso',
+      description: 'Acompanhe o que você usou.',
+      steps: {
+        header: {
+          title: 'Uso',
+          body: 'Acompanhe seu consumo diário de tokens em relação ao plano.',
+        },
+        card: {
+          title: 'Uso diário de tokens',
+          body: 'A barra mostra quanto da franquia de hoje você usou e seu crédito de conectores, se o plano tiver.',
+        },
+      },
+    },
+    [TourId.FilesIntro]: {
+      title: 'Seus arquivos',
+      description: 'Envie arquivos para dar contexto à IA.',
+      steps: {
+        header: {
+          title: 'Arquivos',
+          body: 'Tudo o que você envia fica aqui, pronto para usar como contexto no chat.',
+        },
+        upload: {
+          title: 'Envie um arquivo',
+          body: 'Arraste um arquivo para cá ou clique para escolher. Os arquivos são verificados antes de serem usados.',
+        },
+      },
+    },
+    [TourId.SettingsIntro]: {
+      title: 'Configurações',
+      description: 'Sua conta e suas preferências.',
+      steps: {
+        header: {
+          title: 'Configurações',
+          body: 'Gerencie seu perfil, segurança, idioma e aparência.',
+        },
+        language: { title: 'Idioma', body: 'Escolha o idioma de todo o aplicativo.' },
+        appearance: {
+          title: 'Aparência',
+          body: 'Alterne entre os temas claro, escuro e do sistema.',
+        },
+        danger: {
+          title: 'Excluir conta',
+          body: 'Exclui sua conta para sempre e encerra todas as sessões. Não dá para desfazer.',
+        },
+      },
+    },
+    [TourId.MemoryIntro]: {
+      title: 'Memória',
+      description: 'O que a IA lembra sobre você.',
+      steps: {
+        header: {
+          title: 'Memória',
+          body: 'Os registros de memória dão à IA um contexto duradouro sobre você e seu trabalho.',
+        },
+        tabs: {
+          title: 'Salvas e sugeridas',
+          body: 'As memórias salvas são usadas nos seus chats. As sugestões são novas memórias que a IA propõe para você revisar.',
+        },
+      },
+    },
+    [TourId.ConnectorsIntro]: {
+      title: 'Conectores',
+      description: 'Suas conexões com provedores de IA.',
+      steps: {
+        header: {
+          title: 'Conectores',
+          body: 'Um conector liga o ClawAI a um provedor de IA com sua própria chave.',
+        },
+        actions: {
+          title: 'Adicione um conector',
+          body: 'Crie um para usar os modelos de um provedor. Depois você pode testar a conexão e sincronizar os modelos dele.',
         },
       },
     },

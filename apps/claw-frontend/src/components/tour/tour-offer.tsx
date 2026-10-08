@@ -33,7 +33,10 @@ export function TourOffer(): ReactElement | null {
       <p className="text-muted-foreground text-xs">
         {tour.title}: {tour.description}
       </p>
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button type="button" variant="ghost" size="sm" onClick={offer.never}>
+          {content.ui.offerNever}
+        </Button>
         <Button type="button" variant="ghost" size="sm" onClick={offer.decline}>
           {content.ui.offerLater}
         </Button>

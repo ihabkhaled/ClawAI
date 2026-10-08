@@ -42,7 +42,12 @@ export default function ChatPage() {
         title={t('nav.chat')}
         description={t('chat.threads')}
         actions={
-          <Button onClick={handleNewChat} disabled={isCreating} className="hidden md:inline-flex">
+          <Button
+            onClick={handleNewChat}
+            disabled={isCreating}
+            className="hidden md:inline-flex"
+            data-tour="chat-new-chat"
+          >
             <Plus className="me-2 h-4 w-4" />
             {t('chat.newThread')}
           </Button>
@@ -51,7 +56,7 @@ export default function ChatPage() {
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden md:flex-row md:gap-6">
         <div className="flex min-h-0 w-full flex-1 flex-col gap-3 overflow-hidden md:w-80 md:flex-none">
-          <div className="relative">
+          <div className="relative" data-tour="chat-list-search">
             <Search className="text-muted-foreground absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2" />
             <Input
               value={search}
@@ -65,7 +70,7 @@ export default function ChatPage() {
             value={activeTab}
             onValueChange={(value) => setActiveTab(value as ChatThreadListTab)}
           >
-            <TabsList className="w-full">
+            <TabsList className="w-full" data-tour="chat-list-tabs">
               <TabsTrigger value={ChatThreadListTab.ALL} className="flex-1">
                 {t('chat.tabs.all')}
               </TabsTrigger>
@@ -78,7 +83,7 @@ export default function ChatPage() {
             </TabsList>
           </Tabs>
 
-          <div className="min-h-0 flex-1 overflow-hidden">
+          <div className="min-h-0 flex-1 overflow-hidden" data-tour="chat-list-items">
             <GroupedThreadList
               threads={allThreads}
               isLoading={isLoading}

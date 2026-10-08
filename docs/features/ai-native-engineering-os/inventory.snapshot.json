@@ -8730,7 +8730,7 @@
           "file": "skills/add-a-payment-gateway-flow.md"
         },
         {
-          "bytes": 2239,
+          "bytes": 2839,
           "file": "skills/add-a-product-tour.md"
         },
         {
@@ -11348,7 +11348,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 741
+        "testFiles": 743
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -12193,7 +12193,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2144,
+    "totalTestFiles": 2146,
     "workspaceCount": 27
   }
 }

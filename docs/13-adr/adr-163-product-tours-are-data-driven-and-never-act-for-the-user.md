@@ -30,3 +30,12 @@ A hard-coded walkthrough library would need one change per page. Targets by attr
 - No tour state is shared across devices.
 
 QA: `docs/qa-evidence/2026-10-07-product-tours.md`.
+
+## Addendum 2026-10-08: this page only, a switch to stop offers, 15 more tours
+
+Owner feedback: starting a tour of another page showed a spotlight on things that are not on screen.
+
+- **The help menu lists only the tours of the page the person is on.** There is no "more tours" section. A page with no tour says so.
+- **A switch stops the offers everywhere.** "Don't show tours again" on the offer card, or "Don't offer tours again" in the help menu, sets `offersDisabled` in the same per-account browser record. Replaying a tour from the menu still works, and the same menu item turns offers back on.
+- **15 more tours.** Chat: chat list, messages and answers, chat header and tools, share a chat, thread settings, reading compare results, orchestration labs. System pages: dashboard, plan, billing, usage, files, settings, memory, connectors. The system-page tours offer themselves once; the chat ones are reached from the help menu.
+- **Dialogs are described, not highlighted.** Share and thread settings open in dialogs, and a tour never clicks. Their tours highlight "More actions" and then explain each dialog in centered cards.

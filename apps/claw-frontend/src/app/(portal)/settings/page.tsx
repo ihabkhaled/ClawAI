@@ -80,7 +80,7 @@ export default function SettingsPage() {
 
         <Separator />
 
-        <Card className="border-destructive/40">
+        <Card className="border-destructive/40" data-tour="settings-delete">
           <CardHeader>
             <CardTitle className="text-lg">{t('settings.deleteAccount')}</CardTitle>
             <CardDescription>{t('settings.deleteAccountDescription')}</CardDescription>
@@ -116,7 +116,7 @@ export default function SettingsPage() {
 
         <Separator />
 
-        <Card>
+        <Card data-tour="settings-language">
           <CardHeader>
             <CardTitle className="text-lg">{t('settings.language')}</CardTitle>
             <CardDescription>{t('settings.languageDescription')}</CardDescription>
@@ -145,7 +145,7 @@ export default function SettingsPage() {
 
         <Separator />
 
-        <Card>
+        <Card data-tour="settings-appearance">
           <CardHeader>
             <CardTitle className="text-lg">{t('settings.appearance')}</CardTitle>
             <CardDescription>{t('settings.appearanceDescription')}</CardDescription>

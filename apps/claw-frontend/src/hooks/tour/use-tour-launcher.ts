@@ -8,25 +8,32 @@ import type { TourLauncherController, TourLauncherEntry } from '@/types/tour.typ
 import { stripLocaleFromPathname } from '@/utilities/locale.utility';
 import { tourAppliesToPath } from '@/utilities/tour-route.utility';
 
-/** The tours a person can start from the help button: this page's first, then the rest. */
+/**
+ * The tours a person can start from the help button: this page's only. A tour of another page
+ * would spotlight things that are not on screen, so it is not offered here.
+ */
 export function useTourLauncher(): TourLauncherController {
   const pathname = usePathname();
   const path = stripLocaleFromPathname(pathname ?? '/');
   const content = useTourContent();
   const completed = useTourStore((state) => state.progress.completed);
   const start = useTourStore((state) => state.start);
+  const offersDisabled = useTourStore((state) => state.progress.offersDisabled);
+  const setOffersDisabled = useTourStore((state) => state.setOffersDisabled);
 
-  const entries: TourLauncherEntry[] = TOUR_DEFINITIONS.map((tour) => ({
+  const here: TourLauncherEntry[] = TOUR_DEFINITIONS.filter((tour) =>
+    tourAppliesToPath(tour, path),
+  ).map((tour) => ({
     id: tour.id,
     title: content.tours[tour.id].title,
     description: content.tours[tour.id].description,
     isCompleted: completed[tour.id] === true,
-    isHere: tourAppliesToPath(tour, path),
   }));
 
   return {
-    here: entries.filter((entry) => entry.isHere),
-    more: entries.filter((entry) => !entry.isHere),
+    here,
+    offersDisabled,
+    setOffersDisabled,
     start: (tourId: TourId) => start(tourId),
   };
 }

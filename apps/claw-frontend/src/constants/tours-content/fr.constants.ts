@@ -13,13 +13,18 @@ export const FR_TOURS_CONTENT: TourDictionary = {
     launcherTitle: 'Visites guidées',
     launcherHint: 'Un court tour de ce que vous voyez sur cette page.',
     launcherHere: 'Sur cette page',
-    launcherMore: 'Autres visites',
     launcherDone: 'Faite',
     launcherStart: 'Démarrer',
     launcherRestart: 'Revoir',
     offerTitle: 'Nouveau ici ? Faites une visite d’une minute',
     offerStart: 'Montrez-moi',
     offerLater: 'Pas maintenant',
+    offerNever: 'Ne plus afficher les visites',
+    launcherNoneHere: 'Pas encore de visite pour cette page.',
+    launcherStopOffers: 'Ne plus proposer de visites',
+    launcherResumeOffers: 'Proposer de nouveau les visites',
+    launcherOffersStopped:
+      'Les propositions de visite sont désactivées. Vous pouvez toujours revoir ici chaque visite de cette page.',
     missingTarget:
       'Cette partie n’est pas à l’écran pour l’instant. Ouvrez-la, puis relancez la visite.',
   },
@@ -249,6 +254,266 @@ export const FR_TOURS_CONTENT: TourDictionary = {
         use: {
           title: 'L’utiliser dans n’importe quel chat',
           body: 'Ouvrez le bouton Contexte dans un chat et joignez le paquet. Le modèle répond alors avec ce matériel sous les yeux.',
+        },
+      },
+    },
+    [TourId.ChatList]: {
+      title: 'Vos discussions',
+      description: 'Trouvez, lancez et organisez vos conversations.',
+      steps: {
+        new: {
+          title: 'Lancer une discussion',
+          body: 'Commencez une nouvelle conversation. Sur mobile, utilisez le bouton rond en bas.',
+        },
+        search: {
+          title: 'Rechercher dans vos discussions',
+          body: 'Saisissez du texte pour retrouver une discussion par son titre.',
+        },
+        tabs: {
+          title: 'Toutes, Épinglées, Archivées',
+          body: 'Les discussions épinglées restent en haut. Archivez-en une pour ranger la liste sans la supprimer.',
+        },
+        items: {
+          title: 'Vos conversations',
+          body: 'Ouvrez-en une pour la poursuivre. Le menu d’une ligne permet de l’épingler ou de l’archiver.',
+        },
+      },
+    },
+    [TourId.ChatMessages]: {
+      title: 'Messages et réponses',
+      description: 'Ce que permet chaque message et chaque réponse.',
+      steps: {
+        yours: {
+          title: 'Votre message',
+          body: 'Survolez ou ciblez un message pour le copier, le modifier ou créer une branche de la discussion à partir de là.',
+        },
+        meta: {
+          title: 'Quel modèle a répondu',
+          body: 'Chaque réponse indique le modèle qui l’a écrite, comment il a été choisi et ce qu’il a utilisé, comme la mémoire ou des fichiers.',
+        },
+        actions: {
+          title: 'Travailler avec une réponse',
+          body: 'Copiez-la, notez-la, régénérez-la avec le même modèle ou un autre, faites-la lire à voix haute, enregistrez-la en mémoire, exportez-la ou ouvrez-la en grand.',
+        },
+        more: {
+          title: 'Derrière la réponse',
+          body: 'Ouvrez « Pourquoi ce modèle » pour voir la raison du choix, et le panneau des sources quand la réponse a utilisé la recherche. Sélectionnez un texte dans une réponse pour le citer dans votre message suivant.',
+        },
+      },
+    },
+    [TourId.ChatHeader]: {
+      title: 'En-tête de la discussion et outils',
+      description: 'Recherche, qualité, export et plus.',
+      steps: {
+        more: {
+          title: 'Plus d’actions',
+          body: 'Recherchez dans cette discussion, vérifiez sa qualité, comparez des modèles, partagez-la, exportez-la, transformez-la en Thread ou ouvrez ses paramètres.',
+        },
+        rail: {
+          title: 'Actions rapides',
+          body: 'Les plus utilisées sont ici : comparer des modèles, vérifier la qualité et rechercher dans cette discussion.',
+        },
+        keep: {
+          title: 'Garder une copie',
+          body: 'L’export enregistre cette conversation dans un fichier. Une discussion issue d’une branche affiche une barre qui renvoie à la discussion d’origine.',
+        },
+      },
+    },
+    [TourId.ChatShare]: {
+      title: 'Partager une discussion',
+      description: 'Publiez un lien en lecture seule, en toute sécurité.',
+      steps: {
+        open: {
+          title: 'Partager une discussion',
+          body: 'Ouvrez « Plus d’actions » et choisissez « Partager » pour publier une copie en lecture seule de cette conversation sur un lien public.',
+        },
+        warning: {
+          title: 'À lire avant de publier',
+          body: 'Toute personne disposant du lien peut la lire sans se connecter. La copie contient la conversation dans son état actuel ; les messages suivants restent privés. Ne partagez jamais de secrets ni de données personnelles.',
+        },
+        link: {
+          title: 'Le lien et les moteurs de recherche',
+          body: 'Copiez le lien public ou ouvrez-le dans un nouvel onglet. N’autorisez l’indexation que si vous voulez qu’il apparaisse dans les recherches ; sinon seules les personnes ayant le lien le trouvent.',
+        },
+        manage: {
+          title: 'Mettre à jour ou arrêter',
+          body: 'Mettez à jour la version partagée pour publier les messages récents, générez un nouveau lien si l’ancien a fuité, ou arrêtez le partage pour désactiver le lien aussitôt.',
+        },
+      },
+    },
+    [TourId.ChatSettings]: {
+      title: 'Paramètres du fil',
+      description: 'Réglez une discussion : modèle, prompt et contexte.',
+      steps: {
+        open: {
+          title: 'Paramètres du fil',
+          body: 'Ouvrez « Plus d’actions » et choisissez « Paramètres » pour changer le comportement de cette seule discussion.',
+        },
+        model: {
+          title: 'Modèle et consignes',
+          body: 'Choisissez un modèle préféré pour cette discussion et rédigez un prompt système qui fixe son rôle et son ton.',
+        },
+        tuning: {
+          title: 'Créativité et longueur',
+          body: 'La température rend les réponses plus prévisibles ou plus variées. Le nombre maximal de tokens limite la longueur d’une réponse.',
+        },
+        context: {
+          title: 'Contexte de cette discussion',
+          body: 'Joignez des packs de contexte et activez ou désactivez la mémoire, le contexte de la discussion et celui des autres discussions pour cette conversation seulement.',
+        },
+      },
+    },
+    [TourId.CompareResults]: {
+      title: 'Lire les résultats de Comparer',
+      description: 'Cartes, Judge et ce que vous pouvez faire des réponses.',
+      steps: {
+        results: {
+          title: 'Côte à côte',
+          body: 'Chaque modèle répond dans sa propre carte, pour que vous les lisiez l’une à côté de l’autre.',
+        },
+        judge: {
+          title: 'Judge et Critic',
+          body: 'Activez le Judge pour classer les réponses et expliquer pourquoi. Ajoutez le Critic pour contester le choix du Judge.',
+        },
+        actions: {
+          title: 'Utiliser une réponse',
+          body: 'Sur chaque carte, vous pouvez alterner entre texte mis en forme et texte brut, le copier, l’exporter en Markdown ou l’ouvrir en grand.',
+        },
+      },
+    },
+    [TourId.LabsIntro]: {
+      title: 'Laboratoires d’orchestration',
+      description: 'Faites passer un prompt par plusieurs modèles selon un schéma fixe.',
+      steps: {
+        what: {
+          title: 'Ce que font les laboratoires',
+          body: 'Chaque laboratoire fait passer votre prompt par plusieurs modèles selon un schéma fixe : consensus, escalade, meilleur de N, ensemble de coûts, décomposition, pipeline, réparation, pack de rôles ou vérification.',
+        },
+        how: {
+          title: 'Comment en utiliser un',
+          body: 'Choisissez les modèles, rédigez votre prompt et envoyez-le. Joignez fichiers, packs de contexte et prompts enregistrés comme dans une discussion normale. Les résultats apparaissent en dessous sous forme de cartes.',
+        },
+      },
+    },
+    [TourId.DashboardIntro]: {
+      title: 'Votre tableau de bord',
+      description: 'Un aperçu rapide de votre espace de travail.',
+      steps: {
+        header: {
+          title: 'Tableau de bord',
+          body: 'Votre vue d’ensemble : ce que vous avez, ce qui est connecté et si tout va bien.',
+        },
+        stats: {
+          title: 'Chiffres clés',
+          body: 'Total des discussions, connecteurs actifs et modèles locaux d’un coup d’œil.',
+        },
+        actions: {
+          title: 'Actions rapides',
+          body: 'Lancez une discussion, ajoutez un connecteur ou configurez le routage en un clic.',
+        },
+      },
+    },
+    [TourId.PlanIntro]: {
+      title: 'Votre offre',
+      description: 'Ce que comprend votre abonnement.',
+      steps: {
+        header: {
+          title: 'Mon offre',
+          body: 'Votre offre actuelle, ses fonctionnalités et les modèles que vous pouvez utiliser.',
+        },
+        quota: { title: 'Quota quotidien de tokens', body: 'Votre allocation pour chaque jour.' },
+        models: {
+          title: 'Modèles autorisés',
+          body: 'Les modèles que votre offre vous permet d’utiliser. Passez à l’offre supérieure pour en débloquer davantage.',
+        },
+      },
+    },
+    [TourId.BillingIntro]: {
+      title: 'Facturation',
+      description: 'Offres, prix et paiements.',
+      steps: {
+        header: {
+          title: 'Facturation',
+          body: 'Gérez votre abonnement et voyez ce que coûte chaque offre.',
+        },
+        plans: {
+          title: 'Choisir une offre',
+          body: 'Comparez les offres et alternez entre facturation mensuelle et annuelle.',
+        },
+      },
+    },
+    [TourId.UsageIntro]: {
+      title: 'Utilisation',
+      description: 'Suivez ce que vous avez consommé.',
+      steps: {
+        header: {
+          title: 'Utilisation',
+          body: 'Suivez votre consommation quotidienne de tokens par rapport à votre offre.',
+        },
+        card: {
+          title: 'Utilisation quotidienne de tokens',
+          body: 'La barre montre la part de l’allocation du jour que vous avez utilisée, ainsi que votre crédit de connecteur si votre offre en comprend.',
+        },
+      },
+    },
+    [TourId.FilesIntro]: {
+      title: 'Vos fichiers',
+      description: 'Importez des fichiers pour donner du contexte à l’IA.',
+      steps: {
+        header: {
+          title: 'Fichiers',
+          body: 'Tout ce que vous importez est ici, prêt à servir de contexte dans la discussion.',
+        },
+        upload: {
+          title: 'Importer un fichier',
+          body: 'Glissez un fichier ici ou cliquez pour en choisir un. Les fichiers sont analysés avant d’être utilisés.',
+        },
+      },
+    },
+    [TourId.SettingsIntro]: {
+      title: 'Paramètres',
+      description: 'Votre compte et vos préférences.',
+      steps: {
+        header: {
+          title: 'Paramètres',
+          body: 'Gérez votre profil, votre sécurité, votre langue et votre apparence.',
+        },
+        language: { title: 'Langue', body: 'Choisissez la langue de toute l’application.' },
+        appearance: {
+          title: 'Apparence',
+          body: 'Passez du thème clair au thème sombre ou à celui du système.',
+        },
+        danger: {
+          title: 'Supprimer le compte',
+          body: 'Supprime définitivement votre compte et ferme toutes les sessions. Impossible à annuler.',
+        },
+      },
+    },
+    [TourId.MemoryIntro]: {
+      title: 'Mémoire',
+      description: 'Ce que l’IA retient de vous.',
+      steps: {
+        header: {
+          title: 'Mémoire',
+          body: 'Les enregistrements de mémoire donnent à l’IA un contexte durable sur vous et votre travail.',
+        },
+        tabs: {
+          title: 'Enregistrées et suggérées',
+          body: 'Les mémoires enregistrées servent dans vos discussions. Les suggestions sont de nouvelles mémoires que l’IA vous propose de relire.',
+        },
+      },
+    },
+    [TourId.ConnectorsIntro]: {
+      title: 'Connecteurs',
+      description: 'Vos connexions aux fournisseurs d’IA.',
+      steps: {
+        header: {
+          title: 'Connecteurs',
+          body: 'Un connecteur relie ClawAI à un fournisseur d’IA avec votre propre clé.',
+        },
+        actions: {
+          title: 'Ajouter un connecteur',
+          body: 'Créez-en un pour utiliser les modèles d’un fournisseur. Vous pourrez ensuite tester la connexion et synchroniser ses modèles.',
         },
       },
     },

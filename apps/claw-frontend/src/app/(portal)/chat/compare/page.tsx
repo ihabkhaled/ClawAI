@@ -260,7 +260,9 @@ export default function ComparePage() {
 
           {allResponded ? <ParallelSummaryBar messages={pollingMessages} t={t} /> : null}
 
-          <ParallelResultsGrid messages={pollingMessages} prompt={prompt} t={t} />
+          <div data-tour="compare-results">
+            <ParallelResultsGrid messages={pollingMessages} prompt={prompt} t={t} />
+          </div>
         </div>
       ) : null}
 

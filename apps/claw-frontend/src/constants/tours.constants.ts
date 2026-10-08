@@ -15,6 +15,11 @@ const CHAT_LAB_ROUTES: readonly string[] = [
   '/chat/verify',
 ];
 
+/** The orchestration labs that are not Compare (Compare has its own tours). */
+const LAB_PAGE_ROUTES: readonly string[] = CHAT_LAB_ROUTES.filter(
+  (route) => route !== '/chat/compare',
+);
+
 /**
  * Every product tour. The text for a step lives in `tours-content/<locale>` under the same ids;
  * the element is any element carrying `data-tour="<target>"`. A step whose element is not on
@@ -141,6 +146,170 @@ export const TOUR_DEFINITIONS: readonly TourDefinition[] = [
     steps: [
       { id: 'create', target: 'context-create' },
       { id: 'use', target: null },
+    ],
+  },
+  {
+    id: TourId.ChatList,
+    routes: ['/chat'],
+    excludedRoutes: [],
+    autoOffer: false,
+    steps: [
+      { id: 'new', target: 'chat-new-chat' },
+      { id: 'search', target: 'chat-list-search' },
+      { id: 'tabs', target: 'chat-list-tabs' },
+      { id: 'items', target: 'chat-list-items' },
+    ],
+  },
+  {
+    id: TourId.ChatMessages,
+    routes: ['/chat/*'],
+    excludedRoutes: CHAT_LAB_ROUTES,
+    autoOffer: false,
+    steps: [
+      { id: 'yours', target: 'message-user-actions' },
+      { id: 'meta', target: 'message-meta' },
+      { id: 'actions', target: 'message-actions' },
+      { id: 'more', target: null },
+    ],
+  },
+  {
+    id: TourId.ChatHeader,
+    routes: ['/chat/*'],
+    excludedRoutes: CHAT_LAB_ROUTES,
+    autoOffer: false,
+    steps: [
+      { id: 'more', target: 'chat-more' },
+      { id: 'rail', target: 'chat-rail' },
+      { id: 'keep', target: null },
+    ],
+  },
+  {
+    id: TourId.ChatShare,
+    routes: ['/chat/*'],
+    excludedRoutes: CHAT_LAB_ROUTES,
+    autoOffer: false,
+    steps: [
+      { id: 'open', target: 'chat-more' },
+      { id: 'warning', target: null },
+      { id: 'link', target: null },
+      { id: 'manage', target: null },
+    ],
+  },
+  {
+    id: TourId.ChatSettings,
+    routes: ['/chat/*'],
+    excludedRoutes: CHAT_LAB_ROUTES,
+    autoOffer: false,
+    steps: [
+      { id: 'open', target: 'chat-more' },
+      { id: 'model', target: null },
+      { id: 'tuning', target: null },
+      { id: 'context', target: null },
+    ],
+  },
+  {
+    id: TourId.CompareResults,
+    routes: ['/chat/compare'],
+    excludedRoutes: [],
+    autoOffer: false,
+    steps: [
+      { id: 'results', target: 'compare-results' },
+      { id: 'judge', target: null },
+      { id: 'actions', target: null },
+    ],
+  },
+  {
+    id: TourId.LabsIntro,
+    routes: LAB_PAGE_ROUTES,
+    excludedRoutes: [],
+    autoOffer: false,
+    steps: [
+      { id: 'what', target: null },
+      { id: 'how', target: null },
+    ],
+  },
+  {
+    id: TourId.DashboardIntro,
+    routes: ['/dashboard'],
+    excludedRoutes: [],
+    autoOffer: true,
+    steps: [
+      { id: 'header', target: 'page-header' },
+      { id: 'stats', target: 'dashboard-stats' },
+      { id: 'actions', target: 'dashboard-quick-actions' },
+    ],
+  },
+  {
+    id: TourId.PlanIntro,
+    routes: ['/plan'],
+    excludedRoutes: [],
+    autoOffer: true,
+    steps: [
+      { id: 'header', target: 'page-header' },
+      { id: 'quota', target: 'plan-quota' },
+      { id: 'models', target: 'plan-models' },
+    ],
+  },
+  {
+    id: TourId.BillingIntro,
+    routes: ['/billing'],
+    excludedRoutes: [],
+    autoOffer: true,
+    steps: [
+      { id: 'header', target: 'page-header' },
+      { id: 'plans', target: 'billing-plans' },
+    ],
+  },
+  {
+    id: TourId.UsageIntro,
+    routes: ['/usage'],
+    excludedRoutes: [],
+    autoOffer: true,
+    steps: [
+      { id: 'header', target: 'page-header' },
+      { id: 'card', target: 'usage-card' },
+    ],
+  },
+  {
+    id: TourId.FilesIntro,
+    routes: ['/files'],
+    excludedRoutes: [],
+    autoOffer: true,
+    steps: [
+      { id: 'header', target: 'page-header' },
+      { id: 'upload', target: 'files-upload' },
+    ],
+  },
+  {
+    id: TourId.SettingsIntro,
+    routes: ['/settings'],
+    excludedRoutes: [],
+    autoOffer: true,
+    steps: [
+      { id: 'header', target: 'page-header' },
+      { id: 'language', target: 'settings-language' },
+      { id: 'appearance', target: 'settings-appearance' },
+      { id: 'danger', target: 'settings-delete' },
+    ],
+  },
+  {
+    id: TourId.MemoryIntro,
+    routes: ['/memory'],
+    excludedRoutes: [],
+    autoOffer: true,
+    steps: [
+      { id: 'header', target: 'page-header' },
+      { id: 'tabs', target: 'memory-tabs' },
+    ],
+  },
+  {
+    id: TourId.ConnectorsIntro,
+    routes: ['/connectors'],
+    excludedRoutes: [],
+    autoOffer: true,
+    steps: [
+      { id: 'header', target: 'page-header' },
+      { id: 'actions', target: 'page-header-actions' },
     ],
   },
 ];

@@ -30,7 +30,7 @@ export default function DashboardPage(): React.ReactElement {
       />
 
       {/* Mobile: 2-column stat grid. Tablet+ keeps the 4-up layout. */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <div data-tour="dashboard-stats" className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {statCards.map((stat) => (
           <DashboardStatCard key={stat.label} card={stat} isLoading={isLoading} />
         ))}
@@ -40,7 +40,10 @@ export default function DashboardPage(): React.ReactElement {
         <h2 className="mb-4 text-lg font-semibold tracking-tight sm:text-xl">
           {t('dashboard.quickActions')}
         </h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+        <div
+          data-tour="dashboard-quick-actions"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3"
+        >
           {quickActions.map((action) => (
             <DashboardQuickActionCard key={action.label} action={action} />
           ))}

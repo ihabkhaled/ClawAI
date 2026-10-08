@@ -114,7 +114,7 @@ export default function BillingPage(): ReactElement {
         />
       </div>
 
-      <section className="grid grid-cols-1 gap-4">
+      <section data-tour="billing-plans" className="grid grid-cols-1 gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold">{t('billing.plans.title')}</h2>
           <BillingIntervalToggle value={view.interval} onChange={view.setInterval} t={t} />

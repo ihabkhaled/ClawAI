@@ -13,13 +13,17 @@ export const EN_TOURS_CONTENT: TourDictionary = {
     launcherTitle: 'Product tours',
     launcherHint: 'A short walk through what you see on this page.',
     launcherHere: 'On this page',
-    launcherMore: 'More tours',
     launcherDone: 'Done',
     launcherStart: 'Start',
     launcherRestart: 'Replay',
     offerTitle: 'New here? Take a 1-minute tour',
     offerStart: 'Show me',
     offerLater: 'Not now',
+    offerNever: "Don't show tours again",
+    launcherNoneHere: 'No tour for this page yet.',
+    launcherStopOffers: "Don't offer tours again",
+    launcherResumeOffers: 'Offer tours again',
+    launcherOffersStopped: 'Tour offers are off. You can still replay any tour of this page here.',
     missingTarget: 'This part is not on screen right now. Open it, then start the tour again.',
   },
   tours: {
@@ -248,6 +252,257 @@ export const EN_TOURS_CONTENT: TourDictionary = {
         use: {
           title: 'Use it in any chat',
           body: 'Open the Context button in a chat and attach the pack. The model then answers with that material in view.',
+        },
+      },
+    },
+    [TourId.ChatList]: {
+      title: 'Your chats',
+      description: 'Find, start and organise your conversations.',
+      steps: {
+        new: {
+          title: 'Start a chat',
+          body: 'Begin a new conversation. On a phone, use the round button at the bottom.',
+        },
+        search: { title: 'Search your chats', body: 'Type to find a chat by its title.' },
+        tabs: {
+          title: 'All, Pinned, Archived',
+          body: 'Pinned chats stay at the top. Archive a chat to tidy the list without deleting it.',
+        },
+        items: {
+          title: 'Your conversations',
+          body: 'Open one to continue it. Use the menu on a row to pin or archive it.',
+        },
+      },
+    },
+    [TourId.ChatMessages]: {
+      title: 'Messages and answers',
+      description: 'What every message and answer lets you do.',
+      steps: {
+        yours: {
+          title: 'Your message',
+          body: 'Hover or focus a message to copy it, edit it, or branch the chat from that point.',
+        },
+        meta: {
+          title: 'Which model answered',
+          body: 'Each answer shows the model that wrote it, how it was chosen and what it used, such as memory or files.',
+        },
+        actions: {
+          title: 'Work with an answer',
+          body: 'Copy it, rate it, regenerate it with the same or another model, read it aloud, save it to memory, export it or open it larger.',
+        },
+        more: {
+          title: 'Behind the answer',
+          body: 'Open Why this model to see the reasoning behind the pick, and the sources panel when the answer used research. Select any text in an answer to quote it in your next message.',
+        },
+      },
+    },
+    [TourId.ChatHeader]: {
+      title: 'Chat header and tools',
+      description: 'Search, quality, export and more.',
+      steps: {
+        more: {
+          title: 'More actions',
+          body: 'Search this chat, check its quality, compare models, share it, export it, turn it into a Thread, or open its settings.',
+        },
+        rail: {
+          title: 'Quick actions',
+          body: 'The most used ones sit here: compare models, check quality and search inside this chat.',
+        },
+        keep: {
+          title: 'Keep a copy',
+          body: 'Export saves this conversation as a file. A branched chat shows a bar that links back to the chat it came from.',
+        },
+      },
+    },
+    [TourId.ChatShare]: {
+      title: 'Share a chat',
+      description: 'Publish a read-only link, safely.',
+      steps: {
+        open: {
+          title: 'Share a chat',
+          body: 'Open More actions and choose Share to publish a read-only copy of this conversation at a public link.',
+        },
+        warning: {
+          title: 'Read before you publish',
+          body: 'Anyone with the link can read it without signing in. It holds the conversation as it is now; later messages stay private. Never share secrets or personal data.',
+        },
+        link: {
+          title: 'The link and search engines',
+          body: 'Copy the public link or open it in a new tab. Allow search engines to index it only if you want it found in search; otherwise only people with the link can find it.',
+        },
+        manage: {
+          title: 'Update or stop',
+          body: 'Update the shared version to publish newer messages, generate a new link if the old one leaked, or stop sharing to turn the link off at once.',
+        },
+      },
+    },
+    [TourId.ChatSettings]: {
+      title: 'Thread settings',
+      description: 'Tune one chat: model, prompt and context.',
+      steps: {
+        open: {
+          title: 'Thread settings',
+          body: 'Open More actions and choose Settings to change how this one chat behaves.',
+        },
+        model: {
+          title: 'Model and instructions',
+          body: 'Pick a preferred model for this chat and write a system prompt to set its role and tone.',
+        },
+        tuning: {
+          title: 'Creativity and length',
+          body: 'Temperature makes answers more predictable or more varied. Max tokens limits how long an answer can be.',
+        },
+        context: {
+          title: 'Context for this chat',
+          body: 'Attach context packs, and switch memory, chat context and other-chat context on or off for this conversation only.',
+        },
+      },
+    },
+    [TourId.CompareResults]: {
+      title: 'Reading compare results',
+      description: 'Cards, Judge and what you can do with answers.',
+      steps: {
+        results: {
+          title: 'Side by side',
+          body: 'Each model answers in its own card, so you can read them next to each other.',
+        },
+        judge: {
+          title: 'Judge and Critic',
+          body: 'Turn on the Judge to rank the answers and explain why. Add the Critic to challenge the Judge’s pick.',
+        },
+        actions: {
+          title: 'Use an answer',
+          body: 'On each card you can switch between formatted and raw text, copy it, export it as Markdown or open it larger.',
+        },
+      },
+    },
+    [TourId.LabsIntro]: {
+      title: 'Orchestration labs',
+      description: 'Run a prompt through several models in a set pattern.',
+      steps: {
+        what: {
+          title: 'What the labs do',
+          body: 'Each lab sends your prompt through several models in a fixed pattern: consensus, escalation, best of N, cost ensemble, decompose, pipeline, repair, role pack or verify.',
+        },
+        how: {
+          title: 'How to use one',
+          body: 'Choose the models, write your prompt and send it. Attach files, context packs and saved prompts as in a normal chat. The results appear below as cards.',
+        },
+      },
+    },
+    [TourId.DashboardIntro]: {
+      title: 'Your dashboard',
+      description: 'A quick look at your workspace.',
+      steps: {
+        header: {
+          title: 'Dashboard',
+          body: 'Your overview: how much you have, what is connected and whether everything is healthy.',
+        },
+        stats: {
+          title: 'Key numbers',
+          body: 'Total chats, active connectors and local models at a glance.',
+        },
+        actions: {
+          title: 'Quick actions',
+          body: 'Start a chat, add a connector or set up routing in one click.',
+        },
+      },
+    },
+    [TourId.PlanIntro]: {
+      title: 'Your plan',
+      description: 'What your subscription includes.',
+      steps: {
+        header: {
+          title: 'My plan',
+          body: 'Your current plan, its features and the models you can use.',
+        },
+        quota: { title: 'Daily token quota', body: 'Your allowance for each day.' },
+        models: {
+          title: 'Allowed models',
+          body: 'The models your plan lets you use. Upgrade to unlock more.',
+        },
+      },
+    },
+    [TourId.BillingIntro]: {
+      title: 'Billing',
+      description: 'Plans, prices and payments.',
+      steps: {
+        header: {
+          title: 'Billing',
+          body: 'Manage your subscription and see what each plan costs.',
+        },
+        plans: {
+          title: 'Choose a plan',
+          body: 'Compare plans and switch between monthly and yearly billing.',
+        },
+      },
+    },
+    [TourId.UsageIntro]: {
+      title: 'Usage',
+      description: 'Track what you have used.',
+      steps: {
+        header: { title: 'Usage', body: 'Track your daily token use against your plan.' },
+        card: {
+          title: 'Daily token usage',
+          body: 'The bar shows how much of today’s allowance you have used, and your connector credit if your plan has it.',
+        },
+      },
+    },
+    [TourId.FilesIntro]: {
+      title: 'Your files',
+      description: 'Upload files to give the AI context.',
+      steps: {
+        header: {
+          title: 'Files',
+          body: 'Everything you upload lives here, ready to use as context in chat.',
+        },
+        upload: {
+          title: 'Upload a file',
+          body: 'Drag a file here or click to choose one. Files are scanned before they are used.',
+        },
+      },
+    },
+    [TourId.SettingsIntro]: {
+      title: 'Settings',
+      description: 'Your account and preferences.',
+      steps: {
+        header: {
+          title: 'Settings',
+          body: 'Manage your profile, security, language and appearance.',
+        },
+        language: { title: 'Language', body: 'Choose the language of the whole app.' },
+        appearance: { title: 'Appearance', body: 'Switch between light, dark and system themes.' },
+        danger: {
+          title: 'Delete account',
+          body: 'Permanently deletes your account and signs out every session. This cannot be undone.',
+        },
+      },
+    },
+    [TourId.MemoryIntro]: {
+      title: 'Memory',
+      description: 'What the AI remembers about you.',
+      steps: {
+        header: {
+          title: 'Memory',
+          body: 'Memory records give the AI lasting context about you and your work.',
+        },
+        tabs: {
+          title: 'Saved and suggested',
+          body: 'Saved memories are used in your chats. Suggestions are new ones the AI proposes for you to review.',
+        },
+      },
+    },
+    [TourId.ConnectorsIntro]: {
+      title: 'Connectors',
+      description: 'Your AI provider connections.',
+      steps: {
+        header: {
+          title: 'Connectors',
+          body: 'A connector links ClawAI to an AI provider with your own key.',
+        },
+        actions: {
+          title: 'Add a connector',
+          body: 'Create one to use a provider’s models. You can test the connection and sync its models afterwards.',
         },
       },
     },

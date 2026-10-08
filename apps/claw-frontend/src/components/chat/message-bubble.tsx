@@ -333,7 +333,10 @@ function MessageBubbleBase({
         </div>
 
         {isUser && message.content.trim().length > 0 ? (
-          <div className="flex items-center gap-1 self-end transition-opacity md:opacity-0 md:group-hover/bubble:opacity-100 md:focus-within:opacity-100">
+          <div
+            data-tour="message-user-actions"
+            className="flex items-center gap-1 self-end transition-opacity md:opacity-0 md:group-hover/bubble:opacity-100 md:focus-within:opacity-100"
+          >
             <CopyButton
               text={message.content}
               size={ComponentSize.SM}
@@ -369,7 +372,7 @@ function MessageBubbleBase({
           judgeDecision ||
           memoryCount > 0 ||
           contextFileIds.length > 0) ? (
-          <div className="flex max-w-full flex-wrap items-center gap-1.5">
+          <div data-tour="message-meta" className="flex max-w-full flex-wrap items-center gap-1.5">
             {providerModel ? (
               <Badge variant="outline" className="max-w-full truncate text-xs">
                 {providerModel}
@@ -430,7 +433,10 @@ function MessageBubbleBase({
         ) : null}
 
         {!isUser ? (
-          <div className="flex flex-wrap items-center gap-1 transition-opacity md:opacity-0 md:group-hover/bubble:opacity-100 md:focus-within:opacity-100">
+          <div
+            data-tour="message-actions"
+            className="flex flex-wrap items-center gap-1 transition-opacity md:opacity-0 md:group-hover/bubble:opacity-100 md:focus-within:opacity-100"
+          >
             <ContextReceiptButton messageId={message.id} />
             {hasVisibleAssistantContent ? (
               <CopyButton

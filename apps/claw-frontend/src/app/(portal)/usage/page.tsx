@@ -46,7 +46,7 @@ export default function UsagePage(): ReactElement {
       ) : null}
 
       {!isLoading && !isError && entitlements !== null ? (
-        <Card className="max-w-xl">
+        <Card className="max-w-xl" data-tour="usage-card">
           <CardHeader>
             <CardTitle className="text-lg">{t('userUsage.cardTitle')}</CardTitle>
             <CardDescription>

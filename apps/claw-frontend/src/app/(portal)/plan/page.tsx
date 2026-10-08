@@ -56,7 +56,7 @@ export default function PlanPage(): ReactElement {
             </Card>
           )}
 
-          <Card>
+          <Card data-tour="plan-quota">
             <CardHeader>
               <CardTitle className="text-lg">{t('userPlan.dailyQuota')}</CardTitle>
             </CardHeader>
@@ -84,7 +84,7 @@ export default function PlanPage(): ReactElement {
             />
           </div>
 
-          <Card className="lg:col-span-2">
+          <Card className="lg:col-span-2" data-tour="plan-models">
             <CardHeader>
               <CardTitle className="text-lg">{t('userPlan.allowedModels')}</CardTitle>
             </CardHeader>

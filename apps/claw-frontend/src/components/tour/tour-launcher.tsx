@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -43,42 +44,34 @@ export function TourLauncher(): ReactElement {
           <span className="block text-sm">{ui.launcherTitle}</span>
           <span className="text-muted-foreground block text-xs font-normal">{ui.launcherHint}</span>
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
         {launcher.here.length > 0 ? (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-muted-foreground text-xs">
-              {ui.launcherHere}
-            </DropdownMenuLabel>
-            {launcher.here.map((entry) => (
-              <TourLauncherEntry
-                key={entry.id}
-                entry={entry}
-                startLabel={ui.launcherStart}
-                restartLabel={ui.launcherRestart}
-                doneLabel={ui.launcherDone}
-                onStart={() => launcher.start(entry.id)}
-              />
-            ))}
-          </>
+          launcher.here.map((entry) => (
+            <TourLauncherEntry
+              key={entry.id}
+              entry={entry}
+              startLabel={ui.launcherStart}
+              restartLabel={ui.launcherRestart}
+              doneLabel={ui.launcherDone}
+              onStart={() => launcher.start(entry.id)}
+            />
+          ))
+        ) : (
+          <p className="text-muted-foreground px-2 py-2 text-xs" data-testid="tour-none-here">
+            {ui.launcherNoneHere}
+          </p>
+        )}
+        <DropdownMenuSeparator />
+        {launcher.offersDisabled ? (
+          <p className="text-muted-foreground px-2 pb-1 text-xs">{ui.launcherOffersStopped}</p>
         ) : null}
-        {launcher.more.length > 0 ? (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-muted-foreground text-xs">
-              {ui.launcherMore}
-            </DropdownMenuLabel>
-            {launcher.more.map((entry) => (
-              <TourLauncherEntry
-                key={entry.id}
-                entry={entry}
-                startLabel={ui.launcherStart}
-                restartLabel={ui.launcherRestart}
-                doneLabel={ui.launcherDone}
-                onStart={() => launcher.start(entry.id)}
-              />
-            ))}
-          </>
-        ) : null}
+        <DropdownMenuItem
+          className="cursor-pointer text-sm"
+          data-testid="tour-offers-toggle"
+          onSelect={() => launcher.setOffersDisabled(!launcher.offersDisabled)}
+        >
+          {launcher.offersDisabled ? ui.launcherResumeOffers : ui.launcherStopOffers}
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

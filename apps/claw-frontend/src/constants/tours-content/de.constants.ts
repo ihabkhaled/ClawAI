@@ -13,13 +13,18 @@ export const DE_TOURS_CONTENT: TourDictionary = {
     launcherTitle: 'Produkttouren',
     launcherHint: 'Ein kurzer Rundgang durch das, was du auf dieser Seite siehst.',
     launcherHere: 'Auf dieser Seite',
-    launcherMore: 'Weitere Touren',
     launcherDone: 'Erledigt',
     launcherStart: 'Starten',
     launcherRestart: 'Wiederholen',
     offerTitle: 'Neu hier? Mach eine 1-Minuten-Tour',
     offerStart: 'Zeig es mir',
     offerLater: 'Jetzt nicht',
+    offerNever: 'Touren nicht mehr anzeigen',
+    launcherNoneHere: 'Für diese Seite gibt es noch keine Tour.',
+    launcherStopOffers: 'Touren nicht mehr vorschlagen',
+    launcherResumeOffers: 'Touren wieder vorschlagen',
+    launcherOffersStopped:
+      'Tour-Vorschläge sind aus. Jede Tour dieser Seite können Sie hier weiterhin wiederholen.',
     missingTarget:
       'Dieser Teil ist gerade nicht sichtbar. Öffne ihn und starte die Tour dann erneut.',
   },
@@ -249,6 +254,266 @@ export const DE_TOURS_CONTENT: TourDictionary = {
         use: {
           title: 'In jedem Chat verwenden',
           body: 'Öffne die Kontext-Schaltfläche in einem Chat und hänge das Paket an. Das Modell antwortet dann mit diesem Material vor Augen.',
+        },
+      },
+    },
+    [TourId.ChatList]: {
+      title: 'Deine Chats',
+      description: 'Konversationen finden, starten und ordnen.',
+      steps: {
+        new: {
+          title: 'Chat starten',
+          body: 'Beginne eine neue Konversation. Auf dem Handy nutzt du den runden Button unten.',
+        },
+        search: {
+          title: 'Chats durchsuchen',
+          body: 'Tippe, um einen Chat anhand seines Titels zu finden.',
+        },
+        tabs: {
+          title: 'Alle, Angeheftet, Archiviert',
+          body: 'Angeheftete Chats bleiben oben. Archiviere einen Chat, um die Liste aufzuräumen, ohne ihn zu löschen.',
+        },
+        items: {
+          title: 'Deine Konversationen',
+          body: 'Öffne eine, um sie fortzusetzen. Über das Menü einer Zeile kannst du sie anheften oder archivieren.',
+        },
+      },
+    },
+    [TourId.ChatMessages]: {
+      title: 'Nachrichten und Antworten',
+      description: 'Was jede Nachricht und jede Antwort dir ermöglicht.',
+      steps: {
+        yours: {
+          title: 'Deine Nachricht',
+          body: 'Fahre über eine Nachricht oder fokussiere sie, um sie zu kopieren, zu bearbeiten oder den Chat ab dort zu verzweigen.',
+        },
+        meta: {
+          title: 'Welches Modell geantwortet hat',
+          body: 'Jede Antwort zeigt das Modell, das sie geschrieben hat, wie es gewählt wurde und was es genutzt hat, etwa Gedächtnis oder Dateien.',
+        },
+        actions: {
+          title: 'Mit einer Antwort arbeiten',
+          body: 'Kopiere sie, bewerte sie, erzeuge sie mit demselben oder einem anderen Modell neu, lass sie dir vorlesen, speichere sie im Gedächtnis, exportiere sie oder öffne sie größer.',
+        },
+        more: {
+          title: 'Hinter der Antwort',
+          body: 'Öffne „Warum dieses Modell“, um die Begründung der Wahl zu sehen, und das Quellenpanel, wenn die Antwort Recherche genutzt hat. Markiere beliebigen Text in einer Antwort, um ihn in deiner nächsten Nachricht zu zitieren.',
+        },
+      },
+    },
+    [TourId.ChatHeader]: {
+      title: 'Chat-Kopfzeile und Werkzeuge',
+      description: 'Suche, Qualität, Export und mehr.',
+      steps: {
+        more: {
+          title: 'Weitere Aktionen',
+          body: 'Durchsuche diesen Chat, prüfe seine Qualität, vergleiche Modelle, teile ihn, exportiere ihn, mache einen Thread daraus oder öffne seine Einstellungen.',
+        },
+        rail: {
+          title: 'Schnellaktionen',
+          body: 'Die am häufigsten genutzten liegen hier: Modelle vergleichen, Qualität prüfen und in diesem Chat suchen.',
+        },
+        keep: {
+          title: 'Eine Kopie behalten',
+          body: 'Der Export speichert diese Konversation als Datei. Ein verzweigter Chat zeigt eine Leiste, die zum Ursprungschat zurückführt.',
+        },
+      },
+    },
+    [TourId.ChatShare]: {
+      title: 'Einen Chat teilen',
+      description: 'Veröffentliche einen schreibgeschützten Link, sicher.',
+      steps: {
+        open: {
+          title: 'Einen Chat teilen',
+          body: 'Öffne „Weitere Aktionen“ und wähle „Teilen“, um eine schreibgeschützte Kopie dieser Konversation unter einem öffentlichen Link zu veröffentlichen.',
+        },
+        warning: {
+          title: 'Vor dem Veröffentlichen lesen',
+          body: 'Jeder mit dem Link kann sie ohne Anmeldung lesen. Die Kopie enthält die Konversation, wie sie jetzt ist; spätere Nachrichten bleiben privat. Teile niemals Geheimnisse oder persönliche Daten.',
+        },
+        link: {
+          title: 'Der Link und Suchmaschinen',
+          body: 'Kopiere den öffentlichen Link oder öffne ihn in einem neuen Tab. Erlaube Suchmaschinen nur dann die Indexierung, wenn du in der Suche gefunden werden willst; sonst finden ihn nur Personen mit dem Link.',
+        },
+        manage: {
+          title: 'Aktualisieren oder beenden',
+          body: 'Aktualisiere die geteilte Version, um neuere Nachrichten zu veröffentlichen, erzeuge einen neuen Link, falls der alte durchgesickert ist, oder beende das Teilen, um den Link sofort abzuschalten.',
+        },
+      },
+    },
+    [TourId.ChatSettings]: {
+      title: 'Thread-Einstellungen',
+      description: 'Einen Chat abstimmen: Modell, Prompt und Kontext.',
+      steps: {
+        open: {
+          title: 'Thread-Einstellungen',
+          body: 'Öffne „Weitere Aktionen“ und wähle „Einstellungen“, um das Verhalten genau dieses Chats zu ändern.',
+        },
+        model: {
+          title: 'Modell und Anweisungen',
+          body: 'Wähle ein bevorzugtes Modell für diesen Chat und schreibe einen System-Prompt, der Rolle und Ton festlegt.',
+        },
+        tuning: {
+          title: 'Kreativität und Länge',
+          body: 'Die Temperatur macht Antworten berechenbarer oder abwechslungsreicher. Max. Tokens begrenzt, wie lang eine Antwort sein darf.',
+        },
+        context: {
+          title: 'Kontext für diesen Chat',
+          body: 'Hänge Kontextpakete an und schalte Gedächtnis, Chat-Kontext und Kontext anderer Chats nur für diese Konversation ein oder aus.',
+        },
+      },
+    },
+    [TourId.CompareResults]: {
+      title: 'Vergleichsergebnisse lesen',
+      description: 'Karten, Judge und was du mit Antworten tun kannst.',
+      steps: {
+        results: {
+          title: 'Nebeneinander',
+          body: 'Jedes Modell antwortet in einer eigenen Karte, sodass du sie nebeneinander lesen kannst.',
+        },
+        judge: {
+          title: 'Judge und Critic',
+          body: 'Schalte den Judge ein, um die Antworten zu ordnen und die Gründe zu erfahren. Ergänze den Critic, der die Wahl des Judge hinterfragt.',
+        },
+        actions: {
+          title: 'Eine Antwort verwenden',
+          body: 'Auf jeder Karte wechselst du zwischen formatiertem und rohem Text, kopierst, exportierst als Markdown oder öffnest größer.',
+        },
+      },
+    },
+    [TourId.LabsIntro]: {
+      title: 'Orchestrierungs-Labore',
+      description: 'Schicke einen Prompt in einem festen Muster durch mehrere Modelle.',
+      steps: {
+        what: {
+          title: 'Was die Labore tun',
+          body: 'Jedes Labor schickt deinen Prompt in einem festen Muster durch mehrere Modelle: Konsens, Eskalation, Best of N, Kostenensemble, Zerlegen, Pipeline, Reparatur, Rollenpaket oder Prüfen.',
+        },
+        how: {
+          title: 'So nutzt du eines',
+          body: 'Wähle die Modelle, schreibe deinen Prompt und sende ihn. Hänge Dateien, Kontextpakete und gespeicherte Prompts wie im normalen Chat an. Die Ergebnisse erscheinen unten als Karten.',
+        },
+      },
+    },
+    [TourId.DashboardIntro]: {
+      title: 'Dein Dashboard',
+      description: 'Ein kurzer Blick auf deinen Arbeitsbereich.',
+      steps: {
+        header: {
+          title: 'Dashboard',
+          body: 'Deine Übersicht: was du hast, was verbunden ist und ob alles gesund ist.',
+        },
+        stats: {
+          title: 'Kennzahlen',
+          body: 'Chats gesamt, aktive Konnektoren und lokale Modelle auf einen Blick.',
+        },
+        actions: {
+          title: 'Schnellaktionen',
+          body: 'Starte einen Chat, füge einen Konnektor hinzu oder richte das Routing ein, mit einem Klick.',
+        },
+      },
+    },
+    [TourId.PlanIntro]: {
+      title: 'Dein Tarif',
+      description: 'Was dein Abonnement enthält.',
+      steps: {
+        header: {
+          title: 'Mein Tarif',
+          body: 'Dein aktueller Tarif, seine Funktionen und die Modelle, die du nutzen kannst.',
+        },
+        quota: { title: 'Tägliches Token-Kontingent', body: 'Dein Kontingent für jeden Tag.' },
+        models: {
+          title: 'Erlaubte Modelle',
+          body: 'Die Modelle, die dein Tarif zulässt. Mit einem Upgrade schaltest du mehr frei.',
+        },
+      },
+    },
+    [TourId.BillingIntro]: {
+      title: 'Abrechnung',
+      description: 'Tarife, Preise und Zahlungen.',
+      steps: {
+        header: {
+          title: 'Abrechnung',
+          body: 'Verwalte dein Abonnement und sieh, was jeder Tarif kostet.',
+        },
+        plans: {
+          title: 'Tarif wählen',
+          body: 'Vergleiche Tarife und wechsle zwischen monatlicher und jährlicher Abrechnung.',
+        },
+      },
+    },
+    [TourId.UsageIntro]: {
+      title: 'Nutzung',
+      description: 'Verfolge, was du verbraucht hast.',
+      steps: {
+        header: {
+          title: 'Nutzung',
+          body: 'Verfolge deinen täglichen Token-Verbrauch im Verhältnis zu deinem Tarif.',
+        },
+        card: {
+          title: 'Tägliche Token-Nutzung',
+          body: 'Der Balken zeigt, wie viel vom heutigen Kontingent du verbraucht hast, und dein Konnektor-Guthaben, falls dein Tarif eines enthält.',
+        },
+      },
+    },
+    [TourId.FilesIntro]: {
+      title: 'Deine Dateien',
+      description: 'Lade Dateien hoch, um der KI Kontext zu geben.',
+      steps: {
+        header: {
+          title: 'Dateien',
+          body: 'Alles, was du hochlädst, liegt hier und ist bereit als Kontext im Chat.',
+        },
+        upload: {
+          title: 'Datei hochladen',
+          body: 'Ziehe eine Datei hierher oder klicke, um eine auszuwählen. Dateien werden vor der Verwendung geprüft.',
+        },
+      },
+    },
+    [TourId.SettingsIntro]: {
+      title: 'Einstellungen',
+      description: 'Dein Konto und deine Präferenzen.',
+      steps: {
+        header: {
+          title: 'Einstellungen',
+          body: 'Verwalte Profil, Sicherheit, Sprache und Erscheinungsbild.',
+        },
+        language: { title: 'Sprache', body: 'Wähle die Sprache der gesamten App.' },
+        appearance: {
+          title: 'Erscheinungsbild',
+          body: 'Wechsle zwischen hellem, dunklem und Systemdesign.',
+        },
+        danger: {
+          title: 'Konto löschen',
+          body: 'Löscht dein Konto endgültig und meldet alle Sitzungen ab. Das lässt sich nicht rückgängig machen.',
+        },
+      },
+    },
+    [TourId.MemoryIntro]: {
+      title: 'Gedächtnis',
+      description: 'Was die KI über dich weiß.',
+      steps: {
+        header: {
+          title: 'Gedächtnis',
+          body: 'Gedächtniseinträge geben der KI dauerhaften Kontext über dich und deine Arbeit.',
+        },
+        tabs: {
+          title: 'Gespeichert und vorgeschlagen',
+          body: 'Gespeicherte Einträge werden in deinen Chats genutzt. Vorschläge sind neue Einträge, die die KI dir zur Prüfung vorlegt.',
+        },
+      },
+    },
+    [TourId.ConnectorsIntro]: {
+      title: 'Konnektoren',
+      description: 'Deine Verbindungen zu KI-Anbietern.',
+      steps: {
+        header: {
+          title: 'Konnektoren',
+          body: 'Ein Konnektor verbindet ClawAI mit einem KI-Anbieter über deinen eigenen Schlüssel.',
+        },
+        actions: {
+          title: 'Konnektor hinzufügen',
+          body: 'Lege einen an, um die Modelle eines Anbieters zu nutzen. Danach kannst du die Verbindung testen und seine Modelle synchronisieren.',
         },
       },
     },

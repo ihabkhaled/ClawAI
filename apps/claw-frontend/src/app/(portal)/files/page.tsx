@@ -50,7 +50,7 @@ export default function FilesPage() {
     <div>
       <PageHeader title={t('files.title')} description={t('files.description')} />
 
-      <div className="mb-6">
+      <div className="mb-6" data-tour="files-upload">
         <FileUploadZone
           onFileSelected={handleFileSelected}
           isUploading={isUploadPending || uploadProgress > 0}

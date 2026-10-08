@@ -52,6 +52,11 @@ export const useTourStore = create<TourStore>()((set, get) => ({
     set({ activeTourId: null, stepIndex: 0, progress: next });
     rememberTourProgress(next);
   },
+  setOffersDisabled: (value) => {
+    const next: TourProgress = { ...get().progress, offersDisabled: value };
+    set({ progress: next });
+    rememberTourProgress(next);
+  },
   dismissOffer: (tourId) => {
     const { progress } = get();
     const next: TourProgress = {

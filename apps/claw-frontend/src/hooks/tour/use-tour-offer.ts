@@ -19,6 +19,7 @@ export function useTourOffer(): TourOfferController {
   const progress = useTourStore((state) => state.progress);
   const start = useTourStore((state) => state.start);
   const dismissOffer = useTourStore((state) => state.dismissOffer);
+  const setOffersDisabled = useTourStore((state) => state.setOffersDisabled);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -29,6 +30,7 @@ export function useTourOffer(): TourOfferController {
 
   const candidate: TourDefinition | undefined = TOUR_DEFINITIONS.find(
     (tour) =>
+      !progress.offersDisabled &&
       tour.autoOffer &&
       tourAppliesToPath(tour, path) &&
       progress.completed[tour.id] !== true &&
@@ -48,5 +50,6 @@ export function useTourOffer(): TourOfferController {
         dismissOffer(offered.id);
       }
     },
+    never: () => setOffersDisabled(true),
   };
 }
