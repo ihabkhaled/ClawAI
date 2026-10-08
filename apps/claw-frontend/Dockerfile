@@ -111,6 +111,10 @@ RUN npm run build
 
 # Production
 FROM base AS runner
+# The compose healthcheck is `wget`, which bookworm-slim does not ship (Alpine's busybox did).
+# Without it the container serves traffic but is marked unhealthy and every deploy rolls back.
+RUN apt-get update && apt-get install -y --no-install-recommends wget \
+  && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production
 
 RUN addgroup --system --gid 1001 nextjs
