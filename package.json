@@ -88,7 +88,7 @@
     "vitest": "5.0.3"
   },
   "dependencies": {
-    "@nestjs/common": "^12.1.0",
+    "@nestjs/common": "^12.1.2",
     "@nestjs/core": "^12.1.0",
     "@nestjs/platform-express": "^12.1.0",
     "better-sqlite3": "^13.0.3",
