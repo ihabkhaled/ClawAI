@@ -33,7 +33,7 @@
   "dependencies": {
     "@claw/shared-constants": "1.202.1",
     "@claw/shared-types": "1.202.1",
-    "@nestjs/common": "^12.1.0",
+    "@nestjs/common": "^12.1.2",
     "axios": "^1.20.0",
     "jsonwebtoken": "^9.0.3",
     "nodemailer": "^10.0.15"
