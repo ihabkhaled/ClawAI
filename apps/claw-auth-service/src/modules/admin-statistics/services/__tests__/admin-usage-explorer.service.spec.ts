@@ -2,7 +2,11 @@ import { NotFoundException } from '@nestjs/common';
 import { vi } from 'vitest';
 
 import { EMPTY_EXPLORER_SUMS_ROW } from '../../constants/admin-usage-explorer.constants';
-import { UsageBillingKind, UsageSortField } from '../../enums/usage-cost-kind.enum';
+import {
+  UsageBillingKind,
+  UsageLeaderboardDimension,
+  UsageSortField,
+} from '../../enums/usage-cost-kind.enum';
 import { encodeCursor } from '../../utilities/usage-cursor.utility';
 import { AdminUsageAuditService } from '../admin-usage-audit.service';
 import { AdminUsageExplorerService } from '../admin-usage-explorer.service';
@@ -44,6 +48,7 @@ function build() {
   const audit = {
     recordViewed: vi.fn().mockResolvedValue(undefined),
     recordExported: vi.fn().mockResolvedValue(undefined),
+    recordListed: vi.fn().mockResolvedValue(undefined),
   };
   const service = new AdminUsageExplorerService(repository as never, audit as never);
   return { repository, audit, service };
@@ -68,7 +73,7 @@ describe('AdminUsageExplorerService', () => {
     ]);
     repository.distinctUsers.mockResolvedValue(3);
 
-    const page = await service.listUsers(baseQuery);
+    const page = await service.listUsers(baseQuery, 'admin-1');
 
     expect(page.items.map((row) => row.email)).toEqual(['a@example.com', 'b@example.com']);
     expect(page.nextCursor).toBe(encodeCursor('20', 'b'));
@@ -79,9 +84,37 @@ describe('AdminUsageExplorerService', () => {
   it('returns no cursor on the last page and passes search through', async () => {
     const { repository, service } = build();
     repository.groupPage.mockResolvedValue([userRow('a', '30')]);
-    const page = await service.listUsers({ ...baseQuery, search: 'jane' });
+    const page = await service.listUsers({ ...baseQuery, search: 'jane' }, 'admin-1');
     expect(page.nextCursor).toBeNull();
     expect(repository.groupPage.mock.calls[0]?.[0]).toMatchObject({ search: 'jane' });
+  });
+
+  it('audits the first users page without email or search text, and skips cursor pages', async () => {
+    const { repository, audit, service } = build();
+    repository.groupPage.mockResolvedValue([userRow('a', '30')]);
+
+    await service.listUsers({ ...baseQuery, search: 'jane@example.com' }, 'admin-1');
+    expect(audit.recordListed).toHaveBeenCalledTimes(1);
+    const [actor, filters] = audit.recordListed.mock.calls[0] ?? [];
+    expect(actor).toBe('admin-1');
+    expect(filters).toMatchObject({ hasSearch: true, rows: 1 });
+    expect(JSON.stringify(audit.recordListed.mock.calls)).not.toMatch(/example\.com|jane/);
+
+    await service.listUsers({ ...baseQuery, cursor: encodeCursor('20', 'b') }, 'admin-1');
+    expect(audit.recordListed).toHaveBeenCalledTimes(1);
+  });
+
+  it('audits only the user-dimension leaderboard, first page only', async () => {
+    const { repository, audit, service } = build();
+    repository.groupPage.mockResolvedValue([userRow('a', '30')]);
+    const query = { ...baseQuery, dimension: UsageLeaderboardDimension.USER };
+
+    await service.leaderboard(query, 'admin-1');
+    expect(audit.recordListed).toHaveBeenCalledTimes(1);
+
+    await service.leaderboard({ ...query, cursor: encodeCursor('20', 'b') }, 'admin-1');
+    await service.leaderboard({ ...query, dimension: UsageLeaderboardDimension.MODEL }, 'admin-1');
+    expect(audit.recordListed).toHaveBeenCalledTimes(1);
   });
 
   it('normalises the provider filter before it reaches the repository', async () => {

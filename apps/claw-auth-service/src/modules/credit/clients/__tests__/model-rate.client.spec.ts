@@ -128,7 +128,7 @@ describe('ModelRateClient — alias-aware cache', () => {
     get: vi.fn(),
     set: vi.fn(),
     del: vi.fn(),
-    deleteByPrefix: vi.fn(),
+    deleteByPrefixChecked: vi.fn(),
   };
   let client: ModelRateClient;
 
@@ -137,7 +137,7 @@ describe('ModelRateClient — alias-aware cache', () => {
     redis.get.mockReset().mockResolvedValue(null);
     redis.set.mockReset().mockResolvedValue(undefined);
     redis.del.mockReset().mockResolvedValue(undefined);
-    redis.deleteByPrefix.mockReset().mockResolvedValue(1);
+    redis.deleteByPrefixChecked.mockReset().mockResolvedValue({ removed: 1, complete: true });
     const module = await Test.createTestingModule({
       providers: [ModelRateClient, { provide: RedisService, useValue: redis }],
     }).compile();
@@ -167,17 +167,39 @@ describe('ModelRateClient — alias-aware cache', () => {
   it('invalidates the whole family: dated and variant keys share the published prefix', async () => {
     await client.invalidate('OPENAI', 'models/gpt-4o-2024-08-06');
 
-    expect(redis.deleteByPrefix).toHaveBeenCalledWith(
+    expect(redis.deleteByPrefixChecked).toHaveBeenCalledWith(
       'claw:payg:rate:OPENAI:gpt-4o',
       expect.any(Number),
       expect.any(Number),
     );
   });
 
-  it('falls back to deleting the exact key when the prefix scan fails', async () => {
-    redis.deleteByPrefix.mockRejectedValue(new Error('scan down'));
+  it('happy path: complete scan deletes nothing extra and does not throw', async () => {
+    await expect(client.invalidate('GEMINI', 'gemini-2.5-flash')).resolves.toBeUndefined();
+    expect(redis.del).not.toHaveBeenCalled();
+  });
 
-    await client.invalidate('GEMINI', 'models/gemini-2.5-flash');
+  it('on a scan error still deletes canonical, family and raw keys, then throws', async () => {
+    redis.deleteByPrefixChecked.mockRejectedValue(new Error('scan down'));
+
+    await expect(client.invalidate('OPENAI', 'models/gpt-4o-2024-08-06:batch')).rejects.toThrow(
+      /incomplete/,
+    );
+
+    const deleted = redis.del.mock.calls.map((call) => call[0]);
+    expect(deleted).toEqual(
+      expect.arrayContaining([
+        'claw:payg:rate:OPENAI:gpt-4o-2024-08-06',
+        'claw:payg:rate:OPENAI:gpt-4o',
+        'claw:payg:rate:OPENAI:models/gpt-4o-2024-08-06:batch',
+      ]),
+    );
+  });
+
+  it('treats a scan cut short by its bound as a failure: alias keys removed, error thrown', async () => {
+    redis.deleteByPrefixChecked.mockResolvedValue({ removed: 5, complete: false });
+
+    await expect(client.invalidate('GEMINI', 'models/gemini-2.5-flash')).rejects.toThrow();
 
     expect(redis.del).toHaveBeenCalledWith('claw:payg:rate:GEMINI:gemini-2.5-flash');
   });

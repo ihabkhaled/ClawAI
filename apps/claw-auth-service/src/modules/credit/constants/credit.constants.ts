@@ -87,5 +87,5 @@ export const RATE_MODEL_ID_VARIANT_MARKER = '~';
 export const RATE_MODEL_ID_DATED_SUFFIX = /-(?:\d{8}|\d{4}-\d{2}-\d{2})$/;
 
 // Upper bound on SCAN round trips when busting a model family's cached rates.
-export const RATE_CACHE_SCAN_MAX_ITERATIONS = 200;
+export const RATE_CACHE_SCAN_MAX_ITERATIONS = 1000;
 export const RATE_CACHE_SCAN_COUNT = 200;

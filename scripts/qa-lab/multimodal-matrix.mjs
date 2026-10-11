@@ -142,7 +142,7 @@ export function buildMatrix(input) {
   };
 }
 
-const cell = (value) => String(value).replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
+const cell = (value) => String(value).replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
 
 /** Markdown rendering: summary lines, the table, then the notes. */
 export function renderMatrix(matrix) {

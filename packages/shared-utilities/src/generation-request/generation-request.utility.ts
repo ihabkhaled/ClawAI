@@ -9,6 +9,7 @@ import {
   PASTED_DOCUMENT_MIN_CHARS,
   PASTED_DOCUMENT_MIN_HEADINGS,
   REQUEST_ENVELOPE_MAX_CHARS,
+  SAVE_COMMAND_MAX_PREFIX_LENGTH,
   SAVE_INTENT_PATTERNS,
   SAVE_TARGET_CONTEXT_WORDS,
   SAVE_TYPE_INSTRUCTION_WORDS,
@@ -88,11 +89,17 @@ function memoryTypeOf(command: string, payload: string): SaveIntentMemoryType {
 
 function matchSaveCommand(text: string): { command: string; rest: string } | null {
   const trimmed = text.trim();
+  // Only the start of the text can hold the command, so only that is matched: the patterns have
+  // overlapping whitespace groups that go quadratic on a long run of tabs or spaces.
+  const head = trimmed.slice(0, SAVE_COMMAND_MAX_PREFIX_LENGTH);
   for (const pattern of SAVE_INTENT_PATTERNS) {
-    const match = pattern.exec(trimmed);
+    const match = pattern.exec(head);
     if (match !== null) {
-      const rest = match.groups?.['rest'] ?? '';
-      return { command: trimmed.slice(0, trimmed.length - rest.length), rest: rest.trim() };
+      const commandLength = head.length - (match.groups?.['rest'] ?? '').length;
+      return {
+        command: trimmed.slice(0, commandLength),
+        rest: trimmed.slice(commandLength).trim(),
+      };
     }
   }
   return null;

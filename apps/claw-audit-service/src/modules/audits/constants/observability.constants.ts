@@ -36,10 +36,12 @@ export const UNKNOWN_LABEL = 'UNKNOWN';
 /** Routing keys auth-service publishes when an admin reads user consumption. */
 export const ADMIN_USAGE_VIEWED_EVENT = 'admin.usage.viewed';
 export const ADMIN_USAGE_EXPORTED_EVENT = 'admin.usage.exported';
+export const ADMIN_USAGE_LISTED_EVENT = 'admin.usage.listed';
 
 export const ADMIN_USAGE_AUDIT_ACTIONS = {
   VIEWED: 'ADMIN_USER_USAGE_VIEWED',
   EXPORTED: 'ADMIN_USER_USAGE_EXPORTED',
+  LISTED: 'ADMIN_USER_USAGE_LISTED',
 } as const;
 
 /** Normalised provider key to display label. Keys not listed are title-cased. */
@@ -57,7 +59,6 @@ export const PROVIDER_LABELS: Readonly<Record<string, string>> = {
   OPENROUTER: 'OpenRouter',
   GROQ: 'Groq',
   ZAI: 'Z.ai',
-  VERCEL_AI_GATEWAY: 'Vercel AI Gateway',
   CUSTOM_OPENAI_COMPATIBLE: 'Custom (OpenAI-compatible)',
   CLAW: 'ClawAI (platform)',
 };

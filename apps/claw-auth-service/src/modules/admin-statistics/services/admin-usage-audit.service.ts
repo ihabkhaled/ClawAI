@@ -3,6 +3,7 @@ import { RabbitMQService } from '@claw/shared-rabbitmq';
 
 import {
   ADMIN_USAGE_EXPORTED_EVENT,
+  ADMIN_USAGE_LISTED_EVENT,
   ADMIN_USAGE_VIEWED_EVENT,
 } from '../constants/admin-usage-explorer.constants';
 import { type AdminUsageAuditPayload } from '../types/admin-usage-explorer.types';
@@ -14,7 +15,7 @@ import { type AdminUsageAuditPayload } from '../types/admin-usage-explorer.types
  * The payload carries the actor id, the target id and the filters, never an
  * email. Publishing is best effort: a broker hiccup is logged and must not
  * turn a read-only admin screen into an outage. audit-service writes the row
- * (`ADMIN_USER_USAGE_VIEWED` / `ADMIN_USER_USAGE_EXPORTED`).
+ * (`ADMIN_USER_USAGE_VIEWED` / `ADMIN_USER_USAGE_EXPORTED` / `ADMIN_USER_USAGE_LISTED`).
  */
 @Injectable()
 export class AdminUsageAuditService {
@@ -40,6 +41,19 @@ export class AdminUsageAuditService {
     filters: AdminUsageAuditPayload['filters'],
   ): Promise<void> {
     await this.publish(ADMIN_USAGE_EXPORTED_EVENT, {
+      actorUserId,
+      targetUserId: null,
+      at: new Date().toISOString(),
+      filters,
+    });
+  }
+
+  /** A first page of users (list or user leaderboard): many emails shown at once. */
+  async recordListed(
+    actorUserId: string,
+    filters: AdminUsageAuditPayload['filters'],
+  ): Promise<void> {
+    await this.publish(ADMIN_USAGE_LISTED_EVENT, {
       actorUserId,
       targetUserId: null,
       at: new Date().toISOString(),

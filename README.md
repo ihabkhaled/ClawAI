@@ -80,8 +80,19 @@ with pooled billing — see the [requirements register](docs/02-business-product
 15. **Reliability** — chat-service scales horizontally, dropped streams resume,
     Stop works across replicas, rolling deploys.
 
-16. **ClawAI Threads (in development)** â€” sourced public articles from deep
-    conversations, with owner approval before publication.
+16. **ClawAI Threads** — turn a chat into a researched, cited public article:
+    several models write, a Judge and a Critic review, you approve, then it is
+    published with views, sharing and export (PDF, Markdown, JSON, TOON, HTML).
+    Open to every plan; failures open an admin ticket.
+17. **Notifications and tours** — a bell in the top bar and email tell you when a
+    Thread is ready, published or failed (in your language); guided product
+    tours for each page, offered once and switchable off everywhere.
+18. **Provider prices and model sync** — models re-sync every six hours; OpenRouter
+    prices are synced as provider-published rows (admin override > provider sync >
+    seed); unpriced models are flagged, never recorded as zero.
+19. **Admin usage explorer** — a tabbed Observability page (overview, consumption,
+    AI and models, users, tracing, failures) with charts, searchable paged tables
+    and a per-user consumption view; admin reads of user data are audited.
 
 Also: memory and context packs, workspace connectors and automations, routing
 transparency on every answer, audit logging, and 13 interface languages with
@@ -170,40 +181,54 @@ Shared infrastructure:
 
 ### Service Table
 
-| Service         | Port | Database                                  | Purpose                                                                                                                                                                                                                                                               |
-| --------------- | ---- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Auth            | 4001 | PostgreSQL `claw_auth` (5441)             | Users, sessions, JWT, roles                                                                                                                                                                                                                                           |
-| Chat            | 4002 | PostgreSQL `claw_chat` (5442)             | Threads, messages, streaming, orchestration workflows                                                                                                                                                                                                                 |
-| Connector       | 4003 | PostgreSQL `claw_connectors` (5443)       | Provider configs, model catalogs                                                                                                                                                                                                                                      |
-| Routing         | 4004 | PostgreSQL `claw_routing` (5444)          | Routing decisions, policies                                                                                                                                                                                                                                           |
-| Memory          | 4005 | PostgreSQL `claw_memory` (5445, pgvector) | Memory, context packs, embeddings                                                                                                                                                                                                                                     |
-| File            | 4006 | PostgreSQL `claw_files` (5446)            | File upload, chunking                                                                                                                                                                                                                                                 |
-| Audit           | 4007 | MongoDB `claw_audit` (27018)              | Audit logs, usage ledger                                                                                                                                                                                                                                              |
-| Ollama Service  | 4008 | PostgreSQL `claw_ollama` (5447)           | Local model proxy and catalog                                                                                                                                                                                                                                         |
-| Health          | 4009 | None (stateless)                          | Aggregates health from downstream services                                                                                                                                                                                                                            |
-| Client Logs     | 4010 | MongoDB `claw_client_logs` (27018)        | Frontend log ingestion                                                                                                                                                                                                                                                |
-| Server Logs     | 4011 | MongoDB `claw_server_logs` (27018)        | Backend structured log aggregation                                                                                                                                                                                                                                    |
-| Image           | 4012 | PostgreSQL `claw_images` (5448)           | Image generation orchestration                                                                                                                                                                                                                                        |
-| File Generation | 4013 | PostgreSQL `claw_file_generations` (5449) | Downloadable document/file generation                                                                                                                                                                                                                                 |
-| Agent           | 4015 | PostgreSQL `claw_agent` (5451)            | Local agent sessions, commands, repos, file events                                                                                                                                                                                                                    |
-| Research        | 4016 | PostgreSQL `claw_research` (5452)         | Dynamic search, fetch, scrape, evidence orchestration                                                                                                                                                                                                                 |
-| Workspace       | 4014 | PostgreSQL `claw_workspace` (5450)        | External workspace context, sync, actions                                                                                                                                                                                                                             |
-| Llamacpp        | 4017 | PostgreSQL `claw_llamacpp` (5440)         | Frontier open-weight LLMs (Kimi K2.6, GLM-5.1, DeepSeek V3.2/V4) via vanilla `llama.cpp`. Auto-installs binary, manages HF downloads, supervises a single resident model. Multi-vendor GPU passthrough (NVIDIA / AMD ROCm / Intel-Vulkan) auto-detected by `claw.sh`. |
-| Payment         | 4018 | PostgreSQL `claw_payments` (5453)         | Checkout, subscriptions, invoices, pay-as-you-go top-ups, display currency                                                                                                                                                                                            |
+| Service           | Port | Database                                   | Purpose                                                                                                                                                                                                                                                               |
+| ----------------- | ---- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Auth              | 4001 | PostgreSQL `claw_auth` (5441)              | Users, sessions, JWT, roles                                                                                                                                                                                                                                           |
+| Chat              | 4002 | PostgreSQL `claw_chat` (5442)              | Threads, messages, streaming, orchestration workflows                                                                                                                                                                                                                 |
+| Connector         | 4003 | PostgreSQL `claw_connectors` (5443)        | Provider configs, model catalogs                                                                                                                                                                                                                                      |
+| Routing           | 4004 | PostgreSQL `claw_routing` (5444)           | Routing decisions, policies                                                                                                                                                                                                                                           |
+| Memory            | 4005 | PostgreSQL `claw_memory` (5445, pgvector)  | Memory, context packs, embeddings                                                                                                                                                                                                                                     |
+| File              | 4006 | PostgreSQL `claw_files` (5446)             | File upload, chunking                                                                                                                                                                                                                                                 |
+| Audit             | 4007 | MongoDB `claw_audit` (27018)               | Audit logs, usage ledger                                                                                                                                                                                                                                              |
+| Ollama Service    | 4008 | PostgreSQL `claw_ollama` (5447)            | Local model proxy and catalog                                                                                                                                                                                                                                         |
+| Health            | 4009 | None (stateless)                           | Aggregates health from downstream services                                                                                                                                                                                                                            |
+| Client Logs       | 4010 | MongoDB `claw_client_logs` (27018)         | Frontend log ingestion                                                                                                                                                                                                                                                |
+| Server Logs       | 4011 | MongoDB `claw_server_logs` (27018)         | Backend structured log aggregation                                                                                                                                                                                                                                    |
+| Image             | 4012 | PostgreSQL `claw_images` (5448)            | Image generation orchestration                                                                                                                                                                                                                                        |
+| File Generation   | 4013 | PostgreSQL `claw_file_generations` (5449)  | Downloadable document/file generation                                                                                                                                                                                                                                 |
+| Agent             | 4015 | PostgreSQL `claw_agent` (5451)             | Local agent sessions, commands, repos, file events                                                                                                                                                                                                                    |
+| Research          | 4016 | PostgreSQL `claw_research` (5452)          | Dynamic search, fetch, scrape, evidence orchestration                                                                                                                                                                                                                 |
+| Workspace         | 4014 | PostgreSQL `claw_workspace` (5450)         | External workspace context, sync, actions                                                                                                                                                                                                                             |
+| Llamacpp          | 4017 | PostgreSQL `claw_llamacpp` (5440)          | Frontier open-weight LLMs (Kimi K2.6, GLM-5.1, DeepSeek V3.2/V4) via vanilla `llama.cpp`. Auto-installs binary, manages HF downloads, supervises a single resident model. Multi-vendor GPU passthrough (NVIDIA / AMD ROCm / Intel-Vulkan) auto-detected by `claw.sh`. |
+| Payment           | 4018 | PostgreSQL `claw_payments` (5453)          | Checkout, subscriptions, invoices, pay-as-you-go top-ups, display currency                                                                                                                                                                                            |
+| Threads           | 4019 | PostgreSQL `claw_threads` (5458)           | Public Thread publications, review, views, community, export                                                                                                                                                                                                          |
+| Thread Generation | 4020 | PostgreSQL `claw_thread_generation` (5457) | Durable generation jobs: research, authors, consensus, Judge, Critic, private drafts                                                                                                                                                                                  |
 
 ### Infrastructure
 
-| Component      | Host Port(s)  | Internal Port | Purpose                                      |
-| -------------- | ------------- | ------------- | -------------------------------------------- |
-| Nginx          | 443, 80, 4000 | 443, 80       | TLS termination, reverse proxy / API gateway |
-| PostgreSQL x14 | 5440-5453     | 5432          | Per-service relational storage               |
-| MongoDB        | 27018         | 27017         | Audit and log storage                        |
-| Redis          | 6380          | 6379          | Caching and ephemeral state                  |
-| RabbitMQ       | 5672          | 5672          | Async inter-service messaging                |
-| RabbitMQ UI    | 15672         | 15672         | Management console                           |
-| Ollama         | 11434         | 11434         | Local model inference                        |
-| ClamAV         | 3310          | 3310          | File antivirus scanning                      |
-| Frontend       | 3000          | 3000          | Next.js UI                                   |
+| Component                         | Host Port(s)  | Internal Port | Purpose                                      |
+| --------------------------------- | ------------- | ------------- | -------------------------------------------- |
+| Nginx                             | 443, 80, 4000 | 443, 80       | TLS termination, reverse proxy / API gateway |
+| PostgreSQL x16                    | 5440-5459     | 5432          | Per-service relational storage               |
+| MongoDB                           | 27018         | 27017         | Audit and log storage                        |
+| Redis                             | 6380          | 6379          | Caching and ephemeral state                  |
+| RabbitMQ                          | 5672          | 5672          | Async inter-service messaging                |
+| RabbitMQ UI                       | 15672         | 15672         | Management console                           |
+| Ollama                            | 11434         | 11434         | Local model inference                        |
+| ClamAV                            | 3310          | 3310          | File antivirus scanning                      |
+| Prometheus                        | internal      | 9090          | Operational metrics                          |
+| Grafana                           | via nginx     | 3000          | Dashboards behind the admin session          |
+| Vector                            | none          | -             | Ships every container log to server-logs     |
+| Crawl4AI, FlareSolverr, Firecrawl | none          | -             | Optional research fetch sidecars             |
+| Frontend                          | 3000          | 3000          | Next.js UI                                   |
+
+### Configuration notes
+
+- `INTER_SERVICE_AUTH_TOKEN` must be a real random value in production; twelve services refuse to boot with a placeholder. The installers generate one.
+- In production every service port (4001-4020) is bound to `127.0.0.1`; only nginx (80/443/4000) and the frontend (3000) are public. Services reach each other by container name.
+- Provider API keys are encrypted at rest and served only to sibling services that present the service token (`/api/v1/internal/connectors/config`); logs redact secret-like query parameters and fields.
+- Notification email uses the existing SMTP settings and `PUBLIC_SITE_URL`; the in-app bell needs no extra configuration. Prices are never environment variables: they live in the model-cost tables (admin override > provider sync > seed).
+- After pulling changes that touch `packages/shared-*`, rebuild the dev services (`./scripts/claw.sh --dev service:rebuild <service>`); dev containers bake those packages.
 
 ---
 
@@ -231,6 +256,8 @@ claw/
 │   ├── claw-research-service/        # Dynamic search and evidence orchestration (:4016)
 │   ├── claw-llamacpp-service/        # Frontier open-weight LLMs via llama.cpp (:4017)
 │   ├── claw-payment-service/         # Payments, subscriptions, PAYG top-ups (:4018)
+│   ├── claw-threads-service/         # Public Threads publications (:4019)
+│   ├── claw-thread-generation-service/ # Durable Threads generation jobs (:4020)
 │   └── claw-coding-agent/            # VS Code Coding Agent (submodule, separate repository)
 ├── packages/
 │   ├── shared-types/                 # @claw/shared-types
@@ -282,6 +309,10 @@ claw/
 - [Agent API Reference](docs/12-reference/api-reference-agent.md)
 - [Workspace API Reference](docs/12-reference/api-reference-workspace.md)
 - [Security](.github/SECURITY.md)
+- [QA workflow (15 lanes, evidence records)](QA-WORKFLOW.md)
+- [ADR index](docs/13-adr/adr-index.md) — see ADR-159 to ADR-165 (Threads, free allowance meter, product tours, notifications, provider keys and price sync)
+- [Admin usage explorer endpoints](docs/04-backend/admin-usage-explorer-endpoints.md)
+- [Wiki](wiki/Home.md)
 - [Testing](docs/09-testing/testing-overview.md)
 - [Contributing](.github/CONTRIBUTING.md)
 - [Changelog](docs/CHANGELOG.md)

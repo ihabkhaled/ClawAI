@@ -245,7 +245,7 @@ export type AdminUsageAuditPayload = {
   actorUserId: string;
   targetUserId: string | null;
   at: string;
-  filters: Record<string, string | number | null>;
+  filters: Record<string, string | number | boolean | null>;
 };
 
 /** Range plus the filters a caller may send, before they are resolved against "now". */

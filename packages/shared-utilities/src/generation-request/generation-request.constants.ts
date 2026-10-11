@@ -149,6 +149,9 @@ export const BACK_REFERENCE_WORDS: readonly string[] = [
   '以上',
 ];
 
+/** How much of a message is searched for a save command (the command is always at the start). */
+export const SAVE_COMMAND_MAX_PREFIX_LENGTH = 400;
+
 /**
  * "Save / remember this" commands. Each pattern must match at the START of a
  * line (after optional politeness) so "what do you remember" and "can you

@@ -18,7 +18,6 @@ export const PROVIDER_LABELS: Readonly<Record<string, string>> = {
   OPENROUTER: 'OpenRouter',
   GROQ: 'Groq',
   ZAI: 'Z.ai',
-  VERCEL_AI_GATEWAY: 'Vercel AI Gateway',
   CUSTOM_OPENAI_COMPATIBLE: 'Custom (OpenAI-compatible)',
   CLAW: 'ClawAI (platform)',
 };

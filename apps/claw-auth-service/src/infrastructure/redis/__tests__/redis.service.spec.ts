@@ -84,4 +84,24 @@ describe('RedisService.deleteByPrefix', () => {
 
     expect(scan).toHaveBeenCalledTimes(3);
   });
+
+  it('deleteByPrefixChecked reports complete only when the cursor returns to 0', async () => {
+    const done = new RedisService({
+      scan: vi.fn().mockResolvedValue(['0', []]),
+      del: vi.fn(),
+    } as unknown as Redis);
+    await expect(done.deleteByPrefixChecked('p:', 3, 10)).resolves.toEqual({
+      removed: 0,
+      complete: true,
+    });
+
+    const cut = new RedisService({
+      scan: vi.fn().mockResolvedValue(['9', []]),
+      del: vi.fn(),
+    } as unknown as Redis);
+    await expect(cut.deleteByPrefixChecked('p:', 3, 10)).resolves.toEqual({
+      removed: 0,
+      complete: false,
+    });
+  });
 });

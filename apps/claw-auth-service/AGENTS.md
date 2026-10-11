@@ -21,7 +21,7 @@ npm run dev
 - Database: postgresql
 - Prisma models: CreditFreeAllowanceUsage, CreditLedgerEntry, CreditPackage, CreditPackageVersion, DeploymentCredential, DeviceAuthorizationGrant, EmailChangeRequest, EmailVerificationToken, EntitlementInboxEvent, FeatureUsageRecord, OpsAccessToken, PasswordResetToken, Plan, PlanFeatureRule, PlanModelAccess, PlanPriceVersion, PlanRetirementMigration, PlanTrialRedemption, Role, RolePermission, SeedExecution, Session, SystemSetting, ThreadJobBudget, ThreadJobBudgetCall, TokenUsageLedger, User, UserCreditWallet, UserDeletionOutboxEvent, UserNotification, UserNotificationPreference, UserPlanAssignment, WeightedUsageRecord
 - API endpoints: 132 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 167 (vitest)
+- Test files: 168 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

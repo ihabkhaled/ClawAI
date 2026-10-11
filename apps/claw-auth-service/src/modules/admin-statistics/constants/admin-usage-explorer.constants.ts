@@ -31,6 +31,7 @@ export const EXPLORER_DEFAULT_DAYS = 7;
 /** Routing keys for the admin read audit trail (consumed by audit-service). */
 export const ADMIN_USAGE_VIEWED_EVENT = 'admin.usage.viewed';
 export const ADMIN_USAGE_EXPORTED_EVENT = 'admin.usage.exported';
+export const ADMIN_USAGE_LISTED_EVENT = 'admin.usage.listed';
 
 /** Escapes the three LIKE metacharacters so user text matches literally. */
 export const LIKE_ESCAPE_PATTERN = /[\\%_]/g;

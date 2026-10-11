@@ -65,7 +65,7 @@ export class AdminUsageExplorerService {
     private readonly audit: AdminUsageAuditService,
   ) {}
 
-  async listUsers(query: ExplorerUsersQueryDto): Promise<AdminUsageUsersPage> {
+  async listUsers(query: ExplorerUsersQueryDto, actorUserId: string): Promise<AdminUsageUsersPage> {
     const now = new Date();
     const { scope, range } = this.resolve(query, now, null);
     const search = query.search ?? null;
@@ -83,6 +83,7 @@ export class AdminUsageExplorerService {
       this.repository.distinctUsers(scope, search),
     ]);
     const page = this.slice(rows, query.limit, groupKey);
+    await this.auditListed(actorUserId, range, query, page.items.length);
     return {
       ...this.pageHead(range, now, query.sort, query.order, query.limit),
       items: page.items.map(toUserRow),
@@ -132,7 +133,10 @@ export class AdminUsageExplorerService {
     };
   }
 
-  async leaderboard(query: ExplorerLeaderboardQueryDto): Promise<AdminUsageLeaderboardPage> {
+  async leaderboard(
+    query: ExplorerLeaderboardQueryDto,
+    actorUserId: string,
+  ): Promise<AdminUsageLeaderboardPage> {
     const now = new Date();
     const { scope, range } = this.resolve(query, now, query.userId ?? null);
     const rows = await this.repository.groupPage({
@@ -145,6 +149,9 @@ export class AdminUsageExplorerService {
       cursor: decodeCursor(query.cursor),
     });
     const page = this.slice(rows, query.limit, groupKey);
+    if (query.dimension === UsageLeaderboardDimension.USER) {
+      await this.auditListed(actorUserId, range, query, page.items.length);
+    }
     return {
       ...this.pageHead(range, now, query.sort, query.order, query.limit),
       dimension: query.dimension,
@@ -337,6 +344,27 @@ export class AdminUsageExplorerService {
       items,
       nextCursor: last === undefined ? null : encodeCursor(last.sort_val, keyOf(last)),
     };
+  }
+
+  /**
+   * Audits the first page of any email-bearing list. Later cursor pages are the
+   * same query, so they add no row. Never stores the search text (it may be an
+   * email), only whether one was used.
+   */
+  private async auditListed(
+    actorUserId: string,
+    range: AdminUsageRange,
+    query: ExplorerScopeInput & { cursor?: string | undefined; search?: string | undefined },
+    returned: number,
+  ): Promise<void> {
+    if (query.cursor !== undefined) {
+      return;
+    }
+    await this.audit.recordListed(actorUserId, {
+      ...this.auditFilters(range, query),
+      hasSearch: query.search !== undefined && query.search.length > 0,
+      rows: returned,
+    });
   }
 
   /** Filters for the audit trail: ids and settings only. Never an email. */

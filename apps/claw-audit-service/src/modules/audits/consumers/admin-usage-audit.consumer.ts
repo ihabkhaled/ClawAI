@@ -3,6 +3,7 @@ import { RabbitMQService } from '@claw/shared-rabbitmq';
 import {
   ADMIN_USAGE_AUDIT_ACTIONS,
   ADMIN_USAGE_EXPORTED_EVENT,
+  ADMIN_USAGE_LISTED_EVENT,
   ADMIN_USAGE_VIEWED_EVENT,
 } from '../constants/observability.constants';
 import { AuditsService } from '../services/audits.service';
@@ -30,6 +31,9 @@ export class AdminUsageAuditConsumer implements OnModuleInit {
     );
     await this.rabbitmq.subscribe(ADMIN_USAGE_EXPORTED_EVENT, (raw) =>
       this.handle(ADMIN_USAGE_AUDIT_ACTIONS.EXPORTED, raw),
+    );
+    await this.rabbitmq.subscribe(ADMIN_USAGE_LISTED_EVENT, (raw) =>
+      this.handle(ADMIN_USAGE_AUDIT_ACTIONS.LISTED, raw),
     );
     this.logger.log('Subscribed to admin usage read events');
   }

@@ -48,8 +48,9 @@ export class AdminUsageExplorerController {
   @Get('users')
   async listUsers(
     @Query(new ZodValidationPipe(explorerUsersQuerySchema)) query: ExplorerUsersQueryDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<AdminUsageUsersPage> {
-    return this.explorer.listUsers(query);
+    return this.explorer.listUsers(query, actor.id);
   }
 
   @Get('users/export')
@@ -85,8 +86,9 @@ export class AdminUsageExplorerController {
   async leaderboard(
     @Query(new ZodValidationPipe(explorerLeaderboardQuerySchema))
     query: ExplorerLeaderboardQueryDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<AdminUsageLeaderboardPage> {
-    return this.explorer.leaderboard(query);
+    return this.explorer.leaderboard(query, actor.id);
   }
 
   @Get('timeseries')

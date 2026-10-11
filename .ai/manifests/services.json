@@ -66,7 +66,7 @@
       "port": 4007,
       "portSource": "shared-constants",
       "prismaModels": [],
-      "testFiles": 38,
+      "testFiles": 39,
       "testRunner": "vitest"
     },
     {
@@ -119,7 +119,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 167,
+      "testFiles": 168,
       "testRunner": "vitest"
     },
     {

@@ -102,5 +102,10 @@ export function resolvePresetEndpoint(
 }
 
 function trimTrailingSlashes(url: string): string {
-  return url.replace(/\/+$/u, '');
+  // A loop, not /\/+$/: that regex is quadratic on a long run of slashes.
+  let end = url.length;
+  while (end > 0 && url.charAt(end - 1) === '/') {
+    end -= 1;
+  }
+  return url.slice(0, end);
 }

@@ -24,14 +24,14 @@ These routes return the **full email**. Opening a user and exporting are audited
 Shared filters: `provider` (any spelling, normalised), `model`, `workflow` (`UNKNOWN` = ledger rows with no
 workflow), `billing` = `CREDIT | ALLOWANCE | UNMETERED | PLAN`.
 
-| Method | Path                      | Query                                                                                                                                                            | Audited                          |
-| ------ | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| GET    | `/users`                  | range, filters, `search` (email, username, exact id), `sort` = `requests\|tokens\|cost\|lastSeen` (default `lastSeen`), `order` = `asc\|desc`, `limit`, `cursor` | no                               |
-| GET    | `/users/export`           | range, filters, `search`, `order`                                                                                                                                | yes, `ADMIN_USER_USAGE_EXPORTED` |
-| GET    | `/users/:userId`          | range, filters                                                                                                                                                   | yes, `ADMIN_USER_USAGE_VIEWED`   |
-| GET    | `/users/:userId/requests` | range, filters, `search` (model, provider, workflow), `sort` = `time\|tokens\|cost`, `order`, `limit`, `cursor`                                                  | first page only                  |
-| GET    | `/leaderboard`            | range, filters, `dimension` = `provider\|model\|workflow\|user`, `userId`, `search`, `sort`, `order`, `limit`, `cursor`                                          | no                               |
-| GET    | `/timeseries`             | range, filters, `userId`                                                                                                                                         | no                               |
+| Method | Path                      | Query                                                                                                                                                            | Audited                                                      |
+| ------ | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| GET    | `/users`                  | range, filters, `search` (email, username, exact id), `sort` = `requests\|tokens\|cost\|lastSeen` (default `lastSeen`), `order` = `asc\|desc`, `limit`, `cursor` | first page only, `ADMIN_USER_USAGE_LISTED`                   |
+| GET    | `/users/export`           | range, filters, `search`, `order`                                                                                                                                | yes, `ADMIN_USER_USAGE_EXPORTED`                             |
+| GET    | `/users/:userId`          | range, filters                                                                                                                                                   | yes, `ADMIN_USER_USAGE_VIEWED`                               |
+| GET    | `/users/:userId/requests` | range, filters, `search` (model, provider, workflow), `sort` = `time\|tokens\|cost`, `order`, `limit`, `cursor`                                                  | first page only                                              |
+| GET    | `/leaderboard`            | range, filters, `dimension` = `provider\|model\|workflow\|user`, `userId`, `search`, `sort`, `order`, `limit`, `cursor`                                          | `dimension=user`, first page only, `ADMIN_USER_USAGE_LISTED` |
+| GET    | `/timeseries`             | range, filters, `userId`                                                                                                                                         | no                                                           |
 
 ### Response shapes
 
@@ -189,8 +189,10 @@ auth-service publishes `admin.usage.viewed` and `admin.usage.exported` (RabbitMQ
 `entityId` = target user id, severity `MEDIUM`, `details` = `{ filters, at }`. Filters hold the window, provider, model,
 workflow, billing and (export) search text and row count. The payload never contains an email. Publishing is best
 effort: a broker failure is logged and does not block the read.
-The users list and leaderboard (`dimension=user`) also return full emails but write no event, to avoid one row per
-keystroke; the per-user open is the audited boundary.
+The users list and the leaderboard with `dimension=user` also return full emails, so their FIRST page (no `cursor`)
+publishes `admin.usage.listed` -> `ADMIN_USER_USAGE_LISTED`. Later cursor pages add no row. The payload filters hold
+the window, provider, model, workflow, billing, `hasSearch` (boolean; the search text is never stored because it may be
+an email) and `rows` (count returned). Other leaderboard dimensions return no emails and are not audited.
 
 ## audit-service (Mongo)
 

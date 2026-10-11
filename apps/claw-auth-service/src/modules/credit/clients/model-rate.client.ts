@@ -65,17 +65,35 @@ export class ModelRateClient {
   async invalidate(provider: string, model: string): Promise<void> {
     const family = rateModelFamily(model);
     this.logger.log(`invalidate: dropping cached rates provider=${provider} family=${family}`);
+    let failure: string | null = null;
     try {
-      await this.redis.deleteByPrefix(
+      const result = await this.redis.deleteByPrefixChecked(
         ModelRateClient.cacheKey(provider, family),
         RATE_CACHE_SCAN_MAX_ITERATIONS,
         RATE_CACHE_SCAN_COUNT,
       );
+      if (!result.complete) {
+        failure = 'prefix scan hit its iteration bound';
+      }
     } catch (error) {
-      // Fall back to the exact key so the published model itself is still busted.
-      this.logger.warn(`invalidate: prefix scan failed — ${(error as Error).message}`);
-      await this.redis.del(ModelRateClient.cacheKey(provider, canonicalRateModelId(model)));
+      failure = `prefix scan failed: ${(error as Error).message}`;
     }
+    if (failure === null) {
+      return;
+    }
+    // Stale-low rates fail OPEN on a money path, so this is an error, not a
+    // warning. Drop every key we can name without a scan, then throw so the
+    // event is retried instead of silently acknowledged.
+    this.logger.error(
+      `invalidate: INCOMPLETE provider=${provider} family=${family} - ${failure}; ` +
+        'dated variants may serve a stale price until the TTL expires',
+    );
+    await Promise.all(
+      [canonicalRateModelId(model), family, model.trim()].map((id) =>
+        this.redis.del(ModelRateClient.cacheKey(provider, id)),
+      ),
+    );
+    throw new Error(`rate cache invalidation incomplete for ${provider}:${family}`);
   }
 
   private async fetchRate(provider: string, model: string): Promise<ModelCostResponse | null> {
