@@ -62,10 +62,23 @@ describe('notificationPreferencesSchema', () => {
 });
 
 describe('pushSubscriptionSchema', () => {
-  const valid = { endpoint: 'https://push.example.test/abc', keys: { p256dh: 'p', auth: 'a' } };
+  const valid = {
+    endpoint: 'https://fcm.googleapis.com/fcm/send/abc',
+    keys: { p256dh: 'p', auth: 'a' },
+  };
 
   it('accepts a browser subscription', () => {
     expect(pushSubscriptionSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it('rejects an endpoint that is not a browser push service', () => {
+    for (const endpoint of [
+      'https://127.0.0.1/x',
+      'https://auth-service:4001/x',
+      'https://evil.example/x',
+    ]) {
+      expect(pushSubscriptionSchema.safeParse({ ...valid, endpoint }).success).toBe(false);
+    }
   });
 
   it('rejects a non-https endpoint, extra fields and missing keys', () => {

@@ -35,6 +35,7 @@ async function main() {
   await page.getByLabel('Password', { exact: true }).fill('QaPlan123!xyz');
   await page.getByRole('button', { name: 'Sign In' }).click();
   await page.waitForURL(/\/en\/(dashboard|chat)/, { timeout: 60000 });
+  page.on('request', (r) => { if (r.method() === 'POST' && r.url().includes('/push/subscriptions')) console.log('endpoint host:', new URL(JSON.parse(r.postData()).endpoint).host); });
   await page.goto(`${LOCAL}/en/settings`, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(6000);
   const row = page.getByTestId('notification-push-row');
@@ -57,11 +58,17 @@ async function main() {
     const payload = JSON.stringify({ pattern: 'user.notification_requested', data: { dedupeKey: `push-check:${Date.now()}`, userId, kind: 'THREAD_PUBLISHED', link: '/threads', params: { title: 'Push check' } }, timestamp: new Date().toISOString(), source: 'push-check' });
     execFileSync('docker', ['exec', 'claw-rabbitmq', 'sh', '-c', `rabbitmqadmin -u "$RABBITMQ_DEFAULT_USER" -p "$RABBITMQ_DEFAULT_PASS" publish exchange=claw.events routing_key=user.notification_requested payload='${payload}'`]);
     await page.waitForTimeout(6000);
-    const shown = await page.evaluate(async () => {
-      const registration = await navigator.serviceWorker.ready;
-      const list = await registration.getNotifications();
-      return list.map((n) => ({ title: n.title, body: n.body, path: n.data && n.data.path }));
-    });
+    console.log('subscription last_used_at:', execFileSync('docker', ['exec', 'claw-pg-auth', 'psql', '-U', 'claw', '-d', 'claw_auth', '-tAc', `select coalesce(last_used_at::text,'never') from push_subscriptions where user_id='${userId}'`]).toString().trim());
+    // The browser vendor's push service delivers in its own time; poll for up to 40 s.
+    let shown = [];
+    for (let attempt = 0; attempt < 20 && shown.length === 0; attempt += 1) {
+      shown = await page.evaluate(async () => {
+        const registration = await navigator.serviceWorker.ready;
+        const list = await registration.getNotifications();
+        return list.map((n) => ({ title: n.title, body: n.body, path: n.data && n.data.path }));
+      });
+      if (shown.length === 0) await page.waitForTimeout(2000);
+    }
     console.log('notifications shown by the worker:', JSON.stringify(shown));
     await control.click();
     await page.waitForTimeout(3000);

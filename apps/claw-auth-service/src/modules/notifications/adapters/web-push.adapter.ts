@@ -2,7 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import webpush from 'web-push';
 
 import { AppConfig } from '../../../app/config/app.config';
-import { PUSH_GONE_STATUS_CODES, PUSH_TTL_SECONDS } from '../constants/notifications.constants';
+import {
+  PUSH_GONE_STATUS_CODES,
+  PUSH_SEND_TIMEOUT_MS,
+  PUSH_TTL_SECONDS,
+} from '../constants/notifications.constants';
+import { isAllowedPushEndpoint } from '../utilities/push-endpoint.utility';
 import type {
   PushConfigView,
   PushMessagePayload,
@@ -37,6 +42,10 @@ export class WebPushAdapter {
     if (keys === null) {
       return 'FAILED';
     }
+    if (!isAllowedPushEndpoint(subscription.endpoint)) {
+      // A row saved before the allow-list, or tampered with: never call it, and drop it.
+      return 'GONE';
+    }
     try {
       await webpush.sendNotification(
         {
@@ -46,6 +55,7 @@ export class WebPushAdapter {
         JSON.stringify(message),
         {
           TTL: PUSH_TTL_SECONDS,
+          timeout: PUSH_SEND_TIMEOUT_MS,
           vapidDetails: {
             subject: keys.subject,
             publicKey: keys.publicKey,

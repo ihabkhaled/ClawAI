@@ -15,7 +15,11 @@ vi.mock('web-push', () => {
   return { default: { sendNotification: vi.fn(), WebPushError } };
 });
 
-const subscription = { endpoint: 'https://push.example.test/abc', p256dh: 'p', auth: 'a' };
+const subscription = {
+  endpoint: 'https://fcm.googleapis.com/fcm/send/abc',
+  p256dh: 'p',
+  auth: 'a',
+};
 const message = { title: 't', body: 'b', link: '/x', lang: 'en', tag: 'k' };
 const keys = {
   VAPID_PUBLIC_KEY: 'pub',
@@ -73,5 +77,27 @@ describe('WebPushAdapter', () => {
     await expect(new WebPushAdapter().send(subscription, message)).resolves.toBe('FAILED');
     vi.mocked(webpush.sendNotification).mockRejectedValueOnce(new Error('network'));
     await expect(new WebPushAdapter().send(subscription, message)).resolves.toBe('FAILED');
+  });
+
+  it('refuses to call an endpoint that is not a browser push service, and reports it gone', async () => {
+    withConfig(keys);
+    const inward = { ...subscription, endpoint: 'https://169.254.169.254/latest/meta-data' };
+    await expect(new WebPushAdapter().send(inward, message)).resolves.toBe('GONE');
+    expect(webpush.sendNotification).not.toHaveBeenCalled();
+  });
+
+  it('puts a timeout on every send', async () => {
+    withConfig(keys);
+    vi.mocked(webpush.sendNotification).mockResolvedValue({
+      statusCode: 201,
+      body: '',
+      headers: {},
+    });
+    await new WebPushAdapter().send(subscription, message);
+    expect(webpush.sendNotification).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.objectContaining({ timeout: 5000 }),
+    );
   });
 });

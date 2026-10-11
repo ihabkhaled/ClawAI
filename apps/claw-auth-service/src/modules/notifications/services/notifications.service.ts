@@ -104,7 +104,14 @@ export class NotificationsService {
         HttpStatus.UNPROCESSABLE_ENTITY,
       );
     }
-    await this.notifications.saveSubscription(userId, input);
+    const saved = await this.notifications.saveSubscription(userId, input);
+    if (!saved) {
+      throw new BusinessException(
+        'This browser subscription belongs to another account',
+        'PUSH_ENDPOINT_IN_USE',
+        HttpStatus.CONFLICT,
+      );
+    }
     await this.notifications.savePreferences(userId, { pushEnabled: true });
   }
 
@@ -161,14 +168,17 @@ export class NotificationsService {
   ): Promise<void> {
     const message = buildPushMessage(recipient.languagePreference, kind, link, dedupeKey);
     const subscriptions = await this.notifications.findSubscriptions(recipient.id);
-    for (const subscription of subscriptions) {
-      const outcome = await this.push.send(subscription, message);
-      if (outcome === 'GONE') {
-        await this.notifications.deleteGoneSubscription(subscription.endpoint);
-      } else if (outcome === 'SENT') {
-        await this.notifications.touchSubscription(subscription.endpoint);
-      }
-    }
+    // In parallel: one slow or dead browser must not hold up the others (each send has a timeout).
+    await Promise.all(
+      subscriptions.map(async (subscription) => {
+        const outcome = await this.push.send(subscription, message);
+        if (outcome === 'GONE') {
+          await this.notifications.deleteGoneSubscription(subscription.endpoint);
+        } else if (outcome === 'SENT') {
+          await this.notifications.touchSubscription(subscription.endpoint);
+        }
+      }),
+    );
   }
 
   /** Best effort: a mail failure must not undo the notification the person can already see. */

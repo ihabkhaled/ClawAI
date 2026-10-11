@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import { authService } from '@/services/auth/auth.service';
+import { releasePushSubscription } from '@/services/notifications/push-release.service';
 import { logger, showToast } from '@/utilities';
 
 // `redirectTo` null keeps the visitor on the current page (the public marketing
@@ -14,8 +15,11 @@ export function useLogout(redirectTo: string | null = ROUTES.LOGIN) {
   const { t } = useTranslation();
 
   const mutation = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       logger.info({ component: 'auth', action: 'logout', message: 'User logged out' });
+      // While the session still works: a push subscription left on this browser would keep showing
+      // this person's notifications to the next one who uses it.
+      await releasePushSubscription();
       return authService.logout();
     },
     onError: (err: unknown) => {

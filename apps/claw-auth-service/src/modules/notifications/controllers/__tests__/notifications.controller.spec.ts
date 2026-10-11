@@ -33,7 +33,10 @@ describe('NotificationsController', () => {
 
   it('scopes push subscribe and unsubscribe by the signed-in user and exposes only the public key', async () => {
     const { controller, service } = build();
-    const body = { endpoint: 'https://push.example.test/a', keys: { p256dh: 'p', auth: 'a' } };
+    const body = {
+      endpoint: 'https://fcm.googleapis.com/fcm/send/a',
+      keys: { p256dh: 'p', auth: 'a' },
+    };
     await controller.subscribePush(user, body);
     await controller.unsubscribePush(user, { endpoint: body.endpoint });
     expect(controller.pushConfig()).toEqual({ enabled: true, publicKey: 'pub' });

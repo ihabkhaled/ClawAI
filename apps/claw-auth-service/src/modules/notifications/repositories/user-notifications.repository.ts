@@ -112,13 +112,26 @@ export class UserNotificationsRepository {
     };
   }
 
-  /** One browser, one row: a browser that signs in as someone else moves to the new person. */
-  async saveSubscription(userId: string, input: PushSubscriptionInput): Promise<void> {
+  /**
+   * One browser, one row. An endpoint already held by ANOTHER person is taken over only when the
+   * caller proves they hold the same subscription (the same auth secret): a browser that signs in
+   * as someone else sends the one it already has, while a stranger who learned an endpoint cannot
+   * redirect it. Returns false when the endpoint belongs to someone else and the secret differs.
+   */
+  async saveSubscription(userId: string, input: PushSubscriptionInput): Promise<boolean> {
+    const existing = await this.prisma.pushSubscription.findUnique({
+      where: { endpoint: input.endpoint },
+      select: { userId: true, auth: true },
+    });
+    if (existing !== null && existing.userId !== userId && existing.auth !== input.auth) {
+      return false;
+    }
     await this.prisma.pushSubscription.upsert({
       where: { endpoint: input.endpoint },
       create: { userId, ...input },
       update: { userId, p256dh: input.p256dh, auth: input.auth },
     });
+    return true;
   }
 
   async countSubscriptions(userId: string): Promise<number> {

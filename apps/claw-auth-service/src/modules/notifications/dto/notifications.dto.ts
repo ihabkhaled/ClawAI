@@ -13,6 +13,7 @@ import {
   PUSH_ENDPOINT_MAX_LENGTH,
   PUSH_P256DH_MAX_LENGTH,
 } from '../constants/notifications.constants';
+import { isAllowedPushEndpoint } from '../utilities/push-endpoint.utility';
 
 /**
  * The event another service sends to say "tell this user". Validated here because the broker is
@@ -60,7 +61,11 @@ export type NotificationPreferencesDto = z.infer<typeof notificationPreferencesS
 /** The browser's `PushSubscription.toJSON()` shape, reduced to what delivery needs. */
 export const pushSubscriptionSchema = z
   .object({
-    endpoint: z.string().url().max(PUSH_ENDPOINT_MAX_LENGTH).startsWith('https://'),
+    endpoint: z
+      .string()
+      .url()
+      .max(PUSH_ENDPOINT_MAX_LENGTH)
+      .refine(isAllowedPushEndpoint, { message: 'Not a browser push service' }),
     keys: z
       .object({
         p256dh: z.string().min(1).max(PUSH_P256DH_MAX_LENGTH),

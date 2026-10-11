@@ -52,3 +52,21 @@ export const PUSH_TTL_SECONDS = 86_400;
 
 /** HTTP statuses a push service uses to say the subscription no longer exists. */
 export const PUSH_GONE_STATUS_CODES: readonly number[] = [404, 410];
+
+/** Longest the server waits on one push service before giving up on that browser. */
+export const PUSH_SEND_TIMEOUT_MS = 5000;
+
+/**
+ * The only hosts a subscription endpoint may point at: the browser vendors' push services. The
+ * endpoint comes from the client, so without this list the server would POST to any URL a person
+ * supplies (SSRF). A host matches when it equals an entry or is a subdomain of it.
+ */
+export const PUSH_ALLOWED_HOST_SUFFIXES: readonly string[] = [
+  'fcm.googleapis.com',
+  // Chrome's older FCM endpoint, still handed out by some channels.
+  'jmt17.google.com',
+  'android.googleapis.com',
+  'push.services.mozilla.com',
+  'push.apple.com',
+  'notify.windows.com',
+];

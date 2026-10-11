@@ -44,7 +44,7 @@ function build(overrides?: {
     findSubscriptions: vi.fn().mockResolvedValue([]),
     deleteGoneSubscription: vi.fn().mockResolvedValue(undefined),
     touchSubscription: vi.fn().mockResolvedValue(undefined),
-    saveSubscription: vi.fn().mockResolvedValue(undefined),
+    saveSubscription: vi.fn().mockResolvedValue(true),
     hasSubscription: vi.fn().mockResolvedValue(false),
     countSubscriptions: vi.fn().mockResolvedValue(0),
     deleteSubscription: vi.fn().mockResolvedValue(true),
@@ -201,8 +201,8 @@ describe('NotificationsService for the signed-in person', () => {
   });
 });
 
-const browser = { endpoint: 'https://push.example.test/abc', p256dh: 'p', auth: 'a' };
-const second = { ...browser, endpoint: 'https://push.example.test/b' };
+const browser = { endpoint: 'https://fcm.googleapis.com/fcm/send/abc', p256dh: 'p', auth: 'a' };
+const second = { ...browser, endpoint: 'https://fcm.googleapis.com/fcm/send/b' };
 const body = { endpoint: browser.endpoint, keys: { p256dh: 'p', auth: 'a' } };
 const pushPreferences = { inAppEnabled: true, emailEnabled: false, pushEnabled: true };
 
@@ -266,5 +266,12 @@ describe('NotificationsService push', () => {
     expect(repository.savePreferences).not.toHaveBeenCalled();
     await service.unsubscribePush('user-1', browser.endpoint);
     expect(repository.savePreferences).toHaveBeenCalledWith('user-1', { pushEnabled: false });
+  });
+
+  it('refuses a subscription that belongs to another account and leaves the channel alone', async () => {
+    const { service, repository } = build();
+    repository.saveSubscription.mockResolvedValue(false);
+    await expect(service.subscribePush('user-1', body)).rejects.toThrow('another account');
+    expect(repository.savePreferences).not.toHaveBeenCalled();
   });
 });
