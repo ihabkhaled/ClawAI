@@ -24,6 +24,12 @@ describe('isAllowedPushEndpoint', () => {
     'https://notfcm.googleapis.com.example/x',
     'https://user:pass@fcm.googleapis.com/x',
     'https://fcm.googleapis.com:8443/x',
+    'https://fcm.googleapis.com\\@169.254.169.254/x',
+    'https://169.254.169.254\\.fcm.googleapis.com/x',
+    'https://fcm.googleapis.com@169.254.169.254/x',
+    'https://fcm.googleapis.com /x',
+    'https://FCM.googleapis.com/x',
+    'https://fcm.googleapis.com/a	b',
     'not a url',
     '',
   ])('rejects %s', (endpoint) => {
