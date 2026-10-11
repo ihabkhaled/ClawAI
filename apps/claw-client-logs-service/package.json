@@ -1,6 +1,6 @@
 {
   "name": "claw-client-logs-service",
-  "version": "1.202.1",
+  "version": "1.203.0",
   "private": true,
   "description": "Claw Client Logs Service - Frontend client log ingestion and querying",
   "license": "UNLICENSED",
