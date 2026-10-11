@@ -6,6 +6,9 @@ import { UserAppearancePreference, UserLanguagePreference } from '@/enums';
 
 const mockSettingsPage = vi.fn();
 
+vi.mock('@/components/settings/notification-preferences-card', () => ({
+  NotificationPreferencesCard: () => <div />,
+}));
 vi.mock('@/hooks/settings/use-settings-page', () => ({
   useSettingsPage: () => mockSettingsPage(),
 }));
