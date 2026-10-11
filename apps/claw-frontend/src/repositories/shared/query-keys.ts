@@ -19,6 +19,12 @@ export const queryKeys = {
     ledger: () => [...queryKeys.credit.all, 'ledger'] as const,
     packages: () => [...queryKeys.credit.all, 'packages'] as const,
   },
+  notifications: {
+    all: ['notifications'] as const,
+    unread: () => [...queryKeys.notifications.all, 'unread'] as const,
+    list: () => [...queryKeys.notifications.all, 'list'] as const,
+    preferences: () => [...queryKeys.notifications.all, 'preferences'] as const,
+  },
   adminCredit: {
     all: ['adminCredit'] as const,
     wallet: (userId: string) => [...queryKeys.adminCredit.all, 'wallet', userId] as const,

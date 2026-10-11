@@ -6,6 +6,7 @@ import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
+import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
@@ -4504,6 +4505,7 @@ export const es: TranslationDictionary = {
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.es,
   skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.es,
   usageAnalytics: USAGE_ANALYTICS_TRANSLATIONS.es,
+  notifications: NOTIFICATIONS_TRANSLATIONS.es,
   adminBilling: {
     credit: {
       packageCreated: 'Paquete de crédito creado.',

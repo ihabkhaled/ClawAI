@@ -4244,6 +4244,7 @@ export type TranslationDictionary = {
   providerManagement?: ProviderManagementLocaleTranslation;
   skippedProviders: SkippedProvidersLocaleTranslation;
   usageAnalytics: UsageAnalyticsLocaleTranslation;
+  notifications: NotificationsLocaleTranslation;
   adminDeployment: {
     title: string;
     description: string;
@@ -7022,4 +7023,38 @@ export type ModelExposureUiLocaleTranslation = {
   lifecycleDeprecated: string;
   lifecycleSunset: string;
   lifecycleRemoved: string;
+};
+
+/** Notification kinds with a title and a body line each (see notifications-translations.ts). */
+export type NotificationKindTranslation = {
+  title: string;
+  body: string;
+};
+
+export type NotificationsLocaleTranslation = {
+  bellLabel: string;
+  title: string;
+  empty: string;
+  loading: string;
+  error: string;
+  retry: string;
+  markAllRead: string;
+  showOlder: string;
+  settings: string;
+  /** Contains {count}. */
+  unreadCount: string;
+  kinds: {
+    THREAD_READY_FOR_REVIEW: NotificationKindTranslation;
+    THREAD_PUBLISHED: NotificationKindTranslation;
+    THREAD_FAILED: NotificationKindTranslation;
+  };
+  preferences: {
+    title: string;
+    description: string;
+    inApp: string;
+    inAppHint: string;
+    email: string;
+    emailHint: string;
+    saveFailed: string;
+  };
 };

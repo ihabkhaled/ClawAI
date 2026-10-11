@@ -6,6 +6,7 @@ import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
+import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
@@ -4448,6 +4449,7 @@ export const fa: TranslationDictionary = {
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.fa,
   skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.fa,
   usageAnalytics: USAGE_ANALYTICS_TRANSLATIONS.fa,
+  notifications: NOTIFICATIONS_TRANSLATIONS.fa,
   adminBilling: {
     credit: {
       packageCreated: 'بستهٔ اعتبار ایجاد شد.',

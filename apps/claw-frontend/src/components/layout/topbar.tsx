@@ -3,6 +3,7 @@
 import { Menu } from 'lucide-react';
 
 import { CurrencySwitcher } from '@/components/common/currency-switcher';
+import { NotificationBell } from '@/components/notifications/notification-bell';
 import { TourLauncher } from '@/components/tour/tour-launcher';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -81,6 +82,7 @@ export function Topbar() {
         <LocaleSwitcher />
         {/* Also at every width: feedback used to float over the page, and a
             phone has no other quick route to it besides the More sheet. */}
+        <NotificationBell />
         <TourLauncher />
         <TopbarFeedbackButton />
         <div className="hidden sm:block">

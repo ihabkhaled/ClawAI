@@ -12,6 +12,9 @@ vi.mock('@/components/layout/global-search', () => ({ GlobalSearch: () => <div /
 vi.mock('@/components/layout/locale-switcher', () => ({ LocaleSwitcher: () => <div /> }));
 vi.mock('@/components/layout/theme-switcher', () => ({ ThemeSwitcher: () => <div /> }));
 vi.mock('@/components/common/currency-switcher', () => ({ CurrencySwitcher: () => <div /> }));
+vi.mock('@/components/notifications/notification-bell', () => ({
+  NotificationBell: () => <div />,
+}));
 // UserMenu is deliberately NOT mocked: its username label is the element under
 // test, and the Topbar case only works if the real one renders inside it.
 vi.mock('@/hooks/auth/use-current-user', () => ({

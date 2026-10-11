@@ -60,6 +60,9 @@ vi.mock('@/components/layout/global-search', () => ({ GlobalSearch: () => <div /
 vi.mock('@/components/layout/locale-switcher', () => ({ LocaleSwitcher: () => <div /> }));
 vi.mock('@/components/layout/theme-switcher', () => ({ ThemeSwitcher: () => <div /> }));
 vi.mock('@/components/layout/user-menu', () => ({ UserMenu: () => <div /> }));
+vi.mock('@/components/notifications/notification-bell', () => ({
+  NotificationBell: () => <div />,
+}));
 vi.mock('@/components/common/currency-switcher', () => ({ CurrencySwitcher: () => <div /> }));
 vi.mock('@/components/layout/mobile-bottom-nav-item', () => ({
   MobileBottomNavItem: () => <a href="/chat">item</a>,

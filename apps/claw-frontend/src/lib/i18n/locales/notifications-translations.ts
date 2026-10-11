@@ -1,0 +1,472 @@
+import { Locale } from '@/enums/locale.enum';
+import type { NotificationsLocaleTranslation } from '@/types/i18n.types';
+
+/**
+ * In-app notifications (the bell in the top bar and the notification settings), in all 13
+ * locales. One file, like usage-analytics-translations.ts: each locale file imports from here,
+ * so a missing locale is a compile error. Real translations, not English placeholders.
+ * `{placeholders}` must be kept as they are; "Thread" is the product's own word.
+ */
+export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTranslation> = {
+  [Locale.EN]: {
+    bellLabel: 'Notifications',
+    title: 'Notifications',
+    empty: 'Nothing new yet. We will tell you here when a Thread is ready, published or fails.',
+    loading: 'Loading…',
+    error: 'Could not load notifications.',
+    retry: 'Try again',
+    markAllRead: 'Mark all as read',
+    showOlder: 'Show older',
+    settings: 'Notification settings',
+    unreadCount: '{count} unread',
+    kinds: {
+      THREAD_READY_FOR_REVIEW: {
+        title: 'Your Thread is ready for review',
+        body: 'The draft is saved privately. Open it to review and approve.',
+      },
+      THREAD_PUBLISHED: {
+        title: 'Your Thread is now public',
+        body: 'Readers can open it now.',
+      },
+      THREAD_FAILED: {
+        title: 'Your Thread could not be finished',
+        body: 'The reserved spend was released. You can try again.',
+      },
+    },
+    preferences: {
+      title: 'Notifications',
+      description: 'Choose how we tell you when a Thread is ready, published or fails.',
+      inApp: 'In the app',
+      inAppHint: 'A bell in the top bar.',
+      email: 'By email',
+      emailHint: 'Sent to your verified address.',
+      saveFailed: 'Could not save your choice. Try again.',
+    },
+  },
+  [Locale.AR]: {
+    bellLabel: 'الإشعارات',
+    title: 'الإشعارات',
+    empty: 'لا جديد حتى الآن. سنخبرك هنا عندما يصبح Thread جاهزًا أو يُنشر أو يتعذّر إكماله.',
+    loading: 'جارٍ التحميل…',
+    error: 'تعذّر تحميل الإشعارات.',
+    retry: 'حاول مرة أخرى',
+    markAllRead: 'تعليم الكل كمقروء',
+    showOlder: 'عرض الأقدم',
+    settings: 'إعدادات الإشعارات',
+    unreadCount: '{count} غير مقروء',
+    kinds: {
+      THREAD_READY_FOR_REVIEW: {
+        title: 'Thread الخاص بك جاهز للمراجعة',
+        body: 'المسودة محفوظة بشكل خاص. افتحها للمراجعة والموافقة.',
+      },
+      THREAD_PUBLISHED: {
+        title: 'أصبح Thread الخاص بك عامًا',
+        body: 'يمكن للقرّاء فتحه الآن.',
+      },
+      THREAD_FAILED: {
+        title: 'تعذّر إكمال Thread الخاص بك',
+        body: 'أُفرج عن المبلغ المحجوز. يمكنك المحاولة مرة أخرى.',
+      },
+    },
+    preferences: {
+      title: 'الإشعارات',
+      description: 'اختر كيف نخبرك عندما يصبح Thread جاهزًا أو يُنشر أو يتعذّر إكماله.',
+      inApp: 'داخل التطبيق',
+      inAppHint: 'جرس في الشريط العلوي.',
+      email: 'بالبريد الإلكتروني',
+      emailHint: 'يُرسل إلى عنوانك الموثّق.',
+      saveFailed: 'تعذّر حفظ اختيارك. حاول مرة أخرى.',
+    },
+  },
+  [Locale.FR]: {
+    bellLabel: 'Notifications',
+    title: 'Notifications',
+    empty:
+      'Rien de nouveau. Nous vous le dirons ici quand un Thread sera prêt, publié ou en échec.',
+    loading: 'Chargement…',
+    error: 'Impossible de charger les notifications.',
+    retry: 'Réessayer',
+    markAllRead: 'Tout marquer comme lu',
+    showOlder: 'Afficher les plus anciennes',
+    settings: 'Paramètres de notification',
+    unreadCount: '{count} non lues',
+    kinds: {
+      THREAD_READY_FOR_REVIEW: {
+        title: 'Votre Thread est prêt à être relu',
+        body: 'Le brouillon est enregistré en privé. Ouvrez-le pour le relire et l’approuver.',
+      },
+      THREAD_PUBLISHED: {
+        title: 'Votre Thread est maintenant public',
+        body: 'Les lecteurs peuvent l’ouvrir dès maintenant.',
+      },
+      THREAD_FAILED: {
+        title: 'Votre Thread n’a pas pu être terminé',
+        body: 'La dépense réservée a été libérée. Vous pouvez réessayer.',
+      },
+    },
+    preferences: {
+      title: 'Notifications',
+      description:
+        'Choisissez comment nous vous prévenons quand un Thread est prêt, publié ou en échec.',
+      inApp: 'Dans l’application',
+      inAppHint: 'Une cloche dans la barre du haut.',
+      email: 'Par e-mail',
+      emailHint: 'Envoyé à votre adresse vérifiée.',
+      saveFailed: 'Impossible d’enregistrer votre choix. Réessayez.',
+    },
+  },
+  [Locale.IT]: {
+    bellLabel: 'Notifiche',
+    title: 'Notifiche',
+    empty: 'Niente di nuovo. Ti avviseremo qui quando un Thread sarà pronto, pubblicato o fallito.',
+    loading: 'Caricamento…',
+    error: 'Impossibile caricare le notifiche.',
+    retry: 'Riprova',
+    markAllRead: 'Segna tutto come letto',
+    showOlder: 'Mostra le più vecchie',
+    settings: 'Impostazioni delle notifiche',
+    unreadCount: '{count} non lette',
+    kinds: {
+      THREAD_READY_FOR_REVIEW: {
+        title: 'Il tuo Thread è pronto per la revisione',
+        body: 'La bozza è salvata in privato. Aprila per rivederla e approvarla.',
+      },
+      THREAD_PUBLISHED: {
+        title: 'Il tuo Thread è ora pubblico',
+        body: 'I lettori possono aprirlo adesso.',
+      },
+      THREAD_FAILED: {
+        title: 'Non è stato possibile completare il tuo Thread',
+        body: 'La spesa riservata è stata rilasciata. Puoi riprovare.',
+      },
+    },
+    preferences: {
+      title: 'Notifiche',
+      description: 'Scegli come avvisarti quando un Thread è pronto, pubblicato o fallito.',
+      inApp: 'Nell’app',
+      inAppHint: 'Una campanella nella barra in alto.',
+      email: 'Per e-mail',
+      emailHint: 'Inviata al tuo indirizzo verificato.',
+      saveFailed: 'Impossibile salvare la tua scelta. Riprova.',
+    },
+  },
+  [Locale.DE]: {
+    bellLabel: 'Benachrichtigungen',
+    title: 'Benachrichtigungen',
+    empty:
+      'Noch nichts Neues. Wir sagen dir hier Bescheid, wenn ein Thread fertig, veröffentlicht oder fehlgeschlagen ist.',
+    loading: 'Wird geladen…',
+    error: 'Benachrichtigungen konnten nicht geladen werden.',
+    retry: 'Erneut versuchen',
+    markAllRead: 'Alle als gelesen markieren',
+    showOlder: 'Ältere anzeigen',
+    settings: 'Benachrichtigungseinstellungen',
+    unreadCount: '{count} ungelesen',
+    kinds: {
+      THREAD_READY_FOR_REVIEW: {
+        title: 'Dein Thread ist bereit zur Prüfung',
+        body: 'Der Entwurf ist privat gespeichert. Öffne ihn, um ihn zu prüfen und zu genehmigen.',
+      },
+      THREAD_PUBLISHED: {
+        title: 'Dein Thread ist jetzt öffentlich',
+        body: 'Leser können ihn jetzt öffnen.',
+      },
+      THREAD_FAILED: {
+        title: 'Dein Thread konnte nicht fertiggestellt werden',
+        body: 'Der reservierte Betrag wurde freigegeben. Du kannst es erneut versuchen.',
+      },
+    },
+    preferences: {
+      title: 'Benachrichtigungen',
+      description:
+        'Lege fest, wie wir dir Bescheid geben, wenn ein Thread fertig, veröffentlicht oder fehlgeschlagen ist.',
+      inApp: 'In der App',
+      inAppHint: 'Eine Glocke in der oberen Leiste.',
+      email: 'Per E-Mail',
+      emailHint: 'An deine bestätigte Adresse gesendet.',
+      saveFailed: 'Deine Auswahl konnte nicht gespeichert werden. Versuche es erneut.',
+    },
+  },
+  [Locale.ES]: {
+    bellLabel: 'Notificaciones',
+    title: 'Notificaciones',
+    empty: 'Nada nuevo todavía. Te avisaremos aquí cuando un Thread esté listo, publicado o falle.',
+    loading: 'Cargando…',
+    error: 'No se pudieron cargar las notificaciones.',
+    retry: 'Reintentar',
+    markAllRead: 'Marcar todo como leído',
+    showOlder: 'Mostrar anteriores',
+    settings: 'Ajustes de notificaciones',
+    unreadCount: '{count} sin leer',
+    kinds: {
+      THREAD_READY_FOR_REVIEW: {
+        title: 'Tu Thread está listo para revisión',
+        body: 'El borrador está guardado en privado. Ábrelo para revisarlo y aprobarlo.',
+      },
+      THREAD_PUBLISHED: {
+        title: 'Tu Thread ya es público',
+        body: 'Los lectores ya pueden abrirlo.',
+      },
+      THREAD_FAILED: {
+        title: 'No se pudo terminar tu Thread',
+        body: 'Se liberó el gasto reservado. Puedes intentarlo de nuevo.',
+      },
+    },
+    preferences: {
+      title: 'Notificaciones',
+      description: 'Elige cómo te avisamos cuando un Thread esté listo, publicado o falle.',
+      inApp: 'En la aplicación',
+      inAppHint: 'Una campana en la barra superior.',
+      email: 'Por correo',
+      emailHint: 'Se envía a tu dirección verificada.',
+      saveFailed: 'No se pudo guardar tu elección. Inténtalo de nuevo.',
+    },
+  },
+  [Locale.PT]: {
+    bellLabel: 'Notificações',
+    title: 'Notificações',
+    empty:
+      'Nada de novo ainda. Avisaremos aqui quando um Thread estiver pronto, publicado ou falhar.',
+    loading: 'Carregando…',
+    error: 'Não foi possível carregar as notificações.',
+    retry: 'Tentar de novo',
+    markAllRead: 'Marcar tudo como lido',
+    showOlder: 'Mostrar mais antigas',
+    settings: 'Configurações de notificações',
+    unreadCount: '{count} não lidas',
+    kinds: {
+      THREAD_READY_FOR_REVIEW: {
+        title: 'Seu Thread está pronto para revisão',
+        body: 'O rascunho está salvo em particular. Abra para revisar e aprovar.',
+      },
+      THREAD_PUBLISHED: {
+        title: 'Seu Thread já é público',
+        body: 'Os leitores já podem abri-lo.',
+      },
+      THREAD_FAILED: {
+        title: 'Não foi possível concluir seu Thread',
+        body: 'O valor reservado foi liberado. Você pode tentar de novo.',
+      },
+    },
+    preferences: {
+      title: 'Notificações',
+      description: 'Escolha como avisamos quando um Thread estiver pronto, publicado ou falhar.',
+      inApp: 'No aplicativo',
+      inAppHint: 'Um sino na barra superior.',
+      email: 'Por e-mail',
+      emailHint: 'Enviado ao seu endereço verificado.',
+      saveFailed: 'Não foi possível salvar sua escolha. Tente de novo.',
+    },
+  },
+  [Locale.RU]: {
+    bellLabel: 'Уведомления',
+    title: 'Уведомления',
+    empty:
+      'Пока ничего нового. Мы сообщим здесь, когда Thread будет готов, опубликован или не удастся.',
+    loading: 'Загрузка…',
+    error: 'Не удалось загрузить уведомления.',
+    retry: 'Повторить',
+    markAllRead: 'Отметить все как прочитанные',
+    showOlder: 'Показать более старые',
+    settings: 'Настройки уведомлений',
+    unreadCount: 'Непрочитанных: {count}',
+    kinds: {
+      THREAD_READY_FOR_REVIEW: {
+        title: 'Ваш Thread готов к проверке',
+        body: 'Черновик сохранён приватно. Откройте его, чтобы проверить и одобрить.',
+      },
+      THREAD_PUBLISHED: {
+        title: 'Ваш Thread теперь общедоступен',
+        body: 'Читатели уже могут его открыть.',
+      },
+      THREAD_FAILED: {
+        title: 'Не удалось завершить ваш Thread',
+        body: 'Зарезервированная сумма освобождена. Вы можете попробовать снова.',
+      },
+    },
+    preferences: {
+      title: 'Уведомления',
+      description: 'Выберите, как сообщать вам, когда Thread готов, опубликован или не удался.',
+      inApp: 'В приложении',
+      inAppHint: 'Колокольчик в верхней панели.',
+      email: 'По электронной почте',
+      emailHint: 'Отправляется на ваш подтверждённый адрес.',
+      saveFailed: 'Не удалось сохранить выбор. Попробуйте снова.',
+    },
+  },
+  [Locale.ZH]: {
+    bellLabel: '通知',
+    title: '通知',
+    empty: '暂时没有新消息。当 Thread 准备好、已发布或失败时，我们会在这里告诉你。',
+    loading: '加载中…',
+    error: '无法加载通知。',
+    retry: '重试',
+    markAllRead: '全部标为已读',
+    showOlder: '显示更早的',
+    settings: '通知设置',
+    unreadCount: '{count} 条未读',
+    kinds: {
+      THREAD_READY_FOR_REVIEW: {
+        title: '你的 Thread 已准备好审阅',
+        body: '草稿已私密保存。打开即可审阅并批准。',
+      },
+      THREAD_PUBLISHED: {
+        title: '你的 Thread 现已公开',
+        body: '读者现在即可打开阅读。',
+      },
+      THREAD_FAILED: {
+        title: '你的 Thread 未能完成',
+        body: '为其预留的费用已释放。你可以再试一次。',
+      },
+    },
+    preferences: {
+      title: '通知',
+      description: '选择当 Thread 准备好、已发布或失败时，我们如何通知你。',
+      inApp: '应用内',
+      inAppHint: '顶部栏中的铃铛。',
+      email: '通过邮件',
+      emailHint: '发送到你已验证的地址。',
+      saveFailed: '无法保存你的选择。请重试。',
+    },
+  },
+  [Locale.JA]: {
+    bellLabel: '通知',
+    title: '通知',
+    empty: 'まだ新しいものはありません。Thread の準備完了・公開・失敗をここでお知らせします。',
+    loading: '読み込み中…',
+    error: '通知を読み込めませんでした。',
+    retry: '再試行',
+    markAllRead: 'すべて既読にする',
+    showOlder: '古いものを表示',
+    settings: '通知設定',
+    unreadCount: '未読 {count} 件',
+    kinds: {
+      THREAD_READY_FOR_REVIEW: {
+        title: 'Thread の確認準備ができました',
+        body: '下書きは非公開で保存されています。開いて確認し、承認してください。',
+      },
+      THREAD_PUBLISHED: {
+        title: 'Thread が公開されました',
+        body: '読者がすぐに開けるようになりました。',
+      },
+      THREAD_FAILED: {
+        title: 'Thread を完成できませんでした',
+        body: '確保していた利用額は解放されました。もう一度お試しください。',
+      },
+    },
+    preferences: {
+      title: '通知',
+      description: 'Thread の準備完了・公開・失敗をどのようにお知らせするかを選びます。',
+      inApp: 'アプリ内',
+      inAppHint: '上部バーのベルで表示します。',
+      email: 'メール',
+      emailHint: '確認済みのアドレスに送信します。',
+      saveFailed: '選択を保存できませんでした。もう一度お試しください。',
+    },
+  },
+  [Locale.HI]: {
+    bellLabel: 'सूचनाएँ',
+    title: 'सूचनाएँ',
+    empty: 'अभी कुछ नया नहीं है। Thread तैयार, प्रकाशित या विफल होने पर हम यहीं बताएँगे।',
+    loading: 'लोड हो रहा है…',
+    error: 'सूचनाएँ लोड नहीं हो सकीं।',
+    retry: 'फिर कोशिश करें',
+    markAllRead: 'सभी को पढ़ा हुआ चिह्नित करें',
+    showOlder: 'पुरानी दिखाएँ',
+    settings: 'सूचना सेटिंग',
+    unreadCount: '{count} अपठित',
+    kinds: {
+      THREAD_READY_FOR_REVIEW: {
+        title: 'आपका Thread समीक्षा के लिए तैयार है',
+        body: 'ड्राफ़्ट निजी रूप से सहेजा गया है। समीक्षा और स्वीकृति के लिए इसे खोलें।',
+      },
+      THREAD_PUBLISHED: {
+        title: 'आपका Thread अब सार्वजनिक है',
+        body: 'पाठक अब इसे खोल सकते हैं।',
+      },
+      THREAD_FAILED: {
+        title: 'आपका Thread पूरा नहीं हो सका',
+        body: 'आरक्षित खर्च वापस कर दिया गया है। आप फिर कोशिश कर सकते हैं।',
+      },
+    },
+    preferences: {
+      title: 'सूचनाएँ',
+      description: 'चुनें कि Thread तैयार, प्रकाशित या विफल होने पर हम आपको कैसे बताएँ।',
+      inApp: 'ऐप में',
+      inAppHint: 'ऊपरी बार में एक घंटी।',
+      email: 'ईमेल से',
+      emailHint: 'आपके सत्यापित पते पर भेजा जाता है।',
+      saveFailed: 'आपकी पसंद सहेजी नहीं जा सकी। फिर कोशिश करें।',
+    },
+  },
+  [Locale.TH]: {
+    bellLabel: 'การแจ้งเตือน',
+    title: 'การแจ้งเตือน',
+    empty: 'ยังไม่มีอะไรใหม่ เราจะแจ้งที่นี่เมื่อ Thread พร้อม เผยแพร่ หรือล้มเหลว',
+    loading: 'กำลังโหลด…',
+    error: 'โหลดการแจ้งเตือนไม่ได้',
+    retry: 'ลองอีกครั้ง',
+    markAllRead: 'ทำเครื่องหมายว่าอ่านทั้งหมด',
+    showOlder: 'แสดงรายการเก่ากว่า',
+    settings: 'การตั้งค่าการแจ้งเตือน',
+    unreadCount: 'ยังไม่ได้อ่าน {count}',
+    kinds: {
+      THREAD_READY_FOR_REVIEW: {
+        title: 'Thread ของคุณพร้อมให้ตรวจสอบ',
+        body: 'ฉบับร่างถูกบันทึกเป็นส่วนตัว เปิดเพื่อตรวจและอนุมัติ',
+      },
+      THREAD_PUBLISHED: {
+        title: 'Thread ของคุณเป็นสาธารณะแล้ว',
+        body: 'ผู้อ่านเปิดอ่านได้ทันที',
+      },
+      THREAD_FAILED: {
+        title: 'ไม่สามารถทำ Thread ของคุณให้เสร็จได้',
+        body: 'ยอดที่กันไว้ถูกคืนแล้ว คุณลองใหม่ได้',
+      },
+    },
+    preferences: {
+      title: 'การแจ้งเตือน',
+      description: 'เลือกวิธีที่เราแจ้งคุณเมื่อ Thread พร้อม เผยแพร่ หรือล้มเหลว',
+      inApp: 'ในแอป',
+      inAppHint: 'กระดิ่งในแถบด้านบน',
+      email: 'ทางอีเมล',
+      emailHint: 'ส่งไปยังที่อยู่ที่ยืนยันแล้วของคุณ',
+      saveFailed: 'บันทึกตัวเลือกไม่ได้ ลองอีกครั้ง',
+    },
+  },
+  [Locale.FA]: {
+    bellLabel: 'اعلان‌ها',
+    title: 'اعلان‌ها',
+    empty: 'هنوز چیز تازه‌ای نیست. وقتی Thread آماده، منتشر یا ناموفق شود همین‌جا خبرتان می‌کنیم.',
+    loading: 'در حال بارگذاری…',
+    error: 'بارگذاری اعلان‌ها ممکن نشد.',
+    retry: 'دوباره تلاش کنید',
+    markAllRead: 'علامت‌گذاری همه به‌عنوان خوانده‌شده',
+    showOlder: 'نمایش قدیمی‌تر',
+    settings: 'تنظیمات اعلان‌ها',
+    unreadCount: '{count} خوانده‌نشده',
+    kinds: {
+      THREAD_READY_FOR_REVIEW: {
+        title: 'Thread شما آمادهٔ بررسی است',
+        body: 'پیش‌نویس به‌صورت خصوصی ذخیره شده است. برای بررسی و تأیید آن را باز کنید.',
+      },
+      THREAD_PUBLISHED: {
+        title: 'Thread شما اکنون عمومی است',
+        body: 'خوانندگان اکنون می‌توانند آن را باز کنند.',
+      },
+      THREAD_FAILED: {
+        title: 'Thread شما به پایان نرسید',
+        body: 'هزینهٔ رزروشده آزاد شد. می‌توانید دوباره تلاش کنید.',
+      },
+    },
+    preferences: {
+      title: 'اعلان‌ها',
+      description: 'انتخاب کنید وقتی Thread آماده، منتشر یا ناموفق شد چگونه خبرتان کنیم.',
+      inApp: 'در برنامه',
+      inAppHint: 'یک زنگ در نوار بالا.',
+      email: 'با ایمیل',
+      emailHint: 'به نشانی تأییدشدهٔ شما فرستاده می‌شود.',
+      saveFailed: 'ذخیرهٔ انتخاب شما ممکن نشد. دوباره تلاش کنید.',
+    },
+  },
+};
