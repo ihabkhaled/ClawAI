@@ -31,6 +31,28 @@ export class RedisService implements OnModuleDestroy {
   }
 
   /**
+   * Deletes every key that starts with `prefix`. SCAN, never KEYS, and bounded
+   * by `maxIterations` so a huge keyspace cannot pin the caller. Glob
+   * characters in the prefix are escaped, so it matches literally.
+   */
+  async deleteByPrefix(prefix: string, maxIterations: number, count: number): Promise<number> {
+    const pattern = `${prefix.replaceAll(/[\\*?[\]]/g, String.raw`\$&`)}*`;
+    let cursor = '0';
+    let removed = 0;
+    for (let round = 0; round < maxIterations; round += 1) {
+      const [next, keys] = await this.client.scan(cursor, 'MATCH', pattern, 'COUNT', count);
+      if (keys.length > 0) {
+        removed += await this.client.del(...keys);
+      }
+      cursor = next;
+      if (cursor === '0') {
+        break;
+      }
+    }
+    return removed;
+  }
+
+  /**
    * Claim a key for `ttlSeconds`, or report how long the existing claim has
    * left. Returns `null` when the claim was taken, and the remaining seconds
    * when someone already holds it.

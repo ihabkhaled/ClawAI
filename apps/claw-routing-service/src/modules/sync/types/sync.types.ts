@@ -13,6 +13,11 @@ export type UpstreamModelSnapshot = {
   maxOutputTokens?: number;
   inputCostPer1M?: number;
   outputCostPer1M?: number;
+  // Provider-published prices as integer micro-USD per million tokens (the
+  // connector's models snapshot). Absent means the provider published none.
+  inputCostPerMTokMicroUsd?: number;
+  outputCostPerMTokMicroUsd?: number;
+  cachedInputCostPerMTokMicroUsd?: number;
   qualityTier?: QualityTier;
   privacySupport?: PrivacyClass;
   // Phase 3: optional richer intelligence block. Sync sources that can

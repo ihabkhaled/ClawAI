@@ -9,3 +9,6 @@
  * the middle: bounded pressure, still concurrent.
  */
 export const MODEL_COST_CATALOG_BATCH_SIZE = 16;
+
+export const UNPRICED_LIST_DEFAULT_PAGE_SIZE = 50;
+export const UNPRICED_LIST_MAX_PAGE_SIZE = 200;

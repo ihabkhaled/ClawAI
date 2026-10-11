@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { RequirePermissions } from '@claw/shared-entitlements';
 import { Permission } from '@claw/shared-types';
 import { Roles } from '../../../app/decorators/roles.decorator';
@@ -13,10 +13,17 @@ import {
   type PublishModelCostDto,
   publishModelCostSchema,
 } from '../dto/publish-model-cost.dto';
+import {
+  type ListUnpricedModelsQueryDto,
+  listUnpricedModelsQuerySchema,
+} from '../dto/list-unpriced-models-query.dto';
 import { ModelCostCatalogService } from '../services/model-cost-catalog.service';
 import { ModelCostService } from '../services/model-cost.service';
 import { type ModelCostSnapshot } from '../types/model-cost.types';
-import { type ModelCostCatalogRow } from '../types/model-cost-catalog.types';
+import {
+  type ModelCostCatalogRow,
+  type UnpricedModelPage,
+} from '../types/model-cost-catalog.types';
 import { type ModelCostQuote } from '../types/model-cost-quote.types';
 
 @Controller('router-models/costs')
@@ -40,6 +47,18 @@ export class ModelCostController {
   @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   async listCatalog(): Promise<ModelCostCatalogRow[]> {
     return this.catalog.listCatalog();
+  }
+
+  // Exposed models with no real price (unpriced, or only a fallback estimate),
+  // including connector models that never reached the registry. Same gate as
+  // the catalogue above.
+  @Get('unpriced')
+  @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
+  async listUnpriced(
+    @Query(new ZodValidationPipe(listUnpricedModelsQuerySchema)) query: ListUnpricedModelsQueryDto,
+  ): Promise<UnpricedModelPage> {
+    return this.catalog.listUnpriced(query.page, query.pageSize, query.search);
   }
 
   @Get(':provider/:model')

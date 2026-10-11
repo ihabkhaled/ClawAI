@@ -14,33 +14,46 @@ export class ModelCostRepository {
   }
 
   /**
-   * The most expensive active rate this provider publishes, by input price.
+   * The dearest TEXT-CHAT rate this provider publishes, ranked by the COMBINED
+   * input + output rate per million tokens.
    *
    * The basis for the unpriced fallback: charging an unknown model at the
    * dearest rate we actually know for its provider can over-charge, but it can
    * never UNDER-charge, and under-charging is the failure that lets a user
-   * outspend their credit. Ordered by input rate because every chat request
-   * pays input; a model with a huge output rate and no input rate would not be
-   * a safe ceiling.
+   * outspend their credit. Ranked by the combined rate (not input alone) so a
+   * model with a cheap input and a huge output cannot hide behind a
+   * higher-input, cheaper-output sibling.
+   *
+   * Only TOKEN-priced chat rows qualify. A per-unit row (image, video, audio,
+   * speech) keeps its money in a unit column and carries a zero output rate by
+   * design; standing it in for an unknown CHAT model would price that model's
+   * output at $0. Prisma cannot order by a sum, so the (small, per-provider)
+   * candidate set is ranked here.
    */
-  //
-  // Only TOKEN-priced chat rows qualify. A per-unit row (gpt-image-1, dall-e, a
-  // transcription or speech model) keeps its money in a unit column and carries
-  // a zero output rate by design; standing it in for an unknown CHAT model
-  // would price that model's output at $0.
   async findMostExpensiveForProvider(provider: string): Promise<ModelCostVersion | null> {
-    return this.prisma.modelCostVersion.findFirst({
+    const candidates = await this.prisma.modelCostVersion.findMany({
       where: {
         provider,
         isActive: true,
-        inputPerMillionMicroUsd: { not: null },
+        inputPerMillionMicroUsd: { gt: 0n },
         outputPerMillionMicroUsd: { gt: 0n },
         imagePerUnitMicroUsd: null,
         audioPerUnitMicroUsd: null,
+        videoPerUnitMicroUsd: null,
         ttsPerCharacterMicroUsd: null,
       },
-      orderBy: [{ inputPerMillionMicroUsd: 'desc' }, { outputPerMillionMicroUsd: 'desc' }],
     });
+    let dearest: ModelCostVersion | null = null;
+    let dearestTotal = 0n;
+    for (const candidate of candidates) {
+      const total =
+        (candidate.inputPerMillionMicroUsd ?? 0n) + (candidate.outputPerMillionMicroUsd ?? 0n);
+      if (dearest === null || total > dearestTotal) {
+        dearest = candidate;
+        dearestTotal = total;
+      }
+    }
+    return dearest;
   }
 
   async listActive(): Promise<ModelCostVersion[]> {

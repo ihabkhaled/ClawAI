@@ -81,9 +81,10 @@ export interface NormalizedModel {
 
 export interface ModelUsageMetadata {
   tier: ModelUsageTier;
-  inputUsdPerMillion: number | null;
-  cachedInputUsdPerMillion: number | null;
-  outputUsdPerMillion: number | null;
+  // A decimal string is accepted so published prices never pass through a float.
+  inputUsdPerMillion: number | string | null;
+  cachedInputUsdPerMillion: number | string | null;
+  outputUsdPerMillion: number | string | null;
 }
 
 export interface CreateHealthEventData {
@@ -199,6 +200,30 @@ export interface UpstreamModelSnapshotEntry {
    * `cache_control`). chat-service reads it from here; absent means off.
    */
   promptCaching?: boolean;
+  /** Provider-published prices, integer micro-USD per million tokens; absent = unpublished. */
+  inputCostPerMTokMicroUsd?: number;
+  outputCostPerMTokMicroUsd?: number;
+  cachedInputCostPerMTokMicroUsd?: number;
+}
+
+export interface SnapshotPriceFields {
+  inputCostPerMTokMicroUsd?: number;
+  outputCostPerMTokMicroUsd?: number;
+  cachedInputCostPerMTokMicroUsd?: number;
+}
+
+/** The stored price columns of a ConnectorModel row. */
+export interface PricedModelRow {
+  inputUsdPerMillion: { toFixed(digits: number): string } | null;
+  outputUsdPerMillion: { toFixed(digits: number): string } | null;
+  cachedInputUsdPerMillion: { toFixed(digits: number): string } | null;
+}
+
+export interface ScheduledSyncSummary {
+  attempted: number;
+  succeeded: number;
+  failed: number;
+  skipped: boolean;
 }
 
 export interface ConnectorModelsSnapshotResult {

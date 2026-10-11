@@ -3208,6 +3208,11 @@
         },
         {
           "method": "GET",
+          "route": "/router-models/costs/unpriced",
+          "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/router-models/intelligence/:provider/:model",
           "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-intelligence.controller.ts"
         },
@@ -11375,7 +11380,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 160
+        "testFiles": 162
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -11387,7 +11392,7 @@
       },
       "claw-connector-service": {
         "runner": "vitest",
-        "testFiles": 56
+        "testFiles": 59
       },
       "claw-file-generation-service": {
         "runner": "vitest",
@@ -11431,7 +11436,7 @@
       },
       "claw-routing-service": {
         "runner": "vitest",
-        "testFiles": 120
+        "testFiles": 121
       },
       "claw-server-logs-service": {
         "runner": "vitest",
@@ -12232,7 +12237,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 56,
-    "endpointCount": 837,
+    "endpointCount": 838,
     "envVarCount": 375,
     "eventCount": 190,
     "frontendRouteCount": 161,
@@ -12244,7 +12249,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2164,
+    "totalTestFiles": 2170,
     "workspaceCount": 27
   }
 }

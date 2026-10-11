@@ -122,3 +122,63 @@ describe('ModelRateClient — per-unit rows', () => {
     expect(snapshot?.isLocalComputeFallback).toBe(false);
   });
 });
+
+describe('ModelRateClient — alias-aware cache', () => {
+  const redis = {
+    get: vi.fn(),
+    set: vi.fn(),
+    del: vi.fn(),
+    deleteByPrefix: vi.fn(),
+  };
+  let client: ModelRateClient;
+
+  beforeEach(async () => {
+    vi.mocked(httpRequest).mockReset();
+    redis.get.mockReset().mockResolvedValue(null);
+    redis.set.mockReset().mockResolvedValue(undefined);
+    redis.del.mockReset().mockResolvedValue(undefined);
+    redis.deleteByPrefix.mockReset().mockResolvedValue(1);
+    const module = await Test.createTestingModule({
+      providers: [ModelRateClient, { provide: RedisService, useValue: redis }],
+    }).compile();
+    client = module.get(ModelRateClient);
+    vi.mocked(httpRequest).mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: costPayload({ model: 'gemini-2.5-flash', inputPerMillionMicroUsd: 300_000 }),
+    });
+  });
+
+  it('fetches and caches decorated ids under the canonical model id', async () => {
+    await client.findRate('GEMINI', 'models/gemini-2.5-flash:batch');
+
+    expect(vi.mocked(httpRequest).mock.calls[0]?.[0].url).toMatch(/\/GEMINI\/gemini-2\.5-flash$/);
+    expect(redis.set.mock.calls[0]?.[0]).toBe('claw:payg:rate:GEMINI:gemini-2.5-flash');
+  });
+
+  it('strips a ~ pointer variant but keeps a dated suffix', async () => {
+    await client.findRate('OPENAI', 'gpt-4o~latest');
+    await client.findRate('OPENAI', 'gpt-4o-2024-08-06');
+
+    expect(redis.set.mock.calls[0]?.[0]).toBe('claw:payg:rate:OPENAI:gpt-4o');
+    expect(redis.set.mock.calls[1]?.[0]).toBe('claw:payg:rate:OPENAI:gpt-4o-2024-08-06');
+  });
+
+  it('invalidates the whole family: dated and variant keys share the published prefix', async () => {
+    await client.invalidate('OPENAI', 'models/gpt-4o-2024-08-06');
+
+    expect(redis.deleteByPrefix).toHaveBeenCalledWith(
+      'claw:payg:rate:OPENAI:gpt-4o',
+      expect.any(Number),
+      expect.any(Number),
+    );
+  });
+
+  it('falls back to deleting the exact key when the prefix scan fails', async () => {
+    redis.deleteByPrefix.mockRejectedValue(new Error('scan down'));
+
+    await client.invalidate('GEMINI', 'models/gemini-2.5-flash');
+
+    expect(redis.del).toHaveBeenCalledWith('claw:payg:rate:GEMINI:gemini-2.5-flash');
+  });
+});

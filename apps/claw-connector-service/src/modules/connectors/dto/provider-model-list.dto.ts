@@ -7,6 +7,7 @@ import { z } from 'zod';
 // at a time by the caller: one malformed model must not hide the other 400.
 
 const stringList = z.array(z.string()).nullish();
+const priceText = z.union([z.string().max(40), z.number()]).nullish();
 
 export const openAICompatibleModelEntrySchema = z.object({
   id: z.string().min(1).max(300),
@@ -22,6 +23,11 @@ export const openAICompatibleModelEntrySchema = z.object({
     .object({ max_completion_tokens: z.number().int().positive().nullish() })
     .nullish(),
   active: z.boolean().nullish(),
+  // OpenRouter publishes USD PER TOKEN as decimal strings; read as text so the
+  // money path stays integer (see usd-per-token-price.utility).
+  pricing: z
+    .object({ prompt: priceText, completion: priceText, input_cache_read: priceText })
+    .nullish(),
   tags: stringList,
   supported_parameters: stringList,
   architecture: z.object({ input_modalities: stringList, output_modalities: stringList }).nullish(),

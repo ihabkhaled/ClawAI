@@ -15,12 +15,15 @@ import {
   ModelCostSource,
 } from '../../../generated/prisma';
 import {
+  AGGREGATOR_COST_PROVIDERS,
+  CUSTOM_COST_PROVIDER_PREFIX,
   LOCAL_COST_PROVIDERS,
   PRISMA_TO_SHARED_COST_CLASS,
 } from '../constants/model-cost.constants';
 import { normalizeModelId } from '../utilities/model-alias-matching.utility';
 import { stripDatedSnapshot } from '../utilities/model-family.utility';
 import { ModelCostRepository } from '../repositories/model-cost.repository';
+import { buildSyncedPriceInput, isRejection } from '../utilities/synced-model-price.utility';
 import {
   ratesAreUnchanged,
   toBigInt,
@@ -31,6 +34,7 @@ import {
   type ApplySyncedCostResult,
   type ModelCostRateDto,
   type ModelCostSnapshot,
+  type PublishedModelPrices,
   type PublishModelCostInput,
 } from '../types/model-cost.types';
 
@@ -112,6 +116,12 @@ export class ModelCostService {
     provider: string,
     modelKey: string,
   ): Promise<ModelCostSnapshot | null> {
+    // An aggregator hosts many third-party models at wildly different prices:
+    // "the dearest one we know" is meaningless there, so refuse (UNPRICED)
+    // instead of guessing.
+    if (ModelCostService.isAggregatorProvider(provider)) {
+      return null;
+    }
     const dearest = await this.repository.findMostExpensiveForProvider(provider);
     if (dearest === null) {
       return null;
@@ -182,6 +192,14 @@ export class ModelCostService {
       isPriced: true,
       isFallbackRate: false,
     };
+  }
+
+  static isAggregatorProvider(provider: string): boolean {
+    const normalized = provider.toUpperCase();
+    return (
+      AGGREGATOR_COST_PROVIDERS.includes(normalized) ||
+      normalized.startsWith(CUSTOM_COST_PROVIDER_PREFIX)
+    );
   }
 
   private static isLocalProvider(provider: string): boolean {
@@ -282,6 +300,16 @@ export class ModelCostService {
     // a nightly no-op sync must not wake every consumer's rate cache.
     const version = await this.publish({ ...input, isAdminOverride: false });
     return { applied: true, version };
+  }
+
+  // Applies prices the provider itself published (connector models snapshot).
+  // Precedence ADMIN_OVERRIDE > PROVIDER_SYNC > SEED; see buildSyncedPriceInput
+  // for what is refused. Idempotent, and the cost-published event fires only
+  // when a rate actually changed (applySyncedRates owns that).
+  async applyPublishedPrices(prices: PublishedModelPrices): Promise<ApplySyncedCostResult> {
+    const active = await this.repository.findActive(prices.provider, prices.modelKey);
+    const built = buildSyncedPriceInput(prices, active);
+    return isRejection(built) ? built : this.applySyncedRates(built);
   }
 
   // Adapts a validated DTO (numbers) to the repository shape (BigInt).

@@ -16,11 +16,11 @@ import { ModelCostSeedService } from '../services/model-cost-seed.service';
 
 describe('ModelCostRepository.findMostExpensiveForProvider', () => {
   it('only lets a TOKEN-priced row stand in for an unpriced chat model', async () => {
-    const findFirst = vi.fn().mockResolvedValue(null);
+    const findMany = vi.fn().mockResolvedValue([]);
     const module = await Test.createTestingModule({
       providers: [
         ModelCostRepository,
-        { provide: PrismaService, useValue: { modelCostVersion: { findFirst } } },
+        { provide: PrismaService, useValue: { modelCostVersion: { findMany } } },
       ],
     }).compile();
 
@@ -29,12 +29,13 @@ describe('ModelCostRepository.findMostExpensiveForProvider', () => {
     // gpt-image-1 carries a $5/M input rate and a ZERO output rate (its money
     // is per image). Picked as the fallback, it would price an unknown chat
     // model's output at $0.
-    expect(findFirst).toHaveBeenCalledWith(
+    expect(findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           provider: 'OPENAI',
           isActive: true,
           outputPerMillionMicroUsd: { gt: 0n },
+          videoPerUnitMicroUsd: null,
           imagePerUnitMicroUsd: null,
           audioPerUnitMicroUsd: null,
           ttsPerCharacterMicroUsd: null,

@@ -26,3 +26,34 @@ export const LOCAL_COST_PROVIDERS: ReadonlyArray<string> = ['OLLAMA', 'LLAMACPP'
  * and requiring the leading hyphen so a bare numeric model name survives intact.
  */
 export const DATED_SNAPSHOT_SUFFIX = /-(?:\d{8}|\d{4}-\d{2}-\d{2})$/;
+
+/**
+ * Providers that resell or host many third-party models at many prices.
+ * There is no "dearest rate the provider publishes" that means anything for
+ * them, so an unpriced model on one of these is UNPRICED (refused), never
+ * charged at a stand-in rate.
+ */
+export const AGGREGATOR_COST_PROVIDERS: ReadonlyArray<string> = [
+  'OPENROUTER',
+  'VERCEL_AI_GATEWAY',
+  'HUGGING_FACE',
+  'NVIDIA_NIM',
+  'POLLINATIONS',
+  'AI_HORDE',
+];
+
+/** Every operator-defined provider is an aggregator of unknown pricing. */
+export const CUSTOM_COST_PROVIDER_PREFIX = 'CUSTOM_';
+
+/** Provider-published prices above $1000 per million tokens are treated as a unit mix-up. */
+export const SYNCED_PRICE_MAX_MICRO_USD_PER_MTOK = 1_000_000_000;
+
+/**
+ * A synced price that moves an existing price by more than this factor in
+ * either direction is held back: far more likely a parse or unit error than a
+ * real repricing, and an administrator can publish it deliberately.
+ */
+export const SYNCED_PRICE_MAX_CHANGE_FACTOR = 20;
+
+/** Names listed in the coverage warning, so one log line stays readable. */
+export const PRICE_COVERAGE_LOG_SAMPLE_SIZE = 20;

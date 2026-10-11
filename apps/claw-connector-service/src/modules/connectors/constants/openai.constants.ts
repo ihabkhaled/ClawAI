@@ -1,13 +1,15 @@
 export const OPENAI_DEFAULT_BASE_URL = 'https://api.openai.com/v1';
-export const OPENAI_CHAT_MODEL_PREFIXES = [
-  'gpt-5',
-  'gpt-4',
-  'gpt-3.5',
-  'o1',
-  'o3',
-  'o4',
-  'chatgpt',
-];
+/** A listed id is a candidate chat model when it is `gpt-*`, `chatgpt*` or an `o<digit>` reasoning model. */
+export const OPENAI_CHAT_MODEL_INCLUDE_PATTERN = /^(?:gpt-|chatgpt|o\d)/u;
+
+/**
+ * Non-chat families OpenAI lists in /v1/models. A deny-list (not an allow-list
+ * of versions) so new families such as gpt-6 or gpt-luna appear without a code
+ * change. Chat-capable `-tts`, `-transcribe`, `-realtime` and `-audio` ids stay:
+ * the audio heuristics read them.
+ */
+export const OPENAI_NON_CHAT_MODEL_PATTERN =
+  /embedding|whisper|^tts-|dall-e|gpt-image|moderation|^sora|^babbage|^davinci/u;
 
 /**
  * OpenAI models served ONLY by POST /v1/responses. On /v1/chat/completions they

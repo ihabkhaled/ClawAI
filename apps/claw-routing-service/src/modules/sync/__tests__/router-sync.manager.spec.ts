@@ -4,6 +4,8 @@ import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { RouterModelRegistryManager } from '../../router-models/managers/router-model-registry.manager';
 import { RouterModelRegistryRepository } from '../../router-models/repositories/router-model-registry.repository';
+import { ModelCostCatalogService } from '../../router-models/services/model-cost-catalog.service';
+import { ModelCostService } from '../../router-models/services/model-cost.service';
 import { RouterSyncManager } from '../managers/router-sync.manager';
 
 // ADR-146: snapshot fetches carry the inter-service token; this spec does not
@@ -31,6 +33,8 @@ describe('RouterSyncManager', () => {
   let registryRepo: Mocked<RouterModelRegistryRepository>;
   let registryManager: Mocked<RouterModelRegistryManager>;
   let rabbitMQ: Mocked<RabbitMQService>;
+  let costs: { applyPublishedPrices: Mock };
+  let costCatalog: { auditCoverage: Mock };
 
   beforeEach(async () => {
     registryRepo = {
@@ -40,6 +44,8 @@ describe('RouterSyncManager', () => {
     registryManager = {
       getProtectedFieldNames: vi.fn().mockResolvedValue(new Set<string>()),
     } as unknown as Mocked<RouterModelRegistryManager>;
+    costs = { applyPublishedPrices: vi.fn().mockResolvedValue({ applied: true, version: 2 }) };
+    costCatalog = { auditCoverage: vi.fn().mockResolvedValue({ unpriced: 0, fallback: 0 }) };
     rabbitMQ = {
       publish: vi.fn(() => Promise.resolve()),
     } as unknown as Mocked<RabbitMQService>;
@@ -49,6 +55,8 @@ describe('RouterSyncManager', () => {
         RouterSyncManager,
         { provide: RouterModelRegistryRepository, useValue: registryRepo },
         { provide: RouterModelRegistryManager, useValue: registryManager },
+        { provide: ModelCostService, useValue: costs },
+        { provide: ModelCostCatalogService, useValue: costCatalog },
         { provide: RabbitMQService, useValue: rabbitMQ },
       ],
     }).compile();
@@ -133,5 +141,59 @@ describe('RouterSyncManager', () => {
     ]) as unknown as typeof fetch;
 
     await expect(manager.syncAll()).resolves.toBeDefined();
+  });
+
+  describe('provider-published prices', () => {
+    const priced = {
+      provider: 'OPENAI',
+      modelKey: 'gpt-4o',
+      displayName: 'GPT-4o',
+      inputCostPerMTokMicroUsd: 2_500_000,
+      outputCostPerMTokMicroUsd: 10_000_000,
+      cachedInputCostPerMTokMicroUsd: 1_250_000,
+    };
+
+    it('hands a snapshot entry that carries prices to the price book', async () => {
+      globalThis.fetch = mock200([priced]) as unknown as typeof fetch;
+
+      await manager.syncAll();
+
+      expect(costs.applyPublishedPrices).toHaveBeenCalledWith({
+        provider: 'OPENAI',
+        modelKey: 'gpt-4o',
+        inputPerMillionMicroUsd: 2_500_000,
+        outputPerMillionMicroUsd: 10_000_000,
+        cachedInputPerMillionMicroUsd: 1_250_000,
+      });
+    });
+
+    it('does not price an entry that published no prices, or a local model', async () => {
+      globalThis.fetch = mock200([
+        { provider: 'OPENAI', modelKey: 'gpt-x', displayName: 'X' },
+        { ...priced, modelKey: 'llama', isLocal: true },
+      ]) as unknown as typeof fetch;
+
+      await manager.syncAll();
+
+      expect(costs.applyPublishedPrices).not.toHaveBeenCalled();
+    });
+
+    it('keeps the registry upsert and the sync alive when pricing throws', async () => {
+      costs.applyPublishedPrices.mockRejectedValue(new Error('db down'));
+      globalThis.fetch = mock200([priced]) as unknown as typeof fetch;
+
+      const result = await manager.syncAll();
+
+      expect(registryRepo.upsert).toHaveBeenCalled();
+      expect(result.totals.skippedCount).toBe(0);
+    });
+
+    it('audits price coverage after the sync and survives an audit failure', async () => {
+      costCatalog.auditCoverage.mockRejectedValue(new Error('connector down'));
+      globalThis.fetch = mock200([priced]) as unknown as typeof fetch;
+
+      await expect(manager.syncAll()).resolves.toBeDefined();
+      expect(costCatalog.auditCoverage).toHaveBeenCalledTimes(1);
+    });
   });
 });

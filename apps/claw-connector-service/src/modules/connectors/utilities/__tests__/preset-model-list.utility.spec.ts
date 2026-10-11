@@ -206,3 +206,68 @@ describe('staticPresetModels', () => {
     expect(models[1]).toMatchObject({ modelKey: 'sonar-pro', displayName: 'Sonar Pro' });
   });
 });
+
+describe('OpenRouter published prices', () => {
+  const body = {
+    data: [
+      {
+        id: 'a/priced',
+        pricing: { prompt: '0.000003', completion: '0.000015', input_cache_read: '3e-7' },
+      },
+      { id: 'openrouter/auto', pricing: { prompt: '-1', completion: '-1' } },
+      { id: 'a/empty', pricing: { prompt: '', completion: '' } },
+    ],
+  };
+
+  it('converts per-token strings to integer micro-USD per million', () => {
+    const [priced] = parsePresetModelList(ConnectorModelsResponseFormat.OPENAI_LIST, body);
+    expect(priced?.inputCostPerMTokMicroUsd).toBe(3_000_000);
+    expect(priced?.outputCostPerMTokMicroUsd).toBe(15_000_000);
+    expect(priced?.cachedInputCostPerMTokMicroUsd).toBe(300_000);
+  });
+
+  it('treats -1 and empty as no price', () => {
+    const [, auto, empty] = parsePresetModelList(ConnectorModelsResponseFormat.OPENAI_LIST, body);
+    expect(auto?.inputCostPerMTokMicroUsd).toBeUndefined();
+    expect(empty?.outputCostPerMTokMicroUsd).toBeUndefined();
+  });
+});
+
+describe('priced entries become model usage', () => {
+  const openRouter = getConnectorPreset('openrouter');
+
+  it('stores decimal text, never a float', () => {
+    if (!openRouter) throw new Error('openrouter preset missing');
+    const model = toNormalizedPresetModel(
+      {
+        id: 'a/priced',
+        tags: [],
+        inputModalities: [],
+        outputModalities: [],
+        supportedParameters: [],
+        inputCostPerMTokMicroUsd: 3_000_000,
+        outputCostPerMTokMicroUsd: 15_000_000,
+      },
+      openRouter,
+    );
+    expect(model.usage?.inputUsdPerMillion).toBe('3.000000');
+    expect(model.usage?.outputUsdPerMillion).toBe('15.000000');
+    expect(model.usage?.cachedInputUsdPerMillion).toBeNull();
+  });
+
+  it('has no usage when only one side is published', () => {
+    if (!openRouter) throw new Error('openrouter preset missing');
+    const model = toNormalizedPresetModel(
+      {
+        id: 'a/half',
+        tags: [],
+        inputModalities: [],
+        outputModalities: [],
+        supportedParameters: [],
+        inputCostPerMTokMicroUsd: 1,
+      },
+      openRouter,
+    );
+    expect(model.usage).toBeUndefined();
+  });
+});

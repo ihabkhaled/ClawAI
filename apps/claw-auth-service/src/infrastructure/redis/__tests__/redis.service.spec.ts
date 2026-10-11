@@ -61,3 +61,27 @@ describe('RedisService.refundWindow', () => {
     expect(REDIS_REFUND_WINDOW_SCRIPT).toContain("redis.call('DECR', KEYS[1])");
   });
 });
+
+describe('RedisService.deleteByPrefix', () => {
+  it('scans with an escaped literal pattern, deletes matches and stops at cursor 0', async () => {
+    const scan = vi
+      .fn()
+      .mockResolvedValueOnce(['7', ['a', 'b']])
+      .mockResolvedValueOnce(['0', ['c']]);
+    const del = vi.fn().mockResolvedValueOnce(2).mockResolvedValueOnce(1);
+    const service = new RedisService({ scan, del } as unknown as Redis);
+
+    await expect(service.deleteByPrefix('p:gpt[4]*', 10, 100)).resolves.toBe(3);
+    expect(scan).toHaveBeenNthCalledWith(1, '0', 'MATCH', String.raw`p:gpt\[4\]\**`, 'COUNT', 100);
+    expect(del).toHaveBeenCalledWith('a', 'b');
+  });
+
+  it('is bounded by maxIterations', async () => {
+    const scan = vi.fn().mockResolvedValue(['9', []]);
+    const service = new RedisService({ scan, del: vi.fn() } as unknown as Redis);
+
+    await service.deleteByPrefix('p:', 3, 10);
+
+    expect(scan).toHaveBeenCalledTimes(3);
+  });
+});
