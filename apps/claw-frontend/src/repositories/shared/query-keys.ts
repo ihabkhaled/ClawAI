@@ -549,6 +549,8 @@ export const queryKeys = {
   adminModelCosts: {
     all: ['adminModelCosts'] as const,
     catalog: () => [...queryKeys.adminModelCosts.all, 'catalog'] as const,
+    unpriced: (page: number, pageSize: number, search: string) =>
+      [...queryKeys.adminModelCosts.all, 'unpriced', { page, pageSize, search }] as const,
   },
   smartRouterAdmin: {
     all: ['smartRouterAdmin'] as const,

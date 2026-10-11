@@ -1,4 +1,6 @@
 import type { ModelBillingFilter } from '@/enums/model-billing.enum';
+import type { ModelCostTab } from '@/enums/model-cost-tab.enum';
+import type { ModelPriceBasis } from '@/enums/model-price-basis.enum';
 import type {
   ModelPricingSource,
   ModelPricingSourceFilter,
@@ -27,6 +29,9 @@ export type ModelCostCatalogRow = {
   modelKey: string;
   displayName: string | null;
   pricingSource: ModelPricingSource;
+  // How far to trust the stored price; null when the model has no price at all.
+  // Optional so an older routing-service that does not send it still renders.
+  priceBasis?: ModelPriceBasis | null;
   inputPerMillionMicroUsd: number | null;
   outputPerMillionMicroUsd: number | null;
   cachedInputPerMillionMicroUsd: number | null;
@@ -34,6 +39,29 @@ export type ModelCostCatalogRow = {
   isAdminOverride: boolean;
   version: number;
   lastVerifiedAt: string | null;
+};
+
+/** One row of `GET /router-models/costs/unpriced`. */
+export type UnpricedModelRow = {
+  provider: string;
+  modelKey: string;
+  displayName: string | null;
+  pricingSource: ModelPricingSource;
+  // False when the connector exposes the model but routing has no registry row.
+  inRegistry: boolean;
+};
+
+export type UnpricedModelPage = {
+  items: UnpricedModelRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type UnpricedModelQuery = {
+  page: number;
+  pageSize: number;
+  search: string;
 };
 
 /**
@@ -97,6 +125,22 @@ export type UseModelCostCatalogResult = {
   refetch: () => void;
 };
 
+export type UseUnpricedModelCostsResult = {
+  rows: UnpricedModelRow[];
+  total: number;
+  page: number;
+  totalPages: number;
+  search: string;
+  onSearchChange: (value: string) => void;
+  onPreviousPage: () => void;
+  onNextPage: () => void;
+  isLoading: boolean;
+  isFetching: boolean;
+  isError: boolean;
+  error: Error | null;
+  onRetry: () => void;
+};
+
 export type UseModelCostFiltersResult = {
   sourceFilter: ModelPricingSource | ModelPricingSourceFilter;
   setSourceFilter: (value: ModelPricingSource | ModelPricingSourceFilter) => void;
@@ -147,6 +191,10 @@ export type UseModelCostsPageResult = {
   activeFilterCount: number;
   counts: ModelCostSourceCounts;
   needsAttentionCount: number;
+  tab: ModelCostTab;
+  onTabChange: (tab: ModelCostTab) => void;
+  unpriced: UseUnpricedModelCostsResult;
+  onPriceUnpriced: (row: UnpricedModelRow) => void;
   sourceFilter: ModelPricingSource | ModelPricingSourceFilter;
   onSourceFilterChange: (value: ModelPricingSource | ModelPricingSourceFilter) => void;
   search: string;
@@ -206,6 +254,18 @@ export type ModelCostAttentionBannerProps = {
 export type ModelCostTableProps = {
   rows: ModelCostCatalogRow[];
   onEdit: (row: ModelCostCatalogRow) => void;
+  resolveBilling: (row: ModelCostCatalogRow) => ModelBillingInfo;
+  t: TranslateFunction;
+};
+
+export type ModelCostPriceBasisBadgeProps = {
+  basis: ModelPriceBasis | null | undefined;
+  t: TranslateFunction;
+};
+
+export type ModelCostUnpricedPanelProps = {
+  unpriced: UseUnpricedModelCostsResult;
+  onPrice: (row: UnpricedModelRow) => void;
   resolveBilling: (row: ModelCostCatalogRow) => ModelBillingInfo;
   t: TranslateFunction;
 };

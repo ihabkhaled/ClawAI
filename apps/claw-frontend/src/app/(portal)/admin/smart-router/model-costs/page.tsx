@@ -9,12 +9,15 @@ import { ModelCostAttentionBanner } from '@/components/admin/model-costs/model-c
 import { ModelCostEditDialog } from '@/components/admin/model-costs/model-cost-edit-dialog';
 import { ModelCostFilterBar } from '@/components/admin/model-costs/model-cost-filter-bar';
 import { ModelCostTable } from '@/components/admin/model-costs/model-cost-table';
+import { ModelCostUnpricedPanel } from '@/components/admin/model-costs/model-cost-unpriced-panel';
 import { EmptyState } from '@/components/common/empty-state';
 import { ListShowMore } from '@/components/common/list-show-more';
 import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ROUTES } from '@/constants';
+import { ModelCostTab } from '@/enums/model-cost-tab.enum';
 import { ModelPricingSource } from '@/enums/model-pricing-source.enum';
 import { useModelCostsPage } from '@/hooks/admin/use-model-costs-page';
 
@@ -36,75 +39,114 @@ export default function AdminModelCostsPage(): ReactElement {
 
       <ModelBillingHelp isPolicyError={controller.isPolicyError} t={controller.t} />
 
-      <ModelCostFilterBar
-        sourceFilter={controller.sourceFilter}
-        counts={controller.counts}
-        totalCount={controller.totalCount}
-        search={controller.search}
-        onSourceFilterChange={controller.onSourceFilterChange}
-        onSearchChange={controller.onSearchChange}
-        billingFilter={controller.billingFilter}
-        billingCounts={controller.billingCounts}
-        onBillingFilterChange={controller.onBillingFilterChange}
-        activeFilterCount={controller.activeFilterCount}
-        t={controller.t}
-      />
-
-      {controller.isLoading ? <Skeleton className="h-64 w-full" /> : null}
-
-      {controller.isError ? (
-        <div
-          className="border-destructive/40 bg-destructive/10 text-destructive flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm"
-          role="alert"
-        >
-          <span>{controller.error?.message ?? controller.t('adminModelCosts.error')}</span>
-          <Button type="button" size="sm" variant="outline" onClick={controller.onRetry}>
-            {controller.t('adminModelCosts.retry')}
-          </Button>
-        </div>
-      ) : null}
-
-      {!controller.isLoading && !controller.isError && controller.totalCount === 0 ? (
-        <EmptyState
-          icon={CircleDollarSign}
-          title={controller.t('adminModelCosts.empty.title')}
-          description={controller.t('adminModelCosts.empty.description')}
-          // An empty registry is an OPERATOR condition, not "there are no
-          // models" — it means discovery has never run. A production install
-          // sat here with every price blank and every paid model refused,
-          // because the old copy implied the sync was automatic and offered
-          // nowhere to go.
-          action={
-            <Button asChild size="sm">
-              <Link href={ROUTES.MODELS_DISCOVERY}>
-                {controller.t('adminModelCosts.empty.action')}
-              </Link>
-            </Button>
+      <Tabs
+        value={controller.tab}
+        onValueChange={(value) => {
+          if (value === ModelCostTab.ALL || value === ModelCostTab.NEEDS_PRICE) {
+            controller.onTabChange(value);
           }
-        />
-      ) : null}
+        }}
+        className="flex min-w-0 flex-col gap-4"
+      >
+        <TabsList
+          className="h-auto w-full flex-wrap justify-start sm:w-auto"
+          aria-label={controller.t('adminModelCosts.unpriced.tabsLabel')}
+        >
+          <TabsTrigger value={ModelCostTab.ALL} className="touch:min-h-11">
+            {controller.t('adminModelCosts.unpriced.tabAll')}
+          </TabsTrigger>
+          <TabsTrigger value={ModelCostTab.NEEDS_PRICE} className="touch:min-h-11 gap-2">
+            {controller.t('adminModelCosts.unpriced.tab')}
+            <span
+              className="bg-muted text-foreground rounded-full px-2 text-xs tabular-nums"
+              data-testid="needs-price-count"
+            >
+              {controller.unpriced.total}
+            </span>
+          </TabsTrigger>
+        </TabsList>
 
-      {!controller.isLoading && !controller.isError && controller.totalCount > 0 ? (
-        <>
-          <ModelCostTable
-            rows={controller.rows}
-            onEdit={controller.onEdit}
+        <TabsContent value={ModelCostTab.ALL} className="mt-0 flex min-w-0 flex-col gap-6">
+          <ModelCostFilterBar
+            sourceFilter={controller.sourceFilter}
+            counts={controller.counts}
+            totalCount={controller.totalCount}
+            search={controller.search}
+            onSourceFilterChange={controller.onSourceFilterChange}
+            onSearchChange={controller.onSearchChange}
+            billingFilter={controller.billingFilter}
+            billingCounts={controller.billingCounts}
+            onBillingFilterChange={controller.onBillingFilterChange}
+            activeFilterCount={controller.activeFilterCount}
+            t={controller.t}
+          />
+
+          {controller.isLoading ? <Skeleton className="h-64 w-full" /> : null}
+
+          {controller.isError ? (
+            <div
+              className="border-destructive/40 bg-destructive/10 text-destructive flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm"
+              role="alert"
+            >
+              <span>{controller.error?.message ?? controller.t('adminModelCosts.error')}</span>
+              <Button type="button" size="sm" variant="outline" onClick={controller.onRetry}>
+                {controller.t('adminModelCosts.retry')}
+              </Button>
+            </div>
+          ) : null}
+
+          {!controller.isLoading && !controller.isError && controller.totalCount === 0 ? (
+            <EmptyState
+              icon={CircleDollarSign}
+              title={controller.t('adminModelCosts.empty.title')}
+              description={controller.t('adminModelCosts.empty.description')}
+              // An empty registry is an OPERATOR condition, not "there are no
+              // models" — it means discovery has never run. A production install
+              // sat here with every price blank and every paid model refused,
+              // because the old copy implied the sync was automatic and offered
+              // nowhere to go.
+              action={
+                <Button asChild size="sm">
+                  <Link href={ROUTES.MODELS_DISCOVERY}>
+                    {controller.t('adminModelCosts.empty.action')}
+                  </Link>
+                </Button>
+              }
+            />
+          ) : null}
+
+          {!controller.isLoading && !controller.isError && controller.totalCount > 0 ? (
+            <>
+              <ModelCostTable
+                rows={controller.rows}
+                onEdit={controller.onEdit}
+                resolveBilling={controller.resolveBilling}
+                t={controller.t}
+              />
+              <ListShowMore
+                shownCount={controller.rows.length}
+                totalCount={controller.filteredCount}
+                hasMore={controller.hasMore}
+                onShowMore={controller.onShowMore}
+                showMoreLabel={controller.t('adminModelCosts.list.showMore')}
+                shownLabel={controller.t('adminModelCosts.list.shown', {
+                  shown: controller.rows.length,
+                  total: controller.filteredCount,
+                })}
+              />
+            </>
+          ) : null}
+        </TabsContent>
+
+        <TabsContent value={ModelCostTab.NEEDS_PRICE} className="mt-0">
+          <ModelCostUnpricedPanel
+            unpriced={controller.unpriced}
+            onPrice={controller.onPriceUnpriced}
             resolveBilling={controller.resolveBilling}
             t={controller.t}
           />
-          <ListShowMore
-            shownCount={controller.rows.length}
-            totalCount={controller.filteredCount}
-            hasMore={controller.hasMore}
-            onShowMore={controller.onShowMore}
-            showMoreLabel={controller.t('adminModelCosts.list.showMore')}
-            shownLabel={controller.t('adminModelCosts.list.shown', {
-              shown: controller.rows.length,
-              total: controller.filteredCount,
-            })}
-          />
-        </>
-      ) : null}
+        </TabsContent>
+      </Tabs>
 
       <ModelCostEditDialog
         open={controller.isDialogOpen}

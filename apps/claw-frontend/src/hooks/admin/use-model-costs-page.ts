@@ -1,15 +1,17 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { MODEL_COST_PAGE_SIZE } from '@/constants/model-cost.constants';
+import { ModelCostTab } from '@/enums/model-cost-tab.enum';
 import { ModelPricingSource } from '@/enums/model-pricing-source.enum';
 import { useIncrementalList } from '@/hooks/common/use-incremental-list';
 import { useTranslation } from '@/lib/i18n';
-import type { UseModelCostsPageResult } from '@/types/model-cost.types';
+import type { UnpricedModelRow, UseModelCostsPageResult } from '@/types/model-cost.types';
 import { filterRowsByBilling } from '@/utilities/model-billing.utility';
 import {
   buildModelCostListResetKey,
   countActiveModelCostFilters,
 } from '@/utilities/model-cost-filter.utility';
+import { unpricedRowToCatalogRow } from '@/utilities/model-cost-unpriced.utility';
 import {
   countModelCostRowsBySource,
   filterModelCostRows,
@@ -21,6 +23,7 @@ import { useModelCostCatalog } from './use-model-cost-catalog';
 import { useModelCostEditDialog } from './use-model-cost-edit-dialog';
 import { useModelCostFilters } from './use-model-cost-filters';
 import { usePublishModelCost } from './use-publish-model-cost';
+import { useUnpricedModelCosts } from './use-unpriced-model-costs';
 
 /**
  * Controller for /admin/smart-router/model-costs.
@@ -36,6 +39,8 @@ export function useModelCostsPage(): UseModelCostsPageResult {
   const billing = useModelCostBilling(catalog.rows);
   const dialog = useModelCostEditDialog();
   const publish = usePublishModelCost(dialog.close);
+  const unpriced = useUnpricedModelCosts();
+  const [tab, setTab] = useState<ModelCostTab>(ModelCostTab.ALL);
 
   const counts = useMemo(() => countModelCostRowsBySource(catalog.rows), [catalog.rows]);
   const filtered = useMemo(
@@ -63,6 +68,13 @@ export function useModelCostsPage(): UseModelCostsPageResult {
     [publish, dialog],
   );
 
+  const onPriceUnpriced = useCallback(
+    (row: UnpricedModelRow): void => {
+      dialog.open(unpricedRowToCatalogRow(row));
+    },
+    [dialog],
+  );
+
   return {
     t,
     rows: list.visible,
@@ -73,6 +85,10 @@ export function useModelCostsPage(): UseModelCostsPageResult {
     counts,
     needsAttentionCount:
       counts[ModelPricingSource.PROVIDER_FALLBACK] + counts[ModelPricingSource.UNPRICED],
+    tab,
+    onTabChange: setTab,
+    unpriced,
+    onPriceUnpriced,
     sourceFilter: filters.sourceFilter,
     onSourceFilterChange: filters.setSourceFilter,
     search: filters.search,

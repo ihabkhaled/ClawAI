@@ -1,4 +1,5 @@
 import { STATUS_STYLES } from '@/constants/status-badge.constants';
+import { ModelPriceBasis } from '@/enums/model-price-basis.enum';
 import { ModelPricingSource, ModelPricingSourceFilter } from '@/enums/model-pricing-source.enum';
 import { CostClass } from '@/enums/router-models.enum';
 import type { ModelCostSourceCounts } from '@/types/model-cost.types';
@@ -119,3 +120,28 @@ export const MODEL_COST_EMPTY_SOURCE_COUNTS: ModelCostSourceCounts = {
 // Rows rendered per "Show more" step. 187 cards at ~320px each made a
 // 60,000px phone page with the filters scrolled out of reach.
 export const MODEL_COST_PAGE_SIZE = 50;
+
+/** Models per page of the "Needs a price" list (backend maximum is 200). */
+export const UNPRICED_MODELS_PAGE_SIZE = 25;
+
+/** Keystroke pause before the search reaches the server. */
+export const UNPRICED_SEARCH_DEBOUNCE_MS = 300;
+
+export const MODEL_PRICE_BASIS_LABEL_KEYS: Record<ModelPriceBasis, string> = {
+  [ModelPriceBasis.PROVIDER_PUBLISHED]: 'adminModelCosts.basis.providerPublished',
+  [ModelPriceBasis.ESTIMATED]: 'adminModelCosts.basis.estimated',
+  [ModelPriceBasis.ADMIN_SET]: 'adminModelCosts.basis.adminSet',
+};
+
+export const MODEL_PRICE_BASIS_HINT_KEYS: Record<ModelPriceBasis, string> = {
+  [ModelPriceBasis.PROVIDER_PUBLISHED]: 'adminModelCosts.basis.providerPublishedHint',
+  [ModelPriceBasis.ESTIMATED]: 'adminModelCosts.basis.estimatedHint',
+  [ModelPriceBasis.ADMIN_SET]: 'adminModelCosts.basis.adminSetHint',
+};
+
+/** Same audited palette as the source badge: green trusted, amber guessed, grey pinned. */
+export const MODEL_PRICE_BASIS_BADGE_CLASSES: Record<ModelPriceBasis, string> = {
+  [ModelPriceBasis.PROVIDER_PUBLISHED]: STATUS_STYLES['active'] ?? '',
+  [ModelPriceBasis.ESTIMATED]: STATUS_STYLES['pending'] ?? '',
+  [ModelPriceBasis.ADMIN_SET]: STATUS_STYLES['inactive'] ?? '',
+};

@@ -170,6 +170,8 @@ Nginx Reverse Proxy (:4000)
   +--> Workspace (:4014) --------> PostgreSQL claw_workspace (:5450)
   +--> Llamacpp (:4017) ---------> PostgreSQL claw_llamacpp (:5440)
   +--> Payment (:4018) ----------> PostgreSQL claw_payments (:5453)
+  +--> Threads (:4019) ----------> PostgreSQL claw_threads (:5458)
+  +--> Thread Generation (:4020) -> PostgreSQL claw_thread_generation (:5457)
                                    + llamacpp-data volume (binary + GGUF weights)
 
 Shared infrastructure:
@@ -177,7 +179,39 @@ Shared infrastructure:
   - Redis (:6380)
   - Ollama runtime (:11434)
   - ClamAV (:3310)
+  - Prometheus, Grafana (behind the admin session), Vector log shipper
+  - Optional research sidecars: Crawl4AI, FlareSolverr, Firecrawl
 ```
+
+### How the pieces talk
+
+- **HTTP** only for request/response between services, with an
+  `Authorization: Service <INTER_SERVICE_AUTH_TOKEN>` header on internal routes
+  (for example provider keys, served by Connector to sibling services only).
+- **RabbitMQ** (topic exchange `claw.events`) for everything asynchronous. Examples:
+  Connector models and prices flow to Routing (`routing.model_cost.published`
+  busts Auth's rate cache); Thread Generation announces `threads.generation_completed`
+  and `threads.generation_failed`; Threads turns them into
+  `user.notification_requested`, which Auth stores, emails and shows in the bell;
+  admin reads of user usage are audited through `admin.usage.*` events.
+- **Databases** are owned by one service each; no service reads another's database.
+- **Money** is integer minor units and integer micro-USD; prices live in the
+  model-cost tables, never in environment variables.
+- **Public edge:** only Nginx and the frontend are public; in production every
+  service port is bound to `127.0.0.1`.
+
+### Threads, notifications and observability
+
+- `Chat -> Thread Generation -> Threads`: a chat becomes a researched, reviewed,
+  owner-approved public article (Auth reserves the spend budget).
+- `Threads -> Auth`: ready, published and failed notices become in-app and email
+  notifications (13 languages).
+- `Connector -> Routing -> Auth`: provider-published prices (OpenRouter) and model
+  lists sync automatically; Auth prices credit use from them.
+- `Auth + Audit -> Frontend`: the admin Observability explorer reads
+  `/api/v1/admin/usage-explorer/*`.
+
+````
 
 ### Service Table
 
@@ -271,7 +305,7 @@ claw/
 ├── scripts/                          # Development and operations scripts
 ├── docker/                           # All docker-compose.{dev,prod}.*.yml split files
 └── package.json                      # Root workspace config
-```
+````
 
 ---
 

@@ -6686,7 +6686,44 @@ export type ProviderManagementLocaleTranslation = {
   chatPath: string;
 };
 
-export type AdminModelCostsLocaleTranslation = {
+/** Price-basis badges and the "Needs a price" tab of the Model Prices page. */
+export type AdminModelCostsNeedsPriceTranslation = {
+  basis: {
+    providerPublished: string;
+    estimated: string;
+    adminSet: string;
+    providerPublishedHint: string;
+    estimatedHint: string;
+    adminSetHint: string;
+  };
+  unpriced: {
+    tabAll: string;
+    tab: string;
+    tabsLabel: string;
+    summary: string;
+    searchPlaceholder: string;
+    provider: string;
+    model: string;
+    state: string;
+    billing: string;
+    actions: string;
+    setPrice: string;
+    setPriceFor: string;
+    notInRegistry: string;
+    notInRegistryHint: string;
+    emptyTitle: string;
+    emptyDescription: string;
+    noMatchTitle: string;
+    noMatchDescription: string;
+    error: string;
+    retry: string;
+    previous: string;
+    next: string;
+    pageOf: string;
+  };
+};
+
+export type AdminModelCostsLocaleTranslation = AdminModelCostsNeedsPriceTranslation & {
   title: string;
   description: string;
   error: string;

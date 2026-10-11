@@ -3,6 +3,8 @@ import type {
   ModelCostCatalogRow,
   PublishModelCostRequest,
   PublishModelCostResponse,
+  UnpricedModelPage,
+  UnpricedModelQuery,
 } from '@/types/model-cost.types';
 
 /**
@@ -15,6 +17,24 @@ const BASE = '/router-models/costs';
 export const modelCostRepository = {
   async listCatalog(): Promise<ModelCostCatalogRow[]> {
     const response = await apiClient.get<ModelCostCatalogRow[]>(`${BASE}/catalog`);
+    return response.data;
+  },
+
+  /**
+   * Exposed models with no real price (unpriced or only a fallback), including
+   * connector models that never reached the registry. An empty search is not
+   * sent: the backend rejects a blank `search`.
+   */
+  async listUnpriced(query: UnpricedModelQuery): Promise<UnpricedModelPage> {
+    const search = query.search.trim();
+    const params: Record<string, string> = {
+      page: String(query.page),
+      pageSize: String(query.pageSize),
+    };
+    if (search !== '') {
+      params['search'] = search;
+    }
+    const response = await apiClient.get<UnpricedModelPage>(`${BASE}/unpriced`, params);
     return response.data;
   },
 

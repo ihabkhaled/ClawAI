@@ -4,6 +4,7 @@ import { Pencil } from 'lucide-react';
 import type { ReactElement } from 'react';
 
 import { ModelBillingCell } from '@/components/admin/model-billing/model-billing-cell';
+import { ModelCostPriceBasisBadge } from '@/components/admin/model-costs/model-cost-price-basis-badge';
 import { ModelCostSourceBadge } from '@/components/admin/model-costs/model-cost-source-badge';
 import { DataTable } from '@/components/common/data-table';
 import { Badge } from '@/components/ui/badge';
@@ -91,6 +92,7 @@ export function ModelCostTable({
       render: (row) => (
         <div className="touch:justify-end flex flex-wrap items-center justify-start gap-1">
           <ModelCostSourceBadge source={row.pricingSource} t={t} />
+          <ModelCostPriceBasisBadge basis={row.priceBasis} t={t} />
           {row.isAdminOverride ? (
             <Badge variant={BadgeVariant.OUTLINE}>{t('adminModelCosts.table.override')}</Badge>
           ) : null}

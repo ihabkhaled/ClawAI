@@ -1,6 +1,8 @@
 import { Locale } from '@/enums/locale.enum';
 import type { AdminModelCostsLocaleTranslation } from '@/types/i18n.types';
 
+import { ADMIN_MODEL_COSTS_NEEDS_PRICE_TRANSLATIONS } from './admin-model-costs-needs-price-translations';
+
 /**
  * Admin model-price catalogue, in all 13 locales. One file rather than
  * thirteen edits, following the smart-router-admin-translations.ts pattern.
@@ -14,6 +16,7 @@ import type { AdminModelCostsLocaleTranslation } from '@/types/i18n.types';
  */
 export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocaleTranslation> = {
   [Locale.EN]: {
+    ...ADMIN_MODEL_COSTS_NEEDS_PRICE_TRANSLATIONS[Locale.EN],
     title: 'Model Prices',
     description: 'What every exposed model costs, and which are still priced by a fallback guess.',
     error: 'Could not load the model price catalogue.',
@@ -102,6 +105,7 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     },
   },
   [Locale.AR]: {
+    ...ADMIN_MODEL_COSTS_NEEDS_PRICE_TRANSLATIONS[Locale.AR],
     title: 'أسعار النماذج',
     description: 'تكلفة كل نموذج معروض، وأي النماذج ما زالت تُسعَّر بسعر احتياطي تقديري.',
     error: 'تعذر تحميل قائمة أسعار النماذج.',
@@ -190,6 +194,7 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     },
   },
   [Locale.DE]: {
+    ...ADMIN_MODEL_COSTS_NEEDS_PRICE_TRANSLATIONS[Locale.DE],
     title: 'Modellpreise',
     description:
       'Was jedes freigegebene Modell kostet und welche noch über einen Ersatzpreis geschätzt werden.',
@@ -284,6 +289,7 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     },
   },
   [Locale.ES]: {
+    ...ADMIN_MODEL_COSTS_NEEDS_PRICE_TRANSLATIONS[Locale.ES],
     title: 'Precios de modelos',
     description:
       'Cuánto cuesta cada modelo expuesto y cuáles siguen tarificados con un precio de reserva.',
@@ -376,6 +382,7 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     },
   },
   [Locale.FA]: {
+    ...ADMIN_MODEL_COSTS_NEEDS_PRICE_TRANSLATIONS[Locale.FA],
     title: 'قیمت مدل‌ها',
     description:
       'هزینهٔ هر مدل در دسترس، و اینکه کدام‌ها هنوز با نرخ جایگزین تخمینی قیمت‌گذاری می‌شوند.',
@@ -469,6 +476,7 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     },
   },
   [Locale.FR]: {
+    ...ADMIN_MODEL_COSTS_NEEDS_PRICE_TRANSLATIONS[Locale.FR],
     title: 'Prix des modèles',
     description:
       'Ce que coûte chaque modèle exposé, et lesquels sont encore tarifés par un prix de repli.',
@@ -562,6 +570,7 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     },
   },
   [Locale.HI]: {
+    ...ADMIN_MODEL_COSTS_NEEDS_PRICE_TRANSLATIONS[Locale.HI],
     title: 'मॉडल क़ीमतें',
     description: 'हर उपलब्ध मॉडल की लागत, और कौन-से अब भी अनुमानित वैकल्पिक दर पर चल रहे हैं।',
     error: 'मॉडल क़ीमत सूची लोड नहीं हो सकी।',
@@ -650,6 +659,7 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     },
   },
   [Locale.IT]: {
+    ...ADMIN_MODEL_COSTS_NEEDS_PRICE_TRANSLATIONS[Locale.IT],
     title: 'Prezzi dei modelli',
     description:
       'Quanto costa ogni modello esposto e quali sono ancora tariffati con un prezzo di ripiego.',
@@ -743,6 +753,7 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     },
   },
   [Locale.JA]: {
+    ...ADMIN_MODEL_COSTS_NEEDS_PRICE_TRANSLATIONS[Locale.JA],
     title: 'モデル料金',
     description: '公開中の各モデルの費用と、まだ暫定レートで課金されているモデルを一覧します。',
     error: 'モデル料金カタログを読み込めませんでした。',
@@ -836,6 +847,7 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     },
   },
   [Locale.PT]: {
+    ...ADMIN_MODEL_COSTS_NEEDS_PRICE_TRANSLATIONS[Locale.PT],
     title: 'Preços dos modelos',
     description:
       'Quanto custa cada modelo exposto e quais ainda são tarifados por um preço de reserva.',
@@ -927,6 +939,7 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     },
   },
   [Locale.RU]: {
+    ...ADMIN_MODEL_COSTS_NEEDS_PRICE_TRANSLATIONS[Locale.RU],
     title: 'Цены моделей',
     description:
       'Сколько стоит каждая доступная модель и какие из них всё ещё тарифицируются резервной ставкой.',
@@ -1020,6 +1033,7 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     },
   },
   [Locale.TH]: {
+    ...ADMIN_MODEL_COSTS_NEEDS_PRICE_TRANSLATIONS[Locale.TH],
     title: 'ราคาโมเดล',
     description: 'ค่าใช้จ่ายของทุกโมเดลที่เปิดใช้ และโมเดลใดที่ยังคิดราคาด้วยอัตราสำรองโดยประมาณ',
     error: 'โหลดรายการราคาโมเดลไม่สำเร็จ',
@@ -1109,6 +1123,7 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     },
   },
   [Locale.ZH]: {
+    ...ADMIN_MODEL_COSTS_NEEDS_PRICE_TRANSLATIONS[Locale.ZH],
     title: '模型价格',
     description: '每个已开放模型的成本，以及哪些仍在按备用估价计费。',
     error: '无法加载模型价格目录。',

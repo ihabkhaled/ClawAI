@@ -1,0 +1,36 @@
+# QA evidence - model-prices-needs-price
+
+Batch: model-prices-needs-price
+Date: 2026-10-11
+Commits: (fill in after committing)
+Verdict: PARTIAL
+
+Every lane is filled in. PASS needs the command and its real output (or a path, a count, a
+screenshot name). NOT_RUN and NOT_APPLICABLE need a reason. Verdict DONE is allowed only when no
+lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (rules/60, rules/49).
+
+| Lane | What                                                                    | Status         | Evidence or reason                                                                                                                                                                                                                                                                              |
+| ---- | ----------------------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L01  | Unit and integration tests (only the changed files)                     | PASS           | claw-frontend: 7 files and 95 tests (hook pagination and search, panel states, badge mapping for three priceBasis values, 13-locale key test) plus the whole i18n folder 22 files 661 tests. Chat-service 4 specs (27 tests) and audit-service observability spec (13) fixed after CI went red. |
+| L02  | Typecheck, lint and build (touched workspaces)                          | NOT_RUN        | typecheck 0 errors in the frontend; eslint clean on changed files. Builds not run.                                                                                                                                                                                                              |
+| L03  | Manual API test (curl) with the log line proving the branch ran         | NOT_RUN        | The new endpoint GET router-models/costs/unpriced was not called live.                                                                                                                                                                                                                          |
+| L04  | Manual browser test (Playwright against the real UI) with screenshots   | NOT_RUN        | Browser tool unavailable; the Needs a price tab was not seen on screen.                                                                                                                                                                                                                         |
+| L05  | Automation e2e (a committed or existing spec was run)                   | NOT_RUN        | No committed Playwright spec.                                                                                                                                                                                                                                                                   |
+| L06  | RBAC across roles and plan tiers (admin, paid, FREE)                    | NOT_RUN        | Not walked as any role.                                                                                                                                                                                                                                                                         |
+| L07  | Device matrix (3+ widths, both orientations, RTL)                       | NOT_RUN        | No device matrix or RTL capture.                                                                                                                                                                                                                                                                |
+| L08  | UAT (acceptance criteria walked as the user would)                      | NOT_RUN        | Not walked live.                                                                                                                                                                                                                                                                                |
+| L09  | Product verification (it does what the owner asked, edge cases decided) | PASS           | Owner asked that unpriced models be visible and prices be published by provider; the page now shows the price basis and a searchable Needs a price list including models missing from the registry.                                                                                             |
+| L10  | Business verification (money, limits, copy and claims match the code)   | NOT_APPLICABLE | No price values changed.                                                                                                                                                                                                                                                                        |
+| L11  | Regression (neighbouring features still work)                           | PASS           | Existing model-cost page, label key and billing tests pass; CI failures in chat and audit were stale mocks and an event-list expectation, now updated.                                                                                                                                          |
+| L12  | Security (authz and IDOR, secrets, injection)                           | PASS           | Admin-only page; no secrets handled.                                                                                                                                                                                                                                                            |
+| L13  | Performance and accessibility                                           | NOT_RUN        | No measurement.                                                                                                                                                                                                                                                                                 |
+| L14  | i18n (13 locales, RTL)                                                  | PASS           | New strings in 13 locales with a key-resolution test.                                                                                                                                                                                                                                           |
+| L15  | Docs, knowledge delta and GitHub gates read                             | NOT_RUN        | README Architecture Overview extended; GitHub gates not yet read.                                                                                                                                                                                                                               |
+
+## Findings
+
+1. CI went red after the key-route commits: chat specs mocked common/utilities without buildInterServiceAuthHeader, and the audit spec listed two events instead of three.
+
+## Open gaps
+
+Browser and live lanes, device matrix, GitHub gates.
