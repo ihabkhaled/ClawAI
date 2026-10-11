@@ -249,12 +249,13 @@ describe('AdminUsageAuditConsumer', () => {
     };
   }
 
-  it('subscribes to both admin read events', async () => {
+  it('subscribes to the viewed, exported and listed admin read events', async () => {
     const { rabbitmq, consumer } = build();
     await consumer.onModuleInit();
     expect(rabbitmq.subscribe.mock.calls.map((call) => call[0])).toEqual([
       'admin.usage.viewed',
       'admin.usage.exported',
+      'admin.usage.listed',
     ]);
   });
 

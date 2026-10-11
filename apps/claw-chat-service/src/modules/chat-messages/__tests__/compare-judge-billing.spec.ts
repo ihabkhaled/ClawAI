@@ -35,6 +35,7 @@ vi.mock('../clients/model-exposure.client', () => ({
 }));
 vi.mock('../../../common/utilities', () => ({
   httpRequest: vi.fn(),
+  buildInterServiceAuthHeader: () => 'Service test-token',
   recordGet: <T>(record: Record<string, T> | undefined | null, key: string): T | undefined =>
     !record ? undefined : (Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined),
 }));
@@ -87,7 +88,9 @@ const verdictBody = JSON.stringify({
   rationale: 'B is the most complete.',
 });
 
-const buildExecution = (access: ReturnType<typeof createFakePaygAccessControl>): ChatExecutionManager =>
+const buildExecution = (
+  access: ReturnType<typeof createFakePaygAccessControl>,
+): ChatExecutionManager =>
   new ChatExecutionManager(
     {
       buildPromptString: vi.fn().mockReturnValue('a prompt'),
@@ -177,7 +180,10 @@ describe('Compare judge billing — one metered judge call per run (ADR-116)', (
         resolveJudgeTarget: vi.fn().mockResolvedValue({ provider: 'OPENAI', model: 'gpt-5-mini' }),
         critiqueLane: vi.fn(),
       } as unknown as JudgeRefereeManager,
-      { emitJudgeEvaluating: vi.fn(), emitOrchestrationStage: vi.fn() } as unknown as ChatStreamService,
+      {
+        emitJudgeEvaluating: vi.fn(),
+        emitOrchestrationStage: vi.fn(),
+      } as unknown as ChatStreamService,
     );
   });
 
@@ -201,7 +207,11 @@ describe('Compare judge billing — one metered judge call per run (ADR-116)', (
   it('releases the one hold when the judge call fails, and reports unavailable', async () => {
     httpRequest.mockImplementation(async (args: { url: string }) => {
       if (args.url.includes('/internal/connectors/config')) {
-        return { ok: true, status: 200, data: { baseUrl: 'https://api.openai.com/v1', apiKey: 'k' } };
+        return {
+          ok: true,
+          status: 200,
+          data: { baseUrl: 'https://api.openai.com/v1', apiKey: 'k' },
+        };
       }
       throw new Error('socket hang up');
     });

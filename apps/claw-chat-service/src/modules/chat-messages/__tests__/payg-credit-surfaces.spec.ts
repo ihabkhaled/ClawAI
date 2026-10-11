@@ -34,6 +34,7 @@ vi.mock('../clients/model-exposure.client', () => ({
 }));
 vi.mock('../../../common/utilities', () => ({
   httpRequest: vi.fn(),
+  buildInterServiceAuthHeader: () => 'Service test-token',
   recordGet: <T>(record: Record<string, T> | undefined | null, key: string): T | undefined => {
     return !record
       ? undefined
