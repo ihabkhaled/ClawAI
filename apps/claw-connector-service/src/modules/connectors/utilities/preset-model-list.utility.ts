@@ -8,7 +8,7 @@ import {
   CONNECTOR_PRESET_VISION_TAGS,
 } from '@claw/shared-utilities';
 import { ConnectorModelsResponseFormat, type ConnectorPreset } from '@claw/shared-types';
-import { ModelLifecycle } from '../../../generated/prisma';
+import { ModelLifecycle, ModelUsageTier } from '../../../generated/prisma';
 import {
   bareModelListSchema,
   cloudflareModelEntrySchema,
@@ -22,6 +22,10 @@ import {
 import { type NormalizedModel } from '../types/connectors.types';
 import { type PresetModelListEntry } from '../types/provider-api.types';
 import { formatModelDisplayName } from './model-display-name.utility';
+import {
+  microUsdToUsdPerMillionText,
+  usdPerTokenToMicroUsdPerMTok,
+} from './usd-per-token-price.utility';
 
 /**
  * Flattens any preset's model-list body into one entry shape (ADR-117).
@@ -125,6 +129,7 @@ export function toNormalizedPresetModel(
     modelKey: entry.id,
     displayName: entry.name ?? formatModelDisplayName(entry.id),
     lifecycle: entry.isDeprecated === true ? ModelLifecycle.DEPRECATED : ModelLifecycle.ACTIVE,
+    ...presetUsage(entry),
     capabilities: {
       supportsStreaming: true,
       supportsTools,
@@ -136,6 +141,23 @@ export function toNormalizedPresetModel(
       ...(entry.maxOutputTokens === undefined ? {} : { maxOutputTokens: entry.maxOutputTokens }),
     },
   };
+}
+
+function presetUsage(entry: PresetModelListEntry): Pick<NormalizedModel, 'usage'> {
+  const { inputCostPerMTokMicroUsd: input, outputCostPerMTokMicroUsd: output } = entry;
+  const cached = entry.cachedInputCostPerMTokMicroUsd;
+  // Input and output must both be published; one alone is not a price.
+  return input === undefined || output === undefined
+    ? {}
+    : {
+        usage: {
+          tier: ModelUsageTier.UNKNOWN,
+          inputUsdPerMillion: microUsdToUsdPerMillionText(input),
+          outputUsdPerMillion: microUsdToUsdPerMillionText(output),
+          cachedInputUsdPerMillion:
+            cached === undefined ? null : microUsdToUsdPerMillionText(cached),
+        },
+      };
 }
 
 /** The documented catalogue of a preset with no usable list endpoint. */
@@ -191,6 +213,7 @@ function fromOpenAIEntry(entry: OpenAICompatibleModelEntry): PresetModelListEntr
     tags: [...(entry.tags ?? []), ...(entry.metadata?.tags ?? [])],
     contextWindow,
     ...(maxOutputTokens === undefined ? {} : { maxOutputTokens }),
+    ...publishedPrices(entry),
     inputModalities:
       entry.architecture?.input_modalities ??
       entry.modalities?.input ??
@@ -207,6 +230,17 @@ function fromOpenAIEntry(entry: OpenAICompatibleModelEntry): PresetModelListEntr
       capabilityObject?.function_calling ?? (capabilityList.includes('tool_calling') || undefined),
     vision: capabilityObject?.vision ?? undefined,
     active: entry.active ?? undefined,
+  };
+}
+
+function publishedPrices(entry: OpenAICompatibleModelEntry): Partial<PresetModelListEntry> {
+  const input = usdPerTokenToMicroUsdPerMTok(entry.pricing?.prompt);
+  const output = usdPerTokenToMicroUsdPerMTok(entry.pricing?.completion);
+  const cached = usdPerTokenToMicroUsdPerMTok(entry.pricing?.input_cache_read);
+  return {
+    ...(input === null ? {} : { inputCostPerMTokMicroUsd: input }),
+    ...(output === null ? {} : { outputCostPerMTokMicroUsd: output }),
+    ...(cached === null ? {} : { cachedInputCostPerMTokMicroUsd: cached }),
   };
 }
 

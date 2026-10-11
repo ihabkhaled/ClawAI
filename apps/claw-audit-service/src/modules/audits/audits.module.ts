@@ -5,6 +5,10 @@ import { AuditsService } from './services/audits.service';
 import { UsageService } from './services/usage.service';
 import { AuditsRepository } from './repositories/audits.repository';
 import { UsageLedgerRepository } from './repositories/usage-ledger.repository';
+import { ObservabilityController } from './controllers/observability.controller';
+import { ObservabilityService } from './services/observability.service';
+import { ObservabilityRepository } from './repositories/observability.repository';
+import { AdminUsageAuditConsumer } from './consumers/admin-usage-audit.consumer';
 import { AuditEventManager } from './managers/audit-event.manager';
 import { AiActionAuditConsumer } from './consumers/ai-action.consumer';
 import { ChatShareAuditConsumer } from './consumers/chat-share.consumer';
@@ -24,12 +28,15 @@ import { UsageLedger, UsageLedgerSchema } from './schemas/usage-ledger.schema';
       { name: UsageLedger.name, schema: UsageLedgerSchema },
     ]),
   ],
-  controllers: [AuditsController],
+  controllers: [AuditsController, ObservabilityController],
   providers: [
     AuditsService,
     UsageService,
     AuditsRepository,
     UsageLedgerRepository,
+    ObservabilityService,
+    ObservabilityRepository,
+    AdminUsageAuditConsumer,
     AuditEventManager,
     WorkspaceSyncAuditConsumer,
     WorkspaceActionAuditConsumer,

@@ -66,3 +66,24 @@ describe('safeStringify', () => {
     expect(safeStringify(circular)).toBe('[unstringifiable]');
   });
 });
+
+describe('safeStringify extra credential names', () => {
+  it('redacts x-api-key, encryptedConfig and friends', () => {
+    const out = JSON.parse(
+      safeStringify({
+        'x-api-key': 'a',
+        encryptedConfig: 'b',
+        encryptedApiKey: 'c',
+        'Proxy-Authorization': 'd',
+        privateKey: 'e',
+        keep: 'ok',
+      }),
+    );
+    expect(out['x-api-key']).toBe('[REDACTED]');
+    expect(out.encryptedConfig).toBe('[REDACTED]');
+    expect(out.encryptedApiKey).toBe('[REDACTED]');
+    expect(out['Proxy-Authorization']).toBe('[REDACTED]');
+    expect(out.privateKey).toBe('[REDACTED]');
+    expect(out.keep).toBe('ok');
+  });
+});

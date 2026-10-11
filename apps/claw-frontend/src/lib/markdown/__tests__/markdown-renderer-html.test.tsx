@@ -148,6 +148,7 @@ describe('MarkdownRenderer — XSS', () => {
       const href = (anchor.getAttribute('href') ?? '').toLowerCase();
       expect(href.startsWith('javascript:')).toBe(false);
       expect(href.startsWith('data:')).toBe(false);
+      expect(href.startsWith('vbscript:')).toBe(false);
     }
   });
 

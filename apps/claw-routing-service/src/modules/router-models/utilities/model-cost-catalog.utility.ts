@@ -1,4 +1,5 @@
-import { ModelPricingSource } from '../../../common/enums';
+import { ModelPriceBasis, ModelPricingSource } from '../../../common/enums';
+import { ModelCostSource } from '../../../generated/prisma';
 import { type ModelCostSnapshot } from '../types/model-cost.types';
 import {
   type ModelCostCatalogRow,
@@ -35,10 +36,23 @@ export function resolvePricingSource(
   // The row was found under a DIFFERENT key than the registry holds — an alias
   // hit, not this model's own price. Compared case-insensitively because
   // `normalizeModelId` lower-cases, and a pure case difference is the same key.
-  if (snapshot.model.toLowerCase() !== entry.modelKey.toLowerCase()) {
-    return ModelPricingSource.DATED_FAMILY;
+  return snapshot.model.toLowerCase() !== entry.modelKey.toLowerCase() ? ModelPricingSource.DATED_FAMILY : ModelPricingSource.PUBLISHED;
+}
+
+/**
+ * Who stands behind the stored price. ADMIN_OVERRIDE > PROVIDER_SYNC /
+ * PROVIDER_REPORTED > SEED. A fallback or unpriced snapshot has no price of its
+ * own, so no basis.
+ */
+export function resolvePriceBasis(snapshot: ModelCostSnapshot): ModelPriceBasis | null {
+  if (snapshot.isFallbackRate || !snapshot.isPriced || snapshot.version === 0) {
+    return null;
   }
-  return ModelPricingSource.PUBLISHED;
+  if (snapshot.isAdminOverride || snapshot.source === ModelCostSource.ADMIN_OVERRIDE) {
+    return ModelPriceBasis.ADMIN_SET;
+  }
+  return snapshot.source === ModelCostSource.PROVIDER_SYNC ||
+    snapshot.source === ModelCostSource.PROVIDER_REPORTED ? ModelPriceBasis.PROVIDER_PUBLISHED : ModelPriceBasis.ESTIMATED;
 }
 
 export function toModelCostCatalogRow(
@@ -50,6 +64,7 @@ export function toModelCostCatalogRow(
     modelKey: entry.modelKey,
     displayName: entry.displayName,
     pricingSource: resolvePricingSource(entry, snapshot),
+    priceBasis: resolvePriceBasis(snapshot),
     inputPerMillionMicroUsd: snapshot.inputPerMillionMicroUsd,
     outputPerMillionMicroUsd: snapshot.outputPerMillionMicroUsd,
     cachedInputPerMillionMicroUsd: snapshot.cachedInputPerMillionMicroUsd,

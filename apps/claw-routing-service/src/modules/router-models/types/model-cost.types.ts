@@ -40,7 +40,25 @@ export type PublishModelCostInput = ModelCostRateInput & {
 // hand-negotiated enterprise rate.
 export type ApplySyncedCostResult =
   | { applied: true; version: number }
-  | { applied: false; reason: 'ADMIN_OVERRIDE_ACTIVE' | 'RATES_UNCHANGED' };
+  | {
+      applied: false;
+      reason:
+        | 'ADMIN_OVERRIDE_ACTIVE'
+        | 'RATES_UNCHANGED'
+        | 'PROVIDER_REPORTED_ACTIVE'
+        | 'INVALID_PRICE'
+        | 'NOT_A_TOKEN_MODEL'
+        | 'IMPLAUSIBLE_CHANGE';
+    };
+
+// Prices a provider published for one model, integer micro-USD per million tokens.
+export type PublishedModelPrices = {
+  provider: string;
+  modelKey: string;
+  inputPerMillionMicroUsd: number | undefined;
+  outputPerMillionMicroUsd: number | undefined;
+  cachedInputPerMillionMicroUsd: number | undefined;
+};
 
 // What the chat service needs to price a request. `null` rates are propagated
 // rather than defaulted so the caller can decide — an unpriced model is an
@@ -82,3 +100,6 @@ export type ModelCostRateDto = {
   localComputeOwnership: LocalComputeOwnership | null;
   notes: string | null;
 };
+
+// A synced price that was refused, and why.
+export type SyncedPriceRejection = Extract<ApplySyncedCostResult, { applied: false }>;

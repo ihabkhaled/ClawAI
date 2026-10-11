@@ -22,7 +22,7 @@
     },
     "@claw/shared-utilities": {
       "runner": "vitest",
-      "testFiles": 51
+      "testFiles": 53
     },
     "claw-agent-service": {
       "runner": "vitest",
@@ -30,11 +30,11 @@
     },
     "claw-audit-service": {
       "runner": "vitest",
-      "testFiles": 37
+      "testFiles": 39
     },
     "claw-auth-service": {
       "runner": "vitest",
-      "testFiles": 160
+      "testFiles": 168
     },
     "claw-chat-service": {
       "runner": "vitest",
@@ -46,7 +46,7 @@
     },
     "claw-connector-service": {
       "runner": "vitest",
-      "testFiles": 54
+      "testFiles": 59
     },
     "claw-file-generation-service": {
       "runner": "vitest",
@@ -58,7 +58,7 @@
     },
     "claw-frontend": {
       "runner": "vitest",
-      "testFiles": 747
+      "testFiles": 762
     },
     "claw-health-service": {
       "runner": "vitest",
@@ -90,7 +90,7 @@
     },
     "claw-routing-service": {
       "runner": "vitest",
-      "testFiles": 120
+      "testFiles": 121
     },
     "claw-server-logs-service": {
       "runner": "vitest",
@@ -110,5 +110,5 @@
     }
   },
   "generated": true,
-  "total": 2160
+  "total": 2193
 }

@@ -6,12 +6,18 @@ import { httpRequest } from '@claw/shared-utilities';
 import { AppConfig } from '../../../app/config/app.config';
 import { buildInterServiceAuthHeader } from '../../../common/utilities';
 import { RedisService } from '../../../infrastructure/redis/redis.service';
-import { MODEL_COST_PATH_PREFIX, MODEL_COST_TIMEOUT_MS } from '../constants/credit.constants';
+import {
+  MODEL_COST_PATH_PREFIX,
+  MODEL_COST_TIMEOUT_MS,
+  RATE_CACHE_SCAN_COUNT,
+  RATE_CACHE_SCAN_MAX_ITERATIONS,
+} from '../constants/credit.constants';
 import {
   type ModelCostResponse,
   modelCostResponseSchema,
 } from '../schemas/model-cost-response.schema';
 import { type PaygRateSnapshot } from '../types/credit.types';
+import { canonicalRateModelId, rateModelFamily } from '../utilities/model-rate-cache-key.utility';
 
 /**
  * What one model costs, learned from routing-service over cached internal HTTP
@@ -34,7 +40,10 @@ export class ModelRateClient {
 
   constructor(private readonly redis: RedisService) {}
 
-  async findRate(provider: string, model: string): Promise<PaygRateSnapshot | null> {
+  async findRate(provider: string, requestedModel: string): Promise<PaygRateSnapshot | null> {
+    // One id for the cache AND the fetch, so a `models/x`, `x:batch` or `x~latest`
+    // request shares one entry with `x` and one published price busts them all.
+    const model = canonicalRateModelId(requestedModel);
     this.logger.debug(`findRate: provider=${provider} model=${model}`);
     const cached = await this.readCache(provider, model);
     if (cached !== null) {
@@ -48,10 +57,43 @@ export class ModelRateClient {
     return ModelRateClient.toSnapshot(fetched);
   }
 
-  /** Drops one model's cached rate. Called by the price-published consumer. */
+  /**
+   * Drops a model's cached rate AND every alias variant of it (dated snapshots,
+   * `models/` prefixed, `:batch`, `~` pointers), because routing prices those
+   * off the same row. Called by the price-published consumer.
+   */
   async invalidate(provider: string, model: string): Promise<void> {
-    this.logger.log(`invalidate: dropping cached rate provider=${provider} model=${model}`);
-    await this.redis.del(ModelRateClient.cacheKey(provider, model));
+    const family = rateModelFamily(model);
+    this.logger.log(`invalidate: dropping cached rates provider=${provider} family=${family}`);
+    let failure: string | null = null;
+    try {
+      const result = await this.redis.deleteByPrefixChecked(
+        ModelRateClient.cacheKey(provider, family),
+        RATE_CACHE_SCAN_MAX_ITERATIONS,
+        RATE_CACHE_SCAN_COUNT,
+      );
+      if (!result.complete) {
+        failure = 'prefix scan hit its iteration bound';
+      }
+    } catch (error) {
+      failure = `prefix scan failed: ${(error as Error).message}`;
+    }
+    if (failure === null) {
+      return;
+    }
+    // Stale-low rates fail OPEN on a money path, so this is an error, not a
+    // warning. Drop every key we can name without a scan, then throw so the
+    // event is retried instead of silently acknowledged.
+    this.logger.error(
+      `invalidate: INCOMPLETE provider=${provider} family=${family} - ${failure}; ` +
+        'dated variants may serve a stale price until the TTL expires',
+    );
+    await Promise.all(
+      [canonicalRateModelId(model), family, model.trim()].map((id) =>
+        this.redis.del(ModelRateClient.cacheKey(provider, id)),
+      ),
+    );
+    throw new Error(`rate cache invalidation incomplete for ${provider}:${family}`);
   }
 
   private async fetchRate(provider: string, model: string): Promise<ModelCostResponse | null> {

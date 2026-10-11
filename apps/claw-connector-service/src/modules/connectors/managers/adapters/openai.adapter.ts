@@ -11,10 +11,8 @@ import {
   type ProviderAdapter,
   type ProviderCapabilities,
 } from '../provider-adapter.interface';
-import {
-  OPENAI_CHAT_MODEL_PREFIXES,
-  OPENAI_DEFAULT_BASE_URL,
-} from '../../constants/openai.constants';
+import { OPENAI_DEFAULT_BASE_URL } from '../../constants/openai.constants';
+import { isOpenAiChatModelId } from '../../utilities/openai-chat-model-id.utility';
 import { isRetiredOpenAiModel } from '../../utilities/retired-model.utility';
 import {
   isOpenAiVisionCapableModel,
@@ -25,8 +23,7 @@ const logger = new Logger('OpenAIAdapter');
 
 export class OpenAIAdapter implements ProviderAdapter {
   private static isChatModel(modelId: string): boolean {
-    const lower = modelId.toLowerCase();
-    return OPENAI_CHAT_MODEL_PREFIXES.some((prefix) => lower.startsWith(prefix));
+    return isOpenAiChatModelId(modelId);
   }
 
   private static formatDisplayName(modelId: string): string {

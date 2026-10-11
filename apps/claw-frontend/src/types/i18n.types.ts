@@ -4244,6 +4244,7 @@ export type TranslationDictionary = {
   providerManagement?: ProviderManagementLocaleTranslation;
   skippedProviders: SkippedProvidersLocaleTranslation;
   usageAnalytics: UsageAnalyticsLocaleTranslation;
+  observabilityExplorer: ObservabilityExplorerLocaleTranslation;
   notifications: NotificationsLocaleTranslation;
   adminDeployment: {
     title: string;
@@ -6559,6 +6560,98 @@ export type UsageAnalyticsLocaleTranslation = {
   modelsAllHeading: string;
   topUsersHeading: string;
   topToolsHeading: string;
+};
+
+/**
+ * Admin Observability explorer. Placeholders: {count}, {user}, {page}, {hours}, {requests},
+ * {p50}, {p95}, {priced}, {estimated}, {unpriced}.
+ */
+export type ObservabilityExplorerLocaleTranslation = {
+  tabsLabel: string;
+  tabOverview: string;
+  tabConsumption: string;
+  tabModels: string;
+  tabUsers: string;
+  tabTracing: string;
+  tabFailures: string;
+  filterProvider: string;
+  filterModel: string;
+  filterWorkflow: string;
+  filterBilling: string;
+  filterAll: string;
+  filtersClear: string;
+  billingCredit: string;
+  billingAllowance: string;
+  billingUnmetered: string;
+  billingPlan: string;
+  billingOther: string;
+  costPriced: string;
+  costFallback: string;
+  costUnpriced: string;
+  costUnmetered: string;
+  costPricedTip: string;
+  costFallbackTip: string;
+  costUnpricedTip: string;
+  costUnmeteredTip: string;
+  costPartial: string;
+  costNotAvailable: string;
+  workflowUnknown: string;
+  cardCostQuality: string;
+  cardCostQualityHint: string;
+  cardCreditRequests: string;
+  cardAllowanceRequests: string;
+  cardCachedTokens: string;
+  cardToolCalls: string;
+  chartRequests: string;
+  chartTokens: string;
+  chartCost: string;
+  chartBilling: string;
+  searchLabel: string;
+  usersSearch: string;
+  requestsSearch: string;
+  failuresSearch: string;
+  matchedUsers: string;
+  openUser: string;
+  pageNumber: string;
+  colRole: string;
+  colLastSeen: string;
+  colProvider: string;
+  colWorkflow: string;
+  colTime: string;
+  colBilling: string;
+  colAction: string;
+  colSource: string;
+  colSeverity: string;
+  colCount: string;
+  colAvgLatency: string;
+  colP50: string;
+  colP95: string;
+  colEstimatedRequests: string;
+  colErrorRate: string;
+  headingProviders: string;
+  headingDaily: string;
+  headingHeaviest: string;
+  headingRequests: string;
+  headingBySource: string;
+  headingTopProviders: string;
+  headingTopModels: string;
+  breakdownTruncated: string;
+  userDialogTitle: string;
+  userDialogDescription: string;
+  tracingByProvider: string;
+  tracingByModel: string;
+  tracingByContext: string;
+  tracingGroupBy: string;
+  tracingOverall: string;
+  tracingErrorRateNote: string;
+  tracingSignals: string;
+  tracingSignalsEmpty: string;
+  windowHours: string;
+  windowClamped: string;
+  failuresWindow: string;
+  failuresTotal: string;
+  failuresSyncHidden: string;
+  failuresIncludeSync: string;
 };
 
 export type ProviderManagementLocaleTranslation = {

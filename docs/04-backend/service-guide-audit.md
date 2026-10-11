@@ -138,3 +138,8 @@ Subscribes to `agent.mobile_action`: one `AGENT_MOBILE_ACTION` row (`agent_comma
 approve, reject or cancel taken with a mobile device token, MEDIUM on success and HIGH when refused, details
 `deviceId`, `operation`, `outcome`, `reason`. `AGENT_DEVICE_PAIRED` and `AGENT_DEVICE_REVOKED` rows now carry
 `tokenClass` (`device` for events from before the class existed). See ADR-144.
+
+## Observability and usage explorer routes
+
+Recent-window failures (`GET /audits/failures`) and metadata-only tracing (`GET /usage/tracing`), plus the audited
+admin read events `admin.usage.viewed` / `admin.usage.exported`: see [admin usage explorer endpoints](admin-usage-explorer-endpoints.md).

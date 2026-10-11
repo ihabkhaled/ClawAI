@@ -3,6 +3,8 @@ import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { RouterModelRegistryRepository } from '../../router-models/repositories/router-model-registry.repository';
 import { RouterModelRegistryManager } from '../../router-models/managers/router-model-registry.manager';
+import { ModelCostCatalogService } from '../../router-models/services/model-cost-catalog.service';
+import { ModelCostService } from '../../router-models/services/model-cost.service';
 import { type ModelIntelligenceEnrichment } from '../../router-models/types/model-intelligence.types';
 import {
   lookupCuratedCloudEnrichment,
@@ -29,6 +31,8 @@ export class RouterSyncManager {
   constructor(
     private readonly registryRepo: RouterModelRegistryRepository,
     private readonly registryManager: RouterModelRegistryManager,
+    private readonly costs: ModelCostService,
+    private readonly costCatalog: ModelCostCatalogService,
     @Optional() private readonly rabbitMQ?: RabbitMQService,
   ) {}
 
@@ -78,6 +82,7 @@ export class RouterSyncManager {
       totals,
       perProvider,
     };
+    await this.auditPriceCoverage();
     await this.publishSyncCompleted(result);
     return result;
   }
@@ -89,6 +94,46 @@ export class RouterSyncManager {
    * arrived from outside.
    */
   private readonly fallbackHosts = new Set<string>();
+
+  // A coverage hole (an exposed paid model nobody priced) is logged the day it
+  // appears. Never allowed to fail the sync itself.
+  private async auditPriceCoverage(): Promise<void> {
+    try {
+      await this.costCatalog.auditCoverage();
+    } catch (error) {
+      this.logger.warn(`auditPriceCoverage: skipped — ${(error as Error).message}`);
+    }
+  }
+
+  // Provider-published prices flow into the price book here. A failure to
+  // price one model never fails its registry upsert.
+  private async applyPublishedPrices(upstream: UpstreamModelSnapshot): Promise<void> {
+    if (
+      upstream.isLocal === true ||
+      upstream.inputCostPerMTokMicroUsd === undefined ||
+      upstream.outputCostPerMTokMicroUsd === undefined
+    ) {
+      return;
+    }
+    try {
+      const outcome = await this.costs.applyPublishedPrices({
+        provider: upstream.provider,
+        modelKey: upstream.modelKey,
+        inputPerMillionMicroUsd: upstream.inputCostPerMTokMicroUsd,
+        outputPerMillionMicroUsd: upstream.outputCostPerMTokMicroUsd,
+        cachedInputPerMillionMicroUsd: upstream.cachedInputCostPerMTokMicroUsd,
+      });
+      if (outcome.applied) {
+        this.logger.log(
+          `applyPublishedPrices: ${upstream.provider}/${upstream.modelKey} priced from provider listing v${String(outcome.version)}`,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `applyPublishedPrices: ${upstream.provider}/${upstream.modelKey} not priced — ${(error as Error).message}`,
+      );
+    }
+  }
 
   private async publishSyncCompleted(result: SyncRunResult): Promise<void> {
     if (this.rabbitMQ === undefined) return;
@@ -174,6 +219,7 @@ export class RouterSyncManager {
           { ...upsertInput.update, lastSyncedAt: new Date() },
         );
         upserted += 1;
+        await this.applyPublishedPrices(upstream);
       } catch (error) {
         this.logger.error(
           `syncOne(${source}): failed to upsert ${upstream.provider}/${upstream.modelKey}: ${(error as Error).message}`,
@@ -209,7 +255,9 @@ export class RouterSyncManager {
     }
     const curated = lookupCuratedCloudEnrichment(upstream.provider, upstream.modelKey);
     if (curated !== undefined) return curated;
-    return existing?.adminOverrideJson !== null && existing?.adminOverrideJson !== undefined ? (existing.adminOverrideJson as ModelIntelligenceEnrichment) : {};
+    return existing?.adminOverrideJson !== null && existing?.adminOverrideJson !== undefined
+      ? (existing.adminOverrideJson as ModelIntelligenceEnrichment)
+      : {};
   }
 
   private toUpsertInput(

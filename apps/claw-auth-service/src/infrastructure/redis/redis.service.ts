@@ -6,6 +6,7 @@ import {
   REDIS_FIXED_WINDOW_SCRIPT,
   REDIS_REFUND_WINDOW_SCRIPT,
 } from './constants/redis-window.constants';
+import type { PrefixDeleteResult } from './types/redis-prefix-delete.types';
 import type { FixedWindowHit } from './types/redis-window.types';
 
 @Injectable()
@@ -28,6 +29,42 @@ export class RedisService implements OnModuleDestroy {
 
   async del(key: string): Promise<void> {
     await this.client.del(key);
+  }
+
+  /**
+   * Deletes every key that starts with `prefix`. SCAN, never KEYS, and bounded
+   * by `maxIterations` so a huge keyspace cannot pin the caller. Glob
+   * characters in the prefix are escaped, so it matches literally.
+   */
+  async deleteByPrefix(prefix: string, maxIterations: number, count: number): Promise<number> {
+    return (await this.deleteByPrefixChecked(prefix, maxIterations, count)).removed;
+  }
+
+  /**
+   * Same as {@link deleteByPrefix} but says whether the scan reached the end of
+   * the keyspace. `complete: false` means keys under the prefix may survive.
+   */
+  async deleteByPrefixChecked(
+    prefix: string,
+    maxIterations: number,
+    count: number,
+  ): Promise<PrefixDeleteResult> {
+    const pattern = `${prefix.replaceAll(/[\\*?[\]]/g, String.raw`\$&`)}*`;
+    let cursor = '0';
+    let removed = 0;
+    let complete = false;
+    for (let round = 0; round < maxIterations; round += 1) {
+      const [next, keys] = await this.client.scan(cursor, 'MATCH', pattern, 'COUNT', count);
+      if (keys.length > 0) {
+        removed += await this.client.del(...keys);
+      }
+      cursor = next;
+      if (cursor === '0') {
+        complete = true;
+        break;
+      }
+    }
+    return { removed, complete };
   }
 
   /**

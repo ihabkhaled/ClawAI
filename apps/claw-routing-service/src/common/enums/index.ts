@@ -14,3 +14,4 @@ export { RoutingLabCaseCategory } from './routing-lab-case-category.enum';
 export { RoutingLabConfigurationVariant } from './routing-lab-configuration-variant.enum';
 export { ModelPricingSource } from './model-pricing-source.enum';
 export { ModalityFit } from './modality-fit.enum';
+export { ModelPriceBasis } from './model-price-basis.enum';

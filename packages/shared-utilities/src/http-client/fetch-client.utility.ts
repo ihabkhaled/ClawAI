@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import { type HttpRequestOptions, type HttpResponse } from '@claw/shared-types';
 
 import { assertSafeRequestUrl } from './request-url.utility';
+import { redactUrlSecrets } from './redact-url-secrets.utility';
 
 const logger = new Logger('FetchHttpClient');
 
@@ -12,7 +13,7 @@ export async function httpRequest<T>(options: HttpRequestOptions): Promise<HttpR
   // straight to fetch. See assertSafeRequestUrl.
   const safeUrl = assertSafeRequestUrl(url, allowedHosts);
 
-  logger.debug(`httpRequest: ${method} ${url} (timeout=${String(timeoutMs)}ms)`);
+  logger.debug(`httpRequest: ${method} ${redactUrlSecrets(url)} (timeout=${String(timeoutMs)}ms)`);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const startTime = Date.now();
@@ -36,7 +37,7 @@ export async function httpRequest<T>(options: HttpRequestOptions): Promise<HttpR
     const data = (await response.json()) as T;
     const durationMs = Date.now() - startTime;
     logger.log(
-      `httpRequest: ${method} ${url} ok status=${String(response.status)} durationMs=${String(durationMs)}`,
+      `httpRequest: ${method} ${redactUrlSecrets(url)} ok status=${String(response.status)} durationMs=${String(durationMs)}`,
     );
 
     return {
@@ -47,7 +48,9 @@ export async function httpRequest<T>(options: HttpRequestOptions): Promise<HttpR
   } catch (error: unknown) {
     const durationMs = Date.now() - startTime;
     const message = error instanceof Error ? error.message : 'Unknown HTTP error';
-    logger.error(`httpRequest: ${method} ${url} failed after ${String(durationMs)}ms — ${message}`);
+    logger.error(
+      `httpRequest: ${method} ${redactUrlSecrets(url)} failed after ${String(durationMs)}ms — ${redactUrlSecrets(message)}`,
+    );
     throw error;
   } finally {
     clearTimeout(timeout);

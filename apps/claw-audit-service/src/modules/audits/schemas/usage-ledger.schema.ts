@@ -1,7 +1,7 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
 
-@Schema({ collection: "usage_ledger", timestamps: true })
+@Schema({ collection: 'usage_ledger', timestamps: true })
 export class UsageLedger extends Document {
   @Prop({ required: true })
   userId!: string;
@@ -39,3 +39,5 @@ export const UsageLedgerSchema = SchemaFactory.createForClass(UsageLedger);
 // Indexes to support per-user usage attribution and context filtering/aggregation.
 UsageLedgerSchema.index({ userId: 1, createdAt: -1 });
 UsageLedgerSchema.index({ context: 1 });
+// Tracing and leaderboards filter the message.completed window by time.
+UsageLedgerSchema.index({ action: 1, createdAt: -1 });

@@ -11,6 +11,15 @@ const REDACTED_KEYS = new Set([
   'authorization',
   'cookie',
   'clientsecret',
+  'x-api-key',
+  'xapikey',
+  'x-goog-api-key',
+  'encryptedconfig',
+  'encryptedapikey',
+  'proxy-authorization',
+  'set-cookie',
+  'privatekey',
+  'signature',
 ]);
 
 const REDACTED_PLACEHOLDER = '[REDACTED]';
@@ -36,7 +45,7 @@ function redactValue(_key: string, value: unknown): unknown {
 /**
  * JSON.stringify variant that redacts known sensitive fields (token, password,
  * apiKey, refreshToken, accessToken, secret, authorization, cookie,
- * clientSecret). Use in logger.debug calls when the input may contain auth
+ * clientSecret, x-api-key, encryptedConfig and similar). Use in logger.debug calls when the input may contain auth
  * material.
  */
 export function safeStringify(value: unknown): string {

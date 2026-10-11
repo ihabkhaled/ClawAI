@@ -70,3 +70,22 @@ export const CREDIT_EVENT_ID_MAX_LENGTH = 200;
 export const CREDIT_MICRO_USD_DIGITS_MAX = 19;
 export const CREDIT_PACKAGE_SLUG_MAX_LENGTH = 64;
 export const CREDIT_PACKAGE_PRICE_MINOR_MAX = 1_000_000;
+
+// ── Rate-cache key normalisation ────────────────────────────────────────────
+
+// Decoration a provider puts on a model id without changing which model it is.
+export const RATE_MODEL_ID_PATH_PREFIXES: readonly string[] = ['models/', 'model/'];
+
+// `:batch` is a request mode of the same model, never a different one.
+export const RATE_MODEL_ID_BATCH_SUFFIX = ':batch';
+
+// `gpt-4o~latest`-style pointer variants: everything from the first `~` after
+// the first character is a moving alias of the base model.
+export const RATE_MODEL_ID_VARIANT_MARKER = '~';
+
+// A trailing release date: `-20251001` or `-2024-08-06` (same rule as routing).
+export const RATE_MODEL_ID_DATED_SUFFIX = /-(?:\d{8}|\d{4}-\d{2}-\d{2})$/;
+
+// Upper bound on SCAN round trips when busting a model family's cached rates.
+export const RATE_CACHE_SCAN_MAX_ITERATIONS = 1000;
+export const RATE_CACHE_SCAN_COUNT = 200;

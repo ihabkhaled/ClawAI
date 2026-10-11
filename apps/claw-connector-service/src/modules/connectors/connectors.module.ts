@@ -11,6 +11,7 @@ import { ModelUnavailableService } from './services/model-unavailable.service';
 import { CreditHeadroomManager } from './managers/credit-headroom.manager';
 import { PublicModelCatalogService } from './services/public-model-catalog.service';
 import { ConnectorsService } from './services/connectors.service';
+import { ModelSyncSchedulerService } from './services/model-sync-scheduler.service';
 import { ConnectorsManager } from './managers/connectors.manager';
 import { ModelsSnapshotManager } from './managers/models-snapshot.manager';
 import { ConnectorsRepository } from './repositories/connectors.repository';
@@ -38,6 +39,7 @@ import { ProviderDefinitionsRepository } from './repositories/provider-definitio
     CreditHeadroomService,
     CreditHeadroomManager,
     ConnectorsService,
+    ModelSyncSchedulerService,
     ProviderDefinitionsService,
     ConnectorsManager,
     ModelsSnapshotManager,

@@ -680,6 +680,11 @@
         },
         {
           "method": "GET",
+          "route": "/audits/failures",
+          "source": "apps/claw-audit-service/src/modules/audits/controllers/observability.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/audits/stats",
           "source": "apps/claw-audit-service/src/modules/audits/controllers/audits.controller.ts"
         },
@@ -752,6 +757,11 @@
           "method": "GET",
           "route": "/usage/summary",
           "source": "apps/claw-audit-service/src/modules/audits/controllers/audits.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/usage/tracing",
+          "source": "apps/claw-audit-service/src/modules/audits/controllers/observability.controller.ts"
         }
       ],
       "claw-auth-service": [
@@ -984,6 +994,36 @@
           "method": "GET",
           "route": "/admin/usage-analytics",
           "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-usage-analytics.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/usage-explorer/leaderboard",
+          "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-usage-explorer.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/usage-explorer/timeseries",
+          "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-usage-explorer.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/usage-explorer/users",
+          "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-usage-explorer.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/usage-explorer/users/:userId",
+          "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-usage-explorer.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/usage-explorer/users/:userId/requests",
+          "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-usage-explorer.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/usage-explorer/users/export",
+          "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-usage-explorer.controller.ts"
         },
         {
           "method": "GET",
@@ -3204,6 +3244,11 @@
         {
           "method": "POST",
           "route": "/router-models/costs/price",
+          "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/router-models/costs/unpriced",
           "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
         },
         {
@@ -9135,7 +9180,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5901
+        "value": 5902
       },
       "localeCount": 13,
       "locales": [
@@ -11363,7 +11408,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "vitest",
-        "testFiles": 51
+        "testFiles": 53
       },
       "claw-agent-service": {
         "runner": "vitest",
@@ -11371,11 +11416,11 @@
       },
       "claw-audit-service": {
         "runner": "vitest",
-        "testFiles": 37
+        "testFiles": 39
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 160
+        "testFiles": 168
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -11387,7 +11432,7 @@
       },
       "claw-connector-service": {
         "runner": "vitest",
-        "testFiles": 54
+        "testFiles": 59
       },
       "claw-file-generation-service": {
         "runner": "vitest",
@@ -11399,7 +11444,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 747
+        "testFiles": 762
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -11431,7 +11476,7 @@
       },
       "claw-routing-service": {
         "runner": "vitest",
-        "testFiles": 120
+        "testFiles": 121
       },
       "claw-server-logs-service": {
         "runner": "vitest",
@@ -12232,7 +12277,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 56,
-    "endpointCount": 837,
+    "endpointCount": 846,
     "envVarCount": 375,
     "eventCount": 190,
     "frontendRouteCount": 161,
@@ -12244,7 +12289,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2160,
+    "totalTestFiles": 2193,
     "workspaceCount": 27
   }
 }

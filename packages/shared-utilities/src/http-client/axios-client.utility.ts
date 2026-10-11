@@ -1,6 +1,7 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios';
 
 import { assertSafeRequestUrl } from './request-url.utility';
+import { redactUrlSecrets } from './redact-url-secrets.utility';
 import { Logger } from '@nestjs/common';
 import { DEFAULT_HTTP_TIMEOUT } from '@claw/shared-constants';
 
@@ -22,7 +23,7 @@ export async function httpGet<T>(
   // host check is unconditional, so a caller with an admin-configured
   // destination declares it with `declaredHost(baseUrl)`.
   assertSafeRequestUrl(url, allowedHosts);
-  logger.debug(`httpGet: GET ${url}`);
+  logger.debug(`httpGet: GET ${redactUrlSecrets(url)}`);
   const startTime = Date.now();
   try {
     const response: AxiosResponse<T> = await axios.get(url, {
@@ -34,13 +35,15 @@ export async function httpGet<T>(
     });
     const durationMs = Date.now() - startTime;
     logger.log(
-      `httpGet: GET ${url} ok status=${String(response.status)} durationMs=${String(durationMs)}`,
+      `httpGet: GET ${redactUrlSecrets(url)} ok status=${String(response.status)} durationMs=${String(durationMs)}`,
     );
     return response.data;
   } catch (error: unknown) {
     const durationMs = Date.now() - startTime;
     const message = error instanceof Error ? error.message : 'Unknown HTTP error';
-    logger.error(`httpGet: GET ${url} failed after ${String(durationMs)}ms — ${message}`);
+    logger.error(
+      `httpGet: GET ${redactUrlSecrets(url)} failed after ${String(durationMs)}ms — ${redactUrlSecrets(message)}`,
+    );
     throw error;
   }
 }
@@ -54,7 +57,7 @@ export async function httpPost<T>(
   // This call had NO url guard at all until 2026-09-20, which is the unchecked
   // path CodeQL kept pointing at even after the fetch client was hardened.
   assertSafeRequestUrl(url, allowedHosts);
-  logger.debug(`httpPost: POST ${url}`);
+  logger.debug(`httpPost: POST ${redactUrlSecrets(url)}`);
   const startTime = Date.now();
   try {
     const response: AxiosResponse<T> = await axios.post(url, data, {
@@ -66,13 +69,15 @@ export async function httpPost<T>(
     });
     const durationMs = Date.now() - startTime;
     logger.log(
-      `httpPost: POST ${url} ok status=${String(response.status)} durationMs=${String(durationMs)}`,
+      `httpPost: POST ${redactUrlSecrets(url)} ok status=${String(response.status)} durationMs=${String(durationMs)}`,
     );
     return response.data;
   } catch (error: unknown) {
     const durationMs = Date.now() - startTime;
     const message = error instanceof Error ? error.message : 'Unknown HTTP error';
-    logger.error(`httpPost: POST ${url} failed after ${String(durationMs)}ms — ${message}`);
+    logger.error(
+      `httpPost: POST ${redactUrlSecrets(url)} failed after ${String(durationMs)}ms — ${redactUrlSecrets(message)}`,
+    );
     throw error;
   }
 }

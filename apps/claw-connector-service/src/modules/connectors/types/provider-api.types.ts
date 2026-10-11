@@ -105,6 +105,10 @@ export type PresetModelListEntry = {
   taskName?: string;
   active?: boolean;
   isDeprecated?: boolean;
+  /** Published prices, integer micro-USD per million tokens. */
+  inputCostPerMTokMicroUsd?: number;
+  outputCostPerMTokMicroUsd?: number;
+  cachedInputCostPerMTokMicroUsd?: number;
 };
 
 /**

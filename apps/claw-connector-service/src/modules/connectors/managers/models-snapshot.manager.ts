@@ -6,6 +6,7 @@ import {
   snapshotSupportsAudio,
   snapshotSupportsVideoInput,
 } from '../utilities/snapshot-media-capability.utility';
+import { publishedSnapshotPrices } from '../utilities/snapshot-price.utility';
 import { effectiveMaxOutputTokens } from '../utilities/model-output-limit.utility';
 import {
   type ConnectorModelsSnapshotResult,
@@ -67,6 +68,7 @@ export class ModelsSnapshotManager {
       exposure: row.exposure,
       kind: row.kind,
       promptCaching: row.promptCaching,
+      ...publishedSnapshotPrices(row),
     };
   }
 }

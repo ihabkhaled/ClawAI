@@ -351,6 +351,10 @@ container reports `TOOL_UNAVAILABLE` on every video until it is **rebuilt**
 docker exec claw-file-service sh -c "ffmpeg -version | head -1; ffprobe -version | head -1"
 ```
 
+### Published service ports (production)
+
+In `docker/docker-compose.prod.services.yml` every backend service port (4001-4020) is published on `127.0.0.1` only (`'127.0.0.1:4003:4003'`), so the internet cannot reach an internal route such as `/api/v1/internal/*`. Services reach each other by container name on the Docker network, health checks run inside the container, and nginx proxies by container name, so nothing needs the host port. Only nginx (80, 443, 4000) and the frontend (3000) stay public. Host-side tools (`curl`, Playwright, smoke scripts) still work on the server itself; from another machine use an SSH tunnel. The dev compose files are unchanged. In production a placeholder `INTER_SERVICE_AUTH_TOKEN` (anything containing `change-me`) now stops the service at boot.
+
 ## Resource Requirements
 
 ### Minimum Development Requirements

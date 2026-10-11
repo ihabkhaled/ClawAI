@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { Public } from '../../../app/decorators/public.decorator';
+import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import {
   type ValidateExposedModelsDto,
@@ -21,7 +22,12 @@ export class ConnectorsInternalController {
     private readonly modelsSnapshotManager: ModelsSnapshotManager,
   ) {}
 
+  // Returns the DECRYPTED provider API key. `@Public()` only lifts the user JWT
+  // guard, so the service token is the sole check: without it any host that can
+  // reach this port reads every provider key. The routes below carry no secret
+  // and stay token-free.
   @Public()
+  @UseGuards(ServiceTokenGuard)
   @Get('config')
   async getConfig(@Query('provider') provider: string): Promise<ConnectorConfigResult> {
     return this.connectorsService.getConnectorConfig(provider);

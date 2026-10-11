@@ -665,3 +665,8 @@ in-turn tool calls (only a count) and image generation as a named tool; the
 ## Notifications (ADR-164, 2026-10-08)
 
 `modules/notifications`: consumes `user.notification_requested`, writes `user_notifications` (idempotent on user + dedupe key), emails through `AuthEmailAdapter.sendThreadNotification` in the person's language, and serves the signed-in person's list, read marks and channel preferences under `/api/v1/notifications` (own nginx location). Email kinds `THREAD_READY_FOR_REVIEW`, `THREAD_PUBLISHED`, `THREAD_FAILED` exist in all 13 copy files. See ADR-164.
+
+## Admin usage explorer
+
+Paginated users table, per-user consumption, leaderboards and time series under `/api/v1/admin/usage-explorer/*`
+(full email, audited): see [admin usage explorer endpoints](admin-usage-explorer-endpoints.md).

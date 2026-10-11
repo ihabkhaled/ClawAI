@@ -3,6 +3,8 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { RouterModelRegistryManager } from '../../router-models/managers/router-model-registry.manager';
 import { RouterModelRegistryRepository } from '../../router-models/repositories/router-model-registry.repository';
+import { ModelCostCatalogService } from '../../router-models/services/model-cost-catalog.service';
+import { ModelCostService } from '../../router-models/services/model-cost.service';
 import { RouterSyncManager } from '../managers/router-sync.manager';
 
 // ADR-146: snapshot fetches carry the inter-service token; this spec does not
@@ -30,6 +32,8 @@ describe('RouterSyncManager — Phase 3 intelligence enrichment', () => {
   let registryRepo: Mocked<RouterModelRegistryRepository>;
   let registryManager: Mocked<RouterModelRegistryManager>;
   let rabbitMQ: Mocked<RabbitMQService>;
+  let costs: { applyPublishedPrices: Mock };
+  let costCatalog: { auditCoverage: Mock };
 
   beforeEach(async () => {
     registryRepo = {
@@ -39,6 +43,8 @@ describe('RouterSyncManager — Phase 3 intelligence enrichment', () => {
     registryManager = {
       getProtectedFieldNames: vi.fn().mockResolvedValue(new Set<string>()),
     } as unknown as Mocked<RouterModelRegistryManager>;
+    costs = { applyPublishedPrices: vi.fn().mockResolvedValue({ applied: true, version: 2 }) };
+    costCatalog = { auditCoverage: vi.fn().mockResolvedValue({ unpriced: 0, fallback: 0 }) };
     rabbitMQ = {
       publish: vi.fn(() => Promise.resolve()),
     } as unknown as Mocked<RabbitMQService>;
@@ -48,6 +54,8 @@ describe('RouterSyncManager — Phase 3 intelligence enrichment', () => {
         RouterSyncManager,
         { provide: RouterModelRegistryRepository, useValue: registryRepo },
         { provide: RouterModelRegistryManager, useValue: registryManager },
+        { provide: ModelCostService, useValue: costs },
+        { provide: ModelCostCatalogService, useValue: costCatalog },
         { provide: RabbitMQService, useValue: rabbitMQ },
       ],
     }).compile();
