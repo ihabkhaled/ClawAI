@@ -7,6 +7,7 @@ import { ModelCatalog } from '@/components/marketing/models/model-catalog';
 import { ModelRail } from '@/components/marketing/models/model-rail';
 import { EditorialPageShell } from '@/components/marketing/shared/editorial-page-shell';
 import { EditorialSectionNav } from '@/components/marketing/shared/editorial-section-nav';
+import { MarketingSceneGallery } from '@/components/marketing/shared/marketing-scene-gallery';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
 import { MODEL_PAGE_VISIBLE_MODEL_LIMIT } from '@/constants/model-provider-mapping.constants';
 import {
@@ -16,6 +17,7 @@ import {
   getModelProviderPath,
   getModelProviderSlug,
 } from '@/constants/models.constants';
+import { MarketingScenePage } from '@/enums/marketing-scene-page.enum';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { fetchPublicModelCatalog } from '@/lib/models/public-models-api';
 import { getSiteUrl } from '@/lib/site/site-config';
@@ -96,6 +98,8 @@ export async function ModelProviderPage({
             {' · '}
             {labels.lastReviewed}: <time dateTime={MODELS_REVIEW_DATE}>{MODELS_REVIEW_DATE}</time>
           </p>
+
+          <MarketingSceneGallery locale={locale} page={MarketingScenePage.MODEL_PROVIDER} />
 
           <ModelCatalog
             heading={labels.catalogHeading}

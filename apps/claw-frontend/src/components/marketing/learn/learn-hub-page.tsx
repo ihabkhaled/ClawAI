@@ -3,8 +3,10 @@ import { headers } from 'next/headers';
 import { ComparisonSection } from '@/components/marketing/compare/comparison-section';
 import { LearnTopicCards } from '@/components/marketing/learn/learn-topic-cards';
 import { EditorialPageShell } from '@/components/marketing/shared/editorial-page-shell';
+import { MarketingSceneGallery } from '@/components/marketing/shared/marketing-scene-gallery';
 import { LEARN_HUB_PATH, LEARN_HUB_SLUG, LEARN_REVIEW_DATE } from '@/constants/learn.constants';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
+import { MarketingScenePage } from '@/enums/marketing-scene-page.enum';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl } from '@/lib/site/site-config';
 // Imported from their specific submodules rather than the `@/utilities` barrel —
@@ -48,6 +50,8 @@ export async function LearnHubPage(): Promise<React.ReactElement> {
           <p className="editorial-comparison__stamp">
             {labels.lastReviewed}: <time dateTime={LEARN_REVIEW_DATE}>{LEARN_REVIEW_DATE}</time>
           </p>
+
+          <MarketingSceneGallery locale={locale} page={MarketingScenePage.LEARN} />
 
           <ComparisonSection id="topics" title={hub.topicsHeading}>
             <LearnTopicCards cards={cards} />

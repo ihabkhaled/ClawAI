@@ -3,12 +3,14 @@ import { headers } from 'next/headers';
 import { ComparisonSection } from '@/components/marketing/compare/comparison-section';
 import { IntegrationHubCards } from '@/components/marketing/integrations/integration-hub-cards';
 import { EditorialPageShell } from '@/components/marketing/shared/editorial-page-shell';
+import { MarketingSceneGallery } from '@/components/marketing/shared/marketing-scene-gallery';
 import {
   INTEGRATIONS_HUB_PATH,
   INTEGRATIONS_HUB_SLUG,
   INTEGRATIONS_REVIEW_DATE,
 } from '@/constants/integrations.constants';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
+import { MarketingScenePage } from '@/enums/marketing-scene-page.enum';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl } from '@/lib/site/site-config';
 // Imported from their specific submodules rather than the `@/utilities` barrel —
@@ -55,6 +57,8 @@ export async function IntegrationHubPage(): Promise<React.ReactElement> {
             {labels.lastReviewed}:{' '}
             <time dateTime={INTEGRATIONS_REVIEW_DATE}>{INTEGRATIONS_REVIEW_DATE}</time>
           </p>
+
+          <MarketingSceneGallery locale={locale} page={MarketingScenePage.INTEGRATIONS_HUB} />
 
           <ComparisonSection id="connectors" title={hub.topicsHeading}>
             <IntegrationHubCards cards={cards} />

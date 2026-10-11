@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 
+import { MarketingRequestSceneGallery } from '@/components/marketing/shared/marketing-request-scene-gallery';
 import { EnterpriseNoteSection } from '@/components/marketing/use-cases/enterprise-note-section';
 import { OneSubscriptionSection } from '@/components/marketing/use-cases/one-subscription-section';
 import { UseCasesCtaSection } from '@/components/marketing/use-cases/use-cases-cta-section';
 import { UseCasesGridSection } from '@/components/marketing/use-cases/use-cases-grid-section';
 import { UseCasesHeroSection } from '@/components/marketing/use-cases/use-cases-hero-section';
 import { UseCasesTaskCardsSection } from '@/components/marketing/use-cases/use-cases-task-cards-section';
+import { MarketingScenePage } from '@/enums/marketing-scene-page.enum';
 import { buildRequestPublicPageMetadata } from '@/lib/seo/public-page-metadata';
 // Imported directly from its specific submodule rather than the `@/utilities`
 // barrel — this is a server component, and the utilities barrel re-exports
@@ -30,6 +32,7 @@ export default async function UseCasesPage(): Promise<React.ReactElement> {
     <>
       <UseCasesHeroSection lastReviewed={lastReviewed} />
       <UseCasesGridSection />
+      <MarketingRequestSceneGallery page={MarketingScenePage.USE_CASES_HUB} />
       <UseCasesTaskCardsSection />
       <OneSubscriptionSection />
       <EnterpriseNoteSection />

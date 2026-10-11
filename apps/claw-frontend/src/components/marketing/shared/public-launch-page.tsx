@@ -6,6 +6,7 @@ import { ModelRosterSection } from '@/components/marketing/home/model-roster-sec
 import { EditorialPageShell } from '@/components/marketing/shared/editorial-page-shell';
 import { EditorialSectionNav } from '@/components/marketing/shared/editorial-section-nav';
 import { EvidenceNote } from '@/components/marketing/shared/evidence-note';
+import { MarketingSceneGallery } from '@/components/marketing/shared/marketing-scene-gallery';
 import { RoutingRail } from '@/components/marketing/shared/routing-rail';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
 import {
@@ -16,6 +17,7 @@ import {
   LEGAL_PUBLIC_LAUNCH_SLUGS,
   PUBLIC_LAUNCH_EFFECTIVE_DATE,
 } from '@/constants/public-launch-page.constants';
+import { MarketingScenePage } from '@/enums/marketing-scene-page.enum';
 import { PublicLaunchPageSlug } from '@/enums/public-launch-page-slug.enum';
 import { getAdSenseSlots } from '@/lib/adsense/adsense-config';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
@@ -108,6 +110,10 @@ export async function PublicLaunchPage({
             {LEGAL_PUBLIC_LAUNCH_SLUGS.has(slug) ? labels.effectiveDate : labels.lastReviewed}:{' '}
             <time dateTime={PUBLIC_LAUNCH_EFFECTIVE_DATE}>{PUBLIC_LAUNCH_EFFECTIVE_DATE}</time>
           </p>
+
+          {slug === PublicLaunchPageSlug.SECURITY_AND_PRIVACY ? (
+            <MarketingSceneGallery locale={locale} page={MarketingScenePage.SECURITY_AND_PRIVACY} />
+          ) : null}
 
           {page.sections.map((section, index) => (
             <section

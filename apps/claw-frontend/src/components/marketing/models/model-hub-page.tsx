@@ -3,8 +3,10 @@ import { headers } from 'next/headers';
 import { ComparisonSection } from '@/components/marketing/compare/comparison-section';
 import { ModelHubCards } from '@/components/marketing/models/model-hub-cards';
 import { EditorialPageShell } from '@/components/marketing/shared/editorial-page-shell';
+import { MarketingSceneGallery } from '@/components/marketing/shared/marketing-scene-gallery';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
 import { MODELS_HUB_PATH, MODELS_HUB_SLUG, MODELS_REVIEW_DATE } from '@/constants/models.constants';
+import { MarketingScenePage } from '@/enums/marketing-scene-page.enum';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl } from '@/lib/site/site-config';
 // Imported from their specific submodules rather than the `@/utilities` barrel —
@@ -50,6 +52,8 @@ export async function ModelHubPage(): Promise<React.ReactElement> {
           <p className="editorial-comparison__stamp">
             {labels.lastReviewed}: <time dateTime={MODELS_REVIEW_DATE}>{MODELS_REVIEW_DATE}</time>
           </p>
+
+          <MarketingSceneGallery locale={locale} page={MarketingScenePage.MODEL_PROVIDERS_HUB} />
 
           <ComparisonSection id="providers" title={hub.topicsHeading}>
             <ModelHubCards cards={cards} />

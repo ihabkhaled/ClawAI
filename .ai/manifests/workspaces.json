@@ -279,6 +279,7 @@
         "lint-staged",
         "lint:fix",
         "lint:strict",
+        "marketing:shots",
         "start",
         "test",
         "test:cov",

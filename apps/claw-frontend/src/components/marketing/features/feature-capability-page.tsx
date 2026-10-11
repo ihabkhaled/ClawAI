@@ -6,6 +6,7 @@ import { ComparisonSection } from '@/components/marketing/compare/comparison-sec
 import { FeatureCapabilityRail } from '@/components/marketing/features/feature-capability-rail';
 import { EditorialPageShell } from '@/components/marketing/shared/editorial-page-shell';
 import { EditorialSectionNav } from '@/components/marketing/shared/editorial-section-nav';
+import { MarketingSceneGallery } from '@/components/marketing/shared/marketing-scene-gallery';
 import {
   FEATURES_HUB_PATH,
   FEATURES_HUB_SLUG,
@@ -14,6 +15,7 @@ import {
   getFeatureCapabilitySlug,
 } from '@/constants/features-cluster.constants';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
+import { FEATURE_CAPABILITY_SCENES } from '@/constants/marketing-scenes.constants';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl } from '@/lib/site/site-config';
 import type { FeatureCapabilityPageProps } from '@/types/features-component.types';
@@ -83,6 +85,8 @@ export async function FeatureCapabilityPage({
             {' · '}
             {labels.lastReviewed}: <time dateTime={reviewDate}>{reviewDate}</time>
           </p>
+
+          <MarketingSceneGallery locale={locale} scenes={FEATURE_CAPABILITY_SCENES[capability]} />
 
           {content.sections.map((section) => (
             <ComparisonSection key={section.id} id={section.id} title={section.heading}>

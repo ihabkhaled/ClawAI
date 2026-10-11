@@ -7,6 +7,7 @@ import { IntegrationCapabilities } from '@/components/marketing/integrations/int
 import { IntegrationRail } from '@/components/marketing/integrations/integration-rail';
 import { EditorialPageShell } from '@/components/marketing/shared/editorial-page-shell';
 import { EditorialSectionNav } from '@/components/marketing/shared/editorial-section-nav';
+import { MarketingSceneGallery } from '@/components/marketing/shared/marketing-scene-gallery';
 import { INTEGRATION_FACTS } from '@/constants/integration-facts.constants';
 import {
   INTEGRATIONS_HUB_PATH,
@@ -16,6 +17,7 @@ import {
   getIntegrationSlug,
 } from '@/constants/integrations.constants';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
+import { MarketingScenePage } from '@/enums/marketing-scene-page.enum';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl } from '@/lib/site/site-config';
 import type { IntegrationTopicPageProps } from '@/types/integrations-component.types';
@@ -90,6 +92,8 @@ export async function IntegrationTopicPage({
             {labels.lastReviewed}:{' '}
             <time dateTime={INTEGRATIONS_REVIEW_DATE}>{INTEGRATIONS_REVIEW_DATE}</time>
           </p>
+
+          <MarketingSceneGallery locale={locale} page={MarketingScenePage.INTEGRATIONS_TOPIC} />
 
           <div id="capabilities">
             <IntegrationCapabilities

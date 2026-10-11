@@ -11,6 +11,9 @@ import { ModelAccessSection } from '@/components/marketing/how-it-works/model-ac
 import { OrchestrationSection } from '@/components/marketing/how-it-works/orchestration-section';
 import { RoutingDecidesSection } from '@/components/marketing/how-it-works/routing-decides-section';
 import { TransparencySection } from '@/components/marketing/how-it-works/transparency-section';
+import { MarketingRequestSceneGallery } from '@/components/marketing/shared/marketing-request-scene-gallery';
+import { MarketingSceneGalleryLayout } from '@/enums/marketing-scene-gallery-layout.enum';
+import { MarketingScenePage } from '@/enums/marketing-scene-page.enum';
 import { buildRequestPublicPageMetadata } from '@/lib/seo/public-page-metadata';
 // Imported directly from its specific submodule rather than the `@/utilities`
 // barrel — this is a server component, and the barrel re-exports 150+ files;
@@ -30,6 +33,11 @@ export default function HowItWorksPage(): React.ReactElement {
     <>
       <HowItWorksHeroSection lastReviewed={lastReviewed} />
       <JourneyStepsSection />
+      <MarketingRequestSceneGallery
+        page={MarketingScenePage.HOW_IT_WORKS}
+        layout={MarketingSceneGalleryLayout.STEPS}
+        id="see-it"
+      />
       <AccountAndPlansSection />
       <ModelAccessSection />
       <RoutingDecidesSection />

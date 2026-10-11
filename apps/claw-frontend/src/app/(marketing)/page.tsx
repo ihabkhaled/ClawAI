@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 
 import { MarketingAdUnit } from '@/components/adsense/marketing-ad-unit';
 import { CodingAgentBandSection } from '@/components/marketing/home/coding-agent-band-section';
@@ -11,11 +12,15 @@ import { HowItWorksSection } from '@/components/marketing/home/how-it-works-sect
 import { ModelRosterSection } from '@/components/marketing/home/model-roster-section';
 import { PricingSection } from '@/components/marketing/home/pricing-section';
 import { ThreadsBandSection } from '@/components/marketing/home/threads-band-section';
+import { MarketingSceneGallery } from '@/components/marketing/shared/marketing-scene-gallery';
+import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
 import {
   MARKETING_HOME_PAYG_BAND,
   MARKETING_HOME_TEAMS_BAND,
 } from '@/constants/marketing-home.constants';
+import { MarketingScenePage } from '@/enums/marketing-scene-page.enum';
 import { getAdSenseSlots } from '@/lib/adsense/adsense-config';
+import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { fetchPublicModelCatalog } from '@/lib/models/public-models-api';
 import { fetchPublicPricingCatalog } from '@/lib/pricing/public-pricing-api';
 import { buildRequestPublicPageMetadata } from '@/lib/seo/public-page-metadata';
@@ -28,6 +33,7 @@ import { getSiteUrl } from '@/lib/site/site-config';
 // dragging a client-only dependency into the server bundle and breaking
 // the production build with "createContext is not a function".
 import { getPageBySlug, isAdEligiblePath } from '@/utilities/content-registry.utility';
+import { isSupportedLocale } from '@/utilities/locale.utility';
 import {
   buildOrganizationJsonLd,
   buildSoftwareApplicationJsonLd,
@@ -51,6 +57,8 @@ export default async function HomePage(): Promise<React.ReactElement> {
   const plans = await fetchPublicPricingCatalog();
   const modelCatalog = await fetchPublicModelCatalog();
   const slots = getAdSenseSlots();
+  const requestedLocale = (await headers()).get(LOCALE_REQUEST_HEADER);
+  const locale = isSupportedLocale(requestedLocale) ? requestedLocale : DEFAULT_LOCALE;
 
   return (
     <>
@@ -63,6 +71,7 @@ export default async function HomePage(): Promise<React.ReactElement> {
       </script>
 
       <HeroSection lastReviewed={lastReviewed} />
+      <MarketingSceneGallery locale={locale} page={MarketingScenePage.HOME} />
       <ModelRosterSection providers={modelCatalog?.providers ?? []} />
       <MarketingAdUnit
         slot={slots.home}

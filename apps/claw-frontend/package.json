@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "clear-cache": "node -e \"require('node:fs').rmSync('.next', { recursive: true, force: true })\"",
+    "marketing:shots": "node scripts/marketing-shots/capture.cjs",
     "dev": "npm run clear-cache && next dev --turbopack --port 3000",
     "dev:docker": "next dev --turbopack --port 3000",
     "build": "npm run clear-cache && next build --turbopack",

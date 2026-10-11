@@ -12,6 +12,8 @@ import { FeaturesProvidersSection } from '@/components/marketing/features/featur
 import { FeaturesRoutingSection } from '@/components/marketing/features/features-routing-section';
 import { FeaturesSecuritySection } from '@/components/marketing/features/features-security-section';
 import { FeaturesWorkspaceSection } from '@/components/marketing/features/features-workspace-section';
+import { MarketingRequestSceneGallery } from '@/components/marketing/shared/marketing-request-scene-gallery';
+import { MarketingScenePage } from '@/enums/marketing-scene-page.enum';
 import { buildRequestPublicPageMetadata } from '@/lib/seo/public-page-metadata';
 // Imported from their specific submodules rather than the `@/utilities`
 // barrel — this is a server component, and pulling the whole barrel into a
@@ -34,6 +36,7 @@ export default function FeaturesPage(): React.ReactElement {
   return (
     <>
       <FeaturesHeroSection lastReviewed={lastReviewed} />
+      <MarketingRequestSceneGallery page={MarketingScenePage.FEATURES_HUB} />
       <FeaturesProvidersSection />
       <FeaturesRoutingSection />
       <FeaturesOrchestrationSection />

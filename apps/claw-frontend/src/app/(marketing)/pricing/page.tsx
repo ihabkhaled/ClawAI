@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 
 import { PricingSection } from '@/components/marketing/home/pricing-section';
+import { MarketingRequestSceneGallery } from '@/components/marketing/shared/marketing-request-scene-gallery';
+import { MarketingScenePage } from '@/enums/marketing-scene-page.enum';
 import { fetchPublicPricingCatalog } from '@/lib/pricing/public-pricing-api';
 import { buildRequestPublicPageMetadata } from '@/lib/seo/public-page-metadata';
 import { getSiteUrl } from '@/lib/site/site-config';
@@ -20,6 +22,7 @@ export default async function PricingPage(): Promise<React.ReactElement> {
         {serializeJsonLd(buildPricingJsonLd(canonicalUrl, plans ?? []))}
       </script>
       <PricingSection initialPlans={plans} standalone />
+      <MarketingRequestSceneGallery page={MarketingScenePage.PRICING} />
     </>
   );
 }

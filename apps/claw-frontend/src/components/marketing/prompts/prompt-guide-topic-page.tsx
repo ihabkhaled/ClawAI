@@ -6,6 +6,7 @@ import { ComparisonSection } from '@/components/marketing/compare/comparison-sec
 import { PromptGuideRail } from '@/components/marketing/prompts/prompt-guide-rail';
 import { EditorialPageShell } from '@/components/marketing/shared/editorial-page-shell';
 import { EditorialSectionNav } from '@/components/marketing/shared/editorial-section-nav';
+import { MarketingSceneGallery } from '@/components/marketing/shared/marketing-scene-gallery';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
 import {
   PROMPTS_HUB_PATH,
@@ -14,6 +15,7 @@ import {
   getPromptGuideTopicPath,
   getPromptGuideTopicSlug,
 } from '@/constants/prompts.constants';
+import { MarketingScenePage } from '@/enums/marketing-scene-page.enum';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl } from '@/lib/site/site-config';
 import type { PromptGuideTopicPageProps } from '@/types/prompt-guide-component.types';
@@ -83,6 +85,8 @@ export async function PromptGuideTopicPage({
             {' · '}
             {labels.lastReviewed}: <time dateTime={PROMPTS_REVIEW_DATE}>{PROMPTS_REVIEW_DATE}</time>
           </p>
+
+          <MarketingSceneGallery locale={locale} page={MarketingScenePage.PROMPTS} />
 
           {content.sections.map((section) => (
             <ComparisonSection key={section.id} id={section.id} title={section.heading}>

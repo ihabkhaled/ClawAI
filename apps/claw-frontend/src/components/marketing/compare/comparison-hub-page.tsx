@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ComparisonHubCards } from '@/components/marketing/compare/comparison-hub-cards';
 import { ComparisonSection } from '@/components/marketing/compare/comparison-section';
 import { EditorialPageShell } from '@/components/marketing/shared/editorial-page-shell';
+import { MarketingSceneGallery } from '@/components/marketing/shared/marketing-scene-gallery';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
 import {
   COMPARISON_HUB_PATH,
@@ -11,6 +12,7 @@ import {
   COMPARISON_SECTION_IDS,
 } from '@/constants/public-comparison.constants';
 import { LaunchPublicPageSlug } from '@/enums/launch-public-page-slug.enum';
+import { MarketingScenePage } from '@/enums/marketing-scene-page.enum';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl } from '@/lib/site/site-config';
 import { getPageBySlugAndLocale } from '@/utilities/content-registry.utility';
@@ -61,6 +63,8 @@ export async function ComparisonHubPage(): Promise<React.ReactElement> {
             {labels.lastReviewed}:{' '}
             <time dateTime={COMPARISON_REVIEW_DATE}>{COMPARISON_REVIEW_DATE}</time>
           </p>
+
+          <MarketingSceneGallery locale={locale} page={MarketingScenePage.COMPARE_HUB} />
 
           <p className="editorial-comparison__lede">{intro}</p>
 

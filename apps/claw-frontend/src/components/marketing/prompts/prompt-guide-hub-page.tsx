@@ -3,12 +3,14 @@ import { headers } from 'next/headers';
 import { ComparisonSection } from '@/components/marketing/compare/comparison-section';
 import { PromptGuideHubCards } from '@/components/marketing/prompts/prompt-guide-hub-cards';
 import { EditorialPageShell } from '@/components/marketing/shared/editorial-page-shell';
+import { MarketingSceneGallery } from '@/components/marketing/shared/marketing-scene-gallery';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
 import {
   PROMPTS_HUB_PATH,
   PROMPTS_HUB_SLUG,
   PROMPTS_REVIEW_DATE,
 } from '@/constants/prompts.constants';
+import { MarketingScenePage } from '@/enums/marketing-scene-page.enum';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl } from '@/lib/site/site-config';
 // Imported from their specific submodules rather than the `@/utilities` barrel —
@@ -54,6 +56,8 @@ export async function PromptGuideHubPage(): Promise<React.ReactElement> {
           <p className="editorial-comparison__stamp">
             {labels.lastReviewed}: <time dateTime={PROMPTS_REVIEW_DATE}>{PROMPTS_REVIEW_DATE}</time>
           </p>
+
+          <MarketingSceneGallery locale={locale} page={MarketingScenePage.PROMPTS} />
 
           <ComparisonSection id="topics" title={hub.topicsHeading}>
             <PromptGuideHubCards cards={cards} />

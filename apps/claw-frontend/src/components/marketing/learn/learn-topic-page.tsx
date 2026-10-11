@@ -6,6 +6,7 @@ import { ComparisonSection } from '@/components/marketing/compare/comparison-sec
 import { LearnRail } from '@/components/marketing/learn/learn-rail';
 import { EditorialPageShell } from '@/components/marketing/shared/editorial-page-shell';
 import { EditorialSectionNav } from '@/components/marketing/shared/editorial-section-nav';
+import { MarketingSceneGallery } from '@/components/marketing/shared/marketing-scene-gallery';
 import {
   LEARN_HUB_PATH,
   LEARN_HUB_SLUG,
@@ -14,6 +15,7 @@ import {
   getLearnTopicSlug,
 } from '@/constants/learn.constants';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
+import { MarketingScenePage } from '@/enums/marketing-scene-page.enum';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl } from '@/lib/site/site-config';
 import type { LearnTopicPageProps } from '@/types/learn-component.types';
@@ -85,6 +87,8 @@ export async function LearnTopicPage({ topic }: LearnTopicPageProps): Promise<Re
             {' · '}
             {labels.lastReviewed}: <time dateTime={LEARN_REVIEW_DATE}>{LEARN_REVIEW_DATE}</time>
           </p>
+
+          <MarketingSceneGallery locale={locale} page={MarketingScenePage.LEARN} />
 
           {content.sections.map((section) => (
             <ComparisonSection key={section.id} id={section.id} title={section.heading}>

@@ -5,8 +5,10 @@ import { ComparisonFaq } from '@/components/marketing/compare/comparison-faq';
 import { ComparisonSection } from '@/components/marketing/compare/comparison-section';
 import { EditorialPageShell } from '@/components/marketing/shared/editorial-page-shell';
 import { EditorialSectionNav } from '@/components/marketing/shared/editorial-section-nav';
+import { MarketingSceneGallery } from '@/components/marketing/shared/marketing-scene-gallery';
 import { UseCaseRail } from '@/components/marketing/use-cases/use-case-rail';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
+import { USE_CASE_TASK_SCENES } from '@/constants/marketing-scenes.constants';
 import {
   USE_CASES_HUB_PATH,
   USE_CASES_HUB_SLUG,
@@ -81,6 +83,8 @@ export async function UseCaseTaskPage({ task }: UseCaseTaskPageProps): Promise<R
             {labels.lastReviewed}:{' '}
             <time dateTime={USE_CASES_REVIEW_DATE}>{USE_CASES_REVIEW_DATE}</time>
           </p>
+
+          <MarketingSceneGallery locale={locale} scenes={USE_CASE_TASK_SCENES[task]} />
 
           {content.sections.map((section) => (
             <ComparisonSection key={section.id} id={section.id} title={section.heading}>

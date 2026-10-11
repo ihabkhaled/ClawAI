@@ -13,6 +13,8 @@ import { ArchitectureSecuritySection } from '@/components/marketing/architecture
 import { ArchitectureServicesSection } from '@/components/marketing/architecture/architecture-services-section';
 import { ArchitectureStreamingSection } from '@/components/marketing/architecture/architecture-streaming-section';
 import { MarketingPageHero } from '@/components/marketing/shared/marketing-page-hero';
+import { MarketingRequestSceneGallery } from '@/components/marketing/shared/marketing-request-scene-gallery';
+import { MarketingScenePage } from '@/enums/marketing-scene-page.enum';
 import { buildRequestPublicPageMetadata } from '@/lib/seo/public-page-metadata';
 // Imported directly from its specific submodule rather than the `@/utilities`
 // barrel — this is a server component, and the utilities barrel re-exports
@@ -45,6 +47,7 @@ export default function ArchitecturePage(): React.ReactElement {
       <ArchitectureDataLayerSection />
       <ArchitectureSecuritySection />
       <ArchitectureObservabilitySection />
+      <MarketingRequestSceneGallery page={MarketingScenePage.ARCHITECTURE} />
       <ArchitectureReliabilitySection />
       <ArchitectureEnterpriseSection />
       <ArchitectureCtaSection />
