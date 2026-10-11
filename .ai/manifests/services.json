@@ -196,7 +196,7 @@
         "ConnectorProviderDefinition",
         "ModelSyncRun"
       ],
-      "testFiles": 54,
+      "testFiles": 56,
       "testRunner": "vitest"
     },
     {

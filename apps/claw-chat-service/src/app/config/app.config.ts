@@ -1,3 +1,4 @@
+import { assertInterServiceTokenNotPlaceholder } from '@claw/shared-utilities';
 import { z } from 'zod';
 import {
   OLLAMA_TOOL_LOOP_MAX_ITERATIONS_DEFAULT,
@@ -216,6 +217,10 @@ export class AppConfig {
         .join('\n');
       throw new Error(`Invalid environment configuration:\n${formatted}`);
     }
+    assertInterServiceTokenNotPlaceholder(
+      result.data.INTER_SERVICE_AUTH_TOKEN,
+      process.env.NODE_ENV,
+    );
     cachedConfig = result.data;
     return cachedConfig;
   }

@@ -1,6 +1,7 @@
 export * from './jwt';
 export * from './http-client';
 export * from './safe-stringify';
+export * from './inter-service-token';
 export * from './https-bootstrap';
 export * from './token-usage';
 export * from './runtime-progress';

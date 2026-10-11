@@ -1,3 +1,4 @@
+import { assertInterServiceTokenNotPlaceholder } from '@claw/shared-utilities';
 import { z } from 'zod';
 
 const appConfigSchema = z.object({
@@ -40,14 +41,15 @@ export class AppConfig {
         .join('\n');
       throw new Error(`Invalid environment configuration:\n${formatted}`);
     }
+    assertInterServiceTokenNotPlaceholder(
+      result.data.INTER_SERVICE_AUTH_TOKEN,
+      process.env.NODE_ENV,
+    );
     cachedConfig = result.data;
     return cachedConfig;
   }
 
   static get(): AppConfigType {
-    if (!cachedConfig) {
-      return AppConfig.validate();
-    }
-    return cachedConfig;
+    return !cachedConfig ? AppConfig.validate() : cachedConfig;
   }
 }
