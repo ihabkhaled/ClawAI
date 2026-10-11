@@ -11431,7 +11431,7 @@
       },
       "claw-routing-service": {
         "runner": "vitest",
-        "testFiles": 119
+        "testFiles": 120
       },
       "claw-server-logs-service": {
         "runner": "vitest",
@@ -12244,7 +12244,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2159,
+    "totalTestFiles": 2160,
     "workspaceCount": 27
   }
 }

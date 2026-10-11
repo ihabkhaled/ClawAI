@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
-import { httpRequest } from '../../../common/utilities';
+import { buildInterServiceAuthHeader, httpRequest } from '../../../common/utilities';
 import {
   CONNECTOR_CONFIG_PATH,
   CONNECTOR_CONFIG_TIMEOUT_MS,
@@ -42,6 +42,7 @@ export class ConnectorCredentialService {
         url,
         method: 'GET',
         timeoutMs: CONNECTOR_CONFIG_TIMEOUT_MS,
+        headers: { Authorization: buildInterServiceAuthHeader() },
       });
 
       if (!response.ok || !response.data.apiKey) {

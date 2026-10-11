@@ -714,7 +714,10 @@ export class ImageExecutionManager {
 
     try {
       this.logger.debug(`fetchConnectorConfig: requesting ${url}`);
-      const result = await httpGet<ConnectorConfigResponse>(url, { timeout: 10_000 });
+      const result = await httpGet<ConnectorConfigResponse>(url, {
+        timeout: 10_000,
+        headers: { Authorization: buildInterServiceAuthHeader() },
+      });
       this.logger.debug(
         `fetchConnectorConfig: config received — hasApiKey=${String(Boolean(result.apiKey))} baseUrl=${result.baseUrl ?? 'default'}`,
       );

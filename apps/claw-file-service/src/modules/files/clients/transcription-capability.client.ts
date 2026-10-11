@@ -93,7 +93,12 @@ export class TranscriptionCapabilityClient {
     const url = `${base}/api/v1/internal/connectors/config?provider=${encodeURIComponent(provider)}`;
     const config = await httpGet<TranscriptionConnectorConfig>(
       url,
-      { timeout: TRANSCRIPTION_CONNECTOR_TIMEOUT_MS },
+      {
+        timeout: TRANSCRIPTION_CONNECTOR_TIMEOUT_MS,
+        // The endpoint returns a decrypted provider key: connector-service
+        // requires the inter-service token on it.
+        headers: { Authorization: `Service ${AppConfig.get().INTER_SERVICE_AUTH_TOKEN}` },
+      },
       declaredHost(base),
     );
     if (typeof config.apiKey !== 'string' || config.apiKey.length === 0) {

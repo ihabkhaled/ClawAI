@@ -27,7 +27,7 @@ export function ModelExposureTable({
 }: ModelExposureListProps): ReactElement {
   return (
     <div
-      className="touch:hidden block max-h-[70vh] overflow-auto rounded-md border"
+      className="touch:hidden block max-h-[70vh] overflow-auto overscroll-contain rounded-md border"
       data-testid="model-exposure-table"
     >
       <table className="w-full min-w-[56rem] text-sm">

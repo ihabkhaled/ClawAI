@@ -5975,6 +5975,7 @@ Your task:
     const response = await httpRequest<ConnectorConfigResponse>({
       url,
       method: 'GET',
+      headers: { Authorization: buildInterServiceAuthHeader() },
       timeoutMs: 10_000,
     });
 

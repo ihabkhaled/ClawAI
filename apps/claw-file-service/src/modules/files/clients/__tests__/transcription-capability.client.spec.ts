@@ -5,6 +5,7 @@
 //   - a model with no AUDIO modality is not treated as capable
 
 import { afterEach, beforeEach, describe, expect, it, type MockedFunction, vi } from 'vitest';
+import { Logger } from '@nestjs/common';
 import { httpGet } from '@claw/shared-utilities';
 import { TranscriptionCapabilityClient } from '../transcription-capability.client';
 import { type TranscriptionSnapshotResponse } from '../../types/transcription.types';
@@ -20,6 +21,7 @@ vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: {
     get: vi.fn(() => ({
       CONNECTOR_SERVICE_URL: 'http://connector-service:4003',
+      INTER_SERVICE_AUTH_TOKEN: 'service-secret-token-0000000000',
       LOCAL_SPEECH_BASE_URL: localConfig.base,
     })),
   },
@@ -269,6 +271,29 @@ describe('TranscriptionCapabilityClient', () => {
       const config = await client.fetchConnectorConfig('LOCAL');
 
       expect(config.baseUrl).toBe('http://proxy/v1');
+    });
+
+    it('sends the Service token on the connector config request and never logs it', async () => {
+      mockedHttpGet.mockResolvedValueOnce({ provider: 'GEMINI', apiKey: 'k', baseUrl: null });
+      const logSpies = [
+        vi.spyOn(Logger.prototype, 'log'),
+        vi.spyOn(Logger.prototype, 'warn'),
+        vi.spyOn(Logger.prototype, 'error'),
+        vi.spyOn(Logger.prototype, 'debug'),
+      ];
+
+      await client.fetchConnectorConfig('GEMINI');
+
+      const [url, config] = mockedHttpGet.mock.calls[0] ?? [];
+      expect(url).toBe(
+        'http://connector-service:4003/api/v1/internal/connectors/config?provider=GEMINI',
+      );
+      expect(config?.headers).toEqual({
+        Authorization: 'Service service-secret-token-0000000000',
+      });
+      for (const spy of logSpies) {
+        expect(JSON.stringify(spy.mock.calls)).not.toContain('service-secret-token');
+      }
     });
 
     it('refuses LOCAL config when the base URL is blank', async () => {

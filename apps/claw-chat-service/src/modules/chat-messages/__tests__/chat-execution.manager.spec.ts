@@ -907,6 +907,7 @@ describe('ChatExecutionManager', () => {
       expect.objectContaining({
         url: 'http://connector:4011/api/v1/internal/connectors/config?provider=OLLAMA',
         method: 'GET',
+        headers: { Authorization: 'Service test-token' },
       }),
     );
     expect(httpRequest).toHaveBeenNthCalledWith(

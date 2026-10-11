@@ -253,7 +253,10 @@ export class VideoExecutionManager {
     const config = AppConfig.get();
     const url = `${config.CONNECTOR_SERVICE_URL}/api/v1/internal/connectors/config?provider=${encodeURIComponent(connector)}`;
     try {
-      const result = await httpGet<ConnectorConfigResponse>(url, { timeout: 10_000 });
+      const result = await httpGet<ConnectorConfigResponse>(url, {
+        timeout: 10_000,
+        headers: { Authorization: buildInterServiceAuthHeader() },
+      });
       return {
         apiKey: result.apiKey,
         baseUrl:

@@ -81,6 +81,15 @@ describe('VideoExecutionManager', () => {
     veo.download.mockResolvedValue(Buffer.from('mp4-bytes'));
   });
 
+  it('sends the Service token header on the connector config request', async () => {
+    await manager.execute(input);
+
+    const call = http.httpGet.mock.calls.find((c) =>
+      String(c[0]).includes('/internal/connectors/config'),
+    );
+    expect(call?.[1]).toMatchObject({ headers: { Authorization: 'Service tok' } });
+  });
+
   it('reserves a hold sized on the SECONDS, priced by the bare model id', async () => {
     await manager.execute(input);
 

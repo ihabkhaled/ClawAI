@@ -80,6 +80,9 @@ describe('ImageExecutionManager — cloud providers', () => {
     expect(vi.mocked(httpGet).mock.calls[0]?.[0]).toContain(
       '/internal/connectors/config?provider=GROK',
     );
+    expect(vi.mocked(httpGet).mock.calls[0]?.[1]).toMatchObject({
+      headers: { Authorization: 'Service t' },
+    });
     expect(generateWithXai).toHaveBeenCalledWith(
       XAI_DEFAULT_BASE_URL,
       'xai-k',

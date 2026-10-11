@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { type Mock, vi } from 'vitest';
 import { PaygSurface } from '@claw/shared-types';
 import { resetInternalHostAllowlist } from '@claw/shared-utilities';
@@ -144,5 +145,38 @@ describe('internal service calls go through the outbound URL guard', () => {
     expect(new Headers(installed?.[1].headers).get('authorization')).toBe(
       'Service inter-service-secret',
     );
+  });
+
+  it('every connector config probe sends the inter-service token and never logs it', async () => {
+    vi.spyOn(AppConfig, 'get').mockReturnValue(
+      config({
+        OLLAMA_SERVICE_URL: 'http://ollama-service:4008',
+        CONNECTOR_SERVICE_URL: 'http://connector-service:4003',
+        AI_ACTION_MODEL_RESOLVER_TTL_SECONDS: 60,
+      }),
+    );
+    fetchMock.mockImplementation((target: string) =>
+      String(target).includes('/internal/connectors/config')
+        ? Promise.reject(new Error('connector down'))
+        : Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({ models: [] }) }),
+    );
+    const logged: string[] = [];
+    const capture = (message: unknown): void => {
+      logged.push(String(message));
+    };
+    vi.spyOn(Logger.prototype, 'debug').mockImplementation(capture);
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(capture);
+
+    await new ModelCatalogResolverManager().resolveDefaults();
+
+    const probes = fetchMock.mock.calls.filter(([target]) =>
+      String(target).includes('/api/v1/internal/connectors/config?provider='),
+    ) as [string, RequestInit][];
+    expect(probes).toHaveLength(5);
+    for (const [, init] of probes) {
+      expect(new Headers(init.headers).get('authorization')).toBe('Service inter-service-secret');
+    }
+    expect(logged.length).toBeGreaterThan(0);
+    expect(logged.some((line) => line.includes('inter-service-secret'))).toBe(false);
   });
 });
