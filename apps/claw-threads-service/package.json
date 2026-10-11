@@ -1,6 +1,6 @@
 {
   "name": "claw-threads-service",
-  "version": "1.204.2",
+  "version": "1.204.3",
   "private": true,
   "description": "ClawAI Threads publication and community service",
   "license": "UNLICENSED",
