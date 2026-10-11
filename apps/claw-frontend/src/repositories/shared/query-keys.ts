@@ -150,6 +150,23 @@ export const queryKeys = {
     // Providers chat-service's credit breaker is skipping (ADR-125 addendum).
     providerBreakers: ['admin', 'provider-breakers'] as const,
   },
+  // Admin Observability explorer. Keys hold the SELECTION (preset, filters), not
+  // computed dates, so each refetch rebuilds the window from the current time.
+  observabilityExplorer: {
+    all: ['observability-explorer'] as const,
+    users: (scope: unknown, list: unknown) =>
+      ['observability-explorer', 'users', scope, list] as const,
+    leaderboard: (scope: unknown, list: unknown) =>
+      ['observability-explorer', 'leaderboard', scope, list] as const,
+    timeseries: (scope: unknown, userId: string) =>
+      ['observability-explorer', 'timeseries', scope, userId] as const,
+    userDetail: (userId: string, scope: unknown) =>
+      ['observability-explorer', 'user', userId, scope] as const,
+    userRequests: (userId: string, scope: unknown, list: unknown) =>
+      ['observability-explorer', 'user-requests', userId, scope, list] as const,
+    failures: (query: unknown) => ['observability-explorer', 'failures', query] as const,
+    tracing: (query: unknown) => ['observability-explorer', 'tracing', query] as const,
+  },
   adminPlans: {
     all: ['adminPlans'] as const,
     lists: () => [...queryKeys.adminPlans.all, 'list'] as const,

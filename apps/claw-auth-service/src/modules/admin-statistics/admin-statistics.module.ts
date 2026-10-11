@@ -4,9 +4,13 @@ import { CreditModule } from '../credit/credit.module';
 import { PlansModule } from '../plans/plans.module';
 import { QuotaModule } from '../quota/quota.module';
 import { AdminUsageAnalyticsController } from './controllers/admin-usage-analytics.controller';
+import { AdminUsageExplorerController } from './controllers/admin-usage-explorer.controller';
 import { AdminUserStatisticsController } from './controllers/admin-user-statistics.controller';
 import { AdminUsageAnalyticsRepository } from './repositories/admin-usage-analytics.repository';
+import { AdminUsageExplorerRepository } from './repositories/admin-usage-explorer.repository';
 import { AdminUsageAnalyticsService } from './services/admin-usage-analytics.service';
+import { AdminUsageAuditService } from './services/admin-usage-audit.service';
+import { AdminUsageExplorerService } from './services/admin-usage-explorer.service';
 import { AdminUserPlanService } from './services/admin-user-plan.service';
 import { AdminUserStatisticsService } from './services/admin-user-statistics.service';
 
@@ -21,12 +25,19 @@ import { AdminUserStatisticsService } from './services/admin-user-statistics.ser
  */
 @Module({
   imports: [QuotaModule, CreditModule, PlansModule],
-  controllers: [AdminUserStatisticsController, AdminUsageAnalyticsController],
+  controllers: [
+    AdminUserStatisticsController,
+    AdminUsageAnalyticsController,
+    AdminUsageExplorerController,
+  ],
   providers: [
     AdminUserStatisticsService,
     AdminUserPlanService,
     AdminUsageAnalyticsService,
     AdminUsageAnalyticsRepository,
+    AdminUsageExplorerRepository,
+    AdminUsageExplorerService,
+    AdminUsageAuditService,
   ],
 })
 export class AdminStatisticsModule {}

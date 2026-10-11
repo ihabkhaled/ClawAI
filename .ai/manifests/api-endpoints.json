@@ -625,6 +625,11 @@
       },
       {
         "method": "GET",
+        "route": "/audits/failures",
+        "source": "apps/claw-audit-service/src/modules/audits/controllers/observability.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/audits/stats",
         "source": "apps/claw-audit-service/src/modules/audits/controllers/audits.controller.ts"
       },
@@ -697,6 +702,11 @@
         "method": "GET",
         "route": "/usage/summary",
         "source": "apps/claw-audit-service/src/modules/audits/controllers/audits.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/usage/tracing",
+        "source": "apps/claw-audit-service/src/modules/audits/controllers/observability.controller.ts"
       }
     ],
     "claw-auth-service": [
@@ -929,6 +939,36 @@
         "method": "GET",
         "route": "/admin/usage-analytics",
         "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-usage-analytics.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/usage-explorer/leaderboard",
+        "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-usage-explorer.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/usage-explorer/timeseries",
+        "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-usage-explorer.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/usage-explorer/users",
+        "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-usage-explorer.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/usage-explorer/users/:userId",
+        "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-usage-explorer.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/usage-explorer/users/:userId/requests",
+        "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-usage-explorer.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/usage-explorer/users/export",
+        "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-usage-explorer.controller.ts"
       },
       {
         "method": "GET",
@@ -4232,5 +4272,5 @@
     ]
   },
   "generated": true,
-  "total": 838
+  "total": 846
 }
