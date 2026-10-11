@@ -41,6 +41,11 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       email: 'By email',
       emailHint: 'Sent to your verified address.',
       saveFailed: 'Could not save your choice. Try again.',
+      push: 'Push notifications',
+      pushHint: 'A pop-up on this device, even when ClawAI is closed.',
+      pushBlocked:
+        'Notifications are blocked for this site. Allow them in your browser settings, then try again.',
+      pushFailed: 'Could not turn on push notifications. Try again.',
     },
   },
   [Locale.AR]: {
@@ -76,6 +81,10 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       email: 'بالبريد الإلكتروني',
       emailHint: 'يُرسل إلى عنوانك الموثّق.',
       saveFailed: 'تعذّر حفظ اختيارك. حاول مرة أخرى.',
+      push: 'إشعارات فورية',
+      pushHint: 'إشعار منبثق على هذا الجهاز حتى عندما يكون ClawAI مغلقًا.',
+      pushBlocked: 'الإشعارات محظورة لهذا الموقع. اسمح بها من إعدادات المتصفح ثم حاول مرة أخرى.',
+      pushFailed: 'تعذّر تفعيل الإشعارات الفورية. حاول مرة أخرى.',
     },
   },
   [Locale.FR]: {
@@ -113,6 +122,11 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       email: 'Par e-mail',
       emailHint: 'Envoyé à votre adresse vérifiée.',
       saveFailed: 'Impossible d’enregistrer votre choix. Réessayez.',
+      push: 'Notifications push',
+      pushHint: 'Une alerte sur cet appareil, même quand ClawAI est fermé.',
+      pushBlocked:
+        'Les notifications sont bloquées pour ce site. Autorisez-les dans les réglages du navigateur, puis réessayez.',
+      pushFailed: "Impossible d'activer les notifications push. Réessayez.",
     },
   },
   [Locale.IT]: {
@@ -148,6 +162,11 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       email: 'Per e-mail',
       emailHint: 'Inviata al tuo indirizzo verificato.',
       saveFailed: 'Impossibile salvare la tua scelta. Riprova.',
+      push: 'Notifiche push',
+      pushHint: 'Un avviso su questo dispositivo, anche quando ClawAI è chiuso.',
+      pushBlocked:
+        'Le notifiche sono bloccate per questo sito. Consentile nelle impostazioni del browser e riprova.',
+      pushFailed: 'Impossibile attivare le notifiche push. Riprova.',
     },
   },
   [Locale.DE]: {
@@ -185,6 +204,12 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       email: 'Per E-Mail',
       emailHint: 'An deine bestätigte Adresse gesendet.',
       saveFailed: 'Deine Auswahl konnte nicht gespeichert werden. Versuche es erneut.',
+      push: 'Push-Benachrichtigungen',
+      pushHint: 'Ein Hinweis auf diesem Gerät, auch wenn ClawAI geschlossen ist.',
+      pushBlocked:
+        'Benachrichtigungen sind für diese Website blockiert. Erlauben Sie sie in den Browser-Einstellungen und versuchen Sie es erneut.',
+      pushFailed:
+        'Push-Benachrichtigungen konnten nicht aktiviert werden. Versuchen Sie es erneut.',
     },
   },
   [Locale.ES]: {
@@ -220,6 +245,11 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       email: 'Por correo',
       emailHint: 'Se envía a tu dirección verificada.',
       saveFailed: 'No se pudo guardar tu elección. Inténtalo de nuevo.',
+      push: 'Notificaciones push',
+      pushHint: 'Un aviso en este dispositivo, incluso con ClawAI cerrado.',
+      pushBlocked:
+        'Las notificaciones están bloqueadas para este sitio. Permítelas en los ajustes del navegador e inténtalo de nuevo.',
+      pushFailed: 'No se pudieron activar las notificaciones push. Inténtalo de nuevo.',
     },
   },
   [Locale.PT]: {
@@ -256,6 +286,11 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       email: 'Por e-mail',
       emailHint: 'Enviado ao seu endereço verificado.',
       saveFailed: 'Não foi possível salvar sua escolha. Tente de novo.',
+      push: 'Notificações push',
+      pushHint: 'Um aviso neste dispositivo, mesmo com o ClawAI fechado.',
+      pushBlocked:
+        'As notificações estão bloqueadas para este site. Permita-as nas configurações do navegador e tente novamente.',
+      pushFailed: 'Não foi possível ativar as notificações push. Tente novamente.',
     },
   },
   [Locale.RU]: {
@@ -292,6 +327,11 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       email: 'По электронной почте',
       emailHint: 'Отправляется на ваш подтверждённый адрес.',
       saveFailed: 'Не удалось сохранить выбор. Попробуйте снова.',
+      push: 'Push-уведомления',
+      pushHint: 'Всплывающее уведомление на этом устройстве, даже когда ClawAI закрыт.',
+      pushBlocked:
+        'Уведомления для этого сайта заблокированы. Разрешите их в настройках браузера и повторите попытку.',
+      pushFailed: 'Не удалось включить push-уведомления. Повторите попытку.',
     },
   },
   [Locale.ZH]: {
@@ -327,6 +367,10 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       email: '通过邮件',
       emailHint: '发送到你已验证的地址。',
       saveFailed: '无法保存你的选择。请重试。',
+      push: '推送通知',
+      pushHint: '即使 ClawAI 已关闭，也会在此设备上弹出提醒。',
+      pushBlocked: '此网站的通知已被屏蔽。请在浏览器设置中允许通知，然后重试。',
+      pushFailed: '无法开启推送通知，请重试。',
     },
   },
   [Locale.JA]: {
@@ -362,6 +406,11 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       email: 'メール',
       emailHint: '確認済みのアドレスに送信します。',
       saveFailed: '選択を保存できませんでした。もう一度お試しください。',
+      push: 'プッシュ通知',
+      pushHint: 'ClawAI を閉じていても、この端末にポップアップで知らせます。',
+      pushBlocked:
+        'このサイトの通知はブロックされています。ブラウザの設定で許可してから、もう一度お試しください。',
+      pushFailed: 'プッシュ通知をオンにできませんでした。もう一度お試しください。',
     },
   },
   [Locale.HI]: {
@@ -397,6 +446,11 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       email: 'ईमेल से',
       emailHint: 'आपके सत्यापित पते पर भेजा जाता है।',
       saveFailed: 'आपकी पसंद सहेजी नहीं जा सकी। फिर कोशिश करें।',
+      push: 'पुश सूचनाएँ',
+      pushHint: 'ClawAI बंद होने पर भी इस डिवाइस पर एक पॉप-अप।',
+      pushBlocked:
+        'इस साइट के लिए सूचनाएँ ब्लॉक हैं। ब्राउज़र सेटिंग में उन्हें अनुमति दें, फिर दोबारा कोशिश करें।',
+      pushFailed: 'पुश सूचनाएँ चालू नहीं हो सकीं। फिर से कोशिश करें।',
     },
   },
   [Locale.TH]: {
@@ -432,6 +486,11 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       email: 'ทางอีเมล',
       emailHint: 'ส่งไปยังที่อยู่ที่ยืนยันแล้วของคุณ',
       saveFailed: 'บันทึกตัวเลือกไม่ได้ ลองอีกครั้ง',
+      push: 'การแจ้งเตือนแบบพุช',
+      pushHint: 'ป๊อปอัปบนอุปกรณ์นี้ แม้ปิด ClawAI อยู่',
+      pushBlocked:
+        'การแจ้งเตือนของเว็บไซต์นี้ถูกบล็อก โปรดอนุญาตในการตั้งค่าเบราว์เซอร์แล้วลองอีกครั้ง',
+      pushFailed: 'เปิดการแจ้งเตือนแบบพุชไม่สำเร็จ โปรดลองอีกครั้ง',
     },
   },
   [Locale.FA]: {
@@ -467,6 +526,11 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       email: 'با ایمیل',
       emailHint: 'به نشانی تأییدشدهٔ شما فرستاده می‌شود.',
       saveFailed: 'ذخیرهٔ انتخاب شما ممکن نشد. دوباره تلاش کنید.',
+      push: 'اعلان‌های فوری',
+      pushHint: 'یک اعلان پاپ‌آپ روی این دستگاه، حتی وقتی ClawAI بسته است.',
+      pushBlocked:
+        'اعلان‌ها برای این سایت مسدود شده‌اند. در تنظیمات مرورگر آن‌ها را مجاز کنید و دوباره تلاش کنید.',
+      pushFailed: 'روشن کردن اعلان‌های فوری ممکن نشد. دوباره تلاش کنید.',
     },
   },
 };

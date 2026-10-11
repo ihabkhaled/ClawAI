@@ -170,3 +170,7 @@ One notification for one user (ADR-164). `user_id` (FK users, cascade), `kind`, 
 ### user_notification_preferences
 
 One row per user, created on first change: `in_app_enabled` (default true), `email_enabled` (default true), `push_enabled` (default false), `updated_at`. No row means those defaults.
+
+### push_subscriptions
+
+One row per browser that agreed to Web Push (ADR-166). `endpoint` unique (varchar 1000, treated as a credential), `p256dh` and `auth` are the browser's public keys, `last_used_at` set on a successful send. FK `user_id` to `users`, cascade delete. Max 10 per user, enforced in the service.

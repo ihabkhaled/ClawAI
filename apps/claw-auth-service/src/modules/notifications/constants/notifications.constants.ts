@@ -38,3 +38,17 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferencesView = {
   emailEnabled: true,
   pushEnabled: false,
 };
+
+/** Web Push endpoints are https URLs on the browser vendor's push service. */
+export const PUSH_ENDPOINT_MAX_LENGTH = 1000;
+export const PUSH_P256DH_MAX_LENGTH = 200;
+export const PUSH_AUTH_MAX_LENGTH = 100;
+
+/** A browser person rarely has more than a few; the cap keeps one account from fanning out forever. */
+export const PUSH_MAX_SUBSCRIPTIONS_PER_USER = 10;
+
+/** Seconds the push service may hold an undelivered message (a day: a stale "ready" ping is noise). */
+export const PUSH_TTL_SECONDS = 86_400;
+
+/** HTTP statuses a push service uses to say the subscription no longer exists. */
+export const PUSH_GONE_STATUS_CODES: readonly number[] = [404, 410];

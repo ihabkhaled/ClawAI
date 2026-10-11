@@ -9,6 +9,9 @@ function build() {
     updatePreferences: vi.fn().mockResolvedValue({ inAppEnabled: false }),
     markRead: vi.fn().mockResolvedValue({ unreadCount: 1 }),
     markAllRead: vi.fn().mockResolvedValue({ unreadCount: 0 }),
+    getPushConfig: vi.fn().mockReturnValue({ enabled: true, publicKey: 'pub' }),
+    subscribePush: vi.fn().mockResolvedValue(undefined),
+    unsubscribePush: vi.fn().mockResolvedValue(undefined),
   };
   return { controller: new NotificationsController(service as never), service };
 }
@@ -26,5 +29,15 @@ describe('NotificationsController', () => {
     expect(service.updatePreferences).toHaveBeenCalledWith('user-1', { inAppEnabled: false });
     expect(service.markRead).toHaveBeenCalledWith('user-1', 'someone-elses-notification');
     expect(service.markAllRead).toHaveBeenCalledWith('user-1');
+  });
+
+  it('scopes push subscribe and unsubscribe by the signed-in user and exposes only the public key', async () => {
+    const { controller, service } = build();
+    const body = { endpoint: 'https://push.example.test/a', keys: { p256dh: 'p', auth: 'a' } };
+    await controller.subscribePush(user, body);
+    await controller.unsubscribePush(user, { endpoint: body.endpoint });
+    expect(controller.pushConfig()).toEqual({ enabled: true, publicKey: 'pub' });
+    expect(service.subscribePush).toHaveBeenCalledWith('user-1', body);
+    expect(service.unsubscribePush).toHaveBeenCalledWith('user-1', body.endpoint);
   });
 });

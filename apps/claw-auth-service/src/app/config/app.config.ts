@@ -41,6 +41,12 @@ const appConfigSchema = z.object({
   CONTACT_SMTP_SECURE: z.enum(['true', 'false']).default('false'),
   CONTACT_SMTP_USER: z.string().min(1).optional(),
   CONTACT_SMTP_PASS: z.string().min(1).optional(),
+  // Web Push (VAPID). All three or none: a partial set leaves push disabled rather than
+  // half-enabled, and the portal then hides the push switch. Generate a pair with
+  // `npx web-push generate-vapid-keys`. The public key is not a secret; the private key is.
+  VAPID_PUBLIC_KEY: z.string().min(40).optional(),
+  VAPID_PRIVATE_KEY: z.string().min(20).optional(),
+  VAPID_SUBJECT: z.string().min(1).optional(),
   DEPLOYMENT_STATUS_FILE: z.string().min(1).default('/app/.deploy/status.json'),
   DEPLOYMENT_AUTOMATION_FILE: z.string().min(1).default('/app/.deploy/automation.json'),
 

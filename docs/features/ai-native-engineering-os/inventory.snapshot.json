@@ -1331,6 +1331,21 @@
           "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/notifications/push/config",
+          "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/notifications/push/subscriptions",
+          "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/notifications/push/subscriptions",
+          "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/notifications/read-all",
           "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
@@ -6476,6 +6491,21 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "VAPID_PRIVATE_KEY"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "VAPID_PUBLIC_KEY"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "VAPID_SUBJECT"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "WEBHOOK_CONNECTOR_REQUESTS_PER_MINUTE"
       },
       {
@@ -10432,6 +10462,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "PushSubscription"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "Role"
           },
           {
@@ -11428,7 +11463,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 168
+        "testFiles": 170
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -11452,7 +11487,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 768
+        "testFiles": 772
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -12286,8 +12321,8 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 56,
-    "endpointCount": 846,
-    "envVarCount": 375,
+    "endpointCount": 849,
+    "envVarCount": 378,
     "eventCount": 190,
     "frontendRouteCount": 161,
     "localeCount": 13,
@@ -12298,7 +12333,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2199,
+    "totalTestFiles": 2205,
     "workspaceCount": 27
   }
 }

@@ -1276,6 +1276,21 @@
         "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/notifications/push/config",
+        "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/notifications/push/subscriptions",
+        "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/notifications/push/subscriptions",
+        "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/notifications/read-all",
         "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
@@ -4272,5 +4287,5 @@
     ]
   },
   "generated": true,
-  "total": 846
+  "total": 849
 }

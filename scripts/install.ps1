@@ -1307,6 +1307,13 @@ CONTACT_SMTP_SECURE=false
 CONTACT_SMTP_USER=
 CONTACT_SMTP_PASS=
 
+# Web Push for portal notifications (Threads ready/published/failed). All three or none: a partial
+# set leaves push off and the portal hides the switch. Generate a pair: npx web-push generate-vapid-keys
+# The public key is not a secret; the private key is. Subject is a mailto: or https: contact.
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=
+
 # =============================================================================
 # Ollama
 # =============================================================================

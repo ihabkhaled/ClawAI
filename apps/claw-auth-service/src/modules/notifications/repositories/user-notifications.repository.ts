@@ -8,6 +8,7 @@ import type {
   NotificationPreferencesView,
   NotificationRecipientRecord,
   NotificationRow,
+  PushSubscriptionInput,
 } from '../types/notifications.types';
 
 /** Every query is scoped by `userId`: there is no way to read or change another person's row. */
@@ -109,5 +110,47 @@ export class UserNotificationsRepository {
       isActive: user.status === UserStatus.ACTIVE,
       isEmailVerified: user.emailVerifiedAt !== null,
     };
+  }
+
+  /** One browser, one row: a browser that signs in as someone else moves to the new person. */
+  async saveSubscription(userId: string, input: PushSubscriptionInput): Promise<void> {
+    await this.prisma.pushSubscription.upsert({
+      where: { endpoint: input.endpoint },
+      create: { userId, ...input },
+      update: { userId, p256dh: input.p256dh, auth: input.auth },
+    });
+  }
+
+  async countSubscriptions(userId: string): Promise<number> {
+    return this.prisma.pushSubscription.count({ where: { userId } });
+  }
+
+  async hasSubscription(userId: string, endpoint: string): Promise<boolean> {
+    return (await this.prisma.pushSubscription.count({ where: { userId, endpoint } })) > 0;
+  }
+
+  async findSubscriptions(userId: string): Promise<PushSubscriptionInput[]> {
+    return this.prisma.pushSubscription.findMany({
+      where: { userId },
+      select: { endpoint: true, p256dh: true, auth: true },
+    });
+  }
+
+  /** Only the caller's own row: another person's endpoint reads as "nothing to remove". */
+  async deleteSubscription(userId: string, endpoint: string): Promise<boolean> {
+    const result = await this.prisma.pushSubscription.deleteMany({ where: { userId, endpoint } });
+    return result.count === 1;
+  }
+
+  /** The push service said this subscription is gone; drop it whoever it belonged to. */
+  async deleteGoneSubscription(endpoint: string): Promise<void> {
+    await this.prisma.pushSubscription.deleteMany({ where: { endpoint } });
+  }
+
+  async touchSubscription(endpoint: string): Promise<void> {
+    await this.prisma.pushSubscription.updateMany({
+      where: { endpoint },
+      data: { lastUsedAt: new Date() },
+    });
   }
 }

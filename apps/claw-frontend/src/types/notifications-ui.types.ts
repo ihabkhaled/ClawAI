@@ -29,6 +29,15 @@ export type UseNotificationPreferencesReturn = {
   save: (patch: NotificationPreferencesPatch) => void;
 };
 
+export type UsePushNotificationsReturn = {
+  /** True when this browser and this deployment can do push; the switch is hidden otherwise. */
+  isAvailable: boolean;
+  isSubscribed: boolean;
+  isBlocked: boolean;
+  isBusy: boolean;
+  toggle: (enabled: boolean) => void;
+};
+
 export type NotificationRowProps = {
   item: NotificationItem;
   text: NotificationRowText;

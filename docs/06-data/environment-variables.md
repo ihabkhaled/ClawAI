@@ -24,16 +24,19 @@ server-only SMTP configuration and the shared hardened transport adapter.
 Invoice PDFs remain available through authenticated download when delivery is
 disabled.
 
-| Variable                 | Required             | Default               | Description                                       |
-| ------------------------ | -------------------- | --------------------- | ------------------------------------------------- |
-| `CONTACT_EMAIL_ENABLED`  | No                   | `false`               | Enables configured outbound delivery              |
-| `CONTACT_EMAIL_PROVIDER` | No                   | `none`                | `smtp` for real delivery; `none` disables it      |
-| `CONTACT_EMAIL_FROM`     | When SMTP is enabled | `no-reply@claw-ai.co` | Verified sender used by contact and invoice mail  |
-| `CONTACT_SMTP_HOST`      | When SMTP is enabled | —                     | SMTP relay host                                   |
-| `CONTACT_SMTP_PORT`      | No                   | `587`                 | `465` implicit TLS; other ports require STARTTLS  |
-| `CONTACT_SMTP_SECURE`    | No                   | `false`               | Operator hint; TLS mode is safely derived by port |
-| `CONTACT_SMTP_USER`      | When SMTP is enabled | —                     | SMTP username                                     |
-| `CONTACT_SMTP_PASS`      | When SMTP is enabled | —                     | SMTP password; never log or expose                |
+| Variable                 | Required             | Default               | Description                                                                                                                |
+| ------------------------ | -------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `CONTACT_EMAIL_ENABLED`  | No                   | `false`               | Enables configured outbound delivery                                                                                       |
+| `CONTACT_EMAIL_PROVIDER` | No                   | `none`                | `smtp` for real delivery; `none` disables it                                                                               |
+| `CONTACT_EMAIL_FROM`     | When SMTP is enabled | `no-reply@claw-ai.co` | Verified sender used by contact and invoice mail                                                                           |
+| `CONTACT_SMTP_HOST`      | When SMTP is enabled | —                     | SMTP relay host                                                                                                            |
+| `CONTACT_SMTP_PORT`      | No                   | `587`                 | `465` implicit TLS; other ports require STARTTLS                                                                           |
+| `CONTACT_SMTP_SECURE`    | No                   | `false`               | Operator hint; TLS mode is safely derived by port                                                                          |
+| `CONTACT_SMTP_USER`      | When SMTP is enabled | —                     | SMTP username                                                                                                              |
+| `CONTACT_SMTP_PASS`      | When SMTP is enabled | —                     | SMTP password; never log or expose                                                                                         |
+| `VAPID_PUBLIC_KEY`       | Web Push             | —                     | VAPID public key for portal push notifications (auth-service). All three VAPID vars or none; a partial set leaves push off |
+| `VAPID_PRIVATE_KEY`      | Web Push             | —                     | VAPID private key; a secret, never log or expose                                                                           |
+| `VAPID_SUBJECT`          | Web Push             | —                     | `mailto:` or `https:` contact the push service may use                                                                     |
 
 `CONTACT_EMAIL_TO`, `CONTACT_RATE_LIMIT_MAX`, and
 `CONTACT_RATE_LIMIT_WINDOW_MS` are contact-form-only. Invoice delivery uses the

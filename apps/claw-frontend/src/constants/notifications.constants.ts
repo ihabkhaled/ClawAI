@@ -14,6 +14,10 @@ export const NOTIFICATIONS_UNREAD_POLL_MS = 60_000;
 
 export const NOTIFICATIONS_STALE_MS = 30_000;
 
+/** Web Push routes, under the same auth-service location as the rest. */
+export const NOTIFICATIONS_PUSH_CONFIG_PATH = `${NOTIFICATIONS_API_BASE}/push/config`;
+export const NOTIFICATIONS_PUSH_SUBSCRIPTIONS_PATH = `${NOTIFICATIONS_API_BASE}/push/subscriptions`;
+
 /** The badge shows this and above as "99+". */
 export const NOTIFICATIONS_MAX_BADGE = 99;
 

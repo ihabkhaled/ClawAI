@@ -55,3 +55,35 @@ export type NotificationRow = {
   readAt: Date | null;
   createdAt: Date;
 };
+
+/** A browser's Web Push registration, as the browser hands it over. */
+export type PushSubscriptionInput = {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+};
+
+/** What the portal needs to ask the browser for permission. */
+export type PushConfigView = {
+  enabled: boolean;
+  publicKey: string | null;
+};
+
+/** What a push message carries. Already in the recipient's language; no ids, no user data. */
+export type PushMessagePayload = {
+  title: string;
+  body: string;
+  link: string;
+  /** Portal language folder (`en`, `ar`, ...) so the click opens the right locale. */
+  lang: string;
+  tag: string;
+};
+
+export type PushSendOutcome = 'SENT' | 'GONE' | 'FAILED';
+
+/** The whole VAPID set; push is on only when all three are configured. */
+export type PushVapidKeys = {
+  publicKey: string;
+  privateKey: string;
+  subject: string;
+};

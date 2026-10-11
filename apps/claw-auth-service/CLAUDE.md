@@ -698,3 +698,7 @@ a migrated database, not only the dev one.
   (`estimateInputCostMicroUsd` 4th argument) or it is absorbed. `credit-cache-write.spec.ts` proves
   both directions; keep it green.
 - `weighted_usage_records.raw_cache_write_tokens` attributes the write slice per settled row.
+
+## Web Push (ADR-166)
+
+`modules/notifications` also sends browser push. `web-push` is imported only in `WebPushAdapter`. VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY and VAPID_SUBJECT are all-or-nothing; never log a subscription endpoint. Push text comes from the email dictionaries (`buildPushMessage`), never from new strings.

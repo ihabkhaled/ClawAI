@@ -39,6 +39,10 @@ const KEYS = [
   'notifications.preferences.email',
   'notifications.preferences.emailHint',
   'notifications.preferences.saveFailed',
+  'notifications.preferences.push',
+  'notifications.preferences.pushHint',
+  'notifications.preferences.pushBlocked',
+  'notifications.preferences.pushFailed',
   ...Object.values(NOTIFICATION_TEXT_KEYS).flatMap((keys) => [keys.titleKey, keys.bodyKey]),
 ];
 

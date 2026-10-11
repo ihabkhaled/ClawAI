@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { AuthModule } from '../auth/auth.module';
+import { WebPushAdapter } from './adapters/web-push.adapter';
 import { NotificationsController } from './controllers/notifications.controller';
 import { UserNotificationRequestedConsumer } from './consumers/user-notification-requested.consumer';
 import { UserNotificationsRepository } from './repositories/user-notifications.repository';
@@ -13,7 +14,12 @@ import { NotificationsService } from './services/notifications.service';
 @Module({
   imports: [AuthModule],
   controllers: [NotificationsController],
-  providers: [NotificationsService, UserNotificationsRepository, UserNotificationRequestedConsumer],
+  providers: [
+    NotificationsService,
+    WebPushAdapter,
+    UserNotificationsRepository,
+    UserNotificationRequestedConsumer,
+  ],
   exports: [NotificationsService],
 })
 export class NotificationsModule {}

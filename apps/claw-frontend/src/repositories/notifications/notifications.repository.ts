@@ -1,9 +1,15 @@
-import { NOTIFICATIONS_API_BASE } from '@/constants/notifications.constants';
+import {
+  NOTIFICATIONS_API_BASE,
+  NOTIFICATIONS_PUSH_CONFIG_PATH,
+  NOTIFICATIONS_PUSH_SUBSCRIPTIONS_PATH,
+} from '@/constants/notifications.constants';
 import { apiClient } from '@/services/shared/api-client';
 import type {
   NotificationPage,
   NotificationPreferences,
   NotificationPreferencesPatch,
+  PushConfig,
+  PushSubscriptionBody,
 } from '@/types/notifications.types';
 
 /**
@@ -54,6 +60,19 @@ class NotificationsRepository {
       patch,
     );
     return response.data;
+  }
+
+  async getPushConfig(): Promise<PushConfig> {
+    const response = await apiClient.get<PushConfig>(NOTIFICATIONS_PUSH_CONFIG_PATH);
+    return response.data;
+  }
+
+  async subscribePush(body: PushSubscriptionBody): Promise<void> {
+    await apiClient.post(NOTIFICATIONS_PUSH_SUBSCRIPTIONS_PATH, body);
+  }
+
+  async unsubscribePush(endpoint: string): Promise<void> {
+    await apiClient.delete(NOTIFICATIONS_PUSH_SUBSCRIPTIONS_PATH, { data: { endpoint } });
   }
 }
 

@@ -7186,5 +7186,9 @@ export type NotificationsLocaleTranslation = {
     email: string;
     emailHint: string;
     saveFailed: string;
+    push: string;
+    pushHint: string;
+    pushBlocked: string;
+    pushFailed: string;
   };
 };

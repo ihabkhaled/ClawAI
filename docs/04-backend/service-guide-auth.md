@@ -666,6 +666,10 @@ in-turn tool calls (only a count) and image generation as a named tool; the
 
 `modules/notifications`: consumes `user.notification_requested`, writes `user_notifications` (idempotent on user + dedupe key), emails through `AuthEmailAdapter.sendThreadNotification` in the person's language, and serves the signed-in person's list, read marks and channel preferences under `/api/v1/notifications` (own nginx location). Email kinds `THREAD_READY_FOR_REVIEW`, `THREAD_PUBLISHED`, `THREAD_FAILED` exist in all 13 copy files. See ADR-164.
 
+### Web Push (ADR-166, 2026-10-11)
+
+`WebPushAdapter` (the only `web-push` import) sends to every row of `push_subscriptions` for a person whose `pushEnabled` is on, from `NotificationsService.receive` after the in-app row and email. Text is the localized email subject and preheader (`buildPushMessage`), so push has no strings of its own. Routes: `GET /notifications/push/config` (enabled and public key), `POST` and `DELETE /notifications/push/subscriptions` (own rows only, 204). Config: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, all three or push is off. A 404 or 410 from the push service deletes the subscription.
+
 ## Admin usage explorer
 
 Paginated users table, per-user consumption, leaderboards and time series under `/api/v1/admin/usage-explorer/*`

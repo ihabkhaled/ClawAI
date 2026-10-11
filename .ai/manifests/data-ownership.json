@@ -63,6 +63,7 @@
         "PlanPriceVersion",
         "PlanRetirementMigration",
         "PlanTrialRedemption",
+        "PushSubscription",
         "Role",
         "RolePermission",
         "SeedExecution",

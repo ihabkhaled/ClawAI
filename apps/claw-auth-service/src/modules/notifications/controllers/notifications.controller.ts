@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
@@ -10,9 +10,17 @@ import {
   notificationListQuerySchema,
   type NotificationPreferencesDto,
   notificationPreferencesSchema,
+  type PushSubscriptionDto,
+  pushSubscriptionSchema,
+  type PushUnsubscribeDto,
+  pushUnsubscribeSchema,
 } from '../dto/notifications.dto';
 import { NotificationsService } from '../services/notifications.service';
-import type { NotificationPage, NotificationPreferencesView } from '../types/notifications.types';
+import type {
+  NotificationPage,
+  NotificationPreferencesView,
+  PushConfigView,
+} from '../types/notifications.types';
 
 /**
  * The signed-in person's own notifications.
@@ -44,6 +52,29 @@ export class NotificationsController {
     @Body(new ZodValidationPipe(notificationPreferencesSchema)) body: NotificationPreferencesDto,
   ): Promise<NotificationPreferencesView> {
     return this.notifications.updatePreferences(user.id, body);
+  }
+
+  @Get('push/config')
+  pushConfig(): PushConfigView {
+    return this.notifications.getPushConfig();
+  }
+
+  @Post('push/subscriptions')
+  @HttpCode(204)
+  async subscribePush(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(pushSubscriptionSchema)) body: PushSubscriptionDto,
+  ): Promise<void> {
+    await this.notifications.subscribePush(user.id, body);
+  }
+
+  @Delete('push/subscriptions')
+  @HttpCode(204)
+  async unsubscribePush(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(pushUnsubscribeSchema)) body: PushUnsubscribeDto,
+  ): Promise<void> {
+    await this.notifications.unsubscribePush(user.id, body.endpoint);
   }
 
   @Post('read-all')

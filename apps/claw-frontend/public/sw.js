@@ -28,6 +28,58 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+/**
+ * Web Push. The server sends one small JSON message (title and body already in the person's
+ * language, a portal link, a language folder and a tag). Nothing here is trusted: a message that
+ * is not that shape is dropped, and the link is only ever opened on this origin.
+ */
+function readPushMessage(event) {
+  try {
+    const message = event.data ? event.data.json() : null;
+    if (!message || typeof message.title !== 'string' || typeof message.link !== 'string')
+      return null;
+    return message;
+  } catch {
+    return null;
+  }
+}
+
+/** The portal's own path for a link: `/threads/x` becomes `/en/threads/x`. Anything else is the home page. */
+function portalPath(message) {
+  const lang =
+    typeof message.lang === 'string' && /^[a-z]{2}$/.test(message.lang) ? message.lang : 'en';
+  return message.link.startsWith('/') && !message.link.startsWith('//')
+    ? `/${lang}${message.link}`
+    : `/${lang}`;
+}
+
+self.addEventListener('push', (event) => {
+  const message = readPushMessage(event);
+  if (!message) return;
+  event.waitUntil(
+    self.registration.showNotification(message.title, {
+      body: typeof message.body === 'string' ? message.body : '',
+      tag: typeof message.tag === 'string' ? message.tag : undefined,
+      icon: '/icon.png',
+      badge: '/icon.png',
+      data: { path: portalPath(message) },
+    }),
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = new URL(event.notification.data?.path ?? '/', self.location.origin);
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      const open = clients.find((client) => new URL(client.url).origin === target.origin);
+      return open
+        ? open.focus().then((client) => client.navigate(target.href))
+        : self.clients.openWindow(target.href);
+    }),
+  );
+});
+
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });

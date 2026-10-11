@@ -9,6 +9,9 @@ import {
   NOTIFICATION_PARAM_VALUE_MAX_LENGTH,
   NOTIFICATIONS_MAX_PAGE_SIZE,
   NOTIFICATIONS_PAGE_SIZE,
+  PUSH_AUTH_MAX_LENGTH,
+  PUSH_ENDPOINT_MAX_LENGTH,
+  PUSH_P256DH_MAX_LENGTH,
 } from '../constants/notifications.constants';
 
 /**
@@ -53,3 +56,22 @@ export const notificationPreferencesSchema = z
   .strict()
   .refine((value) => Object.keys(value).length > 0, { message: 'Provide at least one channel' });
 export type NotificationPreferencesDto = z.infer<typeof notificationPreferencesSchema>;
+
+/** The browser's `PushSubscription.toJSON()` shape, reduced to what delivery needs. */
+export const pushSubscriptionSchema = z
+  .object({
+    endpoint: z.string().url().max(PUSH_ENDPOINT_MAX_LENGTH).startsWith('https://'),
+    keys: z
+      .object({
+        p256dh: z.string().min(1).max(PUSH_P256DH_MAX_LENGTH),
+        auth: z.string().min(1).max(PUSH_AUTH_MAX_LENGTH),
+      })
+      .strict(),
+  })
+  .strict();
+export type PushSubscriptionDto = z.infer<typeof pushSubscriptionSchema>;
+
+export const pushUnsubscribeSchema = z
+  .object({ endpoint: z.string().url().max(PUSH_ENDPOINT_MAX_LENGTH) })
+  .strict();
+export type PushUnsubscribeDto = z.infer<typeof pushUnsubscribeSchema>;

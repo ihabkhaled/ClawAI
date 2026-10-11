@@ -5,12 +5,14 @@ import type { ReactElement } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { useNotificationPreferences } from '@/hooks/notifications/use-notification-preferences';
+import { usePushNotifications } from '@/hooks/notifications/use-push-notifications';
 import { useTranslation } from '@/lib/i18n';
 
-/** The channels a person chooses for notifications. In-app and email today; push comes later. */
+/** The channels a person chooses for notifications: in the app, by email, and push on this browser. */
 export function NotificationPreferencesCard(): ReactElement {
   const { t } = useTranslation();
   const { preferences, isLoading, isSaving, save } = useNotificationPreferences();
+  const push = usePushNotifications();
   const disabled = preferences === null || isLoading || isSaving;
 
   return (
@@ -54,6 +56,30 @@ export function NotificationPreferencesCard(): ReactElement {
             aria-label={t('notifications.preferences.email')}
           />
         </div>
+        {push.isAvailable ? (
+          <div
+            className="flex items-center justify-between gap-4"
+            data-testid="notification-push-row"
+          >
+            <div>
+              <label htmlFor="notification-push" className="text-sm font-medium">
+                {t('notifications.preferences.push')}
+              </label>
+              <p className="text-muted-foreground text-xs">
+                {push.isBlocked
+                  ? t('notifications.preferences.pushBlocked')
+                  : t('notifications.preferences.pushHint')}
+              </p>
+            </div>
+            <Switch
+              id="notification-push"
+              checked={push.isSubscribed && (preferences?.pushEnabled ?? false)}
+              disabled={disabled || push.isBusy || push.isBlocked}
+              onCheckedChange={push.toggle}
+              aria-label={t('notifications.preferences.push')}
+            />
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );

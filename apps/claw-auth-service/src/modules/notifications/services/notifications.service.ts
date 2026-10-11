@@ -1,14 +1,18 @@
 import type { UserNotificationKind } from '@claw/shared-types';
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 
+import { BusinessException } from '../../../common/errors';
 import { AuthEmailAdapter } from '../../auth/adapters/auth-email.adapter';
+import { WebPushAdapter } from '../adapters/web-push.adapter';
 import {
   NOTIFICATION_EMAIL_KIND,
   NOTIFICATION_EMAIL_TITLE_FALLBACK,
+  PUSH_MAX_SUBSCRIPTIONS_PER_USER,
 } from '../constants/notifications.constants';
 import {
   type NotificationListQueryDto,
   type NotificationPreferencesDto,
+  type PushSubscriptionDto,
   userNotificationRequestedSchema,
 } from '../dto/notifications.dto';
 import { UserNotificationsRepository } from '../repositories/user-notifications.repository';
@@ -17,8 +21,10 @@ import type {
   NotificationPreferencesView,
   NotificationRecipientRecord,
   NotificationView,
+  PushConfigView,
 } from '../types/notifications.types';
 import { toNotificationView } from '../utilities/notification-view.utility';
+import { buildPushMessage } from '../utilities/push-message.utility';
 
 /**
  * Notifications for the signed-in person and the delivery of new ones.
@@ -35,6 +41,7 @@ export class NotificationsService {
   constructor(
     private readonly notifications: UserNotificationsRepository,
     private readonly email: AuthEmailAdapter,
+    private readonly push: WebPushAdapter,
   ) {}
 
   /** Handles one `user.notification_requested` event. A malformed or unknown-recipient event is dropped. */
@@ -64,6 +71,48 @@ export class NotificationsService {
     }
     if (preferences.emailEnabled && recipient.isEmailVerified) {
       await this.sendEmail(recipient, request.kind, request.params, request.link);
+    }
+    if (preferences.pushEnabled) {
+      await this.sendPush(recipient, request.kind, request.link, request.dedupeKey);
+    }
+  }
+
+  getPushConfig(): PushConfigView {
+    return this.push.getConfig();
+  }
+
+  /** Saves this browser for the caller and turns the push channel on: granting permission is the opt-in. */
+  async subscribePush(userId: string, subscription: PushSubscriptionDto): Promise<void> {
+    if (!this.push.getConfig().enabled) {
+      throw new BusinessException(
+        'Push notifications are not configured',
+        'PUSH_NOT_CONFIGURED',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    const input = {
+      endpoint: subscription.endpoint,
+      p256dh: subscription.keys.p256dh,
+      auth: subscription.keys.auth,
+    };
+    const known = await this.notifications.hasSubscription(userId, input.endpoint);
+    const count = known ? 0 : await this.notifications.countSubscriptions(userId);
+    if (count >= PUSH_MAX_SUBSCRIPTIONS_PER_USER) {
+      throw new BusinessException(
+        'Too many browsers are subscribed',
+        'PUSH_TOO_MANY_BROWSERS',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+    await this.notifications.saveSubscription(userId, input);
+    await this.notifications.savePreferences(userId, { pushEnabled: true });
+  }
+
+  /** Forgets one browser. When it was the last, the push channel is switched off with it. */
+  async unsubscribePush(userId: string, endpoint: string): Promise<void> {
+    await this.notifications.deleteSubscription(userId, endpoint);
+    if ((await this.notifications.countSubscriptions(userId)) === 0) {
+      await this.notifications.savePreferences(userId, { pushEnabled: false });
     }
   }
 
@@ -101,6 +150,25 @@ export class NotificationsService {
     patch: NotificationPreferencesDto,
   ): Promise<NotificationPreferencesView> {
     return this.notifications.savePreferences(userId, patch);
+  }
+
+  /** Best effort, like email: one dead browser must not stop the others. */
+  private async sendPush(
+    recipient: NotificationRecipientRecord,
+    kind: UserNotificationKind,
+    link: string,
+    dedupeKey: string,
+  ): Promise<void> {
+    const message = buildPushMessage(recipient.languagePreference, kind, link, dedupeKey);
+    const subscriptions = await this.notifications.findSubscriptions(recipient.id);
+    for (const subscription of subscriptions) {
+      const outcome = await this.push.send(subscription, message);
+      if (outcome === 'GONE') {
+        await this.notifications.deleteGoneSubscription(subscription.endpoint);
+      } else if (outcome === 'SENT') {
+        await this.notifications.touchSubscription(subscription.endpoint);
+      }
+    }
   }
 
   /** Best effort: a mail failure must not undo the notification the person can already see. */

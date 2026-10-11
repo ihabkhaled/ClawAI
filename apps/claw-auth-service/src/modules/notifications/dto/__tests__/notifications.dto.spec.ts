@@ -3,6 +3,7 @@ import { UserNotificationKind } from '@claw/shared-types';
 import {
   notificationListQuerySchema,
   notificationPreferencesSchema,
+  pushSubscriptionSchema,
   userNotificationRequestedSchema,
 } from '../notifications.dto';
 
@@ -57,5 +58,24 @@ describe('notificationPreferencesSchema', () => {
     expect(notificationPreferencesSchema.safeParse({ emailEnabled: false }).success).toBe(true);
     expect(notificationPreferencesSchema.safeParse({ smsEnabled: true }).success).toBe(false);
     expect(notificationPreferencesSchema.safeParse({ emailEnabled: 'no' }).success).toBe(false);
+  });
+});
+
+describe('pushSubscriptionSchema', () => {
+  const valid = { endpoint: 'https://push.example.test/abc', keys: { p256dh: 'p', auth: 'a' } };
+
+  it('accepts a browser subscription', () => {
+    expect(pushSubscriptionSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it('rejects a non-https endpoint, extra fields and missing keys', () => {
+    expect(
+      pushSubscriptionSchema.safeParse({ ...valid, endpoint: 'http://push.example.test/a' })
+        .success,
+    ).toBe(false);
+    expect(pushSubscriptionSchema.safeParse({ ...valid, userId: 'someone' }).success).toBe(false);
+    expect(
+      pushSubscriptionSchema.safeParse({ endpoint: valid.endpoint, keys: { p256dh: 'p' } }).success,
+    ).toBe(false);
   });
 });

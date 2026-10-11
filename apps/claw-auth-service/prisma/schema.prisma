@@ -107,6 +107,7 @@ model User {
   sessions                Session[]
   notifications           UserNotification[]
   notificationPreference  UserNotificationPreference?
+  pushSubscriptions       PushSubscription[]
   passwordResetTokens     PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
   roleRef                 Role?                    @relation(fields: [roleId], references: [id])
@@ -1218,4 +1219,23 @@ model UserNotificationPreference {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_notification_preferences")
+}
+
+// One browser (or device) that agreed to Web Push for a user. The endpoint is the push service's
+// own URL for that browser and is unique, so a browser that signs in as someone else moves here
+// instead of duplicating. `p256dh` and `auth` are the browser's PUBLIC encryption keys, not secrets
+// of ours; the endpoint itself is treated as a credential (never logged).
+model PushSubscription {
+  id         String    @id @default(cuid())
+  userId     String    @map("user_id")
+  endpoint   String    @unique @db.VarChar(1000)
+  p256dh     String    @db.VarChar(200)
+  auth       String    @db.VarChar(100)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  lastUsedAt DateTime? @map("last_used_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
 }

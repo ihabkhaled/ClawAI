@@ -25,6 +25,18 @@ export type NotificationPreferences = {
 
 export type NotificationPreferencesPatch = Partial<NotificationPreferences>;
 
+/** Whether the server can send push, and the public key a browser needs to subscribe. */
+export type PushConfig = {
+  enabled: boolean;
+  publicKey: string | null;
+};
+
+/** A browser subscription reduced to what the server stores. */
+export type PushSubscriptionBody = {
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+};
+
 /** What a row of the bell shows, already in the person's language. */
 export type NotificationRowText = {
   title: string;

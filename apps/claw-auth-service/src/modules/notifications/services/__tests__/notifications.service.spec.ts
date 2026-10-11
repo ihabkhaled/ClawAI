@@ -41,10 +41,21 @@ function build(overrides?: {
     markRead: vi.fn().mockResolvedValue(true),
     markAllRead: vi.fn().mockResolvedValue(3),
     savePreferences: vi.fn(),
+    findSubscriptions: vi.fn().mockResolvedValue([]),
+    deleteGoneSubscription: vi.fn().mockResolvedValue(undefined),
+    touchSubscription: vi.fn().mockResolvedValue(undefined),
+    saveSubscription: vi.fn().mockResolvedValue(undefined),
+    hasSubscription: vi.fn().mockResolvedValue(false),
+    countSubscriptions: vi.fn().mockResolvedValue(0),
+    deleteSubscription: vi.fn().mockResolvedValue(true),
   };
   const email = { sendThreadNotification: vi.fn().mockResolvedValue(undefined) };
-  const service = new NotificationsService(repository as never, email as never);
-  return { service, repository, email };
+  const push = {
+    getConfig: vi.fn().mockReturnValue({ enabled: true, publicKey: 'pub' }),
+    send: vi.fn().mockResolvedValue('SENT'),
+  };
+  const service = new NotificationsService(repository as never, email as never, push as never);
+  return { service, repository, email, push };
 }
 
 describe('NotificationsService.receive', () => {
@@ -187,5 +198,73 @@ describe('NotificationsService for the signed-in person', () => {
     });
     await service.updatePreferences('user-1', { emailEnabled: false });
     expect(repository.savePreferences).toHaveBeenCalledWith('user-1', { emailEnabled: false });
+  });
+});
+
+const browser = { endpoint: 'https://push.example.test/abc', p256dh: 'p', auth: 'a' };
+const second = { ...browser, endpoint: 'https://push.example.test/b' };
+const body = { endpoint: browser.endpoint, keys: { p256dh: 'p', auth: 'a' } };
+const pushPreferences = { inAppEnabled: true, emailEnabled: false, pushEnabled: true };
+
+describe('NotificationsService push', () => {
+  it('pushes the localized text to every saved browser of a person who opted in', async () => {
+    const { service, repository, push } = build({ preferences: pushPreferences });
+    repository.findSubscriptions.mockResolvedValue([browser, second]);
+    await service.receive(request);
+    expect(push.send).toHaveBeenCalledTimes(2);
+    expect(push.send).toHaveBeenCalledWith(
+      browser,
+      expect.objectContaining({ link: '/threads/my-slug', tag: request.dedupeKey }),
+    );
+    expect(repository.touchSubscription).toHaveBeenCalledTimes(2);
+  });
+
+  it('sends no push when the person did not opt in, or on a redelivered event', async () => {
+    const off = build();
+    await off.service.receive(request);
+    expect(off.push.send).not.toHaveBeenCalled();
+    const replay = build({ preferences: pushPreferences, created: false });
+    await replay.service.receive(request);
+    expect(replay.push.send).not.toHaveBeenCalled();
+  });
+
+  it('forgets a browser the push service says is gone and keeps going', async () => {
+    const { service, repository, push } = build({ preferences: pushPreferences });
+    repository.findSubscriptions.mockResolvedValue([browser, second]);
+    push.send.mockResolvedValueOnce('GONE').mockResolvedValueOnce('SENT');
+    await service.receive(request);
+    expect(repository.deleteGoneSubscription).toHaveBeenCalledExactlyOnceWith(browser.endpoint);
+    expect(repository.touchSubscription).toHaveBeenCalledTimes(1);
+  });
+
+  it('saves a subscription and turns the push channel on', async () => {
+    const { service, repository } = build();
+    await service.subscribePush('user-1', body);
+    expect(repository.saveSubscription).toHaveBeenCalledWith('user-1', browser);
+    expect(repository.savePreferences).toHaveBeenCalledWith('user-1', { pushEnabled: true });
+  });
+
+  it('refuses to subscribe when push is not configured', async () => {
+    const { service, push, repository } = build();
+    push.getConfig.mockReturnValue({ enabled: false, publicKey: null });
+    await expect(service.subscribePush('user-1', body)).rejects.toThrow('not configured');
+    expect(repository.saveSubscription).not.toHaveBeenCalled();
+  });
+
+  it('caps the browsers per person, but lets a known browser refresh its keys', async () => {
+    const { service, repository } = build();
+    repository.countSubscriptions.mockResolvedValue(10);
+    await expect(service.subscribePush('user-1', body)).rejects.toThrow('Too many');
+    repository.hasSubscription.mockResolvedValue(true);
+    await expect(service.subscribePush('user-1', body)).resolves.toBeUndefined();
+  });
+
+  it('switches the channel off only when the last browser is removed', async () => {
+    const { service, repository } = build();
+    repository.countSubscriptions.mockResolvedValueOnce(1).mockResolvedValueOnce(0);
+    await service.unsubscribePush('user-1', browser.endpoint);
+    expect(repository.savePreferences).not.toHaveBeenCalled();
+    await service.unsubscribePush('user-1', browser.endpoint);
+    expect(repository.savePreferences).toHaveBeenCalledWith('user-1', { pushEnabled: false });
   });
 });

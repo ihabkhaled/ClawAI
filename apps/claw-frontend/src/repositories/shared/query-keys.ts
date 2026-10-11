@@ -24,6 +24,7 @@ export const queryKeys = {
     unread: () => [...queryKeys.notifications.all, 'unread'] as const,
     list: () => [...queryKeys.notifications.all, 'list'] as const,
     preferences: () => [...queryKeys.notifications.all, 'preferences'] as const,
+    pushConfig: () => [...queryKeys.notifications.all, 'push-config'] as const,
   },
   adminCredit: {
     all: ['adminCredit'] as const,
