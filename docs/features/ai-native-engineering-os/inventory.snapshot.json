@@ -8740,13 +8740,17 @@
           "file": "rules/61-threads-account-deletion.md"
         },
         {
-          "bytes": 7539,
+          "bytes": 1063,
+          "file": "rules/62-portal-shell-must-never-scroll-as-a-document.md"
+        },
+        {
+          "bytes": 7811,
           "file": "rules/README.md"
         }
       ],
       "skills": [
         {
-          "bytes": 33875,
+          "bytes": 34076,
           "file": "skills/00-index.md"
         },
         {
@@ -9012,6 +9016,10 @@
         {
           "bytes": 4445,
           "file": "skills/finish-worktree-branch-with-pr.md"
+        },
+        {
+          "bytes": 946,
+          "file": "skills/fix-a-corrupted-page-layout.md"
         },
         {
           "bytes": 4302,
@@ -11444,7 +11452,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 765
+        "testFiles": 766
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -12289,7 +12297,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2196,
+    "totalTestFiles": 2197,
     "workspaceCount": 27
   }
 }

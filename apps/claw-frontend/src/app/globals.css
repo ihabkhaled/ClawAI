@@ -914,6 +914,7 @@
    */
   .editorial-comparison {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: clamp(2.5rem, 6vw, 4rem);
   }
 
@@ -1198,6 +1199,10 @@
 
   .editorial-comparison__card-link {
     margin-block-start: auto;
+    /* Wrap rather than overflow: a long summary next to the name pushed the card 2px past a 320px screen. */
+    max-width: 100%;
+    flex-wrap: wrap;
+    overflow-wrap: anywhere;
   }
 
   .editorial-comparison__card-link:hover,

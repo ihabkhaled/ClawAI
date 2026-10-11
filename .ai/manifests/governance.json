@@ -346,13 +346,17 @@
       "file": "rules/61-threads-account-deletion.md"
     },
     {
-      "bytes": 7539,
+      "bytes": 1063,
+      "file": "rules/62-portal-shell-must-never-scroll-as-a-document.md"
+    },
+    {
+      "bytes": 7811,
       "file": "rules/README.md"
     }
   ],
   "skills": [
     {
-      "bytes": 33875,
+      "bytes": 34076,
       "file": "skills/00-index.md"
     },
     {
@@ -618,6 +622,10 @@
     {
       "bytes": 4445,
       "file": "skills/finish-worktree-branch-with-pr.md"
+    },
+    {
+      "bytes": 946,
+      "file": "skills/fix-a-corrupted-page-layout.md"
     },
     {
       "bytes": 4302,

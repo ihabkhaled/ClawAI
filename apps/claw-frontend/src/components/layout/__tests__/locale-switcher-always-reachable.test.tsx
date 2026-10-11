@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { Topbar } from '@/components/layout/topbar';
@@ -47,14 +47,28 @@ function classChain(element: HTMLElement): string[] {
 describe('the language control is reachable at every width', () => {
   it('renders in the portal topbar', () => {
     render(<Topbar />);
-    expect(screen.getByTestId('locale-switcher')).toBeInTheDocument();
+    expect(screen.getAllByTestId('locale-switcher').length).toBeGreaterThan(0);
   });
 
-  it('is not hidden below a breakpoint by any ancestor', () => {
+  it('sits inline on a wide bar and is hidden there only by a container-width breakpoint', () => {
     render(<Topbar />);
+    const inline = screen.getAllByTestId('locale-switcher')[0];
+    expect(inline).toBeDefined();
+    const chain = classChain(inline as HTMLElement);
+    // Hidden below the bar's @3xl width, shown from there up: never `hidden` without a matching
+    // `@3xl:flex` on the same wrapper.
+    expect(chain).toContain('@3xl:flex');
+  });
 
-    // `hidden` with a `sm:block` sibling class is exactly the regression: it
-    // reads as "visible" in the source and is invisible on a phone.
-    expect(classChain(screen.getByTestId('locale-switcher'))).not.toContain('hidden');
+  it('is always reachable on a narrow bar through the More panel', () => {
+    render(<Topbar />);
+    fireEvent.click(screen.getByTestId('topbar-overflow-trigger'));
+    const panel = screen.getByTestId('topbar-overflow-panel');
+    expect(within(panel).getByTestId('locale-switcher')).toBeInTheDocument();
+  });
+
+  it('keeps the More button visible on a narrow bar and hides it on a wide one', () => {
+    render(<Topbar />);
+    expect(classChain(screen.getByTestId('topbar-overflow-trigger'))).toContain('@3xl:hidden');
   });
 });

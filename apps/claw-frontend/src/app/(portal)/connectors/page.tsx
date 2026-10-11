@@ -60,19 +60,23 @@ function ConnectorsContent({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {connectors.map((connector) => (
-        <ConnectorCard
-          key={connector.id}
-          connector={connector}
-          onTest={testConnector}
-          onSync={syncModels}
-          onEdit={handleOpenEdit}
-          onDelete={deleteConnector}
-          isTestPending={isTestPending}
-          isSyncPending={isSyncPending}
-        />
-      ))}
+    // Columns follow the width of the content area, not the window: beside the 256px sidebar a
+    // tablet has far less room than its viewport suggests.
+    <div className="@container">
+      <div className="grid grid-cols-1 gap-4 @lg:grid-cols-2 @4xl:grid-cols-3">
+        {connectors.map((connector) => (
+          <ConnectorCard
+            key={connector.id}
+            connector={connector}
+            onTest={testConnector}
+            onSync={syncModels}
+            onEdit={handleOpenEdit}
+            onDelete={deleteConnector}
+            isTestPending={isTestPending}
+            isSyncPending={isSyncPending}
+          />
+        ))}
+      </div>
     </div>
   );
 }

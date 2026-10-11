@@ -72,4 +72,26 @@ describe('PortalShell (regression: behavior-preserving extraction from the old c
     expect(screen.getByTestId('skip-link')).toBeInTheDocument();
     expect(screen.getByText('page content')).toBeInTheDocument();
   });
+
+  it('lets the content column shrink below its widest child (min-w-0) so a wide page never stretches the top bar off a phone screen', () => {
+    mockAuthGuard.mockReturnValue({ isReady: true });
+    render(
+      <PortalShell>
+        <div>page content</div>
+      </PortalShell>,
+    );
+    const column = screen.getByTestId('topbar').parentElement;
+    expect(column).toHaveClass('min-w-0', 'flex-1', 'overflow-clip');
+  });
+
+  it('makes the shell the containing block (relative) so overflow-clip also clips absolutely positioned descendants', () => {
+    mockAuthGuard.mockReturnValue({ isReady: true });
+    render(
+      <PortalShell>
+        <div>page content</div>
+      </PortalShell>,
+    );
+    const shell = screen.getByTestId('topbar').parentElement?.parentElement;
+    expect(shell).toHaveClass('relative', 'h-dvh', 'overflow-clip');
+  });
 });

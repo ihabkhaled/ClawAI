@@ -16,6 +16,7 @@ import { GlobalSearch } from './global-search';
 import { LocaleSwitcher } from './locale-switcher';
 import { ThemeSwitcher } from './theme-switcher';
 import { TopbarFeedbackButton } from './topbar-feedback-button';
+import { TopbarOverflowMenu } from './topbar-overflow-menu';
 import { UserMenu } from './user-menu';
 
 export function Topbar() {
@@ -70,25 +71,22 @@ export function Topbar() {
       </div>
       <div className="flex min-w-0 shrink-0 items-center gap-0.5 sm:gap-2">
         <GlobalSearch />
-        <Separator orientation="vertical" className="hidden h-6 sm:block" />
-        {/* Visible at every width, unlike the locale and theme controls beside
-            it. A phone is exactly where someone notices the prices are in the
-            wrong currency, and the portal has no other place to change it. */}
-        <CurrencySwitcher />
-        {/* Also visible at every width, for the same reason. The portal had no
-            language control at all below 640px: the topbar hid it and neither
-            the sidebar, the user menu nor the bottom navigation carries one,
-            so a phone user's only route was the Settings page. */}
-        <LocaleSwitcher />
-        {/* Also at every width: feedback used to float over the page, and a
-            phone has no other quick route to it besides the More sheet. */}
         <NotificationBell />
-        <TourLauncher />
-        <TopbarFeedbackButton />
-        <div className="hidden sm:block">
+        {/* Wide bar: every secondary control sits inline. Narrow bar (a phone or a tablet beside the
+            sidebar rail): the same controls are gathered in one panel behind the "More" button, so
+            nothing is lost and the account menu is never pushed off the edge. The language and
+            currency controls stay reachable at every width, which is why they are in the panel
+            rather than dropped. */}
+        <div className="hidden items-center gap-1 @3xl:flex @3xl:gap-2">
+          <Separator orientation="vertical" className="h-6" />
+          <CurrencySwitcher />
+          <LocaleSwitcher />
+          <TourLauncher />
+          <TopbarFeedbackButton />
           <ThemeSwitcher />
+          <Separator orientation="vertical" className="h-6" />
         </div>
-        <Separator orientation="vertical" className="hidden h-6 sm:block" />
+        <TopbarOverflowMenu />
         <UserMenu />
       </div>
     </header>

@@ -40,13 +40,17 @@ export default function DashboardPage(): React.ReactElement {
         <h2 className="mb-4 text-lg font-semibold tracking-tight sm:text-xl">
           {t('dashboard.quickActions')}
         </h2>
-        <div
-          data-tour="dashboard-quick-actions"
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3"
-        >
-          {quickActions.map((action) => (
-            <DashboardQuickActionCard key={action.label} action={action} />
-          ))}
+        {/* Columns answer to the width of this block, not the window: beside the 256px sidebar a
+            768px tablet leaves ~512px, and three viewport-gated columns squeezed every title to 10px. */}
+        <div className="@container">
+          <div
+            data-tour="dashboard-quick-actions"
+            className="grid grid-cols-1 gap-4 @md:grid-cols-2 @3xl:grid-cols-3"
+          >
+            {quickActions.map((action) => (
+              <DashboardQuickActionCard key={action.label} action={action} />
+            ))}
+          </div>
         </div>
       </section>
 

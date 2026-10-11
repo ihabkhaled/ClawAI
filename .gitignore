@@ -135,3 +135,7 @@ test-results/
 playwright-report/
 
 .playwright-mcp/
+
+# Responsive audit script is tracked; its screenshots/results are not.
+!apps/claw-frontend/scripts/responsive-audit/
+apps/claw-frontend/scripts/responsive-audit/out/

@@ -29,13 +29,15 @@ export function DashboardHero({
       )}
       aria-label={t(greetingKey)}
     >
-      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 space-y-2">
+      <div className="relative flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="min-w-0 flex-1 space-y-2 sm:basis-72">
           <div className="text-primary flex items-center gap-2">
             <Sparkles className="h-5 w-5" aria-hidden="true" />
             <span className="text-sm font-medium tracking-wider uppercase">ClawAI</span>
           </div>
-          <h1 className="truncate text-3xl font-bold tracking-tight sm:text-4xl">{headline}</h1>
+          <h1 className="text-3xl font-bold tracking-tight [overflow-wrap:anywhere] sm:text-4xl">
+            {headline}
+          </h1>
           <p className="text-muted-foreground max-w-xl text-sm sm:text-base">
             {t('dashboard.heroSubtitle')}
           </p>

@@ -40,9 +40,11 @@ export function PortalShell({ children }: { children: React.ReactNode }): React.
   }
 
   // overflow-clip, not overflow-hidden: a hidden box can still be scrolled by focus and
-  // scrollIntoView, which slid the whole shell up and left a blank band under it.
+  // scrollIntoView, which slid the whole shell up and left a blank band under it. `relative` makes
+  // the shell the containing block for absolutely positioned descendants (sr-only text, popper
+  // anchors), so overflow-clip clips them instead of letting them stretch the document.
   return (
-    <div className="bg-surface-shell flex h-dvh overflow-clip">
+    <div className="bg-surface-shell relative flex h-dvh overflow-clip">
       {/* Skip-to-content link — visually hidden until focused (Tab from URL
        * bar). MUST be the first focusable element in the layout per WCAG
        * 2.4.1 (Bypass Blocks). */}
@@ -50,7 +52,10 @@ export function PortalShell({ children }: { children: React.ReactNode }): React.
       <Sidebar />
       <div
         className={[
-          'flex flex-1 flex-col overflow-clip',
+          // `min-w-0`: overflow-clip does not zero a flex item's automatic minimum width, so one
+          // wide child (a toolbar, a chart, a table) stretched the whole column, and the top bar
+          // with it, past the screen edge on a phone.
+          'flex min-w-0 flex-1 flex-col overflow-clip',
           // On phones, reserve space for the fixed MobileBottomNav AT THE
           // COLUMN LEVEL (outside the scrollable area). Putting this clearance
           // on <main>'s padding-bottom let users scroll into a dead band of

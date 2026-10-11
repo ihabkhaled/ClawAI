@@ -128,7 +128,11 @@ describe('ModelExposureSection layout switch', () => {
     render(<ModelExposureSection connectorId="c1" />);
 
     expect(screen.getByTestId('model-exposure-card-list')).toHaveClass('hidden', 'touch:flex');
-    expect(screen.getByTestId('model-exposure-table')).toHaveClass('touch:hidden', 'overflow-auto');
+    expect(screen.getByTestId('model-exposure-table')).toHaveClass(
+      'touch:hidden',
+      'overflow-auto',
+      'relative',
+    );
     expect(screen.getAllByTestId('model-exposure-card')).toHaveLength(2);
   });
 

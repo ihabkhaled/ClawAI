@@ -87,20 +87,22 @@ export default function WorkspacePage(): React.ReactElement {
       )}
 
       {!isLoading && connectors.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {connectors.map((connector) => (
-            <WorkspaceConnectorCard
-              key={connector.id}
-              connector={connector}
-              onDelete={handleDelete}
-              onHealthCheck={handleHealthCheck}
-              onSync={handleSync}
-              isDeleting={isDeleting}
-              isCheckingHealth={isCheckingHealth}
-              isSyncing={isSyncing}
-              t={t}
-            />
-          ))}
+        <div className="@container">
+          <div className="grid grid-cols-1 gap-4 @min-[1100px]:grid-cols-4 @lg:grid-cols-2 @4xl:grid-cols-3">
+            {connectors.map((connector) => (
+              <WorkspaceConnectorCard
+                key={connector.id}
+                connector={connector}
+                onDelete={handleDelete}
+                onHealthCheck={handleHealthCheck}
+                onSync={handleSync}
+                isDeleting={isDeleting}
+                isCheckingHealth={isCheckingHealth}
+                isSyncing={isSyncing}
+                t={t}
+              />
+            ))}
+          </div>
         </div>
       )}
 

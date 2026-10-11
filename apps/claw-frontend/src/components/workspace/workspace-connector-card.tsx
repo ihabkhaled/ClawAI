@@ -28,16 +28,16 @@ export function WorkspaceConnectorCard({
         <div className="flex items-start justify-between gap-2">
           <Link
             href={ROUTES.WORKSPACE_CONNECTOR_DETAIL(connector.id)}
-            className="flex-1 truncate hover:underline"
+            className="min-w-0 flex-1 [overflow-wrap:anywhere] hover:underline"
           >
             <CardTitle className="flex items-center gap-2 text-base leading-tight">
               {connector.name}
-              <ExternalLink className="size-3 text-muted-foreground" />
+              <ExternalLink className="text-muted-foreground size-3" />
             </CardTitle>
           </Link>
           <WorkspaceConnectorStatusBadge connector={connector} t={t} />
         </div>
-        <p className="text-sm text-muted-foreground">{connector.provider}</p>
+        <p className="text-muted-foreground text-sm">{connector.provider}</p>
       </CardHeader>
 
       <CardContent className="flex-1 space-y-2 pb-3">
@@ -89,7 +89,7 @@ export function WorkspaceConnectorCard({
           size="icon"
           onClick={() => onDelete(connector.id)}
           disabled={isDeleting}
-          className="shrink-0 text-destructive hover:text-destructive"
+          className="text-destructive hover:text-destructive shrink-0"
           aria-label={t('common.delete')}
         >
           <Trash2 className="size-4" />
