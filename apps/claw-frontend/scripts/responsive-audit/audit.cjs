@@ -385,7 +385,8 @@ async function discover(page) {
       return null;
     }, source);
   };
-  const strip = (p) => (p ? p.replace(new RegExp(`^/${LOCALE}`), '') : p);
+  const prefix = `/${LOCALE}`;
+  const strip = (p) => (p && p.startsWith(prefix) ? p.slice(prefix.length) : p);
   return {
     thread: await findThread(page),
     review: strip(await find('/threads', '/threads/review/[\\w-]+')),
