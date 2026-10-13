@@ -97,18 +97,24 @@ test('shared packages build in dependency order computed from package.json', () 
 });
 
 test('a shared package whose dist was built from other source is stale', () => {
-  const workspaces = loadWorkspaces();
-  const hashes = sharedInputHashes(workspaces);
-  const stamp = repoPath('node_modules/.cache/claw-shared-build/@claw__shared-types.hash');
-  const previous = existsSync(stamp) ? readFileSync(stamp, 'utf8') : null;
+  // A synthetic package with its own dist, so the check never depends on the real
+  // packages having been built (CI runs this suite on a fresh checkout).
+  const name = '@claw/shared-stamp-probe';
+  const dir = 'node_modules/.cache/claw-shared-build-probe/pkg';
+  const stamp = repoPath('node_modules/.cache/claw-shared-build', `${name.replace('/', '__')}.hash`);
+  const probe = [{ name, dir, type: 'shared-package', internalDeps: [] }];
+  const hashes = new Map([[name, 'current-source-hash']]);
+  mkdirSync(repoPath(dir, 'dist'), { recursive: true });
+  writeFileSync(repoPath(dir, 'dist', 'index.js'), '');
+  mkdirSync(dirname(stamp), { recursive: true });
   try {
     writeFileSync(stamp, 'built-from-older-source\n');
-    assert.ok(staleSharedPackages(workspaces, hashes).includes('@claw/shared-types'));
-    writeFileSync(stamp, `${hashes.get('@claw/shared-types')}\n`);
-    assert.ok(!staleSharedPackages(workspaces, hashes).includes('@claw/shared-types'));
+    assert.deepEqual(staleSharedPackages(probe, hashes), [name]);
+    writeFileSync(stamp, 'current-source-hash\n');
+    assert.deepEqual(staleSharedPackages(probe, hashes), []);
   } finally {
-    if (previous === null) rmSync(stamp, { force: true });
-    else writeFileSync(stamp, previous);
+    rmSync(stamp, { force: true });
+    rmSync(repoPath('node_modules/.cache/claw-shared-build-probe'), { force: true, recursive: true });
   }
 });
 
