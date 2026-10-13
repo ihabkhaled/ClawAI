@@ -40,6 +40,9 @@ describe('parseStepError', () => {
   it.each([
     ['Chat model gateway is unavailable', 'PROVIDER_UNAVAILABLE'],
     ['Complete role context exceeds the model window', 'CONTEXT_WINDOW_EXCEEDED'],
+    ['Complete role context exceeds the assumed model window', 'CONTEXT_WINDOW_ASSUMED'],
+    ['Model catalog is unreachable', 'MODEL_CATALOG_UNREACHABLE'],
+    ['Model catalog rejected the lookup (401)', 'MODEL_CATALOG_REJECTED'],
     ['A model returned invalid structured output', 'OUTPUT_INVALID'],
     ['Research service is unavailable', 'RESEARCH_UNAVAILABLE'],
     ['Generation did not pass consensus and reviews in three rounds', 'REVIEW_NOT_PASSED'],

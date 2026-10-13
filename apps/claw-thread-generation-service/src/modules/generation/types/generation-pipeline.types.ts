@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import type { Locale, ThreadPublicationType } from '@claw/shared-types';
 
+import type { ThreadGenerationStage } from '../../../generated/prisma';
+import type { ResearchEvidence } from '../../research/research.client';
+import type { ReviewerRole } from './reviewer-role.enum';
+
 export const modelRoleSchema = z.object({
   id: z.string().min(1).max(64),
   provider: z.string().min(1).max(100),
@@ -32,6 +36,24 @@ export const reviewSchema = z.object({
   revisionBrief: z.string().max(1000),
 });
 
+export const checkpointBundleSchema = z.record(z.string(), z.unknown());
+
+export const ownerRevisionContentSchema = z.object({
+  markdown: z.string(),
+  citations: z.array(z.object({ evidenceId: z.string(), url: z.string().url() })),
+  judge: z.object({ score: z.number().int().min(0).max(100) }),
+  critic: z.object({ score: z.number().int().min(0).max(100) }),
+  review: z
+    .object({
+      draftHash: z.string().length(64),
+      authorConsensus: z.boolean(),
+      ready: z.boolean(),
+      reasons: z.array(z.string()),
+    })
+    .optional(),
+});
+
+export type OwnerRevisionContent = z.infer<typeof ownerRevisionContentSchema>;
 export type ModelRole = z.infer<typeof modelRoleSchema>;
 export type AuthorDraft = z.infer<typeof authorDraftSchema>;
 export type StructuredReview = z.infer<typeof reviewSchema>;
@@ -85,4 +107,26 @@ export type PrivateGenerationState = {
     judgeScore: number;
     criticScore: number;
   } | null;
+};
+
+export type GenerationRoundContext = {
+  job: GenerationPipelineInput;
+  evidence: ResearchEvidence;
+  evidenceItems: Map<string, string>;
+  sharedMaterial: string;
+};
+
+export type GenerationRoundOutcome =
+  { kind: 'passed'; result: GenerationPipelineResult } | { kind: 'retry'; revisionBrief: string };
+
+export type ReviewStageSpec = {
+  reviewer: ReviewerRole;
+  stage: ThreadGenerationStage;
+  minScore: number;
+};
+
+export type ReviewStageResult = {
+  review: StructuredReview;
+  /** Null when the review passed; otherwise the brief for the next round. */
+  revisionBrief: string | null;
 };

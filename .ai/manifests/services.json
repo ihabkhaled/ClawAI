@@ -574,7 +574,7 @@
         "ThreadModelCommunication",
         "ThreadRevisionDraft"
       ],
-      "testFiles": 26,
+      "testFiles": 29,
       "testRunner": "vitest"
     },
     {

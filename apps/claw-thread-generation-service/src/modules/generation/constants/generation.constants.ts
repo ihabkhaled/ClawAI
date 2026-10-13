@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+import { ThreadGenerationStage } from '../../../generated/prisma';
+import type { ReviewStageSpec } from '../types/generation-pipeline.types';
+import { ReviewerRole } from '../types/reviewer-role.enum';
+
 export const MAX_GENERATION_ROUNDS = 3;
 export const FORMAT_ATTEMPTS_PER_MODEL = 2;
 export const MAX_GENERATION_ATTEMPTS = 3;
@@ -12,6 +16,16 @@ export const generationRetryDelayMs = (attempt: number): number =>
   Math.min(15_000 * 2 ** Math.max(0, attempt - 1), 120_000);
 export const MIN_JUDGE_SCORE = 80;
 export const MIN_CRITIC_SCORE = 75;
+export const JUDGE_STAGE: ReviewStageSpec = {
+  reviewer: ReviewerRole.JUDGE,
+  stage: ThreadGenerationStage.JUDGE,
+  minScore: MIN_JUDGE_SCORE,
+};
+export const CRITIC_STAGE: ReviewStageSpec = {
+  reviewer: ReviewerRole.CRITIC,
+  stage: ThreadGenerationStage.CRITIC,
+  minScore: MIN_CRITIC_SCORE,
+};
 export const GENERATION_WORKER_ID = `thread-generation-${process.pid}`;
 export const GENERATION_EVENT_SCHEMA_MAX_CORRELATION_LENGTH = 200;
 export const generationEventSchema = z.object({

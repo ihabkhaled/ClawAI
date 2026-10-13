@@ -20,5 +20,15 @@ Table `thread_generation_steps` records every step of a job (owner-only, bounded
 builds a new job from the pinned snapshot (no fresh snapshot, new idempotency key); delete waits
 for the budget close and removes the whole retry chain. `retriedFromJobId` is unique, so a job has at
 most one retry: a second retry returns the existing retry child before any budget is reserved, and a lost race releases its
-reservation. Error codes come from `parseStepError`; never log excerpts. See the
+reservation. Error codes come from `parseStepError`; never log excerpts.
+
+## Model window and retries (ADR-173)
+
+`ModelContextClient.getWindow` returns `{ tokens, source: 'known' | 'assumed' }`. An unknown
+window is assumed to be `THREADS_ASSUMED_WINDOW_TOKENS` (32,768), never an error, and the prompt is
+still checked against it and never truncated. Lookups are cached (5 min TTL, 200 entries). Failure
+codes are separate: `MODEL_CATALOG_UNREACHABLE` (retryable), `MODEL_CATALOG_REJECTED`,
+`CONTEXT_WINDOW_EXCEEDED`, `CONTEXT_WINDOW_ASSUMED`. Throw `DeterministicGenerationError` for
+anything a retry cannot fix; the job then fails on attempt 1 (`retryOrFail(..., false)`). A new
+code needs the frontend `THREAD_GENERATION_CODE_KEYS` entry and all 13 locales. See the
 [service guide](../../docs/04-backend/service-guide-thread-generation.md#owner-step-log-progress-retry-and-delete).

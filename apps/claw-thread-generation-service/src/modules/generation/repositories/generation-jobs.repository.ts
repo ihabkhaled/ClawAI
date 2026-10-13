@@ -11,9 +11,30 @@ import type { ChatModelResponse } from '../../models/chat-model.client';
 import { stableJson } from '../utilities/stable-json.utility';
 import { GenerationJobStorageResult } from '../../../common/enums/generation-job-storage-result.enum';
 import type {
+  GenerationCancellationState,
+  GenerationJobBudgetClosure,
+  GenerationJobDeletable,
+  GenerationJobDispatchable,
   GenerationJobIdempotencyResponse,
+  GenerationJobOwnerState,
+  GenerationJobProgressRow,
+  GenerationJobRetrySource,
+  GenerationJobRevisionParent,
+  GenerationJobRow,
   GenerationJobStorageResponse,
+  GenerationJobUnreportedFailure,
+  GenerationResumeState,
 } from '../types/generation-job-storage.types';
+import {
+  BUDGET_CLOSURE_SELECT,
+  DELETABLE_SELECT,
+  DISPATCHABLE_SELECT,
+  OWNER_STATE_SELECT,
+  PROGRESS_JOB_SELECT,
+  RETRY_SOURCE_SELECT,
+  REVISION_PARENT_SELECT,
+  UNREPORTED_FAILURE_SELECT,
+} from '../constants/generation-job-select.constants';
 import { GenerationBudgetCloseStatus } from '../../../common/enums/generation-budget-close-status.enum';
 import { GenerationJobAttemptOutcome } from '../../../common/enums/generation-job-attempt-outcome.enum';
 import { GenerationJobRecoveryOutcome } from '../../../common/enums/generation-job-recovery-outcome.enum';
@@ -99,11 +120,7 @@ export class GenerationJobsRepository {
       const raced = await this.prisma.threadGenerationJob.findUnique({
         where: { idempotencyKey: input.idempotencyKey },
       });
-      if (
-        raced &&
-        raced.ownerId === input.ownerId &&
-        stableJson(raced.request) === stableJson(input)
-      ) {
+      if (raced?.ownerId === input.ownerId && stableJson(raced.request) === stableJson(input)) {
         return { result: GenerationJobStorageResult.SUCCESS, job: raced };
       }
       // No job holds this idempotency key, so the unique hit was the retry link.
@@ -144,26 +161,17 @@ export class GenerationJobsRepository {
       : { result: GenerationJobStorageResult.CONFLICT };
   }
 
-  async findRevisionParent(parentJobId: string, ownerId: string) {
+  async findRevisionParent(
+    parentJobId: string,
+    ownerId: string,
+  ): Promise<GenerationJobRevisionParent | null> {
     return this.prisma.threadGenerationJob.findFirst({
       where: {
         id: parentJobId,
         ownerId,
         status: ThreadGenerationStatus.WAITING_FOR_REVIEW,
       },
-      select: {
-        id: true,
-        ownerId: true,
-        sourceThreadId: true,
-        sourceSnapshot: true,
-        sourceSnapshotHash: true,
-        evidenceBundle: true,
-        evidenceBundleHash: true,
-        evidenceVersion: true,
-        request: true,
-        publicIntentVersion: true,
-        publicIntentAt: true,
-      },
+      select: REVISION_PARENT_SELECT,
     });
   }
 
@@ -175,7 +183,7 @@ export class GenerationJobsRepository {
       return { result: GenerationJobStorageResult.ACCOUNT_DELETED };
     }
     const parent = await this.findRevisionParent(input.parentJobId, input.ownerId);
-    if (!parent || parent.evidenceBundle === null || !parent.evidenceBundleHash) {
+    if (!parent?.evidenceBundleHash || parent.evidenceBundle === null) {
       return { result: GenerationJobStorageResult.STORAGE_ERROR };
     }
     const originalRequest = enqueueGenerationSchema.safeParse(parent.request);
@@ -240,8 +248,7 @@ export class GenerationJobsRepository {
       const raced = await this.prisma.threadGenerationJob.findUnique({
         where: { idempotencyKey: input.idempotencyKey },
       });
-      return raced &&
-        raced.ownerId === input.ownerId &&
+      return raced?.ownerId === input.ownerId &&
         stableJson(this.revisionRequestForIdempotency(raced.request)) ===
           stableJson(this.revisionRequestForIdempotency(request))
         ? { result: GenerationJobStorageResult.SUCCESS, job: raced }
@@ -249,67 +256,37 @@ export class GenerationJobsRepository {
     }
   }
 
-  async findQueued(id: string) {
+  async findQueued(id: string): Promise<GenerationJobRow | null> {
     return this.prisma.threadGenerationJob.findFirst({
       where: { id, status: ThreadGenerationStatus.QUEUED },
     });
   }
 
-  async findOwnerState(id: string, ownerId: string) {
+  async findOwnerState(id: string, ownerId: string): Promise<GenerationJobOwnerState | null> {
     return this.prisma.threadGenerationJob.findFirst({
       where: { id, ownerId },
-      select: {
-        id: true,
-        status: true,
-        stage: true,
-        round: true,
-        safeErrorCode: true,
-        revisions: {
-          orderBy: { revision: 'desc' },
-          take: 1,
-          select: { content: true },
-        },
-      },
+      select: OWNER_STATE_SELECT,
     });
   }
 
-  async findProgressJob(id: string, ownerId: string) {
+  async findProgressJob(id: string, ownerId: string): Promise<GenerationJobProgressRow | null> {
     return this.prisma.threadGenerationJob.findFirst({
       where: { id, ownerId },
-      select: {
-        id: true,
-        status: true,
-        stage: true,
-        round: true,
-        attemptCount: true,
-        spentMicroCredits: true,
-        spendCapMicroUsd: true,
-        sourceThreadId: true,
-        safeErrorCode: true,
-        request: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: PROGRESS_JOB_SELECT,
     });
   }
 
-  async findRetrySource(id: string, ownerId: string) {
+  async findRetrySource(id: string, ownerId: string): Promise<GenerationJobRetrySource | null> {
     return this.prisma.threadGenerationJob.findFirst({
       where: { id, ownerId },
-      select: {
-        id: true,
-        status: true,
-        request: true,
-        sourceSnapshot: true,
-        sourceSnapshotHash: true,
-      },
+      select: RETRY_SOURCE_SELECT,
     });
   }
 
-  async findDeletable(id: string, ownerId: string) {
+  async findDeletable(id: string, ownerId: string): Promise<GenerationJobDeletable | null> {
     return this.prisma.threadGenerationJob.findFirst({
       where: { id, ownerId },
-      select: { id: true, status: true, budgetClosedAt: true, retriedFromJobId: true },
+      select: DELETABLE_SELECT,
     });
   }
 
@@ -363,7 +340,7 @@ export class GenerationJobsRepository {
     });
   }
 
-  async findDispatchable(limit: number) {
+  async findDispatchable(limit: number): Promise<GenerationJobDispatchable[]> {
     const now = new Date();
     return this.prisma.threadGenerationJob.findMany({
       where: {
@@ -373,11 +350,11 @@ export class GenerationJobsRepository {
       },
       orderBy: [{ nextAttemptAt: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
       take: limit,
-      select: { id: true },
+      select: DISPATCHABLE_SELECT,
     });
   }
 
-  async findPendingBudgetClosures(limit: number) {
+  async findPendingBudgetClosures(limit: number): Promise<GenerationJobBudgetClosure[]> {
     return this.prisma.threadGenerationJob.findMany({
       where: {
         budgetClosedAt: null,
@@ -391,32 +368,17 @@ export class GenerationJobsRepository {
       },
       orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
       take: limit,
-      select: { id: true, budgetId: true, status: true },
+      select: BUDGET_CLOSURE_SELECT,
     });
   }
 
   /** Failed jobs not yet reported to operators, oldest first. */
-  async findUnreportedFailures(limit: number) {
+  async findUnreportedFailures(limit: number): Promise<GenerationJobUnreportedFailure[]> {
     return this.prisma.threadGenerationJob.findMany({
       where: { status: ThreadGenerationStatus.FAILED, failureReportedAt: null },
       orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
       take: limit,
-      select: {
-        id: true,
-        ownerId: true,
-        correlationId: true,
-        stage: true,
-        attemptCount: true,
-        safeErrorCode: true,
-        failureSummary: true,
-        sourceSnapshotHash: true,
-        budgetCloseStatus: true,
-        request: true,
-        createdAt: true,
-        completedAt: true,
-        updatedAt: true,
-        attempts: { orderBy: { startedAt: 'asc' }, take: 1, select: { startedAt: true } },
-      },
+      select: UNREPORTED_FAILURE_SELECT,
     });
   }
 
@@ -434,7 +396,7 @@ export class GenerationJobsRepository {
     });
   }
 
-  async loadResumeState(jobId: string) {
+  async loadResumeState(jobId: string): Promise<GenerationResumeState> {
     const [job, communications] = await this.prisma.$transaction([
       this.prisma.threadGenerationJob.findUnique({
         where: { id: jobId },
@@ -453,7 +415,7 @@ export class GenerationJobsRepository {
     };
   }
 
-  async requestCancellation(jobId: string) {
+  async requestCancellation(jobId: string): Promise<GenerationCancellationState | null> {
     const queued = await this.prisma.threadGenerationJob.updateMany({
       where: { id: jobId, status: ThreadGenerationStatus.QUEUED },
       data: {
@@ -586,7 +548,7 @@ export class GenerationJobsRepository {
     round: number,
     evidenceHash: string,
     inputHash: string,
-  ) {
+  ): Promise<Prisma.JsonValue | null> {
     const communication = await this.prisma.threadModelCommunication.findUnique({
       where: { jobId_role_round: { jobId, role, round } },
       select: { evidenceBundleHash: true, inputHash: true, output: true },
@@ -597,7 +559,7 @@ export class GenerationJobsRepository {
       : null;
   }
 
-  async claim(id: string, workerId: string) {
+  async claim(id: string, workerId: string): Promise<GenerationJobRow | null> {
     const now = new Date();
     return this.prisma.$transaction(async (tx) => {
       const claimed = await tx.threadGenerationJob.updateMany({
@@ -693,6 +655,7 @@ export class GenerationJobsRepository {
     jobId: string,
     attempt: number,
     failureSummary: string | null = null,
+    retryable = true,
   ): Promise<GenerationJobRecoveryOutcome> {
     const now = new Date();
     return this.prisma.$transaction(async (tx) => {
@@ -702,7 +665,7 @@ export class GenerationJobsRepository {
       });
       if (!job) return GenerationJobRecoveryOutcome.MISSING;
       const cancelled = job.cancelRequestedAt !== null;
-      const retry = !cancelled && attempt < MAX_GENERATION_ATTEMPTS;
+      const retry = retryable && !cancelled && attempt < MAX_GENERATION_ATTEMPTS;
       let outcome = GenerationJobRecoveryOutcome.FAILED;
       let jobUpdate: Prisma.ThreadGenerationJobUpdateManyMutationInput;
       let attemptOutcome = GenerationJobAttemptOutcome.FAILED;

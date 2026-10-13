@@ -32,12 +32,13 @@ export const STEP_ROW_SELECT = {
 } as const;
 
 export const UPSTREAM_STATUS_PATTERN =
-  /Chat model request failed \((\d{3})(?:: ([A-Z][A-Z0-9_]{2,59}))?\)/u;
+  /Chat model request failed \((\d{3})(?:: ([A-Z][A-Z0-9_]{2,59})|)\)/u;
 
 /** Message fragments written by this service, mapped to a stable machine code. */
 export const STEP_MESSAGE_CODES: ReadonlyArray<{ fragment: string; code: string }> = [
   { fragment: 'Chat model gateway is unavailable', code: 'PROVIDER_UNAVAILABLE' },
   { fragment: 'exceeds the model window', code: 'CONTEXT_WINDOW_EXCEEDED' },
+  { fragment: 'exceeds the assumed model window', code: 'CONTEXT_WINDOW_ASSUMED' },
   { fragment: 'invalid structured output', code: 'OUTPUT_INVALID' },
   { fragment: 'returned an invalid', code: 'OUTPUT_INVALID' },
   { fragment: 'outside its evidence bundle', code: 'CITATION_INVALID' },
@@ -46,8 +47,8 @@ export const STEP_MESSAGE_CODES: ReadonlyArray<{ fragment: string; code: string 
   { fragment: 'Research evidence response is invalid', code: 'RESEARCH_FAILED' },
   { fragment: 'Research returned no', code: 'RESEARCH_EMPTY' },
   { fragment: 'did not pass consensus and reviews', code: 'REVIEW_NOT_PASSED' },
-  { fragment: 'Model context', code: 'MODEL_CONTEXT_UNAVAILABLE' },
-  { fragment: 'Model catalog is unavailable', code: 'MODEL_CONTEXT_UNAVAILABLE' },
+  { fragment: 'Model catalog is unreachable', code: 'MODEL_CATALOG_UNREACHABLE' },
+  { fragment: 'Model catalog rejected', code: 'MODEL_CATALOG_REJECTED' },
 ];
 
 export const STEP_SECRET_PATTERNS: readonly RegExp[] = [

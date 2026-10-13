@@ -1,6 +1,18 @@
+import { DeterministicGenerationError } from '../../generation/utilities/deterministic-generation.error';
 import { ChatModelClient } from '../chat-model.client';
 import { type ModelContextClient } from '../model-context.client';
 import { AppConfig } from '../../../app/config/app.config';
+
+const oversized = {
+  ownerId: 'owner-1',
+  requestId: 'job-1:judge:round-1',
+  budgetId: 'budget-1',
+  provider: 'OLLAMA',
+  model: 'glm-5.3',
+  systemPrompt: 'system',
+  userPrompt: `evidence ${'x'.repeat(20_000)}`,
+  maxOutputTokens: 4_096,
+};
 
 describe('ChatModelClient', () => {
   beforeEach(() => {
@@ -18,7 +30,7 @@ describe('ChatModelClient', () => {
 
   it('uses the exact job budget and stable call id through the chat billing path', async () => {
     const modelContext = {
-      getWindow: vi.fn().mockResolvedValue(128_000),
+      getWindow: vi.fn().mockResolvedValue({ tokens: 128_000, source: 'known' }),
     } as unknown as ModelContextClient;
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
@@ -56,7 +68,7 @@ describe('ChatModelClient', () => {
 
   it('refuses an oversized complete prompt before calling the model', async () => {
     const modelContext = {
-      getWindow: vi.fn().mockResolvedValue(4_097),
+      getWindow: vi.fn().mockResolvedValue({ tokens: 4_097, source: 'known' }),
     } as unknown as ModelContextClient;
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
@@ -74,5 +86,62 @@ describe('ChatModelClient', () => {
       }),
     ).rejects.toThrow('Complete role context exceeds the model window');
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('marks an overflow of a known window as a failure a retry cannot fix', async () => {
+    const modelContext = {
+      getWindow: vi.fn().mockResolvedValue({ tokens: 4_097, source: 'known' }),
+    } as unknown as ModelContextClient;
+    vi.stubGlobal('fetch', vi.fn());
+
+    const failure = await new ChatModelClient(modelContext)
+      .generate({ ...oversized })
+      .catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(DeterministicGenerationError);
+  });
+
+  it('says the window was assumed when an unknown window cannot hold the prompt', async () => {
+    const modelContext = {
+      getWindow: vi.fn().mockResolvedValue({ tokens: 32_768, source: 'assumed' }),
+    } as unknown as ModelContextClient;
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const failure = await new ChatModelClient(modelContext)
+      .generate({ ...oversized, userPrompt: `evidence ${'x'.repeat(140_000)}` })
+      .catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(DeterministicGenerationError);
+    expect(failure).toHaveProperty(
+      'message',
+      'Complete role context exceeds the assumed model window',
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('still calls the model when the prompt fits an assumed window, without truncating it', async () => {
+    const modelContext = {
+      getWindow: vi.fn().mockResolvedValue({ tokens: 32_768, source: 'assumed' }),
+    } as unknown as ModelContextClient;
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          content: '{"draft":"ready"}',
+          provider: 'OLLAMA',
+          model: 'glm-5.3',
+          durationMs: 10,
+          clamped: false,
+        }),
+        { status: 200 },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const userPrompt = `complete evidence ${'y'.repeat(2_000)}`;
+
+    await new ChatModelClient(modelContext).generate({ ...oversized, userPrompt });
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toMatchObject({ userPrompt });
   });
 });

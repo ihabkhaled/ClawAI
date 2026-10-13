@@ -3,14 +3,14 @@ import { createHash } from 'node:crypto';
 import { z } from 'zod';
 
 import {
+  CRITIC_STAGE,
   FORMAT_ATTEMPTS_PER_MODEL,
+  JUDGE_STAGE,
   MAX_GENERATION_ROUNDS,
-  MIN_CRITIC_SCORE,
-  MIN_JUDGE_SCORE,
 } from '../constants/generation.constants';
 import { ThreadGenerationStage } from '../../../generated/prisma';
-import { ChatModelClient } from '../../models/chat-model.client';
-import { ResearchClient } from '../../research/research.client';
+import { ChatModelClient, type ChatModelResponse } from '../../models/chat-model.client';
+import { ResearchClient, type ResearchEvidence } from '../../research/research.client';
 import { resolveAuthorConsensus } from '../utilities/author-consensus.utility';
 import { GenerationJobsRepository } from '../repositories/generation-jobs.repository';
 import { ThreadGenerationCancelledError } from '../utilities/thread-generation-cancelled.error';
@@ -20,19 +20,32 @@ import { stripCodeFence } from '../utilities/strip-code-fence.utility';
 import { ReviewerRole } from '../types/reviewer-role.enum';
 import { StepRecorder } from '../services/step-recorder.service';
 import type { StepResponseOutcome } from '../types/step-recorder.types';
+import {
+  DeterministicGenerationError,
+  isDeterministicGenerationError,
+} from '../utilities/deterministic-generation.error';
 import { parseStepError } from '../utilities/parse-step-error.utility';
 import { STEP_RESUMED_CODE } from '../constants/step-recorder.constants';
 import { roleStepInfo } from '../utilities/role-step.utility';
 import {
   type AuthorDraft,
   authorDraftSchema,
+  checkpointBundleSchema,
   type GenerationPipelineInput,
   type GenerationPipelineResult,
+  type GenerationRoundContext,
+  type GenerationRoundOutcome,
   type ModelRole,
   modelRoleSchema,
   reviewSchema,
+  type ReviewStageResult,
+  type ReviewStageSpec,
+  type StructuredReview,
 } from '../types/generation-pipeline.types';
-import { revisionAuthorResponseSchema } from '../types/revision-review.types';
+import {
+  revisionAuthorResponseSchema,
+  type RevisionAuthorVote,
+} from '../types/revision-review.types';
 import { evaluateRevisionReview, revisionDraftHash } from '../utilities/revision-review.utility';
 
 @Injectable()
@@ -46,157 +59,204 @@ export class GenerationPipelineManager {
 
   async generate(input: GenerationPipelineInput): Promise<GenerationPipelineResult> {
     const job = this.validateRoles(input);
-    const saved = await this.jobs.loadResumeState(job.jobId);
-    const savedBundle = z.record(z.string(), z.unknown()).safeParse(saved.evidenceBundle);
-    if (
-      saved.evidenceBundle !== null &&
-      saved.evidenceBundle !== undefined &&
-      (!savedBundle.success ||
-        !saved.evidenceBundleHash ||
-        (this.hash(JSON.stringify(savedBundle.data)) !== saved.evidenceBundleHash &&
-          this.hash(stableJson(savedBundle.data)) !== saved.evidenceBundleHash))
-    ) {
-      throw new ServiceUnavailableException(
-        'Saved research checkpoint failed integrity validation',
-      );
-    }
-    if (savedBundle.success && saved.evidenceBundleHash) await this.recordResumed(job.jobId);
-    const evidence =
-      savedBundle.success && saved.evidenceBundleHash
-        ? {
-            researchRunId: '',
-            bundle: savedBundle.data,
-            sha256: saved.evidenceBundleHash,
-            version: 1 as const,
-          }
-        : await this.runResearch(job);
-    if (!savedBundle.success) {
-      const savedEvidence = await this.jobs.saveResearchEvidence(job.jobId, job.attempt, evidence);
-      if (!savedEvidence) throw new ThreadGenerationLeaseLostError();
-    }
+    const evidence = await this.resolveEvidence(job);
     const evidenceItems = this.evidenceItems(evidence.bundle);
     await this.throwIfCancelled(job);
-    const sharedMaterial = JSON.stringify({
-      version: 1,
-      topic: job.topic,
-      publicationType: job.publicationType,
-      sourceSnapshot: job.sourceSnapshot,
-      researchEvidence: evidence.bundle,
-    });
-    let revisionBrief = '';
-
-    for (let round = 1; round <= MAX_GENERATION_ROUNDS; round += 1) {
-      await this.enterStage(job, ThreadGenerationStage.AUTHOR_DRAFTS, round);
-      const authorResults = await this.callAuthors(
-        job,
-        round,
-        sharedMaterial,
-        evidence.sha256,
-        revisionBrief,
-        evidenceItems,
-      );
-      const drafts = this.requireFulfilled(authorResults, 'An author role failed');
-      await this.checkCitations(job, round, drafts, evidenceItems);
-      // Independent models never write byte-identical drafts, so consensus is a vote:
-      // one candidate, and every author must agree with its exact hash.
-      const candidate = drafts[0];
-      if (!candidate)
-        throw new ServiceUnavailableException('Author consensus did not produce a draft');
-      const candidateHash = revisionDraftHash(candidate);
-      const voteMaterial = JSON.stringify({
+    const context: GenerationRoundContext = {
+      job,
+      evidence,
+      evidenceItems,
+      sharedMaterial: JSON.stringify({
         version: 1,
         topic: job.topic,
         publicationType: job.publicationType,
         sourceSnapshot: job.sourceSnapshot,
         researchEvidence: evidence.bundle,
-        exactCandidateHash: candidateHash,
-      });
-      await this.enterStage(job, ThreadGenerationStage.CONSENSUS, round);
-      const voteResults = await Promise.allSettled(
-        job.authors.map((role) =>
-          this.callRevisionVote(
-            job,
-            role,
-            candidate,
-            candidateHash,
-            voteMaterial,
-            evidence.sha256,
-            {
-              communicationPrefix: 'consensus-author',
-              round,
-            },
-          ),
-        ),
-      );
-      const votes = this.requireFulfilled(voteResults, 'An author role failed to vote');
-      const consensus = resolveAuthorConsensus(
-        votes.map((vote) => ({
-          role: vote.roleId,
-          draftHash: vote.agrees ? vote.draftHash : `dissent:${vote.roleId}`,
-        })),
-      );
-      if (consensus.status !== 'consensus' || consensus.draftHash !== candidateHash) {
-        await this.recorder.record(job.jobId, {
-          stage: ThreadGenerationStage.CONSENSUS,
-          round,
-          outcome: 'RETRY',
-          roleKind: 'SYSTEM',
-          code: 'CONSENSUS_NOT_REACHED',
-        });
-        revisionBrief = `Authors did not all agree. Improve this candidate for factual support, coherence and evidence use, then return the complete improved draft: ${JSON.stringify(candidate)}`;
-        continue;
-      }
+      }),
+    };
+    let revisionBrief = '';
 
-      const draft = candidate;
-      await this.enterStage(job, ThreadGenerationStage.JUDGE, round);
-      const judge = await this.callReview(
-        job,
-        job.judge,
-        ReviewerRole.JUDGE,
-        round,
-        sharedMaterial,
-        draft,
-        evidence.sha256,
-      );
-      if (judge.score < MIN_JUDGE_SCORE || judge.blockers.length > 0) {
-        revisionBrief = this.reviewBrief(judge);
-        await this.recordReviewRetry(job, round, ReviewerRole.JUDGE, revisionBrief);
-        continue;
-      }
-
-      await this.enterStage(job, ThreadGenerationStage.CRITIC, round);
-      const critic = await this.callReview(
-        job,
-        job.critic,
-        ReviewerRole.CRITIC,
-        round,
-        sharedMaterial,
-        draft,
-        evidence.sha256,
-      );
-      if (critic.score < MIN_CRITIC_SCORE || critic.blockers.length > 0) {
-        revisionBrief = this.reviewBrief(critic);
-        await this.recordReviewRetry(job, round, ReviewerRole.CRITIC, revisionBrief);
-        continue;
-      }
-      return {
-        markdown: draft.markdown,
-        citations: draft.citations,
-        draftHash: consensus.draftHash,
-        evidenceBundle: evidence.bundle,
-        evidenceHash: evidence.sha256,
-        rounds: round,
-        authorDrafts: drafts,
-        judgeReview: judge,
-        criticReview: critic,
-        authorConsensus: true,
-        reviewReady: true,
-        reviewReasons: [],
-      };
+    for (let round = 1; round <= MAX_GENERATION_ROUNDS; round += 1) {
+      const outcome = await this.runRound(context, round, revisionBrief);
+      if (outcome.kind === 'passed') return outcome.result;
+      revisionBrief = outcome.revisionBrief;
     }
     throw new ServiceUnavailableException(
       'Generation did not pass consensus and reviews in three rounds',
     );
+  }
+
+  private async resolveEvidence(job: GenerationPipelineInput): Promise<ResearchEvidence> {
+    const saved = await this.jobs.loadResumeState(job.jobId);
+    const savedBundle = checkpointBundleSchema.safeParse(saved.evidenceBundle);
+    if (
+      saved.evidenceBundle !== null &&
+      saved.evidenceBundle !== undefined &&
+      !this.isCheckpointIntact(savedBundle, saved.evidenceBundleHash)
+    ) {
+      throw new ServiceUnavailableException(
+        'Saved research checkpoint failed integrity validation',
+      );
+    }
+    if (savedBundle.success && saved.evidenceBundleHash) {
+      await this.recordResumed(job.jobId);
+      return {
+        researchRunId: '',
+        bundle: savedBundle.data,
+        sha256: saved.evidenceBundleHash,
+        version: 1 as const,
+      };
+    }
+    const evidence = await this.runResearch(job);
+    if (!savedBundle.success) {
+      const savedEvidence = await this.jobs.saveResearchEvidence(job.jobId, job.attempt, evidence);
+      if (!savedEvidence) throw new ThreadGenerationLeaseLostError();
+    }
+    return evidence;
+  }
+
+  private isCheckpointIntact(
+    parsed: z.ZodSafeParseResult<Record<string, unknown>>,
+    savedHash: string | null | undefined,
+  ): boolean {
+    return (
+      parsed.success &&
+      Boolean(savedHash) &&
+      (this.hash(JSON.stringify(parsed.data)) === savedHash ||
+        this.hash(stableJson(parsed.data)) === savedHash)
+    );
+  }
+
+  private async runRound(
+    context: GenerationRoundContext,
+    round: number,
+    revisionBrief: string,
+  ): Promise<GenerationRoundOutcome> {
+    const { job, evidence } = context;
+    const drafts = await this.runAuthorStage(context, round, revisionBrief);
+    // Independent models never write byte-identical drafts, so consensus is a vote:
+    // one candidate, and every author must agree with its exact hash.
+    const candidate = drafts[0];
+    if (!candidate)
+      throw new ServiceUnavailableException('Author consensus did not produce a draft');
+    const candidateHash = revisionDraftHash(candidate);
+    if (!(await this.reachConsensus(context, round, candidate, candidateHash))) {
+      return {
+        kind: 'retry',
+        revisionBrief: `Authors did not all agree. Improve this candidate for factual support, coherence and evidence use, then return the complete improved draft: ${JSON.stringify(candidate)}`,
+      };
+    }
+    const judge = await this.runReviewStage(context, round, JUDGE_STAGE, job.judge, candidate);
+    if (judge.revisionBrief !== null) return { kind: 'retry', revisionBrief: judge.revisionBrief };
+    const critic = await this.runReviewStage(context, round, CRITIC_STAGE, job.critic, candidate);
+    if (critic.revisionBrief !== null) {
+      return { kind: 'retry', revisionBrief: critic.revisionBrief };
+    }
+    return {
+      kind: 'passed',
+      result: {
+        markdown: candidate.markdown,
+        citations: candidate.citations,
+        draftHash: candidateHash,
+        evidenceBundle: evidence.bundle,
+        evidenceHash: evidence.sha256,
+        rounds: round,
+        authorDrafts: drafts,
+        judgeReview: judge.review,
+        criticReview: critic.review,
+        authorConsensus: true,
+        reviewReady: true,
+        reviewReasons: [],
+      },
+    };
+  }
+
+  private async runAuthorStage(
+    context: GenerationRoundContext,
+    round: number,
+    revisionBrief: string,
+  ): Promise<AuthorDraft[]> {
+    const { job, evidence, evidenceItems, sharedMaterial } = context;
+    await this.enterStage(job, ThreadGenerationStage.AUTHOR_DRAFTS, round);
+    const authorResults = await this.callAuthors(
+      job,
+      round,
+      sharedMaterial,
+      evidence.sha256,
+      revisionBrief,
+      evidenceItems,
+    );
+    const drafts = this.requireFulfilled(authorResults, 'An author role failed');
+    await this.checkCitations(job, round, drafts, evidenceItems);
+    return drafts;
+  }
+
+  private async reachConsensus(
+    context: GenerationRoundContext,
+    round: number,
+    candidate: AuthorDraft,
+    candidateHash: string,
+  ): Promise<boolean> {
+    const { job, evidence } = context;
+    const voteMaterial = JSON.stringify({
+      version: 1,
+      topic: job.topic,
+      publicationType: job.publicationType,
+      sourceSnapshot: job.sourceSnapshot,
+      researchEvidence: evidence.bundle,
+      exactCandidateHash: candidateHash,
+    });
+    await this.enterStage(job, ThreadGenerationStage.CONSENSUS, round);
+    const voteResults = await Promise.allSettled(
+      job.authors.map((role) =>
+        this.callRevisionVote(job, role, candidate, candidateHash, voteMaterial, evidence.sha256, {
+          communicationPrefix: 'consensus-author',
+          round,
+        }),
+      ),
+    );
+    const votes = this.requireFulfilled(voteResults, 'An author role failed to vote');
+    const consensus = resolveAuthorConsensus(
+      votes.map((vote) => ({
+        role: vote.roleId,
+        draftHash: vote.agrees ? vote.draftHash : `dissent:${vote.roleId}`,
+      })),
+    );
+    if (consensus.status === 'consensus' && consensus.draftHash === candidateHash) return true;
+    await this.recorder.record(job.jobId, {
+      stage: ThreadGenerationStage.CONSENSUS,
+      round,
+      outcome: 'RETRY',
+      roleKind: 'SYSTEM',
+      code: 'CONSENSUS_NOT_REACHED',
+    });
+    return false;
+  }
+
+  private async runReviewStage(
+    context: GenerationRoundContext,
+    round: number,
+    spec: ReviewStageSpec,
+    role: ModelRole,
+    draft: AuthorDraft,
+  ): Promise<ReviewStageResult> {
+    const { job, evidence, sharedMaterial } = context;
+    await this.enterStage(job, spec.stage, round);
+    const review = await this.callReview(
+      job,
+      role,
+      spec.reviewer,
+      round,
+      sharedMaterial,
+      draft,
+      evidence.sha256,
+    );
+    if (review.score >= spec.minScore && review.blockers.length === 0) {
+      return { review, revisionBrief: null };
+    }
+    const revisionBrief = this.reviewBrief(review);
+    await this.recordReviewRetry(job, round, spec.reviewer, revisionBrief);
+    return { review, revisionBrief };
   }
 
   async reviewRevision(
@@ -278,7 +338,7 @@ export class GenerationPipelineManager {
     });
   }
 
-  private async runResearch(job: GenerationPipelineInput) {
+  private async runResearch(job: GenerationPipelineInput): Promise<ResearchEvidence> {
     const startedAt = Date.now();
     const base = { stage: ThreadGenerationStage.RESEARCH, roleKind: 'RESEARCH' as const };
     await this.recorder.record(job.jobId, { ...base, outcome: 'STARTED' });
@@ -363,7 +423,7 @@ export class GenerationPipelineManager {
     evidenceHash: string,
     revisionBrief: string,
     evidenceItems: Map<string, string>,
-  ) {
+  ): Promise<PromiseSettledResult<AuthorDraft>[]> {
     return Promise.allSettled(
       job.authors.map((role) =>
         this.callAuthor(
@@ -381,15 +441,15 @@ export class GenerationPipelineManager {
 
   private validateRoles(input: GenerationPipelineInput): GenerationPipelineInput {
     if (input.authors.length < 3 || input.authors.length > 5) {
-      throw new ServiceUnavailableException('Generation requires three to five author roles');
+      throw new DeterministicGenerationError('Generation requires three to five author roles');
     }
     const roles = [...input.authors, input.judge, input.critic].map((role) => {
       const parsed = modelRoleSchema.safeParse(role);
       if (!parsed.success) {
-        throw new ServiceUnavailableException('A model role configuration is invalid');
+        throw new DeterministicGenerationError('A model role configuration is invalid');
       }
       if (parsed.data.fallbacks.some((fallback) => fallback.provider === parsed.data.provider)) {
-        throw new ServiceUnavailableException('A fallback must use a different provider');
+        throw new DeterministicGenerationError('A fallback must use a different provider');
       }
       return parsed.data;
     });
@@ -397,7 +457,7 @@ export class GenerationPipelineManager {
     const judge = roles[input.authors.length];
     const critic = roles[input.authors.length + 1];
     if (!judge || !critic)
-      throw new ServiceUnavailableException('Judge and Critic roles are required');
+      throw new DeterministicGenerationError('Judge and Critic roles are required');
     const roleIds = roles.map((role) => role.id);
     if (new Set(roleIds).size !== roleIds.length) {
       throw new ServiceUnavailableException('Generation role identifiers must be unique');
@@ -465,7 +525,7 @@ export class GenerationPipelineManager {
     sharedMaterial: string,
     draft: AuthorDraft,
     evidenceHash: string,
-  ) {
+  ): Promise<StructuredReview> {
     const prompts = {
       systemPrompt: `Review the draft independently as ${reviewer}. Return only one JSON object shaped {"score": integer 0-100, "blockers": string[], "findings": string[] (at most five), "revisionBrief": string} with no code fences. Do not include chain-of-thought.`,
       userPrompt: `${sharedMaterial}\nDraft:\n${JSON.stringify(draft)}`,
@@ -518,7 +578,7 @@ export class GenerationPipelineManager {
       communicationPrefix: 'revision-author',
       round: 1,
     },
-  ) {
+  ): Promise<RevisionAuthorVote> {
     const communicationRole = { ...role, id: `${communicationPrefix}-${role.id}` };
     const prompts = {
       systemPrompt:
@@ -573,7 +633,7 @@ export class GenerationPipelineManager {
     round: number,
     evidenceHash: string,
     prompts: { systemPrompt: string; userPrompt: string },
-    response: Awaited<ReturnType<ChatModelClient['generate']>>,
+    response: ChatModelResponse,
     output: Record<string, unknown>,
   ): Promise<void> {
     const saved = await this.jobs.saveCommunication({
@@ -596,11 +656,12 @@ export class GenerationPipelineManager {
     round: number,
     prompt: { systemPrompt: string; userPrompt: string },
     accepts: z.ZodType,
-  ) {
+  ): Promise<ChatModelResponse> {
     const candidates = [{ provider: role.provider, model: role.model }, ...role.fallbacks];
     const outputReserve = role.maxOutputTokens;
     const { stage, roleKind } = roleStepInfo(roleKey);
     let lastError: unknown;
+    let everyFailureDeterministic = true;
     for (const [index, candidate] of candidates.entries()) {
       const step = { stage, round, roleKind, roleId: role.id, ...candidate };
       if (index > 0) {
@@ -638,6 +699,7 @@ export class GenerationPipelineManager {
             rawExcerpt: response.content,
           });
           if (accepted) return response;
+          everyFailureDeterministic = false;
           lastError = new ServiceUnavailableException('A model returned invalid structured output');
         } catch (error: unknown) {
           if (error instanceof ThreadGenerationCancelledError) throw error;
@@ -649,14 +711,21 @@ export class GenerationPipelineManager {
             httpStatus: parsed.httpStatus,
             durationMs: Date.now() - startedAt,
           });
+          everyFailureDeterministic &&= isDeterministicGenerationError(error);
           lastError = error;
           break;
         }
       }
     }
-    throw lastError instanceof Error
-      ? lastError
-      : new ServiceUnavailableException('No eligible model could complete this role');
+    if (!(lastError instanceof Error)) {
+      throw new ServiceUnavailableException('No eligible model could complete this role');
+    }
+    // One candidate failing for a reason a retry cannot fix does not make the role
+    // permanent while another candidate failed transiently: only "all" ends the job.
+    if (!everyFailureDeterministic && isDeterministicGenerationError(lastError)) {
+      throw new ServiceUnavailableException(lastError.message);
+    }
+    throw lastError;
   }
 
   private responseOutcome(accepted: boolean, attempt: number): StepResponseOutcome {
@@ -698,7 +767,10 @@ export class GenerationPipelineManager {
   }
 
   private requireFulfilled<T>(results: PromiseSettledResult<T>[], message: string): T[] {
-    const rejected = results.find((result) => result.status === 'rejected');
+    // A transient failure among the rejections wins, so a retry is not skipped on a hunch.
+    const rejections = results.filter((result) => result.status === 'rejected');
+    const rejected =
+      rejections.find((result) => !isDeterministicGenerationError(result.reason)) ?? rejections[0];
     if (
       rejected?.status === 'rejected' &&
       rejected.reason instanceof ThreadGenerationCancelledError

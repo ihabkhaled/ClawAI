@@ -868,6 +868,9 @@ export const th: TranslationDictionary = {
         fallbackUsed: 'โมเดลหนึ่งล้มเหลว จึงใช้โมเดลสำรองแทน',
         contextWindowExceeded: 'เนื้อหายาวเกินไปสำหรับโมเดลที่เลือก',
         modelContextUnavailable: 'ตรวจสอบขีดจำกัดขนาดของโมเดลที่เลือกไม่ได้',
+        modelCatalogUnreachable: 'เชื่อมต่อแคตตาล็อกโมเดลไม่ได้',
+        modelCatalogRejected: 'แคตตาล็อกโมเดลปฏิเสธการตรวจสอบขีดจำกัดขนาด',
+        contextWindowAssumed: 'เนื้อหายาวเกินไปสำหรับโมเดลที่ไม่ทราบขีดจำกัดขนาด (สมมติว่า 32k)',
         researchUnavailable: 'เชื่อมต่อบริการค้นคว้าไม่ได้',
         researchFailed: 'ขั้นตอนการค้นคว้าล้มเหลว',
         researchEmpty: 'การค้นคว้าไม่พบแหล่งข้อมูลที่ใช้ได้',
@@ -897,6 +900,11 @@ export const th: TranslationDictionary = {
         contextWindowExceeded:
           'เลือกโมเดลที่มีหน้าต่างบริบทใหญ่กว่า หรือย่อหัวข้อให้สั้นลง แล้วลองอีกครั้ง',
         modelContextUnavailable: 'รอสักครู่แล้วลองอีกครั้ง',
+        modelCatalogUnreachable: 'รอสักครู่แล้วลองอีกครั้ง',
+        modelCatalogRejected:
+          'นี่เป็นปัญหาการตั้งค่าจากฝั่งเรา การลองใหม่จะไม่ช่วย เลือกโมเดลอื่นหรือติดต่อฝ่ายสนับสนุน',
+        contextWindowAssumed:
+          'เลือกโมเดลที่มีหน้าต่างบริบทที่ทราบและใหญ่กว่า หรือย่อหัวข้อให้สั้นลง แล้วลองอีกครั้ง',
         researchUnavailable: 'รอสักครู่แล้วลองอีกครั้ง',
         researchFailed: 'ลองอีกครั้ง หากยังล้มเหลวให้เปลี่ยนหัวข้อ',
         researchEmpty: 'ทำให้หัวข้อเฉพาะเจาะจงขึ้นหรือกว้างขึ้น แล้วลองอีกครั้ง',

@@ -889,6 +889,10 @@ export const hi: TranslationDictionary = {
         fallbackUsed: 'एक मॉडल विफल हुआ, इसलिए बैकअप मॉडल ने काम संभाल लिया।',
         contextWindowExceeded: 'सामग्री चुने गए मॉडल के लिए बहुत लंबी है।',
         modelContextUnavailable: 'चुने गए मॉडल की आकार सीमा जाँची नहीं जा सकी।',
+        modelCatalogUnreachable: 'मॉडल कैटलॉग तक पहुँचा नहीं जा सका।',
+        modelCatalogRejected: 'मॉडल कैटलॉग ने आकार सीमा की जाँच अस्वीकार कर दी।',
+        contextWindowAssumed:
+          'सामग्री ऐसे मॉडल के लिए बहुत लंबी है जिसकी आकार सीमा अज्ञात है (32k सीमा मानी गई)।',
         researchUnavailable: 'रिसर्च सेवा तक पहुँचा नहीं जा सका।',
         researchFailed: 'रिसर्च चरण विफल रहा।',
         researchEmpty: 'रिसर्च में कोई उपयोगी स्रोत नहीं मिला।',
@@ -918,6 +922,11 @@ export const hi: TranslationDictionary = {
         contextWindowExceeded:
           'बड़ी संदर्भ विंडो वाला मॉडल चुनें या विषय छोटा करें, फिर कोशिश करें।',
         modelContextUnavailable: 'थोड़ा रुकें और फिर कोशिश करें।',
+        modelCatalogUnreachable: 'थोड़ा रुकें और फिर कोशिश करें।',
+        modelCatalogRejected:
+          'यह हमारी ओर की सेटअप समस्या है, दोबारा कोशिश से कुछ नहीं बदलेगा। कोई दूसरा मॉडल चुनें या सहायता से संपर्क करें।',
+        contextWindowAssumed:
+          'ज्ञात और बड़ी संदर्भ विंडो वाला मॉडल चुनें या विषय छोटा करें, फिर कोशिश करें।',
         researchUnavailable: 'थोड़ा रुकें और फिर कोशिश करें।',
         researchFailed: 'फिर कोशिश करें। बार-बार विफल हो तो विषय बदलें।',
         researchEmpty: 'विषय को और खास या और व्यापक बनाएँ, फिर कोशिश करें।',

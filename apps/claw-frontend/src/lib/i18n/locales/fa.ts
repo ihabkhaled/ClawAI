@@ -887,6 +887,10 @@ export const fa: TranslationDictionary = {
         fallbackUsed: 'یک مدل شکست خورد و مدل جایگزین جای آن را گرفت.',
         contextWindowExceeded: 'محتوا برای مدل انتخاب‌شده خیلی بلند است.',
         modelContextUnavailable: 'حد اندازه یکی از مدل‌های انتخاب‌شده بررسی نشد.',
+        modelCatalogUnreachable: 'دسترسی به فهرست مدل‌ها ممکن نبود.',
+        modelCatalogRejected: 'فهرست مدل‌ها بررسی حد اندازه را رد کرد.',
+        contextWindowAssumed:
+          'محتوا برای مدلی با حد اندازه نامشخص خیلی بلند است (حد ۳۲ هزار فرض شد).',
         researchUnavailable: 'دسترسی به سرویس پژوهش ممکن نبود.',
         researchFailed: 'مرحله پژوهش شکست خورد.',
         researchEmpty: 'پژوهش منبع قابل استفاده‌ای پیدا نکرد.',
@@ -916,6 +920,11 @@ export const fa: TranslationDictionary = {
         contextWindowExceeded:
           'مدلی با پنجره زمینه بزرگ‌تر انتخاب کنید یا موضوع را کوتاه کنید و دوباره تلاش کنید.',
         modelContextUnavailable: 'کمی صبر کنید و دوباره تلاش کنید.',
+        modelCatalogUnreachable: 'کمی صبر کنید و دوباره تلاش کنید.',
+        modelCatalogRejected:
+          'این یک مشکل پیکربندی از سمت ماست و تلاش دوباره کمکی نمی‌کند. مدل دیگری انتخاب کنید یا با پشتیبانی تماس بگیرید.',
+        contextWindowAssumed:
+          'مدلی با پنجره زمینه شناخته‌شده و بزرگ‌تر انتخاب کنید یا موضوع را کوتاه کنید و دوباره تلاش کنید.',
         researchUnavailable: 'کمی صبر کنید و دوباره تلاش کنید.',
         researchFailed: 'دوباره تلاش کنید. اگر باز هم شکست خورد، موضوع را تغییر دهید.',
         researchEmpty: 'موضوع را دقیق‌تر یا گسترده‌تر کنید و دوباره تلاش کنید.',

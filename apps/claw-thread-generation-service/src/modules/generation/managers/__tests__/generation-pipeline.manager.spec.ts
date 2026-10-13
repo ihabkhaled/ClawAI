@@ -1,4 +1,8 @@
 import { GenerationPipelineManager } from '../generation-pipeline.manager';
+import {
+  DeterministicGenerationError,
+  isDeterministicGenerationError,
+} from '../../utilities/deterministic-generation.error';
 import { createHash } from 'node:crypto';
 import type { GenerationPipelineInput, ModelRole } from '../../types/generation-pipeline.types';
 import { revisionDraftHash } from '../../utilities/revision-review.utility';
@@ -323,6 +327,86 @@ ${text}
     expect(harness.research.run).not.toHaveBeenCalled();
   });
 
+  it('marks an invalid role configuration as a failure a retry cannot fix', async () => {
+    const harness = build([]);
+
+    const tooFew = await harness.manager
+      .generate({ ...input, authors: input.authors.slice(0, 2) })
+      .catch((error: unknown) => error);
+    const sameProviderFallback = await harness.manager
+      .generate({
+        ...input,
+        authors: [
+          { ...role('author-1'), fallbacks: [{ provider: 'OPENAI', model: 'other' }] },
+          ...input.authors.slice(1),
+        ],
+      })
+      .catch((error: unknown) => error);
+
+    expect(tooFew).toBeInstanceOf(DeterministicGenerationError);
+    expect(sameProviderFallback).toBeInstanceOf(DeterministicGenerationError);
+    expect(harness.research.run).not.toHaveBeenCalled();
+  });
+
+  describe('retry classification of a failed role', () => {
+    const withFallbacks: GenerationPipelineInput = {
+      ...input,
+      authors: [
+        { ...role('author-1'), fallbacks: [{ provider: 'ANTHROPIC', model: 'fallback-model' }] },
+        {
+          ...role('author-2', 'ANTHROPIC'),
+          fallbacks: [{ provider: 'GEMINI', model: 'fallback-model' }],
+        },
+        {
+          ...role('author-3', 'GEMINI'),
+          fallbacks: [{ provider: 'OPENAI', model: 'fallback-model' }],
+        },
+      ],
+    };
+    const tooLarge = () =>
+      new DeterministicGenerationError('Complete role context exceeds the model window');
+
+    it('is deterministic when the prompt overflows every candidate of the role', async () => {
+      const harness = build([]);
+      harness.models.generate.mockRejectedValue(tooLarge());
+
+      const failure = await harness.manager
+        .generate(withFallbacks)
+        .catch((error: unknown) => error);
+
+      expect(isDeterministicGenerationError(failure)).toBe(true);
+      expect(harness.models.generate).toHaveBeenCalledTimes(6);
+    });
+
+    it('stays retryable when a fallback failed for a transient reason', async () => {
+      const harness = build([]);
+      harness.models.generate.mockImplementation(async (request: { model: string }) => {
+        if (request.model === 'fallback-model')
+          throw new Error('Chat model gateway is unavailable');
+        throw tooLarge();
+      });
+
+      const failure = await harness.manager
+        .generate(withFallbacks)
+        .catch((error: unknown) => error);
+
+      expect(failure).toBeInstanceOf(Error);
+      expect(isDeterministicGenerationError(failure)).toBe(false);
+    });
+
+    it('stays retryable when one author is deterministic and another is transient', async () => {
+      const harness = build([]);
+      harness.models.generate.mockImplementation(async (request: { provider: string }) => {
+        if (request.provider === 'OPENAI') throw tooLarge();
+        throw new Error('Chat model gateway is unavailable');
+      });
+
+      const failure = await harness.manager.generate(input).catch((error: unknown) => error);
+
+      expect(isDeterministicGenerationError(failure)).toBe(false);
+    });
+  });
+
   it('rejects duplicate author, Judge, or Critic role identifiers', async () => {
     const harness = build([]);
 
@@ -338,8 +422,8 @@ ${text}
       citations: [{ evidenceId: 'source-1', url: 'https://example.org/source' }],
     };
     const draftHash = revisionDraftHash(edited);
-    const vote = JSON.stringify({ agrees: true, draftHash });
-    const harness = build([vote, vote, vote, review(80), review(75)]);
+    const editedVote = JSON.stringify({ agrees: true, draftHash });
+    const harness = build([editedVote, editedVote, editedVote, review(80), review(75)]);
 
     const result = await harness.manager.reviewRevision(
       input,

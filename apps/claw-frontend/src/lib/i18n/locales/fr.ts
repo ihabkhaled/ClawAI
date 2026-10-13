@@ -904,6 +904,11 @@ export const fr: TranslationDictionary = {
         fallbackUsed: 'Un modèle a échoué, un modèle de secours a pris le relais.',
         contextWindowExceeded: 'Le contenu est trop long pour le modèle choisi.',
         modelContextUnavailable: 'La limite de taille d’un modèle choisi n’a pas pu être vérifiée.',
+        modelCatalogUnreachable: 'Le catalogue de modèles est injoignable.',
+        modelCatalogRejected:
+          'Le catalogue de modèles a refusé la vérification de la limite de taille.',
+        contextWindowAssumed:
+          'Le contenu est trop long pour un modèle dont la limite de taille est inconnue (32k supposés).',
         researchUnavailable: 'Le service de recherche est injoignable.',
         researchFailed: 'L’étape de recherche a échoué.',
         researchEmpty: 'La recherche n’a trouvé aucune source exploitable.',
@@ -934,6 +939,11 @@ export const fr: TranslationDictionary = {
         contextWindowExceeded:
           'Choisissez un modèle à plus grande fenêtre de contexte ou raccourcissez le sujet, puis réessayez.',
         modelContextUnavailable: 'Patientez un instant puis réessayez.',
+        modelCatalogUnreachable: 'Patientez un instant puis réessayez.',
+        modelCatalogRejected:
+          'C’est un problème de configuration de notre côté, réessayer n’y changera rien. Choisissez un autre modèle ou contactez le support.',
+        contextWindowAssumed:
+          'Choisissez un modèle à fenêtre de contexte connue et plus grande, ou raccourcissez le sujet, puis réessayez.',
         researchUnavailable: 'Patientez un instant puis réessayez.',
         researchFailed: 'Réessayez. Si cela échoue encore, changez le sujet.',
         researchEmpty: 'Précisez ou élargissez le sujet, puis réessayez.',

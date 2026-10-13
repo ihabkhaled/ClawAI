@@ -808,6 +808,9 @@ export type TranslationDictionary = {
         fallbackUsed: string;
         contextWindowExceeded: string;
         modelContextUnavailable: string;
+        modelCatalogUnreachable: string;
+        modelCatalogRejected: string;
+        contextWindowAssumed: string;
         researchUnavailable: string;
         researchFailed: string;
         researchEmpty: string;
@@ -833,6 +836,9 @@ export type TranslationDictionary = {
         fallbackUsed: string;
         contextWindowExceeded: string;
         modelContextUnavailable: string;
+        modelCatalogUnreachable: string;
+        modelCatalogRejected: string;
+        contextWindowAssumed: string;
         researchUnavailable: string;
         researchFailed: string;
         researchEmpty: string;

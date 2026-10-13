@@ -77,6 +77,15 @@ describe('THREAD_GENERATION_CODE_KEYS', () => {
     expect(missing).toEqual([]);
   });
 
+  it('maps each model-window failure to its own message instead of one catch-all', () => {
+    expect(THREAD_GENERATION_CODE_KEYS.MODEL_CATALOG_UNREACHABLE).toBe('modelCatalogUnreachable');
+    expect(THREAD_GENERATION_CODE_KEYS.MODEL_CATALOG_REJECTED).toBe('modelCatalogRejected');
+    expect(THREAD_GENERATION_CODE_KEYS.CONTEXT_WINDOW_ASSUMED).toBe('contextWindowAssumed');
+    expect(THREAD_GENERATION_CODE_KEYS.CONTEXT_WINDOW_EXCEEDED).toBe('contextWindowExceeded');
+    // Steps stored before the split still carry the old code, so it stays mapped.
+    expect(THREAD_GENERATION_CODE_KEYS.MODEL_CONTEXT_UNAVAILABLE).toBe('modelContextUnavailable');
+  });
+
   it('carries the codes added for leases and checkpoints and drops the retired ones', () => {
     expect(THREAD_GENERATION_CODE_KEYS.LEASE_EXPIRED).toBe('leaseExpired');
     expect(THREAD_GENERATION_CODE_KEYS.RESUMED_FROM_CHECKPOINT).toBe('resumedFromCheckpoint');

@@ -368,6 +368,22 @@ describe('GenerationJobsRepository recovery', () => {
     );
   });
 
+  it('fails on the first attempt, with the reason, when the failure cannot be fixed by a retry', async () => {
+    const { repository, tx } = buildRepository();
+
+    expect(await repository.retryOrFail('job-1', 1, 'prompt too large', false)).toBe('FAILED');
+    expect(tx.threadGenerationJob.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: ThreadGenerationStatus.FAILED,
+          safeErrorCode: 'GENERATION_FAILED',
+          failureSummary: 'prompt too large',
+          completedAt: expect.any(Date),
+        }),
+      }),
+    );
+  });
+
   it('fails the job after the third attempt instead of scheduling unbounded retries', async () => {
     const { repository, tx } = buildRepository();
 

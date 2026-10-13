@@ -1,7 +1,9 @@
 import { EventPattern, Locale, ThreadPublicationType } from '@claw/shared-types';
+import { ServiceUnavailableException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 
 import { GenerationJobsService } from '../generation-jobs.service';
+import { DeterministicGenerationError } from '../../utilities/deterministic-generation.error';
 import { GenerationJobStorageResult } from '../../../../common/enums/generation-job-storage-result.enum';
 
 const role = (id: string) => ({
@@ -448,58 +450,77 @@ describe('GenerationJobsService', () => {
     });
   });
 
-  it('keeps the parent budget held when a bounded attempt is retried', async () => {
-    let handler: ((event: unknown) => Promise<void>) | undefined;
-    const job = {
-      id: 'job-1',
-      ownerId: 'owner-1',
-      budgetId: 'budget-1',
-      attemptCount: 1,
-      request: {
-        ownerId: 'owner-1',
-        sourceThreadId: 'thread-1',
-        idempotencyKey: 'request-1',
-        correlationId: 'correlation-1',
-        spendCapMicroUsd: '5000000',
-        topic: 'A detailed topic for a publication',
-        publicationType: 'article',
-        contentLocale: Locale.EN,
-        publicIntentVersion: 'threads-public-v1',
-        authors: [role('author-1'), role('author-2'), role('author-3')],
-        judge: role('judge'),
-        critic: role('critic'),
-      },
-      sourceSnapshot: { messages: [] },
-    };
-    const repository = {
-      claim: vi.fn().mockResolvedValue(job),
-      isCancellationRequested: vi.fn().mockResolvedValue(false),
-      retryOrFail: vi.fn().mockResolvedValue('RETRY'),
-    };
-    const rabbit = {
-      subscribe: vi.fn().mockImplementation(async (_pattern, callback) => {
-        handler = callback;
+  it.each([
+    ['a transient failure is retried', new Error('temporary provider outage'), 'RETRY', true, 0],
+    [
+      'a failure whose cause cannot be fixed by a retry fails on the first attempt',
+      new ServiceUnavailableException('An author role failed', {
+        cause: new DeterministicGenerationError('Complete role context exceeds the model window'),
       }),
-    };
-    const pipeline = {
-      generate: vi.fn().mockRejectedValue(new Error('temporary provider outage')),
-    };
-    const budgets = { close: vi.fn() };
-    const service = new GenerationJobsService(
-      {} as never,
-      repository as never,
-      rabbit as never,
-      pipeline as never,
-      budgets as never,
-      recorder as never,
-    );
+      'FAILED',
+      false,
+      1,
+    ],
+  ])(
+    'keeps the parent budget held only when the attempt is retried: %s',
+    async (_label, failure, outcome, retryable, closeCalls) => {
+      let handler: ((event: unknown) => Promise<void>) | undefined;
+      const job = {
+        id: 'job-1',
+        ownerId: 'owner-1',
+        budgetId: 'budget-1',
+        attemptCount: 1,
+        request: {
+          ownerId: 'owner-1',
+          sourceThreadId: 'thread-1',
+          idempotencyKey: 'request-1',
+          correlationId: 'correlation-1',
+          spendCapMicroUsd: '5000000',
+          topic: 'A detailed topic for a publication',
+          publicationType: 'article',
+          contentLocale: Locale.EN,
+          publicIntentVersion: 'threads-public-v1',
+          authors: [role('author-1'), role('author-2'), role('author-3')],
+          judge: role('judge'),
+          critic: role('critic'),
+        },
+        sourceSnapshot: { messages: [] },
+      };
+      const repository = {
+        claim: vi.fn().mockResolvedValue(job),
+        isCancellationRequested: vi.fn().mockResolvedValue(false),
+        retryOrFail: vi.fn().mockResolvedValue(outcome),
+      };
+      const rabbit = {
+        subscribe: vi.fn().mockImplementation(async (_pattern, callback) => {
+          handler = callback;
+        }),
+      };
+      const pipeline = {
+        generate: vi.fn().mockRejectedValue(failure),
+      };
+      const budgets = { close: vi.fn() };
+      const service = new GenerationJobsService(
+        {} as never,
+        repository as never,
+        rabbit as never,
+        pipeline as never,
+        budgets as never,
+        recorder as never,
+      );
 
-    await service.subscribe();
-    await handler?.({ jobId: 'job-1', correlationId: 'correlation-1' });
+      await service.subscribe();
+      await handler?.({ jobId: 'job-1', correlationId: 'correlation-1' });
 
-    expect(repository.retryOrFail).toHaveBeenCalledWith('job-1', 1, expect.any(String));
-    expect(budgets.close).not.toHaveBeenCalled();
-  });
+      expect(repository.retryOrFail).toHaveBeenCalledWith(
+        'job-1',
+        1,
+        expect.any(String),
+        retryable,
+      );
+      expect(budgets.close).toHaveBeenCalledTimes(closeCalls);
+    },
+  );
 
   describe('failure reports', () => {
     const failedJob = {

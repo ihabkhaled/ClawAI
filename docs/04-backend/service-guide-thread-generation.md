@@ -25,8 +25,18 @@ cancels queued jobs or requests cancellation between provider calls.
 - The publication and community service owns approved public revisions.
 - Chat supplies filtered snapshots through an internal API; this service never reads the chat database.
 - Research evidence remains owned by `claw-research-service`.
-- Routing-service supplies model context windows; an unknown or oversized full
-  prompt fails closed without truncation.
+- Routing-service supplies model context windows. `ModelContextClient` returns
+  `{ tokens, source }`: `known` (catalog row or shared table) or `assumed` (32,768,
+  `THREADS_ASSUMED_WINDOW_TOKENS`, when neither has a window). Results are cached in
+  memory per provider/model for 5 minutes (200 entries). An oversized full prompt
+  fails closed without truncation, before any model call ([ADR-173](../13-adr/adr-173-threads-unknown-model-window-is-assumed-not-fatal.md)).
+- **Retry classification.** `DeterministicGenerationError` marks a failure a retry
+  cannot fix: prompt too large for every candidate, invalid role configuration, a
+  catalog 4xx. `GenerationJobsService.process` then calls
+  `retryOrFail(..., retryable = false)` and the job is FAILED on attempt 1 with the
+  reason in `failureSummary`. Catalog unreachable, 5xx/408/425/429 and gateway errors
+  stay retryable (3 attempts, 15 s then 30 s). A role is deterministic only when
+  every candidate failed deterministically.
 - Chat-service applies existing provider credit holds and settlement using a
   stable request ID and the Auth-owned aggregate job budget. No PAYG price
   surface is added.
@@ -90,7 +100,9 @@ Table `thread_generation_steps` (migration `20261013120000_threads_generation_st
 - Codes come from `parseStepError`: `Chat model request failed (402: PAYG_CREDIT_EXHAUSTED)`
   becomes httpStatus 402 + code `PAYG_CREDIT_EXHAUSTED`; a bare status becomes `PROVIDER_ERROR`
   (429 `PROVIDER_RATE_LIMITED`); service-written messages map to `PROVIDER_UNAVAILABLE`,
-  `CONTEXT_WINDOW_EXCEEDED`, `OUTPUT_INVALID`, `CITATION_INVALID`, `RESEARCH_*`,
+  `CONTEXT_WINDOW_EXCEEDED`, `CONTEXT_WINDOW_ASSUMED` (prompt too large for an assumed 32k
+  window), `MODEL_CATALOG_UNREACHABLE`, `MODEL_CATALOG_REJECTED`, `OUTPUT_INVALID`,
+  `CITATION_INVALID`, `RESEARCH_*`,
   `REVIEW_NOT_PASSED`, `CANCELLED`. The cause chain is walked; an upstream status wins.
 - Excerpt: first 600 chars of the model output, trimmed, URL query strings and obvious secrets
   removed. Owner-only; never put it in a log line or a public response.

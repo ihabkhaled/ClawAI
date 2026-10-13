@@ -29,4 +29,11 @@ export const KNOWN_CONTEXT_WINDOWS: readonly KnownContextWindowEntry[] = [
   { provider: 'DEEPSEEK', pattern: /^deepseek-/u, tokens: 65_536 },
   { provider: 'GROK', pattern: /^grok-4/u, tokens: 256_000 },
   { provider: 'GROK', pattern: /^grok-/u, tokens: 131_072 },
+  // The same open-weight gpt-oss family, served by other hosts under their own provider key.
+  // Only the family already in this table (OPENAI row above) is repeated: no other host's
+  // models (glm, qwen, mistral) have a window stated anywhere in this repository, so they
+  // keep falling back to the consumer's conservative default rather than a guessed number.
+  { provider: 'GROQ', pattern: /^(?:openai\/)?gpt-oss/u, tokens: 131_072 },
+  { provider: 'OPENROUTER', pattern: /^(?:openai\/)?gpt-oss/u, tokens: 131_072 },
+  { provider: 'OLLAMA', pattern: /^(?:openai\/)?gpt-oss/u, tokens: 131_072 },
 ];

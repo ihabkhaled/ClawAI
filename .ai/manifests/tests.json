@@ -102,7 +102,7 @@
     },
     "claw-thread-generation-service": {
       "runner": "vitest",
-      "testFiles": 26
+      "testFiles": 29
     },
     "claw-threads-service": {
       "runner": "vitest",
@@ -114,5 +114,5 @@
     }
   },
   "generated": true,
-  "total": 2379
+  "total": 2382
 }

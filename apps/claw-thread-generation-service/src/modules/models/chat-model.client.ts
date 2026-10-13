@@ -5,6 +5,11 @@ import { z } from 'zod';
 
 import { AppConfig } from '../../app/config/app.config';
 import { checkRoleContextFit } from '../generation/utilities/context-fit.utility';
+import { DeterministicGenerationError } from '../generation/utilities/deterministic-generation.error';
+import {
+  CONTEXT_WINDOW_ASSUMED_EXCEEDED_MESSAGE,
+  CONTEXT_WINDOW_EXCEEDED_MESSAGE,
+} from './constants/model-context.constants';
 import { ModelContextClient } from './model-context.client';
 
 const modelResponseSchema = z.object({
@@ -43,16 +48,21 @@ export class ChatModelClient {
 
   async generate(input: ChatModelRequest): Promise<ChatModelResponse> {
     const promptTokens = estimateTextTokens(`${input.systemPrompt}\n${input.userPrompt}`);
-    const contextWindowTokens = await this.modelContext.getWindow(input.provider, input.model);
+    const window = await this.modelContext.getWindow(input.provider, input.model);
     const contextFit = checkRoleContextFit({
       provider: input.provider,
       model: input.model,
       promptTokens,
       outputReserveTokens: input.maxOutputTokens,
-      knownWindowTokens: contextWindowTokens,
+      knownWindowTokens: window.tokens,
     });
     if (!contextFit.fits) {
-      throw new ServiceUnavailableException('Complete role context exceeds the model window');
+      // The same prompt overflows the same window on a retry, so this is not retried.
+      throw new DeterministicGenerationError(
+        window.source === 'assumed'
+          ? CONTEXT_WINDOW_ASSUMED_EXCEEDED_MESSAGE
+          : CONTEXT_WINDOW_EXCEEDED_MESSAGE,
+      );
     }
 
     const config = AppConfig.get();

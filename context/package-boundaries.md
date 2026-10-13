@@ -90,3 +90,5 @@ sees the edge. See [stack-and-toolchain.md](stack-and-toolchain.md#ci).
 - Add a cross-service type/value/function to a single service instead of the
   right shared package.
 - Create a cycle between shared packages.
+
+`@claw/shared-utilities` also owns the model context-window table (`model-context-window.constants.ts`): a row is added only for a model whose window the repo states. A model with no row is not a failure: Threads assumes 32,768 tokens and still checks the prompt (ADR-173).

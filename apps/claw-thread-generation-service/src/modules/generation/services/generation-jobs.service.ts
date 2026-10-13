@@ -31,6 +31,7 @@ import { ThreadBudgetClient } from './thread-budget.client';
 import { StepRecorder } from './step-recorder.service';
 import type { RetryGenerationDto } from '../dto/retry-generation.dto';
 import { buildRetryInput } from '../utilities/build-retry-input.utility';
+import { isDeterministicGenerationError } from '../utilities/deterministic-generation.error';
 import { parseStepError } from '../utilities/parse-step-error.utility';
 import {
   RETRY_ALREADY_EXISTS_MESSAGE,
@@ -42,10 +43,20 @@ import {
 } from '../constants/step-recorder.constants';
 import { ThreadGenerationCancelledError } from '../utilities/thread-generation-cancelled.error';
 import { ThreadGenerationLeaseLostError } from '../utilities/thread-generation-lease-lost.error';
-import type {
-  GenerationPipelineResult,
-  PrivateGenerationState,
+import {
+  type GenerationPipelineResult,
+  type OwnerRevisionContent,
+  ownerRevisionContentSchema,
+  type PrivateGenerationState,
 } from '../types/generation-pipeline.types';
+import type {
+  GenerationEnqueueResult,
+  GenerationJobDispatchView,
+  GenerationJobOwnerState,
+  GenerationJobRow,
+  GenerationJobStorageResponse,
+  LeaseMonitor,
+} from '../types/generation-job-storage.types';
 import { stableJson } from '../utilities/stable-json.utility';
 import { describeFailure } from '../utilities/describe-failure.utility';
 import { toFailedPayload } from '../utilities/failure-report.utility';
@@ -156,21 +167,9 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     input: EnqueueGenerationDto,
     loadSnapshot: () => Promise<{ snapshot: Record<string, unknown>; sha256: string }>,
     retriedFromJobId?: string,
-  ): Promise<{ jobId: string; status: string }> {
-    const existing = await this.repository.findByIdempotencyKey(input);
-    if (existing) {
-      switch (existing.result) {
-        case GenerationJobStorageResult.CONFLICT:
-          throw new ConflictException(
-            'Idempotency key was already used for a different generation',
-          );
-        case GenerationJobStorageResult.SUCCESS:
-          if (existing.job.status === 'QUEUED') {
-            await this.dispatchJob(existing.job.id, existing.job.correlationId);
-          }
-          return { jobId: existing.job.id, status: existing.job.status };
-      }
-    }
+  ): Promise<GenerationEnqueueResult> {
+    const replay = await this.replayIdempotentEnqueue(input);
+    if (replay) return replay;
     const retryChild = await this.findExistingRetryChild(retriedFromJobId);
     if (retryChild) return retryChild;
     const { snapshot, sha256 } = await loadSnapshot();
@@ -186,10 +185,28 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       budget.id,
       retriedFromJobId,
     );
+    return this.dispatchQueuedJob(await this.requireStoredJob(stored, budget.id));
+  }
+
+  private async replayIdempotentEnqueue(
+    input: EnqueueGenerationDto,
+  ): Promise<GenerationEnqueueResult | null> {
+    const existing = await this.repository.findByIdempotencyKey(input);
+    if (!existing) return null;
+    if (existing.result === GenerationJobStorageResult.CONFLICT) {
+      throw new ConflictException('Idempotency key was already used for a different generation');
+    }
+    return this.dispatchQueuedJob(existing.job);
+  }
+
+  private async requireStoredJob(
+    stored: GenerationJobStorageResponse,
+    budgetId: string,
+  ): Promise<GenerationJobRow> {
     switch (stored.result) {
       case GenerationJobStorageResult.RETRY_CONFLICT:
         // Lost the race to a concurrent retry: give the reserved budget back.
-        await this.releaseUnusedBudget(budget.id);
+        await this.releaseUnusedBudget(budgetId);
         throw new ConflictException(RETRY_ALREADY_EXISTS_MESSAGE);
       case GenerationJobStorageResult.CONFLICT:
         throw new ConflictException('Idempotency key was already used for a different generation');
@@ -198,27 +215,37 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       case GenerationJobStorageResult.ACCOUNT_DELETED:
         throw new ConflictException('Deleted accounts cannot enqueue Threads generation');
       case GenerationJobStorageResult.SUCCESS:
-        break;
+        return stored.job;
     }
-    const job = stored.job;
+  }
+
+  private async dispatchQueuedJob(
+    job: GenerationJobDispatchView,
+  ): Promise<GenerationEnqueueResult> {
     if (job.status === 'QUEUED') await this.dispatchJob(job.id, job.correlationId);
     return { jobId: job.id, status: job.status };
   }
 
-  async enqueueRevisionReview(
-    input: EnqueueRevisionReviewDto,
-  ): Promise<{ jobId: string; status: string }> {
+  async enqueueRevisionReview(input: EnqueueRevisionReviewDto): Promise<GenerationEnqueueResult> {
     const existing = await this.repository.findRevisionReviewByIdempotencyKey(input);
     if (existing) {
       if (existing.result === GenerationJobStorageResult.CONFLICT) {
         throw new ConflictException('Idempotency key was already used for a different edit review');
       }
-      if (existing.job.status === 'QUEUED') {
-        await this.dispatchJob(existing.job.id, existing.job.correlationId);
-      }
-      return { jobId: existing.job.id, status: existing.job.status };
+      return this.dispatchQueuedJob(existing.job);
     }
 
+    await this.requireRevisionParent(input);
+    const budget = await this.budgets.reserve(
+      input.ownerId,
+      input.idempotencyKey,
+      Number(input.spendCapMicroUsd),
+    );
+    const stored = await this.repository.createRevisionReviewQueued(input, budget.id);
+    return this.dispatchQueuedJob(await this.requireStoredRevisionJob(stored, budget.id));
+  }
+
+  private async requireRevisionParent(input: EnqueueRevisionReviewDto): Promise<void> {
     const parent = await this.repository.findRevisionParent(input.parentJobId, input.ownerId);
     const parentRequest = parent ? enqueueGenerationSchema.safeParse(parent.request) : null;
     if (
@@ -229,28 +256,24 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     ) {
       throw new NotFoundException('Parent generation review not found');
     }
+  }
 
-    const budget = await this.budgets.reserve(
-      input.ownerId,
-      input.idempotencyKey,
-      Number(input.spendCapMicroUsd),
-    );
-    const stored = await this.repository.createRevisionReviewQueued(input, budget.id);
+  private async requireStoredRevisionJob(
+    stored: GenerationJobStorageResponse,
+    budgetId: string,
+  ): Promise<GenerationJobRow> {
     switch (stored.result) {
       case GenerationJobStorageResult.RETRY_CONFLICT:
       case GenerationJobStorageResult.CONFLICT:
         throw new ConflictException('Idempotency key was already used for a different edit review');
       case GenerationJobStorageResult.STORAGE_ERROR:
-        await this.budgets.close(budget.id, GenerationBudgetCloseStatus.RELEASED);
+        await this.budgets.close(budgetId, GenerationBudgetCloseStatus.RELEASED);
         throw new InternalServerErrorException('Revision review job could not be stored');
       case GenerationJobStorageResult.ACCOUNT_DELETED:
         throw new ConflictException('Deleted accounts cannot request a Threads revision');
       case GenerationJobStorageResult.SUCCESS:
-        break;
+        return stored.job;
     }
-    const job = stored.job;
-    if (job.status === 'QUEUED') await this.dispatchJob(job.id, job.correlationId);
-    return { jobId: job.id, status: job.status };
   }
 
   async cancel(jobId: string): Promise<{ jobId: string; status: string }> {
@@ -265,44 +288,33 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
   async getOwnerState(jobId: string, ownerId: string): Promise<PrivateGenerationState> {
     const job = await this.repository.findOwnerState(jobId, ownerId);
     if (!job) throw new NotFoundException('Generation job not found');
-    const revision = job.status === 'WAITING_FOR_REVIEW' ? job.revisions[0] : undefined;
-    const parsed = revision
-      ? z
-          .object({
-            markdown: z.string(),
-            citations: z.array(z.object({ evidenceId: z.string(), url: z.string().url() })),
-            judge: z.object({ score: z.number().int().min(0).max(100) }),
-            critic: z.object({ score: z.number().int().min(0).max(100) }),
-            review: z
-              .object({
-                draftHash: z.string().length(64),
-                authorConsensus: z.boolean(),
-                ready: z.boolean(),
-                reasons: z.array(z.string()),
-              })
-              .optional(),
-          })
-          .safeParse(revision.content)
-      : undefined;
-    if (parsed && !parsed.success) {
-      throw new InternalServerErrorException('Generation result is invalid');
-    }
+    const content = this.readOwnerRevision(job);
     return {
       jobId: job.id,
       status: job.status,
       stage: job.stage,
       round: job.round,
       safeErrorCode: job.safeErrorCode,
-      review: parsed?.success ? (parsed.data.review ?? null) : null,
-      draft: parsed?.success
+      review: content?.review ?? null,
+      draft: content
         ? {
-            markdown: parsed.data.markdown,
-            citations: parsed.data.citations,
-            judgeScore: parsed.data.judge.score,
-            criticScore: parsed.data.critic.score,
+            markdown: content.markdown,
+            citations: content.citations,
+            judgeScore: content.judge.score,
+            criticScore: content.critic.score,
           }
         : null,
     };
+  }
+
+  private readOwnerRevision(job: GenerationJobOwnerState): OwnerRevisionContent | null {
+    const revision = job.status === 'WAITING_FOR_REVIEW' ? job.revisions[0] : undefined;
+    if (!revision) return null;
+    const parsed = ownerRevisionContentSchema.safeParse(revision.content);
+    if (!parsed.success) {
+      throw new InternalServerErrorException('Generation result is invalid');
+    }
+    return parsed.data;
   }
 
   async subscribe(): Promise<void> {
@@ -319,6 +331,17 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     const request = revisionReview.success
       ? revisionReview.data
       : enqueueGenerationSchema.parse(job.request);
+    const lease = this.startLeaseMonitor(job);
+    try {
+      await this.runAndSave(job, event, request, lease, revisionReview.success);
+    } catch (error: unknown) {
+      await this.handleAttemptError(job, error, lease);
+    } finally {
+      lease.stop();
+    }
+  }
+
+  private startLeaseMonitor(job: ThreadGenerationJob): LeaseMonitor {
     let leaseLost = false;
     let heartbeatRunning = false;
     const heartbeat = setInterval(() => {
@@ -337,74 +360,103 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
         });
     }, GENERATION_HEARTBEAT_MS);
     heartbeat.unref();
-    try {
-      const requestData = revisionReview.success ? revisionReview.data : request;
-      const result = await this.runPipeline(job, event, requestData, () => leaseLost);
-      if (leaseLost) return;
-      if (await this.repository.isCancellationRequested(job.id)) {
-        throw new ThreadGenerationCancelledError();
-      }
-      const saved = await this.repository.saveResult(job.id, job.attemptCount, result);
-      if (!saved) {
+    return {
+      isLost: () => leaseLost,
+      markLost: () => {
         leaseLost = true;
-        return;
-      }
-      await this.closeBudget(job.id, job.budgetId, GenerationBudgetCloseStatus.FINALIZED);
-      await this.repository.completeAttempt(job.id, job.attemptCount);
+      },
+      stop: () => {
+        clearInterval(heartbeat);
+      },
+    };
+  }
+
+  private async runAndSave(
+    job: ThreadGenerationJob,
+    event: z.infer<typeof generationEventSchema>,
+    request: EnqueueGenerationDto | RevisionReviewJobRequest,
+    lease: LeaseMonitor,
+    isRevisionReview: boolean,
+  ): Promise<void> {
+    const result = await this.runPipeline(job, event, request, lease.isLost);
+    if (lease.isLost()) return;
+    if (await this.repository.isCancellationRequested(job.id)) {
+      throw new ThreadGenerationCancelledError();
+    }
+    const saved = await this.repository.saveResult(job.id, job.attemptCount, result);
+    if (!saved) {
+      lease.markLost();
+      return;
+    }
+    await this.closeBudget(job.id, job.budgetId, GenerationBudgetCloseStatus.FINALIZED);
+    await this.repository.completeAttempt(job.id, job.attemptCount);
+    await this.recorder.record(job.id, {
+      stage: 'READY_FOR_REVIEW',
+      round: result.rounds,
+      outcome: 'SUCCEEDED',
+      roleKind: 'SYSTEM',
+    });
+    // A revision review is an edit the owner already asked for and is waiting on in the page.
+    if (!isRevisionReview) await this.announceCompleted(job);
+  }
+
+  private async handleAttemptError(
+    job: ThreadGenerationJob,
+    error: unknown,
+    lease: LeaseMonitor,
+  ): Promise<void> {
+    if (lease.isLost()) {
+      this.logger.warn('Expired generation worker stopped after lease loss');
+      return;
+    }
+    if (error instanceof ThreadGenerationLeaseLostError) return;
+    if (error instanceof ThreadGenerationCancelledError) {
+      await this.handleCancelledAttempt(job);
+      return;
+    }
+    await this.handleFailedAttempt(job, error);
+  }
+
+  private async handleCancelledAttempt(job: ThreadGenerationJob): Promise<void> {
+    const outcome = await this.repository.retryOrFail(job.id, job.attemptCount);
+    if (outcome === GenerationJobRecoveryOutcome.CANCELLED) {
+      await this.closeBudget(job.id, job.budgetId, GenerationBudgetCloseStatus.RELEASED);
+    }
+    await this.recorder.record(job.id, {
+      stage: STEP_FINAL_STAGE,
+      outcome: 'FAILED',
+      roleKind: 'SYSTEM',
+      code: STEP_CANCELLED_CODE,
+    });
+  }
+
+  private async handleFailedAttempt(job: ThreadGenerationJob, error: unknown): Promise<void> {
+    // Operators need the failing step; never log prompts, drafts or provider bodies.
+    this.logger.warn(`Generation attempt failed: ${describeFailure(error)}`);
+    // A failure a retry cannot fix (prompt too large, bad role config, catalog 4xx) ends the job now.
+    const outcome = await this.repository.retryOrFail(
+      job.id,
+      job.attemptCount,
+      describeFailure(error),
+      !isDeterministicGenerationError(error),
+    );
+    if (outcome === GenerationJobRecoveryOutcome.FAILED) {
+      await this.closeBudget(job.id, job.budgetId, GenerationBudgetCloseStatus.RELEASED);
+    } else if (outcome === GenerationJobRecoveryOutcome.RETRY) {
+      this.logger.warn('Generation attempt scheduled for bounded retry');
+    }
+    if (
+      outcome === GenerationJobRecoveryOutcome.FAILED ||
+      outcome === GenerationJobRecoveryOutcome.RETRY
+    ) {
+      const parsedError = parseStepError(error, STEP_GENERATION_FAILED_CODE);
       await this.recorder.record(job.id, {
-        stage: 'READY_FOR_REVIEW',
-        round: result.rounds,
-        outcome: 'SUCCEEDED',
+        stage: STEP_FINAL_STAGE,
+        outcome: outcome === GenerationJobRecoveryOutcome.FAILED ? 'FAILED' : 'RETRY',
         roleKind: 'SYSTEM',
+        code: parsedError.code,
+        httpStatus: parsedError.httpStatus,
       });
-      // A revision review is an edit the owner already asked for and is waiting on in the page.
-      if (!revisionReview.success) await this.announceCompleted(job);
-    } catch (error: unknown) {
-      if (leaseLost) {
-        this.logger.warn('Expired generation worker stopped after lease loss');
-        return;
-      }
-      if (error instanceof ThreadGenerationLeaseLostError) return;
-      if (error instanceof ThreadGenerationCancelledError) {
-        const outcome = await this.repository.retryOrFail(job.id, job.attemptCount);
-        if (outcome === GenerationJobRecoveryOutcome.CANCELLED) {
-          await this.closeBudget(job.id, job.budgetId, GenerationBudgetCloseStatus.RELEASED);
-        }
-        await this.recorder.record(job.id, {
-          stage: STEP_FINAL_STAGE,
-          outcome: 'FAILED',
-          roleKind: 'SYSTEM',
-          code: STEP_CANCELLED_CODE,
-        });
-        return;
-      }
-      // Operators need the failing step; never log prompts, drafts or provider bodies.
-      this.logger.warn(`Generation attempt failed: ${describeFailure(error)}`);
-      const outcome = await this.repository.retryOrFail(
-        job.id,
-        job.attemptCount,
-        describeFailure(error),
-      );
-      if (outcome === GenerationJobRecoveryOutcome.FAILED) {
-        await this.closeBudget(job.id, job.budgetId, GenerationBudgetCloseStatus.RELEASED);
-      } else if (outcome === GenerationJobRecoveryOutcome.RETRY) {
-        this.logger.warn('Generation attempt scheduled for bounded retry');
-      }
-      if (
-        outcome === GenerationJobRecoveryOutcome.FAILED ||
-        outcome === GenerationJobRecoveryOutcome.RETRY
-      ) {
-        const parsedError = parseStepError(error, STEP_GENERATION_FAILED_CODE);
-        await this.recorder.record(job.id, {
-          stage: STEP_FINAL_STAGE,
-          outcome: outcome === GenerationJobRecoveryOutcome.FAILED ? 'FAILED' : 'RETRY',
-          roleKind: 'SYSTEM',
-          code: parsedError.code,
-          httpStatus: parsedError.httpStatus,
-        });
-      }
-    } finally {
-      clearInterval(heartbeat);
     }
   }
 

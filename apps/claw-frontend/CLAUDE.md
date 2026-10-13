@@ -880,3 +880,10 @@ unlimited, `0` disabled, absent = server decides); the server enforces it again.
 bounds equal the service ranges (a test reads the service file); a key call that fails after a
 successful install is retried alone.
 Full note: [`docs/05-frontend/plugins-installs.md`](../../docs/05-frontend/plugins-installs.md).
+
+## Threads generation failure codes
+
+`thread-generation-progress.constants.ts` maps each step failure code to a translation key. The context-window
+codes `MODEL_CATALOG_UNREACHABLE`, `MODEL_CATALOG_REJECTED`, `CONTEXT_WINDOW_EXCEEDED` and `CONTEXT_WINDOW_ASSUMED`
+have their text and hint in all 13 locales; the old `MODEL_CONTEXT_UNAVAILABLE` stays mapped so steps stored
+before ADR-173 still read. A code without a key renders the raw key, so add the key chain to `i18n.types.ts`.

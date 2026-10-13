@@ -55,8 +55,12 @@ Persist canonical JSON snapshots and structured drafts. Pin snapshots and
 evidence by version and hash; every author, Judge, and Critic receives the same
 complete bundle. Research runs through research-service. The generation worker
 checks each complete role prompt against routing-service's context window plus
-the output reserve; unknown or oversized windows fail closed without
-truncation.
+the output reserve. A prompt that does not fit fails closed without
+truncation. A model with no known window is assumed to have 32k tokens and is
+held to that, not rejected ([ADR-173](../13-adr/adr-173-threads-unknown-model-window-is-assumed-not-fatal.md),
+which supersedes the earlier "unknown windows fail closed"). A failure a retry
+cannot fix (prompt too large, invalid role setup, catalog 4xx) fails the job on
+the first attempt; an unreachable catalog is retried.
 
 Three to five authors draft independently; the first author's draft becomes the
 candidate, and every author must return `agrees: true` with that candidate's exact

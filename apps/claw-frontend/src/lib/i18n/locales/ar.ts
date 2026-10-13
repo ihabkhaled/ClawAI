@@ -873,6 +873,10 @@ export const ar: TranslationDictionary = {
         fallbackUsed: 'فشل أحد النماذج فتولّى نموذج بديل المهمة.',
         contextWindowExceeded: 'المحتوى أطول من أن يستوعبه النموذج المختار.',
         modelContextUnavailable: 'تعذّر التحقق من حد الحجم لأحد النماذج المختارة.',
+        modelCatalogUnreachable: 'تعذّر الوصول إلى فهرس النماذج.',
+        modelCatalogRejected: 'رفض فهرس النماذج التحقق من حد الحجم.',
+        contextWindowAssumed:
+          'المحتوى أطول من أن يستوعبه نموذج حد حجمه غير معروف (افتُرض حد 32 ألف).',
         researchUnavailable: 'تعذّر الوصول إلى خدمة البحث.',
         researchFailed: 'فشلت خطوة البحث.',
         researchEmpty: 'لم يجد البحث مصادر صالحة للاستخدام.',
@@ -899,6 +903,11 @@ export const ar: TranslationDictionary = {
         fallbackUsed: 'لا حاجة لأي إجراء. الإنشاء مستمر.',
         contextWindowExceeded: 'اختر نموذجًا بنافذة سياق أكبر أو اختصر الموضوع ثم أعد المحاولة.',
         modelContextUnavailable: 'انتظر لحظة ثم أعد المحاولة.',
+        modelCatalogUnreachable: 'انتظر لحظة ثم أعد المحاولة.',
+        modelCatalogRejected:
+          'هذه مشكلة إعداد من جانبنا، ولن تفيد إعادة المحاولة. اختر نموذجًا آخر أو تواصل مع الدعم.',
+        contextWindowAssumed:
+          'اختر نموذجًا بنافذة سياق معروفة وأكبر أو اختصر الموضوع ثم أعد المحاولة.',
         researchUnavailable: 'انتظر لحظة ثم أعد المحاولة.',
         researchFailed: 'أعد المحاولة. إذا استمر الفشل فغيّر الموضوع.',
         researchEmpty: 'اجعل الموضوع أكثر تحديدًا أو أوسع ثم أعد المحاولة.',

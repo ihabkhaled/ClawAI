@@ -910,6 +910,10 @@ export const de: TranslationDictionary = {
         fallbackUsed: 'Ein Modell ist ausgefallen, daher übernahm ein Ersatzmodell.',
         contextWindowExceeded: 'Das Material ist für das gewählte Modell zu lang.',
         modelContextUnavailable: 'Das Größenlimit eines gewählten Modells ließ sich nicht prüfen.',
+        modelCatalogUnreachable: 'Der Modellkatalog war nicht erreichbar.',
+        modelCatalogRejected: 'Der Modellkatalog hat die Prüfung des Größenlimits abgelehnt.',
+        contextWindowAssumed:
+          'Das Material ist zu lang für ein Modell mit unbekanntem Größenlimit (angenommen wurden 32k).',
         researchUnavailable: 'Der Recherche-Dienst war nicht erreichbar.',
         researchFailed: 'Der Recherche-Schritt ist fehlgeschlagen.',
         researchEmpty: 'Die Recherche hat keine brauchbaren Quellen gefunden.',
@@ -943,6 +947,11 @@ export const de: TranslationDictionary = {
         contextWindowExceeded:
           'Wähle ein Modell mit größerem Kontextfenster oder kürze das Thema und versuche es erneut.',
         modelContextUnavailable: 'Warte einen Moment und versuche es erneut.',
+        modelCatalogUnreachable: 'Warte einen Moment und versuche es erneut.',
+        modelCatalogRejected:
+          'Das ist ein Einrichtungsproblem auf unserer Seite, ein erneuter Versuch hilft nicht. Wähle ein anderes Modell oder kontaktiere den Support.',
+        contextWindowAssumed:
+          'Wähle ein Modell mit bekanntem, größerem Kontextfenster oder kürze das Thema und versuche es erneut.',
         researchUnavailable: 'Warte einen Moment und versuche es erneut.',
         researchFailed: 'Versuche es erneut. Falls es weiter scheitert, ändere das Thema.',
         researchEmpty: 'Formuliere das Thema genauer oder weiter und versuche es erneut.',

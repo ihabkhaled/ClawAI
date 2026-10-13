@@ -891,6 +891,9 @@ export const ja: TranslationDictionary = {
         fallbackUsed: 'モデルが失敗したため、代替モデルに切り替えました。',
         contextWindowExceeded: '選択したモデルには資料が長すぎます。',
         modelContextUnavailable: '選択したモデルのサイズ上限を確認できませんでした。',
+        modelCatalogUnreachable: 'モデルカタログに接続できませんでした。',
+        modelCatalogRejected: 'モデルカタログがサイズ上限の確認を拒否しました。',
+        contextWindowAssumed: 'サイズ上限が不明なモデル（32k と仮定）には資料が長すぎます。',
         researchUnavailable: 'リサーチサービスに接続できませんでした。',
         researchFailed: 'リサーチの手順が失敗しました。',
         researchEmpty: 'リサーチで使える情報源が見つかりませんでした。',
@@ -920,6 +923,11 @@ export const ja: TranslationDictionary = {
         contextWindowExceeded:
           'コンテキストウィンドウの大きいモデルを選ぶか、トピックを短くしてやり直してください。',
         modelContextUnavailable: '少し待ってからやり直してください。',
+        modelCatalogUnreachable: '少し待ってからやり直してください。',
+        modelCatalogRejected:
+          'こちら側の設定の問題のため、再試行しても解決しません。別のモデルを選ぶか、サポートにお問い合わせください。',
+        contextWindowAssumed:
+          '上限が分かっていてより大きいコンテキストウィンドウのモデルを選ぶか、トピックを短くしてやり直してください。',
         researchUnavailable: '少し待ってからやり直してください。',
         researchFailed: 'もう一度試してください。繰り返す場合はトピックを変えてください。',
         researchEmpty: 'トピックをより具体的に、または広くしてやり直してください。',

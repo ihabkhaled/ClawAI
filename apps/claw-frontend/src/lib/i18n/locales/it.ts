@@ -905,6 +905,11 @@ export const it: TranslationDictionary = {
         contextWindowExceeded: 'Il materiale è troppo lungo per il modello scelto.',
         modelContextUnavailable:
           'Non è stato possibile verificare il limite di dimensione di un modello scelto.',
+        modelCatalogUnreachable: 'Il catalogo dei modelli non è raggiungibile.',
+        modelCatalogRejected:
+          'Il catalogo dei modelli ha rifiutato il controllo del limite di dimensione.',
+        contextWindowAssumed:
+          'Il materiale è troppo lungo per un modello con limite di dimensione sconosciuto (ipotizzati 32k).',
         researchUnavailable: 'Il servizio di ricerca non è raggiungibile.',
         researchFailed: 'Il passaggio di ricerca non è riuscito.',
         researchEmpty: 'La ricerca non ha trovato fonti utilizzabili.',
@@ -935,6 +940,11 @@ export const it: TranslationDictionary = {
         contextWindowExceeded:
           'Scegli un modello con una finestra di contesto più ampia o accorcia l’argomento, poi riprova.',
         modelContextUnavailable: 'Attendi un momento e riprova.',
+        modelCatalogUnreachable: 'Attendi un momento e riprova.',
+        modelCatalogRejected:
+          'È un problema di configurazione da parte nostra e riprovare non servirà. Scegli un altro modello o contatta l’assistenza.',
+        contextWindowAssumed:
+          'Scegli un modello con una finestra di contesto nota e più ampia, o accorcia l’argomento, poi riprova.',
         researchUnavailable: 'Attendi un momento e riprova.',
         researchFailed: 'Riprova. Se continua a fallire, cambia argomento.',
         researchEmpty: 'Rendi l’argomento più specifico o più ampio, poi riprova.',

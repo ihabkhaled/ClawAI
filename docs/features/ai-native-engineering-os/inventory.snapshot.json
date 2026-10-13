@@ -9304,7 +9304,7 @@
           "file": "skills/deadlock-recovery.md"
         },
         {
-          "bytes": 1718,
+          "bytes": 2079,
           "file": "skills/debug-a-failed-thread-generation.md"
         },
         {
@@ -9518,7 +9518,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 6048
+        "value": 6054
       },
       "localeCount": 13,
       "locales": [
@@ -11916,7 +11916,7 @@
       },
       "claw-thread-generation-service": {
         "runner": "vitest",
-        "testFiles": 26
+        "testFiles": 29
       },
       "claw-threads-service": {
         "runner": "vitest",
@@ -12779,7 +12779,7 @@
     "serviceCount": 21,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2379,
+    "totalTestFiles": 2382,
     "workspaceCount": 28
   }
 }

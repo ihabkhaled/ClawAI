@@ -886,6 +886,10 @@ export const en: TranslationDictionary = {
         fallbackUsed: 'A model failed, so a fallback model took over.',
         contextWindowExceeded: 'The material is too long for the selected model.',
         modelContextUnavailable: 'The size limit of a selected model could not be checked.',
+        modelCatalogUnreachable: 'The model catalog could not be reached.',
+        modelCatalogRejected: 'The model catalog refused the size-limit check.',
+        contextWindowAssumed:
+          'The material is too long for a model whose size limit is unknown (a 32k limit was assumed).',
         researchUnavailable: 'The research service could not be reached.',
         researchFailed: 'The research step failed.',
         researchEmpty: 'Research found no usable sources.',
@@ -915,6 +919,11 @@ export const en: TranslationDictionary = {
         contextWindowExceeded:
           'Pick a model with a larger context window or shorten the topic, then retry.',
         modelContextUnavailable: 'Wait a moment and retry.',
+        modelCatalogUnreachable: 'Wait a moment and retry.',
+        modelCatalogRejected:
+          'This is a setup problem on our side, so retrying will not help. Pick a different model or contact support.',
+        contextWindowAssumed:
+          'Pick a model with a known, larger context window or shorten the topic, then retry.',
         researchUnavailable: 'Wait a moment and retry.',
         researchFailed: 'Retry. If it keeps failing, change the topic.',
         researchEmpty: 'Make the topic more specific or broader, then retry.',
