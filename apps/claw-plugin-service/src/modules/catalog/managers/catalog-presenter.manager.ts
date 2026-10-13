@@ -19,7 +19,7 @@ export class CatalogPresenterManager {
   private readonly logger = new Logger(CatalogPresenterManager.name);
 
   /** The card for the list view, or null when the stored row is corrupt. */
-  toCard(entry: CatalogEntryRecord, locale: Locale): CatalogCard | null {
+  toCard(entry: CatalogEntryRecord, locale: Locale, installed = false): CatalogCard | null {
     const translations = pluginTranslationsSchema.safeParse(entry.translations);
     if (!translations.success) {
       this.logger.error(`toCard: entry ${entry.slug} has invalid translations, skipping`);
@@ -40,13 +40,13 @@ export class CatalogPresenterManager {
       maxRisk: this.maxRisk(enabledTools.map((tool) => tool.riskLevel)),
       installCount: entry.installCount,
       featured: entry.featured,
-      installed: false,
+      installed,
     };
   }
 
   /** The detail page payload, or null when the stored row is corrupt. */
-  toDetail(entry: CatalogEntryRecord, locale: Locale): CatalogDetail | null {
-    const card = this.toCard(entry, locale);
+  toDetail(entry: CatalogEntryRecord, locale: Locale, installed = false): CatalogDetail | null {
+    const card = this.toCard(entry, locale, installed);
     if (card === null) return null;
     const parsed = parsePluginManifest(entry.currentVersion.manifest);
     if (!parsed.ok) {

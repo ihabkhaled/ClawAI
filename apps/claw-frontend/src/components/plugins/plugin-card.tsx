@@ -41,6 +41,9 @@ export function PluginCard({ plugin, t }: PluginCardProps): React.ReactElement {
           </p>
           <div id={detailsId} className="mt-auto flex flex-wrap items-center gap-2">
             <PluginRiskBadge risk={plugin.maxRisk} t={t} />
+            {plugin.installed ? (
+              <Badge variant="success">{t('pluginsInstall.install.installed')}</Badge>
+            ) : null}
             <Badge variant="outline">{categoryLabel(t, plugin.category)}</Badge>
             <span className="text-muted-foreground ms-auto text-xs">
               {t('plugins.toolsCount', { value: plugin.toolCount })}

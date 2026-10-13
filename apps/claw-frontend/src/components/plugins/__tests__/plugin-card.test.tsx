@@ -35,6 +35,13 @@ describe('PluginCard', () => {
     expect(details?.textContent).toContain('plugins.toolsCount|3');
   });
 
+  it('shows an Installed badge only for an installed plugin', () => {
+    const { rerender } = render(<PluginCard plugin={pluginItem()} t={tStub} />);
+    expect(screen.queryByText('pluginsInstall.install.installed')).toBeNull();
+    rerender(<PluginCard plugin={pluginItem({ installed: true })} t={tStub} />);
+    expect(screen.getByText('pluginsInstall.install.installed')).toBeTruthy();
+  });
+
   it('shows an unknown category by its raw key', () => {
     render(<PluginCard plugin={pluginItem({ category: 'weird' })} t={tStub} />);
     expect(screen.getByText('weird')).toBeTruthy();

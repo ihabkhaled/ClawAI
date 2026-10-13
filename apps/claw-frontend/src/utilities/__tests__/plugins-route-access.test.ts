@@ -108,7 +108,7 @@ describe('plugins sidebar visibility', () => {
     expect(JSON.stringify(visible)).not.toContain(ADMIN_PLUGINS_NAV_KEY);
   });
 
-  it('has no admin plugins sidebar link until /admin/plugins ships (batch 2)', () => {
+  it('shows the admin plugins link to an administrator holding PLUGINS_ADMIN', () => {
     const visible = filterSidebarItems(
       SIDEBAR_NAV_ITEMS,
       () => true,
@@ -116,8 +116,22 @@ describe('plugins sidebar visibility', () => {
     );
     const admin = visible.find((item) => item.labelKey === 'nav.admin');
     expect(admin).toBeDefined();
-    expect(labelKeys(admin?.children ?? [])).not.toContain(ADMIN_PLUGINS_NAV_KEY);
-    expect(JSON.stringify(SIDEBAR_NAV_ITEMS)).not.toContain(ROUTES.ADMIN_PLUGINS);
+    expect(labelKeys(admin?.children ?? [])).toContain(ADMIN_PLUGINS_NAV_KEY);
+    const entry = admin?.children?.find((child) => child.labelKey === ADMIN_PLUGINS_NAV_KEY);
+    expect(entry?.href).toBe(ROUTES.ADMIN_PLUGINS);
+  });
+
+  it('gates /admin/plugins on PLUGINS_ADMIN, before the /admin catch-all', () => {
+    expect(requiredRequirementForPath(ROUTES.ADMIN_PLUGINS)).toEqual({
+      permission: Permission.PLUGINS_ADMIN,
+    });
+  });
+
+  it('covers the Installed page under /plugins with the same requirement', () => {
+    expect(requiredRequirementForPath(ROUTES.PLUGINS_INSTALLED)).toEqual({
+      permission: Permission.PLUGINS_USE,
+      feature: PlanFeature.ALLOW_PLUGINS,
+    });
   });
 
   it('keeps the admin plugins link out for an Admin-area user who lacks PLUGINS_ADMIN', () => {

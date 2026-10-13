@@ -97,6 +97,18 @@ See `docs/13-adr/adr-140-dynamic-trial-length.md`.
 | ------------------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `credit_connector_free_requests_per_month` | integer | Free requests per credit connector per UTC month. `NULL` = unlimited, `0` = none (default). CHECK `>= 0` when set. Seeded Free = 2, every other plan 0; never overwritten on re-seed. |
 
+### plans (plugins, plugins-and-mcp-design.md section 5)
+
+| Column                     | Type    | Notes                                                                                                                                                          |
+| -------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `allow_plugins`            | boolean | `NOT NULL DEFAULT true`: on for every plan, Free included.                                                                                                     |
+| `max_installed_plugins`    | integer | Installs. `NULL` = unlimited, `0` = disabled, default 5.                                                                                                       |
+| `max_user_mcp_servers`     | integer | Own MCP servers. `NULL` = unlimited, `0` = disabled, default 0.                                                                                                |
+| `max_plugin_calls_per_day` | integer | Plugin tool calls per UTC day. `NULL` = unlimited, `0` = disabled, default 20. The `plan_feature_rules` row for `PLUGIN_CALLS` (window `DAY`) derives from it. |
+
+Migrations `20261013100000_add_plugins_plan_gate`, `20261013120000_add_plugin_calls_feature` (the `PlanFeatureKey` value) and
+`20261013120100_plugin_calls_plan_limits`.
+
 ### credit_free_allowance_usage
 
 > Amended 2026-10-02: `provider` is always `'*'` (one total per user per month across all credit connectors). Migration `20261002120000_free_allowance_single_total` folds old per-provider rows into it.

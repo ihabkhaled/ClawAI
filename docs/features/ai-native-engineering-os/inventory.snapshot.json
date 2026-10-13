@@ -3118,6 +3118,31 @@
         },
         {
           "method": "GET",
+          "route": "/plugins/admin/catalog",
+          "source": "apps/claw-plugin-service/src/modules/admin/controllers/plugin-admin.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/plugins/admin/catalog/:slug",
+          "source": "apps/claw-plugin-service/src/modules/admin/controllers/plugin-admin.controller.ts"
+        },
+        {
+          "method": "PATCH",
+          "route": "/plugins/admin/catalog/:slug",
+          "source": "apps/claw-plugin-service/src/modules/admin/controllers/plugin-admin.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/plugins/admin/settings",
+          "source": "apps/claw-plugin-service/src/modules/admin/controllers/plugin-admin.controller.ts"
+        },
+        {
+          "method": "PATCH",
+          "route": "/plugins/admin/settings",
+          "source": "apps/claw-plugin-service/src/modules/admin/controllers/plugin-admin.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/plugins/catalog",
           "source": "apps/claw-plugin-service/src/modules/catalog/controllers/plugin-catalog.controller.ts"
         },
@@ -3125,6 +3150,56 @@
           "method": "GET",
           "route": "/plugins/catalog/:slug",
           "source": "apps/claw-plugin-service/src/modules/catalog/controllers/plugin-catalog.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/plugins/installs",
+          "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/plugins/installs",
+          "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/plugins/installs/:id",
+          "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/plugins/installs/:id",
+          "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
+        },
+        {
+          "method": "PATCH",
+          "route": "/plugins/installs/:id",
+          "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/plugins/installs/:id/consent",
+          "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/plugins/installs/:id/consent/:toolName",
+          "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/plugins/installs/:id/credential",
+          "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
+        },
+        {
+          "method": "PUT",
+          "route": "/plugins/installs/:id/credential",
+          "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/plugins/installs/mentions",
+          "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
         }
       ],
       "claw-research-service": [
@@ -8066,6 +8141,11 @@
         "route": "/admin/plans"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/admin/plugins/page.tsx",
+        "kind": "page",
+        "route": "/admin/plugins"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/admin/refunds/page.tsx",
         "kind": "page",
         "route": "/admin/refunds"
@@ -8399,6 +8479,11 @@
         "file": "apps/claw-frontend/src/app/(portal)/plugins/[slug]/page.tsx",
         "kind": "page",
         "route": "/plugins/[slug]"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(portal)/plugins/installed/page.tsx",
+        "kind": "page",
+        "route": "/plugins/installed"
       },
       {
         "file": "apps/claw-frontend/src/app/(portal)/plugins/page.tsx",
@@ -9433,7 +9518,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 6045
+        "value": 6048
       },
       "localeCount": 13,
       "locales": [
@@ -11243,12 +11328,32 @@
           {
             "confidence": "verified",
             "source": "apps/claw-plugin-service/prisma/schema.prisma",
+            "value": "PluginCredential"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-plugin-service/prisma/schema.prisma",
+            "value": "PluginInstall"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-plugin-service/prisma/schema.prisma",
+            "value": "PluginInvocation"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-plugin-service/prisma/schema.prisma",
             "value": "PluginSetting"
           },
           {
             "confidence": "verified",
             "source": "apps/claw-plugin-service/prisma/schema.prisma",
             "value": "PluginTool"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-plugin-service/prisma/schema.prisma",
+            "value": "PluginToolConsent"
           },
           {
             "confidence": "verified",
@@ -11731,7 +11836,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "vitest",
-        "testFiles": 53
+        "testFiles": 54
       },
       "claw-agent-service": {
         "runner": "vitest",
@@ -11743,7 +11848,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 179
+        "testFiles": 186
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -11767,7 +11872,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 850
+        "testFiles": 864
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -11795,7 +11900,7 @@
       },
       "claw-plugin-service": {
         "runner": "vitest",
-        "testFiles": 21
+        "testFiles": 43
       },
       "claw-research-service": {
         "runner": "vitest",
@@ -12324,6 +12429,7 @@
           "@claw/shared-auth",
           "@claw/shared-constants",
           "@claw/shared-entitlements",
+          "@claw/shared-rabbitmq",
           "@claw/shared-types",
           "@claw/shared-utilities"
         ],
@@ -12661,10 +12767,10 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 58,
-    "endpointCount": 871,
+    "endpointCount": 886,
     "envVarCount": 386,
     "eventCount": 190,
-    "frontendRouteCount": 173,
+    "frontendRouteCount": 175,
     "localeCount": 13,
     "nginxRouteCount": 71,
     "permissionCount": 94,
@@ -12673,7 +12779,7 @@
     "serviceCount": 21,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2335,
+    "totalTestFiles": 2379,
     "workspaceCount": 28
   }
 }

@@ -22,10 +22,10 @@ change type needs (`rules/23-git-commits-hooks-and-release-gates.md`, gate matri
 ## Ownership (generated)
 - Port: 4021
 - Database: postgresql
-- Prisma models: PluginCatalogEntry, PluginSetting, PluginTool, PluginVersion
-- API endpoints: 3 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 21 (vitest)
-- Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-types, @claw/shared-utilities
+- Prisma models: PluginCatalogEntry, PluginCredential, PluginInstall, PluginInvocation, PluginSetting, PluginTool, PluginToolConsent, PluginVersion
+- API endpoints: 18 (see `.ai/manifests/api-endpoints.json`)
+- Test files: 43 (vitest)
+- Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing
 1. `npm run knowledge:context -- --task="<task>" --service=plugin-service`

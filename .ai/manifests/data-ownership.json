@@ -230,8 +230,12 @@
       "mongooseModels": [],
       "prismaModels": [
         "PluginCatalogEntry",
+        "PluginCredential",
+        "PluginInstall",
+        "PluginInvocation",
         "PluginSetting",
         "PluginTool",
+        "PluginToolConsent",
         "PluginVersion"
       ],
       "service": "claw-plugin-service"

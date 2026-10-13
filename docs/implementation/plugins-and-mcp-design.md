@@ -12,6 +12,7 @@ What shipped differs from the text below in these ways. Where this document and 
 - **`PLUGIN_CALLS` metering was added in batch 2.** The metered feature and its plan rules were not part of batch 1.
 - **Manifests are TypeScript constants**, not `prisma/seeders/catalog/*.json`, so the compiled service never depends on
   a path outside `dist`.
+- **Batch 2 shipped as follows (ADR-172).** Installs are `unique(userId, pluginId)` and pinned by `versionId`; there is no `invocationMode`, `grantedScopes` or `NEEDS_AUTH` yet. The consent grant stores the tool's own risk level (`WRITE` or `DESTRUCTIVE`) rather than a `ConsentMode`. The credential column is one base64 `ciphertext` string plus `keyVersion` (no separate iv and tag columns). The admin routes are `GET /admin/catalog`, `GET|PATCH /admin/catalog/:slug` and `GET|PATCH /admin/settings`; publish, version and host-rule routes come with batch 3. The plan cap is read from the entitlements payload; no quota reserve call and no `plugin.installed` events yet.
 - **Manifest fields added:** `iconKey`, `homepageUrl` and `network.publicWeb` (the page reader may reach any public host
   behind the resolver guard; no other plugin may).
 

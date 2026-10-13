@@ -153,8 +153,12 @@
     ],
     "claw-plugin-service": [
       "PluginCatalogEntry",
+      "PluginCredential",
+      "PluginInstall",
+      "PluginInvocation",
       "PluginSetting",
       "PluginTool",
+      "PluginToolConsent",
       "PluginVersion"
     ],
     "claw-research-service": [

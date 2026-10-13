@@ -49,6 +49,7 @@ export const KNOWN_USAGE_TOOLS: readonly string[] = [
   'WORKSPACES',
   'MEMORY',
   'CONTEXT_PACKS',
+  'PLUGIN_CALLS',
 ];
 
 /** Translation key suffix per preset (`usageAnalytics.preset<Name>`). */

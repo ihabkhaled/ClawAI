@@ -31,6 +31,7 @@ const base: UserEntitlements = {
       maxVideoSeconds: 60,
       maxInstalledPlugins: 5,
       maxUserMcpServers: 0,
+      maxPluginCallsPerDay: 20,
     },
     featureGates: {
       allowCompareMode: false,

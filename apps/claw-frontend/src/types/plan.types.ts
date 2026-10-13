@@ -78,6 +78,8 @@ export type PlanView = {
   /** Plugin installs and own MCP servers. null = unlimited, 0 = disabled. */
   maxInstalledPlugins: number | null;
   maxUserMcpServers: number | null;
+  /** Metered plugin calls per day. null = unlimited, 0 = disabled. Absent from an older auth-service. */
+  maxPluginCallsPerDay?: number | null;
   /** Free requests per month per credit connector. null = unlimited, 0 = off. Absent from an older auth-service. */
   creditConnectorFreeRequestsPerMonth?: number | null;
   /** The free allowance's monthly money meter, micro-USD. null = no meter. Absent from an older auth-service. */
@@ -160,6 +162,7 @@ export type CreatePlanRequest = {
   /** Plugin installs and own MCP servers. null = unlimited, 0 = disabled. */
   maxInstalledPlugins?: number | null;
   maxUserMcpServers?: number | null;
+  maxPluginCallsPerDay?: number | null;
   /** null sets unlimited; omitted leaves the plan's value untouched. */
   creditConnectorFreeRequestsPerMonth?: number | null;
   /** null clears the meter; omitted leaves it untouched. */
@@ -252,6 +255,7 @@ export type EntitlementPlanLimits = {
   /** Plugin installs and own MCP servers. null = unlimited, 0 = disabled. */
   maxInstalledPlugins?: number | null;
   maxUserMcpServers?: number | null;
+  maxPluginCallsPerDay?: number | null;
 };
 
 // One enforced token window. `limit: null` is unlimited, `0` is disabled —
@@ -309,6 +313,8 @@ export type PlanFormState = {
   maxVideoSeconds: string;
   maxInstalledPlugins: string;
   maxUserMcpServers: string;
+  /** Blank = unlimited, 0 = disabled. */
+  maxPluginCallsPerDay: string;
   creditConnectorFreeRequestsPerMonth: string;
   /** Dollars, as typed. Blank = no meter. */
   creditConnectorFreeBudgetUsd: string;

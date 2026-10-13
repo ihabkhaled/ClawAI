@@ -1387,6 +1387,7 @@
     },
     {
       "consumers": [
+        "claw-plugin-service",
         "claw-thread-generation-service",
         "claw-threads-service"
       ],

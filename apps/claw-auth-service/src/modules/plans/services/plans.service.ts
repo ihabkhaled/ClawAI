@@ -613,6 +613,7 @@ export class PlansService {
       maxVideoSeconds: plan.maxVideoSeconds,
       maxInstalledPlugins: plan.maxInstalledPlugins,
       maxUserMcpServers: plan.maxUserMcpServers,
+      maxPluginCallsPerDay: plan.maxPluginCallsPerDay,
       creditConnectorFreeRequestsPerMonth: plan.creditConnectorFreeRequestsPerMonth,
       creditConnectorFreeBudgetMicroUsd: toNumberOrNull(plan.creditConnectorFreeBudgetMicroUsd),
       creditConnectorFreeMaxModelOutputMicroUsd: toNumberOrNull(

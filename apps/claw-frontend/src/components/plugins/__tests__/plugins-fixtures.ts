@@ -1,6 +1,10 @@
+import type { PluginInstallView } from '@claw/shared-types';
+
 import { PluginAuthKind } from '@/enums/plugin-auth-kind.enum';
+import { PluginInstallGateReason } from '@/enums/plugin-install-gate-reason.enum';
 import { PluginRiskLevel } from '@/enums/plugin-risk-level.enum';
 import { PluginSource } from '@/enums/plugin-source.enum';
+import type { UsePluginInstallPanelReturn } from '@/types/plugin-installs.types';
 import type {
   PluginCatalogDetail,
   PluginCatalogItem,
@@ -63,6 +67,48 @@ export function pageState(overrides: Partial<UsePluginsPageReturn> = {}): UsePlu
     hasNextPage: false,
     loadMore: () => undefined,
     retry: () => undefined,
+    ...overrides,
+  };
+}
+
+/** An install as the API returns it. Override only what a test is about. */
+export function installView(overrides: Partial<PluginInstallView> = {}): PluginInstallView {
+  return {
+    id: 'i1',
+    slug: 'web-fetch',
+    name: 'Web fetch',
+    iconKey: 'globe',
+    version: '1.0.0',
+    latestVersion: null,
+    state: 'ENABLED',
+    authKind: 'NONE',
+    settings: {},
+    credential: { hasCredential: false, kind: null, updatedAt: null },
+    consents: [],
+    installedAt: '2026-10-13T00:00:00Z',
+    updatedAt: '2026-10-13T00:00:00Z',
+    ...overrides,
+  };
+}
+
+export function panelState(
+  overrides: Partial<UsePluginInstallPanelReturn> = {},
+): UsePluginInstallPanelReturn {
+  return {
+    t: tStub,
+    install: undefined,
+    gate: { reason: PluginInstallGateReason.None, canInstall: true },
+    limit: 5,
+    isOpen: false,
+    openDialog: () => undefined,
+    closeDialog: () => undefined,
+    credential: '',
+    setCredential: () => undefined,
+    needsCredential: false,
+    canConfirm: true,
+    isInstalling: false,
+    errorMessage: null,
+    confirm: () => undefined,
     ...overrides,
   };
 }

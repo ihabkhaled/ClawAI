@@ -30,6 +30,7 @@ function facts(
             maxVideoSeconds: null,
             maxInstalledPlugins: null,
             maxUserMcpServers: null,
+            maxPluginCallsPerDay: null,
             ...limits,
           },
           featureGates: {} as NonNullable<UserEntitlements['plan']>['featureGates'],
@@ -83,6 +84,10 @@ describe('resolvePlanLimit', () => {
       (l: NonNullable<UserEntitlements['plan']>['limits']) => l.maxUserMcpServers,
     ],
     [
+      'maxPluginCallsPerDay',
+      (l: NonNullable<UserEntitlements['plan']>['limits']) => l.maxPluginCallsPerDay,
+    ],
+    [
       'workspaceConnections',
       (l: NonNullable<UserEntitlements['plan']>['limits']) => l.workspaceConnections,
     ],
@@ -101,6 +106,15 @@ describe('resolvePlanLimit', () => {
     expect(
       resolvePlanLimit(facts(true, { maxUserMcpServers: 0 }), (l) => l.maxUserMcpServers),
     ).toBeNull();
+  });
+
+  // Plugin calls: Free gets 20 a day. 0 is DISABLED and null is unlimited.
+  it('keeps a numeric daily plugin-call cap, 0 as disabled and null as unlimited', () => {
+    const select = (l: NonNullable<UserEntitlements['plan']>['limits']) => l.maxPluginCallsPerDay;
+    expect(resolvePlanLimit(facts(false, { maxPluginCallsPerDay: 20 }), select)).toBe(20);
+    expect(resolvePlanLimit(facts(false, { maxPluginCallsPerDay: 0 }), select)).toBe(0);
+    expect(resolvePlanLimit(facts(false, { maxPluginCallsPerDay: null }), select)).toBeNull();
+    expect(resolvePlanLimit(facts(true, { maxPluginCallsPerDay: 0 }), select)).toBeNull();
   });
 
   // ADR-122: free processes 60 s of video; 0 would switch video off entirely.

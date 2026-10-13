@@ -45,6 +45,7 @@ export const createPlanSchema = z
     // Plugins caps: null = unlimited, 0 = disabled. Omitted on create = the Free caps.
     maxInstalledPlugins: z.number().int().min(0).max(10_000).nullable().optional(),
     maxUserMcpServers: z.number().int().min(0).max(1_000).nullable().optional(),
+    maxPluginCallsPerDay: z.number().int().min(0).max(1_000_000).nullable().optional(),
     // null = unlimited, 0 = video disabled (ADR-122). Ten hours is the bound.
     maxVideoSeconds: z.number().int().min(0).max(36_000).nullable().optional(),
     // Free requests per credit connector per UTC month (ADR-142). null = unlimited,

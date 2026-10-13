@@ -3091,6 +3091,31 @@
       },
       {
         "method": "GET",
+        "route": "/plugins/admin/catalog",
+        "source": "apps/claw-plugin-service/src/modules/admin/controllers/plugin-admin.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/plugins/admin/catalog/:slug",
+        "source": "apps/claw-plugin-service/src/modules/admin/controllers/plugin-admin.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/plugins/admin/catalog/:slug",
+        "source": "apps/claw-plugin-service/src/modules/admin/controllers/plugin-admin.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/plugins/admin/settings",
+        "source": "apps/claw-plugin-service/src/modules/admin/controllers/plugin-admin.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/plugins/admin/settings",
+        "source": "apps/claw-plugin-service/src/modules/admin/controllers/plugin-admin.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/plugins/catalog",
         "source": "apps/claw-plugin-service/src/modules/catalog/controllers/plugin-catalog.controller.ts"
       },
@@ -3098,6 +3123,56 @@
         "method": "GET",
         "route": "/plugins/catalog/:slug",
         "source": "apps/claw-plugin-service/src/modules/catalog/controllers/plugin-catalog.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/plugins/installs",
+        "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/plugins/installs",
+        "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/plugins/installs/:id",
+        "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/plugins/installs/:id",
+        "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/plugins/installs/:id",
+        "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/plugins/installs/:id/consent",
+        "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/plugins/installs/:id/consent/:toolName",
+        "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/plugins/installs/:id/credential",
+        "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/plugins/installs/:id/credential",
+        "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/plugins/installs/mentions",
+        "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
       }
     ],
     "claw-research-service": [
@@ -4399,5 +4474,5 @@
     ]
   },
   "generated": true,
-  "total": 871
+  "total": 886
 }

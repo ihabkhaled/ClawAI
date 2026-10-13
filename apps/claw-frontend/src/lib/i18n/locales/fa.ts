@@ -14,6 +14,8 @@ import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-tr
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
+import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
+import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
@@ -22,6 +24,8 @@ import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const fa: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.fa,
+  pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.fa,
+  pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.fa,
   pagination: {
     label: 'صفحه‌بندی',
     showing: 'نمایش {from}-{to} از {total}',
@@ -5437,6 +5441,7 @@ export const fa: TranslationDictionary = {
       MEMORY: 'حافظه',
       CONTEXT_PACKS: 'بسته های زمینه',
       FILE_GENERATION: 'فایل‌های نوشته‌شده با هوش مصنوعی',
+      PLUGIN_CALLS: 'فراخوانی افزونه‌ها',
     },
     invoices: {
       title: 'فاکتورها',

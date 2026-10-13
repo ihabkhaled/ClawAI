@@ -48,6 +48,7 @@ function buildRepository() {
   const prisma = {
     pluginCatalogEntry: { findMany: vi.fn(), findFirst: vi.fn() },
     pluginVersion: { findMany: vi.fn() },
+    pluginInstall: { findMany: vi.fn() },
   };
   return { prisma, repository: new CatalogRepository(prisma as never) };
 }
@@ -178,6 +179,33 @@ describe('CatalogRepository', () => {
       prisma.pluginVersion.findMany.mockResolvedValue([]);
 
       await expect(repository.findVisibleEntryBySlug('weather')).resolves.toBeNull();
+    });
+  });
+});
+
+describe('CatalogRepository.findInstalledPluginIds', () => {
+  it('returns the entry ids the user installed', async () => {
+    const { prisma, repository } = buildRepository();
+    prisma.pluginInstall.findMany.mockResolvedValue([{ pluginId: 'a' }, { pluginId: 'b' }]);
+
+    const ids = await repository.findInstalledPluginIds('user-1');
+
+    expect(prisma.pluginInstall.findMany).toHaveBeenCalledWith({
+      where: { userId: 'user-1' },
+      select: { pluginId: true },
+    });
+    expect([...ids]).toEqual(['a', 'b']);
+  });
+
+  it('narrows the lookup to the given entries', async () => {
+    const { prisma, repository } = buildRepository();
+    prisma.pluginInstall.findMany.mockResolvedValue([]);
+
+    await repository.findInstalledPluginIds('user-1', ['a']);
+
+    expect(prisma.pluginInstall.findMany).toHaveBeenCalledWith({
+      where: { userId: 'user-1', pluginId: { in: ['a'] } },
+      select: { pluginId: true },
     });
   });
 });

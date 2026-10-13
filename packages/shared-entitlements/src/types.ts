@@ -80,6 +80,9 @@ export type UserEntitlements = {
       // Plugin installs and own MCP servers. `null` = unlimited, `0` = disabled.
       maxInstalledPlugins: number | null;
       maxUserMcpServers: number | null;
+      // Plugin tool calls per UTC day (metered as PLUGIN_CALLS by auth-service). `null` =
+      // unlimited, `0` = disabled. Read it through `resolvePlanLimit`, never `?? 0`.
+      maxPluginCallsPerDay: number | null;
     };
     featureGates: PlanFeatureGates;
   } | null;

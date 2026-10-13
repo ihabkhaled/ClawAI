@@ -36,6 +36,7 @@ const seedPlan = {
   maxVideoSeconds: 600,
   maxInstalledPlugins: 50,
   maxUserMcpServers: 10,
+  maxPluginCallsPerDay: 300,
   allowCompareMode: true,
   allowJudgeMode: false,
   allowResearchMode: true,
@@ -203,11 +204,41 @@ describe('usePlanForm', () => {
 
     expect(result.current.state.maxInstalledPlugins).toBe('50');
     expect(result.current.state.maxUserMcpServers).toBe('10');
+    expect(result.current.state.maxPluginCallsPerDay).toBe('300');
     expect(result.current.buildUpdateRequest()).toMatchObject({
       allowPlugins: true,
       maxInstalledPlugins: 50,
       maxUserMcpServers: 10,
+      maxPluginCallsPerDay: 300,
     });
+  });
+
+  it('starts a new plan on the Free daily plugin-call allowance, never blank', () => {
+    const { result } = renderHook(() => usePlanForm(null));
+    expect(result.current.state.maxPluginCallsPerDay).toBe('25');
+    act(() => {
+      result.current.setField('name', 'Custom');
+      result.current.setField('slug', 'custom');
+    });
+    expect(result.current.buildCreateRequest()).toMatchObject({ maxPluginCallsPerDay: 25 });
+  });
+
+  it('sends a blank daily plugin-call cap as null (unlimited) and keeps 0 as disabled', () => {
+    const { result } = renderHook(() => usePlanForm(seedPlan));
+    act(() => {
+      result.current.setField('maxPluginCallsPerDay', '');
+    });
+    expect(result.current.buildUpdateRequest()).toMatchObject({ maxPluginCallsPerDay: null });
+    act(() => {
+      result.current.setField('maxPluginCallsPerDay', '0');
+    });
+    expect(result.current.buildUpdateRequest()).toMatchObject({ maxPluginCallsPerDay: 0 });
+  });
+
+  it('reads an absent daily plugin-call cap from an older auth-service as unlimited (blank)', () => {
+    const older = { ...seedPlan, maxPluginCallsPerDay: undefined };
+    const { result } = renderHook(() => usePlanForm(older));
+    expect(result.current.state.maxPluginCallsPerDay).toBe('');
   });
 
   it('lets an administrator switch the module off for a plan', () => {

@@ -75,6 +75,7 @@
 | [Trial Banner Dismissal](05-frontend/trial-banner-dismissal.md)                     | Snooze / hide-forever for the trial banner, and when it returns                                      |
 | [Observability Page](05-frontend/observability-page.md)                             | Service status (state, uptime, incidents) and usage, admin-only                                      |
 | [Admin Model Billing and Exposure](05-frontend/admin-model-billing-and-exposure.md) | Credit / Included badge source, responsive Model exposure panel                                      |
+| [Plugins: Installs and Admin](05-frontend/plugins-installs.md)                      | Install flow, Installed page, settings sheet, admin console, plan caps                               |
 
 ### Layer E: Data & Integrations
 

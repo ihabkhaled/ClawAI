@@ -14,6 +14,8 @@ import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-tr
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
+import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
+import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
@@ -22,6 +24,8 @@ import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const th: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.th,
+  pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.th,
+  pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.th,
   pagination: {
     label: 'การแบ่งหน้า',
     showing: 'แสดง {from}-{to} จาก {total}',
@@ -5369,6 +5373,7 @@ export const th: TranslationDictionary = {
       MEMORY: 'หน่วยความจำ',
       CONTEXT_PACKS: 'แพ็คบริบท',
       FILE_GENERATION: 'ไฟล์ที่ AI เขียน',
+      PLUGIN_CALLS: 'การเรียกใช้ปลั๊กอิน',
     },
     invoices: {
       title: 'ใบแจ้งหนี้',

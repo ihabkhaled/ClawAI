@@ -228,13 +228,13 @@ export class ContextSaveProposalService {
     memory: ContextSavePartOutcome,
     pack: ContextSavePartOutcome,
   ): Partial<ContextSaveRecord> {
-    const failure = memory.failure ?? pack.failure;
+    const failing = memory.failure === undefined ? pack : memory;
     return {
       ...(memory.failure === undefined ? {} : { memoryFailure: memory.failure }),
       ...(pack.failure === undefined ? {} : { packFailure: pack.failure }),
-      ...(failure === undefined
+      ...(failing.failure === undefined
         ? {}
-        : { proposalError: CONTEXT_SAVE_FAILURE_ERRORS[failure].code }),
+        : { proposalError: CONTEXT_SAVE_FAILURE_ERRORS[failing.failure].code }),
     };
   }
 
@@ -329,7 +329,7 @@ export class ContextSaveProposalService {
     const thread = message === null ? null : await this.threads.findById(message.threadId);
     // One answer for "no such message" and "someone else's": never confirm
     // another user's message exists.
-    if (message === null || thread === null || thread.userId !== userId) {
+    if (message === null || thread?.userId !== userId) {
       throw new EntityNotFoundException('ChatMessage', messageId);
     }
     const record = contextSaveOf(message);

@@ -149,7 +149,8 @@ export const SETTINGS_SCHEMA_DEFAULT = {
 
 export const ACCEPT_LANGUAGE_MAX_LENGTH = 500;
 export const ACCEPT_LANGUAGE_MAX_ENTRIES = 20;
-export const CATALOG_CACHE_CONTROL = 'private, max-age=60';
+export const CATALOG_VARY = 'Accept-Language, Authorization';
+export const CATALOG_CACHE_CONTROL = 'private, no-store';
 export const RISK_ORDER: readonly string[] = ['READ', 'WRITE', 'DESTRUCTIVE'];
 
 export const SUPPORTED_LOCALES: readonly string[] = Object.values(Locale);

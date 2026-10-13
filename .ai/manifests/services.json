@@ -120,7 +120,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 179,
+      "testFiles": 186,
       "testRunner": "vitest"
     },
     {
@@ -424,11 +424,12 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-plugin-service",
-      "endpointCount": 3,
+      "endpointCount": 18,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
         "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
         "@claw/shared-types",
         "@claw/shared-utilities"
       ],
@@ -438,11 +439,15 @@
       "portSource": "shared-constants",
       "prismaModels": [
         "PluginCatalogEntry",
+        "PluginCredential",
+        "PluginInstall",
+        "PluginInvocation",
         "PluginSetting",
         "PluginTool",
+        "PluginToolConsent",
         "PluginVersion"
       ],
-      "testFiles": 21,
+      "testFiles": 43,
       "testRunner": "vitest"
     },
     {

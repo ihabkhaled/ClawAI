@@ -7,6 +7,7 @@ import {
   SessionRevocationGuard,
 } from '@claw/shared-auth';
 import { PLUGIN_SERVICE } from '@claw/shared-constants';
+import { RabbitMQModule } from '@claw/shared-rabbitmq';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { EntitlementsModule, PermissionGuard } from '@claw/shared-entitlements';
@@ -14,7 +15,10 @@ import { EntitlementsModule, PermissionGuard } from '@claw/shared-entitlements';
 import { AppConfig } from './config/app.config';
 import { HealthModule } from '../modules/health/health.module';
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
+import { AccountDeletionModule } from '../modules/account-deletion/account-deletion.module';
+import { AdminModule } from '../modules/admin/admin.module';
 import { CatalogModule } from '../modules/catalog/catalog.module';
+import { InstallsModule } from '../modules/installs/installs.module';
 import { SeedingModule } from '../modules/seeding/seeding.module';
 
 @Module({
@@ -46,9 +50,20 @@ import { SeedingModule } from '../modules/seeding/seeding.module';
       authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,
       interServiceToken: AppConfig.get().INTER_SERVICE_AUTH_TOKEN,
     }),
+    RabbitMQModule.forRootAsync({
+      useFactory: () => ({
+        url: AppConfig.get().RABBITMQ_URL,
+        serviceName: 'plugin-service',
+        queuePrefix: 'claw.plugins',
+        prefetchCount: 1,
+      }),
+    }),
     HealthModule,
     PrismaModule,
     CatalogModule,
+    InstallsModule,
+    AdminModule,
+    AccountDeletionModule,
     SeedingModule,
   ],
   providers: [

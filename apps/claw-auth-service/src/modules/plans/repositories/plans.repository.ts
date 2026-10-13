@@ -2,8 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { isUniqueViolationOnUser } from '../utilities/prisma-error.utility';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { POPULAR_PLAN_KEY } from '../constants/popular-plan.constants';
+import { upsertFeatureRuleOn } from '../utilities/feature-rule-write.utility';
+import { toPluginCallsRule } from '../utilities/plugin-calls-rule.utility';
 import { addTrialDays } from '../utilities/trial-expiry.utility';
 import {
+  PlanFeatureKey,
   PlanModelAccessMode,
   type PlanRetirementMigrationStatus,
   type PlanTrialRedemption,
@@ -125,13 +128,38 @@ export class PlansRepository {
       : { isTrial: assignment.plan.isTrial, expiresAt: assignment.entitlementValidUntil };
   }
 
+  // The plan row and its PLUGIN_CALLS rule are written in ONE transaction. The
+  // column is the payload an administrator sees; the rule is what the quota
+  // reservation enforces. Two separate writes could commit one and lose the
+  // other, leaving the payload and the enforced cap in disagreement.
   async create(data: Prisma.PlanCreateInput): Promise<PlanWithAccess> {
-    const plan = await this.prisma.plan.create({ data });
-    return this.findById(plan.id) as Promise<PlanWithAccess>;
+    const planId = await this.prisma.$transaction(async (tx) => {
+      const plan = await tx.plan.create({ data });
+      await upsertFeatureRuleOn(
+        tx,
+        plan.id,
+        PlanFeatureKey.PLUGIN_CALLS,
+        toPluginCallsRule(plan.maxPluginCallsPerDay),
+      );
+      return plan.id;
+    });
+    return this.findById(planId) as Promise<PlanWithAccess>;
   }
 
+  // Re-derives the rule only when the update touches the column, so an unrelated
+  // edit (a rename) never rewrites enforcement.
   async update(id: string, data: Prisma.PlanUpdateInput): Promise<PlanWithAccess> {
-    await this.prisma.plan.update({ where: { id }, data });
+    await this.prisma.$transaction(async (tx) => {
+      const plan = await tx.plan.update({ where: { id }, data });
+      if (data.maxPluginCallsPerDay !== undefined) {
+        await upsertFeatureRuleOn(
+          tx,
+          id,
+          PlanFeatureKey.PLUGIN_CALLS,
+          toPluginCallsRule(plan.maxPluginCallsPerDay),
+        );
+      }
+    });
     return this.findById(id) as Promise<PlanWithAccess>;
   }
 
@@ -304,11 +332,12 @@ export class PlansRepository {
           where: { id: planId, isActive: true, isTrial: true, trialDurationDays: { gte: 1 } },
           select: { id: true, trialDurationDays: true },
         });
-        if (trialPlan === null || trialPlan.trialDurationDays === null) {
+        const trialDays = trialPlan?.trialDurationDays ?? null;
+        if (trialDays === null) {
           return null;
         }
         // The length is the plan's own, set by the administrator — never a constant.
-        const expiresAt = addTrialDays(now, trialPlan.trialDurationDays);
+        const expiresAt = addTrialDays(now, trialDays);
         await tx.userPlanAssignment.updateMany({
           where: { userId, status: 'ACTIVE' },
           data: { status: 'EXPIRED', endsAt: now },

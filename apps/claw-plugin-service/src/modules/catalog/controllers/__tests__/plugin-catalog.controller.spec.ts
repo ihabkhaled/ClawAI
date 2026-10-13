@@ -18,6 +18,7 @@ import {
 } from '../../dto/catalog-query.dto';
 import { PluginCatalogController } from '../plugin-catalog.controller';
 
+const CALLER = { id: 'user-1', email: 'user@claw.local', role: UserRole.USER, sessionId: 's-1' };
 const SECRET = 'plugin-service-test-secret-0123456789';
 
 function base64Url(value: string | Buffer): string {
@@ -168,7 +169,7 @@ describe('PluginCatalogController', () => {
       ).rejects.toBeInstanceOf(ServiceUnavailableException);
     });
 
-    it('is marked private-cacheable and varies on Accept-Language', () => {
+    it('is per-user: private, no-store, and varies on language and credentials', () => {
       const headers = Reflect.getMetadata('__headers__', handler) as Array<{
         name: string;
         value: string;
@@ -176,8 +177,8 @@ describe('PluginCatalogController', () => {
 
       expect(headers).toEqual(
         expect.arrayContaining([
-          { name: 'Cache-Control', value: 'private, max-age=60' },
-          { name: 'Vary', value: 'Accept-Language' },
+          { name: 'Cache-Control', value: 'private, no-store' },
+          { name: 'Vary', value: 'Accept-Language, Authorization' },
         ]),
       );
     });
@@ -190,8 +191,8 @@ describe('PluginCatalogController', () => {
       const controller = new PluginCatalogController(catalog as never);
       const query = catalogListQuerySchema.parse({ q: 'web' });
 
-      await expect(controller.list(query, 'fr-FR')).resolves.toBe(page);
-      expect(catalog.list).toHaveBeenCalledWith({ q: 'web', limit: 20 }, 'fr-FR');
+      await expect(controller.list(CALLER, query, 'fr-FR')).resolves.toBe(page);
+      expect(catalog.list).toHaveBeenCalledWith('user-1', { q: 'web', limit: 20 }, 'fr-FR');
     });
 
     it('passes slug, query and Accept-Language to the service for the detail', async () => {
@@ -199,8 +200,10 @@ describe('PluginCatalogController', () => {
       const catalog = { list: vi.fn(), detail: vi.fn().mockResolvedValue(detail) };
       const controller = new PluginCatalogController(catalog as never);
 
-      await expect(controller.detail('weather', { locale: undefined }, 'de')).resolves.toBe(detail);
-      expect(catalog.detail).toHaveBeenCalledWith('weather', { locale: undefined }, 'de');
+      await expect(controller.detail(CALLER, 'weather', { locale: undefined }, 'de')).resolves.toBe(
+        detail,
+      );
+      expect(catalog.detail).toHaveBeenCalledWith('user-1', 'weather', { locale: undefined }, 'de');
     });
 
     it('requires the PLUGINS_USE permission on the whole controller', () => {

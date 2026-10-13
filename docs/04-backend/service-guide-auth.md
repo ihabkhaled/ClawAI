@@ -539,6 +539,12 @@ refused. Both these and `internal/users/:id/entitlements` require
 2026-09-20; `EntitlementsAdapter` sends it. A caller that does not is 401
 (TD-035). Deploy auth-service and its callers together.
 
+The second user is `PLUGIN_CALLS` (plugins, batch 2): the plugin service reserves one per tool call and settles it afterwards,
+through the same two routes. `Plan.maxPluginCallsPerDay` is the editable cap (`null` unlimited, `0` disabled, default 20) and
+`PlansRepository` writes the derived `PLUGIN_CALLS` rule in the same transaction as the plan, and every reserve counts and writes
+under a per-user, per-feature advisory lock so the cap holds under concurrency; see the "Plugin calls are metered" section of
+`apps/claw-auth-service/CLAUDE.md` for tiers, migrations and specs.
+
 ## Media plan gates (ADR-122, 2026-09-25)
 
 Four `Plan` fields, modelled like `allowCompareMode`:

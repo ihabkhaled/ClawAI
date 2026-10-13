@@ -5,13 +5,9 @@ import { McpTransport } from '../../../common/enums/mcp-transport.enum';
 import { RiskLevel } from '../../../common/enums/risk-level.enum';
 import { RuntimeKind } from '../../../common/enums/runtime-kind.enum';
 import {
-  ALLOWED_AUTH_HEADERS,
   AUTH_HEADER_PATTERN,
   CALLS_PER_TURN_DEFAULT,
   CALLS_PER_TURN_MAX,
-  CUSTOM_AUTH_HEADER_PATTERN,
-  DENIED_AUTH_HEADER_PREFIXES,
-  DENIED_AUTH_HEADERS,
   DESCRIPTION_MAX,
   KEY_PATTERN,
   MANIFEST_VERSION,
@@ -41,6 +37,7 @@ import {
   TOOL_TIMEOUT_MIN_MS,
   TOOL_TITLE_MAX,
 } from '../constants/catalog.constants';
+import { isAllowedAuthHeader } from '../utilities/is-allowed-auth-header.utility';
 import { isValidHostname } from '../utilities/is-valid-hostname.utility';
 import { containsHostileText } from '../utilities/contains-hostile-text.utility';
 import { checkJsonSchemaSubset } from '../utilities/json-schema-subset.utility';
@@ -168,14 +165,6 @@ const networkSchema = z
     publicWeb: z.boolean().default(false),
   })
   .default({ hosts: [], publicWeb: false });
-
-function isAllowedAuthHeader(name: string): boolean {
-  const lower = name.toLowerCase();
-  if (DENIED_AUTH_HEADERS.includes(lower)) return false;
-  return DENIED_AUTH_HEADER_PREFIXES.some((prefix) => lower.startsWith(prefix))
-    ? false
-    : ALLOWED_AUTH_HEADERS.includes(lower) || CUSTOM_AUTH_HEADER_PATTERN.test(name);
-}
 
 const authHeaderName = z
   .string()

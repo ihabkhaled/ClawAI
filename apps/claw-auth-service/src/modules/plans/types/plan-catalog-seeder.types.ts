@@ -50,6 +50,7 @@ declare module '*/plan-catalog.seeder.cjs' {
     enabled?: boolean;
     maxInstalled?: number | null;
     maxUserMcpServers?: number | null;
+    maxCallsPerDay?: number | null;
   };
 
   /** The Plan columns the plugins block projects to; a missing block is on with the Free caps. */
@@ -57,6 +58,7 @@ declare module '*/plan-catalog.seeder.cjs' {
     allowPlugins: boolean;
     maxInstalledPlugins: number | null;
     maxUserMcpServers: number | null;
+    maxPluginCallsPerDay: number | null;
   };
 
   export function pluginGateProjections(

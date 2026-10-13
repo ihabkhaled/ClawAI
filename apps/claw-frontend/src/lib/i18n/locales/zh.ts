@@ -14,6 +14,8 @@ import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-tr
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
+import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
+import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
@@ -22,6 +24,8 @@ import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const zh: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.zh,
+  pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.zh,
+  pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.zh,
   pagination: {
     label: '分页',
     showing: '显示第 {from}-{to} 条，共 {total} 条',
@@ -5232,6 +5236,7 @@ export const zh: TranslationDictionary = {
       MEMORY: '记忆',
       CONTEXT_PACKS: '上下文包',
       FILE_GENERATION: 'AI 生成的文件',
+      PLUGIN_CALLS: '插件调用',
     },
     invoices: {
       title: '发票',

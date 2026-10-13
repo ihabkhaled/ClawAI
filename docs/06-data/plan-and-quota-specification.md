@@ -119,6 +119,10 @@ authoritative.
 Workspaces are disabled on Free; memory and context packs are enabled on every
 plan within the item limits above.
 
+`PLUGIN_CALLS` (plugin tool calls, window `DAY`) is the metered feature behind the plugins module: Free 20, Starter 100, Plus 300,
+Pro 1000, Team and Scale 5000, Unlimited no cap. The editable value is `Plan.maxPluginCallsPerDay` (`null` unlimited, `0`
+disabled); its rule row is derived from it and written in the same transaction as the plan. See `apps/claw-auth-service/CLAUDE.md`.
+
 ### Reserve → consume → release
 
 A trial is **held** before execution and only **spent** once the user actually

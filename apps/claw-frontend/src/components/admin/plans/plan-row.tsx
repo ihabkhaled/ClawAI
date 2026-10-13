@@ -9,6 +9,8 @@ import type { PlanRowProps } from '@/types';
 import { formatNullableLimit, formatTokenCount } from '@/utilities';
 import { microUsdToUsdInput } from '@/utilities/micro-usd-input.utility';
 
+import { PlanPluginLimits } from './plan-plugin-limits';
+
 export function PlanRow({
   plan,
   pendingId,
@@ -105,6 +107,7 @@ export function PlanRow({
             <span className="text-foreground font-medium">{t('adminPlans.modelRules')}</span>:{' '}
             {plan.modelAccess.length}
           </div>
+          <PlanPluginLimits plan={plan} t={t} />
         </div>
 
         <div className="flex flex-wrap items-center gap-2">

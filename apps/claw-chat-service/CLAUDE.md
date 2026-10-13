@@ -1741,3 +1741,7 @@ In AUTO (not a picked model) a PAYG refusal (`402`, e.g. `PAYG_FREE_ALLOWANCE_EX
 model only: `ChatExecutionManager.execute` skips that provider and tries the next candidate (included or local
 models need no credit). The first refusal is thrown only if the whole chain fails, so the upgrade notice still
 shows. Never end an AUTO chain on a 402 again. A picked model still shows its own refusal.
+
+## Save-cue corpus and `?raw` spec imports
+
+`save-cue-matcher.utility.ts` compiles each cue with `compileCuePattern` (a small, lint-clean regex builder; the 13-language cue corpus is unchanged). The DTO spec reads the cue text files with `?raw` imports, typed by `src/raw-text-imports.d.ts` — keep that declaration when adding a text fixture.

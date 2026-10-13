@@ -14,6 +14,8 @@ import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-tr
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
+import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
+import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
@@ -22,6 +24,8 @@ import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const es: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.es,
+  pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.es,
+  pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.es,
   pagination: {
     label: 'Paginación',
     showing: 'Mostrando {from}-{to} de {total}',
@@ -5500,6 +5504,7 @@ export const es: TranslationDictionary = {
       MEMORY: 'Memoria',
       CONTEXT_PACKS: 'Paquetes de contexto',
       FILE_GENERATION: 'Archivos creados por IA',
+      PLUGIN_CALLS: 'Llamadas a plugins',
     },
     invoices: {
       title: 'Facturas',

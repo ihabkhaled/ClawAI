@@ -48,6 +48,8 @@ export const PLAN_FORM_DEFAULTS: PlanFormState = {
   // 0 own servers), never blank, because blank means unlimited.
   maxInstalledPlugins: '5',
   maxUserMcpServers: '0',
+  // The Free daily plugin-call allowance. Blank would mean unlimited.
+  maxPluginCallsPerDay: '25',
   // Mirrors the server default (2). Blank would mean unlimited.
   creditConnectorFreeRequestsPerMonth: '2',
   // A new plan has no meter and no price limit, so it never gives provider spend away by omission.
@@ -136,6 +138,7 @@ export const PLAN_MAX_VIDEO_SECONDS_LIMIT = 36_000;
 /** Upper bounds on the plugin caps, matching the auth-service DTOs. */
 export const PLAN_MAX_INSTALLED_PLUGINS_LIMIT = 10_000;
 export const PLAN_MAX_USER_MCP_SERVERS_LIMIT = 1_000;
+export const PLAN_MAX_PLUGIN_CALLS_PER_DAY_LIMIT = 1_000_000;
 
 /** Upper bound on free credit-connector requests per month, matching the auth-service DTO. */
 export const PLAN_CREDIT_FREE_REQUESTS_LIMIT = 100_000;

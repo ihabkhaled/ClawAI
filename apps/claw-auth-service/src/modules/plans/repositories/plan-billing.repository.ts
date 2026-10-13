@@ -6,6 +6,8 @@ import {
   type PlanFeatureRule,
   type PlanPriceVersion,
 } from '../../../generated/prisma';
+import { upsertFeatureRuleOn } from '../utilities/feature-rule-write.utility';
+import { type FeatureRuleValues } from '../types/feature-rule-values.types';
 import { type PriceSetParams } from '../types/plan-interval-pricing.types';
 
 @Injectable()
@@ -125,6 +127,14 @@ export class PlanBillingRepository {
 
   async listFeatureRules(planId: string): Promise<PlanFeatureRule[]> {
     return this.prisma.planFeatureRule.findMany({ where: { planId } });
+  }
+
+  async upsertFeatureRule(
+    planId: string,
+    feature: PlanFeatureKey,
+    rule: FeatureRuleValues,
+  ): Promise<void> {
+    await upsertFeatureRuleOn(this.prisma, planId, feature, rule);
   }
 
   async findFeatureRule(planId: string, feature: PlanFeatureKey): Promise<PlanFeatureRule | null> {

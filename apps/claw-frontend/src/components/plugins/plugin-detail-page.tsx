@@ -16,11 +16,12 @@ import type { PluginDetailPageProps } from '@/types/plugins.types';
 import { categoryLabel } from '@/utilities/plugins.utility';
 
 import { PluginIcon } from './plugin-icon';
+import { PluginInstallPanel } from './plugin-install-panel';
 import { PluginPermissions } from './plugin-permissions';
 import { PluginRiskBadge } from './plugin-risk-badge';
 import { PluginToolList } from './plugin-tool-list';
 
-/** One plugin: what it is, the tools it adds and what using it means. Read-only in this batch. */
+/** One plugin: what it is, the tools it adds, what using it means, and the install control. */
 export function PluginDetailPage({ slug }: PluginDetailPageProps): React.ReactElement {
   const { t, plugin, isLoading, isNotFound, isError, retry } = usePluginDetail(slug);
 
@@ -101,6 +102,7 @@ export function PluginDetailPage({ slug }: PluginDetailPageProps): React.ReactEl
               {t('plugins.detail.version', { value: plugin.version })}
             </span>
           </div>
+          <PluginInstallPanel plugin={plugin} />
         </div>
       </header>
 

@@ -247,6 +247,9 @@ model Plan {
   allowPlugins                        Boolean             @default(true) @map("allow_plugins")
   maxInstalledPlugins                 Int?                @default(5) @map("max_installed_plugins")
   maxUserMcpServers                   Int?                @default(0) @map("max_user_mcp_servers")
+  // Plugin tool calls per UTC day (PLUGIN_CALLS). NULL = unlimited, 0 = disabled; the default is the
+  // Free value. The PLUGIN_CALLS plan_feature_rules row is derived from this column.
+  maxPluginCallsPerDay                Int?                @default(20) @map("max_plugin_calls_per_day")
   // Free requests per UTC calendar month, PER credit connector, that the platform
   // absorbs when the user has no credit to cover a token-priced call (ADR-142).
   // NULL = unlimited, 0 = none. DEFAULT 0 so a plan created without the field
@@ -584,6 +587,8 @@ enum PlanFeatureKey {
   CONTEXT_PACKS
   /// AI-written files (F3d, ADR-110). Exports of existing answers never count.
   FILE_GENERATION
+  /// One plugin or MCP tool call (plugins-and-mcp-design.md section 5). Reserved by plugin-service per invoke.
+  PLUGIN_CALLS
 }
 
 enum PlanFeatureAccessMode {

@@ -19,6 +19,7 @@ export const ADMIN_ENTITLEMENT_PLAN: NonNullable<UserEntitlements['plan']> = {
     maxVideoSeconds: null,
     maxInstalledPlugins: null,
     maxUserMcpServers: null,
+    maxPluginCallsPerDay: null,
   },
   featureGates: {
     allowCompareMode: true,

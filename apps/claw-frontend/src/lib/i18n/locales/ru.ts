@@ -14,6 +14,8 @@ import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-tr
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
+import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
+import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
@@ -22,6 +24,8 @@ import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const ru: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.ru,
+  pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.ru,
+  pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.ru,
   pagination: {
     label: 'Постраничная навигация',
     showing: 'Показаны {from}-{to} из {total}',
@@ -5476,6 +5480,7 @@ export const ru: TranslationDictionary = {
       MEMORY: 'Память',
       CONTEXT_PACKS: 'Наборы контекста',
       FILE_GENERATION: 'Файлы, созданные ИИ',
+      PLUGIN_CALLS: 'Вызовы плагинов',
     },
     invoices: {
       title: 'Счета',

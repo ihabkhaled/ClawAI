@@ -14,6 +14,8 @@ import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-tr
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
+import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
+import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
@@ -22,6 +24,8 @@ import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const ar: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.ar,
+  pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.ar,
+  pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.ar,
   pagination: {
     label: 'ترقيم الصفحات',
     showing: 'عرض {from}-{to} من {total}',
@@ -5352,6 +5356,7 @@ export const ar: TranslationDictionary = {
       MEMORY: 'الذاكرة',
       CONTEXT_PACKS: 'حزم السياق',
       FILE_GENERATION: 'ملفات يكتبها الذكاء الاصطناعي',
+      PLUGIN_CALLS: 'استدعاءات الإضافات',
     },
     invoices: {
       title: 'الفواتير',

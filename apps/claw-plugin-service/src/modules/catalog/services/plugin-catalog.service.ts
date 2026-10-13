@@ -13,11 +13,18 @@ export class PluginCatalogService {
     private readonly presenter: CatalogPresenterManager,
   ) {}
 
-  async list(query: CatalogListQuery, acceptLanguage: string | undefined): Promise<CatalogPage> {
+  async list(
+    userId: string,
+    query: CatalogListQuery,
+    acceptLanguage: string | undefined,
+  ): Promise<CatalogPage> {
     const locale = resolveLocale(query.locale, acceptLanguage);
-    const entries = await this.repository.findVisibleEntries(query.category);
+    const [entries, installed] = await Promise.all([
+      this.repository.findVisibleEntries(query.category),
+      this.repository.findInstalledPluginIds(userId),
+    ]);
     const cards = entries
-      .map((entry) => this.presenter.toCard(entry, locale))
+      .map((entry) => this.presenter.toCard(entry, locale, installed.has(entry.id)))
       .filter((card): card is CatalogCard => card !== null)
       .filter((card) => this.matches(card, query.q));
     const start = this.startIndex(cards, query.cursor);
@@ -27,15 +34,24 @@ export class PluginCatalogService {
   }
 
   async detail(
+    userId: string,
     slug: string,
     query: CatalogDetailQuery,
     acceptLanguage: string | undefined,
   ): Promise<CatalogDetail> {
     const entry = await this.repository.findVisibleEntryBySlug(slug);
+    const installed =
+      entry === null
+        ? new Set<string>()
+        : await this.repository.findInstalledPluginIds(userId, [entry.id]);
     const detail =
       entry === null
         ? null
-        : this.presenter.toDetail(entry, resolveLocale(query.locale, acceptLanguage));
+        : this.presenter.toDetail(
+            entry,
+            resolveLocale(query.locale, acceptLanguage),
+            installed.has(entry.id),
+          );
     if (detail === null) {
       throw new NotFoundException({ message: 'Plugin not found', errorCode: 'PLUGIN_NOT_FOUND' });
     }

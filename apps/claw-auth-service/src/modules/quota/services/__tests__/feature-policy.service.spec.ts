@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { FeaturePolicyService } from '../feature-policy.service';
 import { type PlanBillingRepository } from '../../../plans/repositories/plan-billing.repository';
 import { type FeatureUsageRepository } from '../../repositories/feature-usage.repository';
@@ -6,12 +6,19 @@ import { type FeatureUsageRepository } from '../../repositories/feature-usage.re
 describe('FeaturePolicyService', () => {
   let service: FeaturePolicyService;
   let planBilling: { findFeatureRule: Mock };
-  let usage: { reserve: Mock; countActive: Mock; consume: Mock; release: Mock };
+  let usage: {
+    reserve: Mock;
+    reserveWithinLimit: Mock;
+    countActive: Mock;
+    consume: Mock;
+    release: Mock;
+  };
 
   beforeEach(() => {
     planBilling = { findFeatureRule: vi.fn() };
     usage = {
       reserve: vi.fn().mockResolvedValue({ id: 'rec-1' }),
+      reserveWithinLimit: vi.fn().mockResolvedValue({ held: true, record: { id: 'rec-1' } }),
       countActive: vi.fn().mockResolvedValue(0),
       consume: vi.fn(),
       release: vi.fn(),
@@ -132,7 +139,7 @@ describe('FeaturePolicyService', () => {
         limit: 1,
         window: 'LIFETIME',
       });
-      usage.countActive.mockResolvedValue(1);
+      usage.reserveWithinLimit.mockResolvedValue({ held: false, used: 1 });
       const result = await service.reserve({
         userId: 'u1',
         planId: 'p1',
@@ -141,7 +148,7 @@ describe('FeaturePolicyService', () => {
         billingPeriodKey: null,
       });
       expect(result).toEqual({ ok: false, reason: 'FEATURE_TRIAL_EXHAUSTED', used: 1, limit: 1 });
-      expect(usage.reserve).not.toHaveBeenCalled();
+      expect(usage.reserveWithinLimit).toHaveBeenCalledWith(expect.objectContaining({ limit: 1 }));
     });
 
     it('counts a LIFETIME allowance against a period-free key so it never resets', async () => {
@@ -157,8 +164,8 @@ describe('FeaturePolicyService', () => {
         requestId: 'req-3',
         billingPeriodKey: null,
       });
-      expect(usage.countActive).toHaveBeenCalledWith(
-        expect.objectContaining({ periodKey: 'LIFETIME' }),
+      expect(usage.reserveWithinLimit).toHaveBeenCalledWith(
+        expect.objectContaining({ periodKey: 'LIFETIME', limit: 1 }),
       );
     });
 
@@ -176,7 +183,7 @@ describe('FeaturePolicyService', () => {
         billingPeriodKey: null,
       });
       expect(result).toMatchObject({ ok: false, reason: 'FEATURE_DISABLED' });
-      expect(usage.reserve).not.toHaveBeenCalled();
+      expect(usage.reserveWithinLimit).not.toHaveBeenCalled();
     });
 
     it('does not meter an ENABLED feature', async () => {
@@ -193,7 +200,9 @@ describe('FeaturePolicyService', () => {
         billingPeriodKey: null,
       });
       expect(result.ok).toBe(true);
-      expect(usage.countActive).not.toHaveBeenCalled();
+      expect(usage.reserveWithinLimit).toHaveBeenCalledWith(
+        expect.objectContaining({ limit: null }),
+      );
     });
   });
 

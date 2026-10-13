@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PluginsPage } from '@/components/plugins/plugins-page';
@@ -53,11 +53,23 @@ describe('PluginsPage', () => {
     );
     render(<PluginsPage />);
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
-    const links = screen.getAllByRole('link');
+    const links = within(screen.getByRole('list')).getAllByRole('link');
     expect(links.map((link) => link.getAttribute('href'))).toEqual([
       '/plugins/web-fetch',
       '/plugins/weather',
     ]);
+  });
+
+  it('has Discover and Installed links, with Discover as the current page', () => {
+    mockPage.mockReturnValue(pageState());
+    render(<PluginsPage />);
+    const nav = within(screen.getByRole('navigation', { name: 'pluginsInstall.nav.label' }));
+    expect(
+      nav.getByRole('link', { name: 'pluginsInstall.nav.discover' }).getAttribute('aria-current'),
+    ).toBe('page');
+    const installed = nav.getByRole('link', { name: 'pluginsInstall.nav.installed' });
+    expect(installed.getAttribute('href')).toBe('/plugins/installed');
+    expect(installed.getAttribute('aria-current')).toBeNull();
     expect(screen.queryByRole('button', { name: 'plugins.loadMore' })).toBeNull();
   });
 

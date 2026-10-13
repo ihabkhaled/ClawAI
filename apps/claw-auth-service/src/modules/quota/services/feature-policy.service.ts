@@ -107,35 +107,28 @@ export class FeaturePolicyService {
       return { ok: false, reason: 'FEATURE_DISABLED', used: 0, limit: 0 };
     }
     const periodKey = featurePeriodKey(rule.window, new Date(), params.billingPeriodKey);
-    if (rule.accessMode === PlanFeatureAccessMode.LIMITED) {
-      const exhausted = await this.rejectWhenExhausted(params, rule, periodKey);
-      if (exhausted) {
-        return exhausted;
-      }
-    }
-    const record = await this.usage.reserve({ ...params, window: rule.window, periodKey });
-    this.logger.log(`reserve: held user=${params.userId} feature=${params.feature}`);
-    return { ok: true, reservationId: record.id };
-  }
-
-  private async rejectWhenExhausted(
-    params: { userId: string; feature: PlanFeatureKey; requestId: string },
-    rule: PlanFeatureRule,
-    periodKey: string,
-  ): Promise<FeatureReservationResult | null> {
-    const limit = rule.limit ?? 0;
-    const existing = await this.usage.countActive({
-      userId: params.userId,
-      feature: params.feature,
+    const limit = rule.accessMode === PlanFeatureAccessMode.LIMITED ? (rule.limit ?? 0) : null;
+    // The count and the write are one atomic step in the repository, so concurrent
+    // reserves cannot overshoot the cap.
+    const outcome = await this.usage.reserveWithinLimit({
+      ...params,
+      window: rule.window,
       periodKey,
+      limit,
     });
-    if (existing < limit) {
-      return null;
+    if (!outcome.held) {
+      this.logger.warn(
+        `reserve: exhausted user=${params.userId} feature=${params.feature} used=${outcome.used} limit=${limit}`,
+      );
+      return {
+        ok: false,
+        reason: 'FEATURE_TRIAL_EXHAUSTED',
+        used: outcome.used,
+        limit: limit ?? 0,
+      };
     }
-    this.logger.warn(
-      `rejectWhenExhausted: user=${params.userId} feature=${params.feature} used=${existing} limit=${limit}`,
-    );
-    return { ok: false, reason: 'FEATURE_TRIAL_EXHAUSTED', used: existing, limit };
+    this.logger.log(`reserve: held user=${params.userId} feature=${params.feature}`);
+    return { ok: true, reservationId: outcome.record.id };
   }
 
   async consume(reservationId: string): Promise<void> {

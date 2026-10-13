@@ -18,6 +18,7 @@ type PluginsBlock = {
   enabled: boolean;
   maxInstalled: number | null;
   maxUserMcpServers: number | null;
+  maxCallsPerDay: number | null;
 };
 type PluginsCatalogEntry = { slug: string; plugins: PluginsBlock };
 
@@ -53,7 +54,12 @@ describe('plugins plan gate', () => {
 
     it('lets Free install from the curated catalog but register no server of its own', () => {
       const free = catalog.find((entry) => entry.slug === 'free');
-      expect(free?.plugins).toEqual({ enabled: true, maxInstalled: 5, maxUserMcpServers: 0 });
+      expect(free?.plugins).toEqual({
+        enabled: true,
+        maxInstalled: 5,
+        maxUserMcpServers: 0,
+        maxCallsPerDay: 20,
+      });
     });
 
     it('is unlimited (null) only on the top tier, never by omission elsewhere', () => {
@@ -88,11 +94,31 @@ describe('plugins plan gate', () => {
       const { pluginGateProjections } =
         await import('../../../../prisma/seeders/plan-catalog.seeder.cjs');
       expect(
-        pluginGateProjections({ enabled: true, maxInstalled: 50, maxUserMcpServers: 10 }),
-      ).toEqual({ allowPlugins: true, maxInstalledPlugins: 50, maxUserMcpServers: 10 });
+        pluginGateProjections({
+          enabled: true,
+          maxInstalled: 50,
+          maxUserMcpServers: 10,
+          maxCallsPerDay: 1000,
+        }),
+      ).toEqual({
+        allowPlugins: true,
+        maxInstalledPlugins: 50,
+        maxUserMcpServers: 10,
+        maxPluginCallsPerDay: 1000,
+      });
       expect(
-        pluginGateProjections({ enabled: true, maxInstalled: null, maxUserMcpServers: null }),
-      ).toEqual({ allowPlugins: true, maxInstalledPlugins: null, maxUserMcpServers: null });
+        pluginGateProjections({
+          enabled: true,
+          maxInstalled: null,
+          maxUserMcpServers: null,
+          maxCallsPerDay: null,
+        }),
+      ).toEqual({
+        allowPlugins: true,
+        maxInstalledPlugins: null,
+        maxUserMcpServers: null,
+        maxPluginCallsPerDay: null,
+      });
     });
 
     it('defaults a missing block to ON with the Free caps, never to unlimited', async () => {
@@ -102,11 +128,13 @@ describe('plugins plan gate', () => {
         allowPlugins: true,
         maxInstalledPlugins: 5,
         maxUserMcpServers: 0,
+        maxPluginCallsPerDay: 20,
       });
       expect(pluginGateProjections({})).toEqual({
         allowPlugins: true,
         maxInstalledPlugins: 5,
         maxUserMcpServers: 0,
+        maxPluginCallsPerDay: 20,
       });
     });
 
@@ -119,7 +147,12 @@ describe('plugins plan gate', () => {
     it('keeps 0 (disabled) apart from null (unlimited)', async () => {
       const { pluginGateProjections } =
         await import('../../../../prisma/seeders/plan-catalog.seeder.cjs');
-      const zero = pluginGateProjections({ maxInstalled: 0, maxUserMcpServers: 0 });
+      const zero = pluginGateProjections({
+        maxInstalled: 0,
+        maxUserMcpServers: 0,
+        maxCallsPerDay: 0,
+      });
+      expect(zero.maxPluginCallsPerDay).toBe(0);
       expect(zero.maxInstalledPlugins).toBe(0);
       expect(zero.maxUserMcpServers).toBe(0);
     });

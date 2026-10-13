@@ -107,5 +107,7 @@ wallet reservations stay in the existing credit system.
 
 `claw-auth-service` publishes `user.deleted` from its transactional outbox.
 `claw-threads-service` and `claw-thread-generation-service` consume independently
-and write hashed tombstones in their own databases. No cross-service database
-access is allowed. See ADR-160 and rule 61.
+and write hashed tombstones in their own databases. `claw-plugin-service` consumes it
+too and deletes the user's installs, consents, credentials and invocation audit
+(idempotent, no tombstone needed). No cross-service database access is allowed.
+See ADR-160, ADR-172 and rule 61.

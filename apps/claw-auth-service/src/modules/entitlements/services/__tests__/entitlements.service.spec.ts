@@ -167,6 +167,7 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
       allowPlugins: true,
       maxInstalledPlugins: 5,
       maxUserMcpServers: 0,
+      maxPluginCallsPerDay: 20,
     });
 
     const result = await service.getForUser('u1');
@@ -174,6 +175,7 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
     expect(result.plan?.featureGates).toEqual(expect.objectContaining({ allowPlugins: true }));
     expect(result.plan?.limits.maxInstalledPlugins).toBe(5);
     expect(result.plan?.limits.maxUserMcpServers).toBe(0);
+    expect(result.plan?.limits.maxPluginCallsPerDay).toBe(20);
   });
 
   it('publishes null plugin caps as null (unlimited), never coalesced to 0', async () => {
@@ -184,12 +186,14 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
       allowPlugins: true,
       maxInstalledPlugins: null,
       maxUserMcpServers: null,
+      maxPluginCallsPerDay: null,
     });
 
     const result = await service.getForUser('u1');
 
     expect(result.plan?.limits.maxInstalledPlugins).toBeNull();
     expect(result.plan?.limits.maxUserMcpServers).toBeNull();
+    expect(result.plan?.limits.maxPluginCallsPerDay).toBeNull();
   });
 
   it('publishes a plan an administrator switched the module off for as allowPlugins false', async () => {
@@ -434,6 +438,7 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
         maxVideoSeconds: null,
         maxInstalledPlugins: null,
         maxUserMcpServers: null,
+        maxPluginCallsPerDay: null,
       },
       featureGates: {
         allowCompareMode: true,

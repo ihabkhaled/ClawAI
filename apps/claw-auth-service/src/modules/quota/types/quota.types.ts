@@ -4,7 +4,7 @@ import { type QuotaRejectionWindow } from '../../../common/enums/quota-rejection
 // (so the wire payload is unchanged), but Prisma models a native enum as a
 // string-literal union, which is not assignable to a TypeScript string enum.
 // Using the Prisma type here keeps the whole path cast-free.
-import { type PlanFeatureKey } from '../../../generated/prisma';
+import { type FeatureUsageRecord, type PlanFeatureKey } from '../../../generated/prisma';
 
 export type QuotaSnapshot = {
   dailyLimit: number;
@@ -187,6 +187,11 @@ export type FeatureReservationResult =
       used: number;
       limit: number;
     };
+
+// What the repository's capped reservation reports: the row now holding the run,
+// or the count that stopped it. A refusal is a value, never a throw.
+export type FeatureCapReservation =
+  { held: true; record: FeatureUsageRecord } | { held: false; used: number };
 
 export type ObservedFeatureUsageInput = {
   userId: string;

@@ -44,6 +44,7 @@ const entitlements = (gates: PlanFeatureGates, isAdmin = false): UserEntitlement
       maxVideoSeconds: 60,
       maxInstalledPlugins: 5,
       maxUserMcpServers: 0,
+      maxPluginCallsPerDay: 20,
     },
     featureGates: gates,
   },

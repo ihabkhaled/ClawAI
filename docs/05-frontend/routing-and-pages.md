@@ -29,10 +29,14 @@ src/app/
     routing/replay/page.tsx
     memory/page.tsx
     files/page.tsx
+    plugins/page.tsx
+    plugins/installed/page.tsx
+    plugins/[slug]/page.tsx
     observability/page.tsx
     audits/page.tsx
     logs/page.tsx
     admin/page.tsx
+    admin/plugins/page.tsx
     settings/page.tsx
   layout.tsx           # Root layout (Providers wrapper)
   page.tsx             # Root redirect to /dashboard or /login

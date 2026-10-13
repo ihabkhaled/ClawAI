@@ -170,5 +170,5 @@ research, and workspace add `@claw/shared-auth`. All 17 non-health services publ
 ## claw-plugin-service — :4021 · plugin and MCP catalog
 
 - **Path:** `apps/claw-plugin-service` · **Gateway:** `/api/v1/plugins` (its `/api/v1/internal/*` routes are closed at the edge)
-- **Owns:** `claw_plugin` PostgreSQL; the plugin catalog (seeded first-party manifests), `PluginSetting` admin settings, and later installs, MCP servers, consents and invocations.
-- **Responsibility:** Batch 1 is the read-only catalog (browse and detail). Chat-service is the only future caller of the internal routes. MCP credentials use the separate `PLUGIN_ENCRYPTION_KEY`. Design: [plugins-and-mcp-design](../docs/implementation/plugins-and-mcp-design.md).
+- **Owns:** `claw_plugin` PostgreSQL; the plugin catalog (seeded first-party manifests), `PluginSetting` admin settings, user installs with tool consents and write-only credentials, and the invocation audit table (MCP servers arrive later).
+- **Responsibility:** Catalog (browse and detail), per-user installs under the plan cap, tool consent, write-only API-key credentials, admin kill switch and settings, and the `user.deleted` purge. Chat-service is the only future caller of the internal routes. Credentials use the separate `PLUGIN_ENCRYPTION_KEY`, checked at boot (ADR-172). Design: [plugins-and-mcp-design](../docs/implementation/plugins-and-mcp-design.md).

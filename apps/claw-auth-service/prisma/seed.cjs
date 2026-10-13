@@ -228,6 +228,7 @@ const SYSTEM_PLANS = [
     allowPlugins: true,
     maxInstalledPlugins: 5,
     maxUserMcpServers: 0,
+    maxPluginCallsPerDay: 20,
     // ADR-142: Free gets 10 requests per credit connector per month.
     creditConnectorFreeRequestsPerMonth: 10,
     creditConnectorFreeBudgetMicroUsd: 250000,
@@ -253,6 +254,7 @@ const SYSTEM_PLANS = [
     allowPlugins: true,
     maxInstalledPlugins: 50,
     maxUserMcpServers: 10,
+    maxPluginCallsPerDay: 1000,
     priceMonthly: 20,
   },
   {
@@ -274,6 +276,7 @@ const SYSTEM_PLANS = [
     allowPlugins: true,
     maxInstalledPlugins: 100,
     maxUserMcpServers: 25,
+    maxPluginCallsPerDay: 5000,
     priceMonthly: 50,
   },
 ];
@@ -315,6 +318,7 @@ async function upsertSystemPlan(def) {
       allowPlugins: def.allowPlugins,
       maxInstalledPlugins: def.maxInstalledPlugins,
       maxUserMcpServers: def.maxUserMcpServers,
+      maxPluginCallsPerDay: def.maxPluginCallsPerDay,
       // Paid plans omit it: 0, so they never give provider spend away (ADR-142).
       creditConnectorFreeRequestsPerMonth: def.creditConnectorFreeRequestsPerMonth ?? 0,
       creditConnectorFreeBudgetMicroUsd: def.creditConnectorFreeBudgetMicroUsd ?? null,

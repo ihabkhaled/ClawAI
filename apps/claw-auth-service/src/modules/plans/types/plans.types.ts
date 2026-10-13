@@ -77,6 +77,8 @@ export type PlanView = {
   /** Plugins: installs and own MCP servers. Null = unlimited, 0 = disabled. */
   maxInstalledPlugins: number | null;
   maxUserMcpServers: number | null;
+  /** Plugin tool calls per UTC day. Null = unlimited, 0 = disabled. */
+  maxPluginCallsPerDay: number | null;
   /** Free requests per credit connector per UTC month (ADR-142). Null = unlimited, 0 = none. */
   creditConnectorFreeRequestsPerMonth: number | null;
   creditConnectorFreeBudgetMicroUsd: number | null;
@@ -134,6 +136,7 @@ export type CreatePlanData = {
   maxVideoSeconds?: number | null;
   maxInstalledPlugins?: number | null;
   maxUserMcpServers?: number | null;
+  maxPluginCallsPerDay?: number | null;
   creditConnectorFreeRequestsPerMonth?: number | null;
   creditConnectorFreeBudgetMicroUsd?: number | null;
   creditConnectorFreeMaxModelOutputMicroUsd?: number | null;

@@ -64,6 +64,7 @@ export const USAGE_ANALYTICS_TRANSLATIONS: Record<Locale, UsageAnalyticsLocaleTr
       WORKSPACES: 'Workspaces',
       MEMORY: 'Memory',
       CONTEXT_PACKS: 'Context packs',
+      PLUGIN_CALLS: 'Plugin calls',
     },
     sectionTitle: 'Platform usage',
     sectionDescription:
@@ -153,6 +154,7 @@ export const USAGE_ANALYTICS_TRANSLATIONS: Record<Locale, UsageAnalyticsLocaleTr
       WORKSPACES: 'مساحات العمل',
       MEMORY: 'الذاكرة',
       CONTEXT_PACKS: 'حزم السياق',
+      PLUGIN_CALLS: 'استدعاءات الإضافات',
     },
     sectionTitle: 'استخدام المنصة',
     sectionDescription:
@@ -244,6 +246,7 @@ export const USAGE_ANALYTICS_TRANSLATIONS: Record<Locale, UsageAnalyticsLocaleTr
       WORKSPACES: 'Espaces de travail',
       MEMORY: 'Mémoire',
       CONTEXT_PACKS: 'Packs de contexte',
+      PLUGIN_CALLS: 'Appels de plugins',
     },
     sectionTitle: 'Utilisation de la plateforme',
     sectionDescription:
@@ -333,6 +336,7 @@ export const USAGE_ANALYTICS_TRANSLATIONS: Record<Locale, UsageAnalyticsLocaleTr
       WORKSPACES: 'Spazi di lavoro',
       MEMORY: 'Memoria',
       CONTEXT_PACKS: 'Pacchetti di contesto',
+      PLUGIN_CALLS: 'Chiamate ai plugin',
     },
     sectionTitle: 'Utilizzo della piattaforma',
     sectionDescription:
@@ -424,6 +428,7 @@ export const USAGE_ANALYTICS_TRANSLATIONS: Record<Locale, UsageAnalyticsLocaleTr
       WORKSPACES: 'Arbeitsbereiche',
       MEMORY: 'Gedächtnis',
       CONTEXT_PACKS: 'Kontextpakete',
+      PLUGIN_CALLS: 'Plugin-Aufrufe',
     },
     sectionTitle: 'Plattformnutzung',
     sectionDescription:
@@ -513,6 +518,7 @@ export const USAGE_ANALYTICS_TRANSLATIONS: Record<Locale, UsageAnalyticsLocaleTr
       WORKSPACES: 'Espacios de trabajo',
       MEMORY: 'Memoria',
       CONTEXT_PACKS: 'Paquetes de contexto',
+      PLUGIN_CALLS: 'Llamadas a plugins',
     },
     sectionTitle: 'Uso de la plataforma',
     sectionDescription:
@@ -602,6 +608,7 @@ export const USAGE_ANALYTICS_TRANSLATIONS: Record<Locale, UsageAnalyticsLocaleTr
       WORKSPACES: 'Рабочие пространства',
       MEMORY: 'Память',
       CONTEXT_PACKS: 'Пакеты контекста',
+      PLUGIN_CALLS: 'Вызовы плагинов',
     },
     sectionTitle: 'Использование платформы',
     sectionDescription:
@@ -691,6 +698,7 @@ export const USAGE_ANALYTICS_TRANSLATIONS: Record<Locale, UsageAnalyticsLocaleTr
       WORKSPACES: 'Espaços de trabalho',
       MEMORY: 'Memória',
       CONTEXT_PACKS: 'Pacotes de contexto',
+      PLUGIN_CALLS: 'Chamadas de plugins',
     },
     sectionTitle: 'Uso da plataforma',
     sectionDescription:
@@ -780,6 +788,7 @@ export const USAGE_ANALYTICS_TRANSLATIONS: Record<Locale, UsageAnalyticsLocaleTr
       WORKSPACES: 'वर्कस्पेस',
       MEMORY: 'मेमोरी',
       CONTEXT_PACKS: 'कॉन्टेक्स्ट पैक',
+      PLUGIN_CALLS: 'प्लगइन कॉल',
     },
     sectionTitle: 'प्लेटफ़ॉर्म उपयोग',
     sectionDescription:
@@ -869,6 +878,7 @@ export const USAGE_ANALYTICS_TRANSLATIONS: Record<Locale, UsageAnalyticsLocaleTr
       WORKSPACES: 'ワークスペース',
       MEMORY: 'メモリ',
       CONTEXT_PACKS: 'コンテキストパック',
+      PLUGIN_CALLS: 'プラグイン呼び出し',
     },
     sectionTitle: 'プラットフォームの利用状況',
     sectionDescription:
@@ -958,6 +968,7 @@ export const USAGE_ANALYTICS_TRANSLATIONS: Record<Locale, UsageAnalyticsLocaleTr
       WORKSPACES: 'เวิร์กสเปซ',
       MEMORY: 'หน่วยความจำ',
       CONTEXT_PACKS: 'แพ็กบริบท',
+      PLUGIN_CALLS: 'การเรียกใช้ปลั๊กอิน',
     },
     sectionTitle: 'การใช้งานแพลตฟอร์ม',
     sectionDescription:
@@ -1047,6 +1058,7 @@ export const USAGE_ANALYTICS_TRANSLATIONS: Record<Locale, UsageAnalyticsLocaleTr
       WORKSPACES: 'فضاهای کاری',
       MEMORY: 'حافظه',
       CONTEXT_PACKS: 'بسته‌های زمینه',
+      PLUGIN_CALLS: 'فراخوانی افزونه‌ها',
     },
     sectionTitle: 'مصرف پلتفرم',
     sectionDescription:
@@ -1136,6 +1148,7 @@ export const USAGE_ANALYTICS_TRANSLATIONS: Record<Locale, UsageAnalyticsLocaleTr
       WORKSPACES: '工作区',
       MEMORY: '记忆',
       CONTEXT_PACKS: '上下文包',
+      PLUGIN_CALLS: '插件调用',
     },
     sectionTitle: '平台用量',
     sectionDescription: '全平台的 Token、提供商成本、模型、用户和工具。仅限管理员。',

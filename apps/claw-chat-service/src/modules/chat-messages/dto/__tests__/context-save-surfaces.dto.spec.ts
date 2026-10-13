@@ -1,16 +1,23 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { consensusMessageSchema } from '../consensus-message.dto';
 import { contextSaveProposalConfirmSchema } from '../context-save-proposal-confirm.dto';
 import { createMessageSchema } from '../create-message.dto';
 import { saveIntentVerdictSchema } from '../save-intent-verdict.dto';
+import best_of_n_message_source from '../best-of-n-message.dto.ts?raw';
+import consensus_message_source from '../consensus-message.dto.ts?raw';
+import cost_ensemble_message_source from '../cost-ensemble-message.dto.ts?raw';
+import decompose_task_source from '../decompose-task.dto.ts?raw';
+import escalation_chain_message_source from '../escalation-chain-message.dto.ts?raw';
+import parallel_message_source from '../parallel-message.dto.ts?raw';
+import pipeline_message_source from '../pipeline-message.dto.ts?raw';
+import repair_message_source from '../repair-message.dto.ts?raw';
+import role_pack_message_source from '../role-pack-message.dto.ts?raw';
+import verify_message_source from '../verify-message.dto.ts?raw';
+import saveIntentConstantsSource from '../../constants/save-intent.constants.ts?raw';
 import {
   SAVE_INTENT_MEMORY_TEXT_MAX_CHARS,
   SAVE_INTENT_PACK_NAME_MAX_CHARS,
   SAVE_INTENT_SUMMARY_MAX_CHARS,
 } from '../../constants/save-intent.constants';
-
-const DTO_DIR = join(__dirname, '..');
 
 /**
  * ADR-168 / rules/59: only the surfaces whose backend path runs the save
@@ -18,22 +25,22 @@ const DTO_DIR = join(__dirname, '..');
  * Consensus, Escalation, the labs, in-thread Compare) never read it, so a field
  * they accepted would be a switch wired to nothing.
  */
-const ORCHESTRATION_DTOS = [
-  'best-of-n-message.dto.ts',
-  'consensus-message.dto.ts',
-  'cost-ensemble-message.dto.ts',
-  'decompose-task.dto.ts',
-  'escalation-chain-message.dto.ts',
-  'parallel-message.dto.ts',
-  'pipeline-message.dto.ts',
-  'repair-message.dto.ts',
-  'role-pack-message.dto.ts',
-  'verify-message.dto.ts',
+const ORCHESTRATION_DTOS: ReadonlyArray<readonly [string, string]> = [
+  ['best-of-n-message.dto.ts', best_of_n_message_source],
+  ['consensus-message.dto.ts', consensus_message_source],
+  ['cost-ensemble-message.dto.ts', cost_ensemble_message_source],
+  ['decompose-task.dto.ts', decompose_task_source],
+  ['escalation-chain-message.dto.ts', escalation_chain_message_source],
+  ['parallel-message.dto.ts', parallel_message_source],
+  ['pipeline-message.dto.ts', pipeline_message_source],
+  ['repair-message.dto.ts', repair_message_source],
+  ['role-pack-message.dto.ts', role_pack_message_source],
+  ['verify-message.dto.ts', verify_message_source],
 ];
 
 describe('contextSaveMode lives only where the save orchestrator runs (ADR-168)', () => {
-  it.each(ORCHESTRATION_DTOS)('%s does not accept contextSaveMode', (file) => {
-    expect(readFileSync(join(DTO_DIR, file), 'utf8')).not.toContain('contextSave');
+  it.each(ORCHESTRATION_DTOS)('%s does not accept contextSaveMode', (_file, source) => {
+    expect(source).not.toContain('contextSave');
   });
 
   it('createMessage keeps it', () => {
@@ -109,18 +116,11 @@ describe('one set of limits for the planner, the confirm and the form (ADR-168)'
   });
 
   it('exports the numbers as plain literals the frontend test can read', () => {
-    const source = readFileSync(
-      join(DTO_DIR, '..', 'constants', 'save-intent.constants.ts'),
-      'utf8',
-    );
+    const source = saveIntentConstantsSource;
 
-    for (const name of [
-      'SAVE_INTENT_MEMORY_TEXT_MAX_CHARS',
-      'SAVE_INTENT_SUMMARY_MAX_CHARS',
-      'SAVE_INTENT_PACK_NAME_MAX_CHARS',
-      'SAVE_PACK_CONTENT_MAX_CHARS',
-    ]) {
-      expect(source).toMatch(new RegExp(`export const ${name} = [\\d_]+;`, 'u'));
-    }
+    expect(source).toMatch(/export const SAVE_INTENT_MEMORY_TEXT_MAX_CHARS = [\d_]+;/u);
+    expect(source).toMatch(/export const SAVE_INTENT_SUMMARY_MAX_CHARS = [\d_]+;/u);
+    expect(source).toMatch(/export const SAVE_INTENT_PACK_NAME_MAX_CHARS = [\d_]+;/u);
+    expect(source).toMatch(/export const SAVE_PACK_CONTENT_MAX_CHARS = [\d_]+;/u);
   });
 });

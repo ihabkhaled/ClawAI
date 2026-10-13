@@ -137,3 +137,15 @@ describe('CatalogPresenterManager', () => {
     });
   });
 });
+
+describe('CatalogPresenterManager installed flag', () => {
+  const presenter = new CatalogPresenterManager();
+
+  it('carries the installed flag onto the card and the detail', () => {
+    const entry = buildEntryRecord({}, WEATHER_MANIFEST);
+
+    expect(presenter.toCard(entry, Locale.EN)?.installed).toBe(false);
+    expect(presenter.toCard(entry, Locale.EN, true)?.installed).toBe(true);
+    expect(presenter.toDetail(entry, Locale.EN, true)?.installed).toBe(true);
+  });
+});

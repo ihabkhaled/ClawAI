@@ -28,6 +28,7 @@ function makePlan(overrides: PlanRow = {}): PlanRow {
     maxVideoSeconds: 600,
     maxInstalledPlugins: 25,
     maxUserMcpServers: 5,
+    maxPluginCallsPerDay: 300,
     creditConnectorFreeRequestsPerMonth: 0,
     // Margin control. Must never reach the payment service or a customer.
     monthlyProviderCostCeilingMicroUsd: BigInt(5_000_000),
@@ -224,6 +225,7 @@ describe('PlanCatalogService', () => {
       expect(Object.keys(entry?.featureGates ?? {})).toHaveLength(20);
       expect(entry?.maxInstalledPlugins).toBe(25);
       expect(entry?.maxUserMcpServers).toBe(5);
+      expect(entry?.maxPluginCallsPerDay).toBe(300);
     });
   });
 

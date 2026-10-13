@@ -27,7 +27,7 @@ copies with imports (extend-don't-parallelize).
 
 Recent additions to the leaf packages (2026-10-13): `shared-types` gained the `PLUGINS_*` permissions and the owner-only Thread generation
 progress, save-proposal and observability page contracts; `shared-constants` gained `PLUGIN_SERVICE` / `PLUGIN_SERVICE_PORT` (4021);
-`shared-entitlements` plan payloads carry `allowPlugins` and the `maxInstalledPlugins` / `maxUserMcpServers` limits (`null` = unlimited, `0` = disabled).
+`shared-entitlements` plan payloads carry `allowPlugins` and the `maxInstalledPlugins` / `maxUserMcpServers` limits, plus `maxPluginCallsPerDay` (the metered `PLUGIN_CALLS` allowance), where `null` = unlimited and `0` = disabled.
 
 Dependency DAG (from the manifest): `shared-types` and `shared-constants` are
 leaves; `shared-utilities` and `shared-rabbitmq` → both leaves;

@@ -24,3 +24,4 @@ export * from './image-intent';
 export * from './video-generation';
 export * from './generation-request';
 export * from './metrics';
+export * from './aes-gcm';

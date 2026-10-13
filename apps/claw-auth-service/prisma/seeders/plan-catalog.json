@@ -116,6 +116,11 @@
           "accessMode": "LIMITED",
           "limit": 15,
           "window": "DAY"
+        },
+        "PLUGIN_CALLS": {
+          "accessMode": "LIMITED",
+          "limit": 20,
+          "window": "DAY"
         }
       },
       "labs": {
@@ -138,7 +143,8 @@
       "plugins": {
         "enabled": true,
         "maxInstalled": 5,
-        "maxUserMcpServers": 0
+        "maxUserMcpServers": 0,
+        "maxCallsPerDay": 20
       },
       "creditConnectorFreeRequestsPerMonth": 10,
       "creditConnectorFreeBudgetMicroUsd": 250000,
@@ -223,6 +229,11 @@
           "accessMode": "LIMITED",
           "limit": 30,
           "window": "DAY"
+        },
+        "PLUGIN_CALLS": {
+          "accessMode": "LIMITED",
+          "limit": 100,
+          "window": "DAY"
         }
       },
       "labs": {
@@ -245,7 +256,8 @@
       "plugins": {
         "enabled": true,
         "maxInstalled": 10,
-        "maxUserMcpServers": 3
+        "maxUserMcpServers": 3,
+        "maxCallsPerDay": 100
       },
       "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": false,
@@ -328,6 +340,11 @@
           "accessMode": "LIMITED",
           "limit": 75,
           "window": "DAY"
+        },
+        "PLUGIN_CALLS": {
+          "accessMode": "LIMITED",
+          "limit": 300,
+          "window": "DAY"
         }
       },
       "labs": {
@@ -350,7 +367,8 @@
       "plugins": {
         "enabled": true,
         "maxInstalled": 25,
-        "maxUserMcpServers": 5
+        "maxUserMcpServers": 5,
+        "maxCallsPerDay": 300
       },
       "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": false,
@@ -433,6 +451,11 @@
           "accessMode": "LIMITED",
           "limit": 200,
           "window": "DAY"
+        },
+        "PLUGIN_CALLS": {
+          "accessMode": "LIMITED",
+          "limit": 1000,
+          "window": "DAY"
         }
       },
       "labs": {
@@ -455,7 +478,8 @@
       "plugins": {
         "enabled": true,
         "maxInstalled": 50,
-        "maxUserMcpServers": 10
+        "maxUserMcpServers": 10,
+        "maxCallsPerDay": 1000
       },
       "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": true,
@@ -538,6 +562,11 @@
           "accessMode": "ENABLED",
           "limit": null,
           "window": "DAY"
+        },
+        "PLUGIN_CALLS": {
+          "accessMode": "LIMITED",
+          "limit": 5000,
+          "window": "DAY"
         }
       },
       "labs": {
@@ -560,7 +589,8 @@
       "plugins": {
         "enabled": true,
         "maxInstalled": 100,
-        "maxUserMcpServers": 25
+        "maxUserMcpServers": 25,
+        "maxCallsPerDay": 5000
       },
       "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": false,
@@ -643,6 +673,11 @@
           "accessMode": "ENABLED",
           "limit": null,
           "window": "DAY"
+        },
+        "PLUGIN_CALLS": {
+          "accessMode": "LIMITED",
+          "limit": 5000,
+          "window": "DAY"
         }
       },
       "labs": {
@@ -665,7 +700,8 @@
       "plugins": {
         "enabled": true,
         "maxInstalled": 100,
-        "maxUserMcpServers": 25
+        "maxUserMcpServers": 25,
+        "maxCallsPerDay": 5000
       },
       "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": false,
@@ -748,6 +784,11 @@
           "accessMode": "ENABLED",
           "limit": null,
           "window": "DAY"
+        },
+        "PLUGIN_CALLS": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "DAY"
         }
       },
       "labs": {
@@ -770,7 +811,8 @@
       "plugins": {
         "enabled": true,
         "maxInstalled": null,
-        "maxUserMcpServers": null
+        "maxUserMcpServers": null,
+        "maxCallsPerDay": null
       },
       "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": false,

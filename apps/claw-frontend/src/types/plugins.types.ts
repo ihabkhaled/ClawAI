@@ -44,6 +44,8 @@ export type PluginCatalogDetail = PluginCatalogItem & {
   auth: { kind: PluginAuthKind; scopes: Array<PluginScope | string> };
   tools: PluginToolSummary[];
   network: { hosts: string[]; publicWeb: boolean };
+  /** The manifest settingsSchema subset the settings sheet draws. Absent from an older plugin service. */
+  settingsSchema?: Record<string, unknown>;
 };
 
 export type ListPluginCatalogParams = {

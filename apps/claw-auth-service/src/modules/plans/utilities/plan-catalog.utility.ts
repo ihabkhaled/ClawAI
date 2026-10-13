@@ -71,6 +71,7 @@ export function toCatalogEntry(
     maxVideoSeconds: plan.maxVideoSeconds,
     maxInstalledPlugins: plan.maxInstalledPlugins,
     maxUserMcpServers: plan.maxUserMcpServers,
+    maxPluginCallsPerDay: plan.maxPluginCallsPerDay,
     creditConnectorFreeRequestsPerMonth: plan.creditConnectorFreeRequestsPerMonth,
     featureGates: {
       allowCompareMode: plan.allowCompareMode,

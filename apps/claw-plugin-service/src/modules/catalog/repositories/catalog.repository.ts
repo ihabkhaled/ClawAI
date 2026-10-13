@@ -29,6 +29,15 @@ export class CatalogRepository {
     return record ?? null;
   }
 
+  /** Ids of the catalog entries this user has installed (optionally narrowed to some entries). */
+  async findInstalledPluginIds(userId: string, entryIds?: string[]): Promise<Set<string>> {
+    const rows = await this.prisma.pluginInstall.findMany({
+      where: { userId, ...(entryIds === undefined ? {} : { pluginId: { in: entryIds } }) },
+      select: { pluginId: true },
+    });
+    return new Set(rows.map((row) => row.pluginId));
+  }
+
   /** Attaches the current version (with its tool rows) and every version number. */
   private async withVersions(entries: PluginCatalogEntry[]): Promise<CatalogEntryRecord[]> {
     if (entries.length === 0) return [];

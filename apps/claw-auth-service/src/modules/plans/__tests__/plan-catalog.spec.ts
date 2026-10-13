@@ -205,6 +205,22 @@ describe('catalog integrity', () => {
     }
   });
 
+  it('gives plugin tool calls the owner-set daily limits, null only on the top tier', () => {
+    const daily = { free: 20, starter: 100, plus: 300, pro: 1000, team: 5000, scale: 5000 };
+    for (const [slug, limit] of Object.entries(daily)) {
+      expect(bySlug(slug).features.PLUGIN_CALLS).toEqual({
+        accessMode: 'LIMITED',
+        limit,
+        window: 'DAY',
+      });
+    }
+    expect(bySlug('unlimited').features.PLUGIN_CALLS).toEqual({
+      accessMode: 'ENABLED',
+      limit: null,
+      window: 'DAY',
+    });
+  });
+
   it('flags only Free as a trial, seeded with 30 days as its default length', () => {
     expect(bySlug('free')).toMatchObject({ isTrial: true, trialDurationDays: 30 });
     for (const plan of catalog.filter((entry) => entry.slug !== 'free')) {
@@ -224,6 +240,7 @@ describe('catalog integrity', () => {
       'MEMORY',
       'CONTEXT_PACKS',
       'FILE_GENERATION',
+      'PLUGIN_CALLS',
     ];
     for (const plan of catalog) {
       expect(Object.keys(plan.features).sort()).toEqual([...expected].sort());

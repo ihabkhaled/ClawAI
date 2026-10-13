@@ -101,6 +101,7 @@ export type PlanCatalogEntry = {
   /** Plugins: installs and own MCP servers. Null = unlimited, 0 = disabled. */
   maxInstalledPlugins: number | null;
   maxUserMcpServers: number | null;
+  maxPluginCallsPerDay: number | null;
   /** Free requests per credit connector per UTC month. Null = unlimited, 0 = none. */
   creditConnectorFreeRequestsPerMonth: number | null;
   featureGates: PlanFeatureGatesView;

@@ -10,12 +10,15 @@ import {
   PAYG_CREDIT_PERCENT_BPS_MAX,
   PLAN_CREDIT_FREE_REQUESTS_LIMIT,
   PLAN_MAX_INSTALLED_PLUGINS_LIMIT,
+  PLAN_MAX_PLUGIN_CALLS_PER_DAY_LIMIT,
   PLAN_MAX_USER_MCP_SERVERS_LIMIT,
   PLAN_TRIAL_MAX_DAYS,
   PLAN_TRIAL_MIN_DAYS,
 } from '@/constants/plan.constants';
 import type { PlanFormProps } from '@/types';
 import { resolvePlanSubmitLabelKey } from '@/utilities';
+
+import { PlanNullableLimitField } from './plan-nullable-limit-field';
 
 export function PlanForm({
   state,
@@ -282,34 +285,33 @@ export function PlanForm({
             placeholder={t('adminPlans.form.unlimitedPlaceholder')}
           />
         </div>
-        <div className="grid grid-cols-1 gap-2">
-          <label htmlFor="plan-max-installed-plugins" className="text-sm font-medium">
-            {t('pluginsAccess.planForm.maxInstalledPlugins')}
-          </label>
-          <Input
-            id="plan-max-installed-plugins"
-            type="number"
-            min={0}
-            max={PLAN_MAX_INSTALLED_PLUGINS_LIMIT}
-            value={state.maxInstalledPlugins}
-            onChange={(e) => setField('maxInstalledPlugins', e.target.value)}
-            placeholder={t('adminPlans.form.unlimitedPlaceholder')}
-          />
-        </div>
-        <div className="grid grid-cols-1 gap-2">
-          <label htmlFor="plan-max-user-mcp-servers" className="text-sm font-medium">
-            {t('pluginsAccess.planForm.maxUserMcpServers')}
-          </label>
-          <Input
-            id="plan-max-user-mcp-servers"
-            type="number"
-            min={0}
-            max={PLAN_MAX_USER_MCP_SERVERS_LIMIT}
-            value={state.maxUserMcpServers}
-            onChange={(e) => setField('maxUserMcpServers', e.target.value)}
-            placeholder={t('adminPlans.form.unlimitedPlaceholder')}
-          />
-        </div>
+        <PlanNullableLimitField
+          id="plan-max-installed-plugins"
+          label={t('pluginsAccess.planForm.maxInstalledPlugins')}
+          value={state.maxInstalledPlugins}
+          max={PLAN_MAX_INSTALLED_PLUGINS_LIMIT}
+          onChange={(next) => setField('maxInstalledPlugins', next)}
+          unlimitedLabel={t('pluginsInstall.planForm.unlimited')}
+          placeholder={t('adminPlans.form.unlimitedPlaceholder')}
+        />
+        <PlanNullableLimitField
+          id="plan-max-user-mcp-servers"
+          label={t('pluginsAccess.planForm.maxUserMcpServers')}
+          value={state.maxUserMcpServers}
+          max={PLAN_MAX_USER_MCP_SERVERS_LIMIT}
+          onChange={(next) => setField('maxUserMcpServers', next)}
+          unlimitedLabel={t('pluginsInstall.planForm.unlimited')}
+          placeholder={t('adminPlans.form.unlimitedPlaceholder')}
+        />
+        <PlanNullableLimitField
+          id="plan-max-plugin-calls-per-day"
+          label={t('pluginsInstall.planForm.maxPluginCallsPerDay')}
+          value={state.maxPluginCallsPerDay}
+          max={PLAN_MAX_PLUGIN_CALLS_PER_DAY_LIMIT}
+          onChange={(next) => setField('maxPluginCallsPerDay', next)}
+          unlimitedLabel={t('pluginsInstall.planForm.unlimited')}
+          placeholder={t('adminPlans.form.unlimitedPlaceholder')}
+        />
         <div className="grid grid-cols-1 gap-2">
           <label htmlFor="plan-credit-free-requests" className="text-sm font-medium">
             {t('adminPlans.form.creditConnectorFreeRequests')}

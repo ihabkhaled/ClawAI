@@ -215,3 +215,7 @@ export * from './file-library-thumb-size.enum';
 export { PluginAuthKind } from './plugin-auth-kind.enum';
 export { PluginRiskLevel } from './plugin-risk-level.enum';
 export { PluginSource } from './plugin-source.enum';
+export { PluginInstallGateReason } from './plugin-install-gate-reason.enum';
+export { PluginSettingsFieldKind } from './plugin-settings-field-kind.enum';
+export { AdminPluginsTab } from './admin-plugins-tab.enum';
+export { PluginsNavTab } from './plugins-nav-tab.enum';

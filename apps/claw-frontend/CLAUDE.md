@@ -867,3 +867,16 @@ client-side AND enforced by the server. The query key holds the SELECTION, not c
 so every refetch rebuilds the window from the clock. Text is under `usageAnalytics.*`
 (`lib/i18n/locales/usage-analytics-translations.ts`, 13 locales). Runbook:
 `skills/add-an-admin-usage-dimension.md`.
+
+## Plugins: installs, Installed page, admin console (batch 2)
+
+`/plugins` (Discover) and `/plugins/installed` are two routes joined by `PluginsNav`; `/admin/plugins`
+is the `PLUGINS_ADMIN` console (catalog kill switches, per-tool disable, PluginSetting rows). The
+install key is write-only: hook state only, cleared on close, never in a query key, toast or log.
+Install is gated by `resolveInstallGate` (plan feature, `limits.maxInstalledPlugins`: `null`
+unlimited, `0` disabled, absent = server decides); the server enforces it again. Plan caps use
+`PlanNullableLimitField` so unlimited and 0 never read alike. Copy: `pluginsInstall.*` in
+`plugins-install-translations.ts` and `pluginsStatus.*` in `plugins-status-translations.ts`. Admin setting
+bounds equal the service ranges (a test reads the service file); a key call that fails after a
+successful install is retried alone.
+Full note: [`docs/05-frontend/plugins-installs.md`](../../docs/05-frontend/plugins-installs.md).

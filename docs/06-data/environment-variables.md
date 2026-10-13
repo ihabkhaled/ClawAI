@@ -261,7 +261,7 @@ Claw uses 15 separate PostgreSQL instances, one per data-owning service.
 | ----------------------- | -------- | ------- | ------------------------------------------------------------------------------------------- |
 | `PLUGIN_ENCRYPTION_KEY` | Yes      | —       | 32-byte hex string (64 hex characters) for AES-256-GCM over MCP credentials, plugin-service |
 
-- `PLUGIN_ENCRYPTION_KEY` is deliberately separate from `ENCRYPTION_KEY` so a leak in one service does not expose the other. The installer generates it and preserves it on re-install (changing it orphans stored MCP credentials).
+- `PLUGIN_ENCRYPTION_KEY` is deliberately separate from `ENCRYPTION_KEY` so a leak in one service does not expose the other. The installer generates it and preserves it on re-install (changing it orphans stored credentials). plugin-service refuses to start when it is missing, shorter or longer than 64 characters, not hex, or all zeros (ADR-172); it also reads `RABBITMQ_URL` for the `user.deleted` consumer.
 
 ---
 

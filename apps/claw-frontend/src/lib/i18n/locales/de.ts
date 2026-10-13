@@ -14,6 +14,8 @@ import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-tr
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
+import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
+import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
@@ -22,6 +24,8 @@ import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const de: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.de,
+  pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.de,
+  pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.de,
   pagination: {
     label: 'Seitennummerierung',
     showing: '{from}-{to} von {total} werden angezeigt',
@@ -5532,6 +5536,7 @@ export const de: TranslationDictionary = {
       MEMORY: 'Gedächtnis',
       CONTEXT_PACKS: 'Kontextpakete',
       FILE_GENERATION: 'KI-erstellte Dateien',
+      PLUGIN_CALLS: 'Plugin-Aufrufe',
     },
     invoices: {
       title: 'Rechnungen',

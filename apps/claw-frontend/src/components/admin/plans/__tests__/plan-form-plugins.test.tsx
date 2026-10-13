@@ -76,4 +76,34 @@ describe('PlanForm plugins gate and caps', () => {
     expect(setField).toHaveBeenCalledWith('maxInstalledPlugins', '25');
     expect(setField).toHaveBeenCalledWith('maxUserMcpServers', '3');
   });
+  it('renders the daily call cap with the Free default and reports edits', () => {
+    const setField = vi.fn();
+    render(<PlanForm {...makeProps({ setField })} />);
+    const calls = screen.getByLabelText('pluginsInstall.planForm.maxPluginCallsPerDay');
+    expect(calls).toHaveValue(25);
+    fireEvent.change(calls, { target: { value: '100' } });
+    expect(setField).toHaveBeenCalledWith('maxPluginCallsPerDay', '100');
+  });
+
+  it('turns a cap unlimited with the checkbox, and back to 0 (disabled), never to blank', () => {
+    const setField = vi.fn();
+    render(<PlanForm {...makeProps({ setField })} />);
+    const boxes = screen.getAllByRole('checkbox', { name: 'pluginsInstall.planForm.unlimited' });
+    expect(boxes).toHaveLength(3);
+    fireEvent.click(boxes[2] as HTMLElement);
+    expect(setField).toHaveBeenCalledWith('maxPluginCallsPerDay', '');
+  });
+
+  it('shows a blank daily cap as unlimited', () => {
+    render(
+      <PlanForm
+        {...makeProps({
+          state: { ...PLAN_FORM_DEFAULTS, name: 'U', slug: 'u', maxPluginCallsPerDay: '' },
+        })}
+      />,
+    );
+    const boxes = screen.getAllByRole('checkbox', { name: 'pluginsInstall.planForm.unlimited' });
+    expect(boxes[2]).toBeChecked();
+    expect(boxes[0]).not.toBeChecked();
+  });
 });

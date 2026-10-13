@@ -31,6 +31,7 @@ export type UserEntitlements = {
       // Plugins: installs and own MCP servers. null = unlimited, 0 = disabled.
       maxInstalledPlugins: number | null;
       maxUserMcpServers: number | null;
+      maxPluginCallsPerDay: number | null;
     };
     featureGates: PlanFeatureGates;
   } | null;

@@ -12,6 +12,9 @@ import type { UsePluginDetailReturn } from '@/types/plugins.types';
 import { pluginDetail, tStub } from './plugins-fixtures';
 
 vi.mock('@/hooks/plugins/use-plugin-detail');
+vi.mock('@/components/plugins/plugin-install-panel', () => ({
+  PluginInstallPanel: () => <div data-testid="install-panel" />,
+}));
 
 const mockDetail = vi.mocked(usePluginDetail);
 
@@ -59,7 +62,7 @@ describe('PluginDetailPage', () => {
     expect(screen.getByText('plugins.errorTitle')).toBeTruthy();
   });
 
-  it('shows the plugin, its tools and its permissions, with no install control', () => {
+  it('shows the plugin, its tools, its permissions and the install panel', () => {
     mockDetail.mockReturnValue(state());
     render(<PluginDetailPage slug="web-fetch" />);
     expect(screen.getByRole('heading', { level: 1, name: 'Web fetch' })).toBeTruthy();
@@ -67,7 +70,7 @@ describe('PluginDetailPage', () => {
     expect(screen.getByText('Fetch a web page')).toBeTruthy();
     expect(screen.getByText('plugins.detail.toolsTitle|1')).toBeTruthy();
     expect(screen.getByText('example.com')).toBeTruthy();
-    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.getByTestId('install-panel')).toBeTruthy();
   });
 });
 

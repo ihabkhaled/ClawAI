@@ -547,6 +547,14 @@ export const queryKeys = {
     catalog: (filters: { q: string; category: string }, locale: string) =>
       ['plugins', 'catalog', filters, locale] as const,
     detail: (slug: string, locale: string) => ['plugins', 'detail', slug, locale] as const,
+    catalogRoot: () => ['plugins', 'catalog'] as const,
+    detailRoot: () => ['plugins', 'detail'] as const,
+    installsRoot: () => ['plugins', 'installs'] as const,
+    installs: (locale: string) => ['plugins', 'installs', locale] as const,
+    mentionsRoot: () => ['plugins', 'mentions'] as const,
+    mentions: (locale: string) => ['plugins', 'mentions', locale] as const,
+    adminCatalog: () => ['plugins', 'admin', 'catalog'] as const,
+    adminSettings: () => ['plugins', 'admin', 'settings'] as const,
   },
   runtimeProgress: {
     all: ['runtimeProgress'] as const,

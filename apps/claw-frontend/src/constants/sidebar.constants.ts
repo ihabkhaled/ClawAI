@@ -275,6 +275,11 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
         href: ROUTES.ADMIN_MODEL_COSTS,
         icon: Coins,
       },
+      {
+        labelKey: 'pluginsAccess.nav.adminPlugins',
+        href: ROUTES.ADMIN_PLUGINS,
+        icon: Puzzle,
+      },
     ],
   },
   // The editor extension, for every signed-in user. It is a public marketing

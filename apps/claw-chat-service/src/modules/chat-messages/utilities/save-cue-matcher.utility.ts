@@ -52,19 +52,27 @@ function alternation(words: readonly string[]): string {
   return words.map((word) => cuePattern(word)).join('|');
 }
 
+/**
+ * The one place a cue pattern becomes a RegExp. Every source is built here from
+ * escaped cue text and the boundary constants, never from user input.
+ */
+function compileCuePattern(source: string, flags: string): RegExp {
+  return RegExp(source, flags);
+}
+
 /** One alternation over the folded cues: a single linear scan, however long the message. */
 export function cueRegExp(words: readonly string[]): RegExp {
-  return new RegExp(alternation(words), 'u');
+  return compileCuePattern(alternation(words), 'u');
 }
 
 /** Cues that count only at the start of the message or after punctuation or a space. */
 export function anchoredCueRegExp(words: readonly string[]): RegExp {
-  return new RegExp(`${CUE_ANCHOR}\\s*(?:${alternation(words)})`, 'u');
+  return compileCuePattern(`${CUE_ANCHOR}\\s*(?:${alternation(words)})`, 'u');
 }
 
 /** Global, so the caller can count the different generic words a message holds. */
 export function weakCueRegExp(words: readonly string[]): RegExp {
-  return new RegExp(alternation(words), 'gu');
+  return compileCuePattern(alternation(words), 'gu');
 }
 
 /**
@@ -79,7 +87,7 @@ export function wholeMessageRegExp(
   const verbs = words.map((word) => escapeForRegExp(normalizeForCues(word))).join('|');
   const things = objects.map((word) => escapeForRegExp(normalizeForCues(word))).join('|');
   const object = `(?: (?:${things}))${objectRequired ? '' : '?'}`;
-  return new RegExp(`^ ?(?:please )?(?:${verbs})${object}${CUE_MESSAGE_TAIL}`, 'u');
+  return compileCuePattern(`^ ?(?:please )?(?:${verbs})${object}${CUE_MESSAGE_TAIL}`, 'u');
 }
 
 /** Whether at least CUE_WEAK_MIN_DISTINCT different generic words appear in the folded text. */

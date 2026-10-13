@@ -24,6 +24,30 @@ enum RuntimeKind {
   MCP_REMOTE
 }
 
+enum AuthKind {
+  NONE
+  API_KEY
+  BEARER_TOKEN
+  OAUTH2_PKCE
+}
+
+enum InstallStatus {
+  ENABLED
+  DISABLED
+}
+
+enum InvocationStatus {
+  OK
+  ERROR
+  TIMEOUT
+  DENIED
+  CONSENT_DECLINED
+  CONSENT_TIMEOUT
+  RATE_LIMITED
+  QUOTA_EXCEEDED
+  BLOCKED
+}
+
 enum RiskLevel {
   READ
   WRITE
@@ -45,6 +69,7 @@ model PluginCatalogEntry {
   currentVersionId String?       @unique @map("current_version_id")
   installCount     Int           @default(0) @map("install_count")
   versions         PluginVersion[]
+  installs         PluginInstall[]
   createdAt        DateTime      @default(now()) @map("created_at")
   updatedAt        DateTime      @updatedAt @map("updated_at")
 
@@ -63,6 +88,7 @@ model PluginVersion {
   signature    String?
   changelog    String?
   tools        PluginTool[]
+  installs     PluginInstall[]
   createdAt    DateTime           @default(now()) @map("created_at")
 
   @@unique([entryId, version])
@@ -89,4 +115,84 @@ model PluginSetting {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("plugin_settings")
+}
+
+/// One user's installation of one catalog plugin, pinned to a version. Owner-scoped by userId.
+model PluginInstall {
+  id          String              @id @default(uuid())
+  userId      String              @map("user_id")
+  pluginId    String              @map("plugin_id")
+  plugin      PluginCatalogEntry  @relation(fields: [pluginId], references: [id], onDelete: Cascade)
+  versionId   String              @map("version_id")
+  version     PluginVersion       @relation(fields: [versionId], references: [id], onDelete: Restrict)
+  status      InstallStatus       @default(ENABLED)
+  settings    Json                @default("{}")
+  consents    PluginToolConsent[]
+  credential  PluginCredential?
+  installedAt DateTime            @default(now()) @map("installed_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+
+  @@unique([userId, pluginId])
+  @@index([userId, status])
+  @@index([pluginId])
+  @@map("plugin_installs")
+}
+
+/// A stored grant for one tool. READ tools need none; DESTRUCTIVE is stored but the runtime asks every time.
+model PluginToolConsent {
+  id        String        @id @default(uuid())
+  installId String        @map("install_id")
+  install   PluginInstall @relation(fields: [installId], references: [id], onDelete: Cascade)
+  toolName  String        @map("tool_name")
+  level     RiskLevel
+  grantedAt DateTime      @default(now()) @map("granted_at")
+
+  @@unique([installId, toolName])
+  @@map("plugin_tool_consents")
+}
+
+/// Write-only secret. ciphertext is base64(nonce, tag, sealed bytes); AAD is userId:installId.
+/// Never returned by any endpoint and never logged.
+model PluginCredential {
+  id         String        @id @default(uuid())
+  userId     String        @map("user_id")
+  installId  String        @unique @map("install_id")
+  install    PluginInstall @relation(fields: [installId], references: [id], onDelete: Cascade)
+  kind       AuthKind
+  headerName String?       @map("header_name")
+  ciphertext String
+  keyVersion Int           @default(1) @map("key_version")
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("plugin_credentials")
+}
+
+/// Audit of tool calls (shape only in batch 2; rows are written by the invoke path in batch 3). No secrets, no results.
+model PluginInvocation {
+  id              String           @id @default(uuid())
+  userId          String           @map("user_id")
+  installId       String           @map("install_id")
+  pluginId        String           @map("plugin_id")
+  toolName        String           @map("tool_name")
+  conversationId  String?          @map("conversation_id")
+  messageId       String?          @map("message_id")
+  surface         String
+  status          InvocationStatus
+  riskLevel       RiskLevel        @map("risk_level")
+  consentDecision String?          @map("consent_decision")
+  taintedTurn     Boolean          @default(false) @map("tainted_turn")
+  argsHash        String           @map("args_hash")
+  argsPreview     String?          @map("args_preview")
+  resultBytes     Int?             @map("result_bytes")
+  truncated       Boolean          @default(false)
+  errorCode       String?          @map("error_code")
+  durationMs      Int?             @map("duration_ms")
+  createdAt       DateTime         @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@index([pluginId, createdAt])
+  @@index([installId])
+  @@map("plugin_invocations")
 }

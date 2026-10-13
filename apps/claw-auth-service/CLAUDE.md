@@ -472,6 +472,32 @@ touch a row still holding the column default, so a tuned number survives a re-ru
 `PLUGINS_INSTALL`, `PLUGINS_MANAGE_OWN_SERVERS` are USER defaults (the boot reconciler back-fills them);
 `PLUGINS_ADMIN` is ADMIN only. Deploy auth-service before the plugin service: an old payload reads as "gate off".
 
+### Plugin calls are metered as `PLUGIN_CALLS` (batch 2, 2026-10-13)
+
+`PlanFeatureKey.PLUGIN_CALLS` (window `DAY`) is reserved by claw-plugin-service per tool call through the existing
+`POST internal/quota/features/reserve` and settled (`CONSUME` when the call ran, `RELEASE` when it failed) through
+`features/settle`; no per-feature code exists, the feature key is the only input. `Plan.maxPluginCallsPerDay`
+(`Int? DEFAULT 20`, `null` unlimited, `0` disabled) is the one value an administrator edits (create and update plan DTOs, admin
+plan view, public catalog, `plan.limits.maxPluginCallsPerDay` in the entitlements payload; the admin entitlement plan is
+`null`). The `plan_feature_rules` row the reservation reads is DERIVED from it, and the two are written in ONE transaction:
+`PlansRepository.create` always writes the rule and `update` rewrites it whenever the update carries the field (`toPluginCallsRule`:
+`null` ENABLED, `0` DISABLED, `n` LIMITED `DAY`; the shared writer is `upsertFeatureRuleOn`, which `PlanBillingRepository.upsertFeatureRule`
+also uses), so the payload and the enforced rule cannot disagree and a failed rule write rolls the plan write back. A plan with no
+rule fails closed (the plan reads as disabled), which is why a custom plan can never be created without one.
+The daily cap cannot be overshot by concurrent calls: `FeaturePolicyService.reserve` hands the whole decision to
+`FeatureUsageRepository.reserveWithinLimit`, which counts and writes inside one transaction under
+`pg_advisory_xact_lock(hashtext(userId || feature))`. Retries are keyed by `requestId`: a RESERVED or CONSUMED row is returned as is
+with no cap check, a RELEASED row is revived to RESERVED only after the cap check passes, and a new request is checked then inserted.
+This covers every metered feature, not only plugin calls.
+Tiers (calls per day): free and trial 20, starter 100, plus 300, pro 1000, team and scale 5000, unlimited null. Fresh installs take
+the `plugins.maxCallsPerDay` and `features.PLUGIN_CALLS` blocks of `plan-catalog.json` (they must agree; a spec checks it);
+existing databases take migrations `20261013120000_add_plugin_calls_feature` (enum value alone) and
+`20261013120100_plugin_calls_plan_limits` (column, per-tier numbers only where the column still holds 20, then one rule row per
+plan with `ON CONFLICT DO NOTHING`, so a re-run never re-enables or overwrites an administrator's value). Specs:
+`plugin-calls-plan-gate.spec.ts`, `plugin-calls-reservation.spec.ts`, `plans.service.plugin-calls.spec.ts`,
+`plans.repository.plugin-calls.spec.ts` (one-transaction rollback), `feature-usage.repository.spec.ts` (serialised interleaving,
+with a no-lock control, and the retry cases), `plan-billing.repository.spec.ts`.
+
 ## Free credit-connector requests (ADR-142, 2026-10-01)
 
 `Plan.creditConnectorFreeRequestsPerMonth` (`Int? DEFAULT 0`; `null` unlimited, `0` none) lets a user

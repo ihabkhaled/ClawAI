@@ -5,6 +5,8 @@ import type { FeedbackTranslation } from '@/types/i18n-feedback.types';
 export type TranslationDictionary = {
   /** Plugins and MCP access: sidebar, plan editor and upgrade label. */
   pluginsAccess: PluginsAccessLocaleTranslation;
+  pluginsInstall: PluginsInstallLocaleTranslation;
+  pluginsStatus: PluginsStatusLocaleTranslation;
   /**
    * The shared table pagination control. Used by every paged list, so a change
    * here is a change everywhere — see `components/ui/pagination.tsx`.
@@ -5328,6 +5330,7 @@ export type TranslationDictionary = {
       MEMORY: string;
       CONTEXT_PACKS: string;
       FILE_GENERATION: string;
+      PLUGIN_CALLS: string;
     };
     invoices: {
       title: string;
@@ -6769,6 +6772,7 @@ export type UsageAnalyticsLocaleTranslation = {
     WORKSPACES: string;
     MEMORY: string;
     CONTEXT_PACKS: string;
+    PLUGIN_CALLS: string;
   };
   sectionTitle: string;
   sectionDescription: string;
@@ -7656,5 +7660,154 @@ export type MarketingVideosLocaleTranslation = {
   local: {
     combined: MarketingVideoCopyLocaleTranslation;
     part: MarketingVideoCopyLocaleTranslation;
+  };
+};
+
+/** Plugin install follow-ups: catalog status labels, plan errors, key retry message (plugins-status-translations.ts). */
+export type PluginsStatusLocaleTranslation = {
+  catalogStatus: { DRAFT: string; PUBLISHED: string; DEPRECATED: string; HIDDEN: string };
+  errors: { planDisabled: string; entitlementsUnavailable: string; credentialFailed: string };
+  install: { alreadyInstalled: string };
+  validation: { tooShort: string };
+};
+
+/** Plugin installs, the Installed page, the admin console and the plan form caps (plugins-install-translations.ts). */
+export type PluginsInstallLocaleTranslation = {
+  nav: {
+    label: string;
+    discover: string;
+    installed: string;
+  };
+  install: {
+    button: string;
+    installing: string;
+    installed: string;
+    manage: string;
+    upgrade: string;
+    globallyDisabled: string;
+    planOff: string;
+    limitReached: string;
+  };
+  state: {
+    enabled: string;
+    disabled: string;
+    unavailable: string;
+  };
+  dialog: {
+    title: string;
+    description: string;
+    toolsTitle: string;
+    accessTitle: string;
+    confirm: string;
+    cancel: string;
+  };
+  credential: {
+    label: string;
+    saved: string;
+    notSet: string;
+    placeholder: string;
+    replacePlaceholder: string;
+    help: string;
+  };
+  installed: {
+    description: string;
+    errorTitle: string;
+    errorDescription: string;
+    emptyTitle: string;
+    emptyDescription: string;
+    browse: string;
+    enabledLabel: string;
+    updateAvailable: string;
+    unavailableHelp: string;
+    settings: string;
+    uninstall: string;
+  };
+  uninstall: {
+    title: string;
+    description: string;
+    cancel: string;
+    confirm: string;
+  };
+  sheet: {
+    title: string;
+    description: string;
+    settingsTitle: string;
+    settingsNone: string;
+    choose: string;
+    save: string;
+    credentialTitle: string;
+    credentialSave: string;
+    credentialReplace: string;
+    credentialRemove: string;
+    consentsTitle: string;
+    consentsNone: string;
+    consentGranted: string;
+    consentGrant: string;
+    consentRevoke: string;
+    consentReadNote: string;
+    consentDestructiveNote: string;
+  };
+  toast: {
+    installed: string;
+    uninstalled: string;
+    saved: string;
+    credentialSaved: string;
+    credentialRemoved: string;
+  };
+  errors: {
+    limit: string;
+    alreadyInstalled: string;
+    notFound: string;
+    unavailable: string;
+    settingsInvalid: string;
+    credentialUnsupported: string;
+    headerDenied: string;
+    generic: string;
+  };
+  validation: {
+    required: string;
+    number: string;
+    integer: string;
+    range: string;
+    option: string;
+    tooLong: string;
+  };
+  admin: {
+    title: string;
+    description: string;
+    tabCatalog: string;
+    tabSettings: string;
+    errorTitle: string;
+    errorDescription: string;
+    empty: string;
+    installs: string;
+    globallyEnabled: string;
+    globallyEnabledFor: string;
+    featured: string;
+    featuredFor: string;
+    tools: string;
+    toolEnabledFor: string;
+    saved: string;
+    save: string;
+    reset: string;
+    setting: {
+      userServersEnabled: string;
+      userServersRequireApproval: string;
+      userServersAllowHttp: string;
+      loopMaxRounds: string;
+      loopMaxCallsPerTurn: string;
+      callTimeoutMs: string;
+      callMaxResultBytes: string;
+      invocationsRetentionDays: string;
+      ratePerUserPerMinute: string;
+      ratePerUserConcurrent: string;
+    };
+  };
+  planForm: {
+    maxPluginCallsPerDay: string;
+    unlimited: string;
+    disabled: string;
+    listLabel: string;
+    listValue: string;
   };
 };

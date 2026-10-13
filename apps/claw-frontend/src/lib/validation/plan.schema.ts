@@ -4,6 +4,7 @@ import {
   PAYG_CREDIT_PERCENT_BPS_MAX,
   PLAN_CREDIT_FREE_REQUESTS_LIMIT,
   PLAN_MAX_INSTALLED_PLUGINS_LIMIT,
+  PLAN_MAX_PLUGIN_CALLS_PER_DAY_LIMIT,
   PLAN_MAX_USER_MCP_SERVERS_LIMIT,
   PLAN_MAX_VIDEO_SECONDS_LIMIT,
   PLAN_TRIAL_MAX_DAYS,
@@ -131,6 +132,11 @@ export const createPlanSchema = z.object({
   maxUserMcpServers: z.preprocess(
     (value: unknown): unknown => (blankToUndefined(value) === undefined ? null : value),
     z.union([z.null(), z.coerce.number().int().min(0).max(PLAN_MAX_USER_MCP_SERVERS_LIMIT)]),
+  ),
+  // Metered plugin calls per day. Blank is an explicit null (unlimited); 0 disables.
+  maxPluginCallsPerDay: z.preprocess(
+    (value: unknown): unknown => (blankToUndefined(value) === undefined ? null : value),
+    z.union([z.null(), z.coerce.number().int().min(0).max(PLAN_MAX_PLUGIN_CALLS_PER_DAY_LIMIT)]),
   ),
   // Free requests per credit connector per month. Blank is an explicit null
   // (unlimited); 0 turns the allowance off. Error text is a translation key.

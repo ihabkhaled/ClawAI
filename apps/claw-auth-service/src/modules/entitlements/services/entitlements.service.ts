@@ -175,6 +175,7 @@ export class EntitlementsService {
         maxVideoSeconds: plan.maxVideoSeconds,
         maxInstalledPlugins: plan.maxInstalledPlugins,
         maxUserMcpServers: plan.maxUserMcpServers,
+        maxPluginCallsPerDay: plan.maxPluginCallsPerDay,
       },
       featureGates: {
         allowCompareMode: plan.allowCompareMode,

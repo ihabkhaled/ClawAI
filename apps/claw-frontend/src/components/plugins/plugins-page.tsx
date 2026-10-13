@@ -9,12 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PLUGINS_GRID_CLASSES, PLUGINS_SKELETON_KEYS } from '@/constants/plugins.constants';
 import { EmptyStateVariant } from '@/enums/empty-state-variant.enum';
+import { PluginsNavTab } from '@/enums/plugins-nav-tab.enum';
 import { usePluginsPage } from '@/hooks/plugins/use-plugins-page';
 
 import { PluginCard } from './plugin-card';
 import { PluginCategoryChips } from './plugin-category-chips';
+import { PluginsNav } from './plugins-nav';
 
-/** Discover: search, category chips and a card per catalog plugin. Browse only; nothing installs yet. */
+/** Discover: search, category chips and a card per catalog plugin. Cards that are installed say so. */
 export function PluginsPage(): React.ReactElement {
   const page = usePluginsPage();
   const { t } = page;
@@ -24,6 +26,7 @@ export function PluginsPage(): React.ReactElement {
   return (
     <div>
       <PageHeader title={t('plugins.title')} description={t('plugins.description')} />
+      <PluginsNav active={PluginsNavTab.Discover} t={t} />
       <div className="mb-6 space-y-4">
         <SearchBox
           id="plugins-search"

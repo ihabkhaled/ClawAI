@@ -116,6 +116,7 @@ function mediaGateProjections(media) {
 // (5 installs, 0 own MCP servers) -- never null, which would mean unlimited.
 const FREE_MAX_INSTALLED_PLUGINS = 5;
 const FREE_MAX_USER_MCP_SERVERS = 0;
+const FREE_MAX_PLUGIN_CALLS_PER_DAY = 20;
 
 function pluginGateProjections(plugins) {
   const block = plugins ?? {};
@@ -125,6 +126,8 @@ function pluginGateProjections(plugins) {
       block.maxInstalled === undefined ? FREE_MAX_INSTALLED_PLUGINS : block.maxInstalled,
     maxUserMcpServers:
       block.maxUserMcpServers === undefined ? FREE_MAX_USER_MCP_SERVERS : block.maxUserMcpServers,
+    maxPluginCallsPerDay:
+      block.maxCallsPerDay === undefined ? FREE_MAX_PLUGIN_CALLS_PER_DAY : block.maxCallsPerDay,
   };
 }
 
