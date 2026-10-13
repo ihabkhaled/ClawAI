@@ -23,8 +23,8 @@ UI, data model, money path or user-facing text changes. The only workspace sourc
 | L05  | Automation e2e (a committed or existing spec was run)                   | PASS           | The hooks themselves were run end to end as a developer runs them: `sh .husky/pre-commit` and `sh .husky/pre-push` on real staged/committed changes, timed in the table below                                                                                                                                                                                           |
 | L06  | RBAC across roles and plan tiers (admin, paid, FREE)                    | NOT_APPLICABLE | No permission, role, plan or entitlement code changed                                                                                                                                                                                                                                                                                                                   |
 | L07  | Device matrix (3+ widths, both orientations, RTL)                       | NOT_APPLICABLE | No UI change                                                                                                                                                                                                                                                                                                                                                            |
-| L08  | UAT (acceptance criteria walked as the user would)                      | NOT_RUN        | Acceptance criteria are walked phase by phase; final walk recorded when the last phase lands                                                                                                                                                                                                                                                                            |
-| L09  | Product verification (it does what the owner asked, edge cases decided) | NOT_RUN        | Recorded against the prompt-pack acceptance list after the last phase                                                                                                                                                                                                                                                                                                   |
+| L08  | UAT (acceptance criteria walked as the user would)                      | PASS           | Walked as a developer: four probe changes (health, chat, shared, docs) committed and pushed through the real hooks, all exit 0 (timings below); a bad base exits 1; a receipt skip is printed with its tree                                                                                                                                                             |
+| L09  | Product verification (it does what the owner asked, edge cases decided) | PASS           | Pack phases 1-6 checked against the code: scoped runner, receipts only from the runner, every pushed ref validated, CI security jobs, lint ratchet, coverage floors, rule 63 checks; deviations in the PR                                                                                                                                                               |
 | L10  | Business verification (money, limits, copy and claims match the code)   | NOT_APPLICABLE | No money, limit, price or marketing-claim code changed                                                                                                                                                                                                                                                                                                                  |
 | L11  | Regression (neighbouring features still work)                           | PASS           | Full tooling suite 432/432 after the change (it covers affected-matrix, deploy, release, knowledge and receipt behaviour); existing `affected-ci` matrix tests unchanged and green                                                                                                                                                                                      |
 | L12  | Security (authz and IDOR, secrets, injection)                           | PASS           | Receipts can no longer be self-attested or forged (`gate-receipt.test.mjs`: other tree, lockfile, Node, tooling hash, scope and legacy formats all rejected; only the affected runner imports `recordReceipt`); npm is spawned without `shell: true`, removing the unescaped-argument path (DEP0190)                                                                    |
@@ -37,15 +37,22 @@ UI, data model, money path or user-facing text changes. The only workspace sourc
 Each row is `sh .husky/<hook>` run by `time-hook.sh` (wall clock, exit code). "Before" is
 `main` at 5ad48d125.
 
-| Scenario                                           | Before | After                  |
-| -------------------------------------------------- | ------ | ---------------------- |
-| pre-commit, one file in claw-health-service        | 12.7s  | (after the last phase) |
-| pre-push, same change                              | 20.0s  | (after the last phase) |
-| pre-commit, one file in claw-chat-service          | 14.1s  | (after the last phase) |
-| pre-push, same change                              | 63.5s  | (after the last phase) |
-| pre-commit, one file in packages/shared-utilities  | 86.5s  | (after the last phase) |
-| pre-push, same change                              | 395.8s | (after the last phase) |
-| pre-commit, docs-only (docs/qa-evidence/README.md) | 7.9s   | (after the last phase) |
+| Scenario                                           | Before | After |
+| -------------------------------------------------- | ------ | ----- |
+| pre-commit, one file in claw-health-service        | 12.7s  | 11.6s |
+| pre-push, same change                              | 20.0s  | 2.2s  |
+| pre-commit, one file in claw-chat-service          | 14.1s  | 13.3s |
+| pre-push, same change                              | 63.5s  | 46.7s |
+| pre-commit, one file in packages/shared-utilities  | 86.5s  | 17.4s |
+| pre-push, same change                              | 395.8s | 5.6s  |
+| pre-commit, docs-only (docs/qa-evidence/README.md) | 7.9s   | 5.8s  |
+
+"After" is this branch: each probe appends a comment to the file, runs pre-commit, commits it, and
+then runs pre-push with `CLAW_GATE_BASE=HEAD~1`, which resets the commit afterwards. A comment-only
+change has no related tests, and the incremental typecheck caches stay warm, so the shared pre-push
+(22 typechecks, tests, topological build) costs 5.6s. Before, the same hook rebuilt and retested
+everything. A real code change in a shared package costs more. The knowledge gate was skipped on a
+genuine receipt that the pre-commit run had written.
 
 Component measurements:
 
