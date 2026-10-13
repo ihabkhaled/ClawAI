@@ -61,9 +61,11 @@ test('pre-push stdin is parsed per ref and deletions are skipped', () => {
 });
 
 test('pushing a ref whose tree is not checked out fails without a receipt for it', async () => {
-  const parent = git(['rev-parse', 'HEAD~1']);
-  if (git(['rev-parse', `${parent}^{tree}`]) === git(['rev-parse', 'HEAD^{tree}'])) return;
-  const ok = await prePush(`refs/heads/other ${parent} refs/heads/other ${ZERO_SHA}\n`);
+  // An empty-tree commit: never checked out and never receipted, unlike HEAD~1,
+  // whose tree a real `gates:receipt` run may already cover.
+  const emptyTree = git(['hash-object', '-t', 'tree', '-w', '--stdin'], { input: '', stdio: ['pipe', 'pipe', 'pipe'] });
+  const commit = git(['commit-tree', emptyTree, '-p', 'HEAD', '-m', 'gate-correctness probe']);
+  const ok = await prePush(`refs/heads/other ${commit} refs/heads/other ${ZERO_SHA}\n`);
   assert.equal(ok, false);
 });
 
