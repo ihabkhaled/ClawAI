@@ -1,6 +1,7 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { PaygSurface } from '@claw/shared-types';
 
+import { AppConfig } from '../../../../app/config/app.config';
 import { callCloudGenerate } from '../cloud-generation-client.utility';
 
 global.fetch = vi.fn();
@@ -43,6 +44,33 @@ const sentBody = (): Record<string, unknown> => {
 describe('callCloudGenerate — PAYG attribution (U8/U9/U10)', () => {
   beforeEach(() => {
     fetchMock().mockReset();
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
+      INTER_SERVICE_AUTH_TOKEN: 'inter-service-secret',
+    } as unknown as ReturnType<typeof AppConfig.get>);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // chat-service guards POST /internal/chat/generate with ServiceTokenGuard.
+  // Dropping this header turns every workspace cloud call into a 401.
+  it('sends the inter-service token as Authorization: Service <token>', async () => {
+    fetchMock().mockResolvedValue(okResponse({ content: 'done' }));
+
+    await callCloudGenerate(input());
+
+    const call = fetchMock().mock.calls[0] as [string, { headers: Record<string, string> }];
+    expect(call[1].headers['Authorization']).toBe('Service inter-service-secret');
+    expect(call[1].headers['Content-Type']).toBe('application/json');
+  });
+
+  it('surfaces a 401 from chat-service as a thrown upstream failure', async () => {
+    fetchMock().mockResolvedValue(errorResponse(401, '{"message":"Unauthorized"}'));
+
+    await expect(callCloudGenerate(input())).rejects.toThrow(
+      /Cloud generation failed \(HTTP 401\)/,
+    );
   });
 
   it('sends the acting user and the spending surface to chat-service', async () => {

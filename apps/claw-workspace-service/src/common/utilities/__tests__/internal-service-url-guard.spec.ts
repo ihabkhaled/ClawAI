@@ -88,6 +88,9 @@ describe('internal service calls go through the outbound URL guard', () => {
       surface: PaygSurface.WORKSPACE_ACTION,
     });
     expect(firstCall()).toMatchObject({ host: 'chat-service:4002', init: { redirect: 'error' } });
+    expect(new Headers(firstCall().init.headers).get('authorization')).toBe(
+      'Service inter-service-secret',
+    );
   });
 
   it('local generation reaches ollama-service, and refuses a non-http base', async () => {

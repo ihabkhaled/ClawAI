@@ -5,6 +5,7 @@ import type {
   CloudGenerateInput,
   CloudGenerateOutput,
 } from '../types/ai-action.types';
+import { buildAuthHeader } from '../../../common/utilities/file-service-client.utility';
 import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 
 const logger = new Logger('CloudGenerationClient');
@@ -34,7 +35,9 @@ export async function callCloudGenerate(input: CloudGenerateInput): Promise<Clou
   try {
     const response = await guardedFetch(input.chatServiceUrl, url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      // chat-service guards /internal/chat/generate with ServiceTokenGuard; an
+      // anonymous call is a 401 on every cloud model.
+      headers: { 'Content-Type': 'application/json', Authorization: buildAuthHeader() },
       body: JSON.stringify({
         provider: input.provider,
         model: input.model,

@@ -228,6 +228,14 @@ _inside chat-service_, around the provider request it owns. Adding a
 — the user pays twice for one answer. That is decision D5, "one reservation, not
 two"; do not "fix" the apparent gap by wrapping a meter around `callCloudGenerate`.
 
+**The call is authenticated.** chat-service guards `POST /internal/chat/generate`
+with `ServiceTokenGuard`, so `callCloudGenerate` sends
+`Authorization: Service <INTER_SERVICE_AUTH_TOKEN>` (via `buildAuthHeader()`,
+token from `AppConfig`). Without it every cloud action, review, chain draft is a 401. `cloud-generation-client.utility.spec.ts` asserts the header. **Multi-model
+review fails as a whole** (`422 AI_ACTION_UPSTREAM_FAILED`) when every reviewer
+failed; it is never a 200 with all reviewers `success:false`. Judge failure alone
+stays a 200 with `judge.success:false`.
+
 What this service is responsible for is telling chat-service **whose** credit is
 being spent and **which** surface spent it. `CloudGenerateInput` therefore carries
 required `userId` and `surface`, and neither is ever defaulted: a defaulted

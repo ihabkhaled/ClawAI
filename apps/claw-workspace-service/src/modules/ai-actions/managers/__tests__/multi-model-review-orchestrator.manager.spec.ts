@@ -1,7 +1,9 @@
+import { HttpStatus } from '@nestjs/common';
 import { type MockInstance, vi } from 'vitest';
 import { PaygSurface } from '@claw/shared-types';
 
 import { MultiModelReviewOrchestratorManager } from '../multi-model-review-orchestrator.manager';
+import { BusinessException } from '../../../../common/errors/business.exception';
 import { AppConfig } from '../../../../app/config/app.config';
 import * as cloudClient from '../../utilities/cloud-generation-client.utility';
 
@@ -92,17 +94,20 @@ describe('MultiModelReviewOrchestratorManager', () => {
     expect(result.judge?.label).toBe('Judge');
   });
 
-  it('skips judge pass when every reviewer failed', async () => {
-    callSpy.mockRejectedValue(new Error('upstream 5xx'));
+  it('fails the whole request with 422 when every reviewer failed, and skips the judge', async () => {
+    callSpy.mockRejectedValue(new Error('Cloud generation failed (HTTP 401): Unauthorized'));
 
-    const result = await manager.run({
-      ...valid,
-      judgeModel: { provider: 'JUDGE', model: 'j' },
-    });
+    const failure = await manager
+      .run({ ...valid, judgeModel: { provider: 'JUDGE', model: 'j' } })
+      .catch((e: unknown) => e);
 
-    expect(result.anyReviewerSucceeded).toBe(false);
-    expect(result.judge).toBeNull();
-    // 2 reviewer calls; judge call was suppressed (callSpy total = 2)
+    expect(failure).toBeInstanceOf(BusinessException);
+    const err = failure as BusinessException;
+    expect(err.getStatus()).toBe(HttpStatus.UNPROCESSABLE_ENTITY);
+    expect(err.code).toBe('AI_ACTION_UPSTREAM_FAILED');
+    expect(err.messageKey).toContain('All 2 reviewers failed');
+    expect(err.messageKey).toContain('HTTP 401');
+    // 2 reviewer calls; the judge call was suppressed.
     expect(callSpy).toHaveBeenCalledTimes(2);
   });
 

@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { PaygSurface } from '@claw/shared-types';
 
 import { AppConfig } from '../../../app/config/app.config';
+import { BusinessException } from '../../../common/errors/business.exception';
 import { AiActionKind } from '../../../common/enums/ai-action-kind.enum';
 import { MULTI_MODEL_REVIEW_REVIEWER_CAP } from '../constants/ai-action-policy.constants';
 import { AI_ACTION_PROMPTS } from '../constants/ai-action-prompts.constants';
@@ -25,7 +26,7 @@ import { withPlatformIdentity } from '../utilities/platform-identity.utility';
  * Cost guardrails:
  *   - hard cap of 5 reviewer models
  *   - per-reviewer timeout from AppConfig.AI_ACTION_REQUEST_TIMEOUT_MS
- *   - `Promise.allSettled` so one slow/failing reviewer never blocks the rest
+ *   - each reviewer is caught individually so one slow/failing reviewer never blocks the rest
  *
  * No new external dependencies — reuses the existing
  * `cloud-generation-client.utility` that funnels through chat-service.
@@ -50,32 +51,42 @@ export class MultiModelReviewOrchestratorManager {
       `run: reviewers=${String(reviewers.length)} judge=${input.judgeModel === undefined ? 'none' : `${input.judgeModel.provider}/${input.judgeModel.model}`}`,
     );
 
-    const reviewerSettled = await Promise.allSettled(
-      reviewers.map((r) => this.runReviewer(r, input.content, chatUrl, timeoutMs, input.userId)),
+    // Each reviewer is caught on its own, so one slow or failing model never
+    // blocks or hides the rest.
+    const reviewerOutcomes = await Promise.all(
+      reviewers.map((r) =>
+        this.runReviewer(r, input.content, chatUrl, timeoutMs, input.userId).catch(
+          (error: unknown) => this.failedReviewer(r, error),
+        ),
+      ),
     );
-    const reviewerOutcomes: ReviewerOutcome[] = reviewerSettled.map((s, i) => {
-      // reviewerSettled and reviewers are zipped 1:1 by index, so the
-      // lookup is always defined. Fall back to a synthetic ref if a future
-      // refactor breaks the invariant — never throw at this layer.
-      const ref = reviewers[i] ?? reviewers[0] ?? { provider: 'unknown', model: 'unknown' };
-      return this.materialiseReviewer(s, ref);
-    });
     const anyReviewerSucceeded = reviewerOutcomes.some((r) => r.success);
 
-    let judge: JudgeOutcome | null = null;
-    if (input.judgeModel !== undefined && anyReviewerSucceeded) {
-      judge = await this.runJudge(
-        input.judgeModel,
-        reviewerOutcomes,
-        chatUrl,
-        timeoutMs,
-        input.userId,
+    // Every reviewer failing is a failed request, not a 200 with a list of
+    // errors: callers (and the bundle download) would otherwise present an empty
+    // review as a success. Same 422 vocabulary as a failed single AI action.
+    if (!anyReviewerSucceeded) {
+      this.logger.warn('run: no reviewer succeeded; failing the request');
+      throw new BusinessException(
+        this.summariseAllFailed(reviewerOutcomes),
+        'AI_ACTION_UPSTREAM_FAILED',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        { triedModels: reviewerOutcomes.map((r) => `${r.provider}/${r.model}`) },
       );
-    } else if (input.judgeModel !== undefined && !anyReviewerSucceeded) {
-      this.logger.warn('run: skipping judge pass — no reviewer succeeded; nothing to synthesise');
     }
 
+    const judge: JudgeOutcome | null =
+      input.judgeModel === undefined
+        ? null
+        : await this.runJudge(input.judgeModel, reviewerOutcomes, chatUrl, timeoutMs, input.userId);
+
     return { reviewers: reviewerOutcomes, judge, anyReviewerSucceeded };
+  }
+
+  private summariseAllFailed(outcomes: ReviewerOutcome[]): string {
+    const last = outcomes.at(-1);
+    const reason = last?.errorMessage ?? 'unknown';
+    return `All ${String(outcomes.length)} reviewers failed. Last error from ${last?.provider ?? 'unknown'}/${last?.model ?? 'unknown'}: ${reason}`;
   }
 
   /**
@@ -117,12 +128,8 @@ export class MultiModelReviewOrchestratorManager {
     };
   }
 
-  private materialiseReviewer(
-    settled: PromiseSettledResult<ReviewerOutcome>,
-    ref: ReviewerModelRef,
-  ): ReviewerOutcome {
-    if (settled.status === 'fulfilled') return settled.value;
-    const message = settled.reason instanceof Error ? settled.reason.message : 'unknown';
+  private failedReviewer(ref: ReviewerModelRef, error: unknown): ReviewerOutcome {
+    const message = error instanceof Error ? error.message : 'unknown';
     this.logger.warn(`reviewer ${ref.provider}/${ref.model} failed: ${message}`);
     return {
       provider: ref.provider,

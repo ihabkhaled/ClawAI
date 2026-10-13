@@ -157,6 +157,11 @@ describe('generate-stream time limits, end to end', () => {
 
   beforeEach(() => {
     vi.useFakeTimers();
+    // The URL guard permits the hosts named by *_SERVICE_URL variables when any are set (CI sets
+    // them), so the hosts this spec calls must be declared the way a deployed service declares them.
+    vi.stubEnv('CONNECTOR_SERVICE_URL', 'http://connector:4011');
+    vi.stubEnv('OLLAMA_SERVICE_URL', 'http://ollama:4008');
+    vi.stubEnv('AUTH_SERVICE_URL', 'http://auth:4001');
     appConfigGet.mockReturnValue({
       OLLAMA_SERVICE_URL: 'http://ollama:4008',
       OLLAMA_GENERATE_TIMEOUT_MS: 10_000,
@@ -171,6 +176,7 @@ describe('generate-stream time limits, end to end', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
   });
 
   it('gives up after 300 s of silence with MODEL_IDLE_TIMEOUT, aborting the provider call and releasing the hold', async () => {
