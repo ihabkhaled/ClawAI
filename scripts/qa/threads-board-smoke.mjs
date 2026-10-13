@@ -1,10 +1,14 @@
 // Live API smoke for the Threads Board. Read-only: publishes nothing.
-//   BOARD_BASE=https://claw.local/api/v1 BOARD_INSECURE_TLS=1 \
+// The local certificate is trusted through the mkcert root CA, never by switching validation off:
+//   NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem" BOARD_BASE=https://claw.local/api/v1 \
 //   BOARD_EMAIL=admin@claw.local BOARD_PASSWORD=<password> node scripts/qa/threads-board-smoke.mjs
 const BASE = process.env.BOARD_BASE ?? 'https://claw.local/api/v1';
-const EMAIL = process.env.BOARD_EMAIL ?? 'admin@claw.local';
-const PASSWORD = process.env.BOARD_PASSWORD ?? 'ClawAdmin123!';
-if (process.env.BOARD_INSECURE_TLS === '1') process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+const EMAIL = process.env.BOARD_EMAIL;
+const PASSWORD = process.env.BOARD_PASSWORD;
+if (!EMAIL || !PASSWORD) {
+  console.error('Set BOARD_EMAIL and BOARD_PASSWORD (no default credentials are kept in the repo).');
+  process.exit(2);
+}
 
 const FORBIDDEN = /owner|author|hash|email|password|token/i;
 const ITEM_KEYS = [

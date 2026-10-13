@@ -133,3 +133,9 @@ real command and output, FAIL, NOT_RUN or NOT_APPLICABLE with a reason) and run
 `npm run qa:evidence:check -- docs/qa-evidence/<file>.md`. CI rejects a feat/fix/perf push without a valid
 record. Plain-language version for anyone: [QA-WORKFLOW.md](../QA-WORKFLOW.md). The lane ids map to this
 skill: L03 = section 1, L04 = section 3, L06 = section 2, L07 = section 4. A change with only unit tests is PARTIAL.
+
+## Writing a QA script that is committed
+
+A script under `scripts/` is scanned by CodeQL like product code. Do not disable certificate validation (use
+`NODE_EXTRA_CA_CERTS` with the mkcert root), keep no default credentials, and run `node --test
+tools/__tests__/tls-validation-guard.test.mjs` before committing. See rules/21.

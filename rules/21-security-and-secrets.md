@@ -70,3 +70,12 @@ return { id, name, provider, status, baseUrl }; // no encryptedConfig field
 - [ ] Input validated/bounded; no raw SQL; strict equality.
 - [ ] Uploads run the full security pipeline; throttler + Helmet present.
 - [ ] New service added to `install-tls` HOSTS; auth enforced.
+
+## QA and tooling scripts never switch TLS validation off
+
+CodeQL fails CI (`js/disabling-certificate-validation`) for any committed script that assigns
+`NODE_TLS_REJECT_UNAUTHORIZED = '0'` or sets `rejectUnauthorized: false`; it blocked the release of the
+Threads Board when a QA smoke script did. Trust the local mkcert root instead:
+`NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem"`. A QA script also keeps no default password: it reads
+credentials from the environment and exits when they are missing. `tools/__tests__/tls-validation-guard.test.mjs`
+fails locally before CI does; the only exceptions are the paths named in `tools/security/codeql-accepted.json`.
