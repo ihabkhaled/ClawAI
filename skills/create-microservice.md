@@ -30,7 +30,7 @@ affected_workspaces:
 required_tests: [unit (vitest *.spec.ts), health endpoint smoke, qa/test-<service>.sh]
 required_docs:
   [docs/04-backend/service-guide-<service>.md, docs/04-backend/services-index.md, CLAUDE.md]
-validation_lane: cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Skill: Create a New Microservice
@@ -76,7 +76,7 @@ This skill EXTENDS the mechanical 12-step wiring in [`./02-service-scaffold.md`]
 4. Wire ALL split compose files: `docker/docker-compose.dev.{databases,services,ollama}.yml` and `docker/docker-compose.prod.{databases,services}.yml`, plus GPU overlays only if it needs passthrough. DB → databases files; service → services files; volumes declared in every file that references them.
 5. Add nginx upstream + `/api/v1/<name>/` location block (SSE routes need `proxy_buffering off`).
 6. Register the service URL in `apps/claw-health-service`.
-7. CI needs BOTH edits per job in `.github/workflows/ci.yml`: the Prisma generate loop entry AND the test env vars — and, for any NEW shared package, the build-step `cd` line plus the `strategy.matrix.include` entry (all four jobs).
+7. CI: add the service's test env vars to the `test` job `env:` in `.github/workflows/ci.yml`. Nothing else is hand-edited — the affected matrix, the shared-build order and Prisma generation (`npm run prisma:generate --workspaces --if-present`) all follow from the workspace and its `package.json`.
 8. Add env vars to `.env`, `.env.example`, `scripts/install.sh`, `scripts/install.ps1`; append the docker hostname to `scripts/install-tls.{sh,ps1}` HOSTS.
 9. Build controller → service → repository → module per [`./create-controller.md`](./create-controller.md), [`./create-service.md`](./create-service.md), [`./create-repository.md`](./create-repository.md).
 
@@ -95,7 +95,10 @@ This skill EXTENDS the mechanical 12-step wiring in [`./02-service-scaffold.md`]
 ## Validation commands
 
 ```bash
-cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 Then `./scripts/claw.sh service:rebuild claw-<service>-service` and `curl http://localhost:4000/api/v1/<name>/health`. Run only per-touched-folder gates; never all-workspace.

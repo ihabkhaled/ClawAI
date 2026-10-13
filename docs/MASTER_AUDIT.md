@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-ClawAI is a local-first AI orchestration platform built as a microservices architecture (17 NestJS services + Next.js frontend + 7 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama). The platform demonstrates strong foundational engineering with real end-to-end functionality in chat, routing, connectors, auth, audit, and observability. However, several critical integration gaps prevent the system from delivering on its full vision.
+ClawAI is a local-first AI orchestration platform built as a microservices architecture (NestJS services — 17 at the time — + Next.js frontend + 7 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama). The platform demonstrates strong foundational engineering with real end-to-end functionality in chat, routing, connectors, auth, audit, and observability. However, several critical integration gaps prevent the system from delivering on its full vision.
 
 **What works well (REAL):**
 
@@ -94,7 +94,7 @@ ClawAI is a local-first AI orchestration platform built as a microservices archi
 
 | #   | Gap                                           | Impact                                   |
 | --- | --------------------------------------------- | ---------------------------------------- |
-| G11 | 2 services have 0 tests (logs)                | Untestable changes                       |
+| G11 | Two services have 0 tests (logs)              | Untestable changes                       |
 | G12 | No file upload in chat UI                     | Users can't attach files in conversation |
 | G13 | Docker health checks missing for app services | Orchestration blind spots                |
 | G14 | No database backup/replication config         | Data loss risk                           |

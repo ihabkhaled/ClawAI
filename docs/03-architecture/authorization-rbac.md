@@ -86,7 +86,7 @@ below.
 
 ### AuthGuard (Global)
 
-Applied to every endpoint across all 17 services. Part of the `shared-auth` package.
+Applied to every endpoint of every service that uses it. Part of the `shared-auth` package.
 
 ```
 Request -> AuthGuard
@@ -271,9 +271,9 @@ providers and connect their own GitHub/Slack/etc. account.
 
 The two new narrow permissions:
 
-| Permission                  | Granted to USER? | What it unlocks                                                                                                                    |
-| --------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `WORKSPACE_VIEW`            | Yes              | Read-only access to the workspace shell — the `/workspace`, `/workspace/connections`, and provider-listing pages.                  |
+| Permission                  | Granted to USER? | What it unlocks                                                                                                                                                                                                       |
+| --------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `WORKSPACE_VIEW`            | Yes              | Read-only access to the workspace shell — the `/workspace`, `/workspace/connections`, and provider-listing pages.                                                                                                     |
 | `WORKSPACE_APP_CONFIG_VIEW` | Yes              | Browse admin-created provider-app-configs (sanitised as `ProviderAppConfigPublic` — `hasSecret: boolean` only; never `encryptedSecret`). Required so the connect-own-account flow can pick which provider app to use. |
 
 The existing `*_OWN` workspace permissions then let USER actually use the

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document catalogs the major npm dependencies used across the ClawAI monorepo, their versions, licenses, and security considerations. The monorepo uses npm workspaces with a root `package.json` orchestrating 17 backend services, 1 frontend, and 5 shared packages.
+This document catalogs the major npm dependencies used across the ClawAI monorepo, their versions, licenses, and security considerations. The monorepo uses npm workspaces with a root `package.json` orchestrating <!-- count:services -->20<!-- /count --> backend services, 1 frontend, and <!-- count:sharedPackages -->6<!-- /count --> shared packages.
 
 Last updated: 2026-04-11
 
@@ -10,15 +10,15 @@ Last updated: 2026-04-11
 
 ## Core Framework Dependencies
 
-| Package                  | Version | License    | Used By                 | Purpose                          |
-| ------------------------ | ------- | ---------- | ----------------------- | -------------------------------- |
-| @nestjs/core             | 10.4.x  | MIT        | All 17 backend services | NestJS core framework            |
-| @nestjs/common           | 10.4.x  | MIT        | All 17 backend services | Common decorators, pipes, guards |
-| @nestjs/platform-express | 10.4.x  | MIT        | All 17 backend services | Express HTTP adapter             |
-| next                     | 16.2.x  | MIT        | Frontend                | React meta-framework             |
-| react                    | 19.2.x  | MIT        | Frontend                | UI library                       |
-| react-dom                | 19.2.x  | MIT        | Frontend                | React DOM renderer               |
-| typescript               | 5.6+    | Apache-2.0 | All packages            | Type-safe JavaScript             |
+| Package                  | Version | License    | Used By              | Purpose                          |
+| ------------------------ | ------- | ---------- | -------------------- | -------------------------------- |
+| @nestjs/core             | 10.4.x  | MIT        | All backend services | NestJS core framework            |
+| @nestjs/common           | 10.4.x  | MIT        | All backend services | Common decorators, pipes, guards |
+| @nestjs/platform-express | 10.4.x  | MIT        | All backend services | Express HTTP adapter             |
+| next                     | 16.2.x  | MIT        | Frontend             | React meta-framework             |
+| react                    | 19.2.x  | MIT        | Frontend             | UI library                       |
+| react-dom                | 19.2.x  | MIT        | Frontend             | React DOM renderer               |
+| typescript               | 5.6+    | Apache-2.0 | All packages         | Type-safe JavaScript             |
 
 ---
 
@@ -39,8 +39,8 @@ Last updated: 2026-04-11
 | ----------------- | ------- | ------- | ------------------------- | ---------------------------- |
 | jsonwebtoken      | Latest  | MIT     | auth-service, shared-auth | JWT signing and verification |
 | argon2            | Latest  | MIT     | auth-service              | Password hashing             |
-| helmet            | Latest  | MIT     | All 17 backend services   | Security headers             |
-| @nestjs/throttler | Latest  | MIT     | All 17 backend services   | Rate limiting                |
+| helmet            | Latest  | MIT     | All backend services      | Security headers             |
+| @nestjs/throttler | Latest  | MIT     | All backend services      | Rate limiting                |
 
 ---
 
@@ -62,12 +62,12 @@ Last updated: 2026-04-11
 
 ## Logging
 
-| Package     | Version | License | Used By                 | Purpose                        |
-| ----------- | ------- | ------- | ----------------------- | ------------------------------ |
-| nestjs-pino | Latest  | MIT     | All 17 backend services | Structured logging integration |
-| pino        | Latest  | MIT     | All 17 backend services | Fast JSON logger               |
-| pino-http   | Latest  | MIT     | All 17 backend services | HTTP request logging           |
-| pino-pretty | Latest  | MIT     | All services (dev)      | Dev log formatting             |
+| Package     | Version | License | Used By              | Purpose                        |
+| ----------- | ------- | ------- | -------------------- | ------------------------------ |
+| nestjs-pino | Latest  | MIT     | All backend services | Structured logging integration |
+| pino        | Latest  | MIT     | All backend services | Fast JSON logger               |
+| pino-http   | Latest  | MIT     | All backend services | HTTP request logging           |
+| pino-pretty | Latest  | MIT     | All services (dev)   | Dev log formatting             |
 
 ---
 
@@ -95,12 +95,12 @@ Last updated: 2026-04-11
 
 ## Testing
 
-| Package          | Version | License    | Used By                 | Purpose               |
-| ---------------- | ------- | ---------- | ----------------------- | --------------------- |
-| vitest           | 5.0.1   | MIT        | All workspaces          | Test runner (ADR-099) |
-| @nestjs/testing  | 10.4.x  | MIT        | All 17 backend services | NestJS test utilities |
-| vitest           | Latest  | MIT        | Frontend                | Frontend test runner  |
-| @playwright/test | Latest  | Apache-2.0 | E2E tests               | Browser automation    |
+| Package          | Version | License    | Used By              | Purpose               |
+| ---------------- | ------- | ---------- | -------------------- | --------------------- |
+| vitest           | 5.0.1   | MIT        | All workspaces       | Test runner (ADR-099) |
+| @nestjs/testing  | 10.4.x  | MIT        | All backend services | NestJS test utilities |
+| vitest           | Latest  | MIT        | Frontend             | Frontend test runner  |
+| @playwright/test | Latest  | Apache-2.0 | E2E tests            | Browser automation    |
 
 ---
 

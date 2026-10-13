@@ -1,33 +1,30 @@
 # Docker Compose Reference
 
-> All 8 compose files, their purpose, and when to use each one.
+> Every compose file, its purpose, and when to use it.
 
 ---
 
 ## 1. Compose File Inventory
 
-ClawAI has 8 Docker Compose files for different environments and configurations:
+The compose configuration is split by layer and environment. There is no single
+all-in-one compose file; `./scripts/claw.sh` is the only supported way to bring
+the stack up, because it stitches the right files together and auto-applies the
+GPU overlay:
 
-| File                                       | Purpose                                                | Usage                       |
-| ------------------------------------------ | ------------------------------------------------------ | --------------------------- |
-| `docker/docker-compose.dev.yml`            | Full dev stack (single file, ~28 containers)           | Primary development         |
-| `docker/docker-compose.dev.databases.yml`  | Dev databases only (9 PG + MongoDB + Redis + RabbitMQ) | Split mode (claw.sh)        |
-| `docker/docker-compose.dev.services.yml`   | Dev backend services + nginx + frontend                | Split mode (claw.sh)        |
-| `docker/docker-compose.dev.ollama.yml`     | Dev Ollama container                                   | Split mode (claw.sh)        |
-| `docker/docker-compose.yml`                | Full prod stack (single file)                          | Production deployment       |
-| `docker/docker-compose.prod.databases.yml` | Prod databases only                                    | Split mode (claw.sh --prod) |
-| `docker/docker-compose.prod.services.yml`  | Prod backend services + nginx + frontend               | Split mode (claw.sh --prod) |
-| `docker/docker-compose.prod.ollama.yml`    | Prod Ollama container                                  | Split mode (claw.sh --prod) |
+| File                                                                                                                      | Purpose                                                                                   | Usage                       |
+| ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | --------------------------- |
+| `docker/docker-compose.dev.databases.yml`                                                                                 | Dev databases + infrastructure (PostgreSQL per service, MongoDB, Redis, RabbitMQ, ClamAV) | `claw.sh` (dev)             |
+| `docker/docker-compose.dev.services.yml`                                                                                  | Dev backend services + nginx + frontend                                                   | `claw.sh` (dev)             |
+| `docker/docker-compose.dev.ollama.yml`                                                                                    | Dev local-AI runtime (Ollama and friends)                                                 | `claw.sh --local-ai`        |
+| `docker/docker-compose.prod.databases.yml`                                                                                | Prod databases + infrastructure                                                           | `claw.sh --prod`            |
+| `docker/docker-compose.prod.services.yml`                                                                                 | Prod backend services + nginx + frontend                                                  | `claw.sh --prod`            |
+| `docker/docker-compose.prod.ollama.yml`                                                                                   | Prod local-AI runtime                                                                     | `claw.sh --prod --local-ai` |
+| `docker/docker-compose.{dev,prod}.gpu-{nvidia,rocm,vulkan}.yml`, `docker/docker-compose.{dev,prod}.ollama.gpu-nvidia.yml` | GPU overlays                                                                              | auto-applied by `claw.sh`   |
+| `docker/docker-compose.feedback-e2e.yml`                                                                                  | Feedback end-to-end test stack                                                            | test lane only              |
 
-### Single File vs Split Mode
+### Layers
 
-**Single file** (`docker/docker-compose.dev.yml`): Simplest approach. One command starts everything:
-
-```bash
-./scripts/claw.sh up -d
-```
-
-**Split mode** (`claw.sh`): The management script uses separate compose files for databases, services, and Ollama. This allows starting/stopping each layer independently:
+`claw.sh` starts and stops each layer independently:
 
 ```bash
 ./scripts/claw.sh up        # Starts all layers in order

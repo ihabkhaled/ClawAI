@@ -79,12 +79,11 @@ page.tsx (render only) → controller hook (useX) → query/mutation hooks
 ## Validation lane
 
 ```bash
-cd apps/claw-frontend
-npm run typecheck   # tsgo --noEmit
-npm run lint
-npm test            # vitest run
-npm run build
-npm run test:e2e    # playwright (when journeys change)
+npm run affected:list
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"   # pre-commit: lint + typecheck
+git push origin <branch>                                              # pre-push: related tests + build; then CI
+cd apps/claw-frontend && npm run test:e2e   # playwright, by hand, when journeys change (no CI job runs it)
 ```
 
 Pages must be visually spot-checked in a real browser (loading/empty/error/

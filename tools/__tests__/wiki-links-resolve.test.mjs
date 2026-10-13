@@ -3,6 +3,8 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
+import { renderedPageNames } from '../knowledge/render-wiki.mjs';
+
 // The wiki/ folder is published to the GitHub wiki by publish-wiki.yml.
 // GitHub wiki links are [[Link Text|Page-Name]]: text first, page second. A
 // consolidation on 2026-09-19 wrote some as [[Page-Name|Text]], which links to
@@ -18,7 +20,9 @@ const normalise = (name) => name.trim().replaceAll(' ', '-').toLowerCase();
 
 function wikiLinks() {
   const files = readdirSync(WIKI).filter((file) => file.endsWith('.md'));
-  const pages = new Set(files.map(pageName));
+  // Pages rendered at publish time (mirrors and manifest pages) exist on the
+  // wiki without a committed file (tools/knowledge/render-wiki.mjs).
+  const pages = new Set([...files, ...renderedPageNames()].map(pageName));
   const links = [];
   for (const file of files) {
     const lines = readFileSync(join(WIKI, file), 'utf8').split('\n');

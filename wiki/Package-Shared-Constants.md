@@ -4,31 +4,7 @@
 
 ## Purpose and ownership
 
-# @claw/shared-constants — agent guide
-
-**Type:** shared-package · **Path:** `packages/shared-constants`
-
-## Canonical owner
-
-- Root policy: `CLAUDE.md` + `rules/00-non-negotiable-rules.md`
-- Shared packages: `rules/17-shared-packages.md` + `context/package-boundaries.md`
-
-## Commands (run in this folder only)
-
-```
-npm run typecheck
-npm run lint
-npm run test
-npm run build
-```
-
-## Before editing
-
-1. `npm run knowledge:context -- --task="<task>" --service=@claw/shared-constants`
-2. Read `.ai/local/current-context.md`.
-3. Never cross this workspace's data boundary; never bypass hooks; never suppress lint/types.
-
-_Generated from source. Edit the renderer, not this file._
+Owner rules: `rules/14-shared-packages.md` and `context/package-boundaries.md`. The package's agent guide (commands, dependencies, what to read before editing) is generated: `packages/shared-constants/AGENTS.md`.
 
 ## Package metadata
 

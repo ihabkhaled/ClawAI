@@ -11,7 +11,7 @@ auth-service change touching identity, sessions, or permissions.
 - `agents/authorization-idor-reviewer.md`
 
 ## Validation lane
-- `cd apps/claw-auth-service && npm run typecheck && npm run lint && npm test`
+- `git commit, then git push — the hooks gate this change for its type (rules/23 gate matrix)`
 
 ## Known pitfalls
 - Refresh-token rotation must invalidate the old token

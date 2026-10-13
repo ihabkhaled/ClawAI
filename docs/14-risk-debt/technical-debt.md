@@ -318,7 +318,7 @@ Last updated: 2026-09-10
 - **The fix**: activate the new worker (`skipWaiting` + `clients.claim`) and
   reload on `controllerchange`, or serve JS chunks network-first.
 
-### TD-032: 16 services report a bad request body as a 500 (2026-09-19)
+### TD-032: 16 of the services report a bad request body as a 500 (2026-09-19)
 
 - **Status**: the 500s are FIXED (2026-09-19). The body-limit check under
   "Also check" is still open.
@@ -561,7 +561,7 @@ Last updated: 2026-09-10
 ### TD-014: Single-Instance Services
 
 - **Severity**: High
-- **Location**: All 17 services (Docker Compose configuration)
+- **Location**: All services (Docker Compose configuration)
 - **Detail**: Each service runs as a single container instance. There is no horizontal scaling, load balancing (beyond Nginx routing), or service discovery.
 - **Impact**: A single service crash causes complete feature outage. No ability to handle traffic spikes.
 - **Recommendation**: For production readiness:
@@ -573,7 +573,7 @@ Last updated: 2026-09-10
 ### TD-015: Single RabbitMQ Instance
 
 - **Severity**: Medium
-- **Location**: `docker/docker-compose.dev.yml`
+- **Location**: `docker/docker-compose.dev.databases.yml`, `docker/docker-compose.prod.databases.yml`
 - **Detail**: RabbitMQ runs as a single instance. No clustering, no mirrored queues.
 - **Impact**: RabbitMQ crash stops all async communication. Messages in transit are lost.
 - **Recommendation**: For production: deploy RabbitMQ cluster (minimum 3 nodes) with quorum queues. Configure publisher confirms and consumer acknowledgments (already implemented). Add a monitoring dashboard (management plugin is enabled).

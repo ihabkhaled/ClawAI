@@ -116,7 +116,7 @@ Intel iGPUs only — no extra packages needed beyond your distro defaults; just 
 **Docker on macOS cannot access Apple Silicon Metal**, regardless of any setting. The Linux VM that Docker Desktop runs on is hardware-virtualized and the GPU is not exposed across the boundary. Two paths:
 
 - **CPU-only inside Docker (default)** — `claw.sh up` will warn `macOS detected — Docker can't access Apple Silicon Metal. llamacpp-service will run CPU-only inside the container.` Inference still works, just on CPU.
-- **Native Metal (recommended for real perf)** — install Node + Postgres + RabbitMQ + Redis on the host, run `claw-llamacpp-service` directly with `npm run start:dev` from `apps/claw-llamacpp-service/`. The dynamic resolver will pick `darwin-arm64-metal` and download the Metal-accelerated `llama-server` binary. Then run the rest of the stack in Docker as usual.
+- **Native Metal (recommended for real perf)** — install Node + Postgres + RabbitMQ + Redis on the host, run `claw-llamacpp-service` directly with `npm run dev` from `apps/claw-llamacpp-service/`. The dynamic resolver will pick `darwin-arm64-metal` and download the Metal-accelerated `llama-server` binary. Then run the rest of the stack in Docker as usual.
 
 Intel-Mac (`darwin-x64-cpu`) follows the same CPU-only path; there is no Metal acceleration on Intel Macs.
 

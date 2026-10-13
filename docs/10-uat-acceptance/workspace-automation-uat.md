@@ -24,7 +24,7 @@ During UAT, walk through each demo script with a non-technical client. Every reg
 
 ## Test fixtures (shared)
 
-Fixtures live in `apps/claw-workspace-service/src/__tests__/fixtures/` and are seeded via `prisma/seed-uat-fixtures.ts`:
+Target fixture set (not built yet: `apps/claw-workspace-service` has no fixtures folder and no `seed-uat-fixtures.ts` seed today):
 
 - `sample-emails.json` — 20 sample Gmail messages (5 with attachments, 5 HTML-only, 5 text-only, 5 long-thread, 2 XSS-attempt, 2 tracking-pixel)
 - `sample-jira.json` — 10 tickets (5 with >10 comments, 5 with <3 comments, distributed across statuses; 1 EPIC for stream 41)

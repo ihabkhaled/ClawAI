@@ -44,10 +44,15 @@ logic is testable without HTTP, and errors are handled in exactly one place.
 ## Correct pattern
 
 ```ts
-// apps/claw-chat-service/src/modules/chat/chat-message.controller.ts
+// apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts (abridged)
 @Post()
-async create(@Body() dto: CreateMessageDto, @CurrentUser() user: AuthUser) {
-  return this.chatMessageService.createMessage(user.id, dto);
+async create(
+  @CurrentUser() user: AuthenticatedUser,
+  @Req() req: Request,
+  @Body(new ZodValidationPipe(createMessageSchema)) dto: CreateMessageDto,
+  @ZeroRetentionRequested() zeroRetention: boolean,
+): Promise<ChatMessage> {
+  return this.chatMessagesService.createMessage(user.id, dto, extractBearer(req), zeroRetention);
 }
 ```
 

@@ -20,36 +20,36 @@
 
 ## Tier ladder
 
-| | **Free** | **Pro** | **Team** | **Enterprise** |
-|---|---|---|---|---|
-| **Price** | $0 | $19 / user / mo | $39 / user / mo | Custom (≥ 50 seats) |
-| **Best for** | Solo evaluator | Indie / solo professional | Small / mid team (5-50) | Org with compliance bar |
-| **Connectors** | 2 active | 8 active | unlimited active | unlimited + custom |
-| **Workspace objects synced** | 5,000 | 100,000 | 1,000,000 | unlimited |
-| **AI actions / month** | 50 | 1,500 | 10,000 / user pooled | unlimited |
-| **Approval queue** | manual only | manual + auto (risk-policy) | manual + auto + bulk + edit-then-approve | + custom policies |
-| **Recipes / chains** | — | 5 personal | 20 shared per team | unlimited + governance |
-| **Auto-suggestions** | — | scheduled (per provider) | + cross-provider + cron tuning | + custom cadence |
-| **Models routed** | Free local (Ollama) | + 1 cloud connector | + multi-cloud + parallel multi-model | + private Bedrock / Vertex |
-| **Local Frontier (Kimi K2 / GLM-5.1 / DeepSeek)** | install only | — | full | full |
-| **Webhook ingest** | — | inbound only | inbound + outbound to chains | + multi-region |
-| **Digest dashboard** | weekly only | daily + weekly | + per-team digest | + custom drill-downs |
-| **Workspace inbox + semantic search** | within 5k objects | full | full | + retention controls |
-| **Multi-model PR review / judge** | — | 1 reviewer model | up to 3 reviewers + judge | unlimited + custom |
-| **Memory-driven learning** | basic preferences | full | full + team memory | + tenant memory |
-| **Audit log** | 30 days | 90 days | 1 year | unlimited / SIEM export |
-| **RBAC** | single owner | single owner | role-based (Admin/Operator/Viewer) | + per-connector RBAC + IP allowlist |
-| **SSO** | — | — | Google / Microsoft | + SAML 2.0, SCIM provisioning |
-| **Data residency** | US default | US default | US / EU choice | + custom region + BYO-key (HSM) |
-| **Support** | community | email (48h) | email (24h) + chat | dedicated CSM + 99.9% SLA |
-| **DPA / GDPR / SOC 2** | self-serve | self-serve | + DPA | + SOC 2 Type II report |
+|                                                   | **Free**            | **Pro**                     | **Team**                                 | **Enterprise**                      |
+| ------------------------------------------------- | ------------------- | --------------------------- | ---------------------------------------- | ----------------------------------- |
+| **Price**                                         | $0                  | $19 / user / mo             | $39 / user / mo                          | Custom (≥ 50 seats)                 |
+| **Best for**                                      | Solo evaluator      | Indie / solo professional   | Small / mid team (5-50)                  | Org with compliance bar             |
+| **Connectors**                                    | 2 active            | 8 active                    | unlimited active                         | unlimited + custom                  |
+| **Workspace objects synced**                      | 5,000               | 100,000                     | 1,000,000                                | unlimited                           |
+| **AI actions / month**                            | 50                  | 1,500                       | 10,000 / user pooled                     | unlimited                           |
+| **Approval queue**                                | manual only         | manual + auto (risk-policy) | manual + auto + bulk + edit-then-approve | + custom policies                   |
+| **Recipes / chains**                              | —                   | 5 personal                  | 20 shared per team                       | unlimited + governance              |
+| **Auto-suggestions**                              | —                   | scheduled (per provider)    | + cross-provider + cron tuning           | + custom cadence                    |
+| **Models routed**                                 | Free local (Ollama) | + 1 cloud connector         | + multi-cloud + parallel multi-model     | + private Bedrock / Vertex          |
+| **Local Frontier (Kimi K2 / GLM-5.1 / DeepSeek)** | install only        | —                           | full                                     | full                                |
+| **Webhook ingest**                                | —                   | inbound only                | inbound + outbound to chains             | + multi-region                      |
+| **Digest dashboard**                              | weekly only         | daily + weekly              | + per-team digest                        | + custom drill-downs                |
+| **Workspace inbox + semantic search**             | within 5k objects   | full                        | full                                     | + retention controls                |
+| **Multi-model PR review / judge**                 | —                   | 1 reviewer model            | up to 3 reviewers + judge                | unlimited + custom                  |
+| **Memory-driven learning**                        | basic preferences   | full                        | full + team memory                       | + tenant memory                     |
+| **Audit log**                                     | 30 days             | 90 days                     | 1 year                                   | unlimited / SIEM export             |
+| **RBAC**                                          | single owner        | single owner                | role-based (Admin/Operator/Viewer)       | + per-connector RBAC + IP allowlist |
+| **SSO**                                           | —                   | —                           | Google / Microsoft                       | + SAML 2.0, SCIM provisioning       |
+| **Data residency**                                | US default          | US default                  | US / EU choice                           | + custom region + BYO-key (HSM)     |
+| **Support**                                       | community           | email (48h)                 | email (24h) + chat                       | dedicated CSM + 99.9% SLA           |
+| **DPA / GDPR / SOC 2**                            | self-serve          | self-serve                  | + DPA                                    | + SOC 2 Type II report              |
 
 ---
 
 ## Concrete limits, per tier (the numbers the gateway will enforce)
 
 These are the values the rate-limiter and quota services should read at runtime.
-They live in `packages/shared-constants/src/pricing-tiers.constants.ts` once shipped.
+Not shipped: no shared constant holds them yet (the plan is a `pricing-tiers.constants.ts` in `@claw/shared-constants`). Plan allowances that do ship live in the database — see `docs/business/`.
 
 ```ts
 export const PRICING_TIER_LIMITS = {
@@ -79,7 +79,7 @@ export const PRICING_TIER_LIMITS = {
     activeConnectors: Number.POSITIVE_INFINITY,
     workspaceObjects: 1_000_000,
     aiActionsPerMonth: 10_000, // pooled across team
-    recipesOwned: 20,           // shared across team
+    recipesOwned: 20, // shared across team
     parallelModels: 3,
     inboxSearchObjects: 1_000_000,
     auditLogDays: 365,
@@ -104,10 +104,10 @@ export const PRICING_TIER_LIMITS = {
 
 ## Upgrade triggers (what nudges a user to upgrade)
 
-| From | To | Trigger seen by user |
-|---|---|---|
-| Free | Pro | Hit 50 AI actions / month OR tried a 3rd connector |
-| Pro | Team | Wanted to share a recipe OR enabled SSO OR added 5+ teammates |
+| From | To         | Trigger seen by user                                                               |
+| ---- | ---------- | ---------------------------------------------------------------------------------- |
+| Free | Pro        | Hit 50 AI actions / month OR tried a 3rd connector                                 |
+| Pro  | Team       | Wanted to share a recipe OR enabled SSO OR added 5+ teammates                      |
 | Team | Enterprise | Compliance review request OR SAML/SCIM ask OR > 50 seats OR per-connector RBAC ask |
 
 Each trigger surfaces a non-blocking banner with one CTA ("Upgrade to Pro for

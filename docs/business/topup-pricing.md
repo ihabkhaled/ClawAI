@@ -37,10 +37,15 @@ idempotencyKey }` and **never an amount**
 | `credit-50`  |        $50.00 |          $30.00 |  0.60 |
 | `credit-100` |       $100.00 |          $60.00 |  0.60 |
 
-Seeded by `apps/claw-auth-service/prisma/seeders/credit-packages.seeder.js`.
-`priceMinor` is integer minor units; `creditMicroUsd` is integer micro-USD; the
-ratio is applied as **BigInt arithmetic**, so 60% of $5 is exactly $3.000000 and
-never `2999999.9999999995`. No float touches either number.
+Seeded by `apps/claw-auth-service/prisma/seeders/credit-packages.seeder.cjs`.
+
+> **Superseded ratio.** `apps/claw-auth-service/prisma/seeders/credit-package-repricing.seeder.cjs`
+> retires these versions and reprices every package to face value (ratio 1.00): the
+> margin lives in the plan, not the top-up. The table above records the original
+> 0.60 catalog.
+> `priceMinor` is integer minor units; `creditMicroUsd` is integer micro-USD; the
+> ratio is applied as **BigInt arithmetic**, so 60% of $5 is exactly $3.000000 and
+> never `2999999.9999999995`. No float touches either number.
 
 ## Why not 1:1
 

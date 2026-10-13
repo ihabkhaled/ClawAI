@@ -4,16 +4,19 @@
 **Type:** shared-package · **Path:** `packages/shared-auth`
 
 ## Canonical owner
-- Root policy: `CLAUDE.md` + `rules/00-non-negotiable-rules.md`
-- Shared packages: `rules/17-shared-packages.md` + `context/package-boundaries.md`
+- Root policy: `AGENTS.md` + `rules/00-non-negotiable-rules.md`
+- Shared packages: `rules/14-shared-packages.md` + `context/package-boundaries.md`
 
-## Commands (run in this folder only)
+## Commands (this workspace)
 ```
 npm run typecheck
 npm run lint
 npm run test
 npm run build
 ```
+
+Landing a change: `git commit`, then `git push` — the hooks run the gates this
+change type needs (`rules/23-git-commits-hooks-and-release-gates.md`, gate matrix).
 
 ## Dependencies (generated)
 - Depends on: @claw/shared-constants, @claw/shared-types, @claw/shared-utilities

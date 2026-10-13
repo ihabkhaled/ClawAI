@@ -41,7 +41,7 @@ external services stay mocked or are covered by [contract testing](contract-test
 A feature spanning services (e.g. message → routing → chat → memory/audit) is verified
 by asserting each hop's observable effect: event published (log line), event consumed
 (consumer effect), DB record in the owning service's DB, audit entry recorded. Do not
-try to stand up all 17 services in one test — assert per-seam. End-to-end user truth is
+try to stand up every service in one test — assert per-seam. End-to-end user truth is
 the E2E layer's job.
 
 ## Determinism

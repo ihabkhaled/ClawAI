@@ -70,9 +70,10 @@ oldest one.
    every router (`AGENTS.md`, `CODEX.md`, `cursor.md`, `GEMINI.md`, `KIMI.md`,
    `GLM.md`, `QWEN.md`, `DEEPSEEK.md`, `MISTRAL.md`, `.cursorrules`),
    `context/architecture-map.md`, `tools/knowledge/render-bootstrap.mjs` (then
-   `npm run knowledge:build` regenerates `.ai/BOOTSTRAP.md`), the wiki mirrors
-   (`wiki/Product-Vision.md`, `wiki/Flagship-Features.md`, `wiki/Home.md`,
-   `wiki/_Sidebar.md`, `wiki/Documentation-Index.md`, `wiki/ADR-Index.md`),
+   `npm run knowledge:build` regenerates `.ai/BOOTSTRAP.md`), the hand-written wiki pages
+   (`wiki/Home.md`, `wiki/_Sidebar.md`, `wiki/Documentation-Index.md`; the
+   Product-Vision, Flagship-Features and ADR-Index pages are rendered from their
+   docs through `wiki/mirrors.json` at publish time),
    `docs/13-adr/adr-index.md`, `docs/CHANGELOG.md`.
 4. **Honest gaps.** A pillar whose features are partly missing says so in the
    catalog's gap table. Never promise SSO, seats, shared billing or anything else

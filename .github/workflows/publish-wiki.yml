@@ -4,8 +4,13 @@ on:
   push:
     branches:
       - main
+    # Mirror pages render from any repository doc and service pages from the
+    # manifests (tools/knowledge/render-wiki.mjs), so any of them can change a page.
     paths:
       - 'wiki/**'
+      - '**/*.md'
+      - '.ai/manifests/**'
+      - 'tools/knowledge/render-wiki.mjs'
       - '.github/workflows/publish-wiki.yml'
   # Daily, so the wiki fills in by itself once its first page exists (GitHub
   # creates the wiki repository only then) instead of waiting for the next
@@ -27,6 +32,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      # Hand-written pages plus everything rendered from its single source:
+      # mirrors (wiki/mirrors.json) and manifest pages (ADR-168).
+      - name: Render wiki pages
+        run: node tools/knowledge/render-wiki.mjs --out "$RUNNER_TEMP/wiki-rendered"
 
       # One workflow publishes the wiki. `wiki-sync.yml` did the same job and
       # failed alongside this one; it was removed on 2026-09-19.
@@ -53,7 +67,7 @@ jobs:
           fi
           git clone "${remote}" "${workdir}/wiki-repo"
 
-          rsync -a --delete --exclude='.git/' wiki/ "${workdir}/wiki-repo/"
+          rsync -a --delete --exclude='.git/' "$RUNNER_TEMP/wiki-rendered/" "${workdir}/wiki-repo/"
 
           cd "${workdir}/wiki-repo"
           git config user.name "github-actions[bot]"

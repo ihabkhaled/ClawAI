@@ -71,7 +71,7 @@ starting, not mid-task.
 "Evidence" in this repo means one of:
 
 - A shell command and its **real, pasted** output — not a paraphrase, not
-  "should work". `npx tsgo --noEmit`, `npm test`, a `curl` against
+  "should work". `npm run typecheck`, `npm test`, a `curl` against
   `https://claw.local`, a `docker logs <container>` tail.
 - An exit code you actually observed (`echo $?` or the tool result), not one
   you infer from the absence of an error message.

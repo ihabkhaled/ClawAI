@@ -11,7 +11,7 @@
 - Verifier code: [apps/claw-agent-service/src/modules/fleet/utilities/saml-verifier.utility.ts](../../apps/claw-agent-service/src/modules/fleet/utilities/saml-verifier.utility.ts)
 - Service: [apps/claw-agent-service/src/modules/fleet/services/saml.service.ts](../../apps/claw-agent-service/src/modules/fleet/services/saml.service.ts)
 - Controller: [apps/claw-agent-service/src/modules/fleet/controllers/saml.controller.ts](../../apps/claw-agent-service/src/modules/fleet/controllers/saml.controller.ts)
-- Mock IdP harness: [qa/saml-mock-idp.mjs](../../qa/saml-mock-idp.mjs)
+- Mock IdP harness: `qa/saml-mock-idp.mjs` — a local, gitignored script (`qa/*` is not committed), so it exists only on a machine that has it.
 
 The verifier is intentionally library-free: a tight regex extractor + Node `crypto.createVerify`. It accepts SAML responses from Okta, Microsoft Entra ID (formerly Azure AD), Auth0, Keycloak, Google Workspace, and any other SAML 2.0 IdP that signs the response with RSA-SHA256.
 
@@ -34,10 +34,10 @@ The verifier is intentionally library-free: a tight regex extractor + Node `cryp
    - **Name ID format**: `EmailAddress`
    - **Application username**: `Email`
    - **Attribute Statements**:
-     | Name | Name format | Value |
-     |---|---|---|
-     | `email` | Basic | `user.email` |
-     | `role` | Basic | `appuser.role` (or hardcode `MEMBER` to start) |
+     | Name    | Name format | Value                                          |
+     | ------- | ----------- | ---------------------------------------------- |
+     | `email` | Basic       | `user.email`                                   |
+     | `role`  | Basic       | `appuser.role` (or hardcode `MEMBER` to start) |
 4. **Feedback** → **Finish**.
 5. From the app's **Sign On** tab, click **View Setup Instructions** and grab:
    - **Identity Provider Issuer** (your `expectedIssuer`)

@@ -7,22 +7,23 @@
 
 ## 1. Executive Summary
 
-ClawAI is a **local-first AI orchestration platform** that genuinely solves a real problem: giving technical users a self-hosted AI control plane where they can route prompts to local or cloud models, maintain persistent memory, ground answers in uploaded documents, and inspect every routing decision. The platform has **strong foundational engineering** across 17 microservices, a comprehensive Next.js frontend with 17 pages and 60+ components, and mature Docker orchestration.
+ClawAI is a **local-first AI orchestration platform** that genuinely solves a real problem: giving technical users a self-hosted AI control plane where they can route prompts to local or cloud models, maintain persistent memory, ground answers in uploaded documents, and inspect every routing decision. The platform has **strong foundational engineering** across its microservices (17 at the time), a comprehensive Next.js frontend with 17 pages and 60+ components, and mature Docker orchestration.
 
 **Overall Assessment: CONDITIONAL APPROVAL for internal/staged rollout.**
 
 The platform is approximately **75% production-ready**. The core chat→route→execute→respond pipeline works end-to-end. Memory extraction, file grounding, context assembly, and routing transparency are all wired. However, key gaps remain in message resilience (recently added DLQ), semantic search (no embeddings), and test coverage (312 unit tests but zero E2E).
 
 **Confidence Scores:**
-| Dimension | Score |
-|-----------|-------|
-| Business viability | 7/10 |
-| Technical completeness | 8/10 |
-| UX trust | 7/10 |
-| Operational readiness | 7/10 |
-| Test confidence | 6/10 |
-| Security posture | 7/10 |
-| Release risk | 6/10 (medium) |
+
+| Dimension              | Score         |
+| ---------------------- | ------------- |
+| Business viability     | 7/10          |
+| Technical completeness | 8/10          |
+| UX trust               | 7/10          |
+| Operational readiness  | 7/10          |
+| Test confidence        | 6/10          |
+| Security posture       | 7/10          |
+| Release risk           | 6/10 (medium) |
 
 ---
 
@@ -231,7 +232,7 @@ Technical users and teams need a unified AI interface that:
 
 | Layer              | Current                  | Needed                                                    |
 | ------------------ | ------------------------ | --------------------------------------------------------- |
-| Unit tests         | 312 across 17 services   | Add 2 untested services (logs)                            |
+| Unit tests         | 312 across the services  | Add 2 untested services (logs)                            |
 | Integration tests  | 0                        | Critical: message flow, memory extraction, file grounding |
 | E2E tests          | 0 (Playwright installed) | Critical: login → chat → response → verify                |
 | API contract tests | 0                        | Needed for inter-service contracts                        |

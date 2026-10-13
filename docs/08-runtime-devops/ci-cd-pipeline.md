@@ -90,7 +90,7 @@ measured coverage that only rises. Policy and the dated path to 92 %:
 | `secrets`                 | A leaked secret: rotate it first, then remove it; a false positive needs a reviewed `.gitleaks.toml` entry                                                                      |
 | `codeql`                  | Fix the finding; a reviewed false positive is dismissed in GitHub and listed in `tools/security/codeql-accepted.json`                                                           |
 | `knowledge-freshness`     | `npm run knowledge:build && npm run audit`, commit the result                                                                                                                   |
-| `knowledge-integrity`     | The listed broken link, stale generated file or contradiction                                                                                                                   |
+| `knowledge-integrity`     | The listed stale reference, hand-written count, copied section, missing `Docs:` trailer or contradiction — fix the doc ([rules/63](../../rules/63-docs-move-with-code.md))      |
 
 ## Adding a new workspace
 

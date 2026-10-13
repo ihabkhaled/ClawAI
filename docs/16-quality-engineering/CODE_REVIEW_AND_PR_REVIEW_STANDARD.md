@@ -10,7 +10,7 @@
 
 - Every PR requires at least one reviewer who did not write the code.
 - For changes touching auth, security, or encryption: two reviewers required.
-- For changes touching shared packages (`packages/*`): reviewer must understand downstream impact on all 17 services.
+- For changes touching shared packages (`packages/*`): reviewer must understand downstream impact on every service.
 
 ### Review Workflow
 
@@ -304,26 +304,26 @@ Checklist:
 
 Every PR that introduces new functionality must update these files if affected. Reviewer must verify:
 
-| File                                    | When to Update                            | Verified |
-| --------------------------------------- | ----------------------------------------- | -------- |
-| `.env.example`                          | New/renamed environment variable          | [ ]      |
-| `.env`                                  | New variable with working dev value       | [ ]      |
-| `scripts/install.sh`                    | New variable in generated .env block      | [ ]      |
-| `scripts/install.ps1`                   | Same for Windows                          | [ ]      |
-| `docker/docker-compose.dev.yml`         | New service, port, volume, DB, dependency | [ ]      |
-| `docker/docker-compose.yml`             | Same for production                       | [ ]      |
-| `docker/docker-compose.dev.ollama.yml`  | Same for dev+ollama                       | [ ]      |
-| `docker/docker-compose.prod.ollama.yml` | Same for prod+ollama                      | [ ]      |
-| `infra/nginx/nginx.conf`                | New route, SSE endpoint                   | [ ]      |
-| `packages/shared-constants`             | New port, service name                    | [ ]      |
-| `packages/shared-types`                 | New event pattern                         | [ ]      |
-| `apps/claw-health-service`              | New service to health check               | [ ]      |
-| `.github/workflows/ci.yml`              | New service in Prisma loop, test env vars | [ ]      |
-| i18n locale files (8)                   | New user-facing text                      | [ ]      |
-| `CLAUDE.md`                             | New pattern, service, env var, rule       | [ ]      |
-| `docs/`                                 | Architecture change                       | [ ]      |
-| Prisma migration                        | Schema change                             | [ ]      |
-| Seed files                              | New default data                          | [ ]      |
+| File                                                                                   | When to Update                            | Verified |
+| -------------------------------------------------------------------------------------- | ----------------------------------------- | -------- |
+| `.env.example`                                                                         | New/renamed environment variable          | [ ]      |
+| `.env`                                                                                 | New variable with working dev value       | [ ]      |
+| `scripts/install.sh`                                                                   | New variable in generated .env block      | [ ]      |
+| `scripts/install.ps1`                                                                  | Same for Windows                          | [ ]      |
+| `docker/docker-compose.dev.services.yml` / `docker/docker-compose.dev.databases.yml`   | New service, port, volume, DB, dependency | [ ]      |
+| `docker/docker-compose.prod.services.yml` / `docker/docker-compose.prod.databases.yml` | Same for production                       | [ ]      |
+| `docker/docker-compose.dev.ollama.yml`                                                 | Same for dev+ollama                       | [ ]      |
+| `docker/docker-compose.prod.ollama.yml`                                                | Same for prod+ollama                      | [ ]      |
+| `infra/nginx/nginx.conf`                                                               | New route, SSE endpoint                   | [ ]      |
+| `packages/shared-constants`                                                            | New port, service name                    | [ ]      |
+| `packages/shared-types`                                                                | New event pattern                         | [ ]      |
+| `apps/claw-health-service`                                                             | New service to health check               | [ ]      |
+| `.github/workflows/ci.yml`                                                             | New service in Prisma loop, test env vars | [ ]      |
+| i18n locale files (8)                                                                  | New user-facing text                      | [ ]      |
+| `CLAUDE.md`                                                                            | New pattern, service, env var, rule       | [ ]      |
+| `docs/`                                                                                | Architecture change                       | [ ]      |
+| Prisma migration                                                                       | Schema change                             | [ ]      |
+| Seed files                                                                             | New default data                          | [ ]      |
 
 ---
 

@@ -132,6 +132,4 @@ docker exec claw-pg-agent psql -U claw -d claw_agent -c \
 - [ADR-032 — Recipe engine architecture](../13-adr/ADR-032-recipe-engine-architecture.md)
 - [ADR-033 — Recipe runner orchestration](../13-adr/ADR-033-recipe-runner-orchestration.md)
 - [Implementation progress](../15-ai-context/desktop-agent-flagship-implementation-progress.md)
-- [QA — Stream 10 capability framework](../../qa/test-stream-10-capability-framework.sh)
-- [QA — Stream 13 recipe CRUD](../../qa/test-stream-13-recipes-crud.sh)
-- [QA — Stream 13 runner live](../../qa/test-stream-13-runner-live.sh)
+- QA scripts `qa/test-stream-10-capability-framework.sh`, `qa/test-stream-13-recipes-crud.sh` and `qa/test-stream-13-runner-live.sh` — local, gitignored scripts (`qa/*` is not committed), so they exist only on a machine that has them.

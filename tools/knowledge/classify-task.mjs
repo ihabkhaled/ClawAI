@@ -2,6 +2,12 @@
 // (rules/skills/reviewers/validation/pitfalls). Pure keyword matching — no AI,
 // fully reproducible. Packs mirror .ai/packs/ and context/task-router.md.
 
+/**
+ * Landing a change runs its gates through the hooks, scoped to the change
+ * type (rules/23 gate matrix). A pack names the extra commands only.
+ */
+const HOOK_LANE = 'git commit, then git push — the hooks gate this change for its type (rules/23 gate matrix)';
+
 const PACKS = [
   {
     pack: 'billing-payments',
@@ -27,9 +33,7 @@ const PACKS = [
       'reliability-engineer',
     ],
     validation: [
-      'cd apps/claw-auth-service && npm run typecheck && npm run lint && npm test',
-      'cd apps/claw-payment-service && npm run typecheck && npm run lint && npm test',
-      'cd apps/claw-frontend && npm run typecheck && npm run lint && npm test',
+      HOOK_LANE,
     ],
     pitfalls: [
       'Read rules/28-billing-integrity-and-api-contracts.md before changing billing state',
@@ -55,7 +59,7 @@ const PACKS = [
     ],
     summary: 'auth-service change touching identity, sessions, or permissions',
     reviewers: ['security-reviewer', 'authentication-reviewer', 'authorization-idor-reviewer'],
-    validation: ['cd apps/claw-auth-service && npm run typecheck && npm run lint && npm test'],
+    validation: [HOOK_LANE],
     pitfalls: [
       'Refresh-token rotation must invalidate the old token',
       'Never log tokens/passwords',
@@ -77,7 +81,7 @@ const PACKS = [
     ],
     summary: 'RabbitMQ event contract or producer/consumer change',
     reviewers: ['rabbitmq-event-reviewer', 'reliability-engineer'],
-    validation: ['cd packages/shared-types && npm run typecheck', 'npm run affected:test'],
+    validation: [HOOK_LANE],
     pitfalls: [
       'Add the pattern to packages/shared-types EventPattern first',
       'Every producer needs a documented consumer',
@@ -101,7 +105,7 @@ const PACKS = [
     reviewers: ['database-reviewer', 'migration-reviewer'],
     validation: [
       'cd apps/<service> && npx prisma migrate dev --name <name>',
-      'npm run affected:test',
+      HOOK_LANE,
     ],
     pitfalls: [
       'Migrations must be additive/reversible',
@@ -114,7 +118,7 @@ const PACKS = [
     keywords: ['stream', 'sse', 'streaming', 'chat', 'token delta', 'reasoning', 'progress'],
     summary: 'chat-service SSE / streaming change',
     reviewers: ['backend-code-reviewer', 'reliability-engineer', 'observability-reviewer'],
-    validation: ['cd apps/claw-chat-service && npm run typecheck && npm run lint && npm test'],
+    validation: [HOOK_LANE],
     pitfalls: [
       'SSE routes need @SkipLogging + proxy_buffering off in nginx',
       'Store an error ASSISTANT message on failure or polling spins forever',
@@ -137,7 +141,7 @@ const PACKS = [
     ],
     summary: 'connector-service provider adapter change',
     reviewers: ['backend-code-reviewer', 'security-reviewer', 'api-contract-reviewer'],
-    validation: ['cd apps/claw-connector-service && npm run typecheck && npm run lint && npm test'],
+    validation: [HOOK_LANE],
     pitfalls: [
       'Wrap the vendor SDK in an adapter — no raw SDK imports in services',
       'API keys are AES-256-GCM encrypted at rest',
@@ -149,7 +153,7 @@ const PACKS = [
     keywords: ['routing', 'router', 'route mode', 'auto mode', 'privacy', 'heuristic', 'policy'],
     summary: 'routing-service decision/policy change',
     reviewers: ['backend-code-reviewer'],
-    validation: ['cd apps/claw-routing-service && npm run typecheck && npm run lint && npm test'],
+    validation: [HOOK_LANE],
     pitfalls: [
       'Privacy keywords must force local routing',
       'ROUTER-role models never appear in the chat selector',
@@ -174,7 +178,7 @@ const PACKS = [
     ],
     summary: 'Next.js frontend feature/component change',
     reviewers: ['frontend-architect', 'accessibility-reviewer', 'i18n-reviewer'],
-    validation: ['cd apps/claw-frontend && npm run typecheck && npm run lint && npm test'],
+    validation: [HOOK_LANE],
     pitfalls: [
       'TSX = render only; no hooks/consts/inline types/sub-components',
       'All text via t() in all 13 locales',
@@ -197,7 +201,7 @@ const PACKS = [
     ],
     summary: 'workspace-service connector change',
     reviewers: ['backend-code-reviewer', 'security-reviewer', 'reliability-engineer'],
-    validation: ['cd apps/claw-workspace-service && npm run typecheck && npm run lint && npm test'],
+    validation: [HOOK_LANE],
     pitfalls: [
       'OAuth secrets never leave the backend',
       'Sync jobs must be idempotent + rate-limited',
@@ -219,7 +223,7 @@ const PACKS = [
     ],
     summary: 'infrastructure / config change',
     reviewers: ['infrastructure-reviewer', 'release-gatekeeper'],
-    validation: ['npm run knowledge:verify', 'npm run affected:build'],
+    validation: ['npm run knowledge:verify', HOOK_LANE],
     pitfalls: [
       'New service/DB → ALL split compose files in the same commit',
       'New env var → .env.example + installers + docs',
@@ -245,7 +249,7 @@ const DEFAULT = {
   reviewers: ['backend-code-reviewer', 'test-engineer'],
   validation: [
     'npm run affected:list',
-    'cd apps/<service> && npm run typecheck && npm run lint && npm test',
+    HOOK_LANE,
   ],
   pitfalls: [
     'Controller → Service → Repository layering',

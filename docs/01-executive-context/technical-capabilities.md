@@ -8,21 +8,21 @@ This document summarizes ClawAI's technical capabilities for business stakeholde
 
 ## Platform Scale
 
-| Metric                     | Value                                               |
-| -------------------------- | --------------------------------------------------- |
-| Backend services           | 17 NestJS microservices                             |
-| Frontend                   | Next.js 16 with React 19                            |
-| PostgreSQL databases       | 9                                                   |
-| MongoDB databases          | 3                                                   |
-| Cloud AI providers         | 5 (OpenAI, Anthropic, Google Gemini, DeepSeek, xAI) |
-| Local AI models (catalog)  | 30 across 6 categories                              |
-| Pre-installed local models | 5 (auto-pulled on startup)                          |
-| Routing modes              | 7                                                   |
-| Supported languages (UI)   | 8 (including Arabic RTL)                            |
-| File generation formats    | 7 (PDF, DOCX, CSV, HTML, MD, TXT, JSON)             |
-| Image generation providers | 3 (DALL-E, Gemini, Stable Diffusion)                |
-| Audit event types          | 10                                                  |
-| Frontend pages             | 17                                                  |
+| Metric                     | Value                                                         |
+| -------------------------- | ------------------------------------------------------------- |
+| Backend services           | <!-- count:services -->20<!-- /count --> NestJS microservices |
+| Frontend                   | Next.js 16 with React 19                                      |
+| PostgreSQL databases       | 9                                                             |
+| MongoDB databases          | 3                                                             |
+| Cloud AI providers         | 5 (OpenAI, Anthropic, Google Gemini, DeepSeek, xAI)           |
+| Local AI models (catalog)  | 30 across 6 categories                                        |
+| Pre-installed local models | 5 (auto-pulled on startup)                                    |
+| Routing modes              | 7                                                             |
+| Supported languages (UI)   | 8 (including Arabic RTL)                                      |
+| File generation formats    | 7 (PDF, DOCX, CSV, HTML, MD, TXT, JSON)                       |
+| Image generation providers | 3 (DALL-E, Gemini, Stable Diffusion)                          |
+| Audit event types          | 10                                                            |
+| Frontend pages             | 17                                                            |
 
 ---
 
@@ -149,7 +149,7 @@ This document summarizes ClawAI's technical capabilities for business stakeholde
 
 | Capability        | Implementation                                           |
 | ----------------- | -------------------------------------------------------- |
-| Health monitoring | Aggregated health check across all 17 services           |
+| Health monitoring | Aggregated health check across every service             |
 | Audit logging     | 10 event types, immutable MongoDB logs                   |
 | Usage tracking    | Token consumption, cost, latency per provider/model/user |
 | Server logs       | Centralized with 30-day retention                        |
@@ -160,12 +160,12 @@ This document summarizes ClawAI's technical capabilities for business stakeholde
 
 ## Deployment
 
-| Aspect        | Capability                                                  |
-| ------------- | ----------------------------------------------------------- |
-| Installation  | Single command (`docker compose up`)                        |
-| Containers    | ~22 (17 services + databases + infrastructure)              |
-| Hot reload    | Source changes auto-detected (Node --watch)                 |
-| CI/CD         | GitHub Actions (lint -> typecheck -> test -> build)         |
-| Pre-commit    | 5-step quality gate (format, lint, type-check, build, test) |
-| Configuration | Single `.env` file for everything                           |
-| Scripts       | Automated install (Linux/macOS/Windows), service management |
+| Aspect        | Capability                                                                     |
+| ------------- | ------------------------------------------------------------------------------ |
+| Installation  | Single command (`docker compose up`)                                           |
+| Containers    | <!-- count:services -->20<!-- /count --> services + databases + infrastructure |
+| Hot reload    | Source changes auto-detected (Node --watch)                                    |
+| CI/CD         | GitHub Actions (lint -> typecheck -> test -> build)                            |
+| Pre-commit    | 5-step quality gate (format, lint, type-check, build, test)                    |
+| Configuration | Single `.env` file for everything                                              |
+| Scripts       | Automated install (Linux/macOS/Windows), service management                    |

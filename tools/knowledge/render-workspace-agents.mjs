@@ -23,17 +23,20 @@ function render(ws, svc, manifests) {
     `**Type:** ${ws.type} · **Path:** \`${ws.dir}\``,
     '',
     '## Canonical owner',
-    '- Root policy: `CLAUDE.md` + `rules/00-non-negotiable-rules.md`',
+    '- Root policy: `AGENTS.md` + `rules/00-non-negotiable-rules.md`',
     ws.type === 'nestjs-service'
       ? '- Backend layering: `rules/09-backend-services.md` + `context/backend-architecture.md`'
       : ws.type === 'frontend'
         ? '- Frontend layering: `rules/04-nextjs-app-router.md` + `context/frontend-architecture.md`'
-        : '- Shared packages: `rules/17-shared-packages.md` + `context/package-boundaries.md`',
+        : '- Shared packages: `rules/14-shared-packages.md` + `context/package-boundaries.md`',
     '',
-    '## Commands (run in this folder only)',
+    '## Commands (this workspace)',
     '```',
     ...commands.map((c) => c),
     '```',
+    '',
+    'Landing a change: `git commit`, then `git push` — the hooks run the gates this',
+    'change type needs (`rules/23-git-commits-hooks-and-release-gates.md`, gate matrix).',
   ];
 
   if (svc) {

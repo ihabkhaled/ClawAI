@@ -72,9 +72,6 @@
 
 - [[Agent-CLI]]
 - [[Coding-Agent]]
-- [[Coding-Agent-Architecture]]
-- [[Coding-Agent-Security]]
-- [[Coding-Agent-Testing]]
 
 **Reference**
 

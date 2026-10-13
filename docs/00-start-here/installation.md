@@ -332,7 +332,7 @@ This installs dependencies for all workspaces:
 - Root workspace (shared tooling)
 - All 17 service apps
 - `apps/claw-frontend` (Next.js)
-- All 5 shared packages
+- All <!-- count:sharedPackages -->6<!-- /count --> shared packages
 
 ### 3. Build Shared Packages
 
@@ -553,8 +553,8 @@ sudo usermod -aG docker $USER
 To reset everything and start fresh:
 
 ```bash
-./scripts/claw.sh down -v
-npm run clean
+./scripts/claw.sh down                  # stops every layer; volumes are kept
+rm -rf node_modules apps/*/node_modules packages/*/node_modules packages/*/dist
 npm install
-./scripts/claw.sh up -d
+./scripts/claw.sh up
 ```

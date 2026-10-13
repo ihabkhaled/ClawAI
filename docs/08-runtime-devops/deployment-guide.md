@@ -70,10 +70,8 @@ The install scripts:
 ### Using Production Compose
 
 ```bash
-# Single file
-docker compose -f docker/docker-compose.yml up -d
-
-# Or via management script
+# The only supported way: claw.sh stitches the split prod compose files
+# (docker/docker-compose.prod.{databases,services,ollama}.yml) and the GPU overlay
 ./scripts/claw.sh --prod up
 ```
 
@@ -162,11 +160,20 @@ Use Cloudflare, AWS ALB, or Traefik in front of Nginx for SSL termination. This 
 
 ### Horizontal Scaling
 
-Backend services are stateless and can be scaled horizontally:
+Only `chat-service` can run as several replicas: it has no `container_name` and
+no published host port in `docker/docker-compose.prod.services.yml`, and its
+stream bus and Stop broadcast live in Redis. Every other service fixes a
+`container_name`, so Docker refuses to scale it. Set the replica count in `.env`
+and recreate the service:
 
 ```bash
-docker compose -f docker/docker-compose.yml up -d --scale chat-service=3
+# .env: CHAT_SERVICE_REPLICAS=4
+./scripts/claw.sh --prod service:recreate chat-service
 ```
+
+nginx reaches the replicas through the `chat-service` network alias and
+re-resolves it per request, so no upstream block is needed. The block below is
+only the general nginx pattern for a fixed set of named backends:
 
 Update Nginx to load-balance:
 

@@ -52,20 +52,20 @@ Caller (workspace-sync, scheduler, factory)
 
 Heuristic-based, deterministic, no LLM call:
 
-| Signal | Score added |
-|---|---|
-| AWS access key (`AKIA…`) | +100 |
-| GitHub PAT (`ghp_…`) | +100 |
-| Slack token (`xox[baprs]-…`) | +100 |
-| JWT pattern | +90 |
-| `Bearer …` / `secret=…` / `password=…` | +80 |
-| Credit-card-like digit run | +60 |
-| SSN pattern | +60 |
-| External recipient (non-`@claw.local`) | +25 |
-| Body length > 5000 chars | +10 |
-| HTML tag detected | +5 |
-| Base | +5 |
-| Cap | 100 |
+| Signal                                 | Score added |
+| -------------------------------------- | ----------- |
+| AWS access key (`AKIA…`)               | +100        |
+| GitHub PAT (`ghp_…`)                   | +100        |
+| Slack token (`xox[baprs]-…`)           | +100        |
+| JWT pattern                            | +90         |
+| `Bearer …` / `secret=…` / `password=…` | +80         |
+| Credit-card-like digit run             | +60         |
+| SSN pattern                            | +60         |
+| External recipient (non-`@claw.local`) | +25         |
+| Body length > 5000 chars               | +10         |
+| HTML tag detected                      | +5          |
+| Base                                   | +5          |
+| Cap                                    | 100         |
 
 Score → label thresholds: `LOW < 30 ≤ MEDIUM < 60 ≤ HIGH < 85 ≤ CRITICAL`.
 
@@ -90,39 +90,39 @@ A policy "matches" when both `providerRegex` and `actionKindRegex` test true and
 
 Seeded by [`AiActionDefaultPolicySeederManager`](../../apps/claw-workspace-service/src/modules/ai-actions/managers/ai-action-default-policy-seeder.manager.ts) on every service start, idempotent via `name` upsert. System defaults cannot be deleted via the admin REST API (HTTP 409).
 
-| Priority | Name | Kind | Notes |
-|---:|---|---|---|
-| 1000 | `deny-pii-leakage` | DENY | catches PII regex matches at draft time |
-| 999 | `deny-impl-prompt-auto-approve` | DENY | hard guard for stream 41 — IMPL_PROMPT never auto |
-| 600 | `allow-customer-facing-default` | ALLOW | Gmail/Slack drafts always require review |
-| 550 | `allow-write-action-default` | ALLOW | external write actions always require review |
-| 500 | `allow-high-risk-require-reason` | ALLOW | rejection of HIGH/CRITICAL needs typed reason |
-| 400 | `auto-approve-summarize-internal-jira` | AUTO_APPROVE | LOW-risk Jira summaries |
-| 400 | `auto-approve-summarize-internal-confluence` | AUTO_APPROVE | LOW-risk Confluence summaries |
-| 400 | `auto-approve-summarize-github-issue` | AUTO_APPROVE | LOW-risk GitHub Issue summaries |
-| 400 | `auto-approve-extract-action-items` | AUTO_APPROVE | LOW-risk EXTRACT on internal docs |
-| 400 | `auto-approve-estimate-low-risk` | AUTO_APPROVE | stream 41 ESTIMATE auto-approves at LOW |
-| 350 | `auto-approve-judge-low-risk` | AUTO_APPROVE | LOW-risk JUDGE actions |
-| 350 | `auto-approve-compare-low-risk` | AUTO_APPROVE | LOW-risk COMPARE actions |
-| 100 | `allow-default-strict` | ALLOW | catch-all fallback — explicit approval required |
+| Priority | Name                                         | Kind         | Notes                                             |
+| -------: | -------------------------------------------- | ------------ | ------------------------------------------------- |
+|     1000 | `deny-pii-leakage`                           | DENY         | catches PII regex matches at draft time           |
+|      999 | `deny-impl-prompt-auto-approve`              | DENY         | hard guard for stream 41 — IMPL_PROMPT never auto |
+|      600 | `allow-customer-facing-default`              | ALLOW        | Gmail/Slack drafts always require review          |
+|      550 | `allow-write-action-default`                 | ALLOW        | external write actions always require review      |
+|      500 | `allow-high-risk-require-reason`             | ALLOW        | rejection of HIGH/CRITICAL needs typed reason     |
+|      400 | `auto-approve-summarize-internal-jira`       | AUTO_APPROVE | LOW-risk Jira summaries                           |
+|      400 | `auto-approve-summarize-internal-confluence` | AUTO_APPROVE | LOW-risk Confluence summaries                     |
+|      400 | `auto-approve-summarize-github-issue`        | AUTO_APPROVE | LOW-risk GitHub Issue summaries                   |
+|      400 | `auto-approve-extract-action-items`          | AUTO_APPROVE | LOW-risk EXTRACT on internal docs                 |
+|      400 | `auto-approve-estimate-low-risk`             | AUTO_APPROVE | stream 41 ESTIMATE auto-approves at LOW           |
+|      350 | `auto-approve-judge-low-risk`                | AUTO_APPROVE | LOW-risk JUDGE actions                            |
+|      350 | `auto-approve-compare-low-risk`              | AUTO_APPROVE | LOW-risk COMPARE actions                          |
+|      100 | `allow-default-strict`                       | ALLOW        | catch-all fallback — explicit approval required   |
 
 ---
 
 ## API surface
 
-| Method | Path | Role |
-|---|---|---|
-| GET | `/api/v1/workspace/ai-actions/policies` | ADMIN, OPERATOR |
-| GET | `/api/v1/workspace/ai-actions/policies/:id` | ADMIN, OPERATOR |
-| POST | `/api/v1/workspace/ai-actions/policies` | ADMIN |
-| PATCH | `/api/v1/workspace/ai-actions/policies/:id` | ADMIN |
-| DELETE | `/api/v1/workspace/ai-actions/policies/:id` | ADMIN |
-| GET | `/api/v1/workspace/ai-actions/queue` | authenticated user (own scope) |
-| GET | `/api/v1/workspace/ai-actions/queue/:id` | authenticated user (own scope) |
-| POST | `/api/v1/workspace/ai-actions/queue/:id/approve` | authenticated user |
-| POST | `/api/v1/workspace/ai-actions/queue/:id/reject` | authenticated user (HIGH+ requires reason ≥10 chars) |
-| POST | `/api/v1/workspace/ai-actions/queue/:id/edit-and-approve` | authenticated user |
-| POST | `/api/v1/workspace/ai-actions/queue/bulk-approve` | authenticated user (CRITICAL excluded by guard) |
+| Method | Path                                                      | Role                                                 |
+| ------ | --------------------------------------------------------- | ---------------------------------------------------- |
+| GET    | `/api/v1/workspace/ai-actions/policies`                   | ADMIN, OPERATOR                                      |
+| GET    | `/api/v1/workspace/ai-actions/policies/:id`               | ADMIN, OPERATOR                                      |
+| POST   | `/api/v1/workspace/ai-actions/policies`                   | ADMIN                                                |
+| PATCH  | `/api/v1/workspace/ai-actions/policies/:id`               | ADMIN                                                |
+| DELETE | `/api/v1/workspace/ai-actions/policies/:id`               | ADMIN                                                |
+| GET    | `/api/v1/workspace/ai-actions/queue`                      | authenticated user (own scope)                       |
+| GET    | `/api/v1/workspace/ai-actions/queue/:id`                  | authenticated user (own scope)                       |
+| POST   | `/api/v1/workspace/ai-actions/queue/:id/approve`          | authenticated user                                   |
+| POST   | `/api/v1/workspace/ai-actions/queue/:id/reject`           | authenticated user (HIGH+ requires reason ≥10 chars) |
+| POST   | `/api/v1/workspace/ai-actions/queue/:id/edit-and-approve` | authenticated user                                   |
+| POST   | `/api/v1/workspace/ai-actions/queue/bulk-approve`         | authenticated user (CRITICAL excluded by guard)      |
 
 All policy-write paths run admin-supplied regexes through [`compilePolicyPattern`](../../apps/claw-workspace-service/src/common/utilities/policy-regex.utility.ts) — rejects with `400 messageKey=POLICY_REGEX_UNSAFE` if the pattern exceeds 256 chars or contains nested-quantifier shapes prone to catastrophic backtracking.
 
@@ -154,7 +154,7 @@ All consumed by `claw-audit-service`:
 ## Test coverage (this stream)
 
 - **Unit:** 41 specs across `policy-regex.utility`, `ai-action-risk-scorer.manager`, `ai-action-policy-matcher.manager`, `ai-action-approval.manager`, `ai-action-approval-queue.service`. Coverage on new files ≥ 95%.
-- **Live API:** [`qa/test-stream-10-approval-engine.sh`](../../qa/test-stream-10-approval-engine.sh) exercises 18 scenarios end-to-end against the running stack — all pass on the dev environment.
+- **Live API:** `qa/test-stream-10-approval-engine.sh` (a local, gitignored QA script — not in the repository) exercises 18 scenarios end-to-end against the running stack — all pass on the dev environment.
 - **DB verification:** every state transition asserted via `psql` queries inside the QA script.
 - **Docker logs:** scan confirms 0 critical errors after 18 live API operations.
 
@@ -171,7 +171,7 @@ All consumed by `claw-audit-service`:
 
 ## References
 
-- Source PLAN: [`.claude/Integrations/stream-10-approval-engine__PLAN.md`](../../.claude/Integrations/stream-10-approval-engine__PLAN.md)
+- Source PLAN: `.claude/Integrations/stream-10-approval-engine__PLAN.md` (a local planning file, not in the repository)
 - Pattern source: [`apps/claw-agent-service/src/common/constants/policy.constants.ts`](../../apps/claw-agent-service/src/common/constants/policy.constants.ts)
 - UAT stories 10.1–10.8: [`docs/10-uat-acceptance/workspace-automation-uat.md`](../10-uat-acceptance/workspace-automation-uat.md)
 - Migration: [`prisma/migrations/20260427000000_ai_action_approval_engine/`](../../apps/claw-workspace-service/prisma/migrations/20260427000000_ai_action_approval_engine/migration.sql)

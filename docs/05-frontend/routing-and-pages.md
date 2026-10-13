@@ -6,7 +6,9 @@
 
 ## 1. Route Structure
 
-ClawAI uses Next.js 16 App Router with route groups for layout separation:
+ClawAI uses Next.js 16 App Router with route groups for layout separation (paths relative to `apps/claw-frontend/`):
+
+<!-- docs:example -->
 
 ```
 src/app/

@@ -2,6 +2,9 @@
 
 Reference for ClawAI NestJS backend services; newer services are appended as they ship.
 
+Rules every backend service shares (commands, absolute rules, Docker rebuild, checklists):
+[backend-service-baseline.md](backend-service-baseline.md). Each service's `CLAUDE.md` adds only what is specific to it.
+
 ---
 
 ## Quick Reference Table

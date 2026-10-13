@@ -120,11 +120,13 @@ export const <NAME>_SERVICE_NAME = 'claw-<name>-service';
 ## Step 6 — Shared Types (if publishing events)
 
 ```typescript
-// packages/shared-types/src/events.ts
-export const <NAME>_EVENTS = {
-  THING_CREATED: '<name>.thing_created',
-  THING_UPDATED: '<name>.thing_updated',
-} as const;
+// packages/shared-types/src/events/event-patterns.ts — add members to the enum
+export enum EventPattern {
+  // …
+  <NAME>_THING_CREATED = '<name>.thing_created',
+  <NAME>_THING_UPDATED = '<name>.thing_updated',
+}
+// payload interfaces go in packages/shared-types/src/events/event-payloads.type.ts
 ```
 
 ---
@@ -149,9 +151,10 @@ location /api/v1/<name>/ {
 ## Step 8 — Health Service Registration
 
 ```typescript
-// apps/claw-health-service/src/modules/health/health.service.ts
-// Add to the service URL list:
-{ name: 'claw-<name>-service', url: this.config.<name>ServiceUrl + '/health' }
+// apps/claw-health-service/src/modules/health/constants/health.constants.ts
+// Add to SERVICE_URLS, then add the service to exactly one COMPONENT_MEMBERS group
+// (constants/status-page.constants.ts — a spec fails otherwise):
+'<name>-service': 'https://<name>-service:40XX/api/v1/health',
 ```
 
 ---
@@ -221,6 +224,9 @@ curl http://localhost:4000/api/v1/<name>/health
 # 6. Check logs
 ./scripts/claw.sh logs claw-<name>-service --tail=50
 
-# 7. Full quality suite
-cd apps/claw-<name>-service && npm run typecheck && npm run lint && npm run test
+# 7. Land it — the hooks run the quality suite for the change type
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "feat(<name>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```

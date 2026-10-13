@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document traces the full lifecycle of a user message from the moment the user presses send to the final audit log entry. The flow involves 7 services, 3 communication patterns (HTTP, RabbitMQ, SSE), and multiple async post-processing pipelines.
+This document traces the full lifecycle of a user message from the moment the user presses send to the final audit log entry. The flow involves several services, 3 communication patterns (HTTP, RabbitMQ, SSE), and multiple async post-processing pipelines.
 
 ---
 

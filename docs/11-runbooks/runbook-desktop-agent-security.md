@@ -124,4 +124,4 @@ If a customer reports a capability that ran without approval:
 - `apps/claw-agent-service/src/common/constants/capability-policy.constants.ts` — default policies
 - `docs/11-runbooks/runbook-capability-framework.md`
 - `docs/11-runbooks/runbook-fleet-enterprise-sso.md` — SSO + device governance
-- `docs/13-adr/ADR-029-capability-framework.md`
+- `docs/13-adr/ADR-029-capability-framework-and-policy-generalisation.md`

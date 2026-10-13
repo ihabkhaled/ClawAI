@@ -36,9 +36,12 @@ Mongoose schemas (audit / client-logs / server-logs).
 ## Correct pattern
 
 ```ts
-// apps/claw-connector-service/src/modules/connectors/connector.repository.ts
-async findById(id: string): Promise<Connector | null> {
-  return this.prisma.connector.findUnique({ where: { id } }); // returns null, never throws
+// apps/claw-connector-service/src/modules/connectors/repositories/connectors.repository.ts (abridged)
+async findById(id: string): Promise<ConnectorWithProviderDefinition | null> {
+  return this.prisma.connector.findUnique({                    // returns null, never throws
+    where: { id },
+    include: { providerDefinition: { select: { key: true, displayName: true } } },
+  }) as Promise<ConnectorWithProviderDefinition | null>;
 }
 ```
 

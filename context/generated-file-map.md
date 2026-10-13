@@ -16,25 +16,25 @@ and makes the manifests untrustworthy as ground truth.
 Produced by `npm run knowledge:build` (`tools/knowledge/build.mjs`). These are
 **ground truth** for facts. The set:
 
-| File                                         | Contains                                                      |
-| -------------------------------------------- | ------------------------------------------------------------- |
-| `services.json`                              | per-service dir, port, DB, models, deps, endpoint/test counts |
-| `ports.json`                                 | the 16 `*_SERVICE_PORT` constants                             |
-| `packages.json`                              | the 6 shared packages + internal deps                         |
-| `workspaces.json`                            | full workspace inventory                                      |
-| `workspace-dependency-graph.json`            | package/service dependency edges                              |
-| `rabbitmq-events.json`                       | event contract detail                                         |
-| `event-graph.json`                           | event pattern → producers/consumers (heuristic)               |
-| `api-endpoints.json`                         | 542 endpoints across services                                 |
-| `nginx-routes.json`                          | gateway prefix → service:port                                 |
-| `frontend-routes.json`                       | 102 frontend pages                                            |
-| `docker-services.json`                       | docker service → compose files                                |
-| `permissions.json`                           | 38 permissions                                                |
-| `environment-variables.json`                 | 335 env vars                                                  |
-| `prisma-models.json`                         | Prisma model inventory                                        |
-| `governance.json`                            | AI-entrypoint/rule/skill/doc sizes + counts                   |
-| `hashes.json`                                | content hashes for drift detection                            |
-| `i18n.json`, `repository.json`, `tests.json` | i18n coverage, repo meta, test-file counts                    |
+| File                                         | Contains                                                                          |
+| -------------------------------------------- | --------------------------------------------------------------------------------- |
+| `services.json`                              | per-service dir, port, DB, models, deps, endpoint/test counts                     |
+| `ports.json`                                 | the 16 `*_SERVICE_PORT` constants                                                 |
+| `packages.json`                              | the <!-- count:sharedPackages -->6<!-- /count --> shared packages + internal deps |
+| `workspaces.json`                            | full workspace inventory                                                          |
+| `workspace-dependency-graph.json`            | package/service dependency edges                                                  |
+| `rabbitmq-events.json`                       | event contract detail                                                             |
+| `event-graph.json`                           | event pattern → producers/consumers (heuristic)                                   |
+| `api-endpoints.json`                         | 542 endpoints across services                                                     |
+| `nginx-routes.json`                          | gateway prefix → service:port                                                     |
+| `frontend-routes.json`                       | 102 frontend pages                                                                |
+| `docker-services.json`                       | docker service → compose files                                                    |
+| `permissions.json`                           | 38 permissions                                                                    |
+| `environment-variables.json`                 | 335 env vars                                                                      |
+| `prisma-models.json`                         | Prisma model inventory                                                            |
+| `governance.json`                            | AI-entrypoint/rule/skill/doc sizes + counts                                       |
+| `hashes.json`                                | content hashes for drift detection                                                |
+| `i18n.json`, `repository.json`, `tests.json` | i18n coverage, repo meta, test-file counts                                        |
 
 ## Committed & generated — other `.ai/` files
 

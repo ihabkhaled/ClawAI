@@ -136,18 +136,18 @@ docker exec claw-mongo mongosh claw_audit --eval \
 ## Seed Scripts
 
 ```bash
-# Ollama model catalog seed (run after first migration)
-cd apps/claw-ollama-service
-npx tsx prisma/seed-catalog.ts
+# Every shipped seeder, once each, versioned (what a release runs)
+npm run seed:versioned
 
-# Auth admin user seed (runs automatically on startup)
-# But can also run manually:
-cd apps/claw-auth-service
-npx tsx prisma/seed.ts
+# Ollama model catalog — seeded at boot by CatalogSeedService; a manual run
+# (seed:catalog uses tsx through npx; tsx is not a declared dependency):
+npm run seed:catalog --workspace=claw-ollama-service
 
-# Routing policies seed
-cd apps/claw-routing-service
-npx tsx prisma/seed.ts
+# Auth admin user + plans (runs automatically on dev startup; prisma/seed.cjs)
+npm run seed --workspace=claw-auth-service
+
+# Routing policies (prisma/seed.cjs)
+npm run seed --workspace=claw-routing-service
 ```
 
 ---

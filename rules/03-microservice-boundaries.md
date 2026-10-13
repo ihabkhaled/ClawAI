@@ -9,7 +9,7 @@ system back into a distributed monolith.
 
 ## Applies to
 
-All 17 `apps/claw-*` services and the `nginx` routing layer.
+All <!-- count:services -->20<!-- /count --> backend `apps/claw-*` services and the `nginx` routing layer.
 
 ## Mandatory rules
 

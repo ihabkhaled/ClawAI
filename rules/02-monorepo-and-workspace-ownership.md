@@ -2,7 +2,7 @@
 
 ## Purpose
 
-ClawAI is an npm-workspaces monorepo: 17 NestJS services, one Next.js frontend,
+ClawAI is an npm-workspaces monorepo: <!-- count:services -->20<!-- /count --> NestJS services, one Next.js frontend,
 and six shared packages. Ownership boundaries keep changes scoped, gates cheap,
 and shared code from silently forking. This rule defines where code belongs and
 how workspaces depend on each other.

@@ -20,7 +20,7 @@ required_context: [ai-context-pack]
 affected_workspaces: [apps/claw-<service>-service]
 required_tests: [config validation spec (valid + missing/invalid)]
 required_docs: [docs/06-data/environment-variables.md]
-validation_lane: cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Skill: Add a Config Value
@@ -76,7 +76,10 @@ Configuration is Zod-validated in `src/app/config/app.config.ts`. Code reads fro
 ## Validation commands
 
 ```bash
-cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 ## Documentation updates

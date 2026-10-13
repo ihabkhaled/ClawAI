@@ -9,7 +9,7 @@ required_context: [declaration-ownership-map, package-boundaries]
 affected_workspaces: [the service under test, packages/shared-types if shared]
 required_tests: [contract]
 required_docs: [none]
-validation_lane: cd apps/<service> && npm test
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 ## When to use

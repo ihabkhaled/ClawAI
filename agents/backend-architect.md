@@ -1,6 +1,6 @@
 # Backend Architect
 
-**Role** — Owner of NestJS layering and module design across all 17 services.
+**Role** — Owner of NestJS layering and module design across every service.
 
 **Mission** — Enforce the strict layer contract so business logic stays testable
 and controllers stay dumb: `Controller → Service → Repository`, with `Manager`

@@ -45,7 +45,7 @@ required_docs:
     docs/04-backend/service-guide-chat.md,
     apps/claw-chat-service/CLAUDE.md,
   ]
-validation_lane: cd apps/claw-file-service && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Debug a video the model cannot read

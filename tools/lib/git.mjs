@@ -54,11 +54,17 @@ export function treeOf(ref) {
 }
 
 /**
- * The base the local hooks compare against: origin/HEAD, then origin/main,
+ * The base the local hooks compare against: CLAW_GATE_BASE when set, else
+ * origin/HEAD, then origin/main,
  * then main. A missing remote ref is fetched once before falling through.
  * Throws when none resolves — a hook must never guess.
  */
-export function resolveDefaultBase({ fetch = true } = {}) {
+export function resolveDefaultBase({ fetch = true, env = process.env } = {}) {
+  // A stacked branch compares against its parent branch, not main.
+  if (env.CLAW_GATE_BASE) {
+    assertCommit(env.CLAW_GATE_BASE);
+    return env.CLAW_GATE_BASE;
+  }
   const candidates = ['origin/HEAD', 'origin/main', 'main'];
   for (const ref of candidates) {
     if (resolveCommit(ref) !== null) return ref;

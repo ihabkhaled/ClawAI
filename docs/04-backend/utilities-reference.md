@@ -8,7 +8,7 @@
 
 ### `jwt.utility.ts`
 
-**Present in**: all 13+ services  
+**Present in**: every service  
 **Wraps**: `jsonwebtoken`  
 **Purpose**: JWT verification only (services never sign tokens — only `claw-auth-service` signs). Extracts and validates `AuthenticatedUser` from Authorization header.  
 **Pattern**:

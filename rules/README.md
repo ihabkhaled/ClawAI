@@ -75,7 +75,7 @@ explicitly and falls back to review. The mechanism vocabulary:
 | Mechanism             | What it means                                                             |
 | --------------------- | ------------------------------------------------------------------------- |
 | **ESLint**            | Flat-config rule (`eslint.config.*`), often `no-restricted-syntax`.       |
-| **TS config**         | `tsconfig` strictness / `tsgo --noEmit` typecheck.                        |
+| **TS config**         | `tsconfig` strictness / TypeScript 7 typecheck (`npm run typecheck`).     |
 | **Unit test**         | Vitest assertion (every workspace).                                       |
 | **Architecture test** | A test that asserts structure (layering, boundaries, no cross-DB import). |
 | **Knowledge check**   | `npm run knowledge:check` / `knowledge:verify` against `.ai/manifests/`.  |
@@ -97,3 +97,4 @@ No silent bypasses: an undocumented `eslint-disable`, `@ts-expect-error`, or
 | [`60-qa-evidence-is-mandatory-and-machine-checked.md`](60-qa-evidence-is-mandatory-and-machine-checked.md) | STRICT: fifteen QA lanes (unit, manual API, manual browser, e2e, RBAC+plans, device matrix, UAT, product, business, regression, security, perf, i18n, docs) recorded per batch in docs/qa-evidence and checked by CI |
 | [`61-threads-account-deletion.md`](61-threads-account-deletion.md) | Auth outbox, typed deletion event, idempotent service consumers, hashed tombstones, anonymous public retention, and private artifact erasure |
 | [`62-portal-shell-must-never-scroll-as-a-document.md`](62-portal-shell-must-never-scroll-as-a-document.md) | PortalShell stays `relative h-dvh overflow-clip`; absolute/sr-only content must not stretch the document; responsive audit checks scrollHeight and scrollWidth |
+| [`63-docs-move-with-code.md`](63-docs-move-with-code.md) | NON-NEGOTIABLE: every doc that describes a change is accurate in the same commit; `Docs:` trailer on every commit; `docs:impact`, `docs:refs`, counts and duplication checks in the hooks and CI (ADR-168) |

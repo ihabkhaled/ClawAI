@@ -12,3 +12,14 @@ coverage
 apps/*/AGENTS.md
 packages/*/AGENTS.md
 docs/features/ai-native-engineering-os/inventory.snapshot.json
+# Per-model routers, generated from AGENTS.md (tools/knowledge/render-model-routers.mjs).
+CODEX.md
+GEMINI.md
+DEEPSEEK.md
+GLM.md
+KIMI.md
+MISTRAL.md
+QWEN.md
+# Coverage and lint ratchet tables, written by their tools.
+tools/lint/warnings-baseline.json
+tools/coverage/thresholds.json

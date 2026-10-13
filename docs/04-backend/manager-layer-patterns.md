@@ -7,13 +7,15 @@ Manager classes handle complex orchestration that exceeds the scope of a service
 ## When to Use a Manager
 
 Use a Manager class when:
+
 - A workflow involves **multiple service calls** that must be coordinated
 - **External API calls** with retry logic, fallback chains, or error recovery
 - **Complex data transformation** spanning multiple sources
 - A single service method would exceed **30 lines**
-- The logic involves **cross-cutting concerns** (e.g., context assembly from 4 services)
+- The logic involves **cross-cutting concerns** (e.g., context assembly from several services)
 
 Do NOT use a Manager when:
+
 - Simple CRUD that fits in 30 lines
 - Single repository call + event publish
 - Pure validation logic (use service private methods instead)
@@ -48,6 +50,7 @@ handleMessageRouted()
 ```
 
 Key patterns:
+
 - **Fallback chain**: If primary provider fails, tries fallbackProvider/fallbackModel
 - **Error message storage**: On total failure, stores ASSISTANT message with `metadata: { error: true }`
 - **SSE emission**: Emits events on success AND failure so frontend can react
@@ -67,6 +70,7 @@ assemble(threadId, userId)
 ```
 
 Key patterns:
+
 - **Parallel fetching**: Memories, packs, and files fetched concurrently
 - **Token budget**: Truncates from the end to fit within model's context window
 - **Graceful degradation**: If a service is down, continues without that context
@@ -99,6 +103,7 @@ buildPrompt(content, routingMode)
 ```
 
 Key patterns:
+
 - **5-minute cache TTL** for installed models
 - **Cache invalidation** on MODEL_PULLED/MODEL_DELETED events
 - **Category detection**: 28 coding, 21 reasoning, 15 thinking keywords

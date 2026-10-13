@@ -25,7 +25,7 @@ affected_workspaces: [apps/claw-*, apps/claw-frontend]
 required_tests: [review-only]
 required_docs:
   [docs/03-architecture/security-architecture, docs/03-architecture/api-security-checklist]
-validation_lane: cd apps/claw-<service> && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 **When to use**
@@ -82,7 +82,7 @@ validation_lane: cd apps/claw-<service> && npm run typecheck && npm run lint && 
 - `rg -n "z\.string\(\)(?!.*\.max)" apps/claw-<service>/src` — strings lacking `.max()`.
 - `rg -n "encryptedConfig|encryptedTokens|passwordHash" apps/claw-<service>/src/**/*.repository.ts` — confirm stripped, not returned.
 - `rg -n "console\.log|EventSource|new Function|eval\(" apps/claw-<service>/src apps/claw-frontend/src`.
-- Gate lane: `cd apps/claw-<service> && npm run typecheck && npm run lint && npm test && npm run build`.
+- Gate lane: commit and push — the hooks run the gates for the change type ([rules/23 gate matrix](../rules/23-git-commits-hooks-and-release-gates.md#gate-matrix-by-change-type)).
 
 **Documentation updates**
 

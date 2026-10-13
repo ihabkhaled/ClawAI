@@ -1,6 +1,6 @@
 # Package Boundaries
 
-The 6 shared packages under `packages/` carry everything that crosses a service
+The <!-- count:sharedPackages -->6<!-- /count --> shared packages under `packages/` carry everything that crosses a service
 boundary at compile time. Ground truth: `.ai/manifests/packages.json`,
 `workspace-dependency-graph.json`.
 
@@ -9,7 +9,7 @@ boundary at compile time. Ground truth: `.ai/manifests/packages.json`,
 > **types → `@claw/shared-types` · values → `@claw/shared-constants` · functions
 > → `@claw/shared-utilities`.**
 
-If a type/value/function is used by 2+ services, it belongs in the corresponding
+If a type/value/function is used by two or more services, it belongs in the corresponding
 package — never copied per service. If a utility lives identically in 2+
 services, that is a bug: move it to `@claw/shared-utilities` and replace the
 copies with imports (extend-don't-parallelize).
@@ -42,15 +42,15 @@ leaves; `shared-utilities` and `shared-rabbitmq` → both leaves;
 
 ## Decision guide
 
-| You have…                                              | Put it in…                        |
-| ------------------------------------------------------ | --------------------------------- |
-| A type/enum used by 2+ services or in an event payload | `shared-types`                    |
-| A constant/port/name used by 2+ services               | `shared-constants`                |
-| A pure function used by 2+ services                    | `shared-utilities`                |
-| An auth guard/decorator                                | `shared-auth`                     |
-| Event publish/consume plumbing                         | `shared-rabbitmq`                 |
-| A plan/entitlement gate                                | `shared-entitlements`             |
-| Something used by only ONE service                     | keep it **local** to that service |
+| You have…                                                       | Put it in…                        |
+| --------------------------------------------------------------- | --------------------------------- |
+| A type/enum used by two or more services or in an event payload | `shared-types`                    |
+| A constant/port/name used by two or more services               | `shared-constants`                |
+| A pure function used by two or more services                    | `shared-utilities`                |
+| An auth guard/decorator                                         | `shared-auth`                     |
+| Event publish/consume plumbing                                  | `shared-rabbitmq`                 |
+| A plan/entitlement gate                                         | `shared-entitlements`             |
+| Something used by only ONE service                              | keep it **local** to that service |
 
 ## Who builds what (Dockerfiles)
 
@@ -70,13 +70,14 @@ Stale when: a Dockerfile builds shared packages through something other than
 `npm run build` (the matcher would then need updating), or `.dockerignore`
 stops copying `packages/*/dist`.
 
-## CI footgun when adding a new package
+## CI when adding a new package
 
-Adding a `packages/<name>` workspace requires TWO edits per job × 4 jobs in
-`.github/workflows/ci.yml`: (1) the "Build shared packages" `tsgo` line, and
-(2) the `strategy.matrix.include` entry. Missing the matrix entry means the
-package's own lint/typecheck/test never runs in CI. See
-[stack-and-toolchain.md](stack-and-toolchain.md).
+No CI file is hand-edited for a new `packages/<name>` workspace: the affected
+matrix and the shared-package build order are derived from the npm workspaces
+and each `package.json` (`tools/affected/index.mjs` `ci-matrix` and
+`shared-build`). The footgun now is a consumer that uses the package without
+declaring it as a dependency — then neither the build order nor the matrix
+sees the edge. See [stack-and-toolchain.md](stack-and-toolchain.md#ci).
 
 ## Never do
 

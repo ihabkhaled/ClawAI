@@ -165,11 +165,11 @@ Outstanding follow-ups:
 
 ## 4. Phase 1 deliverables shipped this session
 
-- `apps/claw-chat-service/src/modules/chat-messages/utilities/follow-up-detection.utility.ts`
+- `apps/claw-chat-service/src/common/utilities/follow-up-detection.utility.ts`
   — heuristic detector for "continue", "make it shorter", "translate it", "do
   the second one", "regenerate", "fix it", "add tests", "in arabic", "compare
   them"… returns `{ isFollowUp: boolean, signals: string[], confidence: number }`.
-- `apps/claw-chat-service/src/modules/chat-messages/utilities/__tests__/follow-up-detection.utility.spec.ts`
+- `apps/claw-chat-service/src/common/utilities/__tests__/follow-up-detection.utility.spec.ts`
   — 30+ unit tests across positive / negative / multilingual / ambiguous cases.
 - `apps/claw-chat-service/src/modules/chat-messages/types/context.types.ts` extended
   with optional `inclusionExplanation: string[]` on `AssembledContext` so

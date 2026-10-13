@@ -10,13 +10,15 @@ ClawAI supports cloud AI providers through the connector system. Adding a new pr
 
 1. **Add the provider enum value**
 
-   File: `packages/shared-types/src/enums/provider.enum.ts`
+   File: `packages/shared-types/src/enums/connector-provider.enum.ts`
 
-   Add the new provider to the `Provider` enum (e.g., `MISTRAL = 'MISTRAL'`).
+   Add the new provider to the `ConnectorProvider` enum (e.g., `MISTRAL = 'MISTRAL'`).
+   An OpenAI-compatible provider needs no enum value or adapter at all — it is
+   data: see `skills/add-an-openai-compatible-provider.md`.
 
 2. **Implement the provider adapter**
 
-   File: `apps/claw-connector-service/src/modules/connectors/adapters/<provider>.adapter.ts`
+   File: `apps/claw-connector-service/src/modules/connectors/managers/adapters/<provider>.adapter.ts`, registered in `adapter-factory.ts` next to it
 
    Implement the adapter interface with methods for:
    - `testConnection()` — verify the API key works
@@ -84,7 +86,7 @@ Adding a new microservice to the ClawAI platform.
 
    PostgreSQL:
    - Create `prisma/schema.prisma` with the data model
-   - Add PG container to `docker/docker-compose.dev.yml`
+   - Add the PG container to `docker/docker-compose.dev.databases.yml` and `docker/docker-compose.prod.databases.yml`
    - Add `PG_<NAME>_USER`, `PG_<NAME>_PASSWORD`, `PG_<NAME>_DB`, `PG_<NAME>_PORT` to `.env.example` and `.env`
    - Add `<NAME>_DATABASE_URL` to `.env.example` and `.env`
    - Add named volume for the database
@@ -94,7 +96,7 @@ Adding a new microservice to the ClawAI platform.
 
 4. **Add to Docker Compose**
 
-   Add the service container to `docker/docker-compose.dev.yml`:
+   Add the service container to `docker/docker-compose.dev.services.yml` and `docker/docker-compose.prod.services.yml` (and every GPU overlay that lists services):
    - Build context and Dockerfile
    - Port mapping
    - Volume mounts (src/ and prisma/ if applicable)
@@ -286,7 +288,7 @@ When scaling, consider:
 
 ### Vertical Scaling
 
-Adjust container resource limits in `docker/docker-compose.dev.yml`:
+Adjust container resource limits in `docker/docker-compose.dev.services.yml` (and the prod counterpart):
 
 ```yaml
 services:

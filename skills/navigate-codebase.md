@@ -51,7 +51,7 @@ For tracing a full request or event flow, use the dedicated trace skills.
 ## Repository discovery steps
 
 Mental model: `apps/claw-<name>-service/` (backend, NestJS + Prisma),
-`apps/claw-frontend/` (Next.js), `packages/shared-*` (6 shared packages).
+`apps/claw-frontend/` (Next.js), `packages/shared-*` (<!-- count:sharedPackages -->6<!-- /count --> shared packages).
 Ports: auth 4001, chat 4002, connector 4003, routing 4004, memory 4005,
 file 4006, audit 4007, ollama 4008, health 4009, client-logs 4010,
 server-logs 4011, image 4012, file-generation 4013, workspace 4014, agent 4015,

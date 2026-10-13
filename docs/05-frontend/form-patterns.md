@@ -24,18 +24,18 @@ All form validation uses Zod schemas defined in `src/lib/validation/<name>.schem
 
 ### Available Schemas
 
-| Schema File                  | Purpose                              |
-| ---------------------------- | ------------------------------------ |
-| `login.schema.ts`            | Login form (email, password)         |
-| `change-password.schema.ts`  | Password change form                 |
-| `connector.schema.ts`        | Connector create/edit form           |
-| `context-pack.schema.ts`     | Context pack form                    |
-| `file.schema.ts`             | File upload validation               |
-| `memory.schema.ts`           | Memory record form                   |
-| `message.schema.ts`          | Message composer validation          |
-| `ollama.schema.ts`           | Model pull/role assignment forms     |
-| `routing.schema.ts`          | Routing policy form                  |
-| `thread.schema.ts`           | Thread settings form                 |
+| Schema File                 | Purpose                          |
+| --------------------------- | -------------------------------- |
+| `login.schema.ts`           | Login form (email, password)     |
+| `change-password.schema.ts` | Password change form             |
+| `connector.schema.ts`       | Connector create/edit form       |
+| `context-pack.schema.ts`    | Context pack form                |
+| `file.schema.ts`            | File upload validation           |
+| `memory.schema.ts`          | Memory record form               |
+| `message.schema.ts`         | Message composer validation      |
+| `ollama.schema.ts`          | Model pull/role assignment forms |
+| `routing.schema.ts`         | Routing policy form              |
+| `thread.schema.ts`          | Thread settings form             |
 
 ### Schema Pattern
 
@@ -63,28 +63,28 @@ export type LoginFormValues = z.infer<typeof loginSchema>;
 
 ```typescript
 // Required string with length limits
-z.string().min(1, 'Name is required').max(255, 'Name is too long')
+z.string().min(1, 'Name is required').max(255, 'Name is too long');
 
 // Optional string with max
-z.string().max(1000, 'Description is too long').optional()
+z.string().max(1000, 'Description is too long').optional();
 
 // Enum validation
-z.nativeEnum(RoutingMode)
+z.nativeEnum(RoutingMode);
 
 // Number with range
-z.number().min(0).max(2).step(0.1)  // temperature 0-2
+z.number().min(0).max(2).step(0.1); // temperature 0-2
 
 // Array with limits
-z.array(z.string()).max(10, 'Maximum 10 items')
+z.array(z.string()).max(10, 'Maximum 10 items');
 
 // Conditional validation
 z.object({
   provider: z.nativeEnum(ConnectorProvider),
   apiKey: z.string().min(1).optional(),
-}).refine(
-  (data) => data.provider !== ConnectorProvider.OPENAI || data.apiKey,
-  { message: 'API key is required for OpenAI', path: ['apiKey'] },
-)
+}).refine((data) => data.provider !== ConnectorProvider.OPENAI || data.apiKey, {
+  message: 'API key is required for OpenAI',
+  path: ['apiKey'],
+});
 ```
 
 ---
@@ -124,9 +124,12 @@ export function useConnectorFormState(initialValues?: ConnectorFormValues) {
   }, []);
 
   return {
-    name, setName,
-    provider, setProvider,
-    apiKey, setApiKey,
+    name,
+    setName,
+    provider,
+    setProvider,
+    apiKey,
+    setApiKey,
     errors,
     validate,
     reset,
@@ -152,7 +155,13 @@ All form inputs MUST use shadcn/ui components:
 
 ```tsx
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
@@ -172,9 +181,7 @@ import { Button } from '@/components/ui/button';
     onChange={(e) => formState.setName(e.target.value)}
     placeholder={t('connectors.namePlaceholder')}
   />
-  {formState.errors.name && (
-    <p className="text-sm text-destructive">{formState.errors.name}</p>
-  )}
+  {formState.errors.name && <p className="text-sm text-destructive">{formState.errors.name}</p>}
 </div>
 ```
 
@@ -271,11 +278,7 @@ function CreateConnectorDialog({ open, onOpenChange }: DialogProps): ReactElemen
         <DialogHeader>
           <DialogTitle>{t('connectors.create')}</DialogTitle>
         </DialogHeader>
-        <ConnectorForm
-          onSubmit={handleCreate}
-          formState={formState}
-          isPending={isPending}
-        />
+        <ConnectorForm onSubmit={handleCreate} formState={formState} isPending={isPending} />
       </DialogContent>
     </Dialog>
   );
@@ -291,9 +294,9 @@ function CreateConnectorDialog({ open, onOpenChange }: DialogProps): ReactElemen
 Display directly below the input field:
 
 ```tsx
-{errors.fieldName && (
-  <p className="text-sm text-destructive">{errors.fieldName}</p>
-)}
+{
+  errors.fieldName && <p className="text-sm text-destructive">{errors.fieldName}</p>;
+}
 ```
 
 ### Form-Level Errors
@@ -301,11 +304,11 @@ Display directly below the input field:
 Display at the top or bottom of the form:
 
 ```tsx
-{submitError && (
-  <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-    {submitError}
-  </div>
-)}
+{
+  submitError && (
+    <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{submitError}</div>
+  );
+}
 ```
 
 ### API Error Handling
@@ -322,33 +325,6 @@ onError: (error: Error) => {
 
 ## 8. Validation Tests
 
-Every Zod schema has corresponding tests in `src/lib/validation/__tests__/`:
-
-```typescript
-// src/lib/validation/__tests__/login.schema.test.ts
-describe('loginSchema', () => {
-  it('should accept valid credentials', () => {
-    const result = loginSchema.safeParse({
-      email: 'user@example.com',
-      password: 'password123',
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it('should reject invalid email', () => {
-    const result = loginSchema.safeParse({
-      email: 'not-an-email',
-      password: 'password123',
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it('should reject empty password', () => {
-    const result = loginSchema.safeParse({
-      email: 'user@example.com',
-      password: '',
-    });
-    expect(result.success).toBe(false);
-  });
-});
-```
+Every Zod schema has corresponding tests in `src/lib/validation/__tests__/` (for example
+`login.schema.test.ts`). How to write them, with a worked example:
+[frontend-testing-guide.md — Testing Validation Schemas](../09-testing/frontend-testing-guide.md#4-testing-validation-schemas).

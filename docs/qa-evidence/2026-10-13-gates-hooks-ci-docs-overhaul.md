@@ -87,6 +87,30 @@ Component measurements:
   `tools/security/codeql-accepted.json` (the 3 reviewed dismissals).
 - actionlint + shellcheck over every workflow: 5 findings (2 pre-existing in `lighthouse.yml` and
   `release.yml`), all fixed; 0 now.
+- Pre-push builds raced: shared packages built in the same pool as their dependents (three
+  service builds read a half-written `dist`). Fixed — shared packages build first, in order.
+- A 7-minute pre-push outlived its HTTPS connection (exit 141 after `pre-push OK`, nothing
+  pushed). `npm run gates:receipt` first, then the push skipped every gate on genuine receipts
+  and finished in 3.7s.
+- Docs checks, first repo-wide run (living docs only): 995 reference problems (after parser
+  fixes: 414), 346 hand-written counts, 200 copied sections. Causes: 176 wiki pages that were
+  dumps or copies (now rendered at publish time from `wiki/mirrors.json` and the manifests, or
+  deleted — the committed service pages showed e.g. 1 endpoint / 4 tests for health-service; the
+  rendered page shows 3 / 14), the old split of compose files, `npx tsgo` (not installed), rule
+  example paths to files that moved, and boilerplate copied into most service `CLAUDE.md`
+  files (now one `docs/04-backend/backend-service-baseline.md`). After the sweep:
+  `node tools/knowledge/docs-checks.mjs all` → `docs checks OK — refs, counts, duplication`.
+- Committing the 516-file docs batch failed in lint-staged: "The command line is too long" for a
+  6,951-character Prettier chunk. The npm `.cmd` shim runs through cmd.exe, which escapes every
+  argument (~4 characters each) before its 8,191 cap. Both lint-staged configs now spawn
+  `node <bin>` for Prettier and ESLint (test in `ci-gates.test.mjs`); the frontend config also
+  stopped formatting its generated `AGENTS.md`.
+- `AGENTS.md` 11,077 → 5,253 bytes (canonical router); `CLAUDE.md` 50,503 → 9,149 bytes;
+  the seven per-model routers are generated from `AGENTS.md` and verified fresh.
+- Out of scope, recorded as follow-ups: root `docker:*` npm scripts call a removed root compose
+  file; `seed:catalog` (ollama, llamacpp) runs `npx tsx`, which is not installed; the frontend
+  responsive-audit script hard-codes a local path; two ADR files carry the number 142; eight
+  pre-existing `eslint-disable` directives.
 
 ## Open gaps
 

@@ -11,7 +11,7 @@ workspace-service connector change.
 - `agents/reliability-engineer.md`
 
 ## Validation lane
-- `cd apps/claw-workspace-service && npm run typecheck && npm run lint && npm test`
+- `git commit, then git push — the hooks gate this change for its type (rules/23 gate matrix)`
 
 ## Known pitfalls
 - OAuth secrets never leave the backend

@@ -41,7 +41,7 @@ export enum NewStatus {
 }
 ```
 
-If cross-service, also add to `packages/shared-types/src/enums.ts`.
+If cross-service, put it in `packages/shared-types/src/enums/<name>.enum.ts` instead and export it from `packages/shared-types/src/enums/index.ts`.
 
 ### 3. Types
 
@@ -211,7 +211,7 @@ Also export from `src/types/index.ts`.
 ### 2. Enums
 
 ```typescript
-// apps/claw-frontend/src/enums/new-entity-status.enum.ts
+// apps/claw-frontend/src/enums/<entity>-status.enum.ts
 export enum NewEntityStatus {
   PENDING = 'PENDING',
   ACTIVE = 'ACTIVE',
@@ -298,7 +298,7 @@ export function NewEntityCard({ entity }: NewEntityCardProps): React.ReactElemen
 ### 8. Page
 
 ```typescript
-// apps/claw-frontend/src/app/(portal)/new-entities/page.tsx
+// apps/claw-frontend/src/app/(portal)/<entities>/page.tsx
 export default function NewEntitiesPage(): React.ReactElement {
   const { entities, isLoading, isError, handleCreate } = useNewEntitiesPage();
 
@@ -334,10 +334,13 @@ newEntities: {
 
 ## After Feature Implementation
 
-Run the full quality suite:
+Land it — the hooks run the quality suite for the change type:
 
 ```bash
-npm run typecheck && npm run lint && npm run test && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 Then run the QA script:

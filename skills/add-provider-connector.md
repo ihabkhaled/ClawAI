@@ -20,7 +20,7 @@ affected_workspaces: [apps/claw-connector-service, packages/shared-types]
 required_tests: [adapter spec (mocked SDK), health + sync spec, qa connector matrix]
 required_docs:
   [docs/07-integrations/ai-provider-catalog.md, docs/04-backend/service-guide-connector.md]
-validation_lane: cd apps/claw-connector-service && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Skill: Add an AI Provider Connector
@@ -105,7 +105,10 @@ key header, 0 models the list format or path. Recipes: provider-catalog.md.
 ## Validation commands
 
 ```bash
-cd apps/claw-connector-service && npm run typecheck && npm run lint && npm test && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 ## Documentation updates

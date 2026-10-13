@@ -27,6 +27,10 @@ Page (TSX)
 
 ## 2. Folder Structure
 
+Paths in this tree are relative to their parent folder, not the repository root.
+
+<!-- docs:example -->
+
 ```
 apps/claw-frontend/src/
   app/                        # Next.js App Router pages and layouts

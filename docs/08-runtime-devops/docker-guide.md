@@ -3,7 +3,7 @@
 ## Overview
 
 ClawAI runs as a fully containerized development environment using split Docker
-Compose files. The complete profile contains 20 backend services, their owned
+Compose files. The complete profile contains <!-- count:services -->20<!-- /count --> backend services, their owned
 databases, shared infrastructure, a reverse proxy, the frontend, and optional
 local-AI runtimes.
 
@@ -278,7 +278,7 @@ docker logs claw-chat-service --tail=50 -f
 
 ## Network Topology
 
-All containers are connected to the `claw-network` bridge network. Services communicate using Docker DNS hostnames that match the service name in `docker/docker-compose.dev.yml`:
+All containers are connected to the `claw-network` bridge network. Services communicate using Docker DNS hostnames that match the service name in `docker/docker-compose.dev.services.yml` / `docker/docker-compose.dev.databases.yml`:
 
 ```
 claw-network (bridge)
@@ -367,16 +367,16 @@ In `docker/docker-compose.prod.services.yml` every backend service port (4001-40
 
 ### Per-Component Estimates
 
-| Component            | RAM Usage | Disk Usage |
-| -------------------- | --------- | ---------- |
-| 13 PostgreSQL (idle) | ~1.8 GB   | ~500 MB    |
-| MongoDB              | ~300 MB   | ~100 MB    |
-| Redis                | ~50 MB    | ~10 MB     |
-| RabbitMQ             | ~200 MB   | ~50 MB     |
-| Ollama (5 models)    | ~2-6 GB   | ~10 GB     |
-| 20 NestJS services   | ~2.6 GB   | ~500 MB    |
-| Nginx                | ~10 MB    | ~5 MB      |
-| Next.js frontend     | ~500 MB   | ~300 MB    |
+| Component                                                | RAM Usage | Disk Usage |
+| -------------------------------------------------------- | --------- | ---------- |
+| 13 PostgreSQL (idle)                                     | ~1.8 GB   | ~500 MB    |
+| MongoDB                                                  | ~300 MB   | ~100 MB    |
+| Redis                                                    | ~50 MB    | ~10 MB     |
+| RabbitMQ                                                 | ~200 MB   | ~50 MB     |
+| Ollama (5 models)                                        | ~2-6 GB   | ~10 GB     |
+| <!-- count:services -->20<!-- /count --> NestJS services | ~2.6 GB   | ~500 MB    |
+| Nginx                                                    | ~10 MB    | ~5 MB      |
+| Next.js frontend                                         | ~500 MB   | ~300 MB    |
 
 Ollama is the largest consumer. Model sizes: gemma3:4b (3.3 GB), llama3.2:3b (2.0 GB), phi3:mini (2.2 GB), gemma2:2b (1.6 GB), tinyllama (637 MB). Models are pulled on first startup and cached in the `ollama-data` volume.
 

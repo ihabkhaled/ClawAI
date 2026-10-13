@@ -277,21 +277,21 @@ ADMIN_PASSWORD=Admin123!
 
 ### Model Catalog Seed
 
-The ollama-service seeds the model catalog on startup:
+The ollama-service seeds the model catalog on startup (`CatalogSeedService.onApplicationBootstrap`)
+from `CATALOG_ENTRIES` in `apps/claw-ollama-service/src/modules/ollama/constants/catalog-entries.constants.ts`.
+By hand, from the service folder:
 
 ```bash
-cd apps/claw-ollama-service && npx tsx prisma/seed-catalog.ts
+cd apps/claw-ollama-service && npm run seed:catalog
 ```
-
-This populates 30 models across 6 categories (Coding, File Generation, Image Generation, Routing, Reasoning, Thinking).
 
 ### Running Seeds Manually
 
 ```bash
-# Seed catalog (ollama service)
-docker exec claw-ollama-service npx tsx prisma/seed-catalog.ts
+# Seed catalog (ollama service): restart it — the catalog seeds at boot
+docker restart claw-ollama-service
 
-# Run Prisma seed (if configured in package.json)
+# Run the Prisma seed (migrations.seed in prisma.config.ts)
 docker exec claw-auth-service npx prisma db seed
 ```
 

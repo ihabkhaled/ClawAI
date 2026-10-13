@@ -4,7 +4,7 @@
 
 ## Purpose
 
-System testing verifies that the entire ClawAI platform operates correctly as a unified system: all 17 services start, communicate, and remain stable under normal operating conditions. This is infrastructure-level validation, not feature-level testing.
+System testing verifies that the entire ClawAI platform operates correctly as a unified system: all services start, communicate, and remain stable under normal operating conditions. This is infrastructure-level validation, not feature-level testing.
 
 ---
 
@@ -42,7 +42,7 @@ curl -s http://localhost:4000/api/v1/health | jq .
 
 **Assertions:**
 
-- All 17 services report `"up"`
+- All services report `"up"`
 - No service latency exceeds 5000ms (indicates a problem)
 - Response returns within 10 seconds
 
@@ -546,7 +546,7 @@ curl -s -u guest:guest http://localhost:15672/api/queues/%2F | \
 curl -s -u guest:guest http://localhost:15672/api/connections | jq '.[].name' | wc -l
 ```
 
-**Assertion:** Number of connections matches number of services that use RabbitMQ (all 17 services minus health-service = 12 minimum).
+**Assertion:** Number of connections matches number of services that use RabbitMQ (every service except health-service).
 
 ---
 

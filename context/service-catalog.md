@@ -122,7 +122,7 @@ research, and workspace add `@claw/shared-auth`. All 17 non-health services publ
 - **Owns:** 25 models — WorkspaceConnector(+Grant), WorkspaceObject(+Link/Embedding), WorkspaceSyncRun, WorkspaceChain(+Run/Step), AiActionPolicy/ApprovalQueue, WebhookDelivery, AutoSuggestRun, SuggestionTriggerRule/Deduplication, DigestSnapshot, and more.
 - **Responsibility:** 12 workspace connectors (GitHub, GitLab, Jira, Slack, Drive, OneDrive, SharePoint, Confluence, Figma, Gmail, Bitbucket, ClickUp), OAuth2/PKCE, webhooks, scheduled sync, AI actions with approval queue, auto-suggest.
 - **Produces:** the largest event set — `workspace.sync.*`, `workspace_action.*`, `workspace_connector.*`, `workspace_object.synced`, `ai_action.*`, `workspace.auto_suggest.*`, `workspace.webhook.*`, `memory.preference.upserted`.
-- **Pitfalls:** largest service (103 endpoints, 66 test files); security-sensitive (OAuth secrets, webhook signatures).
+- **Pitfalls:** largest service (103 endpoints, the most test files); security-sensitive (OAuth secrets, webhook signatures).
 
 ## claw-agent-service — :4015 · PostgreSQL
 

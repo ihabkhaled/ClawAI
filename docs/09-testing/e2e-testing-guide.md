@@ -75,7 +75,7 @@ curl -s http://localhost:4009/api/v1/health | jq
 
 ## 3. Full Message Flow Verification
 
-The complete message flow involves 5 services. Verify each step:
+The complete message flow crosses several services. Verify each step:
 
 ### Step 1: Send Message (Chat Service)
 
@@ -87,6 +87,7 @@ curl -X POST http://localhost:4000/api/v1/chat-messages \
 ```
 
 Check chat-service logs for `message.created` event publication:
+
 ```bash
 docker compose logs chat-service --since 1m | grep "message.created"
 ```
@@ -94,6 +95,7 @@ docker compose logs chat-service --since 1m | grep "message.created"
 ### Step 2: Routing (Routing Service)
 
 Check routing-service logs for routing decision:
+
 ```bash
 docker compose logs routing-service --since 1m | grep "routing"
 ```
@@ -103,6 +105,7 @@ Verify `message.routed` event was published.
 ### Step 3: Execution (Chat Service)
 
 Check chat-service logs for provider call:
+
 ```bash
 docker compose logs chat-service --since 1m | grep -E "(execution|provider|ollama)"
 ```
@@ -110,6 +113,7 @@ docker compose logs chat-service --since 1m | grep -E "(execution|provider|ollam
 ### Step 4: SSE Events (Optional)
 
 Connect to SSE stream in another terminal:
+
 ```bash
 curl -N http://localhost:4000/api/v1/chat-messages/stream/$THREAD_ID \
   -H "Authorization: Bearer $TOKEN" \
@@ -119,11 +123,13 @@ curl -N http://localhost:4000/api/v1/chat-messages/stream/$THREAD_ID \
 ### Step 5: Completion
 
 Check for `message.completed` event:
+
 ```bash
 docker compose logs chat-service --since 2m | grep "message.completed"
 ```
 
 Verify ASSISTANT message exists:
+
 ```bash
 curl -s http://localhost:4000/api/v1/chat-messages?threadId=$THREAD_ID \
   -H "Authorization: Bearer $TOKEN" | jq '.data[] | {role, content}'
@@ -274,6 +280,7 @@ npx playwright test tests/chat.spec.ts
 Before releasing, manually verify these flows:
 
 ### Authentication
+
 - [ ] Login with valid credentials
 - [ ] Login with invalid credentials (shows error)
 - [ ] Token refresh works (wait 15+ minutes, make a request)
@@ -281,6 +288,7 @@ Before releasing, manually verify these flows:
 - [ ] Protected routes redirect to login when unauthenticated
 
 ### Chat
+
 - [ ] Create a new thread
 - [ ] Send a message and receive AI response
 - [ ] Message appears with provider/model badge
@@ -293,38 +301,45 @@ Before releasing, manually verify these flows:
 - [ ] Search threads
 
 ### Connectors
+
 - [ ] Create a connector
 - [ ] Test connector connection
 - [ ] Sync connector models
 - [ ] Delete a connector
 
 ### Models
+
 - [ ] View cloud models
 - [ ] View local models
 - [ ] Pull a model from catalog
 - [ ] Assign a model role
 
 ### Memory
+
 - [ ] Create a memory record
 - [ ] Edit a memory record
 - [ ] Toggle memory enabled/disabled
 - [ ] Delete a memory record
 
 ### Files
+
 - [ ] Upload a file
 - [ ] View file list with ingestion status
 - [ ] Delete a file
 
 ### Settings
+
 - [ ] Change language (verify translations)
 - [ ] Change theme (verify dark/light mode)
 - [ ] Change password
 
 ### Admin (ADMIN role only)
+
 - [ ] View user list
 - [ ] Non-admin cannot access admin page
 
 ### Observability
+
 - [ ] Health dashboard shows all services
 - [ ] Audit log viewer works with filters
 - [ ] Log viewer shows client and server logs
@@ -352,6 +367,7 @@ SELECT id, role, content, provider, model FROM "ChatMessage" ORDER BY "createdAt
 ### Check RabbitMQ
 
 Access the management UI at http://localhost:15672 (credentials from `.env`):
+
 - Check queue depths
 - Check for dead-letter messages
 - Verify exchange bindings
@@ -372,6 +388,7 @@ The routing engine can be tested systematically by sending messages from each ca
 
 1. **Get a JWT token** (see Step 1 above)
 2. **Create a thread in AUTO mode**:
+
 ```bash
 THREAD_ID=$(curl -s -X POST http://localhost:4000/api/v1/chat-threads \
   -H "Authorization: Bearer $TOKEN" \
@@ -381,6 +398,7 @@ THREAD_ID=$(curl -s -X POST http://localhost:4000/api/v1/chat-threads \
 ```
 
 3. **Send a test message and capture the routing decision**:
+
 ```bash
 # Send message
 curl -s -X POST http://localhost:4000/api/v1/chat-messages \
@@ -400,43 +418,43 @@ curl -s "http://localhost:4000/api/v1/routing/decisions?threadId=$THREAD_ID&limi
 
 Use these messages to verify each capability class routes correctly:
 
-| Category | Test Message | Expected Provider | Expected Model |
-| --- | --- | --- | --- |
-| Coding | "Write a TypeScript function to debounce API calls" | ANTHROPIC or LOCAL_CODING | claude-sonnet-4 or coding model |
-| Reasoning | "Prove that the square root of 2 is irrational step by step" | LOCAL_REASONING or DEEPSEEK | reasoning model or deepseek-chat |
-| Thinking | "Research the pros and cons of microservices vs monolith" | LOCAL_THINKING or GEMINI | thinking model or gemini-2.5-flash |
-| Infrastructure | "Write a Terraform module for an AWS VPC with subnets" | ANTHROPIC or LOCAL_CODING | claude-sonnet-4 or coding model |
-| Data Analysis | "Write a pandas script to aggregate sales by region" | LOCAL_REASONING or GEMINI | reasoning model or gemini-2.5-flash |
-| Business | "Create a SWOT analysis for launching a SaaS product" | LOCAL_FILE_GEN or FILE_GEN | file-gen model or auto |
-| Creative Writing | "Write a blog post about the future of AI" | OPENAI or LOCAL_FALLBACK | gpt-4o-mini or chat model |
-| Security | "Perform an OWASP top 10 review of this API endpoint" | ANTHROPIC or LOCAL_CODING | claude-sonnet-4 or coding model |
-| Medical | "What medication interactions should I check for metformin" | local-ollama (privacy) | gemma3:4b |
-| Legal | "Review this NDA clause for liability issues" | local-ollama (privacy) | gemma3:4b |
-| Translation | "Translate this paragraph to French" | local-ollama | gemma3:4b |
-| Image Gen | "Generate a watercolor illustration of a mountain lake" | IMAGE_GEMINI | gemini-2.5-flash-image |
-| File Gen | "Export this data as a CSV report" | FILE_GENERATION | auto |
-| Privacy | "Here is my SSN and bank account, analyze my finances" | local-ollama (privacy) | gemma3:4b |
-| General | "Hello, how are you today?" | local-ollama or OPENAI | gemma3:4b or gpt-4o-mini |
+| Category         | Test Message                                                 | Expected Provider           | Expected Model                      |
+| ---------------- | ------------------------------------------------------------ | --------------------------- | ----------------------------------- |
+| Coding           | "Write a TypeScript function to debounce API calls"          | ANTHROPIC or LOCAL_CODING   | claude-sonnet-4 or coding model     |
+| Reasoning        | "Prove that the square root of 2 is irrational step by step" | LOCAL_REASONING or DEEPSEEK | reasoning model or deepseek-chat    |
+| Thinking         | "Research the pros and cons of microservices vs monolith"    | LOCAL_THINKING or GEMINI    | thinking model or gemini-2.5-flash  |
+| Infrastructure   | "Write a Terraform module for an AWS VPC with subnets"       | ANTHROPIC or LOCAL_CODING   | claude-sonnet-4 or coding model     |
+| Data Analysis    | "Write a pandas script to aggregate sales by region"         | LOCAL_REASONING or GEMINI   | reasoning model or gemini-2.5-flash |
+| Business         | "Create a SWOT analysis for launching a SaaS product"        | LOCAL_FILE_GEN or FILE_GEN  | file-gen model or auto              |
+| Creative Writing | "Write a blog post about the future of AI"                   | OPENAI or LOCAL_FALLBACK    | gpt-4o-mini or chat model           |
+| Security         | "Perform an OWASP top 10 review of this API endpoint"        | ANTHROPIC or LOCAL_CODING   | claude-sonnet-4 or coding model     |
+| Medical          | "What medication interactions should I check for metformin"  | local-ollama (privacy)      | gemma3:4b                           |
+| Legal            | "Review this NDA clause for liability issues"                | local-ollama (privacy)      | gemma3:4b                           |
+| Translation      | "Translate this paragraph to French"                         | local-ollama                | gemma3:4b                           |
+| Image Gen        | "Generate a watercolor illustration of a mountain lake"      | IMAGE_GEMINI                | gemini-2.5-flash-image              |
+| File Gen         | "Export this data as a CSV report"                           | FILE_GENERATION             | auto                                |
+| Privacy          | "Here is my SSN and bank account, analyze my finances"       | local-ollama (privacy)      | gemma3:4b                           |
+| General          | "Hello, how are you today?"                                  | local-ollama or OPENAI      | gemma3:4b or gpt-4o-mini            |
 
 ### Expected Accuracy Targets per Category
 
-| Category | Target Accuracy | Notes |
-| --- | --- | --- |
-| Privacy enforcement | 100% | Zero tolerance -- no privacy-sensitive content to cloud |
-| Image generation | > 95% | Multi-layer detection makes false negatives rare |
-| File generation | > 95% | Verb+format combo is highly specific |
-| Coding | > 90% | 100 keywords cover most coding terminology |
-| Reasoning | > 85% | Some overlap with coding (algorithm, data structure) |
-| Thinking | > 85% | Research/investigation keywords are distinctive |
-| Infrastructure | > 90% | Cloud/container terms are highly specific |
-| Security | > 90% | CVE, OWASP, pentest are unambiguous |
-| Medical | > 95% | Clinical/HIPAA terms rarely appear outside medical context |
-| Legal | > 90% | Contract/NDA/GDPR terms are specific |
-| Creative Writing | > 80% | Some overlap with general chat |
-| Translation | > 90% | Translate/localize keywords are clear |
-| Data Analysis | > 85% | pandas/ETL/BigQuery are unambiguous |
-| Business | > 80% | KPI/ROI terms can appear in other contexts |
-| General Chat | N/A | Default fallback, always correct by definition |
+| Category            | Target Accuracy | Notes                                                      |
+| ------------------- | --------------- | ---------------------------------------------------------- |
+| Privacy enforcement | 100%            | Zero tolerance -- no privacy-sensitive content to cloud    |
+| Image generation    | > 95%           | Multi-layer detection makes false negatives rare           |
+| File generation     | > 95%           | Verb+format combo is highly specific                       |
+| Coding              | > 90%           | 100 keywords cover most coding terminology                 |
+| Reasoning           | > 85%           | Some overlap with coding (algorithm, data structure)       |
+| Thinking            | > 85%           | Research/investigation keywords are distinctive            |
+| Infrastructure      | > 90%           | Cloud/container terms are highly specific                  |
+| Security            | > 90%           | CVE, OWASP, pentest are unambiguous                        |
+| Medical             | > 95%           | Clinical/HIPAA terms rarely appear outside medical context |
+| Legal               | > 90%           | Contract/NDA/GDPR terms are specific                       |
+| Creative Writing    | > 80%           | Some overlap with general chat                             |
+| Translation         | > 90%           | Translate/localize keywords are clear                      |
+| Data Analysis       | > 85%           | pandas/ETL/BigQuery are unambiguous                        |
+| Business            | > 80%           | KPI/ROI terms can appear in other contexts                 |
+| General Chat        | N/A             | Default fallback, always correct by definition             |
 
 ### Batch Experiment Script
 
@@ -502,20 +520,20 @@ The routing engine was validated through 500+ experiments across multiple rounds
 
 ### Category-Level Accuracy (Final Validation)
 
-| Category Group | Accuracy | Notes |
-| --- | --- | --- |
-| Engineering | 100% | Coding, infrastructure, DevOps |
-| Data / ML | 100% | pandas, ETL, BigQuery, Spark |
-| Security | 100% | CVE, OWASP, pentest, threat model |
-| Business | 100% | KPI, ROI, SWOT, pitch deck |
-| Creative | 100% | Blog post, screenplay, copywriting |
-| Science | 100% | Research, analysis, hypothesis |
-| Logistics | 100% | Supply chain, fleet, inventory |
-| Hospitality | 100% | Hotel, restaurant, booking |
-| Privacy | 97%+ | Medical, legal, financial, PII |
-| HR / Education / Sales | 100% | Recruitment, curriculum, CRM |
-| Specialty | 100% | Domain-specific tasks |
-| General | 100% | Simple Q&A, greetings, translations |
+| Category Group         | Accuracy | Notes                               |
+| ---------------------- | -------- | ----------------------------------- |
+| Engineering            | 100%     | Coding, infrastructure, DevOps      |
+| Data / ML              | 100%     | pandas, ETL, BigQuery, Spark        |
+| Security               | 100%     | CVE, OWASP, pentest, threat model   |
+| Business               | 100%     | KPI, ROI, SWOT, pitch deck          |
+| Creative               | 100%     | Blog post, screenplay, copywriting  |
+| Science                | 100%     | Research, analysis, hypothesis      |
+| Logistics              | 100%     | Supply chain, fleet, inventory      |
+| Hospitality            | 100%     | Hotel, restaurant, booking          |
+| Privacy                | 97%+     | Medical, legal, financial, PII      |
+| HR / Education / Sales | 100%     | Recruitment, curriculum, CRM        |
+| Specialty              | 100%     | Domain-specific tasks               |
+| General                | 100%     | Simple Q&A, greetings, translations |
 
 ### Overall Results
 
@@ -528,13 +546,13 @@ The routing engine was validated through 500+ experiments across multiple rounds
 
 Image generation routing accuracy improved significantly through iterative refinement:
 
-| Round | Image Accuracy | Changes Made |
-| --- | --- | --- |
-| Round 1 | 33% | Initial keyword set too narrow |
-| Round 2 | 67% | Added verb/noun combination detection |
-| Round 3 | 85% | Added art style indicator keywords |
-| Round 4 | 95% | Added strong noun context detection |
-| Round 5 | 100% | Final 5-layer detection system with reference-based detection |
+| Round   | Image Accuracy | Changes Made                                                  |
+| ------- | -------------- | ------------------------------------------------------------- |
+| Round 1 | 33%            | Initial keyword set too narrow                                |
+| Round 2 | 67%            | Added verb/noun combination detection                         |
+| Round 3 | 85%            | Added art style indicator keywords                            |
+| Round 4 | 95%            | Added strong noun context detection                           |
+| Round 5 | 100%           | Final 5-layer detection system with reference-based detection |
 
 ### Routing Engine Scale
 

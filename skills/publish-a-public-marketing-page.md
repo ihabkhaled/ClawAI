@@ -21,7 +21,7 @@ affected_workspaces: [claw-frontend]
 required_tests: [vitest, lighthouse-ci]
 required_docs:
   [docs/05-frontend/multilingual-discovery.md, docs/05-frontend/seo-content-architecture.md]
-validation_lane: cd apps/claw-frontend && npx tsgo --noEmit && npm run lint && npm test && npm run build
+validation_lane: git commit + git push — the hooks gate the change (rules/23 gate matrix)
 ---
 
 # Skill: Publish a public marketing page
@@ -82,7 +82,7 @@ the page renders perfectly while being absent from every discovery document.
 6. **Lighthouse URL** — add `http://localhost:3000/en/<path>` to
    `lighthouserc.json`. `accessibility`, `best-practices` and `seo` are hard
    errors at score 1; a page not listed is a page with no gate at all. Then
-   regenerate the PR sample: `node tools/lighthouse/build-pr-config.mjs`. Never
+   regenerate the PR sample: `node apps/claw-frontend/tools/lighthouse/build-pr-config.mjs`. Never
    hand-edit `lighthouserc.pr.json` — it is derived, and
    `lighthouse-coverage.test.ts` asserts it matches what the generator would
    produce.
@@ -129,8 +129,10 @@ an English page in the Japanese sitemap and nothing else will notice.
 ## Validation commands
 
 ```bash
-cd apps/claw-frontend
-npx tsgo --noEmit && npm run lint && npm test && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 Gate once, at the end of the batch. Never all-workspace.

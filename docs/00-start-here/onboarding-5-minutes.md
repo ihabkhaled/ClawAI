@@ -33,7 +33,7 @@ cd ClawAI
 npm install
 ```
 
-This installs dependencies for all 17 backend services, the frontend, and shared packages (npm workspaces handles everything from the root).
+This installs dependencies for all <!-- count:services -->20<!-- /count --> backend services, the frontend, and shared packages (npm workspaces handles everything from the root).
 
 ---
 
@@ -65,7 +65,7 @@ The installer creates the `.env` file, sets up databases, runs Prisma migrations
 ./scripts/claw.sh up -d
 ```
 
-This starts 33 containers: 17 backend services, frontend, Nginx, 13 PostgreSQL databases, MongoDB, Redis, RabbitMQ, Ollama, and ClamAV.
+This starts the whole stack: the <!-- count:services -->20<!-- /count --> backend services, frontend, Nginx, the per-service PostgreSQL databases, MongoDB, Redis, RabbitMQ, Ollama, and ClamAV.
 
 Wait about 60 seconds for all services to initialize, run migrations, and pull local models.
 
@@ -128,7 +128,7 @@ Password: ClawAdmin123!
 Run from the service directory (for example `apps/claw-chat-service/`):
 
 ```bash
-npm run start:dev    # Start with hot reload
+npm run dev          # Rebuild and restart on every change (nodemon)
 npm run test         # Run tests
 npm run lint         # Lint this service
 ```

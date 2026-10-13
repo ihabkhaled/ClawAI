@@ -48,7 +48,7 @@ required_docs:
     apps/claw-chat-service/CLAUDE.md,
     rules/51-router-candidates-and-model-window-fit.md,
   ]
-validation_lane: cd apps/claw-<each touched> && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Skill: Add a Helper Model Role
@@ -160,8 +160,9 @@ structured line per attempt (`visionHelper {…}`).
 ## Validation
 
 ```bash
-cd apps/claw-routing-service && npm run typecheck && npm run lint && npm test && npm run build
-cd apps/claw-chat-service   && npm run typecheck && npm run lint && npm test && npm run build
-cd apps/claw-frontend       && npm run typecheck && npm run lint && npm test && npm run build
-node --test tools/__tests__/payg-surface-exhaustiveness.test.mjs
+node --test tools/__tests__/payg-surface-exhaustiveness.test.mjs   # the root check for a new PaygSurface
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```

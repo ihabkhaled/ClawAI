@@ -243,7 +243,7 @@ safe state machine:
 - On stream end, `flushStreamTail` drains the scanner state and surfaces any
   trailing reasoning fragment.
 
-The scanner is implemented in `packages/shared-utilities/src/think-tag-scanner`
+The scanner is implemented in `packages/shared-utilities/src/runtime-progress/think-tag-scanner.utility.ts`
 so the same code path can later be used by chat-service (PR2) for Ollama paths
 that hit `<think>` tags without the native `thinking` field.
 

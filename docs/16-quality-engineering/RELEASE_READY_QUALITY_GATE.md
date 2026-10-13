@@ -31,7 +31,7 @@ These are the four automated quality checks that run in CI and as pre-commit hoo
 npm run typecheck
 ```
 
-**Pass criteria:** Zero errors across all workspaces (frontend + 17 backend services + 3 shared packages).
+**Pass criteria:** Zero errors across all workspaces (frontend + <!-- count:services -->20<!-- /count --> backend services + <!-- count:sharedPackages -->6<!-- /count --> shared packages).
 
 **What this catches:**
 
@@ -76,7 +76,7 @@ npm run lint
 npm run test
 ```
 
-**Pass criteria:** All tests pass (312+ tests across 17 services and frontend). Zero failures, zero skipped tests (unless pre-existing and documented).
+**Pass criteria:** All tests pass (every test across the services and the frontend). Zero failures, zero skipped tests (unless pre-existing and documented).
 
 **What this catches:**
 
@@ -309,7 +309,7 @@ curl -X POST http://localhost:4000/api/v1/chat-messages \
 
 **Pass criteria:** User Acceptance Testing completed and signed off. The tester confirms the feature works as specified from the user's perspective.
 
-Refer to [Client Acceptance Testing Standard](./11-CLIENT_ACCEPTANCE_TESTING_STANDARD.md) for the UAT process and scorecard.
+Refer to [Client Acceptance Testing Standard](./CLIENT_ACCEPTANCE_TESTING_STANDARD.md) for the UAT process and scorecard.
 
 ### E3: Documentation Updated
 
@@ -338,8 +338,8 @@ Files to check:
 
 **Pass criteria:** If any service, port, volume, or database was added or changed:
 
-- [ ] `docker/docker-compose.dev.yml` updated.
-- [ ] `docker/docker-compose.yml` (production) updated.
+- [ ] `docker/docker-compose.dev.services.yml` / `docker/docker-compose.dev.databases.yml` updated.
+- [ ] `docker/docker-compose.prod.services.yml` / `docker/docker-compose.prod.databases.yml` (production) updated.
 - [ ] `docker/docker-compose.dev.ollama.yml` updated.
 - [ ] `docker/docker-compose.prod.ollama.yml` updated.
 

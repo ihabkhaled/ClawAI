@@ -24,7 +24,7 @@ required_context: [TDD_AND_UNIT_TESTING_STANDARD, ai-context-pack]
 affected_workspaces: [apps/claw-<service>-service, apps/claw-frontend, packages/shared-utilities]
 required_tests: [unit spec, dto fuzz spec]
 required_docs: [docs/09-testing/README, docs/04-backend/service-guide-<service>.md]
-validation_lane: cd <workspace> && npm run typecheck && npm run lint && npm test -- --coverage && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Skill: Write Unit Tests
@@ -92,8 +92,10 @@ For a DTO fuzz spec: valid object; boundary object at each `.max()`; over-length
 ## Validation commands
 
 ```bash
-cd <workspace>   # apps/claw-<service>-service | apps/claw-frontend | packages/<pkg>
-npm run typecheck && npm run lint && npm test -- --coverage && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 ## Documentation updates

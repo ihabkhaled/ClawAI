@@ -199,34 +199,18 @@ Every new service must be added to:
 
 3. **Build job matrix** — if service has a separate build step
 
-4. **Lint / Typecheck / Test matrix include** — every new service goes into the matrix `include:` block of all four jobs (lint, typecheck, test, build) with `service`, `workspace`, and `prisma: true|false` keys.
+4. **Matrix entries are derived, not hand-written** — `tools/affected/index.mjs ci-matrix` discovers every workspace from the root `package.json`, so a new service joins the static, test and build matrices automatically (with `prisma: true` when it declares `prisma:generate`).
 
-### ⚠️ New shared package = CI workflow update (added 2026-04-26)
+### New shared package and CI
 
-When a new package is added under `packages/`, **all four jobs** in `.github/workflows/ci.yml` (lint, typecheck, test, build) have a "Build shared packages" step that compiles each package's `dist/` before service typecheck runs. This step MUST include the new package, otherwise consumer services fail with `Cannot find module '@claw/<new-package>'` even though the package is in `package-lock.json`.
-
-```yaml
-- name: Link tsgo binary (@typescript/native-preview)
-  run: npm rebuild @typescript/native-preview
-- name: Build shared packages
-  run: |
-    cd packages/shared-types && npx tsgo -p tsconfig.build.json
-    cd ../shared-constants && npx tsgo -p tsconfig.build.json
-    cd ../shared-utilities && npx tsgo -p tsconfig.build.json
-    cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
-    cd ../shared-auth && npx tsgo -p tsconfig.build.json
-    cd ../shared-entitlements && npx tsgo -p tsconfig.build.json
-    cd ../<new-shared-package> && npx tsgo -p tsconfig.build.json   # MUST add for any new shared package
-```
-
-> The repo compiles with **tsgo** (`@typescript/native-preview`), not `tsc` /
-> `nest build`. The `npm rebuild @typescript/native-preview` step links the
-> native binary after `npm ci --ignore-scripts`. Full toolchain reference:
-> [docs/08-runtime-devops/build-system.md](../docs/08-runtime-devops/build-system.md).
-
-**Why it bites:** local builds work because `node_modules/@claw/<pkg>` is a symlink populated by `npm install`, and `dist/` is created by the developer's local `npm run build`. CI starts from a fresh checkout where `dist/` doesn't exist — so `require('@claw/<new-pkg>')` resolves to a `main` path that doesn't exist on disk yet.
-
-**Verification rule:** after adding a new shared package, push to a feature branch and confirm all four CI jobs go green BEFORE merging to main.
+CI needs no edit for a new package under `packages/`: the `setup` job builds every
+shared package in the dependency order computed from the `package.json` files
+(`node tools/affected/index.mjs shared-build`), uploads the `dist` folders as an
+artifact for every matrix job, and the matrices are derived from the workspace
+list. What still needs a hand edit is every consumer's `Dockerfile` and
+`Dockerfile.dev` ([rules/14](14-shared-packages.md) §6, enforced by
+`tools/__tests__/dockerfile-shared-package-completeness.test.mjs`). The repo
+compiles with TypeScript 7 — [docs/08-runtime-devops/build-system.md](../docs/08-runtime-devops/build-system.md).
 
 ---
 
@@ -282,17 +266,11 @@ Health check endpoint format:
 
 ---
 
-## Pre-commit Hook (Never Skip)
+## Git hooks
 
-The pre-commit hook runs 5 steps:
-
-1. `prettier --write` — format staged files
-2. `npm run lint` — ESLint all workspaces (0 errors)
-3. `npm run typecheck` — TypeScript strict (0 errors)
-4. `npm run build` — production build all workspaces
-5. `npm run test` — all tests pass
-
-**NEVER use `--no-verify`.** If hook fails, fix the underlying issue.
+What pre-commit, commit-msg and pre-push run — scoped to the change, never the
+whole repository — is [rules/23](23-git-commits-hooks-and-release-gates.md#what-the-hooks-run).
+**Never use `--no-verify`.** If a hook fails, fix the underlying issue.
 
 ---
 
@@ -334,59 +312,12 @@ Next available port: **4017**
 - [ ] `apps/claw-health-service` updated
 - [ ] `docs/06-data/environment-variables.md` updated
 
-## Generated artifacts are a HARD GATE (never optional)
+## Generated artifacts are a hard gate
 
-`.ai/**`, every workspace `AGENTS.md`, and
-`docs/features/ai-native-engineering-os/inventory.snapshot.json` are
-**generated from the tree**. CI verifies them on every push:
-
-| CI job              | Command                    | Fails when                                                           |
-| ------------------- | -------------------------- | -------------------------------------------------------------------- |
-| Knowledge freshness | `npm run knowledge:check`  | a generated file's hash no longer matches the tree                   |
-| Knowledge integrity | `npm run knowledge:verify` | stale file, broken link, orphan reviewer, hook-bypass, contradiction |
-| Inventory audit     | `npm run audit:check`      | the inventory snapshot hash has drifted                              |
-
-**A stale artifact turns the build red on every subsequent push**, for everyone,
-until someone regenerates it. It is not a warning and it is not deferrable.
-
-### The rule
-
-Any commit that touches `packages/**`, `apps/**`, `infra/**`, `docker/**`,
-`docs/**`, `scripts/**`, `rules/**`, `skills/**`, `tools/**` or `.env.example`
-MUST regenerate and stage:
-
-```bash
-npm run knowledge:build      # rewrites .ai/** + workspace AGENTS.md
-npm run audit                # rewrites the inventory snapshot
-git add .ai docs/features/ai-native-engineering-os/inventory.snapshot.json
-git add apps/*/AGENTS.md packages/*/AGENTS.md 2>/dev/null
-npm run knowledge:verify     # what CI runs
-npm run audit:check          # what CI runs
-```
-
-The pre-commit hook now does all of this **automatically**, so in normal use
-there is nothing to remember. The rule is written down because the hook can be
-skipped (it must not be) and because a red CI needs a documented fix.
-
-### Order matters — regenerate AFTER formatting, never before
-
-This is the mistake that actually caused a red build:
-
-1. `npm run knowledge:build` — hashes the current bytes
-2. `git add` / commit — **lint-staged reformats the staged files**
-3. the reformatted bytes no longer match the hashes recorded in step 1
-4. `knowledge:check` passes locally (it ran before the reformat) but
-   `knowledge:verify` fails in CI
-
-Generators must run **after** prettier and `eslint --fix` have settled. The
-pre-commit hook is ordered that way deliberately: lint-staged is step 1,
-regeneration is step 2.
-
-### Never hand-edit a generated artifact
-
-If a generated file is wrong, fix the **generator or its input**, then
-regenerate. Editing `.ai/manifests/*.json` or a workspace `AGENTS.md` by hand is
-overwritten on the next build and hides the real problem.
+`.ai/**`, every workspace `AGENTS.md`, the per-model routers and the inventory
+snapshot are generated; the pre-commit hook regenerates and stages them, and CI
+fails on a stale one. The rule, the fix for a red CI and the ordering trap live in
+one place: [rules/24](24-generated-files-and-knowledge-freshness.md#generated-artifacts-are-a-hard-gate-never-optional).
 
 ## Enforcement
 

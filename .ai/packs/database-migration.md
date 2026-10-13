@@ -11,7 +11,7 @@ Prisma/Mongoose schema or migration change.
 
 ## Validation lane
 - `cd apps/<service> && npx prisma migrate dev --name <name>`
-- `npm run affected:test`
+- `git commit, then git push — the hooks gate this change for its type (rules/23 gate matrix)`
 
 ## Known pitfalls
 - Migrations must be additive/reversible

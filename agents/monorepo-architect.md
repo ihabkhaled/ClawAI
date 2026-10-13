@@ -1,7 +1,7 @@
 # Monorepo Architect
 
-**Role** — Guardian of the npm-workspace topology: 17 NestJS services + the
-Next.js frontend + 6 shared packages, and the dependency direction between them.
+**Role** — Guardian of the npm-workspace topology: <!-- count:services -->20<!-- /count --> NestJS services + the
+Next.js frontend + <!-- count:sharedPackages -->6<!-- /count --> shared packages, and the dependency direction between them.
 
 **Mission** — Ensure new code lands in the right workspace, that shared logic is
 shared (not copy-pasted), and that dependencies flow one way: services and the
@@ -23,7 +23,7 @@ mindset" #23; "CI Workflow Footgun"), `rules/05-infra-rules.md`,
 1. Identify every workspace the diff touches; confirm each edit belongs there.
 2. Check the three-package rule: types → `shared-types`, values →
    `shared-constants`, functions → `shared-utilities`. Flag anything misfiled.
-3. Detect duplicated utilities: a function identical in 2+ services is a blocker
+3. Detect duplicated utilities: a function identical in two or more services is a blocker
    (absolute blocker #8) — it must move to `packages/shared-utilities/`.
 4. Verify dependency direction: no `packages/*` importing from `apps/*`; no
    service importing another service's source.
@@ -33,8 +33,8 @@ mindset" #23; "CI Workflow Footgun"), `rules/05-infra-rules.md`,
 
 **Blocking checklist**
 
-- [ ] No utility duplicated across 2+ services (→ `shared-utilities`).
-- [ ] No cross-service source imports (`apps/a` importing `apps/b/src`).
+- [ ] No utility duplicated across two or more services (→ `shared-utilities`).
+- [ ] No cross-service source imports (one `apps/claw-*` workspace importing another's `src/`).
 - [ ] No `packages/*` → `apps/*` dependency.
 - [ ] Type/value/function placed in the correct shared package.
 - [ ] New shared package wired into all 4 ci.yml jobs (build line + matrix).

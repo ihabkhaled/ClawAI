@@ -432,7 +432,7 @@ export function buildThread(overrides: Partial<ChatThread> = {}): ChatThread {
 | Unit (frontend) | Vitest                  | `apps/claw-frontend/src/**/*.test.ts`  | CI + pre-commit  | Hooks, utilities, component render                  |
 | API             | curl / Vitest+supertest | Manual or `test/api/`                  | Dev environment  | Endpoint contract, auth, validation                 |
 | Integration     | Vitest                  | `test/integration/`                    | Dev environment  | Multi-layer (service -> repo -> DB)                 |
-| E2E             | Playwright              | `apps/claw-frontend/e2e/`              | Dev environment  | Full browser flow                                   |
+| E2E             | Playwright              | `apps/claw-frontend/tests/e2e/`        | Dev environment  | Full browser flow                                   |
 | System          | Shell scripts + curl    | `scripts/`                             | Dev/staging      | All services healthy, end-to-end flow               |
 | Regression      | All of above            | Tagged with regression tags            | Every test cycle | Previously broken functionality still works         |
 | UAT             | Manual                  | Test plan document                     | Pre-release      | Business acceptance criteria met                    |

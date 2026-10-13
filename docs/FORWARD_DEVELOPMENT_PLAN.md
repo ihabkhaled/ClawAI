@@ -157,7 +157,7 @@ Every gap from the audit, converted to implementable work with priority, effort,
 - [ ] Memory influence indicator visible
 - [ ] File attribution indicator visible
 - [ ] Onboarding wizard functional
-- [ ] All 12 services healthy
+- [ ] All services healthy
 - [ ] 0 lint errors, 0 typecheck errors
 - [ ] 350+ unit tests passing
 

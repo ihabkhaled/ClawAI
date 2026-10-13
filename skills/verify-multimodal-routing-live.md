@@ -54,7 +54,7 @@ It is the rule [44](../rules/44-live-verification-before-done.md) /
 
 ## 0. Is the stack running THIS code?
 
-Dev containers run `tsgo --watch` over the **main checkout's** bind-mounted
+Dev containers rebuild on change (nodemon → `npm run build`) over the **main checkout's** bind-mounted
 `src` — worktree code is live only after it lands on `main` and the main
 checkout is updated. These batches also changed shared packages and Prisma
 schemas, so after pulling:

@@ -2,7 +2,9 @@
 
 ## Purpose
 
-This document defines the test data fixtures, seed scripts, and data strategies used across ClawAI. Every test environment must be reproducible from scratch using these seeds and fixtures. No test should depend on manually created data. No fixture should use trivial placeholder data -- all fixtures must exercise realistic scenarios and edge cases.
+This document defines the test data fixtures, seed scripts, and data strategies used across ClawAI.
+
+> **What exists today.** Only three services ship a seed: auth-service (`npm run seed --workspace=claw-auth-service`, `prisma/seed.cjs`), routing-service (`npm run seed --workspace=claw-routing-service`, `prisma/seed.cjs`) and the model catalogs of ollama-service and llamacpp-service (seeded at boot; `seed:catalog` script for a manual run). Releases run every shipped seeder once, versioned, through `npm run seed:versioned`. Every other per-service "Seed Script" section below is the **target** fixture set and is marked _not built_. Every test environment must be reproducible from scratch using these seeds and fixtures. No test should depend on manually created data. No fixture should use trivial placeholder data -- all fixtures must exercise realistic scenarios and edge cases.
 
 ---
 
@@ -44,7 +46,7 @@ This document defines the test data fixtures, seed scripts, and data strategies 
 cd apps/claw-auth-service && npx prisma db seed
 ```
 
-**Location:** `apps/claw-auth-service/prisma/seed.ts`
+**Location:** `apps/claw-auth-service/prisma/seed.cjs` (with `prisma/seeders/`); `npx prisma db seed` runs it through `prisma.config.ts`, and so does `npm run seed`.
 
 **Behavior:**
 
@@ -96,7 +98,7 @@ Each message fixture includes:
 cd apps/claw-chat-service && npx prisma db seed
 ```
 
-**Location:** `apps/claw-chat-service/prisma/seed.ts`
+**Status:** not built. `apps/claw-chat-service` has no seed script today; the fixtures above are the target set, and `npx prisma db seed` there reports that no seed command is configured.
 
 ---
 
@@ -139,7 +141,7 @@ Each model fixture includes capability flags: `supportsStreaming`, `supportsTool
 cd apps/claw-connector-service && npx prisma db seed
 ```
 
-**Location:** `apps/claw-connector-service/prisma/seed.ts`
+**Status:** not built. `apps/claw-connector-service` has no seed script today; the fixtures above are the target set, and `npx prisma db seed` there reports that no seed command is configured.
 
 **Important:** Connector configs contain encrypted API keys. The seed uses the `ENCRYPTION_KEY` from `.env` to encrypt placeholder keys. These are not real API keys -- they are test values that will fail if used against real providers.
 
@@ -178,7 +180,7 @@ Each decision includes: `selectedProvider`, `selectedModel`, `confidence`, `reas
 cd apps/claw-routing-service && npx prisma db seed
 ```
 
-**Location:** `apps/claw-routing-service/prisma/seed.ts`
+**Location:** `apps/claw-routing-service/prisma/seed.cjs` (run by `npx prisma db seed` through `prisma.config.ts`, or `npm run seed`).
 
 ---
 
@@ -199,8 +201,11 @@ cd apps/claw-routing-service && npx prisma db seed
 The model catalog is seeded separately with 30 models across 6 categories:
 
 ```bash
-cd apps/claw-ollama-service && npx tsx prisma/seed-catalog.ts
+# Seeded automatically at boot (CatalogSeedService). A manual run:
+npm run seed:catalog --workspace=claw-ollama-service
 ```
+
+`seed:catalog` runs `prisma/seed-catalog.ts` through `tsx`, which is not a declared dependency, so npx downloads it on first use.
 
 **Location:** `apps/claw-ollama-service/prisma/seed-catalog.ts`
 
@@ -221,7 +226,7 @@ This seed is idempotent and populates the full catalog as defined in CLAUDE.md (
 cd apps/claw-ollama-service && npx prisma db seed
 ```
 
-**Location:** `apps/claw-ollama-service/prisma/seed.ts`
+**Status:** not built. `apps/claw-ollama-service` has no seed script today; the fixtures above are the target set, and `npx prisma db seed` there reports that no seed command is configured.
 
 ---
 
@@ -245,7 +250,7 @@ cd apps/claw-ollama-service && npx prisma db seed
 
 ### Security Test Files (not seeded in DB, used for upload testing)
 
-These files are stored in `apps/claw-file-service/test/fixtures/` for use in security tests:
+Target location: a `test/fixtures/` folder in `apps/claw-file-service` (not created yet). The file-service test fixtures that exist today live in `apps/claw-file-service/src/common/utilities/__tests__/__fixtures__/`. Target set:
 
 | Filename                              | Purpose                     |
 | ------------------------------------- | --------------------------- |
@@ -262,7 +267,7 @@ These files are stored in `apps/claw-file-service/test/fixtures/` for use in sec
 cd apps/claw-file-service && npx prisma db seed
 ```
 
-**Location:** `apps/claw-file-service/prisma/seed.ts`
+**Status:** not built. `apps/claw-file-service` has no seed script today; the fixtures above are the target set, and `npx prisma db seed` there reports that no seed command is configured.
 
 **Note:** The seed creates database records and dummy chunk content. It does not create actual files on disk. For integration tests that need real files, use the test fixtures directory.
 
@@ -307,7 +312,7 @@ Each pack contains items of mixed types:
 cd apps/claw-memory-service && npx prisma db seed
 ```
 
-**Location:** `apps/claw-memory-service/prisma/seed.ts`
+**Status:** not built. `apps/claw-memory-service` has no seed script today; the fixtures above are the target set, and `npx prisma db seed` there reports that no seed command is configured.
 
 ---
 
@@ -348,7 +353,7 @@ Seed 20 usage entries:
 cd apps/claw-audit-service && npx prisma db seed
 ```
 
-**Location:** `apps/claw-audit-service/prisma/seed.ts` (uses Mongoose, not Prisma)
+**Status:** not built. audit-service uses Mongoose, not Prisma, so `npx prisma db seed` does not apply; there is no seed script.
 
 ---
 
@@ -492,20 +497,13 @@ Because some fixtures reference IDs from other services, seeds must run in this 
 ### Full Seed Command
 
 ```bash
-# Run all seeds in order
-cd apps/claw-auth-service && npx prisma db seed && cd ../..
-cd apps/claw-file-service && npx prisma db seed && cd ../..
-cd apps/claw-ollama-service && npx prisma db seed && cd ../..
-cd apps/claw-ollama-service && npx tsx prisma/seed-catalog.ts && cd ../..
-cd apps/claw-connector-service && npx prisma db seed && cd ../..
-cd apps/claw-memory-service && npx prisma db seed && cd ../..
-cd apps/claw-routing-service && npx prisma db seed && cd ../..
-cd apps/claw-chat-service && npx prisma db seed && cd ../..
-cd apps/claw-audit-service && npx prisma db seed && cd ../..
-cd apps/claw-client-logs-service && npx prisma db seed && cd ../..
-cd apps/claw-server-logs-service && npx prisma db seed && cd ../..
-cd apps/claw-image-service && npx prisma db seed && cd ../..
-cd apps/claw-file-generation-service && npx prisma db seed && cd ../..
+# Every seeder that ships, once each, versioned and idempotent
+npm run seed:versioned
+
+# Or one service at a time
+npm run seed --workspace=claw-auth-service
+npm run seed --workspace=claw-routing-service
+npm run seed:catalog --workspace=claw-ollama-service   # also runs at boot
 ```
 
 ### Reset and Re-Seed

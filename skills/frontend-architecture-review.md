@@ -22,7 +22,7 @@ required_context: [codebase-navigation, CODE_REVIEW_AND_PR_REVIEW_STANDARD]
 affected_workspaces: [apps/claw-frontend]
 required_tests: [review-only]
 required_docs: [docs/05-frontend, CLAUDE.md]
-validation_lane: cd apps/claw-frontend && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 **When to use**
@@ -77,7 +77,7 @@ validation_lane: cd apps/claw-frontend && npm run typecheck && npm run lint && n
 
 - `rg -n "<input|<select|<textarea|dangerouslySetInnerHTML" apps/claw-frontend/src` — none outside `components/ui/`.
 - `npx vitest run src/lib/i18n` — key references, enum labels, and completeness guards that flag non-EN entries equal to EN.
-- Gate lane: `cd apps/claw-frontend && npm run typecheck && npm run lint && npm test && npm run build`.
+- Gate lane: commit and push — the hooks run the gates for the change type ([rules/23 gate matrix](../rules/23-git-commits-hooks-and-release-gates.md#gate-matrix-by-change-type)).
 
 **Documentation updates**
 

@@ -17,7 +17,7 @@ required_context: [ai-context-pack, codebase-navigation]
 affected_workspaces: [claw-frontend]
 required_tests: [vitest, accessibility]
 required_docs: [docs/05-frontend]
-validation_lane: cd apps/claw-frontend && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Skill: Create a Presentational Component
@@ -73,7 +73,7 @@ state, and never defines inline sub-components. All form controls come from shad
 
 ## Validation commands
 
-`cd apps/claw-frontend && npm run typecheck && npm run lint && npm test && npm run build`. Never `--no-verify`.
+commit and push — the hooks run the gates for the change type ([rules/23 gate matrix](../rules/23-git-commits-hooks-and-release-gates.md#gate-matrix-by-change-type)). Never `--no-verify`.
 
 ## Documentation updates
 

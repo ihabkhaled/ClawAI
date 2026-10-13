@@ -1,6 +1,6 @@
 # ClawAI — Backend Architecture Rules
 
-> Applies to all 17 NestJS services. Read alongside the service-specific CLAUDE.md.
+> Applies to every NestJS service. Read alongside the service-specific CLAUDE.md.
 
 ## Layer Boundaries
 
@@ -251,7 +251,7 @@ Banned in every backend logic file (ESLint `no-restricted-syntax`):
 
 Before writing a utility in `apps/<service>/src/common/utilities/`, check `packages/shared-utilities/`.
 
-If the utility lives identically in 2+ services, it MUST be in `packages/shared-utilities/`. Per-service copies are a delivery blocker.
+If the utility lives identically in two or more services, it MUST be in `packages/shared-utilities/`. Per-service copies are a delivery blocker.
 
 Cross-service ownership table:
 
@@ -268,7 +268,7 @@ Cross-service ownership table:
 - **ESLint** — layering and import-boundary rules in the flat config
   (`no-restricted-syntax`, `no-restricted-imports`).
 - **Architecture test** — `npm run architecture:check`.
-- **TS config** — `npm run affected:typecheck` (tsgo, `--noEmit`).
+- **TS config** — `npm run affected:typecheck` (TypeScript 7, `--noEmit`).
 - **CI job** — the per-service lint/typecheck/test/build matrix in `.github/workflows/ci.yml`.
 
 ## Definition of done

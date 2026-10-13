@@ -3,7 +3,7 @@
 **Status:** active · **Owner:** knowledge-layer · **Added:** 2026-09-20
 
 > Ported from the Akinator method (https://github.com/ihabkhaled/akinator-ai,
-> `skills/everything/SKILL.md`). This rule is the non-negotiable subset,
+> its [everything skill](https://github.com/ihabkhaled/akinator-ai/blob/HEAD/skills/everything/SKILL.md)). This rule is the non-negotiable subset,
 > restated in ClawAI's own vocabulary so it applies whether or not the
 > `akinator` plugin is installed in the session. Full runbook:
 > [`skills/apply-akinator-without-the-plugin.md`](../skills/apply-akinator-without-the-plugin.md).

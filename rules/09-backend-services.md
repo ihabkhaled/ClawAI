@@ -35,13 +35,18 @@ while staying small enough to read at a glance.
 ## Correct pattern
 
 ```ts
-// apps/claw-memory-service/src/modules/memory/memory.service.ts
-async forget(userId: string, memoryId: string): Promise<void> {
-  const memory = await this.memoryRepo.findById(memoryId);
-  if (!memory) throw new EntityNotFoundException('Memory', memoryId);
-  if (memory.userId !== userId) throw new BusinessException('Forbidden', HttpStatus.FORBIDDEN, 'MEMORY_FORBIDDEN');
-  await this.memoryRepo.softDelete(memoryId);
-  await this.events.publish(MEMORY_FORGOTTEN, { userId, memoryId }); // after persistence
+// apps/claw-memory-service/src/modules/memory/services/memory.service.ts (abridged)
+async deleteMemory(id: string, userId: string, confirmForget: boolean): Promise<MemoryRecord> {
+  if (!confirmForget) {
+    throw new BusinessException('Forget confirmation required', 'FORGET_CONFIRMATION_REQUIRED', HttpStatus.BAD_REQUEST);
+  }
+  const memory = await this.memoryRepository.findById(id);
+  if (!memory) throw new EntityNotFoundException('MemoryRecord', id);
+  this.validateOwnership(memory, userId);
+  const deleted = await this.memoryRepository.delete(id);
+  await this.recordAudit(userId, id, MemoryAuditAction.DELETED, { type: deleted.type });
+  void this.rabbitMQService.publish(EventPattern.MEMORY_FORGOTTEN, { memoryId: id, userId /* … */ }); // after persistence
+  return deleted;
 }
 ```
 

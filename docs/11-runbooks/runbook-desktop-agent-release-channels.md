@@ -10,17 +10,17 @@ each channel and the promotion rules between them.
 
 ## Channel rules
 
-| Channel  | Audience                             | Source                                                      | QA bar                                                  |
-| -------- | ------------------------------------ | ----------------------------------------------------------- | ------------------------------------------------------- |
-| `canary` | Internal dogfood (ClawAI engineers)  | Every commit to `feature/desktop-agent-v2`                  | Unit + typecheck + lint green                           |
-| `beta`   | Early-adopter customers              | Tagged commits matching `v*-beta` on `main`                 | Canary green + maintainer-OS QA evidence                |
-| `stable` | All production users                 | Tagged commits matching `v*` (no suffix) on `main`          | Full cross-OS QA matrix (`runbook-cross-os-evidence.md`) |
+| Channel  | Audience                            | Source                                             | QA bar                                                   |
+| -------- | ----------------------------------- | -------------------------------------------------- | -------------------------------------------------------- |
+| `canary` | Internal dogfood (ClawAI engineers) | Every commit to `feature/desktop-agent-v2`         | Unit + typecheck + lint green                            |
+| `beta`   | Early-adopter customers             | Tagged commits matching `v*-beta` on `main`        | Canary green + maintainer-OS QA evidence                 |
+| `stable` | All production users                | Tagged commits matching `v*` (no suffix) on `main` | Full cross-OS QA matrix (`runbook-cross-os-evidence.md`) |
 
 Promotion happens by re-tagging: a canary build that survives 7 days
 without rollback can be re-tagged as the next beta; a beta that
 survives 14 days can be re-tagged as the next stable.
 
-## CI workflow scaffold (`.github/workflows/desktop-agent-release.yml`)
+## CI workflow scaffold (proposed — no `desktop-agent-release.yml` workflow exists yet)
 
 ```yaml
 name: Desktop Agent Release
@@ -32,7 +32,7 @@ on:
 
 permissions:
   contents: write
-  id-token: write   # for OIDC into the release CDN
+  id-token: write # for OIDC into the release CDN
 
 env:
   TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
@@ -76,6 +76,7 @@ jobs:
 ## Latest.json (per channel)
 
 The Tauri updater queries:
+
 ```
 https://releases.clawai.dev/desktop/{{target}}/{{arch}}/{{current_version}}/{{channel}}
 ```

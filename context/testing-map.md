@@ -1,13 +1,13 @@
 # Testing Map
 
-Ground truth: `.ai/manifests/tests.json` (**678 test files** total),
+Ground truth: `.ai/manifests/tests.json` (**<!-- count:specFiles -->2260<!-- /count --> test files** total),
 `services.json` (`testRunner`/`testFiles` per service).
 
 ## Runners
 
 - **Every workspace → vitest** (`vitest run`; backend + shared packages via `unplugin-swc` for decorator metadata). Migrated from Jest on 2026-09-17 (ADR-099). Backend test files are
   `*.spec.ts`, colocated in `__tests__/`.
-- **Frontend → vitest** (`vitest run`). 211 test files. `*.test.ts` / `*.spec.ts`.
+- **Frontend → vitest** (`vitest run`). `*.test.ts` / `*.spec.ts`.
 - **E2E → playwright** (`npm run test:e2e` in the frontend).
 
 ## Test-file distribution (from tests.json)

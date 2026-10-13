@@ -12,7 +12,7 @@ Thank you for your interest in contributing to Claw. This guide will help you ge
 
 3. **Read the project rules** in [CLAUDE.md](../CLAUDE.md) -- these are the coding standards enforced across the project.
 
-4. **Understand the architecture**: Claw uses a microservices architecture with 17 backend services, 5 shared packages, and a Next.js frontend. See [ADR-004](../docs/adrs/004-microservices-architecture.md) for the architectural rationale.
+4. **Understand the architecture**: Claw uses a microservices architecture with <!-- count:services -->20<!-- /count --> backend services, <!-- count:sharedPackages -->6<!-- /count --> shared packages, and a Next.js frontend. See [ADR-004](../docs/adrs/004-microservices-architecture.md) for the architectural rationale.
 
 ---
 
@@ -92,11 +92,9 @@ npm install
 # (the legacy root compose file was removed; compose lives under docker/).
 ./scripts/claw.sh up
 
-# Build the 5 shared packages locally with tsgo (services also build them
-# in-container on startup):
-npm run build -w packages/shared-types -w packages/shared-constants \
-              -w packages/shared-rabbitmq -w packages/shared-auth \
-              -w packages/shared-utilities
+# Build every shared package locally, in dependency order (services also
+# build them in-container on startup; the git hooks rebuild stale ones):
+npm run affected:shared-build
 
 # Follow one service's logs
 ./scripts/claw.sh logs chat-service
@@ -105,26 +103,24 @@ npm run build -w packages/shared-types -w packages/shared-constants \
 npm run dev:frontend
 ```
 
-Services compile with **tsgo** (`@typescript/native-preview`) + `tsc-alias`,
-not `tsc`/`nest build` -- see
+Services compile with TypeScript 7 (the `typescript7` alias, run through
+`tools/typescript/run-ts7.mjs`) + `tsc-alias`, not `nest build` -- see
 [docs/08-runtime-devops/build-system.md](../docs/08-runtime-devops/build-system.md).
 
 ### 4. Make Your Changes
 
 - Follow the code standards described below
 - Write tests for new functionality
-- Update documentation if your change affects public APIs, configuration, or architecture
+- Update every document your change makes stale, in the same commit, and add a
+  `Docs:` trailer to the commit message (`Docs: updated <what>` or
+  `Docs: none — <specific reason>`) — [rules/63](../rules/63-docs-move-with-code.md)
 
 ### 5. Verify Quality
 
-Before submitting, run the full quality gate:
-
-```bash
-npm run lint        # Zero errors required
-npm run typecheck   # Zero errors required
-npm run build       # Must compile successfully
-npm run test        # All tests must pass
-```
+Commit and push: the git hooks run the gates your change needs, scoped to what
+it touches, and CI runs the rest. What runs where, by change type, is the gate
+matrix in [rules/23](../rules/23-git-commits-hooks-and-release-gates.md#gate-matrix-by-change-type).
+Never bypass a hook with `--no-verify`.
 
 ### 6. Submit a Pull Request
 
@@ -193,7 +189,7 @@ Update `README.md`, `docs/00-start-here/installation.md`, `docs/06-data/environm
 
 ## Shared Packages Workflow
 
-The 5 shared packages under `packages/` are consumed by all microservices:
+The <!-- count:sharedPackages -->6<!-- /count --> shared packages under `packages/` are consumed by all microservices:
 
 | Package                  | Purpose                                               |
 | ------------------------ | ----------------------------------------------------- |
@@ -204,8 +200,8 @@ The 5 shared packages under `packages/` are consumed by all microservices:
 | `@claw/shared-utilities` | jwt, http-client, crypto, retry, safe-stringify, etc. |
 
 Each shared package has its own `lint` / `test` / `build` / `typecheck`
-scripts and is a first-class CI matrix entry. They build with **tsgo**
-(`npm run build -w packages/<name>` = `tsgo -p tsconfig.build.json`).
+scripts and is a first-class CI matrix entry. They build with TypeScript 7
+(`npm run build -w packages/<name>`).
 
 ### Making Changes to Shared Packages
 
@@ -222,9 +218,10 @@ scripts and is a first-class CI matrix entry. They build with **tsgo**
 3. Add the package to the root `package.json` workspaces array.
 4. Run `npm install` from the root to link the new package.
 5. Add the package as a dependency in consuming services' `package.json`.
-6. **Add it to the "Build shared packages" step in ALL FOUR CI jobs**
-   (`.github/workflows/ci.yml`): `cd packages/<name> && npx tsgo -p tsconfig.build.json`.
-   Skipping this fails CI with `Cannot find module '@claw/<name>'`.
+6. CI needs no edit: the setup job builds every shared package in dependency
+   order and the matrices are derived from the workspace list. Do add the
+   package to every consumer's `Dockerfile` and `Dockerfile.dev`
+   ([rules/14](../rules/14-shared-packages.md) §6).
 
 ---
 
@@ -250,7 +247,7 @@ compose files under `docker/` and auto-applies the right GPU overlay
 ```
 
 For a quick code-only refresh, services hot-reload via `node --watch` on
-`dist/` (tsgo + tsc-alias watchers). Only rebuild when dependencies or the
+`dist/` (TypeScript 7 + tsc-alias watchers). Only rebuild when dependencies or the
 Prisma schema change.
 
 ### Viewing logs

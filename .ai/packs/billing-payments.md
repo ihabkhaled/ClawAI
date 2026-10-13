@@ -12,9 +12,7 @@ subscription, payment gateway, refund, invoice, pricing, or billing operations c
 - `agents/reliability-engineer.md`
 
 ## Validation lane
-- `cd apps/claw-auth-service && npm run typecheck && npm run lint && npm test`
-- `cd apps/claw-payment-service && npm run typecheck && npm run lint && npm test`
-- `cd apps/claw-frontend && npm run typecheck && npm run lint && npm test`
+- `git commit, then git push — the hooks gate this change for its type (rules/23 gate matrix)`
 
 ## Known pitfalls
 - Read rules/28-billing-integrity-and-api-contracts.md before changing billing state

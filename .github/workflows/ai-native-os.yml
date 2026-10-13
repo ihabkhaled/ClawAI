@@ -44,8 +44,18 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
+      # Includes the rules/63 docs checks: references, counts, duplication.
       - name: knowledge:verify
         run: node tools/knowledge/verify.mjs
+      # rules/63: every commit in the pull request declares its docs impact and
+      # changes the docs of every mapped code area it touches. (A push to main
+      # is a merge of an already-checked pull request.)
+      - name: docs:impact (every pull-request commit)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node tools/knowledge/docs-impact.mjs --range "${BASE_SHA}..${HEAD_SHA}"
       # Rule 33's documentation-discoverability gate. It lives here rather than
       # in the git hooks on purpose: a missing index row never breaks a build —
       # but it does cost the next agent a re-derivation, so CI catches it.

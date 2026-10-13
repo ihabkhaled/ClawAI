@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Auth is uniform across all 17 services: one JWT model, one guard stack, one
+Auth is uniform across every service: one JWT model, one guard stack, one
 permission catalog, one entitlement layer. Consistency here is a security
 property — a service that rolls its own auth check is a hole.
 
@@ -100,11 +100,17 @@ and the frontend feature-gate hook.
 ## Correct pattern
 
 ```ts
-// apps/claw-chat-service/src/modules/chat/chat.controller.ts
-@RequirePermissions(Permission.COMPARE_USE)
-@Post('parallel')
-async compare(@Body() dto: CompareDto, @CurrentUser() user: AuthUser) {
-  return this.compareService.run(user.id, dto); // entitlement + ownership checked in service
+// apps/claw-audit-service/src/modules/feedback/controllers/feedback.controller.ts (abridged)
+@Controller('feedback')
+@RequirePermissions(Permission.FEEDBACK_SUBMIT)
+export class FeedbackController {
+  @Get('mine/:id')
+  getMine(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ): Promise<FeedbackTicketDocument> {
+    return this.feedbackService.getOwn(user.id, id); // ownership checked in the service, never trusted from the client
+  }
 }
 ```
 

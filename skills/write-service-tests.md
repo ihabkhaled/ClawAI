@@ -21,7 +21,7 @@ required_context: [TDD_AND_UNIT_TESTING_STANDARD, ai-context-pack]
 affected_workspaces: [apps/claw-<service>-service]
 required_tests: [service spec (happy + ownership + error branches), manager error-path spec]
 required_docs: [docs/04-backend/service-guide-<service>.md]
-validation_lane: cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test -- --coverage && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Skill: Write Service-Layer Tests
@@ -86,7 +86,10 @@ Service methods hold the business logic: ownership/permission validation, orches
 ## Validation commands
 
 ```bash
-cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test -- --coverage && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 ## Documentation updates

@@ -231,7 +231,7 @@ Query parameters for `/usage`: page, limit, provider, model, startDate, endDate.
 | ------ | --------- | ------ | ----------------------- | ------------------ |
 | GET    | `/health` | Public | Aggregated health check | `AggregatedHealth` |
 
-Checks all 12 services: auth, chat, connector, routing, memory, file, audit, ollama, client-logs, server-logs, image, file-generation.
+Checks every other service listed in `SERVICE_URLS` (`apps/claw-health-service/src/modules/health/constants/health.constants.ts`).
 
 ---
 

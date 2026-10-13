@@ -3,7 +3,8 @@
 // source. Deterministic: unchanged source ⇒ byte-identical output. Everything
 // under `.ai/` EXCEPT `.ai/local/` is generated and committed; never hand-edit.
 //
-//   node tools/knowledge/build.mjs           → (re)generate .ai + workspace AGENTS.md
+//   node tools/knowledge/build.mjs           → (re)generate .ai, workspace AGENTS.md,
+//                                              the per-model routers and count fragments
 //   node tools/knowledge/build.mjs --check    → fail if any generated file is stale
 //   node tools/knowledge/build.mjs --write-and-verify → regenerate, then run the
 //        knowledge:verify integrity checks in the same pass (pre-commit)
@@ -15,11 +16,12 @@ import { stableStringify, hash, normalizeEol } from '../lib/fact.mjs';
 import { renderBootstrap } from './render-bootstrap.mjs';
 import { renderWorkspaceAgents } from './render-workspace-agents.mjs';
 import { renderPacks } from './render-packs.mjs';
+import { renderModelRouters } from './render-model-routers.mjs';
+import { countFragmentProblems, countValues, writeCountFragments } from './count-fragments.mjs';
 import { reportVerify, runVerify } from './verify.mjs';
 
 /** Compute every generated file as { relPath -> content } without writing. */
-export function computeGeneratedFiles() {
-  const manifests = buildManifests();
+export function computeGeneratedFiles(manifests = buildManifests()) {
   const files = {};
 
   for (const [name, data] of Object.entries(manifests)) {
@@ -33,6 +35,11 @@ export function computeGeneratedFiles() {
   }
 
   for (const [relPath, content] of Object.entries(renderPacks())) {
+    files[relPath] = content;
+  }
+
+  // CODEX.md, GEMINI.md, … — AGENTS.md plus a per-model emphasis (ADR-168).
+  for (const [relPath, content] of Object.entries(renderModelRouters())) {
     files[relPath] = content;
   }
 
@@ -70,9 +77,10 @@ function checkAll(files) {
 
 function main() {
   const check = process.argv.includes('--check');
-  const files = computeGeneratedFiles();
+  const manifests = buildManifests();
+  const files = computeGeneratedFiles(manifests);
   if (check) {
-    const stale = checkAll(files);
+    const stale = [...checkAll(files), ...countFragmentProblems(countValues(manifests))];
     if (stale.length > 0) {
       console.error(`knowledge:check FAILED — ${stale.length} generated file(s) stale:`);
       for (const s of stale.slice(0, 20)) console.error(`  ${s}`);
@@ -83,6 +91,7 @@ function main() {
     return;
   }
   writeAll(files);
+  writeCountFragments(countValues(manifests));
   console.log(`knowledge:build wrote ${Object.keys(files).length} generated files under .ai/ + workspace AGENTS.md.`);
   if (process.argv.includes('--write-and-verify') && !reportVerify(runVerify({ freshness: false }))) {
     process.exit(1);

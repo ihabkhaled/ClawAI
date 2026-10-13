@@ -21,7 +21,7 @@ affected_workspaces: [apps/claw-workspace-service, packages/shared-types]
 required_tests: [oauth flow spec, webhook handler spec, sync idempotency spec, qa matrix]
 required_docs:
   [docs/03-architecture/workspace-automation.md, docs/04-backend/service-guide-workspace.md]
-validation_lane: cd apps/claw-workspace-service && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Skill: Add a Workspace Connector
@@ -80,7 +80,10 @@ workspace-service (port 4014) integrates external productivity tools (GitHub, Gi
 ## Validation commands
 
 ```bash
-cd apps/claw-workspace-service && npm run typecheck && npm run lint && npm test && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 ## Documentation updates

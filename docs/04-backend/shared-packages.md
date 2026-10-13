@@ -586,7 +586,7 @@ export class ExampleController {
 **Package**: `@claw/shared-utilities`
 **Path**: `packages/shared-utilities/`
 **Added**: 2026-04-26 (Phase C-1 of the codebase-wide refactor)
-**Purpose**: Cross-service utility functions. The third "shape" alongside `shared-types` (types) and `shared-constants` (values) — this package owns _functions_ that 2+ services need. Eliminates per-service duplicates of the same wrapper code.
+**Purpose**: Cross-service utility functions. The third "shape" alongside `shared-types` (types) and `shared-constants` (values) — this package owns _functions_ that two or more services need. Eliminates per-service duplicates of the same wrapper code.
 
 ### Sub-packages
 
@@ -638,7 +638,7 @@ The actual `jsonwebtoken` library call now lives **exactly once** in `packages/s
 
 The package skeleton is designed to grow. Reserved sub-packages for future phases:
 
-- `crypto/` — AES-256-GCM encryption (currently duplicated in 4 services: auth / connector / research / workspace)
+- `crypto/` — AES-256-GCM encryption (currently duplicated in auth / connector / research / workspace)
 - `url-safety/` — URL parsing + SSRF blocklists (currently duplicated in research + workspace)
 - `retry-policy/` — exponential backoff + jitter
 - `pkce/` — OAuth 2.1 PKCE helpers (currently in workspace only, but research will need it)
@@ -659,12 +659,12 @@ The workflow step now reads:
 ```yaml
 - name: Build shared packages
   run: |
-    cd packages/shared-types && npx tsgo -p tsconfig.build.json
-    cd ../shared-constants && npx tsgo -p tsconfig.build.json
-    cd ../shared-utilities && npx tsgo -p tsconfig.build.json
-    cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
-    cd ../shared-auth && npx tsgo -p tsconfig.build.json
-    cd ../shared-entitlements && npx tsgo -p tsconfig.build.json
+    cd packages/shared-types && npm run build
+    cd ../shared-constants && npm run build
+    cd ../shared-utilities && npm run build
+    cd ../shared-rabbitmq && npm run build
+    cd ../shared-auth && npm run build
+    cd ../shared-entitlements && npm run build
 ```
 
 This rule is now codified in `rules/05-infra-rules.md` and `rules/09-refactor-rules.md`.

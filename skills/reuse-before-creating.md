@@ -29,7 +29,7 @@ required_context: [ai-context-pack, codebase-navigation]
 affected_workspaces: [packages/*, apps/claw-*-service]
 required_tests: [review-only]
 required_docs: [packages/shared-utilities/README.md]
-validation_lane: 'cd <touched-workspace> && npm run typecheck && npm run lint && npm test && npm run build'
+validation_lane: 'git commit + git push — the hooks gate the change (rules/23 gate matrix)'
 ---
 
 # Skill: Reuse Before Creating
@@ -60,7 +60,7 @@ validation_lane: 'cd <touched-workspace> && npm run typecheck && npm run lint &&
 2. Search sibling services for the same helper name/shape:
    - `grep -rln "<helperName>" apps/*/src/common/utilities`
 3. Ask the seam question: does an existing layer (auth pipeline, RBAC, `RabbitMQService`, SSE rich-progress, http-client retry, repository pattern, capability framework) already solve this class? If yes, extend it.
-4. Check `packages/shared-utilities/README.md` — it catalogues what already exists.
+4. Check `packages/shared-utilities/src/index.ts` — every shared utility the package exports, one folder per family under `packages/shared-utilities/src/`.
 
 ## Tests-first plan
 
@@ -88,12 +88,12 @@ validation_lane: 'cd <touched-workspace> && npm run typecheck && npm run lint &&
 
 ## Validation commands
 
-- `cd <touched-workspace> && npm run typecheck && npm run lint && npm test && npm run build`
+- commit and push — the hooks run the gates for the change type ([rules/23 gate matrix](../rules/23-git-commits-hooks-and-release-gates.md#gate-matrix-by-change-type))
 - If a shared package changed, rebuild dependents per `./06-docker-toolkit.md`.
 
 ## Documentation updates
 
-- Update `packages/shared-utilities/README.md` if you add a shared utility.
+- Export a new shared utility from `packages/shared-utilities/src/index.ts`, and describe it in `docs/04-backend/shared-packages.md`.
 - Update root `CLAUDE.md` only if a new cross-cutting pattern was introduced (rare).
 
 ## Definition of done

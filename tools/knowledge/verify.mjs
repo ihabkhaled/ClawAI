@@ -5,6 +5,8 @@
 //  - hook-bypass recommendations in canonical policy
 //  - unresolved cross-source contradictions
 //  - a workspace with source code and no spec
+//  - rules/63 docs checks: dead references, hand-written counts, copied
+//    sections, stale count fragments
 // Runs the same authoritative extractors developers/CI use.
 import { existsSync } from 'node:fs';
 import { computeGeneratedFiles } from './build.mjs';
@@ -15,9 +17,12 @@ import { findContradictions, findBypassRecommendations } from '../lib/analyzers.
 import { extractAll, extractTests } from '../lib/extractors.mjs';
 import { discoverWorkspaces, isMain, exists } from '../lib/repo.mjs';
 import { TASK_PACKS } from './classify-task.mjs';
+import { buildManifests } from '../lib/manifests.mjs';
+import { countFragmentProblems, countValues } from './count-fragments.mjs';
+import { runDocsChecks } from './docs-checks.mjs';
 
-function checkFreshness() {
-  const files = computeGeneratedFiles();
+function checkFreshness(manifests) {
+  const files = computeGeneratedFiles(manifests);
   const stale = [];
   for (const [rel, content] of Object.entries(files)) {
     const abs = repoPath(rel);
@@ -192,8 +197,10 @@ function checkContradictions() {
  * that comparison would recompute.
  */
 export function runVerify({ freshness = true } = {}) {
+  const manifests = buildManifests();
   return {
-    freshness: freshness ? checkFreshness() : [],
+    freshness: freshness ? checkFreshness(manifests) : [],
+    docs: [...runDocsChecks(), ...countFragmentProblems(countValues(manifests))],
     links: checkLinks(),
     bypass: checkBypass(),
     orphans: checkOrphans(),
@@ -210,6 +217,7 @@ export function reportVerify(results) {
     ...results.orphans,
     ...results.contradictions,
     ...results.tests,
+    ...results.docs,
   ];
   if (all.length > 0) {
     console.error(`knowledge:verify FAILED — ${all.length} issue(s):`);

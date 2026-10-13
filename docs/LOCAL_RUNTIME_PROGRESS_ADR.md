@@ -127,7 +127,7 @@ without adding any capability the existing channel can't carry.
 
 ### B. Lift `ChatStreamService` into a shared package
 
-Move the per-thread Subject machinery into `packages/shared-runtime-progress/`
+Move the per-thread Subject machinery into a new `shared-runtime-progress` package
 so chat-service and a new dedicated service can both use it.
 
 **Rejected because:** there's no second consumer today. YAGNI. If a future

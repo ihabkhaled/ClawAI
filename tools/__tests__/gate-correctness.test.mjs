@@ -16,7 +16,7 @@ import { gateJobs } from '../affected/pool.mjs';
 import { ESLINT_CANARY, planRootChecks } from '../affected/root-checks.mjs';
 import { sharedBuildOrder, sharedInputHashes, staleSharedPackages } from '../affected/shared-build.mjs';
 import { prePush } from '../gates/pre-push.mjs';
-import { git, parsePrePushRefs, ZERO_SHA } from '../lib/git.mjs';
+import { git, parsePrePushRefs, resolveDefaultBase, ZERO_SHA } from '../lib/git.mjs';
 import { repoPath } from '../lib/repo.mjs';
 import { checkEveryWorkspaceHasTests } from '../knowledge/verify.mjs';
 
@@ -39,6 +39,11 @@ test('a comparison base that does not resolve fails instead of reporting zero ch
   });
   assert.equal(cli.status, 1);
   assert.match(cli.stderr, /does not resolve/u);
+});
+
+test('CLAW_GATE_BASE overrides the default base and must resolve', () => {
+  assert.equal(resolveDefaultBase({ env: { CLAW_GATE_BASE: 'HEAD' } }), 'HEAD');
+  assert.throws(() => resolveDefaultBase({ env: { CLAW_GATE_BASE: 'no-such-ref-anywhere' } }), /does not resolve/u);
 });
 
 test('the pre-push hook no longer retries a failing suite against a second base', () => {

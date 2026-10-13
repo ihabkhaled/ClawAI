@@ -48,7 +48,7 @@ doesn't make files" reports; the writer lane above is for writer quality.
 
 ```bash
 export NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem" QA_LAB_EMAIL=… QA_LAB_PASSWORD=…
-node scripts/qa-lab/file-chat-matrix.mjs --mode=manual   --models=OLLAMA:gemma4:31b,GEMINI:models/gemini-2.5-flash   --formats=PDF,XLSX,IMAGE --variants=0,1 --out=scripts/qa-lab/results/CHATMATRIX-x
+node scripts/qa-lab/file-chat-matrix.mjs --mode=manual   --models=OLLAMA:gemma4:31b,GEMINI:models/gemini-2.5-flash   --formats=PDF,XLSX,IMAGE --variants=0,1 --out=scripts/qa-lab/results/CHATMATRIX-<tag>
 ```
 
 - `--mode=manual` is the case users hit most (a model picked in the

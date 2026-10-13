@@ -2,7 +2,7 @@
 
 ## Overview
 
-Claw runs as a fully Dockerized development environment with ~24 containers orchestrated by a single `docker/docker-compose.yml` (620 lines). Automated install scripts handle first-time setup on both Linux/macOS (bash) and Windows (PowerShell).
+Claw runs as a fully Dockerized development environment whose containers are defined in split compose files (`docker/docker-compose.{dev,prod}.{databases,services,ollama}.yml` plus GPU overlays) and brought up only through `./scripts/claw.sh`. Automated install scripts handle first-time setup on both Linux/macOS (bash) and Windows (PowerShell).
 
 ---
 

@@ -8,7 +8,7 @@ required_context: [testing-map, backend-architecture]
 affected_workspaces: [the service under test]
 required_tests: [backend-e2e]
 required_docs: [none]
-validation_lane: cd apps/<service> && npm test
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 ## When to use
@@ -69,7 +69,10 @@ in the response body.
 ## Validation commands
 
 ```
-cd apps/<service> && npm run typecheck && npm run lint && npm test
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "test(<scope>): <subject>" -m "Docs: none — <why no doc describes it>"
+git push origin <branch>
 ```
 
 ## Documentation updates

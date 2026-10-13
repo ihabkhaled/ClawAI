@@ -28,7 +28,7 @@ affected_workspaces:
   ]
 required_tests: [connector-presets.spec.ts case, adapter spec case if the response shape is new]
 required_docs: [docs/13-adr/adr-117-connector-presets-one-registry-generic-adapter.md]
-validation_lane: cd packages/shared-utilities && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Skill: Add an OpenAI-compatible provider
@@ -137,10 +137,11 @@ Format` values cannot express**, extend `provider-model-list.utility.ts`'s
 ## Validation commands
 
 ```bash
-cd packages/shared-utilities && npm run typecheck && npm run lint && npm test && npm run build
-cd ../shared-types && npm run typecheck && npm run lint && npm test && npm run build
-cd ../shared-constants && npm run typecheck && npm run lint && npm test && npm run build
-cd ../../apps/claw-connector-service && npx prisma generate && npm run typecheck && npm run lint && npm test && npm run build
+cd apps/claw-connector-service && npx prisma generate && cd -
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 ## Definition of done

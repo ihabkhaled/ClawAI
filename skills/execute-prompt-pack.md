@@ -117,7 +117,7 @@ change touching a public page, a design token, or a semantic colour must be chec
 against it before pushing:
 
 ```bash
-cd apps/claw-frontend && npx @lhci/cli@0.15.x autorun --config=lighthouserc.json
+npm run lighthouse   # from the repository root: Lighthouse CI with apps/claw-frontend/lighthouserc.json
 ```
 
 ### 6. Write the plan
@@ -150,8 +150,10 @@ workspace, one gated commit per coherent change, pushed before the next starts.
 ```
 npm run knowledge:context -- --task="<subject>"
 npm run affected:list
-cd <workspace> && npm run typecheck && npm run lint && npm test && npm run build
-npm run knowledge:verify
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 ## Documentation updates

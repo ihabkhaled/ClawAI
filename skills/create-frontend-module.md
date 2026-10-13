@@ -19,7 +19,7 @@ required_context: [ai-context-pack, codebase-navigation]
 affected_workspaces: [claw-frontend]
 required_tests: [vitest, accessibility]
 required_docs: [docs/05-frontend]
-validation_lane: cd apps/claw-frontend && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Skill: Create a Frontend Module (feature slice)
@@ -83,7 +83,7 @@ i18n contracts. Backend must already expose the endpoints (behind nginx `/api/v1
 
 ## Validation commands
 
-`cd apps/claw-frontend && npm run typecheck && npm run lint && npm test && npm run build`
+commit and push — the hooks run the gates for the change type ([rules/23 gate matrix](../rules/23-git-commits-hooks-and-release-gates.md#gate-matrix-by-change-type))
 Then `npx vitest run src/lib/i18n` from `apps/claw-frontend`. Never `--no-verify`.
 
 ## Documentation updates

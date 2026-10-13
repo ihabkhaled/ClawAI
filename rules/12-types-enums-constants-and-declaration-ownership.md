@@ -41,10 +41,10 @@ All backend logic files (`*.service.ts`, `*.manager.ts`, `*.controller.ts`,
 ## Correct pattern
 
 ```
-apps/claw-routing-service/src/common/enums/routing-mode.enum.ts   # the enum
-apps/claw-routing-service/src/modules/routing/types/decision.types.ts
+apps/claw-routing-service/src/common/enums/complexity-class.enum.ts     # the enum
+apps/claw-routing-service/src/modules/routing/types/complexity.types.ts
 apps/claw-routing-service/src/modules/routing/constants/routing.constants.ts
-# routing.service.ts imports all three — declares none of them
+# managers/routing.manager.ts imports all three — declares none of them
 ```
 
 ## Enforcement

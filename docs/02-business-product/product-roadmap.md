@@ -2,7 +2,7 @@
 
 ## Current State (v0.2.0, April 2026)
 
-ClawAI is a fully functional local-first AI orchestration platform with 17 NestJS microservices, a Next.js frontend, and comprehensive infrastructure. The platform is in active development with most features at GA status.
+ClawAI is a fully functional local-first AI orchestration platform with <!-- count:services -->20<!-- /count --> NestJS microservices, a Next.js frontend, and comprehensive infrastructure. The platform is in active development with most features at GA status.
 
 ---
 
@@ -10,7 +10,7 @@ ClawAI is a fully functional local-first AI orchestration platform with 17 NestJ
 
 ### Core Platform (GA)
 
-- 17 microservices with individual databases (13 PostgreSQL + 3 MongoDB)
+- <!-- count:services -->20<!-- /count --> microservices, each owning its own database
 - Next.js 16 frontend with React 19, TanStack Query, Zustand
 - Nginx reverse proxy with 20+ route mappings
 - Docker Compose deployment (~22 containers)
@@ -164,8 +164,8 @@ discovery. The eight-batch delivery plan and launch gates are in
 
 ## Version History
 
-| Version | Date       | Highlights                                                          |
-| ------- | ---------- | ------------------------------------------------------------------- |
-| v0.2.0  | 2026-04-09 | Model catalog (30 models), download manager, category-aware routing |
-| v0.1.x  | 2026-03-xx | Image generation, file generation scaffolding, 17 services complete |
-| v0.0.x  | 2026-02-xx | Core platform: chat, routing, memory, connectors, auth, audit       |
+| Version | Date       | Highlights                                                                        |
+| ------- | ---------- | --------------------------------------------------------------------------------- |
+| v0.2.0  | 2026-04-09 | Model catalog (30 models), download manager, category-aware routing               |
+| v0.1.x  | 2026-03-xx | Image generation, file generation scaffolding, services complete (17 at the time) |
+| v0.0.x  | 2026-02-xx | Core platform: chat, routing, memory, connectors, auth, audit                     |

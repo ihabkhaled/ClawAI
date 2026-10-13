@@ -16,7 +16,7 @@ required_context: [service-catalog, event-flow-map, database-ownership-map]
 affected_workspaces: [apps/claw-payment-service, apps/claw-auth-service]
 required_tests: [reconciliation unit tests, cross-service entitlement contract tests]
 required_docs: [docs/11-runbooks/runbook-billing-reconciliation.md]
-validation_lane: cd apps/claw-payment-service && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Skill: Reconcile Billing State
@@ -77,8 +77,10 @@ tokens. The manual endpoint is server-permission guarded.
 ## Validation commands
 
 ```bash
-cd apps/claw-payment-service
-npm run typecheck && npm run lint && npm test && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 ## Documentation updates

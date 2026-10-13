@@ -120,8 +120,8 @@ Before writing code, know what will reject it:
   that compile perfectly: a colour pair below 4.5:1, a missing landmark, an unlabelled
   control, a heading level skipped. Any change that touches a public page, a design
   token, or a semantic colour MUST be checked against it — locally with
-  `npx @lhci/cli@0.15.x autorun --config=lighthouserc.json` from
-  `apps/claw-frontend`, or by reading the assertion list in `lighthouserc.json`
+  `npm run lighthouse` from the repository root (Lighthouse CI with
+  `apps/claw-frontend/lighthouserc.json`), or by reading the assertion list in `lighthouserc.json`
   before choosing a colour.
 
 ### 6. Write the plan, and state the deviations

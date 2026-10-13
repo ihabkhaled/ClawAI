@@ -155,7 +155,7 @@ A Pino-based logger wrapper that includes service name, request ID, and trace ID
 
 ### Consumers
 
-All 17 backend services import `shared-rabbitmq`.
+Every backend service except `claw-health-service` imports `shared-rabbitmq`.
 
 ## shared-auth
 

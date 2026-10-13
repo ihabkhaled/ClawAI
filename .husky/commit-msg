@@ -1,2 +1,6 @@
 #!/usr/bin/env sh
-npx --no -- commitlint --edit ${1}
+# commit-msg: conventional message (commitlint), then rules/63 — every commit
+# declares its docs impact (`Docs: updated <what>` or `Docs: none — <reason>`)
+# and a change to a mapped code area changes one of its docs. NEVER bypass.
+npx --no -- commitlint --edit "${1}" || exit 1
+node tools/knowledge/docs-impact.mjs --commit-msg "${1}" || exit 1

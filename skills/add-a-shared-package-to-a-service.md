@@ -77,8 +77,9 @@ Dockerfile copies the same stale dist again.
     && cd /app/packages/shared-<x> && npm run build
    ```
 
-3. **New package only:** add it to the "Build shared packages" step and the
-   matrix in all four `.github/workflows/ci.yml` jobs (rule 14 §4).
+3. **New package only:** nothing to edit in `.github/workflows/ci.yml` — the
+   affected matrix and the shared-build order come from the `package.json`
+   dependency you declared in step 1 (rule 14 §4).
 4. **Prove it** without touching Docker:
 
    ```bash

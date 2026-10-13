@@ -83,4 +83,4 @@ Regenerate this block with `python <skill>/scripts/akinator_wiki.py index`; `pyt
 - [Threads product spec](../02-business-product/clawai-threads-product-spec.md)
 - [Threads architecture](../03-architecture/clawai-threads-architecture.md)
 - [Threads account deletion ADR](../13-adr/adr-160-threads-account-deletion-propagation.md)
-- [Threads wiki](../../wiki/Threads.md)
+- Threads wiki page — rendered at publish time from the [Threads product spec](../02-business-product/clawai-threads-product-spec.md) (`wiki/mirrors.json`)

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import test from 'node:test';
 
 import {
@@ -151,6 +152,24 @@ test('CodeQL findings fail unless accepted by rule and path', () => {
   const { blocking, known } = partitionFindings(findings, [{ rule: 'js/request-forgery', path: 'packages/b.ts' }]);
   assert.deepEqual(blocking.map((f) => f.rule), ['js/sql-injection']);
   assert.deepEqual(known.map((f) => f.rule), ['js/request-forgery']);
+});
+
+test('lint-staged never spawns a tool through an npm .cmd shim, and skips generated docs', () => {
+  // A .cmd shim goes through cmd.exe, whose 8191-character cap (after it
+  // escapes every argument) failed a 270-file docs commit on 2026-10-13.
+  const require = createRequire(import.meta.url);
+  for (const config of ['.lintstagedrc.cjs', 'apps/claw-frontend/.lintstagedrc.cjs']) {
+    const rules = require(repoPath(config));
+    const docs = rules['*.{ts,tsx,js,jsx,json,css,md,yml,yaml}']([
+      repoPath('apps/claw-frontend/AGENTS.md'),
+      repoPath('apps/claw-frontend/README.md'),
+    ]);
+    assert.ok(docs.length > 0, config);
+    for (const command of docs) {
+      assert.match(command, /^node \S+prettier\.cjs --write /u, `${config}: ${command.slice(0, 60)}`);
+      assert.doesNotMatch(command, /AGENTS\.md/u, `${config} must not format a generated AGENTS.md`);
+    }
+  }
 });
 
 test('the secret scan uses the staged git mode on gitleaks 8.19 and later', () => {

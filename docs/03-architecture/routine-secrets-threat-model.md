@@ -1,6 +1,6 @@
 # Routine secrets: threat model (F099 step 2)
 
-Decision and design: [ADR-142](../13-adr/adr-142-per-routine-secrets-isolated-and-write-only.md).
+Decision and design: [ADR-142](../13-adr/adr-143-per-routine-secrets-isolated-and-write-only.md).
 Code: `apps/claw-agent-service/src/modules/agent/services/routine-secret.service.ts`.
 
 ## Assets

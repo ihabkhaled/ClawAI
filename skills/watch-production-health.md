@@ -11,7 +11,7 @@ infrastructure detail in what users read).
 
 ## The pipeline, in one line
 
-health-service checks 17 services → caches one snapshot (14 s) → exports
+health-service checks every other service → caches one snapshot (14 s) → exports
 `claw_service_up{service}` → Prometheus scrapes every 15 s, keeps 30 d →
 health-service reads it back with two range queries → `GET /api/v1/health/status`
 (admin) → `/observability` service-status section.

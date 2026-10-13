@@ -50,11 +50,13 @@ Before release: `npm run release:preflight` runs the all-workspace gate.
    change affects is typechecked, after any stale shared package is rebuilt in
    dependency order.
 
-**commit-msg** — commitlint (conventional subject, body lines ≤ 200).
+**commit-msg** — commitlint (conventional subject, body lines ≤ 200) and
+`docs:impact`: a `Docs:` trailer, and the docs of every mapped code area the
+commit touches ([rules/63](63-docs-move-with-code.md)).
 
 **pre-push** (`tools/gates/pre-push.mjs`, every pushed ref read from stdin; base
 resolved as `origin/HEAD` → `origin/main` → `main`, fetched if missing, never
-guessed):
+guessed; a stacked branch sets `CLAW_GATE_BASE=<parent branch>`):
 
 1. `knowledge:verify` + `audit:check` — skipped when pre-commit's receipt covers
    the tree.
@@ -73,7 +75,7 @@ five gates for its tree. Workspaces run in a bounded pool (`CLAW_GATE_JOBS`).
 
 | Change type                                                 | pre-commit                                                                  | pre-push                                                                    | CI (`ci.yml` + `ai-native-os`)                                                                         | By hand                                                                  |
 | ----------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
-| **Docs only** (`*.md` anywhere)                             | prettier, secret scan, knowledge + link checks. No code gate.               | knowledge (skipped via receipt). No code gate.                              | knowledge freshness + integrity (docs checks), format ratchet, secrets, CodeQL, QA evidence            | nothing                                                                  |
+| **Docs only** (`*.md` anywhere)                             | prettier, secret scan, knowledge + docs checks (rules/63). No code gate.    | knowledge (skipped via receipt). No code gate.                              | knowledge freshness + integrity (docs checks), format ratchet, secrets, CodeQL, QA evidence            | nothing                                                                  |
 | **Single-workspace source**                                 | eslint `--max-warnings 0` + prettier, secret scan, knowledge, typecheck     | `vitest related`, build                                                     | setup, static (lint ratchet + typecheck), test + coverage floor, changed-lines coverage, build, policy | nothing                                                                  |
 | **Shared package** (`packages/*`)                           | + stale shared `dist` rebuilt in order; typecheck package + all dependents  | related tests of the package, typecheck of dependents, build of the package | the full matrix of every dependent                                                                     | nothing                                                                  |
 | **Prisma schema**                                           | typecheck of the service (against its current client)                       | related tests / suite, build                                                | setup regenerates every client; static, test, build of the service                                     | `npm run prisma:generate --workspace=<svc>` and the migration (rules/52) |
@@ -95,7 +97,7 @@ CI job by job, and how a red job blocks release:
    as is any other hook bypass. A receipt skips only gates it ran.
 3. **Conventional commits** — `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert`,
    subject ≤ 100 chars, no sentence/start/pascal/upper case, body lines ≤ 200
-   chars.
+   chars, and a `Docs:` trailer ([rules/63](63-docs-move-with-code.md)).
 4. **Explicit paths when staging** — `git add <path> …`, never `git add -A`/`.`
    (it sweeps in parallel work).
 5. **Push each commit before starting the next one.** CI only sees what is pushed;
@@ -114,7 +116,7 @@ CI job by job, and how a red job blocks release:
 - Re-running by hand the gates the hooks are about to run on the same tree.
 - `git add -A` / `git add .` when staging.
 - Committing again while an earlier commit is unpushed.
-- A non-conventional commit subject.
+- A non-conventional commit subject, or a commit with no valid `Docs:` trailer.
 
 ## Enforcement
 
@@ -130,12 +132,13 @@ CI job by job, and how a red job blocks release:
 
 - [rules/34](34-gate-economy-and-machine-resources.md) — receipts, concurrency, machine resources.
 - [rules/48](48-lint-and-test-only-what-changed.md) — testing and linting only what changed.
+- [rules/63](63-docs-move-with-code.md) — docs move with code.
 - [skills/commit-and-push-each-change](../skills/commit-and-push-each-change.md) ·
   [skills/run-gates-once-and-land](../skills/run-gates-once-and-land.md).
 
 ## Definition of done
 
 - [ ] Committed and pushed through the hooks; no bypass.
-- [ ] Conventional subject, explicit paths.
+- [ ] Conventional subject, explicit paths, a valid `Docs:` trailer.
 - [ ] `git log --oneline origin/<branch>..HEAD` is empty.
 - [ ] CI green, including `CI success`.

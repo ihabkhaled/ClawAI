@@ -179,7 +179,8 @@ If you need to start fresh (destroys all data):
 ./scripts/claw.sh up -d
 
 # Re-run seeds
-./scripts/claw.sh exec ollama-service npx tsx prisma/seed-catalog.ts
+# The Ollama model catalog re-seeds itself at boot (CatalogSeedService):
+./scripts/claw.sh service:recreate ollama-service
 ```
 
 ## Prevention
