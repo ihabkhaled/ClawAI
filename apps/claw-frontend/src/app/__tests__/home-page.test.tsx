@@ -8,6 +8,13 @@ import { LocaleProvider } from '@/lib/i18n';
 import { en } from '@/lib/i18n/locales/en';
 import { getPageBySlug } from '@/utilities/content-registry.utility';
 
+// An async server component: rendering it inside this client harness suspends the whole tree.
+vi.mock('@/components/marketing/shared/marketing-video-section', () => ({
+  MarketingVideoSection: ({ placement }: { placement: string }) => (
+    <div data-testid="marketing-video-section" data-placement={placement} />
+  ),
+}));
+
 vi.mock('@/components/adsense/marketing-ad-unit', () => ({
   MarketingAdUnit: ({ slot }: { slot: string | null }) => (
     <aside data-testid="marketing-ad-unit" data-slot={slot ?? ''} />

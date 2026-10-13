@@ -135,6 +135,11 @@
         "textToSpeech": false,
         "maxVideoSeconds": 60
       },
+      "plugins": {
+        "enabled": true,
+        "maxInstalled": 5,
+        "maxUserMcpServers": 0
+      },
       "creditConnectorFreeRequestsPerMonth": 10,
       "creditConnectorFreeBudgetMicroUsd": 250000,
       "creditConnectorFreeMaxModelOutputMicroUsd": 5000000,
@@ -237,6 +242,11 @@
         "textToSpeech": true,
         "maxVideoSeconds": 600
       },
+      "plugins": {
+        "enabled": true,
+        "maxInstalled": 10,
+        "maxUserMcpServers": 3
+      },
       "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": false,
       "paygCreditPercentBps": 3000
@@ -336,6 +346,11 @@
         "helperVision": true,
         "textToSpeech": true,
         "maxVideoSeconds": 600
+      },
+      "plugins": {
+        "enabled": true,
+        "maxInstalled": 25,
+        "maxUserMcpServers": 5
       },
       "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": false,
@@ -437,6 +452,11 @@
         "textToSpeech": true,
         "maxVideoSeconds": 600
       },
+      "plugins": {
+        "enabled": true,
+        "maxInstalled": 50,
+        "maxUserMcpServers": 10
+      },
       "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": true,
       "paygCreditPercentBps": 2500
@@ -536,6 +556,11 @@
         "helperVision": true,
         "textToSpeech": true,
         "maxVideoSeconds": 600
+      },
+      "plugins": {
+        "enabled": true,
+        "maxInstalled": 100,
+        "maxUserMcpServers": 25
       },
       "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": false,
@@ -637,6 +662,11 @@
         "textToSpeech": true,
         "maxVideoSeconds": 600
       },
+      "plugins": {
+        "enabled": true,
+        "maxInstalled": 100,
+        "maxUserMcpServers": 25
+      },
       "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": false,
       "paygCreditPercentBps": 2500
@@ -736,6 +766,11 @@
         "helperVision": true,
         "textToSpeech": true,
         "maxVideoSeconds": 600
+      },
+      "plugins": {
+        "enabled": true,
+        "maxInstalled": null,
+        "maxUserMcpServers": null
       },
       "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": false,

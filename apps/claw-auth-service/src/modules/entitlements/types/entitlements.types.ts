@@ -28,6 +28,9 @@ export type UserEntitlements = {
       memoryItems: number | null;
       // Seconds. null = unlimited, 0 = video disabled (ADR-122).
       maxVideoSeconds: number | null;
+      // Plugins: installs and own MCP servers. null = unlimited, 0 = disabled.
+      maxInstalledPlugins: number | null;
+      maxUserMcpServers: number | null;
     };
     featureGates: PlanFeatureGates;
   } | null;

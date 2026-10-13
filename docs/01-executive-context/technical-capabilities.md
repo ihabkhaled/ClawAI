@@ -10,7 +10,7 @@ This document summarizes ClawAI's technical capabilities for business stakeholde
 
 | Metric                     | Value                                                         |
 | -------------------------- | ------------------------------------------------------------- |
-| Backend services           | <!-- count:services -->20<!-- /count --> NestJS microservices |
+| Backend services           | <!-- count:services -->21<!-- /count --> NestJS microservices |
 | Frontend                   | Next.js 16 with React 19                                      |
 | PostgreSQL databases       | 9                                                             |
 | MongoDB databases          | 3                                                             |
@@ -163,7 +163,7 @@ This document summarizes ClawAI's technical capabilities for business stakeholde
 | Aspect        | Capability                                                                     |
 | ------------- | ------------------------------------------------------------------------------ |
 | Installation  | Single command (`docker compose up`)                                           |
-| Containers    | <!-- count:services -->20<!-- /count --> services + databases + infrastructure |
+| Containers    | <!-- count:services -->21<!-- /count --> services + databases + infrastructure |
 | Hot reload    | Source changes auto-detected (Node --watch)                                    |
 | CI/CD         | GitHub Actions (lint -> typecheck -> test -> build)                            |
 | Pre-commit    | 5-step quality gate (format, lint, type-check, build, test)                    |

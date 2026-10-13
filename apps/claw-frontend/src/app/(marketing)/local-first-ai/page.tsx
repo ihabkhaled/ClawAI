@@ -10,7 +10,9 @@ import { EnterpriseHeroSection } from '@/components/marketing/enterprise/enterpr
 import { EnterpriseHybridSection } from '@/components/marketing/enterprise/enterprise-hybrid-section';
 import { EnterpriseLocalModelsSection } from '@/components/marketing/enterprise/enterprise-local-models-section';
 import { MarketingRequestSceneGallery } from '@/components/marketing/shared/marketing-request-scene-gallery';
+import { MarketingVideoSection } from '@/components/marketing/shared/marketing-video-section';
 import { MarketingScenePage } from '@/enums/marketing-scene-page.enum';
+import { MarketingVideoPlacement } from '@/enums/marketing-video-placement.enum';
 import { buildRequestPublicPageMetadata } from '@/lib/seo/public-page-metadata';
 // Imported directly from their specific submodules rather than the
 // `@/utilities` barrel — this is a server component, and the utilities
@@ -33,6 +35,7 @@ export default function EnterpriseDeploymentPage(): React.ReactElement {
     <>
       <EnterpriseHeroSection lastReviewed={lastReviewed} />
       <MarketingRequestSceneGallery page={MarketingScenePage.LOCAL_FIRST_AI} />
+      <MarketingVideoSection placement={MarketingVideoPlacement.LOCAL_FIRST_AI} />
       <EnterpriseAudienceSection />
       <EnterpriseDeploymentSection />
       <EnterpriseLocalModelsSection />

@@ -46,7 +46,7 @@ npm run typecheck
 **Pass criteria:** Zero TypeScript errors across all workspaces:
 
 - `apps/claw-frontend`
-- All <!-- count:services -->20<!-- /count --> `apps/claw-*-service` workspaces
+- All <!-- count:services -->21<!-- /count --> `apps/claw-*-service` workspaces
 - All <!-- count:sharedPackages -->6<!-- /count --> `packages/*` workspaces
 
 **What a failure here means:** Type contracts between layers are broken. A frontend type does not match a backend DTO. A shared package change broke a downstream service. A new enum value was added without updating all switch statements.

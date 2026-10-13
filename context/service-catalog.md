@@ -166,3 +166,9 @@ research, and workspace add `@claw/shared-auth`. All 17 non-health services publ
 - **Path:** `apps/claw-thread-generation-service` · **Gateway:** internal only
 - **Owns:** `claw_thread_generation` PostgreSQL; durable jobs, attempts, checkpoints, evidence, model outputs, and private revision drafts.
 - **Responsibility:** service-token-only enqueue/cancel routes; dedicated `claw.threads.generation` worker; research, author consensus, Judge, and Critic pipeline. Publication read/approval handoff is pending.
+
+## claw-plugin-service — :4021 · plugin and MCP catalog
+
+- **Path:** `apps/claw-plugin-service` · **Gateway:** `/api/v1/plugins` (its `/api/v1/internal/*` routes are closed at the edge)
+- **Owns:** `claw_plugin` PostgreSQL; the plugin catalog (seeded first-party manifests), `PluginSetting` admin settings, and later installs, MCP servers, consents and invocations.
+- **Responsibility:** Batch 1 is the read-only catalog (browse and detail). Chat-service is the only future caller of the internal routes. MCP credentials use the separate `PLUGIN_ENCRYPTION_KEY`. Design: [plugins-and-mcp-design](../docs/implementation/plugins-and-mcp-design.md).

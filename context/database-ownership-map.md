@@ -21,7 +21,7 @@ and `mongodb` containers).
 Compose containers: `pg-auth`, `pg-chat`, `pg-connector`, `pg-routing`,
 `pg-memory`, `pg-files`, `pg-ollama`, `pg-images`, `pg-file-generations`,
 `pg-workspace`, `pg-agent`, `pg-research`, `pg-llamacpp`, `pg-payments`,
-`pg-thread-generation`, `pg-threads`, plus `mongodb`, `redis`, `rabbitmq`, `clamav` (databases
+`pg-thread-generation`, `pg-threads`, `pg-plugin`, plus `mongodb`, `redis`, `rabbitmq`, `clamav` (databases
 compose files).
 
 ## Ownership table
@@ -47,6 +47,7 @@ compose files).
 | llamacpp :4017          | Postgres            | FrontierCatalogEntry, BinaryRelease, PullJob, HardwareSnapshot, ModelLoadEvent, PreflightOverrideAudit, RuntimeConfig                                                                                                                                              |
 | payment :4018           | Postgres            | BillingCustomer, Subscription, CheckoutSession, PaymentTransaction, Invoice(+Line/Delivery), Refund, PaymentMethod, ProrationQuote, FxQuote, WebhookEvent, OutboxEvent, ReconciliationRun/Divergence                                                               |
 | thread-generation :4020 | Postgres            | ThreadGenerationJob, ThreadGenerationAttempt, ThreadGenerationCheckpoint, ThreadModelCommunication, ThreadRevisionDraft                                                                                                                                            |
+| plugin :4021            | Postgres            | PluginCatalogEntry, PluginSetting (Batch 1); installs, servers, consents, invocations later                                                                                                                                                                        |
 | threads :4019           | Postgres            | ThreadPublication, ThreadPublicationRevision                                                                                                                                                                                                                       |
 
 ## Migrations (Prisma services)

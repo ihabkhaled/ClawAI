@@ -75,7 +75,7 @@ git push origin <branch>                 # pre-push; then CI
 Which gate runs for which change type:
 [rules/23 — gate matrix](../rules/23-git-commits-hooks-and-release-gates.md#gate-matrix-by-change-type).
 **Never** run the all-workspace lint/typecheck/test/build for a scoped change —
-it regenerates <!-- count:prismaClients -->16<!-- /count --> Prisma clients and compiles every service
+it regenerates <!-- count:prismaClients -->17<!-- /count --> Prisma clients and compiles every service
 ([rules/34](../rules/34-gate-economy-and-machine-resources.md)). Want one proof up
 front instead of two hook runs? `npm run gates:receipt` after staging.
 

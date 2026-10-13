@@ -13,12 +13,14 @@ import { ModelRosterSection } from '@/components/marketing/home/model-roster-sec
 import { PricingSection } from '@/components/marketing/home/pricing-section';
 import { ThreadsBandSection } from '@/components/marketing/home/threads-band-section';
 import { MarketingSceneGallery } from '@/components/marketing/shared/marketing-scene-gallery';
+import { MarketingVideoSection } from '@/components/marketing/shared/marketing-video-section';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
 import {
   MARKETING_HOME_PAYG_BAND,
   MARKETING_HOME_TEAMS_BAND,
 } from '@/constants/marketing-home.constants';
 import { MarketingScenePage } from '@/enums/marketing-scene-page.enum';
+import { MarketingVideoPlacement } from '@/enums/marketing-video-placement.enum';
 import { getAdSenseSlots } from '@/lib/adsense/adsense-config';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { fetchPublicModelCatalog } from '@/lib/models/public-models-api';
@@ -73,6 +75,7 @@ export default async function HomePage(): Promise<React.ReactElement> {
       <HeroSection lastReviewed={lastReviewed} />
       <MarketingSceneGallery locale={locale} page={MarketingScenePage.HOME} />
       <ModelRosterSection providers={modelCatalog?.providers ?? []} />
+      <MarketingVideoSection placement={MarketingVideoPlacement.HOME_ACTION} />
       <MarketingAdUnit
         slot={slots.home}
         pathname="/"
@@ -85,7 +88,14 @@ export default async function HomePage(): Promise<React.ReactElement> {
       <HomeValueBandSection band={MARKETING_HOME_PAYG_BAND} />
       <HowItWorksSection />
       <FeaturesSection />
-      <ThreadsBandSection />
+      <ThreadsBandSection
+        video={
+          <MarketingVideoSection
+            placement={MarketingVideoPlacement.HOME_THREADS}
+            contained={false}
+          />
+        }
+      />
       <CodingAgentBandSection />
       <HomeValueBandSection band={MARKETING_HOME_TEAMS_BAND} />
       <EnterpriseBandSection />

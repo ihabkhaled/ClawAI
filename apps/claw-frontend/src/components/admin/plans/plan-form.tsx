@@ -9,6 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   PAYG_CREDIT_PERCENT_BPS_MAX,
   PLAN_CREDIT_FREE_REQUESTS_LIMIT,
+  PLAN_MAX_INSTALLED_PLUGINS_LIMIT,
+  PLAN_MAX_USER_MCP_SERVERS_LIMIT,
   PLAN_TRIAL_MAX_DAYS,
   PLAN_TRIAL_MIN_DAYS,
 } from '@/constants/plan.constants';
@@ -277,6 +279,34 @@ export function PlanForm({
             min={0}
             value={state.maxVideoSeconds}
             onChange={(e) => setField('maxVideoSeconds', e.target.value)}
+            placeholder={t('adminPlans.form.unlimitedPlaceholder')}
+          />
+        </div>
+        <div className="grid grid-cols-1 gap-2">
+          <label htmlFor="plan-max-installed-plugins" className="text-sm font-medium">
+            {t('pluginsAccess.planForm.maxInstalledPlugins')}
+          </label>
+          <Input
+            id="plan-max-installed-plugins"
+            type="number"
+            min={0}
+            max={PLAN_MAX_INSTALLED_PLUGINS_LIMIT}
+            value={state.maxInstalledPlugins}
+            onChange={(e) => setField('maxInstalledPlugins', e.target.value)}
+            placeholder={t('adminPlans.form.unlimitedPlaceholder')}
+          />
+        </div>
+        <div className="grid grid-cols-1 gap-2">
+          <label htmlFor="plan-max-user-mcp-servers" className="text-sm font-medium">
+            {t('pluginsAccess.planForm.maxUserMcpServers')}
+          </label>
+          <Input
+            id="plan-max-user-mcp-servers"
+            type="number"
+            min={0}
+            max={PLAN_MAX_USER_MCP_SERVERS_LIMIT}
+            value={state.maxUserMcpServers}
+            onChange={(e) => setField('maxUserMcpServers', e.target.value)}
             placeholder={t('adminPlans.form.unlimitedPlaceholder')}
           />
         </div>
@@ -613,6 +643,16 @@ export function PlanForm({
             id="plan-allow-text-to-speech"
             checked={state.allowTextToSpeech}
             onCheckedChange={(next) => setField('allowTextToSpeech', next)}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="plan-allow-plugins" className="text-sm">
+            {t('pluginsAccess.planGate.allowPlugins')}
+          </label>
+          <Switch
+            id="plan-allow-plugins"
+            checked={state.allowPlugins}
+            onCheckedChange={(next) => setField('allowPlugins', next)}
           />
         </div>
       </div>

@@ -542,6 +542,12 @@ export const queryKeys = {
     list: (filters: { q: string; tag: string | null; favoriteOnly: boolean }) =>
       ['promptTemplates', 'list', filters] as const,
   },
+  plugins: {
+    all: ['plugins'] as const,
+    catalog: (filters: { q: string; category: string }, locale: string) =>
+      ['plugins', 'catalog', filters, locale] as const,
+    detail: (slug: string, locale: string) => ['plugins', 'detail', slug, locale] as const,
+  },
   runtimeProgress: {
     all: ['runtimeProgress'] as const,
     probes: () => [...queryKeys.runtimeProgress.all, 'probe'] as const,

@@ -93,7 +93,7 @@ This document compares ClawAI against direct competitors and alternative approac
 
 | Dimension                | Open WebUI                | ClawAI                                                          |
 | ------------------------ | ------------------------- | --------------------------------------------------------------- |
-| **Architecture**         | Monolithic (Python)       | <!-- count:services -->20<!-- /count --> microservices (NestJS) |
+| **Architecture**         | Monolithic (Python)       | <!-- count:services -->21<!-- /count --> microservices (NestJS) |
 | **Cloud providers**      | Basic (OpenAI-compatible) | 5 native provider integrations                                  |
 | **Routing intelligence** | None                      | 7 modes, Ollama-powered AUTO, policies                          |
 | **Privacy routing**      | Manual                    | Automatic (PRIVACY_FIRST, LOCAL_ONLY)                           |

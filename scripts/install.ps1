@@ -664,6 +664,16 @@ if ([string]::IsNullOrWhiteSpace($paymentTokenEncryptionKey)) {
 } else {
     Write-Ok "Preserved PAYMENT_TOKEN_ENCRYPTION_KEY from existing .env"
 }
+# Separate from $encryptionKey on purpose: MCP credentials stored by the plugin
+# service are encrypted under their own key so a leak in one service does not
+# expose the other. Preserved across re-installs - regenerating it would orphan
+# every stored MCP credential.
+$pluginEncryptionKey = Get-EnvValue -Path $envFile -Key 'PLUGIN_ENCRYPTION_KEY'
+if ([string]::IsNullOrWhiteSpace($pluginEncryptionKey)) {
+    $pluginEncryptionKey = New-SecretHex
+} else {
+    Write-Ok "Preserved PLUGIN_ENCRYPTION_KEY from existing .env"
+}
 # Every Postgres database gets its OWN password.
 #
 # One shared credential defeats the reason each service owns a separate
@@ -687,7 +697,7 @@ if ([string]::IsNullOrWhiteSpace($paymentTokenEncryptionKey)) {
 $pgDbKeys = @(
     'AUTH', 'CHAT', 'CONNECTOR', 'ROUTING', 'MEMORY', 'FILES', 'OLLAMA',
     'IMAGES', 'FILE_GENERATIONS', 'WORKSPACE', 'AGENT', 'RESEARCH',
-    'PAYMENTS', 'LLAMACPP', 'THREAD_GENERATION', 'THREADS'
+    'PAYMENTS', 'LLAMACPP', 'THREAD_GENERATION', 'THREADS', 'PLUGIN'
 )
 $pgPasswords = @{}
 $pgPreservedCount = 0
@@ -1118,6 +1128,10 @@ PG_THREADS_USER=claw
 PG_THREADS_PASSWORD=$($pgPasswords.THREADS)
 PG_THREADS_DB=claw_threads
 PG_THREADS_PORT=5458
+PG_PLUGIN_USER=claw
+PG_PLUGIN_PASSWORD=$($pgPasswords.PLUGIN)
+PG_PLUGIN_DB=claw_plugin
+PG_PLUGIN_PORT=5459
 
 # =============================================================================
 # MongoDB
@@ -1166,6 +1180,10 @@ ENCRYPTION_KEY=$encryptionKey
 # independently.
 PAYMENT_TOKEN_ENCRYPTION_KEY=$paymentTokenEncryptionKey
 PAYMENT_TOKEN_KEY_VERSION=1
+
+# Plugin service: AES-256-GCM key for stored MCP credentials. Separate from
+# ENCRYPTION_KEY so a leak in one service does not expose the other.
+PLUGIN_ENCRYPTION_KEY=$pluginEncryptionKey
 
 # Where a gateway sends the customer back after payment. Return URLs are built
 # from THIS value server-side, never from a client-supplied redirect parameter.
@@ -1451,6 +1469,7 @@ RESEARCH_SERVICE_URL=https://research-service:4016
 PAYMENT_SERVICE_URL=https://payment-service:4018
 THREADS_SERVICE_URL=https://threads-service:4019
 THREAD_GENERATION_SERVICE_URL=https://thread-generation-service:4020
+PLUGIN_SERVICE_URL=https://plugin-service:4021
 LLAMACPP_SERVICE_URL=https://llamacpp-service:4017
 
 # =============================================================================
@@ -1484,6 +1503,7 @@ RESEARCH_PORT=4016
 PAYMENT_SERVICE_PORT=4018
 THREADS_SERVICE_PORT=4019
 THREAD_GENERATION_SERVICE_PORT=4020
+PLUGIN_SERVICE_PORT=4021
 LLAMACPP_PORT=4017
 
 # Research service: headless-browser fallback (ADR-094).
@@ -1587,6 +1607,7 @@ PAYMENT_DATABASE_URL=postgresql://claw:$($pgPasswords.PAYMENTS)@pg-payments:5432
 LLAMACPP_DATABASE_URL=postgresql://claw:$($pgPasswords.LLAMACPP)@pg-llamacpp:5432/claw_llamacpp?schema=public
 THREAD_GENERATION_DATABASE_URL=postgresql://claw:$($pgPasswords.THREAD_GENERATION)@pg-thread-generation:5432/claw_thread_generation?schema=public
 THREADS_DATABASE_URL=postgresql://claw:$($pgPasswords.THREADS)@pg-threads:5432/claw_threads?schema=public
+PLUGIN_DATABASE_URL=postgresql://claw:$($pgPasswords.PLUGIN)@pg-plugin:5432/claw_plugin?schema=public
 
 # claw-llamacpp-service (Local Frontier LLM runtime)
 # Path matches the `llamacpp-data` Docker named volume so binary + weights

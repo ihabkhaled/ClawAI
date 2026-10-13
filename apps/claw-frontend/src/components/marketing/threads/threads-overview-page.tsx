@@ -6,6 +6,7 @@ import { ComparisonFaq } from '@/components/marketing/compare/comparison-faq';
 import { ComparisonSection } from '@/components/marketing/compare/comparison-section';
 import { EditorialPageShell } from '@/components/marketing/shared/editorial-page-shell';
 import { EditorialSectionNav } from '@/components/marketing/shared/editorial-section-nav';
+import { MarketingVideoSection } from '@/components/marketing/shared/marketing-video-section';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
 import {
   THREADS_DISCOVER_PATH,
@@ -15,6 +16,7 @@ import {
   THREADS_PORTAL_PATH,
 } from '@/constants/threads-marketing.constants';
 import { LaunchPublicPageSlug } from '@/enums/launch-public-page-slug.enum';
+import { MarketingVideoPlacement } from '@/enums/marketing-video-placement.enum';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl } from '@/lib/site/site-config';
 import { getPageBySlugAndLocale } from '@/utilities/content-registry.utility';
@@ -92,6 +94,11 @@ export async function ThreadsOverviewPage(): Promise<React.ReactElement> {
             </div>
           </section>
 
+          <MarketingVideoSection
+            placement={MarketingVideoPlacement.THREADS_OVERVIEW}
+            contained={false}
+          />
+
           <ComparisonSection id={ids.what} title={content.whatTitle}>
             {content.whatParagraphs.map((paragraph) => (
               <p key={paragraph} className="editorial-comparison__body">
@@ -126,6 +133,11 @@ export async function ThreadsOverviewPage(): Promise<React.ReactElement> {
               })}
             </ol>
           </ComparisonSection>
+
+          <MarketingVideoSection
+            placement={MarketingVideoPlacement.THREADS_OVERVIEW_STEPS}
+            contained={false}
+          />
 
           <ComparisonSection id={ids.trust} title={content.trustTitle}>
             <p className="editorial-comparison__body">{content.trustIntro}</p>

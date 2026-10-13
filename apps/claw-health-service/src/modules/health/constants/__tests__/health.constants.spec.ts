@@ -7,4 +7,8 @@ describe('SERVICE_URLS', () => {
       'https://thread-generation-service:4020/api/v1/health',
     );
   });
+
+  it('registers the plugin service on its configured health route', () => {
+    expect(SERVICE_URLS['plugin-service']).toBe('https://plugin-service:4021/api/v1/health');
+  });
 });

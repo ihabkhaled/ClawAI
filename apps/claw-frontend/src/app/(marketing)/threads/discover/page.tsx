@@ -3,8 +3,10 @@ import { headers } from 'next/headers';
 import Link from 'next/link';
 import Script from 'next/script';
 
+import { MarketingVideoSection } from '@/components/marketing/shared/marketing-video-section';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
 import { Locale } from '@/enums/locale.enum';
+import { MarketingVideoPlacement } from '@/enums/marketing-video-placement.enum';
 import { loadDictionary } from '@/lib/i18n/dictionary-loader';
 import { buildRequestPublicPageMetadata } from '@/lib/seo/public-page-metadata';
 import { getSiteUrl } from '@/lib/site/site-config';
@@ -46,6 +48,12 @@ export default async function ThreadDiscoveryPage(): Promise<React.ReactElement>
       <p className="text-muted-foreground mt-3 max-w-3xl">
         {dictionary.chat.threadDiscoveryDescription}
       </p>
+      <div className="mt-8">
+        <MarketingVideoSection
+          placement={MarketingVideoPlacement.THREADS_DISCOVER}
+          contained={false}
+        />
+      </div>
       <Script id="threads-discovery-jsonld" type="application/ld+json" strategy="beforeInteractive">
         {serializeJsonLd(structuredData)}
       </Script>

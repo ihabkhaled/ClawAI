@@ -642,6 +642,16 @@
       "route": "/plan"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/plugins/[slug]/page.tsx",
+      "kind": "page",
+      "route": "/plugins/[slug]"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/plugins/page.tsx",
+      "kind": "page",
+      "route": "/plugins"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/profile/page.tsx",
       "kind": "page",
       "route": "/profile"

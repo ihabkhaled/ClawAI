@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Integration tests verify that ClawAI's <!-- count:services -->20<!-- /count --> microservices communicate correctly through RabbitMQ events, HTTP internal calls, SSE streams, Redis cache, and database persistence. Unlike unit tests (which mock boundaries), integration tests run against real infrastructure inside Docker Compose.
+Integration tests verify that ClawAI's <!-- count:services -->21<!-- /count --> microservices communicate correctly through RabbitMQ events, HTTP internal calls, SSE streams, Redis cache, and database persistence. Unlike unit tests (which mock boundaries), integration tests run against real infrastructure inside Docker Compose.
 
 ---
 

@@ -97,6 +97,18 @@ const nextConfig = {
         ],
       },
       {
+        // The marketing videos, posters and Short thumbnails are named by what they
+        // contain and replaced by a new file name, never edited in place, so a year
+        // of browser and CDN caching is safe. See docs/05-frontend/seo-content-architecture.md.
+        source: '/marketing/videos/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
         source: '/:locale/billing',
         headers: [
           {

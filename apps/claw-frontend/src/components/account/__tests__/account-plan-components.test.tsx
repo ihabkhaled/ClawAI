@@ -36,6 +36,7 @@ const gates: EntitlementFeatureGates = {
   allowImageGeneration: false,
   allowHelperVision: false,
   allowTextToSpeech: false,
+  allowPlugins: true,
 };
 
 describe('UsageMeter', () => {

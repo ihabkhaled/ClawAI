@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document catalogs the major npm dependencies used across the ClawAI monorepo, their versions, licenses, and security considerations. The monorepo uses npm workspaces with a root `package.json` orchestrating <!-- count:services -->20<!-- /count --> backend services, 1 frontend, and <!-- count:sharedPackages -->6<!-- /count --> shared packages.
+This document catalogs the major npm dependencies used across the ClawAI monorepo, their versions, licenses, and security considerations. The monorepo uses npm workspaces with a root `package.json` orchestrating <!-- count:services -->21<!-- /count --> backend services, 1 frontend, and <!-- count:sharedPackages -->6<!-- /count --> shared packages.
 
 Last updated: 2026-04-11
 

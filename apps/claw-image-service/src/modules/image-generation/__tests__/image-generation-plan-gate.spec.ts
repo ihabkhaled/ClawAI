@@ -42,6 +42,8 @@ const entitlements = (gates: PlanFeatureGates, isAdmin = false): UserEntitlement
       contextPacks: null,
       memoryItems: null,
       maxVideoSeconds: 60,
+      maxInstalledPlugins: 5,
+      maxUserMcpServers: 0,
     },
     featureGates: gates,
   },

@@ -31,7 +31,7 @@ These are the four automated quality checks that run in CI and as pre-commit hoo
 npm run typecheck
 ```
 
-**Pass criteria:** Zero errors across all workspaces (frontend + <!-- count:services -->20<!-- /count --> backend services + <!-- count:sharedPackages -->6<!-- /count --> shared packages).
+**Pass criteria:** Zero errors across all workspaces (frontend + <!-- count:services -->21<!-- /count --> backend services + <!-- count:sharedPackages -->6<!-- /count --> shared packages).
 
 **What this catches:**
 

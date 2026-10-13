@@ -41,6 +41,11 @@ export const USER_DEFAULT_PERMISSIONS: Permission[] = [
   Permission.THREAD_PUBLICATIONS_CREATE,
   Permission.THREAD_PUBLICATIONS_UPDATE,
   Permission.THREAD_PUBLICATIONS_PUBLISH,
+  // Plugins are on for every plan; the plan's allowPlugins gate and the
+  // max_* caps do the per-tier limiting. PLUGINS_ADMIN is ADMIN-only.
+  Permission.PLUGINS_USE,
+  Permission.PLUGINS_INSTALL,
+  Permission.PLUGINS_MANAGE_OWN_SERVERS,
   Permission.COMPARE_USE,
   Permission.JUDGE_USE,
   Permission.FILES_USE,

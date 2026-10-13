@@ -4,10 +4,10 @@ The repo contains many valuable historical architecture audits and scorecards, b
 
 ## Confirmed drift
 
-- Older docs give **17** as the service count; the generated services manifest now lists **<!-- count:services -->20<!-- /count -->**.
-- Some docs/context give **23** or **24** as the workspace count; the generated manifest now lists **<!-- count:workspaces -->27<!-- /count -->**.
+- Older docs give **17** as the service count; the generated services manifest now lists **<!-- count:services -->21<!-- /count -->**.
+- Some docs/context give **23** or **24** as the workspace count; the generated manifest now lists **<!-- count:workspaces -->28<!-- /count -->**.
 - Older frontend audits predate the current **155 generated route records**.
-- Older testing audits predate the current **<!-- count:specFiles -->2298<!-- /count -->** generated test files and the Vitest migration.
+- Older testing audits predate the current **<!-- count:specFiles -->2335<!-- /count -->** generated test files and the Vitest migration.
 
 ## Wiki evidence policy
 

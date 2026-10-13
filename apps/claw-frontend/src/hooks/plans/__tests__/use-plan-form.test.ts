@@ -34,6 +34,8 @@ const seedPlan = {
   maxContextPacks: 5,
   maxMemoryItems: 100,
   maxVideoSeconds: 600,
+  maxInstalledPlugins: 50,
+  maxUserMcpServers: 10,
   allowCompareMode: true,
   allowJudgeMode: false,
   allowResearchMode: true,
@@ -53,6 +55,7 @@ const seedPlan = {
   allowImageGeneration: true,
   allowHelperVision: true,
   allowTextToSpeech: true,
+  allowPlugins: true,
   modelAccess: [],
   createdAt: '2026-05-01T00:00:00.000Z',
   updatedAt: '2026-05-01T00:00:00.000Z',
@@ -156,6 +159,73 @@ describe('usePlanForm', () => {
       allowTextToSpeech: true,
       maxVideoSeconds: 600,
     });
+  });
+
+  // Plugins are ON for every plan, Free included, and a new plan starts with the Free
+  // caps (5 installs, 0 own servers). Blank would mean unlimited.
+  it('creates a plan with plugins on and the Free caps by default', () => {
+    const { result } = renderHook(() => usePlanForm(null));
+    act(() => {
+      result.current.setField('name', 'Custom');
+      result.current.setField('slug', 'custom');
+    });
+
+    expect(result.current.buildCreateRequest()).toMatchObject({
+      allowPlugins: true,
+      maxInstalledPlugins: 5,
+      maxUserMcpServers: 0,
+    });
+  });
+
+  it('sends a blank plugin cap as null (unlimited) and keeps 0 as disabled', () => {
+    const { result } = renderHook(() => usePlanForm(seedPlan));
+    act(() => {
+      result.current.setField('maxInstalledPlugins', '');
+      result.current.setField('maxUserMcpServers', '');
+    });
+    expect(result.current.buildUpdateRequest()).toMatchObject({
+      maxInstalledPlugins: null,
+      maxUserMcpServers: null,
+    });
+
+    act(() => {
+      result.current.setField('maxInstalledPlugins', '0');
+      result.current.setField('maxUserMcpServers', '0');
+    });
+    expect(result.current.buildUpdateRequest()).toMatchObject({
+      maxInstalledPlugins: 0,
+      maxUserMcpServers: 0,
+    });
+  });
+
+  it('round-trips the plugins gate and caps from a seeded plan', () => {
+    const { result } = renderHook(() => usePlanForm(seedPlan));
+
+    expect(result.current.state.maxInstalledPlugins).toBe('50');
+    expect(result.current.state.maxUserMcpServers).toBe('10');
+    expect(result.current.buildUpdateRequest()).toMatchObject({
+      allowPlugins: true,
+      maxInstalledPlugins: 50,
+      maxUserMcpServers: 10,
+    });
+  });
+
+  it('lets an administrator switch the module off for a plan', () => {
+    const { result } = renderHook(() => usePlanForm(seedPlan));
+    act(() => {
+      result.current.setField('allowPlugins', false);
+    });
+
+    expect(result.current.buildUpdateRequest()).toMatchObject({ allowPlugins: false });
+  });
+
+  it('rejects a negative plugin cap with a field error', () => {
+    const { result } = renderHook(() => usePlanForm(seedPlan));
+    act(() => {
+      result.current.setField('maxInstalledPlugins', '-1');
+    });
+
+    expect(result.current.buildUpdateRequest()).toBeNull();
   });
 
   it('serializes an enabled trial with the 30-day default length', () => {

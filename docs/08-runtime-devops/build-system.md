@@ -8,7 +8,7 @@ ClawAI does **not** use `nest build` to compile services. It compiles with
 the **`typescript7`** alias (`"typescript7": "npm:typescript@7.x"`) and invoked
 through [`tools/typescript/run-ts7.mjs`](../../tools/typescript/run-ts7.mjs) —
 plus **`tsc-alias`** to rewrite path aliases after compilation. This applies to
-**all <!-- count:services -->20<!-- /count --> backend services AND all
+**all <!-- count:services -->21<!-- /count --> backend services AND all
 <!-- count:sharedPackages -->6<!-- /count --> shared packages**. The frontend
 
 (`claw-frontend`) typechecks with TypeScript 7 (`apps/claw-frontend/scripts/typecheck-ts7.mjs`) and

@@ -33,9 +33,10 @@ The canonical port table. Ground truth: `.ai/manifests/ports.json` (the 18
 | payment           | 4018     | shared-constants                  | Postgres                              |
 | threads           | 4019     | shared-constants                  | none (health-only foundation)         |
 | thread-generation | 4020     | shared-constants                  | PostgreSQL (`claw_thread_generation`) |
+| plugin            | 4021     | shared-constants                  | PostgreSQL (`claw_plugin`)            |
 
-Backend services occupy **4001–4020** contiguously, except the existing
-client-logs/server-logs env-only ports 4010–4011. New services continue at 4021.
+Backend services occupy **4001–4021** contiguously, except the existing
+client-logs/server-logs env-only ports 4010–4011. New services continue at 4022.
 
 ## ⚠️ The client-logs / server-logs env-only gap
 

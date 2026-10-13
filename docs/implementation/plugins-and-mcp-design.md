@@ -1,10 +1,25 @@
 # Plugins and MCP for ClawAI chat: design and delivery plan
 
+## Deviations from this design
+
+What shipped differs from the text below in these ways. Where this document and the code disagree, the code and
+[ADR-171](../13-adr/adr-171-plugins-are-a-separate-service-with-a-curated-catalog.md) win.
+
+- **Permission names.** `PLUGINS_REGISTER_MCP` is `PLUGINS_MANAGE_OWN_SERVERS` and `ADMIN_PLUGINS_MANAGE` is
+  `PLUGINS_ADMIN`. This document has been renamed throughout.
+- **Free plan owns no MCP servers.** Own MCP servers is `0` for Free and Trial (was `1`). Free installs from the curated
+  catalog only.
+- **`PLUGIN_CALLS` metering was added in batch 2.** The metered feature and its plan rules were not part of batch 1.
+- **Manifests are TypeScript constants**, not `prisma/seeders/catalog/*.json`, so the compiled service never depends on
+  a path outside `dist`.
+- **Manifest fields added:** `iconKey`, `homepageUrl` and `network.publicWeb` (the page reader may reach any public host
+  behind the resolver guard; no other plugin may).
+
 > **Decisions taken on the owner's behalf (2026-10-13, owner said "execute, do not ask") — each is a database setting or a
 > plan number, so flipping one needs no code change:**
 >
 > 1. Private MCP servers work at once for their owner (SSRF-guarded, tools default to WRITE risk, capped); admin setting `requireApproval` turns review on.
-> 2. **Free users install from the curated catalog; they may register 0 custom MCP servers** (Plus and above: caps in section 5). The module itself is ON for every plan including Free, as the owner asked.
+> 2. **Free users install from the curated catalog; they may register 0 custom MCP servers** (Starter and above: caps in section 5). The module itself is ON for every plan including Free, as the owner asked.
 > 3. Per-plan numbers: section 5 as written.
 > 4. First plugins: web-fetch, datetime-and-math, weather. No vendor MCP entries until the owner names vendors and accepts the legal note.
 > 5. A plugin is offered to the model only when `@`-mentioned (per-plugin AUTO mode is a later setting, default ON_MENTION).
@@ -504,12 +519,12 @@ Implemented in plugin-service (`result-sanitizer.utility.ts`), so every caller g
 
 ### Permissions (`packages/shared-types/src/enums/permission.enum.ts`, mirrored in the frontend enum)
 
-| Value                  | Meaning                                                                                | ADMIN | USER default                                      |
-| ---------------------- | -------------------------------------------------------------------------------------- | ----- | ------------------------------------------------- |
-| `PLUGINS_USE`          | See the marketplace, use installed plugins, call with `@`                              | yes   | **yes**                                           |
-| `PLUGINS_INSTALL`      | Install, uninstall and configure plugins from the catalog                              | yes   | **yes**                                           |
-| `PLUGINS_REGISTER_MCP` | Register and manage own remote MCP servers                                             | yes   | **yes** (gated by the admin setting and plan cap) |
-| `ADMIN_PLUGINS_MANAGE` | Catalog CRUD, global enable and disable, server approvals, host rules, settings, audit | yes   | no                                                |
+| Value                        | Meaning                                                                                | ADMIN | USER default                                      |
+| ---------------------------- | -------------------------------------------------------------------------------------- | ----- | ------------------------------------------------- |
+| `PLUGINS_USE`                | See the marketplace, use installed plugins, call with `@`                              | yes   | **yes**                                           |
+| `PLUGINS_INSTALL`            | Install, uninstall and configure plugins from the catalog                              | yes   | **yes**                                           |
+| `PLUGINS_MANAGE_OWN_SERVERS` | Register and manage own remote MCP servers                                             | yes   | **yes** (gated by the admin setting and plan cap) |
+| `PLUGINS_ADMIN`              | Catalog CRUD, global enable and disable, server approvals, host rules, settings, audit | yes   | no                                                |
 
 View and write stay separate permissions where it matters (`PLUGINS_USE` versus `PLUGINS_INSTALL`).
 
@@ -521,7 +536,7 @@ Changes:
 4. The boot reconciler (`PermissionsSeederService`) back-fills existing installs. It is add-only, so an admin who later removes a permission from USER is respected.
 5. Update `permissions-seeder.service.spec.ts`.
 6. Frontend: `src/enums/permission.enum.ts` and `route-permissions.constants.ts`. Put `/admin/plugins` before the `/admin` catch-all, then `/plugins`. Add `ROUTES.PLUGINS` and `ROUTES.ADMIN_PLUGINS`, sidebar entries, and tests in `route-permission.utility.test.ts` and `sidebar-visibility.utility.test.ts`.
-7. Controllers use `@RequirePermissions` plus the service's own AuthGuard. `/internal/*` is guarded by the internal service credential and is not reachable through nginx. IDOR: every query is scoped by `userId` from the JWT. Admin routes require `ADMIN_PLUGINS_MANAGE`.
+7. Controllers use `@RequirePermissions` plus the service's own AuthGuard. `/internal/*` is guarded by the internal service credential and is not reachable through nginx. IDOR: every query is scoped by `userId` from the JWT. Admin routes require `PLUGINS_ADMIN`.
 
 ### Plan gates (auth-service, enabled on ALL plans including Free)
 
@@ -540,7 +555,7 @@ Changes:
 
 | Plan         | Installs | Own MCP servers | Calls / day |
 | ------------ | -------- | --------------- | ----------- |
-| Free / Trial | 5        | 1               | 25          |
+| Free / Trial | 5        | 0               | 25          |
 | Starter      | 10       | 3               | 100         |
 | Plus         | 25       | 5               | 300         |
 | Pro          | 50       | 10              | 1000        |
@@ -553,7 +568,7 @@ These are small enough that Free cannot be used to proxy abusive traffic. Tool r
 
 Both layers must pass on the backend. The plugin service checks `allowPlugins` and the install and server caps on install and register. It reserves `PLUGIN_CALLS` on invoke. Chat-service checks the gate while resolving refs, so a disabled plan gets a clean notice and the message still goes through without plugins. The frontend hides surfaces with `usePlanFeatures().has(ALLOW_PLUGINS)`. It does not rely on that alone.
 
-### Admin controls (`/admin/plugins`, `ADMIN_PLUGINS_MANAGE`)
+### Admin controls (`/admin/plugins`, `PLUGINS_ADMIN`)
 
 - Catalog: create, edit and publish versions, `globallyEnabled` kill switch per plugin, per-tool `disabledByAdmin`, featured.
 - Server approvals: queue of `PENDING_APPROVAL` and `NEEDS_REVIEW`, with the tool diff. Approve, reject, disable, or make it `ALL_USERS` visible.
@@ -623,29 +638,29 @@ Base `/api/v1/plugins`. All routes need a valid JWT. Errors use the project's ex
 
 User routes:
 
-| Method and path                     | Permission           | Body / query                                                        | Response                                                                                                                                                                                                                                              |
-| ----------------------------------- | -------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /catalog`                      | PLUGINS_USE          | `q, category, cursor, limit`                                        | `{items:[{slug,name,summary,publisher,category,iconKey,source,version,toolCount,maxRisk,installCount,installed}], nextCursor}` (localized by `Accept-Language`)                                                                                       |
-| `GET /catalog/:slug`                | PLUGINS_USE          |                                                                     | `{...card, description, auth:{kind,scopes[]}, tools:[{name,title,description,riskLevel,inputSchema}], settingsSchema, network:{hosts[]}, versions[]}`                                                                                                 |
-| `GET /installs`                     | PLUGINS_USE          |                                                                     | `[{id,slug\|serverId,name,status,invocationMode,grantedScopes,hasCredential,toolConsents:{tool:mode}}]`                                                                                                                                               |
-| `POST /installs`                    | PLUGINS_INSTALL      | `{slug, grantedScopes[], invocationMode, settings?}`                | `201 install`; `409 ALREADY_INSTALLED`; `403 PLAN_LIMIT_REACHED {limit,current}`; `403 PLUGIN_DISABLED`                                                                                                                                               |
-| `PATCH /installs/:id`               | PLUGINS_INSTALL      | `{enabled?, invocationMode?, settings?, toolConsents?:{tool:mode}}` | install                                                                                                                                                                                                                                               |
-| `DELETE /installs/:id`              | PLUGINS_INSTALL      |                                                                     | `204` (credentials removed)                                                                                                                                                                                                                           |
-| `PUT /installs/:id/credential`      | PLUGINS_INSTALL      | `{kind, headerName?, value}`                                        | `{hasCredential:true,updatedAt}` (write-only)                                                                                                                                                                                                         |
-| `DELETE /installs/:id/credential`   | PLUGINS_INSTALL      |                                                                     | `204`                                                                                                                                                                                                                                                 |
-| `POST /installs/:id/oauth/start`    | PLUGINS_INSTALL      |                                                                     | `{authorizeUrl}`                                                                                                                                                                                                                                      |
-| `GET /oauth/callback`               | none (state-bound)   | `code, state`                                                       | redirect to `/plugins/:slug?connected=1`                                                                                                                                                                                                              |
-| `GET /mentions`                     | PLUGINS_USE          | `q?, limit?`                                                        | `[{installId,slug,name,iconKey,status,tools:[{name,title,riskLevel}]}]`                                                                                                                                                                               |
-| `POST /servers`                     | PLUGINS_REGISTER_MCP | `{name,url,authKind,credential?:{headerName?,value}}`               | `201 {server, discoveredTools:[{name,description,inputSchema,riskLevel:"WRITE"}]}`; `403 MCP_SERVERS_DISABLED`, `403 PLAN_LIMIT_REACHED`, `422 MCP_URL_BLOCKED`, `502 MCP_SERVER_UNREACHABLE`; status is `PENDING_APPROVAL` or `APPROVED` per setting |
-| `GET /servers`                      | PLUGINS_REGISTER_MCP |                                                                     | own servers with status                                                                                                                                                                                                                               |
-| `PATCH /servers/:id`                | PLUGINS_REGISTER_MCP | `{name?,enabled?,tools?:[{name,enabled,riskLevel}]}`                | server                                                                                                                                                                                                                                                |
-| `POST /servers/:id/refresh`         | PLUGINS_REGISTER_MCP |                                                                     | `{changed:boolean, diff?}`; a changed hash sets `NEEDS_REVIEW`                                                                                                                                                                                        |
-| `POST /servers/:id/approve-changes` | PLUGINS_REGISTER_MCP | `{toolsHash}`                                                       | server                                                                                                                                                                                                                                                |
-| `DELETE /servers/:id`               | PLUGINS_REGISTER_MCP |                                                                     | `204`                                                                                                                                                                                                                                                 |
-| `POST /consents/:requestId`         | PLUGINS_USE          | `{decision:"ALLOW_ONCE\|ALLOW_CONVERSATION\|ALWAYS\|DECLINE"}`      | `{accepted:true}`                                                                                                                                                                                                                                     |
-| `GET /invocations`                  | PLUGINS_USE          | `cursor, limit`                                                     | own history (no args, preview only)                                                                                                                                                                                                                   |
+| Method and path                     | Permission                 | Body / query                                                        | Response                                                                                                                                                                                                                                              |
+| ----------------------------------- | -------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /catalog`                      | PLUGINS_USE                | `q, category, cursor, limit`                                        | `{items:[{slug,name,summary,publisher,category,iconKey,source,version,toolCount,maxRisk,installCount,installed}], nextCursor}` (localized by `Accept-Language`)                                                                                       |
+| `GET /catalog/:slug`                | PLUGINS_USE                |                                                                     | `{...card, description, auth:{kind,scopes[]}, tools:[{name,title,description,riskLevel,inputSchema}], settingsSchema, network:{hosts[]}, versions[]}`                                                                                                 |
+| `GET /installs`                     | PLUGINS_USE                |                                                                     | `[{id,slug\|serverId,name,status,invocationMode,grantedScopes,hasCredential,toolConsents:{tool:mode}}]`                                                                                                                                               |
+| `POST /installs`                    | PLUGINS_INSTALL            | `{slug, grantedScopes[], invocationMode, settings?}`                | `201 install`; `409 ALREADY_INSTALLED`; `403 PLAN_LIMIT_REACHED {limit,current}`; `403 PLUGIN_DISABLED`                                                                                                                                               |
+| `PATCH /installs/:id`               | PLUGINS_INSTALL            | `{enabled?, invocationMode?, settings?, toolConsents?:{tool:mode}}` | install                                                                                                                                                                                                                                               |
+| `DELETE /installs/:id`              | PLUGINS_INSTALL            |                                                                     | `204` (credentials removed)                                                                                                                                                                                                                           |
+| `PUT /installs/:id/credential`      | PLUGINS_INSTALL            | `{kind, headerName?, value}`                                        | `{hasCredential:true,updatedAt}` (write-only)                                                                                                                                                                                                         |
+| `DELETE /installs/:id/credential`   | PLUGINS_INSTALL            |                                                                     | `204`                                                                                                                                                                                                                                                 |
+| `POST /installs/:id/oauth/start`    | PLUGINS_INSTALL            |                                                                     | `{authorizeUrl}`                                                                                                                                                                                                                                      |
+| `GET /oauth/callback`               | none (state-bound)         | `code, state`                                                       | redirect to `/plugins/:slug?connected=1`                                                                                                                                                                                                              |
+| `GET /mentions`                     | PLUGINS_USE                | `q?, limit?`                                                        | `[{installId,slug,name,iconKey,status,tools:[{name,title,riskLevel}]}]`                                                                                                                                                                               |
+| `POST /servers`                     | PLUGINS_MANAGE_OWN_SERVERS | `{name,url,authKind,credential?:{headerName?,value}}`               | `201 {server, discoveredTools:[{name,description,inputSchema,riskLevel:"WRITE"}]}`; `403 MCP_SERVERS_DISABLED`, `403 PLAN_LIMIT_REACHED`, `422 MCP_URL_BLOCKED`, `502 MCP_SERVER_UNREACHABLE`; status is `PENDING_APPROVAL` or `APPROVED` per setting |
+| `GET /servers`                      | PLUGINS_MANAGE_OWN_SERVERS |                                                                     | own servers with status                                                                                                                                                                                                                               |
+| `PATCH /servers/:id`                | PLUGINS_MANAGE_OWN_SERVERS | `{name?,enabled?,tools?:[{name,enabled,riskLevel}]}`                | server                                                                                                                                                                                                                                                |
+| `POST /servers/:id/refresh`         | PLUGINS_MANAGE_OWN_SERVERS |                                                                     | `{changed:boolean, diff?}`; a changed hash sets `NEEDS_REVIEW`                                                                                                                                                                                        |
+| `POST /servers/:id/approve-changes` | PLUGINS_MANAGE_OWN_SERVERS | `{toolsHash}`                                                       | server                                                                                                                                                                                                                                                |
+| `DELETE /servers/:id`               | PLUGINS_MANAGE_OWN_SERVERS |                                                                     | `204`                                                                                                                                                                                                                                                 |
+| `POST /consents/:requestId`         | PLUGINS_USE                | `{decision:"ALLOW_ONCE\|ALLOW_CONVERSATION\|ALWAYS\|DECLINE"}`      | `{accepted:true}`                                                                                                                                                                                                                                     |
+| `GET /invocations`                  | PLUGINS_USE                | `cursor, limit`                                                     | own history (no args, preview only)                                                                                                                                                                                                                   |
 
-Admin routes (`ADMIN_PLUGINS_MANAGE`), prefix `/admin`:
+Admin routes (`PLUGINS_ADMIN`), prefix `/admin`:
 
 - `GET/POST /catalog`
 - `PUT /catalog/:slug`
@@ -731,7 +746,7 @@ Ships the service, the catalog, the seeded first-party plugins and a browse page
 - **shared-utilities:** `resolved-address.utility.ts` (guard and pinned dispatcher), with a large spec table: IPv4 forms, IPv6, mapped addresses, rebinding via a fake resolver that changes its answer, redirect, userinfo.
 - **Plugin service:** `modules/mcp` (client, HTTP transport, SSE parsing, egress, policy manager, snapshot and hash pinning, OAuth2 PKCE), `McpServer` and `McpServerTool` and `PluginOAuthState` and `PluginHostRule` tables, user and admin server endpoints, approval queue, `modules/runtime` (invoke endpoint, adapter runner, result sanitizer, consent token, Redis rate limits and breaker with half-open, quota reserve and commit, invocation audit), the 3 to 4 adapters actually implemented. A local fake MCP server fixture (`__fixtures__/fake-mcp-server`) for tests, including a hostile mode (poisoned descriptions, oversized results, slow responses, hash change).
 - **Frontend:** My servers tab, add-server dialog with test and tool review, risk overrides, `NEEDS_REVIEW` re-approval, admin server queue and host rules, invocation audit page.
-- **Knowledge:** ADR-170, skill `register-an-mcp-server-safely`, `docs/security` threat model for plugins.
+- **Knowledge:** ADR-172, skill `register-an-mcp-server-safely`, `docs/security` threat model for plugins.
 - **Tests:** MCP protocol conformance against the fake server, caps and timeouts, result truncation, taint and consent token, rate limit and breaker, credential header allowlist, rug-pull detection, sanitizer corpus.
 - **QA lanes:** a written SSRF pentest list run live (169.254.169.254, `localhost`, 127.0.0.1, decimal IP, IPv6 loopback, IPv4-mapped, a DNS name resolving to a private IP, rebinding, redirect to an internal URL, `userinfo@host`, oversized response, slow-loris), all with uniform errors and nothing leaking; the `curl` API lane for register, refresh, invoke; RBAC and plan caps for server counts; confirm that `/internal` returns nothing via nginx. Honest PARTIAL if a real third-party MCP server is not reachable from the test machine.
 

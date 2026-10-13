@@ -7,30 +7,34 @@ function facts(
   isAdmin: boolean,
   limits: Partial<NonNullable<UserEntitlements['plan']>['limits']> | null,
 ): LimitFacts {
-  return limits === null ? { isAdmin, plan: null } : {
-    isAdmin,
-    plan: {
-      id: 'plan-1',
-      slug: 'pro',
-      name: 'Pro',
-      isTrial: false,
-      trialEndsAt: null,
-      isTrialExpired: false,
-      limits: {
-        dailyTokens: 500_000,
-        weeklyTokens: 2_000_000,
-        monthlyTokens: null,
-        chatsPerDay: null,
-        messagesPerDay: null,
-        workspaceConnections: null,
-        contextPacks: null,
-        memoryItems: null,
-        maxVideoSeconds: null,
-        ...limits,
-      },
-      featureGates: {} as NonNullable<UserEntitlements['plan']>['featureGates'],
-    },
-  };
+  return limits === null
+    ? { isAdmin, plan: null }
+    : {
+        isAdmin,
+        plan: {
+          id: 'plan-1',
+          slug: 'pro',
+          name: 'Pro',
+          isTrial: false,
+          trialEndsAt: null,
+          isTrialExpired: false,
+          limits: {
+            dailyTokens: 500_000,
+            weeklyTokens: 2_000_000,
+            monthlyTokens: null,
+            chatsPerDay: null,
+            messagesPerDay: null,
+            workspaceConnections: null,
+            contextPacks: null,
+            memoryItems: null,
+            maxVideoSeconds: null,
+            maxInstalledPlugins: null,
+            maxUserMcpServers: null,
+            ...limits,
+          },
+          featureGates: {} as NonNullable<UserEntitlements['plan']>['featureGates'],
+        },
+      };
 }
 
 // Regression suite for a live production defect. Six call sites across four
@@ -71,11 +75,32 @@ describe('resolvePlanLimit', () => {
     ['memoryItems', (l: NonNullable<UserEntitlements['plan']>['limits']) => l.memoryItems],
     ['maxVideoSeconds', (l: NonNullable<UserEntitlements['plan']>['limits']) => l.maxVideoSeconds],
     [
+      'maxInstalledPlugins',
+      (l: NonNullable<UserEntitlements['plan']>['limits']) => l.maxInstalledPlugins,
+    ],
+    [
+      'maxUserMcpServers',
+      (l: NonNullable<UserEntitlements['plan']>['limits']) => l.maxUserMcpServers,
+    ],
+    [
       'workspaceConnections',
       (l: NonNullable<UserEntitlements['plan']>['limits']) => l.workspaceConnections,
     ],
   ])('treats an unlimited %s as unlimited', (_name, select) => {
     expect(resolvePlanLimit(facts(false, {}), select)).toBeNull();
+  });
+
+  // Plugins: Free installs 5 and registers 0 own servers. 0 is DISABLED, not unlimited.
+  it('keeps 0 own MCP servers as disabled and a numeric install cap as that number', () => {
+    expect(
+      resolvePlanLimit(facts(false, { maxUserMcpServers: 0 }), (l) => l.maxUserMcpServers),
+    ).toBe(0);
+    expect(
+      resolvePlanLimit(facts(false, { maxInstalledPlugins: 5 }), (l) => l.maxInstalledPlugins),
+    ).toBe(5);
+    expect(
+      resolvePlanLimit(facts(true, { maxUserMcpServers: 0 }), (l) => l.maxUserMcpServers),
+    ).toBeNull();
   });
 
   // ADR-122: free processes 60 s of video; 0 would switch video off entirely.

@@ -34,6 +34,10 @@ export type PlanFeatureGates = {
   allowHelperVision: boolean;
   // Spoken replies. Enforced by the text-to-speech endpoint.
   allowTextToSpeech: boolean;
+  // Plugins and MCP. ON for every plan including Free (a missing value from an
+  // older auth-service reads as off, failing closed). Install and own-server
+  // caps are in limits.maxInstalledPlugins / limits.maxUserMcpServers.
+  allowPlugins: boolean;
 };
 
 export type AllowedModel = {
@@ -73,6 +77,9 @@ export type UserEntitlements = {
       // Longest video the plan processes, in seconds. `null` = unlimited,
       // `0` = video disabled. Read it through `resolvePlanLimit`, never `?? 0`.
       maxVideoSeconds: number | null;
+      // Plugin installs and own MCP servers. `null` = unlimited, `0` = disabled.
+      maxInstalledPlugins: number | null;
+      maxUserMcpServers: number | null;
     };
     featureGates: PlanFeatureGates;
   } | null;

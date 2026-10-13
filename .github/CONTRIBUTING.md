@@ -12,7 +12,7 @@ Thank you for your interest in contributing to Claw. This guide will help you ge
 
 3. **Read the project rules** in [CLAUDE.md](../CLAUDE.md) -- these are the coding standards enforced across the project.
 
-4. **Understand the architecture**: Claw uses a microservices architecture with <!-- count:services -->20<!-- /count --> backend services, <!-- count:sharedPackages -->6<!-- /count --> shared packages, and a Next.js frontend. See [ADR-004](../docs/adrs/004-microservices-architecture.md) for the architectural rationale.
+4. **Understand the architecture**: Claw uses a microservices architecture with <!-- count:services -->21<!-- /count --> backend services, <!-- count:sharedPackages -->6<!-- /count --> shared packages, and a Next.js frontend. See [ADR-004](../docs/adrs/004-microservices-architecture.md) for the architectural rationale.
 
 ---
 

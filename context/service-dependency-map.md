@@ -20,7 +20,7 @@ Every service imports `@claw/shared-constants`, `@claw/shared-types`,
 
 - **`@claw/shared-rabbitmq`** — all services except `health`.
 - **`@claw/shared-entitlements`** — audit, chat, connector, file, llamacpp,
-  memory, ollama, payment, research, routing, server-logs, workspace.
+  memory, ollama, payment, plugin, research, routing, server-logs, workspace.
 - **`@claw/shared-auth`** — agent, payment, research, workspace, and both Threads
   services. Both Threads services also use shared constants, types, and utilities.
 - **`health`** — depends on `@claw/shared-utilities` **only**.
@@ -82,6 +82,7 @@ synchronous data other services need at request time:
 | agent             | chat              | `/internal/agent/terminal/seed-command`                                  |
 | payment           | auth              | `/internal/plans/*`, `/internal/billing-metrics/provider-costs`          |
 | auth              | payment           | `/internal/payments/users/:userId/entitlement`                           |
+| plugin            | auth              | `/internal/users/:id/entitlements` (via `@claw/shared-entitlements`)     |
 | health            | all               | `/health` aggregation                                                    |
 
 Internal endpoints are discovered in `.ai/manifests/api-endpoints.json` (routes

@@ -1,7 +1,7 @@
 # ESLint architecture
 
 The root `eslint.config.mjs` is the active, finely-tuned config that gates all
-<!-- count:workspaces -->27<!-- /count --> workspaces today (typescript-eslint strict, security, unicorn, import-x, plus
+<!-- count:workspaces -->28<!-- /count --> workspaces today (typescript-eslint strict, security, unicorn, import-x, plus
 
 ClawAI's `no-restricted-syntax` inline-declaration bans and per-file overrides).
 It is intentionally **not rewritten** — rewriting a working repo-wide lint config

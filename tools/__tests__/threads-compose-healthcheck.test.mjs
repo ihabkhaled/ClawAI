@@ -11,6 +11,7 @@ const composeFiles = [
 const serviceDefinitions = [
   ['threads-service', 4019],
   ['thread-generation-service', 4020],
+  ['plugin-service', 4021],
 ];
 
 function readServiceBlock(composeFile, serviceName) {

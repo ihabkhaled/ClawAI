@@ -8,7 +8,7 @@
 
 ## Purpose and Philosophy
 
-Planning exists for one reason: to prevent wasted effort. In a system with <!-- count:services -->20<!-- /count --> NestJS microservices, per-service PostgreSQL databases, RabbitMQ event flows, Nginx routing, shared packages used by every service, and a Next.js frontend with 13 language locales — a change that seems isolated rarely is. An unplanned change to `claw-routing-service` can break the frontend replay lab, invalidate shared types consumed by `claw-chat-service`, corrupt the CI pipeline, and ship with missing Nginx routes all at the same time.
+Planning exists for one reason: to prevent wasted effort. In a system with <!-- count:services -->21<!-- /count --> NestJS microservices, per-service PostgreSQL databases, RabbitMQ event flows, Nginx routing, shared packages used by every service, and a Next.js frontend with 13 language locales — a change that seems isolated rarely is. An unplanned change to `claw-routing-service` can break the frontend replay lab, invalidate shared types consumed by `claw-chat-service`, corrupt the CI pipeline, and ship with missing Nginx routes all at the same time.
 
 Planning is not bureaucracy. It is the activity that turns a vague request into a precise, bounded, testable work item. It answers every question before the first function is written so that implementation is execution, not discovery.
 
@@ -83,7 +83,7 @@ Before writing code, fill every row of this table. A row marked "N/A" is a posit
 
 | Area                        | Impacted? | Specific Files / Items Affected                                                                                               |
 | --------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| **Backend services**        |           | Which of the <!-- count:services -->20<!-- /count --> services? (claw-routing-service, claw-chat-service, etc.)               |
+| **Backend services**        |           | Which of the <!-- count:services -->21<!-- /count --> services? (claw-routing-service, claw-chat-service, etc.)               |
 | **Frontend pages**          |           | Which pages in `src/app/(portal)/`?                                                                                           |
 | **Frontend components**     |           | Which files in `src/components/<feature>/`?                                                                                   |
 | **Frontend hooks**          |           | Which files in `src/hooks/<domain>/`?                                                                                         |

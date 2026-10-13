@@ -76,6 +76,10 @@ const ALL_PERMISSIONS = [
   'THREAD_PUBLICATIONS_UPDATE',
   'THREAD_PUBLICATIONS_PUBLISH',
   'THREAD_PUBLICATIONS_MODERATE',
+  'PLUGINS_USE',
+  'PLUGINS_INSTALL',
+  'PLUGINS_MANAGE_OWN_SERVERS',
+  'PLUGINS_ADMIN',
   'AGENT_USE',
   'AGENT_TERMINAL_USE',
   'AGENT_CAPABILITIES_MANAGE',
@@ -149,6 +153,9 @@ const USER_DEFAULT_PERMISSIONS = [
   'THREAD_PUBLICATIONS_CREATE',
   'THREAD_PUBLICATIONS_UPDATE',
   'THREAD_PUBLICATIONS_PUBLISH',
+  'PLUGINS_USE',
+  'PLUGINS_INSTALL',
+  'PLUGINS_MANAGE_OWN_SERVERS',
   'COMPARE_USE',
   'JUDGE_USE',
   'FILES_USE',
@@ -217,6 +224,10 @@ const SYSTEM_PLANS = [
     allowHelperVision: false,
     allowTextToSpeech: false,
     maxVideoSeconds: 60,
+    // Plugins and MCP: on for every plan; null = unlimited, 0 = disabled.
+    allowPlugins: true,
+    maxInstalledPlugins: 5,
+    maxUserMcpServers: 0,
     // ADR-142: Free gets 10 requests per credit connector per month.
     creditConnectorFreeRequestsPerMonth: 10,
     creditConnectorFreeBudgetMicroUsd: 250000,
@@ -238,6 +249,10 @@ const SYSTEM_PLANS = [
     allowHelperVision: true,
     allowTextToSpeech: true,
     maxVideoSeconds: 600,
+    // Plugins and MCP: on for every plan; null = unlimited, 0 = disabled.
+    allowPlugins: true,
+    maxInstalledPlugins: 50,
+    maxUserMcpServers: 10,
     priceMonthly: 20,
   },
   {
@@ -255,6 +270,10 @@ const SYSTEM_PLANS = [
     allowHelperVision: true,
     allowTextToSpeech: true,
     maxVideoSeconds: 600,
+    // Plugins and MCP: on for every plan; null = unlimited, 0 = disabled.
+    allowPlugins: true,
+    maxInstalledPlugins: 100,
+    maxUserMcpServers: 25,
     priceMonthly: 50,
   },
 ];
@@ -293,10 +312,14 @@ async function upsertSystemPlan(def) {
       allowHelperVision: def.allowHelperVision,
       allowTextToSpeech: def.allowTextToSpeech,
       maxVideoSeconds: def.maxVideoSeconds,
+      allowPlugins: def.allowPlugins,
+      maxInstalledPlugins: def.maxInstalledPlugins,
+      maxUserMcpServers: def.maxUserMcpServers,
       // Paid plans omit it: 0, so they never give provider spend away (ADR-142).
       creditConnectorFreeRequestsPerMonth: def.creditConnectorFreeRequestsPerMonth ?? 0,
       creditConnectorFreeBudgetMicroUsd: def.creditConnectorFreeBudgetMicroUsd ?? null,
-      creditConnectorFreeMaxModelOutputMicroUsd: def.creditConnectorFreeMaxModelOutputMicroUsd ?? null,
+      creditConnectorFreeMaxModelOutputMicroUsd:
+        def.creditConnectorFreeMaxModelOutputMicroUsd ?? null,
       priceMonthly: def.priceMonthly,
       currency: 'USD',
     },

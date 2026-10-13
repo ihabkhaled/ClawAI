@@ -320,30 +320,8 @@ export class PlansService {
         new Date(),
       );
       if (assignment === null) {
-        // The trial is spent. If this plan is also the DEFAULT one, that must
-        // not block the assignment: putting someone back on the baseline plan
-        // is a downgrade, not a trial grant.
-        //
-        // The default plan is flagged isTrial, so every downgrade to free ran
-        // down this path, collided with the user's existing redemption row and
-        // failed. Once a user had used their trial there was no way back to
-        // free at all — the only way off a paid plan was another paid plan.
-        //
-        // The redemption row is left exactly as it is, so a spent trial stays
-        // spent and this grants only the baseline they would have had anyway.
-        // To give a spent-trial user more days, the admin passes durationDays.
-        if (plan.isDefault) {
-          await this.plansRepository.assignDefaultPlan(userId, planId);
-          this.logger.log(
-            `assignUserToPlan: user=${userId} downgraded to default plan=${planId} (trial already spent)`,
-          );
-          return this.toView(plan);
-        }
-        throw new BusinessException(
-          'Plan trial already used',
-          'PLAN_TRIAL_ALREADY_USED',
-          HttpStatus.CONFLICT,
-        );
+        await this.downgradeSpentTrialToDefault(userId, plan);
+        return this.toView(plan);
       }
     } else {
       const now = new Date();
@@ -358,6 +336,32 @@ export class PlansService {
     }
     this.logger.log(`assignUserToPlan: user=${userId} plan=${planId}`);
     return this.toView(plan);
+  }
+
+  private async downgradeSpentTrialToDefault(userId: string, plan: PlanWithAccess): Promise<void> {
+    // The trial is spent. If this plan is also the DEFAULT one, that must
+    // not block the assignment: putting someone back on the baseline plan
+    // is a downgrade, not a trial grant.
+    //
+    // The default plan is flagged isTrial, so every downgrade to free ran
+    // down this path, collided with the user's existing redemption row and
+    // failed. Once a user had used their trial there was no way back to
+    // free at all — the only way off a paid plan was another paid plan.
+    //
+    // The redemption row is left exactly as it is, so a spent trial stays
+    // spent and this grants only the baseline they would have had anyway.
+    // To give a spent-trial user more days, the admin passes durationDays.
+    if (!plan.isDefault) {
+      throw new BusinessException(
+        'Plan trial already used',
+        'PLAN_TRIAL_ALREADY_USED',
+        HttpStatus.CONFLICT,
+      );
+    }
+    await this.plansRepository.assignDefaultPlan(userId, plan.id);
+    this.logger.log(
+      `assignUserToPlan: user=${userId} downgraded to default plan=${plan.id} (trial already spent)`,
+    );
   }
 
   /**
@@ -429,7 +433,7 @@ export class PlansService {
         HttpStatus.CONFLICT,
       );
     }
-    if (assignment === null || assignment.id !== redemption.assignmentId) {
+    if (assignment?.id !== redemption.assignmentId) {
       throw new BusinessException(
         'This user is no longer on their free trial. Set them to the free plan for a number of days instead',
         PLAN_TRIAL_SUPERSEDED,
@@ -607,6 +611,8 @@ export class PlansService {
       maxContextPacks: plan.maxContextPacks,
       maxMemoryItems: plan.maxMemoryItems,
       maxVideoSeconds: plan.maxVideoSeconds,
+      maxInstalledPlugins: plan.maxInstalledPlugins,
+      maxUserMcpServers: plan.maxUserMcpServers,
       creditConnectorFreeRequestsPerMonth: plan.creditConnectorFreeRequestsPerMonth,
       creditConnectorFreeBudgetMicroUsd: toNumberOrNull(plan.creditConnectorFreeBudgetMicroUsd),
       creditConnectorFreeMaxModelOutputMicroUsd: toNumberOrNull(
@@ -655,6 +661,7 @@ export class PlansService {
       allowImageGeneration: plan.allowImageGeneration,
       allowHelperVision: plan.allowHelperVision,
       allowTextToSpeech: plan.allowTextToSpeech,
+      allowPlugins: plan.allowPlugins,
     };
   }
 

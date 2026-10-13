@@ -37,6 +37,7 @@ export const COMPONENT_MEMBERS: readonly ComponentMembers[] = [
       'server-logs-service',
       'threads-service',
       'thread-generation-service',
+      'plugin-service',
     ],
   },
 ];

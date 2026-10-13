@@ -2,7 +2,7 @@
 
 ## Current State (v0.2.0, April 2026)
 
-ClawAI is a fully functional local-first AI orchestration platform with <!-- count:services -->20<!-- /count --> NestJS microservices, a Next.js frontend, and comprehensive infrastructure. The platform is in active development with most features at GA status.
+ClawAI is a fully functional local-first AI orchestration platform with <!-- count:services -->21<!-- /count --> NestJS microservices, a Next.js frontend, and comprehensive infrastructure. The platform is in active development with most features at GA status.
 
 ---
 
@@ -10,7 +10,7 @@ ClawAI is a fully functional local-first AI orchestration platform with <!-- cou
 
 ### Core Platform (GA)
 
-- <!-- count:services -->20<!-- /count --> microservices, each owning its own database
+- <!-- count:services -->21<!-- /count --> microservices, each owning its own database
 - Next.js 16 frontend with React 19, TanStack Query, Zustand
 - Nginx reverse proxy with 20+ route mappings
 - Docker Compose deployment (~22 containers)

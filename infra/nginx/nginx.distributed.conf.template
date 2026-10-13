@@ -137,6 +137,7 @@ http {
     map $host $origin_auth            { default "${CLAW_AUTH_ORIGIN}"; }
     map $host $origin_payment         { default "${CLAW_PAYMENT_ORIGIN}"; }
     map $host $origin_threads         { default "${CLAW_THREADS_ORIGIN}"; }
+    map $host $origin_plugin          { default "${CLAW_PLUGIN_ORIGIN}"; }
     map $host $origin_chat            { default "${CLAW_CHAT_ORIGIN}"; }
     map $host $origin_connector       { default "${CLAW_CONNECTOR_ORIGIN}"; }
     map $host $origin_routing         { default "${CLAW_ROUTING_ORIGIN}"; }
@@ -295,6 +296,13 @@ http {
         # Keep publication routes distinct from /api/v1/threads (chat threads).
         location /api/v1/thread-publications {
             set $backend https://$origin_threads;
+            proxy_pass $backend;
+        }
+
+        # Plugins and MCP (plugin-service). Public prefix only; /api/v1/internal/
+        # stays closed.
+        location /api/v1/plugins {
+            set $backend https://$origin_plugin;
             proxy_pass $backend;
         }
 

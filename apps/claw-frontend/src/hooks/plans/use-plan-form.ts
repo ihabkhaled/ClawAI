@@ -37,6 +37,8 @@ const fromPlan = (plan: PlanView): PlanFormState => ({
   maxContextPacks: numToStr(plan.maxContextPacks),
   maxMemoryItems: numToStr(plan.maxMemoryItems),
   maxVideoSeconds: numToStr(plan.maxVideoSeconds),
+  maxInstalledPlugins: numToStr(plan.maxInstalledPlugins),
+  maxUserMcpServers: numToStr(plan.maxUserMcpServers),
   creditConnectorFreeRequestsPerMonth: numToStr(plan.creditConnectorFreeRequestsPerMonth ?? null),
   creditConnectorFreeBudgetUsd: microUsdToUsdInput(plan.creditConnectorFreeBudgetMicroUsd),
   creditConnectorFreeMaxModelOutputUsd: microUsdToUsdInput(
@@ -61,6 +63,7 @@ const fromPlan = (plan: PlanView): PlanFormState => ({
   allowImageGeneration: plan.allowImageGeneration,
   allowHelperVision: plan.allowHelperVision,
   allowTextToSpeech: plan.allowTextToSpeech,
+  allowPlugins: plan.allowPlugins,
 });
 
 const buildPayload = (state: PlanFormState): Record<string, unknown> => ({
@@ -82,6 +85,8 @@ const buildPayload = (state: PlanFormState): Record<string, unknown> => ({
   maxContextPacks: state.maxContextPacks,
   maxMemoryItems: state.maxMemoryItems,
   maxVideoSeconds: state.maxVideoSeconds,
+  maxInstalledPlugins: state.maxInstalledPlugins,
+  maxUserMcpServers: state.maxUserMcpServers,
   creditConnectorFreeRequestsPerMonth: state.creditConnectorFreeRequestsPerMonth,
   // Typed in dollars; the schema turns them into integer micro-USD under the API's own names.
   creditConnectorFreeBudgetMicroUsd: state.creditConnectorFreeBudgetUsd,
@@ -105,6 +110,7 @@ const buildPayload = (state: PlanFormState): Record<string, unknown> => ({
   allowImageGeneration: state.allowImageGeneration,
   allowHelperVision: state.allowHelperVision,
   allowTextToSpeech: state.allowTextToSpeech,
+  allowPlugins: state.allowPlugins,
 });
 
 export function usePlanForm(initial: PlanView | null): UsePlanFormResult {

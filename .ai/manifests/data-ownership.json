@@ -229,6 +229,17 @@
       "database": "postgresql",
       "mongooseModels": [],
       "prismaModels": [
+        "PluginCatalogEntry",
+        "PluginSetting",
+        "PluginTool",
+        "PluginVersion"
+      ],
+      "service": "claw-plugin-service"
+    },
+    {
+      "database": "postgresql",
+      "mongooseModels": [],
+      "prismaModels": [
         "FetchJob",
         "FetchStrategyConfig",
         "HostStrategyMemory",

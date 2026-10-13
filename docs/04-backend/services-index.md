@@ -31,6 +31,7 @@ Rules every backend service shares (commands, absolute rules, Docker rebuild, ch
 | 18  | Payment                                                 | `claw-payment-service`           | 4018 | PostgreSQL                            | Checkout, subscriptions, invoices, refunds                  |
 | 19  | [Threads](service-guide-threads.md)                     | `claw-threads-service`           | 4019 | PostgreSQL (`claw_threads`)           | Owner generation handoff and private publication revisions  |
 | 20  | [Thread Generation](service-guide-thread-generation.md) | `claw-thread-generation-service` | 4020 | PostgreSQL (`claw_thread_generation`) | Durable isolated generation jobs and review pipeline        |
+| 21  | [Plugin](service-guide-plugin.md)                       | `claw-plugin-service`            | 4021 | PostgreSQL (`claw_plugin`)            | Plugin and MCP catalog, installs, consent                   |
 
 ---
 

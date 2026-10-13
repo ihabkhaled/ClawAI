@@ -63,7 +63,7 @@
 
 | Document                                                                            | Purpose                                                                                              |
 | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| [Services Index](04-backend/services-index.md)                                      | All <!-- count:services -->20<!-- /count --> services: ports, DBs, controllers, events, dependencies |
+| [Services Index](04-backend/services-index.md)                                      | All <!-- count:services -->21<!-- /count --> services: ports, DBs, controllers, events, dependencies |
 | [Controllers Reference](04-backend/controllers-reference.md)                        | Every route across all services                                                                      |
 | [Backend Coding Standards](04-backend/coding-standards.md)                          | Layer rules, ESLint, extraction, error handling                                                      |
 | [Shared Packages](04-backend/shared-packages.md)                                    | shared-types, shared-constants, shared-rabbitmq, shared-auth                                         |

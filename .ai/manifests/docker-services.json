@@ -297,6 +297,13 @@
         "docker/docker-compose.dev.databases.yml",
         "docker/docker-compose.prod.databases.yml"
       ],
+      "name": "pg-plugin"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.databases.yml",
+        "docker/docker-compose.prod.databases.yml"
+      ],
       "name": "pg-research"
     },
     {
@@ -326,6 +333,13 @@
         "docker/docker-compose.prod.databases.yml"
       ],
       "name": "pg-workspace"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "plugin-service"
     },
     {
       "files": [

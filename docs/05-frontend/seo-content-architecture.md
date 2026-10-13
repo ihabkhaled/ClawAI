@@ -246,6 +246,35 @@ raised `RSS_GLOBAL_MAX_ITEMS` to 4,000. Guarded by
 `features-flagship-content.test.ts` (discovery, real translations, audited
 omissions) and `repositioning-slogan-keys.test.ts` (slogan keys × 13 locales).
 
+**Video sections (2026-10-13).** Twelve placements show video, all named in
+`MarketingVideoPlacement` and driven by ONE registry, `MARKETING_VIDEOS`
+(`constants/marketing-videos.constants.ts`): the "ClawAI Threads in 30 seconds" video on
+`/features/threads`, `/threads/discover` and the home Threads band; a neutral "Watch the ClawAI
+Threads video in three parts" strip on `/features/threads`; "See ClawAI in action" on the home page
+(three Shorts); the two "free AI" Shorts on `/pricing`, `/supported-models` and `/model-providers`;
+one open-source Short each on `/local-first-ai`, `/how-it-works`, `/architecture` and
+`/integrations`. A page adds `<MarketingVideoSection placement={...} />`.
+
+What the copy may claim: we do not know what each clip narrates, so the self-hosted clips are
+described neutrally ("ClawAI Threads video, part 1 of 3") with no step story, and the Shorts show
+their YouTube title VERBATIM from the registry (never translated or paraphrased; the four
+same-title Shorts get `#1` to `#4` only to tell them apart). There are no spoken-language badges,
+because the audio language is unconfirmed; the Arabic locale puts Arabic-titled Shorts first by
+the title's script, not by a claim about the audio.
+
+Self-hosted mp4s (`MarketingVideo`) are a click-to-load facade like the Shorts: a lazy poster and a
+play button in a reserved 16:9 box, so no `<video>` and no mp4 request exists before the click;
+click, Enter or Space swaps in `<video controls autoplay preload="metadata">` and moves focus to
+it. They get `VideoObject` JSON-LD. The clips carry an audio track; `muted` stays only for the
+`media-has-caption` lint rule, and the owner supplies `.vtt` captions if the clips contain speech.
+YouTube Shorts (`YouTubeShortFacade`) are the same pattern over a local thumbnail, so there is no
+YouTube request before the click, and the CSP `frame-src` names only
+`https://www.youtube-nocookie.com`. `next.config.mjs` serves `/marketing/videos/:path*` with
+`Cache-Control: public, max-age=31536000, immutable`: files are replaced by a new name, never
+edited in place (no test covers `next.config` headers, so this is documented here). Copy is
+`marketing.videos.*` in `marketing-videos-translations.ts` (13 locales). Each section adds a
+heading and a line of text, so a page never becomes video-only (rule 38).
+
 ### F5 — no topical clusters exist
 
 Nothing covers the informational half of the funnel: what model routing _is_,

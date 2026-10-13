@@ -75,6 +75,9 @@ export type PlanView = {
   maxMemoryItems: number | null;
   /** Longest video processed, in seconds. null = unlimited, 0 = disabled (ADR-122). */
   maxVideoSeconds: number | null;
+  /** Plugin installs and own MCP servers. null = unlimited, 0 = disabled. */
+  maxInstalledPlugins: number | null;
+  maxUserMcpServers: number | null;
   /** Free requests per month per credit connector. null = unlimited, 0 = off. Absent from an older auth-service. */
   creditConnectorFreeRequestsPerMonth?: number | null;
   /** The free allowance's monthly money meter, micro-USD. null = no meter. Absent from an older auth-service. */
@@ -100,6 +103,7 @@ export type PlanView = {
   allowImageGeneration: boolean;
   allowHelperVision: boolean;
   allowTextToSpeech: boolean;
+  allowPlugins: boolean;
   modelAccessMode?: PlanModelAccessMode;
   allowedCostClasses?: string[];
   modelAccess: PlanModelAccessView[];
@@ -153,6 +157,9 @@ export type CreatePlanRequest = {
   maxMemoryItems?: number;
   /** null sets unlimited; omitted leaves the plan's value untouched. */
   maxVideoSeconds?: number | null;
+  /** Plugin installs and own MCP servers. null = unlimited, 0 = disabled. */
+  maxInstalledPlugins?: number | null;
+  maxUserMcpServers?: number | null;
   /** null sets unlimited; omitted leaves the plan's value untouched. */
   creditConnectorFreeRequestsPerMonth?: number | null;
   /** null clears the meter; omitted leaves it untouched. */
@@ -178,6 +185,7 @@ export type CreatePlanRequest = {
   allowImageGeneration?: boolean;
   allowHelperVision?: boolean;
   allowTextToSpeech?: boolean;
+  allowPlugins?: boolean;
 };
 
 export type UpdatePlanRequest = Partial<CreatePlanRequest>;
@@ -216,6 +224,7 @@ export type EntitlementFeatureGates = {
   allowImageGeneration: boolean;
   allowHelperVision: boolean;
   allowTextToSpeech: boolean;
+  allowPlugins: boolean;
 };
 
 export type EntitlementPlan = {
@@ -240,6 +249,9 @@ export type EntitlementPlanLimits = {
   memoryItems: number | null;
   /** Seconds. null = unlimited, 0 = video disabled (ADR-122). Absent from an older auth-service. */
   maxVideoSeconds?: number | null;
+  /** Plugin installs and own MCP servers. null = unlimited, 0 = disabled. */
+  maxInstalledPlugins?: number | null;
+  maxUserMcpServers?: number | null;
 };
 
 // One enforced token window. `limit: null` is unlimited, `0` is disabled —
@@ -295,6 +307,8 @@ export type PlanFormState = {
   maxContextPacks: string;
   maxMemoryItems: string;
   maxVideoSeconds: string;
+  maxInstalledPlugins: string;
+  maxUserMcpServers: string;
   creditConnectorFreeRequestsPerMonth: string;
   /** Dollars, as typed. Blank = no meter. */
   creditConnectorFreeBudgetUsd: string;
@@ -319,6 +333,7 @@ export type PlanFormState = {
   allowImageGeneration: boolean;
   allowHelperVision: boolean;
   allowTextToSpeech: boolean;
+  allowPlugins: boolean;
 };
 
 /**

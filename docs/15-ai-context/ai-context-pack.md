@@ -10,7 +10,7 @@ Optimized reference for AI coding agents working on the ClawAI codebase. Read th
 
 **Why**: Organizations need a single interface that intelligently selects from multiple AI providers while keeping sensitive data local when required.
 
-**How**: <!-- count:services -->20<!-- /count --> NestJS microservices communicate via RabbitMQ events, each owning its own database. A Next.js frontend connects through an Nginx reverse proxy. Ollama runs locally for privacy-sensitive tasks and as the routing brain in AUTO mode.
+**How**: <!-- count:services -->21<!-- /count --> NestJS microservices communicate via RabbitMQ events, each owning its own database. A Next.js frontend connects through an Nginx reverse proxy. Ollama runs locally for privacy-sensitive tasks and as the routing brain in AUTO mode.
 
 ---
 
@@ -184,7 +184,7 @@ Controllers never contain try/catch or throw statements. Repositories never thro
 - **Every new function needs a test.** No exceptions.
 - **Test files are exempt** from the no-`any` rule and inline restrictions.
 - **Pre-commit hook runs all tests** -- they must pass before commit.
-- **<!-- count:specFiles -->2298<!-- /count --> test files** across the monorepo (`.ai/manifests/tests.json`).
+- **<!-- count:specFiles -->2335<!-- /count --> test files** across the monorepo (`.ai/manifests/tests.json`).
 
 ---
 

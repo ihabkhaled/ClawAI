@@ -3110,6 +3110,23 @@
           "source": "apps/claw-payment-service/src/modules/webhooks/controllers/paypal-webhook.controller.ts"
         }
       ],
+      "claw-plugin-service": [
+        {
+          "method": "GET",
+          "route": "/health",
+          "source": "apps/claw-plugin-service/src/modules/health/controllers/health.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/plugins/catalog",
+          "source": "apps/claw-plugin-service/src/modules/catalog/controllers/plugin-catalog.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/plugins/catalog/:slug",
+          "source": "apps/claw-plugin-service/src/modules/catalog/controllers/plugin-catalog.controller.ts"
+        }
+      ],
       "claw-research-service": [
         {
           "method": "GET",
@@ -4706,6 +4723,13 @@
           "docker/docker-compose.dev.databases.yml",
           "docker/docker-compose.prod.databases.yml"
         ],
+        "name": "pg-plugin"
+      },
+      {
+        "files": [
+          "docker/docker-compose.dev.databases.yml",
+          "docker/docker-compose.prod.databases.yml"
+        ],
         "name": "pg-research"
       },
       {
@@ -4735,6 +4759,13 @@
           "docker/docker-compose.prod.databases.yml"
         ],
         "name": "pg-workspace"
+      },
+      {
+        "files": [
+          "docker/docker-compose.dev.services.yml",
+          "docker/docker-compose.prod.services.yml"
+        ],
+        "name": "plugin-service"
       },
       {
         "files": [
@@ -6183,6 +6214,26 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "PG_PLUGIN_DB"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PG_PLUGIN_PASSWORD"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PG_PLUGIN_PORT"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PG_PLUGIN_USER"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "PG_RESEARCH_DB"
       },
       {
@@ -6284,6 +6335,26 @@
         "confidence": "verified",
         "source": ".env.example",
         "value": "PIPER_BIN_PATH"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PLUGIN_DATABASE_URL"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PLUGIN_ENCRYPTION_KEY"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PLUGIN_SERVICE_PORT"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PLUGIN_SERVICE_URL"
       },
       {
         "confidence": "verified",
@@ -8325,6 +8396,16 @@
         "route": "/plan"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/plugins/[slug]/page.tsx",
+        "kind": "page",
+        "route": "/plugins/[slug]"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(portal)/plugins/page.tsx",
+        "kind": "page",
+        "route": "/plugins"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/profile/page.tsx",
         "kind": "page",
         "route": "/profile"
@@ -8906,7 +8987,7 @@
       ],
       "skills": [
         {
-          "bytes": 32514,
+          "bytes": 32794,
           "file": "skills/00-index.md"
         },
         {
@@ -8948,6 +9029,10 @@
         {
           "bytes": 7503,
           "file": "skills/README.md"
+        },
+        {
+          "bytes": 5274,
+          "file": "skills/add-a-catalog-plugin.md"
         },
         {
           "bytes": 6166,
@@ -9348,7 +9433,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 6042
+        "value": 6045
       },
       "localeCount": 13,
       "locales": [
@@ -9705,6 +9790,12 @@
         "location": "/api/v1/payments/webhooks",
         "port": 4018,
         "service": "payment-service",
+        "source": "infra/nginx/locations.conf"
+      },
+      {
+        "location": "/api/v1/plugins",
+        "port": 4021,
+        "service": "plugin-service",
         "source": "infra/nginx/locations.conf"
       },
       {
@@ -10067,6 +10158,26 @@
       {
         "confidence": "verified",
         "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "PLUGINS_ADMIN"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "PLUGINS_INSTALL"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "PLUGINS_MANAGE_OWN_SERVERS"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "PLUGINS_USE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
         "value": "REPAIR_LAB_USE"
       },
       {
@@ -10345,6 +10456,11 @@
         "confidence": "verified",
         "source": "packages/shared-constants/src/index.ts",
         "value": 4018
+      },
+      "PLUGIN_SERVICE_PORT": {
+        "confidence": "verified",
+        "source": "packages/shared-constants/src/index.ts",
+        "value": 4021
       },
       "RESEARCH_SERVICE_PORT": {
         "confidence": "verified",
@@ -11117,6 +11233,35 @@
           "value": "postgresql"
         }
       },
+      "claw-plugin-service": {
+        "models": [
+          {
+            "confidence": "verified",
+            "source": "apps/claw-plugin-service/prisma/schema.prisma",
+            "value": "PluginCatalogEntry"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-plugin-service/prisma/schema.prisma",
+            "value": "PluginSetting"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-plugin-service/prisma/schema.prisma",
+            "value": "PluginTool"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-plugin-service/prisma/schema.prisma",
+            "value": "PluginVersion"
+          }
+        ],
+        "provider": {
+          "confidence": "verified",
+          "source": "apps/claw-plugin-service/prisma/schema.prisma",
+          "value": "postgresql"
+        }
+      },
       "claw-research-service": {
         "models": [
           {
@@ -11598,7 +11743,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 177
+        "testFiles": 179
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -11622,7 +11767,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 836
+        "testFiles": 850
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -11647,6 +11792,10 @@
       "claw-payment-service": {
         "runner": "vitest",
         "testFiles": 112
+      },
+      "claw-plugin-service": {
+        "runner": "vitest",
+        "testFiles": 21
       },
       "claw-research-service": {
         "runner": "vitest",
@@ -12170,6 +12319,35 @@
         "type": "nestjs-service"
       },
       {
+        "dir": "apps/claw-plugin-service",
+        "internalDeps": [
+          "@claw/shared-auth",
+          "@claw/shared-constants",
+          "@claw/shared-entitlements",
+          "@claw/shared-types",
+          "@claw/shared-utilities"
+        ],
+        "name": "claw-plugin-service",
+        "scripts": [
+          "build",
+          "dev",
+          "format",
+          "format:check",
+          "lint",
+          "lint:strict",
+          "migrate",
+          "migrate:dev",
+          "prisma:generate",
+          "start",
+          "start:prod",
+          "test",
+          "test:watch",
+          "typecheck"
+        ],
+        "source": "apps/claw-plugin-service/package.json",
+        "type": "nestjs-service"
+      },
+      {
         "dir": "apps/claw-research-service",
         "internalDeps": [
           "@claw/shared-auth",
@@ -12482,20 +12660,20 @@
   "summary": {
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
-    "dockerServiceCount": 56,
-    "endpointCount": 868,
-    "envVarCount": 378,
+    "dockerServiceCount": 58,
+    "endpointCount": 871,
+    "envVarCount": 386,
     "eventCount": 190,
-    "frontendRouteCount": 171,
+    "frontendRouteCount": 173,
     "localeCount": 13,
-    "nginxRouteCount": 70,
-    "permissionCount": 90,
-    "portCount": 18,
+    "nginxRouteCount": 71,
+    "permissionCount": 94,
+    "portCount": 19,
     "portCoverageGapCount": 2,
-    "serviceCount": 20,
+    "serviceCount": 21,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2298,
-    "workspaceCount": 27
+    "totalTestFiles": 2335,
+    "workspaceCount": 28
   }
 }

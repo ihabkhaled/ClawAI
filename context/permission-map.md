@@ -168,6 +168,11 @@ Rules that hold the line (all in agent-service, all tested):
 5. **Issued by the owner.** Only a user JWT on `pair/approve` can mint a mobile device (max 5 live per user), and
    only the owner (user JWT) can revoke it. A mobile token cannot pair, approve a pairing, or revoke a device.
 
+Plugins and MCP use `PLUGINS_USE` (browse and call), `PLUGINS_INSTALL` (install and configure) and
+`PLUGINS_MANAGE_OWN_SERVERS` (own MCP servers); all three are USER defaults, and the plan gate `allowPlugins` is on for
+every plan. `PLUGINS_ADMIN` (catalog, approvals, host rules, settings, audit) is ADMIN only. Frontend: `/plugins`
+needs `PLUGINS_USE` plus `allowPlugins`; `/admin/plugins` needs `PLUGINS_ADMIN`.
+
 Threads generation requires `THREAD_GENERATION_USE` and existing research,
 Judge, and Critic plan reservations. Publication read/create/update/publish are
 user permissions; report moderation requires `THREAD_PUBLICATIONS_MODERATE`.

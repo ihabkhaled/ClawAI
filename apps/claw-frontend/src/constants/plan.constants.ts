@@ -44,6 +44,10 @@ export const PLAN_FORM_DEFAULTS: PlanFormState = {
   maxMemoryItems: '',
   // The free allowance, not blank: blank means unlimited video (ADR-122).
   maxVideoSeconds: '60',
+  // Plugins are on for every plan: a new plan starts with the Free caps (5 installs,
+  // 0 own servers), never blank, because blank means unlimited.
+  maxInstalledPlugins: '5',
+  maxUserMcpServers: '0',
   // Mirrors the server default (2). Blank would mean unlimited.
   creditConnectorFreeRequestsPerMonth: '2',
   // A new plan has no meter and no price limit, so it never gives provider spend away by omission.
@@ -70,6 +74,8 @@ export const PLAN_FORM_DEFAULTS: PlanFormState = {
   allowImageGeneration: false,
   allowHelperVision: false,
   allowTextToSpeech: false,
+  // Unlike the media half, plugins are ON by default, matching the database default.
+  allowPlugins: true,
 };
 
 export const DISABLED_PLAN_FEATURE_GATES: EntitlementFeatureGates = {
@@ -92,6 +98,7 @@ export const DISABLED_PLAN_FEATURE_GATES: EntitlementFeatureGates = {
   allowImageGeneration: false,
   allowHelperVision: false,
   allowTextToSpeech: false,
+  allowPlugins: false,
 };
 
 // Feature-gate toggle field names rendered as Switches in the PlanForm and as
@@ -120,10 +127,15 @@ export const PLAN_FEATURE_GATE_FIELDS: ReadonlyArray<{
   { field: 'allowImageGeneration', labelKey: 'adminPlans.gate.allowImageGeneration' },
   { field: 'allowHelperVision', labelKey: 'adminPlans.gate.allowHelperVision' },
   { field: 'allowTextToSpeech', labelKey: 'adminPlans.gate.allowTextToSpeech' },
+  { field: 'allowPlugins', labelKey: 'pluginsAccess.planGate.allowPlugins' },
 ];
 
 /** Upper bound on the plan editor's video length, matching the auth-service DTO (ten hours). */
 export const PLAN_MAX_VIDEO_SECONDS_LIMIT = 36_000;
+
+/** Upper bounds on the plugin caps, matching the auth-service DTOs. */
+export const PLAN_MAX_INSTALLED_PLUGINS_LIMIT = 10_000;
+export const PLAN_MAX_USER_MCP_SERVERS_LIMIT = 1_000;
 
 /** Upper bound on free credit-connector requests per month, matching the auth-service DTO. */
 export const PLAN_CREDIT_FREE_REQUESTS_LIMIT = 100_000;

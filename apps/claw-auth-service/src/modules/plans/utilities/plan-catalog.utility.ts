@@ -69,6 +69,8 @@ export function toCatalogEntry(
     maxContextPacks: plan.maxContextPacks,
     maxMemoryItems: plan.maxMemoryItems,
     maxVideoSeconds: plan.maxVideoSeconds,
+    maxInstalledPlugins: plan.maxInstalledPlugins,
+    maxUserMcpServers: plan.maxUserMcpServers,
     creditConnectorFreeRequestsPerMonth: plan.creditConnectorFreeRequestsPerMonth,
     featureGates: {
       allowCompareMode: plan.allowCompareMode,
@@ -90,6 +92,7 @@ export function toCatalogEntry(
       allowImageGeneration: plan.allowImageGeneration,
       allowHelperVision: plan.allowHelperVision,
       allowTextToSpeech: plan.allowTextToSpeech,
+      allowPlugins: plan.allowPlugins,
     },
     prices,
     features,

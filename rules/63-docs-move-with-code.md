@@ -75,7 +75,7 @@ An intentional example in a fenced block (a path or command that is meant not to
 exist) is preceded by the line `<!-- docs:example -->`.
 
 Counts come from the manifests. Write
-`<!-- count:services -->20<!-- /count -->` and `npm run knowledge:build` keeps the
+`<!-- count:services -->21<!-- /count -->` and `npm run knowledge:build` keeps the
 number current; the keys are `services`, `workspaces`, `sharedPackages`,
 `specFiles` and `prismaClients`.
 

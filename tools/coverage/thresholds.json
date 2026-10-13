@@ -127,6 +127,12 @@
       "lines": 80,
       "statements": 80
     },
+    "claw-plugin-service": {
+      "branches": 65,
+      "functions": 80,
+      "lines": 70,
+      "statements": 75
+    },
     "claw-research-service": {
       "branches": 70,
       "functions": 70,
@@ -290,6 +296,12 @@
       "functions": 92,
       "lines": 92,
       "statements": 92
+    },
+    "claw-plugin-service": {
+      "branches": 65,
+      "functions": 80,
+      "lines": 70,
+      "statements": 75
     },
     "claw-research-service": {
       "branches": 70,

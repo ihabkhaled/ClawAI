@@ -50,7 +50,7 @@ For every feature or bug, explicitly enumerate:
 
 | Dimension                 | What to Check                                                                                                                          |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| **Backend services**      | Which of the <!-- count:services -->20<!-- /count --> services are touched? List by name (e.g., claw-chat-service, claw-file-service). |
+| **Backend services**      | Which of the <!-- count:services -->21<!-- /count --> services are touched? List by name (e.g., claw-chat-service, claw-file-service). |
 | **Frontend pages**        | Which pages in `src/app/(portal)/` are affected?                                                                                       |
 | **Frontend components**   | Which components in `src/components/` change?                                                                                          |
 | **Database schemas**      | Any Prisma schema or MongoDB collection changes? Which DB (claw_chat, claw_files, etc.)?                                               |

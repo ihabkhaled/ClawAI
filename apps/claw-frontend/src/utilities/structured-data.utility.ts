@@ -1,6 +1,7 @@
 import { MARKETING_GITHUB_URL } from '@/constants/marketing-nav.constants';
 import { SITE_DESCRIPTION, SITE_SLOGAN } from '@/constants/site-metadata.constants';
 import type { SharedChatJsonLdInput } from '@/types/chat-share-page.types';
+import type { VideoObjectJsonLdInput } from '@/types/marketing-videos.types';
 import type { PublicPlan } from '@/types/public-pricing.types';
 import type {
   CodingAgentJsonLdInput,
@@ -13,6 +14,7 @@ import type {
   PublicPageJsonLdInput,
   ThreadArticleJsonLdInput,
 } from '@/types/structured-data.types';
+import { formatIsoDuration } from '@/utilities/marketing-videos.utility';
 import { formatPriceDecimal } from '@/utilities/pricing-catalog.utility';
 
 // Only facts the application and repository actually support — no
@@ -401,4 +403,25 @@ export function buildLearnHubJsonLd(input: LearnHubJsonLdInput): JsonLdObject {
 
 export function serializeJsonLd(data: JsonLdObject): string {
   return JSON.stringify(data).replaceAll('<', '\\u003c');
+}
+
+/**
+ * Structured data for the videos we host ourselves. YouTube Shorts are left out on purpose: they
+ * belong to YouTube's own markup, and describing content we cannot see would be inventing it.
+ */
+export function buildVideoObjectsJsonLd(
+  videos: ReadonlyArray<VideoObjectJsonLdInput>,
+): JsonLdObject {
+  return {
+    '@context': 'https://schema.org',
+    '@graph': videos.map((video) => ({
+      '@type': 'VideoObject',
+      name: video.name,
+      description: video.description,
+      thumbnailUrl: video.thumbnailUrl,
+      contentUrl: video.contentUrl,
+      uploadDate: video.uploadDate,
+      duration: formatIsoDuration(video.durationSeconds),
+    })),
+  };
 }

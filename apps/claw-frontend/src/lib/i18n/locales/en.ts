@@ -5,6 +5,7 @@ import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { FILE_LIBRARY_TRANSLATIONS } from './file-library-translations';
+import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
@@ -12,12 +13,15 @@ import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
+import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
+import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const en: TranslationDictionary = {
+  pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.en,
   pagination: {
     label: 'Pagination',
     showing: 'Showing {from}-{to} of {total}',
@@ -4584,6 +4588,7 @@ export const en: TranslationDictionary = {
   observabilityExplorer: OBSERVABILITY_EXPLORER_TRANSLATIONS.en,
   observabilityPages: OBSERVABILITY_PAGES_TRANSLATIONS.en,
   notifications: NOTIFICATIONS_TRANSLATIONS.en,
+  plugins: PLUGINS_TRANSLATIONS.en,
   adminBilling: {
     credit: {
       packageCreated: 'Credit package created.',
@@ -5453,6 +5458,7 @@ export const en: TranslationDictionary = {
     },
   },
   marketing: {
+    videos: MARKETING_VIDEOS_TRANSLATIONS.en,
     header: {
       navLabel: 'Main navigation',
       navFeatures: 'Features',

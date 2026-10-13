@@ -60,6 +60,8 @@ export const ROUTES = {
   OBSERVABILITY_CONSUMPTION: '/observability/consumption',
   OBSERVABILITY_TRACING: '/observability/tracing',
   OBSERVABILITY_FAILURES: '/observability/failures',
+  PLUGINS: '/plugins',
+  PLUGIN_DETAIL: (slug: string) => `/plugins/${encodeURIComponent(slug)}` as const,
   SETTINGS: '/settings',
   // Where a forced password rotation lands. Under /settings so it inherits the
   // private-route prefix (robots, auth) instead of adding a list entry to keep in sync.
@@ -93,6 +95,7 @@ export const ROUTES = {
   WORKSPACE_IMPL_HANDOFFS: '/workspace/impl-handoffs',
   ADMIN_USERS: '/admin/users',
   ADMIN_FEEDBACK: '/admin/feedback',
+  ADMIN_PLUGINS: '/admin/plugins',
   ADMIN_AI_ACTION_POLICIES: '/admin/ai-action-policies',
   ADMIN_SUGGESTION_RULES: '/admin/suggestion-rules',
   ADMIN_WEBHOOK_DELIVERIES: '/admin/webhook-deliveries',

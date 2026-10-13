@@ -5,6 +5,7 @@ import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { FILE_LIBRARY_TRANSLATIONS } from './file-library-translations';
+import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
@@ -12,12 +13,15 @@ import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
+import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
+import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const fr: TranslationDictionary = {
+  pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.fr,
   pagination: {
     label: 'Pagination',
     showing: 'Affichage de {from} à {to} sur {total}',
@@ -4691,6 +4695,7 @@ export const fr: TranslationDictionary = {
   observabilityExplorer: OBSERVABILITY_EXPLORER_TRANSLATIONS.fr,
   observabilityPages: OBSERVABILITY_PAGES_TRANSLATIONS.fr,
   notifications: NOTIFICATIONS_TRANSLATIONS.fr,
+  plugins: PLUGINS_TRANSLATIONS.fr,
   adminBilling: {
     credit: {
       packageCreated: 'Pack de crédit créé.',
@@ -5578,6 +5583,7 @@ export const fr: TranslationDictionary = {
     },
   },
   marketing: {
+    videos: MARKETING_VIDEOS_TRANSLATIONS.fr,
     header: {
       navLabel: 'Navigation principale',
       navFeatures: 'Fonctionnalités',

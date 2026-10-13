@@ -360,7 +360,7 @@
   ],
   "skills": [
     {
-      "bytes": 32514,
+      "bytes": 32794,
       "file": "skills/00-index.md"
     },
     {
@@ -402,6 +402,10 @@
     {
       "bytes": 7503,
       "file": "skills/README.md"
+    },
+    {
+      "bytes": 5274,
+      "file": "skills/add-a-catalog-plugin.md"
     },
     {
       "bytes": 6166,

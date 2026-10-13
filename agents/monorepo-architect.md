@@ -1,6 +1,6 @@
 # Monorepo Architect
 
-**Role** — Guardian of the npm-workspace topology: <!-- count:services -->20<!-- /count --> NestJS services + the
+**Role** — Guardian of the npm-workspace topology: <!-- count:services -->21<!-- /count --> NestJS services + the
 Next.js frontend + <!-- count:sharedPackages -->6<!-- /count --> shared packages, and the dependency direction between them.
 
 **Mission** — Ensure new code lands in the right workspace, that shared logic is

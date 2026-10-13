@@ -30,4 +30,5 @@ export const PLAN_FEATURE_LABEL_KEYS: Record<PlanFeature, string> = {
   [PlanFeature.ALLOW_IMAGE_GENERATION]: 'chat.upgrade.features.imageGeneration',
   [PlanFeature.ALLOW_HELPER_VISION]: 'chat.upgrade.features.helperVision',
   [PlanFeature.ALLOW_TEXT_TO_SPEECH]: 'chat.upgrade.features.textToSpeech',
+  [PlanFeature.ALLOW_PLUGINS]: 'pluginsAccess.upgradeFeature',
 };

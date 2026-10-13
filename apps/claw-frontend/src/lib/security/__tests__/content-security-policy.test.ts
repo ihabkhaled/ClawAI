@@ -174,6 +174,31 @@ describe('buildContentSecurityPolicy analytics hosts', () => {
     expect(frameSrc).toContain('https://www.googletagmanager.com');
   });
 
+  it('frames the YouTube privacy-enhanced embed host and nothing wider', () => {
+    const csp = buildContentSecurityPolicy(prod);
+    const frameSrc = csp.split(';').find((d) => d.trim().startsWith('frame-src')) ?? '';
+    const sources = frameSrc.trim().split(/\s+/u).slice(1);
+
+    expect(sources).toContain('https://www.youtube-nocookie.com');
+    expect(sources).not.toContain('https://www.youtube.com');
+    expect(sources).not.toContain('https://youtube.com');
+    expect(sources).not.toContain('https:');
+    expect(sources).not.toContain('*');
+    expect(sources.filter((source) => source.includes('youtube'))).toEqual([
+      'https://www.youtube-nocookie.com',
+    ]);
+  });
+
+  it('does not add the YouTube host to any other fetch directive', () => {
+    const csp = buildContentSecurityPolicy(prod);
+    const others = csp
+      .split(';')
+      .filter((d) => !d.trim().startsWith('frame-src'))
+      .join(';');
+
+    expect(others).not.toContain('youtube');
+  });
+
   it('allows measurement pixels as images', () => {
     const csp = buildContentSecurityPolicy(prod);
     const imgSrc = csp.split(';').find((d) => d.trim().startsWith('img-src')) ?? '';

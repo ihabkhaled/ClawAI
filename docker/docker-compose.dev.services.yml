@@ -884,6 +884,50 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  plugin-service:
+    labels:
+      claw.service: plugin-service
+    logging: *claw-logging
+    build:
+      context: ..
+      dockerfile: apps/claw-plugin-service/Dockerfile.dev
+    container_name: claw-plugin-service
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      <<: *development-watch-environment
+    depends_on:
+      pg-plugin:
+        condition: service_healthy
+    ports:
+      - '4021:4021'
+    volumes:
+      - ../apps/claw-plugin-service/package.json:/app/apps/claw-plugin-service/package.json:ro
+      - ../apps/claw-plugin-service/prisma:/app/apps/claw-plugin-service/prisma:ro
+      - ../apps/claw-plugin-service/prisma.config.ts:/app/apps/claw-plugin-service/prisma.config.ts:ro
+      - ../apps/claw-plugin-service/tsconfig.json:/app/apps/claw-plugin-service/tsconfig.json:ro
+      - ../apps/claw-plugin-service/tsconfig.build.json:/app/apps/claw-plugin-service/tsconfig.build.json:ro
+      - ../apps/claw-plugin-service/src:/app/apps/claw-plugin-service/src
+      - ../tools:/app/tools:ro
+      - ../certs:/certs:ro
+    # TLS is enabled inside the service container. Its loopback probe accepts
+    # the local certificate and uses Node because this image has no wget.
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('node:https').get('https://localhost:4021/api/v1/health', { rejectUnauthorized: false }, (response) => process.exit(response.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
   frontend:
     labels:
       claw.service: frontend

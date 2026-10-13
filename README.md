@@ -172,6 +172,7 @@ Nginx Reverse Proxy (:4000)
   +--> Payment (:4018) ----------> PostgreSQL claw_payments (:5453)
   +--> Threads (:4019) ----------> PostgreSQL claw_threads (:5458)
   +--> Thread Generation (:4020) -> PostgreSQL claw_thread_generation (:5457)
+  +--> Plugins (:4021) ----------> PostgreSQL claw_plugin (:5459)
                                    + llamacpp-data volume (binary + GGUF weights)
 
 Shared infrastructure:
@@ -237,6 +238,7 @@ Shared infrastructure:
 | Payment           | 4018 | PostgreSQL `claw_payments` (5453)          | Checkout, subscriptions, invoices, pay-as-you-go top-ups, display currency                                                                                                                                                                                            |
 | Threads           | 4019 | PostgreSQL `claw_threads` (5458)           | Public Thread publications, review, views, community, export                                                                                                                                                                                                          |
 | Thread Generation | 4020 | PostgreSQL `claw_thread_generation` (5457) | Durable generation jobs: research, authors, consensus, Judge, Critic, private drafts                                                                                                                                                                                  |
+| Plugins           | 4021 | PostgreSQL `claw_plugin` (5459)            | Plugin and MCP catalog, installs, consent and invocation history (browse-only in Batch 1)                                                                                         |
 
 ### Infrastructure
 
@@ -259,7 +261,7 @@ Shared infrastructure:
 ### Configuration notes
 
 - `INTER_SERVICE_AUTH_TOKEN` must be a real random value in production; twelve services refuse to boot with a placeholder. The installers generate one.
-- In production every service port (4001-4020) is bound to `127.0.0.1`; only nginx (80/443/4000) and the frontend (3000) are public. Services reach each other by container name.
+- In production every service port (4001-4021) is bound to `127.0.0.1`; only nginx (80/443/4000) and the frontend (3000) are public. Services reach each other by container name.
 - Provider API keys are encrypted at rest and served only to sibling services that present the service token (`/api/v1/internal/connectors/config`); logs redact secret-like query parameters and fields.
 - Notification email uses the existing SMTP settings and `PUBLIC_SITE_URL`; the in-app bell needs no extra configuration. Prices are never environment variables: they live in the model-cost tables (admin override > provider sync > seed).
 - After pulling changes that touch `packages/shared-*`, rebuild the dev services (`./scripts/claw.sh --dev service:rebuild <service>`); dev containers bake those packages.
@@ -292,6 +294,7 @@ claw/
 │   ├── claw-payment-service/         # Payments, subscriptions, PAYG top-ups (:4018)
 │   ├── claw-threads-service/         # Public Threads publications (:4019)
 │   ├── claw-thread-generation-service/ # Durable Threads generation jobs (:4020)
+│   ├── claw-plugin-service/          # Plugin and MCP catalog, installs, consent (:4021)
 │   └── claw-coding-agent/            # VS Code Coding Agent (submodule, separate repository)
 ├── packages/
 │   ├── shared-types/                 # @claw/shared-types

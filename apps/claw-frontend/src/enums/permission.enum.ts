@@ -38,6 +38,13 @@ export enum Permission {
   RESEARCH_USE = 'RESEARCH_USE',
   AGENT_USE = 'AGENT_USE',
 
+  // Plugins and MCP. The first three are on by default for USER (the module is on
+  // for every plan); PLUGINS_ADMIN is the catalog, approvals and settings console.
+  PLUGINS_USE = 'PLUGINS_USE',
+  PLUGINS_INSTALL = 'PLUGINS_INSTALL',
+  PLUGINS_MANAGE_OWN_SERVERS = 'PLUGINS_MANAGE_OWN_SERVERS',
+  PLUGINS_ADMIN = 'PLUGINS_ADMIN',
+
   // The coding agent's individual surfaces, so a role can be given the agent
   // without being given the terminal.
   //

@@ -25,6 +25,10 @@ copies with imports (extend-don't-parallelize).
 | **`@claw/shared-rabbitmq`**     | RabbitMQModule, RabbitMQService (publish/consume with retry + DLQ), StructuredLogger                                                       | shared-constants, shared-types |
 | **`@claw/shared-entitlements`** | plan feature gates (`allowCompareMode`, `allowJudgeMode`, `allowMemory`, …) enforced by chat `AccessControlService` + FE `useFeatureGates` | shared-types                   |
 
+Recent additions to the leaf packages (2026-10-13): `shared-types` gained the `PLUGINS_*` permissions and the owner-only Thread generation
+progress, save-proposal and observability page contracts; `shared-constants` gained `PLUGIN_SERVICE` / `PLUGIN_SERVICE_PORT` (4021);
+`shared-entitlements` plan payloads carry `allowPlugins` and the `maxInstalledPlugins` / `maxUserMcpServers` limits (`null` = unlimited, `0` = disabled).
+
 Dependency DAG (from the manifest): `shared-types` and `shared-constants` are
 leaves; `shared-utilities` and `shared-rabbitmq` → both leaves;
 `shared-entitlements` → `shared-types`; `shared-auth` → `shared-types` +

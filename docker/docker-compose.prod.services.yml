@@ -726,6 +726,42 @@ services:
     networks:
       - claw-network
 
+  # Plugin Service
+  # ---------------------------------------------------------------------------
+  plugin-service:
+    labels:
+      claw.service: plugin-service
+    logging: *claw-logging
+    build:
+      context: ..
+      dockerfile: apps/claw-plugin-service/Dockerfile
+    container_name: claw-plugin-service
+    restart: unless-stopped
+    env_file: ../.env
+    depends_on:
+      pg-plugin:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:4021:4021'
+    volumes:
+      - ../certs:/certs:ro
+    # TLS is enabled inside the service container. Its loopback probe accepts
+    # the local certificate and uses Node because this image has no wget.
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('node:https').get('https://localhost:4021/api/v1/health', { rejectUnauthorized: false }, (response) => process.exit(response.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
   # Frontend
   # ---------------------------------------------------------------------------
   frontend:

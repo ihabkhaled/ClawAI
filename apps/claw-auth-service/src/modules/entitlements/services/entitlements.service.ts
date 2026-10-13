@@ -12,6 +12,10 @@ import { SystemSettingService } from '../../system-settings/services/system-sett
 import { QuotaService } from '../../quota/services/quota.service';
 import { type UserEntitlements } from '../types/entitlements.types';
 import { ADMIN_ENTITLEMENT_PLAN } from '../constants/admin-entitlements.constants';
+import {
+  pickAllowedModelAccess,
+  resolveFreeCreditCeiling,
+} from '../utilities/entitlement-projection.utility';
 
 @Injectable()
 export class EntitlementsService {
@@ -40,23 +44,8 @@ export class EntitlementsService {
     const permissions = await this.rolesService.resolvePermissionsForUser(user.roleId, user.role);
     const plan = isAdmin ? null : await this.resolvePlan(userId, user.activePlanId);
 
-    const dailyLimit = plan?.dailyTokenQuota ?? 0;
-    const quota = isAdmin
-      ? { dailyLimit: 0, used: 0, remaining: 0, windows: [], unlimited: true, adminBypass: true }
-      : {
-          ...(await this.quotaService.getSnapshot(userId, {
-            daily: dailyLimit,
-            weekly: plan?.weeklyTokenQuota ?? null,
-            monthly: plan?.monthlyTokenQuota ?? null,
-          })),
-          unlimited: false,
-          adminBypass: false,
-        };
-
-    // ALLOW_ALL plans use an empty model list as the unrestricted routing hot
-    // path. Explicit policies return only enabled rows; their access mode keeps
-    // an empty allow-list or DENY_ALL policy restrictive downstream.
-    const modelAccess = (plan?.modelAccess ?? []).filter((m) => m.isAllowed);
+    const quota = await this.resolveQuota(userId, isAdmin, plan);
+    const modelAccess = pickAllowedModelAccess(plan);
 
     return {
       userId,
@@ -66,12 +55,7 @@ export class EntitlementsService {
       plan: this.resolveEntitlementPlan(isAdmin, plan, trial),
       modelAccessMode: this.resolveModelAccessMode(isAdmin, plan?.modelAccessMode),
       hasPaygCredit: isAdmin ? false : await this.resolveHasPaygCredit(userId),
-      freeCreditMaxModelOutputMicroUsd:
-        isAdmin ||
-        plan?.creditConnectorFreeMaxModelOutputMicroUsd === null ||
-        plan?.creditConnectorFreeMaxModelOutputMicroUsd === undefined
-          ? null
-          : Number(plan.creditConnectorFreeMaxModelOutputMicroUsd),
+      freeCreditMaxModelOutputMicroUsd: resolveFreeCreditCeiling(isAdmin, plan),
       allowedModels: modelAccess.map((m) => ({
         provider: m.provider,
         model: m.model,
@@ -85,6 +69,29 @@ export class EntitlementsService {
       allowedProviders: [...new Set(modelAccess.map((m) => m.provider))],
       quota,
     };
+  }
+
+  private async resolveQuota(
+    userId: string,
+    isAdmin: boolean,
+    plan: PlanWithAccess | null,
+  ): Promise<UserEntitlements['quota']> {
+    if (isAdmin) {
+      return {
+        dailyLimit: 0,
+        used: 0,
+        remaining: 0,
+        windows: [],
+        unlimited: true,
+        adminBypass: true,
+      };
+    }
+    const snapshot = await this.quotaService.getSnapshot(userId, {
+      daily: plan?.dailyTokenQuota ?? 0,
+      weekly: plan?.weeklyTokenQuota ?? null,
+      monthly: plan?.monthlyTokenQuota ?? null,
+    });
+    return { ...snapshot, unlimited: false, adminBypass: false };
   }
 
   // Spendable PAYG credit with metering on. Fails closed: an unreadable wallet
@@ -166,6 +173,8 @@ export class EntitlementsService {
         contextPacks: plan.maxContextPacks ?? null,
         memoryItems: plan.maxMemoryItems ?? null,
         maxVideoSeconds: plan.maxVideoSeconds,
+        maxInstalledPlugins: plan.maxInstalledPlugins,
+        maxUserMcpServers: plan.maxUserMcpServers,
       },
       featureGates: {
         allowCompareMode: plan.allowCompareMode,
@@ -187,6 +196,7 @@ export class EntitlementsService {
         allowImageGeneration: plan.allowImageGeneration,
         allowHelperVision: plan.allowHelperVision,
         allowTextToSpeech: plan.allowTextToSpeech,
+        allowPlugins: plan.allowPlugins,
       },
     };
   }

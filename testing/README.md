@@ -1,6 +1,6 @@
 # ClawAI Testing Standards
 
-The prescriptive testing standards for the ClawAI monorepo (<!-- count:services -->20<!-- /count --> NestJS services +
+The prescriptive testing standards for the ClawAI monorepo (<!-- count:services -->21<!-- /count --> NestJS services +
 Next.js frontend + <!-- count:sharedPackages -->6<!-- /count --> shared packages). These documents say _what good testing is_
 here; the _why_ (post-mortem lessons) lives in
 [`../memory/testing-strategy.md`](../memory/testing-strategy.md).

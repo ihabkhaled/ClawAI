@@ -497,6 +497,35 @@
       "type": "nestjs-service"
     },
     {
+      "dir": "apps/claw-plugin-service",
+      "internalDeps": [
+        "@claw/shared-auth",
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-plugin-service",
+      "scripts": [
+        "build",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:strict",
+        "migrate",
+        "migrate:dev",
+        "prisma:generate",
+        "start",
+        "start:prod",
+        "test",
+        "test:watch",
+        "typecheck"
+      ],
+      "source": "apps/claw-plugin-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
       "dir": "apps/claw-research-service",
       "internalDeps": [
         "@claw/shared-auth",

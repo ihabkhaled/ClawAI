@@ -4,6 +4,7 @@ import {
   ANALYTICS_IMG_HOSTS,
   GTM_HOST,
 } from '@/constants/analytics.constants';
+import { YOUTUBE_EMBED_ORIGIN } from '@/constants/marketing-videos.constants';
 import type { ContentSecurityPolicyOptions } from '@/types/security.types';
 
 // Google ad domains that the browser must be allowed to frame / fetch from
@@ -158,6 +159,9 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
     ...ANALYTICS_FRAME_HOSTS,
     ...PAYMOB_CHECKOUT_HOSTS,
     ...PAYPAL_CHECKOUT_HOSTS,
+    // Click-to-load Shorts on the marketing pages. The privacy-enhanced host only; the facade
+    // makes no request to it until a visitor presses play.
+    YOUTUBE_EMBED_ORIGIN,
     ...(adsenseEnabled ? GOOGLE_AD_FRAME_HOSTS : []),
   ];
 

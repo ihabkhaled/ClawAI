@@ -159,6 +159,50 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
     expect(result.plan?.limits.maxVideoSeconds).toBeNull();
   });
 
+  // Plugins are on for every plan including Free; the two caps ride limits and keep
+  // null (unlimited) and 0 (disabled) apart.
+  it('publishes the Free plugin gate: on, 5 installs, 0 own MCP servers (disabled, not unlimited)', async () => {
+    plansRepoMock.findEffectiveForUser.mockResolvedValue({
+      ...freePlanWithNoModelAccess,
+      allowPlugins: true,
+      maxInstalledPlugins: 5,
+      maxUserMcpServers: 0,
+    });
+
+    const result = await service.getForUser('u1');
+
+    expect(result.plan?.featureGates).toEqual(expect.objectContaining({ allowPlugins: true }));
+    expect(result.plan?.limits.maxInstalledPlugins).toBe(5);
+    expect(result.plan?.limits.maxUserMcpServers).toBe(0);
+  });
+
+  it('publishes null plugin caps as null (unlimited), never coalesced to 0', async () => {
+    plansRepoMock.findEffectiveForUser.mockResolvedValue({
+      ...freePlanWithNoModelAccess,
+      slug: 'unlimited',
+      isTrial: false,
+      allowPlugins: true,
+      maxInstalledPlugins: null,
+      maxUserMcpServers: null,
+    });
+
+    const result = await service.getForUser('u1');
+
+    expect(result.plan?.limits.maxInstalledPlugins).toBeNull();
+    expect(result.plan?.limits.maxUserMcpServers).toBeNull();
+  });
+
+  it('publishes a plan an administrator switched the module off for as allowPlugins false', async () => {
+    plansRepoMock.findEffectiveForUser.mockResolvedValue({
+      ...freePlanWithNoModelAccess,
+      allowPlugins: false,
+    });
+
+    const result = await service.getForUser('u1');
+
+    expect(result.plan?.featureGates).toEqual(expect.objectContaining({ allowPlugins: false }));
+  });
+
   describe('freeCreditMaxModelOutputMicroUsd (ADR-162)', () => {
     beforeEach(() => {
       walletMock.getBalances.mockResolvedValue({ availableMicroUsd: 0n } as never);
@@ -388,6 +432,8 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
         contextPacks: null,
         memoryItems: null,
         maxVideoSeconds: null,
+        maxInstalledPlugins: null,
+        maxUserMcpServers: null,
       },
       featureGates: {
         allowCompareMode: true,
@@ -409,6 +455,7 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
         allowImageGeneration: true,
         allowHelperVision: true,
         allowTextToSpeech: true,
+        allowPlugins: true,
       },
     });
     expect(result.modelAccessMode).toBe(PlanModelAccessMode.ALLOW_ALL);

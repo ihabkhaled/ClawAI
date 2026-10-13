@@ -240,6 +240,13 @@ model Plan {
   // DEFAULT 60 so a plan created without the field gets the free allowance,
   // never an accidental unlimited.
   maxVideoSeconds                     Int?                @default(60) @map("max_video_seconds")
+  // Plugins and MCP (plugins-and-mcp-design.md section 5). Unlike the gates above this
+  // one is DEFAULT true: the module is on for every plan including Free and for
+  // custom plans. The two caps are NULL = unlimited, 0 = disabled; the defaults are
+  // the Free values so a plan created without them never lands on unlimited.
+  allowPlugins                        Boolean             @default(true) @map("allow_plugins")
+  maxInstalledPlugins                 Int?                @default(5) @map("max_installed_plugins")
+  maxUserMcpServers                   Int?                @default(0) @map("max_user_mcp_servers")
   // Free requests per UTC calendar month, PER credit connector, that the platform
   // absorbs when the user has no credit to cover a token-priced call (ADR-142).
   // NULL = unlimited, 0 = none. DEFAULT 0 so a plan created without the field

@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum CatalogSource {
+  FIRST_PARTY
+  CURATED_MCP
+}
+
+enum CatalogStatus {
+  DRAFT
+  PUBLISHED
+  DEPRECATED
+  HIDDEN
+}
+
+enum RuntimeKind {
+  BUILTIN
+  MCP_REMOTE
+}
+
+enum RiskLevel {
+  READ
+  WRITE
+  DESTRUCTIVE
+}
+
+model PluginCatalogEntry {
+  id               String        @id @default(uuid())
+  slug             String        @unique
+  source           CatalogSource
+  status           CatalogStatus @default(DRAFT)
+  category         String
+  publisher        String
+  iconKey          String        @map("icon_key")
+  homepageUrl      String?       @map("homepage_url")
+  translations     Json
+  globallyEnabled  Boolean       @default(true) @map("globally_enabled")
+  featured         Boolean       @default(false)
+  currentVersionId String?       @unique @map("current_version_id")
+  installCount     Int           @default(0) @map("install_count")
+  versions         PluginVersion[]
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  @@index([status, category])
+  @@map("plugin_catalog_entries")
+}
+
+model PluginVersion {
+  id           String             @id @default(uuid())
+  entryId      String             @map("entry_id")
+  entry        PluginCatalogEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  version      String
+  runtimeKind  RuntimeKind        @map("runtime_kind")
+  manifest     Json
+  manifestHash String             @map("manifest_hash")
+  signature    String?
+  changelog    String?
+  tools        PluginTool[]
+  createdAt    DateTime           @default(now()) @map("created_at")
+
+  @@unique([entryId, version])
+  @@map("plugin_versions")
+}
+
+model PluginTool {
+  id              String        @id @default(uuid())
+  versionId       String        @map("version_id")
+  version         PluginVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  name            String
+  riskLevel       RiskLevel     @map("risk_level")
+  scopes          String[]
+  disabledByAdmin Boolean       @default(false) @map("disabled_by_admin")
+
+  @@unique([versionId, name])
+  @@map("plugin_tools")
+}
+
+model PluginSetting {
+  key       String   @id
+  value     Json
+  updatedBy String?  @map("updated_by")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("plugin_settings")
+}

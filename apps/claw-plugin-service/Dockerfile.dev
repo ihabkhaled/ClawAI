@@ -1,0 +1,18 @@
+FROM node:26-bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY package.json ./package.json
+COPY tools/typescript/ ./tools/typescript/
+COPY .npmrc ./.npmrc
+COPY packages/ ./packages/
+COPY apps/claw-plugin-service/ ./apps/claw-plugin-service/
+RUN npm install --ignore-scripts --legacy-peer-deps
+RUN cd /app/packages/shared-constants && npm run build \
+ && cd /app/packages/shared-types && npm run build \
+ && cd /app/packages/shared-utilities && npm run build \
+ && cd /app/packages/shared-rabbitmq && npm run build \
+ && cd /app/packages/shared-auth && npm run build \
+ && cd /app/packages/shared-entitlements && npm run build
+WORKDIR /app/apps/claw-plugin-service
+CMD ["sh", "docker-entrypoint.dev.sh"]

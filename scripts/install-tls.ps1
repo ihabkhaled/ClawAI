@@ -75,7 +75,7 @@ $HostsArr = @(
     'health-service', 'client-logs-service', 'server-logs-service',
     'image-service', 'file-generation-service', 'workspace-service',
     'agent-service', 'research-service', 'llamacpp-service', 'payment-service',
-    'threads-service', 'thread-generation-service'
+    'threads-service', 'thread-generation-service', 'plugin-service'
 )
 $HostsArr += $ClawHostname
 if (-not (Test-IsIpv4 $ClawHostname)) {

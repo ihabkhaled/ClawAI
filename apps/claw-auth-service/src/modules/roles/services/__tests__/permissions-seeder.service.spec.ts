@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { Permission, UserRole } from '@claw/shared-types';
 
 import { AppConfig } from '../../../../app/config/app.config';
@@ -81,10 +81,9 @@ describe('PermissionsSeederService', () => {
         if (where.slug === UserRole.ADMIN) {
           return Promise.resolve({ id: adminRoleId, slug: UserRole.ADMIN });
         }
-        if (where.slug === UserRole.USER) {
-          return Promise.resolve({ id: userRoleId, slug: UserRole.USER });
-        }
-        return Promise.resolve(null);
+        return where.slug === UserRole.USER
+          ? Promise.resolve({ id: userRoleId, slug: UserRole.USER })
+          : Promise.resolve(null);
       });
       prisma.rolePermission.findMany.mockImplementation(
         ({ where }: { where: { roleId: string } }) => {
@@ -128,16 +127,49 @@ describe('PermissionsSeederService', () => {
       expect(prisma.rolePermission.deleteMany).not.toHaveBeenCalled();
     });
 
+    // An install that predates the plugins module has a USER role without the
+    // three plugin grants. The boot reconciler is add-only, so they arrive on the
+    // next start without an admin touching the matrix, and PLUGINS_ADMIN does not.
+    it('back-fills the plugin permissions onto an existing USER role', async () => {
+      stubAppConfig(true);
+      const pluginPermissions = [
+        Permission.PLUGINS_USE,
+        Permission.PLUGINS_INSTALL,
+        Permission.PLUGINS_MANAGE_OWN_SERVERS,
+      ];
+      prisma.role.findUnique.mockImplementation(({ where }: { where: { slug: string } }) =>
+        Promise.resolve({ id: `role-${where.slug}`, slug: where.slug }),
+      );
+      prisma.rolePermission.findMany.mockImplementation(
+        ({ where }: { where: { roleId: string } }) => {
+          return where.roleId === `role-${UserRole.ADMIN}`
+            ? Promise.resolve(Object.values(Permission).map((p) => ({ permission: p })))
+            : Promise.resolve(
+                USER_DEFAULT_PERMISSIONS.filter((p) => !pluginPermissions.includes(p)).map(
+                  (permission) => ({ permission }),
+                ),
+              );
+        },
+      );
+
+      const summary = await service.reconcile();
+
+      const userResult = summary.results.find((r) => r.roleSlug === UserRole.USER);
+      expect(userResult?.added).toEqual(expect.arrayContaining(pluginPermissions));
+      expect(userResult?.added).toHaveLength(3);
+      expect(userResult?.added).not.toContain(Permission.PLUGINS_ADMIN);
+      expect(userResult?.removed).toEqual([]);
+    });
+
     it('removes extras when SEED_RECONCILE_PERMISSIONS=true', async () => {
       stubAppConfig(true);
 
       // ADMIN exists with the full set; USER has one EXTRA permission
       // (ADMIN_USERS_MANAGE) that is NOT in USER_DEFAULT_PERMISSIONS.
       prisma.role.findUnique.mockImplementation(({ where }: { where: { slug: string } }) => {
-        if (where.slug === UserRole.ADMIN) {
-          return Promise.resolve({ id: 'role-admin', slug: UserRole.ADMIN });
-        }
-        return Promise.resolve({ id: 'role-user', slug: UserRole.USER });
+        return where.slug === UserRole.ADMIN
+          ? Promise.resolve({ id: 'role-admin', slug: UserRole.ADMIN })
+          : Promise.resolve({ id: 'role-user', slug: UserRole.USER });
       });
       prisma.rolePermission.findMany.mockImplementation(
         ({ where }: { where: { roleId: string } }) => {
@@ -168,10 +200,9 @@ describe('PermissionsSeederService', () => {
       stubAppConfig(false);
 
       prisma.role.findUnique.mockImplementation(({ where }: { where: { slug: string } }) => {
-        if (where.slug === UserRole.ADMIN) {
-          return Promise.resolve({ id: 'role-admin', slug: UserRole.ADMIN });
-        }
-        return Promise.resolve({ id: 'role-user', slug: UserRole.USER });
+        return where.slug === UserRole.ADMIN
+          ? Promise.resolve({ id: 'role-admin', slug: UserRole.ADMIN })
+          : Promise.resolve({ id: 'role-user', slug: UserRole.USER });
       });
       prisma.rolePermission.findMany.mockImplementation(
         ({ where }: { where: { roleId: string } }) => {
@@ -201,10 +232,9 @@ describe('PermissionsSeederService', () => {
       stubAppConfig(true);
 
       prisma.role.findUnique.mockImplementation(({ where }: { where: { slug: string } }) => {
-        if (where.slug === UserRole.ADMIN) {
-          return Promise.resolve({ id: 'role-admin', slug: UserRole.ADMIN });
-        }
-        return Promise.resolve({ id: 'role-user', slug: UserRole.USER });
+        return where.slug === UserRole.ADMIN
+          ? Promise.resolve({ id: 'role-admin', slug: UserRole.ADMIN })
+          : Promise.resolve({ id: 'role-user', slug: UserRole.USER });
       });
       prisma.rolePermission.findMany.mockImplementation(
         ({ where }: { where: { roleId: string } }) => {

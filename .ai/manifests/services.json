@@ -120,7 +120,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 177,
+      "testFiles": 179,
       "testRunner": "vitest"
     },
     {
@@ -419,6 +419,30 @@
         "WebhookEvent"
       ],
       "testFiles": 112,
+      "testRunner": "vitest"
+    },
+    {
+      "database": "postgresql",
+      "dir": "apps/claw-plugin-service",
+      "endpointCount": 3,
+      "internalDeps": [
+        "@claw/shared-auth",
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [],
+      "name": "claw-plugin-service",
+      "port": 4021,
+      "portSource": "shared-constants",
+      "prismaModels": [
+        "PluginCatalogEntry",
+        "PluginSetting",
+        "PluginTool",
+        "PluginVersion"
+      ],
+      "testFiles": 21,
       "testRunner": "vitest"
     },
     {

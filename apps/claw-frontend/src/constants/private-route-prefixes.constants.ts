@@ -23,6 +23,7 @@ export const PRIVATE_ROUTE_PREFIXES: ReadonlyArray<string> = [
   '/audits',
   '/logs',
   '/observability',
+  '/plugins',
   '/settings',
   '/admin',
   '/research',

@@ -29,6 +29,8 @@ const base: UserEntitlements = {
       contextPacks: 1,
       memoryItems: 5,
       maxVideoSeconds: 60,
+      maxInstalledPlugins: 5,
+      maxUserMcpServers: 0,
     },
     featureGates: {
       allowCompareMode: false,
@@ -50,6 +52,7 @@ const base: UserEntitlements = {
       allowImageGeneration: false,
       allowHelperVision: false,
       allowTextToSpeech: false,
+      allowPlugins: true,
     },
   },
   modelAccessMode: PlanModelAccessMode.ALLOW_ALL,
@@ -133,6 +136,23 @@ describe('entitlements helpers', () => {
         expect(hasPlanFeature(paid, feature)).toBe(true);
       },
     );
+
+    // Plugins are on for every plan, Free included.
+    it('a free plan carries allowPlugins, and a plan without the key fails closed', () => {
+      expect(hasPlanFeature(base, 'allowPlugins')).toBe(true);
+      const plan = base.plan;
+      if (plan === null) {
+        throw new Error('fixture has a plan');
+      }
+      const { allowPlugins: _omitted, ...withoutPlugins } = plan.featureGates;
+      const older = {
+        ...base,
+        plan: { ...plan, featureGates: withoutPlugins as typeof plan.featureGates },
+      };
+      expect(hasPlanFeature(older, 'allowPlugins')).toBe(false);
+      expect(hasPlanFeature({ ...older, isAdmin: true }, 'allowPlugins')).toBe(true);
+      expect(hasPlanFeature({ ...base, plan: null }, 'allowPlugins')).toBe(false);
+    });
 
     it('an account with no plan has no media feature (fails closed)', () => {
       expect(hasPlanFeature({ ...base, plan: null }, 'allowImageGeneration')).toBe(false);

@@ -68,6 +68,13 @@ export enum Permission {
   THREAD_PUBLICATIONS_PUBLISH = 'THREAD_PUBLICATIONS_PUBLISH',
   THREAD_PUBLICATIONS_MODERATE = 'THREAD_PUBLICATIONS_MODERATE',
 
+  // Plugins and MCP. The first three are on by default for USER (the module is
+  // on for every plan); PLUGINS_ADMIN is catalog, approvals and settings.
+  PLUGINS_USE = 'PLUGINS_USE',
+  PLUGINS_INSTALL = 'PLUGINS_INSTALL',
+  PLUGINS_MANAGE_OWN_SERVERS = 'PLUGINS_MANAGE_OWN_SERVERS',
+  PLUGINS_ADMIN = 'PLUGINS_ADMIN',
+
   // The coding agent's individual surfaces, so a role can be given the agent
   // without being given the terminal.
   //

@@ -212,3 +212,6 @@ export { ThreadRevisionField } from './thread-revision-field.enum';
 export * from './file-library-filter.enum';
 export * from './file-library-view-mode.enum';
 export * from './file-library-thumb-size.enum';
+export { PluginAuthKind } from './plugin-auth-kind.enum';
+export { PluginRiskLevel } from './plugin-risk-level.enum';
+export { PluginSource } from './plugin-source.enum';

@@ -458,6 +458,20 @@ the checksummed payload); existing rows from migration
 all on and `maxVideoSeconds: null`. Deploy auth-service before image-service
 and chat-service: an old payload reads as "gate off" and refuses paid users.
 
+## Plugins plan gate (plugins-and-mcp-design.md section 5, 2026-10-13)
+
+`Plan.allowPlugins` is `DEFAULT true` (every other gate is opt-in): the module is ON for every plan, Free and custom
+plans included. `Plan.maxInstalledPlugins` (`Int? DEFAULT 5`) and `Plan.maxUserMcpServers` (`Int? DEFAULT 0`) are
+`null` unlimited, `0` disabled, so the column defaults are the Free values and a row can never land on unlimited by
+omission. Tiers (installs / own servers): free and trial 5 / 0, starter 10 / 3, plus 25 / 5, pro 50 / 10, team and scale
+100 / 25, unlimited null / null. They ride the entitlements payload as `plan.featureGates.allowPlugins` and
+`plan.limits.maxInstalledPlugins` / `maxUserMcpServers`; the admin entitlement plan has the gate on and both caps
+`null`. Fresh installs take them from the `plugins` block of `plan-catalog.json` (`pluginGateProjections`, not in
+the checksummed payload); existing rows from migration `20261013100000_add_plugins_plan_gate`, whose cap updates only
+touch a row still holding the column default, so a tuned number survives a re-run. Permissions `PLUGINS_USE`,
+`PLUGINS_INSTALL`, `PLUGINS_MANAGE_OWN_SERVERS` are USER defaults (the boot reconciler back-fills them);
+`PLUGINS_ADMIN` is ADMIN only. Deploy auth-service before the plugin service: an old payload reads as "gate off".
+
 ## Free credit-connector requests (ADR-142, 2026-10-01)
 
 `Plan.creditConnectorFreeRequestsPerMonth` (`Int? DEFAULT 0`; `null` unlimited, `0` none) lets a user

@@ -23,4 +23,7 @@ export enum PlanFeature {
   ALLOW_IMAGE_GENERATION = 'allowImageGeneration',
   ALLOW_HELPER_VISION = 'allowHelperVision',
   ALLOW_TEXT_TO_SPEECH = 'allowTextToSpeech',
+  // Plugins and MCP: ON for every plan including Free. Install and own-server caps
+  // are numeric limits, not gates.
+  ALLOW_PLUGINS = 'allowPlugins',
 }

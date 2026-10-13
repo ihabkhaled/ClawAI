@@ -111,6 +111,23 @@ function mediaGateProjections(media) {
   };
 }
 
+// Plugins gate and caps (plugins-and-mcp-design.md section 5). Unlike the media
+// gates the gate defaults to ON: a missing block is "enabled" with the FREE caps
+// (5 installs, 0 own MCP servers) -- never null, which would mean unlimited.
+const FREE_MAX_INSTALLED_PLUGINS = 5;
+const FREE_MAX_USER_MCP_SERVERS = 0;
+
+function pluginGateProjections(plugins) {
+  const block = plugins ?? {};
+  return {
+    allowPlugins: block.enabled !== false,
+    maxInstalledPlugins:
+      block.maxInstalled === undefined ? FREE_MAX_INSTALLED_PLUGINS : block.maxInstalled,
+    maxUserMcpServers:
+      block.maxUserMcpServers === undefined ? FREE_MAX_USER_MCP_SERVERS : block.maxUserMcpServers,
+  };
+}
+
 // Free credit-connector requests per month (ADR-142). A missing value is 0 --
 // never null, which would mean unlimited. Fresh installs only (create/upgrade
 // branches); existing rows are moved by migration
@@ -177,6 +194,9 @@ function planColumns(definition) {
     // by migration 20260925200000_add_media_plan_gates. Deliberately not in the
     // checksummed `payload` below, for the reason the isPopular note gives.
     ...mediaGateProjections(definition.media),
+    // Same rule for the plugins gate: existing rows are moved by migration
+    // 20261013100000_add_plugins_plan_gate.
+    ...pluginGateProjections(definition.plugins),
     ...creditAllowanceProjection(definition),
   };
 }
@@ -345,6 +365,7 @@ module.exports = {
   booleanProjections,
   labGateProjections,
   mediaGateProjections,
+  pluginGateProjections,
   creditAllowanceProjection,
   computeDiscountedIntervalMinor,
 };

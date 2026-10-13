@@ -21,7 +21,7 @@ sources and should be re-derived when they drift.
 | [codebase-navigation.md](codebase-navigation.md)                 | Where to look for any given kind of code.                                                                                                      |
 | [task-router.md](task-router.md)                                 | Maps a kind of task → rules + skills + reviewers + validation lane (mirrors `.ai/packs/`).                                                     |
 | [prompt-pack-intake.md](prompt-pack-intake.md)                   | The seven steps that must precede code when work arrives as a prompt pack or execution prompt.                                                 |
-| [workspace-map.md](workspace-map.md)                             | The npm-workspace inventory (<!-- count:workspaces -->27<!-- /count --> workspaces).                                                           |
+| [workspace-map.md](workspace-map.md)                             | The npm-workspace inventory (<!-- count:workspaces -->28<!-- /count --> workspaces).                                                           |
 | [service-catalog.md](service-catalog.md)                         | One entry per service: path, port, DB, responsibility, deps, events, pitfalls.                                                                 |
 | [service-dependency-map.md](service-dependency-map.md)           | Who calls whom (HTTP + events + shared packages).                                                                                              |
 | [frontend-architecture.md](frontend-architecture.md)             | Next.js layering, state, i18n, styling.                                                                                                        |

@@ -3,6 +3,8 @@ import { z } from 'zod';
 import {
   PAYG_CREDIT_PERCENT_BPS_MAX,
   PLAN_CREDIT_FREE_REQUESTS_LIMIT,
+  PLAN_MAX_INSTALLED_PLUGINS_LIMIT,
+  PLAN_MAX_USER_MCP_SERVERS_LIMIT,
   PLAN_MAX_VIDEO_SECONDS_LIMIT,
   PLAN_TRIAL_MAX_DAYS,
   PLAN_TRIAL_MIN_DAYS,
@@ -120,6 +122,16 @@ export const createPlanSchema = z.object({
     (value: unknown): unknown => (blankToUndefined(value) === undefined ? null : value),
     z.union([z.null(), z.coerce.number().int().min(0).max(PLAN_MAX_VIDEO_SECONDS_LIMIT)]),
   ),
+  // Plugin caps. Blank is an explicit null (unlimited), 0 disables; the column
+  // defaults to the Free value, so "omitted" would not mean what the placeholder says.
+  maxInstalledPlugins: z.preprocess(
+    (value: unknown): unknown => (blankToUndefined(value) === undefined ? null : value),
+    z.union([z.null(), z.coerce.number().int().min(0).max(PLAN_MAX_INSTALLED_PLUGINS_LIMIT)]),
+  ),
+  maxUserMcpServers: z.preprocess(
+    (value: unknown): unknown => (blankToUndefined(value) === undefined ? null : value),
+    z.union([z.null(), z.coerce.number().int().min(0).max(PLAN_MAX_USER_MCP_SERVERS_LIMIT)]),
+  ),
   // Free requests per credit connector per month. Blank is an explicit null
   // (unlimited); 0 turns the allowance off. Error text is a translation key.
   creditConnectorFreeRequestsPerMonth: z
@@ -158,6 +170,7 @@ export const createPlanSchema = z.object({
   allowImageGeneration: z.boolean().optional(),
   allowHelperVision: z.boolean().optional(),
   allowTextToSpeech: z.boolean().optional(),
+  allowPlugins: z.boolean().optional(),
 });
 
 export type CreatePlanForm = z.infer<typeof createPlanSchema>;

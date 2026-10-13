@@ -22,6 +22,16 @@ describe('rbac.constants', () => {
       expect(USER_DEFAULT_PERMISSIONS).toContain(Permission.WORKSPACE_ACTION_OWN);
     });
 
+    // Plugins are on for every plan, so the role layer grants them by default
+    // (THREAD_GENERATION_USE is the precedent); the plan's allowPlugins gate and the
+    // max_* caps do the per-tier limiting. PLUGINS_ADMIN stays an operator action.
+    it('grants USER the three plugin permissions by default, and withholds PLUGINS_ADMIN', () => {
+      expect(USER_DEFAULT_PERMISSIONS).toContain(Permission.PLUGINS_USE);
+      expect(USER_DEFAULT_PERMISSIONS).toContain(Permission.PLUGINS_INSTALL);
+      expect(USER_DEFAULT_PERMISSIONS).toContain(Permission.PLUGINS_MANAGE_OWN_SERVERS);
+      expect(USER_DEFAULT_PERMISSIONS).not.toContain(Permission.PLUGINS_ADMIN);
+    });
+
     it('does NOT include any ADMIN_* permission (admin-only writes must stay locked)', () => {
       for (const perm of USER_DEFAULT_PERMISSIONS) {
         expect(perm.startsWith('ADMIN_')).toBe(false);
@@ -36,6 +46,18 @@ describe('rbac.constants', () => {
       expect(adminSeed?.permissions).toEqual(ALL_PERMISSIONS);
       expect(adminSeed?.permissions).toContain(Permission.WORKSPACE_VIEW);
       expect(adminSeed?.permissions).toContain(Permission.WORKSPACE_APP_CONFIG_VIEW);
+    });
+
+    it('grants ADMIN all four plugin permissions', () => {
+      const adminSeed = SYSTEM_ROLE_SEED.find((r) => r.slug === 'ADMIN');
+      for (const permission of [
+        Permission.PLUGINS_USE,
+        Permission.PLUGINS_INSTALL,
+        Permission.PLUGINS_MANAGE_OWN_SERVERS,
+        Permission.PLUGINS_ADMIN,
+      ]) {
+        expect(adminSeed?.permissions).toContain(permission);
+      }
     });
 
     it('grants the USER role the USER_DEFAULT_PERMISSIONS set', () => {

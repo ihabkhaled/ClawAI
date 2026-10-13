@@ -12,6 +12,7 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
   // Admin specific pages (MUST precede the /admin catch-all below).
   { prefix: ROUTES.ADMIN_USERS, permission: Permission.ADMIN_USERS_MANAGE },
   { prefix: ROUTES.ADMIN_FEEDBACK, permission: Permission.ADMIN_FEEDBACK_MANAGE },
+  { prefix: ROUTES.ADMIN_PLUGINS, permission: Permission.PLUGINS_ADMIN },
   {
     prefix: ROUTES.ADMIN_AI_ACTION_POLICIES,
     permission: Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE,
@@ -175,6 +176,14 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
   { prefix: ROUTES.MEMORY, permission: Permission.MEMORY_USE },
   { prefix: ROUTES.CONTEXT, permission: Permission.CONTEXT_PACK_READ_OWN },
   { prefix: ROUTES.FILES, permission: Permission.FILES_USE },
+  // Plugins and MCP: the permission AND the plan gate, like the orchestration labs.
+  // The gate is ON for every plan including Free, so in practice this hides the
+  // entry only from a role without PLUGINS_USE or a plan an admin switched it off for.
+  {
+    prefix: ROUTES.PLUGINS,
+    permission: Permission.PLUGINS_USE,
+    feature: PlanFeature.ALLOW_PLUGINS,
+  },
   // The /research/* PAGES (providers + runs) are admin observability and
   // stay hidden from normal users — they have RESEARCH_USE so the in-chat /
   // in-compare research selector works against the backend, but the standalone

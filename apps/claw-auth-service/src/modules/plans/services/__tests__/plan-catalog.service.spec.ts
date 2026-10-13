@@ -26,6 +26,8 @@ function makePlan(overrides: PlanRow = {}): PlanRow {
     maxContextPacks: null,
     maxMemoryItems: null,
     maxVideoSeconds: 600,
+    maxInstalledPlugins: 25,
+    maxUserMcpServers: 5,
     creditConnectorFreeRequestsPerMonth: 0,
     // Margin control. Must never reach the payment service or a customer.
     monthlyProviderCostCeilingMicroUsd: BigInt(5_000_000),
@@ -48,6 +50,7 @@ function makePlan(overrides: PlanRow = {}): PlanRow {
     allowImageGeneration: true,
     allowHelperVision: true,
     allowTextToSpeech: true,
+    allowPlugins: true,
     quarterlyDiscountBps: 1000,
     semiannualDiscountBps: 1500,
     yearlyDiscountBps: 2000,
@@ -215,9 +218,12 @@ describe('PlanCatalogService', () => {
           allowImageGeneration: true,
           allowHelperVision: true,
           allowTextToSpeech: true,
+          allowPlugins: true,
         }),
       );
-      expect(Object.keys(entry?.featureGates ?? {})).toHaveLength(19);
+      expect(Object.keys(entry?.featureGates ?? {})).toHaveLength(20);
+      expect(entry?.maxInstalledPlugins).toBe(25);
+      expect(entry?.maxUserMcpServers).toBe(5);
     });
   });
 

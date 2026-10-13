@@ -8,7 +8,7 @@
 
 ## Purpose
 
-In a system with <!-- count:services -->20<!-- /count --> microservices, split Docker Compose files, an Nginx reverse proxy, per-service PostgreSQL databases, RabbitMQ, Redis, Ollama, a CI/CD pipeline, 13 i18n locales, and a shared monorepo — every structural change has ripple effects. This checklist ensures none of them are missed.
+In a system with <!-- count:services -->21<!-- /count --> microservices, split Docker Compose files, an Nginx reverse proxy, per-service PostgreSQL databases, RabbitMQ, Redis, Ollama, a CI/CD pipeline, 13 i18n locales, and a shared monorepo — every structural change has ripple effects. This checklist ensures none of them are missed.
 
 **This checklist is derived from the 18-item mandatory update list in root `CLAUDE.md`.** It adds exact verification steps, severity ratings, and historical failure patterns for each item.
 

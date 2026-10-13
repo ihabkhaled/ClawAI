@@ -48,6 +48,7 @@ export type PlanFeatureGatesView = {
   allowImageGeneration: boolean;
   allowHelperVision: boolean;
   allowTextToSpeech: boolean;
+  allowPlugins: boolean;
 };
 
 /**
@@ -97,6 +98,9 @@ export type PlanCatalogEntry = {
   maxMemoryItems: number | null;
   /** Longest video processed, in seconds. Null = unlimited, 0 = disabled. */
   maxVideoSeconds: number | null;
+  /** Plugins: installs and own MCP servers. Null = unlimited, 0 = disabled. */
+  maxInstalledPlugins: number | null;
+  maxUserMcpServers: number | null;
   /** Free requests per credit connector per UTC month. Null = unlimited, 0 = none. */
   creditConnectorFreeRequestsPerMonth: number | null;
   featureGates: PlanFeatureGatesView;

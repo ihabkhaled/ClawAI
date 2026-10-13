@@ -3,6 +3,8 @@ import type { Locale } from '@/enums/locale.enum';
 import type { FeedbackTranslation } from '@/types/i18n-feedback.types';
 
 export type TranslationDictionary = {
+  /** Plugins and MCP access: sidebar, plan editor and upgrade label. */
+  pluginsAccess: PluginsAccessLocaleTranslation;
   /**
    * The shared table pagination control. Used by every paged list, so a change
    * here is a change everywhere — see `components/ui/pagination.tsx`.
@@ -4393,6 +4395,7 @@ export type TranslationDictionary = {
   observabilityExplorer: ObservabilityExplorerLocaleTranslation;
   observabilityPages: ObservabilityPagesLocaleTranslation;
   notifications: NotificationsLocaleTranslation;
+  plugins: PluginsLocaleTranslation;
   adminDeployment: {
     title: string;
     description: string;
@@ -5375,6 +5378,7 @@ export type TranslationDictionary = {
     };
   };
   marketing: {
+    videos: MarketingVideosLocaleTranslation;
     header: {
       navLabel: string;
       navFeatures: string;
@@ -6527,6 +6531,78 @@ export type ComposerMenuLocaleTranslation = {
   chipLabel: string;
 };
 
+/** Plugins and MCP access: sidebar, plan editor and upgrade label (plugins-access-translations.ts). */
+export type PluginsAccessLocaleTranslation = {
+  nav: { plugins: string; adminPlugins: string };
+  planGate: { allowPlugins: string };
+  planForm: { maxInstalledPlugins: string; maxUserMcpServers: string };
+  upgradeFeature: string;
+};
+
+/** The Plugins browse and detail pages (plugins-translations.ts). */
+export type PluginsLocaleTranslation = {
+  title: string;
+  description: string;
+  searchLabel: string;
+  categoryLabel: string;
+  loading: string;
+  errorTitle: string;
+  errorDescription: string;
+  emptyTitle: string;
+  emptyDescription: string;
+  emptyFilteredTitle: string;
+  emptyFilteredDescription: string;
+  clearFilters: string;
+  loadMore: string;
+  loadingMore: string;
+  openPlugin: string;
+  toolsCount: string;
+  categories: {
+    all: string;
+    search: string;
+    productivity: string;
+    dev: string;
+    data: string;
+    media: string;
+    utilities: string;
+  };
+  risk: {
+    read: string;
+    write: string;
+    destructive: string;
+    readHint: string;
+    writeHint: string;
+    destructiveHint: string;
+  };
+  auth: {
+    none: string;
+    apiKey: string;
+    bearerToken: string;
+    oauth: string;
+  };
+  source: {
+    firstParty: string;
+    curatedMcp: string;
+  };
+  detail: {
+    back: string;
+    notFoundTitle: string;
+    notFoundDescription: string;
+    aboutTitle: string;
+    toolsTitle: string;
+    toolsEmpty: string;
+    permissionsTitle: string;
+    authTitle: string;
+    networkTitle: string;
+    networkNone: string;
+    networkPublicWeb: string;
+    scopesTitle: string;
+    riskTitle: string;
+    publishedBy: string;
+    version: string;
+  };
+};
+
 /** When a credit model is refused and an included one answers (credit-fallback-translations.ts). */
 export type CreditFallbackLocaleTranslation = {
   creditExhausted: string;
@@ -7555,4 +7631,30 @@ export type ObservabilityPagesLocaleTranslation = {
   weekdayThu: string;
   weekdayTue: string;
   weekdayWed: string;
+};
+
+/** One video's title and the line shown beside it. */
+export type MarketingVideoCopyLocaleTranslation = {
+  title: string;
+  description: string;
+};
+
+/** A heading and the sentence under it. */
+export type MarketingVideoSectionCopyLocaleTranslation = {
+  title: string;
+  body: string;
+};
+
+/** The marketing-page videos (see marketing-videos-translations.ts), at `marketing.videos`. */
+export type MarketingVideosLocaleTranslation = {
+  action: MarketingVideoSectionCopyLocaleTranslation;
+  shortsSection: MarketingVideoSectionCopyLocaleTranslation;
+  threadsSection: MarketingVideoSectionCopyLocaleTranslation;
+  stepsSection: MarketingVideoSectionCopyLocaleTranslation;
+  durationLabel: string;
+  facade: { play: string; frameTitle: string };
+  local: {
+    combined: MarketingVideoCopyLocaleTranslation;
+    part: MarketingVideoCopyLocaleTranslation;
+  };
 };

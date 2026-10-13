@@ -30,6 +30,7 @@ export type PlanFeatureGates = {
   allowImageGeneration: boolean;
   allowHelperVision: boolean;
   allowTextToSpeech: boolean;
+  allowPlugins: boolean;
 };
 
 export type PlanModelAccessView = {
@@ -73,6 +74,9 @@ export type PlanView = {
   maxMemoryItems: number | null;
   /** Longest video processed, in seconds. Null = unlimited, 0 = disabled. */
   maxVideoSeconds: number | null;
+  /** Plugins: installs and own MCP servers. Null = unlimited, 0 = disabled. */
+  maxInstalledPlugins: number | null;
+  maxUserMcpServers: number | null;
   /** Free requests per credit connector per UTC month (ADR-142). Null = unlimited, 0 = none. */
   creditConnectorFreeRequestsPerMonth: number | null;
   creditConnectorFreeBudgetMicroUsd: number | null;
@@ -100,6 +104,7 @@ export type PlanView = {
   allowImageGeneration: boolean;
   allowHelperVision: boolean;
   allowTextToSpeech: boolean;
+  allowPlugins: boolean;
   modelAccessMode: PlanModelAccessMode;
   allowedCostClasses: string[];
   modelAccess: PlanModelAccessView[];
@@ -127,6 +132,8 @@ export type CreatePlanData = {
   maxContextPacks?: number;
   maxMemoryItems?: number;
   maxVideoSeconds?: number | null;
+  maxInstalledPlugins?: number | null;
+  maxUserMcpServers?: number | null;
   creditConnectorFreeRequestsPerMonth?: number | null;
   creditConnectorFreeBudgetMicroUsd?: number | null;
   creditConnectorFreeMaxModelOutputMicroUsd?: number | null;
@@ -149,6 +156,7 @@ export type CreatePlanData = {
   allowImageGeneration?: boolean;
   allowHelperVision?: boolean;
   allowTextToSpeech?: boolean;
+  allowPlugins?: boolean;
 };
 
 export type UpdatePlanData = Partial<Omit<CreatePlanData, 'slug'>>;

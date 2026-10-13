@@ -3083,6 +3083,23 @@
         "source": "apps/claw-payment-service/src/modules/webhooks/controllers/paypal-webhook.controller.ts"
       }
     ],
+    "claw-plugin-service": [
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-plugin-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/plugins/catalog",
+        "source": "apps/claw-plugin-service/src/modules/catalog/controllers/plugin-catalog.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/plugins/catalog/:slug",
+        "source": "apps/claw-plugin-service/src/modules/catalog/controllers/plugin-catalog.controller.ts"
+      }
+    ],
     "claw-research-service": [
       {
         "method": "GET",
@@ -4382,5 +4399,5 @@
     ]
   },
   "generated": true,
-  "total": 868
+  "total": 871
 }

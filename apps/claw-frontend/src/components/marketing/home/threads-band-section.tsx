@@ -10,6 +10,7 @@ import {
   THREADS_PORTAL_PATH,
 } from '@/constants/threads-marketing.constants';
 import { useTranslation } from '@/lib/i18n';
+import type { ThreadsBandSectionProps } from '@/types/marketing-videos.types';
 
 /**
  * ClawAI Threads, on the homepage, with its four steps.
@@ -17,7 +18,7 @@ import { useTranslation } from '@/lib/i18n';
  * It sits between the feature grid and the editor band: it is the newest flagship, and a visitor
  * who has just read what ClawAI does is ready to see something they can make with it.
  */
-export function ThreadsBandSection(): React.ReactElement {
+export function ThreadsBandSection({ video }: ThreadsBandSectionProps): React.ReactElement {
   const { t } = useTranslation();
 
   return (
@@ -32,6 +33,8 @@ export function ThreadsBandSection(): React.ReactElement {
           </h2>
           <p className="text-muted-foreground mt-4">{t('marketing.home.threads.body')}</p>
         </div>
+
+        {video === undefined ? null : <div className="mx-auto mt-8 max-w-3xl">{video}</div>}
 
         <ol className="mx-auto mt-10 grid max-w-6xl grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {MARKETING_THREADS_STEPS.map((step, index) => (

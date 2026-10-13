@@ -743,6 +743,10 @@ ENCRYPTION_KEY=$(gen_secret_hex)
 # encrypted under their own key so a payment-token compromise does not also
 # expose connector API keys, and so the two can be rotated independently.
 PAYMENT_TOKEN_ENCRYPTION_KEY=$(gen_secret_hex)
+# Separate from ENCRYPTION_KEY on purpose: MCP credentials stored by the plugin
+# service are encrypted under their own key so a leak in one service does not
+# expose the other.
+PLUGIN_ENCRYPTION_KEY=$(gen_secret_hex)
 
 # Every Postgres database gets its OWN password.
 #
@@ -756,7 +760,7 @@ PAYMENT_TOKEN_ENCRYPTION_KEY=$(gen_secret_hex)
 # written to .env below, which are exactly the variables each container reads
 # as POSTGRES_PASSWORD in docker/docker-compose.*.databases.yml. Adding a
 # database means adding its key here and in all three places.
-PG_DB_KEYS="AUTH CHAT CONNECTOR ROUTING MEMORY FILES OLLAMA IMAGES FILE_GENERATIONS WORKSPACE AGENT RESEARCH PAYMENTS LLAMACPP THREAD_GENERATION THREADS"
+PG_DB_KEYS="AUTH CHAT CONNECTOR ROUTING MEMORY FILES OLLAMA IMAGES FILE_GENERATIONS WORKSPACE AGENT RESEARCH PAYMENTS LLAMACPP THREAD_GENERATION THREADS PLUGIN"
 for pg_key in $PG_DB_KEYS; do
   printf -v "PG_PW_${pg_key}" '%s' "$(gen_password)"
 done
@@ -781,6 +785,7 @@ GRAFANA_SECRET_KEY=$(gen_secret_hex)
 ok "JWT secret generated (${#JWT_SECRET} chars)"
 ok "Encryption key generated (${#ENCRYPTION_KEY} hex chars)"
 ok "Payment token encryption key generated (${#PAYMENT_TOKEN_ENCRYPTION_KEY} hex chars)"
+ok "Plugin encryption key generated (${#PLUGIN_ENCRYPTION_KEY} hex chars)"
 ok "Database passwords generated (one distinct password per Postgres database)"
 ok "Admin password generated"
 ok "Inter-service auth token generated (${#INTER_SERVICE_AUTH_TOKEN} hex chars)"
@@ -820,6 +825,7 @@ if [ -f "$ENV_FILE" ]; then
   PREV_JWT_SECRET="$(get_env_value "JWT_SECRET" "$ENV_FILE")"
   PREV_ENCRYPTION_KEY="$(get_env_value "ENCRYPTION_KEY" "$ENV_FILE")"
   PREV_PAYMENT_TOKEN_KEY="$(get_env_value "PAYMENT_TOKEN_ENCRYPTION_KEY" "$ENV_FILE")"
+  PREV_PLUGIN_ENCRYPTION_KEY="$(get_env_value "PLUGIN_ENCRYPTION_KEY" "$ENV_FILE")"
   PREV_GRAFANA_SECRET_KEY="$(get_env_value "GRAFANA_SECRET_KEY" "$ENV_FILE")"
   PREV_CRAWL4AI_API_TOKEN="$(get_env_value "CRAWL4AI_API_TOKEN" "$ENV_FILE")"
   if [ -n "$PREV_CRAWL4AI_API_TOKEN" ]; then
@@ -852,6 +858,10 @@ if [ -f "$ENV_FILE" ]; then
   if [ -n "$PREV_PAYMENT_TOKEN_KEY" ]; then
     PAYMENT_TOKEN_ENCRYPTION_KEY="$PREV_PAYMENT_TOKEN_KEY"
     ok "Preserved PAYMENT_TOKEN_ENCRYPTION_KEY from existing .env (changing it would orphan every vaulted payment method)"
+  fi
+  if [ -n "$PREV_PLUGIN_ENCRYPTION_KEY" ]; then
+    PLUGIN_ENCRYPTION_KEY="$PREV_PLUGIN_ENCRYPTION_KEY"
+    ok "Preserved PLUGIN_ENCRYPTION_KEY from existing .env (changing it would orphan every stored MCP credential)"
   fi
 fi
 state_mark_done "secrets"
@@ -1285,6 +1295,10 @@ PG_THREADS_USER=claw
 PG_THREADS_PASSWORD=${PG_PW_THREADS}
 PG_THREADS_DB=claw_threads
 PG_THREADS_PORT=5458
+PG_PLUGIN_USER=claw
+PG_PLUGIN_PASSWORD=${PG_PW_PLUGIN}
+PG_PLUGIN_DB=claw_plugin
+PG_PLUGIN_PORT=5459
 
 # =============================================================================
 # MongoDB
@@ -1333,6 +1347,10 @@ ENCRYPTION_KEY=${ENCRYPTION_KEY}
 # independently.
 PAYMENT_TOKEN_ENCRYPTION_KEY=${PAYMENT_TOKEN_ENCRYPTION_KEY}
 PAYMENT_TOKEN_KEY_VERSION=1
+
+# Plugin service: AES-256-GCM key for stored MCP credentials. Separate from
+# ENCRYPTION_KEY so a leak in one service does not expose the other.
+PLUGIN_ENCRYPTION_KEY=${PLUGIN_ENCRYPTION_KEY}
 
 # Where a gateway sends the customer back after payment. Return URLs are built
 # from THIS value server-side, never from a client-supplied redirect parameter.
@@ -1618,6 +1636,7 @@ RESEARCH_SERVICE_URL=https://research-service:4016
 PAYMENT_SERVICE_URL=https://payment-service:4018
 THREADS_SERVICE_URL=https://threads-service:4019
 THREAD_GENERATION_SERVICE_URL=https://thread-generation-service:4020
+PLUGIN_SERVICE_URL=https://plugin-service:4021
 LLAMACPP_SERVICE_URL=https://llamacpp-service:4017
 
 # =============================================================================
@@ -1651,6 +1670,7 @@ RESEARCH_PORT=4016
 PAYMENT_SERVICE_PORT=4018
 THREADS_SERVICE_PORT=4019
 THREAD_GENERATION_SERVICE_PORT=4020
+PLUGIN_SERVICE_PORT=4021
 LLAMACPP_PORT=4017
 
 # Research service: headless-browser fallback (ADR-094).
@@ -1754,6 +1774,7 @@ PAYMENT_DATABASE_URL=postgresql://claw:${PG_PW_PAYMENTS}@pg-payments:5432/claw_p
 LLAMACPP_DATABASE_URL=postgresql://claw:${PG_PW_LLAMACPP}@pg-llamacpp:5432/claw_llamacpp?schema=public
 THREAD_GENERATION_DATABASE_URL=postgresql://claw:${PG_PW_THREAD_GENERATION}@pg-thread-generation:5432/claw_thread_generation?schema=public
 THREADS_DATABASE_URL=postgresql://claw:${PG_PW_THREADS}@pg-threads:5432/claw_threads?schema=public
+PLUGIN_DATABASE_URL=postgresql://claw:${PG_PW_PLUGIN}@pg-plugin:5432/claw_plugin?schema=public
 
 # claw-llamacpp-service (Local Frontier LLM runtime)
 # Path matches the `llamacpp-data` Docker named volume so binary + weights

@@ -151,6 +151,12 @@
       "Subscription",
       "WebhookEvent"
     ],
+    "claw-plugin-service": [
+      "PluginCatalogEntry",
+      "PluginSetting",
+      "PluginTool",
+      "PluginVersion"
+    ],
     "claw-research-service": [
       "FetchJob",
       "FetchStrategyConfig",
