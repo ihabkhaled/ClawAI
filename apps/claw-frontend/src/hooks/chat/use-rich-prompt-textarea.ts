@@ -4,11 +4,16 @@ import {
   IME_PROCESS_KEY_CODE,
   RICH_PROMPT_DEFAULT_MAX_ROWS,
   RICH_PROMPT_DEFAULT_MIN_ROWS,
+  RICH_PROMPT_EXPANDED_VIEWPORT_FRACTION,
 } from '@/constants/chat.constants';
 import { MEDIA_QUERY_COARSE_POINTER } from '@/constants/media-query.constants';
 import { useMediaQuery } from '@/hooks/ui/use-media-query';
 import type { UseRichPromptTextareaParams, UseRichPromptTextareaReturn } from '@/types';
-import { insertNewlineAtSelection } from '@/utilities/composer-newline.utility';
+import { htmlTableToMarkdown } from '@/utilities/clipboard-table.utility';
+import {
+  insertNewlineAtSelection,
+  insertTextAtSelection,
+} from '@/utilities/composer-newline.utility';
 
 /**
  * Owns the keyboard + autosize + IME glue for the shared RichPromptTextarea.
@@ -66,6 +71,10 @@ export function useRichPromptTextarea(
   const recallIndexRef = useRef(-1);
   const recalledTextRef = useRef<string | null>(null);
   const [lineHeightPx, setLineHeightPx] = useState<number | null>(null);
+  // Expanded = the cap grows from maxRows to a share of the viewport. canExpand
+  // is true only while the content actually overflows the collapsed cap.
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isOverflowing, setIsOverflowing] = useState(false);
   // True once the user has manually drag-resized the textarea — at that
   // point we stop auto-growing and let the user own the height. Reset to
   // false when the value clears (submit / external reset) so autosize
@@ -109,19 +118,28 @@ export function useRichPromptTextarea(
     // take over again so the next message starts from the configured min.
     if (value.length === 0) {
       userResizedRef.current = false;
+      setIsExpanded(false);
     }
     if (userResizedRef.current) {
       return;
     }
     const minPx = Math.round(minRows * lineHeightPx);
-    const maxPx = Math.round(maxRows * lineHeightPx);
+    const collapsedMaxPx = Math.round(maxRows * lineHeightPx);
+    const viewportHeight = globalThis.visualViewport?.height ?? globalThis.innerHeight;
+    const maxPx = isExpanded
+      ? Math.max(
+          collapsedMaxPx,
+          Math.round(viewportHeight * RICH_PROMPT_EXPANDED_VIEWPORT_FRACTION),
+        )
+      : collapsedMaxPx;
     // Reset first so shrinks work — without this, height only ever grows.
     el.style.height = 'auto';
     const next = Math.min(Math.max(el.scrollHeight, minPx), maxPx);
     el.style.height = `${next}px`;
     el.style.overflowY = el.scrollHeight > maxPx ? 'auto' : 'hidden';
     lastAutoHeightRef.current = next;
-  }, [value, minRows, maxRows, lineHeightPx]);
+    setIsOverflowing(el.scrollHeight > collapsedMaxPx);
+  }, [value, minRows, maxRows, lineHeightPx, isExpanded]);
 
   // Watch for manual drag-resize. When the rendered height diverges from the
   // last autosize-applied height, the user dragged the native handle —
@@ -273,6 +291,43 @@ export function useRichPromptTextarea(
     [allowEmptySubmit, disabled, isTouchInput, onChange, onSubmit, recallHistory, value],
   );
 
+  // A table copied from Excel, Sheets, Word or a web page arrives as HTML plus
+  // a tab-separated text fallback that loses the grid. Paste it as a markdown
+  // table instead; everything else pastes as the browser would. stopPropagation
+  // matters: Excel also puts a PNG of the range on the clipboard, and the
+  // dropzone around the composer would upload it as an attachment.
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent<HTMLTextAreaElement>): void => {
+      if (disabled) {
+        return;
+      }
+      const markdown = htmlTableToMarkdown(e.clipboardData.getData('text/html'));
+      if (markdown === null) {
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      const target = e.currentTarget;
+      const inserted = insertTextAtSelection(
+        value,
+        markdown,
+        target.selectionStart,
+        target.selectionEnd,
+      );
+      onChange(inserted.value);
+      globalThis.requestAnimationFrame(() => {
+        target.setSelectionRange(inserted.caret, inserted.caret);
+      });
+    },
+    [disabled, onChange, value],
+  );
+
+  const toggleExpanded = useCallback((): void => {
+    // A fresh height decision: drop the drag-resize latch so autosize applies.
+    userResizedRef.current = false;
+    setIsExpanded((prev) => !prev);
+  }, []);
+
   const handleCompositionStart = useCallback((): void => {
     isComposingRef.current = true;
   }, []);
@@ -287,5 +342,9 @@ export function useRichPromptTextarea(
     handleKeyDown,
     handleCompositionStart,
     handleCompositionEnd,
+    handlePaste,
+    isExpanded,
+    canExpand: isOverflowing || isExpanded,
+    toggleExpanded,
   };
 }

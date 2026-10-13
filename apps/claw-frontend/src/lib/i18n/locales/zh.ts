@@ -962,6 +962,8 @@ export const zh: TranslationDictionary = {
     attachedFile: '附件',
     beginningOfConversation: '谈话开始',
     composerPlaceholder: '输入您的消息...',
+    composerExpand: '展开编辑器',
+    composerCollapse: '收起编辑器',
     currentAiProgress: '当前人工智能进展',
     fileGenerationCancelled: '文件生成已取消',
     fileGenerationFailedRetry: '文件生成失败。重试？',

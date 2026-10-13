@@ -1,7 +1,10 @@
+import { Maximize2, Minimize2 } from 'lucide-react';
 import { forwardRef, useImperativeHandle } from 'react';
 
+import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useRichPromptTextarea } from '@/hooks/chat/use-rich-prompt-textarea';
+import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { RichPromptTextareaProps } from '@/types';
 
@@ -43,6 +46,10 @@ export const RichPromptTextarea = forwardRef<HTMLTextAreaElement, RichPromptText
       handleKeyDown,
       handleCompositionStart,
       handleCompositionEnd,
+      handlePaste,
+      isExpanded,
+      canExpand,
+      toggleExpanded,
     } = useRichPromptTextarea({
       value,
       onChange,
@@ -60,28 +67,49 @@ export const RichPromptTextarea = forwardRef<HTMLTextAreaElement, RichPromptText
     // proxy ref without leaking the underlying node identity. The hook
     // returns a stable ref object so depending on it does NOT re-run on
     // every render — it satisfies the exhaustive-deps rule without cost.
+    const { t } = useTranslation();
+    const toggleLabel = isExpanded ? t('chat.composerCollapse') : t('chat.composerExpand');
+    const ToggleIcon = isExpanded ? Minimize2 : Maximize2;
+
     useImperativeHandle(forwardedRef, () => textareaRef.current as HTMLTextAreaElement, [
       textareaRef,
     ]);
 
     return (
-      <Textarea
-        ref={textareaRef}
-        id={id}
-        value={value}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        onCompositionStart={handleCompositionStart}
-        onCompositionEnd={handleCompositionEnd}
-        placeholder={placeholder}
-        aria-label={ariaLabel}
-        disabled={disabled}
-        rows={minRows}
-        // Allow vertical drag-resize. Autosize still drives initial height
-        // and content-grow up to maxRows; the hook latches "user resized"
-        // via ResizeObserver and stops auto-growing once the handle is used.
-        className={cn('resize-y', className)}
-      />
+      <div className="flex items-start gap-1">
+        <Textarea
+          ref={textareaRef}
+          id={id}
+          value={value}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
+          onCompositionStart={handleCompositionStart}
+          onCompositionEnd={handleCompositionEnd}
+          placeholder={placeholder}
+          aria-label={ariaLabel}
+          disabled={disabled}
+          rows={minRows}
+          // Allow vertical drag-resize. Autosize still drives initial height
+          // and content-grow up to maxRows; the hook latches "user resized"
+          // via ResizeObserver and stops auto-growing once the handle is used.
+          className={cn('min-w-0 flex-1 resize-y', className)}
+        />
+        {canExpand ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={toggleExpanded}
+            aria-label={toggleLabel}
+            title={toggleLabel}
+            aria-pressed={isExpanded}
+            className="text-muted-foreground h-7 w-7 shrink-0"
+          >
+            <ToggleIcon className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        ) : null}
+      </div>
     );
   },
 );

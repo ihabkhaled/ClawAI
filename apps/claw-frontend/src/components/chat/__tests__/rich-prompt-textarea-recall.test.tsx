@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
 
+vi.mock('@/lib/i18n', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+
 // ArrowUp/ArrowDown history, the way a shell does it: up goes older, down goes
 // newer, down past the newest restores the empty composer.
 //

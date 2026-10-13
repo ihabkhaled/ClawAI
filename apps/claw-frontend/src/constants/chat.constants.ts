@@ -123,6 +123,11 @@ export const VIRTUALIZED_MESSAGES_VIEWPORT_BUFFER = { top: 1200, bottom: 200 } a
 export const RICH_PROMPT_DEFAULT_MIN_ROWS = 2;
 export const RICH_PROMPT_DEFAULT_MAX_ROWS = 12;
 
+// Expanded composer: the textarea may take this share of the visual viewport.
+// A fraction, not pixels (rule 40 §2), and the visual viewport so an open
+// mobile keyboard shrinks it.
+export const RICH_PROMPT_EXPANDED_VIEWPORT_FRACTION = 0.6;
+
 // localStorage key used to pass a seed prompt from /chat (suggested-prompt
 // buttons) into the composer on the newly-created thread page. Written by
 // use-chat-page.ts.handleSuggestedPrompt; consumed once on composer mount in

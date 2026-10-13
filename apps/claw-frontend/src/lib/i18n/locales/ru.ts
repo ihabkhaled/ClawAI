@@ -1013,6 +1013,8 @@ export const ru: TranslationDictionary = {
     attachedFile: 'Прикреплённый файл',
     beginningOfConversation: 'Начало разговора',
     composerPlaceholder: 'Введите ваше сообщение...',
+    composerExpand: 'Развернуть редактор',
+    composerCollapse: 'Свернуть редактор',
     currentAiProgress: 'Текущий прогресс ИИ',
     fileGenerationCancelled: 'Создание файла отменено',
     fileGenerationFailedRetry: 'Не удалось создать файл. Повторить?',

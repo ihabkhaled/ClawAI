@@ -1003,6 +1003,8 @@ export const fa: TranslationDictionary = {
     attachedFile: 'فایل پیوست',
     beginningOfConversation: 'شروع گفتگو',
     composerPlaceholder: 'پیام خود را تایپ کنید...',
+    composerExpand: 'بزرگ کردن ویرایشگر',
+    composerCollapse: 'کوچک کردن ویرایشگر',
     currentAiProgress: 'پیشرفت فعلی هوش مصنوعی',
     fileGenerationCancelled: 'تولید فایل لغو شد',
     fileGenerationFailedRetry: 'تولید فایل انجام نشد.دوباره امتحان کنید؟',

@@ -1007,6 +1007,8 @@ export const ja: TranslationDictionary = {
     attachedFile: '添付ファイル',
     beginningOfConversation: '会話の始まり',
     composerPlaceholder: 'メッセージを入力してください...',
+    composerExpand: 'エディターを拡大',
+    composerCollapse: 'エディターを縮小',
     currentAiProgress: '現在の AI の進捗状況',
     fileGenerationCancelled: 'ファイル生成がキャンセルされました',
     fileGenerationFailedRetry: 'ファイルの生成に失敗しました。リトライ？',

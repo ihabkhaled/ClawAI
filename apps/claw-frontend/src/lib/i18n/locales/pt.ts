@@ -1013,6 +1013,8 @@ export const pt: TranslationDictionary = {
     attachedFile: 'Arquivo anexado',
     beginningOfConversation: 'Início da conversa',
     composerPlaceholder: 'Digite sua mensagem...',
+    composerExpand: 'Expandir editor',
+    composerCollapse: 'Recolher editor',
     currentAiProgress: 'Progresso atual da IA',
     fileGenerationCancelled: 'Geração de arquivo cancelada',
     fileGenerationFailedRetry: 'Falha na geração do arquivo. Tentar novamente?',

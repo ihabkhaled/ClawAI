@@ -1003,6 +1003,8 @@ export const en: TranslationDictionary = {
     attachedFile: 'Attached file',
     beginningOfConversation: 'Beginning of conversation',
     composerPlaceholder: 'Type your message...',
+    composerExpand: 'Expand editor',
+    composerCollapse: 'Collapse editor',
     currentAiProgress: 'Current AI progress',
     fileGenerationCancelled: 'File generation cancelled',
     fileGenerationFailedRetry: 'File generation failed. Retry?',

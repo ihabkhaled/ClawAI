@@ -1023,6 +1023,8 @@ export const fr: TranslationDictionary = {
     attachedFile: 'Fichier joint',
     beginningOfConversation: 'Début de la conversation',
     composerPlaceholder: 'Saisissez votre message...',
+    composerExpand: "Agrandir l'éditeur",
+    composerCollapse: "Réduire l'éditeur",
     currentAiProgress: "Progression actuelle de l'IA",
     fileGenerationCancelled: 'Génération de fichier annulée',
     fileGenerationFailedRetry: 'Échec de la génération du fichier. Réessayer ?',

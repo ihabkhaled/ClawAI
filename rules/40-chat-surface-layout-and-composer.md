@@ -353,3 +353,13 @@ of it, and do not move it back among the scrolling controls. Proof:
 `tests/e2e/composer-context-menu.spec.ts` (360, 390, 768, 844x390 landscape, 1366, Arabic RTL at
 390 and 360: button on screen and unobstructed, pick, view, memory). The language switch is saved
 on the account, so that spec sets it per case and restores English.
+
+## Paste and expand in the composer (2026-10-12)
+
+`RichPromptTextarea` (so chat, Compare, in-thread Compare and every lab at once, rule 59) owns two paste/size behaviours:
+
+- **A pasted table stays a table.** Clipboard HTML that is essentially ONE `<table>` (Excel, Sheets, Word, a web page) is inserted as a GitHub-flavoured markdown table (`utilities/clipboard-table.utility.ts`) instead of the tab-separated plain text. Anything else — text beside the table, two tables, no table — pastes exactly as the browser would. The handler calls `stopPropagation`, because Excel also puts a PNG of the range on the clipboard and the dropzone around the composer would upload it as an attachment.
+- **A long draft can be expanded.** When content overflows `maxRows`, an icon button (inline-end, top) appears; expanded, the cap becomes `RICH_PROMPT_EXPANDED_VIEWPORT_FRACTION` of the visual viewport (a fraction, never px — §2), collapse restores it. Labels: `chat.composerExpand` / `chat.composerCollapse`. Clearing the field collapses it.
+
+Known limit: the sent user bubble renders plain text (`whitespace-pre-wrap`), so the table shows as pipes there; the model receives it as a real table. Rendering user bubbles as markdown is a separate decision.
+Proof: `clipboard-table.utility.test.ts`, `rich-prompt-textarea-paste.test.tsx`, live browser 2026-10-12 (paste → markdown table; expand 225→533 px and back).

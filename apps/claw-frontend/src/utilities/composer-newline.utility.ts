@@ -18,3 +18,18 @@ export function insertNewlineAtSelection(
     caret: start + 1,
   };
 }
+
+/** Splice `text` into `value`, replacing the current selection, caret after it. */
+export function insertTextAtSelection(
+  value: string,
+  text: string,
+  selectionStart: number,
+  selectionEnd: number,
+): InsertedNewline {
+  const start = Math.min(selectionStart, selectionEnd);
+  const end = Math.max(selectionStart, selectionEnd);
+  return {
+    value: `${value.slice(0, start)}${text}${value.slice(end)}`,
+    caret: start + text.length,
+  };
+}

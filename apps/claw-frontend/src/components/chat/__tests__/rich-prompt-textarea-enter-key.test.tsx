@@ -6,6 +6,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
 import { MEDIA_QUERY_COARSE_POINTER } from '@/constants/media-query.constants';
 
+vi.mock('@/lib/i18n', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+
 function stubPointer(coarse: boolean): void {
   vi.stubGlobal('matchMedia', (query: string) => ({
     matches: coarse && query === MEDIA_QUERY_COARSE_POINTER,

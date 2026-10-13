@@ -766,6 +766,10 @@ export type UseRichPromptTextareaReturn = {
   handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   handleCompositionStart: () => void;
   handleCompositionEnd: () => void;
+  handlePaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void;
+  isExpanded: boolean;
+  canExpand: boolean;
+  toggleExpanded: () => void;
 };
 
 export type UseThreadDetailPageParams = {

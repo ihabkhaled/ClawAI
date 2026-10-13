@@ -5,6 +5,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
 
+vi.mock('@/lib/i18n', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+
 // Small controlled wrapper so the textarea sees real state updates when we
 // fire change events. Mirrors how the in-thread compare panel wires the
 // shared component to its hook's prompt/setPrompt.

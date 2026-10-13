@@ -922,6 +922,8 @@ export type TranslationDictionary = {
     attachedFile: string;
     beginningOfConversation: string;
     composerPlaceholder: string;
+    composerExpand: string;
+    composerCollapse: string;
     currentAiProgress: string;
     fileGenerationCancelled: string;
     fileGenerationFailedRetry: string;

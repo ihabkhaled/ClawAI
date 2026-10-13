@@ -983,6 +983,8 @@ export const th: TranslationDictionary = {
     attachedFile: 'ไฟล์แนบ',
     beginningOfConversation: 'จุดเริ่มต้นของการสนทนา',
     composerPlaceholder: 'พิมพ์ข้อความของคุณ...',
+    composerExpand: 'ขยายตัวแก้ไข',
+    composerCollapse: 'ย่อตัวแก้ไข',
     currentAiProgress: 'ความก้าวหน้าของ AI ในปัจจุบัน',
     fileGenerationCancelled: 'การสร้างไฟล์ถูกยกเลิก',
     fileGenerationFailedRetry: 'การสร้างไฟล์ล้มเหลวลองอีกครั้ง?',

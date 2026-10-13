@@ -989,6 +989,8 @@ export const ar: TranslationDictionary = {
     attachedFile: 'الملف المرفق',
     beginningOfConversation: 'بداية المحادثة',
     composerPlaceholder: 'اكتب رسالتك...',
+    composerExpand: 'توسيع المحرر',
+    composerCollapse: 'طي المحرر',
     currentAiProgress: 'تقدم الذكاء الاصطناعي الحالي',
     fileGenerationCancelled: 'تم إلغاء إنشاء الملف',
     fileGenerationFailedRetry: 'فشل إنشاء الملف. هل تريد إعادة المحاولة؟',

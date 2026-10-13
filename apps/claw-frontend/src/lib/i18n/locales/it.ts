@@ -1025,6 +1025,8 @@ export const it: TranslationDictionary = {
     attachedFile: 'File allegato',
     beginningOfConversation: 'Inizio della conversazione',
     composerPlaceholder: 'Scrivi il tuo messaggio...',
+    composerExpand: "Espandi l'editor",
+    composerCollapse: "Comprimi l'editor",
     currentAiProgress: "Avanzamento attuale dell'IA",
     fileGenerationCancelled: 'Generazione del file annullata',
     fileGenerationFailedRetry: 'Generazione del file non riuscita. Riprovare?',

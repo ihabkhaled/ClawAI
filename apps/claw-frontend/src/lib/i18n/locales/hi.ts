@@ -1006,6 +1006,8 @@ export const hi: TranslationDictionary = {
     attachedFile: 'संलग्न फ़ाइल',
     beginningOfConversation: 'बातचीत की शुरुआत',
     composerPlaceholder: 'अपना संदेश लिखें...',
+    composerExpand: 'एडिटर बड़ा करें',
+    composerCollapse: 'एडिटर छोटा करें',
     currentAiProgress: 'वर्तमान AI प्रगति',
     fileGenerationCancelled: 'फ़ाइल निर्माण रद्द किया गया',
     fileGenerationFailedRetry: 'फ़ाइल निर्माण विफल रहा। पुनः प्रयास करें?',

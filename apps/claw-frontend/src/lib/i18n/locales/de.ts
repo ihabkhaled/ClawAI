@@ -1028,6 +1028,8 @@ export const de: TranslationDictionary = {
     attachedFile: 'Angehängte Datei',
     beginningOfConversation: 'Anfang der Unterhaltung',
     composerPlaceholder: 'Nachricht eingeben...',
+    composerExpand: 'Editor erweitern',
+    composerCollapse: 'Editor einklappen',
     currentAiProgress: 'Aktueller KI-Fortschritt',
     fileGenerationCancelled: 'Dateierstellung abgebrochen',
     fileGenerationFailedRetry: 'Dateierstellung fehlgeschlagen. Erneut versuchen?',
