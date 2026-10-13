@@ -14,6 +14,35 @@ describe('thread job budget DTOs', () => {
     ).toBe(true);
   });
 
+  it('treats the detailed flag as optional, so an older meter keeps its boolean answer', () => {
+    const base = {
+      budgetId: 'clx12345678901234567890123',
+      requestId: 'generation-request',
+      creditReservationId: null,
+      amountMicroUsd: 10,
+    };
+    expect(threadJobBudgetCallSchema.safeParse(base).success).toBe(true);
+    expect(threadJobBudgetCallSchema.safeParse({ ...base, detailed: true }).success).toBe(true);
+    expect(threadJobBudgetCallSchema.safeParse({ ...base, detailed: 'yes' }).success).toBe(false);
+  });
+
+  it('rejects a fractional or unsafe amount: money is integer micro-USD', () => {
+    const base = {
+      budgetId: 'clx12345678901234567890123',
+      requestId: 'generation-request',
+      creditReservationId: null,
+    };
+    expect(threadJobBudgetCallSchema.safeParse({ ...base, amountMicroUsd: 1.5 }).success).toBe(
+      false,
+    );
+    expect(threadJobBudgetCallSchema.safeParse({ ...base, amountMicroUsd: 2 ** 53 }).success).toBe(
+      false,
+    );
+    expect(threadJobBudgetCallSchema.safeParse({ ...base, amountMicroUsd: -1 }).success).toBe(
+      false,
+    );
+  });
+
   it('accepts only supported close states and bounded CUID identifiers', () => {
     expect(
       threadJobBudgetCloseSchema.safeParse({

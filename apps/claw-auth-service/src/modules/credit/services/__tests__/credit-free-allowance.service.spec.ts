@@ -476,6 +476,93 @@ describe('CreditFreeAllowanceService', () => {
       expect(counters.adjustSpend).not.toHaveBeenCalled();
     });
 
+    describe('a Free user starting their one Thread (D4)', () => {
+      const CHEAP: PaygRateSnapshot = {
+        ...RATE,
+        rates: {
+          ...RATE.rates,
+          outputPerMillionMicroUsd: 400_000,
+          inputPerMillionMicroUsd: 100_000,
+        },
+      };
+      const threads = (overrides: Partial<CreditReserveInput> = {}) =>
+        makeInput({ surface: PaygSurface.THREADS, requestedMaxOutputTokens: 4096, ...overrides });
+
+      it('admits a Threads call on the allowance instead of leaving it to an empty wallet', async () => {
+        const attempt = await service.tryAdmit(threads(), CHEAP, await policyOf(), NOW);
+        expect(attempt.status).toBe('ADMITTED');
+      });
+
+      it('is not stopped by the monthly request count: a Thread makes many calls for one action', async () => {
+        await service.tryAdmit(threads(), CHEAP, await policyOf(), NOW);
+        expect(counters.tryConsume.mock.calls[0]?.[1]).toBe(2_147_483_647);
+      });
+
+      it('still holds every Threads call to the money meter', async () => {
+        await service.tryAdmit(threads(), CHEAP, await policyOf(), NOW);
+        expect(counters.tryConsume.mock.calls[0]?.[3]).toBe(250_000n);
+        expect(counters.tryConsume.mock.calls[0]?.[2] as bigint).toBeGreaterThan(0n);
+      });
+
+      it('stops a Thread when the month meter is spent, whatever the count says', async () => {
+        counters.findTotals.mockResolvedValue({ usedCount: 0, spentMicroUsd: 250_000n });
+        const attempt = await service.tryAdmit(threads(), CHEAP, await policyOf(), NOW);
+        expect(attempt).toMatchObject({ status: 'SPENT' });
+        expect(counters.tryConsume).not.toHaveBeenCalled();
+      });
+
+      it('still applies the price limit: a dear model is not covered for a Thread either', async () => {
+        const attempt = await service.tryAdmit(threads(), RATE, await policyOf(), NOW);
+        expect(attempt).toEqual({ status: 'MODEL_NOT_COVERED' });
+        expect(counters.tryConsume).not.toHaveBeenCalled();
+      });
+
+      it('keeps the request count for every other surface', async () => {
+        await service.tryAdmit(makeInput(), CHEAP, await policyOf(), NOW);
+        expect(counters.tryConsume.mock.calls[0]?.[1]).toBe(10);
+      });
+
+      it('does NOT waive the count when the plan has no money meter (nothing else would bound it)', async () => {
+        plans.findEffectiveForUser.mockResolvedValue(
+          metered({ creditConnectorFreeBudgetMicroUsd: null }),
+        );
+        await service.tryAdmit(threads(), CHEAP, await policyOf(), NOW);
+        expect(counters.tryConsume.mock.calls[0]?.[1]).toBe(10);
+      });
+
+      it('gives the slot and the hold back like any allowance call when the Thread call fails', async () => {
+        const counter = { userId: 'user-1', provider: '*', periodKey: '2026-10' };
+        await service.giveBack(counter, 12_000n);
+        expect(counters.giveBack).toHaveBeenCalledWith(counter, 12_000n);
+      });
+
+      it('settles the meter to what a Thread call really cost', async () => {
+        const counter = { userId: 'user-1', provider: '*', periodKey: '2026-10' };
+        await service.settleSpend(counter, 12_000n, 3_000n);
+        expect(counters.adjustSpend).toHaveBeenCalledWith(counter, -9_000n);
+      });
+
+      it('a parallel burst of Thread calls is bounded by the meter the counter enforces', async () => {
+        let spent = 0n;
+        counters.tryConsume.mockImplementation(
+          (_key: unknown, _limit: number, hold: bigint, budget: bigint | null) => {
+            if (budget !== null && spent + hold > budget) return Promise.resolve(false);
+            spent += hold;
+            return Promise.resolve(true);
+          },
+        );
+        const policy = await policyOf();
+
+        const attempts = await Promise.all(
+          Array.from({ length: 12 }, () => service.tryAdmit(threads(), CHEAP, policy, NOW)),
+        );
+
+        const admitted = attempts.filter((attempt) => attempt.status === 'ADMITTED').length;
+        expect(admitted).toBeGreaterThan(0);
+        expect(spent).toBeLessThanOrEqual(250_000n);
+      });
+    });
+
     it('reports how much of the meter is used as a percentage, never a price', async () => {
       counters.findTotals.mockResolvedValue({ usedCount: 4, spentMicroUsd: 125_000n });
 

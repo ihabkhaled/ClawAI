@@ -10,7 +10,7 @@
     },
     "@claw/shared-entitlements": {
       "runner": "vitest",
-      "testFiles": 11
+      "testFiles": 12
     },
     "@claw/shared-rabbitmq": {
       "runner": "vitest",
@@ -34,7 +34,7 @@
     },
     "claw-auth-service": {
       "runner": "vitest",
-      "testFiles": 186
+      "testFiles": 192
     },
     "claw-chat-service": {
       "runner": "vitest",
@@ -114,5 +114,5 @@
     }
   },
   "generated": true,
-  "total": 2406
+  "total": 2413
 }

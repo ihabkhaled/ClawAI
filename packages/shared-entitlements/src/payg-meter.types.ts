@@ -1,4 +1,4 @@
-import type { PaygSurface, PaygUnitCounts } from '@claw/shared-types';
+import type { BillingErrorCode, PaygSurface, PaygUnitCounts } from '@claw/shared-types';
 
 /**
  * Everything the auth-service needs to price and gate one provider call.
@@ -101,6 +101,16 @@ export type PaygFinalizeCalls = PaygUnitCounts & {
 };
 
 export type PaygReleaseReason = 'PROVIDER_ERROR' | 'CANCELLED' | 'TIMEOUT';
+
+/**
+ * auth-service's verdict on one Threads model call against its job budget.
+ *
+ * `errorCode` is the honest reason a refused call is refused: the job's spend cap
+ * (`PAYG_CREDIT_EXHAUSTED`, with what is left of it) is a different thing from a
+ * budget that could not be consulted (`PAYG_PRICING_UNAVAILABLE`, temporary).
+ */
+export type PaygThreadCallVerdict =
+  { reserved: true } | { reserved: false; errorCode: BillingErrorCode; remainingMicroUsd: number };
 
 export type PaygMeterOptions = {
   /** Base URL of auth-service, e.g. https://auth-service:4001 */

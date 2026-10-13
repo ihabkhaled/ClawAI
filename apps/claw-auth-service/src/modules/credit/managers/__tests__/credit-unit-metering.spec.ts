@@ -23,6 +23,7 @@ import { ModelRateClient } from '../../clients/model-rate.client';
 import { CreditLedgerRepository } from '../../repositories/credit-ledger.repository';
 import { CreditWalletRepository } from '../../repositories/credit-wallet.repository';
 import { CreditBillingModeService } from '../../services/credit-billing-mode.service';
+import { ThreadJobBudgetCreditLinkService } from '../../services/thread-job-budget-credit-link.service';
 import { CreditEventService } from '../../services/credit-event.service';
 import { CreditFreeAllowanceService } from '../../services/credit-free-allowance.service';
 import { CreditGrantService } from '../../services/credit-grant.service';
@@ -280,6 +281,13 @@ describe('CreditReservationManager — unit metering', () => {
         {
           provide: CreditBillingModeService,
           useValue: { resolve: vi.fn().mockResolvedValue(PaygBillingMode.PAYG) },
+        },
+        {
+          provide: ThreadJobBudgetCreditLinkService,
+          useValue: {
+            spendCeilingMicroUsd: vi.fn().mockResolvedValue(undefined),
+            settleForReservation: vi.fn().mockResolvedValue(undefined),
+          },
         },
         {
           provide: CreditLedgerRepository,

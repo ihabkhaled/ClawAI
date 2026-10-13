@@ -1323,6 +1323,11 @@
           "source": "apps/claw-auth-service/src/modules/entitlements/controllers/thread-job-budget-internal.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/internal/threads/budgets/summary",
+          "source": "apps/claw-auth-service/src/modules/entitlements/controllers/thread-job-budget-internal.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/internal/users/:id/entitlements",
           "source": "apps/claw-auth-service/src/modules/entitlements/controllers/entitlements-internal.controller.ts"
@@ -11829,7 +11834,7 @@
       },
       "@claw/shared-entitlements": {
         "runner": "vitest",
-        "testFiles": 11
+        "testFiles": 12
       },
       "@claw/shared-rabbitmq": {
         "runner": "vitest",
@@ -11853,7 +11858,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 186
+        "testFiles": 192
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -12772,7 +12777,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 58,
-    "endpointCount": 887,
+    "endpointCount": 888,
     "envVarCount": 386,
     "eventCount": 190,
     "frontendRouteCount": 175,
@@ -12784,7 +12789,7 @@
     "serviceCount": 21,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2406,
+    "totalTestFiles": 2413,
     "workspaceCount": 28
   }
 }

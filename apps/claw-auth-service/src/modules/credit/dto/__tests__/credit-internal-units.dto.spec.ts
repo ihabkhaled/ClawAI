@@ -35,6 +35,30 @@ const UNIT_FIELDS = [
   ['videoSeconds', CREDIT_VIDEO_SECONDS_MAX],
 ] as const;
 
+describe('credit internal DTOs — Threads budget link', () => {
+  it('leaves the budget id absent for every caller that is not a Threads call', () => {
+    expect(reserveCreditSchema.parse(RESERVE_BASE).threadJobBudgetId).toBeUndefined();
+  });
+
+  it('accepts a bounded budget id', () => {
+    expect(
+      reserveCreditSchema.parse({
+        ...RESERVE_BASE,
+        threadJobBudgetId: 'clx12345678901234567890123',
+      }).threadJobBudgetId,
+    ).toBe('clx12345678901234567890123');
+  });
+
+  it('rejects an empty or oversized budget id', () => {
+    expect(reserveCreditSchema.safeParse({ ...RESERVE_BASE, threadJobBudgetId: '' }).success).toBe(
+      false,
+    );
+    expect(
+      reserveCreditSchema.safeParse({ ...RESERVE_BASE, threadJobBudgetId: 'x'.repeat(65) }).success,
+    ).toBe(false);
+  });
+});
+
 describe('credit internal DTOs — unit counts', () => {
   it('defaults every unit count to 0 when a caller omits them (old payloads)', () => {
     expect(reserveCreditSchema.parse(RESERVE_BASE)).toMatchObject({

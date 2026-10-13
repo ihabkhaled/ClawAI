@@ -8,7 +8,11 @@ import { PaygSurface } from '@claw/shared-types';
  * should be. Per-unit surfaces (IMAGE, VIDEO, TRANSCRIPTION, TTS) are excluded on
  * purpose, because one clip can cost $1.60 and "2 requests" would then be an
  * unbounded giveaway. VISION_HELPER is excluded too: a helper call is not a
- * request the user made. CODING_AGENT IS counted (2026-10-02): the agent loop is
+ * request the user made. THREADS IS eligible (2026-10-13, ADR-162 addendum): every plan may start a
+ * Thread and Free gets one for life, but a Thread is many model calls, so its calls ride the
+ * allowance WITHOUT being held to the request count (see
+ * `FREE_ALLOWANCE_COUNT_WAIVED_SURFACES`); the money meter and the price limit still apply.
+ * CODING_AGENT IS counted (2026-10-02): the agent loop is
  * reachable by a Free account and nothing else gates it, so leaving it out let a
  * capped plan run unlimited credit-connector turns. Each agent turn takes one slot.
  */
@@ -21,6 +25,19 @@ export const FREE_ALLOWANCE_ELIGIBLE_SURFACES: readonly PaygSurface[] = Object.f
   PaygSurface.FILE_GENERATION,
   PaygSurface.WORKSPACE_ACTION,
   PaygSurface.ROUTING,
+  PaygSurface.THREADS,
+]);
+
+/**
+ * Eligible surfaces whose calls are NOT stopped by the monthly request count, only by the money
+ * meter and the price limit. A Thread makes a dozen calls for ONE user action (the plan's Threads
+ * allowance is what counts that action), so holding each call to "10 requests a month" would
+ * let a Free user start their one Thread and fail it at the eleventh call.
+ *
+ * Waived ONLY while the plan has a money meter: without one nothing would bound the total.
+ */
+export const FREE_ALLOWANCE_COUNT_WAIVED_SURFACES: readonly PaygSurface[] = Object.freeze([
+  PaygSurface.THREADS,
 ]);
 
 /**

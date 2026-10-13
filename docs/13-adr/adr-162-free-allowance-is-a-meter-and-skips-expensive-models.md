@@ -28,3 +28,11 @@ Ten free requests on a $25-per-million model can cost more than ten on a $0.40 o
 - The per-request ceiling of ADR-142 is unchanged and still applies; the meter can only tighten it.
 
 QA: `docs/qa-evidence/2026-10-07-free-allowance-meter.md`.
+
+## Addendum (2026-10-14): Threads is allowance-eligible, and its calls are not held to the request count
+
+A Free user passed the Threads plan gate (one research, Judge and Critic review for life) and then had every model call refused, because `PaygSurface.THREADS` was not in `FREE_ALLOWANCE_ELIGIBLE_SURFACES`: the allowance was never tried and the empty wallet answered `PAYG_CREDIT_EXHAUSTED`.
+
+`THREADS` is now eligible, and also listed in `FREE_ALLOWANCE_COUNT_WAIVED_SURFACES`. A Thread is one user action but a dozen model calls, so holding each call to "10 requests a month" would let a Free user start their one Thread and fail it at the eleventh call. A Threads call therefore takes a slot with the counter's limit lifted (INT4 max), and is still bounded by the month's money meter and by the price limit (a dear model is `PAYG_MODEL_NOT_IN_FREE_ALLOWANCE`). The waiver applies only while the plan HAS a money meter; without one nothing would bound the total, so the count applies as before. The slot is still taken and given back like any other (a failed call returns it), so the books stay symmetrical.
+
+Consequence, stated plainly: the slots a Thread takes count toward `used`, so after a Free Thread the month's request count reads as used and a credit-connector chat falls back to an included model (ADR-161) until the next UTC month. The owner may prefer a separate counter; that needs a column and is not done here. The product spec says only "Free 1 for life"; it does not say what a Thread may cost a Free user, so the meter (`$0.25` by default) is the bound, and a Thread on a dear model still stops at it.

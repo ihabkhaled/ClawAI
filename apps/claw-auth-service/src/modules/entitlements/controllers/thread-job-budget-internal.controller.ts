@@ -5,11 +5,17 @@ import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { ThreadJobBudgetService } from '../../credit/services/thread-job-budget.service';
 import { ThreadJobBudgetCloseStatus } from '../../credit/enums/thread-job-budget-close-status.enum';
 import {
+  type ThreadCallReserveReply,
+  type ThreadJobBudgetSummary,
+} from '../types/thread-job-budget.types';
+import { toThreadCallReserveReply } from '../utilities/thread-call-reserve-reply.utility';
+import {
   threadJobBudgetCallSchema,
   threadJobBudgetCloseSchema,
   threadJobBudgetReleaseSchema,
   threadJobBudgetReserveSchema,
   threadJobBudgetSettleSchema,
+  threadJobBudgetSummarySchema,
 } from '../dto/thread-job-budget.dto';
 
 @Controller('internal/threads/budgets')
@@ -26,7 +32,13 @@ export class ThreadJobBudgetInternalController {
       requestId: string;
       capMicroUsd: number;
     },
-  ) {
+  ): Promise<{
+    id: string;
+    userId: string;
+    requestId: string;
+    capMicroUsd: number;
+    status: string;
+  }> {
     const budget = await this.budgets.reserve({ ...body, capMicroUsd: BigInt(body.capMicroUsd) });
     return {
       id: budget.id,
@@ -39,16 +51,23 @@ export class ThreadJobBudgetInternalController {
 
   @Post('calls/reserve')
   @HttpCode(HttpStatus.OK)
-  reserveCall(
+  async reserveCall(
     @Body(new ZodValidationPipe(threadJobBudgetCallSchema))
     body: {
       budgetId: string;
       requestId: string;
       creditReservationId: string | null;
       amountMicroUsd: number;
+      detailed?: boolean;
     },
-  ) {
-    return this.budgets.reserveCall({ ...body, amountMicroUsd: BigInt(body.amountMicroUsd) });
+  ): Promise<boolean | ThreadCallReserveReply> {
+    const result = await this.budgets.reserveCall({
+      budgetId: body.budgetId,
+      requestId: body.requestId,
+      creditReservationId: body.creditReservationId,
+      amountMicroUsd: BigInt(body.amountMicroUsd),
+    });
+    return toThreadCallReserveReply(result, body.detailed === true);
   }
 
   @Post('calls/finalize')
@@ -60,7 +79,7 @@ export class ThreadJobBudgetInternalController {
       requestId: string;
       settledMicroUsd: number;
     },
-  ) {
+  ): Promise<boolean> {
     return this.budgets.settleCall(body.budgetId, body.requestId, BigInt(body.settledMicroUsd));
   }
 
@@ -72,8 +91,23 @@ export class ThreadJobBudgetInternalController {
       budgetId: string;
       requestId: string;
     },
-  ) {
+  ): Promise<boolean> {
     return this.budgets.releaseCall(body.budgetId, body.requestId);
+  }
+
+  /**
+   * What the job has really spent against its cap: the charge counted so far, not the
+   * holds. Read-only; 404 for an unknown budget (the service decides).
+   */
+  @Post('summary')
+  @HttpCode(HttpStatus.OK)
+  summary(
+    @Body(new ZodValidationPipe(threadJobBudgetSummarySchema))
+    body: {
+      budgetId: string;
+    },
+  ): Promise<ThreadJobBudgetSummary> {
+    return this.budgets.summary(body.budgetId);
   }
 
   @Post('close')
@@ -84,7 +118,7 @@ export class ThreadJobBudgetInternalController {
       budgetId: string;
       status: ThreadJobBudgetCloseStatus;
     },
-  ) {
+  ): Promise<boolean> {
     return this.budgets.close(body.budgetId, body.status);
   }
 }

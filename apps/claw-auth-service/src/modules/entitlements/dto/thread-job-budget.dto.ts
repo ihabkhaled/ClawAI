@@ -11,6 +11,9 @@ export const threadJobBudgetCallSchema = z.object({
   requestId: z.string().min(1).max(200),
   creditReservationId: z.string().uuid().nullable(),
   amountMicroUsd: z.number().int().safe().nonnegative(),
+  // A caller that asks for the detailed answer gets the outcome and what is left of the cap;
+  // one that does not gets the boolean it always got, so an older meter keeps working.
+  detailed: z.boolean().optional(),
 });
 export const threadJobBudgetSettleSchema = z.object({
   budgetId: z.string().min(1).max(64),
@@ -20,6 +23,9 @@ export const threadJobBudgetSettleSchema = z.object({
 export const threadJobBudgetReleaseSchema = z.object({
   budgetId: z.string().min(1).max(64),
   requestId: z.string().min(1).max(200),
+});
+export const threadJobBudgetSummarySchema = z.object({
+  budgetId: z.string().min(1).max(64),
 });
 export const threadJobBudgetCloseSchema = z.object({
   budgetId: z.string().min(1).max(64),

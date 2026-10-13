@@ -12,6 +12,7 @@ import {
 } from '@claw/shared-types';
 
 import { PaygCreditExhaustedError } from './payg-credit-exhausted.error';
+import { readThreadCallVerdict } from './payg-thread-call-verdict';
 import {
   type PaygFinalizeCalls,
   type PaygFinalizeUsage,
@@ -19,6 +20,7 @@ import {
   type PaygMeterOptions,
   type PaygReleaseReason,
   type PaygReserveInput,
+  type PaygThreadCallVerdict,
 } from './payg-meter.types';
 
 // Response shapes as they arrive off the wire. Narrowed by the guards below
@@ -109,7 +111,8 @@ function readFinalizeOutcome(payload: unknown): PaygFinalizeOutcome | undefined 
 }
 
 function readNumber(payload: unknown, key: string): number {
-  return isRecord(payload) && typeof payload[key] === 'number' ? payload[key] : 0;
+  const value: unknown = isRecord(payload) ? Reflect.get(payload, key) : undefined;
+  return typeof value === 'number' ? value : 0;
 }
 
 /**
@@ -192,6 +195,8 @@ export class PaygMeter {
           Math.floor(input.cacheWritePromptTokens ?? 0),
         ),
         requestedMaxOutputTokens: Math.max(1, Math.floor(input.requestedMaxOutputTokens)),
+        // A Threads call names its job budget so auth sizes the hold to what is left of the cap.
+        ...(input.threadJobBudgetId ? { threadJobBudgetId: input.threadJobBudgetId } : {}),
         ...PaygMeter.unitWire(input),
       });
     } catch (error) {
@@ -207,48 +212,7 @@ export class PaygMeter {
 
     if (isWireMetered(payload)) {
       if (input.threadJobBudgetId) {
-        let reserved = false;
-        try {
-          reserved = await this.reserveThreadCall(
-            input.threadJobBudgetId,
-            input.requestId,
-            payload.reservationId,
-            payload.heldMicroUsd,
-          );
-        } catch {
-          await this.release(
-            {
-              metered: true,
-              reservationId: payload.reservationId,
-              maxOutputTokens: payload.maxOutputTokens,
-              clamped: payload.clamped,
-              heldMicroUsd: payload.heldMicroUsd,
-              availableAfterMicroUsd: payload.availableAfterMicroUsd,
-              reason: null,
-            },
-            'CANCELLED',
-          );
-          throw new PaygCreditExhaustedError(BillingErrorCode.PAYG_PRICING_UNAVAILABLE, 0, null);
-        }
-        if (!reserved) {
-          await this.release(
-            {
-              metered: true,
-              reservationId: payload.reservationId,
-              maxOutputTokens: payload.maxOutputTokens,
-              clamped: payload.clamped,
-              heldMicroUsd: payload.heldMicroUsd,
-              availableAfterMicroUsd: payload.availableAfterMicroUsd,
-              reason: null,
-            },
-            'CANCELLED',
-          );
-          throw new PaygCreditExhaustedError(
-            BillingErrorCode.PAYG_CREDIT_EXHAUSTED,
-            0,
-            payload.heldMicroUsd,
-          );
-        }
+        await this.admitThreadCall(input.threadJobBudgetId, input.requestId, payload);
       }
       return {
         metered: true,
@@ -302,8 +266,9 @@ export class PaygMeter {
     if (!hold.metered || hold.reservationId === null) {
       return undefined;
     }
+    let outcome: PaygFinalizeOutcome | undefined;
     try {
-      const outcome = readFinalizeOutcome(
+      outcome = readFinalizeOutcome(
         await this.request(`${CREDIT_INTERNAL_API_BASE}/finalize`, {
           reservationId: hold.reservationId,
           usage: {
@@ -321,23 +286,45 @@ export class PaygMeter {
           ...PaygMeter.unitWire(calls),
         }),
       );
-      if (hold.threadJobBudgetId && hold.threadJobRequestId) {
-        const settled =
-          outcome?.billingMode === PaygBillingMode.SUBSCRIPTION
-            ? 0
-            : (outcome?.settledCostMicroUsd ?? hold.heldMicroUsd);
-        await this.request('/internal/threads/budgets/calls/finalize', {
-          budgetId: hold.threadJobBudgetId,
-          requestId: hold.threadJobRequestId,
-          settledMicroUsd: settled,
-        });
-      }
-      return outcome;
     } catch {
       // Swallowed on purpose. See the doc comment: the sweeper is the backstop,
       // and it runs well inside PAYG_RESERVATION_TTL_MS.
       void PAYG_RESERVATION_TTL_MS;
-      return undefined;
+    }
+    await this.settleThreadCall(hold, outcome);
+    return outcome;
+  }
+
+  /**
+   * Settles a Threads call against its job budget. Never throws.
+   *
+   * auth-service settles the call itself at what the user was CHARGED when the
+   * credit hold settles, so this request normally finds it done and changes
+   * nothing. It is the fallback for a finalize that did not complete: then the
+   * call is counted at the disclosed cost when there is one, and otherwise at
+   * the hold (the conservative figure, never an under-count). It runs even when
+   * the credit finalize itself failed, so a failed bookkeeping call cannot leave
+   * a call RESERVED against the cap.
+   */
+  private async settleThreadCall(
+    hold: PaygHold,
+    outcome: PaygFinalizeOutcome | undefined,
+  ): Promise<void> {
+    if (!hold.threadJobBudgetId || !hold.threadJobRequestId) {
+      return;
+    }
+    const settled =
+      outcome?.billingMode === PaygBillingMode.SUBSCRIPTION
+        ? 0
+        : (outcome?.settledCostMicroUsd ?? hold.heldMicroUsd);
+    try {
+      await this.request('/internal/threads/budgets/calls/finalize', {
+        budgetId: hold.threadJobBudgetId,
+        requestId: hold.threadJobRequestId,
+        settledMicroUsd: settled,
+      });
+    } catch {
+      // The budget close releases anything still in flight.
     }
   }
 
@@ -372,19 +359,57 @@ export class PaygMeter {
     return this.exemptProviders.some((exempt) => exempt.toUpperCase() === normalized);
   }
 
-  private async reserveThreadCall(
+  /**
+   * Books a metered Threads call against its job budget, or gives the credit
+   * hold back and throws. The two ways it can fail are told apart on purpose:
+   * a spend cap that is genuinely used up is `PAYG_CREDIT_EXHAUSTED` (with what
+   * is left of the cap), while a budget that could not be consulted is
+   * `PAYG_PRICING_UNAVAILABLE`, a temporary failure that a retry can clear.
+   */
+  private async admitThreadCall(
     budgetId: string,
     requestId: string,
-    creditReservationId: string,
-    amountMicroUsd: number,
-  ): Promise<boolean> {
-    const result = await this.request('/internal/threads/budgets/calls/reserve', {
-      budgetId,
-      requestId,
-      creditReservationId,
-      amountMicroUsd,
-    });
-    return result === true;
+    payload: WireMetered,
+  ): Promise<void> {
+    let verdict: PaygThreadCallVerdict;
+    try {
+      verdict = readThreadCallVerdict(
+        await this.request('/internal/threads/budgets/calls/reserve', {
+          budgetId,
+          requestId,
+          creditReservationId: payload.reservationId,
+          amountMicroUsd: payload.heldMicroUsd,
+          detailed: true,
+        }),
+      );
+    } catch {
+      await this.releaseWireHold(payload);
+      throw new PaygCreditExhaustedError(BillingErrorCode.PAYG_PRICING_UNAVAILABLE, 0, null);
+    }
+    if (verdict.reserved) {
+      return;
+    }
+    await this.releaseWireHold(payload);
+    throw new PaygCreditExhaustedError(
+      verdict.errorCode,
+      verdict.remainingMicroUsd,
+      payload.heldMicroUsd,
+    );
+  }
+
+  private releaseWireHold(payload: WireMetered): Promise<void> {
+    return this.release(
+      {
+        metered: true,
+        reservationId: payload.reservationId,
+        maxOutputTokens: payload.maxOutputTokens,
+        clamped: payload.clamped,
+        heldMicroUsd: payload.heldMicroUsd,
+        availableAfterMicroUsd: payload.availableAfterMicroUsd,
+        reason: null,
+      },
+      'CANCELLED',
+    );
   }
 
   /** `{ [name]: value }` when `value` is a positive integer, else `{}`. */

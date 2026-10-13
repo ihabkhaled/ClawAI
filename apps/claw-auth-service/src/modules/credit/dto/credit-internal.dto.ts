@@ -48,6 +48,8 @@ export const reserveCreditSchema = z.object({
   // so a caller that predates it is unchanged. Held at the write rate.
   cacheWritePromptTokens: z.number().int().min(0).max(CREDIT_TOKEN_COUNT_MAX).default(0),
   requestedMaxOutputTokens: z.number().int().min(1).max(CREDIT_MAX_OUTPUT_TOKENS_MAX),
+  // A Threads call names its job budget so the hold is sized to what is left of the cap.
+  threadJobBudgetId: z.string().min(1).max(64).optional(),
   // EXPECTED units: the hold is sized on them.
   ...unitCountFields,
 });

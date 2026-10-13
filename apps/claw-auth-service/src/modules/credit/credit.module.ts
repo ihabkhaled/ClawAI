@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { AuthRepository } from '../auth/repositories/auth.repository';
 import { EntitlementInboxRepository } from '../entitlements/repositories/entitlement-inbox.repository';
+import { ThreadJobBudgetRepository } from '../entitlements/repositories/thread-job-budget.repository';
 import { PlansModule } from '../plans/plans.module';
 import { QuotaModule } from '../quota/quota.module';
 import { SystemSettingsModule } from '../system-settings/system-settings.module';
@@ -26,6 +27,7 @@ import { CreditPackageService } from './services/credit-package.service';
 import { CreditSweeperService } from './services/credit-sweeper.service';
 import { CreditTopupInboxService } from './services/credit-topup-inbox.service';
 import { CreditWalletService } from './services/credit-wallet.service';
+import { ThreadJobBudgetCreditLinkService } from './services/thread-job-budget-credit-link.service';
 
 /**
  * PAYG credit: the wallet, its ledger, the reservation chokepoint and the
@@ -65,6 +67,8 @@ import { CreditWalletService } from './services/credit-wallet.service';
     CreditSweeperService,
     CreditTopupInboxService,
     CreditReservationManager,
+    ThreadJobBudgetRepository,
+    ThreadJobBudgetCreditLinkService,
     ModelRateClient,
     ConnectorPolicyClient,
     ModelCostPublishedConsumer,

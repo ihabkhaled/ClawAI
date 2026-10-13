@@ -23,6 +23,7 @@ import { RuntimeAdmissionService } from './services/runtime-admission.service';
 import { ThreadJobBudgetInternalController } from './controllers/thread-job-budget-internal.controller';
 import { ThreadJobBudgetRepository } from './repositories/thread-job-budget.repository';
 import { ThreadJobBudgetService } from '../credit/services/thread-job-budget.service';
+import { ThreadJobBudgetSweeperService } from '../credit/services/thread-job-budget-sweeper.service';
 
 @Module({
   imports: [RolesModule, PlansModule, QuotaModule, CreditModule, SystemSettingsModule],
@@ -48,6 +49,7 @@ import { ThreadJobBudgetService } from '../credit/services/thread-job-budget.ser
     RuntimeAdmissionService,
     ThreadJobBudgetRepository,
     ThreadJobBudgetService,
+    ThreadJobBudgetSweeperService,
   ],
   exports: [EntitlementsService, EntitlementInboxService, UsageViewService],
 })

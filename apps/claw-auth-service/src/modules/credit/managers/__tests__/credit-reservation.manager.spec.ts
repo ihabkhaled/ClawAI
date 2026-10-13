@@ -146,6 +146,7 @@ describe('CreditReservationManager', () => {
   let events: { publishBalanceState: Mock };
   let ledger: { findReservationAttribution: Mock };
   let billingModes: { resolve: Mock };
+  let threadBudgets: { spendCeilingMicroUsd: Mock; settleForReservation: Mock };
   let manager: CreditReservationManager;
 
   const build = (): CreditReservationManager =>
@@ -162,6 +163,7 @@ describe('CreditReservationManager', () => {
       ledger as unknown as CreditLedgerRepository,
       freeAllowance as unknown as CreditFreeAllowanceService,
       billingModes as unknown as CreditBillingModeService,
+      threadBudgets as never,
     );
 
   beforeEach(() => {
@@ -219,6 +221,10 @@ describe('CreditReservationManager', () => {
         .mockResolvedValue({ surface: PaygSurface.CHAT, workflow: null }),
     };
     billingModes = { resolve: vi.fn().mockResolvedValue(PaygBillingMode.PAYG) };
+    threadBudgets = {
+      spendCeilingMicroUsd: vi.fn().mockResolvedValue(undefined),
+      settleForReservation: vi.fn().mockResolvedValue(undefined),
+    };
     manager = build();
   });
 
@@ -411,6 +417,76 @@ describe('CreditReservationManager', () => {
       expect(client.eval).not.toHaveBeenCalled();
       expect(usage['createReservation']).not.toHaveBeenCalled();
       expect(wallets['applyHold']).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('a Threads call is bounded by its job budget', () => {
+    // $0.05 balance. With $10/M output and a $0.001 prompt the whole balance buys 4,900 tokens.
+    it('sizes the hold to what is left of the cap, not to the wallet', async () => {
+      threadBudgets.spendCeilingMicroUsd.mockResolvedValue(20_000);
+      const outcome = await manager.reserve(makeInput({ threadJobBudgetId: 'budget-1' }));
+      expect(threadBudgets.spendCeilingMicroUsd).toHaveBeenCalledWith('budget-1');
+      expect(outcome).toMatchObject({ metered: true, clamped: true, heldMicroUsd: 20_000 });
+      const held = wallets['applyHold'].mock.calls[0]?.[0].split;
+      expect(held.grantMicroUsd + held.purchasedMicroUsd).toBe(20_000n);
+    });
+
+    it('never holds more than the wallet even when the cap is larger', async () => {
+      threadBudgets.spendCeilingMicroUsd.mockResolvedValue(9_000_000);
+      const outcome = await manager.reserve(makeInput({ threadJobBudgetId: 'budget-1' }));
+      expect(outcome).toMatchObject({ heldMicroUsd: 50_000 });
+    });
+
+    it('says the PROMPT is too dear when the cap left cannot even carry it', async () => {
+      threadBudgets.spendCeilingMicroUsd.mockResolvedValue(100);
+      await expect(
+        manager.reserve(makeInput({ threadJobBudgetId: 'budget-1', promptTokens: 5000 })),
+      ).rejects.toMatchObject({ code: BillingErrorCode.PAYG_PROMPT_TOO_EXPENSIVE });
+    });
+
+    it('refuses with PAYG_CREDIT_EXHAUSTED when the cap is spent or the budget is closed', async () => {
+      threadBudgets.spendCeilingMicroUsd.mockResolvedValue(0);
+      await expect(
+        manager.reserve(makeInput({ threadJobBudgetId: 'budget-1', promptTokens: 0 })),
+      ).rejects.toMatchObject({ code: BillingErrorCode.PAYG_CREDIT_EXHAUSTED });
+    });
+
+    it('is unchanged for a call with no budget', async () => {
+      const outcome = await manager.reserve(makeInput());
+      expect(outcome).toMatchObject({ heldMicroUsd: 50_000 });
+    });
+
+    it('settles the budget call at what the user was CHARGED, not at the hold', async () => {
+      wallets['applySettlement'].mockResolvedValue({
+        chargedMicroUsd: 4_829n,
+        refundedMicroUsd: 16_171n,
+        availableAfterMicroUsd: 0n,
+        periodGrantMicroUsd: 0n,
+      });
+      await manager.finalize({
+        reservationId: 'res-1',
+        promptTokens: 1000,
+        completionTokens: 2000,
+        cachedPromptTokens: 0,
+        reasoningTokens: 0,
+        toolCalls: 0,
+        searchCalls: 0,
+      });
+      expect(threadBudgets.settleForReservation).toHaveBeenCalledWith('res-1', 4_829n);
+    });
+
+    it('does not settle the budget for a replayed finalize', async () => {
+      usage['markFinalized'].mockResolvedValue(0);
+      await manager.finalize({
+        reservationId: 'res-1',
+        promptTokens: 1,
+        completionTokens: 1,
+        cachedPromptTokens: 0,
+        reasoningTokens: 0,
+        toolCalls: 0,
+        searchCalls: 0,
+      });
+      expect(threadBudgets.settleForReservation).not.toHaveBeenCalled();
     });
   });
 

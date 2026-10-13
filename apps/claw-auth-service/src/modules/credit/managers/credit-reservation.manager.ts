@@ -42,6 +42,7 @@ import { CreditBillingModeService } from '../services/credit-billing-mode.servic
 import { CreditEventService } from '../services/credit-event.service';
 import { CreditFreeAllowanceService } from '../services/credit-free-allowance.service';
 import { CreditGrantService } from '../services/credit-grant.service';
+import { ThreadJobBudgetCreditLinkService } from '../services/thread-job-budget-credit-link.service';
 import { CreditWalletService } from '../services/credit-wallet.service';
 import {
   FREE_ALLOWANCE_LEDGER_REASON_RETURNED,
@@ -119,6 +120,7 @@ export class CreditReservationManager {
     private readonly ledger: CreditLedgerRepository,
     private readonly freeAllowance: CreditFreeAllowanceService,
     private readonly billingModes: CreditBillingModeService,
+    private readonly threadBudgets: ThreadJobBudgetCreditLinkService,
   ) {}
 
   async reserve(input: CreditReserveInput): Promise<PaygReservationOutcome> {
@@ -148,7 +150,11 @@ export class CreditReservationManager {
       this.logger.warn(`reserve: reusing hold for repeated request=${input.requestId}`);
       return this.reuseHold(existing, input.requestedMaxOutputTokens);
     }
-    return this.takeHold(input, classification.rate);
+    return this.takeHold(
+      input,
+      classification.rate,
+      await this.threadBudgets.spendCeilingMicroUsd(input.threadJobBudgetId),
+    );
   }
 
   /**
@@ -225,9 +231,14 @@ export class CreditReservationManager {
       );
       // F108: the user was charged nothing and the figure is what the PLATFORM
       // paid, so no cost is disclosed. UNKNOWN is the fail-closed answer.
+      // The user paid nothing, so a Threads job's budget counts nothing either.
+      await this.threadBudgets.settleForReservation(input.reservationId, 0n);
       return { settled: true, billingMode: PaygBillingMode.UNKNOWN };
     }
-    return this.outcomeFor(record.userId, await this.settle(record, actualMicroUsd));
+    const settlement = await this.settle(record, actualMicroUsd);
+    // The job budget counts what the user was CHARGED, not what was held.
+    await this.threadBudgets.settleForReservation(input.reservationId, settlement.chargedMicroUsd);
+    return this.outcomeFor(record.userId, settlement);
   }
 
   /**
@@ -373,12 +384,17 @@ export class CreditReservationManager {
   private async takeHold(
     input: CreditReserveInput,
     rate: PaygRateSnapshot,
+    spendCeilingMicroUsd?: number,
   ): Promise<PaygReservationOutcome> {
     // Brings the period grant up to date FIRST. A user whose month rolled over
     // a minute ago must not be told they are out of credit because a background
     // job has not run yet.
     const balances = await this.grants.ensureCurrentPeriod(input.userId);
     const available = toSafeBalanceNumber(balances.availableMicroUsd);
+    // A Threads call is also bounded by what is left of its job's cap, so the hold is
+    // sized to FIT the cap (a shorter answer) instead of being refused for exceeding it.
+    const spendable =
+      spendCeilingMicroUsd === undefined ? available : Math.min(available, spendCeilingMicroUsd);
     const allowance = await this.freeAllowance.resolvePolicy(input.userId);
     if (
       allowance !== null &&
@@ -392,7 +408,7 @@ export class CreditReservationManager {
     }
     const clamp = clampOutputTokensToBalance({
       rates: rate.rates,
-      balanceMicroUsd: available,
+      balanceMicroUsd: spendable,
       promptTokens: input.promptTokens,
       cachedPromptTokens: input.cachedPromptTokens,
       // F093: held at the write rate, because settlement is capped at the hold.
@@ -411,7 +427,7 @@ export class CreditReservationManager {
         input,
         rate,
         allowance,
-        CreditReservationManager.refusalFor(clamp, available),
+        CreditReservationManager.refusalFor(clamp, spendable),
       );
     }
     try {

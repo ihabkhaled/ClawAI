@@ -2,6 +2,7 @@ import { type CreditReserveInput, type PaygRateSnapshot } from '../../types/cred
 import { PaygSurface } from '@claw/shared-types';
 
 import {
+  FREE_ALLOWANCE_COUNT_WAIVED_SURFACES,
   FREE_ALLOWANCE_ELIGIBLE_SURFACES,
   FREE_ALLOWANCE_FALLBACK_REQUEST_CEILING_MICRO_USD,
   FREE_ALLOWANCE_UNLIMITED_COUNTER_LIMIT,
@@ -9,6 +10,7 @@ import {
 import {
   computeFreeRequestCeilingMicroUsd,
   isCappedAllowance,
+  isCountWaived,
   isFreeAllowanceEligible,
   isFreeAllowanceEnabled,
   isModelAboveFreeCap,
@@ -91,6 +93,36 @@ describe('isFreeAllowanceEligible', () => {
     for (const surface of [PaygSurface.IMAGE, PaygSurface.VIDEO, PaygSurface.TTS]) {
       expect(FREE_ALLOWANCE_ELIGIBLE_SURFACES).not.toContain(surface);
     }
+  });
+});
+
+describe('Threads and the free allowance (D4)', () => {
+  it('lists THREADS as eligible, so a Free Thread is not left to an empty wallet', () => {
+    expect(FREE_ALLOWANCE_ELIGIBLE_SURFACES).toContain(PaygSurface.THREADS);
+    expect(isFreeAllowanceEligible(request({ surface: PaygSurface.THREADS }))).toBe(true);
+  });
+
+  it('still excludes a THREADS-labelled call that carries per-unit quantities', () => {
+    expect(
+      isFreeAllowanceEligible(request({ surface: PaygSurface.THREADS, videoSeconds: 8 })),
+    ).toBe(false);
+  });
+
+  it('waives the request count for Threads only, and only under a money meter', () => {
+    const metered = { budgetMicroUsd: 250_000n };
+    const unmetered = { budgetMicroUsd: null };
+    expect(isCountWaived({ surface: PaygSurface.THREADS }, metered)).toBe(true);
+    expect(isCountWaived({ surface: PaygSurface.THREADS }, unmetered)).toBe(false);
+    expect(isCountWaived({ surface: PaygSurface.CHAT }, metered)).toBe(false);
+    for (const surface of FREE_ALLOWANCE_ELIGIBLE_SURFACES) {
+      expect(isCountWaived({ surface }, metered)).toBe(
+        FREE_ALLOWANCE_COUNT_WAIVED_SURFACES.includes(surface),
+      );
+    }
+  });
+
+  it('waives the count for nothing but Threads', () => {
+    expect([...FREE_ALLOWANCE_COUNT_WAIVED_SURFACES]).toEqual([PaygSurface.THREADS]);
   });
 });
 

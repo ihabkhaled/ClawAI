@@ -26,6 +26,7 @@ export function toCreditReserveInput(dto: ReserveCreditDto): CreditReserveInput 
     audioSeconds: dto.audioSeconds,
     ttsCharacters: dto.ttsCharacters,
     videoSeconds: dto.videoSeconds,
+    ...(dto.threadJobBudgetId === undefined ? {} : { threadJobBudgetId: dto.threadJobBudgetId }),
   };
 }
 

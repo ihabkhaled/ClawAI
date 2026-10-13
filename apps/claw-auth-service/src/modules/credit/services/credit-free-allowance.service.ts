@@ -11,19 +11,21 @@ import {
   type CreditFreeAllowanceAttempt,
   type CreditFreeAllowanceCounterKey,
   type CreditFreeAllowancePolicy,
+  type CreditFreeAllowanceSizing,
   type CreditReserveInput,
   type PaygRateSnapshot,
 } from '../types/credit.types';
 import { toSafeBalanceNumber } from '../utilities/credit-bucket.utility';
 import {
   computeFreeRequestCeilingMicroUsd,
+  counterLimitFor,
   isCappedAllowance,
   isFreeAllowanceEligible,
   isFreeAllowanceEnabled,
   isModelAboveFreeCap,
   meterUsedPercent,
   nextUtcMonthStart,
-  toCounterLimit,
+  toFreeAllowanceAdmission,
   toFreeAllowanceView,
 } from '../utilities/credit-free-allowance.utility';
 
@@ -62,6 +64,46 @@ export class CreditFreeAllowanceService {
     allowance: CreditFreeAllowancePolicy,
     now: Date,
   ): Promise<CreditFreeAllowanceAttempt> {
+    const early = this.refuseWithoutCounting(input, rate, allowance);
+    if (early !== null) {
+      return early;
+    }
+    const counter: CreditFreeAllowanceCounterKey = {
+      userId: input.userId,
+      provider: FREE_ALLOWANCE_TOTAL_COUNTER_KEY,
+      periodKey: utcMonthKey(now),
+    };
+    const limit = counterLimitFor(input, allowance);
+    const remaining = await this.remainingBudgetMicroUsd(
+      input.userId,
+      counter.periodKey,
+      allowance,
+    );
+    const sized = this.sizeAgainstMeter(input, rate, allowance, remaining, limit);
+    if (sized.refusal !== null) {
+      return sized.refusal;
+    }
+    const admission = toFreeAllowanceAdmission(counter, input, sized.ceiling);
+    if (
+      !(await this.counters.tryConsume(
+        counter,
+        limit,
+        admission.worstCaseCostMicroUsd,
+        allowance.budgetMicroUsd,
+      ))
+    ) {
+      this.logger.log(`tryAdmit: allowance spent (total) provider=${input.provider}`);
+      return { status: 'SPENT', limit };
+    }
+    return { status: 'ADMITTED', admission };
+  }
+
+  /** The refusals that need neither the counter nor a price clamp. */
+  private refuseWithoutCounting(
+    input: CreditReserveInput,
+    rate: PaygRateSnapshot | null,
+    allowance: CreditFreeAllowancePolicy,
+  ): CreditFreeAllowanceAttempt | null {
     if (!isFreeAllowanceEligible(input)) {
       return { status: 'INELIGIBLE' };
     }
@@ -71,53 +113,41 @@ export class CreditFreeAllowanceService {
       );
       return { status: 'MODEL_NOT_COVERED' };
     }
-    const counter: CreditFreeAllowanceCounterKey = {
-      userId: input.userId,
-      provider: FREE_ALLOWANCE_TOTAL_COUNTER_KEY,
-      periodKey: utcMonthKey(now),
-    };
-    const limit = toCounterLimit(allowance.limit);
-    const remaining = await this.remainingBudgetMicroUsd(
-      input.userId,
-      counter.periodKey,
-      allowance,
-    );
+    return null;
+  }
+
+  /**
+   * Whether the request fits what is left of the month's meter and the per-request ceiling,
+   * and the output ceiling it is clamped to. No write happens here.
+   */
+  private sizeAgainstMeter(
+    input: CreditReserveInput,
+    rate: PaygRateSnapshot | null,
+    allowance: CreditFreeAllowancePolicy,
+    remaining: bigint | null,
+    limit: number,
+  ): CreditFreeAllowanceSizing {
     if (remaining !== null && remaining <= 0n) {
       this.logger.log(`tryAdmit: free budget spent provider=${input.provider}`);
-      return { status: 'SPENT', limit };
+      return { refusal: { status: 'SPENT', limit } };
     }
-    const ceiling = rate === null ? null : this.clampToCeiling(input, rate, allowance, remaining);
-    if (ceiling !== null && ceiling.status !== 'AFFORDABLE') {
-      this.logger.warn(
-        `tryAdmit: ${ceiling.status} against the free-request ceiling provider=${input.provider}`,
-      );
-      // The prompt does not fit what is LEFT of the month's budget: that is the meter, not the
-      // size of the prompt, so it is told apart from a prompt too large for any request.
-      return remaining !== null && remaining < allowance.requestCeilingMicroUsd
-        ? { status: 'SPENT', limit }
-        : { status: 'PROMPT_TOO_LARGE' };
+    if (rate === null) {
+      return { refusal: null, ceiling: null };
     }
-    const hold = ceiling === null ? 0n : BigInt(ceiling.worstCaseCostMicroUsd);
-    if (!(await this.counters.tryConsume(counter, limit, hold, allowance.budgetMicroUsd))) {
-      this.logger.log(`tryAdmit: allowance spent (total) provider=${input.provider}`);
-      return { status: 'SPENT', limit };
+    const ceiling = this.clampToCeiling(input, rate, allowance, remaining);
+    if (ceiling.status === 'AFFORDABLE') {
+      return { refusal: null, ceiling };
     }
+    this.logger.warn(
+      `tryAdmit: ${ceiling.status} against the free-request ceiling provider=${input.provider}`,
+    );
+    // The prompt does not fit what is LEFT of the month's budget: that is the meter, not the
+    // size of the prompt, so it is told apart from a prompt too large for any request.
     return {
-      status: 'ADMITTED',
-      admission:
-        ceiling === null
-          ? {
-              counter,
-              maxOutputTokens: input.requestedMaxOutputTokens,
-              clamped: false,
-              worstCaseCostMicroUsd: 0n,
-            }
-          : {
-              counter,
-              maxOutputTokens: ceiling.maxOutputTokens,
-              clamped: ceiling.clamped,
-              worstCaseCostMicroUsd: hold,
-            },
+      refusal:
+        remaining !== null && remaining < allowance.requestCeilingMicroUsd
+          ? { status: 'SPENT', limit }
+          : { status: 'PROMPT_TOO_LARGE' },
     };
   }
 

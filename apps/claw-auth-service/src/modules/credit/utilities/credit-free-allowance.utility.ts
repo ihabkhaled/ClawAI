@@ -1,11 +1,15 @@
 import { type PaygFreeAllowanceView } from '@claw/shared-types';
 
 import {
+  FREE_ALLOWANCE_COUNT_WAIVED_SURFACES,
   FREE_ALLOWANCE_ELIGIBLE_SURFACES,
   FREE_ALLOWANCE_FALLBACK_REQUEST_CEILING_MICRO_USD,
   FREE_ALLOWANCE_UNLIMITED_COUNTER_LIMIT,
 } from '../constants/credit-free-allowance.constants';
 import {
+  type CreditFreeAllowanceAdmission,
+  type CreditFreeAllowanceAffordableClamp,
+  type CreditFreeAllowanceCounterKey,
   type CreditFreeAllowancePolicy,
   type CreditReserveInput,
   type PaygRateSnapshot,
@@ -30,6 +34,49 @@ export function isFreeAllowanceEnabled(limit: number | null): boolean {
  */
 export function isCappedAllowance(policy: CreditFreeAllowancePolicy): boolean {
   return policy.limit !== null;
+}
+
+/**
+ * True when this request is not held to the monthly request COUNT: a waived surface (Threads)
+ * under a plan whose money meter bounds the total. Only the counter's limit is lifted; the
+ * slot is still taken and given back like any other, so the books stay symmetrical.
+ */
+export function isCountWaived(
+  input: Pick<CreditReserveInput, 'surface'>,
+  policy: Pick<CreditFreeAllowancePolicy, 'budgetMicroUsd'>,
+): boolean {
+  return (
+    policy.budgetMicroUsd !== null && FREE_ALLOWANCE_COUNT_WAIVED_SURFACES.includes(input.surface)
+  );
+}
+
+/** The request limit the atomic counter enforces for this call (lifted for a waived surface). */
+export function counterLimitFor(
+  input: Pick<CreditReserveInput, 'surface'>,
+  policy: Pick<CreditFreeAllowancePolicy, 'limit' | 'budgetMicroUsd'>,
+): number {
+  return toCounterLimit(isCountWaived(input, policy) ? null : policy.limit);
+}
+
+/** What an admitted free request carries into its usage row: the ceiling it was clamped to. */
+export function toFreeAllowanceAdmission(
+  counter: CreditFreeAllowanceCounterKey,
+  input: Pick<CreditReserveInput, 'requestedMaxOutputTokens'>,
+  ceiling: CreditFreeAllowanceAffordableClamp | null,
+): CreditFreeAllowanceAdmission {
+  return ceiling === null
+    ? {
+        counter,
+        maxOutputTokens: input.requestedMaxOutputTokens,
+        clamped: false,
+        worstCaseCostMicroUsd: 0n,
+      }
+    : {
+        counter,
+        maxOutputTokens: ceiling.maxOutputTokens,
+        clamped: ceiling.clamped,
+        worstCaseCostMicroUsd: BigInt(ceiling.worstCaseCostMicroUsd),
+      };
 }
 
 /** The limit handed to the atomic counter. `null` (unlimited) becomes INT4 max. */
@@ -89,14 +136,14 @@ export function toFreeAllowanceView(
   limit: number | null,
   used: number,
   resetsAt: Date,
-  meterUsedPercent: number | null,
+  usedPercent: number | null,
 ): PaygFreeAllowanceView {
   return {
     limit,
     used,
     remaining: limit === null ? null : Math.max(0, limit - used),
     resetsAt: resetsAt.toISOString(),
-    meterUsedPercent,
+    meterUsedPercent: usedPercent,
   };
 }
 

@@ -92,3 +92,5 @@ sees the edge. See [stack-and-toolchain.md](stack-and-toolchain.md#ci).
 - Create a cycle between shared packages.
 
 `@claw/shared-utilities` also owns the model context-window table (`model-context-window.constants.ts`): a row is added only for a model whose window the repo states. A model with no row is not a failure: Threads assumes 32,768 tokens and still checks the prompt (ADR-173).
+
+`@claw/shared-entitlements` also owns the PAYG meter's Threads budget-call verdict (`payg-thread-call-verdict.ts`): a reserve returns one of RESERVED, ALREADY_RESERVED, ALREADY_FINALIZED, ALREADY_RELEASED, CAP_EXCEEDED, BUDGET_CLOSED or BUDGET_NOT_FOUND, so a retried request id is idempotent and an exhausted cap is told apart from a transient failure (ADR-159 addendum).

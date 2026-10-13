@@ -1,4 +1,5 @@
 import type { ModelCostRates, PaygLedgerEntryView, PaygSurface } from '@claw/shared-types';
+import type { clampOutputTokensToBalance } from '@claw/shared-utilities';
 
 import type { CreditLedgerKind, Prisma, UserCreditWallet } from '../../../generated/prisma';
 
@@ -50,6 +51,8 @@ export type CreditReserveInput = {
   audioSeconds?: number;
   ttsCharacters?: number;
   videoSeconds?: number;
+  /** Set only for a Threads call: its job budget, which also bounds the hold. */
+  threadJobBudgetId?: string;
 };
 
 export type CreditFinalizeInput = {
@@ -262,6 +265,12 @@ export type CreditFreeAllowanceAdmission = {
   worstCaseCostMicroUsd: bigint;
 };
 
+/** A free request's output ceiling once it is known to fit. */
+export type CreditFreeAllowanceAffordableClamp = Extract<
+  ReturnType<typeof clampOutputTokensToBalance>,
+  { status: 'AFFORDABLE' }
+>;
+
 /**
  * The outcome of asking for one free-allowance slot. The refusals are told apart
  * because they lead to different answers: SPENT is the plan's monthly cap
@@ -274,3 +283,8 @@ export type CreditFreeAllowanceAttempt =
   | { status: 'PROMPT_TOO_LARGE' }
   | { status: 'SPENT'; limit: number }
   | { status: 'MODEL_NOT_COVERED' };
+
+/** Whether a free request fits, and the ceiling it was clamped to (`null` = priced nothing). */
+export type CreditFreeAllowanceSizing =
+  | { refusal: CreditFreeAllowanceAttempt }
+  | { refusal: null; ceiling: CreditFreeAllowanceAffordableClamp | null };
