@@ -48,7 +48,7 @@ export class AdminUsageAuditService {
     });
   }
 
-  /** A first page of users (list or user leaderboard): many emails shown at once. */
+  /** Any page of users (list or user leaderboard): many emails shown at once. */
   async recordListed(
     actorUserId: string,
     filters: AdminUsageAuditPayload['filters'],

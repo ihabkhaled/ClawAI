@@ -13,7 +13,7 @@ Every AI coding agent and every person starts here. This file routes; it does no
 restate policy. `CODEX.md`, `GEMINI.md`, `DEEPSEEK.md`, `GLM.md`, `KIMI.md`,
 `MISTRAL.md` and `QWEN.md` are generated from it; `CLAUDE.md`, `cursor.md` and
 `.cursorrules` add tool-specific notes and point back here
-([ADR-168](docs/13-adr/adr-168-agents-md-is-the-canonical-router.md)).
+([ADR-170](docs/13-adr/adr-170-agents-md-is-the-canonical-router.md)).
 
 > **Before you finish any change, update every doc it makes stale (rule 63). The hooks will reject it otherwise.**
 >

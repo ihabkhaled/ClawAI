@@ -5,7 +5,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ResearchMode } from '@/enums';
 import { useInThreadCompare } from '@/hooks/chat/use-in-thread-compare';
+import { signInTestUser, signOutTestUser } from '@/test/fixtures/signed-in-user.fixture';
 import type { ParallelRequest } from '@/types';
+import {
+  resetContextSaveModeMemory,
+  writeContextSaveMode,
+} from '@/utilities/context-save-mode.utility';
 
 const sendParallelMock = vi.fn();
 
@@ -84,6 +89,24 @@ describe('useInThreadCompare — researchMode round-trip', () => {
     expect(payload.researchProviderId).toBeUndefined();
     expect(payload.threadId).toBe('t1');
     expect(payload.content).toBe('hello');
+  });
+
+  it('never sends the save mode: Compare does not run the save orchestrator (rule 59 exception)', async () => {
+    signInTestUser();
+    resetContextSaveModeMemory();
+    writeContextSaveMode('AUTO');
+    const { result } = renderHook(() => useInThreadCompare({ threadId: 't1' }), { wrapper });
+    act(() => {
+      result.current.handleToggleModel('OPENAI', 'gpt-4o', true);
+      result.current.handleToggleModel('ANTHROPIC', 'claude-sonnet-4', true);
+    });
+    act(() => {
+      result.current.handleCompare('remember I like tea');
+    });
+    await waitFor(() => expect(sendParallelMock).toHaveBeenCalledTimes(1));
+    expect(Object.keys(sendParallelMock.mock.calls[0]?.[0] ?? {})).not.toContain('contextSaveMode');
+    writeContextSaveMode('ASK');
+    signOutTestUser();
   });
 
   it('omits critic fields by default (criticEnabled=false)', async () => {

@@ -29,6 +29,7 @@ export function useUsageLeaderboard(
   const list = { dimension, search, sort, order, limit: pageSize, cursor: pager.cursor };
 
   const query = useQuery({
+    enabled: scope.issue === null,
     queryKey: queryKeys.observabilityExplorer.leaderboard(
       { ...scope.selection, ...scope.filters },
       list,

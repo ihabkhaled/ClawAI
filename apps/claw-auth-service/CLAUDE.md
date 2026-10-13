@@ -611,3 +611,12 @@ a migrated database, not only the dev one.
 ## Web Push (ADR-166)
 
 `modules/notifications` also sends browser push. `web-push` is imported only in `WebPushAdapter`. VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY and VAPID_SUBJECT are all-or-nothing; never log a subscription endpoint. Push text comes from the email dictionaries (`buildPushMessage`), never from new strings.
+
+## Observability pages (ADR-169)
+
+`GET /api/v1/admin/observability/*` (`overview`, `filter-options`, `health`, `users`, `users/export`, `providers[/:provider]`,
+`models[/detail]`, `plans`, `workflows`) lives in `modules/admin-statistics`, ADMIN role plus `ADMIN_USAGE_VIEW`. Lists are
+`page` + `limit` (max 100) over ALL matching rows, never a top-N. Only `users` (EVERY request, any page) and `users/export` return
+full emails and are audited; everything else masks. Settle time is `finalized_at - created_at`, NOT provider latency; settle / refund rate is
+settled vs released holds, NOT an HTTP success rate. Only the health queries read RELEASED rows. Every window read runs under `SET LOCAL statement_timeout`, in batches of at most six per page. A row's plan is `COALESCE(w.plan_id, u.active_plan_id)` (nothing fills `plan_id`); settle-time metrics skip legacy rows (`request_id = reservation_id`); series are zero-filled. Wire types are `AdminObs*` in
+`@claw/shared-types`. Details: `docs/04-backend/admin-usage-explorer-endpoints.md`.

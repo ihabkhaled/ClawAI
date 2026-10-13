@@ -129,6 +129,7 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     criticModel,
     research,
     selectedFileIds,
+    contextPackIds,
   ]);
 
   return {

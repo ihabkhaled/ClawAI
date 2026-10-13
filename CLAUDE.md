@@ -4,7 +4,7 @@
 identity, authority order, first command, how a change lands, the absolute
 prohibitions and where everything lives. This file adds only what is specific to
 working in Claude Code, plus a compact index
-([ADR-168](docs/13-adr/adr-168-agents-md-is-the-canonical-router.md)).
+([ADR-170](docs/13-adr/adr-170-agents-md-is-the-canonical-router.md)).
 
 > **Before you finish any change, update every doc it makes stale (rule 63). The hooks will reject it otherwise.**
 >

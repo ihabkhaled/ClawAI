@@ -6,6 +6,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComposerAttachmentState } from '@/enums/composer-attachment-state.enum';
 import { FileIngestionStatus } from '@/enums/file-ingestion-status.enum';
 import { useOrchestrationComposer } from '@/hooks/chat/use-orchestration-composer';
+import { signInTestUser, signOutTestUser } from '@/test/fixtures/signed-in-user.fixture';
+import {
+  resetContextSaveModeMemory,
+  writeContextSaveMode,
+} from '@/utilities/context-save-mode.utility';
 
 // The nine orchestration labs share this hook (via OrchestrationPageShell).
 // They used to get a count + progress bar; they now get the chat composer's
@@ -107,5 +112,19 @@ describe('useOrchestrationComposer — per-attachment status (same as chat)', ()
     });
 
     await waitFor(() => expect(result.current.attachmentChips.chips).toEqual([]));
+  });
+});
+
+describe('useOrchestrationComposer — context save mode (ADR-168, rule 59 exception)', () => {
+  it('never puts the save mode in the payload every lab spreads: labs do not run the save orchestrator', () => {
+    signInTestUser();
+    resetContextSaveModeMemory();
+    writeContextSaveMode('AUTO');
+    const { result } = renderHook(() => useOrchestrationComposer(), { wrapper });
+
+    expect(Object.keys(result.current.sharedPayload)).not.toContain('contextSaveMode');
+
+    writeContextSaveMode('ASK');
+    signOutTestUser();
   });
 });

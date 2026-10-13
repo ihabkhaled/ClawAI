@@ -38,7 +38,7 @@ jobs:
           node-version-file: .nvmrc
 
       # Hand-written pages plus everything rendered from its single source:
-      # mirrors (wiki/mirrors.json) and manifest pages (ADR-168).
+      # mirrors (wiki/mirrors.json) and manifest pages (ADR-170).
       - name: Render wiki pages
         run: node tools/knowledge/render-wiki.mjs --out "$RUNNER_TEMP/wiki-rendered"
 

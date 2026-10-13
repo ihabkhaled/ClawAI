@@ -3,21 +3,18 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { scope, userRow } from '@/components/observability/explorer/__tests__/explorer-fixtures';
+import { scope } from '@/components/observability/explorer/__tests__/explorer-fixtures';
 import { UsageLeaderboardDimension } from '@/enums/usage-leaderboard-dimension.enum';
 import { useObservabilityFailures } from '@/hooks/observability/use-observability-failures';
 import { useObservabilityTracing } from '@/hooks/observability/use-observability-tracing';
-import { useUsageExplorerUsers } from '@/hooks/observability/use-usage-explorer-users';
 import { useUsageLeaderboard } from '@/hooks/observability/use-usage-leaderboard';
 
-const mockGetUsers = vi.fn();
 const mockGetLeaderboard = vi.fn();
 const mockGetFailures = vi.fn();
 const mockGetTracing = vi.fn();
 
 vi.mock('@/repositories/admin/observability-explorer.repository', () => ({
   observabilityExplorerRepository: {
-    getUsers: (...args: unknown[]) => mockGetUsers(...args),
     getLeaderboard: (...args: unknown[]) => mockGetLeaderboard(...args),
     getFailures: (...args: unknown[]) => mockGetFailures(...args),
     getTracing: (...args: unknown[]) => mockGetTracing(...args),
@@ -32,35 +29,6 @@ function wrapper({ children }: { children: ReactNode }): ReactElement {
 describe('observability data hooks', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it('loads users with the range params and the default sort', async () => {
-    mockGetUsers.mockResolvedValue({ items: [userRow()], nextCursor: 'c2', matchedUsers: 1 });
-    const { result } = renderHook(() => useUsageExplorerUsers(scope()), { wrapper });
-    await waitFor(() => {
-      expect(result.current.page?.items).toHaveLength(1);
-    });
-    expect(mockGetUsers).toHaveBeenCalledWith(
-      { hours: '168' },
-      expect.objectContaining({ sort: 'lastSeen', order: 'desc', limit: 10, search: '' }),
-    );
-  });
-
-  it('asks for the next page with the cursor the server returned', async () => {
-    mockGetUsers.mockResolvedValue({ items: [userRow()], nextCursor: 'c2', matchedUsers: 20 });
-    const { result } = renderHook(() => useUsageExplorerUsers(scope()), { wrapper });
-    await waitFor(() => {
-      expect(result.current.page).not.toBeNull();
-    });
-    act(() => {
-      result.current.pager.goNext(result.current.page?.nextCursor ?? null);
-    });
-    await waitFor(() => {
-      expect(mockGetUsers).toHaveBeenLastCalledWith(
-        { hours: '168' },
-        expect.objectContaining({ cursor: 'c2' }),
-      );
-    });
   });
 
   it('re-sorts a leaderboard and drops back to the first page', async () => {
@@ -86,9 +54,23 @@ describe('observability data hooks', () => {
     });
   });
 
+  it('never queries while the range has an issue', async () => {
+    const broken = scope({ issue: 'usageAnalytics.errorCustomRange' });
+    renderHook(() => useUsageLeaderboard(broken, UsageLeaderboardDimension.Provider), { wrapper });
+    renderHook(() => useObservabilityFailures(broken), { wrapper });
+    renderHook(() => useObservabilityTracing(broken), { wrapper });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(mockGetLeaderboard).not.toHaveBeenCalled();
+    expect(mockGetFailures).not.toHaveBeenCalled();
+    expect(mockGetTracing).not.toHaveBeenCalled();
+  });
+
   it('reports a failed load', async () => {
-    mockGetUsers.mockRejectedValue(new Error('boom'));
-    const { result } = renderHook(() => useUsageExplorerUsers(scope()), { wrapper });
+    mockGetLeaderboard.mockRejectedValue(new Error('boom'));
+    const { result } = renderHook(
+      () => useUsageLeaderboard(scope(), UsageLeaderboardDimension.Provider),
+      { wrapper },
+    );
     await waitFor(() => {
       expect(result.current.isError).toBe(true);
     });

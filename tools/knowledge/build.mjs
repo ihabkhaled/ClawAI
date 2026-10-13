@@ -38,7 +38,7 @@ export function computeGeneratedFiles(manifests = buildManifests()) {
     files[relPath] = content;
   }
 
-  // CODEX.md, GEMINI.md, … — AGENTS.md plus a per-model emphasis (ADR-168).
+  // CODEX.md, GEMINI.md, … — AGENTS.md plus a per-model emphasis (ADR-170).
   for (const [relPath, content] of Object.entries(renderModelRouters())) {
     files[relPath] = content;
   }
@@ -92,8 +92,13 @@ function main() {
   }
   writeAll(files);
   writeCountFragments(countValues(manifests));
-  console.log(`knowledge:build wrote ${Object.keys(files).length} generated files under .ai/ + workspace AGENTS.md.`);
-  if (process.argv.includes('--write-and-verify') && !reportVerify(runVerify({ freshness: false }))) {
+  console.log(
+    `knowledge:build wrote ${Object.keys(files).length} generated files under .ai/ + workspace AGENTS.md.`,
+  );
+  if (
+    process.argv.includes('--write-and-verify') &&
+    !reportVerify(runVerify({ freshness: false }))
+  ) {
     process.exit(1);
   }
 }

@@ -123,6 +123,12 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
 
   const shellProps: ChatThreadShellProps = {
     threadId,
+    contextSaveProposalProps: {
+      threadId,
+      messages: data.messages,
+      isReady: !data.isLoadingThread && !data.isLoadingMessages,
+      isFetching: data.virtualizedMessages.isFetching,
+    },
     isLoadingPlaceholder: !threadId,
     loadingLabel: t('chat.loadingThread'),
     title,

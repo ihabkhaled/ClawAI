@@ -40,3 +40,32 @@ export enum UsageRequestSortField {
   TOKENS = 'tokens',
   COST = 'cost',
 }
+
+/** Entities the observability pages list. Static SQL fragments are keyed by these. */
+export enum ObservabilityEntity {
+  USER = 'user',
+  PROVIDER = 'provider',
+  MODEL = 'model',
+  PLAN = 'plan',
+  WORKFLOW = 'workflow',
+}
+
+/** Sorts the observability list pages accept. All numeric, so one comparison fits every sort. */
+export enum ObservabilitySortField {
+  REQUESTS = 'requests',
+  TOKENS = 'tokens',
+  INPUT_TOKENS = 'inputTokens',
+  OUTPUT_TOKENS = 'outputTokens',
+  COST = 'cost',
+  COST_PER_REQUEST = 'costPerRequest',
+  TOOL_CALLS = 'toolCalls',
+  ACTIVE_DAYS = 'activeDays',
+  LAST_SEEN = 'lastSeen',
+  DISTINCT_USERS = 'distinctUsers',
+}
+
+/** How a user row carries the email: the audited list shows it in full, every preview masks it. */
+export enum ObservabilityEmailMode {
+  FULL = 'FULL',
+  MASKED = 'MASKED',
+}

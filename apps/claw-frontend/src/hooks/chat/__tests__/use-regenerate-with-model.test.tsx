@@ -7,7 +7,12 @@ import { MODEL_AUTO_VALUE } from '@/constants';
 import { RoutingMode } from '@/enums';
 import { useRegenerateMessage } from '@/hooks/chat/use-regenerate-message';
 import { useRegenerateWithModel } from '@/hooks/chat/use-regenerate-with-model';
+import { signInTestUser, signOutTestUser } from '@/test/fixtures/signed-in-user.fixture';
 import { encodeModelValue } from '@/utilities';
+import {
+  resetContextSaveModeMemory,
+  writeContextSaveMode,
+} from '@/utilities/context-save-mode.utility';
 
 const mockRegenerateMessage = vi.fn();
 
@@ -79,16 +84,37 @@ describe('useRegenerateMessage', () => {
     act(() => result.current.regenerate('m-1', { routingMode: RoutingMode.AUTO }));
 
     await waitFor(() =>
-      expect(mockRegenerateMessage).toHaveBeenCalledWith('m-1', { routingMode: RoutingMode.AUTO }),
+      expect(mockRegenerateMessage).toHaveBeenCalledWith('m-1', {
+        contextSaveMode: 'ASK',
+        routingMode: RoutingMode.AUTO,
+      }),
     );
   });
 
-  it('sends no choice for a plain regenerate, keeping the old behaviour', async () => {
+  it('sends the viewer save mode with a regenerate, AUTO once chosen', async () => {
+    signInTestUser();
+    resetContextSaveModeMemory();
+    writeContextSaveMode('AUTO');
     mockRegenerateMessage.mockResolvedValue({ id: 'm-1' });
     const { result } = renderHook(() => useRegenerateMessage('t-1'), { wrapper });
 
     act(() => result.current.regenerate('m-1'));
 
-    await waitFor(() => expect(mockRegenerateMessage).toHaveBeenCalledWith('m-1', undefined));
+    await waitFor(() =>
+      expect(mockRegenerateMessage).toHaveBeenCalledWith('m-1', { contextSaveMode: 'AUTO' }),
+    );
+    writeContextSaveMode('ASK');
+    signOutTestUser();
+  });
+
+  it('sends only the save mode for a plain regenerate', async () => {
+    mockRegenerateMessage.mockResolvedValue({ id: 'm-1' });
+    const { result } = renderHook(() => useRegenerateMessage('t-1'), { wrapper });
+
+    act(() => result.current.regenerate('m-1'));
+
+    await waitFor(() =>
+      expect(mockRegenerateMessage).toHaveBeenCalledWith('m-1', { contextSaveMode: 'ASK' }),
+    );
   });
 });

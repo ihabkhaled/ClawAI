@@ -1,24 +1,8 @@
-import { ObservabilityTab } from '@/enums/observability-tab.enum';
 import { TracingDimension } from '@/enums/tracing-dimension.enum';
 import { TracingSort } from '@/enums/tracing-sort.enum';
 import { UsageBillingKind } from '@/enums/usage-billing-kind.enum';
 import { UsageCostKind } from '@/enums/usage-cost-kind.enum';
-import type {
-  AdminUsageFilterOptions,
-  ExplorerFilters,
-  ObservabilityTabDefinition,
-  TracingDimensionOption,
-} from '@/types/observability-explorer.types';
-
-/** Tab order. `Failures` needs ADMIN_SYSTEM_VIEW and is dropped for other admins. */
-export const OBSERVABILITY_TABS: readonly ObservabilityTabDefinition[] = [
-  { tab: ObservabilityTab.Overview, labelKey: 'observabilityExplorer.tabOverview' },
-  { tab: ObservabilityTab.Consumption, labelKey: 'observabilityExplorer.tabConsumption' },
-  { tab: ObservabilityTab.Models, labelKey: 'observabilityExplorer.tabModels' },
-  { tab: ObservabilityTab.Users, labelKey: 'observabilityExplorer.tabUsers' },
-  { tab: ObservabilityTab.Tracing, labelKey: 'observabilityExplorer.tabTracing' },
-  { tab: ObservabilityTab.Failures, labelKey: 'observabilityExplorer.tabFailures' },
-];
+import type { ExplorerFilters, TracingDimensionOption } from '@/types/observability-explorer.types';
 
 export const EMPTY_EXPLORER_FILTERS: ExplorerFilters = {
   provider: '',
@@ -106,17 +90,8 @@ export const TRACING_DIMENSION_OPTIONS: readonly TracingDimensionOption[] = [
 
 export const CHART_PRIMARY_COLOR = 'hsl(var(--primary))';
 
-/** Rows in the "top users" list on the Overview tab. */
-export const TOP_USERS_LIMIT = 5;
-
-/** Provider, model and workflow choices fetched for the filter selects (server cap 100). */
-export const FILTER_OPTION_LIMIT = 100;
+/** How long the filter choices stay fresh. */
 export const FILTER_OPTION_STALE_MS = 60_000;
-export const NO_FILTER_OPTIONS: AdminUsageFilterOptions = {
-  providers: [],
-  models: [],
-  workflows: [],
-};
 
 /** Sort columns the tracing endpoint accepts. */
 export const TRACING_SORTS: readonly TracingSort[] = Object.values(TracingSort);

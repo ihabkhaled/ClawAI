@@ -201,6 +201,20 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
     permission: Permission.WORKSPACE_APP_CONFIG_VIEW,
   },
   { prefix: ROUTES.WORKSPACE, permission: Permission.WORKSPACE_VIEW },
+  // The usage pages under /observability read auth-service's
+  // /admin/observability/* and audit-service's /usage/tracing, all gated on
+  // ADMIN_USAGE_VIEW, so the UI gate is the same permission: SYSTEM_VIEW would
+  // hand a usage viewer a 403 on a page the server would have answered. They
+  // MUST precede the bare /observability entry (longest prefix first). The hub
+  // (service status) and the failures page (audit /audits/failures) really are
+  // system views and keep the parent entry.
+  { prefix: ROUTES.OBSERVABILITY_USERS, permission: Permission.ADMIN_USAGE_VIEW },
+  { prefix: ROUTES.OBSERVABILITY_PROVIDERS, permission: Permission.ADMIN_USAGE_VIEW },
+  { prefix: ROUTES.OBSERVABILITY_MODELS, permission: Permission.ADMIN_USAGE_VIEW },
+  { prefix: ROUTES.OBSERVABILITY_PLANS, permission: Permission.ADMIN_USAGE_VIEW },
+  { prefix: ROUTES.OBSERVABILITY_SURFACES, permission: Permission.ADMIN_USAGE_VIEW },
+  { prefix: ROUTES.OBSERVABILITY_CONSUMPTION, permission: Permission.ADMIN_USAGE_VIEW },
+  { prefix: ROUTES.OBSERVABILITY_TRACING, permission: Permission.ADMIN_USAGE_VIEW },
   { prefix: ROUTES.OBSERVABILITY, permission: Permission.ADMIN_SYSTEM_VIEW },
   { prefix: ROUTES.AUDITS, permission: Permission.ADMIN_SYSTEM_VIEW },
   { prefix: ROUTES.LOGS, permission: Permission.ADMIN_LOGS_VIEW },

@@ -15,11 +15,11 @@ import {
   UsageSortField,
 } from '../enums/usage-cost-kind.enum';
 
-const isoInstant = z.string().datetime({ offset: true });
+export const isoInstant = z.string().datetime({ offset: true });
 const MAX_CURSOR_LENGTH = 400;
 const HOURS_PER_DAY = 24;
 
-const rangeShape = {
+export const rangeShape = {
   hours: z.coerce
     .number()
     .int()
@@ -31,7 +31,7 @@ const rangeShape = {
   to: isoInstant.optional(),
 };
 
-const filterShape = {
+export const filterShape = {
   provider: z.string().trim().min(1).max(EXPLORER_FILTER_MAX_LENGTH).optional(),
   model: z.string().trim().min(1).max(EXPLORER_FILTER_MAX_LENGTH).optional(),
   workflow: z.string().trim().min(1).max(EXPLORER_FILTER_MAX_LENGTH).optional(),
@@ -45,21 +45,23 @@ const pageShape = {
   cursor: z.string().min(1).max(MAX_CURSOR_LENGTH).optional(),
 };
 
-type RangeFields = { hours?: number | undefined; days?: number | undefined };
+export type RangeFields = { hours?: number | undefined; days?: number | undefined };
 
 /** Exactly one way to pick the window; `days` is folded into `hours`. */
-function rangeIsExclusive(q: RangeFields & { from?: string | undefined; to?: string | undefined }) {
+export function rangeIsExclusive(
+  q: RangeFields & { from?: string | undefined; to?: string | undefined },
+) {
   const presets = [q.hours, q.days].filter((value) => value !== undefined).length;
   const explicit = q.from !== undefined || q.to !== undefined;
   return presets === 0 || (presets === 1 && !explicit);
 }
 
-function foldDays<T extends RangeFields>(query: T): Omit<T, 'days'> {
+export function foldDays<T extends RangeFields>(query: T): Omit<T, 'days'> {
   const { days, ...rest } = query;
   return days === undefined ? rest : { ...rest, hours: days * HOURS_PER_DAY };
 }
 
-const RANGE_EXCLUSIVE_ISSUE = {
+export const RANGE_EXCLUSIVE_ISSUE = {
   message: 'use one of hours, days, or from/to',
   path: ['hours'],
 };

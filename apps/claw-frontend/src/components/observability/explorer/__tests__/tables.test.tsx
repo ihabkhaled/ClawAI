@@ -5,18 +5,10 @@ import { CostCell } from '@/components/observability/explorer/cost-cell';
 import { CostKindBadge } from '@/components/observability/explorer/cost-kind-badge';
 import { GroupTable } from '@/components/observability/explorer/group-table';
 import { UserRequestsTable } from '@/components/observability/explorer/user-requests-table';
-import { UsersTable } from '@/components/observability/explorer/users-table';
 import { UsageCostKind } from '@/enums/usage-cost-kind.enum';
 import { UsageLeaderboardDimension } from '@/enums/usage-leaderboard-dimension.enum';
 
-import {
-  FULL_EMAIL,
-  groupRow,
-  metrics,
-  requestRow,
-  tStub as t,
-  userRow,
-} from './explorer-fixtures';
+import { FULL_EMAIL, groupRow, requestRow, tStub as t } from './explorer-fixtures';
 
 describe('CostKindBadge', () => {
   it.each([
@@ -81,86 +73,6 @@ describe('CostCell', () => {
     rerender(<CostCell cost={{ costMicroUsd: '0', costKind: UsageCostKind.Unmetered }} t={t} />);
     expect(container.textContent).not.toContain('$0');
     expect(container.textContent).toContain('observabilityExplorer.costUnmetered');
-  });
-});
-
-describe('UsersTable', () => {
-  it('shows the FULL email, never a masked one, and opens the user on click', () => {
-    const onOpenUser = vi.fn();
-    render(
-      <UsersTable
-        users={[userRow()]}
-        sort="lastSeen"
-        order="desc"
-        onSort={vi.fn()}
-        onOpenUser={onOpenUser}
-        t={t}
-      />,
-    );
-    expect(screen.getByText(FULL_EMAIL)).toBeInTheDocument();
-    expect(document.body.textContent).not.toContain('***');
-    fireEvent.click(screen.getByRole('button', { name: /openUser/u }));
-    expect(onOpenUser).toHaveBeenCalledWith('user-1');
-  });
-
-  it('falls back to the username, then the id, when there is no email', () => {
-    render(
-      <UsersTable
-        users={[
-          userRow({ userId: 'u-a', email: null, username: 'only-name' }),
-          userRow({ userId: 'u-b', email: null, username: null }),
-        ]}
-        sort="lastSeen"
-        order="desc"
-        onSort={vi.fn()}
-        onOpenUser={vi.fn()}
-        t={t}
-      />,
-    );
-    expect(screen.getByText('only-name')).toBeInTheDocument();
-    expect(screen.getByText('u-b')).toBeInTheDocument();
-  });
-
-  it('sorts by the clicked column and announces the active sort', () => {
-    const onSort = vi.fn();
-    render(
-      <UsersTable
-        users={[userRow()]}
-        sort="cost"
-        order="asc"
-        onSort={onSort}
-        onOpenUser={vi.fn()}
-        t={t}
-      />,
-    );
-    expect(screen.getByRole('columnheader', { name: 'usageAnalytics.colCost' })).toHaveAttribute(
-      'aria-sort',
-      'ascending',
-    );
-    expect(screen.getByRole('columnheader', { name: 'usageAnalytics.colTokens' })).toHaveAttribute(
-      'aria-sort',
-      'none',
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'usageAnalytics.colTokens' }));
-    expect(onSort).toHaveBeenCalledWith('tokens');
-  });
-
-  it('labels an unpriced user honestly in the cost column', () => {
-    render(
-      <UsersTable
-        users={[
-          userRow({
-            cost: { ...metrics().cost, costKind: UsageCostKind.Unpriced, costMicroUsd: '0' },
-          }),
-        ]}
-        sort="cost"
-        order="desc"
-        onSort={vi.fn()}
-        onOpenUser={vi.fn()}
-        t={t}
-      />,
-    );
-    expect(document.body.textContent).toContain('observabilityExplorer.costUnpriced');
   });
 });
 

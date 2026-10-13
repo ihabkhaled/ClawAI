@@ -212,9 +212,16 @@ export class ChatMessagesRepository {
     id: string,
     from: string,
     metadata: Prisma.InputJsonValue,
+    savingSince?: string,
   ): Promise<boolean> {
+    const claim = [{ metadata: { path: ['contextSave', 'status'], equals: from } }];
+    // An abandoned SAVING record is taken over only by the caller that saw THIS
+    // claim time, so two tabs recovering it at once cannot both win.
+    if (savingSince !== undefined) {
+      claim.push({ metadata: { path: ['contextSave', 'savingSince'], equals: savingSince } });
+    }
     const result = await this.prisma.chatMessage.updateMany({
-      where: { id, metadata: { path: ['contextSave', 'status'], equals: from } },
+      where: { id, AND: claim },
       data: { metadata },
     });
     return result.count === 1;

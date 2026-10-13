@@ -121,6 +121,7 @@ import type {
   CreateContextPackItemRequest,
   CreateContextPackRequest,
 } from './context-pack.types';
+import type { ContextSaveProposalHostProps } from './context-save.types';
 import type { CostEnsembleResult } from './cost-ensemble.types';
 import type { DashboardQuickAction, DashboardStatCard } from './dashboard.types';
 import type { DocFileMetadata } from './docs.types';
@@ -2162,6 +2163,8 @@ export type ChatThreadShellProps = {
   connectionHealth: SseConnectionHealth;
   // Bootstrap.
   threadId: string;
+  /** What the "Remember this" dialog needs from the thread (ADR-168). */
+  contextSaveProposalProps: ContextSaveProposalHostProps;
   isLoadingPlaceholder: boolean;
   loadingLabel: string;
   // Header.

@@ -4,6 +4,11 @@ import { createElement, type ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useMessageEdit } from '@/hooks/chat/use-message-edit';
+import { signInTestUser, signOutTestUser } from '@/test/fixtures/signed-in-user.fixture';
+import {
+  resetContextSaveModeMemory,
+  writeContextSaveMode,
+} from '@/utilities/context-save-mode.utility';
 
 const mockEditMessage = vi.fn();
 const mockBranchThread = vi.fn();
@@ -79,9 +84,29 @@ describe('useMessageEdit', () => {
     expect(result.current.canSave).toBe(true);
     act(() => result.current.save());
 
-    await waitFor(() => expect(mockEditMessage).toHaveBeenCalledWith('msg-1', 'second draft'));
+    await waitFor(() =>
+      expect(mockEditMessage).toHaveBeenCalledWith('msg-1', 'second draft', 'ASK'),
+    );
     await waitFor(() => expect(mockSuccess).toHaveBeenCalled());
     await waitFor(() => expect(result.current.isOpen).toBe(false));
+  });
+
+  it('sends the viewer save mode with the edit, so a detected save behaves as in chat', async () => {
+    signInTestUser();
+    resetContextSaveModeMemory();
+    writeContextSaveMode('AUTO');
+    const { result } = renderHook(() => useMessageEdit('msg-1', 'first draft', 'thread-1'), {
+      wrapper,
+    });
+
+    act(() => result.current.setDraft('remember I like tea'));
+    act(() => result.current.save());
+
+    await waitFor(() =>
+      expect(mockEditMessage).toHaveBeenCalledWith('msg-1', 'remember I like tea', 'AUTO'),
+    );
+    writeContextSaveMode('ASK');
+    signOutTestUser();
   });
 
   it('reseeds the draft on open, so a cancelled attempt does not come back', () => {

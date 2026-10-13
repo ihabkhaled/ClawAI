@@ -1,7 +1,7 @@
 // Renders the per-model router files (CODEX.md, GEMINI.md, …) from AGENTS.md —
 // the canonical router — plus a short emphasis per model. Generated, verified
 // fresh by knowledge:check, so seven copies can never drift apart again
-// (ADR-168). Edit AGENTS.md or MODEL_ROUTERS below, never the output.
+// (ADR-170). Edit AGENTS.md or MODEL_ROUTERS below, never the output.
 import { readText, repoPath } from '../lib/repo.mjs';
 
 export const MODEL_ROUTERS = {
@@ -27,7 +27,9 @@ export const MODEL_ROUTERS = {
   },
   'GLM.md': {
     model: 'GLM',
-    emphasis: ['Prefer small, responsibility-scoped changes. Never perform an uncontrolled whole-repository rewrite.'],
+    emphasis: [
+      'Prefer small, responsibility-scoped changes. Never perform an uncontrolled whole-repository rewrite.',
+    ],
   },
   'KIMI.md': {
     model: 'Kimi',
@@ -41,7 +43,9 @@ export const MODEL_ROUTERS = {
   },
   'QWEN.md': {
     model: 'Qwen',
-    emphasis: ['Run `npm run affected:list` before editing to confirm scope. Never rewrite across many workspaces at once.'],
+    emphasis: [
+      'Run `npm run affected:list` before editing to confirm scope. Never rewrite across many workspaces at once.',
+    ],
   },
 };
 

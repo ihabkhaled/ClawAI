@@ -90,6 +90,16 @@ describe('prompt and note', () => {
     expect(prompt).toContain('add this to Trips');
   });
 
+  it('lets the planner be generous with standing preferences only when the user confirms first', () => {
+    const base = { userText: 'Call me Jonas from here on.', previousText: '', packNames: [] };
+
+    expect(buildSaveIntentPrompt({ ...base, proposeFirst: true })).toContain(
+      'only PROPOSES a save',
+    );
+    expect(buildSaveIntentPrompt(base)).not.toContain('PROPOSES');
+    expect(buildSaveIntentPrompt({ ...base, proposeFirst: false })).not.toContain('PROPOSES');
+  });
+
   it('tells the answering model what was done and which link to give', () => {
     const note = contextSaveModelNote({
       status: ContextSaveStatus.SAVED,

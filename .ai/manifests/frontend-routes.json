@@ -582,9 +582,59 @@
       "route": "/models"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/observability/consumption/page.tsx",
+      "kind": "page",
+      "route": "/observability/consumption"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/observability/failures/page.tsx",
+      "kind": "page",
+      "route": "/observability/failures"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/observability/models/detail/page.tsx",
+      "kind": "page",
+      "route": "/observability/models/detail"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/observability/models/page.tsx",
+      "kind": "page",
+      "route": "/observability/models"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/observability/page.tsx",
       "kind": "page",
       "route": "/observability"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/observability/plans/page.tsx",
+      "kind": "page",
+      "route": "/observability/plans"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/observability/providers/[provider]/page.tsx",
+      "kind": "page",
+      "route": "/observability/providers/[provider]"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/observability/providers/page.tsx",
+      "kind": "page",
+      "route": "/observability/providers"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/observability/surfaces/page.tsx",
+      "kind": "page",
+      "route": "/observability/surfaces"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/observability/tracing/page.tsx",
+      "kind": "page",
+      "route": "/observability/tracing"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/observability/users/page.tsx",
+      "kind": "page",
+      "route": "/observability/users"
     },
     {
       "file": "apps/claw-frontend/src/app/(portal)/plan/page.tsx",

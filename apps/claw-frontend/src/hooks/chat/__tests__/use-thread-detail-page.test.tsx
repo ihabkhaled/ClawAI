@@ -203,6 +203,13 @@ describe('useThreadDetailPage — composes every page-level hook', () => {
     expect(result.current.shellProps.threadId).toBe('thread-123');
     expect(result.current.shellProps.title).toBe('Test Thread');
     expect(result.current.shellProps.canCompare).toBe(true);
+    expect(result.current.shellProps.contextSaveProposalProps).toMatchObject({
+      threadId: 'thread-123',
+      isReady: true,
+      // From the messages query, so the dialog host never baselines a stale cache.
+      isFetching: false,
+    });
+    expect(Array.isArray(result.current.shellProps.contextSaveProposalProps.messages)).toBe(true);
     expect(result.current.shellProps.canUseQualityControls).toBe(true);
     // The composer no longer carries a height: it sizes itself to its content
     // (ADR-088). What the shell needs from this hook instead is the overflow

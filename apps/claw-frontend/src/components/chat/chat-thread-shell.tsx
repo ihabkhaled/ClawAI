@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ChatPanelDropzone } from '@/components/chat/chat-panel-dropzone';
 import { ChatThreadActionRail } from '@/components/chat/chat-thread-action-rail';
 import { ChatThreadHeaderMenu } from '@/components/chat/chat-thread-header-menu';
+import { ContextSaveProposalHost } from '@/components/chat/context-save-proposal-host';
 import { EditableTitle } from '@/components/chat/editable-title';
 import { InThreadComparePanel } from '@/components/chat/in-thread-compare-panel';
 import { MessageComposer } from '@/components/chat/message-composer';
@@ -168,6 +169,9 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
       <ShareChatDialog {...props.shareDialogProps} />
 
       <ThreadCreateDialog {...props.threadCreateDialogProps} />
+
+      {/* "Remember this" (ADR-168): opens by itself for a fresh proposal. */}
+      <ContextSaveProposalHost {...props.contextSaveProposalProps} />
 
       <ConfirmDialog
         open={props.deleteConfirmOpen}

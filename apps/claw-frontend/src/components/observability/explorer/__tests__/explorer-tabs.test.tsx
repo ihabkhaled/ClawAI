@@ -3,36 +3,24 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConsumptionTab } from '@/components/observability/explorer/consumption-tab';
 import { FailuresTab } from '@/components/observability/explorer/failures-tab';
-import { ModelsTab } from '@/components/observability/explorer/models-tab';
-import { OverviewTab } from '@/components/observability/explorer/overview-tab';
 import { TracingTab } from '@/components/observability/explorer/tracing-tab';
-import { UsersTab } from '@/components/observability/explorer/users-tab';
 import { TracingDimension } from '@/enums/tracing-dimension.enum';
 import { UsageLeaderboardDimension } from '@/enums/usage-leaderboard-dimension.enum';
 import { useObservabilityFailures } from '@/hooks/observability/use-observability-failures';
 import { useObservabilityTracing } from '@/hooks/observability/use-observability-tracing';
-import { useUsageExplorerUsers } from '@/hooks/observability/use-usage-explorer-users';
 import { useUsageLeaderboard } from '@/hooks/observability/use-usage-leaderboard';
 import { useUsageTimeseries } from '@/hooks/observability/use-usage-timeseries';
 
-import { FULL_EMAIL, groupRow, metrics, scope, tStub as t, userRow } from './explorer-fixtures';
+import { groupRow, metrics, scope, tStub as t } from './explorer-fixtures';
 
 vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({ t: (key: string) => key, locale: 'en', dir: 'ltr' }),
 }));
-vi.mock('@/hooks/observability/use-usage-explorer-users');
 vi.mock('@/hooks/observability/use-usage-leaderboard');
 vi.mock('@/hooks/observability/use-usage-timeseries');
 vi.mock('@/hooks/observability/use-observability-failures');
 vi.mock('@/hooks/observability/use-observability-tracing');
-vi.mock('@/hooks/observability/use-service-status', () => ({
-  useServiceStatus: () => ({}),
-}));
-vi.mock('@/components/observability/service-status-section', () => ({
-  ServiceStatusSection: () => <div data-testid="service-status" />,
-}));
 
-const mockUsers = vi.mocked(useUsageExplorerUsers);
 const mockLeaderboard = vi.mocked(useUsageLeaderboard);
 const mockTimeseries = vi.mocked(useUsageTimeseries);
 const mockFailures = vi.mocked(useObservabilityFailures);
@@ -59,29 +47,6 @@ function pager(overrides = {}) {
     hasPrevious: false,
     goNext: vi.fn(),
     goPrevious: vi.fn(),
-    ...overrides,
-  };
-}
-
-function usersState(overrides = {}) {
-  return {
-    controls: controls(),
-    pager: pager(),
-    page: {
-      from: 'a',
-      to: 'b',
-      generatedAt: 'c',
-      sort: 'lastSeen',
-      order: 'desc' as const,
-      limit: 10,
-      items: [userRow()],
-      nextCursor: 'c2',
-      matchedUsers: 7,
-    },
-    isLoading: false,
-    isFetching: false,
-    isError: false,
-    refetch: noop,
     ...overrides,
   };
 }
@@ -133,109 +98,6 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('UsersTab', () => {
-  it('lists users with the full email, the matched count and opens a user', () => {
-    mockUsers.mockReturnValue(usersState());
-    const onOpenUser = vi.fn();
-    render(<UsersTab scope={scope()} onOpenUser={onOpenUser} t={t} />);
-    expect(screen.getByText(FULL_EMAIL)).toBeInTheDocument();
-    expect(screen.getByText(/observabilityExplorer.matchedUsers\|count=7/u)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /openUser/u }));
-    expect(onOpenUser).toHaveBeenCalledWith('user-1');
-  });
-
-  it('sends the typed search to the hook', () => {
-    const state = usersState();
-    mockUsers.mockReturnValue(state);
-    render(<UsersTab scope={scope()} onOpenUser={noop} t={t} />);
-    fireEvent.change(screen.getByLabelText('observabilityExplorer.usersSearch'), {
-      target: { value: 'jane' },
-    });
-    expect(state.controls.setSearchDraft).toHaveBeenCalledWith('jane');
-  });
-
-  it('pages forward with the server cursor and back again', () => {
-    const state = usersState({ pager: pager({ hasPrevious: true, pageNumber: 2 }) });
-    mockUsers.mockReturnValue(state);
-    render(<UsersTab scope={scope()} onOpenUser={noop} t={t} />);
-    fireEvent.click(screen.getByRole('button', { name: 'pagination.next' }));
-    expect(state.pager.goNext).toHaveBeenCalledWith('c2');
-    fireEvent.click(screen.getByRole('button', { name: 'pagination.previous' }));
-    expect(state.pager.goPrevious).toHaveBeenCalled();
-  });
-
-  it('disables next on the last page and previous on the first', () => {
-    mockUsers.mockReturnValue(
-      usersState({
-        page: { ...usersState().page, nextCursor: null },
-      }),
-    );
-    render(<UsersTab scope={scope()} onOpenUser={noop} t={t} />);
-    expect(screen.getByRole('button', { name: 'pagination.next' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'pagination.previous' })).toBeDisabled();
-  });
-
-  it('shows the loading state', () => {
-    mockUsers.mockReturnValue(usersState({ isLoading: true, page: null }));
-    render(<UsersTab scope={scope()} onOpenUser={noop} t={t} />);
-    expect(screen.getByRole('status')).toBeInTheDocument();
-  });
-
-  it('shows the error state with a retry that refetches', () => {
-    const refetch = vi.fn();
-    mockUsers.mockReturnValue(usersState({ isError: true, page: null, refetch }));
-    render(<UsersTab scope={scope()} onOpenUser={noop} t={t} />);
-    expect(screen.getByText('usageAnalytics.errorTitle')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
-    expect(refetch).toHaveBeenCalled();
-  });
-
-  it('shows the empty state when nobody matches', () => {
-    mockUsers.mockReturnValue(
-      usersState({ page: { ...usersState().page, items: [], nextCursor: null, matchedUsers: 0 } }),
-    );
-    render(<UsersTab scope={scope()} onOpenUser={noop} t={t} />);
-    expect(screen.getByText('usageAnalytics.empty')).toBeInTheDocument();
-  });
-});
-
-describe('OverviewTab', () => {
-  it('shows service status, the headline cards, and opens a top user', () => {
-    mockTimeseries.mockReturnValue(timeseriesState());
-    mockLeaderboard.mockReturnValue(
-      leaderboardState([groupRow({ key: 'user-1', userId: 'user-1', email: FULL_EMAIL })]),
-    );
-    const onOpenUser = vi.fn();
-    render(<OverviewTab scope={scope()} onOpenUser={onOpenUser} t={t} />);
-    expect(screen.getByTestId('service-status')).toBeInTheDocument();
-    expect(screen.getByTestId('metric-cards')).toBeInTheDocument();
-    expect(screen.getByTestId('area-line-chart')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /openUser/u }));
-    expect(onOpenUser).toHaveBeenCalledWith('user-1');
-  });
-
-  it('shows the empty state when the period has no usage', () => {
-    mockTimeseries.mockReturnValue(
-      timeseriesState({
-        data: { ...timeseriesState().data, totals: metrics({ requests: 0 }), series: [] },
-      }),
-    );
-    mockLeaderboard.mockReturnValue(leaderboardState([]));
-    render(<OverviewTab scope={scope()} onOpenUser={noop} t={t} />);
-    expect(screen.getAllByText('usageAnalytics.empty').length).toBeGreaterThan(0);
-    expect(screen.queryByTestId('metric-cards')).not.toBeInTheDocument();
-  });
-
-  it('shows an error with retry when the timeseries fails', () => {
-    const refetch = vi.fn();
-    mockTimeseries.mockReturnValue(timeseriesState({ data: null, isError: true, refetch }));
-    mockLeaderboard.mockReturnValue(leaderboardState([]));
-    render(<OverviewTab scope={scope()} onOpenUser={noop} t={t} />);
-    fireEvent.click(screen.getAllByRole('button', { name: 'common.retry' })[0] as HTMLElement);
-    expect(refetch).toHaveBeenCalled();
-  });
-});
-
 describe('ConsumptionTab', () => {
   it('draws tokens, cost and billing charts and the workflow table', () => {
     mockTimeseries.mockReturnValue(timeseriesState());
@@ -257,17 +119,6 @@ describe('ConsumptionTab', () => {
     mockLeaderboard.mockReturnValue(leaderboardState([]));
     render(<ConsumptionTab scope={scope()} t={t} />);
     expect(screen.getAllByText('observabilityExplorer.costPartial').length).toBeGreaterThan(0);
-  });
-});
-
-describe('ModelsTab', () => {
-  it('renders the provider and model tables, each with its own search', () => {
-    mockLeaderboard.mockReturnValue(leaderboardState());
-    render(<ModelsTab scope={scope()} t={t} />);
-    expect(screen.getByText('observabilityExplorer.headingProviders')).toBeInTheDocument();
-    expect(screen.getByText('usageAnalytics.modelsAllHeading')).toBeInTheDocument();
-    expect(screen.getAllByTestId('group-table')).toHaveLength(2);
-    expect(screen.getAllByLabelText('observabilityExplorer.searchLabel')).toHaveLength(2);
   });
 });
 

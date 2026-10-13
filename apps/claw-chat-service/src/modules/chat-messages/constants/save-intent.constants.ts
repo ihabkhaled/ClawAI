@@ -14,21 +14,29 @@ export const SAVE_PREFILTER_WORDS: readonly string[] = [
   'memorize',
   'memorise',
   'memory',
-  'save this',
-  'save that',
-  'save it',
   'context',
   'keep in mind',
   "don't forget",
   'note this',
   'note that',
+  // en: an object-bearing save, kept narrow (a bare "save this" is a whole-message command)
+  'save this answer',
+  'save that answer',
+  'save this response',
+  'save this reply',
+  'save this to my',
+  'save that to my',
+  'save this in my',
+  'save that in my',
+  'store this in my',
+  'store that in my',
+  'keep this in my',
+  'keep that in my',
+  'keep this in mind',
+  'keep that in mind',
   // en: a save asked without the words memory/context ("add this to clawai")
   'add this',
   'add that',
-  'store this',
-  'store that',
-  'keep this',
-  'keep that',
   'from now on',
   'going forward',
   'for later',
@@ -118,9 +126,14 @@ export const SAVE_INTENT_MAX_OUTPUT_TOKENS = 700;
 export const SAVE_INTENT_PREVIOUS_EXCERPT_CHARS = 4_000;
 export const SAVE_INTENT_USER_EXCERPT_CHARS = 6_000;
 
-/** Bounds on what the classifier may write. */
-export const SAVE_INTENT_MEMORY_TEXT_MAX_CHARS = 1_000;
+/**
+ * Bounds on what the classifier may write. ONE number per kind, shared by the
+ * planner's verdict schema, the confirm DTO and the frontend form (a test there
+ * reads this file): a SUMMARY memory is as long as a pack summary may be, so a
+ * proposal the planner produced is never one the confirm refuses.
+ */
 export const SAVE_INTENT_SUMMARY_MAX_CHARS = 4_000;
+export const SAVE_INTENT_MEMORY_TEXT_MAX_CHARS = 4_000;
 export const SAVE_INTENT_PACK_NAME_MAX_CHARS = 120;
 
 /**
@@ -167,6 +180,20 @@ export const SAVE_INTENT_SYSTEM_PROMPT = [
   '                       "packName": string|null, "newPackName": string|null}}',
 ].join('\n');
 
+/**
+ * Appended in ASK mode only. The user confirms the proposal before anything is written, so the
+ * planner may be generous with standing preferences; AUTO mode (a silent save) keeps the strict rule.
+ */
+export const SAVE_INTENT_PROPOSE_ADDENDUM = [
+  '',
+  'This turn only PROPOSES a save: the user reviews and confirms before anything is stored, so a',
+  'wrong yes costs one click. ALSO answer save=true, with a MEMORY, when the message states a',
+  'lasting preference, standing instruction or fact about the user without using the word remember',
+  '("call me Jonas from here on", "always answer in French", "I am vegetarian", "never use',
+  'emojis with me", "my budget is 5k"). Do NOT propose for one-off task details ("translate this',
+  'to French", "use 5 columns in this table") or for questions.',
+].join('\n');
+
 /** memory-service routes added for ADR-134 (service token, owner-scoped). */
 export const PACK_OPTIONS_FOR_CHAT_PATH = '/api/v1/internal/context-packs/options-for-chat';
 export const CONTEXT_PACKS_INTERNAL_PATH = '/api/v1/internal/context-packs';
@@ -181,6 +208,25 @@ export const CONTEXT_SAVE_FAILURE_ERRORS: Record<
   LIMIT: { code: 'PLAN_CONTEXT_PACK_LIMIT_EXCEEDED', status: HttpStatus.TOO_MANY_REQUESTS },
   UNAVAILABLE: { code: 'CONTEXT_SAVE_UNAVAILABLE', status: HttpStatus.SERVICE_UNAVAILABLE },
 };
+
+/**
+ * The stable codes a confirm that saved nothing or only half reports as
+ * `proposalError` (and as the error code of a total failure). The client maps
+ * each one to its own translated reason; every code is a value of
+ * CONTEXT_SAVE_FAILURE_ERRORS, so the two lists cannot drift.
+ */
+export const CONTEXT_SAVE_PROPOSAL_ERROR_CODES: readonly string[] = Object.values(
+  CONTEXT_SAVE_FAILURE_ERRORS,
+).map((error) => error.code);
+
+/** What a confirm that threw unexpectedly reports (the service could not be reached). */
+export const CONTEXT_SAVE_UNEXPECTED_FAILURE: SaveFailureReason = 'UNAVAILABLE';
+
+/**
+ * A SAVING claim older than this is an abandoned one (the process died after
+ * claiming): the next confirm or pack choice treats the record as waiting again.
+ */
+export const CONTEXT_SAVE_SAVING_STALE_MS = 120_000;
 
 /**
  * Opens the save note when it is repeated on the final user turn. The system

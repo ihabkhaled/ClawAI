@@ -137,6 +137,7 @@ export function scope(overrides: Partial<ObservabilityScope> = {}): Observabilit
     buildParams: () => ({ hours: '168' }),
     buildRangeParams: () => ({ hours: '168' }),
     buildHours: (maxHours: number) => ({ hours: Math.min(168, maxHours), clamped: false }),
+    issue: null,
     ...overrides,
   };
 }

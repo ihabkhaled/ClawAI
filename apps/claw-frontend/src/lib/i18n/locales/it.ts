@@ -10,6 +10,7 @@ import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
+import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
@@ -498,6 +499,37 @@ export const it: TranslationDictionary = {
         PLAN: 'Il tuo piano non include questa funzione.',
         LIMIT: 'Hai raggiunto il limite del tuo piano.',
         UNAVAILABLE: 'Il servizio non è disponibile ora. Riprova tra poco.',
+      },
+      proposal: {
+        cardTitle: 'Salvare questo in memoria?',
+        review: 'Controlla e salva',
+        notNow: 'Non ora',
+        dialogTitle: 'Ricordare questo?',
+        dialogDescription:
+          'Controlla cosa verrà salvato e modifica ciò che vuoi. Non viene memorizzato nulla finché non premi Salva.',
+        memorySection: 'Memoria',
+        memoryType: 'Tipo',
+        memoryText: 'Cosa ricordare',
+        packSection: 'Pacchetto di contesto',
+        packContent: 'Contenuto da aggiungere',
+        packChoose: 'Pacchetto',
+        packPick: 'Scegli un pacchetto',
+        packOption: '{name} ({count} elementi)',
+        packNew: 'Nuovo pacchetto',
+        packNewName: 'Nome del nuovo pacchetto',
+        save: 'Salva',
+        alwaysAuto: 'Salva sempre automaticamente senza chiedere',
+        alwaysAutoHint:
+          'Si applica quando premi Salva. Puoi cambiarlo in qualsiasi momento nelle impostazioni della memoria.',
+        partialFailed: 'Una parte non è stata salvata.',
+        saved: 'Salvato.',
+        failed: 'Impossibile salvare. Riprova.',
+        errors: {
+          empty: 'Questo campo non può essere vuoto.',
+          tooLong: 'È troppo lungo.',
+          packRequired: 'Scegli un pacchetto o creane uno nuovo.',
+          nothingSelected: 'Scegli la memoria, un pacchetto di contesto o entrambi.',
+        },
       },
     },
     speech: {
@@ -1500,6 +1532,14 @@ export const it: TranslationDictionary = {
     resolvedUrlLabel: 'Si risolve in:',
   },
   memory: {
+    saveMode: {
+      title: 'Salvataggio dalla chat',
+      switchLabel: 'Salva sempre automaticamente',
+      descriptionAsk:
+        'Disattivato: ClawAI ti chiede conferma prima di salvare ciò che gli hai chiesto di ricordare.',
+      descriptionAuto:
+        'Attivato: ciò che chiedi a ClawAI di ricordare viene salvato subito, senza chiedere.',
+    },
     title: 'Memoria',
     description: 'Gestisci i record di memoria IA',
     createMemory: 'Crea memoria',
@@ -4625,6 +4665,7 @@ export const it: TranslationDictionary = {
   skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.it,
   usageAnalytics: USAGE_ANALYTICS_TRANSLATIONS.it,
   observabilityExplorer: OBSERVABILITY_EXPLORER_TRANSLATIONS.it,
+  observabilityPages: OBSERVABILITY_PAGES_TRANSLATIONS.it,
   notifications: NOTIFICATIONS_TRANSLATIONS.it,
   adminBilling: {
     credit: {

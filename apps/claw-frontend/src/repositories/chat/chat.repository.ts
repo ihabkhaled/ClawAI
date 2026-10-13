@@ -9,6 +9,8 @@ import type {
   ThreadLineage,
   RegenerateMessageRequest,
   ContextSaveChoiceRequest,
+  ContextSaveMode,
+  ContextSaveProposalConfirmRequest,
   ContextSaveRecord,
   ConsensusRequest,
   ConsensusResponse,
@@ -121,6 +123,27 @@ export const chatRepository = {
     return response.data;
   },
 
+  /** Saves the owner's confirmed (possibly edited) proposal (ADR-168). */
+  async confirmContextSave(
+    messageId: string,
+    request: ContextSaveProposalConfirmRequest,
+  ): Promise<ContextSaveRecord> {
+    const response = await apiClient.post<ContextSaveRecord>(
+      `/chat-messages/${messageId}/context-save/confirm`,
+      request,
+    );
+    return response.data;
+  },
+
+  /** "Not now": drops a proposal without saving; safe to repeat (ADR-168). */
+  async dismissContextSave(messageId: string): Promise<ContextSaveRecord> {
+    const response = await apiClient.post<ContextSaveRecord>(
+      `/chat-messages/${messageId}/context-save/dismiss`,
+      {},
+    );
+    return response.data;
+  },
+
   async createMessage(data: CreateMessageRequest): Promise<ChatMessage> {
     const response = await apiClient.post<ChatMessage>('/chat-messages', data);
     return response.data;
@@ -175,9 +198,14 @@ export const chatRepository = {
    * Destructive on the server: everything below the edited message is deleted,
    * because those were answers to a question that no longer exists.
    */
-  async editMessage(messageId: string, content: string): Promise<ChatMessage> {
+  async editMessage(
+    messageId: string,
+    content: string,
+    contextSaveMode?: ContextSaveMode,
+  ): Promise<ChatMessage> {
     const response = await apiClient.post<ChatMessage>(`/chat-messages/${messageId}/edit`, {
       content,
+      ...(contextSaveMode === undefined ? {} : { contextSaveMode }),
     });
     return response.data;
   },

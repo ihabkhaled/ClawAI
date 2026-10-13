@@ -10,6 +10,7 @@ import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
+import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
@@ -495,6 +496,36 @@ export const ja: TranslationDictionary = {
         PLAN: 'ご利用のプランには含まれていません。',
         LIMIT: 'プランの上限に達しました。',
         UNAVAILABLE: '現在サービスを利用できません。少し後でもう一度お試しください。',
+      },
+      proposal: {
+        cardTitle: 'これをメモリに保存しますか？',
+        review: '確認して保存',
+        notNow: '今はしない',
+        dialogTitle: 'これを覚えておきますか？',
+        dialogDescription:
+          '保存される内容を確認し、必要なら自由に変更してください。「保存」を押すまで何も保存されません。',
+        memorySection: 'メモリ',
+        memoryType: 'タイプ',
+        memoryText: '覚えておく内容',
+        packSection: 'コンテキストパック',
+        packContent: '追加する内容',
+        packChoose: 'パック',
+        packPick: 'パックを選択',
+        packOption: '{name}（{count}件）',
+        packNew: '新しいパック',
+        packNewName: '新しいパックの名前',
+        save: '保存',
+        alwaysAuto: '確認せずに常に自動で保存する',
+        alwaysAutoHint: '「保存」を押したときに適用されます。いつでもメモリの設定で変更できます。',
+        partialFailed: '一部が保存されませんでした。',
+        saved: '保存しました。',
+        failed: '保存できませんでした。もう一度お試しください。',
+        errors: {
+          empty: 'この項目は空にできません。',
+          tooLong: '長すぎます。',
+          packRequired: 'パックを選ぶか、新しく作成してください。',
+          nothingSelected: 'メモリ、コンテキストパック、または両方を選択してください。',
+        },
       },
     },
     speech: {
@@ -1480,6 +1511,12 @@ export const ja: TranslationDictionary = {
     resolvedUrlLabel: '解決先:',
   },
   memory: {
+    saveMode: {
+      title: 'チャットからの保存',
+      switchLabel: '常に自動で保存する',
+      descriptionAsk: 'オフ：覚えておくよう頼んだ内容を保存する前に、ClawAI が確認を求めます。',
+      descriptionAuto: 'オン：覚えておくよう頼んだ内容は、確認なしですぐに保存されます。',
+    },
     title: 'メモリ',
     description: 'AI メモリ レコードの管理',
     createMemory: 'メモリの作成',
@@ -4586,6 +4623,7 @@ export const ja: TranslationDictionary = {
   skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.ja,
   usageAnalytics: USAGE_ANALYTICS_TRANSLATIONS.ja,
   observabilityExplorer: OBSERVABILITY_EXPLORER_TRANSLATIONS.ja,
+  observabilityPages: OBSERVABILITY_PAGES_TRANSLATIONS.ja,
   notifications: NOTIFICATIONS_TRANSLATIONS.ja,
   adminBilling: {
     credit: {

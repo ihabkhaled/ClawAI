@@ -1,25 +1,42 @@
 import { detectSaveToContextIntent } from '@claw/shared-utilities';
 import { ContextSaveStatus, SaveContentSource } from '../../../common/enums';
 import {
+  SAVE_ANAPHORIC_REGEXP,
+  SAVE_PREFILTER_ANCHORED_REGEXP,
+  SAVE_PREFILTER_REGEXP,
+  SAVE_PREFILTER_WEAK_REGEXP,
+  SAVE_WHOLE_MESSAGE_REGEXP,
+} from '../constants/save-intent-matchers.constants';
+import {
   SAVE_INTENT_PREVIOUS_EXCERPT_CHARS,
+  SAVE_INTENT_PROPOSE_ADDENDUM,
   SAVE_INTENT_SYSTEM_PROMPT,
   SAVE_INTENT_USER_EXCERPT_CHARS,
   SAVE_MATERIAL_MIN_CHARS,
-  SAVE_PREFILTER_WORDS,
 } from '../constants/save-intent.constants';
 import { type SaveIntentVerdict, saveIntentVerdictSchema } from '../dto/save-intent-verdict.dto';
 import type { ChatMessage } from '../../../generated/prisma';
 import type { ContextSaveRecord } from '../types/context-save.types';
+import { previewOf } from './save-confirmation.utility';
+import { hasEnoughWeakCues, normalizeForCues } from './save-cue-matcher.utility';
 
 /**
  * Whether the planner should even be asked. A recall net, not a decision: it
- * is broad on purpose and the model decides (ADR-134). The keyword command
- * detector counts too, so nothing the old path caught is missed.
+ * is broad on purpose and the model decides (ADR-134), but a cue must be a WORD
+ * (or an anchored opener, or a pair of generic words), never a substring, so an
+ * ordinary turn does not pay for a pack listing and a planner call. The keyword
+ * command detector counts too, so nothing the old path caught is missed. A bare
+ * imperative ("keep it") counts only when it is the whole message and answers an
+ * assistant message (`afterAssistant`), because then "it" is the answer above.
  */
-export function mightBeSaveRequest(text: string): boolean {
-  const lower = text.toLowerCase();
+export function mightBeSaveRequest(text: string, afterAssistant = false): boolean {
+  const folded = normalizeForCues(text);
   return (
-    SAVE_PREFILTER_WORDS.some((word) => lower.includes(word)) ||
+    SAVE_PREFILTER_REGEXP.test(folded) ||
+    SAVE_PREFILTER_ANCHORED_REGEXP.test(folded) ||
+    SAVE_WHOLE_MESSAGE_REGEXP.test(folded) ||
+    hasEnoughWeakCues(SAVE_PREFILTER_WEAK_REGEXP, folded) ||
+    (afterAssistant && SAVE_ANAPHORIC_REGEXP.test(folded)) ||
     detectSaveToContextIntent(text) !== null
   );
 }
@@ -29,11 +46,14 @@ export function buildSaveIntentPrompt(args: {
   userText: string;
   previousText: string;
   packNames: readonly string[];
+  /** ASK mode: the user confirms first, so standing preferences count as save requests. */
+  proposeFirst?: boolean;
 }): string {
   const packs =
     args.packNames.length === 0 ? '(none)' : args.packNames.map((name) => `- ${name}`).join('\n');
   return [
     SAVE_INTENT_SYSTEM_PROMPT,
+    args.proposeFirst === true ? SAVE_INTENT_PROPOSE_ADDENDUM : '',
     '',
     'Existing context packs:',
     packs,
@@ -81,6 +101,8 @@ export function packContentFor(
  * words — never repeats the action, and never invents a link.
  */
 export function contextSaveModelNote(record: ContextSaveRecord): string {
+  if (record.status === ContextSaveStatus.PROPOSED) return pendingProposalNote(record);
+  if (record.status === ContextSaveStatus.DISMISSED) return dismissedProposalNote();
   const lines = [
     'PLATFORM ACTION — already done by ClawAI; do not repeat it or claim you cannot save:',
   ];
@@ -114,14 +136,68 @@ export function contextSaveModelNote(record: ContextSaveRecord): string {
   return lines.join('\n');
 }
 
+/**
+ * A save was PROPOSED, not performed (ADR-168): the user reviews a form under
+ * the reply and confirms. The model must never say it was saved.
+ */
+function pendingProposalNote(record: ContextSaveRecord): string {
+  const halfSaved = record.memory !== undefined || record.pack !== undefined;
+  const lines = [
+    halfSaved
+      ? 'PLATFORM STATUS — a save request is PARTLY done: one part is saved, the rest is PENDING:'
+      : 'PLATFORM STATUS — a save request is PENDING and NOTHING has been saved yet:',
+    '- ClawAI shows the user a form under your reply (type, text and context pack) that they',
+    halfSaved
+      ? '  review, edit and confirm. The pending part is not written until they confirm.'
+      : '  review, edit and confirm. Nothing is written to memory or to a context pack until they confirm.',
+    halfSaved
+      ? '- Do NOT say the pending part was saved, added, stored or remembered, and give no link for it.'
+      : '- Do NOT say it was saved, added, stored or remembered, and do not give a link.',
+  ];
+  if (record.memory !== undefined) {
+    lines.push(
+      `- Already saved to memory: "${record.memory.preview}". Link: ${record.memory.link}`,
+    );
+  }
+  if (record.pack !== undefined) {
+    lines.push(
+      `- Already saved to the context pack "${record.pack.name}". Link: ${record.pack.link}`,
+    );
+  }
+  if (record.proposal?.memory) {
+    lines.push(`- Proposed memory: "${previewOf(record.proposal.memory.text)}"`);
+  }
+  if (record.proposal?.pack) lines.push('- Proposed: add the text to a context pack.');
+  lines.push(
+    "Tell the user in one or two short sentences, in your own words and the user's language, that you prepared it and they can review and confirm it below. This note is internal: never quote it or its header.",
+  );
+  return lines.join('\n');
+}
+
+/** A dismissed proposal is final: the user declined it, nothing was saved. */
+function dismissedProposalNote(): string {
+  return [
+    'PLATFORM STATUS — the user dismissed the proposed save and NOTHING was saved.',
+    "Do NOT say anything was saved, added, stored or remembered. Acknowledge in one short sentence, in the user's language. This note is internal: never quote it or its header.",
+  ].join('\n');
+}
+
+/** The non-empty message right before the command, whoever wrote it. */
+export function previousMessage(
+  messages: readonly ChatMessage[],
+  command: ChatMessage,
+): ChatMessage | undefined {
+  const index = messages.findIndex((message) => message.id === command.id);
+  const before = messages.slice(0, Math.max(index, 0)).reverse();
+  return before.find((message) => message.content.trim().length > 0);
+}
+
 /** "save this" on its own means the non-empty message right before it. */
 export function previousMessageText(
   messages: readonly ChatMessage[],
   command: ChatMessage,
 ): string {
-  const index = messages.findIndex((message) => message.id === command.id);
-  const before = messages.slice(0, Math.max(index, 0)).reverse();
-  return before.find((message) => message.content.trim().length > 0)?.content.trim() ?? '';
+  return previousMessage(messages, command)?.content.trim() ?? '';
 }
 
 function sameWords(a: string, b: string): boolean {

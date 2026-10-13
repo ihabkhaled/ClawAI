@@ -1,9 +1,18 @@
+import type {
+  AdminObsDetail,
+  AdminObsFilterOptions,
+  AdminObsHealthReport,
+  AdminObsOverview,
+  AdminObsPage,
+  AdminObsUsersExport,
+} from '@claw/shared-types';
+
+import { OBSERVABILITY_API_BASE } from '@/constants/observability-pages.constants';
 import { apiClient } from '@/services/shared/api-client';
 import type {
   AdminUsageLeaderboardPage,
   AdminUsageRequestsPage,
   AdminUsageTimeseries,
-  AdminUsageUsersPage,
   AdminUserConsumptionDetail,
   ExplorerListQuery,
   ExplorerParams,
@@ -12,8 +21,14 @@ import type {
   TracingQuery,
   TracingResponse,
 } from '@/types/observability-explorer.types';
+import type {
+  ObservabilityEntityKind,
+  ObservabilityExportQuery,
+  ObservabilityListQuery,
+} from '@/types/observability-pages-api.types';
 
 const EXPLORER = '/admin/usage-explorer';
+const OBSERVABILITY = OBSERVABILITY_API_BASE;
 
 /** Strings only, empty and undefined dropped so the server's defaults apply. */
 function toParams(...sources: Array<object | undefined>): ExplorerParams {
@@ -33,10 +48,73 @@ function toParams(...sources: Array<object | undefined>): ExplorerParams {
  * failures and tracing views. The explorer returns full emails to admins only.
  */
 export const observabilityExplorerRepository = {
-  async getUsers(range: ExplorerParams, list: ExplorerListQuery): Promise<AdminUsageUsersPage> {
-    const response = await apiClient.get<AdminUsageUsersPage>(
-      `${EXPLORER}/users`,
+  /** Every matching user (server-capped), for the CSV download. Same period, filters, search and order as the table. */
+  async exportUsers(
+    range: ExplorerParams,
+    list: ObservabilityExportQuery,
+  ): Promise<AdminObsUsersExport> {
+    const response = await apiClient.get<AdminObsUsersExport>(
+      `${OBSERVABILITY}/users/export`,
       toParams(range, list),
+    );
+    return response.data;
+  },
+
+  async getFilterOptions(range: ExplorerParams): Promise<AdminObsFilterOptions> {
+    const response = await apiClient.get<AdminObsFilterOptions>(
+      `${OBSERVABILITY}/filter-options`,
+      toParams(range),
+    );
+    return response.data;
+  },
+
+  /** Settled versus refunded holds overall and per provider, most refunds first. */
+  async getHealth(range: ExplorerParams): Promise<AdminObsHealthReport> {
+    const response = await apiClient.get<AdminObsHealthReport>(
+      `${OBSERVABILITY}/health`,
+      toParams(range),
+    );
+    return response.data;
+  },
+
+  async getOverview(range: ExplorerParams): Promise<AdminObsOverview> {
+    const response = await apiClient.get<AdminObsOverview>(
+      `${OBSERVABILITY}/overview`,
+      toParams(range),
+    );
+    return response.data;
+  },
+
+  /** Users, providers, models, plans or workflows: one row each, with derived values. */
+  async getList(
+    kind: ObservabilityEntityKind,
+    range: ExplorerParams,
+    list: ObservabilityListQuery,
+  ): Promise<AdminObsPage> {
+    const response = await apiClient.get<AdminObsPage>(
+      `${OBSERVABILITY}/${kind}`,
+      toParams(range, list),
+    );
+    return response.data;
+  },
+
+  async getProviderDetail(provider: string, range: ExplorerParams): Promise<AdminObsDetail> {
+    const response = await apiClient.get<AdminObsDetail>(
+      `${OBSERVABILITY}/providers/${encodeURIComponent(provider)}`,
+      toParams(range),
+    );
+    return response.data;
+  },
+
+  /** A model id contains "/" and ":", so provider and model travel in the query string. */
+  async getModelDetail(
+    provider: string,
+    model: string,
+    range: ExplorerParams,
+  ): Promise<AdminObsDetail> {
+    const response = await apiClient.get<AdminObsDetail>(
+      `${OBSERVABILITY}/models/detail`,
+      toParams(range, { provider, model }),
     );
     return response.data;
   },

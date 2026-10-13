@@ -8,6 +8,7 @@ import type { ObservabilityScope } from '@/types/observability-explorer.types';
 /** Totals and the bucketed series for the selected period and filters. */
 export function useUsageTimeseries(scope: ObservabilityScope) {
   const query = useQuery({
+    enabled: scope.issue === null,
     queryKey: queryKeys.observabilityExplorer.timeseries(
       { ...scope.selection, ...scope.filters },
       '',

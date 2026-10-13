@@ -42,6 +42,14 @@ Service entry points that create threads for Compare/Consensus/Escalation: `chat
 - **TD-045** A lab has no thread before it runs, so its Context button has the pack picker but not the
   "what will be sent" / memory dialogs. Compare in a thread has all three.
 
+- **Save proposals (ADR-168, rule 57 item 11)** Only normal chat proposes "remember this" saves:
+  `contextSaveMode` lives on the create-message DTO alone (edit and regenerate re-run the same
+  `handleMessageRouted` from the stored user message). Compare, in-thread Compare, Consensus, Escalation and the
+  seven labs run their own managers, which never call `ContextSaveOrchestratorManager`, so a save request typed there is
+  answered as plain text, and their DTOs and the frontend do not carry the field. Why: a field the backend never reads
+  is a switch wired to nothing. Closing it: route those managers through the pre-filter and orchestrator, then
+  restore the `contextSaveFields` fragment on their DTOs, in one change. Guard: `context-save-surfaces.dto.spec.ts`.
+
 - **Loose composer controls (rule 40 item 24, follow-up)** Normal chat has ONE round `+` menu (`ComposerPlusMenu`:
   Attach / Context / Tools). Three surfaces still render the old loose buttons: **Compare**
   (`app/(portal)/chat/compare/page.tsx`), **in-thread Compare** (`in-thread-compare-panel.tsx`) and

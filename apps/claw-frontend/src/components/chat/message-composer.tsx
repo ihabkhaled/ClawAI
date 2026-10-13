@@ -9,6 +9,7 @@ import { MaskEditDialog } from '@/components/chat/mask-edit-dialog';
 import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
 import { UploadProgressIndicator } from '@/components/files/upload-progress-indicator';
 import { Button } from '@/components/ui/button';
+import { CHAT_COMPOSER_INPUT_ID } from '@/constants/context-save.constants';
 import { useMessageComposer } from '@/hooks/chat/use-message-composer';
 import type { MessageComposerProps } from '@/types';
 
@@ -57,6 +58,7 @@ export function MessageComposer(props: MessageComposerProps): React.ReactElement
 
         <div data-tour="composer-input">
           <RichPromptTextarea
+            id={CHAT_COMPOSER_INPUT_ID}
             value={composer.content}
             onChange={composer.onValueChange}
             onSubmit={composer.onSubmitValue}

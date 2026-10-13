@@ -200,7 +200,12 @@ export class ChatMessagesController {
     @Body(new ZodValidationPipe(editMessageSchema)) dto: EditMessageDto,
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ChatMessage> {
-    return this.chatMessagesService.editAndRerunMessage(id, user.id, dto.content);
+    return this.chatMessagesService.editAndRerunMessage(
+      id,
+      user.id,
+      dto.content,
+      dto.contextSaveMode,
+    );
   }
 
   @Patch(':id/feedback')

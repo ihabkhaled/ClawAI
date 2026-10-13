@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 
 import type { FailureSort } from '@/enums/failure-sort.enum';
-import type { ObservabilityTab } from '@/enums/observability-tab.enum';
 import type { TracingDimension } from '@/enums/tracing-dimension.enum';
 import type { TracingSort } from '@/enums/tracing-sort.enum';
 import type { UsageBillingKind } from '@/enums/usage-billing-kind.enum';
@@ -75,8 +74,6 @@ export type AdminUsagePage<T> = {
   items: T[];
   nextCursor: string | null;
 };
-
-export type AdminUsageUsersPage = AdminUsagePage<AdminUsageUserRow> & { matchedUsers: number };
 
 export type AdminUsageLeaderboardPage = AdminUsagePage<AdminUsageGroupRow> & {
   dimension: UsageLeaderboardDimension;
@@ -215,6 +212,8 @@ export type ExplorerFilters = {
   model: string;
   workflow: string;
   billing: string;
+  /** Plan id, or `NONE` for requests with no plan. Set by the split Observability pages only. */
+  plan?: string;
 };
 
 export type ExplorerParams = Record<string, string>;
@@ -261,6 +260,8 @@ export type ObservabilityScope = {
   buildRangeParams: () => ExplorerParams;
   /** Whole hours covered by the range, clamped to `maxHours`, for the hours-only endpoints. */
   buildHours: (maxHours: number) => { hours: number; clamped: boolean };
+  /** Why the range cannot be queried (translation key), or null. A scope with an issue must not query. */
+  issue: UsageSelectionIssue;
 };
 
 export type UseObservabilityFiltersReturn = {
@@ -312,11 +313,6 @@ export type TProps = { t: TranslateFunction };
 
 export type ExplorerTabProps = TProps & { scope: ObservabilityScope };
 
-export type ObservabilityTabDefinition = {
-  tab: ObservabilityTab;
-  labelKey: string;
-};
-
 export type CostKindBadgeProps = TProps & {
   kind: UsageCostKind;
   partial?: boolean;
@@ -357,14 +353,6 @@ export type QueryStateProps = TProps & {
   isEmpty: boolean;
   onRetry: () => void;
   children: ReactNode;
-};
-
-export type UsersTableProps = TProps & {
-  users: AdminUsageUserRow[];
-  sort: string;
-  order: SortOrder;
-  onSort: (column: string) => void;
-  onOpenUser: (userId: string) => void;
 };
 
 export type GroupTableProps = TProps & {
@@ -417,8 +405,6 @@ export type UserConsumptionBodyProps = TProps & {
   userId: string;
   initialScope: ObservabilityScope;
 };
-
-export type OpenUserTabProps = ExplorerTabProps & { onOpenUser: (userId: string) => void };
 
 export type LeaderboardSectionProps = ExplorerTabProps & {
   dimension: UsageLeaderboardDimension;

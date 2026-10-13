@@ -30,12 +30,14 @@ export function useUserConsumption(userId: string, initialScope: ObservabilitySc
   const list = { search, sort, order, limit: REQUESTS_PAGE_SIZE, cursor: pager.cursor };
 
   const detail = useQuery({
+    enabled: scope.issue === null,
     queryKey: queryKeys.observabilityExplorer.userDetail(userId, scopeKey),
     placeholderData: (previous) => previous,
     queryFn: () => observabilityExplorerRepository.getUserDetail(userId, scope.buildParams()),
   });
 
   const requests = useQuery({
+    enabled: scope.issue === null,
     queryKey: queryKeys.observabilityExplorer.userRequests(userId, scopeKey, list),
     placeholderData: (previous) => previous,
     queryFn: () =>

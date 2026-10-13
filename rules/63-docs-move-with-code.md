@@ -1,7 +1,7 @@
 # 63 — Docs move with code
 
 **Status:** active, **NON-NEGOTIABLE** · **Owner:** tooling · **Introduced:** 2026-10-13 ·
-**ADR:** [ADR-168](../docs/13-adr/adr-168-agents-md-is-the-canonical-router.md)
+**ADR:** [ADR-170](../docs/13-adr/adr-170-agents-md-is-the-canonical-router.md)
 
 ## The rule
 

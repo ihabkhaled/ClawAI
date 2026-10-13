@@ -1,6 +1,7 @@
 import type { ChatMessage } from '../../../generated/prisma';
 import { CONTEXT_SAVE_TURN_MARKER } from '../constants/save-intent.constants';
 import type { AssembledContext } from '../types/context.types';
+import { contextSaveOf } from './context-save-record.utility';
 
 /**
  * The context the answering model gets on a save turn: the assembled context
@@ -32,6 +33,5 @@ export function withSaveTurnNote(turnText: string, note: string | undefined): st
 
 /** Whether an answer carries a chat-save record (it was a save turn). */
 export function hasContextSave(message: Pick<ChatMessage, 'metadata'>): boolean {
-  const metadata = message.metadata;
-  return typeof metadata === 'object' && metadata !== null && 'contextSave' in metadata;
+  return contextSaveOf(message) !== undefined;
 }

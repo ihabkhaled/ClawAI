@@ -5,7 +5,7 @@
 These are the hard blockers. Each one, alone, fails review and blocks delivery
 regardless of how good the rest of the change is. They sit at the top of the
 authority order together with [`AGENTS.md`](../AGENTS.md), the canonical router
-([ADR-168](../docs/13-adr/adr-168-agents-md-is-the-canonical-router.md)). There is no
+([ADR-170](../docs/13-adr/adr-170-agents-md-is-the-canonical-router.md)). There is no
 situational bypass. If you think you have found one, you have found a bug in the
 change, not an exception to the rule.
 

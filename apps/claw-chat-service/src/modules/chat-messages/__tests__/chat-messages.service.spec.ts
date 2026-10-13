@@ -579,6 +579,21 @@ describe('ChatMessagesService', () => {
       );
     });
 
+    it('stores the chosen save mode on the re-run user message before publishing', async () => {
+      messagesRepo.findById.mockResolvedValue({ ...mockMessage, metadata: { fileIds: ['f1'] } });
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+
+      await service.regenerateMessage('msg-1', 'user-1', { contextSaveMode: 'AUTO' });
+
+      expect(messagesRepo.updateMetadata).toHaveBeenCalledWith('msg-1', {
+        fileIds: ['f1'],
+        contextSaveMode: 'AUTO',
+      });
+      expect(messagesRepo.updateMetadata.mock.invocationCallOrder[0]).toBeLessThan(
+        (rabbitMQ.publish as Mock).mock.invocationCallOrder[0] ?? 0,
+      );
+    });
+
     it('re-routes with AUTO when asked, forcing no model even on a pinned thread', async () => {
       messagesRepo.findById.mockResolvedValue(mockMessage);
       threadsRepo.findById!.mockResolvedValue({
@@ -987,6 +1002,34 @@ describe('ChatMessagesService', () => {
 
   describe('editAndRerunMessage', () => {
     const editable = { ...mockMessage, role: 'USER' as const, content: 'first draft' };
+
+    it('stores the chosen save mode on the message BEFORE the re-run event goes out', async () => {
+      messagesRepo.findById.mockResolvedValue({
+        ...editable,
+        originalContent: null,
+        metadata: { fileIds: ['f1'] },
+      });
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+
+      await service.editAndRerunMessage('msg-1', 'user-1', 'second draft', 'AUTO');
+
+      expect(messagesRepo.updateMetadata).toHaveBeenCalledWith('msg-1', {
+        fileIds: ['f1'],
+        contextSaveMode: 'AUTO',
+      });
+      expect(messagesRepo.updateMetadata.mock.invocationCallOrder[0]).toBeLessThan(
+        (rabbitMQ.publish as Mock).mock.invocationCallOrder[0] ?? 0,
+      );
+    });
+
+    it('leaves the metadata alone when no save mode is sent', async () => {
+      messagesRepo.findById.mockResolvedValue({ ...editable, originalContent: null });
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+
+      await service.editAndRerunMessage('msg-1', 'user-1', 'second draft');
+
+      expect(messagesRepo.updateMetadata).not.toHaveBeenCalled();
+    });
 
     it('replaces the text, keeps the first version, and runs the thread again', async () => {
       messagesRepo.findById.mockResolvedValue({ ...editable, originalContent: null });

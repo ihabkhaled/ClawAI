@@ -2,7 +2,7 @@
 // Builds the GitHub wiki at publish time (publish-wiki.yml). The repository
 // keeps only the hand-written wiki pages; everything that only restates a
 // repository file or a manifest is rendered here from its single source, so it
-// can never drift and is never a second copy to maintain (ADR-168, rules/63).
+// can never drift and is never a second copy to maintain (ADR-170, rules/63).
 //
 //   - mirror pages: wiki/mirrors.json maps a page name to the repository file
 //     it mirrors; the page is that file with relative links made absolute.
@@ -25,12 +25,17 @@ export function readMirrors() {
 
 /** Relative markdown links in `text` (a file at `sourceRel`) made absolute repo links. */
 export function absolutiseLinks(text, sourceRel) {
-  return text.replace(/(\]\()(?!https?:|mailto:|#)([^)\s]+)(\))/gu, (match, open, target, close) => {
-    const [path, anchor] = target.split('#');
-    const rel = path.startsWith('/') ? path.slice(1) : posix.normalize(posix.join(posix.dirname(sourceRel), path));
-    if (rel.startsWith('../')) return match;
-    return `${open}${REPO_BLOB}${rel}${anchor === undefined ? '' : `#${anchor}`}${close}`;
-  });
+  return text.replace(
+    /(\]\()(?!https?:|mailto:|#)([^)\s]+)(\))/gu,
+    (match, open, target, close) => {
+      const [path, anchor] = target.split('#');
+      const rel = path.startsWith('/')
+        ? path.slice(1)
+        : posix.normalize(posix.join(posix.dirname(sourceRel), path));
+      if (rel.startsWith('../')) return match;
+      return `${open}${REPO_BLOB}${rel}${anchor === undefined ? '' : `#${anchor}`}${close}`;
+    },
+  );
 }
 
 export function renderMirror(page, sourceRel) {
@@ -76,7 +81,9 @@ function servicePage(service, manifests) {
     '',
     '| Method | Route | Source |',
     '| --- | --- | --- |',
-    ...endpoints.map((e) => `| ${e.method} | \`${e.route}\` | ${link(e.source, e.source.split('/').pop())} |`),
+    ...endpoints.map(
+      (e) => `| ${e.method} | \`${e.route}\` | ${link(e.source, e.source.split('/').pop())} |`,
+    ),
     '',
     '## Events (inferred from source; verify before a critical change)',
     '',
@@ -100,7 +107,10 @@ export function renderManifestPages(manifests = buildManifests()) {
     '',
     '| Route | File |',
     '| --- | --- |',
-    ...manifests['frontend-routes'].routes.map((r) => `| \`${r.route}\` | ${link(r.file, r.file.replace('apps/claw-frontend/src/app/', ''))} |`),
+    ...manifests['frontend-routes'].routes.map(
+      (r) =>
+        `| \`${r.route}\` | ${link(r.file, r.file.replace('apps/claw-frontend/src/app/', ''))} |`,
+    ),
     '',
   ].join('\n');
   pages['Prisma-Models.md'] = [
@@ -122,7 +132,10 @@ export function renderManifestPages(manifests = buildManifests()) {
     '',
     '| Pattern | Producers | Consumers |',
     '| --- | --- | --- |',
-    ...manifests['event-graph'].events.map((e) => `| \`${e.pattern}\` | ${e.producers.join(', ') || '—'} | ${e.consumers.join(', ') || '—'} |`),
+    ...manifests['event-graph'].events.map(
+      (e) =>
+        `| \`${e.pattern}\` | ${e.producers.join(', ') || '—'} | ${e.consumers.join(', ') || '—'} |`,
+    ),
     '',
   ].join('\n');
   return pages;
