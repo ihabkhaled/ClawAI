@@ -48,7 +48,7 @@ compose files).
 | payment :4018           | Postgres            | BillingCustomer, Subscription, CheckoutSession, PaymentTransaction, Invoice(+Line/Delivery), Refund, PaymentMethod, ProrationQuote, FxQuote, WebhookEvent, OutboxEvent, ReconciliationRun/Divergence                                                               |
 | thread-generation :4020 | Postgres            | ThreadGenerationJob, ThreadGenerationAttempt, ThreadGenerationCheckpoint, ThreadModelCommunication, ThreadRevisionDraft                                                                                                                                            |
 | plugin :4021            | Postgres            | PluginCatalogEntry, PluginVersion, PluginTool, PluginSetting; PluginInstall, PluginToolConsent, PluginCredential (ciphertext only), PluginInvocation (audit shape); servers later                                                                                  |
-| threads :4019           | Postgres            | ThreadPublication, ThreadPublicationRevision                                                                                                                                                                                                                       |
+| threads :4019           | Postgres            | ThreadPublication, ThreadPublicationRevision, ThreadPublicationSearchDoc (Board projection, ADR-177)                                                                                                                                                               |
 
 ## Migrations (Prisma services)
 
