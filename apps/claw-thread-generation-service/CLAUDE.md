@@ -90,3 +90,43 @@ frame type is ignored; the `message` text is never read or forwarded, only the m
   `callBuffered` and `CHAT_GENERATE_PATH` once every chat-service replica serves the stream route.
 - A new code needs the frontend `THREAD_GENERATION_CODE_KEYS` entry and all 13 locales (done for the four codes
   above in `docs/05-frontend/threads-progress-codes.md`). Research calls are not yet cancellable in flight.
+
+## Concurrency, fairness and failure causes (ADR-176)
+
+- **Jobs run in parallel.** `app.module.ts` sets the RabbitMQ `prefetchCount` to `GENERATION_REPLICA_CONCURRENCY`
+  (3); each delivery is handled on its own and holds its message until the job ends, so a replica runs at most
+  three jobs. `GENERATION_WORKER_SLOT_COUNT` (6, one `thread_generation_worker_slots` row each, seeded by
+  migrations) caps all replicas together; raise it only with a migration that inserts the rows, and keep it at
+  least replicas x 3. `GENERATION_OWNER_MAX_RUNNING` (2) caps one user.
+- **`claim` may answer null and that is not an error.** It takes `pg_advisory_xact_lock(hashtext(ownerId))`,
+  counts that owner's RUNNING jobs, and refuses at the cap; a refused or slotless claim leaves the job QUEUED with
+  no attempt used, the message is acked, and the sweep re-publishes it after the 30 s dispatch lease. Never throw
+  or nack for it.
+- **`findDispatchable` is fair by SQL**, not by ordering in code: `ROW_NUMBER() OVER (PARTITION BY owner_id)`,
+  one job per owner per round, owners at the cap skipped. Do not go back to `findMany` oldest-first.
+- **A failed role ends in `CandidatesExhaustedError`** (`utilities/candidates-exhausted.error.ts`): per-candidate
+  `CandidateOutcome`s (machine codes only), a primary cause (most repeated code, earliest on a tie), and a summary
+  line. `parseStepError` returns the primary cause and stops there; `handleFailedAttempt` records it as the final
+  step's code with the summary as the owner-visible excerpt, and `describeFailure` uses the same summary for
+  `failureSummary`. Never report the last fallback's error as the job's cause. Constructing it with a
+  deterministic cause keeps the job's fail-on-attempt-1 behaviour.
+- **`OUTPUT_INVALID` steps carry a classified reason** from `describeOutputFailure` (`EMPTY`, `TRUNCATED`,
+  `PROSE`, `INVALID_JSON`, `WRONG_SHAPE` plus the invalid field names, length, start and end), not a blind cut
+  of the reply. The code stays `OUTPUT_INVALID`.
+- **Budget close is bounded.** All closes go through `GenerationBudgetCloser`; a failure is counted on the job
+  (`budget_close_attempts`, `budget_close_next_at`), the sweep honours the back-off (15 s doubling to 30 min),
+  and after 8 tries the job is marked `CLOSE_ABANDONED` and closed locally. One warning with the reason on the
+  first failure, one error when it gives up, nothing between. `ThreadBudgetClient.close` throws
+  `ThreadBudgetCloseRefusedError` when auth answers null/false (a call is still reserved) and a plain
+  `ServiceUnavailableException` for an outage. Do not add a log or a retry outside the closer.
+- **Abandoned jobs.** `recoverExpiredLeases` also takes RUNNING rows with no lease untouched for lease + grace;
+  `expireStaleQueuedJobs` fails QUEUED rows older than `GENERATION_QUEUE_MAX_AGE_MS` (3 h) with
+  `QUEUE_EXPIRED`. Both are bounded, guarded by status and age, and idempotent; the budget is released through
+  the closer. This service cannot see publications, so a job whose publication was never attached is not
+  detected earlier than the age bound.
+- **A job that could not be stored releases its reservation** only when no job holds the idempotency key
+  (reserve is idempotent per owner and key, so a concurrent request shares the budget).
+- A new code (`QUEUE_EXPIRED`) needs the frontend `THREAD_GENERATION_CODE_KEYS` entry and all 13 locales.
+- `spentMicroCredits` is the sum of the `costMicroUsd` chat-service reports, and it reports it only for
+  pay-as-you-go calls, so an included-plan job shows 0 while auth's budget row holds the real spend. No read
+  endpoint for budget spend exists; do not invent a price here.

@@ -1,5 +1,8 @@
 import { HttpException } from '@nestjs/common';
 
+import { FAILURE_SUMMARY_MAX_CHARS } from '../constants/step-recorder.constants';
+import { findCandidatesExhausted } from './candidates-exhausted.error';
+
 /**
  * The text of an error is only kept when this service wrote it (an HttpException it
  * threw). Anything else, such as a database, network or provider error, can carry
@@ -13,6 +16,10 @@ function describe(error: Error): string {
 
 export function describeFailure(error: unknown): string {
   if (!(error instanceof Error)) return 'non-error thrown';
+  // The summary holds only provider, model and machine codes, so it is safe to keep whole.
+  const exhausted = findCandidatesExhausted(error);
+  if (exhausted)
+    return `${exhausted.name}: ${exhausted.summary}`.slice(0, FAILURE_SUMMARY_MAX_CHARS);
   const cause = error.cause instanceof Error ? ` <- ${describe(error.cause)}` : '';
   return `${describe(error)}${cause}`;
 }

@@ -45,6 +45,10 @@ model ThreadGenerationJob {
   budgetId               String                       @map("budget_id")
   budgetCloseStatus      String?                      @map("budget_close_status")
   budgetClosedAt         DateTime?                    @map("budget_closed_at")
+  /// Failed close tries; bounds the retry sweep (ADR-176). Reset never: a closed job stops being scanned.
+  budgetCloseAttempts    Int                          @default(0) @map("budget_close_attempts")
+  /// Earliest time the sweep may try the close again (exponential back-off).
+  budgetCloseNextAt      DateTime?                    @map("budget_close_next_at")
   spentMicroCredits      BigInt                       @default(0) @map("spent_micro_credits")
   round                  Int                          @default(0)
   attemptCount           Int                          @default(0) @map("attempt_count")
@@ -74,6 +78,8 @@ model ThreadGenerationJob {
   @@index([status, nextAttemptAt, createdAt])
   @@index([status, dispatchLeaseExpiresAt])
   @@index([status, failureReportedAt])
+  @@index([status, budgetClosedAt, budgetCloseNextAt], map: "thread_generation_jobs_budget_close_sweep_idx")
+  @@index([ownerId, status])
   @@index([ownerId, createdAt])
   @@map("thread_generation_jobs")
 }

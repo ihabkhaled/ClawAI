@@ -8,6 +8,8 @@ import {
 } from '../../models/constants/model-call.constants';
 
 export const STEP_EXCERPT_MAX_CHARS = 600;
+/** `failure_summary` is VARCHAR(400). */
+export const FAILURE_SUMMARY_MAX_CHARS = 400;
 export const STEP_APPEND_MAX_RETRIES = 5;
 export const STEP_LIST_MAX = 500;
 export const STEP_FALLBACK_ERROR_CODE = 'PROVIDER_ERROR';
@@ -17,6 +19,8 @@ export const STEP_FINAL_STAGE = 'GENERATION';
 export const STEP_ERROR_CAUSE_DEPTH = 5;
 export const STEP_REDACTED_MARK = '[redacted]';
 export const STEP_LEASE_EXPIRED_CODE = 'LEASE_EXPIRED';
+/** A job that waited in the queue past GENERATION_QUEUE_MAX_AGE_MS and was failed by the sweep. */
+export const STEP_QUEUE_EXPIRED_CODE = 'QUEUE_EXPIRED';
 export const STEP_RESUMED_CODE = 'RESUMED_FROM_CHECKPOINT';
 export const STEP_ATTEMPT_TIMEOUT_CODE = 'GENERATION_ATTEMPT_TIMEOUT';
 export const STEP_ATTEMPT_TIMEOUT_MESSAGE = 'Generation attempt exceeded its time limit';

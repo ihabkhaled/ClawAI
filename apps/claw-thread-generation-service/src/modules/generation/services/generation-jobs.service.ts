@@ -28,6 +28,7 @@ import {
   revisionReviewJobRequestSchema,
 } from '../dto/enqueue-revision-review.dto';
 import { ThreadBudgetClient } from './thread-budget.client';
+import { GenerationBudgetCloser } from './generation-budget-closer';
 import { StepRecorder } from './step-recorder.service';
 import type { RetryGenerationDto } from '../dto/retry-generation.dto';
 import { buildRetryInput } from '../utilities/build-retry-input.utility';
@@ -40,6 +41,7 @@ import {
   STEP_FINAL_STAGE,
   STEP_GENERATION_FAILED_CODE,
   STEP_LEASE_EXPIRED_CODE,
+  STEP_QUEUE_EXPIRED_CODE,
 } from '../constants/step-recorder.constants';
 import { ThreadGenerationCancelledError } from '../utilities/thread-generation-cancelled.error';
 import { ThreadGenerationLeaseLostError } from '../utilities/thread-generation-lease-lost.error';
@@ -59,10 +61,13 @@ import type {
 } from '../types/generation-job-storage.types';
 import { stableJson } from '../utilities/stable-json.utility';
 import { describeFailure } from '../utilities/describe-failure.utility';
+import { findCandidatesExhausted } from '../utilities/candidates-exhausted.error';
 import { toFailedPayload } from '../utilities/failure-report.utility';
 
 import {
   CANCEL_POLL_INTERVAL_MS,
+  GENERATION_CLOSURE_BATCH,
+  GENERATION_DISPATCH_BATCH,
   GENERATION_HEARTBEAT_MS,
   GENERATION_RECOVERY_INTERVAL_MS,
   GENERATION_WORKER_ID,
@@ -77,6 +82,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(GenerationJobsService.name);
   private recoveryTimer: ReturnType<typeof setInterval> | undefined;
   private recoveryRunning = false;
+  private readonly closer: GenerationBudgetCloser;
   constructor(
     private readonly snapshots: ChatSnapshotClient,
     private readonly repository: GenerationJobsRepository,
@@ -84,7 +90,9 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     private readonly pipeline: GenerationPipelineManager,
     private readonly budgets: ThreadBudgetClient,
     private readonly recorder: StepRecorder,
-  ) {}
+  ) {
+    this.closer = new GenerationBudgetCloser(budgets, repository);
+  }
 
   async onModuleInit(): Promise<void> {
     await this.subscribe();
@@ -186,7 +194,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       budget.id,
       retriedFromJobId,
     );
-    return this.dispatchQueuedJob(await this.requireStoredJob(stored, budget.id));
+    return this.dispatchQueuedJob(await this.requireStoredJob(stored, budget.id, input));
   }
 
   private async replayIdempotentEnqueue(
@@ -203,6 +211,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
   private async requireStoredJob(
     stored: GenerationJobStorageResponse,
     budgetId: string,
+    input: EnqueueGenerationDto,
   ): Promise<GenerationJobRow> {
     switch (stored.result) {
       case GenerationJobStorageResult.RETRY_CONFLICT:
@@ -212,6 +221,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       case GenerationJobStorageResult.CONFLICT:
         throw new ConflictException('Idempotency key was already used for a different generation');
       case GenerationJobStorageResult.STORAGE_ERROR:
+        await this.releaseBudgetOfUnstoredJob(budgetId, input);
         throw new InternalServerErrorException('Generation job could not be stored');
       case GenerationJobStorageResult.ACCOUNT_DELETED:
         throw new ConflictException('Deleted accounts cannot enqueue Threads generation');
@@ -497,6 +507,8 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
         roleKind: 'SYSTEM',
         code: parsedError.code,
         httpStatus: parsedError.httpStatus,
+        // Every candidate failed: the owner sees the main cause and what each model did.
+        rawExcerpt: findCandidatesExhausted(error)?.summary,
       });
     }
   }
@@ -538,23 +550,10 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     if (this.recoveryRunning) return;
     this.recoveryRunning = true;
     try {
-      const recovered = await this.repository.recoverExpiredLeases();
-      for (const job of recovered) {
-        if (job.outcome !== GenerationJobRecoveryOutcome.RETRY) {
-          await this.closeBudget(job.jobId, job.budgetId, GenerationBudgetCloseStatus.RELEASED);
-        }
-        await this.recordRecovery(job.jobId, job.outcome);
-      }
-      const pendingClosures = await this.repository.findPendingBudgetClosures(10);
-      for (const job of pendingClosures) {
-        const status =
-          job.status === 'WAITING_FOR_REVIEW'
-            ? GenerationBudgetCloseStatus.FINALIZED
-            : GenerationBudgetCloseStatus.RELEASED;
-        await this.closeBudget(job.id, job.budgetId, status);
-      }
+      await this.recoverAbandonedJobs();
+      await this.sweepBudgetClosures();
       await this.reportFailedJobs();
-      const queued = await this.repository.findDispatchable(10);
+      const queued = await this.repository.findDispatchable(GENERATION_DISPATCH_BATCH);
       for (const job of queued) {
         const record = await this.repository.findQueued(job.id);
         if (record) await this.dispatchJob(job.id, record.correlationId);
@@ -563,6 +562,42 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       this.logger.warn('Generation recovery pass failed; it will retry on the next interval');
     } finally {
       this.recoveryRunning = false;
+    }
+  }
+
+  /**
+   * Jobs nobody is working on any more: a lease that expired or never existed, and jobs queued
+   * past GENERATION_QUEUE_MAX_AGE_MS. Each is retried or failed with a coded step, its budget
+   * released, and a repeat pass finds nothing left to change.
+   */
+  private async recoverAbandonedJobs(): Promise<void> {
+    const recovered = await this.repository.recoverExpiredLeases();
+    for (const job of recovered) {
+      if (job.outcome !== GenerationJobRecoveryOutcome.RETRY) {
+        await this.closeBudget(job.jobId, job.budgetId, GenerationBudgetCloseStatus.RELEASED);
+      }
+      await this.recordRecovery(job.jobId, job.outcome);
+    }
+    for (const job of await this.repository.expireStaleQueuedJobs()) {
+      await this.closeBudget(job.jobId, job.budgetId, GenerationBudgetCloseStatus.RELEASED);
+      await this.recorder.record(job.jobId, {
+        stage: STEP_FINAL_STAGE,
+        outcome: 'FAILED',
+        roleKind: 'SYSTEM',
+        code: STEP_QUEUE_EXPIRED_CODE,
+      });
+    }
+  }
+
+  private async sweepBudgetClosures(): Promise<void> {
+    const pendingClosures =
+      await this.repository.findPendingBudgetClosures(GENERATION_CLOSURE_BATCH);
+    for (const job of pendingClosures) {
+      const status =
+        job.status === 'WAITING_FOR_REVIEW'
+          ? GenerationBudgetCloseStatus.FINALIZED
+          : GenerationBudgetCloseStatus.RELEASED;
+      await this.closeBudget(job.id, job.budgetId, status);
     }
   }
 
@@ -609,6 +644,24 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
+  /**
+   * The job could not be stored, so nothing will ever run on its reservation. Reserving is
+   * idempotent per owner and key, so a concurrent request with the same key shares this budget:
+   * it is released only when no job holds the key, never from under a job that did get stored.
+   */
+  private async releaseBudgetOfUnstoredJob(
+    budgetId: string,
+    input: EnqueueGenerationDto,
+  ): Promise<void> {
+    try {
+      if (await this.repository.findByIdempotencyKey(input)) return;
+    } catch {
+      this.logger.warn('Generation key lookup failed; the unused budget is left to its sweep');
+      return;
+    }
+    await this.releaseUnusedBudget(budgetId);
+  }
+
   /** Gives back a reservation that no job will ever use. The close call is idempotent. */
   private async releaseUnusedBudget(budgetId: string): Promise<void> {
     try {
@@ -623,12 +676,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     budgetId: string,
     status: GenerationBudgetCloseStatus,
   ): Promise<void> {
-    try {
-      await this.budgets.close(budgetId, status);
-      await this.repository.markBudgetClosed(jobId, status);
-    } catch {
-      this.logger.error(`Generation budget close failed (${status})`);
-    }
+    await this.closer.close(jobId, budgetId, status);
   }
 
   private async runPipeline(

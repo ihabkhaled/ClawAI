@@ -8,6 +8,7 @@ import {
   GENERATION_ATTEMPT_MAX_MS,
   JUDGE_STAGE,
   MAX_GENERATION_ROUNDS,
+  OUTPUT_INVALID_CODE,
 } from '../constants/generation.constants';
 import { ThreadGenerationStage } from '../../../generated/prisma';
 import { ChatModelClient, type ChatModelResponse } from '../../models/chat-model.client';
@@ -30,7 +31,10 @@ import {
   isDeterministicGenerationError,
 } from '../utilities/deterministic-generation.error';
 import { parseStepError } from '../utilities/parse-step-error.utility';
-import { STEP_RESUMED_CODE } from '../constants/step-recorder.constants';
+import { CandidatesExhaustedError } from '../utilities/candidates-exhausted.error';
+import { describeOutputFailure } from '../utilities/describe-output-failure.utility';
+import type { CandidateAttempt, CandidateOutcome } from '../types/candidate-outcome.types';
+import { STEP_FALLBACK_ERROR_CODE, STEP_RESUMED_CODE } from '../constants/step-recorder.constants';
 import { roleStepInfo } from '../utilities/role-step.utility';
 import {
   type AuthorDraft,
@@ -698,8 +702,8 @@ export class GenerationPipelineManager {
     accepts: z.ZodType,
   ): Promise<ChatModelResponse> {
     const candidates = [{ provider: role.provider, model: role.model }, ...role.fallbacks];
-    const outputReserve = role.maxOutputTokens;
     const { stage, roleKind } = roleStepInfo(roleKey);
+    const outcomes: CandidateOutcome[] = [];
     let lastError: unknown;
     let everyFailureDeterministic = true;
     for (const [index, candidate] of candidates.entries()) {
@@ -711,56 +715,112 @@ export class GenerationPipelineManager {
           code: 'FALLBACK_USED',
         });
       }
-      // A model that answers in the wrong shape gets one more try before its fallback.
-      for (let attempt = 1; attempt <= FORMAT_ATTEMPTS_PER_MODEL; attempt += 1) {
+      const result = await this.tryCandidate(
+        input,
+        step,
+        { roleKey, round, index, candidate, prompt, accepts },
+        role,
+      );
+      if ('response' in result) return result.response;
+      outcomes.push(result.failure);
+      everyFailureDeterministic &&= result.deterministic;
+      lastError = result.error;
+    }
+    throw this.exhaustedError(outcomes, lastError, everyFailureDeterministic);
+  }
+
+  /**
+   * One candidate model: a wrong-shaped answer gets one more try, any other failure moves on to
+   * the next candidate. Returns the accepted reply, or how the candidate finally failed.
+   */
+  private async tryCandidate(
+    input: GenerationPipelineInput,
+    step: Omit<StepRecordInput, 'outcome'>,
+    call: {
+      roleKey: string;
+      round: number;
+      index: number;
+      candidate: { provider: string; model: string };
+      prompt: { systemPrompt: string; userPrompt: string };
+      accepts: z.ZodType;
+    },
+    role: ModelRole,
+  ): Promise<CandidateAttempt<ChatModelResponse>> {
+    const { candidate } = call;
+    let failure: CandidateOutcome = {
+      ...candidate,
+      code: STEP_FALLBACK_ERROR_CODE,
+      httpStatus: null,
+    };
+    let error: unknown;
+    let deterministic = true;
+    for (let attempt = 1; attempt <= FORMAT_ATTEMPTS_PER_MODEL; attempt += 1) {
+      await this.throwIfCancelled(input);
+      const requestId = `${input.jobId}:${call.roleKey}:round-${String(call.round)}:attempt-${String(input.attempt)}:cand-${String(call.index + 1)}${attempt > 1 ? `:try-${String(attempt)}` : ''}`;
+      await this.recorder.record(input.jobId, { ...step, outcome: 'STARTED' });
+      const startedAt = Date.now();
+      try {
+        const response = await this.models.generate({
+          ownerId: input.ownerId,
+          requestId,
+          budgetId: input.budgetId,
+          provider: candidate.provider,
+          model: candidate.model,
+          systemPrompt: call.prompt.systemPrompt,
+          userPrompt: call.prompt.userPrompt,
+          maxOutputTokens: role.maxOutputTokens,
+          signal: input.signal,
+        });
+        // Paid for even if the job is cancelled or the answer is unusable, so counted first.
+        await this.recordSpend(input.jobId, response.costMicroUsd);
         await this.throwIfCancelled(input);
-        const requestId = `${input.jobId}:${roleKey}:round-${String(round)}:attempt-${String(index + 1)}${attempt > 1 ? `:try-${String(attempt)}` : ''}`;
-        await this.recorder.record(input.jobId, { ...step, outcome: 'STARTED' });
-        const startedAt = Date.now();
-        try {
-          const response = await this.models.generate({
-            ownerId: input.ownerId,
-            requestId,
-            budgetId: input.budgetId,
-            provider: candidate.provider,
-            model: candidate.model,
-            systemPrompt: prompt.systemPrompt,
-            userPrompt: prompt.userPrompt,
-            maxOutputTokens: outputReserve,
-            signal: input.signal,
-          });
-          // Paid for even if the job is cancelled or the answer is unusable, so counted first.
-          await this.recordSpend(input.jobId, response.costMicroUsd);
-          await this.throwIfCancelled(input);
-          const accepted = accepts.safeParse(parseModelJson(response.content, accepts)).success;
-          await this.recorder.record(input.jobId, {
-            ...step,
-            ...this.responseOutcome(accepted, attempt),
-            durationMs: response.durationMs,
-            inputTokens: response.inputTokens,
-            outputTokens: response.outputTokens,
-            rawExcerpt: response.content,
-          });
-          if (accepted) return response;
-          everyFailureDeterministic = false;
-          lastError = new ServiceUnavailableException('A model returned invalid structured output');
-        } catch (error: unknown) {
-          await this.recordCallFailure(input.jobId, step, error, startedAt);
-          everyFailureDeterministic &&= isDeterministicGenerationError(error);
-          lastError = error;
-          break;
-        }
+        const accepted = call.accepts.safeParse(
+          parseModelJson(response.content, call.accepts),
+        ).success;
+        await this.recorder.record(input.jobId, {
+          ...step,
+          ...this.responseOutcome(accepted, attempt),
+          durationMs: response.durationMs,
+          inputTokens: response.inputTokens,
+          outputTokens: response.outputTokens,
+          rawExcerpt: accepted
+            ? response.content
+            : describeOutputFailure(response.content, call.accepts),
+        });
+        if (accepted) return { response };
+        deterministic = false;
+        failure = { ...candidate, code: OUTPUT_INVALID_CODE, httpStatus: null };
+        error = new ServiceUnavailableException('A model returned invalid structured output');
+      } catch (caught: unknown) {
+        await this.recordCallFailure(input.jobId, step, caught, startedAt);
+        const parsed = parseStepError(caught);
+        failure = { ...candidate, code: parsed.code, httpStatus: parsed.httpStatus };
+        deterministic &&= isDeterministicGenerationError(caught);
+        error = caught;
+        break;
       }
     }
+    return { failure, error, deterministic };
+  }
+
+  /**
+   * Every candidate failed: one error that names the primary cause and each candidate's outcome.
+   * One candidate failing for a reason a retry cannot fix does not make the role permanent while
+   * another failed transiently, so only "all deterministic" keeps the deterministic marker.
+   */
+  private exhaustedError(
+    outcomes: readonly CandidateOutcome[],
+    lastError: unknown,
+    everyFailureDeterministic: boolean,
+  ): Error {
     if (!(lastError instanceof Error)) {
-      throw new ServiceUnavailableException('No eligible model could complete this role');
+      return new ServiceUnavailableException('No eligible model could complete this role');
     }
-    // One candidate failing for a reason a retry cannot fix does not make the role
-    // permanent while another candidate failed transiently: only "all" ends the job.
-    if (!everyFailureDeterministic && isDeterministicGenerationError(lastError)) {
-      throw new ServiceUnavailableException(lastError.message);
-    }
-    throw lastError;
+    const cause =
+      !everyFailureDeterministic && isDeterministicGenerationError(lastError)
+        ? new ServiceUnavailableException(lastError.message)
+        : lastError;
+    return new CandidatesExhaustedError(outcomes, cause);
   }
 
   /**
@@ -793,7 +853,7 @@ export class GenerationPipelineManager {
     if (accepted) return { outcome: 'SUCCEEDED', code: null };
     return {
       outcome: attempt < FORMAT_ATTEMPTS_PER_MODEL ? 'RETRY' : 'FAILED',
-      code: 'OUTPUT_INVALID',
+      code: OUTPUT_INVALID_CODE,
     };
   }
 

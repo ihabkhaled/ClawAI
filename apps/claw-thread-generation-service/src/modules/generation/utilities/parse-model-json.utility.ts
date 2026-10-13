@@ -11,7 +11,7 @@ import {
 import { stripCodeFence } from './strip-code-fence.utility';
 
 /** Index of the brace closing the object that opens at `start`, or -1 when it never closes. */
-function findObjectEnd(text: string, start: number): number {
+export function findObjectEnd(text: string, start: number): number {
   let depth = 0;
   let inString = false;
   let escaped = false;

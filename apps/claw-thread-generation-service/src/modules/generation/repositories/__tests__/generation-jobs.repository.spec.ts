@@ -1,5 +1,6 @@
 import { GenerationJobsRepository } from '../generation-jobs.repository';
 import { Prisma, ThreadGenerationStatus } from '../../../../generated/prisma';
+import { GENERATION_WORKER_SLOT_IDS } from '../../constants/generation.constants';
 
 function buildRepository(overrides: Record<string, unknown> = {}) {
   const tx = {
@@ -7,8 +8,9 @@ function buildRepository(overrides: Record<string, unknown> = {}) {
     threadGenerationJob: {
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       findUnique: vi.fn().mockResolvedValue({ id: 'job-1', attemptCount: 1 }),
-      findFirst: vi.fn().mockResolvedValue({ cancelRequestedAt: null }),
+      findFirst: vi.fn().mockResolvedValue({ cancelRequestedAt: null, ownerId: 'owner-1' }),
       findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
     },
     threadGenerationWorkerSlot: {
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
@@ -17,6 +19,7 @@ function buildRepository(overrides: Record<string, unknown> = {}) {
       create: vi.fn().mockResolvedValue({}),
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     },
+    $executeRaw: vi.fn().mockResolvedValue(1),
     ...overrides,
   };
   const prisma = {
@@ -333,7 +336,9 @@ describe('GenerationJobsRepository recovery', () => {
     });
 
     expect(await repository.claim('job-1', 'worker-1')).toBeNull();
-    expect(tx.threadGenerationWorkerSlot.updateMany).toHaveBeenCalledTimes(2);
+    expect(tx.threadGenerationWorkerSlot.updateMany).toHaveBeenCalledTimes(
+      GENERATION_WORKER_SLOT_IDS.length,
+    );
     expect(tx.threadGenerationJob.updateMany).toHaveBeenLastCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -416,7 +421,10 @@ describe('GenerationJobsRepository recovery', () => {
         where: expect.objectContaining({
           id: 'job-1',
           status: ThreadGenerationStatus.RUNNING,
-          leaseExpiresAt: expect.objectContaining({ lte: expect.any(Date) }),
+          OR: [
+            { leaseExpiresAt: { lte: expect.any(Date) } },
+            { leaseExpiresAt: null, updatedAt: { lte: expect.any(Date) } },
+          ],
         }),
         data: expect.objectContaining({
           status: ThreadGenerationStatus.QUEUED,

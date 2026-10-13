@@ -225,3 +225,41 @@ describe('buildRetryInput', () => {
     ).toThrow(BadRequestException);
   });
 });
+
+describe('buildProgress spend and terminal reason', () => {
+  it('reports the persisted job spend exactly, as a decimal string', () => {
+    const spent = { ...job('FAILED'), spentMicroCredits: 11_892n };
+    expect(buildProgress(spent, request as never, []).spentMicroCredits).toBe('11892');
+
+    const huge = { ...job('FAILED'), spentMicroCredits: 9_007_199_254_740_993n };
+    expect(buildProgress(huge, request as never, []).spentMicroCredits).toBe('9007199254740993');
+  });
+
+  it('reports zero only when nothing was recorded', () => {
+    const none = { ...job('RUNNING'), spentMicroCredits: 0n };
+    expect(buildProgress(none, request as never, []).spentMicroCredits).toBe('0');
+  });
+
+  it('shows the primary cause recorded on the final step, not an earlier fallback error', () => {
+    const progress = buildProgress(job('FAILED'), request as never, [
+      step({ seq: 1, code: 'OUTPUT_INVALID', httpStatus: null, provider: 'GEMINI' }),
+      step({ seq: 2, code: 'OUTPUT_INVALID', httpStatus: null, provider: 'OLLAMA' }),
+      step({ seq: 3, code: 'CLOUD_PROVIDER_UNAVAILABLE', httpStatus: 400, provider: 'OPENROUTER' }),
+      step({
+        seq: 4,
+        stage: 'GENERATION',
+        roleKind: 'SYSTEM',
+        roleId: null,
+        provider: null,
+        model: null,
+        code: 'OUTPUT_INVALID',
+        httpStatus: null,
+        excerpt: 'Every model failed. Main cause: OUTPUT_INVALID (2 of 3).',
+      }),
+    ]);
+
+    expect(progress.failure?.code).toBe('OUTPUT_INVALID');
+    expect(progress.failure?.httpStatus).toBeNull();
+    expect(progress.steps.at(-1)?.excerpt).toContain('Main cause: OUTPUT_INVALID');
+  });
+});

@@ -71,3 +71,8 @@ export type LeaseMonitor = {
   markLost: () => void;
   stop: () => void;
 };
+
+/** What one failed budget close did to the job's retry bookkeeping. */
+export type GenerationBudgetCloseFailureState = { attempts: number; abandoned: boolean };
+
+export type GenerationStaleJob = { jobId: string; budgetId: string };

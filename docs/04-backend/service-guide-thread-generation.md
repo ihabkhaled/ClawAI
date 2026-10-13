@@ -56,7 +56,7 @@ cancels queued jobs and aborts a running job's in-flight provider call within ab
   surface is added.
 - The queue is dedicated to generation work and has prefetch one. Prisma
   migrations run from development and production container entrypoints.
-- A database-backed pair of worker slots caps concurrency across replicas.
+- Database-backed worker slots cap concurrency across replicas (six; three per replica, two per user, see ADR-176 below).
   Heartbeats extend leases; periodic recovery retries expired jobs up to the
   bounded attempt limit with backoff. Resume reuses persisted research and role
   outputs only when input and evidence hashes match.
@@ -166,3 +166,43 @@ Retry reuses the enqueue path (idempotency, budget reserve). Its correlation id 
 the key (`retry:<key>`), so repeating the same call is idempotent and a key reused with changed
 input conflicts. Changing a role's provider drops fallbacks on that provider. Delete refuses to
 run before `budget_closed_at` is set so the idempotent close path never loses its row.
+
+## Concurrency, fairness and failure causes (ADR-176)
+
+Added 2026-10-14 after local QA found one job per replica, a starving queue, wrong failure causes and a budget
+close that retried for ever.
+
+| Setting                                     | Value                               | Where                                                                                     |
+| ------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------- |
+| Jobs per replica (RabbitMQ prefetch)        | 3                                   | `GENERATION_REPLICA_CONCURRENCY`, `app.module.ts`                                         |
+| Jobs across all replicas (worker slot rows) | 6                                   | `GENERATION_WORKER_SLOT_COUNT`, migration `20261014120000_threads_generation_concurrency` |
+| Running jobs per user                       | 2                                   | `GENERATION_OWNER_MAX_RUNNING`                                                            |
+| Jobs re-published per 15 s sweep            | 10, one per user per round          | `GENERATION_DISPATCH_BATCH`, `findDispatchable`                                           |
+| Budget close tries                          | 8, back-off 15 s doubling to 30 min | `BUDGET_CLOSE_*`                                                                          |
+| Queued longer than                          | 3 h is failed `QUEUE_EXPIRED`       | `GENERATION_QUEUE_MAX_AGE_MS`                                                             |
+| RUNNING with no lease                       | recovered after lease + 5 min       | `GENERATION_STALE_GRACE_MS`                                                               |
+
+- **Claiming.** A claim locks the owner (`pg_advisory_xact_lock`), refuses when the owner already runs the cap
+  or no slot is free, and then leaves the job QUEUED, untouched: the message is acked and the sweep re-publishes
+  it after its 30 s dispatch lease. Delivery stays at-least-once: a duplicate finds the job RUNNING or finished
+  and does nothing.
+- **Fair re-publish.** The sweep takes the oldest job of every user before the second job of any user and skips
+  users at the cap, so a long backlog cannot hide another user's job behind ten of its own.
+- **Why a failed job names its cause.** When every candidate of a role fails, the job ends with the code that
+  repeated most among the candidates (the first model's on a tie), and the final `GENERATION` step shows
+  `Every model failed. Main cause: OUTPUT_INVALID (2 of 3). GEMINI/..: OUTPUT_INVALID; ...`. The per-candidate
+  steps above it keep their own codes. `failureSummary` (operator ticket) carries the same text.
+- **Why an output was refused.** An `OUTPUT_INVALID` step reads `TRUNCATED: The reply was cut off before the JSON
+object ended. 8123 characters. Start: "..." End: "..."` (or `EMPTY`, `PROSE`, `INVALID_JSON`, `WRONG_SHAPE` with
+  the field names). The recorder redacts and bounds it as before.
+- **Budget close.** Auth releases any model call of the job still in flight as part of the close (2026-10-14), so a
+  cancelled job closes at once. A close that auth cannot answer (503) is counted on the job and retried with back-off; after 8 tries the job is marked `budget_close_status =
+CLOSE_ABANDONED`, closed locally so it can be deleted, and one error line names the job and budget ids. Look
+  for `Generation budget close given up` in the log and release that budget in auth.
+- **Spend.** `spentMicroCredits` in the progress is the persisted sum of the per-call cost chat-service reports
+  (pay-as-you-go calls only). For an included-plan job it stays 0 although auth's `thread_job_budgets.spent_micro_usd`
+  is real. Auth now settles the budget at the amount charged and offers `POST /internal/threads/budgets/summary`
+  (`spentMicroUsd`, `remainingMicroUsd`); showing it in the progress is a generation-service follow-up.
+- **Operating the slot count.** More replicas need `GENERATION_WORKER_SLOT_COUNT >= replicas x 3` and a migration
+  that inserts `threads-worker-N` rows; a replica beyond the slots still works but its surplus claims wait for the
+  sweep.

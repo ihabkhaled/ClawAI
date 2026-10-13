@@ -1,7 +1,8 @@
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, ServiceUnavailableException } from '@nestjs/common';
 
 import { AppConfig } from '../../../../app/config/app.config';
 import { ThreadBudgetClient } from '../thread-budget.client';
+import { ThreadBudgetCloseRefusedError } from '../../utilities/thread-budget-close-refused.error';
 
 describe('ThreadBudgetClient', () => {
   afterEach(() => {
@@ -53,5 +54,47 @@ describe('ThreadBudgetClient', () => {
     await expect(
       new ThreadBudgetClient().reserve('owner-1', 'request-1', 2_000_000),
     ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  describe('close', () => {
+    const configure = (): void => {
+      vi.spyOn(AppConfig, 'get').mockReturnValue({
+        AUTH_SERVICE_URL: 'https://auth-service:4001',
+        INTER_SERVICE_AUTH_TOKEN: 'x'.repeat(32),
+      } as never);
+    };
+
+    it('resolves when the budget service answers true', async () => {
+      configure();
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('true', { status: 200 })));
+
+      await expect(
+        new ThreadBudgetClient().close('budget-1', 'RELEASED' as never),
+      ).resolves.toBeUndefined();
+    });
+
+    it.each([['null'], [''], ['false']])(
+      'reports a refusal when the budget service answers %j (a call is still reserved)',
+      async (body) => {
+        configure();
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(body, { status: 200 })));
+
+        await expect(
+          new ThreadBudgetClient().close('budget-1', 'RELEASED' as never),
+        ).rejects.toBeInstanceOf(ThreadBudgetCloseRefusedError);
+      },
+    );
+
+    it('reports an outage, not a refusal, for a failed request', async () => {
+      configure();
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 502 })));
+
+      const failure = await new ThreadBudgetClient()
+        .close('budget-1', 'RELEASED' as never)
+        .catch((error: unknown) => error);
+
+      expect(failure).toBeInstanceOf(ServiceUnavailableException);
+      expect(failure).not.toBeInstanceOf(ThreadBudgetCloseRefusedError);
+    });
   });
 });

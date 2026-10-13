@@ -17,6 +17,7 @@ import { SourceSnapshotsModule } from '../modules/source-snapshots/source-snapsh
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
 import { GenerationModule } from '../modules/generation/generation.module';
 import { AccountDeletionModule } from '../modules/account-deletion/account-deletion.module';
+import { GENERATION_REPLICA_CONCURRENCY } from '../modules/generation/constants/generation.constants';
 
 @Module({
   imports: [
@@ -46,7 +47,7 @@ import { AccountDeletionModule } from '../modules/account-deletion/account-delet
         url: AppConfig.get().RABBITMQ_URL,
         serviceName: 'thread-generation-service',
         queuePrefix: 'claw.threads.generation',
-        prefetchCount: 1,
+        prefetchCount: GENERATION_REPLICA_CONCURRENCY,
       }),
     }),
     PrismaModule,

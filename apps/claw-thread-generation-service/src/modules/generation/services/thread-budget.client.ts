@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { GenerationBudgetCloseStatus } from '../../../common/enums/generation-budget-close-status.enum';
+import { ThreadBudgetCloseRefusedError } from '../utilities/thread-budget-close-refused.error';
 
 const reservedBudgetSchema = z.object({
   id: z.string().min(1).max(64),
@@ -74,8 +75,9 @@ export class ThreadBudgetClient {
     } catch {
       throw new ServiceUnavailableException('Threads budget service is unavailable');
     }
-    if (!response.ok || (await response.json()) !== true) {
-      throw new ServiceUnavailableException('Threads budget could not be closed');
-    }
+    if (!response.ok) throw new ServiceUnavailableException('Threads budget could not be closed');
+    // The budget service answers `true` once closed; `null` (an empty body) means it refused.
+    const closed: unknown = await response.json().catch(() => null);
+    if (closed !== true) throw new ThreadBudgetCloseRefusedError();
   }
 }

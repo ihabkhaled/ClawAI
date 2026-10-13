@@ -11,6 +11,7 @@ import type { ChatModelResponse } from '../../models/chat-model.client';
 import { stableJson } from '../utilities/stable-json.utility';
 import { GenerationJobStorageResult } from '../../../common/enums/generation-job-storage-result.enum';
 import type {
+  GenerationBudgetCloseFailureState,
   GenerationCancellationState,
   GenerationJobBudgetClosure,
   GenerationJobDeletable,
@@ -24,11 +25,11 @@ import type {
   GenerationJobStorageResponse,
   GenerationJobUnreportedFailure,
   GenerationResumeState,
+  GenerationStaleJob,
 } from '../types/generation-job-storage.types';
 import {
   BUDGET_CLOSURE_SELECT,
   DELETABLE_SELECT,
-  DISPATCHABLE_SELECT,
   OWNER_STATE_SELECT,
   PROGRESS_JOB_SELECT,
   RETRY_SOURCE_SELECT,
@@ -39,12 +40,23 @@ import { GenerationBudgetCloseStatus } from '../../../common/enums/generation-bu
 import { GenerationJobAttemptOutcome } from '../../../common/enums/generation-job-attempt-outcome.enum';
 import { GenerationJobRecoveryOutcome } from '../../../common/enums/generation-job-recovery-outcome.enum';
 import {
+  BUDGET_CLOSE_ABANDONED_STATUS,
+  BUDGET_CLOSE_MAX_ATTEMPTS,
+  budgetCloseDelayMs,
   GENERATION_DISPATCH_LEASE_MS,
   GENERATION_LEASE_MS,
+  GENERATION_OWNER_MAX_RUNNING,
+  GENERATION_QUEUE_MAX_AGE_MS,
+  GENERATION_STALE_BATCH,
+  GENERATION_STALE_GRACE_MS,
   GENERATION_WORKER_SLOT_IDS,
   generationRetryDelayMs,
   MAX_GENERATION_ATTEMPTS,
 } from '../constants/generation.constants';
+import {
+  STEP_LEASE_EXPIRED_CODE,
+  STEP_QUEUE_EXPIRED_CODE,
+} from '../constants/step-recorder.constants';
 
 @Injectable()
 export class GenerationJobsRepository {
@@ -340,21 +352,40 @@ export class GenerationJobsRepository {
     });
   }
 
+  /**
+   * Queued jobs that may be published now, one per owner per round (oldest first within an owner),
+   * so a user with a long backlog cannot fill the batch and starve everyone behind them. An owner
+   * already at the running cap is skipped: its next job would only be deferred again.
+   */
   async findDispatchable(limit: number): Promise<GenerationJobDispatchable[]> {
-    const now = new Date();
-    return this.prisma.threadGenerationJob.findMany({
-      where: {
-        status: ThreadGenerationStatus.QUEUED,
-        nextAttemptAt: { lte: now },
-        OR: [{ dispatchLeaseExpiresAt: null }, { dispatchLeaseExpiresAt: { lte: now } }],
-      },
-      orderBy: [{ nextAttemptAt: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
-      take: limit,
-      select: DISPATCHABLE_SELECT,
-    });
+    // An ISO string cast to timestamp keeps the UTC clock Prisma stores, whatever the session zone.
+    const nowText = new Date().toISOString();
+    return this.prisma.$queryRaw<GenerationJobDispatchable[]>(Prisma.sql`
+      SELECT ranked."id" FROM (
+        SELECT j."id", j."next_attempt_at", j."created_at",
+          ROW_NUMBER() OVER (
+            PARTITION BY j."owner_id" ORDER BY j."next_attempt_at", j."created_at", j."id"
+          ) AS owner_rank
+        FROM "thread_generation_jobs" j
+        WHERE j."status" = 'QUEUED'
+          AND j."next_attempt_at" <= CAST(${nowText} AS timestamp)
+          AND (
+            j."dispatch_lease_expires_at" IS NULL
+            OR j."dispatch_lease_expires_at" <= CAST(${nowText} AS timestamp)
+          )
+          AND (
+            SELECT COUNT(*) FROM "thread_generation_jobs" r
+            WHERE r."owner_id" = j."owner_id" AND r."status" = 'RUNNING'
+          ) < ${GENERATION_OWNER_MAX_RUNNING}
+      ) ranked
+      ORDER BY ranked.owner_rank, ranked."next_attempt_at", ranked."created_at", ranked."id"
+      LIMIT ${limit}
+    `);
   }
 
+  /** Terminal jobs whose budget is still open and whose back-off has passed, oldest first. */
   async findPendingBudgetClosures(limit: number): Promise<GenerationJobBudgetClosure[]> {
+    const now = new Date();
     return this.prisma.threadGenerationJob.findMany({
       where: {
         budgetClosedAt: null,
@@ -365,11 +396,44 @@ export class GenerationJobsRepository {
             ThreadGenerationStatus.CANCELLED,
           ],
         },
+        OR: [{ budgetCloseNextAt: null }, { budgetCloseNextAt: { lte: now } }],
       },
       orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
       take: limit,
       select: BUDGET_CLOSURE_SELECT,
     });
+  }
+
+  /**
+   * Counts one failed budget close and schedules the next try with exponential back-off. At the
+   * limit the close is given up: the job is marked closed with an abandoned status so the sweep
+   * stops, the owner can delete the job, and the caller logs the single terminal line.
+   */
+  async recordBudgetCloseFailure(jobId: string): Promise<GenerationBudgetCloseFailureState | null> {
+    const job = await this.prisma.threadGenerationJob.findFirst({
+      where: { id: jobId, budgetClosedAt: null },
+      select: { budgetCloseAttempts: true },
+    });
+    if (!job) return null;
+    const attempts = job.budgetCloseAttempts + 1;
+    const now = new Date();
+    const abandoned = attempts >= BUDGET_CLOSE_MAX_ATTEMPTS;
+    const updated = await this.prisma.threadGenerationJob.updateMany({
+      where: { id: jobId, budgetClosedAt: null, budgetCloseAttempts: job.budgetCloseAttempts },
+      data: abandoned
+        ? {
+            budgetCloseAttempts: attempts,
+            budgetCloseStatus: BUDGET_CLOSE_ABANDONED_STATUS,
+            budgetClosedAt: now,
+            budgetCloseNextAt: null,
+          }
+        : {
+            budgetCloseAttempts: attempts,
+            budgetCloseNextAt: new Date(now.getTime() + budgetCloseDelayMs(attempts)),
+          },
+    });
+    // Another replica counted the same failure first: it owns the log line.
+    return updated.count === 1 ? { attempts, abandoned } : null;
   }
 
   /** Failed jobs not yet reported to operators, oldest first. */
@@ -572,14 +636,35 @@ export class GenerationJobsRepository {
       : null;
   }
 
+  /**
+   * Takes a QUEUED job for this worker, or returns null and leaves it queued untouched when it
+   * is not runnable, its owner already runs GENERATION_OWNER_MAX_RUNNING jobs, or no worker slot
+   * is free. Null is never an error: the message is acked and the recovery sweep re-publishes the
+   * job once its dispatch lease lapses, so a deferred job is delayed, not lost.
+   */
   async claim(id: string, workerId: string): Promise<GenerationJobRow | null> {
     const now = new Date();
     return this.prisma.$transaction(async (tx) => {
-      const claimed = await tx.threadGenerationJob.updateMany({
+      const candidate = await tx.threadGenerationJob.findFirst({
         where: {
           id,
           status: ThreadGenerationStatus.QUEUED,
           nextAttemptAt: { lte: now },
+          attemptCount: { lt: MAX_GENERATION_ATTEMPTS },
+        },
+        select: { ownerId: true },
+      });
+      if (!candidate) return null;
+      // One claim per owner at a time, so two replicas cannot both pass the running-count check.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${candidate.ownerId}))`;
+      const running = await tx.threadGenerationJob.count({
+        where: { ownerId: candidate.ownerId, status: ThreadGenerationStatus.RUNNING },
+      });
+      if (running >= GENERATION_OWNER_MAX_RUNNING) return null;
+      const claimed = await tx.threadGenerationJob.updateMany({
+        where: {
+          id,
+          status: ThreadGenerationStatus.QUEUED,
           attemptCount: { lt: MAX_GENERATION_ATTEMPTS },
         },
         data: {
@@ -591,26 +676,7 @@ export class GenerationJobsRepository {
         },
       });
       if (claimed.count !== 1) return null;
-      let slotClaimed = false;
-      for (const slotId of GENERATION_WORKER_SLOT_IDS) {
-        const slot = await tx.threadGenerationWorkerSlot.updateMany({
-          where: {
-            slotId,
-            OR: [{ jobId: null }, { leaseExpiresAt: { lte: now } }],
-          },
-          data: {
-            jobId: id,
-            workerId,
-            leaseExpiresAt: new Date(now.getTime() + GENERATION_LEASE_MS),
-            heartbeatAt: now,
-          },
-        });
-        if (slot.count === 1) {
-          slotClaimed = true;
-          break;
-        }
-      }
-      if (!slotClaimed) {
+      if (!(await this.claimWorkerSlot(tx, id, workerId, now))) {
         await tx.threadGenerationJob.updateMany({
           where: { id, status: ThreadGenerationStatus.RUNNING, leaseOwner: workerId },
           data: {
@@ -630,12 +696,32 @@ export class GenerationJobsRepository {
           data: { stage: ThreadGenerationStage.RESEARCH },
         });
       }
-      const attempt = job.attemptCount;
       await tx.threadGenerationAttempt.create({
-        data: { jobId: id, attempt, workerId },
+        data: { jobId: id, attempt: job.attemptCount, workerId },
       });
       return job;
     });
+  }
+
+  private async claimWorkerSlot(
+    tx: Prisma.TransactionClient,
+    jobId: string,
+    workerId: string,
+    now: Date,
+  ): Promise<boolean> {
+    for (const slotId of GENERATION_WORKER_SLOT_IDS) {
+      const slot = await tx.threadGenerationWorkerSlot.updateMany({
+        where: { slotId, OR: [{ jobId: null }, { leaseExpiresAt: { lte: now } }] },
+        data: {
+          jobId,
+          workerId,
+          leaseExpiresAt: new Date(now.getTime() + GENERATION_LEASE_MS),
+          heartbeatAt: now,
+        },
+      });
+      if (slot.count === 1) return true;
+    }
+    return false;
   }
 
   async heartbeat(jobId: string, workerId: string, attempt: number): Promise<boolean> {
@@ -736,9 +822,10 @@ export class GenerationJobsRepository {
     Array<{ jobId: string; budgetId: string; outcome: GenerationJobRecoveryOutcome }>
   > {
     const now = new Date();
+    const abandoned = this.abandonedLeaseWhere(now);
     return this.prisma.$transaction(async (tx) => {
       const stale = await tx.threadGenerationJob.findMany({
-        where: { status: ThreadGenerationStatus.RUNNING, leaseExpiresAt: { lte: now } },
+        where: { status: ThreadGenerationStatus.RUNNING, ...abandoned },
         select: { id: true, budgetId: true, attemptCount: true, cancelRequestedAt: true },
         orderBy: [{ leaseExpiresAt: 'asc' }, { createdAt: 'asc' }],
         take: GENERATION_WORKER_SLOT_IDS.length,
@@ -781,17 +868,14 @@ export class GenerationJobsRepository {
           jobUpdate = {
             status: ThreadGenerationStatus.FAILED,
             safeErrorCode: 'GENERATION_FAILED',
+            failureSummary: STEP_LEASE_EXPIRED_CODE,
             completedAt: now,
             leaseOwner: null,
             leaseExpiresAt: null,
           };
         }
         const recoveredCount = await tx.threadGenerationJob.updateMany({
-          where: {
-            id: job.id,
-            status: ThreadGenerationStatus.RUNNING,
-            leaseExpiresAt: { lte: now },
-          },
+          where: { id: job.id, status: ThreadGenerationStatus.RUNNING, ...abandoned },
           data: jobUpdate,
         });
         if (recoveredCount.count !== 1) continue;
@@ -807,6 +891,56 @@ export class GenerationJobsRepository {
         recovered.push({ jobId: job.id, budgetId: job.budgetId, outcome });
       }
       return recovered;
+    });
+  }
+
+  /**
+   * A RUNNING job whose lease ran out, or one with no lease at all (no owner) that nothing has
+   * touched for a lease plus the grace period (no heartbeat). Both are abandoned by their worker.
+   */
+  private abandonedLeaseWhere(now: Date): Prisma.ThreadGenerationJobWhereInput {
+    const untouchedSince = new Date(
+      now.getTime() - GENERATION_LEASE_MS - GENERATION_STALE_GRACE_MS,
+    );
+    return {
+      OR: [
+        { leaseExpiresAt: { lte: now } },
+        { leaseExpiresAt: null, updatedAt: { lte: untouchedSince } },
+      ],
+    };
+  }
+
+  /**
+   * Fails jobs that sat QUEUED longer than GENERATION_QUEUE_MAX_AGE_MS (an orphan whose
+   * publication was never attached, or a queue that stopped draining). Each row is guarded by
+   * its status and age, so a job claimed meanwhile is left alone and a repeat pass changes nothing.
+   */
+  async expireStaleQueuedJobs(): Promise<GenerationStaleJob[]> {
+    const now = new Date();
+    const cutoff = new Date(now.getTime() - GENERATION_QUEUE_MAX_AGE_MS);
+    const where = { status: ThreadGenerationStatus.QUEUED, nextAttemptAt: { lte: cutoff } };
+    return this.prisma.$transaction(async (tx) => {
+      const stale = await tx.threadGenerationJob.findMany({
+        where,
+        select: { id: true, budgetId: true },
+        orderBy: [{ nextAttemptAt: 'asc' }, { id: 'asc' }],
+        take: GENERATION_STALE_BATCH,
+      });
+      const expired: GenerationStaleJob[] = [];
+      for (const job of stale) {
+        const changed = await tx.threadGenerationJob.updateMany({
+          where: { ...where, id: job.id },
+          data: {
+            status: ThreadGenerationStatus.FAILED,
+            safeErrorCode: 'GENERATION_FAILED',
+            failureSummary: STEP_QUEUE_EXPIRED_CODE,
+            dispatchLeaseExpiresAt: null,
+            completedAt: now,
+          },
+        });
+        if (changed.count === 1) expired.push({ jobId: job.id, budgetId: job.budgetId });
+      }
+      return expired;
     });
   }
 

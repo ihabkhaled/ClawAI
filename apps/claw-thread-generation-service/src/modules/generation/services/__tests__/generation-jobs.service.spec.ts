@@ -542,6 +542,7 @@ describe('GenerationJobsService', () => {
     const build = (publish: ReturnType<typeof vi.fn>) => {
       const repository = {
         recoverExpiredLeases: vi.fn().mockResolvedValue([]),
+        expireStaleQueuedJobs: vi.fn().mockResolvedValue([]),
         findPendingBudgetClosures: vi.fn().mockResolvedValue([]),
         findUnreportedFailures: vi.fn().mockResolvedValue([failedJob]),
         markFailureReported: vi.fn().mockResolvedValue(undefined),

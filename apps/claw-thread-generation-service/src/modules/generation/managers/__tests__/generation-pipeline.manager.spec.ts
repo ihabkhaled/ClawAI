@@ -193,6 +193,10 @@ ${text}
     expect(harness.models.generate).toHaveBeenCalledTimes(9);
     const requestIds = harness.models.generate.mock.calls.map((call) => call[0].requestId);
     expect(requestIds.filter((id) => id.endsWith(':try-2'))).toHaveLength(1);
+    for (const id of requestIds) {
+      expect(id.startsWith('job-1:')).toBe(true);
+      expect(id).toContain(`:attempt-${String(input.attempt)}:cand-`);
+    }
   });
 
   it('fails the attempt when a model keeps answering in the wrong shape', async () => {

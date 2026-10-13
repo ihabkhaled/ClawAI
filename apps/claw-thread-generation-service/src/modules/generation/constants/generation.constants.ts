@@ -5,9 +5,49 @@ import type { ReviewStageSpec } from '../types/generation-pipeline.types';
 import { ReviewerRole } from '../types/reviewer-role.enum';
 
 export const MAX_GENERATION_ROUNDS = 3;
+/** Step code of a reply that was not the JSON the role asked for. */
+export const OUTPUT_INVALID_CODE = 'OUTPUT_INVALID';
 export const FORMAT_ATTEMPTS_PER_MODEL = 2;
 export const MAX_GENERATION_ATTEMPTS = 3;
-export const GENERATION_WORKER_SLOT_IDS = ['threads-worker-1', 'threads-worker-2'] as const;
+/**
+ * Jobs one replica runs at once. It is also the broker prefetch: each running job holds one
+ * unacked message, so a replica is never handed more work than it will start. Three keeps a
+ * replica busy while one job waits on a slow model, without one process fanning out dozens of
+ * long model streams.
+ */
+export const GENERATION_REPLICA_CONCURRENCY = 3;
+/**
+ * Jobs running across ALL replicas, one `thread_generation_worker_slots` row each. It must be at
+ * least replicas x GENERATION_REPLICA_CONCURRENCY, or the surplus claims find no slot and wait
+ * for the next sweep. Raising it needs a migration that inserts the new slot rows.
+ */
+export const GENERATION_WORKER_SLOT_COUNT = 6;
+export const GENERATION_WORKER_SLOT_IDS: readonly string[] = Array.from(
+  { length: GENERATION_WORKER_SLOT_COUNT },
+  (_, index) => `threads-worker-${String(index + 1)}`,
+);
+/**
+ * Jobs of one owner running at once. A user who queues a dozen jobs holds at most this many
+ * slots, so the rest of the slots stay available to other users.
+ */
+export const GENERATION_OWNER_MAX_RUNNING = 2;
+/** Jobs the recovery pass re-publishes per interval, taken one per owner per round. */
+export const GENERATION_DISPATCH_BATCH = 10;
+/** Extra time past a lease before a job with no owner or no heartbeat is treated as abandoned. */
+export const GENERATION_STALE_GRACE_MS = 5 * 60_000;
+/** A job that waited this long in the queue (since it was last made runnable) is expired. */
+export const GENERATION_QUEUE_MAX_AGE_MS = 3 * 60 * 60_000;
+export const GENERATION_STALE_BATCH = 20;
+/** Terminal jobs whose budget close the recovery pass tries per interval. */
+export const GENERATION_CLOSURE_BATCH = 10;
+export const BUDGET_CLOSE_MAX_ATTEMPTS = 8;
+export const BUDGET_CLOSE_BASE_DELAY_MS = 15_000;
+export const BUDGET_CLOSE_MAX_DELAY_MS = 30 * 60_000;
+/** `budgetCloseStatus` of a job whose close was given up on; the budget is left to its owner service. */
+export const BUDGET_CLOSE_ABANDONED_STATUS = 'CLOSE_ABANDONED';
+/** Wait before the next budget close try after `failures` failures: 15 s doubling up to 30 min. */
+export const budgetCloseDelayMs = (failures: number): number =>
+  Math.min(BUDGET_CLOSE_BASE_DELAY_MS * 2 ** Math.max(0, failures - 1), BUDGET_CLOSE_MAX_DELAY_MS);
 export const GENERATION_LEASE_MS = 90_000;
 export const GENERATION_HEARTBEAT_MS = 20_000;
 export const GENERATION_DISPATCH_LEASE_MS = 30_000;

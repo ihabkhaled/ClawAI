@@ -320,6 +320,7 @@ describe('GenerationJobsService lease recovery steps', () => {
         .fn()
         .mockResolvedValue([{ jobId: 'job-1', budgetId: 'budget-1', outcome: recovery }]),
       markBudgetClosed: vi.fn(),
+      expireStaleQueuedJobs: vi.fn().mockResolvedValue([]),
       findPendingBudgetClosures: vi.fn().mockResolvedValue([]),
       findUnreportedFailures: vi.fn().mockResolvedValue([]),
       findDispatchable: vi.fn().mockResolvedValue([]),

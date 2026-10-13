@@ -6,6 +6,7 @@ import {
   UPSTREAM_STATUS_PATTERN,
 } from '../constants/step-recorder.constants';
 import type { ParsedStepError } from '../types/step-recorder.types';
+import { CandidatesExhaustedError } from './candidates-exhausted.error';
 import { ThreadGenerationCancelledError } from './thread-generation-cancelled.error';
 
 function statusCode(status: number): string {
@@ -13,6 +14,9 @@ function statusCode(status: number): string {
 }
 
 function parseOne(error: Error): ParsedStepError | null {
+  if (error instanceof CandidatesExhaustedError) {
+    return { code: error.primary.code, httpStatus: error.primary.httpStatus };
+  }
   if (error instanceof ThreadGenerationCancelledError) {
     return { code: STEP_CANCELLED_CODE, httpStatus: null };
   }
@@ -27,7 +31,8 @@ function parseOne(error: Error): ParsedStepError | null {
 
 /**
  * Maps a thrown error to a stable machine code. The cause chain is walked because the
- * pipeline wraps the upstream failure; the innermost upstream status wins over a wrapper.
+ * pipeline wraps the upstream failure; the innermost upstream status wins over a wrapper, except
+ * that a role whose every candidate failed reports its primary cause, not the last candidate's.
  */
 export function parseStepError(
   error: unknown,
@@ -37,6 +42,8 @@ export function parseStepError(
   let wrapper: ParsedStepError | null = null;
   for (let depth = 0; depth < STEP_ERROR_CAUSE_DEPTH && current instanceof Error; depth += 1) {
     const parsed = parseOne(current);
+    // The primary cause is final: the last fallback's status deeper in the chain must not replace it.
+    if (current instanceof CandidatesExhaustedError && parsed) return parsed;
     if (parsed && parsed.httpStatus !== null) return parsed;
     wrapper ??= parsed;
     current = current.cause;
