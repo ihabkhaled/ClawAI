@@ -27,6 +27,7 @@
         "start:prod",
         "test",
         "test:cov",
+        "test:related",
         "test:watch",
         "typecheck",
         "validate"
@@ -57,6 +58,7 @@
         "start:prod",
         "test",
         "test:cov",
+        "test:related",
         "test:watch",
         "typecheck",
         "validate"
@@ -91,6 +93,7 @@
         "start:prod",
         "test",
         "test:cov",
+        "test:related",
         "test:watch",
         "typecheck",
         "validate"
@@ -124,6 +127,7 @@
         "start",
         "test",
         "test:cov",
+        "test:related",
         "test:runtime-v2:coverage",
         "test:runtime-v2:redis",
         "test:watch",
@@ -155,6 +159,7 @@
         "start:prod",
         "test",
         "test:cov",
+        "test:related",
         "test:watch",
         "typecheck",
         "validate"
@@ -189,6 +194,7 @@
         "start:prod",
         "test",
         "test:cov",
+        "test:related",
         "test:watch",
         "typecheck",
         "validate"
@@ -220,6 +226,7 @@
         "start:prod",
         "test",
         "test:cov",
+        "test:related",
         "test:watch",
         "typecheck",
         "validate"
@@ -253,6 +260,7 @@
         "start:prod",
         "test",
         "test:cov",
+        "test:related",
         "test:watch",
         "typecheck",
         "validate"
@@ -284,6 +292,7 @@
         "test",
         "test:cov",
         "test:e2e",
+        "test:related",
         "test:watch",
         "typecheck",
         "validate"
@@ -311,6 +320,7 @@
         "start:prod",
         "test",
         "test:cov",
+        "test:related",
         "test:watch",
         "typecheck",
         "validate"
@@ -343,6 +353,7 @@
         "start:prod",
         "test",
         "test:cov",
+        "test:related",
         "test:watch",
         "typecheck",
         "validate"
@@ -375,6 +386,7 @@
         "start:prod",
         "test",
         "test:cov",
+        "test:related",
         "test:watch",
         "typecheck",
         "validate"
@@ -408,6 +420,7 @@
         "start:prod",
         "test",
         "test:cov",
+        "test:related",
         "test:watch",
         "typecheck",
         "validate"
@@ -440,6 +453,7 @@
         "start:prod",
         "test",
         "test:cov",
+        "test:related",
         "test:watch",
         "typecheck",
         "validate"
@@ -474,6 +488,7 @@
         "start:prod",
         "test",
         "test:cov",
+        "test:related",
         "test:watch",
         "typecheck",
         "validate"
@@ -508,6 +523,7 @@
         "start:prod",
         "test",
         "test:cov",
+        "test:related",
         "test:watch",
         "typecheck",
         "validate"
@@ -543,6 +559,7 @@
         "start:prod",
         "test",
         "test:cov",
+        "test:related",
         "test:watch",
         "typecheck",
         "validate"
@@ -573,6 +590,7 @@
         "start:prod",
         "test",
         "test:cov",
+        "test:related",
         "test:watch",
         "typecheck",
         "validate"
@@ -603,6 +621,7 @@
         "start",
         "start:prod",
         "test",
+        "test:related",
         "test:watch",
         "typecheck"
       ],
@@ -633,6 +652,7 @@
         "start",
         "start:prod",
         "test",
+        "test:related",
         "test:watch",
         "typecheck"
       ],
@@ -666,6 +686,7 @@
         "start:prod",
         "test",
         "test:cov",
+        "test:related",
         "test:watch",
         "typecheck",
         "validate"
@@ -686,6 +707,7 @@
         "lint",
         "lint:fix",
         "test",
+        "test:related",
         "test:watch",
         "typecheck"
       ],
@@ -701,6 +723,7 @@
         "lint",
         "lint:fix",
         "test",
+        "test:related",
         "test:watch",
         "typecheck"
       ],
@@ -719,6 +742,7 @@
         "lint",
         "lint:fix",
         "test",
+        "test:related",
         "test:watch",
         "typecheck"
       ],
@@ -737,6 +761,7 @@
         "lint",
         "lint:fix",
         "test",
+        "test:related",
         "test:watch",
         "typecheck"
       ],
@@ -752,6 +777,7 @@
         "lint",
         "lint:fix",
         "test",
+        "test:related",
         "test:watch",
         "typecheck"
       ],
@@ -770,6 +796,7 @@
         "lint",
         "lint:fix",
         "test",
+        "test:related",
         "test:watch",
         "typecheck"
       ],

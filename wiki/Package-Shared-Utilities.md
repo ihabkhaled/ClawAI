@@ -9,10 +9,12 @@
 **Type:** shared-package · **Path:** `packages/shared-utilities`
 
 ## Canonical owner
+
 - Root policy: `CLAUDE.md` + `rules/00-non-negotiable-rules.md`
 - Shared packages: `rules/17-shared-packages.md` + `context/package-boundaries.md`
 
 ## Commands (run in this folder only)
+
 ```
 npm run typecheck
 npm run lint
@@ -21,15 +23,16 @@ npm run build
 ```
 
 ## Dependencies (generated)
+
 - Depends on: @claw/shared-constants, @claw/shared-types
 
 ## Before editing
+
 1. `npm run knowledge:context -- --task="<task>" --service=@claw/shared-utilities`
 2. Read `.ai/local/current-context.md`.
 3. Never cross this workspace's data boundary; never bypass hooks; never suppress lint/types.
 
 _Generated from source. Edit the renderer, not this file._
-
 
 ## Package metadata
 
@@ -40,14 +43,14 @@ _Generated from source. Edit the renderer, not this file._
 
 ## Scripts
 
-| Script | Command |
-|---|---|
-| `typecheck` | `node ../../tools/typescript/run-ts7.mjs --noEmit` |
-| `build` | `node ../../tools/typescript/run-ts7.mjs -p tsconfig.build.json && tsc-alias -p tsconfig.build.json -f` |
-| `test` | `vitest run --passWithNoTests` |
-| `lint` | `eslint src/ --concurrency=1` |
-| `lint:fix` | `eslint src/ --fix` |
-| `test:watch` | `vitest` |
+| Script       | Command                                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------------------------- |
+| `typecheck`  | `node ../../tools/typescript/run-ts7.mjs --noEmit`                                                      |
+| `build`      | `node ../../tools/typescript/run-ts7.mjs -p tsconfig.build.json && tsc-alias -p tsconfig.build.json -f` |
+| `test`       | `vitest run` (an empty suite fails)                                                                     |
+| `lint`       | `eslint src/ --concurrency=1`                                                                           |
+| `lint:fix`   | `eslint src/ --fix`                                                                                     |
+| `test:watch` | `vitest`                                                                                                |
 
 ## Workspace inventory
 

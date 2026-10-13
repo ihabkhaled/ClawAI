@@ -2,8 +2,20 @@
 
 **Status:** active · **Owner:** tooling · **Introduced:** 2026-09-17
 
-The repo is 24 workspaces and ~792 spec files. A gate that scales with the repo
-instead of with the change is a gate people start bypassing.
+The repo has dozens of workspaces and thousands of spec files (live counts:
+`.ai/manifests/repository.json`, `.ai/manifests/tests.json`). A gate that scales
+with the repo instead of with the change is a gate people start bypassing.
+
+## What the hooks already do for you
+
+- **pre-commit** lints and formats only the staged files (ESLint with a content
+  cache and `--max-warnings 0`), and typechecks only the workspaces the staged
+  change affects — after rebuilding any shared package whose `dist` is stale.
+- **pre-push** runs `vitest related` for the directly changed workspaces (the
+  whole suite only when a config, `package.json` or test setup changed),
+  typechecks the dependents of a changed shared package, and builds the
+  directly changed workspaces. Full dependent suites run in CI.
+- Both run affected workspaces in a bounded parallel pool (`CLAW_GATE_JOBS`).
 
 ## The rules
 
@@ -14,10 +26,12 @@ instead of with the change is a gate people start bypassing.
    run all workspace or repository tests for a scoped change.
 3. **Typecheck the workspace you touched.** `npm run typecheck` is per-workspace
    already; run it in that folder, not at the root.
-4. **Do not re-prove an unchanged tree.** Use a valid exact-tree gate receipt
-   when it proves the same scoped checks already passed for the staged tree.
-   Hooks remain enabled; receipts may avoid duplicate work only where the hook
-   supports that behavior.
+4. **Do not re-prove an unchanged tree.** `npm run gates:receipt` runs the
+   hook gates once over the staged tree and records each one that passed; the
+   hooks then skip exactly those gates for exactly that tree. Which gate a
+   receipt can skip is the table in
+   [rules/34](34-gate-economy-and-machine-resources.md) rule 4 — never a gate it
+   did not run.
 5. **Never bypass hooks.** --no-verify and other hook bypasses are prohibited
    by ADR-061, even when a user asks. Reduce cost with changed-file checks and
    tree-bound receipts.
@@ -70,11 +84,13 @@ Related: [`rules/34-gate-economy-and-machine-resources.md`](34-gate-economy-and-
    `runtime-v2-coverage` and `runtime-v2-redis` were skipped for weeks, then a chat change
    woke them and they failed with "Failed to resolve entry for @claw/shared-utilities" (no
    `dist`). Any new `needs.changes`-gated job copies the "Build shared packages" step.
-8. **After `git pull`, rebuild before you trust a gate.** Upstream moved `shared-types`,
-   `shared-utilities` and the Prisma schemas; the stale local `dist` and Prisma clients made
-   pre-commit typecheck fail in services nobody touched. Run
-   `npm run build --workspace=@claw/shared-types` (then constants, utilities) and
-   `npx prisma generate` in the services that fail, then retry once.
+8. **After `git pull`, stale Prisma clients still need regenerating.** Upstream moved
+   `shared-types`, `shared-utilities` and the Prisma schemas; the stale local `dist` and
+   Prisma clients made pre-commit typecheck fail in services nobody touched. The hooks now
+   rebuild any shared package whose `dist` no longer matches its source, in dependency
+   order (`npm run affected:shared-build` does the same by hand). Prisma clients are not
+   rebuilt for you: run `npm run prisma:generate --workspace=<service>` in a service that
+   fails on a missing model, then retry once.
 9. **Change a seed value, grep for the old number.** Free allowance 2 -> 10 left one spec
    asserting the catalog still said 2 and turned CI red. `rg` the old value across specs,
    docs and ADRs in the same change.
@@ -90,6 +106,8 @@ Related: [`rules/34-gate-economy-and-machine-resources.md`](34-gate-economy-and-
     screenshots, and tell the user to run `npx playwright test --headed` themselves.
 13. **Commit subjects stay under 100 characters** (commitlint) and end with the attribution
     line. A too-long subject fails after the 4-minute hook run, so check length first.
-14. **Hooks stay enabled.** Never use --no-verify. Use exact-tree receipts only
-    for checks they directly cover; do not treat receipts as permission to skip
-    hooks, knowledge generation, or required CI gates.
+14. **Hooks stay enabled.** Never use --no-verify. A receipt skips only the gates it
+    ran (rules/34 rule 4); it never skips lint-staged, knowledge generation, or CI.
+15. **A test that passes on a re-run is flaky, not fixed.** Quarantine it per
+    [`testing/flaky-test-policy.md`](../testing/flaky-test-policy.md). The hooks no
+    longer re-run a failing suite against a second base, which used to hide exactly this.

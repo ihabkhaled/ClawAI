@@ -1,48 +1,59 @@
 #!/usr/bin/env node
 // Affected-workspace engine. Given a git diff, determines which workspaces need
 // validation and WHY — so a one-service change runs a one-service gate, not the
-// whole 24-workspace fleet, while a shared-package change fans out to dependents.
+// whole fleet, while a shared-package change fans out to its dependents.
 //
-//   node tools/affected/index.mjs list [--base=main]
-//   node tools/affected/index.mjs lint|typecheck|test|build [--base=main]
+//   node tools/affected/index.mjs list [--base=<ref>] [--staged]
+//   node tools/affected/index.mjs lint|typecheck|build [--base=<ref>] [--staged] [--all-on-root]
+//   node tools/affected/index.mjs test [--base=<ref>] [--staged] [--all-on-root] [--related]
+//   node tools/affected/index.mjs root-checks [--base=<ref>] [--staged] [--tooling]
+//   node tools/affected/index.mjs shared-build
+//   node tools/affected/index.mjs knowledge --record     (pre-commit step 2)
+//   node tools/affected/index.mjs gates                  (npm run gates:receipt)
+//   node tools/affected/index.mjs ci-matrix [--base=<ref> --head=<sha> | --full]
+//
+// Without --base the base is resolved explicitly (origin/HEAD → origin/main →
+// main, fetching once if needed). A base that does not resolve is an error,
+// never "0 changed files".
 import { execFileSync } from 'node:child_process';
-import { buildManifests } from '../lib/manifests.mjs';
-import { isMain } from '../lib/repo.mjs';
+
 import { cmp } from '../lib/fact.mjs';
+import { extractWorkspaces } from '../lib/extractors.mjs';
+import { assertCommit, git, gitLines, resolveDefaultBase } from '../lib/git.mjs';
+import { npmInvocation } from '../lib/npm.mjs';
+import { isMain } from '../lib/repo.mjs';
+import { recordReceipt } from '../gates/receipt.mjs';
+import { formatSummary, runPool } from './pool.mjs';
+import { planRootChecks } from './root-checks.mjs';
+import { ensureSharedPackagesFresh, sharedBuildOrder } from './shared-build.mjs';
 
-// npm is npm.cmd on Windows; execFileSync can't spawn a .cmd without a shell.
-// Node's post-CVE-2024-27980 behavior throws EINVAL when spawning a .cmd/.bat
-// without shell:true, so the NPM invocation below MUST pass IS_WINDOWS as its
-// `shell` option — otherwise every workspace gate silently fails on Windows.
-const IS_WINDOWS = process.platform === 'win32';
-const NPM = IS_WINDOWS ? 'npm.cmd' : 'npm';
+let workspaceCache = null;
 
-function gitLines(args) {
-  try {
-    return execFileSync('git', args, { encoding: 'utf8' }).split('\n').filter(Boolean);
-  } catch {
-    return [];
-  }
+/** Workspaces from package.json files, computed once per process. */
+export function loadWorkspaces() {
+  workspaceCache ??= extractWorkspaces();
+  return workspaceCache;
 }
 
 /**
- * Changed files. In --staged mode (used by pre-commit) only the staged set is
- * considered, so a commit validates what it is actually committing and is not
- * blocked by unrelated in-flight work in the tree. Otherwise it also includes
- * the diff against `base` and unstaged edits.
+ * Changed files. In --staged mode (pre-commit) only the staged set counts, so a
+ * commit validates what it commits and is not blocked by unrelated work in the
+ * tree. With `head` it is exactly `base...head` (CI and pre-push of a ref).
+ * Otherwise it is `base...HEAD` plus staged and unstaged edits.
  */
-function changedFiles(base, stagedOnly) {
-  if (stagedOnly) return [...new Set(gitLines(['diff', '--name-only', '--cached']))].sort();
+export function changedFiles(base, { staged = false, head } = {}) {
+  if (staged) return [...new Set(gitLines(['diff', '--name-only', '--cached']))].sort();
+  assertCommit(base);
+  if (head) {
+    assertCommit(head);
+    return gitLines(['diff', '--name-only', `${base}...${head}`]).sort();
+  }
   const parts = [
     ...gitLines(['diff', '--name-only', `${base}...HEAD`]),
     ...gitLines(['diff', '--name-only', '--cached']),
     ...gitLines(['diff', '--name-only']),
   ];
   return [...new Set(parts)].sort();
-}
-
-function changedFilesBetween(base, head) {
-  return gitLines(['diff', '--name-only', `${base}...${head}`]).sort();
 }
 
 /** Reverse dependency map: package -> [workspaces depending on it]. */
@@ -57,32 +68,46 @@ function reverseDeps(workspaces) {
   return rev;
 }
 
+const ROOT_INVARIANT =
+  /^(package\.json|package-lock\.json|\.npmrc|\.lintstagedrc\.cjs|[^/]+\.config\.(?:js|mjs|cjs|ts)|eslint|tsconfig|\.github\/|\.husky\/|docker\/|infra\/|tools\/|scripts\/|rules\/|skills\/|context\/|\.env)/u;
+
+/**
+ * Markdown never feeds a compiler, a test or a bundle, so a documentation edit
+ * inside a workspace (its README, CLAUDE.md or generated AGENTS.md) must not
+ * trigger that workspace's code gates. Docs have their own checks.
+ */
+export function isDocumentation(file) {
+  return file.endsWith('.md');
+}
+
+/**
+ * Each affected workspace with WHY: `direct` (a file inside it changed; `files`
+ * lists them) or `dependent` (it depends on a changed shared package).
+ */
 export function computeAffectedFromFiles(files, workspaces) {
   const rev = reverseDeps(workspaces);
-
-  const affected = new Map(); // name -> reason
-  const add = (name, reason) => {
-    if (!affected.has(name)) affected.set(name, reason);
+  const affected = new Map();
+  // A workspace that is both edited and a dependent counts as direct.
+  const mark = (name, kind, reason) => {
+    const entry = affected.get(name);
+    if (!entry) affected.set(name, { kind, reason, files: [] });
+    else if (kind === 'direct' && entry.kind !== 'direct') Object.assign(entry, { kind, reason });
+    return affected.get(name);
   };
 
   let rootInvariant = false;
   for (const f of files) {
-    // A workspace's own AGENTS.md is generated documentation (tools/knowledge/
-    // build.mjs) with zero code impact — it must not trigger a code gate
-    // (typecheck/lint/test/build) for that workspace, or every governance
-    // commit that regenerates 24 AGENTS.md files would force a full-fleet run.
-    if (/\/AGENTS\.md$/.test(f)) continue;
+    if (isDocumentation(f)) continue;
     const owner = workspaces.find((ws) => f.startsWith(`${ws.dir}/`));
     if (owner) {
-      add(owner.name, `direct edit: ${f}`);
-      // Shared package changed → every dependent workspace is affected.
+      mark(owner.name, 'direct', `direct edit: ${f}`).files.push(f);
       if (owner.type === 'shared-package') {
         const queue = [owner.name];
         const visited = new Set(queue);
         while (queue.length > 0) {
           const dependency = queue.shift();
           for (const dependent of rev[dependency] ?? []) {
-            add(dependent, `depends on changed package ${owner.name}`);
+            mark(dependent, 'dependent', `depends on changed package ${owner.name}`);
             if (!visited.has(dependent)) {
               visited.add(dependent);
               queue.push(dependent);
@@ -92,29 +117,24 @@ export function computeAffectedFromFiles(files, workspaces) {
       }
       continue;
     }
-    // Root/infra changes → broad invariant validation.
-    if (
-      /^(package\.json|package-lock\.json|\.npmrc|[^/]+\.config\.(?:js|mjs|cjs|ts)|eslint|tsconfig|\.github\/|docker\/|infra\/|tools\/|rules\/|skills\/|context\/|\.env)/.test(
-        f,
-      )
-    ) {
-      rootInvariant = true;
-      add('__root__', `root/infra/governance change: ${f}`);
-    }
+    if (ROOT_INVARIANT.test(f)) rootInvariant = true;
   }
 
   const result = [...affected.entries()]
-    .filter(([name]) => name !== '__root__')
-    .map(([name, reason]) => ({ name, reason }))
+    .map(([name, entry]) => ({
+      name,
+      kind: entry.kind,
+      reason: entry.reason,
+      files: [...new Set(entry.files)].sort(),
+    }))
     .sort((a, b) => cmp(a.name, b.name));
 
-  return { changedFileCount: files.length, rootInvariant, affected: result };
+  return { changedFileCount: files.length, rootInvariant, affected: result, files };
 }
 
-export function computeAffected(base, stagedOnly = false, head) {
-  const workspaces = buildManifests().workspaces.workspaces;
-  const files = head ? changedFilesBetween(base, head) : changedFiles(base, stagedOnly);
-  return { base, ...computeAffectedFromFiles(files, workspaces) };
+export function computeAffected(base, { staged = false, head } = {}) {
+  const files = changedFiles(base, { staged, head });
+  return { base, ...computeAffectedFromFiles(files, loadWorkspaces()) };
 }
 
 function serviceName(workspace) {
@@ -130,9 +150,8 @@ function serviceName(workspace) {
  * CI at about four minutes while every other workspace finished in under one.
  * `vitest --shard=i/n` splits the files; each shard is a job of its own.
  *
- * Only the TEST matrix is sharded. Lint, typecheck and build stay one job per
- * workspace: they are already short, and this account runs at most 20 jobs at
- * once, so extra jobs are taken from a fixed budget.
+ * Only the TEST matrix is sharded: the static (lint + typecheck) and build jobs
+ * stay one per workspace, because this account runs at most 20 jobs at once.
  */
 export const TEST_SHARDS = { 'claw-frontend': 4 };
 
@@ -174,71 +193,191 @@ export function createCiMatrix(result, workspaces, full = false) {
   };
 }
 
-function runGate(script, base, expandRoot, stagedOnly) {
-  const { affected, rootInvariant } = computeAffected(base, stagedOnly);
-  const names = affected
-    .map((a) => a.name)
-    // Only workspaces that actually declare the target script can run it.
-    .filter((name) => scriptExists(name, script));
-  // Local hooks stay scoped: they run only the directly-affected workspaces and
-  // their dependents. A root/config/governance change is flagged rootInvariant
-  // and — ONLY with --all-on-root (used by CI + release:preflight) — expands to
-  // every workspace. This keeps local hooks fast and prevents false-fails on
-  // unrelated in-flight work, while CI still does the full broad pass.
-  const list =
-    rootInvariant && expandRoot
-      ? buildManifests()
-          .workspaces.workspaces.map((w) => w.name)
-          .filter((name) => scriptExists(name, script))
-      : names;
-  const scope = rootInvariant
-    ? expandRoot
-      ? '(root invariant — ALL workspaces)'
-      : '(root invariant — local scope: affected only; full pass runs in CI/preflight)'
-    : names.join(', ') || '(none)';
-  console.log(`affected:${script} → ${scope}`);
-  if (list.length === 0) {
-    console.log('Nothing to validate in local scope.');
+const SOURCE_FILE = /\/src\/.+\.(?:ts|tsx|mts|js|jsx)$/u;
+
+/**
+ * How a directly changed workspace is tested locally. When every changed file
+ * is source under src/, `vitest related` runs only the specs that import them.
+ * Any other change (vitest config, package.json, tsconfig, test setup) can
+ * affect every spec, so the whole suite runs.
+ */
+export function testInvocation(entry, workspace) {
+  const related =
+    workspace.scripts.includes('test:related') &&
+    entry.files.length > 0 &&
+    entry.files.every((f) => SOURCE_FILE.test(f));
+  if (!related) return { script: 'test', args: [] };
+  return {
+    script: 'test:related',
+    args: entry.files.map((f) => f.slice(workspace.dir.length + 1)),
+  };
+}
+
+function defaultKinds(script) {
+  return script === 'typecheck' ? ['direct', 'dependent'] : ['direct'];
+}
+
+function npmTask(name, args) {
+  const [command, commandArgs, options] = npmInvocation(args);
+  return { name, command, args: commandArgs, options };
+}
+
+/**
+ * The tasks for one gate. Locally (`expandRoot` false) the scope is:
+ *  - typecheck: every affected workspace (direct and dependents)
+ *  - test:      direct workspaces only, via `vitest related` where possible;
+ *               dependents of a changed shared package are typechecked, and
+ *               their full suites run in CI
+ *  - build:     direct workspaces only (dependents build in CI)
+ *  - lint:      direct workspaces
+ * `kinds` narrows that (pre-push typechecks only dependents: the direct ones
+ * are compiled by their build). With `expandRoot` and a root-invariant change,
+ * every workspace runs in full.
+ */
+export function planGate(
+  script,
+  result,
+  workspaces,
+  { expandRoot = false, related = false, kinds = defaultKinds(script) } = {},
+) {
+  const byName = new Map(workspaces.map((ws) => [ws.name, ws]));
+  const has = (name, s) => byName.get(name)?.scripts.includes(s) ?? false;
+
+  if (result.rootInvariant && expandRoot) {
+    const names = workspaces.filter((ws) => has(ws.name, script)).map((ws) => ws.name);
+    return { scope: names, tasks: names.map((n) => npmTask(n, ['run', script, '--workspace', n])) };
+  }
+
+  const entries = result.affected.filter((entry) => kinds.includes(entry.kind));
+  const scoped = entries.filter((entry) => has(entry.name, script));
+  const tasks = scoped.map((entry) => {
+    if (script !== 'test' || !related) {
+      return npmTask(entry.name, ['run', script, '--workspace', entry.name]);
+    }
+    const { script: testScript, args } = testInvocation(entry, byName.get(entry.name));
+    const extra = args.length > 0 ? ['--', ...args] : [];
+    return npmTask(`${entry.name}${testScript === 'test:related' ? ' (related)' : ''}`, [
+      'run',
+      testScript,
+      '--workspace',
+      entry.name,
+      ...extra,
+    ]);
+  });
+  return { scope: scoped.map((entry) => entry.name), tasks };
+}
+
+const BUILDS_ON_SHARED = new Set(['typecheck', 'test', 'build']);
+
+/** Run a gate's tasks in the bounded pool. Returns { ok, scope }. */
+export async function runGate(script, result, options = {}) {
+  const workspaces = loadWorkspaces();
+  const { scope, tasks } = planGate(script, result, workspaces, options);
+  const label = result.rootInvariant && options.expandRoot ? '(root invariant — ALL workspaces)' : scope.join(', ');
+  console.log(`affected:${script} → ${label || '(none)'}`);
+  if (tasks.length === 0) return { ok: true, scope };
+  if (BUILDS_ON_SHARED.has(script)) ensureSharedPackagesFresh(workspaces);
+  const results = await runPool(tasks);
+  process.stdout.write(`\n${formatSummary(results)}`);
+  return { ok: results.every((r) => r.ok), scope };
+}
+
+/** Run the root-invariant checks a change calls for. */
+export async function runRootChecks(files, { tooling = false } = {}) {
+  const { reasons, tasks } = planRootChecks(files, loadWorkspaces(), { includeTooling: tooling });
+  for (const reason of reasons) console.log(`root-checks: ${reason}`);
+  if (tasks.length === 0) {
+    console.log('root-checks: none needed');
+    return true;
+  }
+  const results = await runPool(tasks);
+  process.stdout.write(`\n${formatSummary(results)}`);
+  return results.every((r) => r.ok);
+}
+
+/** True when the working tree has no unstaged or untracked changes. */
+function workingTreeMatchesIndex() {
+  return (
+    gitLines(['diff', '--name-only']).length === 0 &&
+    gitLines(['ls-files', '--others', '--exclude-standard']).length === 0
+  );
+}
+
+function runNode(script, args) {
+  execFileSync(process.execPath, [script, ...args], { stdio: 'inherit' });
+}
+
+/**
+ * Pre-commit step 2: regenerate the knowledge layer and inventory snapshot,
+ * stage them, verify, and — when the working tree equals the index — record a
+ * `knowledge` receipt for the exact tree being committed, so pre-push does not
+ * verify the same tree again.
+ */
+function knowledgeStep(record) {
+  runNode('tools/knowledge/build.mjs', ['--write-and-verify']);
+  // Writing the snapshot computes exactly what `audit --check` would compare
+  // against, so a check right after the write would prove nothing new.
+  runNode('tools/audit/index.mjs', []);
+  git(['add', '--', '.ai', 'docs/features/ai-native-engineering-os/inventory.snapshot.json']);
+  const agents = gitLines(['ls-files', '--modified', '--others', '--exclude-standard', '--', '*/AGENTS.md', 'AGENTS.md']);
+  if (agents.length > 0) git(['add', '--', ...agents]);
+  if (!record) return;
+  if (!workingTreeMatchesIndex()) {
+    console.log('knowledge: working tree differs from the index — no receipt recorded');
     return;
   }
-  for (const name of list) {
-    console.log(`\n▶ ${name}: npm run ${script}`);
-    try {
-      // shell:true on Windows so npm.cmd can be spawned (see IS_WINDOWS note
-      // above). `script` is a fixed gate name and `name` is a repo workspace
-      // slug from the manifest — neither is user-controlled, so shell quoting
-      // is not an injection surface here.
-      execFileSync(NPM, ['run', script, '--workspace', name], {
-        stdio: 'inherit',
-        shell: IS_WINDOWS,
-      });
-    } catch {
-      console.error(`✖ ${name} failed npm run ${script}`);
-      process.exit(1);
-    }
+  recordReceipt(git(['write-tree']), 'knowledge', ['repo']);
+}
+
+/**
+ * `npm run gates:receipt`: run every gate the hooks would run for the current
+ * change, over a working tree identical to the index, and record a receipt
+ * only for the gates that passed. There is no way to record without running.
+ */
+async function gatesAndRecord(base) {
+  if (!workingTreeMatchesIndex()) {
+    console.error(
+      'gates:receipt refused — the working tree has unstaged or untracked changes, so the gates ' +
+        'would not run over the tree being committed. Stage or stash them first.',
+    );
+    return false;
   }
+  const tree = git(['write-tree']);
+  const result = computeAffected(base);
+
+  if (!(await runRootChecks(result.files, { tooling: true }))) return false;
+  recordReceipt(tree, 'root', ['repo']);
+  for (const [script, options] of [
+    ['typecheck', {}],
+    ['test', { related: true }],
+    ['build', {}],
+  ]) {
+    const { ok, scope } = await runGate(script, result, options);
+    if (!ok) return false;
+    recordReceipt(tree, script, scope);
+  }
+  console.log(`gates:receipt recorded for tree ${tree.slice(0, 12)} (root, typecheck, test, build)`);
+  return true;
 }
 
-/** True when a workspace's package.json declares the given script. */
-function scriptExists(name, script) {
-  const ws = buildManifests().workspaces.workspaces.find((w) => w.name === name);
-  return Boolean(ws && ws.scripts.includes(script));
+function flag(name) {
+  const arg = process.argv.find((a) => a.startsWith(`--${name}=`));
+  return arg ? arg.slice(name.length + 3) : undefined;
 }
 
-function main() {
-  const [cmdArg = 'list'] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
-  const baseArg = process.argv.find((a) => a.startsWith('--base='));
-  const base = baseArg ? baseArg.split('=')[1] : 'main';
-  const expandRoot = process.argv.includes('--all-on-root');
-  const stagedOnly = process.argv.includes('--staged');
-  const headArg = process.argv.find((a) => a.startsWith('--head='));
-  const head = headArg ? headArg.split('=')[1] : undefined;
-  const full = process.argv.includes('--full');
-  if (cmdArg === 'ci-matrix') {
-    const workspaces = buildManifests().workspaces.workspaces;
+async function main() {
+  const [command = 'list'] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+  const has = (name) => process.argv.includes(`--${name}`);
+  const staged = has('staged');
+  const full = has('full');
+  const head = flag('head');
+  const base = staged || (command === 'ci-matrix' && full) ? flag('base') : (flag('base') ?? resolveDefaultBase());
+
+  if (command === 'ci-matrix') {
+    const workspaces = loadWorkspaces();
     const result = full
       ? { affected: [], changedFileCount: 0, rootInvariant: true }
-      : computeAffected(base, false, head);
+      : computeAffected(base, { head });
     const matrix = createCiMatrix(result, workspaces, full);
     process.stdout.write(
       JSON.stringify({
@@ -249,18 +388,43 @@ function main() {
         testMatrix: createCiTestMatrix(result, workspaces, full),
       }),
     );
-    return;
+    return true;
   }
-  if (cmdArg === 'list') {
-    const { affected, rootInvariant, changedFileCount } = computeAffected(base, stagedOnly);
+  if (command === 'shared-build') {
+    console.log(`shared build order: ${sharedBuildOrder(loadWorkspaces()).join(' → ')}`);
+    ensureSharedPackagesFresh(loadWorkspaces());
+    return true;
+  }
+  if (command === 'knowledge') {
+    knowledgeStep(has('record'));
+    return true;
+  }
+  if (command === 'gates') return gatesAndRecord(base);
+
+  const result = computeAffected(base, { staged, head });
+  if (command === 'list') {
+    const where = staged ? 'staged changes' : base;
     console.log(
-      `Affected vs ${base} (${changedFileCount} changed files)${rootInvariant ? ' [root invariant]' : ''}:`,
+      `Affected vs ${where} (${result.changedFileCount} changed files)${result.rootInvariant ? ' [root invariant]' : ''}:`,
     );
-    if (affected.length === 0 && !rootInvariant) console.log('  (none)');
-    for (const a of affected) console.log(`  ${a.name} — ${a.reason}`);
-    return;
+    if (result.affected.length === 0 && !result.rootInvariant) console.log('  (none)');
+    for (const a of result.affected) console.log(`  ${a.name} — ${a.reason}`);
+    return true;
   }
-  runGate(cmdArg, base, expandRoot, stagedOnly);
+  if (command === 'root-checks') return runRootChecks(result.files, { tooling: has('tooling') });
+  const { ok } = await runGate(command, result, {
+    expandRoot: has('all-on-root'),
+    related: has('related'),
+  });
+  return ok;
 }
 
-if (isMain(import.meta.url)) main();
+if (isMain(import.meta.url)) {
+  main().then(
+    (ok) => process.exit(ok ? 0 : 1),
+    (error) => {
+      console.error(`✖ ${error.message}`);
+      process.exit(1);
+    },
+  );
+}

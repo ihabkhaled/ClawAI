@@ -82,7 +82,7 @@ change). The 1500ms nodemon delay debounces the tsgo→tsc-alias write sequence.
 | `build`     | `tsgo -p tsconfig.build.json`                                       |
 | `typecheck` | `tsgo --noEmit`                                                     |
 | `lint`      | `eslint src/ --cache --cache-location .eslintcache --concurrency=4` |
-| `test`      | `vitest run --passWithNoTests`                                      |
+| `test`      | `vitest run` (an empty suite fails)                                 |
 
 ---
 

@@ -18,8 +18,10 @@ Every commit and push in the repo; the git hooks; `.github/workflows/ci.yml`.
    its validation lane requires it. Never run whole-workspace or all-workspace
    lint/tests for a scoped change.
 2. **Green then commit.** When touched-folder gates pass, commit and let the
-   hook run. The pre-commit hook is now scoped + fast (lint-staged + knowledge
-   freshness + `affected typecheck --staged`), so there is no reason to bypass it.
+   hook run. pre-commit is scoped and fast (lint-staged with `--max-warnings 0` →
+   knowledge layer regenerate + verify → root-invariant checks + typecheck of the
+   staged-affected workspaces); pre-push validates the tree of every pushed ref
+   (`tools/gates/pre-push.mjs`). There is no reason to bypass either.
    **`--no-verify` is banned** ([ADR-061](../docs/13-adr/adr-061-git-hook-policy-no-bypass.md));
    a hook failure is a real problem in something you staged — fix it, never skip it.
    A valid exact-tree receipt may prevent only redundant checks supported by the hook.
@@ -46,7 +48,7 @@ origin/<branch>..HEAD` must be empty before you stage the next change. The only
 ## Prohibited patterns
 
 - `--no-verify` (or any hook bypass) on commit or push — banned outright.
-- Running lint/typecheck/test/build across all 17 services for a one-service change.
+- Running lint/typecheck/test/build across every workspace for a one-service change.
 - `git add -A` / `git add .` when splitting a commit.
 - Building a local stack: committing again while an earlier commit is unpushed.
 - A non-conventional commit subject.

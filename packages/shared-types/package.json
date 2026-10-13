@@ -5,11 +5,12 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "typecheck": "node ../../tools/typescript/run-ts7.mjs --noEmit",
+    "typecheck": "node ../../tools/typescript/run-ts7.mjs --noEmit --incremental --tsBuildInfoFile node_modules/.cache/tsc/typecheck.tsbuildinfo",
     "build": "node ../../tools/typescript/run-ts7.mjs -p tsconfig.build.json && tsc-alias -p tsconfig.build.json -f",
-    "lint": "eslint src/ --concurrency=1",
+    "lint": "eslint src/ --concurrency=1 --cache --cache-strategy content --cache-location node_modules/.cache/eslint/",
     "lint:fix": "eslint src/ --fix",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
+    "test:related": "vitest related --run --passWithNoTests",
     "test:watch": "vitest"
   },
   "devDependencies": {

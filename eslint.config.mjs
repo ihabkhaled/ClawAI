@@ -114,7 +114,11 @@ export default tseslint.config(
     },
     languageOptions: {
       parserOptions: {
-        project: ['./apps/*/tsconfig.json', './packages/*/tsconfig.json'],
+        // The project service loads only the tsconfig that owns each linted
+        // file. The old `project: ['./apps/*/tsconfig.json', …]` glob built
+        // every workspace program for a one-file lint, which is why a commit
+        // needed an 8 GB heap and a single file took seconds.
+        projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },

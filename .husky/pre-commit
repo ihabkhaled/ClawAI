@@ -1,84 +1,52 @@
 #!/usr/bin/env sh
 # Pre-commit: scoped + fast. NEVER bypass with --no-verify — a failure here is a
-# real problem in something you changed. Kept fast so there is no reason to skip.
+# real problem in something you staged. What each step proves, and what CI adds
+# on top, is the gate matrix in rules/23-git-commits-hooks-and-release-gates.md.
 
-echo "pre-commit 1/3: lint-staged (eslint --fix + prettier on staged files)"
+echo "pre-commit 1/3: lint-staged (eslint --fix --max-warnings 0 + prettier on staged files)"
 npx lint-staged || exit 1
 
-# The committed .ai knowledge layer and the audit inventory snapshot are
-# GENERATED from the tree. CI verifies they match; if they drift, the build goes
-# red on every subsequent push until someone regenerates them.
+# The committed .ai knowledge layer and the inventory snapshot are GENERATED
+# from the tree, so they are regenerated and staged here — after lint-staged has
+# settled the bytes they hash — then verified in the same pass.
 #
-# This step REGENERATES and STAGES them rather than merely checking, because a
-# check alone kept failing in a way that is easy to get wrong: regenerating
-# BEFORE staging races lint-staged, which reformats files in step 1 above and
-# changes the very bytes the manifest hashed. Running the generators here — after
-# the formatters have settled — means the recorded hashes always describe what is
-# actually being committed. The gate cannot be forgotten, and there is nothing
-# for a human or an agent to remember.
-if git diff --cached --name-only | grep -qE '^(packages/|apps/|infra/|docker/|docs/|scripts/|rules/|skills/|\.env\.example|tools/)'; then
-  echo "pre-commit 2/3: regenerating knowledge layer + inventory snapshot"
-
-  # The generators read the WORKING TREE, but CI regenerates from what was
-  # actually committed. If unstaged or untracked source files are lying around,
-  # generating here records facts CI cannot see — e.g. an event declared in an
-  # untracked service file lands in event-graph.json, and CI then reports the
-  # manifest as stale on every subsequent push.
-  #
-  # So: hide everything that is not being committed, generate against exactly
-  # the staged tree, then restore. lint-staged performs the same dance in step 1,
-  # so the pattern is already proven here. The trap restores the stash even if a
-  # generator fails or the shell is interrupted — losing a developer's
-  # uncommitted work to a hook would be far worse than a stale manifest.
-  STASH_MSG="pre-commit-knowledge-$$"
-  STASHED=0
-  STASH_REF=""
-  if ! git diff --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then
-    STASH_BEFORE=$(git rev-parse -q --verify refs/stash 2>/dev/null || true)
-    if git stash push --quiet --keep-index --include-untracked --message "$STASH_MSG"; then
-      STASH_AFTER=$(git rev-parse -q --verify refs/stash 2>/dev/null || true)
-      if [ -n "$STASH_AFTER" ] && [ "$STASH_AFTER" != "$STASH_BEFORE" ]; then
-        STASHED=1
-        STASH_REF=$STASH_AFTER
-      fi
+# The generators read the WORKING TREE, but CI regenerates from what was
+# committed. So everything not being committed is parked first, and restored by
+# the trap even if a generator fails or the shell is interrupted: losing a
+# developer's uncommitted work to a hook would be far worse than a failed check.
+echo "pre-commit 2/3: knowledge layer + inventory snapshot (regenerate, stage, verify)"
+STASH_MSG="pre-commit-knowledge-$$"
+STASHED=0
+STASH_REF=""
+if ! git diff --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+  STASH_BEFORE=$(git rev-parse -q --verify refs/stash 2>/dev/null || true)
+  if git stash push --quiet --keep-index --include-untracked --message "$STASH_MSG"; then
+    STASH_AFTER=$(git rev-parse -q --verify refs/stash 2>/dev/null || true)
+    if [ -n "$STASH_AFTER" ] && [ "$STASH_AFTER" != "$STASH_BEFORE" ]; then
+      STASHED=1
+      STASH_REF=$STASH_AFTER
     fi
   fi
-  restore_stash() {
-    if [ "$STASHED" = "1" ]; then
-      STASHED=0
-      sh scripts/hooks/restore-stash.sh "$STASH_REF" "$STASH_MSG"
-    fi
-  }
-  trap 'restore_stash' EXIT INT TERM
-
-  npm run knowledge:build >/dev/null || { echo "→ knowledge:build failed"; exit 1; }
-  npm run audit >/dev/null || { echo "→ audit failed"; exit 1; }
-  git add .ai docs/features/ai-native-engineering-os/inventory.snapshot.json 2>/dev/null
-  # Workspace AGENTS.md files are generated too.
-  git ls-files --modified --others --exclude-standard -- '*/AGENTS.md' 'AGENTS.md' | while read -r f; do
-    git add "$f"
-  done
-  # The same verifications CI runs, against the same content CI will see.
-  npm run knowledge:verify || { echo "→ knowledge:verify failed"; exit 1; }
-  npm run audit:check || { echo "→ audit:check failed"; exit 1; }
-
-  restore_stash
-  STASHED=0
-  trap - EXIT INT TERM
-else
-  echo "pre-commit 2/3: knowledge + inventory (skipped — no generated-source changes)"
 fi
+restore_stash() {
+  if [ "$STASHED" = "1" ]; then
+    STASHED=0
+    sh scripts/hooks/restore-stash.sh "$STASH_REF" "$STASH_MSG"
+  fi
+}
+trap 'restore_stash' EXIT INT TERM
 
-# Typecheck only workspaces this commit's STAGED changes touch unless the
-# exact staged tree already has a scoped gate receipt. Shared package edits can
-# fan out to nearly every workspace; repeating their typechecks after the
-# changed modules already passed adds cost without new evidence. A formatter or
-# generator change invalidates the tree hash and takes the full affected path.
-if node tools/gates/receipt.mjs check --staged >/dev/null 2>&1; then
-  echo "pre-commit 3/3: typecheck skipped -- exact staged tree has a gate receipt"
-else
-  echo "pre-commit 3/3: typecheck affected (staged) workspaces"
-  node tools/affected/index.mjs typecheck --staged || exit 1
-fi
+# Records a `knowledge` receipt for the staged tree, so pre-push does not verify
+# the same tree again (rules/34).
+node tools/affected/index.mjs knowledge --record || { echo "→ knowledge layer check failed"; exit 1; }
+
+restore_stash
+trap - EXIT INT TERM
+
+# Root-invariant checks (lockfile, ESLint config, tsconfig) and typecheck of the
+# workspaces the STAGED change affects, after rebuilding any stale shared
+# package. Skipped only where a receipt for this exact staged tree proves it.
+echo "pre-commit 3/3: root checks + typecheck of affected (staged) workspaces"
+node tools/gates/pre-commit.mjs || exit 1
 
 echo "pre-commit OK"

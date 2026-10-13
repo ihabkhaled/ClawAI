@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 3 identical headings (50060 vs 7369 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 3 identical headings (49966 vs 7369 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and cursor.md share 1 identical headings (50060 vs 29057 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and cursor.md share 1 identical headings (49966 vs 29057 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -8456,7 +8456,7 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 50060,
+          "bytes": 49966,
           "file": "CLAUDE.md"
         },
         {
@@ -8644,7 +8644,7 @@
           "file": "rules/22-testing-and-coverage.md"
         },
         {
-          "bytes": 6756,
+          "bytes": 6908,
           "file": "rules/23-git-commits-hooks-and-release-gates.md"
         },
         {
@@ -8688,7 +8688,7 @@
           "file": "rules/33-knowledge-compounding-and-context-velocity.md"
         },
         {
-          "bytes": 7041,
+          "bytes": 8624,
           "file": "rules/34-gate-economy-and-machine-resources.md"
         },
         {
@@ -8744,7 +8744,7 @@
           "file": "rules/47-client-bundle-weight-and-barrel-boundaries.md"
         },
         {
-          "bytes": 5347,
+          "bytes": 6569,
           "file": "rules/48-lint-and-test-only-what-changed.md"
         },
         {
@@ -9166,7 +9166,7 @@
           "file": "skills/run-coding-agent-release-rounds.md"
         },
         {
-          "bytes": 4882,
+          "bytes": 5088,
           "file": "skills/run-gates-once-and-land.md"
         },
         {
@@ -11482,7 +11482,7 @@
       },
       "@claw/shared-rabbitmq": {
         "runner": "vitest",
-        "testFiles": 0
+        "testFiles": 2
       },
       "@claw/shared-types": {
         "runner": "vitest",
@@ -11604,6 +11604,7 @@
           "start:prod",
           "test",
           "test:cov",
+          "test:related",
           "test:watch",
           "typecheck",
           "validate"
@@ -11634,6 +11635,7 @@
           "start:prod",
           "test",
           "test:cov",
+          "test:related",
           "test:watch",
           "typecheck",
           "validate"
@@ -11668,6 +11670,7 @@
           "start:prod",
           "test",
           "test:cov",
+          "test:related",
           "test:watch",
           "typecheck",
           "validate"
@@ -11701,6 +11704,7 @@
           "start",
           "test",
           "test:cov",
+          "test:related",
           "test:runtime-v2:coverage",
           "test:runtime-v2:redis",
           "test:watch",
@@ -11732,6 +11736,7 @@
           "start:prod",
           "test",
           "test:cov",
+          "test:related",
           "test:watch",
           "typecheck",
           "validate"
@@ -11766,6 +11771,7 @@
           "start:prod",
           "test",
           "test:cov",
+          "test:related",
           "test:watch",
           "typecheck",
           "validate"
@@ -11797,6 +11803,7 @@
           "start:prod",
           "test",
           "test:cov",
+          "test:related",
           "test:watch",
           "typecheck",
           "validate"
@@ -11830,6 +11837,7 @@
           "start:prod",
           "test",
           "test:cov",
+          "test:related",
           "test:watch",
           "typecheck",
           "validate"
@@ -11861,6 +11869,7 @@
           "test",
           "test:cov",
           "test:e2e",
+          "test:related",
           "test:watch",
           "typecheck",
           "validate"
@@ -11888,6 +11897,7 @@
           "start:prod",
           "test",
           "test:cov",
+          "test:related",
           "test:watch",
           "typecheck",
           "validate"
@@ -11920,6 +11930,7 @@
           "start:prod",
           "test",
           "test:cov",
+          "test:related",
           "test:watch",
           "typecheck",
           "validate"
@@ -11952,6 +11963,7 @@
           "start:prod",
           "test",
           "test:cov",
+          "test:related",
           "test:watch",
           "typecheck",
           "validate"
@@ -11985,6 +11997,7 @@
           "start:prod",
           "test",
           "test:cov",
+          "test:related",
           "test:watch",
           "typecheck",
           "validate"
@@ -12017,6 +12030,7 @@
           "start:prod",
           "test",
           "test:cov",
+          "test:related",
           "test:watch",
           "typecheck",
           "validate"
@@ -12051,6 +12065,7 @@
           "start:prod",
           "test",
           "test:cov",
+          "test:related",
           "test:watch",
           "typecheck",
           "validate"
@@ -12085,6 +12100,7 @@
           "start:prod",
           "test",
           "test:cov",
+          "test:related",
           "test:watch",
           "typecheck",
           "validate"
@@ -12120,6 +12136,7 @@
           "start:prod",
           "test",
           "test:cov",
+          "test:related",
           "test:watch",
           "typecheck",
           "validate"
@@ -12150,6 +12167,7 @@
           "start:prod",
           "test",
           "test:cov",
+          "test:related",
           "test:watch",
           "typecheck",
           "validate"
@@ -12180,6 +12198,7 @@
           "start",
           "start:prod",
           "test",
+          "test:related",
           "test:watch",
           "typecheck"
         ],
@@ -12210,6 +12229,7 @@
           "start",
           "start:prod",
           "test",
+          "test:related",
           "test:watch",
           "typecheck"
         ],
@@ -12243,6 +12263,7 @@
           "start:prod",
           "test",
           "test:cov",
+          "test:related",
           "test:watch",
           "typecheck",
           "validate"
@@ -12263,6 +12284,7 @@
           "lint",
           "lint:fix",
           "test",
+          "test:related",
           "test:watch",
           "typecheck"
         ],
@@ -12278,6 +12300,7 @@
           "lint",
           "lint:fix",
           "test",
+          "test:related",
           "test:watch",
           "typecheck"
         ],
@@ -12296,6 +12319,7 @@
           "lint",
           "lint:fix",
           "test",
+          "test:related",
           "test:watch",
           "typecheck"
         ],
@@ -12314,6 +12338,7 @@
           "lint",
           "lint:fix",
           "test",
+          "test:related",
           "test:watch",
           "typecheck"
         ],
@@ -12329,6 +12354,7 @@
           "lint",
           "lint:fix",
           "test",
+          "test:related",
           "test:watch",
           "typecheck"
         ],
@@ -12347,6 +12373,7 @@
           "lint",
           "lint:fix",
           "test",
+          "test:related",
           "test:watch",
           "typecheck"
         ],
@@ -12372,7 +12399,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2258,
+    "totalTestFiles": 2260,
     "workspaceCount": 27
   }
 }

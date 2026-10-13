@@ -5,6 +5,8 @@
 //
 //   node tools/knowledge/build.mjs           → (re)generate .ai + workspace AGENTS.md
 //   node tools/knowledge/build.mjs --check    → fail if any generated file is stale
+//   node tools/knowledge/build.mjs --write-and-verify → regenerate, then run the
+//        knowledge:verify integrity checks in the same pass (pre-commit)
 import { mkdirSync, writeFileSync, rmSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildManifests } from '../lib/manifests.mjs';
@@ -13,6 +15,7 @@ import { stableStringify, hash, normalizeEol } from '../lib/fact.mjs';
 import { renderBootstrap } from './render-bootstrap.mjs';
 import { renderWorkspaceAgents } from './render-workspace-agents.mjs';
 import { renderPacks } from './render-packs.mjs';
+import { reportVerify, runVerify } from './verify.mjs';
 
 /** Compute every generated file as { relPath -> content } without writing. */
 export function computeGeneratedFiles() {
@@ -81,6 +84,9 @@ function main() {
   }
   writeAll(files);
   console.log(`knowledge:build wrote ${Object.keys(files).length} generated files under .ai/ + workspace AGENTS.md.`);
+  if (process.argv.includes('--write-and-verify') && !reportVerify(runVerify({ freshness: false }))) {
+    process.exit(1);
+  }
 }
 
 if (isMain(import.meta.url)) main();

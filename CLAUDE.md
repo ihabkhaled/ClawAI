@@ -122,19 +122,16 @@ Full list with rationale: [`rules/00-non-negotiable-rules.md`](rules/00-non-nego
 ## Validation and landing a change
 
 ```bash
-npm run affected:list                    # which workspaces your change touches
-cd <touched-workspace>
-npx tsgo --noEmit && npm run lint && npm test && npm run build
+npm run affected:list                    # which workspaces your change touches, and why
+git add <explicit paths>
+npm run gates:receipt                    # runs the hook gates once over the staged tree, records what passed
 ```
 
-Run the gates **only in the folders you touched** — never all-workspace, which is
-prohibitively expensive (13 Prisma clients, every service compiled) and false-fails
-on unchanged siblings.
-
-Gate **once, at the end of a batch** — not per edit, not per commit. If those scoped
-gates just proved this exact tree green, record it with `npm run gates:receipt` and the
-hooks skip the duplicate pass for that tree only. The receipt is the sanctioned way
-to avoid paying for the same proof twice; bypassing a hook remains prohibited under
+The gates run **only for the workspaces you touched** — never all-workspace, which
+is prohibitively expensive (a Prisma client per service, every service compiled)
+and false-fails on unchanged siblings. Gate **once, at the end of a batch** — not
+per edit, not per commit. The hooks skip exactly the gates a receipt proves for
+that tree; bypassing a hook remains prohibited under
 [ADR-061](docs/13-adr/adr-061-git-hook-policy-no-bypass.md).
 
 Then:

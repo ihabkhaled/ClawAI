@@ -54,7 +54,7 @@ _Generated from source. Edit the renderer, not this file._
 | `build`      | `node ../../tools/typescript/run-ts7.mjs -p tsconfig.build.json && tsc-alias -p tsconfig.build.json -f` |
 | `lint`       | `eslint src/ --concurrency=4`                                                                           |
 | `lint:fix`   | `eslint src/ --fix`                                                                                     |
-| `test`       | `vitest run --passWithNoTests`                                                                          |
+| `test`       | `vitest run` (an empty suite fails)                                                                     |
 | `test:watch` | `vitest`                                                                                                |
 
 ## Workspace inventory

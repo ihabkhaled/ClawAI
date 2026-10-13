@@ -34,7 +34,7 @@ uses Next + vitest.
 npm run typecheck   # tsgo --noEmit
 npm run lint        # eslint src/ --concurrency=4   (lint:strict adds --max-warnings 0)
 npm run build       # tsgo -p tsconfig.build.json && tsc-alias -p tsconfig.build.json
-npm test            # vitest run --passWithNoTests   (test:cov = vitest run --coverage)
+npm test            # vitest run — an empty suite fails   (test:cov = vitest run --coverage)
 npm run dev         # tsgo build then concurrent tsgo --watch + tsc-alias --watch + nodemon dist/main.js
 npm start           # node dist/main.js
 ```

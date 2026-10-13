@@ -53,10 +53,14 @@ function buildChunkedCommands(fileNames, prefix) {
   return chunkByCommandLength(absolute, prefix).map((chunk) => `${prefix}${chunk.join(' ')}`);
 }
 
+// Same contract as the root config: a staged file must lint with zero warnings,
+// the content-keyed cache makes unchanged files free, and lint-staged stages
+// whatever the tasks modify itself.
+const ESLINT_PREFIX =
+  'eslint --fix --max-warnings 0 --no-warn-ignored --cache --cache-strategy content --cache-location node_modules/.cache/eslint/ ';
+
 module.exports = {
-  '*.{ts,tsx,js,jsx}': (filenames) => buildChunkedCommands(filenames, 'eslint --fix '),
-  '*.{ts,tsx,js,jsx,json,css,md,yml,yaml}': (filenames) => [
-    ...buildChunkedCommands(filenames, 'prettier --write '),
-    ...buildChunkedCommands(filenames, 'git add '),
-  ],
+  '*.{ts,tsx,js,jsx}': (filenames) => buildChunkedCommands(filenames, ESLINT_PREFIX),
+  '*.{ts,tsx,js,jsx,json,css,md,yml,yaml}': (filenames) =>
+    buildChunkedCommands(filenames, 'prettier --write '),
 };

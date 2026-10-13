@@ -1,25 +1,24 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import test from 'node:test';
 
-import { isReceiptValidFor } from '../gates/receipt.mjs';
+import { receiptContext, receiptCovers, recordReceipt, RECEIPT_REL } from '../gates/receipt.mjs';
 import { repoPath } from '../lib/repo.mjs';
 
-// Rule 34. The receipt exists so the hooks can skip work they have already been
-// given proof for — which is only safe if the proof is bound to the exact tree.
-// These tests guard that binding: the whole reason this mechanism is allowed to
-// exist instead of `--no-verify` is that it cannot be pointed at a tree it never
-// verified.
+// Rule 34. A receipt lets a hook skip a gate it already has proof for — which
+// is only safe if the proof is bound to the exact tree, environment and gate
+// scope, and if nothing but the affected runner can write one.
 
-const RECEIPT = repoPath('.ai/local/gate-receipt.json');
+const RECEIPT = repoPath(RECEIPT_REL);
+const TREE = 'a'.repeat(40);
 
-function withReceipt(contents, run) {
-  const had = existsSync(RECEIPT);
-  const previous = had ? readFileSync(RECEIPT, 'utf8') : null;
+function withReceiptFile(contents, run) {
+  const previous = existsSync(RECEIPT) ? readFileSync(RECEIPT, 'utf8') : null;
   mkdirSync(dirname(RECEIPT), { recursive: true });
-  writeFileSync(RECEIPT, contents, 'utf8');
+  if (contents === null) rmSync(RECEIPT, { force: true });
+  else writeFileSync(RECEIPT, contents, 'utf8');
   try {
     run();
   } finally {
@@ -28,76 +27,113 @@ function withReceipt(contents, run) {
   }
 }
 
-test('a receipt for a different tree is rejected', () => {
-  withReceipt(JSON.stringify({ tree: '0'.repeat(40), recordedAt: 'x' }), () => {
-    assert.equal(
-      isReceiptValidFor('f'.repeat(40)),
-      false,
-      'a receipt naming another tree must never satisfy the gate',
-    );
+function v2(receipts) {
+  return JSON.stringify({ version: 2, receipts });
+}
+
+test('a recorded gate covers its own scope, and nothing more', () => {
+  withReceiptFile(null, () => {
+    recordReceipt(TREE, 'test', ['claw-chat-service']);
+    assert.equal(receiptCovers(TREE, 'test', ['claw-chat-service']), true);
+    assert.equal(receiptCovers(TREE, 'test', ['claw-chat-service', 'claw-auth-service']), false);
+    assert.equal(receiptCovers(TREE, 'build', ['claw-chat-service']), false, 'a gate it did not run');
+    assert.equal(receiptCovers('b'.repeat(40), 'test', ['claw-chat-service']), false, 'another tree');
   });
 });
 
-test('a receipt for the matching tree is accepted', () => {
-  const tree = 'a'.repeat(40);
-  withReceipt(JSON.stringify({ tree, recordedAt: 'x' }), () => {
-    assert.equal(isReceiptValidFor(tree), true);
+test('recording more gates for the same tree accumulates them', () => {
+  withReceiptFile(null, () => {
+    recordReceipt(TREE, 'typecheck', ['a']);
+    recordReceipt(TREE, 'build', ['a']);
+    recordReceipt(TREE, 'typecheck', ['b']);
+    assert.equal(receiptCovers(TREE, 'typecheck', ['a', 'b']), true);
+    assert.equal(receiptCovers(TREE, 'build', ['a']), true);
   });
 });
 
-test('a malformed or absent receipt is rejected rather than trusted', () => {
-  withReceipt('not json at all', () => {
-    assert.equal(isReceiptValidFor('a'.repeat(40)), false);
-  });
-  withReceipt(JSON.stringify({ recordedAt: 'x' }), () => {
-    assert.equal(isReceiptValidFor('a'.repeat(40)), false, 'a receipt with no tree proves nothing');
-  });
-
-  const had = existsSync(RECEIPT);
-  const previous = had ? readFileSync(RECEIPT, 'utf8') : null;
-  rmSync(RECEIPT, { force: true });
-  try {
-    assert.equal(isReceiptValidFor('a'.repeat(40)), false, 'no receipt means run the gates');
-  } finally {
-    if (previous !== null) writeFileSync(RECEIPT, previous, 'utf8');
+test('a receipt from another lockfile, Node version or tool version is rejected', () => {
+  const context = receiptContext();
+  for (const changed of [{ lockHash: 'x' }, { node: 'v0.0.0' }, { tool: 'y' }]) {
+    withReceiptFile(v2([{ tree: TREE, ...context, ...changed, gates: { test: ['a'] } }]), () => {
+      assert.equal(receiptCovers(TREE, 'test', ['a']), false, JSON.stringify(changed));
+    });
   }
+  withReceiptFile(v2([{ tree: TREE, ...context, gates: { test: ['a'] } }]), () => {
+    assert.equal(receiptCovers(TREE, 'test', ['a']), true, 'the same receipt in context is accepted');
+  });
+});
+
+test('a forged, legacy, malformed or absent receipt proves nothing', () => {
+  for (const contents of [
+    null,
+    'not json at all',
+    JSON.stringify({ tree: TREE, recordedAt: 'x' }),
+    v2([{ tree: TREE, gates: { test: ['a'] } }]),
+    v2([{ ...receiptContext(), gates: { test: ['a'] } }]),
+  ]) {
+    withReceiptFile(contents, () => {
+      assert.equal(receiptCovers(TREE, 'test', ['a']), false, String(contents));
+    });
+  }
+});
+
+test('the receipt CLI cannot record — only the affected runner writes receipts', () => {
+  const result = spawnSync(process.execPath, ['tools/gates/receipt.mjs', 'record'], {
+    cwd: repoPath(),
+    encoding: 'utf8',
+  });
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /only by the affected/u);
+
+  const importers = [];
+  const walk = (dir) => {
+    for (const entry of readdirSync(repoPath(dir), { withFileTypes: true })) {
+      const rel = `${dir}/${entry.name}`;
+      if (entry.isDirectory()) {
+        if (entry.name !== '__tests__') walk(rel);
+      } else if (entry.name.endsWith('.mjs') && /recordReceipt/u.test(readFileSync(repoPath(rel), 'utf8'))) {
+        importers.push(rel);
+      }
+    }
+  };
+  walk('tools');
+  assert.deepEqual(importers.sort(), ['tools/affected/index.mjs', 'tools/gates/receipt.mjs']);
+});
+
+test('gates:receipt runs the gates instead of writing a bare record', () => {
+  const pkg = JSON.parse(readFileSync(repoPath('package.json'), 'utf8'));
+  assert.equal(pkg.scripts['gates:receipt'], 'node tools/affected/index.mjs gates');
 });
 
 test('the receipt file is not committed', () => {
-  // It records one developer's local proof; committing it would let one machine
-  // suppress another machine's gates.
-  const ignored = execFileSync('git', ['check-ignore', '.ai/local/gate-receipt.json'], {
+  // It records one developer's local proof; committing it would let one
+  // machine suppress another machine's gates.
+  const ignored = execFileSync('git', ['check-ignore', RECEIPT_REL], {
     cwd: repoPath('.'),
     encoding: 'utf8',
   }).trim();
-  assert.equal(ignored, '.ai/local/gate-receipt.json');
+  assert.equal(ignored, RECEIPT_REL);
 });
 
-test('the pre-push hook consults the receipt instead of bypassing the hook', () => {
-  const hook = readFileSync(repoPath('.husky/pre-push'), 'utf8');
-  assert.match(hook, /tools\/gates\/receipt\.mjs check/, 'pre-push must consult the receipt');
-  // Without a valid receipt the expensive stages must still run in full — the
-  // receipt is a fast path, not an escape hatch.
-  assert.match(
-    hook,
-    /affected\/index\.mjs test/,
-    'the full test pass must remain in the else branch',
-  );
-  assert.match(
-    hook,
-    /affected\/index\.mjs build/,
-    'the full build pass must remain in the else branch',
-  );
-  // The hook may WARN about --no-verify, but must never invoke it.
-  for (const line of hook.split('\n')) {
-    if (line.trimStart().startsWith('#')) continue;
-    assert.ok(!line.includes('--no-verify'), `hook must not invoke a bypass: ${line.trim()}`);
+test('the hooks delegate to the receipt-aware gate scripts and never bypass', () => {
+  const preCommit = readFileSync(repoPath('.husky/pre-commit'), 'utf8');
+  const prePush = readFileSync(repoPath('.husky/pre-push'), 'utf8');
+  assert.match(preCommit, /node tools\/gates\/pre-commit\.mjs/u);
+  assert.match(preCommit, /node tools\/affected\/index\.mjs knowledge --record/u);
+  assert.match(prePush, /node tools\/gates\/pre-push\.mjs/u);
+  // The ref list on stdin must reach pre-push.mjs, not be thrown away.
+  assert.doesNotMatch(prePush, /^\s*cat\s+>\s*\/dev\/null/mu);
+  for (const hook of [preCommit, prePush]) {
+    for (const line of hook.split('\n')) {
+      if (line.trimStart().startsWith('#')) continue;
+      assert.ok(!line.includes('--no-verify'), `hook must not invoke a bypass: ${line.trim()}`);
+    }
   }
 });
 
-test('the pre-commit hook skips affected typecheck only for the exact staged receipt', () => {
-  const hook = readFileSync(repoPath('.husky/pre-commit'), 'utf8');
-  assert.match(hook, /tools\/gates\/receipt\.mjs check --staged/);
-  assert.match(hook, /affected\/index\.mjs typecheck --staged/);
-  assert.match(hook, /else[\s\S]*affected\/index\.mjs typecheck --staged/);
+test('every tool file a receipt is bound to exists', () => {
+  const source = readFileSync(repoPath('tools/gates/receipt.mjs'), 'utf8');
+  const listed = [...source.matchAll(/^ {2}'([^']+)',$/gmu)].map((m) => m[1]);
+  assert.ok(listed.length >= 10);
+  for (const file of listed) assert.ok(existsSync(join(repoPath(), file)), file);
 });

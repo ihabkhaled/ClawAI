@@ -18,8 +18,10 @@ that decision after the fact; no separate ADR was written at the time.
 
 ## Decision
 
-- **Every workspace runs Vitest.** `test` is `vitest run --passWithNoTests`,
-  `test:cov` is `vitest run --coverage`, `test:watch` is `vitest`. Jest,
+- **Every workspace runs Vitest.** `test` is `vitest run` (it was
+  `vitest run --passWithNoTests` until 2026-10-13, when an empty suite became a
+  failure — rules/22), `test:related` is `vitest related --run --passWithNoTests`
+  (pre-push only), `test:cov` is `vitest run --coverage`, `test:watch` is `vitest`. Jest,
   `ts-jest`, `babel-jest`, `@types/jest`, every `jest.config.*` and
   `babel.config.cjs` were removed.
 - **Backend configs use `unplugin-swc`**, not Vitest's default esbuild
