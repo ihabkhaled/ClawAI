@@ -10,6 +10,8 @@ import type { OrchestrationPageShellProps } from '@/types/orchestration.types';
 
 const hasFeatureMock = vi.fn();
 
+vi.mock('@/lib/i18n', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+
 vi.mock('@/components/chat/orchestration/orchestration-context-button', () => ({
   OrchestrationContextButton: () => <div data-testid="orchestration-context-button" />,
 }));

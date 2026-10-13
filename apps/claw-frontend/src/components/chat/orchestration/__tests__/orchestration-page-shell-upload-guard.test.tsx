@@ -7,6 +7,8 @@ import { ResearchMode } from '@/enums/research-mode.enum';
 import type { UseOrchestrationComposerReturn } from '@/types/hook.types';
 import type { OrchestrationPageShellProps } from '@/types/orchestration.types';
 
+vi.mock('@/lib/i18n', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+
 vi.mock('@/components/chat/orchestration/orchestration-context-button', () => ({
   OrchestrationContextButton: () => <div data-testid="orchestration-context-button" />,
 }));
