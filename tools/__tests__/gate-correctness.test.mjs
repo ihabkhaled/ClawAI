@@ -8,6 +8,7 @@ import {
   computeAffectedFromFiles,
   loadWorkspaces,
   planGate,
+  testConcurrency,
   testInvocation,
 } from '../affected/index.mjs';
 import { gateJobs } from '../affected/pool.mjs';
@@ -165,6 +166,20 @@ test('a shared change tests only the package locally; dependents are typechecked
   assert.deepEqual(planGate('build', result, fake).scope, ['@claw/shared-utilities']);
   assert.deepEqual(planGate('typecheck', result, fake, { kinds: ['dependent'] }).scope, ['claw-chat-service']);
   assert.deepEqual(planGate('typecheck', result, fake).scope, ['@claw/shared-utilities', 'claw-chat-service']);
+});
+
+test('test suites never oversubscribe the gate budget', () => {
+  assert.deepEqual(testConcurrency(14), { suites: 3, workersPerSuite: 4 });
+  assert.deepEqual(testConcurrency(1), { suites: 1, workersPerSuite: 1 });
+  assert.deepEqual(testConcurrency(4), { suites: 1, workersPerSuite: 4 });
+  for (const jobs of [1, 2, 3, 4, 7, 14, 32]) {
+    const { suites, workersPerSuite } = testConcurrency(jobs);
+    assert.ok(suites * workersPerSuite <= Math.max(1, jobs), `${jobs} jobs`);
+  }
+  const result = computeAffectedFromFiles(['apps/claw-chat-service/src/a.ts'], fake);
+  const [task] = planGate('test', result, fake, { related: true, testWorkers: 4 }).tasks;
+  assert.ok(task.args.includes('--maxWorkers=4'));
+  assert.ok(task.args.includes('src/a.ts'));
 });
 
 test('the gate pool uses half the cores unless CLAW_GATE_JOBS overrides it', () => {

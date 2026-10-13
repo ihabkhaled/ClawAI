@@ -59,8 +59,12 @@ runs, and the git hooks in `.husky/`.
    work never requires disabling the safety net.
 6. **Let the gate runner own concurrency.** The affected runner runs workspaces
    in a bounded pool — half the cores, overridable with `CLAW_GATE_JOBS`
-   (`CLAW_GATE_JOBS=1` is serial). Do not start more suites by hand alongside
-   it, and never run gates in parallel with a Docker image build.
+   (`CLAW_GATE_JOBS=1` is serial). Test suites get a stricter split, because
+   every vitest run starts its own worker pool: about a quarter as many suites
+   at once, each capped with `--maxWorkers`, so suites × workers stays within
+   the budget (fourteen uncapped suites timed frontend tests out). Do not start
+   more suites by hand alongside it, and never run gates in parallel with a
+   Docker image build.
 7. **Background anything slow, and announce it in one line.** A build, an install
    or an image rebuild runs in the background so the session stays responsive —
    but its completion must be checked by its **real exit code**, not by a summary.

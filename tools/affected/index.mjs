@@ -18,12 +18,12 @@
 import { execFileSync } from 'node:child_process';
 
 import { cmp } from '../lib/fact.mjs';
-import { extractWorkspaces } from '../lib/extractors.mjs';
+import { extractTests, extractWorkspaces } from '../lib/extractors.mjs';
 import { assertCommit, git, gitLines, resolveDefaultBase } from '../lib/git.mjs';
 import { npmInvocation } from '../lib/npm.mjs';
 import { isMain } from '../lib/repo.mjs';
 import { recordReceipt } from '../gates/receipt.mjs';
-import { formatSummary, runPool } from './pool.mjs';
+import { formatSummary, gateJobs, runPool } from './pool.mjs';
 import { planRootChecks } from './root-checks.mjs';
 import { ensureSharedPackagesFresh, sharedBuildOrder } from './shared-build.mjs';
 
@@ -238,36 +238,56 @@ export function planGate(
   script,
   result,
   workspaces,
-  { expandRoot = false, related = false, kinds = defaultKinds(script) } = {},
+  { expandRoot = false, related = false, kinds = defaultKinds(script), testWorkers = testConcurrency().workersPerSuite } = {},
 ) {
   const byName = new Map(workspaces.map((ws) => [ws.name, ws]));
   const has = (name, s) => byName.get(name)?.scripts.includes(s) ?? false;
-
-  if (result.rootInvariant && expandRoot) {
-    const names = workspaces.filter((ws) => has(ws.name, script)).map((ws) => ws.name);
-    return { scope: names, tasks: names.map((n) => npmTask(n, ['run', script, '--workspace', n])) };
-  }
-
-  const entries = result.affected.filter((entry) => kinds.includes(entry.kind));
+  const all = result.rootInvariant && expandRoot;
+  const entries = all
+    ? workspaces.map((ws) => ({ name: ws.name, kind: 'direct', files: [] }))
+    : result.affected.filter((entry) => kinds.includes(entry.kind));
   const scoped = entries.filter((entry) => has(entry.name, script));
+
   const tasks = scoped.map((entry) => {
-    if (script !== 'test' || !related) {
-      return npmTask(entry.name, ['run', script, '--workspace', entry.name]);
-    }
-    const { script: testScript, args } = testInvocation(entry, byName.get(entry.name));
-    const extra = args.length > 0 ? ['--', ...args] : [];
-    return npmTask(`${entry.name}${testScript === 'test:related' ? ' (related)' : ''}`, [
+    if (script !== 'test') return npmTask(entry.name, ['run', script, '--workspace', entry.name]);
+    const invocation = related ? testInvocation(entry, byName.get(entry.name)) : { script: 'test', args: [] };
+    const label = `${entry.name}${invocation.script === 'test:related' ? ' (related)' : ''}`;
+    return npmTask(label, [
       'run',
-      testScript,
+      invocation.script,
       '--workspace',
       entry.name,
-      ...extra,
+      '--',
+      `--maxWorkers=${String(testWorkers)}`,
+      ...invocation.args,
     ]);
   });
   return { scope: scoped.map((entry) => entry.name), tasks };
 }
 
+/**
+ * Every vitest run starts its own worker pool. Fourteen suites each sized for
+ * the whole machine oversubscribed it so badly that frontend tests hit their
+ * 20s timeouts (measured on the first push of this change). So the test gate
+ * runs fewer suites at once and caps each suite's workers, keeping the total
+ * at the gate budget: suites × workersPerSuite ≈ gateJobs().
+ */
+export function testConcurrency(jobs = gateJobs()) {
+  const suites = Math.max(1, Math.floor(jobs / 4));
+  return { suites, workersPerSuite: Math.max(1, Math.floor(jobs / suites)) };
+}
+
 const BUILDS_ON_SHARED = new Set(['typecheck', 'test', 'build']);
+
+/** Biggest suites first, so the longest run starts at once instead of last. */
+function largestSuitesFirst(tasks, scope) {
+  const tests = extractTests();
+  const size = (index) => tests[scope[index]]?.testFiles ?? 0;
+  return tasks
+    .map((task, index) => ({ task, files: size(index) }))
+    .sort((a, b) => b.files - a.files)
+    .map(({ task }) => task);
+}
 
 /** Run a gate's tasks in the bounded pool. Returns { ok, scope }. */
 export async function runGate(script, result, options = {}) {
@@ -277,7 +297,10 @@ export async function runGate(script, result, options = {}) {
   console.log(`affected:${script} → ${label || '(none)'}`);
   if (tasks.length === 0) return { ok: true, scope };
   if (BUILDS_ON_SHARED.has(script)) ensureSharedPackagesFresh(workspaces);
-  const results = await runPool(tasks);
+  const results =
+    script === 'test'
+      ? await runPool(largestSuitesFirst(tasks, scope), { jobs: testConcurrency().suites })
+      : await runPool(tasks);
   process.stdout.write(`\n${formatSummary(results)}`);
   return { ok: results.every((r) => r.ok), scope };
 }
