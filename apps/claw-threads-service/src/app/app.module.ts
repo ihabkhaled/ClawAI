@@ -16,6 +16,7 @@ import { AppConfig } from './config/app.config';
 import { HealthModule } from '../modules/health/health.module';
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
 import { PublicationsModule } from '../modules/publications/publications.module';
+import { BoardModule } from '../modules/board/board.module';
 import { AccountDeletionModule } from '../modules/account-deletion/account-deletion.module';
 
 @Module({
@@ -56,6 +57,7 @@ import { AccountDeletionModule } from '../modules/account-deletion/account-delet
     HealthModule,
     PrismaModule,
     PublicationsModule,
+    BoardModule,
     AccountDeletionModule,
   ],
   providers: [

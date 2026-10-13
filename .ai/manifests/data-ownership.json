@@ -324,6 +324,7 @@
         "ThreadPublicationReader",
         "ThreadPublicationReport",
         "ThreadPublicationRevision",
+        "ThreadPublicationSearchDoc",
         "ThreadPublicationView"
       ],
       "service": "claw-threads-service"

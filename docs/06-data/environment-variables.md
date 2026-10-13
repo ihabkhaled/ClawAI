@@ -159,7 +159,7 @@ Claw uses 15 separate PostgreSQL instances, one per data-owning service.
 - When running services locally (outside Docker), use `localhost` with the host port (e.g., `5441` for auth).
 - Each PostgreSQL instance is a separate Docker container for fault isolation.
 - The generation service uses `THREAD_GENERATION_DATABASE_URL`; the installer derives its password from `PG_THREAD_GENERATION_PASSWORD`.
-- The publication service uses `THREADS_DATABASE_URL`; the installer derives its password from `PG_THREADS_PASSWORD`. It also reads `ROUTING_SERVICE_URL` (default `http://routing-service:4004`) to check at enqueue that each chosen model exists in the catalog (ADR-174); the shared value from `.env` is used, no new variable.
+- The publication service uses `THREADS_DATABASE_URL`; the installer derives its password from `PG_THREADS_PASSWORD`. It also reads `CONNECTOR_SERVICE_URL` (default `http://connector-service:4003`) to check at enqueue and retry that each chosen model is in the model picker catalog by exact match (ADR-174 and its 2026-10-14 addendum); the shared value from `.env` is used, no new variable. It no longer reads `ROUTING_SERVICE_URL`.
 - The plugin service uses `PLUGIN_DATABASE_URL`; the installer derives its password from `PG_PLUGIN_PASSWORD`.
 - Memory service uses pgvector extension for embedding similarity search.
 

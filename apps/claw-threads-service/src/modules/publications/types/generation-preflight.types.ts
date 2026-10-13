@@ -19,3 +19,18 @@ export type PreflightRoleRequest = StartThreadGenerationDto['judge'];
 
 /** A provider/model pair, used for the catalog lookup. */
 export type ModelRef = { provider: string; model: string };
+
+/** The stored seat of a finished attempt, as the generation service reports it. */
+export type StoredGenerationRole = {
+  roleId: string;
+  roleKind: string;
+  provider: string;
+  model: string;
+  fallbacks: ReadonlyArray<{ provider: string; model: string }>;
+};
+
+/** What a retry is checked against: the stored seats and cap of the attempt being replaced. */
+export type StoredGenerationSelections = {
+  roles: readonly StoredGenerationRole[];
+  spendCapMicroUsd: string;
+};

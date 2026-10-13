@@ -13,4 +13,16 @@ export enum ThreadGenerationErrorCode {
   MODEL_UNKNOWN = 'THREAD_MODEL_UNKNOWN',
   /** The spend cap is below the documented minimum. */
   SPEND_CAP_TOO_LOW = 'THREAD_SPEND_CAP_TOO_LOW',
+  /** The plan has Thread generation, but its allowance is used up or held by a running generation. */
+  ALLOWANCE_UNAVAILABLE = 'THREAD_GENERATION_ALLOWANCE_UNAVAILABLE',
+  /** The owner already has the maximum number of generations running at once. */
+  TOO_MANY_ACTIVE = 'THREAD_GENERATION_TOO_MANY_ACTIVE',
+  /** The idempotency key was already used by this owner for a different request. */
+  IDEMPOTENCY_KEY_REUSED = 'THREAD_IDEMPOTENCY_KEY_REUSED',
+  /** Cancel was asked for a generation that is not running or queued. */
+  NOT_CANCELLABLE = 'THREAD_GENERATION_NOT_CANCELLABLE',
+  /** The topic is empty after trimming or holds a character the stores cannot keep. */
+  TOPIC_INVALID = 'THREAD_TOPIC_INVALID',
+  /** A request text field holds a NUL byte or a lone surrogate. */
+  TEXT_INVALID = 'THREAD_TEXT_INVALID',
 }

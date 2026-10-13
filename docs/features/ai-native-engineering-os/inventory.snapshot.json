@@ -3827,6 +3827,16 @@
           "source": "apps/claw-threads-service/src/modules/health/controllers/health.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/thread-publications-moderation/orphan-generations/repair",
+          "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-generation-repair.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/thread-publications-moderation/publications/:id/revoke",
+          "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-moderation.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/thread-publications-moderation/reports",
           "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-moderation.controller.ts"
@@ -3895,6 +3905,16 @@
           "method": "POST",
           "route": "/thread-publications/:publicationId/unpublish",
           "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-owner.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/thread-publications/board",
+          "source": "apps/claw-threads-service/src/modules/board/controllers/board.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/thread-publications/board/suggest",
+          "source": "apps/claw-threads-service/src/modules/board/controllers/board.controller.ts"
         },
         {
           "method": "POST",
@@ -9126,6 +9146,10 @@
           "file": "skills/README.md"
         },
         {
+          "bytes": 2698,
+          "file": "skills/add-a-board-search-language.md"
+        },
+        {
           "bytes": 5274,
           "file": "skills/add-a-catalog-plugin.md"
         },
@@ -11664,6 +11688,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-threads-service/prisma/schema.prisma",
+            "value": "ThreadPublicationSearchDoc"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-threads-service/prisma/schema.prisma",
             "value": "ThreadPublicationView"
           }
         ],
@@ -11930,7 +11959,7 @@
       },
       "claw-threads-service": {
         "runner": "vitest",
-        "testFiles": 38
+        "testFiles": 66
       },
       "claw-workspace-service": {
         "runner": "vitest",
@@ -12777,7 +12806,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 58,
-    "endpointCount": 888,
+    "endpointCount": 892,
     "envVarCount": 386,
     "eventCount": 190,
     "frontendRouteCount": 175,
@@ -12789,7 +12818,7 @@
     "serviceCount": 21,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2422,
+    "totalTestFiles": 2450,
     "workspaceCount": 28
   }
 }

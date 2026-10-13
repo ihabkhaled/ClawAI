@@ -13,6 +13,7 @@ describe('PublicationsRepository', () => {
         id: 'revision-1',
         title: 'Research note',
         content: { markdown: '# Research note' },
+        reviewStatus: 'READY_FOR_REVIEW',
       },
     ],
   };
@@ -109,13 +110,18 @@ describe('PublicationsRepository', () => {
     const result = await repository.publishReadyRevision('pub_opaque', 'owner-1');
 
     expect(result).toMatchObject({
-      id: 'pub_opaque',
-      slug: 'research-note',
-      title: 'Research note',
-      content: { markdown: '# Research note' },
+      kind: 'PUBLISHED',
+      newlyPublished: true,
+      publication: {
+        id: 'pub_opaque',
+        slug: 'research-note',
+        title: 'Research note',
+        content: { markdown: '# Research note' },
+      },
     });
-    expect(result).not.toHaveProperty('ownerId');
-    expect(result).not.toHaveProperty('sourceSnapshot');
+    const published = result?.kind === 'PUBLISHED' ? result.publication : undefined;
+    expect(published).not.toHaveProperty('ownerId');
+    expect(published).not.toHaveProperty('sourceSnapshot');
     expect(transaction.threadPublication.updateMany).toHaveBeenCalledTimes(1);
     expect(transaction.threadPublicationRevision.updateMany).toHaveBeenCalledTimes(1);
   });
@@ -128,12 +134,14 @@ describe('PublicationsRepository', () => {
     expect(transaction.threadPublicationRevision.updateMany).not.toHaveBeenCalled();
   });
 
-  it('restores review state if the revision changes before approval', async () => {
+  it('publishes nothing when the approval is lost every time it is tried', async () => {
     const { repository, transaction } = createRepository(readyRecord, 0);
 
-    await expect(repository.publishReadyRevision('pub_opaque', 'owner-1')).resolves.toBeNull();
-    expect(transaction.threadPublication.updateMany).toHaveBeenCalledTimes(2);
-    expect(transaction.threadPublicationRevision.updateMany).toHaveBeenCalledTimes(1);
+    await expect(repository.publishReadyRevision('pub_opaque', 'owner-1')).resolves.toEqual({
+      kind: 'NOT_READY',
+    });
+    expect(transaction.threadPublication.updateMany).not.toHaveBeenCalled();
+    expect(transaction.threadPublicationRevision.updateMany).toHaveBeenCalledTimes(3);
   });
 
   it('stores a completed generation as a private pending revision', async () => {

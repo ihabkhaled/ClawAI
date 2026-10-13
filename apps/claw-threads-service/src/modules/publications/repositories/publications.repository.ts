@@ -19,16 +19,27 @@ import {
   MIN_PUBLICATION_JUDGE_SCORE,
 } from '../constants/publication-review.constants';
 import { OWNER_DELETABLE_PUBLICATION_STATUSES } from '../constants/publication-generation-owner.constants';
+import {
+  PUBLISH_RACE_PASSES,
+  REPUBLISHABLE_STATUSES,
+} from '../constants/publication-publish.constants';
+import {
+  SERIALIZATION_RETRY_ATTEMPTS,
+  SERIALIZATION_RETRY_BASE_DELAY_MS,
+} from '../constants/generation-concurrency.constants';
+import { withSerializationRetry } from '../../../common/utilities/with-serialization-retry.utility';
 import type { NotificationPublicationTarget } from '../types/thread-notification.types';
 import type {
   EditedRevisionRecord,
   NewPublicationMetadata,
   OwnedRevisionReviewRecord,
   PublicationExport,
+  PublicationStartIdentity,
   PublicPublication,
   PublicPublicationDiscoveryItem,
   PublicPublicationSitemapItem,
   PublishedPublication,
+  PublishOutcome,
 } from '../types/publication.types';
 import type { EditPublicationRevisionDto } from '../dto/edit-publication-revision.dto';
 import type { PublicationSafetyResult } from '../types/publication-safety.types';
@@ -77,10 +88,78 @@ export class PublicationsRepository {
     }));
   }
 
+  /**
+   * Creates the owner's publication for a freshly queued job, or returns the one that already
+   * points at that job. A write conflict (two starts landing together) is retried a few times
+   * before it can reach the caller as a 500.
+   */
   async createQueuedPublication(
     ownerId: string,
     generationJobId: string,
     metadata: NewPublicationMetadata,
+    identity?: PublicationStartIdentity,
+  ): Promise<{ id: string; slug: string; ownerId: string } | null> {
+    return withSerializationRetry(
+      () => this.createQueuedPublicationOnce(ownerId, generationJobId, metadata, identity),
+      SERIALIZATION_RETRY_ATTEMPTS,
+      SERIALIZATION_RETRY_BASE_DELAY_MS,
+    );
+  }
+
+  /** The owner's publication that a start with this key already created, if any. */
+  async findStartByKey(
+    ownerId: string,
+    keyHash: string,
+  ): Promise<{ id: string; generationJobId: string; requestHash: string | null } | null> {
+    const found = await this.prisma.threadPublication.findFirst({
+      where: { ownerId, startKeyHash: keyHash, generationJobId: { not: null } },
+      select: { id: true, generationJobId: true, startRequestHash: true },
+    });
+    return found?.generationJobId
+      ? {
+          id: found.id,
+          generationJobId: found.generationJobId,
+          requestHash: found.startRequestHash,
+        }
+      : null;
+  }
+
+  /** The owner's newest draft publications and the job each points at: the only ones that can be running. */
+  async findDraftJobs(
+    ownerId: string,
+    limit: number,
+  ): Promise<Array<{ publicationId: string; jobId: string }>> {
+    const drafts = await this.prisma.threadPublication.findMany({
+      where: { ownerId, status: PublicationStatus.DRAFT, generationJobId: { not: null } },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      select: { id: true, generationJobId: true },
+    });
+    return drafts.flatMap(({ id, generationJobId }) =>
+      generationJobId ? [{ publicationId: id, jobId: generationJobId }] : [],
+    );
+  }
+
+  /** True when any publication or edit review here points at this generation job. */
+  async isJobReferenced(jobId: string): Promise<boolean> {
+    const [publication, revision] = await Promise.all([
+      this.prisma.threadPublication.findUnique({
+        where: { generationJobId: jobId },
+        select: { id: true },
+      }),
+      this.prisma.threadPublicationRevision.findFirst({
+        where: { revalidationJobId: jobId },
+        select: { id: true },
+      }),
+    ]);
+    return publication !== null || revision !== null;
+  }
+
+  private createQueuedPublicationOnce(
+    ownerId: string,
+    generationJobId: string,
+    metadata: NewPublicationMetadata,
+    identity: PublicationStartIdentity | undefined,
   ): Promise<{ id: string; slug: string; ownerId: string } | null> {
     return this.prisma.$transaction(
       async (transaction) => {
@@ -99,6 +178,8 @@ export class PublicationsRepository {
             slug: randomUUID(),
             contentLocale: metadata.contentLocale,
             publicationType: metadata.publicationType,
+            startKeyHash: identity?.keyHash ?? null,
+            startRequestHash: identity?.requestHash ?? null,
           },
           update: {},
           select: { id: true, slug: true, ownerId: true },
@@ -196,90 +277,94 @@ export class PublicationsRepository {
     });
   }
 
+  /**
+   * Publishes the newest eligible revision. A READY_FOR_REVIEW revision is approved and published;
+   * an already approved one is published again after an unpublish (nothing changed, so nothing
+   * needs a new review); publishing something already live answers with the live article and
+   * `newlyPublished: false`. Two requests landing together cannot both approve: the loser re-reads
+   * and gets the idempotent answer.
+   */
   async publishReadyRevision(
     publicationId: string,
     ownerId: string,
-  ): Promise<PublishedPublication | null> {
+  ): Promise<PublishOutcome | null> {
     return this.prisma.$transaction(async (transaction) => {
-      const ready = await transaction.threadPublication.findFirst({
-        where: {
-          id: publicationId,
-          ownerId,
-          status: {
-            in: [
-              PublicationStatus.READY_FOR_REVIEW,
-              PublicationStatus.PUBLISHED,
-              PublicationStatus.UNPUBLISHED,
-            ],
-          },
-          revisions: {
-            some: {
-              reviewStatus: RevisionReviewStatus.READY_FOR_REVIEW,
-              safetyStatus: PublicationSafetyStatus.APPROVED,
-              indexEligible: true,
+      for (let pass = 0; pass < PUBLISH_RACE_PASSES; pass += 1) {
+        const owned = await transaction.threadPublication.findFirst({
+          where: { id: publicationId, ownerId },
+          select: {
+            id: true,
+            slug: true,
+            status: true,
+            publishedAt: true,
+            revisions: {
+              where: {
+                reviewStatus: {
+                  in: [RevisionReviewStatus.READY_FOR_REVIEW, RevisionReviewStatus.OWNER_APPROVED],
+                },
+                safetyStatus: PublicationSafetyStatus.APPROVED,
+                indexEligible: true,
+              },
+              orderBy: { revision: 'desc' },
+              take: 1,
+              select: { id: true, title: true, content: true, reviewStatus: true },
             },
-          },
-        },
-        select: {
-          id: true,
-          slug: true,
-          status: true,
-          publishedAt: true,
-          revisions: {
-            where: {
-              reviewStatus: RevisionReviewStatus.READY_FOR_REVIEW,
-              safetyStatus: PublicationSafetyStatus.APPROVED,
-              indexEligible: true,
-            },
-            orderBy: { revision: 'desc' },
-            take: 1,
-            select: { id: true, title: true, content: true, indexEligible: true },
-          },
-        },
-      });
-      const revision = ready?.revisions[0];
-      if (!ready || !revision) return null;
-      const content = z.object({ markdown: z.string() }).safeParse(revision.content);
-      if (!content.success) return null;
-
-      const changed = await transaction.threadPublication.updateMany({
-        where: {
-          id: publicationId,
-          ownerId,
-          status: {
-            in: [
-              PublicationStatus.READY_FOR_REVIEW,
-              PublicationStatus.PUBLISHED,
-              PublicationStatus.UNPUBLISHED,
-            ],
-          },
-        },
-        data: { status: PublicationStatus.PUBLISHED, publishedAt: new Date() },
-      });
-      if (changed.count !== 1) return null;
-
-      const approved = await transaction.threadPublicationRevision.updateMany({
-        where: { id: revision.id, reviewStatus: RevisionReviewStatus.READY_FOR_REVIEW },
-        data: { reviewStatus: RevisionReviewStatus.OWNER_APPROVED, ownerApprovedAt: new Date() },
-      });
-      if (approved.count !== 1) {
-        await transaction.threadPublication.updateMany({
-          where: { id: publicationId, ownerId, status: PublicationStatus.PUBLISHED },
-          data: {
-            status: ready.status,
-            publishedAt: ready.status === PublicationStatus.PUBLISHED ? ready.publishedAt : null,
           },
         });
-        return null;
-      }
+        if (!owned) return null;
+        if (owned.status === PublicationStatus.REVOKED) return { kind: 'REVOKED' };
+        const revision = owned.revisions[0];
+        if (!revision || owned.status === PublicationStatus.DRAFT) return { kind: 'NOT_READY' };
+        const content = z.object({ markdown: z.string() }).safeParse(revision.content);
+        if (!content.success) return { kind: 'NOT_READY' };
+        const view = (publishedAt: Date): PublishedPublication => ({
+          id: owned.id,
+          slug: owned.slug,
+          title: revision.title,
+          content: { markdown: content.data.markdown },
+          publishedAt,
+        });
 
-      return {
-        id: ready.id,
-        slug: ready.slug,
-        title: revision.title,
-        content: { markdown: content.data.markdown },
-        publishedAt: new Date(),
-      };
+        if (revision.reviewStatus === RevisionReviewStatus.OWNER_APPROVED) {
+          if (owned.status === PublicationStatus.PUBLISHED) {
+            return {
+              kind: 'PUBLISHED',
+              publication: view(owned.publishedAt ?? new Date()),
+              newlyPublished: false,
+            };
+          }
+          const publishedAt = new Date();
+          const again = await transaction.threadPublication.updateMany({
+            where: { id: publicationId, ownerId, status: { in: REPUBLISHABLE_STATUSES } },
+            data: { status: PublicationStatus.PUBLISHED, publishedAt },
+          });
+          if (again.count === 1) {
+            return { kind: 'PUBLISHED', publication: view(publishedAt), newlyPublished: true };
+          }
+          continue;
+        }
+
+        const approved = await transaction.threadPublicationRevision.updateMany({
+          where: { id: revision.id, reviewStatus: RevisionReviewStatus.READY_FOR_REVIEW },
+          data: { reviewStatus: RevisionReviewStatus.OWNER_APPROVED, ownerApprovedAt: new Date() },
+        });
+        // Another request approved it first: read again and answer from what it committed.
+        if (approved.count !== 1) continue;
+        const publishedAt = new Date();
+        const published = await transaction.threadPublication.updateMany({
+          where: { id: publicationId, ownerId, status: { in: REPUBLISHABLE_STATUSES } },
+          data: { status: PublicationStatus.PUBLISHED, publishedAt },
+        });
+        if (published.count !== 1) {
+          await transaction.threadPublicationRevision.updateMany({
+            where: { id: revision.id },
+            data: { reviewStatus: RevisionReviewStatus.READY_FOR_REVIEW, ownerApprovedAt: null },
+          });
+          return { kind: 'NOT_READY' };
+        }
+        return { kind: 'PUBLISHED', publication: view(publishedAt), newlyPublished: true };
+      }
+      return { kind: 'NOT_READY' };
     });
   }
 

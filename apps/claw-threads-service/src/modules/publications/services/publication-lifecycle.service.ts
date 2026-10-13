@@ -1,13 +1,21 @@
 import {
   BadRequestException,
   ConflictException,
+  HttpStatus,
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 
+import { PublicationStatus } from '../../../generated/prisma';
+import { BoardIndexService } from '../../board-index/services/board-index.service';
 import { PublicationsRepository } from '../repositories/publications.repository';
 import { ThreadNotificationService } from './thread-notification.service';
+import { GenerationStartGate } from './generation-start-gate.service';
+import { ThreadGenerationErrorCode } from '../../../common/enums/thread-generation-error-code.enum';
+import { codedErrorBody } from '../../../common/utilities/coded-error-body.utility';
+import { ACTIVE_GENERATION_JOB_STATUSES } from '../constants/publication-generation-owner.constants';
 import { ThreadsGenerationClient } from './threads-generation.client';
 import type { EditPublicationRevisionDto } from '../dto/edit-publication-revision.dto';
 import type { StartThreadGenerationDto } from '../dto/start-thread-generation.dto';
@@ -19,8 +27,10 @@ import type {
   PublicationEditResult,
   PublicationExport,
   PublicationRevisionReviewState,
+  PublicationStartIdentity,
   PublicPublication,
   PublishedPublication,
+  RevisionReviewSaver,
 } from '../types/publication.types';
 import type { PrivateGenerationState } from '../types/generation.types';
 import { evaluatePublicationSafety } from '../utilities/publication-safety.utility';
@@ -37,20 +47,52 @@ export class PublicationLifecycleService {
     private readonly publications: PublicationsRepository,
     private readonly generation: ThreadsGenerationClient,
     private readonly notifications: ThreadNotificationService,
+    private readonly gate: GenerationStartGate,
+    @Optional() private readonly boardIndex?: BoardIndexService,
   ) {}
 
   listOwned(ownerId: string): ReturnType<PublicationsRepository['findOwnedPublications']> {
     return this.publications.findOwnedPublications(ownerId);
   }
 
+  /**
+   * Queues the job, then its publication. The two live in different services, so the second step
+   * failing must undo the first: the job is cancelled upstream (which releases its budget and
+   * feature allowance) unless some publication already points at it. A job is never left queued
+   * with no owner to see it.
+   */
   async enqueueGeneration(
     ownerId: string,
     input: StartThreadGenerationDto,
+    identity?: PublicationStartIdentity,
   ): Promise<{ publicationId: string; jobId: string; status: string }> {
     const job = await this.generation.enqueue(ownerId, input);
-    const publication = await this.publications.createQueuedPublication(ownerId, job.jobId, input);
-    if (!publication) throw new ConflictException('Generation job owner mismatch');
-    return { publicationId: publication.id, jobId: job.jobId, status: job.status };
+    const endAttach = this.gate.beginAttach(job.jobId);
+    try {
+      const publication = await this.publications.createQueuedPublication(
+        ownerId,
+        job.jobId,
+        input,
+        identity,
+      );
+      if (!publication) throw new ConflictException('Generation job owner mismatch');
+      return { publicationId: publication.id, jobId: job.jobId, status: job.status };
+    } catch (error: unknown) {
+      await this.releaseUnattachedJob(job.jobId);
+      throw error;
+    } finally {
+      endAttach();
+    }
+  }
+
+  /** Best effort and never masks the original error; the orphan repair covers a cancel that fails. */
+  private async releaseUnattachedJob(jobId: string): Promise<void> {
+    try {
+      if (await this.publications.findByGenerationJobId(jobId)) return;
+      await this.generation.cancel(jobId);
+    } catch {
+      this.logger.warn(`Generation job ${jobId} could not be released after a failed start`);
+    }
   }
 
   async getGenerationState(
@@ -80,26 +122,59 @@ export class PublicationLifecycleService {
     return { publicationId, publicationStatus: publication.status, ...state };
   }
 
+  /**
+   * Asks the generation service to stop a queued or running generation. Anything else is a 409
+   * that says what state the generation is really in, instead of pretending a cancel was queued.
+   */
   async cancelGeneration(
     publicationId: string,
     ownerId: string,
   ): Promise<{ publicationId: string; status: 'CANCEL_REQUESTED' }> {
     const publication = await this.publications.findOwnedGeneration(publicationId, ownerId);
     if (!publication?.generationJobId) throw new NotFoundException('Publication not found');
+    const state = await this.generation.getPrivateState(publication.generationJobId, ownerId);
+    if (
+      publication.status !== PublicationStatus.DRAFT ||
+      !ACTIVE_GENERATION_JOB_STATUSES.includes(state.status)
+    ) {
+      throw new ConflictException(
+        codedErrorBody(
+          'Only a queued or running generation can be cancelled.',
+          ThreadGenerationErrorCode.NOT_CANCELLABLE,
+          HttpStatus.CONFLICT,
+          { state: state.status, publicationStatus: publication.status },
+        ),
+      );
+    }
     await this.generation.cancel(publication.generationJobId);
     return { publicationId, status: 'CANCEL_REQUESTED' };
   }
 
   async approveAndPublish(publicationId: string, ownerId: string): Promise<PublishedPublication> {
-    const publication = await this.publications.publishReadyRevision(publicationId, ownerId);
-    if (!publication) throw new NotFoundException('Publication not found');
-    // The article is live either way; a lost notice must not turn an approval into an error.
-    try {
-      await this.notifications.notifyPublished(ownerId, publication);
-    } catch {
-      this.logger.warn('Publish notification could not be sent');
+    const outcome = await this.publications.publishReadyRevision(publicationId, ownerId);
+    if (!outcome) throw new NotFoundException('Publication not found');
+    if (outcome.kind === 'REVOKED') {
+      throw new ConflictException(
+        'This publication was removed by moderation and cannot be published.',
+      );
     }
-    return publication;
+    if (outcome.kind === 'NOT_READY') {
+      throw new ConflictException(
+        'This publication has no approved revision ready to publish. Wait for the review to finish, or edit it first.',
+      );
+    }
+    // Also on a repeat or a republish: the visible revision may have changed, and a sync is idempotent.
+    await this.syncBoard(publicationId);
+    // A repeated publish of a live article answers with it again and tells nobody twice.
+    if (outcome.newlyPublished) {
+      try {
+        await this.notifications.notifyPublished(ownerId, outcome.publication);
+      } catch {
+        // The article is live either way; a lost notice must not turn an approval into an error.
+        this.logger.warn('Publish notification could not be sent');
+      }
+    }
+    return outcome.publication;
   }
 
   async editRevision(
@@ -117,6 +192,7 @@ export class PublicationLifecycleService {
       safety,
     );
     if (!revision) throw new NotFoundException('Publication not found');
+    await this.syncBoard(publicationId);
     this.assertEditCanProceed(revision);
     if (!safety.approved) return this.safetyBlockedEdit(revision, safety.reasons);
     if (revision.revalidationJobId) {
@@ -199,55 +275,63 @@ export class PublicationLifecycleService {
     };
   }
 
-  private async resolveRevisionReviewState(
+  private resolveRevisionReviewState(
     publicationId: string,
     revisionId: string,
     ownerId: string,
     revision: OwnedRevisionReviewRecord,
     state: PrivateGenerationState,
   ): Promise<PublicationRevisionReviewState> {
-    if (state.status !== 'WAITING_FOR_REVIEW') {
-      if (state.status === 'FAILED' || state.status === 'CANCELLED') {
-        await this.saveRevisionReview(
-          revisionId,
-          publicationId,
-          ownerId,
-          revision,
-          false,
-          null,
-          null,
-        );
-        return { revisionId, status: state.status, ready: false, reasons: ['REVALIDATION_FAILED'] };
-      }
-      return { revisionId, status: state.status, ready: false, reasons: [] };
-    }
-    if (!state.review || !state.draft || state.review.draftHash !== revision.contentHash) {
-      await this.saveRevisionReview(
+    const save: RevisionReviewSaver = (ready, judgeScore, criticScore) =>
+      this.saveRevisionReview(
         revisionId,
         publicationId,
         ownerId,
         revision,
-        false,
-        state.draft?.judgeScore ?? null,
-        state.draft?.criticScore ?? null,
+        ready,
+        judgeScore,
+        criticScore,
       );
-      return {
-        revisionId,
-        status: 'STALE',
-        ready: false,
-        reasons: ['CANDIDATE_HASH_MISMATCH'],
-      };
+    return state.status === 'WAITING_FOR_REVIEW'
+      ? this.resolveFinishedReview(revisionId, revision, state, save)
+      : this.resolveUnfinishedReview(revisionId, state, save);
+  }
+
+  /** The review job has not produced a verdict: only a failed or cancelled one is recorded. */
+  private async resolveUnfinishedReview(
+    revisionId: string,
+    state: PrivateGenerationState,
+    save: RevisionReviewSaver,
+  ): Promise<PublicationRevisionReviewState> {
+    if (state.status === 'FAILED' || state.status === 'CANCELLED') {
+      await save(false, null, null);
+      return { revisionId, status: state.status, ready: false, reasons: ['REVALIDATION_FAILED'] };
+    }
+    return { revisionId, status: state.status, ready: false, reasons: [] };
+  }
+
+  /** The verdict is for other content than the revision now holds, so it cannot make it ready. */
+  private async resolveMismatchedReview(
+    revisionId: string,
+    state: PrivateGenerationState,
+    save: RevisionReviewSaver,
+  ): Promise<PublicationRevisionReviewState> {
+    await save(false, state.draft?.judgeScore ?? null, state.draft?.criticScore ?? null);
+    return { revisionId, status: 'STALE', ready: false, reasons: ['CANDIDATE_HASH_MISMATCH'] };
+  }
+
+  /** The review job reached a verdict: it counts only for the exact content that was reviewed. */
+  private async resolveFinishedReview(
+    revisionId: string,
+    revision: OwnedRevisionReviewRecord,
+    state: PrivateGenerationState,
+    save: RevisionReviewSaver,
+  ): Promise<PublicationRevisionReviewState> {
+    if (!state.review || !state.draft || state.review.draftHash !== revision.contentHash) {
+      return this.resolveMismatchedReview(revisionId, state, save);
     }
     const ready = this.revisionReviewPassed(revision, state);
-    await this.saveRevisionReview(
-      revisionId,
-      publicationId,
-      ownerId,
-      revision,
-      ready,
-      state.draft.judgeScore,
-      state.draft.criticScore,
-    );
+    await save(ready, state.draft.judgeScore, state.draft.criticScore);
     const reasons = [...state.review.reasons];
     if (reasons.length === 0 && !ready) reasons.push('REVIEW_FAILED');
     return {
@@ -301,7 +385,25 @@ export class PublicationLifecycleService {
     if (!(await this.publications.unpublishOwned(publicationId, ownerId))) {
       throw new NotFoundException('Publication not found');
     }
+    await this.removeFromBoard(publicationId);
     return { unpublished: true };
+  }
+
+  /** The Board row follows the publication; a failure is logged and the 60 s reconcile heals it. */
+  private async syncBoard(publicationId: string): Promise<void> {
+    try {
+      await this.boardIndex?.syncPublication(publicationId);
+    } catch {
+      this.logger.warn(`Board index sync failed for ${publicationId}; reconcile will retry`);
+    }
+  }
+
+  private async removeFromBoard(publicationId: string): Promise<void> {
+    try {
+      await this.boardIndex?.removePublication(publicationId);
+    } catch {
+      this.logger.warn(`Board index removal failed for ${publicationId}; reconcile will retry`);
+    }
   }
 
   async export(

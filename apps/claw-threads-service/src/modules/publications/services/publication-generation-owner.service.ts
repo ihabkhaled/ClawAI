@@ -15,6 +15,10 @@ import type {
   OwnedGeneration,
   RetryGenerationResult,
 } from '../types/generation.types';
+import { scopedIdempotencyKey } from '../utilities/generation-idempotency.utility';
+import { GenerationActiveCapService } from './generation-active-cap.service';
+import { GenerationPreflightService } from './generation-preflight.service';
+import { GenerationStartGate } from './generation-start-gate.service';
 import { ThreadsGenerationClient } from './threads-generation.client';
 
 /** Owner-only progress, retry and delete of a Thread generation. Everyone else gets a 404. */
@@ -23,6 +27,9 @@ export class PublicationGenerationOwnerService {
   constructor(
     private readonly publications: PublicationsRepository,
     private readonly generation: ThreadsGenerationClient,
+    private readonly preflight: GenerationPreflightService,
+    private readonly activeCap: GenerationActiveCapService,
+    private readonly gate: GenerationStartGate,
   ) {}
 
   async getProgress(publicationId: string, ownerId: string): Promise<ThreadGenerationProgress> {
@@ -38,7 +45,20 @@ export class PublicationGenerationOwnerService {
     }
   }
 
-  async retry(
+  /**
+   * A retry is a new paid generation, so it passes the same checks as a start (models known, on
+   * the plan with fallbacks, spend cap, permission, active cap) on the models it will really use,
+   * and runs one at a time per owner. The idempotency key is scoped to the owner.
+   */
+  retry(
+    publicationId: string,
+    ownerId: string,
+    input: RetryThreadGenerationDto,
+  ): Promise<RetryGenerationResult> {
+    return this.gate.run(ownerId, () => this.retrySerialised(publicationId, ownerId, input));
+  }
+
+  private async retrySerialised(
     publicationId: string,
     ownerId: string,
     input: RetryThreadGenerationDto,
@@ -51,22 +71,56 @@ export class PublicationGenerationOwnerService {
     if (!RETRYABLE_GENERATION_JOB_STATUSES.includes(state.status)) {
       throw new ConflictException('Generation must be failed or cancelled before a retry');
     }
-    const job = await this.generation.retry(owned.generationJobId, ownerId, input);
-    const attached = await this.publications.attachRetryJob(
-      publicationId,
-      ownerId,
-      owned.generationJobId,
-      job.jobId,
-    );
-    if (!attached) {
-      const current = await this.publications.findOwnedGeneration(publicationId, ownerId);
-      if (current?.generationJobId === job.jobId) {
-        return { publicationId, jobId: job.jobId, status: job.status };
-      }
-      await this.cancelOrphanedJob(job.jobId);
-      throw new ConflictException('Generation retry could not be attached');
+    const stored = await this.generation.getProgress(owned.generationJobId, ownerId);
+    await this.preflight.assertCanRetry(ownerId, stored.selections, input);
+    await this.activeCap.assertBelowCap(ownerId);
+    const job = await this.queueRetry(owned.generationJobId, ownerId, input);
+    return this.attachRetry(publicationId, ownerId, owned.generationJobId, job);
+  }
+
+  private async queueRetry(
+    previousJobId: string,
+    ownerId: string,
+    input: RetryThreadGenerationDto,
+  ): Promise<{ jobId: string; status: string }> {
+    try {
+      return await this.generation.retry(previousJobId, ownerId, {
+        ...input,
+        idempotencyKey: scopedIdempotencyKey(ownerId, input.idempotencyKey),
+      });
+    } catch (error: unknown) {
+      throw (await this.preflight.explainBudgetDenial(ownerId, error)) ?? error;
     }
-    return { publicationId, jobId: job.jobId, status: job.status };
+  }
+
+  private async attachRetry(
+    publicationId: string,
+    ownerId: string,
+    previousJobId: string,
+    job: { jobId: string; status: string },
+  ): Promise<RetryGenerationResult> {
+    const endAttach = this.gate.beginAttach(job.jobId);
+    try {
+      const attached = await this.publications.attachRetryJob(
+        publicationId,
+        ownerId,
+        previousJobId,
+        job.jobId,
+      );
+      if (!attached) {
+        const current = await this.publications.findOwnedGeneration(publicationId, ownerId);
+        if (current?.generationJobId !== job.jobId) {
+          await this.cancelOrphanedJob(job.jobId);
+          throw new ConflictException('Generation retry could not be attached');
+        }
+      }
+      return { publicationId, jobId: job.jobId, status: job.status };
+    } catch (error: unknown) {
+      if (!(error instanceof ConflictException)) await this.cancelOrphanedJob(job.jobId);
+      throw error;
+    } finally {
+      endAttach();
+    }
   }
 
   async delete(publicationId: string, ownerId: string): Promise<DeleteGenerationResult> {
@@ -97,6 +151,7 @@ export class PublicationGenerationOwnerService {
   /** Best effort: a retry job that lost the attach race must not keep running unowned. */
   private async cancelOrphanedJob(jobId: string): Promise<void> {
     try {
+      if (await this.publications.findByGenerationJobId(jobId)) return;
       await this.generation.cancel(jobId);
     } catch {
       // The 409 below is the answer; a failed cancel must not mask it.

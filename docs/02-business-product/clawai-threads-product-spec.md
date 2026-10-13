@@ -33,6 +33,10 @@ participation is open to authenticated users under existing moderation rules.
   this policy in its own database. Delayed and duplicate delivery is safe, and
   tombstones prevent later jobs from restoring deleted account data.
 
+## Board (signed-in browse and search)
+
+Signed-in users get a Board at `/board`: a grid of published Threads with search-as-you-type, sort (latest, trending, discussed, liked), language and type filters, and a reader at `/board/[slug]` with the existing reactions and comments. Defaults: the language filter is the UI locale with an "All languages" option; the Board is behind login, noindex and not linked from marketing pages; the sidebar entry "Board" sits beside Threads; publishing does not redirect there. Privacy decision: cards and the reader show no author name or avatar. The public `/threads/[slug]` page stays the canonical, indexable copy. See ADR-177 and ADR-178 and [the change record](../changes/2026-10-14-threads-board.md).
+
 ## Budget and plan enforcement
 
 Reserve the existing research, judge, and critic plan allowances once per job.
@@ -90,7 +94,7 @@ Generation intent or a private draft alone does not make content public.
 Threads is open to every plan and to administrators (owner decision 2026-10-07). Creating one
 reserves one research, one Judge and one Critic review from the plan's Threads allowance, which is
 the catalog's: Free 1 for life, Starter 2 a month (1 Critic), Plus 10 a month (5 Critic), Pro and
-above by their own rules. Administrators are not counted. A person who has used the allowance sees
+above by their own rules. Administrators are not counted. A Free Thread's model calls ride the plan's free credit allowance (its money meter and price limit, not its monthly request count; ADR-162 addendum). A person who has used the allowance sees
 that the plan does not include (or has used up) Threads, with a link to the plans page. Chat's own
 Research, Judge and Critic switches are unchanged. Reading, commenting, reacting and suggesting
 changes are open to every signed-in account.

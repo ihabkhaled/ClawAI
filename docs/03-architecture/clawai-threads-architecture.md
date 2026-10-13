@@ -85,7 +85,7 @@ path and carry a stable per-call idempotency key plus the Auth-owned aggregate
 budget ID. Idempotency prevents duplicate enqueue and charges. Persisted job
 state is authoritative; queue delivery and live progress are transport only.
 The generation consumer uses its own durable RabbitMQ queue with prefetch one.
-Database-backed worker slots cap active generation at two across replicas.
+Database-backed worker slots cap active generation at six across replicas, three per replica and two per user ([ADR-176](../13-adr/adr-176-thread-generation-runs-jobs-concurrently-and-fairly.md)).
 Workers renew leases while running; recovery requeues expired work with bounded
 attempts and backoff. Persisted research evidence and role outputs are reused
 only when their canonical evidence and input hashes still match. Dispatch is
@@ -156,8 +156,9 @@ probe so both mkcert and self-signed internal certificates work without `wget`.
 Auth owns the durable job budget and per-call sub-holds. Its internal
 service-token routes reserve the cap and each existing PAYG wallet hold; call
 settlement moves measured cost into the cap ledger. The cap adds no provider
-prices or wallet balance. Generation closes the budget only after all provider
-calls settle or release.
+prices or wallet balance. Closing the budget releases any call still in flight
+(a cancelled job abandons its calls), and a sweeper closes budgets a dead job
+never closed. Auth counts what the user was charged, not what was held.
 
 Community comments, reactions, change requests, and reports are stored in the
 Threads database. Public comment responses omit author identifiers. Owner

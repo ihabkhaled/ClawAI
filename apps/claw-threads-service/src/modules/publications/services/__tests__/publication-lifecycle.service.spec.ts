@@ -3,6 +3,7 @@ import { BadRequestException, ConflictException, NotFoundException } from '@nest
 import { decodeToon } from '../../../../common/utilities/toon.utility';
 
 import { PublicationLifecycleService } from '../publication-lifecycle.service';
+import { GenerationStartGate } from '../generation-start-gate.service';
 import { Locale, ThreadPublicationType } from '@claw/shared-types';
 import type { PublicationsRepository } from '../../repositories/publications.repository';
 
@@ -15,10 +16,17 @@ describe('PublicationLifecycleService', () => {
       publications as never,
       {} as never,
       {} as never,
+      new GenerationStartGate(),
     );
 
     await expect(service.listOwned('owner-1')).resolves.toEqual([{ id: 'private-1' }]);
     expect(publications.findOwnedPublications).toHaveBeenCalledWith('owner-1');
+  });
+
+  const published = (item: object, newlyPublished = true) => ({
+    kind: 'PUBLISHED' as const,
+    publication: item,
+    newlyPublished,
   });
 
   const publication = {
@@ -31,12 +39,13 @@ describe('PublicationLifecycleService', () => {
 
   it('publishes only a review-ready publication owned by the caller', async () => {
     const repository = {
-      publishReadyRevision: vi.fn().mockResolvedValue(publication),
+      publishReadyRevision: vi.fn().mockResolvedValue(published(publication)),
     };
     const service = new PublicationLifecycleService(
       repository as unknown as PublicationsRepository,
       {} as never,
       {} as never,
+      new GenerationStartGate(),
     );
 
     await expect(service.approveAndPublish('pub_opaque', 'owner-1')).resolves.toEqual(publication);
@@ -49,6 +58,7 @@ describe('PublicationLifecycleService', () => {
       repository as unknown as PublicationsRepository,
       {} as never,
       {} as never,
+      new GenerationStartGate(),
     );
 
     await expect(service.approveAndPublish('pub_opaque', 'owner-2')).rejects.toBeInstanceOf(
@@ -57,12 +67,13 @@ describe('PublicationLifecycleService', () => {
   });
 
   it('tells the owner once the article is live', async () => {
-    const repository = { publishReadyRevision: vi.fn().mockResolvedValue(publication) };
+    const repository = { publishReadyRevision: vi.fn().mockResolvedValue(published(publication)) };
     const notifications = { notifyPublished: vi.fn().mockResolvedValue(undefined) };
     const service = new PublicationLifecycleService(
       repository as unknown as PublicationsRepository,
       {} as never,
       notifications as never,
+      new GenerationStartGate(),
     );
 
     await service.approveAndPublish('pub_opaque', 'owner-1');
@@ -71,12 +82,13 @@ describe('PublicationLifecycleService', () => {
   });
 
   it('does not turn an approval into an error when the notice cannot be sent', async () => {
-    const repository = { publishReadyRevision: vi.fn().mockResolvedValue(publication) };
+    const repository = { publishReadyRevision: vi.fn().mockResolvedValue(published(publication)) };
     const notifications = { notifyPublished: vi.fn().mockRejectedValue(new Error('down')) };
     const service = new PublicationLifecycleService(
       repository as unknown as PublicationsRepository,
       {} as never,
       notifications as never,
+      new GenerationStartGate(),
     );
 
     await expect(service.approveAndPublish('pub_opaque', 'owner-1')).resolves.toEqual(publication);
@@ -84,12 +96,13 @@ describe('PublicationLifecycleService', () => {
 
   it('keeps public response fields in the repository allow-list', async () => {
     const repository = {
-      publishReadyRevision: vi.fn().mockResolvedValue(publication),
+      publishReadyRevision: vi.fn().mockResolvedValue(published(publication)),
     };
     const service = new PublicationLifecycleService(
       repository as unknown as PublicationsRepository,
       {} as never,
       {} as never,
+      new GenerationStartGate(),
     );
 
     const result = await service.approveAndPublish('pub_opaque', 'owner-1');
@@ -110,6 +123,7 @@ describe('PublicationLifecycleService', () => {
       publications as never,
       generation as never,
       {} as never,
+      new GenerationStartGate(),
     );
 
     await expect(
@@ -173,6 +187,7 @@ describe('PublicationLifecycleService', () => {
       'owner-1',
       'job-private',
       expect.objectContaining({ contentLocale: 'fr', publicationType: 'article' }),
+      undefined,
     );
   });
 
@@ -204,6 +219,7 @@ describe('PublicationLifecycleService', () => {
       publications as never,
       generation as never,
       {} as never,
+      new GenerationStartGate(),
     );
 
     await expect(service.getGenerationState('pub-1', 'owner-1')).resolves.toMatchObject({
@@ -224,6 +240,7 @@ describe('PublicationLifecycleService', () => {
       publications as never,
       generation as never,
       {} as never,
+      new GenerationStartGate(),
     );
 
     await expect(service.getGenerationState('pub-other', 'owner-1')).rejects.toBeInstanceOf(
@@ -255,6 +272,7 @@ describe('PublicationLifecycleService', () => {
       publications as never,
       generation as never,
       {} as never,
+      new GenerationStartGate(),
     );
     const input = {
       ...draft,
@@ -304,6 +322,7 @@ describe('PublicationLifecycleService', () => {
       publications as never,
       generation as never,
       {} as never,
+      new GenerationStartGate(),
     );
 
     await expect(
@@ -350,6 +369,7 @@ describe('PublicationLifecycleService', () => {
       publications as never,
       generation as never,
       {} as never,
+      new GenerationStartGate(),
     );
 
     await expect(service.getRevisionReviewState('pub-1', 'revision-2', 'owner-1')).resolves.toEqual(
@@ -394,6 +414,7 @@ describe('PublicationLifecycleService', () => {
       publications as never,
       generation as never,
       {} as never,
+      new GenerationStartGate(),
     );
 
     await expect(service.getRevisionReviewState('pub-1', 'revision-2', 'owner-1')).resolves.toEqual(
@@ -419,6 +440,7 @@ describe('PublicationLifecycleService', () => {
       publications as never,
       generation as never,
       {} as never,
+      new GenerationStartGate(),
     );
 
     await expect(
@@ -444,6 +466,7 @@ describe('PublicationLifecycleService', () => {
       publications as never,
       generation as never,
       {} as never,
+      new GenerationStartGate(),
     );
 
     await expect(
@@ -469,6 +492,7 @@ describe('PublicationLifecycleService', () => {
         { findOwnedExport: vi.fn().mockResolvedValue(found) } as never,
         {} as never,
         {} as never,
+        new GenerationStartGate(),
       );
 
     it('returns the canonical JSON untouched', async () => {

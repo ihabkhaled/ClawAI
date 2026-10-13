@@ -19,6 +19,7 @@ import type {
   ModelRef,
   PreflightRole,
   PreflightRoleRequest,
+  StoredGenerationRole,
 } from '../types/generation-preflight.types';
 
 export function modelKey(ref: ModelRef): string {
@@ -146,6 +147,95 @@ export function assertModelsOnPlan(
       ThreadGenerationErrorCode.MODEL_NOT_ALLOWED_FOR_PLAN,
       HttpStatus.FORBIDDEN,
       { ...roleDetails(denied), plan: entitlements.plan?.slug ?? 'none' },
+    ),
+  );
+}
+
+const RETRY_SEAT_KINDS: ReadonlyMap<string, ThreadGenerationRoleKind> = new Map([
+  ['AUTHOR', ThreadGenerationRoleKind.AUTHOR],
+  ['JUDGE', ThreadGenerationRoleKind.JUDGE],
+  ['CRITIC', ThreadGenerationRoleKind.CRITIC],
+]);
+
+/**
+ * Every model a retry will call: the stored seats with the owner's `models` overrides applied the
+ * way the generation service applies them (a new primary replaces the old one and drops fallbacks
+ * on the same provider). A role id the job does not have is a 400, the same answer the generation
+ * service gives, so the refusal arrives before any budget is held.
+ */
+export function collectRetryRoles(
+  stored: readonly StoredGenerationRole[],
+  overrides: ReadonlyArray<{ roleId: string; provider: string; model: string }>,
+): PreflightRole[] {
+  const seats = stored.filter((role) => RETRY_SEAT_KINDS.has(role.roleKind));
+  if (overrides.some(({ roleId }) => !seats.some((seat) => seat.roleId === roleId))) {
+    throw new BadRequestException('Unknown role in model changes');
+  }
+  let authorPosition = 0;
+  return seats.flatMap((seat) => {
+    const kind = RETRY_SEAT_KINDS.get(seat.roleKind) ?? ThreadGenerationRoleKind.AUTHOR;
+    if (kind === ThreadGenerationRoleKind.AUTHOR) authorPosition += 1;
+    const override = overrides.find(({ roleId }) => roleId === seat.roleId);
+    const role: PreflightRoleRequest = {
+      id: seat.roleId,
+      provider: override?.provider ?? seat.provider,
+      model: override?.model ?? seat.model,
+      maxOutputTokens: 0,
+      fallbacks: override
+        ? seat.fallbacks.filter((fallback) => fallback.provider !== override.provider)
+        : [...seat.fallbacks],
+    };
+    return toRoles(kind, kind === ThreadGenerationRoleKind.AUTHOR ? authorPosition : 1, role);
+  });
+}
+
+/** Whole micro-USD from a decimal dollar amount, by string formatting only (no float arithmetic). */
+export function usdToMicroUsd(usd: number): number {
+  const [whole = '0', fraction = ''] = usd.toFixed(6).split('.');
+  return Number(`${whole}${fraction}`);
+}
+
+/** The cap a retry will run with: the owner's new one, else the one the job already has. */
+export function retrySpendCapMicroUsd(
+  storedMicroUsd: string,
+  newCapUsd: number | undefined,
+): number {
+  return newCapUsd === undefined ? Number(storedMicroUsd) : usdToMicroUsd(newCapUsd);
+}
+
+/** True for the generic 403 the budget step answers with when the plan or allowance refused. */
+export function isNotInPlanDenial(error: unknown): boolean {
+  if (!(error instanceof ForbiddenException)) return false;
+  const body = error.getResponse();
+  return (
+    typeof body === 'object' &&
+    'code' in body &&
+    body.code === ThreadGenerationErrorCode.NOT_IN_PLAN
+  );
+}
+
+/** The plan has Thread generation, yet the budget step refused: the allowance is the problem. */
+export function allowanceUnavailableDenial(): ForbiddenException {
+  return new ForbiddenException(
+    codedErrorBody(
+      'Your plan includes Thread generation, but its allowance is used up or is held by a generation that is still running. It frees up when that generation ends, and renews with your plan period.',
+      ThreadGenerationErrorCode.ALLOWANCE_UNAVAILABLE,
+      HttpStatus.FORBIDDEN,
+    ),
+  );
+}
+
+/** The plan lacks features a generation reserves; they are named in plain words. */
+export function missingFeaturesDenial(
+  planName: string,
+  missing: readonly string[],
+): ForbiddenException {
+  return new ForbiddenException(
+    codedErrorBody(
+      `Your ${planName} plan does not include ${missing.join(', ')}, which Thread generation needs. Upgrade your plan or ask an administrator.`,
+      ThreadGenerationErrorCode.NOT_IN_PLAN,
+      HttpStatus.FORBIDDEN,
+      { missingFeatures: missing.join(', ') },
     ),
   );
 }

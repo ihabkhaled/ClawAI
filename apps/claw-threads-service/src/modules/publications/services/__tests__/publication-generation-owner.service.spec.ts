@@ -1,8 +1,29 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  NotFoundException,
+} from '@nestjs/common';
 
+import { scopedIdempotencyKey } from '../../utilities/generation-idempotency.utility';
+import { GenerationStartGate } from '../generation-start-gate.service';
 import { PublicationGenerationOwnerService } from '../publication-generation-owner.service';
 
-const progress = { jobId: 'job-1', status: 'FAILED' };
+const selections = {
+  spendCapMicroUsd: '2000000',
+  roles: [
+    {
+      roleId: 'author-1',
+      roleKind: 'AUTHOR',
+      provider: 'GEMINI',
+      model: 'gemini-2.5-flash',
+      fallbacks: [{ provider: 'OPENAI', model: 'gpt-5-mini' }],
+    },
+  ],
+};
+const progress = { jobId: 'job-1', status: 'FAILED', selections };
 
 function setup(
   owned: { status: string; generationJobId: string | null } | null,
@@ -11,6 +32,7 @@ function setup(
   const publications = {
     findOwnedGeneration: vi.fn().mockResolvedValue(owned ? { id: 'pub-1', ...owned } : null),
     attachRetryJob: vi.fn().mockResolvedValue(true),
+    findByGenerationJobId: vi.fn().mockResolvedValue(null),
     deleteOwnedUnpublished: vi.fn().mockResolvedValue(true),
   };
   const generation = {
@@ -20,8 +42,19 @@ function setup(
     deleteJob: vi.fn().mockResolvedValue(undefined),
     cancel: vi.fn().mockResolvedValue(undefined),
   };
-  const service = new PublicationGenerationOwnerService(publications as never, generation as never);
-  return { service, publications, generation };
+  const preflight = {
+    assertCanRetry: vi.fn().mockResolvedValue(undefined),
+    explainBudgetDenial: vi.fn().mockResolvedValue(null),
+  };
+  const activeCap = { assertBelowCap: vi.fn().mockResolvedValue(undefined) };
+  const service = new PublicationGenerationOwnerService(
+    publications as never,
+    generation as never,
+    preflight as never,
+    activeCap as never,
+    new GenerationStartGate(),
+  );
+  return { service, publications, generation, preflight, activeCap };
 }
 
 const draft = { status: 'DRAFT', generationJobId: 'job-1' };
@@ -76,7 +109,10 @@ describe('PublicationGenerationOwnerService', () => {
           jobId: 'job-2',
           status: 'QUEUED',
         });
-        expect(generation.retry).toHaveBeenCalledWith('job-1', 'owner-1', input);
+        expect(generation.retry).toHaveBeenCalledWith('job-1', 'owner-1', {
+          ...input,
+          idempotencyKey: scopedIdempotencyKey('owner-1', 'retry-1'),
+        });
         expect(publications.attachRetryJob).toHaveBeenCalledWith(
           'pub-1',
           'owner-1',
@@ -236,5 +272,118 @@ describe('PublicationGenerationOwnerService', () => {
       publications.deleteOwnedUnpublished.mockResolvedValue(false);
       await expect(service.delete('pub-1', 'owner-1')).rejects.toBeInstanceOf(ConflictException);
     });
+  });
+});
+
+describe('PublicationGenerationOwnerService retry preflight (ADR-176)', () => {
+  const input = {
+    idempotencyKey: 'retry-1',
+    models: [{ roleId: 'author-1', provider: 'GEMINI', model: 'gemini-nope-9' }],
+  };
+
+  it('runs the start preflight on the stored seats and the requested models before any job exists', async () => {
+    const { service, preflight, generation } = setup(draft);
+
+    await service.retry('pub-1', 'owner-1', input);
+
+    expect(preflight.assertCanRetry).toHaveBeenCalledWith('owner-1', selections, input);
+    expect(generation.retry).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['an unknown model', new BadRequestException('unknown')],
+    ['a model the plan excludes', new ForbiddenException('plan')],
+    ['a spend cap below the floor', new BadRequestException('cap')],
+  ])('creates no job when the preflight refuses %s', async (_name, refusal) => {
+    const { service, preflight, generation, publications } = setup(draft);
+    preflight.assertCanRetry.mockRejectedValue(refusal);
+
+    await expect(service.retry('pub-1', 'owner-1', input)).rejects.toBe(refusal);
+
+    expect(generation.retry).not.toHaveBeenCalled();
+    expect(publications.attachRetryJob).not.toHaveBeenCalled();
+  });
+
+  it('refuses a retry from an owner at the active cap before any job exists', async () => {
+    const { service, activeCap, generation } = setup(draft);
+    const tooMany = new HttpException('429', HttpStatus.TOO_MANY_REQUESTS);
+    activeCap.assertBelowCap.mockRejectedValue(tooMany);
+
+    await expect(service.retry('pub-1', 'owner-1', input)).rejects.toBe(tooMany);
+
+    expect(generation.retry).not.toHaveBeenCalled();
+  });
+
+  it('replaces the budget refusal with the explained one', async () => {
+    const { service, generation, preflight } = setup(draft);
+    const generic = new ForbiddenException('generic');
+    const explained = new ForbiddenException('allowance used');
+    generation.retry.mockRejectedValue(generic);
+    preflight.explainBudgetDenial.mockResolvedValue(explained);
+
+    await expect(service.retry('pub-1', 'owner-1', input)).rejects.toBe(explained);
+    expect(preflight.explainBudgetDenial).toHaveBeenCalledWith('owner-1', generic);
+  });
+
+  it('keeps any other upstream failure as it is', async () => {
+    const { service, generation } = setup(draft);
+    const down = new Error('down');
+    generation.retry.mockRejectedValue(down);
+
+    await expect(service.retry('pub-1', 'owner-1', input)).rejects.toBe(down);
+  });
+
+  it('cancels the new job when saving the attach throws, unless a publication already owns it', async () => {
+    const { service, publications, generation } = setup(draft);
+    publications.attachRetryJob.mockRejectedValue(new Error('db down'));
+
+    await expect(service.retry('pub-1', 'owner-1', input)).rejects.toThrow('db down');
+    expect(generation.cancel).toHaveBeenCalledWith('job-2');
+
+    generation.cancel.mockClear();
+    publications.findByGenerationJobId.mockResolvedValue({ id: 'pub-1' });
+    await expect(service.retry('pub-1', 'owner-1', input)).rejects.toThrow('db down');
+    expect(generation.cancel).not.toHaveBeenCalled();
+  });
+
+  it('serialises two simultaneous retries of one publication: one job, one clean 409', async () => {
+    const { service, generation } = setup(draft);
+    let current = 'FAILED';
+    generation.getPrivateState.mockImplementation(async () => ({ status: current }));
+    generation.retry.mockImplementation(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      current = 'QUEUED';
+      return { jobId: 'job-2', status: 'QUEUED' };
+    });
+
+    const results = await Promise.allSettled([
+      service.retry('pub-1', 'owner-1', input),
+      service.retry('pub-1', 'owner-1', { ...input, idempotencyKey: 'retry-2' }),
+    ]);
+
+    expect(generation.retry).toHaveBeenCalledTimes(1);
+    expect(results.filter(({ status }) => status === 'fulfilled')).toHaveLength(1);
+    const refused = results.find(({ status }) => status === 'rejected');
+    expect(refused).toMatchObject({ reason: expect.any(ConflictException) });
+  });
+
+  it('does not let one owner’s retry wait for another owner’s', async () => {
+    const { service, generation } = setup(draft);
+    let running = 0;
+    let mostAtOnce = 0;
+    generation.retry.mockImplementation(async (_jobId: string, ownerId: string) => {
+      running += 1;
+      mostAtOnce = Math.max(mostAtOnce, running);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      running -= 1;
+      return { jobId: `job-${ownerId}`, status: 'QUEUED' };
+    });
+
+    await Promise.all([
+      service.retry('pub-1', 'owner-1', input),
+      service.retry('pub-1', 'owner-2', input),
+    ]);
+
+    expect(mostAtOnce).toBe(2);
   });
 });

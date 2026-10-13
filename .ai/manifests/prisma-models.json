@@ -219,6 +219,7 @@
       "ThreadPublicationReader",
       "ThreadPublicationReport",
       "ThreadPublicationRevision",
+      "ThreadPublicationSearchDoc",
       "ThreadPublicationView"
     ],
     "claw-workspace-service": [

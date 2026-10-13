@@ -30,6 +30,15 @@ export type PublicPublicationDiscoveryItem = {
 };
 
 export type PublicPublicationSitemapItem = { slug: string; publishedAt: Date };
+/** What a publish did. `newlyPublished` is false when the article was already live. */
+export type PublishOutcome =
+  | { kind: 'PUBLISHED'; publication: PublishedPublication; newlyPublished: boolean }
+  | { kind: 'NOT_READY' }
+  | { kind: 'REVOKED' };
+
+/** Hashes that let a repeated start by the same owner find its publication again. */
+export type PublicationStartIdentity = { keyHash: string; requestHash: string };
+
 export type NewPublicationMetadata = {
   contentLocale: Locale;
   publicationType: ThreadPublicationType;
@@ -74,3 +83,13 @@ export type OwnedRevisionReviewRecord = {
   safetyReasons: string[];
   revalidationJobId: string | null;
 };
+
+/** What starting a generation answers: the new (or repeated) publication and its job. */
+export type StartGenerationResult = { publicationId: string; jobId: string; status: string };
+
+/** Records the outcome of one revision review: whether it passed and the two scores, if any. */
+export type RevisionReviewSaver = (
+  ready: boolean,
+  judgeScore: number | null,
+  criticScore: number | null,
+) => Promise<void>;

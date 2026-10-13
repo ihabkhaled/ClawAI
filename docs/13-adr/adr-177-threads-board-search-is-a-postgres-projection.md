@@ -1,0 +1,53 @@
+# ADR-177: Threads Board search is a transactional Postgres projection with trigram fuzzy matching
+
+**Status:** Accepted
+
+**Date:** 2026-10-14
+
+Builds on [ADR-159](adr-159-clawai-threads-two-service-architecture.md). Rules: [rule 02](../../rules/02-backend-rules.md), [rule 08](../../rules/08-security-rules.md), [rule 52](../../rules/52-every-schema-ships-a-migration.md). Companion: [ADR-178](adr-178-the-board-is-a-portal-surface-seo-stays-on-threads-slug.md).
+
+## Context
+
+Published Threads were only reachable through public discovery pages and direct links. Signed-in users had no place to browse, search and react to them. Title and body live in revision JSON, `contentLocale` is on the parent row and counts live in other tables, so none of it can be indexed or sorted directly. The Board needs a list with sort and filters, a search-as-you-type dropdown with highlights, typo tolerance and a "did you mean" hint, in 13 locales including Arabic, Persian, CJK and Thai.
+
+## Decision
+
+threads-service owns one denormalised table, `thread_publication_search_docs` (Prisma model `ThreadPublicationSearchDoc`), and serves the Board from it with parameterised raw SQL.
+
+Contract (prefix `/api/v1`, behind the normal auth guard):
+
+- `GET /thread-publications/board?q&sort=latest|trending|discussed|liked&lang=<locale|all>&type=<publicationType|all>&page&limit=12|24|48` returns `{ items, meta: { total, page, limit, totalPages }, didYouMean }`. An item is `{ slug, title, excerpt, contentLocale, publicationType, publishedAt, readingMinutes, sourceCount, likeCount, commentCount, viewCount, viewerReaction }`. No author field exists.
+- `GET /thread-publications/board/suggest?q&lang` returns up to 10 `{ slug, title, publicationType, contentLocale, publishedAt, match }` with `match` as `[start, end]` offsets, plus `didYouMean`, `total` and `totalCapped` (total is capped at 100).
+- `POST /thread-publications-moderation/publications/:id/revoke` (permission `THREAD_PUBLICATIONS_MODERATE`) sets `REVOKED`, deletes the search row and writes an audit entry.
+
+Projection rules:
+
+- Rows exist only for publications that pass the public discovery predicate: PUBLISHED, OWNER_APPROVED, safety APPROVED and index eligible. Publish, unpublish, revoke and approved edits write the row in the same transaction. Delete and account deletion cascade (FK `ON DELETE CASCADE`).
+- Counters (like, dislike, comment, view) are bumped in the existing transactional write paths. A reconcile job recomputes them to heal drift.
+- Columns: publication id (PK), slug, locale, type, title, excerpt, normalised title, normalised body (first 20000 chars), reading minutes, source count, counters, published time, `tsv`, updated time.
+- Extensions `pg_trgm` and `unaccent`. GIN on `tsv`, GIN `gin_trgm_ops` on the normalised title and body, btree on (locale, published time, slug) and (type, published time). GIN trigram indexes live in migration SQL only.
+- One pure TypeScript normaliser serves both indexing and querying: NFKD, strip combining marks for Latin and Cyrillic only (never Devanagari or Thai), lowercase, fold Arabic alef, hamza, ya and ta-marbuta variants, strip tashkeel and tatweel, collapse whitespace, strip control characters.
+- Ranking with `q` combines full-text rank with trigram similarity on the title; without `q`, each sort uses its own index path. Suggest is title-first, hard limit 10.
+- Throttles: suggest is tighter than list (see the service guide). The query is trimmed, length capped, and never string-built into SQL.
+
+Rollback and flag: the migration is additive and old code ignores the table. The Board ships behind a database-level setting that defaults OFF; OFF is the rollback lever and is tested as a state. Deploy order is migrate, threads-service, then frontend.
+
+## Alternatives
+
+|                | A. Postgres tsvector + pg_trgm projection (chosen)                                       | B. In-process fuzzy index (MiniSearch or Fuse)                                 | C. External engine (Meilisearch, Typesense, OpenSearch)            |
+| -------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| Typo tolerance | Trigram similarity: good for omissions and transpositions, weaker on one-character words | Very good, configurable                                                        | Best out of the box                                                |
+| Prefix speed   | GIN, milliseconds at 10^4 to 10^5 docs                                                   | Sub-millisecond, but every replica holds the index in RAM and rebuilds on boot | Milliseconds                                                       |
+| Consistency    | Transactional with publish, unpublish and moderation                                     | Stale between rebuilds; takedown needs cross-replica invalidation              | Asynchronous; stale window                                         |
+| Ops cost       | None new (extension in the existing Postgres image)                                      | Cold start and memory per replica                                              | New service in all 7 compose files plus nginx, health, CI, backups |
+| 13 languages   | Own normaliser; CJK and Thai weaker                                                      | Own tokeniser; CJK needs n-grams                                               | Analyzers included, configured per language                        |
+| Scale ceiling  | About 10^5 to 10^6 docs                                                                  | About 10^4 docs                                                                | Unlimited                                                          |
+
+## Consequences
+
+- A revoked or unpublished Thread disappears from list, suggest and "did you mean" in the same transaction.
+- No new service, no new compose entry.
+- Counters are denormalised and can drift between reconcile runs. If that proves too fragile, counts can be computed per page with grouped queries.
+- CJK, Thai and Persian search quality is the weakest part and is unverified until the live lane runs; see [the skill](../../skills/add-a-board-search-language.md).
+- Prod unknowns: privilege to create extensions, and a UTF-8 non-C collation.
+- Revisit option C only if the corpus passes about 10^6 documents or ranking becomes the product's core.

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, Param, Post } from '@nestjs/common';
 import { CurrentUser, Public } from '@claw/shared-auth';
 import type { AuthenticatedUser } from '@claw/shared-types';
 
@@ -19,6 +19,7 @@ import {
   type SetPublicationReactionDto,
   setPublicationReactionSchema,
 } from '../dto/set-publication-reaction.dto';
+import { optionalViewerId } from '../../publication-community/utilities/optional-viewer.utility';
 import { PublicationCommunityService } from '../services/publication-community.service';
 
 @Controller('thread-publications/public/:slug')
@@ -46,8 +47,9 @@ export class PublicationCommunityController {
   @Get('reactions')
   getReactionSummary(
     @Param('slug') slug: string,
+    @Headers('authorization') authorization?: string,
   ): ReturnType<PublicationCommunityService['getReactionSummary']> {
-    return this.community.getReactionSummary(slug);
+    return this.community.getReactionSummary(slug, optionalViewerId(authorization));
   }
 
   @Post('reactions')

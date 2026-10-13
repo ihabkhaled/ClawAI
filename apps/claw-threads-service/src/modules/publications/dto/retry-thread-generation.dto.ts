@@ -1,18 +1,19 @@
 import { z } from 'zod';
 
+import { safeText, topicText } from './safe-text.schema';
 import { MIN_THREAD_SPEND_CAP_USD } from '../constants/generation-preflight.constants';
 
 export const retryThreadGenerationSchema = z
   .object({
-    idempotencyKey: z.string().min(1).max(200),
-    topic: z.string().min(10).max(10_000).optional(),
+    idempotencyKey: safeText(1, 200),
+    topic: topicText().optional(),
     spendCapUsd: z.number().min(MIN_THREAD_SPEND_CAP_USD).max(1000).optional(),
     models: z
       .array(
         z.object({
-          roleId: z.string().min(1).max(64),
-          provider: z.string().min(1).max(100),
-          model: z.string().min(1).max(200),
+          roleId: safeText(1, 64),
+          provider: safeText(1, 100),
+          model: safeText(1, 200),
         }),
       )
       .max(7)

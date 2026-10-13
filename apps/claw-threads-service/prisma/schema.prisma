@@ -59,30 +59,36 @@ enum PublicationReportStatus {
 }
 
 model ThreadPublication {
-  id              String                           @id @default(cuid())
-  ownerId         String?                          @map("owner_id")
-  slug            String                           @unique
-  status          PublicationStatus                @default(DRAFT)
-  generationJobId String?                          @unique @map("generation_job_id")
-  contentLocale   String                           @default("en") @map("content_locale")
-  publicationType String                           @default("article") @map("publication_type")
-  sourceSnapshot  Json?                            @map("source_snapshot")
-  sourceHash      String?                          @map("source_hash")
-  publishedAt     DateTime?                        @map("published_at")
+  id               String                           @id @default(cuid())
+  ownerId          String?                          @map("owner_id")
+  slug             String                           @unique
+  status           PublicationStatus                @default(DRAFT)
+  generationJobId  String?                          @unique @map("generation_job_id")
+  contentLocale    String                           @default("en") @map("content_locale")
+  publicationType  String                           @default("article") @map("publication_type")
+  sourceSnapshot   Json?                            @map("source_snapshot")
+  sourceHash       String?                          @map("source_hash")
+  /// Hash of the owner's start idempotency key; with `ownerId` it makes a repeated start return this row (ADR-176).
+  startKeyHash     String?                          @map("start_key_hash")
+  /// Hash of the start request body (without keys), so a reused key with another body is a 409.
+  startRequestHash String?                          @map("start_request_hash")
+  publishedAt      DateTime?                        @map("published_at")
   /// Human views (crawlers and repeats inside the dedupe window are not counted).
-  viewCount       Int                              @default(0) @map("view_count")
+  viewCount        Int                              @default(0) @map("view_count")
   /// Distinct signed-in readers. A count only: who they are is never exposed.
-  readerCount     Int                              @default(0) @map("reader_count")
-  createdAt       DateTime                         @default(now()) @map("created_at")
-  updatedAt       DateTime                         @updatedAt @map("updated_at")
-  views           ThreadPublicationView[]
-  readers         ThreadPublicationReader[]
-  revisions       ThreadPublicationRevision[]
-  comments        ThreadPublicationComment[]
-  reactions       ThreadPublicationReaction[]
-  changeRequests  ThreadPublicationChangeRequest[]
-  reports         ThreadPublicationReport[]
+  readerCount      Int                              @default(0) @map("reader_count")
+  createdAt        DateTime                         @default(now()) @map("created_at")
+  updatedAt        DateTime                         @updatedAt @map("updated_at")
+  views            ThreadPublicationView[]
+  readers          ThreadPublicationReader[]
+  revisions        ThreadPublicationRevision[]
+  comments         ThreadPublicationComment[]
+  reactions        ThreadPublicationReaction[]
+  changeRequests   ThreadPublicationChangeRequest[]
+  reports          ThreadPublicationReport[]
+  searchDoc        ThreadPublicationSearchDoc?
 
+  @@unique([ownerId, startKeyHash])
   @@index([ownerId, createdAt])
   @@index([status, publishedAt])
   @@map("thread_publications")
@@ -214,4 +220,32 @@ model ThreadPublicationReport {
   @@index([status, createdAt])
   @@index([publicationId, createdAt])
   @@map("thread_publication_reports")
+}
+
+/// Read model for the Board (search + listing). Rows exist only for publications that pass the public
+/// visibility predicate; owned and kept in step by BoardIndexService. The tsvector column and the GIN
+/// indexes (tsv, title_norm/body_norm trigram) live in the migration only, Prisma cannot express them.
+model ThreadPublicationSearchDoc {
+  publicationId   String                   @id @map("publication_id")
+  publication     ThreadPublication        @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  slug            String
+  contentLocale   String                   @map("content_locale")
+  publicationType String                   @map("publication_type")
+  title           String
+  excerpt         String
+  titleNorm       String                   @map("title_norm")
+  bodyNorm        String                   @map("body_norm")
+  readingMinutes  Int                      @default(1) @map("reading_minutes")
+  sourceCount     Int                      @default(0) @map("source_count")
+  likeCount       Int                      @default(0) @map("like_count")
+  dislikeCount    Int                      @default(0) @map("dislike_count")
+  commentCount    Int                      @default(0) @map("comment_count")
+  viewCount       Int                      @default(0) @map("view_count")
+  publishedAt     DateTime                 @map("published_at") @db.Timestamptz(6)
+  tsv             Unsupported("tsvector")?
+  updatedAt       DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([contentLocale, publishedAt(sort: Desc), slug(sort: Desc)])
+  @@index([publicationType, publishedAt(sort: Desc)])
+  @@map("thread_publication_search_docs")
 }
