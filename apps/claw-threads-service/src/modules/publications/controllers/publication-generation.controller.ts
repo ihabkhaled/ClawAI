@@ -7,17 +7,17 @@ import {
   type StartThreadGenerationDto,
   startThreadGenerationSchema,
 } from '../dto/start-thread-generation.dto';
-import { PublicationLifecycleService } from '../services/publication-lifecycle.service';
+import { PublicationGenerationStartService } from '../services/publication-generation-start.service';
 
 @Controller('thread-publications/generations')
 export class PublicationGenerationController {
-  constructor(private readonly lifecycle: PublicationLifecycleService) {}
+  constructor(private readonly generationStart: PublicationGenerationStartService) {}
 
   @Post()
   enqueue(
     @Body(new ZodValidationPipe(startThreadGenerationSchema)) body: StartThreadGenerationDto,
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<{ publicationId: string; jobId: string; status: string }> {
-    return this.lifecycle.enqueueGeneration(user.id, body);
+    return this.generationStart.start(user.id, body);
   }
 }

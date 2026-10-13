@@ -25,8 +25,10 @@ cancels queued jobs or requests cancellation between provider calls.
 - The publication and community service owns approved public revisions.
 - Chat supplies filtered snapshots through an internal API; this service never reads the chat database.
 - Research evidence remains owned by `claw-research-service`.
-- Routing-service supplies model context windows. `ModelContextClient` returns
-  `{ tokens, source }`: `known` (catalog row or shared table) or `assumed` (32,768,
+- Model context windows come from, in order: connector-service's public catalog
+  (`ConnectorCatalogWindowClient`, the picker's source, fails open, 5 minute index),
+  routing-service's registry, then the shared table. `ModelContextClient` returns
+  `{ tokens, source }`: `known` (catalog, router row or shared table) or `assumed` (32,768,
   `THREADS_ASSUMED_WINDOW_TOKENS`, when neither has a window). Results are cached in
   memory per provider/model for 5 minutes (200 entries). An oversized full prompt
   fails closed without truncation, before any model call ([ADR-173](../13-adr/adr-173-threads-unknown-model-window-is-assumed-not-fatal.md)).
@@ -37,6 +39,18 @@ cancels queued jobs or requests cancellation between provider calls.
   reason in `failureSummary`. Catalog unreachable, 5xx/408/425/429 and gateway errors
   stay retryable (3 attempts, 15 s then 30 s). A role is deterministic only when
   every candidate failed deterministically.
+- **Model output parsing.** Providers wrap JSON (Gemini in a ```json fence or markdown prose,
+  Ollama models similarly). `parseModelJson` accepts bare JSON, a single fence, or the first balanced
+  object in surrounding prose (braces inside strings are ignored), preferring the object the role's zod
+  schema accepts; truncated output and text with no JSON yield nothing and the step fails
+  `OUTPUT_INVALID` (one more try per model, then the fallback). No repair re-ask exists in the pipeline and
+  none was added.
+- **Job spend.** `thread_generation_jobs.spent_micro_credits` is integer micro-USD. Chat-service's
+  `/internal/chat/generate` reply may carry `costMicroUsd` (the settled PAYG cost); the pipeline adds it
+  per call, unfenced by attempt or status because the provider was paid either way, including for replies
+  that fail validation or are cut short by the balance. A call that fails at the provider is released
+  by the gateway and costs nothing. Owner progress shows the total. A gateway that omits the field (it
+  does for non-PAYG billing) leaves the total at 0.
 - Chat-service applies existing provider credit holds and settlement using a
   stable request ID and the Auth-owned aggregate job budget. No PAYG price
   surface is added.
@@ -79,6 +93,11 @@ The worker writes the job's `stage` and `round` as it moves (`saveProgress`, fen
 number): AUTHOR_DRAFTS, CONSENSUS, JUDGE, CRITIC, then READY_FOR_REVIEW. The review page reads them
 from `generation-state` and says what is happening. Before 2026-10-07 the stage stayed
 AUTHOR_DRAFTS until the end.
+
+## Review language and source-thread visibility (ADR-174)
+
+- **Judge and Critic review in the requested language.** `buildReviewSystemPrompt(reviewer, contentLocale)` (`utilities/review-prompt.utility.ts`) tells the reviewer the owner requested the article in that language (for example Spanish), so it is correct even when the topic, source conversation or evidence are in another language. A reviewer must not lower the score, add a blocker or ask for a rewrite or translation because the languages differ, may raise a language blocker only if the draft is not in the requested language, judges only factual support, coherence, completeness and safety, and writes findings and `revisionBrief` in that language. JSON keys stay English. Before this, the prompt omitted the locale, so a Spanish or French draft of an English request was scored down and told to switch to English (production rounds R08 and R12). The shared material still has no locale field; the system prompt carries it. Saved review communications are keyed by the prompt hash, so an in-flight job replays its review once.
+- **A source thread that is missing or owned by someone else is a 404.** `ChatSnapshotClient` maps chat-service's 404 (and 403) to `NotFoundException('Thread not found')` instead of a 503 that invited retries. Threads relays it as `404 Source thread not found`, the same body for both cases, so a caller cannot tell whether another user's thread id exists.
 
 ## Owner step log, progress, retry and delete
 

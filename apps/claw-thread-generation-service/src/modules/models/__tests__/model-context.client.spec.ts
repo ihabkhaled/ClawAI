@@ -5,10 +5,17 @@ import {
   MODEL_WINDOW_CACHE_TTL_MS,
   THREADS_ASSUMED_WINDOW_TOKENS,
 } from '../constants/model-context.constants';
+import { ConnectorCatalogWindowClient } from '../connector-catalog-window.client';
 import { ModelContextClient } from '../model-context.client';
 
 function windowResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status });
+}
+
+function newClient(catalogTokens?: number): ModelContextClient {
+  const catalog = new ConnectorCatalogWindowClient();
+  vi.spyOn(catalog, 'findWindow').mockResolvedValue(catalogTokens);
+  return new ModelContextClient(catalog);
 }
 
 async function failureOf(attempt: Promise<unknown>): Promise<Error> {
@@ -39,7 +46,7 @@ describe('ModelContextClient', () => {
     const fetchMock = vi.fn().mockResolvedValue(windowResponse({ contextWindowTokens: 200_000 }));
     vi.stubGlobal('fetch', fetchMock);
 
-    const window = await new ModelContextClient().getWindow('ANTHROPIC', 'claude-x');
+    const window = await newClient().getWindow('ANTHROPIC', 'claude-x');
 
     expect(window).toEqual({ tokens: 200_000, source: 'known' });
     const [url, init] = fetchMock.mock.calls[0] ?? [];
@@ -55,7 +62,7 @@ describe('ModelContextClient', () => {
       vi.fn().mockResolvedValue(windowResponse({ contextWindowTokens: null })),
     );
 
-    const window = await new ModelContextClient().getWindow('OLLAMA', 'glm-5.3');
+    const window = await newClient().getWindow('OLLAMA', 'glm-5.3');
 
     expect(window).toEqual({ tokens: THREADS_ASSUMED_WINDOW_TOKENS, source: 'assumed' });
     expect(THREADS_ASSUMED_WINDOW_TOKENS).toBe(32_768);
@@ -67,7 +74,7 @@ describe('ModelContextClient', () => {
       vi.fn().mockResolvedValue(windowResponse({ contextWindowTokens: null })),
     );
 
-    const window = await new ModelContextClient().getWindow('GROQ', 'openai/gpt-oss-120b');
+    const window = await newClient().getWindow('GROQ', 'openai/gpt-oss-120b');
 
     expect(window).toEqual({ tokens: 131_072, source: 'known' });
   });
@@ -75,7 +82,7 @@ describe('ModelContextClient', () => {
   it('treats a body that is not the expected shape as an unknown window', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(windowResponse({ contextWindowTokens: 'x' })));
 
-    const window = await new ModelContextClient().getWindow('OLLAMA', 'glm-5.3');
+    const window = await newClient().getWindow('OLLAMA', 'glm-5.3');
 
     expect(window.source).toBe('assumed');
   });
@@ -83,7 +90,7 @@ describe('ModelContextClient', () => {
   it('treats a body that is not JSON as an unknown window', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('<html>', { status: 200 })));
 
-    const window = await new ModelContextClient().getWindow('OLLAMA', 'glm-5.3');
+    const window = await newClient().getWindow('OLLAMA', 'glm-5.3');
 
     expect(window).toEqual({ tokens: THREADS_ASSUMED_WINDOW_TOKENS, source: 'assumed' });
   });
@@ -91,7 +98,7 @@ describe('ModelContextClient', () => {
   it('reports an unreachable catalog when the request itself fails', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('ECONNREFUSED')));
 
-    const failure = await failureOf(new ModelContextClient().getWindow('OPENAI', 'gpt-5'));
+    const failure = await failureOf(newClient().getWindow('OPENAI', 'gpt-5'));
 
     expect(failure).toBeInstanceOf(Error);
     expect(failure.message).toBe('Model catalog is unreachable');
@@ -103,7 +110,7 @@ describe('ModelContextClient', () => {
     async (status) => {
       vi.stubGlobal('fetch', vi.fn().mockResolvedValue(windowResponse({}, status)));
 
-      const failure = await failureOf(new ModelContextClient().getWindow('OPENAI', 'gpt-5'));
+      const failure = await failureOf(newClient().getWindow('OPENAI', 'gpt-5'));
 
       expect(failure.message).toBe('Model catalog is unreachable');
       expect(failure).not.toBeInstanceOf(DeterministicGenerationError);
@@ -115,7 +122,7 @@ describe('ModelContextClient', () => {
     async (status) => {
       vi.stubGlobal('fetch', vi.fn().mockResolvedValue(windowResponse({}, status)));
 
-      const failure = await failureOf(new ModelContextClient().getWindow('OPENAI', 'gpt-5'));
+      const failure = await failureOf(newClient().getWindow('OPENAI', 'gpt-5'));
 
       expect(failure).toBeInstanceOf(DeterministicGenerationError);
       expect(failure.message).toBe(`Model catalog rejected the lookup (${String(status)})`);
@@ -127,7 +134,7 @@ describe('ModelContextClient', () => {
       .fn()
       .mockImplementation(() => Promise.resolve(windowResponse({ contextWindowTokens: 64_000 })));
     vi.stubGlobal('fetch', fetchMock);
-    const client = new ModelContextClient();
+    const client = newClient();
 
     await client.getWindow('OPENAI', 'gpt-5');
     await client.getWindow('openai', 'gpt-5');
@@ -142,7 +149,7 @@ describe('ModelContextClient', () => {
       .fn()
       .mockImplementation(() => Promise.resolve(windowResponse({ contextWindowTokens: null })));
     vi.stubGlobal('fetch', fetchMock);
-    const client = new ModelContextClient();
+    const client = newClient();
 
     await client.getWindow('OLLAMA', 'glm-5.3');
     const again = await client.getWindow('OLLAMA', 'glm-5.3');
@@ -157,7 +164,7 @@ describe('ModelContextClient', () => {
       .fn()
       .mockImplementation(() => Promise.resolve(windowResponse({ contextWindowTokens: 64_000 })));
     vi.stubGlobal('fetch', fetchMock);
-    const client = new ModelContextClient();
+    const client = newClient();
 
     await client.getWindow('OPENAI', 'gpt-5');
     vi.advanceTimersByTime(MODEL_WINDOW_CACHE_TTL_MS - 1);
@@ -175,7 +182,7 @@ describe('ModelContextClient', () => {
       .mockResolvedValueOnce(windowResponse({}, 503))
       .mockResolvedValueOnce(windowResponse({ contextWindowTokens: 64_000 }));
     vi.stubGlobal('fetch', fetchMock);
-    const client = new ModelContextClient();
+    const client = newClient();
 
     await expect(client.getWindow('OPENAI', 'gpt-5')).rejects.toThrow('unreachable');
     const window = await client.getWindow('OPENAI', 'gpt-5');
@@ -189,7 +196,7 @@ describe('ModelContextClient', () => {
       .fn()
       .mockImplementation(() => Promise.resolve(windowResponse({ contextWindowTokens: 64_000 })));
     vi.stubGlobal('fetch', fetchMock);
-    const client = new ModelContextClient();
+    const client = newClient();
 
     for (let index = 0; index <= MODEL_WINDOW_CACHE_MAX_ENTRIES; index += 1) {
       await client.getWindow('OPENAI', `model-${String(index)}`);
@@ -199,5 +206,72 @@ describe('ModelContextClient', () => {
     expect(fetchMock).toHaveBeenCalledTimes(calls);
     await client.getWindow('OPENAI', 'model-0');
     expect(fetchMock).toHaveBeenCalledTimes(calls + 1);
+  });
+
+  describe('source order: catalog, router, shared table, assumed', () => {
+    it('uses the catalog window first and never asks the router', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(windowResponse({ contextWindowTokens: 8_000 }));
+      vi.stubGlobal('fetch', fetchMock);
+
+      const window = await newClient(262_144).getWindow(
+        'OPENROUTER',
+        'mistralai/mistral-small-2603',
+      );
+
+      expect(window).toEqual({ tokens: 262_144, source: 'known' });
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('still resolves from the catalog while the router is unreachable', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('ECONNREFUSED')));
+
+      const window = await newClient(131_072).getWindow('GROQ', 'qwen/qwen3.8-27b');
+
+      expect(window).toEqual({ tokens: 131_072, source: 'known' });
+    });
+
+    it('asks the router when the catalog states no window', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue(windowResponse({ contextWindowTokens: 200_000 })),
+      );
+
+      const window = await newClient(undefined).getWindow('ANTHROPIC', 'claude-x');
+
+      expect(window).toEqual({ tokens: 200_000, source: 'known' });
+    });
+
+    it('uses the shared table when neither the catalog nor the router states a window', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue(windowResponse({ contextWindowTokens: null })),
+      );
+
+      const window = await newClient(undefined).getWindow('GROQ', 'openai/gpt-oss-20b');
+
+      expect(window).toEqual({ tokens: 131_072, source: 'known' });
+    });
+
+    it('assumes the default only when all three sources are silent', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue(windowResponse({ contextWindowTokens: null })),
+      );
+
+      const window = await newClient(undefined).getWindow('NVIDIANIM', 'meta/unlisted-model');
+
+      expect(window).toEqual({ tokens: THREADS_ASSUMED_WINDOW_TOKENS, source: 'assumed' });
+    });
+
+    it('caches a catalog window so the catalog is asked once per model', async () => {
+      const catalog = new ConnectorCatalogWindowClient();
+      const find = vi.spyOn(catalog, 'findWindow').mockResolvedValue(131_072);
+      const client = new ModelContextClient(catalog);
+
+      await client.getWindow('GROQ', 'openai/gpt-oss-120b');
+      await client.getWindow('groq', 'openai/gpt-oss-120b');
+
+      expect(find).toHaveBeenCalledTimes(1);
+    });
   });
 });

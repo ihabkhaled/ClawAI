@@ -18,6 +18,9 @@ import { PublicationViewsRepository } from './repositories/publication-views.rep
 import { PublicationViewsService } from './services/publication-views.service';
 import { ThreadGenerationEventsConsumer } from './consumers/thread-generation-events.consumer';
 import { PublicationGenerationOwnerService } from './services/publication-generation-owner.service';
+import { PublicationGenerationStartService } from './services/publication-generation-start.service';
+import { GenerationPreflightService } from './services/generation-preflight.service';
+import { ModelCatalogClient } from './services/model-catalog.client';
 import { ThreadNotificationService } from './services/thread-notification.service';
 
 @Module({
@@ -37,6 +40,9 @@ import { ThreadNotificationService } from './services/thread-notification.servic
     ThreadGenerationEventsConsumer,
     PublicationLifecycleService,
     PublicationGenerationOwnerService,
+    PublicationGenerationStartService,
+    GenerationPreflightService,
+    ModelCatalogClient,
     PublicationCommunityService,
     PublicationsRepository,
     ThreadsGenerationClient,

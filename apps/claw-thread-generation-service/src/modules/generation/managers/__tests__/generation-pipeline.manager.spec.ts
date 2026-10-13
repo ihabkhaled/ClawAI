@@ -150,6 +150,30 @@ ${text}
     expect(systemPrompts[6]).toContain('"score": integer 0-100');
   });
 
+  it('tells the Judge and the Critic the requested language is correct and to review in it', async () => {
+    const harness = build([
+      draft('grounded article'),
+      draft('grounded article'),
+      draft('grounded article'),
+      vote('grounded article'),
+      vote('grounded article'),
+      vote('grounded article'),
+      review(80),
+      review(75),
+    ]);
+
+    await harness.manager.generate(input);
+
+    const systemPrompts = harness.models.generate.mock.calls.map((call) => call[0].systemPrompt);
+    const reviewerPrompts = systemPrompts.filter((prompt) => prompt.includes('independently as'));
+    expect(reviewerPrompts).toHaveLength(2);
+    for (const prompt of reviewerPrompts) {
+      expect(prompt).toContain('requested this publication in Arabic (ar)');
+      expect(prompt).toContain('Never lower the score');
+      expect(prompt).toContain('Write every finding and the revisionBrief in Arabic');
+    }
+  });
+
   it('retries a model once when its answer is not the requested JSON shape', async () => {
     const harness = build([
       'not json at all',

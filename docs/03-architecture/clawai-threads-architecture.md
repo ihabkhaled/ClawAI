@@ -54,8 +54,10 @@ pins the snapshot body for later job persistence.
 Persist canonical JSON snapshots and structured drafts. Pin snapshots and
 evidence by version and hash; every author, Judge, and Critic receives the same
 complete bundle. Research runs through research-service. The generation worker
-checks each complete role prompt against routing-service's context window plus
-the output reserve. A prompt that does not fit fails closed without
+checks each complete role prompt against the model's context window plus
+the output reserve. The window comes from the first source that states one: the
+connector catalog the model picker shows, then routing-service, then the shared
+table (ADR-173 addendum). A prompt that does not fit fails closed without
 truncation. A model with no known window is assumed to have 32k tokens and is
 held to that, not rejected ([ADR-173](../13-adr/adr-173-threads-unknown-model-window-is-assumed-not-fatal.md),
 which supersedes the earlier "unknown windows fail closed"). A failure a retry

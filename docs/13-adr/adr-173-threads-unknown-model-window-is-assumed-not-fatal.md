@@ -26,3 +26,20 @@ Production, 2026-10-13: every Threads generation failed at the first author step
 - A wrong inter-service token now fails once with `MODEL_CATALOG_REJECTED` instead of three times.
 - The in-memory cache is per process; a restart or a second replica asks routing-service again, at most once per model per five minutes.
 - Chat surfaces are untouched: chat-service already failed open on an unknown window.
+
+## Addendum 2026-10-13: the picker's catalog is the first window source
+
+A second production round showed GROQ (`openai/gpt-oss-120b`, 131,072) and OPENROUTER (`mistralai/mistral-small-2603`, 262,144) still falling to the assumed 32k although the model picker shows their real windows. The picker reads connector-service's `ConnectorModel.maxContextTokens`; the router registry has no rows for GROQ, OPENROUTER, NVIDIANIM, HUGGINGFACE or AI_HORDE, and the shared table covers only a few families. Threads asked the router, never the picker's source.
+
+- **Order is now: connector catalog window, then router registry, then the shared static table, then the assumed 32,768.** The first source that states a positive window wins and is `source: 'known'`.
+- **The catalog source is connector-service's `GET /api/v1/internal/connectors/public-catalog`** (service token, the existing internal pattern). It is built with `findExposedForCatalog`, the same query that fills the in-app picker, so what a user sees is what Threads uses. No connector-service change was needed. `ConnectorCatalogWindowClient` reads it once, indexes `PROVIDER/modelKey` to window for 5 minutes, and shares one in-flight read between concurrent lookups.
+- **The catalog source fails open.** A network error, non-2xx, wrong shape or refused URL answers "no window", so the router is asked next; a failed read is not retried for 30 seconds so a down connector-service costs one wait of at most 4 seconds, not one per role. The router keeps its ADR-173 failure codes (`MODEL_CATALOG_UNREACHABLE`, `MODEL_CATALOG_REJECTED`) unchanged. A catalog hit never calls the router, so an unreachable router no longer blocks a model the picker knows.
+- **Limit.** The catalog lists only exposed, active chat models, which is exactly what a user can pick. A model outside that set (unexposed, or a custom key) still resolves through the router, the shared table, then the assumed default.
+- **Config.** `CONNECTOR_SERVICE_URL` (already in the shared `.env`; default `http://connector-service:4003`). No new variable.
+
+## Addendum 2026-10-13: tolerant output parsing and per-call spend
+
+Production rounds showed Gemini and some Ollama models answering with a code fence, markdown or prose around the JSON, which failed steps as `OUTPUT_INVALID`, and `spentMicroCredits` staying 0 although real calls were made (nothing ever wrote it).
+
+- Role replies are read by `parseModelJson`: bare JSON, one fence, or the first balanced object in prose (string-aware), preferring the object the role schema accepts. Truncated or JSON-free replies still fail `OUTPUT_INVALID`. The existing schemas still validate; no repair re-ask is added.
+- The job total is the sum of the gateway-reported `costMicroUsd` (integer micro-USD) of every call, added right after each call, including unusable and cut-short replies. No price is computed in this service. The field is optional on the wire, so a chat-service that does not send it leaves the total at 0 and nothing breaks.

@@ -4,3 +4,6 @@ export type ModelWindowSource = 'known' | 'assumed';
 export type ModelWindow = { tokens: number; source: ModelWindowSource };
 
 export type ModelWindowCacheEntry = { window: ModelWindow; expiresAt: number };
+
+/** The catalog reduced to the windows it states, keyed by `PROVIDER/modelKey`. */
+export type ConnectorWindowIndex = { windows: ReadonlyMap<string, number>; expiresAt: number };

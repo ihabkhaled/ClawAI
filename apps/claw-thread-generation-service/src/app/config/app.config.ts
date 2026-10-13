@@ -6,6 +6,7 @@ const appConfigSchema = z.object({
   RABBITMQ_URL: z.string().min(1).default('amqp://localhost:5672'),
   RESEARCH_SERVICE_URL: z.string().url().default('http://research-service:4016'),
   ROUTING_SERVICE_URL: z.string().url().default('http://routing-service:4004'),
+  CONNECTOR_SERVICE_URL: z.string().url().default('http://connector-service:4003'),
   AUTH_SERVICE_URL: z.string().url().default('http://auth-service:4001'),
   THREAD_GENERATION_SERVICE_PORT: z.coerce.number().int().positive().default(4020),
   JWT_SECRET: z.string().min(32),

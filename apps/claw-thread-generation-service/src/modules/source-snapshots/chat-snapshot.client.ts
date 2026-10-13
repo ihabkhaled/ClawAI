@@ -1,4 +1,4 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
 import { z } from 'zod';
@@ -48,6 +48,11 @@ export class ChatSnapshotClient {
       });
     } catch {
       throw new ServiceUnavailableException('Chat snapshot service is unavailable');
+    }
+    // Chat answers 404 for a missing thread and for one owned by someone else, so this is the
+    // owner-only answer: 404, not a 503 that tells the caller nothing and invites retries.
+    if (response.status === 404 || response.status === 403) {
+      throw new NotFoundException('Thread not found');
     }
     if (!response.ok) {
       throw new ServiceUnavailableException(

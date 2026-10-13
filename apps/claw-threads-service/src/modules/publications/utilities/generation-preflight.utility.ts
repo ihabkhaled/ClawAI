@@ -1,0 +1,145 @@
+import { BadRequestException, ForbiddenException, HttpStatus } from '@nestjs/common';
+import {
+  hasPermission,
+  isModelAllowedForUsage,
+  ModelUsageType,
+  type UserEntitlements,
+} from '@claw/shared-entitlements';
+import { Permission } from '@claw/shared-types';
+
+import { ThreadGenerationErrorCode } from '../../../common/enums/thread-generation-error-code.enum';
+import { ThreadGenerationRoleKind } from '../../../common/enums/thread-generation-role-kind.enum';
+import { codedErrorBody } from '../../../common/utilities/coded-error-body.utility';
+import {
+  MICRO_USD_PER_USD,
+  MIN_THREAD_SPEND_CAP_MICRO_USD,
+} from '../constants/generation-preflight.constants';
+import type { StartThreadGenerationDto } from '../dto/start-thread-generation.dto';
+import type {
+  ModelRef,
+  PreflightRole,
+  PreflightRoleRequest,
+} from '../types/generation-preflight.types';
+
+export function modelKey(ref: ModelRef): string {
+  return `${ref.provider}/${ref.model}`;
+}
+
+function toRoles(
+  kind: ThreadGenerationRoleKind,
+  position: number,
+  role: PreflightRoleRequest,
+): PreflightRole[] {
+  const primary: PreflightRole = {
+    kind,
+    roleId: role.id,
+    position,
+    provider: role.provider,
+    model: role.model,
+    isFallback: false,
+  };
+  const fallbacks = role.fallbacks.map((fallback): PreflightRole => ({
+    ...primary,
+    ...fallback,
+    isFallback: true,
+  }));
+  return [primary, ...fallbacks];
+}
+
+/** Every model the request names: authors first, then judge, critic, each with its fallbacks. */
+export function collectPreflightRoles(input: StartThreadGenerationDto): PreflightRole[] {
+  return [
+    ...input.authors.flatMap((author, index) =>
+      toRoles(ThreadGenerationRoleKind.AUTHOR, index + 1, author),
+    ),
+    ...toRoles(ThreadGenerationRoleKind.JUDGE, 1, input.judge),
+    ...toRoles(ThreadGenerationRoleKind.CRITIC, 1, input.critic),
+  ];
+}
+
+/** The distinct provider/model pairs to look up, so a model used in several seats is asked once. */
+export function distinctModelRefs(roles: readonly PreflightRole[]): ModelRef[] {
+  const byKey = new Map<string, ModelRef>();
+  for (const { provider, model } of roles) {
+    byKey.set(modelKey({ provider, model }), { provider, model });
+  }
+  return [...byKey.values()];
+}
+
+/** "Author 2", "Judge", "Critic": how the seat is named in a message. */
+export function describeRoleSeat(role: PreflightRole): string {
+  if (role.kind === ThreadGenerationRoleKind.AUTHOR) return `Author ${String(role.position)}`;
+  return role.kind === ThreadGenerationRoleKind.JUDGE ? 'Judge' : 'Critic';
+}
+
+function roleDetails(role: PreflightRole): Record<string, string> {
+  return { role: role.kind, roleId: role.roleId, provider: role.provider, model: role.model };
+}
+
+export function assertSpendCapAllowed(capMicroUsd: number): void {
+  if (capMicroUsd >= MIN_THREAD_SPEND_CAP_MICRO_USD) return;
+  const minimumUsd = (MIN_THREAD_SPEND_CAP_MICRO_USD / MICRO_USD_PER_USD).toFixed(2);
+  throw new BadRequestException(
+    codedErrorBody(
+      `The spend cap is too low to pay for a generation. Set at least $${minimumUsd}.`,
+      ThreadGenerationErrorCode.SPEND_CAP_TOO_LOW,
+      HttpStatus.BAD_REQUEST,
+      { minimumMicroUsd: MIN_THREAD_SPEND_CAP_MICRO_USD, capMicroUsd },
+    ),
+  );
+}
+
+export function assertGenerationPermitted(entitlements: UserEntitlements): void {
+  if (hasPermission(entitlements, Permission.THREAD_GENERATION_USE)) return;
+  throw new ForbiddenException(
+    codedErrorBody(
+      'Your account role does not include Thread generation. Ask an administrator to enable it.',
+      ThreadGenerationErrorCode.NOT_PERMITTED,
+      HttpStatus.FORBIDDEN,
+    ),
+  );
+}
+
+/** Every model is looked up; the first one the catalog does not know is named in the error. */
+export function assertModelsKnown(
+  roles: readonly PreflightRole[],
+  knownKeys: ReadonlySet<string>,
+): void {
+  const unknown = roles.find((role) => !knownKeys.has(modelKey(role)));
+  if (!unknown) return;
+  const subject = unknown.isFallback ? 'fallback model' : 'model';
+  throw new BadRequestException(
+    codedErrorBody(
+      `The ${subject} ${modelKey(unknown)} chosen for ${describeRoleSeat(unknown)} is not in the model catalog. Pick a model from the list.`,
+      ThreadGenerationErrorCode.MODEL_UNKNOWN,
+      HttpStatus.BAD_REQUEST,
+      roleDetails(unknown),
+    ),
+  );
+}
+
+/**
+ * The same test chat applies to a picked model: the primary of every seat must be on the plan.
+ * A fallback the plan excludes only means that fallback is skipped at call time, so it is not
+ * refused here. Only the caller's own request and plan name appear in the error.
+ */
+export function assertModelsOnPlan(
+  entitlements: UserEntitlements,
+  roles: readonly PreflightRole[],
+): void {
+  const denied = roles.find(
+    (role) =>
+      !role.isFallback &&
+      !isModelAllowedForUsage(entitlements, role.provider, role.model, ModelUsageType.PRIMARY),
+  );
+  if (!denied) return;
+  const planName = entitlements.plan?.name ?? 'current';
+  throw new ForbiddenException(
+    codedErrorBody(
+      `${describeRoleSeat(denied)} uses ${modelKey(denied)}, which your ${planName} plan does not include. Pick a model your plan includes, or upgrade to a plan that lists it.`,
+      ThreadGenerationErrorCode.MODEL_NOT_ALLOWED_FOR_PLAN,
+      HttpStatus.FORBIDDEN,
+      { ...roleDetails(denied), plan: entitlements.plan?.slug ?? 'none' },
+    ),
+  );
+}

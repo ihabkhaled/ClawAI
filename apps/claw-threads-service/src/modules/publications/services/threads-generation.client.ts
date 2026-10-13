@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  HttpStatus,
   Injectable,
   NotFoundException,
   ServiceUnavailableException,
@@ -10,6 +11,12 @@ import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
 import { z } from 'zod';
 
 import { AppConfig } from '../../../app/config/app.config';
+import { ThreadGenerationErrorCode } from '../../../common/enums/thread-generation-error-code.enum';
+import { codedErrorBody } from '../../../common/utilities/coded-error-body.utility';
+import {
+  GENERATION_JOB_NOT_FOUND_MESSAGE,
+  SOURCE_THREAD_NOT_FOUND_MESSAGE,
+} from '../constants/generation-preflight.constants';
 import type { StartThreadGenerationDto } from '../dto/start-thread-generation.dto';
 import type { RetryThreadGenerationDto } from '../dto/retry-thread-generation.dto';
 import {
@@ -68,10 +75,12 @@ export class ThreadsGenerationClient {
       judge: input.judge,
       critic: input.critic,
     };
-    const result = await this.request('/api/v1/internal/threads/generations', {
-      method: 'POST',
-      body: JSON.stringify({ ...body, ownerId }),
-    });
+    // A 404 here is the source chat thread: missing and another user's look the same.
+    const result = await this.request(
+      '/api/v1/internal/threads/generations',
+      { method: 'POST', body: JSON.stringify({ ...body, ownerId }) },
+      SOURCE_THREAD_NOT_FOUND_MESSAGE,
+    );
     const parsed = enqueueResponseSchema.safeParse(result);
     if (!parsed.success) throw new ServiceUnavailableException('Generation response is invalid');
     return parsed.data;
@@ -147,6 +156,7 @@ export class ThreadsGenerationClient {
   private async request(
     path: string,
     options: { method: string; body?: string },
+    notFoundMessage: string = GENERATION_JOB_NOT_FOUND_MESSAGE,
   ): Promise<unknown> {
     const config = AppConfig.get();
     const url = `${config.THREAD_GENERATION_SERVICE_URL}${path}`;
@@ -167,8 +177,16 @@ export class ThreadsGenerationClient {
     }
     if (!response.ok) {
       if (response.status === 400) throw new BadRequestException('Generation request is invalid');
-      if (response.status === 403) throw new ForbiddenException('Generation is not permitted');
-      if (response.status === 404) throw new NotFoundException('Generation job not found');
+      if (response.status === 403) {
+        throw new ForbiddenException(
+          codedErrorBody(
+            'Your plan does not include everything Thread generation needs (web research, Judge and Critic review). Upgrade your plan or ask an administrator.',
+            ThreadGenerationErrorCode.NOT_IN_PLAN,
+            HttpStatus.FORBIDDEN,
+          ),
+        );
+      }
+      if (response.status === 404) throw new NotFoundException(notFoundMessage);
       if (response.status === 409)
         throw new ConflictException('Generation request conflicts with an existing job');
       throw new ServiceUnavailableException(

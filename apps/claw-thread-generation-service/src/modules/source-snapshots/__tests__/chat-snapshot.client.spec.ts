@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+
 import { AppConfig } from '../../../app/config/app.config';
 import { ChatSnapshotClient } from '../chat-snapshot.client';
 
@@ -50,6 +52,35 @@ describe('ChatSnapshotClient', () => {
     expect((init as RequestInit).redirect).toBe('error');
     expect(JSON.parse(String((init as RequestInit).body))).toEqual({ userId: 'owner-1' });
     expect(result.sourceThreadId).toBe('thread-1');
+  });
+
+  describe.each([404, 403])('when the chat service answers %i', (status) => {
+    it('answers 404 for a missing or foreign source thread, never 503', async () => {
+      vi.stubEnv('JWT_SECRET', 'j'.repeat(40));
+      vi.stubEnv('THREAD_GENERATION_DATABASE_URL', 'postgresql://claw:secret@localhost:5432/db');
+      vi.stubEnv('INTER_SERVICE_AUTH_TOKEN', 't'.repeat(40));
+      AppConfig.validate();
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status })));
+
+      const failure = await new ChatSnapshotClient()
+        .getOwnedSnapshot('owner-2', 'thread-of-owner-1')
+        .catch((error: unknown) => error);
+
+      expect(failure).toBeInstanceOf(NotFoundException);
+      expect((failure as NotFoundException).message).toBe('Thread not found');
+    });
+  });
+
+  it('still answers 503 when the chat service itself fails', async () => {
+    vi.stubEnv('JWT_SECRET', 'j'.repeat(40));
+    vi.stubEnv('THREAD_GENERATION_DATABASE_URL', 'postgresql://claw:secret@localhost:5432/db');
+    vi.stubEnv('INTER_SERVICE_AUTH_TOKEN', 't'.repeat(40));
+    AppConfig.validate();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status: 500 })));
+
+    await expect(
+      new ChatSnapshotClient().getOwnedSnapshot('owner-1', 'thread-1'),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
   });
 
   it('rejects a snapshot with a bad digest or byte count', async () => {

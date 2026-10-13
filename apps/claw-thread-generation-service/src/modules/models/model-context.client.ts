@@ -13,6 +13,7 @@ import {
   MODEL_WINDOW_CACHE_TTL_MS,
   THREADS_ASSUMED_WINDOW_TOKENS,
 } from './constants/model-context.constants';
+import { ConnectorCatalogWindowClient } from './connector-catalog-window.client';
 import { contextWindowSchema } from './schemas/model-context.schema';
 import type { ModelWindow, ModelWindowCacheEntry } from './types/model-context.types';
 
@@ -20,10 +21,14 @@ import type { ModelWindow, ModelWindowCacheEntry } from './types/model-context.t
 export class ModelContextClient {
   private readonly cache = new Map<string, ModelWindowCacheEntry>();
 
+  constructor(private readonly connectorCatalog: ConnectorCatalogWindowClient) {}
+
   /**
-   * The context window for a model. An unknown window is not an error: a conservative
-   * default is assumed and the caller still refuses a prompt that does not fit it, so
-   * nothing is ever truncated. Only an unreachable or rejecting catalog throws.
+   * The context window for a model, from the first source that states one: the connector
+   * catalog the picker shows, then the router registry, then the shared table (ADR-173).
+   * An unknown window is not an error: a conservative default is assumed and the caller still
+   * refuses a prompt that does not fit it, so nothing is ever truncated. Only an unreachable or
+   * rejecting router throws; the connector catalog fails open.
    */
   async getWindow(provider: string, model: string): Promise<ModelWindow> {
     const key = `${provider.toUpperCase()}/${model}`;
@@ -35,6 +40,13 @@ export class ModelContextClient {
   }
 
   private async lookup(provider: string, model: string): Promise<ModelWindow> {
+    const catalogTokens = await this.connectorCatalog.findWindow(provider, model);
+    return catalogTokens === undefined
+      ? this.lookupViaRouter(provider, model)
+      : { tokens: catalogTokens, source: 'known' };
+  }
+
+  private async lookupViaRouter(provider: string, model: string): Promise<ModelWindow> {
     const config = AppConfig.get();
     const url = `${config.ROUTING_SERVICE_URL}/api/v1/internal/router-models/context-window/${encodeURIComponent(provider)}/${encodeURIComponent(model)}`;
     assertSafeRequestUrl(url, declaredHost(config.ROUTING_SERVICE_URL));

@@ -7,6 +7,7 @@ const appConfigSchema = z.object({
   RABBITMQ_URL: z.string().url(),
   AUTH_SERVICE_URL: z.string().url(),
   THREAD_GENERATION_SERVICE_URL: z.string().url(),
+  ROUTING_SERVICE_URL: z.string().url().default('http://routing-service:4004'),
   INTER_SERVICE_AUTH_TOKEN: z.string().min(32),
   JWT_SECRET: z.string().min(32),
   CORS_ORIGINS: z.string().optional(),

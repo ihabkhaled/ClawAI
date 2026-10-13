@@ -20,3 +20,20 @@ when the publication is PUBLISHED or the job is QUEUED or RUNNING (cancel first)
 removes the job upstream and the publication row (revisions cascade). Public discovery,
 sitemap and slug reads filter on `status = PUBLISHED`, so a failed or running draft is
 never public; repository tests prove it.
+
+## Start checks (ADR-174)
+
+`POST /thread-publications/generations` goes controller -> `PublicationGenerationStartService.start`
+-> `GenerationPreflightService.assertCanStart` -> `PublicationLifecycleService.enqueueGeneration`.
+The preflight runs before any job, budget or publication exists and never calls a model:
+spend cap >= `MIN_THREAD_SPEND_CAP_MICRO_USD` (10,000, one cent; a retry's `spendCapUsd` has the
+same floor), `THREAD_GENERATION_USE` permission, every provider/model (fallbacks too) known to
+`ModelCatalogClient` (routing-service `context-window` lookup, `known`), and every seat's primary on
+the caller's plan (`isModelAllowedForUsage(..., PRIMARY)`, the chat test). Plan or catalog
+unreadable -> 503 (fail closed). Refusals use `codedErrorBody` = `{ message, code, statusCode, ...own
+request fields }`; codes live in `ThreadGenerationErrorCode`. Never put another user's data, a
+plan list or a secret in a refusal. A missing or foreign source chat thread is `404 Source thread
+not found` (same body); a budget 403 from auth-service maps to `THREAD_GENERATION_NOT_IN_PLAN`.
+`ROUTING_SERVICE_URL` is the shared `.env` value (default `http://routing-service:4004`). The frontend
+still shows one generic sentence for any 403 on start; mapping these codes to the 13 locales is
+open.

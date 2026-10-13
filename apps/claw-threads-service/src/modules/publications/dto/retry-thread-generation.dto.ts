@@ -1,10 +1,12 @@
 import { z } from 'zod';
 
+import { MIN_THREAD_SPEND_CAP_USD } from '../constants/generation-preflight.constants';
+
 export const retryThreadGenerationSchema = z
   .object({
     idempotencyKey: z.string().min(1).max(200),
     topic: z.string().min(10).max(10_000).optional(),
-    spendCapUsd: z.number().positive().max(1000).optional(),
+    spendCapUsd: z.number().min(MIN_THREAD_SPEND_CAP_USD).max(1000).optional(),
     models: z
       .array(
         z.object({

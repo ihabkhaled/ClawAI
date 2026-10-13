@@ -15,10 +15,17 @@ describe('retryThreadGenerationSchema', () => {
     expect(result.success).toBe(true);
   });
 
+  it('accepts a retry cap exactly at the documented minimum of one cent', () => {
+    expect(
+      retryThreadGenerationSchema.safeParse({ idempotencyKey: 'k', spendCapUsd: 0.01 }).success,
+    ).toBe(true);
+  });
+
   it.each([
     { idempotencyKey: '' },
     { idempotencyKey: 'k', topic: 'short' },
     { idempotencyKey: 'k', spendCapUsd: 0 },
+    { idempotencyKey: 'k', spendCapUsd: 0.001 },
     { idempotencyKey: 'k', spendCapUsd: 5000 },
     { idempotencyKey: 'k', models: [{ roleId: 'a', provider: '', model: 'm' }] },
     { idempotencyKey: 'k', unexpected: true },

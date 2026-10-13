@@ -1,4 +1,4 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
 
@@ -10,13 +10,15 @@ import {
 } from '../constants/generation.constants';
 import { ThreadGenerationStage } from '../../../generated/prisma';
 import { ChatModelClient, type ChatModelResponse } from '../../models/chat-model.client';
+import { ChatModelIncompleteError } from '../../models/chat-model-incomplete.error';
 import { ResearchClient, type ResearchEvidence } from '../../research/research.client';
 import { resolveAuthorConsensus } from '../utilities/author-consensus.utility';
+import { buildReviewSystemPrompt } from '../utilities/review-prompt.utility';
 import { GenerationJobsRepository } from '../repositories/generation-jobs.repository';
 import { ThreadGenerationCancelledError } from '../utilities/thread-generation-cancelled.error';
 import { ThreadGenerationLeaseLostError } from '../utilities/thread-generation-lease-lost.error';
 import { stableJson } from '../utilities/stable-json.utility';
-import { stripCodeFence } from '../utilities/strip-code-fence.utility';
+import { parseModelJson } from '../utilities/parse-model-json.utility';
 import { ReviewerRole } from '../types/reviewer-role.enum';
 import { StepRecorder } from '../services/step-recorder.service';
 import type { StepResponseOutcome } from '../types/step-recorder.types';
@@ -50,6 +52,8 @@ import { evaluateRevisionReview, revisionDraftHash } from '../utilities/revision
 
 @Injectable()
 export class GenerationPipelineManager {
+  private readonly logger = new Logger(GenerationPipelineManager.name);
+
   constructor(
     private readonly research: ResearchClient,
     private readonly models: ChatModelClient,
@@ -502,7 +506,7 @@ export class GenerationPipelineManager {
         draft.citations.every(({ evidenceId, url }) => evidenceItems.get(evidenceId) === url),
       ),
     );
-    const parsed = authorDraftSchema.safeParse(this.parseJson(response.content));
+    const parsed = authorDraftSchema.safeParse(this.parseJson(response.content, authorDraftSchema));
     if (!parsed.success)
       throw new ServiceUnavailableException('An author returned an invalid draft');
     await this.persistCommunication(
@@ -527,7 +531,7 @@ export class GenerationPipelineManager {
     evidenceHash: string,
   ): Promise<StructuredReview> {
     const prompts = {
-      systemPrompt: `Review the draft independently as ${reviewer}. Return only one JSON object shaped {"score": integer 0-100, "blockers": string[], "findings": string[] (at most five), "revisionBrief": string} with no code fences. Do not include chain-of-thought.`,
+      systemPrompt: buildReviewSystemPrompt(reviewer, input.contentLocale),
       userPrompt: `${sharedMaterial}\nDraft:\n${JSON.stringify(draft)}`,
     };
     const saved = await this.jobs.findCommunication(
@@ -552,7 +556,7 @@ export class GenerationPipelineManager {
       prompts,
       reviewSchema,
     );
-    const parsed = reviewSchema.safeParse(this.parseJson(response.content));
+    const parsed = reviewSchema.safeParse(this.parseJson(response.content, reviewSchema));
     if (!parsed.success)
       throw new ServiceUnavailableException(`${reviewer} returned an invalid review`);
     await this.persistCommunication(
@@ -605,7 +609,7 @@ export class GenerationPipelineManager {
           )
         : null;
     const parsed = revisionAuthorResponseSchema.safeParse(
-      saved ?? this.parseJson(response?.content ?? ''),
+      saved ?? this.parseJson(response?.content ?? '', revisionAuthorResponseSchema),
     );
     if (!parsed.success) {
       throw new ServiceUnavailableException('An author returned an invalid edit review');
@@ -688,8 +692,10 @@ export class GenerationPipelineManager {
             userPrompt: prompt.userPrompt,
             maxOutputTokens: outputReserve,
           });
+          // Paid for even if the job is cancelled or the answer is unusable, so counted first.
+          await this.recordSpend(input.jobId, response.costMicroUsd);
           await this.throwIfCancelled(input);
-          const accepted = accepts.safeParse(this.tryParseJson(response.content)).success;
+          const accepted = accepts.safeParse(parseModelJson(response.content, accepts)).success;
           await this.recorder.record(input.jobId, {
             ...step,
             ...this.responseOutcome(accepted, attempt),
@@ -702,6 +708,9 @@ export class GenerationPipelineManager {
           everyFailureDeterministic = false;
           lastError = new ServiceUnavailableException('A model returned invalid structured output');
         } catch (error: unknown) {
+          if (error instanceof ChatModelIncompleteError) {
+            await this.recordSpend(input.jobId, error.costMicroUsd);
+          }
           if (error instanceof ThreadGenerationCancelledError) throw error;
           const parsed = parseStepError(error);
           await this.recorder.record(input.jobId, {
@@ -795,20 +804,22 @@ export class GenerationPipelineManager {
     });
   }
 
-  private tryParseJson(content: string): unknown {
-    try {
-      return JSON.parse(stripCodeFence(content));
-    } catch {
-      return undefined;
-    }
-  }
-
-  private parseJson(content: string): unknown {
-    const parsed = this.tryParseJson(content);
+  private parseJson(content: string, accepts: z.ZodType): unknown {
+    const parsed = parseModelJson(content, accepts);
     if (parsed === undefined) {
       throw new ServiceUnavailableException('A model returned invalid structured output');
     }
     return parsed;
+  }
+
+  /** Spend bookkeeping never fails a generation: the model call it describes already happened. */
+  private async recordSpend(jobId: string, microUsd: number | undefined): Promise<void> {
+    if (!microUsd) return;
+    try {
+      await this.jobs.addSpend(jobId, microUsd);
+    } catch {
+      this.logger.warn('Generation spend could not be recorded');
+    }
   }
 
   private hash(value: string): string {

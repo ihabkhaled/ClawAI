@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 
 import { AppConfig } from '../../../../app/config/app.config';
+import type { StartThreadGenerationDto } from '../../dto/start-thread-generation.dto';
 import { ThreadsGenerationClient } from '../threads-generation.client';
 
 describe('ThreadsGenerationClient', () => {
@@ -160,6 +161,39 @@ describe('ThreadsGenerationClient', () => {
     await expect(new ThreadsGenerationClient().getProgress('job-1', 'o')).rejects.toBeInstanceOf(
       expected,
     );
+  });
+
+  it('answers a 403 from the budget step with a machine code and a plain plan message', async () => {
+    stubFetch({ ok: false, status: 403 });
+
+    const failure = await new ThreadsGenerationClient()
+      .getProgress('job-1', 'o')
+      .catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(ForbiddenException);
+    expect((failure as ForbiddenException).getResponse()).toMatchObject({
+      code: 'THREAD_GENERATION_NOT_IN_PLAN',
+      statusCode: 403,
+      message: expect.stringContaining('web research, Judge and Critic review'),
+    });
+  });
+
+  it('answers a 404 on enqueue as a missing source thread, with the same body as not found', async () => {
+    stubFetch({ ok: false, status: 404 });
+    const input = {
+      sourceThreadId: 'thread-of-someone-else',
+      idempotencyKey: 'key-1',
+      correlationId: 'corr-1',
+      capMicroUsd: 2_000_000,
+      topic: 'A sufficiently detailed topic for research',
+    } as StartThreadGenerationDto;
+
+    const failure = await new ThreadsGenerationClient()
+      .enqueue('owner-1', input)
+      .catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(NotFoundException);
+    expect((failure as NotFoundException).message).toBe('Source thread not found');
   });
 
   it('reports an unreachable generation service', async () => {

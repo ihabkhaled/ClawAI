@@ -10,7 +10,11 @@ import {
   CONTEXT_WINDOW_ASSUMED_EXCEEDED_MESSAGE,
   CONTEXT_WINDOW_EXCEEDED_MESSAGE,
 } from './constants/model-context.constants';
+import { ChatModelIncompleteError } from './chat-model-incomplete.error';
 import { ModelContextClient } from './model-context.client';
+
+// Integer micro-USD as settled by the gateway; anything else is not a cost and is dropped.
+const microUsdSchema = z.number().int().nonnegative().safe();
 
 const modelResponseSchema = z.object({
   content: z.string().min(1),
@@ -20,7 +24,10 @@ const modelResponseSchema = z.object({
   outputTokens: z.number().nonnegative().optional(),
   durationMs: z.number().nonnegative(),
   clamped: z.boolean(),
+  costMicroUsd: microUsdSchema.optional(),
 });
+
+const reportedCostSchema = z.object({ costMicroUsd: microUsdSchema.optional() });
 
 export type ChatModelRequest = {
   ownerId: string;
@@ -100,12 +107,19 @@ export class ChatModelClient {
         `Chat model request failed (${String(response.status)}${await describeGatewayError(response)})`,
       );
     }
-    const parsed = modelResponseSchema.safeParse(await response.json());
+    const body: unknown = await response.json();
+    const parsed = modelResponseSchema.safeParse(body);
     if (!parsed.success || parsed.data.clamped) {
-      throw new ServiceUnavailableException('Chat model response was incomplete');
+      throw new ChatModelIncompleteError(reportedCost(parsed.success ? parsed.data : body));
     }
     return parsed.data;
   }
+}
+
+// The cost of a reply that failed validation, read on its own so it is not lost with the reply.
+function reportedCost(body: unknown): number {
+  const parsed = reportedCostSchema.safeParse(body);
+  return parsed.success ? (parsed.data.costMicroUsd ?? 0) : 0;
 }
 
 // Only a machine code (e.g. CLOUD_PROVIDER_EMPTY_RESPONSE) is kept: upstream free text

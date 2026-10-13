@@ -496,6 +496,19 @@ export class GenerationJobsRepository {
     });
   }
 
+  /**
+   * Adds the settled cost of one model call (integer micro-USD) to the job. Deliberately not
+   * fenced on the attempt or status: the provider was paid even when the worker lost its lease
+   * or the job was cancelled mid-call, and the owner's total must say so.
+   */
+  async addSpend(jobId: string, microUsd: number): Promise<void> {
+    if (!Number.isSafeInteger(microUsd) || microUsd <= 0) return;
+    await this.prisma.threadGenerationJob.updateMany({
+      where: { id: jobId },
+      data: { spentMicroCredits: { increment: BigInt(microUsd) } },
+    });
+  }
+
   async saveCommunication(input: {
     jobId: string;
     attempt: number;

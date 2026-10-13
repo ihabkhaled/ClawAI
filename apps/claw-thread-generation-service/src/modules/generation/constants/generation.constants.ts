@@ -32,3 +32,13 @@ export const generationEventSchema = z.object({
   jobId: z.string().min(1).max(64),
   correlationId: z.string().min(1).max(GENERATION_EVENT_SCHEMA_MAX_CORRELATION_LENGTH),
 });
+
+/** Upper bound on `{` positions tried when looking for JSON inside a prose-wrapped model reply. */
+export const MODEL_JSON_MAX_OBJECT_STARTS = 50;
+
+// Characters the model-JSON scanner reads; the byte order mark some providers prepend is code 0xFEFF.
+export const JSON_OPEN_BRACE = '{';
+export const JSON_CLOSE_BRACE = '}';
+export const JSON_QUOTE = '"';
+export const JSON_BACKSLASH = String.fromCharCode(92);
+export const UTF8_BYTE_ORDER_MARK_CODE = 0xfeff;
