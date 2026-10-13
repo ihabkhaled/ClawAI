@@ -319,6 +319,23 @@ function largestSuitesFirst(tasks, scope) {
     .map(({ task }) => task);
 }
 
+/**
+ * The tasks that may run in the parallel pool. A shared package's build
+ * rewrites the dist every dependent compiles against, so it never shares the
+ * pool with them (measured: three service builds read a half-written
+ * shared-utilities dist). ensureSharedPackagesFresh builds each stale shared
+ * package in dependency order before the pool starts, and a fresh stamp means
+ * an identical input already built successfully.
+ */
+export function poolableTasks(script, tasks, scope, workspaces) {
+  if (script !== 'build') return { pooled: tasks, builtInOrder: [] };
+  const shared = new Set(workspaces.filter((ws) => ws.type === 'shared-package').map((ws) => ws.name));
+  return {
+    pooled: tasks.filter((_, index) => !shared.has(scope[index])),
+    builtInOrder: scope.filter((name) => shared.has(name)),
+  };
+}
+
 /** Run a gate's tasks in the bounded pool. Returns { ok, scope }. */
 export async function runGate(script, result, options = {}) {
   const workspaces = loadWorkspaces();
@@ -327,10 +344,14 @@ export async function runGate(script, result, options = {}) {
   console.log(`affected:${script} → ${label || '(none)'}`);
   if (tasks.length === 0) return { ok: true, scope };
   if (BUILDS_ON_SHARED.has(script)) ensureSharedPackagesFresh(workspaces);
+  const { pooled, builtInOrder } = poolableTasks(script, tasks, scope, workspaces);
+  if (builtInOrder.length > 0) {
+    console.log(`affected:build → shared packages built in dependency order: ${builtInOrder.join(', ')}`);
+  }
   const results =
     script === 'test'
-      ? await runPool(largestSuitesFirst(tasks, scope), { jobs: testConcurrency().suites })
-      : await runPool(tasks);
+      ? await runPool(largestSuitesFirst(pooled, scope), { jobs: testConcurrency().suites })
+      : await runPool(pooled);
   process.stdout.write(`\n${formatSummary(results)}`);
   return { ok: results.every((r) => r.ok), scope };
 }

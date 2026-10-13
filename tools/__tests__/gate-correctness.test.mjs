@@ -8,6 +8,7 @@ import {
   computeAffectedFromFiles,
   loadWorkspaces,
   planGate,
+  poolableTasks,
   testConcurrency,
   testInvocation,
 } from '../affected/index.mjs';
@@ -166,6 +167,16 @@ test('a shared change tests only the package locally; dependents are typechecked
   assert.deepEqual(planGate('build', result, fake).scope, ['@claw/shared-utilities']);
   assert.deepEqual(planGate('typecheck', result, fake, { kinds: ['dependent'] }).scope, ['claw-chat-service']);
   assert.deepEqual(planGate('typecheck', result, fake).scope, ['@claw/shared-utilities', 'claw-chat-service']);
+});
+
+test('a shared package never builds in the same pool as its dependents', () => {
+  const result = computeAffectedFromFiles(['packages/shared-utilities/package.json', 'apps/claw-chat-service/src/a.ts'], fake);
+  const { scope, tasks } = planGate('build', result, fake);
+  assert.deepEqual(scope, ['@claw/shared-utilities', 'claw-chat-service']);
+  const { pooled, builtInOrder } = poolableTasks('build', tasks, scope, fake);
+  assert.deepEqual(builtInOrder, ['@claw/shared-utilities']);
+  assert.deepEqual(pooled.map((t) => t.name), ['claw-chat-service']);
+  assert.equal(poolableTasks('test', tasks, scope, fake).pooled.length, 2, 'only builds write dist');
 });
 
 test('test suites never oversubscribe the gate budget', () => {

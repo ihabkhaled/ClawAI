@@ -62,7 +62,9 @@ runs, and the git hooks in `.husky/`.
    (`CLAW_GATE_JOBS=1` is serial). Test suites get a stricter split, because
    every vitest run starts its own worker pool: about a quarter as many suites
    at once, each capped with `--maxWorkers`, so suites × workers stays within
-   the budget (fourteen uncapped suites timed frontend tests out). Do not start
+   the budget (fourteen uncapped suites timed frontend tests out). Shared
+   packages always build first, one at a time in dependency order, never in the
+   pool with the workspaces that compile against their `dist`. Do not start
    more suites by hand alongside it, and never run gates in parallel with a
    Docker image build.
 7. **Background anything slow, and announce it in one line.** A build, an install
