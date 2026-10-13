@@ -4,11 +4,13 @@ import type { NotificationRow, NotificationView } from '../types/notifications.t
 
 /** Keeps only string values: a stored `params` column is JSON and is not trusted blindly. */
 export function toStringParams(value: unknown): Record<string, string> {
-  return typeof value !== 'object' || value === null || Array.isArray(value) ? {} : Object.fromEntries(
-    Object.entries(value).filter(
-      (entry): entry is [string, string] => typeof entry[1] === 'string',
-    ),
-  );
+  return typeof value !== 'object' || value === null || Array.isArray(value)
+    ? {}
+    : Object.fromEntries(
+        Object.entries(value).filter(
+          (entry): entry is [string, string] => typeof entry[1] === 'string',
+        ),
+      );
 }
 
 /** Whether a stored kind is one this build knows. */

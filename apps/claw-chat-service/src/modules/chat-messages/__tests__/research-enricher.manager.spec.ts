@@ -44,7 +44,7 @@ vi.mock('../../../common/utilities', () => ({
   httpRequest: vi.fn(),
 }));
 
-const { httpRequest } = await vi.importMock('../../../common/utilities') as {
+const { httpRequest } = (await vi.importMock('../../../common/utilities')) as {
   httpRequest: Mock;
 };
 // AppConfig exposes a STATIC get(); neither a bare automock nor importMock

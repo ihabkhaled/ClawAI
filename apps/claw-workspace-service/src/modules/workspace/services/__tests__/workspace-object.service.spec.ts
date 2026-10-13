@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { WorkspaceObjectService } from '../workspace-object.service';
 import { EntityNotFoundException } from '../../../../common/errors/entity-not-found.exception';
 import { BusinessException } from '../../../../common/errors/business.exception';
@@ -105,9 +105,7 @@ describe('WorkspaceObjectService', () => {
         userId: 'other-user',
       });
       (mockAccessService.can as Mock).mockResolvedValue(true);
-      (mockObjectRepository.findByConnectorIdForAuthorizedUser as Mock).mockResolvedValue(
-        mockPage,
-      );
+      (mockObjectRepository.findByConnectorIdForAuthorizedUser as Mock).mockResolvedValue(mockPage);
       const result = await service.listObjects('grantee', {
         page: 1,
         limit: 20,
@@ -222,9 +220,7 @@ describe('WorkspaceObjectService', () => {
   describe('listSyncRuns', () => {
     it('returns recent runs for an owned connector', async () => {
       (mockConnectorRepository.findById as Mock).mockResolvedValue(mockConnector);
-      (mockConnectorRepository.findSyncRunsByConnectorId as Mock).mockResolvedValue([
-        { id: 'r1' },
-      ]);
+      (mockConnectorRepository.findSyncRunsByConnectorId as Mock).mockResolvedValue([{ id: 'r1' }]);
       const result = await service.listSyncRuns('conn1', 'user1', 10);
       expect(result).toHaveLength(1);
       expect(mockConnectorRepository.findSyncRunsByConnectorId).toHaveBeenCalledWith('conn1', 10);

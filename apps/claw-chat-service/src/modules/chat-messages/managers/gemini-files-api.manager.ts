@@ -394,10 +394,12 @@ export class GeminiFilesApiManager {
   }
 
   private buildUploadTimeout(mimeType: string): BusinessException {
-    return mimeType.startsWith(GEMINI_VIDEO_MIME_PREFIX) ? this.buildVideoProcessingTimeout() : new BusinessException(
-      'Gemini Files API upload timed out',
-      'GEMINI_FILES_API_UPLOAD_TIMEOUT',
-    );
+    return mimeType.startsWith(GEMINI_VIDEO_MIME_PREFIX)
+      ? this.buildVideoProcessingTimeout()
+      : new BusinessException(
+          'Gemini Files API upload timed out',
+          'GEMINI_FILES_API_UPLOAD_TIMEOUT',
+        );
   }
 
   private buildCancellationError(): BusinessException {

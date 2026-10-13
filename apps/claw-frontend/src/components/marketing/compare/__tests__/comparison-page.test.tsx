@@ -3,7 +3,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ComparisonHubPage } from '@/components/marketing/compare/comparison-hub-page';
 import { ComparisonPage } from '@/components/marketing/compare/comparison-page';
-import { COMPARISON_DIMENSION_ORDER, COMPARISON_RIVAL_ORDER  } from '@/constants/public-comparison.constants';
+import {
+  COMPARISON_DIMENSION_ORDER,
+  COMPARISON_RIVAL_ORDER,
+} from '@/constants/public-comparison.constants';
 import { ComparisonRival } from '@/enums/comparison-rival.enum';
 
 vi.mock('next/headers', () => ({

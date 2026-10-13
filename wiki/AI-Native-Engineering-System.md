@@ -3,6 +3,7 @@
 ClawAI treats coding-agent context as a governed engineering subsystem.
 
 ## Layers
+
 - **Root policy / routers** — `CLAUDE.md`, `AGENTS.md`, `CODEX.md`, `cursor.md`, model-specific routers.
 - **Rules** — mandatory constraints.
 - **Skills** — operational runbooks.

@@ -57,13 +57,15 @@ function lastFailedStep(steps: StepRow[]): StepRow | undefined {
 /** The last failed role step that no later success for the same role cleared (a recovered fallback is not blamed). */
 function blamedRoleStep(steps: StepRow[]): StepRow | undefined {
   return [...steps].reverse().find((step) => {
-    return step.outcome !== 'FAILED' || step.roleKind === 'SYSTEM' ? false : !steps.some(
-      (later) =>
-        later.seq > step.seq &&
-        later.outcome === 'SUCCEEDED' &&
-        later.roleKind === step.roleKind &&
-        later.roleId === step.roleId,
-    );
+    return step.outcome !== 'FAILED' || step.roleKind === 'SYSTEM'
+      ? false
+      : !steps.some(
+          (later) =>
+            later.seq > step.seq &&
+            later.outcome === 'SUCCEEDED' &&
+            later.roleKind === step.roleKind &&
+            later.roleId === step.roleId,
+        );
   });
 }
 

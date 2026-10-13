@@ -20,7 +20,7 @@ export function ParallelResultsGrid({
 
   if (messages.length === 0) {
     return (
-      <p className="py-4 text-center text-sm text-muted-foreground">{t('compare.noResults')}</p>
+      <p className="text-muted-foreground py-4 text-center text-sm">{t('compare.noResults')}</p>
     );
   }
 

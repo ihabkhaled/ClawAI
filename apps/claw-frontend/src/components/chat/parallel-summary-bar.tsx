@@ -24,7 +24,7 @@ export function ParallelSummaryBar({ messages, t }: ParallelSummaryBarProps): Re
     <Card>
       <CardContent className="flex flex-wrap items-center gap-4 py-3">
         <div className="flex items-center gap-1.5">
-          <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          <BarChart3 className="text-muted-foreground h-4 w-4" />
           <span className="text-sm font-medium">{t('compare.summaryTitle')}</span>
         </div>
 
@@ -33,21 +33,21 @@ export function ParallelSummaryBar({ messages, t }: ParallelSummaryBarProps): Re
         </Badge>
 
         {completedCount > 0 ? (
-          <Badge variant="outline" className="gap-1 text-success">
+          <Badge variant="outline" className="text-success gap-1">
             <CheckCircle className="h-3 w-3" />
             {t('compare.completedCount', { count: completedCount })}
           </Badge>
         ) : null}
 
         {failedCount > 0 ? (
-          <Badge variant="outline" className="gap-1 text-destructive">
+          <Badge variant="outline" className="text-destructive gap-1">
             <XCircle className="h-3 w-3" />
             {t('compare.failedCount', { count: failedCount })}
           </Badge>
         ) : null}
 
         {timeoutCount > 0 ? (
-          <Badge variant="outline" className="gap-1 text-warning">
+          <Badge variant="outline" className="text-warning gap-1">
             <Clock className="h-3 w-3" />
             {t('compare.timeoutCount', { count: timeoutCount })}
           </Badge>
@@ -55,7 +55,7 @@ export function ParallelSummaryBar({ messages, t }: ParallelSummaryBarProps): Re
 
         {fastestModel ? (
           <div className="flex items-center gap-1 text-sm">
-            <Zap className="h-3.5 w-3.5 text-success" />
+            <Zap className="text-success h-3.5 w-3.5" />
             <span className="text-muted-foreground">{t('compare.fastest')}:</span>
             <span className="font-medium">{fastestModel}</span>
           </div>
@@ -63,7 +63,7 @@ export function ParallelSummaryBar({ messages, t }: ParallelSummaryBarProps): Re
 
         {bestModel && (bestIsJudged || bestModel !== fastestModel) ? (
           <div className="flex items-center gap-1 text-sm">
-            <Trophy className="h-3.5 w-3.5 text-warning" />
+            <Trophy className="text-warning h-3.5 w-3.5" />
             <span className="text-muted-foreground">
               {t(bestIsJudged ? 'compare.ranking.winner' : 'compare.bestResponse')}:
             </span>
@@ -72,14 +72,14 @@ export function ParallelSummaryBar({ messages, t }: ParallelSummaryBarProps): Re
         ) : null}
 
         {avgLatencyMs > 0 ? (
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex items-center gap-1 text-sm">
             <Clock className="h-3.5 w-3.5" />
             {t('compare.avgLatencyLabel')}: {formatLatency(avgLatencyMs)}
           </div>
         ) : null}
 
         {totalTokens > 0 ? (
-          <div className="text-sm text-muted-foreground">
+          <div className="text-muted-foreground text-sm">
             {t('compare.totalTokens')}: {totalTokens.toLocaleString()}
           </div>
         ) : null}

@@ -43,11 +43,13 @@ export class TavilyAdapter implements SearchAdapter {
         redirect: 'error',
       });
       const latencyMs = Date.now() - start;
-      return response.ok ? { healthy: true, latencyMs } : {
-        healthy: false,
-        latencyMs,
-        errorMessage: `HTTP ${response.status}`,
-      };
+      return response.ok
+        ? { healthy: true, latencyMs }
+        : {
+            healthy: false,
+            latencyMs,
+            errorMessage: `HTTP ${response.status}`,
+          };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`Tavily health check failed: ${message}`);

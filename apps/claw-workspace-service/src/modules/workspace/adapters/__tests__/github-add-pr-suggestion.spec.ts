@@ -31,10 +31,7 @@ describe('GitHubWriteActionsHelper — ADD_PR_SUGGESTION split-diff polish', () 
 
     const sentCall = (global.fetch as Mock).mock.calls[0];
     expect(sentCall).toBeDefined();
-    const sent = JSON.parse(sentCall?.[1].body) as Record<
-      string,
-      unknown
-    >;
+    const sent = JSON.parse(sentCall?.[1].body) as Record<string, unknown>;
     expect(sent['line']).toBe(10);
     expect(sent['side']).toBe('RIGHT');
     expect(sent['start_line']).toBeUndefined();
@@ -50,10 +47,7 @@ describe('GitHubWriteActionsHelper — ADD_PR_SUGGESTION split-diff polish', () 
     });
     const sentCall = (global.fetch as Mock).mock.calls[0];
     expect(sentCall).toBeDefined();
-    const sent = JSON.parse(sentCall?.[1].body) as Record<
-      string,
-      unknown
-    >;
+    const sent = JSON.parse(sentCall?.[1].body) as Record<string, unknown>;
     expect(sent['start_line']).toBe(7);
     expect(sent['line']).toBe(10);
   });
@@ -67,10 +61,7 @@ describe('GitHubWriteActionsHelper — ADD_PR_SUGGESTION split-diff polish', () 
     });
     const sentCall = (global.fetch as Mock).mock.calls[0];
     expect(sentCall).toBeDefined();
-    const sent = JSON.parse(sentCall?.[1].body) as Record<
-      string,
-      unknown
-    >;
+    const sent = JSON.parse(sentCall?.[1].body) as Record<string, unknown>;
     expect(sent['side']).toBe('LEFT');
     expect(sent['start_side']).toBe('LEFT');
   });

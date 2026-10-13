@@ -126,7 +126,9 @@ function normalizeManifest(markdown: string): string {
     .split('\n')
     .filter((line) => !line.startsWith('Generated: '))
     .map((line) =>
-      line.startsWith('|') ? line.replaceAll(/\s+/gu, ' ').replaceAll(/-{2,}/gu, '-') : line.trimEnd(),
+      line.startsWith('|')
+        ? line.replaceAll(/\s+/gu, ' ').replaceAll(/-{2,}/gu, '-')
+        : line.trimEnd(),
     )
     .join('\n')
     .trim();

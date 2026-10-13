@@ -3,6 +3,7 @@
 The generated fact layer contains current machine-readable inventories for endpoints, services, workspaces, dependencies, environment variables, Docker/Nginx, persistence models, permissions, events, tests, governance, packages, i18n, ports and data ownership.
 
 ## Governance snapshot
+
 - Rules: **62**
 - Skills: **77**
 - AI entrypoints: **5**

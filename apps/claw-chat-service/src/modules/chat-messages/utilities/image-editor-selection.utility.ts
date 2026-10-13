@@ -19,5 +19,7 @@ export function selectImageEditor(hasMask: boolean): ImageEditCapability | undef
  * Stable Diffusion) must still be moved to a mask-capable editor.
  */
 export function keepsRoutedImageProvider(selectedProvider: string, hasMask: boolean): boolean {
-  return !selectedProvider.startsWith('IMAGE_') ? false : !hasMask || supportsImageMask(selectedProvider);
+  return !selectedProvider.startsWith('IMAGE_')
+    ? false
+    : !hasMask || supportsImageMask(selectedProvider);
 }

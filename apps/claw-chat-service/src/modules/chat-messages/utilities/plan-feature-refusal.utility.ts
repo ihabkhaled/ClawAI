@@ -36,5 +36,7 @@ export function imagePlanRefusalResponse(
  * image-service's exception filter sends the machine code as `code`.
  */
 export function isPlanFeatureDisabledResponse(status: number, data: unknown): boolean {
-  return status !== Number(HttpStatus.FORBIDDEN) || typeof data !== 'object' || data === null ? false : 'code' in data && data.code === PLAN_FEATURE_DISABLED_CODE;
+  return status !== Number(HttpStatus.FORBIDDEN) || typeof data !== 'object' || data === null
+    ? false
+    : 'code' in data && data.code === PLAN_FEATURE_DISABLED_CODE;
 }

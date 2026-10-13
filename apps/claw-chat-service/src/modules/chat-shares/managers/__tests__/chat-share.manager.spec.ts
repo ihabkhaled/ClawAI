@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { AppConfig } from '../../../../app/config/app.config';
 import { EntityNotFoundException } from '../../../../common/errors';
 import { ChatShareManager } from '../chat-share.manager';
@@ -115,9 +115,7 @@ describe('ChatShareManager', () => {
     };
     shares = {
       findByThreadId: vi.fn().mockResolvedValue(null),
-      create: vi
-        .fn()
-        .mockImplementation(async (data: Record<string, unknown>) => makeShare(data)),
+      create: vi.fn().mockImplementation(async (data: Record<string, unknown>) => makeShare(data)),
       update: vi
         .fn()
         .mockImplementation(async (_id: string, data: Record<string, unknown>) => makeShare(data)),
@@ -138,14 +136,12 @@ describe('ChatShareManager', () => {
     // No thread in these fixtures carries images, so the publisher passes the
     // messages through untouched. Asset copying has its own spec.
     shareAssets = {
-      attachCopies: vi.fn(async (messages: unknown) => messages),
+      attachCopies: vi.fn(async (copied: unknown) => copied),
       releaseCopies: vi.fn(async () => {}),
     };
-    vi
-      .spyOn(AppConfig, 'get')
-      .mockReturnValue({ PUBLIC_SITE_URL: 'https://claw.local' } as ReturnType<
-        typeof AppConfig.get
-      >);
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
+      PUBLIC_SITE_URL: 'https://claw.local',
+    } as ReturnType<typeof AppConfig.get>);
 
     manager = new ChatShareManager(
       shares as unknown as ChatSharesRepository,

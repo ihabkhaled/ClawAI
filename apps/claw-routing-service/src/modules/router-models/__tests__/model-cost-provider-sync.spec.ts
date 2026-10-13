@@ -352,7 +352,9 @@ describe('ModelCostCatalogService unpriced list and coverage audit', () => {
   function build(): { catalog: ModelCostCatalogService; costs: { getSnapshot: Mock } } {
     const costs = {
       getSnapshot: vi.fn(async (provider: string, modelKey: string) => {
-        return provider === 'OPENAI' ? snapshot({ provider, model: modelKey, source: 'PROVIDER_SYNC' }) : snapshot({ provider, model: modelKey, version: 0, isPriced: false });
+        return provider === 'OPENAI'
+          ? snapshot({ provider, model: modelKey, source: 'PROVIDER_SYNC' })
+          : snapshot({ provider, model: modelKey, version: 0, isPriced: false });
       }),
     };
     const registry = { listCatalogEntries: vi.fn().mockResolvedValue(entries) };

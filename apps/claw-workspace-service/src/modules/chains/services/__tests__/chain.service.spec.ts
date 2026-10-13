@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 
 import { ChainService } from '../chain.service';
@@ -120,9 +120,9 @@ describe('ChainService', () => {
         findByName: vi.fn().mockResolvedValue(makeChain({ id: 'chain-other', name: 'Taken' })),
       });
       const service = new ChainService(repo as never);
-      await expect(
-        service.update('u1', 'chain-1', { name: 'Taken' }),
-      ).rejects.toBeInstanceOf(ConflictException);
+      await expect(service.update('u1', 'chain-1', { name: 'Taken' })).rejects.toBeInstanceOf(
+        ConflictException,
+      );
       expect(repo['update']).not.toHaveBeenCalled();
     });
   });

@@ -1,7 +1,6 @@
 import { vi } from 'vitest';
 import { buildInterServiceAuthHeader } from '../inter-service-auth.utility';
 
-
 // AppConfig exposes a STATIC get(); neither a bare automock nor importMock
 // hands that same static back, so the spec configured one object while the code
 // under test read another. A hoisted vi.fn keeps both on one mock.

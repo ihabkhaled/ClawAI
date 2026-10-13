@@ -1,4 +1,4 @@
-import { vi, type MockInstance, type Mock } from 'vitest';
+import { type Mock, type MockInstance, vi } from 'vitest';
 import { PaygSurface } from '@claw/shared-types';
 
 import { AppConfig } from '../../../../app/config/app.config';
@@ -45,9 +45,9 @@ describe('ChainNlDraftManager.draft', () => {
   let callSpy: MockInstance;
 
   beforeEach(() => {
-    vi
-      .spyOn(AppConfig, 'get')
-      .mockReturnValue(mockConfig as unknown as ReturnType<typeof AppConfig.get>);
+    vi.spyOn(AppConfig, 'get').mockReturnValue(
+      mockConfig as unknown as ReturnType<typeof AppConfig.get>,
+    );
     callSpy = vi.spyOn(cloudClient, 'callCloudGenerate');
   });
 

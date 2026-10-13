@@ -19,9 +19,9 @@ describe('ServiceTokenGuard', () => {
 
   beforeEach(() => {
     guard = new ServiceTokenGuard();
-    vi
-      .spyOn(AppConfig, 'get')
-      .mockReturnValue({ INTER_SERVICE_AUTH_TOKEN: TOKEN } as ReturnType<typeof AppConfig.get>);
+    vi.spyOn(AppConfig, 'get').mockReturnValue({ INTER_SERVICE_AUTH_TOKEN: TOKEN } as ReturnType<
+      typeof AppConfig.get
+    >);
   });
 
   afterEach(() => {

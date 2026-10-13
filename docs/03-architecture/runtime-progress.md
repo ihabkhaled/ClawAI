@@ -406,7 +406,7 @@ Shipped artifacts:
 - `apps/claw-image-service/src/modules/runtime-progress/workflows/comfyui-workflow-node.mapper.ts`
 - `apps/claw-image-service/src/modules/runtime-progress/constants/comfyui.constants.ts`
 - `apps/claw-image-service/src/modules/runtime-progress/types/comfyui.types.ts`
-- `apps/claw-frontend/src/components/chat/runtime-progress/ComfyUINodeTimeline.tsx`
+- `apps/claw-frontend/src/components/chat/runtime-progress/ComfyUiNodeTimeline.tsx`
 - `apps/claw-frontend/src/utilities/comfyui-node-timeline.utility.ts`
 - 303-line adapter unit test
 

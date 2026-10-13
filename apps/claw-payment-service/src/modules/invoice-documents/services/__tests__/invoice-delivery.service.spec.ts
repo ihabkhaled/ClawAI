@@ -6,7 +6,7 @@ import { InvoiceDeliveryStatus } from '../../../../generated/prisma';
 import { InvoiceDeliveryService } from '../invoice-delivery.service';
 
 vi.mock('@claw/shared-utilities', async () => ({
-  ...await vi.importActual('@claw/shared-utilities'),
+  ...(await vi.importActual('@claw/shared-utilities')),
   createSmtpEmailTransport: vi.fn(),
 }));
 

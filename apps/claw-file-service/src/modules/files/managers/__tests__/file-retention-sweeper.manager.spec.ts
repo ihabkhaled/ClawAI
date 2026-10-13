@@ -28,11 +28,13 @@ vi.mock('../../../../common/utilities', () => ({
   readFile: vi.fn(),
 }));
 
-const { deleteFile } = await vi.importMock('../../../../common/utilities') as {
+const { deleteFile } = (await vi.importMock('../../../../common/utilities')) as {
   deleteFile: Mock;
 };
 
-const { AppConfig: MockedAppConfig } = await vi.importMock('../../../../app/config/app.config') as {
+const { AppConfig: MockedAppConfig } = (await vi.importMock(
+  '../../../../app/config/app.config',
+)) as {
   AppConfig: { get: Mock };
 };
 

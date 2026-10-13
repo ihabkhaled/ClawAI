@@ -22,8 +22,13 @@ vi.mock('../../../../app/config/app.config', () => ({
 type OutboxRepositoryMock = {
   claimBatch: Mock<(limit: number, now: Date) => Promise<OutboxPublishCandidate[]>>;
   markFailed: Mock<
-    (id: string, attempts: number, maxAttempts: number, retryAt: Date, errorCode: string) =>
-      Promise<void>
+    (
+      id: string,
+      attempts: number,
+      maxAttempts: number,
+      retryAt: Date,
+      errorCode: string,
+    ) => Promise<void>
   >;
   markPublished: Mock<(id: string) => Promise<void>>;
 };
@@ -34,8 +39,7 @@ type RabbitMock = {
 
 type ScheduledJobsMock = {
   run: Mock<
-    (options: ScheduledJobOptions, callback: ScheduledJobCallback<number>) =>
-      Promise<number | null>
+    (options: ScheduledJobOptions, callback: ScheduledJobCallback<number>) => Promise<number | null>
   >;
 };
 
@@ -54,7 +58,9 @@ describe('OutboxPublisherService', () => {
 
   beforeEach(() => {
     repository = {
-      claimBatch: vi.fn<(limit: number, now: Date) => Promise<OutboxPublishCandidate[]>>(async () => [event]),
+      claimBatch: vi.fn<(limit: number, now: Date) => Promise<OutboxPublishCandidate[]>>(
+        async () => [event],
+      ),
       markFailed: vi.fn<
         (
           id: string,

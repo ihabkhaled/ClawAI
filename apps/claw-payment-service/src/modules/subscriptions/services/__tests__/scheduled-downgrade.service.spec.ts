@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { EventPattern, SubscriptionStatus } from '@claw/shared-types';
 
 import type { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
@@ -77,9 +77,7 @@ describe('ScheduledDowngradeService', () => {
     updateMany = vi.fn().mockResolvedValue({ count: 1 });
     const transaction = vi.fn(
       async (
-        callback: (tx: {
-          subscription: { update: Mock; updateMany: Mock };
-        }) => Promise<unknown>,
+        callback: (tx: { subscription: { update: Mock; updateMany: Mock } }) => Promise<unknown>,
       ) => callback({ subscription: { update, updateMany } }),
     );
     outbox = { enqueue: vi.fn() };

@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { AppConfig } from '../../../../app/config/app.config';
 import { EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS } from '../../constants/email-verification.constants';
 import { EmailVerificationService } from '../email-verification.service';
@@ -38,9 +38,9 @@ function build(): {
 
 describe('EmailVerificationService.resend', () => {
   beforeEach(() => {
-    vi
-      .spyOn(AppConfig, 'get')
-      .mockReturnValue({ JWT_SECRET: 'x'.repeat(32) } as ReturnType<typeof AppConfig.get>);
+    vi.spyOn(AppConfig, 'get').mockReturnValue({ JWT_SECRET: 'x'.repeat(32) } as ReturnType<
+      typeof AppConfig.get
+    >);
   });
 
   afterEach(() => vi.restoreAllMocks());

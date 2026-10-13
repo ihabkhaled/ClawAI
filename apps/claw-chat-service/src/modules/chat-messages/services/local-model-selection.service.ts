@@ -120,7 +120,7 @@ export class LocalModelSelectionService {
         timeoutMs: 5_000,
       });
 
-      return !response.ok ? [] : response.data.models ?? [];
+      return !response.ok ? [] : (response.data.models ?? []);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`fetchInstalledModels: ${msg}`);
@@ -132,11 +132,11 @@ export class LocalModelSelectionService {
     models: InstalledModelInfo[],
     preferredRole?: string,
   ): InstalledModelInfo | null {
-    return models.length === 0 ? null : (
-      [...models].sort(
-        (a, b) => this.selectionScore(b, preferredRole) - this.selectionScore(a, preferredRole),
-      )[0] ?? null
-    );
+    return models.length === 0
+      ? null
+      : ([...models].sort(
+          (a, b) => this.selectionScore(b, preferredRole) - this.selectionScore(a, preferredRole),
+        )[0] ?? null);
   }
 
   private selectionScore(model: InstalledModelInfo, preferredRole?: string): number {

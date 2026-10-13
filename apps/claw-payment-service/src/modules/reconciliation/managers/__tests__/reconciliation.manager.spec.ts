@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { ReconciliationRunStatus } from '../../../../common/enums/reconciliation.enum';
 import type { ScheduledJobRunnerService } from '../../../scheduled-jobs/services/scheduled-job-runner.service';
 import type { ReconciliationRepository } from '../../repositories/reconciliation.repository';
@@ -28,9 +28,7 @@ describe('ReconciliationManager', () => {
 
   beforeEach(() => {
     jobs = {
-      run: vi.fn(async (_options: unknown, callback: ScheduledJobCallback<unknown>) =>
-        callback(),
-      ),
+      run: vi.fn(async (_options: unknown, callback: ScheduledJobCallback<unknown>) => callback()),
     };
     repository = {
       createRun: vi.fn().mockResolvedValue({ id: 'run-1' }),

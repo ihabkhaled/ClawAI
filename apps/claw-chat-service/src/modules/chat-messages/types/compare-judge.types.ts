@@ -1,9 +1,6 @@
 import type { TokenUsageSource } from '@claw/shared-types';
 
-import type {
-  CompareJudgeFailureReason,
-  CompareJudgeVerdictStatus,
-} from '../../../common/enums';
+import type { CompareJudgeFailureReason, CompareJudgeVerdictStatus } from '../../../common/enums';
 import type { AssembledContext } from './context.types';
 import type { FileDeliveryEntry } from './file-delivery.types';
 import type { ParallelCriticConfig } from './parallel.types';

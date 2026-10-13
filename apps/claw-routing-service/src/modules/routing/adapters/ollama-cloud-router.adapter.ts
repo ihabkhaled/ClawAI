@@ -108,13 +108,15 @@ export class OllamaCloudRouterAdapter implements RouterInferenceProvider {
       }
 
       const content = response.data.message?.content ?? '';
-      return content.length === 0 ? emptyContentFailure(latencyMs) : {
-        ok: true,
-        raw: content,
-        latencyMs,
-        inputTokens: response.data.prompt_eval_count ?? null,
-        outputTokens: response.data.eval_count ?? null,
-      };
+      return content.length === 0
+        ? emptyContentFailure(latencyMs)
+        : {
+            ok: true,
+            raw: content,
+            latencyMs,
+            inputTokens: response.data.prompt_eval_count ?? null,
+            outputTokens: response.data.eval_count ?? null,
+          };
     } catch (error: unknown) {
       return failureFromThrown(error, Date.now() - startedAt);
     }

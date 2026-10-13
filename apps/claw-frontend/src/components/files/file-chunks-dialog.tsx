@@ -29,16 +29,18 @@ export function FileChunksDialog({ fileId, onClose }: FileChunksDialogProps) {
       </div>
     );
   } else if (chunks.length === 0) {
-    content = <p className="py-8 text-center text-sm text-muted-foreground">{t('files.noChunks')}</p>;
+    content = (
+      <p className="text-muted-foreground py-8 text-center text-sm">{t('files.noChunks')}</p>
+    );
   } else {
     content = (
       <div className="space-y-3">
         {chunks.map((chunk) => (
           <div key={chunk.id} className="rounded-lg border p-3">
-            <p className="mb-1 text-xs font-medium text-muted-foreground">
+            <p className="text-muted-foreground mb-1 text-xs font-medium">
               {t('files.chunkIndex', { index: chunk.chunkIndex + 1 })}
             </p>
-            <p className="whitespace-pre-wrap [overflow-wrap:anywhere] text-sm">{chunk.content}</p>
+            <p className="text-sm [overflow-wrap:anywhere] whitespace-pre-wrap">{chunk.content}</p>
           </div>
         ))}
       </div>

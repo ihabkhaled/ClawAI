@@ -2,10 +2,12 @@ import { parseResearchGateVerdict } from '../research-gate.utility';
 
 describe('parseResearchGateVerdict', () => {
   it('reads a clean verdict', () => {
-    expect(parseResearchGateVerdict('{"needsWeb":true,"reason":"asks for today\'s news"}')).toEqual({
-      needsWeb: true,
-      reason: "asks for today's news",
-    });
+    expect(parseResearchGateVerdict('{"needsWeb":true,"reason":"asks for today\'s news"}')).toEqual(
+      {
+        needsWeb: true,
+        reason: "asks for today's news",
+      },
+    );
   });
 
   it('finds the object inside chatter the model added anyway', () => {

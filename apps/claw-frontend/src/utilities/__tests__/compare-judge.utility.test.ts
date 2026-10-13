@@ -18,9 +18,39 @@ const rankedVerdictMeta = {
   judgeModel: 'OPENAI/gpt-5-mini',
   scale: { min: 0, max: 10 },
   lanes: [
-    { laneIndex: 2, label: 'C', provider: 'DEEPSEEK', model: 'deepseek-chat', score: 9, rank: 1, reason: 'Best.', truncated: false, criticSummary: null },
-    { laneIndex: 0, label: 'A', provider: 'OPENAI', model: 'gpt-5', score: 6, rank: 2, reason: 'Solid.', truncated: false, criticSummary: 'Needs work.' },
-    { laneIndex: 1, label: 'B', provider: 'ANTHROPIC', model: 'claude-sonnet-4', score: 4, rank: 3, reason: 'Thin.', truncated: true, criticSummary: null },
+    {
+      laneIndex: 2,
+      label: 'C',
+      provider: 'DEEPSEEK',
+      model: 'deepseek-chat',
+      score: 9,
+      rank: 1,
+      reason: 'Best.',
+      truncated: false,
+      criticSummary: null,
+    },
+    {
+      laneIndex: 0,
+      label: 'A',
+      provider: 'OPENAI',
+      model: 'gpt-5',
+      score: 6,
+      rank: 2,
+      reason: 'Solid.',
+      truncated: false,
+      criticSummary: 'Needs work.',
+    },
+    {
+      laneIndex: 1,
+      label: 'B',
+      provider: 'ANTHROPIC',
+      model: 'claude-sonnet-4',
+      score: 4,
+      rank: 3,
+      reason: 'Thin.',
+      truncated: true,
+      criticSummary: null,
+    },
   ],
   winnerLaneIndex: 2,
   tiedLaneIndices: [],
@@ -52,13 +82,20 @@ describe('readCompareJudgeVerdict', () => {
     expect(readCompareJudgeVerdict({})).toBeNull();
     expect(readCompareJudgeVerdict({ compareJudge: { status: 'not-a-real-status' } })).toBeNull();
     expect(
-      readCompareJudgeVerdict({ compareJudge: { status: CompareJudgeVerdictStatus.RANKED, lanes: [{ laneIndex: 'nope' }] } }),
+      readCompareJudgeVerdict({
+        compareJudge: { status: CompareJudgeVerdictStatus.RANKED, lanes: [{ laneIndex: 'nope' }] },
+      }),
     ).toBeNull();
   });
 
   it('normalises an unrecognised failure reason to null', () => {
     const verdict = readCompareJudgeVerdict({
-      compareJudge: { ...rankedVerdictMeta, status: CompareJudgeVerdictStatus.UNAVAILABLE, failureReason: 'made_up', lanes: [] },
+      compareJudge: {
+        ...rankedVerdictMeta,
+        status: CompareJudgeVerdictStatus.UNAVAILABLE,
+        failureReason: 'made_up',
+        lanes: [],
+      },
     });
     expect(verdict?.failureReason).toBeNull();
   });
@@ -75,7 +112,11 @@ describe('readCompareLaneIndex', () => {
 describe('getLaneRanking', () => {
   it('finds this lane in the shared verdict', () => {
     const verdict = readCompareJudgeVerdict({ compareJudge: rankedVerdictMeta });
-    const response: ParallelModelResponse = { ...baseResponse, compareLaneIndex: 1, compareJudge: verdict };
+    const response: ParallelModelResponse = {
+      ...baseResponse,
+      compareLaneIndex: 1,
+      compareJudge: verdict,
+    };
     expect(getLaneRanking(response)?.label).toBe('B');
   });
 
@@ -106,7 +147,12 @@ describe('getCompareJudgeNoticeKey', () => {
   it('maps each failure reason to its own notice key', () => {
     const build = (failureReason: CompareJudgeFailureReason) =>
       readCompareJudgeVerdict({
-        compareJudge: { ...rankedVerdictMeta, status: CompareJudgeVerdictStatus.UNAVAILABLE, failureReason, lanes: [] },
+        compareJudge: {
+          ...rankedVerdictMeta,
+          status: CompareJudgeVerdictStatus.UNAVAILABLE,
+          failureReason,
+          lanes: [],
+        },
       });
     expect(getCompareJudgeNoticeKey(build(CompareJudgeFailureReason.CALL_FAILED)!)).toBe(
       'compare.ranking.callFailed',
@@ -123,8 +169,19 @@ describe('getCompareJudgeNoticeKey', () => {
 describe('resolveBestResponse', () => {
   it('uses the judge winner when a verdict is present, ignoring the heuristic', () => {
     const responses: ParallelModelResponse[] = [
-      { ...baseResponse, model: 'gpt-5', compareLaneIndex: 0, compareJudge: readCompareJudgeVerdict({ compareJudge: rankedVerdictMeta }) },
-      { ...baseResponse, model: 'deepseek-chat', provider: 'DEEPSEEK', compareLaneIndex: 2, compareJudge: readCompareJudgeVerdict({ compareJudge: rankedVerdictMeta }) },
+      {
+        ...baseResponse,
+        model: 'gpt-5',
+        compareLaneIndex: 0,
+        compareJudge: readCompareJudgeVerdict({ compareJudge: rankedVerdictMeta }),
+      },
+      {
+        ...baseResponse,
+        model: 'deepseek-chat',
+        provider: 'DEEPSEEK',
+        compareLaneIndex: 2,
+        compareJudge: readCompareJudgeVerdict({ compareJudge: rankedVerdictMeta }),
+      },
     ];
     const best = resolveBestResponse(responses, 'gpt-5');
     expect(best).toEqual({ model: 'deepseek-chat', judged: true });
@@ -136,9 +193,17 @@ describe('resolveBestResponse', () => {
 
   it('names no winner when the judge ran but produced no ranking', () => {
     const unavailable = readCompareJudgeVerdict({
-      compareJudge: { ...rankedVerdictMeta, status: CompareJudgeVerdictStatus.UNAVAILABLE, failureReason: CompareJudgeFailureReason.PARSE_FAILED, lanes: [], winnerLaneIndex: null },
+      compareJudge: {
+        ...rankedVerdictMeta,
+        status: CompareJudgeVerdictStatus.UNAVAILABLE,
+        failureReason: CompareJudgeFailureReason.PARSE_FAILED,
+        lanes: [],
+        winnerLaneIndex: null,
+      },
     });
-    const responses: ParallelModelResponse[] = [{ ...baseResponse, compareLaneIndex: 0, compareJudge: unavailable }];
+    const responses: ParallelModelResponse[] = [
+      { ...baseResponse, compareLaneIndex: 0, compareJudge: unavailable },
+    ];
     expect(resolveBestResponse(responses, 'gpt-5')).toEqual({ model: null, judged: true });
   });
 });
@@ -146,7 +211,10 @@ describe('resolveBestResponse', () => {
 describe('getCompareJudgeVerdict', () => {
   it('reads the shared verdict off whichever lane carries it', () => {
     const verdict = readCompareJudgeVerdict({ compareJudge: rankedVerdictMeta });
-    const responses: ParallelModelResponse[] = [baseResponse, { ...baseResponse, compareJudge: verdict }];
+    const responses: ParallelModelResponse[] = [
+      baseResponse,
+      { ...baseResponse, compareJudge: verdict },
+    ];
     expect(getCompareJudgeVerdict(responses)?.judgeModel).toBe('OPENAI/gpt-5-mini');
   });
 

@@ -6,13 +6,15 @@ import type { MessageQuote } from '../types/message-quote.types';
 export function quotesFromMetadata(metadata: unknown): MessageQuote[] {
   if (metadata === null || typeof metadata !== 'object') return [];
   const quotes = (metadata as { quotes?: unknown }).quotes;
-  return !Array.isArray(quotes) ? [] : quotes.filter(
-    (quote): quote is MessageQuote =>
-      typeof quote === 'object' &&
-      quote !== null &&
-      typeof (quote as MessageQuote).text === 'string' &&
-      typeof (quote as MessageQuote).sourceMessageId === 'string',
-  );
+  return !Array.isArray(quotes)
+    ? []
+    : quotes.filter(
+        (quote): quote is MessageQuote =>
+          typeof quote === 'object' &&
+          quote !== null &&
+          typeof (quote as MessageQuote).text === 'string' &&
+          typeof (quote as MessageQuote).sourceMessageId === 'string',
+      );
 }
 
 /**

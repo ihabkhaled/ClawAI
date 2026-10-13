@@ -82,11 +82,9 @@ describe('DeploymentStatusFileAdapter', () => {
   );
 
   it('reads the automation switch from its own configured file', async () => {
-    vi
-      .mocked(readFile)
-      .mockResolvedValue(
-        JSON.stringify({ schemaVersion: 1, enabled: false, updatedAt: '2026-08-13T10:29:58Z' }),
-      );
+    vi.mocked(readFile).mockResolvedValue(
+      JSON.stringify({ schemaVersion: 1, enabled: false, updatedAt: '2026-08-13T10:29:58Z' }),
+    );
 
     await expect(new DeploymentStatusFileAdapter().readAutomation()).resolves.toMatchObject({
       enabled: false,

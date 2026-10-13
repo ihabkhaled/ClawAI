@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { AiActionPolicyKind } from '../../../../common/enums/ai-action-policy-kind.enum';
 import { AiActionQueueStatus } from '../../../../common/enums/ai-action-queue-status.enum';
 import { AiActionRiskLabel } from '../../../../common/enums/ai-action-risk-label.enum';
@@ -74,10 +74,7 @@ describe('AiActionApprovalManager', () => {
     publish: vi.fn().mockImplementation(async () => {}),
   });
 
-  const makeLimiter = (
-    allowed = true,
-    reason = 'PER_MINUTE',
-  ): { tryReserve: Mock } => ({
+  const makeLimiter = (allowed = true, reason = 'PER_MINUTE'): { tryReserve: Mock } => ({
     tryReserve: vi.fn().mockReturnValue(allowed ? { allowed: true } : { allowed: false, reason }),
   });
 

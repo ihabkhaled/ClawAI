@@ -12,7 +12,9 @@ describe('AiActionUserRateLimiterManager', () => {
 
   beforeEach(() => {
     limiter = new AiActionUserRateLimiterManager();
-    vi.spyOn(AppConfig, 'get').mockReturnValue(baseConfig as unknown as ReturnType<typeof AppConfig.get>);
+    vi.spyOn(AppConfig, 'get').mockReturnValue(
+      baseConfig as unknown as ReturnType<typeof AppConfig.get>,
+    );
   });
 
   afterEach(() => {
@@ -30,12 +32,10 @@ describe('AiActionUserRateLimiterManager', () => {
   });
 
   it('blocks with PER_HOUR when minute cap is high but hour cap is low', () => {
-    vi
-      .spyOn(AppConfig, 'get')
-      .mockReturnValue({
-        AI_ACTION_PER_USER_RATE_PER_MIN: 100,
-        AI_ACTION_PER_USER_RATE_PER_HOUR: 2,
-      } as unknown as ReturnType<typeof AppConfig.get>);
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
+      AI_ACTION_PER_USER_RATE_PER_MIN: 100,
+      AI_ACTION_PER_USER_RATE_PER_HOUR: 2,
+    } as unknown as ReturnType<typeof AppConfig.get>);
     limiter = new AiActionUserRateLimiterManager();
     expect(limiter.tryReserve('u1').allowed).toBe(true);
     expect(limiter.tryReserve('u1').allowed).toBe(true);

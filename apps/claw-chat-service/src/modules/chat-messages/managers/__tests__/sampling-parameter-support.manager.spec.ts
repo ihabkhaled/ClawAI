@@ -26,9 +26,9 @@ describe('SamplingParameterSupportManager', () => {
 
   it('is shared across instances (process-wide, like every replica-local cache)', () => {
     support.record('claude-opus-5-5', 'temperature', NOW);
-    expect(new SamplingParameterSupportManager().rejects('claude-opus-5-5', 'temperature', NOW)).toBe(
-      true,
-    );
+    expect(
+      new SamplingParameterSupportManager().rejects('claude-opus-5-5', 'temperature', NOW),
+    ).toBe(true);
   });
 
   it('normalises padding and casing of the model id', () => {

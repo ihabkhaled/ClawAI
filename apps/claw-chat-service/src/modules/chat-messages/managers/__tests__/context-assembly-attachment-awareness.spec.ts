@@ -60,9 +60,11 @@ const decision = (file: FileContentResponse, mode: FileDeliveryMode) => ({
   sendNative: mode === FileDeliveryMode.NATIVE_IMAGE,
 });
 
-const planOf = (
-  ...decisions: ReturnType<typeof decision>[]
-): AttachmentDeliveryPlan => ({ provider: 'OPENAI', model: 'o3-mini', decisions });
+const planOf = (...decisions: ReturnType<typeof decision>[]): AttachmentDeliveryPlan => ({
+  provider: 'OPENAI',
+  model: 'o3-mini',
+  decisions,
+});
 
 const contextWith = (
   messages: ChatMessage[],
@@ -108,7 +110,10 @@ const newManager = (): ContextAssemblyManager =>
 // Whatever the user typed, in any language, the files are named on the turn.
 const WORDINGS: [string, string][] = [
   ['no instruction at all', 'hmm'],
-  ['the owner wording', 'here is a screenshot for postman on mac, check it and tell me where to press'],
+  [
+    'the owner wording',
+    'here is a screenshot for postman on mac, check it and tell me where to press',
+  ],
   ['a bare question', 'where do I press?'],
   ['a French question', 'où dois-je appuyer ?'],
   ['an Arabic question', 'أين أضغط؟'],

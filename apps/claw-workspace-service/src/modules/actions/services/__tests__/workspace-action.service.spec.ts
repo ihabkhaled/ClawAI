@@ -142,11 +142,7 @@ describe('WorkspaceActionService', () => {
         }),
       ).resolves.toBeDefined();
       // Confirm the access service was asked the right question
-      expect(mockAccessService.can).toHaveBeenCalledWith(
-        'u1',
-        'c1',
-        'PROPOSE_AI_ACTION',
-      );
+      expect(mockAccessService.can).toHaveBeenCalledWith('u1', 'c1', 'PROPOSE_AI_ACTION');
     });
 
     it('should throw 403 when connector is READ-only', async () => {

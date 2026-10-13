@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { httpRequest } from '@claw/shared-utilities';
 
 import { AppConfig } from '../../../app/config/app.config';
@@ -6,7 +6,7 @@ import { FxService } from '../services/fx.service';
 import { type FxQuoteRepository } from '../repositories/fx-quote.repository';
 
 vi.mock('@claw/shared-utilities', async () => ({
-  ...await vi.importActual('@claw/shared-utilities'),
+  ...(await vi.importActual('@claw/shared-utilities')),
   httpRequest: vi.fn(),
 }));
 

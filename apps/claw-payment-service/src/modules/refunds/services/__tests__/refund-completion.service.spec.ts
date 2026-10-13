@@ -51,9 +51,7 @@ describe('RefundCompletionService', () => {
     subscription: { update: vi.fn() },
   };
   const prisma = {
-    $transaction: vi.fn(async (callback: (client: typeof tx) => Promise<unknown>) =>
-      callback(tx),
-    ),
+    $transaction: vi.fn(async (callback: (client: typeof tx) => Promise<unknown>) => callback(tx)),
   };
   const repository = {
     findForCompletion: vi.fn(),

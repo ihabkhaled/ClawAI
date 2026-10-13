@@ -3,6 +3,7 @@
 ClawAI is a microservice monorepo with a Next.js frontend, shared packages, service-owned persistence, Nginx reverse proxying, RabbitMQ asynchronous events, provider/workspace connectors and local inference runtimes.
 
 ## Invariants
+
 1. Each service owns its data.
 2. Cross-service access is HTTP or RabbitMQ, never another service's database.
 3. Shared contracts/utilities live in `packages/`.

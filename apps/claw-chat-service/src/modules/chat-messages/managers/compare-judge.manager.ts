@@ -86,7 +86,9 @@ export class CompareJudgeManager {
         `judge: run=${request.runId} not called — lanes=${String(request.lanes.length)} targetResolved=${String(target !== null)}`,
       );
       return buildUnrankedVerdict({
-        status: notEnough ? CompareJudgeVerdictStatus.SKIPPED : CompareJudgeVerdictStatus.UNAVAILABLE,
+        status: notEnough
+          ? CompareJudgeVerdictStatus.SKIPPED
+          : CompareJudgeVerdictStatus.UNAVAILABLE,
         failureReason: notEnough
           ? CompareJudgeFailureReason.NOT_ENOUGH_ANSWERS
           : CompareJudgeFailureReason.CALL_FAILED,
@@ -220,7 +222,15 @@ export class CompareJudgeManager {
           threadId: request.threadId,
         },
       });
-      return this.toVerdict(response, request, shuffle, truncatedByLabel, critiques, judgeLabel, startedAt);
+      return this.toVerdict(
+        response,
+        request,
+        shuffle,
+        truncatedByLabel,
+        critiques,
+        judgeLabel,
+        startedAt,
+      );
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`rankLanes: run=${request.runId} judge call failed — ${message}`);
@@ -266,7 +276,9 @@ export class CompareJudgeManager {
     });
     const budgetChars = computeAnswerBudgetChars(
       context.modelBudget,
-      estimateTokensFromText(systemPrompt) + estimateHistoryTokens(context) + estimateTokensFromText(skeleton),
+      estimateTokensFromText(systemPrompt) +
+        estimateHistoryTokens(context) +
+        estimateTokensFromText(skeleton),
     );
     const fitted = fitAnswersFairly(
       ordered.map((lane) => lane.content),

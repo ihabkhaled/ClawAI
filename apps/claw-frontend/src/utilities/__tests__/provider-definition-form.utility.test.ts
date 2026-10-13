@@ -4,8 +4,12 @@ import { readProviderDefinitionForm } from '@/utilities/provider-definition-form
 
 const formOf = (entries: Record<string, string>, checked: string[] = []): FormData => {
   const form = new FormData();
-  for (const [name, value] of Object.entries(entries)) {form.set(name, value);}
-  for (const name of checked) {form.set(name, 'on');}
+  for (const [name, value] of Object.entries(entries)) {
+    form.set(name, value);
+  }
+  for (const name of checked) {
+    form.set(name, 'on');
+  }
   return form;
 };
 

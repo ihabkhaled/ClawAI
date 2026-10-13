@@ -31,12 +31,18 @@ describe('ollama-vision-heuristics', () => {
       expect(isOllamaMultimodalModel(modelName)).toBe(true);
     });
 
-    it.each(['llama2', 'mistral', 'neural-chat', 'qwen2.5-coder', 'gemma3:1b', 'gemma3n:e4b', 'qwen3:8b', 'mistral-small:22b'])(
-      'returns false for non-multimodal model %s',
-      (modelName) => {
-        expect(isOllamaMultimodalModel(modelName)).toBe(false);
-      },
-    );
+    it.each([
+      'llama2',
+      'mistral',
+      'neural-chat',
+      'qwen2.5-coder',
+      'gemma3:1b',
+      'gemma3n:e4b',
+      'qwen3:8b',
+      'mistral-small:22b',
+    ])('returns false for non-multimodal model %s', (modelName) => {
+      expect(isOllamaMultimodalModel(modelName)).toBe(false);
+    });
 
     it('is case-insensitive', () => {
       expect(isOllamaMultimodalModel('LLAVA:7B')).toBe(true);

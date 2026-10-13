@@ -34,7 +34,7 @@ import { estimateTokensFromText } from './token-estimator.utility';
 
 /** The anonymous label for a presentation position: 0 → "A", 1 → "B". */
 export function compareJudgeLabelAt(position: number): string {
-  return COMPARE_JUDGE_LABELS[position] ?? `L${String(position + 1)}`;
+  return COMPARE_JUDGE_LABELS.at(position) ?? `L${String(position + 1)}`;
 }
 
 /**
@@ -46,30 +46,35 @@ export function compareJudgeLabelAt(position: number): string {
  * verdict names candidates by label, and the only way to turn "B" back into a
  * lane after the fact is to know exactly which lane B was.
  */
-export function buildLaneShuffle(seed: string, laneIndices: readonly number[]): CompareJudgeShuffle {
+export function buildLaneShuffle(
+  seed: string,
+  laneIndices: readonly number[],
+): CompareJudgeShuffle {
   const order = [...laneIndices];
   for (let step = order.length - 1; step > 0; step -= 1) {
     const swapWith = seededIndex(seed, step, step + 1);
-    const current = order[step];
-    const other = order[swapWith];
+    const current = order.at(step);
+    const other = order.at(swapWith);
     if (current === undefined || other === undefined) {
       continue;
     }
-    order[step] = other;
-    order[swapWith] = current;
+    order.splice(step, 1, other);
+    order.splice(swapWith, 1, current);
   }
   return { seed, order, labels: order.map((_, position) => compareJudgeLabelAt(position)) };
 }
 
 function seededIndex(seed: string, step: number, bound: number): number {
-  const digest = createHash('sha256').update(`${seed}:${String(step)}`).digest();
+  const digest = createHash('sha256')
+    .update(`${seed}:${String(step)}`)
+    .digest();
   return digest.readUInt32BE(0) % bound;
 }
 
 /** The lane the judge knew as `label`, or null for a label it was never shown. */
 export function laneIndexForLabel(shuffle: CompareJudgeShuffle, label: string): number | null {
   const position = shuffle.labels.indexOf(label);
-  return position < 0 ? null : (shuffle.order[position] ?? null);
+  return position < 0 ? null : (shuffle.order.at(position) ?? null);
 }
 
 /**
@@ -82,7 +87,10 @@ export function laneIndexForLabel(shuffle: CompareJudgeShuffle, label: string): 
  * Nothing is cut below `COMPARE_JUDGE_MIN_ANSWER_CHARS`: past that point an
  * answer cannot be judged at all, and the prompt says so either way.
  */
-export function fitAnswersFairly(texts: readonly string[], budgetChars: number): FairTruncationResult {
+export function fitAnswersFairly(
+  texts: readonly string[],
+  budgetChars: number,
+): FairTruncationResult {
   const total = texts.reduce((sum, text) => sum + text.length, 0);
   if (total <= budgetChars) {
     return { texts: [...texts], truncated: texts.map(() => false), capChars: null };
@@ -97,7 +105,9 @@ export function fitAnswersFairly(texts: readonly string[], budgetChars: number):
   const truncated = texts.map((text) => text.length > cap);
   return {
     texts: texts.map((text) =>
-      text.length > cap ? `${sliceWholeCodePoints(text, cap)}${COMPARE_JUDGE_TRUNCATION_MARKER}` : text,
+      text.length > cap
+        ? `${sliceWholeCodePoints(text, cap)}${COMPARE_JUDGE_TRUNCATION_MARKER}`
+        : text,
     ),
     truncated,
     capChars: truncated.some(Boolean) ? cap : null,
@@ -133,7 +143,10 @@ function sliceWholeCodePoints(text: string, maxChars: number): string {
  * prompt skeleton around the answers. The same ~4 chars/token estimate the rest
  * of the service uses, with headroom because a dense answer beats it.
  */
-export function computeAnswerBudgetChars(budget: ModelTokenBudget, committedTokens: number): number {
+export function computeAnswerBudgetChars(
+  budget: ModelTokenBudget,
+  committedTokens: number,
+): number {
   const freeTokens =
     budget.contextWindowTokens -
     budget.reservedOutputTokens -
@@ -141,7 +154,9 @@ export function computeAnswerBudgetChars(budget: ModelTokenBudget, committedToke
     budget.toolOverheadTokens -
     committedTokens;
   return Math.floor(
-    (Math.max(0, freeTokens) * COMPARE_JUDGE_CHARS_PER_TOKEN * COMPARE_JUDGE_BUDGET_SAFETY_PERCENT) /
+    (Math.max(0, freeTokens) *
+      COMPARE_JUDGE_CHARS_PER_TOKEN *
+      COMPARE_JUDGE_BUDGET_SAFETY_PERCENT) /
       100,
   );
 }
@@ -199,7 +214,7 @@ export function buildCompareJudgeQuestion(input: CompareJudgePromptInput): strin
     `Compare the ${String(count)} candidate answers below. Each one answers the user's most recent message in this conversation.`,
     `Candidates: ${input.labels.join(', ')}.`,
   ];
-  const shortened = input.labels.filter((_, position) => input.truncated[position] === true);
+  const shortened = input.labels.filter((_, position) => input.truncated.at(position) === true);
   if (input.capChars !== null && shortened.length > 0) {
     lines.push(
       `Note: the answers did not all fit your context window. Candidate(s) ${shortened.join(', ')} were each shortened to the same length of ${String(input.capChars)} characters; every other candidate is complete. A shortened answer ends with "${COMPARE_JUDGE_TRUNCATION_MARKER.trim()}". Judge what is shown and do not penalise the shortening itself.`,
@@ -218,14 +233,14 @@ export function buildCompareJudgeQuestion(input: CompareJudgePromptInput): strin
 function candidateBlock(label: string, position: number, input: CompareJudgePromptInput): string[] {
   const block = [
     `<candidate label="${label}">`,
-    neutraliseCandidateTags(input.texts[position] ?? ''),
+    neutraliseCandidateTags(input.texts.at(position) ?? ''),
     '</candidate>',
   ];
-  const notes = input.criticNotes[position];
+  const notes = input.criticNotes.at(position);
   if (notes !== null && notes !== undefined && notes.length > 0) {
     block.push(`Critic notes on candidate ${label}: ${notes.join('; ')}`);
   }
-  const missing = input.missingFiles[position] ?? [];
+  const missing = input.missingFiles.at(position) ?? [];
   if (missing.length > 0) {
     block.push(
       `Candidate ${label} could not receive these attachments: ${missing.join(', ')}. Do not penalise it for not using them.`,
@@ -328,7 +343,7 @@ export function buildRankedVerdict(input: CompareJudgeRankedInput): CompareJudge
         score: scored.score,
         rank: 1 + input.parsed.scores.filter((entry) => entry.score > scored.score).length,
         reason: scored.reason,
-        truncated: input.truncatedByLabel[position] === true,
+        truncated: input.truncatedByLabel.at(position) === true,
         criticSummary: critique?.summary ?? null,
       },
     ];

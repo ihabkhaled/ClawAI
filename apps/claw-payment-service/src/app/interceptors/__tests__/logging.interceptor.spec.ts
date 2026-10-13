@@ -22,7 +22,9 @@ function buildHandler(): CallHandler {
 
 // Typed with its real two-argument signature so assertions can reach into
 // mock.calls[n][1] (the payload) without a cast.
-function buildPublishMock(): Mock<(pattern: string, payload: Record<string, unknown>) => Promise<void>> {
+function buildPublishMock(): Mock<
+  (pattern: string, payload: Record<string, unknown>) => Promise<void>
+> {
   return vi.fn(async (_pattern: string, _payload: Record<string, unknown>) => {});
 }
 

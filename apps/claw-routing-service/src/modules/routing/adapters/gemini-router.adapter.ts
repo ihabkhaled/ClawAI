@@ -107,13 +107,15 @@ export class GeminiRouterAdapter implements RouterInferenceProvider {
       }
 
       const content = response.data.choices?.[0]?.message?.content ?? '';
-      return content.length === 0 ? emptyContentFailure(latencyMs) : {
-        ok: true,
-        raw: content,
-        latencyMs,
-        inputTokens: response.data.usage?.prompt_tokens ?? null,
-        outputTokens: response.data.usage?.completion_tokens ?? null,
-      };
+      return content.length === 0
+        ? emptyContentFailure(latencyMs)
+        : {
+            ok: true,
+            raw: content,
+            latencyMs,
+            inputTokens: response.data.usage?.prompt_tokens ?? null,
+            outputTokens: response.data.usage?.completion_tokens ?? null,
+          };
     } catch (error: unknown) {
       return failureFromThrown(error, Date.now() - startedAt);
     }

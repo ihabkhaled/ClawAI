@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { AppConfig } from '../../../../app/config/app.config';
 import { AutomationPreferenceService } from '../automation-preference.service';
 
@@ -11,9 +11,9 @@ describe('AutomationPreferenceService.fetchLearned', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi
-      .spyOn(AppConfig, 'get')
-      .mockReturnValue(mockConfig as unknown as ReturnType<typeof AppConfig.get>);
+    vi.spyOn(AppConfig, 'get').mockReturnValue(
+      mockConfig as unknown as ReturnType<typeof AppConfig.get>,
+    );
     service = new AutomationPreferenceService({} as never);
   });
 

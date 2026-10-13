@@ -116,7 +116,9 @@ function matchesBrowser(matcher: Record<string, unknown>, input: RiskAssessmentI
   if (allowGlobs !== undefined && !globMatchesAny(allowGlobs, url)) {
     return false;
   }
-  return matcher['urlPathRegex'] !== undefined ? safeRegexTest(String(matcher['urlPathRegex']), url) : matchesGeneric(matcher, input);
+  return matcher['urlPathRegex'] !== undefined
+    ? safeRegexTest(String(matcher['urlPathRegex']), url)
+    : matchesGeneric(matcher, input);
 }
 
 function matchesScreen(matcher: Record<string, unknown>, input: RiskAssessmentInput): boolean {
@@ -124,7 +126,9 @@ function matchesScreen(matcher: Record<string, unknown>, input: RiskAssessmentIn
     const app = readString(input.targetDescriptor, 'activeApp');
     return app === undefined ? false : safeRegexTest(String(matcher['activeAppDenyRegex']), app);
   }
-  return matcher['payloadHasRegion'] === true ? input.payload['regionDimensions'] !== undefined : matchesGeneric(matcher, input);
+  return matcher['payloadHasRegion'] === true
+    ? input.payload['regionDimensions'] !== undefined
+    : matchesGeneric(matcher, input);
 }
 
 function matchesClipboard(matcher: Record<string, unknown>, input: RiskAssessmentInput): boolean {
@@ -175,7 +179,9 @@ function matchesGeneric(matcher: Record<string, unknown>, input: RiskAssessmentI
   }
   if (matcher['recipientDomainRegex'] !== undefined) {
     const domain = readString(input.payload, 'recipientDomain');
-    return domain === undefined ? false : safeRegexTest(String(matcher['recipientDomainRegex']), domain);
+    return domain === undefined
+      ? false
+      : safeRegexTest(String(matcher['recipientDomainRegex']), domain);
   }
   // No matcher keys — treat as catch-all match
   return Object.keys(matcher).length === 0;

@@ -22,7 +22,7 @@ export function ParallelMessageGroup({
   return (
     <div className="w-full space-y-2">
       <div className="flex items-center gap-1.5">
-        <span className="text-xs font-medium text-muted-foreground">{t('compare.title')}</span>
+        <span className="text-muted-foreground text-xs font-medium">{t('compare.title')}</span>
         <Badge variant="secondary" className="text-xs">
           {t('compare.modelCount', { count: messages.length })}
         </Badge>

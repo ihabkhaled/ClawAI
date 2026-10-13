@@ -140,9 +140,7 @@ describe('buildGeminiRequestBody', () => {
   });
 
   it('uploads a large video through the Gemini Files API path', async () => {
-    const uploadFn = vi
-      .fn<GeminiFileUploadFn>()
-      .mockResolvedValue('files/video-123');
+    const uploadFn = vi.fn<GeminiFileUploadFn>().mockResolvedValue('files/video-123');
     const videoBase64 = base64OfSize(50_000);
     const source: OpenAiChatMessage[] = [
       {

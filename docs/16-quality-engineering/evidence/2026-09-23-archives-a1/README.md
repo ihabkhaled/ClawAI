@@ -7,23 +7,23 @@ territory). Admin: `admin@claw.local`. Free user created for RBAC:
 
 ## Summary — PASS/FAIL per feature
 
-| Feature                                              | Status                              |
-| ----------------------------------------------------- | ------------------------------------ |
-| A1 — zip: nested tree, member text, manifest, restart | **PASS**                             |
-| A1 — traversal / bomb rejection                       | **PASS** (zip and tar)               |
-| A1 — encrypted entries (partial + all)                | **PASS**                             |
-| A1 — Compare file-delivery receipt = EXTRACTED_TEXT   | **PASS** (zip and tar)               |
-| A2 — 7z, tar, tar.gz, tar.bz2, tar.xz                 | **PASS** (API/DB; browser not run)   |
-| A2 — RAR                                              | **NOT RUN** — no RAR encoder available |
-| Migration `20260923120000_add_file_archive_path`      | **PASS** — applied                   |
-| RBAC / IDOR on archive files (free vs admin)          | **PASS** — 403 on every route        |
-| Recorder — consent dialog                             | **PASS** (browser, before fix)       |
-| Recorder — button dimmed with reason (incapable model) | **PASS**                             |
-| Recorder — actually records (getUserMedia)             | **FAIL → FIXED** (bug #1 below)      |
-| Recorder — AUDIO_TOO_LARGE (>12MB refused)            | **PASS**                             |
-| Recorder — transcription completes                     | **FAIL → FIXED** (bug #3 below), not yet re-verified live |
-| Research toggle sends `researchMode`                  | **PASS** (network + assistant metadata) |
-| Pagination — page/limit/total meta                     | **PASS** (API); browser grid **NOT RUN** (frontend down) |
+| Feature                                                | Status                                                           |
+| ------------------------------------------------------ | ---------------------------------------------------------------- |
+| A1 — zip: nested tree, member text, manifest, restart  | **PASS**                                                         |
+| A1 — traversal / bomb rejection                        | **PASS** (zip and tar)                                           |
+| A1 — encrypted entries (partial + all)                 | **PASS**                                                         |
+| A1 — Compare file-delivery receipt = EXTRACTED_TEXT    | **PASS** (zip and tar)                                           |
+| A2 — 7z, tar, tar.gz, tar.bz2, tar.xz                  | **PASS** (API/DB; browser not run)                               |
+| A2 — RAR                                               | **NOT RUN** — no RAR encoder available                           |
+| Migration `20260923120000_add_file_archive_path`       | **PASS** — applied                                               |
+| RBAC / IDOR on archive files (free vs admin)           | **PASS** — 403 on every route                                    |
+| Recorder — consent dialog                              | **PASS** (browser, before fix)                                   |
+| Recorder — button dimmed with reason (incapable model) | **PASS**                                                         |
+| Recorder — actually records (getUserMedia)             | **FAIL → FIXED** (bug #1 below)                                  |
+| Recorder — AUDIO_TOO_LARGE (>12MB refused)             | **PASS**                                                         |
+| Recorder — transcription completes                     | **FAIL → FIXED** (bug #3 below), not yet re-verified live        |
+| Research toggle sends `researchMode`                   | **PASS** (network + assistant metadata)                          |
+| Pagination — page/limit/total meta                     | **PASS** (API); browser grid **NOT RUN** (frontend down)         |
 | Responsive matrix / RTL                                | **NOT RUN** — frontend was down for the whole session (see bugs) |
 
 ## Bugs found and fixed (this worktree, pushed to `origin/main`)
@@ -323,7 +323,7 @@ File tree (1 files, paths relative to the archive root):
 
 Caught at the inner layer, no 200MB ever written to disk, no crash.
 
-**RAR — not tested.** 7-Zip can only *extract* RAR, not create it, and no
+**RAR — not tested.** 7-Zip can only _extract_ RAR, not create it, and no
 `rar`/`unrar` CLI was available in this environment to build a fixture.
 Reporting as not-run rather than guessing.
 

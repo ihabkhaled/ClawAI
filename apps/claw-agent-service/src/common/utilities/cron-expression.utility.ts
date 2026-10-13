@@ -27,7 +27,9 @@ function bounds(
   if (low === undefined) return undefined;
   // "5/10" means "from 5 to the end, every 10"; a bare "5" means just 5.
   const high = to === undefined ? (hasStep ? range.max : low) : whole(to);
-  return high === undefined || low < range.min || high > range.max || low > high ? undefined : [low, high];
+  return high === undefined || low < range.min || high > range.max || low > high
+    ? undefined
+    : [low, high];
 }
 
 function partValues(part: string, range: CronFieldRange): number[] | undefined {
@@ -71,7 +73,7 @@ export function parseCron(expression: string): CronParse {
     };
   }
   const sets = parts.map((part, index) => {
-    const range = CRON_RANGES[index];
+    const range = CRON_RANGES.at(index);
     return range === undefined ? undefined : fieldValues(part, range);
   });
   const [minutes, hours, daysOfMonth, months, weekdays] = sets;
@@ -83,7 +85,10 @@ export function parseCron(expression: string): CronParse {
     weekdays === undefined
   ) {
     const bad = sets.findIndex((set) => set === undefined);
-    return { parsed: false, reason: `The ${CRON_RANGES[bad]?.name ?? 'cron'} field is not valid.` };
+    return {
+      parsed: false,
+      reason: `The ${CRON_RANGES.at(bad)?.name ?? 'cron'} field is not valid.`,
+    };
   }
   return {
     parsed: true,
@@ -159,10 +164,12 @@ export function validateCronForRoutine(expression: string, nowMs: number): CronV
   if (first === undefined) {
     return { valid: false, reason: 'That cron expression never matches a real date.' };
   }
-  return tooFrequent(parsed.fields, first) ? {
-      valid: false,
-      reason: `A cron schedule may fire at most every ${String(CRON_MIN_INTERVAL_MINUTES)} minutes.`,
-    } : { valid: true, expression: normalized, fields: parsed.fields };
+  return tooFrequent(parsed.fields, first)
+    ? {
+        valid: false,
+        reason: `A cron schedule may fire at most every ${String(CRON_MIN_INTERVAL_MINUTES)} minutes.`,
+      }
+    : { valid: true, expression: normalized, fields: parsed.fields };
 }
 
 /** The next run of a stored expression, or undefined when it no longer parses or has no date. */

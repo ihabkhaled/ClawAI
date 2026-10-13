@@ -270,7 +270,12 @@ describe('projections', () => {
 
   it('projects an invoice with both integer money fields and nullable periods', () => {
     const entry = toAdminInvoiceEntry(
-      buildInvoice({ status: InvoiceStatus.OPEN, paidAt: null, periodStart: null, periodEnd: null }),
+      buildInvoice({
+        status: InvoiceStatus.OPEN,
+        paidAt: null,
+        periodStart: null,
+        periodEnd: null,
+      }),
     );
     expect(entry).toEqual({
       id: 'inv_1',

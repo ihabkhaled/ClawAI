@@ -72,7 +72,7 @@ export function nativeFrameCap(modelBudget: AssembledContext['modelBudget']): nu
 export function currentQuestion(context: Pick<AssembledContext, 'threadMessages'>): string {
   const messages = context.threadMessages;
   for (let index = messages.length - 1; index >= 0; index -= 1) {
-    const message = messages[index];
+    const message = messages.at(index);
     if (message?.role === 'USER') {
       return message.content;
     }
@@ -139,14 +139,16 @@ export function describedFrameSet(
           },
         ];
   });
-  return observations.length > 0 ? {
-      fileId,
-      filename,
-      timestampsMs: observations.map((observation) => observation.timestampMs),
-      frameDelivery: VideoFrameDelivery.HELPER_OBSERVATIONS,
-      frames: [],
-      observations: observations.sort((a, b) => a.timestampMs - b.timestampMs),
-    } : transcriptOnlySet(fileId, filename, timestampsMs, noObservationReason(batch));
+  return observations.length > 0
+    ? {
+        fileId,
+        filename,
+        timestampsMs: observations.map((observation) => observation.timestampMs),
+        frameDelivery: VideoFrameDelivery.HELPER_OBSERVATIONS,
+        frames: [],
+        observations: observations.sort((a, b) => a.timestampMs - b.timestampMs),
+      }
+    : transcriptOnlySet(fileId, filename, timestampsMs, noObservationReason(batch));
 }
 
 function noObservationReason(batch: VideoFrameDescriptionBatch): string {

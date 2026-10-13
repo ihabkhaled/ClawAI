@@ -145,9 +145,7 @@ describe('CapabilityRiskService.assess', () => {
       targetMatcherJson: null,
     });
     const service = new CapabilityRiskService(fakeRepoWith([denyPolicy, allowPolicy]));
-    const result = await service.assess(
-      fsInput({ targetDescriptor: { path: '/etc/passwd' } }),
-    );
+    const result = await service.assess(fsInput({ targetDescriptor: { path: '/etc/passwd' } }));
     expect(result.status).toBe(CapabilityInvocationStatus.DENIED);
     expect(result.matchedPolicyName).toBe('deny-fs-system-paths');
   });
@@ -217,7 +215,9 @@ describe('CapabilityRiskService.assess', () => {
     );
     expect(result.riskScore).toBeGreaterThanOrEqual(40);
     expect(result.riskLabel).not.toBe(RiskLabel.LOW);
-    expect(result.reasons).toEqual(expect.arrayContaining(['blast=SYSTEM_SCOPE', 'reversibility=IRREVERSIBLE']));
+    expect(result.reasons).toEqual(
+      expect.arrayContaining(['blast=SYSTEM_SCOPE', 'reversibility=IRREVERSIBLE']),
+    );
   });
 
   it('detects secret patterns in payload and adds risk + reason', async () => {

@@ -72,9 +72,9 @@ describe('DeploymentService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi
-      .spyOn(AppConfig, 'get')
-      .mockReturnValue({ ENCRYPTION_KEY: 'a'.repeat(64) } as unknown as AppConfigType);
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
+      ENCRYPTION_KEY: 'a'.repeat(64),
+    } as unknown as AppConfigType);
     resolve.mockResolvedValue(RESOLVED);
     workflowUrl.mockReturnValue(WORKFLOW_URL);
     readAutomation.mockResolvedValue(null);

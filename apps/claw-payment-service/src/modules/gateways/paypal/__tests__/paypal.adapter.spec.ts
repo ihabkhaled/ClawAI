@@ -10,7 +10,7 @@ import { GatewayMode } from '../../../gateway-config/enums/gateway-mode.enum';
 // tests is that the adapter's own request-building, response-validation and
 // verification logic is exercised for real.
 vi.mock('@claw/shared-utilities', async () => ({
-  ...await vi.importActual('@claw/shared-utilities'),
+  ...(await vi.importActual('@claw/shared-utilities')),
   httpRequest: vi.fn(),
 }));
 

@@ -30,9 +30,9 @@ is happening.
 
 ## Compressed mode — trigger phrases
 
-Some phrasings mean "compress harder, for the rest of the session": *just get
-it done*, *hurry up*, *wrap this up*, *get on with it*, *cut the crap*, *make
-it quick*, *finish it already*, *don't drag this out*, *I've got a headache*,
+Some phrasings mean "compress harder, for the rest of the session": _just get
+it done_, _hurry up_, _wrap this up_, _get on with it_, _cut the crap_, _make
+it quick_, _finish it already_, _don't drag this out_, _I've got a headache_,
 or any explicit ask for shorter, less talkative answers. This can arrive
 mid-task, not only at the start of a session.
 

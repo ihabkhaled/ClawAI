@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { httpRequest } from '@claw/shared-utilities';
 import { GeoCountrySource } from '@claw/shared-types';
 
@@ -7,7 +7,7 @@ import { type RedisService } from '../../../infrastructure/redis/redis.service';
 import { GeoCountryService } from '../services/geo-country.service';
 
 vi.mock('@claw/shared-utilities', async () => ({
-  ...await vi.importActual('@claw/shared-utilities'),
+  ...(await vi.importActual('@claw/shared-utilities')),
   httpRequest: vi.fn(),
 }));
 

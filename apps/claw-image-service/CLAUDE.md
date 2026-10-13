@@ -294,7 +294,7 @@ lifecycle event and closes the session.
 
 - `apps/claw-frontend/src/components/chat/runtime-progress/ImageGenerationProgressPanel.tsx`
   (SD WebUI step bar + ETA + Cancel button)
-- `apps/claw-frontend/src/components/chat/runtime-progress/ComfyUINodeTimeline.tsx`
+- `apps/claw-frontend/src/components/chat/runtime-progress/ComfyUiNodeTimeline.tsx`
   (per-node card with mapper-resolved names + elapsed time)
 
 Full architecture: [`docs/03-architecture/runtime-progress.md`](../../docs/03-architecture/runtime-progress.md).

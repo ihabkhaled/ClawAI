@@ -102,7 +102,9 @@ function createAdapter(opts: ScenarioOptions): {
     if (url.includes('/interrupt')) {
       return {};
     }
-    return opts.scenario === 'prompt_post_invalid' ? { node_errors: { '3': { type: 'bad_input' } } } : { prompt_id: 'prompt-1', number: 1 };
+    return opts.scenario === 'prompt_post_invalid'
+      ? { node_errors: { '3': { type: 'bad_input' } } }
+      : { prompt_id: 'prompt-1', number: 1 };
   });
 
   const httpGetStub = vi.fn(async (url: string) => {

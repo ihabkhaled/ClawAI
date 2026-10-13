@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 
 import {
@@ -24,7 +24,7 @@ vi.mock('../../../app/config/app.config', () => ({
   },
 }));
 
-const { httpRequest } = await vi.importMock('../../../common/utilities') as {
+const { httpRequest } = (await vi.importMock('../../../common/utilities')) as {
   httpRequest: Mock;
 };
 

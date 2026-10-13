@@ -1,8 +1,11 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { InvoiceStatus } from '@claw/shared-types';
 
 import type { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
-import { INVOICE_LIST_LIMIT, PAID_INVOICE_SCAN_LIMIT } from '../../constants/subscriptions.constants';
+import {
+  INVOICE_LIST_LIMIT,
+  PAID_INVOICE_SCAN_LIMIT,
+} from '../../constants/subscriptions.constants';
 import { InvoiceRepository } from '../invoice.repository';
 
 type InvoiceDelegate = {

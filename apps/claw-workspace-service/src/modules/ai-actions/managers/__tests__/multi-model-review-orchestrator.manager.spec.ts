@@ -1,4 +1,4 @@
-import { vi, type MockInstance } from 'vitest';
+import { type MockInstance, vi } from 'vitest';
 import { PaygSurface } from '@claw/shared-types';
 
 import { MultiModelReviewOrchestratorManager } from '../multi-model-review-orchestrator.manager';
@@ -25,9 +25,9 @@ describe('MultiModelReviewOrchestratorManager', () => {
 
   beforeEach(() => {
     manager = new MultiModelReviewOrchestratorManager();
-    vi
-      .spyOn(AppConfig, 'get')
-      .mockReturnValue(mockConfig as unknown as ReturnType<typeof AppConfig.get>);
+    vi.spyOn(AppConfig, 'get').mockReturnValue(
+      mockConfig as unknown as ReturnType<typeof AppConfig.get>,
+    );
     callSpy = vi.spyOn(cloudClient, 'callCloudGenerate');
   });
 

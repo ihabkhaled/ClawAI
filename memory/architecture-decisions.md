@@ -83,6 +83,7 @@ Where a model _is_ used (routing AUTO mode), always ship a heuristic fallback so
 system degrades instead of failing when the model is unavailable.
 
 **Related.** ADR-057 deterministic-context-resolver; [testing-strategy](testing-strategy.md).
+
 ### Runtime-managed compatible providers (2026-10-03)
 
 Custom OpenAI-compatible provider definitions live in connector-service and use

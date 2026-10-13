@@ -69,9 +69,24 @@ describe('CompareJudgeManager — one comparative call per compare run', () => {
     instructions: 'Answer only in French.',
     laneContext: makeContext(),
     lanes: [
-      { laneIndex: 0, provider: 'ANTHROPIC', model: 'claude-sonnet-4', content: 'Answer from lane zero.' },
-      { laneIndex: 1, provider: 'GEMINI', model: 'gemini-2.5-pro', content: 'Answer from lane one.' },
-      { laneIndex: 2, provider: 'DEEPSEEK', model: 'deepseek-chat', content: 'Answer from lane two.' },
+      {
+        laneIndex: 0,
+        provider: 'ANTHROPIC',
+        model: 'claude-sonnet-4',
+        content: 'Answer from lane zero.',
+      },
+      {
+        laneIndex: 1,
+        provider: 'GEMINI',
+        model: 'gemini-2.5-pro',
+        content: 'Answer from lane one.',
+      },
+      {
+        laneIndex: 2,
+        provider: 'DEEPSEEK',
+        model: 'deepseek-chat',
+        content: 'Answer from lane two.',
+      },
     ],
     ...overrides,
   });
@@ -148,7 +163,13 @@ describe('CompareJudgeManager — one comparative call per compare run', () => {
     const sent = callProvider.mock.calls[0]?.[2] as AssembledContext;
     const question = sent.threadMessages.at(-1)?.content ?? '';
     expect(sent.threadMessages[0]?.content).toBe('Explain CRDTs.');
-    for (const model of ['claude-sonnet-4', 'gemini-2.5-pro', 'deepseek-chat', 'ANTHROPIC', 'GEMINI']) {
+    for (const model of [
+      'claude-sonnet-4',
+      'gemini-2.5-pro',
+      'deepseek-chat',
+      'ANTHROPIC',
+      'GEMINI',
+    ]) {
       expect(question).not.toContain(model);
     }
     // Candidate A is whichever lane the seeded shuffle put first.
@@ -223,7 +244,9 @@ describe('CompareJudgeManager — one comparative call per compare run', () => {
 
     expect(critiqueLane).toHaveBeenCalledTimes(3);
     expect(callProvider).toHaveBeenCalledTimes(1);
-    const question = (callProvider.mock.calls[0]?.[2] as AssembledContext).threadMessages.at(-1)?.content;
+    const question = (callProvider.mock.calls[0]?.[2] as AssembledContext).threadMessages.at(
+      -1,
+    )?.content;
     expect(question).toContain('note for gemini');
     // The critic's per-lane score is exactly the uncalibrated number this
     // manager exists to stop comparing; it must not reach the judge.
@@ -233,7 +256,11 @@ describe('CompareJudgeManager — one comparative call per compare run', () => {
 
   it('shortens answers fairly to the judge window and tells the judge so', async () => {
     judgeContext = makeContext({
-      modelBudget: { ...fallbackModelTokenBudget(), contextWindowTokens: 4_000, reservedOutputTokens: 1_500 },
+      modelBudget: {
+        ...fallbackModelTokenBudget(),
+        contextWindowTokens: 4_000,
+        reservedOutputTokens: 1_500,
+      },
     });
     const long = 'x'.repeat(20_000);
 
@@ -247,7 +274,8 @@ describe('CompareJudgeManager — one comparative call per compare run', () => {
       }),
     );
 
-    const question = (callProvider.mock.calls[0]?.[2] as AssembledContext).threadMessages.at(-1)?.content ?? '';
+    const question =
+      (callProvider.mock.calls[0]?.[2] as AssembledContext).threadMessages.at(-1)?.content ?? '';
     expect(question).toContain('were each shortened to the same length');
     expect(question).toContain('short answer');
     expect(question.length).toBeLessThan(20_000);

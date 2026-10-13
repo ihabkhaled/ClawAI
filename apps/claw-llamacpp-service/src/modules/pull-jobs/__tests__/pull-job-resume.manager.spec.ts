@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { PullJobPhase, PullJobStatus } from '../../../common/enums';
 import { PullJobResumeManager } from '../managers/pull-job-resume.manager';
 import { type PullJobRunnerManager } from '../managers/pull-job-runner.manager';
@@ -35,7 +35,10 @@ describe('PullJobResumeManager', () => {
 
   beforeEach(() => {
     jobsRepo = { findAllResumable: vi.fn() };
-    runner = { run: vi.fn().mockResolvedValue(undefined), isRunning: vi.fn().mockReturnValue(false) };
+    runner = {
+      run: vi.fn().mockResolvedValue(undefined),
+      isRunning: vi.fn().mockReturnValue(false),
+    };
     manager = new PullJobResumeManager(
       jobsRepo as unknown as PullJobsRepository,
       runner as unknown as PullJobRunnerManager,
@@ -61,7 +64,10 @@ describe('PullJobResumeManager', () => {
 
   it('skips jobs already running', async () => {
     runner.isRunning.mockImplementation((id: string) => id === 'job-1');
-    jobsRepo.findAllResumable.mockResolvedValue([baseJob({ id: 'job-1' }), baseJob({ id: 'job-2' })]);
+    jobsRepo.findAllResumable.mockResolvedValue([
+      baseJob({ id: 'job-1' }),
+      baseJob({ id: 'job-2' }),
+    ]);
     await manager.onApplicationBootstrap();
     expect(runner.run).toHaveBeenCalledTimes(1);
     expect(runner.run).toHaveBeenCalledWith('job-2', true);

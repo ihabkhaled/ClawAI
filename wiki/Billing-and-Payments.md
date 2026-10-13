@@ -3,6 +3,7 @@
 Billing spans the payment service and the auth service's credit/plan/quota/entitlement ownership.
 
 ## Payment service modules
+
 - `admin-user-billing`
 - `billing`
 - `billing-dashboard`
@@ -24,12 +25,14 @@ Billing spans the payment service and the auth service's credit/plan/quota/entit
 - `webhooks`
 
 ## Auth-service billing ownership
+
 - `credit`
 - `plans`
 - `quota`
 - `entitlements`
 
 ## Integrity rules
+
 - [rules/28-billing-integrity-and-api-contracts.md](https://github.com/ihabkhaled/ClawAI/blob/main/rules/28-billing-integrity-and-api-contracts.md)
 - [rules/37-payg-credit-integrity.md](https://github.com/ihabkhaled/ClawAI/blob/main/rules/37-payg-credit-integrity.md)
 - [rules/45-display-currency-versus-settlement-currency.md](https://github.com/ihabkhaled/ClawAI/blob/main/rules/45-display-currency-versus-settlement-currency.md)

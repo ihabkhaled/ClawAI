@@ -35,7 +35,9 @@ export class PaypalTokenManager {
   }
 
   async getAccessToken(nowMs: number = Date.now()): Promise<string> {
-    return this.cachedToken !== null && nowMs < this.expiresAtMs ? this.cachedToken : this.fetchToken(nowMs);
+    return this.cachedToken !== null && nowMs < this.expiresAtMs
+      ? this.cachedToken
+      : this.fetchToken(nowMs);
   }
 
   // Forces the next call to re-authenticate. Used when PayPal rejects a token

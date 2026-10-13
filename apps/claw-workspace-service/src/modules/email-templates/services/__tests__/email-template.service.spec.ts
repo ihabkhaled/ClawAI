@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 
 import { EmailTemplateService } from '../email-template.service';
@@ -140,9 +140,9 @@ describe('EmailTemplateService', () => {
         findByName: vi.fn().mockResolvedValue(makeTpl({ id: 'tpl-other' })),
       });
       const service = new EmailTemplateService(repo as never);
-      await expect(
-        service.update('u1', 'tpl-1', { name: 'Conflict' }),
-      ).rejects.toBeInstanceOf(ConflictException);
+      await expect(service.update('u1', 'tpl-1', { name: 'Conflict' })).rejects.toBeInstanceOf(
+        ConflictException,
+      );
       expect(repo['update']).not.toHaveBeenCalled();
     });
 

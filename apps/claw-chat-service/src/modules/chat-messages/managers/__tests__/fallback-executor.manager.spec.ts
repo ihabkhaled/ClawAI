@@ -78,10 +78,14 @@ describe('FallbackExecutorManager', () => {
 
   describe('executeChain', () => {
     it('returns success on the first candidate when SUCCESS is returned', async () => {
-      const callback = vi.fn<
-        (candidate: FallbackCandidate, attemptIndex: number) =>
-          Promise<CandidateCallbackResult<string>>
-      >().mockResolvedValueOnce({ status: 'SUCCESS', response: 'ok', qualityScore: 0.9 });
+      const callback = vi
+        .fn<
+          (
+            candidate: FallbackCandidate,
+            attemptIndex: number,
+          ) => Promise<CandidateCallbackResult<string>>
+        >()
+        .mockResolvedValueOnce({ status: 'SUCCESS', response: 'ok', qualityScore: 0.9 });
 
       const outcome = await manager.executeChain(candidates, callback);
 
@@ -100,9 +104,11 @@ describe('FallbackExecutorManager', () => {
     it('moves to the next candidate on FAILURE and stops on the next SUCCESS', async () => {
       const callback = vi
         .fn<
-        (candidate: FallbackCandidate, attemptIndex: number) =>
-          Promise<CandidateCallbackResult<string>>
-      >()
+          (
+            candidate: FallbackCandidate,
+            attemptIndex: number,
+          ) => Promise<CandidateCallbackResult<string>>
+        >()
         .mockResolvedValueOnce({
           status: 'FAILURE',
           error: new Error('boom'),
@@ -130,9 +136,11 @@ describe('FallbackExecutorManager', () => {
     it('moves to the next candidate on RE_ROUTE and records the quality score', async () => {
       const callback = vi
         .fn<
-        (candidate: FallbackCandidate, attemptIndex: number) =>
-          Promise<CandidateCallbackResult<string>>
-      >()
+          (
+            candidate: FallbackCandidate,
+            attemptIndex: number,
+          ) => Promise<CandidateCallbackResult<string>>
+        >()
         .mockResolvedValueOnce({
           status: 'RE_ROUTE',
           qualityScore: 0.2,
@@ -154,9 +162,11 @@ describe('FallbackExecutorManager', () => {
     it('returns exhausted with the last error when every candidate fails', async () => {
       const callback = vi
         .fn<
-        (candidate: FallbackCandidate, attemptIndex: number) =>
-          Promise<CandidateCallbackResult<string>>
-      >()
+          (
+            candidate: FallbackCandidate,
+            attemptIndex: number,
+          ) => Promise<CandidateCallbackResult<string>>
+        >()
         .mockResolvedValue({
           status: 'FAILURE',
           error: new Error('still down'),
@@ -180,9 +190,11 @@ describe('FallbackExecutorManager', () => {
       });
       const callback = vi
         .fn<
-        (candidate: FallbackCandidate, attemptIndex: number) =>
-          Promise<CandidateCallbackResult<string>>
-      >()
+          (
+            candidate: FallbackCandidate,
+            attemptIndex: number,
+          ) => Promise<CandidateCallbackResult<string>>
+        >()
         .mockResolvedValue({ status: 'FAILURE', error: new Error('x'), errorMessage: 'x' });
 
       const outcome = await manager.executeChain(candidates, callback);
@@ -199,9 +211,11 @@ describe('FallbackExecutorManager', () => {
       });
       const callback = vi
         .fn<
-        (candidate: FallbackCandidate, attemptIndex: number) =>
-          Promise<CandidateCallbackResult<string>>
-      >()
+          (
+            candidate: FallbackCandidate,
+            attemptIndex: number,
+          ) => Promise<CandidateCallbackResult<string>>
+        >()
         .mockResolvedValue({ status: 'FAILURE', error: new Error('x'), errorMessage: 'x' });
 
       const outcome = await manager.executeChain(candidates, callback);
@@ -213,9 +227,11 @@ describe('FallbackExecutorManager', () => {
     it('captures attempts even when the callback throws (no crash)', async () => {
       const callback = vi
         .fn<
-        (candidate: FallbackCandidate, attemptIndex: number) =>
-          Promise<CandidateCallbackResult<string>>
-      >()
+          (
+            candidate: FallbackCandidate,
+            attemptIndex: number,
+          ) => Promise<CandidateCallbackResult<string>>
+        >()
         .mockImplementationOnce(() => {
           throw new Error('uncaught');
         })
@@ -236,9 +252,11 @@ describe('FallbackExecutorManager', () => {
     it('records durationMs as a non-negative number per attempt', async () => {
       const callback = vi
         .fn<
-        (candidate: FallbackCandidate, attemptIndex: number) =>
-          Promise<CandidateCallbackResult<string>>
-      >()
+          (
+            candidate: FallbackCandidate,
+            attemptIndex: number,
+          ) => Promise<CandidateCallbackResult<string>>
+        >()
         .mockImplementationOnce(async () => {
           await new Promise((resolve) => setTimeout(resolve, 5));
           return { status: 'SUCCESS', response: 'ok' };

@@ -1,4 +1,4 @@
-import { vi, type Mocked } from 'vitest';
+import { type Mocked, vi } from 'vitest';
 import { CapabilityClass } from '../../../../common/enums/capability-class.enum';
 import { CapabilityInvocationStatus } from '../../../../common/enums/capability-invocation-status.enum';
 import { CapabilityOperation } from '../../../../common/enums/capability-operation.enum';
@@ -243,9 +243,7 @@ describe('RecipeRunnerManager', () => {
         step1.id,
         expect.objectContaining({ dryRun: true }),
       );
-      expect(runRepo.createRun).toHaveBeenCalledWith(
-        expect.objectContaining({ dryRun: true }),
-      );
+      expect(runRepo.createRun).toHaveBeenCalledWith(expect.objectContaining({ dryRun: true }));
     });
   });
 
@@ -259,10 +257,7 @@ describe('RecipeRunnerManager', () => {
       runRepo.updateStep.mockResolvedValue({ ...stepRow, status: 'SUCCEEDED' });
       runRepo.findRunByIdInternal.mockResolvedValue({
         ...fakeRun(),
-        steps: [
-          { ...stepRow, status: 'SUCCEEDED' },
-          fakeStep(2),
-        ],
+        steps: [{ ...stepRow, status: 'SUCCEEDED' }, fakeStep(2)],
       } as never);
       runRepo.findStepsForRun.mockResolvedValue([
         { ...stepRow, status: 'SUCCEEDED', output: { contentBase64: 'aGVsbG8=' } },
@@ -309,11 +304,7 @@ describe('RecipeRunnerManager', () => {
       } as never);
       runRepo.findStepsForRun.mockResolvedValue([stepRow, fakeStep(2)]);
 
-      const runner = new RecipeRunnerManager(
-        fakeRecipeRepo(fakeRecipe()),
-        runRepo,
-        fakeApproval(),
-      );
+      const runner = new RecipeRunnerManager(fakeRecipeRepo(fakeRecipe()), runRepo, fakeApproval());
       await runner.onStepInvocationTerminated(
         'inv-bad',
         CapabilityInvocationStatus.FAILED,
@@ -331,12 +322,13 @@ describe('RecipeRunnerManager', () => {
       const runRepo = fakeRunRepo();
       runRepo.findStepByInvocationId.mockResolvedValue(null);
 
-      const runner = new RecipeRunnerManager(
-        fakeRecipeRepo(fakeRecipe()),
-        runRepo,
-        fakeApproval(),
+      const runner = new RecipeRunnerManager(fakeRecipeRepo(fakeRecipe()), runRepo, fakeApproval());
+      await runner.onStepInvocationTerminated(
+        'inv-orphan',
+        CapabilityInvocationStatus.EXECUTED,
+        {},
+        null,
       );
-      await runner.onStepInvocationTerminated('inv-orphan', CapabilityInvocationStatus.EXECUTED, {}, null);
 
       expect(runRepo.updateStep).not.toHaveBeenCalled();
       expect(runRepo.updateRun).not.toHaveBeenCalled();

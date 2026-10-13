@@ -1,4 +1,4 @@
-import { vi, type Mocked, type Mock } from 'vitest';
+import { type Mock, type Mocked, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { UsageLedgerRepository } from '../usage-ledger.repository';
@@ -33,9 +33,7 @@ describe('UsageLedgerRepository', () => {
     Object.assign(modelFactory, {
       find: vi.fn().mockReturnValue(queryChain),
       countDocuments: vi.fn().mockReturnValue({ exec: vi.fn().mockResolvedValue(11) }),
-      aggregate: vi
-        .fn()
-        .mockResolvedValue([{ provider: 'openai', count: 100, totalTokens: 5000 }]),
+      aggregate: vi.fn().mockResolvedValue([{ provider: 'openai', count: 100, totalTokens: 5000 }]),
     });
     modelMock = modelFactory as never;
 

@@ -11,21 +11,21 @@ hobbyist claims, not measurements of ours; treat block-class claims as
 The owner overrode parts of section 3. What shipped (ADR-121) — this table
 wins over the recommendations below where they differ:
 
-| Tool                                              | Status                                    | Evidence / reason                                                                                 |
-| ------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Official APIs (Wikipedia, GitHub, arXiv, Crossref, HN) | Enabled, tier 0                     | `OfficialApiFetchAdapter`                                                                         |
-| RSS/Atom, sitemap, JSON-LD/OpenGraph              | Enabled (already in `extractHtml`/site-crawl) | unchanged code, now machine-readable fetches are raw-HTTP only                              |
-| @mozilla/readability + linkedom + turndown        | Enabled on every tier's HTML              | `extractPageContent`                                                                              |
-| impit                                             | Enabled, tier 20                          | glibc prebuilt ran in `node:26-bookworm-slim` as `nestjs`; fiverr.com: Node fetch 403, impit 200  |
-| Patchright                                        | Enabled, tier 30 (replaces Playwright)    | Chromium 153 rendered quotes.toscrape.com/js (10 quotes) in the prod image                        |
-| Crawl4AI 0.9.4                                    | Shipped, DISABLED (profile `crawl4ai`)    | ≥ 0.9.4 for the 2026-09-23 SSRF fixes; behind our own SSRF guard + isolated network               |
-| FlareSolverr v3.5.2                               | Shipped, DISABLED (profile `flaresolverr`) | policy runs it only after a JS interstitial on a robots-allowed URL                              |
-| Firecrawl self-host                               | Shipped, DISABLED (profile `firecrawl`)   | digest-pinned images, 8-12 GB                                                                      |
-| Jina Reader                                       | Enabled, tier 70                          | public, token-free URLs only; 1 call / 3.5 s                                                       |
-| Wayback availability API                          | Enabled, tier 80                          | output labelled "Archived copy, captured <date>"; CDX not needed for one-snapshot lookups         |
-| Crawlee                                           | Not adopted                               | would replace ~30 lines of concurrency code with a framework, its storage and its own retries; deletes none of our code honestly (ADR-121) |
-| Proxies (any)                                     | Not adopted                               | owner: no paid proxies; free lists unsafe                                                          |
-| Browserless, Camoufox, Nodriver, got-scraping, Scrapling, curl_cffi | Not adopted             | per section 3 (licence, Python-only, or superseded by impit/Patchright)                            |
+| Tool                                                                | Status                                        | Evidence / reason                                                                                                                          |
+| ------------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Official APIs (Wikipedia, GitHub, arXiv, Crossref, HN)              | Enabled, tier 0                               | `OfficialApiFetchAdapter`                                                                                                                  |
+| RSS/Atom, sitemap, JSON-LD/OpenGraph                                | Enabled (already in `extractHtml`/site-crawl) | unchanged code, now machine-readable fetches are raw-HTTP only                                                                             |
+| @mozilla/readability + linkedom + turndown                          | Enabled on every tier's HTML                  | `extractPageContent`                                                                                                                       |
+| impit                                                               | Enabled, tier 20                              | glibc prebuilt ran in `node:26-bookworm-slim` as `nestjs`; fiverr.com: Node fetch 403, impit 200                                           |
+| Patchright                                                          | Enabled, tier 30 (replaces Playwright)        | Chromium 153 rendered quotes.toscrape.com/js (10 quotes) in the prod image                                                                 |
+| Crawl4AI 0.9.4                                                      | Shipped, DISABLED (profile `crawl4ai`)        | ≥ 0.9.4 for the 2026-09-23 SSRF fixes; behind our own SSRF guard + isolated network                                                        |
+| FlareSolverr v3.5.2                                                 | Shipped, DISABLED (profile `flaresolverr`)    | policy runs it only after a JS interstitial on a robots-allowed URL                                                                        |
+| Firecrawl self-host                                                 | Shipped, DISABLED (profile `firecrawl`)       | digest-pinned images, 8-12 GB                                                                                                              |
+| Jina Reader                                                         | Enabled, tier 70                              | public, token-free URLs only; 1 call / 3.5 s                                                                                               |
+| Wayback availability API                                            | Enabled, tier 80                              | output labelled "Archived copy, captured <date>"; CDX not needed for one-snapshot lookups                                                  |
+| Crawlee                                                             | Not adopted                                   | would replace ~30 lines of concurrency code with a framework, its storage and its own retries; deletes none of our code honestly (ADR-121) |
+| Proxies (any)                                                       | Not adopted                                   | owner: no paid proxies; free lists unsafe                                                                                                  |
+| Browserless, Camoufox, Nodriver, got-scraping, Scrapling, curl_cffi | Not adopted                                   | per section 3 (licence, Python-only, or superseded by impit/Patchright)                                                                    |
 
 ## 0. Ground rules this survey respects
 

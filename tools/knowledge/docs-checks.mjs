@@ -99,7 +99,7 @@ function concreteMatches(text, pattern) {
 // committed, and apps/claw-coding-agent is a submodule — another repository,
 // not checked out in CI — whose own docs and CI verify its paths.
 const UNCHECKABLE_PATH =
-  /(^|\/)(node_modules|dist|coverage|\.next|generated|\.cache|playwright-report|test-results|\.lighthouseci)(\/|$)|^\.ai\/local\/|^apps\/claw-coding-agent\//u;
+  /(^|\/)(node_modules|dist|coverage|\.next|generated|\.cache|playwright-report|test-results|\.lighthouseci)(\/|$)|^\.ai\/local\/|^\.husky\/_(\/|$)|^apps\/claw-coding-agent\//u;
 // A line about the coding-agent repository names that repository's npm scripts.
 const SUBMODULE_CONTEXT = /claw-coding-agent|coding[- ]agent|ClawAI-Coding-Agent/iu;
 // `git checkout -b docs/x` names a branch, not a path.

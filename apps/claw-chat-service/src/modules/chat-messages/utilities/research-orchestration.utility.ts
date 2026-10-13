@@ -14,7 +14,9 @@ import type {
 
 /** The run's evidence bundle, or null when the run failed or came back empty-shaped. */
 export function bundleOf(run: ResearchRunResponse | null): ResearchEvidenceBundle | null {
-  return run === null || !('items' in run.bundle) || !Array.isArray(run.bundle.items) ? null : (run.bundle as ResearchEvidenceBundle);
+  return run === null || !('items' in run.bundle) || !Array.isArray(run.bundle.items)
+    ? null
+    : (run.bundle as ResearchEvidenceBundle);
 }
 
 /** The distinct fetch strategies that served this evidence, in first-seen order. Reads untyped JSON defensively (stored metadata). */

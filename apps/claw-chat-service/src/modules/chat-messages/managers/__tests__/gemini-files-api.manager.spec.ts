@@ -381,15 +381,17 @@ describe('GeminiFilesApiManager', () => {
         GEMINI_FILES_API_CACHE_ENABLED: false,
       });
       let session = 0;
-      const fetchMock = vi.fn<(...args: FetchArgs) => Promise<Response>>().mockImplementation(async (url) => {
-        if (String(url) === GEMINI_FILES_API_BASE_URL) {
-          session++;
-          return buildUploadStartResponse(
-            `https://generativelanguage.googleapis.com/upload/v1beta/files/session-${String(session)}`,
-          );
-        }
-        return buildUploadedFileResponse(`files/uncached-${String(session)}`);
-      });
+      const fetchMock = vi
+        .fn<(...args: FetchArgs) => Promise<Response>>()
+        .mockImplementation(async (url) => {
+          if (String(url) === GEMINI_FILES_API_BASE_URL) {
+            session++;
+            return buildUploadStartResponse(
+              `https://generativelanguage.googleapis.com/upload/v1beta/files/session-${String(session)}`,
+            );
+          }
+          return buildUploadedFileResponse(`files/uncached-${String(session)}`);
+        });
       global.fetch = fetchMock as unknown as typeof fetch;
 
       await manager.getCachedOrUpload('id', Buffer.from('a'), 'image/png', CONNECTOR_KEY);
@@ -408,19 +410,21 @@ describe('GeminiFilesApiManager', () => {
       let session = 0;
       let activeFinalizations = 0;
       let peakFinalizations = 0;
-      const fetchMock = vi.fn<(...args: FetchArgs) => Promise<Response>>().mockImplementation(async (url) => {
-        if (String(url) === GEMINI_FILES_API_BASE_URL) {
-          session++;
-          return buildUploadStartResponse(
-            `https://generativelanguage.googleapis.com/upload/v1beta/files/session-${String(session)}`,
-          );
-        }
-        activeFinalizations++;
-        peakFinalizations = Math.max(peakFinalizations, activeFinalizations);
-        await new Promise((resolve) => setTimeout(resolve, 5));
-        activeFinalizations--;
-        return buildUploadedFileResponse(`files/u-${String(session)}`);
-      });
+      const fetchMock = vi
+        .fn<(...args: FetchArgs) => Promise<Response>>()
+        .mockImplementation(async (url) => {
+          if (String(url) === GEMINI_FILES_API_BASE_URL) {
+            session++;
+            return buildUploadStartResponse(
+              `https://generativelanguage.googleapis.com/upload/v1beta/files/session-${String(session)}`,
+            );
+          }
+          activeFinalizations++;
+          peakFinalizations = Math.max(peakFinalizations, activeFinalizations);
+          await new Promise((resolve) => setTimeout(resolve, 5));
+          activeFinalizations--;
+          return buildUploadedFileResponse(`files/u-${String(session)}`);
+        });
       global.fetch = fetchMock as unknown as typeof fetch;
 
       await Promise.all(

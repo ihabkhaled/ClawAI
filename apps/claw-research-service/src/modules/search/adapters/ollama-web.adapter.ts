@@ -197,11 +197,13 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
         redirect: 'error',
       });
       const latencyMs = Date.now() - start;
-      return response.ok ? { healthy: true, latencyMs } : {
-        healthy: false,
-        latencyMs,
-        errorMessage: `Fallback HTTP ${response.status}`,
-      };
+      return response.ok
+        ? { healthy: true, latencyMs }
+        : {
+            healthy: false,
+            latencyMs,
+            errorMessage: `Fallback HTTP ${response.status}`,
+          };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       return { healthy: false, latencyMs: Date.now() - start, errorMessage: message };
@@ -298,7 +300,9 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
       relevance: this.scoreQueryMatch(query, result),
     }));
     ranked.sort((left, right) => {
-      return right.relevance !== left.relevance ? right.relevance - left.relevance : left.index - right.index;
+      return right.relevance !== left.relevance
+        ? right.relevance - left.relevance
+        : left.index - right.index;
     });
     return ranked.map(({ result, relevance }) => ({
       ...result,

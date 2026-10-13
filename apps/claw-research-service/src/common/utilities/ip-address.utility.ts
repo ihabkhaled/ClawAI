@@ -69,7 +69,8 @@ export function ipv6Bytes(address: string): number[] | null {
     return null;
   }
   let text = bare;
-  const tail = /(\d{1,3}(?:\.\d{1,3}){3})$/u.exec(text)?.[1];
+  const lastSegment = text.slice(text.lastIndexOf(':') + 1);
+  const tail = isIPv4(lastSegment) ? lastSegment : undefined;
   if (tail !== undefined) {
     const octets = ipv4Octets(tail);
     if (octets === null) {
@@ -109,9 +110,15 @@ function embeddedIpv4(bytes: readonly number[]): number[] | null {
     return bytes.slice(12);
   }
   // 64:ff9b::/96 NAT64 well-known prefix.
-  if (bytes[0] === 0 && bytes[1] === 0x64 && bytes[2] === 0xff && bytes[3] === 0x9b && allZero(bytes, 4, 12)) {
-      return bytes.slice(12);
-    }
+  if (
+    bytes[0] === 0 &&
+    bytes[1] === 0x64 &&
+    bytes[2] === 0xff &&
+    bytes[3] === 0x9b &&
+    allZero(bytes, 4, 12)
+  ) {
+    return bytes.slice(12);
+  }
   // 2002::/16 6to4 carries the IPv4 address in bytes 2..5.
   return bytes[0] === 0x20 && bytes[1] === 0x02 ? bytes.slice(2, 6) : null;
 }
@@ -172,7 +179,7 @@ export function isMetadataIp(address: string): boolean {
   }
   const groups: string[] = [];
   for (let index = 0; index < bytes.length; index += 2) {
-    groups.push((((bytes[index] ?? 0) << 8) | (bytes[index + 1] ?? 0)).toString(16));
+    groups.push((((bytes.at(index) ?? 0) << 8) | (bytes.at(index + 1) ?? 0)).toString(16));
   }
   return METADATA_IPV6_ADDRESSES.has(groups.join(':'));
 }

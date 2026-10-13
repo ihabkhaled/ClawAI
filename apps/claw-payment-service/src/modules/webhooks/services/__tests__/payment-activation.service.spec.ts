@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import {
   BillingErrorCode,
   BillingInterval,
@@ -74,11 +74,9 @@ describe('PaymentActivationService', () => {
         invoiceNumber: 'CLAW-00000002',
       }),
     };
-    vi
-      .spyOn(AppConfig, 'get')
-      .mockReturnValue({ BILLING_GRACE_PERIOD_MS: 259_200_000 } as ReturnType<
-        typeof AppConfig.get
-      >);
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
+      BILLING_GRACE_PERIOD_MS: 259_200_000,
+    } as ReturnType<typeof AppConfig.get>);
     creditTopups = {
       activateFromVerifiedPayment: vi.fn().mockResolvedValue({
         paymentTransactionId: 'tx-topup',
@@ -269,11 +267,9 @@ describe('PaymentActivationService — credit top-up', () => {
         outboxEventId: 'evt-1',
       }),
     };
-    vi
-      .spyOn(AppConfig, 'get')
-      .mockReturnValue({ BILLING_GRACE_PERIOD_MS: 259_200_000 } as ReturnType<
-        typeof AppConfig.get
-      >);
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
+      BILLING_GRACE_PERIOD_MS: 259_200_000,
+    } as ReturnType<typeof AppConfig.get>);
     service = new PaymentActivationService(
       sessions as unknown as CheckoutSessionRepository,
       customers as unknown as BillingCustomerRepository,

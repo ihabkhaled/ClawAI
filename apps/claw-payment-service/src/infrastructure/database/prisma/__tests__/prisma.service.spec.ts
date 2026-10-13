@@ -36,8 +36,8 @@ vi.mock('@prisma/adapter-pg', () => {
   };
 });
 
-const generated = await vi.importMock('../../../../generated/prisma') as PrismaMockRegistry;
-const adapter = await vi.importMock('@prisma/adapter-pg') as PrismaMockRegistry;
+const generated = (await vi.importMock('../../../../generated/prisma')) as PrismaMockRegistry;
+const adapter = (await vi.importMock('@prisma/adapter-pg')) as PrismaMockRegistry;
 
 describe('PrismaService', () => {
   const originalEnv = process.env;

@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { httpRequest, normalizeDisplayCurrency } from '@claw/shared-utilities';
 import { DisplayFxSource } from '@claw/shared-types';
 
@@ -6,7 +6,7 @@ import { FawazExchangeProvider } from '../providers/fawaz-exchange.provider';
 import { FrankfurterProvider } from '../providers/frankfurter.provider';
 
 vi.mock('@claw/shared-utilities', async () => ({
-  ...await vi.importActual('@claw/shared-utilities'),
+  ...(await vi.importActual('@claw/shared-utilities')),
   httpRequest: vi.fn(),
 }));
 

@@ -58,7 +58,7 @@ export function UserMenu(): React.ReactElement | null {
               clipped the account button at the screen edge. Nothing is lost
               when it hides: the username and the email are both in the menu
               this button opens. */}
-          <span className="@2xl:inline hidden max-w-[120px] truncate font-medium">
+          <span className="hidden max-w-[120px] truncate font-medium @2xl:inline">
             {user.username}
           </span>
         </Button>

@@ -229,7 +229,9 @@ export class CatalogRemoteMetadataService {
   }
 
   private sumLayerSizes(layers: Array<{ size: number }>): bigint | null {
-    return layers.length === 0 ? null : layers.reduce((total, layer) => total + BigInt(layer.size), BigInt(0));
+    return layers.length === 0
+      ? null
+      : layers.reduce((total, layer) => total + BigInt(layer.size), BigInt(0));
   }
 
   private rankSourceSlugs(

@@ -36,7 +36,9 @@ export function resolvePricingSource(
   // The row was found under a DIFFERENT key than the registry holds — an alias
   // hit, not this model's own price. Compared case-insensitively because
   // `normalizeModelId` lower-cases, and a pure case difference is the same key.
-  return snapshot.model.toLowerCase() !== entry.modelKey.toLowerCase() ? ModelPricingSource.DATED_FAMILY : ModelPricingSource.PUBLISHED;
+  return snapshot.model.toLowerCase() !== entry.modelKey.toLowerCase()
+    ? ModelPricingSource.DATED_FAMILY
+    : ModelPricingSource.PUBLISHED;
 }
 
 /**
@@ -52,7 +54,9 @@ export function resolvePriceBasis(snapshot: ModelCostSnapshot): ModelPriceBasis 
     return ModelPriceBasis.ADMIN_SET;
   }
   return snapshot.source === ModelCostSource.PROVIDER_SYNC ||
-    snapshot.source === ModelCostSource.PROVIDER_REPORTED ? ModelPriceBasis.PROVIDER_PUBLISHED : ModelPriceBasis.ESTIMATED;
+    snapshot.source === ModelCostSource.PROVIDER_REPORTED
+    ? ModelPriceBasis.PROVIDER_PUBLISHED
+    : ModelPriceBasis.ESTIMATED;
 }
 
 export function toModelCostCatalogRow(

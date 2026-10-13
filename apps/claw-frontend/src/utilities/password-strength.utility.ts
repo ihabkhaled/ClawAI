@@ -18,9 +18,15 @@ function evaluateRequirements(password: string): PasswordRequirementState {
 }
 
 function resolveLevel(meetsPolicy: boolean, length: number): PasswordStrengthLevel {
-  if (!meetsPolicy) {return PasswordStrengthLevel.Weak;}
-  if (length >= PASSWORD_STRENGTH_LONG_LENGTH) {return PasswordStrengthLevel.Strong;}
-  if (length >= PASSWORD_MIN_LENGTH + 4) {return PasswordStrengthLevel.Good;}
+  if (!meetsPolicy) {
+    return PasswordStrengthLevel.Weak;
+  }
+  if (length >= PASSWORD_STRENGTH_LONG_LENGTH) {
+    return PasswordStrengthLevel.Strong;
+  }
+  if (length >= PASSWORD_MIN_LENGTH + 4) {
+    return PasswordStrengthLevel.Good;
+  }
   return PasswordStrengthLevel.Fair;
 }
 

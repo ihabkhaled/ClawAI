@@ -13,9 +13,13 @@ export function getThreadsServiceOrigin(): string | null {
 export async function getPublicThreadPublication(
   slug: string,
 ): Promise<PublicThreadPublication | null> {
-  if (!/^[a-zA-Z0-9-]{1,64}$/u.test(slug)) {return null;}
+  if (!/^[a-zA-Z0-9-]{1,64}$/u.test(slug)) {
+    return null;
+  }
   const origin = getThreadsServiceOrigin();
-  if (origin === null) {return null;}
+  if (origin === null) {
+    return null;
+  }
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), THREAD_PUBLIC_FETCH_TIMEOUT_MS);
   try {
@@ -34,7 +38,9 @@ export async function getPublicThreadPublication(
 
 export async function countPublicThreads(locale: string): Promise<number> {
   const origin = getThreadsServiceOrigin();
-  if (origin === null) {return 0;}
+  if (origin === null) {
+    return 0;
+  }
   const query = new URLSearchParams({ locale });
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), THREAD_PUBLIC_FETCH_TIMEOUT_MS);
@@ -47,7 +53,9 @@ export async function countPublicThreads(locale: string): Promise<number> {
         headers: { Accept: 'application/json' },
       },
     );
-    if (!response.ok) {return 0;}
+    if (!response.ok) {
+      return 0;
+    }
     const result = (await response.json()) as { total?: unknown };
     return typeof result.total === 'number' && Number.isSafeInteger(result.total)
       ? result.total
@@ -61,7 +69,9 @@ export async function countPublicThreads(locale: string): Promise<number> {
 
 export async function getPublicThreadSitemapPage(locale: string, page: number) {
   const origin = getThreadsServiceOrigin();
-  if (origin === null) {return null;}
+  if (origin === null) {
+    return null;
+  }
   const query = new URLSearchParams({
     locale,
     page: String(page),
@@ -75,7 +85,9 @@ export async function getPublicThreadSitemapPage(locale: string, page: number) {
       signal: controller.signal,
       headers: { Accept: 'application/json' },
     });
-    if (!response.ok) {return null;}
+    if (!response.ok) {
+      return null;
+    }
     return (await response.json()) as {
       total: number;
       items: Array<{ slug: string; publishedAt: string }>;
@@ -89,7 +101,9 @@ export async function getPublicThreadSitemapPage(locale: string, page: number) {
 
 export async function listPublicThreadFeedEntries(locale: string) {
   const origin = getThreadsServiceOrigin();
-  if (origin === null) {return null;}
+  if (origin === null) {
+    return null;
+  }
   const query = new URLSearchParams({ locale, limit: '100' });
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), THREAD_PUBLIC_FETCH_TIMEOUT_MS);
@@ -99,7 +113,9 @@ export async function listPublicThreadFeedEntries(locale: string) {
       signal: controller.signal,
       headers: { Accept: 'application/json' },
     });
-    if (!response.ok) {return null;}
+    if (!response.ok) {
+      return null;
+    }
     const result = (await response.json()) as {
       items?: Array<{
         slug: string;
@@ -119,7 +135,9 @@ export async function listPublicThreadFeedEntries(locale: string) {
 
 export async function listPublicThreadDiscoveries(locale: string) {
   const origin = getThreadsServiceOrigin();
-  if (origin === null) {return [];}
+  if (origin === null) {
+    return [];
+  }
   const query = new URLSearchParams({ locale, limit: '20' });
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), THREAD_PUBLIC_FETCH_TIMEOUT_MS);
@@ -129,7 +147,9 @@ export async function listPublicThreadDiscoveries(locale: string) {
       signal: controller.signal,
       headers: { Accept: 'application/json' },
     });
-    if (!response.ok) {return [];}
+    if (!response.ok) {
+      return [];
+    }
     const result = (await response.json()) as {
       items?: Array<{
         slug: string;

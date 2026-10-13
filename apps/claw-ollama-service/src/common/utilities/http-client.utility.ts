@@ -41,7 +41,9 @@ export type { AxiosInstance } from 'axios';
 function resolveRequestUrl(baseUrl: string | undefined, path: string | undefined): string {
   const requestPath = path ?? '';
   const isAbsolute = /^[a-z][a-z\d+.-]*:/i.test(requestPath);
-  return isAbsolute || baseUrl === undefined || baseUrl === '' ? requestPath : `${baseUrl.replace(/\/+$/, '')}/${requestPath.replace(/^\/+/, '')}`;
+  return isAbsolute || baseUrl === undefined || baseUrl === ''
+    ? requestPath
+    : `${baseUrl.replace(/\/+$/, '')}/${requestPath.replace(/^\/+/, '')}`;
 }
 
 /**

@@ -33,7 +33,9 @@ export function isChainTerminalFailureCode(errorCode: string | null | undefined)
  * row afterwards.
  */
 export function isCreditFailureCode(errorCode: string | null | undefined): boolean {
-  return errorCode === null || errorCode === undefined ? false : IMAGE_CREDIT_FAILURE_CODES.includes(errorCode);
+  return errorCode === null || errorCode === undefined
+    ? false
+    : IMAGE_CREDIT_FAILURE_CODES.includes(errorCode);
 }
 
 /**

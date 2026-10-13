@@ -23,9 +23,9 @@ describe('ModelUnavailableService (ADR-151)', () => {
 
   it('reports a retirement', async () => {
     const { service } = build(1);
-    await expect(service.record({ provider: 'OPENAI', model: 'gpt-5-chat-latest' })).resolves.toEqual(
-      { counted: 1, retired: 1 },
-    );
+    await expect(
+      service.record({ provider: 'OPENAI', model: 'gpt-5-chat-latest' }),
+    ).resolves.toEqual({ counted: 1, retired: 1 });
   });
 
   it('ignores a provider outside the connector enum instead of throwing', async () => {

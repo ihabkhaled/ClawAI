@@ -1,10 +1,12 @@
 import { vi } from 'vitest';
-import { ForbiddenException, type ExecutionContext } from '@nestjs/common';
+import { type ExecutionContext, ForbiddenException } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { AdminIpAllowlistGuard } from '../admin-ip-allowlist.guard';
 
-const makeCtx = (req: Partial<{ ip: string; headers: Record<string, unknown> }>): ExecutionContext =>
+const makeCtx = (
+  req: Partial<{ ip: string; headers: Record<string, unknown> }>,
+): ExecutionContext =>
   ({
     switchToHttp: () => ({
       getRequest: () => ({ ip: req.ip, headers: req.headers ?? {} }),

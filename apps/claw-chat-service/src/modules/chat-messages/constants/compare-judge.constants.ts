@@ -49,7 +49,8 @@ export const COMPARE_JUDGE_BUDGET_SAFETY_PERCENT = 85;
 export const COMPARE_JUDGE_MIN_ANSWER_CHARS = 400;
 
 /** Appended to every answer the budget shortened. The prompt explains it. */
-export const COMPARE_JUDGE_TRUNCATION_MARKER = '\n[...shortened to fit the judge context window...]';
+export const COMPARE_JUDGE_TRUNCATION_MARKER =
+  '\n[...shortened to fit the judge context window...]';
 
 export const COMPARE_JUDGE_REASON_MAX_CHARS = 400;
 export const COMPARE_JUDGE_RATIONALE_MAX_CHARS = 1_500;

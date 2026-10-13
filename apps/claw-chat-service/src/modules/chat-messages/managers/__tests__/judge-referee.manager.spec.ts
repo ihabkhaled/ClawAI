@@ -1,4 +1,4 @@
-import { vi, type Mocked } from 'vitest';
+import { type Mocked, vi } from 'vitest';
 import { JudgeRefereeManager } from '../judge-referee.manager';
 import { JudgeDecision } from '../../../../common/enums';
 import type { ChatExecutionManager } from '../chat-execution.manager';
@@ -59,9 +59,7 @@ const buildPayload = (): MessageRoutedData => ({
 
 describe('JudgeRefereeManager — critic invocation', () => {
   let manager: JudgeRefereeManager;
-  let chatStream: Mocked<
-    Pick<ChatStreamService, 'emitJudgeEvaluating' | 'emitOrchestrationStage'>
-  >;
+  let chatStream: Mocked<Pick<ChatStreamService, 'emitJudgeEvaluating' | 'emitOrchestrationStage'>>;
   let localSelection: Mocked<Pick<LocalModelSelectionService, 'resolveDefaultModel'>>;
   let executionManager: Mocked<Pick<ChatExecutionManager, 'callProvider'>>;
 

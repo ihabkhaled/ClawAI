@@ -1,7 +1,6 @@
 import { CreditLedgerKind, PaygSurface } from '@claw/shared-types';
 import { describe, expect, it } from 'vitest';
 
-
 import {
   BillingGateway,
   BillingInterval,

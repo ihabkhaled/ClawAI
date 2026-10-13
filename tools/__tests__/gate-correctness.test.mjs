@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 import test from 'node:test';
 
 import {
@@ -64,7 +65,18 @@ test('pushing a ref whose tree is not checked out fails without a receipt for it
   // An empty-tree commit: never checked out and never receipted, unlike HEAD~1,
   // whose tree a real `gates:receipt` run may already cover.
   const emptyTree = git(['hash-object', '-t', 'tree', '-w', '--stdin'], { input: '', stdio: ['pipe', 'pipe', 'pipe'] });
-  const commit = git(['commit-tree', emptyTree, '-p', 'HEAD', '-m', 'gate-correctness probe']);
+  const commit = git([
+    '-c',
+    'user.name=gate-correctness',
+    '-c',
+    'user.email=gate-correctness@example.invalid',
+    'commit-tree',
+    emptyTree,
+    '-p',
+    'HEAD',
+    '-m',
+    'gate-correctness probe',
+  ]);
   const ok = await prePush(`refs/heads/other ${commit} refs/heads/other ${ZERO_SHA}\n`);
   assert.equal(ok, false);
 });

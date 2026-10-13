@@ -1,4 +1,3 @@
-
 import { DisplayFxSource, DisplayRoundingPolicy } from '@claw/shared-types';
 import type { LocalizedMoneyView } from '@claw/shared-types';
 import { describe, expect, it } from 'vitest';

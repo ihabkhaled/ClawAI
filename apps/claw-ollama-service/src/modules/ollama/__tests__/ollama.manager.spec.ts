@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { OllamaManager } from '../managers/ollama.manager';
 import { type LocalModelsRepository } from '../repositories/local-models.repository';
 import { type RoleAssignmentsRepository } from '../repositories/role-assignments.repository';
@@ -66,9 +66,7 @@ const mockLocalModelsRepo = (): Partial<Record<keyof LocalModelsRepository, Mock
   countAll: vi.fn().mockResolvedValue(1),
 });
 
-const mockRoleAssignmentsRepo = (): Partial<
-  Record<keyof RoleAssignmentsRepository, Mock>
-> => ({
+const mockRoleAssignmentsRepo = (): Partial<Record<keyof RoleAssignmentsRepository, Mock>> => ({
   create: vi.fn().mockResolvedValue(mockRoleAssignment),
   findActiveByRole: vi.fn().mockResolvedValue(mockRoleAssignment),
   deactivateByRole: vi.fn().mockResolvedValue(void 0),

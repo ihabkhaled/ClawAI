@@ -12,6 +12,7 @@
 CI/CD combines Actions with local Husky hooks, affected-workspace tooling, generated knowledge verification, architecture checks, release preflight, Lighthouse, deployment automation and release versioning.
 
 Related:
+
 - [.husky/pre-commit](https://github.com/ihabkhaled/ClawAI/blob/main/.husky/pre-commit)
 - [.husky/pre-push](https://github.com/ihabkhaled/ClawAI/blob/main/.husky/pre-push)
 - [tools/release/](https://github.com/ihabkhaled/ClawAI/blob/main/tools/release)

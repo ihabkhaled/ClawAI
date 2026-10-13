@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { BusinessException } from '../../../../common/errors/business.exception';
 import { ChainExecutorManager } from '../chain-executor.manager';
 
@@ -278,9 +278,7 @@ describe('ChainExecutorManager', () => {
     });
 
     it('does NOT re-execute an already-SUCCEEDED step — only resumes from the failed step onward', async () => {
-      const executeWriteAction = vi
-        .fn()
-        .mockResolvedValue({ success: true, externalId: 'msg-1' });
+      const executeWriteAction = vi.fn().mockResolvedValue({ success: true, externalId: 'msg-1' });
       const { manager, chainRepo } = makeDeps({
         chain: { id: 'chain-1', userId: 'u1', isEnabled: true, dsl: twoStepDsl },
         runWithSteps: failedRunWithFirstStepSucceeded,
@@ -303,9 +301,7 @@ describe('ChainExecutorManager', () => {
     });
 
     it('marks wasResumed: true the moment resume() is called, distinguishing a manually-repaired run from one that succeeded on the first try', async () => {
-      const executeWriteAction = vi
-        .fn()
-        .mockResolvedValue({ success: true, externalId: 'msg-1' });
+      const executeWriteAction = vi.fn().mockResolvedValue({ success: true, externalId: 'msg-1' });
       const { manager, chainRepo } = makeDeps({
         chain: { id: 'chain-1', userId: 'u1', isEnabled: true, dsl: twoStepDsl },
         runWithSteps: failedRunWithFirstStepSucceeded,
@@ -345,9 +341,7 @@ describe('ChainExecutorManager', () => {
     });
 
     it('uses the run dslSnapshot, not the chain current dsl, so an edited chain does not change what a resume replays', async () => {
-      const executeWriteAction = vi
-        .fn()
-        .mockResolvedValue({ success: true, externalId: 'msg-1' });
+      const executeWriteAction = vi.fn().mockResolvedValue({ success: true, externalId: 'msg-1' });
       const editedDsl = {
         steps: [{ id: 'different-step', connectorId: 'x', actionType: 'Y', payload: {} }],
       };

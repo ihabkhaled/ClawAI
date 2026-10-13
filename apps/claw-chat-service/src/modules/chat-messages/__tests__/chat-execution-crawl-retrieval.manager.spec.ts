@@ -29,7 +29,9 @@ vi.mock('../../../common/utilities', () => ({
   httpRequest: vi.fn(),
   buildInterServiceAuthHeader: () => 'Service test-token',
   recordGet: <T>(record: Record<string, T> | undefined | null, key: string): T | undefined => {
-    return !record ? undefined : (Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined);
+    return !record
+      ? undefined
+      : (Object.entries(record).find(([k]) => k === key)?.[1] as T | undefined);
   },
 }));
 

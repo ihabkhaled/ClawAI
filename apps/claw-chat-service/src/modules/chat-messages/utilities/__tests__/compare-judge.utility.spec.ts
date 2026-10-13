@@ -162,13 +162,28 @@ describe('parseCompareJudgeOutput — strict schema and invariants', () => {
   const labels = ['A', 'B', 'C'];
 
   it('accepts a well-formed verdict, including inside a code fence', () => {
-    const body = verdictJson(['B', 'A', 'C'], [['A', 7], ['B', 9], ['C', 4]]);
+    const body = verdictJson(
+      ['B', 'A', 'C'],
+      [
+        ['A', 7],
+        ['B', 9],
+        ['C', 4],
+      ],
+    );
     expect(parseCompareJudgeOutput(body, labels)?.ranking).toEqual(['B', 'A', 'C']);
     expect(parseCompareJudgeOutput(`Here:\n\`\`\`json\n${body}\n\`\`\``, labels)).not.toBeNull();
   });
 
   it('normalises lower-case labels and drops unknown keys', () => {
-    const body = verdictJson(['b', 'a', 'c'], [['a', 7], ['b', 9], ['c', 4]], { winner: 'b' });
+    const body = verdictJson(
+      ['b', 'a', 'c'],
+      [
+        ['a', 7],
+        ['b', 9],
+        ['c', 4],
+      ],
+      { winner: 'b' },
+    );
     const parsed = parseCompareJudgeOutput(body, labels);
     expect(parsed?.ranking).toEqual(['B', 'A', 'C']);
     expect(parsed?.scores.map((entry) => entry.label)).toEqual(['A', 'B', 'C']);
@@ -176,21 +191,95 @@ describe('parseCompareJudgeOutput — strict schema and invariants', () => {
 
   it.each([
     ['prose, not JSON', 'Candidate B is clearly the best.'],
-    ['a missing label', verdictJson(['B', 'A'], [['A', 7], ['B', 9]])],
-    ['a duplicated label', verdictJson(['B', 'B', 'C'], [['A', 7], ['B', 9], ['C', 4]])],
-    ['a label never shown', verdictJson(['B', 'A', 'D'], [['A', 7], ['B', 9], ['D', 4]])],
-    ['a score out of range', verdictJson(['B', 'A', 'C'], [['A', 7], ['B', 11], ['C', 4]])],
-    ['a ranking that contradicts the scores', verdictJson(['A', 'B', 'C'], [['A', 7], ['B', 9], ['C', 4]])],
-    ['no rationale', verdictJson(['B', 'A', 'C'], [['A', 7], ['B', 9], ['C', 4]], { rationale: '' })],
+    [
+      'a missing label',
+      verdictJson(
+        ['B', 'A'],
+        [
+          ['A', 7],
+          ['B', 9],
+        ],
+      ),
+    ],
+    [
+      'a duplicated label',
+      verdictJson(
+        ['B', 'B', 'C'],
+        [
+          ['A', 7],
+          ['B', 9],
+          ['C', 4],
+        ],
+      ),
+    ],
+    [
+      'a label never shown',
+      verdictJson(
+        ['B', 'A', 'D'],
+        [
+          ['A', 7],
+          ['B', 9],
+          ['D', 4],
+        ],
+      ),
+    ],
+    [
+      'a score out of range',
+      verdictJson(
+        ['B', 'A', 'C'],
+        [
+          ['A', 7],
+          ['B', 11],
+          ['C', 4],
+        ],
+      ),
+    ],
+    [
+      'a ranking that contradicts the scores',
+      verdictJson(
+        ['A', 'B', 'C'],
+        [
+          ['A', 7],
+          ['B', 9],
+          ['C', 4],
+        ],
+      ),
+    ],
+    [
+      'no rationale',
+      verdictJson(
+        ['B', 'A', 'C'],
+        [
+          ['A', 7],
+          ['B', 9],
+          ['C', 4],
+        ],
+        { rationale: '' },
+      ),
+    ],
     ['a truncated object', '{"ranking": ["B", "A", "C"], "scores": ['],
   ])('rejects %s', (_case, body) => {
     expect(parseCompareJudgeOutput(body, labels)).toBeNull();
   });
 
   it('accepts tied labels in either order', () => {
-    const body = verdictJson(['A', 'B', 'C'], [['A', 8], ['B', 8], ['C', 4]]);
+    const body = verdictJson(
+      ['A', 'B', 'C'],
+      [
+        ['A', 8],
+        ['B', 8],
+        ['C', 4],
+      ],
+    );
     expect(parseCompareJudgeOutput(body, labels)).not.toBeNull();
-    const swapped = verdictJson(['B', 'A', 'C'], [['A', 8], ['B', 8], ['C', 4]]);
+    const swapped = verdictJson(
+      ['B', 'A', 'C'],
+      [
+        ['A', 8],
+        ['B', 8],
+        ['C', 4],
+      ],
+    );
     expect(parseCompareJudgeOutput(swapped, labels)).not.toBeNull();
   });
 });
@@ -215,7 +304,14 @@ describe('buildRankedVerdict — unshuffled onto lanes, ties are ties', () => {
   };
 
   it('maps each label back to the lane that was shown under it', () => {
-    const verdict = rank([['A', 9], ['B', 6], ['C', 3]], ['A', 'B', 'C']);
+    const verdict = rank(
+      [
+        ['A', 9],
+        ['B', 6],
+        ['C', 3],
+      ],
+      ['A', 'B', 'C'],
+    );
     const shuffle = buildLaneShuffle('run-rank', [0, 1, 2]);
     expect(verdict.status).toBe(CompareJudgeVerdictStatus.RANKED);
     for (const lane of verdict.lanes) {
@@ -229,14 +325,28 @@ describe('buildRankedVerdict — unshuffled onto lanes, ties are ties', () => {
   });
 
   it('names no winner on a tie for first place, and lists the tied lanes', () => {
-    const verdict = rank([['A', 8], ['B', 8], ['C', 3]], ['B', 'A', 'C']);
+    const verdict = rank(
+      [
+        ['A', 8],
+        ['B', 8],
+        ['C', 3],
+      ],
+      ['B', 'A', 'C'],
+    );
     expect(verdict.winnerLaneIndex).toBeNull();
     expect(verdict.tiedLaneIndices).toHaveLength(2);
     expect(verdict.lanes.map((lane) => lane.rank)).toEqual([1, 1, 3]);
   });
 
   it('gives a lower tie a shared rank without touching the winner', () => {
-    const verdict = rank([['A', 9], ['B', 5], ['C', 5]], ['A', 'C', 'B']);
+    const verdict = rank(
+      [
+        ['A', 9],
+        ['B', 5],
+        ['C', 5],
+      ],
+      ['A', 'C', 'B'],
+    );
     expect(verdict.winnerLaneIndex).not.toBeNull();
     expect(verdict.tiedLaneIndices).toEqual([]);
     expect(verdict.lanes.map((lane) => lane.rank)).toEqual([1, 2, 2]);
@@ -292,7 +402,9 @@ describe('buildCompareJudgeQuestion', () => {
       truncated: [true, false],
       capChars: 3_000,
     });
-    expect(question).toContain('Candidate(s) A were each shortened to the same length of 3000 characters');
+    expect(question).toContain(
+      'Candidate(s) A were each shortened to the same length of 3000 characters',
+    );
     expect(question).toContain('do not penalise the shortening');
   });
 });
@@ -312,8 +424,22 @@ describe('small helpers', () => {
       model: 'gpt-5',
       content: 'x',
       attachmentDelivery: [
-        { fileId: '1', filename: 'a.txt', mimeType: 'text/plain', provider: 'OPENAI', model: 'gpt-5', mode: FileDeliveryMode.EXTRACTED_TEXT },
-        { fileId: '2', filename: 'b.png', mimeType: 'image/png', provider: 'OPENAI', model: 'gpt-5', mode: FileDeliveryMode.OMITTED_NO_VISION },
+        {
+          fileId: '1',
+          filename: 'a.txt',
+          mimeType: 'text/plain',
+          provider: 'OPENAI',
+          model: 'gpt-5',
+          mode: FileDeliveryMode.EXTRACTED_TEXT,
+        },
+        {
+          fileId: '2',
+          filename: 'b.png',
+          mimeType: 'image/png',
+          provider: 'OPENAI',
+          model: 'gpt-5',
+          mode: FileDeliveryMode.OMITTED_NO_VISION,
+        },
       ],
     };
     expect(missingFilesForLane(lane)).toEqual(['b.png']);

@@ -11,10 +11,7 @@ import type { CompareJudgeRankingProps } from '@/types';
  * ranking, one shared scale, one rationale. Replaces reading a winner off
  * per-lane scores that were never on the same scale.
  */
-export function CompareJudgeRanking({
-  verdict,
-  t,
-}: CompareJudgeRankingProps): React.ReactElement {
+export function CompareJudgeRanking({ verdict, t }: CompareJudgeRankingProps): React.ReactElement {
   const { rows, hasRanking, isTie, noticeKey } = useCompareJudgeRanking(verdict);
   const max = verdict.scale.max;
 
@@ -97,7 +94,9 @@ export function CompareJudgeRanking({
                   </p>
                 )}
                 {row.truncated ? (
-                  <p className="text-warning mt-1 text-xs">{t('compare.ranking.answerTruncated')}</p>
+                  <p className="text-warning mt-1 text-xs">
+                    {t('compare.ranking.answerTruncated')}
+                  </p>
                 ) : null}
               </li>
             ))}

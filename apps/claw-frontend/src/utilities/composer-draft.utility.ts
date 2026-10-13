@@ -19,7 +19,9 @@ export function buildComposerDraftKey(threadId: string): string {
  * are reasons to fail to render a composer.
  */
 export function readComposerDraft(threadId: string): string {
-  if (typeof window === 'undefined') {return '';}
+  if (typeof window === 'undefined') {
+    return '';
+  }
   try {
     return window.localStorage.getItem(buildComposerDraftKey(threadId)) ?? '';
   } catch (error) {
@@ -41,7 +43,9 @@ export function readComposerDraft(threadId: string): string {
  * happened.
  */
 export function writeComposerDraft(threadId: string, content: string): void {
-  if (typeof window === 'undefined') {return;}
+  if (typeof window === 'undefined') {
+    return;
+  }
   try {
     if (content.trim().length === 0 || content.length > COMPOSER_DRAFT_MAX_LENGTH) {
       window.localStorage.removeItem(buildComposerDraftKey(threadId));

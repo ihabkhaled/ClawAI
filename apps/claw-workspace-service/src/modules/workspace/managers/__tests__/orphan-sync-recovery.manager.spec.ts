@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 
 import { AppConfig } from '../../../../app/config/app.config';
@@ -112,9 +112,10 @@ describe('OrphanSyncRecoveryManager', () => {
   });
 
   it('is a no-op when scheduler disabled', async () => {
-    vi
-      .spyOn(AppConfig, 'get')
-      .mockReturnValue({ ...validBaseConfig, WORKSPACE_SCHEDULER_ENABLED: false });
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
+      ...validBaseConfig,
+      WORKSPACE_SCHEDULER_ENABLED: false,
+    });
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OrphanSyncRecoveryManager,

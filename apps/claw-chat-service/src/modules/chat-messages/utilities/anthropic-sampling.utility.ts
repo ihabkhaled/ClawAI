@@ -20,6 +20,7 @@ export function modelRejectsSamplingParams(model: string): boolean {
     .replace(ANTHROPIC_MODEL_SNAPSHOT_SUFFIX, '');
   return ANTHROPIC_MODELS_WITHOUT_SAMPLING.some(
     (family) =>
-      normalized === family || normalized.startsWith(`${family}${ANTHROPIC_MODEL_FAMILY_SEPARATOR}`),
+      normalized === family ||
+      normalized.startsWith(`${family}${ANTHROPIC_MODEL_FAMILY_SEPARATOR}`),
   );
 }

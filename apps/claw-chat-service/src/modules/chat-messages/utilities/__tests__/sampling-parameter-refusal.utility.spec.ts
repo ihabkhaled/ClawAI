@@ -1,4 +1,7 @@
-import { BusinessException, ProviderUnsupportedParameterException } from '../../../../common/errors';
+import {
+  BusinessException,
+  ProviderUnsupportedParameterException,
+} from '../../../../common/errors';
 import {
   parseRejectedSamplingParameter,
   providerRetryPlan,
@@ -39,9 +42,7 @@ describe('parseRejectedSamplingParameter', () => {
   });
 
   it('accepts a 422 validation refusal', () => {
-    expect(parseRejectedSamplingParameter(422, 'temperature is not permitted')).toBe(
-      'temperature',
-    );
+    expect(parseRejectedSamplingParameter(422, 'temperature is not permitted')).toBe('temperature');
   });
 
   it('ignores a sentence that names temperature without refusing it', () => {
@@ -79,7 +80,9 @@ describe('toProviderHttpFailure — sampling-parameter refusals', () => {
   });
 
   it('leaves every other 400 a plain BusinessException', () => {
-    const error = failure(400, { error: { message: 'messages: at least one message is required' } });
+    const error = failure(400, {
+      error: { message: 'messages: at least one message is required' },
+    });
     expect(error).not.toBeInstanceOf(ProviderUnsupportedParameterException);
     expect(error).toBeInstanceOf(BusinessException);
   });

@@ -54,6 +54,12 @@ test('links with Next.js route groups and repository blob URLs resolve', () => {
   );
 });
 
+test('the generated husky hooks directory is not a missing path', () => {
+  const doc = 'Hooks live in `.husky/_` after `npx husky`; `.husky/not-a-file.sh` is a real typo.\n';
+  const problems = referenceProblems('AGENTS.md', doc).map((p) => p.problem);
+  assert.deepEqual(problems, ['missing path .husky/not-a-file.sh']);
+});
+
 test('a fenced block marked as an example is not checked', () => {
   // Prettier puts a blank line after an HTML comment; the marker still applies.
   const doc = [

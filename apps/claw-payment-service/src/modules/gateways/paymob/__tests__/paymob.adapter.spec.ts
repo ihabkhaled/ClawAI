@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { httpRequest } from '@claw/shared-utilities';
 
 import { AppConfig } from '../../../../app/config/app.config';
@@ -7,7 +7,7 @@ import { type PaymobTokenManager } from '../managers/paymob-token.manager';
 import { computePaymobCardTokenHmac, computePaymobHmac } from '../utilities/paymob-hmac.utility';
 
 vi.mock('@claw/shared-utilities', async () => ({
-  ...await vi.importActual('@claw/shared-utilities'),
+  ...(await vi.importActual('@claw/shared-utilities')),
   httpRequest: vi.fn(),
 }));
 

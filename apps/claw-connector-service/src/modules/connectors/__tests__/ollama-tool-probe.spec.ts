@@ -15,7 +15,7 @@ vi.mock('../../../common/utilities/http.utility', () => ({
   httpPost: vi.fn(),
 }));
 
-const { httpPost } = await vi.importMock('../../../common/utilities/http.utility') as {
+const { httpPost } = (await vi.importMock('../../../common/utilities/http.utility')) as {
   httpPost: Mock;
 };
 

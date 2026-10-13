@@ -1,4 +1,4 @@
-import { vi, type Mocked, type Mock } from 'vitest';
+import { type Mock, type Mocked, vi } from 'vitest';
 // Phase 9 — Learning loop integration test. Exercises the path that
 // flows learned-score data from LearningLoopManager into the scoring
 // engine's learnedSuccessRate input.
@@ -113,9 +113,9 @@ describe('RouteEvaluatorManager — Phase 9 learning loop integration', () => {
         routingMode: undefined,
         policyId: undefined,
       } as any)
-      .catch(() => undefined);
+      .catch(() => {});
 
-    const scoringInput = ((scorer.score as unknown) as Mock).mock.calls[0]?.[0];
+    const scoringInput = (scorer.score as unknown as Mock).mock.calls[0]?.[0];
     expect(scoringInput.candidates[0].learnedSuccessRate).toBeNull();
     expect(scoringInput.candidates[1].learnedSuccessRate).toBeNull();
     expect(learningLoop.getRollingScore).not.toHaveBeenCalled();
@@ -144,9 +144,9 @@ describe('RouteEvaluatorManager — Phase 9 learning loop integration', () => {
         routingMode: undefined,
         policyId: undefined,
       } as any)
-      .catch(() => undefined);
+      .catch(() => {});
 
-    const scoringInput = ((scorer.score as unknown) as Mock).mock.calls[0]?.[0];
+    const scoringInput = (scorer.score as unknown as Mock).mock.calls[0]?.[0];
     expect(scoringInput.candidates[0].learnedSuccessRate).toBe(0.87);
     expect(learningLoop.getRollingScore).toHaveBeenCalledWith(
       'OPENAI/gpt-4o',
@@ -179,9 +179,9 @@ describe('RouteEvaluatorManager — Phase 9 learning loop integration', () => {
         routingMode: undefined,
         policyId: undefined,
       } as any)
-      .catch(() => undefined);
+      .catch(() => {});
 
-    const scoringInput = ((scorer.score as unknown) as Mock).mock.calls[0]?.[0];
+    const scoringInput = (scorer.score as unknown as Mock).mock.calls[0]?.[0];
     expect(scoringInput.candidates[0].learnedSuccessRate).toBeNull();
   });
 
@@ -206,9 +206,9 @@ describe('RouteEvaluatorManager — Phase 9 learning loop integration', () => {
         routingMode: undefined,
         policyId: undefined,
       } as any)
-      .catch(() => undefined);
+      .catch(() => {});
 
-    const scoringInput = ((scorer.score as unknown) as Mock).mock.calls[0]?.[0];
+    const scoringInput = (scorer.score as unknown as Mock).mock.calls[0]?.[0];
     expect(scoringInput.candidates[0].learnedSuccessRate).toBeNull();
   });
 });

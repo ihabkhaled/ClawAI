@@ -3,10 +3,12 @@
 File behavior is split across two services plus chat/frontend attachment surfaces.
 
 ## File service
+
 - `files`
 - `health`
 
 ## File-generation service
+
 - `file-generation`
 - `health`
 

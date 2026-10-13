@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { SearchProviderKind } from '../../../../common/enums/search-provider-kind.enum';
 import { OllamaWebSearchAdapter } from '../ollama-web.adapter';
 import { runSearchAdapterContract } from './search-adapter-contract';
@@ -54,12 +54,10 @@ describe('OllamaWebSearchAdapter', () => {
   });
 
   it('search falls back to DuckDuckGo HTML when Ollama Web is unauthorized', async () => {
-    (global.fetch as Mock)
-      .mockResolvedValueOnce({ ok: false, status: 401 })
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        text: async () => `
+    (global.fetch as Mock).mockResolvedValueOnce({ ok: false, status: 401 }).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      text: async () => `
           <html>
             <body>
               <a class="result__a" href="//duckduckgo.com/l/?uddg=${encodeURIComponent('https://example.com/a')}">A</a>
@@ -68,7 +66,7 @@ describe('OllamaWebSearchAdapter', () => {
               <a class="result__snippet">Snippet B</a>
             </body>
           </html>`,
-      });
+    });
 
     const response = await adapter.search({ query: 'q', maxResults: 2 }, context);
 

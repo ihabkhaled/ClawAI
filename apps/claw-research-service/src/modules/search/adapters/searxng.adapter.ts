@@ -33,7 +33,9 @@ export class SearxngAdapter implements SearchAdapter {
         redirect: 'error',
       });
       const latencyMs = Date.now() - start;
-      return response.ok ? { healthy: true, latencyMs } : { healthy: false, latencyMs, errorMessage: `HTTP ${response.status}` };
+      return response.ok
+        ? { healthy: true, latencyMs }
+        : { healthy: false, latencyMs, errorMessage: `HTTP ${response.status}` };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`SearXNG health check failed: ${message}`);

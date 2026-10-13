@@ -50,7 +50,7 @@ export default defineConfig({
         'src/**/*.enum.ts',
         'src/**/index.ts',
       ],
-      thresholds: {"branches":70,"functions":70,"lines":70,"statements":70},
+      thresholds: { branches: 70, functions: 70, lines: 70, statements: 70 },
     },
   },
   resolve: {

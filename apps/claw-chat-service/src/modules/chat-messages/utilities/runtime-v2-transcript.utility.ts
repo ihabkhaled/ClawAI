@@ -104,7 +104,9 @@ function clipObject(
  */
 function clipString(value: string, budget: number): string {
   if (value.length <= budget) return value;
-  return budget <= RUNTIME_V2_TRANSCRIPT_IDENTITY_CHARACTERS ? RUNTIME_V2_TRANSCRIPT_TRUNCATION_NOTICE : `${value.slice(0, budget)}${RUNTIME_V2_TRANSCRIPT_TRUNCATION_NOTICE}`;
+  return budget <= RUNTIME_V2_TRANSCRIPT_IDENTITY_CHARACTERS
+    ? RUNTIME_V2_TRANSCRIPT_TRUNCATION_NOTICE
+    : `${value.slice(0, budget)}${RUNTIME_V2_TRANSCRIPT_TRUNCATION_NOTICE}`;
 }
 
 function clipArray(
