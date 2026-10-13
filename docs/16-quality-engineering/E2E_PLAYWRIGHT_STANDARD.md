@@ -53,7 +53,7 @@ export default defineConfig({
 
 - Full Docker Compose stack running (`./scripts/claw.sh up -d`)
 - Frontend running on `http://localhost:3000` (either Docker or `npm run dev` in `apps/claw-frontend`)
-- All 17 services healthy
+- All services healthy
 - Seeded admin user: `admin@claw.ai` / `admin123` (or as configured in `.env`)
 - At least one connector configured (Gemini recommended -- the only configured provider)
 - At least one Ollama model pulled (gemma3:4b minimum)
@@ -604,10 +604,15 @@ npx playwright show-report
 
 ### CI Pipeline
 
-E2E tests run after unit tests and build pass. They require the full Docker Compose stack:
+**No E2E job exists in CI today** — `.github/workflows/ci.yml` runs no Playwright step, so the
+browser lane is run locally and recorded in the QA evidence (rules/60). A future job would need
+the full stack and would look roughly like this sketch (`apps/claw-frontend/playwright.config.ts`
+uses the `list` reporter today, so an HTML report would also need enabling there):
+
+<!-- docs:example -->
 
 ```yaml
-# In .github/workflows/ci.yml (E2E job)
+# Sketch of a future E2E job — not in any workflow
 e2e:
   needs: [build]
   runs-on: ubuntu-latest

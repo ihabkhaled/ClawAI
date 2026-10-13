@@ -180,13 +180,13 @@ Last updated: 2026-04-09
 
 ## 8. Observability
 
-| ID     | Scenario         | Steps                                     | Expected Outcome                                                        |
-| ------ | ---------------- | ----------------------------------------- | ----------------------------------------------------------------------- |
-| OBS-01 | Health dashboard | Navigate to health/observability page     | All 17 services show status (healthy/unhealthy); response times visible |
-| OBS-02 | Audit logs       | Navigate to Audits page                   | Recent events listed: login, message, connector operations              |
-| OBS-03 | Usage stats      | Navigate to usage view                    | Token usage, message counts, provider breakdown displayed               |
-| OBS-04 | Client logs      | Navigate to Logs page, filter client logs | Frontend log entries visible with component, action, timestamp          |
-| OBS-05 | Server logs      | Filter server logs by service             | Backend log entries visible with service name, module, action           |
+| ID     | Scenario         | Steps                                     | Expected Outcome                                                       |
+| ------ | ---------------- | ----------------------------------------- | ---------------------------------------------------------------------- |
+| OBS-01 | Health dashboard | Navigate to health/observability page     | Every service shows status (healthy/unhealthy); response times visible |
+| OBS-02 | Audit logs       | Navigate to Audits page                   | Recent events listed: login, message, connector operations             |
+| OBS-03 | Usage stats      | Navigate to usage view                    | Token usage, message counts, provider breakdown displayed              |
+| OBS-04 | Client logs      | Navigate to Logs page, filter client logs | Frontend log entries visible with component, action, timestamp         |
+| OBS-05 | Server logs      | Filter server logs by service             | Backend log entries visible with service name, module, action          |
 
 **Evidence required**: Screenshots of health dashboard, audit log entries, and usage statistics.
 

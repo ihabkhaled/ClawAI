@@ -145,7 +145,7 @@ Prometheus text format: `claw_service_up`, `claw_service_response_ms`,
 `claw_services_total`, `claw_services_up`, `claw_health_snapshot_age_ms`.
 
 - **It is cached** for `METRICS_SNAPSHOT_TTL_MS` (14 s, just under the 15 s
-  scrape). Without that, every scrape would fan out to all 17 services —
+  scrape). Without that, every scrape would fan out to every service —
   ~98,000 extra requests a day — and two scrapers at once would double it.
   Concurrent scrapes share a single refresh.
 - **Only allowlisted labels** may be rendered (`service`). The renderer throws
@@ -176,7 +176,7 @@ StatusPageController (AuthGuard + SessionRevocationGuard + RolesGuard(ADMIN), th
             └── min_over_time(claw_service_up[300s]) == 0       buckets each service failed in
 ```
 
-- **Components, not services.** `COMPONENT_MEMBERS` groups the 17 services into
+- **Components, not services.** `COMPONENT_MEMBERS` groups the services into
   10 user-facing components. The response carries component keys, states,
   integers and ISO timestamps only — no service name, host, port, version or
   error message. `status-aggregation.utility.spec.ts` serialises it and

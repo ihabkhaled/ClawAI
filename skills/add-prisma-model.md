@@ -20,7 +20,7 @@ required_context: [data-ownership, ai-context-pack]
 affected_workspaces: [apps/claw-<service>-service]
 required_tests: [repository spec with mocked client]
 required_docs: [docs/06-data/database-reference.md, service CLAUDE.md]
-validation_lane: cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Skill: Add a Prisma Model
@@ -77,7 +77,11 @@ Each service owns its PostgreSQL schema in `apps/claw-<service>-service/prisma/s
 ## Validation commands
 
 ```bash
-cd apps/claw-<service>-service && npx prisma generate && npm run typecheck && npm run lint && npm test && npm run build
+cd apps/claw-<service>-service && npx prisma generate && cd -
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 ## Documentation updates

@@ -15,9 +15,25 @@ Every workspace. Every workspace uses Vitest (ADR-099); backend `*.spec.ts`, fro
 
 1. **A test for every change** — every new function, service method, DTO, hook, and
    component gets a test. TDD preferred: failing test before implementation.
-2. **≥ 92 % coverage** on statements/branches/functions/lines per service and the
-   frontend, enforced via `coverageThreshold` and `npm run test -- --coverage`.
-   Do not lower a threshold to land a change.
+2. **Coverage is a ratchet with a dated path to 92 %.** The single home for the
+   numbers is [`tools/coverage/thresholds.json`](../tools/coverage/thresholds.json):
+   - **declared** — each workspace's vitest `coverage.thresholds` (the target).
+     Never lowered.
+   - **floor** — what CI enforces on every run: the declared value once the suite
+     meets it, otherwise the coverage measured when the floor was set (minus one
+     point for Linux/Windows drift). A floor only rises
+     (`npm run coverage:raise-floors` after `npm run coverage:measure`).
+   - **changedLines** — every line a pull request adds or changes in workspace
+     source must be covered at this rate on its own, whatever the workspace
+     average (currently 80 %).
+
+   Until 2026-10-13 CI never ran `--coverage`, so the declared values were never
+   enforced; on that date 17 of 27 suites measured below their own. The path
+   (proposed with the gates overhaul, owner to confirm): every floor reaches its
+   declared value by **2026-12-31**; `changedLines` rises to 92 by **2027-03-31**;
+   every declared threshold reaches 92 on all four metrics by **2027-06-30**.
+   CI fails when any declared value, floor or `changedLines` goes down.
+
 3. **Cover the edges, not just the happy path** — boundary, null, empty, overflow,
    duplicate, concurrent, malformed inputs. Every manager `catch` branch is tested.
 4. **DTO fuzz tests** for every Zod schema (valid + boundary + invalid + null/empty/overflow).
@@ -38,7 +54,9 @@ Every workspace. Every workspace uses Vitest (ADR-099); backend `*.spec.ts`, fro
 ## Prohibited patterns
 
 - Shipping code with no accompanying test.
-- Lowering `coverageThreshold` to pass CI.
+- A workspace with source and no spec (`knowledge:verify` fails it; test scripts no
+  longer pass `--passWithNoTests`).
+- Lowering a vitest `coverage.thresholds` value, a floor or `changedLines`.
 - `expect(x).toBeDefined()` as the only assertion.
 - `xit`/`.skip()` / mocking the unit under test.
 - Declaring a feature done without running its `qa/` script.
@@ -55,10 +73,16 @@ qa/test-memory-service.sh   # auth → endpoints → psql verify → log scan �
 
 ## Enforcement
 
-- **CI job** — `test` job runs per-workspace with `--coverage`; threshold gate.
-- **Unit test config** — `vitest.config.ts` `test.coverage.thresholds`.
-- **Review checklist** — QA script existence + 0-failure evidence in
-  `.claude/Integrations/<feature>__QA_output.md`.
+- **CI `test` job** — every workspace suite runs with `--coverage` and the floor
+  from `tools/coverage/thresholds.mjs flags`; a sharded suite (the frontend) is
+  merged in `coverage-merge`, which enforces its floor on the whole.
+- **CI `changed-lines-coverage`** (pull requests) — `tools/coverage/changed-lines.mjs`.
+- **CI `policy`** — `tools/coverage/thresholds.mjs check --base=<base>`: nothing
+  went down.
+- **Unit test config** — `vitest.config.ts` `test.coverage.thresholds` (declared).
+- **Tests** — `tools/__tests__/ci-gates.test.mjs`.
+- **Review checklist** — the batch's `docs/qa-evidence/` record (rules/60) carries
+  the QA-script evidence.
 
 ## Related skills
 
@@ -71,7 +95,8 @@ qa/test-memory-service.sh   # auth → endpoints → psql verify → log scan �
 
 ## Definition of done
 
-- [ ] New/changed behavior tested; coverage ≥ 92 %, not lowered.
+- [ ] New/changed behavior tested; changed lines meet `changedLines`; no declared
+      threshold or floor lowered.
 - [ ] Edge/boundary/error paths + DTO fuzz covered.
 - [ ] Frontend method/path/headers/body exactly match the backend DTO contract.
 - [ ] `qa/test-<feature>.sh` run with 0 failures; DB + logs verified.

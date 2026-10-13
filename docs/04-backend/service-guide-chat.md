@@ -758,97 +758,11 @@ first time.
 
 ## Every lane gets the media its own model can read (ADR-120, 2026-09-25)
 
-The model the user picked is **not** assumed to be the media executor. Per lane
-(single chat, each compare lane, judge, critic) chat-service decides how every
-attachment reaches THAT model, and the one decision drives both the payload and
-the record. Rule: [rules/42](../../rules/42-attachment-understanding.md) item 14.
-
-- **Capability**: `ModelCapabilityClient` (`clients/model-capability.client.ts`)
-  reads connector-service `GET /api/v1/internal/connectors/models-snapshot`
-  (60 s cache, 10 s negative cache, 2.5 s timeout, **never throws**), keyed by
-  `modelMatchKey` from `@claw/shared-utilities` (the same normalizer routing
-  uses). Result per modality: `MediaCapabilityState` SUPPORTED / UNSUPPORTED /
-  UNKNOWN (`IMAGE_INPUT`, `AUDIO`|`AUDIO_INPUT`, `VIDEO_INPUT`).
-- **Unknown policy**: no row for a local runtime (`local-ollama`, `OLLAMA`,
-  `local-llamacpp`, `LLAMACPP`) → `isLocalVisionModel` name heuristic; no row
-  for a cloud model, or snapshot down → UNKNOWN → the old provider-level
-  behaviour (`VISION_CAPABLE_PROVIDERS`, `GEMINI_VIDEO_CAPABLE_MODELS`).
-- **Resolver**: pure `resolveAttachmentDelivery(files, capabilities, options)`
-  (`utilities/attachment-delivery.utility.ts`) → per file a `FileDeliveryMode`
-  and `sendNative`. `buildFileDeliveryEntries` delegates to it (one classifier).
-- **Chokepoints**: `AttachmentDeliveryManager.applyToContext` runs at the top of
-  `callProvider` and `streamCandidate`, stamps `context.attachmentDelivery`, and
-  the response carries `fileDelivery`. Builders read `isSentNatively` /
-  `nativeImageContents` — never re-derive vision themselves. Image/file
-  generation providers are skipped.
-- **Non-vision lane**: no `image_url` part, no Ollama `images[]`; the system
-  block carries the OCR text framed as extracted text, or a plain "cannot see
-  this image" note; recorded `OMITTED_NO_VISION` (batch 5's helper vision
-  upgrades exactly this decision — see the next section).
-- **Modes**: `TRANSCRIPT` / `STILL_PROCESSING` / `FAILED_PROCESSING` for audio,
-  `NATIVE_VIDEO` only on Gemini's native transport, `TRUNCATED_TEXT` when the
-  text exceeded `MAX_FILE_CONTENT_LENGTH` or carries `TEXT_BUDGET_SHORTENED_MARKER`.
-- **Provenance**: single chat writes `metadata.fileDelivery` (compare's shape);
-  compare records each lane from its own model (`laneDeliveryEntries`); the
-  judge summarises `response.fileDelivery` before falling back to the heuristic.
-- **Video routing**: `resolveVideoAttachmentCandidates` takes a
-  `VideoRoutingCapability` (`AttachmentDeliveryManager.resolveVideoRouting`);
-  alternatives are built from the same catalog data and never include the
-  rejected model.
-- **Placeholders**: `decodeFileContent` checks video BEFORE `extractedText`, so
-  file-service's `[Video file: x]` never reaches a model.
-- **Compare budget**: `ChatContextRequest.laneTargets` → the gateway budgets
-  the shared context for the smallest lane window; any unknown lane keeps the
-  conservative 8k.
-- **Log line** (content-free): `mediaDelivery {"provider","model","vision","videoInput","files","modes":{…},"fileIds":[…]}`.
-  `docker logs claw-chat-service | grep mediaDelivery` answers "did the model get my image?".
+Canonical home: the "Every lane gets the media its own model can read (ADR-120, 2026-09-25)" section of [`apps/claw-chat-service/CLAUDE.md`](../../apps/claw-chat-service/CLAUDE.md).
 
 ## Helper vision: a lane that cannot see gets a description (ADR-120 batch 5, 2026-09-25)
 
-When a lane's model cannot see (`OMITTED_NO_VISION`, reason `no_vision`), the
-admin's `VISION_HELPER` models describe the image and the lane receives the
-description as **derived observations**. The user's model stays the
-conversational model; the message's `provider`/`model` are never replaced.
-
-- **Where**: `ChatExecutionManager.withAttachmentDelivery` runs
-  `AttachmentDeliveryManager.applyToContext` then
-  `VisionHelperManager.upgradeContext` (`managers/vision-helper.manager.ts`) at
-  both chokepoints, so single chat, compare lanes, judge and critic are covered.
-- **Candidates**: `VisionHelperCandidatesClient` reads
-  `GET /internal/assistant-models/VISION_HELPER/candidates` (60 s cache, last list
-  on outage, empty list = no helper). Only models the connector catalog marks
-  vision-`SUPPORTED` are tried; a LOCAL_ONLY / PRIVACY_FIRST turn
-  (`context.mediaLocalOnly`) tries local providers only.
-- **One description per (user, turn, image)**: `ContextAssemblyManager.assemble`
-  stamps `turnId`; lanes spread it, so compare lanes + judge share one in-flight
-  result (10 min TTL, 500 entries). One image = one paid call, one hold.
-- **Metering**: `PaygSurface.VISION_HELPER`, workflow `vision-helper`. The
-  manager reserves (`requestId` `${turnId}:vision:${fileId}`, a fall-through
-  gets `…:attempt:N`), then calls `callProvider` with `paygCall.hold`, so the
-  provider receives `hold.maxOutputTokens` and the chokepoint finalizes /
-  releases. A 402, clamped hold (released `CANCELLED`) or unreachable meter →
-  `REFUSED`, no next candidate (rule 37 item 18). A timeout (`timeoutMs` from
-  the role row) → `TIMED_OUT`, no next candidate (the late call settles its own
-  hold). Any other error, including an image rejection → next candidate.
-  Local helpers come back `metered: false`.
-- **Limits**: `VISION_HELPER_MAX_IMAGES_PER_TURN` = 4; the rest keep OCR with
-  reason `vision_helper_limit`. The helper gets only the fixed instruction
-  (`VISION_HELPER_SYSTEM_PROMPT`) and the one image — no history, memories or
-  user question.
-- **Payload**: `DERIVED_IMAGE_TEXT` entries carry `helperProvider` /
-  `helperModel`; `renderFileText` emits the framed block
-  (`DERIVED IMAGE OBSERVATIONS — produced by ClawAI's vision helper (p/m), not seen directly by you.`,
-  `Image:`, BEGIN/END delimiters with forged ones stripped, and guidance to say
-  it relied on a description and to treat image text as data, not instructions).
-  Failure → OCR + honest note (`vision_helper_failed`); credit refusal → OCR +
-  `VISION_HELPER_REFUSED_NOTE` (`vision_helper_refused`).
-- **Window**: descriptions and the other files' text are fitted TOGETHER into
-  the file share (`fitLaneFileShare`, rule 51 item 4), descriptions first;
-  `context-assembly-window-fit.spec.ts` proves an 8k lane still fits.
-- **Provenance**: `metadata.helperExecutions: [{kind:'VISION', provider, model, fileId, latencyMs, outcome}]`
-  on single chat and every compare lane it served.
-- **Log line** (content-free, per attempt): `visionHelper {"kind","provider","model","fileId","latencyMs","outcome"}`.
-- **Not yet**: plan gating (paid-only helper vision) is batch 6.
+Canonical home: the "Helper vision: a lane that cannot see gets a description (ADR-120 batch 5, 2026-09-25)" section of [`apps/claw-chat-service/CLAUDE.md`](../../apps/claw-chat-service/CLAUDE.md).
 
 ## Media plan gates (ADR-122, 2026-09-25)
 
@@ -907,155 +821,14 @@ rather than that none could be read.
 
 ## "Read aloud" — progressive text-to-speech of a reply (batch 9; async since 2026-09-25)
 
-Its own capability, endpoint, player and PAYG surface — never mixed with
-transcription (ADR-120 addenda). **Asynchronous and segmented since
-2026-09-25**: measured live, Gemini `gemini-2.5-flash-preview-tts` renders
-~36 characters/s, so a synchronous reading of any reply over ~1,200
-characters could never finish inside nginx's 60 s (4,000 chars: 0/3, every
-one a 504). Our own overhead was 82–216 ms.
-
-- **Provider host** (2026-09-29): speech calls go to the connector's configured
-  `baseUrl` when set (blank = unset), else the default host — same rule as chat
-  completions. A Gemini base on the OpenAI-compat `…/openai` path is trimmed to
-  the native API (`speechProviderBaseUrl`, `utilities/speech-provider-url.utility.ts`);
-  the SSRF allowlist is declared from that base. `SpeechConnectorClient.resolveCredentials`.
-- **Routes** (`ChatSpeechController`, JWT; Zod params, id `^[A-Za-z0-9_-]{1,64}$`):
-  - `GET /chat-messages/speech/availability` → `{ available, reason }` (unchanged).
-  - `POST /chat-messages/:id/speech` → **200** `{status: READY, …}` when a stored
-    reading of the same text exists, else **202** `{status: GENERATING, …}` and a
-    background job starts. Never waits on a provider.
-  - `GET /chat-messages/:id/speech` → the poll. Owner-only (404 like a missing
-    id), free, never locks/reserves.
-  - `POST /chat-messages/:id/speech/cancel` → the owner's Stop (see **Cancel**).
-  - Body (all three): `{ status: SpeechJobStatus (NONE|GENERATING|READY|PARTIAL|FAILED|CANCELLED),
-segments: [{index, fileId, mimeType, characters}], totalSegments, truncated,
-errorCode }`. `NONE` = never read, or the stored reading is of other text.
-- **Order** (`MessageSpeechService.start`): owner else 404 → `assertTextToSpeechAccess`
-  403 before anything paid → speakable text (`speakable-text.utility.ts`, capped at
-  **12,000** code points at a sentence end, `truncated`) → READY + same content hash
-  - first file still exists → 200 replay (no lock, no hold) → GENERATING and not
-    stale → 202 as is (never a second job) → **Redis job lock**
-    (`SpeechJobLockStore`, `SET NX PX`, key `claw:chat:speech:job:<messageId>`, TTL
-    = job deadline + 30 s, compare-and-delete release) → lost the lock → 202
-    GENERATING (a sibling replica owns it) → won → re-read, write GENERATING state
-    under a **new generation**, `void SpeechJobManager.run(...)`, 202. Redis
-    unreachable → 503 `TTS_FAILED`, nothing paid (prod runs 4 chat replicas; a job
-    that cannot prove it is alone does not start).
-- **Segments** (`speech-segments.utility.ts`): first ≤ 160 code points (first audio
-  in ~4 s), then ≤ 600; cut at the last sentence end / line break, else a clause
-  break (`, ; : ، ؛ 、 ，` or a spaced dash), else a space — never mid-word; only a
-  break-less run (CJK without marks) is cut at the limit. Deterministic, so a
-  resumed job's indices match the stored ones.
-- **Job** (`SpeechJobManager`): at most `SPEECH_SEGMENT_CONCURRENCY` = 3 provider
-  calls in flight, segment 1 queued first. Per segment: `SpeechSynthesisManager`
-  walk → store the WAV/MP3 (`reply-<msg>-<n>.wav`) via file-service
-  `POST /internal/files/store-generated-audio` → append to `metadata.speech.segments`
-  (index order; writes are chained and re-read the message so other metadata keys
-  survive) → **finalize** on the measured units. A store/record failure
-  **releases** that hold (CANCELLED, log `reason=STORE_FAILED`). A provider
-  failure fails only its segment; a credit refusal / clamp / meter down / no voice
-  / deadline stops every worker (rule 37 item 18). End state: READY, **PARTIAL**
-  (stored segments play and are charged; failed ones were released — the player
-  says so), or FAILED; then the lock is released. The job never throws; a meter
-  error in settlement is logged (`outcome=FINALIZE_FAILED|RELEASE_FAILED`).
-- **Deadline**: `SPEECH_JOB_DEADLINE_MS` = 180 s from `startedAt`. No attempt starts
-  unless it, its store (10 s) and its settlement (5 s) fit. A GENERATING state
-  older than the lock TTL is **stale**: GET reports PARTIAL/FAILED with
-  `TTS_FAILED`, the next POST resumes (keeps stored segments, new generation).
-- **Walk per segment** (`SpeechSynthesisManager.synthesize`): candidates from
-  routing `TTS_VOICE` (60 s cache; Gemini `…-tts` and OpenAI `tts-1`/`tts-1-hd`
-  only). Per-attempt timeout = min(candidate, 12 s + 60 ms/char capped at 40 s,
-  job window). A **timeout is retried once on the same candidate**, then the next
-  candidate; a rejection moves on at once. A key-less provider is skipped before
-  any hold.
-- **Rate limits** (2026-09-25; live: Gemini 429 in 339 ms with 3 segments in
-  flight, OpenAI fallback out of quota, segment dropped → PARTIAL). A Gemini 429 /
-  `RESOURCE_EXHAUSTED` or an OpenAI 429 that is not `insufficient_quota` is
-  `RATE_LIMITED` (`SpeechProviderError.rateLimited`): hold **released**
-  (`PROVIDER_ERROR`, never charged), then the **same candidate** is retried after
-  the provider hint (Gemini `RetryInfo.retryDelay`, OpenAI `Retry-After`) or
-  1.5 s / 3 s / 6 s ±20 % jitter, each wait ≤ 45 s (a longer hint, e.g. a spent daily quota, → move on), at
-  most `SPEECH_RATE_LIMIT_RETRIES` = 3, never when the attempt would no longer fit
-  the job window. Each retry is a new requestId / hold (rule 37 item 15). Only
-  then the next candidate; a credit refusal still ends everything (item 18). The
-  job's first 429 drops it to **one call in flight** (in-flight calls finish;
-  segment order kept). OpenAI `insufficient_quota` is a plain FAILED — waiting
-  never fixes a billing quota. Helpers: `speech-rate-limit.utility.ts`. Log:
-  `ttsAttempt outcome=RATE_LIMITED … retry=n/3 hintMs=… retryInMs=<ms|none>`,
-  `ttsJob … rateLimited concurrency=1`.
-- **Metering** (`PaygSurface.TTS`, one hold per attempt, requestId
-  `tts:<msg>:<contentHash>:g<generation>:seg<n>:<attempt>`, ≤ 128 chars): OpenAI
-  reserves / finalizes the segment's `ttsCharacters`; Gemini reserves text tokens
-  - 16 and 4 output tokens per character (≤ admin ceiling), sends
-    `hold.maxOutputTokens`, finalizes on `usageMetadata`. A second POST while a job
-    runs makes no hold at all.
-- **Legacy**: a v1 `metadata.speech` (one `fileId`, before segmenting) reads as a
-  READY one-segment state — old readings still replay free.
-- **Cancel** (owner's Stop, pack §72, ADR-120 addendum 3): `POST
-/chat-messages/:id/speech/cancel` → **200** with the state body (never 201).
-  Owner-only (a stranger gets the missing-id 404). Only a live GENERATING job of
-  the reply's CURRENT text is stopped: the Redis flag
-  `claw:chat:speech:cancel:<messageId>:<generation>` (`SpeechJobCancelStore`,
-  TTL = job-lock TTL, per generation so a later job is never hit) is written
-  FIRST, then `metadata.speech.status = CANCELLED`. Anything else (NONE, READY,
-  PARTIAL, FAILED, already CANCELLED, stale) is a no-op answering the state as
-  it is. Redis down → 503 `TTS_FAILED` and the state stays GENERATING — a stop
-  that cannot reach the job is never claimed. The job (any replica) reads the
-  flag before each segment, right after each provider call, and every
-  `SPEECH_JOB_CANCEL_POLL_INTERVAL_MS` = 1 s; once seen: no new segment starts,
-  in-flight provider requests are aborted LOCALLY (`AbortSignal` through
-  `httpRequest` / `httpPostBinary`; the provider may still render upstream —
-  never claimed stopped), a result that lands anyway is discarded and its hold
-  RELEASED (`CANCELLED`, log `reason=CANCELLED_BY_OWNER`), never finalized; a
-  rate-limit wait is cut short. Segments already stored stay stored and charged
-  (the user heard them). The job ends CANCELLED (READY if every segment had
-  landed), `errorCode: null`. Job writes never replace a newer generation's
-  state and never turn CANCELLED back into GENERATING. A POST while the stopped
-  job still holds the lock → **409 `TTS_CANCEL_PENDING`**; after it, a POST
-  resumes only the missing segments under a new generation. Frontend: Stop
-  (player or button) calls `useCancelMessageSpeech` only while GENERATING, and
-  its answer replaces the cached state, so polling stops; phase `CANCELLED`
-  reads `chat.speech.cancelled`. Tests: `message-speech.service.spec.ts`
-  ("MessageSpeechService.cancel"), `chat-speech.controller.spec.ts`,
-  `speech-rate-limit.utility.spec.ts` (`waitMs`), `http-client.utility.spec.ts`
-  (`httpPostBinary` signal).
-- **Logs**: `speech: job started messageId=… generation=… segments=… kept=…`,
-  `ttsAttempt {messageId, segment, provider, model, requestId, outcome, latencyMs}`,
-  `ttsSegment … failed code=… stop=…`, `ttsSettlement reservationId=… outcome=…`,
-  `ttsJob messageId=… status=… segments=x/y ms=…`. Never a user id or a balance.
-- **Frontend**: `useMessageSpeech` (button) POSTs once and seeds the
-  `queryKeys.speech.state` cache; a cached READY replays with no request.
-  `MessageSpeechPlayer` mounts `MessageSpeechPlayback` only while open;
-  `useMessageSpeechPlayer` is the ONLY observer that polls (700 ms, while
-  GENERATING, capped at 258 polls = 3 min) and plays segments in index order via
-  `useSpeechSegmentBlobs` (authenticated `getSegmentAudio`, current + next
-  preloaded, each fetched once, URLs revoked). Tests:
-  `message-speech.service.spec.ts`, `speech-segments.utility.spec.ts`,
-  `speech-job-state.utility.spec.ts`, `speech-gateway-timeout.spec.ts`,
-  frontend `message-speech-player.test.tsx`.
+Canonical home: the "Read aloud" section of [`apps/claw-chat-service/CLAUDE.md`](../../apps/claw-chat-service/CLAUDE.md) (it also covers the voice picker and the metrics).
 
 ## Reasoning never reaches the answer (rule 56, 2026-09-25)
 
-Prod, OLLAMA / `glm-5.3`, Direct mode: the stored answer was
-`"…Be concise.</think>Same voice note, same problem: …"`. GLM's template
-injects `<think>` into the prompt, so its output starts INSIDE the reasoning
-and contains only a bare `</think>`. `ThinkingFragmentScanner` looks only for
-an opening tag outside a block, and the Ollama Cloud path stored the raw
-buffered content; the markdown renderer hid the tag, so the user read the
-model's private notes run into its reply.
+Canonical home (the incident, `splitBufferedReasoning`, `parseOllamaChatResponse`, the
+"reasoned but produced no answer" error): the "Reasoning never reaches the answer" section of
+[`apps/claw-chat-service/CLAUDE.md`](../../apps/claw-chat-service/CLAUDE.md). One detail kept here:
 
-- `splitBufferedReasoning` (`utilities/buffered-reasoning.utility.ts`) splits a
-  COMPLETE response: a closing tag before any opening tag ends a reasoning
-  block that began at byte 0; then ordinary `<think>` / `<thinking>` /
-  `<reasoning>` / `<thought>` blocks (any case, unterminated included). No
-  tag → byte-for-byte unchanged; a tag quoted in inline code is text.
-- `parseOllamaChatResponse` applies it and folds `message.thinking` in, so
-  every buffered Ollama path (cloud, cloud tool loop, local tool route) returns
-  clean `content` plus `reasoning`. `simulateOllamaCloudStream` and
-  `simulateOllamaStream` pass `reasoningContent` to `runSimulated` so the live
-  panel shows it; `metadata.reasoning` stores it.
-- The "reasoned but produced no answer" error now also fires when the only
-  thing before a bare `</think>` was reasoning.
 - **True streams (added the same day).** OpenRouter and OpenAI-compatible
   presets stream token by token, so the text before a bare `</think>` used to
   be emitted before the tag arrived. `StreamingReasoningSplitter` — the one
@@ -1179,35 +952,7 @@ The composer uploads a mask PNG as a file and sends its id as `maskFileId`. chat
 
 ## Runtime V2 settled cost in the journal (F108, rule 37 item 23)
 
-- Each paid model call of a run (the ordinary turn AND every repair turn, both in
-  `RuntimeV2LoopManager`) publishes ONE `run.usage` event, `{ costMicros }`, integer
-  micro-USD, right after the call settles and before the answer or terminal event.
-  The coding agent's telemetry already reads `payload.costMicros` off any event and
-  exports it as `clawai.cost`; summing the events is the run's whole bill.
-- **PAYG only, fail closed.** `PaygMeter.finalize` returns auth-service's
-  `{ settled, billingMode, settledCostMicroUsd? }`; `paygDisclosableCost` keeps the
-  cost only for `billingMode === 'PAYG'` plus a non-negative safe integer, and
-  `settlePaygHold` also requires `hold.metered`. The chokepoint then sets
-  `LlmResponse.settledCostMicroUsd`. Subscribers, trials, administrators, unmetered
-  calls, an old auth-service (204), an unrecognised mode and a failed finalize all
-  leave the field off, so `reportSettledCost` returns before touching the store and
-  their journal is unchanged. Zero is a real cost and is published as `0`.
-- The event carries `costMicros` and nothing else: no provider, model, rate, ceiling or
-  margin (`buildRuntimeV2UsageEvent`, pinned by `runtime-v2.store.spec.ts`). It is a new
-  type on purpose: clients validate every known payload `.strict()`, so a key added to
-  `model.summary` or `run.completed` would be a rejected event, while an unknown type
-  is projected as-is.
-- `RuntimeV2Store.appendUsage` reuses the `APPEND_MODEL_OUTPUT` script (active run +
-  current claim required). `executeClaimedRun` puts the claim on the binding the model
-  calls use (`claimed`) because the claim is taken after the binding is resolved. A
-  failed publish is logged with the run id only (never an amount) and never fails the
-  turn: the money has already moved.
-- Only the buffered `callProvider` chokepoint sets the field; the streaming chokepoint
-  and the tool-loop do not (nothing reads it there).
-- Tests: `payg-credit-chokepoint.spec.ts` (shown / zero / subscription / unknown /
-  unrecognised / float / no reply / unmetered), `payg-cost-disclosure.utility.spec.ts`,
-  `runtime-v2-usage.utility.spec.ts`, `runtime-v2.store.spec.ts` (`appendUsage`),
-  `runtime-v2-loop.usage-event.spec.ts` (turn, repair, claim, ordering, store failure).
+Canonical home: the "Runtime V2 settled cost in the journal (F108, rule 37 item 23)" section of [`apps/claw-chat-service/CLAUDE.md`](../../apps/claw-chat-service/CLAUDE.md).
 
 ## Video generation (ADR-137)
 

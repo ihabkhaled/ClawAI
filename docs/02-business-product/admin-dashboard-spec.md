@@ -32,7 +32,7 @@ ClawAI provides comprehensive administrative capabilities for managing users, mo
 
 **Access**: All roles (read-only)
 
-Aggregated health dashboard checking all 17 backend services:
+Aggregated health dashboard checking every backend service:
 
 | Service                 | Port | Health Check     |
 | ----------------------- | ---- | ---------------- |
@@ -125,10 +125,10 @@ Aggregated health dashboard checking all 17 backend services:
 
 **Access**: ADMIN only
 
-| Log Type    | Source                  | TTL     | Fields                                               |
-| ----------- | ----------------------- | ------- | ---------------------------------------------------- |
-| Server Logs | All 17 backend services | 30 days | level, serviceName, module, action, requestId, error |
-| Client Logs | Frontend (browser)      | 30 days | level, message, component, action, userId, route     |
+| Log Type    | Source               | TTL     | Fields                                               |
+| ----------- | -------------------- | ------- | ---------------------------------------------------- |
+| Server Logs | All backend services | 30 days | level, serviceName, module, action, requestId, error |
+| Client Logs | Frontend (browser)   | 30 days | level, message, component, action, userId, route     |
 
 **Filtering**: By service name, log level, date range, search text.
 

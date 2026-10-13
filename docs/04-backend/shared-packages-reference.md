@@ -1,6 +1,6 @@
 # Shared Packages Reference
 
-ClawAI has 5 shared packages in the `packages/` directory, consumed by all backend services.
+ClawAI has <!-- count:sharedPackages -->6<!-- /count --> shared packages in the `packages/` directory. This page covers four of them; `shared-utilities` and `shared-entitlements` are described in [shared-packages.md](shared-packages.md).
 
 ---
 

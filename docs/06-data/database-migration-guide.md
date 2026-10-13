@@ -110,62 +110,36 @@ npx prisma migrate reset
 
 ```bash
 cd apps/claw-<service>
-npx prisma db seed
-# or
-npx tsx prisma/seed.ts
+npm run seed            # node prisma/seed.cjs — where the service has one
+npx prisma db seed      # the same command, via migrations.seed in prisma.config.ts
 ```
+
+Release lane: `npm run seed:versioned` (part of `npm run release:prepare`) runs
+`npx prisma db seed` in every workspace that ships `prisma/seed.cjs`, `seed.js` or `seed.ts`.
 
 ### Existing Seeds
 
-| Service | Seed File                | What It Seeds                     |
-| ------- | ------------------------ | --------------------------------- |
-| auth    | `prisma/seed.ts`         | Default admin user                |
-| ollama  | `prisma/seed-catalog.ts` | 30 model catalog entries          |
-| routing | `prisma/seed.ts`         | Default routing policies (if any) |
+| Service | Seed File                | What It Seeds                                                                                          |
+| ------- | ------------------------ | ------------------------------------------------------------------------------------------------------ |
+| auth    | `prisma/seed.cjs`        | Admin user, plan catalog, credit packages (`prisma/seeders/`); permissions: `npm run seed:permissions` |
+| ollama  | `prisma/seed-catalog.ts` | Model catalog (`npm run seed:catalog`; also seeded at boot)                                            |
+| routing | `prisma/seed.cjs`        | Model cost versions (also seeded at boot by `ModelCostSeedService`)                                    |
 
 ### Creating a New Seed
 
-1. Create `prisma/seed.ts` (or `prisma/seed-<name>.ts`)
-2. Import the generated Prisma client
-3. Use `prisma.$transaction` for atomic operations
+1. Write `prisma/seed.cjs` as plain JavaScript reading from the built `dist/` — the
+   production image ships no TypeScript tree and no TypeScript runner
+   (`apps/claw-routing-service/prisma/seed.cjs` explains why and is the template).
+2. Construct the Prisma client with its driver adapter, as `PrismaService` does.
+3. Use `prisma.$transaction` for atomic operations; make every write idempotent (upsert).
+4. Declare it in `prisma.config.ts` — Prisma 7 ignores the old `"prisma": { "seed" }` field in `package.json`:
 
 ```typescript
-import { PrismaClient } from '../src/generated/prisma';
-
-const prisma = new PrismaClient();
-
-async function main(): Promise<void> {
-  await prisma.routingPolicy.upsert({
-    where: {
-      /* unique field */
-    },
-    update: {},
-    create: {
-      name: 'Default AUTO Policy',
-      routingMode: 'AUTO',
-      priority: 0,
-      isActive: true,
-      config: {},
-    },
-  });
-}
-
-main()
-  .then(() => prisma.$disconnect())
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  });
-```
-
-4. Add to `package.json` if using `prisma db seed`:
-
-```json
-{
-  "prisma": {
-    "seed": "npx tsx prisma/seed.ts"
-  }
-}
+export default defineConfig({
+  schema: './prisma/schema.prisma',
+  migrations: { seed: 'node prisma/seed.cjs' },
+  datasource: { url: process.env['<SERVICE>_DATABASE_URL'] ?? '' },
+});
 ```
 
 ---

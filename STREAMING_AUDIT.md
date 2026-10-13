@@ -139,7 +139,7 @@ Consumes `message.routed`; publishes `message.created`, `message.completed`, `me
    (`stream-thinking-panel`) and metrics HUD. Keep polling as reconnect/finalization fallback.
 5. **Compare (slice 2)**: add `laneId`; `ParallelExecutionManager` streams per model; new lane-aware FE hook demuxes by lane.
 6. **Wiring**: i18n (9 locales) + `i18n.types.ts`, nginx already has SSE `proxy_buffering off` for the stream route
-   (verify), docs `docs/RICH_MODEL_STREAMING.md`, CLAUDE.md, tests.
+   (verify), docs (`docs/03-architecture/runtime-progress.md`), CLAUDE.md, tests.
 
 ## 4. Realistic provider availability for testing
 

@@ -369,7 +369,7 @@ customer downgrade.
 - `docs/11-runbooks/runbook-billing-reconciliation.md` — reconciliation diagnosis and safe recovery
 - `docs/11-runbooks/runbook-failed-billing-sweep.md` — lifecycle/outbox/invoice sweep recovery
 - `rules/28-billing-integrity-and-api-contracts.md` — immutable billing and API contract rules
-- `docs/13-adr/adr-064-refund-entitlement-semantics.md` through ADR 067 — financial-record and job decisions
+- `docs/13-adr/adr-064-refund-ledger-and-entitlement-policy.md` through ADR 067 — financial-record and job decisions
 - `.claude/Integrations/secure-subscriptions-payments__PLAN.md` — Phase-0 plan
 - `docs/13-adr/adr-083-credit-topup-checkout-purpose.md` — credit top-up as the third checkout purpose (amends ADR-066)
 - `docs/03-architecture/payg-credit.md` — the connector-credit mechanism end to end

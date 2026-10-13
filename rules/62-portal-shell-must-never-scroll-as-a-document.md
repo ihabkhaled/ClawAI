@@ -6,4 +6,4 @@
 - Any scroll box that holds `sr-only` or absolutely positioned content is `relative` as well (`ModelExposureTable` had the same defect sideways).
 - Never use `overflow-hidden` on a shell: focus and `scrollIntoView` can still scroll it. Use `overflow-clip`.
 - Wide content (tables, charts, toolbars) gets its own `overflow-x-auto` box and `min-w-0` parents; it never widens the column.
-- Prove it: `npm run responsive:audit` (see `docs/05-frontend/responsive-audit.md`) fails a page when `scrollHeight > innerHeight` or `scrollWidth > clientWidth`.
+- Prove it: `node apps/claw-frontend/scripts/responsive-audit/audit.cjs` (see `docs/05-frontend/responsive-audit.md`) fails a page when `scrollHeight > innerHeight` or `scrollWidth > clientWidth`.

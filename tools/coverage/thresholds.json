@@ -1,0 +1,331 @@
+{
+  "changedLines": 80,
+  "floors": {
+    "@claw/shared-auth": {
+      "branches": 80,
+      "functions": 77,
+      "lines": 80,
+      "statements": 80
+    },
+    "@claw/shared-constants": {
+      "branches": 80,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    },
+    "@claw/shared-entitlements": {
+      "branches": 80,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    },
+    "@claw/shared-rabbitmq": {
+      "branches": 80,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    },
+    "@claw/shared-types": {
+      "branches": 80,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    },
+    "@claw/shared-utilities": {
+      "branches": 80,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    },
+    "claw-agent-service": {
+      "branches": 10,
+      "functions": 10,
+      "lines": 10,
+      "statements": 10
+    },
+    "claw-audit-service": {
+      "branches": 65,
+      "functions": 53,
+      "lines": 66,
+      "statements": 66
+    },
+    "claw-auth-service": {
+      "branches": 70,
+      "functions": 68,
+      "lines": 75,
+      "statements": 75
+    },
+    "claw-chat-service": {
+      "branches": 70,
+      "functions": 70,
+      "lines": 70,
+      "statements": 70
+    },
+    "claw-client-logs-service": {
+      "branches": 53,
+      "functions": 54,
+      "lines": 59,
+      "statements": 60
+    },
+    "claw-connector-service": {
+      "branches": 65,
+      "functions": 74,
+      "lines": 73,
+      "statements": 73
+    },
+    "claw-file-generation-service": {
+      "branches": 65,
+      "functions": 76,
+      "lines": 70,
+      "statements": 72
+    },
+    "claw-file-service": {
+      "branches": 70,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    },
+    "claw-frontend": {
+      "branches": 60,
+      "functions": 60,
+      "lines": 60,
+      "statements": 60
+    },
+    "claw-health-service": {
+      "branches": 80,
+      "functions": 92,
+      "lines": 92,
+      "statements": 92
+    },
+    "claw-image-service": {
+      "branches": 50,
+      "functions": 70,
+      "lines": 55,
+      "statements": 55
+    },
+    "claw-llamacpp-service": {
+      "branches": 23,
+      "functions": 23,
+      "lines": 23,
+      "statements": 23
+    },
+    "claw-memory-service": {
+      "branches": 32,
+      "functions": 35,
+      "lines": 40,
+      "statements": 39
+    },
+    "claw-ollama-service": {
+      "branches": 35,
+      "functions": 33,
+      "lines": 39,
+      "statements": 39
+    },
+    "claw-payment-service": {
+      "branches": 77,
+      "functions": 77,
+      "lines": 80,
+      "statements": 80
+    },
+    "claw-research-service": {
+      "branches": 70,
+      "functions": 70,
+      "lines": 70,
+      "statements": 70
+    },
+    "claw-routing-service": {
+      "branches": 70,
+      "functions": 68,
+      "lines": 70,
+      "statements": 70
+    },
+    "claw-server-logs-service": {
+      "branches": 67,
+      "functions": 63,
+      "lines": 69,
+      "statements": 69
+    },
+    "claw-thread-generation-service": {
+      "branches": 65,
+      "functions": 78,
+      "lines": 70,
+      "statements": 75
+    },
+    "claw-threads-service": {
+      "branches": 62,
+      "functions": 65,
+      "lines": 70,
+      "statements": 70
+    },
+    "claw-workspace-service": {
+      "branches": 53,
+      "functions": 50,
+      "lines": 59,
+      "statements": 58
+    }
+  },
+  "workspaces": {
+    "@claw/shared-auth": {
+      "branches": 80,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    },
+    "@claw/shared-constants": {
+      "branches": 80,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    },
+    "@claw/shared-entitlements": {
+      "branches": 80,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    },
+    "@claw/shared-rabbitmq": {
+      "branches": 80,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    },
+    "@claw/shared-types": {
+      "branches": 80,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    },
+    "@claw/shared-utilities": {
+      "branches": 80,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    },
+    "claw-agent-service": {
+      "branches": 10,
+      "functions": 10,
+      "lines": 10,
+      "statements": 10
+    },
+    "claw-audit-service": {
+      "branches": 80,
+      "functions": 92,
+      "lines": 92,
+      "statements": 92
+    },
+    "claw-auth-service": {
+      "branches": 70,
+      "functions": 92,
+      "lines": 90,
+      "statements": 90
+    },
+    "claw-chat-service": {
+      "branches": 70,
+      "functions": 70,
+      "lines": 70,
+      "statements": 70
+    },
+    "claw-client-logs-service": {
+      "branches": 80,
+      "functions": 92,
+      "lines": 92,
+      "statements": 92
+    },
+    "claw-connector-service": {
+      "branches": 65,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    },
+    "claw-file-generation-service": {
+      "branches": 65,
+      "functions": 80,
+      "lines": 70,
+      "statements": 75
+    },
+    "claw-file-service": {
+      "branches": 70,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    },
+    "claw-frontend": {
+      "branches": 60,
+      "functions": 60,
+      "lines": 60,
+      "statements": 60
+    },
+    "claw-health-service": {
+      "branches": 80,
+      "functions": 92,
+      "lines": 92,
+      "statements": 92
+    },
+    "claw-image-service": {
+      "branches": 50,
+      "functions": 70,
+      "lines": 55,
+      "statements": 55
+    },
+    "claw-llamacpp-service": {
+      "branches": 70,
+      "functions": 70,
+      "lines": 70,
+      "statements": 70
+    },
+    "claw-memory-service": {
+      "branches": 75,
+      "functions": 90,
+      "lines": 88,
+      "statements": 88
+    },
+    "claw-ollama-service": {
+      "branches": 70,
+      "functions": 70,
+      "lines": 70,
+      "statements": 70
+    },
+    "claw-payment-service": {
+      "branches": 92,
+      "functions": 92,
+      "lines": 92,
+      "statements": 92
+    },
+    "claw-research-service": {
+      "branches": 70,
+      "functions": 70,
+      "lines": 70,
+      "statements": 70
+    },
+    "claw-routing-service": {
+      "branches": 70,
+      "functions": 70,
+      "lines": 70,
+      "statements": 70
+    },
+    "claw-server-logs-service": {
+      "branches": 80,
+      "functions": 92,
+      "lines": 92,
+      "statements": 92
+    },
+    "claw-thread-generation-service": {
+      "branches": 65,
+      "functions": 80,
+      "lines": 70,
+      "statements": 75
+    },
+    "claw-threads-service": {
+      "branches": 65,
+      "functions": 80,
+      "lines": 70,
+      "statements": 75
+    },
+    "claw-workspace-service": {
+      "branches": 70,
+      "functions": 70,
+      "lines": 70,
+      "statements": 70
+    }
+  }
+}

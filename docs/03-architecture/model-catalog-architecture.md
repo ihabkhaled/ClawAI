@@ -234,8 +234,10 @@ The catalog is seeded from `apps/claw-ollama-service/prisma/seed-catalog.ts`:
 
 ```bash
 cd apps/claw-ollama-service
-npx tsx prisma/seed-catalog.ts
+npm run seed:catalog
 ```
+
+ollama-service also seeds the catalog at boot (`CatalogSeedService.onApplicationBootstrap`).
 
 This creates **170** `ModelCatalogEntry` records — the length of `CATALOG_ENTRIES`
 in `src/modules/ollama/constants/catalog-entries.constants.ts`, which the seed

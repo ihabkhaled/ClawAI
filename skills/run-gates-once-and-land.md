@@ -1,8 +1,8 @@
 # Skill: Run the Gates Once and Land the Change
 
 The runbook for [rule 34](../rules/34-gate-economy-and-machine-resources.md).
-The gates here are expensive by construction — 13 Prisma clients, 20 workspaces,
-thousands of tests. This is how to prove a change green **once**, land it, and
+The gates here are expensive by construction — a Prisma client per service, every
+workspace compiled, thousands of tests. This is how to prove a change green **once**, land it, and
 leave the developer's machine no busier than you found it.
 
 ## When to use
@@ -36,20 +36,22 @@ npx vitest run <matching spec>
 npm run typecheck
 ```
 
-One workspace at a time. Concurrency does not shorten wall-clock time here; it
-thrashes the disk and the CPU and makes everything slower.
+Do not start several suites by hand: the affected runner already runs
+workspaces in a bounded pool (half the cores; `CLAW_GATE_JOBS=1` for serial).
 
-## Step 2 — record the proof so nothing repeats it
+## Step 2 — prove it once and record the proof
 
 ```bash
 git add <explicit paths>        # never -A, never .
-npm run gates:receipt           # hashes the staged tree into .ai/local/gate-receipt.json
+npm run gates:receipt           # runs root checks, typecheck, related tests, build — then records
 ```
 
-The receipt names the exact tree it proved. `pre-commit` skips the affected
-typecheck and `pre-push` skips the affected test/build pass for that tree only;
-lint-staged and cheap integrity checks still run. Change a single byte and the
-receipt is void and the full pass returns.
+`gates:receipt` refuses to run while the working tree differs from the index
+(the gates would not be testing what you commit). It records each gate that
+passed with the workspaces it covered, bound to the tree, the lockfile, the
+Node version and the gate tooling. The hooks then skip exactly those gates for
+exactly that tree; lint-staged always runs. Change a single byte and the
+receipt is void. What each receipt gate may skip: rules/34 rule 4.
 
 **This is the sanctioned way to avoid duplicate work.** Do not reach for
 `--no-verify`: it is prohibited by

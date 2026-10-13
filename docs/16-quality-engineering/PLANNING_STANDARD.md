@@ -8,7 +8,7 @@
 
 ## Purpose and Philosophy
 
-Planning exists for one reason: to prevent wasted effort. In a system with 17 NestJS microservices, 13 PostgreSQL databases, RabbitMQ event flows, Nginx routing, shared packages used by every service, and a Next.js frontend with 8 language locales — a change that seems isolated rarely is. An unplanned change to `claw-routing-service` can break the frontend replay lab, invalidate shared types consumed by `claw-chat-service`, corrupt the CI pipeline, and ship with missing Nginx routes all at the same time.
+Planning exists for one reason: to prevent wasted effort. In a system with <!-- count:services -->20<!-- /count --> NestJS microservices, per-service PostgreSQL databases, RabbitMQ event flows, Nginx routing, shared packages used by every service, and a Next.js frontend with 13 language locales — a change that seems isolated rarely is. An unplanned change to `claw-routing-service` can break the frontend replay lab, invalidate shared types consumed by `claw-chat-service`, corrupt the CI pipeline, and ship with missing Nginx routes all at the same time.
 
 Planning is not bureaucracy. It is the activity that turns a vague request into a precise, bounded, testable work item. It answers every question before the first function is written so that implementation is execution, not discovery.
 
@@ -25,17 +25,17 @@ Planning is not bureaucracy. It is the activity that turns a vague request into 
 
 Planning is required for **every work item without exception**:
 
-| Work Type             | Planning Required? | Minimum Planning Depth           |
-| --------------------- | ------------------ | -------------------------------- |
-| New feature           | Yes                | Full (all sections)              |
-| Bug fix               | Yes                | Sections 1–5 + risk              |
-| Refactor              | Yes                | Sections 1–5 + regression scope  |
-| Schema migration      | Yes                | Full (all sections)              |
-| Shared package change | Yes                | Full (impact on all 17 services) |
-| New env variable      | Yes                | Sections 1–4 + infra checklist   |
-| i18n addition only    | Yes                | Sections 1–2 + locale checklist  |
-| Documentation update  | Yes                | Section 1 only                   |
-| Hotfix                | Yes                | Abridged (see Section 10)        |
+| Work Type             | Planning Required? | Minimum Planning Depth          |
+| --------------------- | ------------------ | ------------------------------- |
+| New feature           | Yes                | Full (all sections)             |
+| Bug fix               | Yes                | Sections 1–5 + risk             |
+| Refactor              | Yes                | Sections 1–5 + regression scope |
+| Schema migration      | Yes                | Full (all sections)             |
+| Shared package change | Yes                | Full (impact on every service)  |
+| New env variable      | Yes                | Sections 1–4 + infra checklist  |
+| i18n addition only    | Yes                | Sections 1–2 + locale checklist |
+| Documentation update  | Yes                | Section 1 only                  |
+| Hotfix                | Yes                | Abridged (see Section 10)       |
 
 A "quick fix" that skips planning is a liability until proven otherwise. If the fix truly is trivial (typo correction, comment change), the planning phase takes two minutes. If you cannot complete planning in two minutes, the fix is not trivial.
 
@@ -81,34 +81,34 @@ Why:  The current runReplay() method is 140 lines, violates the complexity limit
 
 Before writing code, fill every row of this table. A row marked "N/A" is a positive assertion that this area is unaffected. Do not leave rows blank.
 
-| Area                        | Impacted? | Specific Files / Items Affected                                                 |
-| --------------------------- | --------- | ------------------------------------------------------------------------------- |
-| **Backend services**        |           | Which of the 17 services? (claw-routing-service, claw-chat-service, etc.)       |
-| **Frontend pages**          |           | Which pages in `src/app/(portal)/`?                                             |
-| **Frontend components**     |           | Which files in `src/components/<feature>/`?                                     |
-| **Frontend hooks**          |           | Which files in `src/hooks/<domain>/`?                                           |
-| **Database schemas**        |           | Which Prisma model? Which DB (claw_routing, claw_chat, etc.)?                   |
-| **Prisma migrations**       |           | Migration name, affected columns/tables                                         |
-| **Seed files**              |           | Which seed file? What default data?                                             |
-| **RabbitMQ events**         |           | New event patterns? Changed payloads? New consumers?                            |
-| **API endpoints**           |           | New or modified routes? HTTP method + path                                      |
-| **Shared packages**         |           | shared-types, shared-constants, shared-rabbitmq, shared-auth                    |
-| **Environment variables**   |           | New/renamed/removed vars? Which services consume them?                          |
-| **Docker compose (dev)**    |           | `docker/docker-compose.dev.yml` — new service, port, volume, depends_on?        |
-| **Docker compose (prod)**   |           | `docker/docker-compose.yml` — same                                              |
-| **Docker compose (ollama)** |           | `docker/docker-compose.dev.ollama.yml`, `docker/docker-compose.prod.ollama.yml` |
-| **Nginx config**            |           | New upstream block? New location block? SSE route?                              |
-| **Health service**          |           | `apps/claw-health-service` — new service URL registered?                        |
-| **CI pipeline**             |           | `.github/workflows/ci.yml` — Prisma generate loop? Test env vars?               |
-| **i18n locales**            |           | New translation keys? All 9 locales: en, ar, de, es, fr, hi, it, pt, ru         |
-| **Frontend types**          |           | `src/types/<domain>.types.ts` — synced with backend DTO changes?                |
-| **Frontend enums**          |           | `src/enums/index.ts` — new enum exported?                                       |
-| **Frontend constants**      |           | `src/constants/<name>.constants.ts` — new constants?                            |
-| **Frontend repository**     |           | `src/repositories/<domain>/` — new API calls?                                   |
-| **Query keys**              |           | `src/repositories/shared/query-keys.ts` — new keys?                             |
-| **Root CLAUDE.md**          |           | New services, env vars, patterns, or rules?                                     |
-| **Service CLAUDE.md**       |           | `apps/<service>/CLAUDE.md` — service-specific changes documented?               |
-| **Architecture docs**       |           | `docs/` — does architecture change?                                             |
+| Area                        | Impacted? | Specific Files / Items Affected                                                                                               |
+| --------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **Backend services**        |           | Which of the <!-- count:services -->20<!-- /count --> services? (claw-routing-service, claw-chat-service, etc.)               |
+| **Frontend pages**          |           | Which pages in `src/app/(portal)/`?                                                                                           |
+| **Frontend components**     |           | Which files in `src/components/<feature>/`?                                                                                   |
+| **Frontend hooks**          |           | Which files in `src/hooks/<domain>/`?                                                                                         |
+| **Database schemas**        |           | Which Prisma model? Which DB (claw_routing, claw_chat, etc.)?                                                                 |
+| **Prisma migrations**       |           | Migration name, affected columns/tables                                                                                       |
+| **Seed files**              |           | Which seed file? What default data?                                                                                           |
+| **RabbitMQ events**         |           | New event patterns? Changed payloads? New consumers?                                                                          |
+| **API endpoints**           |           | New or modified routes? HTTP method + path                                                                                    |
+| **Shared packages**         |           | shared-types, shared-constants, shared-rabbitmq, shared-auth                                                                  |
+| **Environment variables**   |           | New/renamed/removed vars? Which services consume them?                                                                        |
+| **Docker compose (dev)**    |           | `docker/docker-compose.dev.services.yml` / `docker/docker-compose.dev.databases.yml` — new service, port, volume, depends_on? |
+| **Docker compose (prod)**   |           | `docker/docker-compose.prod.services.yml` / `docker/docker-compose.prod.databases.yml` — same                                 |
+| **Docker compose (ollama)** |           | `docker/docker-compose.dev.ollama.yml`, `docker/docker-compose.prod.ollama.yml`                                               |
+| **Nginx config**            |           | New upstream block? New location block? SSE route?                                                                            |
+| **Health service**          |           | `apps/claw-health-service` — new service URL registered?                                                                      |
+| **CI pipeline**             |           | `.github/workflows/ci.yml` — Prisma generate loop? Test env vars?                                                             |
+| **i18n locales**            |           | New translation keys? All 9 locales: en, ar, de, es, fr, hi, it, pt, ru                                                       |
+| **Frontend types**          |           | `src/types/<domain>.types.ts` — synced with backend DTO changes?                                                              |
+| **Frontend enums**          |           | `src/enums/index.ts` — new enum exported?                                                                                     |
+| **Frontend constants**      |           | `src/constants/<name>.constants.ts` — new constants?                                                                          |
+| **Frontend repository**     |           | `src/repositories/<domain>/` — new API calls?                                                                                 |
+| **Query keys**              |           | `src/repositories/shared/query-keys.ts` — new keys?                                                                           |
+| **Root CLAUDE.md**          |           | New services, env vars, patterns, or rules?                                                                                   |
+| **Service CLAUDE.md**       |           | `apps/<service>/CLAUDE.md` — service-specific changes documented?                                                             |
+| **Architecture docs**       |           | `docs/` — does architecture change?                                                                                           |
 
 **Completed example (Replay Lab pagination):**
 
@@ -253,7 +253,7 @@ List the existing flows that this change could affect. For each flow, state expl
 | Replay POST returns outcome labels         | Yes                | Yes           | API + unit tests |
 | Frontend filters by outcome label          | Yes                | Yes           | UI test          |
 | claw-chat-service consuming routing events | Yes                | Yes           | Integration test |
-| All 17 services CI build                   | Yes                | Yes           | CI pipeline      |
+| All services CI build                      | Yes                | Yes           | CI pipeline      |
 
 ---
 
@@ -365,7 +365,7 @@ OUT OF SCOPE (separate work items):
 | Dependency                               | Type      | Status           | Impact if Blocked                 |
 | ---------------------------------------- | --------- | ---------------- | --------------------------------- |
 | Migration must run before service starts | Technical | Resolved at boot | Deploy fails if migration skipped |
-| shared-types must be rebuilt first       | Technical | Manual step      | All 17 services fail typecheck    |
+| shared-types must be rebuilt first       | Technical | Manual step      | Every service fails typecheck     |
 | Nginx config change needs nginx restart  | Infra     | Manual step      | New route returns 404             |
 | Feature X must ship before this feature  | Product   | Note dependency  | End-to-end flow incomplete        |
 
@@ -428,7 +428,7 @@ Before implementation begins, the plan must be reviewed.
 6. Is any dependency not captured?
 7. Is the scope too large to implement and test in one work item? (If yes, split it.)
 
-**Scope limit rule:** If the impacted-area map touches more than 5 backend services, more than 8 frontend files, or more than 2 database schemas in a single work item — consider splitting. Larger changes have exponentially higher regression risk and harder-to-review PRs.
+**Scope limit rule:** If the impacted-area map touches more than five backend services, more than 8 frontend files, or more than 2 database schemas in a single work item — consider splitting. Larger changes have exponentially higher regression risk and harder-to-review PRs.
 
 ---
 

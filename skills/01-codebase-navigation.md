@@ -190,7 +190,7 @@ grep -r "message.created\|MESSAGE_CREATED" apps/ packages/ --include="*.ts"
 
 ## Understanding a RabbitMQ Flow
 
-1. Find the event pattern in `packages/shared-types/src/events.ts`
+1. Find the event pattern in `packages/shared-types/src/events/event-patterns.ts` (the `EventPattern` enum)
 2. Find the publisher: `grep -r "eventPattern" apps/ --include="*.service.ts"`
 3. Find the consumer: `grep -r "eventPattern" apps/ --include="*.controller.ts"`
 4. Read the publisher's payload shape
@@ -224,5 +224,5 @@ find apps/claw-routing-service/src -name "prompt-builder*"
 | `apps/claw-frontend/src/hooks/chat/use-thread-detail-page.ts`                            | Main chat page controller hook                           |
 | `apps/claw-frontend/src/repositories/shared/query-keys.ts`                               | All TanStack Query key factories                         |
 | `infra/nginx/nginx.conf`                                                                 | All service routes + SSE config                          |
-| `packages/shared-types/src/events.ts`                                                    | All RabbitMQ event patterns                              |
+| `packages/shared-types/src/events/event-patterns.ts`                                     | All RabbitMQ event patterns                              |
 | `packages/shared-constants/src/index.ts`                                                 | All service ports + names                                |

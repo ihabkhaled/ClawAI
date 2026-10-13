@@ -39,7 +39,7 @@ cat .deploy/status.json                      # the rollout in flight, phase, ser
 ps -ef | grep -E 'buildkit|docker compose build' | grep -v grep
 ```
 
-A `history.log` line listing ~20 services on a release commit means the full
+A `history.log` line listing every service on a release commit means the full
 rebuild is still happening: check that the deployer on the box includes the
 release-version filter (`grep -n drop_version_only_changes scripts/deploy-prod.sh`)
 and that `python3 --version` works. Without python3 the filter fails safe and

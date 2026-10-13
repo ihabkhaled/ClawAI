@@ -3,9 +3,9 @@
 Command output and lane evidence are recorded in
 `../../qa-evidence/2026-10-03-runtime-managed-connector-providers.md`.
 
-- Connector-service: typecheck/build passed; 49 test files, 730 tests passed;
+- Connector-service: typecheck/build passed; 730 tests in 49 suites passed;
   lint 0 errors and 16 warnings.
-- Routing-service: typecheck/build passed; 117 test files, 1,783 tests passed;
+- Routing-service: typecheck/build passed; 1,783 tests in 117 suites passed;
   lint 0 errors and 136 warnings.
 - Frontend: typecheck/build passed; three provider/locale test files, 76 tests
   passed; lint 0 errors and 12 warnings.

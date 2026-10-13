@@ -19,7 +19,7 @@ required_context: [authorization-rbac, ai-context-pack]
 affected_workspaces: [packages/shared-types, apps/claw-auth-service, apps/claw-<service>-service]
 required_tests: [guard/permission spec, qa auth matrix (401/403)]
 required_docs: [docs/03-architecture/authorization-rbac.md, CLAUDE.md]
-validation_lane: cd packages/shared-types && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Skill: Add a Permission
@@ -76,9 +76,15 @@ Permissions are the source of truth for endpoint authorization. The enum lives i
 ## Validation commands
 
 ```bash
-cd packages/shared-types && npm run typecheck && npm run lint && npm test && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 # then gate the consuming service and run its lane:
-cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 ## Documentation updates

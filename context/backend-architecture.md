@@ -1,7 +1,7 @@
 # Backend Architecture
 
-Every backend service is a **NestJS 11.1** app compiled with **tsgo +
-tsc-alias**. Full rules: `rules/02-backend-rules.md`.
+Every backend service is a **NestJS 11.1** app compiled with **TypeScript 7
+(`tools/typescript/run-ts7.mjs`) + tsc-alias**. Full rules: `rules/02-backend-rules.md`.
 
 ## Layering
 
@@ -90,12 +90,14 @@ Logs ship to MongoDB via Pino → `log.server` → server-logs-service (TTL 30d)
 
 ## Validation lane
 
+The hooks run it for the change type — do not run the four gates by hand
+([rules/23 gate matrix](../rules/23-git-commits-hooks-and-release-gates.md#gate-matrix-by-change-type)):
+
 ```bash
-cd apps/claw-<service>
-npm run typecheck   # tsgo --noEmit
-npm run lint
-npm test            # vitest run
-npm run build       # tsgo + tsc-alias
+npm run affected:list
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"   # pre-commit: lint + typecheck
+git push origin <branch>                                              # pre-push: related tests + build; then CI
 ```
 
 Coverage bar: **≥92%** on all four vitest coverage metrics (`test.coverage.thresholds` in each

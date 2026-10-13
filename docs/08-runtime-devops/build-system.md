@@ -1,88 +1,96 @@
-# Build System & TypeScript Toolchain (tsgo)
+# Build System & TypeScript Toolchain (TypeScript 7)
 
 > **Audience:** any engineer or AI agent who needs to build, run, typecheck, or
 > debug a service. This is the canonical reference for how ClawAI compiles.
 
-ClawAI does **not** use `tsc` or `nest build` to compile services. It uses
-**tsgo** — the Go-native TypeScript compiler shipped as
-[`@typescript/native-preview`](https://www.npmjs.com/package/@typescript/native-preview)
-— plus **`tsc-alias`** to rewrite path aliases after compilation. This applies
-to **all 17 backend services AND all 5 shared packages**. The frontend
-(`claw-frontend`) typechecks with tsgo and bundles/tests with Next.js + Vitest 4.
+ClawAI does **not** use `nest build` to compile services. It compiles with
+**TypeScript 7** — the Go-native TypeScript compiler, installed at the root as
+the **`typescript7`** alias (`"typescript7": "npm:typescript@7.x"`) and invoked
+through [`tools/typescript/run-ts7.mjs`](../../tools/typescript/run-ts7.mjs) —
+plus **`tsc-alias`** to rewrite path aliases after compilation. This applies to
+**all <!-- count:services -->20<!-- /count --> backend services AND all
+<!-- count:sharedPackages -->6<!-- /count --> shared packages**. The frontend
+
+(`claw-frontend`) typechecks with TypeScript 7 (`apps/claw-frontend/scripts/typecheck-ts7.mjs`) and
+bundles/tests with Next.js + Vitest.
+
+You never call the compiler directly: `npm run build` / `npm run typecheck` in a
+workspace wrap it, and the git hooks run them for you
+([rules/23](../../rules/23-git-commits-hooks-and-release-gates.md#gate-matrix-by-change-type)).
 
 ---
 
-## 1. Why tsgo
+## 1. Why TypeScript 7
 
-- **Speed.** tsgo is the native (Go) port of the TypeScript compiler; build and
-  typecheck are dramatically faster than `tsc` on this monorepo.
+- **Speed.** TypeScript 7 is the native (Go) port of the TypeScript compiler;
+  build and typecheck are dramatically faster than the JavaScript `tsc` 6.x on
+  this monorepo.
 - **One compiler everywhere.** Services and shared packages share the same
   toolchain, so behaviour is consistent across CI, Docker, and local dev.
 
-tsgo is TypeScript 7-era and is stricter about module resolution than the old
-`tsc` setup (see [§7 Gotchas](#7-gotchas--troubleshooting)).
+TypeScript 7 is stricter about module resolution than the old `tsc` setup (see
+[§7 Gotchas](#7-gotchas--troubleshooting)).
 
 ---
 
 ## 2. How `typescript` resolves
 
-Each workspace's `package.json` does two things:
+Two TypeScript versions coexist on purpose:
 
 ```jsonc
-"devDependencies": {
-  "@typescript/native-preview": "^7.0.0-dev.20260421.2", // the tsgo binary
-  "typescript": "npm:@typescript/native-preview@beta",   // alias: `typescript` IS tsgo
-  "tsc-alias": "^1.8.17"
-}
+// root package.json devDependencies
+"typescript": "6.0.3",                  // the JS API, for typescript-eslint and other tooling
+"typescript7": "npm:typescript@7.0.2",  // the compiler every build and typecheck runs
 ```
 
-- The `typescript` dependency is **aliased** to `@typescript/native-preview`, so
-  any tool that imports `typescript` gets tsgo's JS API.
-- The **real `tsc` 6.x** is still present transitively (pulled by
-  `@nestjs/schematics` / `@prisma/client` overrides) and coexists with it
-  intentionally. (It used to feed ts-jest; since ADR-099 tests run on Vitest + swc.)
-- The platform binary (`@typescript/native-preview-linux-x64`, `-win32-x64`,
-  etc.) is an **optional dependency**. The repo's `.npmrc` sets
-  `include=optional` so every platform's binary stays in `package-lock.json` —
-  this is what lets CI's `npm ci` on Linux resolve the linux binary even though
-  the lockfile was last written on Windows.
+- **`typescript7`** is what compiles. `tools/typescript/run-ts7.mjs` resolves
+  `typescript7/package.json` and runs its `bin/tsc` with the arguments it was
+  given, so a workspace script reads
+  `node ../../tools/typescript/run-ts7.mjs -p tsconfig.build.json`.
+- **`typescript` 6.x** stays for tools that import the TypeScript JS API
+  (`typescript-eslint`, editors). Each workspace also pins it as a
+  devDependency next to `tsc-alias`.
+- CI's setup job checks the compiler with
+  `node tools/typescript/run-ts7.mjs --version` before anything else runs.
 
 ---
 
 ## 3. tsc-alias (why a second step)
 
-tsgo compiles `.ts` → `.js` but does **not** rewrite path aliases. After tsgo
-runs, `dist/` still contains `require("@app/...")` / `@common/...` / `@modules/...`.
-`tsc-alias` reads the `paths` map from `tsconfig.build.json` and rewrites those
-to relative paths (`require("./app/...")`), so `node dist/main.js` resolves with
-no runtime path-mapping loader. Shared packages have **no** path aliases, so they
-skip `tsc-alias` entirely.
+The compiler emits `.ts` → `.js` but does **not** rewrite path aliases. After it
+runs, `dist/` still contains imports of `@app/...` / `@common/...` / `@modules/...`.
+`tsc-alias -f` reads the `paths` map from `tsconfig.build.json`, rewrites those
+to relative paths, and adds the `.js` extensions ESM needs, so
+`node dist/main.js` resolves with no runtime path-mapping loader. Prisma-backed
+services run `tools/typescript/copy-generated-prisma.mjs` between the compile and
+the `tsc-alias` pass, so `dist/generated/prisma` exists when the extensions are
+resolved.
 
 ---
 
 ## 4. Per-workspace npm scripts
 
-Every backend service uses the same four scripts:
+Backend services (`apps/claw-auth-service/package.json` is representative):
 
-| Script      | Command                                                                                                                                                                                                                                                                            |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `dev`       | `tsgo -p tsconfig.build.json && tsc-alias -p tsconfig.build.json && concurrently -k -n tsgo,alias,node -c blue,magenta,green "tsgo -p tsconfig.build.json --watch" "tsc-alias -p tsconfig.build.json --watch" "nodemon --watch dist --delay 1500ms --signal SIGTERM dist/main.js"` |
-| `build`     | `tsgo -p tsconfig.build.json && tsc-alias -p tsconfig.build.json`                                                                                                                                                                                                                  |
-| `typecheck` | `tsgo --noEmit`                                                                                                                                                                                                                                                                    |
-| `start`     | `node dist/main.js`                                                                                                                                                                                                                                                                |
+| Script      | Command                                                                                                                                                          |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dev`       | `nodemon --legacy-watch --watch src --ext ts,json --delay 1500ms --signal SIGTERM --exec "npm run build && node dist/main.js"`                                   |
+| `build`     | `node ../../tools/typescript/run-ts7.mjs -p tsconfig.build.json && node ../../tools/typescript/copy-generated-prisma.mjs && tsc-alias -p tsconfig.build.json -f` |
+| `typecheck` | `node ../../tools/typescript/run-ts7.mjs --noEmit --incremental --tsBuildInfoFile node_modules/.cache/tsc/typecheck.tsbuildinfo`                                 |
+| `start`     | `node dist/main.js`                                                                                                                                              |
 
-`dev` does an initial build, then runs three watchers concurrently: tsgo
-(recompile), tsc-alias (re-rewrite paths), and nodemon (restart node on `dist/`
-change). The 1500ms nodemon delay debounces the tsgo→tsc-alias write sequence.
+`dev` watches `src/` and, on every change, rebuilds and restarts node. The
+1500ms nodemon delay debounces bursts of saves. (Services without Prisma omit the
+`copy-generated-prisma.mjs` step.)
 
 **Shared packages** (`packages/*`):
 
-| Script      | Command                                                             |
-| ----------- | ------------------------------------------------------------------- |
-| `build`     | `tsgo -p tsconfig.build.json`                                       |
-| `typecheck` | `tsgo --noEmit`                                                     |
-| `lint`      | `eslint src/ --cache --cache-location .eslintcache --concurrency=4` |
-| `test`      | `vitest run --passWithNoTests`                                      |
+| Script      | Command                                                                                                                          |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `build`     | `node ../../tools/typescript/run-ts7.mjs -p tsconfig.build.json && tsc-alias -p tsconfig.build.json -f`                          |
+| `typecheck` | `node ../../tools/typescript/run-ts7.mjs --noEmit --incremental --tsBuildInfoFile node_modules/.cache/tsc/typecheck.tsbuildinfo` |
+| `lint`      | `eslint src/ --cache --cache-strategy content --cache-location node_modules/.cache/eslint/`                                      |
+| `test`      | `vitest run` (an empty suite fails)                                                                                              |
 
 ---
 
@@ -93,7 +101,7 @@ Each workspace has two configs:
 - **`tsconfig.json`** — the editor/typecheck config. Key options: `module: Node16`,
   `moduleResolution: Node16`, `strict`, `paths` (`@app/*`, `@common/*`,
   `@modules/*`, `@infrastructure/*`), `types: ["node"]` (Vitest globals come from `src/vitest-globals.d.ts`). **No `baseUrl`,
-  no `moduleResolution: node`, no `ignoreDeprecations`** — tsgo rejects those.
+  no `moduleResolution: node`, no `ignoreDeprecations`** — TypeScript 7 rejects those.
 - **`tsconfig.build.json`** — extends `tsconfig.json`, sets `sourceMap: false`,
   and excludes specs: `["node_modules", "dist", "test", "**/*.spec.ts", "**/*.e2e-spec.ts", "**/__tests__/**"]`.
   `build`/`dev` use this; `typecheck` uses `tsconfig.json` (so specs are
@@ -106,32 +114,27 @@ Each workspace has two configs:
 ### Docker
 
 All images use **`node:26-bookworm-slim`** (Debian/glibc), **never Alpine**:
-the tsgo binary and llama.cpp release binaries are glibc-linked and will not run
-on musl. Dev `Dockerfile.dev` installs deps at the **workspace root**
-(`npm install --ignore-scripts` — `--ignore-scripts` is safe because the tsgo
-platform binary is an optional dep, not a postinstall), compiles the 5 shared
-packages with `npx tsgo`, runs `prisma generate`, then `npm run dev`. Prod
-Dockerfiles are multi-stage (base → deps → builder → runner); the builder runs
-`npm run build`, the runner copies `dist/` + `node_modules` and runs
-`node dist/main.js` (or a prisma-aware entrypoint). `claw-file-service` and
-`claw-llamacpp-service` drop privileges via `runuser` (Debian's `su-exec`
-equivalent). See [docker-guide.md](docker-guide.md).
+the native compiler and llama.cpp release binaries are glibc-linked and will not
+run on musl. Dev `Dockerfile.dev` installs deps at the **workspace root**
+(`npm install --ignore-scripts`), builds each shared package the service uses
+with `RUN cd packages/<pkg> && npm run build`, runs `prisma generate`, then the
+entrypoint runs migrations and `npm run dev`. Prod Dockerfiles are multi-stage
+(base → deps → builder → runner); the builder runs `npm run build`, the runner
+copies `dist/` + `node_modules` and runs `node dist/main.js` (or a prisma-aware
+entrypoint). `claw-file-service` and `claw-llamacpp-service` drop privileges via
+`runuser` (Debian's `su-exec` equivalent). See [docker-guide.md](docker-guide.md).
 
 ### CI (`.github/workflows/ci.yml`)
 
-Four jobs — **lint, typecheck, test, build** — each a **~23-entry matrix**
-(17 services + frontend + 5 shared packages). Every job:
-
-1. `npm ci --ignore-scripts`
-2. **`npm rebuild @typescript/native-preview`** — links the tsgo binary (the
-   `--ignore-scripts` install skipped it).
-3. Build shared packages: `cd packages/<pkg> && npx tsgo -p tsconfig.build.json`
-   (in dependency order; shared-types first).
-4. `npx prisma generate` (prisma services only).
-5. The job step (`npm run lint|typecheck|test|build --workspace=<name>`).
-
-The frontend test job runs `vitest run` directly (no wrapper) and bumps
-`NODE_OPTIONS=--max-old-space-size=8192`.
+A **setup** job installs once (`npm ci --ignore-scripts`, cached), verifies the
+compiler (`node tools/typescript/run-ts7.mjs --version`), builds the shared
+packages in dependency order (`node tools/affected/index.mjs shared-build` — the
+order is derived from each `package.json`, never hard-coded), generates every
+Prisma client, and uploads `packages/*/dist` + `apps/*/src/generated` as an
+artifact. The per-workspace jobs (static = lint ratchet + typecheck, test, build)
+run over the **affected** matrix only and restore that artifact through
+`.github/actions/prepare`. Job by job:
+[ci-cd-pipeline.md](ci-cd-pipeline.md).
 
 ---
 
@@ -140,11 +143,11 @@ The frontend test job runs `vitest run` directly (no wrapper) and bumps
 | Symptom                                                                                           | Cause / fix                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Cannot find module '@claw/shared-<x>'` while building a service image                            | Declare the workspace in the service `package.json`, then build it in both `Dockerfile` and `Dockerfile.dev`. `tools/__tests__/dockerfile-shared-package-completeness.test.mjs` checks declared packages against both image recipes.                                                                                                                                                                                                                                                                                                                                                                                                           |
-| `TS5108: option 'node' … deprecated` or errors on `baseUrl`                                       | Old tsconfig. tsgo requires `moduleResolution: Node16`/`nodenext`, relative `paths`, no `baseUrl`, no `ignoreDeprecations`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `TS5108: option 'node' … deprecated` or errors on `baseUrl`                                       | Old tsconfig. TypeScript 7 requires `moduleResolution: Node16`/`nodenext`, relative `paths`, no `baseUrl`, no `ignoreDeprecations`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `Cannot find module '../x'` on a **dynamic** `await import('../x')`                               | Node16 needs an explicit `.js` extension for dynamic relative imports — or convert to a static import.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Third-party lib's named exports "do not exist" under Node16                                       | The lib publishes extensionless `export *` chains (e.g. **docx**) that Node16 can't traverse. Load it via dynamic `import()` through an `unknown` boundary + a local typed interface, or pin a Node16-friendly version. **pdf-parse v2** is a class API (`new PDFParse({data}).getText()`), not the v1 function.                                                                                                                                                                                                                                                                                                                               |
-| `tsgo: not found` in CI                                                                           | Missing the `npm rebuild @typescript/native-preview` step.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| `Cannot find module '@claw/<pkg>'` in CI                                                          | The new shared package wasn't added to the "Build shared packages" step in **all four** CI jobs.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `Cannot find module 'typescript7/package.json'`                                                   | Dependencies are not installed at the root — `typescript7` is a root devDependency. Run `npm ci` at the repository root; CI's setup job checks it with `node tools/typescript/run-ts7.mjs --version`.                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `Cannot find module '@claw/<pkg>'` in CI                                                          | The service does not declare the package in its `package.json`, so it is missing from the shared-build order (`node tools/affected/index.mjs shared-build`) and from the CI build artifact.                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `npm ci`: "Missing X from lock file" on Linux                                                     | A cross-platform optional binary was stripped. Ensure `.npmrc` has `include=optional` and regenerate the lockfile.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | Decorator metadata error (`TS1272`)                                                               | `isolatedModules: true` + `emitDecoratorMetadata` conflict. Use `isolatedModules: false` (services already do).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `<lib>.<fn> is not a function` at runtime, for a library imported as `import * as x from '<lib>'` | Every workspace is `"type": "module"`. Under real ESM a CommonJS package's namespace holds only what `cjs-module-lexer` could statically detect; the real `module.exports` sits on `.default`. It is per-package: `argon2` exposes everything, `jsonwebtoken` exposes `decode` alone, so `jwt.verify` was `undefined` and 401'd every request in prod on 2026-09-02. Use a **default** import (`import jwt from 'jsonwebtoken'`). Unit tests do **not** catch this (ts-jest used to transpile specs to CommonJS; Vitest's default `deps.interopDefault` can likewise mask it) — `tools/__tests__/esm-namespace-import-bindings.test.mjs` does. |
@@ -158,6 +161,6 @@ The frontend test job runs `vitest run` directly (no wrapper) and bumps
 ## See also
 
 - [docker-guide.md](docker-guide.md) — container lifecycle, `claw.sh`
-- [cicd-pipeline.md](cicd-pipeline.md) — full CI pipeline
-- [../04-backend/shared-packages.md](../04-backend/shared-packages.md) — the 5 shared packages
+- [ci-cd-pipeline.md](ci-cd-pipeline.md) — full CI pipeline
+- [../04-backend/shared-packages.md](../04-backend/shared-packages.md) — the shared packages
 - [port-service-map.md](port-service-map.md) — service ↔ port ↔ database map

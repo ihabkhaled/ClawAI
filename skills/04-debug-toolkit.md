@@ -111,10 +111,10 @@ curl -s -u admin:admin http://localhost:15672/api/queues/%2F/claw.events.dlq | j
 
 **Fix**:
 
-1. Check `apps/claw-connector-service/src/modules/connectors/managers/adapter-factory.ts`
-2. Verify the provider is registered: `case ConnectorProvider.OLLAMA: return this.ollamaAdapter`
-3. Verify the adapter is injected in the factory constructor
-4. Verify the adapter module is registered in the feature module
+1. Check `apps/claw-connector-service/src/modules/connectors/managers/adapters/adapter-factory.ts`
+2. Verify the provider has an entry in its `adapters` registry — `getAdapter(provider)` throws `No adapter registered for provider: <X>` otherwise
+3. Verify the adapter class is imported into that registry
+4. Verify the provider value exists in the shared `ConnectorProvider` enum
 
 ### "fetch failed" or "ECONNREFUSED" inside Docker
 

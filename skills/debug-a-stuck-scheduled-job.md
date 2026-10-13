@@ -17,7 +17,7 @@ required_context: [architecture-map, environment-ownership-map]
 affected_workspaces: [apps/claw-<service>-service]
 required_tests: [lock contention, owner mismatch, callback failure, idempotent replay]
 required_docs: [docs/11-runbooks/runbook-failed-billing-sweep.md]
-validation_lane: cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Skill: Debug a Stuck Scheduled Job
@@ -76,8 +76,10 @@ log only job name, counts, stable machine codes, and safe entity ids.
 ## Validation commands
 
 ```bash
-cd apps/claw-<service>-service
-npm run typecheck && npm run lint && npm test && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 ## Documentation updates

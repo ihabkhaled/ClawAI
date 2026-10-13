@@ -117,9 +117,9 @@ graph TB
 
 ### Logging Events
 
-| Event        | Publisher       | Consumers           | Trigger                  |
-| ------------ | --------------- | ------------------- | ------------------------ |
-| `log.server` | all 17 services | server-logs-service | Any structured log entry |
+| Event        | Publisher             | Consumers           | Trigger                  |
+| ------------ | --------------------- | ------------------- | ------------------------ |
+| `log.server` | every backend service | server-logs-service | Any structured log entry |
 
 ---
 

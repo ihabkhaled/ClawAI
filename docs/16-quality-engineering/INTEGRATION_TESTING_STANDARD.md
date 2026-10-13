@@ -4,14 +4,14 @@
 
 ## Purpose
 
-Integration tests verify that ClawAI's 17 microservices communicate correctly through RabbitMQ events, HTTP internal calls, SSE streams, Redis cache, and database persistence. Unlike unit tests (which mock boundaries), integration tests run against real infrastructure inside Docker Compose.
+Integration tests verify that ClawAI's <!-- count:services -->20<!-- /count --> microservices communicate correctly through RabbitMQ events, HTTP internal calls, SSE streams, Redis cache, and database persistence. Unlike unit tests (which mock boundaries), integration tests run against real infrastructure inside Docker Compose.
 
 ---
 
 ## Prerequisites
 
 - Full Docker Compose stack running: `./scripts/claw.sh up -d`
-- All 17 services healthy: `curl http://localhost:4000/api/v1/health`
+- All services healthy: `curl http://localhost:4000/api/v1/health`
 - RabbitMQ management UI accessible: `http://localhost:15672` (guest/guest or configured credentials)
 - Valid JWT token obtained via `POST http://localhost:4000/api/v1/auth/login`
 - Test user seeded (ADMIN role) for full access
@@ -556,7 +556,7 @@ When adding a new feature, verify it does not break existing flows:
 | File changes           | Upload, chunking, attachment in chat messages                                  |
 | Ollama changes         | Model pull, role assignment, routing model availability                        |
 | Image changes          | Generation, progress SSE, audit logging                                        |
-| Shared package changes | All 17 services that depend on the package                                     |
+| Shared package changes | Every service that depends on the package                                      |
 
 ### 7.2 Smoke Test Suite
 
@@ -610,7 +610,7 @@ done
 
 **Assertions:**
 
-- Aggregated health returns status for all 17 services
+- Aggregated health returns status for every service
 - Each service individually returns 200
 - Unhealthy services are flagged (not silently omitted)
 

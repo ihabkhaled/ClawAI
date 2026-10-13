@@ -39,27 +39,28 @@ task, until the commit you just made is on the remote.
 ## Steps
 
 1. Determine the touched workspaces (`npm run affected:list`).
-2. Run the four gates inside each touched folder only — never all-workspace.
+2. Do **not** run typecheck, lint, test and build by hand. The hooks run the
+   gates for the change type, scoped to what changed — see the
+   [gate matrix in rules/23](../rules/23-git-commits-hooks-and-release-gates.md#gate-matrix-by-change-type).
 3. Stage **explicit paths**. Never `git add -A` and never `git add .`: both sweep
    up unrelated work-in-progress from parallel tasks into a commit that claims to
    be about something else.
-4. Commit with a conventional-commit subject. Let the hook run; never
-   `--no-verify`.
+4. Commit with a conventional-commit subject and a `Docs:` trailer
+   (`Docs: updated <what>` or `Docs: none — <reason>`, rules/63). Let the
+   pre-commit and commit-msg hooks run; never `--no-verify`.
 5. **Push immediately.**
 6. Only now begin the next commit.
 
 ```bash
 # commit 1
 npm run affected:list
-cd apps/claw-<service> && npx tsgo --noEmit && npm run lint && npm test && npm run build
-cd -
 git add apps/claw-<service>/src/... apps/claw-<service>/src/.../__tests__/...
-git commit -m "feat(<scope>): <subject>"
-git push origin <branch>          # ← before anything else
+git commit -m "feat(<scope>): <subject>" -m "Docs: updated <what>"   # pre-commit + commit-msg gate it
+git push origin <branch>          # ← before anything else; pre-push gates it
 
 # commit 2 — only now
 git add <explicit paths>
-git commit -m "test(<scope>): <subject>"
+git commit -m "test(<scope>): <subject>" -m "Docs: none — <why no doc describes it>"
 git push origin <branch>
 ```
 

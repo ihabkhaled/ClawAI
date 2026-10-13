@@ -10,7 +10,7 @@ Optimized reference for AI coding agents working on the ClawAI codebase. Read th
 
 **Why**: Organizations need a single interface that intelligently selects from multiple AI providers while keeping sensitive data local when required.
 
-**How**: 17 NestJS microservices communicate via RabbitMQ events, each owning its own database. A Next.js frontend connects through an Nginx reverse proxy. Ollama runs locally for privacy-sensitive tasks and as the routing brain in AUTO mode.
+**How**: <!-- count:services -->20<!-- /count --> NestJS microservices communicate via RabbitMQ events, each owning its own database. A Next.js frontend connects through an Nginx reverse proxy. Ollama runs locally for privacy-sensitive tasks and as the routing brain in AUTO mode.
 
 ---
 
@@ -169,7 +169,7 @@ Controllers never contain try/catch or throw statements. Repositories never thro
 | 4        | `packages/shared-rabbitmq/src/`                     | RabbitMQ module, retry logic, structured logger       |
 | 5        | `apps/claw-chat-service/src/modules/chat-messages/` | Most complex service -- context assembly + execution  |
 | 6        | `apps/claw-routing-service/src/modules/routing/`    | Routing decision engine                               |
-| 7        | `apps/claw-frontend/src/app/(authenticated)/chat/`  | Main chat UI pages and components                     |
+| 7        | `apps/claw-frontend/src/app/(portal)/chat/`         | Main chat UI pages and components                     |
 | 8        | `apps/claw-frontend/src/hooks/chat/`                | Chat hooks -- demonstrate the hook pattern            |
 | 9        | `infra/nginx/nginx.conf`                            | All route mappings                                    |
 | 10       | `.env.example`                                      | Every environment variable the system uses            |
@@ -180,11 +180,11 @@ Controllers never contain try/catch or throw statements. Repositories never thro
 
 - **Backend**: Vitest (ADR-099). Tests in `apps/claw-<service>/src/__tests__/`. Unit tests for services and managers; integration tests for controllers.
 - **Frontend**: Vitest. Tests colocated or in `__tests__` directories.
-- **E2E**: Playwright. In `apps/claw-frontend/e2e/` or project root.
+- **E2E**: Playwright. In `apps/claw-frontend/tests/e2e/` (`apps/claw-frontend/playwright.config.ts`).
 - **Every new function needs a test.** No exceptions.
 - **Test files are exempt** from the no-`any` rule and inline restrictions.
 - **Pre-commit hook runs all tests** -- they must pass before commit.
-- **312+ tests** across 17 services as of baseline.
+- **<!-- count:specFiles -->2298<!-- /count --> test files** across the monorepo (`.ai/manifests/tests.json`).
 
 ---
 

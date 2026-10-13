@@ -52,7 +52,7 @@ required_docs:
     docs/04-backend/service-guide-<name>.md,
     apps/claw-<name>-service/CLAUDE.md,
   ]
-validation_lane: cd apps/claw-<calling>-service && npx tsgo --noEmit && npm run lint && npm test && npm run build
+validation_lane: git commit + git push — the hooks gate the change (rules/23 gate matrix)
 ---
 
 # Skill: Meter a Paid Provider Call
@@ -313,11 +313,13 @@ transcription — rule 37 item 20, ADR-120 addendum 3):
 ## Validation commands
 
 ```bash
-cd apps/claw-<calling>-service
-npx tsgo --noEmit && npm run lint && npm test && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 
-# if you added a PaygSurface member:
-cd packages/shared-types && npx tsgo --noEmit && npm test && npm run build
+# if you added a PaygSurface member, packages/shared-types is in the same commit:
+# the pre-commit hook rebuilds it and typechecks every dependent
 
 # prove it end to end against a running stack
 docker exec claw-pg-auth psql -U claw -d claw_auth -tAF'|' -c "

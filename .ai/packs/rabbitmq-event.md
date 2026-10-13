@@ -10,8 +10,7 @@ RabbitMQ event contract or producer/consumer change.
 - `agents/reliability-engineer.md`
 
 ## Validation lane
-- `cd packages/shared-types && npm run typecheck`
-- `npm run affected:test`
+- `git commit, then git push — the hooks gate this change for its type (rules/23 gate matrix)`
 
 ## Known pitfalls
 - Add the pattern to packages/shared-types EventPattern first

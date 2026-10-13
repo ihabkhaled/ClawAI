@@ -19,7 +19,7 @@ required_context: [ai-context-pack, event-bus, data-ownership]
 affected_workspaces: [apps/claw-<service>-service]
 required_tests: [unit (vitest *.spec.ts) per method incl. error path]
 required_docs: [docs/04-backend/service-guide-<service>.md]
-validation_lane: cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Skill: Create a Service
@@ -78,7 +78,10 @@ The service layer holds business logic: ownership and permission checks, orchest
 ## Validation commands
 
 ```bash
-cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 ## Documentation updates

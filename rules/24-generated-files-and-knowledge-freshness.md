@@ -85,22 +85,23 @@ until someone regenerates it. It is not a warning and it is not deferrable.
 
 ### The rule
 
-Any commit that touches `packages/**`, `apps/**`, `infra/**`, `docker/**`,
-`docs/**`, `scripts/**`, `rules/**`, `skills/**`, `tools/**` or `.env.example`
-MUST regenerate and stage:
+**The hook does this; run it by hand only to fix a red CI.** pre-commit step 3
+(`node tools/affected/index.mjs knowledge --record`) regenerates the knowledge
+layer and the inventory snapshot, stages them, and runs the `knowledge:verify`
+checks in the same pass, on every commit. There is nothing to remember and
+nothing to run before committing.
+
+When CI's `knowledge-freshness` or `knowledge-integrity` job is red (a commit
+that came from somewhere the hook did not run — a rebase, a web edit, a bot),
+regenerate and commit:
 
 ```bash
 npm run knowledge:build      # rewrites .ai/** + workspace AGENTS.md
 npm run audit                # rewrites the inventory snapshot
 git add .ai docs/features/ai-native-engineering-os/inventory.snapshot.json
-git add apps/*/AGENTS.md packages/*/AGENTS.md 2>/dev/null
+git add apps/*/AGENTS.md packages/*/AGENTS.md
 npm run knowledge:verify     # what CI runs
-npm run audit:check          # what CI runs
 ```
-
-The pre-commit hook now does all of this **automatically**, so in normal use
-there is nothing to remember. The rule is written down because the hook can be
-skipped (it must not be) and because a red CI needs a documented fix.
 
 ### Order matters — regenerate AFTER formatting, never before
 
@@ -114,7 +115,7 @@ This is the mistake that actually caused a red build:
 
 Generators must run **after** prettier and `eslint --fix` have settled. The
 pre-commit hook is ordered that way deliberately: lint-staged is step 1,
-regeneration is step 2.
+regeneration is step 3.
 
 ### Never hand-edit a generated artifact
 

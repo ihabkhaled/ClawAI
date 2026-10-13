@@ -35,14 +35,16 @@ so services stay ≤30-line coordinators and orchestration stays testable in iso
 ## Correct pattern
 
 ```ts
-// apps/claw-chat-service/src/modules/chat/managers/chat-execution.manager.ts
-async execute(ctx: ExecutionContext): Promise<AssistantMessage> {
+// apps/claw-chat-service/src/modules/chat-messages/managers/answer-repair.manager.ts (abridged)
+} catch (error: unknown) {
+  const msg = error instanceof Error ? error.message : 'Unknown error';
+  this.logger.error(`executeInBackground: repair failed for thread ${threadId} — ${msg}`);
+  this.chatStreamService.emitError(threadId, `Answer repair failed: ${msg}`); // SSE first
   try {
-    return await this.runWithFallbackChain(ctx);   // ≤80 lines, delegates helpers
-  } catch (error) {
-    this.emitError(ctx.threadId, error);            // SSE first
-    await this.storeErrorMessage(ctx, error);       // DB record second (nested try)
-    throw error;
+    await this.storeErrorMessage(threadId, msg);                             // DB record second
+  } catch (storeError: unknown) {
+    const storeMsg = storeError instanceof Error ? storeError.message : 'Unknown store error';
+    this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
   }
 }
 ```

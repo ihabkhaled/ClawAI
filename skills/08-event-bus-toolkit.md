@@ -92,31 +92,31 @@ export class RoutingController {
 ### Step 1: Define pattern in shared-types
 
 ```typescript
-// packages/shared-types/src/events.ts
-export const CONNECTOR_EVENTS = {
-  SYNCED: 'connector.synced',
-  HEALTH_CHECKED: 'connector.health_checked',
-  MODEL_SYNC_COMPLETED: 'connector.model_sync_completed', // NEW
-} as const;
+// packages/shared-types/src/events/event-patterns.ts
+export enum EventPattern {
+  // …
+  CONNECTOR_SYNCED = 'connector.synced',
+  CONNECTOR_MODEL_SYNC_COMPLETED = 'connector.model_sync_completed', // NEW
+}
 ```
 
 ### Step 2: Define payload type in shared-types
 
 ```typescript
-// packages/shared-types/src/payloads.ts
-export type ConnectorModelSyncCompletedPayload = {
+// packages/shared-types/src/events/event-payloads.type.ts
+export interface ConnectorModelSyncCompletedPayload extends BaseEventPayload {
   connectorId: string;
   modelsUpserted: number;
   totalModels: number;
-  correlationId: string;
-  timestamp: string;
-};
+}
+// …and add it to the payload union at the bottom of the same file, and export
+// it from packages/shared-types/src/events/index.ts.
 ```
 
 ### Step 3: Publish from service
 
 ```typescript
-await this.rabbitMQ.publish(CONNECTOR_EVENTS.MODEL_SYNC_COMPLETED, {
+await this.rabbitMQService.publish(EventPattern.CONNECTOR_MODEL_SYNC_COMPLETED, {
   connectorId: connector.id,
   modelsUpserted: result.upserted,
   totalModels: result.total,
@@ -128,11 +128,13 @@ await this.rabbitMQ.publish(CONNECTOR_EVENTS.MODEL_SYNC_COMPLETED, {
 ### Step 4: Subscribe in consuming service
 
 ```typescript
-@EventPattern(CONNECTOR_EVENTS.MODEL_SYNC_COMPLETED)
-async handleModelSyncCompleted(
-  @Payload() payload: ConnectorModelSyncCompletedPayload
-): Promise<void> {
-  await this.service.handleModelSyncCompleted(payload);
+// e.g. in the consuming service's onModuleInit — the pattern
+// apps/claw-memory-service/src/modules/memory/services/memory.service.ts uses
+await this.rabbitMQService.subscribe(
+  EventPattern.CONNECTOR_MODEL_SYNC_COMPLETED,
+  async (data: unknown) => {
+    await this.handleModelSyncCompleted(data); // validate the payload first
+  },
 }
 ```
 

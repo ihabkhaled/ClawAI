@@ -6,10 +6,11 @@ Base URL: `http://localhost:4000/api/v1` (via nginx) or `http://localhost:4009/a
 
 ## GET /health
 
-Aggregated health check across all 12 services.
+Aggregated health check across every other backend service.
 
 **Auth**: Public
 **Response 200**:
+
 ```json
 {
   "status": "healthy",
@@ -97,18 +98,25 @@ Aggregated health check across all 12 services.
 ```
 
 **Degraded response** (some services down):
+
 ```json
 {
   "status": "degraded",
   "services": [
     { "name": "auth-service", "status": "up", "responseTimeMs": 12, "error": null },
-    { "name": "ollama-service", "status": "down", "responseTimeMs": null, "error": "Connection refused" }
+    {
+      "name": "ollama-service",
+      "status": "down",
+      "responseTimeMs": null,
+      "error": "Connection refused"
+    }
   ],
   "summary": { "total": 12, "up": 11, "down": 1 }
 }
 ```
 
 **Unhealthy response** (all services down):
+
 ```json
 {
   "status": "unhealthy",
@@ -120,23 +128,23 @@ Aggregated health check across all 12 services.
 
 ## Status Values
 
-| Overall Status | Condition |
-|---------------|-----------|
-| `healthy` | All services are up |
-| `degraded` | Some services are up, some are down |
-| `unhealthy` | All services are down |
+| Overall Status | Condition                           |
+| -------------- | ----------------------------------- |
+| `healthy`      | All services are up                 |
+| `degraded`     | Some services are up, some are down |
+| `unhealthy`    | All services are down               |
 
-| Service Status | Meaning |
-|---------------|---------|
-| `up` | Service responded within timeout |
-| `down` | Service failed to respond or returned error |
+| Service Status | Meaning                                     |
+| -------------- | ------------------------------------------- |
+| `up`           | Service responded within timeout            |
+| `down`         | Service failed to respond or returned error |
 
 ---
 
 ## Health Check Configuration
 
 - **Timeout**: 5000ms per service
-- **Checked services**: All 12 services (auth through file-generation)
+- **Checked services**: every other backend service (auth through thread-generation; the list is `SERVICE_URLS` in `apps/claw-health-service/src/modules/health/constants/health.constants.ts`)
 - **Endpoint hit**: `GET /api/v1/health` on each service
 - **Parallel**: All checks run concurrently
 
@@ -153,6 +161,7 @@ GET http://<service>:<port>/api/v1/health
 These return `{ "status": "ok" }` and are used by the health service aggregator.
 
 **curl**:
+
 ```bash
 # Aggregated health
 curl http://localhost:4000/api/v1/health

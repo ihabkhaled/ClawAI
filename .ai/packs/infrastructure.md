@@ -11,7 +11,7 @@ infrastructure / config change.
 
 ## Validation lane
 - `npm run knowledge:verify`
-- `npm run affected:build`
+- `git commit, then git push — the hooks gate this change for its type (rules/23 gate matrix)`
 
 ## Known pitfalls
 - New service/DB → ALL split compose files in the same commit

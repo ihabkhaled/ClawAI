@@ -6,7 +6,7 @@ The npm-workspace inventory. Ground truth: root `package.json`
 (`"workspaces": ["packages/*", "apps/*"]`), `.ai/manifests/services.json`,
 `.ai/manifests/packages.json`, `.ai/manifests/tests.json`.
 
-**Total workspaces: 27** = 6 shared packages + 20 backend services + 1 frontend.
+**Total workspaces: <!-- count:workspaces -->27<!-- /count -->** = <!-- count:sharedPackages -->6<!-- /count --> shared packages + <!-- count:services -->20<!-- /count --> backend services + 1 frontend.
 
 ## Shared packages (`packages/`)
 
@@ -59,7 +59,8 @@ env-only-port note for client-logs/server-logs is expanded in
 
 ## Test totals
 
-678 test files across the monorepo (`.ai/manifests/tests.json`). Every backend
+<!-- count:specFiles -->2298<!-- /count --> test files across the monorepo (`.ai/manifests/tests.json`). Every backend
+
 service, shared package and the frontend uses **vitest** (ADR-099). See
 [testing-map.md](testing-map.md).
 

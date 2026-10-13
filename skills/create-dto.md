@@ -19,7 +19,7 @@ required_context: [ai-context-pack]
 affected_workspaces: [apps/claw-<service>-service]
 required_tests: [dto fuzz spec (valid + boundary + invalid + null/empty/overflow)]
 required_docs: [docs/04-backend/service-guide-<service>.md]
-validation_lane: cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Skill: Create a DTO
@@ -77,7 +77,10 @@ DTOs are Zod schemas that validate every input at the HTTP and RabbitMQ boundari
 ## Validation commands
 
 ```bash
-cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 ## Documentation updates

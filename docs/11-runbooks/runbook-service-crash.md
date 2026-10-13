@@ -130,14 +130,14 @@ If the crash is caused by a schema mismatch:
 If `docker stats` shows high memory usage:
 
 1. Check for memory leaks in the service code (common: unclosed streams, growing arrays)
-2. Increase container memory limit in `docker/docker-compose.dev.yml`:
+2. Increase the container memory limit in `docker/docker-compose.dev.services.yml` (prod: `docker/docker-compose.prod.services.yml`):
    ```yaml
    deploy:
      resources:
        limits:
          memory: 1G
    ```
-3. Restart: `./scripts/claw.sh up -d chat-service`
+3. Recreate the service so it picks up the new limit: `./scripts/claw.sh service:recreate chat-service`
 
 ### Nuclear Option (Full Stack Restart)
 

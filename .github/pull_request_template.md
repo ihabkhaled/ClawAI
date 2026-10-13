@@ -1,16 +1,29 @@
 ## Summary
-Brief description of changes.
+
+What changed and why (three bullets at most).
 
 ## Type
+
 - [ ] Feature
-- [ ] Bug Fix
+- [ ] Bug fix
 - [ ] Refactor
 - [ ] Documentation
 - [ ] Test
+- [ ] Tooling / CI
+
+## Docs impact (required — rules/63)
+
+<!-- Mirror of the commits' `Docs:` trailers. One of: -->
+
+- Updated: <the docs this change made stale, and that it fixed>
+- None, because: <the specific reason no document describes this change>
+
+## QA evidence (rules/60)
+
+- Record: `docs/qa-evidence/<date>-<slug>.md` — all 15 lanes, PASS / NOT_RUN / NOT_APPLICABLE with reasons
 
 ## Checklist
-- [ ] `npm run lint` passes
-- [ ] `npm run build` passes
-- [ ] `npm run test` passes
-- [ ] Documentation updated (if applicable)
-- [ ] No secrets in code
+
+- [ ] Landed through the hooks (no `--no-verify`); every commit has a `Docs:` trailer
+- [ ] `CI success` is green (it aggregates every CI and ai-native-os job and gates release)
+- [ ] No secrets, no `eslint-disable`, no lowered coverage threshold

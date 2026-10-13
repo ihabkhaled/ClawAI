@@ -8,7 +8,7 @@ ClawAI is designed as stateless microservices that can be horizontally scaled. T
 
 ## Current State (Development)
 
-All 17 services run as single Docker containers on one machine (~22 containers total). This is sufficient for small teams (5-20 users) but has clear limits.
+Every service runs as a single Docker container on one machine (chat-service alone can run replicas in production). This is sufficient for small teams (5-20 users) but has clear limits.
 
 ---
 

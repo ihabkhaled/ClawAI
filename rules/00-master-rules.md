@@ -27,7 +27,7 @@
 | `31-anti-gaming-and-semantic-compliance.md`              | **Anti-gaming**: rule 30's budgets enforced by intent, not literal syntax; false progress/completion/blocker guards; executive override protocol                                                                                                                                            |
 | `32-underthinking-and-reasoning-balance.md`              | **Reasoning floor**: the counterweight to rule 30 — architecture/root-cause/evidence/security floors, decision-readiness gate                                                                                                                                                               |
 | `01-task-intake-and-planning.md`                         | No line of code is written before the task is understood and its blast radius is mapped.                                                                                                                                                                                                    |
-| `02-monorepo-and-workspace-ownership.md`                 | ClawAI is an npm-workspaces monorepo: 17 NestJS services, one Next.js frontend, and six shared packages.                                                                                                                                                                                    |
+| `02-monorepo-and-workspace-ownership.md`                 | ClawAI is an npm-workspaces monorepo: <!-- count:services -->20<!-- /count --> NestJS services, one Next.js frontend, and six shared packages.                                                                                                                                              |
 | `03-microservice-boundaries.md`                          | Each ClawAI service owns its data and its process.                                                                                                                                                                                                                                          |
 | `04-nextjs-app-router.md`                                | `apps/claw-frontend` is a Next.js 16 App Router application (React 19.2).                                                                                                                                                                                                                   |
 | `05-frontend-components-and-hooks.md`                    | Components render; hooks hold logic. Splitting them — and keeping each small and single-purpose — is what makes the frontend reviewable and testabl…                                                                                                                                        |
@@ -41,7 +41,7 @@
 | `13-external-library-wrappers-and-adapters.md`           | Third-party code touches ClawAI in exactly one place.                                                                                                                                                                                                                                       |
 | `14-shared-packages.md`                                  | Six `packages/shared-*` workspaces hold everything used by two or more services.                                                                                                                                                                                                            |
 | `15-configuration-and-environment.md`                    | Configuration is read once, validated with Zod, and exposed through a typed `AppConfig` — never scraped from `process.env` at call sites.                                                                                                                                                   |
-| `16-authentication-and-authorization.md`                 | Auth is uniform across all 17 services: one JWT model, one guard stack, one permission catalog, one entitlement layer.                                                                                                                                                                      |
+| `16-authentication-and-authorization.md`                 | Auth is uniform across every service: one JWT model, one guard stack, one permission catalog, one entitlement layer.                                                                                                                                                                        |
 | `17-rabbitmq-events-and-jobs.md`                         | Async cross-service communication runs on one topic exchange with one reliability contract.                                                                                                                                                                                                 |
 | `18-error-handling-and-reliability.md`                   | Errors are typed, logged, and surfaced — never swallowed, never left to spin.                                                                                                                                                                                                               |
 | `19-logging-observability-and-redaction.md`              | Every request is traceable end-to-end and no log line ever leaks a secret.                                                                                                                                                                                                                  |
@@ -51,7 +51,7 @@
 | `23-git-commits-hooks-and-release-gates.md`              | Quality gates run where they are cheap and correct: in the folder you touched.                                                                                                                                                                                                              |
 | `24-generated-files-and-knowledge-freshness.md`          | The AI-native workflow depends on machine-readable facts staying true.                                                                                                                                                                                                                      |
 | `33-knowledge-compounding-and-context-velocity.md`       | ClawAI is production-grade and worked on by many people and many agents.                                                                                                                                                                                                                    |
-| `34-gate-economy-and-machine-resources.md`               | The gates in this repo are expensive by construction: 13 Prisma clients, 20 workspaces, thousands of tests.                                                                                                                                                                                 |
+| `34-gate-economy-and-machine-resources.md`               | The gates in this repo are expensive by construction: <!-- count:prismaClients -->16<!-- /count --> Prisma clients, <!-- count:workspaces -->27<!-- /count --> workspaces, thousands of tests.                                                                                              |
 | `35-super-administrator-and-privilege-boundaries.md`     | Protecting a row is half a privilege boundary; the other half is asking what the caller is allowed to do.                                                                                                                                                                                   |
 | `36-floating-ui-and-toast-clearance.md`                  | Toasts stack from the same corner everything else floats in; a floating element declares itself and the clearance is measured, never hardcoded.                                                                                                                                             |
 | `37-payg-credit-integrity.md`                            | PAYG credit spends a customer's money before they see a result: overspend impossible by construction, every dollar attributable, margin inputs private.                                                                                                                                     |
@@ -86,19 +86,16 @@ These are NEVER acceptable. They block delivery unconditionally:
 3. **Failing test** — `npm run test` must exit 0
 4. **QA script not run** — every feature needs `qa/test-<feature>.sh` passing 0 failures
 5. **Docs missing** — every new service/feature needs docs in `docs/`
-6. **Coverage below 92 %** — every microservice and the frontend must report ≥92 % statements/branches/functions/lines via `npm run test -- --coverage`
+6. **Coverage going down** — CI runs every suite with `--coverage` and fails below the workspace floor, below the changed-lines target, or when any threshold is lowered; the numbers and the dated path to 92 % are in [rules/22](22-testing-and-coverage.md) rule 2
 7. **Public method missing logging** — every method in `*.service.ts` / `*.manager.ts` / `*.adapter.ts` / `*.utility.ts` / `*.repository.ts` MUST emit `logger.debug` on entry and `logger.error` in every `catch` block
-8. **Cross-service duplicate utility** — if a utility lives identically in 2+ services, it MUST be moved to `packages/shared-utilities/`. Per-service copies are a delivery blocker.
+8. **Cross-service duplicate utility** — if a utility lives identically in two or more services, it MUST be moved to `packages/shared-utilities/`. Per-service copies are a delivery blocker.
 
-## Scoped Quality Gates Before Commit (STRICT — read before EVERY commit/push)
+## Landing a change
 
-> Full text: `rules/07-commit-rules.md` → "Scoped Quality Gates Before Commit". Mirrored in `CLAUDE.md`, `CODEX.md`, `cursor.md`, and agent memory `feedback_per_folder_gates_before_commit`.
-
-**Run lint/typecheck/test/build ONLY in the folder(s) you touched — NEVER across all 17 services.** The all-workspace gate is prohibitively expensive (13 Prisma clients, every service compiled, thousands of tests) and false-fails on unchanged sibling services in a fresh worktree. For ANY change in ANY folder (`apps/claw-<service>/`, `apps/claw-frontend/`, `packages/<pkg>/`): run the four gates inside that folder; when green, `git commit` then `git push`. Non-workspace files (`scripts/**`, `*.mjs`) → cheapest equivalent check (`node --check`). Docs-only changes skip the gates but stay conventional-format.
-
-**`--no-verify` is banned** ([ADR-061](../docs/13-adr/adr-061-git-hook-policy-no-bypass.md)). The hooks now run the _affected_ lane only, so they are scoped and fast — a hook failure is a real problem in something you staged, and skipping it just moves the failure to CI. The only exception is a documented incident procedure with explicit human sign-off (`docs/exceptions/README.md`).
-
-**Push every commit before starting the next one.** One commit, one push: after a commit passes its hook, the next git command is `git push`. CI only sees what is pushed, so a local stack of N commits is N unverified commits with an N-wide bisect surface. Full rationale in `rules/07-commit-rules.md` → "Push each commit before starting the next one"; runbook in `skills/commit-and-push-each-change.md`. `git log --oneline origin/<branch>..HEAD` must be empty when you begin the next commit.
+How a change lands, what each hook runs and what CI adds — by change type — is
+one canonical section: [rules/23](23-git-commits-hooks-and-release-gates.md#landing-a-change).
+In short: commit and push through the hooks, run nothing else by hand, never
+bypass a hook ([ADR-061](../docs/13-adr/adr-061-git-hook-policy-no-bypass.md)).
 
 ## The Non-Negotiable Mandate
 
@@ -140,7 +137,7 @@ A feature IS done when:
 16. `packages/shared-types` updated
 17. `apps/claw-health-service` updated
 18. `apps/claw-frontend` updated
-19. **`packages/shared-utilities` updated** (if the change adds a utility that 2+ services need)
+19. **`packages/shared-utilities` updated** (if the change adds a utility that two or more services need)
 20. **Logging audit** (every public method in changed files emits debug/error)
 21. **`CODEX.md` and `cursor.md` updated** (mirror any new pattern/rule into all three LLM instruction files)
 
@@ -173,59 +170,12 @@ pre-push and CI) **before** writing code rather than after.
 Where a pack conflicts with repository policy, **policy wins** — and the deviation is
 stated explicitly in the plan, never applied silently.
 
-## Generated artifacts are a HARD GATE (never optional)
+## Generated artifacts are a hard gate
 
-`.ai/**`, every workspace `AGENTS.md`, and
-`docs/features/ai-native-engineering-os/inventory.snapshot.json` are
-**generated from the tree**. CI verifies them on every push:
-
-| CI job              | Command                    | Fails when                                                           |
-| ------------------- | -------------------------- | -------------------------------------------------------------------- |
-| Knowledge freshness | `npm run knowledge:check`  | a generated file's hash no longer matches the tree                   |
-| Knowledge integrity | `npm run knowledge:verify` | stale file, broken link, orphan reviewer, hook-bypass, contradiction |
-| Inventory audit     | `npm run audit:check`      | the inventory snapshot hash has drifted                              |
-
-**A stale artifact turns the build red on every subsequent push**, for everyone,
-until someone regenerates it. It is not a warning and it is not deferrable.
-
-### The rule
-
-Any commit that touches `packages/**`, `apps/**`, `infra/**`, `docker/**`,
-`docs/**`, `scripts/**`, `rules/**`, `skills/**`, `tools/**` or `.env.example`
-MUST regenerate and stage:
-
-```bash
-npm run knowledge:build      # rewrites .ai/** + workspace AGENTS.md
-npm run audit                # rewrites the inventory snapshot
-git add .ai docs/features/ai-native-engineering-os/inventory.snapshot.json
-git add apps/*/AGENTS.md packages/*/AGENTS.md 2>/dev/null
-npm run knowledge:verify     # what CI runs
-npm run audit:check          # what CI runs
-```
-
-The pre-commit hook now does all of this **automatically**, so in normal use
-there is nothing to remember. The rule is written down because the hook can be
-skipped (it must not be) and because a red CI needs a documented fix.
-
-### Order matters — regenerate AFTER formatting, never before
-
-This is the mistake that actually caused a red build:
-
-1. `npm run knowledge:build` — hashes the current bytes
-2. `git add` / commit — **lint-staged reformats the staged files**
-3. the reformatted bytes no longer match the hashes recorded in step 1
-4. `knowledge:check` passes locally (it ran before the reformat) but
-   `knowledge:verify` fails in CI
-
-Generators must run **after** prettier and `eslint --fix` have settled. The
-pre-commit hook is ordered that way deliberately: lint-staged is step 1,
-regeneration is step 2.
-
-### Never hand-edit a generated artifact
-
-If a generated file is wrong, fix the **generator or its input**, then
-regenerate. Editing `.ai/manifests/*.json` or a workspace `AGENTS.md` by hand is
-overwritten on the next build and hides the real problem.
+`.ai/**`, every workspace `AGENTS.md`, the per-model routers and the inventory
+snapshot are generated; the pre-commit hook regenerates and stages them, and CI
+fails on a stale one. The rule, the fix for a red CI and the ordering trap live in
+one place: [rules/24](24-generated-files-and-knowledge-freshness.md#generated-artifacts-are-a-hard-gate-never-optional).
 
 ## Enforcement
 
@@ -240,3 +190,4 @@ overwritten on the next build and hides the real problem.
 - [ ] Each entry's one-line description still matches the rule's Purpose.
       | `59-chat-surfaces-are-one-pipeline.md` | Every chat surface (Compare, Consensus, Escalation, Repair, Decompose, Best-of-N, Verifier, Pipeline, Cost-Ensemble, Role Pack, judge/critic) is one pipeline: shared context + execution gateways, `resolveOrchestrationThread`, shared DTO fragments, `sharedPayload`; a normal-chat change is not done until it reaches all of them; `orchestration-parity.spec.ts` guards it (ADR-155) |
       | `60-qa-evidence-is-mandatory-and-machine-checked.md` | STRICT: no change is done without walking all 15 QA lanes (unit is only L01; manual API and manual browser are L03/L04) and recording evidence in `docs/qa-evidence/<date>-<slug>.md`; Verdict DONE only with no NOT_RUN/FAIL lane; `tools/qa/evidence.mjs` + CI job `qa-evidence` enforce it (ADR-156) |
+      | `63-docs-move-with-code.md` | NON-NEGOTIABLE: docs move with code — every doc a change makes stale is fixed in the same commit, every commit carries a `Docs:` trailer, and `docs:impact` / `docs:refs` / counts / duplication checks enforce it in the hooks and CI (ADR-170) |

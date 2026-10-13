@@ -10,7 +10,7 @@
 
 - A service file is over 500 lines
 - A method is over 50 lines (service) or 80 lines (manager)
-- A utility lives identically in 2+ services
+- A utility lives identically in two or more services
 - Test coverage in a service is below 92 %
 - A method has zero log statements
 - An ESLint warning surfaces a `complexity > 10/15` or `max-lines-per-function`
@@ -55,7 +55,7 @@ ls apps/claw-<service>-service/src/common/utilities/
 
 # For each utility, check if it lives in shared-utilities or another service
 diff apps/claw-<service>-service/src/common/utilities/jwt.utility.ts \
-     packages/shared-utilities/src/jwt-verifier/jwt.utility.ts
+     packages/shared-utilities/src/jwt/jwt-verifier.utility.ts
 
 # If identical (or near-identical), adopt:
 #   1. Edit imports in service code: from '../common/utilities/jwt.utility' → from '@claw/shared-utilities'
@@ -63,13 +63,14 @@ diff apps/claw-<service>-service/src/common/utilities/jwt.utility.ts \
 #   3. Run typecheck: npm run typecheck
 ```
 
-Common candidates for shared-utilities (per Phase A audit):
+Common candidates for shared-utilities (find today's copies with
+`ls apps/*/src/common/utilities/<name>.utility.ts`):
 
-- `jwt.utility.ts` (verifier) — 17 services have identical copies
-- `http-client.utility.ts` — 7 services, two flavours (fetch vs axios)
-- `crypto.utility.ts` — 4 services
-- `url-safety.utility.ts` — 2 services
-- `bearer.utility.ts` — chat-only today, but pattern leaks into many controllers
+- `jwt.utility.ts` (verifier) — the shared home is `packages/shared-utilities/src/jwt/`
+- `http-client.utility.ts` — two flavours (fetch vs axios); the shared home is `packages/shared-utilities/src/http-client/`
+- `crypto.utility.ts`
+- `url-safety.utility.ts`
+- `bearer.utility.ts` — chat-only today, but the pattern leaks into many controllers
 
 ### Step 3 — Extract every inline declaration
 
@@ -150,39 +151,34 @@ DTO fuzz tests for every Zod schema (valid + boundary + invalid).
 
 Manager error-path tests for every `catch` branch.
 
-### Step 8 — Run all gates
+### Step 8 — Let the hooks gate it
 
-```bash
-cd apps/claw-<service>-service
-npm run lint           # → 0 errors
-npm run typecheck      # → 0 errors
-npm run test -- --coverage  # → all pass, ≥92 % all metrics
-npm run build          # → success
-```
+Do not run lint, typecheck, test and build by hand. Commit and push (Step 12):
+the pre-commit hook lints and typechecks the staged change, the pre-push hook
+runs the related tests and the build of the changed workspace, and CI enforces
+the coverage floor. Which gate runs for which change type:
+[rules/23 — gate matrix](../rules/23-git-commits-hooks-and-release-gates.md#gate-matrix-by-change-type).
 
-Fix any failure before proceeding. Do NOT use `--no-verify` to bypass.
+Fix any failure the hooks report. Do NOT use `--no-verify` to bypass.
 
 ### Step 9 — Run the QA script
 
-```bash
-bash qa/test-<service>.sh
-```
+Run the service's local QA script, `qa/test-<service>.sh` — a local,
+gitignored script (`qa/*` is not committed), so it exists only on a machine
+that has one.
 
 0 failures required. If a test fails, the refactor changed behaviour. Investigate before proceeding.
 
 ### Step 10 — Rebuild Docker container and scan logs
 
 ```bash
-./scripts/claw.sh stop <service>
-./scripts/claw.sh rm -f <service>
-docker rmi claw-<service>-service
 ./scripts/claw.sh service:rebuild <service>
 
 # Wait for healthy
-./scripts/claw.sh ps <service>
+./scripts/claw.sh status
 
 # Scan logs for errors
-./scripts/claw.sh logs <service> --tail=200 | \
+docker logs claw-<service>-service --tail=200 2>&1 | \
   grep -cE "UnhandledPromiseRejection|FATAL|Cannot read properties of undefined"
 # Must be 0
 ```
@@ -196,9 +192,14 @@ docker rmi claw-<service>-service
 ### Step 12 — Commit
 
 ```bash
-git add -A
-git commit -m "refactor(<service>): adopt shared-utilities, extract inline declarations, split long methods, enrich logging, backfill tests to 92%"
+git add <explicit paths>     # never -A, never .
+git commit -m "refactor(<service>): adopt shared-utilities, extract inline declarations, split long methods, enrich logging, backfill tests to 92%" \
+  -m "Docs: updated apps/claw-<service>-service/CLAUDE.md"
+git push origin <branch>
 ```
+
+The hooks gate the commit and the push
+([rules/23](../rules/23-git-commits-hooks-and-release-gates.md#landing-a-change)).
 
 The commit body should describe:
 
@@ -233,9 +234,11 @@ Don't. One service per commit. Reviewers can't diff a 50-file mixed commit relia
 
 Don't skip the smallest methods. The 3-line method also needs `logger.debug` on entry — and `logger.error` if it has a catch. There is no "too small" method.
 
-### Pitfall 7: Forgetting to update CODEX.md and cursor.md
+### Pitfall 7: Hand-editing the per-model routers
 
-Don't. CLAUDE.md, CODEX.md, and cursor.md are mirrors. Update all three together — never one alone.
+Don't. `CODEX.md`, `GEMINI.md` and the other per-model routers are generated
+from the canonical rules; change the rule or `CLAUDE.md` and let the
+pre-commit hook regenerate them.
 
 ## Reference
 
@@ -243,4 +246,4 @@ Don't. CLAUDE.md, CODEX.md, and cursor.md are mirrors. Update all three together
 - `docs/16-quality-engineering/LOGGING_COVERAGE_STANDARD.md` — Logging coverage standard
 - `docs/16-quality-engineering/TDD_AND_UNIT_TESTING_STANDARD.md` — Test coverage standard
 - `.claude/Integrations/refactor__PLAN.md` — The codebase-wide refactor plan (Phase A audit results)
-- `packages/shared-utilities/README.md` — Catalogue of shared utilities
+- `packages/shared-utilities/src/index.ts` — every shared utility the package exports

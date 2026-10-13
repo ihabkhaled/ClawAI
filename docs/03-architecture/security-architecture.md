@@ -2,7 +2,7 @@
 
 ## Overview
 
-ClawAI implements defense-in-depth security across all 17 microservices and the frontend. Security is enforced at every layer: network (Nginx, CORS), transport (HTTPS), authentication (JWT), authorization (RBAC), input validation (Zod), data protection (AES-256-GCM encryption, log redaction), and runtime hardening (Helmet, rate limiting).
+ClawAI implements defense-in-depth security across every backend service and the frontend. Security is enforced at every layer: network (Nginx, CORS), transport (HTTPS), authentication (JWT), authorization (RBAC), input validation (Zod), data protection (AES-256-GCM encryption, log redaction), and runtime hardening (Helmet, rate limiting).
 
 ---
 
@@ -288,7 +288,7 @@ Configurable via:
 ### Implementation
 
 - Uses `@nestjs/throttler` module
-- Applied globally to all 17 services
+- Applied globally to every service
 - Tracks requests by IP address
 - Returns `429 Too Many Requests` when limit is exceeded
 - Response includes `Retry-After` header
@@ -309,7 +309,7 @@ Critical endpoints can have tighter limits:
 
 ## Security Headers (Helmet)
 
-All 17 NestJS services use Helmet middleware to set security-related HTTP headers.
+Every NestJS service uses Helmet middleware to set security-related HTTP headers.
 
 ### Headers Set
 
@@ -500,15 +500,5 @@ CORS is enforced at both Nginx and NestJS levels for defense in depth.
 
 ## Security Checklist for New Features
 
-When adding new features, verify:
-
-- [ ] All endpoints have `AuthGuard` (or explicit `@Public()` decorator)
-- [ ] Appropriate `@Roles()` decorators are applied
-- [ ] All input is validated with Zod schemas (with `.max()` limits)
-- [ ] No secrets are logged or exposed in responses
-- [ ] New environment variables are not prefixed with `NEXT_PUBLIC_` if they contain secrets
-- [ ] Database queries use Prisma/Mongoose (no raw queries)
-- [ ] Rate limiting is appropriate for the endpoint's sensitivity
-- [ ] Audit events are published for security-relevant operations
-- [ ] Error responses do not leak internal details (stack traces, SQL errors)
-- [ ] File uploads are validated for type and size
+The checklist every new feature walks lives in one place:
+[api-security-checklist.md — Security Checklist for New Features](api-security-checklist.md#security-checklist-for-new-features).

@@ -11,7 +11,7 @@ chat-service SSE / streaming change.
 - `agents/observability-reviewer.md`
 
 ## Validation lane
-- `cd apps/claw-chat-service && npm run typecheck && npm run lint && npm test`
+- `git commit, then git push — the hooks gate this change for its type (rules/23 gate matrix)`
 
 ## Known pitfalls
 - SSE routes need @SkipLogging + proxy_buffering off in nginx

@@ -163,11 +163,15 @@ Seeds live under `prisma/`:
 
 ```bash
 cd apps/claw-routing-service
-npx prisma migrate deploy          # apply 5 migrations
-npx tsx prisma/seed-router-models.ts   # ~25 cloud + local profiles
-npx tsx prisma/seed-taxonomy.ts        # ~110 professional roles
-npx tsx prisma/seed-workflows.ts       # 13 default workflows
+npm run migrate      # prisma migrate deploy
+npm run seed         # prisma/seed.cjs — model cost versions, read from the built dist/
 ```
+
+Model costs, deployments and router chains also seed themselves at boot
+(`ModelCostSeedService`, `DeploymentSeedService`, `RouterChainSeedService`).
+`prisma/seed-router-models.ts`, `seed-taxonomy.ts` and `seed-workflows.ts` are
+standalone scripts with no npm script and no TypeScript runner installed in the
+repository; no automated lane runs them.
 
 ## Testing
 

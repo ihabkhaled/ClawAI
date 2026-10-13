@@ -269,7 +269,7 @@ Rate limiting at two levels:
 
 ## Helmet (Security Headers)
 
-All 16 NestJS services apply `helmet` middleware:
+Every NestJS service applies `helmet` middleware:
 
 - `Strict-Transport-Security` (HSTS)
 - `X-Content-Type-Options: nosniff`
@@ -293,7 +293,7 @@ All 16 NestJS services apply `helmet` middleware:
 
 ## Pino Log Redaction
 
-Structured logs produced by all 16 services redact sensitive fields:
+Structured logs produced by every service redact sensitive fields:
 
 ```json
 { "redact": ["req.headers.authorization", "password", "refreshToken", "apiKey", "token", "secret"] }

@@ -91,19 +91,19 @@ This document compares ClawAI against direct competitors and alternative approac
 
 ### vs Open WebUI (Ollama WebUI)
 
-| Dimension                | Open WebUI                | ClawAI                                                 |
-| ------------------------ | ------------------------- | ------------------------------------------------------ |
-| **Architecture**         | Monolithic (Python)       | 17 microservices (NestJS)                              |
-| **Cloud providers**      | Basic (OpenAI-compatible) | 5 native provider integrations                         |
-| **Routing intelligence** | None                      | 7 modes, Ollama-powered AUTO, policies                 |
-| **Privacy routing**      | Manual                    | Automatic (PRIVACY_FIRST, LOCAL_ONLY)                  |
-| **Memory**               | RAG (document upload)     | Automatic extraction + manual curation + context packs |
-| **Scalability**          | Single process            | Horizontally scalable microservices                    |
-| **Event system**         | None                      | RabbitMQ with DLQ and retry                            |
-| **Audit trail**          | None                      | 10 event types, usage ledger                           |
-| **Image generation**     | Via Ollama (limited)      | 3 providers with multi-provider fallback               |
-| **File generation**      | None                      | 7 formats                                              |
-| **i18n**                 | Community translations    | 9 languages with RTL support                           |
+| Dimension                | Open WebUI                | ClawAI                                                          |
+| ------------------------ | ------------------------- | --------------------------------------------------------------- |
+| **Architecture**         | Monolithic (Python)       | <!-- count:services -->20<!-- /count --> microservices (NestJS) |
+| **Cloud providers**      | Basic (OpenAI-compatible) | 5 native provider integrations                                  |
+| **Routing intelligence** | None                      | 7 modes, Ollama-powered AUTO, policies                          |
+| **Privacy routing**      | Manual                    | Automatic (PRIVACY_FIRST, LOCAL_ONLY)                           |
+| **Memory**               | RAG (document upload)     | Automatic extraction + manual curation + context packs          |
+| **Scalability**          | Single process            | Horizontally scalable microservices                             |
+| **Event system**         | None                      | RabbitMQ with DLQ and retry                                     |
+| **Audit trail**          | None                      | 10 event types, usage ledger                                    |
+| **Image generation**     | Via Ollama (limited)      | 3 providers with multi-provider fallback                        |
+| **File generation**      | None                      | 7 formats                                                       |
+| **i18n**                 | Community translations    | 9 languages with RTL support                                    |
 
 **ClawAI advantage**: Enterprise architecture. Intelligent routing. Comprehensive audit. Production scalability.
 

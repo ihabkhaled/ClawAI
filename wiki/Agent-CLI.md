@@ -14,4 +14,4 @@ The built-in `agent-cli/` tree currently contains **53 files** and combines a No
 
 ## Security model
 
-Capabilities are not equivalent to arbitrary remote shell access. Server-side policy/risk/scopes and client-side capability providers form a layered approval boundary. For backend details see [[Service-Agent]] and [[Security-Architecture]].
+Capabilities are not equivalent to arbitrary remote shell access. Server-side policy/risk/scopes and client-side capability providers form a layered approval boundary. For backend details see [[Service-claw-agent-service]] and [[Security-Architecture]].

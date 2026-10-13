@@ -8,7 +8,7 @@
 
 ## Purpose
 
-In a system with 17 microservices, 4 Docker Compose files, an Nginx reverse proxy, 13 PostgreSQL databases, RabbitMQ, Redis, Ollama, a CI/CD pipeline, 9 i18n locales, and a shared monorepo — every structural change has ripple effects. This checklist ensures none of them are missed.
+In a system with <!-- count:services -->20<!-- /count --> microservices, split Docker Compose files, an Nginx reverse proxy, per-service PostgreSQL databases, RabbitMQ, Redis, Ollama, a CI/CD pipeline, 13 i18n locales, and a shared monorepo — every structural change has ripple effects. This checklist ensures none of them are missed.
 
 **This checklist is derived from the 18-item mandatory update list in root `CLAUDE.md`.** It adds exact verification steps, severity ratings, and historical failure patterns for each item.
 
@@ -98,9 +98,9 @@ Select-String -Path 'scripts/install.ps1' -Pattern 'NEW_VARIABLE_NAME'
 
 ---
 
-### Item 5: `docker/docker-compose.dev.yml`
+### Item 5: `docker/docker-compose.dev.services.yml` + `docker/docker-compose.dev.databases.yml`
 
-**WHAT:** The primary development Docker Compose file. Defines all 22 dev containers.
+**WHAT:** The development compose files — services (backends, nginx, frontend) and databases/infrastructure. `./scripts/claw.sh` stitches them together; never bring the stack up with `docker compose -f` by hand.
 
 **WHEN:**
 
@@ -114,12 +114,12 @@ Select-String -Path 'scripts/install.ps1' -Pattern 'NEW_VARIABLE_NAME'
 
 ```bash
 # New service starts and is healthy
-./scripts/claw.sh up -d <new-service>
-./scripts/claw.sh ps <new-service>
-# STATUS column must show: (healthy)
+./scripts/claw.sh service:rebuild <new-service>
+./scripts/claw.sh status
+# The new service's STATUS column must show: (healthy)
 
-# New service logs show no startup errors
-./scripts/claw.sh logs <new-service> --tail 30
+# New service logs show no startup errors (follows; Ctrl+C to stop)
+./scripts/claw.sh logs <new-service>
 ```
 
 **SEVERITY IF MISSED:** Service does not run in dev. Other services that depend on it fail. The entire feature is untestable in the dev environment.
@@ -128,23 +128,24 @@ Select-String -Path 'scripts/install.ps1' -Pattern 'NEW_VARIABLE_NAME'
 
 ---
 
-### Item 6: `docker/docker-compose.yml` (Production)
+### Item 6: `docker/docker-compose.prod.services.yml` + `docker/docker-compose.prod.databases.yml` (Production)
 
-**WHAT:** The production Docker Compose file. Mirrors `docker/docker-compose.dev.yml` but with production image references and no dev-only settings.
+**WHAT:** The production compose files. They mirror the dev files but with production builds and no dev-only settings (no bind mounts, no watch mode).
 
 **WHEN:** Same triggers as Item 5.
 
 **HOW TO VERIFY:**
 
 ```bash
-docker compose -f docker/docker-compose.yml config --quiet
+# Validate the merged prod config (validation only — bring the stack up with claw.sh)
+docker compose --env-file .env -f docker/docker-compose.prod.databases.yml -f docker/docker-compose.prod.services.yml config --quiet
 # Must exit 0 (valid compose config)
 # Inspect new service block matches dev config (minus dev-only settings)
 ```
 
 **SEVERITY IF MISSED:** Production deployment missing the service. The feature that works in dev does not exist in prod. First production deployment after the feature ships will break.
 
-**Common mistake:** Updating only `docker/docker-compose.dev.yml` and shipping. Production deployment then has a different service topology from dev.
+**Common mistake:** Updating only the dev compose files and shipping. Production deployment then has a different service topology from dev.
 
 ---
 
@@ -184,7 +185,7 @@ grep 'AUTO_PULL_MODELS\|ollama\|comfyui' docker-compose.dev.ollama.yml
 
 ### Item 9: `infra/nginx/nginx.conf`
 
-**WHAT:** The Nginx reverse proxy configuration. Routes all traffic from port 4000 to the 17 backend services.
+**WHAT:** The Nginx reverse proxy configuration. Terminates TLS on 443 and routes `/api/v1/*` to the backend services.
 
 **WHEN:**
 
@@ -252,7 +253,7 @@ curl -s http://localhost:4009/api/v1/health | jq '.services["new-service-name"]'
 
 ### Item 11: `packages/shared-constants`
 
-**WHAT:** The shared constants package consumed by all 17 services. Contains service port numbers, service names, exchange names, API prefix, and pagination defaults.
+**WHAT:** The shared constants package consumed by every service. Contains service port numbers, service names, exchange names, API prefix, and pagination defaults.
 
 **WHEN:**
 
@@ -404,8 +405,7 @@ npx prisma migrate dev --name migration1
 
 ```bash
 # Run the seed script for the affected service
-cd apps/claw-ollama-service
-npx tsx prisma/seed-catalog.ts
+npm run seed:catalog --workspace=claw-ollama-service
 # Must complete without errors
 
 # Verify the seed data was inserted
@@ -562,25 +562,25 @@ payment-service crash-looped. Runbook:
 
 For each item, the reviewer must confirm the following before approving a PR:
 
-| Item                             | Evidence Required                                                |
-| -------------------------------- | ---------------------------------------------------------------- |
-| `.env.example`                   | Diff shows new variable with placeholder value                   |
-| `.env`                           | Dev value confirmed present (not shown in PR — verified locally) |
-| `install.sh`                     | Diff shows variable in .env generation block                     |
-| `install.ps1`                    | Diff shows variable in .env generation block                     |
-| `docker/docker-compose.dev.yml`  | New service block present; `docker ps` shows (healthy)           |
-| `docker/docker-compose.yml`      | New service block matches dev config                             |
-| `docker/docker-compose.*.ollama` | If applicable: model/variable present                            |
-| `nginx.conf`                     | `nginx -t` passes; endpoint returns non-404 from port 4000       |
-| Health service                   | `/api/v1/health` response includes new service                   |
-| `shared-constants`               | `npm run typecheck` 0 errors; new constant visible in diff       |
-| `shared-types`                   | `npm run typecheck` 0 errors; new type/pattern visible in diff   |
-| `ci.yml`                         | CI pipeline green; new service in Prisma generate step           |
-| Prisma migration                 | Migration file in diff; migration applies on fresh container     |
-| Seed files                       | Seed runs without error; data visible in DB via psql             |
-| i18n (all 8)                     | All 9 locale files in diff; `npm run typecheck` 0 errors         |
-| Frontend types                   | `npm run typecheck` 0 errors on frontend workspace               |
-| Root `CLAUDE.md`                 | New service/endpoint/var/pattern visible in diff                 |
+| Item                                      | Evidence Required                                                     |
+| ----------------------------------------- | --------------------------------------------------------------------- |
+| `.env.example`                            | Diff shows new variable with placeholder value                        |
+| `.env`                                    | Dev value confirmed present (not shown in PR — verified locally)      |
+| `install.sh`                              | Diff shows variable in .env generation block                          |
+| `install.ps1`                             | Diff shows variable in .env generation block                          |
+| `docker/docker-compose.dev.services.yml`  | New service block present; `./scripts/claw.sh status` shows (healthy) |
+| `docker/docker-compose.prod.services.yml` | New service block matches dev config                                  |
+| `docker/docker-compose.*.ollama`          | If applicable: model/variable present                                 |
+| `nginx.conf`                              | `nginx -t` passes; endpoint returns non-404 from port 4000            |
+| Health service                            | `/api/v1/health` response includes new service                        |
+| `shared-constants`                        | `npm run typecheck` 0 errors; new constant visible in diff            |
+| `shared-types`                            | `npm run typecheck` 0 errors; new type/pattern visible in diff        |
+| `ci.yml`                                  | CI pipeline green; new service in Prisma generate step                |
+| Prisma migration                          | Migration file in diff; migration applies on fresh container          |
+| Seed files                                | Seed runs without error; data visible in DB via psql                  |
+| i18n (all 8)                              | All 9 locale files in diff; `npm run typecheck` 0 errors              |
+| Frontend types                            | `npm run typecheck` 0 errors on frontend workspace                    |
+| Root `CLAUDE.md`                          | New service/endpoint/var/pattern visible in diff                      |
 
 ---
 
@@ -592,7 +592,7 @@ These are the items most frequently missed in ClawAI development. Treat them as 
 
 2. **Prisma migration committed but not the migration file.** Running `prisma migrate dev` generates the file locally but it must be committed. Check `git status` for `prisma/migrations/`.
 
-3. **New env variable in service code but not in `docker/docker-compose.dev.yml` `environment:` block.** The service reads from `.env` via `env_file:` but some variables need explicit override. Confirm with `docker compose config` that the variable resolves.
+3. **New env variable in service code but not in the `environment:` block of `docker/docker-compose.dev.services.yml`.** The service reads from `.env` via `env_file:` but some variables need explicit override. Confirm with `docker compose config` that the variable resolves.
 
 4. **Frontend type not updated when backend DTO field added.** The API call compiles but the new field is missing. Add a TypeScript test that exercises the full request/response type.
 

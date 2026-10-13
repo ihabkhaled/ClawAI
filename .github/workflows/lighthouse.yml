@@ -45,11 +45,11 @@ jobs:
       # localhost.
       SITE_URL: https://claw.example
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: npm
 
       - name: Install dependencies
@@ -79,7 +79,7 @@ jobs:
             --exclude='apps/claw-frontend/.next/standalone' \
             apps/claw-frontend/.next packages/*/dist
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: lighthouse-build
           path: lighthouse-build.tgz
@@ -100,17 +100,17 @@ jobs:
       LIGHTHOUSE_SHARDS: 20
       SITE_URL: https://claw.example
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: npm
 
       - name: Install dependencies
         run: npm ci --ignore-scripts
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: lighthouse-build
 
@@ -139,7 +139,7 @@ jobs:
         working-directory: apps/claw-frontend
         run: |
           PORT=4901 SERVICE_TOKEN=lighthouse-fixture node scripts/lighthouse-pricing-fixture.mjs &
-          for attempt in $(seq 1 20); do
+          for _ in $(seq 1 20); do
             curl -sf -H 'Authorization: Service lighthouse-fixture' \
               http://127.0.0.1:4901/api/v1/internal/plans/catalog >/dev/null && exit 0
             sleep 1
@@ -174,7 +174,7 @@ jobs:
 
       - name: Upload Lighthouse reports
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: lighthouse-reports-${{ matrix.shard }}
           path: apps/claw-frontend/.lighthouseci

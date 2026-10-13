@@ -11,7 +11,7 @@ connector-service provider adapter change.
 - `agents/api-contract-reviewer.md`
 
 ## Validation lane
-- `cd apps/claw-connector-service && npm run typecheck && npm run lint && npm test`
+- `git commit, then git push — the hooks gate this change for its type (rules/23 gate matrix)`
 
 ## Known pitfalls
 - Wrap the vendor SDK in an adapter — no raw SDK imports in services

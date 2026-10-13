@@ -20,7 +20,7 @@ affected_workspaces: [apps/claw-<service>-service]
 required_tests:
   [consumer spec (valid payload, invalid payload, duplicate/idempotent, handler error)]
 required_docs: [docs/03-architecture/event-bus.md]
-validation_lane: cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Skill: Add an Event Consumer
@@ -77,7 +77,10 @@ A consumer subscribes to a `claw.events` pattern with `@EventPattern`/`@MessageP
 ## Validation commands
 
 ```bash
-cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 Verify end-to-end by publishing a test event and checking the consumer's DB + logs (no `UnhandledPromiseRejection`).

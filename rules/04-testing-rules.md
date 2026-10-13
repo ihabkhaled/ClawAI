@@ -12,20 +12,12 @@
 
 Write failing tests BEFORE writing the implementation code.
 
-**Coverage target (updated 2026-04-26): ≥ 92 % on every microservice and the frontend, all four Vitest coverage metrics (statements, branches, functions, lines).** The 95 %-on-new-code rule still applies for new code added in a feature commit; the 92 % flagship is the per-service global floor enforced via CI.
-
-Per-service `vitest.config.ts` MUST contain:
-
-```ts
-test: {
-  coverage: {
-    provider: 'v8',
-    thresholds: { statements: 92, branches: 92, functions: 92, lines: 92 },
-  },
-},
-```
-
-CI runs `npm run test -- --coverage` and fails on any metric drop. Coverage is ratcheted only upward — never lower a threshold to land a change.
+**Coverage:** the numbers, the ratchet and the dated path to 92 % live in
+[rules/22](22-testing-and-coverage.md) rule 2 and
+[`tools/coverage/thresholds.json`](../tools/coverage/thresholds.json). In short: CI
+runs every suite with `--coverage`, enforces each workspace's floor, holds the lines
+a PR changes to the `changedLines` target, and fails if any number goes down. Never
+lower a threshold to land a change.
 
 Required test subjects:
 

@@ -1,0 +1,39 @@
+name: Prepare workspace
+description: >-
+  Node from .nvmrc, node_modules from the cache the setup job saved (npm ci on
+  a miss), and — unless disabled — the shared-package dist and Prisma clients
+  the setup job built, so no matrix job installs or builds them again.
+
+inputs:
+  build-outputs:
+    description: Download the setup job's shared-package dist and Prisma clients.
+    required: false
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      id: node
+      with:
+        node-version-file: .nvmrc
+
+    - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      id: modules
+      with:
+        path: |
+          node_modules
+          apps/*/node_modules
+          packages/*/node_modules
+        key: modules-${{ runner.os }}-node${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
+
+    - name: Install dependencies (cache miss only)
+      if: steps.modules.outputs.cache-hit != 'true'
+      shell: bash
+      run: npm ci --ignore-scripts --no-audit --no-fund
+
+    - name: Shared-package dist and Prisma clients from the setup job
+      if: inputs.build-outputs == 'true'
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        name: build-outputs

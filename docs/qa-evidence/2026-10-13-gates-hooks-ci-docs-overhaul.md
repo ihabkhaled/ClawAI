@@ -1,0 +1,126 @@
+# QA evidence - gates-hooks-ci-docs-overhaul
+
+Batch: gates-hooks-ci-docs-overhaul
+Date: 2026-10-13
+Commits: branch chore/gates-hooks-ci-docs-overhaul (one commit per phase; see the PR)
+Verdict: PARTIAL
+
+Every lane is filled in. PASS needs the command and its real output (or a path, a count, a
+screenshot name). NOT_RUN and NOT_APPLICABLE need a reason. Verdict DONE is allowed only when no
+lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (rules/60, rules/49).
+
+Scope: developer tooling only (git hooks, the affected gate runner, gate receipts, lint-staged,
+ESLint/TypeScript gate configuration, CI workflows, governance docs). No service runtime code, API,
+UI, data model, money path or user-facing text changes. The only workspace source added is the
+`packages/shared-rabbitmq` test suite.
+
+| Lane | What                                                                    | Status         | Evidence or reason                                                                                                                                                                                                                                                                                                                                                      |
+| ---- | ----------------------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L01  | Unit and integration tests (only the changed files)                     | PASS           | `npm run knowledge:test:fast` -> `tests 432, pass 432, fail 0`; `node --test tools/__tests__/gate-correctness.test.mjs tools/__tests__/gate-receipt.test.mjs tools/__tests__/affected-ci.test.mjs` -> `tests 42, pass 42`; `npm test --workspace=@claw/shared-rabbitmq` -> `Test Files 2 passed, Tests 29 passed` (98.6% statements, 94.91% branches with `--coverage`) |
+| L02  | Typecheck, lint and build (touched workspaces)                          | PASS           | `npm run typecheck --workspace=@claw/shared-rabbitmq` exit 0; `npm run build --workspace=@claw/shared-rabbitmq` exit 0; `eslint --max-warnings 0` on both new specs exit 0; `node --check` on every new tools module -> SYNTAX_OK                                                                                                                                       |
+| L03  | Manual API test (curl) with the log line proving the branch ran         | NOT_APPLICABLE | No HTTP endpoint, service handler or request path changed; the batch changes git hooks, CI and docs only                                                                                                                                                                                                                                                                |
+| L04  | Manual browser test (Playwright against the real UI) with screenshots   | NOT_APPLICABLE | No UI change; nothing rendered by the frontend changed                                                                                                                                                                                                                                                                                                                  |
+| L05  | Automation e2e (a committed or existing spec was run)                   | PASS           | The hooks themselves were run end to end as a developer runs them: `sh .husky/pre-commit` and `sh .husky/pre-push` on real staged/committed changes, timed in the table below                                                                                                                                                                                           |
+| L06  | RBAC across roles and plan tiers (admin, paid, FREE)                    | NOT_APPLICABLE | No permission, role, plan or entitlement code changed                                                                                                                                                                                                                                                                                                                   |
+| L07  | Device matrix (3+ widths, both orientations, RTL)                       | NOT_APPLICABLE | No UI change                                                                                                                                                                                                                                                                                                                                                            |
+| L08  | UAT (acceptance criteria walked as the user would)                      | PASS           | Walked as a developer: four probe changes (health, chat, shared, docs) committed and pushed through the real hooks, all exit 0 (timings below); a bad base exits 1; a receipt skip is printed with its tree                                                                                                                                                             |
+| L09  | Product verification (it does what the owner asked, edge cases decided) | PASS           | Pack phases 1-6 checked against the code: scoped runner, receipts only from the runner, every pushed ref validated, CI security jobs, lint ratchet, coverage floors, rule 63 checks; deviations in the PR                                                                                                                                                               |
+| L10  | Business verification (money, limits, copy and claims match the code)   | NOT_APPLICABLE | No money, limit, price or marketing-claim code changed                                                                                                                                                                                                                                                                                                                  |
+| L11  | Regression (neighbouring features still work)                           | PASS           | Full tooling suite 432/432 after the change (it covers affected-matrix, deploy, release, knowledge and receipt behaviour); existing `affected-ci` matrix tests unchanged and green                                                                                                                                                                                      |
+| L12  | Security (authz and IDOR, secrets, injection)                           | PASS           | Receipts can no longer be self-attested or forged (`gate-receipt.test.mjs`: other tree, lockfile, Node, tooling hash, scope and legacy formats all rejected; only the affected runner imports `recordReceipt`); npm is spawned without `shell: true`, removing the unescaped-argument path (DEP0190)                                                                    |
+| L13  | Performance and accessibility                                           | PASS           | Measured timings in the table below; accessibility not applicable (no UI)                                                                                                                                                                                                                                                                                               |
+| L14  | i18n (13 locales, RTL)                                                  | NOT_APPLICABLE | No user-facing text                                                                                                                                                                                                                                                                                                                                                     |
+| L15  | Docs, knowledge delta and GitHub gates read                             | NOT_RUN        | Docs updated per phase in the same commit; GitHub gates are read after the PR is opened                                                                                                                                                                                                                                                                                 |
+
+## Measured timings (Windows 11, 28 logical cores, warm caches)
+
+Each row is `sh .husky/<hook>` run by `time-hook.sh` (wall clock, exit code). "Before" is
+`main` at 5ad48d125.
+
+| Scenario                                           | Before | After |
+| -------------------------------------------------- | ------ | ----- |
+| pre-commit, one file in claw-health-service        | 12.7s  | 11.6s |
+| pre-push, same change                              | 20.0s  | 2.2s  |
+| pre-commit, one file in claw-chat-service          | 14.1s  | 13.3s |
+| pre-push, same change                              | 63.5s  | 46.7s |
+| pre-commit, one file in packages/shared-utilities  | 86.5s  | 17.4s |
+| pre-push, same change                              | 395.8s | 5.6s  |
+| pre-commit, docs-only (docs/qa-evidence/README.md) | 7.9s   | 5.8s  |
+
+"After" is this branch: each probe appends a comment to the file, runs pre-commit, commits it, and
+then runs pre-push with `CLAW_GATE_BASE=HEAD~1`, which resets the commit afterwards. A comment-only
+change has no related tests, and the incremental typecheck caches stay warm, so the shared pre-push
+(22 typechecks, tests, topological build) costs 5.6s. Before, the same hook rebuilt and retested
+everything. A real code change in a shared package costs more. The knowledge gate was skipped on a
+genuine receipt that the pre-commit run had written.
+
+Component measurements:
+
+| Step                                       | Before                          | After                                          |
+| ------------------------------------------ | ------------------------------- | ---------------------------------------------- |
+| ESLint, one chat-service file (cold)       | 5.2s (old `project` glob)       | 2.8s (`projectService`)                        |
+| ESLint, same file, warm content cache      | n/a (no cache)                  | 1.1s                                           |
+| ESLint, 4 files in 4 workspaces, 2 GB heap | OOM without the 8 GB override   | 6.2s, exit 0                                   |
+| chat-service typecheck (tsgo `--noEmit`)   | 1.1s                            | 0.3s warm (`--incremental`)                    |
+| shared packages, nothing changed           | rebuilt never (stale dist used) | 0.1s hash check; 3.1s full topological rebuild |
+| `npm ci --dry-run` lockfile check          | not run locally                 | 1.6s clean / exit 1 in 1.8s on a mismatch      |
+
+## Findings
+
+- `tools/affected` turned every git error into "0 changed files": `--base=origin/DOES-NOT-EXIST`
+  printed `(0 changed files)` and exited 0. Confirmed before the fix; now exits 1 with the reason.
+- Pre-commit typechecked dependents of a changed shared package against the old `dist`
+  (confirmed on a shared-utilities probe: no rebuild ran before the 22 typechecks).
+- ESLint's `project: ['./apps/*/tsconfig.json', …]` OOMed on the default heap for a 2-file lint;
+  the 8 GB override was masking it.
+- The first push of the new pre-push ran 14 suites at once with uncapped vitest pools: 15 frontend
+  tests timed out at 20s. Fixed by capping suites × workers (`testConcurrency`); the second push
+  ran all 27 suites green (frontend 298.9s, chat 75.0s, everything else under 30s).
+- `npm run coverage:measure` (all 27 suites with `--coverage`): **17 of 27 workspaces are below
+  their own declared vitest thresholds** (e.g. memory-service lines 41.37% vs 88%, llamacpp
+  24.39% vs 70%, audit 67.4% vs 92%). CI never ran `--coverage`, so those numbers were never
+  enforced. Declared thresholds are unchanged; CI now enforces a measured floor that only rises
+  (`tools/coverage/thresholds.json`, rules/22 rule 2).
+- Lint baseline: 1,171 warnings in 688 files (`tools/lint/warnings-baseline.json`); zero-count
+  rules promoted to `error`; two `eslint-disable` directives that suppressed nothing were removed;
+  eight real ones remain (follow-up).
+- Secret scan of the working tree with the default gitleaks rules: 102 findings, every one a test
+  fixture, a CI test value, the public IndexNow key, a placeholder or a documentation example;
+  0 after the reviewed `.gitleaks.toml` (provider-specific rules never allowlisted).
+- `npm audit --omit=dev`: one high advisory (GHSA-ggr8-5vv4-36mx, deepmerge-ts via the Prisma
+  CLI); the only fix is a Prisma major downgrade; recorded with a reason and a 2026-12-31 expiry.
+- CodeQL default setup is enabled on the repository with 3 dismissed alerts and 0 open; the CI
+  job runs the same suite without uploading and fails on anything not in
+  `tools/security/codeql-accepted.json` (the 3 reviewed dismissals).
+- actionlint + shellcheck over every workflow: 5 findings (2 pre-existing in `lighthouse.yml` and
+  `release.yml`), all fixed; 0 now.
+- Pre-push builds raced: shared packages built in the same pool as their dependents (three
+  service builds read a half-written `dist`). Fixed — shared packages build first, in order.
+- A 7-minute pre-push outlived its HTTPS connection (exit 141 after `pre-push OK`, nothing
+  pushed). `npm run gates:receipt` first, then the push skipped every gate on genuine receipts
+  and finished in 3.7s.
+- Docs checks, first repo-wide run (living docs only): 995 reference problems (after parser
+  fixes: 414), 346 hand-written counts, 200 copied sections. Causes: 176 wiki pages that were
+  dumps or copies (now rendered at publish time from `wiki/mirrors.json` and the manifests, or
+  deleted — the committed service pages showed e.g. 1 endpoint / 4 tests for health-service; the
+  rendered page shows 3 / 14), the old split of compose files, `npx tsgo` (not installed), rule
+  example paths to files that moved, and boilerplate copied into most service `CLAUDE.md`
+  files (now one `docs/04-backend/backend-service-baseline.md`). After the sweep:
+  `node tools/knowledge/docs-checks.mjs all` → `docs checks OK — refs, counts, duplication`.
+- Committing the 516-file docs batch failed in lint-staged: "The command line is too long" for a
+  6,951-character Prettier chunk. The npm `.cmd` shim runs through cmd.exe, which escapes every
+  argument (~4 characters each) before its 8,191 cap. Both lint-staged configs now spawn
+  `node <bin>` for Prettier and ESLint (test in `ci-gates.test.mjs`); the frontend config also
+  stopped formatting its generated `AGENTS.md`.
+- `AGENTS.md` 11,077 → 5,253 bytes (canonical router); `CLAUDE.md` 50,503 → 9,149 bytes;
+  the seven per-model routers are generated from `AGENTS.md` and verified fresh.
+- Out of scope, recorded as follow-ups: root `docker:*` npm scripts call a removed root compose
+  file; `seed:catalog` (ollama, llamacpp) runs `npx tsx`, which is not installed; the frontend
+  responsive-audit script hard-codes a local path; two ADR files carry the number 142; eight
+  pre-existing `eslint-disable` directives.
+
+## Open gaps
+
+- L08, L09: walked after the last phase lands (owner: this batch).
+- L15: GitHub gates read after the PR opens (owner: this batch).
+- After-timings: measured after the last phase (owner: this batch).

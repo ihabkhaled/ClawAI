@@ -106,12 +106,11 @@ npm run knowledge:context -- --task="add criticModel to compare DTO"
 #    skills/create-dto.md                      — if the procedure generalises
 #    rules/11-dtos-and-validation.md           — if it establishes a constraint
 
-# 3. Regenerate the machine-readable layer and prove it is consistent.
-npm run knowledge:build && npm run audit && npm run knowledge:verify
-
-# 4. Gate only the folders you touched, then commit once and push.
-cd apps/claw-chat-service
-npx tsgo --noEmit && npm run lint && npm test && npm run build
+# 3. Commit once and push. The hooks regenerate the machine-readable layer,
+#    verify it and the docs, and run the gates this change type needs (rules/23).
+git add <explicit paths>
+git commit   # with a Docs: trailer naming the docs from step 2 (rules/63)
+git push
 ```
 
 ## Enforcement

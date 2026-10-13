@@ -162,8 +162,8 @@ Write tests as the last coding step, then run the gates **once**, only in the
 touched workspaces:
 
 ```
-cd apps/claw-audit-service && npx tsgo --noEmit && npm run lint && npm test && npm run build
-cd apps/claw-frontend     && npx tsgo --noEmit && npm run lint && npm test && npm run build
+cd apps/claw-audit-service && npm run typecheck && npm run lint && npm test && npm run build
+cd apps/claw-frontend     && npm run typecheck && npm run lint && npm test && npm run build
 cd packages/shared-types  && npm run build
 ```
 

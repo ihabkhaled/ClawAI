@@ -1,287 +1,146 @@
-# ClawAI — root policy
+# ClawAI — Claude Code notes
 
-Canonical entry point for every agent. **This file is an index, not a mirror**: it
-carries only what you need before you know what you are doing, plus links to the
-canonical body for everything else. Rule bodies live in `rules/`, runbooks in
-`skills/`, structural maps in `context/`, narrative in `docs/`.
+**Start at [`AGENTS.md`](AGENTS.md).** It is the canonical router for every agent:
+identity, authority order, first command, how a change lands, the absolute
+prohibitions and where everything lives. This file adds only what is specific to
+working in Claude Code, plus a compact index
+([ADR-170](docs/13-adr/adr-170-agents-md-is-the-canonical-router.md)).
 
-It was 2,595 lines and 167 kB, which spent a large slice of every agent's context
-window on every task and drifted out of step with the `rules/` files it duplicated.
-Nothing was deleted — each section below links to the canonical home its content
-moved to.
+> **Before you finish any change, update every doc it makes stale (rule 63). The hooks will reject it otherwise.**
+>
+> **Testing is not optional.** Before any change is called done, walk all 15 QA lanes
+> and record them in `docs/qa-evidence/<date>-<slug>.md` (`npm run qa:evidence:new`).
+> CI rejects a feat/fix push without a valid record. Read
+> [`QA-WORKFLOW.md`](QA-WORKFLOW.md) and
+> [rules/60](rules/60-qa-evidence-is-mandatory-and-machine-checked.md) first.
 
-> **STOP - testing is not optional.** Unit tests are 1 of 15 QA lanes. Before ANY change is called done you walk all
-> 15 lanes (manual API with curl, manual browser with Playwright, RBAC across plans, device matrix, UAT, product and
-> business verification, regression, security, i18n, docs) and record them in `docs/qa-evidence/<date>-<slug>.md`
-> (`npm run qa:evidence:new`). CI rejects a feat/fix push without a valid record. Read [`QA-WORKFLOW.md`](QA-WORKFLOW.md)
-> and [`rules/60`](rules/60-qa-evidence-is-mandatory-and-machine-checked.md) FIRST.
+## Read order for a task
 
-## Identity
+1. `npm run knowledge:context -- --task="<task>"`, then `.ai/local/current-context.md`.
+2. [`rules/00-non-negotiable-rules.md`](rules/00-non-negotiable-rules.md).
+3. The rules and skills the context file names; the touched workspace's own
+   `CLAUDE.md` and generated `AGENTS.md`.
+4. Work arriving as a document (prompt pack, plan, brief):
+   [rules/26](rules/26-prompt-pack-intake-protocol.md) before any code.
 
-**"Every AI, one workspace."** Positioning: [`docs/01-executive-context/product-vision.md`](docs/01-executive-context/product-vision.md) ·
-flagships: [`docs/02-business-product/flagship-features.md`](docs/02-business-product/flagship-features.md) ([ADR-126](docs/13-adr/adr-126-every-ai-one-workspace-positioning.md)).
+## Working in Claude Code
 
-Local-first AI orchestration platform. 20 NestJS services + Next.js 16 frontend +
-6 shared packages (npm workspaces). 14 PostgreSQL (pgvector) + MongoDB + Redis +
-RabbitMQ (`claw.events`, topic exchange) + Ollama. Nginx terminates TLS on 443 and
-proxies `/api/v1/*` to services on 4001–4020.
-
-Details: [`context/architecture-map.md`](context/architecture-map.md) ·
-[`context/service-catalog.md`](context/service-catalog.md) ·
-[`context/workspace-map.md`](context/workspace-map.md) ·
-[`context/port-and-service-map.md`](context/port-and-service-map.md)
-
-## Authority hierarchy (higher wins on conflict)
-
-1. This file
-2. [`rules/00-non-negotiable-rules.md`](rules/00-non-negotiable-rules.md) — the blockers
-3. [`context/architecture-map.md`](context/architecture-map.md) + [`context/stack-and-toolchain.md`](context/stack-and-toolchain.md)
-4. Numbered [`rules/*`](rules/) → [`skills/*`](skills/) → [`context/*`](context/) + `memory/*`
-5. Generated `.ai/manifests/*`
-6. Compact per-tool routers (`CODEX.md`, `cursor.md`, `GEMINI.md`, `KIMI.md`, `GLM.md`, `QWEN.md`, `DEEPSEEK.md`, `MISTRAL.md`, `AGENTS.md`, `.cursorrules`)
-
-See [ADR-055](docs/13-adr/adr-055-canonical-ai-authority-hierarchy.md) and
-[ADR-058](docs/13-adr/adr-058-compact-ai-routers-not-mirrors.md).
-
-## First command, always
-
-```bash
-npm run knowledge:context -- --task="<what you are doing>"
-```
-
-Then read `.ai/local/current-context.md`. It resolves the affected workspaces,
-governing rules, matching skills, reviewers, related events/permissions/env vars,
-and known pitfalls for your specific task. Compact bootstrap: `.ai/BOOTSTRAP.md`.
-
-## Work arriving as a document
-
-A prompt pack, execution prompt, plan pack or implementation brief runs the **full
-intake protocol before any code**:
-[`rules/26-prompt-pack-intake-protocol.md`](rules/26-prompt-pack-intake-protocol.md).
-Runbook: [`skills/execute-prompt-pack.md`](skills/execute-prompt-pack.md).
-
-Seven steps: read the pack end to end → `knowledge:context` → read governing docs
-in authority order → **audit every deliverable against the code**
-(done/partial/missing; _present is not wired_ — a repository method with no callers
-is scaffolding) → **review the constraint surface up front** (ESLint, TypeScript,
-Prettier, coverage, security, i18n × 13, the delivery checklist, and every gate) →
-write the plan and state deviations → implement.
-
-**Policy outranks the pack.** Where they conflict, policy wins and the deviation is
-stated explicitly, never applied silently.
-
-## Absolute prohibitions
-
-- **NEVER** bypass a git hook (`--no-verify` or any equivalent) — [ADR-061](docs/13-adr/adr-061-git-hook-policy-no-bypass.md).
-- **NEVER** suppress a finding: no `eslint-disable`, `@ts-ignore`, `@ts-expect-error`, `any`, `as unknown as`.
-- **NEVER** cross a service database boundary — HTTP or RabbitMQ only. Each service owns its data.
-- **NEVER** put business logic in a controller, a Prisma/Mongoose call outside a repository, or `process.env` outside AppConfig.
-- **NEVER** use `console.log`, `==`/`!=`, `var`, or a non-null `!`.
-- **NEVER** log or expose a secret, token, password, refresh token, or API key.
-- **NEVER** add user-facing text without i18n in all 13 locales, as real translations.
-- **NEVER** add code without a test.
-- **NEVER** declare a `type`/`interface`/`enum`/module-`const` inline in a logic file — extract per [`rules/12-types-enums-constants-and-declaration-ownership.md`](rules/12-types-enums-constants-and-declaration-ownership.md).
-- **NEVER** ship a change with no knowledge delta. Code alone is half a change: the
-  skills, rules, docs, `context/` and `.ai/` that let the next agent act in seconds
-  ship in the **same commit** — [`rules/33-knowledge-compounding-and-context-velocity.md`](rules/33-knowledge-compounding-and-context-velocity.md).
-- **NEVER** change normal chat alone. Compare, Consensus, Escalation, the seven labs and the judge/critic are
-  surfaces over it: same context, uploads, tools and buttons, by shared code. A chat change is not done until it
-  has reached all of them — [`rules/59-chat-surfaces-are-one-pipeline.md`](rules/59-chat-surfaces-are-one-pipeline.md) ·
-  [`skills/propagate-a-chat-change-to-every-mode.md`](skills/propagate-a-chat-change-to-every-mode.md) ·
-  [`context/chat-surface-parity-map.md`](context/chat-surface-parity-map.md).
-- **NEVER** call a change done on unit tests alone, or without its `docs/qa-evidence` record: all 15 lanes, real evidence, honest PARTIAL when a lane is open — [`rules/60`](rules/60-qa-evidence-is-mandatory-and-machine-checked.md) · [`QA-WORKFLOW.md`](QA-WORKFLOW.md) · [ADR-156](docs/13-adr/adr-156-qa-evidence-is-mandatory-and-machine-checked.md).
-- **NEVER** re-run a gate you have already proven green over an unchanged tree, and
-  never run all-workspace gates. Gate once, at the end, scoped — [`rules/34-gate-economy-and-machine-resources.md`](rules/34-gate-economy-and-machine-resources.md).
-- **NEVER** call a change done without walking it as the whole QA team and
-  producing real evidence — Playwright browser lane, `curl` API lane, RBAC across
-  roles **and** plan tiers (free included), UAT, regression, security, performance,
-  and the device matrix (≥3 widths per platform, both orientations, plus RTL). The
-  exact command and its real output, a screenshot per breakpoint, the log line
-  proving your branch ran. A lane you could not run is reported as not run; a
-  fabricated or assumed result is a prohibited sentence. Extends
-  [`rules/44-live-verification-before-done.md`](rules/44-live-verification-before-done.md) —
-  [`rules/49-qa-team-discipline-and-test-evidence.md`](rules/49-qa-team-discipline-and-test-evidence.md) ·
-  [`skills/run-the-qa-team.md`](skills/run-the-qa-team.md).
-
-Full list with rationale: [`rules/00-non-negotiable-rules.md`](rules/00-non-negotiable-rules.md).
-
-## Load-bearing facts that surprise people
-
-- **TypeScript compiles with `tsgo`** (`@typescript/native-preview`) + `tsc-alias`, NOT `tsc`/`nest build`. `npm run build/typecheck/dev` already wrap it per workspace.
-- **Docker images are `node:26-bookworm-slim`** (glibc), not Alpine — tsgo and llama.cpp release binaries are not musl-compatible.
-- **`./scripts/claw.sh up` is the only supported way to start the stack.** It stitches the split compose files and auto-applies the right GPU overlay. Never `docker compose -f …` to bring the stack up.
-- **Prices are never environment variables.** They live in `PlanPriceVersion` rows; a price change creates a new immutable version.
-- **Money is integer minor units**; provider cost is integer micro-USD. Floating point is banned in every billing path.
-- **`null` means unlimited, `0` means disabled.** They are not interchangeable.
-- **A gateway is enabled only when its WHOLE credential set is present.** A partial set does not half-enable it. A blank value in `.env` means unset, not empty-string.
-- **`t()` is not type-safe against `TranslationDictionary`.** A wrong key compiles and renders the raw key string to the user — verify the key chain exists in `i18n.types.ts` when you add a `t()` call.
-- **Generated artifacts are a hard gate.** `.ai/**`, workspace `AGENTS.md`, and the inventory snapshot are generated from the tree; a stale one turns CI red for everyone. The pre-commit hook regenerates and stages them.
-- **A dev container's `dist/generated/prisma` is copied, not compiled.** After a schema change, the entrypoint refreshes it; a stale copy shows up as `z.nativeEnum(undefined)` at boot.
-- **`files.content` is base64 of the uploaded bytes, NOT extracted text.** The readable text is `files.extractedText`. Handing `content` to a text model is why every provider used to answer "I can't read the attached file" — they were paraphrasing our own placeholder, not refusing. [ADR-095](docs/13-adr/adr-095-attachment-text-extraction-pipeline.md).
-
-## Validation and landing a change
-
-```bash
-npm run affected:list                    # which workspaces your change touches
-cd <touched-workspace>
-npx tsgo --noEmit && npm run lint && npm test && npm run build
-```
-
-Run the gates **only in the folders you touched** — never all-workspace, which is
-prohibitively expensive (13 Prisma clients, every service compiled) and false-fails
-on unchanged siblings.
-
-Gate **once, at the end of a batch** — not per edit, not per commit. If those scoped
-gates just proved this exact tree green, record it with `npm run gates:receipt` and the
-hooks skip the duplicate pass for that tree only. The receipt is the sanctioned way
-to avoid paying for the same proof twice; bypassing a hook remains prohibited under
-[ADR-061](docs/13-adr/adr-061-git-hook-policy-no-bypass.md).
-
-Then:
-
-```bash
-git add <explicit paths>                 # never -A, never .
-git commit -m "<conventional commit>"    # hooks always run
-git push origin <branch>                 # immediately, before the next commit
-```
-
-**One commit, one push.** `git log --oneline origin/<branch>..HEAD` must be empty
-before you start the next commit.
-
-**Large flagship work must ship in batches.** Split a gigantic feature into
-coherent, independently reviewable and independently gated changes. Finish the
-scoped validation lane, commit, and push each batch before continuing to code the
-next batch; never accumulate an entire flagship feature as one unpushed worktree.
-
-**Every GitHub gate must be green before a push counts as done**: CI matrix
-(lint → typecheck → test → build), knowledge freshness, inventory audit,
-**Lighthouse CI** (including accessibility assertions such as `color-contrast` over
-every public marketing URL), and CodeQL. Release lane:
-`npm run release:preflight`.
-
-Full policy: [`rules/07-commit-rules.md`](rules/07-commit-rules.md) ·
-[`rules/23-git-commits-hooks-and-release-gates.md`](rules/23-git-commits-hooks-and-release-gates.md) ·
-[`skills/commit-and-push-each-change.md`](skills/commit-and-push-each-change.md)
-
-## Delivery checklist — a feature is incomplete without these
-
-When a change adds or renames anything, the propagation is not optional:
-
-`.env.example` · `.env` · `scripts/install.sh` · `scripts/install.ps1` · every split
-compose file (`docker/docker-compose.{dev,prod}.{databases,services,ollama}.yml`
-plus the per-vendor GPU overlays) · `infra/nginx/nginx.conf` ·
-`packages/shared-constants` · `packages/shared-types` ·
-`apps/claw-health-service` · `.github/workflows/ci.yml` (the build step **and** the
-per-package matrix, in all 4 jobs) · `scripts/install-tls.{sh,ps1}` HOSTS array ·
-all 13 i18n locales + `i18n.types.ts` in the same commit · Prisma migration · seeds ·
-tests · frontend types · `docs/` · this file only when a canonical rule genuinely
-changes.
-
-**And the knowledge layer, in the same commit.** A repeatable new procedure gets a
-`skills/*.md`; a new constraint gets a numbered `rules/*.md`; a service change updates
-its `CLAUDE.md` and `docs/04-backend/service-guide-<name>.md`; a cross-cutting decision
-gets an ADR. Anything new must be reachable from its index — `npm run knowledge:coverage`
-fails otherwise. Full rule:
-[`rules/33-knowledge-compounding-and-context-velocity.md`](rules/33-knowledge-compounding-and-context-velocity.md).
-
-Full checklist with rationale: [`rules/05-infra-rules.md`](rules/05-infra-rules.md) ·
-[`context/environment-ownership-map.md`](context/environment-ownership-map.md) ·
-[`docs/16-quality-engineering/DOCS_ENV_DOCKER_NGINX_CI_CHECKLIST.md`](docs/16-quality-engineering/DOCS_ENV_DOCKER_NGINX_CI_CHECKLIST.md)
-
-## Where everything lives
-
-| You need                                                                          | Go to                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The blockers, in one page                                                         | [`rules/00-non-negotiable-rules.md`](rules/00-non-negotiable-rules.md)                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| Rule index                                                                        | [`rules/00-master-rules.md`](rules/00-master-rules.md) · [`rules/README.md`](rules/README.md)                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| The 26 engineering mindsets                                                       | [`rules/27-engineering-mindsets.md`](rules/27-engineering-mindsets.md)                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| Knowledge, docs and skills that ship with the code                                | [`rules/33-knowledge-compounding-and-context-velocity.md`](rules/33-knowledge-compounding-and-context-velocity.md) · [`skills/grow-the-knowledge-layer.md`](skills/grow-the-knowledge-layer.md)                                                                                                                                                                                                                                                                                                               |
-| Gate economy and machine resources                                                | [`rules/34-gate-economy-and-machine-resources.md`](rules/34-gate-economy-and-machine-resources.md) · [`skills/run-gates-once-and-land.md`](skills/run-gates-once-and-land.md)                                                                                                                                                                                                                                                                                                                                 |
-| Planning gate (Phase 0 / 0g)                                                      | [`rules/01-planning-rules.md`](rules/01-planning-rules.md) · [`rules/01-task-intake-and-planning.md`](rules/01-task-intake-and-planning.md)                                                                                                                                                                                                                                                                                                                                                                   |
-| Backend layering: controllers, services, managers, repositories                   | [`rules/02-backend-rules.md`](rules/02-backend-rules.md), [`rules/07`](rules/07-backend-controllers-and-transport.md)–[`rules/11`](rules/11-dtos-and-validation.md)                                                                                                                                                                                                                                                                                                                                           |
-| Frontend pages, hooks, components, queries                                        | [`rules/03-frontend-rules.md`](rules/03-frontend-rules.md), [`rules/04`](rules/04-nextjs-app-router.md)–[`rules/06`](rules/06-frontend-queries-and-cache.md)                                                                                                                                                                                                                                                                                                                                                  |
-| Declaration ownership (types/enums/constants)                                     | [`rules/12-types-enums-constants-and-declaration-ownership.md`](rules/12-types-enums-constants-and-declaration-ownership.md)                                                                                                                                                                                                                                                                                                                                                                                  |
-| Library wrappers and adapters                                                     | [`rules/13-external-library-wrappers-and-adapters.md`](rules/13-external-library-wrappers-and-adapters.md)                                                                                                                                                                                                                                                                                                                                                                                                    |
-| Shared packages and boundaries                                                    | [`rules/14-shared-packages.md`](rules/14-shared-packages.md) · [`context/package-boundaries.md`](context/package-boundaries.md)                                                                                                                                                                                                                                                                                                                                                                               |
-| Config and environment                                                            | [`rules/15-configuration-and-environment.md`](rules/15-configuration-and-environment.md) · [`docs/06-data/environment-variables.md`](docs/06-data/environment-variables.md)                                                                                                                                                                                                                                                                                                                                   |
-| Auth, permissions, IDOR                                                           | [`rules/16-authentication-and-authorization.md`](rules/16-authentication-and-authorization.md) · [`context/permission-map.md`](context/permission-map.md)                                                                                                                                                                                                                                                                                                                                                     |
-| Events and jobs                                                                   | [`rules/17-rabbitmq-events-and-jobs.md`](rules/17-rabbitmq-events-and-jobs.md) · [`context/event-flow-map.md`](context/event-flow-map.md)                                                                                                                                                                                                                                                                                                                                                                     |
-| Billing integrity and API contracts                                               | [`rules/28-billing-integrity-and-api-contracts.md`](rules/28-billing-integrity-and-api-contracts.md) · [`docs/03-architecture/billing-threat-model.md`](docs/03-architecture/billing-threat-model.md)                                                                                                                                                                                                                                                                                                         |
-| Errors, logging, redaction                                                        | [`rules/18-error-handling-and-reliability.md`](rules/18-error-handling-and-reliability.md) · [`rules/19-logging-observability-and-redaction.md`](rules/19-logging-observability-and-redaction.md)                                                                                                                                                                                                                                                                                                             |
-| i18n                                                                              | [`rules/20-i18n-and-user-facing-messages.md`](rules/20-i18n-and-user-facing-messages.md)                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| Security and secrets                                                              | [`rules/08-security-rules.md`](rules/08-security-rules.md) · [`rules/21-security-and-secrets.md`](rules/21-security-and-secrets.md)                                                                                                                                                                                                                                                                                                                                                                           |
-| Testing and coverage                                                              | [`rules/04-testing-rules.md`](rules/04-testing-rules.md) · [`rules/22-testing-and-coverage.md`](rules/22-testing-and-coverage.md) · [`context/testing-map.md`](context/testing-map.md)                                                                                                                                                                                                                                                                                                                        |
-| Generated files and freshness                                                     | [`rules/24-generated-files-and-knowledge-freshness.md`](rules/24-generated-files-and-knowledge-freshness.md) · [`context/generated-file-map.md`](context/generated-file-map.md)                                                                                                                                                                                                                                                                                                                               |
-| Exceptions and waivers                                                            | [`rules/25-exceptions-and-waivers.md`](rules/25-exceptions-and-waivers.md) · [`docs/exceptions/README.md`](docs/exceptions/README.md)                                                                                                                                                                                                                                                                                                                                                                         |
-| Refactor discipline                                                               | [`rules/09-refactor-rules.md`](rules/09-refactor-rules.md) · [`skills/09-refactor-toolkit.md`](skills/09-refactor-toolkit.md)                                                                                                                                                                                                                                                                                                                                                                                 |
-| AdSense eligibility / low-value-content policy                                    | [`rules/38-adsense-eligibility-and-low-value-content.md`](rules/38-adsense-eligibility-and-low-value-content.md) · [`docs/03-architecture/adsense-eligibility.md`](docs/03-architecture/adsense-eligibility.md)                                                                                                                                                                                                                                                                                               |
-| A model says it cannot read an attached file                                      | [`rules/42-attachment-understanding.md`](rules/42-attachment-understanding.md) · [`skills/debug-an-attachment-the-model-cannot-read.md`](skills/debug-an-attachment-the-model-cannot-read.md) · [ADR-095](docs/13-adr/adr-095-attachment-text-extraction-pipeline.md)                                                                                                                                                                                                                                         |
-| Login errors, account-state leaks, transactional email                            | [`rules/43-account-state-disclosure-and-transactional-email.md`](rules/43-account-state-disclosure-and-transactional-email.md) · [`skills/change-a-transactional-email.md`](skills/change-a-transactional-email.md) · [ADR-096](docs/13-adr/adr-096-login-failure-taxonomy-without-account-enumeration.md)                                                                                                                                                                                                    |
-| Proving a batch actually works (API + browser)                                    | [`rules/44-live-verification-before-done.md`](rules/44-live-verification-before-done.md) · [`skills/verify-a-batch-live.md`](skills/verify-a-batch-live.md)                                                                                                                                                                                                                                                                                                                                                   |
-| Being the whole QA team, the device matrix, test evidence                         | [`rules/49-qa-team-discipline-and-test-evidence.md`](rules/49-qa-team-discipline-and-test-evidence.md) · [`skills/run-the-qa-team.md`](skills/run-the-qa-team.md)                                                                                                                                                                                                                                                                                                                                             |
-| **The testing workflow nobody may skip (15 lanes, evidence record, CI check)**    | [`QA-WORKFLOW.md`](QA-WORKFLOW.md) · [`rules/60-qa-evidence-is-mandatory-and-machine-checked.md`](rules/60-qa-evidence-is-mandatory-and-machine-checked.md) · [`docs/qa-evidence/README.md`](docs/qa-evidence/README.md) · [ADR-156](docs/13-adr/adr-156-qa-evidence-is-mandatory-and-machine-checked.md)                                                                                                                                                                                                     |
-| AUTO research, crawling, the narrated work log                                    | [`rules/50-agentic-research-loop-and-narration.md`](rules/50-agentic-research-loop-and-narration.md) · [ADR-098](docs/13-adr/adr-098-auto-research-is-an-ai-driven-narrated-loop.md) · [`skills/verify-the-research-loop-live.md`](skills/verify-the-research-loop-live.md)                                                                                                                                                                                                                                   |
-| AUTO always picks one provider, or "context window full"                          | [`rules/51-router-candidates-and-model-window-fit.md`](rules/51-router-candidates-and-model-window-fit.md) · [ADR-100](docs/13-adr/adr-100-router-candidates-and-per-model-context-fit.md)                                                                                                                                                                                                                                                                                                                    |
-| Local-currency display vs the amount actually charged                             | [`rules/45-display-currency-versus-settlement-currency.md`](rules/45-display-currency-versus-settlement-currency.md) · [ADR-097](docs/13-adr/adr-097-display-fx-separate-from-settlement-fx.md) · [`docs/implementation/local-currency-display-plan.md`](docs/implementation/local-currency-display-plan.md)                                                                                                                                                                                                  |
-| A user going over a daily/weekly/monthly token limit                              | [`rules/46-token-quota-enforcement-and-window-integrity.md`](rules/46-token-quota-enforcement-and-window-integrity.md)                                                                                                                                                                                                                                                                                                                                                                                        |
-| A slow page, a huge JS chunk, or a barrel import question                         | [`rules/47-client-bundle-weight-and-barrel-boundaries.md`](rules/47-client-bundle-weight-and-barrel-boundaries.md)                                                                                                                                                                                                                                                                                                                                                                                            |
-| Gates feel slow / what to lint before committing                                  | [`rules/48-lint-and-test-only-what-changed.md`](rules/48-lint-and-test-only-what-changed.md)                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Changing normal chat (any button, upload, tool, context, detector, DTO)           | [`rules/59-chat-surfaces-are-one-pipeline.md`](rules/59-chat-surfaces-are-one-pipeline.md) · [`skills/propagate-a-chat-change-to-every-mode.md`](skills/propagate-a-chat-change-to-every-mode.md) · [`context/chat-surface-parity-map.md`](context/chat-surface-parity-map.md) · [ADR-155](docs/13-adr/adr-155-chat-surfaces-are-one-pipeline.md)                                                                                                                                                             |
-| Showing a money amount in the visitor's currency                                  | [`skills/add-a-localized-money-surface.md`](skills/add-a-localized-money-surface.md)                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| Finishing an agent-created worktree/branch (PR + release notes)                   | [`rules/39-worktree-branch-completion-pr-and-release-notes.md`](rules/39-worktree-branch-completion-pr-and-release-notes.md) · [`skills/finish-worktree-branch-with-pr.md`](skills/finish-worktree-branch-with-pr.md)                                                                                                                                                                                                                                                                                         |
-| Exact commands (build, test, prisma, docker, release)                             | [`context/stack-and-toolchain.md`](context/stack-and-toolchain.md)                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| Which task → which rules/skills/reviewers                                         | [`context/task-router.md`](context/task-router.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| Where a kind of code lives                                                        | [`context/codebase-navigation.md`](context/codebase-navigation.md)                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| Who owns which table                                                              | [`context/database-ownership-map.md`](context/database-ownership-map.md)                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| Request and data flow across services                                             | [`docs/03-architecture/end-to-end-data-flow.md`](docs/03-architecture/end-to-end-data-flow.md)                                                                                                                                                                                                                                                                                                                                                                                                                |
-| Routing modes and capability classes                                              | [`docs/03-architecture/routing-engine.md`](docs/03-architecture/routing-engine.md)                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| Model catalog                                                                     | [`docs/03-architecture/model-catalog-architecture.md`](docs/03-architecture/model-catalog-architecture.md)                                                                                                                                                                                                                                                                                                                                                                                                    |
-| Runtime progress / SSE                                                            | [`docs/03-architecture/runtime-progress.md`](docs/03-architecture/runtime-progress.md)                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| Billing, subscriptions, quotas, threat model                                      | [`docs/03-architecture/billing-threat-model.md`](docs/03-architecture/billing-threat-model.md)                                                                                                                                                                                                                                                                                                                                                                                                                |
-| Product positioning, flagships, requirements, drift                               | [`docs/01-executive-context/product-vision.md`](docs/01-executive-context/product-vision.md) · [`docs/02-business-product/flagship-features.md`](docs/02-business-product/flagship-features.md) · [`skills/change-the-product-positioning.md`](skills/change-the-product-positioning.md)                                                                                                                                                                                                                      |
-| ClawAI Threads product, architecture, generation operations, and launch decisions | [`docs/02-business-product/clawai-threads-product-spec.md`](docs/02-business-product/clawai-threads-product-spec.md); [`docs/03-architecture/clawai-threads-architecture.md`](docs/03-architecture/clawai-threads-architecture.md); [`docs/04-backend/service-guide-thread-generation.md`](docs/04-backend/service-guide-thread-generation.md); [`skills/run-threads-generation-queue.md`](skills/run-threads-generation-queue.md); [ADR-159](docs/13-adr/adr-159-clawai-threads-two-service-architecture.md) |
-| The money NUMBERS: plan allowances, margin, credit terms                          | [`docs/business/`](docs/business/README.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| Operational metrics, Prometheus, what is up right now                             | [`docs/08-runtime-devops/metrics-and-dashboards.md`](docs/08-runtime-devops/metrics-and-dashboards.md) · [ADR-113](docs/13-adr/adr-113-prometheus-for-operational-metrics.md)                                                                                                                                                                                                                                                                                                                                 |
-| Nginx reference                                                                   | [`docs/08-runtime-devops/nginx-reference.md`](docs/08-runtime-devops/nginx-reference.md)                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| Docker, GPU overlays, rebuild procedure                                           | [`docs/08-runtime-devops/docker-guide.md`](docs/08-runtime-devops/docker-guide.md) · [`skills/06-docker-toolkit.md`](skills/06-docker-toolkit.md)                                                                                                                                                                                                                                                                                                                                                             |
-| Build system (tsgo, tsc-alias, CI)                                                | [`docs/08-runtime-devops/build-system.md`](docs/08-runtime-devops/build-system.md)                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| TLS / mkcert                                                                      | [`docs/08-runtime-devops/tls-setup.md`](docs/08-runtime-devops/tls-setup.md)                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Quality-engineering lifecycle and standards                                       | [`docs/16-quality-engineering/`](docs/16-quality-engineering/)                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| Something is broken — runbooks                                                    | [`docs/11-runbooks/README.md`](docs/11-runbooks/README.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| Architecture decisions                                                            | [`docs/13-adr/adr-index.md`](docs/13-adr/adr-index.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| Per-service deep dive                                                             | `docs/04-backend/service-guide-<name>.md` · `apps/claw-<name>/CLAUDE.md`                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| Skill runbooks (scaffold, debug, QA, DB, events)                                  | [`skills/00-index.md`](skills/00-index.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+- **Land through the hooks.** `git add <explicit paths>` → `git commit` → `git push`.
+  The hooks gate the change for its type
+  ([rules/23 gate matrix](rules/23-git-commits-hooks-and-release-gates.md#gate-matrix-by-change-type));
+  do not pre-run the same gates by hand. Every commit carries a `Docs:` trailer
+  ([rules/63](rules/63-docs-move-with-code.md)).
+- **A push whose pre-push runs for minutes can lose its connection** and exit 141
+  after printing `pre-push OK`. Run `npm run gates:receipt` first: it proves the
+  tree once and the push then skips those gates. Always check the push's real exit
+  code and `git log origin/<branch>..HEAD`, never a summary.
+- **Background only long jobs**, announce them in one line, and read their real
+  exit code. Never edit files that a running hook or test run is reading.
+- **Subagents**: foreground by default, at most two at once, each with a stated
+  scope ([rules/48](rules/48-lint-and-test-only-what-changed.md) item 10). Agents
+  editing one tree contaminate each other's gates.
+- **Fresh worktree**: `npm ci`, then `npm run affected:shared-build` and
+  `npm run prisma:generate --workspaces --if-present` before trusting a gate.
+  Never commit while a background agent writes in the same tree.
+- **Never** `--no-verify` or any other hook bypass
+  ([ADR-061](docs/13-adr/adr-061-git-hook-policy-no-bypass.md)).
 
 ## Per-workspace rules still apply
 
-Every service carries its own `CLAUDE.md` plus a generated `AGENTS.md` with
-service-local constraints — chat-service's universal token-deduction chokepoint,
-payment-service's card-data prohibitions, llamacpp's Debian requirement, and so on.
-Read the one for the service you are touching. It is not duplicated here.
+Each workspace carries its own `CLAUDE.md` and a generated `AGENTS.md` with
+service-local constraints (chat-service's token-deduction chokepoint,
+payment-service's card-data rules, llamacpp's Debian requirement, …). Read the one
+for the workspace you touch.
+
+## Index
+
+- **Blockers:** [rules/00-non-negotiable-rules.md](rules/00-non-negotiable-rules.md) ·
+  rule index [rules/README.md](rules/README.md) ·
+  [engineering mindsets](rules/27-engineering-mindsets.md)
+- **Landing a change, hooks, CI:** [rules/23](rules/23-git-commits-hooks-and-release-gates.md) ·
+  [rules/34](rules/34-gate-economy-and-machine-resources.md) ·
+  [rules/48](rules/48-lint-and-test-only-what-changed.md) ·
+  [CI pipeline](docs/08-runtime-devops/ci-cd-pipeline.md)
+- **Docs and knowledge:** [rules/63](rules/63-docs-move-with-code.md) ·
+  [rules/33](rules/33-knowledge-compounding-and-context-velocity.md) ·
+  [rules/24](rules/24-generated-files-and-knowledge-freshness.md) ·
+  [skills/grow-the-knowledge-layer.md](skills/grow-the-knowledge-layer.md)
+- **QA and testing:** [QA-WORKFLOW.md](QA-WORKFLOW.md) ·
+  [rules/60](rules/60-qa-evidence-is-mandatory-and-machine-checked.md) ·
+  [rules/49](rules/49-qa-team-discipline-and-test-evidence.md) ·
+  [rules/44](rules/44-live-verification-before-done.md) ·
+  [rules/22 coverage](rules/22-testing-and-coverage.md) ·
+  [skills/run-the-qa-team.md](skills/run-the-qa-team.md)
+- **Planning:** [rules/01-planning-rules.md](rules/01-planning-rules.md) ·
+  [rules/01-task-intake-and-planning.md](rules/01-task-intake-and-planning.md)
+- **Backend layering:** [rules/02](rules/02-backend-rules.md), [rules/07](rules/07-backend-controllers-and-transport.md)–[rules/11](rules/11-dtos-and-validation.md) ·
+  declarations [rules/12](rules/12-types-enums-constants-and-declaration-ownership.md) ·
+  library wrappers [rules/13](rules/13-external-library-wrappers-and-adapters.md) ·
+  shared packages [rules/14](rules/14-shared-packages.md)
+- **Frontend:** [rules/03](rules/03-frontend-rules.md), [rules/04](rules/04-nextjs-app-router.md)–[rules/06](rules/06-frontend-queries-and-cache.md) ·
+  bundle weight [rules/47](rules/47-client-bundle-weight-and-barrel-boundaries.md)
+- **Chat:** every surface shares one pipeline — [rules/59](rules/59-chat-surfaces-are-one-pipeline.md) ·
+  [parity map](context/chat-surface-parity-map.md) ·
+  [skill](skills/propagate-a-chat-change-to-every-mode.md)
+- **Config, auth, events:** [rules/15](rules/15-configuration-and-environment.md) ·
+  [rules/16](rules/16-authentication-and-authorization.md) ·
+  [rules/17](rules/17-rabbitmq-events-and-jobs.md) ·
+  [env vars](docs/06-data/environment-variables.md)
+- **Errors, logging, i18n, security:** [rules/18](rules/18-error-handling-and-reliability.md) ·
+  [rules/19](rules/19-logging-observability-and-redaction.md) ·
+  [rules/20](rules/20-i18n-and-user-facing-messages.md) ·
+  [rules/08](rules/08-security-rules.md) · [rules/21](rules/21-security-and-secrets.md)
+- **Money:** [rules/28](rules/28-billing-integrity-and-api-contracts.md) ·
+  [billing threat model](docs/03-architecture/billing-threat-model.md) ·
+  [plan numbers](docs/business/README.md) ·
+  display vs settlement currency [rules/45](rules/45-display-currency-versus-settlement-currency.md) ·
+  token quotas [rules/46](rules/46-token-quota-enforcement-and-window-integrity.md)
+- **Attachments, login, research, routing:**
+  [rules/42](rules/42-attachment-understanding.md) ·
+  [rules/43](rules/43-account-state-disclosure-and-transactional-email.md) ·
+  [rules/50](rules/50-agentic-research-loop-and-narration.md) ·
+  [rules/51](rules/51-router-candidates-and-model-window-fit.md)
+- **Infra delivery checklist** (env, installers, every compose file, nginx, health,
+  CI, TLS, i18n, migrations, seeds): [rules/05](rules/05-infra-rules.md) ·
+  [env ownership](context/environment-ownership-map.md)
+- **Refactors, exceptions, AdSense, worktree PRs:** [rules/09](rules/09-refactor-rules.md) ·
+  [rules/25](rules/25-exceptions-and-waivers.md) ·
+  [rules/38](rules/38-adsense-eligibility-and-low-value-content.md) ·
+  [rules/39](rules/39-worktree-branch-completion-pr-and-release-notes.md)
+- **Maps:** [architecture](context/architecture-map.md) ·
+  [services](context/service-catalog.md) · [workspaces](context/workspace-map.md) ·
+  [ports](context/port-and-service-map.md) · [permissions](context/permission-map.md) ·
+  [events](context/event-flow-map.md) · [databases](context/database-ownership-map.md) ·
+  [codebase navigation](context/codebase-navigation.md) · [task router](context/task-router.md) ·
+  [load-bearing facts](context/load-bearing-facts.md)
+- **Architecture docs:** [data flow](docs/03-architecture/end-to-end-data-flow.md) ·
+  [routing engine](docs/03-architecture/routing-engine.md) ·
+  [model catalog](docs/03-architecture/model-catalog-architecture.md) ·
+  [runtime progress](docs/03-architecture/runtime-progress.md) ·
+  [metrics](docs/08-runtime-devops/metrics-and-dashboards.md) ·
+  [nginx](docs/08-runtime-devops/nginx-reference.md) ·
+  [docker](docs/08-runtime-devops/docker-guide.md) ·
+  [build system](docs/08-runtime-devops/build-system.md) ·
+  [TLS](docs/08-runtime-devops/tls-setup.md)
+- **Product:** [vision](docs/01-executive-context/product-vision.md) ·
+  [flagships](docs/02-business-product/flagship-features.md) ·
+  [Threads spec](docs/02-business-product/clawai-threads-product-spec.md)
+- **Decisions and runbooks:** [ADR index](docs/13-adr/adr-index.md) ·
+  [runbooks](docs/11-runbooks/README.md) · [skills index](skills/00-index.md)
+- **Per service:** `docs/04-backend/service-guide-<name>.md` · `apps/claw-<name>/CLAUDE.md`
 
 ## Honest status
 
-Where something is partially built, the docs say so rather than implying
-completeness. Report the same way: if a step was skipped, say it was skipped; if a
-test fails, show the output. "Done" means gated, committed, pushed, and green.
+Where something is partially built, the docs say so. Report the same way: a
+skipped step is reported as skipped, a failing test with its output. "Done" means
+gated, committed, pushed and CI green.
 
-## Communication style (MANDATORY)
+## Communication style (mandatory)
 
-**Short. Plain. Concrete.** A few lines max.
-
-- Blocked? One line: `Blocked: <the actual thing>.`
-- Working? `Working — <what>.` Progress? `~70/100.`
-- Name the concrete cause: file, symbol, exact error. Never circle the problem.
-- Easy words over complex ones. Cut every reply in half before sending.
-
-Full rule: [`rules/29-communication-style.md`](rules/29-communication-style.md) ·
-Runbook: [`skills/communicate-briefly.md`](skills/communicate-briefly.md)
-
-**Stay foreground / keep streaming.** Do not go silent — silence reads as stopped.
-Foreground commands by default; background only for long jobs, announced in one line.
-
-**Show every step.** One short line per action as it happens — file changed, patch applied,
-test run, trial failed. Never batch and report at the end.
-
-**Granularity:** report every file touched, every patch (including failures), every command and
-its result, every test count, every retry, every mini-operation, every wait. One line each.
+Short, plain, concrete — a few lines. `Blocked: <the actual thing>.` when blocked;
+`Working — <what>.` while working. Name the file, symbol or exact error. Stay in
+the foreground and show every step as it happens — each file changed, patch
+applied (or failed), command run with its result, test count and retry — one line
+each, never batched into a final report
+([rules/29](rules/29-communication-style.md) ·
+[skills/communicate-briefly](skills/communicate-briefly.md)).

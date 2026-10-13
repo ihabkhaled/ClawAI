@@ -43,7 +43,7 @@ A method exceeding its ceiling MUST be split. Acceptable extraction targets:
 - External-call orchestration → manager helper
 - Pure computation → utility file (cross-service if reusable)
 
-If the same helper is needed in 2+ services, it goes to `packages/shared-utilities/`.
+If the same helper is needed in two or more services, it goes to `packages/shared-utilities/`.
 
 ## R3 — File-Size Discipline
 
@@ -132,7 +132,7 @@ Quality bar:
 
 ## R6 — Cross-Service Deduplication Discipline
 
-If a utility, type, or constant lives identically in 2+ services, it is a bug.
+If a utility, type, or constant lives identically in two or more services, it is a bug.
 
 | Shared kind   | Package                      | Examples                                                                                       |
 | ------------- | ---------------------------- | ---------------------------------------------------------------------------------------------- |
@@ -160,8 +160,8 @@ Every per-service refactor commit MUST follow this exact recipe:
 5. Split every method over the R2 ceiling. Extract helpers; reusable ones move to utility files.
 6. Enrich logging on every public method per R4.
 7. Backfill tests to ≥92 % coverage per R5. DTO fuzz, error paths, boundary cases, null/empty/overflow.
-8. Run gates: `npm run lint && npm run typecheck && npm run test -- --coverage && npm run build`. All green.
-9. Run `qa/test-<service>.sh`. 0 failures required.
+8. Let the hooks gate it: commit and push — pre-commit lints and typechecks the staged change, pre-push runs the related tests and the build, CI enforces the coverage floor ([rules/23 gate matrix](./23-git-commits-hooks-and-release-gates.md#gate-matrix-by-change-type)). All green.
+9. Run the service's local QA script `qa/test-<service>.sh` (local, gitignored — `qa/*` is not committed). 0 failures required.
 10. Rebuild Docker container (stop → rm → rmi → build per memory `feedback_docker_rebuild`). Scan logs for `UnhandledPromiseRejection|FATAL`. 0 hits.
 11. Update `apps/<service>/CLAUDE.md` if patterns changed; update `docs/04-backend/<service>.md` if architecture changed.
 12. Commit: `refactor(<service>): adopt shared-utilities, extract inline declarations, split long methods, enrich logging, backfill tests to 92%`.

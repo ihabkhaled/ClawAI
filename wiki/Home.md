@@ -8,8 +8,8 @@ Welcome to the **ClawAI engineering and product Wiki**. This Wiki is generated f
 
 ## Current repository snapshot
 
-- **27 npm workspaces**: 20 backend services + 1 frontend + 6 shared packages.
-- **1283 test files** tracked by the generated test manifest.
+- **<!-- count:workspaces -->27<!-- /count --> npm workspaces**: <!-- count:services -->20<!-- /count --> backend services + 1 frontend + <!-- count:sharedPackages -->6<!-- /count --> shared packages.
+- **<!-- count:specFiles -->2298<!-- /count --> test files** tracked by the generated test manifest.
 - **669 API endpoints** in the generated endpoint manifest.
 - **178 RabbitMQ event definitions** in the event graph.
 - **355 environment variables** in the generated environment manifest.
@@ -48,7 +48,7 @@ Welcome to the **ClawAI engineering and product Wiki**. This Wiki is generated f
 - **Runtime:** [[Docker-and-DevOps-Architecture]], [[Nginx-Reference]], [[CI-CD-Pipeline]], [[Logging-and-Observability]]
 - **Quality:** [[Testing-and-QA-Architecture]], [[Quality-Gates]], [[UAT-Guide]], [[Reviewer-Roles]]
 - **Governance:** [[Rules-Catalog]], [[Skills-Catalog]], [[Context-Layer]], [[Engineering-Memory]]
-- **Agents:** [[Agent-CLI]], [[Coding-Agent]], [[Coding-Agent-Architecture]], [[Coding-Agent-Security]]
+- **Agents:** [[Agent-CLI]], [[Coding-Agent]]
 
 > Source of truth remains the code and generated manifests on `main`. Wiki pages that mirror repo docs include their source path at the top.
 

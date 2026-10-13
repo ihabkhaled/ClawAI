@@ -68,10 +68,10 @@ politely and touch nothing, which looks like an agent defect and is not one.
 ## 3. Run the rounds
 
 ```bash
-cd apps/claw-coding-agent
+# from the ClawAI repository root (the script lives in the coding-agent submodule)
 NODE_OPTIONS=--use-system-ca \
 CLAW_LIVE_EMAIL=admin@claw.local CLAW_LIVE_PASSWORD='ClawAdmin123!' \
-node scripts/live-rounds.mjs --models=kimi-k3,glm-5.2,... --repeat=3 --json=rounds.json
+node apps/claw-coding-agent/scripts/live-rounds.mjs --models=kimi-k3,glm-5.2,... --repeat=3 --json=rounds.json
 ```
 
 `NODE_OPTIONS=--use-system-ca` is required: `claw.local` uses a locally trusted
@@ -88,8 +88,8 @@ scenario wherever one covers several, and keeping every currently-red scenario
 so that dropping a scenario can never be how a gap disappears.
 
 ```bash
-node scripts/live-rounds.mjs --scenarios=all        # the full fifteen
-node scripts/live-rounds.mjs --scenarios=git-commit # exactly these
+node apps/claw-coding-agent/scripts/live-rounds.mjs --scenarios=all        # the full fifteen
+node apps/claw-coding-agent/scripts/live-rounds.mjs --scenarios=git-commit # exactly these
 ```
 
 Note the plural. `--scenario=` is not a flag; it is ignored in silence and the
@@ -108,7 +108,7 @@ rows.
 Re-run a single failing pair before concluding anything:
 
 ```bash
-node scripts/live-rounds.mjs --models=kimi-k3 --scenarios=apply-markdown-plan --repeat=5
+node apps/claw-coding-agent/scripts/live-rounds.mjs --models=kimi-k3 --scenarios=apply-markdown-plan --repeat=5
 ```
 
 An intermittent failure is a finding in its own right. Record the rate; never
@@ -130,7 +130,7 @@ fast on two things that CI on the PR does not check:
    "Require a new version".
 2. **Committed build assets.** `builds/clawai-coding-agent-<version>.{vsix,cdx.json,spdx.json,provenance.json}`
    and their `.sha256` files must be in git. `builds/` is gitignored, so use
-   `git add -f`. Generate them with `npm run package` then `npm run supply-chain`
+   `git add -f`. Generate them in the coding-agent repo with `npm run package` then `npm run supply-chain`
    (the latter needs a clean tree, so commit the version bump first).
 
 Order: bump + changelog PR → `package` + `supply-chain` → `git add -f` assets PR
@@ -141,7 +141,7 @@ push as a background task. `OVSX_PAT` unset means Open VSX is skipped, not faile
 
 ## 7. What 1.81.0 and 1.82.0 added to the landing list
 
-- **Run the whole `npm run check`, not a chosen subset.** 1.82.0 went red in CI
+- **Run the coding agent's whole `npm run check`, not a chosen subset.** 1.82.0 went red in CI
   on two steps that were skipped locally: `coverage:scope` (every new
   `src/core/runtime/*` file must be in `vitest.config.ts` `coverage.include`)
   and `package:audit` (every contributed command id must appear in a file that

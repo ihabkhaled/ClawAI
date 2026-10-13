@@ -53,7 +53,7 @@ Authentication and authorization are security-critical. Any change requires:
 
 ### 1.5 Every Shared Component Change
 
-Changes to files in `packages/shared-types`, `packages/shared-constants`, `packages/shared-rabbitmq`, or `packages/shared-auth` affect all 17 services. Requires:
+Changes to files in `packages/shared-types`, `packages/shared-constants`, `packages/shared-rabbitmq`, or `packages/shared-auth` affect every service. Requires:
 
 - **Full system regression** (smoke test all services)
 - Rebuild all dependent services

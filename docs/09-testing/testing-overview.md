@@ -8,7 +8,7 @@ Testing strategy and mandatory quality gates for the Claw platform.
 
 ## Testing Strategy Overview
 
-Claw uses a layered testing approach across the frontend and all 17 backend microservices:
+Claw uses a layered testing approach across the frontend and every backend service:
 
 ```
               ┌──────────────────────┐
@@ -303,7 +303,7 @@ cd apps/claw-frontend && npx vitest src/utilities/format-date.test.ts
 
 **Scope**: Full user journeys (all services must be running)
 
-**Location**: `apps/claw-frontend/e2e/`
+**Location**: `apps/claw-frontend/tests/e2e/` (config: `apps/claw-frontend/playwright.config.ts`)
 
 **Critical paths to cover:**
 

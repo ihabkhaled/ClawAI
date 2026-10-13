@@ -32,11 +32,13 @@ packages, in an npm-workspace monorepo. Events flow over RabbitMQ (topic exchang
 - NEVER add user-facing text without i18n in all 13 locales.
 - NEVER add code without a test.
 
-## Validation (run the gates for the folders you touched ONLY)
+## Landing a change (rules/23)
 ```
 npm run affected:list                 # what your diff touches + why
-cd <touched-workspace> && npm run typecheck && npm run lint && npm test && npm run build
+git add <explicit paths> && git commit  # pre-commit gates the staged change; Docs: trailer (rules/63)
+git push                              # pre-push gates every pushed ref; then CI
 ```
+The hooks run the gates the change type needs; run nothing else by hand.
 Full validation before release: `npm run release:preflight`.
 
 ## Where things live

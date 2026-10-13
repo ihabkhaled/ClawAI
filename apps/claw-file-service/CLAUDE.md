@@ -183,114 +183,19 @@ bytes.
 
 Runbook for adding a format: [`skills/add-an-archive-format.md`](../../skills/add-an-archive-format.md).
 
-## All Standard Backend Rules Apply
+## Baseline rules
 
-See the root CLAUDE.md for the full set of architecture rules, naming conventions, and code quality requirements. Key points:
-
-- NEVER use `any` — use `unknown`, generics, or proper types
-- NEVER disable ESLint rules
-- NEVER use `console.log` — use NestJS Logger
-- NEVER use `process.env` directly — use AppConfig (Zod-validated)
-- Controllers are 3-line methods: extract params, call ONE service, return
-- Service methods max 30 lines
-- Repositories are pure data access only
-- All Zod schemas must have `.max()` on every string and array field
-- All errors use `BusinessException` with a `messageKey`
-- Every function must have an explicit return type
-
-## No Inline Declarations Rule
-
-**NEVER** define `type`, `interface`, `enum`, or module-level `const` inline in service, controller, repository, manager, adapter, utility, guard, filter, interceptor, pipe, or module files. Extract to dedicated files:
-
-- Types/interfaces → `src/modules/<domain>/types/<name>.types.ts`
-- Enums → `src/common/enums/<name>.enum.ts`
-- Constants → `src/modules/<domain>/constants/<name>.constants.ts`
-  Only exception: `private readonly logger = new Logger(...)` inside NestJS classes.
-
-## Library Wrapping Rule
-
-Every third-party library MUST be wrapped in a utility file under `src/common/utilities/`. Services and controllers NEVER import third-party packages directly — they import the wrapper. Example: `src/common/utilities/jwt.utility.ts` wraps `jsonwebtoken`, and services import `{ signToken, verifyToken }` from the wrapper.
+Baseline rules for every backend service (commands, absolute rules, declarations, library wrapping, Docker rebuild, workflow phases, checklists, output format): [docs/04-backend/backend-service-baseline.md](../../docs/04-backend/backend-service-baseline.md). This file adds only what is specific to `claw-file-service`.
 
 ## Commands
 
+The standard commands are in the baseline; the Prisma ones for this service:
+
 ```bash
-npm run dev              # Start with hot reload
-npm run build            # Production build
-npm run typecheck        # Type check
-npm run lint             # ESLint
-npm run test             # Unit tests
 npm run migrate          # Run migrations (production)
 npm run migrate:dev      # Create + run migration (dev)
 npm run prisma:generate  # Regenerate Prisma client
 ```
-
-## Docker Container Rebuild Procedure
-
-When rebuilding this service (especially after shared package changes):
-
-```bash
-./scripts/claw.sh stop file-service
-./scripts/claw.sh rm -f file-service
-docker rmi claw-file-service
-./scripts/claw.sh up -d --build file-service
-```
-
-**NEVER skip steps.** See root CLAUDE.md for full explanation.
-
-## Workflow Phase Requirements
-
-All work on this service MUST follow the phases defined in the root `CLAUDE.md`:
-
-- **Phase 0** (Planning Gate): Document impacted areas, risks, acceptance criteria before coding
-- **Phase 0g** (Business Framing): Define user problem, success metrics, UAT seed for user-facing changes
-- **Phase 1-3** (Implementation): Follow backend architecture rules above
-- **Phase 4** (SSE rules if applicable): Apply SSE-specific patterns from root CLAUDE.md
-- **Phase 5** (Error handling): All async errors stored + SSE emitted
-- **Phase 8** (Validation): typecheck + lint + test + build before any commit
-- **Phase 9** (API testing): Verify all new endpoints with curl/Postman before claiming done
-- **Phase 12** (QE Gates): All phases from docs/16-quality-engineering/ must pass
-
-## Pre-Implementation Checklist (this service)
-
-Before writing code for this service:
-
-- [ ] Read root CLAUDE.md
-- [ ] Read this service CLAUDE.md
-- [ ] Read existing service code for the area being changed
-- [ ] Read current Prisma schema (if DB changes)
-- [ ] Identify all RabbitMQ events published/consumed by this service
-- [ ] Check if shared packages need updating
-
-## Post-Implementation Checklist (this service)
-
-After implementing any change to this service:
-
-- [ ] `npm run typecheck` → 0 errors
-- [ ] `npm run lint` → 0 errors
-- [ ] `npm run test` → all pass
-- [ ] `npm run build` → success
-- [ ] All new Zod DTOs have: max() on strings, max() on arrays, required fields explicit
-- [ ] All new service methods are ≤ 30 lines
-- [ ] All new manager methods are ≤ 80 lines
-- [ ] All new controllers are 3-line methods
-- [ ] No try/catch in controllers
-- [ ] No Prisma calls outside repositories
-- [ ] All new events published using RabbitMQService
-- [ ] All new messageKeys added to error catalog
-- [ ] All background tasks use fire-and-forget with `void`
-- [ ] All fire-and-forget error paths: `emitError` → `storeErrorMessage` in nested try-catch
-- [ ] All poll-detected flows store metadata `{ error: true }` on failure
-
-## Required Output Format
-
-After completing any implementation task on this service, produce:
-
-1. **Files changed** (list with purpose of each change)
-2. **Tests added/updated** (list with what each test covers)
-3. **API changes** (new endpoints, changed contracts)
-4. **Infrastructure changes** (env vars, Docker, Nginx, CI)
-5. **Known gaps or follow-up items**
-6. **Evidence**: typecheck output, lint output, test output
 
 ## Audio is transcribed here, not elsewhere
 
@@ -509,37 +414,13 @@ a build-time `ffmpeg -version` check. Runbook:
 
 ## Video jobs lost to a restart are re-queued (2026-09-29)
 
-A video job holds `file:video-process-lock:<id>` (15 min TTL) and deletes it
-only when it finishes. Before 2026-09-29 a restart mid-job left the lock
-behind: RabbitMQ redelivered the unacked message, the handler found the lock
-taken, skipped and acked — the job was lost, and only a later open of the file
-(`healStalledVideoIfNeeded`, 10 min) re-queued it.
+`VideoStaleRecoveryManager` re-queues a video job whose lock outlived a restart: it sweeps at boot
+(5 s grace) and every 60 s, deletes only a lock owned by a dead process (compare-and-delete),
+and fails the file after `VIDEO_STALE_MAX_REQUEUES` attempts. The boot grace is safe ONLY
+because file-service runs as one replica — if it is ever scaled, the grace must become the full
+window and "foreign owner" no longer means "dead".
 
-`VideoStaleRecoveryManager` (`managers/video-stale-recovery.manager.ts`) sweeps
-at boot (5 s grace — safe ONLY because file-service is one replica:
-`container_name: claw-file-service`, no `deploy.replicas`) and every 60 s
-(`VIDEO_PROCESSING_STALE_MS`, 10 min). Batch 50, single-flight, never throws,
-timer `unref`'d and cleared on destroy. No env var. Per stale placeholder
-(`findStaleVideoPlaceholders` = the `isVideoAwaitingProcessing` state):
-
-- The lock value is now a per-process owner token (`VideoProcessingManager.ownsLock`).
-  Owned here → a live job → skipped. Any other value → a dead process's lock →
-  `RedisService.deleteIfValue` (Lua compare-and-delete of that exact value;
-  a lock re-taken meanwhile is never deleted).
-- Attempt counter `file:video-requeue-attempts:<id>` (Redis INCR, 24 h TTL).
-  Past `VIDEO_STALE_MAX_REQUEUES` (3) → `failStalled`: FAILED,
-  `PROCESSING_ERROR` ("…the job was lost to a service restart after N
-  attempts"), same conditional write + `file.video_process_failed` as any
-  failure. No paid step.
-- Else `touchVideoPlaceholder` (restarts the 10 min clock, conditional on
-  still awaiting) and `requestVideoProcessing` — the same path the lazy heal
-  uses. A duplicate message is harmless (lock + awaiting-state check).
-
-Log: `videoStaleRecovery fileId=… outcome=REQUEUED|FAILED_EXHAUSTED|SKIPPED_LIVE_LOCK`.
-If file-service is ever scaled, the boot grace must become the full window and
-"foreign owner" no longer means "dead".
-
-Details: [`service-guide-file.md`](../../docs/04-backend/service-guide-file.md#stale-video-recovery-2026-09-29).
+Full mechanism: [`service-guide-file.md`](../../docs/04-backend/service-guide-file.md#stale-video-recovery-2026-09-29).
 
 ## Generated audio is stored, never transcribed (multimodal batch 9, 2026-09-25)
 

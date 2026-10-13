@@ -44,6 +44,7 @@ export class AuthGuard implements CanActivate {
 Bypass: Use `@Public()` decorator on endpoint or controller class.
 
 Error responses:
+
 - `401 "Missing authorization header"` — no Authorization header
 - `401 "Invalid authorization header format"` — not Bearer format
 - `401 "Missing token"` — empty token
@@ -71,6 +72,7 @@ export class RolesGuard implements CanActivate {
 Roles hierarchy: `ADMIN > OPERATOR > VIEWER` (no inheritance — must list explicitly).
 
 Usage:
+
 ```typescript
 @Roles(UserRole.ADMIN)  // Only admins
 @Roles(UserRole.ADMIN, UserRole.OPERATOR)  // Admins and operators
@@ -96,7 +98,6 @@ export class LoggingInterceptor implements NestInterceptor {
     // 2. Extract or generate X-Trace-ID
     // 3. Set headers on request and response
     // 4. Record start time
-
     // After response:
     // 5. Log: method, url, statusCode, durationMs, requestId, traceId
   }
@@ -104,6 +105,7 @@ export class LoggingInterceptor implements NestInterceptor {
 ```
 
 Log output format:
+
 ```
 LoggingInterceptor - GET /api/v1/chat-threads 200 - 45ms
 {requestId: "abc", traceId: "xyz", method: "GET", url: "/api/v1/chat-threads", statusCode: 200, durationMs: 45}
@@ -121,29 +123,10 @@ LoggingInterceptor - GET /api/v1/chat-threads 200 - 45ms
 **Applied**: Per-endpoint via `@UsePipes()` or `@Body(new ZodValidationPipe(schema))`
 **Purpose**: Validates and transforms request data using Zod schemas
 
-```typescript
-@Injectable()
-export class ZodValidationPipe implements PipeTransform {
-  constructor(private readonly schema: ZodSchema) {}
-
-  transform(value: unknown, _metadata: ArgumentMetadata): unknown {
-    const result = this.schema.safeParse(value);
-    if (!result.success) {
-      const errors = result.error.issues.map((issue) => ({
-        field: issue.path.join('.'),
-        message: issue.message,
-      }));
-      throw new BadRequestException({
-        message: 'Validation failed',
-        errors,
-      });
-    }
-    return result.data;  // Returns transformed data (defaults applied)
-  }
-}
-```
+Implementation: [dto-validation-patterns.md — ZodValidationPipe Implementation](dto-validation-patterns.md#zodvalidationpipe-implementation).
 
 Usage patterns:
+
 ```typescript
 // Per-parameter
 @Body(new ZodValidationPipe(createThreadSchema)) dto: CreateThreadDto
@@ -171,7 +154,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     // 2. HttpException -> use status + message
     // 3. Error -> 500 + log stack trace
     // 4. Unknown -> 500 + log
-
     // Response body: { statusCode, message, code?, errors?, timestamp }
   }
 }
@@ -253,6 +235,7 @@ providers: [
 ```
 
 Rate limiting is configured via `ThrottlerModule`:
+
 ```typescript
 ThrottlerModule.forRoot([{
   ttl: config.throttleTtl,    // Default: 60000ms
@@ -271,6 +254,7 @@ app.use(helmet());
 ```
 
 This sets:
+
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: SAMEORIGIN`
 - `X-XSS-Protection: 0`

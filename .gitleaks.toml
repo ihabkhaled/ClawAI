@@ -1,0 +1,63 @@
+# Secret scanning (rules/21, rules/23). pre-commit scans the staged changes
+# (`gitleaks git --staged`); CI scans every commit in the pull request and
+# fails on any finding. The default ruleset applies; this file only narrows it.
+#
+# Every allowlist entry is a reviewed decision with its reason. Adding one is a
+# security review, not a convenience: prefer moving a fixture into a test
+# directory, or building it at runtime, over widening this list. The
+# provider-specific rules (cloud keys, GitHub tokens, private keys, payment
+# keys) are never allowlisted anywhere — only the heuristic rules are narrowed.
+title = "ClawAI secret scanning"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Build output, dependencies and generated files — never hand-authored"
+paths = [
+  '''(^|/)node_modules/''',
+  '''(^|/)dist/''',
+  '''(^|/)\.next/''',
+  '''(^|/)coverage/''',
+  '''(^|/)src/generated/''',
+  '''^\.ai/''',
+  '''^docs/features/ai-native-engineering-os/inventory\.snapshot\.json$''',
+  '''^tools/format/baseline\.json$''',
+  '''^tools/lint/warnings-baseline\.json$''',
+  '''^package-lock\.json$''',
+]
+
+[[allowlists]]
+description = "Test fixtures: fake JWT secrets, tokens and keys exist to exercise redaction and auth code"
+targetRules = ["generic-api-key", "github-pat", "jwt"]
+paths = [
+  '''(^|/)__tests__/''',
+  '''\.(spec|test)\.tsx?$''',
+  '''^apps/[^/]+/src/common/testing/''',
+]
+
+[[allowlists]]
+description = "Documentation examples: curl -u guest:guest, Bearer <token>, sample response bodies"
+targetRules = ["generic-api-key", "curl-auth-user", "curl-auth-header", "jwt"]
+paths = ['''\.md$''']
+
+[[allowlists]]
+description = "CI test-only values (ci.yml test job env) and the IndexNow key, which the protocol makes public (it is served at /<key>.txt)"
+targetRules = ["generic-api-key"]
+regexTarget = "line"
+regexes = [
+  '''JWT_SECRET: this_is_a_test_secret_that_is_32chars_long''',
+  '''ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef''',
+  '''PAYMENT_TOKEN_ENCRYPTION_KEY: fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210''',
+  '''INDEXNOW_KEY''',
+]
+
+[[allowlists]]
+description = "Placeholders and identifiers that only look like keys: the .env.example placeholder, a localStorage key prefix, a model id, a schema comment"
+targetRules = ["generic-api-key"]
+paths = [
+  '''^\.env\.example$''',
+  '''^apps/claw-frontend/src/constants/tour\.constants\.ts$''',
+  '''^apps/claw-routing-service/src/modules/router-models/constants/model-cost-seed\.constants\.ts$''',
+  '''^apps/claw-workspace-service/prisma/schema\.prisma$''',
+]

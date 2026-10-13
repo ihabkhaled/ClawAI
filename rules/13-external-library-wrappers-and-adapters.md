@@ -72,8 +72,8 @@ business logic.
 ## Correct pattern
 
 ```
-apps/claw-connector-service/src/modules/connectors/adapters/anthropic.adapter.ts
-apps/claw-connector-service/src/modules/connectors/adapters/adapter.factory.ts   # selects by provider enum
+apps/claw-connector-service/src/modules/connectors/managers/adapters/anthropic.adapter.ts
+apps/claw-connector-service/src/modules/connectors/managers/adapters/adapter-factory.ts   # getAdapter(provider), keyed by the shared-types enum
 packages/shared-utilities/src/http-client/…                                       # shared fetch wrapper
 ```
 

@@ -8,8 +8,8 @@ visible, owned, and expires.
 
 - An `eslint-disable` that isn't a narrow, single-line, justified suppression.
 - Any `@ts-expect-error` (bare `@ts-ignore` is never allowed — see
-  [../rules/00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md)).
-- A coverage threshold temporarily below the [`testing/coverage-policy.md`](../testing/coverage-policy.md) target.
+  [rules/00-non-negotiable-rules.md](../../rules/00-non-negotiable-rules.md)).
+- A coverage threshold temporarily below the [`testing/coverage-policy.md`](../../testing/coverage-policy.md) target.
 - A rule from `rules/` that genuinely cannot be satisfied for a documented reason.
 
 ## Required fields

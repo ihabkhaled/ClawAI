@@ -12,7 +12,7 @@ and `mongodb` containers).
 
 - **16 PostgreSQL instances** (one per Postgres-backed service, pgvector-capable)
   via **Prisma 7.8**.
-- **1 MongoDB** serving 3 services (audit, client-logs, server-logs) via
+- **1 MongoDB** serving three services (audit, client-logs, server-logs) via
   **Mongoose**.
 - **Redis** (caching) and **RabbitMQ** (bus) are shared infrastructure, not
   owned application data.

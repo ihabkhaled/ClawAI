@@ -1,6 +1,6 @@
 # Microservice Boundary Reviewer
 
-**Role** — Enforcer of service ownership and the seams between the 17 services.
+**Role** — Enforcer of service ownership and the seams between the services.
 
 **Mission** — Guarantee each service owns its own data and that the only ways
 services communicate are HTTP (internal endpoints) or RabbitMQ events on the

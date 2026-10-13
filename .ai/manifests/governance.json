@@ -1,23 +1,23 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 50060,
+      "bytes": 9066,
       "file": "CLAUDE.md"
     },
     {
-      "bytes": 7369,
+      "bytes": 5925,
       "file": "CODEX.md"
     },
     {
-      "bytes": 29057,
+      "bytes": 1739,
       "file": "cursor.md"
     },
     {
-      "bytes": 10970,
+      "bytes": 5224,
       "file": "AGENTS.md"
     },
     {
-      "bytes": 3911,
+      "bytes": 848,
       "file": ".cursorrules"
     }
   ],
@@ -58,11 +58,11 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 33902,
+      "bytes": 30662,
       "file": "rules/00-master-rules.md"
     },
     {
-      "bytes": 6897,
+      "bytes": 8086,
       "file": "rules/00-non-negotiable-rules.md"
     },
     {
@@ -74,11 +74,11 @@
       "file": "rules/01-task-intake-and-planning.md"
     },
     {
-      "bytes": 9996,
+      "bytes": 10011,
       "file": "rules/02-backend-rules.md"
     },
     {
-      "bytes": 2940,
+      "bytes": 2978,
       "file": "rules/02-monorepo-and-workspace-ownership.md"
     },
     {
@@ -86,15 +86,15 @@
       "file": "rules/03-frontend-rules.md"
     },
     {
-      "bytes": 3118,
+      "bytes": 3164,
       "file": "rules/03-microservice-boundaries.md"
     },
     {
-      "bytes": 2835,
+      "bytes": 2843,
       "file": "rules/04-nextjs-app-router.md"
     },
     {
-      "bytes": 11482,
+      "bytes": 11255,
       "file": "rules/04-testing-rules.md"
     },
     {
@@ -102,7 +102,7 @@
       "file": "rules/05-frontend-components-and-hooks.md"
     },
     {
-      "bytes": 18767,
+      "bytes": 15270,
       "file": "rules/05-infra-rules.md"
     },
     {
@@ -114,15 +114,15 @@
       "file": "rules/06-frontend-queries-and-cache.md"
     },
     {
-      "bytes": 3259,
+      "bytes": 3483,
       "file": "rules/07-backend-controllers-and-transport.md"
     },
     {
-      "bytes": 11935,
+      "bytes": 8263,
       "file": "rules/07-commit-rules.md"
     },
     {
-      "bytes": 2782,
+      "bytes": 3063,
       "file": "rules/08-backend-managers-and-use-cases.md"
     },
     {
@@ -130,31 +130,31 @@
       "file": "rules/08-security-rules.md"
     },
     {
-      "bytes": 2978,
+      "bytes": 3257,
       "file": "rules/09-backend-services.md"
     },
     {
-      "bytes": 11638,
+      "bytes": 11905,
       "file": "rules/09-refactor-rules.md"
     },
     {
-      "bytes": 2545,
+      "bytes": 2752,
       "file": "rules/10-repositories-and-persistence.md"
     },
     {
-      "bytes": 4050,
+      "bytes": 4564,
       "file": "rules/11-dtos-and-validation.md"
     },
     {
-      "bytes": 2882,
+      "bytes": 2899,
       "file": "rules/12-types-enums-constants-and-declaration-ownership.md"
     },
     {
-      "bytes": 5714,
+      "bytes": 5760,
       "file": "rules/13-external-library-wrappers-and-adapters.md"
     },
     {
-      "bytes": 4630,
+      "bytes": 4887,
       "file": "rules/14-shared-packages.md"
     },
     {
@@ -162,7 +162,7 @@
       "file": "rules/15-configuration-and-environment.md"
     },
     {
-      "bytes": 8090,
+      "bytes": 8264,
       "file": "rules/16-authentication-and-authorization.md"
     },
     {
@@ -178,7 +178,7 @@
       "file": "rules/19-logging-observability-and-redaction.md"
     },
     {
-      "bytes": 4914,
+      "bytes": 4916,
       "file": "rules/20-i18n-and-user-facing-messages.md"
     },
     {
@@ -186,15 +186,15 @@
       "file": "rules/21-security-and-secrets.md"
     },
     {
-      "bytes": 3581,
+      "bytes": 5178,
       "file": "rules/22-testing-and-coverage.md"
     },
     {
-      "bytes": 6756,
+      "bytes": 10701,
       "file": "rules/23-git-commits-hooks-and-release-gates.md"
     },
     {
-      "bytes": 5545,
+      "bytes": 5607,
       "file": "rules/24-generated-files-and-knowledge-freshness.md"
     },
     {
@@ -202,11 +202,11 @@
       "file": "rules/25-exceptions-and-waivers.md"
     },
     {
-      "bytes": 11433,
+      "bytes": 11455,
       "file": "rules/26-prompt-pack-intake-protocol.md"
     },
     {
-      "bytes": 15798,
+      "bytes": 15807,
       "file": "rules/27-engineering-mindsets.md"
     },
     {
@@ -230,11 +230,11 @@
       "file": "rules/32-underthinking-and-reasoning-balance.md"
     },
     {
-      "bytes": 9188,
+      "bytes": 9158,
       "file": "rules/33-knowledge-compounding-and-context-velocity.md"
     },
     {
-      "bytes": 7041,
+      "bytes": 9043,
       "file": "rules/34-gate-economy-and-machine-resources.md"
     },
     {
@@ -290,7 +290,7 @@
       "file": "rules/47-client-bundle-weight-and-barrel-boundaries.md"
     },
     {
-      "bytes": 5347,
+      "bytes": 6569,
       "file": "rules/48-lint-and-test-only-what-changed.md"
     },
     {
@@ -310,7 +310,7 @@
       "file": "rules/52-every-schema-ships-a-migration.md"
     },
     {
-      "bytes": 2953,
+      "bytes": 2995,
       "file": "rules/53-coding-agent-release-rounds.md"
     },
     {
@@ -318,7 +318,7 @@
       "file": "rules/54-evidence-and-completion-honesty.md"
     },
     {
-      "bytes": 4863,
+      "bytes": 4937,
       "file": "rules/55-akinator-station-discipline.md"
     },
     {
@@ -346,33 +346,37 @@
       "file": "rules/61-threads-account-deletion.md"
     },
     {
-      "bytes": 1063,
+      "bytes": 1097,
       "file": "rules/62-portal-shell-must-never-scroll-as-a-document.md"
     },
     {
-      "bytes": 7811,
+      "bytes": 5904,
+      "file": "rules/63-docs-move-with-code.md"
+    },
+    {
+      "bytes": 8077,
       "file": "rules/README.md"
     }
   ],
   "skills": [
     {
-      "bytes": 34356,
+      "bytes": 32514,
       "file": "skills/00-index.md"
     },
     {
-      "bytes": 8816,
+      "bytes": 8857,
       "file": "skills/01-codebase-navigation.md"
     },
     {
-      "bytes": 5272,
+      "bytes": 5702,
       "file": "skills/02-service-scaffold.md"
     },
     {
-      "bytes": 9061,
+      "bytes": 9328,
       "file": "skills/03-feature-scaffold.md"
     },
     {
-      "bytes": 7083,
+      "bytes": 7150,
       "file": "skills/04-debug-toolkit.md"
     },
     {
@@ -380,19 +384,19 @@
       "file": "skills/05-qa-toolkit.md"
     },
     {
-      "bytes": 8886,
+      "bytes": 8914,
       "file": "skills/06-docker-toolkit.md"
     },
     {
-      "bytes": 5897,
+      "bytes": 6071,
       "file": "skills/07-database-toolkit.md"
     },
     {
-      "bytes": 8082,
+      "bytes": 8328,
       "file": "skills/08-event-bus-toolkit.md"
     },
     {
-      "bytes": 9002,
+      "bytes": 9671,
       "file": "skills/09-refactor-toolkit.md"
     },
     {
@@ -408,7 +412,7 @@
       "file": "skills/add-a-grafana-dashboard.md"
     },
     {
-      "bytes": 8698,
+      "bytes": 8676,
       "file": "skills/add-a-helper-model-role.md"
     },
     {
@@ -416,7 +420,7 @@
       "file": "skills/add-a-localized-money-surface.md"
     },
     {
-      "bytes": 4010,
+      "bytes": 4137,
       "file": "skills/add-a-payment-gateway-flow.md"
     },
     {
@@ -428,11 +432,11 @@
       "file": "skills/add-a-service-metric.md"
     },
     {
-      "bytes": 4875,
+      "bytes": 4934,
       "file": "skills/add-a-shared-package-to-a-service.md"
     },
     {
-      "bytes": 32865,
+      "bytes": 32846,
       "file": "skills/add-a-voice-note-or-transcription-path.md"
     },
     {
@@ -448,7 +452,7 @@
       "file": "skills/add-an-archive-format.md"
     },
     {
-      "bytes": 7411,
+      "bytes": 7297,
       "file": "skills/add-an-openai-compatible-provider.md"
     },
     {
@@ -456,23 +460,23 @@
       "file": "skills/add-an-outbound-http-destination.md"
     },
     {
-      "bytes": 3616,
+      "bytes": 3695,
       "file": "skills/add-app-route.md"
     },
     {
-      "bytes": 3791,
+      "bytes": 3911,
       "file": "skills/add-config-value.md"
     },
     {
-      "bytes": 4117,
+      "bytes": 4237,
       "file": "skills/add-event-consumer.md"
     },
     {
-      "bytes": 4181,
+      "bytes": 4301,
       "file": "skills/add-library-adapter.md"
     },
     {
-      "bytes": 3872,
+      "bytes": 4031,
       "file": "skills/add-migration.md"
     },
     {
@@ -480,27 +484,27 @@
       "file": "skills/add-pagination-to-a-list.md"
     },
     {
-      "bytes": 4112,
+      "bytes": 4370,
       "file": "skills/add-permission.md"
     },
     {
-      "bytes": 3888,
+      "bytes": 4047,
       "file": "skills/add-prisma-model.md"
     },
     {
-      "bytes": 6494,
+      "bytes": 6614,
       "file": "skills/add-provider-connector.md"
     },
     {
-      "bytes": 4187,
+      "bytes": 4222,
       "file": "skills/add-rabbitmq-event.md"
     },
     {
-      "bytes": 4776,
+      "bytes": 4896,
       "file": "skills/add-workspace-connector.md"
     },
     {
-      "bytes": 7577,
+      "bytes": 10190,
       "file": "skills/apply-akinator-without-the-plugin.md"
     },
     {
@@ -508,7 +512,7 @@
       "file": "skills/audit-conversational-context.md"
     },
     {
-      "bytes": 5496,
+      "bytes": 5573,
       "file": "skills/backend-architecture-review.md"
     },
     {
@@ -520,11 +524,11 @@
       "file": "skills/change-a-transactional-email.md"
     },
     {
-      "bytes": 4962,
+      "bytes": 5032,
       "file": "skills/change-the-product-positioning.md"
     },
     {
-      "bytes": 4242,
+      "bytes": 4559,
       "file": "skills/commit-and-push-each-change.md"
     },
     {
@@ -532,51 +536,51 @@
       "file": "skills/communicate-briefly.md"
     },
     {
-      "bytes": 4751,
+      "bytes": 4871,
       "file": "skills/create-backend-module.md"
     },
     {
-      "bytes": 3457,
+      "bytes": 3536,
       "file": "skills/create-client-container.md"
     },
     {
-      "bytes": 3931,
+      "bytes": 4051,
       "file": "skills/create-controller.md"
     },
     {
-      "bytes": 3834,
+      "bytes": 3954,
       "file": "skills/create-dto.md"
     },
     {
-      "bytes": 4896,
+      "bytes": 4975,
       "file": "skills/create-frontend-module.md"
     },
     {
-      "bytes": 4208,
+      "bytes": 4328,
       "file": "skills/create-manager-or-use-case.md"
     },
     {
-      "bytes": 6445,
+      "bytes": 6631,
       "file": "skills/create-microservice.md"
     },
     {
-      "bytes": 3679,
+      "bytes": 3758,
       "file": "skills/create-presentational-component.md"
     },
     {
-      "bytes": 3348,
+      "bytes": 3427,
       "file": "skills/create-query.md"
     },
     {
-      "bytes": 3721,
+      "bytes": 3841,
       "file": "skills/create-repository.md"
     },
     {
-      "bytes": 4060,
+      "bytes": 4180,
       "file": "skills/create-service.md"
     },
     {
-      "bytes": 3491,
+      "bytes": 3570,
       "file": "skills/create-view-model-hook.md"
     },
     {
@@ -592,11 +596,11 @@
       "file": "skills/debug-a-sign-out.md"
     },
     {
-      "bytes": 3192,
+      "bytes": 3315,
       "file": "skills/debug-a-stuck-scheduled-job.md"
     },
     {
-      "bytes": 11775,
+      "bytes": 11774,
       "file": "skills/debug-a-video-the-model-cannot-read.md"
     },
     {
@@ -612,7 +616,7 @@
       "file": "skills/deploy-payg-credit.md"
     },
     {
-      "bytes": 6197,
+      "bytes": 6338,
       "file": "skills/execute-prompt-pack.md"
     },
     {
@@ -632,7 +636,7 @@
       "file": "skills/fix-a-corrupted-page-layout.md"
     },
     {
-      "bytes": 4302,
+      "bytes": 4381,
       "file": "skills/frontend-architecture-review.md"
     },
     {
@@ -664,11 +668,11 @@
       "file": "skills/measure-chat-network-baseline.md"
     },
     {
-      "bytes": 19585,
+      "bytes": 19725,
       "file": "skills/meter-a-paid-provider-call.md"
     },
     {
-      "bytes": 4352,
+      "bytes": 4396,
       "file": "skills/navigate-codebase.md"
     },
     {
@@ -684,7 +688,7 @@
       "file": "skills/propagate-account-deletion.md"
     },
     {
-      "bytes": 14444,
+      "bytes": 14586,
       "file": "skills/publish-a-public-marketing-page.md"
     },
     {
@@ -696,7 +700,7 @@
       "file": "skills/reasoning-balance.md"
     },
     {
-      "bytes": 3566,
+      "bytes": 3693,
       "file": "skills/reconcile-billing-state.md"
     },
     {
@@ -704,19 +708,19 @@
       "file": "skills/resolve-task-context.md"
     },
     {
-      "bytes": 4741,
+      "bytes": 4930,
       "file": "skills/reuse-before-creating.md"
     },
     {
-      "bytes": 8079,
+      "bytes": 8268,
       "file": "skills/run-coding-agent-release-rounds.md"
     },
     {
-      "bytes": 4882,
+      "bytes": 5088,
       "file": "skills/run-gates-once-and-land.md"
     },
     {
-      "bytes": 5895,
+      "bytes": 5899,
       "file": "skills/run-the-file-model-matrix.md"
     },
     {
@@ -728,7 +732,7 @@
       "file": "skills/run-threads-generation-queue.md"
     },
     {
-      "bytes": 4455,
+      "bytes": 4532,
       "file": "skills/security-review.md"
     },
     {
@@ -752,7 +756,7 @@
       "file": "skills/verify-local-speech-container.md"
     },
     {
-      "bytes": 7969,
+      "bytes": 7996,
       "file": "skills/verify-multimodal-routing-live.md"
     },
     {
@@ -768,27 +772,27 @@
       "file": "skills/verify-video-generation-live.md"
     },
     {
-      "bytes": 3786,
+      "bytes": 3794,
       "file": "skills/watch-production-health.md"
     },
     {
-      "bytes": 3058,
+      "bytes": 3119,
       "file": "skills/write-api-contract-tests.md"
     },
     {
-      "bytes": 3335,
+      "bytes": 3568,
       "file": "skills/write-backend-e2e-tests.md"
     },
     {
-      "bytes": 5072,
+      "bytes": 5164,
       "file": "skills/write-integration-tests.md"
     },
     {
-      "bytes": 5142,
+      "bytes": 5234,
       "file": "skills/write-service-tests.md"
     },
     {
-      "bytes": 5134,
+      "bytes": 5191,
       "file": "skills/write-unit-tests.md"
     }
   ]

@@ -3,12 +3,14 @@
 The repo contains many valuable historical architecture audits and scorecards, but some predate the current tree.
 
 ## Confirmed drift
-- Older docs say **17 services**; current generated manifest says **18**.
-- Some docs/context say **23/24 workspaces**; current generated manifest says **25**.
+
+- Older docs give **17** as the service count; the generated services manifest now lists **<!-- count:services -->20<!-- /count -->**.
+- Some docs/context give **23** or **24** as the workspace count; the generated manifest now lists **<!-- count:workspaces -->27<!-- /count -->**.
 - Older frontend audits predate the current **155 generated route records**.
-- Older testing audits predate the current **1,273 generated test files** and the Vitest migration.
+- Older testing audits predate the current **<!-- count:specFiles -->2298<!-- /count -->** generated test files and the Vitest migration.
 
 ## Wiki evidence policy
+
 1. Current generated manifests for inventories/counts.
 2. Live code/config for actual behavior.
 3. Canonical rules/context for intended boundaries.

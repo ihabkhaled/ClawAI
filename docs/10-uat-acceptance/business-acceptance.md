@@ -69,7 +69,7 @@ Last updated: 2026-04-09
 | --- | ----------------------------------------- | ----------------------------------------------------------------- | ------ |
 | 1   | All user actions create audit records     | Login, message send, connector change all appear in audit log     |        |
 | 2   | Usage tracking captures token consumption | Token counts per provider/model visible in usage dashboard        |        |
-| 3   | Health dashboard shows all service status | All 17 services show health; unhealthy service highlighted        |        |
+| 3   | Health dashboard shows all service status | Every service shows health; unhealthy service highlighted         |        |
 | 4   | Logs searchable by service, level, time   | Filter logs by each dimension; results match filters              |        |
 | 5   | Audit logs retained indefinitely          | Verify no TTL on audit collection; logs from 30+ days ago present |        |
 
@@ -117,15 +117,15 @@ Last updated: 2026-04-09
 
 ### 3.1 Deployment Readiness
 
-| Item                      | Description                                                | Status |
-| ------------------------- | ---------------------------------------------------------- | ------ |
-| Docker Compose validated  | All containers start successfully from clean state         |        |
-| Environment configuration | `.env.example` covers all variables; documented            |        |
-| Database migrations       | All Prisma migrations apply cleanly on fresh databases     |        |
-| Seed data                 | Admin user created on first startup                        |        |
-| Ollama models             | 5 default models pull successfully on startup              |        |
-| Nginx routes              | All 20+ route mappings tested and functional               |        |
-| Health checks             | All 17 services report healthy within 2 minutes of startup |        |
+| Item                      | Description                                               | Status |
+| ------------------------- | --------------------------------------------------------- | ------ |
+| Docker Compose validated  | All containers start successfully from clean state        |        |
+| Environment configuration | `.env.example` covers all variables; documented           |        |
+| Database migrations       | All Prisma migrations apply cleanly on fresh databases    |        |
+| Seed data                 | Admin user created on first startup                       |        |
+| Ollama models             | 5 default models pull successfully on startup             |        |
+| Nginx routes              | All 20+ route mappings tested and functional              |        |
+| Health checks             | Every service reports healthy within 2 minutes of startup |        |
 
 ### 3.2 Monitoring Readiness
 
@@ -213,7 +213,7 @@ Maintain a list of known issues with workarounds that support staff can referenc
 ### 5.2 Launch Day (T-0)
 
 - [ ] Fresh deployment from clean state verified
-- [ ] All 17 services healthy
+- [ ] All services healthy
 - [ ] All database migrations applied successfully
 - [ ] Admin can log in
 - [ ] Sample chat message succeeds (local + cloud)
@@ -262,7 +262,7 @@ For systemic issues affecting multiple services:
 4. Checkout the previous known-good git tag/commit.
 5. Rebuild all containers: `docker compose build --no-cache`.
 6. Start all services: `docker compose up -d`.
-7. Verify all 17 services healthy.
+7. Verify all services healthy.
 8. Verify data integrity (spot-check recent threads, users, connectors).
 9. Notify users of service restoration.
 

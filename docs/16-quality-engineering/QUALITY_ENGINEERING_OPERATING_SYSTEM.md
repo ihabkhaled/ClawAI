@@ -48,22 +48,22 @@ Why does this matter? Who is affected? What is the user impact if this is not de
 
 For every feature or bug, explicitly enumerate:
 
-| Dimension                 | What to Check                                                                                    |
-| ------------------------- | ------------------------------------------------------------------------------------------------ |
-| **Backend services**      | Which of the 17 services are touched? List by name (e.g., claw-chat-service, claw-file-service). |
-| **Frontend pages**        | Which pages in `src/app/(portal)/` are affected?                                                 |
-| **Frontend components**   | Which components in `src/components/` change?                                                    |
-| **Database schemas**      | Any Prisma schema or MongoDB collection changes? Which DB (claw_chat, claw_files, etc.)?         |
-| **RabbitMQ events**       | New events? Changed payloads? New consumers? Check the event bus table in CLAUDE.md.             |
-| **API endpoints**         | New or modified endpoints? Check Nginx route map.                                                |
-| **Shared packages**       | Changes to `shared-types`, `shared-constants`, `shared-rabbitmq`, `shared-auth`?                 |
-| **Environment variables** | New or renamed env vars? Affects `.env`, `.env.example`, install scripts, Docker compose files.  |
-| **Docker compose**        | New containers, volumes, ports, depends_on, healthchecks? All 4 compose files.                   |
-| **Nginx config**          | New upstream, location block, SSE route?                                                         |
-| **CI pipeline**           | New service in Prisma generate loop? New test env vars?                                          |
-| **i18n locales**          | New user-facing text? All 9 locales (en, ar, de, es, fr, hi, it, pt, ru).                        |
-| **Documentation**         | CLAUDE.md, docs/ folder, service-specific docs?                                                  |
-| **Seed data**             | New default records (catalog entries, routing policies, admin user data)?                        |
+| Dimension                 | What to Check                                                                                                                          |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Backend services**      | Which of the <!-- count:services -->20<!-- /count --> services are touched? List by name (e.g., claw-chat-service, claw-file-service). |
+| **Frontend pages**        | Which pages in `src/app/(portal)/` are affected?                                                                                       |
+| **Frontend components**   | Which components in `src/components/` change?                                                                                          |
+| **Database schemas**      | Any Prisma schema or MongoDB collection changes? Which DB (claw_chat, claw_files, etc.)?                                               |
+| **RabbitMQ events**       | New events? Changed payloads? New consumers? Check the event bus table in CLAUDE.md.                                                   |
+| **API endpoints**         | New or modified endpoints? Check Nginx route map.                                                                                      |
+| **Shared packages**       | Changes to `shared-types`, `shared-constants`, `shared-rabbitmq`, `shared-auth`?                                                       |
+| **Environment variables** | New or renamed env vars? Affects `.env`, `.env.example`, install scripts, Docker compose files.                                        |
+| **Docker compose**        | New containers, volumes, ports, depends_on, healthchecks? All 4 compose files.                                                         |
+| **Nginx config**          | New upstream, location block, SSE route?                                                                                               |
+| **CI pipeline**           | New service in Prisma generate loop? New test env vars?                                                                                |
+| **i18n locales**          | New user-facing text? All 9 locales (en, ar, de, es, fr, hi, it, pt, ru).                                                              |
+| **Documentation**         | CLAUDE.md, docs/ folder, service-specific docs?                                                                                        |
+| **Seed data**             | New default records (catalog entries, routing policies, admin user data)?                                                              |
 
 ### A4. Define Success Criteria
 

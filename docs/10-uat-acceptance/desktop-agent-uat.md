@@ -31,7 +31,7 @@
 - `fixtures/sample-marketplace/evil-006-time-bomb.json`
 - `fixtures/sample-marketplace/evil-007-tampered-sig.json`
 
-Lives in `agent-cli/test/fixtures/` (CLI) and `apps/claw-agent-service/src/__tests__/fixtures/` (backend).
+Target locations (not created yet): a `test/fixtures/` folder in `agent-cli` (CLI) and a `src/__tests__/fixtures/` folder in `apps/claw-agent-service` (backend). The agent-service fixtures that exist today are in `apps/claw-agent-service/src/modules/fleet/__fixtures__/`.
 
 ---
 
@@ -40,6 +40,7 @@ Lives in `agent-cli/test/fixtures/` (CLI) and `apps/claw-agent-service/src/__tes
 ### Stream 10 — Capability Framework + Approval Engine
 
 #### Story 10.1 — Default-strict capability requires approval (F-CAP-01)
+
 **As an** IC engineer with a freshly paired device
 **I want** every new capability invocation to require explicit approval by default
 **So that** I trust the system before I relax controls
@@ -58,6 +59,7 @@ And no execution event fires
 And an audit row records `entityType=capability_invocation action=DENIED`
 
 **Demo (≤30s):**
+
 1. (5s) Open `/agent` dashboard
 2. (5s) Trigger fs.delete on a test file
 3. (10s) See PENDING card with risk badge + reversibility chip
@@ -68,28 +70,33 @@ And an audit row records `entityType=capability_invocation action=DENIED`
 **DB changes:** insert into CapabilityInvocation (status=PENDING_APPROVAL → APPROVED → EXECUTING → EXECUTED), parallel TerminalCommand row if dual-write enabled
 
 #### Story 10.2 — LOW + AUTO_APPROVE policy auto-executes (F-CAP-02)
+
 Given a CapabilityInvocation `class=FILESYSTEM op=LIST target=~/Documents`
 When proposed
 Then `status=AUTO_APPROVED` immediately, EXECUTING within 2s, EXECUTED with directory contents in result
 And no human action required
 
 #### Story 10.3 — DENY policy rejects at draft time (F-CAP-03)
+
 Given a CapabilityInvocation `class=PROCESS op=KILL target.pid=1`
 When proposed
 Then `status=DENIED` matched policy `deny-process-kill-pid-1`
 
 #### Story 10.4 — Capability lineage view (F-CAP-04)
+
 Given an executed capability invocation
 When the user opens `/agent/activity/<id>`
 Then they see the chain: recipe (if any) → capability descriptor → policy match → approver → execution result → audit log row → rollback status
 
 #### Story 10.5 — Cancel during EXECUTING (F-CAP-05)
+
 Given a long-running capability `status=EXECUTING`
 When the user clicks Cancel
 Then `status=CANCELLED`, `agent.capability.cancelled` event published
 And CLI runtime aborts execution
 
 #### Story 10.6 — Rollback REVERSIBLE invocation (F-CAP-06)
+
 Given an EXECUTED invocation with `reversibility=COMPENSATABLE` and a recorded `undoPlan`
 When the user clicks Rollback
 Then the undoPlan steps execute in reverse
@@ -217,6 +224,7 @@ Story 42.A5 — time-bombed payload caught by monthly rescan
 Story 42.A6 — typosquatting publisher name flagged + admin notified
 
 **Demo (adversarial 42.A1):**
+
 1. Open marketplace
 2. Try install evil-001-rm-rf
 3. See red block dialog with deny-pattern reason

@@ -16,7 +16,7 @@ that fails intermittently, differs per model, and cannot be unit tested.
 ## What must run after every release
 
 1. Install the released VSIX into a real VS Code and sign in to `claw.local`.
-2. `node scripts/live-rounds.mjs` against the Ollama **connector** models
+2. `node apps/claw-coding-agent/scripts/live-rounds.mjs` against the Ollama **connector** models
    (non-local), covering at minimum: reading the workspace, writing exact
    content, editing an existing file without destroying its neighbours, running
    a command and acting on its output, a real `git` commit, delivering a
@@ -54,6 +54,6 @@ comes to look finished while delivering nothing.
 
 `apps/claw-coding-agent/scripts/live-rounds.mjs`, with scenarios in
 `live-rounds.scenarios.mjs` and the shared run driver in
-`live-agent-session.mjs` (also used by `npm run check:live`).
+`live-agent-session.mjs` (also used by the coding agent's `npm run check:live`).
 
 Runbook: [`skills/run-coding-agent-release-rounds.md`](../skills/run-coding-agent-release-rounds.md)

@@ -15,7 +15,7 @@ It is three stages (2026-09-19). In one job, 115 URLs took about 53 minutes.
 1. **`Lighthouse build`**: builds the frontend once and uploads `.next`
    (without cache and standalone) plus the shared packages' `dist`.
 2. **`Lighthouse shard 0…19`**: 20 parallel jobs. Each downloads that build,
-   takes every twentieth URL (`tools/lighthouse/shard-config.mjs`, round-robin so
+   takes every twentieth URL (`apps/claw-frontend/tools/lighthouse/shard-config.mjs`, round-robin so
    heavy clusters spread out), and runs `lhci autorun` with the same
    assertions. Reports upload as `lighthouse-reports-<shard>`.
 3. **`Lighthouse budgets (marketing)`**: the check name the gate always had.
@@ -77,8 +77,8 @@ To reproduce the job's pricing pages, start the fixture and pass the same two
 variables to `next start`:
 
 ```bash
+PORT=4901 SERVICE_TOKEN=lighthouse-fixture node apps/claw-frontend/scripts/lighthouse-pricing-fixture.mjs &
 cd apps/claw-frontend
-PORT=4901 SERVICE_TOKEN=lighthouse-fixture node scripts/lighthouse-pricing-fixture.mjs &
 AUTH_SERVICE_URL=http://127.0.0.1:4901 INTER_SERVICE_AUTH_TOKEN=lighthouse-fixture \
   SITE_URL=https://claw.example npx next start -p 3100
 ```
@@ -87,11 +87,11 @@ The whole run:
 
 ```bash
 npm run build:frontend          # produce the production build first
-npm run lighthouse              # runs @lhci/cli via npx against the built app
+npm run lighthouse              # runs @lhci/cli (fetched by npx) on the built app
 ```
 
 `@lhci/cli` is intentionally NOT a dependency (it pulls Chromium) — it is run
-on-demand via `npx`. Reports land in `apps/claw-frontend/.lighthouseci`
+on-demand via `npx`. Reports land in the frontend's `.lighthouseci` folder
 (gitignored; uploaded as a CI artifact).
 
 ## Which pages are audited
@@ -140,7 +140,7 @@ is not just slower, it is proportionally more likely to red a PR for a page the
 PR never touched.
 
 Pull requests therefore audit `lighthouserc.pr.json`, a sample derived by
-`tools/lighthouse/build-pr-config.mjs`: group the full URL list by its first
+`apps/claw-frontend/tools/lighthouse/build-pr-config.mjs`: group the full URL list by its first
 path segment after the locale (so every cluster and every standalone page is
 its own group), keep at most 2 URLs per group. This guarantees every cluster
 keeps _some_ coverage on every PR — a bug affecting all of `/learn` cannot slip
@@ -153,7 +153,7 @@ ultimately ungated; the sample only relaxes what has to pass before a PR merges.
 Regenerate the sample after adding a URL to `lighthouserc.json`:
 
 ```bash
-node tools/lighthouse/build-pr-config.mjs
+node apps/claw-frontend/tools/lighthouse/build-pr-config.mjs
 ```
 
 `lighthouse-coverage.test.ts` asserts `lighthouserc.pr.json` is exactly what

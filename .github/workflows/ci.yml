@@ -1,10 +1,17 @@
 name: CI
 
+# The one gate a change has to pass. `ci-success` aggregates every job below
+# (including the ai-native-os workflow, called here), and release.yml runs only
+# after this workflow succeeds on main — so any red job here blocks the release
+# and the production deploy. What each job proves, and what the local hooks
+# prove before it, is the gate matrix in rules/23.
+#
+# Third-party actions are pinned to commit SHAs (the comment names the tag).
+
 on:
   push:
     branches: [main, develop]
   pull_request:
-    branches: [main, develop]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -19,16 +26,25 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.affected.outputs.matrix }}
-      # The same workspaces, except the ones whose suite is split across shards
+      # The same workspaces, except those whose suite is split across shards
       # (tools/affected/index.mjs, TEST_SHARDS). Only the test job uses it.
       test_matrix: ${{ steps.affected.outputs.test_matrix }}
+      merge_matrix: ${{ steps.affected.outputs.merge_matrix }}
       has_affected: ${{ steps.affected.outputs.has_affected }}
+      has_sharded: ${{ steps.affected.outputs.has_sharded }}
       includes_chat: ${{ steps.affected.outputs.includes_chat }}
       full: ${{ steps.affected.outputs.full }}
+      deploy: ${{ steps.affected.outputs.deploy }}
+      dockerfiles: ${{ steps.affected.outputs.dockerfiles }}
+      has_dockerfiles: ${{ steps.affected.outputs.has_dockerfiles }}
+      base: ${{ steps.affected.outputs.base }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
 
       - name: Calculate affected matrix
         id: affected
@@ -56,82 +72,94 @@ jobs:
 
           if [ "$full" = true ]; then
             result="$(node tools/affected/index.mjs ci-matrix --full)"
+            echo "base=" >> "$GITHUB_OUTPUT"
           else
             result="$(node tools/affected/index.mjs ci-matrix --base="$base" --head="$HEAD_SHA")"
+            echo "base=$base" >> "$GITHUB_OUTPUT"
           fi
 
-          echo "matrix=$(jq -c '.matrix' <<<"$result")" >> "$GITHUB_OUTPUT"
-          echo "test_matrix=$(jq -c '.testMatrix' <<<"$result")" >> "$GITHUB_OUTPUT"
-          echo "has_affected=$(jq -r '.hasAffected' <<<"$result")" >> "$GITHUB_OUTPUT"
-          echo "includes_chat=$(jq -r '.includesChat' <<<"$result")" >> "$GITHUB_OUTPUT"
-          echo "full=$(jq -r '.full' <<<"$result")" >> "$GITHUB_OUTPUT"
+          {
+            echo "matrix=$(jq -c '.matrix' <<<"$result")"
+            echo "test_matrix=$(jq -c '.testMatrix' <<<"$result")"
+            echo "merge_matrix=$(jq -c '.mergeMatrix' <<<"$result")"
+            echo "has_affected=$(jq -r '.hasAffected' <<<"$result")"
+            echo "has_sharded=$(jq -r '.mergeMatrix.include | length > 0' <<<"$result")"
+            echo "includes_chat=$(jq -r '.includesChat' <<<"$result")"
+            echo "full=$(jq -r '.full' <<<"$result")"
+            echo "deploy=$(jq -r '.deploy' <<<"$result")"
+            echo "dockerfiles=$(jq -c '.dockerfiles' <<<"$result")"
+            echo "has_dockerfiles=$(jq -r '.dockerfiles | length > 0' <<<"$result")"
+          } >> "$GITHUB_OUTPUT"
           jq . <<<"$result"
 
-  lint:
-    name: Lint (${{ matrix.service }})
+  # One install, one shared-package build (topological, computed from the
+  # package.json files) and every Prisma client, shared with every matrix job
+  # through the node_modules cache and the build-outputs artifact.
+  setup:
+    name: Install, build shared packages, generate Prisma clients
     needs: changes
     if: needs.changes.outputs.has_affected == 'true'
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJSON(needs.changes.outputs.matrix) }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        id: node
         with:
-          node-version: 24
-          cache: npm
-      - name: Install dependencies
-        run: npm ci --ignore-scripts
+          node-version-file: .nvmrc
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: modules
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: modules-${{ runner.os }}-node${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
+      - name: Install dependencies (cache miss only)
+        if: steps.modules.outputs.cache-hit != 'true'
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Verify TypeScript 7 compiler
         run: node tools/typescript/run-ts7.mjs --version
-      - name: Build shared packages
-        run: |
-          cd packages/shared-constants && npm run build
-          cd ../shared-types && npm run build
-          cd ../shared-utilities && npm run build
-          cd ../shared-rabbitmq && npm run build
-          cd ../shared-auth && npm run build
-          cd ../shared-entitlements && npm run build
-      - name: Generate Prisma client
-        if: matrix.prisma == true
-        run: npm run prisma:generate --workspace=${{ matrix.workspace }}
-      - name: Lint
-        run: npm run lint --workspace=${{ matrix.workspace }}
+      - name: Build shared packages in dependency order
+        run: node tools/affected/index.mjs shared-build
+      - name: Generate every Prisma client
+        run: npm run prisma:generate --workspaces --if-present
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: build-outputs
+          retention-days: 1
+          if-no-files-found: error
+          path: |
+            packages/*/dist
+            apps/*/src/generated
 
-  typecheck:
-    name: Typecheck (${{ matrix.service }})
-    needs: changes
-    if: needs.changes.outputs.has_affected == 'true'
+  # Lint and typecheck in one job per workspace. Lint fails on any error and on
+  # any warning above tools/lint/warnings-baseline.json (the backlog can only
+  # shrink). The ESLint cache and tsbuildinfo persist between runs.
+  static:
+    name: Static (${{ matrix.service }})
+    needs: [changes, setup]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.changes.outputs.matrix) }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/prepare
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          node-version: 24
-          cache: npm
-      - run: npm ci --ignore-scripts
-      - run: node tools/typescript/run-ts7.mjs --version
-      - name: Build shared packages
-        run: |
-          npm run build --workspace=@claw/shared-constants
-          npm run build --workspace=@claw/shared-types
-          npm run build --workspace=@claw/shared-utilities
-          npm run build --workspace=@claw/shared-rabbitmq
-          npm run build --workspace=@claw/shared-auth
-          npm run build --workspace=@claw/shared-entitlements
-      - name: Generate Prisma client
-        if: matrix.prisma == true
-        run: npm run prisma:generate --workspace=${{ matrix.workspace }}
-      - run: npm run typecheck --workspace=${{ matrix.workspace }}
+          path: |
+            ${{ matrix.dir }}/node_modules/.cache/eslint
+            ${{ matrix.dir }}/node_modules/.cache/tsc
+          key: static-${{ matrix.slug }}-${{ github.sha }}
+          restore-keys: static-${{ matrix.slug }}-
+      - name: Lint (no error; no warning above the baseline)
+        run: node tools/lint/ratchet.mjs check --workspace=${{ matrix.workspace }}
+      - name: Typecheck
+        run: npm run typecheck --workspace=${{ matrix.workspace }}
 
   test:
     name: Test (${{ matrix.service }})
-    needs: changes
-    if: needs.changes.outputs.has_affected == 'true'
+    needs: [changes, setup]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -172,57 +200,131 @@ jobs:
       AUTO_SUGGEST_INBOX_REPLY_CRON: '0 */15 * * * *'
       AUTO_SUGGEST_INBOX_REPLY_LOOKBACK_HOURS: '48'
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci --ignore-scripts
-      - run: node tools/typescript/run-ts7.mjs --version
-      - name: Build shared packages
-        run: |
-          npm run build --workspace=@claw/shared-constants
-          npm run build --workspace=@claw/shared-types
-          npm run build --workspace=@claw/shared-utilities
-          npm run build --workspace=@claw/shared-rabbitmq
-          npm run build --workspace=@claw/shared-auth
-          npm run build --workspace=@claw/shared-entitlements
-      - name: Generate Prisma client
-        if: matrix.prisma == true
-        run: npm run prisma:generate --workspace=${{ matrix.workspace }}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/prepare
       - name: Hoist vite to root (frontend hoisting fix)
-        if: matrix.service == 'frontend'
+        if: matrix.slug == 'frontend'
         run: npm install --no-save vite
+      # A whole-suite job enforces the workspace's coverage floor here
+      # (tools/coverage/thresholds.json: the declared thresholds once the suite
+      # meets them, otherwise a measured floor that only rises).
+      - name: Test with coverage
+        if: matrix.shards == 1
+        env:
+          WORKSPACE: ${{ matrix.workspace }}
+        run: |
+          read -r -a floor <<<"$(node tools/coverage/thresholds.mjs flags "$WORKSPACE")"
+          npm run test --workspace="$WORKSPACE" -- \
+            --coverage --coverage.reporter=text-summary --coverage.reporter=json-summary --coverage.reporter=lcov \
+            "${floor[@]}"
       # vitest splits the FILES across shards, so every test still runs exactly
-      # once across the matrix — a file cannot fall out of every shard.
-      - run: npm run test --workspace=${{ matrix.workspace }} -- --shard=${{ matrix.shard }}/${{ matrix.shards }}
+      # once across the matrix. A shard sees part of the suite, so its own
+      # coverage thresholds are zeroed; the coverage-merge job merges the blob
+      # reports and enforces the floor on the whole.
+      - name: Test shard with coverage (blob report)
+        if: matrix.shards > 1
+        run: >-
+          npm run test --workspace=${{ matrix.workspace }} --
+          --shard=${{ matrix.shard }}/${{ matrix.shards }} --reporter=blob --reporter=default --coverage
+          --coverage.thresholds.branches=0 --coverage.thresholds.functions=0
+          --coverage.thresholds.lines=0 --coverage.thresholds.statements=0
+      - name: Repo-relative lcov for the changed-lines check
+        if: matrix.shards == 1
+        run: node tools/coverage/changed-lines.mjs normalize ${{ matrix.dir }} ${{ matrix.dir }}/coverage/lcov.info > lcov-${{ matrix.slug }}.info
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: matrix.shards == 1
+        with:
+          name: coverage-${{ matrix.slug }}
+          retention-days: 3
+          path: lcov-${{ matrix.slug }}.info
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: matrix.shards > 1
+        with:
+          name: blob-${{ matrix.slug }}-${{ matrix.shard }}
+          retention-days: 1
+          include-hidden-files: true
+          path: ${{ matrix.dir }}/.vitest/blob/*
+
+  coverage-merge:
+    name: Coverage (${{ matrix.service }}, merged shards)
+    needs: [changes, setup, test]
+    if: needs.changes.outputs.has_sharded == 'true' && needs.test.result == 'success'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.changes.outputs.merge_matrix) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/prepare
+      - name: Hoist vite to root (frontend hoisting fix)
+        if: matrix.slug == 'frontend'
+        run: npm install --no-save vite
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: blob-${{ matrix.slug }}-*
+          merge-multiple: true
+          path: ${{ matrix.dir }}/.vitest/blob
+      - name: Merge shard reports and enforce the coverage floor
+        working-directory: ${{ matrix.dir }}
+        env:
+          WORKSPACE: ${{ matrix.workspace }}
+        run: |
+          read -r -a floor <<<"$(node ../../tools/coverage/thresholds.mjs flags "$WORKSPACE")"
+          npx vitest --merge-reports --coverage \
+            --coverage.reporter=text-summary --coverage.reporter=json-summary --coverage.reporter=lcov \
+            "${floor[@]}"
+      - name: Repo-relative lcov for the changed-lines check
+        run: node tools/coverage/changed-lines.mjs normalize ${{ matrix.dir }} ${{ matrix.dir }}/coverage/lcov.info > lcov-${{ matrix.slug }}.info
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-${{ matrix.slug }}
+          retention-days: 3
+          path: lcov-${{ matrix.slug }}.info
+
+  # New and changed lines must meet the changed-lines target on their own,
+  # even where the workspace average is lower (tools/coverage/thresholds.json).
+  changed-lines-coverage:
+    name: Changed-lines coverage
+    needs: [changes, test, coverage-merge]
+    if: >-
+      always() &&
+      github.event_name == 'pull_request' &&
+      needs.changes.outputs.has_affected == 'true' &&
+      needs.test.result == 'success' &&
+      (needs.coverage-merge.result == 'success' || needs.coverage-merge.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: coverage-*
+          merge-multiple: true
+          path: coverage-artifacts
+      - name: Changed-lines coverage against the PR base
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node tools/coverage/changed-lines.mjs --base="$BASE_SHA" --head="$HEAD_SHA" coverage-artifacts/*.info
 
   runtime-v2-coverage:
     name: Runtime V2 security coverage
-    needs: changes
+    needs: [changes, setup]
     if: needs.changes.outputs.includes_chat == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-      - name: Install dependencies
-        run: npm ci --ignore-scripts
-      - name: Build shared packages
-        run: |
-          npm run build --workspace=@claw/shared-constants
-          npm run build --workspace=@claw/shared-types
-          npm run build --workspace=@claw/shared-utilities
-      - name: Generate chat Prisma client
-        run: npm run prisma:generate --workspace=claw-chat-service
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/prepare
       - name: Enforce Runtime V2 security coverage
         run: npm run test:runtime-v2:coverage --workspace=claw-chat-service
 
   runtime-v2-redis:
     name: Runtime V2 Redis authority
-    needs: changes
+    needs: [changes, setup]
     if: needs.changes.outputs.includes_chat == 'true'
     runs-on: ubuntu-latest
     services:
@@ -238,33 +340,22 @@ jobs:
     env:
       RUNTIME_V2_TEST_REDIS_URL: redis://127.0.0.1:6379/15
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-      - name: Install dependencies
-        run: npm ci --ignore-scripts
-      - name: Build shared packages
-        run: |
-          npm run build --workspace=@claw/shared-constants
-          npm run build --workspace=@claw/shared-types
-          npm run build --workspace=@claw/shared-utilities
-      - name: Generate chat Prisma client
-        run: npm run prisma:generate --workspace=claw-chat-service
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/prepare
       - name: Execute Runtime V2 Lua on Redis 7
         run: npm run test:runtime-v2:redis --workspace=claw-chat-service
 
   build:
     name: Build (${{ matrix.service }})
-    needs: [changes, lint, typecheck, test, runtime-v2-coverage, runtime-v2-redis]
+    needs: [changes, setup, static, test, coverage-merge, runtime-v2-coverage, runtime-v2-redis]
     if: >-
       always() &&
       needs.changes.result == 'success' &&
       needs.changes.outputs.has_affected == 'true' &&
-      needs.lint.result == 'success' &&
-      needs.typecheck.result == 'success' &&
+      needs.setup.result == 'success' &&
+      needs.static.result == 'success' &&
       needs.test.result == 'success' &&
+      (needs.coverage-merge.result == 'success' || needs.coverage-merge.result == 'skipped') &&
       (needs.runtime-v2-coverage.result == 'success' || needs.runtime-v2-coverage.result == 'skipped') &&
       (needs.runtime-v2-redis.result == 'success' || needs.runtime-v2-redis.result == 'skipped')
     runs-on: ubuntu-latest
@@ -274,31 +365,168 @@ jobs:
     env:
       NODE_OPTIONS: --max-old-space-size=8192
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci --ignore-scripts
-      - run: node tools/typescript/run-ts7.mjs --version
-      - name: Build shared packages
-        run: |
-          npm run build --workspace=@claw/shared-constants
-          npm run build --workspace=@claw/shared-types
-          npm run build --workspace=@claw/shared-utilities
-          npm run build --workspace=@claw/shared-rabbitmq
-          npm run build --workspace=@claw/shared-auth
-          npm run build --workspace=@claw/shared-entitlements
-      - name: Generate Prisma client
-        if: matrix.prisma == true
-        run: npm run prisma:generate --workspace=${{ matrix.workspace }}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/prepare
       - run: npm run build --workspace=${{ matrix.workspace }}
+
+  # Cheap repository-wide policy checks: formatting ratchet, coverage-threshold
+  # and lint-baseline ratchets (never lower than the base), production
+  # dependency audit, and workflow lint.
+  policy:
+    name: Policy (format, ratchets, npm audit, actionlint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/prepare
+        with:
+          build-outputs: 'false'
+      - name: Formatting ratchet
+        run: npm run format:check
+      - name: Coverage thresholds only go up
+        env:
+          BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -n "$BASE_REF" ] && git cat-file -e "${BASE_REF}^{commit}" 2>/dev/null; then
+            node tools/coverage/thresholds.mjs check --base="$BASE_REF"
+          else
+            node tools/coverage/thresholds.mjs check
+          fi
+      - name: Lint warning baseline only shrinks
+        env:
+          BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -n "$BASE_REF" ] && git cat-file -e "${BASE_REF}^{commit}" 2>/dev/null; then
+            node tools/lint/ratchet.mjs check-baseline --base="$BASE_REF"
+          else
+            echo "No comparable base; nothing to compare."
+          fi
+      - name: Production dependency audit (high/critical, reviewed allowlist)
+        run: node tools/security/npm-audit.mjs
+      - name: actionlint (pinned release, pinned checksum)
+        env:
+          ACTIONLINT_VERSION: 1.7.12
+          ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+        run: |
+          set -euo pipefail
+          archive="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          curl -sSfL -o "$RUNNER_TEMP/$archive" \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/$archive"
+          echo "${ACTIONLINT_SHA256}  $RUNNER_TEMP/$archive" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" actionlint
+          "$RUNNER_TEMP/actionlint" -color
+
+  # gitleaks over every commit this push or pull request adds, with the
+  # committed .gitleaks.toml. Any finding fails.
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Install gitleaks (pinned release, pinned checksum)
+        env:
+          GITLEAKS_VERSION: 8.30.1
+          GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        run: |
+          set -euo pipefail
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "$RUNNER_TEMP/$archive" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/$archive"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$archive" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" gitleaks
+      - name: Scan the commits this change adds
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BASE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            range="${PR_BASE_SHA}..${PR_HEAD_SHA}"
+          elif [ -n "$PUSH_BASE_SHA" ] && ! [[ "$PUSH_BASE_SHA" =~ ^0+$ ]] && git cat-file -e "${PUSH_BASE_SHA}^{commit}" 2>/dev/null; then
+            range="${PUSH_BASE_SHA}..${HEAD_SHA}"
+          else
+            range="${HEAD_SHA}~1..${HEAD_SHA}"
+          fi
+          echo "Scanning $range"
+          "$RUNNER_TEMP/gitleaks" git --log-opts="$range" --redact --no-banner --config .gitleaks.toml
+
+  # GitHub's CodeQL default setup already uploads alerts for this repository;
+  # an uploading workflow would conflict with it. This job runs the same
+  # default suite WITHOUT uploading and fails on any finding, so a CodeQL alert
+  # blocks the merge and the release instead of only appearing on a dashboard.
+  codeql:
+    name: CodeQL (javascript-typescript)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # codeql-action requires this scope even with `upload: never`.
+      security-events: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - uses: github/codeql-action/init@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          languages: javascript-typescript
+          build-mode: none
+          config: |
+            paths-ignore:
+              - '**/node_modules/**'
+              - '**/dist/**'
+              - '**/src/generated/**'
+              - '**/.next/**'
+      - uses: github/codeql-action/analyze@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          category: /language:javascript-typescript
+          upload: never
+          output: ${{ runner.temp }}/codeql-results
+      - name: Fail on any CodeQL finding
+        run: node tools/security/sarif-gate.mjs "$RUNNER_TEMP/codeql-results"
+
+  # Builds each production Dockerfile this change touches and scans the image
+  # (HIGH/CRITICAL with a fix available) and the Dockerfile itself.
+  image-scan:
+    name: Image scan (${{ matrix.dockerfile }})
+    needs: changes
+    if: needs.changes.outputs.has_dockerfiles == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dockerfile: ${{ fromJSON(needs.changes.outputs.dockerfiles) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build the image
+        run: docker build -f "${{ matrix.dockerfile }}" -t claw-scan:ci .
+      - name: Scan the Dockerfile for misconfiguration
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: config
+          scan-ref: ${{ matrix.dockerfile }}
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+      - name: Scan the image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: claw-scan:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
 
   submodule-integrity:
     name: Submodule pointer integrity (coding-agent)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Verify recorded pointer exists remotely
         shell: bash
         run: |
@@ -312,19 +540,36 @@ jobs:
           git -C "${RUNNER_TEMP}/submodule" remote add origin https://github.com/ihabkhaled/ClawAI-Coding-Agent.git
           git -C "${RUNNER_TEMP}/submodule" fetch -q --depth=1 origin "$sha"
 
+  # Knowledge freshness, knowledge integrity + docs checks, QA evidence,
+  # tooling tests, architecture rules and (on deploy paths) the deploy
+  # rehearsal — run as part of this workflow so they gate the release too.
+  ai-native-os:
+    name: ai-native-os
+    needs: changes
+    uses: ./.github/workflows/ai-native-os.yml
+    with:
+      deploy: ${{ needs.changes.outputs.deploy == 'true' }}
+
   ci-success:
     name: CI success
     if: always()
     needs:
       [
         changes,
-        lint,
-        typecheck,
+        setup,
+        static,
         test,
+        coverage-merge,
+        changed-lines-coverage,
         runtime-v2-coverage,
         runtime-v2-redis,
         build,
+        policy,
+        secrets,
+        codeql,
+        image-scan,
         submodule-integrity,
+        ai-native-os,
       ]
     runs-on: ubuntu-latest
     steps:
@@ -332,10 +577,16 @@ jobs:
         env:
           RESULTS: ${{ join(needs.*.result, ' ') }}
           HAS_AFFECTED: ${{ needs.changes.outputs.has_affected }}
+          HAS_SHARDED: ${{ needs.changes.outputs.has_sharded }}
           INCLUDES_CHAT: ${{ needs.changes.outputs.includes_chat }}
+          HAS_DOCKERFILES: ${{ needs.changes.outputs.has_dockerfiles }}
+          EVENT_NAME: ${{ github.event_name }}
           BUILD_RESULT: ${{ needs.build.result }}
+          COVERAGE_MERGE_RESULT: ${{ needs.coverage-merge.result }}
+          CHANGED_LINES_RESULT: ${{ needs.changed-lines-coverage.result }}
           RUNTIME_COVERAGE_RESULT: ${{ needs.runtime-v2-coverage.result }}
           RUNTIME_REDIS_RESULT: ${{ needs.runtime-v2-redis.result }}
+          IMAGE_SCAN_RESULT: ${{ needs.image-scan.result }}
         run: |
           for result in $RESULTS; do
             if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then
@@ -343,11 +594,19 @@ jobs:
               exit 1
             fi
           done
-          if [ "$HAS_AFFECTED" = "true" ] && [ "$BUILD_RESULT" != "success" ]; then
-            echo "Affected workspaces exist, but the build gate did not succeed."
-            exit 1
+          require() {
+            if [ "$2" != "success" ]; then
+              echo "$1 applies to this change, but its job ended with: $2"
+              exit 1
+            fi
+          }
+          if [ "$HAS_AFFECTED" = "true" ]; then
+            require "The build gate" "$BUILD_RESULT"
+            if [ "$EVENT_NAME" = "pull_request" ]; then require "Changed-lines coverage" "$CHANGED_LINES_RESULT"; fi
           fi
-          if [ "$INCLUDES_CHAT" = "true" ] && { [ "$RUNTIME_COVERAGE_RESULT" != "success" ] || [ "$RUNTIME_REDIS_RESULT" != "success" ]; }; then
-            echo "Chat is affected, but a Runtime V2 security gate did not succeed."
-            exit 1
+          if [ "$HAS_SHARDED" = "true" ] && [ "$HAS_AFFECTED" = "true" ]; then require "Merged shard coverage" "$COVERAGE_MERGE_RESULT"; fi
+          if [ "$INCLUDES_CHAT" = "true" ]; then
+            require "Runtime V2 security coverage" "$RUNTIME_COVERAGE_RESULT"
+            require "Runtime V2 Redis authority" "$RUNTIME_REDIS_RESULT"
           fi
+          if [ "$HAS_DOCKERFILES" = "true" ]; then require "The image scan" "$IMAGE_SCAN_RESULT"; fi

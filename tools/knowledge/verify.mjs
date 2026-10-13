@@ -4,6 +4,9 @@
 //  - broken internal markdown links in governance docs
 //  - hook-bypass recommendations in canonical policy
 //  - unresolved cross-source contradictions
+//  - a workspace with source code and no spec
+//  - rules/63 docs checks: dead references, hand-written counts, copied
+//    sections, stale count fragments
 // Runs the same authoritative extractors developers/CI use.
 import { existsSync } from 'node:fs';
 import { computeGeneratedFiles } from './build.mjs';
@@ -11,12 +14,15 @@ import { repoPath, readText, listFiles, walkFiles, toRel } from '../lib/repo.mjs
 import { readFileSync, readdirSync } from 'node:fs';
 import { normalizeEol } from '../lib/fact.mjs';
 import { findContradictions, findBypassRecommendations } from '../lib/analyzers.mjs';
-import { extractAll } from '../lib/extractors.mjs';
-import { isMain, exists } from '../lib/repo.mjs';
+import { extractAll, extractTests } from '../lib/extractors.mjs';
+import { discoverWorkspaces, isMain, exists } from '../lib/repo.mjs';
 import { TASK_PACKS } from './classify-task.mjs';
+import { buildManifests } from '../lib/manifests.mjs';
+import { countFragmentProblems, countValues } from './count-fragments.mjs';
+import { runDocsChecks } from './docs-checks.mjs';
 
-function checkFreshness() {
-  const files = computeGeneratedFiles();
+function checkFreshness(manifests) {
+  const files = computeGeneratedFiles(manifests);
   const stale = [];
   for (const [rel, content] of Object.entries(files)) {
     const abs = repoPath(rel);
@@ -158,6 +164,26 @@ export function checkKnowledgeCoverage() {
   return errors;
 }
 
+// Workspace test scripts no longer pass `--passWithNoTests`, so an empty suite
+// fails its own `npm test`. This catches the same gap without running anything:
+// a workspace that ships source must ship at least one spec (rules/22).
+export function checkEveryWorkspaceHasTests(
+  workspaces = discoverWorkspaces(),
+  tests = extractTests(),
+) {
+  const errors = [];
+  for (const ws of workspaces) {
+    const sources = walkFiles(
+      repoPath(ws.dir, 'src'),
+      (rel) => /\.(?:ts|tsx)$/u.test(rel) && !/\.d\.ts$|\.(?:spec|test)\.tsx?$/u.test(rel),
+    );
+    if (sources.length > 0 && (tests[ws.name]?.testFiles ?? 0) === 0) {
+      errors.push(`empty test suite: ${ws.dir} has ${sources.length} source file(s) and no spec (rules/22)`);
+    }
+  }
+  return errors;
+}
+
 function checkContradictions() {
   const inv = extractAll();
   return findContradictions(inv)
@@ -165,33 +191,47 @@ function checkContradictions() {
     .map((f) => `contradiction (${f.severity}): ${f.message}`);
 }
 
-export function runVerify() {
+/**
+ * `freshness: false` skips the regeneration comparison — used by
+ * `build.mjs --write-and-verify`, which has just written exactly the content
+ * that comparison would recompute.
+ */
+export function runVerify({ freshness = true } = {}) {
+  const manifests = buildManifests();
   return {
-    freshness: checkFreshness(),
+    freshness: freshness ? checkFreshness(manifests) : [],
+    docs: [...runDocsChecks(), ...countFragmentProblems(countValues(manifests))],
     links: checkLinks(),
     bypass: checkBypass(),
     orphans: checkOrphans(),
     contradictions: checkContradictions(),
+    tests: checkEveryWorkspaceHasTests(),
   };
 }
 
-function main() {
-  const results = runVerify();
+export function reportVerify(results) {
   const all = [
     ...results.freshness,
     ...results.links,
     ...results.bypass,
     ...results.orphans,
     ...results.contradictions,
+    ...results.tests,
+    ...results.docs,
   ];
   if (all.length > 0) {
     console.error(`knowledge:verify FAILED — ${all.length} issue(s):`);
     for (const e of all) console.error(`  ✖ ${e}`);
-    process.exit(1);
+    return false;
   }
   console.log(
     'knowledge:verify OK — generated files fresh, links valid, no orphan reviewers, no hook-bypass, no high-severity contradictions.',
   );
+  return true;
+}
+
+function main() {
+  if (!reportVerify(runVerify())) process.exit(1);
 }
 
 if (isMain(import.meta.url)) main();

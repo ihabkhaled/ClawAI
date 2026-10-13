@@ -3,10 +3,13 @@ import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
+  changedDockerfiles,
   computeAffectedFromFiles,
+  createCiMergeMatrix,
   createCiMatrix,
   createCiTestMatrix,
   TEST_SHARDS,
+  touchesDeploy,
 } from '../affected/index.mjs';
 import { buildManifests } from '../lib/manifests.mjs';
 import { repoPath } from '../lib/repo.mjs';
@@ -85,8 +88,36 @@ test('docs-only changes produce an empty successful matrix', () => {
 test('matrix metadata is derived from workspace manifests', () => {
   const result = computeAffectedFromFiles(['apps/claw-auth-service/src/auth.ts'], workspaces);
   assert.deepEqual(createCiMatrix(result, workspaces), {
-    include: [{ prisma: true, service: 'auth', workspace: 'claw-auth-service' }],
+    include: [
+      {
+        dir: 'apps/claw-auth-service',
+        prisma: true,
+        service: 'auth',
+        slug: 'auth',
+        workspace: 'claw-auth-service',
+      },
+    ],
   });
+});
+
+test('only sharded workspaces get a coverage-merge entry', () => {
+  const result = computeAffectedFromFiles(['package-lock.json'], workspaces);
+  const merge = createCiMergeMatrix(result, workspaces, true).include;
+  assert.deepEqual(
+    merge.map(({ workspace }) => workspace),
+    Object.keys(TEST_SHARDS).filter((name) => workspaces.some((ws) => ws.name === name)),
+  );
+  for (const entry of merge) assert.equal(entry.shards, TEST_SHARDS[entry.workspace]);
+});
+
+test('deploy paths and production Dockerfiles are detected for the conditional CI jobs', () => {
+  assert.equal(touchesDeploy(['scripts/deploy-prod.sh']), true);
+  assert.equal(touchesDeploy(['tools/release/version.mjs']), true);
+  assert.equal(touchesDeploy(['.github/workflows/deploy-production.yml']), true);
+  assert.equal(touchesDeploy(['apps/claw-chat-service/src/a.ts', 'docs/x.md']), false);
+  assert.deepEqual(changedDockerfiles(['apps/claw-health-service/Dockerfile', 'apps/claw-health-service/Dockerfile.dev', 'apps/claw-gone/Dockerfile']), [
+    'apps/claw-health-service/Dockerfile',
+  ]);
 });
 
 // The frontend's ~3,600 tests were the longest job in CI; vitest --shard

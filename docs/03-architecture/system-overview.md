@@ -71,7 +71,7 @@ graph TB
 
 ---
 
-## 15 Backend Services
+## Backend Services
 
 | #   | Service                 | Port | Database                    | Purpose                                                                  |
 | --- | ----------------------- | ---- | --------------------------- | ------------------------------------------------------------------------ |
@@ -197,17 +197,24 @@ Used for real-time streaming:
 
 ### Development
 
-Single Docker Compose file (`docker/docker-compose.dev.yml`): 33 containers including all services, databases, message broker, cache, local AI runtime, and file scanning support.
+Compose is split by layer and driven only by `./scripts/claw.sh`, which stitches the files
+together and adds the right GPU overlay:
+
+- `docker/docker-compose.dev.databases.yml` — databases, message broker, cache, ClamAV file scanning
+- `docker/docker-compose.dev.services.yml` — the backend services and the frontend
+- `docker/docker-compose.dev.ollama.yml` — the local AI runtime
+- per-vendor GPU overlays (`docker/docker-compose.dev.gpu-nvidia.yml`, `-rocm`, `-vulkan`, and `docker/docker-compose.dev.ollama.gpu-nvidia.yml`)
 
 ```bash
 ./scripts/claw.sh up -d
 ```
 
+Never bring the stack up with `docker compose -f …` by hand.
+
 ### Production
 
-Separate compose files for production optimization:
-
-- `docker/docker-compose.yml`
-- environment-specific overlays as needed
+The same split with `prod` in place of `dev`: `docker/docker-compose.prod.databases.yml`,
+`docker/docker-compose.prod.services.yml`, `docker/docker-compose.prod.ollama.yml` and the
+matching `docker/docker-compose.prod.gpu-*.yml` overlays, again driven by `./scripts/claw.sh`.
 
 All services use `env_file: .env` from root. A single `.env` file remains the source of truth for service URLs, secrets, and database connection strings.

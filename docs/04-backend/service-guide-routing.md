@@ -499,23 +499,7 @@ The summary aggregates these into an overall improvement percentage.
 
 ## Assistant model role VISION_HELPER (ADR-120 batch 5, 2026-09-25)
 
-`AssistantModelRole.VISION_HELPER` names the vision models chat-service uses to
-describe an attached image for a lane whose model cannot see. Admin-managed on
-the Smart Router "Assistant models" tab like `RESEARCH_GATE` and `FILE_WRITER`
-(rule 51 item 7: a helper model gets a role, never a constant).
-
-- **Migration**: `20260925150000_add_vision_helper_role`
-  (`ALTER TYPE "AssistantModelRole" ADD VALUE IF NOT EXISTS 'VISION_HELPER'`).
-  Deploy it before the new image boots, or `seedOnce` fails on an unknown label.
-- **Seed** (`assistant-model-seed.constants.ts`, fills the role only while it
-  has no rows): `GEMINI gemini-2.5-flash` order 1, `OPENAI gpt-4.1-mini`
-  order 2, both enabled, `timeoutMs` 30 000, `maxTokens` 1 024. chat-service
-  skips any candidate the connector catalog does not mark vision-SUPPORTED, so
-  an unconfigured provider is simply not tried.
-- **Endpoints**: unchanged — `GET/PUT /routing/assistant-models/VISION_HELPER`
-  (admin) and `GET /internal/assistant-models/VISION_HELPER/candidates`.
-- Metering happens in chat-service (`PaygSurface.VISION_HELPER`), not here.
-- Runbook: [`skills/add-a-helper-model-role.md`](../../skills/add-a-helper-model-role.md).
+Canonical home: the "Assistant model role VISION_HELPER (ADR-120 batch 5, 2026-09-25)" section of [`apps/claw-routing-service/CLAUDE.md`](../../apps/claw-routing-service/CLAUDE.md).
 
 ## AUTO ranks candidates by modality fit (multimodal batch 8, 2026-09-25)
 
@@ -544,23 +528,7 @@ Turns without attachments skip it entirely.
 
 ## Assistant model role TTS_VOICE (multimodal batch 9, 2026-09-25)
 
-`AssistantModelRole.TTS_VOICE` names the voice models chat-service uses for
-"Read aloud" (text-to-speech of a reply).
-
-- **Migration** `20260925230000_add_tts_voice_role`
-  (`ALTER TYPE "AssistantModelRole" ADD VALUE IF NOT EXISTS 'TTS_VOICE'`).
-- **Seed**: Gemini `gemini-2.5-flash-preview-tts` (order 1), OpenAI `tts-1`
-  (order 2), 60 s timeout, `maxTokens` 16,384 (Gemini audio-output ceiling: 4
-  tokens per character over the 4,000-character cap). Filled only while the
-  role has no rows.
-- **Prices** (model-cost seed **v6**, `model-cost-list-prices-2026-v6`): `tts-1`
-  `ttsPerCharacterMicroUsd` 15 ($15 / 1M chars), `tts-1-hd` 30, Gemini
-  `gemini-2.5-flash-preview-tts` $0.50 / 1M input + $10 / 1M output tokens
-  (OpenAI + Google pricing pages, owner-supplied 2026-09-25). `gpt-4o-mini-tts`
-  deliberately unpriced (no usage to settle on — blocked, and chat skips it).
-- **Endpoints**: unchanged — `GET/PUT /routing/assistant-models/TTS_VOICE`
-  (admin) and `GET /internal/assistant-models/TTS_VOICE/candidates`.
-- Metering happens in chat-service (`PaygSurface.TTS`), not here.
+Canonical home: the "Assistant model role TTS_VOICE (multimodal batch 9, 2026-09-25)" section of [`apps/claw-routing-service/CLAUDE.md`](../../apps/claw-routing-service/CLAUDE.md).
 
 ## Image edit intent (2026-09-26)
 

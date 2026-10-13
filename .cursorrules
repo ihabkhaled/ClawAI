@@ -1,68 +1,20 @@
-# ClawAI — Cursor rules (compact router)
+# ClawAI — Cursor rules (pointer)
 
-Product: "Every AI, one workspace." — positioning in docs/01-executive-context/product-vision.md,
-flagships in docs/02-business-product/flagship-features.md (ADR-126).
+Read AGENTS.md first: it is the canonical router for every agent (identity,
+authority order, first command, landing a change, prohibitions, where everything
+lives). Cursor-specific notes: cursor.md.
 
-Do NOT invent repository facts. Before editing, run:
+Before editing, run:
   npm run knowledge:context -- --task="<task>"
 and read .ai/local/current-context.md.
 
-Canonical authority (higher wins): CLAUDE.md > rules/00-non-negotiable-rules.md >
-context/architecture-map.md > context/stack-and-toolchain.md > numbered rules/* >
-skills/* > context/* + memory/* > .ai/manifests/*.
+Before you finish any change, update every doc it makes stale (rule 63). The
+hooks will reject it otherwise.
 
-Blockers (never): --no-verify / hook bypass; eslint-disable / @ts-ignore / any /
-as unknown as; cross-service DB access; logic in controllers; DB calls outside
-repositories; process.env outside AppConfig; console.log; logging/exposing
-secrets; user-facing text without i18n (13 locales); code without a test;
-shipping a change with no knowledge delta (docs/skills/rules/context in the SAME
-commit, rules/33); gating per-commit or all-workspace instead of once at the end,
-scoped (rules/34); calling a change done without the whole QA-team walk and real
-evidence — Playwright + curl API lane + RBAC across roles AND plan tiers (free
-included) + UAT + regression + security + performance + the device matrix (>=3
-widths per platform, both orientations, plus RTL), each with the exact command and
-its real output, a screenshot per breakpoint, and the log line proving your branch
-ran; never fabricate a lane you did not run (rules/49, extends rules/44; runbook
-skills/run-the-qa-team.md).
+Land a change through the hooks — never bypass them:
+  git add <explicit paths>  ->  git commit (Docs: trailer)  ->  git push
+What each hook runs: rules/23-git-commits-hooks-and-release-gates.md (gate matrix).
 
-Validation (touched folders only):
-  npm run affected:list
-  cd <workspace> && npm run typecheck && npm run lint && npm test && npm run build
-
-Scoped rules live in .cursor/rules/*.mdc (by file glob). Full router: cursor.md + AGENTS.md.
-
-Prompt packs / execution prompts — before ANY code, run the protocol in
-rules/26-prompt-pack-intake-protocol.md (runbook: skills/execute-prompt-pack.md):
-read the pack end to end; npm run knowledge:context; read governing docs in
-authority order; audit every deliverable done/partial/missing against the CODE
-(present is not wired — a repo method with no callers is scaffolding); review the
-constraint surface up front (eslint flat config, TS strict, prettier, coverage
-floors, security, i18n x9 + i18n.types.ts, the CLAUDE.md delivery checklist, and
-the gate topology incl. pre-commit/pre-push/CI/freshness); write the plan
-and state deviations — policy outranks the pack, never silently; then implement
-with scoped gates, one gated commit per change, each pushed before the next.
-
-## Communication style (MANDATORY)
-
-**Short. Plain. Concrete.** A few lines max.
-- Blocked? One line: `Blocked: <the actual thing>.`
-- Working? `Working — <what>.` Progress? `~70/100.`
-- Name the concrete cause: file, symbol, exact error. Never circle the problem.
-- Easy words over complex ones. Cut every reply in half before sending.
-
-Full rule: [`rules/29-communication-style.md`](rules/29-communication-style.md) ·
-Runbook: [`skills/communicate-briefly.md`](skills/communicate-briefly.md)
-
-
-**Stay foreground / keep streaming.** Do not go silent — silence reads as stopped.
-Foreground commands by default; background only for long jobs, announced in one line.
-
-
-**Show every step.** One short line per action as it happens — file changed, patch applied,
-test run, trial failed. Never batch and report at the end.
-
-
-**Granularity:** report every file touched, every patch (including failures), every command and
-its result, every test count, every retry, every mini-operation, every wait. One line each.
-Never change normal chat alone: Compare, Consensus, Escalation, the labs and the judge/critic are surfaces over it (rules/59, skills/propagate-a-chat-change-to-every-mode.md).
-Never call anything done on unit tests alone: walk all 15 QA lanes and record docs/qa-evidence/<date>-<slug>.md (rules/60, QA-WORKFLOW.md); CI checks it.
+Blockers: rules/00-non-negotiable-rules.md. Testing is 15 QA lanes with a
+docs/qa-evidence record (QA-WORKFLOW.md, rules/60). User-facing text needs i18n in
+all 13 locales (rules/20).

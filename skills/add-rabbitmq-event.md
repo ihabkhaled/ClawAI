@@ -20,7 +20,7 @@ required_context: [event-bus, ai-context-pack]
 affected_workspaces: [packages/shared-types, apps/claw-<service>-service, apps/claw-audit-service]
 required_tests: [service spec asserting publish after persistence, consumer spec]
 required_docs: [docs/03-architecture/event-bus.md, CLAUDE.md]
-validation_lane: cd packages/shared-types && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Skill: Add a RabbitMQ Event
@@ -77,8 +77,10 @@ Events flow through the durable topic exchange `claw.events` (DLQ + 3 retries wi
 ## Validation commands
 
 ```bash
-cd packages/shared-types && npm run typecheck && npm run lint && npm test && npm run build
-cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 ## Documentation updates

@@ -19,8 +19,8 @@ Checklist; Scoped Quality Gates), `CLAUDE.md` (Post-Implementation Checklist;
 
 1. Collect verdicts from every reviewer the context resolver recommended;
    confirm each returned `PASS`.
-2. Confirm per-touched-folder gates ran green: `tsgo --noEmit`, `npm run lint`,
-   `npm test`, `npm run build` (NEVER the all-workspace gate to "be safe").
+2. Confirm the hook gates ran green for the change type (pre-commit, pre-push,
+   then CI — rules/23 gate matrix); NEVER the all-workspace gate to "be safe".
 3. Confirm the 8 absolute blockers are all clear (typecheck/lint/test/QA/docs/
    coverage≥92%/logging/no-dup-utility).
 4. Confirm QA script ran with 0 failures and Docker logs are clean (no

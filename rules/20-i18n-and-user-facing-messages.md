@@ -53,8 +53,8 @@ npx vitest run src/lib/i18n                 // key references, enum labels, comp
 ## Enforcement
 
 Each mechanism below **exists today**, under
-`apps/claw-frontend/src/lib/i18n/__tests__/`. `tools/audit-untranslated-i18n.cjs`
-was named here and never written; `.ai/manifests/i18n.json` holds a key count and
+`apps/claw-frontend/src/lib/i18n/__tests__/`. An `audit-untranslated-i18n.cjs`
+tool was named here and never written; `.ai/manifests/i18n.json` holds a key count and
 a locale list and flags nothing. Both claims are removed rather than left to
 imply a coverage that was not there.
 

@@ -1,0 +1,19 @@
+{
+  "accepted": [
+    {
+      "rule": "js/command-line-injection",
+      "path": "scripts/qa-lab/video-restart-live.mjs",
+      "reason": "Dismissed in GitHub code scanning as 'used in tests': a local QA-lab script run by an operator, never deployed."
+    },
+    {
+      "rule": "js/disabling-certificate-validation",
+      "path": "scripts/qa-lab/video-restart-live.mjs",
+      "reason": "Dismissed in GitHub code scanning as 'used in tests': talks to the local mkcert stack only, never deployed."
+    },
+    {
+      "rule": "js/request-forgery",
+      "path": "packages/shared-utilities/src/http-client/fetch-client.utility.ts",
+      "reason": "Dismissed in GitHub code scanning as a false positive: every URL passes assertSafeRequestUrl before the request (TD-040)."
+    }
+  ]
+}

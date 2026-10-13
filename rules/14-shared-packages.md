@@ -14,19 +14,23 @@ blast radius, so they carry the strictest wiring rules.
 ## Mandatory rules
 
 1. **Right package for the kind of thing:**
-   - `@claw/shared-types` — TS types + RabbitMQ event payloads shared by 2+ services.
-   - `@claw/shared-constants` — values shared by 2+ services (ports, names, `EXCHANGE_NAME`, `API_PREFIX`).
-   - `@claw/shared-utilities` — functions shared by 2+ services (http-client, jwt, crypto, retry).
+   - `@claw/shared-types` — TS types + RabbitMQ event payloads shared by two or more services.
+   - `@claw/shared-constants` — values shared by two or more services (ports, names, `EXCHANGE_NAME`, `API_PREFIX`).
+   - `@claw/shared-utilities` — functions shared by two or more services (http-client, jwt, crypto, retry).
    - `@claw/shared-auth` — guards/decorators (`AuthGuard`, `RolesGuard`, `@Public`, `@Roles`, `@CurrentUser`).
    - `@claw/shared-rabbitmq` — `RabbitMQModule`/`RabbitMQService` (retry + DLQ), `StructuredLogger`.
    - `@claw/shared-entitlements` — plan/feature gate evaluation.
 2. **Promote on the second copy.** The moment a helper exists identically in two
    services, move it to `@claw/shared-utilities` and import in both.
-3. **Compile with tsgo.** Shared packages build via `tsgo -p tsconfig.build.json`
-   (+ `tsc-alias`), like services — not `tsc`/`nest build`.
-4. **Adding a NEW `packages/<name>` workspace requires two CI edits per job, in all
-   four jobs** of `.github/workflows/ci.yml`: the "Build shared packages" `cd …`
-   line AND a `strategy.matrix.include` entry. Skipping either is the documented CI footgun.
+3. **Compile with TypeScript 7.** Shared packages build via
+   `node ../../tools/typescript/run-ts7.mjs -p tsconfig.build.json && tsc-alias -p tsconfig.build.json -f`,
+   like services — not `nest build`.
+4. **A NEW `packages/<name>` workspace needs no hand-edited CI entry.** CI's
+   `changes` job derives the affected matrix from the npm workspaces
+   (`node tools/affected/index.mjs ci-matrix`), and the `setup` job builds every
+   shared package in the order its `package.json` dependencies give
+   (`node tools/affected/index.mjs shared-build`). Declare the dependency in each
+   consumer's `package.json`, or the build order and the matrix will not see it.
 5. **Changing a shared package means rebuilding dependents** — a stale service
    container will run old shared code (full stop → rm → rmi → build).
 6. **Every service Dockerfile builds every shared package the service declares —
@@ -52,17 +56,16 @@ blast radius, so they carry the strictest wiring rules.
 
 ## Correct pattern
 
-```yaml
-# .github/workflows/ci.yml — Build shared packages (all four jobs)
-cd packages/shared-utilities && npx tsgo -p tsconfig.build.json
-cd ../<new-package> && npx tsgo -p tsconfig.build.json      # edit #1
-# strategy.matrix.include (all four jobs):
-- { service: <new-package>, workspace: '@claw/<new-package>', prisma: false }   # edit #2
+```jsonc
+// apps/claw-<service>-service/package.json — the only wiring CI needs
+"dependencies": {
+  "@claw/<new-package>": "*"   // shared-build order and the affected matrix follow from this
+}
 ```
 
 ## Enforcement
 
-- **CI job** — the per-package matrix builds/lints/tests each shared package.
+- **CI job** — the affected matrix (`ci-matrix`) lints, typechecks, tests and builds each changed shared package and every dependent.
 - **Knowledge check** — `.ai/manifests/packages.json` lists the canonical set.
 - **Review checklist** — the two-edits-per-job rule is verified for new packages.
 - **Root test** — `tools/__tests__/dockerfile-shared-package-completeness.test.mjs`
@@ -83,7 +86,7 @@ cd ../<new-package> && npx tsgo -p tsconfig.build.json      # edit #1
 ## Definition of done
 
 - [ ] Shared code lives in the correct package; no service-local copy remains.
-- [ ] New package added to both CI spots in all four jobs.
+- [ ] New package declared as a dependency of every consumer (that is what puts it in the CI build order and matrix).
 - [ ] Dependent containers rebuilt after a shared-package change.
 - [ ] Every Dockerfile of every service that declares the package builds it
       (`npm run knowledge:test` green).

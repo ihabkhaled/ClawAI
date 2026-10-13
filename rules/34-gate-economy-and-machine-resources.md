@@ -2,9 +2,9 @@
 
 ## Purpose
 
-The gates in this repo are expensive by construction: 13 Prisma clients, 20
-workspaces, thousands of tests. Running them carelessly does not just waste
-time — it saturates the developer's machine, makes the editor unusable, and on a
+The gates in this repo are expensive by construction: a Prisma client per
+database-owning service, every workspace compiled, thousands of tests. Running
+them carelessly does not just waste time — it saturates the developer's machine, makes the editor unusable, and on a
 constrained box it starves the very containers the change is supposed to be
 tested against. Repeated full-suite runs also cause cascading flaky timeouts,
 which then get misread as real failures and trigger another run.
@@ -21,7 +21,7 @@ that needed them is finished.
 ## Applies to
 
 Every workspace, every agent, and every long-running command: `npm test`,
-`npm run lint`, `npm run build`, `npx tsgo --noEmit`, Docker builds, Playwright
+`npm run lint`, `npm run build`, `npm run typecheck`, Docker builds, Playwright
 runs, and the git hooks in `.husky/`.
 
 ## Mandatory rules
@@ -33,22 +33,40 @@ runs, and the git hooks in `.husky/`.
    files and the matching spec for changed TypeScript. Typecheck/build the
    affected workspace only when required by its validation lane. All-workspace
    runs are prohibitively expensive and false-fail on unchanged siblings.
-3. **Never pay for the same proof twice.** If the scoped gates were just run
-   green over exactly the tree being committed, pre-commit skips its affected
-   typecheck and pre-push skips its affected test/build pass. Record the proof
-   with `npm run gates:receipt`; lint-staged and knowledge/inventory integrity
-   checks still run, and any formatting or generated-file change invalidates the
-   receipt (see _Correct pattern_).
-4. **A receipt is bound to a tree, never to a session.** It records the hash of
-   the staged content it proved. Any edit invalidates it and the hooks run in
-   full again. There is no "trust me" mode.
+3. **Never pay for the same proof twice.** A hook skips a gate only when a
+   receipt proves that exact gate already ran green over that exact tree.
+   Receipts are never self-attested: `npm run gates:receipt` RUNS the gates the
+   hooks would run (root checks, typecheck, related tests, build) and records
+   only the ones that passed; pre-commit records a `knowledge` receipt for the
+   staged tree it just verified. lint-staged always runs.
+4. **A receipt is bound to a tree, never to a session.** It records the tree
+   hash, each gate with the exact workspaces it ran for, the `package-lock.json`
+   hash, the Node version and a hash of the gate tooling and hooks. A hook may
+   skip a gate only when all of those match and the recorded scope covers every
+   workspace it would have run. A receipt may never skip a check it did not run.
+
+   | Receipt gate | Written by                         | May skip                                                      |
+   | ------------ | ---------------------------------- | ------------------------------------------------------------- |
+   | `knowledge`  | pre-commit step 2, `gates:receipt` | pre-push `knowledge:verify` + `audit:check`                   |
+   | `root`       | `gates:receipt`                    | pre-commit / pre-push root-invariant checks                   |
+   | `typecheck`  | `gates:receipt`                    | pre-commit typecheck; pre-push typecheck of shared dependents |
+   | `test`       | `gates:receipt`                    | pre-push tests of directly changed workspaces                 |
+   | `build`      | `gates:receipt`                    | pre-push build of directly changed workspaces                 |
+
 5. **Do not bypass the hooks.** `--no-verify` is still prohibited by
    [ADR-061](../docs/13-adr/adr-061-git-hook-policy-no-bypass.md) and is detected
    by `knowledge:verify`. The receipt exists precisely so that skipping redundant
    work never requires disabling the safety net.
-6. **One long job at a time.** Do not run test suites in several workspaces
-   concurrently on a developer machine, and never in parallel with a Docker image
-   build. Concurrency here does not shorten wall-clock time; it thrashes.
+6. **Let the gate runner own concurrency.** The affected runner runs workspaces
+   in a bounded pool — half the cores, overridable with `CLAW_GATE_JOBS`
+   (`CLAW_GATE_JOBS=1` is serial). Test suites get a stricter split, because
+   every vitest run starts its own worker pool: about a quarter as many suites
+   at once, each capped with `--maxWorkers`, so suites × workers stays within
+   the budget (fourteen uncapped suites timed frontend tests out). Shared
+   packages always build first, one at a time in dependency order, never in the
+   pool with the workspaces that compile against their `dist`. Do not start
+   more suites by hand alongside it, and never run gates in parallel with a
+   Docker image build.
 7. **Background anything slow, and announce it in one line.** A build, an install
    or an image rebuild runs in the background so the session stays responsive —
    but its completion must be checked by its **real exit code**, not by a summary.
@@ -85,17 +103,14 @@ runs, and the git hooks in `.husky/`.
 ```bash
 # Implement the whole coherent batch first — no gates in between.
 
-# Then gate ONCE, narrowly, in the folders the change actually touched.
+# Then gate ONCE: stage the batch and let the runner prove it and record it.
 npm run affected:list
-cd apps/claw-chat-service
-npx tsgo --noEmit && npm run lint && npm test && npm run build
-
-# Record that proof against the staged tree, so the hooks do not repeat it.
 git add <explicit paths>
-npm run gates:receipt          # hashes the staged tree, writes .ai/local/gate-receipt.json
+npm run gates:receipt          # runs root checks, typecheck, related tests, build; records what passed
 
-# Commit and push normally. The hooks see a receipt matching this exact tree and
-# skip the work they would otherwise duplicate; any later edit voids it.
+# Commit and push normally. The hooks see a receipt for this exact tree and
+# skip the gates it covers; any later edit voids it. (Without a receipt the
+# hooks simply run the same gates themselves — that is fine too.)
 git commit -m "feat(chat): …"
 git push origin <branch>
 ```
@@ -107,13 +122,20 @@ docker ps --filter "label=claw.scratch=true" -q | xargs -r docker stop
 
 ## Enforcement
 
-- **Hook script** — `.husky/pre-commit` and `.husky/pre-push` consult
-  `.ai/local/gate-receipt.json` and re-run in full whenever the staged tree hash
-  does not match, so the fast path is unreachable without genuine proof.
+- **Hook script** — `.husky/pre-commit` and `.husky/pre-push` delegate to
+  `tools/gates/pre-commit.mjs` and `tools/gates/pre-push.mjs`, which consult
+  `.ai/local/gate-receipt.json` per gate and run the gate whenever the tree,
+  lockfile, Node version, tooling hash or scope does not match.
 - **Knowledge check** — `npm run knowledge:verify` (`checkBypass`) fails if any
   canonical policy file recommends a hook bypass.
-- **Unit test** — `tools/__tests__/gate-receipt.test.mjs` asserts that a receipt
-  for a different tree is rejected.
+- **Unit tests** — `tools/__tests__/gate-receipt.test.mjs` (a receipt for another
+  tree, lockfile, Node, tooling or scope is rejected; only the affected runner
+  can write one) and `tools/__tests__/gate-correctness.test.mjs` (bad base,
+  non-HEAD push, stale shared dist, lockfile-only change, empty suite).
+- **Flaky tests** — a test that fails and then passes on a re-run is quarantined
+  per [`testing/flaky-test-policy.md`](../testing/flaky-test-policy.md), never
+  silently retried. The hooks no longer retry a failing suite against a second
+  base.
 - **Review checklist** — a reviewer rejects a change that added an
   all-workspace gate invocation to a hook or a script.
 

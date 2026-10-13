@@ -3,6 +3,7 @@
 Complete navigation map for the generated ClawAI Wiki.
 
 ## General and architecture pages (39)
+
 - [[AI Manifests|AI-Manifests]]
 - [[AI Native Engineering System|AI-Native-Engineering-System]]
 - [[Agent CLI|Agent-CLI]]
@@ -39,11 +40,11 @@ Complete navigation map for the generated ClawAI Wiki.
 - [[Scripts|Scripts]]
 - [[Security|Security]]
 - [[Testing and QA|Testing-and-QA]]
-- [[Tools|Tools]]
 - [[Work Skills Framework|Work-Skills-Framework]]
 - [[Workspaces and Packages|Workspaces-and-Packages]]
 
 ## Service encyclopedia (19)
+
 - [[Service Catalog|Service-Catalog]]
 - [[Service claw agent service|Service-claw-agent-service]]
 - [[Service claw audit service|Service-claw-audit-service]]
@@ -65,27 +66,21 @@ Complete navigation map for the generated ClawAI Wiki.
 - [[Service claw workspace service|Service-claw-workspace-service]]
 
 ## References and exhaustive indexes (19)
+
 - [[ADR Index|ADR-Index]]
 - [[API Reference|API-Reference]]
-- [[Agent CLI File Inventory|Agent-CLI-File-Inventory]]
-- [[Coding Agent Repository Inventory|Coding-Agent-Repository-Inventory]]
-- [[Coding Agent Surface Catalog|Coding-Agent-Surface-Catalog]]
 - [[Documentation Index|Documentation-Index]]
 - [[Environment Variables|Environment-Variables]]
-- [[Frontend File Inventory|Frontend-File-Inventory]]
 - [[Frontend Routes|Frontend-Routes]]
-- [[Governance File Inventory|Governance-File-Inventory]]
-- [[Packages File Inventory|Packages-File-Inventory]]
 - [[Permissions and RBAC|Permissions-and-RBAC]]
 - [[Prisma Models|Prisma-Models]]
 - [[RabbitMQ Events|RabbitMQ-Events]]
-- [[Repository File Inventory|Repository-File-Inventory]]
 - [[Rules Catalog|Rules-Catalog]]
 - [[Skills Catalog|Skills-Catalog]]
-- [[Tooling and Infrastructure File Inventory|Tooling-and-Infrastructure-File-Inventory]]
 - [[Wiki Coverage Audit|Wiki-Coverage-Audit]]
 
 ## Special pages
+
 - [[Home]]
 - [[Publishing|PUBLISHING]]
 - `_Sidebar.md`

@@ -228,32 +228,32 @@ apps/claw-frontend/
 | Zustand stores       | `apps/claw-frontend/src/stores/<name>.store.ts`                       |
 | i18n translations    | `apps/claw-frontend/src/lib/i18n/locales/<lang>.ts`                   |
 | Form validation      | `apps/claw-frontend/src/lib/validation/<name>.schema.ts`              |
-| Tailwind config      | `apps/claw-frontend/tailwind.config.ts`                               |
+| Tailwind config      | `apps/claw-frontend/tailwind.config.mts`                              |
 | CSS variables/theme  | `apps/claw-frontend/src/app/globals.css`                              |
 
 ### Shared Packages
 
-| Looking for...        | Location                                            |
-| --------------------- | --------------------------------------------------- |
-| Shared enums          | `packages/shared-types/src/enums/`                  |
-| Event payloads        | `packages/shared-types/src/events/`                 |
-| Auth types            | `packages/shared-types/src/auth/`                   |
-| Port/prefix constants | `packages/shared-constants/src/`                    |
-| RabbitMQ module       | `packages/shared-rabbitmq/src/rabbitmq.module.ts`   |
-| RabbitMQ service      | `packages/shared-rabbitmq/src/rabbitmq.service.ts`  |
-| Structured logger     | `packages/shared-rabbitmq/src/structured-logger.ts` |
-| Auth guards           | `packages/shared-auth/src/guards/`                  |
-| Auth decorators       | `packages/shared-auth/src/decorators/`              |
+| Looking for...        | Location                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------- |
+| Shared enums          | `packages/shared-types/src/enums/`                                                          |
+| Event payloads        | `packages/shared-types/src/events/`                                                         |
+| Auth types            | `packages/shared-types/src/types/` (`jwt-payload.type.ts`, `authenticated-request.type.ts`) |
+| Port/prefix constants | `packages/shared-constants/src/`                                                            |
+| RabbitMQ module       | `packages/shared-rabbitmq/src/rabbitmq.module.ts`                                           |
+| RabbitMQ service      | `packages/shared-rabbitmq/src/rabbitmq.service.ts`                                          |
+| Structured logger     | `packages/shared-rabbitmq/src/structured-logger.ts`                                         |
+| Auth guards           | `packages/shared-auth/src/auth.guard.ts`, `roles.guard.ts`, `session-revocation.guard.ts`   |
+| Auth decorators       | `packages/shared-auth/src/decorators.ts`                                                    |
 
 ### Infrastructure
 
-| Looking for...        | Location                                    |
-| --------------------- | ------------------------------------------- |
-| Nginx route mappings  | `infra/nginx/nginx.conf`                    |
-| Docker services       | `docker/docker-compose.dev.yml` (root)      |
-| Environment variables | `.env.example` (root)                       |
-| Setup scripts         | `scripts/install.sh`, `scripts/install.ps1` |
-| Management script     | `scripts/claw.sh`                           |
+| Looking for...        | Location                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------- |
+| Nginx route mappings  | `infra/nginx/nginx.conf`                                                                          |
+| Docker services       | `docker/docker-compose.{dev,prod}.{databases,services,ollama}.yml`, driven by `./scripts/claw.sh` |
+| Environment variables | `.env.example` (root)                                                                             |
+| Setup scripts         | `scripts/install.sh`, `scripts/install.ps1`                                                       |
+| Management script     | `scripts/claw.sh`                                                                                 |
 
 ---
 

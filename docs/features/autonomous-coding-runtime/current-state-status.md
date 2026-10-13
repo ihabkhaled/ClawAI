@@ -210,14 +210,14 @@ Scoped to the touched workspaces per repository policy — never all-workspace.
 
 `apps/claw-coding-agent`:
 
-| Gate                        | Result                                                       |
-| --------------------------- | ------------------------------------------------------------ |
-| `vitest run tests/unit`     | **747 passed / 114 files**                                   |
-| `tsc --noEmit`              | exit 0                                                       |
-| `eslint . --max-warnings=0` | exit 0                                                       |
-| `node esbuild.mjs`          | exit 0                                                       |
-| `npm run package`           | `clawai-coding-agent-0.41.1.vsix` (127 files, 16.47 MB)      |
-| `npm run package:audit`     | OK — 23 commands, 13 locales, strict CSP, no secret settings |
+| Gate                        | Result                                                                           |
+| --------------------------- | -------------------------------------------------------------------------------- |
+| `vitest run tests/unit`     | **747 passed / 114 files**                                                       |
+| `tsc --noEmit`              | exit 0                                                                           |
+| `eslint . --max-warnings=0` | exit 0                                                                           |
+| `node esbuild.mjs`          | exit 0                                                                           |
+| `npm run package`           | `clawai-coding-agent-0.41.1.vsix` (127 files, 16.47 MB)                          |
+| `npm run package:audit`     | OK (coding-agent repo) — 23 commands, 13 locales, strict CSP, no secret settings |
 
 `apps/claw-chat-service`:
 

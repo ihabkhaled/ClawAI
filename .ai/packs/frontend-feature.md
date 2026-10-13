@@ -11,7 +11,7 @@ Next.js frontend feature/component change.
 - `agents/i18n-reviewer.md`
 
 ## Validation lane
-- `cd apps/claw-frontend && npm run typecheck && npm run lint && npm test`
+- `git commit, then git push — the hooks gate this change for its type (rules/23 gate matrix)`
 
 ## Known pitfalls
 - TSX = render only; no hooks/consts/inline types/sub-components

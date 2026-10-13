@@ -89,8 +89,7 @@ Any change touching a public page, a design token, or a semantic colour must be
 checked against it before pushing:
 
 ```bash
-cd apps/claw-frontend
-npx @lhci/cli@0.15.x autorun --config=lighthouserc.json
+npm run lighthouse   # from the repository root: Lighthouse CI with apps/claw-frontend/lighthouserc.json
 ```
 
 Reading `lighthouserc.json` before choosing a colour is cheaper than discovering the

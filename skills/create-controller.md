@@ -19,7 +19,7 @@ required_context: [ai-context-pack, authorization-rbac]
 affected_workspaces: [apps/claw-<service>-service]
 required_tests: [controller smoke (delegation), e2e via qa script]
 required_docs: [docs/04-backend/service-guide-<service>.md]
-validation_lane: cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Skill: Create a Controller
@@ -77,7 +77,10 @@ A controller is the HTTP boundary. It extracts params, calls exactly ONE service
 ## Validation commands
 
 ```bash
-cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 ## Documentation updates

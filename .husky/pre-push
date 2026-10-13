@@ -1,23 +1,11 @@
 #!/usr/bin/env sh
-# Pre-push: verify the governance/knowledge integrity + run affected tests/build.
-# NEVER bypass with --no-verify. Local scope stays cheap; CI does the full pass.
-
-# Everything below must judge what is BEING PUSHED, not what happens to be lying
-# around in the working tree. The generators and the affected-workspace walker
-# both read the filesystem, so uncommitted work makes them report on code that
-# is not part of this push — knowledge:verify then fails on a manifest that is
-# perfectly correct for the committed tree, and the push is blocked for no real
-# reason.
+# Pre-push: gate the tree of every ref being pushed. NEVER bypass with
+# --no-verify. Local scope stays cheap; CI does the full pass. What runs here,
+# and what a receipt may skip, is the gate matrix in rules/23.
 #
-# So: hide anything not committed, run the checks against the committed tree,
-# then restore. The trap restores even on failure or interrupt — blocking a push
-# is a nuisance, losing a developer's uncommitted work to a hook is not.
-# Drain the ref list git writes to this hook's stdin. Nothing below needs it,
-# but a hook that never reads it leaves that write outstanding, and when the
-# hook exits git can take EPIPE on it and die with 141 — aborting the push
-# *after* all four checks have already passed and printed OK. Consuming it costs
-# nothing and keeps a green hook run from silently failing to transfer.
-cat >/dev/null 2>&1 || true
+# The checks must judge what is BEING PUSHED, not what happens to be lying
+# around in the working tree, so uncommitted work is parked first and restored
+# by the trap — even on failure or interrupt.
 
 STASHED=0
 STASH_REF=""
@@ -42,38 +30,13 @@ restore_stash() {
 }
 trap 'restore_stash' EXIT INT TERM
 
-fail() {
-  echo "$1"
+# git writes `<local ref> <local sha> <remote ref> <remote sha>` per pushed ref
+# to this hook's stdin. pre-push.mjs reads ALL of it (an unread pipe can make
+# git die with EPIPE after a green run) and validates each pushed ref's tree.
+if ! node tools/gates/pre-push.mjs; then
+  echo "→ pre-push failed"
   restore_stash
   exit 1
-}
-
-echo "pre-push 1/4: knowledge integrity (freshness, links, no hook-bypass, contradictions)"
-npm run knowledge:verify || fail "→ knowledge:verify failed"
-npm run audit:check || fail "→ audit:check failed — run 'npm run audit' and commit the snapshot"
-
-echo "pre-push 2/4: knowledge + architecture tooling tests"
-npm run knowledge:test || fail "→ knowledge:test failed"
-npm run architecture:check || fail "→ architecture:check failed"
-
-# Stages 3 and 4 are the expensive ones. If the scoped gates already ran green
-# over exactly this tree and recorded a receipt, repeating them here proves
-# nothing and only burns the developer's machine. The receipt names the tree it
-# proved, so a single changed byte invalidates it and both stages run in full.
-# This is the sanctioned way to avoid duplicate work — never --no-verify, which
-# would also skip the cheap integrity checks above. See rules/34.
-if node tools/gates/receipt.mjs check >/dev/null 2>&1; then
-  echo "pre-push 3-4/4: skipped — gate receipt matches this exact tree (rules/34)"
-else
-  echo "pre-push 3/4: test affected workspaces"
-  node tools/affected/index.mjs test --base=origin/HEAD ||
-    node tools/affected/index.mjs test --base=main ||
-    fail "→ affected tests failed"
-
-  echo "pre-push 4/4: build affected workspaces"
-  node tools/affected/index.mjs build --base=origin/HEAD ||
-    node tools/affected/index.mjs build --base=main ||
-    fail "→ affected build failed"
 fi
 
 restore_stash

@@ -215,7 +215,7 @@ GLM, Qwen, DeepSeek, Mistral, or any other).
 ### 23. Shared-utilities-first mindset (added 2026-04-26)
 
 - Before writing a utility in `apps/<service>/src/common/utilities/`, search `packages/shared-utilities/`. If it exists there, IMPORT IT — never copy-paste.
-- If a utility lives identically in 2+ services, it is a bug. Move it to `packages/shared-utilities/` and replace per-service copies with imports.
+- If a utility lives identically in two or more services, it is a bug. Move it to `packages/shared-utilities/` and replace per-service copies with imports.
 - Per-service utilities are reserved for service-specific glue. Anything domain-neutral (HTTP, JWT verification, crypto primitives, URL safety, regex helpers, retry policies, exponential backoff, time helpers, encoding helpers) lives in `packages/shared-utilities/`.
 - Cross-service constants live in `packages/shared-constants/`. Cross-service types live in `packages/shared-types/`. Cross-service utilities live in `packages/shared-utilities/`. The three packages cover types / values / functions respectively.
 

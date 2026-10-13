@@ -14,7 +14,7 @@
     },
     "@claw/shared-rabbitmq": {
       "runner": "vitest",
-      "testFiles": 0
+      "testFiles": 2
     },
     "@claw/shared-types": {
       "runner": "vitest",
@@ -110,5 +110,5 @@
     }
   },
   "generated": true,
-  "total": 2296
+  "total": 2298
 }

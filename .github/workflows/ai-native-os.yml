@@ -1,12 +1,20 @@
 # AI-native engineering OS gates. Runs the SAME authoritative scripts developers
-# run locally — no CI-only mystery commands. Independent from ci.yml so it can
-# run on every PR cheaply (pure Node, no Docker, no Prisma generation).
+# run locally — no CI-only mystery commands. Pure Node: no Docker, no Prisma.
+#
+# Called by ci.yml (job `ai-native-os`), so every job here feeds `ci-success`
+# and a red gate blocks release and deploy. Running inside the CI run also
+# gives it CI's concurrency group (a newer push cancels an older run) and the
+# Node version from .nvmrc.
 name: ai-native-os
 
 on:
-  pull_request:
-  push:
-    branches: [main]
+  workflow_call:
+    inputs:
+      deploy:
+        description: The change touches deploy paths, so the deploy rehearsal runs.
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -16,10 +24,10 @@ jobs:
     name: Knowledge freshness (generated .ai layer)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '22'
+          node-version-file: .nvmrc
       # No install needed: the tooling is dependency-light Node ESM (stdlib).
       - name: Audit snapshot is current
         run: node tools/audit/index.mjs --check
@@ -27,19 +35,30 @@ jobs:
         run: node tools/knowledge/build.mjs --check
 
   knowledge-integrity:
-    name: Knowledge integrity (links, no hook-bypass, contradictions)
+    name: Knowledge integrity (links, docs, no hook-bypass, contradictions)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: '22'
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      # Includes the rules/63 docs checks: references, counts, duplication.
       - name: knowledge:verify
         run: node tools/knowledge/verify.mjs
+      # rules/63: every commit in the pull request declares its docs impact and
+      # changes the docs of every mapped code area it touches. (A push to main
+      # is a merge of an already-checked pull request.)
+      - name: docs:impact (every pull-request commit)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node tools/knowledge/docs-impact.mjs --range "${BASE_SHA}..${HEAD_SHA}"
       # Rule 33's documentation-discoverability gate. It lives here rather than
-      # in the git hooks on purpose: hooks gate code and must stay fast, and a
-      # missing index row never breaks a build — but it does cost the next agent
-      # a re-derivation, so CI is where it gets caught.
+      # in the git hooks on purpose: a missing index row never breaks a build —
+      # but it does cost the next agent a re-derivation, so CI catches it.
       - name: knowledge:coverage
         run: node tools/knowledge/coverage.mjs
 
@@ -47,45 +66,63 @@ jobs:
     name: 'QA evidence (rules/60, no feat or fix lands without its record)'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '22'
+          node-version-file: .nvmrc
       - name: Every feat/fix/perf product commit has a valid docs/qa-evidence record
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            RANGE="origin/${{ github.base_ref }}...HEAD"
-          elif [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            RANGE="origin/${BASE_REF}...HEAD"
+          elif [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
             echo 'new branch push, nothing to compare'; exit 0
           else
-            RANGE="${{ github.event.before }}..${{ github.sha }}"
+            RANGE="${BEFORE}..${AFTER}"
           fi
           node tools/qa/evidence.mjs check --range "$RANGE"
 
   tooling-tests:
-    name: Tooling tests (audit, knowledge, affected)
+    name: Tooling tests (audit, knowledge, affected, gates)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: '22'
-      - name: Install tooling dependencies
-        run: npm ci --ignore-scripts
+          fetch-depth: 0
+      - uses: ./.github/actions/prepare
+        with:
+          build-outputs: 'false'
+      # The deploy rehearsal (~140s) has its own job, gated on deploy paths.
       - name: knowledge tooling tests
-        run: node --test "tools/__tests__/*.test.mjs"
+        run: npm run knowledge:test:fast
+
+  deploy-rehearsal:
+    name: Deploy rehearsal (deploy paths changed)
+    if: inputs.deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: End-to-end deploy rehearsal
+        run: npm run knowledge:test:rehearsal
 
   architecture-rules:
     name: Architecture ESLint rule tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/prepare
         with:
-          node-version: '22'
-      - name: Install (eslint for RuleTester)
-        run: npm ci --ignore-scripts
+          build-outputs: 'false'
       - name: architecture:check
-        run: node --test "eslint/architecture-plugin/__tests__/*.test.mjs"
+        run: npm run architecture:check

@@ -54,17 +54,29 @@ and silent shape drift between frontend and backend.
 ## Correct pattern
 
 ```ts
-// apps/claw-chat-service/src/modules/chat/dto/create-compare.dto.ts
-export const CreateCompareSchema = z
+// apps/claw-chat-service/src/modules/chat-messages/dto/parallel-message.dto.ts (abridged)
+export const parallelMessageSchema = z
   .object({
-    content: z.string().min(1).max(20_000),
-    models: z.array(z.string().max(200)).min(2).max(5),
-    criticEnabled: z.boolean().default(false),
-    criticModel: z.string().max(200).default(''),
+    content: z.string().max(100_000, 'Content must be at most 100000 characters'),
+    models: z
+      .array(z.object({ provider: z.string().max(50), model: z.string().max(255) }))
+      .min(2, 'At least 2 models are required')
+      .max(5, 'At most 5 models are allowed'),
+    judgeEnabled: z.boolean().optional(),
+    criticEnabled: z.boolean().optional().default(false),
+    criticModel: z.string().max(200).optional().nullable(),
+    ...attachmentFields, // shared fragments, not re-declared per mode
   })
-  .strict()
-  .refine((d) => !d.criticEnabled || d.criticModel !== '', { message: 'criticModel required' });
-export type CreateCompareDto = z.infer<typeof CreateCompareSchema>;
+  .superRefine((value, ctx) => {
+    if (value.criticEnabled === true && value.judgeEnabled !== true) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['criticEnabled'],
+        message: 'criticEnabled requires judgeEnabled to be true',
+      });
+    }
+  });
+export type ParallelMessageDto = z.infer<typeof parallelMessageSchema>;
 ```
 
 ## Enforcement

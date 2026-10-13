@@ -46,8 +46,8 @@ npm run typecheck
 **Pass criteria:** Zero TypeScript errors across all workspaces:
 
 - `apps/claw-frontend`
-- All 13 `apps/claw-*-service` workspaces
-- All 4 `packages/*` workspaces
+- All <!-- count:services -->20<!-- /count --> `apps/claw-*-service` workspaces
+- All <!-- count:sharedPackages -->6<!-- /count --> `packages/*` workspaces
 
 **What a failure here means:** Type contracts between layers are broken. A frontend type does not match a backend DTO. A shared package change broke a downstream service. A new enum value was added without updating all switch statements.
 
@@ -421,22 +421,15 @@ A rollback is initiated when any of these conditions occur in production after d
 ### Rollback Procedure
 
 ```bash
-# Step 1: Revert to the previous Docker image
-docker compose -f docker/docker-compose.yml stop <service-name>
-docker compose -f docker/docker-compose.yml rm -f <service-name>
-
-# Step 2: Pull the previous image (tag the previous build before deploying)
-docker pull <image-name>:<previous-tag>
-
-# Step 3: Update docker-compose.yml to reference the previous image tag
-# (this is why images must be tagged with version before deploy)
-
-# Step 4: Start the previous image
-docker compose -f docker/docker-compose.yml up -d <service-name>
+# Steps 1-4: Check out the previous release on the deploy box, then rebuild
+# and recreate only the affected service from it (claw.sh drives the split
+# prod compose files; never call docker compose -f by hand)
+git checkout <previous-release-tag>
+./scripts/claw.sh --prod service:rebuild <service-name>
 
 # Step 5: Verify service is healthy
-docker compose -f docker/docker-compose.yml ps <service-name>
-# Must show (healthy)
+./scripts/claw.sh --prod status
+# The service must show (healthy)
 
 # Step 6: If a DB migration was applied — a rollback migration is required
 # NEVER run prisma migrate reset in production — it deletes data
@@ -533,8 +526,8 @@ Run within 5 minutes of deploying:
 
 ```bash
 # 1. Check all services are healthy
-docker compose -f docker/docker-compose.yml ps | grep -v "healthy"
-# Output must be empty (all services healthy)
+./scripts/claw.sh --prod status
+# Every service must show (healthy)
 
 # 2. Check aggregated health endpoint
 curl -s http://localhost:4009/api/v1/health | jq '.status'
@@ -547,11 +540,11 @@ curl -s -o /dev/null -w "%{http_code}" \
 # Must return 200 (or expected status), NOT 404 or 500
 
 # 4. Check service logs for errors
-docker compose -f docker/docker-compose.yml logs <service-name> --since 5m | grep -i "error\|exception\|failed"
+docker logs claw-<service-name> --since 5m 2>&1 | grep -i "error\|exception\|failed"
 # Must return nothing (no errors)
 
 # 5. Check Nginx logs for unexpected 5xx
-docker compose -f docker/docker-compose.yml logs nginx --since 5m | grep " 5[0-9][0-9] "
+docker logs claw-nginx --since 5m 2>&1 | grep " 5[0-9][0-9] "
 # Must return nothing
 ```
 

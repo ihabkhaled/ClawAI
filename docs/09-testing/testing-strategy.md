@@ -44,7 +44,7 @@
 
 ## 3. Test Inventory
 
-### Backend Tests (Vitest) -- 38+ test files across 17 services
+### Backend Tests (Vitest) -- every service
 
 | Service                      | Files | Focus                                            |
 | ---------------------------- | ----- | ------------------------------------------------ |
@@ -60,7 +60,7 @@
 | claw-image-service           | 2     | Image generation service, app                    |
 | claw-file-generation-service | 2     | File generation service, app                     |
 
-### Frontend Tests (Vitest) -- 28+ test files
+### Frontend Tests (Vitest)
 
 | Category     | Files | Examples                                                               |
 | ------------ | ----- | ---------------------------------------------------------------------- |

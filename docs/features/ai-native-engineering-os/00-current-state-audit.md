@@ -40,8 +40,8 @@ narrated in [`context/service-catalog.md`](../../../context/service-catalog.md).
 
 ## 2. What already exists and should be retained
 
-- **A mature codebase**: 17 services + frontend + 6 shared packages, 507 test
-  files, a real event bus (`claw.events`), Prisma + Mongoose ownership per
+- **A mature codebase**: at audit time 17 backends + frontend + six shared packages, and 507 files
+  of tests, a real event bus (`claw.events`), Prisma + Mongoose ownership per
   service, an nginx route map, split docker compose files, TLS, Vercel deploy.
 - **Governance seeds**: `rules/` (10 files), `skills/` (10 files), a large
   `docs/` tree (22 categories), and heavyweight AI instruction files
@@ -60,7 +60,7 @@ Computed by `tools/lib/analyzers.mjs`, not by reading prose.
 - **Port ↔ nginx: 0 disagreements.** Every nginx `set $x_backend` port matches
   the `*_SERVICE_PORT` constant. Good.
 - **Service-count / locale-count claims: 0 stale** at audit time (the docs'
-  "17 microservices" and "9 locales" match the derived counts). The analyzer
+  microservice count (17) and "9 locales" matched the derived counts). The analyzer
   stays wired so future drift fails the gate.
 
 ---
@@ -70,7 +70,7 @@ Computed by `tools/lib/analyzers.mjs`, not by reading prose.
 1. **Two services have no port constant.** `claw-client-logs-service` (4010) and
    `claw-server-logs-service` (4011) are absent from
    `packages/shared-constants/src/index.ts` — their ports live only in `.env`.
-   15 constants for 17 services. This is a real discoverability gap for humans
+   15 constants for the 17 backends of the time. This is a real discoverability gap for humans
    and agents: the canonical port catalog is incomplete.
    → Tracked finding `service-without-port-constant` in the snapshot.
 2. **No task-scoped context system** existed before this slice — every agent had

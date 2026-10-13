@@ -4,10 +4,10 @@
 **Type:** nestjs-service · **Path:** `apps/claw-chat-service`
 
 ## Canonical owner
-- Root policy: `CLAUDE.md` + `rules/00-non-negotiable-rules.md`
+- Root policy: `AGENTS.md` + `rules/00-non-negotiable-rules.md`
 - Backend layering: `rules/09-backend-services.md` + `context/backend-architecture.md`
 
-## Commands (run in this folder only)
+## Commands (this workspace)
 ```
 npm run typecheck
 npm run lint
@@ -15,6 +15,9 @@ npm run test
 npm run build
 npm run dev
 ```
+
+Landing a change: `git commit`, then `git push` — the hooks run the gates this
+change type needs (`rules/23-git-commits-hooks-and-release-gates.md`, gate matrix).
 
 ## Ownership (generated)
 - Port: 4002

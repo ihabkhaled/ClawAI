@@ -7,72 +7,77 @@
 
 ## The stack
 
-| Layer    | Choice                                                                                                                                                      |
-| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Runtime  | Node **>= 22.13.0** (Docker images run `node:26-bookworm-slim` — glibc, NOT Alpine)                                                                         |
-| Backend  | NestJS **11.1**, Prisma **7.8** (Postgres) / Mongoose (Mongo), Zod **4.4**                                                                                  |
-| Frontend | Next.js **16.2**, React **19.2**, TanStack Query, Zustand, Tailwind, shadcn/ui                                                                              |
-| Language | TypeScript compiled by **tsgo** (`@typescript/native-preview`, the Go-native TS compiler) + **tsc-alias** for path rewriting — **NOT `tsc` / `nest build`** |
-| Lint     | ESLint **9** flat config, Prettier **3.8**                                                                                                                  |
-| Tests    | **vitest** (every workspace, backend via `unplugin-swc`), **playwright** (E2E) — ADR-099                                                                    |
-| Packages | npm workspaces (`packages/*`, `apps/*`)                                                                                                                     |
+| Layer    | Choice                                                                                                                                                                                          |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Runtime  | Node **>= 22.13.0** (Docker images run `node:26-bookworm-slim` — glibc, NOT Alpine)                                                                                                             |
+| Backend  | NestJS **11.1**, Prisma **7.8** (Postgres) / Mongoose (Mongo), Zod **4.4**                                                                                                                      |
+| Frontend | Next.js **16.2**, React **19.2**, TanStack Query, Zustand, Tailwind, shadcn/ui                                                                                                                  |
+| Language | TypeScript compiled by **TypeScript 7** (the Go-native compiler: the `typescript7` alias, run through `tools/typescript/run-ts7.mjs`) + **tsc-alias** for path rewriting — **NOT `nest build`** |
+| Lint     | ESLint **9** flat config, Prettier **3.8**                                                                                                                                                      |
+| Tests    | **vitest** (every workspace, backend via `unplugin-swc`), **playwright** (E2E) — ADR-099                                                                                                        |
+| Packages | npm workspaces (`packages/*`, `apps/*`)                                                                                                                                                         |
 
-`typescript` is **aliased** to `@typescript/native-preview@beta`. Real `tsc` 6.x
-still resolves transitively. CI links the native binary with
-`npm rebuild @typescript/native-preview`.
+Two TypeScript versions coexist on purpose: `typescript7` (`npm:typescript@7.x`,
+a root devDependency) is the compiler every build and typecheck runs, through
+`tools/typescript/run-ts7.mjs`; `typescript` 6.x stays for tools that import the
+TypeScript JS API (typescript-eslint, editors). CI's setup job checks the
+compiler with `node tools/typescript/run-ts7.mjs --version`. Full reference:
+[docs/08-runtime-devops/build-system.md](../docs/08-runtime-devops/build-system.md).
 
 ## Per-workspace scripts (the real ones)
 
-Every backend service and shared package uses the **tsgo** toolchain. Frontend
-uses Next + vitest.
+Every backend service and shared package compiles with **TypeScript 7**
+(`run-ts7.mjs`) + `tsc-alias`. Frontend uses Next + vitest.
 
 ### Backend service / shared package
 
 ```bash
-npm run typecheck   # tsgo --noEmit
-npm run lint        # eslint src/ --concurrency=4   (lint:strict adds --max-warnings 0)
-npm run build       # tsgo -p tsconfig.build.json && tsc-alias -p tsconfig.build.json
-npm test            # vitest run --passWithNoTests   (test:cov = vitest run --coverage)
-npm run dev         # tsgo build then concurrent tsgo --watch + tsc-alias --watch + nodemon dist/main.js
+npm run typecheck   # node ../../tools/typescript/run-ts7.mjs --noEmit --incremental …
+npm run lint        # eslint src/ --concurrency=4 --cache   (lint:strict adds --max-warnings 0)
+npm run build       # run-ts7.mjs -p tsconfig.build.json [&& copy-generated-prisma.mjs] && tsc-alias -p tsconfig.build.json -f
+npm test            # vitest run — an empty suite fails   (test:cov = vitest run --coverage)
+npm run dev         # nodemon: on every src/ change, npm run build && node dist/main.js
 npm start           # node dist/main.js
 ```
 
-Shared packages (`packages/shared-*`) build with `tsgo -p tsconfig.build.json`
-only (no tsc-alias needed for most; see each package.json).
+Shared packages (`packages/shared-*`) build with
+`run-ts7.mjs -p tsconfig.build.json && tsc-alias -p tsconfig.build.json -f`
+(see each package.json).
 
 ### Frontend (`apps/claw-frontend`)
 
 ```bash
-npm run typecheck   # tsgo --noEmit
-npm run lint        # eslint src/ --concurrency=4   (lint:strict adds `next lint`)
+npm run typecheck   # apps/claw-frontend/scripts/typecheck-ts7.mjs --noEmit … (TypeScript 7)
+npm run lint        # eslint src/ --concurrency=4 --cache   (lint:strict adds `next lint`)
 npm run build       # clear-cache then next build --turbopack
 npm test            # vitest run   (test:cov adds --coverage)
 npm run test:e2e    # playwright test
 npm run dev         # clear-cache then next dev --turbopack --port 3000
 ```
 
-> **Why tsgo, not tsc:** tsgo does not rewrite path aliases (`@app/*`,
-> `@common/*`, `@modules/*`), so `tsc-alias` runs after compile to convert them
-> to relative paths in `dist/`. Never substitute `tsc` or `nest build`.
+> **Why tsc-alias:** the compiler does not rewrite path aliases (`@app/*`,
+> `@common/*`, `@modules/*`), so `tsc-alias -f` runs after compile to convert them
+> to relative paths (with `.js` extensions) in `dist/`. Never substitute `nest build`.
 
-## The per-folder gate lane (MANDATORY before commit)
+## Landing a change — the hooks are the gate lane
 
-Run the gates **only in the folder(s) you actually touched**. **Never** run the
-all-workspace lint/typecheck/test/build — it regenerates 13 Prisma clients,
-compiles every service, and false-fails on unchanged siblings in a fresh
-worktree. Cost is the primary reason; the worktree footgun is secondary.
+Do not run lint, typecheck, test and build by hand. Commit and push; the hooks
+run the gates the change type needs, scoped to what changed, and CI runs the
+rest:
 
 ```bash
-cd apps/claw-<service>        # or apps/claw-frontend, or packages/<pkg>
-npm run typecheck             # 0 errors  (tsgo --noEmit)
-npm run lint                  # 0 errors on touched files
-npm test                      # all pass; coverage may not drop
-npm run build                 # success
+npm run affected:list                    # what your diff touches, and why
+git add <explicit paths>                 # never -A, never .
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"   # pre-commit + commit-msg
+git push origin <branch>                 # pre-push; then CI
 ```
 
-Multi-folder change → run the gates for **each** touched folder, never the
-untouched ones. Non-workspace files (`scripts/**`, `infra/**`, plain `.mjs`) →
-cheapest equivalent (`node --check <file>`, JSON validate).
+Which gate runs for which change type:
+[rules/23 — gate matrix](../rules/23-git-commits-hooks-and-release-gates.md#gate-matrix-by-change-type).
+**Never** run the all-workspace lint/typecheck/test/build for a scoped change —
+it regenerates <!-- count:prismaClients -->16<!-- /count --> Prisma clients and compiles every service
+([rules/34](../rules/34-gate-economy-and-machine-resources.md)). Want one proof up
+front instead of two hook runs? `npm run gates:receipt` after staging.
 
 **Never `--no-verify` to bypass a real failure**, and never suppress errors
 (`eslint-disable`, `@ts-ignore`, `any`, `as unknown as`). These are blockers
@@ -90,13 +95,13 @@ npm run knowledge:context -- --task="<what you are doing>"
 # Other knowledge tools
 npm run knowledge:build     # regenerate .ai/ manifests + BOOTSTRAP + packs
 npm run knowledge:check     # verify generated knowledge is up to date
-npm run knowledge:verify    # docs/governance verification (also `npm run docs:check`)
+npm run knowledge:verify    # docs and governance verification (also `npm run docs:check`)
 npm run knowledge:test      # node --test over tools/__tests__/*.test.mjs
 ```
 
 ## Affected-workspace commands
 
-Scope validation to what your diff actually touches (backs the per-folder lane).
+Scope validation to what your diff actually touches (the hooks use the same engine).
 
 ```bash
 npm run affected:list        # what your diff touches + why
@@ -162,16 +167,20 @@ Default is API-only. Split compose files are enumerated in
 
 ## CI
 
-`.github/workflows/ci.yml` runs 4 jobs — **lint → typecheck → test → build** —
-with a per-package matrix. Adding a **new `packages/<name>` workspace** requires
-TWO edits per job × 4 jobs: the "Build shared packages" `tsgo` line **and** the
-`strategy.matrix.include` entry. Missing the matrix entry means the package is
-silently never lint/typecheck/tested in CI.
+`.github/workflows/ci.yml`: a `changes` job computes the **affected** matrix
+(`node tools/affected/index.mjs ci-matrix`); a `setup` job installs once, builds
+the shared packages in dependency order (`node tools/affected/index.mjs shared-build`,
+order derived from each `package.json`) and generates every Prisma client; then
+`static` (lint ratchet + typecheck), `test` (+ coverage floors), `build`,
+`policy`, `secrets`, `codeql` and the rest run per affected workspace. A new
+workspace needs no hand-edited matrix entry — it joins once it is an npm
+workspace. Job by job:
+[docs/08-runtime-devops/ci-cd-pipeline.md](../docs/08-runtime-devops/ci-cd-pipeline.md).
 
 ## What to never do (toolchain blockers)
 
-- Never run the all-workspace gate for a scoped change — use the per-folder lane.
+- Never run the all-workspace gate for a scoped change — let the hooks gate it.
 - Never `--no-verify` to bypass a real failure.
 - Never `eslint-disable` / `@ts-ignore` / `any` / `as unknown as`.
-- Never substitute `tsc` or `nest build` for `tsgo` + `tsc-alias`.
+- Never substitute `nest build` for `run-ts7.mjs` + `tsc-alias`.
 - Never start the stack with raw `docker compose -f …` — use `scripts/claw.sh`.

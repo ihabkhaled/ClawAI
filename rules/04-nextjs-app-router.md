@@ -50,7 +50,7 @@ export default function RoutingReplayPage(): React.ReactElement {
 
 - **ESLint** (frontend flat config) — restricts hooks/types/consts inside `.tsx`,
   bans raw form elements and `dangerouslySetInnerHTML`, requires explicit return types.
-- **TS config** — `npm run typecheck` (tsgo) enforces the return type.
+- **TS config** — `npm run typecheck` (TypeScript 7) enforces the return type.
 - **Unit test** (Vitest) — loading/empty/error/success states asserted.
 
 ## Related skills

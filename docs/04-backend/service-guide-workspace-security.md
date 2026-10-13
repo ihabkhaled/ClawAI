@@ -132,7 +132,7 @@ Verified by `qa/test-workspace-security.sh` section 6: a PAT test hit with a `su
 | Gate                                       | Evidence                                                         |
 | ------------------------------------------ | ---------------------------------------------------------------- |
 | 0 typecheck errors                         | `npm run typecheck`                                              |
-| 152 unit tests pass                        | `npx jest`                                                       |
+| 152 unit tests pass                        | `npm test` (Vitest)                                              |
 | SSRF QA 14/14                              | `qa/test-workspace-security.sh`                                  |
 | Provider registry QA 41/41 (no regression) | `qa/test-workspace-provider-registry.sh`                         |
 | OAuth flow QA 24/24 (no regression)        | `qa/test-workspace-oauth-flow.sh`                                |

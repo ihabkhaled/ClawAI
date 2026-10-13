@@ -272,7 +272,7 @@ The fix must include at least one new test that:
 | Frontend component     | Component test (Vitest)               | `apps/claw-frontend/src/components/<feature>/__tests__/` |
 | Frontend hook          | Hook test (Vitest)                    | `apps/claw-frontend/src/hooks/<domain>/__tests__/`       |
 | Frontend utility       | Unit test (Vitest)                    | `apps/claw-frontend/src/utilities/__tests__/`            |
-| End-to-end flow        | E2E test (Playwright)                 | `apps/claw-frontend/e2e/`                                |
+| End-to-end flow        | E2E test (Playwright)                 | `apps/claw-frontend/tests/e2e/`                          |
 
 ### F2: Layer-Matched Verification
 

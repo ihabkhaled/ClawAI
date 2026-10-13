@@ -15,6 +15,8 @@ const deploymentRehearsal = readFileSync(
 ).replaceAll('\r\n', '\n');
 const gitBash = 'C:/Program Files/Git/bin/bash.exe';
 const bashBinary = process.platform === 'win32' && existsSync(gitBash) ? gitBash : 'bash';
+// The rehearsal takes ~140s on a CI runner; past 5 minutes it is hung.
+const REHEARSAL_TIMEOUT_MS = 300_000;
 const gitignore = readFileSync(repoPath('.gitignore'), 'utf8');
 const prodCompose = readFileSync(repoPath('docker/docker-compose.prod.services.yml'), 'utf8');
 const prodDatabaseCompose = readFileSync(
@@ -470,17 +472,26 @@ test('the end-to-end rehearsal detaches from an inherited git environment', () =
 test(
   'end-to-end rehearsal: first deploy, selective deploy, shared-package fan-out, no-op, rollback guard, build/health failure, locking',
   {
-    timeout: 120_000,
     skip:
       process.platform === 'win32'
         ? 'Unix deployment rehearsal is unsafe with Windows Git and bash /tmp paths'
         : false,
   },
   () => {
+    // node:test's own `timeout` cannot interrupt a test blocked in spawnSync, so
+    // a hung rehearsal used to block the whole run. spawnSync's timeout kills
+    // the child, and the status assertion below then fails loudly.
     const result = spawnSync(bashBinary, ['tools/__tests__/deploy-prod-e2e.sh'], {
       encoding: 'utf8',
       cwd: repoPath(),
+      timeout: REHEARSAL_TIMEOUT_MS,
+      killSignal: 'SIGKILL',
     });
+    assert.equal(
+      result.error?.code,
+      undefined,
+      `deploy-prod-e2e.sh did not finish within ${REHEARSAL_TIMEOUT_MS / 1000}s (${result.error?.message})`,
+    );
     if (result.status !== 0) {
       process.stderr.write(result.stdout ?? '');
       process.stderr.write(result.stderr ?? '');

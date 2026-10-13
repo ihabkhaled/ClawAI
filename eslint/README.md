@@ -1,10 +1,11 @@
 # ESLint architecture
 
 The root `eslint.config.mjs` is the active, finely-tuned config that gates all
-24 workspaces today (typescript-eslint strict, security, unicorn, import-x, plus
+<!-- count:workspaces -->27<!-- /count --> workspaces today (typescript-eslint strict, security, unicorn, import-x, plus
+
 ClawAI's `no-restricted-syntax` inline-declaration bans and per-file overrides).
 It is intentionally **not rewritten** — rewriting a working repo-wide lint config
-without a full 24-workspace lint run is how you break everyone at once.
+without a full all-workspace lint run is how you break everyone at once.
 
 This folder adds the **architecture enforcement layer** as opt-in, tested modules
 that ratchet in per workspace rather than flipping the whole repo in one commit.
@@ -27,8 +28,9 @@ that ratchet in per workspace rather than flipping the whole repo in one commit.
 
 ## Target split (documented structure)
 
-The intended end-state decomposes the root orchestrator into composable modules
-(`eslint/base.config.mjs`, `typescript.config.mjs`, `security.config.mjs`,
+The intended end-state (not built yet — only `architecture.config.mjs` and
+`architecture-plugin/` exist today) decomposes the root orchestrator into
+composable modules (`base.config.mjs`, `typescript.config.mjs`, `security.config.mjs`,
 `backend.config.mjs`, `frontend.config.mjs`, `react.config.mjs`,
 `tests.config.mjs`, `architecture.config.mjs`, `package-boundaries.config.mjs`,
 `architecture-plugin/`). The root then only composes them in a documented order.

@@ -37,7 +37,7 @@ Automatically formats all staged files according to project Prettier configurati
 npm run lint
 ```
 
-Runs ESLint across ALL workspaces (17 backend services + frontend + shared packages).
+Runs ESLint across ALL workspaces (every backend service + frontend + shared packages).
 
 **What it catches**:
 
@@ -130,7 +130,7 @@ Each job runs on a fresh runner and performs:
    ```
    shared-types -> shared-constants -> shared-rabbitmq -> shared-auth
    ```
-5. Generate Prisma clients for 17 services:
+5. Generate the Prisma client of every Prisma-backed service:
    ```
    auth, chat, connector, routing, memory, file, ollama, image, file-generation
    ```

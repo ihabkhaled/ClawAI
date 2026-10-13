@@ -61,20 +61,20 @@
 
 ### Layer D: Backend & Frontend
 
-| Document                                                                            | Purpose                                                         |
-| ----------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| [Services Index](04-backend/services-index.md)                                      | All 17 services: ports, DBs, controllers, events, dependencies  |
-| [Controllers Reference](04-backend/controllers-reference.md)                        | Every route across all services                                 |
-| [Backend Coding Standards](04-backend/coding-standards.md)                          | Layer rules, ESLint, extraction, error handling                 |
-| [Shared Packages](04-backend/shared-packages.md)                                    | shared-types, shared-constants, shared-rabbitmq, shared-auth    |
-| [Workspace Service Guide](04-backend/service-guide-workspace.md)                    | Workspace sync, search, actions, OAuth                          |
-| [Agent Service Guide](04-backend/service-guide-agent.md)                            | Local agent sessions, approvals, repos, file events             |
-| [Frontend Architecture](05-frontend/frontend-architecture.md)                       | Page->Hook->Service->Repo pattern, state management, i18n       |
-| [Frontend Coding Standards](05-frontend/coding-standards.md)                        | Component/hook/query patterns                                   |
-| [PWA Update Banner](05-frontend/pwa-update-banner.md)                               | How a new version is offered, and why it asks only once         |
-| [Trial Banner Dismissal](05-frontend/trial-banner-dismissal.md)                     | Snooze / hide-forever for the trial banner, and when it returns |
-| [Observability Page](05-frontend/observability-page.md)                             | Service status (state, uptime, incidents) and usage, admin-only |
-| [Admin Model Billing and Exposure](05-frontend/admin-model-billing-and-exposure.md) | Credit / Included badge source, responsive Model exposure panel |
+| Document                                                                            | Purpose                                                                                              |
+| ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| [Services Index](04-backend/services-index.md)                                      | All <!-- count:services -->20<!-- /count --> services: ports, DBs, controllers, events, dependencies |
+| [Controllers Reference](04-backend/controllers-reference.md)                        | Every route across all services                                                                      |
+| [Backend Coding Standards](04-backend/coding-standards.md)                          | Layer rules, ESLint, extraction, error handling                                                      |
+| [Shared Packages](04-backend/shared-packages.md)                                    | shared-types, shared-constants, shared-rabbitmq, shared-auth                                         |
+| [Workspace Service Guide](04-backend/service-guide-workspace.md)                    | Workspace sync, search, actions, OAuth                                                               |
+| [Agent Service Guide](04-backend/service-guide-agent.md)                            | Local agent sessions, approvals, repos, file events                                                  |
+| [Frontend Architecture](05-frontend/frontend-architecture.md)                       | Page->Hook->Service->Repo pattern, state management, i18n                                            |
+| [Frontend Coding Standards](05-frontend/coding-standards.md)                        | Component/hook/query patterns                                                                        |
+| [PWA Update Banner](05-frontend/pwa-update-banner.md)                               | How a new version is offered, and why it asks only once                                              |
+| [Trial Banner Dismissal](05-frontend/trial-banner-dismissal.md)                     | Snooze / hide-forever for the trial banner, and when it returns                                      |
+| [Observability Page](05-frontend/observability-page.md)                             | Service status (state, uptime, incidents) and usage, admin-only                                      |
+| [Admin Model Billing and Exposure](05-frontend/admin-model-billing-and-exposure.md) | Credit / Included badge source, responsive Model exposure panel                                      |
 
 ### Layer E: Data & Integrations
 
@@ -90,7 +90,7 @@
 | --------------------------------------------------------------- | ---------------------------------------------------------- |
 | [Build System (tsgo)](08-runtime-devops/build-system.md)        | tsgo + tsc-alias toolchain, scripts, tsconfig, CI, gotchas |
 | [Docker Guide](08-runtime-devops/docker-guide.md)               | Dev stack, hot reload, startup order, troubleshooting      |
-| [CI/CD Pipeline](08-runtime-devops/cicd-pipeline.md)            | GitHub Actions (4 jobs x 23 matrix), pre-commit hooks      |
+| [CI/CD Pipeline](08-runtime-devops/ci-cd-pipeline.md)           | Every CI job, what it proves, how a red job blocks release |
 | [Nginx Reference](08-runtime-devops/nginx-reference.md)         | Route mappings, SSE config, security headers               |
 | [Port & Service Map](08-runtime-devops/port-service-map.md)     | Every process: port, datastore, prisma yes/no              |
 | [Testing Strategy](09-testing/testing-strategy.md)              | Test pyramid, inventory, commands, coverage                |

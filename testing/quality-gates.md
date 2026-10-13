@@ -7,7 +7,10 @@ lanes exist — keep them separate; do not substitute one for the other.
 
 ```bash
 npm run affected:list
-cd <touched-workspace> && npm run typecheck && npm run lint && npm test && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 Runs only the workspaces your diff actually touches (plus dependents of a

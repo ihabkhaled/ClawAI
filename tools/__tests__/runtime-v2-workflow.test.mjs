@@ -16,31 +16,20 @@ function jobSource(jobId) {
   return nextJob === -1 ? remaining : remaining.slice(0, nextJob);
 }
 
-function runCommands(source) {
-  return [...source.matchAll(/^\s+run:\s+(.+)$/gmu)].map((match) => match[1].trim());
-}
+// Prisma clients and shared-package dist are produced once, by the setup job,
+// and reach every other job through the build-outputs artifact that the
+// prepare action downloads. A job that runs chat tests must therefore depend on
+// setup and prepare before its test command.
+test('the setup job generates every Prisma client and ships it to the matrix jobs', () => {
+  const setup = jobSource('setup');
+  const generate = setup.indexOf('npm run prisma:generate --workspaces --if-present');
+  const upload = setup.indexOf('name: build-outputs');
+  assert.ok(generate >= 0, 'setup must generate every Prisma client');
+  assert.ok(upload > generate, 'the generated clients must be uploaded after generation');
+  assert.match(setup, /apps\/\*\/src\/generated/u);
+});
 
-function assertChatPrismaGenerationPrecedes(commands, runtimeCommand) {
-  const generateIndex = commands.findIndex(
-    (command) =>
-      command === 'npm run prisma:generate --workspace=claw-chat-service' ||
-      command === 'cd apps/claw-chat-service && npx prisma generate',
-  );
-  const runtimeIndex = commands.indexOf(runtimeCommand);
-
-  assert.notEqual(runtimeIndex, -1, `${runtimeCommand} must remain enforced`);
-  assert.notEqual(
-    generateIndex,
-    -1,
-    'the chat Prisma client must be generated from a clean checkout',
-  );
-  assert.ok(
-    generateIndex < runtimeIndex,
-    'Prisma generation must finish before Runtime V2 tests run',
-  );
-}
-
-test('Runtime V2 CI jobs generate the chat Prisma client before compiling tests', () => {
+test('Runtime V2 CI jobs get the chat Prisma client before compiling tests', () => {
   const jobs = [
     {
       id: 'runtime-v2-coverage',
@@ -53,6 +42,11 @@ test('Runtime V2 CI jobs generate the chat Prisma client before compiling tests'
   ];
 
   for (const job of jobs) {
-    assertChatPrismaGenerationPrecedes(runCommands(jobSource(job.id)), job.command);
+    const source = jobSource(job.id);
+    assert.match(source, /needs: \[changes, setup\]/u, `${job.id} must wait for the setup job`);
+    const prepared = source.indexOf('uses: ./.github/actions/prepare');
+    const runtime = source.indexOf(job.command);
+    assert.notEqual(runtime, -1, `${job.command} must remain enforced`);
+    assert.ok(prepared >= 0 && prepared < runtime, 'build outputs must be downloaded before Runtime V2 tests run');
   }
 });

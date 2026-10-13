@@ -23,7 +23,7 @@ required_context: [ai-context-pack]
 affected_workspaces: [apps/claw-<service>-service]
 required_tests: [unit (vitest *.spec.ts) with the SDK mocked at the wrapper boundary]
 required_docs: [docs/04-backend/adapters-reference.md, service CLAUDE.md]
-validation_lane: cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 # Skill: Add a Library Adapter / Wrapper
@@ -80,7 +80,10 @@ Every third-party package MUST be wrapped once, so if the library changes only t
 ## Validation commands
 
 ```bash
-cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 ## Documentation updates

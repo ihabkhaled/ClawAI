@@ -43,7 +43,7 @@ required_context: [codebase-navigation, services-index, CODE_REVIEW_AND_PR_REVIE
 affected_workspaces: [apps/claw-*, packages/shared-utilities]
 required_tests: [review-only]
 required_docs: [docs/04-backend/services-index, service-specific CLAUDE.md]
-validation_lane: cd apps/claw-<service> && npm run typecheck && npm run lint && npm test && npm run build
+validation_lane: the hooks (git commit, then git push) gate this change for its type — rules/23 gate matrix
 ---
 
 **When to use**
@@ -104,7 +104,7 @@ validation_lane: cd apps/claw-<service> && npm run typecheck && npm run lint && 
 
 - `rg -n "process\.env|console\.log|as unknown as|: any" apps/claw-<service>/src` — should be empty in logic files.
 - `rg -n "try\s*\{|throw " apps/claw-<service>/src/**/*.controller.ts` — controllers must be clean.
-- Gate lane: `cd apps/claw-<service> && npm run typecheck && npm run lint && npm test && npm run build`. NEVER `--no-verify`.
+- Gate lane: commit and push — the hooks run the gates for the change type ([rules/23 gate matrix](../rules/23-git-commits-hooks-and-release-gates.md#gate-matrix-by-change-type)). NEVER `--no-verify`.
 
 **Documentation updates**
 

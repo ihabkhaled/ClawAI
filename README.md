@@ -317,16 +317,15 @@ claw/
 | `npm run dev --workspace=claw-chat-service`      | Start chat service only                  |
 | `npm run dev --workspace=claw-workspace-service` | Start workspace service only             |
 | `npm run dev --workspace=claw-agent-service`     | Start agent service only                 |
-| `npm run build`                                  | Build all applications and packages      |
-| `npm run lint`                                   | Lint all applications and packages       |
-| `npm run typecheck`                              | Type-check all applications and packages |
-| `npm run test`                                   | Run all test suites                      |
-| `npm run test:e2e`                               | Run end-to-end tests (Playwright)        |
+| `npm run build`                                  | Build all workspaces (release lane only) |
+| `npm run lint`                                   | Lint all workspaces (release lane only)  |
+| `npm run typecheck`                              | Type-check all workspaces (release only) |
+| `npm run test`                                   | Run every suite (release lane only)      |
+| `npm run test:e2e --workspace=claw-frontend`     | Run end-to-end tests (Playwright)        |
 | `npm run format`                                 | Format code with Prettier                |
-| `npm run clean`                                  | Remove build artifacts and node_modules  |
 | `./scripts/claw.sh up`                           | Start the full dev stack                 |
 | `./scripts/claw.sh down`                         | Stop the full dev stack                  |
-| `./scripts/claw.sh logs -f <service>`            | Tail logs for a specific container       |
+| `./scripts/claw.sh logs <service>`               | Follow logs for a specific container     |
 
 ---
 

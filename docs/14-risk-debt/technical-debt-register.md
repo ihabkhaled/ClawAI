@@ -192,7 +192,7 @@ Last updated: 2026-09-10
 
 - **Severity**: High
 - **Effort**: High
-- **Location**: All 17 services (Docker Compose)
+- **Location**: All services (Docker Compose)
 - **Detail**: Each service is a single container. No horizontal scaling or load balancing.
 - **Impact**: Single failure causes feature outage. Cannot handle traffic spikes.
 - **Remediation**: Health check-based restart policies. Kubernetes migration plan. PgBouncer for connection pooling.
@@ -201,7 +201,7 @@ Last updated: 2026-09-10
 
 - **Severity**: Medium
 - **Effort**: High
-- **Location**: `docker/docker-compose.dev.yml`
+- **Location**: `docker/docker-compose.dev.databases.yml`, `docker/docker-compose.prod.databases.yml`
 - **Detail**: No clustering, no mirrored queues.
 - **Impact**: RabbitMQ crash stops all async communication.
 - **Remediation**: 3-node cluster with quorum queues. Publisher confirms (already done).
@@ -259,7 +259,7 @@ Last updated: 2026-09-10
 
 ## 7. Error Handling
 
-### TD-032: 16 services report a bad request body as a 500 — FIXED (2026-09-19)
+### TD-032: 16 of the services report a bad request body as a 500 — FIXED (2026-09-19)
 
 - **Added**: 2026-09-19 · **Severity**: Low · **Effort**: Low
 - Body-parser's 400/413/415 errors are plain `http-errors`, not `HttpException`,

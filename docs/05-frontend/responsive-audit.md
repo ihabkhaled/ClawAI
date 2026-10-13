@@ -30,21 +30,21 @@ S=.next/standalone/apps/claw-frontend
 mkdir -p $S/.next && cp -r .next/static $S/.next/static && cp -r public $S/public
 (cd $S && PORT=3999 HOSTNAME=127.0.0.1 node server.js)
 
-# in another shell; the dev stack must answer https://claw.local/api/v1/health
+# in another shell, from the repository root; the dev stack must answer https://claw.local/api/v1/health
 export MSYS_NO_PATHCONV=1   # Git Bash only: stops it rewriting "/thread" style arguments
-node scripts/responsive-audit/audit.cjs --tag=after                       # English, all viewports
-node scripts/responsive-audit/audit.cjs --locale=ar --tag=after           # Arabic, 4 viewports
-node scripts/responsive-audit/audit.cjs --vp=m320,m390 --only=/files,/billing --tag=quick
+node apps/claw-frontend/scripts/responsive-audit/audit.cjs --tag=after                       # English, all viewports
+node apps/claw-frontend/scripts/responsive-audit/audit.cjs --locale=ar --tag=after           # Arabic, 4 viewports
+node apps/claw-frontend/scripts/responsive-audit/audit.cjs --vp=m320,m390 --only=/files,/billing --tag=quick
 ```
 
 Flags: `--locale=en|ar`, `--vp=<names>`, `--only=<route substrings>`, `--tag=<prefix>`.
 `NO_SHOT=1` skips screenshots. `/api/v1/**` is forwarded to `https://claw.local`
 (`AUDIT_BACKEND` overrides it, `AUDIT_LOCAL` overrides the frontend origin). Portal routes log in as
 `admin@claw.local`; marketing routes run logged out. Thread, review and connector ids are
-discovered from the live data. `scripts/responsive-audit/probe-wide.cjs <path> [width]` lists the
+discovered from the live data. `apps/claw-frontend/scripts/responsive-audit/probe-wide.cjs <path> [width]` lists the
 deepest elements wider than the viewport when a route fails.
 
-Output goes to `scripts/responsive-audit/out/` (git-ignored): `<tag>-<locale>-results.json`, a
+Output goes to the `out/` folder next to `audit.cjs` (git-ignored, so absent from a fresh checkout; note `audit.cjs` currently hard-codes it as an absolute `D:/Freelance/Claw/...` path in its `OUT` constant): `<tag>-<locale>-results.json`, a
 screenshot per failure, and a sample screenshot (dashboard, chat, home) per viewport.
 
 ## What counts as a failure

@@ -9,7 +9,6 @@ const DEFAULT_NEGATIVE = 'blurry, low quality, distorted';
 const DEFAULT_FILENAME_PREFIX = 'ClawAI_image';
 
 function generateRandomSeed(): number {
-  // eslint-disable-next-line security/detect-pseudoRandomBytes
   return Math.floor(Math.random() * 0x100000000);
 }
 

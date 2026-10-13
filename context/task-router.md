@@ -64,12 +64,15 @@ and an exact command, screenshot or log line behind every claim. Runbooks
 [skills/verify-a-batch-live.md](../skills/verify-a-batch-live.md) (the
 stale-container traps).
 
-Before committing, run the per-folder gates on the folders you touched (see
-[stack-and-toolchain.md](stack-and-toolchain.md)):
+Land the change and let the hooks gate it — they run the gates for the change
+type, scoped to what changed (see
+[rules/23 — gate matrix](../rules/23-git-commits-hooks-and-release-gates.md#gate-matrix-by-change-type)):
 
 ```bash
-cd <touched-workspace>
-npm run typecheck && npm run lint && npm test && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 And before release: `npm run release:preflight`.

@@ -104,6 +104,9 @@
 | Debug a Random Sign-Out                  | `debug-a-sign-out.md`                          | Users logged out with two tabs, after sleep, or in VS Code: reproduce with the session probe + two Playwright tabs, read the grace log, know which defence covers which race (ADR-106)  |
 | Run the File-Model Matrix                | `run-the-file-model-matrix.md`                 | Which models write which formats: every model × format × N real files through chat → writer → render → download, checked per format; restores FILE_WRITER; resumable (F4)               |
 | Add a Helper Model Role                  | `add-a-helper-model-role.md`                   | A model beside the chosen one (gate, file writer, vision helper): role + migration + seed, candidates client, per-turn metering, admin tab (rule 51 §7)                                 |
+| Add an Admin Usage Dimension             | `add-an-admin-usage-dimension.md`              | You add a figure to the admin per-user usage modal or the Observability "Platform usage" section: where each dimension is stored, what is missing, the bounded-query rules              |
+| Propagate a Chat Change to Every Mode    | `propagate-a-chat-change-to-every-mode.md`     | You change ANYTHING in normal chat (button, upload type, tool, context source, detector, DTO field): walk the ten surfaces before calling it done                                       |
+| Fix a Corrupted Page Layout              | `fix-a-corrupted-page-layout.md`               | A portal page shows a blank band, endless scroll or a pushed-off top bar: find the escaped absolute element and fix it at the owner                                                     |
 
 ---
 
@@ -121,9 +124,9 @@ These `docs/` pages answer the questions skills most often depend on:
 | Per-service deep dive                                            | [docs/04-backend/service-guide-<name>.md](../docs/04-backend/)                                  |
 | All env vars                                                     | [docs/06-data/environment-variables.md](../docs/06-data/environment-variables.md)               |
 
-> **Build reminder:** the repo uses **tsgo** (`@typescript/native-preview`) +
-> `tsc-alias`, NOT `tsc`/`nest build`. `npm run build/typecheck/dev` already
-> wrap tsgo per workspace. Docker images are `node:26-bookworm-slim` (glibc).
+> **Build reminder:** the repo compiles with **TypeScript 7** (the `typescript7`
+> alias, run through `tools/typescript/run-ts7.mjs`) + `tsc-alias`, NOT
+> `nest build`. `npm run build/typecheck/dev` already wrap it per workspace. Docker images are `node:26-bookworm-slim` (glibc).
 
 ---
 
@@ -160,10 +163,13 @@ grep -r "ModelLifecycle.ACTIVE" apps/ --include="*.ts"
 grep -r "@Get\|@Post\|@Put\|@Patch\|@Delete" apps/ --include="*.controller.ts" -l
 ```
 
-### Run the full quality suite
+### Land a change (the hooks run the quality suite)
 
 ```bash
-npm run typecheck && npm run lint && npm run test && npm run build
+# The hooks gate the change for its type (rules/23-git-commits-hooks-and-release-gates.md, gate matrix)
+git add <explicit paths>
+git commit -m "<type>(<scope>): <subject>" -m "Docs: updated <what>"
+git push origin <branch>
 ```
 
 ### Check a service is healthy
@@ -189,59 +195,9 @@ echo $TOKEN
 ./scripts/claw.sh logs connector-service --tail=50
 ```
 
-## Generated artifacts are a HARD GATE (never optional)
+## Generated artifacts are a hard gate
 
-`.ai/**`, every workspace `AGENTS.md`, and
-`docs/features/ai-native-engineering-os/inventory.snapshot.json` are
-**generated from the tree**. CI verifies them on every push:
-
-| CI job              | Command                    | Fails when                                                           |
-| ------------------- | -------------------------- | -------------------------------------------------------------------- |
-| Knowledge freshness | `npm run knowledge:check`  | a generated file's hash no longer matches the tree                   |
-| Knowledge integrity | `npm run knowledge:verify` | stale file, broken link, orphan reviewer, hook-bypass, contradiction |
-| Inventory audit     | `npm run audit:check`      | the inventory snapshot hash has drifted                              |
-
-**A stale artifact turns the build red on every subsequent push**, for everyone,
-until someone regenerates it. It is not a warning and it is not deferrable.
-
-### The rule
-
-Any commit that touches `packages/**`, `apps/**`, `infra/**`, `docker/**`,
-`docs/**`, `scripts/**`, `rules/**`, `skills/**`, `tools/**` or `.env.example`
-MUST regenerate and stage:
-
-```bash
-npm run knowledge:build      # rewrites .ai/** + workspace AGENTS.md
-npm run audit                # rewrites the inventory snapshot
-git add .ai docs/features/ai-native-engineering-os/inventory.snapshot.json
-git add apps/*/AGENTS.md packages/*/AGENTS.md 2>/dev/null
-npm run knowledge:verify     # what CI runs
-npm run audit:check          # what CI runs
-```
-
-The pre-commit hook now does all of this **automatically**, so in normal use
-there is nothing to remember. The rule is written down because the hook can be
-skipped (it must not be) and because a red CI needs a documented fix.
-
-### Order matters — regenerate AFTER formatting, never before
-
-This is the mistake that actually caused a red build:
-
-1. `npm run knowledge:build` — hashes the current bytes
-2. `git add` / commit — **lint-staged reformats the staged files**
-3. the reformatted bytes no longer match the hashes recorded in step 1
-4. `knowledge:check` passes locally (it ran before the reformat) but
-   `knowledge:verify` fails in CI
-
-Generators must run **after** prettier and `eslint --fix` have settled. The
-pre-commit hook is ordered that way deliberately: lint-staged is step 1,
-regeneration is step 2.
-
-### Never hand-edit a generated artifact
-
-If a generated file is wrong, fix the **generator or its input**, then
-regenerate. Editing `.ai/manifests/*.json` or a workspace `AGENTS.md` by hand is
-overwritten on the next build and hides the real problem.
-| Add an Admin Usage Dimension | `add-an-admin-usage-dimension.md` | You add a figure to the admin per-user usage modal or the Observability "Platform usage" section: where each dimension is stored, what is missing, the bounded-query rules |
-| Propagate a Chat Change to Every Mode | `propagate-a-chat-change-to-every-mode.md` | You change ANYTHING in normal chat (button, upload type, tool, context source, detector, DTO field): walk the ten surfaces before calling it done |
-| Fix a Corrupted Page Layout | `fix-a-corrupted-page-layout.md` | A portal page shows a blank band, endless scroll or a pushed-off top bar: find the escaped absolute element and fix it at the owner |
+`.ai/**`, every workspace `AGENTS.md`, the per-model routers and the inventory
+snapshot are generated; the pre-commit hook regenerates and stages them, and CI
+fails on a stale one. The rule, the fix for a red CI and the ordering trap live in
+one place: [rules/24](../rules/24-generated-files-and-knowledge-freshness.md#generated-artifacts-are-a-hard-gate-never-optional).

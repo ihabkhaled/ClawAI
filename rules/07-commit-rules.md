@@ -2,35 +2,15 @@
 
 ---
 
-## Scoped Quality Gates Before Commit (MANDATORY — STRICT — applies to EVERY change, EVERYWHERE)
+## Landing a change
 
-> **Read this section before EVERY commit/push. No exceptions.** It is mirrored in `CLAUDE.md`, `CODEX.md`, `cursor.md`, and the agent memory `feedback_per_folder_gates_before_commit`. Policy authority: [ADR-061](../docs/13-adr/adr-061-git-hook-policy-no-bypass.md).
-
-**The pre-commit hook is now scoped + fast** — it lint-stages only the staged files, checks knowledge freshness, and typechecks ONLY the workspaces your staged changes touch (`tools/affected/index.mjs typecheck --staged`). It does NOT run the old expensive all-workspace gate. Because it is cheap and scoped, there is **no reason to ever bypass it**. `--no-verify` is banned (ADR-061); `knowledge:verify` scans the canonical docs and fails on any `--no-verify` recommendation.
-
-**Run the manual gates ONLY in the folder(s) you actually touched — as a confidence check before you commit, not as a replacement for the hook. NEVER run the full all-workspace lint/typecheck/test/build.** This repo is 17 backend services + the frontend + 6 shared packages. An all-workspace gate run generates 13 Prisma clients, compiles every service, and executes thousands of tests — many minutes of CPU for a one-file change. It is the wrong default for an agent on two counts: it is **prohibitively expensive**, and it **false-fails** on unchanged sibling services whose Prisma client isn't generated in a fresh worktree.
-
-**The rule — for ANY change, in ANY folder:**
-
-1. Identify which workspace folder(s) you edited: `apps/claw-<service>/`, `apps/claw-frontend/`, or `packages/<shared-pkg>/`.
-2. Lint changed files and run only the matching spec for changed TypeScript.
-   Typecheck/build the affected workspace only when its validation lane requires it.
-
-```bash
-cd apps/claw-<service>      # or apps/claw-frontend, or packages/<pkg>
-npx eslint <changed files>
-npx vitest run <matching spec>
-npm run typecheck          # only when required by the scoped validation lane
-```
-
-3. Multi-folder change → run scoped gates only for affected files/workspaces.
-4. Non-workspace files with no gate (`scripts/**`, `infra/**`, plain `*.mjs`) → do the cheapest equivalent check (`node --check <file>`, JSON/schema validate). Do NOT trigger an all-workspace run "to be safe".
-5. When required scoped gates are green, commit and let the hook run, then **push immediately**. A valid exact-tree receipt can avoid redundant checks only where the hook supports it; hooks remain enabled:
-
-```bash
-git commit -m "<conventional-commit-message>"
-git push origin <branch>
-```
+Commit and push through the hooks; they run the gates the change type needs,
+scoped to what changed, and CI runs the rest. Run nothing else by hand, and never
+re-run a gate the hooks are about to run on the same tree. The canonical text —
+the landing loop, what each hook runs, and the gate matrix by change type — is
+[rules/23](23-git-commits-hooks-and-release-gates.md#landing-a-change).
+`--no-verify` and every other bypass are banned
+([ADR-061](../docs/13-adr/adr-061-git-hook-policy-no-bypass.md)).
 
 ## Push each commit before starting the next one (MANDATORY)
 
@@ -113,7 +93,9 @@ the user; it is never the default and never inferred.
 
 **Body**: Explain WHY the change was needed. The diff shows WHAT changed.
 
-**Footer**: `Co-Authored-By: <AI-name> <noreply@...>`
+**Footer**: a `Docs:` trailer on every commit — `Docs: updated <what>` or
+`Docs: none — <specific reason>` ([rules/63](63-docs-move-with-code.md)) — then
+`Co-Authored-By: <AI-name> <noreply@...>` for agent-authored commits.
 
 Examples:
 
@@ -124,6 +106,7 @@ Connector sync was limited to locally installed models. Users couldn't
 discover or select cloud Ollama models without knowing model names.
 Now syncs 200+ models from ollama.com catalog.
 
+Docs: updated apps/claw-connector-service/CLAUDE.md, docs/04-backend/service-guide-connector.md
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 ```
 
@@ -134,6 +117,7 @@ Provider comparison only checked 'local-ollama'. Connectors created
 with provider=OLLAMA (uppercase) fell through to cloud provider call,
 which failed silently and triggered local fallback with wrong model.
 
+Docs: none — a routing bug fix; no document described the broken comparison
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 ```
 
@@ -155,21 +139,17 @@ Commit 7: docs (CLAUDE.md, docs/ files)
 
 ---
 
-## Pre-commit Hook (Never Skip)
+## What the hooks run
 
-```
-1. prettier --write        (format staged files)
-2. npm run lint            (ESLint 0 errors)
-3. npm run typecheck       (TypeScript 0 errors)
-4. npm run build           (production build success)
-5. npm run test            (all tests pass)
-```
+pre-commit: lint-staged (ESLint `--max-warnings 0`, Prettier) → secret scan →
+knowledge layer regenerate + verify (including the docs checks) → root checks +
+typecheck of the staged-affected workspaces. commit-msg: commitlint and the
+`Docs:` trailer check. pre-push: every pushed ref's tree — knowledge, root
+checks, typecheck of shared-package dependents, related tests, build. Details:
+[rules/23](23-git-commits-hooks-and-release-gates.md#what-the-hooks-run).
 
-**NEVER `--no-verify`.** If a hook fails, fix the underlying issue.
-
-If the pre-commit hook fails and you create a new commit to fix it, NEVER use `--amend` — it modifies the previous commit. Create a fresh commit.
-
----
+A hook failure is a real problem in what you staged: fix it and make a new
+commit — never `--amend` to paper over it, never bypass it.
 
 ## Branch Rules
 
@@ -202,8 +182,13 @@ PR body must include:
 
 - [ ] All 18 infra items verified
 - [ ] QA script run with 0 failures
-- [ ] Docs updated
+
+## Docs impact
+
+- Updated: <docs> — or: none, because <specific reason> (rules/63)
 ```
+
+The canonical PR template is [`.github/pull_request_template.md`](../.github/pull_request_template.md).
 
 ---
 
@@ -219,63 +204,16 @@ PR body must include:
 - Hardcoded secrets (API keys, passwords, tokens)
 - Inline types/enums/consts in restricted files
 
-## Generated artifacts are a HARD GATE (never optional)
+## Generated artifacts are a hard gate
 
-`.ai/**`, every workspace `AGENTS.md`, and
-`docs/features/ai-native-engineering-os/inventory.snapshot.json` are
-**generated from the tree**. CI verifies them on every push:
-
-| CI job              | Command                    | Fails when                                                           |
-| ------------------- | -------------------------- | -------------------------------------------------------------------- |
-| Knowledge freshness | `npm run knowledge:check`  | a generated file's hash no longer matches the tree                   |
-| Knowledge integrity | `npm run knowledge:verify` | stale file, broken link, orphan reviewer, hook-bypass, contradiction |
-| Inventory audit     | `npm run audit:check`      | the inventory snapshot hash has drifted                              |
-
-**A stale artifact turns the build red on every subsequent push**, for everyone,
-until someone regenerates it. It is not a warning and it is not deferrable.
-
-### The rule
-
-Any commit that touches `packages/**`, `apps/**`, `infra/**`, `docker/**`,
-`docs/**`, `scripts/**`, `rules/**`, `skills/**`, `tools/**` or `.env.example`
-MUST regenerate and stage:
-
-```bash
-npm run knowledge:build      # rewrites .ai/** + workspace AGENTS.md
-npm run audit                # rewrites the inventory snapshot
-git add .ai docs/features/ai-native-engineering-os/inventory.snapshot.json
-git add apps/*/AGENTS.md packages/*/AGENTS.md 2>/dev/null
-npm run knowledge:verify     # what CI runs
-npm run audit:check          # what CI runs
-```
-
-The pre-commit hook now does all of this **automatically**, so in normal use
-there is nothing to remember. The rule is written down because the hook can be
-skipped (it must not be) and because a red CI needs a documented fix.
-
-### Order matters — regenerate AFTER formatting, never before
-
-This is the mistake that actually caused a red build:
-
-1. `npm run knowledge:build` — hashes the current bytes
-2. `git add` / commit — **lint-staged reformats the staged files**
-3. the reformatted bytes no longer match the hashes recorded in step 1
-4. `knowledge:check` passes locally (it ran before the reformat) but
-   `knowledge:verify` fails in CI
-
-Generators must run **after** prettier and `eslint --fix` have settled. The
-pre-commit hook is ordered that way deliberately: lint-staged is step 1,
-regeneration is step 2.
-
-### Never hand-edit a generated artifact
-
-If a generated file is wrong, fix the **generator or its input**, then
-regenerate. Editing `.ai/manifests/*.json` or a workspace `AGENTS.md` by hand is
-overwritten on the next build and hides the real problem.
+`.ai/**`, every workspace `AGENTS.md`, the per-model routers and the inventory
+snapshot are generated; the pre-commit hook regenerates and stages them, and CI
+fails on a stale one. The rule, the fix for a red CI and the ordering trap live in
+one place: [rules/24](24-generated-files-and-knowledge-freshness.md#generated-artifacts-are-a-hard-gate-never-optional).
 
 ## Enforcement
 
-- **Git hook** — `.husky/commit-msg` runs commitlint on every message;
+- **Git hook** — `.husky/commit-msg` runs commitlint and `docs:impact` on every message;
   `.husky/pre-commit` and `.husky/pre-push` gate the content.
 - **Knowledge check** — `npm run knowledge:verify` (`checkBypass`) fails if any
   canonical policy file recommends bypassing a hook.
