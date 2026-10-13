@@ -183,3 +183,148 @@ describe('ThreadPublicationDetail', () => {
     expect(alerts).toContain('chat.threadProgress.error.credit');
   });
 });
+
+const READY_DRAFT = {
+  markdown: '# Heat pumps',
+  citations: [{ evidenceId: 'e-1', url: 'https://source.example/heat' }],
+  judgeScore: 90,
+  criticScore: 88,
+};
+
+function readyGeneration() {
+  return {
+    data: {
+      publicationId: 'pub-1',
+      publicationStatus: 'READY_FOR_REVIEW',
+      jobId: 'job-1',
+      status: 'WAITING_FOR_REVIEW',
+      stage: 'READY_FOR_REVIEW',
+      round: 1,
+      safeErrorCode: null,
+      draft: READY_DRAFT,
+    },
+  };
+}
+
+describe('ThreadPublicationDetail owner actions and publish banner', () => {
+  it('shows the live banner with the address and an Open live Thread link after publish', () => {
+    const detail = makeDetail(
+      {
+        publish: mutation({ isSuccess: true }) as never,
+        publicUrl: 'https://claw.local/threads/abc',
+        hasDraft: true,
+        generationFailed: false,
+      },
+      readyGeneration(),
+    );
+    render(<ThreadPublicationDetail detail={detail} />);
+
+    expect(screen.getByTestId('thread-live-banner')).toBeInTheDocument();
+    expect(screen.getByLabelText('chat.threadLiveLinkLabel')).toHaveValue(
+      'https://claw.local/threads/abc',
+    );
+    const open = screen.getByRole('link', { name: 'chat.threadLiveOpen' });
+    expect(open).toHaveAttribute('href', 'https://claw.local/threads/abc');
+    expect(open).toHaveAttribute('target', '_blank');
+    expect(open).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(screen.queryByRole('button', { name: 'chat.threadApproveAndPublish' })).toBeNull();
+  });
+
+  it('falls back to the one-line notice until the public address is known', () => {
+    const detail = makeDetail(
+      { publish: mutation({ isSuccess: true }) as never, publicUrl: null, hasDraft: true },
+      readyGeneration(),
+    );
+    render(<ThreadPublicationDetail detail={detail} />);
+
+    expect(screen.queryByTestId('thread-live-banner')).toBeNull();
+    expect(screen.getByText('chat.threadPublished')).toBeInTheDocument();
+  });
+
+  it('does not show the banner before anything was published', () => {
+    const detail = makeDetail({ hasDraft: true, publicationReady: true }, readyGeneration());
+    render(<ThreadPublicationDetail detail={detail} />);
+
+    expect(screen.queryByTestId('thread-live-banner')).toBeNull();
+  });
+
+  it('offers Edit draft and Approve and publish together, and publishes on click', async () => {
+    const detail = makeDetail(
+      { hasDraft: true, publicationReady: true, generationFailed: false },
+      readyGeneration(),
+    );
+    render(<ThreadPublicationDetail detail={detail} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'chat.threadEditDraft' }));
+    expect(detail.startEditing).toHaveBeenCalledTimes(1);
+    await userEvent.click(screen.getByRole('button', { name: 'chat.threadApproveAndPublish' }));
+    expect(detail.publish.mutate).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers Unpublish for a published Thread and wires it to the mutation', async () => {
+    const published = {
+      id: 'pub-1',
+      status: ThreadPublicationStatus.Published,
+      title: 'T',
+      slug: 't',
+      updatedAt: '2026-10-13',
+    };
+    const detail = makeDetail(
+      { selectedPublication: published, hasDraft: true, generationFailed: false },
+      readyGeneration(),
+    );
+    render(<ThreadPublicationDetail detail={detail} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'chat.threadUnpublish' }));
+    expect(detail.unpublish.mutate).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the draft in a read-only field a keyboard can reach and scroll', () => {
+    const detail = makeDetail({ hasDraft: true, generationFailed: false }, readyGeneration());
+    render(<ThreadPublicationDetail detail={detail} />);
+
+    const preview = screen.getByTestId('thread-draft-preview');
+    expect(preview).toHaveValue('# Heat pumps');
+    expect(preview).toHaveAttribute('readonly');
+    expect(preview).toHaveAccessibleName('chat.threadDraftPreview');
+  });
+
+  it('edits the revision with the shared fields and cancels with an icon button', async () => {
+    const detail = makeDetail(
+      { hasDraft: true, editingRevision: true, revisionMarkdown: 'Body', revisionCapUsd: '0.5' },
+      readyGeneration(),
+    );
+    render(<ThreadPublicationDetail detail={detail} />);
+
+    expect(screen.getByLabelText('chat.threadRevisionContent')).toHaveValue('Body');
+    expect(screen.getByLabelText('chat.threadRevisionCap')).toHaveValue(0.5);
+    await userEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
+    expect(detail.setEditingRevision).toHaveBeenCalledWith(false);
+  });
+
+  it('says the job is queued, never "freezing your chat", before it starts', () => {
+    const detail = makeDetail(
+      { generationFailed: false },
+      {
+        data: {
+          publicationId: 'pub-1',
+          publicationStatus: 'DRAFT',
+          jobId: 'job-1',
+          status: 'QUEUED',
+          stage: 'SNAPSHOT',
+          round: 0,
+          safeErrorCode: null,
+          draft: null,
+        },
+      },
+    );
+    render(<ThreadPublicationDetail detail={detail} />);
+
+    expect(screen.getByTestId('thread-generation-stage')).toHaveTextContent(
+      'chat.threadProgress.statusQueued',
+    );
+    expect(screen.getByTestId('thread-generation-stage')).not.toHaveTextContent(
+      'chat.threadStageSnapshot',
+    );
+  });
+});

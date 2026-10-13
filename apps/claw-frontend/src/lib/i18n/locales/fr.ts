@@ -20,6 +20,7 @@ import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
+import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const fr: TranslationDictionary = {
@@ -458,6 +459,7 @@ export const fr: TranslationDictionary = {
       auto: 'Laisser AUTO choisir',
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.fr,
+    ...THREAD_BOARD_TRANSLATIONS.fr,
     composerContext: {
       menuLabel: 'Contexte',
       pickLabel: 'Choisir des packs de contexte',
@@ -732,6 +734,11 @@ export const fr: TranslationDictionary = {
     threadStartGeneration: 'Lancer la génération',
     threadApproveAndPublish: 'Approuver et publier',
     threadPublished: 'La publication est en ligne.',
+    threadLiveTitle: 'Votre Thread est en ligne',
+    threadLiveBody:
+      'Toute personne disposant de ce lien peut le lire. Partagez-le ou ouvrez-le pour voir ce que voient les lecteurs.',
+    threadLiveLinkLabel: 'Lien public',
+    threadLiveOpen: 'Ouvrir le Thread en ligne',
     threadDraftNotEligible: 'Ce brouillon ne peut pas être publié après les contrôles de sécurité.',
     threadGenerationCancelled: 'La génération a été annulée.',
     threadStageSnapshot: 'Figement de votre chat',
@@ -839,6 +846,9 @@ export const fr: TranslationDictionary = {
     threadCreateFailed: 'Échec de la création du fil',
     threadProgress: {
       title: 'Progression de la génération',
+      statusQueued: 'En file d’attente',
+      queuedHint:
+        'Rien n’a encore commencé. Votre Thread démarre dès qu’un worker est libre. Vous pouvez annuler à tout moment.',
       statusLabel: 'Statut',
       stageLabel: 'Étape',
       attempt: 'Tentative {current} sur {max}',
@@ -931,6 +941,8 @@ export const fr: TranslationDictionary = {
           'Un modèle travaillait encore après 10 minutes, l’appel a donc été arrêté.',
         modelReasonedNoAnswer:
           'Un modèle a dépensé tout son budget de sortie à réfléchir et n’a écrit aucune réponse.',
+        queueExpired:
+          'Cette génération a trop attendu dans la file, elle a donc été arrêtée avant de commencer.',
         unknown: 'Un problème est survenu ({code}).',
       },
       hint: {
@@ -973,6 +985,7 @@ export const fr: TranslationDictionary = {
           'Choisissez un modèle plus rapide ou un sujet plus court, puis réessayez.',
         modelReasonedNoAnswer:
           'Réessayez, choisissez un modèle qui répond plus directement ou raccourcissez le sujet.',
+        queueExpired: 'Relancez-la maintenant. Si la file est longue, réessayez plus tard.',
         unknown: 'Réessayez, ou changez de modèles.',
       },
       startError: {
@@ -985,6 +998,18 @@ export const fr: TranslationDictionary = {
         modelUnknown:
           'Un modèle sélectionné ne figure pas dans le catalogue de modèles. Choisissez-en un dans la liste.',
         spendCapTooLow: 'Le plafond de dépense est trop bas. Fixez au moins 0,01 USD.',
+        allowanceUnavailable:
+          'Votre quota de Threads est épuisé ou retenu par une génération en cours. Attendez qu’elle se termine ou changez d’offre.',
+        tooManyActive:
+          'Vous avez déjà le nombre maximal de générations en cours. Attendez la fin de l’une d’elles ou annulez-en une.',
+        idempotencyKeyReused:
+          'Cette demande a déjà été envoyée avec des détails différents. Recommencez depuis le formulaire.',
+        notCancellable:
+          'Cette génération n’est ni en cours ni en file d’attente, il n’y a donc rien à annuler.',
+        topicInvalid:
+          'Le sujet est vide ou contient un caractère qui ne peut pas être enregistré. Modifiez-le et réessayez.',
+        textInvalid:
+          'Un champ de texte contient un caractère qui ne peut pas être enregistré. Supprimez les caractères inhabituels et réessayez.',
       },
       error: {
         conflict: 'Annulez d’abord la génération ou réessayez dans un instant.',

@@ -2,10 +2,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { ThreadPublicationCommunityAction } from '@/enums/thread-publication-community-action.enum';
 import { threadPublicationsRepository } from '@/repositories/threads/thread-publications.repository';
+import { useAuthStore } from '@/stores/auth.store';
 import type { ThreadPublicAction, ThreadPublicMutation } from '@/types/thread-publication.types';
+import { rememberReaction } from '@/utilities/thread-viewer-reaction.utility';
 
 export function useThreadPublicMutation(slug: string): ThreadPublicMutation {
   const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? '');
   return useMutation({
     mutationFn: async (action: ThreadPublicAction) => {
       if (action.kind === ThreadPublicationCommunityAction.Comment) {
@@ -32,6 +35,9 @@ export function useThreadPublicMutation(slug: string): ThreadPublicMutation {
     },
     onSuccess: async (summary, action) => {
       if (action.kind === ThreadPublicationCommunityAction.Reaction && summary) {
+        if (userId !== '') {
+          rememberReaction(userId, slug, action.value);
+        }
         queryClient.setQueryData(['thread-publications', 'public', slug, 'reactions'], summary);
       } else if (action.kind !== ThreadPublicationCommunityAction.Reaction) {
         await queryClient.invalidateQueries({

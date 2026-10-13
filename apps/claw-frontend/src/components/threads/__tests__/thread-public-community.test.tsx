@@ -43,11 +43,15 @@ function createActions(reportTarget: string | null = null): ThreadCommunityActio
   };
 }
 
-function renderCommunity(isAuthenticated: boolean, actions = createActions()) {
+function renderCommunity(
+  isAuthenticated: boolean,
+  actions = createActions(),
+  summary: ThreadReactionSummary = reactions,
+) {
   render(
     <ThreadPublicCommunity
       comments={comments}
-      reactions={reactions}
+      reactions={summary}
       isAuthenticated={isAuthenticated}
       communityLoading={false}
       communityError={false}
@@ -99,5 +103,74 @@ describe('ThreadPublicCommunity', () => {
     }
     fireEvent.submit(changeForm);
     await waitFor(() => expect(actions.submitChangeRequest).toHaveBeenCalledOnce());
+  });
+});
+
+describe('ThreadPublicCommunity reactions and controls', () => {
+  it('highlights the own like of the viewer and removes it with the same button', async () => {
+    const user = userEvent.setup();
+    const actions = renderCommunity(true, createActions(), {
+      likes: 4,
+      dislikes: 1,
+      viewerReaction: ThreadPublicationReaction.Like,
+    });
+
+    const like = screen.getByRole('button', { name: 'chat.threadPublicLike (4)' });
+    expect(like).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'chat.threadPublicDislike (1)' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    expect(like).toHaveAttribute('title', 'chat.threadPublicRemoveReaction');
+    await user.click(like);
+    expect(actions.setReaction).toHaveBeenCalledWith(null);
+  });
+
+  it('switches from a like to a dislike in one click', async () => {
+    const user = userEvent.setup();
+    const actions = renderCommunity(true, createActions(), {
+      likes: 4,
+      dislikes: 1,
+      viewerReaction: ThreadPublicationReaction.Like,
+    });
+
+    await user.click(screen.getByRole('button', { name: 'chat.threadPublicDislike (1)' }));
+
+    expect(actions.setReaction).toHaveBeenCalledWith(ThreadPublicationReaction.Dislike);
+  });
+
+  it('no longer has a separate Remove reaction button', () => {
+    renderCommunity(true);
+    expect(screen.queryByRole('button', { name: 'chat.threadPublicRemoveReaction' })).toBeNull();
+  });
+
+  it('disables reactions for a signed-out reader and offers sign-in as a button-styled link', () => {
+    renderCommunity(false);
+
+    expect(screen.getByRole('button', { name: 'chat.threadPublicLike (4)' })).toBeDisabled();
+    expect(screen.getByRole('link', { name: 'chat.threadPublicSignInToJoin' }).className).toContain(
+      'inline-flex',
+    );
+  });
+
+  it('reports the article from a labelled ghost button and opens the report form', async () => {
+    const user = userEvent.setup();
+    const actions = renderCommunity(true);
+
+    await user.click(screen.getByRole('button', { name: 'chat.threadPublicReportArticle' }));
+
+    expect(actions.setReportTarget).toHaveBeenCalledWith('');
+  });
+
+  it('keeps the comment and suggestion forms in shared fields with icon buttons', () => {
+    renderCommunity(true);
+
+    expect(
+      screen.getByRole('button', { name: 'chat.threadPublicPostComment' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'chat.threadPublicSubmitChange' }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('chat.threadPublicAddComment').tagName).toBe('TEXTAREA');
   });
 });

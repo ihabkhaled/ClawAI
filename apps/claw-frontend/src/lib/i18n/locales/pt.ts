@@ -20,6 +20,7 @@ import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
+import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const pt: TranslationDictionary = {
@@ -453,6 +454,7 @@ export const pt: TranslationDictionary = {
       auto: 'Deixar o AUTO escolher',
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.pt,
+    ...THREAD_BOARD_TRANSLATIONS.pt,
     composerContext: {
       menuLabel: 'Contexto',
       pickLabel: 'Escolher pacotes de contexto',
@@ -725,6 +727,11 @@ export const pt: TranslationDictionary = {
     threadStartGeneration: 'Iniciar geração',
     threadApproveAndPublish: 'Aprovar e publicar',
     threadPublished: 'A publicação está no ar.',
+    threadLiveTitle: 'Seu Thread está no ar',
+    threadLiveBody:
+      'Qualquer pessoa com este link pode lê-lo. Compartilhe ou abra para ver como os leitores o veem.',
+    threadLiveLinkLabel: 'Link público',
+    threadLiveOpen: 'Abrir o Thread publicado',
     threadDraftNotEligible: 'O rascunho não pode ser publicado após as verificações de segurança.',
     threadGenerationCancelled: 'A geração foi cancelada.',
     threadStageSnapshot: 'Congelando seu chat',
@@ -830,6 +837,9 @@ export const pt: TranslationDictionary = {
     threadCreateFailed: 'Falha ao criar conversa',
     threadProgress: {
       title: 'Progresso da geração',
+      statusQueued: 'Na fila de espera',
+      queuedHint:
+        'Nada começou ainda. Seu Thread começa assim que um worker estiver livre. Você pode cancelar a qualquer momento.',
       statusLabel: 'Status',
       stageLabel: 'Etapa',
       attempt: 'Tentativa {current} de {max}',
@@ -920,6 +930,8 @@ export const pt: TranslationDictionary = {
           'Um modelo ainda trabalhava após 10 minutos, então a chamada foi interrompida.',
         modelReasonedNoAnswer:
           'Um modelo gastou todo o orçamento de saída pensando e não escreveu resposta.',
+        queueExpired:
+          'Esta geração ficou tempo demais na fila e foi interrompida antes de começar.',
         unknown: 'Algo deu errado ({code}).',
       },
       hint: {
@@ -961,6 +973,7 @@ export const pt: TranslationDictionary = {
         modelHardCeiling: 'Escolha um modelo mais rápido ou um tema mais curto e tente de novo.',
         modelReasonedNoAnswer:
           'Tente de novo, escolha um modelo que responda mais diretamente ou encurte o tema.',
+        queueExpired: 'Tente de novo agora. Se a fila estiver grande, tente mais tarde.',
         unknown: 'Tente de novo, ou mude os modelos.',
       },
       startError: {
@@ -972,6 +985,18 @@ export const pt: TranslationDictionary = {
           'Um modelo selecionado não está incluído no seu plano. Escolha um modelo incluído.',
         modelUnknown: 'Um modelo selecionado não está no catálogo de modelos. Escolha um da lista.',
         spendCapTooLow: 'O limite de gastos está baixo demais. Defina pelo menos 0,01 USD.',
+        allowanceUnavailable:
+          'Sua cota de Threads acabou ou está retida por uma geração em andamento. Espere ela terminar ou faça upgrade do plano.',
+        tooManyActive:
+          'Você já tem o máximo de gerações em andamento. Espere uma terminar ou cancele uma.',
+        idempotencyKeyReused:
+          'Esta solicitação já foi enviada com detalhes diferentes. Comece de novo pelo formulário.',
+        notCancellable:
+          'Esta geração não está em andamento nem na fila, então não há nada para cancelar.',
+        topicInvalid:
+          'O tópico está vazio ou tem um caractere que não pode ser salvo. Edite-o e tente de novo.',
+        textInvalid:
+          'Um campo de texto tem um caractere que não pode ser salvo. Remova os caracteres incomuns e tente de novo.',
       },
       error: {
         conflict: 'Cancele primeiro a geração ou tente de novo daqui a pouco.',

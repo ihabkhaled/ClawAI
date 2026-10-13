@@ -20,6 +20,7 @@ import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
+import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const it: TranslationDictionary = {
@@ -458,6 +459,7 @@ export const it: TranslationDictionary = {
       auto: 'Lascia scegliere ad AUTO',
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.it,
+    ...THREAD_BOARD_TRANSLATIONS.it,
     composerContext: {
       menuLabel: 'Contesto',
       pickLabel: 'Scegli i pacchetti di contesto',
@@ -732,6 +734,11 @@ export const it: TranslationDictionary = {
     threadStartGeneration: 'Avvia generazione',
     threadApproveAndPublish: 'Approva e pubblica',
     threadPublished: 'La pubblicazione è online.',
+    threadLiveTitle: 'Il tuo Thread è online',
+    threadLiveBody:
+      'Chiunque abbia questo link può leggerlo. Condividilo o aprilo per vedere come lo vedono i lettori.',
+    threadLiveLinkLabel: 'Link pubblico',
+    threadLiveOpen: 'Apri il Thread online',
     threadDraftNotEligible: 'La bozza non è pubblicabile dopo i controlli di sicurezza.',
     threadGenerationCancelled: 'La generazione è stata annullata.',
     threadStageSnapshot: 'Congelamento della chat',
@@ -839,6 +846,9 @@ export const it: TranslationDictionary = {
     threadCreateFailed: 'Creazione conversazione non riuscita',
     threadProgress: {
       title: 'Avanzamento della generazione',
+      statusQueued: 'In coda',
+      queuedHint:
+        'Non è ancora iniziato nulla. Il tuo Thread parte appena un worker è libero. Puoi annullare in qualsiasi momento.',
       statusLabel: 'Stato',
       stageLabel: 'Fase',
       attempt: 'Tentativo {current} di {max}',
@@ -932,6 +942,8 @@ export const it: TranslationDictionary = {
           'Un modello stava ancora lavorando dopo 10 minuti, quindi la chiamata è stata fermata.',
         modelReasonedNoAnswer:
           'Un modello ha speso tutto il budget di output a pensare e non ha scritto alcuna risposta.',
+        queueExpired:
+          'Questa generazione è rimasta in coda troppo a lungo ed è stata fermata prima di iniziare.',
         unknown: 'Qualcosa è andato storto ({code}).',
       },
       hint: {
@@ -973,6 +985,7 @@ export const it: TranslationDictionary = {
         modelHardCeiling: 'Scegli un modello più veloce o un argomento più breve, poi riprova.',
         modelReasonedNoAnswer:
           'Riprova, scegli un modello che risponde più direttamente o accorcia l’argomento.',
+        queueExpired: 'Riprova ora. Se la coda è lunga, riprova più tardi.',
         unknown: 'Riprova, oppure cambia i modelli.',
       },
       startError: {
@@ -985,6 +998,18 @@ export const it: TranslationDictionary = {
         modelUnknown:
           'Un modello selezionato non è nel catalogo dei modelli. Scegline uno dall’elenco.',
         spendCapTooLow: 'Il limite di spesa è troppo basso. Imposta almeno 0,01 USD.',
+        allowanceUnavailable:
+          'La tua quota di Thread è esaurita o è occupata da una generazione in corso. Aspetta che finisca o passa a un piano superiore.',
+        tooManyActive:
+          'Hai già il numero massimo di generazioni in corso. Aspetta che una finisca o annullane una.',
+        idempotencyKeyReused:
+          'Questa richiesta è già stata inviata con dettagli diversi. Ricomincia dal modulo.',
+        notCancellable:
+          'Questa generazione non è in corso né in coda, quindi non c’è nulla da annullare.',
+        topicInvalid:
+          'L’argomento è vuoto o contiene un carattere che non può essere salvato. Modificalo e riprova.',
+        textInvalid:
+          'Un campo di testo contiene un carattere che non può essere salvato. Rimuovi i caratteri insoliti e riprova.',
       },
       error: {
         conflict: 'Annulla prima la generazione o riprova tra un momento.',

@@ -17,6 +17,7 @@ export const ROUTES = {
   DASHBOARD: '/dashboard',
   CHAT: '/chat',
   THREAD_PUBLICATIONS: '/threads',
+  THREAD_BOARD: '/board',
   CHAT_THREAD: (threadId: string) => `/chat/${threadId}` as const,
   CONNECTORS: '/connectors',
   CONNECTOR_PROVIDERS: '/connectors/providers',

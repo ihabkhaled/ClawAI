@@ -20,6 +20,7 @@ import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
+import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const hi: TranslationDictionary = {
@@ -452,6 +453,7 @@ export const hi: TranslationDictionary = {
       auto: 'AUTO को चुनने दें',
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.hi,
+    ...THREAD_BOARD_TRANSLATIONS.hi,
     composerContext: {
       menuLabel: 'संदर्भ',
       pickLabel: 'संदर्भ पैक चुनें',
@@ -721,6 +723,11 @@ export const hi: TranslationDictionary = {
     threadStartGeneration: 'जनरेशन शुरू करें',
     threadApproveAndPublish: 'मंज़ूर करें और प्रकाशित करें',
     threadPublished: 'प्रकाशन लाइव है।',
+    threadLiveTitle: 'आपका Thread लाइव है',
+    threadLiveBody:
+      'इस लिंक वाला कोई भी इसे पढ़ सकता है। इसे साझा करें या खोलकर देखें कि पाठकों को यह कैसा दिखता है।',
+    threadLiveLinkLabel: 'सार्वजनिक लिंक',
+    threadLiveOpen: 'लाइव Thread खोलें',
     threadDraftNotEligible: 'सुरक्षा जाँच के बाद यह मसौदा प्रकाशित करने योग्य नहीं है।',
     threadGenerationCancelled: 'जनरेशन रद्द कर दिया गया।',
     threadStageSnapshot: 'आपकी चैट स्थिर की जा रही है',
@@ -825,6 +832,9 @@ export const hi: TranslationDictionary = {
     threadCreateFailed: 'थ्रेड बनाने में विफल',
     threadProgress: {
       title: 'जनरेशन की प्रगति',
+      statusQueued: 'कतार में प्रतीक्षा',
+      queuedHint:
+        'अभी कुछ शुरू नहीं हुआ है। कोई वर्कर खाली होते ही आपका Thread शुरू हो जाएगा। आप कभी भी रद्द कर सकते हैं।',
       statusLabel: 'स्थिति',
       stageLabel: 'चरण',
       attempt: 'प्रयास {current} / {max}',
@@ -911,6 +921,8 @@ export const hi: TranslationDictionary = {
         modelHardCeiling: 'एक मॉडल 10 मिनट बाद भी काम कर रहा था, इसलिए कॉल रोक दी गई।',
         modelReasonedNoAnswer:
           'एक मॉडल ने अपना पूरा आउटपुट बजट सोचने में लगा दिया और कोई उत्तर नहीं लिखा।',
+        queueExpired:
+          'यह जनरेशन कतार में बहुत देर तक इंतज़ार करता रहा, इसलिए शुरू होने से पहले ही रोक दिया गया।',
         unknown: 'कुछ गड़बड़ हो गई ({code})।',
       },
       hint: {
@@ -951,6 +963,7 @@ export const hi: TranslationDictionary = {
         modelHardCeiling: 'तेज़ मॉडल या छोटा विषय चुनें, फिर दोबारा कोशिश करें।',
         modelReasonedNoAnswer:
           'दोबारा कोशिश करें, सीधे उत्तर देने वाला मॉडल चुनें या विषय छोटा करें।',
+        queueExpired: 'अभी दोबारा कोशिश करें। कतार लंबी हो तो बाद में फिर कोशिश करें।',
         unknown: 'दोबारा कोशिश करें, या मॉडल बदलें।',
       },
       startError: {
@@ -960,6 +973,18 @@ export const hi: TranslationDictionary = {
         modelNotAllowedForPlan: 'चुना गया एक मॉडल आपके प्लान में शामिल नहीं है। शामिल मॉडल चुनें।',
         modelUnknown: 'चुना गया एक मॉडल मॉडल कैटलॉग में नहीं है। सूची में से कोई चुनें।',
         spendCapTooLow: 'खर्च सीमा बहुत कम है। कम से कम 0.01 USD रखें।',
+        allowanceUnavailable:
+          'आपका Thread कोटा खत्म हो गया है या किसी चल रहे जनरेशन ने उसे रोक रखा है। उसके पूरा होने तक रुकें या प्लान अपग्रेड करें।',
+        tooManyActive:
+          'आपके पास पहले से अधिकतम जनरेशन चल रहे हैं। किसी एक के पूरा होने तक रुकें या एक को रद्द करें।',
+        idempotencyKeyReused:
+          'यह अनुरोध पहले ही अलग विवरण के साथ भेजा जा चुका है। फ़ॉर्म से दोबारा शुरू करें।',
+        notCancellable:
+          'यह जनरेशन न तो चल रहा है और न कतार में है, इसलिए रद्द करने के लिए कुछ नहीं है।',
+        topicInvalid:
+          'विषय खाली है या उसमें ऐसा वर्ण है जो सहेजा नहीं जा सकता। उसे बदलें और फिर कोशिश करें।',
+        textInvalid:
+          'किसी टेक्स्ट फ़ील्ड में ऐसा वर्ण है जो सहेजा नहीं जा सकता। असामान्य वर्ण हटाएँ और फिर कोशिश करें।',
       },
       error: {
         conflict: 'पहले जेनरेशन रद्द करें या थोड़ी देर बाद फिर कोशिश करें।',

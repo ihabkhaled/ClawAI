@@ -20,6 +20,7 @@ import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
+import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const fa: TranslationDictionary = {
@@ -454,6 +455,7 @@ export const fa: TranslationDictionary = {
       auto: 'بگذار AUTO انتخاب کند',
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.fa,
+    ...THREAD_BOARD_TRANSLATIONS.fa,
     composerContext: {
       menuLabel: 'زمینه',
       pickLabel: 'انتخاب بسته‌های زمینه',
@@ -720,6 +722,11 @@ export const fa: TranslationDictionary = {
     threadStartGeneration: 'شروع تولید',
     threadApproveAndPublish: 'تأیید و انتشار',
     threadPublished: 'مطلب منتشر شد.',
+    threadLiveTitle: 'Thread شما منتشر شد',
+    threadLiveBody:
+      'هر کسی که این پیوند را داشته باشد می‌تواند آن را بخواند. آن را به اشتراک بگذارید یا باز کنید تا ببینید خوانندگان چه می‌بینند.',
+    threadLiveLinkLabel: 'پیوند عمومی',
+    threadLiveOpen: 'باز کردن Thread منتشرشده',
     threadDraftNotEligible: 'این پیش‌نویس پس از بررسی‌های ایمنی واجد شرایط انتشار نیست.',
     threadGenerationCancelled: 'تولید لغو شد.',
     threadStageSnapshot: 'ثابت کردن چت شما',
@@ -824,6 +831,9 @@ export const fa: TranslationDictionary = {
     threadCreateFailed: 'موضوع ایجاد نشد',
     threadProgress: {
       title: 'پیشرفت تولید',
+      statusQueued: 'در صف انتظار',
+      queuedHint:
+        'هنوز چیزی شروع نشده است. به‌محض آزاد شدن یک پردازشگر، Thread شما شروع می‌شود. هر زمان می‌توانید لغو کنید.',
       statusLabel: 'وضعیت',
       stageLabel: 'مرحله',
       attempt: 'تلاش {current} از {max}',
@@ -908,6 +918,7 @@ export const fa: TranslationDictionary = {
         modelIdleTimeout: 'یک مدل ۵ دقیقه ساکت ماند، پس گیرکرده در نظر گرفته شد.',
         modelHardCeiling: 'یک مدل پس از ۱۰ دقیقه هنوز کار می‌کرد، پس فراخوانی متوقف شد.',
         modelReasonedNoAnswer: 'یک مدل تمام بودجهٔ خروجی‌اش را صرف فکر کردن کرد و پاسخی ننوشت.',
+        queueExpired: 'این تولید مدت زیادی در صف ماند و پیش از شروع متوقف شد.',
         unknown: 'مشکلی پیش آمد ({code}).',
       },
       hint: {
@@ -949,6 +960,7 @@ export const fa: TranslationDictionary = {
         modelHardCeiling: 'مدل سریع‌تر یا موضوع کوتاه‌تری انتخاب کنید و دوباره تلاش کنید.',
         modelReasonedNoAnswer:
           'دوباره تلاش کنید، مدلی که مستقیم‌تر پاسخ می‌دهد انتخاب کنید یا موضوع را کوتاه کنید.',
+        queueExpired: 'همین حالا دوباره تلاش کنید. اگر صف طولانی است، بعداً دوباره امتحان کنید.',
         unknown: 'دوباره تلاش کنید یا مدل‌ها را تغییر دهید.',
       },
       startError: {
@@ -960,6 +972,17 @@ export const fa: TranslationDictionary = {
         modelUnknown:
           'یکی از مدل‌های انتخاب‌شده در فهرست مدل‌ها نیست. یکی را از فهرست انتخاب کنید.',
         spendCapTooLow: 'سقف هزینه خیلی کم است. دست‌کم ۰٫۰۱ دلار تعیین کنید.',
+        allowanceUnavailable:
+          'سهمیه Thread شما تمام شده یا یک تولید در حال اجرا آن را نگه داشته است. منتظر پایان آن بمانید یا طرح خود را ارتقا دهید.',
+        tooManyActive:
+          'شما همین حالا بیشترین تعداد تولید هم‌زمان را در حال اجرا دارید. منتظر پایان یکی بمانید یا یکی را لغو کنید.',
+        idempotencyKeyReused:
+          'این درخواست قبلاً با جزئیات دیگری ارسال شده است. از فرم دوباره شروع کنید.',
+        notCancellable: 'این تولید نه در حال اجراست و نه در صف، بنابراین چیزی برای لغو کردن نیست.',
+        topicInvalid:
+          'موضوع خالی است یا نویسه‌ای دارد که ذخیره نمی‌شود. آن را ویرایش کنید و دوباره تلاش کنید.',
+        textInvalid:
+          'یکی از فیلدهای متنی نویسه‌ای دارد که ذخیره نمی‌شود. نویسه‌های غیرمعمول را حذف کنید و دوباره تلاش کنید.',
       },
       error: {
         conflict: 'ابتدا تولید را لغو کنید یا کمی بعد دوباره تلاش کنید.',

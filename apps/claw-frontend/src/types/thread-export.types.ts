@@ -1,3 +1,5 @@
+import type { ComponentType } from 'react';
+
 import type { ThreadPublicationExportFormat } from '@/enums/thread-publication-export-format.enum';
 
 /** One file going into a ZIP archive. */
@@ -78,4 +80,14 @@ export type ThreadShareController = {
   canShareNatively: boolean;
   copyLink: () => Promise<void>;
   shareNatively: () => Promise<void>;
+};
+
+/** What each share-link icon accepts: just a class, because the colour comes from the theme. */
+export type ThreadShareIconProps = { className?: string };
+
+/** How one share network looks in the share row. */
+export type ThreadShareAppearance = {
+  Icon: ComponentType<ThreadShareIconProps>;
+  /** Hover colour only; the resting colour is the theme's, so contrast never depends on a brand. */
+  hoverClass: string;
 };

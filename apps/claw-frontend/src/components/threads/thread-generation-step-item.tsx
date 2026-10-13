@@ -93,7 +93,7 @@ export function ThreadGenerationStepItem({ step }: ThreadStepItemProps): ReactEl
           </Button>
           {excerpt.isOpen ? (
             <pre
-              className="bg-muted/30 max-h-64 overflow-auto rounded-md p-3 text-xs break-words whitespace-pre-wrap"
+              className="bg-muted/30 rounded-md p-3 text-xs break-words whitespace-pre-wrap"
               data-testid="thread-progress-excerpt"
             >
               {truncateExcerpt(step.excerpt)}

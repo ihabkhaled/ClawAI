@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  LayoutGrid,
   MessageSquare,
   GitCompareArrows,
   Layers,
@@ -71,6 +72,7 @@ export type SidebarItem = {
 export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
   { labelKey: 'nav.dashboard', href: ROUTES.DASHBOARD, icon: LayoutDashboard },
   { labelKey: 'nav.threads', href: ROUTES.THREAD_PUBLICATIONS, icon: Newspaper },
+  { labelKey: 'chat.threadBoardNavLabel', href: ROUTES.THREAD_BOARD, icon: LayoutGrid },
   {
     labelKey: 'nav.chat',
     href: ROUTES.CHAT,

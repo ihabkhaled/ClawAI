@@ -20,6 +20,7 @@ import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
+import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const ar: TranslationDictionary = {
@@ -448,6 +449,7 @@ export const ar: TranslationDictionary = {
       auto: 'دع AUTO يختار',
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.ar,
+    ...THREAD_BOARD_TRANSLATIONS.ar,
     composerContext: {
       menuLabel: 'السياق',
       pickLabel: 'اختيار حزم السياق',
@@ -709,6 +711,10 @@ export const ar: TranslationDictionary = {
     threadStartGeneration: 'بدء الإنشاء',
     threadApproveAndPublish: 'الموافقة والنشر',
     threadPublished: 'تم نشر المنشور.',
+    threadLiveTitle: 'أصبح الـ Thread الخاص بك منشورًا',
+    threadLiveBody: 'يمكن لأي شخص لديه هذا الرابط قراءته. شاركه أو افتحه لترى ما يراه القرّاء.',
+    threadLiveLinkLabel: 'الرابط العام',
+    threadLiveOpen: 'افتح الـ Thread المنشور',
     threadDraftNotEligible: 'المسودة غير مؤهلة للنشر بعد اجتياز فحوص السلامة.',
     threadGenerationCancelled: 'تم إلغاء الإنشاء.',
     threadStageSnapshot: 'تجميد المحادثة',
@@ -811,6 +817,9 @@ export const ar: TranslationDictionary = {
     threadCreateFailed: 'فشل إنشاء المحادثة',
     threadProgress: {
       title: 'تقدم الإنشاء',
+      statusQueued: 'في قائمة الانتظار',
+      queuedHint:
+        'لم يبدأ شيء بعد. سيبدأ الـ Thread الخاص بك فور توفر عامل متاح. يمكنك الإلغاء في أي وقت.',
       statusLabel: 'الحالة',
       stageLabel: 'المرحلة',
       attempt: 'المحاولة {current} من {max}',
@@ -894,6 +903,7 @@ export const ar: TranslationDictionary = {
         modelIdleTimeout: 'ظل نموذج صامتًا لمدة 5 دقائق، فاعتُبر عالقًا.',
         modelHardCeiling: 'كان نموذج لا يزال يعمل بعد 10 دقائق، فتم إيقاف الاستدعاء.',
         modelReasonedNoAnswer: 'استنفد نموذج ميزانية الإخراج كلها في التفكير ولم يكتب إجابة.',
+        queueExpired: 'انتظرت هذه العملية في قائمة الانتظار وقتًا طويلًا، فتم إيقافها قبل أن تبدأ.',
         unknown: 'حدث خطأ ما ({code}).',
       },
       hint: {
@@ -931,6 +941,7 @@ export const ar: TranslationDictionary = {
         modelHardCeiling: 'اختر نموذجًا أسرع أو موضوعًا أقصر ثم أعد المحاولة.',
         modelReasonedNoAnswer:
           'أعد المحاولة، أو اختر نموذجًا يجيب بشكل أكثر مباشرة، أو اختصر الموضوع.',
+        queueExpired: 'أعد المحاولة الآن. وإذا كانت القائمة طويلة، جرّب لاحقًا.',
         unknown: 'أعد المحاولة، أو غيّر النماذج.',
       },
       startError: {
@@ -940,6 +951,15 @@ export const ar: TranslationDictionary = {
         modelNotAllowedForPlan: 'أحد النماذج المختارة غير مشمول في خطتك. اختر نموذجًا مشمولًا.',
         modelUnknown: 'أحد النماذج المختارة غير موجود في كتالوج النماذج. اختر نموذجًا من القائمة.',
         spendCapTooLow: 'حد الإنفاق منخفض جدًا. اضبطه على 0.01 دولار على الأقل.',
+        allowanceUnavailable:
+          'استُهلكت حصة الـ Thread لديك، أو أن عملية جارية تحتجزها. انتظر حتى تنتهي أو قم بترقية خطتك.',
+        tooManyActive:
+          'لديك بالفعل الحد الأقصى من عمليات الإنشاء الجارية. انتظر حتى تنتهي إحداها أو ألغِ واحدة.',
+        idempotencyKeyReused: 'تم إرسال هذا الطلب سابقًا بتفاصيل مختلفة. ابدأ من جديد من النموذج.',
+        notCancellable:
+          'هذه العملية ليست قيد التشغيل ولا في قائمة الانتظار، لذا لا يوجد ما يمكن إلغاؤه.',
+        topicInvalid: 'الموضوع فارغ أو يحتوي على حرف لا يمكن حفظه. عدّله وحاول مرة أخرى.',
+        textInvalid: 'يحتوي حقل نصي على حرف لا يمكن حفظه. أزل الأحرف غير المعتادة وحاول مرة أخرى.',
       },
       error: {
         conflict: 'ألغِ الإنشاء أولًا أو أعد المحاولة بعد لحظة.',

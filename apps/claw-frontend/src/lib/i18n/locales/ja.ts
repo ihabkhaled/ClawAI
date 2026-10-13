@@ -20,6 +20,7 @@ import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
+import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const ja: TranslationDictionary = {
@@ -456,6 +457,7 @@ export const ja: TranslationDictionary = {
       auto: 'AUTO に任せる',
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.ja,
+    ...THREAD_BOARD_TRANSLATIONS.ja,
     composerContext: {
       menuLabel: 'コンテキスト',
       pickLabel: 'コンテキストパックを選択',
@@ -723,6 +725,11 @@ export const ja: TranslationDictionary = {
     threadStartGeneration: '生成を開始',
     threadApproveAndPublish: '承認して公開',
     threadPublished: '記事を公開しました。',
+    threadLiveTitle: 'Thread を公開しました',
+    threadLiveBody:
+      'このリンクを知っている人は誰でも読めます。共有するか、開いて読者の見え方を確認してください。',
+    threadLiveLinkLabel: '公開リンク',
+    threadLiveOpen: '公開中の Thread を開く',
     threadDraftNotEligible: 'この下書きは安全性チェックを通過せず、公開できません。',
     threadGenerationCancelled: '生成をキャンセルしました。',
     threadStageSnapshot: 'チャットを固定しています',
@@ -827,6 +834,9 @@ export const ja: TranslationDictionary = {
     threadCreateFailed: 'スレッドの作成に失敗しました',
     threadProgress: {
       title: '生成の進行状況',
+      statusQueued: '順番待ち',
+      queuedHint:
+        'まだ何も始まっていません。ワーカーが空き次第、Thread の作成を開始します。いつでもキャンセルできます。',
       statusLabel: 'ステータス',
       stageLabel: '段階',
       attempt: '{max} 回中 {current} 回目の試行',
@@ -911,6 +921,7 @@ export const ja: TranslationDictionary = {
         modelIdleTimeout: 'モデルが5分間無応答だったため、停止したと判断しました。',
         modelHardCeiling: 'モデルが10分経っても動作していたため、呼び出しを停止しました。',
         modelReasonedNoAnswer: 'モデルが出力の予算をすべて思考に使い切り、回答を書きませんでした。',
+        queueExpired: 'この生成は待機列に長く並びすぎたため、開始前に停止されました。',
         unknown: '問題が発生しました（{code}）。',
       },
       hint: {
@@ -952,6 +963,8 @@ export const ja: TranslationDictionary = {
         modelHardCeiling: 'より速いモデルか短いテーマを選んで、もう一度試してください。',
         modelReasonedNoAnswer:
           'もう一度試すか、より直接答えるモデルを選ぶか、テーマを短くしてください。',
+        queueExpired:
+          'いますぐ再試行してください。待機列が長い場合は、しばらくしてからもう一度お試しください。',
         unknown: '再試行するか、モデルを変更してください。',
       },
       startError: {
@@ -963,6 +976,17 @@ export const ja: TranslationDictionary = {
           '選択したモデルがお使いのプランに含まれていません。含まれるモデルを選んでください。',
         modelUnknown: '選択したモデルがモデルカタログにありません。一覧から選んでください。',
         spendCapTooLow: '上限額が低すぎます。0.01 USD 以上に設定してください。',
+        allowanceUnavailable:
+          'Thread の利用枠を使い切ったか、実行中の生成が枠を使用しています。完了を待つか、プランをアップグレードしてください。',
+        tooManyActive:
+          '同時に実行できる生成の上限に達しています。1 件の完了を待つか、1 件をキャンセルしてください。',
+        idempotencyKeyReused:
+          'このリクエストは別の内容で送信済みです。フォームからやり直してください。',
+        notCancellable: 'この生成は実行中でも待機中でもないため、キャンセルするものはありません。',
+        topicInvalid:
+          'トピックが空か、保存できない文字が含まれています。編集してもう一度お試しください。',
+        textInvalid:
+          '保存できない文字がテキスト欄に含まれています。特殊な文字を取り除いてもう一度お試しください。',
       },
       error: {
         conflict: '先に生成をキャンセルするか、少し待ってからやり直してください。',

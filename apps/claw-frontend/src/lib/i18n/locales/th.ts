@@ -20,6 +20,7 @@ import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
+import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const th: TranslationDictionary = {
@@ -443,6 +444,7 @@ export const th: TranslationDictionary = {
       auto: 'ให้ AUTO เลือก',
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.th,
+    ...THREAD_BOARD_TRANSLATIONS.th,
     composerContext: {
       menuLabel: 'บริบท',
       pickLabel: 'เลือกแพ็กบริบท',
@@ -705,6 +707,11 @@ export const th: TranslationDictionary = {
     threadStartGeneration: 'เริ่มสร้าง',
     threadApproveAndPublish: 'อนุมัติและเผยแพร่',
     threadPublished: 'เผยแพร่บทความแล้ว',
+    threadLiveTitle: 'Thread ของคุณเผยแพร่แล้ว',
+    threadLiveBody:
+      'ใครก็ตามที่มีลิงก์นี้สามารถอ่านได้ แชร์ลิงก์หรือเปิดดูเพื่อดูว่าผู้อ่านเห็นอะไร',
+    threadLiveLinkLabel: 'ลิงก์สาธารณะ',
+    threadLiveOpen: 'เปิด Thread ที่เผยแพร่แล้ว',
     threadDraftNotEligible: 'ร่างนี้ไม่ผ่านการตรวจสอบความปลอดภัยและยังเผยแพร่ไม่ได้',
     threadGenerationCancelled: 'ยกเลิกการสร้างแล้ว',
     threadStageSnapshot: 'กำลังตรึงแชตของคุณ',
@@ -807,6 +814,9 @@ export const th: TranslationDictionary = {
     threadCreateFailed: 'ไม่สามารถสร้างเธรดได้',
     threadProgress: {
       title: 'ความคืบหน้าการสร้าง',
+      statusQueued: 'รอคิว',
+      queuedHint:
+        'ยังไม่มีอะไรเริ่มทำงาน Thread ของคุณจะเริ่มทันทีที่มีตัวประมวลผลว่าง คุณยกเลิกได้ทุกเมื่อ',
       statusLabel: 'สถานะ',
       stageLabel: 'ขั้นตอน',
       attempt: 'ครั้งที่ {current} จาก {max}',
@@ -888,6 +898,7 @@ export const th: TranslationDictionary = {
         modelIdleTimeout: 'โมเดลเงียบไป 5 นาที จึงถือว่าค้าง',
         modelHardCeiling: 'โมเดลยังทำงานอยู่หลังผ่านไป 10 นาที จึงหยุดการเรียกนี้',
         modelReasonedNoAnswer: 'โมเดลใช้งบเอาต์พุตทั้งหมดไปกับการคิดและไม่ได้เขียนคำตอบ',
+        queueExpired: 'การสร้างนี้รอในคิวนานเกินไป จึงถูกหยุดก่อนเริ่มทำงาน',
         unknown: 'เกิดข้อผิดพลาด ({code})',
       },
       hint: {
@@ -927,6 +938,7 @@ export const th: TranslationDictionary = {
           'ลองอีกครั้งหรือเลือกโมเดลอื่น โมเดลที่ช้าแต่ยังเขียนอยู่จะไม่ถูกหยุดเพราะความช้า',
         modelHardCeiling: 'เลือกโมเดลที่เร็วกว่าหรือหัวข้อที่สั้นลง แล้วลองอีกครั้ง',
         modelReasonedNoAnswer: 'ลองอีกครั้ง เลือกโมเดลที่ตอบตรงกว่า หรือทำหัวข้อให้สั้นลง',
+        queueExpired: 'ลองใหม่ได้ทันที หากคิวยาว ให้ลองอีกครั้งภายหลัง',
         unknown: 'ลองใหม่ หรือเปลี่ยนโมเดล',
       },
       startError: {
@@ -936,6 +948,14 @@ export const th: TranslationDictionary = {
         modelNotAllowedForPlan: 'โมเดลที่เลือกไม่รวมอยู่ในแพ็กเกจของคุณ เลือกโมเดลที่รวมอยู่',
         modelUnknown: 'โมเดลที่เลือกไม่อยู่ในแคตตาล็อกโมเดล เลือกจากรายการ',
         spendCapTooLow: 'วงเงินใช้จ่ายต่ำเกินไป ตั้งอย่างน้อย 0.01 USD',
+        allowanceUnavailable:
+          'โควตา Thread ของคุณหมดแล้ว หรือถูกการสร้างที่กำลังทำงานอยู่กันไว้ รอให้เสร็จหรืออัปเกรดแพ็กเกจ',
+        tooManyActive:
+          'คุณมีการสร้างที่กำลังทำงานครบจำนวนสูงสุดแล้ว รอให้อันหนึ่งเสร็จหรือยกเลิกหนึ่งอัน',
+        idempotencyKeyReused: 'คำขอนี้เคยถูกส่งด้วยรายละเอียดที่ต่างออกไปแล้ว เริ่มใหม่จากแบบฟอร์ม',
+        notCancellable: 'การสร้างนี้ไม่ได้กำลังทำงานและไม่ได้อยู่ในคิว จึงไม่มีอะไรให้ยกเลิก',
+        topicInvalid: 'หัวข้อว่างเปล่าหรือมีอักขระที่บันทึกไม่ได้ แก้ไขแล้วลองอีกครั้ง',
+        textInvalid: 'ช่องข้อความมีอักขระที่บันทึกไม่ได้ ลบอักขระที่ผิดปกติแล้วลองอีกครั้ง',
       },
       error: {
         conflict: 'ยกเลิกการสร้างก่อน หรือลองอีกครั้งในอีกสักครู่',

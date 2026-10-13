@@ -281,3 +281,56 @@ export type ThreadCreateDialogProps = {
   threadId?: string;
   threadTitle?: string;
 };
+
+/** The banner shown after Publish: where the Thread now lives. */
+export type ThreadLiveBannerProps = {
+  url: string;
+};
+
+/** The draft a reader suggestion would revise, or null while it is unavailable. */
+export type ThreadChangesRevisionSource = ThreadChangeRequestsProps['revisionSource'];
+
+/** The owner's answer to one reader suggestion. */
+export type ThreadChangeRequestDecision = {
+  requestId: string;
+  status:
+    ThreadPublicationChangeRequestStatus.Accepted | ThreadPublicationChangeRequestStatus.Rejected;
+  ownerResponse: string;
+};
+
+/** What the owner has typed so far while answering reader suggestions. */
+export type ThreadChangeRequestForm = {
+  acceptingRequestId: string;
+  revisionMarkdown: string;
+  spendCapUsd: string;
+  ownerResponses: Record<string, string>;
+  /** The revised article differs from the draft it started from. */
+  revisionChanged: boolean;
+  setRevisionMarkdown: (value: string) => void;
+  setSpendCapUsd: (value: string) => void;
+  setOwnerResponse: (requestId: string, value: string) => void;
+  beginAcceptance: (requestId: string) => void;
+  cancelAcceptance: () => void;
+  /** Clears what belongs to a request once it has been answered. */
+  finishRequest: (requestId: string) => void;
+};
+
+export type ThreadChangeRequestsController = {
+  requests: UseQueryResult<ThreadPublicationChangeRequest[]>;
+  resolve: UseMutationResult<
+    ThreadPublicationChangeRequestResolution,
+    Error,
+    ThreadChangeRequestDecision
+  >;
+  form: ThreadChangeRequestForm;
+  beginAcceptance: (requestId: string) => void;
+  cancelAcceptance: () => void;
+};
+
+/** What the decision mutation needs besides the decision itself. */
+export type ThreadChangeRequestResolveInput = {
+  publicationId: string;
+  revisionSource: ThreadChangesRevisionSource;
+  form: ThreadChangeRequestForm;
+  onRevisionStarted: (revisionId: string) => void;
+};

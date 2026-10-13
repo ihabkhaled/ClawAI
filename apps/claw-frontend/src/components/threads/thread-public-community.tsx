@@ -1,3 +1,4 @@
+import { Flag, Lightbulb, LogIn, MessageSquare, Send, ThumbsDown, ThumbsUp } from 'lucide-react';
 import Link from 'next/link';
 import type { FormEvent, ReactElement } from 'react';
 
@@ -19,6 +20,8 @@ export function ThreadPublicCommunity({
   actions,
 }: ThreadCommunityPanelProps): ReactElement {
   const { t } = useTranslation();
+  const liked = reactions?.viewerReaction === ThreadPublicationReaction.Like;
+  const disliked = reactions?.viewerReaction === ThreadPublicationReaction.Dislike;
 
   return (
     <section
@@ -37,47 +40,30 @@ export function ThreadPublicCommunity({
           <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
-              variant={
-                reactions.viewerReaction === ThreadPublicationReaction.Like ? 'default' : 'outline'
-              }
-              aria-pressed={reactions.viewerReaction === ThreadPublicationReaction.Like}
+              variant={liked ? 'default' : 'outline'}
+              aria-pressed={liked}
+              title={liked ? t('chat.threadPublicRemoveReaction') : undefined}
               disabled={!isAuthenticated || actions.isSubmitting}
-              onClick={() =>
-                actions.setReaction(
-                  reactions.viewerReaction === ThreadPublicationReaction.Like
-                    ? null
-                    : ThreadPublicationReaction.Like,
-                )
-              }
+              onClick={() => actions.setReaction(liked ? null : ThreadPublicationReaction.Like)}
             >
+              <ThumbsUp className={liked ? 'h-4 w-4 fill-current' : 'h-4 w-4'} aria-hidden="true" />
               {t('chat.threadPublicLike')} ({reactions.likes})
             </Button>
             <Button
               type="button"
-              variant={
-                reactions.viewerReaction === ThreadPublicationReaction.Dislike
-                  ? 'default'
-                  : 'outline'
-              }
-              aria-pressed={reactions.viewerReaction === ThreadPublicationReaction.Dislike}
+              variant={disliked ? 'default' : 'outline'}
+              aria-pressed={disliked}
+              title={disliked ? t('chat.threadPublicRemoveReaction') : undefined}
               disabled={!isAuthenticated || actions.isSubmitting}
               onClick={() =>
-                actions.setReaction(
-                  reactions.viewerReaction === ThreadPublicationReaction.Dislike
-                    ? null
-                    : ThreadPublicationReaction.Dislike,
-                )
+                actions.setReaction(disliked ? null : ThreadPublicationReaction.Dislike)
               }
             >
+              <ThumbsDown
+                className={disliked ? 'h-4 w-4 fill-current' : 'h-4 w-4'}
+                aria-hidden="true"
+              />
               {t('chat.threadPublicDislike')} ({reactions.dislikes})
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              disabled={!isAuthenticated || actions.isSubmitting}
-              onClick={() => actions.setReaction(null)}
-            >
-              {t('chat.threadPublicRemoveReaction')}
             </Button>
           </div>
         ) : null}
@@ -85,26 +71,33 @@ export function ThreadPublicCommunity({
       {communityLoading ? <p role="status">{t('common.loading')}</p> : null}
       {communityError ? <p role="alert">{t('chat.threadPublicCommunityFailed')}</p> : null}
       {comments.length === 0 && !communityLoading ? (
-        <p className="text-muted-foreground">{t('chat.threadPublicNoComments')}</p>
+        <p className="text-muted-foreground flex items-center gap-2">
+          <MessageSquare className="h-4 w-4 shrink-0" aria-hidden="true" />
+          {t('chat.threadPublicNoComments')}
+        </p>
       ) : null}
       {comments.map((comment) => (
         <article
           key={comment.id}
-          className="border-border flex flex-col gap-3 rounded-md border p-4"
+          className="border-border bg-card flex flex-col gap-3 rounded-lg border p-4"
         >
           <p className="break-words whitespace-pre-wrap">{comment.content}</p>
-          <time className="text-muted-foreground text-xs" dateTime={comment.createdAt}>
-            {comment.createdAt.slice(0, 10)}
-          </time>
-          {isAuthenticated ? (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => actions.setReportTarget(comment.id)}
-            >
-              {t('chat.threadPublicReportComment')}
-            </Button>
-          ) : null}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <time className="text-muted-foreground text-xs" dateTime={comment.createdAt}>
+              {comment.createdAt.slice(0, 10)}
+            </time>
+            {isAuthenticated ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => actions.setReportTarget(comment.id)}
+              >
+                <Flag className="h-4 w-4" aria-hidden="true" />
+                {t('chat.threadPublicReportComment')}
+              </Button>
+            ) : null}
+          </div>
           {actions.reportTarget === comment.id ? (
             <ThreadPublicReportForm commentId={comment.id} actions={actions} />
           ) : null}
@@ -113,13 +106,19 @@ export function ThreadPublicCommunity({
       {isAuthenticated ? (
         <>
           <form
-            className="flex flex-col gap-3"
+            className="border-border bg-card flex flex-col gap-3 rounded-lg border p-4"
             onSubmit={(event: FormEvent<HTMLFormElement>) => {
               event.preventDefault();
               actions.submitComment();
             }}
           >
-            <label htmlFor="thread-public-comment">{t('chat.threadPublicAddComment')}</label>
+            <label
+              htmlFor="thread-public-comment"
+              className="flex items-center gap-2 text-sm font-medium"
+            >
+              <MessageSquare className="h-4 w-4" aria-hidden="true" />
+              {t('chat.threadPublicAddComment')}
+            </label>
             <Textarea
               id="thread-public-comment"
               required
@@ -128,18 +127,28 @@ export function ThreadPublicCommunity({
               onChange={(event) => actions.setComment(event.target.value)}
               disabled={actions.isSubmitting}
             />
-            <Button type="submit" disabled={actions.isSubmitting} isLoading={actions.isSubmitting}>
+            <Button
+              type="submit"
+              disabled={actions.isSubmitting}
+              isLoading={actions.isSubmitting}
+              className="w-full sm:w-fit"
+            >
+              <Send className="h-4 w-4 rtl:-scale-x-100" aria-hidden="true" />
               {t('chat.threadPublicPostComment')}
             </Button>
           </form>
           <form
-            className="flex flex-col gap-3"
+            className="border-border bg-card flex flex-col gap-3 rounded-lg border p-4"
             onSubmit={(event: FormEvent<HTMLFormElement>) => {
               event.preventDefault();
               actions.submitChangeRequest();
             }}
           >
-            <label htmlFor="thread-public-change-request">
+            <label
+              htmlFor="thread-public-change-request"
+              className="flex items-center gap-2 text-sm font-medium"
+            >
+              <Lightbulb className="h-4 w-4" aria-hidden="true" />
               {t('chat.threadPublicChangeRequest')}
             </label>
             <Textarea
@@ -150,16 +159,25 @@ export function ThreadPublicCommunity({
               onChange={(event) => actions.setSuggestion(event.target.value)}
               disabled={actions.isSubmitting}
             />
-            <Button type="submit" disabled={actions.isSubmitting} isLoading={actions.isSubmitting}>
+            <Button
+              type="submit"
+              variant="secondary"
+              disabled={actions.isSubmitting}
+              isLoading={actions.isSubmitting}
+              className="w-full sm:w-fit"
+            >
+              <Send className="h-4 w-4 rtl:-scale-x-100" aria-hidden="true" />
               {t('chat.threadPublicSubmitChange')}
             </Button>
           </form>
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
+            className="w-full sm:w-fit"
             onClick={() => actions.setReportTarget('')}
             disabled={actions.isSubmitting}
           >
+            <Flag className="h-4 w-4" aria-hidden="true" />
             {t('chat.threadPublicReportArticle')}
           </Button>
           {actions.reportTarget === '' ? (
@@ -171,9 +189,12 @@ export function ThreadPublicCommunity({
           {actions.actionFailed ? <p role="alert">{t('chat.threadPublicActionFailed')}</p> : null}
         </>
       ) : (
-        <Link className="text-primary w-fit underline" href={loginHref}>
-          {t('chat.threadPublicSignInToJoin')}
-        </Link>
+        <Button asChild variant="outline" className="w-full sm:w-fit">
+          <Link href={loginHref}>
+            <LogIn className="h-4 w-4 rtl:-scale-x-100" aria-hidden="true" />
+            {t('chat.threadPublicSignInToJoin')}
+          </Link>
+        </Button>
       )}
     </section>
   );

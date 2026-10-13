@@ -20,6 +20,7 @@ import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
+import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const de: TranslationDictionary = {
@@ -462,6 +463,7 @@ export const de: TranslationDictionary = {
       auto: 'AUTO wählen lassen',
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.de,
+    ...THREAD_BOARD_TRANSLATIONS.de,
     composerContext: {
       menuLabel: 'Kontext',
       pickLabel: 'Kontextpakete auswählen',
@@ -735,6 +737,11 @@ export const de: TranslationDictionary = {
     threadStartGeneration: 'Erstellung starten',
     threadApproveAndPublish: 'Genehmigen und veröffentlichen',
     threadPublished: 'Der Beitrag wurde veröffentlicht.',
+    threadLiveTitle: 'Der Thread ist live',
+    threadLiveBody:
+      'Jeder mit diesem Link kann ihn lesen. Link teilen oder öffnen, um die Leseansicht zu sehen.',
+    threadLiveLinkLabel: 'Öffentlicher Link',
+    threadLiveOpen: 'Live-Thread öffnen',
     threadDraftNotEligible:
       'Der Entwurf ist nach der Sicherheitsprüfung nicht zur Veröffentlichung freigegeben.',
     threadGenerationCancelled: 'Die Erstellung wurde abgebrochen.',
@@ -845,6 +852,9 @@ export const de: TranslationDictionary = {
     threadCreateFailed: 'Thread konnte nicht erstellt werden',
     threadProgress: {
       title: 'Fortschritt der Erstellung',
+      statusQueued: 'In der Warteschlange',
+      queuedHint:
+        'Noch hat nichts begonnen. Der Thread startet, sobald ein Worker frei ist. Abbrechen ist jederzeit möglich.',
       statusLabel: 'Status',
       stageLabel: 'Phase',
       attempt: 'Versuch {current} von {max}',
@@ -937,6 +947,8 @@ export const de: TranslationDictionary = {
           'Ein Modell arbeitete nach 10 Minuten noch, daher wurde der Aufruf gestoppt.',
         modelReasonedNoAnswer:
           'Ein Modell hat sein gesamtes Ausgabebudget zum Nachdenken verbraucht und keine Antwort geschrieben.',
+        queueExpired:
+          'Diese Erstellung hat zu lange in der Warteschlange gewartet und wurde gestoppt, bevor sie begann.',
         unknown: 'Etwas ist schiefgelaufen ({code}).',
       },
       hint: {
@@ -982,6 +994,8 @@ export const de: TranslationDictionary = {
           'Wähle ein schnelleres Modell oder ein kürzeres Thema und versuche es erneut.',
         modelReasonedNoAnswer:
           'Versuche es erneut, wähle ein Modell, das direkter antwortet, oder kürze das Thema.',
+        queueExpired:
+          'Versuche es jetzt erneut. Ist die Warteschlange lang, versuche es später noch einmal.',
         unknown: 'Versuchen Sie es erneut oder ändern Sie die Modelle.',
       },
       startError: {
@@ -993,6 +1007,18 @@ export const de: TranslationDictionary = {
         modelUnknown:
           'Ein gewähltes Modell steht nicht im Modellkatalog. Wähle eines aus der Liste.',
         spendCapTooLow: 'Das Ausgabenlimit ist zu niedrig. Setze mindestens 0,01 USD.',
+        allowanceUnavailable:
+          'Dein Thread-Kontingent ist aufgebraucht oder wird von einer laufenden Erstellung belegt. Warte, bis sie fertig ist, oder wechsle deinen Tarif.',
+        tooManyActive:
+          'Du hast bereits die maximale Anzahl an Erstellungen gleichzeitig laufen. Warte, bis eine fertig ist, oder brich eine ab.',
+        idempotencyKeyReused:
+          'Diese Anfrage wurde schon mit anderen Angaben gesendet. Starte neu über das Formular.',
+        notCancellable:
+          'Diese Erstellung läuft nicht und wartet nicht in der Warteschlange, es gibt also nichts abzubrechen.',
+        topicInvalid:
+          'Das Thema ist leer oder enthält ein Zeichen, das nicht gespeichert werden kann. Bearbeite es und versuche es erneut.',
+        textInvalid:
+          'Ein Textfeld enthält ein Zeichen, das nicht gespeichert werden kann. Entferne ungewöhnliche Zeichen und versuche es erneut.',
       },
       error: {
         conflict: 'Brich zuerst die Erstellung ab oder versuche es gleich noch einmal.',

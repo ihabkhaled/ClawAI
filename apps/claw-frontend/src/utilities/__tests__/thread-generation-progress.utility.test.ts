@@ -9,6 +9,8 @@ import {
   formatMicroUsd,
   describeStepDuration,
   formatStepTime,
+  hasThreadSpend,
+  isQueuedThreadStatus,
   isRetryableThreadStatus,
   isTerminalThreadStatus,
   microUsdToInputValue,
@@ -234,5 +236,28 @@ describe('threadHeadlineKey', () => {
     expect(threadHeadlineKey('FAILED', 'RESEARCH')).toBe('chat.threadProgress.outcomeFailed');
     expect(threadHeadlineKey('RUNNING', 'RESEARCH')).toBe('chat.threadStageResearch');
     expect(threadHeadlineKey('RUNNING', 'MYSTERY')).toBeNull();
+  });
+});
+
+describe('queued jobs and unknown spend', () => {
+  it('recognises a queued job, and only that', () => {
+    expect(isQueuedThreadStatus('QUEUED')).toBe(true);
+    expect(isQueuedThreadStatus('RUNNING')).toBe(false);
+    expect(isQueuedThreadStatus('queued')).toBe(false);
+  });
+
+  it('words a queued job as waiting, never by the stage it has not reached', () => {
+    expect(threadHeadlineKey('QUEUED', 'SNAPSHOT')).toBe('chat.threadProgress.statusQueued');
+    expect(threadHeadlineKey('RUNNING', 'SNAPSHOT')).toBe('chat.threadStageSnapshot');
+  });
+
+  it('counts only a positive, readable amount as spend', () => {
+    expect(hasThreadSpend('12300')).toBe(true);
+    expect(hasThreadSpend('1')).toBe(true);
+    expect(hasThreadSpend('0')).toBe(false);
+    expect(hasThreadSpend('')).toBe(false);
+    expect(hasThreadSpend('-5')).toBe(false);
+    expect(hasThreadSpend('abc')).toBe(false);
+    expect(hasThreadSpend('Infinity')).toBe(false);
   });
 });

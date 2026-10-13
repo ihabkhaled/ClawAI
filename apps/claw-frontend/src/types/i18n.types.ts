@@ -651,6 +651,10 @@ export type TranslationDictionary = {
     threadStartGeneration: string;
     threadApproveAndPublish: string;
     threadPublished: string;
+    threadLiveTitle: string;
+    threadLiveBody: string;
+    threadLiveLinkLabel: string;
+    threadLiveOpen: string;
     threadDraftNotEligible: string;
     threadGenerationCancelled: string;
     threadStageSnapshot: string;
@@ -772,6 +776,8 @@ export type TranslationDictionary = {
       tokens: string;
       showExcerpt: string;
       hideExcerpt: string;
+      statusQueued: string;
+      queuedHint: string;
       stillWorking: string;
       pollingPaused: string;
       failureTitle: string;
@@ -827,6 +833,7 @@ export type TranslationDictionary = {
         modelIdleTimeout: string;
         modelHardCeiling: string;
         modelReasonedNoAnswer: string;
+        queueExpired: string;
         unknown: string;
       };
       hint: {
@@ -859,6 +866,7 @@ export type TranslationDictionary = {
         modelIdleTimeout: string;
         modelHardCeiling: string;
         modelReasonedNoAnswer: string;
+        queueExpired: string;
         unknown: string;
       };
       startError: {
@@ -867,6 +875,12 @@ export type TranslationDictionary = {
         modelNotAllowedForPlan: string;
         modelUnknown: string;
         spendCapTooLow: string;
+        allowanceUnavailable: string;
+        tooManyActive: string;
+        idempotencyKeyReused: string;
+        notCancellable: string;
+        topicInvalid: string;
+        textInvalid: string;
       };
       error: {
         conflict: string;
@@ -1277,7 +1291,7 @@ export type TranslationDictionary = {
         textToSpeech: string;
       };
     };
-  };
+  } & ThreadBoardLocaleTranslation;
   receipt: {
     openLabel: string;
     contextUsed: string;
@@ -7832,4 +7846,50 @@ export type PluginsInstallLocaleTranslation = {
     listLabel: string;
     listValue: string;
   };
+};
+
+/** Flat `chat.threadBoard*` keys for the community Board; see thread-board-translations.ts. */
+export type ThreadBoardLocaleTranslation = {
+  threadBoardNavLabel: string;
+  threadBoardTitle: string;
+  threadBoardSubtitle: string;
+  threadBoardSearchLabel: string;
+  threadBoardSearchPlaceholder: string;
+  threadBoardSuggestionsLabel: string;
+  threadBoardNoSuggestions: string;
+  threadBoardShowAll: string;
+  threadBoardDidYouMean: string;
+  threadBoardSortLabel: string;
+  threadBoardSortLatest: string;
+  threadBoardSortTrending: string;
+  threadBoardSortDiscussed: string;
+  threadBoardSortLiked: string;
+  threadBoardFilterLanguage: string;
+  threadBoardAllLanguages: string;
+  threadBoardFilterType: string;
+  threadBoardAllTypes: string;
+  threadBoardFilters: string;
+  threadBoardClearFilters: string;
+  threadBoardApply: string;
+  threadBoardResultsCount: string;
+  threadBoardEmptyTitle: string;
+  threadBoardEmptyBody: string;
+  threadBoardEmptySearch: string;
+  threadBoardErrorTitle: string;
+  threadBoardErrorBody: string;
+  threadBoardRetry: string;
+  threadBoardReadingMinutes: string;
+  threadBoardSources: string;
+  threadBoardComments: string;
+  threadBoardLikes: string;
+  threadBoardViews: string;
+  threadBoardRead: string;
+  threadBoardBack: string;
+  threadBoardPrevPage: string;
+  threadBoardNextPage: string;
+  threadBoardPageOf: string;
+  threadBoardReaderEngage: string;
+  threadBoardOpenPublic: string;
+  threadBoardCopyLink: string;
+  threadBoardViewOnBoard: string;
 };

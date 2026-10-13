@@ -20,6 +20,7 @@ import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
+import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const en: TranslationDictionary = {
@@ -453,6 +454,7 @@ export const en: TranslationDictionary = {
       auto: 'Let AUTO choose',
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.en,
+    ...THREAD_BOARD_TRANSLATIONS.en,
     composerContext: {
       menuLabel: 'Context',
       pickLabel: 'Choose context packs',
@@ -720,6 +722,11 @@ export const en: TranslationDictionary = {
     threadStartGeneration: 'Start generation',
     threadApproveAndPublish: 'Approve and publish',
     threadPublished: 'Publication is live.',
+    threadLiveTitle: 'Your Thread is live',
+    threadLiveBody:
+      'Anyone with this link can read it. Share it, or open it to see what readers see.',
+    threadLiveLinkLabel: 'Public link',
+    threadLiveOpen: 'Open live Thread',
     threadDraftNotEligible: 'This draft is not eligible to publish after the safety checks.',
     threadGenerationCancelled: 'Generation was cancelled.',
     threadStageSnapshot: 'Freezing your chat',
@@ -824,6 +831,9 @@ export const en: TranslationDictionary = {
     threadCreateFailed: 'Failed to create thread',
     threadProgress: {
       title: 'Generation progress',
+      statusQueued: 'Waiting in the queue',
+      queuedHint:
+        'Nothing has started yet. Your Thread begins as soon as a worker is free. You can cancel any time.',
       statusLabel: 'Status',
       stageLabel: 'Stage',
       attempt: 'Attempt {current} of {max}',
@@ -907,6 +917,8 @@ export const en: TranslationDictionary = {
         modelIdleTimeout: 'A model went silent for 5 minutes, so it was treated as stuck.',
         modelHardCeiling: 'A model was still working after 10 minutes, so the call was stopped.',
         modelReasonedNoAnswer: 'A model used its whole output budget thinking and wrote no answer.',
+        queueExpired:
+          'This generation waited in the queue too long, so it was stopped before it started.',
         unknown: 'Something went wrong ({code}).',
       },
       hint: {
@@ -947,6 +959,7 @@ export const en: TranslationDictionary = {
         modelHardCeiling: 'Pick a faster model or a shorter topic, then retry.',
         modelReasonedNoAnswer:
           'Retry, pick a model that answers more directly, or shorten the topic.',
+        queueExpired: 'Retry it now. If the queue is long, try again later.',
         unknown: 'Retry, or change the models and try again.',
       },
       startError: {
@@ -957,6 +970,17 @@ export const en: TranslationDictionary = {
           'A selected model is not included in your plan. Pick an included model.',
         modelUnknown: 'A selected model is not in the model catalog. Pick one from the list.',
         spendCapTooLow: 'The spend cap is too low. Set at least 0.01 USD.',
+        allowanceUnavailable:
+          'Your Thread allowance is used up, or a running generation is holding it. Wait for it to finish or upgrade your plan.',
+        tooManyActive:
+          'You already have the maximum number of generations running. Wait for one to finish or cancel one.',
+        idempotencyKeyReused:
+          'This request was already sent with different details. Start again from the form.',
+        notCancellable: 'This generation is not running or queued, so there is nothing to cancel.',
+        topicInvalid:
+          'The topic is empty or has a character that cannot be saved. Edit it and try again.',
+        textInvalid:
+          'A text field has a character that cannot be saved. Remove unusual characters and try again.',
       },
       error: {
         conflict: 'Cancel the generation first, or try again in a moment.',

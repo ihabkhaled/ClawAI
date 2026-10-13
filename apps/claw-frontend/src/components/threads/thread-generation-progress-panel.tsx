@@ -1,3 +1,4 @@
+import { RotateCcw, Square, Trash2 } from 'lucide-react';
 import type { ReactElement } from 'react';
 
 import { ThreadErrorNotice } from '@/components/threads/thread-error-notice';
@@ -13,6 +14,8 @@ import type { ThreadProgressPanelProps } from '@/types/thread-generation-progres
 import {
   findFailedRoleKind,
   formatMicroUsd,
+  hasThreadSpend,
+  isQueuedThreadStatus,
   threadHeadlineKey,
 } from '@/utilities/thread-generation-progress.utility';
 
@@ -31,6 +34,7 @@ export function ThreadGenerationProgressPanel({
   const panel = useThreadProgressPanel(publicationId);
   const { progress } = panel;
   const headlineKey = progress ? threadHeadlineKey(progress.status, progress.stage) : null;
+  const isQueued = progress !== undefined && isQueuedThreadStatus(progress.status);
 
   return (
     <section
@@ -45,7 +49,11 @@ export function ThreadGenerationProgressPanel({
       {panel.isLoading ? <p role="status">{t('common.loading')}</p> : null}
       {panel.error === null ? null : <ThreadErrorNotice message={panel.error} />}
       {panel.pollingPaused ? (
-        <p role="status" className="text-warning text-sm" data-testid="thread-progress-paused">
+        <p
+          role="status"
+          className="dark:text-warning text-sm text-amber-700"
+          data-testid="thread-progress-paused"
+        >
           {t(
             panel.pollingPausedByErrors
               ? 'chat.threadProgress.pollingErrors'
@@ -65,19 +73,32 @@ export function ThreadGenerationProgressPanel({
             {progress.round > 0 ? (
               <span>{t('chat.threadStageRound', { round: String(progress.round) })}</span>
             ) : null}
-            <span>
-              {t('chat.threadProgress.attempt', {
-                current: String(progress.attemptCount),
-                max: String(progress.maxAttempts),
-              })}
-            </span>
-            <span>
-              {t('chat.threadProgress.spent', {
-                amount: formatMicroUsd(progress.spentMicroCredits),
-              })}
-            </span>
+            {isQueued ? null : (
+              <span>
+                {t('chat.threadProgress.attempt', {
+                  current: String(progress.attemptCount),
+                  max: String(progress.maxAttempts),
+                })}
+              </span>
+            )}
+            {hasThreadSpend(progress.spentMicroCredits) ? (
+              <span data-testid="thread-progress-spent">
+                {t('chat.threadProgress.spent', {
+                  amount: formatMicroUsd(progress.spentMicroCredits),
+                })}
+              </span>
+            ) : null}
           </p>
-          {panel.isRunning && progress.failure === null ? (
+          {isQueued ? (
+            <p
+              role="status"
+              className="text-muted-foreground text-sm"
+              data-testid="thread-progress-queued"
+            >
+              {t('chat.threadProgress.queuedHint')}
+            </p>
+          ) : null}
+          {panel.isRunning && !isQueued && progress.failure === null ? (
             <p
               role="status"
               className="text-muted-foreground text-sm"
@@ -94,9 +115,10 @@ export function ThreadGenerationProgressPanel({
           )}
           <ThreadGenerationSelectionsView selections={progress.selections} />
           <ThreadGenerationTimeline steps={progress.steps} />
-          <div className="flex flex-wrap gap-2">
+          <div className="border-border flex flex-col gap-2 border-t pt-4 sm:flex-row sm:flex-wrap">
             {panel.canRetry ? (
-              <Button type="button" onClick={panel.retry.open}>
+              <Button type="button" onClick={panel.retry.open} className="w-full sm:w-auto">
+                <RotateCcw className="h-4 w-4" aria-hidden="true" />
                 {t('chat.threadProgress.retry')}
               </Button>
             ) : null}
@@ -107,7 +129,9 @@ export function ThreadGenerationProgressPanel({
                 onClick={onCancel}
                 disabled={isCancelling}
                 isLoading={isCancelling}
+                className="w-full sm:w-auto"
               >
+                <Square className="h-4 w-4" aria-hidden="true" />
                 {t('common.cancel')}
               </Button>
             ) : null}
@@ -116,7 +140,9 @@ export function ThreadGenerationProgressPanel({
                 type="button"
                 variant="destructive"
                 onClick={() => panel.remove.setOpen(true)}
+                className="w-full sm:ms-auto sm:w-auto"
               >
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
                 {t('chat.threadProgress.deleteButton')}
               </Button>
             ) : null}

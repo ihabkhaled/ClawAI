@@ -14,6 +14,7 @@ export const PRIVATE_ROUTE_PREFIXES: ReadonlyArray<string> = [
   '/confirm-email-change',
   '/dashboard',
   '/chat',
+  '/board',
   '/connectors',
   '/models',
   '/routing',

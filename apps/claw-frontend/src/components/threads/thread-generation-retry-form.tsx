@@ -1,3 +1,4 @@
+import { RotateCcw, X } from 'lucide-react';
 import type { ReactElement } from 'react';
 
 import { ThreadErrorNotice } from '@/components/threads/thread-error-notice';
@@ -10,6 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from '@/lib/i18n';
 import type { ThreadGenerationRetryFormProps } from '@/types/thread-generation-progress.types';
 import { threadRoleLabelKey } from '@/utilities/thread-generation-progress.utility';
@@ -33,18 +36,18 @@ export function ThreadGenerationRetryForm({ form }: ThreadGenerationRetryFormPro
         >
           <label className="flex flex-col gap-1 text-sm">
             {t('chat.threadTopic')}
-            <textarea
+            <Textarea
               required
               minLength={10}
               maxLength={10000}
               value={form.topic}
               onChange={(event) => form.setTopic(event.target.value)}
-              className="border-input bg-background min-h-24 rounded-md border px-3 py-2"
+              className="min-h-24"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             {t('chat.threadSpendCapUsd')}
-            <input
+            <Input
               required
               type="number"
               min="0.01"
@@ -52,7 +55,6 @@ export function ThreadGenerationRetryForm({ form }: ThreadGenerationRetryFormPro
               step="0.01"
               value={form.spendCapUsd}
               onChange={(event) => form.setSpendCapUsd(event.target.value)}
-              className="border-input bg-background rounded-md border px-3 py-2"
             />
           </label>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -67,11 +69,23 @@ export function ThreadGenerationRetryForm({ form }: ThreadGenerationRetryFormPro
             ))}
           </div>
           {form.error === null ? null : <ThreadErrorNotice message={form.error} />}
-          <div className="flex flex-wrap gap-2">
-            <Button type="submit" disabled={form.isSubmitting} isLoading={form.isSubmitting}>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <Button
+              type="submit"
+              disabled={form.isSubmitting}
+              isLoading={form.isSubmitting}
+              className="w-full sm:w-auto"
+            >
+              <RotateCcw className="h-4 w-4" aria-hidden="true" />
               {t('chat.threadProgress.retrySubmit')}
             </Button>
-            <Button type="button" variant="outline" onClick={form.close}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={form.close}
+              className="w-full sm:w-auto"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
               {t('common.cancel')}
             </Button>
           </div>

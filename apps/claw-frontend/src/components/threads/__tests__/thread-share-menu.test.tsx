@@ -75,3 +75,40 @@ describe('ThreadShareMenu', () => {
     expect(share).toHaveBeenCalledWith({ title: 'T', url: URL_UNDER_TEST });
   });
 });
+
+describe('ThreadShareMenu icon row', () => {
+  it('renders each network as an icon-only link with an accessible name and a tooltip', () => {
+    render(<ThreadShareMenu url={URL_UNDER_TEST} title="Vector search" />);
+
+    const links = screen.getAllByRole('link');
+    expect(links).toHaveLength(7);
+    for (const link of links) {
+      expect(link.getAttribute('aria-label')).toMatch(/^chat\.threadShareOn:/u);
+      expect(link.getAttribute('title')).toBe(link.getAttribute('aria-label'));
+      expect(link.querySelector('svg[aria-hidden="true"], svg')).not.toBeNull();
+      expect(link.textContent).toBe('');
+    }
+  });
+
+  it('draws the brand marks as inline SVG that follow the theme colour', () => {
+    render(<ThreadShareMenu url={URL_UNDER_TEST} title="Vector search" />);
+
+    for (const platform of ['Facebook', 'LinkedIn', 'X', 'Reddit']) {
+      const svg = screen
+        .getByRole('link', { name: `chat.threadShareOn:${platform}` })
+        .querySelector('svg');
+      expect(svg).not.toBeNull();
+      expect(svg?.getAttribute('fill')).toBe('currentColor');
+      expect(svg?.getAttribute('aria-hidden')).toBe('true');
+    }
+  });
+
+  it('uses logical spacing and touch-sized buttons so it mirrors in right-to-left', () => {
+    render(<ThreadShareMenu url={URL_UNDER_TEST} title="Vector search" />);
+
+    const copy = screen.getByRole('button', { name: 'chat.threadShareCopy' });
+    expect(copy.className).toContain('ms-auto');
+    expect(copy.className).not.toMatch(/(^|\s)(ml|mr|pl|pr)-/u);
+    expect(screen.getAllByRole('link')[0]?.className).toContain('h-10');
+  });
+});

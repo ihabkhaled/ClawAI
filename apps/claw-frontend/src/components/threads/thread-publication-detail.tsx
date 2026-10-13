@@ -1,11 +1,15 @@
+import { Check, EyeOff, Pencil, Rocket, X } from 'lucide-react';
 import type { ReactElement } from 'react';
 
 import { ThreadChangeRequests } from '@/components/threads/thread-change-requests';
 import { ThreadErrorNotice } from '@/components/threads/thread-error-notice';
 import { ThreadExportPanel } from '@/components/threads/thread-export-panel';
 import { ThreadGenerationProgressPanel } from '@/components/threads/thread-generation-progress-panel';
+import { ThreadLiveBanner } from '@/components/threads/thread-live-banner';
 import { ThreadShareMenu } from '@/components/threads/thread-share-menu';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { THREAD_OWNER_EXPORT_OPTIONS } from '@/constants/thread-publication.constants';
 import { ThreadPublicationStatus } from '@/enums/thread-publication-status.enum';
 import { ThreadRevisionField } from '@/enums/thread-revision-field.enum';
@@ -15,7 +19,7 @@ import {
   isThreadNotFoundError,
   resolveThreadErrorMessage,
 } from '@/utilities/thread-error-message.utility';
-import { threadStageLabelKey } from '@/utilities/thread-generation-stage.utility';
+import { threadHeadlineKey } from '@/utilities/thread-generation-progress.utility';
 
 /**
  * One publication, after generation starts: progress, draft preview, capped
@@ -38,7 +42,20 @@ export function ThreadPublicationDetail({
     activeRevisionId,
   } = detail;
   const draft = generation.data?.draft;
-  const stageLabelKey = generation.data ? threadStageLabelKey(generation.data.stage) : null;
+  const stageLabelKey = generation.data
+    ? threadHeadlineKey(generation.data.status, generation.data.stage)
+    : null;
+  const isPublished = selectedPublication?.status === ThreadPublicationStatus.Published;
+  const canEdit =
+    Boolean(draft) &&
+    !editingRevision &&
+    (!activeRevisionId || detail.revisionIsTerminal || revisionReview.isError);
+  const canApprove =
+    generation.data?.status === 'WAITING_FOR_REVIEW' &&
+    Boolean(draft) &&
+    Boolean(activeRevisionId ? revisionReview.data?.ready : detail.publicationReady) &&
+    !publish.isSuccess;
+  const canUnpublish = isPublished && !unpublish.isSuccess;
 
   return (
     <>
@@ -47,7 +64,7 @@ export function ThreadPublicationDetail({
       ) : null}
       <ThreadGenerationProgressPanel
         publicationId={detail.publicationId}
-        canDelete={selectedPublication?.status !== ThreadPublicationStatus.Published}
+        canDelete={!isPublished}
         onCancel={() => cancel.mutate()}
         isCancelling={cancel.isPending}
       />
@@ -81,9 +98,14 @@ export function ThreadPublicationDetail({
               <h3 className="font-medium" data-tour="thread-review-draft">
                 {t('chat.threadDraftPreview')}
               </h3>
-              <pre className="bg-muted/30 max-h-[32rem] overflow-auto rounded-md p-4 text-sm whitespace-pre-wrap">
-                {draft.markdown}
-              </pre>
+              <Textarea
+                readOnly
+                rows={18}
+                value={draft.markdown}
+                aria-label={t('chat.threadDraftPreview')}
+                data-testid="thread-draft-preview"
+                className="bg-muted/30 max-h-[32rem] font-mono"
+              />
               <h3 className="font-medium">{t('chat.threadCitations')}</h3>
               <ul className="list-inside list-disc">
                 {draft.citations.map(({ evidenceId, url }) => (
@@ -101,13 +123,6 @@ export function ThreadPublicationDetail({
               </ul>
             </>
           ) : null}
-          {draft &&
-          !editingRevision &&
-          (!activeRevisionId || detail.revisionIsTerminal || revisionReview.isError) ? (
-            <Button type="button" variant="outline" className="w-fit" onClick={detail.startEditing}>
-              {t('chat.threadEditDraft')}
-            </Button>
-          ) : null}
           {editingRevision ? (
             <form
               className="flex flex-col gap-3"
@@ -116,21 +131,27 @@ export function ThreadPublicationDetail({
                 editRevision.mutate();
               }}
             >
-              <label className="flex flex-col gap-1 text-sm">
-                {t('chat.threadRevisionContent')}
-                <textarea
+              <div className="flex flex-col gap-2">
+                <label htmlFor="thread-revision-markdown" className="text-sm font-medium">
+                  {t('chat.threadRevisionContent')}
+                </label>
+                <Textarea
+                  id="thread-revision-markdown"
                   required
                   maxLength={100000}
                   value={detail.revisionMarkdown}
                   onChange={(event) =>
                     detail.changeRevisionField(ThreadRevisionField.Markdown, event.target.value)
                   }
-                  className="border-input bg-background min-h-64 rounded-md border px-3 py-2"
+                  className="min-h-64"
                 />
-              </label>
-              <label className="flex flex-col gap-1 text-sm">
-                {t('chat.threadRevisionCap')}
-                <input
+              </div>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="thread-revision-cap" className="text-sm font-medium">
+                  {t('chat.threadRevisionCap')}
+                </label>
+                <Input
+                  id="thread-revision-cap"
                   required
                   min="0.01"
                   step="0.01"
@@ -139,28 +160,31 @@ export function ThreadPublicationDetail({
                   onChange={(event) =>
                     detail.changeRevisionField(ThreadRevisionField.Cap, event.target.value)
                   }
-                  className="border-input bg-background rounded-md border px-3 py-2"
                 />
-              </label>
+              </div>
               <p className="text-muted-foreground text-sm">
                 {t('chat.threadRevisionReviewDisclosure')}
               </p>
               {editRevision.isError ? (
                 <ThreadErrorNotice message={resolveThreadErrorMessage(editRevision.error)} />
               ) : null}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                 <Button
                   type="submit"
                   disabled={editRevision.isPending}
                   isLoading={editRevision.isPending}
+                  className="w-full sm:w-auto"
                 >
+                  <Check className="h-4 w-4" aria-hidden="true" />
                   {t('chat.threadSubmitRevision')}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => detail.setEditingRevision(false)}
+                  className="w-full sm:w-auto"
                 >
+                  <X className="h-4 w-4" aria-hidden="true" />
                   {t('common.cancel')}
                 </Button>
               </div>
@@ -180,35 +204,58 @@ export function ThreadPublicationDetail({
           !publish.isSuccess ? (
             <p role="status">{t('chat.threadDraftNotEligible')}</p>
           ) : null}
-          {publish.isSuccess ? <p role="status">{t('chat.threadPublished')}</p> : null}
-          {generation.data.status === 'WAITING_FOR_REVIEW' &&
-          draft &&
-          (activeRevisionId ? revisionReview.data?.ready : detail.publicationReady) &&
-          !publish.isSuccess ? (
-            <Button
-              type="button"
-              onClick={() => publish.mutate()}
-              disabled={publish.isSuccess}
-              className="w-fit"
-              isLoading={publish.isPending}
-              data-tour="thread-review-approve"
-            >
-              {t('chat.threadApproveAndPublish')}
-            </Button>
+          {publish.isSuccess && detail.publicUrl !== null ? (
+            <ThreadLiveBanner url={detail.publicUrl} />
           ) : null}
-          {selectedPublication?.status === 'PUBLISHED' && !unpublish.isSuccess ? (
-            <Button
-              type="button"
-              variant="outline"
-              className="w-fit"
-              onClick={() => unpublish.mutate()}
-              disabled={unpublish.isPending}
-              isLoading={unpublish.isPending}
-            >
-              {t('chat.threadUnpublish')}
-            </Button>
+          {publish.isSuccess && detail.publicUrl === null ? (
+            <p role="status">{t('chat.threadPublished')}</p>
           ) : null}
-          {selectedPublication && (draft || selectedPublication.status === 'PUBLISHED') ? (
+          {canEdit || canApprove || canUnpublish ? (
+            <div
+              className="border-border flex flex-col gap-2 border-t pt-4 sm:flex-row sm:flex-wrap"
+              data-testid="thread-owner-actions"
+            >
+              {canEdit ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  onClick={detail.startEditing}
+                >
+                  <Pencil className="h-4 w-4" aria-hidden="true" />
+                  {t('chat.threadEditDraft')}
+                </Button>
+              ) : null}
+              {canApprove ? (
+                <Button
+                  type="button"
+                  size="lg"
+                  onClick={() => publish.mutate()}
+                  disabled={publish.isSuccess}
+                  className="w-full sm:w-auto"
+                  isLoading={publish.isPending}
+                  data-tour="thread-review-approve"
+                >
+                  <Rocket className="h-4 w-4" aria-hidden="true" />
+                  {t('chat.threadApproveAndPublish')}
+                </Button>
+              ) : null}
+              {canUnpublish ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full sm:ms-auto sm:w-auto"
+                  onClick={() => unpublish.mutate()}
+                  disabled={unpublish.isPending}
+                  isLoading={unpublish.isPending}
+                >
+                  <EyeOff className="h-4 w-4" aria-hidden="true" />
+                  {t('chat.threadUnpublish')}
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
+          {selectedPublication && (draft || isPublished) ? (
             <ThreadExportPanel
               baseName={`thread-${detail.publicationId}`}
               options={THREAD_OWNER_EXPORT_OPTIONS}
@@ -225,7 +272,7 @@ export function ThreadPublicationDetail({
           {publish.isError ? (
             <ThreadErrorNotice message={resolveThreadErrorMessage(publish.error)} />
           ) : null}
-          {selectedPublication?.status === 'PUBLISHED' ? (
+          {isPublished ? (
             <ThreadChangeRequests
               publicationId={detail.publicationId}
               revisionSource={draft ?? null}

@@ -1,3 +1,4 @@
+import { Flag, X } from 'lucide-react';
 import type { FormEvent, ReactElement } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -9,9 +10,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { THREAD_REPORT_REASONS } from '@/constants/thread-publication.constants';
+import {
+  THREAD_REPORT_REASONS,
+  THREAD_REPORT_REASON_LABEL_KEYS,
+} from '@/constants/thread-publication.constants';
 import { useTranslation } from '@/lib/i18n';
 import type { ThreadPublicReportFormProps } from '@/types/thread-publication.types';
+import { parseThreadReportReason } from '@/utilities/thread-report-reason.utility';
 
 export function ThreadPublicReportForm({
   commentId,
@@ -22,16 +27,27 @@ export function ThreadPublicReportForm({
 
   return (
     <form
-      className="border-border bg-muted/40 flex flex-col gap-3 rounded-md border p-4"
+      className="border-border bg-muted/40 flex flex-col gap-3 rounded-lg border p-4"
       onSubmit={(event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         actions.submitReport();
       }}
     >
-      <label htmlFor={`thread-report-reason-${target}`}>{t('chat.threadPublicReportReason')}</label>
+      <label
+        htmlFor={`thread-report-reason-${target}`}
+        className="flex items-center gap-2 text-sm font-medium"
+      >
+        <Flag className="h-4 w-4" aria-hidden="true" />
+        {t('chat.threadPublicReportReason')}
+      </label>
       <Select
         value={actions.reportReason}
-        onValueChange={(value) => actions.setReportReason(value as typeof actions.reportReason)}
+        onValueChange={(value) => {
+          const reason = parseThreadReportReason(value);
+          if (reason !== null) {
+            actions.setReportReason(reason);
+          }
+        }}
       >
         <SelectTrigger id={`thread-report-reason-${target}`}>
           <SelectValue />
@@ -39,12 +55,12 @@ export function ThreadPublicReportForm({
         <SelectContent>
           {THREAD_REPORT_REASONS.map((reason) => (
             <SelectItem key={reason} value={reason}>
-              {t(`threadPublicReport${reason}`)}
+              {t(THREAD_REPORT_REASON_LABEL_KEYS[reason])}
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
-      <label htmlFor={`thread-report-details-${target}`}>
+      <label htmlFor={`thread-report-details-${target}`} className="text-sm font-medium">
         {t('chat.threadPublicReportDetails')}
       </label>
       <Textarea
@@ -54,8 +70,14 @@ export function ThreadPublicReportForm({
         onChange={(event) => actions.setReportDetails(event.target.value)}
         disabled={actions.isSubmitting}
       />
-      <div className="flex gap-2">
-        <Button type="submit" disabled={actions.isSubmitting} isLoading={actions.isSubmitting}>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button
+          type="submit"
+          disabled={actions.isSubmitting}
+          isLoading={actions.isSubmitting}
+          className="w-full sm:w-auto"
+        >
+          <Flag className="h-4 w-4" aria-hidden="true" />
           {t('chat.threadPublicSubmitReport')}
         </Button>
         <Button
@@ -63,7 +85,9 @@ export function ThreadPublicReportForm({
           variant="outline"
           onClick={() => actions.setReportTarget(null)}
           disabled={actions.isSubmitting}
+          className="w-full sm:w-auto"
         >
+          <X className="h-4 w-4" aria-hidden="true" />
           {t('common.cancel')}
         </Button>
       </div>

@@ -27,6 +27,10 @@ While a job runs and has not failed, the panel shows one status line, `chat.thre
 (testid `thread-progress-still-working`): slow models can take minutes, and a model counts as stuck only after
 5 minutes of silence. It is static wording, not a timer, so it cannot disagree with the service.
 
+A job that is still `QUEUED` has not started, so none of that applies: the headline is `chat.threadProgress.statusQueued`
+("Waiting in the queue"), `queuedHint` explains it (testid `thread-progress-queued`), and the attempt counter and the still-working
+line are hidden. "Spent so far" appears only once the amount is above zero. See [threads-buttons-and-publish-banner.md](threads-buttons-and-publish-banner.md).
+
 ## Start refusals
 
 `resolveThreadErrorMessage` checks the refusal code before the HTTP status, so a 403 with
@@ -34,6 +38,15 @@ While a job runs and has not failed, the panel shows one status line, `chat.thre
 block. `useThreadGenerationForm` leaves `isPlanBlocked` false for these codes; a 403 with no known code still shows
 the plan block and upgrade link. The service message (English, names the seat and model) is not shown; the
 translated sentence has no placeholders.
+
+## Codes added with the queue and concurrency work (2026-10-13)
+
+The Threads and thread-generation services gained codes the contract tests above require a sentence for, so they are mapped
+and translated in 13 locales: step code `QUEUE_EXPIRED` (a job that waited in the queue too long, `code.queueExpired` and
+`hint.queueExpired`) and start refusals `THREAD_GENERATION_ALLOWANCE_UNAVAILABLE`, `THREAD_GENERATION_TOO_MANY_ACTIVE`,
+`THREAD_IDEMPOTENCY_KEY_REUSED`, `THREAD_GENERATION_NOT_CANCELLABLE`, `THREAD_TOPIC_INVALID` and `THREAD_TEXT_INVALID`
+(`startError.allowanceUnavailable`, `tooManyActive`, `idempotencyKeyReused`, `notCancellable`, `topicInvalid`, `textInvalid`).
+The sentences follow the service enum comments; if a service changes what a code means, change the sentence with it.
 
 ## Tests
 

@@ -1,5 +1,7 @@
 import type { ThreadGenerationStepOutcome, ThreadGenerationStepRoleKind } from '@claw/shared-types';
 
+import { ThreadGenerationJobStatus } from '@/enums/thread-generation-job-status.enum';
+
 /** How often the owner's progress panel asks for the step list while a job runs. */
 export const THREAD_PROGRESS_POLL_INTERVAL_MS = 3000;
 
@@ -61,6 +63,7 @@ export const THREAD_GENERATION_CODE_KEYS: Readonly<Record<string, string>> = {
   LEASE_EXPIRED: 'leaseExpired',
   RESUMED_FROM_CHECKPOINT: 'resumedFromCheckpoint',
   GENERATION_ATTEMPT_TIMEOUT: 'generationAttemptTimeout',
+  QUEUE_EXPIRED: 'queueExpired',
   MODEL_IDLE_TIMEOUT: 'modelIdleTimeout',
   MODEL_HARD_CEILING: 'modelHardCeiling',
   MODEL_REASONED_NO_ANSWER: 'modelReasonedNoAnswer',
@@ -76,6 +79,12 @@ export const THREAD_START_ERROR_KEYS: Readonly<Record<string, string>> = {
   MODEL_NOT_ALLOWED_FOR_PLAN: 'modelNotAllowedForPlan',
   THREAD_MODEL_UNKNOWN: 'modelUnknown',
   THREAD_SPEND_CAP_TOO_LOW: 'spendCapTooLow',
+  THREAD_GENERATION_ALLOWANCE_UNAVAILABLE: 'allowanceUnavailable',
+  THREAD_GENERATION_TOO_MANY_ACTIVE: 'tooManyActive',
+  THREAD_IDEMPOTENCY_KEY_REUSED: 'idempotencyKeyReused',
+  THREAD_GENERATION_NOT_CANCELLABLE: 'notCancellable',
+  THREAD_TOPIC_INVALID: 'topicInvalid',
+  THREAD_TEXT_INVALID: 'textInvalid',
 };
 
 export const THREAD_STEP_OUTCOME_KEYS: Readonly<Record<ThreadGenerationStepOutcome, string>> = {
@@ -95,21 +104,25 @@ export const THREAD_STEP_ROLE_KEYS: Readonly<Record<ThreadGenerationStepRoleKind
   SYSTEM: 'chat.threadProgress.roleSystem',
 };
 
-/** Tone classes per outcome. Logical, theme-token colours only. */
+/**
+ * Tone classes per outcome. Light-theme shades are picked for 4.5:1 on a white or tinted card
+ * (the token colours measured 2.1 to 3.6:1 there); dark mode keeps the brighter tokens.
+ */
 export const THREAD_STEP_OUTCOME_TONES: Readonly<Record<ThreadGenerationStepOutcome, string>> = {
-  STARTED: 'text-info',
-  SUCCEEDED: 'text-success',
-  FAILED: 'text-destructive',
-  RETRY: 'text-warning',
-  FALLBACK: 'text-warning',
+  STARTED: 'text-blue-700 dark:text-info',
+  SUCCEEDED: 'text-green-700 dark:text-success',
+  FAILED: 'text-red-800 dark:text-destructive',
+  RETRY: 'text-amber-700 dark:text-warning',
+  FALLBACK: 'text-amber-700 dark:text-warning',
   SKIPPED: 'text-muted-foreground',
 };
 
 /** Roles whose model the owner can change when retrying. */
 export const THREAD_RETRY_EDITABLE_ROLE_KINDS: readonly string[] = ['AUTHOR', 'JUDGE', 'CRITIC'];
 
-/** Terminal statuses that read better as a status chip than as a stage name. */
+/** Statuses that read better as a status chip than as a stage name (a queued job has no stage yet). */
 export const THREAD_STATUS_LABEL_KEYS: Readonly<Record<string, string>> = {
+  [ThreadGenerationJobStatus.Queued]: 'chat.threadProgress.statusQueued',
   FAILED: 'chat.threadProgress.outcomeFailed',
   CANCELLED: 'chat.threadGenerationCancelled',
   WAITING_FOR_REVIEW: 'chat.threadStageReady',

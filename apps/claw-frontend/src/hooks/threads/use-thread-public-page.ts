@@ -22,6 +22,10 @@ import {
   buildThreadMarkdownDocument,
   buildThreadTextDocument,
 } from '@/utilities/thread-document-export.utility';
+import {
+  readRememberedReaction,
+  withRememberedReaction,
+} from '@/utilities/thread-viewer-reaction.utility';
 
 export function useThreadPublicPage(
   initialPublication: PublicThreadPublication,
@@ -37,6 +41,7 @@ export function useThreadPublicPage(
   const queries = useThreadPublicQueries(slug, initialPublication);
   const actions = useThreadPublicActions(slug);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const userId = useAuthStore((state) => state.user?.id ?? '');
   useThreadPublicView(slug, isAuthenticated);
   const error = queries.publication.error;
   const isNotFound = error instanceof ApiClientError && error.status === 404;
@@ -74,7 +79,10 @@ export function useThreadPublicPage(
     buildExportFile,
     publication: queries.publication.data,
     comments: queries.comments.data ?? [],
-    reactions: queries.reactions.data,
+    reactions: withRememberedReaction(
+      queries.reactions.data,
+      isAuthenticated && userId !== '' ? readRememberedReaction(userId, slug) : null,
+    ),
     isAuthenticated,
     isLoading: queries.publication.isLoading,
     isNotFound,

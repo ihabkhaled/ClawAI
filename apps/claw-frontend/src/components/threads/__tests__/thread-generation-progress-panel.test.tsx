@@ -195,3 +195,71 @@ describe('ThreadGenerationProgressPanel', () => {
     expect(screen.getByRole('button', { name: 'common.cancel' })).toBeDisabled();
   });
 });
+
+describe('ThreadGenerationProgressPanel queued, spend and action bar', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  function queued() {
+    return makeController({
+      progress: makeProgress({
+        status: 'QUEUED',
+        stage: 'SNAPSHOT',
+        round: 0,
+        attemptCount: 0,
+        spentMicroCredits: '0',
+        failure: null,
+        steps: [],
+      }),
+      isRunning: true,
+      canRetry: false,
+    });
+  }
+
+  it('says a queued job is waiting, not that it is freezing the chat or still working', () => {
+    renderPanel(queued());
+
+    const summary = screen.getByTestId('thread-progress-summary');
+    expect(summary).toHaveTextContent('chat.threadProgress.statusQueued');
+    expect(summary).not.toHaveTextContent('chat.threadStageSnapshot');
+    expect(summary).not.toHaveTextContent('chat.threadProgress.attempt');
+    expect(screen.getByTestId('thread-progress-queued')).toHaveTextContent(
+      'chat.threadProgress.queuedHint',
+    );
+    expect(screen.queryByTestId('thread-progress-still-working')).not.toBeInTheDocument();
+  });
+
+  it('still lets the owner cancel a queued job', async () => {
+    const user = userEvent.setup();
+    const { onCancel } = renderPanel(queued());
+
+    await user.click(screen.getByRole('button', { name: 'common.cancel' }));
+
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the spend line until a real amount exists', () => {
+    renderPanel(makeController({ progress: makeProgress({ spentMicroCredits: '0' }) }));
+    expect(screen.queryByTestId('thread-progress-spent')).not.toBeInTheDocument();
+  });
+
+  it('hides the spend line for an unreadable amount', () => {
+    renderPanel(makeController({ progress: makeProgress({ spentMicroCredits: 'n/a' }) }));
+    expect(screen.queryByTestId('thread-progress-spent')).not.toBeInTheDocument();
+  });
+
+  it('shows the spend line once the job has spent something', () => {
+    renderPanel(makeController());
+    expect(screen.getByTestId('thread-progress-spent')).toHaveTextContent('$0.0123');
+  });
+
+  it('keeps the destructive Delete visually separate from Retry in the action bar', () => {
+    renderPanel(makeController());
+    const retry = screen.getByRole('button', { name: 'chat.threadProgress.retry' });
+    const remove = screen.getByRole('button', { name: 'chat.threadProgress.deleteButton' });
+
+    expect(retry.parentElement).toBe(remove.parentElement);
+    expect(retry.querySelector('svg')).not.toBeNull();
+    expect(remove.querySelector('svg')).not.toBeNull();
+    expect(remove.className).toContain('bg-destructive');
+  });
+});

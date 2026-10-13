@@ -1,5 +1,6 @@
 'use client';
 
+import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactElement } from 'react';
 
@@ -20,6 +21,7 @@ export default function ThreadPublicationsPage(): ReactElement {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">{t('chat.threads')}</h1>
         <Button type="button" onClick={createDialog.open} data-tour="threads-create">
+          <Plus className="h-4 w-4" aria-hidden="true" />
           {t('chat.threadCreateButton')}
         </Button>
       </div>

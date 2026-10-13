@@ -20,6 +20,7 @@ import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
+import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const ru: TranslationDictionary = {
@@ -456,6 +457,7 @@ export const ru: TranslationDictionary = {
       auto: 'Пусть выберет AUTO',
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.ru,
+    ...THREAD_BOARD_TRANSLATIONS.ru,
     composerContext: {
       menuLabel: 'Контекст',
       pickLabel: 'Выбрать пакеты контекста',
@@ -726,6 +728,11 @@ export const ru: TranslationDictionary = {
     threadStartGeneration: 'Начать генерацию',
     threadApproveAndPublish: 'Одобрить и опубликовать',
     threadPublished: 'Публикация опубликована.',
+    threadLiveTitle: 'Ваш Thread опубликован',
+    threadLiveBody:
+      'Любой, у кого есть эта ссылка, может его прочитать. Поделитесь ею или откройте, чтобы увидеть, как его видят читатели.',
+    threadLiveLinkLabel: 'Публичная ссылка',
+    threadLiveOpen: 'Открыть опубликованный Thread',
     threadDraftNotEligible: 'Черновик не прошёл проверки безопасности и не может быть опубликован.',
     threadGenerationCancelled: 'Генерация отменена.',
     threadStageSnapshot: 'Фиксация чата',
@@ -832,6 +839,9 @@ export const ru: TranslationDictionary = {
     threadCreateFailed: 'Не удалось создать чат',
     threadProgress: {
       title: 'Ход генерации',
+      statusQueued: 'В очереди',
+      queuedHint:
+        'Ничего ещё не началось. Thread запустится, как только освободится исполнитель. Отменить можно в любой момент.',
       statusLabel: 'Статус',
       stageLabel: 'Этап',
       attempt: 'Попытка {current} из {max}',
@@ -918,6 +928,7 @@ export const ru: TranslationDictionary = {
         modelHardCeiling: 'Модель всё ещё работала через 10 минут, поэтому вызов остановлен.',
         modelReasonedNoAnswer:
           'Модель потратила весь бюджет вывода на размышления и не написала ответ.',
+        queueExpired: 'Эта генерация слишком долго ждала в очереди и была остановлена до начала.',
         unknown: 'Что-то пошло не так ({code}).',
       },
       hint: {
@@ -959,6 +970,7 @@ export const ru: TranslationDictionary = {
         modelHardCeiling: 'Выберите более быструю модель или более короткую тему и повторите.',
         modelReasonedNoAnswer:
           'Повторите, выберите модель, которая отвечает прямее, или сократите тему.',
+        queueExpired: 'Повторите попытку сейчас. Если очередь длинная, попробуйте позже.',
         unknown: 'Повторите или смените модели.',
       },
       startError: {
@@ -970,6 +982,18 @@ export const ru: TranslationDictionary = {
           'Выбранная модель не входит в ваш тариф. Выберите включённую модель.',
         modelUnknown: 'Выбранной модели нет в каталоге моделей. Выберите модель из списка.',
         spendCapTooLow: 'Лимит расходов слишком мал. Укажите не меньше 0,01 USD.',
+        allowanceUnavailable:
+          'Квота Thread исчерпана или занята выполняющейся генерацией. Дождитесь её завершения или перейдите на другой тариф.',
+        tooManyActive:
+          'У вас уже запущено максимальное число генераций. Дождитесь завершения одной или отмените одну.',
+        idempotencyKeyReused:
+          'Этот запрос уже отправлялся с другими данными. Начните заново с формы.',
+        notCancellable:
+          'Эта генерация не выполняется и не стоит в очереди, поэтому отменять нечего.',
+        topicInvalid:
+          'Тема пуста или содержит символ, который нельзя сохранить. Измените её и повторите попытку.',
+        textInvalid:
+          'В текстовом поле есть символ, который нельзя сохранить. Уберите необычные символы и повторите попытку.',
       },
       error: {
         conflict: 'Сначала отмените генерацию или повторите чуть позже.',

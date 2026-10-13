@@ -20,6 +20,7 @@ import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
+import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const zh: TranslationDictionary = {
@@ -431,6 +432,7 @@ export const zh: TranslationDictionary = {
       auto: '让 AUTO 选择',
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.zh,
+    ...THREAD_BOARD_TRANSLATIONS.zh,
     composerContext: {
       menuLabel: '上下文',
       pickLabel: '选择上下文包',
@@ -688,6 +690,10 @@ export const zh: TranslationDictionary = {
     threadStartGeneration: '开始生成',
     threadApproveAndPublish: '批准并发布',
     threadPublished: '文章已发布。',
+    threadLiveTitle: '你的 Thread 已发布',
+    threadLiveBody: '任何拥有此链接的人都可以阅读。你可以分享它，或打开查看读者看到的样子。',
+    threadLiveLinkLabel: '公开链接',
+    threadLiveOpen: '打开已发布的 Thread',
     threadDraftNotEligible: '草稿未通过安全检查，暂时无法发布。',
     threadGenerationCancelled: '生成已取消。',
     threadStageSnapshot: '正在固定你的聊天',
@@ -790,6 +796,8 @@ export const zh: TranslationDictionary = {
     threadCreateFailed: '创建线程失败',
     threadProgress: {
       title: '生成进度',
+      statusQueued: '排队中',
+      queuedHint: '尚未开始。有空闲的处理单元后，你的 Thread 会立即开始。你可以随时取消。',
       statusLabel: '状态',
       stageLabel: '阶段',
       attempt: '第 {current} 次尝试，共 {max} 次',
@@ -869,6 +877,7 @@ export const zh: TranslationDictionary = {
         modelIdleTimeout: '有模型沉默了 5 分钟，因此被视为卡住。',
         modelHardCeiling: '有模型在 10 分钟后仍在运行，因此调用已被停止。',
         modelReasonedNoAnswer: '有模型把全部输出额度用在了思考上，没有写出答案。',
+        queueExpired: '此次生成在队列中等待过久，在开始之前已被停止。',
         unknown: '出了点问题（{code}）。',
       },
       hint: {
@@ -901,6 +910,7 @@ export const zh: TranslationDictionary = {
         modelIdleTimeout: '请重试或选择其他模型。仍在输出的慢速模型不会因为慢而被中止。',
         modelHardCeiling: '请选择更快的模型或更短的主题，然后重试。',
         modelReasonedNoAnswer: '请重试，选择回答更直接的模型，或缩短主题。',
+        queueExpired: '请立即重试。如果队列很长，请稍后再试。',
         unknown: '请重试，或更换模型。',
       },
       startError: {
@@ -910,6 +920,13 @@ export const zh: TranslationDictionary = {
         modelNotAllowedForPlan: '所选的某个模型不在你的套餐内。请选择已包含的模型。',
         modelUnknown: '所选的某个模型不在模型目录中。请从列表中选择。',
         spendCapTooLow: '支出上限太低。请至少设为 0.01 美元。',
+        allowanceUnavailable:
+          '你的 Thread 额度已用完，或被正在运行的生成占用。请等待其完成，或升级套餐。',
+        tooManyActive: '你已达到同时运行的生成数量上限。请等待其中一个完成，或取消一个。',
+        idempotencyKeyReused: '此请求已用不同的内容发送过。请从表单重新开始。',
+        notCancellable: '此次生成既未运行也不在队列中，因此没有可取消的内容。',
+        topicInvalid: '主题为空，或包含无法保存的字符。请修改后重试。',
+        textInvalid: '某个文本字段包含无法保存的字符。请删除不常见的字符后重试。',
       },
       error: {
         conflict: '请先取消生成，或稍后再试。',

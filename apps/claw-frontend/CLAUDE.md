@@ -895,3 +895,23 @@ The idle-timeout codes `MODEL_IDLE_TIMEOUT`, `MODEL_HARD_CEILING`, `MODEL_REASON
 `chat.threadProgress.startError.*`; `resolveThreadErrorMessage` checks the code before the status. The running panel shows
 `chat.threadProgress.stillWorking`. A test reads the threads-service enum, so a new refusal code fails the build until
 it has a key in all 13 locales. Full note: [`docs/05-frontend/threads-progress-codes.md`](../../docs/05-frontend/threads-progress-codes.md).
+
+## Threads UI: label keys, buttons, publish banner
+
+Never pass a template literal to `t()`. `t()` returns the key itself when it does not resolve, so a dropped `chat.` prefix
+shows raw text (`threadPublicReportSPAM`) and no mocked test notices. Enum-dependent labels go through literal maps
+(`THREAD_REPORT_REASON_LABEL_KEYS`, `THREAD_CHANGE_REQUEST_STATUS_LABEL_KEYS`); `threads-translation-keys.test.ts` reads every
+quoted `chat.`/`common.` literal under the Threads files, fails on a template key, and checks the maps in 13 locales.
+Label-bearing component tests use the real dictionary, not a key-echo mock.
+
+After Publish the owner sees `ThreadLiveBanner` (address, copy, Open live Thread in a new tab, never an automatic redirect).
+Threads buttons use the shared `Button`/`Checkbox`/`Select`/`Textarea`/`Badge` with lucide icons; share networks without a lucide
+icon use the inline marks in `thread-share-icons.tsx`. Light-theme text on a card uses a dark shade plus `dark:` token
+(`THREAD_STEP_OUTCOME_TONES`), because the bright status tokens measure 2.1 to 3.6:1 on white. A `QUEUED` job reads
+"Waiting in the queue", never a stage name, and "Spent so far" is hidden until the amount is above zero. The public reactions
+endpoint cannot say who is asking, so a remembered reaction (localStorage, per user and Thread) fills its `null` until the
+backend returns `viewerReaction`. Full note: [`docs/05-frontend/threads-buttons-and-publish-banner.md`](../../docs/05-frontend/threads-buttons-and-publish-banner.md).
+
+## Threads Board: `/board` and `/board/[slug]` (2026-10-14)
+
+Portal routes, behind login, noindex, not linked from marketing; SEO stays on `/threads/[slug]` (ADR-178). The URL is the only state: `?q=&sort=&lang=&type=&page=`. Hooks in `src/hooks/threads/board/`: `useBoardQueryState`, `useBoardList`, `useBoardSuggest` (200 ms debounce, enabled from 2 characters, keeps previous data), `useComboboxKeyboard`. Components in `src/components/threads/board/` (BoardPageView, BoardToolbar, BoardFilters, BoardFiltersSheet, BoardGrid, BoardCard, BoardSkeleton, BoardEmpty, BoardError, BoardPagination, BoardSearchCombobox, BoardSuggestionRow, BoardDidYouMean, HighlightedText). Query keys start with `thread-board`. Strings are `chat.threadBoard*` keys in 13 locales from `src/lib/i18n/locales/thread-board-translations.ts`. Cards show no author. Highlights render as React text nodes from server offsets, never HTML. Note: [`docs/05-frontend/threads-board.md`](../../docs/05-frontend/threads-board.md).

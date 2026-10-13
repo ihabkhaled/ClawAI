@@ -457,6 +457,16 @@
       "route": "/billing/return"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/board/[slug]/page.tsx",
+      "kind": "page",
+      "route": "/board/[slug]"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/board/page.tsx",
+      "kind": "page",
+      "route": "/board"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/chat/[threadId]/page.tsx",
       "kind": "page",
       "route": "/chat/[threadId]"

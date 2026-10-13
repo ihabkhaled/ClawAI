@@ -57,7 +57,11 @@ export function ThreadModelPicker({
         footer={<CreditDualConsumptionNotice t={t} className="border-0 bg-transparent px-0 py-0" />}
       />
       {isThreadCreditModel(value) ? (
-        <p role="note" className="text-warning text-xs" data-testid="thread-model-credit-warning">
+        <p
+          role="note"
+          className="dark:text-warning text-xs text-amber-700"
+          data-testid="thread-model-credit-warning"
+        >
           {t('chat.threadProgress.needsCredit')}
         </p>
       ) : null}

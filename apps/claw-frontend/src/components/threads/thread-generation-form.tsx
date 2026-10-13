@@ -5,6 +5,8 @@ import { ThreadErrorNotice } from '@/components/threads/thread-error-notice';
 import { ThreadModelPicker } from '@/components/threads/thread-model-picker';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { ROUTES } from '@/constants/routes.constants';
 import {
   THREAD_GENERATION_ROLE_KEYS,
@@ -53,13 +55,13 @@ export function ThreadGenerationForm({ form }: ThreadGenerationFormProps): React
       ) : null}
       <label className="flex flex-col gap-1 text-sm" data-tour="thread-create-topic">
         {t('chat.threadTopic')}
-        <textarea
+        <Textarea
           required
           minLength={10}
           maxLength={10000}
           value={form.topic}
           onChange={(event) => form.setTopic(event.target.value)}
-          className="border-input bg-background min-h-24 rounded-md border px-3 py-2"
+          className="min-h-24"
         />
       </label>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -99,14 +101,13 @@ export function ThreadGenerationForm({ form }: ThreadGenerationFormProps): React
         </label>
         <label className="flex flex-col gap-1 text-sm" data-tour="thread-create-cap">
           {t('chat.threadSpendCapUsd')}
-          <input
+          <Input
             type="number"
             min="0.01"
             step="0.01"
             required
             value={form.spendCapUsd}
             onChange={(event) => form.setSpendCapUsd(event.target.value)}
-            className="border-input bg-background rounded-md border px-3 py-2"
           />
         </label>
       </div>
@@ -135,7 +136,7 @@ export function ThreadGenerationForm({ form }: ThreadGenerationFormProps): React
       {form.isPlanBlocked ? (
         <p
           role="alert"
-          className="border-warning/40 bg-warning-surface text-warning rounded-md border p-3 text-sm"
+          className="border-warning/40 bg-warning-surface dark:text-warning rounded-md border p-3 text-sm text-amber-900"
         >
           {t('chat.threadPlanRequired')}{' '}
           <Link href={ROUTES.PLAN} className="underline">

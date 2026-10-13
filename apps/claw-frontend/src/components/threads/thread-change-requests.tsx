@@ -1,107 +1,37 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, type ReactElement } from 'react';
+import { Check, Lightbulb, Send, X } from 'lucide-react';
+import type { ReactElement } from 'react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  THREAD_CHANGE_REQUEST_STATUS_BADGES,
+  THREAD_CHANGE_REQUEST_STATUS_LABEL_KEYS,
+} from '@/constants/thread-publication.constants';
 import { ThreadPublicationChangeRequestStatus } from '@/enums/thread-publication-change-request-status.enum';
+import { useThreadChangeRequests } from '@/hooks/threads/use-thread-change-requests';
 import { useTranslation } from '@/lib/i18n';
-import { threadPublicationsRepository } from '@/repositories/threads/thread-publications.repository';
 import type { ThreadChangeRequestsProps } from '@/types/thread-publication.types';
-import { createThreadRevisionRequest } from '@/utilities/thread-revision-request.utility';
 
-export function ThreadChangeRequests({
-  publicationId,
-  revisionSource,
-  onRevisionStarted,
-}: ThreadChangeRequestsProps): ReactElement {
+export function ThreadChangeRequests(props: ThreadChangeRequestsProps): ReactElement {
+  const { revisionSource } = props;
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
-  const [acceptingRequestId, setAcceptingRequestId] = useState('');
-  const [revisionMarkdown, setRevisionMarkdown] = useState('');
-  const [spendCapUsd, setSpendCapUsd] = useState('');
-  const [ownerResponses, setOwnerResponses] = useState<Record<string, string>>({});
-  const requests = useQuery({
-    queryKey: ['thread-publications', publicationId, 'change-requests'],
-    queryFn: () => threadPublicationsRepository.listChangeRequests(publicationId),
-    enabled: publicationId !== '',
-  });
-  const revisionChanged =
-    revisionSource !== null && revisionMarkdown.trim() !== revisionSource.markdown.trim();
-  const resolve = useMutation({
-    mutationFn: ({
-      requestId,
-      status,
-      ownerResponse,
-    }: {
-      requestId: string;
-      status:
-        | ThreadPublicationChangeRequestStatus.Accepted
-        | ThreadPublicationChangeRequestStatus.Rejected;
-      ownerResponse: string;
-    }) => {
-      const response = ownerResponse.trim();
-      const responseField = response === '' ? {} : { ownerResponse: response };
-      if (status === ThreadPublicationChangeRequestStatus.Rejected) {
-        return threadPublicationsRepository.resolveChangeRequest(publicationId, requestId, {
-          status,
-          ...responseField,
-        });
-      }
-      if (!revisionSource) {
-        throw new Error('Revision source unavailable');
-      }
-      const revision = createThreadRevisionRequest({
-        markdown: revisionMarkdown,
-        citations: revisionSource.citations,
-        spendCapUsd: Number(spendCapUsd),
-        idempotencyKey: crypto.randomUUID(),
-        correlationId: crypto.randomUUID(),
-      });
-      return threadPublicationsRepository.resolveChangeRequest(publicationId, requestId, {
-        status,
-        ...responseField,
-        revision,
-      });
-    },
-    onSuccess: async ({ edit }, { requestId }) => {
-      if (edit) {
-        onRevisionStarted(edit.revisionId);
-      }
-      setAcceptingRequestId('');
-      setOwnerResponses((current) => {
-        const next = { ...current };
-        delete next[requestId];
-        return next;
-      });
-      setSpendCapUsd('');
-      await queryClient.invalidateQueries({
-        queryKey: ['thread-publications', publicationId, 'change-requests'],
-      });
-    },
-  });
-
-  function beginAcceptance(requestId: string): void {
-    setAcceptingRequestId(requestId);
-    setRevisionMarkdown(revisionSource?.markdown ?? '');
-    setSpendCapUsd('');
-    resolve.reset();
-  }
-
-  function cancelAcceptance(): void {
-    setAcceptingRequestId('');
-    setSpendCapUsd('');
-    resolve.reset();
-  }
+  const { requests, resolve, form, beginAcceptance, cancelAcceptance } =
+    useThreadChangeRequests(props);
 
   return (
     <section
       aria-labelledby="thread-change-requests-title"
       className="border-border bg-card flex flex-col gap-4 rounded-lg border p-5"
     >
-      <h2 id="thread-change-requests-title" className="text-lg font-semibold">
+      <h2
+        id="thread-change-requests-title"
+        className="flex items-center gap-2 text-lg font-semibold"
+      >
+        <Lightbulb className="h-5 w-5" aria-hidden="true" />
         {t('chat.threadChangeRequests')}
       </h2>
       {requests.isLoading ? <p role="status">{t('common.loading')}</p> : null}
@@ -113,13 +43,16 @@ export function ThreadChangeRequests({
       {requests.data?.map((request) => (
         <article
           key={request.id}
-          className="border-border flex flex-col gap-3 rounded-md border p-4"
+          className="border-border flex flex-col gap-3 rounded-lg border p-4"
         >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="font-medium">{request.suggestion}</p>
-            <span className="text-muted-foreground text-sm">
-              {t(`threadChangeRequest${request.status}`)}
-            </span>
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <p className="min-w-0 font-medium break-words">{request.suggestion}</p>
+            <Badge
+              variant={THREAD_CHANGE_REQUEST_STATUS_BADGES[request.status].variant}
+              className={THREAD_CHANGE_REQUEST_STATUS_BADGES[request.status].className}
+            >
+              {t(THREAD_CHANGE_REQUEST_STATUS_LABEL_KEYS[request.status])}
+            </Badge>
           </div>
           {request.ownerResponse ? (
             <p className="text-muted-foreground text-sm">{request.ownerResponse}</p>
@@ -127,23 +60,18 @@ export function ThreadChangeRequests({
           {request.status === ThreadPublicationChangeRequestStatus.Pending ? (
             <>
               <div className="flex flex-col gap-2">
-                <label htmlFor={`thread-response-${request.id}`}>
+                <label htmlFor={`thread-response-${request.id}`} className="text-sm font-medium">
                   {t('chat.threadResponseToRequester')}
                 </label>
                 <Textarea
                   id={`thread-response-${request.id}`}
                   maxLength={2000}
-                  value={ownerResponses[request.id] ?? ''}
-                  onChange={(event) =>
-                    setOwnerResponses((current) => ({
-                      ...current,
-                      [request.id]: event.target.value,
-                    }))
-                  }
+                  value={form.ownerResponses[request.id] ?? ''}
+                  onChange={(event) => form.setOwnerResponse(request.id, event.target.value)}
                   disabled={resolve.isPending}
                 />
               </div>
-              {acceptingRequestId === request.id ? (
+              {form.acceptingRequestId === request.id ? (
                 <form
                   className="flex flex-col gap-3"
                   onSubmit={(event) => {
@@ -151,7 +79,7 @@ export function ThreadChangeRequests({
                     resolve.mutate({
                       requestId: request.id,
                       status: ThreadPublicationChangeRequestStatus.Accepted,
-                      ownerResponse: ownerResponses[request.id] ?? '',
+                      ownerResponse: form.ownerResponses[request.id] ?? '',
                     });
                   }}
                 >
@@ -162,25 +90,31 @@ export function ThreadChangeRequests({
                     <p role="alert">{t('chat.threadChangeAcceptUnavailable')}</p>
                   ) : null}
                   <div className="flex flex-col gap-2">
-                    <label htmlFor={`thread-change-revision-${request.id}`}>
+                    <label
+                      htmlFor={`thread-change-revision-${request.id}`}
+                      className="text-sm font-medium"
+                    >
                       {t('chat.threadRevisionContent')}
                     </label>
                     <Textarea
                       id={`thread-change-revision-${request.id}`}
                       required
                       maxLength={100000}
-                      value={revisionMarkdown}
-                      onChange={(event) => setRevisionMarkdown(event.target.value)}
+                      value={form.revisionMarkdown}
+                      onChange={(event) => form.setRevisionMarkdown(event.target.value)}
                       disabled={resolve.isPending || !revisionSource}
                     />
                   </div>
-                  {!revisionChanged ? (
+                  {!form.revisionChanged ? (
                     <p className="text-muted-foreground text-sm">
                       {t('chat.threadChangeRevisionUnchanged')}
                     </p>
                   ) : null}
                   <div className="flex flex-col gap-2">
-                    <label htmlFor={`thread-change-cap-${request.id}`}>
+                    <label
+                      htmlFor={`thread-change-cap-${request.id}`}
+                      className="text-sm font-medium"
+                    >
                       {t('chat.threadRevisionCap')}
                     </label>
                     <Input
@@ -189,17 +123,19 @@ export function ThreadChangeRequests({
                       min="0.01"
                       step="0.01"
                       required
-                      value={spendCapUsd}
-                      onChange={(event) => setSpendCapUsd(event.target.value)}
+                      value={form.spendCapUsd}
+                      onChange={(event) => form.setSpendCapUsd(event.target.value)}
                       disabled={resolve.isPending || !revisionSource}
                     />
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                     <Button
                       type="submit"
-                      disabled={resolve.isPending || !revisionSource || !revisionChanged}
+                      disabled={resolve.isPending || !revisionSource || !form.revisionChanged}
                       isLoading={resolve.isPending}
+                      className="w-full sm:w-auto"
                     >
+                      <Send className="h-4 w-4 rtl:-scale-x-100" aria-hidden="true" />
                       {t('chat.threadSubmitChangeDecision')}
                     </Button>
                     <Button
@@ -207,18 +143,22 @@ export function ThreadChangeRequests({
                       variant="outline"
                       onClick={cancelAcceptance}
                       disabled={resolve.isPending}
+                      className="w-full sm:w-auto"
                     >
+                      <X className="h-4 w-4" aria-hidden="true" />
                       {t('common.cancel')}
                     </Button>
                   </div>
                 </form>
               ) : (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                   <Button
                     type="button"
                     onClick={() => beginAcceptance(request.id)}
                     disabled={!revisionSource || resolve.isPending}
+                    className="w-full sm:w-auto"
                   >
+                    <Check className="h-4 w-4" aria-hidden="true" />
                     {t('chat.threadChangeAccept')}
                   </Button>
                   <Button
@@ -228,12 +168,14 @@ export function ThreadChangeRequests({
                       resolve.mutate({
                         requestId: request.id,
                         status: ThreadPublicationChangeRequestStatus.Rejected,
-                        ownerResponse: ownerResponses[request.id] ?? '',
+                        ownerResponse: form.ownerResponses[request.id] ?? '',
                       })
                     }
                     disabled={resolve.isPending}
                     isLoading={resolve.isPending}
+                    className="w-full sm:w-auto"
                   >
+                    <X className="h-4 w-4" aria-hidden="true" />
                     {t('chat.threadChangeReject')}
                   </Button>
                 </div>

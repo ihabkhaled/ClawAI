@@ -20,6 +20,7 @@ import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
+import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const es: TranslationDictionary = {
@@ -457,6 +458,7 @@ export const es: TranslationDictionary = {
       auto: 'Dejar que AUTO elija',
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.es,
+    ...THREAD_BOARD_TRANSLATIONS.es,
     composerContext: {
       menuLabel: 'Contexto',
       pickLabel: 'Elegir paquetes de contexto',
@@ -730,6 +732,11 @@ export const es: TranslationDictionary = {
     threadStartGeneration: 'Iniciar generación',
     threadApproveAndPublish: 'Aprobar y publicar',
     threadPublished: 'La publicación ya está publicada.',
+    threadLiveTitle: 'Tu Thread ya está en línea',
+    threadLiveBody:
+      'Cualquiera con este enlace puede leerlo. Compártelo o ábrelo para ver cómo lo ven los lectores.',
+    threadLiveLinkLabel: 'Enlace público',
+    threadLiveOpen: 'Abrir el Thread publicado',
     threadDraftNotEligible: 'El borrador no puede publicarse tras las comprobaciones de seguridad.',
     threadGenerationCancelled: 'Se canceló la generación.',
     threadStageSnapshot: 'Congelando tu chat',
@@ -836,6 +843,9 @@ export const es: TranslationDictionary = {
     threadCreateFailed: 'Error al crear la conversación',
     threadProgress: {
       title: 'Progreso de la generación',
+      statusQueued: 'En la cola de espera',
+      queuedHint:
+        'Todavía no ha empezado nada. Tu Thread comenzará en cuanto haya un proceso libre. Puedes cancelar cuando quieras.',
       statusLabel: 'Estado',
       stageLabel: 'Etapa',
       attempt: 'Intento {current} de {max}',
@@ -925,6 +935,8 @@ export const es: TranslationDictionary = {
           'Un modelo seguía trabajando tras 10 minutos, así que se detuvo la llamada.',
         modelReasonedNoAnswer:
           'Un modelo gastó todo su presupuesto de salida pensando y no escribió respuesta.',
+        queueExpired:
+          'Esta generación esperó demasiado en la cola, así que se detuvo antes de empezar.',
         unknown: 'Algo salió mal ({code}).',
       },
       hint: {
@@ -965,6 +977,7 @@ export const es: TranslationDictionary = {
         modelHardCeiling: 'Elige un modelo más rápido o un tema más corto y reintenta.',
         modelReasonedNoAnswer:
           'Reintenta, elige un modelo que responda más directamente o acorta el tema.',
+        queueExpired: 'Reinténtalo ahora. Si la cola es larga, prueba más tarde.',
         unknown: 'Reintenta, o cambia los modelos e inténtalo de nuevo.',
       },
       startError: {
@@ -977,6 +990,18 @@ export const es: TranslationDictionary = {
         modelUnknown:
           'Un modelo seleccionado no está en el catálogo de modelos. Elige uno de la lista.',
         spendCapTooLow: 'El límite de gasto es demasiado bajo. Fija al menos 0,01 USD.',
+        allowanceUnavailable:
+          'Tu cupo de Threads se agotó o lo retiene una generación en curso. Espera a que termine o mejora tu plan.',
+        tooManyActive:
+          'Ya tienes el máximo de generaciones en curso. Espera a que termine una o cancela una.',
+        idempotencyKeyReused:
+          'Esta solicitud ya se envió con otros datos. Empieza de nuevo desde el formulario.',
+        notCancellable:
+          'Esta generación no está en curso ni en cola, así que no hay nada que cancelar.',
+        topicInvalid:
+          'El tema está vacío o tiene un carácter que no se puede guardar. Edítalo e inténtalo de nuevo.',
+        textInvalid:
+          'Un campo de texto tiene un carácter que no se puede guardar. Quita los caracteres inusuales e inténtalo de nuevo.',
       },
       error: {
         conflict: 'Cancela primero la generación o inténtalo de nuevo en un momento.',

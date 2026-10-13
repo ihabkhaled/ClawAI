@@ -16,6 +16,7 @@ import {
   THREAD_STATUS_LABEL_KEYS,
   THREAD_STEP_ROLE_KEYS,
 } from '@/constants/thread-generation-progress.constants';
+import { ThreadGenerationJobStatus } from '@/enums/thread-generation-job-status.enum';
 import type {
   BuildThreadRetryRequestInput,
   ThreadFailureKeys,
@@ -26,6 +27,17 @@ import { threadStageLabelKey } from '@/utilities/thread-generation-stage.utility
 
 export function isTerminalThreadStatus(status: string): boolean {
   return THREAD_PROGRESS_TERMINAL_STATUSES.includes(status);
+}
+
+/** A job that was accepted but has not been picked up: no stage, no attempt, no spend yet. */
+export function isQueuedThreadStatus(status: string): boolean {
+  return status === ThreadGenerationJobStatus.Queued;
+}
+
+/** True only for a real, positive spend; "0" or garbage means the figure is unknown, so say nothing. */
+export function hasThreadSpend(micro: string): boolean {
+  const value = Number(micro);
+  return Number.isFinite(value) && value > 0;
 }
 
 export function isRetryableThreadStatus(status: string): boolean {
