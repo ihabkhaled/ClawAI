@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { detectSaveToContextIntent } from '@claw/shared-utilities';
+import type { ContextSaveMode } from '@claw/shared-types';
 import { ContextSaveStatus, type MemoryRecordType } from '../../../common/enums';
 import type { ChatMessage } from '../../../generated/prisma';
 import { ContextSaveClient } from '../clients/context-save.client';
@@ -23,8 +25,14 @@ import {
   mightBeSaveRequest,
   packContentFor,
   parseSaveIntentVerdict,
+  previousMessage,
   previousMessageText,
 } from '../utilities/save-intent.utility';
+import {
+  buildKeywordSaveProposal,
+  buildSaveProposal,
+  contextSaveModeOf,
+} from '../utilities/save-proposal.utility';
 import { SaveToContextManager } from './save-to-context.manager';
 
 /**
@@ -36,14 +44,18 @@ import { SaveToContextManager } from './save-to-context.manager';
  *    message, the one before it and the user's pack names, and answers JSON:
  *    save or not, memory (type + one concise sentence), context pack (which
  *    text, which pack), or both.
- * 3. The saves run through memory-service's owner-scoped internal routes.
+ * 3. ASK mode (the default, ADR-168) stops here: the verdict becomes a PROPOSED
+ *    record the user edits and confirms in a modal. AUTO mode continues: the
+ *    saves run through memory-service's owner-scoped internal routes.
  *    A pack the user did not name, when they already have packs, is NOT
  *    guessed: the answer carries a "which pack?" card instead.
  * 4. The answering model is told exactly what happened, and the answer stores
  *    the record the card renders.
  *
- * With no planner reachable, the deterministic keyword path (the previous
- * behaviour) still saves — the feature never goes dark.
+ * With no planner reachable, the deterministic keyword path still works — the
+ * feature never goes dark. In AUTO mode it saves (the previous behaviour); in ASK
+ * mode it PROPOSES the same form from what the keyword detector recognised,
+ * because ASK means nothing is written before the user confirms (ADR-168).
  */
 @Injectable()
 export class ContextSaveOrchestratorManager {
@@ -62,19 +74,25 @@ export class ContextSaveOrchestratorManager {
     messages: readonly ChatMessage[],
   ): Promise<ContextSaveDecision | null> {
     const lastUser = [...messages].reverse().find((message) => message.role === 'USER');
-    if (lastUser === undefined || !mightBeSaveRequest(lastUser.content)) return null;
+    if (lastUser === undefined) return null;
+    const previous = previousMessage(messages, lastUser);
+    if (!mightBeSaveRequest(lastUser.content, previous?.role === 'ASSISTANT')) return null;
     const previousText = previousMessageText(messages, lastUser);
+    const mode = contextSaveModeOf(lastUser);
     const packs = await this.client.listPacks(userId);
     const verdict = await this.planner.askPlanner(
       buildSaveIntentPrompt({
         userText: lastUser.content,
         previousText,
         packNames: packs.map((pack) => pack.name),
+        proposeFirst: mode === 'ASK',
       }),
       SAVE_INTENT_MAX_OUTPUT_TOKENS,
       parseSaveIntentVerdict,
     );
-    if (verdict === null) return this.fallback(userId, threadId, messages);
+    if (verdict === null) {
+      return this.fallback({ userId, threadId, messages, lastUser, previousText, packs, mode });
+    }
     this.logger.log(
       `handle: thread=${threadId} save=${String(verdict.save)} memory=${String((verdict.memory ?? null) !== null)} pack=${String((verdict.contextPack ?? null) !== null)}`,
     );
@@ -94,6 +112,22 @@ export class ContextSaveOrchestratorManager {
       );
       return null;
     }
+    // ASK (the default): the user reviews and confirms a form before anything
+    // is written (ADR-168). AUTO saves at once, exactly as ADR-134 did.
+    if (mode === 'ASK') {
+      const proposed: ContextSaveRecord = {
+        status: ContextSaveStatus.PROPOSED,
+        sourceMessageId: lastUser.id,
+        proposal: buildSaveProposal({
+          verdict: guarded,
+          userText: lastUser.content,
+          previousText,
+          packs,
+        }),
+      };
+      this.logger.log(`handle: thread=${threadId} proposed a save — waiting for the user`);
+      return { kind: 'AI', record: proposed, modelNote: contextSaveModelNote(proposed) };
+    }
     const record = await this.execute({
       userId,
       threadId,
@@ -105,16 +139,52 @@ export class ContextSaveOrchestratorManager {
     return { kind: 'AI', record, modelNote: contextSaveModelNote(record) };
   }
 
-  /** The planner could not answer: the keyword command path decides, as before. */
-  private async fallback(
-    userId: string,
-    threadId: string,
-    messages: readonly ChatMessage[],
-  ): Promise<ContextSaveDecision | null> {
-    const outcome = await this.legacy.trySave(userId, threadId, messages);
-    if (outcome !== null)
-      this.logger.warn(`fallback: thread=${threadId} planner unavailable — keyword save`);
+  /**
+   * The planner could not answer: the keyword command path decides. AUTO saves
+   * as before; ASK proposes (nothing is written before the user confirms).
+   */
+  private async fallback(args: {
+    userId: string;
+    threadId: string;
+    messages: readonly ChatMessage[];
+    lastUser: ChatMessage;
+    previousText: string;
+    packs: ChatPackOptionResponse[];
+    mode: ContextSaveMode;
+  }): Promise<ContextSaveDecision | null> {
+    if (args.mode === 'ASK') return this.proposeFromKeywords(args);
+    const outcome = await this.legacy.trySave(args.userId, args.threadId, args.messages);
+    if (outcome !== null) {
+      this.logger.warn(`fallback: thread=${args.threadId} planner unavailable — keyword save`);
+    }
     return outcome === null ? null : { kind: 'LEGACY', outcome };
+  }
+
+  private proposeFromKeywords(args: {
+    threadId: string;
+    lastUser: ChatMessage;
+    previousText: string;
+    packs: ChatPackOptionResponse[];
+  }): ContextSaveDecision | null {
+    const intent = detectSaveToContextIntent(args.lastUser.content);
+    if (intent === null) return null;
+    const proposal = buildKeywordSaveProposal({
+      intent,
+      userText: args.lastUser.content,
+      previousText: args.previousText,
+      packs: args.packs,
+    });
+    // A bare "save this" with nothing above it: the legacy one-line question.
+    if (proposal === null) return { kind: 'LEGACY', outcome: { kind: 'ASK' } };
+    const proposed: ContextSaveRecord = {
+      status: ContextSaveStatus.PROPOSED,
+      sourceMessageId: args.lastUser.id,
+      proposal,
+    };
+    this.logger.warn(
+      `fallback: thread=${args.threadId} planner unavailable — proposed a keyword save, waiting for the user`,
+    );
+    return { kind: 'AI', record: proposed, modelNote: contextSaveModelNote(proposed) };
   }
 
   private async execute(args: {

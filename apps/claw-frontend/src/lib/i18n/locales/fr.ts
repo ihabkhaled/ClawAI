@@ -10,6 +10,7 @@ import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
+import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
@@ -498,6 +499,37 @@ export const fr: TranslationDictionary = {
         PLAN: 'Votre forfait ne comprend pas cette fonction.',
         LIMIT: 'Vous avez atteint la limite de votre forfait.',
         UNAVAILABLE: 'Le service est indisponible pour le moment. Réessayez dans un instant.',
+      },
+      proposal: {
+        cardTitle: 'Enregistrer ceci dans la mémoire ?',
+        review: 'Vérifier et enregistrer',
+        notNow: 'Pas maintenant',
+        dialogTitle: 'Retenir ceci ?',
+        dialogDescription:
+          "Vérifiez ce qui sera enregistré et modifiez ce que vous voulez. Rien n'est stocké avant d'appuyer sur Enregistrer.",
+        memorySection: 'Mémoire',
+        memoryType: 'Type',
+        memoryText: "Ce qu'il faut retenir",
+        packSection: 'Pack de contexte',
+        packContent: 'Contenu à ajouter',
+        packChoose: 'Pack',
+        packPick: 'Choisir un pack',
+        packOption: '{name} ({count} éléments)',
+        packNew: 'Nouveau pack',
+        packNewName: 'Nom du nouveau pack',
+        save: 'Enregistrer',
+        alwaysAuto: 'Toujours enregistrer automatiquement sans demander',
+        alwaysAutoHint:
+          "S'applique quand vous appuyez sur Enregistrer. Vous pouvez le modifier à tout moment dans les réglages de la mémoire.",
+        partialFailed: "Une partie n'a pas été enregistrée.",
+        saved: 'Enregistré.',
+        failed: 'Enregistrement impossible. Réessayez.',
+        errors: {
+          empty: 'Ce champ ne peut pas être vide.',
+          tooLong: "C'est trop long.",
+          packRequired: 'Choisissez un pack ou créez-en un nouveau.',
+          nothingSelected: 'Choisissez la mémoire, un pack de contexte, ou les deux.',
+        },
       },
     },
     speech: {
@@ -1501,6 +1533,14 @@ export const fr: TranslationDictionary = {
     resolvedUrlLabel: 'Se résout en :',
   },
   memory: {
+    saveMode: {
+      title: 'Enregistrement depuis le chat',
+      switchLabel: 'Toujours enregistrer automatiquement',
+      descriptionAsk:
+        "Désactivé : ClawAI vous demande de confirmer avant d'enregistrer ce que vous lui avez demandé de retenir.",
+      descriptionAuto:
+        'Activé : ce que vous demandez à ClawAI de retenir est enregistré aussitôt, sans confirmation.',
+    },
     title: 'Mémoire',
     description: "Gérez les enregistrements de mémoire de l'IA",
     createMemory: 'Créer une mémoire',
@@ -4649,6 +4689,7 @@ export const fr: TranslationDictionary = {
   skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.fr,
   usageAnalytics: USAGE_ANALYTICS_TRANSLATIONS.fr,
   observabilityExplorer: OBSERVABILITY_EXPLORER_TRANSLATIONS.fr,
+  observabilityPages: OBSERVABILITY_PAGES_TRANSLATIONS.fr,
   notifications: NOTIFICATIONS_TRANSLATIONS.fr,
   adminBilling: {
     credit: {

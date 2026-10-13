@@ -772,6 +772,61 @@
       },
       {
         "method": "GET",
+        "route": "/admin/observability/filter-options",
+        "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/observability/health",
+        "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/observability/models",
+        "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/observability/models/detail",
+        "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/observability/overview",
+        "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/observability/plans",
+        "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/observability/providers",
+        "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/observability/providers/:provider",
+        "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/observability/users",
+        "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/observability/users/export",
+        "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/observability/workflows",
+        "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/admin/ops-tokens",
         "source": "apps/claw-auth-service/src/modules/ops-tokens/controllers/admin-ops-token.controller.ts"
       },
@@ -1410,6 +1465,16 @@
       {
         "method": "POST",
         "route": "/chat-messages/:id/context-save",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/context-save.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-messages/:id/context-save/confirm",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/context-save.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-messages/:id/context-save/dismiss",
         "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/context-save.controller.ts"
       },
       {
@@ -4317,5 +4382,5 @@
     ]
   },
   "generated": true,
-  "total": 855
+  "total": 868
 }

@@ -17,24 +17,82 @@ describe('observability explorer repository', () => {
     mockGet.mockResolvedValue({ data: { ok: true } });
   });
 
-  it('lists users with the range, filters and list controls as strings', async () => {
-    await observabilityExplorerRepository.getUsers(
-      { hours: '168', provider: 'GEMINI' },
-      { search: 'jane', sort: 'cost', order: 'desc', limit: 10, cursor: undefined },
+  it('lists users with the range, filters, page and list controls as strings', async () => {
+    await observabilityExplorerRepository.getList(
+      'users',
+      { days: '7', provider: 'GEMINI', plan: 'NONE' },
+      { search: 'jane', sort: 'cost', order: 'desc', limit: 25, page: 3 },
     );
-    expect(mockGet).toHaveBeenCalledWith('/admin/usage-explorer/users', {
-      hours: '168',
+    expect(mockGet).toHaveBeenCalledWith('/admin/observability/users', {
+      days: '7',
       provider: 'GEMINI',
+      plan: 'NONE',
       search: 'jane',
       sort: 'cost',
       order: 'desc',
-      limit: '10',
+      limit: '25',
+      page: '3',
     });
   });
 
   it('drops empty values so the server defaults apply', async () => {
-    await observabilityExplorerRepository.getUsers({}, { search: '', cursor: '' });
-    expect(mockGet).toHaveBeenCalledWith('/admin/usage-explorer/users', {});
+    await observabilityExplorerRepository.getList('providers', {}, { search: '' });
+    expect(mockGet).toHaveBeenCalledWith('/admin/observability/providers', {});
+  });
+
+  it('reads every list kind from its own endpoint', async () => {
+    for (const kind of ['models', 'plans', 'workflows'] as const) {
+      await observabilityExplorerRepository.getList(kind, { days: '30' }, {});
+      expect(mockGet).toHaveBeenLastCalledWith(`/admin/observability/${kind}`, { days: '30' });
+    }
+  });
+
+  it('exports with the same period, filters and search as the table, without paging', async () => {
+    await observabilityExplorerRepository.exportUsers(
+      { days: '30', plan: 'p-1' },
+      { search: 'jane', sort: 'requests', order: 'asc' },
+    );
+    expect(mockGet).toHaveBeenCalledWith('/admin/observability/users/export', {
+      days: '30',
+      plan: 'p-1',
+      search: 'jane',
+      sort: 'requests',
+      order: 'asc',
+    });
+  });
+
+  it('reads the filter options for the range alone and the overview with the filters', async () => {
+    await observabilityExplorerRepository.getFilterOptions({ days: '7' });
+    expect(mockGet).toHaveBeenCalledWith('/admin/observability/filter-options', { days: '7' });
+    await observabilityExplorerRepository.getOverview({ days: '7', billing: 'CREDIT' });
+    expect(mockGet).toHaveBeenLastCalledWith('/admin/observability/overview', {
+      days: '7',
+      billing: 'CREDIT',
+    });
+  });
+
+  it('reads the hold health for the period and filters', async () => {
+    await observabilityExplorerRepository.getHealth({ days: '30', provider: 'GEMINI' });
+    expect(mockGet).toHaveBeenCalledWith('/admin/observability/health', {
+      days: '30',
+      provider: 'GEMINI',
+    });
+  });
+
+  it('puts a provider in the path and a model id in the query string', async () => {
+    await observabilityExplorerRepository.getProviderDetail('LOCAL_OLLAMA', { days: '7' });
+    expect(mockGet).toHaveBeenCalledWith('/admin/observability/providers/LOCAL_OLLAMA', {
+      days: '7',
+    });
+    await observabilityExplorerRepository.getModelDetail('OPENAI', 'ft:gpt-4o/mini', {
+      days: '7',
+      provider: 'GEMINI',
+    });
+    expect(mockGet).toHaveBeenLastCalledWith('/admin/observability/models/detail', {
+      days: '7',
+      provider: 'OPENAI',
+      model: 'ft:gpt-4o/mini',
+    });
   });
 
   it('sends the dimension and cursor to the leaderboard', async () => {

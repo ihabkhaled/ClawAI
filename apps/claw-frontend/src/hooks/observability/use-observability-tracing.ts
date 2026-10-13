@@ -42,6 +42,7 @@ export function useObservabilityTracing(scope: ObservabilityScope) {
   };
 
   const result = useQuery({
+    enabled: scope.issue === null,
     queryKey: queryKeys.observabilityExplorer.tracing(query),
     refetchInterval: QUERY_POLL_BACKGROUND_MS,
     placeholderData: (previous) => previous,

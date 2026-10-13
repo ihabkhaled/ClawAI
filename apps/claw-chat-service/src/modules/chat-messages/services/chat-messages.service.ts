@@ -13,6 +13,7 @@ import {
 } from '@claw/shared-utilities';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
 import {
+  type ContextSaveMode,
   EventPattern,
   LogLevel,
   Permission,
@@ -1138,6 +1139,8 @@ export class ChatMessagesService implements OnModuleInit {
     this.logger.log(
       `regenerateMessage: publishing message.created for ${target.id} (requested via ${id}) mode=${regenRoutingMode}`,
     );
+    // Stored BEFORE the event goes out: the re-run reads the mode from the row.
+    await this.applyContextSaveMode(target, dto.contextSaveMode);
     const modality = await this.resolveRerunAttachmentModality(userId, target);
     void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
       messageId: target.id,
@@ -1225,7 +1228,12 @@ export class ChatMessagesService implements OnModuleInit {
    * transcript claim a model said something it did not, which is the one thing
    * a chat log has to be trusted about.
    */
-  async editAndRerunMessage(id: string, userId: string, content: string): Promise<ChatMessage> {
+  async editAndRerunMessage(
+    id: string,
+    userId: string,
+    content: string,
+    contextSaveMode?: ContextSaveMode,
+  ): Promise<ChatMessage> {
     const message = await this.chatMessagesRepository.findById(id);
     if (!message) {
       throw new EntityNotFoundException('ChatMessage', id);
@@ -1255,8 +1263,28 @@ export class ChatMessagesService implements OnModuleInit {
       );
     }
 
-    await this.applyEditAndRerun(message, thread, userId, trimmed);
+    await this.applyEditAndRerun(message, thread, userId, trimmed, contextSaveMode);
     return { ...message, content: trimmed, editedAt: new Date() };
+  }
+
+  /**
+   * Merges the save mode chosen for a re-run into the user turn's metadata, so
+   * the orchestrator (which reads it from the row) honours it on regenerate and
+   * edit as it does on a new message. No mode keeps the stored one.
+   */
+  private async applyContextSaveMode(
+    message: ChatMessage,
+    contextSaveMode: ContextSaveMode | undefined,
+  ): Promise<ChatMessage> {
+    if (contextSaveMode === undefined) return message;
+    const current = message.metadata;
+    const base =
+      typeof current === 'object' && current !== null && !Array.isArray(current)
+        ? (current as Record<string, unknown>)
+        : {};
+    const metadata = { ...base, contextSaveMode };
+    await this.chatMessagesRepository.updateMetadata(message.id, metadata as Prisma.InputJsonValue);
+    return { ...message, metadata: metadata as Prisma.JsonValue };
   }
 
   /** The write half of an edit: replace, prune below, run again. */
@@ -1265,6 +1293,7 @@ export class ChatMessagesService implements OnModuleInit {
     thread: ChatThread,
     userId: string,
     content: string,
+    contextSaveMode?: ContextSaveMode,
   ): Promise<void> {
     const forcedProvider = thread.preferredProvider ?? undefined;
     const forcedModel = thread.preferredModel ?? undefined;
@@ -1290,12 +1319,14 @@ export class ChatMessagesService implements OnModuleInit {
       `editAndRerunMessage: message=${message.id} thread=${message.threadId} removedBelow=${removed}`,
     );
 
+    // Stored BEFORE the event goes out: the re-run reads the mode from the row.
+    const rerun = await this.applyContextSaveMode(message, contextSaveMode);
     const modality = await this.resolveRerunAttachmentModality(userId, message);
     void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
       messageId: message.id,
       threadId: message.threadId,
       userId,
-      content: resolveRoutingContent(content, message.metadata),
+      content: resolveRoutingContent(content, rerun.metadata),
       routingMode: forcedProvider && forcedModel ? RoutingMode.MANUAL_MODEL : message.routingMode,
       forcedProvider,
       forcedModel,
@@ -2801,6 +2832,9 @@ export class ChatMessagesService implements OnModuleInit {
     }
     if (typeof dto.modelDisplayName === 'string' && dto.modelDisplayName.length > 0) {
       metadata.modelDisplayName = dto.modelDisplayName;
+    }
+    if (dto.contextSaveMode !== undefined) {
+      metadata.contextSaveMode = dto.contextSaveMode;
     }
     if (researchRun !== null) {
       metadata.research = {

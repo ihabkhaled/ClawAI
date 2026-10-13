@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { stripNulBytes } from '../../../common/utilities/postgres-safe-text.utility';
+import { contextSaveFields } from './context-save-fields.dto';
 
 /**
  * The replacement text for a user message that is being edited and re-run.
@@ -21,6 +22,8 @@ export const editMessageSchema = z.object({
         .min(1, 'Content must not be empty')
         .max(100000, 'Content must be at most 100000 characters'),
     ),
+  // The re-run honours the save mode the user picks now (ADR-168).
+  ...contextSaveFields,
 });
 
 export type EditMessageDto = z.infer<typeof editMessageSchema>;

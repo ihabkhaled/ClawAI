@@ -286,6 +286,49 @@ not joined per request. Failed requests that never reach the ledger are counted 
 fallback counts are the audit events whose action contains `FALLBACK`, `RETRY`, `CIRCUIT_BREAKER` or `RATE_LIMITED`; a
 per-request retry count is not stored.
 
+## Observability pages (auth-service, `/api/v1/admin/observability`)
+
+The split Observability pages ([ADR-169](../13-adr/adr-169-observability-is-split-into-pages-and-lists-every-user.md))
+read these routes. Role `ADMIN` and `ADMIN_USAGE_VIEW`. Same window rules as above (`hours` / `days` / `from`+`to`, 90 day cap,
+default 7 days). Shared filters on every route: `provider`, `model`, `workflow`, `billing`, `plan` (a plan id, or `NONE` for
+requests with no plan at all) and `userId`. A row's plan is its ledger plan, else the user's plan at query time (`COALESCE(w.plan_id, u.active_plan_id)`), because no writer fills `plan_id` today.
+
+Lists (`users`, `providers`, `models`, `plans`, `workflows`) take `search`, `sort`, `order`, `page` (1-10000) and
+`limit` (1-100, default 25) and return `{ items, total, pageCount, totals, ... }`. `sort` is one of `requests | tokens |
+inputTokens | outputTokens | cost | costPerRequest | toolCalls | activeDays | lastSeen | distinctUsers` (users default
+`lastSeen`, the rest `cost`). Every row carries `metrics`, BigInt-safe `derived` values, and `health` (settle / refund rate and
+settle p50 / p95; **settle time is reserve to settle, not provider latency**).
+
+| Method | Path                   | Notes                                                                                                                              | Audited       |
+| ------ | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| GET    | `/overview`            | Hub: totals, previous-period totals and deltas, active and first-time users, signups series, counts, health, series, hour, weekday | no            |
+| GET    | `/filter-options`      | Providers, models, workflows (busiest 500 in the window) and every plan                                                            | no            |
+| GET    | `/health`              | Refunded holds overall and per provider (the auth half of the failures page)                                                       | no            |
+| GET    | `/users`               | Every user with usage in the window. FULL email                                                                                    | every request |
+| GET    | `/users/export`        | Same filters, up to 5000 rows (`truncated` when more). FULL email                                                                  | yes           |
+| GET    | `/providers`           | One row per normalised provider; `distinctUsers`, `distinctModels`                                                                 | no            |
+| GET    | `/providers/:provider` | Header, series, hour of day, billing split, models (100), users (50, masked), plans, workflows                                     | no            |
+| GET    | `/models`              | One row per provider and model; search matches model or provider                                                                   | no            |
+| GET    | `/models/detail`       | `provider` and `model` are REQUIRED query parameters (model ids contain `/` and `:`); same blocks plus the provider spellings      | no            |
+| GET    | `/plans`               | Per ledger plan (`NONE` = no plan); `allowanceCostMicroUsd` is what the platform absorbed on free allowance                        | no            |
+| GET    | `/workflows`           | Per product surface (chat, compare, labs); `UNKNOWN` = rows before `workflow` was recorded                                         | no            |
+
+Rules worth knowing:
+
+- Only the users list and export return full emails; every other route masks (`ja***@example.com`), and a masked user row
+  carries a masked `label`, never the address.
+- `totals` on a list ignores `search`; it is the denominator of `shareOfCostPct` and `shareOfRequestsPct`. On a detail page the
+  header shares are against the platform total, each split block's against the entity itself.
+- Business sums exclude RELEASED rows; only `health` reads them. Every window read runs under a 15 s statement timeout, and a
+  page issues its reads in batches of at most six. `staleReserved` is RESERVED for over 15 minutes.
+- Settle avg / p50 / p95 skip legacy rows (`request_id = reservation_id`); the finalized / released counts and rates do not.
+- `series` and `signupsSeries` have a point for every bucket of the window (zeros included), at the range grain, in UTC.
+- Each `/users` request writes an `admin.usage.listed` audit event with `page`, `limit`, `search` (null when none) and `rows`; never an address.
+- `newSignups` counts accounts in the window and ignores the usage filters. Hour of day and weekday are UTC.
+- `derived.estimateAccuracy` is `SUM(actual) / SUM(estimated)` over rows with both, `null` when none. It is only meaningful while
+  the estimate survives settlement; unverified on the dev database.
+- Not built: `population=all` (users with zero usage), per-request HTTP codes, device or country (not stored).
+
 ## Known limits
 
 - The legacy page widgets (`/usage/summary`, `/usage/cost`, `/usage/latency`) are unchanged and still all-time with a

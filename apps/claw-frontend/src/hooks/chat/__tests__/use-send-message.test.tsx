@@ -1,13 +1,18 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useSendMessage } from '@/hooks/chat/use-send-message';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import { ApiClientError } from '@/services/shared/api-client';
 import { useQuoteDraftStore } from '@/stores/quote-draft.store';
+import { signInTestUser, signOutTestUser } from '@/test/fixtures/signed-in-user.fixture';
 import { readComposerDraft } from '@/utilities/composer-draft.utility';
+import {
+  resetContextSaveModeMemory,
+  writeContextSaveMode,
+} from '@/utilities/context-save-mode.utility';
 
 const mockCreateMessage = vi.fn();
 const mockToastError = vi.fn();
@@ -138,5 +143,70 @@ describe('useSendMessage', () => {
     mockCreateMessage.mockResolvedValueOnce({ id: 'm-2', threadId: 'thread-1' });
     act(() => result.current.sendMessage({ threadId: 'thread-1', content: 'hi' }));
     await waitFor(() => expect(useQuoteDraftStore.getState().byThread['thread-1']).toBeUndefined());
+  });
+});
+
+describe('useSendMessage context save mode (ADR-168)', () => {
+  const setup = () => {
+    const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    return renderHook(() => useSendMessage('thread-1'), { wrapper });
+  };
+
+  beforeEach(() => {
+    window.localStorage.clear();
+    resetContextSaveModeMemory();
+    signInTestUser('user-1');
+    mockCreateMessage.mockReset();
+    mockCreateMessage.mockResolvedValue({ id: 'm-1', threadId: 'thread-1' });
+  });
+
+  it('sends ASK with every message by default', async () => {
+    const { result } = setup();
+
+    act(() => result.current.sendMessage({ threadId: 'thread-1', content: 'remember I like tea' }));
+
+    await waitFor(() => expect(mockCreateMessage).toHaveBeenCalledOnce());
+    expect(mockCreateMessage).toHaveBeenCalledWith({
+      contextSaveMode: 'ASK',
+      threadId: 'thread-1',
+      content: 'remember I like tea',
+    });
+  });
+
+  it('sends AUTO once the viewer chose to always save', async () => {
+    writeContextSaveMode('AUTO');
+    const { result } = setup();
+
+    act(() => result.current.sendMessage({ threadId: 'thread-1', content: 'hello' }));
+
+    await waitFor(() => expect(mockCreateMessage).toHaveBeenCalledOnce());
+    expect(mockCreateMessage.mock.calls[0]?.[0]).toMatchObject({ contextSaveMode: 'AUTO' });
+  });
+
+  it('sends ASK to the next account on the same browser, never the previous account AUTO', async () => {
+    writeContextSaveMode('AUTO');
+    signOutTestUser();
+    signInTestUser('user-2');
+    const { result } = setup();
+
+    act(() => result.current.sendMessage({ threadId: 'thread-1', content: 'hello' }));
+
+    await waitFor(() => expect(mockCreateMessage).toHaveBeenCalledOnce());
+    expect(mockCreateMessage.mock.calls[0]?.[0]).toMatchObject({ contextSaveMode: 'ASK' });
+  });
+
+  it('lets an explicit mode on the request win', async () => {
+    writeContextSaveMode('AUTO');
+    const { result } = setup();
+
+    act(() =>
+      result.current.sendMessage({ threadId: 'thread-1', content: 'hi', contextSaveMode: 'ASK' }),
+    );
+
+    await waitFor(() => expect(mockCreateMessage).toHaveBeenCalledOnce());
+    expect(mockCreateMessage.mock.calls[0]?.[0]).toMatchObject({ contextSaveMode: 'ASK' });
   });
 });

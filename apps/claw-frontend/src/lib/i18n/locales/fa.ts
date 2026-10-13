@@ -10,6 +10,7 @@ import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
+import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
@@ -493,6 +494,37 @@ export const fa: TranslationDictionary = {
         PLAN: 'طرح شما این قابلیت را ندارد.',
         LIMIT: 'به سقف طرح خود رسیده‌اید.',
         UNAVAILABLE: 'سرویس اکنون در دسترس نیست. کمی بعد دوباره امتحان کنید.',
+      },
+      proposal: {
+        cardTitle: 'این را در حافظه ذخیره کنم؟',
+        review: 'بررسی و ذخیره',
+        notNow: 'حالا نه',
+        dialogTitle: 'این را به خاطر بسپارم؟',
+        dialogDescription:
+          'ببینید چه چیزی ذخیره می‌شود و هر چه خواستید تغییر دهید. تا وقتی ذخیره را نزنید چیزی نگه‌داری نمی‌شود.',
+        memorySection: 'حافظه',
+        memoryType: 'نوع',
+        memoryText: 'چه چیزی به خاطر سپرده شود',
+        packSection: 'بسته زمینه',
+        packContent: 'محتوایی که اضافه شود',
+        packChoose: 'بسته',
+        packPick: 'یک بسته انتخاب کنید',
+        packOption: '{name} ({count} مورد)',
+        packNew: 'بسته جدید',
+        packNewName: 'نام بسته جدید',
+        save: 'ذخیره',
+        alwaysAuto: 'همیشه خودکار و بدون پرسیدن ذخیره کن',
+        alwaysAutoHint:
+          'با فشردن «ذخیره» اعمال می‌شود. هر زمان می‌توانید آن را در تنظیمات حافظه تغییر دهید.',
+        partialFailed: 'بخشی از این ذخیره نشد.',
+        saved: 'ذخیره شد.',
+        failed: 'ذخیره نشد. دوباره تلاش کنید.',
+        errors: {
+          empty: 'این بخش نباید خالی باشد.',
+          tooLong: 'این بیش از حد طولانی است.',
+          packRequired: 'یک بسته انتخاب کنید یا بسته جدیدی بسازید.',
+          nothingSelected: 'حافظه، بسته زمینه یا هر دو را انتخاب کنید.',
+        },
       },
     },
     speech: {
@@ -1475,6 +1507,14 @@ export const fa: TranslationDictionary = {
     resolvedUrlLabel: 'حاصل می‌شود به:',
   },
   memory: {
+    saveMode: {
+      title: 'ذخیره از گفتگو',
+      switchLabel: 'همیشه خودکار ذخیره کن',
+      descriptionAsk:
+        'خاموش: ClawAI پیش از ذخیره‌کردن چیزی که خواسته‌اید به خاطر بسپارد، تأیید شما را می‌خواهد.',
+      descriptionAuto:
+        'روشن: آنچه از ClawAI می‌خواهید به خاطر بسپارد، بدون پرسش و بلافاصله ذخیره می‌شود.',
+    },
     title: 'حافظه',
     description: 'سوابق حافظه هوش مصنوعی را مدیریت کنید',
     createMemory: 'ایجاد حافظه',
@@ -4572,6 +4612,7 @@ export const fa: TranslationDictionary = {
   skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.fa,
   usageAnalytics: USAGE_ANALYTICS_TRANSLATIONS.fa,
   observabilityExplorer: OBSERVABILITY_EXPLORER_TRANSLATIONS.fa,
+  observabilityPages: OBSERVABILITY_PAGES_TRANSLATIONS.fa,
   notifications: NOTIFICATIONS_TRANSLATIONS.fa,
   adminBilling: {
     credit: {

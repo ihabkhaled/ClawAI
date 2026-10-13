@@ -10,6 +10,7 @@ import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
+import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
@@ -492,6 +493,37 @@ export const hi: TranslationDictionary = {
         PLAN: 'आपके प्लान में यह शामिल नहीं है।',
         LIMIT: 'आप अपने प्लान की सीमा तक पहुँच गए हैं।',
         UNAVAILABLE: 'सेवा अभी उपलब्ध नहीं है। थोड़ी देर बाद फिर कोशिश करें।',
+      },
+      proposal: {
+        cardTitle: 'क्या इसे मेमोरी में सहेजें?',
+        review: 'देखें और सहेजें',
+        notNow: 'अभी नहीं',
+        dialogTitle: 'क्या इसे याद रखें?',
+        dialogDescription:
+          'देखें कि क्या सहेजा जाएगा और जो चाहें बदलें। सहेजें दबाने तक कुछ भी संग्रहीत नहीं होता।',
+        memorySection: 'मेमोरी',
+        memoryType: 'प्रकार',
+        memoryText: 'क्या याद रखना है',
+        packSection: 'संदर्भ पैक',
+        packContent: 'जोड़ने के लिए सामग्री',
+        packChoose: 'पैक',
+        packPick: 'एक पैक चुनें',
+        packOption: '{name} ({count} आइटम)',
+        packNew: 'नया पैक',
+        packNewName: 'नए पैक का नाम',
+        save: 'सहेजें',
+        alwaysAuto: 'बिना पूछे हमेशा अपने-आप सहेजें',
+        alwaysAutoHint:
+          'यह तब लागू होता है जब आप सहेजें दबाते हैं। आप इसे कभी भी मेमोरी सेटिंग में बदल सकते हैं।',
+        partialFailed: 'इसका एक हिस्सा सहेजा नहीं गया।',
+        saved: 'सहेज लिया गया।',
+        failed: 'सहेजा नहीं जा सका। फिर से कोशिश करें।',
+        errors: {
+          empty: 'यह खाली नहीं हो सकता।',
+          tooLong: 'यह बहुत लंबा है।',
+          packRequired: 'एक पैक चुनें या नया बनाएँ।',
+          nothingSelected: 'मेमोरी, संदर्भ पैक या दोनों चुनें।',
+        },
       },
     },
     speech: {
@@ -1477,6 +1509,14 @@ export const hi: TranslationDictionary = {
     resolvedUrlLabel: 'का समाधान:',
   },
   memory: {
+    saveMode: {
+      title: 'चैट से सहेजना',
+      switchLabel: 'हमेशा अपने-आप सहेजें',
+      descriptionAsk:
+        'बंद: जो बात आपने ClawAI से याद रखने को कही, उसे सहेजने से पहले वह आपसे पुष्टि माँगता है।',
+      descriptionAuto:
+        'चालू: जो बात आप ClawAI से याद रखने को कहते हैं, वह बिना पूछे तुरंत सहेज दी जाती है।',
+    },
     title: 'मेमोरी',
     description: 'AI मेमोरी रिकॉर्ड प्रबंधित करें',
     createMemory: 'मेमोरी बनाएं',
@@ -4572,6 +4612,7 @@ export const hi: TranslationDictionary = {
   skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.hi,
   usageAnalytics: USAGE_ANALYTICS_TRANSLATIONS.hi,
   observabilityExplorer: OBSERVABILITY_EXPLORER_TRANSLATIONS.hi,
+  observabilityPages: OBSERVABILITY_PAGES_TRANSLATIONS.hi,
   notifications: NOTIFICATIONS_TRANSLATIONS.hi,
   adminBilling: {
     credit: {

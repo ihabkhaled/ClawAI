@@ -238,6 +238,11 @@ export type UseFloatingObstacleClearanceReturn = {
 };
 
 export type UseContextSaveCardReturn = {
+  /** Opens the "Remember this" dialog for this answer's proposal. */
+  review: () => void;
+  /** "Not now": discards the proposal. */
+  dismiss: () => void;
+  isDismissing: boolean;
   choosePack: (packId: string) => void;
   chooseNewPack: () => void;
   isPending: boolean;

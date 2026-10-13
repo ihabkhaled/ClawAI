@@ -3,11 +3,14 @@ import { Module } from '@nestjs/common';
 import { CreditModule } from '../credit/credit.module';
 import { PlansModule } from '../plans/plans.module';
 import { QuotaModule } from '../quota/quota.module';
+import { AdminObservabilityController } from './controllers/admin-observability.controller';
 import { AdminUsageAnalyticsController } from './controllers/admin-usage-analytics.controller';
 import { AdminUsageExplorerController } from './controllers/admin-usage-explorer.controller';
 import { AdminUserStatisticsController } from './controllers/admin-user-statistics.controller';
+import { AdminObservabilityRepository } from './repositories/admin-observability.repository';
 import { AdminUsageAnalyticsRepository } from './repositories/admin-usage-analytics.repository';
 import { AdminUsageExplorerRepository } from './repositories/admin-usage-explorer.repository';
+import { AdminObservabilityService } from './services/admin-observability.service';
 import { AdminUsageAnalyticsService } from './services/admin-usage-analytics.service';
 import { AdminUsageAuditService } from './services/admin-usage-audit.service';
 import { AdminUsageExplorerService } from './services/admin-usage-explorer.service';
@@ -29,6 +32,7 @@ import { AdminUserStatisticsService } from './services/admin-user-statistics.ser
     AdminUserStatisticsController,
     AdminUsageAnalyticsController,
     AdminUsageExplorerController,
+    AdminObservabilityController,
   ],
   providers: [
     AdminUserStatisticsService,
@@ -38,6 +42,8 @@ import { AdminUserStatisticsService } from './services/admin-user-statistics.ser
     AdminUsageExplorerRepository,
     AdminUsageExplorerService,
     AdminUsageAuditService,
+    AdminObservabilityRepository,
+    AdminObservabilityService,
   ],
 })
 export class AdminStatisticsModule {}

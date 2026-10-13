@@ -8,6 +8,7 @@ import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { UseMessageEditReturn } from '@/types';
 import { showToast } from '@/utilities';
+import { readContextSaveMode } from '@/utilities/context-save-mode.utility';
 
 import { useEditInBranch } from './use-edit-in-branch';
 
@@ -35,7 +36,8 @@ export function useMessageEdit(
   const branch = useEditInBranch(threadId, messageId);
 
   const { mutate, isPending } = useMutation({
-    mutationFn: (next: string) => chatRepository.editMessage(messageId, next),
+    mutationFn: (next: string) =>
+      chatRepository.editMessage(messageId, next, readContextSaveMode()),
     onSuccess: () => {
       setOpen(false);
       // Both lists: the thread's messages changed, and the thread row's

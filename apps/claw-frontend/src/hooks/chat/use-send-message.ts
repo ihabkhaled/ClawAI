@@ -9,6 +9,7 @@ import { insertSentMessageIntoCache, logger, showToast } from '@/utilities';
 import { resolveApiErrorMessage } from '@/utilities/api-error-message.utility';
 import { resolveChatLimitNotice } from '@/utilities/chat-limit-notice.utility';
 import { writeComposerDraft } from '@/utilities/composer-draft.utility';
+import { readContextSaveMode } from '@/utilities/context-save-mode.utility';
 
 export function useSendMessage(
   threadId: string,
@@ -26,7 +27,9 @@ export function useSendMessage(
         message: 'Sending message',
         details: { threadId, contentLength: data.content.length },
       });
-      return chatRepository.createMessage(data);
+      // Every chat message says whether a detected "remember this" should be
+      // proposed first (ASK, the default) or saved at once (AUTO) - ADR-168.
+      return chatRepository.createMessage({ contextSaveMode: readContextSaveMode(), ...data });
     },
     onSuccess: (message) => {
       logger.info({

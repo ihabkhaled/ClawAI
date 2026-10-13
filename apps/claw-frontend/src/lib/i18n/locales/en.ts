@@ -10,6 +10,7 @@ import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
+import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
@@ -493,6 +494,37 @@ export const en: TranslationDictionary = {
         PLAN: 'Your plan does not include this.',
         LIMIT: 'You have reached your plan limit.',
         UNAVAILABLE: 'The service is unavailable right now. Try again shortly.',
+      },
+      proposal: {
+        cardTitle: 'Save this to memory?',
+        review: 'Review and save',
+        notNow: 'Not now',
+        dialogTitle: 'Remember this?',
+        dialogDescription:
+          'Check what will be saved and change anything you like. Nothing is stored until you press Save.',
+        memorySection: 'Memory',
+        memoryType: 'Type',
+        memoryText: 'What to remember',
+        packSection: 'Context pack',
+        packContent: 'Content to add',
+        packChoose: 'Pack',
+        packPick: 'Choose a pack',
+        packOption: '{name} ({count} items)',
+        packNew: 'New pack',
+        packNewName: 'New pack name',
+        save: 'Save',
+        alwaysAuto: 'Always save automatically without asking',
+        alwaysAutoHint:
+          'Applies when you press Save. You can change it any time in Memory settings.',
+        partialFailed: 'Part of this was not saved.',
+        saved: 'Saved.',
+        failed: 'Could not save. Try again.',
+        errors: {
+          empty: 'This cannot be empty.',
+          tooLong: 'This is too long.',
+          packRequired: 'Choose a pack or create a new one.',
+          nothingSelected: 'Choose memory, a context pack, or both.',
+        },
       },
     },
     speech: {
@@ -1468,6 +1500,13 @@ export const en: TranslationDictionary = {
     resolvedUrlLabel: 'Resolves to:',
   },
   memory: {
+    saveMode: {
+      title: 'Saving from chat',
+      switchLabel: 'Always save automatically',
+      descriptionAsk:
+        'Off: ClawAI asks you to confirm before saving something you asked it to remember.',
+      descriptionAuto: 'On: things you ask ClawAI to remember are saved at once, without asking.',
+    },
     title: 'Memory',
     description: 'Manage AI memory records',
     createMemory: 'Create Memory',
@@ -4543,6 +4582,7 @@ export const en: TranslationDictionary = {
   skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.en,
   usageAnalytics: USAGE_ANALYTICS_TRANSLATIONS.en,
   observabilityExplorer: OBSERVABILITY_EXPLORER_TRANSLATIONS.en,
+  observabilityPages: OBSERVABILITY_PAGES_TRANSLATIONS.en,
   notifications: NOTIFICATIONS_TRANSLATIONS.en,
   adminBilling: {
     credit: {

@@ -18,7 +18,7 @@ export function AuditList(props: AuditListProps): React.ReactElement {
   if (entries.length === 0) {
     return (
       <Card>
-        <CardContent className="py-12 text-center text-sm text-muted-foreground">
+        <CardContent className="text-muted-foreground py-12 text-center text-sm">
           {t('memory.noAudit')}
         </CardContent>
       </Card>
@@ -35,14 +35,14 @@ export function AuditList(props: AuditListProps): React.ReactElement {
                 {entry.action}
               </Badge>
               {entry.memoryId ? (
-                <span className="font-mono text-xs text-muted-foreground">{entry.memoryId}</span>
+                <span className="text-muted-foreground font-mono text-xs">{entry.memoryId}</span>
               ) : (
-                <span className="text-xs italic text-muted-foreground">
+                <span className="text-muted-foreground text-xs italic">
                   {t('memory.auditNoMemoryId')}
                 </span>
               )}
             </div>
-            <span className="text-xs text-muted-foreground">{formatDate(entry.createdAt)}</span>
+            <span className="text-muted-foreground text-xs">{formatDate(entry.createdAt)}</span>
           </CardContent>
         </Card>
       ))}

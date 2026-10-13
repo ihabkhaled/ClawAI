@@ -7,4 +7,8 @@ export enum ContextSaveStatus {
   NEEDS_PACK_CHOICE = 'NEEDS_PACK_CHOICE',
   SAVING = 'SAVING',
   FAILED = 'FAILED',
+  /** A save was proposed and waits for the user to confirm or dismiss it (ADR-168). */
+  PROPOSED = 'PROPOSED',
+  /** The user dismissed the proposal; nothing was saved. */
+  DISMISSED = 'DISMISSED',
 }

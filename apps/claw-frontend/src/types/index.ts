@@ -1326,3 +1326,21 @@ export type {
   UpdatePromptTemplateVariables,
 } from './prompt-library.types';
 export type { FileLibraryMenuProps } from './file-library.types';
+export type {
+  ContextSaveMemoryType,
+  ContextSaveMode,
+  ContextSaveProposal,
+  ContextSaveProposalConfirmRequest,
+  ContextSaveProposalDialogProps,
+  ContextSaveProposalDraft,
+  ContextSaveProposalErrors,
+  ContextSaveProposalHostProps,
+  ContextSaveProposalStore,
+  ContextSaveProposalTarget,
+  UseContextSaveModeReturn,
+  UseContextSaveProposalActionsReturn,
+  UseContextSaveProposalDialogReturn,
+  UseContextSaveProposalFormReturn,
+  UseContextSaveProposalHostParams,
+  UseContextSaveProposalHostReturn,
+} from './context-save.types';

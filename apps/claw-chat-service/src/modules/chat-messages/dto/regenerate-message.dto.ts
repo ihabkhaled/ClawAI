@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { RoutingMode } from '../../../generated/prisma';
+import { contextSaveFields } from './context-save-fields.dto';
 
 /**
  * How to answer again (chat-supremacy Batch 4). Every field is optional: an
@@ -17,6 +18,7 @@ export const regenerateMessageSchema = z.preprocess(
       routingMode: z.enum([RoutingMode.AUTO, RoutingMode.MANUAL_MODEL]).optional(),
       provider: z.string().min(1).max(50, 'Provider must be at most 50 characters').optional(),
       model: z.string().min(1).max(255, 'Model must be at most 255 characters').optional(),
+      ...contextSaveFields,
     })
     .refine(
       (value) =>

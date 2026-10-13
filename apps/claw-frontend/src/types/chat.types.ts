@@ -1,3 +1,5 @@
+import type { ContextSaveMode, ContextSaveProposal } from '@claw/shared-types';
+
 import type {
   AiReasoningVisibility,
   AiStreamProgressConfidence,
@@ -189,6 +191,8 @@ export type CreateMessageRequest = {
   researchProviderId?: string;
   /** Selections from earlier messages this turn replies to (Batch 2). */
   quotes?: MessageQuoteRequest[];
+  /** ASK (default) proposes a save first; AUTO saves at once like ADR-134 (ADR-168). */
+  contextSaveMode?: ContextSaveMode;
 };
 
 /**
@@ -199,6 +203,8 @@ export type RegenerateMessageRequest = {
   routingMode?: RoutingMode;
   provider?: string;
   model?: string;
+  /** ASK (default) proposes a detected save first; AUTO saves at once (ADR-168). */
+  contextSaveMode?: ContextSaveMode;
 };
 
 /**
@@ -219,6 +225,10 @@ export type ContextSaveRecord = {
   memoryFailure?: SaveFailureReason;
   pack?: { id: string; name: string; created: boolean; link: string };
   packFailure?: SaveFailureReason;
+  /** Present while `status` is PROPOSED: the pre-filled save the user confirms (ADR-168). */
+  proposal?: ContextSaveProposal;
+  /** Error code of the last confirm that saved only part of the proposal; status is back to PROPOSED. */
+  proposalError?: string;
   pending?: {
     suggestedName: string;
     options: { id: string; name: string }[];

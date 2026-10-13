@@ -48,6 +48,18 @@ export const ROUTES = {
   AUDITS: '/audits',
   LOGS: '/logs',
   OBSERVABILITY: '/observability',
+  OBSERVABILITY_USERS: '/observability/users',
+  OBSERVABILITY_PROVIDERS: '/observability/providers',
+  OBSERVABILITY_PROVIDER_DETAIL: (provider: string) =>
+    `/observability/providers/${encodeURIComponent(provider)}` as const,
+  OBSERVABILITY_MODELS: '/observability/models',
+  // Model ids contain "/" and ":", so the model travels in the query string.
+  OBSERVABILITY_MODEL_DETAIL: '/observability/models/detail',
+  OBSERVABILITY_PLANS: '/observability/plans',
+  OBSERVABILITY_SURFACES: '/observability/surfaces',
+  OBSERVABILITY_CONSUMPTION: '/observability/consumption',
+  OBSERVABILITY_TRACING: '/observability/tracing',
+  OBSERVABILITY_FAILURES: '/observability/failures',
   SETTINGS: '/settings',
   // Where a forced password rotation lands. Under /settings so it inherits the
   // private-route prefix (robots, auth) instead of adding a list entry to keep in sync.

@@ -10,6 +10,7 @@ import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
+import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
@@ -502,6 +503,37 @@ export const de: TranslationDictionary = {
         PLAN: 'Dein Tarif enthält das nicht.',
         LIMIT: 'Du hast das Limit deines Tarifs erreicht.',
         UNAVAILABLE: 'Der Dienst ist gerade nicht erreichbar. Versuche es gleich noch einmal.',
+      },
+      proposal: {
+        cardTitle: 'Im Gedächtnis speichern?',
+        review: 'Prüfen und speichern',
+        notNow: 'Jetzt nicht',
+        dialogTitle: 'Soll ich mir das merken?',
+        dialogDescription:
+          'Prüfe, was gespeichert wird, und ändere, was du möchtest. Erst mit „Speichern“ wird etwas abgelegt.',
+        memorySection: 'Gedächtnis',
+        memoryType: 'Typ',
+        memoryText: 'Was gemerkt werden soll',
+        packSection: 'Kontextpaket',
+        packContent: 'Hinzuzufügender Inhalt',
+        packChoose: 'Paket',
+        packPick: 'Paket wählen',
+        packOption: '{name} ({count} Einträge)',
+        packNew: 'Neues Paket',
+        packNewName: 'Name des neuen Pakets',
+        save: 'Speichern',
+        alwaysAuto: 'Immer automatisch speichern, ohne zu fragen',
+        alwaysAutoHint:
+          'Gilt, sobald du auf Speichern drückst. Du kannst es jederzeit in den Memory-Einstellungen ändern.',
+        partialFailed: 'Ein Teil davon wurde nicht gespeichert.',
+        saved: 'Gespeichert.',
+        failed: 'Speichern fehlgeschlagen. Versuche es erneut.',
+        errors: {
+          empty: 'Dieses Feld darf nicht leer sein.',
+          tooLong: 'Das ist zu lang.',
+          packRequired: 'Wähle ein Paket oder erstelle ein neues.',
+          nothingSelected: 'Wähle Gedächtnis, ein Kontextpaket oder beides.',
+        },
       },
     },
     speech: {
@@ -1510,6 +1542,14 @@ export const de: TranslationDictionary = {
     resolvedUrlLabel: 'Ergibt:',
   },
   memory: {
+    saveMode: {
+      title: 'Speichern aus dem Chat',
+      switchLabel: 'Immer automatisch speichern',
+      descriptionAsk:
+        'Aus: ClawAI bittet um Bestätigung, bevor es etwas speichert, das du merken lassen wolltest.',
+      descriptionAuto:
+        'An: Was du ClawAI merken lässt, wird sofort und ohne Nachfrage gespeichert.',
+    },
     title: 'Speicher',
     description: 'KI-Speichereinträge verwalten',
     createMemory: 'Speicher erstellen',
@@ -4654,6 +4694,7 @@ export const de: TranslationDictionary = {
   skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.de,
   usageAnalytics: USAGE_ANALYTICS_TRANSLATIONS.de,
   observabilityExplorer: OBSERVABILITY_EXPLORER_TRANSLATIONS.de,
+  observabilityPages: OBSERVABILITY_PAGES_TRANSLATIONS.de,
   notifications: NOTIFICATIONS_TRANSLATIONS.de,
   adminBilling: {
     credit: {

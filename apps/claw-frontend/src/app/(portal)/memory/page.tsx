@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { AuditList } from '@/components/memory/audit-list';
+import { ContextSaveModeSetting } from '@/components/memory/context-save-mode-setting';
 import { MemoryCard } from '@/components/memory/memory-card';
 import { MemoryForm } from '@/components/memory/memory-form';
 import { SuggestionsList } from '@/components/memory/suggestions-list';
@@ -95,6 +96,8 @@ export default function MemoryPage(): React.ReactElement {
           </Button>
         }
       />
+
+      <ContextSaveModeSetting />
 
       <Tabs
         value={activeTab}

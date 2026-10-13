@@ -10,6 +10,7 @@ import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
+import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
@@ -482,6 +483,36 @@ export const th: TranslationDictionary = {
         PLAN: 'แพ็กเกจของคุณไม่รวมฟีเจอร์นี้',
         LIMIT: 'คุณใช้ถึงขีดจำกัดของแพ็กเกจแล้ว',
         UNAVAILABLE: 'ขณะนี้บริการไม่พร้อมใช้งาน โปรดลองอีกครั้งในไม่ช้า',
+      },
+      proposal: {
+        cardTitle: 'บันทึกสิ่งนี้ลงความทรงจำไหม',
+        review: 'ตรวจสอบและบันทึก',
+        notNow: 'ไม่ใช่ตอนนี้',
+        dialogTitle: 'จดจำสิ่งนี้ไหม',
+        dialogDescription:
+          'ตรวจสอบสิ่งที่จะบันทึกและแก้ไขได้ตามต้องการ ระบบจะไม่เก็บอะไรจนกว่าคุณจะกดบันทึก',
+        memorySection: 'ความทรงจำ',
+        memoryType: 'ประเภท',
+        memoryText: 'สิ่งที่ต้องจดจำ',
+        packSection: 'แพ็กบริบท',
+        packContent: 'เนื้อหาที่จะเพิ่ม',
+        packChoose: 'แพ็ก',
+        packPick: 'เลือกแพ็ก',
+        packOption: '{name} ({count} รายการ)',
+        packNew: 'แพ็กใหม่',
+        packNewName: 'ชื่อแพ็กใหม่',
+        save: 'บันทึก',
+        alwaysAuto: 'บันทึกอัตโนมัติเสมอโดยไม่ต้องถาม',
+        alwaysAutoHint: 'มีผลเมื่อคุณกดบันทึก เปลี่ยนได้ทุกเมื่อในการตั้งค่าหน่วยความจำ',
+        partialFailed: 'บางส่วนไม่ได้ถูกบันทึก',
+        saved: 'บันทึกแล้ว',
+        failed: 'บันทึกไม่สำเร็จ ลองอีกครั้ง',
+        errors: {
+          empty: 'ห้ามเว้นว่าง',
+          tooLong: 'ยาวเกินไป',
+          packRequired: 'เลือกแพ็กหรือสร้างแพ็กใหม่',
+          nothingSelected: 'เลือกความทรงจำ แพ็กบริบท หรือทั้งสองอย่าง',
+        },
       },
     },
     speech: {
@@ -1447,6 +1478,12 @@ export const th: TranslationDictionary = {
     resolvedUrlLabel: 'จะได้เป็น:',
   },
   memory: {
+    saveMode: {
+      title: 'การบันทึกจากแชท',
+      switchLabel: 'บันทึกอัตโนมัติเสมอ',
+      descriptionAsk: 'ปิด: ClawAI จะขอให้คุณยืนยันก่อนบันทึกสิ่งที่คุณขอให้จำ',
+      descriptionAuto: 'เปิด: สิ่งที่คุณขอให้ ClawAI จำจะถูกบันทึกทันทีโดยไม่ถาม',
+    },
     title: 'หน่วยความจำ',
     description: 'จัดการบันทึกหน่วยความจำ AI',
     createMemory: 'สร้างความทรงจำ',
@@ -4515,6 +4552,7 @@ export const th: TranslationDictionary = {
   skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.th,
   usageAnalytics: USAGE_ANALYTICS_TRANSLATIONS.th,
   observabilityExplorer: OBSERVABILITY_EXPLORER_TRANSLATIONS.th,
+  observabilityPages: OBSERVABILITY_PAGES_TRANSLATIONS.th,
   notifications: NOTIFICATIONS_TRANSLATIONS.th,
   adminBilling: {
     credit: {

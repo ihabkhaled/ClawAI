@@ -98,7 +98,7 @@ export function buildExplorerParams(
     }
   }
   for (const [key, value] of Object.entries(filters)) {
-    if (value !== '') {
+    if (value !== undefined && value !== '') {
       params[key] = value;
     }
   }

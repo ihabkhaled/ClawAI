@@ -1,5 +1,6 @@
 import { type Mock, vi } from 'vitest';
 import { ContextSaveStatus } from '../../../../common/enums';
+import { CONTEXT_SAVE_SAVING_STALE_MS } from '../../constants/save-intent.constants';
 import { ContextSaveChoiceService } from '../context-save-choice.service';
 import type { ChatMessagesRepository } from '../../repositories/chat-messages.repository';
 import type { ChatThreadsRepository } from '../../../chat-threads/repositories/chat-threads.repository';
@@ -132,5 +133,101 @@ describe('ContextSaveChoiceService (ADR-134)', () => {
     expect(written).toMatchObject({
       contextSave: { status: ContextSaveStatus.NEEDS_PACK_CHOICE, packFailure: 'LIMIT' },
     });
+  });
+});
+
+describe('ContextSaveChoiceService — a record never stays SAVING (ADR-168)', () => {
+  it('claims with a savingSince stamp', async () => {
+    const { service, transition } = setup({});
+
+    await service.choose('u1', 'a-msg', { packId: 'pack-1' });
+
+    const [, from, claimDoc] = transition.mock.calls[0] ?? [];
+    expect(from).toBe(ContextSaveStatus.NEEDS_PACK_CHOICE);
+    expect(claimDoc).toMatchObject({ contextSave: { status: ContextSaveStatus.SAVING } });
+    expect(
+      typeof (claimDoc as { contextSave: { savingSince?: unknown } }).contextSave.savingSince,
+    ).toBe('string');
+  });
+
+  it('a throw after the claim puts the card back to "choose" and rethrows', async () => {
+    const { service, client, updateMetadata } = setup({});
+    client.addToPack.mockRejectedValueOnce(new Error('socket hang up'));
+
+    await expect(service.choose('u1', 'a-msg', { packId: 'pack-1' })).rejects.toThrow(
+      'socket hang up',
+    );
+
+    const [, written] = updateMetadata.mock.calls[0] ?? [];
+    expect(written).toMatchObject({
+      other: 1,
+      contextSave: {
+        status: ContextSaveStatus.NEEDS_PACK_CHOICE,
+        pending: { content: '## Paris plan' },
+      },
+    });
+    expect(
+      (written as { contextSave: Record<string, unknown> }).contextSave['savingSince'],
+    ).toBeUndefined();
+  });
+
+  it('a failed write of the final record also releases the claim', async () => {
+    const { service, updateMetadata } = setup({});
+    updateMetadata.mockRejectedValueOnce(new Error('db down'));
+
+    await expect(service.choose('u1', 'a-msg', { packId: 'pack-1' })).rejects.toThrow('db down');
+
+    expect(updateMetadata).toHaveBeenCalledTimes(2);
+    expect(updateMetadata.mock.calls[1]?.[1]).toMatchObject({
+      contextSave: { status: ContextSaveStatus.NEEDS_PACK_CHOICE },
+    });
+  });
+
+  it('if even the release fails, the original error still surfaces', async () => {
+    const { service, updateMetadata } = setup({});
+    updateMetadata.mockRejectedValue(new Error('db down'));
+
+    await expect(service.choose('u1', 'a-msg', { packId: 'pack-1' })).rejects.toThrow('db down');
+  });
+
+  it('a SAVING record older than two minutes is treated as waiting again', async () => {
+    const savingSince = new Date(Date.now() - CONTEXT_SAVE_SAVING_STALE_MS - 1_000).toISOString();
+    const { service, client, transition } = setup({
+      record: { ...pendingRecord, status: ContextSaveStatus.SAVING, savingSince },
+    });
+
+    const record = await service.choose('u1', 'a-msg', { packId: 'pack-1' });
+
+    expect(transition.mock.calls[0]?.[1]).toBe(ContextSaveStatus.SAVING);
+    expect(transition.mock.calls[0]?.[3]).toBe(savingSince);
+    expect(client.addToPack).toHaveBeenCalledTimes(1);
+    expect(record.status).toBe(ContextSaveStatus.SAVED);
+  });
+
+  it('a fresh SAVING record is somebody else working: refused', async () => {
+    const { service, client, transition } = setup({
+      record: {
+        ...pendingRecord,
+        status: ContextSaveStatus.SAVING,
+        savingSince: new Date().toISOString(),
+      },
+    });
+
+    await expect(service.choose('u1', 'a-msg', { packId: 'pack-1' })).rejects.toMatchObject({
+      code: 'CONTEXT_SAVE_NOT_PENDING',
+    });
+    expect(transition).not.toHaveBeenCalled();
+    expect(client.addToPack).not.toHaveBeenCalled();
+  });
+
+  it('a DISMISSED record is final', async () => {
+    const { service, transition } = setup({
+      record: { ...pendingRecord, status: ContextSaveStatus.DISMISSED },
+    });
+
+    await expect(service.choose('u1', 'a-msg', { newPack: true })).rejects.toMatchObject({
+      code: 'CONTEXT_SAVE_NOT_PENDING',
+    });
+    expect(transition).not.toHaveBeenCalled();
   });
 });

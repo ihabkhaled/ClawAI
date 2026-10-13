@@ -74,6 +74,7 @@ export function useObservabilityFilters(
       buildParams: () => buildExplorerParams(applied, filters, new Date()),
       buildRangeParams: () => buildExplorerParams(applied, EMPTY_EXPLORER_FILTERS, new Date()),
       buildHours: (maxHours: number) => selectionToHours(applied, new Date(), maxHours),
+      issue: validateSelection(applied),
     }),
     [applied, filters],
   );

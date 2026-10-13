@@ -10,6 +10,7 @@ import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
+import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
@@ -470,6 +471,35 @@ export const zh: TranslationDictionary = {
         PLAN: '你的套餐不包含此功能。',
         LIMIT: '你已达到套餐上限。',
         UNAVAILABLE: '服务暂时不可用，请稍后再试。',
+      },
+      proposal: {
+        cardTitle: '要把这个保存到记忆吗？',
+        review: '查看并保存',
+        notNow: '暂不',
+        dialogTitle: '要记住这个吗？',
+        dialogDescription: '请查看将要保存的内容，可随意修改。点击“保存”之前不会存储任何内容。',
+        memorySection: '记忆',
+        memoryType: '类型',
+        memoryText: '要记住的内容',
+        packSection: '上下文包',
+        packContent: '要添加的内容',
+        packChoose: '包',
+        packPick: '选择一个包',
+        packOption: '{name}（{count} 项）',
+        packNew: '新建包',
+        packNewName: '新包名称',
+        save: '保存',
+        alwaysAuto: '以后总是自动保存，不再询问',
+        alwaysAutoHint: '点击“保存”时生效。你可以随时在记忆设置中更改。',
+        partialFailed: '其中一部分没有保存。',
+        saved: '已保存。',
+        failed: '保存失败，请重试。',
+        errors: {
+          empty: '此项不能为空。',
+          tooLong: '内容过长。',
+          packRequired: '请选择一个包，或新建一个。',
+          nothingSelected: '请选择记忆、上下文包，或两者都选。',
+        },
       },
     },
     speech: {
@@ -1417,6 +1447,12 @@ export const zh: TranslationDictionary = {
     resolvedUrlLabel: '解析为：',
   },
   memory: {
+    saveMode: {
+      title: '从聊天中保存',
+      switchLabel: '始终自动保存',
+      descriptionAsk: '关闭：在保存你要求记住的内容之前，ClawAI 会先请你确认。',
+      descriptionAuto: '开启：你要求 ClawAI 记住的内容会立即保存，不再询问。',
+    },
     title: '记忆',
     description: '管理AI内存记录',
     createMemory: '创造记忆',
@@ -4398,6 +4434,7 @@ export const zh: TranslationDictionary = {
   skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.zh,
   usageAnalytics: USAGE_ANALYTICS_TRANSLATIONS.zh,
   observabilityExplorer: OBSERVABILITY_EXPLORER_TRANSLATIONS.zh,
+  observabilityPages: OBSERVABILITY_PAGES_TRANSLATIONS.zh,
   notifications: NOTIFICATIONS_TRANSLATIONS.zh,
   adminBilling: {
     credit: {

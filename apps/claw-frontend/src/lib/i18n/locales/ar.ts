@@ -10,6 +10,7 @@ import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
+import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
@@ -487,6 +488,35 @@ export const ar: TranslationDictionary = {
         PLAN: 'خطتك لا تتضمن هذه الميزة.',
         LIMIT: 'لقد بلغت حد خطتك.',
         UNAVAILABLE: 'الخدمة غير متاحة الآن. حاول مرة أخرى بعد قليل.',
+      },
+      proposal: {
+        cardTitle: 'هل تريد حفظ هذا في الذاكرة؟',
+        review: 'مراجعة وحفظ',
+        notNow: 'ليس الآن',
+        dialogTitle: 'هل تريد تذكر هذا؟',
+        dialogDescription: 'راجع ما سيتم حفظه وعدّل ما تشاء. لن يُخزَّن شيء حتى تضغط على حفظ.',
+        memorySection: 'الذاكرة',
+        memoryType: 'النوع',
+        memoryText: 'ما الذي يجب تذكره',
+        packSection: 'حزمة السياق',
+        packContent: 'المحتوى المراد إضافته',
+        packChoose: 'الحزمة',
+        packPick: 'اختر حزمة',
+        packOption: '{name} ({count} عناصر)',
+        packNew: 'حزمة جديدة',
+        packNewName: 'اسم الحزمة الجديدة',
+        save: 'حفظ',
+        alwaysAuto: 'احفظ تلقائيًا دائمًا دون سؤال',
+        alwaysAutoHint: 'يُطبَّق عند الضغط على حفظ. يمكنك تغييره في أي وقت من إعدادات الذاكرة.',
+        partialFailed: 'لم يُحفظ جزء من هذا.',
+        saved: 'تم الحفظ.',
+        failed: 'تعذّر الحفظ. حاول مرة أخرى.',
+        errors: {
+          empty: 'لا يمكن ترك هذا فارغًا.',
+          tooLong: 'هذا طويل جدًا.',
+          packRequired: 'اختر حزمة أو أنشئ حزمة جديدة.',
+          nothingSelected: 'اختر الذاكرة أو حزمة السياق أو كليهما.',
+        },
       },
     },
     speech: {
@@ -1450,6 +1480,12 @@ export const ar: TranslationDictionary = {
     resolvedUrlLabel: 'يُحل إلى:',
   },
   memory: {
+    saveMode: {
+      title: 'الحفظ من المحادثة',
+      switchLabel: 'الحفظ تلقائيًا دائمًا',
+      descriptionAsk: 'متوقف: يطلب منك ClawAI التأكيد قبل حفظ ما طلبت منه تذكّره.',
+      descriptionAuto: 'مفعّل: يُحفظ ما تطلب من ClawAI تذكّره فورًا دون سؤال.',
+    },
     title: 'الذاكرة',
     description: 'إدارة سجلات ذاكرة الذكاء الاصطناعي',
     createMemory: 'إنشاء ذاكرة',
@@ -4500,6 +4536,7 @@ export const ar: TranslationDictionary = {
   skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.ar,
   usageAnalytics: USAGE_ANALYTICS_TRANSLATIONS.ar,
   observabilityExplorer: OBSERVABILITY_EXPLORER_TRANSLATIONS.ar,
+  observabilityPages: OBSERVABILITY_PAGES_TRANSLATIONS.ar,
   notifications: NOTIFICATIONS_TRANSLATIONS.ar,
   adminBilling: {
     credit: {

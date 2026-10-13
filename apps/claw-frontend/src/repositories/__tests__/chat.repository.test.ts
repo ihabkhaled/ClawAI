@@ -169,6 +169,60 @@ describe('chatRepository', () => {
     });
   });
 
+  describe('editMessage', () => {
+    it('posts the new content alone when no save mode is given', async () => {
+      mockPost.mockResolvedValueOnce({ data: mockMessage, status: 201 });
+
+      await chatRepository.editMessage('m-1', 'new text');
+
+      expect(mockPost).toHaveBeenCalledWith('/chat-messages/m-1/edit', { content: 'new text' });
+    });
+
+    it('carries the save mode when one is given (ADR-168)', async () => {
+      mockPost.mockResolvedValueOnce({ data: mockMessage, status: 201 });
+
+      await chatRepository.editMessage('m-1', 'new text', 'AUTO');
+
+      expect(mockPost).toHaveBeenCalledWith('/chat-messages/m-1/edit', {
+        content: 'new text',
+        contextSaveMode: 'AUTO',
+      });
+    });
+  });
+
+  // ---------- context save proposals (ADR-168) ----------
+
+  describe('confirmContextSave / dismissContextSave', () => {
+    it('posts the edited proposal to the confirm route', async () => {
+      mockPost.mockResolvedValueOnce({ data: { status: 'SAVED' }, status: 201 });
+      const request = {
+        memory: { type: 'PREFERENCE' as const, text: 'Likes tea' },
+        pack: { packId: null, newPackName: 'Drinks', content: 'Likes tea' },
+      };
+
+      const result = await chatRepository.confirmContextSave('m-1', request);
+
+      expect(mockPost).toHaveBeenCalledWith('/chat-messages/m-1/context-save/confirm', request);
+      expect(result).toEqual({ status: 'SAVED' });
+    });
+
+    it('posts an empty body to the dismiss route', async () => {
+      mockPost.mockResolvedValueOnce({ data: { status: 'DISMISSED' }, status: 201 });
+
+      await chatRepository.dismissContextSave('m-1');
+
+      expect(mockPost).toHaveBeenCalledWith('/chat-messages/m-1/context-save/dismiss', {});
+    });
+
+    it('propagates a refused confirm', async () => {
+      mockPost.mockRejectedValueOnce(new Error('not pending'));
+
+      await expect(
+        chatRepository.confirmContextSave('m-1', { memory: null, pack: null }),
+      ).rejects.toThrow('not pending');
+    });
+  });
+
   // ---------- getMessages ----------
 
   describe('getMessages', () => {

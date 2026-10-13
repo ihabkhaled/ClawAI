@@ -1,3 +1,4 @@
+import type { ContextSaveMode } from '@claw/shared-types';
 import type { ResearchEvidenceBundle } from './research.types';
 import type { ResearchTranscript } from './research-transcript.types';
 import type { MessageQuote } from './message-quote.types';
@@ -13,6 +14,8 @@ export type UserMessageMetadata = {
   /** File id of the PNG alpha mask drawn for an image edit (transparent = edit here). */
   maskFileId?: string;
   modelDisplayName?: string;
+  /** ASK proposes a save and waits for confirmation; AUTO saves at once (ADR-168). */
+  contextSaveMode?: ContextSaveMode;
   /** Selections from earlier messages this turn replies to (Batch 2). */
   quotes?: MessageQuote[];
   research?: {

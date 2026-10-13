@@ -165,6 +165,14 @@ export const queryKeys = {
       ['observability-explorer', 'user', userId, scope] as const,
     userRequests: (userId: string, scope: unknown, list: unknown) =>
       ['observability-explorer', 'user-requests', userId, scope, list] as const,
+    filterOptions: (scope: unknown) => ['observability-explorer', 'filter-options', scope] as const,
+    health: (scope: unknown) => ['observability-explorer', 'health', scope] as const,
+    overview: (scope: unknown, top: number) =>
+      ['observability-explorer', 'overview', scope, top] as const,
+    entities: (kind: string, scope: unknown, list: unknown) =>
+      ['observability-explorer', 'entities', kind, scope, list] as const,
+    entityDetail: (kind: string, scope: unknown, id: unknown) =>
+      ['observability-explorer', 'entity-detail', kind, scope, id] as const,
     failures: (query: unknown) => ['observability-explorer', 'failures', query] as const,
     tracing: (query: unknown) => ['observability-explorer', 'tracing', query] as const,
   },

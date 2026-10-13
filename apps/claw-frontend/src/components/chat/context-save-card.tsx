@@ -1,6 +1,6 @@
 'use client';
 
-import { Brain, FolderPlus, Layers, Loader2 } from 'lucide-react';
+import { BookmarkPlus, Brain, FolderPlus, Layers, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,7 @@ import { ContextSaveStatus } from '@/enums';
 import { useContextSaveCard } from '@/hooks/chat/use-context-save-card';
 import { useTranslation } from '@/lib/i18n';
 import type { ContextSaveCardProps } from '@/types';
+import { proposalErrorText } from '@/utilities/context-save-proposal.utility';
 
 /**
  * What a "remember this / add this to my context" turn did (ADR-134), under
@@ -22,11 +23,27 @@ export function ContextSaveCard({
   messageId,
   threadId,
   record,
-}: ContextSaveCardProps): React.ReactElement {
+}: ContextSaveCardProps): React.ReactElement | null {
   const { t } = useTranslation();
   const card = useContextSaveCard(messageId, threadId);
   const choosing =
     record.status === ContextSaveStatus.NEEDS_PACK_CHOICE && record.pending !== undefined;
+  const proposed = record.status === ContextSaveStatus.PROPOSED && record.proposal !== undefined;
+  const proposedPreview = record.proposal?.memory?.text ?? record.proposal?.pack?.content ?? '';
+  // A half-saved confirm already says what happened through `proposalError`; the
+  // per-half failure lines would repeat it in other words.
+  const showFailures = !(proposed && record.proposalError !== undefined);
+
+  // Nothing to show: a dismissed proposal with nothing saved and nothing failed,
+  // or a proposal that lost its content, must not leave an empty bordered box.
+  const hasFailures = Boolean(record.memoryFailure) || Boolean(record.packFailure);
+  const emptyDismissal =
+    record.status === ContextSaveStatus.DISMISSED && !record.memory && !record.pack && !hasFailures;
+  const emptyProposal =
+    record.status === ContextSaveStatus.PROPOSED && record.proposal === undefined;
+  if (emptyDismissal || emptyProposal) {
+    return null;
+  }
 
   return (
     <section
@@ -64,6 +81,40 @@ export function ContextSaveCard({
           </Link>
         </div>
       ) : null}
+      {proposed ? (
+        <div className="flex min-w-0 flex-col gap-2">
+          <div className="flex min-w-0 items-start gap-2">
+            <BookmarkPlus className="text-primary mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <span className="font-medium">{t('chat.contextSave.proposal.cardTitle')}</span>
+              {proposedPreview.length > 0 ? (
+                <span className="text-muted-foreground line-clamp-2 break-words">
+                  {proposedPreview}
+                </span>
+              ) : null}
+            </div>
+          </div>
+          {record.proposalError !== undefined ? (
+            <p className="text-destructive text-xs" role="alert">
+              {proposalErrorText(record.proposalError, t)}
+            </p>
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" size="sm" disabled={card.isDismissing} onClick={card.review}>
+              {t('chat.contextSave.proposal.review')}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={card.isDismissing}
+              onClick={card.dismiss}
+            >
+              {t('chat.contextSave.proposal.notNow')}
+            </Button>
+          </div>
+        </div>
+      ) : null}
       {choosing && record.pending ? (
         <div className="flex flex-col gap-2">
           <p className="text-muted-foreground">{t('chat.contextSave.choosePack')}</p>
@@ -94,13 +145,13 @@ export function ContextSaveCard({
           {t('chat.contextSave.saving')}
         </p>
       ) : null}
-      {record.memoryFailure ? (
+      {showFailures && record.memoryFailure ? (
         <p className="text-destructive text-xs" role="alert">
           {t('chat.contextSave.memoryFailed')}{' '}
           {t(`chat.contextSave.reasons.${record.memoryFailure}`)}
         </p>
       ) : null}
-      {record.packFailure ? (
+      {showFailures && record.packFailure ? (
         <p className="text-destructive text-xs" role="alert">
           {t('chat.contextSave.packFailed')} {t(`chat.contextSave.reasons.${record.packFailure}`)}
         </p>

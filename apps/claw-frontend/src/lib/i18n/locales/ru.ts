@@ -10,6 +10,7 @@ import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
+import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
@@ -495,6 +496,37 @@ export const ru: TranslationDictionary = {
         PLAN: 'Ваш тариф этого не включает.',
         LIMIT: 'Вы достигли лимита тарифа.',
         UNAVAILABLE: 'Сервис сейчас недоступен. Попробуйте ещё раз чуть позже.',
+      },
+      proposal: {
+        cardTitle: 'Сохранить это в память?',
+        review: 'Проверить и сохранить',
+        notNow: 'Не сейчас',
+        dialogTitle: 'Запомнить это?',
+        dialogDescription:
+          'Проверьте, что будет сохранено, и измените что угодно. Пока вы не нажмёте «Сохранить», ничего не записывается.',
+        memorySection: 'Память',
+        memoryType: 'Тип',
+        memoryText: 'Что запомнить',
+        packSection: 'Пакет контекста',
+        packContent: 'Что добавить',
+        packChoose: 'Пакет',
+        packPick: 'Выберите пакет',
+        packOption: '{name} ({count} элем.)',
+        packNew: 'Новый пакет',
+        packNewName: 'Название нового пакета',
+        save: 'Сохранить',
+        alwaysAuto: 'Всегда сохранять автоматически, не спрашивая',
+        alwaysAutoHint:
+          'Применяется, когда вы нажимаете «Сохранить». Изменить можно в любой момент в настройках памяти.',
+        partialFailed: 'Часть не была сохранена.',
+        saved: 'Сохранено.',
+        failed: 'Не удалось сохранить. Попробуйте ещё раз.',
+        errors: {
+          empty: 'Это поле не может быть пустым.',
+          tooLong: 'Слишком длинно.',
+          packRequired: 'Выберите пакет или создайте новый.',
+          nothingSelected: 'Выберите память, пакет контекста или оба варианта.',
+        },
       },
     },
     speech: {
@@ -1488,6 +1520,14 @@ export const ru: TranslationDictionary = {
     resolvedUrlLabel: 'Разрешается в:',
   },
   memory: {
+    saveMode: {
+      title: 'Сохранение из чата',
+      switchLabel: 'Всегда сохранять автоматически',
+      descriptionAsk:
+        'Выключено: ClawAI просит подтверждения перед сохранением того, что вы попросили запомнить.',
+      descriptionAuto:
+        'Включено: то, что вы просите ClawAI запомнить, сохраняется сразу, без вопросов.',
+    },
     title: 'Память',
     description: 'Управление записями памяти ИИ',
     createMemory: 'Создать запись',
@@ -4607,6 +4647,7 @@ export const ru: TranslationDictionary = {
   skippedProviders: SKIPPED_PROVIDERS_TRANSLATIONS.ru,
   usageAnalytics: USAGE_ANALYTICS_TRANSLATIONS.ru,
   observabilityExplorer: OBSERVABILITY_EXPLORER_TRANSLATIONS.ru,
+  observabilityPages: OBSERVABILITY_PAGES_TRANSLATIONS.ru,
   notifications: NOTIFICATIONS_TRANSLATIONS.ru,
   adminBilling: {
     credit: {

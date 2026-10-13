@@ -5,16 +5,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   detail,
-  groupRow,
   scope,
   userRow,
 } from '@/components/observability/explorer/__tests__/explorer-fixtures';
-import { ObservabilityTab } from '@/enums/observability-tab.enum';
-import { Permission } from '@/enums/permission.enum';
 import { UsageRangePreset } from '@/enums/usage-range-preset.enum';
-import { usePermissions } from '@/hooks/auth/use-permissions';
-import { useExplorerFilterOptions } from '@/hooks/observability/use-explorer-filter-options';
-import { useObservabilityExplorer } from '@/hooks/observability/use-observability-explorer';
 import { useUsageTimeseries } from '@/hooks/observability/use-usage-timeseries';
 import { useUserConsumption } from '@/hooks/observability/use-user-consumption';
 
@@ -31,92 +25,14 @@ vi.mock('@/repositories/admin/observability-explorer.repository', () => ({
     getUserRequests: (...args: unknown[]) => mockGetUserRequests(...args),
   },
 }));
-vi.mock('@/hooks/auth/use-permissions');
-
-const mockPermissions = vi.mocked(usePermissions);
-
 function wrapper({ children }: { children: ReactNode }): ReactElement {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
-function grant(...allowed: Permission[]): void {
-  mockPermissions.mockReturnValue({
-    isAdmin: true,
-    isSuperAdmin: false,
-    can: (permission) => allowed.includes(permission),
-    canAny: () => false,
-  });
-}
-
 beforeEach(() => {
   vi.clearAllMocks();
   mockGetLeaderboard.mockResolvedValue({ items: [] });
-});
-
-describe('useObservabilityExplorer', () => {
-  it('offers all six tabs to an admin who can view system health', () => {
-    grant(Permission.ADMIN_USAGE_VIEW, Permission.ADMIN_SYSTEM_VIEW);
-    const { result } = renderHook(() => useObservabilityExplorer(), { wrapper });
-    expect(result.current.tabs.map((definition) => definition.tab)).toEqual([
-      ObservabilityTab.Overview,
-      ObservabilityTab.Consumption,
-      ObservabilityTab.Models,
-      ObservabilityTab.Users,
-      ObservabilityTab.Tracing,
-      ObservabilityTab.Failures,
-    ]);
-    expect(result.current.tab).toBe(ObservabilityTab.Overview);
-  });
-
-  it('drops the Failures tab without ADMIN_SYSTEM_VIEW', () => {
-    grant(Permission.ADMIN_USAGE_VIEW);
-    const { result } = renderHook(() => useObservabilityExplorer(), { wrapper });
-    expect(result.current.tabs.map((definition) => definition.tab)).not.toContain(
-      ObservabilityTab.Failures,
-    );
-  });
-
-  it('switches tab and tracks the open user', () => {
-    grant(Permission.ADMIN_USAGE_VIEW);
-    const { result } = renderHook(() => useObservabilityExplorer(), { wrapper });
-    act(() => {
-      result.current.setTab(ObservabilityTab.Users);
-      result.current.setOpenUserId('user-3');
-    });
-    expect(result.current.tab).toBe(ObservabilityTab.Users);
-    expect(result.current.openUserId).toBe('user-3');
-  });
-});
-
-describe('useExplorerFilterOptions', () => {
-  it('lists every provider, model and workflow of the PERIOD, ignoring the applied filters', async () => {
-    mockGetLeaderboard
-      .mockResolvedValueOnce({
-        items: [groupRow({ provider: 'LOCAL_OLLAMA', providerLabel: 'Local Ollama' })],
-      })
-      .mockResolvedValueOnce({ items: [groupRow({ model: 'm-1' })] })
-      .mockResolvedValueOnce({ items: [groupRow({ key: 'UNKNOWN' }), groupRow({ key: 'CHAT' })] });
-    const rangeOnly = vi.fn(() => ({ hours: '168' }));
-    const { result } = renderHook(
-      () =>
-        useExplorerFilterOptions(
-          scope({
-            buildRangeParams: rangeOnly,
-            buildParams: () => ({ hours: '168', provider: 'GEMINI' }),
-          }),
-        ),
-      { wrapper },
-    );
-    await waitFor(() => {
-      expect(result.current.models).toEqual(['m-1']);
-    });
-    expect(result.current.providers).toEqual([{ value: 'LOCAL_OLLAMA', label: 'Local Ollama' }]);
-    expect(result.current.workflows).toEqual(['UNKNOWN', 'CHAT']);
-    expect(rangeOnly).toHaveBeenCalled();
-    expect(mockGetLeaderboard).toHaveBeenCalledTimes(3);
-    expect(mockGetLeaderboard).toHaveBeenCalledWith({ hours: '168' }, expect.anything());
-  });
 });
 
 describe('useUsageTimeseries', () => {

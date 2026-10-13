@@ -21,7 +21,7 @@ export function SuggestionsList(props: SuggestionsListProps): React.ReactElement
   if (suggestions.length === 0) {
     return (
       <Card>
-        <CardContent className="py-12 text-center text-sm text-muted-foreground">
+        <CardContent className="text-muted-foreground py-12 text-center text-sm">
           {t('memory.noSuggestions')}
         </CardContent>
       </Card>
@@ -44,21 +44,21 @@ export function SuggestionsList(props: SuggestionsListProps): React.ReactElement
                     {suggestion.sensitivity}
                   </Badge>
                 )}
-                <span className="text-xs text-muted-foreground">
+                <span className="text-muted-foreground text-xs">
                   {t('memory.suggestionConfidence', {
                     value: String(Math.round(suggestion.confidence * 100)),
                   })}
                 </span>
               </div>
-              <CardTitle className="text-xs text-muted-foreground">
+              <CardTitle className="text-muted-foreground text-xs">
                 {formatDate(suggestion.createdAt)}
               </CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            <p className="whitespace-pre-wrap text-sm">{suggestion.content}</p>
+            <p className="text-sm whitespace-pre-wrap">{suggestion.content}</p>
             {suggestion.reason ? (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 {t('memory.suggestionReason', { value: suggestion.reason })}
               </p>
             ) : null}

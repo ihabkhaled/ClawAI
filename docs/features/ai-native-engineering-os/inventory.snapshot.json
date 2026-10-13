@@ -827,6 +827,61 @@
         },
         {
           "method": "GET",
+          "route": "/admin/observability/filter-options",
+          "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/observability/health",
+          "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/observability/models",
+          "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/observability/models/detail",
+          "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/observability/overview",
+          "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/observability/plans",
+          "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/observability/providers",
+          "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/observability/providers/:provider",
+          "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/observability/users",
+          "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/observability/users/export",
+          "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/observability/workflows",
+          "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-observability.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/admin/ops-tokens",
           "source": "apps/claw-auth-service/src/modules/ops-tokens/controllers/admin-ops-token.controller.ts"
         },
@@ -1465,6 +1520,16 @@
         {
           "method": "POST",
           "route": "/chat-messages/:id/context-save",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/context-save.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/chat-messages/:id/context-save/confirm",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/context-save.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/chat-messages/:id/context-save/dismiss",
           "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/context-save.controller.ts"
         },
         {
@@ -8223,9 +8288,64 @@
         "route": "/models"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/observability/consumption/page.tsx",
+        "kind": "page",
+        "route": "/observability/consumption"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(portal)/observability/failures/page.tsx",
+        "kind": "page",
+        "route": "/observability/failures"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(portal)/observability/layout.tsx",
+        "kind": "layout",
+        "route": "/observability"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(portal)/observability/models/detail/page.tsx",
+        "kind": "page",
+        "route": "/observability/models/detail"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(portal)/observability/models/page.tsx",
+        "kind": "page",
+        "route": "/observability/models"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/observability/page.tsx",
         "kind": "page",
         "route": "/observability"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(portal)/observability/plans/page.tsx",
+        "kind": "page",
+        "route": "/observability/plans"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(portal)/observability/providers/[provider]/page.tsx",
+        "kind": "page",
+        "route": "/observability/providers/[provider]"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(portal)/observability/providers/page.tsx",
+        "kind": "page",
+        "route": "/observability/providers"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(portal)/observability/surfaces/page.tsx",
+        "kind": "page",
+        "route": "/observability/surfaces"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(portal)/observability/tracing/page.tsx",
+        "kind": "page",
+        "route": "/observability/tracing"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(portal)/observability/users/page.tsx",
+        "kind": "page",
+        "route": "/observability/users"
       },
       {
         "file": "apps/claw-frontend/src/app/(portal)/plan/page.tsx",
@@ -8780,7 +8900,7 @@
           "file": "rules/56-model-reasoning-never-in-the-answer.md"
         },
         {
-          "bytes": 10451,
+          "bytes": 12891,
           "file": "rules/57-memory-and-context-pack-integrity.md"
         },
         {
@@ -9252,7 +9372,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 6008
+        "value": 6042
       },
       "localeCount": 13,
       "locales": [
@@ -11502,11 +11622,11 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 172
+        "testFiles": 177
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 323
+        "testFiles": 331
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -11526,7 +11646,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 811
+        "testFiles": 836
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -12360,10 +12480,10 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 56,
-    "endpointCount": 855,
+    "endpointCount": 868,
     "envVarCount": 378,
     "eventCount": 190,
-    "frontendRouteCount": 161,
+    "frontendRouteCount": 171,
     "localeCount": 13,
     "nginxRouteCount": 70,
     "permissionCount": 90,
@@ -12372,7 +12492,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2258,
+    "totalTestFiles": 2296,
     "workspaceCount": 27
   }
 }

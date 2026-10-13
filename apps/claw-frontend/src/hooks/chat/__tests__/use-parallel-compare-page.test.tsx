@@ -5,7 +5,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ResearchMode } from '@/enums';
 import { useParallelComparePage } from '@/hooks/chat/use-parallel-compare-page';
+import { signInTestUser, signOutTestUser } from '@/test/fixtures/signed-in-user.fixture';
 import type { ParallelRequest } from '@/types';
+import {
+  resetContextSaveModeMemory,
+  writeContextSaveMode,
+} from '@/utilities/context-save-mode.utility';
 
 const sendParallelMock = vi.fn();
 
@@ -79,6 +84,27 @@ describe('useParallelComparePage — researchMode round-trip', () => {
       judgeEnabled: false,
       judgeModel: null,
     });
+  });
+
+  it('never sends the save mode: Compare does not run the save orchestrator (rule 59 exception)', async () => {
+    signInTestUser();
+    resetContextSaveModeMemory();
+    writeContextSaveMode('AUTO');
+    const { result } = renderHook(() => useParallelComparePage(), { wrapper });
+
+    act(() => {
+      result.current.setPrompt('remember I like tea');
+      result.current.handleToggleModel('OPENAI', 'gpt-4o', true);
+      result.current.handleToggleModel('ANTHROPIC', 'claude-sonnet-4', true);
+    });
+    act(() => {
+      result.current.handleSend();
+    });
+
+    await waitFor(() => expect(sendParallelMock).toHaveBeenCalledTimes(1));
+    expect(Object.keys(sendParallelMock.mock.calls[0]?.[0] ?? {})).not.toContain('contextSaveMode');
+    writeContextSaveMode('ASK');
+    signOutTestUser();
   });
 
   it('defaults research to AUTO and forwards it — Compare used to default to NONE', async () => {

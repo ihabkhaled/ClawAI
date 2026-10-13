@@ -200,6 +200,7 @@ export * from './image-mask-refusal-code.enum';
 export { MaskBrushMode } from './mask-brush-mode.enum';
 export { ImageMaskRefusalCode } from './image-mask-refusal-code.enum';
 export { BranchCut } from './branch-cut.enum';
+export { ContextSaveFieldError } from './context-save-field-error.enum';
 export { ContextSaveStatus } from './context-save-status.enum';
 export { SaveFailureReason } from './save-failure-reason.enum';
 export { VideoGenerationStatus } from './video-generation-status.enum';

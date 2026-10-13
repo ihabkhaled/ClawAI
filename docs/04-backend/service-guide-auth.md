@@ -674,3 +674,8 @@ in-turn tool calls (only a count) and image generation as a named tool; the
 
 Paginated users table, per-user consumption, leaderboards and time series under `/api/v1/admin/usage-explorer/*`
 (full email, audited): see [admin usage explorer endpoints](admin-usage-explorer-endpoints.md).
+
+The split Observability pages read `/api/v1/admin/observability/*` (every user paginated, providers, models, plans, workflows,
+hub overview with previous-period deltas): see the Observability section of
+[admin usage explorer endpoints](admin-usage-explorer-endpoints.md) and
+[ADR-169](../13-adr/adr-169-observability-is-split-into-pages-and-lists-every-user.md).

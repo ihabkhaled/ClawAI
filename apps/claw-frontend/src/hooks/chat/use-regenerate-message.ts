@@ -7,6 +7,7 @@ import { useTranslation } from '@/lib/i18n';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import type { RegenerateMessageRequest } from '@/types';
 import { invalidateThreadMessages, logger, showToast } from '@/utilities';
+import { readContextSaveMode } from '@/utilities/context-save-mode.utility';
 
 export function useRegenerateMessage(threadId: string, onRegenerated?: () => void) {
   const queryClient = useQueryClient();
@@ -26,7 +27,11 @@ export function useRegenerateMessage(threadId: string, onRegenerated?: () => voi
         message: 'Regenerating message',
         details: { threadId, messageId, routingMode: choice?.routingMode ?? 'default' },
       });
-      return chatRepository.regenerateMessage(messageId, choice);
+      // A regenerated answer can carry a detected save like any other (ADR-168).
+      return chatRepository.regenerateMessage(messageId, {
+        contextSaveMode: readContextSaveMode(),
+        ...choice,
+      });
     },
     onSuccess: () => {
       logger.info({
