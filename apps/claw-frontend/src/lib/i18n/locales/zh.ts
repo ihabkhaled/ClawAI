@@ -814,6 +814,7 @@ export const zh: TranslationDictionary = {
       tokens: '输入 {input} 个令牌，输出 {output} 个令牌',
       showExcerpt: '查看 AI 的回答',
       hideExcerpt: '收起',
+      stillWorking: '仍在处理中。慢速模型可能需要几分钟。只有静默 5 分钟后，模型才会被视为卡住。',
       pollingPaused: '实时更新已暂停。请刷新页面再次检查。',
       failureTitle: '本次生成失败',
       failureWhere: '在“{stage}”失败（{role}）',
@@ -864,6 +865,10 @@ export const zh: TranslationDictionary = {
         generationWorkerLost: '运行此次生成的工作进程意外停止。',
         leaseExpired: '工作进程停止响应，任务已转交给其他进程。',
         resumedFromCheckpoint: '生成已从最近保存的步骤恢复。',
+        generationAttemptTimeout: '此次尝试超过 25 分钟，因此已被停止。',
+        modelIdleTimeout: '有模型沉默了 5 分钟，因此被视为卡住。',
+        modelHardCeiling: '有模型在 10 分钟后仍在运行，因此调用已被停止。',
+        modelReasonedNoAnswer: '有模型把全部输出额度用在了思考上，没有写出答案。',
         unknown: '出了点问题（{code}）。',
       },
       hint: {
@@ -892,7 +897,19 @@ export const zh: TranslationDictionary = {
         generationWorkerLost: '请重试以再次运行。',
         leaseExpired: '无需操作，会自动继续。',
         resumedFromCheckpoint: '无需操作，之前的工作已保留。',
+        generationAttemptTimeout: '请重试，或选择更快的模型或更短的主题。',
+        modelIdleTimeout: '请重试或选择其他模型。仍在输出的慢速模型不会因为慢而被中止。',
+        modelHardCeiling: '请选择更快的模型或更短的主题，然后重试。',
+        modelReasonedNoAnswer: '请重试，选择回答更直接的模型，或缩短主题。',
         unknown: '请重试，或更换模型。',
+      },
+      startError: {
+        notPermitted: '你的账户无权生成 Thread。请向管理员申请权限。',
+        notInPlan:
+          '你的套餐不包含此次生成所需的功能（网络调研、评审或评论者）。请移除它或升级套餐。',
+        modelNotAllowedForPlan: '所选的某个模型不在你的套餐内。请选择已包含的模型。',
+        modelUnknown: '所选的某个模型不在模型目录中。请从列表中选择。',
+        spendCapTooLow: '支出上限太低。请至少设为 0.01 美元。',
       },
       error: {
         conflict: '请先取消生成，或稍后再试。',

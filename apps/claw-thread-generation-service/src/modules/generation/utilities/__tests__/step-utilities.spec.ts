@@ -46,9 +46,24 @@ describe('parseStepError', () => {
     ['A model returned invalid structured output', 'OUTPUT_INVALID'],
     ['Research service is unavailable', 'RESEARCH_UNAVAILABLE'],
     ['Generation did not pass consensus and reviews in three rounds', 'REVIEW_NOT_PASSED'],
+    ['Chat model call went silent', 'MODEL_IDLE_TIMEOUT'],
+    ['Chat model call exceeded its time limit', 'MODEL_HARD_CEILING'],
+    ['Chat model stream ended without a result', 'PROVIDER_UNAVAILABLE'],
+    ['Chat model stream was malformed', 'PROVIDER_UNAVAILABLE'],
+    ['Generation attempt exceeded its time limit', 'GENERATION_ATTEMPT_TIMEOUT'],
   ])('maps "%s"', (message, code) => {
     expect(parseStepError(new Error(message))).toEqual({ code, httpStatus: null });
   });
+
+  it.each(['MODEL_IDLE_TIMEOUT', 'MODEL_HARD_CEILING', 'MODEL_REASONED_NO_ANSWER'])(
+    'keeps the status and %s from a coded error frame',
+    (code) => {
+      expect(parseStepError(new Error(`Chat model request failed (504: ${code})`))).toEqual({
+        code,
+        httpStatus: 504,
+      });
+    },
+  );
 
   it('maps cancellation', () => {
     expect(parseStepError(new ThreadGenerationCancelledError()).code).toBe('CANCELLED');

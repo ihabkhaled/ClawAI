@@ -96,6 +96,30 @@ describe('useThreadGenerationForm', () => {
     expect(result.current.startError).toBeNull();
   });
 
+  it('shows a known refusal code as its own sentence instead of the plan block', async () => {
+    vi.mocked(threadPublicationsRepository.startGeneration).mockRejectedValue(
+      new ApiClientError({
+        message: 'not on plan',
+        status: 403,
+        code: 'MODEL_NOT_ALLOWED_FOR_PLAN',
+      }),
+    );
+    const { result } = renderHook(
+      () => useThreadGenerationForm({ fixedSourceThreadId: 't1', onStarted: vi.fn() }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.selectedModels).toHaveLength(5));
+
+    await fillAndSubmit(result);
+
+    await waitFor(() =>
+      expect(result.current.startError).toEqual({
+        key: 'chat.threadProgress.startError.modelNotAllowedForPlan',
+      }),
+    );
+    expect(result.current.isPlanBlocked).toBe(false);
+  });
+
   it('flags a request that cannot be built as a validation error', async () => {
     const { result } = renderHook(
       () => useThreadGenerationForm({ fixedSourceThreadId: 't1', onStarted: vi.fn() }),

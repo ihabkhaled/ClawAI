@@ -4,14 +4,33 @@ import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { z } from 'zod';
 
 import { AppConfig } from '../../app/config/app.config';
+import { abortReasonToError } from '../generation/utilities/abort-reason-error.utility';
 import { checkRoleContextFit } from '../generation/utilities/context-fit.utility';
 import { DeterministicGenerationError } from '../generation/utilities/deterministic-generation.error';
+import {
+  CHAT_GENERATE_PATH,
+  CHAT_GENERATE_STREAM_PATH,
+  GATEWAY_ERROR_CODE_PATTERN,
+  HTTP_NOT_FOUND,
+  MODEL_CALL_CEILING_MESSAGE,
+  MODEL_CALL_IDLE_MESSAGE,
+  MODEL_CALL_IDLE_TIMEOUT_MS,
+  MODEL_CALL_MAX_TOTAL_MS,
+  MODEL_HARD_CEILING_CODE,
+  MODEL_STREAM_TRUNCATED_MESSAGE,
+  NDJSON_CONTENT_TYPE,
+} from './constants/model-call.constants';
 import {
   CONTEXT_WINDOW_ASSUMED_EXCEEDED_MESSAGE,
   CONTEXT_WINDOW_EXCEEDED_MESSAGE,
 } from './constants/model-context.constants';
 import { ChatModelIncompleteError } from './chat-model-incomplete.error';
+import { ModelCallCeilingError } from './model-call-ceiling.error';
 import { ModelContextClient } from './model-context.client';
+import { chatStreamFrameSchema } from './schemas/chat-generate-stream.schema';
+import type { ModelCallGuard } from './types/model-call.types';
+import { createModelCallGuard } from './utilities/model-call-guard.utility';
+import { readNdjsonLines } from './utilities/ndjson-lines.utility';
 
 // Integer micro-USD as settled by the gateway; anything else is not a cost and is dropped.
 const microUsdSchema = z.number().int().nonnegative().safe();
@@ -38,22 +57,43 @@ export type ChatModelRequest = {
   systemPrompt: string;
   userPrompt: string;
   maxOutputTokens: number;
+  /** Aborting it (cancel, lease loss, attempt ceiling) stops the call in flight. */
+  signal?: AbortSignal;
 };
 
 const gatewayErrorSchema = z.object({
-  code: z
-    .string()
-    .regex(/^[A-Z][A-Z0-9_]{2,59}$/u)
-    .optional(),
+  code: z.string().regex(GATEWAY_ERROR_CODE_PATTERN).optional(),
 });
 
 export type ChatModelResponse = z.infer<typeof modelResponseSchema>;
 
+/**
+ * Calls chat-service for one model reply. The call is read as a stream of frames and is
+ * bounded by silence, not by the clock: a model that is still answering or thinking keeps
+ * the call alive, one that goes quiet for MODEL_CALL_IDLE_TIMEOUT_MS is stuck, and a call
+ * never outlives MODEL_CALL_MAX_TOTAL_MS. The job's signal aborts the call in flight.
+ */
 @Injectable()
 export class ChatModelClient {
   constructor(private readonly modelContext: ModelContextClient) {}
 
   async generate(input: ChatModelRequest): Promise<ChatModelResponse> {
+    await this.requireContextFit(input);
+    const guard = createModelCallGuard({
+      idleMs: MODEL_CALL_IDLE_TIMEOUT_MS,
+      maxMs: MODEL_CALL_MAX_TOTAL_MS,
+      cancelSignal: input.signal,
+    });
+    try {
+      return await this.callGateway(input, guard);
+    } catch (error: unknown) {
+      throw this.explainAbort(error, guard, input.signal);
+    } finally {
+      guard.dispose();
+    }
+  }
+
+  private async requireContextFit(input: ChatModelRequest): Promise<void> {
     const promptTokens = estimateTextTokens(`${input.systemPrompt}\n${input.userPrompt}`);
     const window = await this.modelContext.getWindow(input.provider, input.model);
     const contextFit = checkRoleContextFit({
@@ -71,18 +111,58 @@ export class ChatModelClient {
           : CONTEXT_WINDOW_EXCEEDED_MESSAGE,
       );
     }
+  }
 
-    const config = AppConfig.get();
-    const url = `${config.CHAT_SERVICE_URL}/api/v1/internal/chat/generate`;
-    assertSafeRequestUrl(url, declaredHost(config.CHAT_SERVICE_URL));
-    let response: Response;
+  private async callGateway(
+    input: ChatModelRequest,
+    guard: ModelCallGuard,
+  ): Promise<ChatModelResponse> {
+    const response = await this.post(CHAT_GENERATE_STREAM_PATH, input, guard);
+    if (response.status === HTTP_NOT_FOUND) {
+      // A chat-service replica that predates the stream route. One release of fallback so
+      // deploy order does not matter; the buffered call has no activity to watch.
+      await this.discardBody(response);
+      return this.callBuffered(input, guard);
+    }
+    if (!response.ok) throw await this.requestFailed(response);
+    guard.touch();
+    return this.readFrames(response, guard);
+  }
+
+  private async discardBody(response: Response): Promise<void> {
     try {
-      response = await fetch(url, {
+      await response.body?.cancel();
+    } catch {
+      // The body is only being dropped; a connection that is already closed is fine.
+    }
+  }
+
+  private async callBuffered(
+    input: ChatModelRequest,
+    guard: ModelCallGuard,
+  ): Promise<ChatModelResponse> {
+    guard.disableIdle();
+    const response = await this.post(CHAT_GENERATE_PATH, input, guard);
+    if (!response.ok) throw await this.requestFailed(response);
+    return this.acceptReply(await response.json());
+  }
+
+  private async post(
+    path: string,
+    input: ChatModelRequest,
+    guard: ModelCallGuard,
+  ): Promise<Response> {
+    const config = AppConfig.get();
+    const url = `${config.CHAT_SERVICE_URL}${path}`;
+    assertSafeRequestUrl(url, declaredHost(config.CHAT_SERVICE_URL));
+    try {
+      return await fetch(url, {
         method: 'POST',
         redirect: 'error',
         headers: {
           Authorization: `Service ${config.INTER_SERVICE_AUTH_TOKEN}`,
           'Content-Type': 'application/json',
+          Accept: NDJSON_CONTENT_TYPE,
           'x-request-id': input.requestId,
         },
         body: JSON.stringify({
@@ -97,22 +177,59 @@ export class ChatModelClient {
           maxTokens: input.maxOutputTokens,
           workflow: 'threads_generation',
         }),
-        signal: AbortSignal.timeout(180_000),
+        signal: guard.signal,
       });
     } catch {
       throw new ServiceUnavailableException('Chat model gateway is unavailable');
     }
-    if (!response.ok) {
-      throw new ServiceUnavailableException(
-        `Chat model request failed (${String(response.status)}${await describeGatewayError(response)})`,
-      );
+  }
+
+  private async readFrames(response: Response, guard: ModelCallGuard): Promise<ChatModelResponse> {
+    if (!response.body) throw new ServiceUnavailableException(MODEL_STREAM_TRUNCATED_MESSAGE);
+    const lines = readNdjsonLines(response.body, { onBytes: guard.touch, signal: guard.signal });
+    for await (const line of lines) {
+      const frame = chatStreamFrameSchema.safeParse(line);
+      // An unknown frame type is ignored: the contract may grow, and its bytes already
+      // counted as activity.
+      if (!frame.success || frame.data.type === 'activity') continue;
+      if (frame.data.type === 'result') return this.acceptReply(frame.data.data);
+      throw this.upstreamFailure(frame.data.status, frame.data.code);
     }
-    const body: unknown = await response.json();
+    throw new ServiceUnavailableException(MODEL_STREAM_TRUNCATED_MESSAGE);
+  }
+
+  private acceptReply(body: unknown): ChatModelResponse {
     const parsed = modelResponseSchema.safeParse(body);
     if (!parsed.success || parsed.data.clamped) {
       throw new ChatModelIncompleteError(reportedCost(parsed.success ? parsed.data : body));
     }
     return parsed.data;
+  }
+
+  private async requestFailed(response: Response): Promise<Error> {
+    const parsed = gatewayErrorSchema.safeParse(await response.json().catch(() => null));
+    return this.upstreamFailure(response.status, parsed.success ? parsed.data.code : undefined);
+  }
+
+  private upstreamFailure(status: number, code: string | undefined): ServiceUnavailableException {
+    const message = `Chat model request failed (${String(status)}${code ? `: ${code}` : ''})`;
+    return code === MODEL_HARD_CEILING_CODE
+      ? new ModelCallCeilingError(message)
+      : new ServiceUnavailableException(message);
+  }
+
+  /** Whatever the transport reported after an abort is a symptom; the cause is the answer. */
+  private explainAbort(error: unknown, guard: ModelCallGuard, signal?: AbortSignal): unknown {
+    switch (guard.cause()) {
+      case 'cancelled':
+        return abortReasonToError(signal?.reason);
+      case 'idle':
+        return new ServiceUnavailableException(MODEL_CALL_IDLE_MESSAGE);
+      case 'ceiling':
+        return new ModelCallCeilingError(MODEL_CALL_CEILING_MESSAGE);
+      case null:
+        return error;
+    }
   }
 }
 
@@ -120,11 +237,4 @@ export class ChatModelClient {
 function reportedCost(body: unknown): number {
   const parsed = reportedCostSchema.safeParse(body);
   return parsed.success ? (parsed.data.costMicroUsd ?? 0) : 0;
-}
-
-// Only a machine code (e.g. CLOUD_PROVIDER_EMPTY_RESPONSE) is kept: upstream free text
-// could echo provider output, so it is dropped before it reaches an exception or a log.
-async function describeGatewayError(response: Response): Promise<string> {
-  const parsed = gatewayErrorSchema.safeParse(await response.json().catch(() => null));
-  return parsed.success && parsed.data.code ? `: ${parsed.data.code}` : '';
 }

@@ -38,7 +38,7 @@
     },
     "claw-chat-service": {
       "runner": "vitest",
-      "testFiles": 331
+      "testFiles": 338
     },
     "claw-client-logs-service": {
       "runner": "vitest",
@@ -102,7 +102,7 @@
     },
     "claw-thread-generation-service": {
       "runner": "vitest",
-      "testFiles": 35
+      "testFiles": 40
     },
     "claw-threads-service": {
       "runner": "vitest",
@@ -114,5 +114,5 @@
     }
   },
   "generated": true,
-  "total": 2394
+  "total": 2406
 }

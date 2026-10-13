@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { assertSafeRequestUrl } from '@claw/shared-utilities';
+import { StreamCeilingError, StreamIdleTimeoutError } from '../errors';
 import {
   type HttpBinaryReadOptions,
   type HttpBinaryResponse,
@@ -9,6 +10,7 @@ import {
   type HttpResponse,
   type HttpStreamOptions,
   type HttpStreamResult,
+  type StreamGuard,
 } from '../types';
 
 const logger = new Logger('HttpClient');
@@ -215,10 +217,23 @@ export async function httpStreamBinary(options: HttpBinaryStreamOptions): Promis
 // Streaming variant of httpRequest. Returns decoded UTF-8 text chunks as they
 // arrive so the caller can normalize provider SSE/NDJSON in real time.
 // Uses an IDLE timeout (reset on every chunk) rather than a total timeout, so
-// long generations are not aborted while tokens are still flowing. The caller
-// may pass its own AbortSignal (composed) to cancel mid-stream.
+// long generations are not aborted while tokens are still flowing. An optional
+// `maxTotalMs` adds an absolute ceiling that no chunk can reset. The two
+// timers abort with typed reasons (StreamIdleTimeoutError / StreamCeilingError)
+// so a catch block can tell "the provider went silent" from "the call ran too
+// long" from "the caller cancelled". The caller may pass its own AbortSignal
+// (composed) to cancel mid-stream.
 export async function httpStream(options: HttpStreamOptions): Promise<HttpStreamResult> {
-  const { url, method, headers, body, timeoutMs = 120_000, signal, allowedHosts } = options;
+  const {
+    url,
+    method,
+    headers,
+    body,
+    timeoutMs = 120_000,
+    maxTotalMs,
+    signal,
+    allowedHosts,
+  } = options;
 
   // Before any timer is armed or any listener attached, so a refused URL costs
   // nothing and leaves nothing to clean up.
@@ -227,32 +242,7 @@ export async function httpStream(options: HttpStreamOptions): Promise<HttpStream
   logger.debug(`httpStream: ${method} ${url} (idleTimeout=${String(timeoutMs)}ms)`);
 
   const controller = new AbortController();
-  const onExternalAbort = (): void => controller.abort();
-  if (signal !== undefined) {
-    if (signal.aborted) {
-      controller.abort();
-    } else {
-      signal.addEventListener('abort', onExternalAbort, { once: true });
-    }
-  }
-
-  let idleTimer: ReturnType<typeof setTimeout> | undefined;
-  const armIdleTimer = (): void => {
-    if (idleTimer !== undefined) {
-      clearTimeout(idleTimer);
-    }
-    idleTimer = setTimeout(() => controller.abort(), timeoutMs);
-  };
-  armIdleTimer();
-
-  const cleanup = (): void => {
-    if (idleTimer !== undefined) {
-      clearTimeout(idleTimer);
-    }
-    if (signal !== undefined) {
-      signal.removeEventListener('abort', onExternalAbort);
-    }
-  };
+  const guard = createStreamGuard(controller, signal, timeoutMs, maxTotalMs);
 
   let response: Response;
   try {
@@ -268,22 +258,22 @@ export async function httpStream(options: HttpStreamOptions): Promise<HttpStream
       redirect: 'error',
     });
   } catch (error: unknown) {
-    cleanup();
+    guard.cleanup();
     const message = error instanceof Error ? error.message : 'Unknown HTTP error';
     logger.error(`httpStream: ${method} ${url} connect failed — ${message}`);
-    throw error;
+    throw abortReasonOr(error, controller.signal);
   }
 
   if (!response.ok) {
     const errorBody = await response.text().catch(() => '');
-    cleanup();
+    guard.cleanup();
     logger.error(`httpStream: ${method} ${url} returned ${String(response.status)}`);
     return { status: response.status, ok: false, errorBody, chunks: emptyChunks() };
   }
 
   const reader = response.body?.getReader();
   if (reader === undefined) {
-    cleanup();
+    guard.cleanup();
     return {
       status: response.status,
       ok: false,
@@ -292,7 +282,72 @@ export async function httpStream(options: HttpStreamOptions): Promise<HttpStream
     };
   }
 
-  return { status: response.status, ok: true, chunks: readChunks(reader, armIdleTimer, cleanup) };
+  return {
+    status: response.status,
+    ok: true,
+    chunks: readChunks(reader, controller.signal, guard),
+  };
+}
+
+/**
+ * The idle clock, the optional absolute ceiling and the caller's signal, all
+ * funnelled into one AbortController. The clocks abort WITH a typed reason; the
+ * caller's own abort passes its reason through untouched.
+ */
+function createStreamGuard(
+  controller: AbortController,
+  signal: AbortSignal | undefined,
+  idleMs: number,
+  maxTotalMs: number | undefined,
+): StreamGuard {
+  const onExternalAbort = (): void => controller.abort(signal?.reason);
+  if (signal !== undefined) {
+    if (signal.aborted) {
+      controller.abort(signal.reason);
+    } else {
+      signal.addEventListener('abort', onExternalAbort, { once: true });
+    }
+  }
+
+  let idleTimer: ReturnType<typeof setTimeout> | undefined;
+  const armIdleTimer = (): void => {
+    if (idleTimer !== undefined) {
+      clearTimeout(idleTimer);
+    }
+    idleTimer = setTimeout(() => controller.abort(new StreamIdleTimeoutError(idleMs)), idleMs);
+  };
+  armIdleTimer();
+
+  const ceilingTimer =
+    maxTotalMs === undefined
+      ? undefined
+      : setTimeout(() => controller.abort(new StreamCeilingError(maxTotalMs)), maxTotalMs);
+
+  const cleanup = (): void => {
+    if (idleTimer !== undefined) {
+      clearTimeout(idleTimer);
+    }
+    if (ceilingTimer !== undefined) {
+      clearTimeout(ceilingTimer);
+    }
+    if (signal !== undefined) {
+      signal.removeEventListener('abort', onExternalAbort);
+    }
+  };
+  return { armIdleTimer, cleanup };
+}
+
+/**
+ * fetch and the body reader reject with whatever the runtime decides the abort
+ * looked like. When OUR clock fired, the typed reason is the truth; anything
+ * else (a caller abort, a network error) is returned untouched.
+ */
+function abortReasonOr(error: unknown, signal: AbortSignal): unknown {
+  const reason: unknown = signal.reason;
+  return signal.aborted &&
+    (reason instanceof StreamIdleTimeoutError || reason instanceof StreamCeilingError)
+    ? reason
+    : error;
 }
 
 async function* emptyChunks(): AsyncGenerator<string> {
@@ -301,22 +356,25 @@ async function* emptyChunks(): AsyncGenerator<string> {
 
 async function* readChunks(
   reader: ReadableStreamDefaultReader<Uint8Array>,
-  armIdleTimer: () => void,
-  cleanup: () => void,
+  signal: AbortSignal,
+  guard: StreamGuard,
 ): AsyncGenerator<string> {
   const decoder = new TextDecoder();
   try {
     for (;;) {
-      const { done, value } = await reader.read();
-      if (done) {
+      let chunk: Awaited<ReturnType<typeof reader.read>>;
+      try {
+        chunk = await reader.read();
+      } catch (error: unknown) {
+        throw abortReasonOr(error, signal);
+      }
+      if (chunk.done) {
         break;
       }
-      armIdleTimer();
-      if (value !== undefined) {
-        const text = decoder.decode(value, { stream: true });
-        if (text.length > 0) {
-          yield text;
-        }
+      guard.armIdleTimer();
+      const text = decoder.decode(chunk.value, { stream: true });
+      if (text.length > 0) {
+        yield text;
       }
     }
     const tail = decoder.decode();
@@ -324,7 +382,7 @@ async function* readChunks(
       yield tail;
     }
   } finally {
-    cleanup();
+    guard.cleanup();
     reader.releaseLock();
   }
 }

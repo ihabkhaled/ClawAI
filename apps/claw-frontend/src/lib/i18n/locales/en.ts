@@ -848,6 +848,8 @@ export const en: TranslationDictionary = {
       tokens: '{input} tokens in, {output} tokens out',
       showExcerpt: 'Show what the AI said',
       hideExcerpt: 'Hide',
+      stillWorking:
+        'Still working. Slow models can take several minutes. A model is only treated as stuck after 5 minutes of silence.',
       pollingPaused: 'Live updates paused. Reload the page to check again.',
       failureTitle: 'This generation failed',
       failureWhere: 'Failed at {stage} ({role})',
@@ -901,6 +903,10 @@ export const en: TranslationDictionary = {
         generationWorkerLost: 'The worker running this generation stopped unexpectedly.',
         leaseExpired: 'The worker stopped responding, so the job moved to another worker.',
         resumedFromCheckpoint: 'The generation resumed from its last saved step.',
+        generationAttemptTimeout: 'This attempt ran longer than 25 minutes, so it was stopped.',
+        modelIdleTimeout: 'A model went silent for 5 minutes, so it was treated as stuck.',
+        modelHardCeiling: 'A model was still working after 10 minutes, so the call was stopped.',
+        modelReasonedNoAnswer: 'A model used its whole output budget thinking and wrote no answer.',
         unknown: 'Something went wrong ({code}).',
       },
       hint: {
@@ -935,7 +941,22 @@ export const en: TranslationDictionary = {
         generationWorkerLost: 'Retry to run it again.',
         leaseExpired: 'Nothing to do. It continues on its own.',
         resumedFromCheckpoint: 'Nothing to do. Earlier work was kept.',
+        generationAttemptTimeout: 'Retry, or pick faster models or a shorter topic.',
+        modelIdleTimeout:
+          'Retry, or pick a different model. A slow model that is still writing is never stopped for being slow.',
+        modelHardCeiling: 'Pick a faster model or a shorter topic, then retry.',
+        modelReasonedNoAnswer:
+          'Retry, pick a model that answers more directly, or shorten the topic.',
         unknown: 'Retry, or change the models and try again.',
+      },
+      startError: {
+        notPermitted: 'Your account is not allowed to generate Threads. Ask an admin for access.',
+        notInPlan:
+          'Your plan does not include a feature this generation needs (web research, Judge or Critic). Remove it or upgrade your plan.',
+        modelNotAllowedForPlan:
+          'A selected model is not included in your plan. Pick an included model.',
+        modelUnknown: 'A selected model is not in the model catalog. Pick one from the list.',
+        spendCapTooLow: 'The spend cap is too low. Set at least 0.01 USD.',
       },
       error: {
         conflict: 'Cancel the generation first, or try again in a moment.',

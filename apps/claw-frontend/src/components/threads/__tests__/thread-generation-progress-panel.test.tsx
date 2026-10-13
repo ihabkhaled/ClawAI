@@ -110,6 +110,24 @@ describe('ThreadGenerationProgressPanel', () => {
     );
   });
 
+  it('says the job is still working while it runs, and not once it has failed', () => {
+    renderPanel(
+      makeController({
+        progress: makeProgress({ status: 'RUNNING', failure: null }),
+        isRunning: true,
+        canRetry: false,
+      }),
+    );
+    expect(screen.getByTestId('thread-progress-still-working')).toHaveTextContent(
+      'chat.threadProgress.stillWorking',
+    );
+  });
+
+  it('does not say still working for a finished job', () => {
+    renderPanel(makeController());
+    expect(screen.queryByTestId('thread-progress-still-working')).not.toBeInTheDocument();
+  });
+
   it('hides Delete for a published Thread and shows an unknown stage as-is', () => {
     renderPanel(
       makeController({

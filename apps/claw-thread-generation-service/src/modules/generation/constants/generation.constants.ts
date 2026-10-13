@@ -12,6 +12,14 @@ export const GENERATION_LEASE_MS = 90_000;
 export const GENERATION_HEARTBEAT_MS = 20_000;
 export const GENERATION_DISPATCH_LEASE_MS = 30_000;
 export const GENERATION_RECOVERY_INTERVAL_MS = 15_000;
+/** How often a running job looks for a cancel request, so an in-flight model call stops within ~2 s. */
+export const CANCEL_POLL_INTERVAL_MS = 2_000;
+/**
+ * Time budget of one job attempt (25 min). The broker drops a consumer that holds a message
+ * longer than 30 min and redelivers it while the first worker still runs, which would pay
+ * for the same calls twice, so an attempt must end well inside that.
+ */
+export const GENERATION_ATTEMPT_MAX_MS = 25 * 60_000;
 export const generationRetryDelayMs = (attempt: number): number =>
   Math.min(15_000 * 2 ** Math.max(0, attempt - 1), 120_000);
 export const MIN_JUDGE_SCORE = 80;

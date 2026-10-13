@@ -869,6 +869,8 @@ export const de: TranslationDictionary = {
       tokens: '{input} Token ein, {output} Token aus',
       showExcerpt: 'Antwort der KI anzeigen',
       hideExcerpt: 'Ausblenden',
+      stillWorking:
+        'Arbeitet noch. Langsame Modelle können mehrere Minuten brauchen. Ein Modell gilt erst nach 5 Minuten Stille als hängend.',
       pollingPaused: 'Live-Updates pausiert. Laden Sie die Seite neu, um erneut zu prüfen.',
       failureTitle: 'Diese Erstellung ist fehlgeschlagen',
       failureWhere: 'Fehlgeschlagen bei {stage} ({role})',
@@ -927,6 +929,14 @@ export const de: TranslationDictionary = {
           'Der Worker antwortete nicht mehr, daher übernahm ein anderer Worker den Auftrag.',
         resumedFromCheckpoint:
           'Die Erstellung wurde ab dem letzten gespeicherten Schritt fortgesetzt.',
+        generationAttemptTimeout:
+          'Dieser Versuch dauerte länger als 25 Minuten und wurde gestoppt.',
+        modelIdleTimeout:
+          'Ein Modell war 5 Minuten lang still und wurde deshalb als hängend behandelt.',
+        modelHardCeiling:
+          'Ein Modell arbeitete nach 10 Minuten noch, daher wurde der Aufruf gestoppt.',
+        modelReasonedNoAnswer:
+          'Ein Modell hat sein gesamtes Ausgabebudget zum Nachdenken verbraucht und keine Antwort geschrieben.',
         unknown: 'Etwas ist schiefgelaufen ({code}).',
       },
       hint: {
@@ -964,7 +974,25 @@ export const de: TranslationDictionary = {
         generationWorkerLost: 'Versuche es erneut, um sie nochmals auszuführen.',
         leaseExpired: 'Nichts zu tun. Es läuft automatisch weiter.',
         resumedFromCheckpoint: 'Nichts zu tun. Frühere Arbeit blieb erhalten.',
+        generationAttemptTimeout:
+          'Versuche es erneut oder wähle schnellere Modelle oder ein kürzeres Thema.',
+        modelIdleTimeout:
+          'Versuche es erneut oder wähle ein anderes Modell. Ein langsames Modell, das noch schreibt, wird nie wegen Langsamkeit gestoppt.',
+        modelHardCeiling:
+          'Wähle ein schnelleres Modell oder ein kürzeres Thema und versuche es erneut.',
+        modelReasonedNoAnswer:
+          'Versuche es erneut, wähle ein Modell, das direkter antwortet, oder kürze das Thema.',
         unknown: 'Versuchen Sie es erneut oder ändern Sie die Modelle.',
+      },
+      startError: {
+        notPermitted: 'Dein Konto darf keine Threads erstellen. Bitte einen Admin um Zugriff.',
+        notInPlan:
+          'Dein Tarif enthält eine Funktion nicht, die diese Erstellung braucht (Web-Recherche, Richter oder Kritiker). Entferne sie oder wechsle den Tarif.',
+        modelNotAllowedForPlan:
+          'Ein gewähltes Modell ist in deinem Tarif nicht enthalten. Wähle ein enthaltenes Modell.',
+        modelUnknown:
+          'Ein gewähltes Modell steht nicht im Modellkatalog. Wähle eines aus der Liste.',
+        spendCapTooLow: 'Das Ausgabenlimit ist zu niedrig. Setze mindestens 0,01 USD.',
       },
       error: {
         conflict: 'Brich zuerst die Erstellung ab oder versuche es gleich noch einmal.',

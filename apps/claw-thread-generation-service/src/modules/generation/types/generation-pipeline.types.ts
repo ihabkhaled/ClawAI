@@ -72,6 +72,8 @@ export type GenerationPipelineInput = {
   judge: ModelRole;
   critic: ModelRole;
   isCancellationRequested?: () => Promise<boolean>;
+  /** Aborts the model call in flight on cancel, lease loss or the attempt time limit. */
+  signal?: AbortSignal;
 };
 
 export type GenerationPipelineResult = {

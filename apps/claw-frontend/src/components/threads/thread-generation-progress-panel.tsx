@@ -77,6 +77,15 @@ export function ThreadGenerationProgressPanel({
               })}
             </span>
           </p>
+          {panel.isRunning && progress.failure === null ? (
+            <p
+              role="status"
+              className="text-muted-foreground text-sm"
+              data-testid="thread-progress-still-working"
+            >
+              {t('chat.threadProgress.stillWorking')}
+            </p>
+          ) : null}
           {progress.failure === null ? null : (
             <ThreadGenerationFailureCard
               failure={progress.failure}

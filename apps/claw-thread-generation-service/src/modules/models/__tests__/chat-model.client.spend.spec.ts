@@ -14,16 +14,21 @@ const request = {
   maxOutputTokens: 1_024,
 };
 
+// chat-service answers the stream route with one terminal result frame.
 const reply = (body: Record<string, unknown>) =>
   new Response(
-    JSON.stringify({
-      content: '{"a":1}',
-      provider: 'GEMINI',
-      model: 'gemini-2.5-flash',
-      durationMs: 10,
-      clamped: false,
-      ...body,
-    }),
+    `${JSON.stringify({
+      type: 'result',
+      data: {
+        content: '{"a":1}',
+        provider: 'GEMINI',
+        model: 'gemini-2.5-flash',
+        durationMs: 10,
+        clamped: false,
+        ...body,
+      },
+    })}
+`,
     { status: 200 },
   );
 

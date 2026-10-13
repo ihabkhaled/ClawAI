@@ -24,7 +24,13 @@ import {
   withObservedSpeed,
 } from '@claw/shared-utilities';
 import { AppConfig } from '../../../app/config/app.config';
-import { buildInterServiceAuthHeader, httpRequest, recordGet } from '../../../common/utilities';
+import type { HttpResponse } from '../../../common/types';
+import {
+  buildInterServiceAuthHeader,
+  httpRequest,
+  httpStream,
+  recordGet,
+} from '../../../common/utilities';
 import {
   BusinessException,
   PickedModelFailedException,
@@ -70,10 +76,13 @@ import {
   type ThreadSettings,
 } from '../types/execution.types';
 import type {
+  CandidateChainState,
   CandidateOutcome,
   ExecutionMetadata,
+  PreparedExecution,
   RunCandidateArgs,
 } from '../types/execution-outcome.types';
+import { newCandidateChainState } from '../utilities/candidate-chain.utility';
 import type { AttemptRecord } from '../types/fallback-executor.types';
 import type { NormalizedToolCall, TranslatedToolCatalog } from '../types/provider-tool.types';
 import {
@@ -103,7 +112,26 @@ import {
   OPENAI_TOOL_CALLS_FINISH_REASON,
 } from '../constants/provider-tool.constants';
 import type { JudgeRefereeConfig, JudgeRefereeResult } from '../types/judge-referee.types';
-import type { InternalGenerateResponse } from '../types/internal-generate.types';
+import type {
+  InternalGenerateArgs,
+  InternalGenerateResponse,
+  InternalGenerateStreamOptions,
+  PreparedInternalGenerate,
+} from '../types/internal-generate.types';
+import type { FoldedProviderStream } from '../types/internal-generate-stream.types';
+import {
+  INTERNAL_GENERATE_BUFFERED_MAX_MS,
+  INTERNAL_GENERATE_IDLE_TIMEOUT_MS,
+  INTERNAL_GENERATE_MAX_TOTAL_MS,
+} from '../constants/internal-generate.constants';
+import { classifyGenerateFailure } from '../utilities/internal-generate-failure.utility';
+import {
+  assertAnswered,
+  assertOllamaReplyAnswered,
+  foldProviderStream,
+  parseJsonObject,
+  resolveFoldedAnswer,
+} from '../utilities/internal-generate-stream.utility';
 import { type AssembledContext } from '../types/context.types';
 import { ContextAssemblyManager } from './context-assembly.manager';
 import { AttachmentDeliveryManager } from './attachment-delivery.manager';
@@ -244,7 +272,6 @@ import {
   refusalSparesCheaperModels,
   skipsMeteredAfterRefusal,
 } from '../utilities/credit-fallback.utility';
-import type { CreditRefusalRecord } from '../types/credit-fallback.types';
 import {
   PROVIDER_CREDIT_MIN_OUTPUT_TOKENS,
   PROVIDER_REQUEST_FAILED_MESSAGE,
@@ -406,6 +433,64 @@ export class ChatExecutionManager implements OnModuleInit {
     threadSettings?: ThreadSettings,
     crawlRetrieval?: CrawlRetrievalContext,
   ): Promise<LlmResponse> {
+    const prepared = await this.prepareExecution(payload, context, threadSettings, crawlRetrieval);
+    const { candidates } = prepared;
+    const chain = newCandidateChainState();
+
+    for (let i = 0; i < candidates.length; i++) {
+      const candidate = candidates.at(i);
+      if (!candidate || this.skipChainCandidate(candidate, i, payload, chain)) {
+        continue;
+      }
+      this.logger.debug(
+        `execute: trying candidate ${String(i + 1)}/${String(candidates.length)} - ${candidate.provider}/${candidate.model}`,
+      );
+      const attemptStartedAt = new Date().toISOString();
+      const attemptStartMs = Date.now();
+      const outcome = await this.runCandidate({
+        candidate,
+        candidateIndex: i,
+        candidates,
+        payload,
+        context,
+        executionContext: prepared.executionContext,
+        executionOptions: prepared.executionOptions,
+        threadSettings,
+        startTime: prepared.startTime,
+        userPrompt: prepared.userPrompt,
+        reRouteAttempt: chain.reRouteAttempt,
+        reRouteReasons: chain.reRouteReasons,
+      });
+      chain.attempts.push(
+        this.buildAttemptRecord(candidate, i, attemptStartedAt, attemptStartMs, outcome),
+      );
+      if (outcome.kind === 'success') {
+        return this.succeedChain(outcome.response, candidate, i, payload, prepared, chain);
+      }
+      this.absorbChainFailure(outcome, candidate, i, payload, chain);
+    }
+
+    // A chain that ended on a credit refusal shows that refusal (the upgrade
+    // notice), not a list of models to retry: none of them was the problem.
+    return isPickedModelTurn(payload) && chain.creditRefusal === null
+      ? this.failPickedModelExecution(
+          chain.lastError,
+          chain.attempts,
+          payload,
+          chain.failedProviders,
+        )
+      : this.failExecution(chain.creditRefusal ?? chain.lastError, chain.attempts);
+  }
+
+  // Everything `execute` settles before the first provider is dialled: the
+  // candidate chain, the options, the context the models will see, and the
+  // optional search-first enrichment.
+  private async prepareExecution(
+    payload: MessageRoutedData,
+    context: AssembledContext,
+    threadSettings: ThreadSettings | undefined,
+    crawlRetrieval: CrawlRetrievalContext | undefined,
+  ): Promise<PreparedExecution> {
     this.logger.log(
       `execute: starting for message ${payload.messageId} with provider=${payload.selectedProvider} model=${payload.selectedModel}`,
     );
@@ -455,126 +540,104 @@ export class ChatExecutionManager implements OnModuleInit {
     this.logger.debug(
       `execute: options fastPath=${String(executionOptions.fastPathEnabled)} maxOutputTokens=${String(executionOptions.maxOutputTokens)}`,
     );
+    return { startTime, candidates, userPrompt, executionOptions, executionContext, searchOutcome };
+  }
 
-    let lastError: unknown = null;
-    let reRouteAttempt = 0;
-    let reRouteReasons: string[] = [];
-    // Phase 5 — collect per-attempt observability so the FE developer
-    // drawer can render "Attempt 1: OpenAI/gpt-4o failed (timeout, 8.1s)
-    // → Attempt 2: Anthropic/claude-sonnet-4 succeeded (2.4s, q=0.92)".
-    const attempts: AttemptRecord[] = [];
-    // A picked model's substitutes: how many were tried, and which providers
-    // already failed as a WHOLE (down, out of credit, rate limited), so a second
-    // model of the same provider is not dialled just to fail the same way.
-    const failedProviders = new Set<string>();
-    let substituteAttempts = 0;
-    // AUTO: a credit refusal (free requests used up, balance empty) is about
-    // THAT credit model only. Included and local models still work, so the chain
-    // moves on; the first refusal is kept to explain a chain that ends empty.
-    const creditRefusedProviders = new Set<string>();
-    let creditRefusal: unknown = null;
-    // The credit model the user wanted, once one is refused, so an included model
-    // that answers instead can say so (metadata.creditFallback).
-    let creditRefusalRecord: CreditRefusalRecord | null = null;
-    // True once a refusal says the credit itself is gone (not just this prompt's price).
-    let creditGone = false;
-
-    for (let i = 0; i < candidates.length; i++) {
-      const candidate = candidates.at(i);
-      if (!candidate) {
-        continue;
-      }
-      if (creditRefusedProviders.has(candidate.provider.toUpperCase())) {
-        this.logger.debug(
-          `execute: skipping ${candidate.provider}/${candidate.model} (credit already refused for this provider)`,
-        );
-        continue;
-      }
-      if (skipsMeteredAfterRefusal(creditGone, candidate)) {
-        this.logger.debug(
-          `execute: skipping ${candidate.provider}/${candidate.model} (credit already refused, only included models can answer)`,
-        );
-        continue;
-      }
-      if (isPickedModelTurn(payload) && i > 0) {
-        const skip = pickedCandidateSkipReason(candidate, failedProviders, substituteAttempts);
-        if (skip !== null) {
-          this.logger.debug(
-            `execute: skipping substitute ${candidate.provider}/${candidate.model} (${skip})`,
-          );
-          continue;
-        }
-        substituteAttempts++;
-      }
-      this.logger.debug(
-        `execute: trying candidate ${String(i + 1)}/${String(candidates.length)} - ${candidate.provider}/${candidate.model}`,
-      );
-      const attemptStartedAt = new Date().toISOString();
-      const attemptStartMs = Date.now();
-      const outcome = await this.runCandidate({
-        candidate,
-        candidateIndex: i,
-        candidates,
-        payload,
-        context,
-        executionContext,
-        executionOptions,
-        threadSettings,
-        startTime,
-        userPrompt,
-        reRouteAttempt,
-        reRouteReasons,
-      });
-      attempts.push(
-        this.buildAttemptRecord(candidate, i, attemptStartedAt, attemptStartMs, outcome),
-      );
-      if (outcome.kind === 'success') {
-        const creditAnswer = creditFallbackPart(creditRefusalRecord, candidate);
-        return this.stampWorkflowMetadata(
-          {
-            ...outcome.response,
-            attempts,
-            // The credit notice already says why this model answered; a second
-            // "X failed" notice would only repeat it.
-            ...(creditAnswer.creditFallback === undefined
-              ? pickedModelFallbackPart(payload, candidate, i)
-              : creditAnswer),
-          },
-          payload,
-          searchOutcome,
-        );
-      }
-      if (outcome.kind === 'reRoute') {
-        reRouteReasons = [...reRouteReasons, ...outcome.reasons];
-        reRouteAttempt++;
-        continue;
-      }
-      if (this.isPaygRefusal(outcome.error)) {
-        creditRefusal ??= outcome.error;
-        creditRefusalRecord = noteCreditRefusal(creditRefusalRecord, candidate, outcome.error);
-        creditGone ||= !refusalSparesCheaperModels(creditFallbackReason(outcome.error));
-        // A refusal costs nothing, so it must not use up the substitute allowance.
-        if (isPickedModelTurn(payload) && i > 0) {
-          substituteAttempts--;
-        }
-        creditRefusedProviders.add(candidate.provider.toUpperCase());
-        lastError = outcome.error;
-        continue;
-      }
-      if (this.endsCandidateChain(outcome.error, payload, i)) {
-        throw outcome.error;
-      }
-      if (isPickedModelTurn(payload) && isProviderWideFailure(outcome.error)) {
-        failedProviders.add(candidate.provider.toUpperCase());
-      }
-      lastError = outcome.error;
+  // True when this candidate must not be dialled. A candidate that goes ahead on
+  // a picked-model turn also uses up one substitute.
+  private skipChainCandidate(
+    candidate: { provider: string; model: string },
+    index: number,
+    payload: MessageRoutedData,
+    chain: CandidateChainState,
+  ): boolean {
+    const label = `${candidate.provider}/${candidate.model}`;
+    if (chain.creditRefusedProviders.has(candidate.provider.toUpperCase())) {
+      this.logger.debug(`execute: skipping ${label} (credit already refused for this provider)`);
+      return true;
     }
+    if (skipsMeteredAfterRefusal(chain.creditGone, candidate)) {
+      this.logger.debug(
+        `execute: skipping ${label} (credit already refused, only included models can answer)`,
+      );
+      return true;
+    }
+    if (isPickedModelTurn(payload) && index > 0) {
+      const skip = pickedCandidateSkipReason(
+        candidate,
+        chain.failedProviders,
+        chain.substituteAttempts,
+      );
+      if (skip !== null) {
+        this.logger.debug(`execute: skipping substitute ${label} (${skip})`);
+        return true;
+      }
+      chain.substituteAttempts++;
+    }
+    return false;
+  }
 
-    // A chain that ended on a credit refusal shows that refusal (the upgrade
-    // notice), not a list of models to retry: none of them was the problem.
-    return isPickedModelTurn(payload) && creditRefusal === null
-      ? this.failPickedModelExecution(lastError, attempts, payload, failedProviders)
-      : this.failExecution(creditRefusal ?? lastError, attempts);
+  // The first answer that comes back ends the chain, stamped with how it got there.
+  private succeedChain(
+    response: LlmResponse,
+    candidate: { provider: string; model: string },
+    index: number,
+    payload: MessageRoutedData,
+    prepared: PreparedExecution,
+    chain: CandidateChainState,
+  ): LlmResponse {
+    const creditAnswer = creditFallbackPart(chain.creditRefusalRecord, candidate);
+    return this.stampWorkflowMetadata(
+      {
+        ...response,
+        attempts: chain.attempts,
+        // The credit notice already says why this model answered; a second
+        // "X failed" notice would only repeat it.
+        ...(creditAnswer.creditFallback === undefined
+          ? pickedModelFallbackPart(payload, candidate, index)
+          : creditAnswer),
+      },
+      payload,
+      prepared.searchOutcome,
+    );
+  }
+
+  // Records a candidate that did not answer, or throws when its failure ends the chain.
+  private absorbChainFailure(
+    outcome: Exclude<CandidateOutcome, { kind: 'success' }>,
+    candidate: { provider: string; model: string },
+    index: number,
+    payload: MessageRoutedData,
+    chain: CandidateChainState,
+  ): void {
+    if (outcome.kind === 'reRoute') {
+      chain.reRouteReasons = [...chain.reRouteReasons, ...outcome.reasons];
+      chain.reRouteAttempt++;
+      return;
+    }
+    if (this.isPaygRefusal(outcome.error)) {
+      chain.creditRefusal ??= outcome.error;
+      chain.creditRefusalRecord = noteCreditRefusal(
+        chain.creditRefusalRecord,
+        candidate,
+        outcome.error,
+      );
+      chain.creditGone ||= !refusalSparesCheaperModels(creditFallbackReason(outcome.error));
+      // A refusal costs nothing, so it must not use up the substitute allowance.
+      if (isPickedModelTurn(payload) && index > 0) {
+        chain.substituteAttempts--;
+      }
+      chain.creditRefusedProviders.add(candidate.provider.toUpperCase());
+      chain.lastError = outcome.error;
+      return;
+    }
+    if (this.endsCandidateChain(outcome.error, payload, index)) {
+      throw outcome.error;
+    }
+    if (isPickedModelTurn(payload) && isProviderWideFailure(outcome.error)) {
+      chain.failedProviders.add(candidate.provider.toUpperCase());
+    }
+    chain.lastError = outcome.error;
   }
 
   /**
@@ -726,25 +789,9 @@ export class ChatExecutionManager implements OnModuleInit {
       args.payload,
       args.executionOptions,
     );
-    // A provider can answer 200 with an error body. Gemini returned a
-    // RESOURCE_EXHAUSTED envelope that was stored and shown as the assistant's
-    // reply, and because nothing threw, the chain never advanced to a provider
-    // that was working. Treat it as this candidate failing so the next one runs.
-    if (
-      response.finishReason !== 'cancelled' &&
-      !this.isGenerationResponse(response) &&
-      isProviderErrorResponse(response.content)
-    ) {
-      const reason = describeProviderErrorResponse(response.content);
-      const error = new BusinessException(reason, 'PROVIDER_ERROR_RESPONSE');
-      this.emitCandidateFailure(
-        error,
-        args.candidate,
-        args.candidateIndex,
-        args.candidates,
-        args.payload,
-      );
-      return { kind: 'failure', error };
+    const envelopeFailure = this.failOnProviderErrorEnvelope(response, args);
+    if (envelopeFailure !== null) {
+      return envelopeFailure;
     }
     if (response.finishReason === 'cancelled') {
       return {
@@ -802,6 +849,33 @@ export class ChatExecutionManager implements OnModuleInit {
           args.executionOptions,
           fastPathEscalated,
         );
+  }
+
+  // A provider can answer 200 with an error body. Gemini returned a
+  // RESOURCE_EXHAUSTED envelope that was stored and shown as the assistant's
+  // reply, and because nothing threw, the chain never advanced to a provider
+  // that was working. Treat it as this candidate failing so the next one runs.
+  private failOnProviderErrorEnvelope(
+    response: LlmResponse,
+    args: RunCandidateArgs,
+  ): CandidateOutcome | null {
+    if (
+      response.finishReason === 'cancelled' ||
+      this.isGenerationResponse(response) ||
+      !isProviderErrorResponse(response.content)
+    ) {
+      return null;
+    }
+    const reason = describeProviderErrorResponse(response.content);
+    const error = new BusinessException(reason, 'PROVIDER_ERROR_RESPONSE');
+    this.emitCandidateFailure(
+      error,
+      args.candidate,
+      args.candidateIndex,
+      args.candidates,
+      args.payload,
+    );
+    return { kind: 'failure', error };
   }
 
   private async invokeProviderWithProgress(
@@ -1619,60 +1693,7 @@ export class ChatExecutionManager implements OnModuleInit {
         this.toolDialectForProtocol(base.protocol),
         executionOptions,
       );
-      // A tool-call turn streams NO content — the model is requesting a tool,
-      // not answering. This is the streaming twin of the buffered
-      // CLOUD_PROVIDER_EMPTY_RESPONSE trap: without the tool-call check, every
-      // successful streamed tool call would terminate the run as an empty
-      // response.
-      if (result.content.trim().length === 0 && !result.cancelled && toolCalls.length === 0) {
-        throw new BusinessException(
-          `Provider ${base.provider} returned no content`,
-          'STREAM_EMPTY_RESPONSE',
-        );
-      }
-      const finishReason = result.cancelled ? 'cancelled' : (result.finishReason ?? 'stop');
-      // Bug-hunt 2026-05-31, Fix 2 — when the model stopped because it
-      // hit the ctx/length cap, leave a loud trail in the logs so an
-      // operator scrolling through chat-service output can correlate a
-      // mid-sentence reply with ctx exhaustion. The FE banner (driven by
-      // metadata.truncatedAtContextLimit) is the user-visible signal.
-      if (finishReason === 'length') {
-        this.logger.warn(
-          `runExecutor: finish_reason=length — likely ctx_size exhausted; provider=${base.provider} model=${base.model} promptTokens=${String(base.promptTokensEstimate)} outputLen=${String(result.content.length)}`,
-        );
-      }
-      return {
-        content: result.content,
-        provider: base.provider,
-        model: base.model,
-        inputTokens: result.inputTokens,
-        outputTokens: result.outputTokens ?? estimateTokensFromText(result.content),
-        // Absent stays absent. `settlePaygHold` defaults each to 0, which is
-        // the right reading of "the provider told us nothing"; writing 0 here
-        // would instead claim we measured a zero.
-        ...(result.cachedPromptTokens === undefined
-          ? {}
-          : { cachedPromptTokens: result.cachedPromptTokens }),
-        ...(result.cacheCreationPromptTokens === undefined
-          ? {}
-          : { cacheCreationPromptTokens: result.cacheCreationPromptTokens }),
-        ...(result.reasoningTokens === undefined
-          ? {}
-          : { reasoningTokens: result.reasoningTokens }),
-        latencyMs: Date.now() - base.startMs,
-        finishReason,
-        usedFallback,
-        // Carried so it can be persisted. Empty for a model that emits none,
-        // and omitted entirely rather than stored as an empty string.
-        ...(result.reasoning.trim().length > 0 ? { reasoning: result.reasoning } : {}),
-        ...(toolCalls.length > 0
-          ? {
-              toolCalls,
-              finishedForTools: finishReason === OPENAI_TOOL_CALLS_FINISH_REASON,
-            }
-          : {}),
-        ...this.buildSpeedReport(base, result, executionOptions),
-      };
+      return this.buildExecutorResponse(base, result, toolCalls, usedFallback, executionOptions);
     } catch (error: unknown) {
       // Stop aborts the transport, which surfaces as an ordinary provider error
       // ("connect failed - This operation was aborted"). Left as-is the chain
@@ -1697,6 +1718,67 @@ export class ChatExecutionManager implements OnModuleInit {
     } finally {
       cancellation.release(cancelKey);
     }
+  }
+
+  private buildExecutorResponse(
+    base: Omit<StreamExecutionInput, 'abortSignal'>,
+    result: StreamExecutionResult,
+    toolCalls: readonly NormalizedToolCall[],
+    usedFallback: boolean,
+    executionOptions: ExecutionOptions | undefined,
+  ): LlmResponse {
+    // A tool-call turn streams NO content — the model is requesting a tool,
+    // not answering. This is the streaming twin of the buffered
+    // CLOUD_PROVIDER_EMPTY_RESPONSE trap: without the tool-call check, every
+    // successful streamed tool call would terminate the run as an empty
+    // response.
+    if (result.content.trim().length === 0 && !result.cancelled && toolCalls.length === 0) {
+      throw new BusinessException(
+        `Provider ${base.provider} returned no content`,
+        'STREAM_EMPTY_RESPONSE',
+      );
+    }
+    const finishReason = result.cancelled ? 'cancelled' : (result.finishReason ?? 'stop');
+    // Bug-hunt 2026-05-31, Fix 2 — when the model stopped because it
+    // hit the ctx/length cap, leave a loud trail in the logs so an
+    // operator scrolling through chat-service output can correlate a
+    // mid-sentence reply with ctx exhaustion. The FE banner (driven by
+    // metadata.truncatedAtContextLimit) is the user-visible signal.
+    if (finishReason === 'length') {
+      this.logger.warn(
+        `runExecutor: finish_reason=length — likely ctx_size exhausted; provider=${base.provider} model=${base.model} promptTokens=${String(base.promptTokensEstimate)} outputLen=${String(result.content.length)}`,
+      );
+    }
+    return {
+      content: result.content,
+      provider: base.provider,
+      model: base.model,
+      inputTokens: result.inputTokens,
+      outputTokens: result.outputTokens ?? estimateTokensFromText(result.content),
+      // Absent stays absent. `settlePaygHold` defaults each to 0, which is
+      // the right reading of "the provider told us nothing"; writing 0 here
+      // would instead claim we measured a zero.
+      ...(result.cachedPromptTokens === undefined
+        ? {}
+        : { cachedPromptTokens: result.cachedPromptTokens }),
+      ...(result.cacheCreationPromptTokens === undefined
+        ? {}
+        : { cacheCreationPromptTokens: result.cacheCreationPromptTokens }),
+      ...(result.reasoningTokens === undefined ? {} : { reasoningTokens: result.reasoningTokens }),
+      latencyMs: Date.now() - base.startMs,
+      finishReason,
+      usedFallback,
+      // Carried so it can be persisted. Empty for a model that emits none,
+      // and omitted entirely rather than stored as an empty string.
+      ...(result.reasoning.trim().length > 0 ? { reasoning: result.reasoning } : {}),
+      ...(toolCalls.length > 0
+        ? {
+            toolCalls,
+            finishedForTools: finishReason === OPENAI_TOOL_CALLS_FINISH_REASON,
+          }
+        : {}),
+      ...this.buildSpeedReport(base, result, executionOptions),
+    };
   }
 
   private buildStreamingChatBody(
@@ -3038,39 +3120,18 @@ export class ChatExecutionManager implements OnModuleInit {
     this.logger.debug(
       `callProvider: dispatching to provider type — provider=${provider} model=${model} usedFallback=${String(usedFallback)}`,
     );
-    if (provider === FILE_GENERATION_PROVIDER) {
-      this.logger.debug('callProvider: routing to file generation service');
-      return this.callFileGenerationService(
-        context,
-        startTime,
-        usedFallback,
-        threadSettings,
-        executionOptions?.fileWriters,
-      );
-    }
-    if (provider.startsWith(VIDEO_PROVIDER_PREFIX) && this.videoGeneration !== undefined) {
-      this.logger.debug('callProvider: routing to video generation');
-      return this.videoGeneration.generate({
-        provider,
-        model,
-        context,
-        startTime,
-        usedFallback,
-        userId: context.userId,
-        isAutoMode: routingMode === 'AUTO',
-      });
-    }
-    if (provider.startsWith(IMAGE_PROVIDER_PREFIX)) {
-      this.logger.debug('callProvider: routing to image service');
-      return this.callImageService(
-        provider,
-        model,
-        context,
-        startTime,
-        usedFallback,
-        context.userId,
-        routingMode === 'AUTO',
-      );
+    const generation = this.dispatchGenerationProvider(
+      provider,
+      model,
+      context,
+      startTime,
+      usedFallback,
+      threadSettings,
+      routingMode,
+      executionOptions,
+    );
+    if (generation !== undefined) {
+      return generation;
     }
     if (provider === OLLAMA_CONNECTOR_PROVIDER) {
       return this.callCloudProvider(
@@ -3116,6 +3177,56 @@ export class ChatExecutionManager implements OnModuleInit {
     );
   }
 
+  // The providers that make a file, a video or an image rather than text:
+  // each dispatches to its own service. Undefined for every other provider, so
+  // the caller carries on to the text lanes.
+  private dispatchGenerationProvider(
+    provider: string,
+    model: string,
+    context: AssembledContext,
+    startTime: number,
+    usedFallback: boolean,
+    threadSettings: ThreadSettings | undefined,
+    routingMode: string | undefined,
+    executionOptions: ExecutionOptions | undefined,
+  ): Promise<LlmResponse> | undefined {
+    if (provider === FILE_GENERATION_PROVIDER) {
+      this.logger.debug('callProvider: routing to file generation service');
+      return this.callFileGenerationService(
+        context,
+        startTime,
+        usedFallback,
+        threadSettings,
+        executionOptions?.fileWriters,
+      );
+    }
+    if (provider.startsWith(VIDEO_PROVIDER_PREFIX) && this.videoGeneration !== undefined) {
+      this.logger.debug('callProvider: routing to video generation');
+      return this.videoGeneration.generate({
+        provider,
+        model,
+        context,
+        startTime,
+        usedFallback,
+        userId: context.userId,
+        isAutoMode: routingMode === 'AUTO',
+      });
+    }
+    if (provider.startsWith(IMAGE_PROVIDER_PREFIX)) {
+      this.logger.debug('callProvider: routing to image service');
+      return this.callImageService(
+        provider,
+        model,
+        context,
+        startTime,
+        usedFallback,
+        context.userId,
+        routingMode === 'AUTO',
+      );
+    }
+    return undefined;
+  }
+
   /**
    * One buffered completion for another service, outside the chat pipeline.
    *
@@ -3127,46 +3238,76 @@ export class ChatExecutionManager implements OnModuleInit {
    * U12). Making them required is a breaking contract change on purpose - an
    * optional user id would have been silently omitted by exactly the callers
    * that most need it.
+   *
+   * The reply carries `costMicroUsd` for a pay-as-you-go user (and only then),
+   * read from the settled outcome - never an estimate.
    */
-  async generateOnce(args: {
-    userId: string;
-    requestId?: string;
-    threadJobBudgetId?: string;
-    surface: PaygSurface;
-    provider: string;
-    model: string;
-    systemPrompt: string;
-    userPrompt: string;
-    maxTokens?: number;
-    workflow?: string;
-  }): Promise<InternalGenerateResponse> {
+  async generateOnce(args: InternalGenerateArgs): Promise<InternalGenerateResponse> {
+    const prepared = await this.prepareInternalGenerate(args);
+    const parsed = await this.postGenerateOnce({
+      prepared,
+      body: this.buildInternalGenerateBody(prepared, args.thinking, false),
+      startTime: Date.now(),
+      timeoutMs: AppConfig.get().OLLAMA_GENERATE_TIMEOUT_MS,
+    });
+    return this.settleInternalGenerate(prepared.hold, parsed);
+  }
+
+  /**
+   * The same completion as `generateOnce`, read from the provider as a stream
+   * so the caller can tell a model that is still working from one that is stuck
+   * (ADR-175).
+   *
+   * Reserve, settle and release are exactly `generateOnce`'s: the hold is taken
+   * before the provider is dialled, settled against measured usage on success,
+   * and released on any failure. What differs is the clock. The provider call is
+   * aborted after INTERNAL_GENERATE_IDLE_TIMEOUT_MS of silence (reset by every
+   * chunk, thinking included) or INTERNAL_GENERATE_MAX_TOTAL_MS in all, and
+   * when the caller's signal aborts. A provider whose connector says it cannot
+   * stream falls back to one buffered call under
+   * INTERNAL_GENERATE_BUFFERED_MAX_MS and sends no activity at all.
+   */
+  async generateOnceStream(
+    args: InternalGenerateArgs,
+    options: InternalGenerateStreamOptions,
+  ): Promise<InternalGenerateResponse> {
+    const prepared = await this.prepareInternalGenerate(args);
+    const startTime = Date.now();
+    const response = prepared.streaming
+      ? await this.streamGenerateOnce({ prepared, thinking: args.thinking, startTime, options })
+      : await this.postGenerateOnce({
+          prepared,
+          body: this.buildInternalGenerateBody(prepared, args.thinking, false),
+          startTime,
+          timeoutMs: INTERNAL_GENERATE_BUFFERED_MAX_MS,
+          clientSignal: options.signal,
+        });
+    return this.settleInternalGenerate(prepared.hold, response);
+  }
+
+  /**
+   * Resolves the connector, sizes the request and takes the hold.
+   *
+   * Shared by both endpoints so they cannot disagree about what is reserved:
+   * the connector is resolved first (a missing key costs nothing), then the
+   * hold, then every later step runs under it.
+   */
+  private async prepareInternalGenerate(
+    args: InternalGenerateArgs,
+  ): Promise<PreparedInternalGenerate> {
     const { provider, model, systemPrompt, userPrompt, maxTokens } = args;
-    const config = AppConfig.get();
-    const { baseUrl, apiKey, gatewayHeaders } = await this.resolveProviderConfig(provider);
+    const { baseUrl, apiKey, gatewayHeaders, supportsStreaming } =
+      await this.resolveProviderConfig(provider);
     const isOllamaConnector = provider === OLLAMA_CONNECTOR_PROVIDER;
-    // Cloud Ollama (and any other provider routed through the OLLAMA
-    // connector) speaks the *native* Ollama chat API at `/api/chat`, not
-    // the OpenAI-compat path. resolveOllamaConnectorBaseUrl already pins
-    // baseUrl to end with `/api`, so the URL here is `${baseUrl}/chat`.
-    // Body is the native Ollama shape (`options.num_predict` instead of
-    // OpenAI's top-level `max_tokens`); response shape is also native.
-    const url = isOllamaConnector ? `${baseUrl}/chat` : `${baseUrl}/chat/completions`;
-    const messages = [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ];
+    const promptTextForEstimate = `${systemPrompt}\n${userPrompt}`;
     // Defensive default: same rationale as buildOllamaChatRequestBody — Ollama
     // Cloud's server-side num_predict default is too low for long answers.
     // Bug-hunt 2026-05-31, Fix 4 — pick the ctx baseline by provider so
     // local-ollama gets a tight 4_096 default and won't time out on CPU.
     const effectiveMaxTokens =
       maxTokens ??
-      computeDefaultMaxTokensForProvider(
-        provider,
-        estimateTokensFromText(`${systemPrompt}\n${userPrompt}`),
-      );
+      computeDefaultMaxTokensForProvider(provider, estimateTokensFromText(promptTextForEstimate));
     const requestedMaxTokens = Math.min(effectiveMaxTokens, HARD_MAX_OUTPUT_TOKENS);
-    const promptTextForEstimate = `${systemPrompt}\n${userPrompt}`;
     const hold = await this.accessControlService.reserveCredit({
       userId: args.userId,
       requestId: args.requestId ?? randomUUID(),
@@ -3179,46 +3320,81 @@ export class ChatExecutionManager implements OnModuleInit {
       cachedPromptTokens: 0,
       requestedMaxOutputTokens: requestedMaxTokens,
     });
-    // Always the hold's ceiling, never the one we asked for.
-    const cappedMaxTokens = Math.min(requestedMaxTokens, hold.maxOutputTokens);
-    const body: OpenAiChatRequest | OllamaChatRequest = isOllamaConnector
-      ? {
-          model,
-          messages,
-          stream: false,
-          options: { num_predict: cappedMaxTokens },
-        }
-      : {
-          model,
-          messages,
-          stream: false,
-          ...this.outputCapField(model, cappedMaxTokens),
-        };
-    const startTime = Date.now();
-    const parsed = await this.postGenerateOnce({
-      url,
+    return {
+      hold,
+      provider,
+      model,
+      // Cloud Ollama (and any other provider routed through the OLLAMA
+      // connector) speaks the *native* Ollama chat API at `/api/chat`, not
+      // the OpenAI-compat path. resolveOllamaConnectorBaseUrl already pins
+      // baseUrl to end with `/api`, so the URL here is `${baseUrl}/chat`.
+      url: isOllamaConnector ? `${baseUrl}/chat` : `${baseUrl}/chat/completions`,
       // Connector baseUrl, declared from the base rather than from `url`.
       allowedHosts: declaredHost(baseUrl),
       apiKey,
-      gatewayHeaders,
-      body,
-      provider,
-      model,
-      startTime,
+      ...(gatewayHeaders === undefined ? {} : { gatewayHeaders }),
       isOllamaConnector,
+      streaming: supportsStreaming !== false,
       promptTextForEstimate,
-      timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
-      hold,
-    });
-    await this.settlePaygHold(hold, parsed);
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      // Always the hold's ceiling, never the one we asked for.
+      cappedMaxTokens: Math.min(requestedMaxTokens, hold.maxOutputTokens),
+    };
+  }
+
+  /**
+   * The request body. Native Ollama shape (`options.num_predict` instead of
+   * OpenAI's top-level `max_tokens`, and a `think` switch) for the OLLAMA
+   * connector; OpenAI-compatible for everything else.
+   *
+   * `think` is OFF unless the caller asked: Ollama's output budget covers the
+   * thinking AND the answer, so a model left to think can spend all of it
+   * reasoning and return empty content (kimi, 2026-10-13). The chat path made
+   * the same choice for the same reason (`resolveOllamaThink`).
+   */
+  private buildInternalGenerateBody(
+    prepared: PreparedInternalGenerate,
+    thinking: boolean | undefined,
+    stream: boolean,
+  ): OpenAiChatRequest | OllamaChatRequest {
+    const { model, messages, cappedMaxTokens } = prepared;
+    if (prepared.isOllamaConnector) {
+      return {
+        model,
+        messages,
+        stream,
+        options: { num_predict: cappedMaxTokens },
+        think: thinking ?? false,
+      };
+    }
     return {
-      content: parsed.content,
-      provider: parsed.provider,
-      model: parsed.model,
-      inputTokens: parsed.inputTokens,
-      outputTokens: parsed.outputTokens,
-      durationMs: parsed.latencyMs,
+      model,
+      messages,
+      stream,
+      // Asks for the closing usage frame, so a streamed call settles on
+      // measured tokens rather than an estimate.
+      ...(stream ? { stream_options: { include_usage: true } } : {}),
+      ...this.outputCapField(model, cappedMaxTokens),
+    };
+  }
+
+  private async settleInternalGenerate(
+    hold: PaygHold,
+    response: LlmResponse,
+  ): Promise<InternalGenerateResponse> {
+    const settledCost = await this.settlePaygHold(hold, response);
+    return {
+      content: response.content,
+      provider: response.provider,
+      model: response.model,
+      inputTokens: response.inputTokens,
+      outputTokens: response.outputTokens,
+      durationMs: response.latencyMs,
       clamped: hold.clamped,
+      ...(settledCost === undefined ? {} : { costMicroUsd: settledCost }),
     };
   }
 
@@ -3229,65 +3405,217 @@ export class ChatExecutionManager implements OnModuleInit {
    * the non-2xx branch together: raising the provider error without giving the
    * hold back would leave the user's money parked until the sweeper reclaimed
    * it fifteen minutes later.
+   *
+   * With a `clientSignal` (the stream endpoint's buffered fallback) a failure
+   * is also classified: a ceiling hit or a cancelled caller gets its own code
+   * and release reason. Without one the error and the reason are untouched.
    */
   private async postGenerateOnce(args: {
-    url: string;
-    allowedHosts: ReadonlySet<string>;
-    apiKey: string;
-    gatewayHeaders?: Record<string, string>;
+    prepared: PreparedInternalGenerate;
     body: OpenAiChatRequest | OllamaChatRequest;
-    provider: string;
-    model: string;
     startTime: number;
-    isOllamaConnector: boolean;
-    promptTextForEstimate: string;
     timeoutMs: number;
-    hold: PaygHold;
+    clientSignal?: AbortSignal;
   }): Promise<LlmResponse> {
+    const { prepared } = args;
     try {
       const response = await httpRequest<OpenAiChatResponse | OllamaChatResponse>({
-        url: args.url,
-        allowedHosts: args.allowedHosts,
+        url: prepared.url,
+        allowedHosts: prepared.allowedHosts,
         method: 'POST',
         headers: withConnectorGatewayHeaders(
-          { Authorization: `Bearer ${args.apiKey}` },
-          args.gatewayHeaders,
+          { Authorization: `Bearer ${prepared.apiKey}` },
+          prepared.gatewayHeaders,
         ),
         body: args.body,
         timeoutMs: args.timeoutMs,
+        ...(args.clientSignal === undefined ? {} : { signal: args.clientSignal }),
       });
       if (!response.ok) {
         this.logger.error(
-          `generateOnce: ${args.provider} returned status=${String(response.status)} body=${redactProviderText(response.data)}`,
+          `generateOnce: ${prepared.provider} returned status=${String(response.status)} body=${redactProviderText(response.data)}`,
         );
         throw toProviderHttpFailure({
           status: response.status,
           body: response.data,
           failureCode: providerFailureCode(response.status),
-          fallbackMessage: `Provider ${args.provider} returned ${String(response.status)}`,
+          fallbackMessage: `Provider ${prepared.provider} returned ${String(response.status)}`,
         });
       }
-      return args.isOllamaConnector
-        ? this.parseOllamaChatResponse(
-            response.data as OllamaChatResponse,
-            args.provider,
-            args.model,
-            args.startTime,
-            false,
-            args.promptTextForEstimate,
-          )
-        : this.parseCloudResponse(
-            response.data as OpenAiChatResponse,
-            args.provider,
-            args.model,
-            args.startTime,
-            false,
-            args.promptTextForEstimate,
-          );
+      return this.parseInternalGenerateReply(response.data, prepared, args.startTime);
     } catch (error: unknown) {
-      await this.accessControlService.releaseCredit(args.hold, 'PROVIDER_ERROR');
-      throw error;
+      if (args.clientSignal === undefined) {
+        await this.accessControlService.releaseCredit(prepared.hold, 'PROVIDER_ERROR');
+        throw error;
+      }
+      const failure = classifyGenerateFailure(error, args.clientSignal);
+      await this.accessControlService.releaseCredit(prepared.hold, failure.releaseReason);
+      throw failure.error;
     }
+  }
+
+  private parseInternalGenerateReply(
+    data: OpenAiChatResponse | OllamaChatResponse,
+    prepared: PreparedInternalGenerate,
+    startTime: number,
+  ): LlmResponse {
+    const { provider, model, promptTextForEstimate } = prepared;
+    if (prepared.isOllamaConnector) {
+      const reply = data as OllamaChatResponse;
+      // Told apart from an empty envelope before the shared parser (which
+      // serves every chat surface) throws one code for both.
+      assertOllamaReplyAnswered(reply, provider, model);
+      return this.parseOllamaChatResponse(
+        reply,
+        provider,
+        model,
+        startTime,
+        false,
+        promptTextForEstimate,
+      );
+    }
+    return this.parseCloudResponse(
+      data as OpenAiChatResponse,
+      provider,
+      model,
+      startTime,
+      false,
+      promptTextForEstimate,
+    );
+  }
+
+  /**
+   * The streaming provider hop of `generateOnceStream`.
+   *
+   * Aborts on its own clocks (idle, ceiling) and on the caller's signal, and
+   * every exit gives the hold back under the reason that is true. The count of
+   * characters already streamed is logged on a failure: the provider billed us
+   * for those tokens and the hold is released regardless (the existing policy
+   * for a failed call), so the loss has to be measurable.
+   */
+  private async streamGenerateOnce(args: {
+    prepared: PreparedInternalGenerate;
+    thinking: boolean | undefined;
+    startTime: number;
+    options: InternalGenerateStreamOptions;
+  }): Promise<LlmResponse> {
+    const { prepared, options } = args;
+    let streamedChars = 0;
+    try {
+      const result = await httpStream({
+        url: prepared.url,
+        allowedHosts: prepared.allowedHosts,
+        method: 'POST',
+        headers: withConnectorGatewayHeaders(
+          { Authorization: `Bearer ${prepared.apiKey}` },
+          prepared.gatewayHeaders,
+        ),
+        body: this.buildInternalGenerateBody(prepared, args.thinking, true),
+        timeoutMs: INTERNAL_GENERATE_IDLE_TIMEOUT_MS,
+        maxTotalMs: INTERNAL_GENERATE_MAX_TOTAL_MS,
+        signal: options.signal,
+      });
+      if (!result.ok) {
+        this.logger.error(
+          `generateOnceStream: ${prepared.provider} returned status=${String(result.status)} body=${redactProviderText(result.errorBody)}`,
+        );
+        throw toProviderHttpFailure({
+          status: result.status,
+          body: result.errorBody,
+          failureCode: providerFailureCode(result.status),
+          fallbackMessage: `Provider ${prepared.provider} returned ${String(result.status)}`,
+        });
+      }
+      const folded = await foldProviderStream(
+        result.chunks,
+        prepared.isOllamaConnector ? AiStreamProtocol.OLLAMA_NDJSON : AiStreamProtocol.OPENAI_SSE,
+        (chunkChars) => {
+          streamedChars += chunkChars;
+          options.onActivity(chunkChars);
+        },
+      );
+      return this.buildStreamedReply(folded, prepared, args.startTime);
+    } catch (error: unknown) {
+      const failure = classifyGenerateFailure(error, options.signal);
+      this.logger.warn(
+        `generateOnceStream: ${prepared.provider}/${prepared.model} failed after ${String(Date.now() - args.startTime)}ms, streamedChars=${String(streamedChars)}, hold released as ${failure.releaseReason}`,
+      );
+      await this.accessControlService.releaseCredit(prepared.hold, failure.releaseReason);
+      throw failure.error;
+    }
+  }
+
+  /** The folded stream as the response the settlement and the caller read. */
+  private buildStreamedReply(
+    folded: FoldedProviderStream,
+    prepared: PreparedInternalGenerate,
+    startTime: number,
+  ): LlmResponse {
+    const buffered = this.readBufferedReplyFromStream(folded, prepared, startTime);
+    if (buffered !== undefined) {
+      return buffered;
+    }
+    const { content, reasoning } = resolveFoldedAnswer(folded);
+    if (content.trim().length === 0) {
+      // Bounded shape only, never the text itself. Whether the model spent its
+      // budget thinking is what tells an operator to raise the budget or to
+      // switch thinking off.
+      this.logger.warn(
+        `generateOnceStream: ${prepared.provider}/${prepared.model} returned no content (thinkingChars=${String(reasoning.length)} finishReason=${folded.finishReason ?? 'none'} completionTokens=${String(folded.completionTokens ?? 0)})`,
+      );
+    }
+    assertAnswered(content, reasoning, prepared.provider, prepared.model);
+    return {
+      content,
+      provider: prepared.provider,
+      model: prepared.model,
+      // The provider's own count, else an estimate: a settlement on zero would
+      // bill a measured call at nothing.
+      inputTokens: folded.promptTokens ?? estimateTokensFromText(prepared.promptTextForEstimate),
+      outputTokens: folded.completionTokens ?? estimateTokensFromText(`${content}${reasoning}`),
+      // Absent stays absent: "the provider told us nothing" is not a zero.
+      ...(folded.cachedPromptTokens === undefined
+        ? {}
+        : { cachedPromptTokens: folded.cachedPromptTokens }),
+      ...(folded.cacheCreationPromptTokens === undefined
+        ? {}
+        : { cacheCreationPromptTokens: folded.cacheCreationPromptTokens }),
+      ...(folded.reasoningTokens === undefined ? {} : { reasoningTokens: folded.reasoningTokens }),
+      latencyMs: Date.now() - startTime,
+      finishReason: folded.finishReason,
+      usedFallback: false,
+      ...(reasoning.length > 0 ? { reasoning } : {}),
+    };
+  }
+
+  /**
+   * A provider that answered `stream: true` with one plain JSON document (it
+   * cannot stream and its connector did not say so). The SSE reader finds
+   * nothing in it, so the raw body is read as the buffered reply it is. No
+   * activity was sent for it, which is true: no bytes arrived until the end.
+   */
+  private readBufferedReplyFromStream(
+    folded: FoldedProviderStream,
+    prepared: PreparedInternalGenerate,
+    startTime: number,
+  ): LlmResponse | undefined {
+    if (folded.sawFragment || prepared.isOllamaConnector) {
+      return undefined;
+    }
+    const record = parseJsonObject(folded.rawBody);
+    if (record === undefined || !Array.isArray(record['choices'])) {
+      return undefined;
+    }
+    const response = this.parseCloudResponse(
+      record as OpenAiChatResponse,
+      prepared.provider,
+      prepared.model,
+      startTime,
+      false,
+      prepared.promptTextForEstimate,
+    );
+    assertAnswered(response.content, '', prepared.provider, prepared.model);
+    return response;
   }
 
   private async callOllama(
@@ -4539,6 +4867,9 @@ export class ChatExecutionManager implements OnModuleInit {
       ...(connectorConfig.gatewayHeaders === undefined
         ? {}
         : { gatewayHeaders: connectorConfig.gatewayHeaders }),
+      ...(typeof connectorConfig.supportsStreaming === 'boolean'
+        ? { supportsStreaming: connectorConfig.supportsStreaming }
+        : {}),
     };
   }
 
@@ -5283,22 +5614,26 @@ export class ChatExecutionManager implements OnModuleInit {
       );
     }
 
-    // Native Ollama exposes reasoning as `think`. When the capability registry
-    // has proven level values for this model the resolver returns a level
-    // instead, and the level lane is not expressible here — so only the
-    // boolean form is applied, and the resolver's own warning records that
-    // intermediate levels are indistinguishable on this lane.
-    const ollamaEffort = this.resolveEffortForDialect(executionOptions, ProviderToolDialect.OLLAMA);
-    const thinkFlag = effortFlagForRequest(ollamaEffort);
-    // Off unless the caller asked for reasoning, mirroring the local lane which
-    // made the same choice for the same reason. Left to think by default a
-    // reasoning model spends the entire turn in `thinking` and returns empty
-    // `content`: kimi-k2.7-code answered with 148 tokens of reasoning,
-    // done_reason "stop", and nothing to show the user, which surfaced as
-    // CLOUD_PROVIDER_EMPTY_RESPONSE and killed the run.
-    requestBody.think = thinkFlag ?? false;
+    requestBody.think = this.resolveOllamaThink(executionOptions);
 
     return requestBody;
+  }
+
+  // Native Ollama exposes reasoning as `think`. When the capability registry
+  // has proven level values for this model the resolver returns a level
+  // instead, and the level lane is not expressible here — so only the
+  // boolean form is applied, and the resolver's own warning records that
+  // intermediate levels are indistinguishable on this lane.
+  //
+  // Off unless the caller asked for reasoning, mirroring the local lane which
+  // made the same choice for the same reason. Left to think by default a
+  // reasoning model spends the entire turn in `thinking` and returns empty
+  // `content`: kimi-k2.7-code answered with 148 tokens of reasoning,
+  // done_reason "stop", and nothing to show the user, which surfaced as
+  // CLOUD_PROVIDER_EMPTY_RESPONSE and killed the run.
+  private resolveOllamaThink(executionOptions: ExecutionOptions | undefined): boolean {
+    const ollamaEffort = this.resolveEffortForDialect(executionOptions, ProviderToolDialect.OLLAMA);
+    return effortFlagForRequest(ollamaEffort) ?? false;
   }
 
   private parseGeminiResponse(
@@ -5535,6 +5870,104 @@ export class ChatExecutionManager implements OnModuleInit {
     };
   }
 
+  // If image files are attached:
+  // 1. Use vision model to analyze and build a detailed prompt
+  // 2. Pass the original image as reference for image-to-image generation
+  private async prepareImageReference(
+    originalPrompt: string,
+    context: AssembledContext,
+  ): Promise<{
+    prompt: string;
+    referenceImageBase64?: string;
+    referenceImageMimeType?: string;
+    referenceFileId?: string;
+  }> {
+    const imageFiles = context.fileContents.filter((f) => f.mimeType.startsWith('image/'));
+    if (imageFiles.length === 0) {
+      this.logger.debug('callImageService: no image files attached — using text prompt only');
+      return { prompt: originalPrompt };
+    }
+    this.logger.log(
+      `callImageService: ${String(imageFiles.length)} image files attached — building vision prompt`,
+    );
+    const description = await this.buildImagePromptFromVision(originalPrompt, context);
+    // User's instruction first and verbatim; a failed rewrite sends it alone.
+    const prompt = buildReferenceImagePrompt(originalPrompt, description);
+    this.logger.debug(`callImageService: vision prompt built — length=${String(prompt.length)}`);
+    const firstImage = imageFiles[0];
+    if (!firstImage?.content) {
+      return { prompt };
+    }
+    this.logger.debug(
+      `callImageService: reference image attached — mimeType=${firstImage.mimeType} base64Len=${String(firstImage.content.length)}`,
+    );
+    return {
+      prompt,
+      referenceImageBase64: firstImage.content,
+      referenceImageMimeType: firstImage.mimeType,
+      // The upload's id, so image-service can re-read the same image on a
+      // retry instead of silently regenerating without it.
+      referenceFileId: firstImage.id,
+    };
+  }
+
+  // A refusal image-service answered with, as the translated notice the user
+  // sees; undefined for a reply that is neither. Throws for any other non-2xx.
+  private imageServiceRefusal(
+    response: { status: number; ok: boolean; data: ImageGenerateResponse },
+    call: {
+      provider: string;
+      model: string;
+      startTime: number;
+      usedFallback: boolean;
+      userId: string;
+    },
+  ): LlmResponse | undefined {
+    const { provider, model, startTime, usedFallback, userId } = call;
+    if (isPlanFeatureDisabledResponse(response.status, response.data)) {
+      // The plan changed between the check above and image-service's own gate.
+      this.logger.warn(`callImageService: image-service refused on plan user=${userId}`);
+      return imagePlanRefusalResponse(
+        IMAGE_GENERATION_PLAN_FEATURE,
+        provider,
+        model,
+        startTime,
+        usedFallback,
+      );
+    }
+    const maskRefusal = readImageMaskRefusalCode(response.status, response.data);
+    if (maskRefusal !== undefined) {
+      // A refused mask is the user's to fix: a translated notice, not a failure.
+      this.logger.warn(`callImageService: mask refused code=${maskRefusal} user=${userId}`);
+      return imageMaskRefusalResponse(maskRefusal, provider, model, startTime, usedFallback);
+    }
+    if (!response.ok) {
+      this.logger.error(
+        `callImageService: image service returned error status=${String(response.status)}`,
+      );
+      throw new BusinessException(
+        `Image service returned status ${String(response.status)}`,
+        'IMAGE_SERVICE_REQUEST_FAILED',
+      );
+    }
+    return undefined;
+  }
+
+  private postImageRequest(
+    body: ImageGenerateRequest,
+  ): Promise<HttpResponse<ImageGenerateResponse>> {
+    const config = AppConfig.get();
+    return httpRequest<ImageGenerateResponse>({
+      url: `${config.IMAGE_SERVICE_URL}/api/v1/internal/images/generate`,
+      method: 'POST',
+      // image-service's internal routes are ServiceTokenGuard-protected; without
+      // this header every chat image request is refused with 401.
+      headers: { Authorization: buildInterServiceAuthHeader() },
+      body,
+      timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
+    });
+  }
+
   private async callImageService(
     provider: string,
     model: string,
@@ -5567,41 +6000,11 @@ export class ChatExecutionManager implements OnModuleInit {
     // Kept on the generation row as `originalPrompt` whenever the prompt sent
     // upstream differs (pack §79).
     const originalPrompt = latestUserTurnText(context.threadMessages) ?? 'generate an image';
-    let prompt = originalPrompt;
-    this.logger.debug(`callImageService: base prompt length=${String(prompt.length)}`);
+    this.logger.debug(`callImageService: base prompt length=${String(originalPrompt.length)}`);
 
-    // If image files are attached:
-    // 1. Use vision model to analyze and build a detailed prompt
-    // 2. Pass the original image as reference for image-to-image generation
-    const imageFiles = context.fileContents.filter((f) => f.mimeType.startsWith('image/'));
-    let referenceImageBase64: string | undefined;
-    let referenceImageMimeType: string | undefined;
-    let referenceFileId: string | undefined;
-
-    if (imageFiles.length > 0) {
-      this.logger.log(
-        `callImageService: ${String(imageFiles.length)} image files attached — building vision prompt`,
-      );
-      const description = await this.buildImagePromptFromVision(originalPrompt, context);
-      // User's instruction first and verbatim; a failed rewrite sends it alone.
-      prompt = buildReferenceImagePrompt(originalPrompt, description);
-      this.logger.debug(`callImageService: vision prompt built — length=${String(prompt.length)}`);
-      const firstImage = imageFiles[0];
-      if (firstImage?.content) {
-        referenceImageBase64 = firstImage.content;
-        referenceImageMimeType = firstImage.mimeType;
-        // The upload's id, so image-service can re-read the same image on a
-        // retry instead of silently regenerating without it.
-        referenceFileId = firstImage.id;
-        this.logger.debug(
-          `callImageService: reference image attached — mimeType=${firstImage.mimeType} base64Len=${String(firstImage.content.length)}`,
-        );
-      }
-    } else {
-      this.logger.debug('callImageService: no image files attached — using text prompt only');
-    }
-
-    prompt = boundImageGenerationPrompt(prompt);
+    const reference = await this.prepareImageReference(originalPrompt, context);
+    const { referenceImageBase64, referenceImageMimeType, referenceFileId } = reference;
+    const prompt = boundImageGenerationPrompt(reference.prompt);
     const maskFileId = readMaskFileId(lastUserMsg?.metadata);
 
     this.logger.debug(
@@ -5628,41 +6031,17 @@ export class ChatExecutionManager implements OnModuleInit {
         ? {}
         : { originalPrompt: boundImageGenerationPrompt(originalPrompt) }),
     };
-    const response = await httpRequest<ImageGenerateResponse>({
-      url: `${config.IMAGE_SERVICE_URL}/api/v1/internal/images/generate`,
-      method: 'POST',
-      // image-service's internal routes are ServiceTokenGuard-protected; without
-      // this header every chat image request is refused with 401.
-      headers: { Authorization: buildInterServiceAuthHeader() },
-      body,
-      timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
-    });
+    const response = await this.postImageRequest(body);
 
-    if (isPlanFeatureDisabledResponse(response.status, response.data)) {
-      // The plan changed between the check above and image-service's own gate.
-      this.logger.warn(`callImageService: image-service refused on plan user=${userId}`);
-      return imagePlanRefusalResponse(
-        IMAGE_GENERATION_PLAN_FEATURE,
-        provider,
-        model,
-        startTime,
-        usedFallback,
-      );
-    }
-    const maskRefusal = readImageMaskRefusalCode(response.status, response.data);
-    if (maskRefusal !== undefined) {
-      // A refused mask is the user's to fix: a translated notice, not a failure.
-      this.logger.warn(`callImageService: mask refused code=${maskRefusal} user=${userId}`);
-      return imageMaskRefusalResponse(maskRefusal, provider, model, startTime, usedFallback);
-    }
-    if (!response.ok) {
-      this.logger.error(
-        `callImageService: image service returned error status=${String(response.status)}`,
-      );
-      throw new BusinessException(
-        `Image service returned status ${String(response.status)}`,
-        'IMAGE_SERVICE_REQUEST_FAILED',
-      );
+    const refusal = this.imageServiceRefusal(response, {
+      provider,
+      model,
+      startTime,
+      usedFallback,
+      userId,
+    });
+    if (refusal !== undefined) {
+      return refusal;
     }
 
     const latencyMs = Date.now() - startTime;

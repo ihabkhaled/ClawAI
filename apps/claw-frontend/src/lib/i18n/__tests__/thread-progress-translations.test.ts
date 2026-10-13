@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { THREAD_GENERATION_CODE_KEYS } from '@/constants/thread-generation-progress.constants';
+import {
+  THREAD_GENERATION_CODE_KEYS,
+  THREAD_START_ERROR_KEYS,
+} from '@/constants/thread-generation-progress.constants';
 import { ar } from '@/lib/i18n/locales/ar';
 import { de } from '@/lib/i18n/locales/de';
 import { en } from '@/lib/i18n/locales/en';
@@ -48,6 +51,31 @@ describe('chat.threadProgress translations', () => {
     expect(source['code.unknown']).toContain('{code}');
     expect(source['hint.unknown']).toBeTruthy();
   });
+
+  it('carries a sentence for every start-refusal code and the still-working line', () => {
+    for (const key of Object.values(THREAD_START_ERROR_KEYS)) {
+      expect(source[`startError.${key}`]).toBeTruthy();
+    }
+    expect(source.stillWorking).toBeTruthy();
+  });
+
+  it.each(Object.entries(OTHERS))(
+    '%s translates the idle-timeout wording instead of copying English',
+    (_locale, dictionary) => {
+      const translated = flatten(dictionary.chat.threadProgress);
+      const keys = [
+        'stillWorking',
+        ...Object.values(THREAD_START_ERROR_KEYS).map((key) => `startError.${key}`),
+        ...['modelIdleTimeout', 'modelHardCeiling', 'modelReasonedNoAnswer'].flatMap((key) => [
+          `code.${key}`,
+          `hint.${key}`,
+        ]),
+      ];
+      for (const key of keys) {
+        expect(translated[key], key).not.toBe(source[key]);
+      }
+    },
+  );
 
   it.each(Object.entries(OTHERS))(
     '%s has every key, the same placeholders, and a real translation',

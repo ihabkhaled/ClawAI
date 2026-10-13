@@ -1773,6 +1773,11 @@
         "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-internal.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/internal/chat/generate-stream",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-internal.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/internal/chat/model-authorization-metrics",
         "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-internal.controller.ts"
@@ -4474,5 +4479,5 @@
     ]
   },
   "generated": true,
-  "total": 886
+  "total": 887
 }

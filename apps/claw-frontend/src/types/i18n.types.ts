@@ -772,6 +772,7 @@ export type TranslationDictionary = {
       tokens: string;
       showExcerpt: string;
       hideExcerpt: string;
+      stillWorking: string;
       pollingPaused: string;
       failureTitle: string;
       failureWhere: string;
@@ -822,6 +823,10 @@ export type TranslationDictionary = {
         generationWorkerLost: string;
         leaseExpired: string;
         resumedFromCheckpoint: string;
+        generationAttemptTimeout: string;
+        modelIdleTimeout: string;
+        modelHardCeiling: string;
+        modelReasonedNoAnswer: string;
         unknown: string;
       };
       hint: {
@@ -850,7 +855,18 @@ export type TranslationDictionary = {
         generationWorkerLost: string;
         leaseExpired: string;
         resumedFromCheckpoint: string;
+        generationAttemptTimeout: string;
+        modelIdleTimeout: string;
+        modelHardCeiling: string;
+        modelReasonedNoAnswer: string;
         unknown: string;
+      };
+      startError: {
+        notPermitted: string;
+        notInPlan: string;
+        modelNotAllowedForPlan: string;
+        modelUnknown: string;
+        spendCapTooLow: string;
       };
       error: {
         conflict: string;

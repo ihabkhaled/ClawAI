@@ -56,3 +56,37 @@ write findings and `revisionBrief` in that language. Keep the rest of the contra
 English, no chain-of-thought). Changing the prompt changes the stored prompt hash, so in-flight jobs
 replay their review once. `ChatSnapshotClient` answers 404 (never 503) when chat reports the source
 thread missing or owned by someone else.
+
+## Model calls time out on silence, not on the clock (ADR-175)
+
+`ChatModelClient.generate` calls chat-service's `POST /internal/chat/generate-stream` and reads
+`application/x-ndjson` frames incrementally (`utilities/ndjson-lines.utility.ts`; a line may be split
+across chunks). Frames (mirrored zod schema in `schemas/chat-generate-stream.schema.ts`, no shared
+package): `{"type":"activity"}` only when upstream bytes really arrived, then exactly one terminal
+`{"type":"result","data":<the /generate JSON>}` or `{"type":"error","status","code","message"}`. An unknown
+frame type is ignored; the `message` text is never read or forwarded, only the machine `code`.
+
+- **One guard per call** (`utilities/model-call-guard.utility.ts`): silence limit `MODEL_CALL_IDLE_TIMEOUT_MS`
+  330 s, restarted on every chunk of bytes; absolute `MODEL_CALL_MAX_TOTAL_MS` 630 s that nothing restarts; and
+  the job's `AbortSignal`. The limits sit 30 s above chat-service's own (300 s idle, 600 s ceiling) so its coded
+  error frame arrives first and this hop's limits are only a backstop. Constants live in
+  `models/constants/model-call.constants.ts`; there are no env vars.
+- **Codes.** `MODEL_IDLE_TIMEOUT` (retryable, falls to the next fallback candidate), `MODEL_REASONED_NO_ANSWER`
+  (same), `MODEL_HARD_CEILING` -> `ModelCallCeilingError`, a `DeterministicGenerationError`: the same model is
+  not retried, the next candidate is tried, and the job fails on attempt 1 only if every candidate ended that
+  way. An error frame becomes `Chat model request failed (<status>: <CODE>)`, so `parseStepError` keeps status
+  and code; a stream that ends with no terminal frame is `PROVIDER_UNAVAILABLE` (transient).
+- **Cancel stops the call in flight.** `GenerationJobsService.startLeaseMonitor` owns an `AbortController` per
+  job and polls `isCancellationRequested` every `CANCEL_POLL_INTERVAL_MS` (2 s); cancel or lease loss aborts it.
+  The signal rides `GenerationPipelineInput.signal` -> `callRole` -> `ChatModelRequest.signal`, so parallel
+  author votes stop together and the socket closes (chat-service then releases the hold). Never poll cancel only
+  between steps again.
+- **Attempt ceiling.** `GenerationPipelineManager.withAttemptCeiling` gives one attempt
+  `GENERATION_ATTEMPT_MAX_MS` (25 min, under the broker's 30 min consumer timeout) and joins that to the job
+  signal. Expiry fails the attempt with `GENERATION_ATTEMPT_TIMEOUT` (`GenerationAttemptTimeoutError`), no
+  fallback is tried, and the retry resumes from saved checkpoints.
+- **One release of fallback.** A 404 from the stream route (a chat-service replica not yet upgraded) calls the old
+  `/internal/chat/generate` instead, with only the ceiling (no activity exists to watch). Delete
+  `callBuffered` and `CHAT_GENERATE_PATH` once every chat-service replica serves the stream route.
+- A new code needs the frontend `THREAD_GENERATION_CODE_KEYS` entry and all 13 locales (done for the four codes
+  above in `docs/05-frontend/threads-progress-codes.md`). Research calls are not yet cancellable in flight.

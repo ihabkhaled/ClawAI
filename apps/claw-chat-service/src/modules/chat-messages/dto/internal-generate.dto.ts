@@ -23,6 +23,13 @@ export const internalGenerateSchema = z
     userPrompt: z.string().min(1).max(200_000),
     maxTokens: z.number().int().positive().max(32_768).optional(),
     workflow: z.string().min(1).max(64).optional(),
+    /**
+     * Whether a reasoning model may think before it answers. Absent means no:
+     * on Ollama the output budget covers thinking AND the answer, so a model
+     * left to think can spend the whole budget reasoning and return an empty
+     * answer (kimi, 2026-10-13). Ignored by providers with no such switch.
+     */
+    thinking: z.boolean().optional(),
   })
   .strict()
   .superRefine((value, context) => {

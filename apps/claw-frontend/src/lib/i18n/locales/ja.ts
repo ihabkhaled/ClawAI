@@ -851,6 +851,8 @@ export const ja: TranslationDictionary = {
       tokens: '入力 {input} トークン、出力 {output} トークン',
       showExcerpt: 'AI の回答を表示',
       hideExcerpt: '隠す',
+      stillWorking:
+        '処理中です。遅いモデルは数分かかることがあります。5分間応答がない場合にのみ、停止したと判断します。',
       pollingPaused: 'ライブ更新を一時停止しました。ページを再読み込みして再確認してください。',
       failureTitle: 'この生成は失敗しました',
       failureWhere: '{stage} で失敗（{role}）',
@@ -905,6 +907,10 @@ export const ja: TranslationDictionary = {
         generationWorkerLost: 'この生成を実行していたワーカーが予期せず停止しました。',
         leaseExpired: 'ワーカーが応答しなくなったため、別のワーカーに引き継がれました。',
         resumedFromCheckpoint: '最後に保存された手順から生成を再開しました。',
+        generationAttemptTimeout: 'この試行は25分を超えたため、停止しました。',
+        modelIdleTimeout: 'モデルが5分間無応答だったため、停止したと判断しました。',
+        modelHardCeiling: 'モデルが10分経っても動作していたため、呼び出しを停止しました。',
+        modelReasonedNoAnswer: 'モデルが出力の予算をすべて思考に使い切り、回答を書きませんでした。',
         unknown: '問題が発生しました（{code}）。',
       },
       hint: {
@@ -940,7 +946,23 @@ export const ja: TranslationDictionary = {
         generationWorkerLost: 'もう一度実行するには再試行してください。',
         leaseExpired: '操作は不要です。自動で続行されます。',
         resumedFromCheckpoint: '操作は不要です。それまでの作業は保持されています。',
+        generationAttemptTimeout: 'もう一度試すか、より速いモデルか短いテーマを選んでください。',
+        modelIdleTimeout:
+          'もう一度試すか、別のモデルを選んでください。まだ書き続けている遅いモデルは、遅いだけでは止められません。',
+        modelHardCeiling: 'より速いモデルか短いテーマを選んで、もう一度試してください。',
+        modelReasonedNoAnswer:
+          'もう一度試すか、より直接答えるモデルを選ぶか、テーマを短くしてください。',
         unknown: '再試行するか、モデルを変更してください。',
+      },
+      startError: {
+        notPermitted:
+          'このアカウントにはThreadを生成する権限がありません。管理者にアクセスを依頼してください。',
+        notInPlan:
+          'お使いのプランには、この生成に必要な機能（Web調査、審査、批評）が含まれていません。外すか、プランをアップグレードしてください。',
+        modelNotAllowedForPlan:
+          '選択したモデルがお使いのプランに含まれていません。含まれるモデルを選んでください。',
+        modelUnknown: '選択したモデルがモデルカタログにありません。一覧から選んでください。',
+        spendCapTooLow: '上限額が低すぎます。0.01 USD 以上に設定してください。',
       },
       error: {
         conflict: '先に生成をキャンセルするか、少し待ってからやり直してください。',

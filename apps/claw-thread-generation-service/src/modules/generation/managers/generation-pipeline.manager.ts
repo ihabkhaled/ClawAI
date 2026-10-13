@@ -5,6 +5,7 @@ import { z } from 'zod';
 import {
   CRITIC_STAGE,
   FORMAT_ATTEMPTS_PER_MODEL,
+  GENERATION_ATTEMPT_MAX_MS,
   JUDGE_STAGE,
   MAX_GENERATION_ROUNDS,
 } from '../constants/generation.constants';
@@ -15,13 +16,15 @@ import { ResearchClient, type ResearchEvidence } from '../../research/research.c
 import { resolveAuthorConsensus } from '../utilities/author-consensus.utility';
 import { buildReviewSystemPrompt } from '../utilities/review-prompt.utility';
 import { GenerationJobsRepository } from '../repositories/generation-jobs.repository';
+import { abortReasonToError } from '../utilities/abort-reason-error.utility';
+import { GenerationAttemptTimeoutError } from '../utilities/generation-attempt-timeout.error';
 import { ThreadGenerationCancelledError } from '../utilities/thread-generation-cancelled.error';
 import { ThreadGenerationLeaseLostError } from '../utilities/thread-generation-lease-lost.error';
 import { stableJson } from '../utilities/stable-json.utility';
 import { parseModelJson } from '../utilities/parse-model-json.utility';
 import { ReviewerRole } from '../types/reviewer-role.enum';
 import { StepRecorder } from '../services/step-recorder.service';
-import type { StepResponseOutcome } from '../types/step-recorder.types';
+import type { StepRecordInput, StepResponseOutcome } from '../types/step-recorder.types';
 import {
   DeterministicGenerationError,
   isDeterministicGenerationError,
@@ -62,7 +65,30 @@ export class GenerationPipelineManager {
   ) {}
 
   async generate(input: GenerationPipelineInput): Promise<GenerationPipelineResult> {
-    const job = this.validateRoles(input);
+    return this.withAttemptCeiling(this.validateRoles(input), (job) => this.runGenerate(job));
+  }
+
+  /**
+   * One attempt gets a fixed time budget. Its signal joins the job's own, so every model call
+   * in flight, parallel votes included, stops when the budget is spent or the job is cancelled.
+   */
+  private async withAttemptCeiling<T>(
+    job: GenerationPipelineInput,
+    run: (bounded: GenerationPipelineInput) => Promise<T>,
+  ): Promise<T> {
+    const ceiling = new AbortController();
+    const timer = setTimeout(() => {
+      ceiling.abort(new GenerationAttemptTimeoutError());
+    }, GENERATION_ATTEMPT_MAX_MS);
+    const signal = job.signal ? AbortSignal.any([job.signal, ceiling.signal]) : ceiling.signal;
+    try {
+      return await run({ ...job, signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  private async runGenerate(job: GenerationPipelineInput): Promise<GenerationPipelineResult> {
     const evidence = await this.resolveEvidence(job);
     const evidenceItems = this.evidenceItems(evidence.bundle);
     await this.throwIfCancelled(job);
@@ -269,7 +295,17 @@ export class GenerationPipelineManager {
     evidenceBundle: Record<string, unknown>,
     evidenceHash: string,
   ): Promise<GenerationPipelineResult> {
-    const job = this.validateRoles(input);
+    return this.withAttemptCeiling(this.validateRoles(input), (job) =>
+      this.runRevisionReview(job, draft, evidenceBundle, evidenceHash),
+    );
+  }
+
+  private async runRevisionReview(
+    job: GenerationPipelineInput,
+    draft: AuthorDraft,
+    evidenceBundle: Record<string, unknown>,
+    evidenceHash: string,
+  ): Promise<GenerationPipelineResult> {
     const evidenceItems = this.evidenceItems(evidenceBundle);
     await this.checkCitations(job, 1, [draft], evidenceItems);
     const draftHash = revisionDraftHash(draft);
@@ -691,6 +727,7 @@ export class GenerationPipelineManager {
             systemPrompt: prompt.systemPrompt,
             userPrompt: prompt.userPrompt,
             maxOutputTokens: outputReserve,
+            signal: input.signal,
           });
           // Paid for even if the job is cancelled or the answer is unusable, so counted first.
           await this.recordSpend(input.jobId, response.costMicroUsd);
@@ -708,18 +745,7 @@ export class GenerationPipelineManager {
           everyFailureDeterministic = false;
           lastError = new ServiceUnavailableException('A model returned invalid structured output');
         } catch (error: unknown) {
-          if (error instanceof ChatModelIncompleteError) {
-            await this.recordSpend(input.jobId, error.costMicroUsd);
-          }
-          if (error instanceof ThreadGenerationCancelledError) throw error;
-          const parsed = parseStepError(error);
-          await this.recorder.record(input.jobId, {
-            ...step,
-            outcome: 'FAILED',
-            code: parsed.code,
-            httpStatus: parsed.httpStatus,
-            durationMs: Date.now() - startedAt,
-          });
+          await this.recordCallFailure(input.jobId, step, error, startedAt);
           everyFailureDeterministic &&= isDeterministicGenerationError(error);
           lastError = error;
           break;
@@ -735,6 +761,32 @@ export class GenerationPipelineManager {
       throw new ServiceUnavailableException(lastError.message);
     }
     throw lastError;
+  }
+
+  /**
+   * Counts the spend and records the failed step. A cancel is not a step failure and ends the
+   * role at once; so does a spent attempt time budget, because no other candidate can run
+   * either. Both are rethrown, any other error is left for the caller to try a fallback.
+   */
+  private async recordCallFailure(
+    jobId: string,
+    step: Omit<StepRecordInput, 'outcome'>,
+    error: unknown,
+    startedAt: number,
+  ): Promise<void> {
+    if (error instanceof ChatModelIncompleteError) {
+      await this.recordSpend(jobId, error.costMicroUsd);
+    }
+    if (error instanceof ThreadGenerationCancelledError) throw error;
+    const parsed = parseStepError(error);
+    await this.recorder.record(jobId, {
+      ...step,
+      outcome: 'FAILED',
+      code: parsed.code,
+      httpStatus: parsed.httpStatus,
+      durationMs: Date.now() - startedAt,
+    });
+    if (error instanceof GenerationAttemptTimeoutError) throw error;
   }
 
   private responseOutcome(accepted: boolean, attempt: number): StepResponseOutcome {
@@ -782,7 +834,8 @@ export class GenerationPipelineManager {
       rejections.find((result) => !isDeterministicGenerationError(result.reason)) ?? rejections[0];
     if (
       rejected?.status === 'rejected' &&
-      rejected.reason instanceof ThreadGenerationCancelledError
+      (rejected.reason instanceof ThreadGenerationCancelledError ||
+        rejected.reason instanceof GenerationAttemptTimeoutError)
     ) {
       throw rejected.reason;
     }
@@ -827,6 +880,7 @@ export class GenerationPipelineManager {
   }
 
   private async throwIfCancelled(input: GenerationPipelineInput): Promise<void> {
+    if (input.signal?.aborted) throw abortReasonToError(input.signal.reason);
     if (await input.isCancellationRequested?.()) throw new ThreadGenerationCancelledError();
   }
 }

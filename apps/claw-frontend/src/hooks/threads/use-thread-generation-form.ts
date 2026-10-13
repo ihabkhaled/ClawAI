@@ -15,7 +15,10 @@ import type {
   ThreadGenerationFormController,
   ThreadGenerationFormOptions,
 } from '@/types/thread-publication.types';
-import { resolveThreadErrorMessage } from '@/utilities/thread-error-message.utility';
+import {
+  isThreadStartRefusal,
+  resolveThreadErrorMessage,
+} from '@/utilities/thread-error-message.utility';
 import { createThreadGenerationRequest } from '@/utilities/thread-generation-request.utility';
 import {
   isThreadModelGroupKey,
@@ -66,8 +69,11 @@ export function useThreadGenerationForm({
   });
 
   // 403: the plan or role does not include Thread generation (research, Judge and Critic).
+  // A refusal with a known code (ADR-174) shows its own sentence instead of this generic block.
   const isPlanBlocked =
-    start.error instanceof ApiClientError && start.error.status === HTTP_STATUS_FORBIDDEN;
+    start.error instanceof ApiClientError &&
+    start.error.status === HTTP_STATUS_FORBIDDEN &&
+    !isThreadStartRefusal(start.error);
 
   useEffect(() => {
     if (selectedModels.length === 0 && availableModels.length > 0) {

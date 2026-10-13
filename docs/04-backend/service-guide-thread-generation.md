@@ -18,7 +18,7 @@ for owner review. After verifying the source snapshot, it reserves the selected
 Auth entitlement cap with the same idempotency key before storing and dispatching
 the job. A repeated matching key returns the pinned job before taking another
 snapshot or budget; a reused key with changed input conflicts. Its cancel route
-cancels queued jobs or requests cancellation between provider calls.
+cancels queued jobs and aborts a running job's in-flight provider call within about two seconds.
 
 ## Boundaries
 
@@ -98,6 +98,34 @@ AUTHOR_DRAFTS until the end.
 
 - **Judge and Critic review in the requested language.** `buildReviewSystemPrompt(reviewer, contentLocale)` (`utilities/review-prompt.utility.ts`) tells the reviewer the owner requested the article in that language (for example Spanish), so it is correct even when the topic, source conversation or evidence are in another language. A reviewer must not lower the score, add a blocker or ask for a rewrite or translation because the languages differ, may raise a language blocker only if the draft is not in the requested language, judges only factual support, coherence, completeness and safety, and writes findings and `revisionBrief` in that language. JSON keys stay English. Before this, the prompt omitted the locale, so a Spanish or French draft of an English request was scored down and told to switch to English (production rounds R08 and R12). The shared material still has no locale field; the system prompt carries it. Saved review communications are keyed by the prompt hash, so an in-flight job replays its review once.
 - **A source thread that is missing or owned by someone else is a 404.** `ChatSnapshotClient` maps chat-service's 404 (and 403) to `NotFoundException('Thread not found')` instead of a 503 that invited retries. Threads relays it as `404 Source thread not found`, the same body for both cases, so a caller cannot tell whether another user's thread id exists.
+
+## Model calls are bounded by silence, not by the clock (ADR-175)
+
+Before this change every role call was one non-streaming request with a fixed `AbortSignal.timeout(180_000)`,
+so a model that was still answering or thinking was killed at three minutes and cancelling a job waited for the
+call in flight (about 60 s). Now:
+
+- **Contract.** The client posts the same body as before to chat-service's
+  `POST /api/v1/internal/chat/generate-stream` and reads `application/x-ndjson`: any number of
+  `{"type":"activity"}` lines (sent only when upstream bytes really arrived, never on a timer), then exactly
+  one `{"type":"result","data":{...the /generate JSON, plus optional costMicroUsd...}}` or
+  `{"type":"error","status":<http>,"code":"<MACHINE_CODE>","message":"..."}`. Partial lines are buffered across
+  chunks; unknown frame types are ignored; the message text is never forwarded.
+- **Limits per call.** Silence 330 s on this hop (chat-service stops a silent provider at 300 s and answers with a
+  coded `MODEL_IDLE_TIMEOUT` frame first), absolute 630 s on this hop (chat-service ends a call at 600 s with
+  `MODEL_HARD_CEILING`). Every received chunk restarts the silence timer. Per attempt: 25 minutes
+  (`GENERATION_ATTEMPT_MAX_MS`), because the broker redelivers a message held more than 30 minutes.
+- **Failure codes in the step log.** `MODEL_IDLE_TIMEOUT` and `MODEL_REASONED_NO_ANSWER` (thinking but no answer)
+  fall to the next fallback candidate and are otherwise retried by the normal job retry. `MODEL_HARD_CEILING`
+  is not retried on the same model; the job is failed at once only when every candidate hit it.
+  `GENERATION_ATTEMPT_TIMEOUT` ends the attempt (no fallback), the retry resumes from checkpoints. A stream cut
+  off before its terminal frame is `PROVIDER_UNAVAILABLE`.
+- **Cancel.** A running job polls for a cancel request every 2 s and aborts the in-flight call (all parallel
+  votes), so the job reaches `CANCELLED` within a couple of seconds instead of waiting out the call; chat-service
+  sees the socket close and releases the credit hold. Lease loss aborts the same way. Research is not yet
+  covered.
+- **Deploy order.** chat-service first, then this service. A new client against a chat-service replica that
+  answers 404 on the stream route falls back to the old route for this release only.
 
 ## Owner step log, progress, retry and delete
 

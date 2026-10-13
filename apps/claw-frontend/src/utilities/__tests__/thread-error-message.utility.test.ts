@@ -5,6 +5,7 @@ import { ApiClientError } from '@/services/shared/api-client';
 import {
   isThreadNotFoundError,
   isThreadPollFatalError,
+  isThreadStartRefusal,
   resolveThreadErrorMessage,
 } from '../thread-error-message.utility';
 
@@ -34,6 +35,17 @@ describe('resolveThreadErrorMessage', () => {
       key: 'chat.threadProgress.error.credit',
     });
   });
+  it.each([
+    ['THREAD_GENERATION_NOT_PERMITTED', 403, 'notPermitted'],
+    ['THREAD_GENERATION_NOT_IN_PLAN', 403, 'notInPlan'],
+    ['MODEL_NOT_ALLOWED_FOR_PLAN', 403, 'modelNotAllowedForPlan'],
+    ['THREAD_MODEL_UNKNOWN', 400, 'modelUnknown'],
+    ['THREAD_SPEND_CAP_TOO_LOW', 400, 'spendCapTooLow'],
+  ])('maps the start refusal %s (HTTP %i) to its own sentence', (code, status, key) => {
+    expect(resolveThreadErrorMessage(apiError(status, code))).toEqual({
+      key: `chat.threadProgress.startError.${key}`,
+    });
+  });
 
   it('echoes a safe machine code in the generic message', () => {
     expect(resolveThreadErrorMessage(apiError(500, 'UPSTREAM_BROKEN'))).toEqual({
@@ -55,6 +67,15 @@ describe('resolveThreadErrorMessage', () => {
     expect(resolveThreadErrorMessage(apiError(500))).toEqual({
       key: 'chat.threadProgress.error.generic',
     });
+  });
+});
+
+describe('isThreadStartRefusal', () => {
+  it('is true only for an API error carrying an ADR-174 code', () => {
+    expect(isThreadStartRefusal(apiError(403, 'THREAD_MODEL_UNKNOWN'))).toBe(true);
+    expect(isThreadStartRefusal(apiError(403))).toBe(false);
+    expect(isThreadStartRefusal(apiError(403, 'SOMETHING_ELSE'))).toBe(false);
+    expect(isThreadStartRefusal(new Error('x'))).toBe(false);
   });
 });
 

@@ -295,8 +295,9 @@ cache usage). Tests: `__tests__/payg-credit-anthropic-cache.spec.ts`,
 **Gateway headers.** `resolveProviderConfig` returns the connector's
 `gatewayHeaders`; `withConnectorGatewayHeaders` merges them under the provider
 auth header on the streaming (`runExecutor`) and buffered
-(`postCloudProviderRequest`) cloud paths. The internal-generate and Ollama-cloud
-tool-loop paths do not send them yet.
+(`postCloudProviderRequest`) cloud paths, and the internal-generate paths
+(`generateOnce`, `generateOnceStream`) send them too. The Ollama-cloud tool-loop
+path does not send them yet.
 
 ## Judge + Critic Pipeline
 
@@ -838,6 +839,48 @@ Canonical home (the incident, `splitBufferedReasoning`, `parseOllamaChatResponse
   prefix; one after a reasoning field is not held. Reasoning longer than the
   hold is removed from the STORED answer at the end of the stream
   (`resplitLeakedReasoning`, logged as a warning). Rule 56 §5–7.
+
+## Internal generate: bounded by silence, not by the clock (ADR-175, 2026-10-13)
+
+**Symptom it fixes:** a Threads model call was killed at 180 s (thread side) or
+300 s (here, a total wall-clock cap) while the model was still answering or
+thinking; cancelling a job waited out the call in flight; a reasoning model
+returned an empty answer after spending its whole output budget thinking.
+
+**Endpoints.** `POST /api/v1/internal/chat/generate` is unchanged (workspace-service).
+`POST /api/v1/internal/chat/generate-stream` takes the same body and answers
+`application/x-ndjson`: any number of `{"type":"activity"}` lines, written only when
+provider bytes arrived (at most one a second), then exactly one terminal line,
+`{"type":"result","data":{...}}` (the `/generate` JSON plus `costMicroUsd` for a
+pay-as-you-go user) or `{"type":"error","status","code","message"}`. Service-token
+and validation refusals are plain HTTP statuses; everything after the headers is a
+coded line.
+
+| Limit                                           | Value | Where                               |
+| ----------------------------------------------- | ----- | ----------------------------------- |
+| Silence (no provider byte, first byte included) | 300 s | `INTERNAL_GENERATE_IDLE_TIMEOUT_MS` |
+| One call, never reset                           | 600 s | `INTERNAL_GENERATE_MAX_TOTAL_MS`    |
+| Provider that cannot stream, one buffered call  | 600 s | `INTERNAL_GENERATE_BUFFERED_MAX_MS` |
+
+They are constants, not environment variables. `httpStream` takes `timeoutMs`
+(idle) and an optional `maxTotalMs` (ceiling) and aborts with a typed reason.
+
+**Money.** `generateOnce` and `generateOnceStream` share `prepareInternalGenerate`
+(connector, then `reserveCredit`) and `settleInternalGenerate` (`finalizeCredit`), and
+release the hold on any failure: `TIMEOUT` for idle and ceiling, `CANCELLED` when the
+caller disconnected (the provider fetch is aborted with it), `PROVIDER_ERROR`
+otherwise. Settling a stream that was cut after tokens were billed is an open
+owner decision; the streamed character count is logged.
+
+**Codes.** `MODEL_IDLE_TIMEOUT`, `MODEL_HARD_CEILING` (504), `MODEL_REASONED_NO_ANSWER`
+(502; thinking with no answer, both endpoints), existing codes unchanged.
+`think` is sent to the Ollama connector as `false` unless the request says
+`thinking: true`.
+
+Tests: `__tests__/internal-generate-stream.spec.ts`,
+`__tests__/internal-generate-idle-timeout.spec.ts`,
+`common/utilities/__tests__/http-stream-timers.spec.ts`. Caller side:
+[service-guide-thread-generation.md](service-guide-thread-generation.md).
 
 ## Provider-key credit and provider error text (ADR-124, 2026-09-25)
 

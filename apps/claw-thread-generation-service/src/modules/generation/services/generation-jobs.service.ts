@@ -62,6 +62,7 @@ import { describeFailure } from '../utilities/describe-failure.utility';
 import { toFailedPayload } from '../utilities/failure-report.utility';
 
 import {
+  CANCEL_POLL_INTERVAL_MS,
   GENERATION_HEARTBEAT_MS,
   GENERATION_RECOVERY_INTERVAL_MS,
   GENERATION_WORKER_ID,
@@ -341,8 +342,35 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  /**
+   * Watches one running job: renews its lease, and looks for a cancel request every
+   * CANCEL_POLL_INTERVAL_MS. Cancel or lease loss aborts `signal`, which stops the model call
+   * in flight instead of leaving the worker to wait for it to finish on its own.
+   */
   private startLeaseMonitor(job: ThreadGenerationJob): LeaseMonitor {
     let leaseLost = false;
+    const stopper = new AbortController();
+    const abort = (): void => {
+      if (!stopper.signal.aborted) stopper.abort(new ThreadGenerationCancelledError());
+    };
+    const lose = (): void => {
+      leaseLost = true;
+      abort();
+    };
+    const heartbeat = this.startHeartbeat(job, lose);
+    const cancelPoll = this.startCancelPoll(job, abort);
+    return {
+      signal: stopper.signal,
+      isLost: () => leaseLost,
+      markLost: lose,
+      stop: () => {
+        clearInterval(heartbeat);
+        clearInterval(cancelPoll);
+      },
+    };
+  }
+
+  private startHeartbeat(job: ThreadGenerationJob, onLost: () => void): NodeJS.Timeout {
     let heartbeatRunning = false;
     const heartbeat = setInterval(() => {
       if (heartbeatRunning) return;
@@ -350,7 +378,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       void this.repository
         .heartbeat(job.id, GENERATION_WORKER_ID, job.attemptCount)
         .then((owned) => {
-          if (!owned) leaseLost = true;
+          if (!owned) onLost();
         })
         .catch(() => {
           this.logger.warn('Generation worker heartbeat failed');
@@ -360,15 +388,28 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
         });
     }, GENERATION_HEARTBEAT_MS);
     heartbeat.unref();
-    return {
-      isLost: () => leaseLost,
-      markLost: () => {
-        leaseLost = true;
-      },
-      stop: () => {
-        clearInterval(heartbeat);
-      },
-    };
+    return heartbeat;
+  }
+
+  private startCancelPoll(job: ThreadGenerationJob, onCancel: () => void): NodeJS.Timeout {
+    let pollRunning = false;
+    const poll = setInterval(() => {
+      if (pollRunning) return;
+      pollRunning = true;
+      void this.repository
+        .isCancellationRequested(job.id)
+        .then((requested) => {
+          if (requested) onCancel();
+        })
+        .catch(() => {
+          this.logger.warn('Generation cancel check failed');
+        })
+        .finally(() => {
+          pollRunning = false;
+        });
+    }, CANCEL_POLL_INTERVAL_MS);
+    poll.unref();
+    return poll;
   }
 
   private async runAndSave(
@@ -378,7 +419,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     lease: LeaseMonitor,
     isRevisionReview: boolean,
   ): Promise<void> {
-    const result = await this.runPipeline(job, event, request, lease.isLost);
+    const result = await this.runPipeline(job, event, request, lease);
     if (lease.isLost()) return;
     if (await this.repository.isCancellationRequested(job.id)) {
       throw new ThreadGenerationCancelledError();
@@ -594,7 +635,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     job: ThreadGenerationJob,
     event: z.infer<typeof generationEventSchema>,
     request: EnqueueGenerationDto | RevisionReviewJobRequest,
-    isLeaseLost: () => boolean,
+    lease: LeaseMonitor,
   ): Promise<GenerationPipelineResult> {
     const source = z.record(z.string(), z.unknown()).parse(job.sourceSnapshot);
     const pipelineInput = {
@@ -609,20 +650,11 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       judge: request.judge,
       critic: request.critic,
       isCancellationRequested: async () =>
-        isLeaseLost() || (await this.repository.isCancellationRequested(job.id)),
+        lease.isLost() || (await this.repository.isCancellationRequested(job.id)),
+      signal: lease.signal,
     };
     if ('kind' in request) {
-      const evidence = z.record(z.string(), z.unknown()).safeParse(job.evidenceBundle);
-      if (
-        !evidence.success ||
-        !job.evidenceBundleHash ||
-        (this.hash(JSON.stringify(evidence.data)) !== job.evidenceBundleHash &&
-          this.hash(stableJson(evidence.data)) !== job.evidenceBundleHash)
-      ) {
-        throw new InternalServerErrorException(
-          'Saved research evidence failed integrity validation',
-        );
-      }
+      const evidence = this.requireIntactEvidence(job);
       return this.pipeline.reviewRevision(
         {
           ...pipelineInput,
@@ -630,8 +662,8 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
           publicationType: request.publicationType,
         },
         request.draft,
-        evidence.data,
-        job.evidenceBundleHash,
+        evidence.bundle,
+        evidence.hash,
       );
     }
     return this.pipeline.generate({
@@ -639,6 +671,22 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       topic: request.topic,
       publicationType: request.publicationType,
     });
+  }
+
+  private requireIntactEvidence(job: ThreadGenerationJob): {
+    bundle: Record<string, unknown>;
+    hash: string;
+  } {
+    const evidence = z.record(z.string(), z.unknown()).safeParse(job.evidenceBundle);
+    if (
+      !evidence.success ||
+      !job.evidenceBundleHash ||
+      (this.hash(JSON.stringify(evidence.data)) !== job.evidenceBundleHash &&
+        this.hash(stableJson(evidence.data)) !== job.evidenceBundleHash)
+    ) {
+      throw new InternalServerErrorException('Saved research evidence failed integrity validation');
+    }
+    return { bundle: evidence.data, hash: job.evidenceBundleHash };
   }
 
   private hash(value: string): string {

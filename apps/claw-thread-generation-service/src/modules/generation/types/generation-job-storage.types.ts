@@ -65,6 +65,8 @@ export type GenerationEnqueueResult = { jobId: string; status: string };
 export type GenerationJobDispatchView = Pick<GenerationJobRow, 'id' | 'status' | 'correlationId'>;
 
 export type LeaseMonitor = {
+  /** Aborts once the job is cancelled or its lease is lost. */
+  signal: AbortSignal;
   isLost: () => boolean;
   markLost: () => void;
   stop: () => void;

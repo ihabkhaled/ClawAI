@@ -860,6 +860,8 @@ export const es: TranslationDictionary = {
       tokens: '{input} tokens de entrada, {output} de salida',
       showExcerpt: 'Mostrar lo que dijo la IA',
       hideExcerpt: 'Ocultar',
+      stillWorking:
+        'Sigue trabajando. Los modelos lentos pueden tardar varios minutos. Un modelo solo se considera bloqueado tras 5 minutos de silencio.',
       pollingPaused: 'Actualizaciones en vivo en pausa. Recarga la página para comprobar de nuevo.',
       failureTitle: 'Esta generación falló',
       failureWhere: 'Falló en {stage} ({role})',
@@ -916,6 +918,13 @@ export const es: TranslationDictionary = {
           'El proceso que ejecutaba esta generación se detuvo de forma inesperada.',
         leaseExpired: 'El proceso dejó de responder, así que el trabajo pasó a otro.',
         resumedFromCheckpoint: 'La generación se reanudó desde el último paso guardado.',
+        generationAttemptTimeout: 'Este intento duró más de 25 minutos, así que se detuvo.',
+        modelIdleTimeout:
+          'Un modelo estuvo en silencio durante 5 minutos, así que se consideró bloqueado.',
+        modelHardCeiling:
+          'Un modelo seguía trabajando tras 10 minutos, así que se detuvo la llamada.',
+        modelReasonedNoAnswer:
+          'Un modelo gastó todo su presupuesto de salida pensando y no escribió respuesta.',
         unknown: 'Algo salió mal ({code}).',
       },
       hint: {
@@ -950,7 +959,24 @@ export const es: TranslationDictionary = {
         generationWorkerLost: 'Reintenta para ejecutarla de nuevo.',
         leaseExpired: 'No hay nada que hacer. Continúa solo.',
         resumedFromCheckpoint: 'No hay nada que hacer. Se conservó el trabajo anterior.',
+        generationAttemptTimeout: 'Reintenta o elige modelos más rápidos o un tema más corto.',
+        modelIdleTimeout:
+          'Reintenta o elige otro modelo. Un modelo lento que sigue escribiendo nunca se detiene por ser lento.',
+        modelHardCeiling: 'Elige un modelo más rápido o un tema más corto y reintenta.',
+        modelReasonedNoAnswer:
+          'Reintenta, elige un modelo que responda más directamente o acorta el tema.',
         unknown: 'Reintenta, o cambia los modelos e inténtalo de nuevo.',
+      },
+      startError: {
+        notPermitted:
+          'Tu cuenta no tiene permiso para generar Threads. Pide acceso a un administrador.',
+        notInPlan:
+          'Tu plan no incluye una función que necesita esta generación (investigación web, Juez o Crítico). Quítala o mejora tu plan.',
+        modelNotAllowedForPlan:
+          'Un modelo seleccionado no está incluido en tu plan. Elige un modelo incluido.',
+        modelUnknown:
+          'Un modelo seleccionado no está en el catálogo de modelos. Elige uno de la lista.',
+        spendCapTooLow: 'El límite de gasto es demasiado bajo. Fija al menos 0,01 USD.',
       },
       error: {
         conflict: 'Cancela primero la generación o inténtalo de nuevo en un momento.',

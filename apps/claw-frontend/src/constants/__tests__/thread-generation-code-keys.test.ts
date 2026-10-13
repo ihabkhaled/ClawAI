@@ -3,8 +3,16 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { THREAD_GENERATION_CODE_KEYS } from '@/constants/thread-generation-progress.constants';
+import {
+  THREAD_GENERATION_CODE_KEYS,
+  THREAD_START_ERROR_KEYS,
+} from '@/constants/thread-generation-progress.constants';
 import { en } from '@/lib/i18n/locales/en';
+
+const THREADS_ERROR_ENUM = resolve(
+  __dirname,
+  '../../../../claw-threads-service/src/common/enums/thread-generation-error-code.enum.ts',
+);
 
 const SERVICE_ROOT = resolve(
   __dirname,
@@ -98,6 +106,37 @@ describe('THREAD_GENERATION_CODE_KEYS', () => {
     for (const key of Object.values(THREAD_GENERATION_CODE_KEYS)) {
       expect(code[key as keyof typeof code], key).toBeTruthy();
       expect(hint[key as keyof typeof hint], key).toBeTruthy();
+    }
+  });
+
+  it('maps the idle-timeout, ceiling and reasoned-no-answer codes to their own messages', () => {
+    expect(THREAD_GENERATION_CODE_KEYS.MODEL_IDLE_TIMEOUT).toBe('modelIdleTimeout');
+    expect(THREAD_GENERATION_CODE_KEYS.GENERATION_ATTEMPT_TIMEOUT).toBe('generationAttemptTimeout');
+    expect(THREAD_GENERATION_CODE_KEYS.MODEL_HARD_CEILING).toBe('modelHardCeiling');
+    expect(THREAD_GENERATION_CODE_KEYS.MODEL_REASONED_NO_ANSWER).toBe('modelReasonedNoAnswer');
+  });
+});
+
+describe('THREAD_START_ERROR_KEYS', () => {
+  const enumCodes = [
+    ...readFileSync(THREADS_ERROR_ENUM, 'utf8').matchAll(/=\s*'([A-Z][A-Z0-9_]+)'/gu),
+  ]
+    .map((match) => match[1])
+    .filter((code): code is string => code !== undefined);
+
+  it('finds the refusal codes the Threads API is known to return (guards the scanner)', () => {
+    expect(enumCodes).toContain('THREAD_SPEND_CAP_TOO_LOW');
+    expect(enumCodes).toContain('MODEL_NOT_ALLOWED_FOR_PLAN');
+  });
+
+  it('has a frontend sentence for every code the Threads API refuses a start with', () => {
+    expect(enumCodes.filter((code) => THREAD_START_ERROR_KEYS[code] === undefined)).toEqual([]);
+  });
+
+  it('points every code at an English sentence', () => {
+    const { startError } = en.chat.threadProgress;
+    for (const key of Object.values(THREAD_START_ERROR_KEYS)) {
+      expect(startError[key as keyof typeof startError], key).toBeTruthy();
     }
   });
 });

@@ -665,6 +665,58 @@ chain drafting and implementation handoff all spend real provider money through
 the callers that most need it. The response carries `clamped` so the calling
 service can tell its own user why the answer is short.
 
+## Internal generate: silence is the signal, not the clock (ADR-175, 2026-10-13)
+
+`POST /internal/chat/generate-stream` is `generate` answered as NDJSON, for
+callers (thread-generation-service) that must tell a model that is still
+working from one that is stuck. `generate` is unchanged for workspace-service.
+
+- **Wire format.** Zero or more `{"type":"activity"}` lines, then exactly one
+  terminal line: a `result` line (`data` is the `/generate` JSON plus an optional
+  `costMicroUsd`) or an `error` line (`status`, `code`, `message`). Headers are
+  flushed before the provider is dialled, so every failure after that is a coded
+  line in a 200 body (a 402 credit refusal included). Service-token and body
+  validation refusals stay plain HTTP statuses. The controller only delegates:
+  `respondWithGenerateStream` owns the body (a controller may not `try/catch`).
+- **`activity` is never a timer.** It is written from the provider chunk loop
+  (`foldProviderStream`'s `onChunk`, before parsing, so thinking frames and SSE
+  comments count), throttled to one a second. A blind ping would make a stuck
+  model look alive.
+- **Clocks** (`constants/internal-generate.constants.ts`, no env vars): idle 300 s
+  (reset by every chunk, also covers the wait for the first byte), ceiling 600 s
+  per call, 600 s for a buffered fallback. `httpStream` takes `timeoutMs` (idle)
+  and `maxTotalMs` (ceiling) and aborts with `StreamIdleTimeoutError` /
+  `StreamCeilingError`; a caller abort passes its own reason. Do not repurpose
+  `OLLAMA_GENERATE_TIMEOUT_MS`.
+- **Same money flow as `generateOnce`.** Both go through `prepareInternalGenerate`
+  (connector, then `reserveCredit`), `settleInternalGenerate` (`finalizeCredit`)
+  and release on any failure. Release reason: `TIMEOUT` (idle, ceiling),
+  `CANCELLED` (caller went away), `PROVIDER_ERROR` (anything else; `generateOnce`
+  keeps this for everything). Never take a hold outside these.
+- **Cancel.** The socket closing before the terminal line aborts the provider
+  fetch and releases the hold. Streamed chars before a failure are logged: the
+  provider billed them and the hold is still released (open owner decision).
+- **Codes.** `MODEL_IDLE_TIMEOUT`, `MODEL_HARD_CEILING` (504),
+  `MODEL_REASONED_NO_ANSWER` (502, thinking but no answer, both endpoints; an
+  empty envelope keeps `CLOUD_PROVIDER_EMPTY_RESPONSE`), `CLIENT_ABORTED` (never
+  written). A message with a URL or JSON is replaced whole; a non-HTTP failure is
+  `PROVIDER_UNREACHABLE`, never the error text.
+- **`think` is off unless asked.** Ollama's `num_predict` covers thinking AND
+  the answer, so a model left to think can return an empty answer. The Ollama
+  body sends `think: false`, or `thinking: true` from the request (both endpoints).
+- **`costMicroUsd`** on both endpoints is the settled outcome through
+  `paygDisclosableCost` (PAYG only, `0` is real, never an estimate).
+- **A provider that cannot stream.** A connector config with
+  `supportsStreaming: false` gets one buffered call under the 600 s ceiling and sends no activity. A
+  provider that answered `stream: true` with one JSON document is read as the
+  buffered reply it is. connector-service does not send the field yet.
+- **`ProviderStreamReader` reads Ollama thinking in both places** (`thinking` for
+  `/api/generate`, `message.thinking` for `/api/chat`).
+- Specs: `__tests__/internal-generate-stream.spec.ts` (money flow, codes, think),
+  `__tests__/internal-generate-idle-timeout.spec.ts` (300 s / 600 s / cancel with
+  the real HTTP client, only `fetch` faked), `common/utilities/__tests__/http-stream-timers.spec.ts`,
+  `utilities/__tests__/internal-generate-*.spec.ts`.
+
 ## Provider-key credit and provider error text (ADR-124, 2026-09-25)
 
 Production showed a user raw OpenRouter JSON — "can only afford 9063", plus a

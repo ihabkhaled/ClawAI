@@ -100,7 +100,7 @@ describe('ProviderStreamReader — OpenAI SSE', () => {
     const frags = reader.push('data: {"choices":[{"delta":{},"finish_reason":"length"}]}\n\n');
     const doneFrag = frags.find((f) => f.kind === 'done');
     expect(doneFrag).toBeDefined();
-    if (doneFrag === undefined || doneFrag.kind !== 'done') {
+    if (doneFrag?.kind !== 'done') {
       throw new Error('expected done fragment');
     }
     expect(doneFrag.finishReason).toBe('length');
@@ -118,6 +118,15 @@ describe('ProviderStreamReader — Ollama NDJSON', () => {
   it('maps thinking field to model-emitted reasoning', () => {
     const reader = new ProviderStreamReader(AiStreamProtocol.OLLAMA_NDJSON);
     expect(reader.push('{"thinking":"hmm","done":false}\n')).toEqual([
+      { kind: 'reasoning', text: 'hmm', visibility: AiReasoningVisibility.MODEL_EMITTED },
+    ]);
+  });
+
+  it('maps native /api/chat message.thinking to model-emitted reasoning', () => {
+    const reader = new ProviderStreamReader(AiStreamProtocol.OLLAMA_NDJSON);
+    expect(
+      reader.push('{"message":{"role":"assistant","content":"","thinking":"hmm"},"done":false}\n'),
+    ).toEqual([
       { kind: 'reasoning', text: 'hmm', visibility: AiReasoningVisibility.MODEL_EMITTED },
     ]);
   });
@@ -146,7 +155,7 @@ describe('ProviderStreamReader — Ollama NDJSON', () => {
     );
     const doneFrag = frags.find((f) => f.kind === 'done');
     expect(doneFrag).toBeDefined();
-    if (doneFrag === undefined || doneFrag.kind !== 'done') {
+    if (doneFrag?.kind !== 'done') {
       throw new Error('expected done fragment');
     }
     expect(doneFrag.finishReason).toBe('stop');
@@ -166,7 +175,7 @@ describe('ProviderStreamReader — Ollama NDJSON', () => {
     const frags = reader.push('{"response":"","done":true}\n');
     const doneFrag = frags.find((f) => f.kind === 'done');
     expect(doneFrag).toBeDefined();
-    if (doneFrag === undefined || doneFrag.kind !== 'done') {
+    if (doneFrag?.kind !== 'done') {
       throw new Error('expected done fragment');
     }
     expect(doneFrag.finalTimings).toBeUndefined();
@@ -185,7 +194,7 @@ describe('ProviderStreamReader — Ollama NDJSON', () => {
     );
     const doneFrag = frags.find((f) => f.kind === 'done');
     expect(doneFrag).toBeDefined();
-    if (doneFrag === undefined || doneFrag.kind !== 'done') {
+    if (doneFrag?.kind !== 'done') {
       throw new Error('expected done fragment');
     }
     expect(doneFrag.finishReason).toBe('length');

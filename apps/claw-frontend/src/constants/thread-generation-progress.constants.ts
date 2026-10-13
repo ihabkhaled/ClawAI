@@ -60,6 +60,22 @@ export const THREAD_GENERATION_CODE_KEYS: Readonly<Record<string, string>> = {
   GENERATION_WORKER_LOST: 'generationWorkerLost',
   LEASE_EXPIRED: 'leaseExpired',
   RESUMED_FROM_CHECKPOINT: 'resumedFromCheckpoint',
+  GENERATION_ATTEMPT_TIMEOUT: 'generationAttemptTimeout',
+  MODEL_IDLE_TIMEOUT: 'modelIdleTimeout',
+  MODEL_HARD_CEILING: 'modelHardCeiling',
+  MODEL_REASONED_NO_ANSWER: 'modelReasonedNoAnswer',
+};
+
+/**
+ * Machine code on a refused start (ADR-174) to the key under `chat.threadProgress.startError`.
+ * The service message is English for API clients; the owner reads this translated sentence.
+ */
+export const THREAD_START_ERROR_KEYS: Readonly<Record<string, string>> = {
+  THREAD_GENERATION_NOT_PERMITTED: 'notPermitted',
+  THREAD_GENERATION_NOT_IN_PLAN: 'notInPlan',
+  MODEL_NOT_ALLOWED_FOR_PLAN: 'modelNotAllowedForPlan',
+  THREAD_MODEL_UNKNOWN: 'modelUnknown',
+  THREAD_SPEND_CAP_TOO_LOW: 'spendCapTooLow',
 };
 
 export const THREAD_STEP_OUTCOME_KEYS: Readonly<Record<ThreadGenerationStepOutcome, string>> = {

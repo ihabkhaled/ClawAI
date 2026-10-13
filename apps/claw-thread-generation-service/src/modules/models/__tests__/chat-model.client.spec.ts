@@ -14,6 +14,17 @@ const oversized = {
   maxOutputTokens: 4_096,
 };
 
+// chat-service answers the stream route with one result frame after any activity frames.
+const resultStream = (data: Record<string, unknown>) =>
+  new Response(
+    `${JSON.stringify({ type: 'activity' })}
+${JSON.stringify({ type: 'result', data })}
+`,
+    {
+      status: 200,
+    },
+  );
+
 describe('ChatModelClient', () => {
   beforeEach(() => {
     vi.stubEnv('THREAD_GENERATION_DATABASE_URL', 'postgresql://claw:secret@localhost:5432/db');
@@ -33,16 +44,13 @@ describe('ChatModelClient', () => {
       getWindow: vi.fn().mockResolvedValue({ tokens: 128_000, source: 'known' }),
     } as unknown as ModelContextClient;
     const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          content: '{"draft":"ready"}',
-          provider: 'OPENAI',
-          model: 'gpt-5',
-          durationMs: 10,
-          clamped: false,
-        }),
-        { status: 200 },
-      ),
+      resultStream({
+        content: '{"draft":"ready"}',
+        provider: 'OPENAI',
+        model: 'gpt-5',
+        durationMs: 10,
+        clamped: false,
+      }),
     );
     vi.stubGlobal('fetch', fetchMock);
 
@@ -125,16 +133,13 @@ describe('ChatModelClient', () => {
       getWindow: vi.fn().mockResolvedValue({ tokens: 32_768, source: 'assumed' }),
     } as unknown as ModelContextClient;
     const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          content: '{"draft":"ready"}',
-          provider: 'OLLAMA',
-          model: 'glm-5.3',
-          durationMs: 10,
-          clamped: false,
-        }),
-        { status: 200 },
-      ),
+      resultStream({
+        content: '{"draft":"ready"}',
+        provider: 'OLLAMA',
+        model: 'glm-5.3',
+        durationMs: 10,
+        clamped: false,
+      }),
     );
     vi.stubGlobal('fetch', fetchMock);
     const userPrompt = `complete evidence ${'y'.repeat(2_000)}`;

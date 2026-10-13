@@ -887,3 +887,11 @@ Full note: [`docs/05-frontend/plugins-installs.md`](../../docs/05-frontend/plugi
 codes `MODEL_CATALOG_UNREACHABLE`, `MODEL_CATALOG_REJECTED`, `CONTEXT_WINDOW_EXCEEDED` and `CONTEXT_WINDOW_ASSUMED`
 have their text and hint in all 13 locales; the old `MODEL_CONTEXT_UNAVAILABLE` stays mapped so steps stored
 before ADR-173 still read. A code without a key renders the raw key, so add the key chain to `i18n.types.ts`.
+
+The idle-timeout codes `MODEL_IDLE_TIMEOUT`, `MODEL_HARD_CEILING`, `MODEL_REASONED_NO_ANSWER` and
+`GENERATION_ATTEMPT_TIMEOUT` are mapped the same way. The ADR-174 start refusals
+(`THREAD_GENERATION_NOT_PERMITTED`, `THREAD_GENERATION_NOT_IN_PLAN`, `MODEL_NOT_ALLOWED_FOR_PLAN`,
+`THREAD_MODEL_UNKNOWN`, `THREAD_SPEND_CAP_TOO_LOW`) map through `THREAD_START_ERROR_KEYS` to
+`chat.threadProgress.startError.*`; `resolveThreadErrorMessage` checks the code before the status. The running panel shows
+`chat.threadProgress.stillWorking`. A test reads the threads-service enum, so a new refusal code fails the build until
+it has a key in all 13 locales. Full note: [`docs/05-frontend/threads-progress-codes.md`](../../docs/05-frontend/threads-progress-codes.md).

@@ -115,6 +115,9 @@ Retry re-queues from the same snapshot onto the same DRAFT publication with a ne
 delete removes a non-published publication and its job after the owner cancels any running
 work. Discovery, sitemap and slug routes only ever read PUBLISHED rows.
 
+How the frontend words step codes, start refusals and the idle-timeout states in 13 locales:
+[threads-progress-codes](../05-frontend/threads-progress-codes.md).
+
 ## Owner notifications
 
 Generation-service publishes `threads.generation_completed` (ownerId, jobId) once a draft is saved; revision reviews do not. Threads-service consumes it and `threads.generation_failed`, checks the publication belongs to that owner, and publishes `user.notification_requested` (ready, failed); approving a publication requests a "published" notice. Auth-service stores it, emails it and shows it in the portal (ADR-164).

@@ -1,3 +1,12 @@
+import {
+  MODEL_CALL_CEILING_MESSAGE,
+  MODEL_CALL_IDLE_MESSAGE,
+  MODEL_HARD_CEILING_CODE,
+  MODEL_IDLE_TIMEOUT_CODE,
+  MODEL_STREAM_MALFORMED_MESSAGE,
+  MODEL_STREAM_TRUNCATED_MESSAGE,
+} from '../../models/constants/model-call.constants';
+
 export const STEP_EXCERPT_MAX_CHARS = 600;
 export const STEP_APPEND_MAX_RETRIES = 5;
 export const STEP_LIST_MAX = 500;
@@ -9,6 +18,8 @@ export const STEP_ERROR_CAUSE_DEPTH = 5;
 export const STEP_REDACTED_MARK = '[redacted]';
 export const STEP_LEASE_EXPIRED_CODE = 'LEASE_EXPIRED';
 export const STEP_RESUMED_CODE = 'RESUMED_FROM_CHECKPOINT';
+export const STEP_ATTEMPT_TIMEOUT_CODE = 'GENERATION_ATTEMPT_TIMEOUT';
+export const STEP_ATTEMPT_TIMEOUT_MESSAGE = 'Generation attempt exceeded its time limit';
 export const MICRO_USD_DECIMALS = 6;
 export const RETRY_CHAIN_MAX_DEPTH = 50;
 export const RETRY_ALREADY_EXISTS_MESSAGE = 'This generation was already retried';
@@ -37,6 +48,11 @@ export const UPSTREAM_STATUS_PATTERN =
 /** Message fragments written by this service, mapped to a stable machine code. */
 export const STEP_MESSAGE_CODES: ReadonlyArray<{ fragment: string; code: string }> = [
   { fragment: 'Chat model gateway is unavailable', code: 'PROVIDER_UNAVAILABLE' },
+  { fragment: MODEL_CALL_IDLE_MESSAGE, code: MODEL_IDLE_TIMEOUT_CODE },
+  { fragment: MODEL_CALL_CEILING_MESSAGE, code: MODEL_HARD_CEILING_CODE },
+  { fragment: MODEL_STREAM_TRUNCATED_MESSAGE, code: 'PROVIDER_UNAVAILABLE' },
+  { fragment: MODEL_STREAM_MALFORMED_MESSAGE, code: 'PROVIDER_UNAVAILABLE' },
+  { fragment: STEP_ATTEMPT_TIMEOUT_MESSAGE, code: STEP_ATTEMPT_TIMEOUT_CODE },
   { fragment: 'exceeds the model window', code: 'CONTEXT_WINDOW_EXCEEDED' },
   { fragment: 'exceeds the assumed model window', code: 'CONTEXT_WINDOW_ASSUMED' },
   { fragment: 'invalid structured output', code: 'OUTPUT_INVALID' },

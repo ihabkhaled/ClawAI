@@ -34,10 +34,24 @@ export type HttpStreamOptions = AllowedHostsOption & {
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   headers?: Record<string, string>;
   body?: unknown;
+  // IDLE timeout: re-armed on every chunk (and armed once before the request,
+  // so it also bounds the wait for the first byte). Aborts with a
+  // `StreamIdleTimeoutError` reason.
   timeoutMs?: number;
+  // Optional ABSOLUTE ceiling for the whole call, never reset by a chunk.
+  // Aborts with a `StreamCeilingError` reason. Absent = no ceiling.
+  maxTotalMs?: number;
   // Caller-owned signal so a stream can be cancelled mid-flight (used by the
   // cancellation manager). Composed with the internal idle/total timeout.
   signal?: AbortSignal;
+};
+
+/** The clocks of one streaming call, as `httpStream` hands them to its chunk reader. */
+export type StreamGuard = {
+  /** Restarts the idle clock. Called for every chunk the provider sends. */
+  armIdleTimer: () => void;
+  /** Stops both clocks and detaches the caller's signal. */
+  cleanup: () => void;
 };
 
 export type HttpStreamResult = {

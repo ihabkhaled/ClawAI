@@ -203,7 +203,13 @@ export class ProviderStreamReader {
     if (frame === null) {
       return;
     }
-    const thinking = getString(frame, 'thinking');
+    const message = getRecord(frame, 'message');
+    // `/api/generate` puts the chain of thought at the top of the frame;
+    // `/api/chat` (the OLLAMA connector) puts it in `message.thinking`. Reading
+    // only the first meant a thinking-only chat stream folded to nothing.
+    const thinking =
+      getString(frame, 'thinking') ??
+      (message !== null ? getString(message, 'thinking') : undefined);
     if (thinking !== undefined && thinking.length > 0) {
       out.push({
         kind: 'reasoning',
@@ -211,7 +217,6 @@ export class ProviderStreamReader {
         visibility: AiReasoningVisibility.MODEL_EMITTED,
       });
     }
-    const message = getRecord(frame, 'message');
     const content =
       getString(frame, 'response') ??
       (message !== null ? getString(message, 'content') : undefined);
@@ -338,26 +343,26 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 }
 
 function getRecord(rec: Record<string, unknown>, key: string): Record<string, unknown> | null {
-  return asRecord(rec[key]);
+  return asRecord(Reflect.get(rec, key));
 }
 
 function getArray(rec: Record<string, unknown>, key: string): unknown[] | null {
-  const value = rec[key];
+  const value: unknown = Reflect.get(rec, key);
   return Array.isArray(value) ? value : null;
 }
 
 function getString(rec: Record<string, unknown>, key: string): string | undefined {
-  const value = rec[key];
+  const value: unknown = Reflect.get(rec, key);
   return typeof value === 'string' ? value : undefined;
 }
 
 function getNumber(rec: Record<string, unknown>, key: string): number | undefined {
-  const value = rec[key];
+  const value: unknown = Reflect.get(rec, key);
   return typeof value === 'number' ? value : undefined;
 }
 
 function getBoolean(rec: Record<string, unknown>, key: string): boolean | undefined {
-  const value = rec[key];
+  const value: unknown = Reflect.get(rec, key);
   return typeof value === 'boolean' ? value : undefined;
 }
 

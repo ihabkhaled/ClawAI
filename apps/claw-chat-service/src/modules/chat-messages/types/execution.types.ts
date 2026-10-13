@@ -477,12 +477,17 @@ export type ConnectorConfigResponse = {
   // Extra headers for an LLM gateway in front of the provider (F092). Absent
   // when the connector has none. Values are credentials — never logged.
   gatewayHeaders?: Record<string, string>;
+  // False when the connector says the provider cannot stream. Absent means
+  // "stream" (connector-service does not send it yet), so the internal
+  // generate-stream endpoint streams unless a connector explicitly says no.
+  supportsStreaming?: boolean;
 };
 
 export type ResolvedProviderConfig = {
   baseUrl: string;
   apiKey: string;
   gatewayHeaders?: Record<string, string>;
+  supportsStreaming?: boolean;
 };
 
 export type FallbackAttemptData = {

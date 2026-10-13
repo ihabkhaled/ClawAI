@@ -10,6 +10,7 @@ export type {
   HttpResponse,
   HttpStreamOptions,
   HttpStreamResult,
+  StreamGuard,
 } from './http-client.type';
 export type { FollowUpDetection } from './follow-up-detection.types';
 export type { ParsedJudgeModel } from './judge-model-parse.types';
