@@ -66,6 +66,10 @@ yarn-error.log*
 
 # Test coverage
 coverage/
+# ...but not the coverage tooling (thresholds ratchet, changed-lines check)
+!tools/coverage/
+# vitest blob reports from sharded runs (CI merges them; never committed)
+.vitest/
 .nyc_output/
 
 # Docker volumes (local data)

@@ -66,6 +66,27 @@ Component measurements:
   (confirmed on a shared-utilities probe: no rebuild ran before the 22 typechecks).
 - ESLint's `project: ['./apps/*/tsconfig.json', …]` OOMed on the default heap for a 2-file lint;
   the 8 GB override was masking it.
+- The first push of the new pre-push ran 14 suites at once with uncapped vitest pools: 15 frontend
+  tests timed out at 20s. Fixed by capping suites × workers (`testConcurrency`); the second push
+  ran all 27 suites green (frontend 298.9s, chat 75.0s, everything else under 30s).
+- `npm run coverage:measure` (all 27 suites with `--coverage`): **17 of 27 workspaces are below
+  their own declared vitest thresholds** (e.g. memory-service lines 41.37% vs 88%, llamacpp
+  24.39% vs 70%, audit 67.4% vs 92%). CI never ran `--coverage`, so those numbers were never
+  enforced. Declared thresholds are unchanged; CI now enforces a measured floor that only rises
+  (`tools/coverage/thresholds.json`, rules/22 rule 2).
+- Lint baseline: 1,171 warnings in 688 files (`tools/lint/warnings-baseline.json`); zero-count
+  rules promoted to `error`; two `eslint-disable` directives that suppressed nothing were removed;
+  eight real ones remain (follow-up).
+- Secret scan of the working tree with the default gitleaks rules: 102 findings, every one a test
+  fixture, a CI test value, the public IndexNow key, a placeholder or a documentation example;
+  0 after the reviewed `.gitleaks.toml` (provider-specific rules never allowlisted).
+- `npm audit --omit=dev`: one high advisory (GHSA-ggr8-5vv4-36mx, deepmerge-ts via the Prisma
+  CLI); the only fix is a Prisma major downgrade; recorded with a reason and a 2026-12-31 expiry.
+- CodeQL default setup is enabled on the repository with 3 dismissed alerts and 0 open; the CI
+  job runs the same suite without uploading and fails on anything not in
+  `tools/security/codeql-accepted.json` (the 3 reviewed dismissals).
+- actionlint + shellcheck over every workflow: 5 findings (2 pre-existing in `lighthouse.yml` and
+  `release.yml`), all fixed; 0 now.
 
 ## Open gaps
 

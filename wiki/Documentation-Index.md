@@ -173,7 +173,7 @@ See also: [[Communication-Style]], [[Agent-Discipline]], [[Akinator-Method]] (wi
 - [docs/07-integrations/stable-diffusion-integration.md](https://github.com/ihabkhaled/ClawAI/blob/main/docs/07-integrations/stable-diffusion-integration.md)
 - [docs/08-runtime-devops/build-system.md](https://github.com/ihabkhaled/ClawAI/blob/main/docs/08-runtime-devops/build-system.md)
 - [docs/08-runtime-devops/ci-cd-pipeline.md](https://github.com/ihabkhaled/ClawAI/blob/main/docs/08-runtime-devops/ci-cd-pipeline.md)
-- [docs/08-runtime-devops/cicd-pipeline.md](https://github.com/ihabkhaled/ClawAI/blob/main/docs/08-runtime-devops/cicd-pipeline.md)
+- [docs/08-runtime-devops/ci-cd-pipeline.md](https://github.com/ihabkhaled/ClawAI/blob/main/docs/08-runtime-devops/ci-cd-pipeline.md)
 - [docs/08-runtime-devops/contact-form.md](https://github.com/ihabkhaled/ClawAI/blob/main/docs/08-runtime-devops/contact-form.md)
 - [docs/08-runtime-devops/container-health-monitoring.md](https://github.com/ihabkhaled/ClawAI/blob/main/docs/08-runtime-devops/container-health-monitoring.md)
 - [docs/08-runtime-devops/conversational-context-rollout.md](https://github.com/ihabkhaled/ClawAI/blob/main/docs/08-runtime-devops/conversational-context-rollout.md)

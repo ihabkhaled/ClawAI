@@ -2,141 +2,140 @@
 
 ## Purpose
 
-Quality gates run where they are cheap and correct: in the folder you touched.
-The all-workspace gate is expensive and false-fails in fresh worktrees, so it is
-never the routine bar. Commits are conventional, hooks are respected, and the full
-gate is reserved for release preflight.
+Quality gates run where they are cheap and correct. The hooks prove the change
+itself, fast; CI proves it against the whole repository; release runs only on a
+green CI. This rule is the **single canonical home** for how a change lands and
+what each gate runs. Every other file links here instead of restating it.
 
 ## Applies to
 
-Every commit and push in the repo; the git hooks; `.github/workflows/ci.yml`.
+Every commit and push in the repo; `.husky/*`; `tools/gates/*`; `tools/affected/*`;
+`.github/workflows/*`.
+
+## Landing a change
+
+```bash
+npm run affected:list              # which workspaces your change touches, and why
+git add <explicit paths>           # never -A, never .
+git commit                         # the hook gates the staged change (see the matrix)
+git push origin <branch>           # the hook gates every pushed ref's tree; then CI
+```
+
+That is the whole loop. An agent runs **nothing else by hand** for a normal
+change: the hooks run the right gates for the change type, scoped to what
+changed, and CI runs the rest. Optional, when you want one proof up front
+instead of two hook runs: `npm run gates:receipt` after staging — it runs the
+hook gates over the staged tree once and records what passed, so the hooks skip
+exactly those gates for exactly that tree
+([rules/34](34-gate-economy-and-machine-resources.md) rule 4).
+
+Before release: `npm run release:preflight` runs the all-workspace gate.
+
+## What the hooks run
+
+**pre-commit** (staged changes only):
+
+1. `lint-staged` — `eslint --fix --max-warnings 0` (content cache) and
+   `prettier --write` on the staged files. Touching a file means leaving it with
+   zero warnings.
+2. Secret scan — `gitleaks git --staged` with `.gitleaks.toml`. Without gitleaks
+   installed it warns loudly and continues; CI scans every commit.
+3. Knowledge layer — regenerate `.ai/**`, workspace `AGENTS.md` and the
+   inventory snapshot, stage them, verify links, docs and contradictions
+   ([rules/24](24-generated-files-and-knowledge-freshness.md)); records a
+   `knowledge` receipt for the staged tree.
+4. Root checks + typecheck — a lockfile change runs `npm ci --dry-run`; an ESLint
+   config change runs `architecture:check` and lints real files; a root tsconfig
+   change typechecks the workspaces extending it. Then every workspace the staged
+   change affects is typechecked, after any stale shared package is rebuilt in
+   dependency order.
+
+**commit-msg** — commitlint (conventional subject, body lines ≤ 200).
+
+**pre-push** (`tools/gates/pre-push.mjs`, every pushed ref read from stdin; base
+resolved as `origin/HEAD` → `origin/main` → `main`, fetched if missing, never
+guessed):
+
+1. `knowledge:verify` + `audit:check` — skipped when pre-commit's receipt covers
+   the tree.
+2. Root checks again, plus `npm run knowledge:test:fast` when `tools/`,
+   `scripts/`, `eslint/` or `.husky/` changed, and `architecture:check` when
+   `eslint/` changed.
+3. Typecheck of the workspaces that depend on a changed shared package.
+4. Tests of the directly changed workspaces — `vitest related` when only source
+   under `src/` changed, the whole suite otherwise.
+5. Build of the directly changed workspaces.
+
+A pushed ref whose tree is not checked out passes only when receipts cover all
+five gates for its tree. Workspaces run in a bounded pool (`CLAW_GATE_JOBS`).
+
+## Gate matrix by change type
+
+| Change type                                                 | pre-commit                                                                  | pre-push                                                                    | CI (`ci.yml` + `ai-native-os`)                                                                         | By hand                                                                  |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| **Docs only** (`*.md` anywhere)                             | prettier, secret scan, knowledge + link checks. No code gate.               | knowledge (skipped via receipt). No code gate.                              | knowledge freshness + integrity (docs checks), format ratchet, secrets, CodeQL, QA evidence            | nothing                                                                  |
+| **Single-workspace source**                                 | eslint `--max-warnings 0` + prettier, secret scan, knowledge, typecheck     | `vitest related`, build                                                     | setup, static (lint ratchet + typecheck), test + coverage floor, changed-lines coverage, build, policy | nothing                                                                  |
+| **Shared package** (`packages/*`)                           | + stale shared `dist` rebuilt in order; typecheck package + all dependents  | related tests of the package, typecheck of dependents, build of the package | the full matrix of every dependent                                                                     | nothing                                                                  |
+| **Prisma schema**                                           | typecheck of the service (against its current client)                       | related tests / suite, build                                                | setup regenerates every client; static, test, build of the service                                     | `npm run prisma:generate --workspace=<svc>` and the migration (rules/52) |
+| **Frontend** (`apps/claw-frontend`)                         | frontend eslint `--max-warnings 0` + prettier, knowledge, typecheck         | `vitest related`, `next build`                                              | as single-workspace, frontend suite sharded + merged coverage; `lighthouse.yml`                        | the browser lanes of rules/60 (Playwright, device matrix)                |
+| **Root config or lockfile**                                 | root checks (`npm ci --dry-run` / ESLint config loads / tsconfig typecheck) | root checks                                                                 | every workspace (root invariant), `npm audit`                                                          | nothing                                                                  |
+| **CI or workflow** (`.github/**`)                           | prettier, secret scan, knowledge                                            | tooling tests (workflow shape tests)                                        | every workspace, actionlint + shellcheck, the new or changed jobs themselves                           | optional: actionlint locally                                             |
+| **Hooks or tools** (`.husky`, `tools`, `scripts`, `eslint`) | prettier, secret scan, knowledge                                            | tooling tests (`knowledge:test:fast`), `architecture:check` for `eslint/`   | every workspace, tooling tests, deploy rehearsal when deploy paths changed                             | nothing                                                                  |
+
+CI job by job, and how a red job blocks release:
+[`docs/08-runtime-devops/ci-cd-pipeline.md`](../docs/08-runtime-devops/ci-cd-pipeline.md).
 
 ## Mandatory rules
 
-1. **Scoped gates before commit.** Lint changed files and run the matching spec
-   for changed TypeScript files. Typecheck/build only the touched workspace when
-   its validation lane requires it. Never run whole-workspace or all-workspace
-   lint/tests for a scoped change.
-2. **Green then commit.** When touched-folder gates pass, commit and let the
-   hook run. pre-commit is scoped and fast (lint-staged with `--max-warnings 0` →
-   knowledge layer regenerate + verify → root-invariant checks + typecheck of the
-   staged-affected workspaces); pre-push validates the tree of every pushed ref
-   (`tools/gates/pre-push.mjs`). There is no reason to bypass either.
-   **`--no-verify` is banned** ([ADR-061](../docs/13-adr/adr-061-git-hook-policy-no-bypass.md));
-   a hook failure is a real problem in something you staged — fix it, never skip it.
-   A valid exact-tree receipt may prevent only redundant checks supported by the hook.
-3. **Non-workspace files** (`scripts/**`, `infra/**`, plain `*.mjs`) → cheapest
-   equivalent check (`node --check`, JSON/schema validate). Do not escalate to the
-   full gate "to be safe."
-4. **Conventional commits** — `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert`,
-   subject ≤ 100 chars, no sentence/start/pascal/upper case.
-5. **Explicit paths when splitting commits** — `git add <path> …`, never
-   `git add -A`/`.` (contaminates the commit with parallel WIP).
-6. **Push each commit before starting the next one.** One commit, one push: after
-   a commit passes its hook, the next git command is `git push`. CI only sees what
-   is pushed, so N local commits are N unverified commits with an N-wide bisect
-   surface, and unpushed work exists on one disk. `git log --oneline
-origin/<branch>..HEAD` must be empty before you stage the next change. The only
-   exception is an explicit user instruction not to push.
-7. **Prefer reversible git actions** — new commit over amend; confirm before
-   force-push / `reset --hard`.
-8. **`npm run release:preflight` runs the full gate** — that is the place the
-   all-workspace checks belong, not the per-change loop.
-9. **Docs-only changes** (`docs/**`, `CLAUDE.md`, `rules/**`, locale files paired
-   with `i18n.types.ts`) skip the code gates but stay conventional-format.
+1. **Let the hooks gate the change.** Commit, let pre-commit run; push, let
+   pre-push run. Do not pre-run the same gates by hand "to be safe" — that pays
+   twice ([rules/34](34-gate-economy-and-machine-resources.md)). A hook failure is
+   a real problem in what you staged: fix it.
+2. **`--no-verify` is banned** ([ADR-061](../docs/13-adr/adr-061-git-hook-policy-no-bypass.md)),
+   as is any other hook bypass. A receipt skips only gates it ran.
+3. **Conventional commits** — `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert`,
+   subject ≤ 100 chars, no sentence/start/pascal/upper case, body lines ≤ 200
+   chars.
+4. **Explicit paths when staging** — `git add <path> …`, never `git add -A`/`.`
+   (it sweeps in parallel work).
+5. **Push each commit before starting the next one.** CI only sees what is pushed;
+   `git log --oneline origin/<branch>..HEAD` must be empty before you stage the
+   next change. The only exception is an explicit user instruction not to push.
+6. **Prefer reversible git actions** — a new commit over an amend; confirm before
+   force-push or `reset --hard`.
+7. **A flaky test is quarantined, not retried** — per
+   [`testing/flaky-test-policy.md`](../testing/flaky-test-policy.md). The hooks
+   never re-run a failing suite.
 
 ## Prohibited patterns
 
-- `--no-verify` (or any hook bypass) on commit or push — banned outright.
-- Running lint/typecheck/test/build across every workspace for a one-service change.
-- `git add -A` / `git add .` when splitting a commit.
-- Building a local stack: committing again while an earlier commit is unpushed.
+- `--no-verify` (or any hook bypass) on commit or push.
+- Running lint/typecheck/test/build across every workspace for a scoped change.
+- Re-running by hand the gates the hooks are about to run on the same tree.
+- `git add -A` / `git add .` when staging.
+- Committing again while an earlier commit is unpushed.
 - A non-conventional commit subject.
-
-## Correct pattern
-
-```bash
-cd apps/claw-chat-service
-npx eslint <changed files> && npx vitest run <matching spec>
-git add apps/claw-chat-service/src/modules/chat/…                # explicit paths
-git commit -m "feat(chat): add criticModel to compare DTO"       # hook runs (scoped + fast)
-git push origin <branch>
-```
 
 ## Enforcement
 
-- **Git hook** — pre-commit/pre-push; per-folder gate is the real bar.
-- **CI job** — `.github/workflows/ci.yml` runs lint → typecheck → test → build
-  (build depends on all three) per-workspace matrix.
-- **Knowledge check** — `npm run affected:*` computes the touched set.
+- **Hooks** — `.husky/pre-commit`, `.husky/commit-msg`, `.husky/pre-push`,
+  delegating to `tools/gates/*` and `tools/affected/index.mjs`.
+- **CI** — `.github/workflows/ci.yml`; `CI success` gates `release.yml`.
+- **Tests** — `tools/__tests__/gate-correctness.test.mjs`,
+  `tools/__tests__/gate-receipt.test.mjs`, `tools/__tests__/affected-ci.test.mjs`,
+  `tools/__tests__/ai-native-workflow.test.mjs`, `tools/__tests__/ci-gates.test.mjs`.
+- **Generated files** — [rules/24](24-generated-files-and-knowledge-freshness.md#generated-artifacts-are-a-hard-gate-never-optional).
 
-## Related skills
+## Related
 
-- [commit-and-push-each-change](../skills/commit-and-push-each-change.md)
-- [09-refactor-toolkit](../skills/09-refactor-toolkit.md)
-
-## Related context
-
-- Root `CLAUDE.md` — "Scoped Quality Gates Before Commit", "Quality Gates".
+- [rules/34](34-gate-economy-and-machine-resources.md) — receipts, concurrency, machine resources.
+- [rules/48](48-lint-and-test-only-what-changed.md) — testing and linting only what changed.
+- [skills/commit-and-push-each-change](../skills/commit-and-push-each-change.md) ·
+  [skills/run-gates-once-and-land](../skills/run-gates-once-and-land.md).
 
 ## Definition of done
 
-- [ ] Touched-folder gates green; full gate not run for a scoped change.
-- [ ] Conventional commit; explicit paths; reversible actions.
-- [ ] `--no-verify` not used at all (banned by ADR-061).
-- [ ] Every commit pushed before the next was started; `git log --oneline
-origin/<branch>..HEAD` is empty.
-
-## Generated artifacts are a HARD GATE (never optional)
-
-`.ai/**`, every workspace `AGENTS.md`, and
-`docs/features/ai-native-engineering-os/inventory.snapshot.json` are
-**generated from the tree**. CI verifies them on every push:
-
-| CI job              | Command                    | Fails when                                                           |
-| ------------------- | -------------------------- | -------------------------------------------------------------------- |
-| Knowledge freshness | `npm run knowledge:check`  | a generated file's hash no longer matches the tree                   |
-| Knowledge integrity | `npm run knowledge:verify` | stale file, broken link, orphan reviewer, hook-bypass, contradiction |
-| Inventory audit     | `npm run audit:check`      | the inventory snapshot hash has drifted                              |
-
-**A stale artifact turns the build red on every subsequent push**, for everyone,
-until someone regenerates it. It is not a warning and it is not deferrable.
-
-### The rule
-
-Any commit that touches `packages/**`, `apps/**`, `infra/**`, `docker/**`,
-`docs/**`, `scripts/**`, `rules/**`, `skills/**`, `tools/**` or `.env.example`
-MUST regenerate and stage:
-
-```bash
-npm run knowledge:build      # rewrites .ai/** + workspace AGENTS.md
-npm run audit                # rewrites the inventory snapshot
-git add .ai docs/features/ai-native-engineering-os/inventory.snapshot.json
-git add apps/*/AGENTS.md packages/*/AGENTS.md 2>/dev/null
-npm run knowledge:verify     # what CI runs
-npm run audit:check          # what CI runs
-```
-
-The pre-commit hook now does all of this **automatically**, so in normal use
-there is nothing to remember. The rule is written down because the hook can be
-skipped (it must not be) and because a red CI needs a documented fix.
-
-### Order matters — regenerate AFTER formatting, never before
-
-This is the mistake that actually caused a red build:
-
-1. `npm run knowledge:build` — hashes the current bytes
-2. `git add` / commit — **lint-staged reformats the staged files**
-3. the reformatted bytes no longer match the hashes recorded in step 1
-4. `knowledge:check` passes locally (it ran before the reformat) but
-   `knowledge:verify` fails in CI
-
-Generators must run **after** prettier and `eslint --fix` have settled. The
-pre-commit hook is ordered that way deliberately: lint-staged is step 1,
-regeneration is step 2.
-
-### Never hand-edit a generated artifact
-
-If a generated file is wrong, fix the **generator or its input**, then
-regenerate. Editing `.ai/manifests/*.json` or a workspace `AGENTS.md` by hand is
-overwritten on the next build and hides the real problem.
+- [ ] Committed and pushed through the hooks; no bypass.
+- [ ] Conventional subject, explicit paths.
+- [ ] `git log --oneline origin/<branch>..HEAD` is empty.
+- [ ] CI green, including `CI success`.

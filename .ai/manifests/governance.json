@@ -94,7 +94,7 @@
       "file": "rules/04-nextjs-app-router.md"
     },
     {
-      "bytes": 11482,
+      "bytes": 11255,
       "file": "rules/04-testing-rules.md"
     },
     {
@@ -186,15 +186,15 @@
       "file": "rules/21-security-and-secrets.md"
     },
     {
-      "bytes": 3581,
+      "bytes": 5178,
       "file": "rules/22-testing-and-coverage.md"
     },
     {
-      "bytes": 6908,
+      "bytes": 10315,
       "file": "rules/23-git-commits-hooks-and-release-gates.md"
     },
     {
-      "bytes": 5545,
+      "bytes": 5607,
       "file": "rules/24-generated-files-and-knowledge-freshness.md"
     },
     {

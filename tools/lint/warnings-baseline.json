@@ -1,0 +1,2172 @@
+{
+  "warnings": {
+    "apps/claw-agent-service/src/app/pipes/zod-validation.pipe.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-agent-service/src/common/constants/recipe.constants.ts": {
+      "security/detect-unsafe-regex": 1
+    },
+    "apps/claw-agent-service/src/common/utilities/cron-expression.utility.ts": {
+      "security/detect-object-injection": 2
+    },
+    "apps/claw-agent-service/src/common/utilities/recipe-expression.utility.ts": {
+      "security/detect-non-literal-regexp": 1,
+      "security/detect-unsafe-regex": 1,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-agent-service/src/common/utilities/risk-status.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-agent-service/src/common/utilities/token.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-agent-service/src/main.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-agent-service/src/modules/agent/controllers/__tests__/runtime-protocol.controller.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-agent-service/src/modules/agent/repositories/agent-command.repository.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-agent-service/src/modules/agent/repositories/capability-invocation.repository.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-agent-service/src/modules/agent/repositories/device-code-request.repository.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-agent-service/src/modules/agent/repositories/pairing-request.repository.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-agent-service/src/modules/agent/repositories/policy.repository.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-agent-service/src/modules/agent/services/__tests__/command-risk.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-agent-service/src/modules/agent/services/agent-command.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-agent-service/src/modules/agent/services/capability-risk.service.ts": {
+      "security/detect-unsafe-regex": 1,
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-agent-service/src/modules/agent/services/command-risk.service.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-agent-service/src/modules/agent/services/device-code.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-agent-service/src/modules/agent/services/routine-secret.service.ts": {
+      "@typescript-eslint/prefer-optional-chain": 1
+    },
+    "apps/claw-agent-service/src/modules/agent/services/runner.service.ts": {
+      "@typescript-eslint/prefer-optional-chain": 2
+    },
+    "apps/claw-agent-service/src/modules/fleet/constants/runner-policy.constants.ts": {
+      "security/detect-unsafe-regex": 1
+    },
+    "apps/claw-agent-service/src/modules/fleet/utilities/saml-verifier.utility.ts": {
+      "security/detect-non-literal-regexp": 2,
+      "unicorn/prefer-string-replace-all": 2
+    },
+    "apps/claw-agent-service/src/modules/marketplace/repositories/marketplace.repository.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-agent-service/src/modules/recipes/managers/__tests__/recipe-runner.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-agent-service/src/modules/recipes/managers/recipe-runner.manager.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-agent-service/src/modules/recipes/services/__tests__/recipe.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-agent-service/src/modules/recipes/utilities/placeholder-resolver.utility.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-audit-service/src/__tests__/audits.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-audit-service/src/__tests__/usage.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-audit-service/src/app/config/app.config.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-audit-service/src/app/guards/roles.guard.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-audit-service/src/app/pipes/zod-validation.pipe.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-audit-service/src/main.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-audit-service/src/modules/audits/__tests__/llamacpp.consumer.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-audit-service/src/modules/audits/constants/ai-action-audit.constants.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-audit-service/src/modules/audits/consumers/__tests__/billing.consumer.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-audit-service/src/modules/audits/consumers/__tests__/chat-share.consumer.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-audit-service/src/modules/audits/managers/__tests__/audit-event.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-audit-service/src/modules/audits/repositories/__tests__/audits.repository.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-audit-service/src/modules/audits/repositories/__tests__/usage-ledger.repository.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-audit-service/src/modules/audits/repositories/observability.repository.ts": {
+      "@typescript-eslint/explicit-function-return-type": 1
+    },
+    "apps/claw-audit-service/src/modules/audits/services/observability.service.ts": {
+      "complexity": 3,
+      "max-lines-per-function": 1
+    },
+    "apps/claw-audit-service/src/modules/audits/utilities/provider-label.utility.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1,
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-audit-service/src/modules/feedback/managers/feedback.manager.ts": {
+      "@typescript-eslint/explicit-function-return-type": 5
+    },
+    "apps/claw-audit-service/src/modules/feedback/repositories/feedback.repository.ts": {
+      "@typescript-eslint/explicit-function-return-type": 7,
+      "@typescript-eslint/prefer-nullish-coalescing": 1
+    },
+    "apps/claw-audit-service/src/modules/feedback/sanitizers/feedback-markdown.sanitizer.ts": {
+      "security/detect-unsafe-regex": 1,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-audit-service/src/modules/feedback/utilities/client-ip.utility.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-audit-service/src/modules/health/services/__tests__/health.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-auth-service/src/app/config/app.config.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1
+    },
+    "apps/claw-auth-service/src/app/pipes/zod-validation.pipe.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-auth-service/src/common/constants/__tests__/rbac-seed-sync.spec.ts": {
+      "security/detect-non-literal-fs-filename": 1
+    },
+    "apps/claw-auth-service/src/common/utilities/constant-time-equal.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-auth-service/src/main.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-auth-service/src/modules/admin-statistics/constants/admin-usage-explorer.constants.ts": {
+      "security/detect-unsafe-regex": 1
+    },
+    "apps/claw-auth-service/src/modules/admin-statistics/dto/admin-usage-explorer.dto.ts": {
+      "@typescript-eslint/explicit-function-return-type": 1
+    },
+    "apps/claw-auth-service/src/modules/admin-statistics/services/__tests__/admin-user-statistics.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-auth-service/src/modules/admin-statistics/services/admin-usage-explorer.service.ts": {
+      "@typescript-eslint/explicit-function-return-type": 2,
+      "max-lines-per-function": 1
+    },
+    "apps/claw-auth-service/src/modules/admin-statistics/utilities/provider-label.utility.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1,
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-auth-service/src/modules/auth/email/utilities/auth-email-render.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-auth-service/src/modules/auth/managers/__tests__/device-authorization.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-auth-service/src/modules/auth/managers/email-change.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-auth-service/src/modules/auth/managers/password-reset.manager.ts": {
+      "security/detect-possible-timing-attacks": 1
+    },
+    "apps/claw-auth-service/src/modules/auth/managers/token-session.manager.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-auth-service/src/modules/auth/repositories/__tests__/device-authorization.repository.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-auth-service/src/modules/auth/repositories/email-change.repository.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-auth-service/src/modules/auth/services/__tests__/auth-email-recipient.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-auth-service/src/modules/auth/services/__tests__/email-dispatch-cooldown.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-auth-service/src/modules/auth/services/__tests__/email-verification.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-auth-service/src/modules/auth/services/__tests__/password-reset.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-auth-service/src/modules/auth/services/auth-email-recipient.service.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-auth-service/src/modules/auth/services/email-change.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-auth-service/src/modules/credit/services/__tests__/credit-topup-inbox.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-auth-service/src/modules/credit/services/credit-free-allowance.service.ts": {
+      "complexity": 1,
+      "max-lines-per-function": 1
+    },
+    "apps/claw-auth-service/src/modules/credit/services/credit-topup-inbox.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-auth-service/src/modules/credit/services/thread-job-budget.service.ts": {
+      "@typescript-eslint/explicit-function-return-type": 5
+    },
+    "apps/claw-auth-service/src/modules/credit/utilities/credit-free-allowance.utility.ts": {
+      "@typescript-eslint/no-shadow": 1
+    },
+    "apps/claw-auth-service/src/modules/credit/utilities/payg-classification.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-auth-service/src/modules/deployment/adapters/deployment-status-file.adapter.ts": {
+      "security/detect-non-literal-fs-filename": 4
+    },
+    "apps/claw-auth-service/src/modules/deployment/constants/deployment-status.constants.ts": {
+      "security/detect-unsafe-regex": 1
+    },
+    "apps/claw-auth-service/src/modules/deployment/services/deployment.service.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-auth-service/src/modules/entitlements/__tests__/billing-entitlement.consumer.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-auth-service/src/modules/entitlements/__tests__/entitlement-inbox.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-auth-service/src/modules/entitlements/controllers/thread-job-budget-internal.controller.ts": {
+      "@typescript-eslint/explicit-function-return-type": 5
+    },
+    "apps/claw-auth-service/src/modules/entitlements/repositories/thread-job-budget.repository.ts": {
+      "@typescript-eslint/explicit-function-return-type": 7,
+      "@typescript-eslint/prefer-optional-chain": 3
+    },
+    "apps/claw-auth-service/src/modules/entitlements/services/entitlement-applier.service.ts": {
+      "max-lines-per-function": 1
+    },
+    "apps/claw-auth-service/src/modules/entitlements/services/entitlement-reconciliation.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-auth-service/src/modules/entitlements/services/entitlements.service.ts": {
+      "complexity": 1,
+      "max-lines-per-function": 1
+    },
+    "apps/claw-auth-service/src/modules/entitlements/services/runtime-admission.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-auth-service/src/modules/entitlements/services/usage-view.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-auth-service/src/modules/health/services/__tests__/health.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-auth-service/src/modules/notifications/dto/__tests__/notifications.dto.spec.ts": {
+      "@typescript-eslint/no-shadow": 1
+    },
+    "apps/claw-auth-service/src/modules/notifications/services/notifications.service.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-auth-service/src/modules/notifications/utilities/push-message.utility.ts": {
+      "security/detect-object-injection": 2
+    },
+    "apps/claw-auth-service/src/modules/plans/__tests__/media-plan-gates.spec.ts": {
+      "security/detect-non-literal-fs-filename": 1
+    },
+    "apps/claw-auth-service/src/modules/plans/__tests__/trial-length-constraints.spec.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-auth-service/src/modules/plans/repositories/plans.repository.ts": {
+      "@typescript-eslint/prefer-optional-chain": 1
+    },
+    "apps/claw-auth-service/src/modules/plans/services/plan-interval-pricing.service.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-auth-service/src/modules/plans/services/plans.service.ts": {
+      "@typescript-eslint/prefer-optional-chain": 1,
+      "max-lines-per-function": 1
+    },
+    "apps/claw-auth-service/src/modules/plans/utilities/plan-interval-price.utility.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-auth-service/src/modules/plans/utilities/prisma-error.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-auth-service/src/modules/quota/constants/quota.constants.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-auth-service/src/modules/quota/controllers/quota-internal.controller.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-auth-service/src/modules/quota/services/__tests__/feature-policy.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-auth-service/src/modules/quota/utilities/quota-reservation.utility.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1
+    },
+    "apps/claw-auth-service/src/modules/quota/utilities/quota-window.utility.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-auth-service/src/modules/roles/services/__tests__/permissions-seeder.service.spec.ts": {
+      "sort-imports": 1,
+      "unicorn/prefer-ternary": 4
+    },
+    "apps/claw-auth-service/src/modules/roles/services/__tests__/roles.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-auth-service/src/modules/system-settings/services/__tests__/system-setting.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-auth-service/src/modules/system-settings/services/system-setting.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-auth-service/src/modules/users/service.utilities/super-admin-mutability.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/__tests__/main-esm-bootstrap.spec.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-chat-service/src/app/config/app.config.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1
+    },
+    "apps/claw-chat-service/src/app/guards/roles.guard.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/app/pipes/zod-validation.pipe.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-chat-service/src/common/constants/explicit-fetch-intent.constants.ts": {
+      "security/detect-unsafe-regex": 2
+    },
+    "apps/claw-chat-service/src/common/constants/follow-up-detection.constants.ts": {
+      "security/detect-unsafe-regex": 1
+    },
+    "apps/claw-chat-service/src/common/utilities/bearer.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/common/utilities/critic-prompt-builder.utility.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-chat-service/src/common/utilities/entitlements-error.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/common/utilities/judge-model-parse.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/common/utilities/ollama-cloud-base-url.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/common/utilities/record-lookup.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/infrastructure/redis/__tests__/redis-client.adapter.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-chat-service/src/infrastructure/redis/redis-client.adapter.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/main.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/__tests__/chat-messages-module-optional-clients.spec.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/__tests__/compare-judge-plan-gates.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/__tests__/orchestration-parity.spec.ts": {
+      "security/detect-non-literal-fs-filename": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/__tests__/provider-stream-executor.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/__tests__/provider-stream-reader.utility.spec.ts": {
+      "@typescript-eslint/prefer-optional-chain": 4
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/__tests__/router-trace-stream.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/__tests__/runtime-v2-catalog-admission.spec.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/__tests__/search-first.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/clients/__tests__/file-writer-candidates.client.spec.ts": {
+      "@typescript-eslint/consistent-type-imports": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/clients/__tests__/speech-clients.spec.ts": {
+      "@typescript-eslint/consistent-type-imports": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/clients/__tests__/vision-helper-candidates.client.spec.ts": {
+      "@typescript-eslint/consistent-type-imports": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/constants/context-composer.constants.ts": {
+      "security/detect-unsafe-regex": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/constants/file-writer.constants.ts": {
+      "security/detect-unsafe-regex": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/constants/platform-identity.constants.ts": {
+      "security/detect-unsafe-regex": 3
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/constants/runtime-v2-model-output.constants.ts": {
+      "security/detect-unsafe-regex": 2
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/constants/speech.constants.ts": {
+      "security/detect-unsafe-regex": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/constants/video-timestamp.constants.ts": {
+      "security/detect-unsafe-regex": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/controllers/__tests__/chat-messages-file-delivery.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/__tests__/context-assembly-window-fit.spec.ts": {
+      "@typescript-eslint/no-shadow": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/__tests__/context-composer.live-replay.spec.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/__tests__/judge-referee.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/__tests__/lab-modes-research-grounding.spec.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/__tests__/research-orchestrator.manager.spec.ts": {
+      "@typescript-eslint/consistent-type-imports": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/__tests__/runtime-v2-loop.continuation-history.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/__tests__/runtime-v2-loop.intent-correction.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/__tests__/video-generation.manager.spec.ts": {
+      "@typescript-eslint/consistent-type-imports": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/answer-repair.manager.ts": {
+      "max-lines-per-function": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/best-of-n.manager.ts": {
+      "max-lines-per-function": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/chat-execution.manager.ts": {
+      "complexity": 3,
+      "max-lines-per-function": 5
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/consensus-execution.manager.ts": {
+      "max-lines-per-function": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/context-assembly.manager.ts": {
+      "@typescript-eslint/prefer-optional-chain": 1,
+      "complexity": 2,
+      "max-lines-per-function": 1,
+      "security/detect-object-injection": 4
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/context-composer.manager.ts": {
+      "@typescript-eslint/prefer-optional-chain": 1,
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/cost-ensemble.manager.ts": {
+      "max-lines-per-function": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/judge-referee.manager.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1,
+      "max-lines-per-function": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/pipeline.manager.ts": {
+      "max-lines-per-function": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/provider-stream-executor.manager.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/quality-check.manager.ts": {
+      "unicorn/prefer-ternary": 5
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/role-pack.manager.ts": {
+      "max-lines-per-function": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/task-decomposition.manager.ts": {
+      "max-lines-per-function": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/verifier.manager.ts": {
+      "max-lines-per-function": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/video-delivery.manager.ts": {
+      "security/detect-object-injection": 2
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/managers/vision-helper.manager.ts": {
+      "complexity": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/repositories/__tests__/file-delivery-record.repository.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/repositories/__tests__/runtime-v2-redis-state-machine.fake.ts": {
+      "unicorn/prefer-ternary": 4
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/repositories/__tests__/runtime-v2.redis.e2e.ts": {
+      "@typescript-eslint/prefer-optional-chain": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/repositories/provider-breaker.store.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/services/__tests__/auto-research-resolution.spec.ts": {
+      "@typescript-eslint/consistent-type-imports": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/services/__tests__/message-created-publishers.spec.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/services/__tests__/research-gate.service.spec.ts": {
+      "@typescript-eslint/consistent-type-imports": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/services/access-control.service.ts": {
+      "security/detect-object-injection": 2
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/services/advanced-module-model-selection.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/services/chat-messages.service.ts": {
+      "@typescript-eslint/prefer-optional-chain": 2,
+      "complexity": 6,
+      "max-lines-per-function": 6,
+      "security/detect-object-injection": 1,
+      "unicorn/prefer-array-some": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/services/chat-stream-bus.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/services/context-save-choice.service.ts": {
+      "@typescript-eslint/prefer-optional-chain": 1,
+      "complexity": 1,
+      "max-lines-per-function": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/services/message-save-to-context.service.ts": {
+      "@typescript-eslint/prefer-optional-chain": 1,
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/services/model-authorization-metrics.service.ts": {
+      "security/detect-object-injection": 2
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/services/runtime-v2-run.service.ts": {
+      "@typescript-eslint/prefer-optional-chain": 1,
+      "max-lines-per-function": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/services/stream-control.service.ts": {
+      "@typescript-eslint/prefer-optional-chain": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/__tests__/picked-model-fallback.utility.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/__tests__/quoted-turn-accessor.spec.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/__tests__/speech-gateway-timeout.spec.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/__tests__/speech-job-state.utility.spec.ts": {
+      "@typescript-eslint/no-shadow": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/chat-stream-frame.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/compare-judge.utility.ts": {
+      "security/detect-object-injection": 11
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/cost-estimator.utility.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/file-format.utility.ts": {
+      "security/detect-object-injection": 2,
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/final-metrics.utility.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/gemini-request-builder.utility.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/image-generation-prompt.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/image-mask-refusal.utility.ts": {
+      "security/detect-object-injection": 2
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/ollama-cloud-tool-runner.utility.ts": {
+      "security/detect-object-injection": 2
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/picked-model-fallback.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/provider-effort.utility.ts": {
+      "security/detect-object-injection": 1,
+      "unicorn/prefer-ternary": 4
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/provider-stream-reader.utility.ts": {
+      "security/detect-object-injection": 5
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/provider-tool-dialect.utility.ts": {
+      "security/detect-object-injection": 1,
+      "unicorn/prefer-ternary": 3
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/relevant-chunks.utility.ts": {
+      "security/detect-object-injection": 5
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/research-marker-match.utility.ts": {
+      "security/detect-non-literal-regexp": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/router-trace-stage.utility.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/runtime-v2-failure.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/runtime-v2-model-output.utility.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/runtime-v2-provider-failure.utility.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/runtime-v2-reply.utility.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/save-confirmation.utility.ts": {
+      "security/detect-object-injection": 2
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/speakable-text.utility.ts": {
+      "security/detect-unsafe-regex": 2
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/speech-job-state.utility.ts": {
+      "security/detect-object-injection": 2
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/stream-progress-tracker.utility.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/thinking-fragment-scanner.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/token-estimator.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/utilities/video-delivery.utility.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-messages/validators/local-only-attachment.validator.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-shares/managers/__tests__/chat-share.manager.spec.ts": {
+      "@typescript-eslint/no-shadow": 1,
+      "sort-imports": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-shares/managers/chat-share.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-shares/services/__tests__/chat-share-events.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-shares/utilities/safe-search-verdict.utility.ts": {
+      "security/detect-object-injection": 2
+    },
+    "apps/claw-chat-service/src/modules/chat-shares/utilities/sitemap-cursor.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-shares/utilities/snapshot-sanitizer.utility.ts": {
+      "unicorn/prefer-ternary": 3
+    },
+    "apps/claw-chat-service/src/modules/chat-threads/__tests__/thread-settings-field-mapping.spec.ts": {
+      "security/detect-non-literal-fs-filename": 1,
+      "security/detect-non-literal-regexp": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-threads/services/chat-threads.service.ts": {
+      "complexity": 1,
+      "max-lines-per-function": 1
+    },
+    "apps/claw-chat-service/src/modules/chat-threads/utilities/derive-thread-title.utility.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-chat-service/src/modules/context-receipts/services/context-receipt.service.ts": {
+      "complexity": 1
+    },
+    "apps/claw-client-logs-service/src/app/config/app.config.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-client-logs-service/src/app/guards/roles.guard.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-client-logs-service/src/app/pipes/zod-validation.pipe.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-client-logs-service/src/main.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-client-logs-service/src/modules/client-logs/repositories/__tests__/client-logs.repository.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-client-logs-service/src/modules/client-logs/services/__tests__/client-logs.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-client-logs-service/src/modules/health/services/__tests__/health.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-connector-service/src/app/config/app.config.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1
+    },
+    "apps/claw-connector-service/src/app/guards/roles.guard.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-connector-service/src/app/pipes/zod-validation.pipe.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-connector-service/src/common/utilities/constant-time-equal.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-connector-service/src/main.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-connector-service/src/modules/connectors/__tests__/llamacpp.adapter.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-connector-service/src/modules/connectors/constants/model-price.constants.ts": {
+      "security/detect-unsafe-regex": 1
+    },
+    "apps/claw-connector-service/src/modules/connectors/constants/ollama-cloud-models.constants.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-connector-service/src/modules/connectors/constants/ollama-tool-heuristics.constants.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-connector-service/src/modules/connectors/controllers/__tests__/connectors-internal.controller.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-connector-service/src/modules/connectors/repositories/__tests__/health-events.repository.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-connector-service/src/modules/connectors/repositories/__tests__/sync-runs.repository.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-connector-service/src/modules/connectors/services/provider-definitions.service.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 2
+    },
+    "apps/claw-connector-service/src/modules/connectors/utilities/model-display-name.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-connector-service/src/modules/health/services/__tests__/health.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-file-generation-service/src/app/config/app.config.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1
+    },
+    "apps/claw-file-generation-service/src/app/guards/auth.guard.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-file-generation-service/src/app/guards/roles.guard.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-file-generation-service/src/app/pipes/zod-validation.pipe.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-file-generation-service/src/main.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-file-generation-service/src/modules/file-generation/__tests__/file-generation.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-file-generation-service/src/modules/file-generation/adapters/json.adapter.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-file-generation-service/src/modules/file-generation/adapters/pdf.adapter.ts": {
+      "security/detect-non-literal-fs-filename": 1
+    },
+    "apps/claw-file-generation-service/src/modules/file-generation/constants/document-render.constants.ts": {
+      "security/detect-non-literal-regexp": 1,
+      "security/detect-unsafe-regex": 3
+    },
+    "apps/claw-file-generation-service/src/modules/file-generation/constants/file-asset.constants.ts": {
+      "security/detect-non-literal-regexp": 2
+    },
+    "apps/claw-file-generation-service/src/modules/file-generation/utilities/document-table.utility.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-file-generation-service/src/modules/file-generation/utilities/docx-document.utility.ts": {
+      "security/detect-object-injection": 2
+    },
+    "apps/claw-file-generation-service/src/modules/file-generation/utilities/typst-document.utility.ts": {
+      "security/detect-object-injection": 2
+    },
+    "apps/claw-file-generation-service/src/modules/file-generation/utilities/xlsx-workbook.utility.ts": {
+      "security/detect-object-injection": 1,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-file-generation-service/src/modules/file-generation/utilities/zip-bundle.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-file-generation-service/src/modules/health/services/__tests__/health.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-file-service/src/app/config/app.config.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1
+    },
+    "apps/claw-file-service/src/app/guards/auth.guard.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-file-service/src/app/guards/roles.guard.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-file-service/src/app/pipes/zod-validation.pipe.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-file-service/src/common/utilities/__tests__/__fixtures__/archive-fixtures.ts": {
+      "security/detect-non-literal-fs-filename": 1
+    },
+    "apps/claw-file-service/src/common/utilities/archive-format.utility.ts": {
+      "security/detect-non-literal-fs-filename": 1,
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-file-service/src/common/utilities/archive-policy.utility.ts": {
+      "security/detect-non-literal-fs-filename": 2,
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-file-service/src/common/utilities/ooxml-parser.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-file-service/src/common/utilities/seven-zip-extraction.utility.ts": {
+      "security/detect-non-literal-fs-filename": 3
+    },
+    "apps/claw-file-service/src/common/utilities/seven-zip.utility.ts": {
+      "security/detect-non-literal-fs-filename": 1,
+      "security/detect-object-injection": 2
+    },
+    "apps/claw-file-service/src/common/utilities/zip-extraction.utility.ts": {
+      "security/detect-non-literal-fs-filename": 1
+    },
+    "apps/claw-file-service/src/main.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-file-service/src/modules/files/managers/zip-expansion.manager.ts": {
+      "security/detect-non-literal-fs-filename": 1
+    },
+    "apps/claw-file-service/src/modules/files/repositories/__tests__/file-chunks.repository.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-file-service/src/modules/files/services/archive-entries.service.ts": {
+      "@typescript-eslint/prefer-optional-chain": 1
+    },
+    "apps/claw-frontend/src/app/__tests__/color-contrast-tokens.test.ts": {
+      "security/detect-non-literal-regexp": 2
+    },
+    "apps/claw-frontend/src/components/chat/recording-waveform.tsx": {
+      "react/no-array-index-key": 1
+    },
+    "apps/claw-frontend/src/components/marketing/features/__tests__/features-cluster-pages.test.tsx": {
+      "security/detect-non-literal-regexp": 1
+    },
+    "apps/claw-frontend/src/components/marketing/integrations/__tests__/integration-pages.test.tsx": {
+      "security/detect-non-literal-regexp": 1
+    },
+    "apps/claw-frontend/src/components/marketing/learn/__tests__/learn-pages.test.tsx": {
+      "security/detect-non-literal-regexp": 1
+    },
+    "apps/claw-frontend/src/components/marketing/model-fit/__tests__/model-fit-pages.test.tsx": {
+      "security/detect-non-literal-regexp": 1
+    },
+    "apps/claw-frontend/src/components/marketing/models/__tests__/model-pages.test.tsx": {
+      "security/detect-non-literal-regexp": 1
+    },
+    "apps/claw-frontend/src/components/marketing/prompts/__tests__/prompt-guide-pages.test.tsx": {
+      "security/detect-non-literal-regexp": 1
+    },
+    "apps/claw-frontend/src/components/marketing/use-cases/__tests__/use-cases-cluster-pages.test.tsx": {
+      "security/detect-non-literal-regexp": 1
+    },
+    "apps/claw-frontend/src/hooks/chat/use-parallel-compare-page.ts": {
+      "react-hooks/exhaustive-deps": 1
+    },
+    "apps/claw-frontend/src/lib/http-client.ts": {
+      "security/detect-possible-timing-attacks": 1
+    },
+    "apps/claw-health-service/src/main.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-health-service/src/modules/health/controllers/__tests__/health.controller.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-health-service/src/modules/health/utilities/prometheus-text.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-health-service/src/modules/health/utilities/status-aggregation.utility.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-image-service/src/app/config/app.config.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1
+    },
+    "apps/claw-image-service/src/app/guards/auth.guard.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-image-service/src/app/guards/roles.guard.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-image-service/src/app/pipes/zod-validation.pipe.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-image-service/src/main.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-image-service/src/modules/health/services/__tests__/health.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-image-service/src/modules/runtime-progress/adapters/comfyui-progress.adapter.ts": {
+      "security/detect-object-injection": 2
+    },
+    "apps/claw-image-service/src/modules/runtime-progress/workflows/comfyui-workflow-node.mapper.ts": {
+      "security/detect-object-injection": 2,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-llamacpp-service/src/app/config/app.config.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1
+    },
+    "apps/claw-llamacpp-service/src/app/guards/roles.guard.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-llamacpp-service/src/app/pipes/zod-validation.pipe.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-llamacpp-service/src/common/utilities/huggingface-client.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-llamacpp-service/src/common/utilities/platform.utility.ts": {
+      "unicorn/prefer-ternary": 4
+    },
+    "apps/claw-llamacpp-service/src/common/utilities/safe-stringify.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-llamacpp-service/src/main.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-llamacpp-service/src/modules/catalog/managers/hf-auto-sync.manager.ts": {
+      "@typescript-eslint/prefer-optional-chain": 2,
+      "security/detect-unsafe-regex": 1,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-llamacpp-service/src/modules/catalog/managers/hf-discovery.manager.ts": {
+      "@typescript-eslint/no-shadow": 1,
+      "@typescript-eslint/prefer-optional-chain": 1,
+      "unicorn/prefer-string-replace-all": 2,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-llamacpp-service/src/modules/catalog/services/catalog.service.ts": {
+      "security/detect-unsafe-regex": 1
+    },
+    "apps/claw-llamacpp-service/src/modules/hardware/managers/hardware-detector.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-llamacpp-service/src/modules/inference/managers/inference-proxy.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-llamacpp-service/src/modules/inference/utilities/think-tag-rewriter.utility.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-llamacpp-service/src/modules/models-lifecycle/managers/llama-server-launcher.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-llamacpp-service/src/modules/pull-jobs/__tests__/pull-job-resume.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-llamacpp-service/src/modules/runtime-progress/__tests__/llamacpp-probe.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-llamacpp-service/src/modules/runtime-progress/services/llamacpp-probe.service.ts": {
+      "unicorn/prefer-ternary": 4
+    },
+    "apps/claw-memory-service/src/app/config/app.config.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1
+    },
+    "apps/claw-memory-service/src/app/guards/roles.guard.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-memory-service/src/app/pipes/zod-validation.pipe.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-memory-service/src/common/constants/memory-sensitivity.constants.ts": {
+      "security/detect-unsafe-regex": 1
+    },
+    "apps/claw-memory-service/src/common/utilities/constant-time-equal.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-memory-service/src/common/utilities/date-coerce.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-memory-service/src/common/utilities/parse-int.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-memory-service/src/common/utilities/sensitivity-validators.utility.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-memory-service/src/main.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-memory-service/src/modules/context-pack-portable/services/context-pack-portable.service.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-memory-service/src/modules/context-pack-templates/services/context-pack-template.service.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-memory-service/src/modules/context-packs/__tests__/context-packs.service.spec.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1,
+      "sort-imports": 1
+    },
+    "apps/claw-memory-service/src/modules/health/services/__tests__/health.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-memory-service/src/modules/memory-portable/services/memory-portable.service.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-memory-service/src/modules/memory-suggestions/repositories/memory-suggestion.repository.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-memory-service/src/modules/memory-suggestions/services/memory-suggestion.service.ts": {
+      "complexity": 1,
+      "max-lines-per-function": 1
+    },
+    "apps/claw-memory-service/src/modules/memory/__tests__/memory.service.spec.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1
+    },
+    "apps/claw-memory-service/src/modules/memory/services/memory-retrieval.service.ts": {
+      "complexity": 1,
+      "max-lines-per-function": 2
+    },
+    "apps/claw-memory-service/src/modules/memory/services/memory.service.ts": {
+      "complexity": 2,
+      "max-lines-per-function": 2
+    },
+    "apps/claw-ollama-service/src/app/config/app.config.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1
+    },
+    "apps/claw-ollama-service/src/app/guards/roles.guard.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-ollama-service/src/app/pipes/zod-validation.pipe.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-ollama-service/src/main.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-ollama-service/src/modules/ollama/__tests__/ollama.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-ollama-service/src/modules/ollama/__tests__/ollama.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-ollama-service/src/modules/ollama/managers/adapters/comfyui-runtime.adapter.spec.ts": {
+      "security/detect-non-literal-fs-filename": 5
+    },
+    "apps/claw-ollama-service/src/modules/ollama/managers/adapters/comfyui-runtime.adapter.ts": {
+      "security/detect-non-literal-fs-filename": 4
+    },
+    "apps/claw-ollama-service/src/modules/ollama/managers/adapters/ollama-runtime.adapter.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-ollama-service/src/modules/ollama/ollama.service.ts": {
+      "unicorn/prefer-ternary": 3
+    },
+    "apps/claw-ollama-service/src/modules/ollama/repositories/local-models.repository.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-ollama-service/src/modules/ollama/repositories/model-catalog.repository.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-ollama-service/src/modules/ollama/services/__tests__/catalog-remote-metadata.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-ollama-service/src/modules/ollama/utilities/catalog-reference.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-ollama-service/src/modules/ollama/utilities/hardware-profile.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-ollama-service/src/modules/ollama/utilities/model-classifier.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-ollama-service/src/modules/ollama/utilities/model-normalizer.utility.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-ollama-service/src/modules/ollama/utilities/model-ranker.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-ollama-service/src/modules/ollama/utilities/search-browser-classifier.utility.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-ollama-service/src/modules/runtime-progress/__tests__/ollama-probe.service.spec.ts": {
+      "unicorn/prefer-ternary": 3
+    },
+    "apps/claw-ollama-service/src/modules/runtime-progress/__tests__/runtime-progress.controller.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-ollama-service/src/modules/runtime-progress/services/ollama-probe.service.ts": {
+      "unicorn/prefer-ternary": 4
+    },
+    "apps/claw-payment-service/src/app/filters/__tests__/global-exception.filter.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/app/pipes/zod-validation.pipe.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-payment-service/src/common/utilities/env-blank.utility.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-payment-service/src/common/utilities/subscription-state-machine.utility.ts": {
+      "security/detect-object-injection": 2
+    },
+    "apps/claw-payment-service/src/infrastructure/redis/__tests__/redis.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/admin-user-billing/services/__tests__/admin-user-billing.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/admin-user-billing/utilities/admin-user-billing-view.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-payment-service/src/modules/billing/__tests__/proration.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/billing/services/__tests__/credit-topup-lifecycle.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/billing/services/__tests__/subscription-lifecycle.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/billing/services/subscription-lifecycle.service.ts": {
+      "max-lines-per-function": 2
+    },
+    "apps/claw-payment-service/src/modules/billing/utilities/credit-topup-snapshot.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-payment-service/src/modules/checkout/services/__tests__/charge-resolver.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/checkout/services/__tests__/credit-charge-resolver.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/checkout/services/__tests__/credit-topup-migration.spec.ts": {
+      "security/detect-non-literal-fs-filename": 1
+    },
+    "apps/claw-payment-service/src/modules/checkout/services/__tests__/payment-method-setup-migration.spec.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-payment-service/src/modules/checkout/services/charge-resolver.service.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-payment-service/src/modules/checkout/services/checkout.service.ts": {
+      "max-lines-per-function": 1
+    },
+    "apps/claw-payment-service/src/modules/checkout/services/credit-charge-resolver.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-payment-service/src/modules/checkout/services/paymob-checkout-completion.service.ts": {
+      "@typescript-eslint/prefer-optional-chain": 1,
+      "complexity": 1,
+      "max-lines-per-function": 1
+    },
+    "apps/claw-payment-service/src/modules/display-fx/__tests__/display-fx-providers.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/display-fx/__tests__/display-fx.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/display-fx/__tests__/geo-country.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/display-fx/providers/fawaz-exchange.provider.ts": {
+      "security/detect-object-injection": 2
+    },
+    "apps/claw-payment-service/src/modules/display-fx/providers/frankfurter.provider.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-payment-service/src/modules/display-fx/service.utilities/client-ip.utility.ts": {
+      "security/detect-object-injection": 1,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-payment-service/src/modules/display-fx/services/display-fx.service.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-payment-service/src/modules/display-fx/services/geo-country.service.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-payment-service/src/modules/fx/__tests__/fx.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/fx/services/fx.service.ts": {
+      "security/detect-object-injection": 1,
+      "security/detect-unsafe-regex": 1,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-payment-service/src/modules/gateway-config/services/gateway-config-bootstrap.service.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-payment-service/src/modules/gateway-config/services/gateway-config.service.ts": {
+      "security/detect-object-injection": 7
+    },
+    "apps/claw-payment-service/src/modules/gateway-config/services/gateway-runtime-config.service.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-payment-service/src/modules/gateways/paymob/__tests__/paymob-token.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/gateways/paymob/__tests__/paymob.adapter.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/gateways/paymob/utilities/paymob-hmac.utility.ts": {
+      "security/detect-object-injection": 1,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-payment-service/src/modules/gateways/paypal/schemas/paypal-response.schema.ts": {
+      "security/detect-unsafe-regex": 1
+    },
+    "apps/claw-payment-service/src/modules/gateways/paypal/utilities/paypal-amount.utility.ts": {
+      "security/detect-unsafe-regex": 1
+    },
+    "apps/claw-payment-service/src/modules/idempotency/repositories/__tests__/idempotency.repository.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/outbox/repositories/__tests__/outbox.repository.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/outbox/utilities/outbox-envelope.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-payment-service/src/modules/reconciliation/clients/__tests__/plan-retirement.client.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/reconciliation/managers/__tests__/reconciliation.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/reconciliation/repositories/__tests__/reconciliation.repository.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/reconciliation/services/__tests__/gateway-reconciliation.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/reconciliation/services/__tests__/lifecycle-reconciliation.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/reconciliation/services/__tests__/plan-retirement-reconciliation.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/reconciliation/services/__tests__/provider-subscription-reconciliation.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/reconciliation/services/__tests__/transaction-reconciliation.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/reconciliation/services/gateway-reconciliation.service.ts": {
+      "max-lines-per-function": 1,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-payment-service/src/modules/reconciliation/services/plan-retirement-reconciliation.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-payment-service/src/modules/reconciliation/services/provider-subscription-reconciliation.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-payment-service/src/modules/reconciliation/services/transaction-reconciliation.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-payment-service/src/modules/refunds/managers/refund.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-payment-service/src/modules/refunds/repositories/refund.repository.ts": {
+      "@typescript-eslint/prefer-optional-chain": 1,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-payment-service/src/modules/refunds/services/refund-webhook.service.ts": {
+      "complexity": 1
+    },
+    "apps/claw-payment-service/src/modules/subscriptions/repositories/__tests__/invoice.repository.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/subscriptions/repositories/__tests__/scheduled-plan-change-reason-migration.spec.ts": {
+      "security/detect-non-literal-fs-filename": 1
+    },
+    "apps/claw-payment-service/src/modules/subscriptions/repositories/__tests__/subscription.repository.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/subscriptions/services/__tests__/plan-change.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/subscriptions/services/__tests__/scheduled-downgrade.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/subscriptions/services/__tests__/subscription-cancel.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/webhooks/repositories/__tests__/webhook-event.repository.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/webhooks/services/__tests__/payment-activation.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/webhooks/services/__tests__/paymob-card-token.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/webhooks/services/__tests__/paypal-webhook-dispatch.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/webhooks/services/__tests__/paypal-webhook.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-payment-service/src/modules/webhooks/services/payment-reversal.service.ts": {
+      "@typescript-eslint/prefer-optional-chain": 1,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-payment-service/src/modules/webhooks/services/paymob-callback-router.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-payment-service/src/modules/webhooks/services/paymob-card-token.service.ts": {
+      "max-lines-per-function": 1
+    },
+    "apps/claw-payment-service/src/modules/webhooks/services/paymob-webhook.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-payment-service/src/modules/webhooks/services/paypal-webhook.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-payment-service/src/modules/webhooks/utilities/paymob-payload.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-payment-service/src/modules/webhooks/utilities/webhook-payload.utility.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-research-service/src/app/pipes/zod-validation.pipe.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-research-service/src/common/utilities/concurrency-pool.utility.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-research-service/src/common/utilities/constant-time-equal.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-research-service/src/common/utilities/feed.utility.ts": {
+      "security/detect-non-literal-regexp": 1,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-research-service/src/common/utilities/html-extract.utility.ts": {
+      "security/detect-non-literal-regexp": 1,
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-research-service/src/common/utilities/impit-client.utility.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1,
+      "sort-imports": 1
+    },
+    "apps/claw-research-service/src/common/utilities/ip-address.utility.ts": {
+      "security/detect-object-injection": 1,
+      "security/detect-unsafe-regex": 1
+    },
+    "apps/claw-research-service/src/common/utilities/sitemap.utility.ts": {
+      "security/detect-non-literal-regexp": 1,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-research-service/src/main.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-research-service/src/modules/fetch/adapters/__tests__/headless-fetch.adapter.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-research-service/src/modules/fetch/adapters/__tests__/tls-impersonate-fetch.adapter.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-research-service/src/modules/fetch/adapters/crawl4ai-fetch.adapter.ts": {
+      "@typescript-eslint/prefer-optional-chain": 1
+    },
+    "apps/claw-research-service/src/modules/fetch/services/__tests__/fetch-strategy-bootstrap.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-research-service/src/modules/fetch/services/__tests__/fetch.service.escalation.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-research-service/src/modules/fetch/services/__tests__/fetch.service.usage.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-research-service/src/modules/fetch/services/__tests__/robots-policy.service.spec.ts": {
+      "sort-imports": 1,
+      "unicorn/no-useless-undefined": 1
+    },
+    "apps/claw-research-service/src/modules/fetch/services/fetch-strategy-bootstrap.service.ts": {
+      "security/detect-object-injection": 5
+    },
+    "apps/claw-research-service/src/modules/fetch/services/fetch-strategy-orchestrator.service.ts": {
+      "complexity": 1,
+      "max-lines-per-function": 1
+    },
+    "apps/claw-research-service/src/modules/fetch/services/fetch.service.ts": {
+      "max-lines-per-function": 1
+    },
+    "apps/claw-research-service/src/modules/fetch/utilities/__tests__/fetch-helpers.utility.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-research-service/src/modules/fetch/utilities/escalation-helpers.utility.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-research-service/src/modules/fetch/utilities/official-api-format.utility.ts": {
+      "security/detect-non-literal-regexp": 1
+    },
+    "apps/claw-research-service/src/modules/fetch/utilities/pinned-fetch.utility.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-research-service/src/modules/fetch/utilities/raw-body-result.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-research-service/src/modules/fetch/utilities/wayback-snapshot.utility.ts": {
+      "security/detect-unsafe-regex": 1
+    },
+    "apps/claw-research-service/src/modules/research/managers/__tests__/research-progress-publisher.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-research-service/src/modules/research/managers/__tests__/site-crawl.manager.spec.ts": {
+      "unicorn/prefer-ternary": 10
+    },
+    "apps/claw-research-service/src/modules/research/managers/site-audit.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-research-service/src/modules/research/managers/site-crawl.manager.ts": {
+      "max-lines-per-function": 1
+    },
+    "apps/claw-research-service/src/modules/scrape/adapters/article.extractor.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-research-service/src/modules/search/adapters/__tests__/ollama-web.adapter.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-research-service/src/modules/search/adapters/__tests__/searxng.adapter.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-research-service/src/modules/search/adapters/__tests__/tavily.adapter.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-research-service/src/modules/search/services/__tests__/search-execution.service.spec.ts": {
+      "sort-imports": 1,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-research-service/src/modules/search/services/__tests__/search-provider-bootstrap.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-research-service/src/modules/search/services/search-execution.service.ts": {
+      "complexity": 1,
+      "max-lines-per-function": 2,
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-research-service/src/modules/search/services/search-provider.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/app/config/app.config.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1
+    },
+    "apps/claw-routing-service/src/app/guards/roles.guard.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/app/pipes/zod-validation.pipe.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-routing-service/src/common/utilities/constant-time-equal.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/common/utilities/keyword-match.utility.ts": {
+      "security/detect-non-literal-regexp": 1
+    },
+    "apps/claw-routing-service/src/common/utilities/record-lookup.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/main.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-routing-service/src/modules/assistant-models/__tests__/assistant-model-seed.constants.spec.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-routing-service/src/modules/classifier/constants/domain-keywords.constants.ts": {
+      "security/detect-unsafe-regex": 1
+    },
+    "apps/claw-routing-service/src/modules/classifier/managers/classifier.manager.ts": {
+      "unicorn/prefer-ternary": 3
+    },
+    "apps/claw-routing-service/src/modules/classifier/utilities/domain-scorer.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/modules/intelligence/managers/ai-route-planner.manager.ts": {
+      "complexity": 1
+    },
+    "apps/claw-routing-service/src/modules/learning-loop/__tests__/learning-loop.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/learning-loop/utilities/bounded-adjust.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/modules/modality-detection/controllers/modality-detection.controller.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/modality-detection/utilities/extension-detector.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/modules/observability/utilities/count-by.utility.ts": {
+      "security/detect-object-injection": 2
+    },
+    "apps/claw-routing-service/src/modules/reliability/__tests__/circuit-breaker.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/reliability/managers/circuit-breaker.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/modules/route-evaluator/__tests__/route-evaluator-learning-loop.spec.ts": {
+      "sort-imports": 1,
+      "unicorn/no-useless-undefined": 4
+    },
+    "apps/claw-routing-service/src/modules/route-evaluator/utilities/canary-hash.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/modules/route-evaluator/utilities/runtime-type.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/modules/router-models/__tests__/deployment-seed.repository.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/router-models/__tests__/deployment-seed.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/router-models/__tests__/model-deployment-schema.spec.ts": {
+      "security/detect-non-literal-fs-filename": 3
+    },
+    "apps/claw-routing-service/src/modules/router-models/__tests__/model-intelligence.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/router-models/__tests__/router-admin-override.repository.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/router-models/__tests__/router-model-registry.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/router-models/__tests__/router-model-registry.repository.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/router-models/managers/router-model-registry.manager.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-routing-service/src/modules/router-models/services/model-intelligence.service.ts": {
+      "@typescript-eslint/prefer-optional-chain": 1,
+      "security/detect-object-injection": 3,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/modules/router-models/utilities/deployment-derivation.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/modules/router-models/utilities/dto-to-update-input.utility.ts": {
+      "security/detect-object-injection": 2
+    },
+    "apps/claw-routing-service/src/modules/router-models/utilities/model-intelligence-merge.utility.ts": {
+      "security/detect-object-injection": 4
+    },
+    "apps/claw-routing-service/src/modules/router-models/utilities/resolve-intelligence-view.utility.ts": {
+      "security/detect-object-injection": 4
+    },
+    "apps/claw-routing-service/src/modules/routing/__tests__/adaptive-learning.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/__tests__/cloud-router.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/__tests__/exposed-models.service.spec.ts": {
+      "@typescript-eslint/consistent-type-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/__tests__/llamacpp-health.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/__tests__/recovery.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/__tests__/replay-heuristics.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/__tests__/replay.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/__tests__/router-attempt.repository.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/__tests__/router-configuration.repository.spec.ts": {
+      "sort-imports": 1,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/__tests__/router-inference-coordinator-payg.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/__tests__/router-shadow-evaluation.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/__tests__/router-trace.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/__tests__/routing-education.repository.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/constants/high-risk-detector.constants.ts": {
+      "security/detect-non-literal-regexp": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/constants/named-model-request.constants.ts": {
+      "security/detect-non-literal-regexp": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/lab/__tests__/routing-lab-evidence.integration.spec.ts": {
+      "security/detect-non-literal-fs-filename": 4
+    },
+    "apps/claw-routing-service/src/modules/routing/managers/capability-router.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/managers/complexity-classifier.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/managers/replay.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/managers/router-education.manager.ts": {
+      "complexity": 1,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/managers/router-inference-coordinator.manager.ts": {
+      "max-lines-per-function": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/managers/router-shadow-evaluation.manager.ts": {
+      "unicorn/prefer-ternary": 3
+    },
+    "apps/claw-routing-service/src/modules/routing/managers/routing.manager.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/services/exposed-models.service.ts": {
+      "complexity": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/services/routing.service.ts": {
+      "max-lines-per-function": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/utilities/cloud-router-candidates.utility.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/utilities/modality-fit.utility.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/utilities/named-model-request.utility.ts": {
+      "security/detect-non-literal-regexp": 2
+    },
+    "apps/claw-routing-service/src/modules/routing/utilities/router-base-url.utility.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-routing-service/src/modules/routing/utilities/router-chain-resolution.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/utilities/router-decision-validation.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/modules/routing/utilities/router-error-mapping.utility.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-routing-service/src/modules/routing/utilities/router-token-estimate.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/modules/scoring/managers/scoring-engine.manager.ts": {
+      "security/detect-object-injection": 1,
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-routing-service/src/modules/scoring/utilities/dimension-scorers.utility.ts": {
+      "security/detect-object-injection": 3,
+      "unicorn/prefer-ternary": 10
+    },
+    "apps/claw-routing-service/src/modules/scoring/utilities/normalize.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-routing-service/src/modules/scoring/utilities/policy-weights-resolver.utility.ts": {
+      "security/detect-object-injection": 7
+    },
+    "apps/claw-routing-service/src/modules/sync/managers/router-sync.manager.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-routing-service/src/modules/sync/utilities/upsert-input-builder.utility.ts": {
+      "security/detect-object-injection": 4
+    },
+    "apps/claw-routing-service/src/modules/taxonomy/__tests__/taxonomy.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-routing-service/src/modules/workflows/managers/workflow-selector.manager.ts": {
+      "complexity": 1
+    },
+    "apps/claw-server-logs-service/src/app/config/app.config.ts": {
+      "@typescript-eslint/prefer-nullish-coalescing": 1
+    },
+    "apps/claw-server-logs-service/src/app/guards/roles.guard.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-server-logs-service/src/app/pipes/zod-validation.pipe.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-server-logs-service/src/main.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-server-logs-service/src/modules/health/services/__tests__/health.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-server-logs-service/src/modules/server-logs/constants/container-log.constants.ts": {
+      "security/detect-non-literal-regexp": 1
+    },
+    "apps/claw-server-logs-service/src/modules/server-logs/managers/__tests__/server-log-event.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-server-logs-service/src/modules/server-logs/repositories/__tests__/server-logs.repository.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-server-logs-service/src/modules/server-logs/services/__tests__/server-logs.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-server-logs-service/src/modules/server-logs/utilities/container-log.utility.ts": {
+      "security/detect-object-injection": 2,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-thread-generation-service/src/app/pipes/zod-validation.pipe.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-thread-generation-service/src/modules/generation/constants/step-recorder.constants.ts": {
+      "security/detect-unsafe-regex": 1
+    },
+    "apps/claw-thread-generation-service/src/modules/generation/managers/__tests__/generation-pipeline.manager.spec.ts": {
+      "@typescript-eslint/no-shadow": 1
+    },
+    "apps/claw-thread-generation-service/src/modules/generation/managers/generation-pipeline.manager.ts": {
+      "@typescript-eslint/explicit-function-return-type": 5,
+      "complexity": 1,
+      "max-lines-per-function": 1
+    },
+    "apps/claw-thread-generation-service/src/modules/generation/repositories/generation-jobs.repository.ts": {
+      "@typescript-eslint/explicit-function-return-type": 13,
+      "@typescript-eslint/prefer-optional-chain": 3
+    },
+    "apps/claw-thread-generation-service/src/modules/generation/services/generation-jobs.service.ts": {
+      "complexity": 4,
+      "max-lines-per-function": 2
+    },
+    "apps/claw-thread-generation-service/src/modules/generation/services/step-recorder.service.ts": {
+      "complexity": 1
+    },
+    "apps/claw-threads-service/src/modules/publications/controllers/publication-discovery.controller.ts": {
+      "@typescript-eslint/explicit-function-return-type": 2
+    },
+    "apps/claw-threads-service/src/modules/publications/services/publication-discovery.service.ts": {
+      "@typescript-eslint/explicit-function-return-type": 2
+    },
+    "apps/claw-threads-service/src/modules/publications/services/publication-lifecycle.service.ts": {
+      "complexity": 1,
+      "max-lines-per-function": 1
+    },
+    "apps/claw-workspace-service/src/app/decorators/raw-webhook-body.decorator.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/app/pipes/zod-validation.pipe.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-workspace-service/src/common/guards/__tests__/admin-ip-allowlist.guard.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/common/guards/admin-ip-allowlist.guard.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/common/guards/webhook-signature.guard.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/common/utilities/record-lookup.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/main.ts": {
+      "security/detect-non-literal-fs-filename": 2
+    },
+    "apps/claw-workspace-service/src/modules/actions/managers/action-execution.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/actions/services/workspace-action.service.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-workspace-service/src/modules/ai-actions/controllers/__tests__/automation-preference.controller.spec.ts": {
+      "@typescript-eslint/consistent-type-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/ai-actions/managers/__tests__/ai-action-approval.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/ai-actions/managers/__tests__/ai-action-execution.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/ai-actions/managers/__tests__/ai-action-policy-matcher.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/ai-actions/managers/__tests__/auto-router.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/ai-actions/managers/__tests__/multi-model-review-orchestrator.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/ai-actions/managers/ai-action-approval.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/ai-actions/managers/ai-action-execution.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/ai-actions/managers/ai-action-policy-matcher.manager.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-workspace-service/src/modules/ai-actions/managers/ai-action-risk-scorer.manager.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-workspace-service/src/modules/ai-actions/managers/multi-model-review-orchestrator.manager.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-workspace-service/src/modules/ai-actions/services/__tests__/ai-action-approval-queue.service.spec.ts": {
+      "sort-imports": 1,
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-workspace-service/src/modules/ai-actions/services/__tests__/ai-action-policy.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/ai-actions/services/__tests__/automation-preference.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/ai-actions/utilities/__tests__/cloud-generation-client.utility.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/ai-actions/utilities/multi-model-review-markdown.utility.ts": {
+      "@typescript-eslint/prefer-optional-chain": 1,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/auto-suggest/managers/__tests__/auto-suggest-scheduler.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/chains/managers/__tests__/chain-executor.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/chains/managers/__tests__/chain-nl-draft.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/chains/managers/__tests__/chain-orphan-run-recovery.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/chains/managers/chain-executor.manager.ts": {
+      "@typescript-eslint/prefer-optional-chain": 4,
+      "max-lines-per-function": 1,
+      "security/detect-object-injection": 2
+    },
+    "apps/claw-workspace-service/src/modules/chains/managers/chain-orphan-run-recovery.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/chains/services/__tests__/chain-template.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/chains/services/__tests__/chain.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/chains/services/chain-template.service.ts": {
+      "@typescript-eslint/prefer-optional-chain": 1,
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-workspace-service/src/modules/chains/services/chain.service.ts": {
+      "@typescript-eslint/prefer-optional-chain": 1,
+      "complexity": 1
+    },
+    "apps/claw-workspace-service/src/modules/chains/utilities/chain-error-classifier.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/chains/utilities/chain-placeholder-resolver.utility.ts": {
+      "security/detect-object-injection": 3,
+      "security/detect-unsafe-regex": 2,
+      "unicorn/prefer-string-replace-all": 1
+    },
+    "apps/claw-workspace-service/src/modules/chains/utilities/chain-template-placeholder.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/connector-access/services/connector-access.service.ts": {
+      "complexity": 1,
+      "unicorn/prefer-ternary": 3
+    },
+    "apps/claw-workspace-service/src/modules/digest/managers/digest-action-item-extractor.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/digest/services/digest.service.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-workspace-service/src/modules/email-signatures/services/__tests__/email-signature.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/email-templates/services/__tests__/email-template.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/inbox/services/inbox.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/learning/managers/preference-classifier.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/suggestion-factory/managers/__tests__/suggestion-factory.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/suggestion-factory/services/__tests__/suggestion-trigger-rule.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/ticket-planning/managers/decompose-fanout.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/ticket-planning/utilities/handoff-status.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/webhooks/managers/__tests__/webhook-receiver.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/webhooks/managers/webhook-receiver.manager.ts": {
+      "unicorn/prefer-ternary": 4
+    },
+    "apps/claw-workspace-service/src/modules/webhooks/utilities/webhook-signature-verifiers.utility.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-workspace-service/src/modules/workspace-events/services/workspace-event-mapper.service.ts": {
+      "unicorn/prefer-ternary": 9
+    },
+    "apps/claw-workspace-service/src/modules/workspace/adapters/__tests__/bitbucket.adapter.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/adapters/__tests__/clickup.adapter.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/adapters/__tests__/confluence.adapter.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/adapters/__tests__/github.adapter.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/adapters/__tests__/google-calendar.adapter.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/adapters/__tests__/google-drive.adapter.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/adapters/__tests__/outlook-calendar.adapter.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/adapters/__tests__/slack.adapter.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/adapters/gmail-compose.helper.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/adapters/gmail-message-parts.utility.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-workspace-service/src/modules/workspace/adapters/google-drive.adapter.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/consumers/workspace-sync.consumer.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/managers/__tests__/connector-activation.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/managers/__tests__/orphan-sync-recovery.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/managers/__tests__/stale-detector.manager.spec.ts": {
+      "sort-imports": 1,
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/managers/__tests__/token-refresh.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/managers/__tests__/workspace-sync-scheduler.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/managers/__tests__/workspace-sync.manager.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/managers/orphan-sync-recovery.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/managers/stale-detector.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/managers/sync-cadence-seeder.manager.ts": {
+      "security/detect-object-injection": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/managers/workspace-search.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/managers/workspace-sync-scheduler.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/managers/workspace-sync.manager.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/repositories/workspace-connector.repository.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "apps/claw-workspace-service/src/modules/workspace/services/__tests__/workspace-connector.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/services/__tests__/workspace-object.service.spec.ts": {
+      "sort-imports": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/services/provider-app-config.service.ts": {
+      "unicorn/no-useless-undefined": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/services/sync-health.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/services/workspace-object.service.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "apps/claw-workspace-service/src/modules/workspace/utilities/file-content-stream.utility.ts": {
+      "unicorn/prefer-string-replace-all": 2
+    },
+    "apps/claw-workspace-service/src/modules/workspace/utilities/oauth-error.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "packages/shared-auth/src/decorators.ts": {
+      "sort-imports": 2
+    },
+    "packages/shared-auth/src/roles.guard.ts": {
+      "sort-imports": 1,
+      "unicorn/prefer-ternary": 1
+    },
+    "packages/shared-constants/src/country-currency.constants.ts": {
+      "security/detect-object-injection": 1,
+      "unicorn/prefer-ternary": 1
+    },
+    "packages/shared-constants/src/timezone-country.constants.ts": {
+      "security/detect-object-injection": 1
+    },
+    "packages/shared-entitlements/src/entitlements-adapter.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "packages/shared-entitlements/src/helpers.ts": {
+      "security/detect-object-injection": 1
+    },
+    "packages/shared-entitlements/src/model-authorization.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "packages/shared-entitlements/src/payg-meter.ts": {
+      "security/detect-object-injection": 2
+    },
+    "packages/shared-entitlements/src/permission.guard.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "packages/shared-rabbitmq/src/rabbitmq.module.ts": {
+      "sort-imports": 1
+    },
+    "packages/shared-rabbitmq/src/structured-logger.ts": {
+      "sort-imports": 1
+    },
+    "packages/shared-types/src/events/event-payloads.type.ts": {
+      "max-lines": 1
+    },
+    "packages/shared-utilities/src/effort/effort-resolver.utility.ts": {
+      "security/detect-object-injection": 9,
+      "unicorn/prefer-ternary": 1
+    },
+    "packages/shared-utilities/src/generation-request/generation-mention.constants.ts": {
+      "security/detect-non-literal-regexp": 1,
+      "security/detect-unsafe-regex": 9
+    },
+    "packages/shared-utilities/src/generation-request/generation-mention.utility.ts": {
+      "security/detect-non-literal-regexp": 1
+    },
+    "packages/shared-utilities/src/generation-request/generation-request.constants.ts": {
+      "security/detect-unsafe-regex": 20
+    },
+    "packages/shared-utilities/src/http-client/redact-url-secrets.utility.ts": {
+      "security/detect-non-literal-regexp": 1
+    },
+    "packages/shared-utilities/src/https-bootstrap/https-bootstrap.utility.ts": {
+      "security/detect-non-literal-fs-filename": 2,
+      "security/detect-object-injection": 2
+    },
+    "packages/shared-utilities/src/idempotency/idempotency-key.utility.ts": {
+      "security/detect-object-injection": 1
+    },
+    "packages/shared-utilities/src/image-intent/image-intent.constants.ts": {
+      "security/detect-unsafe-regex": 2
+    },
+    "packages/shared-utilities/src/image-intent/image-term-match.utility.ts": {
+      "security/detect-non-literal-regexp": 2
+    },
+    "packages/shared-utilities/src/money/commercial-rounding.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "packages/shared-utilities/src/money/display-currency.utility.ts": {
+      "security/detect-object-injection": 1,
+      "security/detect-unsafe-regex": 1,
+      "unicorn/prefer-ternary": 2
+    },
+    "packages/shared-utilities/src/money/fx.utility.ts": {
+      "security/detect-unsafe-regex": 1
+    },
+    "packages/shared-utilities/src/money/money.utility.ts": {
+      "security/detect-object-injection": 1,
+      "security/detect-unsafe-regex": 1
+    },
+    "packages/shared-utilities/src/money/proration.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "packages/shared-utilities/src/runtime-progress/extract-final-timings.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "packages/shared-utilities/src/runtime-progress/find-bottleneck.utility.ts": {
+      "security/detect-object-injection": 1
+    },
+    "packages/shared-utilities/src/runtime-progress/parse-ollama-ndjson.utility.ts": {
+      "security/detect-object-injection": 3,
+      "unicorn/prefer-ternary": 1
+    },
+    "packages/shared-utilities/src/runtime-progress/think-tag-scanner.utility.ts": {
+      "unicorn/prefer-ternary": 2
+    },
+    "packages/shared-utilities/src/safe-stringify/safe-stringify.utility.ts": {
+      "security/detect-object-injection": 2
+    },
+    "packages/shared-utilities/src/speed/speed-resolver.utility.ts": {
+      "security/detect-object-injection": 5,
+      "unicorn/prefer-ternary": 1
+    },
+    "packages/shared-utilities/src/token-usage/estimate-text-tokens.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "packages/shared-utilities/src/token-usage/token-usage-guards.utility.ts": {
+      "security/detect-object-injection": 2,
+      "unicorn/prefer-ternary": 4
+    },
+    "packages/shared-utilities/src/url-detection/url-detection.constants.ts": {
+      "security/detect-unsafe-regex": 1
+    },
+    "packages/shared-utilities/src/url-detection/url-detection.utility.ts": {
+      "unicorn/prefer-ternary": 1
+    },
+    "packages/shared-utilities/src/video-generation/video-generation.constants.ts": {
+      "security/detect-unsafe-regex": 6
+    }
+  }
+}

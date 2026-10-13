@@ -39,7 +39,7 @@ test('release commit and GitHub release use the deployment release label', () =>
 
 test('release relies on the built-in token and workflow_run gates for loop prevention, not skip directives', () => {
   const checkout =
-    workflow.split('- uses: actions/checkout@v7')[1]?.split('- uses: actions/setup-node@v7')[0] ??
+    workflow.split(/- uses: actions\/checkout@\S+/u)[1]?.split(/- uses: actions\/setup-node@\S+/u)[0] ??
     '';
   assert.doesNotMatch(checkout, /token:/u);
   assert.doesNotMatch(checkout, /persist-credentials:\s*false/u);
@@ -53,7 +53,7 @@ test('release never force-pushes to main', () => {
 
 test('privileged release checks out trusted main before accepting the exact CI commit', () => {
   const checkout =
-    workflow.split('- uses: actions/checkout@v7')[1]?.split('- uses: actions/setup-node@v7')[0] ??
+    workflow.split(/- uses: actions\/checkout@\S+/u)[1]?.split(/- uses: actions\/setup-node@\S+/u)[0] ??
     '';
   const releaseScript = workflow.split('id: release')[1]?.split('Publish GitHub release')[0] ?? '';
 

@@ -158,6 +158,6 @@ The frontend test job runs `vitest run` directly (no wrapper) and bumps
 ## See also
 
 - [docker-guide.md](docker-guide.md) — container lifecycle, `claw.sh`
-- [cicd-pipeline.md](cicd-pipeline.md) — full CI pipeline
+- [ci-cd-pipeline.md](ci-cd-pipeline.md) — full CI pipeline
 - [../04-backend/shared-packages.md](../04-backend/shared-packages.md) — the 5 shared packages
 - [port-service-map.md](port-service-map.md) — service ↔ port ↔ database map

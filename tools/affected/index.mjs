@@ -16,12 +16,13 @@
 // main, fetching once if needed). A base that does not resolve is an error,
 // never "0 changed files".
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 
 import { cmp } from '../lib/fact.mjs';
 import { extractTests, extractWorkspaces } from '../lib/extractors.mjs';
 import { assertCommit, git, gitLines, resolveDefaultBase } from '../lib/git.mjs';
 import { npmInvocation } from '../lib/npm.mjs';
-import { isMain } from '../lib/repo.mjs';
+import { isMain, repoPath } from '../lib/repo.mjs';
 import { recordReceipt } from '../gates/receipt.mjs';
 import { formatSummary, gateJobs, runPool } from './pool.mjs';
 import { planRootChecks } from './root-checks.mjs';
@@ -186,11 +187,40 @@ export function createCiMatrix(result, workspaces, full = false) {
     include: workspaces
       .filter(({ name }) => selected.has(name))
       .map((workspace) => ({
+        dir: workspace.dir,
         prisma: workspace.scripts.includes('prisma:generate'),
         service: serviceName(workspace),
+        slug: serviceName(workspace),
         workspace: workspace.name,
       })),
   };
+}
+
+/**
+ * The sharded workspaces whose blob reports are merged after the test job —
+ * that merge is where their coverage thresholds are enforced, because no
+ * single shard sees the whole suite.
+ */
+export function createCiMergeMatrix(result, workspaces, full = false) {
+  return {
+    include: createCiMatrix(result, workspaces, full)
+      .include.filter((entry) => (TEST_SHARDS[entry.workspace] ?? 1) > 1)
+      .map((entry) => ({ ...entry, shards: TEST_SHARDS[entry.workspace] })),
+  };
+}
+
+const DEPLOY_PATHS =
+  /^(?:scripts\/deploy|tools\/release\/|tools\/__tests__\/deploy-prod|docker\/|\.github\/workflows\/deploy-production\.yml$)/u;
+const PRODUCTION_DOCKERFILE = /(?:^|\/)Dockerfile$/u;
+
+/** True when the change can affect the production deploy (runs the deploy rehearsal in CI). */
+export function touchesDeploy(files) {
+  return files.some((file) => DEPLOY_PATHS.test(file));
+}
+
+/** Production Dockerfiles among the changed files (the CI image scan builds and scans each). */
+export function changedDockerfiles(files) {
+  return files.filter((file) => PRODUCTION_DOCKERFILE.test(file) && existsSync(repoPath(file))).sort();
 }
 
 const SOURCE_FILE = /\/src\/.+\.(?:ts|tsx|mts|js|jsx)$/u;
@@ -399,15 +429,19 @@ async function main() {
   if (command === 'ci-matrix') {
     const workspaces = loadWorkspaces();
     const result = full
-      ? { affected: [], changedFileCount: 0, rootInvariant: true }
+      ? { affected: [], changedFileCount: 0, rootInvariant: true, files: [] }
       : computeAffected(base, { head });
     const matrix = createCiMatrix(result, workspaces, full);
+    const dockerfiles = full ? changedDockerfiles(gitLines(['ls-files'])) : changedDockerfiles(result.files);
     process.stdout.write(
       JSON.stringify({
+        deploy: full || touchesDeploy(result.files),
+        dockerfiles,
         full: full || result.rootInvariant,
         hasAffected: matrix.include.length > 0,
         includesChat: matrix.include.some(({ workspace }) => workspace === 'claw-chat-service'),
         matrix,
+        mergeMatrix: createCiMergeMatrix(result, workspaces, full),
         testMatrix: createCiTestMatrix(result, workspaces, full),
       }),
     );

@@ -90,7 +90,7 @@
 | --------------------------------------------------------------- | ---------------------------------------------------------- |
 | [Build System (tsgo)](08-runtime-devops/build-system.md)        | tsgo + tsc-alias toolchain, scripts, tsconfig, CI, gotchas |
 | [Docker Guide](08-runtime-devops/docker-guide.md)               | Dev stack, hot reload, startup order, troubleshooting      |
-| [CI/CD Pipeline](08-runtime-devops/cicd-pipeline.md)            | GitHub Actions (4 jobs x 23 matrix), pre-commit hooks      |
+| [CI/CD Pipeline](08-runtime-devops/ci-cd-pipeline.md)           | Every CI job, what it proves, how a red job blocks release |
 | [Nginx Reference](08-runtime-devops/nginx-reference.md)         | Route mappings, SSE config, security headers               |
 | [Port & Service Map](08-runtime-devops/port-service-map.md)     | Every process: port, datastore, prisma yes/no              |
 | [Testing Strategy](09-testing/testing-strategy.md)              | Test pyramid, inventory, commands, coverage                |

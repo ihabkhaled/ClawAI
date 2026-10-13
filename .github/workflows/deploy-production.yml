@@ -192,7 +192,7 @@ jobs:
       # unchanged for every path that does not reach here.
       - name: Fetch the IndexNow submitter
         if: steps.deploy.outcome == 'success'
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           sparse-checkout: tools/indexnow
           sparse-checkout-cone-mode: false

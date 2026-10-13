@@ -161,6 +161,6 @@ The frontend test job runs `vitest run` directly (no wrapper) and bumps
 ## See also
 
 - [docker-guide.md](https://github.com/ihabkhaled/ClawAI/blob/main/docs/08-runtime-devops/docker-guide.md) — container lifecycle, `claw.sh`
-- [cicd-pipeline.md](https://github.com/ihabkhaled/ClawAI/blob/main/docs/08-runtime-devops/cicd-pipeline.md) — full CI pipeline
+- [ci-cd-pipeline.md](https://github.com/ihabkhaled/ClawAI/blob/main/docs/08-runtime-devops/ci-cd-pipeline.md) — full CI pipeline
 - [../04-backend/shared-packages.md](https://github.com/ihabkhaled/ClawAI/blob/main/docs/04-backend/shared-packages.md) — the 5 shared packages
 - [port-service-map.md](https://github.com/ihabkhaled/ClawAI/blob/main/docs/08-runtime-devops/port-service-map.md) — service ↔ port ↔ database map

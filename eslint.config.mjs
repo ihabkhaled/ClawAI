@@ -130,14 +130,18 @@ export default tseslint.config(
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
       '@typescript-eslint/no-non-null-assertion': 'error',
+      // Autofixable style; the few remaining hits are fixed by lint-staged
+      // (`--fix`) as files are touched. Same for sort-imports below.
       '@typescript-eslint/consistent-type-imports': [
         'warn',
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
       ],
+      // Readability, not correctness; backlog tracked in the lint baseline.
       '@typescript-eslint/no-shadow': 'warn',
       '@typescript-eslint/default-param-last': 'error',
       '@typescript-eslint/no-useless-empty-export': 'error',
       '@typescript-eslint/no-loop-func': 'error',
+      // Inference covers these at the type level; backlog in the lint baseline.
       '@typescript-eslint/explicit-function-return-type': [
         'warn',
         {
@@ -148,7 +152,10 @@ export default tseslint.config(
       ],
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-misused-promises': 'error',
+      // `||` → `??` changes behaviour for '' and 0, so each hit needs a human
+      // decision rather than an autofix; backlog in the lint baseline.
       '@typescript-eslint/prefer-nullish-coalescing': 'warn',
+      // Readability; the rewrite can change short-circuit order, so not autofixed.
       '@typescript-eslint/prefer-optional-chain': 'warn',
       '@typescript-eslint/no-extraneous-class': 'off',
 
@@ -169,35 +176,49 @@ export default tseslint.config(
       'no-loop-func': 'off',
 
       // ── Security ─────────────────────────────────────────────────────────
+      // A rule stays 'warn' only with a reason. Warnings are not a free pass:
+      // lint-staged fails a commit on any warning in a staged file, and CI
+      // fails any warning above tools/lint/warnings-baseline.json (rules/23).
+      // Heuristic on any `obj[key]`; ~200 hits, nearly all typed-key lookups.
       'security/detect-object-injection': 'warn',
+      // Admin-configured patterns are built at runtime behind length and ReDoS
+      // checks; each remaining hit is reviewed when its file is next touched.
       'security/detect-non-literal-regexp': 'warn',
+      // Fires on any `x === null` when x is named like a token; both hits are
+      // null checks, not secret comparisons.
       'security/detect-possible-timing-attacks': 'warn',
+      // Services read files from configured directories; ~90 hits to review
+      // file by file rather than suppress.
       'security/detect-non-literal-fs-filename': 'warn',
       'security/detect-eval-with-expression': 'error',
       'security/detect-no-csrf-before-method-override': 'error',
       'security/detect-buffer-noassert': 'error',
-      'security/detect-child-process': 'warn',
+      'security/detect-child-process': 'error',
       'security/detect-disable-mustache-escape': 'error',
       'security/detect-new-buffer': 'error',
-      'security/detect-pseudoRandomBytes': 'warn',
+      'security/detect-pseudoRandomBytes': 'error',
+      // Star-height heuristic with false positives; ~80 hits, each to be
+      // rewritten or proven linear when its file is next touched.
       'security/detect-unsafe-regex': 'warn',
 
       // ── Unicorn ──────────────────────────────────────────────────────────
       'unicorn/prefer-node-protocol': 'error',
-      'unicorn/no-for-each': 'warn',
+      'unicorn/no-for-each': 'error',
+      // Style-only rules below stay 'warn' because their backlog is large;
+      // the baseline ratchet stops it growing.
       'unicorn/no-useless-undefined': 'warn',
       'unicorn/prefer-ternary': 'warn',
       'unicorn/no-nested-ternary': 'error',
       'unicorn/prefer-string-slice': 'error',
-      'unicorn/prefer-array-find': 'warn',
+      'unicorn/prefer-array-find': 'error',
       'unicorn/prefer-array-some': 'warn',
-      'unicorn/prefer-includes': 'warn',
-      'unicorn/prefer-number-properties': 'warn',
-      'unicorn/no-lonely-if': 'warn',
-      'unicorn/no-array-push-push': 'warn',
-      'unicorn/prefer-spread': 'warn',
+      'unicorn/prefer-includes': 'error',
+      'unicorn/prefer-number-properties': 'error',
+      'unicorn/no-lonely-if': 'error',
+      'unicorn/no-array-push-push': 'error',
+      'unicorn/prefer-spread': 'error',
       'unicorn/prefer-string-replace-all': 'warn',
-      'unicorn/prefer-at': 'warn',
+      'unicorn/prefer-at': 'error',
       'unicorn/prefer-top-level-await': 'off',
       'unicorn/prevent-abbreviations': 'off',
       'unicorn/no-null': 'off',
@@ -213,6 +234,7 @@ export default tseslint.config(
       'import-x/no-useless-path-segments': 'error',
 
       // ── Sort imports ─────────────────────────────────────────────────────
+      // Autofixable; lint-staged's --fix clears it in every file it touches.
       'sort-imports': [
         'warn',
         {
@@ -230,21 +252,12 @@ export default tseslint.config(
         { max: 500, skipBlankLines: true, skipComments: true },
       ],
 
-      // ── Phase-U promotion targets (currently warn; promoted to error per
-      // service in Phases D-T once the service is clean, then root-level
-      // promotion in Phase U). DO NOT promote globally before per-service
-      // cleanup ships, otherwise CI breaks.
-      // Marked rules: consistent-type-imports, explicit-function-return-type,
-      // no-shadow, prefer-nullish-coalescing, prefer-optional-chain,
-      // unicorn/no-for-each, unicorn/no-useless-undefined,
-      // unicorn/prefer-ternary, unicorn/prefer-array-find/some/includes,
-      // unicorn/no-array-push-push, unicorn/prefer-spread,
-      // unicorn/prefer-string-replace-all, unicorn/prefer-at,
-      // security/detect-object-injection (with per-line justification),
-      // security/detect-non-literal-regexp, security/detect-unsafe-regex,
-      // security/detect-non-literal-fs-filename,
-      // security/detect-possible-timing-attacks,
-      // complexity (10/15), max-lines-per-function (50/80).
+      // ── Promotion path ────────────────────────────────────────────────────
+      // Every rule above or below that is still 'warn' has a backlog recorded
+      // in tools/lint/warnings-baseline.json. A rule is promoted to 'error' as
+      // soon as its baseline count reaches zero (2026-10-13: the zero-count
+      // security and unicorn rules were promoted). Never promote a rule with a
+      // non-zero baseline — CI would fail on code nobody touched.
     },
   },
 
@@ -253,6 +266,8 @@ export default tseslint.config(
     files: ['apps/*/src/**/*.service.ts'],
     rules: {
       'no-restricted-syntax': ['error', ...logicFileRestrictions],
+      // Size and branching budgets are design signals, not defects; the
+      // backlog is in the lint baseline and shrinks as files are split.
       'max-lines-per-function': ['warn', { max: 50, skipBlankLines: true, skipComments: true }],
       complexity: ['warn', 10],
     },
@@ -313,6 +328,8 @@ export default tseslint.config(
     files: ['apps/*/src/**/*.manager.ts'],
     rules: {
       'no-restricted-syntax': ['error', ...logicFileRestrictions],
+      // Size and branching budgets are design signals, not defects; the
+      // backlog is in the lint baseline and shrinks as files are split.
       'max-lines-per-function': ['warn', { max: 80, skipBlankLines: true, skipComments: true }],
       complexity: ['warn', 15],
     },

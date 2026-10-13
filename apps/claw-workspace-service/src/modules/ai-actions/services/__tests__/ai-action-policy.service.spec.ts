@@ -1,5 +1,4 @@
-import { vi, type Mock } from 'vitest';
-/* eslint-disable unicorn/no-useless-undefined */
+import { type Mock, vi } from 'vitest';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 
 import { AiActionPolicyKind } from '../../../../common/enums/ai-action-policy-kind.enum';

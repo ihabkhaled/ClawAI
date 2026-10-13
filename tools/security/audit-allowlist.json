@@ -1,0 +1,12 @@
+{
+  "advisories": {
+    "GHSA-ggr8-5vv4-36mx": {
+      "package": "deepmerge-ts",
+      "via": "prisma -> @prisma/config -> deepmerge-ts@7",
+      "reason": "Stack exhaustion when merging a recursive object graph. deepmerge-ts is reached only by the Prisma CLI loading prisma.config.ts (generate/migrate at build and deploy time); no request path merges user-controlled objects through it. npm's only fix is downgrading prisma to 6.12 (a major), which would break every service.",
+      "reviewedBy": "gates-hooks-ci-docs-overhaul (2026-10-13)",
+      "expires": "2026-12-31",
+      "followUp": "Drop this entry when a prisma 7.x release depends on deepmerge-ts >= 8."
+    }
+  }
+}
