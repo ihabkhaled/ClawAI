@@ -15,10 +15,12 @@ import type {
   ThreadGenerationFormController,
   ThreadGenerationFormOptions,
 } from '@/types/thread-publication.types';
+import { resolveThreadErrorMessage } from '@/utilities/thread-error-message.utility';
 import { createThreadGenerationRequest } from '@/utilities/thread-generation-request.utility';
 import {
   isThreadModelGroupKey,
   pickDistinctModels,
+  rankThreadModels,
 } from '@/utilities/thread-model-defaults.utility';
 
 /**
@@ -92,6 +94,7 @@ export function useThreadGenerationForm({
         contentLocale,
         spendCapUsd: Number(spendCapUsd),
         models: selectedModels,
+        fallbackPool: rankThreadModels(availableModels),
         idempotencyKey: crypto.randomUUID(),
         correlationId: crypto.randomUUID(),
       });
@@ -122,7 +125,8 @@ export function useThreadGenerationForm({
     changeModel,
     hasAcknowledgedPublic,
     setHasAcknowledgedPublic,
-    hasError: (start.isError && !isPlanBlocked) || requestError,
+    hasError: requestError,
+    startError: start.isError && !isPlanBlocked ? resolveThreadErrorMessage(start.error) : null,
     isPlanBlocked,
     isStarting: start.isPending,
     submit,

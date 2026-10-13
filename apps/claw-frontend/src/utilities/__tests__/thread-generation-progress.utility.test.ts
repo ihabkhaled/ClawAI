@@ -1,0 +1,238 @@
+import { describe, expect, it } from 'vitest';
+
+import { makeProgress } from '@/components/threads/__tests__/thread-progress.fixture';
+import { THREAD_EXCERPT_MAX_CHARS } from '@/constants/thread-generation-progress.constants';
+
+import {
+  buildThreadRetryRequest,
+  findFailedRoleKind,
+  formatMicroUsd,
+  describeStepDuration,
+  formatStepTime,
+  isRetryableThreadStatus,
+  isTerminalThreadStatus,
+  microUsdToInputValue,
+  resolveThreadFailureKeys,
+  threadRoleLabelKey,
+  threadHeadlineKey,
+  threadStatusLabelKey,
+  toThreadRetryRoleSelections,
+  truncateExcerpt,
+} from '../thread-generation-progress.utility';
+
+describe('status helpers', () => {
+  it('knows terminal and retryable statuses', () => {
+    expect(isTerminalThreadStatus('COMPLETED')).toBe(true);
+    expect(isTerminalThreadStatus('FAILED')).toBe(true);
+    expect(isTerminalThreadStatus('WAITING_FOR_REVIEW')).toBe(true);
+    expect(isTerminalThreadStatus('RUNNING')).toBe(false);
+    expect(isRetryableThreadStatus('CANCELLED')).toBe(true);
+    expect(isRetryableThreadStatus('WAITING_FOR_REVIEW')).toBe(false);
+  });
+
+  it('labels terminal statuses and leaves running ones to the stage label', () => {
+    expect(threadStatusLabelKey('FAILED')).toBe('chat.threadProgress.outcomeFailed');
+    expect(threadStatusLabelKey('RUNNING')).toBeNull();
+  });
+
+  it('maps a role kind to its label key', () => {
+    expect(threadRoleLabelKey('JUDGE')).toBe('chat.threadProgress.roleJudge');
+  });
+});
+
+describe('describeStepDuration', () => {
+  it('describes milliseconds, seconds and minutes with translatable units', () => {
+    expect(describeStepDuration(850)).toEqual({
+      key: 'chat.threadProgress.durationUnit.ms',
+      params: { value: '850' },
+    });
+    expect(describeStepDuration(1500)).toEqual({
+      key: 'chat.threadProgress.durationUnit.s',
+      params: { value: '1.5' },
+    });
+    expect(describeStepDuration(125_000)).toEqual({
+      key: 'chat.threadProgress.durationUnit.minSec',
+      params: { minutes: '2', seconds: '5' },
+    });
+  });
+
+  it('rolls a near-minute duration over to the minutes form instead of 60 seconds', () => {
+    expect(describeStepDuration(119_600)).toEqual({
+      key: 'chat.threadProgress.durationUnit.minSec',
+      params: { minutes: '2', seconds: '0' },
+    });
+    expect(describeStepDuration(59_960)).toEqual({
+      key: 'chat.threadProgress.durationUnit.minSec',
+      params: { minutes: '1', seconds: '0' },
+    });
+  });
+
+  it('keeps one-decimal seconds below the rounded minute', () => {
+    expect(describeStepDuration(400).key).toBe('chat.threadProgress.durationUnit.ms');
+    expect(describeStepDuration(59_400)).toEqual({
+      key: 'chat.threadProgress.durationUnit.s',
+      params: { value: '59.4' },
+    });
+  });
+
+  it('never goes negative', () => {
+    expect(describeStepDuration(-5).params).toEqual({ value: '0' });
+  });
+});
+
+describe('money helpers', () => {
+  it('formats micro-USD, keeping at least cents', () => {
+    expect(formatMicroUsd('12300')).toBe('$0.0123');
+    expect(formatMicroUsd('1000000')).toBe('$1.00');
+    expect(formatMicroUsd('1500000')).toBe('$1.50');
+  });
+
+  it('survives bad input', () => {
+    expect(formatMicroUsd('nope')).toBe('$0.00');
+  });
+
+  it('turns micro-USD into an input value', () => {
+    expect(microUsdToInputValue('2500000')).toBe('2.5');
+    expect(microUsdToInputValue('0')).toBe('');
+    expect(microUsdToInputValue('bad')).toBe('');
+  });
+});
+
+describe('formatStepTime', () => {
+  it('formats a valid timestamp and returns an invalid one untouched', () => {
+    expect(formatStepTime('2026-10-13T10:00:00.000Z')).not.toBe('2026-10-13T10:00:00.000Z');
+    expect(formatStepTime('not a date')).toBe('not a date');
+  });
+});
+
+describe('truncateExcerpt', () => {
+  it('keeps short text and bounds long text', () => {
+    expect(truncateExcerpt('short')).toBe('short');
+    const long = 'x'.repeat(THREAD_EXCERPT_MAX_CHARS + 50);
+    expect(truncateExcerpt(long)).toHaveLength(THREAD_EXCERPT_MAX_CHARS + 1);
+    expect(truncateExcerpt(long).endsWith('…')).toBe(true);
+  });
+});
+
+describe('resolveThreadFailureKeys', () => {
+  it('resolves a known code', () => {
+    expect(resolveThreadFailureKeys('PAYG_CREDIT_EXHAUSTED')).toEqual({
+      messageKey: 'chat.threadProgress.code.paygCreditExhausted',
+      hintKey: 'chat.threadProgress.hint.paygCreditExhausted',
+      params: { code: 'PAYG_CREDIT_EXHAUSTED' },
+    });
+  });
+
+  it('falls back for an unknown code and keeps the code for display', () => {
+    expect(resolveThreadFailureKeys('WEIRD')).toEqual({
+      messageKey: 'chat.threadProgress.code.unknown',
+      hintKey: 'chat.threadProgress.hint.unknown',
+      params: { code: 'WEIRD' },
+    });
+  });
+});
+
+describe('findFailedRoleKind', () => {
+  it('finds the kind of the failed role', () => {
+    expect(findFailedRoleKind(makeProgress())).toBe('AUTHOR');
+  });
+
+  it('is null without a failure, without a role id, or for an unknown role', () => {
+    expect(findFailedRoleKind(makeProgress({ failure: null }))).toBeNull();
+    const base = makeProgress();
+    const failure = base.failure;
+    expect(
+      findFailedRoleKind({ ...base, failure: failure && { ...failure, roleId: null } }),
+    ).toBeNull();
+    expect(
+      findFailedRoleKind({ ...base, failure: failure && { ...failure, roleId: 'ghost' } }),
+    ).toBeNull();
+  });
+});
+
+describe('buildThreadRetryRequest', () => {
+  const progress = makeProgress();
+  const roles = progress.selections.roles.map(({ roleId, roleKind, provider, model }) => ({
+    roleId,
+    roleKind,
+    model: { provider, model, displayName: model },
+  }));
+
+  it('sends only the idempotency key when nothing changed', () => {
+    expect(
+      buildThreadRetryRequest({
+        progress,
+        idempotencyKey: 'key-1',
+        topic: ' How heat pumps work ',
+        spendCapUsd: '1',
+        roles,
+      }),
+    ).toEqual({ idempotencyKey: 'key-1' });
+  });
+
+  it('sends the changed topic, cap and models only', () => {
+    const changedRoles = roles.map((role) =>
+      role.roleId === 'author-1'
+        ? { ...role, model: { provider: 'OLLAMA', model: 'oll-z', displayName: 'Oll' } }
+        : role,
+    );
+    expect(
+      buildThreadRetryRequest({
+        progress,
+        idempotencyKey: 'key-2',
+        topic: 'A new angle on heat pumps',
+        spendCapUsd: '2.5',
+        roles: changedRoles,
+      }),
+    ).toEqual({
+      idempotencyKey: 'key-2',
+      topic: 'A new angle on heat pumps',
+      spendCapUsd: 2.5,
+      models: [{ roleId: 'author-1', provider: 'OLLAMA', model: 'oll-z' }],
+    });
+  });
+
+  it('ignores an empty topic and an unusable cap', () => {
+    expect(
+      buildThreadRetryRequest({
+        progress,
+        idempotencyKey: 'key-3',
+        topic: '   ',
+        spendCapUsd: '-4',
+        roles: [],
+      }),
+    ).toEqual({ idempotencyKey: 'key-3' });
+  });
+});
+
+describe('toThreadRetryRoleSelections', () => {
+  it('lists the editable roles with the model the failed job used', () => {
+    const roles = toThreadRetryRoleSelections(makeProgress());
+    expect(roles.map((role) => role.roleId)).toEqual(['author-1', 'judge', 'critic']);
+    expect(roles[0]?.model).toEqual({ provider: 'OPENAI', model: 'gpt-x', displayName: 'gpt-x' });
+  });
+
+  it('skips research and system roles and copes with no progress', () => {
+    const base = makeProgress();
+    const withSystem = {
+      ...base,
+      selections: {
+        ...base.selections,
+        roles: [
+          ...base.selections.roles,
+          { roleId: 'sys', roleKind: 'SYSTEM' as const, provider: 'X', model: 'y', fallbacks: [] },
+        ],
+      },
+    };
+    expect(toThreadRetryRoleSelections(withSystem).map((role) => role.roleId)).not.toContain('sys');
+    expect(toThreadRetryRoleSelections(undefined)).toEqual([]);
+  });
+});
+
+describe('threadHeadlineKey', () => {
+  it('prefers a terminal status, then the stage, then null', () => {
+    expect(threadHeadlineKey('FAILED', 'RESEARCH')).toBe('chat.threadProgress.outcomeFailed');
+    expect(threadHeadlineKey('RUNNING', 'RESEARCH')).toBe('chat.threadStageResearch');
+    expect(threadHeadlineKey('RUNNING', 'MYSTERY')).toBeNull();
+  });
+});

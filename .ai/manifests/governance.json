@@ -356,7 +356,7 @@
   ],
   "skills": [
     {
-      "bytes": 34076,
+      "bytes": 34356,
       "file": "skills/00-index.md"
     },
     {
@@ -582,6 +582,10 @@
     {
       "bytes": 5007,
       "file": "skills/deadlock-recovery.md"
+    },
+    {
+      "bytes": 1718,
+      "file": "skills/debug-a-failed-thread-generation.md"
     },
     {
       "bytes": 3802,

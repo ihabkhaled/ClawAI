@@ -57,6 +57,12 @@ export const THREAD_PREFERRED_PROVIDERS = [
   'OPENROUTER',
 ];
 
+/** Volunteer or best-effort providers: offered, but never chosen as a default or a fallback. */
+export const THREAD_DEPRIORITIZED_PROVIDERS = ['AI_HORDE'];
+
+/** Backup models each role may fall back to when its own model fails. */
+export const THREAD_FALLBACKS_PER_ROLE = 2;
+
 /** Three authors, one Judge and one Critic. */
 export const THREAD_GENERATION_MODEL_COUNT = 5;
 

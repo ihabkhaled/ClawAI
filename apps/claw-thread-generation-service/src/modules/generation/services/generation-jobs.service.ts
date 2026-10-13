@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   InternalServerErrorException,
@@ -27,6 +28,18 @@ import {
   revisionReviewJobRequestSchema,
 } from '../dto/enqueue-revision-review.dto';
 import { ThreadBudgetClient } from './thread-budget.client';
+import { StepRecorder } from './step-recorder.service';
+import type { RetryGenerationDto } from '../dto/retry-generation.dto';
+import { buildRetryInput } from '../utilities/build-retry-input.utility';
+import { parseStepError } from '../utilities/parse-step-error.utility';
+import {
+  RETRY_ALREADY_EXISTS_MESSAGE,
+  RETRY_CHAIN_MAX_DEPTH,
+  STEP_CANCELLED_CODE,
+  STEP_FINAL_STAGE,
+  STEP_GENERATION_FAILED_CODE,
+  STEP_LEASE_EXPIRED_CODE,
+} from '../constants/step-recorder.constants';
 import { ThreadGenerationCancelledError } from '../utilities/thread-generation-cancelled.error';
 import { ThreadGenerationLeaseLostError } from '../utilities/thread-generation-lease-lost.error';
 import type {
@@ -58,6 +71,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     private readonly rabbit: RabbitMQService,
     private readonly pipeline: GenerationPipelineManager,
     private readonly budgets: ThreadBudgetClient,
+    private readonly recorder: StepRecorder,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -75,6 +89,74 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
   }
 
   async enqueue(input: EnqueueGenerationDto): Promise<{ jobId: string; status: string }> {
+    return this.enqueueWithSnapshot(input, async () => {
+      const snapshot = await this.snapshots.getOwnedSnapshot(input.ownerId, input.sourceThreadId);
+      return {
+        snapshot: JSON.parse(JSON.stringify(snapshot)) as Record<string, unknown>,
+        sha256: snapshot.sha256,
+      };
+    });
+  }
+
+  /** Owner retry: a new job from the failed job's pinned snapshot, with allowed overrides. */
+  async retry(
+    jobId: string,
+    change: RetryGenerationDto,
+  ): Promise<{ jobId: string; status: string }> {
+    const source = await this.repository.findRetrySource(jobId, change.ownerId);
+    if (!source) throw new NotFoundException('Generation job not found');
+    if (source.status !== 'FAILED' && source.status !== 'CANCELLED') {
+      throw new ConflictException('Only a failed or cancelled generation can be retried');
+    }
+    const original = enqueueGenerationSchema.safeParse(source.request);
+    if (!original.success) throw new ConflictException('This generation cannot be retried');
+    const input = buildRetryInput(original.data, change);
+    const snapshot = z.record(z.string(), z.unknown()).safeParse(source.sourceSnapshot);
+    if (!snapshot.success) throw new BadRequestException('Saved source snapshot is invalid');
+    return this.enqueueWithSnapshot(
+      input,
+      () => Promise.resolve({ snapshot: snapshot.data, sha256: source.sourceSnapshotHash }),
+      source.id,
+    );
+  }
+
+  /** Owner delete of a finished job. The budget close stays on its own idempotent path. */
+  async deleteJob(jobId: string, ownerId: string): Promise<{ jobId: string; deleted: true }> {
+    const job = await this.repository.findDeletable(jobId, ownerId);
+    if (!job) throw new NotFoundException('Generation job not found');
+    const chain = [job];
+    const seen = new Set([job.id]);
+    let parentId = job.retriedFromJobId;
+    // A retry chain is one history to the owner: delete the job and every earlier attempt.
+    while (parentId && !seen.has(parentId) && chain.length < RETRY_CHAIN_MAX_DEPTH) {
+      const parent = await this.repository.findDeletable(parentId, ownerId);
+      if (!parent) break;
+      seen.add(parent.id);
+      chain.push(parent);
+      parentId = parent.retriedFromJobId;
+    }
+    if (chain.some((item) => item.status === 'QUEUED' || item.status === 'RUNNING')) {
+      throw new ConflictException('A running generation must be cancelled before it is deleted');
+    }
+    if (chain.some((item) => item.budgetClosedAt === null)) {
+      throw new ConflictException('The generation budget is still closing; try again shortly');
+    }
+    if (
+      !(await this.repository.deleteTerminalChain(
+        chain.map((item) => item.id),
+        ownerId,
+      ))
+    ) {
+      throw new ConflictException('The generation changed while it was being deleted');
+    }
+    return { jobId, deleted: true };
+  }
+
+  private async enqueueWithSnapshot(
+    input: EnqueueGenerationDto,
+    loadSnapshot: () => Promise<{ snapshot: Record<string, unknown>; sha256: string }>,
+    retriedFromJobId?: string,
+  ): Promise<{ jobId: string; status: string }> {
     const existing = await this.repository.findByIdempotencyKey(input);
     if (existing) {
       switch (existing.result) {
@@ -89,7 +171,9 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
           return { jobId: existing.job.id, status: existing.job.status };
       }
     }
-    const snapshot = await this.snapshots.getOwnedSnapshot(input.ownerId, input.sourceThreadId);
+    const retryChild = await this.findExistingRetryChild(retriedFromJobId);
+    if (retryChild) return retryChild;
+    const { snapshot, sha256 } = await loadSnapshot();
     const budget = await this.budgets.reserve(
       input.ownerId,
       input.idempotencyKey,
@@ -97,11 +181,16 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     );
     const stored = await this.repository.createQueued(
       input,
-      JSON.parse(JSON.stringify(snapshot)) as Record<string, unknown>,
-      snapshot.sha256,
+      snapshot,
+      sha256,
       budget.id,
+      retriedFromJobId,
     );
     switch (stored.result) {
+      case GenerationJobStorageResult.RETRY_CONFLICT:
+        // Lost the race to a concurrent retry: give the reserved budget back.
+        await this.releaseUnusedBudget(budget.id);
+        throw new ConflictException(RETRY_ALREADY_EXISTS_MESSAGE);
       case GenerationJobStorageResult.CONFLICT:
         throw new ConflictException('Idempotency key was already used for a different generation');
       case GenerationJobStorageResult.STORAGE_ERROR:
@@ -148,6 +237,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     );
     const stored = await this.repository.createRevisionReviewQueued(input, budget.id);
     switch (stored.result) {
+      case GenerationJobStorageResult.RETRY_CONFLICT:
       case GenerationJobStorageResult.CONFLICT:
         throw new ConflictException('Idempotency key was already used for a different edit review');
       case GenerationJobStorageResult.STORAGE_ERROR:
@@ -261,6 +351,12 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       }
       await this.closeBudget(job.id, job.budgetId, GenerationBudgetCloseStatus.FINALIZED);
       await this.repository.completeAttempt(job.id, job.attemptCount);
+      await this.recorder.record(job.id, {
+        stage: 'READY_FOR_REVIEW',
+        round: result.rounds,
+        outcome: 'SUCCEEDED',
+        roleKind: 'SYSTEM',
+      });
       // A revision review is an edit the owner already asked for and is waiting on in the page.
       if (!revisionReview.success) await this.announceCompleted(job);
     } catch (error: unknown) {
@@ -274,6 +370,12 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
         if (outcome === GenerationJobRecoveryOutcome.CANCELLED) {
           await this.closeBudget(job.id, job.budgetId, GenerationBudgetCloseStatus.RELEASED);
         }
+        await this.recorder.record(job.id, {
+          stage: STEP_FINAL_STAGE,
+          outcome: 'FAILED',
+          roleKind: 'SYSTEM',
+          code: STEP_CANCELLED_CODE,
+        });
         return;
       }
       // Operators need the failing step; never log prompts, drafts or provider bodies.
@@ -287,6 +389,19 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
         await this.closeBudget(job.id, job.budgetId, GenerationBudgetCloseStatus.RELEASED);
       } else if (outcome === GenerationJobRecoveryOutcome.RETRY) {
         this.logger.warn('Generation attempt scheduled for bounded retry');
+      }
+      if (
+        outcome === GenerationJobRecoveryOutcome.FAILED ||
+        outcome === GenerationJobRecoveryOutcome.RETRY
+      ) {
+        const parsedError = parseStepError(error, STEP_GENERATION_FAILED_CODE);
+        await this.recorder.record(job.id, {
+          stage: STEP_FINAL_STAGE,
+          outcome: outcome === GenerationJobRecoveryOutcome.FAILED ? 'FAILED' : 'RETRY',
+          roleKind: 'SYSTEM',
+          code: parsedError.code,
+          httpStatus: parsedError.httpStatus,
+        });
       }
     } finally {
       clearInterval(heartbeat);
@@ -335,6 +450,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
         if (job.outcome !== GenerationJobRecoveryOutcome.RETRY) {
           await this.closeBudget(job.jobId, job.budgetId, GenerationBudgetCloseStatus.RELEASED);
         }
+        await this.recordRecovery(job.jobId, job.outcome);
       }
       const pendingClosures = await this.repository.findPendingBudgetClosures(10);
       for (const job of pendingClosures) {
@@ -370,6 +486,42 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
         this.logger.warn('Generation failure report is pending retry by the recovery scheduler');
         return;
       }
+    }
+  }
+
+  /**
+   * A retry child may exist without the threads-service ever attaching it. Returning it keeps
+   * retry idempotent and re-attachable instead of blocking forever. The source job was already
+   * owner-checked by the caller, so its only child belongs to the same owner.
+   */
+  private async findExistingRetryChild(
+    retriedFromJobId: string | undefined,
+  ): Promise<{ jobId: string; status: string } | null> {
+    if (!retriedFromJobId) return null;
+    const child = await this.repository.findRetryChild(retriedFromJobId);
+    return child ? { jobId: child.id, status: child.status } : null;
+  }
+
+  /** Tells the owner why a job restarted or stopped after its worker vanished. */
+  private async recordRecovery(
+    jobId: string,
+    outcome: GenerationJobRecoveryOutcome,
+  ): Promise<void> {
+    const cancelled = outcome === GenerationJobRecoveryOutcome.CANCELLED;
+    await this.recorder.record(jobId, {
+      stage: STEP_FINAL_STAGE,
+      outcome: outcome === GenerationJobRecoveryOutcome.RETRY ? 'RETRY' : 'FAILED',
+      roleKind: 'SYSTEM',
+      code: cancelled ? STEP_CANCELLED_CODE : STEP_LEASE_EXPIRED_CODE,
+    });
+  }
+
+  /** Gives back a reservation that no job will ever use. The close call is idempotent. */
+  private async releaseUnusedBudget(budgetId: string): Promise<void> {
+    try {
+      await this.budgets.close(budgetId, GenerationBudgetCloseStatus.RELEASED);
+    } catch {
+      this.logger.error('Unused generation budget release failed');
     }
   }
 

@@ -47,6 +47,7 @@ export class GenerationJobsRepository {
     sourceSnapshot: Record<string, unknown>,
     hash: string,
     budgetId: string,
+    retriedFromJobId?: string,
   ): Promise<GenerationJobStorageResponse> {
     if (await this.isAccountDeleted(input.ownerId)) {
       return { result: GenerationJobStorageResult.ACCOUNT_DELETED };
@@ -81,6 +82,7 @@ export class GenerationJobsRepository {
               spendCapMicroUsd: BigInt(input.spendCapMicroUsd),
               publicIntentVersion: input.publicIntentVersion,
               publicIntentAt: new Date(),
+              retriedFromJobId: retriedFromJobId ?? null,
             },
           });
           return { accountDeleted: false as const, job };
@@ -97,12 +99,26 @@ export class GenerationJobsRepository {
       const raced = await this.prisma.threadGenerationJob.findUnique({
         where: { idempotencyKey: input.idempotencyKey },
       });
-      return raced &&
+      if (
+        raced &&
         raced.ownerId === input.ownerId &&
         stableJson(raced.request) === stableJson(input)
-        ? { result: GenerationJobStorageResult.SUCCESS, job: raced }
+      ) {
+        return { result: GenerationJobStorageResult.SUCCESS, job: raced };
+      }
+      // No job holds this idempotency key, so the unique hit was the retry link.
+      return !raced && retriedFromJobId
+        ? { result: GenerationJobStorageResult.RETRY_CONFLICT }
         : { result: GenerationJobStorageResult.CONFLICT };
     }
+  }
+
+  /** The retry already created from this job, if any. */
+  async findRetryChild(retriedFromJobId: string): Promise<{ id: string; status: string } | null> {
+    return this.prisma.threadGenerationJob.findUnique({
+      where: { retriedFromJobId },
+      select: { id: true, status: true },
+    });
   }
 
   private async isAccountDeleted(userId: string): Promise<boolean> {
@@ -255,6 +271,75 @@ export class GenerationJobsRepository {
         },
       },
     });
+  }
+
+  async findProgressJob(id: string, ownerId: string) {
+    return this.prisma.threadGenerationJob.findFirst({
+      where: { id, ownerId },
+      select: {
+        id: true,
+        status: true,
+        stage: true,
+        round: true,
+        attemptCount: true,
+        spentMicroCredits: true,
+        spendCapMicroUsd: true,
+        sourceThreadId: true,
+        safeErrorCode: true,
+        request: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async findRetrySource(id: string, ownerId: string) {
+    return this.prisma.threadGenerationJob.findFirst({
+      where: { id, ownerId },
+      select: {
+        id: true,
+        status: true,
+        request: true,
+        sourceSnapshot: true,
+        sourceSnapshotHash: true,
+      },
+    });
+  }
+
+  async findDeletable(id: string, ownerId: string) {
+    return this.prisma.threadGenerationJob.findFirst({
+      where: { id, ownerId },
+      select: { id: true, status: true, budgetClosedAt: true, retriedFromJobId: true },
+    });
+  }
+
+  /**
+   * Deletes the job and every retry ancestor in one transaction, or none of them.
+   * Cascades to attempts, checkpoints, communications, drafts and steps.
+   */
+  async deleteTerminalChain(ids: string[], ownerId: string): Promise<boolean> {
+    const where: Prisma.ThreadGenerationJobWhereInput = {
+      id: { in: ids },
+      ownerId,
+      budgetClosedAt: { not: null },
+      status: {
+        in: [
+          ThreadGenerationStatus.FAILED,
+          ThreadGenerationStatus.CANCELLED,
+          ThreadGenerationStatus.WAITING_FOR_REVIEW,
+          ThreadGenerationStatus.COMPLETED,
+        ],
+      },
+    };
+    return this.prisma.$transaction(
+      async (tx) => {
+        // All or nothing: one job that no longer qualifies leaves the whole chain in place.
+        if ((await tx.threadGenerationJob.count({ where })) !== ids.length) return false;
+        const result = await tx.threadGenerationJob.deleteMany({ where });
+        return result.count === ids.length;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   async leaseDispatch(jobId: string): Promise<boolean> {

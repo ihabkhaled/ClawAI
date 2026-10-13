@@ -56,6 +56,8 @@ model ThreadGenerationJob {
   safeErrorCode          String?                      @map("safe_error_code")
   failureSummary         String?                      @map("failure_summary") @db.VarChar(400)
   failureReportedAt      DateTime?                    @map("failure_reported_at")
+  /// The failed or cancelled job this one retries; unique so a job has at most one retry child.
+  retriedFromJobId       String?                      @unique @map("retried_from_job_id")
   publicIntentVersion    String                       @map("public_intent_version")
   publicIntentAt         DateTime                     @map("public_intent_at")
   createdAt              DateTime                     @default(now()) @map("created_at")
@@ -65,6 +67,7 @@ model ThreadGenerationJob {
   checkpoints            ThreadGenerationCheckpoint[]
   communications         ThreadModelCommunication[]
   revisions              ThreadRevisionDraft[]
+  steps                  ThreadGenerationStep[]
 
   @@index([status, createdAt])
   @@index([status, leaseExpiresAt])
@@ -159,4 +162,30 @@ model ThreadRevisionDraft {
 
   @@unique([jobId, revision])
   @@map("thread_revision_drafts")
+}
+
+/// Owner-only step log of one job: what ran, with which model, how it ended and a bounded excerpt.
+model ThreadGenerationStep {
+  id           String              @id @default(cuid())
+  jobId        String              @map("job_id")
+  job          ThreadGenerationJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  seq          Int
+  at           DateTime            @default(now())
+  stage        String
+  round        Int                 @default(0)
+  outcome      String
+  roleKind     String              @map("role_kind")
+  roleId       String?             @map("role_id")
+  provider     String?
+  model        String?
+  code         String?
+  httpStatus   Int?                @map("http_status")
+  durationMs   Int?                @map("duration_ms")
+  inputTokens  Int?                @map("input_tokens")
+  outputTokens Int?                @map("output_tokens")
+  excerpt      String?             @db.VarChar(1200)
+
+  @@unique([jobId, seq])
+  @@index([jobId])
+  @@map("thread_generation_steps")
 }

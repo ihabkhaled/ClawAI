@@ -18,6 +18,11 @@ import { ThreadGenerationLeaseLostError } from '../utilities/thread-generation-l
 import { stableJson } from '../utilities/stable-json.utility';
 import { stripCodeFence } from '../utilities/strip-code-fence.utility';
 import { ReviewerRole } from '../types/reviewer-role.enum';
+import { StepRecorder } from '../services/step-recorder.service';
+import type { StepResponseOutcome } from '../types/step-recorder.types';
+import { parseStepError } from '../utilities/parse-step-error.utility';
+import { STEP_RESUMED_CODE } from '../constants/step-recorder.constants';
+import { roleStepInfo } from '../utilities/role-step.utility';
 import {
   type AuthorDraft,
   authorDraftSchema,
@@ -36,6 +41,7 @@ export class GenerationPipelineManager {
     private readonly research: ResearchClient,
     private readonly models: ChatModelClient,
     private readonly jobs: GenerationJobsRepository,
+    private readonly recorder: StepRecorder,
   ) {}
 
   async generate(input: GenerationPipelineInput): Promise<GenerationPipelineResult> {
@@ -54,6 +60,7 @@ export class GenerationPipelineManager {
         'Saved research checkpoint failed integrity validation',
       );
     }
+    if (savedBundle.success && saved.evidenceBundleHash) await this.recordResumed(job.jobId);
     const evidence =
       savedBundle.success && saved.evidenceBundleHash
         ? {
@@ -62,7 +69,7 @@ export class GenerationPipelineManager {
             sha256: saved.evidenceBundleHash,
             version: 1 as const,
           }
-        : await this.research.run(job.ownerId, job.topic, job.correlationId);
+        : await this.runResearch(job);
     if (!savedBundle.success) {
       const savedEvidence = await this.jobs.saveResearchEvidence(job.jobId, job.attempt, evidence);
       if (!savedEvidence) throw new ThreadGenerationLeaseLostError();
@@ -79,12 +86,7 @@ export class GenerationPipelineManager {
     let revisionBrief = '';
 
     for (let round = 1; round <= MAX_GENERATION_ROUNDS; round += 1) {
-      await this.jobs.saveProgress(
-        job.jobId,
-        job.attempt,
-        ThreadGenerationStage.AUTHOR_DRAFTS,
-        round,
-      );
+      await this.enterStage(job, ThreadGenerationStage.AUTHOR_DRAFTS, round);
       const authorResults = await this.callAuthors(
         job,
         round,
@@ -94,7 +96,7 @@ export class GenerationPipelineManager {
         evidenceItems,
       );
       const drafts = this.requireFulfilled(authorResults, 'An author role failed');
-      this.validateCitations(drafts, evidenceItems);
+      await this.checkCitations(job, round, drafts, evidenceItems);
       // Independent models never write byte-identical drafts, so consensus is a vote:
       // one candidate, and every author must agree with its exact hash.
       const candidate = drafts[0];
@@ -109,7 +111,7 @@ export class GenerationPipelineManager {
         researchEvidence: evidence.bundle,
         exactCandidateHash: candidateHash,
       });
-      await this.jobs.saveProgress(job.jobId, job.attempt, ThreadGenerationStage.CONSENSUS, round);
+      await this.enterStage(job, ThreadGenerationStage.CONSENSUS, round);
       const voteResults = await Promise.allSettled(
         job.authors.map((role) =>
           this.callRevisionVote(
@@ -134,12 +136,19 @@ export class GenerationPipelineManager {
         })),
       );
       if (consensus.status !== 'consensus' || consensus.draftHash !== candidateHash) {
+        await this.recorder.record(job.jobId, {
+          stage: ThreadGenerationStage.CONSENSUS,
+          round,
+          outcome: 'RETRY',
+          roleKind: 'SYSTEM',
+          code: 'CONSENSUS_NOT_REACHED',
+        });
         revisionBrief = `Authors did not all agree. Improve this candidate for factual support, coherence and evidence use, then return the complete improved draft: ${JSON.stringify(candidate)}`;
         continue;
       }
 
       const draft = candidate;
-      await this.jobs.saveProgress(job.jobId, job.attempt, ThreadGenerationStage.JUDGE, round);
+      await this.enterStage(job, ThreadGenerationStage.JUDGE, round);
       const judge = await this.callReview(
         job,
         job.judge,
@@ -151,10 +160,11 @@ export class GenerationPipelineManager {
       );
       if (judge.score < MIN_JUDGE_SCORE || judge.blockers.length > 0) {
         revisionBrief = this.reviewBrief(judge);
+        await this.recordReviewRetry(job, round, ReviewerRole.JUDGE, revisionBrief);
         continue;
       }
 
-      await this.jobs.saveProgress(job.jobId, job.attempt, ThreadGenerationStage.CRITIC, round);
+      await this.enterStage(job, ThreadGenerationStage.CRITIC, round);
       const critic = await this.callReview(
         job,
         job.critic,
@@ -166,6 +176,7 @@ export class GenerationPipelineManager {
       );
       if (critic.score < MIN_CRITIC_SCORE || critic.blockers.length > 0) {
         revisionBrief = this.reviewBrief(critic);
+        await this.recordReviewRetry(job, round, ReviewerRole.CRITIC, revisionBrief);
         continue;
       }
       return {
@@ -196,7 +207,7 @@ export class GenerationPipelineManager {
   ): Promise<GenerationPipelineResult> {
     const job = this.validateRoles(input);
     const evidenceItems = this.evidenceItems(evidenceBundle);
-    this.validateCitations([draft], evidenceItems);
+    await this.checkCitations(job, 1, [draft], evidenceItems);
     const draftHash = revisionDraftHash(draft);
     const sharedMaterial = JSON.stringify({
       version: 1,
@@ -253,6 +264,96 @@ export class GenerationPipelineManager {
       reviewReady: evaluation.ready,
       reviewReasons: evaluation.reasons,
     };
+  }
+
+  /** Tells the owner a saved checkpoint was reused instead of paying for the work again. */
+  private async recordResumed(jobId: string, roleId?: string): Promise<void> {
+    const info = roleId ? roleStepInfo(roleId) : undefined;
+    await this.recorder.record(jobId, {
+      stage: info?.stage ?? ThreadGenerationStage.RESEARCH,
+      outcome: 'SKIPPED',
+      roleKind: info?.roleKind ?? 'SYSTEM',
+      roleId: roleId ?? null,
+      code: STEP_RESUMED_CODE,
+    });
+  }
+
+  private async runResearch(job: GenerationPipelineInput) {
+    const startedAt = Date.now();
+    const base = { stage: ThreadGenerationStage.RESEARCH, roleKind: 'RESEARCH' as const };
+    await this.recorder.record(job.jobId, { ...base, outcome: 'STARTED' });
+    try {
+      const evidence = await this.research.run(job.ownerId, job.topic, job.correlationId);
+      await this.recorder.record(job.jobId, {
+        ...base,
+        outcome: 'SUCCEEDED',
+        durationMs: Date.now() - startedAt,
+      });
+      return evidence;
+    } catch (error: unknown) {
+      const parsed = parseStepError(error, 'RESEARCH_FAILED');
+      await this.recorder.record(job.jobId, {
+        ...base,
+        outcome: 'FAILED',
+        code: parsed.code,
+        httpStatus: parsed.httpStatus,
+        durationMs: Date.now() - startedAt,
+      });
+      throw error;
+    }
+  }
+
+  private async enterStage(
+    job: GenerationPipelineInput,
+    stage: ThreadGenerationStage,
+    round: number,
+  ): Promise<void> {
+    await this.jobs.saveProgress(job.jobId, job.attempt, stage, round);
+    await this.recorder.record(job.jobId, {
+      stage,
+      round,
+      outcome: 'STARTED',
+      roleKind: 'SYSTEM',
+    });
+  }
+
+  private async checkCitations(
+    job: GenerationPipelineInput,
+    round: number,
+    drafts: AuthorDraft[],
+    evidence: Map<string, string>,
+  ): Promise<void> {
+    try {
+      this.validateCitations(drafts, evidence);
+    } catch (error: unknown) {
+      await this.recorder.record(job.jobId, {
+        stage: ThreadGenerationStage.AUTHOR_DRAFTS,
+        round,
+        outcome: 'FAILED',
+        roleKind: 'SYSTEM',
+        code: parseStepError(error).code,
+      });
+      throw error;
+    }
+  }
+
+  private async recordReviewRetry(
+    job: GenerationPipelineInput,
+    round: number,
+    reviewer: ReviewerRole,
+    brief: string,
+  ): Promise<void> {
+    const isJudge = reviewer === ReviewerRole.JUDGE;
+    const kind = isJudge ? 'JUDGE' : 'CRITIC';
+    await this.recorder.record(job.jobId, {
+      stage: kind,
+      round,
+      outcome: 'RETRY',
+      roleKind: kind,
+      roleId: isJudge ? job.judge.id : job.critic.id,
+      code: `${kind}_SCORE_LOW`,
+      rawExcerpt: brief,
+    });
   }
 
   private callAuthors(
@@ -325,6 +426,7 @@ export class GenerationPipelineManager {
       this.hash(`${prompts.systemPrompt}\n${prompts.userPrompt}`),
     );
     if (saved !== null) {
+      await this.recordResumed(input.jobId, role.id);
       const parsed = authorDraftSchema.safeParse(saved);
       if (!parsed.success) throw new ServiceUnavailableException('A saved author draft is invalid');
       return parsed.data;
@@ -376,6 +478,7 @@ export class GenerationPipelineManager {
       this.hash(`${prompts.systemPrompt}\n${prompts.userPrompt}`),
     );
     if (saved !== null) {
+      await this.recordResumed(input.jobId, role.id);
       const parsed = reviewSchema.safeParse(saved);
       if (!parsed.success)
         throw new ServiceUnavailableException(`${reviewer} has a saved invalid review`);
@@ -429,6 +532,7 @@ export class GenerationPipelineManager {
       evidenceHash,
       this.hash(`${prompts.systemPrompt}\n${prompts.userPrompt}`),
     );
+    if (saved !== null) await this.recordResumed(input.jobId, communicationRole.id);
     const response =
       saved === null
         ? await this.callRole(
@@ -495,12 +599,23 @@ export class GenerationPipelineManager {
   ) {
     const candidates = [{ provider: role.provider, model: role.model }, ...role.fallbacks];
     const outputReserve = role.maxOutputTokens;
+    const { stage, roleKind } = roleStepInfo(roleKey);
     let lastError: unknown;
     for (const [index, candidate] of candidates.entries()) {
+      const step = { stage, round, roleKind, roleId: role.id, ...candidate };
+      if (index > 0) {
+        await this.recorder.record(input.jobId, {
+          ...step,
+          outcome: 'FALLBACK',
+          code: 'FALLBACK_USED',
+        });
+      }
       // A model that answers in the wrong shape gets one more try before its fallback.
       for (let attempt = 1; attempt <= FORMAT_ATTEMPTS_PER_MODEL; attempt += 1) {
         await this.throwIfCancelled(input);
         const requestId = `${input.jobId}:${roleKey}:round-${String(round)}:attempt-${String(index + 1)}${attempt > 1 ? `:try-${String(attempt)}` : ''}`;
+        await this.recorder.record(input.jobId, { ...step, outcome: 'STARTED' });
+        const startedAt = Date.now();
         try {
           const response = await this.models.generate({
             ownerId: input.ownerId,
@@ -513,10 +628,27 @@ export class GenerationPipelineManager {
             maxOutputTokens: outputReserve,
           });
           await this.throwIfCancelled(input);
-          if (accepts.safeParse(this.tryParseJson(response.content)).success) return response;
+          const accepted = accepts.safeParse(this.tryParseJson(response.content)).success;
+          await this.recorder.record(input.jobId, {
+            ...step,
+            ...this.responseOutcome(accepted, attempt),
+            durationMs: response.durationMs,
+            inputTokens: response.inputTokens,
+            outputTokens: response.outputTokens,
+            rawExcerpt: response.content,
+          });
+          if (accepted) return response;
           lastError = new ServiceUnavailableException('A model returned invalid structured output');
         } catch (error: unknown) {
           if (error instanceof ThreadGenerationCancelledError) throw error;
+          const parsed = parseStepError(error);
+          await this.recorder.record(input.jobId, {
+            ...step,
+            outcome: 'FAILED',
+            code: parsed.code,
+            httpStatus: parsed.httpStatus,
+            durationMs: Date.now() - startedAt,
+          });
           lastError = error;
           break;
         }
@@ -525,6 +657,14 @@ export class GenerationPipelineManager {
     throw lastError instanceof Error
       ? lastError
       : new ServiceUnavailableException('No eligible model could complete this role');
+  }
+
+  private responseOutcome(accepted: boolean, attempt: number): StepResponseOutcome {
+    if (accepted) return { outcome: 'SUCCEEDED', code: null };
+    return {
+      outcome: attempt < FORMAT_ATTEMPTS_PER_MODEL ? 'RETRY' : 'FAILED',
+      code: 'OUTPUT_INVALID',
+    };
   }
 
   private evidenceItems(bundle: Record<string, unknown>): Map<string, string> {

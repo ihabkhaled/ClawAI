@@ -62,8 +62,15 @@ function build(modelResponses: string[]) {
     saveProgress: vi.fn().mockResolvedValue(undefined),
     saveCommunication: vi.fn().mockResolvedValue(true),
   };
+  const recorder = { record: vi.fn().mockResolvedValue(undefined) };
   return {
-    manager: new GenerationPipelineManager(research as never, models as never, jobs as never),
+    manager: new GenerationPipelineManager(
+      research as never,
+      models as never,
+      jobs as never,
+      recorder as never,
+    ),
+    recorder,
     research,
     models,
     jobs,

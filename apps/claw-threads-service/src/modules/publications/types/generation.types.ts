@@ -1,3 +1,6 @@
+import type { ThreadGenerationProgress } from '@claw/shared-types';
+
+import type { PublicationStatus } from '../../../generated/prisma';
 import type { StartThreadGenerationDto } from '../dto/start-thread-generation.dto';
 
 export type GenerationEnqueueInput = Omit<StartThreadGenerationDto, 'capMicroUsd'> & {
@@ -35,3 +38,21 @@ export type RevisionReviewEnqueueInput = {
     citations: Array<{ evidenceId: string; url: string }>;
   };
 };
+
+/** What the generation service returns to the owner; the publication id is added here. */
+export type OwnerGenerationProgress = Omit<ThreadGenerationProgress, 'publicationId'>;
+
+/** A publication the caller owns, with the job it currently points at. */
+export type OwnedGeneration = {
+  id: string;
+  generationJobId: string;
+  status: PublicationStatus;
+};
+
+export type RetryGenerationResult = {
+  publicationId: string;
+  jobId: string;
+  status: string;
+};
+
+export type DeleteGenerationResult = { deleted: true };

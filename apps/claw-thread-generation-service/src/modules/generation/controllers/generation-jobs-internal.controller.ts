@@ -12,13 +12,18 @@ import {
   type EnqueueRevisionReviewDto,
   enqueueRevisionReviewSchema,
 } from '../dto/enqueue-revision-review.dto';
+import { type RetryGenerationDto, retryGenerationSchema } from '../dto/retry-generation.dto';
 import { GenerationJobsService } from '../services/generation-jobs.service';
+import { GenerationProgressService } from '../services/generation-progress.service';
 
 @Public()
 @UseGuards(ServiceTokenGuard)
 @Controller('internal/threads/generations')
 export class GenerationJobsInternalController {
-  constructor(private readonly jobs: GenerationJobsService) {}
+  constructor(
+    private readonly jobs: GenerationJobsService,
+    private readonly progress: GenerationProgressService,
+  ) {}
 
   @Post()
   @HttpCode(HttpStatus.ACCEPTED)
@@ -40,6 +45,33 @@ export class GenerationJobsInternalController {
   @HttpCode(HttpStatus.OK)
   cancel(@Param('jobId') jobId: string): ReturnType<GenerationJobsService['cancel']> {
     return this.jobs.cancel(jobId);
+  }
+
+  @Post(':jobId/progress')
+  @HttpCode(HttpStatus.OK)
+  getProgress(
+    @Param('jobId') jobId: string,
+    @Body(new ZodValidationPipe(generationOwnerStateSchema)) body: GenerationOwnerStateDto,
+  ): ReturnType<GenerationProgressService['getProgress']> {
+    return this.progress.getProgress(jobId, body.ownerId);
+  }
+
+  @Post(':jobId/retry')
+  @HttpCode(HttpStatus.ACCEPTED)
+  retry(
+    @Param('jobId') jobId: string,
+    @Body(new ZodValidationPipe(retryGenerationSchema)) body: RetryGenerationDto,
+  ): ReturnType<GenerationJobsService['retry']> {
+    return this.jobs.retry(jobId, body);
+  }
+
+  @Post(':jobId/delete')
+  @HttpCode(HttpStatus.OK)
+  remove(
+    @Param('jobId') jobId: string,
+    @Body(new ZodValidationPipe(generationOwnerStateSchema)) body: GenerationOwnerStateDto,
+  ): ReturnType<GenerationJobsService['deleteJob']> {
+    return this.jobs.deleteJob(jobId, body.ownerId);
   }
 
   @Post(':jobId/owner-state')

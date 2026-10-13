@@ -10,6 +10,7 @@ export type GenerationJobStorageResponse =
   | {
       result:
         | GenerationJobStorageResult.CONFLICT
+        | GenerationJobStorageResult.RETRY_CONFLICT
         | GenerationJobStorageResult.STORAGE_ERROR
         | GenerationJobStorageResult.ACCOUNT_DELETED;
     };

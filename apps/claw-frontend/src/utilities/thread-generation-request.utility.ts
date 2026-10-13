@@ -1,3 +1,4 @@
+import { THREAD_FALLBACKS_PER_ROLE } from '@/constants/thread-publication.constants';
 import type { ThreadPublicationType } from '@/constants/thread-publication.constants';
 import type { Locale } from '@/enums/locale.enum';
 import type { ModelSelection } from '@/types';
@@ -9,6 +10,8 @@ export type ThreadGenerationRequestInput = {
   contentLocale: Locale;
   spendCapUsd: number;
   models: ModelSelection[];
+  /** Ranked reliable models; each role falls back to the first few that differ from its own. */
+  fallbackPool?: ModelSelection[];
   idempotencyKey: string;
   correlationId: string;
 };
@@ -68,7 +71,10 @@ export function createThreadGenerationRequest(
     provider: selection.provider,
     model: selection.model,
     maxOutputTokens: 4096,
-    fallbacks: [],
+    fallbacks: (input.fallbackPool ?? [])
+      .filter((other) => other.provider !== selection.provider || other.model !== selection.model)
+      .slice(0, THREAD_FALLBACKS_PER_ROLE)
+      .map(({ provider, model }) => ({ provider, model })),
   });
 
   return {

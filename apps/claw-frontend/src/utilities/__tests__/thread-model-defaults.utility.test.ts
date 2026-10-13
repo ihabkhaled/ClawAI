@@ -4,6 +4,7 @@ import type { ModelSelection } from '@/types';
 import {
   isThreadModelGroupKey,
   pickDistinctModels,
+  rankThreadModels,
 } from '@/utilities/thread-model-defaults.utility';
 
 const model = (provider: string, key: string): ModelSelection => ({
@@ -37,11 +38,11 @@ describe('pickDistinctModels', () => {
         model('HUGGING', 'x1'),
         model('OLLAMA', 'o1'),
         model('OLLAMA', 'o2'),
-        model('ANTHROPIC', 'c1'),
+        model('OPENROUTER', 'c1'),
       ],
       3,
     );
-    expect(picked.map((entry) => entry.model)).toEqual(['c1', 'o1', 'x1']);
+    expect(picked.map((entry) => entry.model)).toEqual(['o1', 'c1', 'x1']);
   });
 
   it('returns nothing when no model is available', () => {
@@ -56,5 +57,16 @@ describe('isThreadModelGroupKey', () => {
 
   it.each([['local-ollama'], ['local-llamacpp'], ['IMAGE_OPENAI']])('hides %s', (key) => {
     expect(isThreadModelGroupKey(key)).toBe(false);
+  });
+});
+
+describe('rankThreadModels', () => {
+  it('puts volunteer providers last and drops them while a reliable model exists', () => {
+    const ranked = rankThreadModels([model('AI_HORDE', 'h'), model('OLLAMA', 'g')]);
+    expect(ranked.map((entry) => entry.model)).toEqual(['g']);
+  });
+
+  it('still offers a volunteer provider when nothing else exists', () => {
+    expect(rankThreadModels([model('AI_HORDE', 'h')]).map((entry) => entry.model)).toEqual(['h']);
   });
 });

@@ -12,6 +12,8 @@ const role = (id: string) => ({
   fallbacks: [],
 });
 
+const recorder = { record: vi.fn().mockResolvedValue(undefined) };
+
 describe('GenerationJobsService', () => {
   it('returns the idempotent owner job without taking another snapshot or budget', async () => {
     const existing = {
@@ -29,6 +31,7 @@ describe('GenerationJobsService', () => {
       {} as never,
       {} as never,
       budgets as never,
+      recorder as never,
     );
 
     await expect(
@@ -77,6 +80,7 @@ describe('GenerationJobsService', () => {
       {} as never,
       {} as never,
       {} as never,
+      recorder as never,
     );
 
     await expect(service.getOwnerState('job-1', 'owner-1')).resolves.toEqual({
@@ -135,6 +139,7 @@ describe('GenerationJobsService', () => {
       rabbit as never,
       {} as never,
       budgets as never,
+      recorder as never,
     );
 
     const result = await service.enqueue({
@@ -158,6 +163,7 @@ describe('GenerationJobsService', () => {
       snapshot,
       snapshot.sha256,
       'budget-1',
+      undefined,
     );
     expect(budgets.reserve).toHaveBeenCalledWith('owner-1', 'request-1', 5000000);
     expect(rabbit.publishConfirmed).toHaveBeenCalledWith(
@@ -179,6 +185,7 @@ describe('GenerationJobsService', () => {
       {} as never,
       {} as never,
       budgets as never,
+      recorder as never,
     );
 
     await expect(
@@ -262,6 +269,7 @@ describe('GenerationJobsService', () => {
       rabbit as never,
       {} as never,
       budgets as never,
+      recorder as never,
     );
 
     await expect(service.enqueueRevisionReview(input)).resolves.toEqual({
@@ -346,6 +354,7 @@ describe('GenerationJobsService', () => {
       rabbit as never,
       pipeline as never,
       budgets as never,
+      recorder as never,
     );
 
     await service.subscribe();
@@ -415,6 +424,7 @@ describe('GenerationJobsService', () => {
         rabbit as never,
         pipeline as never,
         { close: vi.fn() } as never,
+        recorder as never,
       );
       await service.subscribe();
       await handler?.({ jobId: 'job-9', correlationId: 'corr-9' });
@@ -481,6 +491,7 @@ describe('GenerationJobsService', () => {
       rabbit as never,
       pipeline as never,
       budgets as never,
+      recorder as never,
     );
 
     await service.subscribe();
@@ -521,6 +532,7 @@ describe('GenerationJobsService', () => {
         { publishConfirmed: publish } as never,
         {} as never,
         {} as never,
+        recorder as never,
       );
       return { repository, reconcile: () => service['reconcileQueue']() };
     };

@@ -1,13 +1,20 @@
 import type { ReactElement } from 'react';
 
 import { ThreadChangeRequests } from '@/components/threads/thread-change-requests';
+import { ThreadErrorNotice } from '@/components/threads/thread-error-notice';
 import { ThreadExportPanel } from '@/components/threads/thread-export-panel';
+import { ThreadGenerationProgressPanel } from '@/components/threads/thread-generation-progress-panel';
 import { ThreadShareMenu } from '@/components/threads/thread-share-menu';
 import { Button } from '@/components/ui/button';
 import { THREAD_OWNER_EXPORT_OPTIONS } from '@/constants/thread-publication.constants';
+import { ThreadPublicationStatus } from '@/enums/thread-publication-status.enum';
 import { ThreadRevisionField } from '@/enums/thread-revision-field.enum';
 import { useTranslation } from '@/lib/i18n';
-import type { ThreadPublicationDetailController } from '@/types/thread-publication.types';
+import type { ThreadPublicationDetailProps } from '@/types/thread-generation-progress.types';
+import {
+  isThreadNotFoundError,
+  resolveThreadErrorMessage,
+} from '@/utilities/thread-error-message.utility';
 import { threadStageLabelKey } from '@/utilities/thread-generation-stage.utility';
 
 /**
@@ -17,9 +24,7 @@ import { threadStageLabelKey } from '@/utilities/thread-generation-stage.utility
  */
 export function ThreadPublicationDetail({
   detail,
-}: {
-  detail: ThreadPublicationDetailController;
-}): ReactElement | null {
+}: ThreadPublicationDetailProps): ReactElement | null {
   const { t } = useTranslation();
   const {
     generation,
@@ -40,7 +45,15 @@ export function ThreadPublicationDetail({
       {generation.isFetching && !generation.data ? (
         <p role="status">{t('common.loading')}</p>
       ) : null}
-      {generation.isError ? <p role="alert">{t('chat.threadCreateFailed')}</p> : null}
+      <ThreadGenerationProgressPanel
+        publicationId={detail.publicationId}
+        canDelete={selectedPublication?.status !== ThreadPublicationStatus.Published}
+        onCancel={() => cancel.mutate()}
+        isCancelling={cancel.isPending}
+      />
+      {generation.isError && !isThreadNotFoundError(generation.error) ? (
+        <ThreadErrorNotice message={resolveThreadErrorMessage(generation.error)} />
+      ) : null}
       {generation.data ? (
         <section
           className="border-border bg-card flex flex-col gap-3 rounded-lg border p-5"
@@ -48,9 +61,6 @@ export function ThreadPublicationDetail({
         >
           {detail.hasDraft ? (
             <h2 className="text-lg font-semibold">{t('chat.threadDraftPreview')}</h2>
-          ) : null}
-          {detail.generationFailed && !detail.hasDraft ? (
-            <p role="alert">{t('chat.threadCreateFailed')}</p>
           ) : null}
           {detail.generationCancelled && !detail.hasDraft ? (
             <p role="status">{t('chat.threadGenerationCancelled')}</p>
@@ -135,7 +145,9 @@ export function ThreadPublicationDetail({
               <p className="text-muted-foreground text-sm">
                 {t('chat.threadRevisionReviewDisclosure')}
               </p>
-              {editRevision.isError ? <p role="alert">{t('chat.threadCreateFailed')}</p> : null}
+              {editRevision.isError ? (
+                <ThreadErrorNotice message={resolveThreadErrorMessage(editRevision.error)} />
+              ) : null}
               <div className="flex flex-wrap gap-2">
                 <Button
                   type="submit"
@@ -159,26 +171,14 @@ export function ThreadPublicationDetail({
               {t('chat.threadRevisionStatus')}: {detail.revisionReviewMessage}
             </p>
           ) : null}
-          {revisionReview.isError ? <p role="alert">{t('chat.threadCreateFailed')}</p> : null}
+          {revisionReview.isError ? (
+            <ThreadErrorNotice message={resolveThreadErrorMessage(revisionReview.error)} />
+          ) : null}
           {generation.data.status === 'WAITING_FOR_REVIEW' &&
           draft &&
           !detail.publicationReady &&
           !publish.isSuccess ? (
             <p role="status">{t('chat.threadDraftNotEligible')}</p>
-          ) : null}
-          {generation.data.status !== 'WAITING_FOR_REVIEW' &&
-          generation.data.status !== 'FAILED' &&
-          generation.data.status !== 'CANCELLED' ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => cancel.mutate()}
-              disabled={cancel.isPending || cancel.isSuccess}
-              className="w-fit"
-              isLoading={cancel.isPending}
-            >
-              {t('common.cancel')}
-            </Button>
           ) : null}
           {publish.isSuccess ? <p role="status">{t('chat.threadPublished')}</p> : null}
           {generation.data.status === 'WAITING_FOR_REVIEW' &&
@@ -219,9 +219,11 @@ export function ThreadPublicationDetail({
           {detail.publicUrl !== null ? (
             <ThreadShareMenu url={detail.publicUrl} title={selectedPublication?.title ?? ''} />
           ) : null}
-          {unpublish.isError ? <p role="alert">{t('chat.threadCreateFailed')}</p> : null}
-          {publish.isError || cancel.isError ? (
-            <p role="alert">{t('chat.threadCreateFailed')}</p>
+          {unpublish.isError ? (
+            <ThreadErrorNotice message={resolveThreadErrorMessage(unpublish.error)} />
+          ) : null}
+          {publish.isError ? (
+            <ThreadErrorNotice message={resolveThreadErrorMessage(publish.error)} />
           ) : null}
           {selectedPublication?.status === 'PUBLISHED' ? (
             <ThreadChangeRequests

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ReactElement } from 'react';
 
+import { ThreadErrorNotice } from '@/components/threads/thread-error-notice';
 import { ThreadModelPicker } from '@/components/threads/thread-model-picker';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -13,13 +14,9 @@ import type { Locale } from '@/enums/locale.enum';
 import { useTranslation } from '@/lib/i18n';
 import { SUPPORTED_LOCALES } from '@/lib/i18n/i18n.constants';
 import type { ThreadPublicationType } from '@/types';
-import type { ThreadGenerationFormController } from '@/types/thread-publication.types';
+import type { ThreadGenerationFormProps } from '@/types/thread-generation-progress.types';
 
-export function ThreadGenerationForm({
-  form,
-}: {
-  form: ThreadGenerationFormController;
-}): ReactElement {
+export function ThreadGenerationForm({ form }: ThreadGenerationFormProps): ReactElement {
   const { t } = useTranslation();
 
   function roleLabel(index: number): string {
@@ -147,6 +144,7 @@ export function ThreadGenerationForm({
         </p>
       ) : null}
       {form.hasError ? <p role="alert">{t('chat.threadCreateFailed')}</p> : null}
+      {form.startError === null ? null : <ThreadErrorNotice message={form.startError} />}
       <Button
         type="submit"
         disabled={

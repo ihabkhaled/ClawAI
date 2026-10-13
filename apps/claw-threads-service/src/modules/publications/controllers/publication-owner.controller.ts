@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { CurrentUser } from '@claw/shared-auth';
 import type { AuthenticatedUser } from '@claw/shared-types';
 
@@ -14,12 +14,18 @@ import {
   resolvePublicationChangeRequestSchema,
 } from '../dto/resolve-publication-change-request.dto';
 import { PublicationCommunityService } from '../services/publication-community.service';
+import { PublicationGenerationOwnerService } from '../services/publication-generation-owner.service';
+import {
+  type RetryThreadGenerationDto,
+  retryThreadGenerationSchema,
+} from '../dto/retry-thread-generation.dto';
 
 @Controller('thread-publications/:publicationId')
 export class PublicationOwnerController {
   constructor(
     private readonly lifecycle: PublicationLifecycleService,
     private readonly community: PublicationCommunityService,
+    private readonly generationOwner: PublicationGenerationOwnerService,
   ) {}
 
   @Post('publish')
@@ -54,6 +60,31 @@ export class PublicationOwnerController {
     @CurrentUser() user: AuthenticatedUser,
   ): ReturnType<PublicationLifecycleService['getGenerationState']> {
     return this.lifecycle.getGenerationState(publicationId, user.id);
+  }
+
+  @Get('generation-progress')
+  getGenerationProgress(
+    @Param('publicationId') publicationId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): ReturnType<PublicationGenerationOwnerService['getProgress']> {
+    return this.generationOwner.getProgress(publicationId, user.id);
+  }
+
+  @Post('retry-generation')
+  retryGeneration(
+    @Param('publicationId') publicationId: string,
+    @Body(new ZodValidationPipe(retryThreadGenerationSchema)) body: RetryThreadGenerationDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): ReturnType<PublicationGenerationOwnerService['retry']> {
+    return this.generationOwner.retry(publicationId, user.id, body);
+  }
+
+  @Delete()
+  deletePublication(
+    @Param('publicationId') publicationId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): ReturnType<PublicationGenerationOwnerService['delete']> {
+    return this.generationOwner.delete(publicationId, user.id);
   }
 
   @Post('cancel-generation')

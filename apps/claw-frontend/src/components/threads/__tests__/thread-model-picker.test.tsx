@@ -68,4 +68,32 @@ describe('ThreadModelPicker', () => {
       expect.objectContaining({ provider: 'ANTHROPIC', model: 'claude-x' }),
     );
   });
+
+  it('warns next to a model that spends credit', () => {
+    render(
+      <ThreadModelPicker
+        id="role"
+        label="Judge"
+        value={{ provider: 'OPENAI', model: 'gpt-x', displayName: 'GPT X' }}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('thread-model-credit-warning')).toHaveTextContent(
+      'chat.threadProgress.needsCredit',
+    );
+  });
+
+  it('shows no warning for an included model', () => {
+    render(
+      <ThreadModelPicker
+        id="role"
+        label="Judge"
+        value={{ provider: 'OLLAMA', model: 'oll', displayName: 'Oll' }}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByTestId('thread-model-credit-warning')).not.toBeInTheDocument();
+  });
 });

@@ -38,6 +38,7 @@ function makeForm(
     hasAcknowledgedPublic: false,
     setHasAcknowledgedPublic: vi.fn(),
     hasError: false,
+    startError: null,
     isPlanBlocked: false,
     isStarting: false,
     submit: vi.fn(),
@@ -98,7 +99,18 @@ describe('ThreadGenerationForm', () => {
     expect(screen.queryByText('chat.threadCreateFailed')).not.toBeInTheDocument();
   });
 
-  it('shows the generic failure for any other error', () => {
+  it('shows the status-specific start error instead of the catch-all sentence', () => {
+    render(
+      <ThreadGenerationForm
+        form={makeForm({ startError: { key: 'chat.threadProgress.error.credit' } })}
+      />,
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent('chat.threadProgress.error.credit');
+    expect(screen.queryByText('chat.threadCreateFailed')).not.toBeInTheDocument();
+  });
+
+  it('shows the generic failure for a request that could not be built', () => {
     render(<ThreadGenerationForm form={makeForm({ hasError: true })} />);
 
     expect(screen.getByText('chat.threadCreateFailed')).toBeInTheDocument();

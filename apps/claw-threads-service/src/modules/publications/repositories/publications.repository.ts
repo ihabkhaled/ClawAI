@@ -18,6 +18,7 @@ import {
   MIN_PUBLICATION_CRITIC_SCORE,
   MIN_PUBLICATION_JUDGE_SCORE,
 } from '../constants/publication-review.constants';
+import { OWNER_DELETABLE_PUBLICATION_STATUSES } from '../constants/publication-generation-owner.constants';
 import type { NotificationPublicationTarget } from '../types/thread-notification.types';
 import type {
   EditedRevisionRecord,
@@ -648,6 +649,37 @@ export class PublicationsRepository {
     const result = await this.prisma.threadPublication.updateMany({
       where: { id: publicationId, ownerId, status: PublicationStatus.PUBLISHED },
       data: { status: PublicationStatus.UNPUBLISHED, publishedAt: null },
+    });
+    return result.count === 1;
+  }
+
+  /** Points a still-draft publication at a fresh job; false when it moved on or is not the owner's. */
+  async attachRetryJob(
+    publicationId: string,
+    ownerId: string,
+    previousJobId: string,
+    newJobId: string,
+  ): Promise<boolean> {
+    const result = await this.prisma.threadPublication.updateMany({
+      where: {
+        id: publicationId,
+        ownerId,
+        generationJobId: previousJobId,
+        status: PublicationStatus.DRAFT,
+      },
+      data: { generationJobId: newJobId },
+    });
+    return result.count === 1;
+  }
+
+  /** Removes a DRAFT, READY_FOR_REVIEW or UNPUBLISHED publication (never PUBLISHED or REVOKED); revisions and community rows cascade. */
+  async deleteOwnedUnpublished(publicationId: string, ownerId: string): Promise<boolean> {
+    const result = await this.prisma.threadPublication.deleteMany({
+      where: {
+        id: publicationId,
+        ownerId,
+        status: { in: [...OWNER_DELETABLE_PUBLICATION_STATUSES] },
+      },
     });
     return result.count === 1;
   }

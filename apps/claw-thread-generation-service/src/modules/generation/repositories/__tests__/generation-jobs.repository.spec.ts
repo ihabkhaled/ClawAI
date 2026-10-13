@@ -1,5 +1,5 @@
 import { GenerationJobsRepository } from '../generation-jobs.repository';
-import { ThreadGenerationStatus } from '../../../../generated/prisma';
+import { Prisma, ThreadGenerationStatus } from '../../../../generated/prisma';
 
 function buildRepository(overrides: Record<string, unknown> = {}) {
   const tx = {
@@ -62,6 +62,79 @@ describe('GenerationJobsRepository recovery', () => {
         topic: 'other',
       } as never),
     ).resolves.toEqual({ result: 'CONFLICT' });
+  });
+
+  describe('retry link', () => {
+    const input = { ownerId: 'owner-1', idempotencyKey: 'retry-1', topic: 'retry topic' };
+    const uniqueViolation = () =>
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: 'test',
+      });
+
+    it('stores the retried job id on the new job', async () => {
+      const { repository, tx } = buildRepository({
+        threadDeletedAccount: { findUnique: vi.fn().mockResolvedValue(null) },
+      });
+      tx.threadGenerationJob.findUnique.mockResolvedValue(null);
+      const created = { id: 'job-new' };
+      (tx.threadGenerationJob as Record<string, unknown>)['create'] = vi
+        .fn()
+        .mockResolvedValue(created);
+
+      await repository.createQueued(
+        { ...input, spendCapMicroUsd: '1000' } as never,
+        {},
+        'h',
+        'budget-1',
+        'job-old',
+      );
+
+      expect(
+        (tx.threadGenerationJob as unknown as { create: ReturnType<typeof vi.fn> }).create,
+      ).toHaveBeenCalledWith({
+        data: expect.objectContaining({ retriedFromJobId: 'job-old' }),
+      });
+    });
+
+    it('reports RETRY_CONFLICT when only the retry link is already taken', async () => {
+      const { repository, tx } = buildRepository({
+        threadDeletedAccount: { findUnique: vi.fn().mockResolvedValue(null) },
+      });
+      tx.threadGenerationJob.findUnique.mockResolvedValue(null);
+      (tx.threadGenerationJob as Record<string, unknown>)['create'] = vi
+        .fn()
+        .mockRejectedValue(uniqueViolation());
+
+      await expect(
+        repository.createQueued(
+          { ...input, spendCapMicroUsd: '1000' } as never,
+          {},
+          'h',
+          'budget-1',
+          'job-old',
+        ),
+      ).resolves.toEqual({ result: 'RETRY_CONFLICT' });
+    });
+
+    it('keeps CONFLICT for a unique hit on a non-retry job', async () => {
+      const { repository, tx } = buildRepository({
+        threadDeletedAccount: { findUnique: vi.fn().mockResolvedValue(null) },
+      });
+      tx.threadGenerationJob.findUnique.mockResolvedValue(null);
+      (tx.threadGenerationJob as Record<string, unknown>)['create'] = vi
+        .fn()
+        .mockRejectedValue(uniqueViolation());
+
+      await expect(
+        repository.createQueued(
+          { ...input, spendCapMicroUsd: '1000' } as never,
+          {},
+          'h',
+          'budget-1',
+        ),
+      ).resolves.toEqual({ result: 'CONFLICT' });
+    });
   });
 
   it('persists review jobs with the parent snapshot and saved evidence bundle', async () => {

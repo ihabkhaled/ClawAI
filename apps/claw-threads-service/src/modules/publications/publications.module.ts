@@ -17,6 +17,7 @@ import { PublicationViewsController } from './controllers/publication-views.cont
 import { PublicationViewsRepository } from './repositories/publication-views.repository';
 import { PublicationViewsService } from './services/publication-views.service';
 import { ThreadGenerationEventsConsumer } from './consumers/thread-generation-events.consumer';
+import { PublicationGenerationOwnerService } from './services/publication-generation-owner.service';
 import { ThreadNotificationService } from './services/thread-notification.service';
 
 @Module({
@@ -35,6 +36,7 @@ import { ThreadNotificationService } from './services/thread-notification.servic
     ThreadNotificationService,
     ThreadGenerationEventsConsumer,
     PublicationLifecycleService,
+    PublicationGenerationOwnerService,
     PublicationCommunityService,
     PublicationsRepository,
     ThreadsGenerationClient,

@@ -11,8 +11,15 @@ import { z } from 'zod';
 
 import { AppConfig } from '../../../app/config/app.config';
 import type { StartThreadGenerationDto } from '../dto/start-thread-generation.dto';
+import type { RetryThreadGenerationDto } from '../dto/retry-thread-generation.dto';
+import {
+  generationDeleteResponseSchema,
+  generationProgressSchema,
+  generationRetryResponseSchema,
+} from '../schemas/generation-progress.schema';
 import type {
   GenerationEnqueueInput,
+  OwnerGenerationProgress,
   PrivateGenerationState,
   RevisionReviewEnqueueInput,
 } from '../types/generation.types';
@@ -93,10 +100,48 @@ export class ThreadsGenerationClient {
     return parsed.data;
   }
 
+  async getProgress(jobId: string, ownerId: string): Promise<OwnerGenerationProgress> {
+    const result = await this.request(this.jobPath(jobId, 'progress'), {
+      method: 'POST',
+      body: JSON.stringify({ ownerId }),
+    });
+    const parsed = generationProgressSchema.safeParse(result);
+    if (!parsed.success) throw new ServiceUnavailableException('Generation response is invalid');
+    return parsed.data;
+  }
+
+  async retry(
+    jobId: string,
+    ownerId: string,
+    input: RetryThreadGenerationDto,
+  ): Promise<{ jobId: string; status: string }> {
+    const result = await this.request(this.jobPath(jobId, 'retry'), {
+      method: 'POST',
+      body: JSON.stringify({ ...input, ownerId }),
+    });
+    const parsed = generationRetryResponseSchema.safeParse(result);
+    if (!parsed.success) throw new ServiceUnavailableException('Generation response is invalid');
+    return parsed.data;
+  }
+
+  async deleteJob(jobId: string, ownerId: string): Promise<void> {
+    const result = await this.request(this.jobPath(jobId, 'delete'), {
+      method: 'POST',
+      body: JSON.stringify({ ownerId }),
+    });
+    if (!generationDeleteResponseSchema.safeParse(result).success) {
+      throw new ServiceUnavailableException('Generation response is invalid');
+    }
+  }
+
   async cancel(jobId: string): Promise<void> {
     await this.request(`/api/v1/internal/threads/generations/${encodeURIComponent(jobId)}/cancel`, {
       method: 'POST',
     });
+  }
+
+  private jobPath(jobId: string, action: string): string {
+    return `/api/v1/internal/threads/generations/${encodeURIComponent(jobId)}/${action}`;
   }
 
   private async request(

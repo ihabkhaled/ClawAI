@@ -1,6 +1,9 @@
+import type { ThreadGenerationProgress, ThreadGenerationRetryRequest } from '@claw/shared-types';
+
 import type { ThreadPublicationReaction } from '@/enums/thread-publication-reaction.enum';
 import { apiClient } from '@/services/shared/api-client';
 import type { ThreadServerExportFormat } from '@/types/thread-export.types';
+import type { ThreadRetryResponse } from '@/types/thread-generation-progress.types';
 import type {
   OwnedThreadPublication,
   ThreadPublicationExport,
@@ -116,6 +119,26 @@ export const threadPublicationsRepository = {
       {},
     );
     return response.data;
+  },
+  /** Owner-only. Anyone else, and an unknown id, gets 404. */
+  async getGenerationProgress(publicationId: string): Promise<ThreadGenerationProgress> {
+    const response = await apiClient.get<ThreadGenerationProgress>(
+      `/thread-publications/${encodeURIComponent(publicationId)}/generation-progress`,
+    );
+    return response.data;
+  },
+  async retryGeneration(
+    publicationId: string,
+    request: ThreadGenerationRetryRequest,
+  ): Promise<ThreadRetryResponse> {
+    const response = await apiClient.post<ThreadRetryResponse>(
+      `/thread-publications/${encodeURIComponent(publicationId)}/retry-generation`,
+      request,
+    );
+    return response.data;
+  },
+  async deletePublication(publicationId: string): Promise<void> {
+    await apiClient.delete(`/thread-publications/${encodeURIComponent(publicationId)}`);
   },
   async publish(publicationId: string): Promise<void> {
     await apiClient.post(`/thread-publications/${encodeURIComponent(publicationId)}/publish`, {});

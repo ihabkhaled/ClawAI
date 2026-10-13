@@ -5,7 +5,10 @@ import { ModelPicker } from '@/components/chat/model-picker';
 import { useModelSelector } from '@/hooks/chat/use-model-selector';
 import type { ThreadModelPickerProps } from '@/types/thread-publication.types';
 import { encodeModelValue, decodeModelValue } from '@/utilities';
-import { isThreadModelGroupKey } from '@/utilities/thread-model-defaults.utility';
+import {
+  isThreadCreditModel,
+  isThreadModelGroupKey,
+} from '@/utilities/thread-model-defaults.utility';
 
 /**
  * One Thread role's model, chosen in the same grouped, searchable, badged picker
@@ -53,6 +56,11 @@ export function ThreadModelPicker({
         triggerClassName="h-10 w-full text-sm"
         footer={<CreditDualConsumptionNotice t={t} className="border-0 bg-transparent px-0 py-0" />}
       />
+      {isThreadCreditModel(value) ? (
+        <p role="note" className="text-warning text-xs" data-testid="thread-model-credit-warning">
+          {t('chat.threadProgress.needsCredit')}
+        </p>
+      ) : null}
     </div>
   );
 }

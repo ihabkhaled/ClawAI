@@ -69,3 +69,41 @@ The worker writes the job's `stage` and `round` as it moves (`saveProgress`, fen
 number): AUTHOR_DRAFTS, CONSENSUS, JUDGE, CRITIC, then READY_FOR_REVIEW. The review page reads them
 from `generation-state` and says what is happening. Before 2026-10-07 the stage stayed
 AUTHOR_DRAFTS until the end.
+
+## Owner step log, progress, retry and delete
+
+Added 2026-10-13. Contract: `ThreadGenerationProgress` in `@claw/shared-types`
+(`thread-generation-progress.type.ts`). This service returns the core without `publicationId`;
+the Threads service adds it.
+
+Table `thread_generation_steps` (migration `20261013120000_threads_generation_steps`, additive):
+`job_id` FK cascade, `seq` (unique per job), `at`, `stage`, `round`, `outcome`
+(STARTED/SUCCEEDED/FAILED/RETRY/FALLBACK/SKIPPED), `role_kind`, `role_id`, `provider`, `model`,
+`code`, `http_status`, `duration_ms`, token counts, `excerpt` (VarChar 1200).
+
+- `StepRecorder` (services/) writes steps through `GenerationStepsRepository`. It never throws:
+  a storage error or a sequence race that outlasts 5 reads is logged and dropped.
+- `GenerationPipelineManager` records research start/finish, each stage change, every author,
+  judge and critic call (start, success, failure, wrong-shape retry, fallback), consensus and
+  review retries, and invalid citations. `GenerationJobsService.process` records the final
+  FAILED / RETRY (stage `GENERATION`), cancel observed (`CANCELLED`) and READY_FOR_REVIEW.
+- Codes come from `parseStepError`: `Chat model request failed (402: PAYG_CREDIT_EXHAUSTED)`
+  becomes httpStatus 402 + code `PAYG_CREDIT_EXHAUSTED`; a bare status becomes `PROVIDER_ERROR`
+  (429 `PROVIDER_RATE_LIMITED`); service-written messages map to `PROVIDER_UNAVAILABLE`,
+  `CONTEXT_WINDOW_EXCEEDED`, `OUTPUT_INVALID`, `CITATION_INVALID`, `RESEARCH_*`,
+  `REVIEW_NOT_PASSED`, `CANCELLED`. The cause chain is walked; an upstream status wins.
+- Excerpt: first 600 chars of the model output, trimmed, URL query strings and obvious secrets
+  removed. Owner-only; never put it in a log line or a public response.
+
+Internal service-token routes (all body-scoped by `ownerId`; a non-owner gets 404, never 403):
+
+| Route                                                                          | Result                                                                                                                                                                                   |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST :jobId/progress` `{ownerId}`                                             | `ThreadGenerationProgressCore` (selections, failure, up to 500 steps)                                                                                                                    |
+| `POST :jobId/retry` `{ownerId, idempotencyKey, topic?, spendCapUsd?, models?}` | New job from the failed or cancelled job's pinned snapshot; 409 if the job is not FAILED/CANCELLED or its request is a revision review; 400 for an unknown role id or a cap out of range |
+| `POST :jobId/delete` `{ownerId}`                                               | Deletes a finished job (cascade); 409 while QUEUED/RUNNING, and 409 until the budget close has run                                                                                       |
+
+Retry reuses the enqueue path (idempotency, budget reserve). Its correlation id is derived from
+the key (`retry:<key>`), so repeating the same call is idempotent and a key reused with changed
+input conflicts. Changing a role's provider drops fallbacks on that provider. Delete refuses to
+run before `budget_closed_at` is set so the idempotent close path never loses its row.

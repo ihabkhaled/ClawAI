@@ -12,6 +12,7 @@ import type { ThreadPublicationStatus } from '@/enums/thread-publication-status.
 import type { ThreadRevisionField } from '@/enums/thread-revision-field.enum';
 import type { ModelSelection } from '@/types/component.types';
 import type { ThreadExportFile } from '@/types/thread-export.types';
+import type { ThreadErrorMessage } from '@/types/thread-generation-progress.types';
 import type { ThreadRevisionRequest } from '@/utilities/thread-revision-request.utility';
 
 export type OwnedThreadPublication = {
@@ -223,7 +224,10 @@ export type ThreadGenerationFormController = {
   changeModel: (index: number, selected: ModelSelection) => void;
   hasAcknowledgedPublic: boolean;
   setHasAcknowledgedPublic: (value: boolean) => void;
+  /** The request could not even be built (client-side validation). */
   hasError: boolean;
+  /** What the service said when the start failed, other than a plan block. */
+  startError: ThreadErrorMessage | null;
   /** The plan or role does not include Thread generation (403). */
   isPlanBlocked: boolean;
   isStarting: boolean;

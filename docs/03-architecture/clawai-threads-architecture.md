@@ -97,6 +97,18 @@ summary, never conversation text, evidence, drafts or prompts. Audit-service ope
 `BUG_REPORT` ticket per job (source `SYSTEM`, keyed `threads-generation:<jobId>`, so a
 redelivery finds the existing ticket) in the admin feedback queue.
 
+## Owner generation progress
+
+A generation is private until the owner publishes it. While it runs or after it fails, only
+the owner can read its progress: `claw-threads-service` checks ownership, then asks the
+generation service over the service-token routes `.../generations/:jobId/progress`, `/retry`
+and `/delete`. The record shows what was selected (topic, type, locale, spend cap, every
+model and fallback), each stage and role step with a stable code (for example
+`PAYG_CREDIT_EXHAUSTED`), duration, tokens and a bounded excerpt. Everyone else gets 404.
+Retry re-queues from the same snapshot onto the same DRAFT publication with a new job;
+delete removes a non-published publication and its job after the owner cancels any running
+work. Discovery, sitemap and slug routes only ever read PUBLISHED rows.
+
 ## Owner notifications
 
 Generation-service publishes `threads.generation_completed` (ownerId, jobId) once a draft is saved; revision reviews do not. Threads-service consumes it and `threads.generation_failed`, checks the publication belongs to that owner, and publishes `user.notification_requested` (ready, failed); approving a publication requests a "published" notice. Auth-service stores it, emails it and shows it in the portal (ADR-164).

@@ -25,6 +25,9 @@ migrations.
 - `POST /api/v1/thread-publications/generations` passes the selected cap, explicit public-intent version, and server-derived owner ID to the generation service with a service token. Generation reserves Auth entitlements after snapshot ownership validation.
 - `GET /api/v1/thread-publications/:publicationId/generation-state` verifies publication ownership before fetching job state; completed drafts are persisted privately with `PENDING` review status.
 - `POST /api/v1/thread-publications/:publicationId/cancel-generation` checks ownership before forwarding cancellation.
+- `GET /api/v1/thread-publications/:publicationId/generation-progress` returns the owner-only step-by-step record (selections, per-role steps with machine codes, durations, tokens, bounded excerpts, failure) from the generation service. Non-owners and unknown ids get `404 Publication not found`.
+- `POST /api/v1/thread-publications/:publicationId/retry-generation` (body: `idempotencyKey`, optional `topic`, `spendCapUsd`, `models`) starts a new job from the same snapshot and attaches it to the same DRAFT publication. 409 unless the publication is DRAFT and the job FAILED or CANCELLED.
+- `DELETE /api/v1/thread-publications/:publicationId` removes a non-published publication and its job. 409 when published or the job is QUEUED or RUNNING.
 - `GET /api/v1/thread-publications/public/:slug` is unauthenticated but resolves only published, owner-approved, safety-approved, index-eligible content; it returns citation URLs, not evidence IDs.
 - `POST /api/v1/thread-publications/:publicationId/unpublish` requires owner identity and removes the record from public resolution.
 - `GET /api/v1/thread-publications/:publicationId/export?format=json|markdown` requires owner identity and exports article content and citation URLs.

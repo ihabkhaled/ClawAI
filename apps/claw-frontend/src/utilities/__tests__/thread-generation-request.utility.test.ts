@@ -35,6 +35,28 @@ describe('createThreadGenerationRequest', () => {
     });
   });
 
+  it('gives each role up to two fallbacks that differ from its own model', () => {
+    const request = createThreadGenerationRequest({
+      sourceThreadId: 'chat-1',
+      topic: 'Explain indexes',
+      publicationType: ThreadPublicationType.ARTICLE,
+      contentLocale: Locale.EN,
+      spendCapUsd: 1,
+      models,
+      fallbackPool: models,
+      idempotencyKey: 'request-1',
+      correlationId: 'correlation-1',
+    });
+    expect(request.authors[0]?.fallbacks).toEqual([
+      { provider: 'OPENAI', model: 'model-1' },
+      { provider: 'OPENAI', model: 'model-2' },
+    ]);
+    expect(request.judge.fallbacks).toEqual([
+      { provider: 'OPENAI', model: 'model-0' },
+      { provider: 'OPENAI', model: 'model-1' },
+    ]);
+  });
+
   it('rejects unsafe caps or incomplete model roles', () => {
     expect(() =>
       createThreadGenerationRequest({

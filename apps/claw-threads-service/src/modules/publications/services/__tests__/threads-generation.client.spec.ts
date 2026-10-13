@@ -1,3 +1,11 @@
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+
 import { AppConfig } from '../../../../app/config/app.config';
 import { ThreadsGenerationClient } from '../threads-generation.client';
 
@@ -5,6 +13,7 @@ describe('ThreadsGenerationClient', () => {
   beforeEach(() => {
     vi.stubEnv('JWT_SECRET', 'j'.repeat(32));
     vi.stubEnv('THREADS_DATABASE_URL', 'postgresql://threads:secret@localhost:5432/threads');
+    vi.stubEnv('RABBITMQ_URL', 'amqp://guest:guest@localhost:5672');
     vi.stubEnv('AUTH_SERVICE_URL', 'https://auth-service:4001');
     vi.stubEnv('THREAD_GENERATION_SERVICE_URL', 'https://thread-generation-service:4020');
     vi.stubEnv('INTER_SERVICE_AUTH_TOKEN', 't'.repeat(32));
@@ -43,6 +52,120 @@ describe('ThreadsGenerationClient', () => {
         redirect: 'error',
         body: expect.stringContaining('"spendCapMicroUsd":"2500000"'),
       }),
+    );
+  });
+
+  const base = 'https://thread-generation-service:4020/api/v1/internal/threads/generations/job-1';
+  const progress = {
+    jobId: 'job-1',
+    status: 'FAILED',
+    stage: 'AUTHOR_DRAFTS',
+    round: 1,
+    attemptCount: 1,
+    maxAttempts: 3,
+    spentMicroCredits: '0',
+    createdAt: '2026-10-13T10:00:00.000Z',
+    updatedAt: '2026-10-13T10:01:00.000Z',
+    selections: {
+      topic: 'Topic',
+      publicationType: 'article',
+      contentLocale: 'en',
+      sourceThreadId: 't-1',
+      spendCapMicroUsd: '1',
+      roles: [],
+    },
+    failure: null,
+    steps: [],
+  };
+
+  function stubFetch(response: { ok: boolean; status?: number; json?: () => Promise<unknown> }) {
+    const fetch = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('fetch', fetch);
+    return fetch;
+  }
+
+  it('fetches owner progress through the internal route', async () => {
+    const fetch = stubFetch({ ok: true, json: async () => progress });
+
+    await expect(new ThreadsGenerationClient().getProgress('job-1', 'owner-1')).resolves.toEqual(
+      progress,
+    );
+    expect(fetch).toHaveBeenCalledWith(
+      `${base}/progress`,
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ ownerId: 'owner-1' }) }),
+    );
+  });
+
+  it('keeps a 404 from the progress route as a 404', async () => {
+    stubFetch({ ok: false, status: 404 });
+    await expect(new ThreadsGenerationClient().getProgress('job-1', 'o')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+
+  it('rejects a malformed progress body', async () => {
+    stubFetch({ ok: true, json: async () => ({ jobId: 1 }) });
+    await expect(new ThreadsGenerationClient().getProgress('job-1', 'o')).rejects.toBeInstanceOf(
+      ServiceUnavailableException,
+    );
+  });
+
+  it('sends the retry changes with the owner id', async () => {
+    const fetch = stubFetch({ ok: true, json: async () => ({ jobId: 'job-2', status: 'QUEUED' }) });
+
+    await expect(
+      new ThreadsGenerationClient().retry('job-1', 'owner-1', {
+        idempotencyKey: 'retry-1',
+        spendCapUsd: 3,
+      }),
+    ).resolves.toEqual({ jobId: 'job-2', status: 'QUEUED' });
+    expect(fetch).toHaveBeenCalledWith(
+      `${base}/retry`,
+      expect.objectContaining({
+        body: JSON.stringify({ idempotencyKey: 'retry-1', spendCapUsd: 3, ownerId: 'owner-1' }),
+      }),
+    );
+  });
+
+  it('rejects a malformed retry body', async () => {
+    stubFetch({ ok: true, json: async () => ({}) });
+    await expect(
+      new ThreadsGenerationClient().retry('job-1', 'o', { idempotencyKey: 'k' }),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+  });
+
+  it('deletes a job and rejects an unconfirmed delete', async () => {
+    const fetch = stubFetch({ ok: true, json: async () => ({ deleted: true }) });
+    await expect(
+      new ThreadsGenerationClient().deleteJob('job-1', 'owner-1'),
+    ).resolves.toBeUndefined();
+    expect(fetch).toHaveBeenCalledWith(
+      `${base}/delete`,
+      expect.objectContaining({ method: 'POST' }),
+    );
+
+    stubFetch({ ok: true, json: async () => ({ deleted: false }) });
+    await expect(new ThreadsGenerationClient().deleteJob('job-1', 'o')).rejects.toBeInstanceOf(
+      ServiceUnavailableException,
+    );
+  });
+
+  it.each([
+    [400, BadRequestException],
+    [403, ForbiddenException],
+    [409, ConflictException],
+    [500, ServiceUnavailableException],
+  ])('maps upstream %i to a typed error', async (status, expected) => {
+    stubFetch({ ok: false, status });
+    await expect(new ThreadsGenerationClient().getProgress('job-1', 'o')).rejects.toBeInstanceOf(
+      expected,
+    );
+  });
+
+  it('reports an unreachable generation service', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('down')));
+    await expect(new ThreadsGenerationClient().getProgress('job-1', 'o')).rejects.toBeInstanceOf(
+      ServiceUnavailableException,
     );
   });
 });

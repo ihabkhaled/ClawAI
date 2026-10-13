@@ -323,6 +323,124 @@ describe('PublicationsRepository', () => {
     });
   });
 
+  it('points only a still-draft owned publication at the retry job', async () => {
+    const threadPublication = { updateMany: vi.fn().mockResolvedValue({ count: 1 }) };
+    const repository = new PublicationsRepository({ threadPublication } as never);
+
+    await expect(repository.attachRetryJob('pub-1', 'owner-1', 'job-1', 'job-2')).resolves.toBe(
+      true,
+    );
+    expect(threadPublication.updateMany).toHaveBeenCalledWith({
+      where: { id: 'pub-1', ownerId: 'owner-1', generationJobId: 'job-1', status: 'DRAFT' },
+      data: { generationJobId: 'job-2' },
+    });
+  });
+
+  it('reports false when the retry job could not be attached', async () => {
+    const threadPublication = { updateMany: vi.fn().mockResolvedValue({ count: 0 }) };
+    const repository = new PublicationsRepository({ threadPublication } as never);
+
+    await expect(repository.attachRetryJob('pub-1', 'owner-1', 'job-1', 'job-2')).resolves.toBe(
+      false,
+    );
+  });
+
+  it('deletes only an owned publication in a deletable status', async () => {
+    const threadPublication = { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) };
+    const repository = new PublicationsRepository({ threadPublication } as never);
+
+    await expect(repository.deleteOwnedUnpublished('pub-1', 'owner-1')).resolves.toBe(true);
+    expect(threadPublication.deleteMany).toHaveBeenCalledWith({
+      where: {
+        id: 'pub-1',
+        ownerId: 'owner-1',
+        status: { in: ['DRAFT', 'READY_FOR_REVIEW', 'UNPUBLISHED'] },
+      },
+    });
+  });
+
+  describe('owner delete status filter', () => {
+    async function sentStatuses(): Promise<string[]> {
+      let sent: string[] = [];
+      const threadPublication = {
+        deleteMany: vi.fn(async (args: { where: { status: { in: string[] } } }) => {
+          sent = args.where.status.in;
+          return { count: 0 };
+        }),
+      };
+      const repository = new PublicationsRepository({ threadPublication } as never);
+      await repository.deleteOwnedUnpublished('pub-1', 'owner-1');
+      return sent;
+    }
+
+    it.each(['PUBLISHED', 'REVOKED'])('never matches a %s row', async (status) => {
+      expect(await sentStatuses()).not.toContain(status);
+    });
+
+    it.each(['DRAFT', 'READY_FOR_REVIEW', 'UNPUBLISHED'])('matches a %s row', async (status) => {
+      expect(await sentStatuses()).toContain(status);
+    });
+  });
+
+  it('reports false when nothing was deleted', async () => {
+    const threadPublication = { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) };
+    const repository = new PublicationsRepository({ threadPublication } as never);
+
+    await expect(repository.deleteOwnedUnpublished('pub-1', 'other')).resolves.toBe(false);
+  });
+
+  describe('a draft publication whose job failed stays out of every public surface', () => {
+    const failedDraft = {
+      id: 'pub-failed',
+      slug: 'failed-draft',
+      status: 'DRAFT',
+      contentLocale: 'en',
+      publishedAt: null,
+      generationJobId: 'job-failed',
+      revisions: [],
+    };
+
+    /** In-memory stand-in that applies the status and locale filters the repository sends. */
+    function prismaOverRows(rows: Array<typeof failedDraft>) {
+      const matches = (where: { status?: string; slug?: string; contentLocale?: string }) =>
+        rows.filter(
+          (row) =>
+            (where.status === undefined || row.status === where.status) &&
+            (where.slug === undefined || row.slug === where.slug) &&
+            (where.contentLocale === undefined || row.contentLocale === where.contentLocale),
+        );
+      return {
+        threadPublication: {
+          findMany: vi.fn(async ({ where }: { where: Parameters<typeof matches>[0] }) =>
+            matches(where),
+          ),
+          findFirst: vi.fn(async ({ where }: { where: Parameters<typeof matches>[0] }) => {
+            return matches(where)[0] ?? null;
+          }),
+          count: vi.fn(async ({ where }: { where: Parameters<typeof matches>[0] }) => {
+            return matches(where).length;
+          }),
+        },
+      };
+    }
+
+    it('is not listed in discovery', async () => {
+      const repository = new PublicationsRepository(prismaOverRows([failedDraft]) as never);
+      await expect(repository.findPublicDiscoveries(Locale.EN, null, 10)).resolves.toEqual([]);
+    });
+
+    it('is not counted or listed in the sitemap', async () => {
+      const repository = new PublicationsRepository(prismaOverRows([failedDraft]) as never);
+      await expect(repository.countPublicDiscoveries(Locale.EN)).resolves.toBe(0);
+      await expect(repository.findPublicSitemapItems(Locale.EN, 0, 10)).resolves.toEqual([]);
+    });
+
+    it('is not served by its public slug', async () => {
+      const repository = new PublicationsRepository(prismaOverRows([failedDraft]) as never);
+      await expect(repository.findPublic('failed-draft')).resolves.toBeNull();
+    });
+  });
+
   it('creates a private immutable edit revision with exact-content hashes', async () => {
     const transaction = {
       threadPublicationRevision: {
