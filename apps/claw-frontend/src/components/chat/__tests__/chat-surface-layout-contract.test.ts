@@ -24,6 +24,10 @@ const TOOLBAR = resolve(CHAT_COMPONENTS, 'composer-toolbar.tsx');
 // which is exactly how the research select ended up 90px wide on a phone.
 const MODEL_SELECTOR = resolve(CHAT_COMPONENTS, 'model-selector.tsx');
 const RESEARCH_TOGGLE = resolve(CHAT_COMPONENTS, 'research-toggle.tsx');
+// The toolbar's "+" menu and the research chip (rules/40 §23).
+const PLUS_MENU_VIEW = resolve(CHAT_COMPONENTS, 'composer-plus-menu-view.tsx');
+const PLUS_MENU_ITEM = resolve(CHAT_COMPONENTS, 'composer-plus-menu-item.tsx');
+const RESEARCH_CHIP = resolve(CHAT_COMPONENTS, 'composer-research-chip.tsx');
 // The header's controls now live here. It is on the height scan for the same
 // reason the shell is: it is a permanent element of the conversation surface.
 const ACTION_RAIL = resolve(CHAT_COMPONENTS, 'chat-thread-action-rail.tsx');
@@ -148,7 +152,7 @@ describe('chat surface layout contract (rules/40)', () => {
     // The CONTROL files only. The toolbar's own root element is `flex-1` on
     // purpose - it is the row, and it has to fill the space beside the send
     // button - which is asserted separately below.
-    for (const file of [MODEL_SELECTOR, RESEARCH_TOGGLE]) {
+    for (const file of [MODEL_SELECTOR, RESEARCH_TOGGLE, RESEARCH_CHIP, PLUS_MENU_VIEW]) {
       // Comments stripped first. Both files explain in prose why `flex-1`
       // was wrong here, and that explanation is worth keeping.
       expect(withoutComments(read(file))).not.toMatch(/\bflex-1\b/);
@@ -160,6 +164,40 @@ describe('chat surface layout contract (rules/40)', () => {
     // children are not. Stated so the check above cannot be "fixed" by
     // deleting it.
     expect(read(TOOLBAR)).toMatch(/\bmin-w-0 flex-1\b/);
+  });
+
+  it('puts attach, context, research settings and prompts behind ONE round plus (rules/40 §23)', () => {
+    // The row used to carry Context, attach, a globe, two research selects, Prompt library
+    // and Preview context as loose siblings. They are rows of the plus menu now; one of them
+    // reappearing here is the regression this contract exists to catch.
+    const toolbar = withoutComments(read(TOOLBAR));
+    expect(toolbar).toContain('<ComposerPlusMenu');
+    for (const loose of [
+      '<FileAttachmentPicker',
+      '<PromptLibraryButton',
+      '<PreviewContextButton',
+      '<ComposerContextControls',
+      '<ResearchToggle',
+    ]) {
+      expect(toolbar).not.toContain(loose);
+    }
+    const menu = withoutComments(read(PLUS_MENU_VIEW));
+    // The tour anchor stays on the plus, and the button is round.
+    expect(menu).toContain('data-tour="composer-attach"');
+    expect(menu).toContain('rounded-full');
+  });
+
+  it('bounds the plus menu in dvh and the space left, so it scrolls inside on a short viewport', () => {
+    // Rule 40 §22: a phone in landscape is ~390px tall. The menu must scroll itself.
+    const menu = withoutComments(read(PLUS_MENU_VIEW));
+    expect(menu).toContain('max-h-[min(70dvh,var(--radix-popover-content-available-height))]');
+    expect(menu).not.toMatch(/(?:ml|mr|pl|pr|left|right|text-left|text-right)-/);
+  });
+
+  it('gives every plus-menu row a coarse-pointer hit area and flips its chevron in RTL', () => {
+    const item = withoutComments(read(PLUS_MENU_ITEM));
+    expect(item).toContain('touch:min-h-11');
+    expect(item).toContain('rtl:rotate-180');
   });
 
   it('signals the hidden scrollbar with a fade', () => {

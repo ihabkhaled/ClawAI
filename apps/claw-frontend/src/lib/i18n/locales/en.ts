@@ -1,8 +1,10 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
+import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { FILE_LIBRARY_TRANSLATIONS } from './file-library-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
@@ -391,6 +393,7 @@ export const en: TranslationDictionary = {
     more: 'More',
   },
   chat: {
+    fileLibrary: FILE_LIBRARY_TRANSLATIONS.en,
     credit: {
       modelBadge: 'Uses credit',
       badgeLabel: 'Credit',
@@ -440,6 +443,7 @@ export const en: TranslationDictionary = {
       trigger: 'Try again with…',
       auto: 'Let AUTO choose',
     },
+    composerMenu: COMPOSER_MENU_TRANSLATIONS.en,
     composerContext: {
       menuLabel: 'Context',
       pickLabel: 'Choose context packs',
@@ -1054,7 +1058,6 @@ export const en: TranslationDictionary = {
       waveformLabel: 'Live audio level',
       cameraPreviewLabel: 'Live camera preview',
     },
-    noFiles: 'No files uploaded yet',
     selectedFiles: '{count} file(s) attached',
     contextPacks: 'Context Packs',
     contextPacksDescription: 'Select context packs to include in this thread.',

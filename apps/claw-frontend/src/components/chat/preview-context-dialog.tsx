@@ -1,56 +1,33 @@
 'use client';
 
-import { Eye } from 'lucide-react';
-import { useState } from 'react';
-
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
-import { usePreviewContext } from '@/hooks/chat/use-preview-context';
+import { usePreviewContextDialog } from '@/hooks/chat/use-preview-context-dialog';
 import { useTranslation } from '@/lib/i18n';
-import type { PreviewContextButtonProps } from '@/types/context-receipt-component.types';
+import type { PreviewContextDialogProps } from '@/types/composer-plus-menu.types';
 
-export function PreviewContextButton(props: PreviewContextButtonProps): React.ReactElement {
-  const { threadId, draft } = props;
+/**
+ * The "what would be sent" dry-run, controlled from outside so both the standalone
+ * Preview button and the composer "+" menu can open the same dialog.
+ */
+export function PreviewContextDialog({
+  threadId,
+  draft,
+  open,
+  onOpenChange,
+}: PreviewContextDialogProps): React.ReactElement {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const preview = usePreviewContext(threadId);
-
-  const handleOpenChange = (nextOpen: boolean): void => {
-    setOpen(nextOpen);
-    if (nextOpen) {
-      preview.mutate({ draft });
-    }
-  };
-
+  const preview = usePreviewContextDialog(threadId, draft, open);
   const bundle = preview.data;
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-9 shrink-0 gap-1 px-2 lg:px-3"
-          aria-label={t('preview.openLabel')}
-          data-tour="composer-preview-context"
-          title={t('preview.openLabel')}
-        >
-          <Eye className="h-3 w-3" />
-          {/* Label only from `lg`, like every other composer control. Below it
-              the toolbar has to scroll to fit, and the label was clipped
-              mid-word at 768px — the icon plus the tooltip says the same thing
-              in 110px less. */}
-          <span className="hidden lg:inline">{t('preview.openLabel')}</span>
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t('preview.dialogTitle')}</DialogTitle>

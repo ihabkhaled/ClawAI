@@ -81,6 +81,7 @@ const baseProps = {
   selectedFileIds: [],
   onSelectedFileIdsChange: vi.fn(),
   onIngestFiles: vi.fn(),
+  isUploading: false,
   attachmentTray: { fileIds: [], pendingUploads: [], progress: null, onRemove: vi.fn() },
   attachmentChips: { chips: [], listLabel: 'Attachments', onRemove: vi.fn() },
   t,
@@ -395,5 +396,17 @@ describe('InThreadComparePanel — voice/video recorder', () => {
     });
     const [files] = onIngestFiles.mock.calls[0] as [File[]];
     expect(files[0]).toBeInstanceOf(File);
+  });
+
+  it('hands the composer upload state to the attach picker', async () => {
+    render(
+      withQueryClient(
+        <InThreadComparePanel {...baseProps} allowJudgeMode allowResearchMode isUploading />,
+      ),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /chat\.attachFiles/ }));
+
+    const uploading = await screen.findByText('chat.fileLibrary.uploading');
+    expect(uploading.closest('button')).toBeDisabled();
   });
 });

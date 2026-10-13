@@ -263,6 +263,7 @@ export const queryKeys = {
     list: (filters: Record<string, unknown>) => [...queryKeys.files.lists(), filters] as const,
     detail: (id: string) => [...queryKeys.files.all, 'detail', id] as const,
     chunks: (id: string) => [...queryKeys.files.all, 'chunks', id] as const,
+    thumbnail: (id: string) => [...queryKeys.files.all, 'thumbnail', id] as const,
     archiveEntries: (id: string) => [...queryKeys.files.all, 'archive-entries', id] as const,
   },
   health: {

@@ -169,6 +169,7 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     selectedFileIds,
     setSelectedFileIds,
     ingestFiles,
+    isUploading,
     attachmentTray,
     attachmentChips,
     upgradeFeature,

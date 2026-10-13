@@ -1,7 +1,10 @@
 import { Loader2, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { useFilePreviewUrl } from '@/hooks/files/use-file-preview-url';
+import { cn } from '@/lib/utils';
 import type { ComposerPendingAttachmentTileProps } from '@/types/composer-attachment.types';
+import { getFileTypeDescriptor } from '@/utilities/file-type-icon.utility';
 import { formatFileSize } from '@/utilities/format.utility';
 
 /**
@@ -19,6 +22,8 @@ export function ComposerPendingAttachmentTile({
   onCancel,
   cancelLabel,
 }: ComposerPendingAttachmentTileProps): React.ReactElement {
+  const { previewUrl, showFallbackIcon, handleError } = useFilePreviewUrl(upload.file);
+  const { Icon: TypeIcon, tone } = getFileTypeDescriptor(upload.mimeType, upload.filename);
   const percent =
     progress !== null && progress.totalBytes === upload.sizeBytes
       ? Math.round(progress.percent)
@@ -31,7 +36,43 @@ export function ComposerPendingAttachmentTile({
       aria-busy="true"
       title={upload.filename}
     >
-      <Loader2 className="text-muted-foreground h-5 w-5 shrink-0 animate-spin" aria-hidden="true" />
+      {previewUrl === null && showFallbackIcon ? (
+        <span
+          className={cn(
+            'relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md sm:h-14 sm:w-14',
+            tone,
+          )}
+          data-testid="composer-pending-attachment-icon"
+        >
+          <TypeIcon className="h-5 w-5" aria-hidden="true" />
+          <Loader2
+            className="absolute -end-0.5 -bottom-0.5 h-3.5 w-3.5 animate-spin"
+            aria-hidden="true"
+          />
+        </span>
+      ) : null}
+      {previewUrl === null && !showFallbackIcon ? (
+        <Loader2
+          className="text-muted-foreground h-5 w-5 shrink-0 animate-spin"
+          aria-hidden="true"
+        />
+      ) : null}
+      {previewUrl === null ? null : (
+        <span
+          className="bg-muted relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md sm:h-14 sm:w-14"
+          data-testid="composer-pending-attachment-preview"
+        >
+          <img
+            alt=""
+            src={previewUrl}
+            className="h-full w-full object-cover"
+            onError={handleError}
+          />
+          <span className="absolute inset-0 flex items-center justify-center bg-black/30">
+            <Loader2 className="h-4 w-4 animate-spin text-white" aria-hidden="true" />
+          </span>
+        </span>
+      )}
       <span className="flex min-w-0 flex-col">
         <span className="truncate text-sm font-medium">{upload.filename}</span>
         <span className="text-muted-foreground text-xs tabular-nums">

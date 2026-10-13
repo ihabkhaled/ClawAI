@@ -68,6 +68,7 @@ export default function ComparePage() {
     selectedFileIds,
     setSelectedFileIds,
     ingestFiles,
+    isUploading,
     attachmentTray,
     attachmentChips,
     upgradeFeature,
@@ -176,6 +177,7 @@ export default function ComparePage() {
                       onChange={setSelectedFileIds}
                       disabled={isPending || isPolling}
                       ingestFiles={ingestFiles}
+                      isUploading={isUploading}
                     />
                   ) : null}
                   {/* Same recorder the chat composer and the nine labs render;

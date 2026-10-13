@@ -1,17 +1,15 @@
-import { ComposerContextControls } from '@/components/chat/composer-context-controls';
+import { ComposerPlusMenu } from '@/components/chat/composer-plus-menu';
+import { ComposerResearchChip } from '@/components/chat/composer-research-chip';
 import { CreditIndicator } from '@/components/chat/credit-indicator';
-import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { ModelSelector } from '@/components/chat/model-selector';
-import { PreviewContextButton } from '@/components/chat/preview-context-button';
-import { PromptLibraryButton } from '@/components/chat/prompt-library/prompt-library-button';
-import { ResearchToggle } from '@/components/chat/research-toggle';
 import { VoiceVideoRecorder } from '@/components/chat/voice-video-recorder';
+import { ResearchMode } from '@/enums/research-mode.enum';
 import type { ComposerToolbarProps } from '@/types';
 
 /**
- * The quiet row under the composer's textarea: which model answers, what is
- * attached, whether the web is searched, what context will be sent, and what
- * the wallet holds.
+ * The quiet row under the composer's textarea: ONE round "+" menu (attach, context,
+ * tools), which model answers, a chip for the active research mode, the recorder and
+ * what the wallet holds. Everything else lives behind the "+" so the row stays calm.
  *
  * Pure render. Every decision — which variant each control takes, whether the
  * credit badge is shown at all — is made in useMessageComposer, so this file
@@ -58,11 +56,21 @@ export function ComposerToolbar({
 }: ComposerToolbarProps): React.ReactElement {
   return (
     <div className="scroll-fade-inline-end flex min-w-0 flex-1 scrollbar-none items-center gap-1.5 overflow-x-auto py-0.5 sm:gap-2">
-      {/* ONE Context button, FIRST in the row so it is on screen at phone widths and in RTL
-          without scrolling (rules/40 §11); packs, view and memory live behind it. */}
-      {threadId !== null ? (
-        <ComposerContextControls threadId={threadId} draft={draft} disabled={disabled} />
-      ) : null}
+      <ComposerPlusMenu
+        disabled={disabled}
+        selectedFileIds={selectedFileIds}
+        onSelectedFileIdsChange={onSelectedFileIdsChange}
+        ingestFiles={ingestFiles}
+        isUploadingAttachment={isUploadingAttachment}
+        canResearch={canResearch}
+        research={research}
+        onResearchChange={onResearchChange}
+        researchProviders={researchProviders}
+        isResearchProvidersLoading={isResearchProvidersLoading}
+        threadId={threadId}
+        draft={draft}
+        onInsertPrompt={onInsertPrompt}
+      />
       <ModelSelector
         value={selectedModel}
         onChange={onModelChange}
@@ -70,22 +78,10 @@ export function ComposerToolbar({
         variant={controlVariant}
         showLabel={showModelLabel}
       />
-      <FileAttachmentPicker
-        selectedFileIds={selectedFileIds}
-        onChange={onSelectedFileIdsChange}
-        disabled={disabled}
-        variant={controlVariant}
-        ingestFiles={ingestFiles}
-        isUploading={isUploadingAttachment}
-      />
-      <VoiceVideoRecorder
-        canSendAudio={canSendAudio}
-        canSendVideo={canSendVideo}
-        onRecorded={onRecorded}
-        disabled={disabled}
-      />
-      {canResearch ? (
-        <ResearchToggle
+      {/* Only while research is on: a chip naming the mode, opening the same panel as the
+          "+" menu. Research off leaves the row without a globe at all. */}
+      {canResearch && research.mode !== ResearchMode.NONE ? (
+        <ComposerResearchChip
           value={research}
           providers={researchProviders}
           isProvidersLoading={isResearchProvidersLoading}
@@ -93,12 +89,12 @@ export function ComposerToolbar({
           disabled={disabled}
         />
       ) : null}
-      <PromptLibraryButton onInsert={onInsertPrompt} disabled={disabled} />
-      {threadId !== null ? (
-        <div className="shrink-0">
-          <PreviewContextButton threadId={threadId} draft={draft} />
-        </div>
-      ) : null}
+      <VoiceVideoRecorder
+        canSendAudio={canSendAudio}
+        canSendVideo={canSendVideo}
+        onRecorded={onRecorded}
+        disabled={disabled}
+      />
       {/* Renders nothing when the account is not metered, so an admin or a
           disabled kill switch sees the composer exactly as before. */}
       {showCredit ? <CreditIndicator /> : null}

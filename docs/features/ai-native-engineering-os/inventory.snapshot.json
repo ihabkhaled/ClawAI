@@ -8712,7 +8712,7 @@
           "file": "rules/39-worktree-branch-completion-pr-and-release-notes.md"
         },
         {
-          "bytes": 28442,
+          "bytes": 30909,
           "file": "rules/40-chat-surface-layout-and-composer.md"
         },
         {
@@ -9252,7 +9252,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 6007
+        "value": 6008
       },
       "localeCount": 13,
       "locales": [
@@ -11526,7 +11526,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 791
+        "testFiles": 811
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -12372,7 +12372,7 @@
     "serviceCount": 20,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2238,
+    "totalTestFiles": 2258,
     "workspaceCount": 27
   }
 }

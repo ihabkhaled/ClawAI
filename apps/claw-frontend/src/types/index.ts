@@ -408,7 +408,6 @@ export type {
   ModelSelectorProps,
   UseModelSelectorResult,
   FileAttachmentPickerProps,
-  FileAttachmentRowProps,
   ContextPackSelectorProps,
   MessageComposerProps,
   ComposerToolbarProps,
@@ -1326,3 +1325,4 @@ export type {
   UpdatePromptTemplateInput,
   UpdatePromptTemplateVariables,
 } from './prompt-library.types';
+export type { FileLibraryMenuProps } from './file-library.types';

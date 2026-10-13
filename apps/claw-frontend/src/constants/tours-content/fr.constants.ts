@@ -121,7 +121,7 @@ export const FR_TOURS_CONTENT: TourDictionary = {
         },
         context: {
           title: 'Contexte',
-          body: 'Ajoutez des paquets de contexte, prévisualisez ce que verra le modèle et utilisez votre mémoire, pour que les réponses s’appuient sur votre matériel.',
+          body: 'Ouvrez + puis Contexte. Ajoutez des paquets de contexte, prévisualisez ce que verra le modèle et utilisez votre mémoire, pour que les réponses s’appuient sur votre matériel.',
         },
         model: {
           title: 'Quel modèle répond',
@@ -129,15 +129,15 @@ export const FR_TOURS_CONTENT: TourDictionary = {
         },
         attach: {
           title: 'Joindre des fichiers',
-          body: 'Téléversez des documents, images, audio ou vidéo. Le texte est extrait pour que n’importe quel modèle puisse le lire.',
+          body: 'Ouvrez + puis Joindre. Téléversez des documents, images, audio ou vidéo. Le texte est extrait pour que n’importe quel modèle puisse le lire.',
         },
         research: {
           title: 'Chercher sur le web',
-          body: 'Activez la recherche web quand la réponse demande des faits récents et des sources.',
+          body: 'Ouvrez + puis Recherche web. Activez la recherche web quand la réponse demande des faits récents et des sources.',
         },
         prompts: {
           title: 'Bibliothèque de prompts',
-          body: 'Des prompts réutilisables pour les tâches courantes. Choisissez-en un pour remplir la zone de message.',
+          body: 'Ouvrez + puis Bibliothèque de prompts. Des prompts réutilisables pour les tâches courantes. Choisissez-en un pour remplir la zone de message.',
         },
         send: {
           title: 'Envoyer',
@@ -177,11 +177,11 @@ export const FR_TOURS_CONTENT: TourDictionary = {
       steps: {
         toggle: {
           title: 'Activer la recherche web',
-          body: 'Activez la recherche avant d’envoyer. ClawAI cherche sur le web, lit les meilleures pages et répond d’après ce qu’il a trouvé.',
+          body: 'Ouvrez + puis Recherche web. Activez la recherche avant d’envoyer. ClawAI cherche sur le web, lit les meilleures pages et répond d’après ce qu’il a trouvé.',
         },
         provider: {
           title: 'Choisir le moteur de recherche',
-          body: 'Choisissez le fournisseur de recherche à utiliser. Auto en prend un qui vous est disponible.',
+          body: 'Ouvrez + puis Recherche web. Choisissez le fournisseur de recherche à utiliser. Auto en prend un qui vous est disponible.',
         },
         sources: {
           title: 'Vérifier les sources',
@@ -194,8 +194,8 @@ export const FR_TOURS_CONTENT: TourDictionary = {
       description: 'Ancrer les réponses dans votre propre matériel.',
       steps: {
         context: {
-          title: 'Le bouton Contexte',
-          body: 'Ouvrez-le pour joindre un paquet de contexte, voir ce qui est joint et activer ou couper la mémoire pour ce chat.',
+          title: 'Contexte dans le menu +',
+          body: 'Ouvrez + puis Contexte pour joindre un paquet de contexte, voir ce qui est joint et activer ou couper la mémoire pour ce chat.',
         },
         preview: {
           title: 'Prévisualiser avant d’envoyer',
@@ -253,7 +253,7 @@ export const FR_TOURS_CONTENT: TourDictionary = {
         },
         use: {
           title: 'L’utiliser dans n’importe quel chat',
-          body: 'Ouvrez le bouton Contexte dans un chat et joignez le paquet. Le modèle répond alors avec ce matériel sous les yeux.',
+          body: 'Dans un chat, ouvrez + puis Contexte et joignez le paquet. Le modèle répond alors avec ce matériel sous les yeux.',
         },
       },
     },

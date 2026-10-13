@@ -153,16 +153,7 @@ export type UseArchiveSelectionParams = {
   onChange: (fileIds: string[]) => void;
 };
 
-export type UseFileAttachmentPickerParams = UseArchiveSelectionParams & {
-  // Same chunked/antivirus/magic-byte upload pipeline every other composer
-  // ingestion path uses (paste, drag-drop-onto-composer, recorder) — see
-  // use-composer-attachments.ts. Passed down from the composer that owns it
-  // rather than instantiated again here, so the paperclip picker's uploads
-  // share one in-flight session and one percent/ETA/speed readout with the
-  // rest of the composer instead of running a second, un-chunked pipeline.
-  ingestFiles: (files: FileList | File[]) => void;
-  isUploading?: boolean;
-};
+export type UseFileAttachmentPickerParams = Pick<UseArchiveSelectionParams, 'selectedFileIds'>;
 
 export type UseArchiveSelectionReturn = ArchiveTreeSelection & {
   /** How many files inside this archive are picked individually. */
@@ -184,21 +175,17 @@ export type UseFileListItemReturn = {
 
 export type UseFileAttachmentPickerReturn = {
   t: TranslateFunction;
-  files: UploadedFile[];
-  isLoading: boolean;
-  isUploading: boolean;
-  selection: UseArchiveSelectionReturn;
-  isArchive: (file: UploadedFile) => boolean;
-  browsingArchive: UploadedFile | null;
-  openArchive: (file: UploadedFile) => void;
-  handleArchiveDialogOpenChange: (open: boolean) => void;
-  dragOver: boolean;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleDrop: (e: React.DragEvent) => void;
-  handleDragOver: (e: React.DragEvent) => void;
-  handleDragLeave: () => void;
   selectedCount: number;
+  menuOpen: boolean;
+  setMenuOpen: (open: boolean) => void;
+  closeMenu: () => void;
+  libraryOpen: boolean;
+  setLibraryOpen: (open: boolean) => void;
+  /** Close the popover and open the Browse-all dialog, which lives outside it. */
+  openLibrary: () => void;
+  contentRef: React.RefObject<HTMLDivElement | null>;
+  /** Radix `onOpenAutoFocus`: on a touch screen focus the popover, not the search box. */
+  handleOpenAutoFocus: (event: Event) => void;
 };
 
 export type UseMessageAttachmentItemReturn = {
@@ -273,15 +260,6 @@ export type ArchiveMemberDialogProps = {
   archive: UploadedFile | null;
   selection: ArchiveTreeSelection;
   onOpenChange: (open: boolean) => void;
-};
-
-export type FileAttachmentArchiveRowProps = {
-  file: UploadedFile;
-  checked: boolean;
-  selectedMemberCount: number;
-  onToggle: (fileId: string, checked: boolean) => void;
-  onBrowse: (file: UploadedFile) => void;
-  t: TranslateFunction;
 };
 
 export type ArchiveAttachmentCardProps = {

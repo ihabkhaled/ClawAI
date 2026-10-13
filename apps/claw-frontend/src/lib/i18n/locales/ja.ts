@@ -1,8 +1,10 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
+import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { FILE_LIBRARY_TRANSLATIONS } from './file-library-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
@@ -394,6 +396,7 @@ export const ja: TranslationDictionary = {
     more: 'もっと見る',
   },
   chat: {
+    fileLibrary: FILE_LIBRARY_TRANSLATIONS.ja,
     credit: {
       modelBadge: 'クレジットを消費',
       badgeLabel: 'クレジット',
@@ -443,6 +446,7 @@ export const ja: TranslationDictionary = {
       trigger: '別のモデルで再試行…',
       auto: 'AUTO に任せる',
     },
+    composerMenu: COMPOSER_MENU_TRANSLATIONS.ja,
     composerContext: {
       menuLabel: 'コンテキスト',
       pickLabel: 'コンテキストパックを選択',
@@ -1064,7 +1068,6 @@ export const ja: TranslationDictionary = {
       waveformLabel: 'ライブ音声レベル',
       cameraPreviewLabel: 'ライブカメラプレビュー',
     },
-    noFiles: 'ファイルはまだアップロードされていません',
     selectedFiles: '{count} ファイルが添付されました',
     contextPacks: 'コンテキスト パック',
     contextPacksDescription: 'このスレッドに含めるコンテキスト パックを選択してください。',

@@ -519,3 +519,20 @@ same Enter-to-send prompt box (`RichPromptTextarea`). A lab has no thread until 
 `OrchestrationContextButton` holds the pack choice (`useDraftContextPacks`) and
 `useOrchestrationComposer().sharedPayload` sends it as `contextPackIds`. New composer controls go to all
 three places in the same commit ([rule 59](../../rules/59-chat-surfaces-are-one-pipeline.md)).
+
+## The composer "+" menu (2026-10-13)
+
+The toolbar under the textarea is `[+] [model] [research chip] [mic/video] … [credit]`, then send. Everything that used to sit loose beside them is a row of the round `+` menu (`ComposerPlusMenu`):
+
+| Section                | Rows                                                                                            |
+| ---------------------- | ----------------------------------------------------------------------------------------------- |
+| Attach                 | `FileLibraryMenu` (recent files, search, Browse all; files lane)                                |
+| Context (threads only) | Context packs (sub-panel), What will be sent, Memory, Preview context                           |
+| Tools                  | Web research (sub-panel: mode + provider; hidden when the plan has no research), Prompt library |
+
+- **Shape.** `composer-plus-menu.tsx` owns the state hook and the prompt-library dialog; `composer-plus-menu-context-host.tsx` runs the context hooks only when a thread exists and owns the three context dialogs; `composer-plus-menu-view.tsx` is the pure popover. `composer-research-panel.tsx` is shared with the toolbar chip (`composer-research-chip.tsx`), so both change the same state. `preview-context-dialog.tsx` replaced the standalone Preview button.
+- **Tours.** `composer-attach` is the `+`. The tour steps for context, prompts, preview and provider now point at `composer-attach` / `composer-research` (the chip); the old anchors also sit on the rows, so they resolve while the menu is open. A step whose element is absent still renders as a centred card.
+- **Short viewports and touch.** The popover scrolls inside (`dvh` + available height); rows are 44px under the touch variant; the chip and the `+` are 36px on a fine pointer and 44px on touch.
+- **Keyboard.** Tab reaches every row; arrow keys, Home and End move between rows and wrap; Esc closes. Opening a sub-panel moves focus into it; Back returns focus to the row that opened it.
+- **i18n.** `chat.composerMenu.*` in `composer-menu-translations.ts` (13 locales); labels reuse `chat.composerContext.*`, `preview.openLabel`, `promptLibrary.openLabel` and `research.*`.
+- **Not yet moved (follow-up).** Compare (`chat/compare/page.tsx`), in-thread Compare and `OrchestrationPageShell` still render the loose Context, research selects and Prompt library buttons: they build their own attachment and research state rather than `ComposerToolbarProps`, so moving them is a separate, tested change (rule 59).

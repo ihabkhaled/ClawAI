@@ -119,7 +119,7 @@ export const EN_TOURS_CONTENT: TourDictionary = {
         },
         context: {
           title: 'Context',
-          body: 'Add context packs, preview what the model will see and use your memory, so answers are grounded in your material.',
+          body: 'Open + then Context. Add context packs, preview what the model will see and use your memory, so answers are grounded in your material.',
         },
         model: {
           title: 'Which model answers',
@@ -127,15 +127,15 @@ export const EN_TOURS_CONTENT: TourDictionary = {
         },
         attach: {
           title: 'Attach files',
-          body: 'Upload documents, images, audio or video. The text is extracted so any model can read it.',
+          body: 'Open + then Attach. Upload documents, images, audio or video. The text is extracted so any model can read it.',
         },
         research: {
           title: 'Search the web',
-          body: 'Turn on web research when the answer needs current facts and sources.',
+          body: 'Open + then Web research. Turn on web research when the answer needs current facts and sources.',
         },
         prompts: {
           title: 'Prompt library',
-          body: 'Reusable prompts for common jobs. Pick one to fill the message box.',
+          body: 'Open + then Prompt library. Reusable prompts for common jobs. Pick one to fill the message box.',
         },
         send: {
           title: 'Send',
@@ -175,11 +175,11 @@ export const EN_TOURS_CONTENT: TourDictionary = {
       steps: {
         toggle: {
           title: 'Turn on web research',
-          body: 'Switch research on before you send. ClawAI searches the web, reads the best pages and answers from what it found.',
+          body: 'Open + then Web research. Switch research on before you send. ClawAI searches the web, reads the best pages and answers from what it found.',
         },
         provider: {
           title: 'Pick the search provider',
-          body: 'Choose which search provider to use. Auto picks one that is available to you.',
+          body: 'Open + then Web research. Choose which search provider to use. Auto picks one that is available to you.',
         },
         sources: {
           title: 'Check the sources',
@@ -192,8 +192,8 @@ export const EN_TOURS_CONTENT: TourDictionary = {
       description: 'Ground answers in your own material.',
       steps: {
         context: {
-          title: 'The Context button',
-          body: 'Open it to attach a context pack, see what is attached and turn memory on or off for this chat.',
+          title: 'Context in the + menu',
+          body: 'Open + then Context to attach a context pack, see what is attached and turn memory on or off for this chat.',
         },
         preview: {
           title: 'Preview before you send',
@@ -251,7 +251,7 @@ export const EN_TOURS_CONTENT: TourDictionary = {
         },
         use: {
           title: 'Use it in any chat',
-          body: 'Open the Context button in a chat and attach the pack. The model then answers with that material in view.',
+          body: 'Open + then Context in a chat and attach the pack. The model then answers with that material in view.',
         },
       },
     },

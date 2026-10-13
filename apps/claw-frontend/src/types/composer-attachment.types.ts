@@ -120,6 +120,8 @@ export type PendingComposerUpload = {
   filename: string;
   mimeType: string;
   sizeBytes: number;
+  /** The picked file itself, so an image can show a local preview while it uploads. */
+  file?: File;
 };
 
 /**

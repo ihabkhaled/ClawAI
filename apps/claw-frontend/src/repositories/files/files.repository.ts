@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/constants/api.constants';
 import { apiClient } from '@/services/shared/api-client';
 import type {
   UploadedFile,
@@ -8,6 +9,7 @@ import type {
 } from '@/types';
 import type { ArchiveEntryListing, PaginatedFiles } from '@/types/archive.types';
 import type { ChunkedUploadAbortResult, FileProcessingCancelResult } from '@/types/file.types';
+import { getAccessToken } from '@/utilities/api.utility';
 
 export const filesRepository = {
   /** One page of top-level files (or of one archive's files, with `parentId`) and its meta. */
@@ -55,6 +57,17 @@ export const filesRepository = {
   async uploadFile(data: UploadFileRequest, signal?: AbortSignal): Promise<UploadedFile> {
     const response = await apiClient.post<UploadedFile>('/files/upload', data, { signal });
     return response.data;
+  },
+
+  /** The file's own bytes, fetched with the session token (an <img> cannot send it). */
+  async downloadBlob(id: string): Promise<Blob> {
+    const response = await fetch(`${API_BASE_URL}/files/download/${id}`, {
+      headers: { Authorization: `Bearer ${getAccessToken() ?? ''}` },
+    });
+    if (!response.ok) {
+      throw new Error(`File download failed (${String(response.status)})`);
+    }
+    return response.blob();
   },
 
   async deleteFile(id: string): Promise<void> {

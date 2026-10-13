@@ -1,58 +1,58 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
-import { useArchiveSelection } from '@/hooks/files/use-archive-selection';
-import { useFiles } from '@/hooks/files/use-files';
+import { MEDIA_QUERY_COARSE_POINTER } from '@/constants/media-query.constants';
+import { useMediaQuery } from '@/hooks/ui/use-media-query';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import type {
   UseFileAttachmentPickerParams,
   UseFileAttachmentPickerReturn,
 } from '@/types/archive.types';
-import type { UploadedFile } from '@/types/file.types';
-import { isArchiveFile } from '@/utilities/archive-status.utility';
-
-import { useFileAttachmentPickerState } from './use-file-attachment-picker-state';
 
 /**
- * Controller for the composer's paperclip picker. Lists top-level files; an
- * archive is one row (attach it whole) plus a way into its contents, where
- * individual files can be picked instead — never both, see useArchiveSelection.
+ * Controller for the paperclip trigger that Compare, in-thread Compare and the
+ * labs still render. The menu content is the shared FileLibraryMenu; this hook
+ * only owns when the popover is open and the Browse-all dialog, which is hosted
+ * OUTSIDE the popover so it stays mounted after the popover closes behind it.
  *
- * Upload itself is NOT owned here: `ingestFiles` is passed down from the
- * composer that instantiated it (useMessageComposerState / useOrchestrationComposer
- * / useInThreadCompare), all of which already go through useComposerAttachments.
- * A prior version of this hook opened its own useUploadFile mutation, which
- * gave the paperclip picker a second, un-chunked upload pipeline running
- * alongside the composer's chunked one.
+ * Upload is not owned here: `ingestFiles` is the composer's chunked pipeline.
  */
 export function useFileAttachmentPicker({
   selectedFileIds,
-  onChange,
-  ingestFiles,
-  isUploading = false,
 }: UseFileAttachmentPickerParams): UseFileAttachmentPickerReturn {
   const { t } = useTranslation();
-  const { files, isLoading } = useFiles();
-  const pickerState = useFileAttachmentPickerState({ selectedFileIds, ingestFiles });
-  const selection = useArchiveSelection({ selectedFileIds, onChange });
-  const [browsingArchive, setBrowsingArchive] = useState<UploadedFile | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const isCoarsePointer = useMediaQuery(MEDIA_QUERY_COARSE_POINTER);
 
-  const openArchive = useCallback((file: UploadedFile): void => setBrowsingArchive(file), []);
-  const handleArchiveDialogOpenChange = useCallback((open: boolean): void => {
-    if (!open) {
-      setBrowsingArchive(null);
-    }
+  const closeMenu = useCallback((): void => setMenuOpen(false), []);
+  // One handler, one batched update: the popover closes and the dialog opens
+  // together, so there is never a moment with both (or a body left inert).
+  const openLibrary = useCallback((): void => {
+    setMenuOpen(false);
+    setLibraryOpen(true);
   }, []);
+  // On a phone, landing in the search box would raise the keyboard over the list.
+  const handleOpenAutoFocus = useCallback(
+    (event: Event): void => {
+      if (isCoarsePointer) {
+        event.preventDefault();
+        contentRef.current?.focus();
+      }
+    },
+    [isCoarsePointer],
+  );
 
   return {
-    ...pickerState,
     t,
-    files,
-    isLoading,
-    isUploading,
-    selection,
-    isArchive: isArchiveFile,
-    browsingArchive,
-    openArchive,
-    handleArchiveDialogOpenChange,
+    selectedCount: selectedFileIds.length,
+    menuOpen,
+    setMenuOpen,
+    closeMenu,
+    libraryOpen,
+    setLibraryOpen,
+    openLibrary,
+    contentRef,
+    handleOpenAutoFocus,
   };
 }

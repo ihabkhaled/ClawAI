@@ -195,6 +195,7 @@ export function useInThreadCompare({
     selectedFileIds,
     setSelectedFileIds,
     ingestFiles,
+    isUploading,
     attachmentTray,
     attachmentChips,
   };

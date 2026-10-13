@@ -145,6 +145,8 @@ export type UseParallelComparePageReturn = {
   setSelectedFileIds: (ids: string[]) => void;
   // Paste/drop ingestion: uploads files and appends their ids to selectedFileIds.
   ingestFiles: (files: FileList | File[]) => void;
+  // True while a picked file is still uploading (the picker disables its upload row).
+  isUploading: boolean;
   // Tiles above the prompt: what is attached, and what is still uploading.
   attachmentTray: ComposerAttachmentTrayProps;
   // Failed / not-supported uploads, one chip each — the same strip chat shows.
@@ -209,6 +211,8 @@ export type UseInThreadCompareReturn = {
   setSelectedFileIds: (ids: string[]) => void;
   // Paste/drop ingestion: uploads files and appends their ids to selectedFileIds.
   ingestFiles: (files: FileList | File[]) => void;
+  // True while a picked file is still uploading (the picker disables its upload row).
+  isUploading: boolean;
   // Tiles above the prompt: what is attached, and what is still uploading.
   attachmentTray: ComposerAttachmentTrayProps;
   // Failed / not-supported uploads, one chip each — the same strip chat shows.

@@ -279,7 +279,12 @@ describe('useComposerAttachments — cap, concurrency and tiles', () => {
       result.current.ingestFiles([pngFile('shot.png')]);
     });
     expect(result.current.pendingUploads).toEqual([
-      expect.objectContaining({ filename: 'shot.png', mimeType: 'image/png', sizeBytes: 10 }),
+      expect.objectContaining({
+        filename: 'shot.png',
+        mimeType: 'image/png',
+        sizeBytes: 10,
+        file: expect.any(File),
+      }),
     ]);
 
     await act(async () => {

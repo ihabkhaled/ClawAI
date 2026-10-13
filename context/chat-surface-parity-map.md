@@ -42,6 +42,17 @@ Service entry points that create threads for Compare/Consensus/Escalation: `chat
 - **TD-045** A lab has no thread before it runs, so its Context button has the pack picker but not the
   "what will be sent" / memory dialogs. Compare in a thread has all three.
 
+- **Loose composer controls (rule 40 item 24, follow-up)** Normal chat has ONE round `+` menu (`ComposerPlusMenu`:
+  Attach / Context / Tools). Three surfaces still render the old loose buttons: **Compare**
+  (`app/(portal)/chat/compare/page.tsx`), **in-thread Compare** (`in-thread-compare-panel.tsx`) and
+  **OrchestrationPageShell** (the seven labs, `orchestration/orchestration-page-shell.tsx`).
+  What remains: `FileAttachmentPicker`, `PromptLibraryButton` and `ResearchToggle` on all three, plus
+  `ComposerContextControls` on in-thread Compare.
+  Why not done: the menu needs the research-provider query, `onInsertPrompt` and the draft wired from each
+  surface, and each one does that on its own (a lab has no thread, so `threadId` is null there). Moving them is a
+  per-surface change with its own tests, not a small safe one. Follow-up: one batch that renders
+  `ComposerPlusMenu` in all three and deletes the loose imports.
+
 - **Turn into public Thread** is a thread-level action in the normal chat header menu (`chat-thread-header-menu.tsx`
   -> `ThreadCreateDialog`), not a message mode: the labs have no saved thread to publish, so they do not carry it.
   The same form (`useThreadGenerationForm`) backs the `/threads` portal, so the two cannot drift.

@@ -1,8 +1,10 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
+import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { FILE_LIBRARY_TRANSLATIONS } from './file-library-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
@@ -392,6 +394,7 @@ export const fa: TranslationDictionary = {
     more: 'بیشتر',
   },
   chat: {
+    fileLibrary: FILE_LIBRARY_TRANSLATIONS.fa,
     credit: {
       modelBadge: 'اعتبار مصرف می‌کند',
       badgeLabel: 'اعتبار',
@@ -441,6 +444,7 @@ export const fa: TranslationDictionary = {
       trigger: 'دوباره امتحان کن با…',
       auto: 'بگذار AUTO انتخاب کند',
     },
+    composerMenu: COMPOSER_MENU_TRANSLATIONS.fa,
     composerContext: {
       menuLabel: 'زمینه',
       pickLabel: 'انتخاب بسته‌های زمینه',
@@ -1057,7 +1061,6 @@ export const fa: TranslationDictionary = {
       waveformLabel: 'سطح صدای زنده',
       cameraPreviewLabel: 'پیش‌نمایش زنده دوربین',
     },
-    noFiles: 'هنوز هیچ فایلی آپلود نشده است',
     selectedFiles: 'فایل(های) {count} پیوست شد',
     contextPacks: 'بسته های زمینه',
     contextPacksDescription: 'بسته های زمینه را برای درج در این موضوع انتخاب کنید.',

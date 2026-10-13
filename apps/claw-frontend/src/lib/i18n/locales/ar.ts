@@ -1,8 +1,10 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
+import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { FILE_LIBRARY_TRANSLATIONS } from './file-library-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
@@ -386,6 +388,7 @@ export const ar: TranslationDictionary = {
     more: 'المزيد',
   },
   chat: {
+    fileLibrary: FILE_LIBRARY_TRANSLATIONS.ar,
     credit: {
       modelBadge: 'يستهلك رصيدًا',
       badgeLabel: 'الرصيد',
@@ -435,6 +438,7 @@ export const ar: TranslationDictionary = {
       trigger: 'أعد المحاولة باستخدام…',
       auto: 'دع AUTO يختار',
     },
+    composerMenu: COMPOSER_MENU_TRANSLATIONS.ar,
     composerContext: {
       menuLabel: 'السياق',
       pickLabel: 'اختيار حزم السياق',
@@ -1039,7 +1043,6 @@ export const ar: TranslationDictionary = {
       waveformLabel: 'مستوى الصوت الحي',
       cameraPreviewLabel: 'معاينة مباشرة للكاميرا',
     },
-    noFiles: 'لم يتم رفع أي ملفات بعد',
     selectedFiles: 'تم إرفاق {count} ملف',
     contextPacks: 'حزم السياق',
     contextPacksDescription: 'اختر حزم السياق لتضمينها في هذه المحادثة.',

@@ -120,7 +120,7 @@ export const PT_TOURS_CONTENT: TourDictionary = {
         },
         context: {
           title: 'Contexto',
-          body: 'Adicione pacotes de contexto, visualize o que o modelo verá e use sua memória, para que as respostas se baseiem no seu material.',
+          body: 'Abra + e depois Contexto. Adicione pacotes de contexto, visualize o que o modelo verá e use sua memória, para que as respostas se baseiem no seu material.',
         },
         model: {
           title: 'Qual modelo responde',
@@ -128,15 +128,15 @@ export const PT_TOURS_CONTENT: TourDictionary = {
         },
         attach: {
           title: 'Anexe arquivos',
-          body: 'Envie documentos, imagens, áudio ou vídeo. O texto é extraído para que qualquer modelo possa lê-lo.',
+          body: 'Abra + e depois Anexar. Envie documentos, imagens, áudio ou vídeo. O texto é extraído para que qualquer modelo possa lê-lo.',
         },
         research: {
           title: 'Pesquise na web',
-          body: 'Ative a pesquisa na web quando a resposta precisar de fatos atuais e fontes.',
+          body: 'Abra + e depois Pesquisa na web. Ative a pesquisa na web quando a resposta precisar de fatos atuais e fontes.',
         },
         prompts: {
           title: 'Biblioteca de prompts',
-          body: 'Prompts reutilizáveis para tarefas comuns. Escolha um para preencher a caixa de mensagem.',
+          body: 'Abra + e depois Biblioteca de prompts. Prompts reutilizáveis para tarefas comuns. Escolha um para preencher a caixa de mensagem.',
         },
         send: {
           title: 'Enviar',
@@ -176,11 +176,11 @@ export const PT_TOURS_CONTENT: TourDictionary = {
       steps: {
         toggle: {
           title: 'Ative a pesquisa na web',
-          body: 'Ative a pesquisa antes de enviar. O ClawAI busca na web, lê as melhores páginas e responde com o que encontrou.',
+          body: 'Abra + e depois Pesquisa na web. Ative a pesquisa antes de enviar. O ClawAI busca na web, lê as melhores páginas e responde com o que encontrou.',
         },
         provider: {
           title: 'Escolha o provedor de busca',
-          body: 'Escolha qual provedor de busca usar. Auto escolhe um disponível para você.',
+          body: 'Abra + e depois Pesquisa na web. Escolha qual provedor de busca usar. Auto escolhe um disponível para você.',
         },
         sources: {
           title: 'Confira as fontes',
@@ -193,8 +193,8 @@ export const PT_TOURS_CONTENT: TourDictionary = {
       description: 'Baseie as respostas no seu próprio material.',
       steps: {
         context: {
-          title: 'O botão Contexto',
-          body: 'Abra para anexar um pacote de contexto, ver o que está anexado e ligar ou desligar a memória neste chat.',
+          title: 'Contexto no menu +',
+          body: 'Abra + e depois Contexto para anexar um pacote de contexto, ver o que está anexado e ligar ou desligar a memória neste chat.',
         },
         preview: {
           title: 'Visualize antes de enviar',
@@ -252,7 +252,7 @@ export const PT_TOURS_CONTENT: TourDictionary = {
         },
         use: {
           title: 'Use em qualquer chat',
-          body: 'Abra o botão Contexto em um chat e anexe o pacote. O modelo então responde com esse material à vista.',
+          body: 'Em um chat, abra + e depois Contexto e anexe o pacote. O modelo então responde com esse material à vista.',
         },
       },
     },

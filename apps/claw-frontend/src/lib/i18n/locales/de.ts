@@ -1,8 +1,10 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
+import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { FILE_LIBRARY_TRANSLATIONS } from './file-library-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
@@ -399,6 +401,7 @@ export const de: TranslationDictionary = {
     more: 'Mehr',
   },
   chat: {
+    fileLibrary: FILE_LIBRARY_TRANSLATIONS.de,
     credit: {
       modelBadge: 'Verbraucht Guthaben',
       badgeLabel: 'Guthaben',
@@ -449,6 +452,7 @@ export const de: TranslationDictionary = {
       trigger: 'Erneut versuchen mit…',
       auto: 'AUTO wählen lassen',
     },
+    composerMenu: COMPOSER_MENU_TRANSLATIONS.de,
     composerContext: {
       menuLabel: 'Kontext',
       pickLabel: 'Kontextpakete auswählen',
@@ -1087,7 +1091,6 @@ export const de: TranslationDictionary = {
       waveformLabel: 'Live-Audiopegel',
       cameraPreviewLabel: 'Live-Kameravorschau',
     },
-    noFiles: 'Noch keine Dateien hochgeladen',
     selectedFiles: '{count} Datei(en) angehängt',
     contextPacks: 'Kontext-Packs',
     contextPacksDescription:

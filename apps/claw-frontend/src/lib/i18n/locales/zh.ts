@@ -1,8 +1,10 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
+import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { FILE_LIBRARY_TRANSLATIONS } from './file-library-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
@@ -370,6 +372,7 @@ export const zh: TranslationDictionary = {
     more: '更多的',
   },
   chat: {
+    fileLibrary: FILE_LIBRARY_TRANSLATIONS.zh,
     credit: {
       modelBadge: '消耗额度',
       badgeLabel: '额度',
@@ -418,6 +421,7 @@ export const zh: TranslationDictionary = {
       trigger: '换个模型重试…',
       auto: '让 AUTO 选择',
     },
+    composerMenu: COMPOSER_MENU_TRANSLATIONS.zh,
     composerContext: {
       menuLabel: '上下文',
       pickLabel: '选择上下文包',
@@ -1011,7 +1015,6 @@ export const zh: TranslationDictionary = {
       waveformLabel: '实时音量',
       cameraPreviewLabel: '实时摄像头预览',
     },
-    noFiles: '尚未上传文件',
     selectedFiles: '附加 {count} 文件',
     contextPacks: '上下文包',
     contextPacksDescription: '选择要包含在此线程中的上下文包。',

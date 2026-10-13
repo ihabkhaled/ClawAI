@@ -348,6 +348,7 @@ export type TranslationDictionary = {
     more: string;
   };
   chat: {
+    fileLibrary: FileLibraryLocaleTranslation;
     credit: {
       modelBadge: string;
       badgeLabel: string;
@@ -396,6 +397,7 @@ export type TranslationDictionary = {
       trigger: string;
       auto: string;
     };
+    composerMenu: ComposerMenuLocaleTranslation;
     composerContext: {
       menuLabel: string;
       pickLabel: string;
@@ -971,7 +973,6 @@ export type TranslationDictionary = {
       waveformLabel: string;
       cameraPreviewLabel: string;
     };
-    noFiles: string;
     selectedFiles: string;
     contextPacks: string;
     contextPacksDescription: string;
@@ -6471,6 +6472,25 @@ export type DeploymentLocaleTranslation = {
  * plain string and is not checked against the dictionary, so a missing key
  * renders the raw key path to a user instead of failing a build.
  */
+/** The composer "+" menu (composer-menu-translations.ts). */
+export type ComposerMenuLocaleTranslation = {
+  addLabel: string;
+  addLabelWithCount: string;
+  sectionAttach: string;
+  sectionContext: string;
+  sectionTools: string;
+  packsHint: string;
+  packsSelected: string;
+  viewHint: string;
+  memoryHint: string;
+  previewHint: string;
+  researchLabel: string;
+  researchHint: string;
+  promptsHint: string;
+  back: string;
+  chipLabel: string;
+};
+
 /** When a credit model is refused and an included one answers (credit-fallback-translations.ts). */
 export type CreditFallbackLocaleTranslation = {
   creditExhausted: string;
@@ -7130,6 +7150,46 @@ export type UseTranslationReturn = {
   t: TranslateFunction;
   locale: Locale;
   dir: Direction;
+};
+
+/** The composer's file library (see file-library-translations.ts), at `chat.fileLibrary`. */
+export type FileLibraryLocaleTranslation = {
+  searchPlaceholder: string;
+  searchLabel: string;
+  clearSearch: string;
+  upload: string;
+  uploading: string;
+  recent: string;
+  results: string;
+  browseAll: string;
+  empty: string;
+  noResults: string;
+  noMatches: string;
+  loading: string;
+  loadError: string;
+  limitReached: string;
+  archiveChoose: string;
+  dialog: {
+    title: string;
+    description: string;
+    filtersLabel: string;
+    layout: string;
+    grid: string;
+    list: string;
+    dropHint: string;
+    dropActive: string;
+    selectedCount: string;
+    attachCount: string;
+    done: string;
+    cancel: string;
+  };
+  filters: {
+    all: string;
+    images: string;
+    documents: string;
+    media: string;
+    archives: string;
+  };
 };
 
 /**

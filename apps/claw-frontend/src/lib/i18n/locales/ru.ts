@@ -1,8 +1,10 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
+import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { FILE_LIBRARY_TRANSLATIONS } from './file-library-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
@@ -394,6 +396,7 @@ export const ru: TranslationDictionary = {
     more: 'Ещё',
   },
   chat: {
+    fileLibrary: FILE_LIBRARY_TRANSLATIONS.ru,
     credit: {
       modelBadge: 'Расходует кредит',
       badgeLabel: 'Кредит',
@@ -443,6 +446,7 @@ export const ru: TranslationDictionary = {
       trigger: 'Повторить с…',
       auto: 'Пусть выберет AUTO',
     },
+    composerMenu: COMPOSER_MENU_TRANSLATIONS.ru,
     composerContext: {
       menuLabel: 'Контекст',
       pickLabel: 'Выбрать пакеты контекста',
@@ -1067,7 +1071,6 @@ export const ru: TranslationDictionary = {
       waveformLabel: 'Уровень звука в реальном времени',
       cameraPreviewLabel: 'Прямой предпросмотр камеры',
     },
-    noFiles: 'Файлы ещё не загружены',
     selectedFiles: 'Прикреплено файлов: {count}',
     contextPacks: 'Пакеты контекста',
     contextPacksDescription: 'Выберите пакеты контекста для этого чата.',

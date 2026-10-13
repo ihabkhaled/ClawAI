@@ -11,11 +11,6 @@ export type ContextReceiptPopoverProps = {
   errorMessage?: string;
 };
 
-export type PreviewContextButtonProps = {
-  threadId: string;
-  draft: string;
-};
-
 export type PreviewContextPopoverProps = {
   bundle: RetrievalBundle | null;
   isLoading: boolean;

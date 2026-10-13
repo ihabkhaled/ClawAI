@@ -119,7 +119,7 @@ export const ZH_TOURS_CONTENT: TourDictionary = {
         },
         context: {
           title: '上下文',
-          body: '添加上下文包，预览模型将看到的内容，并使用你的记忆，让回答立足于你的资料。',
+          body: '打开 +，再选择上下文。添加上下文包，预览模型将看到的内容，并使用你的记忆，让回答立足于你的资料。',
         },
         model: {
           title: '哪个模型回答',
@@ -127,12 +127,15 @@ export const ZH_TOURS_CONTENT: TourDictionary = {
         },
         attach: {
           title: '附加文件',
-          body: '上传文档、图片、音频或视频。文本会被提取出来，任何模型都能读取。',
+          body: '打开 +，再选择附件。上传文档、图片、音频或视频。文本会被提取出来，任何模型都能读取。',
         },
-        research: { title: '搜索网络', body: '当回答需要最新事实和来源时，打开网络调研。' },
+        research: {
+          title: '搜索网络',
+          body: '打开 +，再选择网页研究。当回答需要最新事实和来源时，打开网络调研。',
+        },
         prompts: {
           title: '提示词库',
-          body: '适用于常见任务的可复用提示词。选一个即可填入消息框。',
+          body: '打开 +，再选择提示词库。适用于常见任务的可复用提示词。选一个即可填入消息框。',
         },
         send: { title: '发送', body: '发送你的消息。回答会逐步到达，你可以随时停止。' },
         rail: {
@@ -169,11 +172,11 @@ export const ZH_TOURS_CONTENT: TourDictionary = {
       steps: {
         toggle: {
           title: '打开网络调研',
-          body: '发送前打开调研。ClawAI 会搜索网络，阅读最好的页面，并根据找到的内容回答。',
+          body: '打开 +，再选择网页研究。发送前打开调研。ClawAI 会搜索网络，阅读最好的页面，并根据找到的内容回答。',
         },
         provider: {
           title: '选择搜索提供商',
-          body: '选择使用哪个搜索提供商。Auto 会选一个你可用的。',
+          body: '打开 +，再选择网页研究。选择使用哪个搜索提供商。Auto 会选一个你可用的。',
         },
         sources: {
           title: '核对来源',
@@ -186,8 +189,8 @@ export const ZH_TOURS_CONTENT: TourDictionary = {
       description: '让回答立足于你自己的资料。',
       steps: {
         context: {
-          title: '上下文按钮',
-          body: '打开它可附加上下文包、查看已附加内容，并为此聊天开启或关闭记忆。',
+          title: '+ 菜单中的上下文',
+          body: '打开 +，再选择上下文，可附加上下文包、查看已附加内容，并为此聊天开启或关闭记忆。',
         },
         preview: {
           title: '发送前预览',
@@ -245,7 +248,7 @@ export const ZH_TOURS_CONTENT: TourDictionary = {
         },
         use: {
           title: '在任意聊天中使用',
-          body: '在聊天中打开上下文按钮并附加该包。之后模型会在看着这些资料的情况下回答。',
+          body: '在聊天中打开 +，选择上下文并附加该包。之后模型会在看着这些资料的情况下回答。',
         },
       },
     },

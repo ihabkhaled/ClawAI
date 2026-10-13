@@ -120,7 +120,7 @@ export const IT_TOURS_CONTENT: TourDictionary = {
         },
         context: {
           title: 'Contesto',
-          body: 'Aggiungi pacchetti di contesto, visualizza in anteprima ciò che vedrà il modello e usa la tua memoria, così le risposte si basano sul tuo materiale.',
+          body: 'Apri + poi Contesto. Aggiungi pacchetti di contesto, visualizza in anteprima ciò che vedrà il modello e usa la tua memoria, così le risposte si basano sul tuo materiale.',
         },
         model: {
           title: 'Quale modello risponde',
@@ -128,15 +128,15 @@ export const IT_TOURS_CONTENT: TourDictionary = {
         },
         attach: {
           title: 'Allega file',
-          body: 'Carica documenti, immagini, audio o video. Il testo viene estratto perché qualsiasi modello possa leggerlo.',
+          body: 'Apri + poi Allega. Carica documenti, immagini, audio o video. Il testo viene estratto perché qualsiasi modello possa leggerlo.',
         },
         research: {
           title: 'Cerca sul web',
-          body: 'Attiva la ricerca web quando la risposta richiede fatti aggiornati e fonti.',
+          body: 'Apri + poi Ricerca sul web. Attiva la ricerca web quando la risposta richiede fatti aggiornati e fonti.',
         },
         prompts: {
           title: 'Libreria di prompt',
-          body: 'Prompt riutilizzabili per i lavori comuni. Sceglierne uno riempie la casella del messaggio.',
+          body: 'Apri + poi Libreria di prompt. Prompt riutilizzabili per i lavori comuni. Sceglierne uno riempie la casella del messaggio.',
         },
         send: {
           title: 'Invia',
@@ -176,11 +176,11 @@ export const IT_TOURS_CONTENT: TourDictionary = {
       steps: {
         toggle: {
           title: 'Attiva la ricerca web',
-          body: 'Attiva la ricerca prima di inviare. ClawAI cerca sul web, legge le pagine migliori e risponde da ciò che ha trovato.',
+          body: 'Apri + poi Ricerca sul web. Attiva la ricerca prima di inviare. ClawAI cerca sul web, legge le pagine migliori e risponde da ciò che ha trovato.',
         },
         provider: {
           title: 'Scegli il motore di ricerca',
-          body: 'Scegli quale fornitore di ricerca usare. Auto ne sceglie uno disponibile per te.',
+          body: 'Apri + poi Ricerca sul web. Scegli quale fornitore di ricerca usare. Auto ne sceglie uno disponibile per te.',
         },
         sources: {
           title: 'Controlla le fonti',
@@ -193,8 +193,8 @@ export const IT_TOURS_CONTENT: TourDictionary = {
       description: 'Basa le risposte sul tuo materiale.',
       steps: {
         context: {
-          title: 'Il pulsante Contesto',
-          body: 'Aprilo per allegare un pacchetto di contesto, vedere cosa è allegato e attivare o disattivare la memoria per questa chat.',
+          title: 'Contesto nel menu +',
+          body: 'Apri + poi Contesto per allegare un pacchetto di contesto, vedere cosa è allegato e attivare o disattivare la memoria per questa chat.',
         },
         preview: {
           title: 'Anteprima prima dell’invio',
@@ -252,7 +252,7 @@ export const IT_TOURS_CONTENT: TourDictionary = {
         },
         use: {
           title: 'Usalo in qualsiasi chat',
-          body: 'Apri il pulsante Contesto in una chat e allega il pacchetto. Il modello risponde allora con quel materiale sotto gli occhi.',
+          body: 'In una chat apri + poi Contesto e allega il pacchetto. Il modello risponde allora con quel materiale sotto gli occhi.',
         },
       },
     },

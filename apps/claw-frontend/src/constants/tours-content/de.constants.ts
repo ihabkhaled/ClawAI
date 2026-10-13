@@ -121,7 +121,7 @@ export const DE_TOURS_CONTENT: TourDictionary = {
         },
         context: {
           title: 'Kontext',
-          body: 'Füge Kontextpakete hinzu, sieh dir an, was das Modell sehen wird, und nutze dein Gedächtnis, damit Antworten auf deinem Material beruhen.',
+          body: 'Öffne + und dann Kontext. Füge Kontextpakete hinzu, sieh dir an, was das Modell sehen wird, und nutze dein Gedächtnis, damit Antworten auf deinem Material beruhen.',
         },
         model: {
           title: 'Welches Modell antwortet',
@@ -129,15 +129,15 @@ export const DE_TOURS_CONTENT: TourDictionary = {
         },
         attach: {
           title: 'Dateien anhängen',
-          body: 'Lade Dokumente, Bilder, Audio oder Video hoch. Der Text wird extrahiert, damit jedes Modell ihn lesen kann.',
+          body: 'Öffne + und dann Anhängen. Lade Dokumente, Bilder, Audio oder Video hoch. Der Text wird extrahiert, damit jedes Modell ihn lesen kann.',
         },
         research: {
           title: 'Im Web suchen',
-          body: 'Schalte die Web-Recherche ein, wenn die Antwort aktuelle Fakten und Quellen braucht.',
+          body: 'Öffne + und dann Websuche. Schalte die Web-Recherche ein, wenn die Antwort aktuelle Fakten und Quellen braucht.',
         },
         prompts: {
           title: 'Prompt-Bibliothek',
-          body: 'Wiederverwendbare Prompts für häufige Aufgaben. Wähle einen, um das Nachrichtenfeld zu füllen.',
+          body: 'Öffne + und dann Prompt-Bibliothek. Wiederverwendbare Prompts für häufige Aufgaben. Wähle einen, um das Nachrichtenfeld zu füllen.',
         },
         send: {
           title: 'Senden',
@@ -177,11 +177,11 @@ export const DE_TOURS_CONTENT: TourDictionary = {
       steps: {
         toggle: {
           title: 'Web-Recherche einschalten',
-          body: 'Schalte die Recherche vor dem Senden ein. ClawAI durchsucht das Web, liest die besten Seiten und antwortet aus dem Gefundenen.',
+          body: 'Öffne + und dann Websuche. Schalte die Recherche vor dem Senden ein. ClawAI durchsucht das Web, liest die besten Seiten und antwortet aus dem Gefundenen.',
         },
         provider: {
           title: 'Suchanbieter wählen',
-          body: 'Wähle, welchen Suchanbieter du nutzt. Auto nimmt einen, der dir zur Verfügung steht.',
+          body: 'Öffne + und dann Websuche. Wähle, welchen Suchanbieter du nutzt. Auto nimmt einen, der dir zur Verfügung steht.',
         },
         sources: {
           title: 'Quellen prüfen',
@@ -194,8 +194,8 @@ export const DE_TOURS_CONTENT: TourDictionary = {
       description: 'Antworten auf deinem eigenen Material gründen.',
       steps: {
         context: {
-          title: 'Die Kontext-Schaltfläche',
-          body: 'Öffne sie, um ein Kontextpaket anzuhängen, zu sehen, was angehängt ist, und das Gedächtnis für diesen Chat ein- oder auszuschalten.',
+          title: 'Kontext im +-Menü',
+          body: 'Öffne + und dann Kontext, um ein Kontextpaket anzuhängen, zu sehen, was angehängt ist, und das Gedächtnis für diesen Chat ein- oder auszuschalten.',
         },
         preview: {
           title: 'Vorschau vor dem Senden',
@@ -253,7 +253,7 @@ export const DE_TOURS_CONTENT: TourDictionary = {
         },
         use: {
           title: 'In jedem Chat verwenden',
-          body: 'Öffne die Kontext-Schaltfläche in einem Chat und hänge das Paket an. Das Modell antwortet dann mit diesem Material vor Augen.',
+          body: 'Öffne in einem Chat + und dann Kontext und hänge das Paket an. Das Modell antwortet dann mit diesem Material vor Augen.',
         },
       },
     },

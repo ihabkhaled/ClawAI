@@ -208,3 +208,6 @@ export { MarketingAuthActionsVariant } from './marketing-auth-actions-variant.en
 export { ThreadPublicationExportFormat } from './thread-publication-export-format.enum';
 export { CreditFallbackReason } from './credit-fallback-reason.enum';
 export { ThreadRevisionField } from './thread-revision-field.enum';
+export * from './file-library-filter.enum';
+export * from './file-library-view-mode.enum';
+export * from './file-library-thumb-size.enum';

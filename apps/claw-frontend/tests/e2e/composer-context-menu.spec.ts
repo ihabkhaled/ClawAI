@@ -1,9 +1,10 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 /**
- * The composer's ONE "Context" button (packs pick, view, memory) must be on
- * screen without sideways scrolling at every phone/tablet/desktop width, in both
- * orientations and in Arabic RTL, and each of its three jobs must work.
+ * The composer's ONE round "+" button must be on screen without sideways scrolling at
+ * every phone/tablet/desktop width, in both orientations and in Arabic RTL, and the
+ * Context rows inside it (packs pick, view, memory) must each work. Open "+" first, then
+ * use the rows under its Context section.
  *
  * Drives the real UI against the live dev stack (https://claw.local).
  */
@@ -25,9 +26,11 @@ const CASES: Case[] = [
   { name: 'rtl-ar-360', width: 360, height: 740, locale: 'ar' },
 ];
 
-const CONTEXT_BUTTON_NAME = { en: 'Context', ar: 'السياق' } as const;
+// The label gains a count once something is selected, so match the stable prefix.
+const ADD_BUTTON_NAME = { en: /^Add to message/, ar: /^إضافة إلى الرسالة/ } as const;
+const CONTEXT_SECTION_NAME = { en: 'Context', ar: 'السياق' } as const;
 const DIALOG = '[role="dialog"][data-state="open"][aria-labelledby]';
-const ROWS = '[data-radix-popper-content-wrapper] button:not([role="checkbox"])';
+const MENU = '[data-radix-popper-content-wrapper]';
 
 test.use({ ignoreHTTPSErrors: true, baseURL: BASE });
 
@@ -118,7 +121,7 @@ for (const c of CASES) {
       }
     });
 
-    test('Context button is visible and pick / view / memory work', async ({ page }) => {
+    test('+ button is visible and the Context rows pick / view / memory work', async ({ page }) => {
       test.setTimeout(120_000);
       await login(page);
       await ensureOnePack(page);
@@ -126,7 +129,11 @@ for (const c of CASES) {
       await openFreshChat(page);
       await expect(page.locator('html')).toHaveAttribute('dir', c.locale === 'ar' ? 'rtl' : 'ltr');
 
-      const button = page.getByRole('button', { name: CONTEXT_BUTTON_NAME[c.locale], exact: true });
+      const button = page.getByRole('button', { name: ADD_BUTTON_NAME[c.locale] });
+      const contextRows = page
+        .locator(MENU)
+        .getByRole('region', { name: CONTEXT_SECTION_NAME[c.locale], exact: true })
+        .getByRole('button');
       await expect(button).toBeVisible();
       await expectOnScreenAndUnobstructed(page, button);
       expect(
@@ -134,14 +141,15 @@ for (const c of CASES) {
       ).toBe(true);
       await shot(page, `${c.name}-1-closed`);
 
-      // Pick: the menu lists packs; toggling one moves the badge on the button.
+      // Pick: the first Context row opens the packs panel; toggling one moves the badge.
       await button.click();
+      await contextRows.nth(0).click();
       const checkbox = page.getByRole('checkbox').first();
       await expect(checkbox).toBeVisible();
       const before = await checkbox.getAttribute('aria-checked');
       await checkbox.click();
       await expect(checkbox).not.toHaveAttribute('aria-checked', before ?? 'false');
-      const menu = page.locator('[data-radix-popper-content-wrapper]').first();
+      const menu = page.locator(MENU).first();
       const menuBox = await menu.boundingBox();
       expect(menuBox).not.toBeNull();
       if (menuBox !== null) {
@@ -152,15 +160,19 @@ for (const c of CASES) {
       await checkbox.click();
       await expect(checkbox).toHaveAttribute('aria-checked', before ?? 'false');
 
-      // View and memory: the two rows under the packs open their dialogs.
-      await page.locator(ROWS).nth(0).click();
+      // View and memory: the two rows under the packs open their dialogs. Escape closes the
+      // packs panel, then "+" is reopened to reach the main list again.
+      await page.keyboard.press('Escape');
+      await expect(page.locator(MENU)).toHaveCount(0);
+      await button.click();
+      await contextRows.nth(1).click();
       await expect(page.locator(DIALOG)).toBeVisible();
       await shot(page, `${c.name}-3-view`);
       await page.keyboard.press('Escape');
       await expect(page.locator(DIALOG)).toHaveCount(0);
 
       await button.click();
-      await page.locator(ROWS).nth(1).click();
+      await contextRows.nth(2).click();
       await expect(page.locator(DIALOG)).toBeVisible();
       await shot(page, `${c.name}-4-memory`);
       await page.keyboard.press('Escape');

@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { TOURS_CONTENT_BY_LOCALE } from '@/constants/tours-content.constants';
 import { TOUR_DEFINITIONS } from '@/constants/tours.constants';
 import { Locale } from '@/enums/locale.enum';
+import { TourId } from '@/enums/tour-id.enum';
 
 const SRC = join(__dirname, '..', '..');
 
@@ -77,4 +78,34 @@ describe('tour definitions', () => {
       }
     }
   });
+});
+
+describe('tour copy after the composer moved behind the + button', () => {
+  it('anchors every research step on the + button, since research only has a chip while on', () => {
+    const research = TOUR_DEFINITIONS.find((tour) => tour.id === TourId.ChatResearch);
+    const intro = TOUR_DEFINITIONS.find((tour) => tour.id === TourId.ChatIntro);
+    const steps = [
+      ...(research?.steps.filter((step) => step.id !== 'sources') ?? []),
+      ...(intro?.steps.filter((step) => step.id === 'research') ?? []),
+    ];
+
+    expect(steps).toHaveLength(3);
+    expect(steps.every((step) => step.target === 'composer-attach')).toBe(true);
+  });
+
+  it.each(Object.values(Locale))(
+    '%s sends the reader through + instead of loose buttons',
+    (locale) => {
+      const tours = TOURS_CONTENT_BY_LOCALE[locale].tours;
+
+      expect(tours[TourId.ChatContext].steps['context']?.title).toContain('+');
+      expect(tours[TourId.ContextPacks].steps['use']?.body).toContain('+');
+      for (const stepId of ['context', 'attach', 'research', 'prompts']) {
+        expect(tours[TourId.ChatIntro].steps[stepId]?.body).toContain('+');
+      }
+      for (const stepId of ['toggle', 'provider']) {
+        expect(tours[TourId.ChatResearch].steps[stepId]?.body).toContain('+');
+      }
+    },
+  );
 });

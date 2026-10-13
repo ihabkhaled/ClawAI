@@ -988,13 +988,6 @@ export type FileAttachmentPickerProps = {
   isUploading?: boolean;
 };
 
-export type FileAttachmentRowProps = {
-  file: UploadedFile;
-  checked: boolean;
-  indented: boolean;
-  onToggle: (fileId: string, checked: boolean) => void;
-};
-
 export type ContextPackSelectorProps = {
   t: TranslateFunction;
   selectedIds: string[];
@@ -2149,6 +2142,8 @@ export type InThreadComparePanelProps = {
   onSelectedFileIdsChange: (ids: string[]) => void;
   // Paste/drop ingestion for the whole compare dialog (upload-and-attach).
   onIngestFiles: (files: FileList | File[]) => void;
+  // True while a picked file is still uploading (the picker disables its upload row).
+  isUploading: boolean;
   // Tiles above the prompt: what is attached, and what is still uploading.
   attachmentTray: ComposerAttachmentTrayProps;
   // Failed / not-supported uploads, one chip each — the same strip chat shows.

@@ -162,7 +162,7 @@ export function useComposerAttachments({
           showToast.error({ title: t('files.fileUploadFailed'), description: reason ?? undefined });
           continue;
         }
-        const pending: PendingComposerUpload = { key: localId, ...metadata };
+        const pending: PendingComposerUpload = { key: localId, ...metadata, file };
         const controller = new AbortController();
         controllersRef.current.set(localId, controller);
         pendingRef.current += 1;
