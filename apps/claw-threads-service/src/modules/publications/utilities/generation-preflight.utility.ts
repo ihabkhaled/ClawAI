@@ -119,9 +119,10 @@ export function assertModelsKnown(
 }
 
 /**
- * The same test chat applies to a picked model: the primary of every seat must be on the plan.
- * A fallback the plan excludes only means that fallback is skipped at call time, so it is not
- * refused here. Only the caller's own request and plan name appear in the error.
+ * The same test chat applies to a picked model, for every model the request names: a primary
+ * must be allowed as a primary and a fallback as a fallback. Nothing downstream re-checks the
+ * plan (the chat gateway only reserves credit), so a fallback the plan excludes would otherwise
+ * run for a user who may not use it. Only the caller's own request and plan name appear in the error.
  */
 export function assertModelsOnPlan(
   entitlements: UserEntitlements,
@@ -129,14 +130,19 @@ export function assertModelsOnPlan(
 ): void {
   const denied = roles.find(
     (role) =>
-      !role.isFallback &&
-      !isModelAllowedForUsage(entitlements, role.provider, role.model, ModelUsageType.PRIMARY),
+      !isModelAllowedForUsage(
+        entitlements,
+        role.provider,
+        role.model,
+        role.isFallback ? ModelUsageType.FALLBACK : ModelUsageType.PRIMARY,
+      ),
   );
   if (!denied) return;
   const planName = entitlements.plan?.name ?? 'current';
+  const subject = denied.isFallback ? 'uses the fallback' : 'uses';
   throw new ForbiddenException(
     codedErrorBody(
-      `${describeRoleSeat(denied)} uses ${modelKey(denied)}, which your ${planName} plan does not include. Pick a model your plan includes, or upgrade to a plan that lists it.`,
+      `${describeRoleSeat(denied)} ${subject} ${modelKey(denied)}, which your ${planName} plan does not include. Pick a model your plan includes, or upgrade to a plan that lists it.`,
       ThreadGenerationErrorCode.MODEL_NOT_ALLOWED_FOR_PLAN,
       HttpStatus.FORBIDDEN,
       { ...roleDetails(denied), plan: entitlements.plan?.slug ?? 'none' },

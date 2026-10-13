@@ -236,6 +236,8 @@ Research-backed publications and community workflows are specified in the
 [ADR-159](../13-adr/adr-159-clawai-threads-two-service-architecture.md).
 Implementation is in progress; do not describe Threads as shipped until its
 generation, publication, safety, discovery, and QA paths are verified.
+The ranked improvement backlog (release blockers first) is in
+[Threads improvement backlog](clawai-threads-improvement-backlog.md).
 
 ---
 

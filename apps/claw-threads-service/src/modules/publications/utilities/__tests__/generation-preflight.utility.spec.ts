@@ -260,7 +260,7 @@ describe('assertModelsOnPlan', () => {
     expect(result.body).toMatchObject({ role: 'author', roleId: 'author-1' });
   });
 
-  it('does not refuse for a fallback the plan excludes', () => {
+  it('refuses a fallback the plan excludes, naming it as a fallback', () => {
     const plan = entitlements({
       allowedModels: allowed(
         ['OLLAMA', 'gpt-oss:20b'],
@@ -274,7 +274,16 @@ describe('assertModelsOnPlan', () => {
       judge: role('judge', 'OLLAMA', 'gpt-oss:120b', [{ provider: 'OPENAI', model: 'gpt-5' }]),
     });
 
-    expect(() => assertModelsOnPlan(plan, withDeniedFallback)).not.toThrow();
+    const result = refusal(() => assertModelsOnPlan(plan, withDeniedFallback));
+
+    expect(result.status).toBe(403);
+    expect(result.body).toMatchObject({
+      code: ThreadGenerationErrorCode.MODEL_NOT_ALLOWED_FOR_PLAN,
+      role: 'judge',
+      provider: 'OPENAI',
+      model: 'gpt-5',
+    });
+    expect(String(result.body.message)).toContain('Judge uses the fallback OPENAI/gpt-5');
   });
 
   it('lets an unrestricted plan and an administrator use any model', () => {
