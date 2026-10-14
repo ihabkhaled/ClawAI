@@ -38,3 +38,24 @@ describe('GenerationJobsRepository.addSpend', () => {
     },
   );
 });
+
+describe('GenerationJobsRepository.syncSpend', () => {
+  it('raises the persisted spend to the settled total and never lowers it', async () => {
+    const { repository, updateMany } = build();
+
+    await repository.syncSpend('job-1', 8_227);
+
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: 'job-1', spentMicroCredits: { lt: 8_227n } },
+      data: { spentMicroCredits: 8_227n },
+    });
+  });
+
+  it.each([[0], [-1], [2.5], [Number.NaN]])('ignores %s', async (value) => {
+    const { repository, updateMany } = build();
+
+    await repository.syncSpend('job-1', value);
+
+    expect(updateMany).not.toHaveBeenCalled();
+  });
+});

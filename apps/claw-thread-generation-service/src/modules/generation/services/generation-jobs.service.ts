@@ -35,6 +35,7 @@ import { buildRetryInput } from '../utilities/build-retry-input.utility';
 import { isDeterministicGenerationError } from '../utilities/deterministic-generation.error';
 import { parseStepError } from '../utilities/parse-step-error.utility';
 import {
+  NON_RETRYABLE_STEP_CODES,
   RETRY_ALREADY_EXISTS_MESSAGE,
   RETRY_CHAIN_MAX_DEPTH,
   STEP_CANCELLED_CODE,
@@ -485,11 +486,12 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     // Operators need the failing step; never log prompts, drafts or provider bodies.
     this.logger.warn(`Generation attempt failed: ${describeFailure(error)}`);
     // A failure a retry cannot fix (prompt too large, bad role config, catalog 4xx) ends the job now.
+    const failureCode = parseStepError(error, STEP_GENERATION_FAILED_CODE).code;
     const outcome = await this.repository.retryOrFail(
       job.id,
       job.attemptCount,
       describeFailure(error),
-      !isDeterministicGenerationError(error),
+      !isDeterministicGenerationError(error) && !NON_RETRYABLE_STEP_CODES.has(failureCode),
     );
     if (outcome === GenerationJobRecoveryOutcome.FAILED) {
       await this.closeBudget(job.id, job.budgetId, GenerationBudgetCloseStatus.RELEASED);

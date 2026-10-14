@@ -87,6 +87,7 @@ function build(replies: Reply[], researchError?: Error) {
     models as never,
     jobs as never,
     recorder as never,
+    { sync: vi.fn().mockResolvedValue(undefined) } as never,
   );
   return { manager, recorder, models, jobs };
 }

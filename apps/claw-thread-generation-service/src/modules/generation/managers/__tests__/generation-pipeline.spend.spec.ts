@@ -72,13 +72,15 @@ function build(replies: Reply[], addSpend = vi.fn().mockResolvedValue(undefined)
     }),
   };
   const recorder = { record: vi.fn().mockResolvedValue(undefined) };
+  const spendSync = { sync: vi.fn().mockResolvedValue(undefined) };
   const manager = new GenerationPipelineManager(
     research as never,
     models as never,
     jobs as never,
     recorder as never,
+    spendSync as never,
   );
-  return { manager, jobs, models, recorder };
+  return { manager, jobs, models, recorder, spendSync };
 }
 
 const paid = (content: string, costMicroUsd: number): Reply => ({ content, costMicroUsd });
@@ -103,6 +105,24 @@ describe('GenerationPipelineManager spend', () => {
     expect(jobs.addSpend).toHaveBeenCalledTimes(8);
     expect(jobs.addSpend).toHaveBeenCalledWith('job-1', 100);
     expect(total(jobs.addSpend)).toBe(720);
+  });
+
+  it('syncs the budget spend after each settled model call, even for a reply without a cost', async () => {
+    const { manager, spendSync } = build([
+      { content: draftJson },
+      { content: draftJson },
+      { content: draftJson },
+      { content: voteJson },
+      { content: voteJson },
+      { content: voteJson },
+      { content: reviewJson(80) },
+      { content: reviewJson(75) },
+    ]);
+
+    await manager.generate(input);
+
+    expect(spendSync.sync).toHaveBeenCalledTimes(8);
+    expect(spendSync.sync).toHaveBeenCalledWith('job-1', input.budgetId);
   });
 
   it('does not record anything for a reply without a reported cost', async () => {

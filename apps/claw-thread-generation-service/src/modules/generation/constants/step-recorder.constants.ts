@@ -62,7 +62,16 @@ export const PAYG_STEP_CODES: readonly string[] = [
   'PAYG_CAP_TOO_LOW',
   'PAYG_CREDIT_EXHAUSTED',
   'PAYG_PRICE_UNAVAILABLE',
+  'PAYG_FREE_ALLOWANCE_EXHAUSTED',
 ];
+/**
+ * Codes only the owner can fix (a higher cap, more credit, a priced model). Every attempt would be
+ * refused the same way and re-run the authors, so the job fails on the first attempt with the code.
+ */
+export const NON_RETRYABLE_STEP_CODES: ReadonlySet<string> = new Set([
+  ...PAYG_STEP_CODES,
+  'PAYG_MODEL_UNPRICED',
+]);
 /** Auth refuses an unpriced model with PAYG_MODEL_UNPRICED; a Thread step reports it as a missing price. */
 export const STEP_UPSTREAM_CODE_ALIASES: ReadonlyMap<string, string> = new Map([
   ['PAYG_MODEL_UNPRICED', 'PAYG_PRICE_UNAVAILABLE'],

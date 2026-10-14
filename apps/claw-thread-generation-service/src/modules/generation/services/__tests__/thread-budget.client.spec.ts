@@ -97,4 +97,44 @@ describe('ThreadBudgetClient', () => {
       expect(failure).not.toBeInstanceOf(ThreadBudgetCloseRefusedError);
     });
   });
+
+  describe('settledMicroUsd', () => {
+    const configure = (): void => {
+      vi.spyOn(AppConfig, 'get').mockReturnValue({
+        AUTH_SERVICE_URL: 'https://auth-service:4001',
+        INTER_SERVICE_AUTH_TOKEN: 'x'.repeat(32),
+      } as never);
+    };
+
+    it('reads the settled spend of the budget row', async () => {
+      configure();
+      const fetch = vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ settledMicroUsd: 8227 }), { status: 200 }),
+        );
+      vi.stubGlobal('fetch', fetch);
+
+      await expect(new ThreadBudgetClient().settledMicroUsd('budget-1')).resolves.toBe(8227);
+      expect(fetch).toHaveBeenCalledWith(
+        'https://auth-service:4001/api/v1/internal/threads/budgets/summary',
+        expect.objectContaining({ body: JSON.stringify({ budgetId: 'budget-1' }) }),
+      );
+    });
+
+    it('fails closed on an error status or an invalid body', async () => {
+      configure();
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 404 })));
+      await expect(new ThreadBudgetClient().settledMicroUsd('b')).rejects.toBeInstanceOf(
+        ServiceUnavailableException,
+      );
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue(new Response(JSON.stringify({ settledMicroUsd: -1 }))),
+      );
+      await expect(new ThreadBudgetClient().settledMicroUsd('b')).rejects.toBeInstanceOf(
+        ServiceUnavailableException,
+      );
+    });
+  });
 });

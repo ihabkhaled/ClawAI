@@ -14,6 +14,8 @@ const reservedBudgetSchema = z.object({
   status: z.string(),
 });
 
+const budgetSummarySchema = z.object({ settledMicroUsd: z.number().int().safe().nonnegative() });
+
 @Injectable()
 export class ThreadBudgetClient {
   async reserve(userId: string, requestId: string, capMicroUsd: number): Promise<{ id: string }> {
@@ -79,5 +81,32 @@ export class ThreadBudgetClient {
     // The budget service answers `true` once closed; `null` (an empty body) means it refused.
     const closed: unknown = await response.json().catch(() => null);
     if (closed !== true) throw new ThreadBudgetCloseRefusedError();
+  }
+
+  /** The money the budget row has settled so far (integer micro-USD), whatever the billing mode. */
+  async settledMicroUsd(budgetId: string): Promise<number> {
+    const config = AppConfig.get();
+    const url = `${config.AUTH_SERVICE_URL}/api/v1/internal/threads/budgets/summary`;
+    assertSafeRequestUrl(url, declaredHost(config.AUTH_SERVICE_URL));
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        redirect: 'error',
+        headers: {
+          Authorization: `Service ${config.INTER_SERVICE_AUTH_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ budgetId }),
+        signal: AbortSignal.timeout(10_000),
+      });
+    } catch {
+      throw new ServiceUnavailableException('Threads budget service is unavailable');
+    }
+    if (!response.ok) throw new ServiceUnavailableException('Threads budget summary failed');
+    const parsed = budgetSummarySchema.safeParse(await response.json().catch(() => null));
+    if (!parsed.success)
+      throw new ServiceUnavailableException('Threads budget response is invalid');
+    return parsed.data.settledMicroUsd;
   }
 }

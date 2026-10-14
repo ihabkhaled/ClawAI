@@ -9,6 +9,8 @@ import {
   JUDGE_STAGE,
   MAX_GENERATION_ROUNDS,
   OUTPUT_INVALID_CODE,
+  REPAIR_NOTE_LEAD,
+  REPAIR_NOTE_MAX_CHARS,
 } from '../constants/generation.constants';
 import { ThreadGenerationStage } from '../../../generated/prisma';
 import { ChatModelClient, type ChatModelResponse } from '../../models/chat-model.client';
@@ -22,9 +24,11 @@ import { GenerationAttemptTimeoutError } from '../utilities/generation-attempt-t
 import { ThreadGenerationCancelledError } from '../utilities/thread-generation-cancelled.error';
 import { ThreadGenerationLeaseLostError } from '../utilities/thread-generation-lease-lost.error';
 import { stableJson } from '../utilities/stable-json.utility';
+import { normalizeAuthorOutput } from '../utilities/normalize-author-output.utility';
 import { parseModelJson } from '../utilities/parse-model-json.utility';
 import { ReviewerRole } from '../types/reviewer-role.enum';
 import { StepRecorder } from '../services/step-recorder.service';
+import { GenerationSpendSyncService } from '../services/generation-spend-sync.service';
 import type { StepRecordInput, StepResponseOutcome } from '../types/step-recorder.types';
 import {
   DeterministicGenerationError,
@@ -70,6 +74,7 @@ export class GenerationPipelineManager {
     private readonly models: ChatModelClient,
     private readonly jobs: GenerationJobsRepository,
     private readonly recorder: StepRecorder,
+    private readonly spendSync: GenerationSpendSyncService,
   ) {}
 
   async generate(input: GenerationPipelineInput): Promise<GenerationPipelineResult> {
@@ -553,7 +558,7 @@ export class GenerationPipelineManager {
     evidenceItems: Map<string, string>,
   ): Promise<AuthorDraft> {
     const prompts = {
-      systemPrompt: `Write the requested publication in ${new Intl.DisplayNames(['en'], { type: 'language' }).of(input.contentLocale) ?? input.contentLocale} (${input.contentLocale}). Use only the supplied source and research evidence. Return only one JSON object shaped {"markdown": string, "citations": [{"evidenceId": string, "url": string}]} with no code fences and no other keys. Cite only evidence items from researchEvidence.items, using their id and url. Do not include analysis or hidden reasoning.`,
+      systemPrompt: `Write the requested publication in ${new Intl.DisplayNames(['en'], { type: 'language' }).of(input.contentLocale) ?? input.contentLocale} (${input.contentLocale}). Use only the supplied source and research evidence. Return only one JSON object shaped {"markdown": string, "citations": [{"evidenceId": string, "url": string}]} with no other keys. "markdown" is the whole article as one string and the body cites with [evidenceId] markers. "citations" lists every cited evidence item as an object with its id and url copied exactly from researchEvidence.items; never a bare string. Minimal valid example: {"markdown":"# Title\\n\\nA claim [abc123].","citations":[{"evidenceId":"abc123","url":"https://example.com/a"}]}. Cite only evidence items from researchEvidence.items. Do not include analysis or hidden reasoning.`,
       userPrompt: `${sharedMaterial}\nRevision brief: ${revisionBrief || 'Create a complete first draft.'}`,
     };
     const saved = await this.jobs.findCommunication(
@@ -569,6 +574,13 @@ export class GenerationPipelineManager {
       if (!parsed.success) throw new ServiceUnavailableException('A saved author draft is invalid');
       return parsed.data;
     }
+    // Accepted citation shapes are normalised first, then the evidence rule is enforced.
+    const outputSchema = z.preprocess(
+      (value) => normalizeAuthorOutput(value, evidenceItems),
+      authorDraftSchema.refine((draft) =>
+        draft.citations.every(({ evidenceId, url }) => evidenceItems.get(evidenceId) === url),
+      ),
+    );
     const response = await this.callRole(
       input,
       role,
@@ -576,11 +588,9 @@ export class GenerationPipelineManager {
       round,
       prompts,
       // A draft citing anything outside the evidence bundle is a wrong answer, so retry it.
-      authorDraftSchema.refine((draft) =>
-        draft.citations.every(({ evidenceId, url }) => evidenceItems.get(evidenceId) === url),
-      ),
+      outputSchema,
     );
-    const parsed = authorDraftSchema.safeParse(this.parseJson(response.content, authorDraftSchema));
+    const parsed = outputSchema.safeParse(this.parseJson(response.content, outputSchema));
     if (!parsed.success)
       throw new ServiceUnavailableException('An author returned an invalid draft');
     await this.persistCommunication(
@@ -789,6 +799,7 @@ export class GenerationPipelineManager {
     };
     let error: unknown;
     let deterministic = true;
+    let repairNote = '';
     for (let attempt = 1; attempt <= FORMAT_ATTEMPTS_PER_MODEL; attempt += 1) {
       await this.throwIfCancelled(input);
       const requestId = `${input.jobId}:${call.roleKey}:round-${String(call.round)}:attempt-${String(input.attempt)}:cand-${String(call.index + 1)}${attempt > 1 ? `:try-${String(attempt)}` : ''}`;
@@ -802,12 +813,12 @@ export class GenerationPipelineManager {
           provider: candidate.provider,
           model: candidate.model,
           systemPrompt: call.prompt.systemPrompt,
-          userPrompt: call.prompt.userPrompt,
+          userPrompt: `${call.prompt.userPrompt}${repairNote}`,
           maxOutputTokens: role.maxOutputTokens,
           signal: input.signal,
         });
         // Paid for even if the job is cancelled or the answer is unusable, so counted first.
-        await this.recordSpend(input.jobId, response.costMicroUsd);
+        await this.recordSpend(input.jobId, input.budgetId, response.costMicroUsd);
         await this.throwIfCancelled(input);
         const accepted = call.accepts.safeParse(
           parseModelJson(response.content, call.accepts),
@@ -823,11 +834,12 @@ export class GenerationPipelineManager {
             : describeOutputFailure(response.content, call.accepts),
         });
         if (accepted) return { response };
+        repairNote = `${REPAIR_NOTE_LEAD}${describeOutputFailure(response.content, call.accepts).slice(0, REPAIR_NOTE_MAX_CHARS)}`;
         deterministic = false;
         failure = { ...candidate, code: OUTPUT_INVALID_CODE, httpStatus: null };
         error = new ServiceUnavailableException('A model returned invalid structured output');
       } catch (caught: unknown) {
-        await this.recordCallFailure(input.jobId, step, caught, startedAt);
+        await this.recordCallFailure(input.jobId, input.budgetId, step, caught, startedAt);
         const parsed = parseStepError(caught);
         failure = { ...candidate, code: parsed.code, httpStatus: parsed.httpStatus };
         deterministic &&= isDeterministicGenerationError(caught);
@@ -865,12 +877,13 @@ export class GenerationPipelineManager {
    */
   private async recordCallFailure(
     jobId: string,
+    budgetId: string,
     step: Omit<StepRecordInput, 'outcome'>,
     error: unknown,
     startedAt: number,
   ): Promise<void> {
     if (error instanceof ChatModelIncompleteError) {
-      await this.recordSpend(jobId, error.costMicroUsd);
+      await this.recordSpend(jobId, budgetId, error.costMicroUsd);
     }
     if (error instanceof ThreadGenerationCancelledError) throw error;
     const parsed = parseStepError(error);
@@ -961,13 +974,20 @@ export class GenerationPipelineManager {
   }
 
   /** Spend bookkeeping never fails a generation: the model call it describes already happened. */
-  private async recordSpend(jobId: string, microUsd: number | undefined): Promise<void> {
-    if (!microUsd) return;
-    try {
-      await this.jobs.addSpend(jobId, microUsd);
-    } catch {
-      this.logger.warn('Generation spend could not be recorded');
+  private async recordSpend(
+    jobId: string,
+    budgetId: string,
+    microUsd: number | undefined,
+  ): Promise<void> {
+    if (microUsd) {
+      try {
+        await this.jobs.addSpend(jobId, microUsd);
+      } catch {
+        this.logger.warn('Generation spend could not be recorded');
+      }
     }
+    // After the call settled: the budget row now holds its real cost (throttled, best effort).
+    await this.spendSync.sync(jobId, budgetId);
   }
 
   private hash(value: string): string {

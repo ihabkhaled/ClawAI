@@ -573,6 +573,18 @@ export class GenerationJobsRepository {
     });
   }
 
+  /**
+   * Raises the job's persisted spend to the budget row's settled total. Monotonic (never lowers
+   * it) and not fenced on status or attempt, for the same reason as addSpend.
+   */
+  async syncSpend(jobId: string, settledMicroUsd: number): Promise<void> {
+    if (!Number.isSafeInteger(settledMicroUsd) || settledMicroUsd <= 0) return;
+    await this.prisma.threadGenerationJob.updateMany({
+      where: { id: jobId, spentMicroCredits: { lt: BigInt(settledMicroUsd) } },
+      data: { spentMicroCredits: BigInt(settledMicroUsd) },
+    });
+  }
+
   async saveCommunication(input: {
     jobId: string;
     attempt: number;

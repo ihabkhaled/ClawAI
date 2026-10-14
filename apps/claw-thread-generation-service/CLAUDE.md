@@ -127,9 +127,15 @@ frame type is ignored; the `message` text is never read or forwarded, only the m
 - **A job that could not be stored releases its reservation** only when no job holds the idempotency key
   (reserve is idempotent per owner and key, so a concurrent request shares the budget).
 - A new code (`QUEUE_EXPIRED`) needs the frontend `THREAD_GENERATION_CODE_KEYS` entry and all 13 locales.
-- `spentMicroCredits` is the sum of the `costMicroUsd` chat-service reports, and it reports it only for
-  pay-as-you-go calls, so an included-plan job shows 0 while auth's budget row holds the real spend. No read
-  endpoint for budget spend exists; do not invent a price here.
+- `spentMicroCredits` is the sum of the `costMicroUsd` chat-service reports (PAYG only), raised monotonically to the
+  budget row's `settledMicroUsd` (auth `POST /internal/threads/budgets/summary`, `ThreadBudgetClient.settledMicroUsd`)
+  by `GenerationBudgetCloser` right before every close, and also while the job runs: `GenerationSpendSyncService`
+  (called from the pipeline's `recordSpend` after each model call settles) syncs it at most once per 5 s per job,
+  best effort. Progress reads the persisted value, never auth per poll.
+  A Free job settles 0 by design (its cost sits in the free-allowance meter), so it still shows 0.
+- `NON_RETRYABLE_STEP_CODES` (PAYG cap too low, price unavailable, unpriced model, credit and allowance exhausted)
+  fail the job on the first attempt; a retry would be refused the same way (ADR-173 addendum). The progress
+  `failure.retryable` is false for them too (`isRetryable` in `build-progress.utility.ts`), so the UI offers no Retry.
 
 ## Round-2 output hardening (2026-10-14, ADR-173 addendum)
 

@@ -86,7 +86,7 @@ describe('buildProgress', () => {
       failedStage: 'AUTHOR_DRAFTS',
       roleId: 'author-1',
       httpStatus: 402,
-      retryable: true,
+      retryable: false,
     });
     expect(result.steps[0]?.at).toBe('2026-10-13T10:00:30.000Z');
   });
@@ -144,6 +144,23 @@ describe('buildProgress', () => {
     expect(
       buildProgress({ ...revision, status: 'CANCELLED' }, request, []).failure?.retryable,
     ).toBe(false);
+  });
+
+  it.each([
+    'PAYG_CAP_TOO_LOW',
+    'PAYG_PRICE_UNAVAILABLE',
+    'PAYG_MODEL_UNPRICED',
+    'PAYG_CREDIT_EXHAUSTED',
+  ])('does not offer Retry for the owner-only refusal %s', (code) => {
+    const result = buildProgress(job('FAILED'), request, [step({ seq: 1, code })]);
+    expect(result.failure).toMatchObject({ code, retryable: false });
+  });
+
+  it('still offers Retry for an ordinary provider failure', () => {
+    const result = buildProgress(job('FAILED'), request, [
+      step({ seq: 1, code: 'PROVIDER_ERROR' }),
+    ]);
+    expect(result.failure?.retryable).toBe(true);
   });
 
   it('falls back to the safe error code without steps', () => {

@@ -11975,7 +11975,7 @@
       },
       "claw-thread-generation-service": {
         "runner": "vitest",
-        "testFiles": 50
+        "testFiles": 53
       },
       "claw-threads-service": {
         "runner": "vitest",
@@ -12838,7 +12838,7 @@
     "serviceCount": 21,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2491,
+    "totalTestFiles": 2494,
     "workspaceCount": 28
   }
 }

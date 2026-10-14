@@ -73,6 +73,7 @@ function build(modelResponses: string[]) {
       models as never,
       jobs as never,
       recorder as never,
+      { sync: vi.fn().mockResolvedValue(undefined) } as never,
     ),
     recorder,
     research,

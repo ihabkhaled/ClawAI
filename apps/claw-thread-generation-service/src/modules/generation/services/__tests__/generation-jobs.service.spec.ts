@@ -522,6 +522,67 @@ describe('GenerationJobsService', () => {
     },
   );
 
+  it.each([
+    'PAYG_CAP_TOO_LOW',
+    'PAYG_PRICE_UNAVAILABLE',
+    'PAYG_MODEL_UNPRICED',
+    'PAYG_CREDIT_EXHAUSTED',
+    'PAYG_FREE_ALLOWANCE_EXHAUSTED',
+  ])('an owner-only refusal (%s) fails on the first attempt', async (code) => {
+    let handler: ((event: unknown) => Promise<void>) | undefined;
+    const job = {
+      id: 'job-1',
+      ownerId: 'owner-1',
+      budgetId: 'budget-1',
+      attemptCount: 1,
+      request: {
+        ownerId: 'owner-1',
+        sourceThreadId: 'thread-1',
+        idempotencyKey: 'request-1',
+        correlationId: 'correlation-1',
+        spendCapMicroUsd: '5000000',
+        topic: 'A detailed topic for a publication',
+        publicationType: 'article',
+        contentLocale: Locale.EN,
+        publicIntentVersion: 'threads-public-v1',
+        authors: [role('author-1'), role('author-2'), role('author-3')],
+        judge: role('judge'),
+        critic: role('critic'),
+      },
+      sourceSnapshot: { messages: [] },
+    };
+    const repository = {
+      claim: vi.fn().mockResolvedValue(job),
+      isCancellationRequested: vi.fn().mockResolvedValue(false),
+      retryOrFail: vi.fn().mockResolvedValue('FAILED'),
+    };
+    const rabbit = {
+      subscribe: vi.fn().mockImplementation(async (_pattern, callback) => {
+        handler = callback;
+      }),
+    };
+    const pipeline = {
+      generate: vi.fn().mockRejectedValue(
+        new ServiceUnavailableException('An author role failed', {
+          cause: new Error(`Chat model request failed (402: ${code})`),
+        }),
+      ),
+    };
+    const service = new GenerationJobsService(
+      {} as never,
+      repository as never,
+      rabbit as never,
+      pipeline as never,
+      { close: vi.fn() } as never,
+      recorder as never,
+    );
+
+    await service.subscribe();
+    await handler?.({ jobId: 'job-1', correlationId: 'correlation-1' });
+
+    expect(repository.retryOrFail).toHaveBeenCalledWith('job-1', 1, expect.any(String), false);
+  });
+
   describe('failure reports', () => {
     const failedJob = {
       id: 'job-failed',

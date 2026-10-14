@@ -6,6 +6,7 @@ import type {
 } from '@claw/shared-types';
 
 import {
+  NON_RETRYABLE_STEP_CODES,
   STEP_CANCELLED_CODE,
   STEP_FINAL_STAGE,
   STEP_GENERATION_FAILED_CODE,
@@ -69,9 +70,11 @@ function blamedRoleStep(steps: StepRow[]): StepRow | undefined {
   });
 }
 
-function isRetryable(job: ProgressJobRecord): boolean {
+/** A failure only the owner can fix (cap, credit, unpriced model) is never offered as a Retry. */
+function isRetryable(job: ProgressJobRecord, failureCode: string | null): boolean {
   return (
     (job.status === 'FAILED' || job.status === 'CANCELLED') &&
+    !(failureCode !== null && NON_RETRYABLE_STEP_CODES.has(failureCode)) &&
     enqueueGenerationSchema.safeParse(job.request).success
   );
 }
@@ -83,19 +86,20 @@ function toFailure(job: ProgressJobRecord, steps: StepRow[]): ThreadGenerationFa
       failedStage: job.stage,
       roleId: null,
       httpStatus: null,
-      retryable: isRetryable(job),
+      retryable: isRetryable(job, null),
     };
   }
   if (job.status !== 'FAILED') return null;
   const last = lastFailedStep(steps);
   const blamed = blamedRoleStep(steps);
+  const code = last?.code ?? job.safeErrorCode ?? STEP_GENERATION_FAILED_CODE;
   return {
-    code: last?.code ?? job.safeErrorCode ?? STEP_GENERATION_FAILED_CODE,
+    code,
     failedStage:
       blamed?.stage ?? (last && last.stage !== STEP_FINAL_STAGE ? last.stage : job.stage),
     roleId: blamed?.roleId ?? null,
     httpStatus: last?.httpStatus ?? null,
-    retryable: isRetryable(job),
+    retryable: isRetryable(job, code),
   };
 }
 

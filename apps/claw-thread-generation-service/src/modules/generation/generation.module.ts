@@ -11,6 +11,7 @@ import { StepRecorder } from './services/step-recorder.service';
 import { GenerationJobsInternalController } from './controllers/generation-jobs-internal.controller';
 import { SourceSnapshotsModule } from '../source-snapshots/source-snapshots.module';
 import { ThreadBudgetClient } from './services/thread-budget.client';
+import { GenerationSpendSyncService } from './services/generation-spend-sync.service';
 
 @Module({
   imports: [ModelsModule, ResearchModule, SourceSnapshotsModule],
@@ -23,6 +24,7 @@ import { ThreadBudgetClient } from './services/thread-budget.client';
     GenerationProgressService,
     StepRecorder,
     ThreadBudgetClient,
+    GenerationSpendSyncService,
   ],
   exports: [GenerationPipelineManager, GenerationJobsService],
 })

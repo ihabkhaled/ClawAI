@@ -24,11 +24,24 @@ export class GenerationBudgetCloser {
   ) {}
 
   async close(jobId: string, budgetId: string, status: GenerationBudgetCloseStatus): Promise<void> {
+    await this.syncSpend(jobId, budgetId);
     try {
       await this.budgets.close(budgetId, status);
       await this.repository.markBudgetClosed(jobId, status);
     } catch (error: unknown) {
       await this.recordFailure(jobId, budgetId, status, error);
+    }
+  }
+
+  /**
+   * Persists what the budget row settled, so the owner's progress shows the real spend for every
+   * billing mode. Bookkeeping only: a failure here never blocks the close.
+   */
+  private async syncSpend(jobId: string, budgetId: string): Promise<void> {
+    try {
+      await this.repository.syncSpend(jobId, await this.budgets.settledMicroUsd(budgetId));
+    } catch {
+      this.logger.debug(`Generation spend could not be synced for job ${jobId}`);
     }
   }
 

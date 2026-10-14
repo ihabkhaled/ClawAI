@@ -199,10 +199,14 @@ object ended. 8123 characters. Start: "..." End: "..."` (or `EMPTY`, `PROSE`, `I
   cancelled job closes at once. A close that auth cannot answer (503) is counted on the job and retried with back-off; after 8 tries the job is marked `budget_close_status =
 CLOSE_ABANDONED`, closed locally so it can be deleted, and one error line names the job and budget ids. Look
   for `Generation budget close given up` in the log and release that budget in auth.
-- **Spend.** `spentMicroCredits` in the progress is the persisted sum of the per-call cost chat-service reports
-  (pay-as-you-go calls only). For an included-plan job it stays 0 although auth's `thread_job_budgets.spent_micro_usd`
-  is real. Auth now settles the budget at the amount charged and offers `POST /internal/threads/budgets/summary`
-  (`spentMicroUsd`, `remainingMicroUsd`); showing it in the progress is a generation-service follow-up.
+- **Spend.** `spentMicroCredits` is the persisted spend: the PAYG per-call cost chat-service reports, raised to the
+  budget row's settled total (`POST /internal/threads/budgets/summary`, `settledMicroUsd`) by the budget closer just
+  before each close, so plan-wallet and PAYG jobs match auth's `thread_job_budgets.spent_micro_usd`. Free jobs
+  settle 0 (the free-allowance meter holds the cost), so they show 0. A summary failure never blocks the close.
+  A running job is synced the same way after each model call settles (`GenerationSpendSyncService`, at most once
+  per 5 s per job, best effort), so the owner sees spend grow before the budget closes.
+- **Owner-only refusals fail fast.** `PAYG_CAP_TOO_LOW`, `PAYG_PRICE_UNAVAILABLE`, `PAYG_MODEL_UNPRICED`,
+  `PAYG_CREDIT_EXHAUSTED` and `PAYG_FREE_ALLOWANCE_EXHAUSTED` end the job on attempt 1 with the code (no 3 attempts), and progress reports `retryable: false` for them.
 - **Operating the slot count.** More replicas need `GENERATION_WORKER_SLOT_COUNT >= replicas x 3` and a migration
   that inserts `threads-worker-N` rows; a replica beyond the slots still works but its surplus claims wait for the
   sweep.
