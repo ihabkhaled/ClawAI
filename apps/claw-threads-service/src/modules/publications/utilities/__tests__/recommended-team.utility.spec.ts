@@ -49,7 +49,6 @@ const catalog: CatalogModel[] = [
   model('GROK', 'grok-4-fast'),
   model('OLLAMA', 'gpt-oss:20b', { windowTokens: null }),
   model('OPENAI', 'gpt-5-mini'),
-  model('ANTHROPIC', 'claude-haiku'),
 ];
 
 describe('classifyModel', () => {
@@ -57,8 +56,11 @@ describe('classifyModel', () => {
     expect(classifyModel(entitlements(), model('OPENAI', 'gpt-5-mini'))).toBe(
       ThreadModelAvailability.UNAVAILABLE,
     );
+  });
+
+  it('offers Anthropic again now that the spend cap is raised', () => {
     expect(classifyModel(entitlements(), model('ANTHROPIC', 'claude-haiku'))).toBe(
-      ThreadModelAvailability.UNAVAILABLE,
+      ThreadModelAvailability.AVAILABLE,
     );
   });
 

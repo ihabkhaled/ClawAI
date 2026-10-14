@@ -22,9 +22,9 @@ export const THREAD_MIN_TEAM_WINDOW_TOKENS = 32_768;
  * row is a follow-up. Each entry states the REAL cause, measured on prod 2026-10-14 from the
  * provider's own error body (chat-service log `generateOnceStream: <PROVIDER> returned status=`):
  * - OPENAI: account has no credit.
- * - ANTHROPIC: "You have reached your specified API usage limits. You will regain access on
- *   2026-11-01" (a 400 invalid_request_error, so it looked like a bad request; it is a spend cap).
- *   Raise the cap in the Anthropic console, then remove the entry.
+ * - ANTHROPIC: removed 2026-10-14 after the owner raised the spend cap. The old cap error was a
+ *   400 invalid_request_error ("You have reached your specified API usage limits"), so a future
+ *   cap shows up the same way: look for that text before suspecting the request body.
  * - HUGGINGFACE: 402 "You have no remaining credits". Buy credits, then remove the entry.
  * - GROQ: the on_demand tier allows 7,000-8,000 tokens PER REQUEST (413 "Request too large ...
  *   Limit 8000, Requested 17934") while a Threads role prompt is 10-18k tokens, so no Groq model
@@ -32,7 +32,6 @@ export const THREAD_MIN_TEAM_WINDOW_TOKENS = 32_768;
  */
 export const THREAD_MODEL_DENY_LIST: ReadonlyArray<{ provider: string; model?: string }> = [
   { provider: 'OPENAI' },
-  { provider: 'ANTHROPIC' },
   { provider: 'HUGGINGFACE' },
   { provider: 'GROQ' },
 ];

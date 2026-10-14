@@ -58,10 +58,9 @@ describe('buildHealingPool (ADR-181)', () => {
     ).toBeUndefined();
   });
 
-  it('keeps out the deny list (OpenAI, Anthropic) and a window that is too small', () => {
+  it('keeps out the deny list (OpenAI) and a window that is too small', () => {
     const pool = buildHealingPool(entitlements, [
       model('OPENAI', 'gpt', 'LOW'),
-      model('ANTHROPIC', 'claude', 'LOW'),
       model('GROK', 'tiny', 'LOW', 4096),
       model('GROK', 'ok', 'LOW', 64_000),
     ]);
