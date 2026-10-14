@@ -43,12 +43,20 @@ export class UsersRepository {
     });
   }
 
-  /** Case-insensitive, ACTIVE only: a mention never resolves to a suspended or unverified account. */
+  /**
+   * ACTIVE only. An exact (case-sensitive) match always wins; otherwise a case-insensitive match
+   * resolves only when it is unambiguous, because usernames are unique per case ("Ann" and "ann"
+   * can both exist) and a mention must never land on the wrong person.
+   */
   async findActiveProfileByUsername(username: string): Promise<PublicProfileSource | null> {
-    return this.prisma.user.findFirst({
+    const matches = await this.prisma.user.findMany({
       where: { username: { equals: username, mode: 'insensitive' }, status: UserStatus.ACTIVE },
       select: { id: true, username: true, firstName: true, lastName: true },
+      take: 2,
     });
+    const exact = matches.find((match) => match.username === username);
+    if (exact) return exact;
+    return matches.length === 1 ? (matches[0] ?? null) : null;
   }
 
   async findAll(params: {

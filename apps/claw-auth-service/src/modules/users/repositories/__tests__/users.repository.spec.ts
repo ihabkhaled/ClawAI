@@ -171,4 +171,27 @@ describe('UsersRepository', () => {
       data: { languagePreference: 'EN' },
     });
   });
+  describe('findActiveProfileByUsername', () => {
+    const profile = (username: string) => ({
+      id: username,
+      username,
+      firstName: null,
+      lastName: null,
+    });
+
+    it('prefers the exact-case match when two accounts differ only by case', async () => {
+      prismaMock.user.findMany.mockResolvedValueOnce([profile('Ann'), profile('ann')]);
+      expect((await repository.findActiveProfileByUsername('ann'))?.id).toBe('ann');
+    });
+
+    it('resolves a single case-insensitive match', async () => {
+      prismaMock.user.findMany.mockResolvedValueOnce([profile('Ann')]);
+      expect((await repository.findActiveProfileByUsername('ann'))?.id).toBe('Ann');
+    });
+
+    it('refuses an ambiguous case-insensitive match', async () => {
+      prismaMock.user.findMany.mockResolvedValueOnce([profile('Ann'), profile('ANN')]);
+      expect(await repository.findActiveProfileByUsername('ann')).toBeNull();
+    });
+  });
 });
