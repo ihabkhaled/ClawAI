@@ -67,3 +67,14 @@ describe('buildBoardIndexDoc', () => {
     expect(doc.formatVersion).toBe(BOARD_DOC_FORMAT_VERSION);
   });
 });
+
+describe('stripCitationMarkers cost', () => {
+  it('stays linear on a body of unclosed brackets and on long hex runs', () => {
+    const hostile = ['['.repeat(200_000), `[${'a1 '.repeat(100_000)}`, `${'[a,'.repeat(70_000)}x`];
+    for (const body of hostile) {
+      const started = Date.now();
+      stripCitationMarkers(body);
+      expect(Date.now() - started).toBeLessThan(1500);
+    }
+  });
+});

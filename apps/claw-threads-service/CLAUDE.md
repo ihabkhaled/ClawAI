@@ -104,3 +104,4 @@ the 13 locales is open.
 
 - The public view endpoint refreshes the Board row in the background and at most once per publication per 30 s (`BOARD_NOTIFY_MIN_INTERVAL_MS`): a public, unauthenticated request never waits for, or multiplies, a database refresh. The reconcile job heals any miss.
 - Removing a Board doc (unpublish, revoke, moderation hide) also removes, in the same transaction, the did-you-mean words only that doc contributed, so a taken-down Thread's words are not echoed back before the next dictionary rebuild.
+- Board citation markers are stripped by a linear scanner (`stripCitationMarkers`), not one regex over the whole body: a body of unclosed brackets cost the square of its length with the earlier pattern (ReDoS). A spec feeds 200,000 unclosed brackets and must finish in 1.5 s.

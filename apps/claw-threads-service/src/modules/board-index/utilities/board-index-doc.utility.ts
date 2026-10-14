@@ -4,7 +4,6 @@ import {
   BOARD_CITATION_ID,
   BOARD_CITATION_NARROW_RUN,
   BOARD_CITATION_TOKEN_SEPARATOR,
-  BOARD_CITATION_WIDE_RUN,
   BOARD_CJK_CHARACTER,
   BOARD_CJK_CHARS_PER_MINUTE,
   BOARD_DEFAULT_TEXT_SEARCH_CONFIG,
@@ -26,12 +25,46 @@ export function estimateReadingMinutes(text: string): number {
   return Math.max(1, Math.ceil(words / BOARD_WORDS_PER_MINUTE + cjk / BOARD_CJK_CHARS_PER_MINUTE));
 }
 
-/** Removes internal source markers so they are neither displayed nor searchable. */
+/**
+ * Removes internal source markers so they are neither displayed nor searchable.
+ *
+ * A linear scan, not one regex over the whole body: a bracket run is the longest stretch of
+ * bracket, comma, space and hex characters from a '[', and it is only a candidate up to its last ']'.
+ * A run without a closing bracket is skipped whole, so a body of unclosed '[' cannot make the cost
+ * grow with the square of its length (ReDoS).
+ */
 export function stripCitationMarkers(text: string): string {
-  return text
-    .replaceAll(BOARD_CITATION_WIDE_RUN, markerRunOrKept)
-    .replaceAll(BOARD_CITATION_NARROW_RUN, markerRunOrKept)
-    .replaceAll(/[ \t]{2,}/gu, ' ');
+  let output = '';
+  let index = 0;
+  while (index < text.length) {
+    const open = text.indexOf('[', index);
+    if (open < 0) {
+      output += text.slice(index);
+      break;
+    }
+    output += text.slice(index, open);
+    let runEnd = open + 1;
+    while (runEnd < text.length && isMarkerRunCharacter(text.charAt(runEnd))) runEnd += 1;
+    const close = text.lastIndexOf(']', runEnd - 1);
+    if (close > open) {
+      output += stripMarkersInRun(text.slice(open, close + 1));
+      index = close + 1;
+    } else {
+      output += text.slice(open, runEnd);
+      index = runEnd;
+    }
+  }
+  return output.replaceAll(/[ \t]{2,}/gu, ' ');
+}
+
+function isMarkerRunCharacter(character: string): boolean {
+  return /[\s,[\]0-9a-f]/iu.test(character);
+}
+
+/** A whole run of 16-hex ids becomes a space; otherwise only the marker groups inside it do. */
+function stripMarkersInRun(run: string): string {
+  const whole = markerRunOrKept(run);
+  return whole === run ? run.replaceAll(BOARD_CITATION_NARROW_RUN, markerRunOrKept) : whole;
 }
 
 /** A bracket run made only of 16-hex ids (one, a comma list or a nested list) becomes a space. */

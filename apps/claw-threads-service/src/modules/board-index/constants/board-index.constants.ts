@@ -28,7 +28,6 @@ export const BOARD_RECONCILE_TIME_BUDGET_MS = 20_000;
  * nested lists [[id1], [id2]]; never shown or searched. A bracket run is a candidate only; it is
  * stripped when every token in it is a 16-hex id. The wide run (may span several brackets) goes first.
  */
-export const BOARD_CITATION_WIDE_RUN = /\[[\s,[\]0-9a-f]+\]/giu;
 export const BOARD_CITATION_NARROW_RUN = /\[{1,2}[\s,0-9a-f]+\]{1,2}/giu;
 export const BOARD_CITATION_TOKEN_SEPARATOR = /[\s,[\]]+/u;
 export const BOARD_CITATION_ID = /^[0-9a-f]{16}$/iu;
