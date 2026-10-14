@@ -18,6 +18,9 @@ export const chatStreamFrameSchema = z.discriminatedUnion('type', [
     type: z.literal('error'),
     status: z.number().int().min(100).max(599).catch(FRAME_FALLBACK_STATUS),
     code: z.string().regex(GATEWAY_ERROR_CODE_PATTERN).optional().catch(undefined),
+    /** Redacted, at most 300 characters; shown to the owner as the step excerpt. */
+    message: z.string().max(300).optional().catch(undefined),
+    retryAfterSeconds: z.number().int().min(0).max(3600).optional().catch(undefined),
   }),
 ]);
 

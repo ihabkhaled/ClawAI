@@ -109,10 +109,12 @@ describe('PublicationGenerationOwnerService', () => {
           jobId: 'job-2',
           status: 'QUEUED',
         });
-        expect(generation.retry).toHaveBeenCalledWith('job-1', 'owner-1', {
-          ...input,
-          idempotencyKey: scopedIdempotencyKey('owner-1', 'retry-1'),
-        });
+        expect(generation.retry).toHaveBeenCalledWith(
+          'job-1',
+          'owner-1',
+          { ...input, idempotencyKey: scopedIdempotencyKey('owner-1', 'retry-1') },
+          undefined,
+        );
         expect(publications.attachRetryJob).toHaveBeenCalledWith(
           'pub-1',
           'owner-1',

@@ -20,6 +20,7 @@ import {
   PUBLISHABLE_PUBLICATION_STATUSES,
 } from '../constants/publication-generation-owner.constants';
 import { GenerationPreflightService } from './generation-preflight.service';
+import { HealingPoolService } from './healing-pool.service';
 import { ThreadsGenerationClient } from './threads-generation.client';
 import type { EditPublicationRevisionDto } from '../dto/edit-publication-revision.dto';
 import type { StartThreadGenerationDto } from '../dto/start-thread-generation.dto';
@@ -54,6 +55,7 @@ export class PublicationLifecycleService {
     private readonly gate: GenerationStartGate,
     @Optional() private readonly boardIndex?: BoardIndexService,
     @Optional() private readonly preflight?: GenerationPreflightService,
+    @Optional() private readonly healingPool?: HealingPoolService,
   ) {}
 
   listOwned(ownerId: string): ReturnType<PublicationsRepository['findOwnedPublications']> {
@@ -71,7 +73,8 @@ export class PublicationLifecycleService {
     input: StartThreadGenerationDto,
     identity?: PublicationStartIdentity,
   ): Promise<{ publicationId: string; jobId: string; status: string }> {
-    const job = await this.generation.enqueue(ownerId, input);
+    const healing = await this.healingPool?.forOwner(ownerId);
+    const job = await this.generation.enqueue(ownerId, input, healing);
     const endAttach = this.gate.beginAttach(job.jobId);
     try {
       const publication = await this.publications.createQueuedPublication(
@@ -115,6 +118,7 @@ export class PublicationLifecycleService {
     stage: string;
     round: number;
     safeErrorCode: string | null;
+    terminal: boolean;
     draft: {
       markdown: string;
       citations: Array<{ evidenceId: string; url: string }>;

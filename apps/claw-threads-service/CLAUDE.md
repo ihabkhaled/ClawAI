@@ -69,8 +69,8 @@ Start and retry bodies go through `ZodValidationPipe(schema, ThreadGenerationErr
 
 ## Round-2 owner fixes (ADR-174 addendum 2026-10-14)
 
-- **Same-provider fallback** is refused at start and retry preflight: `400 THREAD_FALLBACK_SAME_PROVIDER`
-  (the pipeline would otherwise fail it after budget is held).
+- **Same-provider fallback** was refused here (`THREAD_FALLBACK_SAME_PROVIDER`); since ADR-181 it is allowed
+  (only a fallback identical to its primary is dropped by the pipeline).
 - **Retry cap** below one cent is `400 THREAD_SPEND_CAP_TOO_LOW` (zod only requires a positive number).
 - **Publish after progress says WAITING_FOR_REVIEW**: the draft is stored only when the job state is
   read, so `approveAndPublish` reads it once on NOT_READY and publishes; no 25 s 409 window.
@@ -129,3 +129,9 @@ Start and retry bodies go through `ZodValidationPipe(schema, ThreadGenerationErr
 - **A removed comment is a placeholder only while it has visible replies** (`removed: true`, `[removed]`, no author); never leak its text or author.
 - **Account deletion** must also delete `thread_publication_comment_reactions` and `..._mentions` rows of the user and null `replyToUserId` (`AccountDeletionRepository`; its spec checks each).
 - Specs run on the swc-free vitest config when Smart App Control blocks `@swc/core`: all new classes are built by hand with mocks, so no Nest DI metadata is needed.
+
+## Healing pool and same-provider fallbacks (ADR-181, 2026-10-14)
+
+- `HealingPoolService.forOwner` builds `{ pool, safeDefault }` (plan-allowed as FALLBACK, not on the deny list, window at least 32k, cheapest band first, spread over providers, at most 8; safe default = a Gemini "flash" model) and `ThreadsGenerationClient.enqueue`/`retry` hand it to the generation service. A failed read means no pool, never a refused start. `PublicationLifecycleService` and `PublicationGenerationOwnerService` take it as an `@Optional()` last constructor argument.
+- `THREAD_FALLBACK_SAME_PROVIDER` is gone: a fallback of another model on the primary's provider is accepted by the start and retry preflight.
+- Retry body accepts `articleLength: 'SHORT'`. The progress schema passes `failure.phase|failureClass|remedies|suggestedModel` and `healing` through (all optional, an older generation service sends none). `generation-state` carries `terminal`.

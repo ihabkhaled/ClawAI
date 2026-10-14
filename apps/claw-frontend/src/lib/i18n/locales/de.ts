@@ -939,6 +939,65 @@ export const de: TranslationDictionary = {
         s: '{value} s',
         minSec: '{minutes} Min. {seconds} Sek.',
       },
+      recovery: {
+        title: 'Was passiert ist und was Sie tun können',
+        phaseLine: 'Fehlgeschlagener Schritt: {phase}.',
+        triedTitle: 'Was wir schon versucht haben',
+        triedNone: 'Automatisch ließ sich nichts weiter versuchen.',
+        remediesTitle: 'Wählen Sie, wie es weitergeht',
+        retryingModel: 'Neuer Versuch mit einem anderen Modell…',
+        retryingSmarter: 'Neuer Versuch auf klügere Weise…',
+        phase: {
+          queue: 'Warten in der Warteschlange',
+          snapshot: 'Lesen Ihres Chats',
+          research: 'Recherche',
+          author: 'Schreiben der Entwürfe',
+          citations: 'Prüfen der Quellen',
+          consensus: 'Einigung auf einen Entwurf',
+          judge: 'die Prüfung durch den Richter',
+          critic: 'die Prüfung durch den Kritiker',
+          finalize: 'Fertigstellen des Entwurfs',
+        },
+        reason: {
+          providerRejected: 'Der KI-Anbieter hat die Anfrage abgelehnt.',
+          providerRateLimited: 'Der KI-Anbieter begrenzt gerade die Anfragen.',
+          providerUnavailable: 'Der KI-Anbieter ist gerade nicht verfügbar.',
+          providerTimeout: 'Das Modell blieb stumm oder brauchte zu lange.',
+          providerCredit: 'Beim Anbieter des Modells ist gerade das Guthaben aufgebraucht.',
+          network: 'Die Verbindung zum KI-Anbieter ist fehlgeschlagen.',
+          emptyOutput: 'Das Modell hat nichts geantwortet.',
+          truncatedOutput: 'Dem Modell ging der Platz aus, bevor es fertig war.',
+          invalidJson: 'Die Antwort des Modells hatte nicht das benötigte Format.',
+          wrongShape: 'In der Antwort des Modells fehlten erforderliche Teile.',
+          citationRule: 'Das Modell hat Quellen genannt, die nicht in der Recherche stehen.',
+          refusal: 'Das Modell hat sich geweigert, zu diesem Thema zu schreiben.',
+          contextOverflow: 'Das Material ist für das Modell zu lang.',
+          pricingUnavailable: 'Für das Modell konnte kein Preis ermittelt werden.',
+          capTooLow: 'Das Ausgabenlimit ist für diesen Schritt zu niedrig.',
+          creditExhausted: 'Ihr Guthaben ist aufgebraucht.',
+          entitlement: 'Ihr Tarif erlaubt dieses Modell nicht.',
+          researchFailed: 'Der Recherche-Schritt konnte keine Quellen finden oder lesen.',
+          reviewNotPassed: 'Der Entwurf hat die Prüfungen nicht bestanden.',
+          queueWorker: 'Der Worker, der diese Erstellung ausführte, wurde beendet.',
+          cancelled: 'Sie haben diese Erstellung abgebrochen.',
+          unknown: 'Es ist etwas Unerwartetes schiefgegangen.',
+        },
+        remedy: {
+          tryAgain: 'Erneut versuchen',
+          trySuggested: 'Erneut mit {model} versuchen',
+          chooseModel: 'Anderes Modell für diesen Schritt wählen',
+          recommendedTeam: 'Empfohlenes Team verwenden',
+          shorterArticle: 'Kürzeren Artikel versuchen',
+          raiseCap: 'Ausgabenlimit erhöhen',
+          addCredit: 'Guthaben aufladen',
+          changeTopic: 'Thema ändern',
+        },
+        result: {
+          pending: '(läuft)',
+          succeeded: '(hat geklappt)',
+          failed: '(hat nicht geklappt)',
+        },
+      },
       code: {
         paygCreditExhausted: 'Bei einem Modell ist das Guthaben aufgebraucht.',
         providerUnavailable: 'Der KI-Anbieter war nicht erreichbar.',
@@ -982,6 +1041,37 @@ export const de: TranslationDictionary = {
         cloudProviderUnavailable: 'Ein Cloud-Modellanbieter ist vorübergehend nicht erreichbar.',
         paygCapTooLow: 'Das Ausgabenlimit ist für einen Modellaufruf zu niedrig.',
         paygPriceUnavailable: 'Für dieses Modell gibt es noch keinen Preis.',
+        healBackoffRetry:
+          'Ein Modell war ausgelastet, daher haben wir kurz gewartet und es erneut gefragt.',
+        healStrictPrompt:
+          'Ein Modell hat im falschen Format geantwortet, daher haben wir strenger nachgefragt.',
+        healJsonRepair:
+          'Die Antwort eines Modells war defekt, daher hat ein Reparaturschritt das Format korrigiert.',
+        healRaiseOutputLimit:
+          'Einem Modell ging der Platz aus, daher haben wir ihm mehr Platz zum Schreiben gegeben.',
+        healCompactOutput:
+          'Einem Modell ging erneut der Platz aus, daher haben wir einen kürzeren Artikel angefordert.',
+        healLowerOutputLimit:
+          'Ein Anbieter hat die Anfrage abgelehnt, daher haben wir mit kleinerer Antwortlänge erneut gefragt.',
+        healShrinkSource:
+          'Der Chat war für ein Modell zu lang, daher haben wir ihn gekürzt und erneut gefragt.',
+        healCrossProvider:
+          'Ein Modell ist immer wieder ausgefallen, daher hat ein anderes Modell übernommen.',
+        healSafeDefault:
+          'Die anderen Modelle sind ausgefallen, daher hat das sichere Standardmodell übernommen.',
+        healStoppedSpendCap:
+          'Weitere Versuche wurden gestoppt, damit dieser Auftrag in Ihrem Ausgabenlimit bleibt.',
+        healStoppedAttemptBudget:
+          'Weitere Versuche wurden gestoppt, weil dieser Schritt sein Versuchslimit erreicht hat.',
+        healStoppedOwnerAction:
+          'Weitere Versuche wurden gestoppt, weil nur Sie das beheben können.',
+        providerRequestTooLarge:
+          'Die Anfrage war größer, als das Limit dieses Modells im Tarif erlaubt.',
+        providerCreditExhausted:
+          'Beim Anbieter dieses Modells ist gerade das Guthaben aufgebraucht.',
+        paygPricingUnavailable: 'Für dieses Modell konnte gerade kein Preis ermittelt werden.',
+        cloudProviderRequestFailed: 'Der KI-Anbieter hat die Anfrage abgelehnt.',
+        cloudProviderEmptyResponse: 'Der KI-Anbieter hat eine leere Antwort geliefert.',
         unknown: 'Etwas ist schiefgelaufen ({code}).',
       },
       hint: {
@@ -1034,6 +1124,27 @@ export const de: TranslationDictionary = {
           'Warten Sie kurz und versuchen Sie es erneut oder wählen Sie ein anderes Modell.',
         paygCapTooLow: 'Erhöhen Sie das Ausgabenlimit und versuchen Sie es erneut.',
         paygPriceUnavailable: 'Wählen Sie ein anderes Modell und versuchen Sie es erneut.',
+        healBackoffRetry: 'Nichts zu tun. Es versucht es von selbst erneut.',
+        healStrictPrompt: 'Nichts zu tun. Es versucht es von selbst erneut.',
+        healJsonRepair: 'Nichts zu tun. Der Entwurf bleibt erhalten.',
+        healRaiseOutputLimit: 'Nichts zu tun. Es versucht es von selbst erneut.',
+        healCompactOutput: 'Nichts zu tun. Der Artikel fällt eventuell kürzer aus als sonst.',
+        healLowerOutputLimit: 'Nichts zu tun. Es versucht es von selbst erneut.',
+        healShrinkSource:
+          'Nichts zu tun. Ältere Nachrichten des Chats wurden in diesem Schritt weggelassen.',
+        healCrossProvider: 'Nichts zu tun. Der Schritt läuft mit dem anderen Modell weiter.',
+        healSafeDefault:
+          'Nichts zu tun. Beim erneuten Versuch können Sie die Modelle selbst wählen.',
+        healStoppedSpendCap: 'Erhöhen Sie das Ausgabenlimit und versuchen Sie es erneut.',
+        healStoppedAttemptBudget:
+          'Wählen Sie für diesen Schritt ein anderes Modell und versuchen Sie es erneut.',
+        healStoppedOwnerAction: 'Sehen Sie unten, was Sie tun können.',
+        providerRequestTooLarge:
+          'Wählen Sie ein Modell mit größerem Limit oder kürzen Sie das Thema und versuchen Sie es erneut.',
+        providerCreditExhausted: 'Wählen Sie ein anderes Modell und versuchen Sie es erneut.',
+        paygPricingUnavailable: 'Wählen Sie ein anderes Modell und versuchen Sie es erneut.',
+        cloudProviderRequestFailed: 'Versuchen Sie es mit einem anderen Modell erneut.',
+        cloudProviderEmptyResponse: 'Versuchen Sie es erneut oder wählen Sie ein anderes Modell.',
         unknown: 'Versuchen Sie es erneut oder ändern Sie die Modelle.',
       },
       startError: {

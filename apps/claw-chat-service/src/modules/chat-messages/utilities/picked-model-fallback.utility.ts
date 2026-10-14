@@ -98,10 +98,9 @@ export function isSubstitutableFailure(error: unknown): boolean {
   if (error instanceof ProviderRateLimitedException) {
     return true;
   }
-  if (error.code === PICKED_MODEL_CANCELLED_CODE) {
-    return false;
-  }
-  return !PICKED_MODEL_NON_SUBSTITUTABLE_STATUSES.has(error.getStatus());
+  return error.code === PICKED_MODEL_CANCELLED_CODE
+    ? false
+    : !PICKED_MODEL_NON_SUBSTITUTABLE_STATUSES.has(error.getStatus());
 }
 
 /**
@@ -141,6 +140,7 @@ export function pickedModelFallbackPart(
   payload: MessageRoutedData,
   candidate: { provider: string; model: string },
   index: number,
+  attempts: ReadonlyArray<{ errorCode?: string | null }> = [],
 ): { pickedModelFallback?: PickedModelFallbackNotice } {
   if (!isPickedModelTurn(payload) || index === 0) {
     return {};
@@ -153,6 +153,9 @@ export function pickedModelFallbackPart(
       originalProvider: payload.selectedProvider,
       originalModel: payload.selectedModel,
       costlier: substitute?.costlier !== false,
+      ...(typeof attempts[0]?.errorCode === 'string' && attempts[0].errorCode.length > 0
+        ? { reasonCode: attempts[0].errorCode }
+        : {}),
     },
   };
 }

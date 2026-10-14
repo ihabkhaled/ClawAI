@@ -1,8 +1,14 @@
 import { z } from 'zod';
-import type { Locale, ThreadPublicationType } from '@claw/shared-types';
+import type {
+  Locale,
+  ThreadArticleLength,
+  ThreadHealingPool,
+  ThreadPublicationType,
+} from '@claw/shared-types';
 
 import type { ThreadGenerationStage } from '../../../generated/prisma';
 import type { ResearchEvidence } from '../../research/research.client';
+import type { HealingBudget } from './healing.types';
 import { clampReviewList, clampReviewText } from '../utilities/clamp-review-text.utility';
 import { sanitizeDraftMarkup } from '../utilities/sanitize-draft-markup.utility';
 import type { ReviewerRole } from './reviewer-role.enum';
@@ -23,6 +29,18 @@ export const modelRoleSchema = z.object({
     .default([]),
 });
 
+const healingCandidateSchema = z.object({
+  provider: z.string().min(1).max(100),
+  model: z.string().min(1).max(200),
+  windowTokens: z.number().int().positive().max(100_000_000).optional(),
+  costRank: z.number().int().min(0).max(1000).optional(),
+});
+
+export const healingPoolSchema = z.object({
+  pool: z.array(healingCandidateSchema).max(12).default([]),
+  safeDefault: healingCandidateSchema.optional(),
+});
+
 export const authorDraftSchema = z.object({
   markdown: z.string().min(1).max(100_000).transform(sanitizeDraftMarkup),
   citations: z
@@ -40,7 +58,11 @@ export const reviewSchema = z.object({
   // Long or numerous items are shortened, never rejected: a verbose review is still a review.
   blockers: z.array(z.string()).transform((items) => clampReviewList(items, REVIEW_BLOCKERS_MAX)),
   findings: z.array(z.string()).transform((items) => clampReviewList(items, REVIEW_FINDINGS_MAX)),
-  revisionBrief: z.string().transform((text) => clampReviewText(text, REVIEW_BRIEF_MAX_CHARS)),
+  // A reviewer that passes a draft often leaves the brief out; a missing one is an empty brief.
+  revisionBrief: z
+    .string()
+    .default('')
+    .transform((text) => clampReviewText(text, REVIEW_BRIEF_MAX_CHARS)),
 });
 
 export const checkpointBundleSchema = z.record(z.string(), z.unknown());
@@ -78,6 +100,15 @@ export type GenerationPipelineInput = {
   authors: ModelRole[];
   judge: ModelRole;
   critic: ModelRole;
+  /** Models the ladder may swap in once the role's own backups are spent (ADR-181). */
+  healing?: ThreadHealingPool;
+  /** The job's cap and what it had spent when this attempt began, for the healing spend guard. */
+  spendCapMicroUsd?: number;
+  spentMicroUsd?: number;
+  /** "Shorter article" asks the authors for about 60 percent of the usual length. */
+  articleLength?: ThreadArticleLength;
+  /** Set by the pipeline for one attempt: the counters that bound healing. */
+  healingBudget?: HealingBudget;
   isCancellationRequested?: () => Promise<boolean>;
   /** Aborts the model call in flight on cancel, lease loss or the attempt time limit. */
   signal?: AbortSignal;
@@ -104,6 +135,11 @@ export type PrivateGenerationState = {
   stage: string;
   round: number;
   safeErrorCode: string | null;
+  /**
+   * True once the job can no longer change by itself (completed, failed, cancelled, waiting for
+   * review). `safeErrorCode` is the last attempt's code and can be set while the job still retries.
+   */
+  terminal: boolean;
   review: {
     draftHash: string;
     authorConsensus: boolean;

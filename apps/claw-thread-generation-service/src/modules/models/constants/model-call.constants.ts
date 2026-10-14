@@ -14,6 +14,7 @@ export const CHAT_GENERATE_STREAM_PATH = '/api/v1/internal/chat/generate-stream'
 export const CHAT_GENERATE_PATH = '/api/v1/internal/chat/generate';
 export const NDJSON_CONTENT_TYPE = 'application/x-ndjson';
 export const HTTP_NOT_FOUND = 404;
+export const MS_PER_SECOND = 1000;
 
 export const MODEL_IDLE_TIMEOUT_CODE = 'MODEL_IDLE_TIMEOUT';
 export const MODEL_HARD_CEILING_CODE = 'MODEL_HARD_CEILING';

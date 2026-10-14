@@ -1,4 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
 import type { UserEntitlements } from '@claw/shared-entitlements';
 import { Locale, Permission, PlanModelAccessMode, ThreadPublicationType } from '@claw/shared-types';
 
@@ -64,22 +63,21 @@ const seat = (roleId: string, roleKind: string, provider: string, fallbacks: Fal
   fallbacks,
 });
 
-describe('GenerationPreflightService same-provider fallback (N-01)', () => {
-  it('refuses a start whose fallback shares its primary provider, before any lookup', async () => {
-    const { service, adapter, catalog } = setup();
+/**
+ * ADR-181: a team that uses one provider has no other provider to fall back to, and most failures
+ * (a refused reply, a model-specific 400, a window) are the model's, not the provider's. A
+ * fallback of another model on the same provider is therefore allowed; the pipeline drops only a
+ * fallback that is the primary itself, and says so in the step log.
+ */
+describe('GenerationPreflightService same-provider fallback (ADR-181)', () => {
+  it('accepts a start whose fallback is another model of its primary provider', async () => {
+    const { service, catalog } = setup();
 
-    const failure = await service
-      .assertCanStart('owner-1', request([{ provider: 'GEMINI', model: 'm2' }]))
-      .catch((error: unknown) => error);
-
-    expect(failure).toBeInstanceOf(BadRequestException);
-    expect((failure as BadRequestException).getResponse()).toMatchObject({
-      code: 'THREAD_FALLBACK_SAME_PROVIDER',
-      role: 'author',
-      roleId: 'author-2',
-    });
-    expect(catalog.isKnown).not.toHaveBeenCalled();
-    expect(adapter.getEntitlements).not.toHaveBeenCalled();
+    await expect(
+      service.assertCanStart('owner-1', request([{ provider: 'GEMINI', model: 'm2' }])),
+    ).resolves.toBeUndefined();
+    // The fallback is looked up and plan-checked like any other model.
+    expect(catalog.isKnown).toHaveBeenCalledWith({ provider: 'GEMINI', model: 'm2' });
   });
 
   it('accepts a fallback on another provider', async () => {
@@ -90,7 +88,18 @@ describe('GenerationPreflightService same-provider fallback (N-01)', () => {
     ).resolves.toBeUndefined();
   });
 
-  it('refuses the same on a retry', async () => {
+  it('still refuses a fallback the catalog does not know, same provider or not', async () => {
+    const { service, catalog } = setup();
+    catalog.isKnown.mockImplementation(({ model }: { model: string }) =>
+      Promise.resolve(model !== 'nope'),
+    );
+
+    await expect(
+      service.assertCanStart('owner-1', request([{ provider: 'GEMINI', model: 'nope' }])),
+    ).rejects.toMatchObject({ response: { code: 'THREAD_MODEL_UNKNOWN' } });
+  });
+
+  it('accepts the same on a retry', async () => {
     const { service } = setup();
     const stored: StoredGenerationSelections = {
       spendCapMicroUsd: '2000000',
@@ -105,6 +114,6 @@ describe('GenerationPreflightService same-provider fallback (N-01)', () => {
 
     await expect(
       service.assertCanRetry('owner-1', stored, { idempotencyKey: 'r1' }),
-    ).rejects.toMatchObject({ response: { code: 'THREAD_FALLBACK_SAME_PROVIDER' } });
+    ).resolves.toBeUndefined();
   });
 });

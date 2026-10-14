@@ -62,6 +62,15 @@ describe('classifyModel', () => {
     );
   });
 
+  it.each([
+    ['HUGGINGFACE', 'Qwen/Qwen2.5-72B-Instruct'],
+    ['GROQ', 'openai/gpt-oss-120b'],
+  ])('keeps %s out: its prod failure is an account cap, not a model fault', (provider, name) => {
+    expect(classifyModel(entitlements(), model(provider, name))).toBe(
+      ThreadModelAvailability.UNAVAILABLE,
+    );
+  });
+
   it('marks a model the plan does not list as needing a plan, with the preflight test', () => {
     const free = entitlements({
       modelAccessMode: PlanModelAccessMode.ALLOW_LIST,

@@ -71,6 +71,10 @@ export const PAYG_STEP_CODES: readonly string[] = [
 export const NON_RETRYABLE_STEP_CODES: ReadonlySet<string> = new Set([
   ...PAYG_STEP_CODES,
   'PAYG_MODEL_UNPRICED',
+  // The platform could not price any candidate, or every candidate's window was too small for the
+  // request even after the source was shrunk: another whole attempt fails the same way (ADR-181).
+  'PAYG_PRICING_UNAVAILABLE',
+  'PROVIDER_REQUEST_TOO_LARGE',
 ]);
 /** Auth refuses an unpriced model with PAYG_MODEL_UNPRICED; a Thread step reports it as a missing price. */
 export const STEP_UPSTREAM_CODE_ALIASES: ReadonlyMap<string, string> = new Map([

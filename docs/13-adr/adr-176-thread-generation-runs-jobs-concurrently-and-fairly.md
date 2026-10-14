@@ -56,7 +56,7 @@ A refused reply is recorded as a classified reason first (`EMPTY`, `TRUNCATED`, 
 
 ## Addendum 2026-10-14: round-2 owner fixes
 
-The preflight also refuses a fallback on its primary's provider (`THREAD_FALLBACK_SAME_PROVIDER`).
+The preflight also refused a fallback on its primary's provider (`THREAD_FALLBACK_SAME_PROVIDER`); [ADR-181](adr-181-thread-generation-heals-itself-by-failure-class-and-resumes-at-the-failed-phase.md) removed that refusal.
 A retry cap below one cent now reaches the preflight and gets `THREAD_SPEND_CAP_TOO_LOW`. Decision:
 an owner edit review is a paid Judge and Critic call and uses the allowance, so a Free owner cannot edit
 after the one lifetime use; the refusal explains the allowance. Still open: refusing a cap below the

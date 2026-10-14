@@ -1,4 +1,4 @@
-import type { ThreadGenerationProgress } from '@claw/shared-types';
+import type { ThreadGenerationProgress, ThreadHealingPool } from '@claw/shared-types';
 
 import type { PublicationStatus } from '../../../generated/prisma';
 import type { StartThreadGenerationDto } from '../dto/start-thread-generation.dto';
@@ -6,6 +6,8 @@ import type { StartThreadGenerationDto } from '../dto/start-thread-generation.dt
 export type GenerationEnqueueInput = Omit<StartThreadGenerationDto, 'capMicroUsd'> & {
   spendCapMicroUsd: string;
   publicIntentVersion: string;
+  /** Models the generation service may heal with after the seat's own backups (ADR-181). */
+  healing?: ThreadHealingPool;
 };
 
 export type PrivateGenerationState = {
@@ -14,6 +16,8 @@ export type PrivateGenerationState = {
   stage: string;
   round: number;
   safeErrorCode: string | null;
+  /** False while the job is queued or running, even when `safeErrorCode` holds the last attempt's code. */
+  terminal: boolean;
   review: {
     draftHash: string;
     authorConsensus: boolean;

@@ -932,6 +932,65 @@ export const it: TranslationDictionary = {
         s: '{value} s',
         minSec: '{minutes} min {seconds} s',
       },
+      recovery: {
+        title: 'Cosa è successo e cosa puoi fare',
+        phaseLine: 'Passaggio non riuscito: {phase}.',
+        triedTitle: 'Cosa abbiamo già provato',
+        triedNone: 'Non si poteva provare altro in automatico.',
+        remediesTitle: 'Scegli come proseguire',
+        retryingModel: 'Nuovo tentativo con un altro modello…',
+        retryingSmarter: 'Nuovo tentativo in modo più furbo…',
+        phase: {
+          queue: "l'attesa in coda",
+          snapshot: 'la lettura della tua chat',
+          research: 'la ricerca',
+          author: 'la scrittura delle bozze',
+          citations: 'la verifica delle fonti',
+          consensus: "l'accordo su una bozza",
+          judge: 'la revisione del Giudice',
+          critic: 'la revisione del Critico',
+          finalize: 'il completamento della bozza',
+        },
+        reason: {
+          providerRejected: 'Il fornitore di IA ha rifiutato la richiesta.',
+          providerRateLimited: 'Il fornitore di IA sta limitando le richieste al momento.',
+          providerUnavailable: 'Il fornitore di IA non è disponibile al momento.',
+          providerTimeout: 'Il modello è rimasto in silenzio o ha impiegato troppo.',
+          providerCredit: 'Il fornitore del modello ha esaurito il credito al momento.',
+          network: 'La connessione al fornitore di IA non è riuscita.',
+          emptyOutput: 'Il modello non ha risposto nulla.',
+          truncatedOutput: 'Al modello è finito lo spazio prima di finire.',
+          invalidJson: 'La risposta del modello non aveva il formato richiesto.',
+          wrongShape: 'Nella risposta del modello mancavano parti obbligatorie.',
+          citationRule: 'Il modello ha citato fonti che non sono nella ricerca.',
+          refusal: 'Il modello ha rifiutato di scrivere su questo argomento.',
+          contextOverflow: 'Il materiale è troppo lungo per il modello.',
+          pricingUnavailable: 'Non è stato possibile stabilire un prezzo per il modello.',
+          capTooLow: 'Il limite di spesa è troppo basso per questo passaggio.',
+          creditExhausted: 'Il tuo credito è esaurito.',
+          entitlement: 'Il tuo piano non consente questo modello.',
+          researchFailed: 'Il passaggio di ricerca non ha trovato né letto fonti.',
+          reviewNotPassed: 'La bozza non ha superato le revisioni.',
+          queueWorker: 'Il processo che eseguiva questa generazione si è fermato.',
+          cancelled: 'Hai annullato questa generazione.',
+          unknown: 'Qualcosa di inatteso è andato storto.',
+        },
+        remedy: {
+          tryAgain: 'Riprova',
+          trySuggested: 'Riprova con {model}',
+          chooseModel: 'Scegli un altro modello per questo passaggio',
+          recommendedTeam: 'Usa il team consigliato',
+          shorterArticle: 'Prova un articolo più breve',
+          raiseCap: 'Aumenta il limite di spesa',
+          addCredit: 'Aggiungi credito',
+          changeTopic: "Cambia l'argomento",
+        },
+        result: {
+          pending: '(in corso)',
+          succeeded: '(ha funzionato)',
+          failed: '(non ha funzionato)',
+        },
+      },
       code: {
         paygCreditExhausted: 'A un modello è finito il credito.',
         providerUnavailable: 'Il provider di IA non è raggiungibile.',
@@ -978,6 +1037,38 @@ export const it: TranslationDictionary = {
           'Un fornitore di modelli cloud non è temporaneamente disponibile.',
         paygCapTooLow: 'Il limite di spesa è troppo basso per una chiamata al modello.',
         paygPriceUnavailable: 'Questo modello non ha ancora un prezzo.',
+        healBackoffRetry:
+          'Un modello era occupato, quindi abbiamo atteso un attimo e glielo abbiamo richiesto.',
+        healStrictPrompt:
+          'Un modello ha risposto nel formato sbagliato, quindi lo abbiamo richiesto in modo più rigoroso.',
+        healJsonRepair:
+          'La risposta di un modello era danneggiata, quindi un passaggio di riparazione ne ha corretto il formato.',
+        healRaiseOutputLimit:
+          'A un modello è finito lo spazio, quindi gli abbiamo dato più spazio per scrivere.',
+        healCompactOutput:
+          'A un modello è finito di nuovo lo spazio, quindi abbiamo chiesto un articolo più breve.',
+        healLowerOutputLimit:
+          "Un fornitore ha rifiutato la richiesta, quindi l'abbiamo ripetuta con una risposta più piccola.",
+        healShrinkSource:
+          "La chat era troppo lunga per un modello, quindi l'abbiamo accorciata e riprovato.",
+        healCrossProvider:
+          'Un modello continuava a fallire, quindi ha preso il suo posto un altro modello.',
+        healSafeDefault:
+          'Gli altri modelli hanno fallito, quindi ha preso il posto il modello sicuro predefinito.',
+        healStoppedSpendCap:
+          'I nuovi tentativi si sono fermati per mantenere questo lavoro entro il tuo limite di spesa.',
+        healStoppedAttemptBudget:
+          'I nuovi tentativi si sono fermati perché questo passaggio ha raggiunto il limite di tentativi.',
+        healStoppedOwnerAction:
+          'I nuovi tentativi si sono fermati perché solo tu puoi risolvere questo problema.',
+        providerRequestTooLarge:
+          'La richiesta superava il limite consentito dal tuo piano per questo modello.',
+        providerCreditExhausted:
+          'Il fornitore di questo modello ha esaurito il credito al momento.',
+        paygPricingUnavailable:
+          'Al momento non è stato possibile stabilire un prezzo per questo modello.',
+        cloudProviderRequestFailed: 'Il fornitore di IA ha rifiutato la richiesta.',
+        cloudProviderEmptyResponse: 'Il fornitore di IA ha restituito una risposta vuota.',
         unknown: 'Qualcosa è andato storto ({code}).',
       },
       hint: {
@@ -1024,6 +1115,26 @@ export const it: TranslationDictionary = {
         cloudProviderUnavailable: 'Attendi un momento e riprova, oppure scegli un altro modello.',
         paygCapTooLow: 'Aumenta il limite di spesa, poi riprova.',
         paygPriceUnavailable: 'Scegli un altro modello, poi riprova.',
+        healBackoffRetry: 'Non devi fare nulla. Riprova da solo.',
+        healStrictPrompt: 'Non devi fare nulla. Riprova da solo.',
+        healJsonRepair: 'Non devi fare nulla. La bozza viene conservata.',
+        healRaiseOutputLimit: 'Non devi fare nulla. Riprova da solo.',
+        healCompactOutput:
+          "Non devi fare nulla. L'articolo potrebbe risultare più breve del solito.",
+        healLowerOutputLimit: 'Non devi fare nulla. Riprova da solo.',
+        healShrinkSource:
+          'Non devi fare nulla. I messaggi più vecchi della chat sono stati esclusi da questo passaggio.',
+        healCrossProvider: "Non devi fare nulla. Il passaggio prosegue con l'altro modello.",
+        healSafeDefault: 'Non devi fare nulla. Quando riprovi puoi scegliere i modelli tu stesso.',
+        healStoppedSpendCap: 'Aumenta il limite di spesa, poi riprova.',
+        healStoppedAttemptBudget: 'Scegli un altro modello per questo passaggio, poi riprova.',
+        healStoppedOwnerAction: 'Guarda qui sotto cosa puoi fare.',
+        providerRequestTooLarge:
+          "Scegli un modello con un limite più alto o accorcia l'argomento, poi riprova.",
+        providerCreditExhausted: 'Scegli un altro modello, poi riprova.',
+        paygPricingUnavailable: 'Scegli un altro modello, poi riprova.',
+        cloudProviderRequestFailed: 'Riprova con un altro modello.',
+        cloudProviderEmptyResponse: 'Riprova oppure scegli un altro modello.',
         unknown: 'Riprova, oppure cambia i modelli.',
       },
       startError: {

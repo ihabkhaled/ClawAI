@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { Locale, ThreadPublicationType } from '@claw/shared-types';
+import { Locale, ThreadArticleLength, ThreadPublicationType } from '@claw/shared-types';
 
-import { modelRoleSchema } from '../types/generation-pipeline.types';
+import { healingPoolSchema, modelRoleSchema } from '../types/generation-pipeline.types';
 
 export const enqueueGenerationSchema = z
   .object({
@@ -20,6 +20,9 @@ export const enqueueGenerationSchema = z
     authors: z.array(modelRoleSchema).min(3).max(5),
     judge: modelRoleSchema,
     critic: modelRoleSchema,
+    /** Models the ladder may swap in after a role's own backups (ADR-181). */
+    healing: healingPoolSchema.optional(),
+    articleLength: z.nativeEnum(ThreadArticleLength).optional(),
   })
   .strict();
 

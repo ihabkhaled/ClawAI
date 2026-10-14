@@ -24,6 +24,8 @@ export type PickedModelFallbackNotice = {
   originalProvider: string;
   originalModel: string;
   costlier: boolean;
+  /** Machine code of why the pick failed (its attempt's `errorCode`); absent when none was recorded. */
+  reasonCode?: string;
 };
 
 /** A candidate in a picked-model chain; `substitute` is undefined for the pick itself. */

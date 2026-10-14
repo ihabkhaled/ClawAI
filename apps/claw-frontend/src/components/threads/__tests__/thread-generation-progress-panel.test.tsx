@@ -36,6 +36,13 @@ function makeController(
     isRunning: false,
     canRetry: true,
     retry: { open: vi.fn() } as unknown as ThreadProgressPanelController['retry'],
+    recovery: {
+      actions: [],
+      run: vi.fn(),
+      pending: null,
+      error: null,
+      addCreditHref: '/billing',
+    },
     remove: { setOpen: vi.fn() } as unknown as ThreadProgressPanelController['remove'],
     ...overrides,
   };

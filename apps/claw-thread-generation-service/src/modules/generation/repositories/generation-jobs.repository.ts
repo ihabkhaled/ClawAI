@@ -8,6 +8,7 @@ import { type EnqueueGenerationDto, enqueueGenerationSchema } from '../dto/enque
 import type { EnqueueRevisionReviewDto } from '../dto/enqueue-revision-review.dto';
 import type { GenerationPipelineResult } from '../types/generation-pipeline.types';
 import type { ChatModelResponse } from '../../models/chat-model.client';
+import { isSameRequest } from '../utilities/same-request.utility';
 import { stableJson } from '../utilities/stable-json.utility';
 import { GenerationJobStorageResult } from '../../../common/enums/generation-job-storage-result.enum';
 import type {
@@ -70,7 +71,7 @@ export class GenerationJobsRepository {
       select: { id: true, ownerId: true, request: true, status: true, correlationId: true },
     });
     if (!existing) return null;
-    return existing.ownerId === input.ownerId && stableJson(existing.request) === stableJson(input)
+    return existing.ownerId === input.ownerId && isSameRequest(existing.request, input)
       ? { result: GenerationJobStorageResult.SUCCESS, job: existing }
       : { result: GenerationJobStorageResult.CONFLICT };
   }
@@ -89,8 +90,7 @@ export class GenerationJobsRepository {
       where: { idempotencyKey: input.idempotencyKey },
     });
     if (existing) {
-      return existing.ownerId !== input.ownerId ||
-        stableJson(existing.request) !== stableJson(input)
+      return existing.ownerId !== input.ownerId || !isSameRequest(existing.request, input)
         ? { result: GenerationJobStorageResult.CONFLICT }
         : { result: GenerationJobStorageResult.SUCCESS, job: existing };
     }
@@ -132,7 +132,7 @@ export class GenerationJobsRepository {
       const raced = await this.prisma.threadGenerationJob.findUnique({
         where: { idempotencyKey: input.idempotencyKey },
       });
-      if (raced?.ownerId === input.ownerId && stableJson(raced.request) === stableJson(input)) {
+      if (raced?.ownerId === input.ownerId && isSameRequest(raced.request, input)) {
         return { result: GenerationJobStorageResult.SUCCESS, job: raced };
       }
       // No job holds this idempotency key, so the unique hit was the retry link.
@@ -638,6 +638,62 @@ export class GenerationJobsRepository {
         update: {},
       });
       return true;
+    });
+  }
+
+  /**
+   * Gives a retry the finished work of the job it retries (ADR-181): the research evidence and
+   * every saved model reply except those of the roles whose model the owner changed, so the
+   * retry starts at the failed phase instead of paying for the whole run again. Only a child that
+   * has not started and has no evidence yet is touched, and rows that already exist are kept, so
+   * a repeated call changes nothing. Returns how many replies were copied.
+   */
+  async inheritCheckpoints(
+    fromJobId: string,
+    toJobId: string,
+    changedRoleIds: readonly string[],
+  ): Promise<number> {
+    return this.prisma.$transaction(async (tx) => {
+      const child = await tx.threadGenerationJob.findUnique({
+        where: { id: toJobId },
+        select: { status: true, attemptCount: true, evidenceBundleHash: true },
+      });
+      if (child?.status !== ThreadGenerationStatus.QUEUED || child.attemptCount > 0) {
+        return 0;
+      }
+      const source = await tx.threadGenerationJob.findUnique({
+        where: { id: fromJobId },
+        select: { evidenceBundle: true, evidenceBundleHash: true, evidenceVersion: true },
+      });
+      if (!source?.evidenceBundle || !source.evidenceBundleHash) return 0;
+      if (child.evidenceBundleHash === null) {
+        await tx.threadGenerationJob.update({
+          where: { id: toJobId },
+          data: {
+            evidenceBundle: source.evidenceBundle as Prisma.InputJsonValue,
+            evidenceBundleHash: source.evidenceBundleHash,
+            evidenceVersion: source.evidenceVersion,
+          },
+        });
+      }
+      const replies = await tx.threadModelCommunication.findMany({ where: { jobId: fromJobId } });
+      const kept = replies.filter(
+        ({ role }) =>
+          !changedRoleIds.some((roleId) => role === roleId || role.endsWith(`-${roleId}`)),
+      );
+      if (kept.length === 0) return 0;
+      const copied = await tx.threadModelCommunication.createMany({
+        data: kept.map(
+          ({ id: _id, jobId: _jobId, createdAt: _createdAt, usage, output, ...row }) => ({
+            ...row,
+            jobId: toJobId,
+            output: output as Prisma.InputJsonValue,
+            usage: usage === null ? Prisma.JsonNull : (usage as Prisma.InputJsonValue),
+          }),
+        ),
+        skipDuplicates: true,
+      });
+      return copied.count;
     });
   }
 

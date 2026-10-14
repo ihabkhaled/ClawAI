@@ -22,8 +22,10 @@ function applyModel(role: ModelRole, models: NonNullable<RetryGenerationDto['mod
     ...role,
     provider: override.provider,
     model: override.model,
-    // A fallback must use a different provider from its primary.
-    fallbacks: role.fallbacks.filter((fallback) => fallback.provider !== override.provider),
+    // A fallback that is the new primary itself adds nothing; another model of its provider does.
+    fallbacks: role.fallbacks.filter(
+      (fallback) => fallback.provider !== override.provider || fallback.model !== override.model,
+    ),
   };
 }
 
@@ -47,6 +49,8 @@ export function buildRetryInput(
     // Deterministic, so repeating the same retry call is idempotent.
     correlationId: `retry:${change.idempotencyKey}`.slice(0, 200),
     topic: change.topic ?? original.topic,
+    articleLength: change.articleLength ?? original.articleLength,
+    healing: change.healing ?? original.healing,
     spendCapMicroUsd:
       change.spendCapUsd === undefined
         ? original.spendCapMicroUsd

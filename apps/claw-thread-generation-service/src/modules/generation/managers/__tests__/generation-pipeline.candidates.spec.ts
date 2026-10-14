@@ -10,6 +10,10 @@ import {
 
 import { parseStepError } from '../../utilities/parse-step-error.utility';
 
+vi.mock('../../utilities/wait-before-retry.utility', () => ({
+  waitBeforeRetry: vi.fn().mockResolvedValue(undefined),
+}));
+
 const evidenceBundle = { items: [{ id: 'source-1', url: 'https://example.org/source' }] };
 const validDraft = JSON.stringify({
   markdown: 'article',
@@ -160,7 +164,17 @@ describe('GenerationPipelineManager when every candidate of a role fails', () =>
       (step) => step['roleId'] === 'author-1' && step['code'] === 'OUTPUT_INVALID',
     );
     const reasons = invalid.map((step) => String(step['rawExcerpt']).split(':')[0]);
-    expect(reasons).toEqual(['PROSE', 'PROSE', 'TRUNCATED', 'TRUNCATED', 'EMPTY', 'EMPTY']);
+    // Prose: first ask, stricter ask, repair pass. Cut off: first ask, more room, shorter article. Empty: first, stricter.
+    expect(reasons).toEqual([
+      'PROSE',
+      'PROSE',
+      'PROSE',
+      'TRUNCATED',
+      'TRUNCATED',
+      'TRUNCATED',
+      'EMPTY',
+      'EMPTY',
+    ]);
     expect(String(invalid[0]?.['rawExcerpt'])).toContain('plain text with no JSON object');
   });
 

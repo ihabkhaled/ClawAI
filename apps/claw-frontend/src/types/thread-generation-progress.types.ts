@@ -1,5 +1,8 @@
 import type {
+  ThreadFailureRemedy,
   ThreadGenerationFailure,
+  ThreadGenerationHealing,
+  ThreadHealingAttempt,
   ThreadGenerationSelections,
   ThreadGenerationProgress,
   ThreadGenerationStep,
@@ -11,6 +14,7 @@ import type {
   ThreadGenerationFormController,
   ThreadPublicationDetailController,
 } from '@/types/thread-publication.types';
+import type { ThreadRecommendedTeam } from '@/types/thread-recommended-team.types';
 
 /** A translatable message: the i18n key plus its `{placeholders}`. */
 export type ThreadErrorMessage = {
@@ -53,6 +57,46 @@ export type ThreadRetryFormController = {
   error: ThreadErrorMessage | null;
 };
 
+/** One button of the recovery panel: the remedy and the words it carries. */
+export type ThreadRecoveryAction = {
+  remedy: ThreadFailureRemedy;
+  labelKey: string;
+  params: Record<string, string>;
+  /** True for a remedy that sends one retry request; false when it opens the form or a page. */
+  oneClick: boolean;
+};
+
+export type ThreadRecoveryController = {
+  actions: ThreadRecoveryAction[];
+  run: (remedy: ThreadFailureRemedy) => void;
+  /** The remedy whose request is in flight, or null. */
+  pending: ThreadFailureRemedy | null;
+  error: ThreadErrorMessage | null;
+  /** Where "Add credit" goes. */
+  addCreditHref: string;
+};
+
+export type ThreadRecoveryPanelProps = {
+  failure: ThreadGenerationFailure;
+  healing: ThreadGenerationHealing | undefined;
+  recovery: ThreadRecoveryController;
+};
+
+export type ThreadHealingNoticeProps = { healing: ThreadGenerationHealing };
+
+export type ThreadHealingAttemptView = {
+  attempt: ThreadHealingAttempt;
+  messageKey: string;
+  model: string;
+};
+
+export type BuildRecoveryRetryInput = {
+  remedy: ThreadFailureRemedy;
+  progress: ThreadGenerationProgress;
+  idempotencyKey: string;
+  team: ThreadRecommendedTeam | null;
+};
+
 export type ThreadDeleteController = {
   isOpen: boolean;
   setOpen: (value: boolean) => void;
@@ -71,6 +115,7 @@ export type ThreadProgressPanelController = {
   isRunning: boolean;
   canRetry: boolean;
   retry: ThreadRetryFormController;
+  recovery: ThreadRecoveryController;
   remove: ThreadDeleteController;
 };
 

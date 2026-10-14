@@ -5,6 +5,10 @@ import { GenerationPipelineManager } from '../generation-pipeline.manager';
 import type { GenerationPipelineInput, ModelRole } from '../../types/generation-pipeline.types';
 import { revisionDraftHash } from '../../utilities/revision-review.utility';
 
+vi.mock('../../utilities/wait-before-retry.utility', () => ({
+  waitBeforeRetry: vi.fn().mockResolvedValue(undefined),
+}));
+
 const evidenceBundle = { items: [{ id: 'source-1', url: 'https://example.org/source' }] };
 
 function role(id: string, provider: string, fallbacks: ModelRole['fallbacks'] = []): ModelRole {
@@ -214,7 +218,7 @@ describe('GenerationPipelineManager step recording', () => {
       voteJson(),
       voteJson(),
       voteJson(),
-      new Error('Chat model request failed (503)'),
+      new Error('Chat model request failed (402: PROVIDER_CREDIT_EXHAUSTED)'),
       reviewJson(80),
       reviewJson(75),
     ]);
@@ -224,8 +228,8 @@ describe('GenerationPipelineManager step recording', () => {
     const steps = recorded(recorder);
     expect(steps.find((s) => s['outcome'] === 'FAILED')).toMatchObject({
       roleKind: 'JUDGE',
-      httpStatus: 503,
-      code: 'PROVIDER_ERROR',
+      httpStatus: 402,
+      code: 'PROVIDER_CREDIT_EXHAUSTED',
     });
     expect(steps.find((s) => s['outcome'] === 'FALLBACK')).toMatchObject({
       roleKind: 'JUDGE',
@@ -236,7 +240,7 @@ describe('GenerationPipelineManager step recording', () => {
   });
 
   it('marks a wrong-shape answer RETRY and then FAILED with OUTPUT_INVALID', async () => {
-    const { manager, recorder } = build(['nope', 'still nope', 'x', 'x']);
+    const { manager, recorder } = build(Array.from({ length: 12 }, () => 'nope'));
     await expect(manager.generate(input)).rejects.toThrow('An author role failed');
     const invalid = recorded(recorder).filter((s) => s['code'] === 'OUTPUT_INVALID');
     expect(invalid.map((s) => s['outcome'])).toContain('RETRY');

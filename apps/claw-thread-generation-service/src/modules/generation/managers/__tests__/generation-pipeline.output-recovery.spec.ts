@@ -5,6 +5,10 @@ import { GenerationPipelineManager } from '../generation-pipeline.manager';
 import type { GenerationPipelineInput, ModelRole } from '../../types/generation-pipeline.types';
 import { CandidatesExhaustedError } from '../../utilities/candidates-exhausted.error';
 
+vi.mock('../../utilities/wait-before-retry.utility', () => ({
+  waitBeforeRetry: vi.fn().mockResolvedValue(undefined),
+}));
+
 const RLM = String.fromCodePoint(0x200f);
 const evidenceBundle = { items: [{ id: 'source-1', url: 'https://example.org/source' }] };
 const validDraft = JSON.stringify({
@@ -139,7 +143,7 @@ describe('GenerationPipelineManager output recovery', () => {
     expect(asks[0]?.userPrompt).not.toContain('cut off');
   });
 
-  it('treats thinking that never ended as a cut-off and fails over after two replies', async () => {
+  it('treats thinking that never ended as a cut-off and fails over after three replies', async () => {
     const endless = '<think>Let me plan the article. First, the evidence says {';
     const fallbacks = [{ provider: 'OLLAMA', model: 'glm-5.3' }];
     const { manager, calls } = build((call) => (call.provider === 'GEMINI' ? endless : validDraft));
@@ -150,6 +154,7 @@ describe('GenerationPipelineManager output recovery', () => {
     expect(asks.map((call) => [call.provider, call.maxOutputTokens])).toEqual([
       ['GEMINI', 1024],
       ['GEMINI', 1536],
+      ['GEMINI', 2304],
       ['OLLAMA', 1024],
     ]);
   });

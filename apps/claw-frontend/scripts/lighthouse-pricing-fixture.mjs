@@ -14,6 +14,29 @@ import { createServer } from 'node:http';
 import { pathToFileURL } from 'node:url';
 
 export const CATALOG_PATH = '/api/v1/internal/plans/catalog';
+export const BOARD_PATH = '/api/v1/thread-publications/public/board';
+
+// The guest Board (/en/threads/board) is rendered from threads-service. With no backend the
+// server render fell back to a client fetch whose failure was logged as a console error.
+export const LIGHTHOUSE_BOARD = {
+  items: [
+    {
+      slug: 'lighthouse-fixture-thread',
+      title: 'Lighthouse fixture Thread',
+      excerpt: 'Test data for the Lighthouse job. It is never shown to a real visitor.',
+      contentLocale: 'en',
+      publicationType: 'article',
+      publishedAt: '2026-01-01T00:00:00.000Z',
+      readingMinutes: 3,
+      sourceCount: 2,
+      likeCount: 0,
+      commentCount: 0,
+      viewCount: 0,
+    },
+  ],
+  meta: { total: 1, page: 1, limit: 12, totalPages: 1 },
+  didYouMean: null,
+};
 
 const price = (planId, interval, amountMinor) => ({
   id: `${planId}-${interval.toLowerCase()}`,
@@ -60,7 +83,13 @@ export const LIGHTHOUSE_PLAN_CATALOG = [
 
 export function createCatalogServer(serviceToken) {
   return createServer((request, response) => {
-    if (request.url !== CATALOG_PATH) {
+    const path = new URL(request.url ?? '/', 'http://fixture.local').pathname;
+    if (path === BOARD_PATH) {
+      response.writeHead(200, { 'content-type': 'application/json' });
+      response.end(JSON.stringify(LIGHTHOUSE_BOARD));
+      return;
+    }
+    if (path !== CATALOG_PATH) {
       response.writeHead(404).end();
       return;
     }

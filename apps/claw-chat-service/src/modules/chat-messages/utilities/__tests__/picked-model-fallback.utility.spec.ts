@@ -14,8 +14,8 @@ import {
   isPickedModelTurn,
   isProviderWideFailure,
   isSubstitutableFailure,
-  pickedCandidateSkipReason,
   parsePickedModelSubstitutes,
+  pickedCandidateSkipReason,
   pickedModelCandidateChain,
   pickedModelFallbackPart,
   suggestedModelsAfterFailure,
@@ -193,6 +193,19 @@ describe('pickedModelFallbackPart', () => {
       pickedModelFallbackPart(p, { provider: 'ANTHROPIC', model: 'claude-sonnet-5' }, 1)
         .pickedModelFallback?.costlier,
     ).toBe(false);
+  });
+
+  it('carries the recorded failure code of the pick so a silent substitution is explainable', () => {
+    const part = pickedModelFallbackPart(p, { provider: 'OPENAI', model: 'gpt-5.6-sol' }, 2, [
+      { errorCode: 'PROVIDER_CREDIT_EXHAUSTED' },
+      { errorCode: null },
+    ]);
+    expect(part.pickedModelFallback?.reasonCode).toBe('PROVIDER_CREDIT_EXHAUSTED');
+  });
+
+  it('leaves reasonCode out when the pick recorded none', () => {
+    const part = pickedModelFallbackPart(p, { provider: 'OPENAI', model: 'gpt-5.6-sol' }, 2, [{}]);
+    expect(part.pickedModelFallback).not.toHaveProperty('reasonCode');
   });
 });
 

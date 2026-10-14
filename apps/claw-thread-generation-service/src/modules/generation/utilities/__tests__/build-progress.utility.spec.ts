@@ -1,5 +1,11 @@
 import { BadRequestException } from '@nestjs/common';
-import { Locale, ThreadPublicationType } from '@claw/shared-types';
+import {
+  Locale,
+  ThreadFailureClass,
+  ThreadFailurePhase,
+  ThreadFailureRemedy,
+  ThreadPublicationType,
+} from '@claw/shared-types';
 
 import type { EnqueueGenerationDto } from '../../dto/enqueue-generation.dto';
 import type { StepRow } from '../../types/step-recorder.types';
@@ -88,6 +94,10 @@ describe('buildProgress', () => {
       roleId: 'author-1',
       httpStatus: 402,
       retryable: false,
+      phase: ThreadFailurePhase.AUTHOR,
+      failureClass: ThreadFailureClass.CREDIT_EXHAUSTED,
+      remedies: [ThreadFailureRemedy.ADD_CREDIT],
+      suggestedModel: null,
     });
     expect(result.steps[0]?.at).toBe('2026-10-13T10:00:30.000Z');
   });
@@ -147,14 +157,44 @@ describe('buildProgress', () => {
     ).toBe(false);
   });
 
+  it('does not offer a plain Retry for spent credit, only the add-credit remedy', () => {
+    const result = buildProgress(job('FAILED'), request, [step({ seq: 1 })]);
+    expect(result.failure).toMatchObject({
+      code: 'PAYG_CREDIT_EXHAUSTED',
+      retryable: false,
+      remedies: [ThreadFailureRemedy.ADD_CREDIT],
+    });
+  });
+
   it.each([
-    'PAYG_CAP_TOO_LOW',
-    'PAYG_PRICE_UNAVAILABLE',
-    'PAYG_MODEL_UNPRICED',
-    'PAYG_CREDIT_EXHAUSTED',
-  ])('does not offer Retry for the owner-only refusal %s', (code) => {
+    ['PAYG_CAP_TOO_LOW', ThreadFailureClass.CAP_TOO_LOW, ThreadFailureRemedy.RAISE_SPEND_CAP],
+    [
+      'PAYG_PRICE_UNAVAILABLE',
+      ThreadFailureClass.PRICING_UNAVAILABLE,
+      ThreadFailureRemedy.CHOOSE_ANOTHER_MODEL,
+    ],
+    [
+      'PAYG_PRICING_UNAVAILABLE',
+      ThreadFailureClass.PRICING_UNAVAILABLE,
+      ThreadFailureRemedy.CHOOSE_ANOTHER_MODEL,
+    ],
+    [
+      'PAYG_MODEL_UNPRICED',
+      ThreadFailureClass.PRICING_UNAVAILABLE,
+      ThreadFailureRemedy.CHOOSE_ANOTHER_MODEL,
+    ],
+  ])('offers a retry with a change for %s', (code, failureClass, remedy) => {
     const result = buildProgress(job('FAILED'), request, [step({ seq: 1, code })]);
-    expect(result.failure).toMatchObject({ code, retryable: false });
+    expect(result.failure).toMatchObject({ code, retryable: true, failureClass });
+    expect(result.failure?.remedies).toContain(remedy);
+  });
+
+  it('offers the first unused backup as the suggested model', () => {
+    const result = buildProgress(job('FAILED'), request, [
+      step({ seq: 1, code: 'OUTPUT_INVALID' }),
+    ]);
+    expect(result.failure?.suggestedModel).toEqual({ provider: 'GEMINI', model: 'g' });
+    expect(result.failure?.remedies?.[0]).toBe(ThreadFailureRemedy.TRY_SUGGESTED_MODEL);
   });
 
   it('still offers Retry for an ordinary provider failure', () => {
@@ -219,7 +259,7 @@ describe('buildRetryInput', () => {
     });
   });
 
-  it('applies topic, cap and model overrides, dropping fallbacks on the new provider', () => {
+  it('applies topic, cap and model overrides, keeping a fallback of another model on the same provider', () => {
     const result = buildRetryInput(original, {
       ownerId: 'owner-1',
       idempotencyKey: 'new-key',
@@ -229,7 +269,11 @@ describe('buildRetryInput', () => {
     });
     expect(result.topic).toBe('A different topic text');
     expect(result.spendCapMicroUsd).toBe('2000000');
-    expect(result.judge).toMatchObject({ provider: 'GEMINI', model: 'gemini-x', fallbacks: [] });
+    expect(result.judge).toMatchObject({
+      provider: 'GEMINI',
+      model: 'gemini-x',
+      fallbacks: [{ provider: 'GEMINI', model: 'g' }],
+    });
     expect(result.critic).toEqual(original.critic);
   });
 

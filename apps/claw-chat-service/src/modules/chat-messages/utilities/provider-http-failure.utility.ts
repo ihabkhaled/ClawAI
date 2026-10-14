@@ -4,6 +4,7 @@ import {
   ProviderModelUnavailableException,
   ProviderOutputLimitException,
   ProviderRateLimitedException,
+  ProviderRequestTooLargeException,
   ProviderUnsupportedParameterException,
 } from '../../../common/errors';
 import {
@@ -28,6 +29,8 @@ import {
   PROVIDER_RATE_LIMIT_BACKOFF_MS,
   PROVIDER_RATE_LIMIT_PATTERN,
   PROVIDER_REQUEST_CREDIT_PATTERN,
+  PROVIDER_REQUEST_TOO_LARGE_PATTERN,
+  PROVIDER_REQUEST_TOO_LARGE_STATUS,
   PROVIDER_TEXT_MAX_CHARS,
   PROVIDER_TEXT_URL_PATTERN,
   PROVIDER_TEXT_URL_REPLACEMENT,
@@ -312,9 +315,29 @@ function classifyKnownFailure(
   ) {
     return new ProviderModelUnavailableException();
   }
+  const tooLarge = parseRequestTooLarge(input.status, text);
+  if (tooLarge !== undefined) {
+    return tooLarge;
+  }
   return input.status === 429 || PROVIDER_RATE_LIMIT_PATTERN.test(text)
     ? new ProviderRateLimitedException(input.failureCode)
     : undefined;
+}
+
+/** A 413 that states its allowance and what was sent; any other 413 stays a generic failure. */
+function parseRequestTooLarge(
+  status: number,
+  text: string,
+): ProviderRequestTooLargeException | undefined {
+  if (status !== PROVIDER_REQUEST_TOO_LARGE_STATUS) {
+    return undefined;
+  }
+  const match = PROVIDER_REQUEST_TOO_LARGE_PATTERN.exec(text);
+  const limit = parsePositiveInteger(match?.[1]);
+  const requested = parsePositiveInteger(match?.[2]);
+  return limit === undefined || requested === undefined
+    ? undefined
+    : new ProviderRequestTooLargeException(limit, requested);
 }
 
 export function toProviderHttpFailure(input: ProviderHttpFailureInput): BusinessException {

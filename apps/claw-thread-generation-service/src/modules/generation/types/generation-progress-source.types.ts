@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { modelRoleSchema } from './generation-pipeline.types';
+import { healingPoolSchema, modelRoleSchema } from './generation-pipeline.types';
 
 /** The fields of a stored job request (generation or revision review) that progress shows. */
 export const progressRequestSchema = z.object({
@@ -10,6 +10,7 @@ export const progressRequestSchema = z.object({
   authors: z.array(modelRoleSchema),
   judge: modelRoleSchema,
   critic: modelRoleSchema,
+  healing: healingPoolSchema.optional(),
 });
 
 export type ProgressRequest = z.infer<typeof progressRequestSchema>;

@@ -23,6 +23,8 @@ const SERVICE_FILES = [
   'utilities/parse-step-error.utility.ts',
   'utilities/failure-report.utility.ts',
   'managers/generation-pipeline.manager.ts',
+  'constants/healing.constants.ts',
+  'constants/failure-class.constants.ts',
   'repositories/generation-jobs.repository.ts',
 ];
 const PATTERNS = [
@@ -67,7 +69,7 @@ describe('THREAD_GENERATION_CODE_KEYS', () => {
       'PROVIDER_ERROR',
       'PROVIDER_RATE_LIMITED',
       'CONSENSUS_NOT_REACHED',
-      'FALLBACK_USED',
+      'HEAL_STOPPED_SPEND_CAP',
       'JUDGE_SCORE_LOW',
       'CRITIC_SCORE_LOW',
       'GENERATION_ATTEMPT_RETRY',
@@ -83,6 +85,30 @@ describe('THREAD_GENERATION_CODE_KEYS', () => {
       (code) => THREAD_GENERATION_CODE_KEYS[code] === undefined,
     );
     expect(missing).toEqual([]);
+  });
+
+  it('has a message for every healing strategy and every classifier code (ADR-181)', () => {
+    const strategies = readFileSync(
+      resolve(
+        __dirname,
+        '../../../../../packages/shared-types/src/enums/thread-healing-strategy.enum.ts',
+      ),
+      'utf8',
+    );
+    const values = [...strategies.matchAll(/=\s*'([A-Z_]+)'/gu)].map((match) => match[1]);
+    expect(values.length).toBeGreaterThan(8);
+    for (const value of values) {
+      expect(THREAD_GENERATION_CODE_KEYS[value ?? ''], value).toBeDefined();
+    }
+    for (const code of [
+      'PROVIDER_REQUEST_TOO_LARGE',
+      'PROVIDER_CREDIT_EXHAUSTED',
+      'PAYG_PRICING_UNAVAILABLE',
+      'CLOUD_PROVIDER_REQUEST_FAILED',
+      'CLOUD_PROVIDER_EMPTY_RESPONSE',
+    ]) {
+      expect(THREAD_GENERATION_CODE_KEYS[code], code).toBeDefined();
+    }
   });
 
   it('maps each model-window failure to its own message instead of one catch-all', () => {

@@ -1,4 +1,7 @@
+import { ThreadArticleLength } from '@claw/shared-types';
 import { z } from 'zod';
+
+import { healingPoolSchema } from '../types/generation-pipeline.types';
 
 export const retryGenerationSchema = z
   .object({
@@ -16,6 +19,9 @@ export const retryGenerationSchema = z
       )
       .max(7)
       .optional(),
+    articleLength: z.nativeEnum(ThreadArticleLength).optional(),
+    /** Recomputed by threads-service for the retry; the stored pool is kept when absent. */
+    healing: healingPoolSchema.optional(),
   })
   .strict();
 

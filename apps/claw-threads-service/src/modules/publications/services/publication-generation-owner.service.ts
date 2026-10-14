@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import type { ThreadGenerationProgress } from '@claw/shared-types';
 import { PublicationStatus } from '../../../generated/prisma';
 
@@ -19,6 +19,7 @@ import { scopedIdempotencyKey } from '../utilities/generation-idempotency.utilit
 import { GenerationActiveCapService } from './generation-active-cap.service';
 import { GenerationPreflightService } from './generation-preflight.service';
 import { GenerationStartGate } from './generation-start-gate.service';
+import { HealingPoolService } from './healing-pool.service';
 import { ThreadsGenerationClient } from './threads-generation.client';
 
 /** Owner-only progress, retry and delete of a Thread generation. Everyone else gets a 404. */
@@ -30,6 +31,7 @@ export class PublicationGenerationOwnerService {
     private readonly preflight: GenerationPreflightService,
     private readonly activeCap: GenerationActiveCapService,
     private readonly gate: GenerationStartGate,
+    @Optional() private readonly healingPool?: HealingPoolService,
   ) {}
 
   async getProgress(publicationId: string, ownerId: string): Promise<ThreadGenerationProgress> {
@@ -84,10 +86,13 @@ export class PublicationGenerationOwnerService {
     input: RetryThreadGenerationDto,
   ): Promise<{ jobId: string; status: string }> {
     try {
-      return await this.generation.retry(previousJobId, ownerId, {
-        ...input,
-        idempotencyKey: scopedIdempotencyKey(ownerId, input.idempotencyKey),
-      });
+      const healing = await this.healingPool?.forOwner(ownerId);
+      return await this.generation.retry(
+        previousJobId,
+        ownerId,
+        { ...input, idempotencyKey: scopedIdempotencyKey(ownerId, input.idempotencyKey) },
+        healing,
+      );
     } catch (error: unknown) {
       throw (await this.preflight.explainBudgetDenial(ownerId, error)) ?? error;
     }

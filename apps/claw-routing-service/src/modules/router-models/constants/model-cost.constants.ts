@@ -36,8 +36,13 @@ export const DATED_SNAPSHOT_SUFFIX = /-(?:\d{8}|\d{4}-\d{2}-\d{2})$/;
 export const AGGREGATOR_COST_PROVIDERS: ReadonlyArray<string> = [
   'OPENROUTER',
   'VERCEL_AI_GATEWAY',
+  // Both spellings: the connector ids are HUGGINGFACE and NVIDIANIM (prod 2026-10-14); the
+  // underscored forms never matched a real provider, so those two fell into the "dearest
+  // published rate" branch that is meaningless for a reseller.
   'HUGGING_FACE',
+  'HUGGINGFACE',
   'NVIDIA_NIM',
+  'NVIDIANIM',
   'POLLINATIONS',
   'AI_HORDE',
 ];

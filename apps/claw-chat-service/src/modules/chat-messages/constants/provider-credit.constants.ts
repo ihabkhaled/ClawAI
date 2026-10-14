@@ -39,7 +39,24 @@ export const PROVIDER_RETRY_REQUEST_SUFFIX = ':provider-retry';
 // limit, upgrade for higher limits or add usage credits" (one account behind every
 // Ollama cloud model, so it is provider-wide).
 export const PROVIDER_ACCOUNT_EXHAUSTED_PATTERN =
-  /insufficient[_ ](?:credits?|quota|balance)|credit[_ ]balance(?:[_ ]is[_ ]too[_ ]low|[_ ]exhausted)|no credits remaining|out of credits?|exceeded your current quota|used all available credits|spending limit|weekly usage limit|add usage credits/iu;
+  /insufficient[_ ](?:credits?|quota|balance)|credit[_ ]balance(?:[_ ]is[_ ]too[_ ]low|[_ ]exhausted)|no credits remaining|out of credits?|exceeded your current quota|used all available credits|spending limit|weekly usage limit|add usage credits|no remaining credits|reached your specified api usage limits/iu;
+
+// Also: Hugging Face 402 "You have no remaining credits" and the Anthropic spend cap, which
+// arrives as a 400 invalid_request_error (prod 2026-10-14): "You have reached your specified
+// API usage limits. You will regain access on <date>". Neither is a bad request.
+
+// ── A request larger than the provider's per-request allowance ──────────────
+
+export const PROVIDER_REQUEST_TOO_LARGE_CODE = 'PROVIDER_REQUEST_TOO_LARGE';
+
+export const PROVIDER_REQUEST_TOO_LARGE_STATUS = 413;
+
+// Groq on_demand tier (prod 2026-10-14): the model window is 131k but the TIER allows
+// 7,000-8,000 tokens per request, so a 13-18k Threads prompt can never succeed.
+// "Request too large for model `x` ... on tokens per minute (TPM): Limit 8000, Requested 17934".
+// Capture 1 = the allowance, 2 = what was sent. Retrying the same body cannot help.
+export const PROVIDER_REQUEST_TOO_LARGE_PATTERN =
+  /request too large for model[^]{0,300}?\bLimit\s+(\d[\d,]*),\s*Requested\s+(\d[\d,]*)/iu;
 
 // THIS request cannot be paid for, but a smaller or cheaper one could
 // (OpenRouter: "requires more credits, or fewer max_tokens ... can only afford

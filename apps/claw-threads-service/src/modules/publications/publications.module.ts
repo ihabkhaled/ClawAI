@@ -29,6 +29,7 @@ import { ThreadGenerationEventsConsumer } from './consumers/thread-generation-ev
 import { PublicationGenerationOwnerService } from './services/publication-generation-owner.service';
 import { PublicationGenerationStartService } from './services/publication-generation-start.service';
 import { GenerationPreflightService } from './services/generation-preflight.service';
+import { HealingPoolService } from './services/healing-pool.service';
 import { ModelCatalogClient } from './services/model-catalog.client';
 import { ThreadNotificationService } from './services/thread-notification.service';
 import { GenerationActiveCapService } from './services/generation-active-cap.service';
@@ -65,6 +66,7 @@ import { PublicationGenerationRepairController } from './controllers/publication
     PublicationGenerationOwnerService,
     PublicationGenerationStartService,
     GenerationPreflightService,
+    HealingPoolService,
     GenerationActiveCapService,
     GenerationOrphanRepairService,
     GenerationStartGate,

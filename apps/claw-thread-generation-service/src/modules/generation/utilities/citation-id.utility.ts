@@ -6,6 +6,7 @@ import {
   DIGIT_BLOCK_ZEROS,
   ID_WRAPPER_PATTERN,
   INVISIBLE_MARKS_PATTERN,
+  TRACKING_PARAM_PATTERN,
 } from '../constants/citation-markup.constants';
 
 function foldDigit(char: string): string {
@@ -31,6 +32,26 @@ export function canonicalCitationText(raw: string): string {
 }
 
 /**
+ * A url reduced to what identifies the page: lower-case scheme and host without `www.`, no
+ * fragment, no tracking parameters, no trailing slash. Never used to build a citation url (that
+ * always comes from the bundle), only to recognise the same page written differently.
+ */
+export function normalizeEvidenceUrl(raw: string): string {
+  try {
+    const url = new URL(raw.trim());
+    for (const key of [...url.searchParams.keys()]) {
+      if (TRACKING_PARAM_PATTERN.test(key)) url.searchParams.delete(key);
+    }
+    url.searchParams.sort();
+    const path = url.pathname.replace(/\/+$/u, '');
+    const query = url.searchParams.toString();
+    return `${url.hostname.toLowerCase().replace(/^www\./u, '')}${url.port}${path}${query ? `?${query}` : ''}`;
+  } catch {
+    return raw.trim();
+  }
+}
+
+/**
  * The evidence id a model-written reference stands for: the exact id, the id once canonicalised,
  * the same id in another letter case, or the id of the evidence item with that url. Null when it
  * names nothing in the bundle (a real hallucination stays unresolved so the evidence rule refuses it).
@@ -45,5 +66,8 @@ export function resolveEvidenceId(
   const sameId = [...evidence.keys()].filter((id) => id.toLowerCase() === lower);
   if (sameId.length === 1) return sameId[0] ?? null;
   const sameUrl = [...evidence].filter(([, url]) => url === text);
-  return sameUrl.length === 1 ? (sameUrl[0]?.[0] ?? null) : null;
+  if (sameUrl.length === 1) return sameUrl[0]?.[0] ?? null;
+  const wanted = normalizeEvidenceUrl(text);
+  const samePage = [...evidence].filter(([, url]) => normalizeEvidenceUrl(url) === wanted);
+  return samePage.length === 1 ? (samePage[0]?.[0] ?? null) : null;
 }

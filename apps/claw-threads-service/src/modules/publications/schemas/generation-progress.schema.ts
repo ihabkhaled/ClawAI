@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import type { ThreadGenerationProgress } from '@claw/shared-types';
+import {
+  ThreadFailureClass,
+  ThreadFailurePhase,
+  ThreadFailureRemedy,
+  type ThreadGenerationProgress,
+  ThreadHealingResult,
+  ThreadHealingStrategy,
+} from '@claw/shared-types';
 
 const roleKindSchema = z.enum(['AUTHOR', 'JUDGE', 'CRITIC', 'RESEARCH', 'SYSTEM']);
 const shortString = z.string().max(200);
@@ -47,6 +54,29 @@ const failureSchema = z.object({
   roleId: nullableString,
   httpStatus: nullableInt,
   retryable: z.boolean(),
+  // Absent from an older generation service; the panel then falls back to the plain code.
+  phase: z.nativeEnum(ThreadFailurePhase).optional(),
+  failureClass: z.nativeEnum(ThreadFailureClass).optional(),
+  remedies: z.array(z.nativeEnum(ThreadFailureRemedy)).max(10).optional(),
+  suggestedModel: z.object({ provider: shortString, model: shortString }).nullish(),
+});
+
+const healingSchema = z.object({
+  attempts: z
+    .array(
+      z.object({
+        seq: z.number().int(),
+        phase: z.nativeEnum(ThreadFailurePhase),
+        roleId: nullableString,
+        strategy: z.nativeEnum(ThreadHealingStrategy),
+        failureClass: z.nativeEnum(ThreadFailureClass),
+        provider: nullableString,
+        model: nullableString,
+        result: z.nativeEnum(ThreadHealingResult),
+      }),
+    )
+    .max(100),
+  active: z.boolean(),
 });
 
 export const generationProgressSchema: z.ZodType<Omit<ThreadGenerationProgress, 'publicationId'>> =
@@ -64,6 +94,7 @@ export const generationProgressSchema: z.ZodType<Omit<ThreadGenerationProgress, 
     updatedAt: shortString,
     selections: selectionsSchema,
     failure: failureSchema.nullable(),
+    healing: healingSchema.optional(),
     steps: z.array(stepSchema).max(500),
   });
 

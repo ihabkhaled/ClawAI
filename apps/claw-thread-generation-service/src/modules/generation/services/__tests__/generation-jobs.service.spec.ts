@@ -91,6 +91,7 @@ describe('GenerationJobsService', () => {
       stage: 'READY_FOR_REVIEW',
       round: 2,
       safeErrorCode: null,
+      terminal: true,
       review: null,
       draft: {
         markdown: '# Article',

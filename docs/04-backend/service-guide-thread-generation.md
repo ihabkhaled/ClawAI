@@ -245,3 +245,7 @@ in `GenerationJobsService`. Tests: `non-english-author-output.spec.ts`, `generat
 ### Allowance refusal body (2026-10-14)
 
 When auth-service refuses the budget reservation because a plan allowance is used up or held, `ThreadBudgetClient.reserve` forwards its 403 body (`code` `THREAD_ALLOWANCE_UNAVAILABLE`, `feature`, `reason`, `used`, `limit`, `window`, `message`). A feature the plan switches off (`FEATURE_DISABLED`) stays the plain 403. Tests: `thread-budget.client.spec.ts`.
+
+## Self-healing and resume at the failed phase (ADR-181, 2026-10-14)
+
+A failed role is classified by phase and class, healed by a bounded ladder (retry with backoff, stricter prompt, JSON repair, more or less output room, shorter source, then a model swap), and a retry resumes at the failed phase. The design is in ADR-181; the working rules, bounds and file map are in the service's CLAUDE.md ("Self-healing and resume at the failed phase"); how to read the attempt log is in the [runbook](../11-runbooks/runbook-thread-generation-failed.md).

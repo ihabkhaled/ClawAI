@@ -1,3 +1,12 @@
+import type {
+  ThreadArticleLength,
+  ThreadFailureClass,
+  ThreadFailurePhase,
+  ThreadFailureRemedy,
+  ThreadHealingResult,
+  ThreadHealingStrategy,
+} from '../enums';
+
 /** Owner-only, step-by-step record of one Thread generation job. Never public. */
 
 export type ThreadGenerationStepOutcome =
@@ -44,12 +53,54 @@ export type ThreadGenerationSelections = {
   roles: ThreadGenerationSelectionRole[];
 };
 
+export type ThreadModelRef = { provider: string; model: string };
+
+/** A model the pipeline may fall back to; `windowTokens` and `costRank` are hints from the catalog. */
+export type ThreadHealingCandidate = ThreadModelRef & {
+  windowTokens?: number;
+  costRank?: number;
+};
+
+/** Extra models a job may heal with once a role's own backups are spent (ADR-181). */
+export type ThreadHealingPool = {
+  /** Plan-allowed, priced, window-fit models, cheapest first. */
+  pool: ThreadHealingCandidate[];
+  /** The last resort, always disclosed in the step log. */
+  safeDefault?: ThreadHealingCandidate;
+};
+
 export type ThreadGenerationFailure = {
   code: string;
   failedStage: string;
   roleId: string | null;
   httpStatus: number | null;
   retryable: boolean;
+  /** Absent from older services. */
+  phase?: ThreadFailurePhase;
+  failureClass?: ThreadFailureClass;
+  /** Remedies in the order the panel shows them. */
+  remedies?: ThreadFailureRemedy[];
+  /** A model the panel can offer for the failed role, picked by the service. */
+  suggestedModel?: ThreadModelRef | null;
+};
+
+/** One healing attempt the service made, derived from the step log. */
+export type ThreadHealingAttempt = {
+  seq: number;
+  phase: ThreadFailurePhase;
+  roleId: string | null;
+  strategy: ThreadHealingStrategy;
+  /** Why the step before it failed. */
+  failureClass: ThreadFailureClass;
+  provider: string | null;
+  model: string | null;
+  result: ThreadHealingResult;
+};
+
+export type ThreadGenerationHealing = {
+  attempts: ThreadHealingAttempt[];
+  /** True while the newest attempt has no result yet: the panel says "Retrying...". */
+  active: boolean;
 };
 
 export type ThreadGenerationProgress = {
@@ -70,6 +121,8 @@ export type ThreadGenerationProgress = {
   updatedAt: string;
   selections: ThreadGenerationSelections;
   failure: ThreadGenerationFailure | null;
+  /** What the service already tried; absent from older services. */
+  healing?: ThreadGenerationHealing;
   steps: ThreadGenerationStep[];
 };
 
@@ -79,4 +132,6 @@ export type ThreadGenerationRetryRequest = {
   topic?: string;
   spendCapUsd?: number;
   models?: Array<{ roleId: string; provider: string; model: string }>;
+  /** `SHORT` asks the authors for a shorter article (the "Shorter article" remedy). */
+  articleLength?: ThreadArticleLength;
 };

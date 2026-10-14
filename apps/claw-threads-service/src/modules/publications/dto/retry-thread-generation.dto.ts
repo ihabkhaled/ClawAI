@@ -1,3 +1,4 @@
+import { ThreadArticleLength } from '@claw/shared-types';
 import { z } from 'zod';
 
 import { safeText, topicText } from './safe-text.schema';
@@ -17,6 +18,7 @@ export const retryThreadGenerationSchema = z
       )
       .max(7)
       .optional(),
+    articleLength: z.nativeEnum(ThreadArticleLength).optional(),
   })
   .strict();
 

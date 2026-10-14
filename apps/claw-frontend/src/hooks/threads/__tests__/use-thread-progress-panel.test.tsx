@@ -8,6 +8,9 @@ import { useThreadProgressPanel } from '../use-thread-progress-panel';
 
 vi.mock('../use-thread-generation-progress', () => ({ useThreadGenerationProgress: vi.fn() }));
 vi.mock('../use-thread-retry-form', () => ({ useThreadRetryForm: () => ({ isOpen: false }) }));
+vi.mock('../use-thread-recovery-actions', () => ({
+  useThreadRecoveryActions: () => ({ actions: [] }),
+}));
 vi.mock('../use-thread-delete-action', () => ({
   useThreadDeleteAction: () => ({ isOpen: false }),
 }));

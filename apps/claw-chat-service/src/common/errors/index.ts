@@ -8,6 +8,7 @@ export { StreamCeilingError, StreamIdleTimeoutError } from './stream-timeout.err
 export { ProviderCreditExhaustedException } from './provider-credit-exhausted.exception';
 export { ProviderOutputLimitException } from './provider-output-limit.exception';
 export { ProviderRateLimitedException } from './provider-rate-limited.exception';
+export { ProviderRequestTooLargeException } from './provider-request-too-large.exception';
 export { PickedModelFailedException } from './picked-model-failed.exception';
 export { ProviderUnsupportedParameterException } from './provider-unsupported-parameter.exception';
 export { ProviderModelUnavailableException } from './provider-model-unavailable.exception';

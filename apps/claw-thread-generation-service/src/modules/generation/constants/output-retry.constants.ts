@@ -30,7 +30,7 @@ export const LOCALE_TOKEN_FACTOR: ReadonlyMap<Locale, number> = new Map([
  * try (a call already in flight is bounded by its own silence and total limits), so a model that
  * keeps answering badly cannot hold a job for the whole attempt budget.
  */
-export const ROLE_MAX_MS = 3 * 60_000;
+export const ROLE_MAX_MS = 6 * 60_000;
 
 /** Lead of the note appended when the previous reply was cut off by the output limit. */
 export const TRUNCATION_NOTE =

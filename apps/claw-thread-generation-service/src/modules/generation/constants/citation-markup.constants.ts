@@ -8,6 +8,15 @@ export const CITATION_MARKER_PATTERN =
 /** Separators between ids in one marker: ASCII and Arabic commas and semicolons, CJK enumeration comma. */
 export const CITATION_ID_SPLIT_PATTERN = /\s*[,;\u060C\u061B\uFF0C\uFF1B\u3001]\s*/u;
 
+/** A marker made only of short numbers, `[1]` or `[1, 2]`. */
+export const CITATION_NUMBER_MARKER_PATTERN = /\[([\d\s,;]{1,40})\]/gu;
+
+/** A bare number a model used where an evidence id belongs. */
+export const CITATION_ORDINAL_PATTERN = /^\d{1,3}$/u;
+
+/** Query parameters that only track a visit; they are ignored when two urls are compared. */
+export const TRACKING_PARAM_PATTERN = /^(?:utm_.+|fbclid|gclid|mc_cid|mc_eid|ref|ref_src)$/iu;
+
 /**
  * Marks that carry no text: zero-width characters, directional marks and isolates (an RTL
  * paragraph inserts them around Latin ids), the word joiner, the soft hyphen and the byte order mark.

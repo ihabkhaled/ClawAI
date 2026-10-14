@@ -5,6 +5,10 @@ import { GenerationPipelineManager } from '../generation-pipeline.manager';
 import type { GenerationPipelineInput, ModelRole } from '../../types/generation-pipeline.types';
 import { revisionDraftHash } from '../../utilities/revision-review.utility';
 
+vi.mock('../../utilities/wait-before-retry.utility', () => ({
+  waitBeforeRetry: vi.fn().mockResolvedValue(undefined),
+}));
+
 const FENCE = '```';
 const evidenceBundle = { items: [{ id: 'source-1', url: 'https://example.org/source' }] };
 
@@ -214,7 +218,7 @@ describe('GenerationPipelineManager tolerant output', () => {
   });
 
   it('still fails with OUTPUT_INVALID when no valid JSON is present', async () => {
-    const { manager, recorder } = build(Array.from({ length: 6 }, () => ({ content: '{"cut' })));
+    const { manager, recorder } = build(Array.from({ length: 12 }, () => ({ content: '{"cut' })));
 
     await expect(manager.generate(input)).rejects.toThrow('An author role failed');
 

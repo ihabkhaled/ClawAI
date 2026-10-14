@@ -1,5 +1,6 @@
 import { useThreadDeleteAction } from '@/hooks/threads/use-thread-delete-action';
 import { useThreadGenerationProgress } from '@/hooks/threads/use-thread-generation-progress';
+import { useThreadRecoveryActions } from '@/hooks/threads/use-thread-recovery-actions';
 import { useThreadRetryForm } from '@/hooks/threads/use-thread-retry-form';
 import type { ThreadProgressPanelController } from '@/types/thread-generation-progress.types';
 import {
@@ -12,6 +13,7 @@ export function useThreadProgressPanel(publicationId: string): ThreadProgressPan
   const { progress, isLoading, error, pollingPaused, pollingPausedByErrors } =
     useThreadGenerationProgress(publicationId);
   const retry = useThreadRetryForm(publicationId, progress);
+  const recovery = useThreadRecoveryActions(publicationId, progress, retry);
   const remove = useThreadDeleteAction(publicationId);
 
   return {
@@ -26,6 +28,7 @@ export function useThreadProgressPanel(publicationId: string): ThreadProgressPan
       isRetryableThreadStatus(progress.status) &&
       progress.failure?.retryable !== false,
     retry,
+    recovery,
     remove,
   };
 }

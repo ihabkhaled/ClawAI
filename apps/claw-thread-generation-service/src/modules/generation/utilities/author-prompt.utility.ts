@@ -1,6 +1,7 @@
-import type { Locale } from '@claw/shared-types';
+import { type Locale, ThreadArticleLength } from '@claw/shared-types';
 
 import { AUTHOR_REPLY_EXAMPLE, AUTHOR_REPLY_SHAPE } from '../constants/author-prompt.constants';
+import { SHORT_ARTICLE_NOTE } from '../constants/healing-notes.constants';
 import { describeContentLanguage } from './review-prompt.utility';
 
 /**
@@ -9,7 +10,7 @@ import { describeContentLanguage } from './review-prompt.utility';
  * article otherwise gets its ids rewritten with local digits or brackets, and the citation check
  * then rejects a draft that is otherwise fine.
  */
-export function buildAuthorSystemPrompt(locale: Locale): string {
+export function buildAuthorSystemPrompt(locale: Locale, length?: ThreadArticleLength): string {
   const language = describeContentLanguage(locale);
   return [
     `Write the requested publication in ${language} (${locale}).`,
@@ -20,5 +21,6 @@ export function buildAuthorSystemPrompt(locale: Locale): string {
     `Minimal valid example: ${AUTHOR_REPLY_EXAMPLE}.`,
     `The JSON keys, the evidence ids, the urls and the [evidenceId] markers stay exactly as in researchEvidence.items: ASCII brackets, ASCII digits and letters, never translated, transliterated or converted to ${language} digits. Only the article text is in ${language}.`,
     'Cite only evidence items from researchEvidence.items. Do not include analysis or hidden reasoning.',
+    ...(length === ThreadArticleLength.SHORT ? [SHORT_ARTICLE_NOTE] : []),
   ].join(' ');
 }

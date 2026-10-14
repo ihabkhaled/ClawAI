@@ -162,3 +162,9 @@ Notifications. `CommunityNotificationService` plans payloads with pure functions
 Never the actor. One notice per person per comment: reply wins over comment, comment wins over mention. Reaction keys have no timestamp, so toggling like/dislike cannot repeat a notice. `params` are `{ actorName, actorUsername, title, excerpt }` (`ThreadCommunityNotificationParams` in `@claw/shared-types`): `actorName` max 100, `title` max 120 (via `notificationTitle`), `excerpt` the first 120 characters on one line, empty for reactions. `actorName` is `''` when auth-service could not be reached. Email text uses only `title`; all 13 locales exist in auth-service.
 
 Account deletion removes the person's comment votes and mentions, nulls `replyToUserId` of replies that answered them, and anonymises their comments (`authorId` null) as before.
+
+## Healing pool and same-provider fallbacks (ADR-181, 2026-10-14)
+
+- `HealingPoolService.forOwner` builds `{ pool, safeDefault }` (plan-allowed as FALLBACK, not on the deny list, window at least 32k, cheapest band first, spread over providers, at most 8; safe default = a Gemini "flash" model) and `ThreadsGenerationClient.enqueue`/`retry` hand it to the generation service. A failed read means no pool, never a refused start. `PublicationLifecycleService` and `PublicationGenerationOwnerService` take it as an `@Optional()` last constructor argument.
+- `THREAD_FALLBACK_SAME_PROVIDER` is gone: a fallback of another model on the primary's provider is accepted by the start and retry preflight.
+- Retry body accepts `articleLength: 'SHORT'`. The progress schema passes `failure.phase|failureClass|remedies|suggestedModel` and `healing` through (all optional, an older generation service sends none). `generation-state` carries `terminal`.

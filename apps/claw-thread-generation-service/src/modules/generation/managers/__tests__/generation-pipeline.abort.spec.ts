@@ -9,6 +9,10 @@ import { GenerationAttemptTimeoutError } from '../../utilities/generation-attemp
 import { parseStepError } from '../../utilities/parse-step-error.utility';
 import { ThreadGenerationCancelledError } from '../../utilities/thread-generation-cancelled.error';
 
+vi.mock('../../utilities/wait-before-retry.utility', () => ({
+  waitBeforeRetry: vi.fn().mockResolvedValue(undefined),
+}));
+
 const evidenceBundle = { items: [{ id: 'source-1', url: 'https://example.org/source' }] };
 
 function role(id: string, provider: string, fallbacks: ModelRole['fallbacks'] = []): ModelRole {

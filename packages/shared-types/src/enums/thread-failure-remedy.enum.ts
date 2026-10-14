@@ -1,0 +1,11 @@
+/** One-click ways out of a failed Thread generation the owner's panel can offer (ADR-181). */
+export enum ThreadFailureRemedy {
+  TRY_AGAIN = 'TRY_AGAIN',
+  TRY_SUGGESTED_MODEL = 'TRY_SUGGESTED_MODEL',
+  CHOOSE_ANOTHER_MODEL = 'CHOOSE_ANOTHER_MODEL',
+  USE_RECOMMENDED_TEAM = 'USE_RECOMMENDED_TEAM',
+  SHORTER_ARTICLE = 'SHORTER_ARTICLE',
+  RAISE_SPEND_CAP = 'RAISE_SPEND_CAP',
+  ADD_CREDIT = 'ADD_CREDIT',
+  CHANGE_TOPIC = 'CHANGE_TOPIC',
+}

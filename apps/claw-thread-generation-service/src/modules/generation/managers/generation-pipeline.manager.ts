@@ -4,17 +4,21 @@ import { z } from 'zod';
 
 import {
   CRITIC_STAGE,
-  FORMAT_ATTEMPTS_PER_MODEL,
   GENERATION_ATTEMPT_MAX_MS,
   JUDGE_STAGE,
   MAX_GENERATION_ROUNDS,
-  OUTPUT_INVALID_CODE,
-  REPAIR_NOTE_LEAD,
-  REPAIR_NOTE_MAX_CHARS,
 } from '../constants/generation.constants';
+import {
+  HEALTH_CACHE_TTL_MS,
+  HEALTH_WINDOW_MS,
+  RESEARCH_ATTEMPTS,
+} from '../constants/healing.constants';
+import { ThreadFailureClass, ThreadHealingStrategy } from '@claw/shared-types';
+import { backoffDelayMs } from '../utilities/backoff-delay.utility';
+import { REVIEW_REPLY_SHAPE, VOTE_REPLY_SHAPE } from '../constants/healing-notes.constants';
+import { AUTHOR_REPLY_SHAPE } from '../constants/author-prompt.constants';
 import { ThreadGenerationStage } from '../../../generated/prisma';
 import { ChatModelClient, type ChatModelResponse } from '../../models/chat-model.client';
-import { ChatModelIncompleteError } from '../../models/chat-model-incomplete.error';
 import { ResearchClient, type ResearchEvidence } from '../../research/research.client';
 import { resolveAuthorConsensus } from '../utilities/author-consensus.utility';
 import { buildReviewSystemPrompt } from '../utilities/review-prompt.utility';
@@ -29,22 +33,17 @@ import { parseModelJson } from '../utilities/parse-model-json.utility';
 import { ReviewerRole } from '../types/reviewer-role.enum';
 import { StepRecorder } from '../services/step-recorder.service';
 import { GenerationSpendSyncService } from '../services/generation-spend-sync.service';
-import type { StepRecordInput, StepResponseOutcome } from '../types/step-recorder.types';
 import {
   DeterministicGenerationError,
   isDeterministicGenerationError,
 } from '../utilities/deterministic-generation.error';
 import { parseStepError } from '../utilities/parse-step-error.utility';
-import { CandidatesExhaustedError } from '../utilities/candidates-exhausted.error';
-import {
-  classifyModelOutput,
-  describeOutputFailure,
-} from '../utilities/describe-output-failure.utility';
 import { buildAuthorSystemPrompt } from '../utilities/author-prompt.utility';
-import { escalatedOutputTokens } from '../utilities/escalate-output-tokens.utility';
-import { ModelOutputFailureKind } from '../../../common/enums/model-output-failure-kind.enum';
-import { ROLE_MAX_MS, TRUNCATION_NOTE } from '../constants/output-retry.constants';
-import type { CandidateAttempt, CandidateOutcome } from '../types/candidate-outcome.types';
+import { createHealingBudget } from '../utilities/healing-budget.utility';
+import { waitBeforeRetry } from '../utilities/wait-before-retry.utility';
+import { citationTable } from '../utilities/citation-table.utility';
+import { RoleHealer } from './role-healer';
+import type { CandidateHealth, RolePrompt } from '../types/healing.types';
 import {
   NON_RETRYABLE_STEP_CODES,
   STEP_FALLBACK_ERROR_CODE,
@@ -76,6 +75,9 @@ import { evaluateRevisionReview, revisionDraftHash } from '../utilities/revision
 @Injectable()
 export class GenerationPipelineManager {
   private readonly logger = new Logger(GenerationPipelineManager.name);
+  private readonly healer: RoleHealer;
+  private healthCache:
+    { value: ReadonlyMap<string, CandidateHealth>; expiresAt: number } | undefined;
 
   constructor(
     private readonly research: ResearchClient,
@@ -83,10 +85,22 @@ export class GenerationPipelineManager {
     private readonly jobs: GenerationJobsRepository,
     private readonly recorder: StepRecorder,
     private readonly spendSync: GenerationSpendSyncService,
-  ) {}
+  ) {
+    this.healer = new RoleHealer({
+      generate: (request) => this.models.generate(request),
+      record: (jobId, step) => this.recorder.record(jobId, step),
+      recordSpend: (jobId, budgetId, microUsd) => this.recordSpend(jobId, budgetId, microUsd),
+      throwIfCancelled: (input) => this.throwIfCancelled(input),
+      loadHealth: () => this.loadHealth(),
+      loadDemoted: (jobId, roleId) => this.loadDemoted(jobId, roleId),
+      wait: waitBeforeRetry,
+      now: () => Date.now(),
+      random: () => Math.random(),
+    });
+  }
 
   async generate(input: GenerationPipelineInput): Promise<GenerationPipelineResult> {
-    const checked = this.validateRoles(input);
+    const checked = { ...this.validateRoles(input), healingBudget: createHealingBudget(input) };
     await this.noteSkippedFallbacks(input, checked);
     return this.withAttemptCeiling(checked, (job) => this.runGenerate(job));
   }
@@ -318,7 +332,7 @@ export class GenerationPipelineManager {
     evidenceBundle: Record<string, unknown>,
     evidenceHash: string,
   ): Promise<GenerationPipelineResult> {
-    const checked = this.validateRoles(input);
+    const checked = { ...this.validateRoles(input), healingBudget: createHealingBudget(input) };
     await this.noteSkippedFallbacks(input, checked);
     return this.withAttemptCeiling(checked, (job) =>
       this.runRevisionReview(job, draft, evidenceBundle, evidenceHash),
@@ -404,27 +418,38 @@ export class GenerationPipelineManager {
   }
 
   private async runResearch(job: GenerationPipelineInput): Promise<ResearchEvidence> {
-    const startedAt = Date.now();
     const base = { stage: ThreadGenerationStage.RESEARCH, roleKind: 'RESEARCH' as const };
-    await this.recorder.record(job.jobId, { ...base, outcome: 'STARTED' });
-    try {
-      const evidence = await this.research.run(job.ownerId, job.topic, job.correlationId);
-      await this.recorder.record(job.jobId, {
-        ...base,
-        outcome: 'SUCCEEDED',
-        durationMs: Date.now() - startedAt,
-      });
-      return evidence;
-    } catch (error: unknown) {
-      const parsed = parseStepError(error, 'RESEARCH_FAILED');
-      await this.recorder.record(job.jobId, {
-        ...base,
-        outcome: 'FAILED',
-        code: parsed.code,
-        httpStatus: parsed.httpStatus,
-        durationMs: Date.now() - startedAt,
-      });
-      throw error;
+    for (let attempt = 1; ; attempt += 1) {
+      const startedAt = Date.now();
+      await this.recorder.record(job.jobId, { ...base, outcome: 'STARTED' });
+      try {
+        const evidence = await this.research.run(job.ownerId, job.topic, job.correlationId);
+        await this.recorder.record(job.jobId, {
+          ...base,
+          outcome: 'SUCCEEDED',
+          durationMs: Date.now() - startedAt,
+        });
+        return evidence;
+      } catch (error: unknown) {
+        const parsed = parseStepError(error, 'RESEARCH_FAILED');
+        await this.recorder.record(job.jobId, {
+          ...base,
+          outcome: 'FAILED',
+          code: parsed.code,
+          httpStatus: parsed.httpStatus,
+          durationMs: Date.now() - startedAt,
+        });
+        // Research is a service call, not a model: a short wait is the whole remedy (ADR-181).
+        if (attempt >= RESEARCH_ATTEMPTS || job.signal?.aborted === true) throw error;
+        await this.recorder.record(job.jobId, {
+          ...base,
+          outcome: 'RETRY',
+          code: ThreadHealingStrategy.BACKOFF_RETRY,
+          rawExcerpt: ThreadFailureClass.RESEARCH_FAILED,
+        });
+        await waitBeforeRetry(backoffDelayMs(attempt - 1, null) ?? 0, job.signal);
+        await this.throwIfCancelled(job);
+      }
     }
   }
 
@@ -513,11 +538,13 @@ export class GenerationPipelineManager {
       if (!parsed.success) {
         throw new DeterministicGenerationError('A model role configuration is invalid');
       }
-      // A fallback on the primary's provider cannot help; skip it (noted as a step), do not fail.
+      // A fallback that is the primary itself cannot help; skip it (noted as a step), do not fail.
+      // A different model of the same provider is a real fallback (ADR-181).
       return {
         ...parsed.data,
         fallbacks: parsed.data.fallbacks.filter(
-          (fallback) => fallback.provider !== parsed.data.provider,
+          (fallback) =>
+            fallback.provider !== parsed.data.provider || fallback.model !== parsed.data.model,
         ),
       };
     });
@@ -565,9 +592,10 @@ export class GenerationPipelineManager {
     revisionBrief: string,
     evidenceItems: Map<string, string>,
   ): Promise<AuthorDraft> {
-    const prompts = {
-      systemPrompt: buildAuthorSystemPrompt(input.contentLocale),
-      userPrompt: `${sharedMaterial}\nRevision brief: ${revisionBrief || 'Create a complete first draft.'}`,
+    const prompts: RolePrompt = {
+      systemPrompt: buildAuthorSystemPrompt(input.contentLocale, input.articleLength),
+      userPrompt: `${sharedMaterial}\nRevision brief: ${revisionBrief || 'Create a complete first draft.'}${citationTable(evidenceItems)}`,
+      sharedMaterial,
     };
     const saved = await this.jobs.findCommunication(
       input.jobId,
@@ -597,6 +625,7 @@ export class GenerationPipelineManager {
       prompts,
       // A draft citing anything outside the evidence bundle is a wrong answer, so retry it.
       outputSchema,
+      AUTHOR_REPLY_SHAPE,
     );
     const parsed = outputSchema.safeParse(this.parseJson(response.content, outputSchema));
     if (!parsed.success)
@@ -622,9 +651,10 @@ export class GenerationPipelineManager {
     draft: AuthorDraft,
     evidenceHash: string,
   ): Promise<StructuredReview> {
-    const prompts = {
+    const prompts: RolePrompt = {
       systemPrompt: buildReviewSystemPrompt(reviewer, input.contentLocale),
       userPrompt: `${sharedMaterial}\nDraft:\n${JSON.stringify(draft)}`,
+      sharedMaterial,
     };
     const saved = await this.jobs.findCommunication(
       input.jobId,
@@ -647,6 +677,7 @@ export class GenerationPipelineManager {
       round,
       prompts,
       reviewSchema,
+      REVIEW_REPLY_SHAPE,
     );
     const parsed = reviewSchema.safeParse(this.parseJson(response.content, reviewSchema));
     if (!parsed.success)
@@ -676,7 +707,8 @@ export class GenerationPipelineManager {
     },
   ): Promise<RevisionAuthorVote> {
     const communicationRole = { ...role, id: `${communicationPrefix}-${role.id}` };
-    const prompts = {
+    const prompts: RolePrompt = {
+      sharedMaterial,
       systemPrompt:
         'Review the exact candidate draft for factual support, coherence, and safety. Do not rewrite it. Return JSON {"agrees": boolean} only; do not repeat the hash. Do not include chain-of-thought.',
       userPrompt: `${sharedMaterial}\nExact candidate hash: ${draftHash}\nDraft:\n${JSON.stringify(draft)}`,
@@ -698,6 +730,7 @@ export class GenerationPipelineManager {
             round,
             prompts,
             revisionAuthorResponseSchema,
+            VOTE_REPLY_SHAPE,
           )
         : null;
     const parsed = revisionAuthorResponseSchema.safeParse(
@@ -729,7 +762,7 @@ export class GenerationPipelineManager {
     role: ModelRole,
     round: number,
     evidenceHash: string,
-    prompts: { systemPrompt: string; userPrompt: string },
+    prompts: RolePrompt,
     response: ChatModelResponse,
     output: Record<string, unknown>,
   ): Promise<void> {
@@ -746,185 +779,40 @@ export class GenerationPipelineManager {
     if (!saved) throw new ThreadGenerationLeaseLostError();
   }
 
-  private async callRole(
+  private callRole(
     input: GenerationPipelineInput,
     role: ModelRole,
     roleKey: string,
     round: number,
-    prompt: { systemPrompt: string; userPrompt: string },
+    prompt: RolePrompt,
     accepts: z.ZodType,
+    shapeHint: string,
   ): Promise<ChatModelResponse> {
-    const candidates = [{ provider: role.provider, model: role.model }, ...role.fallbacks];
-    const deadline = Date.now() + ROLE_MAX_MS;
-    const { stage, roleKind } = roleStepInfo(roleKey);
-    const outcomes: CandidateOutcome[] = [];
-    let lastError: unknown;
-    let everyFailureDeterministic = true;
-    for (const [index, candidate] of candidates.entries()) {
-      // The role's time is spent: report what failed so far instead of starting another model.
-      if (index > 0 && Date.now() > deadline) break;
-      const step = { stage, round, roleKind, roleId: role.id, ...candidate };
-      if (index > 0) {
-        await this.recorder.record(input.jobId, {
-          ...step,
-          outcome: 'FALLBACK',
-          code: 'FALLBACK_USED',
-        });
-      }
-      const result = await this.tryCandidate(
-        input,
-        step,
-        { roleKey, round, index, candidate, prompt, accepts, deadline },
-        role,
-      );
-      if ('response' in result) return result.response;
-      outcomes.push(result.failure);
-      everyFailureDeterministic &&= result.deterministic;
-      lastError = result.error;
-    }
-    throw this.exhaustedError(outcomes, lastError, everyFailureDeterministic);
+    const budget = input.healingBudget ?? createHealingBudget(input);
+    return this.healer.call(input, budget, { role, roleKey, round, prompt, accepts, shapeHint });
   }
 
-  /**
-   * One candidate model: a wrong-shaped answer gets one more try, any other failure moves on to
-   * the next candidate. Returns the accepted reply, or how the candidate finally failed.
-   */
-  private async tryCandidate(
-    input: GenerationPipelineInput,
-    step: Omit<StepRecordInput, 'outcome'>,
-    call: {
-      roleKey: string;
-      round: number;
-      index: number;
-      candidate: { provider: string; model: string };
-      prompt: { systemPrompt: string; userPrompt: string };
-      accepts: z.ZodType;
-      deadline: number;
-    },
-    role: ModelRole,
-  ): Promise<CandidateAttempt<ChatModelResponse>> {
-    const { candidate } = call;
-    let failure: CandidateOutcome = {
-      ...candidate,
-      code: STEP_FALLBACK_ERROR_CODE,
-      httpStatus: null,
-    };
-    let error: unknown;
-    let deterministic = true;
-    let repairNote = '';
-    let maxOutputTokens = role.maxOutputTokens;
-    for (let attempt = 1; attempt <= FORMAT_ATTEMPTS_PER_MODEL; attempt += 1) {
-      if (attempt > 1 && Date.now() > call.deadline) break;
-      await this.throwIfCancelled(input);
-      const requestId = `${input.jobId}:${call.roleKey}:round-${String(call.round)}:attempt-${String(input.attempt)}:cand-${String(call.index + 1)}${attempt > 1 ? `:try-${String(attempt)}` : ''}`;
-      await this.recorder.record(input.jobId, { ...step, outcome: 'STARTED' });
-      const startedAt = Date.now();
-      try {
-        const response = await this.models.generate({
-          ownerId: input.ownerId,
-          requestId,
-          budgetId: input.budgetId,
-          provider: candidate.provider,
-          model: candidate.model,
-          systemPrompt: call.prompt.systemPrompt,
-          userPrompt: `${call.prompt.userPrompt}${repairNote}`,
-          maxOutputTokens,
-          signal: input.signal,
-        });
-        // Paid for even if the job is cancelled or the answer is unusable, so counted first.
-        await this.recordSpend(input.jobId, input.budgetId, response.costMicroUsd);
-        await this.throwIfCancelled(input);
-        const accepted = call.accepts.safeParse(
-          parseModelJson(response.content, call.accepts),
-        ).success;
-        await this.recorder.record(input.jobId, {
-          ...step,
-          ...this.responseOutcome(accepted, attempt),
-          durationMs: response.durationMs,
-          inputTokens: response.inputTokens,
-          outputTokens: response.outputTokens,
-          rawExcerpt: accepted
-            ? response.content
-            : describeOutputFailure(response.content, call.accepts),
-        });
-        if (accepted) return { response };
-        const reason = describeOutputFailure(response.content, call.accepts).slice(
-          0,
-          REPAIR_NOTE_MAX_CHARS,
-        );
-        const cutOff =
-          classifyModelOutput(response.content, call.accepts) === ModelOutputFailureKind.TRUNCATED;
-        // Cut off by the output limit: asking the same again fails the same way, so give it room.
-        if (cutOff) maxOutputTokens = escalatedOutputTokens(maxOutputTokens, input.contentLocale);
-        repairNote = `${cutOff ? TRUNCATION_NOTE : ''}${REPAIR_NOTE_LEAD}${reason}`;
-        deterministic = false;
-        failure = { ...candidate, code: OUTPUT_INVALID_CODE, httpStatus: null };
-        error = new ServiceUnavailableException('A model returned invalid structured output');
-      } catch (caught: unknown) {
-        await this.recordCallFailure(input.jobId, input.budgetId, step, caught, startedAt);
-        const parsed = parseStepError(caught);
-        failure = { ...candidate, code: parsed.code, httpStatus: parsed.httpStatus };
-        deterministic &&= isDeterministicGenerationError(caught);
-        error = caught;
-        break;
-      }
+  /** Health of each model in the last hour, read best effort and cached for a minute. */
+  private async loadHealth(): Promise<ReadonlyMap<string, CandidateHealth>> {
+    const now = Date.now();
+    if (this.healthCache && this.healthCache.expiresAt > now) return this.healthCache.value;
+    let value: ReadonlyMap<string, CandidateHealth> = new Map();
+    try {
+      value = await this.recorder.recentModelHealth(new Date(now - HEALTH_WINDOW_MS));
+    } catch {
+      // Ranking is an optimisation: without it the pool keeps the catalog's order.
     }
-    return { failure, error, deterministic };
+    this.healthCache = { value, expiresAt: now + HEALTH_CACHE_TTL_MS };
+    return value;
   }
 
-  /**
-   * Every candidate failed: one error that names the primary cause and each candidate's outcome.
-   * One candidate failing for a reason a retry cannot fix does not make the role permanent while
-   * another failed transiently, so only "all deterministic" keeps the deterministic marker.
-   */
-  private exhaustedError(
-    outcomes: readonly CandidateOutcome[],
-    lastError: unknown,
-    everyFailureDeterministic: boolean,
-  ): Error {
-    if (!(lastError instanceof Error)) {
-      return new ServiceUnavailableException('No eligible model could complete this role');
+  /** Models that failed this role for their own reasons in an earlier attempt of this job. */
+  private async loadDemoted(jobId: string, roleId: string): Promise<ReadonlySet<string>> {
+    try {
+      return await this.recorder.modelSpecificFailures(jobId, roleId);
+    } catch {
+      return new Set();
     }
-    const cause =
-      !everyFailureDeterministic && isDeterministicGenerationError(lastError)
-        ? new ServiceUnavailableException(lastError.message)
-        : lastError;
-    return new CandidatesExhaustedError(outcomes, cause);
-  }
-
-  /**
-   * Counts the spend and records the failed step. A cancel is not a step failure and ends the
-   * role at once; so does a spent attempt time budget, because no other candidate can run
-   * either. Both are rethrown, any other error is left for the caller to try a fallback.
-   */
-  private async recordCallFailure(
-    jobId: string,
-    budgetId: string,
-    step: Omit<StepRecordInput, 'outcome'>,
-    error: unknown,
-    startedAt: number,
-  ): Promise<void> {
-    if (error instanceof ChatModelIncompleteError) {
-      await this.recordSpend(jobId, budgetId, error.costMicroUsd);
-    }
-    if (error instanceof ThreadGenerationCancelledError) throw error;
-    const parsed = parseStepError(error);
-    await this.recorder.record(jobId, {
-      ...step,
-      outcome: 'FAILED',
-      code: parsed.code,
-      httpStatus: parsed.httpStatus,
-      durationMs: Date.now() - startedAt,
-    });
-    if (error instanceof GenerationAttemptTimeoutError) throw error;
-  }
-
-  private responseOutcome(accepted: boolean, attempt: number): StepResponseOutcome {
-    if (accepted) return { outcome: 'SUCCEEDED', code: null };
-    return {
-      outcome: attempt < FORMAT_ATTEMPTS_PER_MODEL ? 'RETRY' : 'FAILED',
-      code: OUTPUT_INVALID_CODE,
-    };
   }
 
   private evidenceItems(bundle: Record<string, unknown>): Map<string, string> {

@@ -5,6 +5,7 @@ import {
   THREAD_STEP_OUTCOME_KEYS,
   THREAD_STEP_OUTCOME_TONES,
 } from '@/constants/thread-generation-progress.constants';
+import { THREAD_HEALING_STEP_CODES } from '@/constants/thread-recovery.constants';
 import { THREAD_STEP_OUTCOME_ICONS } from '@/constants/thread-step-icons.constants';
 import { useThreadStepExcerpt } from '@/hooks/threads/use-thread-step-excerpt';
 import { useTranslation } from '@/lib/i18n';
@@ -27,6 +28,8 @@ export function ThreadGenerationStepItem({ step }: ThreadStepItemProps): ReactEl
   const failure = step.code === null ? null : resolveThreadFailureKeys(step.code);
   const duration = step.durationMs === null ? null : describeStepDuration(step.durationMs);
   const model = [step.provider, step.model].filter(Boolean).join(' / ');
+  // A healing step's excerpt is only the failure class it answered, not something the AI said.
+  const isHealingStep = step.code !== null && THREAD_HEALING_STEP_CODES.has(step.code);
 
   return (
     <li
@@ -77,7 +80,7 @@ export function ThreadGenerationStepItem({ step }: ThreadStepItemProps): ReactEl
           </span>
         )}
       </p>
-      {step.excerpt === null || step.excerpt === '' ? null : (
+      {step.excerpt === null || step.excerpt === '' || isHealingStep ? null : (
         <>
           <Button
             type="button"

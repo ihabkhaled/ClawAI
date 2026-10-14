@@ -4,6 +4,8 @@ import type { ReactElement } from 'react';
 import { ThreadErrorNotice } from '@/components/threads/thread-error-notice';
 import { ThreadGenerationDeleteDialog } from '@/components/threads/thread-generation-delete-dialog';
 import { ThreadGenerationFailureCard } from '@/components/threads/thread-generation-failure-card';
+import { ThreadGenerationHealingNotice } from '@/components/threads/thread-generation-healing-notice';
+import { ThreadGenerationRecoveryPanel } from '@/components/threads/thread-generation-recovery-panel';
 import { ThreadGenerationRetryForm } from '@/components/threads/thread-generation-retry-form';
 import { ThreadGenerationSelectionsView } from '@/components/threads/thread-generation-selections';
 import { ThreadGenerationTimeline } from '@/components/threads/thread-generation-timeline';
@@ -116,12 +118,22 @@ export function ThreadGenerationProgressPanel({
               {t('chat.threadProgress.stillWorking')}
             </p>
           ) : null}
+          {progress.healing && panel.isRunning ? (
+            <ThreadGenerationHealingNotice healing={progress.healing} />
+          ) : null}
           {progress.failure === null ? null : (
-            <ThreadGenerationFailureCard
-              failure={progress.failure}
-              roleKind={findFailedRoleKind(progress)}
-              allowanceRefunded={allowanceRefunded}
-            />
+            <>
+              <ThreadGenerationFailureCard
+                failure={progress.failure}
+                roleKind={findFailedRoleKind(progress)}
+                allowanceRefunded={allowanceRefunded}
+              />
+              <ThreadGenerationRecoveryPanel
+                failure={progress.failure}
+                healing={progress.healing}
+                recovery={panel.recovery}
+              />
+            </>
           )}
           <ThreadGenerationSelectionsView selections={progress.selections} />
           <ThreadGenerationTimeline steps={progress.steps} />

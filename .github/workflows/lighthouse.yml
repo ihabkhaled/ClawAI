@@ -158,6 +158,7 @@ jobs:
         working-directory: apps/claw-frontend
         env:
           AUTH_SERVICE_URL: http://127.0.0.1:4901
+          THREADS_SERVICE_URL: http://127.0.0.1:4901
           INTER_SERVICE_AUTH_TOKEN: lighthouse-fixture
         run: npx --yes @lhci/cli@0.15.x autorun --config=lighthouserc.shard.json
 
@@ -166,6 +167,7 @@ jobs:
         working-directory: apps/claw-frontend
         env:
           AUTH_SERVICE_URL: http://127.0.0.1:4901
+          THREADS_SERVICE_URL: http://127.0.0.1:4901
           INTER_SERVICE_AUTH_TOKEN: lighthouse-fixture
         run: |
           echo "The first pass failed. Auditing this shard again: a budget that"

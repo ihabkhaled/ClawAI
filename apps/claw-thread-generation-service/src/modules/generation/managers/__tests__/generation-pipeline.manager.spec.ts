@@ -10,6 +10,10 @@ import type { GenerationPipelineInput, ModelRole } from '../../types/generation-
 import { revisionDraftHash } from '../../utilities/revision-review.utility';
 import { Locale, ThreadPublicationType } from '@claw/shared-types';
 
+vi.mock('../../utilities/wait-before-retry.utility', () => ({
+  waitBeforeRetry: vi.fn().mockResolvedValue(undefined),
+}));
+
 const evidenceBundle = {
   items: [{ id: 'source-1', url: 'https://example.org/source' }],
 };
@@ -369,7 +373,7 @@ ${text}
     expect(harness.research.run).not.toHaveBeenCalled();
   });
 
-  it('skips a same-provider fallback with a step note instead of failing the role (N-01)', async () => {
+  it('skips a fallback that is the primary itself with a step note instead of failing the role (N-01)', async () => {
     const harness = build([
       draft('grounded'),
       draft('grounded'),
@@ -384,7 +388,10 @@ ${text}
     const result = await harness.manager.generate({
       ...input,
       authors: [
-        { ...role('author-1'), fallbacks: [{ provider: 'OPENAI', model: 'other' }] },
+        {
+          ...role('author-1'),
+          fallbacks: [{ provider: 'OPENAI', model: role('author-1').model }],
+        },
         ...input.authors.slice(1),
       ],
     });
@@ -445,7 +452,8 @@ ${text}
         .catch((error: unknown) => error);
 
       expect(isDeterministicGenerationError(failure)).toBe(true);
-      expect(harness.models.generate).toHaveBeenCalledTimes(6);
+      // Each candidate is asked once, then once more with a shortened source (ADR-181).
+      expect(harness.models.generate).toHaveBeenCalledTimes(12);
     });
 
     it('stays retryable when a fallback failed for a transient reason', async () => {

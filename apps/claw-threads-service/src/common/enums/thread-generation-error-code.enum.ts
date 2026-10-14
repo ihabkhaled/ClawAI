@@ -13,8 +13,6 @@ export enum ThreadGenerationErrorCode {
   MODEL_UNKNOWN = 'THREAD_MODEL_UNKNOWN',
   /** The spend cap is below the documented minimum. */
   SPEND_CAP_TOO_LOW = 'THREAD_SPEND_CAP_TOO_LOW',
-  /** A fallback names the same provider as its primary, which the pipeline refuses at run time. */
-  FALLBACK_SAME_PROVIDER = 'THREAD_FALLBACK_SAME_PROVIDER',
   /** The plan has Thread generation, but its allowance is used up or held by a running generation. */
   ALLOWANCE_UNAVAILABLE = 'THREAD_GENERATION_ALLOWANCE_UNAVAILABLE',
   /** The owner already has the maximum number of generations running at once. */

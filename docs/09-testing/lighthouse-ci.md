@@ -71,6 +71,13 @@ workflow stops wiring the fixture, or if a plan loses a field the page renders.
 report). A page that depends on the backend needs a fixture here, not a
 weaker assertion.
 
+The same fixture also answers threads-service's public Board list
+(`/api/v1/thread-publications/public/board`), and the audit steps set
+`THREADS_SERVICE_URL` to it. Without that, `/en/threads/board` (added
+2026-10-13) fell back to a client fetch that failed in CI and cost
+best-practices 0.04 from 2026-10-14. **Rule: a public marketing page that reads
+a backend service must get a fixture route here in the same commit that adds the page.**
+
 ## Running locally
 
 To reproduce the job's pricing pages, start the fixture and pass the same two

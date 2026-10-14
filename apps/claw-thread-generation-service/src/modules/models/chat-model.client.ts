@@ -18,6 +18,7 @@ import {
   MODEL_CALL_MAX_TOTAL_MS,
   MODEL_HARD_CEILING_CODE,
   MODEL_STREAM_TRUNCATED_MESSAGE,
+  MS_PER_SECOND,
   NDJSON_CONTENT_TYPE,
 } from './constants/model-call.constants';
 import {
@@ -25,6 +26,7 @@ import {
   CONTEXT_WINDOW_EXCEEDED_MESSAGE,
 } from './constants/model-context.constants';
 import { ChatModelIncompleteError } from './chat-model-incomplete.error';
+import { ChatUpstreamError } from './chat-upstream.error';
 import { ModelCallCeilingError } from './model-call-ceiling.error';
 import { ModelContextClient } from './model-context.client';
 import { chatStreamFrameSchema } from './schemas/chat-generate-stream.schema';
@@ -193,7 +195,10 @@ export class ChatModelClient {
       // counted as activity.
       if (!frame.success || frame.data.type === 'activity') continue;
       if (frame.data.type === 'result') return this.acceptReply(frame.data.data);
-      throw this.upstreamFailure(frame.data.status, frame.data.code);
+      throw this.upstreamFailure(frame.data.status, frame.data.code, {
+        message: frame.data.message,
+        retryAfterSeconds: frame.data.retryAfterSeconds,
+      });
     }
     throw new ServiceUnavailableException(MODEL_STREAM_TRUNCATED_MESSAGE);
   }
@@ -211,11 +216,18 @@ export class ChatModelClient {
     return this.upstreamFailure(response.status, parsed.success ? parsed.data.code : undefined);
   }
 
-  private upstreamFailure(status: number, code: string | undefined): ServiceUnavailableException {
+  private upstreamFailure(
+    status: number,
+    code: string | undefined,
+    detail: { message?: string; retryAfterSeconds?: number } = {},
+  ): ServiceUnavailableException {
     const message = `Chat model request failed (${String(status)}${code ? `: ${code}` : ''})`;
-    return code === MODEL_HARD_CEILING_CODE
-      ? new ModelCallCeilingError(message)
-      : new ServiceUnavailableException(message);
+    if (code === MODEL_HARD_CEILING_CODE) return new ModelCallCeilingError(message);
+    return new ChatUpstreamError(
+      message,
+      detail.message ?? null,
+      detail.retryAfterSeconds === undefined ? null : detail.retryAfterSeconds * MS_PER_SECOND,
+    );
   }
 
   /** Whatever the transport reported after an abort is a symptom; the cause is the answer. */

@@ -421,3 +421,16 @@ describe('ModelCostService — provider id decoration', () => {
     expect(snapshot.isPriced).toBe(false);
   });
 });
+
+describe('ModelCostService.isAggregatorProvider — real connector ids', () => {
+  it.each(['OPENROUTER', 'HUGGINGFACE', 'NVIDIANIM', 'HUGGING_FACE', 'NVIDIA_NIM', 'huggingface'])(
+    '%s is a reseller, never priced at a stand-in rate',
+    (provider) => {
+      expect(ModelCostService.isAggregatorProvider(provider)).toBe(true);
+    },
+  );
+
+  it.each(['GROQ', 'ANTHROPIC', 'GEMINI'])('%s is a first-party provider', (provider) => {
+    expect(ModelCostService.isAggregatorProvider(provider)).toBe(false);
+  });
+});

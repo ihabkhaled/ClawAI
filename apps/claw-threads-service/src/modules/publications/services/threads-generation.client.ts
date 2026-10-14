@@ -8,6 +8,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { assertSafeRequestUrl, declaredHost } from '@claw/shared-utilities';
+import type { ThreadHealingPool } from '@claw/shared-types';
 import { z } from 'zod';
 
 import { AppConfig } from '../../../app/config/app.config';
@@ -39,6 +40,7 @@ const privateStateSchema = z.object({
   stage: z.string(),
   round: z.number().int().nonnegative(),
   safeErrorCode: z.string().nullable(),
+  terminal: z.boolean().default(false),
   review: z
     .object({
       draftHash: z.string().length(64),
@@ -70,6 +72,7 @@ export class ThreadsGenerationClient {
   async enqueue(
     ownerId: string,
     input: StartThreadGenerationDto,
+    healing?: ThreadHealingPool,
   ): Promise<{ jobId: string; status: string }> {
     const body: GenerationEnqueueInput = {
       sourceThreadId: input.sourceThreadId,
@@ -83,6 +86,7 @@ export class ThreadsGenerationClient {
       authors: input.authors,
       judge: input.judge,
       critic: input.critic,
+      ...(healing ? { healing } : {}),
     };
     // A 404 here is the source chat thread: missing and another user's look the same.
     const result = await this.request(
@@ -132,10 +136,11 @@ export class ThreadsGenerationClient {
     jobId: string,
     ownerId: string,
     input: RetryThreadGenerationDto,
+    healing?: ThreadHealingPool,
   ): Promise<{ jobId: string; status: string }> {
     const result = await this.request(this.jobPath(jobId, 'retry'), {
       method: 'POST',
-      body: JSON.stringify({ ...input, ownerId }),
+      body: JSON.stringify({ ...input, ...(healing ? { healing } : {}), ownerId }),
     });
     const parsed = generationRetryResponseSchema.safeParse(result);
     if (!parsed.success) throw new ServiceUnavailableException('Generation response is invalid');

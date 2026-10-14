@@ -182,6 +182,7 @@ describe('PublicationLifecycleService', () => {
         capMicroUsd: 1000000,
         publicIntentVersion: 'threads-public-v1',
       }),
+      undefined,
     );
     expect(publications.createQueuedPublication).toHaveBeenCalledWith(
       'owner-1',

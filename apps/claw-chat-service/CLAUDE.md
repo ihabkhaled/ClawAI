@@ -750,6 +750,12 @@ text>)` again. Credit refusals → `ProviderCreditExhaustedException`
   runs once, outside the retry. Specs:
   `__tests__/provider-credit-chokepoint.spec.ts`.
 
+### Provider caps that look like bad requests (prod 2026-10-14)
+
+- Anthropic's spend cap is a **400** `invalid_request_error` ("reached your specified API usage limits"), Hugging Face's empty balance a 402 "no remaining credits": both match `PROVIDER_ACCOUNT_EXHAUSTED_PATTERN`, so the caller sees `PROVIDER_CREDIT_EXHAUSTED` (503) and the breaker opens, never a generic 400.
+- A 413 "Request too large ... Limit N, Requested M" (Groq on_demand tier) becomes `ProviderRequestTooLargeException` (`PROVIDER_REQUEST_TOO_LARGE`, 413, numbers only, never retried).
+- `metadata.pickedModelFallback.reasonCode` is the picked model's failure code, so a silent substitution is explainable. The caller of `generate-stream` should read the error frame's `message` (<= 300 chars, URL and JSON bodies already removed).
+
 ### Every provider's refusals (ADR-125)
 
 - Small shared windows (ADR-151 addendum): `applyWindowFit` clamps the output cap to `window - prompt - 256` from `knownContextWindow` (gpt-4 = 8,192). `parseContextOverrunOutputRoom` retries the "(N in the messages, M in the completion)" refusal once; the ceiling is prompt-dependent and is not recorded as the model's learned output limit.

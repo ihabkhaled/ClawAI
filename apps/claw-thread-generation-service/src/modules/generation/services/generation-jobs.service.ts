@@ -34,6 +34,7 @@ import type { RetryGenerationDto } from '../dto/retry-generation.dto';
 import { budgetCloseStatusForFailure } from '../utilities/classify-budget-close.utility';
 import { buildRetryInput } from '../utilities/build-retry-input.utility';
 import { isDeterministicGenerationError } from '../utilities/deterministic-generation.error';
+import { classifyFailure } from '../utilities/classify-failure.utility';
 import { parseStepError } from '../utilities/parse-step-error.utility';
 import {
   NON_RETRYABLE_STEP_CODES,
@@ -133,13 +134,32 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     const original = enqueueGenerationSchema.safeParse(source.request);
     if (!original.success) throw new ConflictException('This generation cannot be retried');
     const input = buildRetryInput(original.data, change);
+    const inherit = input.topic === original.data.topic;
     const snapshot = z.record(z.string(), z.unknown()).safeParse(source.sourceSnapshot);
     if (!snapshot.success) throw new BadRequestException('Saved source snapshot is invalid');
     return this.enqueueWithSnapshot(
       input,
       () => Promise.resolve({ snapshot: snapshot.data, sha256: source.sourceSnapshotHash }),
       source.id,
+      inherit ? (change.models ?? []).map(({ roleId }) => roleId) : null,
     );
+  }
+
+  /**
+   * A retry resumes at the failed phase (ADR-181): the new job starts with the research and the
+   * model replies of the failed one, except the roles whose model the owner changed. Best effort:
+   * when the copy fails the retry simply starts from scratch. Never done for a changed topic.
+   */
+  private async inheritFromFailedJob(
+    fromJobId: string,
+    toJobId: string,
+    changedRoleIds: readonly string[],
+  ): Promise<void> {
+    try {
+      await this.repository.inheritCheckpoints(fromJobId, toJobId, changedRoleIds);
+    } catch {
+      this.logger.warn('Retry could not inherit the failed generation checkpoints');
+    }
   }
 
   /** Owner delete of a finished job. The budget close stays on its own idempotent path. */
@@ -178,6 +198,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     input: EnqueueGenerationDto,
     loadSnapshot: () => Promise<{ snapshot: Record<string, unknown>; sha256: string }>,
     retriedFromJobId?: string,
+    changedRoleIds: readonly string[] | null = null,
   ): Promise<GenerationEnqueueResult> {
     const replay = await this.replayIdempotentEnqueue(input);
     if (replay) return replay;
@@ -196,7 +217,11 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       budget.id,
       retriedFromJobId,
     );
-    return this.dispatchQueuedJob(await this.requireStoredJob(stored, budget.id, input));
+    const job = await this.requireStoredJob(stored, budget.id, input);
+    if (retriedFromJobId && changedRoleIds) {
+      await this.inheritFromFailedJob(retriedFromJobId, job.id, changedRoleIds);
+    }
+    return this.dispatchQueuedJob(job);
   }
 
   private async replayIdempotentEnqueue(
@@ -308,6 +333,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       stage: job.stage,
       round: job.round,
       safeErrorCode: job.safeErrorCode,
+      terminal: !['QUEUED', 'RUNNING'].includes(job.status),
       review: content?.review ?? null,
       draft: content
         ? {
@@ -492,7 +518,9 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       job.id,
       job.attemptCount,
       describeFailure(error),
-      !isDeterministicGenerationError(error) && !NON_RETRYABLE_STEP_CODES.has(failureCode),
+      !isDeterministicGenerationError(error) &&
+        !NON_RETRYABLE_STEP_CODES.has(failureCode) &&
+        !classifyFailure({ code: failureCode, httpStatus: null }).ownerOnly,
     );
     if (outcome === GenerationJobRecoveryOutcome.FAILED) {
       await this.closeBudget(job.id, job.budgetId, budgetCloseStatusForFailure(failureCode));
@@ -724,6 +752,10 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       isCancellationRequested: async () =>
         lease.isLost() || (await this.repository.isCancellationRequested(job.id)),
       signal: lease.signal,
+      spendCapMicroUsd: Number(job.spendCapMicroUsd),
+      spentMicroUsd: Number(job.spentMicroCredits),
+      healing: 'healing' in request ? request.healing : undefined,
+      articleLength: 'articleLength' in request ? request.articleLength : undefined,
     };
     if ('kind' in request) {
       const evidence = this.requireIntactEvidence(job);

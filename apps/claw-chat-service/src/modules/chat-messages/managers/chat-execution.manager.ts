@@ -601,7 +601,7 @@ export class ChatExecutionManager implements OnModuleInit {
         // The credit notice already says why this model answered; a second
         // "X failed" notice would only repeat it.
         ...(creditAnswer.creditFallback === undefined
-          ? pickedModelFallbackPart(payload, candidate, index)
+          ? pickedModelFallbackPart(payload, candidate, index, chain.attempts)
           : creditAnswer),
       },
       payload,

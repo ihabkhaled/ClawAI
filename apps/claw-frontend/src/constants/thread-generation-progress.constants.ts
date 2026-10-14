@@ -71,6 +71,24 @@ export const THREAD_GENERATION_CODE_KEYS: Readonly<Record<string, string>> = {
   MODEL_IDLE_TIMEOUT: 'modelIdleTimeout',
   MODEL_HARD_CEILING: 'modelHardCeiling',
   MODEL_REASONED_NO_ANSWER: 'modelReasonedNoAnswer',
+  // Healing steps (ADR-181): what the service changed before it asked again.
+  HEAL_BACKOFF_RETRY: 'healBackoffRetry',
+  HEAL_STRICT_PROMPT: 'healStrictPrompt',
+  HEAL_JSON_REPAIR: 'healJsonRepair',
+  HEAL_RAISE_OUTPUT_LIMIT: 'healRaiseOutputLimit',
+  HEAL_COMPACT_OUTPUT: 'healCompactOutput',
+  HEAL_LOWER_OUTPUT_LIMIT: 'healLowerOutputLimit',
+  HEAL_SHRINK_SOURCE: 'healShrinkSource',
+  HEAL_CROSS_PROVIDER: 'healCrossProvider',
+  HEAL_SAFE_DEFAULT: 'healSafeDefault',
+  HEAL_STOPPED_SPEND_CAP: 'healStoppedSpendCap',
+  HEAL_STOPPED_ATTEMPT_BUDGET: 'healStoppedAttemptBudget',
+  HEAL_STOPPED_OWNER_ACTION: 'healStoppedOwnerAction',
+  PROVIDER_REQUEST_TOO_LARGE: 'providerRequestTooLarge',
+  PROVIDER_CREDIT_EXHAUSTED: 'providerCreditExhausted',
+  PAYG_PRICING_UNAVAILABLE: 'paygPricingUnavailable',
+  CLOUD_PROVIDER_REQUEST_FAILED: 'cloudProviderRequestFailed',
+  CLOUD_PROVIDER_EMPTY_RESPONSE: 'cloudProviderEmptyResponse',
 };
 
 /**
@@ -91,7 +109,6 @@ export const THREAD_START_ERROR_KEYS: Readonly<Record<string, string>> = {
   THREAD_GENERATION_TOO_MANY_ACTIVE: 'tooManyActive',
   THREAD_IDEMPOTENCY_KEY_REUSED: 'idempotencyKeyReused',
   THREAD_GENERATION_NOT_CANCELLABLE: 'notCancellable',
-  THREAD_FALLBACK_SAME_PROVIDER: 'fallbackSameProvider',
   THREAD_PUBLICATION_NOT_PUBLISHED: 'notPublished',
   THREAD_TOPIC_INVALID: 'topicInvalid',
   THREAD_TEXT_INVALID: 'textInvalid',

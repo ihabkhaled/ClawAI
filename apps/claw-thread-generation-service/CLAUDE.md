@@ -158,7 +158,7 @@ parsing (280 characters, five findings), never rejected; the prompt states the l
 through `sanitizeDraftMarkup` (strips `<sup>`/`<sub>`, flattens `[[id1], [id2]]`). A provider outage the chat
 service sends as a 400 with `CLOUD_PROVIDER_UNAVAILABLE` is stored as `PROVIDER_UNAVAILABLE` with HTTP 503.
 `PAYG_CAP_TOO_LOW`, `PAYG_CREDIT_EXHAUSTED`, `PAYG_PRICE_UNAVAILABLE` pass through as their own codes. A
-same-provider fallback is dropped at call time with a SKIPPED step `FALLBACK_SKIPPED_SAME_PROVIDER`.
+fallback identical to its primary is dropped at call time with a SKIPPED step `FALLBACK_SKIPPED_SAME_PROVIDER` (ADR-181: a different model of the same provider is kept).
 
 ## Non-English and reasoning-model author output (2026-10-14)
 
@@ -185,3 +185,16 @@ There is no language or length check in the author schema; the causes were three
 ## Allowance refusal pass-through (2026-10-14)
 
 `ThreadBudgetClient.reserve` keeps the body of auth-service's 403 `THREAD_ALLOWANCE_UNAVAILABLE` (`feature`, `reason`, `used`, `limit`, `window`, parsed by `threadAllowanceRefusalSchema`) so threads-service can tell the owner how much is used and when it frees up. A `FEATURE_DISABLED` refusal and any other 403 stay the plain "not permitted" 403. Do not drop the body again.
+
+## Self-healing and resume at the failed phase (ADR-181, 2026-10-14)
+
+- **Classifier.** `classifyFailure` (`utilities/classify-failure.utility.ts`, table in `constants/failure-class.constants.ts`) maps every step failure to `{ phase, failureClass, healable, ownerOnly, retryable, remedies }`. The enums (`ThreadFailurePhase`, `ThreadFailureClass`, `ThreadHealingStrategy`, `ThreadFailureRemedy`, `ThreadArticleLength`) live in `@claw/shared-types`. A new code goes in `FAILURE_CLASS_BY_CODE`, the frontend `THREAD_GENERATION_CODE_KEYS` and all 13 locales. `ownerOnly` classes (spent credit, entitlement, safety refusal) stop the ladder and are never retried as a whole attempt.
+- **Ladder.** `managers/role-healer.ts` (`RoleHealer`, plain class, fakes in specs) replaces the old `callRole`/`tryCandidate`. Per class, `nextOnModelStep` picks the next unused rung for the same model (backoff + jitter + Retry-After, stricter prompt, JSON repair pass, more or less output room, shorter source); when the rungs are spent the role swaps model: owner backups, then the pool (`input.healing`, ranked by the last hour's success rate in the step log), then the safe default. After a provider-wide failure other providers go first. Same-provider fallbacks are allowed; only a fallback identical to the primary is dropped with a SKIPPED step. The gateway has no temperature or response_format parameter, so none is varied.
+- **Bounds.** 6 healing attempts per role (`MAX_HEAL_ATTEMPTS_PER_ROLE`), 24 per job attempt, 6 minutes per role, and no healing attempt once spend reaches 85 percent of the cap (`HealingBudget`, built per attempt by `createHealingBudget`). Backoff waits (at most 30 s) stop on cancel (`waitBeforeRetry`).
+- **Step log.** A healing step is a `RETRY`/`FALLBACK` row whose code is the strategy (`HEAL_*`, or `FALLBACK_USED`) and whose excerpt is the failure class it answered; `HEAL_STOPPED_*` SKIPPED rows say why healing stopped. `buildHealingSummary` derives `progress.healing` from the log; there is no extra table. `progress.failure` also carries `phase`, `failureClass`, `remedies` and `suggestedModel`.
+- **Resume.** `retry` calls `GenerationJobsRepository.inheritCheckpoints`: research evidence and every saved reply except the roles whose model changed are copied into the unstarted child (skip duplicates, best effort). A changed topic inherits nothing. `articleLength: SHORT` (the Shorter article remedy) changes the author prompt, so authors regenerate.
+- **Request.** `enqueueGenerationSchema` accepts optional `healing` (pool of at most 12, safe default) and `articleLength`. `healing` is ignored when two requests are compared for idempotency (`isSameRequest`).
+- **Citations.** `normalizeAuthorOutput` also resolves a url written with a trailing slash, tracking parameters, another scheme or `www`, and a number only when the entry gives that item's url; unresolved listed entries are dropped when another citation is real. The author user prompt ends with an id/url table. A `revisionBrief` left out by a reviewer is empty.
+- **Gateway detail.** An error frame's redacted `message` and `retryAfterSeconds` are kept on `ChatUpstreamError`; the message becomes the failed step's excerpt.
+- **Owner state.** `getOwnerState` adds `terminal`; `safeErrorCode` can hold the last attempt's code while the job is queued or running.
+- Not done: best-draft acceptance or a tie-break judge after repeated no-consensus, sectioned authoring, dropping a failed author, a cross-job provider breaker, `GENERATION_WORKER_SLOT_COUNT` is still 6. See the [runbook](../../docs/11-runbooks/runbook-thread-generation-failed.md).

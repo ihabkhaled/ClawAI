@@ -4,7 +4,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  BOARD_PATH,
   CATALOG_PATH,
+  LIGHTHOUSE_BOARD,
   LIGHTHOUSE_PLAN_CATALOG,
   createCatalogServer,
 } from '../../apps/claw-frontend/scripts/lighthouse-pricing-fixture.mjs';
@@ -50,4 +52,15 @@ test('the Lighthouse workflow starts the fixture and points the frontend at it',
   assert.match(workflow, /scripts\/lighthouse-pricing-fixture\.mjs/u);
   assert.match(workflow, /AUTH_SERVICE_URL: http:\/\/127\.0\.0\.1:4901/u);
   assert.match(workflow, /INTER_SERVICE_AUTH_TOKEN: lighthouse-fixture/u);
+});
+
+test('the guest Board is served by the fixture and both audit steps point THREADS_SERVICE_URL at it', async () => {
+  await withServer(async (origin) => {
+    const response = await fetch(`${origin}${BOARD_PATH}?page=1&limit=12`);
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).items.length, LIGHTHOUSE_BOARD.items.length);
+  });
+  const workflow = readFileSync(WORKFLOW, 'utf8');
+  const wired = workflow.match(/THREADS_SERVICE_URL: http:\/\/127\.0\.0\.1:4901/gu) ?? [];
+  assert.equal(wired.length, 2, 'the first pass and the retry must both see the Board fixture');
 });

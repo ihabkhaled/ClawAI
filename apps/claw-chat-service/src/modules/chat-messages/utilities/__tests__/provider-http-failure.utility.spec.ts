@@ -5,6 +5,7 @@ import {
   ProviderModelUnavailableException,
   ProviderOutputLimitException,
   ProviderRateLimitedException,
+  ProviderRequestTooLargeException,
 } from '../../../../common/errors';
 import { OUTPUT_BOUNDS_SAFETY_MARGIN } from '../../constants/output-token-bounds.constants';
 import {
@@ -387,6 +388,92 @@ describe('account-level credit exhaustion (ADR-125)', () => {
       body: OPENROUTER_402,
     }) as ProviderCreditExhaustedException;
     expect(error.accountExhausted).toBe(false);
+  });
+});
+
+describe('prod 2026-10-14: provider caps that looked like bad requests', () => {
+  const ANTHROPIC_CAP = {
+    error: {
+      code: 'invalid_request_error',
+      message:
+        'You have reached your specified API usage limits. You will regain access on 2026-11-01 at 00:00 UTC.',
+      type: 'invalid_request_error',
+      param: null,
+    },
+  };
+  const HF_NO_CREDITS = {
+    error:
+      'You have no remaining credits. Purchase pre-paid credits to continue using Inference Providers.',
+  };
+  const GROQ_TOO_LARGE = {
+    error: {
+      message:
+        'Request too large for model `openai/gpt-oss-120b` in organization `org_x` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Requested 17934, please reduce your message size and try again. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing',
+      type: 'tokens',
+      code: 'rate_limit_exceeded',
+    },
+  };
+
+  it('Anthropic spend cap (a 400) is account exhaustion, not a bad request', () => {
+    const error = classify({
+      status: 400,
+      body: ANTHROPIC_CAP,
+    }) as ProviderCreditExhaustedException;
+    expect(error).toBeInstanceOf(ProviderCreditExhaustedException);
+    expect(error.accountExhausted).toBe(true);
+    expect(error.code).toBe(PROVIDER_CREDIT_EXHAUSTED_CODE);
+  });
+
+  it('Hugging Face 402 "no remaining credits" is account exhaustion (opens the breaker)', () => {
+    const error = classify({
+      status: 402,
+      body: HF_NO_CREDITS,
+    }) as ProviderCreditExhaustedException;
+    expect(error.accountExhausted).toBe(true);
+  });
+
+  it('Groq 413 states its allowance: a non-retried request-too-large with only the numbers', () => {
+    const error = classify({
+      status: 413,
+      body: GROQ_TOO_LARGE,
+    }) as ProviderRequestTooLargeException;
+    expect(error).toBeInstanceOf(ProviderRequestTooLargeException);
+    expect(error.code).toBe('PROVIDER_REQUEST_TOO_LARGE');
+    expect(error.getStatus()).toBe(HttpStatus.PAYLOAD_TOO_LARGE);
+    expect([error.limitTokens, error.requestedTokens]).toEqual([8000, 17934]);
+    expect(error.message).not.toMatch(/https?:|groq.com|org_x/u);
+    expect(providerRetryPlan(error)).toBeUndefined();
+    expect(isAccountExhaustion(error)).toBe(false);
+  });
+
+  it('reads the qwen ITPM wording too', () => {
+    const body = {
+      error: {
+        message:
+          'Request too large for model `qwen/qwen3.8-27b` on input tokens per minute (ITPM): Limit 7000, Requested 14028, please reduce',
+      },
+    };
+    const error = classify({ status: 413, body }) as ProviderRequestTooLargeException;
+    expect([error.limitTokens, error.requestedTokens]).toEqual([7000, 14028]);
+  });
+
+  it('a 413 that states no numbers stays a plain failure carrying the upstream status', () => {
+    const error = classify({ status: 413, body: { error: { message: 'Payload too large' } } });
+    expect(error).not.toBeInstanceOf(ProviderRequestTooLargeException);
+    expect(Reflect.get(error, 'upstreamStatus')).toBe(413);
+  });
+
+  it('a plain Groq TPM 429 is still a retryable rate limit', () => {
+    const error = classify({
+      status: 429,
+      body: {
+        error: {
+          message:
+            'Rate limit reached for model x on tokens per minute (TPM): Limit 8000, Used 7023, Requested 6379.',
+        },
+      },
+    });
+    expect(error).toBeInstanceOf(ProviderRateLimitedException);
   });
 });
 
