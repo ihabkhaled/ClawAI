@@ -25,12 +25,12 @@ export function BoardFilters({
 }: BoardFiltersProps): ReactElement {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col gap-3 md:flex-row md:items-center">
+    <div className="flex flex-col gap-3 @4xl:flex-row @4xl:items-center">
       <Select value={lang} onValueChange={onLanguageChange}>
         <SelectTrigger
           id={`${idPrefix}-lang`}
           aria-label={t('chat.threadBoardFilterLanguage')}
-          className="min-h-11 md:w-44"
+          className="min-h-11 @4xl:w-44"
         >
           <SelectValue />
         </SelectTrigger>
@@ -47,7 +47,7 @@ export function BoardFilters({
         <SelectTrigger
           id={`${idPrefix}-type`}
           aria-label={t('chat.threadBoardFilterType')}
-          className="min-h-11 md:w-48"
+          className="min-h-11 @4xl:w-48"
         >
           <SelectValue />
         </SelectTrigger>

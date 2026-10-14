@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/lib/i18n';
 import type { BoardReaderViewProps } from '@/types/thread-board-reader.types';
 import { safeThreadCitationUrl } from '@/utilities/thread-citation.utility';
+import { threadContentDirection } from '@/utilities/thread-content-direction.utility';
 
 export function BoardReaderView({ state }: BoardReaderViewProps): ReactElement {
   const { t } = useTranslation();
@@ -68,7 +69,7 @@ export function BoardReaderView({ state }: BoardReaderViewProps): ReactElement {
           <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden="true" />
           {t('chat.threadBoardBack')}
         </Button>
-        <nav aria-label={t('chat.threadBoardTitle')}>
+        <nav aria-label={t('chat.threadBoardTitle')} className="min-w-0 flex-1">
           <ol className="text-muted-foreground flex min-w-0 items-center gap-1 text-sm">
             <li>
               <Link href={state.boardHref} className="hover:underline">
@@ -78,13 +79,17 @@ export function BoardReaderView({ state }: BoardReaderViewProps): ReactElement {
             <li aria-hidden="true">
               <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
             </li>
-            <li aria-current="page" className="text-foreground truncate">
+            <li aria-current="page" className="text-foreground min-w-0 truncate">
               {publication.title}
             </li>
           </ol>
         </nav>
       </div>
-      <article className="border-border bg-card rounded-xl border p-5 sm:p-8">
+      <article
+        className="border-border bg-card rounded-xl border p-5 sm:p-8"
+        lang={publication.contentLocale}
+        dir={threadContentDirection(publication.contentLocale)}
+      >
         <header className="mb-6 flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight">{publication.title}</h1>
           <time className="text-muted-foreground text-sm" dateTime={publication.publishedAt}>

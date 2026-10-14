@@ -93,4 +93,12 @@ describe('useBoardSuggest', () => {
     });
     expect(result.current.isError).toBe(true);
   });
+
+  it('clamps the request to 100 characters so the API never answers 400', async () => {
+    renderHook(() => useBoardSuggest('x'.repeat(130), 'all'), { wrapper: wrapper() });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(250);
+    });
+    expect(vi.mocked(threadBoardRepository.suggest).mock.calls[0]?.[0]).toBe('x'.repeat(100));
+  });
 });

@@ -32,7 +32,7 @@ export function BoardFiltersSheet({
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button type="button" variant="outline" className="min-h-11 gap-2 md:hidden">
+        <Button type="button" variant="outline" className="min-h-11 gap-2 @4xl:hidden">
           <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
           {t('chat.threadBoardFilters')}
           {activeCount > 0 ? <Badge variant={BadgeVariant.SECONDARY}>{activeCount}</Badge> : null}

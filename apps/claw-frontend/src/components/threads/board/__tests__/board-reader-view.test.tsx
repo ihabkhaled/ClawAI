@@ -175,4 +175,25 @@ describe('BoardReaderActions', () => {
     render(<BoardReaderActions {...props} publicUrl={null} />);
     expect(screen.getByRole('button', { name: 'chat.threadBoardCopyLink' })).toBeDisabled();
   });
+
+  it('sets lang and dir on the article from the content locale (RTL on an LTR UI)', () => {
+    const base = createState();
+    const publication = base.publication;
+    if (!publication) {
+      throw new Error('publication missing');
+    }
+    render(
+      <BoardReaderView
+        state={{ ...base, publication: { ...publication, contentLocale: Locale.AR } }}
+      />,
+    );
+    const article = screen.getByRole('article');
+    expect(article).toHaveAttribute('dir', 'rtl');
+    expect(article).toHaveAttribute('lang', 'ar');
+  });
+
+  it('keeps an English article left-to-right', () => {
+    render(<BoardReaderView state={createState()} />);
+    expect(screen.getByRole('article')).toHaveAttribute('dir', 'ltr');
+  });
 });

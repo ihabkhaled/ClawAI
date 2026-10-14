@@ -49,6 +49,11 @@ describe('BoardSearchCombobox', () => {
     };
   });
 
+  it('limits the input to 100 characters', () => {
+    const { input } = setup();
+    expect(input).toHaveAttribute('maxlength', '100');
+  });
+
   it('exposes combobox a11y attributes and a live count', async () => {
     const { input } = setup();
     expect(input).toHaveAttribute('aria-expanded', 'false');

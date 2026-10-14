@@ -36,14 +36,14 @@ export function BoardCard({ item }: BoardCardProps): ReactElement {
         <Badge variant={BadgeVariant.SECONDARY}>{boardLanguageLabel(item.contentLocale)}</Badge>
         {typeKey ? <Badge variant={BadgeVariant.OUTLINE}>{t(typeKey)}</Badge> : null}
       </div>
-      <h3 className="text-base leading-snug font-semibold">
+      <h2 className="text-base leading-snug font-semibold">
         <Link
           href={boardItemPath(item.slug)}
           className="flex min-h-11 items-center rounded-sm outline-none after:absolute after:inset-0"
         >
           <span className="line-clamp-2">{item.title}</span>
         </Link>
-      </h3>
+      </h2>
       <p className="text-muted-foreground line-clamp-3 text-sm">{item.excerpt}</p>
       <ul className="text-muted-foreground mt-auto flex flex-wrap gap-x-3 gap-y-1 text-xs">
         {stats.map(({ Icon, text }) => (

@@ -29,7 +29,7 @@ export function BoardPageView(): ReactElement {
         sort={state.sort}
         lang={state.lang}
         type={state.type}
-        total={meta?.total ?? 0}
+        total={page.items.length > 0 ? (meta?.total ?? 0) : 0}
         chips={page.chips}
         hasActiveFilters={query.hasActiveFilters}
         activeFilterCount={page.activeFilterCount}

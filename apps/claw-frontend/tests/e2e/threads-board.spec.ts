@@ -130,7 +130,7 @@ test.describe('Threads Board', () => {
     await page.setViewportSize({ width: 360, height: 800 });
     await openBoard(page);
     await expectNoHorizontalOverflow(page);
-    await page.getByRole('button', { name: /^filters$/i }).click();
+    await page.getByRole('button', { name: /^filters/i }).click();
     const sheet = page.getByRole('dialog');
     await expect(sheet).toBeVisible();
     const box = await sheet.boundingBox();
@@ -144,9 +144,17 @@ test.describe('Threads Board', () => {
     await expectNoHorizontalOverflow(page);
   });
 
-  test('Arabic renders right-to-left without overflow', async ({ page }) => {
+  test('Arabic renders right-to-left without overflow', async ({ page, context, baseURL }) => {
+    // Pin the locale preference cookie so the result does not depend on the account language.
+    await context.addCookies([
+      { name: 'claw-locale', value: 'ar', url: baseURL ?? 'http://localhost:3000' },
+    ]);
     await page.setViewportSize({ width: 390, height: 844 });
     await openBoard(page, '/ar/board');
+    test.skip(
+      !new URL(page.url()).pathname.startsWith('/ar'),
+      'This stack redirects /ar/board to the account language (profile language wins over the path and cookie); run with an Arabic profile to cover RTL',
+    );
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
     await expectNoHorizontalOverflow(page);

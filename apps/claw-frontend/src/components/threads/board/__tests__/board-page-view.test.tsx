@@ -135,6 +135,36 @@ describe('BoardPageView', () => {
     expect(screen.queryByText('chat.threadBoardClearFilters')).not.toBeInTheDocument();
   });
 
+  it('hides the results count when the requested page is empty but the total is not', () => {
+    list = {
+      isLoading: false,
+      isError: false,
+      data: {
+        items: [],
+        meta: { total: 6, page: 999, limit: 12, totalPages: 1 },
+        didYouMean: null,
+      },
+    };
+    render(<BoardPageView />);
+    expect(screen.queryByTestId('board-count')).not.toBeInTheDocument();
+    expect(screen.getByText('chat.threadBoardEmptyBody')).toBeInTheDocument();
+  });
+
+  it('renders card titles as h2 directly under the page h1', () => {
+    list = {
+      isLoading: false,
+      isError: false,
+      data: {
+        items: [item('a')],
+        meta: { total: 1, page: 1, limit: 12, totalPages: 1 },
+        didYouMean: null,
+      },
+    };
+    render(<BoardPageView />);
+    expect(screen.getByRole('heading', { level: 2, name: 'Title a' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 3 })).not.toBeInTheDocument();
+  });
+
   it('offers clear in the filtered empty state', () => {
     state = { ...state, q: 'zzz' };
     hasActiveFilters = true;

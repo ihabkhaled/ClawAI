@@ -23,13 +23,13 @@ import type { BoardToolbarProps } from '@/types/thread-board-view.types';
 export function BoardToolbar(props: BoardToolbarProps): ReactElement {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col gap-3" data-testid="board-toolbar">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center">
-        <div className="min-w-0 flex-1">
+    <div className="@container flex flex-col gap-3" data-testid="board-toolbar">
+      <div className="flex flex-col gap-3 @4xl:flex-row @4xl:items-center">
+        <div className="min-w-0 flex-1 @4xl:min-w-56">
           <BoardSearchCombobox value={props.q} lang={props.lang} onSubmit={props.onSearch} />
         </div>
         <Select value={props.sort} onValueChange={props.onSort}>
-          <SelectTrigger aria-label={t('chat.threadBoardSortLabel')} className="min-h-11 md:w-44">
+          <SelectTrigger aria-label={t('chat.threadBoardSortLabel')} className="min-h-11 @4xl:w-44">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -40,7 +40,7 @@ export function BoardToolbar(props: BoardToolbarProps): ReactElement {
             ))}
           </SelectContent>
         </Select>
-        <div className="hidden md:block">
+        <div className="hidden @4xl:block">
           <BoardFilters
             idPrefix="board"
             lang={props.lang}
@@ -59,9 +59,11 @@ export function BoardToolbar(props: BoardToolbarProps): ReactElement {
         />
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <p className="text-muted-foreground text-sm" role="status" data-testid="board-count">
-          {t('chat.threadBoardResultsCount', { count: props.total })}
-        </p>
+        {props.total > 0 ? (
+          <p className="text-muted-foreground text-sm" role="status" data-testid="board-count">
+            {t('chat.threadBoardResultsCount', { count: props.total })}
+          </p>
+        ) : null}
         {props.chips.map((chip) => (
           <Badge key={chip.kind} variant={BadgeVariant.SECONDARY} className="gap-1 ps-2.5 pe-1">
             {chip.label}

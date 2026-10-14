@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 import { BoardDidYouMean } from '@/components/threads/board/board-did-you-mean';
 import { BoardSuggestionRow } from '@/components/threads/board/board-suggestion-row';
 import { Button } from '@/components/ui/button';
+import { THREAD_BOARD_MAX_QUERY_LENGTH } from '@/constants/thread-board.constants';
 import { useBoardSearchCombobox } from '@/hooks/threads/board/use-board-search-combobox';
 import { useTranslation } from '@/lib/i18n';
 import type { BoardSearchComboboxProps } from '@/types/thread-board-search.types';
@@ -28,6 +29,7 @@ export function BoardSearchCombobox(props: BoardSearchComboboxProps): ReactEleme
         type="text"
         role="combobox"
         dir="auto"
+        maxLength={THREAD_BOARD_MAX_QUERY_LENGTH}
         aria-label={t('chat.threadBoardSearchLabel')}
         aria-autocomplete="list"
         aria-haspopup="listbox"

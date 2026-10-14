@@ -9,13 +9,17 @@ import {
 } from '@/constants/thread-board.constants';
 import { threadBoardRepository } from '@/repositories/threads/thread-board.repository';
 import type { UseBoardSuggestResult } from '@/types/thread-board.types';
+import { normalizeSuggestQuery } from '@/utilities/thread-board-suggest-query.utility';
 
 /** `lang` is the board's active language filter (or `all`), never the UI locale. */
 export function useBoardSuggest(rawQuery: string, lang: string): UseBoardSuggestResult {
-  const [debounced, setDebounced] = useState(rawQuery.trim());
+  const [debounced, setDebounced] = useState(normalizeSuggestQuery(rawQuery));
 
   useEffect(() => {
-    const timer = setTimeout(() => setDebounced(rawQuery.trim()), THREAD_BOARD_SUGGEST_DEBOUNCE_MS);
+    const timer = setTimeout(
+      () => setDebounced(normalizeSuggestQuery(rawQuery)),
+      THREAD_BOARD_SUGGEST_DEBOUNCE_MS,
+    );
     return () => clearTimeout(timer);
   }, [rawQuery]);
 
