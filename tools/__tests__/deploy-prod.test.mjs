@@ -15,8 +15,9 @@ const deploymentRehearsal = readFileSync(
 ).replaceAll('\r\n', '\n');
 const gitBash = 'C:/Program Files/Git/bin/bash.exe';
 const bashBinary = process.platform === 'win32' && existsSync(gitBash) ? gitBash : 'bash';
-// The rehearsal takes ~140s on a CI runner; past 5 minutes it is hung.
-const REHEARSAL_TIMEOUT_MS = 300_000;
+// The rehearsal takes ~140s on a CI runner plus the stall scenarios (2026-10-14); past 7
+// minutes it is hung, and the partial output is printed.
+const REHEARSAL_TIMEOUT_MS = 420_000;
 const gitignore = readFileSync(repoPath('.gitignore'), 'utf8');
 const prodCompose = readFileSync(repoPath('docker/docker-compose.prod.services.yml'), 'utf8');
 const prodDatabaseCompose = readFileSync(
@@ -502,15 +503,20 @@ test(
       timeout: REHEARSAL_TIMEOUT_MS,
       killSignal: 'SIGKILL',
     });
+    if (result.error || result.status !== 0) {
+      // Partial output is the only clue to WHICH scenario hung or failed, so
+      // print it before any assertion can throw.
+      process.stderr.write(
+        `--- rehearsal output (${result.error?.message ?? `exit ${result.status}`}) ---\n`,
+      );
+      process.stderr.write(String(result.stdout ?? ''));
+      process.stderr.write(String(result.stderr ?? ''));
+    }
     assert.equal(
       result.error?.code,
       undefined,
       `deploy-prod-e2e.sh did not finish within ${REHEARSAL_TIMEOUT_MS / 1000}s (${result.error?.message})`,
     );
-    if (result.status !== 0) {
-      process.stderr.write(result.stdout ?? '');
-      process.stderr.write(result.stderr ?? '');
-    }
     assert.equal(
       result.status,
       0,

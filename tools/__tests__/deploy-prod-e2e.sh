@@ -58,6 +58,14 @@ bad() {
   fi
 }
 
+# A stub that outlives its deployment holds the caller's stdout pipe open and
+# stalls spawnSync for its whole sleep, so any leak fails here, fast.
+assert_no_stray_sleep() {
+  local label="$1" strays
+  strays="$(ps -eo args= 2>/dev/null | grep -c '^sleep 120$' || true)"
+  assert_equals "$label leaves no stray stub process" "${strays:-0}" "0"
+}
+
 assert_contains() {
   case "$2" in
     *"$3"*) ok "$1" ;;
@@ -104,7 +112,7 @@ case "${1:-}" in
       build)
         if [ "${CLAW_STUB_BUILD_FAIL:-0}" = "1" ]; then exit 1; fi
         # Stands in for a wedged BuildKit step: no output, no exit, no worker.
-        if [ "${CLAW_STUB_BUILD_HANG:-0}" = "1" ]; then sleep 120; fi
+        if [ "${CLAW_STUB_BUILD_HANG:-0}" = "1" ]; then exec sleep 120; fi
         # BuildKit stalls AFTER printing a line (the 2026-10-14 unpack hang).
         # CLAW_STUB_BUILD_STALL=N stalls the first N builds, then builds normally.
         if [ -n "${CLAW_STUB_BUILD_STALL:-}" ]; then
@@ -112,7 +120,7 @@ case "${1:-}" in
           if [ "$n" -lt "$CLAW_STUB_BUILD_STALL" ]; then
             printf '%s\n' "$((n + 1))" >"$CLAW_STUB_LOG.stalls"
             printf '#36 unpacking to docker.io/library/claw-stub:latest\n'
-            sleep 120
+            exec sleep 120
           fi
         fi
         exit 0
@@ -420,6 +428,7 @@ assert_contains "a wedged build refuses to retry" "$out" "refusing to retry"
 assert_contains "a wedged build fails the deployment" "$out" "docker compose build failed"
 assert_equals "a wedged build leaves the recorded SHA alone" "$(deployed_sha)" "$SHA_BASE"
 assert_contains "a wedged build records failed status" "$(cat "$PROD/.deploy/status.json")" '"state":"failed"'
+assert_no_stray_sleep "a wedged build"
 # ─── Stalled BuildKit step: abort early, retry once on a fresh session ───────
 # 2026-10-14: `unpacking to docker.io/library/...` hung for an hour. Output stops
 # but the process lives, so only a no-output watchdog can tell it from a slow build.
@@ -429,6 +438,7 @@ out="$(CLAW_STUB_BUILD_STALL=1 CLAW_DEPLOY_BUILD_STALL_SECONDS=2 CLAW_DEPLOY_BUI
 assert_contains "a stalled build names the last line" "$out" "BuildKit stalled at: #36 unpacking to docker.io/library/claw-stub:latest"
 assert_contains "a stalled build is retried once" "$out" "once with a fresh session"
 assert_equals "a stall then success deploys the commit" "$(deployed_sha)" "$SHA_PAYMENT"
+assert_no_stray_sleep "a stalled build"
 printf '%s' "$SHA_BASE" >"$PROD/.deploy/deployed-sha"
 reset_docker_log
 rm -f "$CLAW_STUB_LOG.stalls"
@@ -437,6 +447,7 @@ assert_contains "a second stall gives the distinct error" "$out" "stalled twice"
 assert_equals "a double stall builds exactly twice" "$(cat "$CLAW_STUB_LOG.stalls")" "2"
 assert_equals "a double stall leaves the recorded SHA alone" "$(deployed_sha)" "$SHA_BASE"
 assert_contains "a double stall records BUILD_STALLED" "$(cat "$PROD/.deploy/status.json")" "BUILD_STALLED"
+assert_no_stray_sleep "a double stall"
 rm -f "$CLAW_STUB_LOG.stalls"
 out="$(CLAW_DEPLOY_BUILD_STALL_SECONDS=0 deploy "$SHA_PAYMENT")"
 assert_contains "rejects a stall window below one second" "$out" "CLAW_DEPLOY_BUILD_STALL_SECONDS must be at least 1 second"

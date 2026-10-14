@@ -29,7 +29,7 @@ lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (
 
 ## Findings
 
-None open. Live Release deploy still unproven until the next run.
+CI run on 703a5582 hit the 300 s rehearsal cap. Fixes: kill_process_tree now snapshots the whole tree once and does one TERM, bounded wait, one KILL (harness: kill of a stalled build 9 s before, 3 s after); the stub builds now `exec sleep 120` so a killed stub cannot orphan a sleep that holds the stdout pipe; three assert_no_stray_sleep checks fail fast on leaks; the test prints partial rehearsal output on timeout. The exact leak could not be reproduced here: WSL on /mnt/d is about 10 min for the whole rehearsal, so total wall time is NOT comparable to a CI runner. The wedged-build stub (sleep 120 orphaned by timeout) is the likeliest original leak. Live Release deploy still unproven until the next run.
 
 ## Open gaps
 

@@ -445,14 +445,48 @@ record_completed_deployment_status() {
 # SIGTERM then SIGKILL for a process and everything below it. The stalled build
 # is `timeout -> docker compose -> buildx`; killing only the top leaves the
 # BuildKit session client alive and the "fresh session" would not be fresh.
+#
+# The whole tree is collected in ONE `ps` snapshot BEFORE anything is signalled:
+# killing leaves first lets their parents react (and exit, or spawn) while the
+# walk is still running, and a child re-parented to init can no longer be found.
+# Then one TERM to all, a short bounded wait, one KILL to the survivors.
 kill_process_tree() {
-  local root="$1" child
-  for child in $(pgrep -P "$root" 2>/dev/null || true); do
-    kill_process_tree "$child"
+  local root="$1" pid ppid tries
+  local -a tree=("$root")
+  local -a pids=() ppids=()
+  local i changed=1
+
+  while read -r pid ppid; do
+    pids+=("$pid")
+    ppids+=("$ppid")
+  done < <(ps -eo pid=,ppid= 2>/dev/null)
+
+  while [ "$changed" -eq 1 ]; do
+    changed=0
+    for i in "${!pids[@]}"; do
+      case " ${tree[*]} " in
+        *" ${pids[$i]} "*) continue ;;
+      esac
+      case " ${tree[*]} " in
+        *" ${ppids[$i]} "*)
+          tree+=("${pids[$i]}")
+          changed=1
+          ;;
+      esac
+    done
   done
-  kill -TERM "$root" 2>/dev/null || true
-  sleep 1
-  kill -KILL "$root" 2>/dev/null || true
+
+  kill -TERM "${tree[@]}" 2>/dev/null || true
+  for tries in 1 2 3 4 5 6 7 8 9 10; do
+    for pid in "${tree[@]}"; do
+      if kill -0 "$pid" 2>/dev/null; then
+        sleep 0.2
+        continue 2
+      fi
+    done
+    return 0
+  done
+  kill -KILL "${tree[@]}" 2>/dev/null || true
 }
 
 # Runs one build of one service. Returns the build's status, or
