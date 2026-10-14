@@ -71,6 +71,14 @@ comparison base selects every workspace.
 Deploy paths: `scripts/deploy*`, `tools/release/**`, `tools/__tests__/deploy-prod*`,
 `docker/**`, `.github/workflows/deploy-production.yml`.
 
+### Advisory jobs (do not block the release)
+
+`knowledge-integrity` (links, docs, no hook-bypass, contradictions) and `tooling-tests` in `ai-native-os.yml` run with
+`continue-on-error: true` (owner decision, 2026-10-14). A failure still shows on the pull request and the push, but it
+does not fail the aggregate `CI success` check, so the Release workflow can run. They are not to be ignored: fix a red
+one in the next change. `qa-evidence`, `knowledge-freshness`, `architecture-rules` and the `ci.yml` gates still block.
+`tools/__tests__/ai-native-workflow.test.mjs` locks which jobs are advisory.
+
 ## Coverage in CI
 
 Every suite runs with `--coverage` and the floor printed by

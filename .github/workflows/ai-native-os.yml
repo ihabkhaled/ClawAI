@@ -36,6 +36,9 @@ jobs:
 
   knowledge-integrity:
     name: Knowledge integrity (links, docs, no hook-bypass, contradictions)
+    # Advisory, not a release gate (owner decision 2026-10-14): a failure shows on the pull request and the
+    # push but does not fail the aggregate CI success check, so it cannot block a release. Fix it, do not ignore it.
+    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -90,6 +93,9 @@ jobs:
 
   tooling-tests:
     name: Tooling tests (audit, knowledge, affected, gates)
+    # Advisory, not a release gate (owner decision 2026-10-14): a failure shows on the pull request and the
+    # push but does not fail the aggregate CI success check, so it cannot block a release. Fix it, do not ignore it.
+    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

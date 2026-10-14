@@ -50,3 +50,12 @@ test('third-party actions are pinned to full commit SHAs', () => {
     }
   }
 });
+
+test('knowledge integrity and tooling tests are advisory; the other ai-native-os gates still block', () => {
+  for (const id of ['knowledge-integrity', 'tooling-tests']) {
+    assert.match(job(workflow, id), /continue-on-error: true/u, `${id} must not block CI success`);
+  }
+  for (const id of ['qa-evidence', 'knowledge-freshness', 'architecture-rules']) {
+    assert.doesNotMatch(job(workflow, id), /continue-on-error/u, `${id} stays a blocking gate`);
+  }
+});
