@@ -47,6 +47,7 @@ import { CreditWalletService } from '../services/credit-wallet.service';
 import {
   FREE_ALLOWANCE_LEDGER_REASON_RETURNED,
   FREE_ALLOWANCE_LEDGER_REASON_USED,
+  FREE_ALLOWANCE_LEDGER_REASON_USED_UNCOUNTED,
 } from '../constants/credit-free-allowance.constants';
 import {
   type CreditBucketSplit,
@@ -395,6 +396,11 @@ export class CreditReservationManager {
     // sized to FIT the cap (a shorter answer) instead of being refused for exceeding it.
     const spendable =
       spendCeilingMicroUsd === undefined ? available : Math.min(available, spendCeilingMicroUsd);
+    // True when the job's cap, not the wallet, is what stops this call (D-L2-06).
+    const capIsBinding =
+      spendCeilingMicroUsd !== undefined &&
+      spendCeilingMicroUsd > 0 &&
+      spendCeilingMicroUsd < available;
     const allowance = await this.freeAllowance.resolvePolicy(input.userId);
     if (
       allowance !== null &&
@@ -427,7 +433,7 @@ export class CreditReservationManager {
         input,
         rate,
         allowance,
-        CreditReservationManager.refusalFor(clamp, spendable),
+        CreditReservationManager.refusalFor(clamp, spendable, capIsBinding),
       );
     }
     try {
@@ -458,7 +464,17 @@ export class CreditReservationManager {
   private static refusalFor(
     clamp: Exclude<ReturnType<typeof clampOutputTokensToBalance>, { status: 'AFFORDABLE' }>,
     available: number,
+    capIsBinding = false,
   ): PaygRejectionException {
+    if (capIsBinding) {
+      // The wallet could pay; the Thread's own spend cap is smaller than this call's hold. Telling
+      // the owner their credit ran out sends them to buy credit the cap would still refuse.
+      return new PaygRejectionException(
+        BillingErrorCode.PAYG_CAP_TOO_LOW,
+        available,
+        clamp.status === 'PROMPT_UNAFFORDABLE' ? clamp.promptCostMicroUsd : null,
+      );
+    }
     if (clamp.status === 'PROMPT_UNAFFORDABLE') {
       return new PaygRejectionException(
         available > 0
@@ -629,11 +645,17 @@ export class CreditReservationManager {
         model: input.model,
         surface: input.surface,
         workflow: input.workflow,
-        reason: FREE_ALLOWANCE_LEDGER_REASON_USED,
+        reason: admission.countsSlot
+          ? FREE_ALLOWANCE_LEDGER_REASON_USED
+          : FREE_ALLOWANCE_LEDGER_REASON_USED_UNCOUNTED,
       });
     } catch (error) {
       this.logger.error(`persistFreeAllowance: failed — ${(error as Error).message}`);
-      await this.freeAllowance.giveBack(admission.counter, admission.worstCaseCostMicroUsd);
+      await this.freeAllowance.giveBack(
+        admission.counter,
+        admission.worstCaseCostMicroUsd,
+        admission.countsSlot,
+      );
       await this.usage.deleteByReservationId(reservationId);
       throw error;
     }
@@ -656,6 +678,7 @@ export class CreditReservationManager {
    * taken from. A compensating ledger row keeps the audit trail append-only.
    */
   private async returnFreeAllowance(record: WeightedUsageRecord, reason: string): Promise<void> {
+    const countsSlot = await this.ledger.findFreeAllowanceCountsSlot(record.reservationId);
     await this.freeAllowance.giveBack(
       {
         userId: record.userId,
@@ -663,6 +686,7 @@ export class CreditReservationManager {
         periodKey: record.monthKey,
       },
       record.estimatedCostMicroUsd,
+      countsSlot,
     );
     const wallet = await this.wallets.ensure(record.userId);
     await this.wallets.recordFreeAllowance({

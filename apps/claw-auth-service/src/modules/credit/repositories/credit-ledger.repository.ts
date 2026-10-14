@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { type CreditLedgerEntry, CreditLedgerKind } from '../../../generated/prisma';
+import { FREE_ALLOWANCE_LEDGER_REASON_USED_UNCOUNTED } from '../constants/credit-free-allowance.constants';
 import { type CreditLedgerPageQuery, type CreditMonthConsumptionRow } from '../types/credit.types';
 
 /**
@@ -53,6 +54,24 @@ export class CreditLedgerRepository {
       where: { reservationId, kind: CreditLedgerKind.RESERVATION },
       select: { surface: true, workflow: true },
     });
+  }
+
+  /**
+   * Whether a free-allowance call took a slot on the monthly request count, read from its "used"
+   * ledger row (a count-waived Thread call is written as UNCOUNTED). A release needs it to give
+   * back exactly what was taken (D-L2-04). True when no such row exists: the older behaviour.
+   */
+  async findFreeAllowanceCountsSlot(reservationId: string): Promise<boolean> {
+    this.logger.debug(`findFreeAllowanceCountsSlot: reservation=${reservationId}`);
+    const row = await this.prisma.creditLedgerEntry.findFirst({
+      where: {
+        reservationId,
+        kind: CreditLedgerKind.FREE_ALLOWANCE,
+        reason: FREE_ALLOWANCE_LEDGER_REASON_USED_UNCOUNTED,
+      },
+      select: { id: true },
+    });
+    return row === null;
   }
 
   /**

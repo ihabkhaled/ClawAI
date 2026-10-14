@@ -19,6 +19,7 @@ export function toThreadJobBudgetSummary(budget: ThreadJobBudget): ThreadJobBudg
     capMicroUsd: toSafeNumber(budget.capMicroUsd),
     reservedMicroUsd: toSafeNumber(budget.reservedMicroUsd),
     spentMicroUsd: toSafeNumber(budget.spentMicroUsd),
+    settledMicroUsd: toSafeNumber(budget.spentMicroUsd),
     remainingMicroUsd: toSafeNumber(remainingBudgetMicroUsd(budget)),
   };
 }

@@ -54,6 +54,9 @@ export enum BillingErrorCode {
   // tomorrow; credit needs a top-up. Mapping both to one code is what makes an
   // error message tell someone to wait when they should be buying.
   PAYG_CREDIT_EXHAUSTED = 'PAYG_CREDIT_EXHAUSTED',
+  // A Threads job's own spend cap is smaller than one call's hold while the wallet could pay.
+  // Its own code because the remedy is a higher cap, not a top-up (D-L2-06).
+  PAYG_CAP_TOO_LOW = 'PAYG_CAP_TOO_LOW',
   // The prompt alone costs more than the whole remaining balance, so no
   // shortening of the answer can make the request fit.
   PAYG_PROMPT_TOO_EXPENSIVE = 'PAYG_PROMPT_TOO_EXPENSIVE',

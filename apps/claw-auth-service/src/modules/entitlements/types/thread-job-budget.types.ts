@@ -33,6 +33,13 @@ export type ThreadJobBudgetSummary = {
   capMicroUsd: number;
   reservedMicroUsd: number;
   spentMicroUsd: number;
+  /**
+   * The total the budget row has settled, whatever the billing mode (PAYG, plan wallet, included
+   * model). Same ledger as `spentMicroUsd` under a name that cannot be read as "PAYG only", so
+   * the Threads services can show a job's real cost without waiting for chat-service to report it
+   * (D-L2-03). An included Free-plan call settles at 0 by design: the user is charged nothing.
+   */
+  settledMicroUsd: number;
   remainingMicroUsd: number;
 };
 

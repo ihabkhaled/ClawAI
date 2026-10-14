@@ -144,7 +144,7 @@ describe('CreditReservationManager', () => {
   };
   let users: { findUserById: Mock };
   let events: { publishBalanceState: Mock };
-  let ledger: { findReservationAttribution: Mock };
+  let ledger: { findReservationAttribution: Mock; findFreeAllowanceCountsSlot: Mock };
   let billingModes: { resolve: Mock };
   let threadBudgets: { spendCeilingMicroUsd: Mock; settleForReservation: Mock };
   let manager: CreditReservationManager;
@@ -219,6 +219,7 @@ describe('CreditReservationManager', () => {
       findReservationAttribution: vi
         .fn()
         .mockResolvedValue({ surface: PaygSurface.CHAT, workflow: null }),
+      findFreeAllowanceCountsSlot: vi.fn().mockResolvedValue(true),
     };
     billingModes = { resolve: vi.fn().mockResolvedValue(PaygBillingMode.PAYG) };
     threadBudgets = {
@@ -437,10 +438,21 @@ describe('CreditReservationManager', () => {
       expect(outcome).toMatchObject({ heldMicroUsd: 50_000 });
     });
 
-    it('says the PROMPT is too dear when the cap left cannot even carry it', async () => {
+    it('says the CAP is too low (not that credit ran out) when the wallet could pay but the cap left cannot carry the call', async () => {
       threadBudgets.spendCeilingMicroUsd.mockResolvedValue(100);
+      const failure = await manager
+        .reserve(makeInput({ threadJobBudgetId: 'budget-1', promptTokens: 5000 }))
+        .catch((error: unknown) => error);
+      expect(failure).toMatchObject({ code: BillingErrorCode.PAYG_CAP_TOO_LOW, status: 402 });
+      expect(JSON.stringify((failure as { getResponse(): unknown }).getResponse())).toContain(
+        '"availableMicroUsd":100',
+      );
+    });
+
+    it('still says the prompt is too dear when the cap is larger than the wallet', async () => {
+      threadBudgets.spendCeilingMicroUsd.mockResolvedValue(9_000_000);
       await expect(
-        manager.reserve(makeInput({ threadJobBudgetId: 'budget-1', promptTokens: 5000 })),
+        manager.reserve(makeInput({ threadJobBudgetId: 'budget-1', promptTokens: 9_000_000 })),
       ).rejects.toMatchObject({ code: BillingErrorCode.PAYG_PROMPT_TOO_EXPENSIVE });
     });
 
@@ -675,6 +687,7 @@ describe('CreditReservationManager', () => {
     const EMPTY_WALLET = { wallet: makeWallet({ grantMicroUsd: 0n }), availableMicroUsd: 0n };
     const ADMISSION = {
       counter: { userId: 'user-1', provider: 'OPENAI', periodKey: '2026-08' },
+      countsSlot: true,
       maxOutputTokens: 14_900,
       clamped: true,
       worstCaseCostMicroUsd: 150_000n,
@@ -710,6 +723,19 @@ describe('CreditReservationManager', () => {
           surface: PaygSurface.CHAT,
           reason: 'FREE_ALLOWANCE_USED',
         }),
+      );
+    });
+
+    it('records a count-waived Thread admission as UNCOUNTED so its release returns no slot', async () => {
+      freeAllowance.tryAdmit.mockResolvedValue({
+        status: 'ADMITTED',
+        admission: { ...ADMISSION, countsSlot: false },
+      });
+
+      await manager.reserve(makeInput({ surface: PaygSurface.THREADS }));
+
+      expect(wallets['recordFreeAllowance']).toHaveBeenCalledWith(
+        expect.objectContaining({ reason: 'FREE_ALLOWANCE_USED:UNCOUNTED' }),
       );
     });
 
@@ -809,7 +835,7 @@ describe('CreditReservationManager', () => {
 
       await expect(manager.reserve(makeInput())).rejects.toThrow('db down');
 
-      expect(freeAllowance.giveBack).toHaveBeenCalledWith(ADMISSION.counter, 150_000n);
+      expect(freeAllowance.giveBack).toHaveBeenCalledWith(ADMISSION.counter, 150_000n, true);
       expect(usage['deleteByReservationId']).toHaveBeenCalledTimes(1);
     });
 
@@ -818,7 +844,7 @@ describe('CreditReservationManager', () => {
 
       await expect(manager.reserve(makeInput())).rejects.toThrow('ledger down');
 
-      expect(freeAllowance.giveBack).toHaveBeenCalledWith(ADMISSION.counter, 150_000n);
+      expect(freeAllowance.giveBack).toHaveBeenCalledWith(ADMISSION.counter, 150_000n, true);
     });
 
     it('a retried request reuses its allowance hold instead of taking a second slot', async () => {
@@ -950,11 +976,26 @@ describe('CreditReservationManager', () => {
             periodKey: '2026-08',
           },
           expect.any(BigInt),
+          true,
         );
         expect(wallets['recordFreeAllowance']).toHaveBeenCalledWith(
           expect.objectContaining({ reason: 'FREE_ALLOWANCE_RETURNED:PROVIDER_ERROR' }),
         );
         expect(wallets['applyRelease']).not.toHaveBeenCalled();
+      });
+
+      it('gives NO slot back for a Thread call that took none (D-L2-04)', async () => {
+        usage['findByReservationId'].mockResolvedValue(allowanceRecord());
+        ledger.findFreeAllowanceCountsSlot.mockResolvedValue(false);
+
+        await manager.release('res-1', 'PROVIDER_ERROR');
+
+        expect(ledger.findFreeAllowanceCountsSlot).toHaveBeenCalledWith('res-1');
+        expect(freeAllowance.giveBack).toHaveBeenCalledWith(
+          { userId: 'user-1', provider: 'OPENAI', periodKey: '2026-08' },
+          expect.any(BigInt),
+          false,
+        );
       });
 
       it('returns the slot ONCE: a double release is a no-op', async () => {
@@ -986,6 +1027,7 @@ describe('CreditReservationManager', () => {
     const cappedPolicy = (limit: number) => ({ limit, requestCeilingMicroUsd: 60_000n });
     const ADMISSION = {
       counter: { userId: 'user-1', provider: '*', periodKey: '2026-08' },
+      countsSlot: true,
       maxOutputTokens: 14_900,
       clamped: true,
       worstCaseCostMicroUsd: 60_000n,
@@ -1139,6 +1181,7 @@ describe('CreditReservationManager', () => {
           periodKey: '2026-08',
         },
         expect.any(BigInt),
+        true,
       );
     });
 

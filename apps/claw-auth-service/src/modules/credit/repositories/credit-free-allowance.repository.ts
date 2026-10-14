@@ -27,13 +27,18 @@ export class CreditFreeAllowanceRepository {
    *
    * A limit below 1 never admits, and neither does a hold bigger than the whole budget: the
    * INSERT arm of the upsert has no `WHERE`, so both are refused here before the statement is sent.
+   *
+   * `countsSlot` false (a count-waived surface, ie a Thread call) keeps the limit check and the
+   * held cost but leaves `used_count` alone: one Thread must not eat the month's other requests.
    */
   async tryConsume(
     key: CreditFreeAllowanceCounterKey,
     limit: number,
     holdMicroUsd: bigint,
     budgetMicroUsd: bigint | null,
+    countsSlot = true,
   ): Promise<boolean> {
+    const slot = countsSlot ? 1 : 0;
     if (limit < 1 || (budgetMicroUsd !== null && holdMicroUsd > budgetMicroUsd)) {
       return false;
     }
@@ -41,10 +46,10 @@ export class CreditFreeAllowanceRepository {
     const rows = await this.prisma.$queryRaw<{ used_count: number }[]>`
       INSERT INTO credit_free_allowance_usage
         (id, user_id, provider, period_key, used_count, spent_micro_usd, created_at, updated_at)
-      VALUES (${randomUUID()}, ${key.userId}, ${key.provider}, ${key.periodKey}, 1, ${holdMicroUsd}::bigint, now(), now())
+      VALUES (${randomUUID()}, ${key.userId}, ${key.provider}, ${key.periodKey}, ${slot}::int, ${holdMicroUsd}::bigint, now(), now())
       ON CONFLICT (user_id, provider, period_key)
       DO UPDATE SET
-        used_count = credit_free_allowance_usage.used_count + 1,
+        used_count = credit_free_allowance_usage.used_count + ${slot}::int,
         spent_micro_usd = credit_free_allowance_usage.spent_micro_usd + ${holdMicroUsd}::bigint,
         updated_at = now()
       WHERE credit_free_allowance_usage.used_count < ${limit}
@@ -55,12 +60,20 @@ export class CreditFreeAllowanceRepository {
     return rows.length > 0;
   }
 
-  /** Gives one slot and its held cost back, never below zero. A missing row is a no-op. */
-  async giveBack(key: CreditFreeAllowanceCounterKey, holdMicroUsd: bigint): Promise<void> {
+  /**
+   * Gives one slot and its held cost back, never below zero. A missing row is a no-op.
+   * `countsSlot` false gives only the cost back (the call never took a slot).
+   */
+  async giveBack(
+    key: CreditFreeAllowanceCounterKey,
+    holdMicroUsd: bigint,
+    countsSlot = true,
+  ): Promise<void> {
+    const slot = countsSlot ? 1 : 0;
     this.logger.debug(`giveBack: provider=${key.provider} period=${key.periodKey}`);
     await this.prisma.$executeRaw`
       UPDATE credit_free_allowance_usage
-      SET used_count = GREATEST(used_count - 1, 0),
+      SET used_count = GREATEST(used_count - ${slot}::int, 0),
           spent_micro_usd = GREATEST(spent_micro_usd - ${holdMicroUsd}::bigint, 0),
           updated_at = now()
       WHERE user_id = ${key.userId}

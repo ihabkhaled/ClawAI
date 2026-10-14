@@ -129,7 +129,7 @@ describe('PaygMeter Threads call against the job budget', () => {
   });
 
   describe('refusals are told apart', () => {
-    it('a spent cap is PAYG_CREDIT_EXHAUSTED with what is left, and the hold goes back', async () => {
+    it('a cap with money left but less than the call needs is PAYG_CAP_TOO_LOW with the cap left, and the hold goes back', async () => {
       const stub = stubSequence(
         reply(200, WIRE_HOLD),
         reply(200, { reserved: false, outcome: 'CAP_EXCEEDED', remainingMicroUsd: 4_000 }),
@@ -138,7 +138,7 @@ describe('PaygMeter Threads call against the job budget', () => {
 
       const failure = await refusal();
 
-      expect(failure.errorCode).toBe(BillingErrorCode.PAYG_CREDIT_EXHAUSTED);
+      expect(failure.errorCode).toBe(BillingErrorCode.PAYG_CAP_TOO_LOW);
       expect(failure.availableMicroUsd).toBe(4_000);
       expect(failure.requiredMicroUsd).toBe(21_226);
       expect(urlOf(stub, 2)).toContain('/internal/credit/release');
@@ -302,7 +302,7 @@ describe('readThreadCallVerdict', () => {
   });
 
   it.each([
-    ['CAP_EXCEEDED', BillingErrorCode.PAYG_CREDIT_EXHAUSTED],
+    ['CAP_EXCEEDED', BillingErrorCode.PAYG_CAP_TOO_LOW],
     ['BUDGET_CLOSED', BillingErrorCode.PAYG_CREDIT_EXHAUSTED],
     ['BUDGET_NOT_FOUND', BillingErrorCode.PAYG_CREDIT_EXHAUSTED],
     ['ALREADY_FINALIZED', BillingErrorCode.PAYG_PRICING_UNAVAILABLE],
@@ -325,6 +325,16 @@ describe('readThreadCallVerdict', () => {
       });
     },
   );
+
+  it('a cap with nothing left is PAYG_CREDIT_EXHAUSTED, not a cap that is too low', () => {
+    expect(
+      readThreadCallVerdict({ reserved: false, outcome: 'CAP_EXCEEDED', remainingMicroUsd: 0 }),
+    ).toEqual({
+      reserved: false,
+      errorCode: BillingErrorCode.PAYG_CREDIT_EXHAUSTED,
+      remainingMicroUsd: 0,
+    });
+  });
 
   it.each([-5, 1.5, Number.NaN, 2 ** 60, '9'])('never trusts a remaining figure of %j', (value) => {
     expect(

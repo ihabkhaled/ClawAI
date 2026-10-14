@@ -190,6 +190,7 @@ export type PaygUnitCounts = {
 export type PaygRejection = {
   reason:
     | 'PAYG_CREDIT_EXHAUSTED'
+    | 'PAYG_CAP_TOO_LOW'
     | 'PAYG_PROMPT_TOO_EXPENSIVE'
     | 'PAYG_MODEL_UNPRICED'
     | 'PAYG_PRICING_UNAVAILABLE'

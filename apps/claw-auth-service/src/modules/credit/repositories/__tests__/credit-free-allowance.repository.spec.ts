@@ -23,14 +23,16 @@ class FakeCounterTable {
   readonly rows = new Map<string, { used: number; spent: bigint }>();
 
   // Bound values arrive in statement order:
-  // id, user, provider, period, hold, hold, limit, budget, hold, budget.
+  // id, user, provider, period, slot, hold, slot, hold, limit, budget, hold, budget.
   queryRaw = vi.fn((_strings: TemplateStringsArray, ...values: unknown[]) => {
-    const [, userId, provider, periodKey, hold, , limit, budget] = values as [
+    const [, userId, provider, periodKey, slot, hold, , , limit, budget] = values as [
       string,
       string,
       string,
       string,
+      number,
       bigint,
+      number,
       bigint,
       number,
       bigint | null,
@@ -38,13 +40,13 @@ class FakeCounterTable {
     const key = `${userId}|${provider}|${periodKey}`;
     const current = this.rows.get(key);
     if (current === undefined) {
-      this.rows.set(key, { used: 1, spent: hold });
-      return Promise.resolve([{ used_count: 1 }]);
+      this.rows.set(key, { used: slot, spent: hold });
+      return Promise.resolve([{ used_count: slot }]);
     }
     const fits = budget === null || current.spent + hold <= budget;
     if (current.used < limit && fits) {
-      this.rows.set(key, { used: current.used + 1, spent: current.spent + hold });
-      return Promise.resolve([{ used_count: current.used + 1 }]);
+      this.rows.set(key, { used: current.used + slot, spent: current.spent + hold });
+      return Promise.resolve([{ used_count: current.used + slot }]);
     }
     return Promise.resolve([]);
   });
@@ -136,6 +138,25 @@ describe('CreditFreeAllowanceRepository', () => {
       expect(table.rows.get('user-1|*|2026-10')).toEqual({ used: 4, spent: 240_000n });
     });
 
+    it('twelve Thread calls (no slot) leave the request count at zero and the month intact (D-L2-04)', async () => {
+      const table = new FakeCounterTable();
+      const racing = new CreditFreeAllowanceRepository({
+        $queryRaw: table.queryRaw,
+      } as unknown as PrismaService);
+
+      const thread = await Promise.all(
+        Array.from({ length: 12 }, () => racing.tryConsume(KEY, 10, 5_000n, 250_000n, false)),
+      );
+      // The month's ordinary requests still have all ten slots.
+      const ordinary = await Promise.all(
+        Array.from({ length: 10 }, () => racing.tryConsume(KEY, 10, 1_000n, 250_000n)),
+      );
+
+      expect(thread.every(Boolean)).toBe(true);
+      expect(ordinary.every(Boolean)).toBe(true);
+      expect(table.rows.get('user-1|*|2026-10')?.used).toBe(10);
+    });
+
     it('lets cheap calls use all ten requests inside the same budget', async () => {
       const table = new FakeCounterTable();
       const racing = new CreditFreeAllowanceRepository({
@@ -157,10 +178,17 @@ describe('CreditFreeAllowanceRepository', () => {
 
       const [strings, ...values] = executeRaw.mock.calls[0] as [TemplateStringsArray, ...unknown[]];
       const statement = asStatement(strings, values);
-      expect(statement.sql).toContain('GREATEST(used_count - 1, 0)');
+      expect(statement.sql).toContain('GREATEST(used_count - ?::int, 0)');
       expect(statement.sql).toContain('GREATEST(spent_micro_usd - ?::bigint, 0)');
       expect(statement.sql).toContain('user_id = ? AND provider = ? AND period_key = ?');
-      expect(statement.values).toEqual([30_000n, KEY.userId, KEY.provider, KEY.periodKey]);
+      expect(statement.values).toEqual([1, 30_000n, KEY.userId, KEY.provider, KEY.periodKey]);
+    });
+
+    it('gives only the cost back when the call took no slot', async () => {
+      await repository.giveBack(KEY, 30_000n, false);
+
+      const [strings, ...values] = executeRaw.mock.calls[0] as [TemplateStringsArray, ...unknown[]];
+      expect(asStatement(strings, values).values[0]).toBe(0);
     });
   });
 

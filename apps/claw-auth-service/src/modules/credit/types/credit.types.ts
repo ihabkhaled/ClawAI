@@ -259,6 +259,8 @@ export type CreditFreeAllowancePolicy = {
 /** A request that took a free-allowance slot, and the ceiling it was clamped to. */
 export type CreditFreeAllowanceAdmission = {
   counter: CreditFreeAllowanceCounterKey;
+  /** False for a count-waived call (a Thread): it took no slot, so a give-back returns none. */
+  countsSlot: boolean;
   maxOutputTokens: number;
   clamped: boolean;
   /** Worst-case platform cost of this one request, integer micro-USD. */

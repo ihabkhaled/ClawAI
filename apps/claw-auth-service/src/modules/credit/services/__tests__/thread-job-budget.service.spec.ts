@@ -286,6 +286,7 @@ describe('ThreadJobBudgetService', () => {
         capMicroUsd: 300_000,
         reservedMicroUsd: 21_226,
         spentMicroUsd: 12_000,
+        settledMicroUsd: 12_000,
         remainingMicroUsd: 266_774,
       });
     });

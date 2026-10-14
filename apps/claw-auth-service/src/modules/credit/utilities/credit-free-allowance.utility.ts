@@ -38,8 +38,10 @@ export function isCappedAllowance(policy: CreditFreeAllowancePolicy): boolean {
 
 /**
  * True when this request is not held to the monthly request COUNT: a waived surface (Threads)
- * under a plan whose money meter bounds the total. Only the counter's limit is lifted; the
- * slot is still taken and given back like any other, so the books stay symmetrical.
+ * under a plan whose money meter bounds the total. The limit is lifted AND the call takes no
+ * slot, so one Thread's dozen calls never use up the month's other credit-connector requests
+ * (D-L2-04: it drove the meter to 12 of 10). The admission records this (`countsSlot`) so a
+ * give-back returns exactly what was taken.
  */
 export function isCountWaived(
   input: Pick<CreditReserveInput, 'surface'>,
@@ -63,16 +65,19 @@ export function toFreeAllowanceAdmission(
   counter: CreditFreeAllowanceCounterKey,
   input: Pick<CreditReserveInput, 'requestedMaxOutputTokens'>,
   ceiling: CreditFreeAllowanceAffordableClamp | null,
+  countsSlot = true,
 ): CreditFreeAllowanceAdmission {
   return ceiling === null
     ? {
         counter,
+        countsSlot,
         maxOutputTokens: input.requestedMaxOutputTokens,
         clamped: false,
         worstCaseCostMicroUsd: 0n,
       }
     : {
         counter,
+        countsSlot,
         maxOutputTokens: ceiling.maxOutputTokens,
         clamped: ceiling.clamped,
         worstCaseCostMicroUsd: BigInt(ceiling.worstCaseCostMicroUsd),

@@ -60,6 +60,12 @@ export const FREE_ALLOWANCE_UNLIMITED_COUNTER_LIMIT = 2_147_483_647;
 /** Ledger `reason` for a request admitted on the allowance. */
 export const FREE_ALLOWANCE_LEDGER_REASON_USED = 'FREE_ALLOWANCE_USED';
 
+/**
+ * Ledger `reason` for a count-waived request (a Thread call) admitted on the allowance: it took no
+ * slot on the monthly count, so its release returns none (D-L2-04).
+ */
+export const FREE_ALLOWANCE_LEDGER_REASON_USED_UNCOUNTED = 'FREE_ALLOWANCE_USED:UNCOUNTED';
+
 /** Ledger `reason` prefix when the allowance is given back; the release reason follows. */
 export const FREE_ALLOWANCE_LEDGER_REASON_RETURNED = 'FREE_ALLOWANCE_RETURNED';
 

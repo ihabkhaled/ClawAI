@@ -138,11 +138,52 @@ describe('CreditFreeAllowanceService', () => {
         2,
         expect.any(BigInt),
         null,
+        true,
       );
       expect(attempt).toMatchObject({
         status: 'ADMITTED',
         admission: { counter: { userId: 'user-1', provider: '*', periodKey: '2026-10' } },
       });
+    });
+
+    it('a Thread call under a money meter takes NO request slot: one Thread cannot use up the month (D-L2-04)', async () => {
+      plans.findEffectiveForUser.mockResolvedValue(
+        makePlan({ creditConnectorFreeBudgetMicroUsd: 250_000n }),
+      );
+      const policy = await policyOf();
+
+      const attempt = await service.tryAdmit(
+        makeInput({ surface: PaygSurface.THREADS }),
+        RATE,
+        policy,
+        NOW,
+      );
+
+      expect(counters.tryConsume).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.any(Number),
+        expect.any(BigInt),
+        250_000n,
+        false,
+      );
+      expect(attempt).toMatchObject({ status: 'ADMITTED', admission: { countsSlot: false } });
+    });
+
+    it('a Thread call with NO money meter is still counted, so nothing is left unbounded', async () => {
+      await service.tryAdmit(
+        makeInput({ surface: PaygSurface.THREADS }),
+        RATE,
+        await policyOf(),
+        NOW,
+      );
+
+      expect(counters.tryConsume).toHaveBeenCalledWith(
+        expect.anything(),
+        2,
+        expect.any(BigInt),
+        null,
+        true,
+      );
     });
 
     it('clamps the output so the worst case stays inside the per-request ceiling', async () => {
@@ -204,6 +245,7 @@ describe('CreditFreeAllowanceService', () => {
         2_147_483_647,
         expect.any(BigInt),
         null,
+        true,
       );
     });
 
@@ -313,6 +355,7 @@ describe('CreditFreeAllowanceService', () => {
       expect(counters.giveBack).toHaveBeenCalledWith(
         { userId: 'user-1', provider: '*', periodKey: '2026-10' },
         30_000n,
+        true,
       );
     });
   });
@@ -533,7 +576,13 @@ describe('CreditFreeAllowanceService', () => {
       it('gives the slot and the hold back like any allowance call when the Thread call fails', async () => {
         const counter = { userId: 'user-1', provider: '*', periodKey: '2026-10' };
         await service.giveBack(counter, 12_000n);
-        expect(counters.giveBack).toHaveBeenCalledWith(counter, 12_000n);
+        expect(counters.giveBack).toHaveBeenCalledWith(counter, 12_000n, true);
+      });
+
+      it('gives only the hold back for a Thread call that took no slot', async () => {
+        const counter = { userId: 'user-1', provider: '*', periodKey: '2026-10' };
+        await service.giveBack(counter, 12_000n, false);
+        expect(counters.giveBack).toHaveBeenCalledWith(counter, 12_000n, false);
       });
 
       it('settles the meter to what a Thread call really cost', async () => {

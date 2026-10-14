@@ -20,6 +20,7 @@ import {
   computeFreeRequestCeilingMicroUsd,
   counterLimitFor,
   isCappedAllowance,
+  isCountWaived,
   isFreeAllowanceEligible,
   isFreeAllowanceEnabled,
   isModelAboveFreeCap,
@@ -83,13 +84,19 @@ export class CreditFreeAllowanceService {
     if (sized.refusal !== null) {
       return sized.refusal;
     }
-    const admission = toFreeAllowanceAdmission(counter, input, sized.ceiling);
+    const admission = toFreeAllowanceAdmission(
+      counter,
+      input,
+      sized.ceiling,
+      !isCountWaived(input, allowance),
+    );
     if (
       !(await this.counters.tryConsume(
         counter,
         limit,
         admission.worstCaseCostMicroUsd,
         allowance.budgetMicroUsd,
+        admission.countsSlot,
       ))
     ) {
       this.logger.log(`tryAdmit: allowance spent (total) provider=${input.provider}`);
@@ -191,10 +198,15 @@ export class CreditFreeAllowanceService {
    * count). The slot always lives on the user's TOTAL counter, whatever provider
    * the released call used.
    */
-  async giveBack(counter: CreditFreeAllowanceCounterKey, heldMicroUsd: bigint): Promise<void> {
+  async giveBack(
+    counter: CreditFreeAllowanceCounterKey,
+    heldMicroUsd: bigint,
+    countsSlot = true,
+  ): Promise<void> {
     await this.counters.giveBack(
       { ...counter, provider: FREE_ALLOWANCE_TOTAL_COUNTER_KEY },
       heldMicroUsd,
+      countsSlot,
     );
   }
 
