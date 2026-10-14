@@ -30,7 +30,7 @@ export function estimateReadingMinutes(text: string): number {
  *
  * A linear scan, not one regex over the whole body: a bracket run is the longest stretch of
  * bracket, comma, space and hex characters from a '[', and it is only a candidate up to its last ']'.
- * A run without a closing bracket is skipped whole, so a body of unclosed '[' cannot make the cost
+ * A run without a closing bracket is skipped whole and the search for its closing bracket stays inside the run, so a body of unclosed '[' cannot make the cost
  * grow with the square of its length (ReDoS).
  */
 export function stripCitationMarkers(text: string): string {
@@ -45,7 +45,8 @@ export function stripCitationMarkers(text: string): string {
     output += text.slice(index, open);
     let runEnd = open + 1;
     while (runEnd < text.length && isMarkerRunCharacter(text.charAt(runEnd))) runEnd += 1;
-    const close = text.lastIndexOf(']', runEnd - 1);
+    const closeInRun = text.slice(open + 1, runEnd).lastIndexOf(']');
+    const close = closeInRun < 0 ? -1 : open + 1 + closeInRun;
     if (close > open) {
       output += stripMarkersInRun(text.slice(open, close + 1));
       index = close + 1;

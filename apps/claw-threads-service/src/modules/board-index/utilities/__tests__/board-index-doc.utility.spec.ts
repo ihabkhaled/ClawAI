@@ -70,7 +70,13 @@ describe('buildBoardIndexDoc', () => {
 
 describe('stripCitationMarkers cost', () => {
   it('stays linear on a body of unclosed brackets and on long hex runs', () => {
-    const hostile = ['['.repeat(200_000), `[${'a1 '.repeat(100_000)}`, `${'[a,'.repeat(70_000)}x`];
+    const hostile = [
+      '['.repeat(200_000),
+      `[${'a1 '.repeat(100_000)}`,
+      `${'[a,'.repeat(70_000)}x`,
+      '[x'.repeat(100_000),
+      'text [zz] '.repeat(30_000),
+    ];
     for (const body of hostile) {
       const started = Date.now();
       stripCitationMarkers(body);
