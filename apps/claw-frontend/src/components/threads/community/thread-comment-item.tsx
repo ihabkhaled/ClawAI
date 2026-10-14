@@ -2,6 +2,7 @@ import { CornerDownRight, Flag, Reply } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactElement } from 'react';
 
+import { RelativeTime } from '@/components/shared/relative-time';
 import { ThreadAuthorBadge } from '@/components/threads/community/thread-author-badge';
 import { ThreadCommentBody } from '@/components/threads/community/thread-comment-body';
 import { ThreadCommentReactions } from '@/components/threads/community/thread-comment-reactions';
@@ -38,9 +39,7 @@ export function ThreadCommentItem({
     >
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <ThreadAuthorBadge author={comment.author} compact={isReply} />
-        <time className="text-muted-foreground text-xs" dateTime={comment.createdAt}>
-          {comment.createdAt.slice(0, 10)}
-        </time>
+        <RelativeTime value={comment.createdAt} className="text-muted-foreground text-xs" />
       </div>
       {isReply && comment.replyTo ? (
         <p

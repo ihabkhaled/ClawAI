@@ -4,6 +4,7 @@ import { ArrowLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactElement } from 'react';
 
+import { RelativeTime } from '@/components/shared/relative-time';
 import { BoardReaderActions } from '@/components/threads/board/board-reader-actions';
 import { ThreadAuthorBadge } from '@/components/threads/community/thread-author-badge';
 import { ThreadPublicCommunity } from '@/components/threads/thread-public-community';
@@ -94,9 +95,7 @@ export function BoardReaderView({ state }: BoardReaderViewProps): ReactElement {
         <header className="mb-6 flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight">{publication.title}</h1>
           {publication.owner ? <ThreadAuthorBadge author={publication.owner} /> : null}
-          <time className="text-muted-foreground text-sm" dateTime={publication.publishedAt}>
-            {publication.publishedAt.slice(0, 10)}
-          </time>
+          <RelativeTime value={publication.publishedAt} className="text-muted-foreground text-sm" />
         </header>
         <ThreadReaderBody
           markdown={publication.content.markdown}

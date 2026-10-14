@@ -7,6 +7,10 @@ import type { PublicThreadPublication } from '@/types/thread-publication.types';
 
 import { ThreadPublicArticle } from '../thread-public-article';
 
+vi.mock('@/components/shared/relative-time', () => ({
+  RelativeTime: () => <time />,
+}));
+
 vi.mock('@/components/threads/thread-reader-body', () => ({
   ThreadReaderBody: () => <div />,
 }));

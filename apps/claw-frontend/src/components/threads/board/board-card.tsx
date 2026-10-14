@@ -1,9 +1,18 @@
 'use client';
 
-import { ArrowRight, Clock, Eye, Link2, MessageSquare, ThumbsUp } from 'lucide-react';
+import {
+  ArrowRight,
+  CalendarClock,
+  Clock,
+  Eye,
+  Link2,
+  MessageSquare,
+  ThumbsUp,
+} from 'lucide-react';
 import Link from 'next/link';
 import type { ReactElement } from 'react';
 
+import { RelativeTime } from '@/components/shared/relative-time';
 import { ThreadAuthorBadge } from '@/components/threads/community/thread-author-badge';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -52,6 +61,10 @@ export function BoardCard({ item }: BoardCardProps): ReactElement {
             <span>{text}</span>
           </li>
         ))}
+        <li className="flex items-center gap-1">
+          <CalendarClock className="h-3.5 w-3.5" aria-hidden="true" />
+          <RelativeTime value={item.publishedAt} />
+        </li>
       </ul>
       <span className="text-primary flex items-center gap-1 text-sm font-medium">
         {t('chat.threadBoardRead')}

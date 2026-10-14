@@ -1,0 +1,36 @@
+# QA evidence - thread-timestamps
+
+Batch: thread-timestamps
+Date: 2026-10-14
+Commits: (fill in after committing)
+Verdict: PARTIAL
+
+Every lane is filled in. PASS needs the command and its real output (or a path, a count, a
+screenshot name). NOT_RUN and NOT_APPLICABLE need a reason. Verdict DONE is allowed only when no
+lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (rules/60, rules/49).
+
+| Lane | What                                                                    | Status         | Evidence or reason                                                                                                                                                                                                                                                                            |
+| ---- | ----------------------------------------------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L01  | Unit and integration tests (only the changed files)                     | PASS           | vitest run src/utilities src/hooks/shared src/components/shared src/components/threads src/components/notifications src/lib/i18n: 273 files, 3637 tests passed, 0 failed (utility boundaries, 13 locales, DST via injected zone, hook ticker with fake timers, component incl. server render) |
+| L02  | Typecheck, lint and build (touched workspaces)                          | PASS           | node scripts/typecheck-ts7.mjs --noEmit: no errors; eslint on every touched file: 0 errors; prettier --write on exact files. next build not run                                                                                                                                               |
+| L03  | Manual API test (curl) with the log line proving the branch ran         | NOT_APPLICABLE | No backend change: Prisma DateTime columns are TIMESTAMP(3) written in UTC and serialised as ISO with Z. Not re-proved with curl                                                                                                                                                              |
+| L04  | Manual browser test (Playwright against the real UI) with screenshots   | NOT_RUN        | No browser run against the real UI yet; owner or QA must check a Thread page, Board card and comments in two time zones                                                                                                                                                                       |
+| L05  | Automation e2e (a committed or existing spec was run)                   | NOT_RUN        | No Playwright spec added for timestamps                                                                                                                                                                                                                                                       |
+| L06  | RBAC across roles and plan tiers (admin, paid, FREE)                    | NOT_APPLICABLE | Display-only change, same data for every role and plan                                                                                                                                                                                                                                        |
+| L07  | Device matrix (3+ widths, both orientations, RTL)                       | NOT_RUN        | No device matrix run; touch devices have no hover tooltip so the full local date is not reachable there                                                                                                                                                                                       |
+| L08  | UAT (acceptance criteria walked as the user would)                      | NOT_RUN        | Acceptance criteria not walked in a browser                                                                                                                                                                                                                                                   |
+| L09  | Product verification (it does what the owner asked, edge cases decided) | PASS           | Owner request mapped to tests: publish time, comment and reply times, visitor time zone, relative label, full date in title, live refresh, no hydration mismatch (renderToString test), clock skew, invalid dates. Decisions: future = just now; notification rows keep their own formatter   |
+| L10  | Business verification (money, limits, copy and claims match the code)   | NOT_APPLICABLE | No money, limits or claims involved                                                                                                                                                                                                                                                           |
+| L11  | Regression (neighbouring features still work)                           | PASS           | 273 neighbouring test files under threads, notifications, utilities and i18n pass; thread-public-article test now mocks RelativeTime                                                                                                                                                          |
+| L12  | Security (authz and IDOR, secrets, injection)                           | NOT_APPLICABLE | No new input and no HTML injection: values only go through Date and Intl and render as text                                                                                                                                                                                                   |
+| L13  | Performance and accessibility                                           | NOT_RUN        | One shared 30 s interval by design (unit-tested: one timer for many subscribers, paused when hidden); no Lighthouse or screen-reader run                                                                                                                                                      |
+| L14  | i18n (13 locales, RTL)                                                  | PASS           | Unit smoke over all 13 locales for the relative label; justNow in thread-time-translations.ts is a type-checked Record of Locale; Arabic script asserted. No visual RTL check                                                                                                                 |
+| L15  | Docs, knowledge delta and GitHub gates read                             | PASS           | apps/claw-frontend/CLAUDE.md section and Threads product spec note added; GitHub gates not read (nothing pushed)                                                                                                                                                                              |
+
+## Findings
+
+The shared ticker is one 30 s interval; the slower pace for old timestamps is per-subscriber throttling, not a second timer.
+
+## Open gaps
+
+L04, L05, L07, L08, L13: browser, device and a11y lanes not run; owner/QA to close before release.

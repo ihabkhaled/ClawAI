@@ -1022,3 +1022,12 @@ The public Thread page (`/threads/[slug]`, guests and members) and the in-app re
 - `/admin/plugins/curation` (`PLUGINS_ADMIN` through the `/admin/plugins` prefix; linked from the Plugins admin header) has four tabs: curated entries, approval queue, rules, audit log. Components `components/admin/plugins/curation/*`, hooks `use-admin-curation-*` and `use-curated-entry-form`, repository `plugin-admin-curation.repository.ts`, utility `plugin-admin-curation.utility.ts`, strings `plugins-admin-catalog-translations.ts` (all 13 locales; the `pluginsAdminCatalog` namespace).
 - The entry form never sends the probe key anywhere but the preview and publish calls and mounts only while the dialog is open. Publish is disabled until Preview tools has run; the server re-checks.
 - Two notification kinds, `MCP_SERVER_APPROVED` and `MCP_SERVER_REJECTED`, have text in `notifications-translations.ts` (the rejection reason is `{excerpt}`) and an icon in `NOTIFICATION_KIND_ICONS`.
+
+## Thread timestamps: `<RelativeTime>` (2026-10-15)
+
+Every Thread date (public/marketing/in-app byline, Board cards, suggestion rows, comments and replies) renders `components/shared/relative-time.tsx`. The API stores and returns UTC ISO-8601 (`Z`); the browser localises it.
+
+- **Utility** `utilities/relative-time.utility.ts` (`formatRelativeTime`, `formatFullDateTime`, `resolveRelativeBucket`, ...): buckets are just now (under 1 min or a future time), minutes, hours, days (yesterday via `numeric: 'auto'`), weeks, months, years, all from `Intl.RelativeTimeFormat` in the app locale. Only "just now" is a translation (`threadTime.justNow`, `thread-time-translations.ts`, 13 locales). A zoneless ISO string is read as UTC; an invalid value renders nothing.
+- **Hook** `hooks/shared/use-relative-time.ts`: `useSyncExternalStore`, so server render and hydration show stable UTC text (`2026-10-14`, title `2026-10-14 10:00 UTC`) and the client then switches to the relative label and the visitor-zone `title` with no mismatch.
+- **Ticker** `utilities/relative-time-ticker.utility.ts`: ONE 30 s interval for the whole page, started by the first subscriber, stopped by the last, silent while `document.hidden`. Each timestamp throttles itself (30 s under an hour, 1 min under a day, 10 min after). Never add a per-comment timer.
+- Hover shows the full local date (`title`); touch devices have no hover tooltip, so the `datetime` attribute is the only full-date carrier there. Notification rows keep their own `formatNotificationTime`.

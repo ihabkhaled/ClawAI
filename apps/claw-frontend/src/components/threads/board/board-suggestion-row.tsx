@@ -1,8 +1,9 @@
 import type { ReactElement } from 'react';
 
+import { RelativeTime } from '@/components/shared/relative-time';
 import { useTranslation } from '@/lib/i18n';
 import type { BoardSuggestionRowProps } from '@/types/thread-board-search.types';
-import { formatBoardDate, formatBoardType } from '@/utilities/board-highlight.utility';
+import { formatBoardType } from '@/utilities/board-highlight.utility';
 import { fuzzyHighlightRanges } from '@/utilities/thread-board-fuzzy-highlight.utility';
 import { boardTypeLabelKey } from '@/utilities/thread-board-view.utility';
 
@@ -43,7 +44,7 @@ export function BoardSuggestionRow({
       <span className="text-muted-foreground flex items-center gap-2 text-xs">
         <span className="rounded border px-1 uppercase">{suggestion.contentLocale}</span>
         <span>{typeKey ? t(typeKey) : formatBoardType(suggestion.publicationType)}</span>
-        <span>{formatBoardDate(suggestion.publishedAt, suggestion.contentLocale)}</span>
+        <RelativeTime value={suggestion.publishedAt} />
       </span>
     </div>
   );

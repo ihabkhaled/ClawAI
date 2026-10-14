@@ -47,6 +47,10 @@ Guests are read-only: they see counts and existing comments, and every action (l
 
 Every Thread shows who published it (name and @username) on the public page, the in-app reader and Board cards. Comments are threaded: any comment or reply has a Reply button that opens an inline box starting with `@username `; a reply to a reply stays in the same list under its top-level comment with a "Replying to @name" chip (unlimited chain, one visual level). Each comment has Like and Dislike with live counts; guests see the counts and are sent to sign in on a click. `@username` in a comment is styled text, never a link. People are notified (in-app, email and push as set in settings) when someone comments on their Thread, replies to their comment, mentions them, reacts to their Thread or comment, or requests a change; each notification opens the Thread at `#comment-<id>`. Frontend notes: `apps/claw-frontend/CLAUDE.md`, section "Threaded comments and names".
 
+## Timestamps (2026-10-15)
+
+A Thread shows when it was published and every comment and reply shows when it was written. Times are stored in UTC and shown in each visitor's own time zone as a relative label ("just now", "20 minutes ago", "yesterday", weeks, months, years) in the page language; hovering shows the full local date and time. Labels refresh while the page is open (not while the tab is hidden). A future timestamp from a skewed clock reads "just now". See `apps/claw-frontend/CLAUDE.md` (Thread timestamps).
+
 ## Budget and plan enforcement
 
 Reserve the existing research, judge, and critic plan allowances once per job.

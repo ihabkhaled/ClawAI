@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react';
 
+import { RelativeTime } from '@/components/shared/relative-time';
 import { ThreadAuthorBadge } from '@/components/threads/community/thread-author-badge';
 import { ThreadReaderBody } from '@/components/threads/thread-reader-body';
 import type { ThreadPublicArticleProps } from '@/types/thread-publication.types';
@@ -22,8 +23,7 @@ export function ThreadPublicArticle({
         <h1 className="text-3xl font-bold tracking-tight">{publication.title}</h1>
         {publication.owner ? <ThreadAuthorBadge author={publication.owner} /> : null}
         <p className="text-muted-foreground text-sm">
-          {publishedLabel}{' '}
-          <time dateTime={publication.publishedAt}>{publication.publishedAt.slice(0, 10)}</time>
+          {publishedLabel} <RelativeTime value={publication.publishedAt} />
           {' · '}
           <span data-testid="thread-public-views">{viewsLabel}</span>
         </p>

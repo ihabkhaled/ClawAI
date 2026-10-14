@@ -30,6 +30,7 @@ import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
 import { THREAD_COMMUNITY_TRANSLATIONS } from './thread-community-translations';
 import { THREAD_FIXES_TRANSLATIONS } from './thread-fixes-translations';
 import { THREAD_PUBLIC_BOARD_TRANSLATIONS } from './thread-public-board-translations';
+import { THREAD_TIME_TRANSLATIONS } from './thread-time-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const hi: TranslationDictionary = {
@@ -37,6 +38,7 @@ export const hi: TranslationDictionary = {
   pluginsAdminCatalog: PLUGINS_ADMIN_CATALOG_TRANSLATIONS.hi,
   pluginChat: PLUGIN_CHAT_TRANSLATIONS.hi,
   pluginConsent: PLUGIN_CONSENT_TRANSLATIONS.hi,
+  threadTime: THREAD_TIME_TRANSLATIONS.hi,
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.hi,
   pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.hi,
   pluginImport: PLUGIN_IMPORT_TRANSLATIONS.hi,

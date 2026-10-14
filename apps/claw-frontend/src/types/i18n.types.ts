@@ -10,6 +10,8 @@ export type TranslationDictionary = {
   pluginChat: PluginChatLocaleTranslation;
   /** The in-chat consent card and the per-chat grants list. */
   pluginConsent: PluginConsentLocaleTranslation;
+  /** Relative-time wording shared by Thread bylines and comments. */
+  threadTime: ThreadTimeLocaleTranslation;
   pluginsInstall: PluginsInstallLocaleTranslation;
   pluginsServers: PluginsServersLocaleTranslation;
   /** Importing a plugin from GitHub or an upload (plugin-import-translations.ts). */
@@ -8349,4 +8351,10 @@ export type PluginsAdminCatalogLocaleTranslation = {
     notPending: string;
     notFound: string;
   };
+};
+
+/** Relative-time wording that `Intl.RelativeTimeFormat` cannot produce (thread-time-translations.ts). */
+export type ThreadTimeLocaleTranslation = {
+  /** Under a minute ago, or a timestamp slightly in the future. */
+  justNow: string;
 };
