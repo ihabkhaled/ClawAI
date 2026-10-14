@@ -25,6 +25,7 @@ function fakeRepository(source: BoardIndexSource | null) {
     deleteDoc: vi.fn<BoardIndexStore['deleteDoc']>().mockResolvedValue(true),
     findChangedSince: vi.fn<BoardIndexStore['findChangedSince']>().mockResolvedValue([]),
     findStaleDocIds: vi.fn<BoardIndexStore['findStaleDocIds']>().mockResolvedValue([]),
+    findOutdatedDocIds: vi.fn<BoardIndexStore['findOutdatedDocIds']>().mockResolvedValue([]),
     findInvisibleDocIds: vi.fn<BoardIndexStore['findInvisibleDocIds']>().mockResolvedValue([]),
   } satisfies BoardIndexStore;
 }

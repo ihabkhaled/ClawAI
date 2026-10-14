@@ -64,3 +64,32 @@ the 13 locales is open.
   (`THREAD_TOPIC_INVALID`, `THREAD_TEXT_INVALID`); `ZodValidationPipe` returns a refinement's `code`.
 - **Budget 403** is split after the fact: plan has all three features means
   `THREAD_GENERATION_ALLOWANCE_UNAVAILABLE`, else `THREAD_GENERATION_NOT_IN_PLAN` naming the features.
+
+## Round-2 owner fixes (ADR-174 addendum 2026-10-14)
+
+- **Same-provider fallback** is refused at start and retry preflight: `400 THREAD_FALLBACK_SAME_PROVIDER`
+  (the pipeline would otherwise fail it after budget is held).
+- **Retry cap** below one cent is `400 THREAD_SPEND_CAP_TOO_LOW` (zod only requires a positive number).
+- **Publish after progress says WAITING_FOR_REVIEW**: the draft is stored only when the job state is
+  read, so `approveAndPublish` reads it once on NOT_READY and publishes; no 25 s 409 window.
+- **Unpublish is idempotent**: a second call on an UNPUBLISHED article is 200; a never-published one is
+  `409 THREAD_PUBLICATION_NOT_PUBLISHED` with its state; a stranger still gets 404.
+- **Owner state** carries `canPublish` (READY_FOR_REVIEW or UNPUBLISHED) and `canRepublish` (UNPUBLISHED).
+  The page must use these, not `publicationStatus === 'READY_FOR_REVIEW'`.
+- **Edit review is a paid Judge and Critic call** and draws on the Threads allowance like a start, so a
+  Free owner whose one lifetime use is spent cannot edit; the refusal is now the plan-aware
+  `THREAD_GENERATION_ALLOWANCE_UNAVAILABLE` / `..._NOT_IN_PLAN`, never a blanket "not in plan".
+- **Not done**: a start-time refusal for a cap below one call's hold or an unpriced model. No cheap
+  price or hold read endpoint exists (the public catalog carries no rate); needs one from connector or chat.
+
+## Board index text format (2026-10-14)
+
+`normalizeSearchText` segments ja/zh/th runs with `Intl.Segmenter`; changing it means bumping `BOARD_DOC_FORMAT_VERSION` so the reconcile job re-indexes old rows. Citation markers are stripped before indexing. A view pushes its count through `BoardCountsPort.viewsChanged`. `highlightRanges` (board-index) computes exact and fuzzy highlight offsets.
+
+## Board search performance (ADR-177 addendum 2026-10-14)
+
+- Searching reads go through `BoardRepository.searching` (transaction + `set_config` thresholds). Never call `similarity(...) >= x` in a WHERE: it defeats the GIN index. Use `%` and `<%`.
+- Under 3 characters: prefix + full-text only (suggest), never a trigram arm. Suggest minimum is 2, enforced in the DTO and the service.
+- `plainto_tsquery`, never `websearch_to_tsquery`: user text must not act as operators.
+- "Did you mean" reads `thread_board_words`; trending sorts on `trending_score`. Both are rebuilt by `BoardMaintenanceService`, not by requests. If a new way to change a title or counters appears, the 2-minute job heals it.
+- Search text errors use `BoardErrorCode`; page beyond 500 is an empty page with meta.

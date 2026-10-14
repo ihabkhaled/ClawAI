@@ -90,6 +90,33 @@ export function assertSpendCapAllowed(capMicroUsd: number): void {
   );
 }
 
+/**
+ * The pipeline refuses a fallback on the same provider as its primary ("A fallback must use a
+ * different provider") only once the job runs, after budget is held. Refuse it here instead.
+ */
+export function assertFallbacksUseOtherProvider(roles: readonly PreflightRole[]): void {
+  const sameProvider = roles.find(
+    (fallback) =>
+      fallback.isFallback &&
+      roles.some(
+        (primary) =>
+          !primary.isFallback &&
+          primary.kind === fallback.kind &&
+          primary.roleId === fallback.roleId &&
+          primary.provider === fallback.provider,
+      ),
+  );
+  if (!sameProvider) return;
+  throw new BadRequestException(
+    codedErrorBody(
+      `The fallback ${modelKey(sameProvider)} chosen for ${describeRoleSeat(sameProvider)} uses the same provider as its main model. A fallback must use a different provider.`,
+      ThreadGenerationErrorCode.FALLBACK_SAME_PROVIDER,
+      HttpStatus.BAD_REQUEST,
+      roleDetails(sameProvider),
+    ),
+  );
+}
+
 export function assertGenerationPermitted(entitlements: UserEntitlements): void {
   if (hasPermission(entitlements, Permission.THREAD_GENERATION_USE)) return;
   throw new ForbiddenException(

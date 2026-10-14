@@ -1,9 +1,11 @@
 import { publicationExcerpt } from '../../publications/utilities/publication-excerpt.utility';
 import {
   BOARD_BODY_MAX_CHARS,
+  BOARD_CITATION_MARKER,
   BOARD_CJK_CHARACTER,
   BOARD_CJK_CHARS_PER_MINUTE,
   BOARD_DEFAULT_TEXT_SEARCH_CONFIG,
+  BOARD_DOC_FORMAT_VERSION,
   BOARD_TEXT_SEARCH_CONFIG_MAP,
   BOARD_WORDS_PER_MINUTE,
 } from '../constants/board-index.constants';
@@ -21,7 +23,17 @@ export function estimateReadingMinutes(text: string): number {
   return Math.max(1, Math.ceil(words / BOARD_WORDS_PER_MINUTE + cjk / BOARD_CJK_CHARS_PER_MINUTE));
 }
 
-export function buildBoardIndexDoc(source: BoardIndexSource): BoardIndexDoc {
+/** Removes internal source markers so they are neither displayed nor searchable. */
+export function stripCitationMarkers(text: string): string {
+  return text.replaceAll(BOARD_CITATION_MARKER, ' ').replaceAll(/[ \t]{2,}/gu, ' ');
+}
+
+export function buildBoardIndexDoc(rawSource: BoardIndexSource): BoardIndexDoc {
+  const source = {
+    ...rawSource,
+    title: stripCitationMarkers(rawSource.title).trim(),
+    markdown: stripCitationMarkers(rawSource.markdown),
+  };
   return {
     publicationId: source.publicationId,
     slug: source.slug,
@@ -39,5 +51,6 @@ export function buildBoardIndexDoc(source: BoardIndexSource): BoardIndexDoc {
     commentCount: source.commentCount,
     viewCount: source.viewCount,
     textSearchConfig: textSearchConfigFor(source.contentLocale),
+    formatVersion: BOARD_DOC_FORMAT_VERSION,
   };
 }

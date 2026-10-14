@@ -78,3 +78,43 @@ describe('PublicationViewsService', () => {
     vi.useRealTimers();
   });
 });
+
+describe('PublicationViewsService board refresh', () => {
+  const counts = { viewCount: 3, readerCount: 0 };
+  const human = { ip: '203.0.113.7', userAgent: BROWSER, userId: null };
+  const buildWithPort = (viewsChanged: () => Promise<void>) => {
+    const views = {
+      recordView: vi.fn().mockResolvedValue(counts),
+      readCounts: vi.fn().mockResolvedValue(counts),
+      purgeViewsBefore: vi.fn().mockResolvedValue(0),
+    };
+    const port = { viewsChanged: vi.fn(viewsChanged) };
+    return { port, service: new PublicationViewsService(views as never, port as never) };
+  };
+
+  it('pushes the new count to the Board row after a human view', async () => {
+    const { port, service } = buildWithPort(() => Promise.resolve());
+    await service.record('slug', human);
+    expect(port.viewsChanged).toHaveBeenCalledWith('slug');
+  });
+
+  it('does not touch the Board for a crawler', async () => {
+    const { port, service } = buildWithPort(() => Promise.resolve());
+    await service.record('slug', { ...human, userAgent: 'Googlebot/2.1' });
+    expect(port.viewsChanged).not.toHaveBeenCalled();
+  });
+
+  it('never fails the view when the Board refresh throws', async () => {
+    const { service } = buildWithPort(() => Promise.reject(new Error('index down')));
+    await expect(service.record('slug', human)).resolves.toEqual(counts);
+  });
+
+  it('does not wait longer than the timeout for a hung Board refresh', async () => {
+    vi.useFakeTimers();
+    const { service } = buildWithPort(() => new Promise<void>(() => {}));
+    const pending = service.record('slug', human);
+    await vi.advanceTimersByTimeAsync(2500);
+    await expect(pending).resolves.toEqual(counts);
+    vi.useRealTimers();
+  });
+});

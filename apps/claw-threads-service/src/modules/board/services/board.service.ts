@@ -1,16 +1,19 @@
 import { Injectable } from '@nestjs/common';
 
+import { highlightRanges } from '../../board-index/utilities/board-match-ranges.utility';
 import { normalizeSearchText } from '../../board-index/utilities/board-search-normalizer.utility';
 import {
   BOARD_DID_YOU_MEAN_BELOW,
   BOARD_DID_YOU_MEAN_MAX_TOKENS,
+  BOARD_MAX_PAGE,
+  BOARD_SUGGEST_MIN_LENGTH,
   BOARD_SUGGEST_TOTAL_CAP,
 } from '../constants/board.constants';
 import type { BoardListQuery, BoardSuggestQuery } from '../dto/board-query.dto';
 import { BoardRepository } from '../repositories/board.repository';
 import type { BoardListResult, BoardSuggestResult } from '../types/board.types';
 import { toItem } from '../utilities/board-row.utility';
-import { applyCorrections, matchRanges, tokenise } from '../utilities/board-text.utility';
+import { applyCorrections, charCount, tokenise } from '../utilities/board-text.utility';
 
 @Injectable()
 export class BoardService {
@@ -27,8 +30,9 @@ export class BoardService {
       limit: query.limit,
       userId,
     };
+    // A page deeper than the cap is an empty page with real meta, never an error or a deep OFFSET scan.
     const [rows, total] = await Promise.all([
-      this.repository.list(params),
+      query.page > BOARD_MAX_PAGE ? Promise.resolve([]) : this.repository.list(params),
       this.repository.count(params),
     ]);
     const didYouMean =
@@ -47,7 +51,9 @@ export class BoardService {
 
   async suggest(query: BoardSuggestQuery): Promise<BoardSuggestResult> {
     const q = normalizeSearchText(query.q);
-    if (!q) return { suggestions: [], didYouMean: null, total: 0, totalCapped: false };
+    if (charCount(q) < BOARD_SUGGEST_MIN_LENGTH) {
+      return { suggestions: [], didYouMean: null, total: 0, totalCapped: false };
+    }
     const [rows, count] = await Promise.all([
       this.repository.suggest(q, query.lang),
       this.repository.suggestCount(q, query.lang),
@@ -61,7 +67,7 @@ export class BoardService {
         publicationType: row.publicationType,
         contentLocale: row.contentLocale,
         publishedAt: new Date(row.publishedAt).toISOString(),
-        match: matchRanges(row.title, q),
+        match: highlightRanges(row.title, q),
       })),
       didYouMean,
       total: Math.min(count, BOARD_SUGGEST_TOTAL_CAP),

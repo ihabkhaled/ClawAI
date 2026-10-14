@@ -25,6 +25,14 @@ describe('BoardCountsAdapter', () => {
     expect(index.syncPublication).toHaveBeenCalledWith('pub-1');
   });
 
+  it('re-syncs the row after a view', async () => {
+    const { adapter, index } = build('pub-1');
+
+    await adapter.viewsChanged('a-slug');
+
+    expect(index.syncPublication).toHaveBeenCalledWith('pub-1');
+  });
+
   it('does nothing for an unknown slug', async () => {
     const { adapter, index } = build(null);
 

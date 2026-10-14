@@ -7,7 +7,7 @@ export const MICRO_USD_PER_USD = 1_000_000;
  * The smallest spend cap a generation may be enqueued with: one US cent. A generation runs
  * research, three to five author drafts, a judge and a critic, so a cap below this cannot pay
  * for even one round and only produces a job that fails on its first model call. The same
- * floor applies to a retry (`MIN_THREAD_SPEND_CAP_USD`).
+ * floor applies to a retry, checked by the preflight so the refusal carries a code.
  */
 export const MIN_THREAD_SPEND_CAP_MICRO_USD = 10_000;
 

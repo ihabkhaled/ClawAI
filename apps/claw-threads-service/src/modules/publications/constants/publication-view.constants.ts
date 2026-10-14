@@ -19,3 +19,6 @@ export const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /** The rate-limit window for the view endpoints. */
 export const VIEW_RATE_LIMIT_WINDOW_MS = 60_000;
+
+/** Longest a view waits for the Board row refresh before moving on. */
+export const BOARD_NOTIFY_TIMEOUT_MS = 2000;

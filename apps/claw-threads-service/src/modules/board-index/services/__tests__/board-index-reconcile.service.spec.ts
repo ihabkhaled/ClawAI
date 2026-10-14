@@ -10,6 +10,7 @@ import { BoardIndexReconcileService } from '../board-index-reconcile.service';
 function build(options: {
   changed?: BoardChangedPublication[][];
   stale?: string[];
+  outdated?: string[];
   invisible?: string[];
   visible?: Set<string>;
 }) {
@@ -24,6 +25,9 @@ function build(options: {
     findStaleDocIds: vi
       .fn<BoardIndexStore['findStaleDocIds']>()
       .mockResolvedValue(options.stale ?? []),
+    findOutdatedDocIds: vi
+      .fn<BoardIndexStore['findOutdatedDocIds']>()
+      .mockResolvedValue(options.outdated ?? []),
     findInvisibleDocIds: vi
       .fn<BoardIndexStore['findInvisibleDocIds']>()
       .mockResolvedValue(options.invisible ?? []),
@@ -49,6 +53,30 @@ describe('BoardIndexReconcileService', () => {
     });
     await expect(service.runOnce()).resolves.toEqual({ upserted: 2, removed: 2 });
     expect(index.removePublication).toHaveBeenCalledWith('c');
+  });
+
+  it('re-indexes rows of an older text format and does not sync a row twice', async () => {
+    const { service, repository, index } = build({ outdated: ['old', 'both'], stale: ['both'] });
+    await expect(service.runOnce()).resolves.toEqual({ upserted: 2, removed: 0 });
+    expect(repository.findOutdatedDocIds).toHaveBeenCalledWith(2, 50);
+    expect(index.syncPublication).toHaveBeenCalledTimes(2);
+  });
+
+  it('inspects a bounded window of idle rows, not a fixed refresh batch', async () => {
+    const { service, repository } = build({});
+    await service.runOnce();
+    expect(repository.findStaleDocIds).toHaveBeenCalledWith(expect.any(Date), 500);
+  });
+
+  it('stops syncing when the time budget is spent and leaves the rest for the next tick', async () => {
+    vi.useFakeTimers();
+    const { service, index } = build({ stale: ['a', 'b', 'c'] });
+    index.syncPublication.mockImplementation(() => {
+      vi.advanceTimersByTime(21_000);
+      return Promise.resolve(true);
+    });
+    await expect(service.runOnce()).resolves.toEqual({ upserted: 1, removed: 0 });
+    vi.useRealTimers();
   });
 
   it('advances the cursor so the next pass starts after the last publication', async () => {

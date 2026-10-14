@@ -30,6 +30,7 @@ export interface BoardIndexDoc {
   commentCount: number;
   viewCount: number;
   textSearchConfig: string;
+  formatVersion: number;
 }
 
 export interface BoardReconcileCursor {
@@ -47,8 +48,10 @@ export interface BoardIndexStore {
   upsertDoc(doc: BoardIndexDoc): Promise<void>;
   deleteDoc(publicationId: string): Promise<boolean>;
   findChangedSince(cursor: BoardReconcileCursor, limit: number): Promise<BoardChangedPublication[]>;
-  findStaleDocIds(before: Date, limit: number): Promise<string[]>;
+  /** Of the `scanLimit` oldest rows idle since `before`, the ids whose counters drifted; the rest are touched. */
+  findStaleDocIds(before: Date, scanLimit: number): Promise<string[]>;
   findInvisibleDocIds(limit: number): Promise<string[]>;
+  findOutdatedDocIds(version: number, limit: number): Promise<string[]>;
 }
 
 export interface BoardIndexSyncer {
@@ -59,4 +62,13 @@ export interface BoardIndexSyncer {
 export interface BoardReconcileResult {
   upserted: number;
   removed: number;
+}
+
+export type BoardTextSpan = readonly [number, number];
+export type BoardHighlightRange = [number, number];
+
+export interface BoardTitleToken {
+  text: string;
+  start: number;
+  end: number;
 }

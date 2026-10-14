@@ -87,8 +87,11 @@ export interface BoardCountRow {
   total: number;
 }
 
-export interface BoardNormalisedTitle {
-  readonly text: string;
-  /** For each char of `text`, the [start, end) range of the original it came from. */
-  readonly spans: [number, number][];
+/** `list` may look inside a short title; `suggest` (every keystroke) uses prefix and full-text only. */
+export type BoardMatchMode = 'list' | 'suggest';
+
+export interface BoardMaintenanceCounts {
+  readonly wordsUpserted: number;
+  readonly wordsRemoved: number;
+  readonly trendingUpdated: number;
 }

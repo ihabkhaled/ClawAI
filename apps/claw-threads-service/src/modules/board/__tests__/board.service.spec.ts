@@ -1,3 +1,4 @@
+import { Locale } from '@claw/shared-types';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { BoardRepository } from '../repositories/board.repository';
@@ -88,5 +89,39 @@ describe('BoardService.suggest', () => {
     const result = await new BoardService(repo).suggest({ q: '​', lang: 'all' });
     expect(result.suggestions).toEqual([]);
     expect(mocks['suggest']).not.toHaveBeenCalled();
+  });
+});
+
+describe('BoardService paging and short suggestions', () => {
+  it('returns an empty page with real meta beyond the page cap, without reading rows', async () => {
+    const { repo, mocks } = fake({ count: () => Promise.resolve(30) });
+    const result = await new BoardService(repo).list('u1', { ...query, page: 501 });
+    expect(result.items).toEqual([]);
+    expect(result.meta).toEqual({ total: 30, page: 501, limit: 12, totalPages: 3 });
+    expect(mocks['list']).not.toHaveBeenCalled();
+  });
+
+  it('returns an empty page when the page is past the last page but within the cap', async () => {
+    const { repo } = fake({ count: () => Promise.resolve(30), list: () => Promise.resolve([]) });
+    const result = await new BoardService(repo).list('u1', { ...query, page: 40 });
+    expect(result.items).toEqual([]);
+    expect(result.meta.totalPages).toBe(3);
+  });
+
+  it('does not suggest for text that normalises below the minimum length', async () => {
+    const { repo, mocks } = fake();
+    const result = await new BoardService(repo).suggest({ q: 'v', lang: 'all' });
+    expect(result.suggestions).toEqual([]);
+    expect(mocks['suggest']).not.toHaveBeenCalled();
+  });
+
+  it('passes the active language to the dictionary lookup', async () => {
+    const { repo, mocks } = fake({
+      suggestCount: () => Promise.resolve(0),
+      closestWords: () => Promise.resolve([]),
+    });
+    await new BoardService(repo).suggest({ q: 'kubernets', lang: Locale.DE });
+    expect(mocks['suggest']).toHaveBeenCalledWith('kubernets', 'de');
+    expect(mocks['closestWords']).toHaveBeenCalledWith(['kubernets'], 'de');
   });
 });

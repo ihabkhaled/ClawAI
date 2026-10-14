@@ -316,6 +316,7 @@
       "database": "postgresql",
       "mongooseModels": [],
       "prismaModels": [
+        "ThreadBoardWord",
         "ThreadDeletedAccount",
         "ThreadPublication",
         "ThreadPublicationChangeRequest",

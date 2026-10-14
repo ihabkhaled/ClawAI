@@ -7,10 +7,14 @@ import {
 } from '@nestjs/common';
 
 import {
+  BOARD_DOC_FORMAT_VERSION,
   BOARD_RECONCILE_BATCH_SIZE,
   BOARD_RECONCILE_INTERVAL_MS,
   BOARD_RECONCILE_START_CURSOR,
+  BOARD_RECONCILE_TIME_BUDGET_MS,
+  BOARD_REINDEX_BATCH_SIZE,
   BOARD_STALE_DOC_AGE_MS,
+  BOARD_STALE_SCAN_SIZE,
 } from '../constants/board-index.constants';
 import { BoardIndexRepository } from '../repositories/board-index.repository';
 import type {
@@ -23,7 +27,7 @@ import { BoardIndexService } from './board-index.service';
 
 /**
  * Safety net for the push-style sync: every minute it indexes visible publications changed since the
- * last run, refreshes the oldest stale rows (so counters never drift) and removes rows whose
+ * last run, refreshes idle rows whose counters drifted, re-indexes rows of an older text format and removes rows whose
  * publication stopped being visible. Idempotent, bounded to one batch per step per tick.
  */
 @Injectable()
@@ -60,11 +64,17 @@ export class BoardIndexReconcileService implements OnModuleInit, OnModuleDestroy
         if (await this.index.syncPublication(publication.id)) result.upserted += 1;
         this.cursor = { updatedAt: publication.updatedAt, id: publication.id };
       }
+      const deadline = Date.now() + BOARD_RECONCILE_TIME_BUDGET_MS;
       const stale = await this.repository.findStaleDocIds(
         new Date(Date.now() - BOARD_STALE_DOC_AGE_MS),
-        BOARD_RECONCILE_BATCH_SIZE,
+        BOARD_STALE_SCAN_SIZE,
       );
-      for (const id of stale) {
+      const outdated = await this.repository.findOutdatedDocIds(
+        BOARD_DOC_FORMAT_VERSION,
+        BOARD_REINDEX_BATCH_SIZE,
+      );
+      for (const id of new Set([...outdated, ...stale])) {
+        if (Date.now() > deadline) break;
         if (await this.index.syncPublication(id)) result.upserted += 1;
         else result.removed += 1;
       }

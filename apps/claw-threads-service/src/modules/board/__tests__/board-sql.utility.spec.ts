@@ -7,6 +7,8 @@ import {
   buildOrderBy,
   buildSuggestCountQuery,
   buildSuggestQuery,
+  buildThresholdQuery,
+  isShortQuery,
 } from '../utilities/board-sql.utility';
 
 const base = {
@@ -54,7 +56,8 @@ describe('board SQL builders', () => {
   it('orders by each metric', () => {
     expect(buildOrderBy('liked', '').sql).toContain('d.like_count DESC');
     expect(buildOrderBy('discussed', '').sql).toContain('d.comment_count DESC');
-    expect(buildOrderBy('trending', '').sql).toContain('POWER');
+    expect(buildOrderBy('trending', '').sql).toContain('d.trending_score DESC');
+    expect(buildOrderBy('trending', '').sql).not.toContain('POWER');
     expect(buildOrderBy('trending', '').sql).toContain('d.slug DESC');
   });
 
@@ -65,9 +68,63 @@ describe('board SQL builders', () => {
     expect(buildSuggestCountQuery('ab', 'all').values).toContain(101);
   });
 
-  it('did-you-mean only reads visible docs and passes tokens as an array', () => {
+  it('searches with indexable operators, not similarity function calls (D-P1)', () => {
+    const where = buildCountQuery({ q: 'quantum', lang: 'all', type: 'all' }).sql;
+    expect(where).toContain('d.title_norm % ');
+    expect(where).toContain('<% d.title_norm');
+    expect(where).not.toMatch(/similarity(.*)s*>=/);
+    expect(where).toContain('LIKE');
+  });
+
+  it('parses user text as words, never as websearch operators (B-05)', () => {
+    const sql = buildCountQuery({ q: '-vector "or" x', lang: 'all', type: 'all' });
+    expect(sql.sql).toContain('plainto_tsquery');
+    expect(sql.sql).not.toContain('websearch_to_tsquery');
+    expect(sql.values).toContain('-vector "or" x');
+  });
+
+  it('runs only a prefix arm for suggestions shorter than 3 characters (D-P2)', () => {
+    expect(isShortQuery('ab')).toBe(true);
+    expect(isShortQuery('abc')).toBe(false);
+    expect(isShortQuery('免疫')).toBe(true);
+    const suggest = buildSuggestCountQuery('ku', 'all');
+    expect(suggest.sql).not.toContain('<%');
+    expect(suggest.sql).not.toContain('d.title_norm % ');
+    expect(suggest.values).toContain('ku%');
+    expect(suggest.values).not.toContain('%ku%');
+    expect(buildSuggestQuery('ku', 'all').sql).not.toContain('<%');
+  });
+
+  it('the list may look inside a short title, suggestions never do', () => {
+    expect(buildCountQuery({ q: 'ku', lang: 'all', type: 'all' }).values).toContain('%ku%');
+  });
+
+  it('keeps the trigram arms for 3+ characters, including suggestions', () => {
+    const suggest = buildSuggestCountQuery('kub', 'all');
+    expect(suggest.sql).toContain('<% d.title_norm');
+    expect(suggest.values).toContain('%kub%');
+  });
+
+  it('sets both trigram thresholds locally to the transaction', () => {
+    const query = buildThresholdQuery();
+    expect(query.sql).toContain("set_config('pg_trgm.similarity_threshold'");
+    expect(query.sql).toContain("set_config('pg_trgm.word_similarity_threshold'");
+    expect(query.sql.split(', true)')).toHaveLength(3);
+    expect(query.values).toEqual(['0.3', '0.45']);
+  });
+
+  it('did-you-mean reads the indexed dictionary, not the documents (D-P4)', () => {
     const query = buildDidYouMeanQuery(['kubernets'], 'all');
-    expect(query.sql).toContain("p.status = 'PUBLISHED'");
+    expect(query.sql).toContain('FROM thread_board_words w');
+    expect(query.sql).toContain('w.word % t.token');
+    expect(query.sql).not.toContain('regexp_split_to_table');
+    expect(query.sql).not.toContain('w.lang =');
     expect(query.values).toContainEqual(['kubernets']);
+  });
+
+  it('did-you-mean honours the language filter', () => {
+    const query = buildDidYouMeanQuery(['kubernets'], 'de');
+    expect(query.sql).toContain('w.lang = ');
+    expect(query.values).toContain('de');
   });
 });

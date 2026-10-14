@@ -51,3 +51,21 @@ Rollback and flag: the migration is additive and old code ignores the table. The
 - CJK, Thai and Persian search quality is the weakest part and is unverified until the live lane runs; see [the skill](../../skills/add-a-board-search-language.md).
 - Prod unknowns: privilege to create extensions, and a UTF-8 non-C collation.
 - Revisit option C only if the corpus passes about 10^6 documents or ranking becomes the product's core.
+
+## Addendum 2026-10-14: segmented ja/zh/th text, marker stripping, doc format version
+
+- `normalizeSearchText` now splits Han, kana and Thai runs into words with `Intl.Segmenter` (dictionary chosen by script, not by article locale, so the index and any query always agree). A term inside an unspaced run (免疫 in 免疫系统) is now a real tsv term.
+- Because that changes what is stored, `thread_publication_search_docs.doc_version` records the text format (`BOARD_DOC_FORMAT_VERSION`, now 2). The reconcile job re-indexes rows with an older version, 50 per tick, and `backfill()` still works.
+- Internal source markers (`[b9e5088333f64bee]`, also doubled brackets) are stripped from title, excerpt and body before indexing.
+- The stale-counter refresh inspects the 500 oldest idle rows per tick; only rows whose view/like/dislike/comment counts drifted are rebuilt, the rest are touched. The loop has a 20 s budget. Autovacuum is tuned (scale factor 0.05) on the table.
+- A view now calls `BoardCountsPort.viewsChanged` (bounded to 2 s, failure-safe).
+- `highlightRanges` (board-index utilities) gives fuzzy highlight ranges for a misspelt query word.
+
+## Addendum 2026-10-14 (search performance, round 2)
+
+- **Indexable operators.** Every trigram arm uses `title_norm % q` and `q <% title_norm`, not `similarity()>=` / `word_similarity()>=` calls, so the GIN indexes serve the query (a seq scan became a BitmapOr on a scratch copy). Thresholds are set per transaction with `set_config(..., true)` inside the repository (`BoardRepository.searching`), not with a database-level `ALTER DATABASE`: a pooled connection, a restored dump or another service on the same server can never change Board results. Measured: the server default `pg_trgm.word_similarity_threshold` is 0.6, outside the transaction, so the per-transaction setting is load-bearing; `%`/`<%` returned the same 3,200 rows as the function form.
+- **Short text.** Under 3 characters a trigram index is useless. Suggest runs full-text plus a prefix `LIKE 'q%'` backed by a `text_pattern_ops` btree on `title_norm`; the list may also look inside the title. Suggest needs 2 characters, enforced in the DTO (`BOARD_QUERY_TOO_SHORT`) and again in the service.
+- **Words, not operators.** The tsquery is `plainto_tsquery`. A leading `-`, quotes or `OR` are plain words, so `-vector` finds vector articles instead of surprisingly excluding them.
+- **Did you mean** reads `thread_board_words` (`lang`, `word`, `freq`, trigram GIN) instead of splitting every title per request. `BoardMaintenanceService` rebuilds it, and the stored `trending_score`, every 2 minutes under an advisory lock; a score is rewritten only if it moved by more than 2%. Trending, discussed and liked each have a btree matching their ORDER BY.
+- **Housekeeping.** The unused `body_norm` trigram index is dropped. The two composite indexes keep short names (`board_docs_locale_published_idx`, `board_docs_type_published_idx`) so `prisma migrate diff` shows only the GIN/prefix lines Prisma cannot model. Migration `20261014140000_board_search_perf` is additive and idempotent.
+- **Input.** Search text with NUL, over 100 characters, or (suggest) under 2 characters is a 400 with `BOARD_QUERY_INVALID` / `BOARD_QUERY_TOO_LONG` / `BOARD_QUERY_TOO_SHORT`. A page number up to 100000 is accepted; beyond page 500 the list answers an empty page with real `meta`.

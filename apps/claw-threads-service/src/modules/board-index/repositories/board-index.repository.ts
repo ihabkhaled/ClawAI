@@ -91,7 +91,7 @@ export class BoardIndexRepository implements BoardIndexStore {
       INSERT INTO thread_publication_search_docs (
         publication_id, slug, content_locale, publication_type, title, excerpt, title_norm, body_norm,
         reading_minutes, source_count, like_count, dislike_count, comment_count, view_count,
-        published_at, tsv, updated_at
+        published_at, tsv, doc_version, updated_at
       ) VALUES (
         ${doc.publicationId}, ${doc.slug}, ${doc.contentLocale}, ${doc.publicationType}, ${doc.title},
         ${doc.excerpt}, ${doc.titleNorm}, ${doc.bodyNorm}, ${doc.readingMinutes}, ${doc.sourceCount},
@@ -100,7 +100,7 @@ export class BoardIndexRepository implements BoardIndexStore {
           setweight(to_tsvector(${doc.textSearchConfig}::regconfig, ${doc.titleNorm}), 'A') ||
           setweight(to_tsvector('simple'::regconfig, ${searchable}), 'B') ||
           setweight(to_tsvector(${doc.textSearchConfig}::regconfig, ${searchable}), 'B'),
-        now()
+        ${doc.formatVersion}, now()
       )
       ON CONFLICT (publication_id) DO UPDATE SET
         slug = EXCLUDED.slug, content_locale = EXCLUDED.content_locale,
@@ -109,7 +109,8 @@ export class BoardIndexRepository implements BoardIndexStore {
         reading_minutes = EXCLUDED.reading_minutes, source_count = EXCLUDED.source_count,
         like_count = EXCLUDED.like_count, dislike_count = EXCLUDED.dislike_count,
         comment_count = EXCLUDED.comment_count, view_count = EXCLUDED.view_count,
-        published_at = EXCLUDED.published_at, tsv = EXCLUDED.tsv, updated_at = now()
+        published_at = EXCLUDED.published_at, tsv = EXCLUDED.tsv,
+        doc_version = EXCLUDED.doc_version, updated_at = now()
     `);
   }
 
@@ -139,10 +140,41 @@ export class BoardIndexRepository implements BoardIndexStore {
     });
   }
 
-  /** Index rows not refreshed since `before`, oldest first, so counters never stay stale. */
-  async findStaleDocIds(before: Date, limit: number): Promise<string[]> {
+  /**
+   * Looks at the `scanLimit` oldest rows idle since `before`. Rows whose view, like, dislike or visible
+   * comment count drifted from the source are returned for a full re-sync; the others are only touched
+   * (updated_at), which rotates the scan through the table without rewriting their body or vector.
+   */
+  async findStaleDocIds(before: Date, scanLimit: number): Promise<string[]> {
+    const rows = await this.prisma.$queryRaw<{ publication_id: string }[]>(Prisma.sql`
+      WITH candidates AS (
+        SELECT d.publication_id,
+          (d.view_count <> p.view_count
+            OR d.like_count <> (SELECT count(*) FROM thread_publication_reactions r
+                 WHERE r.publication_id = d.publication_id AND r.value = 'LIKE')
+            OR d.dislike_count <> (SELECT count(*) FROM thread_publication_reactions r
+                 WHERE r.publication_id = d.publication_id AND r.value = 'DISLIKE')
+            OR d.comment_count <> (SELECT count(*) FROM thread_publication_comments c
+                 WHERE c.publication_id = d.publication_id AND c.status = 'VISIBLE')) AS changed
+        FROM thread_publication_search_docs d
+        JOIN thread_publications p ON p.id = d.publication_id
+        WHERE d.updated_at < ${before}
+        ORDER BY d.updated_at ASC
+        LIMIT ${scanLimit}
+      ), touched AS (
+        UPDATE thread_publication_search_docs SET updated_at = now()
+        WHERE publication_id IN (SELECT publication_id FROM candidates WHERE NOT changed)
+        RETURNING 1
+      )
+      SELECT publication_id FROM candidates WHERE changed
+    `);
+    return rows.map((row) => row.publication_id);
+  }
+
+  /** Index rows written with an older text format than `version`. */
+  async findOutdatedDocIds(version: number, limit: number): Promise<string[]> {
     const rows = await this.prisma.threadPublicationSearchDoc.findMany({
-      where: { updatedAt: { lt: before } },
+      where: { docVersion: { lt: version } },
       orderBy: { updatedAt: 'asc' },
       take: limit,
       select: { publicationId: true },

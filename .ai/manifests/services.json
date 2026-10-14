@@ -594,6 +594,7 @@
       "port": 4019,
       "portSource": "shared-constants",
       "prismaModels": [
+        "ThreadBoardWord",
         "ThreadDeletedAccount",
         "ThreadPublication",
         "ThreadPublicationChangeRequest",
@@ -605,7 +606,7 @@
         "ThreadPublicationSearchDoc",
         "ThreadPublicationView"
       ],
-      "testFiles": 66,
+      "testFiles": 73,
       "testRunner": "vitest"
     },
     {

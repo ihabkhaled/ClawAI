@@ -211,6 +211,7 @@
       "ThreadRevisionDraft"
     ],
     "claw-threads-service": [
+      "ThreadBoardWord",
       "ThreadDeletedAccount",
       "ThreadPublication",
       "ThreadPublicationChangeRequest",

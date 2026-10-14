@@ -94,3 +94,11 @@ Privacy: items carry no author field. Nothing from DRAFT, UNPUBLISHED, REVOKED o
 - [Threads product spec](../02-business-product/clawai-threads-product-spec.md)
 - [Threads architecture](../03-architecture/clawai-threads-architecture.md)
 - [Backend service index](services-index.md)
+
+## Board index: segmentation, versions and view sync (2026-10-14)
+
+CJK and Thai text is word-segmented in the one shared normaliser; `doc_version` marks the index text format and the reconcile job re-indexes older rows in batches of 50. The stale-counter scan only rebuilds rows whose counters drifted. Views refresh the Board row through `BoardCountsPort.viewsChanged`. See the ADR-177 addendum.
+
+## Board search performance (2026-10-14)
+
+Search reads run in a short transaction that sets `pg_trgm.similarity_threshold` and `pg_trgm.word_similarity_threshold` locally, so the `%` and `<%` operators use the GIN trigram index. Suggest under 3 characters uses a prefix index only. `BoardMaintenanceService` (module `board`) rebuilds the `thread_board_words` dictionary behind "did you mean" and the stored `trending_score` every 2 minutes; replicas take turns with `pg_try_advisory_xact_lock`. Sort indexes: `board_docs_published_idx`, `_discussed_idx`, `_liked_idx`, `_trending_idx`. Search text errors carry `BOARD_QUERY_INVALID`, `BOARD_QUERY_TOO_LONG`, `BOARD_QUERY_TOO_SHORT`. A trending order can lag a new reaction by up to 2 minutes (the counters themselves are immediate). See the ADR-177 addendum.

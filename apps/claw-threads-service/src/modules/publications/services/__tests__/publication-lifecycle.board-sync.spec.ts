@@ -11,6 +11,7 @@ function build(overrides: { sync?: () => Promise<boolean>; remove?: () => Promis
       .fn()
       .mockResolvedValue({ kind: 'PUBLISHED', publication, newlyPublished: false }),
     unpublishOwned: vi.fn().mockResolvedValue(true),
+    findOwnedGeneration: vi.fn().mockResolvedValue(null),
     createEditedRevision: vi.fn().mockResolvedValue({
       id: 'rev-2',
       editInProgress: false,

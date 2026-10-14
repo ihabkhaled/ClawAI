@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
+import { highlightRanges } from '../../board-index/utilities/board-match-ranges.utility';
 import {
   applyCorrections,
   escapeLike,
-  matchRanges,
   stripControlChars,
   tokenise,
 } from '../utilities/board-text.utility';
@@ -22,21 +22,21 @@ describe('board text utilities', () => {
   });
 
   it('maps a match back to the original title', () => {
-    expect(matchRanges('Hello World', 'world')).toEqual([[6, 11]]);
+    expect(highlightRanges('Hello World', 'world')).toEqual([[6, 11]]);
   });
 
   it('maps through accents and merges adjacent ranges', () => {
-    expect(matchRanges('Café Crème', 'cafe')).toEqual([[0, 4]]);
-    expect(matchRanges('abc abc', 'abc')).toEqual([
+    expect(highlightRanges('Café Crème', 'cafe')).toEqual([[0, 4]]);
+    expect(highlightRanges('abc abc', 'abc')).toEqual([
       [0, 3],
       [4, 7],
     ]);
-    expect(matchRanges('aaaa', 'aa')).toEqual([[0, 4]]);
+    expect(highlightRanges('aaaa', 'aa')).toEqual([[0, 4]]);
   });
 
   it('returns no ranges for an empty query or no hit', () => {
-    expect(matchRanges('Hello', '')).toEqual([]);
-    expect(matchRanges('Hello', 'zzz')).toEqual([]);
+    expect(highlightRanges('Hello', '')).toEqual([]);
+    expect(highlightRanges('Hello', 'zzz')).toEqual([]);
   });
 
   it('rebuilds a corrected query or null when unchanged', () => {

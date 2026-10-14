@@ -20,6 +20,7 @@ import type {
 } from '../types/generation-preflight.types';
 import {
   allowanceUnavailableDenial,
+  assertFallbacksUseOtherProvider,
   assertGenerationPermitted,
   assertModelsKnown,
   assertModelsOnPlan,
@@ -96,6 +97,7 @@ export class GenerationPreflightService {
     capMicroUsd: number,
   ): Promise<void> {
     assertSpendCapAllowed(capMicroUsd);
+    assertFallbacksUseOtherProvider(roles);
     const [entitlements, knownKeys] = await Promise.all([
       this.loadEntitlements(ownerId),
       this.loadKnownKeys(roles),

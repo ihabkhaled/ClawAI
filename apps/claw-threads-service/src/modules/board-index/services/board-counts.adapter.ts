@@ -24,6 +24,10 @@ export class BoardCountsAdapter implements BoardCountsPort {
     return this.refresh(slug);
   }
 
+  viewsChanged(slug: string): Promise<void> {
+    return this.refresh(slug);
+  }
+
   private async refresh(slug: string): Promise<void> {
     const publicationId = await this.repository.findIdBySlug(slug);
     if (publicationId !== null) await this.index.syncPublication(publicationId);

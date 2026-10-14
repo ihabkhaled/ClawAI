@@ -15,7 +15,11 @@ import { ThreadNotificationService } from './thread-notification.service';
 import { GenerationStartGate } from './generation-start-gate.service';
 import { ThreadGenerationErrorCode } from '../../../common/enums/thread-generation-error-code.enum';
 import { codedErrorBody } from '../../../common/utilities/coded-error-body.utility';
-import { ACTIVE_GENERATION_JOB_STATUSES } from '../constants/publication-generation-owner.constants';
+import {
+  ACTIVE_GENERATION_JOB_STATUSES,
+  PUBLISHABLE_PUBLICATION_STATUSES,
+} from '../constants/publication-generation-owner.constants';
+import { GenerationPreflightService } from './generation-preflight.service';
 import { ThreadsGenerationClient } from './threads-generation.client';
 import type { EditPublicationRevisionDto } from '../dto/edit-publication-revision.dto';
 import type { StartThreadGenerationDto } from '../dto/start-thread-generation.dto';
@@ -49,6 +53,7 @@ export class PublicationLifecycleService {
     private readonly notifications: ThreadNotificationService,
     private readonly gate: GenerationStartGate,
     @Optional() private readonly boardIndex?: BoardIndexService,
+    @Optional() private readonly preflight?: GenerationPreflightService,
   ) {}
 
   listOwned(ownerId: string): ReturnType<PublicationsRepository['findOwnedPublications']> {
@@ -101,6 +106,10 @@ export class PublicationLifecycleService {
   ): Promise<{
     publicationId: string;
     publicationStatus: string;
+    /** The owner may press Publish now: a reviewed draft, or an unpublished article again. */
+    canPublish: boolean;
+    /** True when the publish would bring back an article the owner unpublished. */
+    canRepublish: boolean;
     jobId: string;
     status: string;
     stage: string;
@@ -116,10 +125,20 @@ export class PublicationLifecycleService {
     const publication = await this.publications.findOwnedGeneration(publicationId, ownerId);
     if (!publication?.generationJobId) throw new NotFoundException('Publication not found');
     const state = await this.generation.getPrivateState(publication.generationJobId, ownerId);
+    let publicationStatus: PublicationStatus = publication.status;
     if (state.status === 'WAITING_FOR_REVIEW' && state.draft) {
       await this.publications.savePrivateDraft(publicationId, state.draft);
+      publicationStatus =
+        (await this.publications.findOwnedGeneration(publicationId, ownerId))?.status ??
+        publicationStatus;
     }
-    return { publicationId, publicationStatus: publication.status, ...state };
+    return {
+      publicationId,
+      publicationStatus,
+      canPublish: PUBLISHABLE_PUBLICATION_STATUSES.includes(publicationStatus),
+      canRepublish: publicationStatus === PublicationStatus.UNPUBLISHED,
+      ...state,
+    };
   }
 
   /**
@@ -151,7 +170,11 @@ export class PublicationLifecycleService {
   }
 
   async approveAndPublish(publicationId: string, ownerId: string): Promise<PublishedPublication> {
-    const outcome = await this.publications.publishReadyRevision(publicationId, ownerId);
+    let outcome = await this.publications.publishReadyRevision(publicationId, ownerId);
+    if (outcome?.kind === 'NOT_READY' && (await this.recordFinishedDraft(publicationId, ownerId))) {
+      // Progress said WAITING_FOR_REVIEW before the draft was saved here: save it, then decide.
+      outcome = await this.publications.publishReadyRevision(publicationId, ownerId);
+    }
     if (!outcome) throw new NotFoundException('Publication not found');
     if (outcome.kind === 'REVOKED') {
       throw new ConflictException(
@@ -175,6 +198,26 @@ export class PublicationLifecycleService {
       }
     }
     return outcome.publication;
+  }
+
+  /**
+   * The draft is stored only when its state is read, so a publish that comes right after progress
+   * reports WAITING_FOR_REVIEW would find no revision. Reads the job once and stores a finished
+   * draft; true when one was stored. Any failure leaves the honest "not ready" answer.
+   */
+  private async recordFinishedDraft(publicationId: string, ownerId: string): Promise<boolean> {
+    try {
+      const publication = await this.publications.findOwnedGeneration(publicationId, ownerId);
+      if (!publication?.generationJobId || publication.status !== PublicationStatus.DRAFT) {
+        return false;
+      }
+      const state = await this.generation.getPrivateState(publication.generationJobId, ownerId);
+      if (state.status !== 'WAITING_FOR_REVIEW' || !state.draft) return false;
+      await this.publications.savePrivateDraft(publicationId, state.draft);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async editRevision(
@@ -253,13 +296,7 @@ export class PublicationLifecycleService {
     input: EditPublicationRevisionDto,
     revision: EditedRevisionRecord,
   ): Promise<PublicationEditResult> {
-    const review = await this.generation.enqueueRevisionReview(ownerId, {
-      parentJobId: revision.generationJobId,
-      idempotencyKey: input.idempotencyKey,
-      correlationId: input.correlationId,
-      spendCapMicroUsd: String(input.capMicroUsd),
-      draft: { markdown: input.markdown, citations: input.citations },
-    });
+    const review = await this.enqueueReview(ownerId, input, revision);
     const attached = await this.publications.attachRevalidationJob(
       publicationId,
       ownerId,
@@ -273,6 +310,28 @@ export class PublicationLifecycleService {
       reviewJobId: review.jobId,
       reasons: [],
     };
+  }
+
+  /**
+   * The review is a paid Judge and Critic call, so it draws on the plan's Threads allowance like
+   * a start does (spec, "Plans"). A refusal is explained from the plan, never reported as "not in plan".
+   */
+  private async enqueueReview(
+    ownerId: string,
+    input: EditPublicationRevisionDto,
+    revision: EditedRevisionRecord,
+  ): Promise<{ jobId: string; status: string }> {
+    try {
+      return await this.generation.enqueueRevisionReview(ownerId, {
+        parentJobId: revision.generationJobId,
+        idempotencyKey: input.idempotencyKey,
+        correlationId: input.correlationId,
+        spendCapMicroUsd: String(input.capMicroUsd),
+        draft: { markdown: input.markdown, citations: input.citations },
+      });
+    } catch (error: unknown) {
+      throw (await this.preflight?.explainBudgetDenial(ownerId, error)) ?? error;
+    }
   }
 
   private resolveRevisionReviewState(
@@ -383,7 +442,19 @@ export class PublicationLifecycleService {
 
   async unpublish(publicationId: string, ownerId: string): Promise<{ unpublished: true }> {
     if (!(await this.publications.unpublishOwned(publicationId, ownerId))) {
-      throw new NotFoundException('Publication not found');
+      const owned = await this.publications.findOwnedGeneration(publicationId, ownerId);
+      if (!owned) throw new NotFoundException('Publication not found');
+      // Already unpublished: the same answer as the first call, so a retry or double click is safe.
+      if (owned.status !== PublicationStatus.UNPUBLISHED) {
+        throw new ConflictException(
+          codedErrorBody(
+            'Only a published article can be unpublished.',
+            ThreadGenerationErrorCode.NOT_PUBLISHED,
+            HttpStatus.CONFLICT,
+            { publicationStatus: owned.status },
+          ),
+        );
+      }
     }
     await this.removeFromBoard(publicationId);
     return { unpublished: true };

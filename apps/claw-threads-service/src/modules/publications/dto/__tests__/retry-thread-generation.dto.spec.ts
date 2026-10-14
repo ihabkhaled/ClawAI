@@ -21,11 +21,16 @@ describe('retryThreadGenerationSchema', () => {
     ).toBe(true);
   });
 
+  it('leaves the one-cent floor to the preflight so the refusal carries a machine code', () => {
+    expect(
+      retryThreadGenerationSchema.safeParse({ idempotencyKey: 'k', spendCapUsd: 0.001 }).success,
+    ).toBe(true);
+  });
+
   it.each([
     { idempotencyKey: '' },
     { idempotencyKey: 'k', topic: 'short' },
     { idempotencyKey: 'k', spendCapUsd: 0 },
-    { idempotencyKey: 'k', spendCapUsd: 0.001 },
     { idempotencyKey: 'k', spendCapUsd: 5000 },
     { idempotencyKey: 'k', models: [{ roleId: 'a', provider: '', model: 'm' }] },
     { idempotencyKey: 'k', unexpected: true },

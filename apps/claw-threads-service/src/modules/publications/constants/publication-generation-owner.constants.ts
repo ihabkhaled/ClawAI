@@ -14,3 +14,9 @@ export const OWNER_DELETABLE_PUBLICATION_STATUSES: readonly PublicationStatus[] 
   PublicationStatus.READY_FOR_REVIEW,
   PublicationStatus.UNPUBLISHED,
 ];
+
+/** States in which Publish is offered: a reviewed draft, or an article the owner unpublished. */
+export const PUBLISHABLE_PUBLICATION_STATUSES: readonly PublicationStatus[] = [
+  PublicationStatus.READY_FOR_REVIEW,
+  PublicationStatus.UNPUBLISHED,
+];

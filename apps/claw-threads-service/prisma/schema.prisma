@@ -224,7 +224,8 @@ model ThreadPublicationReport {
 
 /// Read model for the Board (search + listing). Rows exist only for publications that pass the public
 /// visibility predicate; owned and kept in step by BoardIndexService. The tsvector column and the GIN
-/// indexes (tsv, title_norm/body_norm trigram) live in the migration only, Prisma cannot express them.
+/// indexes (tsv, title_norm trigram) and the text_pattern_ops prefix index live in migrations only, Prisma
+/// cannot express them. `trendingScore` is recomputed by BoardMaintenanceService, never by a request.
 model ThreadPublicationSearchDoc {
   publicationId   String                   @id @map("publication_id")
   publication     ThreadPublication        @relation(fields: [publicationId], references: [id], onDelete: Cascade)
@@ -243,9 +244,26 @@ model ThreadPublicationSearchDoc {
   viewCount       Int                      @default(0) @map("view_count")
   publishedAt     DateTime                 @map("published_at") @db.Timestamptz(6)
   tsv             Unsupported("tsvector")?
+  trendingScore   Float                    @default(0) @map("trending_score")
+  docVersion      Int                      @default(0) @map("doc_version")
   updatedAt       DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  @@index([contentLocale, publishedAt(sort: Desc), slug(sort: Desc)])
-  @@index([publicationType, publishedAt(sort: Desc)])
+  @@index([contentLocale, publishedAt(sort: Desc), slug(sort: Desc)], map: "board_docs_locale_published_idx")
+  @@index([publicationType, publishedAt(sort: Desc)], map: "board_docs_type_published_idx")
+  @@index([publishedAt(sort: Desc), slug(sort: Desc)], map: "board_docs_published_idx")
+  @@index([commentCount(sort: Desc), publishedAt(sort: Desc), slug(sort: Desc)], map: "board_docs_discussed_idx")
+  @@index([likeCount(sort: Desc), publishedAt(sort: Desc), slug(sort: Desc)], map: "board_docs_liked_idx")
+  @@index([trendingScore(sort: Desc), publishedAt(sort: Desc), slug(sort: Desc)], map: "board_docs_trending_idx")
   @@map("thread_publication_search_docs")
+}
+
+/// Distinct title words per locale behind the Board's "did you mean". Rebuilt by BoardMaintenanceService;
+/// the trigram GIN index on `word` lives in the migration only (Prisma cannot express it).
+model ThreadBoardWord {
+  lang String
+  word String
+  freq Int    @default(1)
+
+  @@id([lang, word])
+  @@map("thread_board_words")
 }

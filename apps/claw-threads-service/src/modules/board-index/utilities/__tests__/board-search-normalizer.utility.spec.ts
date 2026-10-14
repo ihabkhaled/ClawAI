@@ -29,13 +29,13 @@ describe('normalizeSearchText', () => {
     expect(normalizeSearchText('کتاب فارسی')).toBe(normalizeSearchText('كتاب فارسي'));
   });
 
-  it('leaves CJK text unchanged', () => {
-    expect(normalizeSearchText('日本語のテスト')).toBe('日本語のテスト');
+  it('keeps CJK characters and only inserts word breaks', () => {
+    expect(normalizeSearchText('日本語のテスト')).toBe('日本語 の テスト');
   });
 
   it('keeps Devanagari and Thai marks', () => {
     expect(normalizeSearchText('हिन्दी में')).toBe('हिन्दी में');
-    expect(normalizeSearchText('ภาษาไทย ที่')).toBe('ภาษาไทย ที่');
+    expect(normalizeSearchText('ภาษาไทย ที่')).toBe('ภาษา ไทย ที่');
   });
 
   it('turns control characters into spaces and collapses whitespace', () => {
@@ -65,5 +65,31 @@ describe('estimateReadingMinutes', () => {
   it('counts words and CJK characters', () => {
     expect(estimateReadingMinutes('word '.repeat(440))).toBe(2);
     expect(estimateReadingMinutes('字'.repeat(800))).toBe(2);
+  });
+});
+
+describe('normalizeSearchText word segmentation', () => {
+  it('splits an unspaced Chinese run so a word inside it is a term', () => {
+    expect(normalizeSearchText('免疫系统')).toBe('免疫 系统');
+    expect(normalizeSearchText('免疫系统').split(' ')).toContain('免疫');
+  });
+
+  it('splits Japanese kana and folds halfwidth katakana before segmenting', () => {
+    expect(normalizeSearchText('ｿｰﾗｰパネル')).toBe(normalizeSearchText('ソーラーパネル'));
+    expect(normalizeSearchText('ソーラーパネル')).toContain('ソーラー');
+  });
+
+  it('splits Thai text into words', () => {
+    expect(normalizeSearchText('ภาษาไทย').split(' ').length).toBeGreaterThan(1);
+  });
+
+  it('keeps a single character and Latin text untouched, and separates a run from adjacent Latin', () => {
+    expect(normalizeSearchText('免')).toBe('免');
+    expect(normalizeSearchText('Hello World')).toBe('hello world');
+    expect(normalizeSearchText('abc免疫def').split(' ')).toEqual(['abc', '免疫', 'def']);
+  });
+
+  it('gives the index form and the query form of the same text', () => {
+    expect(normalizeSearchText('免疫系统是什么')).toBe(normalizeSearchText('  免疫系统是什么 '));
   });
 });
