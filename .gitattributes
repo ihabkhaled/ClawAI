@@ -2,6 +2,8 @@
 # can execute them regardless of the committer's OS.
 *.sh text eol=lf
 docker-entrypoint*.sh text eol=lf
+# Read by the shell preflight on the server: a CR in a line would corrupt the variable name.
+scripts/prod-required-env.manifest text eol=lf
 
 # Generated AI-native-OS knowledge layer + generated workspace guides MUST stay
 # LF on every OS. They are byte-compared against LF-computed content by
