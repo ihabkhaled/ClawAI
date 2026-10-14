@@ -6,7 +6,9 @@ const BASE = process.env.BOARD_BASE ?? 'https://claw.local/api/v1';
 const EMAIL = process.env.BOARD_EMAIL;
 const PASSWORD = process.env.BOARD_PASSWORD;
 if (!EMAIL || !PASSWORD) {
-  console.error('Set BOARD_EMAIL and BOARD_PASSWORD (no default credentials are kept in the repo).');
+  console.error(
+    'Set BOARD_EMAIL and BOARD_PASSWORD (no default credentials are kept in the repo).',
+  );
   process.exit(2);
 }
 
@@ -187,9 +189,9 @@ async function main() {
 
   const empty = await call('/thread-publications/board?q=', token);
   check(
-    'empty q behaves like unfiltered list',
-    empty.status === 200 && empty.body.meta.total === meta?.total,
-    `status ${empty.status}`,
+    'empty q -> coded 400 BOARD_QUERY_TOO_SHORT',
+    empty.status === 400 && empty.body?.code === 'BOARD_QUERY_TOO_SHORT',
+    `status ${empty.status} ${JSON.stringify(empty.body)}`,
   );
   const emptySuggest = await call('/thread-publications/board/suggest?q=', token);
   check(

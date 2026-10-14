@@ -1,7 +1,10 @@
 import { publicationExcerpt } from '../../publications/utilities/publication-excerpt.utility';
 import {
   BOARD_BODY_MAX_CHARS,
-  BOARD_CITATION_MARKER,
+  BOARD_CITATION_ID,
+  BOARD_CITATION_NARROW_RUN,
+  BOARD_CITATION_TOKEN_SEPARATOR,
+  BOARD_CITATION_WIDE_RUN,
   BOARD_CJK_CHARACTER,
   BOARD_CJK_CHARS_PER_MINUTE,
   BOARD_DEFAULT_TEXT_SEARCH_CONFIG,
@@ -25,7 +28,16 @@ export function estimateReadingMinutes(text: string): number {
 
 /** Removes internal source markers so they are neither displayed nor searchable. */
 export function stripCitationMarkers(text: string): string {
-  return text.replaceAll(BOARD_CITATION_MARKER, ' ').replaceAll(/[ \t]{2,}/gu, ' ');
+  return text
+    .replaceAll(BOARD_CITATION_WIDE_RUN, markerRunOrKept)
+    .replaceAll(BOARD_CITATION_NARROW_RUN, markerRunOrKept)
+    .replaceAll(/[ \t]{2,}/gu, ' ');
+}
+
+/** A bracket run made only of 16-hex ids (one, a comma list or a nested list) becomes a space. */
+function markerRunOrKept(run: string): string {
+  const tokens = run.split(BOARD_CITATION_TOKEN_SEPARATOR).filter(Boolean);
+  return tokens.length > 0 && tokens.every((token) => BOARD_CITATION_ID.test(token)) ? ' ' : run;
 }
 
 export function buildBoardIndexDoc(rawSource: BoardIndexSource): BoardIndexDoc {

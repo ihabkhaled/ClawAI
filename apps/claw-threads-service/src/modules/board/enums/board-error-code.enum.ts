@@ -9,4 +9,6 @@ export enum BoardErrorCode {
   QUERY_TOO_LONG = 'BOARD_QUERY_TOO_LONG',
   /** The search text is empty, or shorter than suggestions need. */
   QUERY_TOO_SHORT = 'BOARD_QUERY_TOO_SHORT',
+  /** The page number is above the maximum the Board accepts. */
+  PAGE_OUT_OF_RANGE = 'BOARD_PAGE_OUT_OF_RANGE',
 }

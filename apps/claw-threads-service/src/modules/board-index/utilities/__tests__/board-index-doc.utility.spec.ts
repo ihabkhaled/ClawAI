@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { BoardIndexSource } from '../../types/board-index.types';
+import { BOARD_DOC_FORMAT_VERSION } from '../../constants/board-index.constants';
 import { buildBoardIndexDoc, stripCitationMarkers } from '../board-index-doc.utility';
 
 function source(overrides: Partial<BoardIndexSource>): BoardIndexSource {
@@ -27,6 +28,18 @@ describe('stripCitationMarkers', () => {
     expect(cleaned).not.toMatch(/b9e5088333f64bee|922197023defa567|\[/u);
   });
 
+  it('removes comma lists and nested lists of markers', () => {
+    const a = '922197023defa567';
+    const b = '9f056d1e0e48b360';
+    for (const marker of [`[${a}, ${b}]`, `[${a},${b}]`, `[[${a}], [${b}]]`, `[[${a}, ${b}]]`]) {
+      expect(stripCitationMarkers(`x ${marker}。`).replaceAll(/\s+/gu, ' ')).toBe('x 。');
+    }
+  });
+
+  it('strips a marker that follows an ordinary bracket and keeps the ordinary one', () => {
+    expect(stripCitationMarkers('see [abc] [922197023defa567]').trim()).toBe('see [abc]');
+  });
+
   it('keeps ordinary brackets and short hex', () => {
     expect(stripCitationMarkers('see [1] and [abc123]')).toBe('see [1] and [abc123]');
   });
@@ -51,6 +64,6 @@ describe('buildBoardIndexDoc', () => {
   it('writes segmented Chinese body text at the current format version', () => {
     const doc = buildBoardIndexDoc(source({ markdown: '免疫系统很重要' }));
     expect(doc.bodyNorm.split(' ')).toContain('免疫');
-    expect(doc.formatVersion).toBe(2);
+    expect(doc.formatVersion).toBe(BOARD_DOC_FORMAT_VERSION);
   });
 });

@@ -91,4 +91,15 @@ describe('board query DTOs', () => {
       sort: 'liked',
     });
   });
+
+  it('answers a coded 400 for a page above the cap and words the minimum correctly', () => {
+    expect(codeOf(boardListQuerySchema.safeParse({ page: '100001' }))).toBe(
+      BoardErrorCode.PAGE_OUT_OF_RANGE,
+    );
+    expect(boardListQuerySchema.safeParse({ page: '100000' }).success).toBe(true);
+    const empty = boardListQuerySchema.safeParse({ q: '' });
+    expect(empty.error?.issues[0]?.message).toBe('Search text must be at least 1 character.');
+    const short = boardSuggestQuerySchema.safeParse({ q: 'v' });
+    expect(short.error?.issues[0]?.message).toMatch(/at least \d+ characters\./u);
+  });
 });

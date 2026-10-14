@@ -114,11 +114,16 @@ describe('PublicationsRepository', () => {
       newlyPublished: true,
       publication: {
         id: 'pub_opaque',
-        slug: 'research-note',
+        slug: 'research-note-pub_opaq',
         title: 'Research note',
         content: { markdown: '# Research note' },
       },
     });
+    expect(transaction.threadPublication.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ slug: 'research-note-pub_opaq' }),
+      }),
+    );
     const published = result?.kind === 'PUBLISHED' ? result.publication : undefined;
     expect(published).not.toHaveProperty('ownerId');
     expect(published).not.toHaveProperty('sourceSnapshot');
@@ -497,10 +502,8 @@ describe('PublicationsRepository', () => {
       safetyApproved: true,
       requestMatches: true,
     });
-    expect(transaction.threadPublicationRevision.updateMany).toHaveBeenCalledWith({
-      where: { publicationId: 'publication-1', reviewStatus: 'READY_FOR_REVIEW' },
-      data: { reviewStatus: 'STALE', indexEligible: false },
-    });
+    // The last approved revision is NOT staled by an edit: it stays publishable until the new one passes.
+    expect(transaction.threadPublicationRevision.updateMany).not.toHaveBeenCalled();
     expect(transaction.threadPublicationRevision.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -516,7 +519,10 @@ describe('PublicationsRepository', () => {
 
   it('marks only the matching private candidate ready after exact-hash validation', async () => {
     const transaction = {
-      threadPublicationRevision: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+      threadPublicationRevision: {
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        findUnique: vi.fn().mockResolvedValue({ revision: 2 }),
+      },
       threadPublication: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
     };
     const repository = new PublicationsRepository({
@@ -547,6 +553,15 @@ describe('PublicationsRepository', () => {
         }),
       }),
     );
+    // Only now do the older approvals go stale.
+    expect(transaction.threadPublicationRevision.updateMany).toHaveBeenCalledWith({
+      where: {
+        publicationId: 'publication-1',
+        reviewStatus: 'READY_FOR_REVIEW',
+        revision: { lt: 2 },
+      },
+      data: { reviewStatus: 'STALE', indexEligible: false },
+    });
     expect(transaction.threadPublication.updateMany).toHaveBeenCalledWith({
       where: { id: 'publication-1', ownerId: 'owner-1', status: 'READY_FOR_REVIEW' },
       data: { status: 'READY_FOR_REVIEW' },

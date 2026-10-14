@@ -108,6 +108,7 @@ describe('owner state tells the page what it may do (D-L2-05)', () => {
   const stateFor = (status: string) => {
     const repository = {
       findOwnedGeneration: vi.fn().mockResolvedValue({ id: 'p1', generationJobId: 'j1', status }),
+      hasPublishableRevision: vi.fn().mockResolvedValue(true),
     };
     const generation = {
       getPrivateState: vi.fn().mockResolvedValue({
@@ -148,6 +149,7 @@ describe('owner edit refusal is truthful (D-L2-07)', () => {
         editInProgress: false,
         requestMatches: true,
       }),
+      discardUnadmittedRevision: vi.fn().mockResolvedValue(true),
     };
 
     await expect(

@@ -5,6 +5,7 @@ import type {
   BoardIndexStore,
   BoardIndexSyncer,
 } from '../../types/board-index.types';
+import { BOARD_DOC_FORMAT_VERSION } from '../../constants/board-index.constants';
 import { BoardIndexReconcileService } from '../board-index-reconcile.service';
 
 function build(options: {
@@ -58,7 +59,7 @@ describe('BoardIndexReconcileService', () => {
   it('re-indexes rows of an older text format and does not sync a row twice', async () => {
     const { service, repository, index } = build({ outdated: ['old', 'both'], stale: ['both'] });
     await expect(service.runOnce()).resolves.toEqual({ upserted: 2, removed: 0 });
-    expect(repository.findOutdatedDocIds).toHaveBeenCalledWith(2, 50);
+    expect(repository.findOutdatedDocIds).toHaveBeenCalledWith(BOARD_DOC_FORMAT_VERSION, 50);
     expect(index.syncPublication).toHaveBeenCalledTimes(2);
   });
 

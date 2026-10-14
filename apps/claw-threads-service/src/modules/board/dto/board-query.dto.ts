@@ -34,7 +34,7 @@ function queryText(minLength: number): z.ZodType<string, string> {
       z
         .string()
         .refine((value) => charCount(value) >= minLength, {
-          message: `Search text must be at least ${String(minLength)} characters.`,
+          message: `Search text must be at least ${String(minLength)} ${minLength === 1 ? 'character' : 'characters'}.`,
           params: { code: BoardErrorCode.QUERY_TOO_SHORT },
         })
         .refine((value) => charCount(value) <= BOARD_QUERY_MAX_LENGTH, {
@@ -62,7 +62,15 @@ export const boardListQuerySchema = z.object({
   sort: z.enum(BOARD_SORTS).default('latest'),
   lang: langSchema,
   type: typeSchema,
-  page: z.coerce.number().int().min(1).max(BOARD_PAGE_INPUT_CAP).default(1),
+  page: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .refine((value) => value <= BOARD_PAGE_INPUT_CAP, {
+      message: `Page must be at most ${String(BOARD_PAGE_INPUT_CAP)}.`,
+      params: { code: BoardErrorCode.PAGE_OUT_OF_RANGE },
+    })
+    .default(1),
   limit: limitSchema,
 });
 

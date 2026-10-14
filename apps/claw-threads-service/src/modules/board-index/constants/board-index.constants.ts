@@ -14,16 +14,24 @@ export const BOARD_RECONCILE_BATCH_SIZE = 100;
  * Version of the text format written to body_norm/title_norm/tsv. Bump it whenever normalisation changes;
  * the reconcile job re-indexes rows written with an older version.
  * 2: ja/zh/th words are segmented; citation markers are stripped.
+ * 3: comma-separated and nested citation marker lists are stripped too.
  */
-export const BOARD_DOC_FORMAT_VERSION = 2;
+export const BOARD_DOC_FORMAT_VERSION = 3;
 /** Rows re-indexed per tick for a format upgrade (bounded so a big table never stalls a tick). */
 export const BOARD_REINDEX_BATCH_SIZE = 50;
 /** Oldest rows inspected per tick for counter drift; unchanged ones are only touched, not rebuilt. */
 export const BOARD_STALE_SCAN_SIZE = 500;
 /** Wall-clock budget for the sync loops of one reconcile tick. */
 export const BOARD_RECONCILE_TIME_BUDGET_MS = 20_000;
-/** Internal source markers such as [b9e5088333f64bee] (also doubled brackets); never shown or searched. */
-export const BOARD_CITATION_MARKER = /\[{1,2}\s*[0-9a-f]{16}\s*\]{1,2}/giu;
+/**
+ * Internal source markers such as [b9e5088333f64bee], doubled brackets, comma lists [id1, id2] and
+ * nested lists [[id1], [id2]]; never shown or searched. A bracket run is a candidate only; it is
+ * stripped when every token in it is a 16-hex id. The wide run (may span several brackets) goes first.
+ */
+export const BOARD_CITATION_WIDE_RUN = /\[[\s,[\]0-9a-f]+\]/giu;
+export const BOARD_CITATION_NARROW_RUN = /\[{1,2}[\s,0-9a-f]+\]{1,2}/giu;
+export const BOARD_CITATION_TOKEN_SEPARATOR = /[\s,[\]]+/u;
+export const BOARD_CITATION_ID = /^[0-9a-f]{16}$/iu;
 /** Runs of scripts written without spaces; segmented into words before indexing and querying. */
 export const BOARD_UNSPACED_RUN = /[\p{scx=Han}\p{scx=Hiragana}\p{scx=Katakana}\p{scx=Thai}]+/gu;
 export const BOARD_THAI_CHARACTER = /\p{Script=Thai}/u;

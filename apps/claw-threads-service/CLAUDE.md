@@ -79,12 +79,18 @@ the 13 locales is open.
 - **Edit review is a paid Judge and Critic call** and draws on the Threads allowance like a start, so a
   Free owner whose one lifetime use is spent cannot edit; the refusal is now the plan-aware
   `THREAD_GENERATION_ALLOWANCE_UNAVAILABLE` / `..._NOT_IN_PLAN`, never a blanket "not in plan".
+- **An edit never bricks the draft** (round 3, N-1/N-2): creating an edit revision no longer stales the
+  approved one. A refused (403) or failed review deletes the unadmitted revision again (coded error to the
+  owner, nothing else changed); a Critic failure stales only the new revision; a pass stales the older
+  unpublished approvals. `canPublish`/`canRepublish` also need a real approved, index-eligible revision
+  (`hasPublishableRevision`). Title = first heading of any level, else first sentence; the first publish
+  gives a slug from the title plus 8 id characters (a republish keeps its link).
 - **Not done**: a start-time refusal for a cap below one call's hold or an unpriced model. No cheap
   price or hold read endpoint exists (the public catalog carries no rate); needs one from connector or chat.
 
 ## Board index text format (2026-10-14)
 
-`normalizeSearchText` segments ja/zh/th runs with `Intl.Segmenter`; changing it means bumping `BOARD_DOC_FORMAT_VERSION` so the reconcile job re-indexes old rows. Citation markers are stripped before indexing. A view pushes its count through `BoardCountsPort.viewsChanged`. `highlightRanges` (board-index) computes exact and fuzzy highlight offsets.
+`normalizeSearchText` segments ja/zh/th runs with `Intl.Segmenter`; changing it means bumping `BOARD_DOC_FORMAT_VERSION` so the reconcile job re-indexes old rows. Citation markers (single, doubled, comma lists `[id1, id2]` and nested `[[id1], [id2]]`; format version 3) are stripped before indexing. A page above 100000 answers a coded 400 `BOARD_PAGE_OUT_OF_RANGE`. A view pushes its count through `BoardCountsPort.viewsChanged`. `highlightRanges` (board-index) computes exact and fuzzy highlight offsets.
 
 ## Board search performance (ADR-177 addendum 2026-10-14)
 

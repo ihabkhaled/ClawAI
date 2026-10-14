@@ -55,6 +55,10 @@ import type {
   PublicPublicationComment,
 } from '../types/publication-community.types';
 import { evaluatePublicationSafety } from '../utilities/publication-safety.utility';
+import {
+  derivePublicationSlug,
+  derivePublicationTitle,
+} from '../utilities/publication-title.utility';
 import { publicationExcerpt } from '../utilities/publication-excerpt.utility';
 
 @Injectable()
@@ -245,7 +249,7 @@ export class PublicationsRepository {
         select: { status: true },
       });
       if (publication?.status !== PublicationStatus.DRAFT) return;
-      const title = draft.markdown.match(/^#\s+(.+)$/mu)?.[1]?.trim() ?? 'Untitled draft';
+      const title = derivePublicationTitle(draft.markdown);
       await transaction.threadPublicationRevision.upsert({
         where: { publicationId_revision: { publicationId, revision: 1 } },
         create: {
@@ -317,9 +321,14 @@ export class PublicationsRepository {
         if (!revision || owned.status === PublicationStatus.DRAFT) return { kind: 'NOT_READY' };
         const content = z.object({ markdown: z.string() }).safeParse(revision.content);
         if (!content.success) return { kind: 'NOT_READY' };
+        // A first publish gives the article a readable slug from its title; a republish keeps its link.
+        const readableSlug = owned.publishedAt
+          ? null
+          : derivePublicationSlug(revision.title, owned.id);
+        const firstSlug: { slug?: string } = readableSlug ? { slug: readableSlug } : {};
         const view = (publishedAt: Date): PublishedPublication => ({
           id: owned.id,
-          slug: owned.slug,
+          slug: readableSlug ?? owned.slug,
           title: revision.title,
           content: { markdown: content.data.markdown },
           publishedAt,
@@ -336,7 +345,7 @@ export class PublicationsRepository {
           const publishedAt = new Date();
           const again = await transaction.threadPublication.updateMany({
             where: { id: publicationId, ownerId, status: { in: REPUBLISHABLE_STATUSES } },
-            data: { status: PublicationStatus.PUBLISHED, publishedAt },
+            data: { status: PublicationStatus.PUBLISHED, publishedAt, ...firstSlug },
           });
           if (again.count === 1) {
             return { kind: 'PUBLISHED', publication: view(publishedAt), newlyPublished: true };
@@ -353,7 +362,7 @@ export class PublicationsRepository {
         const publishedAt = new Date();
         const published = await transaction.threadPublication.updateMany({
           where: { id: publicationId, ownerId, status: { in: REPUBLISHABLE_STATUSES } },
-          data: { status: PublicationStatus.PUBLISHED, publishedAt },
+          data: { status: PublicationStatus.PUBLISHED, publishedAt, ...firstSlug },
         });
         if (published.count !== 1) {
           await transaction.threadPublicationRevision.updateMany({
@@ -446,17 +455,9 @@ export class PublicationsRepository {
           editInProgress: true,
         };
       }
-      if (publication.status !== PublicationStatus.PUBLISHED) {
-        await transaction.threadPublicationRevision.updateMany({
-          where: {
-            publicationId,
-            reviewStatus: RevisionReviewStatus.READY_FOR_REVIEW,
-          },
-          data: { reviewStatus: RevisionReviewStatus.STALE, indexEligible: false },
-        });
-      }
+      // The last approved revision stays publishable until a NEW revision passes the Critic.
       const content = { markdown: input.markdown, citations: input.citations };
-      const title = input.markdown.match(/^#\s+(.+)$/mu)?.[1]?.trim() ?? 'Untitled draft';
+      const title = derivePublicationTitle(input.markdown);
       const revision = await transaction.threadPublicationRevision.create({
         data: {
           publicationId,
@@ -493,6 +494,41 @@ export class PublicationsRepository {
         editInProgress: false,
       };
     });
+  }
+
+  /** Undoes an edit whose review was never admitted: the previous approved revision stays current. */
+  async discardUnadmittedRevision(
+    publicationId: string,
+    ownerId: string,
+    revisionId: string,
+  ): Promise<boolean> {
+    const removed = await this.prisma.threadPublicationRevision.deleteMany({
+      where: {
+        id: revisionId,
+        publicationId,
+        reviewStatus: RevisionReviewStatus.PENDING,
+        revalidationJobId: null,
+        publication: { ownerId },
+      },
+    });
+    return removed.count === 1;
+  }
+
+  /** True when an approved, index-eligible revision exists, which is what Publish needs. */
+  async hasPublishableRevision(publicationId: string, ownerId: string): Promise<boolean> {
+    const found = await this.prisma.threadPublicationRevision.findFirst({
+      where: {
+        publicationId,
+        publication: { ownerId },
+        reviewStatus: {
+          in: [RevisionReviewStatus.READY_FOR_REVIEW, RevisionReviewStatus.OWNER_APPROVED],
+        },
+        safetyStatus: PublicationSafetyStatus.APPROVED,
+        indexEligible: true,
+      },
+      select: { id: true },
+    });
+    return found !== null;
   }
 
   async attachRevalidationJob(
@@ -575,6 +611,19 @@ export class PublicationsRepository {
         },
       });
       if (updated.count === 1 && result.ready) {
+        // The new revision passed: only now do the older unpublished approvals go stale.
+        const passed = await transaction.threadPublicationRevision.findUnique({
+          where: { id: revisionId },
+          select: { revision: true },
+        });
+        await transaction.threadPublicationRevision.updateMany({
+          where: {
+            publicationId,
+            reviewStatus: RevisionReviewStatus.READY_FOR_REVIEW,
+            revision: { lt: passed?.revision ?? 0 },
+          },
+          data: { reviewStatus: RevisionReviewStatus.STALE, indexEligible: false },
+        });
         await transaction.threadPublication.updateMany({
           where: {
             id: publicationId,

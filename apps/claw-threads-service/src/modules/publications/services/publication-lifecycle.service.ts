@@ -135,8 +135,12 @@ export class PublicationLifecycleService {
     return {
       publicationId,
       publicationStatus,
-      canPublish: PUBLISHABLE_PUBLICATION_STATUSES.includes(publicationStatus),
-      canRepublish: publicationStatus === PublicationStatus.UNPUBLISHED,
+      canPublish:
+        PUBLISHABLE_PUBLICATION_STATUSES.includes(publicationStatus) &&
+        (await this.publications.hasPublishableRevision(publicationId, ownerId)),
+      canRepublish:
+        publicationStatus === PublicationStatus.UNPUBLISHED &&
+        (await this.publications.hasPublishableRevision(publicationId, ownerId)),
       ...state,
     };
   }
@@ -296,7 +300,16 @@ export class PublicationLifecycleService {
     input: EditPublicationRevisionDto,
     revision: EditedRevisionRecord,
   ): Promise<PublicationEditResult> {
-    const review = await this.enqueueReview(ownerId, input, revision);
+    let review: { jobId: string; status: string };
+    try {
+      review = await this.enqueueReview(ownerId, input, revision);
+    } catch (error: unknown) {
+      // The review was refused or failed: take the unreviewed revision back out so the last
+      // approved one stays current and Publish still works. The coded error reaches the owner.
+      await this.publications.discardUnadmittedRevision(publicationId, ownerId, revision.id);
+      await this.syncBoard(publicationId);
+      throw error;
+    }
     const attached = await this.publications.attachRevalidationJob(
       publicationId,
       ownerId,
