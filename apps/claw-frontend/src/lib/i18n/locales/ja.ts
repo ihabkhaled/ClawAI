@@ -790,6 +790,8 @@ export const ja: TranslationDictionary = {
     threadPublicReportComment: 'コメントを報告',
     threadPublicAddComment: 'コメントを追加',
     threadPublicPostComment: 'コメントを投稿',
+
+    threadPublicCommentRequired: '投稿する前にコメントを入力してください。',
     threadPublicChangeRequest: '変更を提案',
     threadPublicSubmitChange: '提案を送信',
     threadPublicReportArticle: '記事を報告',

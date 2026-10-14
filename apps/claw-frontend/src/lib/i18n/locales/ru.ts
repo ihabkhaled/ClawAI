@@ -795,6 +795,8 @@ export const ru: TranslationDictionary = {
     threadPublicReportComment: 'Пожаловаться на комментарий',
     threadPublicAddComment: 'Добавить комментарий',
     threadPublicPostComment: 'Опубликовать комментарий',
+
+    threadPublicCommentRequired: 'Напишите комментарий перед публикацией.',
     threadPublicChangeRequest: 'Предложить изменение',
     threadPublicSubmitChange: 'Отправить предложение',
     threadPublicReportArticle: 'Пожаловаться на статью',

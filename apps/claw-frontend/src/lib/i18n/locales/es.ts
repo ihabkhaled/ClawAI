@@ -798,6 +798,8 @@ export const es: TranslationDictionary = {
     threadPublicReportComment: 'Denunciar comentario',
     threadPublicAddComment: 'Añadir comentario',
     threadPublicPostComment: 'Publicar comentario',
+
+    threadPublicCommentRequired: 'Escribe un comentario antes de publicarlo.',
     threadPublicChangeRequest: 'Sugerir un cambio',
     threadPublicSubmitChange: 'Enviar sugerencia',
     threadPublicReportArticle: 'Denunciar artículo',

@@ -921,3 +921,9 @@ Portal routes, behind login, noindex, not linked from marketing; SEO stays on `/
 - Publish shows for `READY_FOR_REVIEW` and `UNPUBLISHED` (or the service's `canPublish` / `canRepublish` when sent): `utilities/thread-publish-eligibility.utility.ts`.
 - The public Thread article carries `lang` and `dir` from the Thread's content locale, not the page locale.
 - Failure code and HTTP status, publication type, role and model ids sit in a collapsed Details disclosure with translated labels. New code keys: `PAYG_CAP_TOO_LOW`, `PAYG_PRICE_UNAVAILABLE`, `CLOUD_PROVIDER_UNAVAILABLE`, `FALLBACK_SKIPPED_SAME_PROVIDER`, `THREAD_FALLBACK_SAME_PROVIDER`, `THREAD_PUBLICATION_NOT_PUBLISHED`. The contract test fails when a service adds a code without a key.
+
+### Public comment form validation
+
+The "Post comment" form (`thread-public-community.tsx`, used by the Board reader and the public Thread page) is `noValidate`.
+`useThreadCommentValidation` blocks an empty or whitespace-only comment: it sends no request, shows `chat.threadPublicCommentRequired`
+in a `role="alert"` paragraph (`aria-invalid` + `aria-describedby` on the textarea) and returns focus to the textarea. Typing clears the message.

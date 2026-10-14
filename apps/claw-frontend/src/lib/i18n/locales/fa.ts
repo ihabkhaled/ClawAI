@@ -787,6 +787,8 @@ export const fa: TranslationDictionary = {
     threadPublicReportComment: 'گزارش دیدگاه',
     threadPublicAddComment: 'افزودن دیدگاه',
     threadPublicPostComment: 'ثبت دیدگاه',
+
+    threadPublicCommentRequired: 'پیش از ثبت، دیدگاهی بنویسید.',
     threadPublicChangeRequest: 'پیشنهاد تغییر',
     threadPublicSubmitChange: 'ارسال پیشنهاد',
     threadPublicReportArticle: 'گزارش مقاله',

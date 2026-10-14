@@ -788,6 +788,8 @@ export const hi: TranslationDictionary = {
     threadPublicReportComment: 'टिप्पणी की रिपोर्ट करें',
     threadPublicAddComment: 'टिप्पणी जोड़ें',
     threadPublicPostComment: 'टिप्पणी पोस्ट करें',
+
+    threadPublicCommentRequired: 'पोस्ट करने से पहले टिप्पणी लिखें।',
     threadPublicChangeRequest: 'बदलाव सुझाएँ',
     threadPublicSubmitChange: 'सुझाव भेजें',
     threadPublicReportArticle: 'लेख की रिपोर्ट करें',

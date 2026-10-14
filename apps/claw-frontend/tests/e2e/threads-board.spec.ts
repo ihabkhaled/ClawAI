@@ -222,11 +222,11 @@ test.describe('Threads Board', () => {
 
   test('reader page shows engagement actions', async ({ page }) => {
     await openBoard(page);
-    const card = page
-      .getByRole('link', { name: /./ })
-      .filter({ has: page.locator('h2, h3') })
-      .first();
-    test.skip((await card.count()) === 0, 'no published Threads on this stack to open');
+    const card = page.locator('main h2 a').first();
+    test.skip(
+      (await card.count()) === 0,
+      'no Board card link (main h2 a) found on this stack to open',
+    );
     await card.click();
     await expect(page).toHaveURL(/\/board\/[^/?]+/);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();

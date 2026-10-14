@@ -753,6 +753,8 @@ export const zh: TranslationDictionary = {
     threadPublicReportComment: '举报评论',
     threadPublicAddComment: '添加评论',
     threadPublicPostComment: '发布评论',
+
+    threadPublicCommentRequired: '发布前请先输入评论内容。',
     threadPublicChangeRequest: '建议修改',
     threadPublicSubmitChange: '提交建议',
     threadPublicReportArticle: '举报文章',

@@ -807,6 +807,8 @@ export const de: TranslationDictionary = {
     threadPublicReportComment: 'Kommentar melden',
     threadPublicAddComment: 'Kommentar hinzufügen',
     threadPublicPostComment: 'Kommentar veröffentlichen',
+
+    threadPublicCommentRequired: 'Schreiben Sie einen Kommentar, bevor Sie ihn veröffentlichen.',
     threadPublicChangeRequest: 'Änderung vorschlagen',
     threadPublicSubmitChange: 'Vorschlag senden',
     threadPublicReportArticle: 'Artikel melden',

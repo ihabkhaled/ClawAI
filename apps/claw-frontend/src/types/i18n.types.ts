@@ -727,6 +727,8 @@ export type TranslationDictionary = {
     threadPublicReportComment: string;
     threadPublicAddComment: string;
     threadPublicPostComment: string;
+
+    threadPublicCommentRequired: string;
     threadPublicChangeRequest: string;
     threadPublicSubmitChange: string;
     threadPublicReportArticle: string;

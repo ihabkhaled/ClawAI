@@ -771,6 +771,8 @@ export const th: TranslationDictionary = {
     threadPublicReportComment: 'รายงานความคิดเห็น',
     threadPublicAddComment: 'เพิ่มความคิดเห็น',
     threadPublicPostComment: 'โพสต์ความคิดเห็น',
+
+    threadPublicCommentRequired: 'โปรดเขียนความคิดเห็นก่อนโพสต์',
     threadPublicChangeRequest: 'เสนอการแก้ไข',
     threadPublicSubmitChange: 'ส่งข้อเสนอ',
     threadPublicReportArticle: 'รายงานบทความ',

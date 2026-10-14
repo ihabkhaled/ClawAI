@@ -5,6 +5,7 @@ import type { FormEvent, ReactElement } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ThreadPublicationReaction } from '@/enums/thread-publication-reaction.enum';
+import { useThreadCommentValidation } from '@/hooks/threads/use-thread-comment-validation';
 import { useTranslation } from '@/lib/i18n';
 import type { ThreadCommunityPanelProps } from '@/types/thread-publication.types';
 
@@ -20,6 +21,11 @@ export function ThreadPublicCommunity({
   actions,
 }: ThreadCommunityPanelProps): ReactElement {
   const { t } = useTranslation();
+  const validation = useThreadCommentValidation(
+    actions.comment,
+    actions.submitComment,
+    actions.setComment,
+  );
   const liked = reactions?.viewerReaction === ThreadPublicationReaction.Like;
   const disliked = reactions?.viewerReaction === ThreadPublicationReaction.Dislike;
 
@@ -106,10 +112,11 @@ export function ThreadPublicCommunity({
       {isAuthenticated ? (
         <>
           <form
+            noValidate
             className="border-border bg-card flex flex-col gap-3 rounded-lg border p-4"
             onSubmit={(event: FormEvent<HTMLFormElement>) => {
               event.preventDefault();
-              actions.submitComment();
+              validation.handleSubmit();
             }}
           >
             <label
@@ -121,12 +128,20 @@ export function ThreadPublicCommunity({
             </label>
             <Textarea
               id="thread-public-comment"
+              ref={validation.textareaRef}
               required
+              aria-invalid={validation.isEmpty}
+              aria-describedby={validation.isEmpty ? 'thread-public-comment-error' : undefined}
               maxLength={5000}
               value={actions.comment}
-              onChange={(event) => actions.setComment(event.target.value)}
+              onChange={(event) => validation.handleChange(event.target.value)}
               disabled={actions.isSubmitting}
             />
+            {validation.isEmpty ? (
+              <p id="thread-public-comment-error" role="alert" className="text-destructive text-sm">
+                {t('chat.threadPublicCommentRequired')}
+              </p>
+            ) : null}
             <Button
               type="submit"
               disabled={actions.isSubmitting}

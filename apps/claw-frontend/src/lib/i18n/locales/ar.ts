@@ -774,6 +774,8 @@ export const ar: TranslationDictionary = {
     threadPublicReportComment: 'الإبلاغ عن تعليق',
     threadPublicAddComment: 'أضف تعليقاً',
     threadPublicPostComment: 'نشر التعليق',
+
+    threadPublicCommentRequired: 'اكتب تعليقًا قبل النشر.',
     threadPublicChangeRequest: 'اقترح تعديلاً',
     threadPublicSubmitChange: 'إرسال الاقتراح',
     threadPublicReportArticle: 'الإبلاغ عن المقالة',

@@ -787,6 +787,8 @@ export const en: TranslationDictionary = {
     threadPublicReportComment: 'Report comment',
     threadPublicAddComment: 'Add a comment',
     threadPublicPostComment: 'Post comment',
+
+    threadPublicCommentRequired: 'Write a comment before posting.',
     threadPublicChangeRequest: 'Suggest a change',
     threadPublicSubmitChange: 'Send suggestion',
     threadPublicReportArticle: 'Report article',

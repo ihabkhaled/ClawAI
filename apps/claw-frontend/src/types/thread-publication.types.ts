@@ -1,6 +1,6 @@
 import type { ThreadPublicationType } from '@claw/shared-types';
 import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
-import type { FormEvent } from 'react';
+import type { FormEvent, RefObject } from 'react';
 
 import type { Locale } from '@/enums/locale.enum';
 import type { ThreadPublicationChangeRequestStatus } from '@/enums/thread-publication-change-request-status.enum';
@@ -336,4 +336,11 @@ export type ThreadChangeRequestResolveInput = {
   revisionSource: ThreadChangesRevisionSource;
   form: ThreadChangeRequestForm;
   onRevisionStarted: (revisionId: string) => void;
+};
+
+export type ThreadCommentValidation = {
+  textareaRef: RefObject<HTMLTextAreaElement | null>;
+  isEmpty: boolean;
+  handleSubmit: () => void;
+  handleChange: (value: string) => void;
 };

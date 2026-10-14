@@ -88,6 +88,7 @@ describe('ThreadPublicCommunity', () => {
 
   it('submits comments and change requests through the controller', async () => {
     const actions = createActions();
+    actions.comment = 'A real comment.';
     renderCommunity(true, actions);
 
     const commentForm = screen.getByLabelText('chat.threadPublicAddComment').closest('form');
@@ -172,5 +173,34 @@ describe('ThreadPublicCommunity reactions and controls', () => {
       screen.getByRole('button', { name: 'chat.threadPublicSubmitChange' }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText('chat.threadPublicAddComment').tagName).toBe('TEXTAREA');
+  });
+
+  it('shows an inline alert, focuses the textarea and sends nothing for a blank comment', async () => {
+    const user = userEvent.setup();
+    const actions = createActions();
+    actions.comment = '   ';
+    renderCommunity(true, actions);
+
+    await user.click(screen.getByRole('button', { name: 'chat.threadPublicPostComment' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('chat.threadPublicCommentRequired');
+    expect(screen.getByLabelText('chat.threadPublicAddComment')).toHaveFocus();
+    expect(screen.getByLabelText('chat.threadPublicAddComment')).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
+    expect(actions.submitComment).not.toHaveBeenCalled();
+  });
+
+  it('submits a non-blank comment without an alert', async () => {
+    const user = userEvent.setup();
+    const actions = createActions();
+    actions.comment = 'Looks right.';
+    renderCommunity(true, actions);
+
+    await user.click(screen.getByRole('button', { name: 'chat.threadPublicPostComment' }));
+
+    expect(actions.submitComment).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
