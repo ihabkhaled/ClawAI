@@ -3,6 +3,7 @@ import { Permission } from '@claw/shared-types';
 import { describe, expect, it, vi } from 'vitest';
 
 import { SerializationRetryExhaustedError } from '../../../entitlements/utilities/serializable-retry.utility';
+import { THREAD_FREE_REFUNDS_PER_DAY } from '../../constants/thread-job-budget.constants';
 import { ThreadCallReserveOutcome } from '../../enums/thread-call-reserve-outcome.enum';
 import { ThreadJobBudgetCloseStatus } from '../../enums/thread-job-budget-close-status.enum';
 import { ThreadJobBudgetService } from '../thread-job-budget.service';
@@ -25,7 +26,11 @@ describe('ThreadJobBudgetService', () => {
     close: vi.fn(),
   };
   const credit = { release: vi.fn() };
-  const freeMeter = { chargedMicroUsd: vi.fn(), refundFinishedCalls: vi.fn() };
+  const freeMeter = {
+    chargedMicroUsd: vi.fn(),
+    refundFinishedCalls: vi.fn(),
+    countRefundsSince: vi.fn(),
+  };
 
   function build(): ThreadJobBudgetService {
     return new ThreadJobBudgetService(
@@ -49,6 +54,7 @@ describe('ThreadJobBudgetService', () => {
     credit.release.mockResolvedValue(undefined);
     freeMeter.chargedMicroUsd.mockResolvedValue(0n);
     freeMeter.refundFinishedCalls.mockResolvedValue(0n);
+    freeMeter.countRefundsSince.mockResolvedValue(0);
     repository.findByRequest.mockResolvedValue(null);
     repository.create.mockResolvedValue({
       id: 'budget-1',
@@ -481,6 +487,54 @@ describe('ThreadJobBudgetService', () => {
         expect(featureUsage.settle).toHaveBeenCalledWith('feature-a', 'RELEASE');
       });
 
+      it('stops refunding once the user has used the daily refund cap and consumes the attempt', async () => {
+        reset();
+        repository.get.mockResolvedValue({
+          id: 'budget-1',
+          userId: 'user-1',
+          status: 'ACTIVE',
+          featureReservationIds: ['feature-a'],
+        });
+        repository.close.mockResolvedValue({ closed: true, releasedCreditReservationIds: [] });
+        freeMeter.countRefundsSince.mockResolvedValue(THREAD_FREE_REFUNDS_PER_DAY);
+
+        await expect(build().close('budget-1', failed)).resolves.toBe(true);
+
+        expect(repository.close).toHaveBeenCalledWith('budget-1', 'FINALIZED');
+        expect(freeMeter.refundFinishedCalls).not.toHaveBeenCalled();
+        expect(featureUsage.settle).toHaveBeenCalledWith('feature-a', 'CONSUME');
+      });
+
+      it('still refunds below the cap', async () => {
+        reset();
+        repository.get.mockResolvedValue({
+          id: 'budget-1',
+          userId: 'user-1',
+          status: 'ACTIVE',
+          featureReservationIds: [],
+        });
+        repository.close.mockResolvedValue({ closed: true, releasedCreditReservationIds: [] });
+        freeMeter.countRefundsSince.mockResolvedValue(THREAD_FREE_REFUNDS_PER_DAY - 1);
+
+        await build().close('budget-1', failed);
+
+        expect(repository.close).toHaveBeenCalledWith('budget-1', 'PLATFORM_FAILED');
+        expect(freeMeter.refundFinishedCalls).toHaveBeenCalledWith('budget-1');
+      });
+
+      it('treats a retried close of a capped refund as done', async () => {
+        reset();
+        repository.get.mockResolvedValue({
+          id: 'budget-1',
+          userId: 'user-1',
+          status: 'FINALIZED',
+          featureReservationIds: [],
+        });
+
+        await expect(build().close('budget-1', failed)).resolves.toBe(true);
+        expect(freeMeter.refundFinishedCalls).not.toHaveBeenCalled();
+      });
+
       it('never refunds for FINALIZED or RELEASED closes', async () => {
         for (const status of [
           ThreadJobBudgetCloseStatus.FINALIZED,
@@ -521,7 +575,7 @@ describe('ThreadJobBudgetService', () => {
 
       it('answers false for a budget already closed another way, with no refund', async () => {
         reset();
-        repository.get.mockResolvedValue({ status: 'FINALIZED', featureReservationIds: ['a'] });
+        repository.get.mockResolvedValue({ status: 'RELEASED', featureReservationIds: ['a'] });
 
         await expect(build().close('budget-1', failed)).resolves.toBe(false);
         expect(freeMeter.refundFinishedCalls).not.toHaveBeenCalled();

@@ -15,6 +15,13 @@ import { type FreeMeterMonthSum } from '../../entitlements/types/thread-job-budg
 export class ThreadJobBudgetFreeMeterRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** How many of this user's Threads jobs had their Free meter money refunded since `since`. */
+  countRefundsSince(userId: string, since: Date): Promise<number> {
+    return this.prisma.threadJobBudget.count({
+      where: { userId, freeRefundedAt: { gte: since } },
+    });
+  }
+
   /**
    * What the Free meter currently charges for this job's calls: finished calls at their real
    * cost, in-flight calls at their hold. Zero for a non-free job and after the refund.

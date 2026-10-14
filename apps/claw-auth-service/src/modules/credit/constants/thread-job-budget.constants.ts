@@ -39,3 +39,13 @@ export const THREAD_WINDOW_RENEWAL_TEXT: ReadonlyMap<string, string> = new Map([
 
 export const THREAD_WINDOW_RENEWAL_FALLBACK_TEXT =
   'It frees up when the running generation ends or fails on our side, and renews with your plan period.';
+
+/**
+ * A user can have this many platform-failure refunds (meter money and the lifetime Thread) in a rolling
+ * day. Beyond it the failure counts like a finished job, so deliberately failing jobs cannot be turned
+ * into unlimited free model calls (security review, 2026-10-14).
+ */
+export const THREAD_FREE_REFUNDS_PER_DAY = 5;
+
+/** The rolling window those refunds are counted in. */
+export const THREAD_FREE_REFUND_WINDOW_MS = 24 * 60 * 60 * 1000;

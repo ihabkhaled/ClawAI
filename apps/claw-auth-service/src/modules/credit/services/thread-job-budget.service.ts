@@ -26,6 +26,8 @@ import { FeatureUsageConsumptionService } from '../../quota/services/feature-usa
 import { FeatureSettlement } from '../../quota/enums/feature-settlement.enum';
 import {
   THREAD_BUDGET_BUSY_CODE,
+  THREAD_FREE_REFUND_WINDOW_MS,
+  THREAD_FREE_REFUNDS_PER_DAY,
   THREAD_JOB_REQUIRED_FEATURES,
 } from '../constants/thread-job-budget.constants';
 import { ThreadJobBudgetCloseStatus } from '../enums/thread-job-budget-close-status.enum';
@@ -163,19 +165,52 @@ export class ThreadJobBudgetService {
    * Safe to call again: the allowance step and the refund are idempotent, so a close
    * that failed half-way is finished by the retry.
    */
-  async close(budgetId: string, status: ThreadJobBudgetCloseStatus): Promise<boolean> {
+  async close(budgetId: string, requested: ThreadJobBudgetCloseStatus): Promise<boolean> {
     const budget = await this.repository.get(budgetId);
     if (!budget) return false;
     if (budget.status !== 'ACTIVE') {
-      if (budget.status !== status) return false;
+      // A refund the daily cap refused was closed as FINALIZED: the same close, asked again, is done.
+      const status = this.alreadyClosedAs(budget, requested);
+      if (status === null) return false;
       await this.finishClose(budgetId, budget.featureReservationIds, status);
       return true;
     }
+    const status = await this.effectiveCloseStatus(budget, requested);
     const result = await this.guardBusy(() => this.repository.close(budgetId, status));
     if (!result.closed) return (await this.repository.get(budgetId))?.status === status;
     await this.releaseCreditHolds(result.releasedCreditReservationIds);
     await this.finishClose(budgetId, budget.featureReservationIds, status);
     return true;
+  }
+
+  /**
+   * Platform-failure refunds are capped per user per rolling day: past the cap the job closes as
+   * FINALIZED (it used its attempt) instead of PLATFORM_FAILED, so failing jobs on purpose cannot buy
+   * unlimited free calls.
+   */
+  private async effectiveCloseStatus(
+    budget: ThreadJobBudget,
+    requested: ThreadJobBudgetCloseStatus,
+  ): Promise<ThreadJobBudgetCloseStatus> {
+    if (requested !== ThreadJobBudgetCloseStatus.PLATFORM_FAILED) return requested;
+    const since = new Date(Date.now() - THREAD_FREE_REFUND_WINDOW_MS);
+    const refunds = await this.freeMeter.countRefundsSince(budget.userId, since);
+    if (refunds < THREAD_FREE_REFUNDS_PER_DAY) return requested;
+    this.logger.warn(
+      `close: refund cap reached for user of budget ${budget.id}; closing as FINALIZED`,
+    );
+    return ThreadJobBudgetCloseStatus.FINALIZED;
+  }
+
+  private alreadyClosedAs(
+    budget: ThreadJobBudget,
+    requested: ThreadJobBudgetCloseStatus,
+  ): ThreadJobBudgetCloseStatus | null {
+    if (budget.status === requested) return requested;
+    const cappedRefund =
+      requested === ThreadJobBudgetCloseStatus.PLATFORM_FAILED &&
+      budget.status === ThreadJobBudgetCloseStatus.FINALIZED;
+    return cappedRefund ? ThreadJobBudgetCloseStatus.FINALIZED : null;
   }
 
   /**
