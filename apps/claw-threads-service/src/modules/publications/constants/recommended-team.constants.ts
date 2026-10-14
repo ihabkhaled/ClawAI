@@ -52,3 +52,26 @@ export const RECOMMENDED_AUTHOR_COUNT = 3;
 
 /** Backups per seat, each on a provider other than the seat's own. */
 export const RECOMMENDED_FALLBACKS_PER_SEAT = 2;
+
+/**
+ * Recent-health demotion (the step log of the last hour, the same counts the healing ranking
+ * uses): a model whose own calls, or failing that its whole provider's, succeeded less often than
+ * this share, over at least this many calls, is marked DEGRADED. It stays selectable (a warning,
+ * not a ban) but is never preselected and ranks after every healthy model.
+ */
+export const RECOMMENDED_HEALTH_MIN_SAMPLES = 5;
+export const RECOMMENDED_HEALTH_MIN_SUCCESS_RATE = 0.4;
+
+/** A model with no recent calls ranks as if it succeeded this often: ahead of a failing one. */
+export const RECOMMENDED_HEALTH_UNKNOWN_RATE = 0.75;
+
+/** The health read is reused for this long; a failed read means "no health data", never an error. */
+export const MODEL_HEALTH_CACHE_TTL_MS = 60_000;
+
+/**
+ * Model ids that are not chat models even when a catalog row says CHAT (for example the
+ * `grok-imagine-*` image and video models). Matched on whole name parts, so `gemini-flash-image`
+ * and `text-embedding-3` match but `imagination-chat` does not.
+ */
+export const THREAD_NON_CHAT_MODEL_PATTERN =
+  /(?:^|[-_/:. ])(?:imagine|imagen|image|images|dall-?e|sora|veo|video|embeddings?|embed|tts|stt|whisper|moderation|rerank|transcribe|speech|audio-?gen)(?:$|[-_/:. 0-9])/iu;

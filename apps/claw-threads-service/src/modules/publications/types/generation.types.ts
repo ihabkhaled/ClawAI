@@ -60,3 +60,6 @@ export type RetryGenerationResult = {
 };
 
 export type DeleteGenerationResult = { deleted: true };
+
+/** Recent success and failure counts of one provider/model, from the generation service. */
+export type ModelHealthEntry = { provider: string; model: string; ok: number; failed: number };

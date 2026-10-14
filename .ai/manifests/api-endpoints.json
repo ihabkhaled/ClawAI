@@ -3858,6 +3858,11 @@
         "source": "apps/claw-thread-generation-service/src/modules/generation/controllers/generation-jobs-internal.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/internal/threads/generations/model-health",
+        "source": "apps/claw-thread-generation-service/src/modules/generation/controllers/generation-jobs-internal.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/internal/threads/generations/revision-reviews",
         "source": "apps/claw-thread-generation-service/src/modules/generation/controllers/generation-jobs-internal.controller.ts"
@@ -4604,5 +4609,5 @@
     ]
   },
   "generated": true,
-  "total": 912
+  "total": 913
 }

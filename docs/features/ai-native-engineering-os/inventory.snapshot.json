@@ -3885,6 +3885,11 @@
           "source": "apps/claw-thread-generation-service/src/modules/generation/controllers/generation-jobs-internal.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/internal/threads/generations/model-health",
+          "source": "apps/claw-thread-generation-service/src/modules/generation/controllers/generation-jobs-internal.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/internal/threads/generations/revision-reviews",
           "source": "apps/claw-thread-generation-service/src/modules/generation/controllers/generation-jobs-internal.controller.ts"
@@ -12078,7 +12083,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 945
+        "testFiles": 949
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -12122,11 +12127,11 @@
       },
       "claw-thread-generation-service": {
         "runner": "vitest",
-        "testFiles": 72
+        "testFiles": 75
       },
       "claw-threads-service": {
         "runner": "vitest",
-        "testFiles": 105
+        "testFiles": 113
       },
       "claw-workspace-service": {
         "runner": "vitest",
@@ -12973,7 +12978,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 58,
-    "endpointCount": 912,
+    "endpointCount": 913,
     "envVarCount": 386,
     "eventCount": 190,
     "frontendRouteCount": 179,
@@ -12985,7 +12990,7 @@
     "serviceCount": 21,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2637,
+    "totalTestFiles": 2652,
     "workspaceCount": 28
   }
 }

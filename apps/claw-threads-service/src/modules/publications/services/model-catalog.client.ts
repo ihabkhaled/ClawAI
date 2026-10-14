@@ -8,6 +8,7 @@ import {
   MODEL_CATALOG_LOOKUP_TIMEOUT_MS,
   MODEL_CATALOG_PATH,
 } from '../constants/generation-preflight.constants';
+import { THREAD_NON_CHAT_MODEL_PATTERN } from '../constants/recommended-team.constants';
 import type { ModelRef } from '../types/generation-preflight.types';
 import type { CatalogIndex, CatalogModel } from '../types/recommended-team.types';
 
@@ -20,11 +21,31 @@ const catalogSchema = z.object({
           modelKey: z.string(),
           maxContextTokens: z.number().int().positive().nullish(),
           usageTier: z.string().nullish(),
+          // Not sent by connector-service today; honoured when it starts to, so a model that is
+          // not a chat model or is no longer exposed never reaches the Threads picker.
+          kind: z.string().nullish(),
+          lifecycle: z.string().nullish(),
+          exposure: z.string().nullish(),
         }),
       ),
     }),
   ),
 });
+
+/** Chat models only: a name of an image, video, embedding or speech model, or a flagged row, is out. */
+function isThreadChatModel(entry: {
+  modelKey: string;
+  kind?: string | null;
+  lifecycle?: string | null;
+  exposure?: string | null;
+}): boolean {
+  const kind = entry.kind?.toUpperCase() ?? 'CHAT';
+  const flagged =
+    kind !== 'CHAT' ||
+    entry.lifecycle?.toUpperCase() === 'REMOVED' ||
+    entry.exposure?.toUpperCase() === 'UNEXPOSED';
+  return !flagged && !THREAD_NON_CHAT_MODEL_PATTERN.test(entry.modelKey);
+}
 
 /** Gemini decorates its ids as `models/<id>`; the prefix names no different model. */
 function bareModelId(model: string): string {
@@ -86,7 +107,9 @@ export class ModelCatalogClient {
     const keys = new Set<string>();
     const models: CatalogModel[] = [];
     for (const { provider, models: entries } of parsed.data.providers) {
-      for (const { modelKey, maxContextTokens, usageTier } of entries) {
+      for (const entry of entries) {
+        const { modelKey, maxContextTokens, usageTier } = entry;
+        if (!isThreadChatModel(entry)) continue;
         keys.add(catalogKey(provider, modelKey));
         models.push({
           provider: provider.toUpperCase(),

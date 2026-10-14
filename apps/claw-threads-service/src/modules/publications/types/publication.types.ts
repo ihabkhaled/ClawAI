@@ -1,3 +1,4 @@
+import type { PublicationSafetyFinding } from './publication-safety.types';
 import type { Locale, ThreadPublicationType } from '@claw/shared-types';
 
 import type { PublicAuthor } from '../../author-identity/types/author-identity.types';
@@ -62,6 +63,8 @@ export type PublicationEditResult = {
   status: string;
   reviewJobId: string | null;
   reasons: string[];
+  /** Flagged passages (secrets and card numbers masked), only when the safety scan blocked the edit. */
+  findings?: PublicationSafetyFinding[];
 };
 
 export type PublicationRevisionReviewState = {

@@ -76,7 +76,7 @@ describe('isPublicPath', () => {
     expect(isPublicThreadPath('/en/threads/a_b')).toBe(false);
     expect(isPublicThreadPath('/en/threads/%2e%2e')).toBe(false);
     expect(isPublicThreadPath('/en/threads/')).toBe(false);
-    expect(isPublicThreadPath(`/en/threads/${'a'.repeat(65)}`)).toBe(false);
+    expect(isPublicThreadPath(`/en/threads/${'a'.repeat(97)}`)).toBe(false);
   });
 
   it.each([

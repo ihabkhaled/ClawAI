@@ -56,7 +56,7 @@ cancels queued jobs and aborts a running job's in-flight provider call within ab
   surface is added.
 - The queue is dedicated to generation work and has prefetch one. Prisma
   migrations run from development and production container entrypoints.
-- Database-backed worker slots cap concurrency across replicas (six; three per replica, two per user, see ADR-176 below).
+- Database-backed worker slots cap concurrency across replicas (twelve; six per replica, two per user, see ADR-176 and ADR-183 below).
   Heartbeats extend leases; periodic recovery retries expired jobs up to the
   bounded attempt limit with backoff. Resume reuses persisted research and role
   outputs only when input and evidence hashes match.
@@ -172,15 +172,15 @@ run before `budget_closed_at` is set so the idempotent close path never loses it
 Added 2026-10-14 after local QA found one job per replica, a starving queue, wrong failure causes and a budget
 close that retried for ever.
 
-| Setting                                     | Value                               | Where                                                                                     |
-| ------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------- |
-| Jobs per replica (RabbitMQ prefetch)        | 3                                   | `GENERATION_REPLICA_CONCURRENCY`, `app.module.ts`                                         |
-| Jobs across all replicas (worker slot rows) | 6                                   | `GENERATION_WORKER_SLOT_COUNT`, migration `20261014120000_threads_generation_concurrency` |
-| Running jobs per user                       | 2                                   | `GENERATION_OWNER_MAX_RUNNING`                                                            |
-| Jobs re-published per 15 s sweep            | 10, one per user per round          | `GENERATION_DISPATCH_BATCH`, `findDispatchable`                                           |
-| Budget close tries                          | 8, back-off 15 s doubling to 30 min | `BUDGET_CLOSE_*`                                                                          |
-| Queued longer than                          | 3 h is failed `QUEUE_EXPIRED`       | `GENERATION_QUEUE_MAX_AGE_MS`                                                             |
-| RUNNING with no lease                       | recovered after lease + 5 min       | `GENERATION_STALE_GRACE_MS`                                                               |
+| Setting                                     | Value                               | Where                                                                                                              |
+| ------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Jobs per replica (RabbitMQ prefetch)        | 6 (was 3 until ADR-183)             | `GENERATION_REPLICA_CONCURRENCY`, `app.module.ts`                                                                  |
+| Jobs across all replicas (worker slot rows) | 12 (was 6 until ADR-183)            | `GENERATION_WORKER_SLOT_COUNT`, migrations `20261014120000_...` and `20261014180000_threads_generation_more_slots` |
+| Running jobs per user                       | 2                                   | `GENERATION_OWNER_MAX_RUNNING`                                                                                     |
+| Jobs re-published per 15 s sweep            | 10, one per user per round          | `GENERATION_DISPATCH_BATCH`, `findDispatchable`                                                                    |
+| Budget close tries                          | 8, back-off 15 s doubling to 30 min | `BUDGET_CLOSE_*`                                                                                                   |
+| Queued longer than                          | 3 h is failed `QUEUE_EXPIRED`       | `GENERATION_QUEUE_MAX_AGE_MS`                                                                                      |
+| RUNNING with no lease                       | recovered after lease + 5 min       | `GENERATION_STALE_GRACE_MS`                                                                                        |
 
 - **Claiming.** A claim locks the owner (`pg_advisory_xact_lock`), refuses when the owner already runs the cap
   or no slot is free, and then leaves the job QUEUED, untouched: the message is acked and the sweep re-publishes
@@ -207,9 +207,17 @@ CLOSE_ABANDONED`, closed locally so it can be deleted, and one error line names 
   per 5 s per job, best effort), so the owner sees spend grow before the budget closes.
 - **Owner-only refusals fail fast.** `PAYG_CAP_TOO_LOW`, `PAYG_PRICE_UNAVAILABLE`, `PAYG_MODEL_UNPRICED`,
   `PAYG_CREDIT_EXHAUSTED` and `PAYG_FREE_ALLOWANCE_EXHAUSTED` end the job on attempt 1 with the code (no 3 attempts), and progress reports `retryable: false` for them.
-- **Operating the slot count.** More replicas need `GENERATION_WORKER_SLOT_COUNT >= replicas x 3` and a migration
+- **Operating the slot count.** More replicas need `GENERATION_WORKER_SLOT_COUNT >= replicas x 6` and a migration
   that inserts `threads-worker-N` rows; a replica beyond the slots still works but its surplus claims wait for the
   sweep.
+
+## Queue stall, queue state and model health (ADR-183)
+
+- **Why jobs waited 15 to 40 minutes.** Production runs one generation replica (`container_name` is fixed), so the per-replica prefetch of 3 was the whole service's concurrency; a burst of 35 Threads queued behind three long runs. Prefetch is now 6 and the slots 12. There is no env var: this service has no settings table and the numbers are bounded constants; raise them with a migration that inserts the `threads-worker-N` rows.
+- **Slots and back-off.** A failed attempt that will be retried leaves the job QUEUED with `nextAttemptAt` and releases its slot, so a job-level back-off holds no worker. The waits inside one attempt (healing ladder, at most 30 s, 6 minutes per role) keep the slot: the slot row follows the lease heartbeat, and releasing it mid-attempt would let a seventh job run beside six.
+- **Progress `queue`.** Owner progress of a QUEUED job carries `queue: { state, ahead, retryAt }`: `WAITING_FOR_WORKER` with the number of runnable older QUEUED jobs, or `BACKOFF` with the time of the next attempt. `null` when running or finished. The UI line is `chat.threadFixQueueNext` / `chat.threadFixQueueAhead`.
+- **`GET internal/threads/generations/model-health`.** Last-hour success and failure counts per provider/model (service token, counts only); threads-service reads it to mark a failing model DEGRADED.
+- **Distinct authors.** At every model swap an author's candidates that another author uses (its pick, or the model it runs now) go behind the unused ones.
 
 ## Author output ceiling (round-3 truncation fix)
 

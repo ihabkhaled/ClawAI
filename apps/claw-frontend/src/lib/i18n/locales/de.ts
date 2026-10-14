@@ -24,6 +24,7 @@ import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
 import { THREAD_COMMUNITY_TRANSLATIONS } from './thread-community-translations';
+import { THREAD_FIXES_TRANSLATIONS } from './thread-fixes-translations';
 import { THREAD_PUBLIC_BOARD_TRANSLATIONS } from './thread-public-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
@@ -472,6 +473,7 @@ export const de: TranslationDictionary = {
     ...THREAD_BOARD_TRANSLATIONS.de,
     ...THREAD_PUBLIC_BOARD_TRANSLATIONS.de,
     ...THREAD_COMMUNITY_TRANSLATIONS.de,
+    ...THREAD_FIXES_TRANSLATIONS.de,
     composerContext: {
       menuLabel: 'Kontext',
       pickLabel: 'Kontextpakete auswählen',

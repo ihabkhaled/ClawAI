@@ -101,6 +101,10 @@ export function useThreadPublicationDetail(
       setRevisionRequestIds({ idempotencyKey: '', correlationId: '' });
       publish.reset();
       await queryClient.invalidateQueries({ queryKey: ['thread-publications', 'mine'] });
+      // A blocked edit changes what was flagged, and a passing one clears it.
+      await queryClient.invalidateQueries({
+        queryKey: ['thread-publications', publicationId, 'generation-state'],
+      });
     },
   });
   const unpublish = useMutation({

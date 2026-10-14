@@ -209,23 +209,24 @@ const queued = (id: string, ownerId: string): FakeJob => ({
 
 describe('GenerationJobsService concurrency', () => {
   it('runs several jobs of different users at once, up to the replica concurrency', async () => {
-    const run = setup(['a', 'b', 'c', 'd', 'e'].map((id) => queued(id, `owner-${id}`)));
+    const ids = Array.from({ length: GENERATION_REPLICA_CONCURRENCY + 2 }, (_, index) =>
+      String.fromCharCode(97 + index),
+    );
+    const run = setup(ids.map((id) => queued(id, `owner-${id}`)));
     await run.service.subscribe();
 
-    for (const id of ['a', 'b', 'c', 'd', 'e']) run.broker.publish(id);
+    for (const id of ids) run.broker.publish(id);
     await flush();
 
-    expect(run.started).toEqual(['a', 'b', 'c']);
+    const firstWave = ids.slice(0, GENERATION_REPLICA_CONCURRENCY);
+    expect(run.started).toEqual(firstWave);
     expect(run.broker.pending()).toBe(2);
 
-    await run.finish('a');
-    expect(run.started).toEqual(['a', 'b', 'c', 'd']);
-    await run.finish('b');
-    await run.finish('c');
-    await run.finish('d');
-    await run.finish('e');
+    await run.finish(ids[0] as string);
+    expect(run.started).toEqual([...firstWave, ids[GENERATION_REPLICA_CONCURRENCY]]);
+    for (const id of ids.slice(1)) await run.finish(id);
 
-    expect(run.started).toEqual(['a', 'b', 'c', 'd', 'e']);
+    expect(run.started).toEqual(ids);
     expect(run.peak()).toBe(GENERATION_REPLICA_CONCURRENCY);
     expect([...run.store.byId.values()].every((job) => job.status === 'DONE')).toBe(true);
   });

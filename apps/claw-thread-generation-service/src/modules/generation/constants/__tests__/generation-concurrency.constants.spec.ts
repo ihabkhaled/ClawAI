@@ -1,5 +1,6 @@
 import concurrencyMigration from '../../../../../prisma/migrations/20261014120000_threads_generation_concurrency/migration.sql?raw';
 import recoveryMigration from '../../../../../prisma/migrations/20261005120000_threads_generation_recovery/migration.sql?raw';
+import slotsMigration from '../../../../../prisma/migrations/20261014180000_threads_generation_more_slots/migration.sql?raw';
 import prismaSchema from '../../../../../prisma/schema.prisma?raw';
 import {
   BUDGET_CLOSE_BASE_DELAY_MS,
@@ -16,9 +17,9 @@ import {
 } from '../generation.constants';
 
 describe('generation concurrency numbers', () => {
-  it('keeps per-replica concurrency in the 2 to 4 range and the owner cap below the slots', () => {
+  it('keeps per-replica concurrency in the 2 to 8 range and the owner cap below the slots', () => {
     expect(GENERATION_REPLICA_CONCURRENCY).toBeGreaterThanOrEqual(2);
-    expect(GENERATION_REPLICA_CONCURRENCY).toBeLessThanOrEqual(4);
+    expect(GENERATION_REPLICA_CONCURRENCY).toBeLessThanOrEqual(8);
     expect(GENERATION_OWNER_MAX_RUNNING).toBeGreaterThanOrEqual(1);
     expect(GENERATION_OWNER_MAX_RUNNING).toBeLessThan(GENERATION_WORKER_SLOT_COUNT);
   });
@@ -29,7 +30,7 @@ describe('generation concurrency numbers', () => {
   });
 
   it('seeds every slot id in a migration, idempotently', () => {
-    const migrations = [recoveryMigration, concurrencyMigration].join('\n');
+    const migrations = [recoveryMigration, concurrencyMigration, slotsMigration].join('\n');
 
     for (const slotId of GENERATION_WORKER_SLOT_IDS) {
       expect(migrations).toContain(`'${slotId}'`);

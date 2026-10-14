@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 
 import { ThreadErrorNotice } from '@/components/threads/thread-error-notice';
 import { ThreadTeamSection } from '@/components/threads/thread-team-section';
+import { ThreadTopicHint } from '@/components/threads/thread-topic-hint';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -47,12 +48,13 @@ export function ThreadGenerationForm({ form }: ThreadGenerationFormProps): React
         {t('chat.threadTopic')}
         <Textarea
           required
-          minLength={10}
           maxLength={10000}
           value={form.topic}
           onChange={(event) => form.setTopic(event.target.value)}
           className="min-h-24"
+          aria-invalid={form.isTopicTooShort}
         />
+        {form.isTopicTooShort ? <ThreadTopicHint /> : null}
       </label>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-sm" data-tour="thread-create-kind">
@@ -132,7 +134,8 @@ export function ThreadGenerationForm({ form }: ThreadGenerationFormProps): React
           form.isStarting ||
           form.isLoadingModels ||
           form.availableModels.length === 0 ||
-          !form.hasAcknowledgedPublic
+          !form.hasAcknowledgedPublic ||
+          !form.isTopicLongEnough
         }
         className="w-fit"
         isLoading={form.isStarting}

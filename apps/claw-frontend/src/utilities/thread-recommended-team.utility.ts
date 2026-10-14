@@ -33,6 +33,13 @@ export function availabilityOf(
   return index.get(refKey(model)) ?? ThreadModelAvailability.Available;
 }
 
+/** A degraded model can still be picked by hand (the picker warns); every other reason blocks it. */
+export function isSelectableAvailability(status: ThreadModelAvailability): boolean {
+  return (
+    status === ThreadModelAvailability.Available || status === ThreadModelAvailability.Degraded
+  );
+}
+
 export function usableModels(
   models: ModelSelection[],
   index: ThreadModelAvailabilityIndex,

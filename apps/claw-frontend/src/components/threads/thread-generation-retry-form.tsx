@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 
 import { ThreadErrorNotice } from '@/components/threads/thread-error-notice';
 import { ThreadModelPicker } from '@/components/threads/thread-model-picker';
+import { ThreadTopicHint } from '@/components/threads/thread-topic-hint';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -38,12 +39,13 @@ export function ThreadGenerationRetryForm({ form }: ThreadGenerationRetryFormPro
             {t('chat.threadTopic')}
             <Textarea
               required
-              minLength={10}
               maxLength={10000}
               value={form.topic}
               onChange={(event) => form.setTopic(event.target.value)}
               className="min-h-24"
+              aria-invalid={form.isTopicTooShort}
             />
+            {form.isTopicTooShort ? <ThreadTopicHint /> : null}
           </label>
           <label className="flex flex-col gap-1 text-sm">
             {t('chat.threadSpendCapUsd')}
@@ -72,7 +74,7 @@ export function ThreadGenerationRetryForm({ form }: ThreadGenerationRetryFormPro
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <Button
               type="submit"
-              disabled={form.isSubmitting}
+              disabled={form.isSubmitting || !form.isTopicLongEnough}
               isLoading={form.isSubmitting}
               className="w-full sm:w-auto"
             >

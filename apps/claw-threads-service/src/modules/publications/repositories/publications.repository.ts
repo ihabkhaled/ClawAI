@@ -65,6 +65,7 @@ import {
   derivePublicationSlug,
   derivePublicationTitle,
 } from '../utilities/publication-title.utility';
+import { resolveCitationMarkers } from '../utilities/citation-marker.utility';
 import { publicationExcerpt } from '../utilities/publication-excerpt.utility';
 
 @Injectable()
@@ -244,7 +245,8 @@ export class PublicationsRepository {
       citations: draft.citations,
     });
     const safety = evaluatePublicationSafety(
-      [draft.markdown, ...draft.citations.map(({ url }) => url)].join('\n'),
+      draft.markdown,
+      draft.citations.map(({ url }) => url),
     );
     const reviewReady =
       safety.approved &&
@@ -428,13 +430,20 @@ export class PublicationsRepository {
         where: {
           id: publicationId,
           ownerId,
-          status: {
-            in: [
-              PublicationStatus.READY_FOR_REVIEW,
-              PublicationStatus.PUBLISHED,
-              PublicationStatus.UNPUBLISHED,
-            ],
-          },
+          // A DRAFT that already holds a stored revision (blocked by the safety scan, or failed
+          // its review) is editable too: the owner must be able to remove the offending passage.
+          OR: [
+            {
+              status: {
+                in: [
+                  PublicationStatus.READY_FOR_REVIEW,
+                  PublicationStatus.PUBLISHED,
+                  PublicationStatus.UNPUBLISHED,
+                ],
+              },
+            },
+            { status: PublicationStatus.DRAFT, revisions: { some: {} } },
+          ],
           generationJobId: { not: null },
         },
         select: { id: true, ownerId: true, generationJobId: true, status: true },
@@ -555,6 +564,30 @@ export class PublicationsRepository {
     };
   }
 
+  /** The newest stored revision's text and safety verdict, so the owner can be shown what was flagged. */
+  async findLatestRevisionSafety(
+    publicationId: string,
+    ownerId: string,
+  ): Promise<{
+    blocked: boolean;
+    markdown: string;
+    citations: Array<{ evidenceId: string; url: string }>;
+  } | null> {
+    const found = await this.prisma.threadPublicationRevision.findFirst({
+      where: { publicationId, publication: { ownerId } },
+      orderBy: { revision: 'desc' },
+      select: { content: true, safetyStatus: true },
+    });
+    if (!found) return null;
+    const content = latestRevisionContentSchema.safeParse(found.content);
+    if (!content.success) return null;
+    return {
+      blocked: found.safetyStatus !== PublicationSafetyStatus.APPROVED,
+      markdown: content.data.markdown,
+      citations: content.data.citations,
+    };
+  }
+
   async hasPublishableRevision(publicationId: string, ownerId: string): Promise<boolean> {
     const found = await this.prisma.threadPublicationRevision.findFirst({
       where: {
@@ -668,7 +701,7 @@ export class PublicationsRepository {
           where: {
             id: publicationId,
             ownerId,
-            status: PublicationStatus.READY_FOR_REVIEW,
+            status: { in: [PublicationStatus.READY_FOR_REVIEW, PublicationStatus.DRAFT] },
           },
           data: { status: PublicationStatus.READY_FOR_REVIEW },
         });
@@ -713,7 +746,9 @@ export class PublicationsRepository {
     const content = z
       .object({
         markdown: z.string(),
-        citations: z.array(z.object({ url: z.string().url() })).default([]),
+        citations: z
+          .array(z.object({ url: z.string().url(), evidenceId: z.string().optional() }))
+          .default([]),
       })
       .safeParse(revision?.content);
     return publication?.publishedAt && revision && content.success
@@ -723,7 +758,18 @@ export class PublicationsRepository {
           contentLocale: publication.contentLocale as Locale,
           publicationType:
             publication.publicationType as PublicPublicationRecord['publicationType'],
-          content: content.data,
+          // Server-side layer of ADR-183: internal source markers become numbers or vanish before
+          // any public reader sees the text; only the addresses leave the service.
+          content: {
+            markdown: resolveCitationMarkers(
+              content.data.markdown,
+              content.data.citations.map(({ url, evidenceId }) => ({
+                url,
+                evidenceId: evidenceId ?? '',
+              })),
+            ),
+            citations: content.data.citations.map(({ url }) => ({ url })),
+          },
           publishedAt: publication.publishedAt,
           viewCount: publication.viewCount,
           readerCount: publication.readerCount,

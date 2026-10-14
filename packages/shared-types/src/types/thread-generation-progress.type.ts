@@ -103,6 +103,17 @@ export type ThreadGenerationHealing = {
   active: boolean;
 };
 
+/**
+ * Where a QUEUED job stands, so the owner is not left guessing (ADR-183). `WAITING_FOR_WORKER`: it
+ * can run now and waits for a free worker; `ahead` is how many runnable jobs were queued before it.
+ * `BACKOFF`: an attempt failed and the next one is scheduled for `retryAt`.
+ */
+export type ThreadGenerationQueue = {
+  state: 'WAITING_FOR_WORKER' | 'BACKOFF';
+  ahead: number;
+  retryAt: string | null;
+};
+
 export type ThreadGenerationProgress = {
   publicationId: string;
   jobId: string;
@@ -123,6 +134,8 @@ export type ThreadGenerationProgress = {
   failure: ThreadGenerationFailure | null;
   /** What the service already tried; absent from older services. */
   healing?: ThreadGenerationHealing;
+  /** Set only while the job is QUEUED; absent from older services. */
+  queue?: ThreadGenerationQueue | null;
   steps: ThreadGenerationStep[];
 };
 

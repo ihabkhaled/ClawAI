@@ -53,6 +53,7 @@ function fakeRepository() {
       Promise.resolve(revisions.some((revision) => revision.status === 'READY')),
     ),
     savePrivateDraft: vi.fn().mockResolvedValue(undefined),
+    findLatestRevisionSafety: vi.fn().mockResolvedValue(null),
     findOwnedGeneration: vi
       .fn()
       .mockResolvedValue({ id: 'p1', generationJobId: 'j1', status: 'READY_FOR_REVIEW' }),

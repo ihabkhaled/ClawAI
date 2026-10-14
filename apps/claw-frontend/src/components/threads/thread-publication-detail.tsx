@@ -6,6 +6,7 @@ import { ThreadErrorNotice } from '@/components/threads/thread-error-notice';
 import { ThreadExportPanel } from '@/components/threads/thread-export-panel';
 import { ThreadGenerationProgressPanel } from '@/components/threads/thread-generation-progress-panel';
 import { ThreadLiveBanner } from '@/components/threads/thread-live-banner';
+import { ThreadSafetyBlockNotice } from '@/components/threads/thread-safety-block-notice';
 import { ThreadShareMenu } from '@/components/threads/thread-share-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -122,6 +123,9 @@ export function ThreadPublicationDetail({
                 ))}
               </ul>
             </>
+          ) : null}
+          {generation.data.safetyBlock ? (
+            <ThreadSafetyBlockNotice block={generation.data.safetyBlock} />
           ) : null}
           {editingRevision ? (
             <form

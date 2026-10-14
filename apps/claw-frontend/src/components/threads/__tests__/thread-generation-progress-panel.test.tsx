@@ -236,6 +236,39 @@ describe('ThreadGenerationProgressPanel queued, spend and action bar', () => {
     expect(screen.queryByTestId('thread-progress-still-working')).not.toBeInTheDocument();
   });
 
+  it('tells a queued owner their place in line when the service reports it', () => {
+    const base = queued();
+    const withQueue = (queue: { state: string; ahead: number; retryAt: string | null }) =>
+      renderPanel({
+        ...base,
+        progress: base.progress ? { ...base.progress, queue } : base.progress,
+      } as never);
+
+    withQueue({ state: 'WAITING_FOR_WORKER', ahead: 4, retryAt: null });
+
+    expect(screen.getByTestId('thread-progress-queue-position')).toHaveTextContent(
+      'chat.threadFixQueueAhead|{"count":4}',
+    );
+  });
+
+  it('says next when nobody is ahead and says nothing extra without a queue payload', () => {
+    const base = queued();
+    renderPanel({
+      ...base,
+      progress: base.progress
+        ? { ...base.progress, queue: { state: 'WAITING_FOR_WORKER', ahead: 0, retryAt: null } }
+        : base.progress,
+    } as never);
+    expect(screen.getByTestId('thread-progress-queue-position')).toHaveTextContent(
+      'chat.threadFixQueueNext',
+    );
+  });
+
+  it('shows no place in line while a retry is backing off or from an older service', () => {
+    renderPanel(queued());
+    expect(screen.queryByTestId('thread-progress-queue-position')).not.toBeInTheDocument();
+  });
+
   it('still lets the owner cancel a queued job', async () => {
     const user = userEvent.setup();
     const { onCancel } = renderPanel(queued());

@@ -2,9 +2,10 @@
  * A Thread slug is built from the title's words, so it carries every script (Arabic, Persian,
  * Hindi, Japanese, Thai, Russian ...) plus the combining marks those scripts need, joined by
  * hyphens. An ASCII-only check silently dropped every non-Latin Thread. The cap is the longest
- * slug the Threads service stores (64 characters).
+ * slug the Threads service issues: up to 60 code points of title plus `-` and 8 id characters
+ * (69), so the check allows 96 and never rejects a slug the service made.
  */
-const THREAD_SLUG_PATTERN = /^[\p{L}\p{N}\p{M}-]{1,64}$/u;
+const THREAD_SLUG_PATTERN = /^[\p{L}\p{N}\p{M}-]{1,96}$/u;
 
 export function isValidThreadSlug(slug: string): boolean {
   return THREAD_SLUG_PATTERN.test(slug);

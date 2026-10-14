@@ -10,6 +10,7 @@ function build(latest: object | null): PublicationLifecycleService {
       .fn()
       .mockResolvedValue({ id: 'p1', generationJobId: 'j1', status: 'PUBLISHED' }),
     hasPublishableRevision: vi.fn().mockResolvedValue(true),
+    findLatestRevisionSafety: vi.fn().mockResolvedValue(null),
     findLatestPublishableRevision: vi.fn().mockResolvedValue(latest),
   };
   const generation = {

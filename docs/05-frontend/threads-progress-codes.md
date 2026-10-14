@@ -54,3 +54,13 @@ The sentences follow the service enum comments; if a service changes what a code
   constants and the threads-service `thread-generation-error-code.enum.ts`, and fails when a code has no map entry.
 - `src/lib/i18n/__tests__/thread-progress-translations.test.ts` fails when a locale lacks a key, changes a
   placeholder, or copies the English text for the codes above.
+
+## Production bug batch (ADR-183)
+
+Owner-facing changes, all strings under `chat.threadFix*` in 13 locales:
+
+- The topic boxes (start and retry) use the script-aware minimum (`isThreadTopicLongEnough`: 10 letters or numbers, 4 for Chinese, Japanese or Korean) and show `threadFixTopicTooShort`; the native `minLength` is gone because it counts UTF-16 units.
+- A draft the sensitive-details scan blocked shows `ThreadSafetyBlockNotice` with each flagged passage (secrets and card numbers masked) above the edit form. Edit the text and save: the edit is re-scanned and, if clean, reviewed as usual.
+- A `DEGRADED` model is selectable and labelled "failing often right now".
+- A queued job says "You are next" or "N jobs are ahead of yours" (`progress.queue`).
+- The public Thread and the Board reader strip unresolved source markers, also in Arabic-Indic digits and CJK brackets, and unwrap `[https://...]`.

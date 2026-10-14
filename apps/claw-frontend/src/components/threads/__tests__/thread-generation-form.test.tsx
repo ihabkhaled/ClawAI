@@ -27,6 +27,8 @@ function makeForm(
     setSourceThreadId: vi.fn(),
     topic: 'A sufficiently detailed topic',
     setTopic: vi.fn(),
+    isTopicLongEnough: true,
+    isTopicTooShort: false,
     publicationType: 'article',
     setPublicationType: vi.fn(),
     contentLocale: 'en',
@@ -55,6 +57,21 @@ describe('ThreadGenerationForm', () => {
   it('keeps the start button disabled until the public-intent box is ticked', () => {
     render(<ThreadGenerationForm form={makeForm()} />);
 
+    expect(screen.getByRole('button', { name: 'chat.threadStartGeneration' })).toBeDisabled();
+  });
+
+  it('explains a topic that is too short and keeps start disabled', () => {
+    render(
+      <ThreadGenerationForm
+        form={makeForm({
+          hasAcknowledgedPublic: true,
+          isTopicLongEnough: false,
+          isTopicTooShort: true,
+        })}
+      />,
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent('chat.threadFixTopicTooShort');
     expect(screen.getByRole('button', { name: 'chat.threadStartGeneration' })).toBeDisabled();
   });
 

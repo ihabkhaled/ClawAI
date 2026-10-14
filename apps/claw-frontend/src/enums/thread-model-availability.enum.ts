@@ -7,4 +7,6 @@ export enum ThreadModelAvailability {
   WindowTooSmall = 'WINDOW_TOO_SMALL',
   /** Kept out on purpose (provider out of credit or failing). */
   Unavailable = 'UNAVAILABLE',
+  /** Usable, but mostly failing in the last hour: selectable with a warning, never preselected. */
+  Degraded = 'DEGRADED',
 }

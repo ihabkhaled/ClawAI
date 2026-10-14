@@ -1,4 +1,4 @@
-import { Inject, Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { Inject, Injectable, Optional, ServiceUnavailableException } from '@nestjs/common';
 import {
   ENTITLEMENTS_ADAPTER,
   type EntitlementsAdapter,
@@ -19,6 +19,7 @@ import {
   listExcludedModels,
 } from '../utilities/recommended-team.utility';
 import { ModelCatalogClient } from './model-catalog.client';
+import { ModelHealthService } from './model-health.service';
 
 /**
  * The server-owned "Recommended team" (P0-2) and the per-model availability the picker shows
@@ -34,20 +35,22 @@ export class RecommendedTeamService {
   constructor(
     @Inject(ENTITLEMENTS_ADAPTER) private readonly entitlements: EntitlementsAdapter,
     private readonly catalog: ModelCatalogClient,
+    @Optional() private readonly health?: ModelHealthService,
   ) {}
 
   async get(ownerId: string): Promise<RecommendedTeamResponse> {
     const now = Date.now();
     const cached = this.cache.get(ownerId);
     if (cached && cached.expiresAt > now) return cached.value;
-    const [entitlements, models] = await Promise.all([
+    const [entitlements, models, health] = await Promise.all([
       this.loadEntitlements(ownerId),
       this.catalog.listModels(),
+      this.health?.current() ?? Promise.resolve(new Map()),
     ]);
     const value: RecommendedTeamResponse = {
       planName: entitlements.plan?.name ?? 'current',
-      team: buildRecommendedTeam(entitlements, models),
-      models: classifyCatalog(entitlements, models),
+      team: buildRecommendedTeam(entitlements, models, health),
+      models: classifyCatalog(entitlements, models, health),
       excluded: listExcludedModels(entitlements, models),
     };
     this.remember(ownerId, value, now);

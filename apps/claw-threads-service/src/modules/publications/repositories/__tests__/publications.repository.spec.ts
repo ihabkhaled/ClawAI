@@ -531,6 +531,14 @@ describe('PublicationsRepository', () => {
       safetyApproved: true,
       requestMatches: true,
     });
+    // A DRAFT that already holds a stored (e.g. safety-blocked) revision is editable as well.
+    expect(transaction.threadPublication.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: expect.arrayContaining([{ status: 'DRAFT', revisions: { some: {} } }]),
+        }),
+      }),
+    );
     // The last approved revision is NOT staled by an edit: it stays publishable until the new one passes.
     expect(transaction.threadPublicationRevision.updateMany).not.toHaveBeenCalled();
     expect(transaction.threadPublicationRevision.create).toHaveBeenCalledWith(
@@ -592,7 +600,11 @@ describe('PublicationsRepository', () => {
       data: { reviewStatus: 'STALE', indexEligible: false },
     });
     expect(transaction.threadPublication.updateMany).toHaveBeenCalledWith({
-      where: { id: 'publication-1', ownerId: 'owner-1', status: 'READY_FOR_REVIEW' },
+      where: {
+        id: 'publication-1',
+        ownerId: 'owner-1',
+        status: { in: ['READY_FOR_REVIEW', 'DRAFT'] },
+      },
       data: { status: 'READY_FOR_REVIEW' },
     });
   });

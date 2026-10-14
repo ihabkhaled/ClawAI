@@ -14,6 +14,7 @@ import {
   microUsdToInputValue,
   toThreadRetryRoleSelections,
 } from '@/utilities/thread-generation-progress.utility';
+import { isThreadTopicLongEnough } from '@/utilities/thread-topic-length.utility';
 
 /**
  * The owner's "retry with changes" form: topic, spend cap and a model per role,
@@ -29,6 +30,7 @@ export function useThreadRetryForm(
   const [topic, setTopic] = useState('');
   const [spendCapUsd, setSpendCapUsd] = useState('');
   const [roles, setRoles] = useState<ThreadRetryRoleSelection[]>([]);
+  const topicLongEnough = isThreadTopicLongEnough(topic);
   const mutation = useMutation({
     mutationFn: () => {
       if (!progress) {
@@ -72,6 +74,8 @@ export function useThreadRetryForm(
     close: () => setIsOpen(false),
     topic,
     setTopic,
+    isTopicLongEnough: topicLongEnough,
+    isTopicTooShort: topic.trim().length > 0 && !topicLongEnough,
     spendCapUsd,
     setSpendCapUsd,
     roles,

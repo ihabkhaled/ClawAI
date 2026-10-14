@@ -11,17 +11,18 @@ export const FORMAT_ATTEMPTS_PER_MODEL = 2;
 export const MAX_GENERATION_ATTEMPTS = 3;
 /**
  * Jobs one replica runs at once. It is also the broker prefetch: each running job holds one
- * unacked message, so a replica is never handed more work than it will start. Three keeps a
- * replica busy while one job waits on a slow model, without one process fanning out dozens of
- * long model streams.
+ * unacked message, so a replica is never handed more work than it will start. Production runs a
+ * single replica, so this is the service's whole concurrency: at 3 a burst of Threads waited
+ * 15 to 40 minutes (ADR-183). A job spends nearly all its time waiting on model streams, so six
+ * in one process cost sockets, not CPU. The owner cap below still keeps one user from taking them.
  */
-export const GENERATION_REPLICA_CONCURRENCY = 3;
+export const GENERATION_REPLICA_CONCURRENCY = 6;
 /**
  * Jobs running across ALL replicas, one `thread_generation_worker_slots` row each. It must be at
  * least replicas x GENERATION_REPLICA_CONCURRENCY, or the surplus claims find no slot and wait
  * for the next sweep. Raising it needs a migration that inserts the new slot rows.
  */
-export const GENERATION_WORKER_SLOT_COUNT = 6;
+export const GENERATION_WORKER_SLOT_COUNT = 12;
 export const GENERATION_WORKER_SLOT_IDS: readonly string[] = Array.from(
   { length: GENERATION_WORKER_SLOT_COUNT },
   (_, index) => `threads-worker-${String(index + 1)}`,

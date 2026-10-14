@@ -1421,7 +1421,8 @@ export type TranslationDictionary = {
     };
   } & ThreadBoardLocaleTranslation &
     ThreadPublicBoardLocaleTranslation &
-    ThreadCommunityLocaleTranslation;
+    ThreadCommunityLocaleTranslation &
+    ThreadFixesLocaleTranslation;
   receipt: {
     openLabel: string;
     contextUsed: string;
@@ -8133,6 +8134,22 @@ export type ThreadCommunityLocaleTranslation = {
   threadCommunitySignInToReact: string;
   threadCommunityReactionFailed: string;
   threadCommunityRemovedComment: string;
+};
+
+/** Flat `chat.threadFix*` keys: topic minimum, sensitive-details editor notice and queue text; see thread-fixes-translations.ts. */
+export type ThreadFixesLocaleTranslation = {
+  threadFixTopicTooShort: string;
+  threadFixSafetyTitle: string;
+  threadFixSafetyHint: string;
+  threadFixSafetyKindSecret: string;
+  threadFixSafetyKindEmail: string;
+  threadFixSafetyKindCard: string;
+  threadFixSafetyKindSsn: string;
+  threadFixSafetyKindIban: string;
+  threadFixQueueNext: string;
+  threadFixQueueAhead: string;
+  threadFixQueueWaiting: string;
+  threadFixModelDegraded: string;
 };
 
 /** Flat `chat.threadPublicBoard*` keys for the public, read-only Threads board; see thread-public-board-translations.ts. */

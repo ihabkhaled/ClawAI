@@ -32,4 +32,38 @@ describe('stripUnresolvedSourceMarkers', () => {
     expect(stripUnresolvedSourceMarkers(body)).toBe(body);
     expect(Date.now() - started).toBeLessThan(1_000);
   });
+
+  it('removes ids written with Arabic-Indic digits and direction marks', () => {
+    expect(stripUnresolvedSourceMarkers('النص [‏a٥٥٠٥c٤١٨٦٩٩ab٦٨‏] هنا')).toBe('النص هنا');
+    expect(stripUnresolvedSourceMarkers('متن [۰۱۲۳۴۵۶۷۸۹abcdef] پایان')).toBe('متن پایان');
+  });
+
+  it('removes ids in CJK and full-width brackets and keeps the surrounding text', () => {
+    expect(stripUnresolvedSourceMarkers('事実【a5505c418699ab68】です。')).toBe('事実です。');
+    expect(stripUnresolvedSourceMarkers('事実［２ｆ２５ｆ１９９７１２ｅｅｃ３ｄ］です。')).toBe(
+      '事実です。',
+    );
+    expect(stripUnresolvedSourceMarkers('Список [a5505c418699ab68，2f25f199712eec3d] конец')).toBe(
+      'Список конец',
+    );
+  });
+
+  it('unwraps a bracketed address but leaves markdown links alone', () => {
+    expect(stripUnresolvedSourceMarkers('См. [https://x.test/a] далее')).toBe(
+      'См. https://x.test/a далее',
+    );
+    const link = 'A [https://x.test](https://x.test) link';
+    expect(stripUnresolvedSourceMarkers(link)).toBe(link);
+  });
+
+  it('keeps local-digit numbers that are not ids', () => {
+    expect(stripUnresolvedSourceMarkers('see [٢] and [۳, ۴]')).toBe('see [٢] and [۳, ۴]');
+  });
+
+  it('stays linear on bracket-and-address spam', () => {
+    const started = Date.now();
+    stripUnresolvedSourceMarkers('[https://a'.repeat(50_000));
+    stripUnresolvedSourceMarkers('[a'.repeat(100_000));
+    expect(Date.now() - started).toBeLessThan(1_500);
+  });
 });

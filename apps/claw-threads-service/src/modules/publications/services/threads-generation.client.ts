@@ -28,10 +28,22 @@ import {
 import { generationAllowanceRefusalSchema } from '../schemas/generation-allowance-refusal.schema';
 import type {
   GenerationEnqueueInput,
+  ModelHealthEntry,
   OwnerGenerationProgress,
   PrivateGenerationState,
   RevisionReviewEnqueueInput,
 } from '../types/generation.types';
+
+const modelHealthSchema = z.object({
+  models: z.array(
+    z.object({
+      provider: z.string(),
+      model: z.string(),
+      ok: z.number().int().nonnegative(),
+      failed: z.number().int().nonnegative(),
+    }),
+  ),
+});
 
 const enqueueResponseSchema = z.object({ jobId: z.string(), status: z.string() });
 const privateStateSchema = z.object({
@@ -155,6 +167,16 @@ export class ThreadsGenerationClient {
     if (!generationDeleteResponseSchema.safeParse(result).success) {
       throw new ServiceUnavailableException('Generation response is invalid');
     }
+  }
+
+  /** Recent success and failure counts per model from the step log (last hour); counts only. */
+  async getModelHealth(): Promise<ModelHealthEntry[]> {
+    const result = await this.request('/api/v1/internal/threads/generations/model-health', {
+      method: 'GET',
+    });
+    const parsed = modelHealthSchema.safeParse(result);
+    if (!parsed.success) throw new ServiceUnavailableException('Generation response is invalid');
+    return parsed.data.models;
   }
 
   async cancel(jobId: string): Promise<void> {

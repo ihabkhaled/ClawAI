@@ -18,6 +18,7 @@ import {
   findFailedRoleKind,
   formatMicroUsd,
   hasThreadSpend,
+  describeThreadQueue,
   isQueuedThreadStatus,
   readAllowanceRefunded,
   readThreadSpentMicro,
@@ -43,6 +44,7 @@ export function ThreadGenerationProgressPanel({
   const spentMicro = progress === undefined ? '0' : readThreadSpentMicro(progress);
   const included = progress === undefined ? null : describeIncludedUsage(progress);
   const isQueued = progress !== undefined && isQueuedThreadStatus(progress.status);
+  const queueLine = describeThreadQueue(progress?.queue);
 
   return (
     <section
@@ -107,6 +109,15 @@ export function ThreadGenerationProgressPanel({
               data-testid="thread-progress-queued"
             >
               {t('chat.threadProgress.queuedHint')}
+            </p>
+          ) : null}
+          {isQueued && queueLine !== null ? (
+            <p
+              role="status"
+              className="text-sm font-medium"
+              data-testid="thread-progress-queue-position"
+            >
+              {t(queueLine.key, queueLine.params)}
             </p>
           ) : null}
           {panel.isRunning && !isQueued && progress.failure === null ? (

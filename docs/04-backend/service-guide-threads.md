@@ -170,3 +170,13 @@ Account deletion removes the person's comment votes and mentions, nulls `replyTo
 - `HealingPoolService.forOwner` builds `{ pool, safeDefault }` (plan-allowed as FALLBACK, not on the deny list, window at least 32k, cheapest band first, spread over providers, at most 8; safe default = a Gemini "flash" model) and `ThreadsGenerationClient.enqueue`/`retry` hand it to the generation service. A failed read means no pool, never a refused start. `PublicationLifecycleService` and `PublicationGenerationOwnerService` take it as an `@Optional()` last constructor argument.
 - `THREAD_FALLBACK_SAME_PROVIDER` is gone: a fallback of another model on the primary's provider is accepted by the start and retry preflight.
 - Retry body accepts `articleLength: 'SHORT'`. The progress schema passes `failure.phase|failureClass|remedies|suggestedModel` and `healing` through (all optional, an older generation service sends none). `generation-state` carries `terminal`.
+
+## Production bug batch (ADR-183, 2026-10-14)
+
+- **Safety scan.** Secrets and e-mails: whole text. Card, SSN, IBAN: prose only (link targets, bare URLs and evidence markers are removed first); a card needs word edges and a Luhn pass, digits of any script are folded. A blocked `DRAFT` stays editable: `POST thread-publications/:id/revisions` accepts a `DRAFT` that holds a stored revision, answers `REVIEW_REQUIRED` with `findings[{ reason, kind: SECRET|EMAIL|CARD|SSN|IBAN, excerpt }]` when the new text still trips the scan (secrets and cards masked), and `GET generation-state` returns `safetyBlock` with the newest stored text. A passing review moves the publication to `READY_FOR_REVIEW`.
+- **Topic.** `THREAD_TOPIC_INVALID` now means fewer than 10 letters or numbers (4 for Chinese, Japanese or Korean), counted per user-perceived character, or an unsavable character.
+- **Slug.** Combining marks stay (Devanagari, Thai, Tamil, Bengali, Arabic harakat, Hebrew niqqud); 60 code points of title, cut per grapheme, plus `-` and 8 id characters.
+- **Recommended team.** `models[].status` may be `DEGRADED` (with `recentHealth { successRate, samples }`): usable, never preselected, ranked after healthy models. Non-chat names and `REMOVED`/`UNEXPOSED`/non-`CHAT` catalog rows never reach the picker data.
+- **Public reads.** `GET public/:slug` returns the markdown with evidence markers numbered or removed; `citations` carries urls only.
+- **Owner progress** may carry `queue` (see the generation service guide).
+- **Board first page.** The unfiltered Board is newest first with no age window and 12 per page; older Threads are on later pages. Members start with their own language filter, guests with every language. Checked, not a defect.

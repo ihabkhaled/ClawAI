@@ -36,8 +36,9 @@ import type {
   PublishedPublication,
   RevisionReviewSaver,
 } from '../types/publication.types';
+import type { PublicationSafetyFinding } from '../types/publication-safety.types';
 import type { PrivateGenerationState } from '../types/generation.types';
-import { evaluatePublicationSafety } from '../utilities/publication-safety.utility';
+import { describePublicationSafety } from '../utilities/publication-safety.utility';
 import { withLatestRevision } from '../utilities/latest-revision-state.utility';
 import {
   MIN_PUBLICATION_CRITIC_SCORE,
@@ -119,6 +120,8 @@ export class PublicationLifecycleService {
     round: number;
     safeErrorCode: string | null;
     terminal: boolean;
+    /** Set when the safety scan blocked the newest revision: what was flagged, for the editor. */
+    safetyBlock: { reasons: string[]; findings: PublicationSafetyFinding[] } | null;
     draft: {
       markdown: string;
       citations: Array<{ evidenceId: string; url: string }>;
@@ -136,10 +139,12 @@ export class PublicationLifecycleService {
         (await this.publications.findOwnedGeneration(publicationId, ownerId))?.status ??
         publicationStatus;
     }
-    const current = await this.withPublishableDraft(publicationId, ownerId, state);
+    const withEdit = await this.withPublishableDraft(publicationId, ownerId, state);
+    const { current, safetyBlock } = await this.withSafetyBlock(publicationId, ownerId, withEdit);
     return {
       publicationId,
       publicationStatus,
+      safetyBlock,
       canPublish:
         PUBLISHABLE_PUBLICATION_STATUSES.includes(publicationStatus) &&
         (await this.publications.hasPublishableRevision(publicationId, ownerId)),
@@ -147,6 +152,34 @@ export class PublicationLifecycleService {
         publicationStatus === PublicationStatus.UNPUBLISHED &&
         (await this.publications.hasPublishableRevision(publicationId, ownerId)),
       ...current,
+    };
+  }
+
+  /**
+   * A draft the safety scan blocked can never publish; the owner must see what was flagged and edit
+   * from the newest stored text (their last edit, not the original draft).
+   */
+  private async withSafetyBlock(
+    publicationId: string,
+    ownerId: string,
+    state: PrivateGenerationState,
+  ): Promise<{
+    current: PrivateGenerationState;
+    safetyBlock: { reasons: string[]; findings: PublicationSafetyFinding[] } | null;
+  }> {
+    if (!state.draft) return { current: state, safetyBlock: null };
+    const latest = await this.publications.findLatestRevisionSafety(publicationId, ownerId);
+    if (!latest?.blocked) return { current: state, safetyBlock: null };
+    const report = describePublicationSafety(
+      latest.markdown,
+      latest.citations.map(({ url }) => url),
+    );
+    return {
+      current: {
+        ...state,
+        draft: { ...state.draft, markdown: latest.markdown, citations: latest.citations },
+      },
+      safetyBlock: { reasons: report.reasons, findings: report.findings },
     };
   }
 
@@ -245,19 +278,18 @@ export class PublicationLifecycleService {
     ownerId: string,
     input: EditPublicationRevisionDto,
   ): Promise<PublicationEditResult> {
-    const safety = evaluatePublicationSafety(
-      [input.markdown, ...input.citations.map(({ url }) => url)].join('\n'),
+    const safety = describePublicationSafety(
+      input.markdown,
+      input.citations.map(({ url }) => url),
     );
-    const revision = await this.publications.createEditedRevision(
-      publicationId,
-      ownerId,
-      input,
-      safety,
-    );
+    const revision = await this.publications.createEditedRevision(publicationId, ownerId, input, {
+      approved: safety.approved,
+      reasons: safety.reasons,
+    });
     if (!revision) throw new NotFoundException('Publication not found');
     await this.syncBoard(publicationId);
     this.assertEditCanProceed(revision);
-    if (!safety.approved) return this.safetyBlockedEdit(revision, safety.reasons);
+    if (!safety.approved) return this.safetyBlockedEdit(revision, safety.reasons, safety.findings);
     if (revision.revalidationJobId) {
       const state = await this.getRevisionReviewState(publicationId, revision.id, ownerId);
       return { ...state, reviewJobId: revision.revalidationJobId };
@@ -301,12 +333,14 @@ export class PublicationLifecycleService {
   private safetyBlockedEdit(
     revision: EditedRevisionRecord,
     reasons: string[],
+    findings: PublicationSafetyFinding[],
   ): PublicationEditResult {
     return {
       revisionId: revision.id,
       status: 'REVIEW_REQUIRED',
       reviewJobId: null,
       reasons,
+      findings,
     };
   }
 

@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
 import { ThreadGenerationErrorCode } from '../../../common/enums/thread-generation-error-code.enum';
+import { TOPIC_MIN_DENSE_CHARACTERS, TOPIC_MIN_WEIGHT } from '../constants/topic-length.constants';
+import { isTopicLongEnough } from '../utilities/topic-length.utility';
 
 /** In unicode mode a valid pair is one code point, so this matches only a lone surrogate half. */
 const LONE_SURROGATE = /[\uD800-\uDFFF]/u;
@@ -25,11 +27,11 @@ export function safeText(min: number, max: number): z.ZodString {
     });
 }
 
-export const TOPIC_MIN_LENGTH = 10;
 export const TOPIC_MAX_LENGTH = 10_000;
 
 /**
- * A topic is trimmed first, so spaces never count toward the minimum, and must then be long enough
+ * A topic is trimmed first, then measured in user-perceived letters and numbers (script-aware, see
+ * `topic-length.utility.ts`), and must be long enough
  * and storable. Both failures answer the same code so a client has one thing to show.
  */
 export function topicText(): z.ZodString {
@@ -37,8 +39,8 @@ export function topicText(): z.ZodString {
     .string()
     .trim()
     .max(TOPIC_MAX_LENGTH)
-    .refine((value) => value.length >= TOPIC_MIN_LENGTH && isStorableText(value), {
-      message: `Describe the topic in at least ${String(TOPIC_MIN_LENGTH)} characters, without control or broken characters.`,
+    .refine((value) => isTopicLongEnough(value) && isStorableText(value), {
+      message: `Describe the topic in at least ${String(TOPIC_MIN_WEIGHT)} letters or numbers (${String(TOPIC_MIN_DENSE_CHARACTERS)} for Chinese, Japanese or Korean), without control or broken characters.`,
       params: { code: ThreadGenerationErrorCode.TOPIC_INVALID },
     });
 }

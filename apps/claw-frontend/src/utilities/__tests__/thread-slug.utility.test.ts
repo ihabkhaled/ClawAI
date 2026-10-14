@@ -15,6 +15,12 @@ const SLUGS = {
   persian: 'فتوسنتز-در-گیاهان-a1b2c3d4',
   hindi: 'प्रकाश-संश्लेषण-कैसे-a1b2c3d4',
   japanese: '茶道-入門-ガイド-a1b2c3d4',
+  thai: 'ปัญญาประดิษฐ์ในการศึกษา-a1b2c3d4',
+  tamil: 'செயற்கை-நுண்ணறிவு-a1b2c3d4',
+  bengali: 'কৃত্রিম-বুদ্ধিমত্তা-a1b2c3d4',
+  hebrew: 'בִּינָה-מְלָאכוּתִית-a1b2c3d4',
+  arabicHarakat: 'الذَّكَاءُ-الِاصْطِنَاعِيُّ-a1b2c3d4',
+  longestIssued: `${'क'.repeat(60)}-a1b2c3d4`,
 } as const;
 
 describe('thread slug validation', () => {
@@ -29,7 +35,7 @@ describe('thread slug validation', () => {
     ['a space', 'a b'],
     ['an underscore', 'a_b'],
     ['a query', 'a?b=1'],
-    ['too long', 'a'.repeat(65)],
+    ['too long', 'a'.repeat(97)],
   ])('rejects %s', (_name, slug) => {
     expect(isValidThreadSlug(slug)).toBe(false);
   });

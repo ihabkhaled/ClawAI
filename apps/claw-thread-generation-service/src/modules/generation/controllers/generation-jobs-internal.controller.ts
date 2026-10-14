@@ -1,4 +1,13 @@
-import { Body, Controller, HttpCode, HttpStatus, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { Public } from '@claw/shared-auth';
 
 import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
@@ -15,6 +24,9 @@ import {
 import { type RetryGenerationDto, retryGenerationSchema } from '../dto/retry-generation.dto';
 import { GenerationJobsService } from '../services/generation-jobs.service';
 import { GenerationProgressService } from '../services/generation-progress.service';
+import { StepRecorder } from '../services/step-recorder.service';
+import { HEALTH_WINDOW_MS } from '../constants/healing.constants';
+import type { ModelHealthReport } from '../types/model-health.types';
 
 @Public()
 @UseGuards(ServiceTokenGuard)
@@ -23,7 +35,25 @@ export class GenerationJobsInternalController {
   constructor(
     private readonly jobs: GenerationJobsService,
     private readonly progress: GenerationProgressService,
+    private readonly recorder: StepRecorder,
   ) {}
+
+  /**
+   * Recent success and failure counts per provider/model from the step log (the healing ranking's
+   * own data, ADR-181), so threads-service can mark a model that mostly fails as degraded. Holds
+   * no owner, job or text: only model names and counts.
+   */
+  @Get('model-health')
+  async modelHealth(): Promise<ModelHealthReport> {
+    const health = await this.recorder.recentModelHealth(new Date(Date.now() - HEALTH_WINDOW_MS));
+    return {
+      windowMs: HEALTH_WINDOW_MS,
+      models: [...health].map(([key, { ok, failed }]) => {
+        const split = key.indexOf('/');
+        return { provider: key.slice(0, split), model: key.slice(split + 1), ok, failed };
+      }),
+    };
+  }
 
   @Post()
   @HttpCode(HttpStatus.ACCEPTED)

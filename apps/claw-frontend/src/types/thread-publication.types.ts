@@ -10,6 +10,7 @@ import type { ThreadPublicationReaction } from '@/enums/thread-publication-react
 import type { ThreadPublicationReportReason } from '@/enums/thread-publication-report-reason.enum';
 import type { ThreadPublicationStatus } from '@/enums/thread-publication-status.enum';
 import type { ThreadRevisionField } from '@/enums/thread-revision-field.enum';
+import type { ThreadSafetyFindingKind } from '@/enums/thread-safety-finding-kind.enum';
 import type { ModelSelection } from '@/types/component.types';
 import type {
   ThreadAuthor,
@@ -29,12 +30,22 @@ export type OwnedThreadPublication = {
   updatedAt: string;
 };
 
+/** What the sensitive-details scan flagged in the newest text (secrets and cards are masked). */
+export type ThreadSafetyBlock = {
+  reasons: string[];
+  findings: Array<{ reason: string; kind: ThreadSafetyFindingKind; excerpt: string }>;
+};
+
+export type ThreadSafetyBlockNoticeProps = { block: ThreadSafetyBlock };
+
 export type ThreadGenerationState = {
   publicationId: string;
   publicationStatus: string;
   /** Owner-state flags from the Threads API; older responses omit them. */
   canPublish?: boolean;
   canRepublish?: boolean;
+  /** Set when the newest revision was blocked by the scan; absent from older responses. */
+  safetyBlock?: ThreadSafetyBlock | null;
   jobId: string;
   status: string;
   stage: string;
@@ -230,6 +241,8 @@ export type ThreadGenerationFormController = {
   setSourceThreadId: (value: string) => void;
   topic: string;
   setTopic: (value: string) => void;
+  isTopicLongEnough: boolean;
+  isTopicTooShort: boolean;
   publicationType: ThreadPublicationType;
   setPublicationType: (value: ThreadPublicationType) => void;
   contentLocale: Locale;

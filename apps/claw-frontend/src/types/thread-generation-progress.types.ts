@@ -48,6 +48,8 @@ export type ThreadRetryFormController = {
   close: () => void;
   topic: string;
   setTopic: (value: string) => void;
+  isTopicLongEnough: boolean;
+  isTopicTooShort: boolean;
   spendCapUsd: string;
   setSpendCapUsd: (value: string) => void;
   roles: ThreadRetryRoleSelection[];

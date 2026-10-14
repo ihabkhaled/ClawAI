@@ -29,4 +29,6 @@ export type ProgressJobRecord = {
   request: unknown;
   createdAt: Date;
   updatedAt: Date;
+  /** Optional so records built by older callers stay valid. */
+  nextAttemptAt?: Date;
 };

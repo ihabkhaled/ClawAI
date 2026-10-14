@@ -33,6 +33,7 @@ import {
   usableModels,
   withSeatFallbacks,
 } from '@/utilities/thread-recommended-team.utility';
+import { isThreadTopicLongEnough } from '@/utilities/thread-topic-length.utility';
 
 /**
  * State and submit for "create a public Thread", shared by the owner portal and
@@ -73,6 +74,7 @@ export function useThreadGenerationForm({
   const [hasAcknowledgedPublic, setHasAcknowledgedPublic] = useState(false);
   const [requestError, setRequestError] = useState(false);
   const sourceThreadId = fixedSourceThreadId ?? pickedSourceThreadId;
+  const topicLongEnough = isThreadTopicLongEnough(topic);
 
   const start = useMutation({
     mutationFn: (request: ReturnType<typeof createThreadGenerationRequest>) =>
@@ -120,7 +122,7 @@ export function useThreadGenerationForm({
 
   function submit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
-    if (!sourceThreadId || !hasAcknowledgedPublic) {
+    if (!sourceThreadId || !hasAcknowledgedPublic || !topicLongEnough) {
       return;
     }
     try {
@@ -153,6 +155,8 @@ export function useThreadGenerationForm({
     setSourceThreadId: setPickedSourceThreadId,
     topic,
     setTopic,
+    isTopicLongEnough: topicLongEnough,
+    isTopicTooShort: topic.trim().length > 0 && !topicLongEnough,
     publicationType,
     setPublicationType,
     contentLocale,

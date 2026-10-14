@@ -15,6 +15,7 @@ import { isThreadModelGroupKey } from '@/utilities/thread-model-defaults.utility
 import {
   annotateGroupsWithReasons,
   availabilityOf,
+  isSelectableAvailability,
 } from '@/utilities/thread-recommended-team.utility';
 
 /**
@@ -53,7 +54,7 @@ export function useThreadModelPicker({
     if (!decoded) {
       return;
     }
-    if (availabilityOf(availability, decoded) !== ThreadModelAvailability.Available) {
+    if (!isSelectableAvailability(availabilityOf(availability, decoded))) {
       return;
     }
     const match = groupedModels

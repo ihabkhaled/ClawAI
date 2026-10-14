@@ -288,6 +288,21 @@ export class GenerationJobsRepository {
     });
   }
 
+  /**
+   * How many other jobs are queued, runnable now and older than this one: its place in line.
+   * Approximate on purpose (the claim is fair per owner, not strictly first come first served).
+   */
+  async countQueuedAhead(job: { id: string; createdAt: Date }): Promise<number> {
+    return this.prisma.threadGenerationJob.count({
+      where: {
+        status: ThreadGenerationStatus.QUEUED,
+        id: { not: job.id },
+        createdAt: { lt: job.createdAt },
+        nextAttemptAt: { lte: new Date() },
+      },
+    });
+  }
+
   async findRetrySource(id: string, ownerId: string): Promise<GenerationJobRetrySource | null> {
     return this.prisma.threadGenerationJob.findFirst({
       where: { id, ownerId },

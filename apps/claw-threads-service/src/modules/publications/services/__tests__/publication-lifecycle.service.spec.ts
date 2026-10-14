@@ -206,6 +206,7 @@ describe('PublicationLifecycleService', () => {
       }),
       savePrivateDraft: vi.fn().mockResolvedValue(undefined),
       hasPublishableRevision: vi.fn().mockResolvedValue(true),
+      findLatestRevisionSafety: vi.fn().mockResolvedValue(null),
       findLatestPublishableRevision: vi.fn().mockResolvedValue(null),
     };
     const generation = {

@@ -41,6 +41,7 @@ export const PROGRESS_JOB_SELECT = {
   request: true,
   createdAt: true,
   updatedAt: true,
+  nextAttemptAt: true,
 } as const satisfies Prisma.ThreadGenerationJobSelect;
 
 export const RETRY_SOURCE_SELECT = {

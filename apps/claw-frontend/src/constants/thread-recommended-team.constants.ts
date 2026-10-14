@@ -13,6 +13,7 @@ export const THREAD_MODEL_UNAVAILABLE_REASON_KEYS: Readonly<
   [ThreadModelAvailability.NeedsPlan]: 'chat.threadTeam.reasonNeedsPlan',
   [ThreadModelAvailability.WindowTooSmall]: 'chat.threadTeam.reasonWindow',
   [ThreadModelAvailability.Unavailable]: 'chat.threadTeam.reasonUnavailable',
+  [ThreadModelAvailability.Degraded]: 'chat.threadFixModelDegraded',
 };
 
 /** No availability known (the service could not be read): every model counts as available. */

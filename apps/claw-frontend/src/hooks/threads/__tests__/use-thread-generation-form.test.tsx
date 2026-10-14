@@ -130,6 +130,7 @@ describe('useThreadGenerationForm', () => {
     );
     await waitFor(() => expect(result.current.selectedModels).toHaveLength(5));
 
+    act(() => result.current.setTopic('A sufficiently detailed topic'));
     act(() => result.current.setHasAcknowledgedPublic(true));
     act(() => result.current.submit(submitEvent()));
 

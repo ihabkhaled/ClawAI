@@ -1,5 +1,6 @@
 import type {
   ThreadGenerationProgress,
+  ThreadGenerationQueue,
   ThreadGenerationRetryRequest,
   ThreadGenerationStepRoleKind,
 } from '@claw/shared-types';
@@ -32,6 +33,21 @@ export function isTerminalThreadStatus(status: string): boolean {
 /** A job that was accepted but has not been picked up: no stage, no attempt, no spend yet. */
 export function isQueuedThreadStatus(status: string): boolean {
   return status === ThreadGenerationJobStatus.Queued;
+}
+
+/**
+ * The line that says where a queued job stands (ADR-183): next in line, or how many runnable jobs
+ * are ahead. A job waiting out a retry back-off, or from an older service, has no place in line.
+ */
+export function describeThreadQueue(
+  queue: ThreadGenerationQueue | null | undefined,
+): { key: string; params?: Record<string, number> } | null {
+  if (!queue || queue.state !== 'WAITING_FOR_WORKER') {
+    return null;
+  }
+  return queue.ahead === 0
+    ? { key: 'chat.threadFixQueueNext' }
+    : { key: 'chat.threadFixQueueAhead', params: { count: queue.ahead } };
 }
 
 /** True only for a real, positive spend; "0" or garbage means the figure is unknown, so say nothing. */

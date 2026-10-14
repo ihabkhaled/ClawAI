@@ -109,6 +109,7 @@ describe('owner state tells the page what it may do (D-L2-05)', () => {
     const repository = {
       findOwnedGeneration: vi.fn().mockResolvedValue({ id: 'p1', generationJobId: 'j1', status }),
       hasPublishableRevision: vi.fn().mockResolvedValue(true),
+      findLatestRevisionSafety: vi.fn().mockResolvedValue(null),
     };
     const generation = {
       getPrivateState: vi.fn().mockResolvedValue({

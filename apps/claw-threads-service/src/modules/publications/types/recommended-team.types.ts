@@ -19,6 +19,8 @@ export enum ThreadModelAvailability {
   NEEDS_PLAN = 'NEEDS_PLAN',
   WINDOW_TOO_SMALL = 'WINDOW_TOO_SMALL',
   UNAVAILABLE = 'UNAVAILABLE',
+  /** Usable and selectable, but mostly failing in the last hour: shown with a warning, never preselected. */
+  DEGRADED = 'DEGRADED',
 }
 
 export type RecommendedSeat = ModelRef & { fallbacks: ModelRef[] };
@@ -29,12 +31,22 @@ export type RecommendedTeam = {
   critic: RecommendedSeat;
 };
 
-export type RecommendedModelStatus = ModelRef & { status: ThreadModelAvailability };
+/** Recent success rate (0 to 1) over `samples` model calls of the last hour. */
+export type ModelRecentHealth = { successRate: number; samples: number };
+
+/** Success and failure counts per `PROVIDER/model` from the generation service's step log. */
+export type ModelHealthIndex = ReadonlyMap<string, { ok: number; failed: number }>;
+
+export type RecommendedModelStatus = ModelRef & {
+  status: ThreadModelAvailability;
+  /** Only when the status is DEGRADED: why it was demoted. */
+  recentHealth?: ModelRecentHealth;
+};
 
 /** Why a catalog model is not offered: every availability except AVAILABLE. */
 export type ThreadModelExclusionReason = Exclude<
   ThreadModelAvailability,
-  ThreadModelAvailability.AVAILABLE
+  ThreadModelAvailability.AVAILABLE | ThreadModelAvailability.DEGRADED
 >;
 
 export type ExcludedModel = ModelRef & { reasonIfExcluded: ThreadModelExclusionReason };

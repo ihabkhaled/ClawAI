@@ -61,6 +61,12 @@ const failureSchema = z.object({
   suggestedModel: z.object({ provider: shortString, model: shortString }).nullish(),
 });
 
+const queueSchema = z.object({
+  state: z.enum(['WAITING_FOR_WORKER', 'BACKOFF']),
+  ahead: z.number().int().nonnegative(),
+  retryAt: z.string().max(64).nullable(),
+});
+
 const healingSchema = z.object({
   attempts: z
     .array(
@@ -95,6 +101,7 @@ export const generationProgressSchema: z.ZodType<Omit<ThreadGenerationProgress, 
     selections: selectionsSchema,
     failure: failureSchema.nullable(),
     healing: healingSchema.optional(),
+    queue: queueSchema.nullish(),
     steps: z.array(stepSchema).max(500),
   });
 

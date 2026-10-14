@@ -109,3 +109,18 @@ export function swapStrategy(origin: CandidateOrigin): ThreadHealingStrategy {
       return ThreadHealingStrategy.TEAM_FALLBACK;
   }
 }
+
+/**
+ * Prefers a model no other author is using (ADR-183). When a fallback would turn two authors into
+ * the same model, the candidates that are not taken come first; the role's own pick keeps its place
+ * and taken models stay in the queue, behind, as a last resort. The sort is stable.
+ */
+export function preferDistinctModels(
+  queue: readonly QueuedCandidate[],
+  taken: ReadonlySet<string>,
+): QueuedCandidate[] {
+  if (taken.size === 0) return [...queue];
+  const isTaken = (candidate: QueuedCandidate): boolean =>
+    candidate.origin !== CandidateOrigin.PRIMARY && taken.has(candidateKey(candidate));
+  return [...queue.filter((candidate) => !isTaken(candidate)), ...queue.filter(isTaken)];
+}

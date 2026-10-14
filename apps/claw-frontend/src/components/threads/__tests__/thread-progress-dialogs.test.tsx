@@ -37,6 +37,8 @@ function makeRetry(overrides: Partial<ThreadRetryFormController> = {}): ThreadRe
     open: vi.fn(),
     close: vi.fn(),
     topic: 'A long enough topic',
+    isTopicLongEnough: true,
+    isTopicTooShort: false,
     setTopic: vi.fn(),
     spendCapUsd: '1',
     setSpendCapUsd: vi.fn(),

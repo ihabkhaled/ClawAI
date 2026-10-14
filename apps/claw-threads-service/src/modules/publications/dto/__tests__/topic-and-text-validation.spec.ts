@@ -132,3 +132,32 @@ describe('other request text', () => {
     expect(isStorableText(String.fromCharCode(0xd83d))).toBe(false);
   });
 });
+
+describe('script-aware topic minimum', () => {
+  it.each([
+    ['Chinese, 3 characters', '人工智'],
+    ['Japanese, 3 characters', '人工知'],
+    ['Korean, 3 syllables', '인공지'],
+    ['Thai, 9 letters', 'สวัสดีครับ'.slice(0, 9)],
+    ['Arabic, 9 letters', 'ذكاء اصطن'],
+    ['Persian, 9 letters', 'هوش مصنو'],
+    ['emoji only', '😀😀😀😀😀😀😀😀😀😀😀😀'],
+    ['punctuation only', '!!!!!!!!!!!!'],
+    ['Thai marks only inside few clusters', 'ก็ก็ก็ก็ก็ก็ก็ก็ก็'],
+  ])('rejects %s', (_name, topic) => {
+    expect(topicIssue(topic)).toMatchObject({ params: { code: 'THREAD_TOPIC_INVALID' } });
+  });
+
+  it.each([
+    ['Chinese, 4 characters', '人工智能'],
+    ['Japanese, 4 characters', '人工知能'],
+    ['Japanese kana', 'ひらがなだ'],
+    ['Korean, 4 syllables', '인공지능'],
+    ['Arabic, ten letters', 'الذكاء الاصطناعي'],
+    ['Thai, ten clusters', 'ก็ก็ก็ก็ก็ก็ก็ก็ก็ก็'],
+    ['mixed Latin and Chinese', 'AI 与教育学'],
+    ['ten Latin letters', 'tenletters'],
+  ])('accepts %s', (_name, topic) => {
+    expect(topicIssue(topic)).toBeNull();
+  });
+});

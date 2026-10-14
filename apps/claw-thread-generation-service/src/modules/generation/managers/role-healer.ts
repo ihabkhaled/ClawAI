@@ -46,7 +46,9 @@ import { isDeterministicGenerationError } from '../utilities/deterministic-gener
 import { escalatedOutputTokens } from '../utilities/escalate-output-tokens.utility';
 import {
   buildCandidateQueue,
+  candidateKey,
   orderAfterFailure,
+  preferDistinctModels,
   swapStrategy,
 } from '../utilities/healing-candidates.utility';
 import { nextOnModelStep } from '../utilities/healing-ladder.utility';
@@ -65,7 +67,32 @@ import { GenerationAttemptTimeoutError } from '../utilities/generation-attempt-t
  * Bounded three ways: attempts per role, attempts per job attempt, and the job's spend cap.
  */
 export class RoleHealer {
+  /** The model each author is running now (or answered with), per job attempt; freed with the input. */
+  private readonly authorModels = new WeakMap<GenerationPipelineInput, Map<string, string>>();
+
   constructor(private readonly deps: HealerDeps) {}
+
+  private isAuthor(input: GenerationPipelineInput, roleId: string): boolean {
+    return input.authors.some(({ id }) => id === roleId);
+  }
+
+  /** `provider/model` keys the OTHER authors use: their picks, replaced by what they run now. */
+  private takenByOtherAuthors(input: GenerationPipelineInput, roleId: string): Set<string> {
+    const live = this.authorModels.get(input);
+    const taken = new Set<string>();
+    for (const author of input.authors) {
+      if (author.id === roleId) continue;
+      taken.add(live?.get(author.id) ?? candidateKey(author));
+    }
+    return taken;
+  }
+
+  private claim(input: GenerationPipelineInput, roleId: string, key: string): void {
+    if (!this.isAuthor(input, roleId)) return;
+    const live = this.authorModels.get(input) ?? new Map<string, string>();
+    live.set(roleId, key);
+    this.authorModels.set(input, live);
+  }
 
   async call(
     input: GenerationPipelineInput,
@@ -84,17 +111,22 @@ export class RoleHealer {
       neededTokens,
     });
     const deadline = this.deps.now() + ROLE_MAX_MS;
+    const distinct = (candidates: readonly QueuedCandidate[]): QueuedCandidate[] =>
+      this.isAuthor(input, role.id)
+        ? preferDistinctModels(candidates, this.takenByOtherAuthors(input, role.id))
+        : [...candidates];
     const { stage, roleKind } = roleStepInfo(spec.roleKey);
     const outcomes: CandidateOutcome[] = [];
     const counter = { attempts: 0 };
-    let remaining = queue;
+    let remaining = distinct(queue);
     let lastError: unknown;
     let everyFailureDeterministic = true;
     let previous: AttemptFailure | null = null;
     for (let index = 0; remaining.length > 0; index += 1) {
       const [candidate, ...rest] = remaining;
       if (!candidate) break;
-      remaining = rest;
+      remaining = distinct(rest);
+      this.claim(input, role.id, candidateKey(candidate));
       const step = { stage, round: spec.round, roleKind, roleId: role.id, ...candidate };
       if (index > 0) {
         const stop = this.stopReason(budget, counter, deadline);
@@ -120,11 +152,13 @@ export class RoleHealer {
         await this.noteStop(input, step, HEAL_STOPPED_OWNER_CODE);
         break;
       }
-      remaining = orderAfterFailure(
-        remaining,
-        candidate.provider,
-        classifyFailure({ code: result.failure.code, httpStatus: result.failure.httpStatus })
-          .failureClass,
+      remaining = distinct(
+        orderAfterFailure(
+          remaining,
+          candidate.provider,
+          classifyFailure({ code: result.failure.code, httpStatus: result.failure.httpStatus })
+            .failureClass,
+        ),
       );
     }
     throw this.exhaustedError(outcomes, lastError, everyFailureDeterministic);
