@@ -509,9 +509,14 @@ run_build_with_stall_watchdog() {
   build_pid=$!
   last_size=0
   last_change="$SECONDS"
+  last_poll="$SECONDS"
 
   while kill -0 "$build_pid" 2>/dev/null; do
-    sleep "$BUILD_STALL_POLL_SECONDS"
+    # Short slices so a build that finishes at once is noticed at once: a flat
+    # BUILD_STALL_POLL_SECONDS sleep cost every service five idle seconds.
+    sleep 0.2
+    [ $((SECONDS - last_poll)) -ge "$BUILD_STALL_POLL_SECONDS" ] || continue
+    last_poll="$SECONDS"
     size="$(wc -c <"$output_file" 2>/dev/null | tr -d ' ' || printf 0)"
     if [ "$size" != "$last_size" ]; then
       last_size="$size"
