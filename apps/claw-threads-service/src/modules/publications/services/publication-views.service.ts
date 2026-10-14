@@ -14,7 +14,8 @@ import {
   type BoardCountsPort,
 } from '../../publication-community/ports/board-counts.port';
 import {
-  BOARD_NOTIFY_TIMEOUT_MS,
+  BOARD_NOTIFY_MAX_TRACKED,
+  BOARD_NOTIFY_MIN_INTERVAL_MS,
   MILLISECONDS_PER_DAY,
   VIEW_DEDUPE_WINDOW_MS,
   VIEW_RETENTION_DAYS,
@@ -44,6 +45,8 @@ import {
 export class PublicationViewsService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PublicationViewsService.name);
   private purgeTimer: ReturnType<typeof setInterval> | undefined;
+  /** When each publication's Board row was last refreshed from a view (coalescing). */
+  private readonly lastBoardNotify = new Map<string, number>();
 
   constructor(
     private readonly views: PublicationViewsRepository,
@@ -74,23 +77,27 @@ export class PublicationViewsService implements OnModuleInit, OnModuleDestroy {
         })
       : await this.views.readCounts(slug);
     if (counts === null) throw new NotFoundException('Publication not found');
-    if (isHuman) await this.notifyBoard(slug);
+    if (isHuman) this.notifyBoard(slug);
     return counts;
   }
 
-  /** Pushes the new view count to the Board row; bounded and failure-safe, it never fails the view. */
-  private async notifyBoard(slug: string): Promise<void> {
+  /**
+   * Pushes the new view count to the Board row. It is coalesced per publication (one refresh per
+   * interval, however many views arrive) and runs in the background: a public, unauthenticated
+   * endpoint must not wait for, or multiply, a database refresh. The reconcile job heals any miss.
+   */
+  private notifyBoard(slug: string): void {
     if (!this.boardCounts) return;
-    try {
-      await Promise.race([
-        this.boardCounts.viewsChanged(slug),
-        new Promise<void>((resolve) => setTimeout(resolve, BOARD_NOTIFY_TIMEOUT_MS).unref()),
-      ]);
-    } catch (error) {
+    const now = Date.now();
+    const last = this.lastBoardNotify.get(slug);
+    if (last !== undefined && now - last < BOARD_NOTIFY_MIN_INTERVAL_MS) return;
+    if (this.lastBoardNotify.size >= BOARD_NOTIFY_MAX_TRACKED) this.lastBoardNotify.clear();
+    this.lastBoardNotify.set(slug, now);
+    this.boardCounts.viewsChanged(slug).catch((error: unknown) => {
       this.logger.warn(
         `Board view count update failed: ${error instanceof Error ? error.message : 'unknown error'}`,
       );
-    }
+    });
   }
 
   private async purgeOldViews(): Promise<void> {

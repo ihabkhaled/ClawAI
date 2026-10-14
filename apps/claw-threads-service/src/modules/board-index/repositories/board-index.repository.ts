@@ -114,11 +114,32 @@ export class BoardIndexRepository implements BoardIndexStore {
     `);
   }
 
+  /**
+   * Removes the doc and, in the same transaction, the did-you-mean words only this doc contributed,
+   * so a taken-down or unpublished Thread cannot be echoed back as a suggestion while the periodic
+   * dictionary rebuild has not run yet.
+   */
   async deleteDoc(publicationId: string): Promise<boolean> {
-    const removed = await this.prisma.threadPublicationSearchDoc.deleteMany({
-      where: { publicationId },
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw(Prisma.sql`
+        DELETE FROM thread_board_words b
+        USING (
+          SELECT DISTINCT d.content_locale AS lang, w.word
+          FROM thread_publication_search_docs d
+          CROSS JOIN LATERAL regexp_split_to_table(d.title_norm, ' ') AS w(word)
+          WHERE d.publication_id = ${publicationId}
+        ) gone
+        WHERE b.lang = gone.lang AND b.word = gone.word
+          AND NOT EXISTS (
+            SELECT 1
+            FROM thread_publication_search_docs o
+            CROSS JOIN LATERAL regexp_split_to_table(o.title_norm, ' ') AS w2(word)
+            WHERE o.publication_id <> ${publicationId}
+              AND o.content_locale = b.lang AND w2.word = b.word
+          )`);
+      const removed = await tx.threadPublicationSearchDoc.deleteMany({ where: { publicationId } });
+      return removed.count > 0;
     });
-    return removed.count > 0;
   }
 
   /** Visible publications changed after the cursor, oldest first (keyset on updatedAt, id). */

@@ -93,3 +93,8 @@ the 13 locales is open.
 - `plainto_tsquery`, never `websearch_to_tsquery`: user text must not act as operators.
 - "Did you mean" reads `thread_board_words`; trending sorts on `trending_score`. Both are rebuilt by `BoardMaintenanceService`, not by requests. If a new way to change a title or counters appears, the 2-minute job heals it.
 - Search text errors use `BoardErrorCode`; page beyond 500 is an empty page with meta.
+
+## Security review follow-ups (Board)
+
+- The public view endpoint refreshes the Board row in the background and at most once per publication per 30 s (`BOARD_NOTIFY_MIN_INTERVAL_MS`): a public, unauthenticated request never waits for, or multiplies, a database refresh. The reconcile job heals any miss.
+- Removing a Board doc (unpublish, revoke, moderation hide) also removes, in the same transaction, the did-you-mean words only that doc contributed, so a taken-down Thread's words are not echoed back before the next dictionary rebuild.

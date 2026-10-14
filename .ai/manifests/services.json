@@ -606,7 +606,7 @@
         "ThreadPublicationSearchDoc",
         "ThreadPublicationView"
       ],
-      "testFiles": 73,
+      "testFiles": 74,
       "testRunner": "vitest"
     },
     {

@@ -20,5 +20,8 @@ export const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 /** The rate-limit window for the view endpoints. */
 export const VIEW_RATE_LIMIT_WINDOW_MS = 60_000;
 
-/** Longest a view waits for the Board row refresh before moving on. */
-export const BOARD_NOTIFY_TIMEOUT_MS = 2000;
+/** One Board row refresh per publication per this interval, however many views arrive. */
+export const BOARD_NOTIFY_MIN_INTERVAL_MS = 30_000;
+
+/** Publications tracked for that coalescing; the map is cleared when it reaches this size. */
+export const BOARD_NOTIFY_MAX_TRACKED = 5000;

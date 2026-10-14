@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 
+import { BOARD_NOTIFY_MIN_INTERVAL_MS } from '../../constants/publication-view.constants';
 import { PublicationViewsService } from '../publication-views.service';
 
 const BROWSER = 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 Chrome/130.0 Safari/537.36';
@@ -109,12 +110,21 @@ describe('PublicationViewsService board refresh', () => {
     await expect(service.record('slug', human)).resolves.toEqual(counts);
   });
 
-  it('does not wait longer than the timeout for a hung Board refresh', async () => {
-    vi.useFakeTimers();
+  it('never waits for a hung Board refresh', async () => {
     const { service } = buildWithPort(() => new Promise<void>(() => {}));
-    const pending = service.record('slug', human);
-    await vi.advanceTimersByTimeAsync(2500);
-    await expect(pending).resolves.toEqual(counts);
+    await expect(service.record('slug', human)).resolves.toEqual(counts);
+  });
+
+  it('coalesces refreshes per publication and refreshes again after the interval', async () => {
+    vi.useFakeTimers();
+    const { port, service } = buildWithPort(() => Promise.resolve());
+    await service.record('slug', human);
+    await service.record('slug', human);
+    await service.record('other', human);
+    expect(port.viewsChanged).toHaveBeenCalledTimes(2);
+    vi.advanceTimersByTime(BOARD_NOTIFY_MIN_INTERVAL_MS + 1);
+    await service.record('slug', human);
+    expect(port.viewsChanged).toHaveBeenCalledTimes(3);
     vi.useRealTimers();
   });
 });
