@@ -185,6 +185,40 @@ describe('plugin import GitHub source fetching', () => {
     });
   });
 
+  it('answers a rate limit with 429, the reset time and a Retry-After', async () => {
+    const reset = Math.floor(Date.now() / 1000) + 600;
+    const limited = new ScriptedGithub(() => ({
+      status: 403,
+      headers: { 'x-ratelimit-reset': String(reset) },
+    }));
+    const error = await manager(limited)
+      .fetch(parseGithubSource('o/r'))
+      .catch((caught: unknown) => caught);
+
+    expect(error).toMatchObject({
+      importCode: ImportErrorCode.SOURCE_RATE_LIMITED,
+      status: 429,
+    });
+    const { retry } = error as { retry: { afterSeconds: number; at: string } };
+    expect(retry.afterSeconds).toBeGreaterThan(590);
+    expect(retry.afterSeconds).toBeLessThanOrEqual(600);
+    expect(new Date(retry.at).getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it('serves a second lookup of the same repository from the short cache', async () => {
+    const transport = new ScriptedGithub(
+      okRoute([{ path: 'skills/a/SKILL.md' }], { 'skills/a/SKILL.md': '# a' }),
+    );
+    const github = manager(transport);
+    await github.fetch(parseGithubSource('o/cached'));
+    const first = transport.urls.filter((url) => url.includes('/git/trees/')).length;
+    await github.fetch(parseGithubSource('o/cached'));
+
+    expect(first).toBe(1);
+    expect(transport.urls.filter((url) => url.includes('/git/trees/'))).toHaveLength(1);
+    expect(transport.urls.filter((url) => url.includes('/commits/'))).toHaveLength(1);
+  });
+
   it('maps 404, rate limiting, redirects and junk answers to stable codes', async () => {
     const run = (route: ConstructorParameters<typeof ScriptedGithub>[0]) =>
       manager(new ScriptedGithub(route)).fetch(parseGithubSource('o/r'));

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 
 import { ImportErrorCode } from '../../../common/enums/import-error-code.enum';
 import { ImportInstallOutcome } from '../../../common/enums/import-install-outcome.enum';
@@ -46,14 +46,19 @@ export class PluginImportService {
     const coordinates = parseGithubSource(source);
     if (subdir !== undefined && subdir !== '') coordinates.subdir = subdir;
     const fetched = await this.github.fetch(coordinates);
-    const total = fetched.files.reduce((sum, file) => sum + file.content.length, 0);
     const folderName = coordinates.subdir.split('/').pop();
-    const parsed = parsePluginBundle({
-      files: fetched.files,
-      fallbackName: folderName === undefined || folderName === '' ? coordinates.repo : folderName,
-      stripWrapper: false,
-      stats: { fileCount: fetched.files.length, skippedCount: 0, totalBytes: total },
-    });
+    const parsed = this.parseSafely(() =>
+      parsePluginBundle({
+        files: fetched.files,
+        fallbackName: folderName === undefined || folderName === '' ? coordinates.repo : folderName,
+        stripWrapper: false,
+        stats: {
+          fileCount: fetched.files.length,
+          skippedCount: 0,
+          totalBytes: fetched.files.reduce((sum, file) => sum + file.content.length, 0),
+        },
+      }),
+    );
     const folder = coordinates.subdir === '' ? '' : `/${coordinates.subdir}`;
     return this.finishPreview(userId, parsed, {
       kind: ImportSourceKind.GITHUB,
@@ -71,18 +76,20 @@ export class PluginImportService {
       throw new PluginImportError(ImportErrorCode.UPLOAD_MISSING, 'no file was uploaded');
     }
     await this.planGate.resolveInstallCap(userId);
-    const read = readArchive(upload.buffer, isReadablePath);
-    const parsed = parsePluginBundle({
-      files: read.files,
-      subdir,
-      fallbackName: upload.originalname.replace(ARCHIVE_SUFFIX, ''),
-      stripWrapper: true,
-      stats: {
-        fileCount: read.fileCount,
-        skippedCount: read.skippedCount,
-        totalBytes: read.totalBytes,
-      },
-    });
+    const read = this.parseSafely(() => readArchive(upload.buffer, isReadablePath));
+    const parsed = this.parseSafely(() =>
+      parsePluginBundle({
+        files: read.files,
+        subdir,
+        fallbackName: upload.originalname.replace(ARCHIVE_SUFFIX, ''),
+        stripWrapper: true,
+        stats: {
+          fileCount: read.fileCount,
+          skippedCount: read.skippedCount,
+          totalBytes: read.totalBytes,
+        },
+      }),
+    );
     return this.finishPreview(userId, parsed, {
       kind: ImportSourceKind.UPLOAD,
       ref: upload.originalname.slice(0, UPLOAD_NAME_MAX),
@@ -148,6 +155,16 @@ export class PluginImportService {
     const removed = await this.repository.remove(id, userId);
     if (!removed) {
       throw new PluginImportError(ImportErrorCode.NOT_FOUND, 'imported plugin not found');
+    }
+  }
+
+  /** Any failure of a reader or parser that is not already a coded refusal becomes one (never a bare 500). */
+  private parseSafely<T>(run: () => T): T {
+    try {
+      return run();
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      throw new PluginImportError(ImportErrorCode.PARSE_FAILED, 'the source could not be read');
     }
   }
 

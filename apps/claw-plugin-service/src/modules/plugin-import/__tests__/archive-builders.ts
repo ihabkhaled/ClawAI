@@ -7,6 +7,8 @@ export type ZipEntrySpec = {
   method?: 0 | 8;
   /** Unix mode in the external attributes (e.g. 0o120777 for a symlink). */
   mode?: number;
+  /** Host system in version-made-by (3 = unix, the default; 0 = DOS/Windows). */
+  host?: number;
   flags?: number;
   /** Lies about the uncompressed size in both headers. */
   declaredSize?: number;
@@ -47,7 +49,7 @@ export function buildZip(entries: ZipEntrySpec[]): Buffer {
     offset += localBytes.length;
     const central = Buffer.alloc(46);
     central.writeUInt32LE(0x02_01_4b_50, 0);
-    central.writeUInt16LE((3 << 8) | 20, 4);
+    central.writeUInt16LE(((entry.host ?? 3) << 8) | 20, 4);
     central.writeUInt16LE(20, 6);
     central.writeUInt16LE(flags, 8);
     central.writeUInt16LE(method, 10);

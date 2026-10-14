@@ -4,6 +4,7 @@ import {
   MANIFEST_PATHS,
   MARKETPLACE_PATHS,
   READ_ONLY_FILES,
+  ROOT_SKILL_FILE,
   STORED_DIRECTORIES,
   TEXT_EXTENSIONS,
 } from '../constants/plugin-import.constants';
@@ -24,7 +25,7 @@ function firstSegment(path: string): string {
 /** Decides at READ time which archive entries are worth inflating. Everything else is counted, not read. */
 export function isReadablePath(path: string): boolean {
   if (!hasTextExtension(path)) return false;
-  const known = [...MANIFEST_PATHS, ...MARKETPLACE_PATHS, ...READ_ONLY_FILES];
+  const known = [...MANIFEST_PATHS, ...MARKETPLACE_PATHS, ...READ_ONLY_FILES, ROOT_SKILL_FILE];
   return known.some((candidate) => endsWithPath(path, candidate))
     ? true
     : path

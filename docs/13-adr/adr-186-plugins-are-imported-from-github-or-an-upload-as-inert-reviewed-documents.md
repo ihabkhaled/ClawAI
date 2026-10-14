@@ -34,3 +34,11 @@ A plugin is a stranger's folder. Reading one is an input-handling problem, not a
 - Private repositories are not supported (no user token is accepted).
 - Custom component paths in a manifest outside the default folders (`skills/`, `commands/`, `agents/`, `output-styles/`, `hooks/`) are validated but their files are not read.
 - The archive readers are our code. Their protections are covered by specs with hand-built hostile archives; any new archive format needs the same list.
+
+## Addendum (2026-10-15, QA round on v1.215.2)
+
+- A symbolic link is refused in a zip as in a tgz, whichever host system the zip names.
+- A `SKILL.md` at the root of a source is a one-skill plugin (the Agent Skills layout).
+- GitHub's rate limit is `429` with `Retry-After` and a retry time; successful tree lookups are cached for 60 s. No GitHub token yet: plugin settings hold no secrets.
+- Every failure of a reader or parser is a coded 422 (`PARSE_FAILED`, `CONTENT_INVALID`); the 5 MB limit is `FILE_TOO_LARGE`.
+- ZWNJ and ZWJ are kept after Arabic-script, Indic-script and emoji characters; bidi overrides and zero-width spaces are still removed.

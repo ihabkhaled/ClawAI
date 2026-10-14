@@ -17,6 +17,7 @@ import { PLUGIN_CHAT_TRANSLATIONS } from './plugin-chat-translations';
 import { PLUGIN_CONSENT_TRANSLATIONS } from './plugin-consent-translations';
 import { PLUGIN_IMPORT_TRANSLATIONS } from './plugin-import-translations';
 import { PLUGIN_OWN_SERVERS_TRANSLATIONS } from './plugin-own-servers-translations';
+import { PLUGIN_QA_FIXES_TRANSLATIONS } from './plugin-qa-fixes-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
 import { PLUGINS_ADMIN_CATALOG_TRANSLATIONS } from './plugins-admin-catalog-translations';
 import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
@@ -42,6 +43,7 @@ export const ja: TranslationDictionary = {
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.ja,
   pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.ja,
   pluginImport: PLUGIN_IMPORT_TRANSLATIONS.ja,
+  pluginQa: PLUGIN_QA_FIXES_TRANSLATIONS.ja,
   pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.ja,
   pagination: {
     label: 'ページ送り',

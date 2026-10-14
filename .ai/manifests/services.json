@@ -458,7 +458,7 @@
         "PluginToolConsent",
         "PluginVersion"
       ],
-      "testFiles": 89,
+      "testFiles": 91,
       "testRunner": "vitest"
     },
     {

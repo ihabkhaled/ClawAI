@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { OPTIONAL_PROVIDERS } from '@/constants/optional-provider-gate.constants';
 import { ollamaRepository } from '@/repositories/ollama/ollama.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import { logger } from '@/utilities';
+import { throughOptionalProvider } from '@/utilities/optional-provider-gate.utility';
 
 export function useLocalModels() {
   const query = useQuery({
@@ -14,7 +16,9 @@ export function useLocalModels() {
         action: 'fetch-local-models',
         message: 'Fetching local Ollama models',
       });
-      return ollamaRepository.getLocalModels();
+      return throughOptionalProvider(OPTIONAL_PROVIDERS.ollama, () =>
+        ollamaRepository.getLocalModels(),
+      );
     },
     // Ollama is an OPTIONAL local runtime. A deployment without it answers 502
     // on every call, so retrying cannot succeed -- it only keeps the dependent

@@ -3,6 +3,7 @@ import { PluginRiskBadge } from '@/components/plugins/plugin-risk-badge';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
+import { usePluralText } from '@/hooks/use-plural-text';
 import type { AdminPluginCatalogRowProps } from '@/types/plugin-installs.types';
 import { catalogStatusKey, toRiskLevel } from '@/utilities/plugin-installs.utility';
 
@@ -15,6 +16,7 @@ export function AdminPluginCatalogRow({
   onToolDisabled,
   t,
 }: AdminPluginCatalogRowProps): React.ReactElement {
+  const plural = usePluralText();
   return (
     <Card>
       <CardContent className="space-y-4 p-4">
@@ -30,7 +32,7 @@ export function AdminPluginCatalogRow({
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">{t(catalogStatusKey(entry.status))}</Badge>
               <span className="text-muted-foreground text-xs">
-                {t('pluginsInstall.admin.installs', { value: entry.installCount })}
+                {plural(t, 'pluginQa.count.installs', entry.installCount)}
               </span>
             </div>
           </div>
@@ -59,7 +61,7 @@ export function AdminPluginCatalogRow({
 
         <details className="rounded-lg border">
           <summary className="min-h-11 cursor-pointer p-3 text-sm font-medium">
-            {t('pluginsInstall.admin.tools', { value: entry.tools.length })}
+            {plural(t, 'pluginQa.count.tools', entry.tools.length)}
           </summary>
           <ul className="divide-y border-t">
             {entry.tools.map((tool) => (

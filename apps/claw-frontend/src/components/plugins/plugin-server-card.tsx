@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { PluginServerStatus } from '@/enums/plugin-server-status.enum';
+import { usePluralText } from '@/hooks/use-plural-text';
 import type { PluginServerCardProps } from '@/types/plugin-servers.types';
 
 import { PluginServerStatusBadge } from './plugin-server-status-badge';
@@ -17,6 +18,7 @@ export function PluginServerCard({
   onRemove,
   t,
 }: PluginServerCardProps): React.ReactElement {
+  const plural = usePluralText();
   const canToggle = server.status === PluginServerStatus.Approved || server.enabled;
   return (
     <Card className="h-full">
@@ -43,7 +45,7 @@ export function PluginServerCard({
         <div className="flex flex-wrap items-center gap-2">
           <PluginServerStatusBadge status={server.status} t={t} />
           <span className="text-muted-foreground text-xs">
-            {t('pluginsServers.card.toolsEnabled', { count: server.toolCount })}
+            {plural(t, 'pluginQa.count.toolsOn', server.toolCount)}
           </span>
           {server.hasCredential ? (
             <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">

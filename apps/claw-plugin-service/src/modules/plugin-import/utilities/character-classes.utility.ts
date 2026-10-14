@@ -2,7 +2,10 @@ import {
   C0_LAST,
   C1_LAST,
   DELETE_CODE,
+  JOINER_SCRIPTS,
   TAB_LINE_FEED_CARRIAGE_RETURN,
+  ZERO_WIDTH_JOINER,
+  ZERO_WIDTH_NON_JOINER,
 } from '../constants/plugin-import.constants';
 
 /** NUL, the other C0 controls, DEL and the C1 controls. Tab, line feed and carriage return are not counted. */
@@ -29,12 +32,28 @@ export function containsControlOrInvisible(text: string): boolean {
   return false;
 }
 
-/** Text with control and invisible-format characters removed (letters, RTL text and emoji stay). */
+/** ZWNJ / ZWJ shape Persian, Arabic, Indic text and emoji sequences: kept only right after such a character. */
+function isMeaningfulJoiner(code: number, previous: string): boolean {
+  return (
+    (code === ZERO_WIDTH_NON_JOINER || code === ZERO_WIDTH_JOINER) && JOINER_SCRIPTS.test(previous)
+  );
+}
+
+/**
+ * Text with control and invisible-format characters removed (letters, RTL text and emoji stay).
+ * Bidi overrides and isolates, zero-width spaces, directional marks and the BOM always go; ZWNJ and
+ * ZWJ stay when they follow an Arabic-script, Indic-script or emoji character.
+ */
 export function stripControlAndInvisible(text: string): string {
   let result = '';
+  let previous = '';
   for (const char of text) {
     const code = char.codePointAt(0) ?? 0;
-    if (!isControlCodePoint(code) && !isInvisibleFormatCodePoint(code)) result += char;
+    const keep =
+      isMeaningfulJoiner(code, previous) ||
+      (!isControlCodePoint(code) && !isInvisibleFormatCodePoint(code));
+    if (keep) result += char;
+    previous = char;
   }
   return result;
 }

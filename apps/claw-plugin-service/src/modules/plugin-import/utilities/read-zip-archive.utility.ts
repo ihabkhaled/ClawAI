@@ -7,6 +7,7 @@ import {
   ZIP_CENTRAL_FIXED,
   ZIP_CENTRAL_SIGNATURE,
   ZIP_COUNT_MARKER,
+  ZIP_DOS_REPARSE,
   ZIP_EOCD_MIN,
   ZIP_EOCD_SIGNATURE,
   ZIP_FLAG_ENCRYPTED,
@@ -96,8 +97,17 @@ function readCentralDirectory(buffer: Buffer): ZipCentralEntry[] {
     const nameEnd = at + ZIP_CENTRAL_FIXED + nameLength;
     if (nameEnd + extraLength + commentLength > eocd) corrupt('entry runs past the directory');
     const name = decodeName(buffer.subarray(at + ZIP_CENTRAL_FIXED, nameEnd));
-    const mode = versionMadeBy >> 8 === ZIP_UNIX_HOST ? (externalAttributes >>> 16) & 0xff_ff : 0;
-    assertFileType(mode);
+    const isUnixHost = versionMadeBy >> 8 === ZIP_UNIX_HOST;
+    const mode = (externalAttributes >>> 16) & 0xff_ff;
+    // A zip made on Windows or by a tool that stamps another host still carries the unix mode in the
+    // high half; a symlink there (or a DOS reparse point) must be refused exactly like in a tgz.
+    if (
+      (mode & ZIP_MODE_TYPE_MASK) === ZIP_MODE_SYMLINK ||
+      (externalAttributes & ZIP_DOS_REPARSE) !== 0
+    ) {
+      throw new PluginImportError(ImportErrorCode.SYMLINK_REJECTED, 'a symbolic link entry');
+    }
+    if (isUnixHost) assertFileType(mode);
     entries.push({
       name,
       flags: buffer.readUInt16LE(at + 8),
@@ -106,7 +116,8 @@ function readCentralDirectory(buffer: Buffer): ZipCentralEntry[] {
       compressedSize: buffer.readUInt32LE(at + 20),
       size: buffer.readUInt32LE(at + 24),
       localOffset: buffer.readUInt32LE(at + 42),
-      isDirectory: name.endsWith('/') || (mode & ZIP_MODE_TYPE_MASK) === ZIP_MODE_DIRECTORY,
+      isDirectory:
+        name.endsWith('/') || (isUnixHost && (mode & ZIP_MODE_TYPE_MASK) === ZIP_MODE_DIRECTORY),
     });
     at = nameEnd + extraLength + commentLength;
   }

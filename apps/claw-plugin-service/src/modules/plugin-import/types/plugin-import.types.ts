@@ -201,3 +201,6 @@ export type AuditEntry = {
 };
 
 export type PluginRow = Omit<PluginRecord, 'preview'> & { preview: unknown };
+
+/** A resolved commit and its file tree, kept briefly per repository ref. */
+export type CachedTree = { sha: string; tree: GithubTreeItem[]; expiresAt: number };

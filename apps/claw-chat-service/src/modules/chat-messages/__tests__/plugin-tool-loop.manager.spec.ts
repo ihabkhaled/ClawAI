@@ -137,6 +137,20 @@ describe('PluginToolLoopManager', () => {
     expect(h.seen[0]?.options.toolChoice).toBe(ToolChoiceMode.AUTO);
   });
 
+  it('sends the thread and message ids with every tool call (a consent card needs both)', async () => {
+    const h = harness({
+      rounds: [response('', [call(FETCH_TOOL, 'c1')]), response('done')],
+    });
+    await h.manager.run({
+      context: context(),
+      executionOptions: undefined,
+      threadId: 'thread-9',
+      messageId: 'message-9',
+      callModel: h.callModel,
+    });
+    expect(h.invocations[0]).toMatchObject({ conversationId: 'thread-9', messageId: 'message-9' });
+  });
+
   it('a tool-level mention exposes only that tool of the plugin', async () => {
     const other: ResolvedPluginTool = {
       ...FETCH_TOOL,

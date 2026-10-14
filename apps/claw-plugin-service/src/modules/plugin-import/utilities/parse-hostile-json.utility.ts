@@ -8,12 +8,18 @@ import { PluginImportError } from '../errors/plugin-import.error';
 
 /** Strict UTF-8 text from bytes, or a refusal. A leading BOM is dropped. */
 export function decodeUtf8Strict(bytes: Buffer, label: string): string {
+  let decoded: string;
   try {
     const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-    return text.codePointAt(0) === 0xfe_ff ? text.slice(1) : text;
+    decoded = text.codePointAt(0) === 0xfe_ff ? text.slice(1) : text;
   } catch {
     throw new PluginImportError(ImportErrorCode.NON_UTF8, `${label} is not valid UTF-8`);
   }
+  // A NUL cannot be stored as text (PostgreSQL refuses it) and is never legitimate in a document.
+  if (decoded.includes(String.fromCodePoint(0))) {
+    throw new PluginImportError(ImportErrorCode.CONTENT_INVALID, `${label} contains a NUL byte`);
+  }
+  return decoded;
 }
 
 /** Deepest nesting of the text, counted without parsing it (strings and escapes are skipped). */

@@ -183,5 +183,10 @@ describe('ConsentFlowManager (consent card, invoke side)', () => {
     expect(stored.expiresAt.getTime()).toBeGreaterThan(Date.now());
     expect(view).not.toHaveProperty('argsHash');
     expect(view.options.allowChat).toBe(true);
+    // The stored row's call id travels back, so a re-asked question resumes on the open card's id.
+    const opened = (await Promise.resolve(requests.open.mock.results.at(0)?.value)) as {
+      callId: string;
+    };
+    expect(view.callId).toBe(opened.callId);
   });
 });

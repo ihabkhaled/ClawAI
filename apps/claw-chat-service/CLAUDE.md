@@ -1818,6 +1818,7 @@ message metadata; the context gateway turns them into `AssembledContext.pluginRe
 
 - **Never edit around the chokepoint.** Each tool round re-enters `callProvider` without `pluginRefs` and
   with its own PAYG key (`paygForPluginRound`). A plugin tool call costs nothing here; plugin-service meters it.
+- **@mentioned plugins are grounding material.** `ChatExecutionManager.hasGroundingMaterial` counts `pluginRefs`, so the AUTO fast path (1k-token context trim, 512-token cap) is never taken for a mention. Without this the model answered "tool not available" in AUTO mode (QA 2026-10-15). The loop also gets `threadId` + `messageId` from `AssembledContext.pluginTurn` (set beside `pluginRefs`) so plugin-service can store them on the consent request.
 - **A tool result is untrusted data.** It goes to the model only through `fencePluginResult`, and into
   metadata only as a capped plain-text excerpt. Never put arguments or full results in metadata or logs.
 - **A new surface that answers the user** goes in `PLUGIN_TOOL_SURFACES`, stores `pluginRefsMetadata` on its

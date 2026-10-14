@@ -27,7 +27,8 @@ function build() {
     pluginConsentRequest: {
       findFirst: vi.fn().mockResolvedValue(null),
       createMany: vi.fn().mockResolvedValue({ count: 1 }),
-      findFirstOrThrow: vi.fn().mockResolvedValue(dbRow()),
+      findUnique: vi.fn().mockResolvedValue(null),
+      findUniqueOrThrow: vi.fn().mockResolvedValue(dbRow()),
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       findMany: vi.fn().mockResolvedValue([]),
     },
@@ -200,5 +201,45 @@ describe('ConsentRequestsRepository (binding and atomicity)', () => {
       expect.objectContaining({ skipDuplicates: true }),
     );
     expect(row.id).toBe(REQUEST_ID);
+  });
+
+  it('open: the same question under a NEW call id gets the already-open card, not a duplicate', async () => {
+    const { prisma, repository } = build();
+    prisma.pluginConsentRequest.findUnique.mockResolvedValue(dbRow({ pendingKey: 'k' }));
+    const row = await repository.open({ ...INPUT, callId: 'call-other' }, NOW);
+    expect(row.id).toBe(REQUEST_ID);
+    expect(row.callId).toBe(CALL);
+    expect(prisma.pluginConsentRequest.createMany).not.toHaveBeenCalled();
+  });
+
+  it('open: a lapsed open card is closed, freeing its key, and a fresh one is created', async () => {
+    const { prisma, repository } = build();
+    prisma.pluginConsentRequest.findUnique.mockResolvedValue(
+      dbRow({ pendingKey: 'k', expiresAt: new Date(NOW.getTime() - 1000) }),
+    );
+    await repository.open({ ...INPUT, callId: 'call-other' }, NOW);
+    expect(prisma.pluginConsentRequest.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { status: 'EXPIRED', pendingKey: null } }),
+    );
+    expect(prisma.pluginConsentRequest.createMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: [expect.objectContaining({ callId: 'call-other', pendingKey: expect.any(String) })],
+      }),
+    );
+  });
+
+  it('decide clears the open key so the same question can be asked again later', async () => {
+    const { tx, repository } = build();
+    await repository.decide({
+      id: REQUEST_ID,
+      userId: OWNER,
+      now: NOW,
+      status: ConsentRequestState.APPROVED,
+      choice: CHOICE.ALLOW_ONCE,
+      effect: { kind: 'NONE' },
+    });
+    expect(tx.pluginConsentRequest.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ pendingKey: null }) }),
+    );
   });
 });

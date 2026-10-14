@@ -2328,10 +2328,13 @@ export class ChatExecutionManager implements OnModuleInit {
   }
 
   private hasGroundingMaterial(context: AssembledContext): boolean {
+    // An @mentioned plugin is grounding too: the AUTO fast path trims the context and caps the
+    // answer, which would drop the tool instructions and leave the model saying the tool is gone.
     return (
       context.researchEvidence.length > 0 ||
       context.researchRequested ||
-      context.fileContents.length > 0
+      context.fileContents.length > 0 ||
+      hasPluginRefs(context)
     );
   }
 
@@ -2477,7 +2480,8 @@ export class ChatExecutionManager implements OnModuleInit {
       return this.pluginToolLoop.run({
         context: laneInput,
         executionOptions,
-        threadId: paygCall?.threadId,
+        threadId: paygCall?.threadId ?? laneInput.pluginTurn?.threadId,
+        messageId: laneInput.pluginTurn?.messageId,
         callModel: (round) =>
           this.callProvider(
             provider,

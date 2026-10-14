@@ -240,6 +240,34 @@ describe('ChatExecutionManager', () => {
     expect(requestBody.prompt).toContain('Respond briefly in 2-4 sentences');
   });
 
+  it('does not take the AUTO fast path when a plugin is @mentioned (the short-answer cap would hide its tools)', async () => {
+    const context = {
+      ...makeContext('status?'),
+      pluginRefs: [{ installId: '11111111-1111-4111-8111-111111111111', label: 'Notes' }],
+    };
+    httpRequest.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { model: 'qwen3:1.7b', response: 'ok', done: true, promptEvalCount: 10, evalCount: 5 },
+    });
+
+    const result = await manager.execute(
+      {
+        messageId: 'msg-plugin',
+        threadId: 'thread-1',
+        selectedProvider: 'local-ollama',
+        selectedModel: 'AUTO',
+        routingMode: 'AUTO',
+        timestamp: new Date().toISOString(),
+      },
+      context,
+    );
+
+    expect(result.fastPathUsed).toBe(false);
+    const body = httpRequest.mock.calls[0]?.[0].body as { prompt: string };
+    expect(body.prompt).not.toContain('Respond briefly in 2-4 sentences');
+  });
+
   describe('AUTO and a credit refusal (free requests used up)', () => {
     const refusal = (): BusinessException =>
       new BusinessException(

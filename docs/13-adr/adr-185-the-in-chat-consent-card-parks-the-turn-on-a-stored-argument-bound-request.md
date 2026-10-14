@@ -31,3 +31,7 @@ A WRITE or DESTRUCTIVE plugin tool call (or any non-READ call in a tainted turn)
 - **Negative**: a spent approval followed by a rate or quota refusal costs the user a second question.
 - **Negative**: the wait polls the database every 500 ms per waiting turn (a few per user at most).
 - **Not done**: purging old `plugin_consent_requests` rows (the retention job is still unbuilt), a "mine"/request history view, push or email when a turn waits in a background tab.
+
+## Addendum (2026-10-15, QA round on v1.215.2)
+
+One WRITE call produced three identical pending cards: the model repeated the call under new call ids, and the old uniqueness was per `(user, callId)` only. A request now also holds a unique `pending_key` (user, tool, target, argument hash, conversation) while it is `PENDING`; a repeat gets the open card and the invoke answer returns that row's `callId`. chat-service now passes `conversationId` and `messageId` on every plugin call. No decision changes: the approval is still bound to user, call id, tool, target and argument hash, and is spent once.

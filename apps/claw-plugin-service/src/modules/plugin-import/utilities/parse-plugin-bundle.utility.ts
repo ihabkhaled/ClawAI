@@ -9,6 +9,7 @@ import { isPlainRecord } from '../../../common/utilities/is-plain-record.utility
 import {
   CLAWAI_MANIFEST,
   FALLBACK_VERSION,
+  FILE_NAME_UNSAFE,
   GIT_SUFFIX,
   GITHUB_SLUG,
   GITHUB_URL_PREFIX,
@@ -16,6 +17,7 @@ import {
   IMPORT_LIMITS,
   MANIFEST_PATHS,
   MARKETPLACE_PATHS,
+  ROOT_SKILL_FILE,
   VERSION_POINTS,
 } from '../constants/plugin-import.constants';
 import { PluginImportError } from '../errors/plugin-import.error';
@@ -28,6 +30,7 @@ import {
   type ParseResult,
 } from '../types/plugin-import.types';
 import { assertDeclaredPathsSafe, extractComponents } from './extract-components.utility';
+import { parseFrontMatter } from './parse-front-matter.utility';
 import { normalizeManifestPath } from './normalize-archive-path.utility';
 import { decodeUtf8Strict, parseHostileJson } from './parse-hostile-json.utility';
 import {
@@ -216,6 +219,29 @@ function buildPlugin(input: ParseInput, files: BundleFile[]): ParseResult {
 }
 
 /**
+ * The Agent Skills layout: a SKILL.md at the root (no manifest, no component folder) is a one-skill
+ * plugin. It is re-homed under `skills/<name>/` so the ordinary reader sees a normal skill; the plugin
+ * is named from the front matter `name`, else the folder or file name.
+ */
+function liftRootSkill(input: ParseInput, files: BundleFile[]): ParseInput | undefined {
+  const skill = files.find((file) => file.path === ROOT_SKILL_FILE);
+  if (skill === undefined || files.some((file) => isPluginContentPath(file.path))) return undefined;
+  const { data } = parseFrontMatter(decodeUtf8Strict(skill.content, ROOT_SKILL_FILE));
+  const name =
+    sanitizeDisplayText(field(data, 'name'), IMPORT_LIMITS.maxNameLength) ||
+    sanitizeDisplayText(input.fallbackName, IMPORT_LIMITS.maxNameLength) ||
+    'skill';
+  const folder = name.replaceAll(FILE_NAME_UNSAFE, '-').replace(/^[.-]+/, '') || 'skill';
+  return {
+    ...input,
+    files: [{ path: `skills/${folder}/${ROOT_SKILL_FILE}`, content: skill.content }],
+    fallbackName: name,
+    subdir: undefined,
+    stripWrapper: false,
+  };
+}
+
+/**
  * Turns a set of in-memory files into a normalised preview and the inert documents to keep.
  * Understands the Claude Code layout (`.claude-plugin/plugin.json`, `skills/`, `commands/`,
  * `agents/`, `hooks/hooks.json`, `.mcp.json`), the ClawAI layout (`clawai-plugin.json`) and a bare
@@ -226,6 +252,8 @@ export function parsePluginBundle(input: ParseInput): ParseResult {
   if (input.subdir !== undefined && input.subdir !== '') {
     files = scopeTo(files, normalizeManifestPath(input.subdir));
   }
+  const lifted = liftRootSkill(input, files);
+  if (lifted !== undefined) return buildPlugin(lifted, lifted.files);
   if (files.some((file) => isPluginContentPath(file.path))) return buildPlugin(input, files);
   const marketplacePath = MARKETPLACE_PATHS.find((path) => files.some((f) => f.path === path));
   const marketplace = files.find((file) => file.path === marketplacePath);

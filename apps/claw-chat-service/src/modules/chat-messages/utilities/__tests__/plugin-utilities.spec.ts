@@ -84,6 +84,13 @@ describe('context refs helpers', () => {
     expect(withPluginRefs(base, [])).toBe(base);
     expect(hasPluginRefs(undefined)).toBe(false);
   });
+
+  it('keeps the thread and message the mention happened in next to the refs', () => {
+    const turn = { threadId: 't-1', messageId: 'm-1' };
+    const withTurn = withPluginRefs(base, [{ installId: ID_A, label: 'A' }], turn);
+    expect(withTurn.pluginTurn).toEqual(turn);
+    expect(withPluginRefs(base, [], turn).pluginTurn).toBeUndefined();
+  });
 });
 
 describe('fencePluginResult', () => {

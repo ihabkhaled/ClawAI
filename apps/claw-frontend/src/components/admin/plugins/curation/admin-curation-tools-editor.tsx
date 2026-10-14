@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ADMIN_CURATION_RISKS } from '@/constants/plugin-admin-curation.constants';
+import { usePluralText } from '@/hooks/use-plural-text';
 import type { AdminCurationToolsEditorProps } from '@/types/plugin-admin-curation.types';
 
 import { AdminCurationSelect } from './admin-curation-select';
@@ -13,6 +14,7 @@ export function AdminCurationToolsEditor({
   state,
   t,
 }: AdminCurationToolsEditorProps): React.ReactElement {
+  const plural = usePluralText();
   const riskOptions = ADMIN_CURATION_RISKS.map((risk) => ({
     value: risk.value,
     label: t(risk.labelKey),
@@ -39,7 +41,7 @@ export function AdminCurationToolsEditor({
       <p className="text-muted-foreground text-xs">{t('pluginsAdminCatalog.form.toolsHelp')}</p>
       {state.skippedCount > 0 ? (
         <p className="text-warning text-xs">
-          {t('pluginsAdminCatalog.form.toolsSkipped', { value: state.skippedCount })}
+          {plural(t, 'pluginQa.count.toolsSkipped', state.skippedCount)}
         </p>
       ) : null}
       <ul className="divide-y">

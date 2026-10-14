@@ -2,6 +2,7 @@ import type { Direction } from '@/enums/direction.enum';
 import type { Locale } from '@/enums/locale.enum';
 import type { FeedbackTranslation } from '@/types/i18n-feedback.types';
 import type { PluginImportLocaleTranslation } from '@/types/plugin-import-i18n.types';
+import type { PluginQaFixesLocaleTranslation } from '@/types/plugin-qa-fixes-i18n.types';
 
 export type TranslationDictionary = {
   /** Plugins and MCP access: sidebar, plan editor and upgrade label. */
@@ -16,6 +17,7 @@ export type TranslationDictionary = {
   pluginsServers: PluginsServersLocaleTranslation;
   /** Importing a plugin from GitHub or an upload (plugin-import-translations.ts). */
   pluginImport: PluginImportLocaleTranslation;
+  pluginQa: PluginQaFixesLocaleTranslation;
   pluginsStatus: PluginsStatusLocaleTranslation;
   /** The catalog curation console: curated entries, approval queue, rules, audit log. */
   pluginsAdminCatalog: PluginsAdminCatalogLocaleTranslation;

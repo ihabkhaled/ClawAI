@@ -103,7 +103,7 @@ describe('AdminPluginCatalogRow', () => {
     render(<AdminPluginCatalogRow entry={ENTRY} busy={false} t={tStub} {...handlers()} />);
     expect(screen.getByText('Web fetch')).toBeTruthy();
     expect(screen.getByText('pluginsStatus.catalogStatus.PUBLISHED')).toBeTruthy();
-    expect(screen.getByText('pluginsInstall.admin.installs|3')).toBeTruthy();
+    expect(screen.getByText('pluginQa.count.installs.other|3')).toBeTruthy();
     expect(screen.getByText('fetch_page')).toBeTruthy();
     expect(screen.getByText('plugins.risk.write')).toBeTruthy();
   });

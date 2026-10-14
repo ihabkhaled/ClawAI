@@ -1,16 +1,23 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 
+import { OPTIONAL_PROVIDERS } from '@/constants/optional-provider-gate.constants';
 import { pullModelSchema } from '@/lib/validation/ollama.schema';
 import { ollamaRepository } from '@/repositories/ollama/ollama.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { FormFieldErrors } from '@/types';
+import { resetOptionalProvider } from '@/utilities/optional-provider-gate.utility';
 
 import { useAssignRole } from './use-assign-role';
 import { useLocalModels } from './use-local-models';
 import { usePullModel } from './use-pull-model';
 
 export function useLocalModelsPage() {
+  // Opening the page is a manual re-check: forget that the runtime was found absent earlier.
+  useState(() => {
+    resetOptionalProvider(OPTIONAL_PROVIDERS.ollama);
+    return true;
+  });
   const [pullModelName, setPullModelName] = useState('');
   const [pullRuntime, setPullRuntime] = useState('');
   const [pullFieldErrors, setPullFieldErrors] = useState<FormFieldErrors>({});

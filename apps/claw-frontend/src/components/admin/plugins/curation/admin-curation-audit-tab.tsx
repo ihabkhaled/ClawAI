@@ -1,8 +1,14 @@
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  ADMIN_CURATION_AUDIT_ACTION_KEYS,
+  ADMIN_CURATION_AUDIT_TARGET_KEYS,
+} from '@/constants/plugin-admin-curation.constants';
+import { useTranslation } from '@/lib/i18n';
 import type {
   AdminCurationTabProps,
   UseAdminCurationAuditReturn,
 } from '@/types/plugin-admin-curation.types';
+import { auditCodeLabel } from '@/utilities/plugin-admin-curation.utility';
 
 import { AdminCurationListState } from './admin-curation-list-state';
 
@@ -11,6 +17,7 @@ export function AdminCurationAuditTab({
   state,
   t,
 }: AdminCurationTabProps<UseAdminCurationAuditReturn>): React.ReactElement {
+  const { locale } = useTranslation();
   return (
     <AdminCurationListState
       isLoading={state.isLoading}
@@ -26,16 +33,19 @@ export function AdminCurationAuditTab({
             <Card>
               <CardContent className="space-y-1 p-3 text-sm">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <code className="font-semibold" dir="ltr">
-                    {row.action}
-                  </code>
-                  <code className="text-muted-foreground break-all" dir="ltr">
-                    {row.targetType} · {row.targetId}
-                  </code>
+                  <span className="font-semibold">
+                    {auditCodeLabel(t, ADMIN_CURATION_AUDIT_ACTION_KEYS, row.action)}
+                  </span>
+                  <span className="text-muted-foreground break-all">
+                    {auditCodeLabel(t, ADMIN_CURATION_AUDIT_TARGET_KEYS, row.targetType)} ·{' '}
+                    <code dir="ltr">{row.targetId}</code>
+                  </span>
                 </div>
                 <p className="text-muted-foreground text-xs break-all">
                   {t('pluginsAdminCatalog.audit.by', { value: row.actorId })} ·{' '}
-                  <time dateTime={row.createdAt}>{new Date(row.createdAt).toLocaleString()}</time>
+                  <time dateTime={row.createdAt}>
+                    {new Date(row.createdAt).toLocaleString(locale)}
+                  </time>
                 </p>
                 <code className="text-muted-foreground block text-xs break-all" dir="ltr">
                   {JSON.stringify(row.summary)}

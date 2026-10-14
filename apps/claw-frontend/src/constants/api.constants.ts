@@ -41,3 +41,6 @@ export const AUTH_REFRESH_EXEMPT_PATHS: ReadonlyArray<string> = [
  * "An unexpected server error occurred". Other 5xx codes stay suppressed.
  */
 export const API_CODE_PASSTHROUGH_SERVER_STATUSES: ReadonlySet<number> = new Set([503]);
+
+/** A FormData body goes out as a form, not as the client's default JSON; the browser adds the boundary. */
+export const MULTIPART_FORM_HEADERS = { 'Content-Type': 'multipart/form-data' } as const;

@@ -11,13 +11,17 @@ import {
   GITHUB_RATE_LIMITED_STATUSES,
   GITHUB_REGULAR_FILE_MODES,
   GITHUB_SHA_ACCEPT,
+  GITHUB_TREE_CACHE_MAX,
+  GITHUB_TREE_CACHE_TTL_MS,
   IMPORT_GITHUB,
   IMPORT_LIMITS,
   MARKETPLACE_PATHS,
+  MS_PER_SECOND,
 } from '../constants/plugin-import.constants';
 import { PluginImportError } from '../errors/plugin-import.error';
 import {
   type BundleFile,
+  type CachedTree,
   type FetchedSource,
   type GithubCoordinates,
   type GithubReply,
@@ -25,6 +29,7 @@ import {
   type GithubTreeItem,
   type RequestCounter,
 } from '../types/plugin-import.types';
+import { retryAfterSeconds } from '../utilities/github-retry-after.utility';
 import { encodePath } from '../utilities/encode-path.utility';
 import { normalizeArchivePath } from '../utilities/normalize-archive-path.utility';
 import { isPluginContentPath, isReadablePath } from '../utilities/plugin-paths.utility';
@@ -38,6 +43,8 @@ import { isPluginContentPath, isReadablePath } from '../utilities/plugin-paths.u
 @Injectable()
 export class GithubSourceManager {
   private readonly logger = new Logger(GithubSourceManager.name);
+  /** Resolved commit + tree per repository ref, kept briefly so a retry or a second preview costs no API calls. */
+  private readonly treeCache = new Map<string, CachedTree>();
 
   constructor(private readonly egress: SafeEgressManager) {}
 
@@ -46,6 +53,22 @@ export class GithubSourceManager {
     const counter: RequestCounter = { requests: 0 };
     const { owner, repo } = coordinates;
     const ref = coordinates.ref ?? 'HEAD';
+    const { sha, tree } = await this.resolveTree(owner, repo, ref, signal, counter);
+    const entries = this.select(tree, coordinates.subdir);
+    const files = await this.download(entries, `${owner}/${repo}`, sha, signal, counter);
+    return { files, commitSha: sha, ref };
+  }
+
+  private async resolveTree(
+    owner: string,
+    repo: string,
+    ref: string,
+    signal: AbortSignal,
+    counter: RequestCounter,
+  ): Promise<CachedTree> {
+    const key = `${owner}/${repo}@${ref}`.toLowerCase();
+    const cached = this.treeCache.get(key);
+    if (cached !== undefined && cached.expiresAt > Date.now()) return cached;
     const sha = (
       await this.get(
         `https://api.github.com/repos/${owner}/${repo}/commits/${encodePath(ref)}`,
@@ -62,9 +85,13 @@ export class GithubSourceManager {
       );
     }
     const tree = await this.readTree(owner, repo, sha, signal, counter);
-    const entries = this.select(tree, coordinates.subdir);
-    const files = await this.download(entries, `${owner}/${repo}`, sha, signal, counter);
-    return { files, commitSha: sha, ref };
+    if (this.treeCache.size >= GITHUB_TREE_CACHE_MAX) {
+      const oldest = this.treeCache.keys().next().value;
+      if (oldest !== undefined) this.treeCache.delete(oldest);
+    }
+    const entry = { sha, tree, expiresAt: Date.now() + GITHUB_TREE_CACHE_TTL_MS };
+    this.treeCache.set(key, entry);
+    return entry;
   }
 
   private async readTree(
@@ -214,7 +241,11 @@ export class GithubSourceManager {
       throw new PluginImportError(ImportErrorCode.SOURCE_NOT_FOUND, 'repository or path not found');
     }
     if (GITHUB_RATE_LIMITED_STATUSES.has(reply.status)) {
-      throw new PluginImportError(ImportErrorCode.SOURCE_RATE_LIMITED, 'GitHub is rate limiting');
+      const seconds = retryAfterSeconds(reply.headers);
+      throw new PluginImportError(ImportErrorCode.SOURCE_RATE_LIMITED, 'GitHub is rate limiting', {
+        afterSeconds: seconds,
+        at: new Date(Date.now() + seconds * MS_PER_SECOND).toISOString(),
+      });
     }
     if (reply.status !== 200 || reply.truncated) {
       throw new PluginImportError(

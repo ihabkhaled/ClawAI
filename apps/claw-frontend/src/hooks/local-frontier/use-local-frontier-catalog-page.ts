@@ -6,6 +6,7 @@ import {
   DEFAULT_RUNTIME_CONFIG_DRAFT,
   LOCAL_FRONTIER_SEARCH_DEBOUNCE_MS,
 } from '@/constants/local-frontier.constants';
+import { OPTIONAL_PROVIDERS } from '@/constants/optional-provider-gate.constants';
 import {
   FrontierPullJobStatus,
   HardwareCompat,
@@ -21,6 +22,7 @@ import type {
 } from '@/types/local-frontier-ui.types';
 import type { CompatChipMeta, FrontierCatalogEntry } from '@/types/local-frontier.types';
 import { classifyCompat } from '@/utilities/local-frontier-compat.utility';
+import { resetOptionalProvider } from '@/utilities/optional-provider-gate.utility';
 
 import { useCancelPull } from './use-cancel-pull';
 import { useDeleteWeights } from './use-delete-weights';
@@ -39,6 +41,11 @@ import { useUpdateRuntimeConfig } from './use-update-runtime-config';
 
 export function useLocalFrontierCatalogPage(): LocalFrontierPageController {
   const { t } = useTranslation();
+  // Opening the page is a manual re-check: forget that the runtime was found absent earlier.
+  useState(() => {
+    resetOptionalProvider(OPTIONAL_PROVIDERS.llamacpp);
+    return true;
+  });
   const [category, setCategory] = useState<FrontierModelCategory | undefined>();
   const [qualityTier, setQualityTier] = useState<FrontierQualityTier | undefined>();
   const [compatibleOnly, setCompatibleOnly] = useState<boolean>(false);

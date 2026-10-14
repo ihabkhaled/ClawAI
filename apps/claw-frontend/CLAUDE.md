@@ -1038,3 +1038,10 @@ Every Thread date (public/marketing/in-app byline, Board cards, suggestion rows,
 - **Public pages never redirect on a dead session**: `lib/http-client.ts` clears the stored session on 401 plus failed refresh, and redirects to `/login` only when `isPublicPath(window.location.pathname)` is false. Do not add a second redirect for public Thread/Board reads.
 - **Marketing header**: `MARKETING_WIDE_NAV_LOCALES` (de, ru, fr, es, pt, it) keep the hamburger until `2xl`; other locales switch at `xl`. A new long locale goes in that list. Measured overflow before: de/ru/fr up to 1502px at 1440px.
 - Mentions render as chips only for usernames in the comment's `mentions[]`; "Comments (N)" uses the page `commentTotal` (all visible comments and replies); Ctrl/Cmd+Enter submits both composers (`submitOnShortcut`); the forced password change keeps the locale (`withLocaleOf`).
+
+## Plugins QA fixes (2026-10-15)
+
+- **FormData needs its own content type.** `httpClient` defaults to `application/json`, and axios turns a FormData into JSON when it sees that header (the import upload arrived as `{"file":{}}`). `apiClient.post` sends `MULTIPART_FORM_HEADERS` for a FormData body so the browser adds the boundary. Regression: `services/shared/__tests__/api-client-multipart.test.ts` runs real axios with a stub adapter.
+- **Plural counts** go through `usePluralText()` / `pluralText` (`Intl.PluralRules`) and the `pluginQa.count.*` keys; every locale carries all six forms (`plugin-qa-fixes-translations.ts` fills the forms a language does not distinguish) so the dictionaries stay key-identical. Never `t('...', { count })` for a noun.
+- **Optional runtimes (Ollama, llama.cpp) are asked through `throughOptionalProvider`.** 404/502/503 stops requests for the session, other failures back off 2 s doubling to 5 min, window focus (at most every 30 s) and opening the provider's own page re-check. The chat page used to send ~70 failing requests a minute.
+- **Rate-limited import** shows "Try again at HH:MM" from `Retry-After` (`pluginImportRetryTime`); admin audit actions, targets and categories are translated (`ADMIN_CURATION_AUDIT_*_KEYS`, `pluginQa.audit.*`).

@@ -57,8 +57,15 @@ export const PLUGIN_IMPORT_ERROR_KEYS: Readonly<Record<string, string>> = {
   PLUGIN_IMPORT_QUOTA_PLUGINS: 'pluginImport.errors.quota',
   PLUGIN_IMPORT_QUOTA_BYTES: 'pluginImport.errors.quota',
   PLUGIN_IMPORT_NOT_FOUND: 'pluginImport.errors.draftExpired',
+  PLUGIN_IMPORT_FILE_TOO_LARGE: 'pluginImport.errors.uploadTooLarge',
+  PLUGIN_IMPORT_CONTENT_INVALID: 'pluginQa.errors.contentInvalid',
+  PLUGIN_IMPORT_PARSE_FAILED: 'pluginQa.errors.parseFailed',
   PLUGIN_PLAN_DISABLED: 'pluginImport.errors.planDisabled',
 };
+
+export const PLUGIN_IMPORT_RATE_LIMITED_CODE = 'PLUGIN_IMPORT_SOURCE_RATE_LIMITED';
+export const PLUGIN_IMPORT_RATE_LIMITED_AT_KEY = 'pluginQa.errors.rateLimitedAt';
+export const PLUGIN_IMPORT_MS_PER_SECOND = 1000;
 
 export const PLUGIN_IMPORT_KIND_KEYS: Readonly<Record<PluginImportComponentKind, string>> = {
   [PluginImportComponentKind.Skill]: 'pluginImport.kind.skill',

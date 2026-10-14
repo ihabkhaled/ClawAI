@@ -11,6 +11,8 @@ export const ZIP_METHOD_DEFLATE = 8;
 export const ZIP_COUNT_MARKER = 0xff_ff;
 export const ZIP64_MARKER = 0xff_ff_ff_ff;
 export const ZIP_UNIX_HOST = 3;
+/** DOS attribute bit for a reparse point (a Windows symlink or junction). */
+export const ZIP_DOS_REPARSE = 0x4_00;
 export const ZIP_MODE_TYPE_MASK = 0xf0_00;
 export const ZIP_MODE_SYMLINK = 0xa0_00;
 export const ZIP_MODE_REGULAR = 0x80_00;

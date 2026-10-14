@@ -1,6 +1,6 @@
 import { PLUGIN_REFS_MAX, PLUGIN_REFS_METADATA_KEY } from '../constants/plugin-tools.constants';
 import { pluginRefSchema } from '../dto/plugin-fields.dto';
-import type { AssembledContext } from '../types/context.types';
+import type { AssembledContext, PluginTurn } from '../types/context.types';
 import type { PluginRef } from '../types/plugin-tools.types';
 
 /**
@@ -39,8 +39,12 @@ export function pluginRefsFor(
 export function withPluginRefs(
   context: AssembledContext,
   refs: readonly PluginRef[],
+  turn?: PluginTurn,
 ): AssembledContext {
-  return refs.length === 0 ? context : { ...context, pluginRefs: refs };
+  if (refs.length === 0) return context;
+  return turn === undefined
+    ? { ...context, pluginRefs: refs }
+    : { ...context, pluginRefs: refs, pluginTurn: turn };
 }
 
 export function withoutPluginRefs(context: AssembledContext): AssembledContext {

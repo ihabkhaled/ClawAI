@@ -57,7 +57,7 @@ export class ConsentFlowManager {
     context: CallContext,
     reason: ConsentDecision,
     args: Record<string, unknown>,
-  ): Promise<ConsentRequestView> {
+  ): Promise<ConsentRequestView & { callId: string }> {
     const now = new Date();
     const target = context.target;
     const row = await this.requests.open(
@@ -81,7 +81,8 @@ export class ConsentFlowManager {
       },
       now,
     );
-    return toConsentView(row, now);
+    // The row's own call id: a re-asked question gets the card already open, and resuming must use its id.
+    return { ...toConsentView(row, now), callId: row.callId };
   }
 
   private async redeem(

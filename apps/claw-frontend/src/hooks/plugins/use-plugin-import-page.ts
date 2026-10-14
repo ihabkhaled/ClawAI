@@ -14,7 +14,12 @@ import type {
   PluginImportPreviewResponse,
   UsePluginImportPageReturn,
 } from '@/types/plugin-import.types';
-import { isUploadTooLarge, pluginImportErrorKey } from '@/utilities/plugin-import.utility';
+import {
+  importErrorText,
+  isUploadTooLarge,
+  pluginImportErrorKey,
+  pluginImportRetryTime,
+} from '@/utilities/plugin-import.utility';
 
 import {
   usePluginImportConfirm,
@@ -25,7 +30,7 @@ import { usePluginImports } from './use-plugin-imports';
 
 /** Import a plugin: choose a source, read the preview, review it, confirm. Also lists what is imported. */
 export function usePluginImportPage(): UsePluginImportPageReturn {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const imports = usePluginImports();
   const previewCall = usePluginImportPreview();
   const confirmCall = usePluginImportConfirm();
@@ -44,6 +49,7 @@ export function usePluginImportPage(): UsePluginImportPageReturn {
       : form.file !== undefined;
   const failure = previewCall.error ?? confirmCall.error ?? removeCall.error;
   const errorKey = localErrorKey ?? (failure === null ? null : pluginImportErrorKey(failure));
+  const retryTime = localErrorKey === null ? pluginImportRetryTime(failure, locale) : undefined;
 
   const run = (next: PluginImportForm): void => {
     setLocalErrorKey(null);
@@ -112,7 +118,7 @@ export function usePluginImportPage(): UsePluginImportPageReturn {
     },
     isInstalling: confirmCall.isPending,
     discard: reset,
-    errorMessage: errorKey === null ? null : t(errorKey),
+    errorMessage: errorKey === null ? null : importErrorText(t, errorKey, retryTime),
     imported: imports.list,
     isLoadingImported: imports.isLoading,
     removingId: removeCall.isPending ? removeCall.variables : null,

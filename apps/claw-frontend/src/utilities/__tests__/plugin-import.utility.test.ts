@@ -6,6 +6,7 @@ import {
   isUploadTooLarge,
   pluginImportErrorKey,
   pluginImportReasonKey,
+  pluginImportRetryTime,
   pluginImportWarningKey,
   shortCommit,
 } from '@/utilities/plugin-import.utility';
@@ -49,5 +50,40 @@ describe('plugin import utilities', () => {
     expect(isUploadTooLarge(small)).toBe(false);
     expect(shortCommit('a'.repeat(40))).toBe('a'.repeat(12));
     expect(shortCommit(null)).toBe('');
+  });
+
+  it('maps the codes added by the QA fixes to a localized message', () => {
+    expect(pluginImportErrorKey(failure(413, 'PLUGIN_IMPORT_FILE_TOO_LARGE'))).toBe(
+      'pluginImport.errors.uploadTooLarge',
+    );
+    expect(pluginImportErrorKey(failure(422, 'PLUGIN_IMPORT_CONTENT_INVALID'))).toBe(
+      'pluginQa.errors.contentInvalid',
+    );
+    expect(pluginImportErrorKey(failure(422, 'PLUGIN_IMPORT_PARSE_FAILED'))).toBe(
+      'pluginQa.errors.parseFailed',
+    );
+    expect(pluginImportErrorKey(failure(422, 'PLUGIN_IMPORT_UPLOAD_MISSING'))).toBe(
+      'pluginImport.errors.uploadMissing',
+    );
+  });
+
+  it('turns a rate limit with a Retry-After into a clock time, and nothing else', () => {
+    const limited = new ApiClientError({
+      message: 'x',
+      status: 429,
+      code: 'PLUGIN_IMPORT_SOURCE_RATE_LIMITED',
+      retryAfterSeconds: 600,
+    });
+    const now = Date.UTC(2026, 9, 15, 10, 0, 0);
+    const time = pluginImportRetryTime(limited, 'en-GB', now);
+
+    expect(time).toMatch(/^\d{2}:\d{2}$/);
+    expect(
+      pluginImportRetryTime(failure(429, 'PLUGIN_IMPORT_SOURCE_RATE_LIMITED'), 'en'),
+    ).toBeUndefined();
+    expect(
+      pluginImportRetryTime(failure(422, 'PLUGIN_IMPORT_NO_PLUGIN_FOUND'), 'en'),
+    ).toBeUndefined();
+    expect(pluginImportRetryTime(null, 'en')).toBeUndefined();
   });
 });

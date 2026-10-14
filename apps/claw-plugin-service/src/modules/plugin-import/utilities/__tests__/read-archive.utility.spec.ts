@@ -60,6 +60,13 @@ describe('plugin import archive reader: zip', () => {
     expect(codeOf(() => readArchive(zip, keepAll))).toBe(ImportErrorCode.SYMLINK_REJECTED);
   });
 
+  it('rejects a symlink entry in a zip stamped by a non-unix host, like a tgz does', () => {
+    const zip = buildZip([
+      { name: 'skills/link.md', data: '/etc/passwd', mode: 0o120777, host: 0 },
+    ]);
+    expect(codeOf(() => readArchive(zip, keepAll))).toBe(ImportErrorCode.SYMLINK_REJECTED);
+  });
+
   it('rejects duplicate names, also when only the case differs', () => {
     const zip = buildZip([
       { name: 'skills/a.md', data: '1' },

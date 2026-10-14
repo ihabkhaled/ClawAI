@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { usePluralText } from '@/hooks/use-plural-text';
 import type { ImportedPluginCardProps } from '@/types/plugin-import.types';
 import { shortCommit } from '@/utilities/plugin-import.utility';
 
@@ -9,6 +10,7 @@ export function ImportedPluginCard({
   onRemove,
   t,
 }: ImportedPluginCardProps): React.ReactElement {
+  const plural = usePluralText();
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
       <div className="min-w-0 space-y-0.5">
@@ -20,9 +22,9 @@ export function ImportedPluginCard({
           {plugin.source.commitSha === null ? '' : ` (${shortCommit(plugin.source.commitSha)})`}
         </p>
         <p className="text-muted-foreground text-xs">
-          {t('pluginImport.imported.summary', {
-            components: plugin.preview.components.length,
-            files: plugin.fileCount,
+          {t('pluginQa.count.summary', {
+            items: plural(t, 'pluginQa.count.items', plugin.preview.components.length),
+            files: plural(t, 'pluginQa.count.files', plugin.fileCount),
           })}
         </p>
       </div>

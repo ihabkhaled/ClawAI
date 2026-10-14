@@ -338,6 +338,9 @@ model PluginConsentRequest {
   expiresAt      DateTime             @map("expires_at")
   decidedAt      DateTime?            @map("decided_at")
   consumedAt     DateTime?            @map("consumed_at")
+  /// Set only while PENDING: a hash of (user, tool, target, argument hash, conversation). Unique, so one
+  /// identical question is one open card however many call ids the model produced. Cleared on any answer.
+  pendingKey     String?              @unique @map("pending_key")
 
   @@unique([userId, callId])
   @@index([userId, status, expiresAt])

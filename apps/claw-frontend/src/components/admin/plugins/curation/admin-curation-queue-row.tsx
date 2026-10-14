@@ -4,6 +4,7 @@ import { PluginRiskBadge } from '@/components/plugins/plugin-risk-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { usePluralText } from '@/hooks/use-plural-text';
 import type { AdminCurationQueueRowProps } from '@/types/plugin-admin-curation.types';
 import { toRiskLevel } from '@/utilities/plugin-installs.utility';
 
@@ -15,6 +16,7 @@ export function AdminCurationQueueRow({
   onReject,
   t,
 }: AdminCurationQueueRowProps): React.ReactElement {
+  const plural = usePluralText();
   const pending = server.status === 'PENDING_APPROVAL';
   return (
     <Card>
@@ -30,9 +32,7 @@ export function AdminCurationQueueRow({
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <PluginRiskBadge risk={toRiskLevel(server.highestRisk)} t={t} />
-            <Badge variant="outline">
-              {t('pluginsAdminCatalog.queue.tools', { value: server.toolCount })}
-            </Badge>
+            <Badge variant="outline">{plural(t, 'pluginQa.count.tools', server.toolCount)}</Badge>
             {server.hasCredential ? (
               <Badge variant="outline">{t('pluginsAdminCatalog.queue.hasKey')}</Badge>
             ) : null}

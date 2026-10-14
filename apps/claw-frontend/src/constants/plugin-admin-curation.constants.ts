@@ -119,3 +119,24 @@ export const ADMIN_CURATION_ERROR_KEYS: Readonly<Record<string, string>> = {
 };
 
 export const ADMIN_CURATION_ERROR_GENERIC = 'pluginsAdminCatalog.errors.generic';
+
+/** The audit log's action and target codes, as text. A code not listed shows as itself, never blank. */
+export const ADMIN_CURATION_AUDIT_ACTION_KEYS: Readonly<Record<string, string>> = {
+  CATALOG_CREATED: 'pluginQa.audit.actions.catalogCreated',
+  CATALOG_UPDATED: 'pluginQa.audit.actions.catalogUpdated',
+  CATALOG_ENABLED: 'pluginQa.audit.actions.catalogEnabled',
+  CATALOG_DISABLED: 'pluginQa.audit.actions.catalogDisabled',
+  CATALOG_DELETED: 'pluginQa.audit.actions.catalogDeleted',
+  CATALOG_HEALTH_CHECKED: 'pluginQa.audit.actions.catalogHealthChecked',
+  CATALOG_SEEDED: 'pluginQa.audit.actions.catalogSeeded',
+  SERVER_APPROVED: 'pluginQa.audit.actions.serverApproved',
+  SERVER_REJECTED: 'pluginQa.audit.actions.serverRejected',
+  RULE_ADDED: 'pluginQa.audit.actions.ruleAdded',
+  RULE_REMOVED: 'pluginQa.audit.actions.ruleRemoved',
+};
+
+export const ADMIN_CURATION_AUDIT_TARGET_KEYS: Readonly<Record<string, string>> = {
+  CATALOG_ENTRY: 'pluginQa.audit.targets.catalogEntry',
+  MCP_SERVER: 'pluginQa.audit.targets.mcpServer',
+  HOST_RULE: 'pluginQa.audit.targets.hostRule',
+};

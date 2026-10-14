@@ -51,6 +51,9 @@ export const MANIFEST_PATHS: readonly string[] = [
   '.claude-plugin/plugin.json',
   'clawai-plugin.json',
 ];
+/** The Agent Skills layout: a SKILL.md at the root of a folder or repository is a one-skill plugin. */
+export const ROOT_SKILL_FILE = 'SKILL.md';
+export const FILE_NAME_UNSAFE = /[^A-Za-z0-9._-]+/g;
 export const MARKETPLACE_PATHS: readonly string[] = [
   '.claude-plugin/marketplace.json',
   'clawai-marketplace.json',
@@ -119,6 +122,11 @@ export const GITHUB_REGULAR_FILE_MODES: ReadonlySet<string> = new Set(['100644',
 export const GITHUB_DOWNLOAD_CONCURRENCY = 4;
 export const GITHUB_OVERALL_TIMEOUT_MS = 45_000;
 export const GITHUB_RATE_LIMITED_STATUSES: ReadonlySet<number> = new Set([403, 429]);
+export const GITHUB_TREE_CACHE_TTL_MS = 60_000;
+export const GITHUB_TREE_CACHE_MAX = 50;
+export const GITHUB_RETRY_FALLBACK_SECONDS = 900;
+export const GITHUB_RETRY_MAX_SECONDS = 3600;
+export const MS_PER_SECOND = 1000;
 export const GITHUB_SHA_ACCEPT = 'application/vnd.github.sha';
 export const GITHUB_JSON_ACCEPT = 'application/vnd.github+json';
 export const PREVIEW_THROTTLE = { default: { limit: 10, ttl: 60_000 } };
@@ -137,3 +145,8 @@ export const TAB_LINE_FEED_CARRIAGE_RETURN: ReadonlySet<number> = new Set([0x09,
 export const C0_LAST = 0x1f;
 export const DELETE_CODE = 0x7f;
 export const C1_LAST = 0x9f;
+
+export const JOINER_SCRIPTS =
+  /[\p{Script=Arabic}\p{Script=Devanagari}\p{Script=Bengali}\p{Script=Gurmukhi}\p{Script=Gujarati}\p{Script=Tamil}\p{Script=Telugu}\p{Script=Kannada}\p{Script=Malayalam}\p{Script=Sinhala}\p{Extended_Pictographic}]/u;
+export const ZERO_WIDTH_NON_JOINER = 0x20_0c;
+export const ZERO_WIDTH_JOINER = 0x20_0d;

@@ -54,6 +54,9 @@ export type WorkspaceCitation = {
   snippet: string | null;
 };
 
+/** Where a plugin tool call happens: the thread and the user message that mentioned the plugin. */
+export type PluginTurn = { threadId?: string | undefined; messageId?: string | undefined };
+
 export type AssembledContext = {
   userId: string;
   systemPrompt: string | null;
@@ -152,6 +155,12 @@ export type AssembledContext = {
    * context through the gateway therefore gets the same behaviour (rule 59).
    */
   pluginRefs?: readonly PluginRef[];
+  /**
+   * The thread and user message the @mentioned tools run for. Set next to `pluginRefs`; the
+   * `callProvider` chokepoint hands them to the plugin tool loop so a consent request is tied to
+   * its conversation and message (the card, and "allow for this chat", need both).
+   */
+  pluginTurn?: PluginTurn;
   /**
    * Completed Runtime V2 tool rounds, oldest first.
    *

@@ -10,6 +10,7 @@ import {
 } from '@/constants/plugin-import.constants';
 import { Locale } from '@/enums/locale.enum';
 import { PLUGIN_IMPORT_TRANSLATIONS } from '@/lib/i18n/locales/plugin-import-translations';
+import { PLUGIN_QA_FIXES_TRANSLATIONS } from '@/lib/i18n/locales/plugin-qa-fixes-translations';
 
 function flatten(value: unknown, prefix = ''): Record<string, string> {
   if (typeof value === 'string') {
@@ -26,6 +27,7 @@ function flatten(value: unknown, prefix = ''): Record<string, string> {
 
 const placeholders = (text: string): string[] => (text.match(/\{\w+\}/gu) ?? []).sort();
 const PREFIX = 'pluginImport.';
+const QA_PREFIX = 'pluginQa.';
 // Names that read the same in several languages.
 const UNCHANGED_IN_EVERY_LOCALE = new Set(['source.github', 'source.label', 'review.source']);
 
@@ -61,6 +63,14 @@ describe('plugin import translations', () => {
       ...Object.values(PLUGIN_IMPORT_RISK_KEYS),
     ];
     for (const key of used) {
+      // The error texts added by the QA fixes live in their own file (plugin-qa-fixes-translations.ts).
+      if (key.startsWith(QA_PREFIX)) {
+        expect(
+          flatten(PLUGIN_QA_FIXES_TRANSLATIONS[Locale.EN])[key.slice(QA_PREFIX.length)],
+          key,
+        ).toBeTruthy();
+        continue;
+      }
       expect(key.startsWith(PREFIX), key).toBe(true);
       expect(english[key.slice(PREFIX.length)], key).toBeTruthy();
     }

@@ -16,6 +16,7 @@ import {
 } from '@/constants/plugin-admin-curation.constants';
 import { AlertVariant } from '@/enums/alert-variant.enum';
 import type { CuratedEntryFormProps } from '@/types/plugin-admin-curation.types';
+import { categoryLabel } from '@/utilities/plugins.utility';
 
 import { AdminCurationSelect } from './admin-curation-select';
 import { AdminCurationToolsEditor } from './admin-curation-tools-editor';
@@ -73,7 +74,10 @@ export function AdminCurationEntryForm({
           id="curation-category"
           label={t('pluginsAdminCatalog.form.category')}
           value={values.category}
-          options={ADMIN_CURATION_CATEGORIES.map((key) => ({ value: key, label: key }))}
+          options={ADMIN_CURATION_CATEGORIES.map((key) => ({
+            value: key,
+            label: categoryLabel(t, key),
+          }))}
           onChange={(value) => {
             setField('category', value);
           }}

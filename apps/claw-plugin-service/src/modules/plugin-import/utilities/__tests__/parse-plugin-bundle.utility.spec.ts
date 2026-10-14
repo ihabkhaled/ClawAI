@@ -248,6 +248,41 @@ describe('plugin import manifest parser: hostile manifests', () => {
     expect(codeOf(() => plugin([bad]))).toBe(ImportErrorCode.NON_UTF8);
   });
 
+  it('imports a SKILL.md at the root as a one-skill plugin named from its front matter', () => {
+    const { preview, files } = plugin([
+      file(
+        'SKILL.md',
+        ['---', 'name: My Skill', 'description: Does a thing', '---', 'Body'].join(
+          String.fromCodePoint(10),
+        ),
+      ),
+    ]);
+
+    expect(preview.name).toBe('My Skill');
+    expect(preview.components).toHaveLength(1);
+    expect(preview.components[0]).toMatchObject({ kind: 'SKILL', description: 'Does a thing' });
+    expect(files.map((f) => f.path)).toEqual(['skills/My-Skill/SKILL.md']);
+  });
+
+  it('names a root SKILL.md plugin from the source when it has no front matter name', () => {
+    expect(plugin([file('SKILL.md', '# Hello')]).preview.name).toBe('fallback-name');
+  });
+
+  it('refuses a NUL byte in a stored document with a coded error', () => {
+    const nul = String.fromCodePoint(0);
+    expect(codeOf(() => plugin([file('skills/x/SKILL.md', `a${nul}b`)]))).toBe(
+      ImportErrorCode.CONTENT_INVALID,
+    );
+  });
+
+  it('keeps Persian ZWNJ and emoji ZWJ but strips bidi overrides and zero-width spaces', () => {
+    const zwnj = String.fromCodePoint(0x200c);
+    const description = `می${zwnj}خواهم ${String.fromCodePoint(0x202e)}x${String.fromCodePoint(0x200b)}y 👨${String.fromCodePoint(0x200d)}👩`;
+    const { preview } = plugin([file('clawai-plugin.json', { name: 'p', description })]);
+
+    expect(preview.description).toBe(`می${zwnj}خواهم xy 👨${String.fromCodePoint(0x200d)}👩`);
+  });
+
   it('shows RTL, emoji and over-long names safely, without bidi controls', () => {
     const long = 'x'.repeat(500);
     const { preview } = plugin([

@@ -1,4 +1,7 @@
-import { API_CODE_PASSTHROUGH_SERVER_STATUSES } from '@/constants/api.constants';
+import {
+  API_CODE_PASSTHROUGH_SERVER_STATUSES,
+  MULTIPART_FORM_HEADERS,
+} from '@/constants/api.constants';
 import { RETRY_AFTER_HEADER } from '@/constants/rate-limit.constants';
 import { httpClient } from '@/lib/http-client';
 import type { ApiClientDeleteOptions, ApiClientRequestOptions, ApiResponse } from '@/types';
@@ -82,6 +85,9 @@ export const apiClient = {
       const response = await httpClient.post<T>(path, body, {
         timeout: options?.timeout,
         signal: options?.signal,
+        // The client default is JSON, and axios turns a FormData into JSON when it sees that header.
+        // Naming multipart makes it send the form as is; the browser then adds the boundary itself.
+        ...(body instanceof FormData ? { headers: MULTIPART_FORM_HEADERS } : {}),
       });
       return { data: response.data, status: response.status };
     } catch (error) {

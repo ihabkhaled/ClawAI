@@ -1574,6 +1574,7 @@ export class ChatMessagesService implements OnModuleInit {
         payload.namedModelNotice,
       ),
       pluginRefsFor(undefined, latestUserMetadata),
+      { threadId: payload.threadId, messageId: payload.messageId },
     );
   }
 

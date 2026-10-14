@@ -3,12 +3,16 @@ import {
   PLUGIN_IMPORT_ERROR_KEY_GENERIC,
   PLUGIN_IMPORT_ERROR_KEYS,
   PLUGIN_IMPORT_HTTP_PAYLOAD_TOO_LARGE,
+  PLUGIN_IMPORT_MS_PER_SECOND,
+  PLUGIN_IMPORT_RATE_LIMITED_AT_KEY,
   PLUGIN_IMPORT_MAX_UPLOAD_BYTES,
+  PLUGIN_IMPORT_RATE_LIMITED_CODE,
   PLUGIN_IMPORT_REASON_KEYS,
   PLUGIN_IMPORT_UPLOAD_TOO_LARGE_KEY,
   PLUGIN_IMPORT_WARNING_KEYS,
 } from '@/constants/plugin-import.constants';
 import { ApiClientError } from '@/services/shared/api-client';
+import type { PluginsTranslate } from '@/types/plugins.types';
 
 function lookup(
   table: Readonly<Record<string, string>>,
@@ -47,4 +51,36 @@ export function isUploadTooLarge(file: File): boolean {
 
 export function shortCommit(sha: string | null): string {
   return sha === null ? '' : sha.slice(0, PLUGIN_IMPORT_COMMIT_SHORT_LENGTH);
+}
+
+/**
+ * When GitHub lets the import try again, as a clock time in the user's language, for a rate-limited
+ * refusal that carried a `Retry-After`. Undefined for any other failure.
+ */
+export function pluginImportRetryTime(
+  error: unknown,
+  locale: string,
+  nowMs: number = Date.now(),
+): string | undefined {
+  if (
+    !(error instanceof ApiClientError) ||
+    error.code !== PLUGIN_IMPORT_RATE_LIMITED_CODE ||
+    error.retryAfterSeconds === undefined ||
+    error.retryAfterSeconds <= 0
+  ) {
+    return undefined;
+  }
+  const at = new Date(nowMs + error.retryAfterSeconds * PLUGIN_IMPORT_MS_PER_SECOND);
+  return new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(at);
+}
+
+/** The message for a failed import: with the clock time when GitHub said when to come back. */
+export function importErrorText(
+  t: PluginsTranslate,
+  errorKey: string,
+  retryTime: string | undefined,
+): string {
+  return retryTime === undefined
+    ? t(errorKey)
+    : t(PLUGIN_IMPORT_RATE_LIMITED_AT_KEY, { time: retryTime });
 }

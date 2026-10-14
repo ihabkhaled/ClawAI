@@ -197,6 +197,14 @@ describe('plugin import service', () => {
     expect(planGate.resolveInstallCap).not.toHaveBeenCalled();
   });
 
+  it('turns a parser crash into a coded refusal instead of a bare 500', async () => {
+    const { service } = build({ fetched: { files: null, commitSha: SHA, ref: 'main' } });
+
+    await expect(service.previewGithub('user-1', 'owner/repo')).rejects.toMatchObject({
+      importCode: ImportErrorCode.PARSE_FAILED,
+    });
+  });
+
   it.each([
     [ImportInstallOutcome.QUOTA_PLUGINS, ImportErrorCode.QUOTA_PLUGINS],
     [ImportInstallOutcome.QUOTA_BYTES, ImportErrorCode.QUOTA_BYTES],

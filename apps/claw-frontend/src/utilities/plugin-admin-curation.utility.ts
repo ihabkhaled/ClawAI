@@ -13,6 +13,7 @@ import {
 } from '@/constants/plugin-admin-curation.constants';
 import { ApiClientError } from '@/services/shared/api-client';
 import type { CuratedFormValues, CuratedToolDraft } from '@/types/plugin-admin-curation.types';
+import type { PluginsTranslate } from '@/types/plugins.types';
 
 const EMPTY_TEXT: CuratedLocaleText = { name: '', summary: '', description: '' };
 
@@ -164,4 +165,13 @@ export function adminCurationErrorKey(error: unknown): string {
     return ADMIN_CURATION_ERROR_KEYS[error.code] ?? ADMIN_CURATION_ERROR_GENERIC;
   }
   return ADMIN_CURATION_ERROR_GENERIC;
+}
+
+/** An audit action or target code as text in the user's language; an unknown code is shown as it is. */
+export function auditCodeLabel(
+  t: PluginsTranslate,
+  table: Readonly<Record<string, string>>,
+  code: string,
+): string {
+  return Object.hasOwn(table, code) ? t(table[code] ?? code) : code;
 }

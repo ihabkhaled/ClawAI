@@ -346,7 +346,7 @@ export class PluginInvokeService {
     const base = { reason, argsHash: context.argsHash, argsPreview: buildArgsPreview(args) };
     const request =
       this.consentFlow === undefined ? null : await this.consentFlow.open(context, reason, args);
-    return this.response(context, InvokeOutcome.CONSENT_REQUIRED, {
+    const reply = this.response(context, InvokeOutcome.CONSENT_REQUIRED, {
       content: null,
       truncated: false,
       errorCode: null,
@@ -361,6 +361,7 @@ export class PluginInvokeService {
               options: request.options,
             },
     });
+    return request === null ? reply : { ...reply, callId: request.callId };
   }
 
   private response(

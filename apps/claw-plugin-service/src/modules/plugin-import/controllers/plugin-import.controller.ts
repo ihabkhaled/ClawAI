@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Post,
   UploadedFile,
+  UseFilters,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -32,6 +33,8 @@ import {
   type UploadFields,
   uploadFieldsSchema,
 } from '../dto/plugin-import.dto';
+import { PluginImportFilter } from '../filters/plugin-import.filter';
+import { UploadLimitInterceptor } from '../interceptors/upload-limit.interceptor';
 import { PluginImportService } from '../services/plugin-import.service';
 import {
   type ImportedPluginView,
@@ -41,6 +44,7 @@ import {
 
 /** Import a third-party plugin: preview (nothing stored as a plugin), confirm by checksum, list, remove. */
 @Controller('plugins/imports')
+@UseFilters(PluginImportFilter)
 export class PluginImportController {
   constructor(private readonly imports: PluginImportService) {}
 
@@ -61,7 +65,7 @@ export class PluginImportController {
   @Throttle(PREVIEW_THROTTLE)
   @RequirePermissions(Permission.PLUGINS_INSTALL)
   @Header('Cache-Control', IMPORT_CACHE_CONTROL)
-  @UseInterceptors(FileInterceptor(UPLOAD_FIELD, UPLOAD_OPTIONS))
+  @UseInterceptors(UploadLimitInterceptor, FileInterceptor(UPLOAD_FIELD, UPLOAD_OPTIONS))
   previewUpload(
     @CurrentUser() user: AuthenticatedUser,
     @UploadedFile() file: UploadedArchive | undefined,

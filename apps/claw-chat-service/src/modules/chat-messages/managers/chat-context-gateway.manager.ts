@@ -110,6 +110,7 @@ export class ChatContextGatewayManager {
           platformSurface: request.surface,
         },
         pluginRefs,
+        request.threadId === null ? undefined : { threadId: request.threadId },
       ),
       thread,
       threadSettings,
