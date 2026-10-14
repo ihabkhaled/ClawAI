@@ -6,6 +6,7 @@ import { NarrationKind } from '@/enums/narration-kind.enum';
 
 vi.mock('@/lib/i18n', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
+vi.mock('@/components/chat/plugin-consent-prompts', () => ({ PluginConsentPrompts: () => null }));
 vi.mock('@/components/chat/runtime-progress', () => ({
   RuntimeProgressPanel: ({ streamError }: { streamError?: string | null }) => (
     <div data-testid="runtime-progress-panel">{streamError}</div>

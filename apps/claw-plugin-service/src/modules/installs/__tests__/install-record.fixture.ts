@@ -74,6 +74,7 @@ export function buildInstallEntry(
     status: CatalogStatus.PUBLISHED,
     globallyEnabled: true,
     currentVersionId: `version-${manifest.slug}`,
+    allowedPlanSlugs: [],
     versions: [{ id: `version-${manifest.slug}`, version: manifest.version, manifest }],
     ...overrides,
   };

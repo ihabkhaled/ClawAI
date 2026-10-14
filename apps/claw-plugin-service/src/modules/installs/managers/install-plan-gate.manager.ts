@@ -26,11 +26,26 @@ export class InstallPlanGateManager {
 
   constructor(@Inject(ENTITLEMENTS_ADAPTER) private readonly entitlements: EntitlementsAdapter) {}
 
-  async resolveInstallCap(userId: string): Promise<number | null> {
+  /** `allowedPlanSlugs` is the entry's per-plan gate: empty means every plan. An admin always passes. */
+  async resolveInstallCap(
+    userId: string,
+    allowedPlanSlugs: readonly string[] = [],
+  ): Promise<number | null> {
     const ent = await this.load(userId);
     if (!hasPlanFeature(ent, 'allowPlugins')) {
       throw new ForbiddenException({
         message: 'Plugins are not available on your plan',
+        errorCode: PluginErrorCode.PLAN_DISABLED,
+      });
+    }
+    const planSlug = ent.plan?.slug ?? null;
+    if (
+      allowedPlanSlugs.length > 0 &&
+      !ent.isAdmin &&
+      (planSlug === null || !allowedPlanSlugs.includes(planSlug))
+    ) {
+      throw new ForbiddenException({
+        message: 'This plugin is not part of your plan',
         errorCode: PluginErrorCode.PLAN_DISABLED,
       });
     }

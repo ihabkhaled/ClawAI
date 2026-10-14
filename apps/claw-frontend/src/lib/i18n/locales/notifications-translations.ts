@@ -56,6 +56,14 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: '{actorName} suggested a change to your Thread',
         body: '@{actorUsername} wrote: {excerpt}',
       },
+      MCP_SERVER_APPROVED: {
+        title: 'Your MCP server was approved',
+        body: 'It is ready to use in chat.',
+      },
+      MCP_SERVER_REJECTED: {
+        title: 'Your MCP server was not approved',
+        body: 'Reason: {excerpt}',
+      },
     },
     preferences: {
       title: 'Notifications',
@@ -120,6 +128,14 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: 'اقترح {actorName} تعديلاً على Thread الخاص بك',
         body: '@{actorUsername} كتب: {excerpt}',
       },
+      MCP_SERVER_APPROVED: {
+        title: 'تمت الموافقة على خادم MCP الخاص بك',
+        body: 'جاهز للاستخدام في المحادثة.',
+      },
+      MCP_SERVER_REJECTED: {
+        title: 'لم تتم الموافقة على خادم MCP الخاص بك',
+        body: 'السبب: {excerpt}',
+      },
     },
     preferences: {
       title: 'الإشعارات',
@@ -183,6 +199,14 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       THREAD_CHANGE_REQUESTED: {
         title: '{actorName} a suggéré une modification de votre Thread',
         body: '@{actorUsername} a écrit : {excerpt}',
+      },
+      MCP_SERVER_APPROVED: {
+        title: 'Votre serveur MCP a été approuvé',
+        body: 'Il est prêt à être utilisé dans le chat.',
+      },
+      MCP_SERVER_REJECTED: {
+        title: "Votre serveur MCP n'a pas été approuvé",
+        body: 'Raison : {excerpt}',
       },
     },
     preferences: {
@@ -249,6 +273,14 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: '{actorName} ha suggerito una modifica al tuo Thread',
         body: '@{actorUsername} ha scritto: {excerpt}',
       },
+      MCP_SERVER_APPROVED: {
+        title: 'Il tuo server MCP è stato approvato',
+        body: "È pronto all'uso in chat.",
+      },
+      MCP_SERVER_REJECTED: {
+        title: 'Il tuo server MCP non è stato approvato',
+        body: 'Motivo: {excerpt}',
+      },
     },
     preferences: {
       title: 'Notifiche',
@@ -313,6 +345,14 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       THREAD_CHANGE_REQUESTED: {
         title: '{actorName} hat eine Änderung an deinem Thread vorgeschlagen',
         body: '@{actorUsername} schrieb: {excerpt}',
+      },
+      MCP_SERVER_APPROVED: {
+        title: 'Ihr MCP-Server wurde genehmigt',
+        body: 'Er ist im Chat einsatzbereit.',
+      },
+      MCP_SERVER_REJECTED: {
+        title: 'Ihr MCP-Server wurde nicht genehmigt',
+        body: 'Grund: {excerpt}',
       },
     },
     preferences: {
@@ -380,6 +420,14 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: '{actorName} sugirió un cambio en tu Thread',
         body: '@{actorUsername} escribió: {excerpt}',
       },
+      MCP_SERVER_APPROVED: {
+        title: 'Tu servidor MCP fue aprobado',
+        body: 'Ya está listo para usar en el chat.',
+      },
+      MCP_SERVER_REJECTED: {
+        title: 'Tu servidor MCP no fue aprobado',
+        body: 'Motivo: {excerpt}',
+      },
     },
     preferences: {
       title: 'Notificaciones',
@@ -444,6 +492,14 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       THREAD_CHANGE_REQUESTED: {
         title: '{actorName} sugeriu uma alteração ao seu Thread',
         body: '@{actorUsername} escreveu: {excerpt}',
+      },
+      MCP_SERVER_APPROVED: {
+        title: 'O seu servidor MCP foi aprovado',
+        body: 'Já está pronto a usar no chat.',
+      },
+      MCP_SERVER_REJECTED: {
+        title: 'O seu servidor MCP não foi aprovado',
+        body: 'Motivo: {excerpt}',
       },
     },
     preferences: {
@@ -510,6 +566,14 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: '{actorName} предложил(а) изменение в вашем Thread',
         body: '@{actorUsername} написал(а): {excerpt}',
       },
+      MCP_SERVER_APPROVED: {
+        title: 'Ваш MCP-сервер одобрен',
+        body: 'Его можно использовать в чате.',
+      },
+      MCP_SERVER_REJECTED: {
+        title: 'Ваш MCP-сервер не одобрен',
+        body: 'Причина: {excerpt}',
+      },
     },
     preferences: {
       title: 'Уведомления',
@@ -574,6 +638,14 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: '{actorName} 建议修改你的 Thread',
         body: '@{actorUsername} 写道：{excerpt}',
       },
+      MCP_SERVER_APPROVED: {
+        title: '你的 MCP 服务器已获批准',
+        body: '现在可以在聊天中使用。',
+      },
+      MCP_SERVER_REJECTED: {
+        title: '你的 MCP 服务器未获批准',
+        body: '原因：{excerpt}',
+      },
     },
     preferences: {
       title: '通知',
@@ -636,6 +708,14 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       THREAD_CHANGE_REQUESTED: {
         title: '{actorName} さんがあなたの Thread への変更を提案しました',
         body: '@{actorUsername} さんの投稿: {excerpt}',
+      },
+      MCP_SERVER_APPROVED: {
+        title: 'MCP サーバーが承認されました',
+        body: 'チャットで使えます。',
+      },
+      MCP_SERVER_REJECTED: {
+        title: 'MCP サーバーは承認されませんでした',
+        body: '理由: {excerpt}',
       },
     },
     preferences: {
@@ -701,6 +781,14 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: '{actorName} ने आपके Thread में बदलाव सुझाया',
         body: '@{actorUsername} ने लिखा: {excerpt}',
       },
+      MCP_SERVER_APPROVED: {
+        title: 'आपका MCP सर्वर स्वीकृत हो गया',
+        body: 'यह चैट में इस्तेमाल के लिए तैयार है।',
+      },
+      MCP_SERVER_REJECTED: {
+        title: 'आपका MCP सर्वर स्वीकृत नहीं हुआ',
+        body: 'कारण: {excerpt}',
+      },
     },
     preferences: {
       title: 'सूचनाएँ',
@@ -765,6 +853,14 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: '{actorName} เสนอการแก้ไข Thread ของคุณ',
         body: '@{actorUsername} เขียนว่า: {excerpt}',
       },
+      MCP_SERVER_APPROVED: {
+        title: 'เซิร์ฟเวอร์ MCP ของคุณได้รับการอนุมัติแล้ว',
+        body: 'พร้อมใช้งานในแชทแล้ว',
+      },
+      MCP_SERVER_REJECTED: {
+        title: 'เซิร์ฟเวอร์ MCP ของคุณไม่ได้รับการอนุมัติ',
+        body: 'เหตุผล: {excerpt}',
+      },
     },
     preferences: {
       title: 'การแจ้งเตือน',
@@ -828,6 +924,14 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       THREAD_CHANGE_REQUESTED: {
         title: '{actorName} تغییری را برای Thread شما پیشنهاد کرد',
         body: '@{actorUsername} نوشت: {excerpt}',
+      },
+      MCP_SERVER_APPROVED: {
+        title: 'سرور MCP شما تأیید شد',
+        body: 'در گفتگو آماده استفاده است.',
+      },
+      MCP_SERVER_REJECTED: {
+        title: 'سرور MCP شما تأیید نشد',
+        body: 'دلیل: {excerpt}',
       },
     },
     preferences: {

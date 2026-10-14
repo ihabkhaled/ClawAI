@@ -3,4 +3,5 @@ export enum PluginsNavTab {
   Discover = 'discover',
   Installed = 'installed',
   Servers = 'servers',
+  Import = 'import',
 }

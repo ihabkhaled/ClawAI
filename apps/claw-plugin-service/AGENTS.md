@@ -22,9 +22,9 @@ change type needs (`rules/23-git-commits-hooks-and-release-gates.md`, gate matri
 ## Ownership (generated)
 - Port: 4021
 - Database: postgresql
-- Prisma models: McpServer, McpServerCredential, McpServerTool, PluginCatalogEntry, PluginCredential, PluginInstall, PluginInvocation, PluginSetting, PluginTool, PluginToolConsent, PluginVersion
-- API endpoints: 30 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 67 (vitest)
+- Prisma models: ImportedPlugin, ImportedPluginFile, McpServer, McpServerCredential, McpServerTool, PluginAdminAudit, PluginCatalogEntry, PluginChatConsent, PluginConsentRequest, PluginCredential, PluginHostRule, PluginImportAudit, PluginImportDraft, PluginInstall, PluginInvocation, PluginSetting, PluginTool, PluginToolConsent, PluginVersion
+- API endpoints: 59 (see `.ai/manifests/api-endpoints.json`)
+- Test files: 89 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

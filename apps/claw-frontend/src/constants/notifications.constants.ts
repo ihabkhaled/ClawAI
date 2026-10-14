@@ -64,4 +64,12 @@ export const NOTIFICATION_TEXT_KEYS: Readonly<
     titleKey: 'notifications.kinds.THREAD_CHANGE_REQUESTED.title',
     bodyKey: 'notifications.kinds.THREAD_CHANGE_REQUESTED.body',
   },
+  [UserNotificationKind.MCP_SERVER_APPROVED]: {
+    titleKey: 'notifications.kinds.MCP_SERVER_APPROVED.title',
+    bodyKey: 'notifications.kinds.MCP_SERVER_APPROVED.body',
+  },
+  [UserNotificationKind.MCP_SERVER_REJECTED]: {
+    titleKey: 'notifications.kinds.MCP_SERVER_REJECTED.title',
+    bodyKey: 'notifications.kinds.MCP_SERVER_REJECTED.body',
+  },
 };

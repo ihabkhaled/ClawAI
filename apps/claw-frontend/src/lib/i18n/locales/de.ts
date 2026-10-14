@@ -14,7 +14,11 @@ import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-tr
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { PLUGIN_CHAT_TRANSLATIONS } from './plugin-chat-translations';
+import { PLUGIN_CONSENT_TRANSLATIONS } from './plugin-consent-translations';
+import { PLUGIN_IMPORT_TRANSLATIONS } from './plugin-import-translations';
+import { PLUGIN_OWN_SERVERS_TRANSLATIONS } from './plugin-own-servers-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
+import { PLUGINS_ADMIN_CATALOG_TRANSLATIONS } from './plugins-admin-catalog-translations';
 import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
 import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
@@ -30,9 +34,12 @@ import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const de: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.de,
+  pluginsAdminCatalog: PLUGINS_ADMIN_CATALOG_TRANSLATIONS.de,
   pluginChat: PLUGIN_CHAT_TRANSLATIONS.de,
+  pluginConsent: PLUGIN_CONSENT_TRANSLATIONS.de,
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.de,
   pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.de,
+  pluginImport: PLUGIN_IMPORT_TRANSLATIONS.de,
   pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.de,
   pagination: {
     label: 'Seitennummerierung',
@@ -474,6 +481,7 @@ export const de: TranslationDictionary = {
     ...THREAD_PUBLIC_BOARD_TRANSLATIONS.de,
     ...THREAD_COMMUNITY_TRANSLATIONS.de,
     ...THREAD_FIXES_TRANSLATIONS.de,
+    ...PLUGIN_OWN_SERVERS_TRANSLATIONS.de,
     composerContext: {
       menuLabel: 'Kontext',
       pickLabel: 'Kontextpakete auswählen',

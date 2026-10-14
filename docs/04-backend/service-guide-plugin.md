@@ -54,7 +54,17 @@ route, the tool loop and the composer) is batch 4.
 chat-service calls these two routes through `PluginInvokePort` (`apps/claw-chat-service/.../clients/plugin-invoke.client.ts`, schema-checked, fails soft). They are built (`PluginInternalController`). Both carry the service credential (`Authorization: Service <token>`, checked by `ServiceTokenGuard` in constant time; the routes are `@Public()` to the user guards) and the owner's `userId` in the body; every lookup is scoped by it. The plan gate (`allowPlugins`) applies exactly as on the user route; the `PLUGINS_USE` role permission does not, because there is no JWT here.
 
 - `POST /api/v1/internal/plugins/resolve {userId, surface, refs: [{installId, toolName?, label?}]}` (at most 5 refs) answers `{tools: [{nativeName, installId, pluginSlug, toolName, title, description, inputSchema, riskLevel}], systemBlock, limits: {maxRounds, maxCallsPerTurn}, notices: [{code}]}`. It returns only tools of installs the caller owns that are ENABLED and available, not admin-disabled, and only the picked tool when a chip names one. `nativeName` is `plugin_<slug>_<tool>` (<= 64). `limits` come from `loop.maxRounds` and `loop.maxCallsPerTurn` (chat-service clamps them again). A plan without plugins, or nothing usable, answers `tools: []` with the notice `PLUGIN_NO_TOOLS`; a plan that cannot be read answers 503 and chat-service answers without tools. Own MCP servers are not offered by resolve yet (the chat `@` picker lists installs only); they are callable through invoke by `serverId`.
-- `POST /api/v1/internal/plugins/invoke` takes the user route's body (see above) plus `userId`. chat-service sends `{userId, installId, toolName, args, callId, surface, tainted, conversationId?, messageId?}`: `callId` is minted per attempt as `chat-<uuid>`, `surface` goes out lower case (`best_of_n`), and empty ids are omitted. The answer is the user route's 200 body; chat-service reads `status` (`OK|ERROR|TIMEOUT|CONSENT_REQUIRED|BLOCKED|RATE_LIMITED|QUOTA_EXCEEDED`), `content`, `truncated`, `durationMs` and `errorCode` (nulls are accepted) and, for an HTTP refusal (403 plan, 409 duplicate, 503 quota unavailable), the `errorCode` of the error body. A WRITE or DESTRUCTIVE tool, or any non-READ tool when `tainted`, answers `CONSENT_REQUIRED` until chat has a consent card (chat-service then tells the model it was not approved). `content` is untrusted text: chat-service fences, sanitises and caps it again.
+- `POST /api/v1/internal/plugins/invoke` takes the user route's body (see above) plus `userId`. chat-service sends `{userId, installId, toolName, args, callId, surface, tainted, conversationId?, messageId?}`: `callId` is minted per attempt as `chat-<uuid>`, `surface` goes out lower case (`best_of_n`), and empty ids are omitted. The answer is the user route's 200 body; chat-service reads `status` (`OK|ERROR|TIMEOUT|CONSENT_REQUIRED|BLOCKED|RATE_LIMITED|QUOTA_EXCEEDED`), `content`, `truncated`, `durationMs` and `errorCode` (nulls are accepted) and, for an HTTP refusal (403 plan, 409 duplicate, 503 quota unavailable), the `errorCode` of the error body. A WRITE or DESTRUCTIVE tool, or any non-READ tool when `tainted`, answers `CONSENT_REQUIRED` with an open consent request (see [The in-chat consent card](#the-in-chat-consent-card-adr-185)); chat-service parks the turn on it and resumes the same call after a yes, or tells the model the user declined. `content` is untrusted text: chat-service fences, sanitises and caps it again.
+
+### Own MCP servers in chat (ADR-184)
+
+A ref's `installId` that is not one of the caller's installs is tried as the id of one of the caller's own MCP servers (`where { id, ownerUserId }`; another user's id reads as unknown). The tools offered are the owner-approved snapshot stored with the server, so `resolve` never contacts the server: only `APPROVED` servers with a closed breaker, only enabled tools, local name `[a-z0-9_]{1,40}`, native name `plugin_<slug>_<tool>` (<= 64), an object input schema, at most 100 tools per message. Description and server name are cleaned again before the model sees them (invisible and bidi characters out, line breaks folded, description cut to 300). Risk is the stored risk (WRITE by default). The read is cached in memory per `userId:serverId` for 30 s (500 entries, no negative caching) and the whole lookup has a 2 s deadline.
+
+Notices added to `notices[]` (shown by the frontend as `chat.pluginOwnServerUnavailable` / `chat.pluginOwnServerNeedsReview`, 13 locales): `PLUGIN_SERVER_NEEDS_REVIEW` (tools changed, owner must approve), `PLUGIN_SERVER_UNAVAILABLE` (unreachable, breaker open, lookup failed or slow; carries `pluginSlug` when a server is known). A `DISABLED`, pending or rejected server is skipped silently. `POST /internal/plugins/invoke` accepts the same id in `installId` (install first, then the caller's server, else 404 `TARGET_NOT_FOUND`); everything after target resolution is the ordinary server path (consent, limits, quota hold, breaker, fence, audit).
+
+| Route                                          | Body | Answer                                                                                                                                                                                                                                                                  |
+| ---------------------------------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/plugins/mentions` (`PLUGINS_USE`) |      | `[{installId, slug, name, iconKey, enabled}]`: installed plugins, then the caller's own servers (`iconKey: mcp-server`; `enabled` false when disabled, in review, rejected or breaker open). A failure reading servers returns the installs alone. `private, no-store`. |
 
 ## Catalog API
 
@@ -137,6 +147,48 @@ Setting ranges: `loop.maxRounds` 1-10, `loop.maxCallsPerTurn` 1-20, `call.timeou
 `rate.perUserConcurrent` 1-20; the three `userServers.*` keys are booleans. A globally disabled plugin disappears
 from the catalog for everyone and its installs read `UNAVAILABLE`.
 
+## Admin curation (ADR-187)
+
+`PLUGINS_ADMIN` only, under `/api/v1/plugins/admin`; the acting admin always comes from the JWT. Module `modules/admin-curation`
+(controllers, services, managers, repositories) plus the leaf module `modules/host-rules` that the user-server code imports.
+Outbound calls (`preview`, `health-check`, publishing) are rate limited to 20 per minute per caller. Responses are `private, no-store`.
+
+| Method and path                                                    | Body                                                                                                                                                | Response                                                                                                              |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `GET /plugins/admin/curated`                                       | `?includeDeleted=true`                                                                                                                              | curated entries with URL, transport, auth, health, tools, texts                                                       |
+| `GET /plugins/admin/curated/:slug`                                 |                                                                                                                                                     | one entry                                                                                                             |
+| `POST /plugins/admin/curated/preview`                              | `{url, transport, auth, credential?}`                                                                                                               | `{serverName, latencyMs, tools[{name, description, inputSchema, defaultRisk: WRITE, curatable}], skipped[], ignored}` |
+| `POST /plugins/admin/curated`                                      | `{slug, publisher, category, iconKey, homepageUrl?, translations, server, auth, tools[], allowedPlanSlugs, adminNotes?, publish, probeCredential?}` | `201` the entry; `publish` probes the server first                                                                    |
+| `PUT /plugins/admin/curated/:slug`                                 | the same without `slug`                                                                                                                             | the entry; a changed manifest adds a patch version                                                                    |
+| `PATCH /plugins/admin/curated/:slug/state`                         | `{enabled}`                                                                                                                                         | the entry; switching a draft or unverified entry on is `409`                                                          |
+| `POST /plugins/admin/curated/:slug/health-check`                   |                                                                                                                                                     | the entry with `health {status, latencyMs, checkedAt, errorCode}`                                                     |
+| `DELETE /plugins/admin/curated/:slug`                              |                                                                                                                                                     | `204`; soft delete                                                                                                    |
+| `GET /plugins/admin/servers`                                       | `?status=PENDING_APPROVAL` (default)                                                                                                                | users' servers: submitter id, host, path, tools with risk, highest risk                                               |
+| `GET /plugins/admin/servers/:id`                                   |                                                                                                                                                     | one server                                                                                                            |
+| `POST /plugins/admin/servers/:id/approve`                          |                                                                                                                                                     | the server; only from `PENDING_APPROVAL`                                                                              |
+| `POST /plugins/admin/servers/:id/reject`                           | `{reason}` (1-200 characters, one line)                                                                                                             | the server; from `PENDING_APPROVAL`, `NEEDS_REVIEW` or `APPROVED`                                                     |
+| `GET/POST /plugins/admin/rules`, `DELETE /plugins/admin/rules/:id` | `{kind: ALLOW\|DENY, match: HOST\|PUBLISHER\|SLUG, pattern, note?}`                                                                                 | rules; a duplicate is `409`                                                                                           |
+| `GET /plugins/admin/audit`                                         | `?limit=1..100&targetType=`                                                                                                                         | newest first: `{actorId, action, targetType, targetId, summary}`                                                      |
+
+Errors carry `errorCode`: `PLUGIN_CURATION_SLUG_TAKEN` (409), `_NOT_CURATED` (409, a first-party entry), `_NOT_FOUND` (404), `_MANIFEST_INVALID`
+(422, with `errors[]`), `_URL_BLOCKED` (422), `_HOST_DENIED` (403, a rule; also on user registration), `_PROBE_FAILED` (502, with `reason`),
+`_TOOLS_UNVERIFIED` (422, with `missing[]`), `_OAUTH_UNSUPPORTED` (422), `_NEEDS_VERIFICATION` (409), `_SERVER_NOT_PENDING` (409), `_RULE_EXISTS` (409),
+`_RULE_INVALID`.
+
+- A curated tool is called by its manifest name, so a publishable tool name matches `[a-z0-9_]{1,40}`; the preview marks others `curatable: false`.
+- Publishing replaces each tool's description and input schema with the server's own and keeps the admin's risk. An edit keeps the tool disables of the
+  previous version. Soft delete sets `deleted_at`, status `HIDDEN`, off and not featured.
+- Per-plan gating: `allowedPlanSlugs` on the entry (empty = every plan) is checked at install in `InstallPlanGateManager.resolveInstallCap`.
+- Rules: DENY wins; any ALLOW rule of a type makes it an allow-list; HOST covers the host and its subdomains. Enforced by `HostRulePolicyManager` on user registration,
+  approval, and every curated preview, save and health check. They do not stop calls to an already approved server.
+- Approve and reject send `MCP_SERVER_APPROVED` / `MCP_SERVER_REJECTED` through `user.notification_requested` (params `title`, `excerpt`); the dedupe key includes the decision time.
+- Tables (migration `20261015120000_plugins_admin_catalog`, additive and idempotent): `plugin_host_rules`, `plugin_admin_audit`, and columns on `plugin_catalog_entries`
+  (`deleted_at`, `admin_notes`, `needs_verification`, `allowed_plan_slugs`, `health_*`) and `mcp_servers` (`decided_by`, `decided_at`, `decision_reason`).
+- The curated seed (`CuratedSeederService`, 13 entries from `INTEGRATION-CATALOG.md`) creates disabled drafts that need verification, once per slug, and never rewrites one. Only the Context7
+  and DeepWiki URLs are in the repo docs (marked "verify"); the others use the placeholder host `verify-url.example.com`.
+
+Runbook: [runbook-plugin-admin](../11-runbooks/runbook-plugin-admin.md).
+
 ## MCP servers API (batch 3)
 
 A user's own remote MCP servers ([ADR-179](../13-adr/adr-179-user-mcp-servers-are-ssrf-guarded-and-consent-gated.md)).
@@ -166,7 +218,7 @@ Tool view (in `tools[]`): `{name, nativeName, remoteName, description, inputSche
 `name` is the local name (`[a-z0-9_]{1,40}`) used by the API; `nativeName` is `plugin_<slug>_<name>` (the slug is `mcp` plus 12 hex
 characters of the id), what the model is offered; `remoteName` is the server's own name for it.
 `status` is `APPROVED` (usable), `PENDING_APPROVAL` (the admin setting `userServers.requireApproval` is on), `NEEDS_REVIEW`
-(the tool list changed), `DISABLED` (the owner switched it off), `REJECTED` or `UNREACHABLE` (reserved for the admin routes).
+(the tool list changed), `DISABLED` (the owner switched it off), `REJECTED` (an admin rejected it, with a reason) or `UNREACHABLE`. Admins decide `PENDING_APPROVAL` servers in the queue ([Admin curation](#admin-curation-adr-187)).
 `lastErrorCode` is `MCP_SERVER_UNREACHABLE` or `MCP_SERVER_REJECTED`, never a detail.
 
 - Registering resolves and checks the URL, performs `initialize` and the tool-list call (tools/list), vets the tools and stores everything in one
@@ -251,6 +303,23 @@ Limits the chat loop respects come from the `PluginSetting` rows (`loop.maxRound
 `resolve` route above; `call.timeoutMs`, `call.maxResultBytes`, `rate.perUserPerMinute` and `rate.perUserConcurrent` are enforced here on every call.
 chat-service reaches the runtime through `POST /api/v1/internal/plugins/invoke` (service token, `userId` in the body), not through this JWT route.
 
+## The in-chat consent card (ADR-185)
+
+[ADR-185](../13-adr/adr-185-the-in-chat-consent-card-parks-the-turn-on-a-stored-argument-bound-request.md). A non-READ call that needs a yes stores a consent request and answers `CONSENT_REQUIRED` with `consent: {reason, argsHash, argsPreview, requestId, expiresAt, options: {allowChat, always, alwaysNeedsConfirmation}}`. Requests live 120 s. All user routes need `PLUGINS_USE`, answer `private, no-store`, and look rows up by `(id, JWT user)`: another user's id is `404 PLUGIN_CONSENT_REQUEST_NOT_FOUND`.
+
+| Route                                                     | Body                                                                        | Answer                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| --------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /api/v1/plugins/consent-requests?conversationId=`    |                                                                             | open (pending, not lapsed) requests of the caller, oldest first, <= 20; how the card returns after a reload                                                                                                                                                                                                                                                                                                                    |
+| `GET /api/v1/plugins/consent-requests/:id`                |                                                                             | the request view (never the call id or the hash)                                                                                                                                                                                                                                                                                                                                                                               |
+| `POST /api/v1/plugins/consent-requests/:id/decision`      | `{choice: ALLOW_ONCE\|ALLOW_CHAT\|ALWAYS_ALLOW\|DENY, confirmDestructive?}` | the request view. Same choice again `200`; a different choice on a decided request `409 PLUGIN_CONSENT_REQUEST_ALREADY_DECIDED`; lapsed `410 PLUGIN_CONSENT_REQUEST_EXPIRED`; `400 PLUGIN_CONSENT_SCOPE_NOT_ALLOWED` (chat grant for a DESTRUCTIVE tool or without a conversation, always for an own-server DESTRUCTIVE tool); `400 PLUGIN_CONSENT_CONFIRMATION_REQUIRED` (always on DESTRUCTIVE without `confirmDestructive`) |
+| `GET /api/v1/plugins/chat-grants`                         |                                                                             | active "Allow for this chat" grants `{id, conversationId, pluginSlug, toolName, riskLevel, grantedAt, expiresAt}`                                                                                                                                                                                                                                                                                                              |
+| `DELETE /api/v1/plugins/chat-grants/:id`                  |                                                                             | `204`; `404 PLUGIN_CHAT_GRANT_NOT_FOUND` for another user's id                                                                                                                                                                                                                                                                                                                                                                 |
+| `POST /api/v1/internal/plugins/consent-requests/:id/wait` | `{userId, waitMs <= 20000}`                                                 | the request view when it is no longer pending or `waitMs` passed (status `PENDING` then); service token only                                                                                                                                                                                                                                                                                                                   |
+
+Resuming: `POST /plugins/invoke` and `/internal/plugins/invoke` accept `consentRequestId` (uuid). The approval is spent by one conditional update bound to user, `callId`, tool, target, argument hash, `APPROVED`, unspent and not lapsed. A request that was denied or lapsed (same call id and arguments) refuses the call as `BLOCKED` with `PLUGIN_CONSENT_DENIED` / `PLUGIN_CONSENT_EXPIRED`; any other mismatch (not found, other user, changed arguments, already spent) simply does not count, so the gate asks again. `ALLOW_CHAT` grants (WRITE only, 24 h) count in the gate unless the turn is tainted; a confirmed DESTRUCTIVE `ALWAYS_ALLOW` (`plugin_tool_consents.confirmed_destructive`) lets a DESTRUCTIVE catalog tool skip the ask, again unless tainted.
+
+chat-service side: `PluginConsentPort` (`PluginConsentClient`) waits; `PluginToolLoopManager` emits the `plugin_consent_requested` / `plugin_consent_resolved` stream frames (`pluginConsent` payload), waits in 20 s slices to the request deadline (ceiling 150 s, at most 10 waits), resumes with the same call id on `APPROVED`, and otherwise gives the model a clear "declined" or "no answer" result. Frontend: `PluginConsentPrompts` in the chat footer, `pluginConsent.*` strings, grants list on the Installed page.
+
 ## The egress guard
 
 Everything that reaches a host a user or a manifest named goes through `SafeEgressManager`
@@ -270,6 +339,26 @@ Everything that reaches a host a user or a manifest named goes through `SafeEgre
 - Per-call defaults come from `PluginSetting` (`call.timeoutMs` 30 s, `call.maxResultBytes` 256 KB); a tool's own manifest
   limits apply when lower. A server's tool list is capped at 512 KB, 64 tools, 16 KB per schema and 1024 characters per description.
 
+## Plugin import (ADR-186)
+
+Routes under `/api/v1/plugins/imports` (module `plugin-import`). Writes need `PLUGINS_INSTALL`, reads `PLUGINS_USE`; the plan gate (`allowPlugins`) applies to previews and confirm; every row is scoped by the JWT user. Responses are `private, no-store`.
+
+| Route                    | Body                                                                                                 | Answer                                                                       |
+| ------------------------ | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `POST /preview/github`   | `{ source, subdir? }` (`owner/repo[/folder][@ref]` or a github.com / raw.githubusercontent.com link) | `{ kind: 'PLUGIN', draft }` or `{ kind: 'MARKETPLACE', name, candidates[] }` |
+| `POST /preview/upload`   | multipart `file` (`.zip` / `.tgz`, 5 MB) + optional `subdir`                                         | same                                                                         |
+| `POST /:draftId/confirm` | `{ checksum, acknowledged: true }`                                                                   | `201` the imported plugin                                                    |
+| `GET /`, `GET /:id`      |                                                                                                      | the user's imported plugins                                                  |
+| `DELETE /:id`            |                                                                                                      | `204`                                                                        |
+
+A `draft` carries `draftId`, `checksum`, `source { kind, ref, commitSha }`, `expiresAt` (30 minutes) and the `preview`: format (`CLAUDE` / `CLAWAI` / `BARE`), name, version, description, author, license, `components[]` (`kind`, `name`, `support` = `USABLE` / `STORED_INERT` / `NOT_SUPPORTED`, `reasonKey`, `url`), `risk`, `warnings[]` (stable keys), file counts. Previews are throttled to 10 a minute.
+
+Limits (`constants/plugin-import.constants.ts`): upload 5 MB; 500 entries; 1 MB an entry; 10 MB unpacked; ratio 100; path depth 12; manifest 256 KB and 16 levels; 100 components a kind; GitHub: 150 files, 5 MB, 10 s a request, 45 s overall, 170 requests; per user 20 plugins, 20 MB, 5 drafts.
+
+Error codes (`PLUGIN_IMPORT_*`, in `errorCode`): `SOURCE_INVALID`, `SOURCE_UNREACHABLE` (502), `SOURCE_NOT_FOUND` (404), `SOURCE_RATE_LIMITED` (503), `UPLOAD_MISSING`, `UPLOAD_TOO_LARGE` (413), `ARCHIVE_UNSUPPORTED`, `ARCHIVE_CORRUPT`, `ARCHIVE_TOO_MANY_ENTRIES`, `ARCHIVE_TOO_LARGE_UNPACKED`, `ARCHIVE_BOMB`, `ARCHIVE_ENCRYPTED`, `PATH_UNSAFE`, `PATH_TOO_DEEP`, `SYMLINK_REJECTED`, `DUPLICATE_ENTRY`, `NON_UTF8`, `MANIFEST_INVALID`, `MANIFEST_TOO_LARGE`, `MANIFEST_TOO_DEEP`, `MANIFEST_FORBIDDEN_KEY`, `NO_PLUGIN_FOUND` (all 422), `DRAFT_NOT_FOUND` / `NOT_FOUND` (404), `CHECKSUM_MISMATCH` / `DUPLICATE_PLUGIN` (409), `QUOTA_PLUGINS` / `QUOTA_BYTES` (403).
+
+Tables (migration `20261015130000_plugins_import`): `plugin_import_drafts`, `imported_plugins` (unique per `user_id` + `name_key`), `imported_plugin_files` (cascade), `plugin_import_audit`. `user.deleted` removes all four. Supported formats for users: [plugin-import-supported-formats](../02-business-product/plugin-import-supported-formats.md).
+
 ## Account deletion
 
 The service subscribes to `user.deleted` (queue prefix `claw.plugins`) and deletes the user's credentials, consents,
@@ -286,7 +375,7 @@ the arguments or the result). Batch 3 adds (migration `20261014180000_mcp_server
 `mcp_servers` (unique `(owner_user_id, url)`, the circuit-breaker columns), `mcp_server_tools` (the approved snapshot, with
 `risk_level` default WRITE and `consent_granted`), `mcp_server_credentials` (one per server, ciphertext only), and on
 `plugin_invocations` the columns `server_id` and `call_id` (unique with `user_id`) and nullable `install_id` / `plugin_id`.
-OAuth state and host rules arrive later.
+The in-chat consent card adds (migration `20261015110000_plugins_consent_card`, additive and idempotent) `plugin_consent_requests` (unique `(user_id, call_id)`; redacted preview, argument hash, status, choice, deadline), `plugin_chat_consents` (unique `(user_id, conversation_id, target_key, tool_name)`) and `plugin_tool_consents.confirmed_destructive`. OAuth state and host rules arrive later.
 
 - The three first-party manifests live in `src/modules/seeding/constants/manifests/` (typed TypeScript, validated
   by the schema at seed time) and are upserted on every boot by slug and version. A new entry is created
@@ -332,6 +421,7 @@ is wired is [skills/add-a-new-service.md](../../skills/add-a-new-service.md).
 ## References
 
 - Design: [plugins-and-mcp-design](../implementation/plugins-and-mcp-design.md)
-- Decisions: [ADR-171](../13-adr/adr-171-plugins-are-a-separate-service-with-a-curated-catalog.md), [ADR-172](../13-adr/adr-172-plugin-installs-consent-and-credentials.md), [ADR-179](../13-adr/adr-179-user-mcp-servers-are-ssrf-guarded-and-consent-gated.md)
+- Decisions: [ADR-171](../13-adr/adr-171-plugins-are-a-separate-service-with-a-curated-catalog.md), [ADR-172](../13-adr/adr-172-plugin-installs-consent-and-credentials.md), [ADR-179](../13-adr/adr-179-user-mcp-servers-are-ssrf-guarded-and-consent-gated.md), [ADR-185](../13-adr/adr-185-the-in-chat-consent-card-parks-the-turn-on-a-stored-argument-bound-request.md)
+- Runbook: [runbook-plugin-admin](../11-runbooks/runbook-plugin-admin.md) (ADR-187)
 - Runbooks: [add-a-catalog-plugin](../../skills/add-a-catalog-plugin.md), [register-an-mcp-server-safely](../../skills/register-an-mcp-server-safely.md)
 - Service rules: [apps/claw-plugin-service/CLAUDE.md](../../apps/claw-plugin-service/CLAUDE.md)

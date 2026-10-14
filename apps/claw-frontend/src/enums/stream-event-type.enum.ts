@@ -26,4 +26,6 @@ export enum StreamEventType {
   PAYG_CREDIT_CLAMPED = 'payg_credit_clamped',
   // One line of the turn's narrated work log (plan, crawl, search, back to the AI).
   NARRATION = 'narration',
+  PLUGIN_CONSENT_REQUESTED = 'plugin_consent_requested',
+  PLUGIN_CONSENT_RESOLVED = 'plugin_consent_resolved',
 }

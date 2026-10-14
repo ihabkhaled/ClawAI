@@ -18,7 +18,7 @@
     },
     "@claw/shared-types": {
       "runner": "vitest",
-      "testFiles": 6
+      "testFiles": 7
     },
     "@claw/shared-utilities": {
       "runner": "vitest",
@@ -34,11 +34,11 @@
     },
     "claw-auth-service": {
       "runner": "vitest",
-      "testFiles": 198
+      "testFiles": 199
     },
     "claw-chat-service": {
       "runner": "vitest",
-      "testFiles": 346
+      "testFiles": 348
     },
     "claw-client-logs-service": {
       "runner": "vitest",
@@ -58,7 +58,7 @@
     },
     "claw-frontend": {
       "runner": "vitest",
-      "testFiles": 949
+      "testFiles": 961
     },
     "claw-health-service": {
       "runner": "vitest",
@@ -86,7 +86,7 @@
     },
     "claw-plugin-service": {
       "runner": "vitest",
-      "testFiles": 67
+      "testFiles": 89
     },
     "claw-research-service": {
       "runner": "vitest",
@@ -114,5 +114,5 @@
     }
   },
   "generated": true,
-  "total": 2652
+  "total": 2690
 }

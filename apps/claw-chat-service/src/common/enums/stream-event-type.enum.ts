@@ -28,6 +28,11 @@ export enum StreamEventType {
   // One line of the turn's narrated work log (plan, crawl, search, back to the
   // AI, thinking). Also stored on the answer, so it survives a refresh.
   NARRATION = 'narration',
+  // A plugin tool needs the user's yes: the turn is parked and the chat shows the consent card.
+  // The frame carries a redacted preview; the request itself lives in plugin-service, so a
+  // reload re-reads it from there. RESOLVED follows when the user answered or it timed out.
+  PLUGIN_CONSENT_REQUESTED = 'plugin_consent_requested',
+  PLUGIN_CONSENT_RESOLVED = 'plugin_consent_resolved',
   DONE = 'done',
   ERROR = 'error',
   FALLBACK_ATTEMPT = 'fallback_attempt',

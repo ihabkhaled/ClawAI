@@ -14,7 +14,11 @@ import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-tr
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { PLUGIN_CHAT_TRANSLATIONS } from './plugin-chat-translations';
+import { PLUGIN_CONSENT_TRANSLATIONS } from './plugin-consent-translations';
+import { PLUGIN_IMPORT_TRANSLATIONS } from './plugin-import-translations';
+import { PLUGIN_OWN_SERVERS_TRANSLATIONS } from './plugin-own-servers-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
+import { PLUGINS_ADMIN_CATALOG_TRANSLATIONS } from './plugins-admin-catalog-translations';
 import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
 import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
@@ -30,9 +34,12 @@ import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const th: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.th,
+  pluginsAdminCatalog: PLUGINS_ADMIN_CATALOG_TRANSLATIONS.th,
   pluginChat: PLUGIN_CHAT_TRANSLATIONS.th,
+  pluginConsent: PLUGIN_CONSENT_TRANSLATIONS.th,
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.th,
   pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.th,
+  pluginImport: PLUGIN_IMPORT_TRANSLATIONS.th,
   pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.th,
   pagination: {
     label: 'การแบ่งหน้า',
@@ -455,6 +462,7 @@ export const th: TranslationDictionary = {
     ...THREAD_PUBLIC_BOARD_TRANSLATIONS.th,
     ...THREAD_COMMUNITY_TRANSLATIONS.th,
     ...THREAD_FIXES_TRANSLATIONS.th,
+    ...PLUGIN_OWN_SERVERS_TRANSLATIONS.th,
     composerContext: {
       menuLabel: 'บริบท',
       pickLabel: 'เลือกแพ็กบริบท',

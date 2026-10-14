@@ -6,6 +6,7 @@ import {
   Heart,
   MessageCircle,
   MessageSquareReply,
+  ServerCog,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -31,4 +32,6 @@ export const NOTIFICATION_KIND_ICONS: Readonly<Record<UserNotificationKind, Luci
   [UserNotificationKind.THREAD_REACTED]: Heart,
   [UserNotificationKind.THREAD_COMMENT_REACTED]: Heart,
   [UserNotificationKind.THREAD_CHANGE_REQUESTED]: FilePenLine,
+  [UserNotificationKind.MCP_SERVER_APPROVED]: ServerCog,
+  [UserNotificationKind.MCP_SERVER_REJECTED]: ServerCog,
 };

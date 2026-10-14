@@ -1,12 +1,15 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, Optional } from '@nestjs/common';
 
 import { BreakerDecision } from '../../../common/enums/breaker-decision.enum';
 import { ConsentDecision } from '../../../common/enums/consent-decision.enum';
 import { InvokeErrorCode } from '../../../common/enums/invoke-error-code.enum';
 import { InvokeOutcome } from '../../../common/enums/invoke-outcome.enum';
 import { QuotaSettlement } from '../../../common/enums/quota-settlement.enum';
+import { RiskLevel } from '../../../common/enums/risk-level.enum';
 import { RuntimeKind } from '../../../common/enums/runtime-kind.enum';
 import { TargetKind } from '../../../common/enums/target-kind.enum';
+import { ConsentFlowManager } from '../../consent-requests/managers/consent-flow.manager';
+import { type ConsentReview } from '../../consent-requests/types/consent-request.types';
 import { McpServerHealthManager } from '../../mcp-servers/managers/mcp-server-health.manager';
 import { RuntimeSettingsManager } from '../../runtime-settings/managers/runtime-settings.manager';
 import { type RuntimeSettings } from '../../runtime-settings/types/runtime-settings.types';
@@ -43,7 +46,9 @@ import { HARD_TIMEOUT_GRACE_MS } from '../constants/runtime.constants';
  *  5. target switched off / withdrawn / awaiting review -> BLOCKED
  *  6. consent: READ never asks; WRITE asks until granted; DESTRUCTIVE every call; a tainted turn
  *     asks for every non-READ call -> CONSENT_REQUIRED (no quota held, no audit row, so the same
- *     call id can be sent again once the user said yes)
+ *     call id can be sent again once the user said yes). The question is stored as a consent
+ *     request; the resumed call names it (`consentRequestId`) and spends it once, bound to the
+ *     call id and the argument hash. A request the user denied or let lapse refuses the call.
  *  7. per-user rate and concurrency -> RATE_LIMITED
  *  8. server circuit breaker -> BLOCKED
  *  9. hold one PLUGIN_CALLS run with auth-service -> QUOTA_EXCEEDED (idempotent per call id)
@@ -66,6 +71,7 @@ export class PluginInvokeService {
     private readonly mcp: McpExecutorManager,
     private readonly health: McpServerHealthManager,
     private readonly audit: InvocationAuditManager,
+    @Optional() private readonly consentFlow?: ConsentFlowManager,
   ) {}
 
   async invoke(userId: string, body: InvokeBody, signal: AbortSignal): Promise<InvokeResponse> {
@@ -103,11 +109,21 @@ export class PluginInvokeService {
     if (blocked !== null) {
       return this.refuse(context, InvokeOutcome.BLOCKED, blocked, ConsentDecision.NOT_REQUIRED);
     }
+    const review = await this.reviewConsent(userId, body, context);
+    if (review.refusal !== null) {
+      return this.refuse(
+        context,
+        InvokeOutcome.BLOCKED,
+        review.refusal,
+        ConsentDecision.NOT_REQUIRED,
+      );
+    }
     const verdict = this.consent.decide({
       riskLevel: target.riskLevel,
       consentGranted: target.consentGranted,
       tainted: body.tainted,
-      userApproved: body.userApproved,
+      userApproved: body.userApproved || review.redeemed,
+      extraGrant: review.extraGrant,
     });
     return verdict.required
       ? this.askConsent(context, verdict.decision, args)
@@ -306,18 +322,44 @@ export class PluginInvokeService {
     });
   }
 
-  /** A question, not a result: nothing is held, nothing is audited, the same call id can be sent again. */
-  private askConsent(
+  private async reviewConsent(
+    userId: string,
+    body: InvokeBody,
+    context: CallContext,
+  ): Promise<ConsentReview> {
+    const flow = this.consentFlow;
+    return context.target.riskLevel === RiskLevel.READ || flow === undefined
+      ? { redeemed: false, extraGrant: false, refusal: null }
+      : flow.review(userId, body, context.target, context.argsHash);
+  }
+
+  /**
+   * A question, not a result: nothing is held, nothing is audited, the same call id can be sent
+   * again. The question is stored as a consent request so the chat card can show it, survive a
+   * reload and be answered by the user.
+   */
+  private async askConsent(
     context: CallContext,
     reason: ConsentDecision,
     args: Record<string, unknown>,
-  ): InvokeResponse {
+  ): Promise<InvokeResponse> {
+    const base = { reason, argsHash: context.argsHash, argsPreview: buildArgsPreview(args) };
+    const request =
+      this.consentFlow === undefined ? null : await this.consentFlow.open(context, reason, args);
     return this.response(context, InvokeOutcome.CONSENT_REQUIRED, {
       content: null,
       truncated: false,
       errorCode: null,
       durationMs: Date.now() - context.started,
-      consent: { reason, argsHash: context.argsHash, argsPreview: buildArgsPreview(args) },
+      consent:
+        request === null
+          ? base
+          : {
+              ...base,
+              requestId: request.id,
+              expiresAt: request.expiresAt,
+              options: request.options,
+            },
     });
   }
 

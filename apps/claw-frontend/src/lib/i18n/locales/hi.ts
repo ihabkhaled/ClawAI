@@ -14,7 +14,11 @@ import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-tr
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { PLUGIN_CHAT_TRANSLATIONS } from './plugin-chat-translations';
+import { PLUGIN_CONSENT_TRANSLATIONS } from './plugin-consent-translations';
+import { PLUGIN_IMPORT_TRANSLATIONS } from './plugin-import-translations';
+import { PLUGIN_OWN_SERVERS_TRANSLATIONS } from './plugin-own-servers-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
+import { PLUGINS_ADMIN_CATALOG_TRANSLATIONS } from './plugins-admin-catalog-translations';
 import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
 import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
@@ -30,9 +34,12 @@ import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const hi: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.hi,
+  pluginsAdminCatalog: PLUGINS_ADMIN_CATALOG_TRANSLATIONS.hi,
   pluginChat: PLUGIN_CHAT_TRANSLATIONS.hi,
+  pluginConsent: PLUGIN_CONSENT_TRANSLATIONS.hi,
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.hi,
   pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.hi,
+  pluginImport: PLUGIN_IMPORT_TRANSLATIONS.hi,
   pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.hi,
   pagination: {
     label: 'पृष्ठ क्रमांकन',
@@ -464,6 +471,7 @@ export const hi: TranslationDictionary = {
     ...THREAD_PUBLIC_BOARD_TRANSLATIONS.hi,
     ...THREAD_COMMUNITY_TRANSLATIONS.hi,
     ...THREAD_FIXES_TRANSLATIONS.hi,
+    ...PLUGIN_OWN_SERVERS_TRANSLATIONS.hi,
     composerContext: {
       menuLabel: 'संदर्भ',
       pickLabel: 'संदर्भ पैक चुनें',

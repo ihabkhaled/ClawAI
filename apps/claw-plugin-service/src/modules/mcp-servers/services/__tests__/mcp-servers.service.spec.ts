@@ -60,6 +60,7 @@ function build(
       ...overrides.settings,
     }),
   };
+  const hostPolicy = { assertAllowed: vi.fn().mockResolvedValue(undefined) };
   const client = {
     discover: vi.fn().mockImplementation(async () =>
       overrides.discover === undefined
@@ -82,8 +83,9 @@ function build(
     new McpToolSnapshotManager(),
     new McpServerToolPolicyManager(),
     new McpServerPresenterManager(),
+    hostPolicy as never,
   );
-  return { service, repository, secrets, crypto, planGate, settings, client };
+  return { service, repository, secrets, crypto, planGate, settings, client, hostPolicy };
 }
 
 function captureLogs(): () => string {

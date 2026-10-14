@@ -44,7 +44,11 @@ describe('plugin chat translations (the @ picker, call timeline and notices)', (
   );
 
   it('defines every pluginChat key the call timeline and the notices point at', () => {
-    const used = [...Object.values(PLUGIN_CALL_STATUS_KEYS), ...Object.values(PLUGIN_NOTICE_KEYS)];
+    // Notices for an own MCP server live under chat.* (plugin-own-servers-translations.test.ts).
+    const used = [
+      ...Object.values(PLUGIN_CALL_STATUS_KEYS),
+      ...Object.values(PLUGIN_NOTICE_KEYS),
+    ].filter((key) => key.startsWith(PREFIX));
     expect(used.length).toBe(10);
     for (const key of used) {
       expect(key.startsWith(PREFIX), key).toBe(true);

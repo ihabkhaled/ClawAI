@@ -1867,23 +1867,38 @@ override or replay cannot rewrite an already-decided migration.
 
 Routed by nginx under `/api/v1/plugins`; `/api/v1/internal/*` is never routed. Every route needs a JWT. Reads need `PLUGINS_USE`, install writes need `PLUGINS_INSTALL`, admin routes need `PLUGINS_ADMIN`. The user id always comes from the JWT. The authoritative description is the [service guide](../04-backend/service-guide-plugin.md); error codes are in the [error catalog](error-catalog.md#plugin-errors-plugin-service).
 
-| Method | Route                                            | Purpose                                                  |
-| ------ | ------------------------------------------------ | -------------------------------------------------------- |
-| GET    | `/api/v1/plugins/catalog`                        | Browse (`q`, `category`, `cursor`, `limit`, `locale`)    |
-| GET    | `/api/v1/plugins/catalog/:slug`                  | Plugin detail with tools, risk levels and `installed`    |
-| POST   | `/api/v1/plugins/installs`                       | Install `{slug, version?, settings?}` under the plan cap |
-| GET    | `/api/v1/plugins/installs`                       | The caller's installs                                    |
-| GET    | `/api/v1/plugins/installs/mentions`              | Installed plugins for the composer mention list          |
-| GET    | `/api/v1/plugins/installs/:id`                   | One install                                              |
-| PATCH  | `/api/v1/plugins/installs/:id`                   | Enable or disable, change settings                       |
-| DELETE | `/api/v1/plugins/installs/:id`                   | Uninstall (consents and credential cascade)              |
-| PUT    | `/api/v1/plugins/installs/:id/credential`        | Write-only API key (never returned)                      |
-| DELETE | `/api/v1/plugins/installs/:id/credential`        | Remove the key                                           |
-| POST   | `/api/v1/plugins/installs/:id/consent`           | Grant `{toolName, level}`                                |
-| DELETE | `/api/v1/plugins/installs/:id/consent/:toolName` | Revoke (204, idempotent)                                 |
-| GET    | `/api/v1/plugins/admin/catalog`                  | Admin catalog                                            |
-| GET    | `/api/v1/plugins/admin/catalog/:slug`            | Admin detail                                             |
-| PATCH  | `/api/v1/plugins/admin/catalog/:slug`            | Kill switch, featured, per-tool disable                  |
-| GET    | `/api/v1/plugins/admin/settings`                 | Admin settings                                           |
-| PATCH  | `/api/v1/plugins/admin/settings`                 | Update settings, range checked, all or nothing           |
-| GET    | `/api/v1/health`                                 | Service health                                           |
+| Method | Route                                              | Purpose                                                               |
+| ------ | -------------------------------------------------- | --------------------------------------------------------------------- |
+| GET    | `/api/v1/plugins/catalog`                          | Browse (`q`, `category`, `cursor`, `limit`, `locale`)                 |
+| GET    | `/api/v1/plugins/catalog/:slug`                    | Plugin detail with tools, risk levels and `installed`                 |
+| POST   | `/api/v1/plugins/installs`                         | Install `{slug, version?, settings?}` under the plan cap              |
+| GET    | `/api/v1/plugins/installs`                         | The caller's installs                                                 |
+| GET    | `/api/v1/plugins/installs/mentions`                | Installed plugins for the composer mention list                       |
+| GET    | `/api/v1/plugins/mentions`                         | Installed plugins and the caller's own MCP servers for the `@` picker |
+| GET    | `/api/v1/plugins/installs/:id`                     | One install                                                           |
+| PATCH  | `/api/v1/plugins/installs/:id`                     | Enable or disable, change settings                                    |
+| DELETE | `/api/v1/plugins/installs/:id`                     | Uninstall (consents and credential cascade)                           |
+| PUT    | `/api/v1/plugins/installs/:id/credential`          | Write-only API key (never returned)                                   |
+| DELETE | `/api/v1/plugins/installs/:id/credential`          | Remove the key                                                        |
+| POST   | `/api/v1/plugins/installs/:id/consent`             | Grant `{toolName, level}`                                             |
+| DELETE | `/api/v1/plugins/installs/:id/consent/:toolName`   | Revoke (204, idempotent)                                              |
+| GET    | `/api/v1/plugins/admin/catalog`                    | Admin catalog                                                         |
+| GET    | `/api/v1/plugins/admin/catalog/:slug`              | Admin detail                                                          |
+| PATCH  | `/api/v1/plugins/admin/catalog/:slug`              | Kill switch, featured, per-tool disable                               |
+| GET    | `/api/v1/plugins/admin/settings`                   | Admin settings                                                        |
+| PATCH  | `/api/v1/plugins/admin/settings`                   | Update settings, range checked, all or nothing                        |
+| GET    | `/api/v1/plugins/admin/curated`                    | Curated entries (health, tools, texts)                                |
+| POST   | `/api/v1/plugins/admin/curated/preview`            | Bounded tools/list probe of a server                                  |
+| POST   | `/api/v1/plugins/admin/curated`                    | Create a curated entry (publish probes first)                         |
+| PUT    | `/api/v1/plugins/admin/curated/:slug`              | Edit; a changed manifest adds a patch version                         |
+| PATCH  | `/api/v1/plugins/admin/curated/:slug/state`        | Switch on or off                                                      |
+| POST   | `/api/v1/plugins/admin/curated/:slug/health-check` | Ping and record status and latency                                    |
+| DELETE | `/api/v1/plugins/admin/curated/:slug`              | Soft delete                                                           |
+| GET    | `/api/v1/plugins/admin/servers`                    | Approval queue of users' servers                                      |
+| POST   | `/api/v1/plugins/admin/servers/:id/approve`        | Approve a pending server                                              |
+| POST   | `/api/v1/plugins/admin/servers/:id/reject`         | Reject with a reason                                                  |
+| GET    | `/api/v1/plugins/admin/rules`                      | Allow and deny rules                                                  |
+| POST   | `/api/v1/plugins/admin/rules`                      | Add a rule                                                            |
+| DELETE | `/api/v1/plugins/admin/rules/:id`                  | Remove a rule                                                         |
+| GET    | `/api/v1/plugins/admin/audit`                      | Admin audit log                                                       |
+| GET    | `/api/v1/health`                                   | Service health                                                        |

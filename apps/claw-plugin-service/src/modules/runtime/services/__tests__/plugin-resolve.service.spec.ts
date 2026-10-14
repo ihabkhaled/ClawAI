@@ -37,7 +37,12 @@ function build(record: InstallTargetRecord | null, planError?: Error) {
         : vi.fn().mockRejectedValue(planError),
   };
   const settings = { loadLoopLimits: vi.fn().mockResolvedValue(LIMITS) };
-  const service = new PluginResolveService(targets as never, planGate as never, settings as never);
+  const service = new PluginResolveService(
+    targets as never,
+    planGate as never,
+    settings as never,
+    { offer: vi.fn().mockResolvedValue({ tools: [], lines: [], notices: [] }) } as never,
+  );
   return { service, targets, planGate, settings };
 }
 

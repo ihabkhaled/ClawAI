@@ -53,6 +53,7 @@ export class InstallsRepository {
       status: CatalogStatus[entry.status],
       globallyEnabled: entry.globallyEnabled,
       currentVersionId: entry.currentVersionId,
+      allowedPlanSlugs: entry.allowedPlanSlugs,
       versions: entry.versions,
     };
   }

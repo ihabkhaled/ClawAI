@@ -207,5 +207,31 @@ export const ZH_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         '您收到此邮件，是因为您参与了 ClawAI 上的这个 Thread。您可以在通知设置中关闭这些邮件。',
     },
+    [AuthEmailKind.MCP_SERVER_APPROVED]: {
+      subject: '你的 MCP 服务器已获批准',
+      preheader: '现在可以在聊天中使用了。',
+      heading: '你的 MCP 服务器已获批准',
+      intro: '管理员已批准“{value}”。',
+      bodyLines: [
+        '它的工具现已在你的聊天中可用。你可以随时在 MCP 服务器页面关闭它或更改其工具权限。',
+      ],
+      actionLabel: '打开我的 MCP 服务器',
+      fallbackNote: '如果按钮无法使用，请复制下方地址并粘贴至您的浏览器中打开。',
+      expiryNote: null,
+      securityNote:
+        '你收到此邮件，是因为你在 ClawAI 上添加了 MCP 服务器。你可以在通知设置中关闭这些邮件。',
+    },
+    [AuthEmailKind.MCP_SERVER_REJECTED]: {
+      subject: '你的 MCP 服务器未获批准',
+      preheader: '打开页面查看原因。',
+      heading: '你的 MCP 服务器未获批准',
+      intro: '管理员未批准“{value}”。',
+      bodyLines: ['打开 MCP 服务器页面查看原因。你可以删除该服务器并添加修正后的版本。'],
+      actionLabel: '打开我的 MCP 服务器',
+      fallbackNote: '如果按钮无法使用，请复制下方地址并粘贴至您的浏览器中打开。',
+      expiryNote: null,
+      securityNote:
+        '你收到此邮件，是因为你在 ClawAI 上添加了 MCP 服务器。你可以在通知设置中关闭这些邮件。',
+    },
   },
 };

@@ -72,6 +72,10 @@ export type ConsentRequest = {
   reason: ConsentDecision;
   argsHash: string;
   argsPreview: string;
+  /** The open question for the chat card. Absent when no card can be raised (no consent flow wired). */
+  requestId?: string;
+  expiresAt?: string;
+  options?: { allowChat: boolean; always: boolean; alwaysNeedsConfirmation: boolean };
 };
 
 /** The body of a 200 answer from POST /plugins/invoke. */

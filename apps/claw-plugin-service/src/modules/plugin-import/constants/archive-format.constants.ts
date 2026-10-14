@@ -1,0 +1,47 @@
+export const ZIP_EOCD_SIGNATURE = 0x06_05_4b_50;
+export const ZIP_CENTRAL_SIGNATURE = 0x02_01_4b_50;
+export const ZIP_LOCAL_SIGNATURE = 0x04_03_4b_50;
+export const ZIP_EOCD_MIN = 22;
+export const ZIP_MAX_COMMENT = 0xff_ff;
+export const ZIP_CENTRAL_FIXED = 46;
+export const ZIP_LOCAL_FIXED = 30;
+export const ZIP_FLAG_ENCRYPTED = 0x1;
+export const ZIP_METHOD_STORE = 0;
+export const ZIP_METHOD_DEFLATE = 8;
+export const ZIP_COUNT_MARKER = 0xff_ff;
+export const ZIP64_MARKER = 0xff_ff_ff_ff;
+export const ZIP_UNIX_HOST = 3;
+export const ZIP_MODE_TYPE_MASK = 0xf0_00;
+export const ZIP_MODE_SYMLINK = 0xa0_00;
+export const ZIP_MODE_REGULAR = 0x80_00;
+export const ZIP_MODE_DIRECTORY = 0x40_00;
+/** Tiny files compress absurdly well legitimately (a run of spaces); the ratio only bites above this. */
+export const RATIO_FLOOR_BYTES = 8 * 1024;
+
+export const ZIP_MAGIC: readonly number[] = [0x50, 0x4b, 0x03, 0x04];
+export const ZIP_EMPTY_MAGIC: readonly number[] = [0x50, 0x4b, 0x05, 0x06];
+export const GZIP_MAGIC: readonly number[] = [0x1f, 0x8b];
+
+export const TAR_BLOCK = 512;
+export const TAR_NAME_AT = 0;
+export const TAR_NAME_LENGTH = 100;
+export const TAR_SIZE_AT = 124;
+export const TAR_SIZE_LENGTH = 12;
+export const TAR_CHECKSUM_AT = 148;
+export const TAR_CHECKSUM_LENGTH = 8;
+export const TAR_TYPE_AT = 156;
+export const TAR_MAGIC_AT = 257;
+export const TAR_MAGIC_LENGTH = 5;
+export const TAR_PREFIX_AT = 345;
+export const TAR_PREFIX_LENGTH = 155;
+export const TAR_BLANK_CHECKSUM_BYTE = 0x20;
+export const TAR_TYPE_FILE: ReadonlySet<string> = new Set(['0', '\0']);
+export const TAR_TYPE_DIRECTORY = '5';
+export const TAR_TYPE_LINKS: ReadonlySet<string> = new Set(['1', '2']);
+export const TAR_TYPE_PAX = 'x';
+export const TAR_TYPE_PAX_GLOBAL = 'g';
+export const TAR_TYPE_GNU_LONG_NAME = 'L';
+export const TAR_MAX_EXTENDED_NAME_BYTES = 4096;
+export const TAR_OCTAL_PATTERN = /^[0-7]+$/;
+export const TAR_PAX_PATH_PATTERN = /^\d+ path=(.*)$/;
+export const TAR_TRAILING_NULS = /\0.*$/s;

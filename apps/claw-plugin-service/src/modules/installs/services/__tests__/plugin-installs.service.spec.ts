@@ -49,7 +49,7 @@ describe('PluginInstallsService', () => {
 
       const view = await service.install(OWNER_ID, { slug: 'weather' }, 'fr');
 
-      expect(planGate.resolveInstallCap).toHaveBeenCalledWith(OWNER_ID);
+      expect(planGate.resolveInstallCap).toHaveBeenCalledWith(OWNER_ID, []);
       expect(repository.createWithinCap).toHaveBeenCalledWith(
         {
           userId: OWNER_ID,

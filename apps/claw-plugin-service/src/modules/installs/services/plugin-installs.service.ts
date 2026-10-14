@@ -49,7 +49,7 @@ export class PluginInstallsService {
     const entry = await this.requireInstallable(body.slug);
     const version = this.pickVersion(entry, body.version);
     const settings = this.settings.resolve(this.manifestOf(version, body.slug), body.settings);
-    const cap = await this.planGate.resolveInstallCap(userId);
+    const cap = await this.planGate.resolveInstallCap(userId, entry.allowedPlanSlugs);
     const outcome = await this.repository.createWithinCap(
       { userId, pluginId: entry.id, versionId: version.id, settings },
       cap,

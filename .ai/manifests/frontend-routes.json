@@ -332,6 +332,11 @@
       "route": "/admin/plans"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/plugins/curation/page.tsx",
+      "kind": "page",
+      "route": "/admin/plugins/curation"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/admin/plugins/page.tsx",
       "kind": "page",
       "route": "/admin/plugins"
@@ -665,6 +670,11 @@
       "file": "apps/claw-frontend/src/app/(portal)/plugins/[slug]/page.tsx",
       "kind": "page",
       "route": "/plugins/[slug]"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/plugins/import/page.tsx",
+      "kind": "page",
+      "route": "/plugins/import"
     },
     {
       "file": "apps/claw-frontend/src/app/(portal)/plugins/installed/page.tsx",

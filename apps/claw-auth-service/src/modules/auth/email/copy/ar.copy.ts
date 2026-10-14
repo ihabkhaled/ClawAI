@@ -219,5 +219,31 @@ export const AR_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'تصلك هذه الرسالة لأنك شاركت في هذا Thread على ClawAI. يمكنك إيقاف هذه الرسائل من إعدادات الإشعارات.',
     },
+    [AuthEmailKind.MCP_SERVER_APPROVED]: {
+      subject: 'تمت الموافقة على خادم MCP الخاص بك',
+      preheader: 'يمكنك استخدامه في المحادثة الآن.',
+      heading: 'تمت الموافقة على خادم MCP الخاص بك',
+      intro: 'وافق أحد المشرفين على «{value}».',
+      bodyLines: [
+        'أدواته متاحة الآن في محادثاتك. يمكنك إيقافه أو تغيير أذونات أدواته في أي وقت من صفحة خوادم MCP.',
+      ],
+      actionLabel: 'فتح خوادم MCP الخاصة بي',
+      fallbackNote: 'إذا لم يعمل الزر، يُرجى نسخ العنوان التالي ولصقه في متصفحك:',
+      expiryNote: null,
+      securityNote:
+        'تصلك هذه الرسالة لأنك أضفت خادم MCP على ClawAI. يمكنك إيقاف هذه الرسائل من إعدادات الإشعارات.',
+    },
+    [AuthEmailKind.MCP_SERVER_REJECTED]: {
+      subject: 'لم تتم الموافقة على خادم MCP الخاص بك',
+      preheader: 'افتح الصفحة لمعرفة السبب.',
+      heading: 'لم تتم الموافقة على خادم MCP الخاص بك',
+      intro: 'لم يوافق أحد المشرفين على «{value}».',
+      bodyLines: ['افتح صفحة خوادم MCP لمعرفة السبب. يمكنك حذف الخادم وإضافة خادم مصحَّح.'],
+      actionLabel: 'فتح خوادم MCP الخاصة بي',
+      fallbackNote: 'إذا لم يعمل الزر، يُرجى نسخ العنوان التالي ولصقه في متصفحك:',
+      expiryNote: null,
+      securityNote:
+        'تصلك هذه الرسالة لأنك أضفت خادم MCP على ClawAI. يمكنك إيقاف هذه الرسائل من إعدادات الإشعارات.',
+    },
   },
 };

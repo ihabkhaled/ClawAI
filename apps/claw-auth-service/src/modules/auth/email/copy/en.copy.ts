@@ -222,5 +222,33 @@ export const EN_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'You are getting this because you took part in this Thread on ClawAI. You can turn these emails off in your notification settings.',
     },
+    [AuthEmailKind.MCP_SERVER_APPROVED]: {
+      subject: 'Your MCP server was approved',
+      preheader: 'You can use it in chat now.',
+      heading: 'Your MCP server is approved',
+      intro: '“{value}” was approved by an admin.',
+      bodyLines: [
+        'Its tools are available in your chats now. You can switch it off or change its tool permissions any time on the MCP servers page.',
+      ],
+      actionLabel: 'Open my MCP servers',
+      fallbackNote: 'If the button does not work, copy the address below into your browser:',
+      expiryNote: null,
+      securityNote:
+        'You are getting this because you added an MCP server on ClawAI. You can turn these emails off in your notification settings.',
+    },
+    [AuthEmailKind.MCP_SERVER_REJECTED]: {
+      subject: 'Your MCP server was not approved',
+      preheader: 'Open the page to see the reason.',
+      heading: 'Your MCP server was not approved',
+      intro: '“{value}” was not approved by an admin.',
+      bodyLines: [
+        'Open the MCP servers page to see the reason. You can remove the server and add a corrected one.',
+      ],
+      actionLabel: 'Open my MCP servers',
+      fallbackNote: 'If the button does not work, copy the address below into your browser:',
+      expiryNote: null,
+      securityNote:
+        'You are getting this because you added an MCP server on ClawAI. You can turn these emails off in your notification settings.',
+    },
   },
 };

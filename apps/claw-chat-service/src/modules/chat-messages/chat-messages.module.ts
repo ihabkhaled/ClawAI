@@ -3,6 +3,8 @@ import { ChatMessagesController } from './controllers/chat-messages.controller';
 import { ChatStreamController } from './controllers/chat-stream.controller';
 import { ChatInternalController } from './controllers/chat-internal.controller';
 import { ChatMessagesService } from './services/chat-messages.service';
+import { PluginConsentClient } from './clients/plugin-consent.client';
+import { PluginConsentPort } from './clients/plugin-consent.port';
 import { PluginInvokeClient } from './clients/plugin-invoke.client';
 import { PluginInvokePort } from './clients/plugin-invoke.port';
 import { PluginToolLoopManager } from './managers/plugin-tool-loop.manager';
@@ -122,6 +124,7 @@ import { RuntimeV2ThreadActivityService } from './services/runtime-v2-thread-act
     // the port is plugin-service's `/internal/plugins/*` routes.
     PluginToolLoopManager,
     { provide: PluginInvokePort, useClass: PluginInvokeClient },
+    { provide: PluginConsentPort, useClass: PluginConsentClient },
     NarrationService,
     ResearchOrchestratorManager,
     ChatMessagesService,

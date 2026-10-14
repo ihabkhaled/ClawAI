@@ -10,6 +10,9 @@ import type { UseInstalledPluginsReturn } from '@/types/plugin-installs.types';
 import { installView, tStub } from './plugins-fixtures';
 
 vi.mock('@/hooks/plugins/use-installed-plugins');
+vi.mock('@/components/plugins/plugin-chat-grants-list', () => ({
+  PluginChatGrantsList: () => null,
+}));
 vi.mock('@/components/plugins/plugin-settings-sheet', () => ({
   PluginSettingsSheet: ({
     install,

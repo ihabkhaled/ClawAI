@@ -1,17 +1,29 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { ToolChoiceMode } from '../../../common/enums/tool-choice-mode.enum';
+import { PluginConsentPort } from '../clients/plugin-consent.port';
 import { PluginInvokePort } from '../clients/plugin-invoke.port';
 import {
   PLUGIN_CONSENT_DECLINED_TEXT,
+  PLUGIN_CONSENT_DENIED_CODE,
+  PLUGIN_CONSENT_DENIED_TEXT,
+  PLUGIN_CONSENT_EXPIRED_CODE,
+  PLUGIN_CONSENT_EXPIRED_TEXT,
+  PLUGIN_CONSENT_GRACE_MS,
+  PLUGIN_CONSENT_MAX_WAIT_MS,
+  PLUGIN_CONSENT_MAX_WAITS,
+  PLUGIN_CONSENT_UNAVAILABLE_CODE,
+  PLUGIN_CONSENT_WAIT_SLICE_MS,
   PLUGIN_LOOP_PLAIN_OPTIONS,
   PLUGIN_UNTRUSTED_RESULTS_INSTRUCTION,
 } from '../constants/plugin-tools.constants';
 import type { ToolDefinitionDto } from '../dto/runtime-v2.dto';
+import { PluginConsentState } from '../enums/plugin-consent-state.enum';
 import { PluginInvokeStatus } from '../enums/plugin-invoke-status.enum';
 import { PluginNoticeCode } from '../enums/plugin-notice-code.enum';
 import type { AssembledContext } from '../types/context.types';
+import type { ConsentResume, PluginConsentCard } from '../types/plugin-consent.types';
 import type { ExecutionOptions } from '../types/execution-options.types';
 import type { LlmResponse } from '../types/execution.types';
 import type {
@@ -29,6 +41,7 @@ import type {
 } from '../types/plugin-tools.types';
 import type { NormalizedToolCall } from '../types/provider-tool.types';
 import type { ToolTurn } from '../types/tool-turn.types';
+import { ChatStreamService } from '../services/chat-stream.service';
 import { withoutPluginRefs } from '../utilities/plugin-refs.utility';
 import { fencePluginResult, pluginResultExcerpt } from '../utilities/plugin-result-fence.utility';
 import { toolsAllowedByRefs, toToolCatalog } from '../utilities/plugin-tool-definition.utility';
@@ -49,7 +62,11 @@ import { toolsAllowedByRefs, toToolCatalog } from '../utilities/plugin-tool-defi
 export class PluginToolLoopManager {
   private readonly logger = new Logger(PluginToolLoopManager.name);
 
-  constructor(private readonly plugins: PluginInvokePort) {}
+  constructor(
+    private readonly plugins: PluginInvokePort,
+    @Optional() private readonly consent?: PluginConsentPort,
+    @Optional() private readonly stream?: ChatStreamService,
+  ) {}
 
   async run(args: PluginToolLoopArgs): Promise<LlmResponse> {
     const refs = args.context.pluginRefs ?? [];
@@ -153,7 +170,10 @@ export class PluginToolLoopManager {
         this.noteOnce(state, PluginNoticeCode.LIMIT_REACHED);
       } else {
         state.callsMade += 1;
-        result = await this.invoke(args, tool, call, state.tainted);
+        result = await this.invoke(args, tool, { call, tainted: state.tainted });
+        if (this.needsCard(result)) {
+          result = await this.askUser(args, tool, call, result, state.tainted);
+        }
         // From here on an untrusted result is in the model context: a later non-READ
         // call this turn needs consent every time (the taint rule).
         state.tainted = true;
@@ -185,9 +205,9 @@ export class PluginToolLoopManager {
   private async invoke(
     args: PluginToolLoopArgs,
     tool: ResolvedPluginTool,
-    call: NormalizedToolCall,
-    tainted: boolean,
+    input: { call: NormalizedToolCall; tainted: boolean; resume?: ConsentResume },
   ): Promise<PluginInvokeResult> {
+    const { call, tainted, resume } = input;
     try {
       return await this.plugins.invoke({
         userId: args.context.userId,
@@ -198,6 +218,9 @@ export class PluginToolLoopManager {
         messageId: args.messageId,
         surface: args.context.platformSurface ?? ChatSurface.CHAT,
         tainted,
+        ...(resume === undefined
+          ? {}
+          : { callId: resume.callId, consentRequestId: resume.consentRequestId }),
       });
     } catch (error: unknown) {
       this.logger.warn(
@@ -205,6 +228,118 @@ export class PluginToolLoopManager {
       );
       return this.refusal('PLUGIN_SERVICE_UNAVAILABLE');
     }
+  }
+
+  /** True when plugin-service raised a consent request this loop can park the turn on. */
+  private needsCard(result: PluginInvokeResult): boolean {
+    return (
+      result.status === PluginInvokeStatus.CONSENT_REQUIRED &&
+      result.consent !== undefined &&
+      result.callId !== undefined &&
+      this.consent !== undefined
+    );
+  }
+
+  /**
+   * The turn pauses here: the card is announced on the stream, the loop waits (bounded) for the
+   * user's answer, and only a yes resumes the SAME call (same call id, the approved request id).
+   * Deny, a timeout, or any trouble reaching plugin-service ends in a blocked result the model
+   * is told about plainly. The call never runs without plugin-service spending the approval.
+   */
+  private async askUser(
+    args: PluginToolLoopArgs,
+    tool: ResolvedPluginTool,
+    call: NormalizedToolCall,
+    asked: PluginInvokeResult,
+    tainted: boolean,
+  ): Promise<PluginInvokeResult> {
+    const card = asked.consent;
+    const callId = asked.callId;
+    if (card === undefined || callId === undefined) return asked;
+    this.announce(args, tool, card, undefined);
+    const answer = await this.awaitAnswer(args.context.userId, card);
+    this.announce(args, tool, card, answer);
+    if (answer === PluginConsentState.APPROVED) {
+      return this.invoke(args, tool, {
+        call,
+        tainted,
+        resume: { callId, consentRequestId: card.requestId },
+      });
+    }
+    return this.blocked(this.blockCode(answer));
+  }
+
+  /** Polls plugin-service in slices until the user answers or the request's own deadline passes. */
+  private async awaitAnswer(userId: string, card: PluginConsentCard): Promise<PluginConsentState> {
+    const port = this.consent;
+    if (port === undefined) return PluginConsentState.EXPIRED;
+    const deadline = Math.min(
+      Date.parse(card.expiresAt) + PLUGIN_CONSENT_GRACE_MS,
+      Date.now() + PLUGIN_CONSENT_MAX_WAIT_MS,
+    );
+    for (let attempt = 0; attempt < PLUGIN_CONSENT_MAX_WAITS; attempt += 1) {
+      const remaining = deadline - Date.now();
+      if (!(remaining > 0)) return PluginConsentState.EXPIRED;
+      try {
+        const state = await port.wait({
+          userId,
+          requestId: card.requestId,
+          waitMs: Math.min(remaining, PLUGIN_CONSENT_WAIT_SLICE_MS),
+        });
+        if (state !== PluginConsentState.PENDING) return state;
+      } catch (error: unknown) {
+        this.logger.warn(
+          `consent wait failed, denying the call — ${error instanceof Error ? error.message : 'unknown error'}`,
+        );
+        return PluginConsentState.CONSUMED;
+      }
+    }
+    return PluginConsentState.EXPIRED;
+  }
+
+  private announce(
+    args: PluginToolLoopArgs,
+    tool: ResolvedPluginTool,
+    card: PluginConsentCard,
+    outcome: PluginConsentState | undefined,
+  ): void {
+    const threadId = args.threadId;
+    if (this.stream === undefined || threadId === undefined || threadId === '') return;
+    const payload = {
+      requestId: card.requestId,
+      pluginSlug: tool.pluginSlug,
+      toolName: tool.toolName,
+      toolTitle: tool.title,
+      riskLevel: tool.riskLevel,
+      argsPreview: card.argsPreview,
+      expiresAt: card.expiresAt,
+      options: card.options,
+      messageId: args.messageId,
+    };
+    if (outcome === undefined) {
+      this.stream.emitPluginConsentRequested(threadId, payload);
+    } else {
+      this.stream.emitPluginConsentResolved(threadId, { ...payload, outcome });
+    }
+  }
+
+  /** The code a blocked result carries for an answer that did not resume the call. */
+  private blockCode(answer: PluginConsentState): string {
+    switch (answer) {
+      case PluginConsentState.DENIED: {
+        return PLUGIN_CONSENT_DENIED_CODE;
+      }
+      case PluginConsentState.EXPIRED: {
+        return PLUGIN_CONSENT_EXPIRED_CODE;
+      }
+      default: {
+        return PLUGIN_CONSENT_UNAVAILABLE_CODE;
+      }
+    }
+  }
+
+  private blocked(errorCode: string): PluginInvokeResult {
+    return { status: PluginInvokeStatus.BLOCKED, truncated: false, durationMs: 0, errorCode };
   }
 
   private refusal(errorCode: string): PluginInvokeResult {
@@ -220,7 +355,11 @@ export class PluginToolLoopManager {
         return PLUGIN_CONSENT_DECLINED_TEXT;
       }
       default: {
-        return `The tool did not run (${result.errorCode ?? result.status}). Do not retry it; continue without it.`;
+        if (result.errorCode === PLUGIN_CONSENT_DENIED_CODE) return PLUGIN_CONSENT_DENIED_TEXT;
+        return result.errorCode === PLUGIN_CONSENT_EXPIRED_CODE ||
+          result.errorCode === PLUGIN_CONSENT_UNAVAILABLE_CODE
+          ? PLUGIN_CONSENT_EXPIRED_TEXT
+          : `The tool did not run (${result.errorCode ?? result.status}). Do not retry it; continue without it.`;
       }
     }
   }

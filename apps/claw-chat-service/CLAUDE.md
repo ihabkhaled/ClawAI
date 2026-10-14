@@ -1823,5 +1823,12 @@ message metadata; the context gateway turns them into `AssembledContext.pluginRe
 - **A new surface that answers the user** goes in `PLUGIN_TOOL_SURFACES`, stores `pluginRefsMetadata` on its
   user message and spreads `pluginFields` on its DTO. `orchestration-parity.spec.ts` checks the last two.
 - **plugin-service down is not an error.** The message answers without the tools and records a notice.
+- **The consent card parks the turn** ([ADR-185](../../docs/13-adr/adr-185-the-in-chat-consent-card-parks-the-turn-on-a-stored-argument-bound-request.md)).
+  When invoke answers `CONSENT_REQUIRED` with a `consent.requestId`, `PluginToolLoopManager` emits the
+  `plugin_consent_requested` / `plugin_consent_resolved` frames, waits through `PluginConsentPort` (20 s slices, the
+  request deadline, ceiling 150 s) and resumes the SAME `callId` with `consentRequestId` only on `APPROVED`. Deny,
+  expiry or a wait failure end as `BLOCKED` (`PLUGIN_CONSENT_DENIED|EXPIRED|UNAVAILABLE`) with a plain result for the
+  model. Never resume without the request id, never mint a new call id for the resume, never put the call id or
+  argument hash on the frame.
 - **Config** is `PLUGIN_SERVICE_URL` (already in `.env`, passed by `env_file`); loop limits are plugin-service's
   `loop.maxRounds` / `loop.maxCallsPerTurn`, returned by `resolve`, never env.

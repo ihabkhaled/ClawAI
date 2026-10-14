@@ -1,7 +1,11 @@
 'use client';
 
+import Link from 'next/link';
+
 import { PageHeader } from '@/components/common/page-header';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ADMIN_CURATION_ROUTE } from '@/constants/plugin-admin-curation.constants';
 import { AdminPluginsTab } from '@/enums/admin-plugins-tab.enum';
 import { useAdminPluginsPage } from '@/hooks/plugins/use-admin-plugins-page';
 
@@ -17,6 +21,11 @@ export function AdminPluginsPage(): React.ReactElement {
       <PageHeader
         title={t('pluginsInstall.admin.title')}
         description={t('pluginsInstall.admin.description')}
+        actions={
+          <Button asChild variant="outline" size="sm">
+            <Link href={ADMIN_CURATION_ROUTE}>{t('pluginsAdminCatalog.page.open')}</Link>
+          </Button>
+        }
       />
       <Tabs
         value={page.tab}

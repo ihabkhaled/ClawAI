@@ -225,5 +225,33 @@ export const IT_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'Ricevi questo messaggio perché hai partecipato a questo Thread su ClawAI. Puoi disattivare queste e-mail nelle impostazioni delle notifiche.',
     },
+    [AuthEmailKind.MCP_SERVER_APPROVED]: {
+      subject: 'Il tuo server MCP è stato approvato',
+      preheader: 'Ora puoi usarlo in chat.',
+      heading: 'Il tuo server MCP è approvato',
+      intro: 'Un amministratore ha approvato «{value}».',
+      bodyLines: [
+        'I suoi strumenti sono ora disponibili nelle tue chat. Puoi disattivarlo o cambiare i permessi dei suoi strumenti in qualsiasi momento dalla pagina dei server MCP.',
+      ],
+      actionLabel: 'Apri i miei server MCP',
+      fallbackNote: 'Se il pulsante non funziona, copi il seguente indirizzo nel Suo browser:',
+      expiryNote: null,
+      securityNote:
+        'Ricevi questo messaggio perché hai aggiunto un server MCP su ClawAI. Puoi disattivare queste e-mail nelle impostazioni delle notifiche.',
+    },
+    [AuthEmailKind.MCP_SERVER_REJECTED]: {
+      subject: 'Il tuo server MCP non è stato approvato',
+      preheader: 'Apri la pagina per vedere il motivo.',
+      heading: 'Il tuo server MCP non è stato approvato',
+      intro: 'Un amministratore non ha approvato «{value}».',
+      bodyLines: [
+        'Apri la pagina dei server MCP per vedere il motivo. Puoi rimuovere il server e aggiungerne uno corretto.',
+      ],
+      actionLabel: 'Apri i miei server MCP',
+      fallbackNote: 'Se il pulsante non funziona, copi il seguente indirizzo nel Suo browser:',
+      expiryNote: null,
+      securityNote:
+        'Ricevi questo messaggio perché hai aggiunto un server MCP su ClawAI. Puoi disattivare queste e-mail nelle impostazioni delle notifiche.',
+    },
   },
 };

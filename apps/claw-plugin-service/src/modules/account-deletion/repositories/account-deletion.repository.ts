@@ -22,8 +22,13 @@ export class AccountDeletionRepository {
       const consents = await tx.pluginToolConsent.deleteMany({ where: { install: { userId } } });
       const invocations = await tx.pluginInvocation.deleteMany({ where: { userId } });
       const removed = await tx.pluginInstall.deleteMany({ where: { userId } });
+      await tx.pluginConsentRequest.deleteMany({ where: { userId } });
+      await tx.pluginChatConsent.deleteMany({ where: { userId } });
       await tx.mcpServerCredential.deleteMany({ where: { userId } });
       const servers = await tx.mcpServer.deleteMany({ where: { ownerUserId: userId } });
+      await tx.importedPlugin.deleteMany({ where: { userId } });
+      await tx.pluginImportDraft.deleteMany({ where: { userId } });
+      await tx.pluginImportAudit.deleteMany({ where: { userId } });
       for (const pluginId of new Set(installs.map((install) => install.pluginId))) {
         await tx.pluginCatalogEntry.updateMany({
           where: { id: pluginId, installCount: { gt: 0 } },

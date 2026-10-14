@@ -19,6 +19,7 @@ import { PluginsNavTab } from '@/enums/plugins-nav-tab.enum';
 import { useInstalledPlugins } from '@/hooks/plugins/use-installed-plugins';
 
 import { InstalledPluginCard } from './installed-plugin-card';
+import { PluginChatGrantsList } from './plugin-chat-grants-list';
 import { PluginSettingsSheet } from './plugin-settings-sheet';
 import { PluginUninstallDialog } from './plugin-uninstall-dialog';
 import { PluginsNav } from './plugins-nav';
@@ -98,6 +99,8 @@ export function InstalledPluginsPage(): React.ReactElement {
           ))}
         </ul>
       ) : null}
+
+      <PluginChatGrantsList />
 
       {page.settingsFor === undefined ? null : (
         <PluginSettingsSheet install={page.settingsFor} onClose={page.closeSettings} />

@@ -233,5 +233,35 @@ export const JA_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'このメールは、ClawAI のこの Thread に参加しているためお送りしています。通知設定からこのメールを停止できます。',
     },
+    [AuthEmailKind.MCP_SERVER_APPROVED]: {
+      subject: 'MCP サーバーが承認されました',
+      preheader: 'チャットですぐに使えます。',
+      heading: 'MCP サーバーが承認されました',
+      intro: '管理者が「{value}」を承認しました。',
+      bodyLines: [
+        'ツールはチャットですぐに使えます。MCP サーバーのページで、いつでもオフにしたり、ツールの権限を変更したりできます。',
+      ],
+      actionLabel: 'MCP サーバーを開く',
+      fallbackNote:
+        'ボタンが機能しない場合は、下記のアドレスをコピーしてブラウザーに貼り付けてください。',
+      expiryNote: null,
+      securityNote:
+        'このメールは、ClawAI で MCP サーバーを追加したためお送りしています。通知設定でこのメールを停止できます。',
+    },
+    [AuthEmailKind.MCP_SERVER_REJECTED]: {
+      subject: 'MCP サーバーは承認されませんでした',
+      preheader: 'ページを開いて理由をご確認ください。',
+      heading: 'MCP サーバーは承認されませんでした',
+      intro: '管理者は「{value}」を承認しませんでした。',
+      bodyLines: [
+        'MCP サーバーのページで理由を確認できます。サーバーを削除して、修正したものを追加できます。',
+      ],
+      actionLabel: 'MCP サーバーを開く',
+      fallbackNote:
+        'ボタンが機能しない場合は、下記のアドレスをコピーしてブラウザーに貼り付けてください。',
+      expiryNote: null,
+      securityNote:
+        'このメールは、ClawAI で MCP サーバーを追加したためお送りしています。通知設定でこのメールを停止できます。',
+    },
   },
 };

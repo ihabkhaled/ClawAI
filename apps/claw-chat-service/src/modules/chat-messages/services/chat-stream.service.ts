@@ -1,4 +1,5 @@
 import type { NarrationEntry } from '../types/narration.types';
+import type { PluginConsentStreamPayload } from '../types/plugin-consent.types';
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import {
   concat,
@@ -481,6 +482,14 @@ export class ChatStreamService implements OnModuleInit {
 
   emitNarration(threadId: string, narration: NarrationEntry): void {
     this.emit({ threadId, type: StreamEventType.NARRATION, narration });
+  }
+
+  emitPluginConsentRequested(threadId: string, pluginConsent: PluginConsentStreamPayload): void {
+    this.emit({ threadId, type: StreamEventType.PLUGIN_CONSENT_REQUESTED, pluginConsent });
+  }
+
+  emitPluginConsentResolved(threadId: string, pluginConsent: PluginConsentStreamPayload): void {
+    this.emit({ threadId, type: StreamEventType.PLUGIN_CONSENT_RESOLVED, pluginConsent });
   }
 
   emitReasoningDelta(threadId: string, input: ReasoningDeltaEmitInput): void {

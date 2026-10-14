@@ -28,7 +28,7 @@ describe('pluginInstallsRepository', () => {
     await pluginInstallsRepository.list();
     expect(mocks.get).toHaveBeenCalledWith('/plugins/installs');
     await pluginInstallsRepository.mentions();
-    expect(mocks.get).toHaveBeenLastCalledWith('/plugins/installs/mentions');
+    expect(mocks.get).toHaveBeenLastCalledWith('/plugins/mentions');
   });
 
   it('installs, updates and uninstalls by id', async () => {

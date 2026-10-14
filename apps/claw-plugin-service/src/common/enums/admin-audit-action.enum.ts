@@ -1,0 +1,23 @@
+/** What an admin did, as written to plugin_admin_audit. */
+export enum AdminAuditAction {
+  CATALOG_CREATED = 'CATALOG_CREATED',
+  CATALOG_UPDATED = 'CATALOG_UPDATED',
+  CATALOG_ENABLED = 'CATALOG_ENABLED',
+  CATALOG_DISABLED = 'CATALOG_DISABLED',
+  CATALOG_DELETED = 'CATALOG_DELETED',
+  CATALOG_HEALTH_CHECKED = 'CATALOG_HEALTH_CHECKED',
+  CATALOG_SEEDED = 'CATALOG_SEEDED',
+  SERVER_APPROVED = 'SERVER_APPROVED',
+  SERVER_REJECTED = 'SERVER_REJECTED',
+  RULE_ADDED = 'RULE_ADDED',
+  RULE_REMOVED = 'RULE_REMOVED',
+}
+
+export enum AdminAuditTarget {
+  CATALOG_ENTRY = 'CATALOG_ENTRY',
+  MCP_SERVER = 'MCP_SERVER',
+  HOST_RULE = 'HOST_RULE',
+}
+
+/** The actor recorded for rows the service writes by itself. */
+export const SYSTEM_ACTOR = 'system';

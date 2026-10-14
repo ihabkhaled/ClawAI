@@ -564,6 +564,8 @@ export const queryKeys = {
     servers: () => ['plugins', 'servers', 'list'] as const,
     mentionsRoot: () => ['plugins', 'mentions'] as const,
     mentions: (locale: string) => ['plugins', 'mentions', locale] as const,
+    consentPending: () => ['plugins', 'consent', 'pending'] as const,
+    chatGrants: () => ['plugins', 'consent', 'chat-grants'] as const,
     adminCatalog: () => ['plugins', 'admin', 'catalog'] as const,
     adminSettings: () => ['plugins', 'admin', 'settings'] as const,
   },

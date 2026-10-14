@@ -12,6 +12,11 @@ function buildRepository(installs: Array<{ pluginId: string }>) {
     pluginCatalogEntry: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
     mcpServer: { deleteMany: vi.fn().mockResolvedValue({ count: 3 }) },
     mcpServerCredential: { deleteMany: vi.fn().mockResolvedValue({ count: 3 }) },
+    pluginConsentRequest: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
+    pluginChatConsent: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
+    importedPlugin: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+    pluginImportDraft: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+    pluginImportAudit: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
   };
   const prisma = {
     $transaction: vi.fn(async (work: (client: typeof tx) => Promise<unknown>) => work(tx)),
@@ -33,6 +38,10 @@ describe('AccountDeletionRepository', () => {
     expect(tx.pluginInstall.deleteMany).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
     expect(tx.mcpServer.deleteMany).toHaveBeenCalledWith({ where: { ownerUserId: 'user-1' } });
     expect(tx.mcpServerCredential.deleteMany).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
+    expect(tx.pluginConsentRequest.deleteMany).toHaveBeenCalledWith({
+      where: { userId: 'user-1' },
+    });
+    expect(tx.pluginChatConsent.deleteMany).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
     expect(counts).toEqual({
       installs: 2,
       credentials: 1,

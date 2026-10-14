@@ -60,6 +60,21 @@ const invokeResponseSchema = z.object({
   truncated: z.boolean().default(false),
   durationMs: z.number().nonnegative().default(0),
   errorCode: z.string().max(80).nullish(),
+  callId: z.string().max(120).nullish(),
+  consent: z
+    .object({
+      requestId: z.string().uuid().optional(),
+      expiresAt: z.string().max(40).optional(),
+      argsPreview: z.string().max(1_000).default(''),
+      options: z
+        .object({
+          allowChat: z.boolean(),
+          always: z.boolean(),
+          alwaysNeedsConfirmation: z.boolean(),
+        })
+        .optional(),
+    })
+    .nullish(),
 });
 
 /** An HTTP error body from plugin-service carries a stable `errorCode` (409, 403, 503, ...). */
@@ -94,7 +109,10 @@ function toInvokeBody(request: PluginInvokeRequest): Record<string, unknown> {
     installId: request.installId,
     toolName: request.toolName,
     args: request.args,
-    callId: `${PLUGIN_CALL_ID_PREFIX}${randomUUID()}`,
+    callId: request.callId ?? `${PLUGIN_CALL_ID_PREFIX}${randomUUID()}`,
+    ...(request.consentRequestId === undefined
+      ? {}
+      : { consentRequestId: request.consentRequestId }),
     surface: wireSurface(request.surface),
     tainted: request.tainted,
     ...(request.conversationId === '' ? {} : { conversationId: request.conversationId }),
@@ -152,11 +170,26 @@ export class PluginInvokeClient extends PluginInvokePort {
     });
     const parsed = invokeResponseSchema.safeParse(response.data);
     if (parsed.success) {
-      const { status, content, truncated, durationMs, errorCode } = parsed.data;
+      const { status, content, truncated, durationMs, errorCode, callId, consent } = parsed.data;
+      const card =
+        consent?.requestId === undefined || consent.expiresAt === undefined
+          ? undefined
+          : {
+              requestId: consent.requestId,
+              expiresAt: consent.expiresAt,
+              argsPreview: consent.argsPreview,
+              options: consent.options ?? {
+                allowChat: false,
+                always: false,
+                alwaysNeedsConfirmation: false,
+              },
+            };
       return {
         status,
         truncated,
         durationMs,
+        ...(callId === null || callId === undefined ? {} : { callId }),
+        ...(card === undefined ? {} : { consent: card }),
         ...(content === null || content === undefined ? {} : { content }),
         ...(errorCode === null || errorCode === undefined ? {} : { errorCode }),
       };

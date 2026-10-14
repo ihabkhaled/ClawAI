@@ -15,4 +15,8 @@ export enum UserNotificationKind {
   THREAD_COMMENT_REACTED = 'THREAD_COMMENT_REACTED',
   /** Someone asked for a change to your Thread. */
   THREAD_CHANGE_REQUESTED = 'THREAD_CHANGE_REQUESTED',
+  /** An admin approved a remote MCP server the user registered. */
+  MCP_SERVER_APPROVED = 'MCP_SERVER_APPROVED',
+  /** An admin rejected a remote MCP server the user registered (the reason travels in params.excerpt). */
+  MCP_SERVER_REJECTED = 'MCP_SERVER_REJECTED',
 }

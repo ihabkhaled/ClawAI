@@ -77,6 +77,16 @@ model PluginCatalogEntry {
   featured         Boolean       @default(false)
   currentVersionId String?       @unique @map("current_version_id")
   installCount     Int           @default(0) @map("install_count")
+  /// Admin curation (plugins-admin-catalog): soft delete, notes, per-plan gate and health of a curated server.
+  deletedAt        DateTime?     @map("deleted_at")
+  adminNotes       String?       @map("admin_notes")
+  needsVerification Boolean      @default(false) @map("needs_verification")
+  /// Empty = every plan. Otherwise only these plan slugs may install the entry.
+  allowedPlanSlugs String[]      @default([]) @map("allowed_plan_slugs")
+  healthStatus     CatalogHealthStatus @default(UNKNOWN) @map("health_status")
+  healthLatencyMs  Int?          @map("health_latency_ms")
+  healthCheckedAt  DateTime?     @map("health_checked_at")
+  healthErrorCode  String?       @map("health_error_code")
   versions         PluginVersion[]
   installs         PluginInstall[]
   createdAt        DateTime      @default(now()) @map("created_at")
@@ -155,6 +165,8 @@ model PluginToolConsent {
   toolName  String        @map("tool_name")
   level     RiskLevel
   grantedAt DateTime      @default(now()) @map("granted_at")
+  /// True only when the user passed the second confirmation for a DESTRUCTIVE tool (in-chat consent card).
+  confirmedDestructive Boolean @default(false) @map("confirmed_destructive")
 
   @@unique([installId, toolName])
   @@map("plugin_tool_consents")
@@ -231,6 +243,10 @@ model McpServer {
   lastErrorCode   String?              @map("last_error_code")
   failureCount    Int                  @default(0) @map("failure_count")
   breakerOpenedAt DateTime?            @map("breaker_opened_at")
+  /// Admin decision on a pending server (plugins-admin-catalog).
+  decidedBy       String?              @map("decided_by")
+  decidedAt       DateTime?            @map("decided_at")
+  decisionReason  String?              @map("decision_reason")
   tools           McpServerTool[]
   credential      McpServerCredential?
   createdAt       DateTime             @default(now()) @map("created_at")
@@ -239,6 +255,7 @@ model McpServer {
   @@unique([ownerUserId, url])
   @@index([ownerUserId, status])
   @@index([urlHost])
+  @@index([status, createdAt])
   @@map("mcp_servers")
 }
 
@@ -279,4 +296,185 @@ model McpServerCredential {
 
   @@index([userId])
   @@map("mcp_server_credentials")
+}
+
+enum ConsentRequestStatus {
+  PENDING
+  APPROVED
+  DENIED
+  EXPIRED
+  CONSUMED
+}
+
+enum ConsentChoice {
+  ALLOW_ONCE
+  ALLOW_CHAT
+  ALWAYS_ALLOW
+  DENY
+}
+
+/// One in-chat question "may this tool run with these arguments?". Bound to the user, the call id and the
+/// argument hash; decided once; consumed once by the resumed call. The preview is redacted and truncated.
+model PluginConsentRequest {
+  id             String               @id @default(uuid())
+  userId         String               @map("user_id")
+  installId      String?              @map("install_id")
+  serverId       String?              @map("server_id")
+  pluginSlug     String               @map("plugin_slug")
+  pluginName     String               @map("plugin_name")
+  toolName       String               @map("tool_name")
+  toolTitle      String               @map("tool_title")
+  riskLevel      RiskLevel            @map("risk_level")
+  callId         String               @map("call_id")
+  conversationId String?              @map("conversation_id")
+  messageId      String?              @map("message_id")
+  surface        String
+  argsHash       String               @map("args_hash")
+  argsPreview    String               @map("args_preview")
+  reason         String
+  status         ConsentRequestStatus @default(PENDING)
+  choice         ConsentChoice?
+  createdAt      DateTime             @default(now()) @map("created_at")
+  expiresAt      DateTime             @map("expires_at")
+  decidedAt      DateTime?            @map("decided_at")
+  consumedAt     DateTime?            @map("consumed_at")
+
+  @@unique([userId, callId])
+  @@index([userId, status, expiresAt])
+  @@index([conversationId])
+  @@map("plugin_consent_requests")
+}
+
+/// "Allow for this chat": a WRITE tool the user approved for one conversation, until it expires or is revoked.
+model PluginChatConsent {
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  conversationId String    @map("conversation_id")
+  targetKey      String    @map("target_key")
+  pluginSlug     String    @map("plugin_slug")
+  toolName       String    @map("tool_name")
+  riskLevel      RiskLevel @map("risk_level")
+  grantedAt      DateTime  @default(now()) @map("granted_at")
+  expiresAt      DateTime  @map("expires_at")
+
+  @@unique([userId, conversationId, targetKey, toolName])
+  @@index([userId, expiresAt])
+  @@map("plugin_chat_consents")
+}
+
+// ---- plugins-admin-catalog: curation, host rules, audit -------------------------------------
+
+enum CatalogHealthStatus {
+  UNKNOWN
+  OK
+  DOWN
+}
+
+enum HostRuleKind {
+  ALLOW
+  DENY
+}
+
+enum HostRuleMatch {
+  HOST
+  PUBLISHER
+  SLUG
+}
+
+/// Admin allow/deny rule. HOST matches a host or its subdomains (user servers and curated URLs),
+/// PUBLISHER and SLUG match curated entries. Any ALLOW rule of a match type turns that type into an allow-list.
+model PluginHostRule {
+  id        String        @id @default(uuid())
+  kind      HostRuleKind
+  match     HostRuleMatch
+  pattern   String
+  note      String?
+  createdBy String        @map("created_by")
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@unique([kind, match, pattern])
+  @@map("plugin_host_rules")
+}
+
+/// Who changed what in the admin console. No secrets, no credentials.
+model PluginAdminAudit {
+  id         String   @id @default(uuid())
+  actorId    String   @map("actor_id")
+  action     String
+  targetType String   @map("target_type")
+  targetId   String   @map("target_id")
+  summary    Json     @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([targetType, targetId])
+  @@map("plugin_admin_audit")
+}
+
+/// A reviewed-but-not-installed import: the exact in-memory bundle the user is looking at, held for 30 minutes.
+model PluginImportDraft {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  sourceKind String   @map("source_kind")
+  sourceRef  String   @map("source_ref")
+  commitSha  String?  @map("commit_sha")
+  checksum   String
+  preview    Json
+  files      Json
+  totalBytes Int      @map("total_bytes")
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId, expiresAt])
+  @@map("plugin_import_drafts")
+}
+
+/// One user's imported (third-party) plugin. Inert: its files are documents, nothing in it is ever executed.
+model ImportedPlugin {
+  id         String               @id @default(uuid())
+  userId     String               @map("user_id")
+  name       String
+  nameKey    String               @map("name_key")
+  version    String
+  sourceKind String               @map("source_kind")
+  sourceRef  String               @map("source_ref")
+  commitSha  String?              @map("commit_sha")
+  checksum   String
+  preview    Json
+  totalBytes Int                  @map("total_bytes")
+  fileCount  Int                  @map("file_count")
+  files      ImportedPluginFile[]
+  createdAt  DateTime             @default(now()) @map("created_at")
+
+  @@unique([userId, nameKey])
+  @@index([userId, createdAt])
+  @@map("imported_plugins")
+}
+
+model ImportedPluginFile {
+  id        String         @id @default(uuid())
+  pluginId  String         @map("plugin_id")
+  plugin    ImportedPlugin @relation(fields: [pluginId], references: [id], onDelete: Cascade)
+  path      String
+  content   String
+  bytes     Int
+
+  @@unique([pluginId, path])
+  @@map("imported_plugin_files")
+}
+
+/// What was imported or removed, by whom, from where. No file contents.
+model PluginImportAudit {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  action     String
+  pluginName String   @map("plugin_name")
+  sourceKind String   @map("source_kind")
+  sourceRef  String   @map("source_ref")
+  commitSha  String?  @map("commit_sha")
+  checksum   String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@map("plugin_import_audit")
 }

@@ -16,6 +16,8 @@ export const PLUGIN_NOTICE_KEYS: Readonly<Record<PluginNoticeCode, string>> = {
   [PluginNoticeCode.NO_TOOLS]: 'pluginChat.notices.noTools',
   [PluginNoticeCode.CONSENT_NOT_AVAILABLE]: 'pluginChat.notices.consentNotAvailable',
   [PluginNoticeCode.LIMIT_REACHED]: 'pluginChat.notices.limitReached',
+  [PluginNoticeCode.SERVER_UNAVAILABLE]: 'chat.pluginOwnServerUnavailable',
+  [PluginNoticeCode.SERVER_NEEDS_REVIEW]: 'chat.pluginOwnServerNeedsReview',
 };
 
 /** Statuses a reader should see as a problem rather than a result. */

@@ -76,3 +76,5 @@ expected list there. If you added a locale-sensitive string, read it in the lang
 - `network.hosts` is the only way a BUILTIN adapter reaches the internet. Do not widen it to make a test pass.
 - Never list a vendor MCP server without the owner naming the vendor and accepting the legal note (design decision 4).
 - Translation fields reject newlines in names and summaries. Keep descriptions plain text.
+
+> A curated **remote MCP** entry needs no code and no deploy: an admin adds it at `/admin/plugins/curation` ([ADR-187](../docs/13-adr/adr-187-admin-curates-the-catalog-and-decides-user-servers-from-the-database.md), [runbook-plugin-admin](../docs/11-runbooks/runbook-plugin-admin.md)). This skill is for first-party `BUILTIN` plugins.

@@ -16,6 +16,17 @@ export const PLUGIN_RESOLVE_TIMEOUT_MS = 5_000;
 /** A tool may declare up to 60 s (design section 4); leave room for the hop. */
 export const PLUGIN_INVOKE_TIMEOUT_MS = 65_000;
 
+/** The consent card: where the loop waits for the answer, and how long it will wait at most. */
+export const PLUGIN_CONSENT_PATH_PREFIX = '/api/v1/internal/plugins/consent-requests';
+export const PLUGIN_CONSENT_WAIT_SLICE_MS = 20_000;
+export const PLUGIN_CONSENT_WAIT_HOP_MS = 5_000;
+export const PLUGIN_CONSENT_GRACE_MS = 5_000;
+export const PLUGIN_CONSENT_MAX_WAIT_MS = 150_000;
+export const PLUGIN_CONSENT_MAX_WAITS = 10;
+export const PLUGIN_CONSENT_DENIED_CODE = 'PLUGIN_CONSENT_DENIED';
+export const PLUGIN_CONSENT_EXPIRED_CODE = 'PLUGIN_CONSENT_EXPIRED';
+export const PLUGIN_CONSENT_UNAVAILABLE_CODE = 'PLUGIN_CONSENT_UNAVAILABLE';
+
 /** Used when plugin-service does not return `limits` (`loop.maxRounds`, `loop.maxCallsPerTurn`). */
 export const PLUGIN_DEFAULT_MAX_ROUNDS = 5;
 export const PLUGIN_DEFAULT_MAX_CALLS_PER_TURN = 6;
@@ -45,6 +56,14 @@ export const PLUGIN_UNTRUSTED_RESULTS_INSTRUCTION =
 /** Said to the model when a tool asked for approval that this surface cannot collect. */
 export const PLUGIN_CONSENT_DECLINED_TEXT =
   'The user has not approved this tool call, so it was not run. Do not retry it. Say so briefly and continue without it.';
+
+/** Said to the model when the user pressed Deny on the consent card. */
+export const PLUGIN_CONSENT_DENIED_TEXT =
+  'The user declined this tool call, so it was not run and nothing changed. Do not retry it or work around it. Tell the user briefly that you did not do it, and continue without it.';
+
+/** Said to the model when the consent card timed out or could not be answered. */
+export const PLUGIN_CONSENT_EXPIRED_TEXT =
+  'The user did not answer the approval request in time, so this tool call was not run and nothing changed. Do not retry it. Tell the user briefly that it was not done, and continue without it.';
 
 /**
  * Surfaces whose model call ANSWERS the user and so may use @mentioned plugin tools.

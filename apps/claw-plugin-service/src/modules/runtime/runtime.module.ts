@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 
+import { ConsentRequestsModule } from '../consent-requests/consent-requests.module';
 import { EgressModule } from '../egress/egress.module';
 import { InstallsModule } from '../installs/installs.module';
 import { McpServersModule } from '../mcp-servers/mcp-servers.module';
+import { OwnServersChatModule } from '../own-servers-chat/own-servers-chat.module';
 import { RuntimeSettingsModule } from '../runtime-settings/runtime-settings.module';
 import { DatetimeMathAdapter } from './adapters/datetime-math.adapter';
 import { WeatherAdapter } from './adapters/weather.adapter';
@@ -25,7 +27,14 @@ import { PluginInvokeService } from './services/plugin-invoke.service';
 import { PluginResolveService } from './services/plugin-resolve.service';
 
 @Module({
-  imports: [EgressModule, InstallsModule, McpServersModule, RuntimeSettingsModule],
+  imports: [
+    ConsentRequestsModule,
+    EgressModule,
+    InstallsModule,
+    McpServersModule,
+    OwnServersChatModule,
+    RuntimeSettingsModule,
+  ],
   controllers: [PluginInvokeController, PluginInternalController],
   providers: [
     PluginInvokeService,

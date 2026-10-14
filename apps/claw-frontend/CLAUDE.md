@@ -893,6 +893,18 @@ call, never in a query key, toast or log. Add needs the risk consent box; every 
 off and WRITE. Copy: `pluginsServers.*` in `plugins-servers-translations.ts` (13 locales).
 Full note: [`docs/05-frontend/plugins-installs.md`](../../docs/05-frontend/plugins-installs.md).
 
+## Plugins: the in-chat consent card
+
+`PluginConsentPrompts` (mounted by `VirtualizedMessagesFooter` while a reply is in flight) lists
+`GET /plugins/consent-requests` (2 s, capped at 3 minutes, never open-ended) and renders a `PluginConsentCard`
+per open request: Allow once, Allow for this chat, Always allow this tool, Deny, with a second confirmation
+(`PluginConsentConfirm`) before "Always allow" on a DESTRUCTIVE tool. Deny takes first focus, Escape denies, the
+arguments are scrubbed server-side and shown as `dir="ltr"` plain text. The buttons shown come from the
+server's `options`; the countdown ends at `expiresAt` (the server has already declined by then). "For this
+chat" grants are listed with Revoke on the Installed page (`PluginChatGrantsList`). Copy: `pluginConsent.*` in
+`plugin-consent-translations.ts` (13 locales). The `plugin_consent_*` stream frames are an additive hint; the
+card does not depend on them. Decision: [ADR-185](../../docs/13-adr/adr-185-the-in-chat-consent-card-parks-the-turn-on-a-stored-argument-bound-request.md).
+
 ## Threads generation failure codes
 
 `thread-generation-progress.constants.ts` maps each step failure code to a translation key. The context-window
@@ -954,7 +966,7 @@ Sitemaps: `/sitemaps/<locale>/threads-N.xml` lists Threads of that content langu
 
 - **`@` opens a combobox.** `RichPromptTextarea` takes an opt-in `pluginMentions` (the composer's
   `usePluginMentionSelection`). With it, typing `@` at the start of the text or after whitespace (never in
-  a word or an email) lists the user's installed, enabled plugins (`GET /plugins/installs/mentions`,
+  a word or an email) lists the user's installed, enabled plugins (`GET /plugins/mentions`: installed plugins plus the user's own MCP servers, ADR-184;
   fetched on the first `@`, cached a minute, no polling). It is a WAI-ARIA combobox on the textarea
   (`aria-expanded`, `aria-controls`, `aria-activedescendant`, a polite count line) and takes ArrowUp/Down,
   Enter, Tab and Escape ONLY while open; closed or no match, every key keeps its meaning (Enter sends). It
@@ -1004,3 +1016,9 @@ The public Thread page (`/threads/[slug]`, guests and members) and the in-app re
 - **Queue line.** `describeThreadQueue(progress.queue)` adds "next in line" or "N jobs ahead" under the queued hint; a back-off or an older service shows only the existing hint.
 - **Slug validator** allows 96 code points (the service issues up to 69).
 - Strings: `chat.threadFix*` from `lib/i18n/locales/thread-fixes-translations.ts` (13 locales).
+
+## Plugin catalog curation (ADR-187, 2026-10-15)
+
+- `/admin/plugins/curation` (`PLUGINS_ADMIN` through the `/admin/plugins` prefix; linked from the Plugins admin header) has four tabs: curated entries, approval queue, rules, audit log. Components `components/admin/plugins/curation/*`, hooks `use-admin-curation-*` and `use-curated-entry-form`, repository `plugin-admin-curation.repository.ts`, utility `plugin-admin-curation.utility.ts`, strings `plugins-admin-catalog-translations.ts` (all 13 locales; the `pluginsAdminCatalog` namespace).
+- The entry form never sends the probe key anywhere but the preview and publish calls and mounts only while the dialog is open. Publish is disabled until Preview tools has run; the server re-checks.
+- Two notification kinds, `MCP_SERVER_APPROVED` and `MCP_SERVER_REJECTED`, have text in `notifications-translations.ts` (the rejection reason is `{excerpt}`) and an icon in `NOTIFICATION_KIND_ICONS`.

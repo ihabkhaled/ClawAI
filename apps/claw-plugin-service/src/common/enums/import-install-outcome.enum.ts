@@ -1,0 +1,6 @@
+export enum ImportInstallOutcome {
+  INSTALLED = 'INSTALLED',
+  QUOTA_PLUGINS = 'QUOTA_PLUGINS',
+  QUOTA_BYTES = 'QUOTA_BYTES',
+  DUPLICATE = 'DUPLICATE',
+}

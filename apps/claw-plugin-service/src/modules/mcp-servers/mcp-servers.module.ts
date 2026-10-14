@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { EgressModule } from '../egress/egress.module';
+import { HostRulesModule } from '../host-rules/host-rules.module';
 import { InstallsModule } from '../installs/installs.module';
 import { RuntimeSettingsModule } from '../runtime-settings/runtime-settings.module';
 import { PluginServersController } from './controllers/plugin-servers.controller';
@@ -17,7 +18,7 @@ import { McpServerReviewService } from './services/mcp-server-review.service';
 import { McpServersService } from './services/mcp-servers.service';
 
 @Module({
-  imports: [EgressModule, InstallsModule, RuntimeSettingsModule],
+  imports: [EgressModule, HostRulesModule, InstallsModule, RuntimeSettingsModule],
   controllers: [PluginServersController],
   providers: [
     McpServersService,

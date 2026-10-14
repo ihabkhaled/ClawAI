@@ -5,6 +5,7 @@ import { InstallStatus } from '../../../common/enums/install-status.enum';
 import { NATIVE_TOOL_PREFIX } from '../../catalog/constants/catalog.constants';
 import { type PluginManifest } from '../../catalog/schemas/plugin-manifest.schema';
 import { parsePluginManifest } from '../../catalog/utilities/parse-plugin-manifest.utility';
+import { OwnServerOffersManager } from '../../own-servers-chat/managers/own-server-offers.manager';
 import { RuntimeSettingsManager } from '../../runtime-settings/managers/runtime-settings.manager';
 import {
   RESOLVE_NOTICE_NO_TOOLS,
@@ -34,6 +35,7 @@ export class PluginResolveService {
     private readonly targets: InvokeTargetsRepository,
     private readonly planGate: RuntimePlanGateManager,
     private readonly settings: RuntimeSettingsManager,
+    private readonly ownServers: OwnServerOffersManager,
   ) {}
 
   async resolve(body: InternalResolveBody): Promise<ResolveResponse> {
@@ -43,14 +45,31 @@ export class PluginResolveService {
     }
     const tools: ResolvedTool[] = [];
     const lines: string[] = [];
+    const unmatched = new Set<string>();
     for (const installId of new Set(body.refs.map((ref) => ref.installId))) {
       const install = await this.targets.findInstall(body.userId, installId);
-      const offered = install === null ? null : this.offer(install, body.refs);
+      if (install === null) {
+        // Not one of the caller's installs: it may be one of the caller's own MCP servers.
+        unmatched.add(installId);
+        continue;
+      }
+      const offered = this.offer(install, body.refs);
       if (offered === null) continue;
       tools.push(...offered.tools);
       lines.push(offered.line);
     }
-    const notices: ResolveNotice[] = tools.length === 0 ? [{ code: RESOLVE_NOTICE_NO_TOOLS }] : [];
+    const own = await this.ownServers.offer(
+      body.userId,
+      body.refs
+        .filter((ref) => unmatched.has(ref.installId))
+        .map((ref) => ({ serverId: ref.installId, toolName: ref.toolName })),
+    );
+    tools.push(...own.tools);
+    lines.push(...own.lines);
+    const notices: ResolveNotice[] = [
+      ...(tools.length === 0 ? [{ code: RESOLVE_NOTICE_NO_TOOLS }] : []),
+      ...own.notices,
+    ];
     return { tools, systemBlock: lines.join('\n'), limits, notices };
   }
 

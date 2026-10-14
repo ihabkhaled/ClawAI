@@ -2,6 +2,7 @@
 
 import { ChatLimitNoticeCard } from '@/components/chat/chat-limit-notice-card';
 import { NarrationLog } from '@/components/chat/narration-log';
+import { PluginConsentPrompts } from '@/components/chat/plugin-consent-prompts';
 import { RuntimeProgressPanel } from '@/components/chat/runtime-progress';
 import { useTranslation } from '@/lib/i18n';
 import type { VirtualizedMessagesFooterProps } from '@/types';
@@ -46,6 +47,7 @@ export function VirtualizedMessagesFooter({
       {isWaitingForResponse && narration !== undefined && narration.length > 0 ? (
         <NarrationLog entries={narration} isLive t={t} />
       ) : null}
+      {isWaitingForResponse ? <PluginConsentPrompts /> : null}
       {!isWaitingForResponse && !streamError ? null : (
         <RuntimeProgressPanel
           fallbackAttempts={fallbackAttempts}

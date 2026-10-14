@@ -1,0 +1,21 @@
+export const QUEUE_SELECT = {
+  id: true,
+  slug: true,
+  name: true,
+  ownerUserId: true,
+  url: true,
+  urlHost: true,
+  authKind: true,
+  status: true,
+  serverInfo: true,
+  toolsHash: true,
+  createdAt: true,
+  decidedBy: true,
+  decidedAt: true,
+  decisionReason: true,
+  credential: { select: { id: true } },
+  tools: {
+    select: { name: true, description: true, riskLevel: true },
+    orderBy: { localName: 'asc' },
+  },
+} as const;

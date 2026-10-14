@@ -20,7 +20,7 @@ describe('UserNotificationKind', () => {
     }
   });
 
-  it('has exactly nine kinds, so a new one cannot slip in without a test and copy', () => {
-    expect(Object.values(UserNotificationKind)).toHaveLength(9);
+  it('has exactly eleven kinds, so a new one cannot slip in without a test and copy', () => {
+    expect(Object.values(UserNotificationKind)).toHaveLength(11);
   });
 });

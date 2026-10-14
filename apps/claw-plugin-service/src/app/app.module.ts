@@ -17,9 +17,12 @@ import { HealthModule } from '../modules/health/health.module';
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
 import { AccountDeletionModule } from '../modules/account-deletion/account-deletion.module';
 import { AdminModule } from '../modules/admin/admin.module';
+import { AdminCurationModule } from '../modules/admin-curation/admin-curation.module';
+import { ConsentRequestsModule } from '../modules/consent-requests/consent-requests.module';
 import { CatalogModule } from '../modules/catalog/catalog.module';
 import { InstallsModule } from '../modules/installs/installs.module';
 import { McpServersModule } from '../modules/mcp-servers/mcp-servers.module';
+import { PluginImportModule } from '../modules/plugin-import/plugin-import.module';
 import { RuntimeModule } from '../modules/runtime/runtime.module';
 import { SeedingModule } from '../modules/seeding/seeding.module';
 
@@ -66,7 +69,10 @@ import { SeedingModule } from '../modules/seeding/seeding.module';
     InstallsModule,
     McpServersModule,
     RuntimeModule,
+    PluginImportModule,
+    ConsentRequestsModule,
     AdminModule,
+    AdminCurationModule,
     AccountDeletionModule,
     SeedingModule,
   ],

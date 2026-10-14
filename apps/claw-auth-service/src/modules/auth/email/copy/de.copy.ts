@@ -240,5 +240,35 @@ export const DE_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'Sie erhalten diese Nachricht, weil Sie an diesem Thread auf ClawAI beteiligt sind. Diese E-Mails können Sie in Ihren Benachrichtigungseinstellungen ausschalten.',
     },
+    [AuthEmailKind.MCP_SERVER_APPROVED]: {
+      subject: 'Ihr MCP-Server wurde genehmigt',
+      preheader: 'Sie können ihn jetzt im Chat nutzen.',
+      heading: 'Ihr MCP-Server ist genehmigt',
+      intro: '„{value}“ wurde von einem Administrator genehmigt.',
+      bodyLines: [
+        'Seine Tools stehen jetzt in Ihren Chats bereit. Auf der Seite „MCP-Server“ können Sie ihn jederzeit ausschalten oder die Tool-Berechtigungen ändern.',
+      ],
+      actionLabel: 'Meine MCP-Server öffnen',
+      fallbackNote:
+        'Falls die Schaltfläche nicht funktioniert, kopieren Sie die untenstehende Adresse in Ihren Browser:',
+      expiryNote: null,
+      securityNote:
+        'Sie erhalten diese Nachricht, weil Sie auf ClawAI einen MCP-Server hinzugefügt haben. In Ihren Benachrichtigungseinstellungen können Sie diese E-Mails abschalten.',
+    },
+    [AuthEmailKind.MCP_SERVER_REJECTED]: {
+      subject: 'Ihr MCP-Server wurde nicht genehmigt',
+      preheader: 'Öffnen Sie die Seite, um den Grund zu sehen.',
+      heading: 'Ihr MCP-Server wurde nicht genehmigt',
+      intro: '„{value}“ wurde von einem Administrator nicht genehmigt.',
+      bodyLines: [
+        'Auf der Seite „MCP-Server“ sehen Sie den Grund. Sie können den Server entfernen und einen korrigierten hinzufügen.',
+      ],
+      actionLabel: 'Meine MCP-Server öffnen',
+      fallbackNote:
+        'Falls die Schaltfläche nicht funktioniert, kopieren Sie die untenstehende Adresse in Ihren Browser:',
+      expiryNote: null,
+      securityNote:
+        'Sie erhalten diese Nachricht, weil Sie auf ClawAI einen MCP-Server hinzugefügt haben. In Ihren Benachrichtigungseinstellungen können Sie diese E-Mails abschalten.',
+    },
   },
 };

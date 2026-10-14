@@ -12,6 +12,8 @@ import type {
 import { apiClient } from '@/services/shared/api-client';
 
 const BASE_PATH = '/plugins/installs';
+/** Installed plugins and the user's own MCP servers, merged by the server for the `@` picker. */
+const MENTIONS_PATH = '/plugins/mentions';
 
 function installPath(id: string): string {
   return `${BASE_PATH}/${encodeURIComponent(id)}`;
@@ -25,7 +27,7 @@ export const pluginInstallsRepository = {
   },
 
   async mentions(): Promise<PluginMentionView[]> {
-    const response = await apiClient.get<PluginMentionView[]>(`${BASE_PATH}/mentions`);
+    const response = await apiClient.get<PluginMentionView[]>(MENTIONS_PATH);
     return response.data;
   },
 

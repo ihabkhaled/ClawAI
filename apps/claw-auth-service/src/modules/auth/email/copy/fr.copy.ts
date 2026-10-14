@@ -240,5 +240,35 @@ export const FR_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'Vous recevez ce message parce que vous participez à ce Thread sur ClawAI. Vous pouvez désactiver ces e-mails dans vos paramètres de notification.',
     },
+    [AuthEmailKind.MCP_SERVER_APPROVED]: {
+      subject: 'Votre serveur MCP a été approuvé',
+      preheader: "Vous pouvez l'utiliser dans le chat dès maintenant.",
+      heading: 'Votre serveur MCP est approuvé',
+      intro: '« {value} » a été approuvé par un administrateur.',
+      bodyLines: [
+        'Ses outils sont maintenant disponibles dans vos conversations. Vous pouvez le désactiver ou modifier les autorisations de ses outils à tout moment depuis la page des serveurs MCP.',
+      ],
+      actionLabel: 'Ouvrir mes serveurs MCP',
+      fallbackNote:
+        "Si le bouton ne fonctionne pas, copiez l'adresse ci-dessous dans votre navigateur :",
+      expiryNote: null,
+      securityNote:
+        'Vous recevez ce message parce que vous avez ajouté un serveur MCP sur ClawAI. Vous pouvez désactiver ces e-mails dans vos paramètres de notifications.',
+    },
+    [AuthEmailKind.MCP_SERVER_REJECTED]: {
+      subject: "Votre serveur MCP n'a pas été approuvé",
+      preheader: 'Ouvrez la page pour voir la raison.',
+      heading: "Votre serveur MCP n'a pas été approuvé",
+      intro: "« {value} » n'a pas été approuvé par un administrateur.",
+      bodyLines: [
+        'Ouvrez la page des serveurs MCP pour voir la raison. Vous pouvez supprimer le serveur et en ajouter un corrigé.',
+      ],
+      actionLabel: 'Ouvrir mes serveurs MCP',
+      fallbackNote:
+        "Si le bouton ne fonctionne pas, copiez l'adresse ci-dessous dans votre navigateur :",
+      expiryNote: null,
+      securityNote:
+        'Vous recevez ce message parce que vous avez ajouté un serveur MCP sur ClawAI. Vous pouvez désactiver ces e-mails dans vos paramètres de notifications.',
+    },
   },
 };

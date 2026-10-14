@@ -17,6 +17,7 @@ import { CredentialCryptoManager } from '../../installs/managers/credential-cryp
 import { EgressError } from '../../egress/errors/egress.error';
 import { EGRESS_ALLOWED_PORTS } from '../../egress/constants/egress.constants';
 import { assertPublicUrl } from '../../egress/utilities/assert-public-url.utility';
+import { HostRulePolicyManager } from '../../host-rules/managers/host-rule-policy.manager';
 import { RuntimeSettingsManager } from '../../runtime-settings/managers/runtime-settings.manager';
 import { MCP_SLUG_HEX_LENGTH, MCP_SLUG_PREFIX, SERVERS_LIST_MAX } from '../constants/mcp.constants';
 import {
@@ -64,6 +65,7 @@ export class McpServersService {
     private readonly snapshots: McpToolSnapshotManager,
     private readonly toolPolicy: McpServerToolPolicyManager,
     private readonly presenter: McpServerPresenterManager,
+    private readonly hostPolicy: HostRulePolicyManager,
   ) {}
 
   async register(userId: string, body: RegisterServerBody): Promise<McpServerRegisteredView> {
@@ -77,6 +79,8 @@ export class McpServersService {
     const cap = await this.planGate.resolveServerCap(userId);
     await this.assertUnderCap(userId, cap);
     const url = this.checkedUrl(body.url);
+    // Admin allow/deny rules (ADR-184); a refusal is 403 PLUGIN_CURATION_HOST_DENIED and opens no connection.
+    await this.hostPolicy.assertAllowed({ host: url.hostname });
     const credential = this.credentialFor(body);
     const snapshot = await this.discoverSnapshot({ url: url.href, headers: credential.headers });
     const id = randomUUID();

@@ -1424,6 +1424,7 @@
       "key": "USER_NOTIFICATION_REQUESTED",
       "pattern": "user.notification_requested",
       "producers": [
+        "claw-plugin-service",
         "claw-threads-service"
       ]
     },

@@ -43,6 +43,8 @@ export type InstallEntryRecord = {
   status: CatalogStatus;
   globallyEnabled: boolean;
   currentVersionId: string | null;
+  /** Plan slugs that may install the entry; empty means every plan (admin curation). */
+  allowedPlanSlugs: string[];
   versions: InstallVersionRecord[];
 };
 

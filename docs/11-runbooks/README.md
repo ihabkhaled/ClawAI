@@ -7,6 +7,7 @@
 
 | Symptom                                                                                | Start here                                                                                                                                                                                       |
 | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A curated MCP server must be added or blocked, or a user's server waits for approval   | [runbook-plugin-admin.md](runbook-plugin-admin.md) → catalog curation screen, approval queue, rules, audit log                                                                                   |
 | A service won't start / crash-loops                                                    | [runbook-service-crash.md](runbook-service-crash.md) → check Docker logs, DB reachability, migrations                                                                                            |
 | A deployed service crash-loops after a release (Nest cannot resolve dependencies)      | [runbook-prod-service-crash-loop.md](runbook-prod-service-crash-loop.md) → docker logs, module providers, compile spec                                                                           |
 | Uploads rejected: `antivirus_scan … ECONNREFUSED …:3310`                               | [runbook-clamav-unreachable.md](runbook-clamav-unreachable.md) → clamd died (OOM) inside a still-running container; restart, watchdog prevents recurrence                                        |
@@ -53,6 +54,7 @@
 - [operational-runbooks.md](operational-runbooks.md) — day-to-day ops
 - [troubleshooting.md](troubleshooting.md) — general troubleshooting
 - [runbook-service-crash.md](runbook-service-crash.md)
+- [runbook-plugin-admin.md](runbook-plugin-admin.md) — curate the plugin catalog, approve or reject users' servers, rules, audit
 - [add-a-service-to-production.md](add-a-service-to-production.md) — a release adds a service with a database or secret
 - [runbook-clamav-unreachable.md](runbook-clamav-unreachable.md)
 - [runbook-scraper-sidecar-down.md](runbook-scraper-sidecar-down.md)

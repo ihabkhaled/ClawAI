@@ -1,15 +1,22 @@
 import type { Direction } from '@/enums/direction.enum';
 import type { Locale } from '@/enums/locale.enum';
 import type { FeedbackTranslation } from '@/types/i18n-feedback.types';
+import type { PluginImportLocaleTranslation } from '@/types/plugin-import-i18n.types';
 
 export type TranslationDictionary = {
   /** Plugins and MCP access: sidebar, plan editor and upgrade label. */
   pluginsAccess: PluginsAccessLocaleTranslation;
   /** Plugins inside a conversation: the @ picker, call timeline and notices. */
   pluginChat: PluginChatLocaleTranslation;
+  /** The in-chat consent card and the per-chat grants list. */
+  pluginConsent: PluginConsentLocaleTranslation;
   pluginsInstall: PluginsInstallLocaleTranslation;
   pluginsServers: PluginsServersLocaleTranslation;
+  /** Importing a plugin from GitHub or an upload (plugin-import-translations.ts). */
+  pluginImport: PluginImportLocaleTranslation;
   pluginsStatus: PluginsStatusLocaleTranslation;
+  /** The catalog curation console: curated entries, approval queue, rules, audit log. */
+  pluginsAdminCatalog: PluginsAdminCatalogLocaleTranslation;
   /**
    * The shared table pagination control. Used by every paged list, so a change
    * here is a change everywhere — see `components/ui/pagination.tsx`.
@@ -1422,7 +1429,8 @@ export type TranslationDictionary = {
   } & ThreadBoardLocaleTranslation &
     ThreadPublicBoardLocaleTranslation &
     ThreadCommunityLocaleTranslation &
-    ThreadFixesLocaleTranslation;
+    ThreadFixesLocaleTranslation &
+    PluginOwnServersLocaleTranslation;
   receipt: {
     openLabel: string;
     contextUsed: string;
@@ -7629,6 +7637,8 @@ export type NotificationsLocaleTranslation = {
     THREAD_REACTED: NotificationKindTranslation;
     THREAD_COMMENT_REACTED: NotificationKindTranslation;
     THREAD_CHANGE_REQUESTED: NotificationKindTranslation;
+    MCP_SERVER_APPROVED: NotificationKindTranslation;
+    MCP_SERVER_REJECTED: NotificationKindTranslation;
   };
   preferences: {
     title: string;
@@ -8136,6 +8146,12 @@ export type ThreadCommunityLocaleTranslation = {
   threadCommunityRemovedComment: string;
 };
 
+/** Flat `chat.pluginOwnServer*` keys: notices for an own MCP server that could not offer tools; see plugin-own-servers-translations.ts. */
+export type PluginOwnServersLocaleTranslation = {
+  pluginOwnServerUnavailable: string;
+  pluginOwnServerNeedsReview: string;
+};
+
 /** Flat `chat.threadFix*` keys: topic minimum, sensitive-details editor notice and queue text; see thread-fixes-translations.ts. */
 export type ThreadFixesLocaleTranslation = {
   threadFixTopicTooShort: string;
@@ -8188,5 +8204,149 @@ export type PluginChatLocaleTranslation = {
     noTools: string;
     consentNotAvailable: string;
     limitReached: string;
+  };
+};
+
+/** The in-chat consent card and the per-chat grants list (plugin-consent-translations.ts). */
+export type PluginConsentLocaleTranslation = {
+  card: {
+    title: string;
+    plugin: string;
+    tool: string;
+    arguments: string;
+    noArguments: string;
+    allowOnce: string;
+    allowChat: string;
+    alwaysAllow: string;
+    deny: string;
+    timeLeft: string;
+    expired: string;
+    confirmTitle: string;
+    confirmBody: string;
+    confirmYes: string;
+    confirmBack: string;
+    error: string;
+    listLabel: string;
+  };
+  grants: {
+    title: string;
+    hint: string;
+    expires: string;
+    revoke: string;
+    revokeError: string;
+  };
+};
+
+/** The catalog curation console (plugins-admin-catalog-translations.ts). `{value}` is filled in by the screen. */
+export type PluginsAdminCatalogLocaleTranslation = {
+  page: {
+    title: string;
+    description: string;
+    back: string;
+    open: string;
+    tabEntries: string;
+    tabQueue: string;
+    tabRules: string;
+    tabAudit: string;
+  };
+  entries: {
+    new: string;
+    empty: string;
+    needsVerification: string;
+    healthOk: string;
+    healthDown: string;
+    healthUnknown: string;
+    latency: string;
+    allPlans: string;
+    plans: string;
+    checkHealth: string;
+  };
+  delete: { title: string; description: string };
+  form: {
+    createTitle: string;
+    editTitle: string;
+    description: string;
+    slug: string;
+    publisher: string;
+    category: string;
+    icon: string;
+    homepage: string;
+    url: string;
+    urlHelp: string;
+    transport: string;
+    transportHttp: string;
+    transportSse: string;
+    auth: string;
+    authNone: string;
+    authApiKey: string;
+    authBearer: string;
+    authOauth: string;
+    headerName: string;
+    probeKey: string;
+    oauthAuthorize: string;
+    oauthToken: string;
+    language: string;
+    textName: string;
+    textSummary: string;
+    textDescription: string;
+    textHelp: string;
+    toolsTitle: string;
+    toolsHelp: string;
+    toolsSkipped: string;
+    toolNameUnusable: string;
+    risk: string;
+    preview: string;
+    plans: string;
+    notes: string;
+    saveDraft: string;
+    publish: string;
+    previewFirst: string;
+  };
+  queue: {
+    filter: string;
+    filterPending: string;
+    filterApproved: string;
+    filterRejected: string;
+    filterReview: string;
+    empty: string;
+    submitter: string;
+    tools: string;
+    hasKey: string;
+    showTools: string;
+    approve: string;
+    reject: string;
+    rejectTitle: string;
+    rejectDescription: string;
+    reason: string;
+  };
+  rules: {
+    help: string;
+    kind: string;
+    kindDeny: string;
+    kindAllow: string;
+    match: string;
+    matchHost: string;
+    matchPublisher: string;
+    matchSlug: string;
+    pattern: string;
+    note: string;
+    add: string;
+    remove: string;
+    empty: string;
+  };
+  audit: { empty: string; by: string };
+  toast: { saved: string; deleted: string; approved: string; rejected: string };
+  errors: {
+    generic: string;
+    exists: string;
+    invalid: string;
+    urlBlocked: string;
+    hostDenied: string;
+    probeFailed: string;
+    toolsUnverified: string;
+    oauthUnsupported: string;
+    needsVerification: string;
+    notPending: string;
+    notFound: string;
   };
 };

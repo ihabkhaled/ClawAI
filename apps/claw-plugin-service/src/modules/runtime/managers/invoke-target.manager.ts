@@ -28,8 +28,12 @@ export class InvokeTargetManager {
   async resolve(userId: string, body: InvokeBody): Promise<ResolvedTarget> {
     if (body.installId !== undefined) {
       const install = await this.repository.findInstall(userId, body.installId);
-      if (install === null) throw this.targetNotFound();
-      return this.fromInstall(install, body.toolName);
+      if (install !== null) return this.fromInstall(install, body.toolName);
+      // chat-service carries a mentioned own server's id in the install id field: the same
+      // owner-scoped lookup answers for it, and anything else still reads as "not found".
+      const own = await this.repository.findServer(userId, body.installId, body.toolName);
+      if (own === null) throw this.targetNotFound();
+      return this.fromServer(own, body.toolName);
     }
     const server = await this.repository.findServer(userId, body.serverId ?? '', body.toolName);
     if (server === null) throw this.targetNotFound();

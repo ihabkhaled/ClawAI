@@ -43,6 +43,16 @@ export function PluginsNav({ active, t }: PluginsNavProps): React.ReactElement {
       >
         {t('pluginsServers.nav.servers')}
       </Link>
+      <Link
+        href={ROUTES.PLUGINS_IMPORT}
+        aria-current={active === PluginsNavTab.Import ? 'page' : undefined}
+        className={cn(
+          PLUGINS_NAV_LINK_CLASSES,
+          active === PluginsNavTab.Import ? 'bg-background shadow-sm' : 'text-muted-foreground',
+        )}
+      >
+        {t('pluginImport.nav.import')}
+      </Link>
     </nav>
   );
 }

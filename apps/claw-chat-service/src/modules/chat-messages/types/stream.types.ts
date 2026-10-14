@@ -1,4 +1,5 @@
 import type { NarrationEntry } from './narration.types';
+import type { PluginConsentStreamPayload } from './plugin-consent.types';
 import type { SuggestedModel } from './picked-model-fallback.types';
 import {
   type AiReasoningVisibility,
@@ -156,6 +157,8 @@ export type StreamEvent = {
   researchDetails?: ResearchProgressDetails;
   // NARRATION payload.
   narration?: NarrationEntry;
+  // PLUGIN_CONSENT_REQUESTED / PLUGIN_CONSENT_RESOLVED payload (the in-chat consent card).
+  pluginConsent?: PluginConsentStreamPayload;
 };
 
 // Shared identity for rich-stream emitters (one model run / lane).

@@ -13,7 +13,10 @@ import { type ConsentVerdict } from '../types/invoke.types';
  *    non-READ call, whatever was granted before: a poisoned result must not be able to spend a
  *    standing "always allow".
  * 4. DESTRUCTIVE asks every time.
- * 5. WRITE asks until the user has stored a grant for that tool.
+ * 5. WRITE asks until the user has stored a grant for that tool, or allowed it for this chat.
+ *
+ * `extraGrant` carries what the consent card stored beyond `consentGranted`: an "Allow for this chat"
+ * grant (WRITE) or a standing grant the user confirmed twice (DESTRUCTIVE). Neither beats the taint rule.
  */
 @Injectable()
 export class ConsentGateManager {
@@ -22,6 +25,7 @@ export class ConsentGateManager {
     consentGranted: boolean;
     tainted: boolean;
     userApproved: boolean;
+    extraGrant?: boolean;
   }): ConsentVerdict {
     if (input.riskLevel === RiskLevel.READ) {
       return { required: false, decision: ConsentDecision.NOT_REQUIRED };
@@ -31,9 +35,11 @@ export class ConsentGateManager {
     }
     if (input.tainted) return { required: true, decision: ConsentDecision.REQUIRED_TAINTED };
     if (input.riskLevel === RiskLevel.DESTRUCTIVE) {
-      return { required: true, decision: ConsentDecision.REQUIRED_EVERY_CALL };
+      return input.extraGrant === true
+        ? { required: false, decision: ConsentDecision.STORED_GRANT }
+        : { required: true, decision: ConsentDecision.REQUIRED_EVERY_CALL };
     }
-    return input.consentGranted
+    return input.consentGranted || input.extraGrant === true
       ? { required: false, decision: ConsentDecision.STORED_GRANT }
       : { required: true, decision: ConsentDecision.REQUIRED_FIRST_USE };
   }

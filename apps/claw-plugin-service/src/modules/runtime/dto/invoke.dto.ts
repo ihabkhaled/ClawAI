@@ -21,6 +21,8 @@ export const invokeFieldsSchema = z.strictObject({
   tainted: z.boolean().default(false),
   /** True only when the user explicitly approved THIS call (same callId, same arguments). */
   userApproved: z.boolean().default(false),
+  /** The consent request the user approved on the chat card; spent once, bound to this call id and these arguments. */
+  consentRequestId: z.string().uuid().optional(),
 });
 
 type TargetFields = { installId?: string | undefined; serverId?: string | undefined };

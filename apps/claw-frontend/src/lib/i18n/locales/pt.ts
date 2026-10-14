@@ -14,7 +14,11 @@ import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-tr
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
 import { PLUGIN_CHAT_TRANSLATIONS } from './plugin-chat-translations';
+import { PLUGIN_CONSENT_TRANSLATIONS } from './plugin-consent-translations';
+import { PLUGIN_IMPORT_TRANSLATIONS } from './plugin-import-translations';
+import { PLUGIN_OWN_SERVERS_TRANSLATIONS } from './plugin-own-servers-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
+import { PLUGINS_ADMIN_CATALOG_TRANSLATIONS } from './plugins-admin-catalog-translations';
 import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
 import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
@@ -30,9 +34,12 @@ import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const pt: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.pt,
+  pluginsAdminCatalog: PLUGINS_ADMIN_CATALOG_TRANSLATIONS.pt,
   pluginChat: PLUGIN_CHAT_TRANSLATIONS.pt,
+  pluginConsent: PLUGIN_CONSENT_TRANSLATIONS.pt,
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.pt,
   pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.pt,
+  pluginImport: PLUGIN_IMPORT_TRANSLATIONS.pt,
   pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.pt,
   pagination: {
     label: 'Paginação',
@@ -465,6 +472,7 @@ export const pt: TranslationDictionary = {
     ...THREAD_PUBLIC_BOARD_TRANSLATIONS.pt,
     ...THREAD_COMMUNITY_TRANSLATIONS.pt,
     ...THREAD_FIXES_TRANSLATIONS.pt,
+    ...PLUGIN_OWN_SERVERS_TRANSLATIONS.pt,
     composerContext: {
       menuLabel: 'Contexto',
       pickLabel: 'Escolher pacotes de contexto',
