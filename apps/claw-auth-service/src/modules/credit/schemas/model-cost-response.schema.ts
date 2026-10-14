@@ -40,6 +40,9 @@ export const modelCostResponseSchema = z.object({
   lastVerifiedAt: z.string().min(1).max(64).nullable(),
   source: z.string().min(1).max(64),
   isPriced: z.boolean(),
+  // True when the rates are the provider's DEAREST published rate standing in for a model nobody
+  // priced. DEFAULTED so a routing-service (or a cached entry) that predates the field still parses.
+  isFallbackRate: z.boolean().default(false),
   // Non-null means the answer came from the LOCAL-compute path. For a metered
   // provider that is a red flag, not a discount — see `isUsablePaygRate`.
   localComputeOwnership: z.string().min(1).max(64).nullable(),

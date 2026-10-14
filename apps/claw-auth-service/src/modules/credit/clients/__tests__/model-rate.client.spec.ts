@@ -107,6 +107,27 @@ describe('ModelRateClient — per-unit rows', () => {
     expect((await client.findRate('OPENAI', 'gpt-5'))?.isLocalComputeFallback).toBe(true);
   });
 
+  it('carries routing isFallbackRate through, and reads an older answer as NOT a fallback (D06-b)', async () => {
+    answer(
+      costPayload({
+        model: 'gemini-3.5-flash-lite',
+        inputPerMillionMicroUsd: 1_250_000,
+        outputPerMillionMicroUsd: 10_000_000,
+        isFallbackRate: true,
+      }),
+    );
+    expect((await client.findRate('GEMINI', 'gemini-3.5-flash-lite'))?.isFallbackRate).toBe(true);
+
+    answer(
+      costPayload({
+        model: 'gpt-5',
+        inputPerMillionMicroUsd: 1_250_000,
+        outputPerMillionMicroUsd: 10_000_000,
+      }),
+    );
+    expect((await client.findRate('OPENAI', 'gpt-5'))?.isFallbackRate).toBe(false);
+  });
+
   it('parses a routing-service answer that predates ttsPerCharacterMicroUsd', async () => {
     const legacy = costPayload({
       model: 'gpt-5',

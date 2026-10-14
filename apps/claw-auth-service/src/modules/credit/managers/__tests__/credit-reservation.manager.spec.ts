@@ -50,6 +50,7 @@ const PRICED_RATE: PaygRateSnapshot = {
   },
   isPriced: true,
   isLocalComputeFallback: false,
+  isFallbackRate: false,
 };
 
 const makeWallet = (overrides: Record<string, unknown> = {}) => ({
@@ -461,6 +462,48 @@ describe('CreditReservationManager', () => {
       await expect(
         manager.reserve(makeInput({ threadJobBudgetId: 'budget-1', promptTokens: 0 })),
       ).rejects.toMatchObject({ code: BillingErrorCode.PAYG_CREDIT_EXHAUSTED });
+    });
+
+    // D06-b: routing prices a model nobody priced at the provider's DEAREST rate. For a chat that
+    // bounds spend; for a job of dozens of calls it held ~the whole cap and billed a made-up price.
+    describe('a model with no published price', () => {
+      const fallbackRate = { ...PRICED_RATE, isFallbackRate: true };
+
+      it('is refused up front with PAYG_MODEL_UNPRICED, before any hold or allowance slot', async () => {
+        rates['findRate'].mockResolvedValue(fallbackRate);
+
+        await expect(
+          manager.reserve(makeInput({ threadJobBudgetId: 'budget-1' })),
+        ).rejects.toMatchObject({ code: BillingErrorCode.PAYG_MODEL_UNPRICED, status: 402 });
+
+        expect(wallets['applyHold']).not.toHaveBeenCalled();
+        expect(client.eval).not.toHaveBeenCalled();
+        expect(usage['createReservation']).not.toHaveBeenCalled();
+        expect(freeAllowance.tryAdmit).not.toHaveBeenCalled();
+      });
+
+      it('is not reported as the cap being too low', async () => {
+        rates['findRate'].mockResolvedValue(fallbackRate);
+        threadBudgets.spendCeilingMicroUsd.mockResolvedValue(100);
+
+        await expect(
+          manager.reserve(makeInput({ threadJobBudgetId: 'budget-1' })),
+        ).rejects.not.toMatchObject({ code: BillingErrorCode.PAYG_CAP_TOO_LOW });
+      });
+
+      it('is still held at the fallback rate for an ordinary chat call (bounded, usable)', async () => {
+        rates['findRate'].mockResolvedValue(fallbackRate);
+
+        const outcome = await manager.reserve(makeInput());
+
+        expect(outcome).toMatchObject({ metered: true, heldMicroUsd: 50_000 });
+      });
+
+      it('a priced model is unaffected inside a Threads job', async () => {
+        const outcome = await manager.reserve(makeInput({ threadJobBudgetId: 'budget-1' }));
+
+        expect(outcome).toMatchObject({ metered: true });
+      });
     });
 
     it('is unchanged for a call with no budget', async () => {
@@ -943,6 +986,20 @@ describe('CreditReservationManager', () => {
         );
       });
 
+      // N-3: a call that failed before the provider billed anything reports no tokens; the
+      // meter must give back the whole worst case it held, not keep it.
+      it('frees the WHOLE held cost when the call used no tokens', async () => {
+        usage['findByReservationId'].mockResolvedValue(allowanceRecord());
+
+        await manager.finalize({ ...usageReport, promptTokens: 0, completionTokens: 0 });
+
+        expect(freeAllowance.settleSpend).toHaveBeenCalledWith(
+          expect.objectContaining({ userId: 'user-1' }),
+          150_000n,
+          0n,
+        );
+      });
+
       it('records the admission estimate, never zero, when the price lookup fails', async () => {
         usage['findByReservationId'].mockResolvedValue(allowanceRecord());
         rates['findRate'].mockResolvedValue(null);
@@ -983,6 +1040,25 @@ describe('CreditReservationManager', () => {
         );
         expect(wallets['applyRelease']).not.toHaveBeenCalled();
       });
+
+      // N-3: a failed, cancelled or refused call returns the money it held, not only the slot.
+      it.each(['PROVIDER_ERROR', 'CANCELLED', 'TIMEOUT'])(
+        'returns the full held cost to the meter on %s',
+        async (reason) => {
+          usage['findByReservationId'].mockResolvedValue({
+            ...allowanceRecord(),
+            estimatedCostMicroUsd: 23_807n,
+          });
+
+          await manager.release('res-1', reason);
+
+          expect(freeAllowance.giveBack).toHaveBeenCalledWith(
+            { userId: 'user-1', provider: 'OPENAI', periodKey: '2026-08' },
+            23_807n,
+            true,
+          );
+        },
+      );
 
       it('gives NO slot back for a Thread call that took none (D-L2-04)', async () => {
         usage['findByReservationId'].mockResolvedValue(allowanceRecord());

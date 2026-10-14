@@ -55,6 +55,7 @@ const GPT_IMAGE_RATE: PaygRateSnapshot = {
   }),
   isPriced: true,
   isLocalComputeFallback: false,
+  isFallbackRate: false,
 };
 
 // Gemini images are token-metered: no per-unit rate, $30/M output.
@@ -67,6 +68,7 @@ const GEMINI_IMAGE_RATE: PaygRateSnapshot = {
   }),
   isPriced: true,
   isLocalComputeFallback: false,
+  isFallbackRate: false,
 };
 
 function rates(overrides: Partial<ModelCostRates>): ModelCostRates {

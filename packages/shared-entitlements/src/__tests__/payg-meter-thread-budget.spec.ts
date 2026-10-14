@@ -128,6 +128,36 @@ describe('PaygMeter Threads call against the job budget', () => {
     await expect(meter().reserve(reserveInput())).resolves.toMatchObject({ metered: true });
   });
 
+  describe('release', () => {
+    const heldCall: PaygHold = {
+      metered: true,
+      maxOutputTokens: 4096,
+      clamped: false,
+      reservationId: 'res-1',
+      heldMicroUsd: 0,
+      availableAfterMicroUsd: 0,
+      reason: null,
+      threadJobBudgetId: BUDGET_ID,
+      threadJobRequestId: 'job-1:author-1:attempt-1',
+    };
+
+    it('still releases the budget call when the credit release request fails (N-3)', async () => {
+      const stub = stubSequence(reply(503, { message: 'down' }), reply(204, undefined));
+
+      await meter().release(heldCall, 'PROVIDER_ERROR');
+
+      expect(stub).toHaveBeenCalledTimes(2);
+      expect(urlOf(stub, 0)).toContain('/internal/credit/release');
+      expect(urlOf(stub, 1)).toContain('/internal/threads/budgets/calls/release');
+    });
+
+    it('never throws when both releases fail', async () => {
+      stubSequence(new Error('socket hang up'), new Error('socket hang up'));
+
+      await expect(meter().release(heldCall, 'CANCELLED')).resolves.toBeUndefined();
+    });
+  });
+
   describe('refusals are told apart', () => {
     it('a cap with money left but less than the call needs is PAYG_CAP_TOO_LOW with the cap left, and the hold goes back', async () => {
       const stub = stubSequence(

@@ -35,6 +35,7 @@ const makeSnapshot = (overrides: Partial<PaygRateSnapshot> = {}): PaygRateSnapsh
   rates: makeRates(),
   isPriced: true,
   isLocalComputeFallback: false,
+  isFallbackRate: false,
   ...overrides,
 });
 

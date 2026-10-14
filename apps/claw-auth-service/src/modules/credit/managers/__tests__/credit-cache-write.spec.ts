@@ -58,6 +58,7 @@ function sonnet(cacheWritePerMillionMicroUsd: number | null): PaygRateSnapshot {
     },
     isPriced: true,
     isLocalComputeFallback: false,
+    isFallbackRate: false,
   };
 }
 

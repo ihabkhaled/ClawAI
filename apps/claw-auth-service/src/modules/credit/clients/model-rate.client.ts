@@ -187,6 +187,7 @@ export class ModelRateClient {
       rates,
       isPriced: payload.isPriced,
       isLocalComputeFallback: ModelRateClient.looksLikeLocalFallback(payload),
+      isFallbackRate: payload.isFallbackRate,
     };
   }
 

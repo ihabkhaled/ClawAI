@@ -20,6 +20,8 @@ export type PaygRateSnapshot = {
   isPriced: boolean;
   /** Set when the registry answered from the LOCAL-compute zero-rate fallback. */
   isLocalComputeFallback: boolean;
+  /** Set when the rates are a stand-in for an unpriced model (the provider's dearest rate). */
+  isFallbackRate: boolean;
 };
 
 /**

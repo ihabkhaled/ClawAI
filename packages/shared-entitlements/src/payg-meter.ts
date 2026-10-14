@@ -343,14 +343,26 @@ export class PaygMeter {
         reservationId: hold.reservationId,
         reason,
       });
-      if (hold.threadJobBudgetId && hold.threadJobRequestId) {
-        await this.request('/internal/threads/budgets/calls/release', {
-          budgetId: hold.threadJobBudgetId,
-          requestId: hold.threadJobRequestId,
-        });
-      }
     } catch {
+      // The credit sweeper reclaims the hold after PAYG_RESERVATION_TTL_MS.
       void reason;
+    }
+    // Independent of the credit release: a credit hiccup must not leave the call RESERVED
+    // against the job's cap (the budget close would only release it at the end of the job).
+    await this.releaseThreadCall(hold);
+  }
+
+  private async releaseThreadCall(hold: PaygHold): Promise<void> {
+    if (!hold.threadJobBudgetId || !hold.threadJobRequestId) {
+      return;
+    }
+    try {
+      await this.request('/internal/threads/budgets/calls/release', {
+        budgetId: hold.threadJobBudgetId,
+        requestId: hold.threadJobRequestId,
+      });
+    } catch {
+      // The budget close releases anything still in flight.
     }
   }
 

@@ -36,6 +36,7 @@ const RATE: PaygRateSnapshot = {
   },
   isPriced: true,
   isLocalComputeFallback: false,
+  isFallbackRate: false,
 };
 
 const makeInput = (overrides: Partial<CreditReserveInput> = {}): CreditReserveInput => ({

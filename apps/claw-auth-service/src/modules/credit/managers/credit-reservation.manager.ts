@@ -151,6 +151,16 @@ export class CreditReservationManager {
       this.logger.warn(`reserve: reusing hold for repeated request=${input.requestId}`);
       return this.reuseHold(existing, input.requestedMaxOutputTokens);
     }
+    // A Threads job makes dozens of calls against one cap. Held at the provider's dearest rate
+    // (routing's stand-in for a model nobody priced) a single call swallows nearly the whole cap and
+    // the job is then billed at a price that is not the model's. Refuse it up front, before any hold,
+    // with the code that tells the owner to pick another model (D06-b).
+    if (input.threadJobBudgetId !== undefined && classification.rate.isFallbackRate) {
+      this.logger.warn(
+        `reserve: ${input.provider}/${input.model} has no published price - refused for a Threads job`,
+      );
+      throw new PaygRejectionException(BillingErrorCode.PAYG_MODEL_UNPRICED, 0, null);
+    }
     return this.takeHold(
       input,
       classification.rate,
