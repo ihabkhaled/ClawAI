@@ -1797,3 +1797,9 @@ shows. Never end an AUTO chain on a 402 again. A picked model still shows its ow
 ## Save-cue corpus and `?raw` spec imports
 
 `save-cue-matcher.utility.ts` compiles each cue with `compileCuePattern` (a small, lint-clean regex builder; the 13-language cue corpus is unchanged). The DTO spec reads the cue text files with `?raw` imports, typed by `src/raw-text-imports.d.ts` — keep that declaration when adding a text fixture.
+
+## Stop, short lanes and the save sentence (2026-10-14, round-2 O1 / C06 / D2)
+
+- Stop on a streamed run keeps the partial text and bills it (prompt estimate plus provider count or streamed-character estimate, capped by the hold). Internal `generate-stream` cancels after text settle on `estimateCancelledStreamUsage` instead of releasing (ADR-175 addendum).
+- A Compare lane whose reply is at most 5 characters for a prompt of 200+ characters is shown as failed (`LANE_REPLY_IMPLAUSIBLY_SHORT`, `isImplausiblyShortLaneReply`); it was already billed.
+- The platform identity block no longer tells the model to mention the Save buttons (ADR-168: the platform proposes saves). A spec asserts it never does.

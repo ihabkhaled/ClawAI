@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { createFakeChatStreamBus } from './helpers/fake-chat-stream-bus.helper';
 import { AiStreamProtocol, AiStreamStage, StreamEventType } from '../../../common/enums';
 import { httpStream as httpStreamMock } from '../../../common/utilities';
@@ -176,5 +176,31 @@ describe('ProviderStreamExecutor — rich final metrics', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('keeps the text already streamed when Stop aborts the transport mid-read (O1)', async () => {
+    const controller = new AbortController();
+    async function* abortedStream(): AsyncGenerator<string> {
+      yield await Promise.resolve('{"message":{"content":"Partial "},"done":false}\n');
+      yield await Promise.resolve('{"message":{"content":"answer"},"done":false}\n');
+      controller.abort();
+      throw new DOMException('This operation was aborted', 'AbortError');
+    }
+    mockedHttpStream.mockResolvedValueOnce({ ok: true, status: 200, chunks: abortedStream() });
+
+    const result = await executor.run(buildInput({ abortSignal: controller.signal }));
+
+    expect(result.cancelled).toBe(true);
+    expect(result.content).toBe('Partial answer');
+  });
+
+  it('still throws a transport failure that is not a Stop', async () => {
+    async function* brokenStream(): AsyncGenerator<string> {
+      yield await Promise.resolve('{"message":{"content":"x"},"done":false}\n');
+      throw new Error('socket hang up');
+    }
+    mockedHttpStream.mockResolvedValueOnce({ ok: true, status: 200, chunks: brokenStream() });
+
+    await expect(executor.run(buildInput())).rejects.toThrow('socket hang up');
   });
 });

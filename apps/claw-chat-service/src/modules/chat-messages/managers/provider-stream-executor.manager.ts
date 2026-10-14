@@ -147,15 +147,26 @@ export class ProviderStreamExecutor {
       input.maxOutputTokens,
     );
 
-    for await (const chunk of chunks) {
-      if (input.abortSignal.aborted) {
-        state.cancelled = true;
-        break;
+    try {
+      for await (const chunk of chunks) {
+        if (input.abortSignal.aborted) {
+          state.cancelled = true;
+          break;
+        }
+        for (const fragment of reader.push(chunk)) {
+          this.handleFragment(fragment, ctx, scanner, tracker, state);
+        }
+        this.maybeEmitMetrics(ctx, tracker, state);
       }
-      for (const fragment of reader.push(chunk)) {
-        this.handleFragment(fragment, ctx, scanner, tracker, state);
+    } catch (error: unknown) {
+      // Stop aborts the transport mid-read, which rejects the chunk iterator.
+      // The text already streamed is the answer to keep (and the tokens to
+      // bill), so a caller abort ends the loop as a cancel instead of throwing
+      // the accumulated state away.
+      if (!input.abortSignal.aborted) {
+        throw error;
       }
-      this.maybeEmitMetrics(ctx, tracker, state);
+      state.cancelled = true;
     }
 
     this.drainScanner(scanner, ctx, tracker, state);
@@ -364,11 +375,7 @@ export class ProviderStreamExecutor {
   private serializeStageTimings(
     map: Map<AiStreamStage, StreamStageTimestamps>,
   ): StreamStageTimings {
-    const result: StreamStageTimings = {};
-    for (const [stage, window] of map) {
-      result[stage] = { ...window };
-    }
-    return result;
+    return Object.fromEntries(Array.from(map, ([stage, window]) => [stage, { ...window }]));
   }
 
   // Public lifecycle emit + per-stage wall-clock window capture. Closes the

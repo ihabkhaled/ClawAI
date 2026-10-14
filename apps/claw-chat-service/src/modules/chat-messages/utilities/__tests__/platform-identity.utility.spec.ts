@@ -96,12 +96,16 @@ describe('buildSelfInspectIntent', () => {
 });
 
 describe('the saving line (a model must not say saving is impossible)', () => {
-  it('points the model at the Save buttons when no platform action ran', () => {
-    const block = buildPlatformIdentityBlock(undefined);
+  it('never tells the model to mention the Save buttons (ADR-168: the platform proposes saves)', () => {
+    for (const surface of [undefined, ChatSurface.AGENT]) {
+      const block = buildPlatformIdentityBlock(undefined, surface);
 
-    expect(block).toMatch(/cannot write the user's memory or context packs yourself/i);
-    expect(block).toContain('Save as context pack');
-    expect(block).toContain('Save to memory');
+      expect(block).not.toMatch(/press/i);
+      expect(block).not.toContain('Save as context pack');
+      expect(block).not.toContain('Save to memory');
+      expect(block).toMatch(/Never mention saving/i);
+      expect(block).toMatch(/never say it is impossible/i);
+    }
   });
 
   it('keeps the coding-agent swap on the same lines (indexes 3 and 4)', () => {
@@ -120,10 +124,10 @@ describe('platform identity — the same behaviour from every model (2026-10-03)
     expect(block).toContain('do the text task and do not announce or start a generation');
   });
 
-  it('a save request gets the material in full, then one Save-button sentence, never a claim of saving', () => {
+  it('a save request gets the material in full, never a claim of saving, and no button sentence', () => {
     expect(block).toContain('IN FULL');
-    expect(block).toContain('Save as context pack');
-    expect(block).toContain('Never claim you saved it yourself');
-    expect(block).toContain('never mention saving or the Save buttons');
+    expect(block).toContain('never claim you saved it yourself');
+    expect(block).toContain('Never mention saving');
+    expect(block).not.toContain('Save as context pack');
   });
 });

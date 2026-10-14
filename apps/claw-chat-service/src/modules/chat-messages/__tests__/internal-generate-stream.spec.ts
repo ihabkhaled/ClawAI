@@ -427,6 +427,43 @@ describe('generateOnceStream', () => {
       expect(access.finalizeCredit).not.toHaveBeenCalled();
     });
 
+    it('settles on the streamed-character estimate when the caller cancels after text arrived (ADR-175 addendum)', async () => {
+      const text = 'x'.repeat(400);
+      async function* cutByCaller(): AsyncGenerator<string> {
+        yield await Promise.resolve(frame({ message: { role: 'assistant', content: text } }));
+        caller.abort();
+        throw new DOMException('aborted', 'AbortError');
+      }
+      httpStream.mockResolvedValue({ ok: true, status: 200, chunks: cutByCaller() });
+
+      await expect(run()).rejects.toMatchObject({ code: 'CLIENT_ABORTED' });
+
+      expect(access.releaseCredit).not.toHaveBeenCalled();
+      expect(access.finalizeCredit).toHaveBeenCalledTimes(1);
+      // The wire frame is 448 chars (400 of text plus its JSON envelope) / 4 = 112 output tokens; "sys\nwrite the draft" = 19 chars -> 5.
+      expect(access.finalizeCredit.mock.calls[0]?.[1]).toMatchObject({
+        promptTokens: 5,
+        completionTokens: 112,
+      });
+    });
+
+    it('caps the cancelled settlement at the hold ceiling', async () => {
+      access = createFakePaygAccessControl({ maxOutputTokens: 30 });
+      manager = buildExecution(access);
+      async function* cutByCaller(): AsyncGenerator<string> {
+        yield await Promise.resolve(
+          frame({ message: { role: 'assistant', content: 'y'.repeat(4000) } }),
+        );
+        caller.abort();
+        throw new DOMException('aborted', 'AbortError');
+      }
+      httpStream.mockResolvedValue({ ok: true, status: 200, chunks: cutByCaller() });
+
+      await expect(run()).rejects.toMatchObject({ code: 'CLIENT_ABORTED' });
+
+      expect(access.finalizeCredit.mock.calls[0]?.[1]).toMatchObject({ completionTokens: 30 });
+    });
+
     it('passes a provider refusal through with its own code and releases the hold', async () => {
       httpStream.mockResolvedValue({
         ok: false,

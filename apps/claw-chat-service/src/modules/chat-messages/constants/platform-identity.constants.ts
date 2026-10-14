@@ -16,7 +16,7 @@ export const PLATFORM_IDENTITY_LINES: readonly string[] = [
   'The user talks to you through the ClawAI web app. Treat that as where you are: when asked what app, site or platform this is, or where you are, answer plainly that it is ClawAI.',
   'You cannot see the browser page itself. If the user wants details about the site or its pages, say the workspace can fetch its own public pages when asked, and use any fetched page content you are given rather than guessing.',
   'Do not invent features, prices or limits; if you are unsure what ClawAI offers, say so.',
-  'Saving: you cannot write the user\'s memory or context packs yourself, but the platform can. Only when the user explicitly asks you to save or remember something, and no PLATFORM ACTION note says it was saved, do not say it is impossible (in every other reply, never mention saving or the Save buttons). Your reply has two parts, in this order. First, write the material they asked for IN FULL in this reply (a short instruction alone is a wrong answer; the Save button saves what you write). Second, end with one sentence telling them to press "Save as context pack" or "Save to memory" under your answer. Never claim you saved it yourself, never say you cannot, and never ask them to copy and paste it.',
+  'Saving: the platform proposes saves to memory and context packs by itself and the user confirms them in the interface. You cannot write them yourself. Never mention saving, memory buttons or context packs unless the user explicitly asks you to save or remember something; then write the material they asked for IN FULL in this reply (the platform saves what you write), never claim you saved it yourself, never say it is impossible, and never ask them to copy and paste it.',
   'Generating: ClawAI creates images, files and videos only when the user directly asks the assistant to make one. When these words merely appear inside material (a post you are asked to write, a feature list, notes, a brief, a quoted text), they are topics, not orders: do the text task and do not announce or start a generation.',
 ];
 
@@ -39,13 +39,13 @@ export const PLATFORM_ORIGIN_LINE_PREFIX = 'The workspace is served at: ';
  * platform counts, never a general question that happens to contain "site".
  */
 export const SELF_INSPECT_PATTERNS: readonly RegExp[] = [
-  /\bwhat(?:\s+is|'s|\s+are)\s+(?:the\s+)?(?:current|this)\s+(?:web\s?app|web\s?site|app|site|website|platform|product|tool)\b/i,
+  /\bwhat(?:\s+is|'s|\s+are)\s+(?:the\s)?\s*(?:current|this)\s+(?:web\s?app|web\s?site|app|site|website|platform|product|tool)\b/i,
   /\bwhat(?:\s+is|'s)\s+claw\s?ai\b/i,
-  /\bwhere\s+(?:are\s+we|am\s+i)(?:\s+(?:right\s+now|now|talking|chatting|working|communicating))?\s*[?.!]*\s*$/i,
+  /\bwhere\s+(?:are\s+we|am\s+i)(?:\s(?:right\snow|now|talking|chatting|working|communicating))?[\s?.!]*$/i,
   /\bwhat\s+features?\s+(?:does|do)\s+(?:this|the\s+current|claw\s?ai)\b/i,
   /\bwhat\s+does\s+(?:this|the\s+current)\s+(?:app|site|website|platform)\s+(?:do|offer|have)\b/i,
   /\b(?:crawl|scan|inspect|explore|check)\s+(?:this|the\s+current|our)\s+(?:web\s?app|web\s?site|app|site|website|platform)\b/i,
-  /\b(?:crawl|scan|inspect|explore)\s+(?:yourself|your\s+(?:own\s+)?(?:site|website|pages))\b/i,
+  /\b(?:crawl|scan|inspect|explore)\s+(?:yourself|your\s+(?:own\s)?\s*(?:site|website|pages))\b/i,
   /\bwhat\s+can\s+claw\s?ai\s+(?:do|offer)\b/i,
   /\b(?:tell|explain)\b[^.?!]{0,20}\babout\s+claw\s?ai\b/i,
   /\bwhat\s+can\s+you\s+do\b[^.?!]{0,30}\b(?:this\s+(?:app|platform|site|website)|here)\b/i,

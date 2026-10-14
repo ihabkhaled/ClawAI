@@ -42,6 +42,11 @@ import { type Prisma } from '../../../generated/prisma';
 import { AppConfig } from '../../../app/config/app.config';
 import { buildFileDeliveryEntries } from '../../../common/utilities';
 import { resolveLaneJudgeState } from '../utilities/compare-judge.utility';
+import {
+  LANE_IMPLAUSIBLY_SHORT_REPLY_CODE,
+  LANE_IMPLAUSIBLY_SHORT_REPLY_MESSAGE,
+} from '../constants/implausible-lane-reply.constants';
+import { isImplausiblyShortLaneReply } from '../utilities/implausible-lane-reply.utility';
 import { injectResearchEvidenceIntoContext } from '../utilities/research-prompt.utility';
 import { BusinessException } from '../../../common/errors';
 import {
@@ -643,6 +648,24 @@ export class ParallelExecutionManager {
           ...(laneHold === undefined ? {} : { hold: laneHold }),
         },
       );
+
+      // A fragment for a long prompt is a cut-off stream, not an answer. The
+      // lane was settled by the chokepoint already; it is shown as failed.
+      const latestUserPrompt =
+        [...context.threadMessages].reverse().find((message) => message.role === 'USER')?.content ??
+        '';
+      if (
+        isImplausiblyShortLaneReply({
+          content: llmResponse.content,
+          userPrompt: latestUserPrompt,
+          finishReason: llmResponse.finishReason,
+        })
+      ) {
+        throw new BusinessException(
+          LANE_IMPLAUSIBLY_SHORT_REPLY_MESSAGE,
+          LANE_IMPLAUSIBLY_SHORT_REPLY_CODE,
+        );
+      }
 
       // The lane's own record, from the same plan its payload was built from
       // (ADR-120). Resolved here only when the chokepoint produced none.

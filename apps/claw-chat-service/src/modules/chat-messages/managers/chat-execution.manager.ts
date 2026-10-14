@@ -160,6 +160,7 @@ import {
   modelRequiresMaxCompletionTokens,
 } from '../utilities/openai-request-shape.utility';
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
+import { estimateCancelledStreamUsage } from '../utilities/cancelled-stream-usage.utility';
 import { splitOllamaMessageReasoning } from '../utilities/buffered-reasoning.utility';
 import { boundImageGenerationPrompt } from '../utilities/image-generation-prompt.utility';
 import { buildReferenceImagePrompt } from '../utilities/image-reference-prompt.utility';
@@ -1753,7 +1754,12 @@ export class ChatExecutionManager implements OnModuleInit {
       content: result.content,
       provider: base.provider,
       model: base.model,
-      inputTokens: result.inputTokens,
+      // A Stop ends the stream before the provider's usage frame, so a
+      // cancelled run is billed on the prompt estimate and the characters that
+      // were actually streamed (capped by the hold at settlement), never on 0.
+      inputTokens: result.cancelled
+        ? (result.inputTokens ?? base.promptTokensEstimate)
+        : result.inputTokens,
       outputTokens: result.outputTokens ?? estimateTokensFromText(result.content),
       // Absent stays absent. `settlePaygHold` defaults each to 0, which is
       // the right reading of "the provider told us nothing"; writing 0 here
@@ -3537,10 +3543,27 @@ export class ChatExecutionManager implements OnModuleInit {
       return this.buildStreamedReply(folded, prepared, args.startTime);
     } catch (error: unknown) {
       const failure = classifyGenerateFailure(error, options.signal);
+      // A caller who cancels after text was streamed still pays for it: the
+      // provider generated those tokens. Settled on the character estimate,
+      // capped at the hold; everything else goes back whole.
+      const settleCancelled = failure.releaseReason === 'CANCELLED' && streamedChars > 0;
       this.logger.warn(
-        `generateOnceStream: ${prepared.provider}/${prepared.model} failed after ${String(Date.now() - args.startTime)}ms, streamedChars=${String(streamedChars)}, hold released as ${failure.releaseReason}`,
+        `generateOnceStream: ${prepared.provider}/${prepared.model} failed after ${String(Date.now() - args.startTime)}ms, streamedChars=${String(streamedChars)}, hold ${settleCancelled ? 'settled on the streamed-character estimate' : `released as ${failure.releaseReason}`}`,
       );
-      await this.accessControlService.releaseCredit(prepared.hold, failure.releaseReason);
+      if (settleCancelled) {
+        const usage = estimateCancelledStreamUsage({
+          streamedChars,
+          promptText: prepared.promptTextForEstimate,
+          outputCeilingTokens: prepared.cappedMaxTokens,
+        });
+        await this.accessControlService.finalizeCredit(prepared.hold, {
+          ...usage,
+          cachedPromptTokens: 0,
+          reasoningTokens: 0,
+        });
+      } else {
+        await this.accessControlService.releaseCredit(prepared.hold, failure.releaseReason);
+      }
       throw failure.error;
     }
   }

@@ -249,7 +249,7 @@ describe('generate-stream time limits, end to end', () => {
     expect(access.releaseCredit).toHaveBeenCalledWith(access.hold, 'TIMEOUT');
   });
 
-  it('aborts the provider call the moment the caller cancels, and releases the hold as cancelled', async () => {
+  it('aborts the provider call the moment the caller cancels, and settles what was already streamed', async () => {
     const upstream = installFetch();
     const call = start();
     await vi.advanceTimersByTimeAsync(0);
@@ -258,6 +258,22 @@ describe('generate-stream time limits, end to end', () => {
 
     caller.abort();
     // Well inside the 2 s the job is allowed to take to notice a cancel.
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(upstream.providerSignal()?.aborted).toBe(true);
+    expect(codeOf(call.outcome())).toBe('CLIENT_ABORTED');
+    // The provider already generated the thinking it streamed (ADR-175 addendum), so the hold is
+    // settled on that estimate instead of being given back whole.
+    expect(access.finalizeCredit).toHaveBeenCalledTimes(1);
+    expect(access.releaseCredit).not.toHaveBeenCalled();
+  });
+
+  it('releases the hold as cancelled when the caller cancels before anything was streamed', async () => {
+    const upstream = installFetch();
+    const call = start();
+    await vi.advanceTimersByTimeAsync(0);
+
+    caller.abort();
     await vi.advanceTimersByTimeAsync(100);
 
     expect(upstream.providerSignal()?.aborted).toBe(true);

@@ -61,6 +61,8 @@ export const PAYG_CREDIT_ERROR_MESSAGES: Readonly<Record<string, string>> = Obje
     'Your pay-as-you-go credit is used up. Add credit or switch to a local model to keep going.',
   [BillingErrorCode.PAYG_PROMPT_TOO_EXPENSIVE]:
     'This prompt costs more than the credit you have left. Add credit, shorten the prompt, or switch to a local model.',
+  [BillingErrorCode.PAYG_CAP_TOO_LOW]:
+    'The spend cap for this job is lower than this step costs. Raise the cap and try again.',
   [BillingErrorCode.PAYG_MODEL_UNPRICED]:
     'This model has no published price yet, so it cannot be billed. Pick another model.',
   [BillingErrorCode.PAYG_FREE_ALLOWANCE_EXHAUSTED]:

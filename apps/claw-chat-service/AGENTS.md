@@ -24,7 +24,7 @@ change type needs (`rules/23-git-commits-hooks-and-release-gates.md`, gate matri
 - Database: postgresql
 - Prisma models: ChatMessage, ChatMessageContextReceipt, ChatShare, ChatShareMessage, ChatShareMessageAsset, ChatThread, FileDeliveryRecord, MessageAttachment, PromptTemplate
 - API endpoints: 73 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 338 (vitest)
+- Test files: 340 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing
