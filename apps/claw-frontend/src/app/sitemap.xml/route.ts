@@ -37,6 +37,9 @@ export async function GET(): Promise<Response> {
       count: await countPublicThreads(locale),
     })),
   );
+  // One count serves every locale: the all-threads family lists the same Threads under each
+  // app locale, so a locale has chunks exactly when any Thread of any language exists.
+  const allThreadCount = await countPublicThreads(null);
   const childUrls: string[] = [];
   for (const { locale } of SUPPORTED_LOCALES) {
     // Page chunks are counted rather than assumed. Hardcoding `pages-1.xml`
@@ -58,6 +61,13 @@ export async function GET(): Promise<Response> {
       chunk += 1
     ) {
       childUrls.push(`${siteUrl}/sitemaps/${locale}/threads-${String(chunk)}.xml`);
+    }
+    for (
+      let chunk = 1;
+      chunk <= Math.ceil(allThreadCount / THREAD_PUBLIC_SITEMAP_PAGE_SIZE);
+      chunk += 1
+    ) {
+      childUrls.push(`${siteUrl}/sitemaps/${locale}/all-threads-${String(chunk)}.xml`);
     }
   }
   return new Response(buildSitemapIndexXml(childUrls), {

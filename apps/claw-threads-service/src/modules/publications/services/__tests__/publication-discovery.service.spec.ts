@@ -47,12 +47,29 @@ describe('PublicationDiscoveryService', () => {
     };
     const service = new PublicationDiscoveryService(publications as never);
 
-    await expect(service.sitemap({ locale: Locale.AR, page: 1, limit: 5 })).resolves.toEqual({
+    await expect(
+      service.sitemap({ locale: Locale.AR, scope: 'locale', page: 1, limit: 5 }),
+    ).resolves.toEqual({
       total: 12,
       page: 1,
       limit: 5,
       items: [],
     });
     expect(publications.findPublicSitemapItems).toHaveBeenCalledWith(Locale.AR, 5, 5);
+  });
+
+  it('lists every content language for scope=all and keeps one-locale paging otherwise', async () => {
+    const publications = {
+      countPublicDiscoveries: vi.fn().mockResolvedValue(30),
+      findPublicSitemapItems: vi.fn().mockResolvedValue([]),
+    };
+    const service = new PublicationDiscoveryService(publications as never);
+
+    await service.sitemap({ scope: 'all', page: 2, limit: 10 });
+    expect(publications.countPublicDiscoveries).toHaveBeenCalledWith(null);
+    expect(publications.findPublicSitemapItems).toHaveBeenCalledWith(null, 20, 10);
+
+    await service.sitemap({ scope: 'locale', locale: Locale.DE, page: 0, limit: 10 });
+    expect(publications.findPublicSitemapItems).toHaveBeenLastCalledWith(Locale.DE, 0, 10);
   });
 });

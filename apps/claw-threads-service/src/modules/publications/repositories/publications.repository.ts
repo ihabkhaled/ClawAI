@@ -732,7 +732,7 @@ export class PublicationsRepository {
       : null;
   }
 
-  async countPublicDiscoveries(contentLocale: Locale): Promise<number> {
+  async countPublicDiscoveries(contentLocale: Locale | null): Promise<number> {
     return this.prisma.threadPublication.count({ where: this.publicIndexFilter(contentLocale) });
   }
 
@@ -790,8 +790,9 @@ export class PublicationsRepository {
     });
   }
 
+  /** `contentLocale` null lists every content language (the all-threads sitemap family). */
   async findPublicSitemapItems(
-    contentLocale: Locale,
+    contentLocale: Locale | null,
     skip: number,
     take: number,
   ): Promise<PublicPublicationSitemapItem[]> {
@@ -807,10 +808,10 @@ export class PublicationsRepository {
     );
   }
 
-  private publicIndexFilter(contentLocale: Locale): Prisma.ThreadPublicationWhereInput {
+  private publicIndexFilter(contentLocale: Locale | null): Prisma.ThreadPublicationWhereInput {
     return {
       status: PublicationStatus.PUBLISHED,
-      contentLocale,
+      ...(contentLocale === null ? {} : { contentLocale }),
       publishedAt: { not: null },
       revisions: {
         some: {

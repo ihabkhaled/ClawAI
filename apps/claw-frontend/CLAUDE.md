@@ -942,6 +942,8 @@ in a `role="alert"` paragraph (`aria-invalid` + `aria-describedby` on the textar
 
 ### Thread reader hides unresolved source markers
 
+Sitemaps: `/sitemaps/<locale>/threads-N.xml` lists Threads of that content language; `all-threads-N.xml` lists every public Thread of any language under the app locale (`getPublicThreadSitemapPage(null, page)` = `scope=all`). The index adds the family for every locale when any Thread exists. The Thread page canonicalises to the content-language URL, so the app-locale URLs are discovery aids (ADR-182).
+
 `ThreadReaderBody` runs the body through `stripUnresolvedSourceMarkers` (`utilities/thread-source-marker.utility.ts`) before rendering: internal `[hex16]` markers (single, doubled, comma and nested lists) are removed because the reader only has numbered sources and they never resolve. `[1]`-style numbers and other bracketed text are kept. It is a linear scan that mirrors the threads-service `stripCitationMarkers`; keep both in step.
 
 ## Threads wizard: recommended team (2026-10-14)

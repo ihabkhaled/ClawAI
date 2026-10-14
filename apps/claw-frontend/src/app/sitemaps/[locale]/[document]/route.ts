@@ -31,6 +31,7 @@ export async function GET(_request: Request, context: DiscoveryRouteContext): Pr
   const pageMatch = /^pages-(\d+)\.xml$/u.exec(document);
   const chatMatch = /^chats-(\d+)\.xml$/u.exec(document);
   const threadMatch = /^threads-(\d+)\.xml$/u.exec(document);
+  const allThreadsMatch = /^all-threads-(\d+)\.xml$/u.exec(document);
   const siteUrl = getSiteUrl();
   let entries: SitemapUrlEntry[] = [];
 
@@ -106,6 +107,22 @@ export async function GET(_request: Request, context: DiscoveryRouteContext): Pr
       return new Response(null, { status: 404 });
     }
     const page = await getPublicThreadSitemapPage(localeValue, chunk - 1);
+    if (page === null || (page.items.length === 0 && chunk > 1)) {
+      return new Response(null, { status: 404 });
+    }
+    entries = page.items.map((item) => ({
+      url: threadCanonicalUrl(siteUrl, localeValue, item.slug),
+      lastModified: item.publishedAt,
+    }));
+  } else if (allThreadsMatch?.[1] !== undefined) {
+    // Every published public Thread in any content language, all addressed under THIS app locale
+    // (/<locale>/threads/<slug>) so it opens in this interface language. Discovery aid only: the
+    // page canonicalises to the content-language URL, so these are not duplicates.
+    const chunk = Number(allThreadsMatch[1]);
+    if (!Number.isSafeInteger(chunk) || chunk < 1) {
+      return new Response(null, { status: 404 });
+    }
+    const page = await getPublicThreadSitemapPage(null, chunk - 1);
     if (page === null || (page.items.length === 0 && chunk > 1)) {
       return new Response(null, { status: 404 });
     }

@@ -28,8 +28,21 @@ describe('public discovery query validation', () => {
       new ZodValidationPipe(publicSitemapQuerySchema).transform({ locale: 'en' }, meta),
     ).toEqual({
       locale: 'en',
+      scope: 'locale',
       page: 0,
       limit: 5000,
     });
+  });
+
+  it('accepts scope=all without a locale and still rejects a missing locale otherwise', () => {
+    expect(
+      new ZodValidationPipe(publicSitemapQuerySchema).transform({ scope: 'all' }, meta),
+    ).toEqual({ scope: 'all', page: 0, limit: 5000 });
+    expect(() =>
+      new ZodValidationPipe(publicSitemapQuerySchema).transform({ scope: 'locale' }, meta),
+    ).toThrow(BadRequestException);
+    expect(() =>
+      new ZodValidationPipe(publicSitemapQuerySchema).transform({ scope: 'bogus' }, meta),
+    ).toThrow(BadRequestException);
   });
 });

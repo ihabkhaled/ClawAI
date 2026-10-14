@@ -19,7 +19,9 @@ re-points the same publication at the new job (`attachRetryJob`). Delete refuses
 when the publication is PUBLISHED or the job is QUEUED or RUNNING (cancel first); it
 removes the job upstream and the publication row (revisions cascade). Public discovery,
 sitemap and slug reads filter on `status = PUBLISHED`, so a failed or running draft is
-never public; repository tests prove it.
+never public; repository tests prove it. `GET /thread-publications/public/sitemap` takes `locale` (one content
+language, unchanged) or `scope=all` (no locale; every content language, same paging and
+`publishedAt desc, slug desc` order, same visibility filter); `locale` without `scope=all` is required (400).
 
 ## Board search projection (ADR-177)
 

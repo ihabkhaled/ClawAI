@@ -463,6 +463,20 @@ describe('PublicationsRepository', () => {
       await expect(repository.findPublicSitemapItems(Locale.EN, 0, 10)).resolves.toEqual([]);
     });
 
+    it('sends no content-locale filter when the locale is null (all-languages scope)', async () => {
+      const prisma = prismaOverRows([failedDraft]);
+      const repository = new PublicationsRepository(prisma as never);
+      await repository.countPublicDiscoveries(null);
+      await repository.findPublicSitemapItems(null, 0, 10);
+      const sentWhere = prisma.threadPublication.count.mock.calls[0]?.[0].where;
+      expect(sentWhere).not.toHaveProperty('contentLocale');
+      expect(sentWhere).toMatchObject({ status: 'PUBLISHED' });
+      await repository.countPublicDiscoveries(Locale.AR);
+      expect(prisma.threadPublication.count.mock.calls[1]?.[0].where).toMatchObject({
+        contentLocale: Locale.AR,
+      });
+    });
+
     it('is not served by its public slug', async () => {
       const repository = new PublicationsRepository(prismaOverRows([failedDraft]) as never);
       await expect(repository.findPublic('failed-draft')).resolves.toBeNull();

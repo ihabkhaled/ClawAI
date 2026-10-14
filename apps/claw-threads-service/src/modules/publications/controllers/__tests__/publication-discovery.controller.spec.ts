@@ -14,7 +14,7 @@ describe('PublicationDiscoveryController', () => {
   it('delegates locale sitemap queries', async () => {
     const discovery = { sitemap: vi.fn().mockResolvedValue({ total: 0, items: [] }) };
     const controller = new PublicationDiscoveryController(discovery as never);
-    const query = { locale: Locale.AR, page: 0, limit: 100 };
+    const query = { locale: Locale.AR, scope: 'locale' as const, page: 0, limit: 100 };
 
     await expect(controller.sitemap(query)).resolves.toEqual({ total: 0, items: [] });
     expect(discovery.sitemap).toHaveBeenCalledWith(query);

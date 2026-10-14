@@ -62,6 +62,30 @@ describe('public Threads API', () => {
     expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
+  it('asks for scope=all, with no locale, to count and page every content language', async () => {
+    vi.stubEnv('THREADS_SERVICE_URL', 'https://threads.internal');
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json({ total: 9 }))
+      .mockResolvedValueOnce(Response.json({ total: 9, items: [] }))
+      .mockResolvedValueOnce(Response.json({ total: 3, items: [] }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(countPublicThreads(null)).resolves.toBe(9);
+    await getPublicThreadSitemapPage(null, 1);
+    await getPublicThreadSitemapPage('fr', 2);
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      'https://threads.internal/api/v1/thread-publications/public/sitemap?scope=all&page=0&limit=1',
+    );
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      'https://threads.internal/api/v1/thread-publications/public/sitemap?scope=all&page=1&limit=10000',
+    );
+    expect(fetchMock.mock.calls[2]?.[0]).toBe(
+      'https://threads.internal/api/v1/thread-publications/public/sitemap?locale=fr&page=2&limit=10000',
+    );
+  });
+
   it('fails closed when the discovery service is unavailable', async () => {
     vi.stubEnv('THREADS_SERVICE_URL', 'https://threads.internal');
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 503 })));

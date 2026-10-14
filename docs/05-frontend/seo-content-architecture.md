@@ -904,6 +904,8 @@ cluster rules above rather than adding a new mechanism:
   root metadata template (`%s | ClawAI`) adds it, and a suffix in the copy made the `<title>` read "... | ClawAI | ClawAI".
   Thread URLs (canonical, hreflang, sitemap, RSS) use one percent-encoded slug segment (`threadCanonicalUrl`), so
   Arabic, Persian, Hindi and Japanese slugs are advertised in the same form the page serves.
+  `/sitemaps/<locale>/all-threads-N.xml` also lists Threads of every other language under `/<locale>/threads/<slug>`;
+  the page canonicalises to the content-language URL, so these are discovery aids and not duplicates (ADR-182).
 - **Structured data.** `buildPublicBoardJsonLd` (`structured-data.utility.ts`) emits a `CollectionPage` whose
   `mainEntity` is an `ItemList` of the first page of Threads (name and canonical `/<locale>/threads/<slug>` URL only,
   `numberOfItems` = total) plus a `BreadcrumbList`. No rating, author or private field.

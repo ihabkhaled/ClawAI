@@ -12,7 +12,10 @@ import {
 export class PublicationDiscoveryService {
   constructor(private readonly publications: PublicationsRepository) {}
 
-  async list(input: PublicDiscoveryQuery) {
+  async list(input: PublicDiscoveryQuery): Promise<{
+    items: Awaited<ReturnType<PublicationsRepository['findPublicDiscoveries']>>;
+    nextCursor: string | null;
+  }> {
     const query = publicDiscoveryQuerySchema.parse(input);
     let cursor: { slug: string; publishedAt: Date } | null = null;
     if (query.cursor) {
@@ -44,12 +47,19 @@ export class PublicationDiscoveryService {
     };
   }
 
-  async sitemap(input: PublicSitemapQuery) {
+  async sitemap(input: PublicSitemapQuery): Promise<{
+    total: number;
+    page: number;
+    limit: number;
+    items: Awaited<ReturnType<PublicationsRepository['findPublicSitemapItems']>>;
+  }> {
     const query = publicSitemapQuerySchema.parse(input);
     const skip = query.page * query.limit;
+    // scope=all spans every content language; a locale is only meaningful for the default scope.
+    const locale = query.scope === 'all' ? null : (query.locale ?? null);
     const [total, items] = await Promise.all([
-      this.publications.countPublicDiscoveries(query.locale),
-      this.publications.findPublicSitemapItems(query.locale, skip, query.limit),
+      this.publications.countPublicDiscoveries(locale),
+      this.publications.findPublicSitemapItems(locale, skip, query.limit),
     ]);
     return { total, page: query.page, limit: query.limit, items };
   }

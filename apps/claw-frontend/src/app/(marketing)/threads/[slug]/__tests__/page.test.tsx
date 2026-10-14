@@ -80,6 +80,15 @@ describe('public Thread page route parameter', () => {
     expect(metadata.title).toBe(PUBLICATION.title);
   });
 
+  it('keeps the content-language canonical when the Thread is opened under another app locale', async () => {
+    // /en/threads/<arabic slug>: the page only sees the slug, so the canonical and hreflang
+    // never follow the interface locale; the all-threads sitemap URLs are discovery aids.
+    const metadata = await generateMetadata({ params: params(encodeURIComponent(ARABIC)) });
+    expect(metadata.alternates?.canonical).toContain('/ar/threads/');
+    expect(metadata.alternates?.canonical).not.toContain('/en/threads/');
+    expect(metadata.robots).toEqual({ index: true, follow: true });
+  });
+
   it('marks an unknown slug noindex', async () => {
     vi.mocked(getPublicThreadPublication).mockResolvedValue(null);
     const metadata = await generateMetadata({ params: params('nope') });

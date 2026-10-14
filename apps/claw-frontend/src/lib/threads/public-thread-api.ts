@@ -37,12 +37,21 @@ export async function getPublicThreadPublication(
   }
 }
 
-export async function countPublicThreads(locale: string): Promise<number> {
+/**
+ * Sitemap query for one content language, or (locale null) for every content language. The
+ * per-locale string is unchanged; the all-languages scope is the explicit `scope=all`.
+ */
+function sitemapScopeQuery(locale: string | null): URLSearchParams {
+  return locale === null ? new URLSearchParams({ scope: 'all' }) : new URLSearchParams({ locale });
+}
+
+/** Published public Threads in one content language, or in every language when locale is null. */
+export async function countPublicThreads(locale: string | null): Promise<number> {
   const origin = getThreadsServiceOrigin();
   if (origin === null) {
     return 0;
   }
-  const query = new URLSearchParams({ locale });
+  const query = sitemapScopeQuery(locale);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), THREAD_PUBLIC_FETCH_TIMEOUT_MS);
   try {
@@ -68,16 +77,14 @@ export async function countPublicThreads(locale: string): Promise<number> {
   }
 }
 
-export async function getPublicThreadSitemapPage(locale: string, page: number) {
+export async function getPublicThreadSitemapPage(locale: string | null, page: number) {
   const origin = getThreadsServiceOrigin();
   if (origin === null) {
     return null;
   }
-  const query = new URLSearchParams({
-    locale,
-    page: String(page),
-    limit: String(THREAD_PUBLIC_SITEMAP_PAGE_SIZE),
-  });
+  const query = sitemapScopeQuery(locale);
+  query.set('page', String(page));
+  query.set('limit', String(THREAD_PUBLIC_SITEMAP_PAGE_SIZE));
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), THREAD_PUBLIC_FETCH_TIMEOUT_MS);
   try {

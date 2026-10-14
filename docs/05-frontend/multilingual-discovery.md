@@ -20,7 +20,11 @@ and local storage never override a locale already present in the URL.
 - Sitemap index: `/sitemap.xml`
 - Child sitemaps: `/sitemaps/{locale}/pages-{chunk}.xml`,
   `/sitemaps/{locale}/chats-{chunk}.xml`, and
-  `/sitemaps/{locale}/threads-{chunk}.xml`
+  `/sitemaps/{locale}/threads-{chunk}.xml` (Threads whose content language is
+  `{locale}`, URLs `/{locale}/threads/{slug}`), and
+  `/sitemaps/{locale}/all-threads-{chunk}.xml` (every published public Thread in
+  any content language, every URL under the app locale `/{locale}/threads/{slug}`;
+  [ADR-182](../13-adr/adr-182-all-threads-sitemaps-list-every-language-under-each-app-locale.md))
 - Per-locale RSS: `/{locale}/feed.xml`, `/{locale}/feeds/topics.xml`, and
   `/{locale}/feeds/chats.xml`
 - Global RSS: `/rss.xml`
@@ -259,7 +263,13 @@ feed APIs. Public list fields omit owner and publication IDs. `/threads/discover
 is registered as localized content and server-renders title/excerpt links to
 canonical `/{contentLocale}/threads/{slug}` routes.
 
-Threads sitemap chunks contain at most 10,000 URLs. RSS/Atom feed builders add
+Threads sitemap chunks contain at most 10,000 URLs. The `all-threads-N.xml` family
+is a discovery aid, not a duplicate: a Thread opened under a foreign app locale
+renders with the UI in that locale and the article in its own `lang`/`dir`, and its
+`<link rel=canonical>` and hreflang stay on the content-language URL. The index lists
+the family for every locale as soon as one Thread of any language exists (one count,
+`scope=all`, chunked by the same page size). Slugs are one percent-encoded segment,
+`&` is XML-escaped. RSS/Atom feed builders add
 approved Threads independently of the chat-share lockdown; the lockdown still
 excludes chats from their sitemap and feeds. Revoke a Thread by unpublishing it,
 then confirm it disappears from detail, discovery, RSS, and subsequent sitemap
