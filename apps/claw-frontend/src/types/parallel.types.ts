@@ -7,6 +7,7 @@ import type {
   ComposerAttachmentTrayProps,
 } from './composer-attachment.types';
 import type { FileDeliveryEntry } from './file-delivery.types';
+import type { PluginRefPayload, UsePluginMentionSelectionReturn } from './plugin-mention.types';
 import type { ResearchOptions, SanitizedResearchProvider } from './research.types';
 
 export type ParallelModelResponse = {
@@ -61,6 +62,8 @@ export type ParallelResponse = {
 export type ParallelRequest = {
   threadId?: string;
   content: string;
+  /** The plugins this prompt @mentioned; each lane may use only their tools. */
+  pluginRefs?: PluginRefPayload[];
   models: ParallelModelTarget[];
   judgeEnabled?: boolean;
   judgeModel?: string | null;
@@ -102,6 +105,8 @@ export type UseParallelCompareReturn = {
 
 export type UseParallelComparePageReturn = {
   t: (key: string, params?: Record<string, string | number>) => string;
+  /** The `@` plugin picker's chips; sent as `pluginRefs` with the run. */
+  pluginMentions: UsePluginMentionSelectionReturn;
   contextPackIds: string[];
   setContextPackIds: (next: string[]) => void;
   selectedModels: ParallelModelTarget[];
@@ -217,4 +222,6 @@ export type UseInThreadCompareReturn = {
   attachmentTray: ComposerAttachmentTrayProps;
   // Failed / not-supported uploads, one chip each — the same strip chat shows.
   attachmentChips: ComposerAttachmentChipsProps;
+  /** The `@` plugin picker's chips; sent as `pluginRefs` with the run. */
+  pluginMentions: UsePluginMentionSelectionReturn;
 };

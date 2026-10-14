@@ -31,6 +31,16 @@ describe('board SQL builders', () => {
     expect(query.values).toEqual(['u1', 12, 0]);
   });
 
+  it('lists for a guest with the same predicate, no reaction join and a null viewer column', () => {
+    const query = buildListQuery({ ...base, userId: null });
+    expect(query.sql).toContain("p.status = 'PUBLISHED'");
+    expect(query.sql).toContain("r.review_status = 'OWNER_APPROVED'");
+    expect(query.sql).toContain('index_eligible = true');
+    expect(query.sql).not.toContain('thread_publication_reactions');
+    expect(query.sql).toContain('NULL::text AS "viewerReaction"');
+    expect(query.values).toEqual([12, 0]);
+  });
+
   it('applies filters and offset as parameters', () => {
     const query = buildListQuery({ ...base, lang: 'fr', type: 'guide', page: 3, limit: 24 });
     expect(query.text).toContain('d.content_locale = $');

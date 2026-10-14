@@ -13,6 +13,7 @@ import { LocalModelSelectionService } from '../services/local-model-selection.se
 import { ChatContextGatewayManager } from './chat-context-gateway.manager';
 import { resolveContextTurnText } from '../utilities/attachment-only-turn.utility';
 import { ModeExecutionGatewayManager } from './mode-execution-gateway.manager';
+import { pluginRefsMetadata } from '../utilities/plugin-refs.utility';
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
 import { parseJudgeModel } from '../../../common/utilities/judge-model-parse.utility';
@@ -21,6 +22,7 @@ import { ResearchEnricherManager } from './research-enricher.manager';
 import type { PipelineMessageDto } from '../dto/pipeline-message.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type { ChatContextBundle } from '../types/chat-context-gateway.types';
+import type { ResearchOrchestrationResult } from '../types/research-enricher.types';
 import type { PipelineResponse, PipelineStage, PipelineStageResult } from '../types/pipeline.types';
 import type { ResearchTranscript } from '../types/research-transcript.types';
 import { type Prisma } from '../../../generated/prisma';
@@ -76,6 +78,7 @@ export class PipelineManager {
         pipelineRequest: true,
         modelSelection: selection,
         ...(dto.fileIds !== undefined && dto.fileIds.length > 0 ? { fileIds: dto.fileIds } : {}),
+        ...pluginRefsMetadata(dto.pluginRefs),
       },
     });
 
@@ -130,16 +133,7 @@ export class PipelineManager {
       // `injectResearchEvidenceIntoContext`, which sets
       // `researchGroundingInjected` so the final-user-turn reminder fires for
       // every stage sharing this bundle.
-      const bundle = await this.chatContextGateway.build({
-        userId,
-        threadId,
-        surface: ChatSurface.PIPELINE,
-        historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
-        ...(enrichment.systemPrompt.length > 0
-          ? { researchEvidenceInstruction: enrichment.systemPrompt }
-          : {}),
-        ...(dto.fileIds !== undefined && dto.fileIds.length > 0 ? { fileIds: dto.fileIds } : {}),
-      });
+      const bundle = await this.buildSharedBundle(userId, threadId, enrichment, dto.fileIds);
       // Rule 42 §18: an attachment-only send's request IS the attachment —
       // spelled out once here for every stage below, never stored.
       const request = resolveContextTurnText(content, bundle.context);
@@ -147,22 +141,19 @@ export class PipelineManager {
       const finalOutput = stageResults.at(-1)?.output ?? content;
       const resolvedModel = resolvedSelection.actualModel;
 
-      await this.chatMessagesRepository.create({
+      await this.storeFinalMessage(
         threadId,
-        role: 'ASSISTANT',
-        content: finalOutput,
-        provider: 'local-ollama',
-        model: resolvedModel,
-        latencyMs: Date.now() - startTime,
-        usedFallback: false,
-        metadata: this.buildPipelineMetadata(
+        finalOutput,
+        resolvedModel,
+        Date.now() - startTime,
+        this.buildPipelineMetadata(
           dto,
           resolvedSelection,
           resolvedModel,
           stageResults,
           enrichment.transcript,
-        ) as Prisma.InputJsonValue,
-      });
+        ),
+      );
 
       this.safeEmitStage(threadId, {
         label: 'Complete',
@@ -172,21 +163,62 @@ export class PipelineManager {
       });
       this.chatStreamService.emitCompletion(threadId, 'local-ollama', resolvedModel);
     } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : 'Pipeline execution failed';
-      this.logger.error(`executeInBackground: failed for thread ${threadId} - ${errorMsg}`);
-      this.safeEmitStage(threadId, {
-        label: 'Pipeline failed',
-        status: OrchestrationStageStatus.ERROR,
-        detail: errorMsg,
-        stageId: 'pipeline:error',
-      });
-      this.chatStreamService.emitError(threadId, errorMsg);
-      try {
-        await this.storeErrorMessage(threadId, errorMsg);
-      } catch (storeError: unknown) {
-        const storeMsg = storeError instanceof Error ? storeError.message : 'Store failed';
-        this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
-      }
+      await this.handleBackgroundFailure(threadId, error);
+    }
+  }
+
+  private async buildSharedBundle(
+    userId: string,
+    threadId: string,
+    enrichment: ResearchOrchestrationResult,
+    fileIds: string[] | undefined,
+  ): Promise<ChatContextBundle> {
+    return this.chatContextGateway.build({
+      userId,
+      threadId,
+      surface: ChatSurface.PIPELINE,
+      historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
+      ...(enrichment.systemPrompt.length > 0
+        ? { researchEvidenceInstruction: enrichment.systemPrompt }
+        : {}),
+      ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
+    });
+  }
+
+  private async storeFinalMessage(
+    threadId: string,
+    content: string,
+    model: string,
+    latencyMs: number,
+    metadata: Record<string, unknown>,
+  ): Promise<void> {
+    await this.chatMessagesRepository.create({
+      threadId,
+      role: 'ASSISTANT',
+      content,
+      provider: 'local-ollama',
+      model,
+      latencyMs,
+      usedFallback: false,
+      metadata: metadata as Prisma.InputJsonValue,
+    });
+  }
+
+  private async handleBackgroundFailure(threadId: string, error: unknown): Promise<void> {
+    const errorMsg = error instanceof Error ? error.message : 'Pipeline execution failed';
+    this.logger.error(`executeInBackground: failed for thread ${threadId} - ${errorMsg}`);
+    this.safeEmitStage(threadId, {
+      label: 'Pipeline failed',
+      status: OrchestrationStageStatus.ERROR,
+      detail: errorMsg,
+      stageId: 'pipeline:error',
+    });
+    this.chatStreamService.emitError(threadId, errorMsg);
+    try {
+      await this.storeErrorMessage(threadId, errorMsg);
+    } catch (storeError: unknown) {
+      const storeMsg = storeError instanceof Error ? storeError.message : 'Store failed';
+      this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
     }
   }
 

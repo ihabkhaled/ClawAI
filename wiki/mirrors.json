@@ -80,6 +80,7 @@
     "Operating-Rules.md": "docs/OPERATING_RULES.md",
     "Operational-Runbooks.md": "docs/11-runbooks/operational-runbooks.md",
     "Port-and-Service-Map.md": "context/port-and-service-map.md",
+    "Plugin-Service.md": "docs/04-backend/service-guide-plugin.md",
     "Product-Vision.md": "docs/01-executive-context/product-vision.md",
     "Production-Deployment.md": "docs/08-runtime-devops/deployment-guide.md",
     "Prompt-Pack-Workflow.md": "docs/15-ai-context/prompt-pack-intake-protocol.md",

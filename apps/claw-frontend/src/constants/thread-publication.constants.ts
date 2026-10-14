@@ -111,6 +111,16 @@ export const THREAD_PREFERRED_PROVIDERS = [
 /** Volunteer or best-effort providers: offered, but never chosen as a default or a fallback. */
 export const THREAD_DEPRIORITIZED_PROVIDERS = ['AI_HORDE'];
 
+/**
+ * Output token ceiling per role. An author writes the whole draft: 4096 truncated long Arabic and
+ * German drafts (these scripts cost more tokens per word), so authors get 8192. Cost effect: the
+ * spend reserve held per author call is priced at this ceiling, so it doubles for authors only; real
+ * spend is what the model actually writes, and the job spend cap still refuses a call whose hold
+ * does not fit. Judge and Critic only return verdicts and stay at 4096. The service accepts up to 32768.
+ */
+export const THREAD_AUTHOR_MAX_OUTPUT_TOKENS = 8192;
+export const THREAD_REVIEWER_MAX_OUTPUT_TOKENS = 4096;
+
 /** Backup models each role may fall back to when its own model fails. */
 export const THREAD_FALLBACKS_PER_ROLE = 2;
 

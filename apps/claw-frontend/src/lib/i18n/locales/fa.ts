@@ -13,19 +13,24 @@ import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
+import { PLUGIN_CHAT_TRANSLATIONS } from './plugin-chat-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
 import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
+import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
+import { THREAD_PUBLIC_BOARD_TRANSLATIONS } from './thread-public-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const fa: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.fa,
+  pluginChat: PLUGIN_CHAT_TRANSLATIONS.fa,
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.fa,
+  pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.fa,
   pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.fa,
   pagination: {
     label: 'صفحه‌بندی',
@@ -456,6 +461,7 @@ export const fa: TranslationDictionary = {
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.fa,
     ...THREAD_BOARD_TRANSLATIONS.fa,
+    ...THREAD_PUBLIC_BOARD_TRANSLATIONS.fa,
     composerContext: {
       menuLabel: 'زمینه',
       pickLabel: 'انتخاب بسته‌های زمینه',
@@ -831,6 +837,18 @@ export const fa: TranslationDictionary = {
     deleteThreadConfirm: 'آیا مطمئن هستید که می خواهید این موضوع را حذف کنید؟',
     threadCreated: 'موضوع ایجاد شد',
     threadCreateFailed: 'موضوع ایجاد نشد',
+    threadTeam: {
+      title: 'تیم پیشنهادی',
+      summary:
+        'مدل‌هایی را انتخاب کردیم که با طرح شما کار می‌کنند. فقط اگر می‌خواهید خودتان انتخاب کنید، بخش پیشرفته را باز کنید.',
+      customised: 'شما تیم را تغییر دادید. برای بازگشت به انتخاب ما از تیم پیشنهادی استفاده کنید.',
+      none: 'اکنون تیم پیشنهادی در دسترس نیست. مدل‌ها را در بخش پیشرفته انتخاب کنید.',
+      advanced: 'پیشرفته: انتخاب مدل‌ها',
+      reset: 'استفاده از تیم پیشنهادی',
+      reasonNeedsPlan: 'در طرح {plan} شما نیست',
+      reasonWindow: 'پنجره زمینه خیلی کوچک است',
+      reasonUnavailable: 'موقتاً در دسترس نیست',
+    },
     threadProgress: {
       title: 'پیشرفت تولید',
       statusQueued: 'در صف انتظار',
@@ -840,6 +858,8 @@ export const fa: TranslationDictionary = {
       stageLabel: 'مرحله',
       attempt: 'تلاش {current} از {max}',
       spent: 'هزینه تا اینجا: {amount}',
+      platformFailureNotice: 'مشکل از طرف ما بود، نه شما. سهمیه رایگان شما مصرف نشد.',
+      retryOnUs: 'تلاش دوباره به حساب ما',
       selectedTitle: 'آنچه انتخاب کردید',
       fallbacks: 'مدل‌های جایگزین: {list}',
       noFallbacks: 'بدون مدل جایگزین',

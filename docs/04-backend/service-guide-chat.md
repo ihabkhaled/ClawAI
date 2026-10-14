@@ -1062,3 +1062,56 @@ Every orchestration surface shares chat's pipeline: [rule 59](../../rules/59-cha
 `resolveOrchestrationThread` replaced ten copies of thread creation; a supplied `threadId` that is not
 the caller's is a 403 `FORBIDDEN_THREAD_ACCESS`. `contextPackIds` on a lab/compare/consensus/escalation
 request is stored on the thread it creates. Guard: `orchestration-parity.spec.ts`.
+
+## @mentioned plugin tools (plugins batch 4, 2026-10-14)
+
+A message that `@`-mentions installed plugins gets ONLY those plugins' tools, as native tools, and
+runs a bounded tool loop. The contract and every file below are the ones to read before changing it.
+
+- **Request field.** `pluginRefs: [{ installId (uuid), toolName?, label }]`, max 5, from
+  `dto/plugin-fields.dto.ts` (`pluginFields`). Spread into all 11 request DTOs (create, parallel,
+  consensus, escalation, repair, decompose, best-of-n, verify, pipeline, cost-ensemble, role-pack);
+  `orchestration-parity.spec.ts` fails when one is missing. The text is never parsed for mentions.
+- **Storage.** Each surface stores `pluginRefs` on the USER message metadata (`pluginRefsMetadata`),
+  the same way it stores `fileIds`. That row is the contract: `ChatContextGatewayManager.build` reads
+  it back (or takes `request.pluginRefs`) and sets `AssembledContext.pluginRefs`, so every surface
+  that builds through the gateway gets the same behaviour. Normal chat sets it in
+  `handleMessageRouted`. `PLUGIN_TOOL_SURFACES` lists the surfaces that ANSWER the user (chat,
+  compare, consensus, escalation, decompose, best-of-n, pipeline, cost-ensemble, role-pack); repair,
+  verify, the judge, the critic and the agent never get plugin tools.
+- **One injection point.** `ChatExecutionManager.callProvider` hands a context with `pluginRefs` to
+  `PluginToolLoopManager`; each tool round re-enters `callProvider` WITHOUT `pluginRefs`, so it is its
+  own metered chokepoint call (own PAYG hold, `paygForPluginRound` gives round N a distinct
+  `requestId:plugin-rN` and drops a spent caller hold). Streaming is bypassed for such a message
+  (`invokeProviderWithProgress`, `streamModelForLane` take the buffered path) because tool calls need
+  the whole response.
+- **The loop** (`managers/plugin-tool-loop.manager.ts`). `PluginInvokePort.resolve` -> tools allowed by
+  the refs (a plugin ref allows all of its tools, a tool ref one) -> Runtime-shaped definitions
+  (`toToolCatalog`, held to `toolDefinitionSchema`, one operation `call`, one target = the install id,
+  native name `plugin_<slug>_<tool>`) -> up to `limits.maxRounds` (`loop.maxRounds`) tool rounds and
+  `limits.maxCallsPerTurn` calls -> `PluginInvokePort.invoke` per call -> result fenced as
+  `<tool_result ... trust="untrusted">` (`fencePluginResult`: control, zero-width and bidi characters
+  stripped, closing tag defanged, capped) and fed back as a `toolTurn` -> a last round with tools
+  switched off (`toolChoice: NONE`) if the model still wants more. A call made after any result is in
+  the context carries `tainted: true`. A consent-required call is answered to the model as "not
+  approved, do not retry" and noted (`PLUGIN_CONSENT_NOT_AVAILABLE`): there is no in-chat approval UI
+  yet. plugin-service being down never fails the message: it answers without tools and says so
+  (`pluginNotices`).
+- **Billing.** The model rounds are billed by the chokepoint like any call; the tool calls themselves
+  are counted by plugin-service as `PLUGIN_CALLS`. chat-service adds nothing.
+- **What is stored.** The assistant message's metadata gets `pluginCalls` (plugin, tool, status, duration,
+  a capped plain-text excerpt of the result; never arguments) and `pluginNotices`; the frontend draws them
+  above the answer (`PluginCallTimeline`).
+- **The port.** `clients/plugin-invoke.port.ts` is the contract; `PluginInvokeClient` is the HTTP
+  adapter (`PLUGIN_SERVICE_URL`, service credential, user id in the body):
+  `POST /api/v1/internal/plugins/resolve {userId, surface, refs[]}` ->
+  `{tools[{nativeName, installId, pluginSlug, toolName, title, description, inputSchema, riskLevel}],
+systemBlock, limits{maxRounds,maxCallsPerTurn,timeoutMs}, notices[]}` and
+  `POST /api/v1/internal/plugins/invoke {userId, installId, toolName, args, callId, surface (lower case), conversationId?, messageId?,
+tainted}` -> `{status OK|ERROR|CONSENT_REQUIRED|BLOCKED|RATE_LIMITED|QUOTA_EXCEEDED, content?, truncated,
+durationMs, errorCode?}`. plugin-service owns ownership, plan gates, consent, quota and the audit;
+  every answer is schema-checked here and a malformed one is treated as "service unavailable".
+  `installId` on a resolved tool is an addition to the design doc's response, needed to address a call.
+- **Not built yet.** No `PLUGIN_*` SSE events and no consent card (a consent-required call is told to the model as
+  "not approved"); no tool-capable-model preference in AUTO routing; no deferred catalog loading; own MCP servers are
+  not offered by `resolve` yet. The two plugin-service internal routes exist (`PluginInternalController`, integrated 2026-10-14).

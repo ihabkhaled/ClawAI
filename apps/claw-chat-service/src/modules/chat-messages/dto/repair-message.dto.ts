@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { advancedModelSelectionFields } from './advanced-model-selection-fields.dto';
 import { attachmentFields } from './attachment-fields.dto';
 import { contextPackFields } from './context-pack-fields.dto';
+import { pluginFields } from './plugin-fields.dto';
 import { researchFields } from './research-fields.dto';
 
 import { RepairType } from '../../../common/enums/repair-type.enum';
@@ -17,6 +18,7 @@ export const repairMessageSchema = z
     ...advancedModelSelectionFields,
     ...researchFields,
     ...contextPackFields,
+    ...pluginFields,
     ...attachmentFields,
   })
   // A repair targets a stored message, typed text, or attached files. An

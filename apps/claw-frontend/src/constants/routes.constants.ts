@@ -63,6 +63,7 @@ export const ROUTES = {
   OBSERVABILITY_FAILURES: '/observability/failures',
   PLUGINS: '/plugins',
   PLUGINS_INSTALLED: '/plugins/installed',
+  PLUGINS_SERVERS: '/plugins/servers',
   PLUGIN_DETAIL: (slug: string) => `/plugins/${encodeURIComponent(slug)}` as const,
   SETTINGS: '/settings',
   // Where a forced password rotation lands. Under /settings so it inherits the

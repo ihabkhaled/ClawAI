@@ -81,6 +81,7 @@ describe('ThreadJobBudgetInternalController', () => {
         spentMicroUsd: 12_000,
         settledMicroUsd: 12_000,
         remainingMicroUsd: 266_774,
+        freeAllowanceMicroUsd: 4_100,
       };
       budgets.summary.mockResolvedValue(summary);
 

@@ -5,7 +5,7 @@ task_keywords: account deletion, user deleted, erasure, anonymization, outbox, t
 applies_to: auth, RabbitMQ consumers, data retention
 required_rules: 00-non-negotiable-rules, 61-threads-account-deletion
 required_context: architecture-map, service-dependency-map
-affected_workspaces: claw-auth-service, claw-threads-service, claw-thread-generation-service, shared-types
+affected_workspaces: claw-auth-service, claw-threads-service, claw-thread-generation-service, claw-plugin-service, shared-types
 required_tests: outbox transaction, retry, duplicate delivery, anonymization, deletion guard
 required_docs: product spec, architecture, QA evidence
 validation_lane: focused changed specs, changed-file lint, affected typecheck

@@ -13,19 +13,24 @@ import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
+import { PLUGIN_CHAT_TRANSLATIONS } from './plugin-chat-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
 import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
+import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
+import { THREAD_PUBLIC_BOARD_TRANSLATIONS } from './thread-public-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const hi: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.hi,
+  pluginChat: PLUGIN_CHAT_TRANSLATIONS.hi,
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.hi,
+  pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.hi,
   pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.hi,
   pagination: {
     label: 'पृष्ठ क्रमांकन',
@@ -454,6 +459,7 @@ export const hi: TranslationDictionary = {
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.hi,
     ...THREAD_BOARD_TRANSLATIONS.hi,
+    ...THREAD_PUBLIC_BOARD_TRANSLATIONS.hi,
     composerContext: {
       menuLabel: 'संदर्भ',
       pickLabel: 'संदर्भ पैक चुनें',
@@ -832,6 +838,18 @@ export const hi: TranslationDictionary = {
     deleteThreadConfirm: 'क्या आप वाकई इस थ्रेड को हटाना चाहते हैं?',
     threadCreated: 'थ्रेड बनाया गया',
     threadCreateFailed: 'थ्रेड बनाने में विफल',
+    threadTeam: {
+      title: 'सुझाई गई टीम',
+      summary:
+        'हमने ऐसे मॉडल चुने हैं जो आपके प्लान पर काम करते हैं। खुद चुनना चाहें तभी उन्नत खोलें।',
+      customised: 'आपने टीम बदल दी है। हमारे चुनाव पर लौटने के लिए सुझाई गई टीम इस्तेमाल करें।',
+      none: 'अभी कोई सुझाई गई टीम उपलब्ध नहीं है। उन्नत में मॉडल चुनें।',
+      advanced: 'उन्नत: मॉडल चुनें',
+      reset: 'सुझाई गई टीम इस्तेमाल करें',
+      reasonNeedsPlan: 'आपके {plan} प्लान में नहीं है',
+      reasonWindow: 'कॉन्टेक्स्ट विंडो बहुत छोटी है',
+      reasonUnavailable: 'अभी अस्थायी रूप से उपलब्ध नहीं',
+    },
     threadProgress: {
       title: 'जनरेशन की प्रगति',
       statusQueued: 'कतार में प्रतीक्षा',
@@ -841,6 +859,9 @@ export const hi: TranslationDictionary = {
       stageLabel: 'चरण',
       attempt: 'प्रयास {current} / {max}',
       spent: 'अब तक खर्च: {amount}',
+      platformFailureNotice:
+        'समस्या हमारी तरफ़ से थी, आपकी नहीं। आपका मुफ़्त कोटा इस्तेमाल नहीं हुआ।',
+      retryOnUs: 'हमारे खर्च पर दोबारा कोशिश करें',
       selectedTitle: 'आपने क्या चुना',
       fallbacks: 'वैकल्पिक मॉडल: {list}',
       noFallbacks: 'कोई वैकल्पिक मॉडल नहीं',

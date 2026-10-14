@@ -22,6 +22,7 @@ import type { ModelRecencyTier } from '@/enums/model-recency-tier.enum';
 import type { ResearchMode } from '@/enums/research-mode.enum';
 
 import type { NarrationEntry } from './narration.types';
+import type { PluginRefPayload } from './plugin-mention.types';
 
 export type ChatThread = {
   id: string;
@@ -193,6 +194,8 @@ export type CreateMessageRequest = {
   quotes?: MessageQuoteRequest[];
   /** ASK (default) proposes a save first; AUTO saves at once like ADR-134 (ADR-168). */
   contextSaveMode?: ContextSaveMode;
+  /** The plugins this message @mentioned; chat-service offers only their tools to the model. */
+  pluginRefs?: PluginRefPayload[];
 };
 
 /**

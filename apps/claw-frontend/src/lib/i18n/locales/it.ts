@@ -13,19 +13,24 @@ import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
+import { PLUGIN_CHAT_TRANSLATIONS } from './plugin-chat-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
 import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
+import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
+import { THREAD_PUBLIC_BOARD_TRANSLATIONS } from './thread-public-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const it: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.it,
+  pluginChat: PLUGIN_CHAT_TRANSLATIONS.it,
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.it,
+  pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.it,
   pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.it,
   pagination: {
     label: 'Impaginazione',
@@ -460,6 +465,7 @@ export const it: TranslationDictionary = {
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.it,
     ...THREAD_BOARD_TRANSLATIONS.it,
+    ...THREAD_PUBLIC_BOARD_TRANSLATIONS.it,
     composerContext: {
       menuLabel: 'Contesto',
       pickLabel: 'Scegli i pacchetti di contesto',
@@ -846,6 +852,18 @@ export const it: TranslationDictionary = {
     deleteThreadConfirm: 'Sei sicuro di voler eliminare questa conversazione?',
     threadCreated: 'Conversazione creata',
     threadCreateFailed: 'Creazione conversazione non riuscita',
+    threadTeam: {
+      title: 'Team consigliato',
+      summary:
+        'Abbiamo scelto modelli che funzionano con il tuo piano. Apri Avanzate solo se vuoi sceglierli tu.',
+      customised: 'Hai cambiato il team. Usa il team consigliato per tornare alla nostra scelta.',
+      none: 'Al momento non c’è un team consigliato. Scegli i modelli in Avanzate.',
+      advanced: 'Avanzate: scegli i modelli',
+      reset: 'Usa il team consigliato',
+      reasonNeedsPlan: 'Non incluso nel tuo piano {plan}',
+      reasonWindow: 'Finestra di contesto troppo piccola',
+      reasonUnavailable: 'Temporaneamente non disponibile',
+    },
     threadProgress: {
       title: 'Avanzamento della generazione',
       statusQueued: 'In coda',
@@ -855,6 +873,9 @@ export const it: TranslationDictionary = {
       stageLabel: 'Fase',
       attempt: 'Tentativo {current} di {max}',
       spent: 'Speso finora: {amount}',
+      platformFailureNotice:
+        'Il problema era dalla nostra parte, non dalla tua. La tua quota gratuita non è stata usata.',
+      retryOnUs: 'Riprova a nostre spese',
       selectedTitle: 'Cosa hai scelto',
       fallbacks: 'Alternative: {list}',
       noFallbacks: 'Nessuna alternativa',

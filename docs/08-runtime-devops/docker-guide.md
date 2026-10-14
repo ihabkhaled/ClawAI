@@ -15,49 +15,55 @@ All containers share the `claw-network` bridge network and read environment vari
 
 ### Infrastructure
 
-| Container                | Image                        | Host Port  | Internal Port | Purpose                                |
-| ------------------------ | ---------------------------- | ---------- | ------------- | -------------------------------------- |
-| claw-pg-auth             | pgvector/pgvector:pg16       | 5441       | 5432          | PostgreSQL for auth service            |
-| claw-pg-chat             | pgvector/pgvector:pg16       | 5442       | 5432          | PostgreSQL for chat service            |
-| claw-pg-connector        | pgvector/pgvector:pg16       | 5443       | 5432          | PostgreSQL for connector service       |
-| claw-pg-routing          | pgvector/pgvector:pg16       | 5444       | 5432          | PostgreSQL for routing service         |
-| claw-pg-memory           | pgvector/pgvector:pg16       | 5445       | 5432          | PostgreSQL for memory service          |
-| claw-pg-files            | pgvector/pgvector:pg16       | 5446       | 5432          | PostgreSQL for file service            |
-| claw-pg-ollama           | pgvector/pgvector:pg16       | 5447       | 5432          | PostgreSQL for ollama service          |
-| claw-pg-images           | pgvector/pgvector:pg16       | 5448       | 5432          | PostgreSQL for image service           |
-| claw-pg-file-generations | pgvector/pgvector:pg16       | 5449       | 5432          | PostgreSQL for file generation service |
-| claw-pg-workspace        | pgvector/pgvector:pg16       | 5450       | 5432          | PostgreSQL for workspace service       |
-| claw-pg-agent            | pgvector/pgvector:pg16       | 5451       | 5432          | PostgreSQL for agent service           |
-| claw-pg-research         | pgvector/pgvector:pg16       | 5452       | 5432          | PostgreSQL for research service        |
-| claw-pg-payments         | pgvector/pgvector:pg16       | 5453       | 5432          | PostgreSQL for payment service         |
-| claw-pg-llamacpp         | pgvector/pgvector:pg16       | 5454       | 5432          | PostgreSQL for llama.cpp service       |
-| claw-mongodb             | mongo:7                      | 27018      | 27017         | MongoDB for audit, client/server logs  |
-| claw-redis               | redis:7-alpine               | 6380       | 6379          | Redis cache and session store          |
-| claw-rabbitmq            | rabbitmq:3-management-alpine | 5672/15672 | 5672/15672    | Message broker with management UI      |
-| claw-ollama              | ollama/ollama:latest         | 11434      | 11434         | Local AI runtime (LLM inference)       |
+| Container                 | Image                        | Host Port  | Internal Port | Purpose                                |
+| ------------------------- | ---------------------------- | ---------- | ------------- | -------------------------------------- |
+| claw-pg-auth              | pgvector/pgvector:pg16       | 5441       | 5432          | PostgreSQL for auth service            |
+| claw-pg-chat              | pgvector/pgvector:pg16       | 5442       | 5432          | PostgreSQL for chat service            |
+| claw-pg-connector         | pgvector/pgvector:pg16       | 5443       | 5432          | PostgreSQL for connector service       |
+| claw-pg-routing           | pgvector/pgvector:pg16       | 5444       | 5432          | PostgreSQL for routing service         |
+| claw-pg-memory            | pgvector/pgvector:pg16       | 5445       | 5432          | PostgreSQL for memory service          |
+| claw-pg-files             | pgvector/pgvector:pg16       | 5446       | 5432          | PostgreSQL for file service            |
+| claw-pg-ollama            | pgvector/pgvector:pg16       | 5447       | 5432          | PostgreSQL for ollama service          |
+| claw-pg-images            | pgvector/pgvector:pg16       | 5448       | 5432          | PostgreSQL for image service           |
+| claw-pg-file-generations  | pgvector/pgvector:pg16       | 5449       | 5432          | PostgreSQL for file generation service |
+| claw-pg-workspace         | pgvector/pgvector:pg16       | 5450       | 5432          | PostgreSQL for workspace service       |
+| claw-pg-agent             | pgvector/pgvector:pg16       | 5451       | 5432          | PostgreSQL for agent service           |
+| claw-pg-research          | pgvector/pgvector:pg16       | 5452       | 5432          | PostgreSQL for research service        |
+| claw-pg-payments          | pgvector/pgvector:pg16       | 5453       | 5432          | PostgreSQL for payment service         |
+| claw-pg-llamacpp          | pgvector/pgvector:pg16       | 5454       | 5432          | PostgreSQL for llama.cpp service       |
+| claw-pg-thread-generation | pgvector/pgvector:pg16       | 5457       | 5432          | PostgreSQL for thread generation       |
+| claw-pg-threads           | pgvector/pgvector:pg16       | 5458       | 5432          | PostgreSQL for threads service         |
+| claw-pg-plugin            | pgvector/pgvector:pg16       | 5459       | 5432          | PostgreSQL for plugin service          |
+| claw-mongodb              | mongo:7                      | 27018      | 27017         | MongoDB for audit, client/server logs  |
+| claw-redis                | redis:7-alpine               | 6380       | 6379          | Redis cache and session store          |
+| claw-rabbitmq             | rabbitmq:3-management-alpine | 5672/15672 | 5672/15672    | Message broker with management UI      |
+| claw-ollama               | ollama/ollama:latest         | 11434      | 11434         | Local AI runtime (LLM inference)       |
 
-### Backend Services (18 containers)
+### Backend Services (21 containers)
 
-| Container                    | Dockerfile                                       | Host Port | Purpose                          |
-| ---------------------------- | ------------------------------------------------ | --------- | -------------------------------- |
-| claw-auth-service            | apps/claw-auth-service/Dockerfile.dev            | 4001      | Authentication, users, RBAC      |
-| claw-chat-service            | apps/claw-chat-service/Dockerfile.dev            | 4002      | Threads, messages, AI execution  |
-| claw-connector-service       | apps/claw-connector-service/Dockerfile.dev       | 4003      | Cloud provider management        |
-| claw-routing-service         | apps/claw-routing-service/Dockerfile.dev         | 4004      | Intelligent model routing        |
-| claw-memory-service          | apps/claw-memory-service/Dockerfile.dev          | 4005      | Memory and context packs         |
-| claw-file-service            | apps/claw-file-service/Dockerfile.dev            | 4006      | File upload and chunking         |
-| claw-audit-service           | apps/claw-audit-service/Dockerfile.dev           | 4007      | Audit logs and usage tracking    |
-| claw-ollama-service          | apps/claw-ollama-service/Dockerfile.dev          | 4008      | Ollama model management          |
-| claw-health-service          | apps/claw-health-service/Dockerfile.dev          | 4009      | Aggregated health checks         |
-| claw-client-logs-service     | apps/claw-client-logs-service/Dockerfile.dev     | 4010      | Frontend log ingestion           |
-| claw-server-logs-service     | apps/claw-server-logs-service/Dockerfile.dev     | 4011      | Backend log aggregation          |
-| claw-image-service           | apps/claw-image-service/Dockerfile.dev           | 4012      | AI image generation              |
-| claw-file-generation-service | apps/claw-file-generation-service/Dockerfile.dev | 4013      | AI file generation               |
-| claw-workspace-service       | apps/claw-workspace-service/Dockerfile.dev       | 4014      | Workspace connectors and actions |
-| claw-agent-service           | apps/claw-agent-service/Dockerfile.dev           | 4015      | Desktop agent                    |
-| claw-research-service        | apps/claw-research-service/Dockerfile.dev        | 4016      | Research orchestration           |
-| claw-llamacpp-service        | apps/claw-llamacpp-service/Dockerfile.dev        | 4017      | Local llama.cpp runtime          |
-| claw-payment-service         | apps/claw-payment-service/Dockerfile.dev         | 4018      | Subscriptions and payments       |
+| Container                      | Dockerfile                                         | Host Port | Purpose                          |
+| ------------------------------ | -------------------------------------------------- | --------- | -------------------------------- |
+| claw-auth-service              | apps/claw-auth-service/Dockerfile.dev              | 4001      | Authentication, users, RBAC      |
+| claw-chat-service              | apps/claw-chat-service/Dockerfile.dev              | 4002      | Threads, messages, AI execution  |
+| claw-connector-service         | apps/claw-connector-service/Dockerfile.dev         | 4003      | Cloud provider management        |
+| claw-routing-service           | apps/claw-routing-service/Dockerfile.dev           | 4004      | Intelligent model routing        |
+| claw-memory-service            | apps/claw-memory-service/Dockerfile.dev            | 4005      | Memory and context packs         |
+| claw-file-service              | apps/claw-file-service/Dockerfile.dev              | 4006      | File upload and chunking         |
+| claw-audit-service             | apps/claw-audit-service/Dockerfile.dev             | 4007      | Audit logs and usage tracking    |
+| claw-ollama-service            | apps/claw-ollama-service/Dockerfile.dev            | 4008      | Ollama model management          |
+| claw-health-service            | apps/claw-health-service/Dockerfile.dev            | 4009      | Aggregated health checks         |
+| claw-client-logs-service       | apps/claw-client-logs-service/Dockerfile.dev       | 4010      | Frontend log ingestion           |
+| claw-server-logs-service       | apps/claw-server-logs-service/Dockerfile.dev       | 4011      | Backend log aggregation          |
+| claw-image-service             | apps/claw-image-service/Dockerfile.dev             | 4012      | AI image generation              |
+| claw-file-generation-service   | apps/claw-file-generation-service/Dockerfile.dev   | 4013      | AI file generation               |
+| claw-workspace-service         | apps/claw-workspace-service/Dockerfile.dev         | 4014      | Workspace connectors and actions |
+| claw-agent-service             | apps/claw-agent-service/Dockerfile.dev             | 4015      | Desktop agent                    |
+| claw-research-service          | apps/claw-research-service/Dockerfile.dev          | 4016      | Research orchestration           |
+| claw-llamacpp-service          | apps/claw-llamacpp-service/Dockerfile.dev          | 4017      | Local llama.cpp runtime          |
+| claw-payment-service           | apps/claw-payment-service/Dockerfile.dev           | 4018      | Subscriptions and payments       |
+| claw-threads-service           | apps/claw-threads-service/Dockerfile.dev           | 4019      | Public Thread publications       |
+| claw-thread-generation-service | apps/claw-thread-generation-service/Dockerfile.dev | 4020      | Durable Thread generation jobs   |
+| claw-plugin-service            | apps/claw-plugin-service/Dockerfile.dev            | 4021      | Plugin and MCP catalog           |
 
 ### Proxy and Frontend (2 containers)
 
@@ -140,7 +146,7 @@ Layer 2 (depends on Layer 1 being healthy):
   health-service    → redis, rabbitmq
 
 Layer 3 (depends on all services being healthy):
-  nginx → all 20 backend services
+  nginx → all 21 backend services
 
 Layer 4:
   frontend → nginx (service_started, not health check)
@@ -288,6 +294,7 @@ claw-network (bridge)
   |     pg-memory:5432, pg-files:5432, pg-ollama:5432, pg-images:5432
   |     pg-file-generations:5432, pg-workspace:5432, pg-agent:5432
   |     pg-research:5432, pg-llamacpp:5432, pg-payments:5432
+  |     pg-threads:5432, pg-thread-generation:5432, pg-plugin:5432
   |     mongodb:27017, redis:6379, rabbitmq:5672
   |     ollama:11434
   |
@@ -299,6 +306,8 @@ claw-network (bridge)
   |     image-service:4012, file-generation-service:4013
   |     workspace-service:4014, agent-service:4015, research-service:4016
   |     llamacpp-service:4017, payment-service:4018
+  |     threads-service:4019, thread-generation-service:4020
+  |     plugin-service:4021
   |
   +-- Proxy + Frontend
         nginx:80 (host 4000), frontend:3000
@@ -353,7 +362,7 @@ docker exec claw-file-service sh -c "ffmpeg -version | head -1; ffprobe -version
 
 ### Published service ports (production)
 
-In `docker/docker-compose.prod.services.yml` every backend service port (4001-4020) is published on `127.0.0.1` only (`'127.0.0.1:4003:4003'`), so the internet cannot reach an internal route such as `/api/v1/internal/*`. Services reach each other by container name on the Docker network, health checks run inside the container, and nginx proxies by container name, so nothing needs the host port. Only nginx (80, 443, 4000) and the frontend (3000) stay public. Host-side tools (`curl`, Playwright, smoke scripts) still work on the server itself; from another machine use an SSH tunnel. The dev compose files are unchanged. In production a placeholder `INTER_SERVICE_AUTH_TOKEN` (anything containing `change-me`) now stops the service at boot.
+In `docker/docker-compose.prod.services.yml` every backend service port (4001-4021) is published on `127.0.0.1` only (`'127.0.0.1:4003:4003'`), so the internet cannot reach an internal route such as `/api/v1/internal/*`. Services reach each other by container name on the Docker network, health checks run inside the container, and nginx proxies by container name, so nothing needs the host port. Only nginx (80, 443, 4000) and the frontend (3000) stay public. Host-side tools (`curl`, Playwright, smoke scripts) still work on the server itself; from another machine use an SSH tunnel. The dev compose files are unchanged. In production a placeholder `INTER_SERVICE_AUTH_TOKEN` (anything containing `change-me`) now stops the service at boot.
 
 ## Resource Requirements
 

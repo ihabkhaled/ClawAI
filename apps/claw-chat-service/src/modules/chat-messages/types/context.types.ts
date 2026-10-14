@@ -1,6 +1,7 @@
 import { type ChatMessage } from '../../../generated/prisma';
 import type { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import type { ToolTurn } from './tool-turn.types';
+import type { PluginRef } from './plugin-tools.types';
 import type { ConversationContextManifest, ModelTokenBudget } from './context-composer.types';
 import type { CrossThreadRetrievalResult } from './cross-thread-retrieval.types';
 import type { AttachmentDeliveryPlan } from './attachment-delivery.types';
@@ -144,6 +145,13 @@ export type AssembledContext = {
   platformOrigin?: string;
   /** The surface this prompt is for; picks the wording of the platform block. */
   platformSurface?: ChatSurface;
+  /**
+   * The plugins the user @mentioned on this turn. Set by the context gateway (and by
+   * normal chat from the user turn's metadata); read by the `callProvider` chokepoint,
+   * which runs the plugin tool loop when it is non-empty. Every surface that builds its
+   * context through the gateway therefore gets the same behaviour (rule 59).
+   */
+  pluginRefs?: readonly PluginRef[];
   /**
    * Completed Runtime V2 tool rounds, oldest first.
    *

@@ -40,6 +40,33 @@ export function hasThreadSpend(micro: string): boolean {
   return Number.isFinite(value) && value > 0;
 }
 
+function readRecordField(source: object, field: string): unknown {
+  return Reflect.get(source, field);
+}
+
+/**
+ * True when the platform refunded the Free allowance for this job. The field is newer than the
+ * shared progress type, so it is read defensively and anything but a real `true` means "no".
+ */
+export function readAllowanceRefunded(progress: ThreadGenerationProgress): boolean {
+  return readRecordField(progress, 'allowanceRefunded') === true;
+}
+
+function asMicroNumber(value: unknown): number {
+  const parsed = typeof value === 'string' || typeof value === 'number' ? Number(value) : NaN;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
+/**
+ * The real spend of a job in micro-USD. Free jobs report money in `freeAllowanceMicroUsd`
+ * (when present); paid jobs in `spentMicroCredits`. Returns "0" when neither is known.
+ */
+export function readThreadSpentMicro(progress: ThreadGenerationProgress): string {
+  const spent = asMicroNumber(progress.spentMicroCredits);
+  const free = asMicroNumber(readRecordField(progress, 'freeAllowanceMicroUsd'));
+  return String(Math.max(spent, free));
+}
+
 export function isRetryableThreadStatus(status: string): boolean {
   return THREAD_PROGRESS_RETRYABLE_STATUSES.includes(status);
 }

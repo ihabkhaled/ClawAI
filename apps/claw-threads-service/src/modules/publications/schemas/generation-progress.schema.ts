@@ -58,6 +58,8 @@ export const generationProgressSchema: z.ZodType<Omit<ThreadGenerationProgress, 
     attemptCount: z.number().int(),
     maxAttempts: z.number().int(),
     spentMicroCredits: z.string().max(40),
+    // Kept (not stripped) so the owner's UI can say "our problem, your allowance is back".
+    allowanceRefunded: z.boolean().default(false),
     createdAt: shortString,
     updatedAt: shortString,
     selections: selectionsSchema,

@@ -102,6 +102,8 @@ for the workspace you touch.
   [rules/51](rules/51-router-candidates-and-model-window-fit.md)
 - **Infra delivery checklist** (env, installers, every compose file, nginx, health,
   CI, TLS, i18n, migrations, seeds): [rules/05](rules/05-infra-rules.md) ·
+  **a new service, every place incl. the production `.env`:**
+  [skills/add-a-new-service.md](skills/add-a-new-service.md) ·
   [env ownership](context/environment-ownership-map.md)
 - **Refactors, exceptions, AdSense, worktree PRs:** [rules/09](rules/09-refactor-rules.md) ·
   [rules/25](rules/25-exceptions-and-waivers.md) ·

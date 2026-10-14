@@ -1,16 +1,12 @@
 import { SettingsIssue } from '../../../common/enums/settings-issue.enum';
 import { isPlainRecord } from '../../../common/utilities/is-plain-record.utility';
 import { SCHEMA_FORBIDDEN_KEYS } from '../../catalog/constants/catalog.constants';
-import {
-  SETTINGS_MAX_ARRAY_ITEMS,
-  SETTINGS_MAX_BYTES,
-  SETTINGS_MAX_DEPTH,
-  SETTINGS_MAX_STRING_LENGTH,
-} from '../constants/installs.constants';
+import { SETTINGS_LIMITS } from '../constants/installs.constants';
 import type {
   PropertyRules,
   SettingsRecord,
   SettingsViolation,
+  ValidationLimits,
 } from '../types/settings-validation.types';
 
 function matchesType(type: unknown, value: unknown): boolean {
@@ -52,10 +48,11 @@ function checkString(
   value: string,
   path: string,
   out: SettingsViolation[],
+  limits: ValidationLimits,
 ): void {
   const declaredMax = typeof schema['maxLength'] === 'number' ? schema['maxLength'] : undefined;
   const minLength = typeof schema['minLength'] === 'number' ? schema['minLength'] : 0;
-  const maxLength = Math.min(declaredMax ?? SETTINGS_MAX_STRING_LENGTH, SETTINGS_MAX_STRING_LENGTH);
+  const maxLength = Math.min(declaredMax ?? limits.maxStringLength, limits.maxStringLength);
   if (value.length > maxLength) out.push({ path, issue: SettingsIssue.TOO_LONG });
   if (value.length < minLength) out.push({ path, issue: SettingsIssue.TOO_SHORT });
 }
@@ -78,17 +75,18 @@ function checkArray(
   path: string,
   depth: number,
   out: SettingsViolation[],
+  limits: ValidationLimits,
 ): void {
   const declared =
-    typeof schema['maxItems'] === 'number' ? schema['maxItems'] : SETTINGS_MAX_ARRAY_ITEMS;
-  if (value.length > Math.min(declared, SETTINGS_MAX_ARRAY_ITEMS)) {
+    typeof schema['maxItems'] === 'number' ? schema['maxItems'] : limits.maxArrayItems;
+  if (value.length > Math.min(declared, limits.maxArrayItems)) {
     out.push({ path, issue: SettingsIssue.TOO_MANY_ITEMS });
     return;
   }
   const items = schema['items'];
   if (!isPlainRecord(items)) return;
   for (const [index, item] of value.entries()) {
-    checkValue(items, item, `${path}[${String(index)}]`, depth + 1, out);
+    checkValue(items, item, `${path}[${String(index)}]`, depth + 1, out, limits);
   }
 }
 
@@ -98,13 +96,14 @@ function checkProperty(
   value: unknown,
   depth: number,
   out: SettingsViolation[],
+  limits: ValidationLimits,
 ): void {
   if (SCHEMA_FORBIDDEN_KEYS.includes(rules.key)) {
     out.push({ path: child, issue: SettingsIssue.UNKNOWN_KEY });
   } else if (isPlainRecord(rules.declared)) {
-    checkValue(rules.declared, value, child, depth + 1, out);
+    checkValue(rules.declared, value, child, depth + 1, out, limits);
   } else if (isPlainRecord(rules.additional)) {
-    checkValue(rules.additional, value, child, depth + 1, out);
+    checkValue(rules.additional, value, child, depth + 1, out, limits);
   } else if (rules.additional !== true) {
     out.push({ path: child, issue: SettingsIssue.UNKNOWN_KEY });
   }
@@ -116,6 +115,7 @@ function checkObject(
   path: string,
   depth: number,
   out: SettingsViolation[],
+  limits: ValidationLimits,
 ): void {
   const declared = new Map(
     Object.entries(isPlainRecord(schema['properties']) ? schema['properties'] : {}),
@@ -126,7 +126,7 @@ function checkObject(
       declared: declared.get(key),
       additional: schema['additionalProperties'],
     };
-    checkProperty(rules, path === '' ? key : `${path}.${key}`, child, depth, out);
+    checkProperty(rules, path === '' ? key : `${path}.${key}`, child, depth, out, limits);
   }
   const required = Array.isArray(schema['required']) ? schema['required'] : [];
   for (const key of required) {
@@ -145,8 +145,9 @@ function checkValue(
   path: string,
   depth: number,
   out: SettingsViolation[],
+  limits: ValidationLimits,
 ): void {
-  if (depth > SETTINGS_MAX_DEPTH) {
+  if (depth > limits.maxDepth) {
     out.push({ path, issue: SettingsIssue.TOO_DEEP });
     return;
   }
@@ -155,9 +156,9 @@ function checkValue(
     return;
   }
   checkAllowed(schema, value, path, out);
-  if (isPlainRecord(value)) checkObject(schema, value, path, depth, out);
-  else if (Array.isArray(value)) checkArray(schema, value, path, depth, out);
-  else if (typeof value === 'string') checkString(schema, value, path, out);
+  if (isPlainRecord(value)) checkObject(schema, value, path, depth, out, limits);
+  else if (Array.isArray(value)) checkArray(schema, value, path, depth, out, limits);
+  else if (typeof value === 'string') checkString(schema, value, path, out, limits);
   else if (typeof value === 'number') checkNumber(schema, value, path, out);
 }
 
@@ -175,12 +176,16 @@ function serialisedBytes(value: unknown): number {
  * properties, additionalProperties (unknown keys are refused unless explicitly allowed),
  * min/max, length and array limits. Violations name a path and a reason, never the value.
  */
-export function validateSettings(schema: SettingsRecord, value: unknown): SettingsViolation[] {
-  if (serialisedBytes(value) > SETTINGS_MAX_BYTES) {
+export function validateSettings(
+  schema: SettingsRecord,
+  value: unknown,
+  limits: ValidationLimits = SETTINGS_LIMITS,
+): SettingsViolation[] {
+  if (serialisedBytes(value) > limits.maxBytes) {
     return [{ path: '', issue: SettingsIssue.TOO_LARGE }];
   }
   const violations: SettingsViolation[] = [];
-  checkValue({ ...schema, type: 'object' }, value, '', 0, violations);
+  checkValue({ ...schema, type: 'object' }, value, '', 0, violations, limits);
   return violations;
 }
 

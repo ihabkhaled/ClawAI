@@ -51,4 +51,24 @@ describe('CredentialCryptoManager', () => {
       manager.seal('same', 'user-1', 'install-1').ciphertext,
     );
   });
+  describe('open', () => {
+    it('returns the plaintext for the same user and owner', () => {
+      const manager = new CredentialCryptoManager();
+      const { ciphertext } = manager.seal('sk-secret', 'user-1', 'server-1');
+
+      expect(manager.open(ciphertext, 'user-1', 'server-1')).toBe('sk-secret');
+    });
+
+    it('returns null for another owner, another user, tampered bytes and garbage', () => {
+      const manager = new CredentialCryptoManager();
+      const { ciphertext } = manager.seal('sk-secret', 'user-1', 'server-1');
+      const tampered = Buffer.from(ciphertext, 'base64');
+      tampered[tampered.length - 1] = (tampered.at(-1) ?? 0) ^ 0xff;
+
+      expect(manager.open(ciphertext, 'user-1', 'server-2')).toBeNull();
+      expect(manager.open(ciphertext, 'user-2', 'server-1')).toBeNull();
+      expect(manager.open(tampered.toString('base64'), 'user-1', 'server-1')).toBeNull();
+      expect(manager.open('not-base64!!', 'user-1', 'server-1')).toBeNull();
+    });
+  });
 });

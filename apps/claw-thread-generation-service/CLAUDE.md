@@ -128,11 +128,20 @@ frame type is ignored; the `message` text is never read or forwarded, only the m
   (reserve is idempotent per owner and key, so a concurrent request shares the budget).
 - A new code (`QUEUE_EXPIRED`) needs the frontend `THREAD_GENERATION_CODE_KEYS` entry and all 13 locales.
 - `spentMicroCredits` is the sum of the `costMicroUsd` chat-service reports (PAYG only), raised monotonically to the
-  budget row's `settledMicroUsd` (auth `POST /internal/threads/budgets/summary`, `ThreadBudgetClient.settledMicroUsd`)
+  budget row's `settledMicroUsd` (auth `POST /internal/threads/budgets/summary`, `ThreadBudgetClient.spentMicroUsd`, the larger of `settledMicroUsd` and `freeAllowanceMicroUsd`; an absent field means 0)
   by `GenerationBudgetCloser` right before every close, and also while the job runs: `GenerationSpendSyncService`
   (called from the pipeline's `recordSpend` after each model call settles) syncs it at most once per 5 s per job,
   best effort. Progress reads the persisted value, never auth per poll.
-  A Free job settles 0 by design (its cost sits in the free-allowance meter), so it still shows 0.
+  A Free job settles 0 by design (its cost sits in the free-allowance meter), so its spend is read from the summary's
+  `freeAllowanceMicroUsd` and shows the real money.
+- **Free generation policy.** A job that ends FAILED (or lease/queue-expired) with no draft closes its budget as
+  `PLATFORM_FAILED` when the code is platform-caused (`PLATFORM_FAILURE_STEP_CODES` plus the `CLOUD_PROVIDER_*` and
+  `MODEL_CATALOG_*` prefixes in `step-recorder.constants.ts`, classified by `budgetCloseStatusForFailure`); auth then
+  refunds the Free meter money and the lifetime Thread hold. `REVIEW_NOT_PASSED`, every `NON_RETRYABLE_STEP_CODES`
+  code, an owner cancel and any unknown code close `RELEASED` (allowance stays spent). A retried close (sweep) reads
+  the job's last failed step code (`findLastFailureCode`) so it keeps the verdict. Progress exposes
+  `allowanceRefunded` (`budget_close_status = PLATFORM_FAILED`). A new platform code goes in the set AND the
+  classification spec table. "Retry on us" needs no code here: the refund frees the allowance the retry reserves.
 - `NON_RETRYABLE_STEP_CODES` (PAYG cap too low, price unavailable, unpriced model, credit and allowance exhausted)
   fail the job on the first attempt; a retry would be refused the same way (ADR-173 addendum). The progress
   `failure.retryable` is false for them too (`isRetryable` in `build-progress.utility.ts`), so the UI offers no Retry.

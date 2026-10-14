@@ -88,9 +88,11 @@ describe('ThreadsGenerationClient', () => {
   it('fetches owner progress through the internal route', async () => {
     const fetch = stubFetch({ ok: true, json: async () => progress });
 
-    await expect(new ThreadsGenerationClient().getProgress('job-1', 'owner-1')).resolves.toEqual(
-      progress,
-    );
+    // The gateway fills allowanceRefunded=false when the generation service did not send it.
+    await expect(new ThreadsGenerationClient().getProgress('job-1', 'owner-1')).resolves.toEqual({
+      ...progress,
+      allowanceRefunded: false,
+    });
     expect(fetch).toHaveBeenCalledWith(
       `${base}/progress`,
       expect.objectContaining({ method: 'POST', body: JSON.stringify({ ownerId: 'owner-1' }) }),

@@ -23,6 +23,9 @@ const BACKEND_SERVICES = [
   'payment-service',
   'llamacpp-service',
   'file-generation-service',
+  'thread-generation-service',
+  'threads-service',
+  'plugin-service',
 ];
 
 const POLLING_SETTINGS = [
@@ -117,7 +120,11 @@ test('development frontend installs its local workspace dependency from the buil
   // Dockerfile.dev/Dockerfile) built shared-types before shared-constants.
   const constantsIndex = source.indexOf('RUN cd packages/shared-constants && npm run build');
   const typesIndex = source.indexOf('RUN cd packages/shared-types && npm run build');
-  assert.notEqual(constantsIndex, -1, 'frontend development image must build @claw/shared-constants');
+  assert.notEqual(
+    constantsIndex,
+    -1,
+    'frontend development image must build @claw/shared-constants',
+  );
   assert.notEqual(typesIndex, -1, 'frontend development image must build @claw/shared-types');
   assert.ok(
     constantsIndex < typesIndex,

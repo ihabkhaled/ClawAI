@@ -37,8 +37,8 @@ describe('GenerationJobsService stale job recovery', () => {
 
     await service['reconcileQueue']();
 
-    expect(budgets.close).toHaveBeenCalledWith('budget-1', 'RELEASED');
-    expect(repository.markBudgetClosed).toHaveBeenCalledWith('old-1', 'RELEASED');
+    expect(budgets.close).toHaveBeenCalledWith('budget-1', 'PLATFORM_FAILED');
+    expect(repository.markBudgetClosed).toHaveBeenCalledWith('old-1', 'PLATFORM_FAILED');
     expect(recorder.record).toHaveBeenCalledWith('old-1', {
       stage: 'GENERATION',
       outcome: 'FAILED',
@@ -86,8 +86,8 @@ describe('GenerationJobsService stale job recovery', () => {
 
     await service['reconcileQueue']();
 
-    expect(budgets.close).toHaveBeenCalledWith('budget-lost', 'RELEASED');
-    expect(budgets.close).toHaveBeenCalledWith('budget-old', 'RELEASED');
+    expect(budgets.close).toHaveBeenCalledWith('budget-lost', 'PLATFORM_FAILED');
+    expect(budgets.close).toHaveBeenCalledWith('budget-old', 'PLATFORM_FAILED');
     expect(recorder.record).toHaveBeenCalledWith(
       'lost-1',
       expect.objectContaining({ code: 'LEASE_EXPIRED' }),

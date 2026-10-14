@@ -25,6 +25,7 @@ import { JudgeRefereeDetails } from '@/components/chat/judge-referee-details';
 import { MessageAttachments } from '@/components/chat/message-attachments';
 import { MessageBranchAction } from '@/components/chat/message-branch-action';
 import { MessageEditAction } from '@/components/chat/message-edit-action';
+import { MessagePluginRefs } from '@/components/chat/message-plugin-refs';
 import { MessageProvenance } from '@/components/chat/message-provenance';
 import { MessageQuotes } from '@/components/chat/message-quotes';
 import { MessageReasoningPanel } from '@/components/chat/message-reasoning-panel';
@@ -36,6 +37,7 @@ import { OllamaToolTranscriptPanel } from '@/components/chat/ollama-tool-transcr
 import { PickedModelFallbackNotice } from '@/components/chat/picked-model-fallback-notice';
 import { PickedModelRecovery } from '@/components/chat/picked-model-recovery';
 import { PlanFeatureNotice } from '@/components/chat/plan-feature-notice';
+import { PluginCallTimeline } from '@/components/chat/plugin-call-timeline';
 import { RegenerateWithModel } from '@/components/chat/regenerate-with-model';
 import { ResearchRunDetails } from '@/components/chat/research-run-details';
 import { ResearchTranscriptPanel } from '@/components/chat/research-transcript-panel';
@@ -73,6 +75,11 @@ import {
   readSuggestedModels,
 } from '@/utilities/picked-model-fallback.utility';
 import { readPlanFeatureRefusal } from '@/utilities/plan-feature-refusal.utility';
+import {
+  readPluginCalls,
+  readPluginNotices,
+  readPluginRefs,
+} from '@/utilities/plugin-call.utility';
 import { describeRoute } from '@/utilities/route-label.utility';
 
 function MessageBubbleBase({
@@ -114,6 +121,10 @@ function MessageBubbleBase({
       : null;
   const memoryCount = typeof metadata?.['memoryCount'] === 'number' ? metadata['memoryCount'] : 0;
   const quotes = isUser ? quotesOfMessage(metadata) : [];
+  // Plugins this turn mentioned (user) / used (assistant), straight from what was stored.
+  const pluginRefs = isUser ? readPluginRefs(metadata) : [];
+  const pluginCalls = isUser ? [] : readPluginCalls(metadata);
+  const pluginNotices = isUser ? [] : readPluginNotices(metadata);
   const citations = isUser ? undefined : citationsOfMessage(metadata);
   const contextSave = isUser ? null : contextSaveOfMessage(metadata);
   const contextFileIds = Array.isArray(metadata?.['fileIds'])
@@ -256,9 +267,13 @@ function MessageBubbleBase({
           </div>
         ) : null}
 
+        {/* The plugins the answer used, above it and outside it, like the work log. */}
+        <PluginCallTimeline calls={pluginCalls} notices={pluginNotices} />
+
         {/* What this turn replies to, above it and outside the coloured
             bubble so the quoted words keep their contrast. */}
         <MessageQuotes quotes={quotes} label={t('chat.quote.repliedTo')} />
+        <MessagePluginRefs refs={pluginRefs} />
 
         {/* data-quote-source-id: a selection inside this element can be quoted
             into the composer with this message as its source (Batch 2). */}

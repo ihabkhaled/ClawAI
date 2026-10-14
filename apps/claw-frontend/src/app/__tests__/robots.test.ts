@@ -99,6 +99,29 @@ describe('robots', () => {
   );
 
   it(
+    'keeps the member Board private but never blocks the public Threads board',
+    async () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      process.env['SITE_URL'] = 'https://claw.example';
+      const { SUPPORTED_LOCALES } = await import('@/lib/i18n/i18n.constants');
+      const robots = (await import('../robots')).default;
+
+      const result = robots();
+      const rules = Array.isArray(result.rules) ? result.rules[0] : result.rules;
+      const disallow = [rules?.disallow ?? []].flat();
+      expect(disallow).toContain('/board');
+      for (const { locale } of SUPPORTED_LOCALES) {
+        expect(disallow).toContain(`/${locale}/board`);
+        expect(disallow).not.toContain(`/${locale}/threads/board`);
+        expect(disallow).not.toContain(`/${locale}/threads`);
+      }
+      expect(disallow).not.toContain('/threads');
+      expect(disallow.some((rule) => '/threads/board'.startsWith(rule))).toBe(false);
+    },
+    DYNAMIC_IMPORT_TIMEOUT_MS,
+  );
+
+  it(
     'disallows everything in non-canonical environments',
     async () => {
       vi.stubEnv('NODE_ENV', 'production');

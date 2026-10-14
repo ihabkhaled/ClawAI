@@ -113,7 +113,7 @@ Layer 2 (depends on databases + infra being healthy):
   server-logs-service --> mongodb, redis, rabbitmq
 
 Layer 3 (depends on all services being healthy):
-  nginx --> all 17 backend services
+  nginx --> all 21 backend services
 
 Layer 4 (depends on proxy being started):
   frontend --> nginx (service_started, not health check)

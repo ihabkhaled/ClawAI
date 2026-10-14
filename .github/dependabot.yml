@@ -125,6 +125,22 @@ updates:
     directory: /apps/claw-llamacpp-service
     schedule:
       interval: weekly
+  - package-ecosystem: docker
+    directory: /apps/claw-payment-service
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: /apps/claw-thread-generation-service
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: /apps/claw-threads-service
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: /apps/claw-plugin-service
+    schedule:
+      interval: weekly
 
   # GitHub Actions used by .github/workflows/*.yml
   - package-ecosystem: github-actions

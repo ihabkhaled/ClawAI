@@ -5,6 +5,7 @@ import type {
   ThreadBoardListResponse,
   ThreadBoardSuggestResponse,
 } from '@/types/thread-board.types';
+import { buildBoardListQuery } from '@/utilities/thread-board-query.utility';
 
 type RequestOptions = { signal?: AbortSignal };
 
@@ -13,19 +14,9 @@ export const threadBoardRepository = {
     params: ThreadBoardListParams,
     options?: RequestOptions,
   ): Promise<ThreadBoardListResponse> {
-    const query: Record<string, string> = {
-      sort: params.sort,
-      lang: params.lang || THREAD_BOARD_ALL,
-      type: params.type,
-      page: String(params.page),
-      limit: String(params.limit),
-    };
-    if (params.q) {
-      query.q = params.q;
-    }
     const response = await apiClient.get<ThreadBoardListResponse>(
       '/thread-publications/board',
-      query,
+      buildBoardListQuery(params),
       options,
     );
     return response.data;

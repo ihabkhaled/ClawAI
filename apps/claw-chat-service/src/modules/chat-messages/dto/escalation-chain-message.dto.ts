@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { attachmentFields } from './attachment-fields.dto';
 import { contextPackFields } from './context-pack-fields.dto';
+import { pluginFields } from './plugin-fields.dto';
 import { researchFields } from './research-fields.dto';
 import { requireContentOrAttachments } from '../validators/content-or-attachments.validator';
 
@@ -19,6 +20,7 @@ export const escalationChainMessageSchema = z
     chain: z.array(escalationStepSchema).min(2).max(5),
     ...attachmentFields,
     ...contextPackFields,
+    ...pluginFields,
   })
   .superRefine((data, ctx) => {
     requireContentOrAttachments()(data, ctx);

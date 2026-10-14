@@ -38,6 +38,18 @@ export type ComparisonHubJsonLdItem = {
   url: string;
 };
 
+export type PublicBoardJsonLdItem = {
+  name: string;
+  url: string;
+};
+
+/** The public Threads board: the page facts plus its first page of Threads (name and URL only). */
+export type PublicBoardJsonLdInput = PublicPageJsonLdInput & {
+  items: ReadonlyArray<PublicBoardJsonLdItem>;
+  /** How many public Threads the board holds in total, not only the first page. */
+  totalItems: number;
+};
+
 export type ComparisonHubJsonLdInput = PublicPageJsonLdInput & {
   items: ReadonlyArray<ComparisonHubJsonLdItem>;
 };

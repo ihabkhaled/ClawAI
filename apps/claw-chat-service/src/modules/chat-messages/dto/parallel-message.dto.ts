@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { attachmentFields } from './attachment-fields.dto';
 import { contextPackFields } from './context-pack-fields.dto';
+import { pluginFields } from './plugin-fields.dto';
 import { researchFields } from './research-fields.dto';
 import { requireContentOrAttachments } from '../validators/content-or-attachments.validator';
 
@@ -36,6 +37,7 @@ export const parallelMessageSchema = z
       .nullable(),
     ...attachmentFields,
     ...contextPackFields,
+    ...pluginFields,
     // Compare-mode research enricher (added 2026-05-30). The user picks ONE of
     // four modes; the chat-service calls research-service before parallel lane
     // execution and pre-pends formatted evidence to the shared system prompt so

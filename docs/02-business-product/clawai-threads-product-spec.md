@@ -35,7 +35,13 @@ participation is open to authenticated users under existing moderation rules.
 
 ## Board (signed-in browse and search)
 
-Signed-in users get a Board at `/board`: a grid of published Threads with search-as-you-type, sort (latest, trending, discussed, liked), language and type filters, and a reader at `/board/[slug]` with the existing reactions and comments. Defaults: the language filter is the UI locale with an "All languages" option; the Board is behind login, noindex and not linked from marketing pages; the sidebar entry "Board" sits beside Threads; publishing does not redirect there. Privacy decision: cards and the reader show no author name or avatar. The public `/threads/[slug]` page stays the canonical, indexable copy. See ADR-177 and ADR-178 and [the change record](../changes/2026-10-14-threads-board.md).
+Signed-in users get a Board at `/board`: a grid of published Threads with search-as-you-type, sort (latest, trending, discussed, liked), language and type filters, and a reader at `/board/[slug]` with the existing reactions and comments. Defaults: the language filter is the UI locale with an "All languages" option; the member Board is behind login and noindex (the public guest board below is its read-only, indexable twin); the sidebar entry "Board" sits beside Threads; publishing does not redirect there. Privacy decision: cards and the reader show no author name or avatar. The public `/threads/[slug]` page stays the canonical, indexable copy. See ADR-177 and ADR-178 and [the change record](../changes/2026-10-14-threads-board.md).
+
+## Public board (guests, read-only)
+
+Visitors without an account get a clear, easy-to-find **Public Threads board** at `/threads/board` in the marketing site (navigation, footer and the Threads hub link to it). It lists every public Thread (published, owner-approved, safety-approved, index-eligible) with the same typo-tolerant search, the suggestions panel of about ten nearest results with a "show all N results" row, did-you-mean, language and type filters, sorts, pagination and cards with like, comment and suggestion counts. Opening a card goes to the canonical `/threads/<slug>` page.
+
+Guests are read-only: they see counts and existing comments, and every action (like, comment, request a change, report with an account, bookmark) shows a friendly "Sign in to ..." prompt linking to login or register. The page exposes no owner or author identifier, hash, safety data or viewer-specific field. It is indexable, listed in the sitemap in all 13 locales and carries real introductory copy. Decision: [ADR-178 addendum](../13-adr/adr-178-the-board-is-a-portal-surface-seo-stays-on-threads-slug.md); change record: [2026-10-14-public-threads-board](../changes/2026-10-14-public-threads-board.md).
 
 ## Budget and plan enforcement
 

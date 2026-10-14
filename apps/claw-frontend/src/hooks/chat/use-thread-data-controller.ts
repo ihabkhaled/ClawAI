@@ -12,6 +12,7 @@ import type {
   UseThreadDataControllerReturn,
   UseVirtualizedMessagesControllerParams,
 } from '@/types';
+import type { PluginRefPayload } from '@/types/plugin-mention.types';
 import { logger, toQuoteRequest } from '@/utilities';
 import {
   resolveChatLimitNotice,
@@ -71,6 +72,7 @@ export const useThreadDataController = ({
       fileIds?: string[],
       research?: ResearchOptions,
       maskFileId?: string,
+      pluginRefs?: PluginRefPayload[],
     ): void => {
       logger.info({
         component: 'chat',
@@ -83,6 +85,7 @@ export const useThreadDataController = ({
           fileCount: fileIds?.length ?? 0,
           researchMode: research?.mode ?? 'OFF',
           hasMask: maskFileId !== undefined,
+          pluginCount: pluginRefs?.length ?? 0,
         },
       });
       detail.startWaitingForResponse();
@@ -99,6 +102,7 @@ export const useThreadDataController = ({
           : {}),
         ...(fileIds && fileIds.length > 0 ? { fileIds } : {}),
         ...(fileIds && fileIds.length > 0 && maskFileId !== undefined ? { maskFileId } : {}),
+        ...(pluginRefs && pluginRefs.length > 0 ? { pluginRefs } : {}),
         ...toQuoteRequest(useQuoteDraftStore.getState().byThread[threadId]),
         ...(research && research.mode !== ResearchMode.NONE
           ? {

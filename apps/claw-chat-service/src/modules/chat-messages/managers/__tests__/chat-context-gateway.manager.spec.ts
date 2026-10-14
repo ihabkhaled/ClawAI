@@ -368,3 +368,61 @@ describe('ChatContextGatewayManager', () => {
     });
   });
 });
+
+describe('ChatContextGatewayManager plugin mentions (rule 59)', () => {
+  const INSTALL = '11111111-1111-4111-8111-111111111111';
+  const stored = { pluginRefs: [{ installId: INSTALL, label: 'Web fetch' }] };
+
+  it('reads the mentions off the latest user turn on every answering surface', async () => {
+    for (const surface of [
+      ChatSurface.CHAT,
+      ChatSurface.COMPARE,
+      ChatSurface.CONSENSUS,
+      ChatSurface.ESCALATION,
+      ChatSurface.DECOMPOSE,
+      ChatSurface.BEST_OF_N,
+      ChatSurface.PIPELINE,
+      ChatSurface.COST_ENSEMBLE,
+      ChatSurface.ROLE_PACK,
+    ]) {
+      const { manager } = harness({ messages: [message('m1', 'USER', stored)] });
+      const bundle = await manager.build({ userId: 'user-1', threadId: 'thread-1', surface });
+      expect(bundle.context.pluginRefs, surface).toEqual(stored.pluginRefs);
+    }
+  });
+
+  it('never gives plugin tools to a surface that only grades or rewrites an answer', async () => {
+    for (const surface of [
+      ChatSurface.JUDGE,
+      ChatSurface.CRITIC,
+      ChatSurface.REPAIR,
+      ChatSurface.VERIFY,
+      ChatSurface.AGENT,
+    ]) {
+      const { manager } = harness({ messages: [message('m1', 'USER', stored)] });
+      const bundle = await manager.build({ userId: 'user-1', threadId: 'thread-1', surface });
+      expect(bundle.context.pluginRefs, surface).toBeUndefined();
+    }
+  });
+
+  it('lets the request carry the mentions when no user turn does', async () => {
+    const { manager } = harness({ messages: [message('m1', 'USER')] });
+    const bundle = await manager.build({
+      userId: 'user-1',
+      threadId: 'thread-1',
+      surface: ChatSurface.COMPARE,
+      pluginRefs: [{ installId: INSTALL, label: 'Web fetch' }],
+    });
+    expect(bundle.context.pluginRefs).toEqual(stored.pluginRefs);
+  });
+
+  it('leaves the context untouched when nothing was mentioned', async () => {
+    const { manager } = harness({ messages: [message('m1', 'USER')] });
+    const bundle = await manager.build({
+      userId: 'user-1',
+      threadId: 'thread-1',
+      surface: ChatSurface.CHAT,
+    });
+    expect(bundle.context).not.toHaveProperty('pluginRefs');
+  });
+});

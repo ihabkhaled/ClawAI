@@ -1,7 +1,7 @@
 # ClawAI Engineering Memory
 
 Durable, dated, abstracted lessons learned building and operating the ClawAI
-monorepo (17 NestJS services + Next.js frontend + 6 shared packages).
+monorepo (21 NestJS services + Next.js frontend + 6 shared packages).
 
 ## Memory vs. Rules vs. Skills
 

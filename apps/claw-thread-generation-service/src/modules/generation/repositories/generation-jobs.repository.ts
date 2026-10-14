@@ -453,6 +453,16 @@ export class GenerationJobsRepository {
     });
   }
 
+  /** The code of the job's last failed step, so a retried budget close keeps its platform verdict. */
+  async findLastFailureCode(jobId: string): Promise<string | null> {
+    const step = await this.prisma.threadGenerationStep.findFirst({
+      where: { jobId, outcome: 'FAILED', code: { not: null } },
+      orderBy: { seq: 'desc' },
+      select: { code: true },
+    });
+    return step?.code ?? null;
+  }
+
   async markBudgetClosed(jobId: string, status: GenerationBudgetCloseStatus): Promise<void> {
     await this.prisma.threadGenerationJob.updateMany({
       where: { id: jobId, budgetClosedAt: null },

@@ -186,11 +186,12 @@ cp .env.example .env
 
 At minimum, update these values:
 
-| Variable         | Action                                              |
-| ---------------- | --------------------------------------------------- |
-| `JWT_SECRET`     | Generate a random 64-character string               |
-| `ENCRYPTION_KEY` | Generate a random 32-byte hex string (64 hex chars) |
-| `ADMIN_PASSWORD` | Set the initial admin password                      |
+| Variable                | Action                                                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `JWT_SECRET`            | Generate a random 64-character string                                                                                          |
+| `ENCRYPTION_KEY`        | Generate a random 32-byte hex string (64 hex chars)                                                                            |
+| `ADMIN_PASSWORD`        | Set the initial admin password                                                                                                 |
+| `PLUGIN_ENCRYPTION_KEY` | Generate a random 32-byte hex string (64 hex chars, not all zeros); the installer does this for you and keeps it on re-install |
 
 If you want to test the newer platform capabilities, also review:
 

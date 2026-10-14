@@ -11,6 +11,23 @@ import type { ThreadBoardLocaleTranslation } from '@/types/i18n.types';
  */
 export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslation> = {
   [Locale.EN]: {
+    threadBoardGuestNavLabel: 'Threads board',
+    threadBoardGuestBannerTitle: 'Reading is free. Taking part needs an account.',
+    threadBoardGuestBannerBody:
+      'Read any public Thread and see its likes, comments and suggested changes. Sign in to like, comment, request a change or report a Thread.',
+    threadBoardGuestSignIn: 'Sign in',
+    threadBoardGuestRegister: 'Create a free account',
+    threadBoardGuestSignInToLike: 'Sign in to like',
+    threadBoardGuestSignInToComment: 'Sign in to comment',
+    threadBoardGuestSignInToRequestChange: 'Sign in to request a change',
+    threadBoardGuestSignInToReport: 'Sign in to report',
+    threadBoardGuestPromptsLabel: 'Sign in to take part',
+    threadBoardGuestBackToAll: 'Back to all Threads',
+    threadBoardGuestHomeEyebrow: 'Community board',
+    threadBoardGuestHomeTitle: 'See what the community has published',
+    threadBoardGuestHomeBody:
+      'Browse every public Thread: researched articles, guides and explanations with their sources. Search by topic, filter by language and read for free. No account needed.',
+    threadBoardGuestHomeCta: 'Browse the Threads board',
     threadBoardNavLabel: 'Board',
     threadBoardTitle: 'Board',
     threadBoardSubtitle:
@@ -59,6 +76,23 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardRateLimitWait: 'Too many requests. Try again in {seconds} seconds.',
   },
   [Locale.AR]: {
+    threadBoardGuestNavLabel: 'لوحة Threads',
+    threadBoardGuestBannerTitle: 'القراءة مجانية، والمشاركة تتطلب حساباً.',
+    threadBoardGuestBannerBody:
+      'اقرأ أي Thread عام وشاهد عدد الإعجابات والتعليقات والتعديلات المقترحة. سجّل الدخول للإعجاب أو التعليق أو طلب تعديل أو الإبلاغ عن Thread.',
+    threadBoardGuestSignIn: 'تسجيل الدخول',
+    threadBoardGuestRegister: 'إنشاء حساب مجاني',
+    threadBoardGuestSignInToLike: 'سجّل الدخول للإعجاب',
+    threadBoardGuestSignInToComment: 'سجّل الدخول للتعليق',
+    threadBoardGuestSignInToRequestChange: 'سجّل الدخول لطلب تعديل',
+    threadBoardGuestSignInToReport: 'سجّل الدخول للإبلاغ',
+    threadBoardGuestPromptsLabel: 'سجّل الدخول للمشاركة',
+    threadBoardGuestBackToAll: 'العودة إلى كل Threads',
+    threadBoardGuestHomeEyebrow: 'لوحة المجتمع',
+    threadBoardGuestHomeTitle: 'اطّلع على ما نشره المجتمع',
+    threadBoardGuestHomeBody:
+      'تصفّح كل Threads العامة: مقالات وأدلة وشروحات موثّقة بمصادرها. ابحث حسب الموضوع، وصفِّ حسب اللغة، واقرأ مجاناً. لا حاجة إلى حساب.',
+    threadBoardGuestHomeCta: 'تصفّح لوحة Threads',
     threadBoardNavLabel: 'اللوحة',
     threadBoardTitle: 'اللوحة',
     threadBoardSubtitle: 'منشورات يشاركها المجتمع. تصفّح وابحث وشارك في النقاش.',
@@ -106,6 +140,23 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardRateLimitWait: 'طلبات كثيرة جدًا. حاول مرة أخرى بعد {seconds} ثانية.',
   },
   [Locale.FR]: {
+    threadBoardGuestNavLabel: 'Tableau des Threads',
+    threadBoardGuestBannerTitle: 'La lecture est gratuite. Participer demande un compte.',
+    threadBoardGuestBannerBody:
+      'Lisez n’importe quel Thread public et voyez ses mentions j’aime, ses commentaires et ses modifications proposées. Connectez-vous pour aimer, commenter, demander une modification ou signaler un Thread.',
+    threadBoardGuestSignIn: 'Se connecter',
+    threadBoardGuestRegister: 'Créer un compte gratuit',
+    threadBoardGuestSignInToLike: 'Connectez-vous pour aimer',
+    threadBoardGuestSignInToComment: 'Connectez-vous pour commenter',
+    threadBoardGuestSignInToRequestChange: 'Connectez-vous pour demander une modification',
+    threadBoardGuestSignInToReport: 'Connectez-vous pour signaler',
+    threadBoardGuestPromptsLabel: 'Connectez-vous pour participer',
+    threadBoardGuestBackToAll: 'Retour à tous les Threads',
+    threadBoardGuestHomeEyebrow: 'Tableau de la communauté',
+    threadBoardGuestHomeTitle: 'Découvrez ce que la communauté a publié',
+    threadBoardGuestHomeBody:
+      'Parcourez tous les Threads publics : articles documentés, guides et explications avec leurs sources. Cherchez par sujet, filtrez par langue et lisez gratuitement. Aucun compte requis.',
+    threadBoardGuestHomeCta: 'Parcourir le tableau des Threads',
     threadBoardNavLabel: 'Tableau',
     threadBoardTitle: 'Tableau',
     threadBoardSubtitle:
@@ -156,6 +207,23 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardRateLimitWait: 'Trop de requêtes. Réessayez dans {seconds} secondes.',
   },
   [Locale.IT]: {
+    threadBoardGuestNavLabel: 'Bacheca dei Threads',
+    threadBoardGuestBannerTitle: 'Leggere è gratis. Partecipare richiede un account.',
+    threadBoardGuestBannerBody:
+      'Leggi qualsiasi Thread pubblico e guarda i suoi mi piace, commenti e modifiche suggerite. Accedi per mettere mi piace, commentare, chiedere una modifica o segnalare un Thread.',
+    threadBoardGuestSignIn: 'Accedi',
+    threadBoardGuestRegister: 'Crea un account gratuito',
+    threadBoardGuestSignInToLike: 'Accedi per mettere mi piace',
+    threadBoardGuestSignInToComment: 'Accedi per commentare',
+    threadBoardGuestSignInToRequestChange: 'Accedi per chiedere una modifica',
+    threadBoardGuestSignInToReport: 'Accedi per segnalare',
+    threadBoardGuestPromptsLabel: 'Accedi per partecipare',
+    threadBoardGuestBackToAll: 'Torna a tutti i Threads',
+    threadBoardGuestHomeEyebrow: 'Bacheca della community',
+    threadBoardGuestHomeTitle: 'Scopri cosa ha pubblicato la community',
+    threadBoardGuestHomeBody:
+      'Sfoglia tutti i Threads pubblici: articoli, guide e spiegazioni documentati con le loro fonti. Cerca per argomento, filtra per lingua e leggi gratis. Non serve un account.',
+    threadBoardGuestHomeCta: 'Sfoglia la bacheca dei Threads',
     threadBoardNavLabel: 'Bacheca',
     threadBoardTitle: 'Bacheca',
     threadBoardSubtitle:
@@ -207,6 +275,23 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardRateLimitWait: 'Troppe richieste. Riprova tra {seconds} secondi.',
   },
   [Locale.DE]: {
+    threadBoardGuestNavLabel: 'Threads-Board',
+    threadBoardGuestBannerTitle: 'Lesen ist kostenlos. Mitmachen geht mit Konto.',
+    threadBoardGuestBannerBody:
+      'Lies jeden öffentlichen Thread und sieh Likes, Kommentare und vorgeschlagene Änderungen. Melde dich an, um zu liken, zu kommentieren, eine Änderung anzufragen oder einen Thread zu melden.',
+    threadBoardGuestSignIn: 'Anmelden',
+    threadBoardGuestRegister: 'Kostenloses Konto erstellen',
+    threadBoardGuestSignInToLike: 'Anmelden, um zu liken',
+    threadBoardGuestSignInToComment: 'Anmelden, um zu kommentieren',
+    threadBoardGuestSignInToRequestChange: 'Anmelden, um eine Änderung anzufragen',
+    threadBoardGuestSignInToReport: 'Anmelden, um zu melden',
+    threadBoardGuestPromptsLabel: 'Anmelden, um mitzumachen',
+    threadBoardGuestBackToAll: 'Zurück zu allen Threads',
+    threadBoardGuestHomeEyebrow: 'Community-Board',
+    threadBoardGuestHomeTitle: 'Sieh, was die Community veröffentlicht hat',
+    threadBoardGuestHomeBody:
+      'Durchstöbere alle öffentlichen Threads: recherchierte Artikel, Leitfäden und Erklärungen mit ihren Quellen. Suche nach Thema, filtere nach Sprache und lies kostenlos. Kein Konto nötig.',
+    threadBoardGuestHomeCta: 'Threads-Board durchsuchen',
     threadBoardNavLabel: 'Board',
     threadBoardTitle: 'Board',
     threadBoardSubtitle:
@@ -259,6 +344,23 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardRateLimitWait: 'Zu viele Anfragen. Versuchen Sie es in {seconds} Sekunden erneut.',
   },
   [Locale.ES]: {
+    threadBoardGuestNavLabel: 'Tablero de Threads',
+    threadBoardGuestBannerTitle: 'Leer es gratis. Participar requiere una cuenta.',
+    threadBoardGuestBannerBody:
+      'Lee cualquier Thread público y consulta sus me gusta, comentarios y cambios sugeridos. Inicia sesión para dar me gusta, comentar, pedir un cambio o denunciar un Thread.',
+    threadBoardGuestSignIn: 'Iniciar sesión',
+    threadBoardGuestRegister: 'Crear una cuenta gratuita',
+    threadBoardGuestSignInToLike: 'Inicia sesión para dar me gusta',
+    threadBoardGuestSignInToComment: 'Inicia sesión para comentar',
+    threadBoardGuestSignInToRequestChange: 'Inicia sesión para pedir un cambio',
+    threadBoardGuestSignInToReport: 'Inicia sesión para denunciar',
+    threadBoardGuestPromptsLabel: 'Inicia sesión para participar',
+    threadBoardGuestBackToAll: 'Volver a todos los Threads',
+    threadBoardGuestHomeEyebrow: 'Tablero de la comunidad',
+    threadBoardGuestHomeTitle: 'Mira lo que ha publicado la comunidad',
+    threadBoardGuestHomeBody:
+      'Explora todos los Threads públicos: artículos, guías y explicaciones con sus fuentes. Busca por tema, filtra por idioma y lee gratis. No necesitas cuenta.',
+    threadBoardGuestHomeCta: 'Explorar el tablero de Threads',
     threadBoardNavLabel: 'Tablón',
     threadBoardTitle: 'Tablón',
     threadBoardSubtitle:
@@ -309,6 +411,23 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardRateLimitWait: 'Demasiadas solicitudes. Inténtalo de nuevo en {seconds} segundos.',
   },
   [Locale.RU]: {
+    threadBoardGuestNavLabel: 'Доска Threads',
+    threadBoardGuestBannerTitle: 'Читать бесплатно. Для участия нужен аккаунт.',
+    threadBoardGuestBannerBody:
+      'Читайте любой публичный Thread и смотрите число лайков, комментариев и предложенных правок. Войдите, чтобы поставить лайк, оставить комментарий, предложить правку или пожаловаться на Thread.',
+    threadBoardGuestSignIn: 'Войти',
+    threadBoardGuestRegister: 'Создать бесплатный аккаунт',
+    threadBoardGuestSignInToLike: 'Войдите, чтобы поставить лайк',
+    threadBoardGuestSignInToComment: 'Войдите, чтобы комментировать',
+    threadBoardGuestSignInToRequestChange: 'Войдите, чтобы предложить правку',
+    threadBoardGuestSignInToReport: 'Войдите, чтобы пожаловаться',
+    threadBoardGuestPromptsLabel: 'Войдите, чтобы участвовать',
+    threadBoardGuestBackToAll: 'Ко всем Threads',
+    threadBoardGuestHomeEyebrow: 'Доска сообщества',
+    threadBoardGuestHomeTitle: 'Посмотрите, что опубликовало сообщество',
+    threadBoardGuestHomeBody:
+      'Просматривайте все публичные Threads: статьи, руководства и объяснения с источниками. Ищите по теме, фильтруйте по языку и читайте бесплатно. Аккаунт не нужен.',
+    threadBoardGuestHomeCta: 'Открыть доску Threads',
     threadBoardNavLabel: 'Доска',
     threadBoardTitle: 'Доска',
     threadBoardSubtitle:
@@ -358,6 +477,23 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardRateLimitWait: 'Слишком много запросов. Повторите попытку через {seconds} с.',
   },
   [Locale.PT]: {
+    threadBoardGuestNavLabel: 'Quadro de Threads',
+    threadBoardGuestBannerTitle: 'Ler é grátis. Participar exige uma conta.',
+    threadBoardGuestBannerBody:
+      'Leia qualquer Thread público e veja suas curtidas, comentários e alterações sugeridas. Entre para curtir, comentar, pedir uma alteração ou denunciar um Thread.',
+    threadBoardGuestSignIn: 'Entrar',
+    threadBoardGuestRegister: 'Criar uma conta gratuita',
+    threadBoardGuestSignInToLike: 'Entre para curtir',
+    threadBoardGuestSignInToComment: 'Entre para comentar',
+    threadBoardGuestSignInToRequestChange: 'Entre para pedir uma alteração',
+    threadBoardGuestSignInToReport: 'Entre para denunciar',
+    threadBoardGuestPromptsLabel: 'Entre para participar',
+    threadBoardGuestBackToAll: 'Voltar para todos os Threads',
+    threadBoardGuestHomeEyebrow: 'Quadro da comunidade',
+    threadBoardGuestHomeTitle: 'Veja o que a comunidade publicou',
+    threadBoardGuestHomeBody:
+      'Explore todos os Threads públicos: artigos, guias e explicações com as suas fontes. Pesquise por tema, filtre por idioma e leia de graça. Sem precisar de conta.',
+    threadBoardGuestHomeCta: 'Explorar o quadro de Threads',
     threadBoardNavLabel: 'Mural',
     threadBoardTitle: 'Mural',
     threadBoardSubtitle:
@@ -406,6 +542,23 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardRateLimitWait: 'Muitas solicitações. Tente novamente em {seconds} segundos.',
   },
   [Locale.HI]: {
+    threadBoardGuestNavLabel: 'Threads बोर्ड',
+    threadBoardGuestBannerTitle: 'पढ़ना मुफ़्त है। भाग लेने के लिए खाता चाहिए।',
+    threadBoardGuestBannerBody:
+      'कोई भी सार्वजनिक Thread पढ़ें और उसके लाइक, टिप्पणियाँ और सुझाए गए बदलाव देखें। लाइक करने, टिप्पणी करने, बदलाव का अनुरोध करने या किसी Thread की रिपोर्ट करने के लिए साइन इन करें।',
+    threadBoardGuestSignIn: 'साइन इन करें',
+    threadBoardGuestRegister: 'मुफ़्त खाता बनाएँ',
+    threadBoardGuestSignInToLike: 'लाइक करने के लिए साइन इन करें',
+    threadBoardGuestSignInToComment: 'टिप्पणी करने के लिए साइन इन करें',
+    threadBoardGuestSignInToRequestChange: 'बदलाव का अनुरोध करने के लिए साइन इन करें',
+    threadBoardGuestSignInToReport: 'रिपोर्ट करने के लिए साइन इन करें',
+    threadBoardGuestPromptsLabel: 'भाग लेने के लिए साइन इन करें',
+    threadBoardGuestBackToAll: 'सभी Threads पर वापस जाएँ',
+    threadBoardGuestHomeEyebrow: 'समुदाय बोर्ड',
+    threadBoardGuestHomeTitle: 'देखें कि समुदाय ने क्या प्रकाशित किया है',
+    threadBoardGuestHomeBody:
+      'सभी सार्वजनिक Threads ब्राउज़ करें: स्रोतों के साथ शोधपूर्ण लेख, मार्गदर्शिकाएँ और व्याख्याएँ। विषय के अनुसार खोजें, भाषा के अनुसार फ़िल्टर करें और मुफ़्त पढ़ें। खाते की ज़रूरत नहीं।',
+    threadBoardGuestHomeCta: 'Threads बोर्ड ब्राउज़ करें',
     threadBoardNavLabel: 'बोर्ड',
     threadBoardTitle: 'बोर्ड',
     threadBoardSubtitle:
@@ -455,6 +608,23 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardRateLimitWait: 'बहुत अधिक अनुरोध। {seconds} सेकंड बाद फिर कोशिश करें।',
   },
   [Locale.JA]: {
+    threadBoardGuestNavLabel: 'Threads ボード',
+    threadBoardGuestBannerTitle: '閲覧は無料です。参加にはアカウントが必要です。',
+    threadBoardGuestBannerBody:
+      '公開されている Thread は誰でも読め、いいね数・コメント・変更提案の数も確認できます。いいね、コメント、変更のリクエスト、Thread の報告にはサインインが必要です。',
+    threadBoardGuestSignIn: 'サインイン',
+    threadBoardGuestRegister: '無料アカウントを作成',
+    threadBoardGuestSignInToLike: 'いいねするにはサインイン',
+    threadBoardGuestSignInToComment: 'コメントするにはサインイン',
+    threadBoardGuestSignInToRequestChange: '変更をリクエストするにはサインイン',
+    threadBoardGuestSignInToReport: '報告するにはサインイン',
+    threadBoardGuestPromptsLabel: '参加するにはサインイン',
+    threadBoardGuestBackToAll: 'すべての Threads に戻る',
+    threadBoardGuestHomeEyebrow: 'コミュニティボード',
+    threadBoardGuestHomeTitle: 'コミュニティが公開した内容を見る',
+    threadBoardGuestHomeBody:
+      '公開されているすべての Thread を閲覧できます。出典付きの調査記事、ガイド、解説が揃っています。トピックで検索し、言語で絞り込み、無料で読めます。アカウントは不要です。',
+    threadBoardGuestHomeCta: 'Threads ボードを見る',
     threadBoardNavLabel: 'ボード',
     threadBoardTitle: 'ボード',
     threadBoardSubtitle:
@@ -504,6 +674,23 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardRateLimitWait: 'リクエストが多すぎます。{seconds} 秒後にもう一度お試しください。',
   },
   [Locale.TH]: {
+    threadBoardGuestNavLabel: 'บอร์ด Threads',
+    threadBoardGuestBannerTitle: 'อ่านได้ฟรี การมีส่วนร่วมต้องมีบัญชี',
+    threadBoardGuestBannerBody:
+      'อ่าน Thread สาธารณะได้ทุกเรื่อง และดูจำนวนไลก์ ความคิดเห็น และข้อเสนอแก้ไข เข้าสู่ระบบเพื่อกดไลก์ แสดงความคิดเห็น ขอแก้ไข หรือรายงาน Thread',
+    threadBoardGuestSignIn: 'เข้าสู่ระบบ',
+    threadBoardGuestRegister: 'สร้างบัญชีฟรี',
+    threadBoardGuestSignInToLike: 'เข้าสู่ระบบเพื่อกดไลก์',
+    threadBoardGuestSignInToComment: 'เข้าสู่ระบบเพื่อแสดงความคิดเห็น',
+    threadBoardGuestSignInToRequestChange: 'เข้าสู่ระบบเพื่อขอแก้ไข',
+    threadBoardGuestSignInToReport: 'เข้าสู่ระบบเพื่อรายงาน',
+    threadBoardGuestPromptsLabel: 'เข้าสู่ระบบเพื่อมีส่วนร่วม',
+    threadBoardGuestBackToAll: 'กลับไปที่ Threads ทั้งหมด',
+    threadBoardGuestHomeEyebrow: 'บอร์ดชุมชน',
+    threadBoardGuestHomeTitle: 'ดูสิ่งที่ชุมชนเผยแพร่',
+    threadBoardGuestHomeBody:
+      'เรียกดู Threads สาธารณะทั้งหมด: บทความที่ค้นคว้ามา คู่มือ และคำอธิบายพร้อมแหล่งที่มา ค้นหาตามหัวข้อ กรองตามภาษา และอ่านได้ฟรี ไม่ต้องมีบัญชี',
+    threadBoardGuestHomeCta: 'เรียกดูบอร์ด Threads',
     threadBoardNavLabel: 'บอร์ด',
     threadBoardTitle: 'บอร์ด',
     threadBoardSubtitle: 'บทความที่ชุมชนแบ่งปัน เรียกดู ค้นหา และร่วมสนทนาได้',
@@ -551,6 +738,23 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardRateLimitWait: 'คำขอมากเกินไป ลองอีกครั้งใน {seconds} วินาที',
   },
   [Locale.FA]: {
+    threadBoardGuestNavLabel: 'تابلوی Threads',
+    threadBoardGuestBannerTitle: 'خواندن رایگان است. مشارکت به حساب کاربری نیاز دارد.',
+    threadBoardGuestBannerBody:
+      'هر Thread عمومی را بخوانید و تعداد پسندها، دیدگاه‌ها و تغییرهای پیشنهادی آن را ببینید. برای پسندیدن، دیدگاه گذاشتن، درخواست تغییر یا گزارش یک Thread وارد شوید.',
+    threadBoardGuestSignIn: 'ورود',
+    threadBoardGuestRegister: 'ساخت حساب رایگان',
+    threadBoardGuestSignInToLike: 'برای پسندیدن وارد شوید',
+    threadBoardGuestSignInToComment: 'برای دیدگاه گذاشتن وارد شوید',
+    threadBoardGuestSignInToRequestChange: 'برای درخواست تغییر وارد شوید',
+    threadBoardGuestSignInToReport: 'برای گزارش وارد شوید',
+    threadBoardGuestPromptsLabel: 'برای مشارکت وارد شوید',
+    threadBoardGuestBackToAll: 'بازگشت به همه Threads',
+    threadBoardGuestHomeEyebrow: 'تابلوی جامعه',
+    threadBoardGuestHomeTitle: 'ببینید جامعه چه چیزی منتشر کرده است',
+    threadBoardGuestHomeBody:
+      'همه Threads عمومی را مرور کنید: مقاله‌ها، راهنماها و توضیح‌های پژوهش‌شده همراه با منبع. بر اساس موضوع جست‌وجو کنید، بر اساس زبان فیلتر کنید و رایگان بخوانید. نیازی به حساب کاربری نیست.',
+    threadBoardGuestHomeCta: 'مرور تابلوی Threads',
     threadBoardNavLabel: 'تابلو',
     threadBoardTitle: 'تابلو',
     threadBoardSubtitle:
@@ -599,6 +803,23 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardRateLimitWait: 'درخواست‌های بیش از حد. {seconds} ثانیهٔ دیگر دوباره تلاش کنید.',
   },
   [Locale.ZH]: {
+    threadBoardGuestNavLabel: 'Threads 看板',
+    threadBoardGuestBannerTitle: '阅读免费，参与需要账户。',
+    threadBoardGuestBannerBody:
+      '你可以阅读任何公开的 Thread，并查看它的点赞、评论和修改建议数量。登录后即可点赞、评论、请求修改或举报 Thread。',
+    threadBoardGuestSignIn: '登录',
+    threadBoardGuestRegister: '创建免费账户',
+    threadBoardGuestSignInToLike: '登录后点赞',
+    threadBoardGuestSignInToComment: '登录后评论',
+    threadBoardGuestSignInToRequestChange: '登录后请求修改',
+    threadBoardGuestSignInToReport: '登录后举报',
+    threadBoardGuestPromptsLabel: '登录后参与',
+    threadBoardGuestBackToAll: '返回全部 Threads',
+    threadBoardGuestHomeEyebrow: '社区看板',
+    threadBoardGuestHomeTitle: '看看社区发布了什么',
+    threadBoardGuestHomeBody:
+      '浏览所有公开的 Thread：附有来源的研究文章、指南和讲解。按主题搜索，按语言筛选，免费阅读，无需账户。',
+    threadBoardGuestHomeCta: '浏览 Threads 看板',
     threadBoardNavLabel: '公告板',
     threadBoardTitle: '公告板',
     threadBoardSubtitle: '社区分享的发布内容。可浏览、搜索并参与讨论。',

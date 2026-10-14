@@ -94,6 +94,19 @@ export function buildOrderBy(sort: BoardSort, q: string): Prisma.Sql {
   }
 }
 
+function viewerReactionColumn(userId: string | null): Prisma.Sql {
+  return userId === null
+    ? Prisma.sql`NULL::text AS "viewerReaction"`
+    : Prisma.sql`rx.value::text AS "viewerReaction"`;
+}
+
+function viewerReactionJoin(userId: string | null): Prisma.Sql {
+  return userId === null
+    ? Prisma.empty
+    : Prisma.sql`LEFT JOIN thread_publication_reactions rx
+      ON rx.publication_id = d.publication_id AND rx.user_id = ${userId}`;
+}
+
 export function buildListQuery(params: BoardListParams): Prisma.Sql {
   const offset = (params.page - 1) * params.limit;
   return Prisma.sql`
@@ -101,10 +114,9 @@ export function buildListQuery(params: BoardListParams): Prisma.Sql {
       d.publication_type AS "publicationType", d.published_at AS "publishedAt",
       d.reading_minutes AS "readingMinutes", d.source_count AS "sourceCount",
       d.like_count AS "likeCount", d.comment_count AS "commentCount", d.view_count AS "viewCount",
-      rx.value::text AS "viewerReaction"
+      ${viewerReactionColumn(params.userId)}
     FROM ${VISIBLE_FROM}
-    LEFT JOIN thread_publication_reactions rx
-      ON rx.publication_id = d.publication_id AND rx.user_id = ${params.userId}
+    ${viewerReactionJoin(params.userId)}
     ${buildWhere(params)}
     ${buildOrderBy(params.sort, params.q)}
     LIMIT ${params.limit} OFFSET ${offset}`;

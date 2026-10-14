@@ -1860,3 +1860,30 @@ The pending response includes auth-derived source/replacement plan IDs,
 replacement slug, user ID, and the opaque payment subscription ID. Outcome
 writes apply only while the row is still `BILLING_SCHEDULE_PENDING`, so a user
 override or replay cannot rewrite an already-decided migration.
+
+---
+
+## 18. Plugins and MCP (plugin-service, port 4021)
+
+Routed by nginx under `/api/v1/plugins`; `/api/v1/internal/*` is never routed. Every route needs a JWT. Reads need `PLUGINS_USE`, install writes need `PLUGINS_INSTALL`, admin routes need `PLUGINS_ADMIN`. The user id always comes from the JWT. The authoritative description is the [service guide](../04-backend/service-guide-plugin.md); error codes are in the [error catalog](error-catalog.md#plugin-errors-plugin-service).
+
+| Method | Route                                            | Purpose                                                  |
+| ------ | ------------------------------------------------ | -------------------------------------------------------- |
+| GET    | `/api/v1/plugins/catalog`                        | Browse (`q`, `category`, `cursor`, `limit`, `locale`)    |
+| GET    | `/api/v1/plugins/catalog/:slug`                  | Plugin detail with tools, risk levels and `installed`    |
+| POST   | `/api/v1/plugins/installs`                       | Install `{slug, version?, settings?}` under the plan cap |
+| GET    | `/api/v1/plugins/installs`                       | The caller's installs                                    |
+| GET    | `/api/v1/plugins/installs/mentions`              | Installed plugins for the composer mention list          |
+| GET    | `/api/v1/plugins/installs/:id`                   | One install                                              |
+| PATCH  | `/api/v1/plugins/installs/:id`                   | Enable or disable, change settings                       |
+| DELETE | `/api/v1/plugins/installs/:id`                   | Uninstall (consents and credential cascade)              |
+| PUT    | `/api/v1/plugins/installs/:id/credential`        | Write-only API key (never returned)                      |
+| DELETE | `/api/v1/plugins/installs/:id/credential`        | Remove the key                                           |
+| POST   | `/api/v1/plugins/installs/:id/consent`           | Grant `{toolName, level}`                                |
+| DELETE | `/api/v1/plugins/installs/:id/consent/:toolName` | Revoke (204, idempotent)                                 |
+| GET    | `/api/v1/plugins/admin/catalog`                  | Admin catalog                                            |
+| GET    | `/api/v1/plugins/admin/catalog/:slug`            | Admin detail                                             |
+| PATCH  | `/api/v1/plugins/admin/catalog/:slug`            | Kill switch, featured, per-tool disable                  |
+| GET    | `/api/v1/plugins/admin/settings`                 | Admin settings                                           |
+| PATCH  | `/api/v1/plugins/admin/settings`                 | Update settings, range checked, all or nothing           |
+| GET    | `/api/v1/health`                                 | Service health                                           |

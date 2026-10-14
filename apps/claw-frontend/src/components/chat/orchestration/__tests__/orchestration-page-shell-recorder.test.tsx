@@ -6,19 +6,31 @@ import { OrchestrationPageShell } from '@/components/chat/orchestration/orchestr
 import { ResearchMode } from '@/enums/research-mode.enum';
 import type { OrchestrationPageShellProps } from '@/types/orchestration.types';
 
+// The grouped "+" menu and the research chip are the shared chat components; their own tests
+// cover them. This file only needs to know the shell mounts them with the right values.
+vi.mock('@/components/chat/composer-plus-menu', () => ({
+  ComposerPlusMenu: ({
+    canResearch,
+    threadId,
+  }: {
+    canResearch: boolean;
+    threadId: string | null;
+  }) => (
+    <div
+      data-testid="composer-plus-menu"
+      data-can-research={String(canResearch)}
+      data-thread-id={String(threadId)}
+    />
+  ),
+}));
+vi.mock('@/components/chat/composer-research-chip', () => ({
+  ComposerResearchChip: ({ value }: { value: { mode: string } }) => (
+    <div data-testid="research-chip" data-mode={value.mode} />
+  ),
+}));
+
 // The shell's other children pull react-query and the file catalog; this test is
 // about one wire: a recorded note reaching the composer's ingestFiles.
-vi.mock('@/components/chat/orchestration/orchestration-context-button', () => ({
-  OrchestrationContextButton: () => <div data-testid="orchestration-context-button" />,
-}));
-
-vi.mock('@/components/chat/prompt-library/prompt-library-button', () => ({
-  PromptLibraryButton: () => <div data-testid="prompt-library-button" />,
-}));
-
-vi.mock('@/components/chat/file-attachment-picker', () => ({
-  FileAttachmentPicker: () => <div data-testid="picker" />,
-}));
 vi.mock('@/components/chat/composer-attachment-tray', () => ({
   ComposerAttachmentTray: () => <div data-testid="attachment-tray" />,
 }));
@@ -121,10 +133,14 @@ describe('OrchestrationPageShell — voice/video notes', () => {
     expect(screen.getByTestId('voice-video-recorder-video')).toBeInTheDocument();
   });
 
-  it('gives every lab the same Context button and Prompt library as chat (rules/59)', () => {
+  it('gives every lab the same grouped "+" menu as chat, not loose buttons (rules/59)', () => {
     renderShell(vi.fn());
-    expect(screen.getByTestId('orchestration-context-button')).toBeInTheDocument();
-    expect(screen.getByTestId('prompt-library-button')).toBeInTheDocument();
+    const menu = screen.getByTestId('composer-plus-menu');
+    expect(menu).toBeInTheDocument();
+    // A lab has no thread until it runs.
+    expect(menu).toHaveAttribute('data-thread-id', 'null');
+    expect(screen.queryByTestId('orchestration-context-button')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('prompt-library-button')).not.toBeInTheDocument();
   });
 
   it('sends a finished recording through the composer ingestFiles pipeline', async () => {

@@ -16,7 +16,7 @@ export function useRolePackPage(): UseRolePackPageReturn {
   const [content, setContent] = useState('');
   const [pack, setPack] = useState<RolePack>(RolePackName.CodingTeam);
   const [selectedModel, setSelectedModel] = useState<AdvancedModuleModelSelection>(null);
-  const composer = useOrchestrationComposer();
+  const composer = useOrchestrationComposer(false, { value: content, onValueChange: setContent });
 
   const { mutate, data: sendResult, isPending, isError, error: sendError } = useSendRolePack();
 

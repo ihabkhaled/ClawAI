@@ -13,19 +13,24 @@ import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
+import { PLUGIN_CHAT_TRANSLATIONS } from './plugin-chat-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
 import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
+import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
+import { THREAD_PUBLIC_BOARD_TRANSLATIONS } from './thread-public-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const ja: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.ja,
+  pluginChat: PLUGIN_CHAT_TRANSLATIONS.ja,
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.ja,
+  pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.ja,
   pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.ja,
   pagination: {
     label: 'ページ送り',
@@ -458,6 +463,7 @@ export const ja: TranslationDictionary = {
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.ja,
     ...THREAD_BOARD_TRANSLATIONS.ja,
+    ...THREAD_PUBLIC_BOARD_TRANSLATIONS.ja,
     composerContext: {
       menuLabel: 'コンテキスト',
       pickLabel: 'コンテキストパックを選択',
@@ -834,6 +840,18 @@ export const ja: TranslationDictionary = {
     deleteThreadConfirm: 'このスレッドを削除してもよろしいですか?',
     threadCreated: 'スレッドが作成されました',
     threadCreateFailed: 'スレッドの作成に失敗しました',
+    threadTeam: {
+      title: 'おすすめチーム',
+      summary:
+        'お使いのプランで動くモデルを選びました。自分で選びたいときだけ「詳細設定」を開いてください。',
+      customised: 'チームを変更しました。「おすすめチームを使う」で元の選択に戻せます。',
+      none: '現在、おすすめチームはありません。「詳細設定」でモデルを選んでください。',
+      advanced: '詳細設定：モデルを選ぶ',
+      reset: 'おすすめチームを使う',
+      reasonNeedsPlan: '{plan}プランには含まれません',
+      reasonWindow: 'コンテキストウィンドウが小さすぎます',
+      reasonUnavailable: '一時的に利用できません',
+    },
     threadProgress: {
       title: '生成の進行状況',
       statusQueued: '順番待ち',
@@ -843,6 +861,9 @@ export const ja: TranslationDictionary = {
       stageLabel: '段階',
       attempt: '{max} 回中 {current} 回目の試行',
       spent: 'これまでの利用額：{amount}',
+      platformFailureNotice:
+        '問題は当社側にあり、お客様の責任ではありません。無料枠は消費されていません。',
+      retryOnUs: '当社負担で再試行',
       selectedTitle: '選択した内容',
       fallbacks: '代替モデル：{list}',
       noFallbacks: '代替モデルなし',

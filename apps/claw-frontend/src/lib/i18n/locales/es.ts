@@ -13,19 +13,24 @@ import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
+import { PLUGIN_CHAT_TRANSLATIONS } from './plugin-chat-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
 import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
+import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
+import { THREAD_PUBLIC_BOARD_TRANSLATIONS } from './thread-public-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const es: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.es,
+  pluginChat: PLUGIN_CHAT_TRANSLATIONS.es,
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.es,
+  pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.es,
   pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.es,
   pagination: {
     label: 'Paginación',
@@ -459,6 +464,7 @@ export const es: TranslationDictionary = {
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.es,
     ...THREAD_BOARD_TRANSLATIONS.es,
+    ...THREAD_PUBLIC_BOARD_TRANSLATIONS.es,
     composerContext: {
       menuLabel: 'Contexto',
       pickLabel: 'Elegir paquetes de contexto',
@@ -843,6 +849,18 @@ export const es: TranslationDictionary = {
     deleteThreadConfirm: '¿Seguro que quieres eliminar esta conversación?',
     threadCreated: 'Conversación creada',
     threadCreateFailed: 'Error al crear la conversación',
+    threadTeam: {
+      title: 'Equipo recomendado',
+      summary:
+        'Elegimos modelos que funcionan con tu plan. Abre Avanzado solo si quieres elegirlos tú.',
+      customised: 'Cambiaste el equipo. Usa el equipo recomendado para volver a nuestra elección.',
+      none: 'Ahora no hay un equipo recomendado. Elige los modelos en Avanzado.',
+      advanced: 'Avanzado: elegir los modelos',
+      reset: 'Usar el equipo recomendado',
+      reasonNeedsPlan: 'No está en tu plan {plan}',
+      reasonWindow: 'Ventana de contexto demasiado pequeña',
+      reasonUnavailable: 'No disponible por ahora',
+    },
     threadProgress: {
       title: 'Progreso de la generación',
       statusQueued: 'En la cola de espera',
@@ -852,6 +870,8 @@ export const es: TranslationDictionary = {
       stageLabel: 'Etapa',
       attempt: 'Intento {current} de {max}',
       spent: 'Gastado hasta ahora: {amount}',
+      platformFailureNotice: 'El problema fue nuestro, no tuyo. No se usó tu cupo gratuito.',
+      retryOnUs: 'Reintentar por nuestra cuenta',
       selectedTitle: 'Lo que elegiste',
       fallbacks: 'Alternativas: {list}',
       noFallbacks: 'Sin alternativas',

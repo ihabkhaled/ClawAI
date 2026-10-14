@@ -39,7 +39,7 @@ export class GenerationBudgetCloser {
    */
   private async syncSpend(jobId: string, budgetId: string): Promise<void> {
     try {
-      await this.repository.syncSpend(jobId, await this.budgets.settledMicroUsd(budgetId));
+      await this.repository.syncSpend(jobId, await this.budgets.spentMicroUsd(budgetId));
     } catch {
       this.logger.debug(`Generation spend could not be synced for job ${jobId}`);
     }

@@ -8,21 +8,33 @@ import { ResearchMode } from '@/enums/research-mode.enum';
 import type { UseOrchestrationComposerReturn } from '@/types/hook.types';
 import type { OrchestrationPageShellProps } from '@/types/orchestration.types';
 
+// The grouped "+" menu and the research chip are the shared chat components; their own tests
+// cover them. This file only needs to know the shell mounts them with the right values.
+vi.mock('@/components/chat/composer-plus-menu', () => ({
+  ComposerPlusMenu: ({
+    canResearch,
+    threadId,
+  }: {
+    canResearch: boolean;
+    threadId: string | null;
+  }) => (
+    <div
+      data-testid="composer-plus-menu"
+      data-can-research={String(canResearch)}
+      data-thread-id={String(threadId)}
+    />
+  ),
+}));
+vi.mock('@/components/chat/composer-research-chip', () => ({
+  ComposerResearchChip: ({ value }: { value: { mode: string } }) => (
+    <div data-testid="research-chip" data-mode={value.mode} />
+  ),
+}));
+
 const hasFeatureMock = vi.fn();
 
 vi.mock('@/lib/i18n', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
-vi.mock('@/components/chat/orchestration/orchestration-context-button', () => ({
-  OrchestrationContextButton: () => <div data-testid="orchestration-context-button" />,
-}));
-
-vi.mock('@/components/chat/prompt-library/prompt-library-button', () => ({
-  PromptLibraryButton: () => <div data-testid="prompt-library-button" />,
-}));
-
-vi.mock('@/components/chat/file-attachment-picker', () => ({
-  FileAttachmentPicker: () => <div data-testid="picker" />,
-}));
 vi.mock('@/components/chat/composer-attachment-tray', () => ({
   ComposerAttachmentTray: () => <div data-testid="attachment-tray" />,
 }));
@@ -34,13 +46,6 @@ vi.mock('@/components/chat/orchestration/orchestration-single-model-select', () 
 }));
 vi.mock('@/components/chat/voice-video-recorder', () => ({
   VoiceVideoRecorder: () => <div data-testid="recorder" />,
-}));
-// The real ResearchToggle is two Radix Selects; this test is about ONE wire —
-// whether the shell renders it at all, and with which values.
-vi.mock('@/components/chat/research-toggle', () => ({
-  ResearchToggle: ({ value }: { value: { mode: string } }) => (
-    <div data-testid="research-toggle" data-mode={value.mode} />
-  ),
 }));
 vi.mock('@/hooks/chat/use-model-media-capabilities', () => ({
   useModelMediaCapabilities: () => ({ canSendAudio: true, canSendVideo: true }),
@@ -100,32 +105,42 @@ describe('OrchestrationPageShell — research control', () => {
     hasFeatureMock.mockReset();
   });
 
-  it('renders the research toggle when the plan allows research', () => {
+  it('lets the "+" menu offer research and names the mode in a chip when the plan allows it', () => {
     hasFeatureMock.mockImplementation((feature) => feature === PlanFeature.ALLOW_RESEARCH_MODE);
 
     renderShell(buildComposer());
 
-    const toggle = screen.getByTestId('research-toggle');
-    expect(toggle).toBeInTheDocument();
-    expect(toggle).toHaveAttribute('data-mode', ResearchMode.AUTO);
+    expect(screen.getByTestId('composer-plus-menu')).toHaveAttribute('data-can-research', 'true');
+    const chip = screen.getByTestId('research-chip');
+    expect(chip).toHaveAttribute('data-mode', ResearchMode.AUTO);
   });
 
-  it('hides the research toggle when the plan does not unlock it', () => {
+  it('draws no research chip while research is off', () => {
+    hasFeatureMock.mockImplementation((feature) => feature === PlanFeature.ALLOW_RESEARCH_MODE);
+
+    renderShell(buildComposer({ research: { mode: ResearchMode.NONE } }));
+
+    expect(screen.queryByTestId('research-chip')).not.toBeInTheDocument();
+  });
+
+  it('hides research from the menu and the chip when the plan does not unlock it', () => {
     hasFeatureMock.mockReturnValue(false);
 
     renderShell(buildComposer());
 
-    expect(screen.queryByTestId('research-toggle')).not.toBeInTheDocument();
+    expect(screen.getByTestId('composer-plus-menu')).toHaveAttribute('data-can-research', 'false');
+    expect(screen.queryByTestId('research-chip')).not.toBeInTheDocument();
     // The rest of the attachment row is unaffected by the research gate.
     expect(screen.getByTestId('orchestration-attachments')).toBeInTheDocument();
   });
 
-  it('renders no research toggle for a page that passes no composer', () => {
+  it('renders no menu and no chip for a page that passes no composer', () => {
     hasFeatureMock.mockReturnValue(true);
 
     renderShell(undefined);
 
-    expect(screen.queryByTestId('research-toggle')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('composer-plus-menu')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('research-chip')).not.toBeInTheDocument();
   });
 });
 

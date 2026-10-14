@@ -21,6 +21,7 @@ export type ProgressJobRecord = {
   round: number;
   attemptCount: number;
   spentMicroCredits: bigint;
+  budgetCloseStatus: string | null;
   spendCapMicroUsd: bigint;
   sourceThreadId: string;
   safeErrorCode: string | null;

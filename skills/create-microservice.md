@@ -39,7 +39,7 @@ This skill EXTENDS the mechanical 12-step wiring in [`./02-service-scaffold.md`]
 
 ## When to use
 
-- A genuinely new bounded context is needed that no existing service owns (new DB, new domain, new port after 4017).
+- A genuinely new bounded context is needed that no existing service owns (new DB, new domain, new port after 4021).
 - The work cannot be a module inside an existing service (if it can, use [`./create-backend-module.md`](./create-backend-module.md) instead).
 
 ## When NOT to use
@@ -51,6 +51,7 @@ This skill EXTENDS the mechanical 12-step wiring in [`./02-service-scaffold.md`]
 ## Read first
 
 - [`./resolve-task-context.md`](./resolve-task-context.md) — run the resolver to surface the exact rules/docs for this task.
+- [`./add-a-new-service.md`](./add-a-new-service.md) — the complete ordered list of EVERY place (incl. the production `.env` manifest) with a verify command each; use it as the checklist.
 - [`./02-service-scaffold.md`](./02-service-scaffold.md) — the 12 wiring steps (compose, nginx, CI, health).
 - [`../rules/02-backend-rules.md`](../rules/02-backend-rules.md), [`../rules/05-infra-rules.md`](../rules/05-infra-rules.md), [`../rules/08-security-rules.md`](../rules/08-security-rules.md).
 - [`../docs/03-architecture/data-ownership.md`](../docs/03-architecture/data-ownership.md) — confirm the new service owns its own DB and crosses boundaries only via HTTP or RabbitMQ.
@@ -59,7 +60,7 @@ This skill EXTENDS the mechanical 12-step wiring in [`./02-service-scaffold.md`]
 
 1. `npm run knowledge:context -- --task="add <name> service"` — surface the ranked rules/skills.
 2. Pick the closest existing service (e.g. `apps/claw-ollama-service`) as the boilerplate donor — read its layout under `src/app`, `src/modules`, `src/common`.
-3. Confirm the next free port from `packages/shared-constants` (current max is 4017).
+3. Confirm the next free port from `packages/shared-constants` (current max is 4021, plugin-service).
 4. Grep every place a sibling service name appears in infra to build your wiring checklist: `docker/docker-compose.*.yml`, `infra/nginx/nginx.conf`, `.github/workflows/ci.yml`, `apps/claw-health-service`.
 
 ## Tests-first plan

@@ -112,3 +112,32 @@ export const STEP_SECRET_PATTERNS: readonly RegExp[] = [
 ];
 
 export const STEP_URL_QUERY_PATTERN = /(https?:\/\/[^\s"'<>?#]+)\?[^\s"'<>#]*/gu;
+
+/**
+ * Failures the platform caused, so a job that ends this way with no draft does not consume the
+ * Free allowance (auth refunds the meter money and the lifetime hold on PLATFORM_FAILED).
+ * REVIEW_NOT_PASSED is deliberately absent (the models ran, the draft did not pass), as is
+ * everything the owner can fix (NON_RETRYABLE_STEP_CODES) and every unknown code.
+ */
+export const PLATFORM_FAILURE_STEP_CODES: ReadonlySet<string> = new Set([
+  'OUTPUT_INVALID',
+  'PROVIDER_ERROR',
+  'PROVIDER_UNAVAILABLE',
+  'MODEL_IDLE_TIMEOUT',
+  'MODEL_HARD_CEILING',
+  'MODEL_REASONED_NO_ANSWER',
+  'GENERATION_FAILED',
+  'CANDIDATES_EXHAUSTED',
+  'RESEARCH_FAILED',
+  'RESEARCH_EMPTY',
+  'RESEARCH_UNAVAILABLE',
+  'GENERATION_ATTEMPT_TIMEOUT',
+  'GENERATION_WORKER_LOST',
+  STEP_QUEUE_EXPIRED_CODE,
+  STEP_LEASE_EXPIRED_CODE,
+]);
+/** Platform-caused families: CLOUD_PROVIDER_* and MODEL_CATALOG_*. */
+export const PLATFORM_FAILURE_CODE_PREFIXES: readonly string[] = [
+  'CLOUD_PROVIDER_',
+  'MODEL_CATALOG_',
+];

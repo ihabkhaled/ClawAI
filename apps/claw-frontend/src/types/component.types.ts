@@ -161,6 +161,7 @@ import type {
 import type { PasswordStrengthResult } from './password-strength.types';
 import type { PipelineResult, PipelineStageResult } from './pipeline.types';
 import type { PlanView } from './plan.types';
+import type { PluginRefPayload, UsePluginMentionSelectionReturn } from './plugin-mention.types';
 import type { ProviderDefinition } from './provider-definition.types';
 import type { ProviderFailureStat, RecentFallback } from './recovery.types';
 import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './replay-run.types';
@@ -1106,6 +1107,8 @@ export type MessageComposerProps = {
     research?: ResearchOptions,
     /** File id of a drawn inpainting mask; only ever set with fileIds[0] as its source. */
     maskFileId?: string,
+    /** The plugins the message @mentioned (chips); sent as `pluginRefs`. */
+    pluginRefs?: PluginRefPayload[],
   ) => void;
   isPending: boolean;
   selectedModel: ModelSelection | null;
@@ -1140,6 +1143,9 @@ export type RichPromptTextareaProps = {
   allowEmptySubmit?: boolean;
   // ArrowUp/ArrowDown history. See UseRichPromptTextareaParams.recallHistory.
   recallHistory?: readonly string[];
+  // Opt-in `@` plugin picker: the composer's chip state (usePluginMentionSelection). Absent, the
+  // textarea behaves exactly as before and `@` is an ordinary character.
+  pluginMentions?: UsePluginMentionSelectionReturn;
 };
 
 // Reusable wrapper that adds clipboard-paste + drag-and-drop file ingestion to
@@ -2149,6 +2155,8 @@ export type InThreadComparePanelProps = {
   attachmentTray: ComposerAttachmentTrayProps;
   // Failed / not-supported uploads, one chip each — the same strip chat shows.
   attachmentChips: ComposerAttachmentChipsProps;
+  // The `@` plugin picker's chips; sent with the run so every lane may use the tools.
+  pluginMentions?: UsePluginMentionSelectionReturn;
   t: TranslateFunction;
 };
 

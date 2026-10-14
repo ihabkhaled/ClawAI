@@ -2,6 +2,7 @@ import { Flag, Lightbulb, LogIn, MessageSquare, Send, ThumbsDown, ThumbsUp } fro
 import Link from 'next/link';
 import type { FormEvent, ReactElement } from 'react';
 
+import { BoardGuestPrompts } from '@/components/threads/board/board-guest-prompts';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ThreadPublicationReaction } from '@/enums/thread-publication-reaction.enum';
@@ -204,12 +205,15 @@ export function ThreadPublicCommunity({
           {actions.actionFailed ? <p role="alert">{t('chat.threadPublicActionFailed')}</p> : null}
         </>
       ) : (
-        <Button asChild variant="outline" className="w-full sm:w-fit">
-          <Link href={loginHref}>
-            <LogIn className="h-4 w-4 rtl:-scale-x-100" aria-hidden="true" />
-            {t('chat.threadPublicSignInToJoin')}
-          </Link>
-        </Button>
+        <>
+          <Button asChild variant="outline" className="w-full sm:w-fit">
+            <Link href={loginHref}>
+              <LogIn className="h-4 w-4 rtl:-scale-x-100" aria-hidden="true" />
+              {t('chat.threadPublicSignInToJoin')}
+            </Link>
+          </Button>
+          <BoardGuestPrompts signInHref={loginHref} />
+        </>
       )}
     </section>
   );

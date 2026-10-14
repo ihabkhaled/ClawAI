@@ -9,6 +9,12 @@
 **Every new service and every new database MUST be added to every compose file
 that could define it, in the same commit.**
 
+> The complete, ordered list of every place a new service must be added (compose,
+> nginx, TLS hosts, installers, the production `.env` manifest, health, CI and
+> coverage, deploy, permissions, docs, wiki, memory) with a verify command for each
+> is [skills/add-a-new-service.md](../skills/add-a-new-service.md). This rule file
+> states the mandates; that skill is the checklist you tick.
+
 The all-in-one `docker-compose.dev.yml` and `docker-compose.yml` no longer
 exist; `./scripts/claw.sh` stitches the split files instead. These are the files
 in `docker/`:
@@ -231,6 +237,20 @@ After updating a shared package:
 3. Run `npm install` in monorepo root to update workspace links
 4. **Update `.github/workflows/ci.yml` "Build shared packages" step** if a new package was added (see footgun above)
 5. **When a service gains a new `@claw/shared-*` dependency, add `RUN cd packages/shared-<x> && npm run build` to that service's `Dockerfile` AND `Dockerfile.dev`.** The image copies the host's `packages/*/dist`; a missing build line runs stale host output (the 2026-09-02 payment-service `ERR_MODULE_NOT_FOUND` crash). Enforced by `tools/__tests__/dockerfile-shared-package-completeness.test.mjs`; runbook [add-a-shared-package-to-a-service](../skills/add-a-shared-package-to-a-service.md), rule [14](14-shared-packages.md) §6.
+
+---
+
+## Production `.env` Rule
+
+A service whose configuration includes a database password, a connection string or an
+encryption key MUST declare those in `scripts/prod-required-env.manifest` in the same
+change. The production `.env` was written before the service existed; the deploy builds
+and recreates application services only, never starts databases and never invents
+secrets, so a missing value fails the health check and rolls the rollout back.
+`scripts/ensure-prod-env.sh` appends what is missing and never rewrites an existing
+value (a key that encrypts rows is never rotated by editing `.env`). The installers must
+also preserve such a key on re-install. Runbook:
+[add-a-service-to-production.md](../docs/11-runbooks/add-a-service-to-production.md).
 
 ---
 

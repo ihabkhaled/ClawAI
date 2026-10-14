@@ -3,4 +3,5 @@ export type AccountDeletionCounts = {
   credentials: number;
   consents: number;
   invocations: number;
+  servers: number;
 };

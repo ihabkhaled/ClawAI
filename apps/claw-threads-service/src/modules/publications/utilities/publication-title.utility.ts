@@ -1,6 +1,7 @@
 import {
   MAX_PUBLICATION_SLUG_LENGTH,
   MAX_PUBLICATION_TITLE_LENGTH,
+  RESERVED_PUBLICATION_SLUGS,
   UNTITLED_PUBLICATION_TITLE,
 } from '../constants/publication-title.constants';
 
@@ -26,7 +27,10 @@ export function derivePublicationTitle(markdown: string): string {
   return sentence ? sentence.slice(0, MAX_PUBLICATION_TITLE_LENGTH) : UNTITLED_PUBLICATION_TITLE;
 }
 
-/** A URL slug from the title (any script), ending in a short unique part; null when no letters. */
+/**
+ * A URL slug from the title (any script), ending in a short unique part; null when no letters, and
+ * null for a word the public routes use as a path segment (`board`, `discover`, `sitemap`).
+ */
 export function derivePublicationSlug(title: string, uniqueId: string): string | null {
   const words = title
     .toLowerCase()
@@ -35,5 +39,7 @@ export function derivePublicationSlug(title: string, uniqueId: string): string |
     .replaceAll(/^-+|-+$/gu, '')
     .slice(0, MAX_PUBLICATION_SLUG_LENGTH)
     .replaceAll(/-+$/gu, '');
-  return words ? `${words}-${uniqueId.replaceAll('-', '').slice(0, 8)}` : null;
+  if (!words) return null;
+  const slug = `${words}-${uniqueId.replaceAll('-', '').slice(0, 8)}`;
+  return RESERVED_PUBLICATION_SLUGS.has(slug) ? null : slug;
 }

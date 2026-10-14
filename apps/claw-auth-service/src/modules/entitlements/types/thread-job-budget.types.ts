@@ -41,6 +41,12 @@ export type ThreadJobBudgetSummary = {
    */
   settledMicroUsd: number;
   remainingMicroUsd: number;
+  /**
+   * Money the Free plan's meter charged for this job's calls (finished at real cost, in flight at
+   * their hold); 0 for a non-free job and after a platform-failure refund. Lets progress show real
+   * spend for a Free job, whose `settledMicroUsd` is 0 by design.
+   */
+  freeAllowanceMicroUsd: number;
 };
 
 /** What `close` did in one transaction. */
@@ -59,3 +65,6 @@ export type RetryOptions = {
   random?: () => number;
   sleep?: (ms: number) => Promise<void>;
 };
+
+/** One UTC month's share of the Free meter money a Threads job was charged (raw SQL row). */
+export type FreeMeterMonthSum = { month_key: string; micro_usd: bigint };

@@ -80,6 +80,7 @@ import type { PasswordStrengthResult } from './password-strength.types';
 import type { CountryDialCode } from './phone.types';
 import type { PipelineResult } from './pipeline.types';
 import type { PlanView } from './plan.types';
+import type { PluginRefPayload, UsePluginMentionSelectionReturn } from './plugin-mention.types';
 import type { RecoveryStats } from './recovery.types';
 import type { ReplayCaseDetail, ReplayRunSummary, RunComparisonResult } from './replay-run.types';
 import type { ReplayBatchResult } from './replay.types';
@@ -665,6 +666,8 @@ export type UseMessageComposerStateParams = {
     research?: ResearchOptions,
     /** File id of a drawn inpainting mask; only ever set with fileIds[0] as its source. */
     maskFileId?: string,
+    /** The plugins the message @mentioned (chips); sent as `pluginRefs`. */
+    pluginRefs?: PluginRefPayload[],
   ) => void;
   isPending: boolean;
   selectedModel: ModelSelection | null;
@@ -711,6 +714,8 @@ export type UseMessageComposerReturn = {
   attachmentChips: ComposerAttachmentChipsProps;
   /** The inpainting dialog: open while an attached image is being masked. */
   maskEditDialog: MaskEditDialogProps;
+  /** The `@` plugin picker's chips, handed to RichPromptTextarea. */
+  pluginMentions: UsePluginMentionSelectionReturn;
 };
 
 export type UseMessageComposerStateReturn = {
@@ -738,6 +743,8 @@ export type UseMessageComposerStateReturn = {
   removeAttachment: (fileId: string) => void;
   /** Inpainting: the open editor, the drawn mask, and its one-shot hand-out on send. */
   maskEdit: UseComposerMaskEditReturn;
+  /** The plugins this message @mentions; cleared once it is sent. */
+  pluginMentions: UsePluginMentionSelectionReturn;
 };
 
 // Inputs to the keyboard / autosize / IME controller for RichPromptTextarea.
@@ -829,6 +836,7 @@ export type UseThreadDataControllerReturn = {
     fileIds?: string[],
     research?: ResearchOptions,
     maskFileId?: string,
+    pluginRefs?: PluginRefPayload[],
   ) => void;
   handleDelete: () => void;
   handleFeedback: (messageId: string, feedback: MessageFeedback | null) => void;
@@ -1342,8 +1350,11 @@ export type UseOrchestrationComposerReturn = {
   contextPackIds: string[];
   setContextPackIds: (next: string[]) => void;
   contextPackPayload: OrchestrationContextPackPayload;
-  /** research + context packs, the one spread every lab hook uses. */
-  sharedPayload: OrchestrationResearchPayload & OrchestrationContextPackPayload;
+  /** The `@` plugin picker's chips; absent on a page that did not hand over its prompt. */
+  pluginMentions?: UsePluginMentionSelectionReturn | undefined;
+  /** research + context packs + plugin mentions, the one spread every lab hook uses. */
+  sharedPayload: OrchestrationResearchPayload &
+    OrchestrationContextPackPayload & { pluginRefs?: PluginRefPayload[] };
   /** Called after a successful send; a lab run is one question. */
   clear: () => void;
 };

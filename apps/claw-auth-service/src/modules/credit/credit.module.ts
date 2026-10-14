@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { AuthRepository } from '../auth/repositories/auth.repository';
 import { EntitlementInboxRepository } from '../entitlements/repositories/entitlement-inbox.repository';
+import { ThreadJobBudgetFreeMeterRepository } from './repositories/thread-job-budget-free-meter.repository';
 import { ThreadJobBudgetRepository } from '../entitlements/repositories/thread-job-budget.repository';
 import { PlansModule } from '../plans/plans.module';
 import { QuotaModule } from '../quota/quota.module';
@@ -68,6 +69,7 @@ import { ThreadJobBudgetCreditLinkService } from './services/thread-job-budget-c
     CreditTopupInboxService,
     CreditReservationManager,
     ThreadJobBudgetRepository,
+    ThreadJobBudgetFreeMeterRepository,
     ThreadJobBudgetCreditLinkService,
     ModelRateClient,
     ConnectorPolicyClient,

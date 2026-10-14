@@ -112,3 +112,9 @@ export type UseComboboxKeyboardResult = {
   setActiveIndex: (index: number) => void;
   onKeyDown: (event: ComboboxKeyboardKeyEvent) => void;
 };
+
+/** The first page the server already rendered, and the URL state it was rendered for. */
+export type ThreadBoardInitialList = {
+  state: ThreadBoardState;
+  data: ThreadBoardListResponse;
+};

@@ -629,6 +629,9 @@ enum ThreadJobBudgetState {
   ACTIVE
   FINALIZED
   RELEASED
+  // The platform failed the job with no completed draft (ADR-162 addendum): the plan
+  // allowance hold and the free-meter money are given back.
+  PLATFORM_FAILED
 }
 
 enum ThreadJobBudgetCallState {
@@ -734,6 +737,9 @@ model ThreadJobBudget {
   featureReservationIds String[]             @default([]) @map("feature_reservation_ids")
   createdAt             DateTime             @default(now()) @map("created_at")
   settledAt             DateTime?            @map("settled_at")
+  // Set in the same transaction that gives the free-meter money back, so a platform-failure
+  // refund happens exactly once however often the close is retried.
+  freeRefundedAt        DateTime?            @map("free_refunded_at")
 
   user  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   calls ThreadJobBudgetCall[]

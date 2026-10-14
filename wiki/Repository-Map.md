@@ -43,6 +43,7 @@ This page maps the **entire repository surface**, including directories that are
 | [[Memory\|Service-claw-memory-service]]                   | 4005 | postgresql |        46 |         14 |
 | [[Ollama\|Service-claw-ollama-service]]                   | 4008 | postgresql |        35 |         18 |
 | [[Payment\|Service-claw-payment-service]]                 | 4018 | postgresql |        39 |        110 |
+| [[Plugin\|Service-claw-plugin-service]]                   | 4021 | postgresql |        18 |         43 |
 | [[Research\|Service-claw-research-service]]               | 4016 | postgresql |        17 |         31 |
 | [[Service-Routing\|Routing]]                              | 4004 | postgresql |        74 |        101 |
 | [[Server Logs\|Service-claw-server-logs-service]]         |  env | mongodb    |         8 |          9 |

@@ -17,6 +17,7 @@ import { LocalModelSelectionService } from '../services/local-model-selection.se
 import { ChatContextGatewayManager } from './chat-context-gateway.manager';
 import { resolveContextTurnText } from '../utilities/attachment-only-turn.utility';
 import { ModeExecutionGatewayManager } from './mode-execution-gateway.manager';
+import { pluginRefsMetadata } from '../utilities/plugin-refs.utility';
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
 import { parseJudgeModel } from '../../../common/utilities/judge-model-parse.utility';
@@ -26,6 +27,7 @@ import { ResearchEnricherManager } from './research-enricher.manager';
 import type { CostEnsembleMessageDto } from '../dto/cost-ensemble-message.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type { ChatContextBundle } from '../types/chat-context-gateway.types';
+import type { ResearchOrchestrationResult } from '../types/research-enricher.types';
 import type {
   CostClassification,
   CostEnsembleResponse,
@@ -92,6 +94,7 @@ export class CostEnsembleManager {
         costEnsembleRequest: true,
         modelSelection: selection,
         ...(dto.fileIds !== undefined && dto.fileIds.length > 0 ? { fileIds: dto.fileIds } : {}),
+        ...pluginRefsMetadata(dto.pluginRefs),
       },
     });
 
@@ -136,40 +139,16 @@ export class CostEnsembleManager {
       // prompt, so an ensemble answer could not be about a file the user had
       // just uploaded. Building it once also means one set of retrievals, not
       // one per tier member.
-      const bundle = await this.chatContextGateway.build({
-        userId,
-        threadId,
-        surface: ChatSurface.COST_ENSEMBLE,
-        historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
-        // The enricher's transcript used to be glued to the front of each
-        // candidate's raw prompt, then merged as a plain `personaInstruction`
-        // with no grounding flag. `researchEvidenceInstruction` routes it
-        // through `injectResearchEvidenceIntoContext`, which sets
-        // `researchGroundingInjected` so the final-user-turn reminder fires for
-        // the classifier and every tier candidate.
-        ...(enrichment.systemPrompt.length > 0
-          ? { researchEvidenceInstruction: enrichment.systemPrompt }
-          : {}),
-        ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
-      });
+      const bundle = await this.buildSharedBundle(userId, threadId, enrichment, fileIds);
       // Rule 42 §18: an attachment-only send's request IS the attachment —
       // spelled out once here for every stage below, never stored.
       const request = resolveContextTurnText(content, bundle.context);
-      this.safeEmitStage(threadId, {
-        label: 'Classifying task',
-        status: OrchestrationStageStatus.ACTIVE,
-        detail: 'Scoring complexity, risk, ambiguity',
-        stageId: 'cost-ensemble:classify',
-      });
-      const rawClassification = await this.classifyTask(bundle, request, resolvedSelection);
-      const tier = this.determineTier(rawClassification);
-      const classification: CostClassification = { tier, ...rawClassification };
-      this.safeEmitStage(threadId, {
-        label: 'Classifying task',
-        status: OrchestrationStageStatus.COMPLETED,
-        detail: `Tier: ${tier} (complexity ${String(rawClassification.complexity.toFixed(2))})`,
-        stageId: 'cost-ensemble:classify',
-      });
+      const { tier, classification } = await this.classifyAndAnnounce(
+        threadId,
+        bundle,
+        request,
+        resolvedSelection,
+      );
 
       const candidates = await this.runEnsemble(threadId, bundle, request, tier, resolvedSelection);
       this.safeEmitStage(threadId, {
@@ -186,27 +165,20 @@ export class CostEnsembleManager {
         stageId: 'cost-ensemble:select',
       });
 
-      await this.chatMessagesRepository.create({
+      await this.storeSelectedMessage(
         threadId,
-        role: 'ASSISTANT',
-        content: best,
-        provider: resolvedSelection.actualProvider,
-        model: resolvedSelection.actualModel,
-        latencyMs: candidates.at(selectedIndex)?.latencyMs ?? 0,
-        usedFallback: false,
-        routingMode:
-          resolvedSelection.modelSelectionMode === 'MANUAL_MODEL'
-            ? RoutingMode.MANUAL_MODEL
-            : RoutingMode.AUTO,
-        metadata: this.buildCostEnsembleMetadata(
+        best,
+        candidates.at(selectedIndex)?.latencyMs ?? 0,
+        this.buildCostEnsembleMetadata(
           resolvedSelection,
           tier,
           classification,
           candidates,
           selectedIndex,
           enrichment.transcript,
-        ) as Prisma.InputJsonValue,
-      });
+        ),
+        resolvedSelection,
+      );
 
       this.safeEmitStage(threadId, {
         label: 'Complete',
@@ -219,21 +191,96 @@ export class CostEnsembleManager {
         resolvedSelection.actualModel,
       );
     } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : 'Cost ensemble generation failed';
-      this.logger.error(`executeInBackground: failed for thread ${threadId} — ${errorMsg}`);
-      this.safeEmitStage(threadId, {
-        label: 'Cost ensemble failed',
-        status: OrchestrationStageStatus.ERROR,
-        detail: errorMsg,
-        stageId: 'cost-ensemble:error',
-      });
-      this.chatStreamService.emitError(threadId, errorMsg);
-      try {
-        await this.storeErrorMessage(threadId, errorMsg);
-      } catch (storeError: unknown) {
-        const storeMsg = storeError instanceof Error ? storeError.message : 'Store failed';
-        this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
-      }
+      await this.handleBackgroundFailure(threadId, error);
+    }
+  }
+
+  private async classifyAndAnnounce(
+    threadId: string,
+    bundle: ChatContextBundle,
+    request: string,
+    selection: AdvancedModelSelectionResolution,
+  ): Promise<{ tier: CostTier; classification: CostClassification }> {
+    this.safeEmitStage(threadId, {
+      label: 'Classifying task',
+      status: OrchestrationStageStatus.ACTIVE,
+      detail: 'Scoring complexity, risk, ambiguity',
+      stageId: 'cost-ensemble:classify',
+    });
+    const rawClassification = await this.classifyTask(bundle, request, selection);
+    const tier = this.determineTier(rawClassification);
+    const classification: CostClassification = { tier, ...rawClassification };
+    this.safeEmitStage(threadId, {
+      label: 'Classifying task',
+      status: OrchestrationStageStatus.COMPLETED,
+      detail: `Tier: ${tier} (complexity ${String(rawClassification.complexity.toFixed(2))})`,
+      stageId: 'cost-ensemble:classify',
+    });
+    return { tier, classification };
+  }
+
+  private async buildSharedBundle(
+    userId: string,
+    threadId: string,
+    enrichment: ResearchOrchestrationResult,
+    fileIds: string[] | undefined,
+  ): Promise<ChatContextBundle> {
+    return this.chatContextGateway.build({
+      userId,
+      threadId,
+      surface: ChatSurface.COST_ENSEMBLE,
+      historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
+      // The enricher's transcript used to be glued to the front of each
+      // candidate's raw prompt, then merged as a plain `personaInstruction`
+      // with no grounding flag. `researchEvidenceInstruction` routes it
+      // through `injectResearchEvidenceIntoContext`, which sets
+      // `researchGroundingInjected` so the final-user-turn reminder fires for
+      // the classifier and every tier candidate.
+      ...(enrichment.systemPrompt.length > 0
+        ? { researchEvidenceInstruction: enrichment.systemPrompt }
+        : {}),
+      ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
+    });
+  }
+
+  private async storeSelectedMessage(
+    threadId: string,
+    content: string,
+    latencyMs: number,
+    metadata: Record<string, unknown>,
+    selection: AdvancedModelSelectionResolution,
+  ): Promise<void> {
+    await this.chatMessagesRepository.create({
+      threadId,
+      role: 'ASSISTANT',
+      content,
+      provider: selection.actualProvider,
+      model: selection.actualModel,
+      latencyMs,
+      usedFallback: false,
+      routingMode:
+        selection.modelSelectionMode === 'MANUAL_MODEL'
+          ? RoutingMode.MANUAL_MODEL
+          : RoutingMode.AUTO,
+      metadata: metadata as Prisma.InputJsonValue,
+    });
+  }
+
+  private async handleBackgroundFailure(threadId: string, error: unknown): Promise<void> {
+    const errorMsg = error instanceof Error ? error.message : 'Cost ensemble generation failed';
+    this.logger.error(`executeInBackground: failed for thread ${threadId} — ${errorMsg}`);
+    this.safeEmitStage(threadId, {
+      label: 'Cost ensemble failed',
+      status: OrchestrationStageStatus.ERROR,
+      detail: errorMsg,
+      stageId: 'cost-ensemble:error',
+    });
+    this.chatStreamService.emitError(threadId, errorMsg);
+    try {
+      await this.storeErrorMessage(threadId, errorMsg);
+    } catch (storeError: unknown) {
+      const storeMsg = storeError instanceof Error ? storeError.message : 'Store failed';
+      this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
     }
   }
 

@@ -276,3 +276,11 @@ found during the SEO expansion (`docs/05-frontend/seo-content-architecture.md`
   from the order array where the contract really is "all of them".
 - **`getPageBySlugAndLocale` returns the unlocalised entry**, which has no
   `path`. Use the route constant and `localisePath`.
+- **A page whose copy already lives in a dictionary can derive its registry SEO from it.**
+  The public Threads board (`/threads/board`, 2026-10-14) keeps its title,
+  description and intro in `thread-public-board-translations.ts` and
+  `threads-public-board-seo.constants.ts` builds the registry copy from that one
+  file, so the search snippet and the page cannot drift. A published entry with no
+  page on disk fails `sitemap-coverage.test.ts` until the route exists; the CJK
+  description minimum (80 characters) in `content-registry.utility.test.ts` bites
+  short Chinese copy.

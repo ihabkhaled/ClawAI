@@ -32,6 +32,10 @@ const RESEARCH_CHIP = resolve(CHAT_COMPONENTS, 'composer-research-chip.tsx');
 // reason the shell is: it is a permanent element of the conversation surface.
 const ACTION_RAIL = resolve(CHAT_COMPONENTS, 'chat-thread-action-rail.tsx');
 const GLOBALS_CSS = resolve(__dirname, '../../../app/globals.css');
+// The three other composers (rules/59): Compare, in-thread Compare and the lab shell.
+const COMPARE_PAGE = resolve(__dirname, '../../../app/(portal)/chat/compare/page.tsx');
+const IN_THREAD_COMPARE = resolve(CHAT_COMPONENTS, 'in-thread-compare-panel.tsx');
+const LAB_SHELL = resolve(CHAT_COMPONENTS, 'orchestration/orchestration-page-shell.tsx');
 
 // Tailwind arbitrary heights (`h-[600px]`, `max-h-[50vh]`, `min-h-[80px]`) and
 // inline style heights. Rule 40 §2: growth is bounded in rows or dvh, never in
@@ -185,6 +189,31 @@ describe('chat surface layout contract (rules/40)', () => {
     // The tour anchor stays on the plus, and the button is round.
     expect(menu).toContain('data-tour="composer-attach"');
     expect(menu).toContain('rounded-full');
+  });
+
+  it('gives Compare, in-thread Compare and the labs the SAME plus menu, not loose buttons (rules/59)', () => {
+    // Four composers, one control. A loose Attach / Context / Prompt library / research control
+    // reappearing on any of them is the drift this contract exists to catch.
+    for (const file of [COMPARE_PAGE, IN_THREAD_COMPARE, LAB_SHELL]) {
+      const source = withoutComments(read(file));
+      expect(source, file).toContain('<ComposerPlusMenu');
+      for (const loose of [
+        '<FileAttachmentPicker',
+        '<PromptLibraryButton',
+        '<OrchestrationContextButton',
+        '<ComposerContextControls',
+        '<ResearchToggle',
+      ]) {
+        expect(source, `${file} still renders ${loose}`).not.toContain(loose);
+      }
+    }
+  });
+
+  it('turns the @ plugin picker on in every composer that sends a mention', () => {
+    // The composer owns the chips and the request field; the textarea owns the picker.
+    for (const file of [COMPOSER, COMPARE_PAGE, IN_THREAD_COMPARE, LAB_SHELL]) {
+      expect(withoutComments(read(file)), file).toContain('pluginMentions=');
+    }
   });
 
   it('bounds the plus menu in dvh and the space left, so it scrolls inside on a short viewport', () => {

@@ -16,6 +16,8 @@ const onResearchChange = vi.fn();
 const onInsertPrompt = vi.fn();
 const lastLibraryProps: { current: FileLibraryMenuInnerProps | null } = { current: null };
 let selectedPackCount = 0;
+let draftPackCount = 0;
+const draftPacksInput: { current: { selectedIds: string[] } | null } = { current: null };
 
 vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({
@@ -59,6 +61,12 @@ vi.mock('@/hooks/chat/use-composer-context-menu', () => ({
     openDialog,
     closeDialog: vi.fn(),
   }),
+}));
+vi.mock('@/hooks/chat/use-draft-context-packs', () => ({
+  useDraftContextPacks: (input: { selectedIds: string[] }) => {
+    draftPacksInput.current = input;
+    return { selectedCount: draftPackCount };
+  },
 }));
 vi.mock('@/hooks/prompt-library/use-prompt-library-controller', () => ({
   usePromptLibraryController: () => ({ onOpenChange: promptsOpenChange }),
@@ -434,5 +442,73 @@ describe('ComposerPlusMenu', () => {
     for (const row of rows) {
       expect(row.className).toContain('touch:min-h-11');
     }
+  });
+});
+
+// Compare and the labs have no thread until they run (rules/59): the same menu, with the
+// pack picker holding the choice for the run and without the rows that need a thread.
+describe('ComposerPlusMenu — a surface with no thread yet', () => {
+  const draftContextPacks = { selectedIds: ['pack-1'], onChange: vi.fn() };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    selectedPackCount = 0;
+    draftPackCount = 0;
+    draftPacksInput.current = null;
+  });
+
+  it('offers the pack picker, but not what-is-sent, memory or preview', () => {
+    render(<ComposerPlusMenu {...baseProps({ threadId: null, draftContextPacks })} />);
+    open();
+
+    const context = screen.getByRole('region', { name: 'chat.composerMenu.sectionContext' });
+    expect(context.querySelectorAll('button')).toHaveLength(1);
+    expect(screen.getByText('chat.composerContext.pickLabel')).toBeInTheDocument();
+    expect(screen.queryByText('chat.composerContext.viewLabel')).toBeNull();
+    expect(screen.queryByText('chat.composerContext.memoryLabel')).toBeNull();
+    expect(screen.queryByText('preview.openLabel')).toBeNull();
+  });
+
+  it('hands the caller choice to the draft pack picker', () => {
+    render(<ComposerPlusMenu {...baseProps({ threadId: null, draftContextPacks })} />);
+
+    expect(draftPacksInput.current).toBe(draftContextPacks);
+  });
+
+  it('counts the picked packs on the button', () => {
+    draftPackCount = 2;
+    render(
+      <ComposerPlusMenu
+        {...baseProps({ threadId: null, draftContextPacks, selectedFileIds: ['f1'] })}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'chat.composerMenu.addLabelWithCount:3' }),
+    ).toBeInTheDocument();
+  });
+
+  it('opens the pack picker from the Context row', () => {
+    render(<ComposerPlusMenu {...baseProps({ threadId: null, draftContextPacks })} />);
+    open();
+    fireEvent.click(screen.getByText('chat.composerContext.pickLabel'));
+
+    expect(screen.getByText('pack-picker-stub')).toBeInTheDocument();
+  });
+
+  it('has no Context section at all when the surface supplies no packs (the bare new-chat menu)', () => {
+    render(<ComposerPlusMenu {...baseProps({ threadId: null })} />);
+    open();
+
+    expect(screen.queryByRole('region', { name: 'chat.composerMenu.sectionContext' })).toBeNull();
+    expect(draftPacksInput.current).toBeNull();
+  });
+
+  it('still uses the thread host, with its own rows, when there is a thread', () => {
+    render(<ComposerPlusMenu {...baseProps({ threadId: 't1', draftContextPacks })} />);
+    open();
+
+    expect(screen.getByText('chat.composerContext.viewLabel')).toBeInTheDocument();
+    expect(draftPacksInput.current).toBeNull();
   });
 });

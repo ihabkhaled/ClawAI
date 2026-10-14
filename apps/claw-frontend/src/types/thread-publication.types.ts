@@ -13,6 +13,7 @@ import type { ThreadRevisionField } from '@/enums/thread-revision-field.enum';
 import type { ModelSelection } from '@/types/component.types';
 import type { ThreadExportFile } from '@/types/thread-export.types';
 import type { ThreadErrorMessage } from '@/types/thread-generation-progress.types';
+import type { ThreadModelAvailabilityIndex } from '@/types/thread-recommended-team.types';
 import type { ThreadRevisionRequest } from '@/utilities/thread-revision-request.utility';
 
 export type OwnedThreadPublication = {
@@ -225,6 +226,14 @@ export type ThreadGenerationFormController = {
   setSpendCapUsd: (value: string) => void;
   selectedModels: ModelSelection[];
   changeModel: (index: number, selected: ModelSelection) => void;
+  /** What the service says about each model for this account (empty when it could not be read). */
+  modelAvailability: ThreadModelAvailabilityIndex;
+  /** The caller's plan name, for the "not on your plan" sentence; empty when unknown. */
+  planName: string;
+  hasRecommendedTeam: boolean;
+  /** True while all five seats are the recommended team. */
+  isRecommendedSelected: boolean;
+  resetToRecommended: () => void;
   hasAcknowledgedPublic: boolean;
   setHasAcknowledgedPublic: (value: boolean) => void;
   /** The request could not even be built (client-side validation). */
@@ -269,6 +278,9 @@ export type ThreadModelPickerProps = {
   label: string;
   value: ModelSelection;
   onChange: (selection: ModelSelection) => void;
+  /** Models that cannot work for this account are marked with their reason and cannot be chosen. */
+  availability?: ThreadModelAvailabilityIndex;
+  planName?: string;
 };
 
 export type ThreadCreateDialogBodyProps = {

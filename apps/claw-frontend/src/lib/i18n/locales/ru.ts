@@ -13,19 +13,24 @@ import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
+import { PLUGIN_CHAT_TRANSLATIONS } from './plugin-chat-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
 import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
+import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
+import { THREAD_PUBLIC_BOARD_TRANSLATIONS } from './thread-public-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const ru: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.ru,
+  pluginChat: PLUGIN_CHAT_TRANSLATIONS.ru,
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.ru,
+  pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.ru,
   pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.ru,
   pagination: {
     label: 'Постраничная навигация',
@@ -458,6 +463,7 @@ export const ru: TranslationDictionary = {
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.ru,
     ...THREAD_BOARD_TRANSLATIONS.ru,
+    ...THREAD_PUBLIC_BOARD_TRANSLATIONS.ru,
     composerContext: {
       menuLabel: 'Контекст',
       pickLabel: 'Выбрать пакеты контекста',
@@ -839,6 +845,19 @@ export const ru: TranslationDictionary = {
     deleteThreadConfirm: 'Вы уверены, что хотите удалить этот чат?',
     threadCreated: 'Чат создан',
     threadCreateFailed: 'Не удалось создать чат',
+    threadTeam: {
+      title: 'Рекомендуемая команда',
+      summary:
+        'Мы выбрали модели, которые работают на вашем тарифе. Открывайте «Расширенные», только если хотите выбрать сами.',
+      customised:
+        'Вы изменили команду. Нажмите «Использовать рекомендуемую команду», чтобы вернуться к нашему выбору.',
+      none: 'Сейчас рекомендуемой команды нет. Выберите модели в разделе «Расширенные».',
+      advanced: 'Расширенные: выбрать модели',
+      reset: 'Использовать рекомендуемую команду',
+      reasonNeedsPlan: 'Нет в вашем тарифе {plan}',
+      reasonWindow: 'Слишком маленькое окно контекста',
+      reasonUnavailable: 'Временно недоступна',
+    },
     threadProgress: {
       title: 'Ход генерации',
       statusQueued: 'В очереди',
@@ -848,6 +867,9 @@ export const ru: TranslationDictionary = {
       stageLabel: 'Этап',
       attempt: 'Попытка {current} из {max}',
       spent: 'Потрачено: {amount}',
+      platformFailureNotice:
+        'Проблема на нашей стороне, не на вашей. Ваш бесплатный лимит не потрачен.',
+      retryOnUs: 'Повторить за наш счёт',
       selectedTitle: 'Что вы выбрали',
       fallbacks: 'Запасные модели: {list}',
       noFallbacks: 'Запасных моделей нет',

@@ -10,6 +10,7 @@ import type {
   JsonLdObject,
   LearnHubJsonLdInput,
   LearnTopicJsonLdInput,
+  PublicBoardJsonLdInput,
   PublicFaqJsonLdInput,
   PublicPageJsonLdInput,
   ThreadArticleJsonLdInput,
@@ -222,6 +223,46 @@ export function buildComparisonHubJsonLd(input: ComparisonHubJsonLdInput): JsonL
           name: item.name,
           url: item.url,
         })),
+      },
+    ],
+  };
+}
+
+/**
+ * The public Threads board: a CollectionPage whose ItemList is the first page of Threads.
+ * Only each Thread's title and canonical URL are emitted, so no private field can reach the
+ * markup. `dateModified` is the page's review date, not a per-Thread value.
+ */
+export function buildPublicBoardJsonLd(input: PublicBoardJsonLdInput): JsonLdObject {
+  const origin = new URL(input.canonicalUrl).origin;
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'CollectionPage',
+        name: input.name,
+        description: input.description,
+        url: input.canonicalUrl,
+        inLanguage: input.language,
+        dateModified: input.lastReviewed,
+        isPartOf: { '@type': 'WebSite', name: 'ClawAI', url: origin },
+        mainEntity: {
+          '@type': 'ItemList',
+          numberOfItems: input.totalItems,
+          itemListElement: input.items.map((item, index) => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            name: item.name,
+            url: item.url,
+          })),
+        },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'ClawAI', item: origin },
+          { '@type': 'ListItem', position: 2, name: input.name, item: input.canonicalUrl },
+        ],
       },
     ],
   };

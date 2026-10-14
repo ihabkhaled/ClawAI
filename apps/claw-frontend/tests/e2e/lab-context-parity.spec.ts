@@ -4,9 +4,11 @@ import path from 'node:path';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 /**
- * Chat-surface parity (rules/59): the lab pages and Compare carry the same "Context" button
- * and "Prompt library" as the chat composer. Both must be on screen and unclipped at phone,
- * tablet, landscape and desktop widths and in Arabic RTL, and picking a pack must tick it.
+ * Chat-surface parity (rules/59): the lab pages and Compare carry the same grouped "+" menu as
+ * the chat composer (Attach, Context, Tools). The "+" must be on screen and unclipped at phone,
+ * tablet, landscape and desktop widths and in Arabic RTL, its Context section must offer the
+ * pack picker (a lab has no thread yet, so the choice rides with the run), the Prompt library
+ * must be one of its rows, and picking a pack must tick it.
  *
  * Drives the real UI against the live dev stack (https://claw.local).
  */
@@ -41,6 +43,10 @@ const NAMES = {
   en: { context: 'Context', library: 'Prompt library' },
   ar: { context: 'السياق', library: 'مكتبة الأوامر' },
 } as const;
+
+// The label gains a count once something is selected, so match the stable prefix.
+const ADD_BUTTON_NAME = { en: /^Add to message/, ar: /^إضافة إلى الرسالة/ } as const;
+const MENU = '[data-radix-popper-content-wrapper]';
 
 const LANGUAGE_LABEL = { en: 'English', ar: 'العربية' } as const;
 
@@ -120,24 +126,30 @@ for (const c of CASES) {
         }
       });
 
-      test('Context and Prompt library are visible, and a picked pack ticks', async ({ page }) => {
+      test('the "+" menu is visible, offers Context and Prompt library, and a picked pack ticks', async ({
+        page,
+      }) => {
         test.setTimeout(90_000);
         await page.goto(`${BASE}${lab.path}`);
         if (c.locale !== 'en') {
           await useLanguage(page, c.locale);
         }
 
-        const context = page.getByRole('button', { name: NAMES[c.locale].context, exact: true });
-        const library = page.getByRole('button', { name: NAMES[c.locale].library });
-        await expect(context.first()).toBeVisible({ timeout: 30_000 });
-        await expect(library.first()).toBeVisible();
-        await expectOnScreen(page, context.first());
-        await expectOnScreen(page, library.first());
+        const add = page.getByRole('button', { name: ADD_BUTTON_NAME[c.locale] });
+        await expect(add.first()).toBeVisible({ timeout: 30_000 });
+        await expectOnScreen(page, add.first());
         expect(
           await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
         ).toBe(true);
 
-        await context.first().click();
+        await add.first().click();
+        const menu = page.locator(MENU).first();
+        await expect(menu.getByRole('button', { name: NAMES[c.locale].library })).toBeVisible();
+        await menu
+          .getByRole('region', { name: NAMES[c.locale].context, exact: true })
+          .getByRole('button')
+          .first()
+          .click();
         const pack = page.getByRole('checkbox').first();
         await expect(pack).toBeVisible();
         await pack.click();

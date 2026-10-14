@@ -22,6 +22,7 @@ import type {
   AnthropicSystemTextBlock,
 } from './anthropic-message-shape.types';
 import type { GeminiContent } from './gemini.types';
+import type { PluginCallRecord, PluginNotice } from './plugin-tools.types';
 import type {
   OllamaCloudToolCall,
   OllamaCloudToolDefinition,
@@ -242,6 +243,10 @@ export type LlmResponse = {
   // compiling untouched; absent means "this call carried no tool catalog".
   toolCalls?: readonly NormalizedToolCall[];
   finishedForTools?: boolean;
+  // Plugin tools the answer used (`metadata.pluginCalls`, shown above the answer) and the
+  // notices explaining a mentioned plugin that did not run (`metadata.pluginNotices`).
+  pluginCalls?: readonly PluginCallRecord[];
+  pluginNotices?: readonly PluginNotice[];
   // What the speed contract actually granted, plus measured throughput when it
   // was measured. Carrying the resolution (not just the request) is what lets
   // the UI say "requested turbo, ran standard" instead of silently showing a

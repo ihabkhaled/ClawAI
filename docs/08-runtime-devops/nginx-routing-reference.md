@@ -228,6 +228,19 @@ location /api/v1/images/ {
 }
 ```
 
+### Plugin Service (port 4021)
+
+```nginx
+location /api/v1/plugins {
+    set $plugin_backend https://plugin-service:4021;
+    proxy_pass $plugin_backend;
+}
+```
+
+Only the public `/api/v1/plugins` prefix is routed. The service-to-service routes
+live under `/api/v1/internal/` and stay closed by the 404 block. The current,
+authoritative table is `infra/nginx/locations.conf`.
+
 ### File Generation Service (port 4013)
 
 ```nginx
@@ -278,21 +291,21 @@ location /api/v1/health {
 
 Three endpoints use SSE and require special nginx configuration:
 
-| Endpoint                   | Service          |
-| -------------------------- | ---------------- |
-| `/api/v1/chat-messages/stream` | chat-service |
-| `/api/v1/images/`          | image-service    |
-| `/api/v1/file-generations/`| file-gen-service |
+| Endpoint                       | Service          |
+| ------------------------------ | ---------------- |
+| `/api/v1/chat-messages/stream` | chat-service     |
+| `/api/v1/images/`              | image-service    |
+| `/api/v1/file-generations/`    | file-gen-service |
 
 Required directives:
 
-| Directive                     | Value    | Why                                                      |
-| ----------------------------- | -------- | -------------------------------------------------------- |
-| `proxy_http_version`          | `1.1`    | HTTP/1.0 closes connections after each response          |
-| `proxy_set_header Connection` | `""`     | Removes `Connection: close` to keep connection alive     |
-| `proxy_read_timeout`          | `86400`  | 24-hour timeout prevents nginx from closing SSE early    |
-| `proxy_buffering`             | `off`    | Events sent immediately, not buffered in nginx           |
-| `proxy_cache`                 | `off`    | SSE responses must not be cached                         |
+| Directive                     | Value   | Why                                                   |
+| ----------------------------- | ------- | ----------------------------------------------------- |
+| `proxy_http_version`          | `1.1`   | HTTP/1.0 closes connections after each response       |
+| `proxy_set_header Connection` | `""`    | Removes `Connection: close` to keep connection alive  |
+| `proxy_read_timeout`          | `86400` | 24-hour timeout prevents nginx from closing SSE early |
+| `proxy_buffering`             | `off`   | Events sent immediately, not buffered in nginx        |
+| `proxy_cache`                 | `off`   | SSE responses must not be cached                      |
 
 ---
 
@@ -327,6 +340,7 @@ This is required because Nginx normally resolves hostnames only at startup. Usin
 To add a new service route:
 
 1. Add the location block in `infra/nginx/nginx.conf`:
+
    ```nginx
    location /api/v1/new-service {
        set $new_service_backend http://new-service:PORT;
@@ -337,6 +351,7 @@ To add a new service route:
 2. If the service has SSE endpoints, add SSE-specific configuration
 
 3. Restart nginx:
+
    ```bash
    ./scripts/claw.sh restart nginx
    ```
@@ -351,19 +366,23 @@ To add a new service route:
 ## 10. Troubleshooting
 
 ### 502 Bad Gateway
+
 - The upstream service is not running or unhealthy
 - Check: `docker compose ps <service-name>`
 
 ### 504 Gateway Timeout
+
 - The upstream service took too long to respond
 - For non-SSE routes, timeout is 60s
 - Consider increasing `proxy_read_timeout` for slow operations
 
 ### SSE Events Not Reaching Client
+
 - Verify `proxy_buffering off` is set
 - Verify the SSE location block is correctly positioned
 - Check nginx logs: `docker compose logs nginx`
 
 ### DNS Resolution Failures
+
 - Verify the service name in the location block matches the compose service name
 - Check that resolver directive is present: `resolver 127.0.0.11 valid=5s`

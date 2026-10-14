@@ -885,3 +885,30 @@ today — registered in the content registry, sitemap, `llms.txt` and
 Lighthouse CI — and every pair page cross-links out to `/model-providers/*`,
 `/model-fit`, and `/learn/*`. Trigger to revisit: if search-console data
 shows `/compare/models` under-discovered relative to its sibling clusters.
+
+## 10. Public Threads board (2026-10-14)
+
+The guest-facing Threads board is registry slug `threads/board`, path `/threads/board`, in all 13 locales
+([ADR-178 addendum](../13-adr/adr-178-the-board-is-a-portal-surface-seo-stays-on-threads-slug.md)). It follows the
+cluster rules above rather than adding a new mechanism:
+
+- **Registry and sitemap.** One `content-registry.constants.ts` entry (category GUIDE, `AdEligibility.INELIGIBLE`,
+  `FeedEligibility.PUBLISHABLE`, review date 2026-10-14). The sitemap, hreflang alternates (13 locales plus
+  `x-default` = English) and `llms.txt` all read the registry, so no sitemap code changed. Guarded by
+  `sitemap-coverage.test.ts` (a route on disk for every published path and the reverse) and
+  `content-registry.utility.test.ts`.
+- **Metadata.** Title and description come from `chat.threadPublicBoardSeoTitle` and `...SeoDescription` in
+  `thread-public-board-translations.ts`; `threads-public-board-seo.constants.ts` derives the registry copy from that
+  single source and is added to `CLUSTER_SEO_SOURCES`. `buildPublicPageMetadata(threads/board, locale)` yields the
+  self-canonical, hreflang, OpenGraph and Twitter tags and `index,follow`.
+- **Structured data.** `buildPublicBoardJsonLd` (`structured-data.utility.ts`) emits a `CollectionPage` whose
+  `mainEntity` is an `ItemList` of the first page of Threads (name and canonical `/<locale>/threads/<slug>` URL only,
+  `numberOfItems` = total) plus a `BreadcrumbList`. No rating, author or private field.
+- **Rule 38 (low-value content).** The page is a listing of content that already has its own indexable page, so the
+  risk is thin content. It carries a heading and real introductory copy (`threadPublicBoardIntro`, at least 120
+  characters in every locale, tested) that says what is on the board, how it is vetted and what a guest can and cannot
+  do; every card links to a full Thread; the page is ad-ineligible. The canonical of every Thread stays `/threads/<slug>`.
+- **Member Board stays out.** `/board` is in `PRIVATE_ROUTE_PREFIXES` (robots disallow for every locale), `noindex`
+  and absent from the sitemap. `robots.test.ts` pins that `/board` is blocked and `/threads/board` is not.
+- **Audit lists.** `lighthouserc.json`, `lighthouserc.pr.json` and `apps/claw-frontend/scripts/responsive-audit/audit.cjs` include the page;
+  `lighthouse-coverage.test.ts` fails if an indexable page is missing from the Lighthouse set.

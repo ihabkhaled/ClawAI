@@ -14,7 +14,7 @@ export function useCostEnsemblePage(): UseCostEnsemblePageReturn {
   const { t } = useTranslation();
   const [content, setContent] = useState('');
   const [selectedModel, setSelectedModel] = useState<AdvancedModuleModelSelection>(null);
-  const composer = useOrchestrationComposer();
+  const composer = useOrchestrationComposer(false, { value: content, onValueChange: setContent });
 
   const { send, result, isPending, isError } = useSendCostEnsemble();
 

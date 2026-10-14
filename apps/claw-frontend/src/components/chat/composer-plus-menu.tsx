@@ -1,7 +1,6 @@
 'use client';
 
-import { ComposerPlusMenuContextHost } from '@/components/chat/composer-plus-menu-context-host';
-import { ComposerPlusMenuView } from '@/components/chat/composer-plus-menu-view';
+import { ComposerPlusMenuHost } from '@/components/chat/composer-plus-menu-host';
 import { FileLibraryDialog } from '@/components/chat/file-library-dialog';
 import { PromptLibraryDialog } from '@/components/chat/prompt-library/prompt-library-dialog';
 import { useComposerPlusMenu } from '@/hooks/chat/use-composer-plus-menu';
@@ -18,11 +17,7 @@ export function ComposerPlusMenu(props: ComposerPlusMenuProps): React.ReactEleme
 
   return (
     <>
-      {props.threadId === null ? (
-        <ComposerPlusMenuView {...props} menu={menu} context={null} />
-      ) : (
-        <ComposerPlusMenuContextHost {...props} threadId={props.threadId} menu={menu} />
-      )}
+      <ComposerPlusMenuHost {...props} menu={menu} />
       <PromptLibraryDialog {...menu.prompts} />
       <FileLibraryDialog
         open={menu.libraryOpen}

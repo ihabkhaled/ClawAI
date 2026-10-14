@@ -22,6 +22,7 @@
         "http://localhost:3000/en/supported-models",
         "http://localhost:3000/en/terms",
         "http://localhost:3000/en/threads/discover",
+        "http://localhost:3000/en/threads/board",
         "http://localhost:3000/en/compare",
         "http://localhost:3000/en/compare/chatgpt",
         "http://localhost:3000/en/coding-agent",

@@ -67,6 +67,12 @@ graph LR
         FGJ[FileGenJob]
         GF[GeneratedFile]
     end
+
+    subgraph "plugin-service (claw_plugin)"
+        PC[PluginCatalogEntry]
+        PI[PluginInstall]
+        PK[PluginCredential ciphertext only]
+    end
 ```
 
 ---

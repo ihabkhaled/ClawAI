@@ -29,6 +29,12 @@ home; this page only collects them. Routed from [`AGENTS.md`](../AGENTS.md).
 - **A dev container's `dist/generated/prisma` is copied, not compiled.** After a
   schema change the entrypoint refreshes it; a stale copy shows up as
   `z.nativeEnum(undefined)` at boot.
+- **A new service needs the production `.env` too.** The live stack reads
+  `/srv/clawai/.env`, written before the service existed; the deploy never starts
+  databases or invents secrets. Declare the service's passwords, URLs and keys in
+  `scripts/prod-required-env.manifest`; `scripts/ensure-prod-env.sh` appends what is
+  missing and never rewrites a value
+  ([skills/add-a-new-service.md](../skills/add-a-new-service.md)).
 - **`files.content` is base64 of the uploaded bytes, not extracted text.** The
   readable text is `files.extractedText`
   ([ADR-095](../docs/13-adr/adr-095-attachment-text-extraction-pipeline.md)).

@@ -6,10 +6,13 @@ import {
 } from '@/constants/thread-board.constants';
 import { THREAD_PUBLICATION_OPTIONS } from '@/constants/thread-publication.constants';
 import { BoardChipKind } from '@/enums/board-chip-kind.enum';
+import type { Locale } from '@/enums/locale.enum';
+import { ThreadBoardMode } from '@/enums/thread-board-mode.enum';
 import type { ThreadBoardSort } from '@/enums/thread-board-sort.enum';
 import type { TranslateFunction } from '@/types/i18n.types';
 import type { BoardChip, BoardChipInput } from '@/types/thread-board-view.types';
 import type { ThreadBoardType } from '@/types/thread-board.types';
+import { localisePath } from '@/utilities/locale.utility';
 
 /** A language's own name ("Deutsch"); falls back to the code if Intl cannot name it. */
 export function boardLanguageLabel(code: string): string {
@@ -55,4 +58,14 @@ export function buildBoardChips(input: BoardChipInput, t: TranslateFunction): Bo
 
 export function boardItemPath(slug: string): string {
   return `/board/${encodeURIComponent(slug)}`;
+}
+
+/**
+ * Where a Board item opens. Members read it in the portal; a guest opens the public Thread page,
+ * in their language, which is also the canonical address of every Thread.
+ */
+export function boardItemHref(mode: ThreadBoardMode, slug: string, locale: Locale): string {
+  return mode === ThreadBoardMode.Guest
+    ? localisePath(`/threads/${encodeURIComponent(slug)}`, locale)
+    : boardItemPath(slug);
 }

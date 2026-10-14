@@ -7,12 +7,15 @@ import {
   THREAD_BOARD_SUGGEST_MIN_CHARS,
   THREAD_BOARD_SUGGEST_STALE_MS,
 } from '@/constants/thread-board.constants';
-import { threadBoardRepository } from '@/repositories/threads/thread-board.repository';
+import { useBoardMode } from '@/hooks/threads/board/use-board-mode';
+import { getThreadBoardRepository } from '@/repositories/threads/thread-board-source';
 import type { UseBoardSuggestResult } from '@/types/thread-board.types';
 import { normalizeSuggestQuery } from '@/utilities/thread-board-suggest-query.utility';
 
 /** `lang` is the board's active language filter (or `all`), never the UI locale. */
 export function useBoardSuggest(rawQuery: string, lang: string): UseBoardSuggestResult {
+  const mode = useBoardMode();
+  const repository = getThreadBoardRepository(mode);
   const [debounced, setDebounced] = useState(normalizeSuggestQuery(rawQuery));
 
   useEffect(() => {
@@ -25,8 +28,8 @@ export function useBoardSuggest(rawQuery: string, lang: string): UseBoardSuggest
 
   const enabled = debounced.length >= THREAD_BOARD_SUGGEST_MIN_CHARS;
   const query = useQuery({
-    queryKey: [THREAD_BOARD_QUERY_KEY, 'suggest', lang, debounced],
-    queryFn: ({ signal }) => threadBoardRepository.suggest(debounced, lang, { signal }),
+    queryKey: [THREAD_BOARD_QUERY_KEY, mode, 'suggest', lang, debounced],
+    queryFn: ({ signal }) => repository.suggest(debounced, lang, { signal }),
     enabled,
     placeholderData: keepPreviousData,
     staleTime: THREAD_BOARD_SUGGEST_STALE_MS,

@@ -19,6 +19,8 @@ import { AccountDeletionModule } from '../modules/account-deletion/account-delet
 import { AdminModule } from '../modules/admin/admin.module';
 import { CatalogModule } from '../modules/catalog/catalog.module';
 import { InstallsModule } from '../modules/installs/installs.module';
+import { McpServersModule } from '../modules/mcp-servers/mcp-servers.module';
+import { RuntimeModule } from '../modules/runtime/runtime.module';
 import { SeedingModule } from '../modules/seeding/seeding.module';
 
 @Module({
@@ -62,6 +64,8 @@ import { SeedingModule } from '../modules/seeding/seeding.module';
     PrismaModule,
     CatalogModule,
     InstallsModule,
+    McpServersModule,
+    RuntimeModule,
     AdminModule,
     AccountDeletionModule,
     SeedingModule,

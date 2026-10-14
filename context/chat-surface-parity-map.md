@@ -6,16 +6,17 @@ Walk this table before calling a chat change done.
 
 ## Shared code (a change here reaches every surface)
 
-| Concern                                                                           | Shared piece                                                                                                               |
-| --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| What a model sees (history, files, memory, packs, cross-thread, research, window) | `ChatContextGatewayManager` -> `ContextAssemblyManager`                                                                    |
-| Calling a model (request shape, hold/ceiling/release, ledger, fallback, sampling) | `ModeExecutionGatewayManager` -> `ChatExecutionManager.callProvider`                                                       |
-| The thread (ownership, context packs)                                             | `resolveOrchestrationThread` (`utilities/orchestration-thread.utility.ts`)                                                 |
-| Request fields                                                                    | Zod fragments: `researchFields`, `attachmentFields`, `contextPackFields` (`dto/`)                                          |
-| Generation-intent guard, named model, platform identity                           | `generationRequestText` (shared-utilities), `named-model.utility.ts`, `platform-identity` block                            |
-| Research evidence narration (how each page was read, `PAGE_READ`)                 | `pageReadNarrations` via `ResearchOrchestratorManager` (AUTO + explicit modes) and `ContextAssemblyManager` (gateway path) |
-| UI request spread                                                                 | `useOrchestrationComposer().sharedPayload`                                                                                 |
-| UI controls                                                                       | `OrchestrationPageShell` (labs), `compare/page.tsx`, `in-thread-compare-panel.tsx`, from the chat composer's components    |
+| Concern                                                                                         | Shared piece                                                                                                                                                                                |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| What a model sees (history, files, memory, packs, cross-thread, research, window)               | `ChatContextGatewayManager` -> `ContextAssemblyManager`                                                                                                                                     |
+| Calling a model (request shape, hold/ceiling/release, ledger, fallback, sampling)               | `ModeExecutionGatewayManager` -> `ChatExecutionManager.callProvider`                                                                                                                        |
+| The thread (ownership, context packs)                                                           | `resolveOrchestrationThread` (`utilities/orchestration-thread.utility.ts`)                                                                                                                  |
+| Request fields                                                                                  | Zod fragments: `researchFields`, `attachmentFields`, `contextPackFields` (`dto/`)                                                                                                           |
+| Generation-intent guard, named model, platform identity                                         | `generationRequestText` (shared-utilities), `named-model.utility.ts`, `platform-identity` block                                                                                             |
+| Research evidence narration (how each page was read, `PAGE_READ`)                               | `pageReadNarrations` via `ResearchOrchestratorManager` (AUTO + explicit modes) and `ContextAssemblyManager` (gateway path)                                                                  |
+| `@` plugin mentions (`pluginRefs`: stored on the user turn, offered as native tools, tool loop) | `pluginFields` DTO fragment, `pluginRefsMetadata` on each surface's user message, `ChatContextGatewayManager` -> `AssembledContext.pluginRefs` -> `callProvider` -> `PluginToolLoopManager` |
+| UI request spread                                                                               | `useOrchestrationComposer().sharedPayload` (carries `pluginRefs`)                                                                                                                           |
+| UI controls                                                                                     | the chat composer's `ComposerPlusMenu` + `RichPromptTextarea` (`@` picker) in `OrchestrationPageShell` (labs), `compare/page.tsx`, `in-thread-compare-panel.tsx`                            |
 
 ## Surfaces
 
@@ -50,16 +51,19 @@ Service entry points that create threads for Compare/Consensus/Escalation: `chat
   is a switch wired to nothing. Closing it: route those managers through the pre-filter and orchestrator, then
   restore the `contextSaveFields` fragment on their DTOs, in one change. Guard: `context-save-surfaces.dto.spec.ts`.
 
-- **Loose composer controls (rule 40 item 24, follow-up)** Normal chat has ONE round `+` menu (`ComposerPlusMenu`:
-  Attach / Context / Tools). Three surfaces still render the old loose buttons: **Compare**
-  (`app/(portal)/chat/compare/page.tsx`), **in-thread Compare** (`in-thread-compare-panel.tsx`) and
-  **OrchestrationPageShell** (the seven labs, `orchestration/orchestration-page-shell.tsx`).
-  What remains: `FileAttachmentPicker`, `PromptLibraryButton` and `ResearchToggle` on all three, plus
-  `ComposerContextControls` on in-thread Compare.
-  Why not done: the menu needs the research-provider query, `onInsertPrompt` and the draft wired from each
-  surface, and each one does that on its own (a lab has no thread, so `threadId` is null there). Moving them is a
-  per-surface change with its own tests, not a small safe one. Follow-up: one batch that renders
-  `ComposerPlusMenu` in all three and deletes the loose imports.
+- **Plugin mentions (2026-10-14, plugins batch 4).** `pluginRefs` reach Compare, in-thread Compare, Consensus,
+  Escalation, Best-of-N, Decompose, Pipeline, Cost-Ensemble and Role Pack through the gateway and `callProvider`;
+  **Repair, Verify, the judge and the critic deliberately get no plugin tools** (they rewrite or grade an existing
+  answer; `PLUGIN_TOOL_SURFACES`), and their pages show no `@` picker. Compare lanes and normal chat leave the
+  streaming path for a mentioned message (tool calls need the whole response). Open: the consent card and
+  `PLUGIN_*` stream events, and own MCP servers in `resolve`; the plugin-service `/api/v1/internal/plugins/*` routes now exist. If plugin-service is down a mentioned
+  message answers as plain chat with a notice.
+
+- **Loose composer controls (closed 2026-10-14).** Compare, in-thread Compare and the seven labs now render the same
+  grouped `ComposerPlusMenu` as normal chat plus the research chip; the loose `FileAttachmentPicker`,
+  `PromptLibraryButton`, `ResearchToggle` and `OrchestrationContextButton` are gone from them. A surface with no
+  thread yet passes `draftContextPacks` and gets the pack picker (the choice rides with the run); the what-is-sent /
+  memory / preview rows stay thread-only (TD-045). Guard: `chat-surface-layout-contract.test.ts`.
 
 - **Turn into public Thread** is a thread-level action in the normal chat header menu (`chat-thread-header-menu.tsx`
   -> `ThreadCreateDialog`), not a message mode: the labs have no saved thread to publish, so they do not carry it.
@@ -67,6 +71,7 @@ Service entry points that create threads for Compare/Consensus/Escalation: `chat
 
 ## Guards
 
-`orchestration-parity.spec.ts` (chat-service), `orchestration-page-shell-recorder.test.tsx`,
-`compare-page.test.tsx`, `in-thread-compare-panel.test.tsx` (frontend). Skill:
+`orchestration-parity.spec.ts` (chat-service; includes `pluginFields` on every DTO and `pluginRefsMetadata` in every
+manager), `orchestration-page-shell-recorder.test.tsx`, `compare-page.test.tsx`,
+`in-thread-compare-panel.test.tsx`, `chat-surface-layout-contract.test.ts` (frontend). Skill:
 [propagate-a-chat-change-to-every-mode](../skills/propagate-a-chat-change-to-every-mode.md).

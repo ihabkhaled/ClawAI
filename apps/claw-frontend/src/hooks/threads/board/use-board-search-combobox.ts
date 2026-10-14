@@ -2,6 +2,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
 import { THREAD_BOARD_SUGGEST_MIN_CHARS } from '@/constants/thread-board.constants';
+import { useBoardItemHref } from '@/hooks/threads/board/use-board-item-href';
 import { useBoardSuggest } from '@/hooks/threads/board/use-board-suggest';
 import { useComboboxKeyboard } from '@/hooks/threads/board/use-combobox-keyboard';
 import type {
@@ -16,6 +17,7 @@ export function useBoardSearchCombobox({
   onSubmit,
 }: BoardSearchComboboxProps): UseBoardSearchComboboxResult {
   const router = useRouter();
+  const itemHref = useBoardItemHref();
   const listId = useId();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [draft, setDraftState] = useState(value);
@@ -42,10 +44,10 @@ export function useBoardSearchCombobox({
       const picked = suggest.suggestions[index];
       setOpen(false);
       if (picked) {
-        router.push(`/board/${picked.slug}`);
+        router.push(itemHref(picked.slug));
       }
     },
-    [suggest.suggestions, router],
+    [suggest.suggestions, router, itemHref],
   );
 
   const applyDidYouMean = useCallback(() => {

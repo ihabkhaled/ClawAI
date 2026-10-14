@@ -53,7 +53,11 @@ MANDATORY Change Checklist:
 
 For a **new service** additionally: `packages/shared-constants` (port + name),
 `apps/claw-health-service` (health list), `.github/workflows/ci.yml` (test env),
-`infra/nginx/nginx.conf`, `scripts/install-tls.{sh,ps1}` (SAN hostname).
+`infra/nginx/locations.conf` and `infra/nginx/nginx.distributed.conf.template`,
+`scripts/install-tls.{sh,ps1}` (SAN hostname), and for any password, URL or key the
+service needs, `scripts/prod-required-env.manifest` (the production `.env`: a missing
+value fails the deploy preflight). The full ordered list:
+[skills/add-a-new-service.md](../skills/add-a-new-service.md).
 
 ## Rules
 

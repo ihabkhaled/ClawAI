@@ -4,17 +4,16 @@ import { CompareCriticControls } from '@/components/chat/compare-critic-controls
 import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
 import { ComposerAttachmentChips } from '@/components/chat/composer-attachment-chips';
 import { ComposerAttachmentTray } from '@/components/chat/composer-attachment-tray';
-import { ComposerContextControls } from '@/components/chat/composer-context-controls';
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
-import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
+import { ComposerPlusMenu } from '@/components/chat/composer-plus-menu';
+import { ComposerResearchChip } from '@/components/chat/composer-research-chip';
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
-import { PromptLibraryButton } from '@/components/chat/prompt-library/prompt-library-button';
-import { ResearchToggle } from '@/components/chat/research-toggle';
 import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
 import { VoiceVideoRecorder } from '@/components/chat/voice-video-recorder';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ResearchMode } from '@/enums/research-mode.enum';
 import { useModelMediaCapabilities } from '@/hooks/chat/use-model-media-capabilities';
 import type { InThreadComparePanelProps } from '@/types';
 import { appendToDraft } from '@/utilities/prompt-template.utility';
@@ -54,6 +53,7 @@ export function InThreadComparePanel({
   isUploading,
   attachmentTray,
   attachmentChips,
+  pluginMentions,
   t,
 }: InThreadComparePanelProps): React.ReactElement {
   // Recorder gating is model-independent: see useModelMediaCapabilities. The
@@ -116,18 +116,22 @@ export function InThreadComparePanel({
 
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
-              {/* The same Context button and Prompt library as the chat composer (rules/59). */}
-              <ComposerContextControls threadId={threadId} draft={prompt} disabled={isPending} />
-              <PromptLibraryButton
-                onInsert={(text: string) => onPromptChange(appendToDraft(prompt, text))}
+              {/* The same grouped "+" menu as the chat composer (rules/59). This Compare runs in
+                  a thread, so its Context section is the thread's: packs, what is sent, memory. */}
+              <ComposerPlusMenu
                 disabled={isPending}
-              />
-              <FileAttachmentPicker
                 selectedFileIds={selectedFileIds}
-                onChange={onSelectedFileIdsChange}
-                disabled={isPending}
+                onSelectedFileIdsChange={onSelectedFileIdsChange}
                 ingestFiles={onIngestFiles}
-                isUploading={isUploading}
+                isUploadingAttachment={isUploading}
+                canResearch={allowResearchMode}
+                research={research}
+                onResearchChange={onResearchChange}
+                researchProviders={researchProviders}
+                isResearchProvidersLoading={isResearchProvidersLoading}
+                threadId={threadId}
+                draft={prompt}
+                onInsertPrompt={(text: string) => onPromptChange(appendToDraft(prompt, text))}
               />
               {/* Same recorder the chat composer and the nine labs render; the
                   consent dialog ships inside it, so it comes along. */}
@@ -137,26 +141,15 @@ export function InThreadComparePanel({
                 onRecorded={(file) => onIngestFiles([file])}
                 disabled={isPending}
               />
-              {/* The shared control, not Compare's mode-only one: Compare
-                  never had a provider picker, and its default was NONE while
-                  every other surface defaulted to AUTO. */}
-              {/* The toggle's triggers are fixed-width by viewport breakpoint,
-                  but this panel's column is ~350px even on desktop, so they
-                  poked past the dialog edge. Bounded + sideways scroll is the
-                  same answer the chat toolbar uses. */}
-              {allowResearchMode ? (
-                <div
-                  data-testid="in-thread-compare-research"
-                  className="max-w-full min-w-0 overflow-x-auto"
-                >
-                  <ResearchToggle
-                    value={research}
-                    providers={researchProviders}
-                    isProvidersLoading={isResearchProvidersLoading}
-                    onChange={onResearchChange}
-                    disabled={isPending}
-                  />
-                </div>
+              {/* While research is on, a chip names the mode, as in chat. */}
+              {allowResearchMode && research.mode !== ResearchMode.NONE ? (
+                <ComposerResearchChip
+                  value={research}
+                  providers={researchProviders}
+                  isProvidersLoading={isResearchProvidersLoading}
+                  onChange={onResearchChange}
+                  disabled={isPending}
+                />
               ) : null}
             </div>
 
@@ -174,6 +167,7 @@ export function InThreadComparePanel({
                 onChange={onPromptChange}
                 onSubmit={onSend}
                 allowEmptySubmit={selectedFileIds.length > 0}
+                pluginMentions={pluginMentions}
                 placeholder={t('compare.sendPrompt')}
                 ariaLabel={t('compare.sendPrompt')}
                 disabled={isPending}

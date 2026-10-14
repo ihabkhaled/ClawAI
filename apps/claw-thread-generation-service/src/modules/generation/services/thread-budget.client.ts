@@ -14,7 +14,11 @@ const reservedBudgetSchema = z.object({
   status: z.string(),
 });
 
-const budgetSummarySchema = z.object({ settledMicroUsd: z.number().int().safe().nonnegative() });
+const budgetSummarySchema = z.object({
+  settledMicroUsd: z.number().int().safe().nonnegative(),
+  /** Absent (an older auth-service) means the Free meter charged nothing for this job. */
+  freeAllowanceMicroUsd: z.number().int().safe().nonnegative().optional().default(0),
+});
 
 @Injectable()
 export class ThreadBudgetClient {
@@ -83,8 +87,18 @@ export class ThreadBudgetClient {
     if (closed !== true) throw new ThreadBudgetCloseRefusedError();
   }
 
-  /** The money the budget row has settled so far (integer micro-USD), whatever the billing mode. */
-  async settledMicroUsd(budgetId: string): Promise<number> {
+  /**
+   * The real money spent on the job (integer micro-USD): what the budget row settled, or what the
+   * Free meter charged for the job's calls, whichever is larger (a Free job settles nothing).
+   */
+  async spentMicroUsd(budgetId: string): Promise<number> {
+    const summary = await this.summary(budgetId);
+    return Math.max(summary.settledMicroUsd, summary.freeAllowanceMicroUsd);
+  }
+
+  private async summary(
+    budgetId: string,
+  ): Promise<{ settledMicroUsd: number; freeAllowanceMicroUsd: number }> {
     const config = AppConfig.get();
     const url = `${config.AUTH_SERVICE_URL}/api/v1/internal/threads/budgets/summary`;
     assertSafeRequestUrl(url, declaredHost(config.AUTH_SERVICE_URL));
@@ -107,6 +121,6 @@ export class ThreadBudgetClient {
     const parsed = budgetSummarySchema.safeParse(await response.json().catch(() => null));
     if (!parsed.success)
       throw new ServiceUnavailableException('Threads budget response is invalid');
-    return parsed.data.settledMicroUsd;
+    return parsed.data;
   }
 }

@@ -255,6 +255,9 @@ import type { ProviderRetryPlan } from '../types/provider-retry.types';
 import { ModelOutputLimitClient } from '../clients/model-output-limit.client';
 import { ModelUnavailableClient } from '../clients/model-unavailable.client';
 import { ProviderCircuitBreakerManager } from './provider-circuit-breaker.manager';
+import { PluginToolLoopManager } from './plugin-tool-loop.manager';
+import { hasPluginRefs } from '../utilities/plugin-refs.utility';
+import { paygForPluginRound } from '../utilities/plugin-payg-round.utility';
 import { SamplingParameterSupportManager } from './sampling-parameter-support.manager';
 import {
   describePickedModelFailure,
@@ -390,6 +393,9 @@ export class ChatExecutionManager implements OnModuleInit {
     // Optional for the same reason. Without it no call is ever sent for prompt
     // caching (F093): every Anthropic call keeps the OpenAI-compatible path.
     @Optional() private readonly promptCachePolicy?: PromptCachePolicyService,
+    // Optional for the same reason. Without it @mentioned plugins are ignored and the
+    // message answers as plain chat (rule 59: every surface reaches this chokepoint).
+    @Optional() private readonly pluginToolLoop?: PluginToolLoopManager,
   ) {}
 
   private get providerBreaker(): ProviderCircuitBreakerManager {
@@ -920,7 +926,9 @@ export class ChatExecutionManager implements OnModuleInit {
     if (retrievalResponse !== null) {
       return retrievalResponse;
     }
-    if (this.canStreamCandidate(candidate.provider)) {
+    // A message that @mentioned plugins needs whole responses to see tool calls, so it
+    // takes the buffered path below, which runs the plugin tool loop in `callProvider`.
+    if (this.canStreamCandidate(candidate.provider) && !hasPluginRefs(executionContext)) {
       return this.streamCandidate(
         candidate,
         executionContext,
@@ -1121,7 +1129,7 @@ export class ChatExecutionManager implements OnModuleInit {
     streamContext: StreamContext,
     paygCall?: PaygCallOptions,
   ): Promise<LlmResponse> {
-    return !this.canStreamCandidate(provider)
+    return !this.canStreamCandidate(provider) || hasPluginRefs(context)
       ? this.callProvider(
           provider,
           model,
@@ -2463,6 +2471,28 @@ export class ChatExecutionManager implements OnModuleInit {
     tokenContext?: TokenLedgerContext,
     paygCall?: PaygCallOptions,
   ): Promise<LlmResponse> {
+    // @mentioned plugins (rule 59): the one place every surface's model call passes.
+    // Each tool round re-enters here without `pluginRefs`, as its own metered call.
+    if (this.pluginToolLoop !== undefined && hasPluginRefs(laneInput)) {
+      return this.pluginToolLoop.run({
+        context: laneInput,
+        executionOptions,
+        threadId: paygCall?.threadId,
+        callModel: (round) =>
+          this.callProvider(
+            provider,
+            model,
+            round.context,
+            startTime,
+            usedFallback,
+            threadSettings,
+            routingMode,
+            round.options,
+            tokenContext,
+            paygForPluginRound(paygCall, round.round),
+          ),
+      });
+    }
     // Delivery runs once, outside the retry: it can itself be a paid helper
     // call (a vision description), which a credit retry must not repeat.
     const context = await this.withAttachmentDelivery(laneInput, provider, model, executionOptions);

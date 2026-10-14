@@ -18,6 +18,7 @@ import { LocalModelSelectionService } from '../services/local-model-selection.se
 import { ChatContextGatewayManager } from './chat-context-gateway.manager';
 import { resolveContextTurnText } from '../utilities/attachment-only-turn.utility';
 import { ModeExecutionGatewayManager } from './mode-execution-gateway.manager';
+import { pluginRefsMetadata } from '../utilities/plugin-refs.utility';
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
 import { parseJudgeModel } from '../../../common/utilities/judge-model-parse.utility';
@@ -28,6 +29,7 @@ import type { VerifyMessageDto } from '../dto/verify-message.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type { VerifierCheckResult, VerifyResponse } from '../types/verifier.types';
 import type { ChatContextBundle } from '../types/chat-context-gateway.types';
+import type { ResearchOrchestrationResult } from '../types/research-enricher.types';
 import { RoutingMode } from '../../../generated/prisma';
 import { OLLAMA_PROVIDER } from '../../../common/constants';
 import { PAYG_WORKFLOW_VERIFIER } from '../constants/payg.constants';
@@ -80,6 +82,7 @@ export class VerifierManager {
         maxRevisions: dto.maxRevisions,
         modelSelection: selection,
         ...(dto.fileIds !== undefined && dto.fileIds.length > 0 ? { fileIds: dto.fileIds } : {}),
+        ...pluginRefsMetadata(dto.pluginRefs),
       },
     });
 
@@ -127,51 +130,16 @@ export class VerifierManager {
       // from the writer is judging a different question, and the verify pass
       // used to see no context at all. Building it once also means one set of
       // retrievals rather than one per hop.
-      const bundle = await this.chatContextGateway.build({
-        userId,
-        threadId,
-        surface: ChatSurface.VERIFY,
-        historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
-        // The enricher's transcript used to be glued to the front of the draft
-        // and repair prompts, and never reached the verifier at all.
-        // `researchEvidenceInstruction` routes it through
-        // `injectResearchEvidenceIntoContext`, which sets
-        // `researchGroundingInjected` so the final-user-turn reminder fires for
-        // the draft, every verify pass and the repair, all sharing this bundle.
-        ...(enrichment.systemPrompt.length > 0
-          ? { researchEvidenceInstruction: enrichment.systemPrompt }
-          : {}),
-        ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
-      });
+      const bundle = await this.buildSharedBundle(userId, threadId, enrichment, fileIds);
       // Rule 42 §18: an attachment-only send's request IS the attachment —
       // spelled out once here for every stage below, never stored.
       const request = resolveContextTurnText(content, bundle.context);
-      this.safeEmitStage(threadId, {
-        label: 'Generating',
-        status: OrchestrationStageStatus.ACTIVE,
-        detail: `${resolvedSelection.actualProvider}/${resolvedSelection.actualModel}`,
-        stageId: 'verifier:draft',
-      });
-      const draft = await this.generateDraft(bundle, request, resolvedSelection);
-      this.safeEmitStage(threadId, {
-        label: 'Generating',
-        status: OrchestrationStageStatus.COMPLETED,
-        detail: `Draft ready (${String(draft.length)} chars)`,
-        stageId: 'verifier:draft',
-      });
-      this.safeEmitStage(threadId, {
-        label: 'Verifier judging',
-        status: OrchestrationStageStatus.ACTIVE,
-        detail: 'Scoring factuality / completeness / safety / formatting',
-        stageId: 'verifier:check:0',
-      });
-      const checkResult = await this.runVerifierCheck(bundle, request, draft, resolvedSelection);
-      this.safeEmitStage(threadId, {
-        label: 'Verifier judging',
-        status: OrchestrationStageStatus.COMPLETED,
-        detail: `Score ${String(checkResult.score.toFixed(2))}`,
-        stageId: 'verifier:check:0',
-      });
+      const { draft, checkResult } = await this.draftAndCheck(
+        threadId,
+        bundle,
+        request,
+        resolvedSelection,
+      );
 
       if (checkResult.score >= VERIFIER_PASS_THRESHOLD || maxRevisions === 0) {
         await this.storeVerifiedMessage(
@@ -183,17 +151,7 @@ export class VerifierManager {
           resolvedSelection,
           enrichment.transcript,
         );
-        this.safeEmitStage(threadId, {
-          label: 'Complete',
-          status: OrchestrationStageStatus.COMPLETED,
-          detail: 'Passed on first check',
-          stageId: 'verifier:complete',
-        });
-        this.chatStreamService.emitCompletion(
-          threadId,
-          resolvedSelection.actualProvider,
-          resolvedSelection.actualModel,
-        );
+        this.announceComplete(threadId, resolvedSelection, 'Passed on first check');
         return;
       }
 
@@ -216,33 +174,108 @@ export class VerifierManager {
         resolvedSelection,
         enrichment.transcript,
       );
-      this.safeEmitStage(threadId, {
-        label: 'Complete',
-        status: OrchestrationStageStatus.COMPLETED,
-        detail: `Final score ${String(finalCheck.score.toFixed(2))} after ${String(revisionCount)} revision(s)`,
-        stageId: 'verifier:complete',
-      });
-      this.chatStreamService.emitCompletion(
+      this.announceComplete(
         threadId,
-        resolvedSelection.actualProvider,
-        resolvedSelection.actualModel,
+        resolvedSelection,
+        `Final score ${String(finalCheck.score.toFixed(2))} after ${String(revisionCount)} revision(s)`,
       );
     } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'Verification failed';
-      this.logger.error(`executeInBackground: failed for thread ${threadId} — ${msg}`);
-      this.safeEmitStage(threadId, {
-        label: 'Verifier failed',
-        status: OrchestrationStageStatus.ERROR,
-        detail: msg,
-        stageId: 'verifier:error',
-      });
-      this.chatStreamService.emitError(threadId, `Verifier failed: ${msg}`);
-      try {
-        await this.storeErrorMessage(threadId, msg);
-      } catch (storeError: unknown) {
-        const storeMsg = storeError instanceof Error ? storeError.message : 'Unknown store error';
-        this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
-      }
+      await this.handleBackgroundFailure(threadId, error);
+    }
+  }
+
+  private announceComplete(
+    threadId: string,
+    selection: AdvancedModelSelectionResolution,
+    detail: string,
+  ): void {
+    this.safeEmitStage(threadId, {
+      label: 'Complete',
+      status: OrchestrationStageStatus.COMPLETED,
+      detail,
+      stageId: 'verifier:complete',
+    });
+    this.chatStreamService.emitCompletion(
+      threadId,
+      selection.actualProvider,
+      selection.actualModel,
+    );
+  }
+
+  private async buildSharedBundle(
+    userId: string,
+    threadId: string,
+    enrichment: ResearchOrchestrationResult,
+    fileIds: string[] | undefined,
+  ): Promise<ChatContextBundle> {
+    return this.chatContextGateway.build({
+      userId,
+      threadId,
+      surface: ChatSurface.VERIFY,
+      historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
+      // The enricher's transcript used to be glued to the front of the draft
+      // and repair prompts, and never reached the verifier at all.
+      // `researchEvidenceInstruction` routes it through
+      // `injectResearchEvidenceIntoContext`, which sets
+      // `researchGroundingInjected` so the final-user-turn reminder fires for
+      // the draft, every verify pass and the repair, all sharing this bundle.
+      ...(enrichment.systemPrompt.length > 0
+        ? { researchEvidenceInstruction: enrichment.systemPrompt }
+        : {}),
+      ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
+    });
+  }
+
+  private async draftAndCheck(
+    threadId: string,
+    bundle: ChatContextBundle,
+    request: string,
+    selection: AdvancedModelSelectionResolution,
+  ): Promise<{ draft: string; checkResult: VerifierCheckResult }> {
+    this.safeEmitStage(threadId, {
+      label: 'Generating',
+      status: OrchestrationStageStatus.ACTIVE,
+      detail: `${selection.actualProvider}/${selection.actualModel}`,
+      stageId: 'verifier:draft',
+    });
+    const draft = await this.generateDraft(bundle, request, selection);
+    this.safeEmitStage(threadId, {
+      label: 'Generating',
+      status: OrchestrationStageStatus.COMPLETED,
+      detail: `Draft ready (${String(draft.length)} chars)`,
+      stageId: 'verifier:draft',
+    });
+    this.safeEmitStage(threadId, {
+      label: 'Verifier judging',
+      status: OrchestrationStageStatus.ACTIVE,
+      detail: 'Scoring factuality / completeness / safety / formatting',
+      stageId: 'verifier:check:0',
+    });
+    const checkResult = await this.runVerifierCheck(bundle, request, draft, selection);
+    this.safeEmitStage(threadId, {
+      label: 'Verifier judging',
+      status: OrchestrationStageStatus.COMPLETED,
+      detail: `Score ${String(checkResult.score.toFixed(2))}`,
+      stageId: 'verifier:check:0',
+    });
+    return { draft, checkResult };
+  }
+
+  private async handleBackgroundFailure(threadId: string, error: unknown): Promise<void> {
+    const msg = error instanceof Error ? error.message : 'Verification failed';
+    this.logger.error(`executeInBackground: failed for thread ${threadId} — ${msg}`);
+    this.safeEmitStage(threadId, {
+      label: 'Verifier failed',
+      status: OrchestrationStageStatus.ERROR,
+      detail: msg,
+      stageId: 'verifier:error',
+    });
+    this.chatStreamService.emitError(threadId, `Verifier failed: ${msg}`);
+    try {
+      await this.storeErrorMessage(threadId, msg);
+    } catch (storeError: unknown) {
+      const storeMsg = storeError instanceof Error ? storeError.message : 'Unknown store error';
+      this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
     }
   }
 

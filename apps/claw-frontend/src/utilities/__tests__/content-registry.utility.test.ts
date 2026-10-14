@@ -123,6 +123,7 @@ describe('content registry integrity', () => {
       '/security-and-privacy',
       '/supported-models',
       '/terms',
+      '/threads/board',
       '/threads/discover',
       '/use-cases',
     ].sort();
@@ -213,7 +214,7 @@ describe('localized publication boundary', () => {
     // launch pages, unchanged by this cluster) + the /compare/models hub +
     // one page per family pair.
     const expectedCount =
-      30 +
+      31 +
       LEARN_TOPIC_ORDER.length +
       1 +
       INTEGRATION_TOPIC_ORDER.length +

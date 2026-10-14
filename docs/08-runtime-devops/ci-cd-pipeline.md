@@ -100,3 +100,7 @@ workspace joins every matrix automatically. Give it a vitest config with
 the declared values) and, after `npm run coverage:measure -- <name>`,
 `npm run coverage:raise-floors`.
 A workspace with source and no spec fails `knowledge:verify`.
+
+A new **service** adds more than a workspace (compose, nginx, TLS, installers, the
+production `.env` manifest, health): the whole list is
+[skills/add-a-new-service.md](../../skills/add-a-new-service.md).

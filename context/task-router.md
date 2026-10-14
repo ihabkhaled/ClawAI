@@ -93,5 +93,6 @@ And before release: `npm run release:preflight`.
 - **frontend-feature** — new user-facing text → all 13 locales + `i18n.types.ts`
   in the same change. ([frontend-architecture.md](frontend-architecture.md))
 - **infrastructure** — a new env var or service must propagate to every compose
-  file, installer, nginx, CI, and shared-constants.
+  file, installer, nginx, CI, and shared-constants; a new service follows
+  [skills/add-a-new-service.md](../skills/add-a-new-service.md) (incl. the production `.env`).
   ([environment-ownership-map.md](environment-ownership-map.md))

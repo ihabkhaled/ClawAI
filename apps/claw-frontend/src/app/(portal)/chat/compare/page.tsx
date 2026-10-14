@@ -7,14 +7,12 @@ import { CompareJudgeControls } from '@/components/chat/compare-judge-controls';
 import { ComposerAttachmentChips } from '@/components/chat/composer-attachment-chips';
 import { ComposerAttachmentTray } from '@/components/chat/composer-attachment-tray';
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
+import { ComposerPlusMenu } from '@/components/chat/composer-plus-menu';
+import { ComposerResearchChip } from '@/components/chat/composer-research-chip';
 import { DailyTokenIndicator } from '@/components/chat/daily-token-indicator';
-import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
-import { OrchestrationContextButton } from '@/components/chat/orchestration/orchestration-context-button';
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
 import { ParallelResultsGrid } from '@/components/chat/parallel-results-grid';
 import { ParallelSummaryBar } from '@/components/chat/parallel-summary-bar';
-import { PromptLibraryButton } from '@/components/chat/prompt-library/prompt-library-button';
-import { ResearchToggle } from '@/components/chat/research-toggle';
 import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
 import { ParallelLaneCard } from '@/components/chat/stream/parallel-lane-card';
 import { UpgradeCtaBanner } from '@/components/chat/upgrade-cta-banner';
@@ -26,7 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ORCHESTRATION_PROMPT_MAX_ROWS, ORCHESTRATION_PROMPT_MIN_ROWS } from '@/constants';
-import { AlertVariant, PlanFeature } from '@/enums';
+import { AlertVariant, PlanFeature, ResearchMode } from '@/enums';
 import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
 import { useModelMediaCapabilities } from '@/hooks/chat/use-model-media-capabilities';
 import { useParallelComparePage } from '@/hooks/chat/use-parallel-compare-page';
@@ -71,6 +69,7 @@ export default function ComparePage() {
     isUploading,
     attachmentTray,
     attachmentChips,
+    pluginMentions,
     upgradeFeature,
     clearUpgradeFeature,
   } = useParallelComparePage();
@@ -152,6 +151,7 @@ export default function ComparePage() {
                   onChange={setPrompt}
                   onSubmit={canSend ? handleSend : undefined}
                   allowEmptySubmit={selectedFileIds.length > 0}
+                  pluginMentions={pluginMentions}
                   placeholder={t('compare.sendPrompt')}
                   ariaLabel={t('compare.sendPrompt')}
                   disabled={isPending || isPolling}
@@ -162,24 +162,24 @@ export default function ComparePage() {
               </div>
               <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:flex sm:items-center sm:justify-between">
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  <OrchestrationContextButton
-                    selectedIds={contextPackIds}
-                    onChange={setContextPackIds}
+                  {/* The grouped "+" menu chat has (Attach, Context, Tools). Compare has no
+                      thread until it runs, so the pack picker holds its choice for the run. */}
+                  <ComposerPlusMenu
                     disabled={isPending || isPolling}
+                    selectedFileIds={selectedFileIds}
+                    onSelectedFileIdsChange={setSelectedFileIds}
+                    ingestFiles={ingestFiles}
+                    isUploadingAttachment={isUploading}
+                    canResearch={canResearch}
+                    research={research}
+                    onResearchChange={setResearch}
+                    researchProviders={researchProviders}
+                    isResearchProvidersLoading={isResearchProvidersLoading}
+                    threadId={null}
+                    draft={prompt}
+                    onInsertPrompt={(text: string) => setPrompt(appendToDraft(prompt, text))}
+                    draftContextPacks={{ selectedIds: contextPackIds, onChange: setContextPackIds }}
                   />
-                  <PromptLibraryButton
-                    onInsert={(text: string) => setPrompt(appendToDraft(prompt, text))}
-                    disabled={isPending || isPolling}
-                  />
-                  {selectedModels.length > 0 ? (
-                    <FileAttachmentPicker
-                      selectedFileIds={selectedFileIds}
-                      onChange={setSelectedFileIds}
-                      disabled={isPending || isPolling}
-                      ingestFiles={ingestFiles}
-                      isUploading={isUploading}
-                    />
-                  ) : null}
                   {/* Same recorder the chat composer and the nine labs render;
                       the consent dialog ships inside it, so it comes along. */}
                   <VoiceVideoRecorder
@@ -188,11 +188,9 @@ export default function ComparePage() {
                     onRecorded={(file) => ingestFiles([file])}
                     disabled={isPending || isPolling}
                   />
-                  {/* The shared control, not Compare's mode-only one: Compare
-                      never had a provider picker, and it was the last surface
-                      still defaulting research to NONE instead of AUTO. */}
-                  {canResearch ? (
-                    <ResearchToggle
+                  {/* While research is on, a chip names the mode, as in chat. */}
+                  {canResearch && research.mode !== ResearchMode.NONE ? (
+                    <ComposerResearchChip
                       value={research}
                       providers={researchProviders}
                       isProvidersLoading={isResearchProvidersLoading}

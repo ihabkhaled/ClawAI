@@ -3100,6 +3100,16 @@
         "source": "apps/claw-plugin-service/src/modules/health/controllers/health.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/internal/plugins/invoke",
+        "source": "apps/claw-plugin-service/src/modules/runtime/controllers/plugin-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/plugins/resolve",
+        "source": "apps/claw-plugin-service/src/modules/runtime/controllers/plugin-internal.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/plugins/admin/catalog",
         "source": "apps/claw-plugin-service/src/modules/admin/controllers/plugin-admin.controller.ts"
@@ -3183,6 +3193,56 @@
         "method": "GET",
         "route": "/plugins/installs/mentions",
         "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/plugins/invoke",
+        "source": "apps/claw-plugin-service/src/modules/runtime/controllers/plugin-invoke.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/plugins/servers",
+        "source": "apps/claw-plugin-service/src/modules/mcp-servers/controllers/plugin-servers.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/plugins/servers",
+        "source": "apps/claw-plugin-service/src/modules/mcp-servers/controllers/plugin-servers.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/plugins/servers/:id",
+        "source": "apps/claw-plugin-service/src/modules/mcp-servers/controllers/plugin-servers.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/plugins/servers/:id",
+        "source": "apps/claw-plugin-service/src/modules/mcp-servers/controllers/plugin-servers.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/plugins/servers/:id",
+        "source": "apps/claw-plugin-service/src/modules/mcp-servers/controllers/plugin-servers.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/plugins/servers/:id/approve-changes",
+        "source": "apps/claw-plugin-service/src/modules/mcp-servers/controllers/plugin-servers.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/plugins/servers/:id/credential",
+        "source": "apps/claw-plugin-service/src/modules/mcp-servers/controllers/plugin-servers.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/plugins/servers/:id/credential",
+        "source": "apps/claw-plugin-service/src/modules/mcp-servers/controllers/plugin-servers.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/plugins/servers/:id/refresh",
+        "source": "apps/claw-plugin-service/src/modules/mcp-servers/controllers/plugin-servers.controller.ts"
       }
     ],
     "claw-research-service": [
@@ -3951,6 +4011,16 @@
       },
       {
         "method": "GET",
+        "route": "/thread-publications/public/board",
+        "source": "apps/claw-threads-service/src/modules/board/controllers/board-public.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/thread-publications/public/board/suggest",
+        "source": "apps/claw-threads-service/src/modules/board/controllers/board-public.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/thread-publications/public/discover",
         "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-discovery.controller.ts"
       },
@@ -3958,6 +4028,11 @@
         "method": "GET",
         "route": "/thread-publications/public/sitemap",
         "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-discovery.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/thread-publications/recommended-team",
+        "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-recommended-team.controller.ts"
       }
     ],
     "claw-workspace-service": [
@@ -4504,5 +4579,5 @@
     ]
   },
   "generated": true,
-  "total": 892
+  "total": 907
 }

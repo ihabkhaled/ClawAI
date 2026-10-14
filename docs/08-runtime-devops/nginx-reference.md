@@ -119,6 +119,18 @@ All routes are prefixed with `/api/v1/`. Nginx uses dynamic variables for upstre
 | `/api/v1/images`   | `http://image-service:4012` | Image generation requests     |
 | `/api/v1/images/*` | `http://image-service:4012` | SSE endpoint (special config) |
 
+### Threads Service (port 4019)
+
+| Frontend Path                  | Backend Destination            | Notes                                                                        |
+| ------------------------------ | ------------------------------ | ---------------------------------------------------------------------------- |
+| `/api/v1/thread-publications*` | `https://threads-service:4019` | Public Thread publications; the legacy `/api/v1/threads` alias stays on chat |
+
+### Plugin Service (port 4021)
+
+| Frontend Path       | Backend Destination           | Notes                                                                                                          |
+| ------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `/api/v1/plugins/*` | `https://plugin-service:4021` | Catalog, installs, consent, credentials, admin. `/api/v1/internal/*` is never routed (closed by the 404 block) |
+
 ---
 
 ## SSE (Server-Sent Events) Configuration

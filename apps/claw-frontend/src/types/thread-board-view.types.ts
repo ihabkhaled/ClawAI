@@ -1,5 +1,9 @@
 import type { BoardChipKind } from '@/enums/board-chip-kind.enum';
-import type { ThreadBoardItem, ThreadBoardType } from '@/types/thread-board.types';
+import type {
+  ThreadBoardInitialList,
+  ThreadBoardItem,
+  ThreadBoardType,
+} from '@/types/thread-board.types';
 
 export type BoardCardItem = ThreadBoardItem;
 
@@ -66,3 +70,19 @@ export type BoardRateLimit = { retryAfterSeconds: number | null };
 export type BoardErrorProps = { onRetry: () => void; rateLimit?: BoardRateLimit | null };
 
 export type BoardChipInput = BoardFilterValues & { q: string };
+
+export type BoardGuestPromptsProps = {
+  signInHref: string;
+};
+
+export type GuestBoardPageViewProps = {
+  /** The first page the server rendered; absent when the server could not load it. */
+  initial?: ThreadBoardInitialList;
+};
+
+export type BoardPageViewProps = GuestBoardPageViewProps;
+
+/** Next passes the URL query to a page as a promise of this shape. */
+export type BoardSearchParams = Record<string, string | string[] | undefined>;
+
+export type PublicThreadsBoardPageProps = { searchParams: Promise<BoardSearchParams> };

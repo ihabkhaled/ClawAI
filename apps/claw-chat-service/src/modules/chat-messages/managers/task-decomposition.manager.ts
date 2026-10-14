@@ -17,6 +17,7 @@ import { LocalModelSelectionService } from '../services/local-model-selection.se
 import { ChatContextGatewayManager } from './chat-context-gateway.manager';
 import { resolveContextTurnText } from '../utilities/attachment-only-turn.utility';
 import { ModeExecutionGatewayManager } from './mode-execution-gateway.manager';
+import { pluginRefsMetadata } from '../utilities/plugin-refs.utility';
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
 import { parseJudgeModel } from '../../../common/utilities/judge-model-parse.utility';
@@ -25,6 +26,7 @@ import { ResearchEnricherManager } from './research-enricher.manager';
 import type { DecomposeTaskDto } from '../dto/decompose-task.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type { ChatContextBundle } from '../types/chat-context-gateway.types';
+import type { ResearchOrchestrationResult } from '../types/research-enricher.types';
 import type {
   SubTask,
   SubTaskResult,
@@ -97,6 +99,7 @@ export class TaskDecompositionManager {
         decompositionRequest: true,
         modelSelection: selection,
         ...(dto.fileIds !== undefined && dto.fileIds.length > 0 ? { fileIds: dto.fileIds } : {}),
+        ...pluginRefsMetadata(dto.pluginRefs),
       },
     });
 
@@ -156,79 +159,39 @@ export class TaskDecompositionManager {
       // cross-thread retrieval once per sub-task to produce bundles that differ
       // only by the question asked, and a five-sub-task run would pay for the
       // same retrievals seven times.
-      const bundle = await this.chatContextGateway.build({
-        userId,
-        threadId,
-        surface: ChatSurface.DECOMPOSE,
-        historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
-        // The enricher's transcript used to be glued to the front of every raw
-        // prompt by `prependResearchEvidence`, then merged as a plain
-        // `personaInstruction` with no grounding flag. `researchEvidenceInstruction`
-        // routes it through `injectResearchEvidenceIntoContext`, which sets
-        // `researchGroundingInjected` so the final-user-turn reminder fires for
-        // the planner and every sub-task the same way it does for chat.
-        ...(enrichment.systemPrompt.length > 0
-          ? { researchEvidenceInstruction: enrichment.systemPrompt }
-          : {}),
-        ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
-      });
+      const bundle = await this.buildSharedBundle(userId, threadId, enrichment, fileIds);
       // Rule 42 §18: an attachment-only send's request IS the attachment —
       // spelled out once here for every stage below, never stored.
       const request = resolveContextTurnText(content, bundle.context);
       const subTasks = await this.decomposeContent(request, maxSubTasks, resolvedSelection, bundle);
-      this.safeEmitStage(threadId, {
-        label: 'Decomposing prompt',
-        status: OrchestrationStageStatus.COMPLETED,
-        detail: `${String(subTasks.length)} sub-tasks planned`,
-        stageId: 'decompose:plan',
-      });
-      this.chatStreamService.emitProgressStage(threadId, StreamEventType.RESPONSE_STREAMING, {
-        label: 'Executing sub-tasks',
-        description: `${String(subTasks.length)} sub-tasks are running in parallel.`,
-        actorType: ProgressActorType.SYSTEM,
-        actorName: 'Task decomposition',
-      });
+      this.announceSubTasksPlanned(threadId, subTasks.length);
       const subTaskResults = await this.executeSubTasks(
         threadId,
         subTasks,
         resolvedSelection,
         bundle,
       );
-      this.safeEmitStage(threadId, {
-        label: 'Aggregating',
-        status: OrchestrationStageStatus.ACTIVE,
-        detail: 'Merging sub-task results into a final answer',
-        stageId: 'decompose:aggregate',
-      });
-      const mergedContent = await this.mergeResults(
+      const mergedContent = await this.mergeAndAnnounce(
+        threadId,
         request,
         subTaskResults,
         resolvedSelection,
         bundle,
       );
-      this.safeEmitStage(threadId, {
-        label: 'Aggregating',
-        status: OrchestrationStageStatus.COMPLETED,
-        detail: `${String(subTaskResults.length)} sub-tasks merged`,
-        stageId: 'decompose:aggregate',
-      });
       const resolvedModel = resolvedSelection.actualModel;
 
-      await this.chatMessagesRepository.create({
+      await this.storeMergedMessage(
         threadId,
-        role: 'ASSISTANT',
-        content: mergedContent,
-        provider: 'local-ollama',
-        model: resolvedModel,
-        latencyMs: Date.now() - startTime,
-        usedFallback: false,
-        metadata: this.buildDecomposeMetadata(
+        mergedContent,
+        resolvedModel,
+        Date.now() - startTime,
+        this.buildDecomposeMetadata(
           resolvedSelection,
           resolvedModel,
           subTaskResults,
           enrichment.transcript,
-        ) as Prisma.InputJsonValue,
-      });
+        ),
+      );
 
       this.safeEmitStage(threadId, {
         label: 'Complete',
@@ -237,21 +200,106 @@ export class TaskDecompositionManager {
       });
       this.chatStreamService.emitCompletion(threadId, 'local-ollama', resolvedModel);
     } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : 'Task decomposition failed';
-      this.logger.error(`executeInBackground: failed for thread ${threadId} - ${errorMsg}`);
-      this.safeEmitStage(threadId, {
-        label: 'Decomposition failed',
-        status: OrchestrationStageStatus.ERROR,
-        detail: errorMsg,
-        stageId: 'decompose:error',
-      });
-      this.chatStreamService.emitError(threadId, errorMsg);
-      try {
-        await this.storeErrorMessage(threadId, errorMsg);
-      } catch (storeError: unknown) {
-        const storeMsg = storeError instanceof Error ? storeError.message : 'Store failed';
-        this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
-      }
+      await this.handleBackgroundFailure(threadId, error);
+    }
+  }
+
+  private announceSubTasksPlanned(threadId: string, subTaskCount: number): void {
+    this.safeEmitStage(threadId, {
+      label: 'Decomposing prompt',
+      status: OrchestrationStageStatus.COMPLETED,
+      detail: `${String(subTaskCount)} sub-tasks planned`,
+      stageId: 'decompose:plan',
+    });
+    this.chatStreamService.emitProgressStage(threadId, StreamEventType.RESPONSE_STREAMING, {
+      label: 'Executing sub-tasks',
+      description: `${String(subTaskCount)} sub-tasks are running in parallel.`,
+      actorType: ProgressActorType.SYSTEM,
+      actorName: 'Task decomposition',
+    });
+  }
+
+  private async mergeAndAnnounce(
+    threadId: string,
+    request: string,
+    subTaskResults: SubTaskResult[],
+    selection: AdvancedModelSelectionResolution,
+    bundle: ChatContextBundle,
+  ): Promise<string> {
+    this.safeEmitStage(threadId, {
+      label: 'Aggregating',
+      status: OrchestrationStageStatus.ACTIVE,
+      detail: 'Merging sub-task results into a final answer',
+      stageId: 'decompose:aggregate',
+    });
+    const mergedContent = await this.mergeResults(request, subTaskResults, selection, bundle);
+    this.safeEmitStage(threadId, {
+      label: 'Aggregating',
+      status: OrchestrationStageStatus.COMPLETED,
+      detail: `${String(subTaskResults.length)} sub-tasks merged`,
+      stageId: 'decompose:aggregate',
+    });
+    return mergedContent;
+  }
+
+  private async buildSharedBundle(
+    userId: string,
+    threadId: string,
+    enrichment: ResearchOrchestrationResult,
+    fileIds: string[] | undefined,
+  ): Promise<ChatContextBundle> {
+    return this.chatContextGateway.build({
+      userId,
+      threadId,
+      surface: ChatSurface.DECOMPOSE,
+      historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
+      // The enricher's transcript used to be glued to the front of every raw
+      // prompt by `prependResearchEvidence`, then merged as a plain
+      // `personaInstruction` with no grounding flag. `researchEvidenceInstruction`
+      // routes it through `injectResearchEvidenceIntoContext`, which sets
+      // `researchGroundingInjected` so the final-user-turn reminder fires for
+      // the planner and every sub-task the same way it does for chat.
+      ...(enrichment.systemPrompt.length > 0
+        ? { researchEvidenceInstruction: enrichment.systemPrompt }
+        : {}),
+      ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
+    });
+  }
+
+  private async storeMergedMessage(
+    threadId: string,
+    content: string,
+    model: string,
+    latencyMs: number,
+    metadata: Record<string, unknown>,
+  ): Promise<void> {
+    await this.chatMessagesRepository.create({
+      threadId,
+      role: 'ASSISTANT',
+      content,
+      provider: 'local-ollama',
+      model,
+      latencyMs,
+      usedFallback: false,
+      metadata: metadata as Prisma.InputJsonValue,
+    });
+  }
+
+  private async handleBackgroundFailure(threadId: string, error: unknown): Promise<void> {
+    const errorMsg = error instanceof Error ? error.message : 'Task decomposition failed';
+    this.logger.error(`executeInBackground: failed for thread ${threadId} - ${errorMsg}`);
+    this.safeEmitStage(threadId, {
+      label: 'Decomposition failed',
+      status: OrchestrationStageStatus.ERROR,
+      detail: errorMsg,
+      stageId: 'decompose:error',
+    });
+    this.chatStreamService.emitError(threadId, errorMsg);
+    try {
+      await this.storeErrorMessage(threadId, errorMsg);
+    } catch (storeError: unknown) {
+      const storeMsg = storeError instanceof Error ? storeError.message : 'Store failed';
+      this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
     }
   }
 

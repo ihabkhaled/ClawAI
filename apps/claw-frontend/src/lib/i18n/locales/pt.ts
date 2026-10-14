@@ -13,19 +13,24 @@ import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
+import { PLUGIN_CHAT_TRANSLATIONS } from './plugin-chat-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
 import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
+import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
+import { THREAD_PUBLIC_BOARD_TRANSLATIONS } from './thread-public-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const pt: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.pt,
+  pluginChat: PLUGIN_CHAT_TRANSLATIONS.pt,
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.pt,
+  pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.pt,
   pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.pt,
   pagination: {
     label: 'Paginação',
@@ -455,6 +460,7 @@ export const pt: TranslationDictionary = {
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.pt,
     ...THREAD_BOARD_TRANSLATIONS.pt,
+    ...THREAD_PUBLIC_BOARD_TRANSLATIONS.pt,
     composerContext: {
       menuLabel: 'Contexto',
       pickLabel: 'Escolher pacotes de contexto',
@@ -837,6 +843,18 @@ export const pt: TranslationDictionary = {
     deleteThreadConfirm: 'Tem certeza que deseja excluir esta conversa?',
     threadCreated: 'Conversa criada',
     threadCreateFailed: 'Falha ao criar conversa',
+    threadTeam: {
+      title: 'Equipe recomendada',
+      summary:
+        'Escolhemos modelos que funcionam no seu plano. Abra Avançado só se quiser escolhê-los você mesmo.',
+      customised: 'Você mudou a equipe. Use a equipe recomendada para voltar à nossa escolha.',
+      none: 'Não há equipe recomendada no momento. Escolha os modelos em Avançado.',
+      advanced: 'Avançado: escolher os modelos',
+      reset: 'Usar a equipe recomendada',
+      reasonNeedsPlan: 'Não está no seu plano {plan}',
+      reasonWindow: 'Janela de contexto pequena demais',
+      reasonUnavailable: 'Indisponível no momento',
+    },
     threadProgress: {
       title: 'Progresso da geração',
       statusQueued: 'Na fila de espera',
@@ -846,6 +864,8 @@ export const pt: TranslationDictionary = {
       stageLabel: 'Etapa',
       attempt: 'Tentativa {current} de {max}',
       spent: 'Gasto até agora: {amount}',
+      platformFailureNotice: 'O problema foi nosso, não seu. Sua cota gratuita não foi usada.',
+      retryOnUs: 'Tentar de novo por nossa conta',
       selectedTitle: 'O que você escolheu',
       fallbacks: 'Alternativas: {list}',
       noFallbacks: 'Sem alternativas',

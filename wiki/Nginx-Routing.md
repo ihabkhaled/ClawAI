@@ -1,6 +1,6 @@
 # Nginx Routing
 
-Current generated route count: **59**.
+Current generated route count: **61** listed (infra/nginx/locations.conf is the full table).
 
 | Location                                 | Service                 | Port | Source                                                                                                  |
 | ---------------------------------------- | ----------------------- | ---- | ------------------------------------------------------------------------------------------------------- |
@@ -50,11 +50,13 @@ Current generated route count: **59**.
 | `/api/v1/payments`                       | payment-service         | 4018 | [infra/nginx/locations.conf](https://github.com/ihabkhaled/ClawAI/blob/main/infra/nginx/locations.conf) |
 | `/api/v1/payments/webhooks`              | payment-service         | 4018 | [infra/nginx/locations.conf](https://github.com/ihabkhaled/ClawAI/blob/main/infra/nginx/locations.conf) |
 | `/api/v1/public/chat-shares`             | chat-service            | 4002 | [infra/nginx/locations.conf](https://github.com/ihabkhaled/ClawAI/blob/main/infra/nginx/locations.conf) |
+| `/api/v1/plugins`                        | plugin-service          | 4021 | [infra/nginx/locations.conf](https://github.com/ihabkhaled/ClawAI/blob/main/infra/nginx/locations.conf) |
 | `/api/v1/research`                       | research-service        | 4016 | [infra/nginx/locations.conf](https://github.com/ihabkhaled/ClawAI/blob/main/infra/nginx/locations.conf) |
 | `/api/v1/router-models`                  | routing-service         | 4004 | [infra/nginx/locations.conf](https://github.com/ihabkhaled/ClawAI/blob/main/infra/nginx/locations.conf) |
 | `/api/v1/routing`                        | routing-service         | 4004 | [infra/nginx/locations.conf](https://github.com/ihabkhaled/ClawAI/blob/main/infra/nginx/locations.conf) |
 | `/api/v1/routing/adaptive-insights`      | routing-service         | 4004 | [infra/nginx/locations.conf](https://github.com/ihabkhaled/ClawAI/blob/main/infra/nginx/locations.conf) |
 | `/api/v1/server-logs`                    | server-logs-service     | 4011 | [infra/nginx/locations.conf](https://github.com/ihabkhaled/ClawAI/blob/main/infra/nginx/locations.conf) |
+| `/api/v1/thread-publications`            | threads-service         | 4019 | [infra/nginx/locations.conf](https://github.com/ihabkhaled/ClawAI/blob/main/infra/nginx/locations.conf) |
 | `/api/v1/threads`                        | chat-service            | 4002 | [infra/nginx/locations.conf](https://github.com/ihabkhaled/ClawAI/blob/main/infra/nginx/locations.conf) |
 | `/api/v1/usage`                          | audit-service           | 4007 | [infra/nginx/locations.conf](https://github.com/ihabkhaled/ClawAI/blob/main/infra/nginx/locations.conf) |
 | `/api/v1/users`                          | auth-service            | 4001 | [infra/nginx/locations.conf](https://github.com/ihabkhaled/ClawAI/blob/main/infra/nginx/locations.conf) |

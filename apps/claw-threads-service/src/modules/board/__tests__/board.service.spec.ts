@@ -37,6 +37,14 @@ function fake(overrides: Record<string, () => unknown> = {}): {
 
 const query = { sort: 'latest', lang: 'all', type: 'all', page: 2, limit: 12 } as const;
 
+describe('BoardService.list (guest)', () => {
+  it('passes a null user to the repository', async () => {
+    const { repo, mocks } = fake();
+    await new BoardService(repo).list(null, query);
+    expect(mocks['list']).toHaveBeenCalledWith(expect.objectContaining({ userId: null }));
+  });
+});
+
 describe('BoardService.list', () => {
   it('returns items, meta and no suggestion when results are plentiful', async () => {
     const { repo, mocks } = fake();

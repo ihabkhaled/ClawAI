@@ -18,7 +18,7 @@ export function useEscalationPage(): UseEscalationPageReturn {
   const [selectedModel, setSelectedModel] = useState<AdvancedModuleModelSelection>(null);
   const [additionalChainModels, setAdditionalChainModels] = useState<EscalationChainStep[]>([]);
   const [prompt, setPrompt] = useState('');
-  const composer = useOrchestrationComposer();
+  const composer = useOrchestrationComposer(false, { value: prompt, onValueChange: setPrompt });
   const { send, result, isPending, isError } = useSendEscalationChain();
 
   const threadId = result?.threadId ?? null;

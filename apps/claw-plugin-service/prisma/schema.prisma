@@ -54,6 +54,15 @@ enum RiskLevel {
   DESTRUCTIVE
 }
 
+enum ServerStatus {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  DISABLED
+  NEEDS_REVIEW
+  UNREACHABLE
+}
+
 model PluginCatalogEntry {
   id               String        @id @default(uuid())
   slug             String        @unique
@@ -169,12 +178,16 @@ model PluginCredential {
   @@map("plugin_credentials")
 }
 
-/// Audit of tool calls (shape only in batch 2; rows are written by the invoke path in batch 3). No secrets, no results.
+
+/// Audit of tool calls. No secrets, no results. A call targets a catalog install or a user-registered
+/// server, so both ids are optional and exactly one is set. (userId, callId) is the idempotency key of a call.
 model PluginInvocation {
   id              String           @id @default(uuid())
   userId          String           @map("user_id")
-  installId       String           @map("install_id")
-  pluginId        String           @map("plugin_id")
+  installId       String?          @map("install_id")
+  pluginId        String?          @map("plugin_id")
+  serverId        String?          @map("server_id")
+  callId          String?          @map("call_id")
   toolName        String           @map("tool_name")
   conversationId  String?          @map("conversation_id")
   messageId       String?          @map("message_id")
@@ -191,8 +204,79 @@ model PluginInvocation {
   durationMs      Int?             @map("duration_ms")
   createdAt       DateTime         @default(now()) @map("created_at")
 
+  @@unique([userId, callId])
   @@index([userId, createdAt])
   @@index([pluginId, createdAt])
   @@index([installId])
+  @@index([serverId])
   @@map("plugin_invocations")
+}
+
+/// A remote MCP server a user registered for their own account. Owner-scoped by ownerUserId. The URL is
+/// https only and re-checked (DNS included) at registration, at every refresh and at every call.
+model McpServer {
+  id              String               @id @default(uuid())
+  ownerUserId     String               @map("owner_user_id")
+  /// "mcp" + 8 hex characters of the id; the slug in the native tool name plugin_slug_tool.
+  slug            String               @unique
+  name            String
+  url             String
+  urlHost         String               @map("url_host")
+  authKind        AuthKind             @map("auth_kind")
+  status          ServerStatus
+  serverInfo      Json?                @map("server_info")
+  /// Hash of the approved tool list. A different hash from tools/list sets NEEDS_REVIEW (tool poisoning).
+  toolsHash       String?              @map("tools_hash")
+  lastCheckedAt   DateTime?            @map("last_checked_at")
+  lastErrorCode   String?              @map("last_error_code")
+  failureCount    Int                  @default(0) @map("failure_count")
+  breakerOpenedAt DateTime?            @map("breaker_opened_at")
+  tools           McpServerTool[]
+  credential      McpServerCredential?
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  @@unique([ownerUserId, url])
+  @@index([ownerUserId, status])
+  @@index([urlHost])
+  @@map("mcp_servers")
+}
+
+/// The tools/list snapshot the user approved. Server-supplied text is untrusted and already sanitised.
+/// Every tool starts as WRITE; only the owner may lower it.
+model McpServerTool {
+  id             String    @id @default(uuid())
+  serverId       String    @map("server_id")
+  server         McpServer @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  /// The name as the server knows it.
+  name           String
+  /// The name used in the native tool name: [a-z0-9_]{1,40}.
+  localName      String    @map("local_name")
+  description    String
+  inputSchema    Json      @map("input_schema")
+  schemaHash     String    @map("schema_hash")
+  riskLevel      RiskLevel @default(WRITE) @map("risk_level")
+  enabled        Boolean   @default(true)
+  consentGranted Boolean   @default(false) @map("consent_granted")
+
+  @@unique([serverId, name])
+  @@unique([serverId, localName])
+  @@map("mcp_server_tools")
+}
+
+/// Write-only secret for a user server. Same sealing as PluginCredential; AAD is userId:serverId.
+model McpServerCredential {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  serverId   String    @unique @map("server_id")
+  server     McpServer @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  kind       AuthKind
+  headerName String    @map("header_name")
+  ciphertext String
+  keyVersion Int       @default(1) @map("key_version")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("mcp_server_credentials")
 }

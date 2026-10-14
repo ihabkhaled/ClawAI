@@ -120,7 +120,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 193,
+      "testFiles": 194,
       "testRunner": "vitest"
     },
     {
@@ -150,7 +150,7 @@
         "MessageAttachment",
         "PromptTemplate"
       ],
-      "testFiles": 340,
+      "testFiles": 346,
       "testRunner": "vitest"
     },
     {
@@ -424,7 +424,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-plugin-service",
-      "endpointCount": 18,
+      "endpointCount": 30,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -438,6 +438,9 @@
       "port": 4021,
       "portSource": "shared-constants",
       "prismaModels": [
+        "McpServer",
+        "McpServerCredential",
+        "McpServerTool",
         "PluginCatalogEntry",
         "PluginCredential",
         "PluginInstall",
@@ -447,7 +450,7 @@
         "PluginToolConsent",
         "PluginVersion"
       ],
-      "testFiles": 43,
+      "testFiles": 67,
       "testRunner": "vitest"
     },
     {
@@ -574,13 +577,13 @@
         "ThreadModelCommunication",
         "ThreadRevisionDraft"
       ],
-      "testFiles": 53,
+      "testFiles": 56,
       "testRunner": "vitest"
     },
     {
       "database": "postgresql",
       "dir": "apps/claw-threads-service",
-      "endpointCount": 33,
+      "endpointCount": 36,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -606,7 +609,7 @@
         "ThreadPublicationSearchDoc",
         "ThreadPublicationView"
       ],
-      "testFiles": 76,
+      "testFiles": 84,
       "testRunner": "vitest"
     },
     {

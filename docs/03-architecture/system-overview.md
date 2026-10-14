@@ -91,6 +91,8 @@ graph TB
 | 14  | workspace-service       | 4014 | PG `claw_workspace`         | Workspace connectors, sync, search, objects, actions                     |
 | 15  | agent-service           | 4015 | PG `claw_agent`             | Desktop agent sessions, command approvals, repos, file events            |
 
+Services 16-21 (research, llamacpp, payment, threads, thread-generation and **plugin**) are listed in [services-index.md](../04-backend/services-index.md). `plugin-service` (4021, PostgreSQL `claw_plugin`) owns the plugin and MCP catalog, installs, tool consent and write-only credentials.
+
 ---
 
 ## Database Topology
@@ -99,19 +101,20 @@ graph TB
 
 Each service owns its database exclusively. No cross-database queries.
 
-| Database              | Service                 | Key Tables                                                                      | Extensions |
-| --------------------- | ----------------------- | ------------------------------------------------------------------------------- | ---------- |
-| claw_auth             | auth-service            | User, Session, SystemSetting                                                    | --         |
-| claw_chat             | chat-service            | ChatThread, ChatMessage, MessageAttachment                                      | --         |
-| claw_connectors       | connector-service       | Connector, ConnectorModel, ConnectorHealthEvent, ModelSyncRun                   | --         |
-| claw_routing          | routing-service         | RoutingDecision, RoutingPolicy                                                  | --         |
-| claw_memory           | memory-service          | MemoryRecord, ContextPack, ContextPackItem                                      | pgvector   |
-| claw_files            | file-service            | File, FileChunk                                                                 | --         |
-| claw_ollama           | ollama-service          | LocalModel, LocalModelRoleAssignment, PullJob, RuntimeConfig, ModelCatalogEntry | --         |
-| claw_images           | image-service           | ImageGeneration, ImageGenerationAsset, ImageGenerationEvent                     | --         |
-| claw_file_generations | file-generation-service | FileGeneration, FileGenerationAsset, FileGenerationEvent                        | --         |
-| claw_workspace        | workspace-service       | WorkspaceConnector, WorkspaceSyncRun, WorkspaceObject, WorkspaceAction          | --         |
-| claw_agent            | agent-service           | AgentSession, TerminalCommand, LocalRepo, FileWatchEvent                        | --         |
+| Database              | Service                 | Key Tables                                                                                                                         | Extensions |
+| --------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| claw_auth             | auth-service            | User, Session, SystemSetting                                                                                                       | --         |
+| claw_chat             | chat-service            | ChatThread, ChatMessage, MessageAttachment                                                                                         | --         |
+| claw_connectors       | connector-service       | Connector, ConnectorModel, ConnectorHealthEvent, ModelSyncRun                                                                      | --         |
+| claw_routing          | routing-service         | RoutingDecision, RoutingPolicy                                                                                                     | --         |
+| claw_memory           | memory-service          | MemoryRecord, ContextPack, ContextPackItem                                                                                         | pgvector   |
+| claw_files            | file-service            | File, FileChunk                                                                                                                    | --         |
+| claw_ollama           | ollama-service          | LocalModel, LocalModelRoleAssignment, PullJob, RuntimeConfig, ModelCatalogEntry                                                    | --         |
+| claw_images           | image-service           | ImageGeneration, ImageGenerationAsset, ImageGenerationEvent                                                                        | --         |
+| claw_file_generations | file-generation-service | FileGeneration, FileGenerationAsset, FileGenerationEvent                                                                           | --         |
+| claw_workspace        | workspace-service       | WorkspaceConnector, WorkspaceSyncRun, WorkspaceObject, WorkspaceAction                                                             | --         |
+| claw_agent            | agent-service           | AgentSession, TerminalCommand, LocalRepo, FileWatchEvent                                                                           | --         |
+| claw_plugin           | plugin-service          | PluginCatalogEntry, PluginVersion, PluginTool, PluginInstall, PluginToolConsent, PluginCredential, PluginInvocation, PluginSetting | --         |
 
 ### MongoDB (3 Databases)
 

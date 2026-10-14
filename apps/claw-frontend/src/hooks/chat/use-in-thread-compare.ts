@@ -6,6 +6,7 @@ import { DEFAULT_RESEARCH_OPTIONS } from '@/constants/research.constants';
 import { ResearchMode } from '@/enums';
 import { useComposerAttachmentSurface } from '@/hooks/chat/use-composer-attachment-surface';
 import { useJudgeModelOptions } from '@/hooks/chat/use-judge-model-options';
+import { usePluginMentionSelection } from '@/hooks/chat/use-plugin-mention-selection';
 import { useComposerAttachments } from '@/hooks/files/use-composer-attachments';
 import { useResearchProviders } from '@/hooks/research/use-research-providers';
 import { useTranslation } from '@/lib/i18n';
@@ -31,6 +32,8 @@ export function useInThreadCompare({
 }: UseInThreadCompareParams): UseInThreadCompareReturn {
   const [selectedModels, setSelectedModels] = useState<ParallelModelTarget[]>([]);
   const [prompt, setPrompt] = useState('');
+  // The `@` plugin picker's chips; sent as `pluginRefs`, so a mention reaches every lane.
+  const pluginMentions = usePluginMentionSelection({ value: prompt, onValueChange: setPrompt });
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { options: judgeModelOptions, isLoading: isJudgeModelOptionsLoading } =
@@ -140,6 +143,7 @@ export function useInThreadCompare({
                 : { researchProviderId: research.providerId }),
             }),
         ...(selectedFileIds.length > 0 ? { fileIds: selectedFileIds } : {}),
+        ...pluginMentions.payload,
       });
     },
     [
@@ -153,6 +157,7 @@ export function useInThreadCompare({
       criticModel,
       research,
       selectedFileIds,
+      pluginMentions.payload,
     ],
   );
 
@@ -165,7 +170,8 @@ export function useInThreadCompare({
     }
     handleCompare(prompt);
     setPrompt('');
-  }, [canSend, prompt, handleCompare, selectedFileIds]);
+    pluginMentions.clear();
+  }, [canSend, prompt, handleCompare, selectedFileIds, pluginMentions]);
 
   return {
     selectedModels,
@@ -198,5 +204,6 @@ export function useInThreadCompare({
     isUploading,
     attachmentTray,
     attachmentChips,
+    pluginMentions,
   };
 }

@@ -28,7 +28,7 @@ export class GenerationSpendSyncService {
     if (last !== undefined && now - last < SPEND_SYNC_MIN_INTERVAL_MS) return;
     this.remember(jobId, now);
     try {
-      await this.repository.syncSpend(jobId, await this.budgets.settledMicroUsd(budgetId));
+      await this.repository.syncSpend(jobId, await this.budgets.spentMicroUsd(budgetId));
     } catch {
       this.logger.debug(`Running spend could not be synced for job ${jobId}`);
     }

@@ -69,6 +69,7 @@ export function MessageComposer(props: MessageComposerProps): React.ReactElement
             maxRows={composer.maxRows}
             recallHistory={composer.recallHistory}
             allowEmptySubmit={composer.allowEmptySubmit}
+            pluginMentions={composer.pluginMentions}
             // Strips the shadcn field frame — the card around it is the frame
             // now — and turns off the native drag handle. Dragging is what let
             // the old composer be left in a state the user could not undo, and

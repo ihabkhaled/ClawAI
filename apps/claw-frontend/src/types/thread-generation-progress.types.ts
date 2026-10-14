@@ -86,6 +86,8 @@ export type ThreadFailureCardProps = {
   failure: ThreadGenerationFailure;
   /** Role kind of the failed role, when the step list names it. */
   roleKind: ThreadGenerationStepRoleKind | null;
+  /** True when the platform caused the failure and gave the Free allowance back. */
+  allowanceRefunded?: boolean;
 };
 
 export type ThreadStepItemProps = { step: ThreadGenerationStep };

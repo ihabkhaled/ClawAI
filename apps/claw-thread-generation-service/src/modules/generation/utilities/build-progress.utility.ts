@@ -5,6 +5,7 @@ import type {
   ThreadGenerationStepRoleKind,
 } from '@claw/shared-types';
 
+import { GenerationBudgetCloseStatus } from '../../../common/enums/generation-budget-close-status.enum';
 import {
   NON_RETRYABLE_STEP_CODES,
   STEP_CANCELLED_CODE,
@@ -116,6 +117,7 @@ export function buildProgress(
     attemptCount: job.attemptCount,
     maxAttempts: MAX_GENERATION_ATTEMPTS,
     spentMicroCredits: job.spentMicroCredits.toString(),
+    allowanceRefunded: job.budgetCloseStatus === GenerationBudgetCloseStatus.PLATFORM_FAILED,
     createdAt: job.createdAt.toISOString(),
     updatedAt: job.updatedAt.toISOString(),
     selections: {

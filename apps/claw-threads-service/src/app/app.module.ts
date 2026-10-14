@@ -56,8 +56,9 @@ import { AccountDeletionModule } from '../modules/account-deletion/account-delet
     }),
     HealthModule,
     PrismaModule,
-    PublicationsModule,
+    // BoardModule first: its `public/board` route must register before `public/:slug`.
     BoardModule,
+    PublicationsModule,
     AccountDeletionModule,
   ],
   providers: [

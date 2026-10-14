@@ -2,7 +2,7 @@ import { GenerationBudgetCloseStatus } from '../../../../common/enums/generation
 import { GenerationBudgetCloser } from '../generation-budget-closer';
 
 function build(settled: () => Promise<number>) {
-  const budgets = { settledMicroUsd: vi.fn(settled), close: vi.fn().mockResolvedValue(undefined) };
+  const budgets = { spentMicroUsd: vi.fn(settled), close: vi.fn().mockResolvedValue(undefined) };
   const repository = {
     syncSpend: vi.fn().mockResolvedValue(undefined),
     markBudgetClosed: vi.fn().mockResolvedValue(undefined),

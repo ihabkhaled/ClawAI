@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 import { PublicMarkdownRenderer } from '@/components/chat-shares/public-markdown-renderer';
 import type { ThreadReaderBodyProps } from '@/types/thread-board-reader.types';
 import { safeThreadCitationUrl } from '@/utilities/thread-citation.utility';
+import { stripUnresolvedSourceMarkers } from '@/utilities/thread-source-marker.utility';
 
 /** The rendered article text and its sources list, shared by the public page and the Board reader. */
 export function ThreadReaderBody({
@@ -18,7 +19,10 @@ export function ThreadReaderBody({
   return (
     <>
       <div className="thread-publication-content min-w-0 break-words">
-        <PublicMarkdownRenderer content={markdown} truncatedLabel={truncatedLabel} />
+        <PublicMarkdownRenderer
+          content={stripUnresolvedSourceMarkers(markdown)}
+          truncatedLabel={truncatedLabel}
+        />
       </div>
       {safeCitations.length > 0 ? (
         <section aria-labelledby="thread-public-citations-title" className="mt-8 border-t pt-5">

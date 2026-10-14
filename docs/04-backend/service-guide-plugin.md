@@ -17,13 +17,16 @@ Batch 1 shipped the foundation: the service scaffold, the seeded first-party cat
 (`web-fetch`, `datetime-and-math`, `weather`, as manifests only), the `PluginSetting`
 seeder, and the catalog read API behind the portal `/plugins` browse and detail pages.
 Batch 2 added installs, per-tool consent, write-only credentials, the admin controls and the account-deletion
-consumer ([ADR-172](../13-adr/adr-172-plugin-installs-consent-and-credentials.md)). There is no MCP client, invoke
-path or chat integration yet.
+consumer ([ADR-172](../13-adr/adr-172-plugin-installs-consent-and-credentials.md)).
+Batch 3 added user MCP servers, the MCP client, the invoke route with its built-in adapters (`web-fetch`, `weather`,
+`datetime-and-math`), the metering, and the SSRF guard that all outbound traffic goes through
+([ADR-179](../13-adr/adr-179-user-mcp-servers-are-ssrf-guarded-and-consent-gated.md)). The chat integration (the resolve
+route, the tool loop and the composer) is batch 4.
 
 ## Boundaries
 
 - The plugin database belongs to this service alone. No other service reads it.
-- Chat-service is the only future caller of the internal routes
+- Chat-service is the only caller of the internal routes
   (`/api/v1/internal/plugins/*`). nginx answers 404 for the whole `/api/v1/internal/`
   prefix, so they are never reachable from the browser.
 - The module is on for every plan, Free included. Free users install from the curated
@@ -31,6 +34,8 @@ path or chat integration yet.
 - MCP credentials are encrypted with `PLUGIN_ENCRYPTION_KEY`. A leak of `ENCRYPTION_KEY`
   or of this key does not expose the other.
 - Everything a tool returns is untrusted input (design section 0).
+- The plugin service never connects to a host a user or a manifest named except through `SafeEgressManager`. A user MCP
+  server is public https only, re-resolved and pinned on every call, and its tools start as WRITE.
 
 ## Infrastructure
 
@@ -43,6 +48,13 @@ path or chat integration yet.
 - Gateway: `location /api/v1/plugins` in `infra/nginx/locations.conf` and the distributed
   template (`CLAW_PLUGIN_ORIGIN`).
 - Health: registered in `claw-health-service` and shown under the platform status group.
+
+## The internal routes chat-service calls (`/api/v1/internal/plugins/*`)
+
+chat-service calls these two routes through `PluginInvokePort` (`apps/claw-chat-service/.../clients/plugin-invoke.client.ts`, schema-checked, fails soft). They are built (`PluginInternalController`). Both carry the service credential (`Authorization: Service <token>`, checked by `ServiceTokenGuard` in constant time; the routes are `@Public()` to the user guards) and the owner's `userId` in the body; every lookup is scoped by it. The plan gate (`allowPlugins`) applies exactly as on the user route; the `PLUGINS_USE` role permission does not, because there is no JWT here.
+
+- `POST /api/v1/internal/plugins/resolve {userId, surface, refs: [{installId, toolName?, label?}]}` (at most 5 refs) answers `{tools: [{nativeName, installId, pluginSlug, toolName, title, description, inputSchema, riskLevel}], systemBlock, limits: {maxRounds, maxCallsPerTurn}, notices: [{code}]}`. It returns only tools of installs the caller owns that are ENABLED and available, not admin-disabled, and only the picked tool when a chip names one. `nativeName` is `plugin_<slug>_<tool>` (<= 64). `limits` come from `loop.maxRounds` and `loop.maxCallsPerTurn` (chat-service clamps them again). A plan without plugins, or nothing usable, answers `tools: []` with the notice `PLUGIN_NO_TOOLS`; a plan that cannot be read answers 503 and chat-service answers without tools. Own MCP servers are not offered by resolve yet (the chat `@` picker lists installs only); they are callable through invoke by `serverId`.
+- `POST /api/v1/internal/plugins/invoke` takes the user route's body (see above) plus `userId`. chat-service sends `{userId, installId, toolName, args, callId, surface, tainted, conversationId?, messageId?}`: `callId` is minted per attempt as `chat-<uuid>`, `surface` goes out lower case (`best_of_n`), and empty ids are omitted. The answer is the user route's 200 body; chat-service reads `status` (`OK|ERROR|TIMEOUT|CONSENT_REQUIRED|BLOCKED|RATE_LIMITED|QUOTA_EXCEEDED`), `content`, `truncated`, `durationMs` and `errorCode` (nulls are accepted) and, for an HTTP refusal (403 plan, 409 duplicate, 503 quota unavailable), the `errorCode` of the error body. A WRITE or DESTRUCTIVE tool, or any non-READ tool when `tainted`, answers `CONSENT_REQUIRED` until chat has a consent card (chat-service then tells the model it was not approved). `content` is untrusted text: chat-service fences, sanitises and caps it again.
 
 ## Catalog API
 
@@ -125,10 +137,143 @@ Setting ranges: `loop.maxRounds` 1-10, `loop.maxCallsPerTurn` 1-20, `call.timeou
 `rate.perUserConcurrent` 1-20; the three `userServers.*` keys are booleans. A globally disabled plugin disappears
 from the catalog for everyone and its installs read `UNAVAILABLE`.
 
+## MCP servers API (batch 3)
+
+A user's own remote MCP servers ([ADR-179](../13-adr/adr-179-user-mcp-servers-are-ssrf-guarded-and-consent-gated.md)).
+Every route needs a valid JWT and `PLUGINS_MANAGE_OWN_SERVERS` (ADMIN passes without a lookup). The owner is always the
+JWT user; a server that belongs to someone else answers `404 MCP_SERVER_NOT_FOUND`, the same as a missing one. Server ids
+are UUIDs. Responses are `Cache-Control: private, no-store`. `POST /servers` and `POST /servers/:id/refresh` open a
+connection to a host the user named, so they are rate limited to 10 per minute per caller.
+
+| Method and path                                    | Body                                                                  | Response                                                                                         |
+| -------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `POST /api/v1/plugins/servers`                     | `{name, url, authKind: NONE\|API_KEY\|BEARER_TOKEN, credential?}`     | `201 {server, skippedTools[], ignoredTools}`                                                     |
+| `GET /api/v1/plugins/servers`                      |                                                                       | server views, newest first                                                                       |
+| `GET /api/v1/plugins/servers/:id`                  |                                                                       | server view with `tools[]`                                                                       |
+| `PATCH /api/v1/plugins/servers/:id`                | `{name?, enabled?, tools?: [{name, enabled?, riskLevel?, consent?}]}` | server view with `tools[]`                                                                       |
+| `DELETE /api/v1/plugins/servers/:id`               |                                                                       | `204`; tools and the credential go with it                                                       |
+| `PUT /api/v1/plugins/servers/:id/credential`       | `{value, headerName?}`                                                | `{hasCredential: true, kind, updatedAt}` (write-only)                                            |
+| `DELETE /api/v1/plugins/servers/:id/credential`    |                                                                       | `204` (also when there was none)                                                                 |
+| `POST /api/v1/plugins/servers/:id/refresh`         |                                                                       | `{changed, diff: {added[], removed[], changed[]} \| null, server, skippedTools[], ignoredTools}` |
+| `POST /api/v1/plugins/servers/:id/approve-changes` | `{toolsHash}`                                                         | server view with `tools[]`                                                                       |
+
+`credential` is `{value, headerName?}`: required with `API_KEY` and `BEARER_TOKEN`, refused with `NONE`. The value is
+printable ASCII without spaces, at most 4096 characters. A bearer token always travels as `Authorization: Bearer <value>`;
+an API key uses `X-API-Key` unless `headerName` is another allow-listed header (`Authorization`, `X-API-Key`, `Api-Key`, `X-*`).
+
+Server view: `{id, slug, name, url, urlHost, authKind, status, hasCredential, credentialUpdatedAt, toolCount, toolsHash, serverInfo {name, version} | null, lastCheckedAt, lastErrorCode, createdAt, updatedAt}`.
+Tool view (in `tools[]`): `{name, nativeName, remoteName, description, inputSchema, riskLevel, enabled, consentGranted}`.
+`name` is the local name (`[a-z0-9_]{1,40}`) used by the API; `nativeName` is `plugin_<slug>_<name>` (the slug is `mcp` plus 12 hex
+characters of the id), what the model is offered; `remoteName` is the server's own name for it.
+`status` is `APPROVED` (usable), `PENDING_APPROVAL` (the admin setting `userServers.requireApproval` is on), `NEEDS_REVIEW`
+(the tool list changed), `DISABLED` (the owner switched it off), `REJECTED` or `UNREACHABLE` (reserved for the admin routes).
+`lastErrorCode` is `MCP_SERVER_UNREACHABLE` or `MCP_SERVER_REJECTED`, never a detail.
+
+- Registering resolves and checks the URL, performs `initialize` and the tool-list call (tools/list), vets the tools and stores everything in one
+  transaction behind a per-user advisory lock (cap and duplicate URL are decided inside it). A cheap count runs first, so a
+  user at the cap never makes us open a connection. Every tool starts as `WRITE` with no consent.
+- `PATCH` tools: `riskLevel` may be any of READ, WRITE, DESTRUCTIVE (only the owner can lower it, and changing it clears the
+  stored consent); `consent: true` stores a standing grant and is allowed only on a WRITE tool; `enabled` switches the tool
+  off. The batch is validated whole before anything is written. `enabled` on the server switches an `APPROVED` server off and a
+  `DISABLED` one on; any other state answers `409 MCP_STATE_NOT_ALLOWED`, so nobody skips a review by toggling.
+- `refresh` re-reads the tool-list call (tools/list). Same hash: `changed: false`, the server keeps working. A different hash: the new list is
+  stored, the status becomes `NEEDS_REVIEW` (or stays `PENDING_APPROVAL`), calls are blocked, and the response carries the diff.
+  Tools whose definition did not change keep the owner's settings; new or changed ones start as WRITE. `approve-changes` needs
+  the exact `toolsHash` of the list the owner saw (`409 MCP_REVIEW_HASH_MISMATCH` otherwise, `409 MCP_NOT_AWAITING_REVIEW`
+  when nothing is waiting).
+
+Error codes: `MCP_URL_BLOCKED` 422 (the URL itself: scheme, userinfo, port, local or IP-literal host; one message for all of
+them), `MCP_SERVER_UNREACHABLE` 502 and `MCP_SERVER_REJECTED` 502 (everything that happens after the syntax check: a private
+address, a failed lookup, a closed port, a refused certificate, a redirect, a bad answer; the user cannot tell which),
+`MCP_NO_USABLE_TOOLS` 422, `MCP_SERVERS_DISABLED` 403 (`userServers.enabled` is off), `MCP_SERVER_LIMIT` 403 (`limit`,
+`current`; `maxUserMcpServers` of `0` is disabled, `null` is unlimited), `PLUGIN_PLAN_DISABLED` 403,
+`PLUGIN_ENTITLEMENTS_UNAVAILABLE` 503 (fails closed), `MCP_SERVER_ALREADY_REGISTERED` 409, `MCP_SERVER_NOT_FOUND` 404,
+`MCP_TOOL_NOT_FOUND` 404, `MCP_CONSENT_NOT_ALLOWED` 400, `MCP_CREDENTIAL_NOT_SUPPORTED` 400,
+`MCP_CREDENTIAL_HEADER_DENIED` 400, `MCP_CREDENTIAL_REQUIRED` 400 (refresh of a server whose credential is gone),
+`MCP_STATE_NOT_ALLOWED` 409, `MCP_NOT_AWAITING_REVIEW` 409, `MCP_REVIEW_HASH_MISMATCH` 409.
+
+## Invoke API (batch 3)
+
+The contract for the chat integration. One route runs one tool for the signed-in user:
+
+`POST /api/v1/plugins/invoke`, `Authorization: Bearer <the user's JWT>`, `PLUGINS_USE`. `Cache-Control: no-store`.
+chat-service calls it service to service (`PLUGIN_SERVICE_URL`, not through nginx) with the user's own bearer token
+forwarded, so the caller is the JWT user and nothing in the body can name another one.
+
+Request body (strict; unknown fields are `400`):
+
+| Field                         | Type                                      | Notes                                                                                                                                                                                                                   |
+| ----------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `installId`                   | UUID                                      | A catalog plugin the user installed. Exactly one of `installId` and `serverId`.                                                                                                                                         |
+| `serverId`                    | UUID                                      | One of the user's own MCP servers.                                                                                                                                                                                      |
+| `toolName`                    | `[a-z0-9_]{1,40}`                         | The tool's local name (the part after `plugin_<slug>_`).                                                                                                                                                                |
+| `args`                        | object (default `{}`)                     | Model-written arguments. Validated against the tool's `inputSchema`; at most 32 KB; defaults are filled.                                                                                                                |
+| `callId`                      | `[A-Za-z0-9][A-Za-z0-9_.:-]{7,99}`        | Unique per user. Idempotency key for the quota hold and the audit row (`409 PLUGIN_CALL_DUPLICATE` on reuse). Every answer except `CONSENT_REQUIRED` is audited and so uses the id up; send a new id for a new attempt. |
+| `surface`                     | `[a-z][a-z0-9:_-]{0,39}` (default `chat`) | `chat`, `compare`, `consensus`, `lab:<name>` ...                                                                                                                                                                        |
+| `conversationId`, `messageId` | string <= 100                             | Optional, stored on the audit row.                                                                                                                                                                                      |
+| `tainted`                     | boolean (default false)                   | True when an untrusted tool result is already in the model context this turn.                                                                                                                                           |
+| `userApproved`                | boolean (default false)                   | True only when the user said yes to THIS call (same `callId`, same arguments).                                                                                                                                          |
+
+Response `200` (every runtime outcome is a 200; client mistakes are 4xx):
+
+```
+{ callId, status, content, truncated, untrusted: true, durationMs, riskLevel, nativeName, errorCode, consent, quota }
+```
+
+`status` is one of `OK`, `ERROR`, `TIMEOUT`, `CONSENT_REQUIRED`, `BLOCKED`, `RATE_LIMITED`, `QUOTA_EXCEEDED`.
+`content` is the tool's text wrapped as `<tool_result plugin="<slug>" tool="<tool>" trust="untrusted">...</tool_result>`
+(control, zero-width and bidi characters removed, the fence tag inside it escaped, cut at the result cap with a
+`[result truncated]` note) for `OK`, `ERROR` and `TIMEOUT`; `null` for every status where nothing ran. It is data, never
+instructions: chat-service must keep it inside the fence and must not let it add a tool call. `errorCode` carries the
+reason for anything but `OK`.
+
+| `status`           | When                                                                                                                                     | `errorCode` / extra                                                                                                                                                                               |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OK`               | The tool ran and delivered a result. One `PLUGIN_CALLS` run was consumed.                                                                |                                                                                                                                                                                                   |
+| `ERROR`            | The tool ran and failed (or reported an error). The run was given back.                                                                  | `PLUGIN_TOOL_FAILED`, `PLUGIN_CALL_ABORTED`, `PLUGIN_RESULT_TOO_LARGE`, `PLUGIN_ADAPTER_FAILED`, `PLUGIN_ADAPTER_MISSING`                                                                         |
+| `TIMEOUT`          | The deadline passed (the tool's own, at most 60 s). The run was given back.                                                              | `PLUGIN_TOOL_TIMED_OUT`                                                                                                                                                                           |
+| `CONSENT_REQUIRED` | The user must say yes first. Nothing was held and nothing was audited, so the same `callId` can be sent again with `userApproved: true`. | `consent: {reason, argsHash, argsPreview}`; `reason` is `REQUIRED_FIRST_USE`, `REQUIRED_EVERY_CALL` or `REQUIRED_TAINTED`. `argsPreview` is redacted and <= 512 characters, for the consent card. |
+| `BLOCKED`          | The target exists but cannot run now.                                                                                                    | `PLUGIN_TOOL_UNAVAILABLE` (switched off, withdrawn, admin-disabled tool), `PLUGIN_SERVER_NEEDS_REVIEW`, `PLUGIN_SERVER_BREAKER_OPEN`, `PLUGIN_CREDENTIAL_UNREADABLE`                              |
+| `RATE_LIMITED`     | Over the per-minute rate or the concurrent-call limit.                                                                                   | `PLUGIN_RATE_LIMITED`, `PLUGIN_CONCURRENCY_LIMITED`                                                                                                                                               |
+| `QUOTA_EXCEEDED`   | The daily `PLUGIN_CALLS` allowance is used up or the plan has none.                                                                      | `PLUGIN_CALLS_EXHAUSTED` or `PLUGIN_CALLS_DISABLED`; `quota: {used, limit, window}`                                                                                                               |
+
+HTTP errors: `400 PLUGIN_ARGUMENTS_INVALID` (`errors[{field, message}]`, paths only), `403 PLUGIN_PLAN_DISABLED`,
+`404 PLUGIN_TARGET_NOT_FOUND` (not the caller's, or missing; the same answer), `404 PLUGIN_INVOKE_TOOL_NOT_FOUND`,
+`409 PLUGIN_CALL_DUPLICATE`, `503 PLUGIN_QUOTA_UNAVAILABLE` (auth-service cannot answer; fail closed, the tool did not run).
+Closing the connection aborts a running tool (the Stop button).
+
+Consent rules, in order: READ never asks. `userApproved` lets the call through. A `tainted` turn asks for every non-READ
+call and ignores a standing grant. DESTRUCTIVE asks every call. WRITE asks until a grant is stored (catalog install:
+`POST /installs/:id/consent`; own server: `PATCH /servers/:id` with `consent: true`). `nativeName` is
+`plugin_<slug>_<toolName>` (<= 64 characters), for the model-facing tool catalog.
+
+Limits the chat loop respects come from the `PluginSetting` rows (`loop.maxRounds`, `loop.maxCallsPerTurn`), published to chat-service by the internal
+`resolve` route above; `call.timeoutMs`, `call.maxResultBytes`, `rate.perUserPerMinute` and `rate.perUserConcurrent` are enforced here on every call.
+chat-service reaches the runtime through `POST /api/v1/internal/plugins/invoke` (service token, `userId` in the body), not through this JWT route.
+
+## The egress guard
+
+Everything that reaches a host a user or a manifest named goes through `SafeEgressManager`
+(`src/modules/egress`): syntax first, then DNS here with every answer checked, then a connection pinned to the checked address
+([ADR-179](../13-adr/adr-179-user-mcp-servers-are-ssrf-guarded-and-consent-gated.md)). The release gate is
+`src/modules/egress/__tests__/ssrf-pentest.spec.ts`; the runbook is
+[register-an-mcp-server-safely](../../skills/register-an-mcp-server-safely.md).
+
+- Refused before DNS: any scheme but https, userinfo, a fragment, a port other than 443/8443 (the page reader: 443), more than 2048
+  characters, control characters, IP literals in any notation (decimal, octal, hex, short, full-width, IPv6, mapped, NAT64, 6to4),
+  single-label names, `localhost`, `*.local`, `*.internal`, `*.localhost`, `*.svc`, the cloud metadata names.
+- Refused after DNS: a name with even one answer in a private, loopback, link-local, carrier-grade NAT, benchmarking,
+  documentation, multicast or reserved range, or an IPv6 address outside `2000::/3` or carrying such an IPv4 address.
+- No redirects for MCP traffic. The web reader follows at most 3 hops, each re-checked from the top.
+- `web-fetch` reads any public https page (1 MB cap); `weather` reaches only the two Open-Meteo hosts of its manifest;
+  `datetime-and-math` has no network at all.
+- Per-call defaults come from `PluginSetting` (`call.timeoutMs` 30 s, `call.maxResultBytes` 256 KB); a tool's own manifest
+  limits apply when lower. A server's tool list is capped at 512 KB, 64 tools, 16 KB per schema and 1024 characters per description.
+
 ## Account deletion
 
 The service subscribes to `user.deleted` (queue prefix `claw.plugins`) and deletes the user's credentials, consents,
-installs and invocation audit rows in one transaction, lowering each plugin's `installCount`. It is idempotent and logs
+installs, invocation audit rows and own MCP servers (their tools and credential go with them) in one transaction, lowering each plugin's `installCount`. It is idempotent and logs
 only the event id and counts. If processing throws, the broker retries the durable event.
 
 ## Data and seeding
@@ -136,7 +281,12 @@ only the event id and counts. If processing throws, the broker retries the durab
 Tables (migrations `20261013180000_plugins_init` and `20261014090000_plugin_installs`, both additive):
 `plugin_catalog_entries`, `plugin_versions`, `plugin_tools`, `plugin_settings`, `plugin_installs` (unique
 `(user_id, plugin_id)`), `plugin_tool_consents`, `plugin_credentials` (one per install, ciphertext only) and
-`plugin_invocations` (audit shape; written by the invoke path in batch 3). MCP servers and OAuth state arrive later.
+`plugin_invocations` (the audit: ids, status, risk, consent decision, a hash of the arguments, sizes and timing, never
+the arguments or the result). Batch 3 adds (migration `20261014180000_mcp_servers_and_invoke`, additive and idempotent)
+`mcp_servers` (unique `(owner_user_id, url)`, the circuit-breaker columns), `mcp_server_tools` (the approved snapshot, with
+`risk_level` default WRITE and `consent_granted`), `mcp_server_credentials` (one per server, ciphertext only), and on
+`plugin_invocations` the columns `server_id` and `call_id` (unique with `user_id`) and nullable `install_id` / `plugin_id`.
+OAuth state and host rules arrive later.
 
 - The three first-party manifests live in `src/modules/seeding/constants/manifests/` (typed TypeScript, validated
   by the schema at seed time) and are upserted on every boot by slug and version. A new entry is created
@@ -169,9 +319,19 @@ A stack installed before the plugin service existed needs these manual steps; no
    (`plugin-service`). Without it, HTTPS calls to `https://plugin-service:4021` fail certificate verification.
 4. Bring the stack up with `./scripts/claw.sh up`. Runtime `.env` changes need `service:recreate`, not a restart.
 
+## Production
+
+The live server reads `/srv/clawai/.env`, written before this service existed, and the deploy never
+starts databases or invents secrets. The service's needs are declared in `scripts/prod-required-env.manifest`
+(`PG_PLUGIN_PASSWORD`, `PLUGIN_DATABASE_URL` derived from it, `PLUGIN_ENCRYPTION_KEY` as 64 hex characters,
+and the running `claw-pg-plugin` container). Run `scripts/ensure-prod-env.sh --env /srv/clawai/.env --check` first;
+without `--check` it appends what is missing and never rewrites a value. Steps and traps:
+[add-a-service-to-production](../11-runbooks/add-a-service-to-production.md). The full list of places a service
+is wired is [skills/add-a-new-service.md](../../skills/add-a-new-service.md).
+
 ## References
 
 - Design: [plugins-and-mcp-design](../implementation/plugins-and-mcp-design.md)
-- Decisions: [ADR-171](../13-adr/adr-171-plugins-are-a-separate-service-with-a-curated-catalog.md), [ADR-172](../13-adr/adr-172-plugin-installs-consent-and-credentials.md)
-- Runbook: [add-a-catalog-plugin](../../skills/add-a-catalog-plugin.md)
+- Decisions: [ADR-171](../13-adr/adr-171-plugins-are-a-separate-service-with-a-curated-catalog.md), [ADR-172](../13-adr/adr-172-plugin-installs-consent-and-credentials.md), [ADR-179](../13-adr/adr-179-user-mcp-servers-are-ssrf-guarded-and-consent-gated.md)
+- Runbooks: [add-a-catalog-plugin](../../skills/add-a-catalog-plugin.md), [register-an-mcp-server-safely](../../skills/register-an-mcp-server-safely.md)
 - Service rules: [apps/claw-plugin-service/CLAUDE.md](../../apps/claw-plugin-service/CLAUDE.md)

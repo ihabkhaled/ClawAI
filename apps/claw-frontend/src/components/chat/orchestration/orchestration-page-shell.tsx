@@ -3,13 +3,11 @@ import { Sparkles } from 'lucide-react';
 import { ComposerAttachmentChips } from '@/components/chat/composer-attachment-chips';
 import { ComposerAttachmentTray } from '@/components/chat/composer-attachment-tray';
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
-import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
-import { OrchestrationContextButton } from '@/components/chat/orchestration/orchestration-context-button';
+import { ComposerPlusMenu } from '@/components/chat/composer-plus-menu';
+import { ComposerResearchChip } from '@/components/chat/composer-research-chip';
 import { OrchestrationPageHeader } from '@/components/chat/orchestration/orchestration-page-header';
 import { OrchestrationSingleModelSelect } from '@/components/chat/orchestration/orchestration-single-model-select';
 import { OrchestrationStageTimeline } from '@/components/chat/orchestration/orchestration-stage-timeline';
-import { PromptLibraryButton } from '@/components/chat/prompt-library/prompt-library-button';
-import { ResearchToggle } from '@/components/chat/research-toggle';
 import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
 import { VoiceVideoRecorder } from '@/components/chat/voice-video-recorder';
 import { LoadingState } from '@/components/common/loading-state';
@@ -22,6 +20,7 @@ import { NOOP_FILE_INGEST } from '@/constants/composer-attachment.constants';
 import { AlertVariant } from '@/enums/alert-variant.enum';
 import { LoadingStateVariant } from '@/enums/loading-state.enum';
 import { PlanFeature } from '@/enums/plan-feature.enum';
+import { ResearchMode } from '@/enums/research-mode.enum';
 import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
 import { useModelMediaCapabilities } from '@/hooks/chat/use-model-media-capabilities';
 import { cn } from '@/lib/utils';
@@ -165,6 +164,7 @@ export function OrchestrationPageShell({
                     onChange={onPromptChange}
                     onSubmit={canSubmit ? onSubmit : undefined}
                     allowEmptySubmit={(composer?.selectedFileIds.length ?? 0) > 0}
+                    pluginMentions={composer?.pluginMentions}
                     placeholder={resolvedPromptPlaceholder}
                     disabled={isPending}
                     minRows={ORCHESTRATION_PROMPT_MIN_ROWS}
@@ -178,23 +178,27 @@ export function OrchestrationPageShell({
                     data-testid="orchestration-attachments"
                     className="flex flex-wrap items-center gap-2"
                   >
-                    {/* The same Context button and Prompt library chat has: a lab is a
-                        surface over chat, not a second product (rules/59). */}
-                    <OrchestrationContextButton
-                      selectedIds={composer.contextPackIds}
-                      onChange={composer.setContextPackIds}
+                    {/* The same grouped "+" menu chat has (Attach, Context, Tools): a lab is a
+                        surface over chat, not a second product (rules/59). A lab has no
+                        thread until it runs, so the pack picker holds its choice for the run. */}
+                    <ComposerPlusMenu
                       disabled={isPending}
-                    />
-                    <PromptLibraryButton
-                      onInsert={(text: string) => onPromptChange(appendToDraft(prompt, text))}
-                      disabled={isPending}
-                    />
-                    <FileAttachmentPicker
                       selectedFileIds={composer.selectedFileIds}
-                      onChange={composer.setSelectedFileIds}
-                      disabled={isPending}
+                      onSelectedFileIdsChange={composer.setSelectedFileIds}
                       ingestFiles={composer.ingestFiles}
-                      isUploading={composer.isUploading}
+                      isUploadingAttachment={composer.isUploading}
+                      canResearch={canResearch}
+                      research={composer.research}
+                      onResearchChange={composer.setResearch}
+                      researchProviders={composer.researchProviders}
+                      isResearchProvidersLoading={composer.isResearchProvidersLoading}
+                      threadId={null}
+                      draft={prompt}
+                      onInsertPrompt={(text: string) => onPromptChange(appendToDraft(prompt, text))}
+                      draftContextPacks={{
+                        selectedIds: composer.contextPackIds,
+                        onChange: composer.setContextPackIds,
+                      }}
                     />
                     {/* One wiring here gives all nine lab pages voice and video
                         notes, exactly as it did attachments. */}
@@ -204,14 +208,11 @@ export function OrchestrationPageShell({
                       onRecorded={(file) => composer.ingestFiles([file])}
                       disabled={isPending}
                     />
-                    {/* The whole web-research path existed on the backend for
-                        every lab — DTO field, manager enrichment, plan gate —
-                        and never ran once, because no lab page ever put
-                        `researchMode` on a payload. This control is the
-                        missing link, and it is the same component the chat
-                        composer renders. */}
-                    {canResearch ? (
-                      <ResearchToggle
+                    {/* Web research was complete on the backend for every lab and never ran,
+                        because no lab put `researchMode` on a payload. It lives in the "+"
+                        menu, and a chip names the mode while it is on, as in chat. */}
+                    {canResearch && composer.research.mode !== ResearchMode.NONE ? (
+                      <ComposerResearchChip
                         value={composer.research}
                         providers={composer.researchProviders}
                         isProvidersLoading={composer.isResearchProvidersLoading}

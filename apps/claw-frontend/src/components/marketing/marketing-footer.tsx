@@ -7,6 +7,7 @@ import { MarketingLocaleSwitcher } from '@/components/marketing/marketing-locale
 import { Button } from '@/components/ui/button';
 import { APP_VERSION, MARKETING_GITHUB_URL, ROUTES } from '@/constants';
 import { COMPARISON_HUB_PATH } from '@/constants/public-comparison.constants';
+import { THREADS_PUBLIC_BOARD_PATH } from '@/constants/thread-board-guest.constants';
 import { useTranslation } from '@/lib/i18n';
 import { useFeedbackDialogStore } from '@/stores/feedback-dialog.store';
 import type { MarketingFooterProps } from '@/types';
@@ -70,8 +71,8 @@ export function MarketingFooter({
                 </a>
               </li>
               <li>
-                <Link href="/threads/discover" className="hover:text-foreground">
-                  {t('chat.threadDiscoveryTitle')}
+                <Link href={THREADS_PUBLIC_BOARD_PATH} className="hover:text-foreground">
+                  {t('chat.threadBoardGuestNavLabel')}
                 </Link>
               </li>
               {explorePages.map((page) => (

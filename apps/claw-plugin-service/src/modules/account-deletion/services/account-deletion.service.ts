@@ -15,7 +15,7 @@ export class AccountDeletionService {
     if (!parsed.success) throw new Error('Invalid user deletion event');
     const counts = await this.repository.deleteAllForUser(parsed.data.userId);
     this.logger.log(
-      `handle: event=${parsed.data.eventId} installs=${String(counts.installs)} credentials=${String(counts.credentials)} consents=${String(counts.consents)} invocations=${String(counts.invocations)}`,
+      `handle: event=${parsed.data.eventId} installs=${String(counts.installs)} credentials=${String(counts.credentials)} consents=${String(counts.consents)} invocations=${String(counts.invocations)} servers=${String(counts.servers)}`,
     );
   }
 }

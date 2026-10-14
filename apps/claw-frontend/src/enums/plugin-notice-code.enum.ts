@@ -1,0 +1,7 @@
+/** Why a mentioned plugin did not run (chat-service `PluginNoticeCode`). */
+export enum PluginNoticeCode {
+  SERVICE_UNAVAILABLE = 'PLUGIN_SERVICE_UNAVAILABLE',
+  NO_TOOLS = 'PLUGIN_NO_TOOLS',
+  CONSENT_NOT_AVAILABLE = 'PLUGIN_CONSENT_NOT_AVAILABLE',
+  LIMIT_REACHED = 'PLUGIN_LIMIT_REACHED',
+}

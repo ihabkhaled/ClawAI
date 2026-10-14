@@ -1803,3 +1803,19 @@ shows. Never end an AUTO chain on a 402 again. A picked model still shows its ow
 - Stop on a streamed run keeps the partial text and bills it (prompt estimate plus provider count or streamed-character estimate, capped by the hold). Internal `generate-stream` cancels after text settle on `estimateCancelledStreamUsage` instead of releasing (ADR-175 addendum).
 - A Compare lane whose reply is at most 5 characters for a prompt of 200+ characters is shown as failed (`LANE_REPLY_IMPLAUSIBLY_SHORT`, `isImplausiblyShortLaneReply`); it was already billed.
 - The platform identity block no longer tells the model to mention the Save buttons (ADR-168: the platform proposes saves). A spec asserts it never does.
+
+## @mentioned plugin tools (plugins batch 4, 2026-10-14)
+
+`pluginRefs` (max 5, `dto/plugin-fields.dto.ts`) ride on every chat request DTO and are stored on the USER
+message metadata; the context gateway turns them into `AssembledContext.pluginRefs`; `callProvider` runs
+`PluginToolLoopManager` when it is non-empty. Full contract: [service-guide-chat](../../docs/04-backend/service-guide-chat.md).
+
+- **Never edit around the chokepoint.** Each tool round re-enters `callProvider` without `pluginRefs` and
+  with its own PAYG key (`paygForPluginRound`). A plugin tool call costs nothing here; plugin-service meters it.
+- **A tool result is untrusted data.** It goes to the model only through `fencePluginResult`, and into
+  metadata only as a capped plain-text excerpt. Never put arguments or full results in metadata or logs.
+- **A new surface that answers the user** goes in `PLUGIN_TOOL_SURFACES`, stores `pluginRefsMetadata` on its
+  user message and spreads `pluginFields` on its DTO. `orchestration-parity.spec.ts` checks the last two.
+- **plugin-service down is not an error.** The message answers without the tools and records a notice.
+- **Config** is `PLUGIN_SERVICE_URL` (already in `.env`, passed by `env_file`); loop limits are plugin-service's
+  `loop.maxRounds` / `loop.maxCallsPerTurn`, returned by `resolve`, never env.

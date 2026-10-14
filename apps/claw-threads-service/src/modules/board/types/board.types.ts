@@ -14,7 +14,8 @@ export interface BoardListParams extends BoardFilters {
   readonly sort: BoardSort;
   readonly page: number;
   readonly limit: number;
-  readonly userId: string;
+  /** Null for an anonymous visitor: no reaction join, `viewerReaction` is always null. */
+  readonly userId: string | null;
 }
 
 export interface BoardRow {

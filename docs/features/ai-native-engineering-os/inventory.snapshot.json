@@ -3127,6 +3127,16 @@
           "source": "apps/claw-plugin-service/src/modules/health/controllers/health.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/internal/plugins/invoke",
+          "source": "apps/claw-plugin-service/src/modules/runtime/controllers/plugin-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/plugins/resolve",
+          "source": "apps/claw-plugin-service/src/modules/runtime/controllers/plugin-internal.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/plugins/admin/catalog",
           "source": "apps/claw-plugin-service/src/modules/admin/controllers/plugin-admin.controller.ts"
@@ -3210,6 +3220,56 @@
           "method": "GET",
           "route": "/plugins/installs/mentions",
           "source": "apps/claw-plugin-service/src/modules/installs/controllers/plugin-installs.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/plugins/invoke",
+          "source": "apps/claw-plugin-service/src/modules/runtime/controllers/plugin-invoke.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/plugins/servers",
+          "source": "apps/claw-plugin-service/src/modules/mcp-servers/controllers/plugin-servers.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/plugins/servers",
+          "source": "apps/claw-plugin-service/src/modules/mcp-servers/controllers/plugin-servers.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/plugins/servers/:id",
+          "source": "apps/claw-plugin-service/src/modules/mcp-servers/controllers/plugin-servers.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/plugins/servers/:id",
+          "source": "apps/claw-plugin-service/src/modules/mcp-servers/controllers/plugin-servers.controller.ts"
+        },
+        {
+          "method": "PATCH",
+          "route": "/plugins/servers/:id",
+          "source": "apps/claw-plugin-service/src/modules/mcp-servers/controllers/plugin-servers.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/plugins/servers/:id/approve-changes",
+          "source": "apps/claw-plugin-service/src/modules/mcp-servers/controllers/plugin-servers.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/plugins/servers/:id/credential",
+          "source": "apps/claw-plugin-service/src/modules/mcp-servers/controllers/plugin-servers.controller.ts"
+        },
+        {
+          "method": "PUT",
+          "route": "/plugins/servers/:id/credential",
+          "source": "apps/claw-plugin-service/src/modules/mcp-servers/controllers/plugin-servers.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/plugins/servers/:id/refresh",
+          "source": "apps/claw-plugin-service/src/modules/mcp-servers/controllers/plugin-servers.controller.ts"
         }
       ],
       "claw-research-service": [
@@ -3978,6 +4038,16 @@
         },
         {
           "method": "GET",
+          "route": "/thread-publications/public/board",
+          "source": "apps/claw-threads-service/src/modules/board/controllers/board-public.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/thread-publications/public/board/suggest",
+          "source": "apps/claw-threads-service/src/modules/board/controllers/board-public.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/thread-publications/public/discover",
           "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-discovery.controller.ts"
         },
@@ -3985,6 +4055,11 @@
           "method": "GET",
           "route": "/thread-publications/public/sitemap",
           "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-discovery.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/thread-publications/recommended-team",
+          "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-recommended-team.controller.ts"
         }
       ],
       "claw-workspace-service": [
@@ -8096,6 +8171,11 @@
         "route": "/threads/[slug]"
       },
       {
+        "file": "apps/claw-frontend/src/app/(marketing)/threads/board/page.tsx",
+        "kind": "page",
+        "route": "/threads/board"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(marketing)/threads/discover/page.tsx",
         "kind": "page",
         "route": "/threads/discover"
@@ -8536,6 +8616,11 @@
         "route": "/plugins"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/plugins/servers/page.tsx",
+        "kind": "page",
+        "route": "/plugins/servers"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/profile/page.tsx",
         "kind": "page",
         "route": "/profile"
@@ -8759,11 +8844,11 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 9066,
+          "bytes": 9191,
           "file": "CLAUDE.md"
         },
         {
-          "bytes": 5925,
+          "bytes": 6003,
           "file": "CODEX.md"
         },
         {
@@ -8771,7 +8856,7 @@
           "file": "cursor.md"
         },
         {
-          "bytes": 5224,
+          "bytes": 5302,
           "file": "AGENTS.md"
         },
         {
@@ -8859,7 +8944,7 @@
           "file": "rules/05-frontend-components-and-hooks.md"
         },
         {
-          "bytes": 15270,
+          "bytes": 16422,
           "file": "rules/05-infra-rules.md"
         },
         {
@@ -9117,7 +9202,7 @@
       ],
       "skills": [
         {
-          "bytes": 33074,
+          "bytes": 36784,
           "file": "skills/00-index.md"
         },
         {
@@ -9125,7 +9210,7 @@
           "file": "skills/01-codebase-navigation.md"
         },
         {
-          "bytes": 5702,
+          "bytes": 5925,
           "file": "skills/02-service-scaffold.md"
         },
         {
@@ -9183,6 +9268,10 @@
         {
           "bytes": 4925,
           "file": "skills/add-a-localized-money-surface.md"
+        },
+        {
+          "bytes": 18916,
+          "file": "skills/add-a-new-service.md"
         },
         {
           "bytes": 4137,
@@ -9325,7 +9414,7 @@
           "file": "skills/create-manager-or-use-case.md"
         },
         {
-          "bytes": 6631,
+          "bytes": 6835,
           "file": "skills/create-microservice.md"
         },
         {
@@ -9445,15 +9534,15 @@
           "file": "skills/pair-and-use-a-mobile-device-token.md"
         },
         {
-          "bytes": 4992,
+          "bytes": 6008,
           "file": "skills/propagate-a-chat-change-to-every-mode.md"
         },
         {
-          "bytes": 2566,
+          "bytes": 2587,
           "file": "skills/propagate-account-deletion.md"
         },
         {
-          "bytes": 14586,
+          "bytes": 15169,
           "file": "skills/publish-a-public-marketing-page.md"
         },
         {
@@ -9467,6 +9556,10 @@
         {
           "bytes": 3693,
           "file": "skills/reconcile-billing-state.md"
+        },
+        {
+          "bytes": 7862,
+          "file": "skills/register-an-mcp-server-safely.md"
         },
         {
           "bytes": 5173,
@@ -9567,7 +9660,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 6095
+        "value": 6109
       },
       "localeCount": 13,
       "locales": [
@@ -11372,6 +11465,21 @@
           {
             "confidence": "verified",
             "source": "apps/claw-plugin-service/prisma/schema.prisma",
+            "value": "McpServer"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-plugin-service/prisma/schema.prisma",
+            "value": "McpServerCredential"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-plugin-service/prisma/schema.prisma",
+            "value": "McpServerTool"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-plugin-service/prisma/schema.prisma",
             "value": "PluginCatalogEntry"
           },
           {
@@ -11907,11 +12015,11 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 193
+        "testFiles": 194
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 340
+        "testFiles": 346
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -11931,7 +12039,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 894
+        "testFiles": 927
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -11959,7 +12067,7 @@
       },
       "claw-plugin-service": {
         "runner": "vitest",
-        "testFiles": 43
+        "testFiles": 67
       },
       "claw-research-service": {
         "runner": "vitest",
@@ -11975,11 +12083,11 @@
       },
       "claw-thread-generation-service": {
         "runner": "vitest",
-        "testFiles": 53
+        "testFiles": 56
       },
       "claw-threads-service": {
         "runner": "vitest",
-        "testFiles": 76
+        "testFiles": 84
       },
       "claw-workspace-service": {
         "runner": "vitest",
@@ -12826,10 +12934,10 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 58,
-    "endpointCount": 892,
+    "endpointCount": 907,
     "envVarCount": 386,
     "eventCount": 190,
-    "frontendRouteCount": 177,
+    "frontendRouteCount": 179,
     "localeCount": 13,
     "nginxRouteCount": 71,
     "permissionCount": 94,
@@ -12838,7 +12946,7 @@
     "serviceCount": 21,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2498,
+    "totalTestFiles": 2573,
     "workspaceCount": 28
   }
 }

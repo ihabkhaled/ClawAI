@@ -13,6 +13,7 @@ import { LocalModelSelectionService } from '../services/local-model-selection.se
 import { ChatContextGatewayManager } from './chat-context-gateway.manager';
 import { resolveContextTurnText } from '../utilities/attachment-only-turn.utility';
 import { ModeExecutionGatewayManager } from './mode-execution-gateway.manager';
+import { pluginRefsMetadata } from '../utilities/plugin-refs.utility';
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
 import { parseJudgeModel } from '../../../common/utilities/judge-model-parse.utility';
@@ -21,6 +22,7 @@ import { QualityCheckManager } from './quality-check.manager';
 import { ResearchEnricherManager } from './research-enricher.manager';
 import type { BestOfNMessageDto } from '../dto/best-of-n-message.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
+import type { ResearchOrchestrationResult } from '../types/research-enricher.types';
 import type { BestOfNResponse, CandidateResult } from '../types/best-of-n.types';
 import type { ChatContextBundle } from '../types/chat-context-gateway.types';
 import { RoutingMode } from '../../../generated/prisma';
@@ -77,6 +79,7 @@ export class BestOfNManager {
         bestOfNRequest: true,
         modelSelection: selection,
         ...(dto.fileIds !== undefined && dto.fileIds.length > 0 ? { fileIds: dto.fileIds } : {}),
+        ...pluginRefsMetadata(dto.pluginRefs),
       },
     });
 
@@ -130,27 +133,7 @@ export class BestOfNManager {
       // One bundle, shared by every candidate: N candidates answering the same
       // question must see the same conversation, files and memories, and
       // building it once also means one set of retrievals rather than N.
-      const bundle = await this.chatContextGateway.build({
-        userId,
-        threadId,
-        surface: ChatSurface.BEST_OF_N,
-        historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
-        // The enricher's transcript used to be glued to the front of the raw
-        // prompt, then merged as a plain `personaInstruction` with no
-        // grounding flag. `researchEvidenceInstruction` routes it through
-        // `injectResearchEvidenceIntoContext`, which sets
-        // `researchGroundingInjected` so the final-user-turn reminder fires for
-        // every candidate.
-        ...(enrichment.systemPrompt.length > 0
-          ? { researchEvidenceInstruction: enrichment.systemPrompt }
-          : {}),
-        // Attachments were not merely ignored by the orchestration modes: they
-        // were not expressible. The DTOs carried no file field at all, so a
-        // user could attach a document in Compare and not in Best-of-N. The
-        // list is spread only when it has entries, so an absent attachment
-        // stays absent rather than arriving as an empty array.
-        ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
-      });
+      const bundle = await this.buildSharedBundle(userId, threadId, enrichment, fileIds);
       // Rule 42 §18: an attachment-only send's request IS the attachment —
       // spelled out once here for every stage below, never stored.
       const request = resolveContextTurnText(content, bundle.context);
@@ -163,51 +146,15 @@ export class BestOfNManager {
         userId,
         bundle,
       );
-      this.safeEmitStage(threadId, {
-        label: 'Scoring',
-        status: OrchestrationStageStatus.ACTIVE,
-        detail: `${String(candidates.length)} candidates scored on quality`,
-        stageId: 'best-of-n:scoring',
-      });
-      const ranked = this.rankCandidates(candidates, content);
-      const best = ranked[0];
+      const { best, ranked } = this.scoreAndAnnounce(threadId, candidates, content);
 
-      if (!best) {
-        throw new Error('No candidates produced a result');
-      }
-      this.safeEmitStage(threadId, {
-        label: 'Scoring',
-        status: OrchestrationStageStatus.COMPLETED,
-        detail: `Top score ${String(best.qualityScore.toFixed(2))}`,
-        stageId: 'best-of-n:scoring',
-      });
-      this.safeEmitStage(threadId, {
-        label: 'Selecting winner',
-        status: OrchestrationStageStatus.COMPLETED,
-        detail: `${best.model} — rank 1 of ${String(ranked.length)}`,
-        stageId: 'best-of-n:winner',
-      });
-
-      await this.chatMessagesRepository.create({
+      await this.storeWinnerMessage(
         threadId,
-        role: 'ASSISTANT',
-        content: best.content,
-        provider: 'local-ollama',
-        model: best.model,
-        latencyMs: best.latencyMs,
-        usedFallback: false,
-        routingMode:
-          resolvedSelection.modelSelectionMode === 'MANUAL_MODEL'
-            ? RoutingMode.MANUAL_MODEL
-            : RoutingMode.AUTO,
-        metadata: {
-          bestOfN: true,
-          candidates: ranked,
-          bestRank: 1,
-          modelSelection: resolvedSelection,
-          ...(enrichment.transcript === null ? {} : { researchTranscript: enrichment.transcript }),
-        },
-      });
+        best,
+        ranked,
+        resolvedSelection,
+        enrichment.transcript,
+      );
 
       this.safeEmitStage(threadId, {
         label: 'Complete',
@@ -216,21 +163,115 @@ export class BestOfNManager {
       });
       this.chatStreamService.emitCompletion(threadId, 'local-ollama', best.model);
     } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : 'Best-of-N generation failed';
-      this.logger.error(`executeInBackground: failed for thread ${threadId} - ${errorMsg}`);
-      this.safeEmitStage(threadId, {
-        label: 'Best-of-N failed',
-        status: OrchestrationStageStatus.ERROR,
-        detail: errorMsg,
-        stageId: 'best-of-n:error',
-      });
-      this.chatStreamService.emitError(threadId, errorMsg);
-      try {
-        await this.storeErrorMessage(threadId, errorMsg);
-      } catch (storeError: unknown) {
-        const storeMsg = storeError instanceof Error ? storeError.message : 'Store failed';
-        this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
-      }
+      await this.handleBackgroundFailure(threadId, error);
+    }
+  }
+
+  private scoreAndAnnounce(
+    threadId: string,
+    candidates: CandidateResult[],
+    content: string,
+  ): { best: CandidateResult; ranked: CandidateResult[] } {
+    this.safeEmitStage(threadId, {
+      label: 'Scoring',
+      status: OrchestrationStageStatus.ACTIVE,
+      detail: `${String(candidates.length)} candidates scored on quality`,
+      stageId: 'best-of-n:scoring',
+    });
+    const ranked = this.rankCandidates(candidates, content);
+    const best = ranked[0];
+
+    if (!best) {
+      throw new Error('No candidates produced a result');
+    }
+    this.safeEmitStage(threadId, {
+      label: 'Scoring',
+      status: OrchestrationStageStatus.COMPLETED,
+      detail: `Top score ${String(best.qualityScore.toFixed(2))}`,
+      stageId: 'best-of-n:scoring',
+    });
+    this.safeEmitStage(threadId, {
+      label: 'Selecting winner',
+      status: OrchestrationStageStatus.COMPLETED,
+      detail: `${best.model} — rank 1 of ${String(ranked.length)}`,
+      stageId: 'best-of-n:winner',
+    });
+    return { best, ranked };
+  }
+
+  private async buildSharedBundle(
+    userId: string,
+    threadId: string,
+    enrichment: ResearchOrchestrationResult,
+    fileIds: string[] | undefined,
+  ): Promise<ChatContextBundle> {
+    return this.chatContextGateway.build({
+      userId,
+      threadId,
+      surface: ChatSurface.BEST_OF_N,
+      historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
+      // The enricher's transcript used to be glued to the front of the raw
+      // prompt, then merged as a plain `personaInstruction` with no
+      // grounding flag. `researchEvidenceInstruction` routes it through
+      // `injectResearchEvidenceIntoContext`, which sets
+      // `researchGroundingInjected` so the final-user-turn reminder fires for
+      // every candidate.
+      ...(enrichment.systemPrompt.length > 0
+        ? { researchEvidenceInstruction: enrichment.systemPrompt }
+        : {}),
+      // Attachments were not merely ignored by the orchestration modes: they
+      // were not expressible. The DTOs carried no file field at all, so a
+      // user could attach a document in Compare and not in Best-of-N. The
+      // list is spread only when it has entries, so an absent attachment
+      // stays absent rather than arriving as an empty array.
+      ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
+    });
+  }
+
+  private async storeWinnerMessage(
+    threadId: string,
+    best: CandidateResult,
+    ranked: CandidateResult[],
+    selection: AdvancedModelSelectionResolution,
+    transcript: ResearchOrchestrationResult['transcript'],
+  ): Promise<void> {
+    await this.chatMessagesRepository.create({
+      threadId,
+      role: 'ASSISTANT',
+      content: best.content,
+      provider: 'local-ollama',
+      model: best.model,
+      latencyMs: best.latencyMs,
+      usedFallback: false,
+      routingMode:
+        selection.modelSelectionMode === 'MANUAL_MODEL'
+          ? RoutingMode.MANUAL_MODEL
+          : RoutingMode.AUTO,
+      metadata: {
+        bestOfN: true,
+        candidates: ranked,
+        bestRank: 1,
+        modelSelection: selection,
+        ...(transcript === null ? {} : { researchTranscript: transcript }),
+      },
+    });
+  }
+
+  private async handleBackgroundFailure(threadId: string, error: unknown): Promise<void> {
+    const errorMsg = error instanceof Error ? error.message : 'Best-of-N generation failed';
+    this.logger.error(`executeInBackground: failed for thread ${threadId} - ${errorMsg}`);
+    this.safeEmitStage(threadId, {
+      label: 'Best-of-N failed',
+      status: OrchestrationStageStatus.ERROR,
+      detail: errorMsg,
+      stageId: 'best-of-n:error',
+    });
+    this.chatStreamService.emitError(threadId, errorMsg);
+    try {
+      await this.storeErrorMessage(threadId, errorMsg);
+    } catch (storeError: unknown) {
+      const storeMsg = storeError instanceof Error ? storeError.message : 'Store failed';
+      this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
     }
   }
 

@@ -7,6 +7,7 @@ import { THREAD_GENERATION_MODEL_COUNT } from '@/constants/thread-publication.co
 import type { Locale } from '@/enums/locale.enum';
 import { useAvailableModels } from '@/hooks/chat/use-available-models';
 import { useThreads } from '@/hooks/chat/use-threads';
+import { useThreadRecommendedTeam } from '@/hooks/threads/use-thread-recommended-team';
 import { useLocale } from '@/lib/i18n';
 import { threadPublicationsRepository } from '@/repositories/threads/thread-publications.repository';
 import { ApiClientError } from '@/services/shared/api-client';
@@ -25,6 +26,13 @@ import {
   pickDistinctModels,
   rankThreadModels,
 } from '@/utilities/thread-model-defaults.utility';
+import {
+  isRecommendedSelection,
+  teamToSelections,
+  toAvailabilityIndex,
+  usableModels,
+  withSeatFallbacks,
+} from '@/utilities/thread-recommended-team.utility';
 
 /**
  * State and submit for "create a public Thread", shared by the owner portal and
@@ -47,6 +55,13 @@ export function useThreadGenerationForm({
         .flatMap(({ models }) => models),
     [groupedModels],
   );
+  const { recommendation, isLoading: isLoadingTeam } = useThreadRecommendedTeam();
+  const modelAvailability = useMemo(() => toAvailabilityIndex(recommendation), [recommendation]);
+  const usablePool = useMemo(
+    () => rankThreadModels(usableModels(availableModels, modelAvailability)),
+    [availableModels, modelAvailability],
+  );
+  const recommendedTeam = recommendation?.team ?? null;
   const [pickedSourceThreadId, setPickedSourceThreadId] = useState('');
   const [topic, setTopic] = useState(defaultTopic ?? '');
   const [publicationType, setPublicationType] = useState<ThreadPublicationType>(
@@ -75,11 +90,27 @@ export function useThreadGenerationForm({
     start.error.status === HTTP_STATUS_FORBIDDEN &&
     !isThreadStartRefusal(start.error);
 
+  // The server's recommended team is the default. Without it (the read failed, or no seat is in
+  // the picker list) the wizard ranks the models the service called usable, never a refused one.
+  const defaultSelection = useMemo(
+    () =>
+      teamToSelections(recommendedTeam, availableModels) ??
+      pickDistinctModels(
+        usablePool.length > 0 ? usablePool : availableModels,
+        THREAD_GENERATION_MODEL_COUNT,
+      ),
+    [recommendedTeam, availableModels, usablePool],
+  );
+
   useEffect(() => {
-    if (selectedModels.length === 0 && availableModels.length > 0) {
-      setSelectedModels(pickDistinctModels(availableModels, THREAD_GENERATION_MODEL_COUNT));
+    if (selectedModels.length === 0 && defaultSelection.length > 0 && !isLoadingTeam) {
+      setSelectedModels(defaultSelection);
     }
-  }, [availableModels, selectedModels.length]);
+  }, [defaultSelection, selectedModels.length, isLoadingTeam]);
+
+  function resetToRecommended(): void {
+    setSelectedModels(defaultSelection);
+  }
 
   function changeModel(index: number, selected: ModelSelection): void {
     setSelectedModels((current) =>
@@ -93,17 +124,18 @@ export function useThreadGenerationForm({
       return;
     }
     try {
-      const request = createThreadGenerationRequest({
+      const baseRequest = createThreadGenerationRequest({
         sourceThreadId,
         topic,
         publicationType,
         contentLocale,
         spendCapUsd: Number(spendCapUsd),
         models: selectedModels,
-        fallbackPool: rankThreadModels(availableModels),
+        fallbackPool: usablePool,
         idempotencyKey: crypto.randomUUID(),
         correlationId: crypto.randomUUID(),
       });
+      const request = withSeatFallbacks(baseRequest, selectedModels, recommendedTeam, usablePool);
       setRequestError(false);
       start.mutate(request);
     } catch {
@@ -114,7 +146,7 @@ export function useThreadGenerationForm({
   return {
     threads,
     isLoadingThreads,
-    isLoadingModels,
+    isLoadingModels: isLoadingModels || isLoadingTeam,
     availableModels,
     fixedSourceThreadId: fixedSourceThreadId ?? null,
     sourceThreadId,
@@ -129,6 +161,11 @@ export function useThreadGenerationForm({
     setSpendCapUsd,
     selectedModels,
     changeModel,
+    modelAvailability,
+    planName: recommendation?.planName ?? '',
+    hasRecommendedTeam: recommendedTeam !== null,
+    isRecommendedSelected: isRecommendedSelection(recommendedTeam, selectedModels),
+    resetToRecommended,
     hasAcknowledgedPublic,
     setHasAcknowledgedPublic,
     hasError: requestError,

@@ -1,0 +1,40 @@
+# Production .env values a service cannot boot without, and that the deploy must
+# therefore find BEFORE it builds or recreates anything.
+#
+# One rule per line:  service|VARIABLE|kind|argument
+#
+#   hex64     64 hex characters, not all zeros (an AES-256 key). Generated with
+#             `openssl rand -hex 32`.
+#   password  at least 24 characters and not the committed default `claw_secret`.
+#             Generated with `openssl rand -hex 24`.
+#   derived   a value built from other variables; the argument is the template and
+#             {NAME} is replaced by the value of NAME from the same .env. Used for
+#             connection strings, so the URL and the database password cannot
+#             drift apart.
+#   literal   a fixed, non-secret value; the argument is the exact value. Used for
+#             the internal URL a CALLER needs: the shared HTTP client refuses any
+#             host not named by a *_SERVICE_URL in the caller's own environment
+#             ("refusing a host this service does not call"), so a caller
+#             without it cannot reach the service although it is healthy.
+#   database  VARIABLE is `-`; the argument is the container name of a database
+#             the service needs. The deploy NEVER starts databases (see
+#             docs/PRODUCTION_DEPLOYMENT.md), so it must already be running and
+#             healthy.
+#   cert-san  VARIABLE is `-`; the argument is a hostname that certs/claw.crt must
+#             list as a DNS subject alternative name. nginx verifies every
+#             upstream certificate, so a service missing from the certificate
+#             answers 502 although it is healthy. Checked by the deploy only.
+#
+# Read by scripts/ensure-prod-env.sh (which appends what is missing) and by the
+# preflight in scripts/deploy-prod.sh (which refuses to roll out without it).
+# Adding a service with a database or a secret means adding its rules here, in
+# the same change (docs/11-runbooks/add-a-service-to-production.md).
+# Values are never stored in this file and are never printed by either script.
+
+plugin-service|PG_PLUGIN_PASSWORD|password|
+plugin-service|PLUGIN_DATABASE_URL|derived|postgresql://claw:{PG_PLUGIN_PASSWORD}@pg-plugin:5432/claw_plugin?schema=public
+plugin-service|PLUGIN_ENCRYPTION_KEY|hex64|
+plugin-service|-|database|claw-pg-plugin
+plugin-service|-|cert-san|plugin-service
+health-service|PLUGIN_SERVICE_URL|literal|https://plugin-service:4021
+plugin-service|PLUGIN_SERVICE_URL|literal|https://plugin-service:4021

@@ -4,6 +4,7 @@ import { COMPOSER_SEED_STORAGE_KEY } from '@/constants/chat.constants';
 import { DEFAULT_RESEARCH_OPTIONS } from '@/constants/research.constants';
 import { ResearchMode } from '@/enums/research-mode.enum';
 import { useComposerMaskEdit } from '@/hooks/chat/use-composer-mask-edit';
+import { usePluginMentionSelection } from '@/hooks/chat/use-plugin-mention-selection';
 import { useComposerAttachments } from '@/hooks/files/use-composer-attachments';
 import { useResearchProviders } from '@/hooks/research/use-research-providers';
 import { useTranslation } from '@/lib/i18n';
@@ -36,6 +37,7 @@ export const useMessageComposerState = ({
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const [research, setResearch] = useState<ResearchOptions>(DEFAULT_RESEARCH_OPTIONS);
   const providerQuery = useResearchProviders();
+  const pluginMentions = usePluginMentionSelection({ value: content, onValueChange: setContent });
   const {
     ingestFiles,
     removeAttachment,
@@ -155,7 +157,17 @@ export const useMessageComposerState = ({
     const sentFileIds = selectedFileIds.length > 0 ? selectedFileIds : undefined;
     const sentResearch = research.mode === ResearchMode.NONE ? undefined : research;
     const maskFileId = consumeMaskFor(sentFileIds);
-    if (maskFileId === undefined) {
+    const sentPluginRefs = pluginMentions.payload.pluginRefs;
+    if (sentPluginRefs !== undefined) {
+      onSend(
+        result.data.content,
+        selectedModel ?? undefined,
+        sentFileIds,
+        sentResearch,
+        maskFileId,
+        sentPluginRefs,
+      );
+    } else if (maskFileId === undefined) {
       onSend(result.data.content, selectedModel ?? undefined, sentFileIds, sentResearch);
     } else {
       onSend(
@@ -171,6 +183,8 @@ export const useMessageComposerState = ({
     // sent, so a draft of it is no longer a draft.
     clearComposerDraft(threadId);
     setSelectedFileIds([]);
+    // A mention belongs to one message, like the files above.
+    pluginMentions.clear();
     return true;
   }, [
     content,
@@ -182,6 +196,7 @@ export const useMessageComposerState = ({
     isUploadingAttachment,
     consumeMaskFor,
     quoteCount,
+    pluginMentions,
     t,
   ]);
 
@@ -241,5 +256,6 @@ export const useMessageComposerState = ({
     pendingUploads,
     removeAttachment,
     maskEdit,
+    pluginMentions,
   };
 };

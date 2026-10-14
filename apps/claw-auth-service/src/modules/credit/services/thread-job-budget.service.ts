@@ -30,6 +30,7 @@ import {
 } from '../constants/thread-job-budget.constants';
 import { ThreadJobBudgetCloseStatus } from '../enums/thread-job-budget-close-status.enum';
 import { CreditReservationManager } from '../managers/credit-reservation.manager';
+import { ThreadJobBudgetFreeMeterRepository } from '../repositories/thread-job-budget-free-meter.repository';
 
 @Injectable()
 export class ThreadJobBudgetService {
@@ -40,6 +41,7 @@ export class ThreadJobBudgetService {
     private readonly featureUsage: FeatureUsageConsumptionService,
     private readonly repository: ThreadJobBudgetRepository,
     private readonly credit: CreditReservationManager,
+    private readonly freeMeter: ThreadJobBudgetFreeMeterRepository,
   ) {}
 
   async reserve(input: {
@@ -133,7 +135,17 @@ export class ThreadJobBudgetService {
     if (!budget) {
       throw new NotFoundException('Threads budget not found');
     }
-    return toThreadJobBudgetSummary(budget);
+    return toThreadJobBudgetSummary(budget, await this.freeMeterCharge(budgetId));
+  }
+
+  /** The Free meter's charge for the job; progress is better without it than not at all. */
+  private async freeMeterCharge(budgetId: string): Promise<bigint> {
+    try {
+      return await this.freeMeter.chargedMicroUsd(budgetId);
+    } catch (error) {
+      this.logger.warn(`freeMeterCharge: ${budgetId} reported as 0 - ${String(error)}`);
+      return 0n;
+    }
   }
 
   settleCall(budgetId: string, requestId: string, settledMicroUsd: bigint): Promise<boolean> {
@@ -147,23 +159,58 @@ export class ThreadJobBudgetService {
   /**
    * Closes the job's budget. Calls still in flight are released with it (a
    * cancelled job's model calls are abandoned), their credit holds are given
-   * back, and the plan allowance is consumed (FINALIZED) or returned (RELEASED).
-   * Safe to call again: the allowance step is idempotent, so a close that failed
-   * half-way is finished by the retry.
+   * back, and the plan allowance is consumed (FINALIZED) or returned (RELEASED,
+   * PLATFORM_FAILED). PLATFORM_FAILED also refunds the money the Free meter charged
+   * for the job's finished calls (ADR-162 addendum).
+   * Safe to call again: the allowance step and the refund are idempotent, so a close
+   * that failed half-way is finished by the retry.
    */
   async close(budgetId: string, status: ThreadJobBudgetCloseStatus): Promise<boolean> {
     const budget = await this.repository.get(budgetId);
     if (!budget) return false;
     if (budget.status !== 'ACTIVE') {
       if (budget.status !== status) return false;
-      await this.settleFeatures(budget.featureReservationIds, status);
+      await this.finishClose(budgetId, budget.featureReservationIds, status);
       return true;
     }
     const result = await this.guardBusy(() => this.repository.close(budgetId, status));
     if (!result.closed) return (await this.repository.get(budgetId))?.status === status;
     await this.releaseCreditHolds(result.releasedCreditReservationIds);
-    await this.settleFeatures(budget.featureReservationIds, status);
+    await this.finishClose(budgetId, budget.featureReservationIds, status);
     return true;
+  }
+
+  /**
+   * The steps after the budget row is closed. Both are attempted even when the first fails, so
+   * a broken meter refund never keeps the user's lifetime allowance hold; the caller is then
+   * asked to retry and the idempotent steps finish.
+   */
+  private async finishClose(
+    budgetId: string,
+    featureIds: string[],
+    status: ThreadJobBudgetCloseStatus,
+  ): Promise<void> {
+    let refundFailed = false;
+    if (status === ThreadJobBudgetCloseStatus.PLATFORM_FAILED) {
+      try {
+        const refunded = await this.freeMeter.refundFinishedCalls(budgetId);
+        if (refunded > 0n) {
+          this.logger.log(
+            `close: refunded ${String(refunded)} micro-USD of free meter, budget ${budgetId}`,
+          );
+        }
+      } catch (error) {
+        refundFailed = true;
+        this.logger.error(`close: free meter refund failed for ${budgetId} - ${String(error)}`);
+      }
+    }
+    await this.settleFeatures(featureIds, status);
+    if (refundFailed) {
+      throw new ServiceUnavailableException({
+        code: THREAD_BUDGET_BUSY_CODE,
+        message: 'The free allowance could not be refunded yet, retry shortly',
+      });
+    }
   }
 
   private async guardBusy<T>(work: () => Promise<T>): Promise<T> {

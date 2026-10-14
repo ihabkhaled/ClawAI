@@ -4,6 +4,7 @@ import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { stripNulBytes } from '../../../common/utilities/postgres-safe-text.utility';
 import { attachmentFields } from './attachment-fields.dto';
 import { contextSaveFields } from './context-save-fields.dto';
+import { pluginFields } from './plugin-fields.dto';
 import { quoteFields } from './quote-fields.dto';
 import { requireContentOrAttachments } from '../validators/content-or-attachments.validator';
 
@@ -39,6 +40,7 @@ export const createMessageSchema = z
     ...attachmentFields,
     ...quoteFields,
     ...contextSaveFields,
+    ...pluginFields,
     // File id of a drawn PNG mask for an image edit; needs an attached image.
     maskFileId: z
       .string()

@@ -881,6 +881,18 @@ bounds equal the service ranges (a test reads the service file); a key call that
 successful install is retried alone.
 Full note: [`docs/05-frontend/plugins-installs.md`](../../docs/05-frontend/plugins-installs.md).
 
+## Plugins: My MCP servers page
+
+`/plugins/servers` (third `PluginsNav` tab) lists the user's own remote MCP servers. Contract used
+(`/api/v1/plugins/servers`, normalised defensively in `utilities/plugin-servers.utility.ts`): `GET`,
+`POST`, `PATCH|DELETE /:id`, `POST /:id/discover`; codes `PLUGIN_SERVER_URL_REFUSED` and
+`PLUGIN_SERVER_LIMIT_REACHED` map to text in `PLUGIN_SERVER_ERROR_KEYS`. The plan cap comes from the
+list answer (`limit`: number, `null` unlimited, `0` disabled, absent = no cap shown or enforced; the
+server enforces it again). The header key is write-only: form state only, dropped after the create
+call, never in a query key, toast or log. Add needs the risk consent box; every discovered tool starts
+off and WRITE. Copy: `pluginsServers.*` in `plugins-servers-translations.ts` (13 locales).
+Full note: [`docs/05-frontend/plugins-installs.md`](../../docs/05-frontend/plugins-installs.md).
+
 ## Threads generation failure codes
 
 `thread-generation-progress.constants.ts` maps each step failure code to a translation key. The context-window
@@ -908,13 +920,13 @@ After Publish the owner sees `ThreadLiveBanner` (address, copy, Open live Thread
 Threads buttons use the shared `Button`/`Checkbox`/`Select`/`Textarea`/`Badge` with lucide icons; share networks without a lucide
 icon use the inline marks in `thread-share-icons.tsx`. Light-theme text on a card uses a dark shade plus `dark:` token
 (`THREAD_STEP_OUTCOME_TONES`), because the bright status tokens measure 2.1 to 3.6:1 on white. A `QUEUED` job reads
-"Waiting in the queue", never a stage name, and "Spent so far" is hidden until the amount is above zero. The public reactions
+"Waiting in the queue", never a stage name, and "Spent so far" is hidden until the amount is above zero (it shows the larger of `spentMicroCredits` and the newer `freeAllowanceMicroUsd`, so Free jobs show real spend). A platform-caused failure whose progress carries `allowanceRefunded: true` (read defensively by `readAllowanceRefunded`; the shared type does not declare it yet) adds `chat.threadProgress.platformFailureNotice` ("our side, your Free allowance was not used") to the failure card and relabels Retry as `retryOnUs`. The public reactions
 endpoint cannot say who is asking, so a remembered reaction (localStorage, per user and Thread) fills its `null` until the
 backend returns `viewerReaction`. Full note: [`docs/05-frontend/threads-buttons-and-publish-banner.md`](../../docs/05-frontend/threads-buttons-and-publish-banner.md).
 
 ## Threads Board: `/board` and `/board/[slug]` (2026-10-14)
 
-Portal routes, behind login, noindex, not linked from marketing; SEO stays on `/threads/[slug]` (ADR-178). The URL is the only state: `?q=&sort=&lang=&type=&page=`. Hooks in `src/hooks/threads/board/`: `useBoardQueryState`, `useBoardList`, `useBoardSuggest` (200 ms debounce, enabled from 2 characters, keeps previous data), `useComboboxKeyboard`. Components in `src/components/threads/board/` (BoardPageView, BoardToolbar, BoardFilters, BoardFiltersSheet, BoardGrid, BoardCard, BoardSkeleton, BoardEmpty, BoardError, BoardPagination, BoardSearchCombobox, BoardSuggestionRow, BoardDidYouMean, HighlightedText). Query keys start with `thread-board`. Strings are `chat.threadBoard*` keys in 13 locales from `src/lib/i18n/locales/thread-board-translations.ts`. Cards show no author. Highlights render as React text nodes from server offsets, never HTML. Every URL change is a `router.push` (Back works); `BoardPageView` remembers its URL for the reader's Back. Placeholders are `{name}` (card `{minutes}`, sources `{count}`, empty `{query}`). A list 429 shows a wait state; suggestions follow the `lang` filter; page max 500, query max 100 (input `maxLength` and the suggest request are both clamped). Reader article sets `lang`/`dir` from the Thread's content locale. The toolbar uses container queries (`@4xl`), not viewport breakpoints, because the sidebar takes 256 px. Card titles are `h2` under the page `h1`; the results count hides when the requested page is empty. Note: [`docs/05-frontend/threads-board.md`](../../docs/05-frontend/threads-board.md).
+Portal routes, behind login, noindex, not linked from marketing; SEO stays on `/threads/[slug]` (ADR-178). The URL is the only state: `?q=&sort=&lang=&type=&page=`. Hooks in `src/hooks/threads/board/`: `useBoardQueryState`, `useBoardList`, `useBoardSuggest` (200 ms debounce, enabled from 2 characters, keeps previous data), `useComboboxKeyboard`. Components in `src/components/threads/board/` (BoardPageView, BoardToolbar, BoardFilters, BoardFiltersSheet, BoardGrid, BoardCard, BoardSkeleton, BoardEmpty, BoardError, BoardPagination, BoardSearchCombobox, BoardSuggestionRow, BoardDidYouMean, HighlightedText). Query keys start with `thread-board`. Strings are `chat.threadBoard*` keys in 13 locales from `src/lib/i18n/locales/thread-board-translations.ts`. Cards show no author. Highlights render as React text nodes from server offsets, never HTML. Every URL change is a `router.push` (Back works); `BoardPageView` remembers its URL for the reader's Back. Placeholders are `{name}` (card `{minutes}`, sources `{count}`, empty `{query}`). A list 429 shows a wait state; suggestions follow the `lang` filter; page max 500, query max 100 (input `maxLength` and the suggest request are both clamped). Reader article sets `lang`/`dir` from the Thread's content locale. The toolbar uses container queries (`@4xl`), not viewport breakpoints, because the sidebar takes 256 px. Card titles are `h2` under the page `h1`; the results count hides when the requested page is empty. Guest mode (`/threads/board`, public, read-only): the same components run under `BoardModeContext` = `Guest` (guest repository with a field whitelist, language default `all`, cards open `/<locale>/threads/<slug>`, server-rendered first page with `revalidate: 60`, sign-in banner and prompts, nav/footer/home links); see the "Guest mode in the frontend" section of the note. Note: [`docs/05-frontend/threads-board.md`](../../docs/05-frontend/threads-board.md).
 
 ## Threads owner UI, round 2 (2026-10-14)
 
@@ -927,3 +939,39 @@ Portal routes, behind login, noindex, not linked from marketing; SEO stays on `/
 The "Post comment" form (`thread-public-community.tsx`, used by the Board reader and the public Thread page) is `noValidate`.
 `useThreadCommentValidation` blocks an empty or whitespace-only comment: it sends no request, shows `chat.threadPublicCommentRequired`
 in a `role="alert"` paragraph (`aria-invalid` + `aria-describedby` on the textarea) and returns focus to the textarea. Typing clears the message.
+
+### Thread reader hides unresolved source markers
+
+`ThreadReaderBody` runs the body through `stripUnresolvedSourceMarkers` (`utilities/thread-source-marker.utility.ts`) before rendering: internal `[hex16]` markers (single, doubled, comma and nested lists) are removed because the reader only has numbered sources and they never resolve. `[1]`-style numbers and other bracketed text are kept. It is a linear scan that mirrors the threads-service `stripCitationMarkers`; keep both in step.
+
+## Threads wizard: recommended team (2026-10-14)
+
+`useThreadGenerationForm` preselects the server team from `useThreadRecommendedTeam` (`GET /thread-publications/recommended-team`, 60 s stale time) and waits for it before choosing, so the default does not flicker; without it the wizard ranks only models the service called usable. The five pickers live in `ThreadTeamSection` under an Advanced `<details>`. `useThreadModelPicker` labels a model the account cannot use with its reason (`chat.threadTeam.reason*`, 13 locales) and ignores a click on it. Backups per role come from `withSeatFallbacks` (other providers only). Reason keys live in `thread-recommended-team.constants.ts` as a plain map, never a built string.
+
+## The `@` plugin picker and the shared "+" menu on every composer (plugins batch 4, 2026-10-14)
+
+- **`@` opens a combobox.** `RichPromptTextarea` takes an opt-in `pluginMentions` (the composer's
+  `usePluginMentionSelection`). With it, typing `@` at the start of the text or after whitespace (never in
+  a word or an email) lists the user's installed, enabled plugins (`GET /plugins/installs/mentions`,
+  fetched on the first `@`, cached a minute, no polling). It is a WAI-ARIA combobox on the textarea
+  (`aria-expanded`, `aria-controls`, `aria-activedescendant`, a polite count line) and takes ArrowUp/Down,
+  Enter, Tab and Escape ONLY while open; closed or no match, every key keeps its meaning (Enter sends). It
+  never opens or swallows keys during IME composition. Picking inserts `@Name ` and a chip; a chip whose
+  `@Name` is edited out of the text is dropped (matched by label, not offsets); chips are sent as
+  `pluginRefs`, max 5. The listbox is pinned above the textarea (logical CSS, 44px rows on touch); the
+  design's bottom sheet positioned from `visualViewport` is NOT built.
+- **Who owns what.** The composer hook owns the chips and spreads `selection.payload` into its request;
+  `useOrchestrationComposer(false, {value, onValueChange})` does it for the labs (`sharedPayload` carries
+  `pluginRefs`; Repair and Verify do not opt in, plugin tools have nothing to do there); Compare and
+  in-thread Compare do it in their own hooks.
+- **The timeline.** `PluginCallTimeline` (above an answer) draws `metadata.pluginCalls` and
+  `metadata.pluginNotices`; `MessagePluginRefs` draws the chips a user message was sent with. What a plugin
+  returned is plain text behind a disclosure, never HTML.
+- **One "+" menu everywhere (rules/59).** Compare, in-thread Compare and the seven labs render
+  `ComposerPlusMenu` (Attach / Context / Tools) plus the research chip, not loose buttons.
+  `chat-surface-layout-contract.test.ts` fails if a loose `FileAttachmentPicker`, `PromptLibraryButton`,
+  `ResearchToggle`, `ComposerContextControls` or `OrchestrationContextButton` comes back. With no thread yet
+  the menu takes `draftContextPacks` and shows the pack picker (the choice rides with the run); the
+  what-is-sent / memory / preview rows need a thread and are absent there (TD-045).
+- **i18n.** `pluginChat.*` (13 locales, `plugin-chat-translations.ts`); status and notice keys are typed maps
+  in `constants/plugin-call.constants.ts`, never template keys.

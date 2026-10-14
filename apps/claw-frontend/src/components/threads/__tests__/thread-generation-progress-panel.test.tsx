@@ -1,3 +1,4 @@
+import type { ThreadGenerationProgress } from '@claw/shared-types';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -261,5 +262,31 @@ describe('ThreadGenerationProgressPanel queued, spend and action bar', () => {
     expect(retry.querySelector('svg')).not.toBeNull();
     expect(remove.querySelector('svg')).not.toBeNull();
     expect(remove.className).toContain('bg-destructive');
+  });
+
+  it('tells a Free owner it was not their fault and offers a prominent Retry on us', () => {
+    const refunded = { ...makeProgress(), allowanceRefunded: true } as ThreadGenerationProgress;
+    renderPanel(makeController({ progress: refunded }));
+
+    expect(screen.getByTestId('thread-progress-platform-failure')).toHaveTextContent(
+      'chat.threadProgress.platformFailureNotice',
+    );
+    expect(
+      screen.getByRole('button', { name: 'chat.threadProgress.retryOnUs' }),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps the plain failure card and Retry when no allowance was refunded', () => {
+    renderPanel(makeController());
+
+    expect(screen.queryByTestId('thread-progress-platform-failure')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'chat.threadProgress.retry' })).toBeInTheDocument();
+  });
+
+  it('shows the real Free spend when the paid figure is zero', () => {
+    const free = { ...makeProgress({ spentMicroCredits: '0' }), freeAllowanceMicroUsd: '4500' };
+    renderPanel(makeController({ progress: free as ThreadGenerationProgress }));
+
+    expect(screen.getByTestId('thread-progress-spent')).toHaveTextContent('$0.0045');
   });
 });

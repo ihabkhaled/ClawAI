@@ -18,6 +18,8 @@ import type { AssembledContext } from '../types/context.types';
 import type { ThreadSettings } from '../types/execution.types';
 import type { ResearchTranscript } from '../types/research-transcript.types';
 import { ChatExecutionManager } from './chat-execution.manager';
+import { pluginRefsMetadata } from '../utilities/plugin-refs.utility';
+import type { PluginRef } from '../types/plugin-tools.types';
 import { ChatContextGatewayManager } from './chat-context-gateway.manager';
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
@@ -47,12 +49,13 @@ export class EscalationChainManager {
     researchMode?: ResearchMode,
     userToken?: string,
     researchProviderId?: string,
+    pluginRefs?: readonly PluginRef[],
   ): Promise<EscalationChainResponse> {
     this.logger.log(
       `executeEscalationChain: queuing ${String(chain.length)}-step chain in thread ${threadId}`,
     );
 
-    const userMessage = await this.storeUserMessage(threadId, content, fileIds);
+    const userMessage = await this.storeUserMessage(threadId, content, fileIds, pluginRefs);
 
     void this.executeInBackground(
       userId,
@@ -318,8 +321,13 @@ export class EscalationChainManager {
     threadId: string,
     content: string,
     fileIds?: string[],
+    pluginRefs?: readonly PluginRef[],
   ): Promise<{ id: string }> {
-    const metadata = fileIds && fileIds.length > 0 ? { fileIds } : undefined;
+    const stored = {
+      ...(fileIds && fileIds.length > 0 ? { fileIds } : {}),
+      ...pluginRefsMetadata(pluginRefs),
+    };
+    const metadata = Object.keys(stored).length > 0 ? stored : undefined;
     return this.chatMessagesRepository.create({ threadId, role: 'USER', content, metadata });
   }
 

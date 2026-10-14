@@ -8,6 +8,7 @@ import { useJudgeModelOptions } from '@/hooks/chat/use-judge-model-options';
 import { useParallelCompare } from '@/hooks/chat/use-parallel-compare';
 import { useParallelPoll } from '@/hooks/chat/use-parallel-poll';
 import { useParallelStream } from '@/hooks/chat/use-parallel-stream';
+import { usePluginMentionSelection } from '@/hooks/chat/use-plugin-mention-selection';
 import { useComposerAttachments } from '@/hooks/files/use-composer-attachments';
 import { useResearchProviders } from '@/hooks/research/use-research-providers';
 import { useTranslation } from '@/lib/i18n';
@@ -32,6 +33,8 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   // Same pack choice the labs hold; stored on the thread this compare creates (rules/59).
   const [contextPackIds, setContextPackIds] = useState<string[]>([]);
+  // The `@` plugin picker's chips; sent as `pluginRefs`, so a mention reaches every lane.
+  const pluginMentions = usePluginMentionSelection({ value: prompt, onValueChange: setPrompt });
   const attachments = useComposerAttachments({
     selectedFileIds,
     onChange: setSelectedFileIds,
@@ -116,8 +119,10 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
       // entirely on the empty path so the BE DTO stays clean.
       ...(selectedFileIds.length > 0 ? { fileIds: selectedFileIds } : {}),
       ...(contextPackIds.length > 0 ? { contextPackIds } : {}),
+      ...pluginMentions.payload,
     });
     setSelectedFileIds([]);
+    pluginMentions.clear();
   }, [
     canSend,
     send,
@@ -130,6 +135,7 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     research,
     selectedFileIds,
     contextPackIds,
+    pluginMentions,
   ]);
 
   return {
@@ -173,6 +179,7 @@ export function useParallelComparePage(): UseParallelComparePageReturn {
     isUploading,
     attachmentTray,
     attachmentChips,
+    pluginMentions,
     upgradeFeature,
     clearUpgradeFeature,
   };

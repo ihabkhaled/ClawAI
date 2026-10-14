@@ -1,6 +1,6 @@
 # System at a Glance
 
-ClawAI ("Every AI, one workspace" — see [product vision](../01-executive-context/product-vision.md)) is a local-first AI orchestration platform built as a monorepo of 17 NestJS backend services, a Next.js frontend, and supporting infrastructure. This document is the single-page reference for understanding the current system.
+ClawAI ("Every AI, one workspace" — see [product vision](../01-executive-context/product-vision.md)) is a local-first AI orchestration platform built as a monorepo of 21 NestJS backend services, a Next.js frontend, and supporting infrastructure. This document is the single-page reference for understanding the current system.
 
 ---
 
@@ -84,6 +84,7 @@ ClawAI ("Every AI, one workspace" — see [product vision](../01-executive-conte
 | 13  | **file-generation** | 4013 | PostgreSQL `claw_file_generations` | AI-driven file/document generation                           |
 | 14  | **workspace**       | 4014 | PostgreSQL `claw_workspace`        | External workspace sync, search, object graph, actions       |
 | 15  | **agent**           | 4015 | PostgreSQL `claw_agent`            | Desktop agent sessions, command approval, repos, file events |
+| 21  | **plugin**          | 4021 | PostgreSQL `claw_plugin`           | Plugin and MCP catalog, installs, consent, credentials       |
 | --  | **frontend**        | 3000 | --                                 | Next.js 16 UI                                                |
 | --  | **nginx**           | 4000 | --                                 | Reverse proxy, route mapping                                 |
 
@@ -91,24 +92,25 @@ ClawAI ("Every AI, one workspace" — see [product vision](../01-executive-conte
 
 ## Database Topology
 
-| Engine     | Instance                | Used By                 | Notes                                         |
-| ---------- | ----------------------- | ----------------------- | --------------------------------------------- |
-| PostgreSQL | `claw_auth`             | auth-service            | Users, sessions, settings                     |
-| PostgreSQL | `claw_chat`             | chat-service            | Threads, messages, attachments                |
-| PostgreSQL | `claw_connectors`       | connector-service       | Providers, models, health events              |
-| PostgreSQL | `claw_routing`          | routing-service         | Decisions, policies                           |
-| PostgreSQL | `claw_memory`           | memory-service          | Memories, context packs (pgvector extension)  |
-| PostgreSQL | `claw_files`            | file-service            | File metadata, chunks                         |
-| PostgreSQL | `claw_ollama`           | ollama-service          | Local models, role assignments, pull jobs     |
-| PostgreSQL | `claw_images`           | image-service           | Image generation records                      |
-| PostgreSQL | `claw_file_generations` | file-generation-service | Generated file records                        |
-| PostgreSQL | `claw_workspace`        | workspace-service       | Connectors, sync runs, objects, actions       |
-| PostgreSQL | `claw_agent`            | agent-service           | Sessions, commands, repos, file events        |
-| MongoDB    | `claw_audit`            | audit-service           | Audit logs, usage ledger                      |
-| MongoDB    | `claw_client_logs`      | client-logs-service     | Frontend logs (TTL 30d)                       |
-| MongoDB    | `claw_server_logs`      | server-logs-service     | Backend logs (TTL 30d)                        |
-| Redis      | --                      | Shared cache layer      | Session cache, rate limiting, ephemeral state |
-| RabbitMQ   | `claw.events`           | All services            | Topic exchange, durable, DLQ + 3 retries      |
+| Engine     | Instance                | Used By                 | Notes                                           |
+| ---------- | ----------------------- | ----------------------- | ----------------------------------------------- |
+| PostgreSQL | `claw_auth`             | auth-service            | Users, sessions, settings                       |
+| PostgreSQL | `claw_chat`             | chat-service            | Threads, messages, attachments                  |
+| PostgreSQL | `claw_connectors`       | connector-service       | Providers, models, health events                |
+| PostgreSQL | `claw_routing`          | routing-service         | Decisions, policies                             |
+| PostgreSQL | `claw_memory`           | memory-service          | Memories, context packs (pgvector extension)    |
+| PostgreSQL | `claw_files`            | file-service            | File metadata, chunks                           |
+| PostgreSQL | `claw_ollama`           | ollama-service          | Local models, role assignments, pull jobs       |
+| PostgreSQL | `claw_images`           | image-service           | Image generation records                        |
+| PostgreSQL | `claw_file_generations` | file-generation-service | Generated file records                          |
+| PostgreSQL | `claw_workspace`        | workspace-service       | Connectors, sync runs, objects, actions         |
+| PostgreSQL | `claw_agent`            | agent-service           | Sessions, commands, repos, file events          |
+| PostgreSQL | `claw_plugin`           | plugin-service          | Plugin catalog, installs, consents, credentials |
+| MongoDB    | `claw_audit`            | audit-service           | Audit logs, usage ledger                        |
+| MongoDB    | `claw_client_logs`      | client-logs-service     | Frontend logs (TTL 30d)                         |
+| MongoDB    | `claw_server_logs`      | server-logs-service     | Backend logs (TTL 30d)                          |
+| Redis      | --                      | Shared cache layer      | Session cache, rate limiting, ephemeral state   |
+| RabbitMQ   | `claw.events`           | All services            | Topic exchange, durable, DLQ + 3 retries        |
 
 ---
 
@@ -267,6 +269,7 @@ All API traffic enters through Nginx on port 4000 and is routed to the appropria
 | `/api/v1/file-generations/*` | file-generation | 4013 |
 | `/api/v1/workspace/*`        | workspace       | 4014 |
 | `/api/v1/agent/*`            | agent           | 4015 |
+| `/api/v1/plugins/*`          | plugin          | 4021 |
 
 ---
 

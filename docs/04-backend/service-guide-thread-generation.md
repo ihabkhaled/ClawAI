@@ -200,7 +200,7 @@ object ended. 8123 characters. Start: "..." End: "..."` (or `EMPTY`, `PROSE`, `I
 CLOSE_ABANDONED`, closed locally so it can be deleted, and one error line names the job and budget ids. Look
   for `Generation budget close given up` in the log and release that budget in auth.
 - **Spend.** `spentMicroCredits` is the persisted spend: the PAYG per-call cost chat-service reports, raised to the
-  budget row's settled total (`POST /internal/threads/budgets/summary`, `settledMicroUsd`) by the budget closer just
+  budget row's settled total (`POST /internal/threads/budgets/summary`, `settledMicroUsd`, plus `freeAllowanceMicroUsd` for Free jobs) by the budget closer just
   before each close, so plan-wallet and PAYG jobs match auth's `thread_job_budgets.spent_micro_usd`. Free jobs
   settle 0 (the free-allowance meter holds the cost), so they show 0. A summary failure never blocks the close.
   A running job is synced the same way after each model call settles (`GenerationSpendSyncService`, at most once
@@ -210,3 +210,16 @@ CLOSE_ABANDONED`, closed locally so it can be deleted, and one error line names 
 - **Operating the slot count.** More replicas need `GENERATION_WORKER_SLOT_COUNT >= replicas x 3` and a migration
   that inserts `threads-worker-N` rows; a replica beyond the slots still works but its surplus claims wait for the
   sweep.
+
+## Author output ceiling (round-3 truncation fix)
+
+The request builder in the frontend (`createThreadGenerationRequest`) sets each role's `maxOutputTokens`. Authors now send 8192 (was 4096, which cut long Arabic and German drafts mid-text); Judge and Critic stay at 4096 because they return verdicts. The schema here accepts 256 to 32768 (`modelRoleSchema`). Cost effect: the spend reserve held for one author call is priced at the ceiling, so it doubles for authors; real spend is only what the model writes, and the job spend cap still refuses a call whose hold does not fit. Constants: `THREAD_AUTHOR_MAX_OUTPUT_TOKENS`, `THREAD_REVIEWER_MAX_OUTPUT_TOKENS` in `apps/claw-frontend/src/constants/thread-publication.constants.ts`.
+
+## Free generation policy (platform failures refund the allowance)
+
+A FAILED job with no draft closes its budget as `PLATFORM_FAILED` when the cause is the platform
+(`OUTPUT_INVALID`, `PROVIDER_*`, `CLOUD_PROVIDER_*`, `MODEL_IDLE_TIMEOUT`, `MODEL_HARD_CEILING`,
+`MODEL_REASONED_NO_ANSWER`, `MODEL_CATALOG_*`, `GENERATION_FAILED`, `CANDIDATES_EXHAUSTED`, `RESEARCH_*`,
+`QUEUE_EXPIRED`, `LEASE_EXPIRED`); auth refunds the Free meter money and the lifetime Thread. `REVIEW_NOT_PASSED`,
+owner or billing refusals (`PAYG_*`, plan and allowance codes, validation), owner cancels and unknown codes close
+`RELEASED`. Progress carries `allowanceRefunded`. Classifier: `utilities/classify-budget-close.utility.ts`.

@@ -102,3 +102,16 @@ CJK and Thai text is word-segmented in the one shared normaliser; `doc_version` 
 ## Board search performance (2026-10-14)
 
 Search reads run in a short transaction that sets `pg_trgm.similarity_threshold` and `pg_trgm.word_similarity_threshold` locally, so the `%` and `<%` operators use the GIN trigram index. Suggest under 3 characters uses a prefix index only. `BoardMaintenanceService` (module `board`) rebuilds the `thread_board_words` dictionary behind "did you mean" and the stored `trending_score` every 2 minutes; replicas take turns with `pg_try_advisory_xact_lock`. Sort indexes: `board_docs_published_idx`, `_discussed_idx`, `_liked_idx`, `_trending_idx`. Search text errors carry `BOARD_QUERY_INVALID`, `BOARD_QUERY_TOO_LONG`, `BOARD_QUERY_TOO_SHORT`. A trending order can lag a new reaction by up to 2 minutes (the counters themselves are immediate). See the ADR-177 addendum.
+
+## Recommended team (ADR-174 addendum, 2026-10-14)
+
+`GET /api/v1/thread-publications/recommended-team` returns `{ planName, team, models }` for the caller only. `team` is three authors, a Judge and a Critic (each `{ provider, model, fallbacks[] }`) or null; `models` has one `{ provider, model, status }` per picker-catalog model with `status` of `AVAILABLE`, `NEEDS_PLAN`, `WINDOW_TOO_SMALL` or `UNAVAILABLE`. Code: `RecommendedTeamService` (60 s per-owner cache), `recommended-team.utility.ts` (pure ranking and classification), `ModelCatalogClient.listModels`. The plan test is the preflight's. The deny list (`THREAD_MODEL_DENY_LIST`, OPENAI and ANTHROPIC) is a constants list; lift a provider by deleting its entry. The Threads wizard preselects the team and keeps the pickers under an Advanced fold. See ADR-174.
+
+## Guest Board endpoints (ADR-177 addendum, 2026-10-14)
+
+| Method | Path                                        | Notes                                                                                                                                   |
+| ------ | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/thread-publications/public/board`         | `@Public`. Same query and response as the signed-in list; `viewerReaction` is always `null`. 60/min per address. `public, s-maxage=60`. |
+| GET    | `/thread-publications/public/board/suggest` | `@Public`. Same as the signed-in suggest. 40/min per address. `public, s-maxage=30`. `Vary: Accept-Language`.                           |
+
+Both controllers call one `BoardService`, so SQL, visibility (only rows in `thread_publication_search_docs`, so unpublished and revoked Threads are absent) and error codes are shared. `BoardModule` must stay imported before `PublicationsModule` so `public/board` is not read as a `public/:slug`.

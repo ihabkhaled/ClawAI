@@ -239,7 +239,7 @@ generation, publication, safety, discovery, and QA paths are verified.
 The ranked improvement backlog (release blockers first) is in
 [Threads improvement backlog](clawai-threads-improvement-backlog.md).
 
-The Threads Board (signed-in browse and search at `/board`, no author names on cards, noindex, language filter defaults to the UI locale) is code in progress and not verified live; see the [Threads product spec](clawai-threads-product-spec.md) and [ADR-178](../13-adr/adr-178-the-board-is-a-portal-surface-seo-stays-on-threads-slug.md).
+The Threads Board (signed-in browse and search at `/board`, no author names on cards, noindex, language filter defaults to the UI locale) and its public read-only twin for guests at `/threads/board` (same smart search, indexable, every action shows a sign-in prompt) are code in progress and not verified live; see the [Threads product spec](clawai-threads-product-spec.md) and [ADR-178](../13-adr/adr-178-the-board-is-a-portal-surface-seo-stays-on-threads-slug.md).
 
 ---
 

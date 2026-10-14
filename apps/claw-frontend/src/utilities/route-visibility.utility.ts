@@ -40,6 +40,20 @@ export function isSharedChatPath(pathname: string): boolean {
   return unlocalizedPath.startsWith(`${SHARE_CHAT_PATH_PREFIX}/`);
 }
 
+const PUBLIC_THREAD_PATH_PATTERN = /^\/threads\/[a-zA-Z0-9-]{1,64}$/u;
+
+/**
+ * Whether a path is one public Thread page (`/threads/<slug>`).
+ *
+ * Like a shared chat it is a dynamic route that can never be a registry entry, and it must not be
+ * blanket-tagged `noindex` at the proxy: an index-eligible Thread is meant to be found. The page
+ * decides the rest (`notFound()` for anything unpublished or unapproved). `/threads` itself is the
+ * signed-in owner list and `/threads/review/<id>` has two segments, so neither matches.
+ */
+export function isPublicThreadPath(pathname: string): boolean {
+  return PUBLIC_THREAD_PATH_PATTERN.test(stripLocaleFromPathname(pathname));
+}
+
 export function classifyRouteVisibility(pathname: string): RouteVisibility {
   if (matchesStaticPublicPath(pathname)) {
     return RouteVisibility.PUBLIC_MACHINE_ROUTE;
@@ -54,6 +68,9 @@ export function classifyRouteVisibility(pathname: string): RouteVisibility {
   }
   if (locale !== null && isKnownPublicPathForLocale(unlocalizedPath, locale)) {
     return RouteVisibility.STATIC_PUBLIC;
+  }
+  if (isPublicThreadPath(pathname)) {
+    return locale === null ? RouteVisibility.UNKNOWN : RouteVisibility.DYNAMIC_PUBLIC_CANDIDATE;
   }
   return RouteVisibility.PRIVATE;
 }

@@ -87,7 +87,7 @@ Full list and reasons: [`rules/00-non-negotiable-rules.md`](rules/00-non-negotia
 - Which task needs which rules and skills: [`context/task-router.md`](context/task-router.md)
 - Commands and toolchain: [`context/stack-and-toolchain.md`](context/stack-and-toolchain.md)
 - Facts that surprise people: [`context/load-bearing-facts.md`](context/load-bearing-facts.md)
-- Delivery checklist (env, compose, nginx, CI, i18n…): [`rules/05-infra-rules.md`](rules/05-infra-rules.md)
+- Delivery checklist (env, compose, nginx, CI, i18n…): [`rules/05-infra-rules.md`](rules/05-infra-rules.md) · a new service: [`skills/add-a-new-service.md`](skills/add-a-new-service.md)
 - ADRs: [`docs/13-adr/adr-index.md`](docs/13-adr/adr-index.md) · runbooks: [`docs/11-runbooks/README.md`](docs/11-runbooks/README.md)
 - Per-service rules: each workspace's `CLAUDE.md` and generated `AGENTS.md`
 

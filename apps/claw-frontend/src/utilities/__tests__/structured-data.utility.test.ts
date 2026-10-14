@@ -5,6 +5,7 @@ import {
   buildComparisonJsonLd,
   buildThreadArticleJsonLd,
   buildThreadDescription,
+  buildPublicBoardJsonLd,
   buildPublicPageJsonLd,
   serializeJsonLd,
 } from '@/utilities/structured-data.utility';
@@ -150,5 +151,67 @@ describe('thread article structured data', () => {
 ${'word '.repeat(80)}`);
     expect(text.startsWith('word')).toBe(true);
     expect(text).toHaveLength(160);
+  });
+});
+
+describe('public Threads board structured data', () => {
+  const input = {
+    name: 'Public Threads board',
+    description: 'Browse every public Thread.',
+    canonicalUrl: 'https://claw.example/en/threads/board',
+    language: 'en',
+    lastReviewed: '2026-10-14',
+    totalItems: 42,
+    items: [
+      { name: 'First', url: 'https://claw.example/en/threads/first' },
+      { name: 'Second', url: 'https://claw.example/en/threads/second' },
+    ],
+  };
+
+  it('describes a CollectionPage whose ItemList is the first page of Threads', () => {
+    const graph = buildPublicBoardJsonLd(input)['@graph'] as Array<Record<string, unknown>>;
+
+    expect(graph[0]).toEqual(
+      expect.objectContaining({
+        '@type': 'CollectionPage',
+        url: 'https://claw.example/en/threads/board',
+        inLanguage: 'en',
+      }),
+    );
+    expect(graph[0]?.['mainEntity']).toEqual({
+      '@type': 'ItemList',
+      numberOfItems: 42,
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'First', url: input.items[0]?.url },
+        { '@type': 'ListItem', position: 2, name: 'Second', url: input.items[1]?.url },
+      ],
+    });
+  });
+
+  it('adds a breadcrumb back to the site root', () => {
+    const graph = buildPublicBoardJsonLd(input)['@graph'] as Array<Record<string, unknown>>;
+
+    expect(graph[1]).toEqual({
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'ClawAI', item: 'https://claw.example' },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'Public Threads board',
+          item: 'https://claw.example/en/threads/board',
+        },
+      ],
+    });
+  });
+
+  it('emits an empty list for an empty board and never a rating or author field', () => {
+    const serialized = serializeJsonLd(
+      buildPublicBoardJsonLd({ ...input, items: [], totalItems: 0 }),
+    );
+
+    expect(serialized).toContain('"numberOfItems":0');
+    expect(serialized).not.toContain('AggregateRating');
+    expect(serialized).not.toContain('author');
   });
 });

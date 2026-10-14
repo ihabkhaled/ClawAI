@@ -38,7 +38,7 @@ export function usePipelinePage(): UsePipelinePageReturn {
   const [content, setContent] = useState('');
   const [template, setTemplate] = useState('analyze-reason-format');
   const [selectedModel, setSelectedModel] = useState<AdvancedModuleModelSelection>(null);
-  const composer = useOrchestrationComposer();
+  const composer = useOrchestrationComposer(false, { value: content, onValueChange: setContent });
 
   const { mutate, data: sendResult, isPending, isError } = useSendPipeline();
 

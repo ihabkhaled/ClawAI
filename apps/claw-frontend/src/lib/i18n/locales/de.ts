@@ -13,19 +13,24 @@ import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
+import { PLUGIN_CHAT_TRANSLATIONS } from './plugin-chat-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
 import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
+import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
+import { THREAD_PUBLIC_BOARD_TRANSLATIONS } from './thread-public-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const de: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.de,
+  pluginChat: PLUGIN_CHAT_TRANSLATIONS.de,
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.de,
+  pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.de,
   pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.de,
   pagination: {
     label: 'Seitennummerierung',
@@ -464,6 +469,7 @@ export const de: TranslationDictionary = {
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.de,
     ...THREAD_BOARD_TRANSLATIONS.de,
+    ...THREAD_PUBLIC_BOARD_TRANSLATIONS.de,
     composerContext: {
       menuLabel: 'Kontext',
       pickLabel: 'Kontextpakete auswählen',
@@ -852,6 +858,19 @@ export const de: TranslationDictionary = {
     deleteThreadConfirm: 'Sind Sie sicher, dass Sie diesen Thread löschen möchten?',
     threadCreated: 'Thread erstellt',
     threadCreateFailed: 'Thread konnte nicht erstellt werden',
+    threadTeam: {
+      title: 'Empfohlenes Team',
+      summary:
+        'Wir haben Modelle gewählt, die mit deinem Tarif funktionieren. Öffne „Erweitert“ nur, wenn du sie selbst wählen willst.',
+      customised:
+        'Du hast das Team geändert. Mit „Empfohlenes Team verwenden“ kehrst du zu unserer Auswahl zurück.',
+      none: 'Derzeit ist kein empfohlenes Team verfügbar. Wähle die Modelle unter „Erweitert“.',
+      advanced: 'Erweitert: Modelle wählen',
+      reset: 'Empfohlenes Team verwenden',
+      reasonNeedsPlan: 'Nicht in deinem Tarif {plan}',
+      reasonWindow: 'Kontextfenster zu klein',
+      reasonUnavailable: 'Vorübergehend nicht verfügbar',
+    },
     threadProgress: {
       title: 'Fortschritt der Erstellung',
       statusQueued: 'In der Warteschlange',
@@ -861,6 +880,9 @@ export const de: TranslationDictionary = {
       stageLabel: 'Phase',
       attempt: 'Versuch {current} von {max}',
       spent: 'Bisher ausgegeben: {amount}',
+      platformFailureNotice:
+        'Das Problem lag bei uns, nicht bei Ihnen. Ihr Gratis-Kontingent wurde nicht verbraucht.',
+      retryOnUs: 'Auf unsere Kosten wiederholen',
       selectedTitle: 'Ihre Auswahl',
       fallbacks: 'Ersatzmodelle: {list}',
       noFallbacks: 'Keine Ersatzmodelle',

@@ -1052,6 +1052,86 @@ preflight() {
     die "docker compose v2 is unavailable (\`docker compose version\` failed)"
 }
 
+# Health of one database container by name: its healthcheck verdict, or its
+# plain state when it has none; `absent` when no such container exists. A
+# function of its own so the rehearsal and the unit tests can stand in for Docker.
+database_container_state() {
+  docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$1" 2>/dev/null 200>&- || printf 'absent'
+}
+
+# Whether a PEM certificate lists a DNS subject alternative name. 0 = yes,
+# 1 = no (or no readable certificate), 2 = cannot tell because openssl is absent.
+# A function of its own so the unit tests can stand in for the certificate.
+certificate_has_san() {
+  local cert="$1" san="$2"
+  command -v openssl >/dev/null 2>&1 || return 2
+  [ -r "$cert" ] || return 1
+  openssl x509 -in "$cert" -noout -ext subjectAltName 2>/dev/null | tr ',' '\n' |
+    grep -qE "DNS:${san}[[:space:]]*\$"
+}
+
+# New services arrive with new secrets and often a database of their own. The
+# deploy never creates .env values and never starts databases, so a service
+# introduced by this commit would otherwise be built, recreated and then
+# crash-loop on a missing key for the whole health timeout. This refuses BEFORE
+# anything is built or recreated, names the variables (never their values) and
+# prints the exact fix. The rules live in scripts/prod-required-env.manifest,
+# read AS OF THE TARGET COMMIT like the compose file; the validation is the
+# target commit's own scripts/ensure-prod-env.sh --check, so the deploy and the
+# operator's fix command can never disagree.
+assert_required_production_config() {
+  local new_sha="$1"
+  local manifest="$TMP_DIR/prod-required-env.manifest"
+  local ensure="$TMP_DIR/ensure-prod-env.sh"
+  local touched="" svc
+  for svc in ${PLAN_SERVICES[@]+"${PLAN_SERVICES[@]}"} ${PLAN_IMAGE_SERVICES[@]+"${PLAN_IMAGE_SERVICES[@]}"}; do
+    touched="${touched:+$touched }$svc"
+  done
+  [ -n "$touched" ] || return 0
+
+  # A commit that predates the manifest has no new requirements to enforce.
+  git show "$new_sha:scripts/prod-required-env.manifest" >"$manifest" 2>/dev/null || return 0
+  git show "$new_sha:scripts/ensure-prod-env.sh" >"$ensure" 2>/dev/null ||
+    die "the target commit has scripts/prod-required-env.manifest but no scripts/ensure-prod-env.sh"
+
+  section "Checking required production configuration..."
+  local report
+  if ! report="$(bash "$ensure" --check --env "$ENV_FILE" --manifest "$manifest" --services "$touched" 2>&1)"; then
+    printf '%s\n' "$report" | grep -E '^(MISSING|INVALID)' | sed 's/^/  /' >&2 || true
+    die "the production .env ($ENV_FILE) is missing or has unusable values the services in this rollout need (listed above, names only). Nothing was built or restarted. Fix: bash scripts/ensure-prod-env.sh --env $ENV_FILE  (appends only what is missing, never overwrites), then re-run. See docs/11-runbooks/add-a-service-to-production.md"
+  fi
+  log "  .env values present and valid for: $touched"
+
+  local rule_service rule_name rule_kind rule_arg state san_status
+  while IFS='|' read -r rule_service rule_name rule_kind rule_arg || [ -n "${rule_service:-}" ]; do
+    case "${rule_service:-}" in '' | \#*) continue ;; esac
+    case " $touched " in *" $rule_service "*) ;; *) continue ;; esac
+    case "$rule_kind" in
+      database)
+        state="$(database_container_state "$rule_arg")"
+        if [ "$state" != "healthy" ]; then
+          # The checkout still holds the PREVIOUS commit, which does not define a
+          # database this commit introduces, so the fix reads the target's file.
+          die "$rule_service needs its database container $rule_arg, which is '$state' (expected healthy). Automated deployment never starts databases. Nothing was built or restarted. Fix: git -C $PROJECT_ROOT show $new_sha:$DB_COMPOSE_REL >/tmp/claw-databases.yml && docker compose --env-file $ENV_FILE -p claw -f /tmp/claw-databases.yml up -d ${rule_arg#claw-}  (that one database only), wait until it is healthy, then re-run. See docs/11-runbooks/add-a-service-to-production.md"
+        fi
+        log "  database $rule_arg is healthy"
+        ;;
+      cert-san)
+        # nginx verifies every upstream certificate (proxy_ssl_verify on), so a
+        # service whose hostname is not a SAN of certs/claw.crt answers 502 even
+        # though it is healthy. The certificate is host state, like .env.
+        san_status=0
+        certificate_has_san "$PROJECT_ROOT/certs/claw.crt" "$rule_arg" || san_status=$?
+        case "$san_status" in
+          0) log "  certificate covers $rule_arg" ;;
+          2) err "  WARNING: openssl is unavailable, so the certificate cannot be checked for $rule_arg" ;;
+          *) die "$PROJECT_ROOT/certs/claw.crt does not list $rule_arg as a subject alternative name, so nginx would refuse $rule_service upstream (502). Nothing was built or restarted. Fix: re-issue the certificate with the target commit's scripts/install-tls.sh in a maintenance window and restart nginx and the services (they read it only at boot). See docs/11-runbooks/add-a-service-to-production.md" ;;
+        esac
+        ;;
+    esac
+  done <"$manifest"
+}
+
 # Refuse to run over unexpected TRACKED modifications. Untracked files are the
 # normal state of this host — .env, certs/, .deploy/ and the generated
 # infra/nginx/public-tls/*.conf all live here and must survive untouched — so
@@ -1799,6 +1879,8 @@ main() {
     log "      touches databases or the local-AI runtime; apply these by hand:"
     printf '        %s\n' "${PLAN_INFRA_MANUAL[@]}"
   fi
+
+  assert_required_production_config "$new_sha"
 
   # ─── Switch the tracked source to the exact target commit ──────────────────
   section "Checking out $new_sha..."

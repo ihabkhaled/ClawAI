@@ -139,7 +139,7 @@ test('deploy-prod.sh never lets a child process inherit the deploy lock', () => 
     .filter((line) => /\bdocker (?:compose|inspect|builder|logs)\b/u.test(line))
     .filter((line) => !/\bversion\b/u.test(line))
     .filter((line) => !/^\s*(?:err|log|die) /u.test(line));
-  assert.equal(dockerLines.length, 8, dockerLines.join('\n'));
+  assert.equal(dockerLines.length, 9, dockerLines.join('\n'));
 });
 
 test('deploy-prod.sh aborts when the session that started it disappears', () => {

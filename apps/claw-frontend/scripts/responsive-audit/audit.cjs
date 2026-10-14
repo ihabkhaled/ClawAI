@@ -64,6 +64,7 @@ const MARKETING = [
   '/architecture',
   '/coding-agent',
   '/threads/discover',
+  '/threads/board',
   '/login',
   '/register',
 ];
@@ -97,7 +98,10 @@ function inspect({ vw, mobile }) {
 
   // The portal shell is exactly one viewport tall; a taller document means something escaped its clip
   // (an absolutely positioned sr-only element) and the whole shell can scroll up, leaving a blank band.
-  if (de.scrollHeight > window.innerHeight + 1 && document.querySelector('[data-testid="topbar"]')) {
+  if (
+    de.scrollHeight > window.innerHeight + 1 &&
+    document.querySelector('[data-testid="topbar"]')
+  ) {
     issues.push({
       kind: 'page-vertical-overflow',
       detail: `scrollHeight ${de.scrollHeight} > innerHeight ${window.innerHeight}`,

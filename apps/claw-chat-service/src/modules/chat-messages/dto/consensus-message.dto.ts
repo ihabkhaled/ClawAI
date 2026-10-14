@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { attachmentFields } from './attachment-fields.dto';
 import { contextPackFields } from './context-pack-fields.dto';
+import { pluginFields } from './plugin-fields.dto';
 import { researchFields } from './research-fields.dto';
 import { requireContentOrAttachments } from '../validators/content-or-attachments.validator';
 
@@ -21,6 +22,7 @@ export const consensusMessageSchema = z
     ...attachmentFields,
     ...researchFields,
     ...contextPackFields,
+    ...pluginFields,
   })
   .superRefine(requireContentOrAttachments());
 

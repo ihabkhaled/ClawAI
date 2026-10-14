@@ -10,6 +10,8 @@ function buildRepository(installs: Array<{ pluginId: string }>) {
     pluginToolConsent: { deleteMany: vi.fn().mockResolvedValue({ count: 2 }) },
     pluginInvocation: { deleteMany: vi.fn().mockResolvedValue({ count: 5 }) },
     pluginCatalogEntry: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+    mcpServer: { deleteMany: vi.fn().mockResolvedValue({ count: 3 }) },
+    mcpServerCredential: { deleteMany: vi.fn().mockResolvedValue({ count: 3 }) },
   };
   const prisma = {
     $transaction: vi.fn(async (work: (client: typeof tx) => Promise<unknown>) => work(tx)),
@@ -29,7 +31,15 @@ describe('AccountDeletionRepository', () => {
     });
     expect(tx.pluginInvocation.deleteMany).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
     expect(tx.pluginInstall.deleteMany).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
-    expect(counts).toEqual({ installs: 2, credentials: 1, consents: 2, invocations: 5 });
+    expect(tx.mcpServer.deleteMany).toHaveBeenCalledWith({ where: { ownerUserId: 'user-1' } });
+    expect(tx.mcpServerCredential.deleteMany).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
+    expect(counts).toEqual({
+      installs: 2,
+      credentials: 1,
+      consents: 2,
+      invocations: 5,
+      servers: 3,
+    });
   });
 
   it('only ever filters by the deleted user', async () => {
@@ -42,8 +52,10 @@ describe('AccountDeletionRepository', () => {
       tx.pluginCredential.deleteMany.mock.calls[0]?.[0].where,
       tx.pluginInvocation.deleteMany.mock.calls[0]?.[0].where,
       tx.pluginInstall.deleteMany.mock.calls[0]?.[0].where,
+      tx.mcpServerCredential.deleteMany.mock.calls[0]?.[0].where,
     ];
-    expect(wheres).toEqual(Array.from({ length: 4 }, () => ({ userId: 'user-1' })));
+    expect(wheres).toEqual(Array.from({ length: 5 }, () => ({ userId: 'user-1' })));
+    expect(tx.mcpServer.deleteMany.mock.calls[0]?.[0].where).toEqual({ ownerUserId: 'user-1' });
   });
 
   it('lowers each plugin install count once, never below zero', async () => {
@@ -68,12 +80,14 @@ describe('AccountDeletionRepository', () => {
     tx.pluginCredential.deleteMany.mockResolvedValue({ count: 0 });
     tx.pluginToolConsent.deleteMany.mockResolvedValue({ count: 0 });
     tx.pluginInvocation.deleteMany.mockResolvedValue({ count: 0 });
+    tx.mcpServer.deleteMany.mockResolvedValue({ count: 0 });
 
     await expect(repository.deleteAllForUser('user-1')).resolves.toEqual({
       installs: 0,
       credentials: 0,
       consents: 0,
       invocations: 0,
+      servers: 0,
     });
     expect(tx.pluginCatalogEntry.updateMany).not.toHaveBeenCalled();
   });

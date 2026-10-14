@@ -32,7 +32,7 @@ export function useConsensusPage(): UseConsensusPageReturn {
     [],
   );
   const [prompt, setPrompt] = useState('');
-  const composer = useOrchestrationComposer();
+  const composer = useOrchestrationComposer(false, { value: prompt, onValueChange: setPrompt });
   const { send, result, isPending, isError } = useSendConsensus();
 
   const threadId = result?.threadId ?? null;

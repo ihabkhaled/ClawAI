@@ -1,6 +1,7 @@
 import { ForbiddenException, ServiceUnavailableException } from '@nestjs/common';
 
 import { AppConfig } from '../../../../app/config/app.config';
+import { GenerationBudgetCloseStatus } from '../../../../common/enums/generation-budget-close-status.enum';
 import { ThreadBudgetClient } from '../thread-budget.client';
 import { ThreadBudgetCloseRefusedError } from '../../utilities/thread-budget-close-refused.error';
 
@@ -64,6 +65,21 @@ describe('ThreadBudgetClient', () => {
       } as never);
     };
 
+    it('sends PLATFORM_FAILED so auth refunds the Free allowance', async () => {
+      configure();
+      const fetch = vi.fn().mockResolvedValue(new Response('true', { status: 200 }));
+      vi.stubGlobal('fetch', fetch);
+
+      await new ThreadBudgetClient().close('budget-1', GenerationBudgetCloseStatus.PLATFORM_FAILED);
+
+      expect(fetch).toHaveBeenCalledWith(
+        'https://auth-service:4001/api/v1/internal/threads/budgets/close',
+        expect.objectContaining({
+          body: JSON.stringify({ budgetId: 'budget-1', status: 'PLATFORM_FAILED' }),
+        }),
+      );
+    });
+
     it('resolves when the budget service answers true', async () => {
       configure();
       vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('true', { status: 200 })));
@@ -98,7 +114,7 @@ describe('ThreadBudgetClient', () => {
     });
   });
 
-  describe('settledMicroUsd', () => {
+  describe('spentMicroUsd', () => {
     const configure = (): void => {
       vi.spyOn(AppConfig, 'get').mockReturnValue({
         AUTH_SERVICE_URL: 'https://auth-service:4001',
@@ -115,24 +131,61 @@ describe('ThreadBudgetClient', () => {
         );
       vi.stubGlobal('fetch', fetch);
 
-      await expect(new ThreadBudgetClient().settledMicroUsd('budget-1')).resolves.toBe(8227);
+      await expect(new ThreadBudgetClient().spentMicroUsd('budget-1')).resolves.toBe(8227);
       expect(fetch).toHaveBeenCalledWith(
         'https://auth-service:4001/api/v1/internal/threads/budgets/summary',
         expect.objectContaining({ body: JSON.stringify({ budgetId: 'budget-1' }) }),
       );
     });
 
+    it('reports the Free meter money for a job that settled nothing', async () => {
+      configure();
+      vi.stubGlobal(
+        'fetch',
+        vi
+          .fn()
+          .mockResolvedValue(
+            new Response(JSON.stringify({ settledMicroUsd: 0, freeAllowanceMicroUsd: 4100 })),
+          ),
+      );
+      await expect(new ThreadBudgetClient().spentMicroUsd('b')).resolves.toBe(4100);
+    });
+
+    it('treats an absent freeAllowanceMicroUsd as zero', async () => {
+      configure();
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue(new Response(JSON.stringify({ settledMicroUsd: 90 }))),
+      );
+      await expect(new ThreadBudgetClient().spentMicroUsd('b')).resolves.toBe(90);
+    });
+
+    it('rejects a negative freeAllowanceMicroUsd', async () => {
+      configure();
+      vi.stubGlobal(
+        'fetch',
+        vi
+          .fn()
+          .mockResolvedValue(
+            new Response(JSON.stringify({ settledMicroUsd: 0, freeAllowanceMicroUsd: -5 })),
+          ),
+      );
+      await expect(new ThreadBudgetClient().spentMicroUsd('b')).rejects.toBeInstanceOf(
+        ServiceUnavailableException,
+      );
+    });
+
     it('fails closed on an error status or an invalid body', async () => {
       configure();
       vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 404 })));
-      await expect(new ThreadBudgetClient().settledMicroUsd('b')).rejects.toBeInstanceOf(
+      await expect(new ThreadBudgetClient().spentMicroUsd('b')).rejects.toBeInstanceOf(
         ServiceUnavailableException,
       );
       vi.stubGlobal(
         'fetch',
         vi.fn().mockResolvedValue(new Response(JSON.stringify({ settledMicroUsd: -1 }))),
       );
-      await expect(new ThreadBudgetClient().settledMicroUsd('b')).rejects.toBeInstanceOf(
+      await expect(new ThreadBudgetClient().spentMicroUsd('b')).rejects.toBeInstanceOf(
         ServiceUnavailableException,
       );
     });

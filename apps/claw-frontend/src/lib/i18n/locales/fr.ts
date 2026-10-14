@@ -13,19 +13,24 @@ import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
+import { PLUGIN_CHAT_TRANSLATIONS } from './plugin-chat-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
 import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
+import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
+import { THREAD_PUBLIC_BOARD_TRANSLATIONS } from './thread-public-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const fr: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.fr,
+  pluginChat: PLUGIN_CHAT_TRANSLATIONS.fr,
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.fr,
+  pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.fr,
   pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.fr,
   pagination: {
     label: 'Pagination',
@@ -460,6 +465,7 @@ export const fr: TranslationDictionary = {
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.fr,
     ...THREAD_BOARD_TRANSLATIONS.fr,
+    ...THREAD_PUBLIC_BOARD_TRANSLATIONS.fr,
     composerContext: {
       menuLabel: 'Contexte',
       pickLabel: 'Choisir des packs de contexte',
@@ -846,6 +852,19 @@ export const fr: TranslationDictionary = {
     deleteThreadConfirm: 'Êtes-vous sûr de vouloir supprimer ce fil ?',
     threadCreated: 'Fil créé',
     threadCreateFailed: 'Échec de la création du fil',
+    threadTeam: {
+      title: 'Équipe recommandée',
+      summary:
+        'Nous avons choisi des modèles compatibles avec votre forfait. Ouvrez Avancé seulement si vous voulez les choisir vous-même.',
+      customised:
+        "Vous avez modifié l'équipe. Utilisez l'équipe recommandée pour revenir à notre choix.",
+      none: "Aucune équipe recommandée n'est disponible pour le moment. Choisissez les modèles sous Avancé.",
+      advanced: 'Avancé : choisir les modèles',
+      reset: "Utiliser l'équipe recommandée",
+      reasonNeedsPlan: 'Absent de votre forfait {plan}',
+      reasonWindow: 'Fenêtre de contexte trop petite',
+      reasonUnavailable: 'Temporairement indisponible',
+    },
     threadProgress: {
       title: 'Progression de la génération',
       statusQueued: 'En file d’attente',
@@ -855,6 +874,9 @@ export const fr: TranslationDictionary = {
       stageLabel: 'Étape',
       attempt: 'Tentative {current} sur {max}',
       spent: 'Dépensé jusqu’ici : {amount}',
+      platformFailureNotice:
+        'Le problème venait de nous, pas de vous. Votre quota gratuit n’a pas été utilisé.',
+      retryOnUs: 'Réessayer à nos frais',
       selectedTitle: 'Votre sélection',
       fallbacks: 'Solutions de repli : {list}',
       noFallbacks: 'Aucune solution de repli',

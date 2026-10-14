@@ -31,12 +31,14 @@ export function ComposerPlusMenuView(props: ComposerPlusMenuViewProps): React.Re
   const { menu, context, disabled, research } = props;
   const { t } = useTranslation();
   const modeLabel = resolveResearchModeLabel(research.mode, t);
-  const badgeCount = props.selectedFileIds.length + (context?.picker.selectedCount ?? 0);
+  // A thread's picker saves as you pick; a thread-less surface holds the choice for its run.
+  const packs = context?.picker ?? props.draftPacks;
+  const packsCount = packs?.selectedCount ?? 0;
+  const badgeCount = props.selectedFileIds.length + packsCount;
   const triggerLabel =
     badgeCount > 0
       ? t('chat.composerMenu.addLabelWithCount', { value: String(badgeCount) })
       : t('chat.composerMenu.addLabel');
-  const packsCount = context?.picker.selectedCount ?? 0;
 
   return (
     <Popover open={menu.open} onOpenChange={menu.onOpenChange}>
@@ -89,7 +91,7 @@ export function ComposerPlusMenuView(props: ComposerPlusMenuViewProps): React.Re
                 onBrowseAll={menu.openLibrary}
               />
             </ComposerPlusMenuSection>
-            {context === null ? null : (
+            {packs === undefined ? null : (
               <ComposerPlusMenuSection title={t('chat.composerMenu.sectionContext')}>
                 <ComposerPlusMenuItem
                   icon={Layers}
@@ -104,31 +106,35 @@ export function ComposerPlusMenuView(props: ComposerPlusMenuViewProps): React.Re
                   dataTour="composer-context"
                   onClick={() => menu.showView(View.PACKS)}
                 />
-                <ComposerPlusMenuItem
-                  icon={FolderOpen}
-                  label={t('chat.composerContext.viewLabel')}
-                  hint={t('chat.composerMenu.viewHint')}
-                  onClick={() => {
-                    menu.closeMenu();
-                    context.openDialog(ComposerContextDialog.VIEW);
-                  }}
-                />
-                <ComposerPlusMenuItem
-                  icon={Brain}
-                  label={t('chat.composerContext.memoryLabel')}
-                  hint={t('chat.composerMenu.memoryHint')}
-                  onClick={() => {
-                    menu.closeMenu();
-                    context.openDialog(ComposerContextDialog.MEMORY);
-                  }}
-                />
-                <ComposerPlusMenuItem
-                  icon={Eye}
-                  label={t('preview.openLabel')}
-                  hint={t('chat.composerMenu.previewHint')}
-                  dataTour="composer-preview-context"
-                  onClick={menu.openPreview}
-                />
+                {context === null ? null : (
+                  <>
+                    <ComposerPlusMenuItem
+                      icon={FolderOpen}
+                      label={t('chat.composerContext.viewLabel')}
+                      hint={t('chat.composerMenu.viewHint')}
+                      onClick={() => {
+                        menu.closeMenu();
+                        context.openDialog(ComposerContextDialog.VIEW);
+                      }}
+                    />
+                    <ComposerPlusMenuItem
+                      icon={Brain}
+                      label={t('chat.composerContext.memoryLabel')}
+                      hint={t('chat.composerMenu.memoryHint')}
+                      onClick={() => {
+                        menu.closeMenu();
+                        context.openDialog(ComposerContextDialog.MEMORY);
+                      }}
+                    />
+                    <ComposerPlusMenuItem
+                      icon={Eye}
+                      label={t('preview.openLabel')}
+                      hint={t('chat.composerMenu.previewHint')}
+                      dataTour="composer-preview-context"
+                      onClick={menu.openPreview}
+                    />
+                  </>
+                )}
               </ComposerPlusMenuSection>
             )}
             <ComposerPlusMenuSection title={t('chat.composerMenu.sectionTools')}>
@@ -167,13 +173,13 @@ export function ComposerPlusMenuView(props: ComposerPlusMenuViewProps): React.Re
             />
           </ComposerPlusSubPanel>
         ) : null}
-        {menu.view === View.PACKS && context !== null ? (
+        {menu.view === View.PACKS && packs !== undefined ? (
           <ComposerPlusSubPanel
             title={t('chat.composerContext.menuLabel')}
             onBack={menu.backToMain}
           >
             <div className="p-2">
-              <ComposerContextPackPicker picker={context.picker} />
+              <ComposerContextPackPicker picker={packs} />
             </div>
           </ComposerPlusSubPanel>
         ) : null}

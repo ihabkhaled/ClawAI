@@ -13,19 +13,24 @@ import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
+import { PLUGIN_CHAT_TRANSLATIONS } from './plugin-chat-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
 import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
+import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
+import { THREAD_PUBLIC_BOARD_TRANSLATIONS } from './thread-public-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const en: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.en,
+  pluginChat: PLUGIN_CHAT_TRANSLATIONS.en,
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.en,
+  pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.en,
   pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.en,
   pagination: {
     label: 'Pagination',
@@ -455,6 +460,7 @@ export const en: TranslationDictionary = {
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.en,
     ...THREAD_BOARD_TRANSLATIONS.en,
+    ...THREAD_PUBLIC_BOARD_TRANSLATIONS.en,
     composerContext: {
       menuLabel: 'Context',
       pickLabel: 'Choose context packs',
@@ -831,6 +837,18 @@ export const en: TranslationDictionary = {
     deleteThreadConfirm: 'Are you sure you want to delete this thread?',
     threadCreated: 'Thread created',
     threadCreateFailed: 'Failed to create thread',
+    threadTeam: {
+      title: 'Recommended team',
+      summary:
+        'We picked models that work on your plan. Open Advanced only if you want to choose them yourself.',
+      customised: 'You changed the team. Use the recommended team to go back to our choice.',
+      none: 'No recommended team is available right now. Choose the models under Advanced.',
+      advanced: 'Advanced: choose the models',
+      reset: 'Use the recommended team',
+      reasonNeedsPlan: 'Not on your {plan} plan',
+      reasonWindow: 'Context window too small',
+      reasonUnavailable: 'Temporarily unavailable',
+    },
     threadProgress: {
       title: 'Generation progress',
       statusQueued: 'Waiting in the queue',
@@ -840,6 +858,9 @@ export const en: TranslationDictionary = {
       stageLabel: 'Stage',
       attempt: 'Attempt {current} of {max}',
       spent: 'Spent so far: {amount}',
+      platformFailureNotice:
+        'This was a problem on our side, not yours. Your Free allowance was not used.',
+      retryOnUs: 'Retry on us',
       selectedTitle: 'What you selected',
       fallbacks: 'Fallbacks: {list}',
       noFallbacks: 'No fallbacks',

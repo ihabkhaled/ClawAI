@@ -29,6 +29,8 @@ import type { AssembledContext } from '../types/context.types';
 import type { ThreadSettings } from '../types/execution.types';
 import type { ResearchTranscript } from '../types/research-transcript.types';
 import { ChatExecutionManager } from './chat-execution.manager';
+import { pluginRefsMetadata } from '../utilities/plugin-refs.utility';
+import type { PluginRef } from '../types/plugin-tools.types';
 import { ChatContextGatewayManager } from './chat-context-gateway.manager';
 import { resolveContextTurnText } from '../utilities/attachment-only-turn.utility';
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
@@ -64,12 +66,13 @@ export class ConsensusExecutionManager {
     researchMode?: ResearchMode,
     researchProviderId?: string,
     userToken?: string,
+    pluginRefs?: readonly PluginRef[],
   ): Promise<ConsensusResponse> {
     this.logger.log(
       `executeConsensus: queuing ${String(models.length)} models in thread ${threadId}`,
     );
 
-    const userMessage = await this.storeUserMessage(threadId, content, fileIds);
+    const userMessage = await this.storeUserMessage(threadId, content, fileIds, pluginRefs);
 
     void this.executeInBackground(
       userId,
@@ -113,30 +116,17 @@ export class ConsensusExecutionManager {
         providerId: researchProviderId,
       });
       const context = injectResearchEvidenceIntoContext(rawContext, enrichment.systemPrompt);
-      this.safeEmitStage(threadId, {
-        label: 'Dispatching candidates',
-        status: OrchestrationStageStatus.ACTIVE,
-        detail: `${String(models.length)} models in parallel`,
-        stageId: 'consensus:dispatch',
-      });
-      const responses = await this.executeAllModels(threadId, models, context, threadSettings);
-      const completedResponses = responses.filter((r) => r.status === 'completed');
-      this.safeEmitStage(threadId, {
-        label: 'Dispatching candidates',
-        status: OrchestrationStageStatus.COMPLETED,
-        detail: `${String(completedResponses.length)}/${String(responses.length)} returned`,
-        stageId: 'consensus:dispatch',
-      });
+      const { responses, completedResponses } = await this.dispatchCandidates(
+        threadId,
+        models,
+        context,
+        threadSettings,
+      );
 
       await this.storeModelMessages(threadId, consensusGroupId, responses, enrichment.transcript);
 
-      this.safeEmitStage(threadId, {
-        label: 'Judge dispatched',
-        status: OrchestrationStageStatus.ACTIVE,
-        detail: 'Synthesizing consensus from candidates',
-        stageId: 'consensus:judge',
-      });
-      const synthesis = await this.synthesize(
+      const synthesis = await this.runJudge(
+        threadId,
         // Rule 42 §18: the synthesis reads no history, so an attachment-only
         // send's request has to be spelled out here or it synthesises "".
         resolveContextTurnText(content, context),
@@ -145,12 +135,6 @@ export class ConsensusExecutionManager {
         userId,
         enrichment.systemPrompt.length > 0,
       );
-      this.safeEmitStage(threadId, {
-        label: 'Judge returned',
-        status: OrchestrationStageStatus.COMPLETED,
-        detail: `Agreement score ${String(synthesis.analysis.agreementScore.toFixed(2))}`,
-        stageId: 'consensus:judge',
-      });
       await this.storeSynthesisMessage(
         threadId,
         consensusGroupId,
@@ -168,22 +152,83 @@ export class ConsensusExecutionManager {
       });
       this.chatStreamService.emitCompletion(threadId, 'consensus', 'consensus');
     } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`executeInBackground: consensus failed — ${msg}`);
-      this.safeEmitStage(threadId, {
-        label: 'Consensus failed',
-        status: OrchestrationStageStatus.ERROR,
-        detail: msg,
-        stageId: 'consensus:error',
-      });
-      await this.storeSynthesisMessage(
-        threadId,
-        consensusGroupId,
-        this.buildFallbackSynthesis(msg),
-        null,
-      );
-      this.chatStreamService.emitError(threadId, `Consensus execution failed: ${msg}`);
+      await this.handleBackgroundFailure(threadId, consensusGroupId, error);
     }
+  }
+
+  private async dispatchCandidates(
+    threadId: string,
+    models: ParallelModelTarget[],
+    context: AssembledContext,
+    threadSettings: ThreadSettings | undefined,
+  ): Promise<{ responses: ParallelModelResponse[]; completedResponses: ParallelModelResponse[] }> {
+    this.safeEmitStage(threadId, {
+      label: 'Dispatching candidates',
+      status: OrchestrationStageStatus.ACTIVE,
+      detail: `${String(models.length)} models in parallel`,
+      stageId: 'consensus:dispatch',
+    });
+    const responses = await this.executeAllModels(threadId, models, context, threadSettings);
+    const completedResponses = responses.filter((r) => r.status === 'completed');
+    this.safeEmitStage(threadId, {
+      label: 'Dispatching candidates',
+      status: OrchestrationStageStatus.COMPLETED,
+      detail: `${String(completedResponses.length)}/${String(responses.length)} returned`,
+      stageId: 'consensus:dispatch',
+    });
+    return { responses, completedResponses };
+  }
+
+  private async runJudge(
+    threadId: string,
+    request: string,
+    completedResponses: ParallelModelResponse[],
+    models: ParallelModelTarget[],
+    userId: string,
+    researchGrounded: boolean,
+  ): Promise<ConsensusSynthesisResult> {
+    this.safeEmitStage(threadId, {
+      label: 'Judge dispatched',
+      status: OrchestrationStageStatus.ACTIVE,
+      detail: 'Synthesizing consensus from candidates',
+      stageId: 'consensus:judge',
+    });
+    const synthesis = await this.synthesize(
+      request,
+      completedResponses,
+      models,
+      userId,
+      researchGrounded,
+    );
+    this.safeEmitStage(threadId, {
+      label: 'Judge returned',
+      status: OrchestrationStageStatus.COMPLETED,
+      detail: `Agreement score ${String(synthesis.analysis.agreementScore.toFixed(2))}`,
+      stageId: 'consensus:judge',
+    });
+    return synthesis;
+  }
+
+  private async handleBackgroundFailure(
+    threadId: string,
+    consensusGroupId: string,
+    error: unknown,
+  ): Promise<void> {
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    this.logger.error(`executeInBackground: consensus failed — ${msg}`);
+    this.safeEmitStage(threadId, {
+      label: 'Consensus failed',
+      status: OrchestrationStageStatus.ERROR,
+      detail: msg,
+      stageId: 'consensus:error',
+    });
+    await this.storeSynthesisMessage(
+      threadId,
+      consensusGroupId,
+      this.buildFallbackSynthesis(msg),
+      null,
+    );
+    this.chatStreamService.emitError(threadId, `Consensus execution failed: ${msg}`);
   }
 
   /**
@@ -621,8 +666,13 @@ Rules: agreementScore 0.0-1.0, confidenceLevel must be HIGH/MEDIUM/LOW, max 3 it
     threadId: string,
     content: string,
     fileIds?: string[],
+    pluginRefs?: readonly PluginRef[],
   ): Promise<{ id: string }> {
-    const metadata = fileIds && fileIds.length > 0 ? { fileIds } : undefined;
+    const stored = {
+      ...(fileIds && fileIds.length > 0 ? { fileIds } : {}),
+      ...pluginRefsMetadata(pluginRefs),
+    };
+    const metadata = Object.keys(stored).length > 0 ? stored : undefined;
     return this.chatMessagesRepository.create({ threadId, role: 'USER', content, metadata });
   }
 

@@ -6,7 +6,7 @@ import { PluginsNavTab } from '@/enums/plugins-nav-tab.enum';
 import { cn } from '@/lib/utils';
 import type { PluginsNavProps } from '@/types/plugin-installs.types';
 
-/** Discover and Installed as two links, so each view has its own URL and Back works. */
+/** Discover, Installed and My servers as links, so each view has its own URL and Back works. */
 export function PluginsNav({ active, t }: PluginsNavProps): React.ReactElement {
   return (
     <nav
@@ -32,6 +32,16 @@ export function PluginsNav({ active, t }: PluginsNavProps): React.ReactElement {
         )}
       >
         {t('pluginsInstall.nav.installed')}
+      </Link>
+      <Link
+        href={ROUTES.PLUGINS_SERVERS}
+        aria-current={active === PluginsNavTab.Servers ? 'page' : undefined}
+        className={cn(
+          PLUGINS_NAV_LINK_CLASSES,
+          active === PluginsNavTab.Servers ? 'bg-background shadow-sm' : 'text-muted-foreground',
+        )}
+      >
+        {t('pluginsServers.nav.servers')}
       </Link>
     </nav>
   );

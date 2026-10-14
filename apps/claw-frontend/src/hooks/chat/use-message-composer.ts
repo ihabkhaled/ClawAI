@@ -121,6 +121,7 @@ export function useMessageComposer(props: MessageComposerProps): UseMessageCompo
       onClose: state.maskEdit.closeEditor,
       onApplied: state.maskEdit.applyMask,
     },
+    pluginMentions: state.pluginMentions,
     toolbarProps: {
       selectedModel: props.selectedModel,
       onModelChange: props.onModelChange,

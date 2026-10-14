@@ -44,7 +44,7 @@ frontend + <!-- count:sharedPackages -->6<!-- /count --> shared packages** = <!-
                 │  HTTP/HTTPS to service:port
                 ▼
 ┌──────────────────────────────────────────────────────────────────────┐
-│  20 NestJS services (ports 4001-4020)                                  │
+│  21 NestJS services (ports 4001-4021)                                  │
 │  Controller (3-line) → Service (≤30 ln) → Repository (no throw)        │
 │                     ↘ Manager (≤80 ln orchestration)                   │
 │                     ↘ Adapter (wraps vendor SDKs)                       │
@@ -93,6 +93,7 @@ out by the inventory audit (`portCoverageGaps`) and detailed in
 | payment           | 4018            | PostgreSQL                            |
 | threads           | 4019            | PostgreSQL (`claw_threads`)           |
 | thread-generation | 4020            | PostgreSQL (`claw_thread_generation`) |
+| plugin            | 4021            | PostgreSQL (`claw_plugin`)            |
 
 Most PostgreSQL services use **Prisma 7.8**; the three Mongo services (audit,
 client-logs, server-logs) use **Mongoose**. `health` has no database.

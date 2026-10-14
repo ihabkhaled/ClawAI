@@ -84,13 +84,13 @@ the 13 locales is open.
   owner, nothing else changed); a Critic failure stales only the new revision; a pass stales the older
   unpublished approvals. `canPublish`/`canRepublish` also need a real approved, index-eligible revision
   (`hasPublishableRevision`). Title = first heading of any level, else first sentence; the first publish
-  gives a slug from the title plus 8 id characters (a republish keeps its link).
+  gives a slug from the title plus 8 id characters (a republish keeps its link). Never a bare route word: `RESERVED_PUBLICATION_SLUGS` (`board`, `discover`, `sitemap`) are the literal segments under `public/`, and a spec derives them from the controllers.
 - **Not done**: a start-time refusal for a cap below one call's hold or an unpriced model. No cheap
   price or hold read endpoint exists (the public catalog carries no rate); needs one from connector or chat.
 
 ## Board index text format (2026-10-14)
 
-`normalizeSearchText` segments ja/zh/th runs with `Intl.Segmenter`; changing it means bumping `BOARD_DOC_FORMAT_VERSION` so the reconcile job re-indexes old rows. Citation markers (single, doubled, comma lists `[id1, id2]` and nested `[[id1], [id2]]`; format version 3) are stripped before indexing. A page above 100000 answers a coded 400 `BOARD_PAGE_OUT_OF_RANGE`. A view pushes its count through `BoardCountsPort.viewsChanged`. `highlightRanges` (board-index) computes exact and fuzzy highlight offsets.
+`normalizeSearchText` segments ja/zh/th runs with `Intl.Segmenter`; changing it means bumping `BOARD_DOC_FORMAT_VERSION` so the reconcile job re-indexes old rows. Citation markers (single, doubled, comma lists `[id1, id2]` and nested `[[id1], [id2]]`; format version 3) are stripped before indexing. A page above 100000 answers a coded 400 `BOARD_PAGE_OUT_OF_RANGE`. A view pushes its count through `BoardCountsPort.viewsChanged`. `highlightRanges` (board-index) computes exact and fuzzy highlight offsets. Thai search is proven by `board-thai-search.spec.ts`: a Thai title/body is segmented into words at index time, the query goes through the same `normalizeSearchText`, and the SQL builders bind it as a parameter (plainto_tsquery plus the trigram arms from 3 characters); the 'simple' text-search config is used for `th`. Real Postgres ranking of Thai is covered only by the live Board lane.
 
 ## Board search performance (ADR-177 addendum 2026-10-14)
 
@@ -105,3 +105,11 @@ the 13 locales is open.
 - The public view endpoint refreshes the Board row in the background and at most once per publication per 30 s (`BOARD_NOTIFY_MIN_INTERVAL_MS`): a public, unauthenticated request never waits for, or multiplies, a database refresh. The reconcile job heals any miss.
 - Removing a Board doc (unpublish, revoke, moderation hide) also removes, in the same transaction, the did-you-mean words only that doc contributed, so a taken-down Thread's words are not echoed back before the next dictionary rebuild.
 - Board citation markers are stripped by a linear scanner (`stripCitationMarkers`), not one regex over the whole body: a body of unclosed brackets cost the square of its length with the earlier pattern (ReDoS). A spec feeds 200,000 unclosed brackets and must finish in 1.5 s.
+
+## Recommended team (ADR-174 addendum 2026-10-14)
+
+`GET thread-publications/recommended-team` (`PublicationRecommendedTeamController` -> `RecommendedTeamService`) is the one place that decides a default team. It uses `ModelCatalogClient.listModels` (same 30 s cached catalog read as `isKnown`, now also keeping the published window and cost band) and `isModelAllowedForUsage` (the preflight's plan test), caches per owner for 60 s, and fails closed with 503. `classifyModel` order: deny list, plan, window. A model with no published window counts as the assumed 32,768 (ADR-173). `THREAD_MODEL_DENY_LIST` (OPENAI, ANTHROPIC) is a constants list until a settings table exists; it shapes the recommendation and the picker only, never the start. Do not add a second ranking in the frontend.
+
+## Guest Board (ADR-177 addendum 2026-10-14)
+
+`BoardPublicController` (`thread-publications/public/board`, `.../suggest`, `@Public`) calls the same `BoardService.list(null, query)` / `suggest` as `BoardController`. Never copy the query or shape into a second path; `userId = null` drops the reaction join and `viewerReaction` stays `null`. Limits 60 and 40 per minute per address, `Cache-Control: public, s-maxage=...`, `Vary: Accept-Language` (never `Authorization`). `BoardModule` stays before `PublicationsModule` in `AppModule` or `public/board` is read as a slug.

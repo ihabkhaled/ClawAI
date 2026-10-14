@@ -3,6 +3,7 @@ import { type ChatMessage, type ChatThread, type RoutingMode } from '../../../ge
 import { type ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { type AssembledContext } from './context.types';
 import { type ThreadSettings } from './execution.types';
+import { type PluginRef } from './plugin-tools.types';
 import { type ResearchOptions } from './research-options.types';
 
 /**
@@ -73,6 +74,14 @@ export type ChatContextRequest = {
 
   routingMode?: RoutingMode;
   research?: ResearchOptions;
+
+  /**
+   * The plugins the user @mentioned, when the surface received them on its request DTO
+   * (Compare, the labs). Absent means "read them off the latest user turn", which is
+   * where normal chat and in-thread Compare keep them. Ignored on surfaces that only
+   * transform or grade an answer (`PLUGIN_TOOL_SURFACES`).
+   */
+  pluginRefs?: readonly PluginRef[];
 
   /**
    * Overrides the thread's answer-length reserve for this call.

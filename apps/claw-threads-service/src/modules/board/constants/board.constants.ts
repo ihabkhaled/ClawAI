@@ -45,3 +45,11 @@ export const BOARD_LIST_RATE_LIMIT_PER_MINUTE = 120;
 export const BOARD_SUGGEST_RATE_LIMIT_PER_MINUTE = 60;
 export const BOARD_RATE_LIMIT_WINDOW_MS = 60_000;
 export const BOARD_SUGGEST_CACHE_CONTROL = 'private, max-age=15';
+
+/** Anonymous (marketing site) board: stricter per-address limits and shared-cache headers. */
+export const BOARD_PUBLIC_LIST_RATE_LIMIT_PER_MINUTE = 60;
+export const BOARD_PUBLIC_SUGGEST_RATE_LIMIT_PER_MINUTE = 40;
+export const BOARD_PUBLIC_LIST_CACHE_CONTROL = 'public, s-maxage=60, stale-while-revalidate=300';
+export const BOARD_PUBLIC_SUGGEST_CACHE_CONTROL = 'public, s-maxage=30';
+/** Never Authorization: the anonymous response is identical for every caller. */
+export const BOARD_PUBLIC_VARY = 'Accept-Language';

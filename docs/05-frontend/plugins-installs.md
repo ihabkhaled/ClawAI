@@ -82,6 +82,36 @@ All paths are under `apps/claw-frontend/src/`.
   reads the service's `admin-settings.constants.ts` and fails when the two differ. The service
   still checks every value again.
 
+## My MCP servers (`/plugins/servers`)
+
+The third tab of `PluginsNav`. Files: `plugin-servers-page`, `plugin-server-card`,
+`add-plugin-server-dialog` (+ `add-plugin-server-form`), `plugin-server-tools-dialog` and
+`plugin-server-tools-panel`, `plugin-server-remove-dialog`, `plugin-server-cap-badge`,
+`plugin-server-status-badge`; hooks `use-plugin-servers*`, `use-add-plugin-server-dialog`,
+`use-plugin-server-tools`; repository `plugin-servers.repository.ts`.
+
+Backend contract the UI is written against (field names are read defensively, so a renamed field
+shows up as a missing value, not a crash):
+
+| Call                                 | Body                                                                                             | Answer read                                                                  |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| `GET /plugins/servers`               |                                                                                                  | array, or `{servers\|items\|data: [...], limit\|maxServers\|cap\|planLimit}` |
+| `POST /plugins/servers`              | `{name, url, authKind: NONE\|API_KEY, credential?: {headerName, value}, acknowledgedRisk: true}` | server, or `{server, discoveredTools}`                                       |
+| `PATCH /plugins/servers/:id`         | `{enabled?}` or `{tools: [{name, enabled, riskLevel}]}`                                          | server                                                                       |
+| `DELETE /plugins/servers/:id`        |                                                                                                  | 204                                                                          |
+| `POST /plugins/servers/:id/discover` | `{}`                                                                                             | tool array, `{tools}`, or a server with `tools`                              |
+
+A server row: `id`, `name`, `url`, `status` (`APPROVED`, `PENDING_APPROVAL`, `REJECTED`, `DISABLED`,
+`NEEDS_REVIEW`, `UNREACHABLE`; an unknown status prints as sent), `enabled` (default true),
+`hasCredential` or `credentialSet`, `tools` or `discoveredTools`, `toolCount`. A tool: `name`,
+`description`, `riskLevel` or `risk` (missing = WRITE), `enabled` (missing = off).
+
+Rules: the cap `limit` is a number (`2 of 5`), `null` (unlimited), `0` (plan has none, Add disabled) or
+absent (nothing shown, nothing blocked); the server refuses again with `PLUGIN_SERVER_LIMIT_REACHED`.
+A refused address (`PLUGIN_SERVER_URL_REFUSED`) is explained on the form without echoing why. Adding
+requires the risk consent box and an `https://` address; the key is cleared from state as soon as it is
+sent. Tools the user switches on are saved with one PATCH.
+
 ## Open gaps against the service
 
 Revoke consent calls `DELETE /plugins/installs/:id/consent/:toolName` (204), a route the service

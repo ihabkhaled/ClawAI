@@ -69,6 +69,15 @@ describe('generation progress schemas', () => {
     );
   });
 
+  it('keeps allowanceRefunded so the owner is told the platform gave the allowance back', () => {
+    const refunded = generationProgressSchema.parse({ ...validProgress, allowanceRefunded: true });
+    expect(refunded.allowanceRefunded).toBe(true);
+  });
+
+  it('reads allowanceRefunded as false when an older service does not send it', () => {
+    expect(generationProgressSchema.parse(validProgress).allowanceRefunded).toBe(false);
+  });
+
   it('rejects an unknown step outcome', () => {
     const steps = [{ ...validProgress.steps[0], outcome: 'EXPLODED' }];
     expect(generationProgressSchema.safeParse({ ...validProgress, steps }).success).toBe(false);

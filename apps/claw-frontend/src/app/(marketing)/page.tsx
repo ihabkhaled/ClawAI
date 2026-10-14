@@ -12,6 +12,7 @@ import { HowItWorksSection } from '@/components/marketing/home/how-it-works-sect
 import { ModelRosterSection } from '@/components/marketing/home/model-roster-section';
 import { PricingSection } from '@/components/marketing/home/pricing-section';
 import { ThreadsBandSection } from '@/components/marketing/home/threads-band-section';
+import { ThreadsBoardCtaSection } from '@/components/marketing/home/threads-board-cta-section';
 import { MarketingSceneGallery } from '@/components/marketing/shared/marketing-scene-gallery';
 import { MarketingVideoSection } from '@/components/marketing/shared/marketing-video-section';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
@@ -96,6 +97,7 @@ export default async function HomePage(): Promise<React.ReactElement> {
           />
         }
       />
+      <ThreadsBoardCtaSection />
       <CodingAgentBandSection />
       <HomeValueBandSection band={MARKETING_HOME_TEAMS_BAND} />
       <EnterpriseBandSection />

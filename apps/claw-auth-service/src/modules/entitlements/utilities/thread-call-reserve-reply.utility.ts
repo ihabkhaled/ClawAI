@@ -13,7 +13,10 @@ function toSafeNumber(value: bigint): number {
 }
 
 /** The job's spend as the generation service shows it: the CHARGE counted so far, not the holds. */
-export function toThreadJobBudgetSummary(budget: ThreadJobBudget): ThreadJobBudgetSummary {
+export function toThreadJobBudgetSummary(
+  budget: ThreadJobBudget,
+  freeAllowanceMicroUsd = 0n,
+): ThreadJobBudgetSummary {
   return {
     status: budget.status,
     capMicroUsd: toSafeNumber(budget.capMicroUsd),
@@ -21,6 +24,7 @@ export function toThreadJobBudgetSummary(budget: ThreadJobBudget): ThreadJobBudg
     spentMicroUsd: toSafeNumber(budget.spentMicroUsd),
     settledMicroUsd: toSafeNumber(budget.spentMicroUsd),
     remainingMicroUsd: toSafeNumber(remainingBudgetMicroUsd(budget)),
+    freeAllowanceMicroUsd: toSafeNumber(freeAllowanceMicroUsd),
   };
 }
 

@@ -347,6 +347,18 @@ No `.deploy/deployed-sha` on disk → every application service is built and
 databases compose file is never part of this script's scope, first
 deployment or not.
 
+### 2.4a A new service on a live server
+
+A service that brings a database or a secret cannot boot on the existing
+`/srv/clawai/.env`, and the deploy never starts databases. The required values
+are declared one per line in `scripts/prod-required-env.manifest`;
+`scripts/ensure-prod-env.sh --env /srv/clawai/.env --check` reports what is
+missing without printing a value, and the same script without `--check` appends
+what is missing (it never rewrites a value that exists). The database container
+is started by hand once. The ordered steps are in
+[the runbook](11-runbooks/add-a-service-to-production.md) and the full list of places a
+service must be added is [skills/add-a-new-service.md](../skills/add-a-new-service.md).
+
 ### 2.5 Health verification
 
 Every affected service must reach Docker's `healthy` status within the

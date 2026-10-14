@@ -2,6 +2,7 @@ import type { ContextSaveMode } from '@claw/shared-types';
 import type { ResearchEvidenceBundle } from './research.types';
 import type { ResearchTranscript } from './research-transcript.types';
 import type { MessageQuote } from './message-quote.types';
+import type { PluginRef } from './plugin-tools.types';
 
 /**
  * Shape of the ChatMessage.metadata JSON field for USER-role messages.
@@ -18,6 +19,8 @@ export type UserMessageMetadata = {
   contextSaveMode?: ContextSaveMode;
   /** Selections from earlier messages this turn replies to (Batch 2). */
   quotes?: MessageQuote[];
+  /** Plugins the user @mentioned (chips). Read back by `readPluginRefs`. */
+  pluginRefs?: PluginRef[];
   research?: {
     runId: string;
     mode: string;

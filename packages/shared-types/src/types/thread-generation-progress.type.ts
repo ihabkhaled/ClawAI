@@ -61,6 +61,11 @@ export type ThreadGenerationProgress = {
   attemptCount: number;
   maxAttempts: number;
   spentMicroCredits: string;
+  /**
+   * True when the platform (not the owner) failed the job and the Free allowance, money and the
+   * lifetime Thread, was given back. Absent from older services; read it as false.
+   */
+  allowanceRefunded?: boolean;
   createdAt: string;
   updatedAt: string;
   selections: ThreadGenerationSelections;

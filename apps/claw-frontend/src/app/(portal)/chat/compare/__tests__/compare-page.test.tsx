@@ -21,16 +21,30 @@ vi.mock('@/lib/i18n', () => ({
 vi.mock('@/lib/i18n/use-translation', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-vi.mock('@/components/chat/orchestration/orchestration-context-button', () => ({
-  OrchestrationContextButton: () => <div data-testid="orchestration-context-button" />,
+// The grouped "+" menu and the research chip are the shared chat components; their own tests
+// cover them. This file only needs to know Compare mounts them with the right values.
+vi.mock('@/components/chat/composer-plus-menu', () => ({
+  ComposerPlusMenu: ({
+    canResearch,
+    threadId,
+    draftContextPacks,
+  }: {
+    canResearch: boolean;
+    threadId: string | null;
+    draftContextPacks?: { selectedIds: string[] };
+  }) => (
+    <div
+      data-testid="composer-plus-menu"
+      data-can-research={String(canResearch)}
+      data-thread-id={String(threadId)}
+      data-has-draft-packs={String(draftContextPacks !== undefined)}
+    />
+  ),
 }));
-
-vi.mock('@/components/chat/prompt-library/prompt-library-button', () => ({
-  PromptLibraryButton: () => <div data-testid="prompt-library-button" />,
-}));
-
-vi.mock('@/components/chat/file-attachment-picker', () => ({
-  FileAttachmentPicker: () => <div data-testid="picker" />,
+vi.mock('@/components/chat/composer-research-chip', () => ({
+  ComposerResearchChip: ({ value }: { value: { mode: string } }) => (
+    <div data-testid="research-chip" data-mode={value.mode} />
+  ),
 }));
 vi.mock('@/components/chat/composer-dropzone', () => ({
   ComposerDropzone: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -101,6 +115,16 @@ vi.mock('@/hooks/chat/use-parallel-compare-page', () => ({
       onCancelUpload: mockCancelUpload,
     },
     attachmentChips: { chips: mockChips, listLabel: 'Attachments', onRemove: vi.fn() },
+    pluginMentions: {
+      refs: [],
+      options: [],
+      isFull: false,
+      arm: vi.fn(),
+      add: vi.fn(),
+      remove: vi.fn(),
+      clear: vi.fn(),
+      payload: {},
+    },
     upgradeFeature: null,
     clearUpgradeFeature: vi.fn(),
   }),
@@ -113,21 +137,23 @@ describe('ComparePage — composer controls', () => {
     expect(screen.getByTestId('voice-video-recorder-video')).toBeInTheDocument();
   });
 
-  it('has the same Context button and Prompt library as chat (rules/59)', () => {
+  it('has the same grouped "+" menu as chat, not loose buttons (rules/59)', () => {
     render(<ComparePage />);
-    expect(screen.getByTestId('orchestration-context-button')).toBeInTheDocument();
-    expect(screen.getByTestId('prompt-library-button')).toBeInTheDocument();
+    const menu = screen.getByTestId('composer-plus-menu');
+    expect(menu).toBeInTheDocument();
+    // Compare has no thread until it runs, so it holds its pack choice for the run.
+    expect(menu).toHaveAttribute('data-thread-id', 'null');
+    expect(menu).toHaveAttribute('data-has-draft-packs', 'true');
+    expect(screen.queryByTestId('orchestration-context-button')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('prompt-library-button')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('picker')).not.toBeInTheDocument();
   });
 
-  it('renders the SHARED research toggle, not the old compare-only control', () => {
+  it('offers research from the menu and names the mode in the shared chip', () => {
     render(<ComparePage />);
-    expect(screen.getByLabelText('research.toggle.modeLabel')).toBeInTheDocument();
+    expect(screen.getByTestId('composer-plus-menu')).toHaveAttribute('data-can-research', 'true');
+    expect(screen.getByTestId('research-chip')).toHaveAttribute('data-mode', ResearchMode.AUTO);
     expect(screen.queryByText('compare.research.label')).not.toBeInTheDocument();
-  });
-
-  it('shows the provider dropdown Compare never had, because the mode is AUTO', () => {
-    render(<ComparePage />);
-    expect(screen.getByLabelText('research.toggle.providerLabel')).toBeInTheDocument();
   });
 });
 

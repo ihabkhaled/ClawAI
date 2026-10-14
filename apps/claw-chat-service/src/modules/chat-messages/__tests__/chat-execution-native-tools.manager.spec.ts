@@ -22,6 +22,9 @@ import type { OllamaChatRequest, OpenAiChatRequest } from '../types/execution.ty
 import { ToolChoiceMode } from '../../../common/enums';
 import { ClawEffortProfile, ClawSpeedProfile } from '@claw/shared-types';
 import { createFakePaygAccessControl } from './helpers/fake-payg-access-control.helper';
+import type { PluginInvokePort } from '../clients/plugin-invoke.port';
+import { PluginInvokeStatus } from '../enums/plugin-invoke-status.enum';
+import { PluginToolLoopManager } from '../managers/plugin-tool-loop.manager';
 
 vi.mock('../clients/model-exposure.client', () => ({
   ModelExposureClient: vi.fn(function () {
@@ -910,5 +913,210 @@ describe('ChatExecutionManager — speed tier', () => {
 
     expect(body.reasoning).toEqual({ effort: 'high' });
     expect(body.service_tier).toBe('fast');
+  });
+});
+
+describe('ChatExecutionManager — @mentioned plugin tools (rule 59)', () => {
+  const INSTALL = '11111111-1111-4111-8111-111111111111';
+  const TOOL = {
+    nativeName: 'plugin_web-fetch_fetch_page',
+    installId: INSTALL,
+    pluginSlug: 'web-fetch',
+    toolName: 'fetch_page',
+    title: 'Fetch a page',
+    description: 'Reads one public web page.',
+    inputSchema: { type: 'object', properties: { url: { type: 'string' } } },
+    riskLevel: 'READ' as const,
+  };
+
+  function mockOpenAiTurn(message: Record<string, unknown>, finishReason: string): void {
+    httpRequest
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: { provider: 'OPENAI', apiKey: 'test-key', baseUrl: 'https://api.openai.com/v1' },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          id: 'chatcmpl-1',
+          choices: [{ index: 0, message, finish_reason: finishReason }],
+          usage: { prompt_tokens: 12, completion_tokens: 8, total_tokens: 20 },
+        },
+      });
+  }
+
+  function build(port: PluginInvokePort): ChatExecutionManager {
+    return new ChatExecutionManager(
+      {
+        buildPromptString: vi.fn().mockReturnValue('user prompt'),
+        buildChatMessages: vi.fn().mockReturnValue([{ role: 'user', content: 'Read it' }]),
+        buildGeminiChatMessages: vi.fn().mockReturnValue([{ role: 'user', content: 'Read it' }]),
+      } as unknown as ContextAssemblyManager,
+      {
+        checkResponseQuality: vi.fn().mockReturnValue({ score: 0.9, reasons: [] }),
+        shouldReRoute: vi.fn().mockReturnValue({ shouldReRoute: false }),
+      } as unknown as QualityCheckManager,
+      {
+        setExecutionManager: vi.fn(),
+        shouldActivate: vi.fn().mockReturnValue(false),
+        evaluate: vi.fn(),
+        buildMetadata: vi.fn().mockReturnValue({}),
+      } as unknown as JudgeRefereeManager,
+      {
+        emitRouterStarted: vi.fn(),
+        emitProviderSelected: vi.fn(),
+        emitResponseStreaming: vi.fn(),
+        startResponseProgressHeartbeat: vi.fn().mockReturnValue(vi.fn()),
+        emitFallbackAttempt: vi.fn(),
+        emitError: vi.fn(),
+      } as unknown as ChatStreamService,
+      {
+        run: vi.fn().mockImplementation(async (_q: string, ctx: unknown) => ({
+          context: ctx,
+          outcome: { applied: false, results: [], runId: null, warning: null },
+        })),
+      } as any,
+      createFakePaygAccessControl() as unknown as AccessControlService,
+      { uploadFile: vi.fn(), getCachedOrUpload: vi.fn() } as any,
+      {
+        resolveDefaultModel: vi.fn().mockResolvedValue('qwen3:1.7b'),
+        resolveModelList: vi.fn().mockResolvedValue(['qwen3:7b']),
+      } as unknown as LocalModelSelectionService,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      new PluginToolLoopManager(port),
+    );
+  }
+
+  beforeEach(() => {
+    httpRequest.mockReset();
+    AppConfig.get.mockReturnValue(DEFAULT_APP_CONFIG);
+  });
+
+  it('runs the tool loop from callProvider: tools out, call executed, fenced result back, answer returned', async () => {
+    const port: PluginInvokePort = {
+      resolve: vi.fn(async () => ({
+        tools: [TOOL],
+        systemBlock: '',
+        limits: { maxRounds: 3, maxCallsPerTurn: 6, timeoutMs: 1000 },
+        notices: [],
+      })),
+      invoke: vi.fn(async () => ({
+        status: PluginInvokeStatus.OK,
+        content: 'the page says hello',
+        truncated: false,
+        durationMs: 5,
+      })),
+    };
+    const manager = build(port);
+    mockOpenAiTurn(
+      {
+        role: 'assistant',
+        content: '',
+        tool_calls: [
+          {
+            id: 'call_1',
+            type: 'function',
+            function: {
+              name: TOOL.nativeName,
+              arguments: JSON.stringify({
+                operation: 'call',
+                targetId: INSTALL,
+                arguments: { url: 'https://example.com' },
+              }),
+            },
+          },
+        ],
+      },
+      'tool_calls',
+    );
+    mockOpenAiTurn({ role: 'assistant', content: 'It says hello.' }, 'stop');
+
+    const result = await manager.callProvider(
+      'OPENAI',
+      'gpt-4o-mini',
+      {
+        ...makeContext('summarise example.com'),
+        pluginRefs: [{ installId: INSTALL, label: 'Web' }],
+      },
+      Date.now(),
+      false,
+      undefined,
+      'AUTO',
+    );
+
+    expect(result.content).toBe('It says hello.');
+    expect(port.invoke).toHaveBeenCalledTimes(1);
+    expect(port.invoke).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-1',
+        installId: INSTALL,
+        toolName: 'fetch_page',
+        args: { url: 'https://example.com' },
+        tainted: false,
+      }),
+    );
+    expect(result.pluginCalls).toHaveLength(1);
+    const first = httpRequest.mock.calls[1]?.[0].body as OpenAiChatRequest;
+    expect(first.tools?.map((tool) => tool.function.name)).toEqual([TOOL.nativeName]);
+    const second = httpRequest.mock.calls[3]?.[0].body as OpenAiChatRequest;
+    const toolMessage = second.messages.find((message) => message.role === 'tool');
+    expect(String(toolMessage?.content)).toContain('trust="untrusted"');
+    expect(String(toolMessage?.content)).toContain('the page says hello');
+  });
+
+  it('answers as plain chat when the message mentioned nothing', async () => {
+    const port: PluginInvokePort = { resolve: vi.fn(), invoke: vi.fn() };
+    const manager = build(port);
+    mockOpenAiTurn({ role: 'assistant', content: 'plain' }, 'stop');
+
+    const result = await manager.callProvider(
+      'OPENAI',
+      'gpt-4o-mini',
+      makeContext('hello'),
+      Date.now(),
+      false,
+      undefined,
+      'AUTO',
+    );
+
+    expect(result.content).toBe('plain');
+    expect(port.resolve).not.toHaveBeenCalled();
+    expect(result.pluginCalls).toBeUndefined();
+  });
+
+  it('keeps answering when plugin-service is down, with a notice and no tools sent', async () => {
+    const port: PluginInvokePort = {
+      resolve: vi.fn(async () => {
+        throw new Error('ECONNREFUSED');
+      }),
+      invoke: vi.fn(),
+    };
+    const manager = build(port);
+    mockOpenAiTurn({ role: 'assistant', content: 'plain answer' }, 'stop');
+
+    const result = await manager.callProvider(
+      'OPENAI',
+      'gpt-4o-mini',
+      { ...makeContext('hello'), pluginRefs: [{ installId: INSTALL, label: 'Web' }] },
+      Date.now(),
+      false,
+      undefined,
+      'AUTO',
+    );
+
+    expect(result.content).toBe('plain answer');
+    expect(result.pluginNotices).toEqual([{ code: 'PLUGIN_SERVICE_UNAVAILABLE' }]);
+    expect((httpRequest.mock.calls[1]?.[0].body as OpenAiChatRequest).tools).toBeUndefined();
   });
 });

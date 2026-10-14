@@ -312,6 +312,7 @@ services:
   pg-threads:
     labels:
       claw.service: pg-threads
+    logging: *claw-logging
     image: pgvector/pgvector:pg16
     container_name: claw-pg-threads
     restart: unless-stopped
@@ -335,6 +336,7 @@ services:
   pg-plugin:
     labels:
       claw.service: pg-plugin
+    logging: *claw-logging
     image: pgvector/pgvector:pg16
     container_name: claw-pg-plugin
     restart: unless-stopped

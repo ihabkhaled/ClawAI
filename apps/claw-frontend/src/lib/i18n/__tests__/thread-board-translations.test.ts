@@ -22,9 +22,30 @@ const EXPECTED_PLACEHOLDERS: Record<string, string[]> = {
   threadBoardPageOf: ['{page}', '{total}'],
 };
 
+const GUEST_KEYS = keys.filter((key) => key.startsWith('threadBoardGuest'));
+
 describe('THREAD_BOARD_TRANSLATIONS', () => {
-  it('has the 45 keys, all prefixed threadBoard', () => {
-    expect(keys).toHaveLength(45);
+  it('has the 15 guest keys of the public, read-only Board', () => {
+    expect(GUEST_KEYS).toHaveLength(15);
+    expect(GUEST_KEYS).toContain('threadBoardGuestNavLabel');
+    expect(GUEST_KEYS).toContain('threadBoardGuestSignInToRequestChange');
+  });
+
+  it.each(locales)('%s guest copy has no placeholders and names the sign-in actions', (locale) => {
+    const entry: Record<string, string> = THREAD_BOARD_TRANSLATIONS[locale];
+    for (const key of GUEST_KEYS) {
+      expect(entry[key] ?? '', `${locale}.${key}`).not.toMatch(PLACEHOLDER);
+    }
+    expect(entry['threadBoardGuestSignInToLike']).not.toBe(
+      entry['threadBoardGuestSignInToComment'],
+    );
+    expect(entry['threadBoardGuestSignInToReport']).not.toBe(
+      entry['threadBoardGuestSignInToRequestChange'],
+    );
+  });
+
+  it('has the 60 keys, all prefixed threadBoard', () => {
+    expect(keys).toHaveLength(60);
     for (const key of keys) {
       expect(key.startsWith('threadBoard')).toBe(true);
     }

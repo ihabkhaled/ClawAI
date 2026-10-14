@@ -9,6 +9,8 @@ import {
   StreamEventType,
 } from '../../../common/enums';
 import { ChatExecutionManager } from './chat-execution.manager';
+import { pluginRefsMetadata } from '../utilities/plugin-refs.utility';
+import type { PluginRef } from '../types/plugin-tools.types';
 import { ChatContextGatewayManager } from './chat-context-gateway.manager';
 import { AttachmentDeliveryManager } from './attachment-delivery.manager';
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
@@ -89,13 +91,20 @@ export class ParallelExecutionManager {
     criticConfig: ParallelCriticConfig,
     fileIds?: string[],
     researchOptions?: ParallelResearchOptions,
+    pluginRefs?: readonly PluginRef[],
   ): Promise<ParallelResponse> {
     this.logger.log(
       `executeParallel: queuing ${String(models.length)} models in thread ${threadId}`,
     );
     this.chatStreamService.emitRequestAccepted(threadId);
 
-    const userMessage = await this.storeUserMessage(threadId, content, judgeConfig, fileIds);
+    const userMessage = await this.storeUserMessage(
+      threadId,
+      content,
+      judgeConfig,
+      fileIds,
+      pluginRefs,
+    );
 
     void this.executeInBackground(
       userId,
@@ -255,11 +264,13 @@ export class ParallelExecutionManager {
     content: string,
     judgeConfig: ParallelJudgeConfig,
     fileIds?: string[],
+    pluginRefs?: readonly PluginRef[],
   ): Promise<{ id: string }> {
     const metadata = {
       ...(fileIds && fileIds.length > 0 ? { fileIds } : {}),
       compareJudgeEnabled: judgeConfig.enabled,
       compareJudgeModel: judgeConfig.model,
+      ...pluginRefsMetadata(pluginRefs),
     };
 
     return this.chatMessagesRepository.create({

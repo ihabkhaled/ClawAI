@@ -246,6 +246,30 @@ Validation errors are produced by the `ZodValidationPipe` and include field-leve
 
 ---
 
+### Plugin Errors (plugin-service)
+
+The body carries `errorCode`; the exact set is `PluginErrorCode` in `apps/claw-plugin-service/src/common/enums/plugin-error-code.enum.ts`.
+
+| Code                            | HTTP Status | Service        | Description                                                                    |
+| ------------------------------- | ----------- | -------------- | ------------------------------------------------------------------------------ |
+| PLUGIN_NOT_FOUND                | 404         | plugin-service | Unknown or unpublished catalog slug                                            |
+| PLUGIN_VERSION_NOT_FOUND        | 404         | plugin-service | The requested version of the plugin does not exist                             |
+| PLUGIN_INSTALL_NOT_FOUND        | 404         | plugin-service | Install id unknown or owned by another user                                    |
+| PLUGIN_TOOL_NOT_FOUND           | 404         | plugin-service | The tool is not part of the plugin version                                     |
+| PLUGIN_ALREADY_INSTALLED        | 409         | plugin-service | The user already has this plugin installed                                     |
+| PLUGIN_UNAVAILABLE              | 409         | plugin-service | The plugin is unpublished or globally disabled by an admin                     |
+| PLUGIN_INSTALL_LIMIT            | 403         | plugin-service | The plan's `maxInstalledPlugins` is reached; the body carries `limit, current` |
+| PLUGIN_PLAN_DISABLED            | 403         | plugin-service | The plan has `allowPlugins` off                                                |
+| PLUGIN_ENTITLEMENTS_UNAVAILABLE | 503         | plugin-service | The plan service could not be reached, so the install is refused, not allowed  |
+| PLUGIN_SETTINGS_INVALID         | 400         | plugin-service | Install settings fail the manifest `settingsSchema`                            |
+| PLUGIN_SETTING_INVALID          | 400         | plugin-service | An admin `PluginSetting` value is unknown or out of range                      |
+| PLUGIN_CONSENT_NOT_REQUIRED     | 400         | plugin-service | A READ tool needs no consent                                                   |
+| PLUGIN_CONSENT_LEVEL_MISMATCH   | 400         | plugin-service | The consent level must equal the tool's risk level                             |
+| PLUGIN_CREDENTIAL_NOT_SUPPORTED | 400         | plugin-service | The plugin does not take a credential                                          |
+| PLUGIN_CREDENTIAL_HEADER_DENIED | 400         | plugin-service | The credential header name is on the deny list                                 |
+
+---
+
 ## HTTP Status Code Summary
 
 | Status                    | Used For                                                                 |

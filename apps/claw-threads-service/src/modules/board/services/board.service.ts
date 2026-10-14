@@ -19,7 +19,8 @@ import { applyCorrections, charCount, tokenise } from '../utilities/board-text.u
 export class BoardService {
   constructor(private readonly repository: BoardRepository) {}
 
-  async list(userId: string, query: BoardListQuery): Promise<BoardListResult> {
+  /** `userId` null is a guest: same query and shape, `viewerReaction` always null. */
+  async list(userId: string | null, query: BoardListQuery): Promise<BoardListResult> {
     const q = normalizeSearchText(query.q ?? '');
     const params = {
       q,

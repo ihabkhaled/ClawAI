@@ -15,9 +15,13 @@ describe('Plugin AccountDeletionService', () => {
 
   it('deletes the plugin data of the deleted user', async () => {
     const repository = {
-      deleteAllForUser: vi
-        .fn()
-        .mockResolvedValue({ installs: 2, credentials: 1, consents: 3, invocations: 9 }),
+      deleteAllForUser: vi.fn().mockResolvedValue({
+        installs: 2,
+        credentials: 1,
+        consents: 3,
+        invocations: 9,
+        servers: 4,
+      }),
     };
     const service = new AccountDeletionService(repository as never);
 
@@ -32,23 +36,32 @@ describe('Plugin AccountDeletionService', () => {
       lines.push(String(message));
     });
     const repository = {
-      deleteAllForUser: vi
-        .fn()
-        .mockResolvedValue({ installs: 2, credentials: 1, consents: 3, invocations: 9 }),
+      deleteAllForUser: vi.fn().mockResolvedValue({
+        installs: 2,
+        credentials: 1,
+        consents: 3,
+        invocations: 9,
+        servers: 4,
+      }),
     };
 
     await new AccountDeletionService(repository as never).handle(EVENT);
 
     expect(lines.join('\n')).toContain('event=event-1');
     expect(lines.join('\n')).toContain('installs=2');
+    expect(lines.join('\n')).toContain('servers=4');
     expect(lines.join('\n')).not.toContain('user-secret-id');
   });
 
   it('is safe to run twice: a redelivered event finds nothing and still succeeds', async () => {
     const repository = {
-      deleteAllForUser: vi
-        .fn()
-        .mockResolvedValue({ installs: 0, credentials: 0, consents: 0, invocations: 0 }),
+      deleteAllForUser: vi.fn().mockResolvedValue({
+        installs: 0,
+        credentials: 0,
+        consents: 0,
+        invocations: 0,
+        servers: 0,
+      }),
     };
     const service = new AccountDeletionService(repository as never);
 

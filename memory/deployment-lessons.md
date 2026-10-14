@@ -23,6 +23,17 @@ files, in the same commit. Never add a DB to only one compose file.
 
 **Related.** `CLAUDE.md` → MANDATORY Change Checklist / How to Add a New Backend Service.
 
+**Update 2026-10-14.** The list now lives in one skill,
+[skills/add-a-new-service.md](../skills/add-a-new-service.md), with a verify command per
+item. It was rebuilt from the `plugin-service` rollout, which also showed the item no
+earlier list had: the **production `.env`**. The live stack reads `/srv/clawai/.env`,
+written before the service existed, and the deploy builds services but never starts
+databases or invents secrets, so a new database password, connection string or
+encryption key must be declared in `scripts/prod-required-env.manifest` in the same
+change (the preflight refuses a rollout without it). A key that encrypts stored rows is
+generated once and preserved by the installers: regenerating it orphans every stored
+credential.
+
 ---
 
 ### Only `affected` folders get gated — an all-workspace run is the wrong default (2026-07-24)

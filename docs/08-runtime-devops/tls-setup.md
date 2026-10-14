@@ -106,6 +106,8 @@ When you add a new microservice, you must:
 
 1. **Add its hostname** to the SAN list in both `install-tls.sh` and
    `install-tls.ps1` (the `HOSTS` array)
+   (today the array ends with `threads-service`, `thread-generation-service`,
+   `plugin-service`)
 2. **Rerun `install-tls`** to reissue the leaf cert with the new SAN
 3. **Mount `../certs:/certs:ro`** into the new service in
    `docker/docker-compose.dev.services.yml` and the prod equivalent

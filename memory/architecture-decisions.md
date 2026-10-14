@@ -8,7 +8,7 @@ record what we _learned_ living with it. See [README](README.md) for format.
 
 ### Database-per-service is a wall, not a fence — plan the crossing up front (2026-07-24)
 
-**What happened.** Each of the 17 services owns its own database (PostgreSQL+Prisma;
+**What happened.** Each of the 21 services owns its own database (PostgreSQL+Prisma;
 audit/client-logs/server-logs on Mongo). Features that "just need one more field
 from another service" repeatedly discovered there is no join across the boundary.
 

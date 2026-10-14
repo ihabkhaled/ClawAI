@@ -55,4 +55,14 @@ describe('thread job budget DTOs', () => {
         .success,
     ).toBe(false);
   });
+
+  it('accepts PLATFORM_FAILED and still rejects an unknown close state', () => {
+    const budgetId = 'clx12345678901234567890123';
+    expect(
+      threadJobBudgetCloseSchema.safeParse({ budgetId, status: 'PLATFORM_FAILED' }).success,
+    ).toBe(true);
+    expect(threadJobBudgetCloseSchema.safeParse({ budgetId, status: 'FAILED' }).success).toBe(
+      false,
+    );
+  });
 });

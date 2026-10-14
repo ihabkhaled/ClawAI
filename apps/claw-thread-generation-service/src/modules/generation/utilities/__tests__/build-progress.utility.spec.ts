@@ -36,6 +36,7 @@ const job = (status: string) => ({
   round: 1,
   attemptCount: 2,
   spentMicroCredits: 12n,
+  budgetCloseStatus: null as string | null,
   spendCapMicroUsd: 5_000_000n,
   sourceThreadId: 'thread-1',
   safeErrorCode: 'GENERATION_FAILED',
@@ -278,5 +279,18 @@ describe('buildProgress spend and terminal reason', () => {
     expect(progress.failure?.code).toBe('OUTPUT_INVALID');
     expect(progress.failure?.httpStatus).toBeNull();
     expect(progress.steps.at(-1)?.excerpt).toContain('Main cause: OUTPUT_INVALID');
+  });
+});
+
+describe('buildProgress allowanceRefunded', () => {
+  it.each([
+    ['PLATFORM_FAILED', true],
+    ['RELEASED', false],
+    ['FINALIZED', false],
+    ['CLOSE_ABANDONED', false],
+    [null, false],
+  ])('close status %s gives allowanceRefunded %s', (budgetCloseStatus, expected) => {
+    const result = buildProgress({ ...job('FAILED'), budgetCloseStatus }, request as never, []);
+    expect(result.allowanceRefunded).toBe(expected);
   });
 });

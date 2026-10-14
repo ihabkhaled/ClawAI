@@ -16,6 +16,8 @@ import {
   formatMicroUsd,
   hasThreadSpend,
   isQueuedThreadStatus,
+  readAllowanceRefunded,
+  readThreadSpentMicro,
   threadHeadlineKey,
 } from '@/utilities/thread-generation-progress.utility';
 
@@ -34,6 +36,8 @@ export function ThreadGenerationProgressPanel({
   const panel = useThreadProgressPanel(publicationId);
   const { progress } = panel;
   const headlineKey = progress ? threadHeadlineKey(progress.status, progress.stage) : null;
+  const allowanceRefunded = progress !== undefined && readAllowanceRefunded(progress);
+  const spentMicro = progress === undefined ? '0' : readThreadSpentMicro(progress);
   const isQueued = progress !== undefined && isQueuedThreadStatus(progress.status);
 
   return (
@@ -81,10 +85,10 @@ export function ThreadGenerationProgressPanel({
                 })}
               </span>
             )}
-            {hasThreadSpend(progress.spentMicroCredits) ? (
+            {hasThreadSpend(spentMicro) ? (
               <span data-testid="thread-progress-spent">
                 {t('chat.threadProgress.spent', {
-                  amount: formatMicroUsd(progress.spentMicroCredits),
+                  amount: formatMicroUsd(spentMicro),
                 })}
               </span>
             ) : null}
@@ -111,6 +115,7 @@ export function ThreadGenerationProgressPanel({
             <ThreadGenerationFailureCard
               failure={progress.failure}
               roleKind={findFailedRoleKind(progress)}
+              allowanceRefunded={allowanceRefunded}
             />
           )}
           <ThreadGenerationSelectionsView selections={progress.selections} />
@@ -119,7 +124,9 @@ export function ThreadGenerationProgressPanel({
             {panel.canRetry ? (
               <Button type="button" onClick={panel.retry.open} className="w-full sm:w-auto">
                 <RotateCcw className="h-4 w-4" aria-hidden="true" />
-                {t('chat.threadProgress.retry')}
+                {t(
+                  allowanceRefunded ? 'chat.threadProgress.retryOnUs' : 'chat.threadProgress.retry',
+                )}
               </Button>
             ) : null}
             {panel.isRunning ? (

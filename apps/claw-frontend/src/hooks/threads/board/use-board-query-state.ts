@@ -2,6 +2,8 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo } from 'react';
 
 import { THREAD_BOARD_ALL, THREAD_BOARD_DEFAULT_SORT } from '@/constants/thread-board.constants';
+import { ThreadBoardMode } from '@/enums/thread-board-mode.enum';
+import { useBoardMode } from '@/hooks/threads/board/use-board-mode';
 import { useLocale } from '@/hooks/use-locale';
 import type { ThreadBoardState, UseBoardQueryStateResult } from '@/types/thread-board.types';
 import {
@@ -20,7 +22,10 @@ export function useBoardQueryState(): UseBoardQueryStateResult {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { locale } = useLocale();
-  const defaultLang: string = locale;
+  const mode = useBoardMode();
+  // Members start in their own language; guests start with every language, so the first view is
+  // the whole Board and the language filter narrows it.
+  const defaultLang: string = mode === ThreadBoardMode.Guest ? THREAD_BOARD_ALL : locale;
   const paramsKey = searchParams.toString();
 
   const state = useMemo(

@@ -59,3 +59,27 @@ describe('GenerationJobsRepository.syncSpend', () => {
     expect(updateMany).not.toHaveBeenCalled();
   });
 });
+
+describe('GenerationJobsRepository.findLastFailureCode', () => {
+  it('reads the code of the newest failed step that has one', async () => {
+    const findFirst = vi.fn().mockResolvedValue({ code: 'MODEL_IDLE_TIMEOUT' });
+    const repository = new GenerationJobsRepository({
+      threadGenerationStep: { findFirst },
+    } as never);
+
+    await expect(repository.findLastFailureCode('job-1')).resolves.toBe('MODEL_IDLE_TIMEOUT');
+    expect(findFirst).toHaveBeenCalledWith({
+      where: { jobId: 'job-1', outcome: 'FAILED', code: { not: null } },
+      orderBy: { seq: 'desc' },
+      select: { code: true },
+    });
+  });
+
+  it('is null when no failed step exists', async () => {
+    const repository = new GenerationJobsRepository({
+      threadGenerationStep: { findFirst: vi.fn().mockResolvedValue(null) },
+    } as never);
+
+    await expect(repository.findLastFailureCode('job-1')).resolves.toBeNull();
+  });
+});

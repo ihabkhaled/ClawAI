@@ -13,19 +13,24 @@ import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
+import { PLUGIN_CHAT_TRANSLATIONS } from './plugin-chat-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
 import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
+import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
+import { THREAD_PUBLIC_BOARD_TRANSLATIONS } from './thread-public-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const th: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.th,
+  pluginChat: PLUGIN_CHAT_TRANSLATIONS.th,
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.th,
+  pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.th,
   pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.th,
   pagination: {
     label: 'การแบ่งหน้า',
@@ -445,6 +450,7 @@ export const th: TranslationDictionary = {
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.th,
     ...THREAD_BOARD_TRANSLATIONS.th,
+    ...THREAD_PUBLIC_BOARD_TRANSLATIONS.th,
     composerContext: {
       menuLabel: 'บริบท',
       pickLabel: 'เลือกแพ็กบริบท',
@@ -814,6 +820,17 @@ export const th: TranslationDictionary = {
     deleteThreadConfirm: 'คุณแน่ใจหรือว่าต้องการลบกระทู้นี้?',
     threadCreated: 'สร้างกระทู้แล้ว',
     threadCreateFailed: 'ไม่สามารถสร้างเธรดได้',
+    threadTeam: {
+      title: 'ทีมที่แนะนำ',
+      summary: 'เราเลือกโมเดลที่ใช้ได้กับแพ็กเกจของคุณแล้ว เปิดขั้นสูงเฉพาะเมื่อต้องการเลือกเอง',
+      customised: 'คุณเปลี่ยนทีมแล้ว ใช้ทีมที่แนะนำเพื่อกลับไปที่ตัวเลือกของเรา',
+      none: 'ตอนนี้ยังไม่มีทีมที่แนะนำ โปรดเลือกโมเดลในขั้นสูง',
+      advanced: 'ขั้นสูง: เลือกโมเดล',
+      reset: 'ใช้ทีมที่แนะนำ',
+      reasonNeedsPlan: 'ไม่อยู่ในแพ็กเกจ {plan} ของคุณ',
+      reasonWindow: 'หน้าต่างบริบทเล็กเกินไป',
+      reasonUnavailable: 'ใช้งานไม่ได้ชั่วคราว',
+    },
     threadProgress: {
       title: 'ความคืบหน้าการสร้าง',
       statusQueued: 'รอคิว',
@@ -823,6 +840,8 @@ export const th: TranslationDictionary = {
       stageLabel: 'ขั้นตอน',
       attempt: 'ครั้งที่ {current} จาก {max}',
       spent: 'ใช้ไปแล้ว: {amount}',
+      platformFailureNotice: 'ปัญหานี้เกิดจากฝั่งเรา ไม่ใช่ความผิดของคุณ โควต้าฟรีของคุณไม่ถูกใช้',
+      retryOnUs: 'ลองใหม่โดยเราออกค่าใช้จ่าย',
       selectedTitle: 'สิ่งที่คุณเลือก',
       fallbacks: 'โมเดลสำรอง: {list}',
       noFallbacks: 'ไม่มีโมเดลสำรอง',

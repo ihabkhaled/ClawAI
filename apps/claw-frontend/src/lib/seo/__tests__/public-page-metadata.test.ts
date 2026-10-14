@@ -72,6 +72,25 @@ describe('buildPublicPageMetadata', () => {
     expect(metadata.robots).toEqual(expect.objectContaining({ index: true, follow: true }));
   });
 
+  it('registers the public Threads board as indexable with hreflang for all 13 locales', async () => {
+    const { buildPublicPageMetadata } = await import('@/lib/seo/public-page-metadata');
+    const metadata = buildPublicPageMetadata('threads/board', Locale.DE);
+    const alternates = metadata.alternates as {
+      canonical: string;
+      languages: Record<string, string>;
+    };
+
+    expect(metadata.title).toBe('Öffentliches Threads-Board | ClawAI');
+    expect(alternates.canonical).toBe('https://claw.example/de/threads/board');
+    expect(Object.keys(alternates.languages)).toHaveLength(14);
+    expect(alternates.languages['x-default']).toBe('https://claw.example/en/threads/board');
+    expect(alternates.languages['ja']).toBe('https://claw.example/ja/threads/board');
+    expect(metadata.robots).toEqual(expect.objectContaining({ index: true, follow: true }));
+    expect(metadata.openGraph).toEqual(
+      expect.objectContaining({ url: 'https://claw.example/de/threads/board' }),
+    );
+  });
+
   it('registers the public Threads hub with localized metadata and feed discovery', async () => {
     const { buildPublicPageMetadata } = await import('@/lib/seo/public-page-metadata');
     const metadata = buildPublicPageMetadata('threads/discover', Locale.AR);

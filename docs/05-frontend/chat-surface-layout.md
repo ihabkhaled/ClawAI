@@ -536,3 +536,7 @@ The toolbar under the textarea is `[+] [model] [research chip] [mic/video] … [
 - **Keyboard.** Tab reaches every row; arrow keys, Home and End move between rows and wrap; Esc closes. Opening a sub-panel moves focus into it; Back returns focus to the row that opened it.
 - **i18n.** `chat.composerMenu.*` in `composer-menu-translations.ts` (13 locales); labels reuse `chat.composerContext.*`, `preview.openLabel`, `promptLibrary.openLabel` and `research.*`.
 - **Not yet moved (follow-up).** Compare (`chat/compare/page.tsx`), in-thread Compare and `OrchestrationPageShell` still render the loose Context, research selects and Prompt library buttons: they build their own attachment and research state rather than `ComposerToolbarProps`, so moving them is a separate, tested change (rule 59).
+
+## The same "+" menu on every composer (2026-10-14)
+
+Compare, in-thread Compare and the seven labs render the chat composer's `ComposerPlusMenu` (Attach / Context / Tools) and, while research is on, `ComposerResearchChip`; the loose Attach, Prompt library, Context and research controls are gone from them (`chat-surface-layout-contract.test.ts` enforces it). A surface with no thread yet passes `draftContextPacks` to get the pack picker; the thread-only rows (what is sent, memory, preview) are absent there. The `@` plugin picker is part of `RichPromptTextarea` (`pluginMentions`).

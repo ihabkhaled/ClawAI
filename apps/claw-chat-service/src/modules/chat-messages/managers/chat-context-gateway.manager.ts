@@ -13,6 +13,8 @@ import {
 import { type ThreadSettings } from '../types/execution.types';
 import { withAttachmentOnlyUserTurn } from '../utilities/attachment-only-turn.utility';
 import { injectResearchEvidenceIntoContext } from '../utilities/research-prompt.utility';
+import { PLUGIN_TOOL_SURFACES } from '../constants/plugin-tools.constants';
+import { pluginRefsFor, withPluginRefs } from '../utilities/plugin-refs.utility';
 import { ContextAssemblyManager } from './context-assembly.manager';
 
 /**
@@ -97,11 +99,18 @@ export class ChatContextGatewayManager {
       request.researchEvidenceInstruction ?? '',
     );
 
+    const pluginRefs = PLUGIN_TOOL_SURFACES.has(request.surface)
+      ? pluginRefsFor(request.pluginRefs, this.latestUserMetadata(windowed))
+      : [];
+
     return {
-      context: {
-        ...this.withPersona(withEvidence, request.personaInstruction),
-        platformSurface: request.surface,
-      },
+      context: withPluginRefs(
+        {
+          ...this.withPersona(withEvidence, request.personaInstruction),
+          platformSurface: request.surface,
+        },
+        pluginRefs,
+      ),
       thread,
       threadSettings,
       messages: windowed,

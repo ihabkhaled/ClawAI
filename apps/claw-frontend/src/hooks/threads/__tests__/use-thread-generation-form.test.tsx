@@ -25,6 +25,9 @@ vi.mock('@/hooks/chat/use-available-models', () => ({
     isLoading: false,
   }),
 }));
+vi.mock('@/hooks/threads/use-thread-recommended-team', () => ({
+  useThreadRecommendedTeam: () => ({ recommendation: undefined, isLoading: false }),
+}));
 vi.mock('@/lib/i18n', () => ({ useLocale: () => ({ locale: 'en' }) }));
 vi.mock('@/repositories/threads/thread-publications.repository', () => ({
   threadPublicationsRepository: { startGeneration: vi.fn() },

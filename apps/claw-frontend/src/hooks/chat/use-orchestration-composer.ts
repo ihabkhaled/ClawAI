@@ -1,12 +1,15 @@
 import { useCallback, useMemo, useState } from 'react';
 
+import { NOOP_VALUE_CHANGE } from '@/constants/plugin-mention.constants';
 import { DEFAULT_RESEARCH_OPTIONS } from '@/constants/research.constants';
 import { ResearchMode } from '@/enums/research-mode.enum';
 import { useComposerAttachmentSurface } from '@/hooks/chat/use-composer-attachment-surface';
+import { usePluginMentionSelection } from '@/hooks/chat/use-plugin-mention-selection';
 import { useComposerAttachments } from '@/hooks/files/use-composer-attachments';
 import { useResearchProviders } from '@/hooks/research/use-research-providers';
 import type { OrchestrationContextPackPayload } from '@/types/composer-context.types';
 import type { UseOrchestrationComposerReturn } from '@/types/hook.types';
+import type { UsePluginMentionSelectionParams } from '@/types/plugin-mention.types';
 import type { OrchestrationResearchPayload, ResearchOptions } from '@/types/research.types';
 
 /**
@@ -35,13 +38,28 @@ import type { OrchestrationResearchPayload, ResearchOptions } from '@/types/rese
  * The research selection deliberately survives `clear()`: it is a preference
  * for the session, not part of the question, and resetting it after every run
  * would silently turn research back to AUTO under a user who chose NONE.
+ *
+ * `prompt` opts the page into the `@` plugin picker: the page hands over its prompt text
+ * and setter, the chips ride in `sharedPayload` as `pluginRefs`, and a mention belongs to
+ * one run, so `clear()` drops it. A page that does not pass it (Repair and Verify only
+ * rewrite or grade an answer, so plugin tools have nothing to do there) gets no picker.
  */
-export function useOrchestrationComposer(disabled = false): UseOrchestrationComposerReturn {
+export function useOrchestrationComposer(
+  disabled = false,
+  prompt?: UsePluginMentionSelectionParams,
+): UseOrchestrationComposerReturn {
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const [research, setResearch] = useState<ResearchOptions>(DEFAULT_RESEARCH_OPTIONS);
   // Like research, the pack choice is a session preference: it survives clear().
   const [contextPackIds, setContextPackIds] = useState<string[]>([]);
   const providerQuery = useResearchProviders();
+  const mentions = usePluginMentionSelection({
+    value: prompt?.value ?? '',
+    onValueChange: prompt?.onValueChange ?? NOOP_VALUE_CHANGE,
+  });
+  const pluginMentions = prompt === undefined ? undefined : mentions;
+  const pluginPayload = pluginMentions?.payload;
+  const { clear: clearMentions } = mentions;
   const attachments = useComposerAttachments({
     selectedFileIds,
     onChange: setSelectedFileIds,
@@ -79,13 +97,14 @@ export function useOrchestrationComposer(disabled = false): UseOrchestrationComp
   // `...composer.sharedPayload` and a new shared fragment reaches all ten pages by
   // being added here, not by editing ten hooks (rules/59).
   const sharedPayload = useMemo(
-    () => ({ ...researchPayload, ...contextPackPayload }),
-    [researchPayload, contextPackPayload],
+    () => ({ ...researchPayload, ...contextPackPayload, ...pluginPayload }),
+    [researchPayload, contextPackPayload, pluginPayload],
   );
 
   const clear = useCallback((): void => {
     setSelectedFileIds([]);
-  }, []);
+    clearMentions();
+  }, [clearMentions]);
 
   return {
     selectedFileIds,
@@ -104,6 +123,7 @@ export function useOrchestrationComposer(disabled = false): UseOrchestrationComp
     contextPackIds,
     setContextPackIds,
     contextPackPayload,
+    pluginMentions,
     sharedPayload,
     clear,
   };

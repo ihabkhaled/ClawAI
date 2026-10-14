@@ -152,6 +152,9 @@
       "WebhookEvent"
     ],
     "claw-plugin-service": [
+      "McpServer",
+      "McpServerCredential",
+      "McpServerTool",
       "PluginCatalogEntry",
       "PluginCredential",
       "PluginInstall",

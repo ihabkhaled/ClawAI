@@ -53,6 +53,8 @@ const appConfigSchema = z.object({
   FILE_GENERATION_SERVICE_URL: z.string().min(1).default('http://file-generation-service:4013'),
   WORKSPACE_SERVICE_URL: z.string().min(1).default('http://workspace-service:4014'),
   RESEARCH_SERVICE_URL: z.string().min(1).default('http://research-service:4016'),
+  // Tools of @mentioned plugins (`/internal/plugins/*`, service credential).
+  PLUGIN_SERVICE_URL: z.string().min(1).default('https://plugin-service:4021'),
 
   OLLAMA_GENERATE_TIMEOUT_MS: z.coerce.number().default(300_000),
   OLLAMA_KEEP_ALIVE: z.string().min(1).default('20m'),
@@ -226,6 +228,6 @@ export class AppConfig {
   }
 
   static get(): AppConfigType {
-    return !cachedConfig ? AppConfig.validate() : cachedConfig;
+    return cachedConfig ?? AppConfig.validate();
   }
 }

@@ -7,16 +7,14 @@ import type { ReactElement } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { BadgeVariant } from '@/enums/badge-variant.enum';
+import { useBoardItemHref } from '@/hooks/threads/board/use-board-item-href';
 import { useTranslation } from '@/lib/i18n';
 import type { BoardCardProps } from '@/types/thread-board-view.types';
-import {
-  boardItemPath,
-  boardLanguageLabel,
-  boardTypeLabelKey,
-} from '@/utilities/thread-board-view.utility';
+import { boardLanguageLabel, boardTypeLabelKey } from '@/utilities/thread-board-view.utility';
 
 export function BoardCard({ item }: BoardCardProps): ReactElement {
   const { t } = useTranslation();
+  const itemHref = useBoardItemHref();
   const typeKey = boardTypeLabelKey(item.publicationType);
   const stats = [
     { Icon: Clock, text: t('chat.threadBoardReadingMinutes', { minutes: item.readingMinutes }) },
@@ -38,7 +36,7 @@ export function BoardCard({ item }: BoardCardProps): ReactElement {
       </div>
       <h2 className="text-base leading-snug font-semibold">
         <Link
-          href={boardItemPath(item.slug)}
+          href={itemHref(item.slug)}
           className="flex min-h-11 items-center rounded-sm outline-none after:absolute after:inset-0"
         >
           <span className="line-clamp-2">{item.title}</span>

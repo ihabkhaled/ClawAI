@@ -13,12 +13,14 @@ import { LocalModelSelectionService } from '../services/local-model-selection.se
 import { ChatContextGatewayManager } from './chat-context-gateway.manager';
 import { resolveContextTurnText } from '../utilities/attachment-only-turn.utility';
 import { ModeExecutionGatewayManager } from './mode-execution-gateway.manager';
+import { pluginRefsMetadata } from '../utilities/plugin-refs.utility';
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
 import { parseJudgeModel } from '../../../common/utilities/judge-model-parse.utility';
 import { TokenLedgerContext } from '@claw/shared-types';
 import { ResearchEnricherManager } from './research-enricher.manager';
 import type { RepairMessageDto } from '../dto/repair-message.dto';
+import type { ResearchOrchestrationResult } from '../types/research-enricher.types';
 import type { AnswerRepairResponse } from '../types/answer-repair.types';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type { ChatContextBundle } from '../types/chat-context-gateway.types';
@@ -83,6 +85,7 @@ export class AnswerRepairManager {
         repairTypes: dto.repairTypes,
         modelSelection: selection,
         ...(dto.fileIds !== undefined && dto.fileIds.length > 0 ? { fileIds: dto.fileIds } : {}),
+        ...pluginRefsMetadata(dto.pluginRefs),
       },
     });
 
@@ -137,25 +140,13 @@ export class AnswerRepairManager {
       // One bundle: the conversation, files, memories and thread system prompt
       // the answer under repair was produced from. Without it a repair pass is
       // rewriting text it cannot check against anything.
-      const bundle = await this.chatContextGateway.build({
+      const bundle = await this.buildRepairBundle(
         userId,
         threadId,
-        surface: ChatSurface.REPAIR,
-        historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
-        // Cut the history at the message being repaired, so the pass does not
-        // read everything said after the answer it is fixing.
-        ...(routedMessageId === undefined ? {} : { routedMessageId }),
-        // The enricher's transcript used to be glued to the front of the repair
-        // prompt by `prependResearchEvidence`, then merged as a plain
-        // `personaInstruction` with no grounding flag. `researchEvidenceInstruction`
-        // routes it through `injectResearchEvidenceIntoContext`, which sets
-        // `researchGroundingInjected` so the final-user-turn reminder fires here
-        // the same way it does for Compare/Consensus/Escalation.
-        ...(enrichment.systemPrompt.length > 0
-          ? { researchEvidenceInstruction: enrichment.systemPrompt }
-          : {}),
-        ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
-      });
+        routedMessageId,
+        enrichment,
+        fileIds,
+      );
       this.safeEmitStage(threadId, {
         label: 'Draft critique',
         status: OrchestrationStageStatus.ACTIVE,
@@ -179,23 +170,14 @@ export class AnswerRepairManager {
         stageId: 'repair:applied',
       });
 
-      await this.chatMessagesRepository.create({
+      await this.storeRepairedMessage(
         threadId,
-        role: 'ASSISTANT',
-        content: repairedContent,
-        provider,
-        model,
-        latencyMs: Date.now() - startTime,
-        usedFallback: false,
-        metadata: {
-          repaired: true,
-          repairTypes,
-          repairProvider: provider,
-          repairModel: model,
-          modelSelection: resolvedSelection,
-          ...(enrichment.transcript === null ? {} : { researchTranscript: enrichment.transcript }),
-        },
-      });
+        repairedContent,
+        repairTypes,
+        resolvedSelection,
+        enrichment.transcript,
+        Date.now() - startTime,
+      );
 
       this.logger.log(
         `executeInBackground: repair complete for thread ${threadId}, types=${repairTypes.join(',')}`,
@@ -207,21 +189,82 @@ export class AnswerRepairManager {
       });
       this.chatStreamService.emitCompletion(threadId, provider, model);
     } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`executeInBackground: repair failed for thread ${threadId} — ${msg}`);
-      this.safeEmitStage(threadId, {
-        label: 'Repair failed',
-        status: OrchestrationStageStatus.ERROR,
-        detail: msg,
-        stageId: 'repair:error',
-      });
-      this.chatStreamService.emitError(threadId, `Answer repair failed: ${msg}`);
-      try {
-        await this.storeErrorMessage(threadId, msg);
-      } catch (storeError: unknown) {
-        const storeMsg = storeError instanceof Error ? storeError.message : 'Unknown store error';
-        this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
-      }
+      await this.handleBackgroundFailure(threadId, error);
+    }
+  }
+
+  private async buildRepairBundle(
+    userId: string,
+    threadId: string,
+    routedMessageId: string | undefined,
+    enrichment: ResearchOrchestrationResult,
+    fileIds: string[] | undefined,
+  ): Promise<ChatContextBundle> {
+    return this.chatContextGateway.build({
+      userId,
+      threadId,
+      surface: ChatSurface.REPAIR,
+      historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
+      // Cut the history at the message being repaired, so the pass does not
+      // read everything said after the answer it is fixing.
+      ...(routedMessageId === undefined ? {} : { routedMessageId }),
+      // The enricher's transcript used to be glued to the front of the repair
+      // prompt by `prependResearchEvidence`, then merged as a plain
+      // `personaInstruction` with no grounding flag. `researchEvidenceInstruction`
+      // routes it through `injectResearchEvidenceIntoContext`, which sets
+      // `researchGroundingInjected` so the final-user-turn reminder fires here
+      // the same way it does for Compare/Consensus/Escalation.
+      ...(enrichment.systemPrompt.length > 0
+        ? { researchEvidenceInstruction: enrichment.systemPrompt }
+        : {}),
+      ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
+    });
+  }
+
+  private async storeRepairedMessage(
+    threadId: string,
+    repairedContent: string,
+    repairTypes: RepairType[],
+    selection: AdvancedModelSelectionResolution,
+    transcript: ResearchOrchestrationResult['transcript'],
+    latencyMs: number,
+  ): Promise<void> {
+    const provider = selection.actualProvider;
+    const model = selection.actualModel;
+    await this.chatMessagesRepository.create({
+      threadId,
+      role: 'ASSISTANT',
+      content: repairedContent,
+      provider,
+      model,
+      latencyMs,
+      usedFallback: false,
+      metadata: {
+        repaired: true,
+        repairTypes,
+        repairProvider: provider,
+        repairModel: model,
+        modelSelection: selection,
+        ...(transcript === null ? {} : { researchTranscript: transcript }),
+      },
+    });
+  }
+
+  private async handleBackgroundFailure(threadId: string, error: unknown): Promise<void> {
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    this.logger.error(`executeInBackground: repair failed for thread ${threadId} — ${msg}`);
+    this.safeEmitStage(threadId, {
+      label: 'Repair failed',
+      status: OrchestrationStageStatus.ERROR,
+      detail: msg,
+      stageId: 'repair:error',
+    });
+    this.chatStreamService.emitError(threadId, `Answer repair failed: ${msg}`);
+    try {
+      await this.storeErrorMessage(threadId, msg);
+    } catch (storeError: unknown) {
+      const storeMsg = storeError instanceof Error ? storeError.message : 'Unknown store error';
+      this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
     }
   }
 

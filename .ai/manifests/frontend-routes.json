@@ -252,6 +252,11 @@
       "route": "/threads/[slug]"
     },
     {
+      "file": "apps/claw-frontend/src/app/(marketing)/threads/board/page.tsx",
+      "kind": "page",
+      "route": "/threads/board"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(marketing)/threads/discover/page.tsx",
       "kind": "page",
       "route": "/threads/discover"
@@ -670,6 +675,11 @@
       "file": "apps/claw-frontend/src/app/(portal)/plugins/page.tsx",
       "kind": "page",
       "route": "/plugins"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/plugins/servers/page.tsx",
+      "kind": "page",
+      "route": "/plugins/servers"
     },
     {
       "file": "apps/claw-frontend/src/app/(portal)/profile/page.tsx",

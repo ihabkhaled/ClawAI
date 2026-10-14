@@ -31,6 +31,7 @@ import { ThreadBudgetClient } from './thread-budget.client';
 import { GenerationBudgetCloser } from './generation-budget-closer';
 import { StepRecorder } from './step-recorder.service';
 import type { RetryGenerationDto } from '../dto/retry-generation.dto';
+import { budgetCloseStatusForFailure } from '../utilities/classify-budget-close.utility';
 import { buildRetryInput } from '../utilities/build-retry-input.utility';
 import { isDeterministicGenerationError } from '../utilities/deterministic-generation.error';
 import { parseStepError } from '../utilities/parse-step-error.utility';
@@ -494,7 +495,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       !isDeterministicGenerationError(error) && !NON_RETRYABLE_STEP_CODES.has(failureCode),
     );
     if (outcome === GenerationJobRecoveryOutcome.FAILED) {
-      await this.closeBudget(job.id, job.budgetId, GenerationBudgetCloseStatus.RELEASED);
+      await this.closeBudget(job.id, job.budgetId, budgetCloseStatusForFailure(failureCode));
     } else if (outcome === GenerationJobRecoveryOutcome.RETRY) {
       this.logger.warn('Generation attempt scheduled for bounded retry');
     }
@@ -576,12 +577,23 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     const recovered = await this.repository.recoverExpiredLeases();
     for (const job of recovered) {
       if (job.outcome !== GenerationJobRecoveryOutcome.RETRY) {
-        await this.closeBudget(job.jobId, job.budgetId, GenerationBudgetCloseStatus.RELEASED);
+        // A lease that expired is the platform's failure; an owner's cancel is not.
+        await this.closeBudget(
+          job.jobId,
+          job.budgetId,
+          job.outcome === GenerationJobRecoveryOutcome.CANCELLED
+            ? GenerationBudgetCloseStatus.RELEASED
+            : budgetCloseStatusForFailure(STEP_LEASE_EXPIRED_CODE),
+        );
       }
       await this.recordRecovery(job.jobId, job.outcome);
     }
     for (const job of await this.repository.expireStaleQueuedJobs()) {
-      await this.closeBudget(job.jobId, job.budgetId, GenerationBudgetCloseStatus.RELEASED);
+      await this.closeBudget(
+        job.jobId,
+        job.budgetId,
+        budgetCloseStatusForFailure(STEP_QUEUE_EXPIRED_CODE),
+      );
       await this.recorder.record(job.jobId, {
         stage: STEP_FINAL_STAGE,
         outcome: 'FAILED',
@@ -595,11 +607,21 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     const pendingClosures =
       await this.repository.findPendingBudgetClosures(GENERATION_CLOSURE_BATCH);
     for (const job of pendingClosures) {
-      const status =
-        job.status === 'WAITING_FOR_REVIEW'
-          ? GenerationBudgetCloseStatus.FINALIZED
-          : GenerationBudgetCloseStatus.RELEASED;
-      await this.closeBudget(job.id, job.budgetId, status);
+      await this.closeBudget(job.id, job.budgetId, await this.sweepCloseStatus(job));
+    }
+  }
+
+  /** A retried close keeps the verdict of the first try: a FAILED job's last coded step decides. */
+  private async sweepCloseStatus(job: {
+    id: string;
+    status: string;
+  }): Promise<GenerationBudgetCloseStatus> {
+    if (job.status === 'WAITING_FOR_REVIEW') return GenerationBudgetCloseStatus.FINALIZED;
+    if (job.status !== 'FAILED') return GenerationBudgetCloseStatus.RELEASED;
+    try {
+      return budgetCloseStatusForFailure(await this.repository.findLastFailureCode(job.id));
+    } catch {
+      return GenerationBudgetCloseStatus.RELEASED;
     }
   }
 

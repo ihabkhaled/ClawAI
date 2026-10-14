@@ -15,7 +15,7 @@ export function useDecomposePage(): UseDecomposePageReturn {
   const [maxSubTasks, setMaxSubTasks] = useState(DECOMPOSE_DEFAULT_MAX_SUB_TASKS);
   const [selectedModel, setSelectedModel] = useState<AdvancedModuleModelSelection>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
-  const composer = useOrchestrationComposer();
+  const composer = useOrchestrationComposer(false, { value: content, onValueChange: setContent });
 
   const { send, result, isPending, isError } = useSendDecompose();
 

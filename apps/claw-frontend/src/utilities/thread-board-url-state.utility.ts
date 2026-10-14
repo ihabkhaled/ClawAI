@@ -96,3 +96,10 @@ export function serialiseBoardUrlState(state: ThreadBoardState, defaultLang: str
 export function hasActiveBoardFilters(state: ThreadBoardState, defaultLang: string): boolean {
   return state.q !== '' || state.lang !== defaultLang || state.type !== THREAD_BOARD_ALL;
 }
+
+/** True when two Board states describe the same view. */
+export function isSameBoardState(a: ThreadBoardState, b: ThreadBoardState): boolean {
+  return (
+    a.q === b.q && a.sort === b.sort && a.lang === b.lang && a.type === b.type && a.page === b.page
+  );
+}

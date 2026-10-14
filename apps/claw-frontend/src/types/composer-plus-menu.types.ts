@@ -2,7 +2,10 @@ import type { LucideIcon } from 'lucide-react';
 import type { KeyboardEvent, ReactNode, RefObject } from 'react';
 
 import type { ComposerPlusMenuView } from '@/enums/composer-plus-menu-view.enum';
-import type { UseComposerContextMenuReturn } from '@/types/composer-context.types';
+import type {
+  UseComposerContextMenuReturn,
+  UseComposerContextPacksReturn,
+} from '@/types/composer-context.types';
 import type { PromptLibraryDialogProps } from '@/types/prompt-library.types';
 import type { ResearchOptions, SanitizedResearchProvider } from '@/types/research.types';
 
@@ -22,6 +25,12 @@ export type ComposerPlusMenuProps = {
   threadId: string | null;
   draft: string;
   onInsertPrompt: (text: string) => void;
+  /**
+   * The packs the next run will carry, for a surface that has no thread until it runs (Compare
+   * and the labs). With a null `threadId` and this set, the menu gets the same Context pack
+   * picker a thread has, minus the dialogs that need a thread (what is sent, memory).
+   */
+  draftContextPacks?: { selectedIds: string[]; onChange: (next: string[]) => void };
 };
 
 export type UseComposerPlusMenuKeyboardReturn = {
@@ -54,11 +63,29 @@ export type ComposerPlusMenuViewProps = ComposerPlusMenuProps & {
   menu: UseComposerPlusMenuReturn;
   /** Null on the new-chat surface, where there is no thread to hold packs or memory. */
   context: UseComposerContextMenuReturn | null;
+  /** The pack picker of a thread-less surface; ignored when `context` is set. */
+  draftPacks?: UseComposerContextPacksReturn;
+};
+
+/** What the host that picks a "+" menu variant gets: the toolbar's props plus the menu state. */
+export type ComposerPlusMenuHostProps = ComposerPlusMenuProps & {
+  menu: UseComposerPlusMenuReturn;
 };
 
 /** The "+" menu on a thread: the view's props minus the context the host itself supplies. */
-export type ComposerPlusMenuContextHostProps = Omit<ComposerPlusMenuViewProps, 'context'> & {
+export type ComposerPlusMenuContextHostProps = Omit<
+  Omit<ComposerPlusMenuViewProps, 'context'>,
+  'draftPacks'
+> & {
   threadId: string;
+};
+
+/** The "+" menu of a thread-less surface that picks packs before its thread exists. */
+export type ComposerPlusMenuDraftHostProps = Omit<
+  Omit<Omit<ComposerPlusMenuViewProps, 'context'>, 'draftPacks'>,
+  'draftContextPacks'
+> & {
+  draftContextPacks: { selectedIds: string[]; onChange: (next: string[]) => void };
 };
 
 export type ComposerPlusMenuItemProps = {

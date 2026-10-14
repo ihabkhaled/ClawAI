@@ -6,17 +6,34 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { InThreadComparePanel } from '@/components/chat/in-thread-compare-panel';
 import { ResearchMode } from '@/enums';
 
-// The compare panel mounts FileAttachmentPicker, which transitively calls
-// useTranslation() (LocaleProvider-backed) plus useFiles(). Upload itself is
-// the `onIngestFiles` prop in baseProps below, not a hook FileAttachmentPicker
-// opens on its own — see use-file-attachment-picker.ts.
-// In this unit test we don't render a LocaleProvider, so mock those modules.
-vi.mock('@/components/chat/composer-context-controls', () => ({
-  ComposerContextControls: () => <div data-testid="composer-context-controls" />,
+// The grouped "+" menu and the research chip are the shared chat components; their own tests
+// cover them. This file only needs to know the panel mounts them with the right values.
+// In this unit test we don't render a LocaleProvider, so mock the translation module too.
+vi.mock('@/components/chat/composer-plus-menu', () => ({
+  ComposerPlusMenu: ({
+    canResearch,
+    threadId,
+    isUploadingAttachment,
+    draftContextPacks,
+  }: {
+    canResearch: boolean;
+    threadId: string | null;
+    isUploadingAttachment: boolean;
+    draftContextPacks?: unknown;
+  }) => (
+    <div
+      data-testid="composer-plus-menu"
+      data-can-research={String(canResearch)}
+      data-thread-id={String(threadId)}
+      data-uploading={String(isUploadingAttachment)}
+      data-has-draft-packs={String(draftContextPacks !== undefined)}
+    />
+  ),
 }));
-
-vi.mock('@/components/chat/prompt-library/prompt-library-button', () => ({
-  PromptLibraryButton: () => <div data-testid="prompt-library-button" />,
+vi.mock('@/components/chat/composer-research-chip', () => ({
+  ComposerResearchChip: ({ value }: { value: { mode: string } }) => (
+    <div data-testid="research-chip" data-mode={value.mode} />
+  ),
 }));
 
 vi.mock('@/lib/i18n/use-translation', () => ({
@@ -95,12 +112,16 @@ function withQueryClient(children: ReactNode): ReactElement {
 }
 
 describe('InThreadComparePanel — plan-feature gates', () => {
-  it('has the same Context button and Prompt library as the chat composer', () => {
+  it('has the same grouped "+" menu as the chat composer, not loose buttons (rules/59)', () => {
     render(
       withQueryClient(<InThreadComparePanel {...baseProps} allowJudgeMode allowResearchMode />),
     );
-    expect(screen.getByTestId('composer-context-controls')).toBeInTheDocument();
-    expect(screen.getByTestId('prompt-library-button')).toBeInTheDocument();
+    const menu = screen.getByTestId('composer-plus-menu');
+    // It runs inside a thread, so the menu is the thread's: its packs, what is sent, its memory.
+    expect(menu).toHaveAttribute('data-thread-id', 'thread-1');
+    expect(menu).toHaveAttribute('data-has-draft-packs', 'false');
+    expect(screen.queryByTestId('composer-context-controls')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('prompt-library-button')).not.toBeInTheDocument();
   });
 
   it('hides judge controls when allowJudgeMode is false', () => {
@@ -118,7 +139,8 @@ describe('InThreadComparePanel — plan-feature gates', () => {
         <InThreadComparePanel {...baseProps} allowJudgeMode allowResearchMode={false} />,
       ),
     );
-    expect(screen.queryByLabelText('research.toggle.modeLabel')).not.toBeInTheDocument();
+    expect(screen.getByTestId('composer-plus-menu')).toHaveAttribute('data-can-research', 'false');
+    expect(screen.queryByTestId('research-chip')).not.toBeInTheDocument();
   });
 
   it('shows both judge + research controls when plan unlocks both', () => {
@@ -126,7 +148,8 @@ describe('InThreadComparePanel — plan-feature gates', () => {
       withQueryClient(<InThreadComparePanel {...baseProps} allowJudgeMode allowResearchMode />),
     );
     expect(screen.getByText('chat.judgeReferee')).toBeInTheDocument();
-    expect(screen.getByLabelText('research.toggle.modeLabel')).toBeInTheDocument();
+    expect(screen.getByTestId('composer-plus-menu')).toHaveAttribute('data-can-research', 'true');
+    expect(screen.getByTestId('research-chip')).toHaveAttribute('data-mode', ResearchMode.AUTO);
   });
 
   it('hides BOTH judge + research controls when plan locks both', () => {
@@ -136,7 +159,7 @@ describe('InThreadComparePanel — plan-feature gates', () => {
       ),
     );
     expect(screen.queryByText('chat.judgeReferee')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('research.toggle.modeLabel')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('research-chip')).not.toBeInTheDocument();
   });
 
   it('hides Critic controls when allowCriticReview is false even with judge enabled', () => {
@@ -196,19 +219,6 @@ describe('InThreadComparePanel — drop-zone scope', () => {
     const dropzone = screen.getByTestId('in-thread-compare-dropzone');
     expect(dropzone.contains(screen.getByLabelText('compare.sendPrompt'))).toBe(true);
     expect(dropzone.contains(screen.getByTestId('voice-video-recorder-audio'))).toBe(true);
-  });
-
-  // Live 2026-09-25: the fixed-width research selects ended 4px past the
-  // dialog edge in the ~350px column. They must sit in a width-bounded,
-  // sideways-scrolling wrapper.
-  it('bounds the research toggle to the column width', () => {
-    render(
-      withQueryClient(<InThreadComparePanel {...baseProps} allowJudgeMode allowResearchMode />),
-    );
-    const wrapper = screen.getByTestId('in-thread-compare-research');
-    expect(wrapper.className).toContain('max-w-full');
-    expect(wrapper.className).toContain('min-w-0');
-    expect(wrapper.className).toContain('overflow-x-auto');
   });
 });
 
@@ -398,15 +408,12 @@ describe('InThreadComparePanel — voice/video recorder', () => {
     expect(files[0]).toBeInstanceOf(File);
   });
 
-  it('hands the composer upload state to the attach picker', async () => {
+  it('hands the composer upload state to the attach menu', () => {
     render(
       withQueryClient(
         <InThreadComparePanel {...baseProps} allowJudgeMode allowResearchMode isUploading />,
       ),
     );
-    fireEvent.click(screen.getByRole('button', { name: /chat\.attachFiles/ }));
-
-    const uploading = await screen.findByText('chat.fileLibrary.uploading');
-    expect(uploading.closest('button')).toBeDisabled();
+    expect(screen.getByTestId('composer-plus-menu')).toHaveAttribute('data-uploading', 'true');
   });
 });

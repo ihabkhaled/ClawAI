@@ -83,4 +83,21 @@ describe('createThreadGenerationRequest', () => {
       }),
     ).toThrow('Select a model for every author and reviewer');
   });
+
+  it('gives authors room for a long draft and keeps reviewers at the verdict size', () => {
+    const request = createThreadGenerationRequest({
+      sourceThreadId: 'chat-1',
+      topic: 'Topic',
+      publicationType: ThreadPublicationType.TECHNICAL_EXPLANATION,
+      contentLocale: Locale.AR,
+      spendCapUsd: 1,
+      models,
+      idempotencyKey: 'request-1',
+      correlationId: 'correlation-1',
+    });
+
+    expect(request.authors.map((author) => author.maxOutputTokens)).toEqual([8192, 8192, 8192]);
+    expect(request.judge.maxOutputTokens).toBe(4096);
+    expect(request.critic.maxOutputTokens).toBe(4096);
+  });
 });

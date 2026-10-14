@@ -5,7 +5,10 @@ import type { FeedbackTranslation } from '@/types/i18n-feedback.types';
 export type TranslationDictionary = {
   /** Plugins and MCP access: sidebar, plan editor and upgrade label. */
   pluginsAccess: PluginsAccessLocaleTranslation;
+  /** Plugins inside a conversation: the @ picker, call timeline and notices. */
+  pluginChat: PluginChatLocaleTranslation;
   pluginsInstall: PluginsInstallLocaleTranslation;
+  pluginsServers: PluginsServersLocaleTranslation;
   pluginsStatus: PluginsStatusLocaleTranslation;
   /**
    * The shared table pagination control. Used by every paged list, so a change
@@ -752,12 +755,25 @@ export type TranslationDictionary = {
     deleteThreadConfirm: string;
     threadCreated: string;
     threadCreateFailed: string;
+    threadTeam: {
+      title: string;
+      summary: string;
+      customised: string;
+      none: string;
+      advanced: string;
+      reset: string;
+      reasonNeedsPlan: string;
+      reasonWindow: string;
+      reasonUnavailable: string;
+    };
     threadProgress: {
       title: string;
       statusLabel: string;
       stageLabel: string;
       attempt: string;
       spent: string;
+      platformFailureNotice: string;
+      retryOnUs: string;
       selectedTitle: string;
       fallbacks: string;
       noFallbacks: string;
@@ -1304,7 +1320,8 @@ export type TranslationDictionary = {
         textToSpeech: string;
       };
     };
-  } & ThreadBoardLocaleTranslation;
+  } & ThreadBoardLocaleTranslation &
+    ThreadPublicBoardLocaleTranslation;
   receipt: {
     openLabel: string;
     contextUsed: string;
@@ -7712,6 +7729,74 @@ export type MarketingVideosLocaleTranslation = {
   };
 };
 
+/** My MCP servers: page, plan cap, add dialog and consent, discovered tools, remove, errors (plugins-servers-translations.ts). */
+export type PluginsServersLocaleTranslation = {
+  nav: { servers: string };
+  description: string;
+  add: string;
+  planNone: string;
+  seePlans: string;
+  loading: string;
+  errorTitle: string;
+  errorDescription: string;
+  emptyTitle: string;
+  emptyDescription: string;
+  cap: { used: string; unlimited: string; disabled: string };
+  status: {
+    approved: string;
+    pendingApproval: string;
+    needsReview: string;
+    rejected: string;
+    unreachable: string;
+    disabled: string;
+  };
+  card: {
+    enabledLabel: string;
+    toolsEnabled: string;
+    keySaved: string;
+    tools: string;
+    remove: string;
+  };
+  form: {
+    title: string;
+    description: string;
+    nameLabel: string;
+    namePlaceholder: string;
+    urlLabel: string;
+    urlHelp: string;
+    keyTitle: string;
+    headerLabel: string;
+    keyLabel: string;
+    keyPlaceholder: string;
+    keyHelp: string;
+    consentLabel: string;
+    consentBody: string;
+    cancel: string;
+    submit: string;
+    submitting: string;
+  };
+  tools: {
+    title: string;
+    titleAdded: string;
+    description: string;
+    warning: string;
+    discovering: string;
+    none: string;
+    rediscover: string;
+    save: string;
+    enableLabel: string;
+  };
+  remove: { title: string; description: string; cancel: string; confirm: string };
+  errors: {
+    urlRefused: string;
+    limitReached: string;
+    unreachable: string;
+    notFound: string;
+    rejected: string;
+  };
+  toast: { added: string; removed: string };
+};
+
 /** Plugin install follow-ups: catalog status labels, plan errors, key retry message (plugins-status-translations.ts). */
 export type PluginsStatusLocaleTranslation = {
   catalogStatus: { DRAFT: string; PUBLISHED: string; DEPRECATED: string; HIDDEN: string };
@@ -7863,6 +7948,21 @@ export type PluginsInstallLocaleTranslation = {
 
 /** Flat `chat.threadBoard*` keys for the community Board; see thread-board-translations.ts. */
 export type ThreadBoardLocaleTranslation = {
+  threadBoardGuestNavLabel: string;
+  threadBoardGuestBannerTitle: string;
+  threadBoardGuestBannerBody: string;
+  threadBoardGuestSignIn: string;
+  threadBoardGuestRegister: string;
+  threadBoardGuestSignInToLike: string;
+  threadBoardGuestSignInToComment: string;
+  threadBoardGuestSignInToRequestChange: string;
+  threadBoardGuestSignInToReport: string;
+  threadBoardGuestPromptsLabel: string;
+  threadBoardGuestBackToAll: string;
+  threadBoardGuestHomeEyebrow: string;
+  threadBoardGuestHomeTitle: string;
+  threadBoardGuestHomeBody: string;
+  threadBoardGuestHomeCta: string;
   threadBoardRateLimitTitle: string;
   threadBoardRateLimitBody: string;
   threadBoardRateLimitWait: string;
@@ -7908,4 +8008,43 @@ export type ThreadBoardLocaleTranslation = {
   threadBoardOpenPublic: string;
   threadBoardCopyLink: string;
   threadBoardViewOnBoard: string;
+};
+
+/** Flat `chat.threadPublicBoard*` keys for the public, read-only Threads board; see thread-public-board-translations.ts. */
+export type ThreadPublicBoardLocaleTranslation = {
+  threadPublicBoardTitle: string;
+  threadPublicBoardIntro: string;
+  threadPublicBoardCta: string;
+  threadPublicBoardSeoTitle: string;
+  threadPublicBoardSeoDescription: string;
+};
+
+/** Plugins inside a conversation: the @ picker, call timeline and notices (plugin-chat-translations.ts). */
+export type PluginChatLocaleTranslation = {
+  mention: {
+    listLabel: string;
+    count: string;
+    chipsLabel: string;
+    removeChip: string;
+  };
+  calls: {
+    title: string;
+    duration: string;
+    truncated: string;
+    resultToggle: string;
+    status: {
+      ok: string;
+      error: string;
+      consentRequired: string;
+      blocked: string;
+      rateLimited: string;
+      quotaExceeded: string;
+    };
+  };
+  notices: {
+    serviceUnavailable: string;
+    noTools: string;
+    consentNotAvailable: string;
+    limitReached: string;
+  };
 };

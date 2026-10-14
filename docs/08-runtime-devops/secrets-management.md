@@ -6,15 +6,16 @@
 
 ## 1. Secrets Inventory
 
-| Secret                | Location      | Purpose                                | Format           |
-| --------------------- | ------------- | -------------------------------------- | ---------------- |
-| `JWT_SECRET`          | `.env`        | Signs JWT access and refresh tokens    | 64 hex chars     |
-| `ENCRYPTION_KEY`      | `.env`        | AES-256-GCM encryption for API keys   | 64 hex chars     |
-| `ADMIN_PASSWORD`      | `.env`        | Default admin user password            | String           |
-| `PG_*_PASSWORD`       | `.env`        | PostgreSQL database passwords (x9)     | String           |
-| `MONGO_PASSWORD`      | `.env`        | MongoDB root password                  | String           |
-| `RABBITMQ_DEFAULT_PASS`| `.env`       | RabbitMQ broker password               | String           |
-| Connector API keys    | PostgreSQL    | Cloud provider API keys (encrypted)    | AES-256-GCM blob |
+| Secret                  | Location   | Purpose                                                                                                              | Format           |
+| ----------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| `JWT_SECRET`            | `.env`     | Signs JWT access and refresh tokens                                                                                  | 64 hex chars     |
+| `ENCRYPTION_KEY`        | `.env`     | AES-256-GCM encryption for API keys                                                                                  | 64 hex chars     |
+| `PLUGIN_ENCRYPTION_KEY` | `.env`     | AES-256-GCM over MCP credentials stored by plugin-service (separate from `ENCRYPTION_KEY`; changing it orphans them) | 64 hex chars     |
+| `ADMIN_PASSWORD`        | `.env`     | Default admin user password                                                                                          | String           |
+| `PG_*_PASSWORD`         | `.env`     | PostgreSQL database passwords (x9)                                                                                   | String           |
+| `MONGO_PASSWORD`        | `.env`     | MongoDB root password                                                                                                | String           |
+| `RABBITMQ_DEFAULT_PASS` | `.env`     | RabbitMQ broker password                                                                                             | String           |
+| Connector API keys      | PostgreSQL | Cloud provider API keys (encrypted)                                                                                  | AES-256-GCM blob |
 
 ---
 
@@ -79,13 +80,13 @@ The ENCRYPTION_KEY is 32 bytes (64 hex characters) for AES-256.
 
 ### Encryption Properties
 
-| Property                | Value                              |
-| ----------------------- | ---------------------------------- |
-| Algorithm               | AES-256-GCM                        |
-| Key length              | 256 bits (32 bytes / 64 hex chars) |
-| IV (nonce)              | 12 bytes, randomly generated       |
-| Auth tag                | 16 bytes                           |
-| Storage format           | IV + encrypted data + auth tag     |
+| Property       | Value                              |
+| -------------- | ---------------------------------- |
+| Algorithm      | AES-256-GCM                        |
+| Key length     | 256 bits (32 bytes / 64 hex chars) |
+| IV (nonce)     | 12 bytes, randomly generated       |
+| Auth tag       | 16 bytes                           |
+| Storage format | IV + encrypted data + auth tag     |
 
 ### Key Rotation
 
@@ -143,7 +144,7 @@ RABBITMQ_DEFAULT_PASS=claw_secret
 Pino is configured to redact sensitive fields from all log output:
 
 ```typescript
-redact: ['authorization', 'password', 'refreshToken', 'apiKey', 'token', 'secret']
+redact: ['authorization', 'password', 'refreshToken', 'apiKey', 'token', 'secret'];
 ```
 
 Any log entry containing these field names will have the value replaced with `[REDACTED]`.
@@ -160,7 +161,7 @@ Any log entry containing these field names will have the value replaced with `[R
 
 - **No `console.log`** -- ESLint enforced; only `console.warn` and `console.error`
 - **No secrets in localStorage** -- only auth tokens (with security note in code)
-- **No NEXT_PUBLIC_ secrets** -- only non-sensitive config uses NEXT_PUBLIC_ prefix
+- **No NEXT_PUBLIC\_ secrets** -- only non-sensitive config uses NEXT_PUBLIC_ prefix
 - **X-Request-ID** -- uses random UUIDs, no sensitive data
 
 ---

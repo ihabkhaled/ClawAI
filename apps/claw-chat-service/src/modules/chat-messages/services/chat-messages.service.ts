@@ -25,6 +25,7 @@ import {
   hasPlanFeature,
   type PlanFeature,
   resolvePlanLimit,
+  type UserEntitlements,
 } from '@claw/shared-entitlements';
 import { ModelExposureClient } from '../clients/model-exposure.client';
 import { AttachmentInfoClient } from '../clients/attachment-info.client';
@@ -160,6 +161,12 @@ import {
   PickedModelFailedException,
 } from '../../../common/errors';
 import type { SuggestedModel } from '../types/picked-model-fallback.types';
+import { findPrecedingUserMessage } from '../utilities/regeneration-target.utility';
+import type { MessageRoutedProgress } from '../types/message-routed-progress.types';
+import { buildUserMessageMetadata } from '../utilities/user-message-metadata.utility';
+import type { MessageCompletedOutcomeOverrides } from '../types/message-completed-outcome.types';
+import type { ResolvedMessageRouting } from '../types/message-routing.types';
+import type { ResearchIntentOptions } from '../types/research-intent-options.types';
 import {
   type ChatMessage,
   type ChatThread,
@@ -188,6 +195,8 @@ import { type SearchMessagesQueryDto } from '../dto/search-messages-query.dto';
 import { type InThreadSearchMatch } from '../types/in-thread-search.types';
 import { buildSearchSnippet } from '../utilities/search-snippet.utility';
 import { pickedModelSubstitutesField } from '../utilities/picked-model-fallback.utility';
+import { buildPluginMetaPart } from '../utilities/plugin-metadata.utility';
+import { pluginRefsFor, withPluginRefs } from '../utilities/plugin-refs.utility';
 import {
   namedModelFields,
   withNamedModelNotice,
@@ -271,14 +280,8 @@ export class ChatMessagesService implements OnModuleInit {
   ): Promise<ChatMessage> {
     this.logger.log(`createMessage: starting for user ${userId} in thread ${dto.threadId}`);
     const thread = await this.getThreadForMessage(dto.threadId, userId);
-    const { effectiveRoutingMode, forcedProvider, forcedModel } = this.resolveRoutingParams(
-      dto,
-      thread,
-    );
-
-    this.logger.debug(
-      `createMessage: resolved routing mode=${effectiveRoutingMode}, provider=${forcedProvider ?? 'auto'}, model=${forcedModel ?? 'auto'}, research=${dto.researchMode ?? ResearchMode.NONE}`,
-    );
+    const routing = this.resolveRoutingParams(dto, thread);
+    this.logResolvedRouting(dto, routing);
 
     // Backend enforcement: reject a forbidden manually-selected model and a
     // user whose daily quota is exhausted, before any work is done. The
@@ -288,77 +291,22 @@ export class ChatMessagesService implements OnModuleInit {
       userId,
       dto,
       thread,
-      forcedProvider,
-      forcedModel,
+      routing.forcedProvider,
+      routing.forcedModel,
     );
     const quotes = await this.resolveQuotes(dto.threadId, dto.quotes);
-    const allowedModels = entitlements ? allowedModelKeys(entitlements) : [];
-    // Travels with the event so the router can tell an ALLOW_ALL plan, which
-    // sends an empty list as a fast path, from a restricted plan whose list is
-    // genuinely empty and therefore grants nothing.
-    const modelAccessMode = entitlements?.modelAccessMode;
-    // The free plan's price limit for AUTO routing (ADR-162). Absent means no limit.
-    const freeModelPriceCap = entitlements?.freeCreditMaxModelOutputMicroUsd ?? null;
 
-    this.chatStreamService.emitRequestAccepted(dto.threadId);
-    // A fresh work log for this turn; the previous turn's log is already stored
-    // on its answer.
-    await this.narration.reset(dto.threadId);
-
-    const message = await this.chatMessagesRepository.createUserMessageWithinDailyLimit(
+    const message = await this.openTurn(
       userId,
-      {
-        threadId: dto.threadId,
-        role: 'USER',
-        content: dto.content,
-        routingMode: effectiveRoutingMode,
-        metadata: this.buildMessageMetadata(dto, null, quotes),
-      },
-      entitlements === null
-        ? null
-        : resolvePlanLimit(entitlements, (limits) => limits.messagesPerDay),
+      dto,
+      routing.effectiveRoutingMode,
+      quotes,
+      entitlements,
+      zeroRetention,
     );
-    if (!message) {
-      throw new BusinessException(
-        'Daily message limit exceeded',
-        'PLAN_DAILY_MESSAGE_LIMIT_EXCEEDED',
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
-    }
+    const publish = await this.buildCreatedPublisher(message, userId, dto, routing, entitlements);
 
-    this.logger.log(`createMessage: created message ${message.id} in thread ${dto.threadId}`);
-    // Marked before the turn is published, so the consumer that answers it
-    // always sees the mark (F055).
-    await this.markZeroRetentionTurn(zeroRetention, dto.threadId, message.id);
-    this.logMessageCreated(userId, dto.threadId, message.id);
-    // What the attachments need a model to read, so AUTO ranks by modality
-    // fit (multimodal batch 8). Bounded; no attachments → no fields.
-    const modality = await this.resolveAttachmentModality(userId, dto.fileIds, async () =>
-      Promise.resolve(
-        entitlements === null ? false : hasPlanFeature(entitlements, HELPER_VISION_PLAN_FEATURE),
-      ),
-    );
-    const publish = (): void =>
-      this.publishMessageCreated(
-        message,
-        userId,
-        effectiveRoutingMode,
-        forcedProvider,
-        forcedModel,
-        allowedModels,
-        modelAccessMode,
-        freeModelPriceCap,
-        modality,
-      );
-
-    // A message that COMMANDS a page to be read ("crawl <url>") still goes through
-    // the research path with research off; `runResearchForIntent` re-checks the plan.
-    const researchOff = dto.researchMode === undefined || dto.researchMode === ResearchMode.NONE;
-    if (
-      researchOff &&
-      resolveExplicitFetchMode(dto.content) === null &&
-      !asksAboutThisPlatform(dto.content)
-    ) {
+    if (this.isPlainSend(dto)) {
       publish();
       return message;
     }
@@ -373,34 +321,170 @@ export class ChatMessagesService implements OnModuleInit {
     // The publish is in `finally`: whatever research does - fails, throws,
     // times out - the turn still reaches the answering model, or the UI would
     // wait for an answer that never comes.
-    void (async () => {
-      try {
-        const run = await this.runResearchIfRequested(
-          userId,
-          userToken,
-          dto,
-          dto.threadId,
-          forcedProvider,
-          forcedModel,
-        );
-        if (run !== null) {
-          const metadata = this.buildMessageMetadata(dto, run, quotes);
-          await this.chatMessagesRepository.updateMetadata(
-            message.id,
-            (metadata ?? {}) as Prisma.InputJsonValue,
-          );
-        }
-      } catch (error) {
-        this.logger.warn(
-          `createMessage: research failed for ${message.id} - answering without it: ${(error as Error).message}`,
-        );
-        await this.narration.append(dto.threadId, { kind: NarrationKind.RESEARCH_FAILED });
-      } finally {
-        publish();
-      }
-    })();
+    void this.runResearchThenPublish(
+      userId,
+      userToken,
+      dto,
+      message,
+      quotes,
+      routing.forcedProvider,
+      routing.forcedModel,
+      publish,
+    );
 
     return message;
+  }
+
+  private logResolvedRouting(dto: CreateMessageDto, routing: ResolvedMessageRouting): void {
+    this.logger.debug(
+      `createMessage: resolved routing mode=${routing.effectiveRoutingMode}, provider=${routing.forcedProvider ?? 'auto'}, model=${routing.forcedModel ?? 'auto'}, research=${dto.researchMode ?? ResearchMode.NONE}`,
+    );
+  }
+
+  // A message that COMMANDS a page to be read ("crawl <url>") still goes through
+  // the research path with research off; `runResearchForIntent` re-checks the plan.
+  private isPlainSend(dto: CreateMessageDto): boolean {
+    const researchOff = dto.researchMode === undefined || dto.researchMode === ResearchMode.NONE;
+    return (
+      researchOff &&
+      resolveExplicitFetchMode(dto.content) === null &&
+      !asksAboutThisPlatform(dto.content)
+    );
+  }
+
+  private planHasVision(entitlements: UserEntitlements | null): boolean {
+    return entitlements === null ? false : hasPlanFeature(entitlements, HELPER_VISION_PLAN_FEATURE);
+  }
+
+  private async openTurn(
+    userId: string,
+    dto: CreateMessageDto,
+    routingMode: RoutingMode,
+    quotes: MessageQuote[] | undefined,
+    entitlements: UserEntitlements | null,
+    zeroRetention: boolean | undefined,
+  ): Promise<ChatMessage> {
+    this.chatStreamService.emitRequestAccepted(dto.threadId);
+    // A fresh work log for this turn; the previous turn's log is already stored
+    // on its answer.
+    await this.narration.reset(dto.threadId);
+
+    const message = await this.storeUserMessage(userId, dto, routingMode, quotes, entitlements);
+
+    this.logger.log(`createMessage: created message ${message.id} in thread ${dto.threadId}`);
+    // Marked before the turn is published, so the consumer that answers it
+    // always sees the mark (F055).
+    await this.markZeroRetentionTurn(zeroRetention, dto.threadId, message.id);
+    this.logMessageCreated(userId, dto.threadId, message.id);
+    return message;
+  }
+
+  private async storeUserMessage(
+    userId: string,
+    dto: CreateMessageDto,
+    routingMode: RoutingMode,
+    quotes: MessageQuote[] | undefined,
+    entitlements: UserEntitlements | null,
+  ): Promise<ChatMessage> {
+    const message = await this.chatMessagesRepository.createUserMessageWithinDailyLimit(
+      userId,
+      {
+        threadId: dto.threadId,
+        role: 'USER',
+        content: dto.content,
+        routingMode,
+        metadata: this.buildMessageMetadata(dto, null, quotes),
+      },
+      entitlements === null
+        ? null
+        : resolvePlanLimit(entitlements, (limits) => limits.messagesPerDay),
+    );
+    if (!message) {
+      throw new BusinessException(
+        'Daily message limit exceeded',
+        'PLAN_DAILY_MESSAGE_LIMIT_EXCEEDED',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+    return message;
+  }
+
+  private async buildCreatedPublisher(
+    message: ChatMessage,
+    userId: string,
+    dto: CreateMessageDto,
+    routing: ResolvedMessageRouting,
+    entitlements: UserEntitlements | null,
+  ): Promise<() => void> {
+    // What the attachments need a model to read, so AUTO ranks by modality
+    // fit (multimodal batch 8). Bounded; no attachments → no fields.
+    const modality = await this.resolveAttachmentModality(userId, dto.fileIds, async () =>
+      Promise.resolve(this.planHasVision(entitlements)),
+    );
+    return (): void =>
+      this.publishMessageCreatedForPlan(message, userId, routing, entitlements, modality);
+  }
+
+  private publishMessageCreatedForPlan(
+    message: ChatMessage,
+    userId: string,
+    routing: ResolvedMessageRouting,
+    entitlements: UserEntitlements | null,
+    modality: AttachmentModalityFields,
+  ): void {
+    this.publishMessageCreated(
+      message,
+      userId,
+      routing.effectiveRoutingMode,
+      routing.forcedProvider,
+      routing.forcedModel,
+      entitlements ? allowedModelKeys(entitlements) : [],
+      // Travels with the event so the router can tell an ALLOW_ALL plan, which
+      // sends an empty list as a fast path, from a restricted plan whose list is
+      // genuinely empty and therefore grants nothing.
+      entitlements?.modelAccessMode,
+      // The free plan's price limit for AUTO routing (ADR-162). Absent means no limit.
+      entitlements?.freeCreditMaxModelOutputMicroUsd ?? null,
+      modality,
+    );
+  }
+
+  // Research failing, throwing or timing out must never stop the turn reaching
+  // the answering model, so the publish is in `finally`.
+  private async runResearchThenPublish(
+    userId: string,
+    userToken: string,
+    dto: CreateMessageDto,
+    message: ChatMessage,
+    quotes: MessageQuote[] | undefined,
+    forcedProvider: string | undefined,
+    forcedModel: string | undefined,
+    publish: () => void,
+  ): Promise<void> {
+    try {
+      const run = await this.runResearchIfRequested(
+        userId,
+        userToken,
+        dto,
+        dto.threadId,
+        forcedProvider,
+        forcedModel,
+      );
+      if (run !== null) {
+        const metadata = this.buildMessageMetadata(dto, run, quotes);
+        await this.chatMessagesRepository.updateMetadata(
+          message.id,
+          (metadata ?? {}) as Prisma.InputJsonValue,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `createMessage: research failed for ${message.id} - answering without it: ${(error as Error).message}`,
+      );
+      await this.narration.append(dto.threadId, { kind: NarrationKind.RESEARCH_FAILED });
+    } finally {
+      publish();
+    }
   }
 
   // Resolves plan-feature requirements for a single-message send and asserts
@@ -585,35 +669,54 @@ export class ChatMessagesService implements OnModuleInit {
     userToken: string,
     threadId: string,
     intent: string,
-    options: {
-      mode?: ResearchMode | string;
-      providerId?: string;
-      forcedProvider?: string;
-      forcedModel?: string;
-      fileIds?: readonly string[];
-    },
+    options: ResearchIntentOptions,
   ): Promise<ResearchRunResponse | null> {
     if (options.mode === undefined || options.mode === ResearchMode.NONE) {
-      // Research is off, but the user COMMANDED a page to be read ("crawl <url>",
-      // "curl <url>"). Do what was asked, unless the plan has no research unlock.
-      const commanded =
-        resolveExplicitFetchMode(intent) ?? this.modeForPickedProvider(options.providerId);
-      // A question about the app itself ("what is the current webapp?") crawls the
-      // platform's OWN public site, so the answer comes from its pages (ADR-136).
-      const selfInspect =
-        commanded === null ? buildSelfInspectIntent(intent, AppConfig.get().PUBLIC_SITE_URL) : null;
-      return (commanded === null && selfInspect === null) ||
-        !(await this.accessControlService.hasResearchAccess(userId))
-        ? null
-        : this.runResearchForIntent(userId, userToken, threadId, selfInspect ?? intent, {
-            ...options,
-            mode: commanded ?? ResearchMode.SEARCH_FETCH,
-          });
+      return this.runCommandedResearch(userId, userToken, threadId, intent, options);
     }
-    if (options.mode === ResearchMode.AUTO) {
-      return this.runAutoResearch(userId, userToken, threadId, intent, options);
-    }
-    const resolvedMode = options.mode as ResearchMode;
+    return options.mode === ResearchMode.AUTO
+      ? this.runAutoResearch(userId, userToken, threadId, intent, options)
+      : this.runExplicitResearch(
+          userId,
+          userToken,
+          threadId,
+          intent,
+          options,
+          options.mode as ResearchMode,
+        );
+  }
+
+  // Research is off, but the user COMMANDED a page to be read ("crawl <url>",
+  // "curl <url>"). Do what was asked, unless the plan has no research unlock.
+  private async runCommandedResearch(
+    userId: string,
+    userToken: string,
+    threadId: string,
+    intent: string,
+    options: ResearchIntentOptions,
+  ): Promise<ResearchRunResponse | null> {
+    const commanded =
+      resolveExplicitFetchMode(intent) ?? this.modeForPickedProvider(options.providerId);
+    // A question about the app itself ("what is the current webapp?") crawls the
+    // platform's OWN public site, so the answer comes from its pages (ADR-136).
+    const selfInspect =
+      commanded === null ? buildSelfInspectIntent(intent, AppConfig.get().PUBLIC_SITE_URL) : null;
+    if (commanded === null && selfInspect === null) return null;
+    if (!(await this.accessControlService.hasResearchAccess(userId))) return null;
+    return this.runResearchForIntent(userId, userToken, threadId, selfInspect ?? intent, {
+      ...options,
+      mode: commanded ?? ResearchMode.SEARCH_FETCH,
+    });
+  }
+
+  private async runExplicitResearch(
+    userId: string,
+    userToken: string,
+    threadId: string,
+    intent: string,
+    options: ResearchIntentOptions,
+    resolvedMode: ResearchMode,
+  ): Promise<ResearchRunResponse | null> {
     if (userToken.length === 0) {
       this.logger.warn(`research: researchMode=${options.mode} but no bearer token; skipping`);
       return null;
@@ -621,13 +724,11 @@ export class ChatMessagesService implements OnModuleInit {
     // Announced only once research is actually going to run, so every start
     // the user sees is followed by a completion.
     this.chatStreamService.emitResearchStarted(threadId, resolvedMode);
-    const workflow = classifyResearchWorkflow(resolvedMode, intent);
-    const config = AppConfig.get();
-    const run = await runResearch(config.RESEARCH_SERVICE_URL, {
+    const run = await runResearch(AppConfig.get().RESEARCH_SERVICE_URL, {
       userToken,
       userId,
       intent,
-      workflow,
+      workflow: classifyResearchWorkflow(resolvedMode, intent),
       searchProviderId: options.providerId,
       requestedProvider: options.forcedProvider,
       requestedModel: options.forcedModel,
@@ -635,17 +736,17 @@ export class ChatMessagesService implements OnModuleInit {
     });
     if (run === null) {
       this.logger.warn(`research: run failed for user ${userId} — continuing without evidence`);
-    } else {
-      this.logger.log(`research: run ${run.id} completed (${resolvedMode})`);
-      const bundle = this.extractResearchBundle(run);
-      await this.researchOrchestrator.narratePagesRead(threadId, run);
-      this.chatStreamService.emitResearchCompleted(
-        threadId,
-        bundle.itemCount,
-        bundle.toolsUsed,
-        bundle.fetchStrategies,
-      );
+      return run;
     }
+    this.logger.log(`research: run ${run.id} completed (${resolvedMode})`);
+    const bundle = this.extractResearchBundle(run);
+    await this.researchOrchestrator.narratePagesRead(threadId, run);
+    this.chatStreamService.emitResearchCompleted(
+      threadId,
+      bundle.itemCount,
+      bundle.toolsUsed,
+      bundle.fetchStrategies,
+    );
     return run;
   }
 
@@ -696,6 +797,7 @@ export class ChatMessagesService implements OnModuleInit {
         providerId: dto.researchProviderId,
         userToken,
       },
+      dto.pluginRefs,
     );
   }
 
@@ -776,6 +878,7 @@ export class ChatMessagesService implements OnModuleInit {
       dto.researchMode,
       dto.researchProviderId,
       userToken,
+      dto.pluginRefs,
     );
   }
 
@@ -812,6 +915,7 @@ export class ChatMessagesService implements OnModuleInit {
       chainResearchMode,
       userToken,
       researchStep?.researchProviderId,
+      dto.pluginRefs,
     );
   }
 
@@ -1163,6 +1267,17 @@ export class ChatMessagesService implements OnModuleInit {
     return message;
   }
 
+  // The user row an answer recorded as `metadata.sourceMessageId`, when it still exists.
+  private async findAnsweredUserMessage(message: ChatMessage): Promise<ChatMessage | null> {
+    const metadata = message.metadata as Record<string, unknown> | null;
+    const sourceId = metadata?.['sourceMessageId'];
+    if (typeof sourceId !== 'string' || sourceId.length === 0) {
+      return null;
+    }
+    const source = await this.chatMessagesRepository.findById(sourceId);
+    return source?.role === MessageRole.USER ? source : null;
+  }
+
   /**
    * Finds the user turn a regeneration should re-run.
    *
@@ -1179,30 +1294,13 @@ export class ChatMessagesService implements OnModuleInit {
       return message;
     }
 
-    const metadata = message.metadata as Record<string, unknown> | null;
-    const sourceId = metadata?.['sourceMessageId'];
-    if (typeof sourceId === 'string' && sourceId.length > 0) {
-      const source = await this.chatMessagesRepository.findById(sourceId);
-      if (source && source.role === MessageRole.USER) {
-        return source;
-      }
+    const answered = await this.findAnsweredUserMessage(message);
+    if (answered) {
+      return answered;
     }
 
     const recent = await this.chatMessagesRepository.findRecentByThreadId(message.threadId, 50);
-    const chronological = [...recent].reverse();
-    const index = chronological.findIndex((row) => row.id === message.id);
-    // A reverse scan rather than `findLast`, which this service's lib target
-    // does not provide, and rather than `.filter().at(-1)`, which lint rewrites
-    // back into `findLast`.
-    const searchWindow = index < 0 ? chronological : chronological.slice(0, index);
-    let preceding: ChatMessage | undefined;
-    for (let cursor = searchWindow.length - 1; cursor >= 0; cursor -= 1) {
-      const row = searchWindow[cursor];
-      if (row !== undefined && row.role === MessageRole.USER) {
-        preceding = row;
-        break;
-      }
-    }
+    const preceding = findPrecedingUserMessage(recent, message.id);
     if (preceding) {
       return preceding;
     }
@@ -1365,77 +1463,118 @@ export class ChatMessagesService implements OnModuleInit {
     //
     // `thread` and `routedMessages` are declared out here so the failure
     // handler still has whatever was resolved before the throw.
-    let thread: ChatThread | null = null;
-    let routedMessages: ChatMessage[] = [];
+    const progress: MessageRoutedProgress = { thread: null, routedMessages: [] };
     try {
-      const [threadMessages, loadedThread] = await Promise.all([
-        this.chatMessagesRepository.findRecentByThreadId(
-          payload.threadId,
-          THREAD_HISTORY_FETCH_LIMIT,
-        ),
-        this.chatThreadsRepository.findById(payload.threadId),
-      ]);
-      thread = loadedThread;
-      const chronologicalMessages = [...threadMessages].reverse();
-      routedMessages = this.resolveRoutedMessageWindow(chronologicalMessages, payload.messageId);
-      // "Remember this / add this to my context" (ADR-134): a planner model
-      // decides and the saves run before the answer, so the answering model
-      // can confirm them. The keyword path, confirmed without a model call,
-      // runs only when no planner answers (owner feature 11, rules/57).
-      const contextSave =
-        thread === null
-          ? null
-          : await this.resolveContextSave(thread.userId, payload.threadId, routedMessages);
-      if (contextSave?.kind === 'LEGACY' && thread !== null) {
-        await this.completeSaveTurn(
-          payload,
-          contextSave.outcome,
-          thread,
-          routedMessages,
-          startedAt,
-        );
-        return;
-      }
-      const threadSettings = await this.withModelContextWindow(
-        this.extractThreadSettings(thread),
-        payload.selectedProvider,
-        payload.selectedModel,
-      );
-      const fileIds = this.extractFileIdsFromMessages(routedMessages);
-      const latestUserMetadata = this.extractLatestUserMetadata(routedMessages);
-      const effectivePayload = await this.applyFollowUpOverrides(payload, thread, routedMessages);
-      const context = await this.contextAssemblyManager.assemble(
-        thread?.userId ?? 'system',
-        routedMessages,
-        threadSettings,
-        thread?.contextPackIds ?? undefined,
-        fileIds,
-        undefined,
-        payload.routingMode as RoutingMode,
-      );
-      // A model named in the prompt reads the task without "use X to"; one that
-      // could not be used is announced by the answer, never swapped silently.
-      const namedContext = withNamedModelNotice(
-        withNamedModelPrompt(context, payload.namedModelPrompt),
-        payload.namedModelNotice,
-      );
-      await this.runLlmAndStore(
-        effectivePayload,
-        payload,
-        contextSave?.kind === 'AI'
-          ? withContextSaveNote(namedContext, contextSave.modelNote)
-          : namedContext,
-        threadSettings,
-        fileIds,
-        thread,
-        routedMessages,
-        latestUserMetadata,
-        contextSave?.kind === 'AI' ? contextSave.record : undefined,
-      );
+      await this.answerRoutedMessage(payload, startedAt, progress);
     } catch (error: unknown) {
-      await this.handleMessageRoutedFailure(error, payload, thread, routedMessages, startedAt);
+      await this.handleMessageRoutedFailure(
+        error,
+        payload,
+        progress.thread,
+        progress.routedMessages,
+        startedAt,
+      );
       throw error;
     }
+  }
+
+  // The guarded body of `handleMessageRouted`. Records what it resolves on
+  // `progress` so the caller's failure handler sees it after a throw.
+  private async answerRoutedMessage(
+    payload: MessageRoutedData,
+    startedAt: number,
+    progress: MessageRoutedProgress,
+  ): Promise<void> {
+    await this.loadRoutedWindow(payload, progress);
+    const { thread, routedMessages } = progress;
+    // "Remember this / add this to my context" (ADR-134): a planner model
+    // decides and the saves run before the answer, so the answering model
+    // can confirm them. The keyword path, confirmed without a model call,
+    // runs only when no planner answers (owner feature 11, rules/57).
+    const contextSave =
+      thread === null
+        ? null
+        : await this.resolveContextSave(thread.userId, payload.threadId, routedMessages);
+    if (contextSave?.kind === 'LEGACY' && thread !== null) {
+      await this.completeSaveTurn(payload, contextSave.outcome, thread, routedMessages, startedAt);
+      return;
+    }
+    const threadSettings = await this.withModelContextWindow(
+      this.extractThreadSettings(thread),
+      payload.selectedProvider,
+      payload.selectedModel,
+    );
+    const fileIds = this.extractFileIdsFromMessages(routedMessages);
+    const latestUserMetadata = this.extractLatestUserMetadata(routedMessages);
+    const effectivePayload = await this.applyFollowUpOverrides(payload, thread, routedMessages);
+    const namedContext = await this.assembleRoutedContext(
+      payload,
+      thread,
+      routedMessages,
+      threadSettings,
+      fileIds,
+      latestUserMetadata,
+    );
+    await this.runLlmAndStore(
+      effectivePayload,
+      payload,
+      contextSave?.kind === 'AI'
+        ? withContextSaveNote(namedContext, contextSave.modelNote)
+        : namedContext,
+      threadSettings,
+      fileIds,
+      thread,
+      routedMessages,
+      latestUserMetadata,
+      contextSave?.kind === 'AI' ? contextSave.record : undefined,
+    );
+  }
+
+  private async loadRoutedWindow(
+    payload: MessageRoutedData,
+    progress: MessageRoutedProgress,
+  ): Promise<void> {
+    const [threadMessages, loadedThread] = await Promise.all([
+      this.chatMessagesRepository.findRecentByThreadId(
+        payload.threadId,
+        THREAD_HISTORY_FETCH_LIMIT,
+      ),
+      this.chatThreadsRepository.findById(payload.threadId),
+    ]);
+    progress.thread = loadedThread;
+    const chronologicalMessages = [...threadMessages].reverse();
+    progress.routedMessages = this.resolveRoutedMessageWindow(
+      chronologicalMessages,
+      payload.messageId,
+    );
+  }
+
+  private async assembleRoutedContext(
+    payload: MessageRoutedData,
+    thread: ChatThread | null,
+    routedMessages: ChatMessage[],
+    threadSettings: ThreadSettings | undefined,
+    fileIds: string[] | undefined,
+    latestUserMetadata: Record<string, unknown> | null,
+  ): Promise<AssembledContext> {
+    const context = await this.contextAssemblyManager.assemble(
+      thread?.userId ?? 'system',
+      routedMessages,
+      threadSettings,
+      thread?.contextPackIds ?? undefined,
+      fileIds,
+      undefined,
+      payload.routingMode as RoutingMode,
+    );
+    // A model named in the prompt reads the task without "use X to"; one that
+    // could not be used is announced by the answer, never swapped silently.
+    return withPluginRefs(
+      withNamedModelNotice(
+        withNamedModelPrompt(context, payload.namedModelPrompt),
+        payload.namedModelNotice,
+      ),
+      pluginRefsFor(undefined, latestUserMetadata),
+    );
   }
 
   /**
@@ -1593,40 +1732,14 @@ export class ChatMessagesService implements OnModuleInit {
       threadSettings,
       this.extractCrawlRetrieval(latestUserMetadata),
     );
-    // The INJECTED count, not the fetched one. These are different numbers and
-    // reporting the fetched one is how the transcript came to claim a memory
-    // was in play that the prompt never carried.
-    const contextMetadata = {
-      memoryCount: this.contextAssemblyManager.injectedMemories(context).length,
-      fileIds: fileIds ?? [],
-      // The sources exactly as the prompt numbered them, so the answer's [n]
-      // can be linked — and only linked — through this list. Not when
-      // SEARCH_FIRST ran: it adds a SECOND [1]..[k] list to the prompt, so a
-      // stored [n] could name the wrong page (ADR-133).
-      citations:
-        llmResponse.searchFirst?.applied === true
-          ? []
-          : toStoredCitations(context.researchEvidence),
-    };
     const assistantMessage = await this.storeAssistantResponse(
       originalPayload,
       llmResponse,
-      contextMetadata,
+      this.buildStoredContextMetadata(context, llmResponse, fileIds),
       latestUserMetadata,
       contextSave,
     );
-    // Integration V2 — persist the "why was this used?" receipt asynchronously.
-    void this.contextReceiptService
-      .write(
-        assistantMessage.id,
-        originalPayload.threadId,
-        thread?.userId ?? 'system',
-        receiptFromAssembledContext(context, llmResponse.inputTokens ?? 0),
-      )
-      .catch((error: unknown) => {
-        const msg = error instanceof Error ? error.message : 'unknown';
-        this.logger.warn(`runLlmAndStore: receipt write failed — ${msg}`);
-      });
+    this.writeContextReceipt(originalPayload, assistantMessage, thread, context, llmResponse);
     await this.updateThreadAfterResponse(originalPayload.threadId, llmResponse);
     this.chatStreamService.emitCompletion(
       originalPayload.threadId,
@@ -1641,6 +1754,49 @@ export class ChatMessagesService implements OnModuleInit {
       thread,
       chronologicalMessages,
     );
+  }
+
+  private buildStoredContextMetadata(
+    context: AssembledContext,
+    llmResponse: LlmResponse,
+    fileIds: string[] | undefined,
+  ): StoredContextMetadata {
+    // The INJECTED count, not the fetched one. These are different numbers and
+    // reporting the fetched one is how the transcript came to claim a memory
+    // was in play that the prompt never carried.
+    return {
+      memoryCount: this.contextAssemblyManager.injectedMemories(context).length,
+      fileIds: fileIds ?? [],
+      // The sources exactly as the prompt numbered them, so the answer's [n]
+      // can be linked — and only linked — through this list. Not when
+      // SEARCH_FIRST ran: it adds a SECOND [1]..[k] list to the prompt, so a
+      // stored [n] could name the wrong page (ADR-133).
+      citations:
+        llmResponse.searchFirst?.applied === true
+          ? []
+          : toStoredCitations(context.researchEvidence),
+    };
+  }
+
+  // Integration V2 — persist the "why was this used?" receipt asynchronously.
+  private writeContextReceipt(
+    payload: MessageRoutedData,
+    assistantMessage: ChatMessage,
+    thread: ChatThread | null,
+    context: AssembledContext,
+    llmResponse: LlmResponse,
+  ): void {
+    void this.contextReceiptService
+      .write(
+        assistantMessage.id,
+        payload.threadId,
+        thread?.userId ?? 'system',
+        receiptFromAssembledContext(context, llmResponse.inputTokens ?? 0),
+      )
+      .catch((error: unknown) => {
+        const msg = error instanceof Error ? error.message : 'unknown';
+        this.logger.warn(`runLlmAndStore: receipt write failed — ${msg}`);
+      });
   }
 
   private async subscribeToEvents(): Promise<void> {
@@ -2103,20 +2259,27 @@ export class ChatMessagesService implements OnModuleInit {
       ...this.buildTruncationMetaPart(llmResponse),
       ...this.buildFileDeliveryMetaPart(llmResponse),
       ...this.buildPaygMetaPart(llmResponse),
-      // A substitute answered for the user's picked model: the bubble says so.
-      ...(llmResponse.pickedModelFallback === undefined
-        ? {}
-        : { pickedModelFallback: llmResponse.pickedModelFallback }),
-      // A credit model was refused and an included one answered: the bubble says so.
-      ...(llmResponse.creditFallback === undefined
-        ? {}
-        : { creditFallback: llmResponse.creditFallback }),
+      ...this.buildFallbackMetaPart(llmResponse),
       ...this.buildToolTranscriptMetaPart(llmResponse),
+      ...buildPluginMetaPart(llmResponse),
       ...(!hasVisibleContent ? { emptyContent: true } : {}),
       ...this.buildDisplayNameMetaPart(latestUserMetadata),
       routeRoadmap,
       progressSummary,
       ...(llmResponse.judgeRefereeMetadata ?? {}),
+    };
+  }
+
+  // A substitute answered for the user's picked model, or a credit model was
+  // refused and an included one answered: the bubble says so.
+  private buildFallbackMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
+    return {
+      ...(llmResponse.pickedModelFallback === undefined
+        ? {}
+        : { pickedModelFallback: llmResponse.pickedModelFallback }),
+      ...(llmResponse.creditFallback === undefined
+        ? {}
+        : { creditFallback: llmResponse.creditFallback }),
     };
   }
 
@@ -2198,17 +2361,10 @@ export class ChatMessagesService implements OnModuleInit {
     }
     const bundleRecord = this.readNestedObject(researchRecord, 'bundle');
     if (bundleRecord === null) {
-      return {
-        mode: this.coerceResearchMode(mode),
-        query: this.readMetaString(latestUserMetadata, 'modelDisplayName') ?? '',
-        sources: [],
-        latencyMs: 0,
-        warnings: [],
-        searchRequestCount: 0,
-        fetchRequestCount: 0,
-        pagesRead: 0,
-        linksFound: 0,
-      };
+      return this.emptyTranscript(
+        this.coerceResearchMode(mode),
+        this.readMetaString(latestUserMetadata, 'modelDisplayName') ?? '',
+      );
     }
     const items = recordGet(bundleRecord, 'items');
     const sources: ResearchTranscriptSource[] = Array.isArray(items)
@@ -2218,17 +2374,11 @@ export class ChatMessagesService implements OnModuleInit {
           )
           .map((item) => this.toTranscriptSource(item))
       : [];
-    const warningsRaw = recordGet(bundleRecord, 'warnings');
-    const warnings = Array.isArray(warningsRaw)
-      ? warningsRaw.filter((value): value is string => typeof value === 'string')
-      : [];
+    const warnings = this.readStringArray(bundleRecord, 'warnings');
     // Counted from what the run actually did, never assumed. These two were
     // hardcoded zeros, so the panel rendered "0 searches / 0 fetches" directly
     // underneath "Used 4 sources" — three numbers, none of them measured.
-    const toolsRaw = recordGet(bundleRecord, 'toolsUsed');
-    const toolsUsed = Array.isArray(toolsRaw)
-      ? toolsRaw.filter((value): value is string => typeof value === 'string')
-      : [];
+    const toolsUsed = this.readStringArray(bundleRecord, 'toolsUsed');
     return {
       mode: this.coerceResearchMode(mode),
       query: this.readMetaString(bundleRecord, 'intent') ?? '',
@@ -2241,6 +2391,20 @@ export class ChatMessagesService implements OnModuleInit {
       pagesRead: sources.filter((source) => source.source === 'fetch' || source.source === 'scrape')
         .length,
       linksFound: sources.filter((source) => source.source === 'search').length,
+    };
+  }
+
+  private emptyTranscript(mode: ResearchMode, query: string): ResearchTranscript {
+    return {
+      mode,
+      query,
+      sources: [],
+      latencyMs: 0,
+      warnings: [],
+      searchRequestCount: 0,
+      fetchRequestCount: 0,
+      pagesRead: 0,
+      linksFound: 0,
     };
   }
 
@@ -2634,14 +2798,9 @@ export class ChatMessagesService implements OnModuleInit {
     llmResponse: LlmResponse,
     thread: ChatThread | null,
     messages: ChatMessage[],
-    outcomeOverrides?: {
-      executionSuccess?: boolean;
-      finalStatus?: string;
-      errorMessage?: string;
-    },
+    outcomeOverrides?: MessageCompletedOutcomeOverrides,
   ): void {
     const lastUserMsg = [...messages].reverse().find((m) => m.role === 'USER');
-    const tokenContext = llmResponse.tokenContext ?? TokenLedgerContext.CHAT;
     void this.rabbitMQService.publish(EventPattern.MESSAGE_COMPLETED, {
       messageId: payload.messageId,
       threadId: payload.threadId,
@@ -2659,15 +2818,8 @@ export class ChatMessagesService implements OnModuleInit {
       detectedCategory: payload.detectedCategory,
       ...this.buildPublishContentPart(payload, assistantMessage, lastUserMsg),
       timestamp: new Date().toISOString(),
-      executionSuccess: outcomeOverrides?.executionSuccess ?? true,
-      finalStatus: outcomeOverrides?.finalStatus ?? 'completed',
-      // Feature 2 — usage attribution: tag the completed message with the call
-      // context and whether the token counts were estimated / native / mixed.
-      tokenContext,
-      ...(llmResponse.tokenEstimated === undefined
-        ? {}
-        : { tokenEstimated: llmResponse.tokenEstimated }),
-      ...(llmResponse.tokenSource === undefined ? {} : { tokenSource: llmResponse.tokenSource }),
+      ...this.buildPublishOutcomePart(outcomeOverrides),
+      ...this.buildPublishTokenPart(llmResponse),
       ...(outcomeOverrides?.errorMessage ? { errorMessage: outcomeOverrides.errorMessage } : {}),
       ...(payload.routerModel ? { routerModel: payload.routerModel } : {}),
       ...this.buildFastPathMetaPart(llmResponse),
@@ -2680,6 +2832,27 @@ export class ChatMessagesService implements OnModuleInit {
     // repair, verify, best-of-n, cost-ensemble, role-pack, pipeline, decompose)
     // consumes the user's daily quota — not only normal chat. This method only
     // publishes the MESSAGE_COMPLETED event for the audit ledger + memory.
+  }
+
+  private buildPublishOutcomePart(
+    outcomeOverrides: MessageCompletedOutcomeOverrides | undefined,
+  ): Record<string, unknown> {
+    return {
+      executionSuccess: outcomeOverrides?.executionSuccess ?? true,
+      finalStatus: outcomeOverrides?.finalStatus ?? 'completed',
+    };
+  }
+
+  // Feature 2 — usage attribution: tag the completed message with the call
+  // context and whether the token counts were estimated / native / mixed.
+  private buildPublishTokenPart(llmResponse: LlmResponse): Record<string, unknown> {
+    return {
+      tokenContext: llmResponse.tokenContext ?? TokenLedgerContext.CHAT,
+      ...(llmResponse.tokenEstimated === undefined
+        ? {}
+        : { tokenEstimated: llmResponse.tokenEstimated }),
+      ...(llmResponse.tokenSource === undefined ? {} : { tokenSource: llmResponse.tokenSource }),
+    };
   }
 
   /**
@@ -2735,14 +2908,7 @@ export class ChatMessagesService implements OnModuleInit {
     return thread;
   }
 
-  private resolveRoutingParams(
-    dto: CreateMessageDto,
-    thread: ChatThread,
-  ): {
-    effectiveRoutingMode: RoutingMode;
-    forcedProvider: string | undefined;
-    forcedModel: string | undefined;
-  } {
+  private resolveRoutingParams(dto: CreateMessageDto, thread: ChatThread): ResolvedMessageRouting {
     const inheritedMode = dto.routingMode ?? thread.routingMode;
 
     if (inheritedMode !== RoutingMode.MANUAL_MODEL) {
@@ -2817,33 +2983,7 @@ export class ChatMessagesService implements OnModuleInit {
     researchRun: ResearchRunResponse | null,
     quotes?: MessageQuote[],
   ): UserMessageMetadata | undefined {
-    const metadata: UserMessageMetadata = {};
-    if (quotes !== undefined && quotes.length > 0) {
-      metadata.quotes = quotes;
-    }
-    if (typeof dto.clientIntent === 'string' && dto.clientIntent.length > 0) {
-      metadata.clientIntent = dto.clientIntent;
-    }
-    if (dto.fileIds && dto.fileIds.length > 0) {
-      metadata.fileIds = dto.fileIds;
-    }
-    if (dto.maskFileId !== undefined && dto.fileIds !== undefined && dto.fileIds.length > 0) {
-      metadata.maskFileId = dto.maskFileId;
-    }
-    if (typeof dto.modelDisplayName === 'string' && dto.modelDisplayName.length > 0) {
-      metadata.modelDisplayName = dto.modelDisplayName;
-    }
-    if (dto.contextSaveMode !== undefined) {
-      metadata.contextSaveMode = dto.contextSaveMode;
-    }
-    if (researchRun !== null) {
-      metadata.research = {
-        runId: researchRun.id,
-        mode: researchRun.workflow,
-        bundle: researchRun.bundle,
-      };
-    }
-    return Object.keys(metadata).length === 0 ? undefined : metadata;
+    return buildUserMessageMetadata(dto, researchRun, quotes);
   }
 
   private logMessageCreated(userId: string, threadId: string, messageId: string): void {
@@ -2969,7 +3109,7 @@ export class ChatMessagesService implements OnModuleInit {
       return payload;
     }
     const lower = this.extractLatestUserText(messages) ?? '';
-    const lastImageMsg = [...messages].reverse().find((m) => {
+    const hasImageMsg = messages.some((m) => {
       const meta = m.metadata as Record<string, unknown> | null;
       return meta?.['type'] === 'image_generation';
     });
@@ -2981,8 +3121,8 @@ export class ChatMessagesService implements OnModuleInit {
       selectedProvider: lastProvider,
       selectedModel: thread?.lastModel ?? payload.selectedModel,
       routingMode: payload.routingMode,
-      fallbackProvider: lastImageMsg ? undefined : payload.fallbackProvider,
-      fallbackModel: lastImageMsg ? undefined : payload.fallbackModel,
+      fallbackProvider: hasImageMsg ? undefined : payload.fallbackProvider,
+      fallbackModel: hasImageMsg ? undefined : payload.fallbackModel,
     };
   }
 

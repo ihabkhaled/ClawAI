@@ -29,6 +29,8 @@ import { ThreadNotificationService } from './services/thread-notification.servic
 import { GenerationActiveCapService } from './services/generation-active-cap.service';
 import { GenerationOrphanRepairService } from './services/generation-orphan-repair.service';
 import { GenerationStartGate } from './services/generation-start-gate.service';
+import { PublicationRecommendedTeamController } from './controllers/publication-recommended-team.controller';
+import { RecommendedTeamService } from './services/recommended-team.service';
 import { PublicationGenerationRepairController } from './controllers/publication-generation-repair.controller';
 
 @Module({
@@ -47,6 +49,7 @@ import { PublicationGenerationRepairController } from './controllers/publication
     PublicationModerationController,
     PublicationGenerationRepairController,
     PublicationListController,
+    PublicationRecommendedTeamController,
     PublicationViewsController,
   ],
   providers: [
@@ -60,6 +63,7 @@ import { PublicationGenerationRepairController } from './controllers/publication
     GenerationOrphanRepairService,
     GenerationStartGate,
     ModelCatalogClient,
+    RecommendedTeamService,
     PublicationCommunityService,
     PublicationReportModerationService,
     PublicationsRepository,

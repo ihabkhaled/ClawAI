@@ -138,6 +138,18 @@ const PUBLISHED_CONTENT_CONFIGS: ReadonlyArray<PublishedContentConfig> = [
     relatedSlugs: ['features', 'how-it-works'],
     reviewDate: '2026-10-05',
   },
+  // The public, read-only Threads board for guests (ADR-178 addendum): searchable,
+  // filterable, every action behind a sign-in prompt. Indexable, linked from marketing.
+  {
+    slug: 'threads/board',
+    path: '/threads/board',
+    category: ContentCategory.GUIDE,
+    adEligibility: AdEligibility.INELIGIBLE,
+    feedEligibility: FeedEligibility.PUBLISHABLE,
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: ['threads/discover', 'features', 'how-it-works'],
+    reviewDate: '2026-10-14',
+  },
   {
     slug: LaunchPublicPageSlug.ABOUT,
     path: '/about',

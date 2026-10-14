@@ -83,6 +83,8 @@ ClawAI is a local-first AI orchestration platform built as a distributed microse
 | workspace-service       | 4014 | PG `claw_workspace`         | NestJS, Prisma              | External sync, search, object graph, action approval       |
 | agent-service           | 4015 | PG `claw_agent`             | NestJS, Prisma              | Local agent sessions, commands, repos, file events         |
 
+Services 16-21 (research, llamacpp, payment, threads, thread-generation and **plugin**) are listed in [services-index.md](../04-backend/services-index.md). `plugin-service` (4021, PostgreSQL `claw_plugin`) owns the plugin and MCP catalog, installs, tool consent and write-only credentials.
+
 ### Database Topology
 
 ```text
@@ -98,6 +100,7 @@ PostgreSQL Instances (11):
   claw_file_generations  <- file-generation-service
   claw_workspace         <- workspace-service
   claw_agent             <- agent-service
+  claw_plugin            <- plugin-service (added after this snapshot; see services-index)
 
 MongoDB Databases (3):
   claw_audit             <- audit-service

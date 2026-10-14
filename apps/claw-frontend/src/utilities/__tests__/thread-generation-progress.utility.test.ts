@@ -4,6 +4,8 @@ import { makeProgress } from '@/components/threads/__tests__/thread-progress.fix
 import { THREAD_EXCERPT_MAX_CHARS } from '@/constants/thread-generation-progress.constants';
 
 import {
+  readAllowanceRefunded,
+  readThreadSpentMicro,
   buildThreadRetryRequest,
   findFailedRoleKind,
   formatMicroUsd,
@@ -259,5 +261,32 @@ describe('queued jobs and unknown spend', () => {
     expect(hasThreadSpend('-5')).toBe(false);
     expect(hasThreadSpend('abc')).toBe(false);
     expect(hasThreadSpend('Infinity')).toBe(false);
+  });
+
+  it('reads allowanceRefunded only when it is a real true', () => {
+    const base = makeProgress();
+    expect(readAllowanceRefunded(base)).toBe(false);
+    expect(readAllowanceRefunded({ ...base, allowanceRefunded: true } as typeof base)).toBe(true);
+    expect(
+      readAllowanceRefunded({ ...base, allowanceRefunded: 'true' } as unknown as typeof base),
+    ).toBe(false);
+  });
+
+  it('shows the larger of the paid spend and the Free meter spend, "0" when unknown', () => {
+    const base = makeProgress({ spentMicroCredits: '0' });
+    expect(readThreadSpentMicro(base)).toBe('0');
+    expect(readThreadSpentMicro({ ...base, freeAllowanceMicroUsd: '4500' } as typeof base)).toBe(
+      '4500',
+    );
+    expect(readThreadSpentMicro({ ...base, freeAllowanceMicroUsd: 'junk' } as typeof base)).toBe(
+      '0',
+    );
+    expect(
+      readThreadSpentMicro({
+        ...base,
+        spentMicroCredits: '12300',
+        freeAllowanceMicroUsd: 4500,
+      } as typeof base),
+    ).toBe('12300');
   });
 });

@@ -6,6 +6,9 @@ const useComposerAttachments = vi.fn();
 vi.mock('@/hooks/files/use-composer-attachments', () => ({
   useComposerAttachments: (...args: unknown[]) => useComposerAttachments(...args),
 }));
+vi.mock('@/hooks/chat/use-plugin-mention-options', () => ({
+  usePluginMentionOptions: () => [],
+}));
 vi.mock('@/hooks/research/use-research-providers', () => ({
   useResearchProviders: () => ({ providers: [], isLoading: false }),
 }));

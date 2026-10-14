@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isPublicPath } from '@/utilities/route-visibility.utility';
+import { isPublicPath, isPublicThreadPath } from '@/utilities/route-visibility.utility';
 
 describe('isPublicPath', () => {
   it('treats the homepage as public', () => {
@@ -54,5 +54,32 @@ describe('isPublicPath', () => {
     // valid but revoked or nonexistent identifier still matches the route here;
     // the 404 and the ad gating are decided by the server per share.
     expect(isPublicPath('/en/share/chat/definitely-not-a-real-id')).toBe(true);
+  });
+
+  it('treats a public Thread page as a public route, so it is not tagged noindex by the proxy', () => {
+    // An index-eligible Thread is meant to be found. The page itself 404s anything unpublished.
+    expect(isPublicPath('/en/threads/7f0c1d2e-3a4b-4c5d-8e6f-0a1b2c3d4e5f')).toBe(true);
+    expect(isPublicPath('/ar/threads/clear-writing')).toBe(true);
+  });
+
+  it('treats the public Threads board as public and the owner portal as private', () => {
+    expect(isPublicPath('/en/threads/board')).toBe(true);
+    expect(isPublicPath('/en/threads/discover')).toBe(true);
+    expect(isPublicPath('/en/threads')).toBe(false);
+    expect(isPublicPath('/en/threads/review/abc')).toBe(false);
+    expect(isPublicPath('/threads')).toBe(false);
+  });
+
+  it('only matches one slug segment of safe characters', () => {
+    expect(isPublicThreadPath('/en/threads/a-b-1')).toBe(true);
+    expect(isPublicThreadPath('/en/threads/a/b')).toBe(false);
+    expect(isPublicThreadPath('/en/threads/a_b')).toBe(false);
+    expect(isPublicThreadPath('/en/threads/%2e%2e')).toBe(false);
+    expect(isPublicThreadPath('/en/threads/')).toBe(false);
+    expect(isPublicThreadPath(`/en/threads/${'a'.repeat(65)}`)).toBe(false);
+  });
+
+  it('does not make an unlocalised Thread path public (the proxy redirects it first)', () => {
+    expect(isPublicPath('/threads/clear-writing')).toBe(false);
   });
 });

@@ -7,7 +7,7 @@ and [log-aggregation-setup](log-aggregation-setup.md).
 ## The shape of it
 
 ```
-health-service  ──checks 17 services──►  /api/v1/metrics  ◄──scrape every 15s──  prometheus
+health-service  ──checks 20 services──►  /api/v1/metrics  ◄──scrape every 15s──  prometheus
       ▲                                    (cached 14 s)                          (30-day TSDB,
       └── the same fan-out /api/v1/health answers                                  internal only)
 ```

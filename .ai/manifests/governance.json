@@ -1,11 +1,11 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 9066,
+      "bytes": 9191,
       "file": "CLAUDE.md"
     },
     {
-      "bytes": 5925,
+      "bytes": 6003,
       "file": "CODEX.md"
     },
     {
@@ -13,7 +13,7 @@
       "file": "cursor.md"
     },
     {
-      "bytes": 5224,
+      "bytes": 5302,
       "file": "AGENTS.md"
     },
     {
@@ -102,7 +102,7 @@
       "file": "rules/05-frontend-components-and-hooks.md"
     },
     {
-      "bytes": 15270,
+      "bytes": 16422,
       "file": "rules/05-infra-rules.md"
     },
     {
@@ -360,7 +360,7 @@
   ],
   "skills": [
     {
-      "bytes": 33074,
+      "bytes": 36784,
       "file": "skills/00-index.md"
     },
     {
@@ -368,7 +368,7 @@
       "file": "skills/01-codebase-navigation.md"
     },
     {
-      "bytes": 5702,
+      "bytes": 5925,
       "file": "skills/02-service-scaffold.md"
     },
     {
@@ -426,6 +426,10 @@
     {
       "bytes": 4925,
       "file": "skills/add-a-localized-money-surface.md"
+    },
+    {
+      "bytes": 18916,
+      "file": "skills/add-a-new-service.md"
     },
     {
       "bytes": 4137,
@@ -568,7 +572,7 @@
       "file": "skills/create-manager-or-use-case.md"
     },
     {
-      "bytes": 6631,
+      "bytes": 6835,
       "file": "skills/create-microservice.md"
     },
     {
@@ -688,15 +692,15 @@
       "file": "skills/pair-and-use-a-mobile-device-token.md"
     },
     {
-      "bytes": 4992,
+      "bytes": 6008,
       "file": "skills/propagate-a-chat-change-to-every-mode.md"
     },
     {
-      "bytes": 2566,
+      "bytes": 2587,
       "file": "skills/propagate-account-deletion.md"
     },
     {
-      "bytes": 14586,
+      "bytes": 15169,
       "file": "skills/publish-a-public-marketing-page.md"
     },
     {
@@ -710,6 +714,10 @@
     {
       "bytes": 3693,
       "file": "skills/reconcile-billing-state.md"
+    },
+    {
+      "bytes": 7862,
+      "file": "skills/register-an-mcp-server-safely.md"
     },
     {
       "bytes": 5173,

@@ -34,6 +34,7 @@ export const PROGRESS_JOB_SELECT = {
   round: true,
   attemptCount: true,
   spentMicroCredits: true,
+  budgetCloseStatus: true,
   spendCapMicroUsd: true,
   sourceThreadId: true,
   safeErrorCode: true,

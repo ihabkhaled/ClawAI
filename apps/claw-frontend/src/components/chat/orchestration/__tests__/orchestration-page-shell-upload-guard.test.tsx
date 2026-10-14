@@ -7,19 +7,31 @@ import { ResearchMode } from '@/enums/research-mode.enum';
 import type { UseOrchestrationComposerReturn } from '@/types/hook.types';
 import type { OrchestrationPageShellProps } from '@/types/orchestration.types';
 
+// The grouped "+" menu and the research chip are the shared chat components; their own tests
+// cover them. This file only needs to know the shell mounts them with the right values.
+vi.mock('@/components/chat/composer-plus-menu', () => ({
+  ComposerPlusMenu: ({
+    canResearch,
+    threadId,
+  }: {
+    canResearch: boolean;
+    threadId: string | null;
+  }) => (
+    <div
+      data-testid="composer-plus-menu"
+      data-can-research={String(canResearch)}
+      data-thread-id={String(threadId)}
+    />
+  ),
+}));
+vi.mock('@/components/chat/composer-research-chip', () => ({
+  ComposerResearchChip: ({ value }: { value: { mode: string } }) => (
+    <div data-testid="research-chip" data-mode={value.mode} />
+  ),
+}));
+
 vi.mock('@/lib/i18n', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
-vi.mock('@/components/chat/orchestration/orchestration-context-button', () => ({
-  OrchestrationContextButton: () => <div data-testid="orchestration-context-button" />,
-}));
-
-vi.mock('@/components/chat/prompt-library/prompt-library-button', () => ({
-  PromptLibraryButton: () => <div data-testid="prompt-library-button" />,
-}));
-
-vi.mock('@/components/chat/file-attachment-picker', () => ({
-  FileAttachmentPicker: () => <div data-testid="picker" />,
-}));
 vi.mock('@/components/chat/composer-attachment-tray', () => ({
   ComposerAttachmentTray: () => <div data-testid="attachment-tray" />,
 }));
@@ -31,9 +43,6 @@ vi.mock('@/components/chat/orchestration/orchestration-single-model-select', () 
 }));
 vi.mock('@/components/chat/voice-video-recorder', () => ({
   VoiceVideoRecorder: () => <div data-testid="recorder" />,
-}));
-vi.mock('@/components/chat/research-toggle', () => ({
-  ResearchToggle: () => <div data-testid="research-toggle" />,
 }));
 vi.mock('@/hooks/chat/use-model-media-capabilities', () => ({
   useModelMediaCapabilities: () => ({ canSendAudio: true, canSendVideo: true }),

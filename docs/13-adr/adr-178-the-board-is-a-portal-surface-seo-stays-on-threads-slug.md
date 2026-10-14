@@ -12,7 +12,7 @@ The public Thread page is the indexable, canonical surface. A second list of the
 
 ## Decision
 
-- Routes `/board` and `/board/[slug]` live in the `(portal)` route group, behind login, with `noindex`. The Board is not linked from marketing pages and not in the sitemap. The canonical URL of every Thread stays `/threads/[slug]`; `/board/[slug]` offers "Open public page" and "Copy link" pointing there.
+- Routes `/board` and `/board/[slug]` live in the `(portal)` route group, behind login, with `noindex`. The member Board is not linked from marketing pages and not in the sitemap (a separate public, read-only Board is added by the 2026-10-14 addendum below). The canonical URL of every Thread stays `/threads/[slug]`; `/board/[slug]` offers "Open public page" and "Copy link" pointing there.
 - The URL is the single state: `?q=&sort=&lang=&type=&page=`. Query keys start with `thread-board`.
 - Cards carry no author name or avatar (privacy). Publishing does not redirect to the Board.
 - Default language filter is the UI locale, with an "All languages" option.
@@ -21,7 +21,7 @@ The public Thread page is the indexable, canonical surface. A second list of the
 
 ## Consequences
 
-- No SEO or AdSense exposure from the Board; the public page keeps all ranking signals.
+- No SEO or AdSense exposure from the member Board; the public Thread page keeps all ranking signals (the public guest Board is covered by the addendum below).
 - Authorship can be added later as an explicit opt-in without changing the contract shape; today the API has no field for it.
 - Reactions and comments on `/board/[slug]` reuse the existing public reader components and endpoints.
 
@@ -35,3 +35,16 @@ The public Thread page is the indexable, canonical surface. A second list of the
 - Client limits match the API: page max 500, query max 100 characters, control characters stripped (`q=%00` is an empty query).
 - The reader has the share icon row (reused platform links and icons) and no nested `<main>`.
 - Not done here: the empty "Post comment" feedback lives in the shared `thread-public-community.tsx`, and long source URLs on the owner "ready" page are outside the Board scope.
+
+## Addendum 2026-10-14: a public, read-only Board for guests
+
+**Supersedes** the Decision bullet "behind login ... not linked from marketing pages and not in the sitemap" and the consequence "No SEO or AdSense exposure from the Board". Owner requirement: guests must find, in the marketing site and without logging in, a clear module that lists every public Thread.
+
+- **Two Boards, one contract.** The in-app Board (`/board`, `/board/[slug]`) is unchanged: portal group, behind login, `noindex`, private in `robots.txt`, not in the sitemap. A second, public Board lives at **`/threads/board`** in the `(marketing)` group (locale-prefixed like every marketing page). It is indexable, in the sitemap with hreflang for all 13 locales, linked from the marketing navigation and footer and from `/threads/discover`.
+- **Same search, read-only.** The public Board has the same smart search (typo tolerance, the suggestions panel of about ten nearest results with a "show all N results" row, did-you-mean), filters (language, type), sorts and pagination, and the same cards with like, comment and suggestion counts. It lists only published, owner-approved, safety-approved, index-eligible Threads (the same set as the sitemap). A card opens the Thread at its canonical `/threads/<slug>` page.
+- **Guests cannot act.** Like, comment, request a change, report-with-account and bookmark each show a friendly "Sign in to ..." prompt with a link to login or register. The page carries no owner id, author id, hash, safety data or viewer-specific field. Existing comments and counts are visible.
+- **Canonical stays `/threads/<slug>`.** The public Board is a listing, not a second copy of the content, so it does not compete with the Thread pages. It carries real introductory copy (`chat.threadPublicBoardIntro` in 13 locales), a `CollectionPage` + `ItemList` JSON-LD for its first page of Threads, a self-canonical and OpenGraph/Twitter metadata, and is ad-ineligible in the content registry (rule 38).
+- **Slug collision.** `board` is a static segment next to `discover`. A Thread slug always ends in a short unique part (`derivePublicationSlug`), so no Thread can be named exactly `board` and shadowed.
+- **Where it lives in code.** Registry entry `threads/board` in `content-registry.constants.ts`; SEO copy derived from `thread-public-board-translations.ts` by `threads-public-board-seo.constants.ts`; `buildPublicBoardJsonLd` in `structured-data.utility.ts`; Lighthouse and responsive-audit URL lists. Details: [seo-content-architecture](../05-frontend/seo-content-architecture.md) and [threads-board](../05-frontend/threads-board.md).
+
+**Consequences.** The Board now has SEO and AdSense exposure, which is why the page needs the intro copy and why the member Board stays `noindex` (two indexable lists of the same Threads would compete). A takedown (revoke) removes a Thread from the public Board, the sitemap and the Thread page together because all three read the same eligibility.

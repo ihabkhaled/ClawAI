@@ -1,5 +1,7 @@
 # Skill: New NestJS Service Scaffolding
 
+> The complete, ordered every-place checklist (production `.env` manifest, TLS, installers, coverage, deploy, docs, wiki, memory) is [`add-a-new-service.md`](add-a-new-service.md). This file keeps the copy-paste snippets.
+
 > Use this skill when adding a new NestJS microservice to the ClawAI monorepo. Follow every step. Skipping any step results in partial wiring that breaks in production.
 
 ---

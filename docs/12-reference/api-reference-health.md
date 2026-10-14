@@ -144,7 +144,7 @@ Aggregated health check across every other backend service.
 ## Health Check Configuration
 
 - **Timeout**: 5000ms per service
-- **Checked services**: every other backend service (auth through thread-generation; the list is `SERVICE_URLS` in `apps/claw-health-service/src/modules/health/constants/health.constants.ts`)
+- **Checked services**: every other backend service (auth through plugin; the list is `SERVICE_URLS` in `apps/claw-health-service/src/modules/health/constants/health.constants.ts`)
 - **Endpoint hit**: `GET /api/v1/health` on each service
 - **Parallel**: All checks run concurrently
 

@@ -1,0 +1,24 @@
+/**
+ * Stable error codes of the user MCP server routes. The two connection codes are deliberately
+ * uniform: whatever went wrong on the way to the server (a private address, a closed port, a
+ * refused certificate, a redirect), the user is told one of these and never which internal thing
+ * was or was not reachable.
+ */
+export enum McpErrorCode {
+  URL_BLOCKED = 'MCP_URL_BLOCKED',
+  SERVER_UNREACHABLE = 'MCP_SERVER_UNREACHABLE',
+  SERVER_REJECTED = 'MCP_SERVER_REJECTED',
+  SERVERS_DISABLED = 'MCP_SERVERS_DISABLED',
+  SERVER_LIMIT = 'MCP_SERVER_LIMIT',
+  SERVER_NOT_FOUND = 'MCP_SERVER_NOT_FOUND',
+  SERVER_ALREADY_REGISTERED = 'MCP_SERVER_ALREADY_REGISTERED',
+  NO_USABLE_TOOLS = 'MCP_NO_USABLE_TOOLS',
+  CREDENTIAL_REQUIRED = 'MCP_CREDENTIAL_REQUIRED',
+  CREDENTIAL_NOT_SUPPORTED = 'MCP_CREDENTIAL_NOT_SUPPORTED',
+  CREDENTIAL_HEADER_DENIED = 'MCP_CREDENTIAL_HEADER_DENIED',
+  TOOL_NOT_FOUND = 'MCP_TOOL_NOT_FOUND',
+  CONSENT_NOT_ALLOWED = 'MCP_CONSENT_NOT_ALLOWED',
+  NOT_AWAITING_REVIEW = 'MCP_NOT_AWAITING_REVIEW',
+  REVIEW_HASH_MISMATCH = 'MCP_REVIEW_HASH_MISMATCH',
+  STATE_NOT_ALLOWED = 'MCP_STATE_NOT_ALLOWED',
+}

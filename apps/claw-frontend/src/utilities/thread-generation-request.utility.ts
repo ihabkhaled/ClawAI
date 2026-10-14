@@ -1,4 +1,8 @@
-import { THREAD_FALLBACKS_PER_ROLE } from '@/constants/thread-publication.constants';
+import {
+  THREAD_AUTHOR_MAX_OUTPUT_TOKENS,
+  THREAD_FALLBACKS_PER_ROLE,
+  THREAD_REVIEWER_MAX_OUTPUT_TOKENS,
+} from '@/constants/thread-publication.constants';
 import type { ThreadPublicationType } from '@/constants/thread-publication.constants';
 import type { Locale } from '@/enums/locale.enum';
 import type { ModelSelection } from '@/types';
@@ -66,11 +70,11 @@ export function createThreadGenerationRequest(
     throw new Error('Select a model for every author and reviewer');
   }
 
-  const toRole = (selection: ModelSelection, id: string) => ({
+  const toRole = (selection: ModelSelection, id: string, maxOutputTokens: number) => ({
     id,
     provider: selection.provider,
     model: selection.model,
-    maxOutputTokens: 4096,
+    maxOutputTokens,
     fallbacks: (input.fallbackPool ?? [])
       .filter((other) => other.provider !== selection.provider || other.model !== selection.model)
       .slice(0, THREAD_FALLBACKS_PER_ROLE)
@@ -87,9 +91,9 @@ export function createThreadGenerationRequest(
     publicationType: input.publicationType,
     contentLocale: input.contentLocale,
     authors: [authorOne, authorTwo, authorThree].map((model, index) =>
-      toRole(model, `author-${index + 1}`),
+      toRole(model, `author-${index + 1}`, THREAD_AUTHOR_MAX_OUTPUT_TOKENS),
     ),
-    judge: toRole(judgeModel, 'judge'),
-    critic: toRole(criticModel, 'critic'),
+    judge: toRole(judgeModel, 'judge', THREAD_REVIEWER_MAX_OUTPUT_TOKENS),
+    critic: toRole(criticModel, 'critic', THREAD_REVIEWER_MAX_OUTPUT_TOKENS),
   };
 }

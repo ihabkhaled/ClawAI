@@ -3,6 +3,9 @@ import { ChatMessagesController } from './controllers/chat-messages.controller';
 import { ChatStreamController } from './controllers/chat-stream.controller';
 import { ChatInternalController } from './controllers/chat-internal.controller';
 import { ChatMessagesService } from './services/chat-messages.service';
+import { PluginInvokeClient } from './clients/plugin-invoke.client';
+import { PluginInvokePort } from './clients/plugin-invoke.port';
+import { PluginToolLoopManager } from './managers/plugin-tool-loop.manager';
 import { AnswerRepairManager } from './managers/answer-repair.manager';
 import { BestOfNManager } from './managers/best-of-n.manager';
 import { TaskDecompositionManager } from './managers/task-decomposition.manager';
@@ -115,6 +118,10 @@ import { RuntimeV2ThreadActivityService } from './services/runtime-v2-thread-act
   ],
   providers: [
     ResearchGateService,
+    // @mentioned plugin tools (rule 59): the loop is reached from the callProvider chokepoint;
+    // the port is plugin-service's `/internal/plugins/*` routes.
+    PluginToolLoopManager,
+    { provide: PluginInvokePort, useClass: PluginInvokeClient },
     NarrationService,
     ResearchOrchestratorManager,
     ChatMessagesService,

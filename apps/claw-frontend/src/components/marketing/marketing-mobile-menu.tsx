@@ -37,7 +37,13 @@ export function MarketingMobileMenu({
 
         <nav aria-label={t('marketing.header.navLabel')} className="flex flex-col gap-1">
           {navLinks.map((link) => (
-            <Link key={link.href} href={link.href} onClick={onNavigate} className={navItemClass}>
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={onNavigate}
+              className={cn(navItemClass, link.icon ? 'gap-2' : undefined)}
+            >
+              {link.icon ? <link.icon className="h-5 w-5" aria-hidden="true" /> : null}
               {t(link.labelKey)}
             </Link>
           ))}

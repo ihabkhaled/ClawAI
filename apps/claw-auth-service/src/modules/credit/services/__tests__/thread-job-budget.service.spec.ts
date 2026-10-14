@@ -25,6 +25,7 @@ describe('ThreadJobBudgetService', () => {
     close: vi.fn(),
   };
   const credit = { release: vi.fn() };
+  const freeMeter = { chargedMicroUsd: vi.fn(), refundFinishedCalls: vi.fn() };
 
   function build(): ThreadJobBudgetService {
     return new ThreadJobBudgetService(
@@ -32,6 +33,7 @@ describe('ThreadJobBudgetService', () => {
       featureUsage as never,
       repository as never,
       credit as never,
+      freeMeter as never,
     );
   }
 
@@ -45,6 +47,8 @@ describe('ThreadJobBudgetService', () => {
     featureUsage.reserve.mockResolvedValue({ allowed: true, reservationId: 'feature-reservation' });
     featureUsage.settle.mockResolvedValue(undefined);
     credit.release.mockResolvedValue(undefined);
+    freeMeter.chargedMicroUsd.mockResolvedValue(0n);
+    freeMeter.refundFinishedCalls.mockResolvedValue(0n);
     repository.findByRequest.mockResolvedValue(null);
     repository.create.mockResolvedValue({
       id: 'budget-1',
@@ -288,6 +292,38 @@ describe('ThreadJobBudgetService', () => {
         spentMicroUsd: 12_000,
         settledMicroUsd: 12_000,
         remainingMicroUsd: 266_774,
+        freeAllowanceMicroUsd: 0,
+      });
+    });
+
+    it('reports what the Free meter charged for the job, for progress', async () => {
+      reset();
+      repository.get.mockResolvedValue({
+        status: 'ACTIVE',
+        capMicroUsd: 300_000n,
+        reservedMicroUsd: 0n,
+        spentMicroUsd: 0n,
+      });
+      freeMeter.chargedMicroUsd.mockResolvedValue(8_250n);
+
+      await expect(build().summary('budget-1')).resolves.toMatchObject({
+        settledMicroUsd: 0,
+        freeAllowanceMicroUsd: 8_250,
+      });
+    });
+
+    it('still answers when the meter cannot be read (0, never an error)', async () => {
+      reset();
+      repository.get.mockResolvedValue({
+        status: 'ACTIVE',
+        capMicroUsd: 1n,
+        reservedMicroUsd: 0n,
+        spentMicroUsd: 0n,
+      });
+      freeMeter.chargedMicroUsd.mockRejectedValue(new Error('db down'));
+
+      await expect(build().summary('budget-1')).resolves.toMatchObject({
+        freeAllowanceMicroUsd: 0,
       });
     });
 
@@ -407,6 +443,93 @@ describe('ThreadJobBudgetService', () => {
       expect(first).toBe(true);
       expect(second).toBe(true);
       expect(credit.release).toHaveBeenCalledTimes(1);
+    });
+    describe('PLATFORM_FAILED', () => {
+      const failed = ThreadJobBudgetCloseStatus.PLATFORM_FAILED;
+
+      it('refunds the Free meter and returns the lifetime allowance hold', async () => {
+        reset();
+        repository.get.mockResolvedValue({
+          status: 'ACTIVE',
+          featureReservationIds: ['feature-a'],
+        });
+        repository.close.mockResolvedValue({
+          closed: true,
+          releasedCreditReservationIds: ['hold-1'],
+        });
+        freeMeter.refundFinishedCalls.mockResolvedValue(5_000n);
+
+        await expect(build().close('budget-1', failed)).resolves.toBe(true);
+        expect(repository.close).toHaveBeenCalledWith('budget-1', 'PLATFORM_FAILED');
+        expect(credit.release).toHaveBeenCalledWith('hold-1', 'CANCELLED');
+        expect(freeMeter.refundFinishedCalls).toHaveBeenCalledWith('budget-1');
+        expect(featureUsage.settle).toHaveBeenCalledWith('feature-a', 'RELEASE');
+      });
+
+      it('never refunds for FINALIZED or RELEASED closes', async () => {
+        for (const status of [
+          ThreadJobBudgetCloseStatus.FINALIZED,
+          ThreadJobBudgetCloseStatus.RELEASED,
+        ]) {
+          reset();
+          repository.get.mockResolvedValue({ status: 'ACTIVE', featureReservationIds: [] });
+          repository.close.mockResolvedValue({ closed: true, releasedCreditReservationIds: [] });
+          await build().close('budget-1', status);
+          expect(freeMeter.refundFinishedCalls).not.toHaveBeenCalled();
+        }
+      });
+
+      it('still returns the allowance hold when the refund fails, and asks for a retry', async () => {
+        reset();
+        repository.get.mockResolvedValue({
+          status: 'ACTIVE',
+          featureReservationIds: ['feature-a'],
+        });
+        repository.close.mockResolvedValue({ closed: true, releasedCreditReservationIds: [] });
+        freeMeter.refundFinishedCalls.mockRejectedValueOnce(new Error('db down'));
+
+        await expect(build().close('budget-1', failed)).rejects.toBeInstanceOf(
+          ServiceUnavailableException,
+        );
+        expect(featureUsage.settle).toHaveBeenCalledWith('feature-a', 'RELEASE');
+
+        // The retry finds the budget closed the same way and finishes the refund.
+        repository.get.mockResolvedValue({
+          status: 'PLATFORM_FAILED',
+          featureReservationIds: ['feature-a'],
+        });
+        freeMeter.refundFinishedCalls.mockResolvedValue(5_000n);
+        await expect(build().close('budget-1', failed)).resolves.toBe(true);
+        expect(freeMeter.refundFinishedCalls).toHaveBeenCalledTimes(2);
+        expect(repository.close).toHaveBeenCalledTimes(1);
+      });
+
+      it('answers false for a budget already closed another way, with no refund', async () => {
+        reset();
+        repository.get.mockResolvedValue({ status: 'FINALIZED', featureReservationIds: ['a'] });
+
+        await expect(build().close('budget-1', failed)).resolves.toBe(false);
+        expect(freeMeter.refundFinishedCalls).not.toHaveBeenCalled();
+        expect(featureUsage.settle).not.toHaveBeenCalled();
+      });
+
+      it('refunds once when two closes race and one loses', async () => {
+        reset();
+        repository.get
+          .mockResolvedValueOnce({ status: 'ACTIVE', featureReservationIds: ['feature-a'] })
+          .mockResolvedValueOnce({ status: 'ACTIVE', featureReservationIds: ['feature-a'] })
+          .mockResolvedValue({ status: 'PLATFORM_FAILED', featureReservationIds: ['feature-a'] });
+        repository.close
+          .mockResolvedValueOnce({ closed: true, releasedCreditReservationIds: [] })
+          .mockResolvedValueOnce({ closed: false, releasedCreditReservationIds: [] });
+        const service = build();
+
+        const results = await Promise.all([service.close('b', failed), service.close('b', failed)]);
+
+        expect(results).toEqual([true, true]);
+        expect(freeMeter.refundFinishedCalls).toHaveBeenCalledTimes(1);
+        expect(featureUsage.settle).toHaveBeenCalledTimes(1);
+      });
     });
   });
 });

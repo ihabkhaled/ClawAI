@@ -2,16 +2,13 @@ import Link from 'next/link';
 import type { ReactElement } from 'react';
 
 import { ThreadErrorNotice } from '@/components/threads/thread-error-notice';
-import { ThreadModelPicker } from '@/components/threads/thread-model-picker';
+import { ThreadTeamSection } from '@/components/threads/thread-team-section';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ROUTES } from '@/constants/routes.constants';
-import {
-  THREAD_GENERATION_ROLE_KEYS,
-  THREAD_PUBLICATION_OPTIONS,
-} from '@/constants/thread-publication.constants';
+import { THREAD_PUBLICATION_OPTIONS } from '@/constants/thread-publication.constants';
 import type { Locale } from '@/enums/locale.enum';
 import { useTranslation } from '@/lib/i18n';
 import { SUPPORTED_LOCALES } from '@/lib/i18n/i18n.constants';
@@ -20,13 +17,6 @@ import type { ThreadGenerationFormProps } from '@/types/thread-generation-progre
 
 export function ThreadGenerationForm({ form }: ThreadGenerationFormProps): ReactElement {
   const { t } = useTranslation();
-
-  function roleLabel(index: number): string {
-    if (index < 3) {
-      return `${t('chat.threadAuthorModel')} ${index + 1}`;
-    }
-    return index === 3 ? t('chat.threadJudgeModel') : t('chat.threadCriticModel');
-  }
 
   return (
     <form className="flex flex-col gap-4" onSubmit={form.submit}>
@@ -111,17 +101,7 @@ export function ThreadGenerationForm({ form }: ThreadGenerationFormProps): React
           />
         </label>
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2" data-tour="thread-create-models">
-        {form.selectedModels.map((model, index) => (
-          <ThreadModelPicker
-            key={THREAD_GENERATION_ROLE_KEYS[index]}
-            id={`thread-role-${THREAD_GENERATION_ROLE_KEYS[index] ?? String(index)}`}
-            label={roleLabel(index)}
-            value={model}
-            onChange={(selected) => form.changeModel(index, selected)}
-          />
-        ))}
-      </div>
+      <ThreadTeamSection form={form} />
       <label
         className="flex cursor-pointer items-start gap-2 text-sm"
         data-tour="thread-create-consent"

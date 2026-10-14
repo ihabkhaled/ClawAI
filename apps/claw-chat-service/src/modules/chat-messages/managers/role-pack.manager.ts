@@ -14,6 +14,7 @@ import { LocalModelSelectionService } from '../services/local-model-selection.se
 import { ChatContextGatewayManager } from './chat-context-gateway.manager';
 import { resolveContextTurnText } from '../utilities/attachment-only-turn.utility';
 import { ModeExecutionGatewayManager } from './mode-execution-gateway.manager';
+import { pluginRefsMetadata } from '../utilities/plugin-refs.utility';
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { MODE_HISTORY_MESSAGE_LIMIT } from '../constants/chat-context-gateway.constants';
 import { parseJudgeModel } from '../../../common/utilities/judge-model-parse.utility';
@@ -22,6 +23,7 @@ import { ResearchEnricherManager } from './research-enricher.manager';
 import type { RolePackMessageDto } from '../dto/role-pack-message.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type { ChatContextBundle } from '../types/chat-context-gateway.types';
+import type { ResearchOrchestrationResult } from '../types/research-enricher.types';
 import type { RoleMember, RoleMemberResult, RolePackResponse } from '../types/role-pack.types';
 import { RoutingMode } from '../../../generated/prisma';
 import { OLLAMA_PROVIDER } from '../../../common/constants';
@@ -73,6 +75,7 @@ export class RolePackManager {
         rolePackRequest: true,
         modelSelection: selection,
         ...(dto.fileIds !== undefined && dto.fileIds.length > 0 ? { fileIds: dto.fileIds } : {}),
+        ...pluginRefsMetadata(dto.pluginRefs),
       },
     });
 
@@ -120,23 +123,7 @@ export class RolePackManager {
       // roles answer the same question about the same conversation, files and
       // memories, so building it once means one set of retrievals for the run
       // instead of one per role.
-      const bundle = await this.chatContextGateway.build({
-        userId,
-        threadId,
-        surface: ChatSurface.ROLE_PACK,
-        historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
-        // The enricher's transcript used to be glued to the front of each
-        // member's raw prompt by `prependResearchEvidence`, then merged as a
-        // plain `personaInstruction` with no grounding flag.
-        // `researchEvidenceInstruction` routes it through
-        // `injectResearchEvidenceIntoContext`, which sets
-        // `researchGroundingInjected` so the final-user-turn reminder fires for
-        // every member of the pack.
-        ...(enrichment.systemPrompt.length > 0
-          ? { researchEvidenceInstruction: enrichment.systemPrompt }
-          : {}),
-        ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
-      });
+      const bundle = await this.buildSharedBundle(userId, threadId, enrichment, fileIds);
       // Rule 42 §18: an attachment-only send's request IS the attachment —
       // spelled out once here for every stage below, never stored.
       const request = resolveContextTurnText(content, bundle.context);
@@ -145,39 +132,17 @@ export class RolePackManager {
       if (allFailed) {
         throw new Error('All role pack members failed to produce output');
       }
-      this.safeEmitStage(threadId, {
-        label: 'Aggregating',
-        status: OrchestrationStageStatus.ACTIVE,
-        detail: `Selecting best output from ${String(results.length)} role(s)`,
-        stageId: 'role-pack:aggregate',
-      });
-      const bestOutput = this.selectBestOutput(results, pack);
-      this.safeEmitStage(threadId, {
-        label: 'Aggregating',
-        status: OrchestrationStageStatus.COMPLETED,
-        stageId: 'role-pack:aggregate',
-      });
+      const bestOutput = this.aggregateAndAnnounce(threadId, results, pack);
 
-      await this.chatMessagesRepository.create({
+      await this.storePackMessage(
         threadId,
-        role: 'ASSISTANT',
-        content: bestOutput,
-        provider: resolvedSelection.actualProvider,
-        model: resolvedSelection.actualModel,
-        latencyMs: Date.now() - startTime,
-        usedFallback: false,
-        routingMode:
-          resolvedSelection.modelSelectionMode === 'MANUAL_MODEL'
-            ? RoutingMode.MANUAL_MODEL
-            : RoutingMode.AUTO,
-        metadata: {
-          rolePack: true,
-          pack,
-          members: results,
-          modelSelection: resolvedSelection,
-          ...(enrichment.transcript === null ? {} : { researchTranscript: enrichment.transcript }),
-        },
-      });
+        bestOutput,
+        pack,
+        results,
+        resolvedSelection,
+        enrichment.transcript,
+        Date.now() - startTime,
+      );
 
       this.safeEmitStage(threadId, {
         label: 'Complete',
@@ -190,21 +155,101 @@ export class RolePackManager {
         resolvedSelection.actualModel,
       );
     } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : 'Role pack execution failed';
-      this.logger.error(`executeInBackground: failed for thread ${threadId} - ${errorMsg}`);
-      this.safeEmitStage(threadId, {
-        label: 'Role pack failed',
-        status: OrchestrationStageStatus.ERROR,
-        detail: errorMsg,
-        stageId: 'role-pack:error',
-      });
-      this.chatStreamService.emitError(threadId, errorMsg);
-      try {
-        await this.storeErrorMessage(threadId, errorMsg);
-      } catch (storeError: unknown) {
-        const storeMsg = storeError instanceof Error ? storeError.message : 'Store failed';
-        this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
-      }
+      await this.handleBackgroundFailure(threadId, error);
+    }
+  }
+
+  private async buildSharedBundle(
+    userId: string,
+    threadId: string,
+    enrichment: ResearchOrchestrationResult,
+    fileIds: string[] | undefined,
+  ): Promise<ChatContextBundle> {
+    return this.chatContextGateway.build({
+      userId,
+      threadId,
+      surface: ChatSurface.ROLE_PACK,
+      historyLimit: MODE_HISTORY_MESSAGE_LIMIT,
+      // The enricher's transcript used to be glued to the front of each
+      // member's raw prompt by `prependResearchEvidence`, then merged as a
+      // plain `personaInstruction` with no grounding flag.
+      // `researchEvidenceInstruction` routes it through
+      // `injectResearchEvidenceIntoContext`, which sets
+      // `researchGroundingInjected` so the final-user-turn reminder fires for
+      // every member of the pack.
+      ...(enrichment.systemPrompt.length > 0
+        ? { researchEvidenceInstruction: enrichment.systemPrompt }
+        : {}),
+      ...(fileIds !== undefined && fileIds.length > 0 ? { fileIds } : {}),
+    });
+  }
+
+  private aggregateAndAnnounce(
+    threadId: string,
+    results: RoleMemberResult[],
+    pack: string,
+  ): string {
+    this.safeEmitStage(threadId, {
+      label: 'Aggregating',
+      status: OrchestrationStageStatus.ACTIVE,
+      detail: `Selecting best output from ${String(results.length)} role(s)`,
+      stageId: 'role-pack:aggregate',
+    });
+    const bestOutput = this.selectBestOutput(results, pack);
+    this.safeEmitStage(threadId, {
+      label: 'Aggregating',
+      status: OrchestrationStageStatus.COMPLETED,
+      stageId: 'role-pack:aggregate',
+    });
+    return bestOutput;
+  }
+
+  private async storePackMessage(
+    threadId: string,
+    content: string,
+    pack: string,
+    results: RoleMemberResult[],
+    selection: AdvancedModelSelectionResolution,
+    transcript: ResearchOrchestrationResult['transcript'],
+    latencyMs: number,
+  ): Promise<void> {
+    await this.chatMessagesRepository.create({
+      threadId,
+      role: 'ASSISTANT',
+      content,
+      provider: selection.actualProvider,
+      model: selection.actualModel,
+      latencyMs,
+      usedFallback: false,
+      routingMode:
+        selection.modelSelectionMode === 'MANUAL_MODEL'
+          ? RoutingMode.MANUAL_MODEL
+          : RoutingMode.AUTO,
+      metadata: {
+        rolePack: true,
+        pack,
+        members: results,
+        modelSelection: selection,
+        ...(transcript === null ? {} : { researchTranscript: transcript }),
+      },
+    });
+  }
+
+  private async handleBackgroundFailure(threadId: string, error: unknown): Promise<void> {
+    const errorMsg = error instanceof Error ? error.message : 'Role pack execution failed';
+    this.logger.error(`executeInBackground: failed for thread ${threadId} - ${errorMsg}`);
+    this.safeEmitStage(threadId, {
+      label: 'Role pack failed',
+      status: OrchestrationStageStatus.ERROR,
+      detail: errorMsg,
+      stageId: 'role-pack:error',
+    });
+    this.chatStreamService.emitError(threadId, errorMsg);
+    try {
+      await this.storeErrorMessage(threadId, errorMsg);
+    } catch (storeError: unknown) {
+      const storeMsg = storeError instanceof Error ? storeError.message : 'Store failed';
+      this.logger.error(`executeInBackground: failed to store error message — ${storeMsg}`);
     }
   }
 

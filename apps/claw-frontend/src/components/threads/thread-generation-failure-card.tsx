@@ -13,6 +13,7 @@ import { threadStageLabelKey } from '@/utilities/thread-generation-stage.utility
 export function ThreadGenerationFailureCard({
   failure,
   roleKind,
+  allowanceRefunded = false,
 }: ThreadFailureCardProps): ReactElement {
   const { t } = useTranslation();
   const keys = resolveThreadFailureKeys(failure.code);
@@ -35,6 +36,11 @@ export function ThreadGenerationFailureCard({
           : t('chat.threadProgress.failureWhere', { stage, role: t(threadRoleLabelKey(roleKind)) })}
       </p>
       <p className="font-medium">{t(keys.messageKey, keys.params)}</p>
+      {allowanceRefunded ? (
+        <p className="font-medium" data-testid="thread-progress-platform-failure">
+          {t('chat.threadProgress.platformFailureNotice')}
+        </p>
+      ) : null}
       <details className="text-xs" data-testid="thread-progress-failure-details">
         <summary className="cursor-pointer font-medium">
           {t('chat.threadProgress.detailsLabel')}

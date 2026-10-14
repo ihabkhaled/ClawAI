@@ -4,7 +4,7 @@ import { SPEND_SYNC_MIN_INTERVAL_MS } from '../../constants/generation.constants
 import { GenerationSpendSyncService } from '../generation-spend-sync.service';
 
 function build(settled: () => Promise<number>) {
-  const budgets = { settledMicroUsd: vi.fn(settled) };
+  const budgets = { spentMicroUsd: vi.fn(settled) };
   const repository = { syncSpend: vi.fn().mockResolvedValue(undefined) };
   const service = new GenerationSpendSyncService(budgets as never, repository as never);
   return { service, budgets, repository };
@@ -29,10 +29,10 @@ describe('GenerationSpendSyncService', () => {
     await service.sync('job-1', 'budget-1');
     await service.sync('job-1', 'budget-1');
     await service.sync('job-2', 'budget-2');
-    expect(budgets.settledMicroUsd).toHaveBeenCalledTimes(2);
+    expect(budgets.spentMicroUsd).toHaveBeenCalledTimes(2);
     vi.advanceTimersByTime(SPEND_SYNC_MIN_INTERVAL_MS + 1);
     await service.sync('job-1', 'budget-1');
-    expect(budgets.settledMicroUsd).toHaveBeenCalledTimes(3);
+    expect(budgets.spentMicroUsd).toHaveBeenCalledTimes(3);
   });
 
   it('never throws when the budget service fails', async () => {

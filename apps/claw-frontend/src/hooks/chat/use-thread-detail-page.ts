@@ -223,6 +223,7 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
       isUploading: compare.isUploading,
       attachmentTray: compare.attachmentTray,
       attachmentChips: compare.attachmentChips,
+      pluginMentions: compare.pluginMentions,
       t,
     },
     threadSettingsProps: {

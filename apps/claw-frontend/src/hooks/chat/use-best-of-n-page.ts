@@ -15,7 +15,7 @@ export function useBestOfNPage(): UseBestOfNPageReturn {
   const [content, setContent] = useState('');
   const [n, setN] = useState(BEST_OF_N_DEFAULT_COUNT);
   const [selectedModel, setSelectedModel] = useState<AdvancedModuleModelSelection>(null);
-  const composer = useOrchestrationComposer();
+  const composer = useOrchestrationComposer(false, { value: content, onValueChange: setContent });
 
   const { send, result, isPending, isError } = useSendBestOfN();
 

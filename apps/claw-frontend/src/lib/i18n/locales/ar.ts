@@ -13,19 +13,24 @@ import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
+import { PLUGIN_CHAT_TRANSLATIONS } from './plugin-chat-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
 import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
+import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
+import { THREAD_PUBLIC_BOARD_TRANSLATIONS } from './thread-public-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const ar: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.ar,
+  pluginChat: PLUGIN_CHAT_TRANSLATIONS.ar,
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.ar,
+  pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.ar,
   pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.ar,
   pagination: {
     label: 'ترقيم الصفحات',
@@ -450,6 +455,7 @@ export const ar: TranslationDictionary = {
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.ar,
     ...THREAD_BOARD_TRANSLATIONS.ar,
+    ...THREAD_PUBLIC_BOARD_TRANSLATIONS.ar,
     composerContext: {
       menuLabel: 'السياق',
       pickLabel: 'اختيار حزم السياق',
@@ -817,6 +823,17 @@ export const ar: TranslationDictionary = {
     deleteThreadConfirm: 'هل أنت متأكد من حذف هذه المحادثة؟',
     threadCreated: 'تم إنشاء المحادثة',
     threadCreateFailed: 'فشل إنشاء المحادثة',
+    threadTeam: {
+      title: 'الفريق الموصى به',
+      summary: 'اخترنا نماذج تعمل مع خطتك. افتح الخيارات المتقدمة فقط إذا أردت اختيارها بنفسك.',
+      customised: 'لقد غيّرت الفريق. استخدم الفريق الموصى به للعودة إلى اختيارنا.',
+      none: 'لا يتوفر فريق موصى به الآن. اختر النماذج ضمن الخيارات المتقدمة.',
+      advanced: 'متقدم: اختر النماذج',
+      reset: 'استخدم الفريق الموصى به',
+      reasonNeedsPlan: 'غير متاح في خطتك {plan}',
+      reasonWindow: 'نافذة السياق صغيرة جدًا',
+      reasonUnavailable: 'غير متاح مؤقتًا',
+    },
     threadProgress: {
       title: 'تقدم الإنشاء',
       statusQueued: 'في قائمة الانتظار',
@@ -826,6 +843,8 @@ export const ar: TranslationDictionary = {
       stageLabel: 'المرحلة',
       attempt: 'المحاولة {current} من {max}',
       spent: 'المصروف حتى الآن: {amount}',
+      platformFailureNotice: 'كانت المشكلة من جانبنا وليست منك. لم يُستهلك رصيدك المجاني.',
+      retryOnUs: 'أعد المحاولة على حسابنا',
       selectedTitle: 'ما اخترته',
       fallbacks: 'النماذج البديلة: {list}',
       noFallbacks: 'لا توجد نماذج بديلة',

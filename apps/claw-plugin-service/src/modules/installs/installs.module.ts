@@ -24,5 +24,6 @@ import { PluginInstallsService } from './services/plugin-installs.service';
     InstallsRepository,
     InstallSecretsRepository,
   ],
+  exports: [CredentialCryptoManager],
 })
 export class InstallsModule {}

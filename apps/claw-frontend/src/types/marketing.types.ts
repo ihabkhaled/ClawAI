@@ -1,3 +1,5 @@
+import type { LucideIcon } from 'lucide-react';
+
 import type { BillingInterval } from '@/enums/billing.enum';
 import type { Locale } from '@/enums/locale.enum';
 import type { MarketingAuthActionsVariant } from '@/enums/marketing-auth-actions-variant.enum';
@@ -25,6 +27,8 @@ export type UseMarketingThemeToggleReturn = {
 export type MarketingNavLink = {
   labelKey: string;
   href: string;
+  /** Shown beside the label, for the few entries that must stand out (the Threads board). */
+  icon?: LucideIcon;
 };
 
 export type UseMarketingMobileMenuReturn = {

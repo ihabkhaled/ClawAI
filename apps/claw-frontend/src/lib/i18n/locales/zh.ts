@@ -13,19 +13,24 @@ import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
 import { PICKED_MODEL_TRANSLATIONS } from './picked-model-translations';
+import { PLUGIN_CHAT_TRANSLATIONS } from './plugin-chat-translations';
 import { PLUGINS_ACCESS_TRANSLATIONS } from './plugins-access-translations';
 import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
+import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
+import { THREAD_PUBLIC_BOARD_TRANSLATIONS } from './thread-public-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
 export const zh: TranslationDictionary = {
   pluginsAccess: PLUGINS_ACCESS_TRANSLATIONS.zh,
+  pluginChat: PLUGIN_CHAT_TRANSLATIONS.zh,
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.zh,
+  pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.zh,
   pluginsStatus: PLUGINS_STATUS_TRANSLATIONS.zh,
   pagination: {
     label: '分页',
@@ -433,6 +438,7 @@ export const zh: TranslationDictionary = {
     },
     composerMenu: COMPOSER_MENU_TRANSLATIONS.zh,
     ...THREAD_BOARD_TRANSLATIONS.zh,
+    ...THREAD_PUBLIC_BOARD_TRANSLATIONS.zh,
     composerContext: {
       menuLabel: '上下文',
       pickLabel: '选择上下文包',
@@ -796,6 +802,17 @@ export const zh: TranslationDictionary = {
     deleteThreadConfirm: '您确定要删除此帖子吗？',
     threadCreated: '线程已创建',
     threadCreateFailed: '创建线程失败',
+    threadTeam: {
+      title: '推荐团队',
+      summary: '我们已选好适用于你的套餐的模型。只有想自己选择时才需要展开“高级”。',
+      customised: '你已更改团队。使用推荐团队即可回到我们的选择。',
+      none: '目前没有推荐团队。请在“高级”中选择模型。',
+      advanced: '高级：选择模型',
+      reset: '使用推荐团队',
+      reasonNeedsPlan: '不在你的 {plan} 套餐中',
+      reasonWindow: '上下文窗口太小',
+      reasonUnavailable: '暂时不可用',
+    },
     threadProgress: {
       title: '生成进度',
       statusQueued: '排队中',
@@ -804,6 +821,8 @@ export const zh: TranslationDictionary = {
       stageLabel: '阶段',
       attempt: '第 {current} 次尝试，共 {max} 次',
       spent: '已花费：{amount}',
+      platformFailureNotice: '问题出在我们这边，不是您的原因。您的免费额度没有被使用。',
+      retryOnUs: '由我们承担，重试',
       selectedTitle: '你的选择',
       fallbacks: '备用模型：{list}',
       noFallbacks: '无备用模型',
