@@ -253,6 +253,20 @@ fan-out plus judge, and the NL-draft retry loop each issue one HTTP request per
 paid attempt, so chat-service reserves and settles each separately. Batching them
 into one request would bill N provider calls as one.
 
+**Upstream failures are plain, never raw (2026-10-14).** `callCloudGenerate` throws
+`CloudGenerationError` (message is only `Cloud generation failed (HTTP n)`; the body
+goes to the log). Reviewer `errorMessage`, the judge message and the 422
+`AI_ACTION_UPSTREAM_FAILED` text come from `describeUpstreamFailure`
+(`ai-actions/utilities/upstream-failure.utility.ts`): a short sentence plus a stable
+`UPSTREAM_*` code (also in the 422 `details.upstreamCode`). Never put a chat-service
+or provider body in a user-facing string.
+
+**NL draft has an overall deadline.** `NL_DRAFT_OVERALL_DEADLINE_MS` (45 s, under
+nginx's 60 s) bounds `chain-nl-draft.manager` `draft()`: each call timeout is capped
+to the time left, and once it passes no further model or attempt starts; the request
+fails with 504 `CHAIN_NL_DRAFT_TIMED_OUT`. Attempts stay sequential on purpose: each
+is a separately reserved paid call, and parallel attempts would multiply spend.
+
 **The local branches are free and stay unmetered.** `callOllamaGenerate` in
 `ai-action-execution.manager` and `chain-nl-draft.manager` runs on the operator's
 own hardware.

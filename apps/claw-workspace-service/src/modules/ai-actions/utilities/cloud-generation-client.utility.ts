@@ -6,6 +6,7 @@ import type {
   CloudGenerateOutput,
 } from '../types/ai-action.types';
 import { buildAuthHeader } from '../../../common/utilities/file-service-client.utility';
+import { CloudGenerationError } from './cloud-generation-error';
 import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 
 const logger = new Logger('CloudGenerationClient');
@@ -53,9 +54,7 @@ export async function callCloudGenerate(input: CloudGenerateInput): Promise<Clou
       logger.warn(
         `callCloudGenerate: HTTP ${String(response.status)} provider=${input.provider} surface=${input.surface} body=${bodyText.slice(0, 300)}`,
       );
-      throw new Error(
-        `Cloud generation failed (HTTP ${String(response.status)}): ${bodyText.slice(0, 200)}`,
-      );
+      throw new CloudGenerationError(response.status, bodyText);
     }
     const parsed = JSON.parse(bodyText) as ChatInternalResponse;
     if (parsed.content.trim().length === 0) {

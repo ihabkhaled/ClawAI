@@ -14,6 +14,7 @@ import type {
   ReviewerOutcome,
 } from '../types/multi-model-review.types';
 import { callCloudGenerate } from '../utilities/cloud-generation-client.utility';
+import { describeUpstreamFailure } from '../utilities/upstream-failure.utility';
 import { withPlatformIdentity } from '../utilities/platform-identity.utility';
 
 /**
@@ -129,8 +130,9 @@ export class MultiModelReviewOrchestratorManager {
   }
 
   private failedReviewer(ref: ReviewerModelRef, error: unknown): ReviewerOutcome {
-    const message = error instanceof Error ? error.message : 'unknown';
-    this.logger.warn(`reviewer ${ref.provider}/${ref.model} failed: ${message}`);
+    const raw = error instanceof Error ? error.message : 'unknown';
+    const { code, message } = describeUpstreamFailure(error);
+    this.logger.warn(`reviewer ${ref.provider}/${ref.model} failed: ${code} ${raw}`);
     return {
       provider: ref.provider,
       model: ref.model,
@@ -182,8 +184,10 @@ export class MultiModelReviewOrchestratorManager {
         latencyMs: Date.now() - startedAt,
       };
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'unknown';
-      this.logger.error(`judge pass failed: ${message}`);
+      const { code, message } = describeUpstreamFailure(error);
+      this.logger.error(
+        `judge pass failed: ${code} ${error instanceof Error ? error.message : 'unknown'}`,
+      );
       return {
         provider: ref.provider,
         model: ref.model,

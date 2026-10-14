@@ -198,4 +198,41 @@ describe('ChainNlDraftManager.draft', () => {
       }),
     );
   });
+
+  it('stops trying further models once the overall deadline has passed, with a coded 504', async () => {
+    const { manager } = makeDeps({
+      fallbackChain: [
+        { ...primaryModel, model: 'second' },
+        { ...primaryModel, model: 'third' },
+      ],
+    });
+    let now = 1_000_000;
+    vi.spyOn(Date, 'now').mockImplementation(() => now);
+    callSpy.mockImplementation(async () => {
+      now += 30_000;
+      return { content: 'not json' };
+    });
+
+    const failure = await manager.draft('u1', 'file a jira ticket').catch((e: unknown) => e);
+
+    expect(failure).toBeInstanceOf(BusinessException);
+    const err = failure as BusinessException;
+    expect(err.code).toBe('CHAIN_NL_DRAFT_TIMED_OUT');
+    expect(err.getStatus()).toBe(504);
+    expect(callSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('caps each call timeout to the time left before the deadline', async () => {
+    const { manager } = makeDeps();
+    callSpy.mockResolvedValue({
+      content: JSON.stringify({
+        steps: [{ id: 's1', connectorId: 'jira-1', actionType: 'CREATE_TICKET', payload: {} }],
+      }),
+    });
+
+    await manager.draft('u1', 'file a jira ticket');
+
+    const arg = callSpy.mock.calls[0]?.[0] as { timeoutMs: number };
+    expect(arg.timeoutMs).toBeLessThanOrEqual(45_000);
+  });
 });

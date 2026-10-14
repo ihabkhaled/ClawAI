@@ -5,6 +5,7 @@ import { PaygSurface } from '@claw/shared-types';
 import { MultiModelReviewOrchestratorManager } from '../multi-model-review-orchestrator.manager';
 import { BusinessException } from '../../../../common/errors/business.exception';
 import { AppConfig } from '../../../../app/config/app.config';
+import { CloudGenerationError } from '../../utilities/cloud-generation-error';
 import * as cloudClient from '../../utilities/cloud-generation-client.utility';
 
 const mockConfig = {
@@ -66,7 +67,7 @@ describe('MultiModelReviewOrchestratorManager', () => {
     expect(result.reviewers).toHaveLength(2);
     expect(result.reviewers[0]?.success).toBe(true);
     expect(result.reviewers[1]?.success).toBe(false);
-    expect(result.reviewers[1]?.errorMessage).toContain('OpenAI timed out');
+    expect(result.reviewers[1]?.errorMessage).toBe('The model could not answer.');
     expect(result.anyReviewerSucceeded).toBe(true);
   });
 
@@ -95,7 +96,9 @@ describe('MultiModelReviewOrchestratorManager', () => {
   });
 
   it('fails the whole request with 422 when every reviewer failed, and skips the judge', async () => {
-    callSpy.mockRejectedValue(new Error('Cloud generation failed (HTTP 401): Unauthorized'));
+    callSpy.mockRejectedValue(
+      new CloudGenerationError(400, '{"statusCode":400,"message":"Provider GEMINI returned 404"}'),
+    );
 
     const failure = await manager
       .run({ ...valid, judgeModel: { provider: 'JUDGE', model: 'j' } })
@@ -106,7 +109,8 @@ describe('MultiModelReviewOrchestratorManager', () => {
     expect(err.getStatus()).toBe(HttpStatus.UNPROCESSABLE_ENTITY);
     expect(err.code).toBe('AI_ACTION_UPSTREAM_FAILED');
     expect(err.messageKey).toContain('All 2 reviewers failed');
-    expect(err.messageKey).toContain('HTTP 401');
+    expect(err.messageKey).toContain('This model is not available.');
+    expect(err.messageKey).not.toContain('{');
     // 2 reviewer calls; the judge call was suppressed.
     expect(callSpy).toHaveBeenCalledTimes(2);
   });
@@ -148,7 +152,7 @@ describe('MultiModelReviewOrchestratorManager', () => {
     });
     expect(result.reviewers.every((r) => r.success)).toBe(true);
     expect(result.judge?.success).toBe(false);
-    expect(result.judge?.errorMessage).toContain('judge 5xx');
+    expect(result.judge?.errorMessage).toBe('The model could not answer.');
   });
 
   // PAYG (U9): N reviewers + 1 judge are N+1 SEPARATE paid provider calls.

@@ -105,4 +105,12 @@ describe('callCloudGenerate — PAYG attribution (U8/U9/U10)', () => {
       /Cloud generation failed \(HTTP 402\)/,
     );
   });
+
+  it('keeps the upstream body out of the thrown message', async () => {
+    fetchMock().mockResolvedValue(errorResponse(400, '{"message":"Provider GEMINI returned 404"}'));
+
+    const failure = await callCloudGenerate(input()).catch((e: unknown) => e);
+
+    expect((failure as Error).message).toBe('Cloud generation failed (HTTP 400)');
+  });
 });

@@ -9,7 +9,10 @@ import type { ModelChoice } from '../../ai-actions/types/ai-action.types';
 import { callCloudGenerate } from '../../ai-actions/utilities/cloud-generation-client.utility';
 import { callOllamaGenerate } from '../../ai-actions/utilities/ollama-generation-client.utility';
 import { WorkspaceConnectorRepository } from '../../workspace/repositories/workspace-connector.repository';
-import { MAX_NL_DRAFT_ATTEMPTS_PER_MODEL } from '../constants/chain-nl-draft.constants';
+import {
+  MAX_NL_DRAFT_ATTEMPTS_PER_MODEL,
+  NL_DRAFT_OVERALL_DEADLINE_MS,
+} from '../constants/chain-nl-draft.constants';
 import { chainDslSchema } from '../dto/chain.dto';
 import type { ChainDsl } from '../types/chain.types';
 import {
@@ -65,12 +68,27 @@ export class ChainNlDraftManager {
     const { systemPrompt, userPrompt } = buildChainNlDraftPrompt(connectors, prompt);
     const connectorIds = new Set(connectors.map((c) => c.id));
 
+    const deadlineAt = Date.now() + NL_DRAFT_OVERALL_DEADLINE_MS;
     let lastError = 'no attempt made';
     for (const model of models) {
       let currentUserPrompt = userPrompt;
       for (let attempt = 1; attempt <= MAX_NL_DRAFT_ATTEMPTS_PER_MODEL; attempt += 1) {
+        if (Date.now() >= deadlineAt) {
+          this.logger.warn(`draft: overall deadline reached; last failure — ${lastError}`);
+          throw new BusinessException(
+            'workspace.chain_nl_draft.timed_out',
+            'CHAIN_NL_DRAFT_TIMED_OUT',
+            HttpStatus.GATEWAY_TIMEOUT,
+          );
+        }
         try {
-          const content = await this.generate(model, systemPrompt, currentUserPrompt, userId);
+          const content = await this.generate(
+            model,
+            systemPrompt,
+            currentUserPrompt,
+            userId,
+            deadlineAt,
+          );
           const dsl = this.parseAndValidate(content, connectorIds);
           return dsl;
         } catch (error) {
@@ -114,6 +132,7 @@ export class ChainNlDraftManager {
     systemPrompt: string,
     userPrompt: string,
     userId: string,
+    deadlineAt: number,
   ): Promise<string> {
     const config = AppConfig.get();
     if (model.provider === AI_ACTION_FALLBACK_LOCAL_PROVIDER) {
@@ -121,7 +140,10 @@ export class ChainNlDraftManager {
         baseUrl: config.OLLAMA_SERVICE_URL,
         model: model.model,
         prompt: `${systemPrompt}\n\n${userPrompt}`,
-        timeoutMs: config.AI_ACTION_REQUEST_TIMEOUT_MS,
+        timeoutMs: Math.min(
+          config.AI_ACTION_REQUEST_TIMEOUT_MS,
+          Math.max(1, deadlineAt - Date.now()),
+        ),
       });
       return result.content;
     }
@@ -131,7 +153,10 @@ export class ChainNlDraftManager {
       model: model.model,
       systemPrompt,
       userPrompt,
-      timeoutMs: config.AI_ACTION_REQUEST_TIMEOUT_MS,
+      timeoutMs: Math.min(
+        config.AI_ACTION_REQUEST_TIMEOUT_MS,
+        Math.max(1, deadlineAt - Date.now()),
+      ),
       userId,
       surface: PaygSurface.WORKSPACE_ACTION,
     });

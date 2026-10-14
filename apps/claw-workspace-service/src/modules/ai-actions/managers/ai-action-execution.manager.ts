@@ -17,6 +17,7 @@ import type {
 } from '../types/ai-action.types';
 import { buildAiActionPrompt, combineSystemAndUser } from '../utilities/ai-action-prompt.utility';
 import { callCloudGenerate } from '../utilities/cloud-generation-client.utility';
+import { describeUpstreamFailure } from '../utilities/upstream-failure.utility';
 import { callOllamaGenerate } from '../utilities/ollama-generation-client.utility';
 
 import { AutoRouterManager } from './auto-router.manager';
@@ -92,14 +93,15 @@ export class AiActionExecutionManager {
       userMessage,
       'AI_ACTION_UPSTREAM_FAILED',
       HttpStatus.UNPROCESSABLE_ENTITY,
-      { triedModels: modelsToTry.map((m) => `${m.provider}/${m.model}`) },
+      {
+        triedModels: modelsToTry.map((m) => `${m.provider}/${m.model}`),
+        upstreamCode: describeUpstreamFailure(lastError).code,
+      },
     );
   }
 
   // Builds a one-line, user-readable explanation of why the AI call failed.
-  // Strips the JSON envelope our internal services add and pulls the
-  // upstream provider's message to the front so users see "this model
-  // requires a subscription" rather than "Internal server error".
+  // Never echoes an upstream body; see describeUpstreamFailure.
   private summariseUpstreamFailure(
     modelsToTry: ModelChoice[],
     lastError: Error | undefined,
@@ -108,15 +110,11 @@ export class AiActionExecutionManager {
     if (lastError === undefined) {
       return `All models exhausted with no error captured (tried: ${tried})`;
     }
-    // Errors thrown by callCloudGenerate look like:
-    //   Cloud generation failed (HTTP 400): {"statusCode":400,"message":"...","code":"..."}
-    // Pull the inner `message` out so the user sees the upstream reason.
-    const match = lastError.message.match(/"message"\s*:\s*"([^"]+)"/);
-    const upstream = match ? match[1] : lastError.message;
-    if (modelsToTry.length === 1) {
-      return `${modelsToTry[0]?.provider}/${modelsToTry[0]?.model}: ${upstream}`;
-    }
-    return `All ${String(modelsToTry.length)} models failed. Last error from ${modelsToTry.at(-1)?.provider}/${modelsToTry.at(-1)?.model}: ${upstream}`;
+    const upstream = describeUpstreamFailure(lastError).message;
+    const last = `${modelsToTry.at(-1)?.provider}/${modelsToTry.at(-1)?.model}`;
+    return modelsToTry.length === 1
+      ? `${last}: ${upstream}`
+      : `All ${String(modelsToTry.length)} models failed. Last error from ${last}: ${upstream}`;
   }
 
   private async buildAttemptChain(
