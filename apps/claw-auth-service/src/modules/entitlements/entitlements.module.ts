@@ -22,6 +22,7 @@ import { RuntimeAdmissionInternalController } from './controllers/runtime-admiss
 import { RuntimeAdmissionService } from './services/runtime-admission.service';
 import { ThreadJobBudgetInternalController } from './controllers/thread-job-budget-internal.controller';
 import { ThreadJobBudgetRepository } from './repositories/thread-job-budget.repository';
+import { ThreadJobBudgetFreeMeterRepository } from '../credit/repositories/thread-job-budget-free-meter.repository';
 import { ThreadJobBudgetService } from '../credit/services/thread-job-budget.service';
 import { ThreadJobBudgetSweeperService } from '../credit/services/thread-job-budget-sweeper.service';
 
@@ -48,6 +49,7 @@ import { ThreadJobBudgetSweeperService } from '../credit/services/thread-job-bud
     FeatureUsageConsumptionService,
     RuntimeAdmissionService,
     ThreadJobBudgetRepository,
+    ThreadJobBudgetFreeMeterRepository,
     ThreadJobBudgetService,
     ThreadJobBudgetSweeperService,
   ],
