@@ -24,7 +24,7 @@ change type needs (`rules/23-git-commits-hooks-and-release-gates.md`, gate matri
 - Database: postgresql
 - Prisma models: ThreadDeletedAccount, ThreadGenerationAttempt, ThreadGenerationCheckpoint, ThreadGenerationJob, ThreadGenerationStep, ThreadGenerationWorkerSlot, ThreadModelCommunication, ThreadRevisionDraft
 - API endpoints: 8 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 49 (vitest)
+- Test files: 50 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

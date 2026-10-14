@@ -90,3 +90,7 @@ export const JSON_CLOSE_BRACE = '}';
 export const JSON_QUOTE = '"';
 export const JSON_BACKSLASH = String.fromCharCode(92);
 export const UTF8_BYTE_ORDER_MARK_CODE = 0xfeff;
+
+/** Stray superscript or subscript tags models wrap around citations. */
+export const STRAY_SCRIPT_TAG_PATTERN = /<\/?(?:sup|sub)\b[^<>]*>/giu;
+export const CITATION_SEPARATOR_PATTERN = /^[\s,;]*/u;

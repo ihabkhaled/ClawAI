@@ -8,9 +8,9 @@ export const revisionAuthorVoteSchema = z.object({
   draftHash: z.string().length(64),
 });
 
+/** What the model returns. The hash is never asked for; an echoed `draftHash` is ignored. */
 export const revisionAuthorResponseSchema = z.object({
   agrees: z.boolean(),
-  draftHash: z.string().length(64),
 });
 
 export type RevisionAuthorVote = z.infer<typeof revisionAuthorVoteSchema>;

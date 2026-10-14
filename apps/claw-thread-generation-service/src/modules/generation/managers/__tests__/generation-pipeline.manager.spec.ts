@@ -291,20 +291,20 @@ ${text}
     expect(roundTwoBrief).toContain('draft A');
   });
 
-  it('does not accept an agreement that names a different draft hash', async () => {
+  it('does not accept a consensus when one author disagrees', async () => {
     const harness = build([
       ...Array.from({ length: 3 }, () => draft('draft A')),
       vote('draft A'),
       vote('draft A'),
-      vote('another draft'),
+      vote('draft A', false),
       ...Array.from({ length: 3 }, () => draft('draft A')),
       vote('draft A'),
       vote('draft A'),
-      vote('another draft'),
+      vote('draft A', false),
       ...Array.from({ length: 3 }, () => draft('draft A')),
       vote('draft A'),
       vote('draft A'),
-      vote('another draft'),
+      vote('draft A', false),
     ]);
 
     await expect(harness.manager.generate(input)).rejects.toThrow(
@@ -361,19 +361,58 @@ ${text}
     const tooFew = await harness.manager
       .generate({ ...input, authors: input.authors.slice(0, 2) })
       .catch((error: unknown) => error);
-    const sameProviderFallback = await harness.manager
-      .generate({
-        ...input,
-        authors: [
-          { ...role('author-1'), fallbacks: [{ provider: 'OPENAI', model: 'other' }] },
-          ...input.authors.slice(1),
-        ],
-      })
-      .catch((error: unknown) => error);
 
     expect(tooFew).toBeInstanceOf(DeterministicGenerationError);
-    expect(sameProviderFallback).toBeInstanceOf(DeterministicGenerationError);
     expect(harness.research.run).not.toHaveBeenCalled();
+  });
+
+  it('skips a same-provider fallback with a step note instead of failing the role (N-01)', async () => {
+    const harness = build([
+      draft('grounded'),
+      draft('grounded'),
+      draft('grounded'),
+      vote('grounded'),
+      vote('grounded'),
+      vote('grounded'),
+      review(80),
+      review(75),
+    ]);
+
+    const result = await harness.manager.generate({
+      ...input,
+      authors: [
+        { ...role('author-1'), fallbacks: [{ provider: 'OPENAI', model: 'other' }] },
+        ...input.authors.slice(1),
+      ],
+    });
+
+    expect(result.reviewReady).toBe(true);
+    expect(harness.recorder.record).toHaveBeenCalledWith(
+      input.jobId,
+      expect.objectContaining({
+        outcome: 'SKIPPED',
+        roleId: 'author-1',
+        code: 'FALLBACK_SKIPPED_SAME_PROVIDER',
+      }),
+    );
+  });
+
+  it('accepts votes whose hash echo is wrong, short or missing (D-L2-01)', async () => {
+    const short = JSON.stringify({ agrees: true, draftHash: 'f'.repeat(63) });
+    const harness = build([
+      draft('grounded'),
+      draft('grounded'),
+      draft('grounded'),
+      short,
+      JSON.stringify({ agrees: true }),
+      vote('grounded'),
+      review(80),
+      review(75),
+    ]);
+
+    const result = await harness.manager.generate(input);
+
+    expect(result.authorConsensus).toBe(true);
   });
 
   describe('retry classification of a failed role', () => {

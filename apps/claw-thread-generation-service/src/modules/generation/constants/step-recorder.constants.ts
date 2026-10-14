@@ -46,6 +46,29 @@ export const STEP_ROW_SELECT = {
   excerpt: true,
 } as const;
 
+/** Owner-facing code and honest status for a provider outage. */
+export const STEP_UPSTREAM_UNAVAILABLE_CODE = 'PROVIDER_UNAVAILABLE';
+export const STEP_UPSTREAM_UNAVAILABLE_STATUS = 503;
+/** Chat service codes that mean the provider is down; they sometimes arrive with a 400 status. */
+export const UPSTREAM_UNAVAILABLE_CODES: ReadonlySet<string> = new Set([
+  'CLOUD_PROVIDER_UNAVAILABLE',
+  'PROVIDER_UNAVAILABLE',
+]);
+/**
+ * PAYG refusals keep their own stable codes so the owner can tell a cap that is too low from spent
+ * credit from a model with no price. They pass through `parseStepError` unchanged.
+ */
+export const PAYG_STEP_CODES: readonly string[] = [
+  'PAYG_CAP_TOO_LOW',
+  'PAYG_CREDIT_EXHAUSTED',
+  'PAYG_PRICE_UNAVAILABLE',
+];
+/** Auth refuses an unpriced model with PAYG_MODEL_UNPRICED; a Thread step reports it as a missing price. */
+export const STEP_UPSTREAM_CODE_ALIASES: ReadonlyMap<string, string> = new Map([
+  ['PAYG_MODEL_UNPRICED', 'PAYG_PRICE_UNAVAILABLE'],
+]);
+export const STEP_FALLBACK_SKIPPED_CODE = 'FALLBACK_SKIPPED_SAME_PROVIDER';
+
 export const UPSTREAM_STATUS_PATTERN =
   /Chat model request failed \((\d{3})(?:: ([A-Z][A-Z0-9_]{2,59})|)\)/u;
 

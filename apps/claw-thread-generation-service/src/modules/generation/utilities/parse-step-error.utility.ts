@@ -3,7 +3,11 @@ import {
   STEP_ERROR_CAUSE_DEPTH,
   STEP_FALLBACK_ERROR_CODE,
   STEP_MESSAGE_CODES,
+  STEP_UPSTREAM_CODE_ALIASES,
+  STEP_UPSTREAM_UNAVAILABLE_CODE,
+  STEP_UPSTREAM_UNAVAILABLE_STATUS,
   UPSTREAM_STATUS_PATTERN,
+  UPSTREAM_UNAVAILABLE_CODES,
 } from '../constants/step-recorder.constants';
 import type { ParsedStepError } from '../types/step-recorder.types';
 import { CandidatesExhaustedError } from './candidates-exhausted.error';
@@ -23,7 +27,12 @@ function parseOne(error: Error): ParsedStepError | null {
   const upstream = UPSTREAM_STATUS_PATTERN.exec(error.message);
   if (upstream?.[1]) {
     const httpStatus = Number(upstream[1]);
-    return { code: upstream[2] ?? statusCode(httpStatus), httpStatus };
+    const rawCode = upstream[2] ?? statusCode(httpStatus);
+    const code = STEP_UPSTREAM_CODE_ALIASES.get(rawCode) ?? rawCode;
+    // The chat service reports a provider outage (for example Gemini 503) with a 400 envelope.
+    return UPSTREAM_UNAVAILABLE_CODES.has(code)
+      ? { code: STEP_UPSTREAM_UNAVAILABLE_CODE, httpStatus: STEP_UPSTREAM_UNAVAILABLE_STATUS }
+      : { code, httpStatus };
   }
   const known = STEP_MESSAGE_CODES.find(({ fragment }) => error.message.includes(fragment));
   return known ? { code: known.code, httpStatus: null } : null;

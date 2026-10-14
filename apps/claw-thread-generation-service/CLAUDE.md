@@ -130,3 +130,13 @@ frame type is ignored; the `message` text is never read or forwarded, only the m
 - `spentMicroCredits` is the sum of the `costMicroUsd` chat-service reports, and it reports it only for
   pay-as-you-go calls, so an included-plan job shows 0 while auth's budget row holds the real spend. No read
   endpoint for budget spend exists; do not invent a price here.
+
+## Round-2 output hardening (2026-10-14, ADR-173 addendum)
+
+The model is never asked to echo the draft hash: the vote schema is `{ agrees }`, the hash comes from the
+request, and a stray echo is ignored. Reviewer `blockers`/`findings`/`revisionBrief` are shortened after
+parsing (280 characters, five findings), never rejected; the prompt states the limit. Author markdown goes
+through `sanitizeDraftMarkup` (strips `<sup>`/`<sub>`, flattens `[[id1], [id2]]`). A provider outage the chat
+service sends as a 400 with `CLOUD_PROVIDER_UNAVAILABLE` is stored as `PROVIDER_UNAVAILABLE` with HTTP 503.
+`PAYG_CAP_TOO_LOW`, `PAYG_CREDIT_EXHAUSTED`, `PAYG_PRICE_UNAVAILABLE` pass through as their own codes. A
+same-provider fallback is dropped at call time with a SKIPPED step `FALLBACK_SKIPPED_SAME_PROVIDER`.

@@ -123,14 +123,12 @@ describe('GenerationPipelineManager when every candidate of a role fails', () =>
     expect(failure.outcomes.map(({ provider, code }) => [provider, code])).toEqual([
       ['GEMINI', 'OUTPUT_INVALID'],
       ['OLLAMA', 'OUTPUT_INVALID'],
-      ['OPENROUTER', 'CLOUD_PROVIDER_UNAVAILABLE'],
+      ['OPENROUTER', 'PROVIDER_UNAVAILABLE'],
     ]);
     expect(failure.primary.code).toBe('OUTPUT_INVALID');
     expect(parseStepError(error)).toEqual({ code: 'OUTPUT_INVALID', httpStatus: null });
     expect(failure.summary).toContain('Main cause: OUTPUT_INVALID (2 of 3)');
-    expect(failure.summary).toContain(
-      'OPENROUTER/mistral-small: CLOUD_PROVIDER_UNAVAILABLE (HTTP 400)',
-    );
+    expect(failure.summary).toContain('OPENROUTER/mistral-small: PROVIDER_UNAVAILABLE (HTTP 503)');
     expect(isDeterministicGenerationError(error)).toBe(false);
   });
 

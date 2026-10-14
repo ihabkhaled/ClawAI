@@ -3,6 +3,8 @@ import type { Locale, ThreadPublicationType } from '@claw/shared-types';
 
 import type { ThreadGenerationStage } from '../../../generated/prisma';
 import type { ResearchEvidence } from '../../research/research.client';
+import { clampReviewList, clampReviewText } from '../utilities/clamp-review-text.utility';
+import { sanitizeDraftMarkup } from '../utilities/sanitize-draft-markup.utility';
 import type { ReviewerRole } from './reviewer-role.enum';
 
 export const modelRoleSchema = z.object({
@@ -22,18 +24,23 @@ export const modelRoleSchema = z.object({
 });
 
 export const authorDraftSchema = z.object({
-  markdown: z.string().min(1).max(100_000),
+  markdown: z.string().min(1).max(100_000).transform(sanitizeDraftMarkup),
   citations: z
     .array(z.object({ evidenceId: z.string().min(1), url: z.string().url() }))
     .min(1)
     .max(100),
 });
 
+const REVIEW_BLOCKERS_MAX = 10;
+const REVIEW_FINDINGS_MAX = 5;
+const REVIEW_BRIEF_MAX_CHARS = 1000;
+
 export const reviewSchema = z.object({
   score: z.number().int().min(0).max(100),
-  blockers: z.array(z.string().min(1).max(300)).max(10),
-  findings: z.array(z.string().min(1).max(300)).max(5),
-  revisionBrief: z.string().max(1000),
+  // Long or numerous items are shortened, never rejected: a verbose review is still a review.
+  blockers: z.array(z.string()).transform((items) => clampReviewList(items, REVIEW_BLOCKERS_MAX)),
+  findings: z.array(z.string()).transform((items) => clampReviewList(items, REVIEW_FINDINGS_MAX)),
+  revisionBrief: z.string().transform((text) => clampReviewText(text, REVIEW_BRIEF_MAX_CHARS)),
 });
 
 export const checkpointBundleSchema = z.record(z.string(), z.unknown());

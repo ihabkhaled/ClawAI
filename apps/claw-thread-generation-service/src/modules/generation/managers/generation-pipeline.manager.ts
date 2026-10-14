@@ -34,7 +34,11 @@ import { parseStepError } from '../utilities/parse-step-error.utility';
 import { CandidatesExhaustedError } from '../utilities/candidates-exhausted.error';
 import { describeOutputFailure } from '../utilities/describe-output-failure.utility';
 import type { CandidateAttempt, CandidateOutcome } from '../types/candidate-outcome.types';
-import { STEP_FALLBACK_ERROR_CODE, STEP_RESUMED_CODE } from '../constants/step-recorder.constants';
+import {
+  STEP_FALLBACK_ERROR_CODE,
+  STEP_FALLBACK_SKIPPED_CODE,
+  STEP_RESUMED_CODE,
+} from '../constants/step-recorder.constants';
 import { roleStepInfo } from '../utilities/role-step.utility';
 import {
   type AuthorDraft,
@@ -69,7 +73,9 @@ export class GenerationPipelineManager {
   ) {}
 
   async generate(input: GenerationPipelineInput): Promise<GenerationPipelineResult> {
-    return this.withAttemptCeiling(this.validateRoles(input), (job) => this.runGenerate(job));
+    const checked = this.validateRoles(input);
+    await this.noteSkippedFallbacks(input, checked);
+    return this.withAttemptCeiling(checked, (job) => this.runGenerate(job));
   }
 
   /**
@@ -299,7 +305,9 @@ export class GenerationPipelineManager {
     evidenceBundle: Record<string, unknown>,
     evidenceHash: string,
   ): Promise<GenerationPipelineResult> {
-    return this.withAttemptCeiling(this.validateRoles(input), (job) =>
+    const checked = this.validateRoles(input);
+    await this.noteSkippedFallbacks(input, checked);
+    return this.withAttemptCeiling(checked, (job) =>
       this.runRevisionReview(job, draft, evidenceBundle, evidenceHash),
     );
   }
@@ -492,10 +500,13 @@ export class GenerationPipelineManager {
       if (!parsed.success) {
         throw new DeterministicGenerationError('A model role configuration is invalid');
       }
-      if (parsed.data.fallbacks.some((fallback) => fallback.provider === parsed.data.provider)) {
-        throw new DeterministicGenerationError('A fallback must use a different provider');
-      }
-      return parsed.data;
+      // A fallback on the primary's provider cannot help; skip it (noted as a step), do not fail.
+      return {
+        ...parsed.data,
+        fallbacks: parsed.data.fallbacks.filter(
+          (fallback) => fallback.provider !== parsed.data.provider,
+        ),
+      };
     });
     const authors = roles.slice(0, input.authors.length);
     const judge = roles[input.authors.length];
@@ -507,6 +518,29 @@ export class GenerationPipelineManager {
       throw new ServiceUnavailableException('Generation role identifiers must be unique');
     }
     return { ...input, authors, judge, critic };
+  }
+
+  /** One SKIPPED step per role whose same-provider fallback was dropped, so the owner sees why. */
+  private async noteSkippedFallbacks(
+    original: GenerationPipelineInput,
+    checked: GenerationPipelineInput,
+  ): Promise<void> {
+    const before = new Map(
+      [...original.authors, original.judge, original.critic].map((role) => [role.id, role]),
+    );
+    for (const role of [...checked.authors, checked.judge, checked.critic]) {
+      if ((before.get(role.id)?.fallbacks.length ?? 0) === role.fallbacks.length) continue;
+      const info = roleStepInfo(role.id);
+      await this.recorder.record(original.jobId, {
+        stage: info.stage,
+        outcome: 'SKIPPED',
+        roleKind: info.roleKind,
+        roleId: role.id,
+        provider: role.provider,
+        model: role.model,
+        code: STEP_FALLBACK_SKIPPED_CODE,
+      });
+    }
   }
 
   private async callAuthor(
@@ -626,7 +660,7 @@ export class GenerationPipelineManager {
     const communicationRole = { ...role, id: `${communicationPrefix}-${role.id}` };
     const prompts = {
       systemPrompt:
-        'Review the exact candidate draft for factual support, coherence, and safety. Do not rewrite it. Return JSON with agrees (boolean) and draftHash copied exactly from the supplied candidate hash. Do not include chain-of-thought.',
+        'Review the exact candidate draft for factual support, coherence, and safety. Do not rewrite it. Return JSON {"agrees": boolean} only; do not repeat the hash. Do not include chain-of-thought.',
       userPrompt: `${sharedMaterial}\nExact candidate hash: ${draftHash}\nDraft:\n${JSON.stringify(draft)}`,
     };
     const saved = await this.jobs.findCommunication(
@@ -668,7 +702,8 @@ export class GenerationPipelineManager {
       });
       if (!persisted) throw new ThreadGenerationLeaseLostError();
     }
-    return { roleId: role.id, ...parsed.data };
+    // The hash comes from the request, never from the model's echo.
+    return { roleId: role.id, agrees: parsed.data.agrees, draftHash };
   }
 
   private async persistCommunication(

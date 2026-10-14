@@ -43,3 +43,9 @@ Production rounds showed Gemini and some Ollama models answering with a code fen
 
 - Role replies are read by `parseModelJson`: bare JSON, one fence, or the first balanced object in prose (string-aware), preferring the object the role schema accepts. Truncated or JSON-free replies still fail `OUTPUT_INVALID`. The existing schemas still validate; no repair re-ask is added.
 - The job total is the sum of the gateway-reported `costMicroUsd` (integer micro-USD) of every call, added right after each call, including unusable and cut-short replies. No price is computed in this service. The field is optional on the wire, so a chat-service that does not send it leaves the total at 0 and nothing breaks.
+
+## Addendum 2026-10-14: round-2 output hardening
+
+Votes no longer carry a model-echoed hash, reviewer text is clamped instead of rejected, draft markup is
+sanitised, provider outages are recorded as `PROVIDER_UNAVAILABLE` / 503, PAYG codes stay distinct, and a
+same-provider fallback is skipped with a step note. Details in `apps/claw-thread-generation-service/CLAUDE.md`.

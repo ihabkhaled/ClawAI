@@ -53,3 +53,11 @@ A refused reply is recorded as a classified reason first (`EMPTY`, `TRUNCATED`, 
 - Orphans whose publication was never attached still run (they are real jobs). Closing that gap needs threads-service to cancel the job when its publication step fails, or an internal lookup this service can ask.
 - New failure codes reach the frontend: `QUEUE_EXPIRED`, and any provider code that now surfaces as the primary cause. Each needs a `THREAD_GENERATION_CODE_KEYS` entry in the 13 locales.
 - When a storage failure leaves a reserved budget with no job, it is released unless some job holds the idempotency key, because reserving is idempotent per owner and key and a concurrent request shares the budget.
+
+## Addendum 2026-10-14: round-2 owner fixes
+
+The preflight also refuses a fallback on its primary's provider (`THREAD_FALLBACK_SAME_PROVIDER`).
+A retry cap below one cent now reaches the preflight and gets `THREAD_SPEND_CAP_TOO_LOW`. Decision:
+an owner edit review is a paid Judge and Critic call and uses the allowance, so a Free owner cannot edit
+after the one lifetime use; the refusal explains the allowance. Still open: refusing a cap below the
+cheapest hold or an unpriced model at start needs a price or hold read endpoint that does not exist.
