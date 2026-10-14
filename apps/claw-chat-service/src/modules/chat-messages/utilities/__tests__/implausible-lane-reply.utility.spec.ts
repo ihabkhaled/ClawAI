@@ -42,4 +42,24 @@ describe('isImplausiblyShortLaneReply', () => {
       }),
     ).toBe(false);
   });
+
+  const PAD = ' Contexte supplementaire sans importance.'.repeat(8);
+  it.each([
+    'Reply with the single word OK.',
+    'Answer yes or no: is it safe?',
+    'أجب بكلمة واحدة فقط.',
+    'Antworte mit einem Wort.',
+    'Responde con una palabra.',
+    'Réponds en un mot.',
+    '一言で答えてください。',
+    '请用一个字回答。',
+  ])('accepts a one-word reply when the prompt asks for it: %s', (ask) => {
+    expect(
+      isImplausiblyShortLaneReply({
+        content: 'OK',
+        userPrompt: ask + PAD,
+        finishReason: 'stop',
+      }),
+    ).toBe(false);
+  });
 });
