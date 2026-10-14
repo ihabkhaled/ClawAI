@@ -39,6 +39,7 @@ import { CandidatesExhaustedError } from '../utilities/candidates-exhausted.erro
 import { describeOutputFailure } from '../utilities/describe-output-failure.utility';
 import type { CandidateAttempt, CandidateOutcome } from '../types/candidate-outcome.types';
 import {
+  NON_RETRYABLE_STEP_CODES,
   STEP_FALLBACK_ERROR_CODE,
   STEP_FALLBACK_SKIPPED_CODE,
   STEP_RESUMED_CODE,
@@ -936,10 +937,16 @@ export class GenerationPipelineManager {
   }
 
   private requireFulfilled<T>(results: PromiseSettledResult<T>[], message: string): T[] {
-    // A transient failure among the rejections wins, so a retry is not skipped on a hunch.
+    // An owner/billing refusal (cap too low, credit spent) wins over everything: another attempt is
+    // refused the same way and re-runs the authors. Otherwise a transient failure wins, so a retry
+    // is not skipped on a hunch.
     const rejections = results.filter((result) => result.status === 'rejected');
     const rejected =
-      rejections.find((result) => !isDeterministicGenerationError(result.reason)) ?? rejections[0];
+      rejections.find((result) =>
+        NON_RETRYABLE_STEP_CODES.has(parseStepError(result.reason, STEP_FALLBACK_ERROR_CODE).code),
+      ) ??
+      rejections.find((result) => !isDeterministicGenerationError(result.reason)) ??
+      rejections[0];
     if (
       rejected?.status === 'rejected' &&
       (rejected.reason instanceof ThreadGenerationCancelledError ||

@@ -136,6 +136,8 @@ frame type is ignored; the `message` text is never read or forwarded, only the m
 - `NON_RETRYABLE_STEP_CODES` (PAYG cap too low, price unavailable, unpriced model, credit and allowance exhausted)
   fail the job on the first attempt; a retry would be refused the same way (ADR-173 addendum). The progress
   `failure.retryable` is false for them too (`isRetryable` in `build-progress.utility.ts`), so the UI offers no Retry.
+  When parallel authors fail with mixed codes, `requireFulfilled` lets such an owner/billing code win over a
+  transient one (a sibling `PROVIDER_ERROR`), so the attempt fails as final instead of retrying and re-spending.
 
 ## Round-2 output hardening (2026-10-14, ADR-173 addendum)
 

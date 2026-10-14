@@ -4,6 +4,8 @@ import {
   isDeterministicGenerationError,
 } from '../../utilities/deterministic-generation.error';
 import { createHash } from 'node:crypto';
+import { NON_RETRYABLE_STEP_CODES } from '../../constants/step-recorder.constants';
+import { parseStepError } from '../../utilities/parse-step-error.utility';
 import type { GenerationPipelineInput, ModelRole } from '../../types/generation-pipeline.types';
 import { revisionDraftHash } from '../../utilities/revision-review.utility';
 import { Locale, ThreadPublicationType } from '@claw/shared-types';
@@ -472,6 +474,60 @@ ${text}
       const failure = await harness.manager.generate(input).catch((error: unknown) => error);
 
       expect(isDeterministicGenerationError(failure)).toBe(false);
+    });
+
+    describe('an owner/billing refusal among parallel authors', () => {
+      const refusal = (code: string) => new Error(`Chat model request failed (402: ${code})`);
+      const providers = ['OPENAI', 'ANTHROPIC', 'GEMINI'];
+      const codes = [
+        'PAYG_CAP_TOO_LOW',
+        'PAYG_PRICE_UNAVAILABLE',
+        'PAYG_MODEL_UNPRICED',
+        'PAYG_CREDIT_EXHAUSTED',
+        'PAYG_FREE_ALLOWANCE_EXHAUSTED',
+      ];
+
+      it.each(codes.flatMap((code) => providers.map((capProvider) => ({ code, capProvider }))))(
+        'wins over a transient failure: $code from $capProvider',
+        async ({ code, capProvider }) => {
+          const harness = build([]);
+          harness.models.generate.mockImplementation(async (request: { provider: string }) => {
+            if (request.provider === capProvider) throw refusal(code);
+            throw new Error('Chat model request failed (500: PROVIDER_ERROR)');
+          });
+
+          const failure = await harness.manager.generate(input).catch((error: unknown) => error);
+
+          const expected = code === 'PAYG_MODEL_UNPRICED' ? 'PAYG_PRICE_UNAVAILABLE' : code;
+          expect(parseStepError(failure).code).toBe(expected);
+          expect(NON_RETRYABLE_STEP_CODES.has(expected)).toBe(true);
+        },
+      );
+
+      it('wins over a deterministic failure and a transient one together', async () => {
+        const harness = build([]);
+        harness.models.generate.mockImplementation(async (request: { provider: string }) => {
+          if (request.provider === 'OPENAI') throw new Error('Chat model gateway is unavailable');
+          if (request.provider === 'ANTHROPIC') throw tooLarge();
+          throw refusal('PAYG_CAP_TOO_LOW');
+        });
+
+        const failure = await harness.manager.generate(input).catch((error: unknown) => error);
+
+        expect(parseStepError(failure).code).toBe('PAYG_CAP_TOO_LOW');
+      });
+
+      it('still retries when only transient failures occur', async () => {
+        const harness = build([]);
+        harness.models.generate.mockRejectedValue(
+          new Error('Chat model request failed (500: PROVIDER_ERROR)'),
+        );
+
+        const failure = await harness.manager.generate(input).catch((error: unknown) => error);
+
+        expect(parseStepError(failure).code).toBe('PROVIDER_ERROR');
+        expect(NON_RETRYABLE_STEP_CODES.has(parseStepError(failure).code)).toBe(false);
+      });
     });
   });
 
