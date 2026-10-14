@@ -880,6 +880,7 @@ export const fa: TranslationDictionary = {
       deleteConfirm: 'حذف برای همیشه',
       ownerOnlyNote: 'فقط شما می‌توانید این پیشرفت را ببینید.',
       errorCode: 'کد: {code}',
+      detailsLabel: 'جزئیات',
       pollingErrors: 'پس از خطاهای مکرر، به‌روزرسانی زنده متوقف شد. صفحه را دوباره بارگذاری کنید.',
       httpStatus: 'وضعیت HTTP {status}',
       durationUnit: {
@@ -919,6 +920,10 @@ export const fa: TranslationDictionary = {
         modelHardCeiling: 'یک مدل پس از ۱۰ دقیقه هنوز کار می‌کرد، پس فراخوانی متوقف شد.',
         modelReasonedNoAnswer: 'یک مدل تمام بودجهٔ خروجی‌اش را صرف فکر کردن کرد و پاسخی ننوشت.',
         queueExpired: 'این تولید مدت زیادی در صف ماند و پیش از شروع متوقف شد.',
+        fallbackSkippedSameProvider: 'یک مدل جایگزین از همان ارائه‌دهنده نادیده گرفته شد.',
+        cloudProviderUnavailable: 'ارائه‌دهنده مدل ابری موقتاً در دسترس نیست.',
+        paygCapTooLow: 'سقف هزینه برای یک فراخوانی مدل خیلی پایین است.',
+        paygPriceUnavailable: 'این مدل هنوز قیمتی ندارد.',
         unknown: 'مشکلی پیش آمد ({code}).',
       },
       hint: {
@@ -961,6 +966,10 @@ export const fa: TranslationDictionary = {
         modelReasonedNoAnswer:
           'دوباره تلاش کنید، مدلی که مستقیم‌تر پاسخ می‌دهد انتخاب کنید یا موضوع را کوتاه کنید.',
         queueExpired: 'همین حالا دوباره تلاش کنید. اگر صف طولانی است، بعداً دوباره امتحان کنید.',
+        fallbackSkippedSameProvider: 'این عادی است و نیازی به اقدام نیست.',
+        cloudProviderUnavailable: 'کمی صبر کنید و دوباره تلاش کنید، یا مدل دیگری انتخاب کنید.',
+        paygCapTooLow: 'سقف هزینه را بالا ببرید و دوباره تلاش کنید.',
+        paygPriceUnavailable: 'مدل دیگری انتخاب کنید و دوباره تلاش کنید.',
         unknown: 'دوباره تلاش کنید یا مدل‌ها را تغییر دهید.',
       },
       startError: {
@@ -979,6 +988,9 @@ export const fa: TranslationDictionary = {
         idempotencyKeyReused:
           'این درخواست قبلاً با جزئیات دیگری ارسال شده است. از فرم دوباره شروع کنید.',
         notCancellable: 'این تولید نه در حال اجراست و نه در صف، بنابراین چیزی برای لغو کردن نیست.',
+        fallbackSameProvider:
+          'مدل جایگزین باید از ارائه‌دهنده‌ای غیر از مدل اصلی باشد. ارائه‌دهنده دیگری انتخاب کنید.',
+        notPublished: 'این Thread منتشر نشده است، پس این اقدام در دسترس نیست.',
         topicInvalid:
           'موضوع خالی است یا نویسه‌ای دارد که ذخیره نمی‌شود. آن را ویرایش کنید و دوباره تلاش کنید.',
         textInvalid:

@@ -117,6 +117,18 @@ describe('THREAD_GENERATION_CODE_KEYS', () => {
   });
 });
 
+describe('PAYG and cloud provider codes', () => {
+  it('maps the cap, price and cloud-outage codes to their own plain messages', () => {
+    expect(THREAD_GENERATION_CODE_KEYS.PAYG_CAP_TOO_LOW).toBe('paygCapTooLow');
+    expect(THREAD_GENERATION_CODE_KEYS.PAYG_PRICE_UNAVAILABLE).toBe('paygPriceUnavailable');
+    expect(THREAD_GENERATION_CODE_KEYS.CLOUD_PROVIDER_UNAVAILABLE).toBe('cloudProviderUnavailable');
+    const { code, hint } = en.chat.threadProgress;
+    expect(hint.paygCapTooLow).toMatch(/spend cap/i);
+    expect(code.paygPriceUnavailable).toMatch(/no price/i);
+    expect(code.cloudProviderUnavailable).toBeTruthy();
+  });
+});
+
 describe('THREAD_START_ERROR_KEYS', () => {
   const enumCodes = [
     ...readFileSync(THREADS_ERROR_ENUM, 'utf8').matchAll(/=\s*'([A-Z][A-Z0-9_]+)'/gu),

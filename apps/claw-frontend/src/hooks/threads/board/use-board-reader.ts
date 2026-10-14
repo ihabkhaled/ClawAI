@@ -22,10 +22,12 @@ export function useBoardReader(): BoardReaderController {
   const slug = params.slug ?? '';
   const router = useRouter();
   const [publicUrl, setPublicUrl] = useState<string | null>(null);
+  const [boardHref, setBoardHref] = useState('/board');
   const publicPath = threadPublicPath(slug);
   useEffect(() => {
     // Known only in the browser, so it appears after hydration and never mismatches it.
     setPublicUrl(`${window.location.origin}${publicPath}`);
+    setBoardHref(readBoardListUrl() ?? '/board');
   }, [publicPath]);
 
   const enabled = slug !== '';
@@ -54,12 +56,7 @@ export function useBoardReader(): BoardReaderController {
   const isNotFound = error instanceof ApiClientError && error.status === 404;
 
   function goBack(): void {
-    const remembered = readBoardListUrl();
-    if (remembered !== null && window.history.length > 1) {
-      router.back();
-      return;
-    }
-    router.push(remembered ?? '/board');
+    router.push(boardHref);
   }
 
   return {
@@ -78,6 +75,7 @@ export function useBoardReader(): BoardReaderController {
     loginHref: `/login?returnTo=${encodeURIComponent(`/board/${slug}`)}`,
     publicUrl,
     publicPath,
+    boardHref,
     actions,
     goBack,
     retry: () => {

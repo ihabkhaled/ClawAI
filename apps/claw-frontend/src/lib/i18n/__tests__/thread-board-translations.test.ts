@@ -18,12 +18,13 @@ const EXPECTED_PLACEHOLDERS: Record<string, string[]> = {
   threadBoardComments: ['{count}'],
   threadBoardLikes: ['{count}'],
   threadBoardViews: ['{count}'],
+  threadBoardRateLimitWait: ['{seconds}'],
   threadBoardPageOf: ['{page}', '{total}'],
 };
 
 describe('THREAD_BOARD_TRANSLATIONS', () => {
-  it('has the 42 keys, all prefixed threadBoard', () => {
-    expect(keys).toHaveLength(42);
+  it('has the 45 keys, all prefixed threadBoard', () => {
+    expect(keys).toHaveLength(45);
     for (const key of keys) {
       expect(key.startsWith('threadBoard')).toBe(true);
     }

@@ -6,18 +6,18 @@ import { ThreadBoardSort } from '@/enums/thread-board-sort.enum';
 
 import { useBoardQueryState } from '../use-board-query-state';
 
-const replace = vi.fn();
+const push = vi.fn();
 let search = '';
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ replace }),
+  useRouter: () => ({ push }),
   usePathname: () => '/board',
   useSearchParams: () => new URLSearchParams(search),
 }));
 vi.mock('@/hooks/use-locale', () => ({ useLocale: () => ({ locale: 'en' }) }));
 
 beforeEach(() => {
-  replace.mockClear();
+  push.mockClear();
   search = '';
 });
 
@@ -39,27 +39,27 @@ describe('useBoardQueryState', () => {
     search = 'page=3';
     const { result } = renderHook(() => useBoardQueryState());
     result.current.setSort(ThreadBoardSort.Trending);
-    expect(replace).toHaveBeenCalledWith('/board?sort=trending');
+    expect(push).toHaveBeenCalledWith('/board?sort=trending');
   });
 
   it('setLanguage all writes lang=all', () => {
     const { result } = renderHook(() => useBoardQueryState());
     result.current.setLanguage('all');
-    expect(replace).toHaveBeenCalledWith('/board?lang=all');
+    expect(push).toHaveBeenCalledWith('/board?lang=all');
   });
 
   it('setPage clamps', () => {
     const { result } = renderHook(() => useBoardQueryState());
     result.current.setPage(-4);
-    expect(replace).toHaveBeenCalledWith('/board');
+    expect(push).toHaveBeenCalledWith('/board');
     result.current.setPage(2);
-    expect(replace).toHaveBeenLastCalledWith('/board?page=2');
+    expect(push).toHaveBeenLastCalledWith('/board?page=2');
   });
 
   it('clearFilters returns to the bare path', () => {
     search = 'q=x&type=guide&lang=all&sort=liked';
     const { result } = renderHook(() => useBoardQueryState());
     result.current.clearFilters();
-    expect(replace).toHaveBeenCalledWith('/board');
+    expect(push).toHaveBeenCalledWith('/board');
   });
 });

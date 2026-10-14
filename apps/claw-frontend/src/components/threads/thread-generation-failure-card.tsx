@@ -35,12 +35,17 @@ export function ThreadGenerationFailureCard({
           : t('chat.threadProgress.failureWhere', { stage, role: t(threadRoleLabelKey(roleKind)) })}
       </p>
       <p className="font-medium">{t(keys.messageKey, keys.params)}</p>
-      <p className="text-xs">
-        {t('chat.threadProgress.errorCode', { code: failure.code })}
-        {failure.httpStatus === null
-          ? ''
-          : ` · ${t('chat.threadProgress.httpStatus', { status: String(failure.httpStatus) })}`}
-      </p>
+      <details className="text-xs" data-testid="thread-progress-failure-details">
+        <summary className="cursor-pointer font-medium">
+          {t('chat.threadProgress.detailsLabel')}
+        </summary>
+        <p className="mt-1 break-all" dir="ltr">
+          {t('chat.threadProgress.errorCode', { code: failure.code })}
+          {failure.httpStatus === null
+            ? ''
+            : ` · ${t('chat.threadProgress.httpStatus', { status: String(failure.httpStatus) })}`}
+        </p>
+      </details>
       <div>
         <p className="font-medium">{t('chat.threadProgress.failureHintLabel')}</p>
         <p>{t(keys.hintKey, keys.params)}</p>

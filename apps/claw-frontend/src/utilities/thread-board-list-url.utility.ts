@@ -1,5 +1,23 @@
 const BOARD_LIST_URL_KEY = 'thread-board:list-url';
 const BOARD_PATH = '/board';
+const LOCALE_PREFIX_PATTERN = /^[a-z]{2}$/;
+
+/** `/board`, optionally locale-prefixed (`/en/board`), with an optional query string. */
+function isBoardListUrl(url: string): boolean {
+  const [path = '', ...rest] = url.split('?');
+  if (rest.length > 0 && url.includes('#')) {
+    return false;
+  }
+  const segments = path.split('/');
+  const [empty, first, second] = segments;
+  if (empty !== '') {
+    return false;
+  }
+  if (segments.length === 2) {
+    return first === 'board';
+  }
+  return segments.length === 3 && LOCALE_PREFIX_PATTERN.test(first ?? '') && second === 'board';
+}
 
 /** Remembers the board URL (with its filters) so the reader's Back returns to the same view. */
 export function rememberBoardListUrl(url: string): void {
@@ -14,7 +32,7 @@ export function rememberBoardListUrl(url: string): void {
 export function readBoardListUrl(): string | null {
   try {
     const url = window.sessionStorage.getItem(BOARD_LIST_URL_KEY);
-    return url !== null && (url === BOARD_PATH || url.startsWith(`${BOARD_PATH}?`)) ? url : null;
+    return url !== null && isBoardListUrl(url) ? url : null;
   } catch {
     return null;
   }

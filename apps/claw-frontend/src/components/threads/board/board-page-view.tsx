@@ -47,9 +47,10 @@ export function BoardPageView(): ReactElement {
         />
       ) : null}
       {page.isLoading ? <BoardSkeleton /> : null}
-      {page.isError ? <BoardError onRetry={page.retry} /> : null}
+      {page.isError ? <BoardError onRetry={page.retry} rateLimit={page.rateLimit} /> : null}
       {showEmpty ? (
         <BoardEmpty
+          query={state.q.trim()}
           hasQuery={state.q.trim() !== ''}
           hasActiveFilters={query.hasActiveFilters}
           onClear={query.clearFilters}

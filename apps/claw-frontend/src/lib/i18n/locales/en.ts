@@ -879,6 +879,7 @@ export const en: TranslationDictionary = {
       deleteConfirm: 'Delete for good',
       ownerOnlyNote: 'Only you can see this progress.',
       errorCode: 'Code: {code}',
+      detailsLabel: 'Details',
       pollingErrors: 'Live updates paused after repeated errors. Reload the page to check again.',
       httpStatus: 'HTTP {status}',
       durationUnit: {
@@ -919,6 +920,10 @@ export const en: TranslationDictionary = {
         modelReasonedNoAnswer: 'A model used its whole output budget thinking and wrote no answer.',
         queueExpired:
           'This generation waited in the queue too long, so it was stopped before it started.',
+        fallbackSkippedSameProvider: 'A fallback model from the same provider was skipped.',
+        cloudProviderUnavailable: 'A cloud model provider is temporarily unavailable.',
+        paygCapTooLow: 'The spend cap is too low for one model call.',
+        paygPriceUnavailable: 'This model has no price yet.',
         unknown: 'Something went wrong ({code}).',
       },
       hint: {
@@ -960,6 +965,10 @@ export const en: TranslationDictionary = {
         modelReasonedNoAnswer:
           'Retry, pick a model that answers more directly, or shorten the topic.',
         queueExpired: 'Retry it now. If the queue is long, try again later.',
+        fallbackSkippedSameProvider: 'This is normal. No action needed.',
+        cloudProviderUnavailable: 'Wait a moment and retry, or pick a different model.',
+        paygCapTooLow: 'Raise the spend cap, then retry.',
+        paygPriceUnavailable: 'Pick another model, then retry.',
         unknown: 'Retry, or change the models and try again.',
       },
       startError: {
@@ -977,6 +986,9 @@ export const en: TranslationDictionary = {
         idempotencyKeyReused:
           'This request was already sent with different details. Start again from the form.',
         notCancellable: 'This generation is not running or queued, so there is nothing to cancel.',
+        fallbackSameProvider:
+          'A fallback must come from a different provider than the main model. Pick another provider.',
+        notPublished: 'This Thread is not published, so this action is not available.',
         topicInvalid:
           'The topic is empty or has a character that cannot be saved. Edit it and try again.',
         textInvalid:

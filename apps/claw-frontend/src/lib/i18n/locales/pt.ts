@@ -886,6 +886,7 @@ export const pt: TranslationDictionary = {
       deleteConfirm: 'Excluir de vez',
       ownerOnlyNote: 'Só você pode ver este progresso.',
       errorCode: 'Código: {code}',
+      detailsLabel: 'Detalhes',
       pollingErrors:
         'Atualizações em direto pausadas após erros repetidos. Recarregue a página para verificar de novo.',
       httpStatus: 'HTTP {status}',
@@ -932,6 +933,11 @@ export const pt: TranslationDictionary = {
           'Um modelo gastou todo o orçamento de saída pensando e não escreveu resposta.',
         queueExpired:
           'Esta geração ficou tempo demais na fila e foi interrompida antes de começar.',
+        fallbackSkippedSameProvider: 'Um modelo de reserva do mesmo provedor foi ignorado.',
+        cloudProviderUnavailable:
+          'Um provedor de modelos na nuvem está temporariamente indisponível.',
+        paygCapTooLow: 'O limite de gastos é baixo demais para uma chamada ao modelo.',
+        paygPriceUnavailable: 'Este modelo ainda não tem preço.',
         unknown: 'Algo deu errado ({code}).',
       },
       hint: {
@@ -974,6 +980,10 @@ export const pt: TranslationDictionary = {
         modelReasonedNoAnswer:
           'Tente de novo, escolha um modelo que responda mais diretamente ou encurte o tema.',
         queueExpired: 'Tente de novo agora. Se a fila estiver grande, tente mais tarde.',
+        fallbackSkippedSameProvider: 'Isso é normal. Nenhuma ação necessária.',
+        cloudProviderUnavailable: 'Aguarde um momento e tente de novo, ou escolha outro modelo.',
+        paygCapTooLow: 'Aumente o limite de gastos e tente de novo.',
+        paygPriceUnavailable: 'Escolha outro modelo e tente de novo.',
         unknown: 'Tente de novo, ou mude os modelos.',
       },
       startError: {
@@ -993,6 +1003,9 @@ export const pt: TranslationDictionary = {
           'Esta solicitação já foi enviada com detalhes diferentes. Comece de novo pelo formulário.',
         notCancellable:
           'Esta geração não está em andamento nem na fila, então não há nada para cancelar.',
+        fallbackSameProvider:
+          'Um modelo de reserva deve ser de um provedor diferente do modelo principal. Escolha outro provedor.',
+        notPublished: 'Este Thread não está publicado, então esta ação não está disponível.',
         topicInvalid:
           'O tópico está vazio ou tem um caractere que não pode ser salvo. Edite-o e tente de novo.',
         textInvalid:

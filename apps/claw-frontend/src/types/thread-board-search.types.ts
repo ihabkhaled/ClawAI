@@ -17,12 +17,16 @@ export interface HighlightSegment {
 
 export interface BoardSearchComboboxProps {
   value: string;
+  /** The board's active language filter, so suggestions follow it. */
+  lang: string;
   onSubmit: (q: string) => void;
 }
 
 export interface BoardSuggestionRowProps {
   id: string;
   suggestion: BoardSuggestionItem;
+  /** What was typed, for the fuzzy highlight when the API sends no ranges. */
+  query: string;
   active: boolean;
   onSelect: () => void;
   onHover: () => void;

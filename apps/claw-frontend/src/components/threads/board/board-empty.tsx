@@ -8,14 +8,21 @@ import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/lib/i18n';
 import type { BoardEmptyProps } from '@/types/thread-board-view.types';
 
-export function BoardEmpty({ hasQuery, hasActiveFilters, onClear }: BoardEmptyProps): ReactElement {
+export function BoardEmpty({
+  query,
+  hasQuery,
+  hasActiveFilters,
+  onClear,
+}: BoardEmptyProps): ReactElement {
   const { t } = useTranslation();
   const filtered = hasQuery || hasActiveFilters;
   return (
     <EmptyState
       icon={SearchX}
       title={t('chat.threadBoardEmptyTitle')}
-      description={filtered ? t('chat.threadBoardEmptySearch') : t('chat.threadBoardEmptyBody')}
+      description={
+        hasQuery ? t('chat.threadBoardEmptySearch', { query }) : t('chat.threadBoardEmptyBody')
+      }
       action={
         filtered ? (
           <Button type="button" variant="outline" className="min-h-11" onClick={onClear}>

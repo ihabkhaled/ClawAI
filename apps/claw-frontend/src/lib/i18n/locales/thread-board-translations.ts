@@ -54,6 +54,9 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardOpenPublic: 'Open public page',
     threadBoardCopyLink: 'Copy link',
     threadBoardViewOnBoard: 'View on Board',
+    threadBoardRateLimitTitle: 'Too many requests',
+    threadBoardRateLimitBody: 'Too many requests. Please wait a moment and try again.',
+    threadBoardRateLimitWait: 'Too many requests. Try again in {seconds} seconds.',
   },
   [Locale.AR]: {
     threadBoardNavLabel: 'اللوحة',
@@ -98,6 +101,9 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardOpenPublic: 'فتح الصفحة العامة',
     threadBoardCopyLink: 'نسخ الرابط',
     threadBoardViewOnBoard: 'عرض في اللوحة',
+    threadBoardRateLimitTitle: 'طلبات كثيرة جدًا',
+    threadBoardRateLimitBody: 'طلبات كثيرة جدًا. انتظر قليلًا ثم حاول مرة أخرى.',
+    threadBoardRateLimitWait: 'طلبات كثيرة جدًا. حاول مرة أخرى بعد {seconds} ثانية.',
   },
   [Locale.FR]: {
     threadBoardNavLabel: 'Tableau',
@@ -145,6 +151,9 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardOpenPublic: 'Ouvrir la page publique',
     threadBoardCopyLink: 'Copier le lien',
     threadBoardViewOnBoard: 'Voir sur le tableau',
+    threadBoardRateLimitTitle: 'Trop de requêtes',
+    threadBoardRateLimitBody: 'Trop de requêtes. Patientez un instant puis réessayez.',
+    threadBoardRateLimitWait: 'Trop de requêtes. Réessayez dans {seconds} secondes.',
   },
   [Locale.IT]: {
     threadBoardNavLabel: 'Bacheca',
@@ -193,6 +202,9 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardOpenPublic: 'Apri pagina pubblica',
     threadBoardCopyLink: 'Copia link',
     threadBoardViewOnBoard: 'Vedi in bacheca',
+    threadBoardRateLimitTitle: 'Troppe richieste',
+    threadBoardRateLimitBody: 'Troppe richieste. Attendi un momento e riprova.',
+    threadBoardRateLimitWait: 'Troppe richieste. Riprova tra {seconds} secondi.',
   },
   [Locale.DE]: {
     threadBoardNavLabel: 'Board',
@@ -241,6 +253,10 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardOpenPublic: 'Öffentliche Seite öffnen',
     threadBoardCopyLink: 'Link kopieren',
     threadBoardViewOnBoard: 'Im Board ansehen',
+    threadBoardRateLimitTitle: 'Zu viele Anfragen',
+    threadBoardRateLimitBody:
+      'Zu viele Anfragen. Bitte warten Sie einen Moment und versuchen Sie es erneut.',
+    threadBoardRateLimitWait: 'Zu viele Anfragen. Versuchen Sie es in {seconds} Sekunden erneut.',
   },
   [Locale.ES]: {
     threadBoardNavLabel: 'Tablón',
@@ -288,6 +304,9 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardOpenPublic: 'Abrir página pública',
     threadBoardCopyLink: 'Copiar enlace',
     threadBoardViewOnBoard: 'Ver en el tablón',
+    threadBoardRateLimitTitle: 'Demasiadas solicitudes',
+    threadBoardRateLimitBody: 'Demasiadas solicitudes. Espera un momento e inténtalo de nuevo.',
+    threadBoardRateLimitWait: 'Demasiadas solicitudes. Inténtalo de nuevo en {seconds} segundos.',
   },
   [Locale.RU]: {
     threadBoardNavLabel: 'Доска',
@@ -334,6 +353,9 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardOpenPublic: 'Открыть публичную страницу',
     threadBoardCopyLink: 'Копировать ссылку',
     threadBoardViewOnBoard: 'Открыть на доске',
+    threadBoardRateLimitTitle: 'Слишком много запросов',
+    threadBoardRateLimitBody: 'Слишком много запросов. Подождите немного и повторите попытку.',
+    threadBoardRateLimitWait: 'Слишком много запросов. Повторите попытку через {seconds} с.',
   },
   [Locale.PT]: {
     threadBoardNavLabel: 'Mural',
@@ -379,6 +401,9 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardOpenPublic: 'Abrir página pública',
     threadBoardCopyLink: 'Copiar link',
     threadBoardViewOnBoard: 'Ver no mural',
+    threadBoardRateLimitTitle: 'Muitas solicitações',
+    threadBoardRateLimitBody: 'Muitas solicitações. Aguarde um momento e tente novamente.',
+    threadBoardRateLimitWait: 'Muitas solicitações. Tente novamente em {seconds} segundos.',
   },
   [Locale.HI]: {
     threadBoardNavLabel: 'बोर्ड',
@@ -425,6 +450,9 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardOpenPublic: 'सार्वजनिक पृष्ठ खोलें',
     threadBoardCopyLink: 'लिंक कॉपी करें',
     threadBoardViewOnBoard: 'बोर्ड पर देखें',
+    threadBoardRateLimitTitle: 'बहुत अधिक अनुरोध',
+    threadBoardRateLimitBody: 'बहुत अधिक अनुरोध। कृपया थोड़ी देर रुकें और फिर कोशिश करें।',
+    threadBoardRateLimitWait: 'बहुत अधिक अनुरोध। {seconds} सेकंड बाद फिर कोशिश करें।',
   },
   [Locale.JA]: {
     threadBoardNavLabel: 'ボード',
@@ -471,6 +499,9 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardOpenPublic: '公開ページを開く',
     threadBoardCopyLink: 'リンクをコピー',
     threadBoardViewOnBoard: 'ボードで見る',
+    threadBoardRateLimitTitle: 'リクエストが多すぎます',
+    threadBoardRateLimitBody: 'リクエストが多すぎます。しばらく待ってからもう一度お試しください。',
+    threadBoardRateLimitWait: 'リクエストが多すぎます。{seconds} 秒後にもう一度お試しください。',
   },
   [Locale.TH]: {
     threadBoardNavLabel: 'บอร์ด',
@@ -515,6 +546,9 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardOpenPublic: 'เปิดหน้าสาธารณะ',
     threadBoardCopyLink: 'คัดลอกลิงก์',
     threadBoardViewOnBoard: 'ดูในบอร์ด',
+    threadBoardRateLimitTitle: 'คำขอมากเกินไป',
+    threadBoardRateLimitBody: 'คำขอมากเกินไป โปรดรอสักครู่แล้วลองอีกครั้ง',
+    threadBoardRateLimitWait: 'คำขอมากเกินไป ลองอีกครั้งใน {seconds} วินาที',
   },
   [Locale.FA]: {
     threadBoardNavLabel: 'تابلو',
@@ -560,6 +594,9 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardOpenPublic: 'باز کردن صفحه عمومی',
     threadBoardCopyLink: 'کپی پیوند',
     threadBoardViewOnBoard: 'مشاهده در تابلو',
+    threadBoardRateLimitTitle: 'درخواست‌های بیش از حد',
+    threadBoardRateLimitBody: 'درخواست‌های بیش از حد. کمی صبر کنید و دوباره تلاش کنید.',
+    threadBoardRateLimitWait: 'درخواست‌های بیش از حد. {seconds} ثانیهٔ دیگر دوباره تلاش کنید.',
   },
   [Locale.ZH]: {
     threadBoardNavLabel: '公告板',
@@ -604,5 +641,8 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardOpenPublic: '打开公开页面',
     threadBoardCopyLink: '复制链接',
     threadBoardViewOnBoard: '在公告板中查看',
+    threadBoardRateLimitTitle: '请求过多',
+    threadBoardRateLimitBody: '请求过多，请稍候再试。',
+    threadBoardRateLimitWait: '请求过多，请在 {seconds} 秒后重试。',
   },
 };

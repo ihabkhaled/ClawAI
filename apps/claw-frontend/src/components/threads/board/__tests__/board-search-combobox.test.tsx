@@ -32,7 +32,7 @@ const item = (slug: string, title: string, match: [number, number][] = []) => ({
 
 function setup(value = '') {
   const onSubmit = vi.fn();
-  render(<BoardSearchCombobox value={value} onSubmit={onSubmit} />);
+  render(<BoardSearchCombobox value={value} lang="all" onSubmit={onSubmit} />);
   return { onSubmit, input: screen.getByRole('combobox') };
 }
 
@@ -110,7 +110,7 @@ describe('BoardSearchCombobox', () => {
     suggestState = { ...suggestState, total: 100, totalCapped: true };
     const { input, onSubmit } = setup();
     await userEvent.type(input, 'al');
-    await userEvent.click(screen.getByText('chat.threadBoardShowAll|100+'));
+    await userEvent.click(screen.getByText('chat.threadBoardShowAll (100+)'));
     expect(onSubmit).toHaveBeenCalledWith('al');
   });
 

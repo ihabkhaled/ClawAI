@@ -8,7 +8,6 @@ import type { ThreadBoardSuggestResponse } from '@/types/thread-board.types';
 
 import { useBoardSuggest } from '../use-board-suggest';
 
-vi.mock('@/hooks/use-locale', () => ({ useLocale: () => ({ locale: 'en' }) }));
 vi.mock('@/repositories/threads/thread-board.repository', () => ({
   threadBoardRepository: { suggest: vi.fn(), list: vi.fn() },
 }));
@@ -39,7 +38,7 @@ afterEach(() => {
 
 describe('useBoardSuggest', () => {
   it('does not fetch below 2 characters', async () => {
-    const { result } = renderHook(() => useBoardSuggest('a'), { wrapper: wrapper() });
+    const { result } = renderHook(() => useBoardSuggest('a', 'en'), { wrapper: wrapper() });
     await act(async () => {
       await vi.advanceTimersByTimeAsync(500);
     });
@@ -49,7 +48,7 @@ describe('useBoardSuggest', () => {
   });
 
   it('debounces 200 ms and fetches once for the final value', async () => {
-    const { rerender } = renderHook(({ q }) => useBoardSuggest(q), {
+    const { rerender } = renderHook(({ q }) => useBoardSuggest(q, 'all'), {
       wrapper: wrapper(),
       initialProps: { q: 'x' },
     });
@@ -71,12 +70,12 @@ describe('useBoardSuggest', () => {
     expect(threadBoardRepository.suggest).toHaveBeenCalledTimes(1);
     expect(vi.mocked(threadBoardRepository.suggest).mock.calls[0]?.slice(0, 2)).toEqual([
       'rags',
-      'en',
+      'all',
     ]);
   });
 
   it('exposes the response fields and passes an abort signal', async () => {
-    const { result } = renderHook(() => useBoardSuggest('rag'), { wrapper: wrapper() });
+    const { result } = renderHook(() => useBoardSuggest('rag', 'all'), { wrapper: wrapper() });
     await act(async () => {
       await vi.advanceTimersByTimeAsync(250);
     });
@@ -88,7 +87,7 @@ describe('useBoardSuggest', () => {
 
   it('reports isError when the request fails', async () => {
     vi.mocked(threadBoardRepository.suggest).mockRejectedValue(new Error('boom'));
-    const { result } = renderHook(() => useBoardSuggest('rag'), { wrapper: wrapper() });
+    const { result } = renderHook(() => useBoardSuggest('rag', 'all'), { wrapper: wrapper() });
     await act(async () => {
       await vi.advanceTimersByTimeAsync(250);
     });

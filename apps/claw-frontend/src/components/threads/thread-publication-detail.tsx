@@ -109,7 +109,7 @@ export function ThreadPublicationDetail({
               <h3 className="font-medium">{t('chat.threadCitations')}</h3>
               <ul className="list-inside list-disc">
                 {draft.citations.map(({ evidenceId, url }) => (
-                  <li key={evidenceId}>
+                  <li key={evidenceId} className="break-all">
                     <a
                       className="text-primary underline"
                       href={url}

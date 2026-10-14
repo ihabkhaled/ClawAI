@@ -881,6 +881,7 @@ export const hi: TranslationDictionary = {
       deleteConfirm: 'हमेशा के लिए हटाएँ',
       ownerOnlyNote: 'यह प्रगति केवल आप देख सकते हैं।',
       errorCode: 'कोड: {code}',
+      detailsLabel: 'विवरण',
       pollingErrors:
         'बार-बार त्रुटि के बाद लाइव अपडेट रोक दिए गए। दोबारा जाँचने के लिए पेज रीलोड करें।',
       httpStatus: 'HTTP स्थिति {status}',
@@ -923,6 +924,10 @@ export const hi: TranslationDictionary = {
           'एक मॉडल ने अपना पूरा आउटपुट बजट सोचने में लगा दिया और कोई उत्तर नहीं लिखा।',
         queueExpired:
           'यह जनरेशन कतार में बहुत देर तक इंतज़ार करता रहा, इसलिए शुरू होने से पहले ही रोक दिया गया।',
+        fallbackSkippedSameProvider: 'उसी प्रदाता के एक बैकअप मॉडल को छोड़ दिया गया।',
+        cloudProviderUnavailable: 'क्लाउड मॉडल प्रदाता अभी उपलब्ध नहीं है।',
+        paygCapTooLow: 'एक मॉडल कॉल के लिए खर्च सीमा बहुत कम है।',
+        paygPriceUnavailable: 'इस मॉडल की अभी कोई कीमत तय नहीं है।',
         unknown: 'कुछ गड़बड़ हो गई ({code})।',
       },
       hint: {
@@ -964,6 +969,10 @@ export const hi: TranslationDictionary = {
         modelReasonedNoAnswer:
           'दोबारा कोशिश करें, सीधे उत्तर देने वाला मॉडल चुनें या विषय छोटा करें।',
         queueExpired: 'अभी दोबारा कोशिश करें। कतार लंबी हो तो बाद में फिर कोशिश करें।',
+        fallbackSkippedSameProvider: 'यह सामान्य है। कुछ करने की ज़रूरत नहीं।',
+        cloudProviderUnavailable: 'थोड़ा रुककर फिर कोशिश करें, या दूसरा मॉडल चुनें।',
+        paygCapTooLow: 'खर्च सीमा बढ़ाएँ, फिर दोबारा कोशिश करें।',
+        paygPriceUnavailable: 'दूसरा मॉडल चुनें, फिर दोबारा कोशिश करें।',
         unknown: 'दोबारा कोशिश करें, या मॉडल बदलें।',
       },
       startError: {
@@ -981,6 +990,9 @@ export const hi: TranslationDictionary = {
           'यह अनुरोध पहले ही अलग विवरण के साथ भेजा जा चुका है। फ़ॉर्म से दोबारा शुरू करें।',
         notCancellable:
           'यह जनरेशन न तो चल रहा है और न कतार में है, इसलिए रद्द करने के लिए कुछ नहीं है।',
+        fallbackSameProvider:
+          'बैकअप मॉडल मुख्य मॉडल से अलग प्रदाता का होना चाहिए। दूसरा प्रदाता चुनें।',
+        notPublished: 'यह Thread प्रकाशित नहीं है, इसलिए यह क्रिया उपलब्ध नहीं है।',
         topicInvalid:
           'विषय खाली है या उसमें ऐसा वर्ण है जो सहेजा नहीं जा सकता। उसे बदलें और फिर कोशिश करें।',
         textInvalid:

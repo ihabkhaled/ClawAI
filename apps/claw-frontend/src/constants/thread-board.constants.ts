@@ -10,8 +10,8 @@ export const THREAD_BOARD_SORTS: ReadonlyArray<ThreadBoardSort> = Object.values(
 export const THREAD_BOARD_DEFAULT_SORT = ThreadBoardSort.Latest;
 export const THREAD_BOARD_PAGE_SIZES: ReadonlyArray<ThreadBoardPageSize> = [12, 24, 48];
 export const THREAD_BOARD_DEFAULT_PAGE_SIZE: ThreadBoardPageSize = 12;
-export const THREAD_BOARD_MAX_PAGE = 1000;
-export const THREAD_BOARD_MAX_QUERY_LENGTH = 200;
+export const THREAD_BOARD_MAX_PAGE = 500;
+export const THREAD_BOARD_MAX_QUERY_LENGTH = 100;
 export const THREAD_BOARD_TYPES: ReadonlyArray<ThreadPublicationType> =
   Object.values(ThreadPublicationType);
 export const THREAD_BOARD_SUGGEST_DEBOUNCE_MS = 200;

@@ -861,6 +861,7 @@ export const th: TranslationDictionary = {
       deleteConfirm: 'ลบถาวร',
       ownerOnlyNote: 'มีเพียงคุณเท่านั้นที่เห็นความคืบหน้านี้',
       errorCode: 'รหัส: {code}',
+      detailsLabel: 'รายละเอียด',
       pollingErrors: 'หยุดอัปเดตสดหลังเกิดข้อผิดพลาดซ้ำ โหลดหน้าใหม่เพื่อตรวจสอบอีกครั้ง',
       httpStatus: 'HTTP สถานะ {status}',
       durationUnit: {
@@ -899,6 +900,10 @@ export const th: TranslationDictionary = {
         modelHardCeiling: 'โมเดลยังทำงานอยู่หลังผ่านไป 10 นาที จึงหยุดการเรียกนี้',
         modelReasonedNoAnswer: 'โมเดลใช้งบเอาต์พุตทั้งหมดไปกับการคิดและไม่ได้เขียนคำตอบ',
         queueExpired: 'การสร้างนี้รอในคิวนานเกินไป จึงถูกหยุดก่อนเริ่มทำงาน',
+        fallbackSkippedSameProvider: 'ข้ามโมเดลสำรองจากผู้ให้บริการเดียวกัน',
+        cloudProviderUnavailable: 'ผู้ให้บริการโมเดลบนคลาวด์ไม่พร้อมใช้งานชั่วคราว',
+        paygCapTooLow: 'วงเงินใช้จ่ายต่ำเกินไปสำหรับการเรียกโมเดลหนึ่งครั้ง',
+        paygPriceUnavailable: 'โมเดลนี้ยังไม่มีราคา',
         unknown: 'เกิดข้อผิดพลาด ({code})',
       },
       hint: {
@@ -939,6 +944,10 @@ export const th: TranslationDictionary = {
         modelHardCeiling: 'เลือกโมเดลที่เร็วกว่าหรือหัวข้อที่สั้นลง แล้วลองอีกครั้ง',
         modelReasonedNoAnswer: 'ลองอีกครั้ง เลือกโมเดลที่ตอบตรงกว่า หรือทำหัวข้อให้สั้นลง',
         queueExpired: 'ลองใหม่ได้ทันที หากคิวยาว ให้ลองอีกครั้งภายหลัง',
+        fallbackSkippedSameProvider: 'เป็นเรื่องปกติ ไม่ต้องทำอะไร',
+        cloudProviderUnavailable: 'รอสักครู่แล้วลองใหม่ หรือเลือกโมเดลอื่น',
+        paygCapTooLow: 'เพิ่มวงเงินใช้จ่ายแล้วลองใหม่',
+        paygPriceUnavailable: 'เลือกโมเดลอื่นแล้วลองใหม่',
         unknown: 'ลองใหม่ หรือเปลี่ยนโมเดล',
       },
       startError: {
@@ -954,6 +963,9 @@ export const th: TranslationDictionary = {
           'คุณมีการสร้างที่กำลังทำงานครบจำนวนสูงสุดแล้ว รอให้อันหนึ่งเสร็จหรือยกเลิกหนึ่งอัน',
         idempotencyKeyReused: 'คำขอนี้เคยถูกส่งด้วยรายละเอียดที่ต่างออกไปแล้ว เริ่มใหม่จากแบบฟอร์ม',
         notCancellable: 'การสร้างนี้ไม่ได้กำลังทำงานและไม่ได้อยู่ในคิว จึงไม่มีอะไรให้ยกเลิก',
+        fallbackSameProvider:
+          'โมเดลสำรองต้องมาจากผู้ให้บริการที่ต่างจากโมเดลหลัก เลือกผู้ให้บริการอื่น',
+        notPublished: 'Thread นี้ยังไม่เผยแพร่ จึงใช้การกระทำนี้ไม่ได้',
         topicInvalid: 'หัวข้อว่างเปล่าหรือมีอักขระที่บันทึกไม่ได้ แก้ไขแล้วลองอีกครั้ง',
         textInvalid: 'ช่องข้อความมีอักขระที่บันทึกไม่ได้ ลบอักขระที่ผิดปกติแล้วลองอีกครั้ง',
       },

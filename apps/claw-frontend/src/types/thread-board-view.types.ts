@@ -54,11 +54,15 @@ export type BoardPaginationProps = {
 };
 
 export type BoardEmptyProps = {
+  query: string;
   hasQuery: boolean;
   hasActiveFilters: boolean;
   onClear: () => void;
 };
 
-export type BoardErrorProps = { onRetry: () => void };
+/** Set when the list was refused with 429; `retryAfterSeconds` is the server's Retry-After. */
+export type BoardRateLimit = { retryAfterSeconds: number | null };
+
+export type BoardErrorProps = { onRetry: () => void; rateLimit?: BoardRateLimit | null };
 
 export type BoardChipInput = BoardFilterValues & { q: string };

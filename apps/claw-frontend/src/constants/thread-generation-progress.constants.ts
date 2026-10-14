@@ -38,6 +38,9 @@ export const THREAD_SAFE_ERROR_CODE_PATTERN = /^[A-Z][A-Z0-9_]{1,63}$/;
 /** Machine code from the service to the key under `chat.threadProgress.code` and `.hint`. */
 export const THREAD_GENERATION_CODE_KEYS: Readonly<Record<string, string>> = {
   PAYG_CREDIT_EXHAUSTED: 'paygCreditExhausted',
+  PAYG_CAP_TOO_LOW: 'paygCapTooLow',
+  PAYG_PRICE_UNAVAILABLE: 'paygPriceUnavailable',
+  CLOUD_PROVIDER_UNAVAILABLE: 'cloudProviderUnavailable',
   PROVIDER_UNAVAILABLE: 'providerUnavailable',
   PROVIDER_ERROR: 'providerError',
   PROVIDER_RATE_LIMITED: 'providerRateLimited',
@@ -46,6 +49,7 @@ export const THREAD_GENERATION_CODE_KEYS: Readonly<Record<string, string>> = {
   JUDGE_SCORE_LOW: 'judgeScoreLow',
   CRITIC_SCORE_LOW: 'criticScoreLow',
   FALLBACK_USED: 'fallbackUsed',
+  FALLBACK_SKIPPED_SAME_PROVIDER: 'fallbackSkippedSameProvider',
   CONTEXT_WINDOW_EXCEEDED: 'contextWindowExceeded',
   MODEL_CONTEXT_UNAVAILABLE: 'modelContextUnavailable',
   MODEL_CATALOG_UNREACHABLE: 'modelCatalogUnreachable',
@@ -83,6 +87,8 @@ export const THREAD_START_ERROR_KEYS: Readonly<Record<string, string>> = {
   THREAD_GENERATION_TOO_MANY_ACTIVE: 'tooManyActive',
   THREAD_IDEMPOTENCY_KEY_REUSED: 'idempotencyKeyReused',
   THREAD_GENERATION_NOT_CANCELLABLE: 'notCancellable',
+  THREAD_FALLBACK_SAME_PROVIDER: 'fallbackSameProvider',
+  THREAD_PUBLICATION_NOT_PUBLISHED: 'notPublished',
   THREAD_TOPIC_INVALID: 'topicInvalid',
   THREAD_TEXT_INVALID: 'textInvalid',
 };

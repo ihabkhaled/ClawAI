@@ -883,6 +883,7 @@ export const ja: TranslationDictionary = {
       deleteConfirm: '完全に削除',
       ownerOnlyNote: 'この進行状況はあなただけが見られます。',
       errorCode: 'コード：{code}',
+      detailsLabel: '詳細',
       pollingErrors:
         'エラーが続いたためライブ更新を停止しました。ページを再読み込みして確認してください。',
       httpStatus: 'HTTP ステータス {status}',
@@ -922,6 +923,10 @@ export const ja: TranslationDictionary = {
         modelHardCeiling: 'モデルが10分経っても動作していたため、呼び出しを停止しました。',
         modelReasonedNoAnswer: 'モデルが出力の予算をすべて思考に使い切り、回答を書きませんでした。',
         queueExpired: 'この生成は待機列に長く並びすぎたため、開始前に停止されました。',
+        fallbackSkippedSameProvider: '同じ提供元の予備モデルをスキップしました。',
+        cloudProviderUnavailable: 'クラウドのモデル提供元が一時的に利用できません。',
+        paygCapTooLow: '利用上限が低すぎて、モデルを1回呼び出せません。',
+        paygPriceUnavailable: 'このモデルにはまだ価格がありません。',
         unknown: '問題が発生しました（{code}）。',
       },
       hint: {
@@ -965,6 +970,10 @@ export const ja: TranslationDictionary = {
           'もう一度試すか、より直接答えるモデルを選ぶか、テーマを短くしてください。',
         queueExpired:
           'いますぐ再試行してください。待機列が長い場合は、しばらくしてからもう一度お試しください。',
+        fallbackSkippedSameProvider: '通常の動作です。対応は不要です。',
+        cloudProviderUnavailable: '少し待って再試行するか、別のモデルを選んでください。',
+        paygCapTooLow: '利用上限を引き上げてから再試行してください。',
+        paygPriceUnavailable: '別のモデルを選んでから再試行してください。',
         unknown: '再試行するか、モデルを変更してください。',
       },
       startError: {
@@ -983,6 +992,9 @@ export const ja: TranslationDictionary = {
         idempotencyKeyReused:
           'このリクエストは別の内容で送信済みです。フォームからやり直してください。',
         notCancellable: 'この生成は実行中でも待機中でもないため、キャンセルするものはありません。',
+        fallbackSameProvider:
+          '予備モデルはメインモデルと別の提供元にする必要があります。別の提供元を選んでください。',
+        notPublished: 'この Thread は公開されていないため、この操作は使えません。',
         topicInvalid:
           'トピックが空か、保存できない文字が含まれています。編集してもう一度お試しください。',
         textInvalid:

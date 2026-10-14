@@ -17,6 +17,7 @@ import {
   buildThreadTextDocument,
 } from '@/utilities/thread-document-export.utility';
 import { threadExportBody } from '@/utilities/thread-export-download.utility';
+import { isThreadPublishable } from '@/utilities/thread-publish-eligibility.utility';
 import { createThreadRevisionRequest } from '@/utilities/thread-revision-request.utility';
 
 /**
@@ -211,7 +212,7 @@ export function useThreadPublicationDetail(
     hasDraft: Boolean(generation.data?.draft),
     generationFailed: generation.data?.status === 'FAILED',
     generationCancelled: generation.data?.status === 'CANCELLED',
-    publicationReady: generation.data?.publicationStatus === 'READY_FOR_REVIEW',
+    publicationReady: isThreadPublishable(generation.data),
     revisionIsTerminal,
     revisionReviewMessage: getRevisionReviewMessage(),
     startEditing,

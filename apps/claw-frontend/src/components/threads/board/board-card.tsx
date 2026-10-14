@@ -19,7 +19,7 @@ export function BoardCard({ item }: BoardCardProps): ReactElement {
   const { t } = useTranslation();
   const typeKey = boardTypeLabelKey(item.publicationType);
   const stats = [
-    { Icon: Clock, text: t('chat.threadBoardReadingMinutes', { count: item.readingMinutes }) },
+    { Icon: Clock, text: t('chat.threadBoardReadingMinutes', { minutes: item.readingMinutes }) },
     { Icon: Link2, text: t('chat.threadBoardSources', { count: item.sourceCount }) },
     { Icon: ThumbsUp, text: t('chat.threadBoardLikes', { count: item.likeCount }) },
     { Icon: MessageSquare, text: t('chat.threadBoardComments', { count: item.commentCount }) },

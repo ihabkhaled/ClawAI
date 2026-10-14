@@ -796,6 +796,7 @@ export type TranslationDictionary = {
       deleteConfirm: string;
       ownerOnlyNote: string;
       errorCode: string;
+      detailsLabel: string;
       pollingErrors: string;
       httpStatus: string;
       durationUnit: {
@@ -805,6 +806,10 @@ export type TranslationDictionary = {
       };
       code: {
         paygCreditExhausted: string;
+        cloudProviderUnavailable: string;
+        fallbackSkippedSameProvider: string;
+        paygCapTooLow: string;
+        paygPriceUnavailable: string;
         providerUnavailable: string;
         providerError: string;
         providerRateLimited: string;
@@ -838,6 +843,10 @@ export type TranslationDictionary = {
       };
       hint: {
         paygCreditExhausted: string;
+        cloudProviderUnavailable: string;
+        fallbackSkippedSameProvider: string;
+        paygCapTooLow: string;
+        paygPriceUnavailable: string;
         providerUnavailable: string;
         providerError: string;
         providerRateLimited: string;
@@ -879,6 +888,8 @@ export type TranslationDictionary = {
         tooManyActive: string;
         idempotencyKeyReused: string;
         notCancellable: string;
+        fallbackSameProvider: string;
+        notPublished: string;
         topicInvalid: string;
         textInvalid: string;
       };
@@ -7850,6 +7861,9 @@ export type PluginsInstallLocaleTranslation = {
 
 /** Flat `chat.threadBoard*` keys for the community Board; see thread-board-translations.ts. */
 export type ThreadBoardLocaleTranslation = {
+  threadBoardRateLimitTitle: string;
+  threadBoardRateLimitBody: string;
+  threadBoardRateLimitWait: string;
   threadBoardNavLabel: string;
   threadBoardTitle: string;
   threadBoardSubtitle: string;

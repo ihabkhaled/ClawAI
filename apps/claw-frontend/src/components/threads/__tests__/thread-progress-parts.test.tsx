@@ -166,6 +166,23 @@ describe('ThreadGenerationSelectionsView', () => {
     expect(view).toHaveTextContent('chat.threadProgress.noFallbacks');
     expect(view).toHaveTextContent('chat.threadProgress.roleJudge');
   });
+
+  it('shows translated labels instead of raw slugs and keeps model ids inside Details', () => {
+    const base = makeProgress().selections;
+    render(
+      <ThreadGenerationSelectionsView
+        selections={{ ...base, publicationType: 'research-article', contentLocale: 'fr' }}
+      />,
+    );
+    const view = screen.getByTestId('thread-progress-selections');
+    expect(view).toHaveTextContent('chat.threadTypeResearchArticle');
+    expect(view).not.toHaveTextContent('research-article');
+    expect(view).not.toHaveTextContent('author-1');
+    expect(view).toHaveTextContent('chat.threadProgress.roleAuthor 1');
+    const details = view.querySelectorAll('details');
+    expect(details).toHaveLength(base.roles.length);
+    expect(details[0]).toHaveTextContent('OPENAI / gpt-x');
+  });
 });
 
 describe('ThreadGenerationFailureCard', () => {
@@ -183,6 +200,10 @@ describe('ThreadGenerationFailureCard', () => {
     expect(card).toHaveTextContent('chat.threadProgress.hint.paygCreditExhausted');
     expect(card).toHaveTextContent('chat.threadProgress.failureRetryable');
     expect(card).toHaveTextContent('chat.threadProgress.httpStatus|{"status":"402"}');
+    const details = screen.getByTestId('thread-progress-failure-details');
+    expect(details.tagName).toBe('DETAILS');
+    expect(details).not.toHaveAttribute('open');
+    expect(details).toHaveTextContent('chat.threadProgress.errorCode');
   });
 
   it('copes with an unknown stage, no role, no status and a non-retryable failure', () => {

@@ -902,6 +902,7 @@ export const de: TranslationDictionary = {
       deleteConfirm: 'Endgültig löschen',
       ownerOnlyNote: 'Nur Sie können diesen Fortschritt sehen.',
       errorCode: 'Code: {code}',
+      detailsLabel: 'Details',
       pollingErrors:
         'Live-Updates nach wiederholten Fehlern angehalten. Lade die Seite neu, um erneut zu prüfen.',
       httpStatus: 'HTTP {status}',
@@ -949,6 +950,10 @@ export const de: TranslationDictionary = {
           'Ein Modell hat sein gesamtes Ausgabebudget zum Nachdenken verbraucht und keine Antwort geschrieben.',
         queueExpired:
           'Diese Erstellung hat zu lange in der Warteschlange gewartet und wurde gestoppt, bevor sie begann.',
+        fallbackSkippedSameProvider: 'Ein Ersatzmodell desselben Anbieters wurde übersprungen.',
+        cloudProviderUnavailable: 'Ein Cloud-Modellanbieter ist vorübergehend nicht erreichbar.',
+        paygCapTooLow: 'Das Ausgabenlimit ist für einen Modellaufruf zu niedrig.',
+        paygPriceUnavailable: 'Für dieses Modell gibt es noch keinen Preis.',
         unknown: 'Etwas ist schiefgelaufen ({code}).',
       },
       hint: {
@@ -996,6 +1001,11 @@ export const de: TranslationDictionary = {
           'Versuche es erneut, wähle ein Modell, das direkter antwortet, oder kürze das Thema.',
         queueExpired:
           'Versuche es jetzt erneut. Ist die Warteschlange lang, versuche es später noch einmal.',
+        fallbackSkippedSameProvider: 'Das ist normal. Keine Aktion nötig.',
+        cloudProviderUnavailable:
+          'Warten Sie kurz und versuchen Sie es erneut oder wählen Sie ein anderes Modell.',
+        paygCapTooLow: 'Erhöhen Sie das Ausgabenlimit und versuchen Sie es erneut.',
+        paygPriceUnavailable: 'Wählen Sie ein anderes Modell und versuchen Sie es erneut.',
         unknown: 'Versuchen Sie es erneut oder ändern Sie die Modelle.',
       },
       startError: {
@@ -1015,6 +1025,10 @@ export const de: TranslationDictionary = {
           'Diese Anfrage wurde schon mit anderen Angaben gesendet. Starte neu über das Formular.',
         notCancellable:
           'Diese Erstellung läuft nicht und wartet nicht in der Warteschlange, es gibt also nichts abzubrechen.',
+        fallbackSameProvider:
+          'Ein Ersatzmodell muss von einem anderen Anbieter stammen als das Hauptmodell. Wählen Sie einen anderen Anbieter.',
+        notPublished:
+          'Dieser Thread ist nicht veröffentlicht, daher ist diese Aktion nicht verfügbar.',
         topicInvalid:
           'Das Thema ist leer oder enthält ein Zeichen, das nicht gespeichert werden kann. Bearbeite es und versuche es erneut.',
         textInvalid:

@@ -896,6 +896,7 @@ export const fr: TranslationDictionary = {
       deleteConfirm: 'Supprimer définitivement',
       ownerOnlyNote: 'Vous seul pouvez voir cette progression.',
       errorCode: 'Code : {code}',
+      detailsLabel: 'Détails',
       pollingErrors:
         'Mises à jour en direct suspendues après des erreurs répétées. Rechargez la page pour revérifier.',
       httpStatus: 'HTTP {status}',
@@ -943,6 +944,10 @@ export const fr: TranslationDictionary = {
           'Un modèle a dépensé tout son budget de sortie à réfléchir et n’a écrit aucune réponse.',
         queueExpired:
           'Cette génération a trop attendu dans la file, elle a donc été arrêtée avant de commencer.',
+        fallbackSkippedSameProvider: 'Un modèle de secours du même fournisseur a été ignoré.',
+        cloudProviderUnavailable: 'Un fournisseur de modèles cloud est momentanément indisponible.',
+        paygCapTooLow: 'Le plafond de dépenses est trop bas pour un appel de modèle.',
+        paygPriceUnavailable: 'Ce modèle n’a pas encore de prix.',
         unknown: 'Un problème est survenu ({code}).',
       },
       hint: {
@@ -986,6 +991,11 @@ export const fr: TranslationDictionary = {
         modelReasonedNoAnswer:
           'Réessayez, choisissez un modèle qui répond plus directement ou raccourcissez le sujet.',
         queueExpired: 'Relancez-la maintenant. Si la file est longue, réessayez plus tard.',
+        fallbackSkippedSameProvider: 'C’est normal. Aucune action nécessaire.',
+        cloudProviderUnavailable:
+          'Patientez un instant et réessayez, ou choisissez un autre modèle.',
+        paygCapTooLow: 'Augmentez le plafond de dépenses, puis réessayez.',
+        paygPriceUnavailable: 'Choisissez un autre modèle, puis réessayez.',
         unknown: 'Réessayez, ou changez de modèles.',
       },
       startError: {
@@ -1006,6 +1016,9 @@ export const fr: TranslationDictionary = {
           'Cette demande a déjà été envoyée avec des détails différents. Recommencez depuis le formulaire.',
         notCancellable:
           'Cette génération n’est ni en cours ni en file d’attente, il n’y a donc rien à annuler.',
+        fallbackSameProvider:
+          'Un modèle de secours doit venir d’un autre fournisseur que le modèle principal. Choisissez un autre fournisseur.',
+        notPublished: 'Ce Thread n’est pas publié, cette action n’est donc pas disponible.',
         topicInvalid:
           'Le sujet est vide ou contient un caractère qui ne peut pas être enregistré. Modifiez-le et réessayez.',
         textInvalid:

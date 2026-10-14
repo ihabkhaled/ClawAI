@@ -888,6 +888,7 @@ export const ru: TranslationDictionary = {
       deleteConfirm: 'Удалить навсегда',
       ownerOnlyNote: 'Этот ход видите только вы.',
       errorCode: 'Код: {code}',
+      detailsLabel: 'Подробности',
       pollingErrors:
         'Живые обновления приостановлены после повторных ошибок. Перезагрузите страницу, чтобы проверить снова.',
       httpStatus: 'HTTP, статус {status}',
@@ -929,6 +930,10 @@ export const ru: TranslationDictionary = {
         modelReasonedNoAnswer:
           'Модель потратила весь бюджет вывода на размышления и не написала ответ.',
         queueExpired: 'Эта генерация слишком долго ждала в очереди и была остановлена до начала.',
+        fallbackSkippedSameProvider: 'Резервная модель того же поставщика была пропущена.',
+        cloudProviderUnavailable: 'Облачный поставщик моделей временно недоступен.',
+        paygCapTooLow: 'Лимит расходов слишком мал для одного вызова модели.',
+        paygPriceUnavailable: 'У этой модели пока нет цены.',
         unknown: 'Что-то пошло не так ({code}).',
       },
       hint: {
@@ -971,6 +976,11 @@ export const ru: TranslationDictionary = {
         modelReasonedNoAnswer:
           'Повторите, выберите модель, которая отвечает прямее, или сократите тему.',
         queueExpired: 'Повторите попытку сейчас. Если очередь длинная, попробуйте позже.',
+        fallbackSkippedSameProvider: 'Это нормально. Действий не требуется.',
+        cloudProviderUnavailable:
+          'Подождите немного и повторите попытку или выберите другую модель.',
+        paygCapTooLow: 'Увеличьте лимит расходов и повторите попытку.',
+        paygPriceUnavailable: 'Выберите другую модель и повторите попытку.',
         unknown: 'Повторите или смените модели.',
       },
       startError: {
@@ -990,6 +1000,9 @@ export const ru: TranslationDictionary = {
           'Этот запрос уже отправлялся с другими данными. Начните заново с формы.',
         notCancellable:
           'Эта генерация не выполняется и не стоит в очереди, поэтому отменять нечего.',
+        fallbackSameProvider:
+          'Резервная модель должна быть от другого поставщика, чем основная. Выберите другого поставщика.',
+        notPublished: 'Этот Thread не опубликован, поэтому действие недоступно.',
         topicInvalid:
           'Тема пуста или содержит символ, который нельзя сохранить. Измените её и повторите попытку.',
         textInvalid:

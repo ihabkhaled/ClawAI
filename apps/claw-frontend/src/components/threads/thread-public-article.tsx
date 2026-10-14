@@ -2,6 +2,7 @@ import type { ReactElement } from 'react';
 
 import { ThreadReaderBody } from '@/components/threads/thread-reader-body';
 import type { ThreadPublicArticleProps } from '@/types/thread-publication.types';
+import { threadContentDirection } from '@/utilities/thread-content-direction.utility';
 
 export function ThreadPublicArticle({
   publication,
@@ -11,7 +12,11 @@ export function ThreadPublicArticle({
   viewsLabel,
 }: ThreadPublicArticleProps): ReactElement {
   return (
-    <article className="border-border bg-card rounded-xl border p-5 sm:p-8">
+    <article
+      className="border-border bg-card rounded-xl border p-5 sm:p-8"
+      lang={publication.contentLocale}
+      dir={threadContentDirection(publication.contentLocale)}
+    >
       <header className="mb-6 flex flex-col gap-3">
         <h1 className="text-3xl font-bold tracking-tight">{publication.title}</h1>
         <p className="text-muted-foreground text-sm">

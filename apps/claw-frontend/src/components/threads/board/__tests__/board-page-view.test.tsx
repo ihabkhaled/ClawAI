@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ThreadBoardAllFilter } from '@/enums/thread-board-all-filter.enum';
 import { ThreadBoardSort } from '@/enums/thread-board-sort.enum';
+import { ApiClientError } from '@/services/shared/api-client';
 import type { ThreadBoardItem, ThreadBoardState } from '@/types/thread-board.types';
 
 import { BoardPageView } from '../board-page-view';
@@ -23,6 +24,7 @@ let list: {
   data?: { items: ThreadBoardItem[]; meta: object; didYouMean: string | null };
   isLoading: boolean;
   isError: boolean;
+  error?: Error;
 };
 
 vi.mock('@/lib/i18n', () => ({
@@ -30,6 +32,10 @@ vi.mock('@/lib/i18n', () => ({
     t: (key: string, params?: Record<string, string | number>) =>
       params ? `${key}:${JSON.stringify(params)}` : key,
   }),
+}));
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/en/board',
+  useSearchParams: () => new URLSearchParams('q=ai&page=2'),
 }));
 vi.mock('@/hooks/threads/board/use-board-query-state', () => ({
   useBoardQueryState: () => ({ state, hasActiveFilters, ...setters }),
@@ -100,6 +106,24 @@ describe('BoardPageView', () => {
     expect(refetch).toHaveBeenCalledTimes(1);
   });
 
+  it('shows a wait state with the Retry-After seconds on a 429', () => {
+    list = {
+      isLoading: false,
+      isError: true,
+      error: new ApiClientError({ message: 'Too many', status: 429, retryAfterSeconds: 54 }),
+    };
+    render(<BoardPageView />);
+    expect(screen.getByTestId('board-rate-limited')).toHaveTextContent(
+      'chat.threadBoardRateLimitWait:{"seconds":54}',
+    );
+    expect(screen.queryByText('chat.threadBoardErrorTitle')).not.toBeInTheDocument();
+  });
+
+  it('remembers the exact board URL so the reader can return to it', () => {
+    render(<BoardPageView />);
+    expect(window.sessionStorage.getItem('thread-board:list-url')).toBe('/en/board?q=ai&page=2');
+  });
+
   it('shows the plain empty state without filters', () => {
     list = {
       isLoading: false,
@@ -120,7 +144,7 @@ describe('BoardPageView', () => {
       data: { items: [], meta: { total: 0, page: 1, limit: 12, totalPages: 0 }, didYouMean: null },
     };
     render(<BoardPageView />);
-    expect(screen.getByText('chat.threadBoardEmptySearch')).toBeInTheDocument();
+    expect(screen.getByText('chat.threadBoardEmptySearch:{"query":"zzz"}')).toBeInTheDocument();
     const [clearButton] = screen.getAllByText('chat.threadBoardClearFilters');
     if (!clearButton) {
       throw new Error('Clear filters control missing');

@@ -840,6 +840,7 @@ export const zh: TranslationDictionary = {
       deleteConfirm: '永久删除',
       ownerOnlyNote: '只有你能看到此进度。',
       errorCode: '代码：{code}',
+      detailsLabel: '详情',
       pollingErrors: '多次出错后已暂停实时更新。请刷新页面再次检查。',
       httpStatus: 'HTTP 状态码 {status}',
       durationUnit: {
@@ -878,6 +879,10 @@ export const zh: TranslationDictionary = {
         modelHardCeiling: '有模型在 10 分钟后仍在运行，因此调用已被停止。',
         modelReasonedNoAnswer: '有模型把全部输出额度用在了思考上，没有写出答案。',
         queueExpired: '此次生成在队列中等待过久，在开始之前已被停止。',
+        fallbackSkippedSameProvider: '已跳过同一服务商的备用模型。',
+        cloudProviderUnavailable: '云端模型服务商暂时不可用。',
+        paygCapTooLow: '支出上限过低，不足以完成一次模型调用。',
+        paygPriceUnavailable: '该模型暂无价格。',
         unknown: '出了点问题（{code}）。',
       },
       hint: {
@@ -911,6 +916,10 @@ export const zh: TranslationDictionary = {
         modelHardCeiling: '请选择更快的模型或更短的主题，然后重试。',
         modelReasonedNoAnswer: '请重试，选择回答更直接的模型，或缩短主题。',
         queueExpired: '请立即重试。如果队列很长，请稍后再试。',
+        fallbackSkippedSameProvider: '这是正常现象，无需操作。',
+        cloudProviderUnavailable: '请稍等片刻后重试，或选择其他模型。',
+        paygCapTooLow: '请提高支出上限后重试。',
+        paygPriceUnavailable: '请选择其他模型后重试。',
         unknown: '请重试，或更换模型。',
       },
       startError: {
@@ -925,6 +934,8 @@ export const zh: TranslationDictionary = {
         tooManyActive: '你已达到同时运行的生成数量上限。请等待其中一个完成，或取消一个。',
         idempotencyKeyReused: '此请求已用不同的内容发送过。请从表单重新开始。',
         notCancellable: '此次生成既未运行也不在队列中，因此没有可取消的内容。',
+        fallbackSameProvider: '备用模型必须来自与主模型不同的服务商。请选择其他服务商。',
+        notPublished: '此 Thread 尚未发布，因此无法执行该操作。',
         topicInvalid: '主题为空，或包含无法保存的字符。请修改后重试。',
         textInvalid: '某个文本字段包含无法保存的字符。请删除不常见的字符后重试。',
       },

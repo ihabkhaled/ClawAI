@@ -4,6 +4,7 @@ import { Check, Copy, ExternalLink, Eye, MessageSquare, Share2, ThumbsUp } from 
 import Link from 'next/link';
 import type { ReactElement } from 'react';
 
+import { BoardReaderShareLinks } from '@/components/threads/board/board-reader-share-links';
 import { Button } from '@/components/ui/button';
 import { useThreadShare } from '@/hooks/threads/use-thread-share';
 import { useTranslation } from '@/lib/i18n';
@@ -85,6 +86,7 @@ export function BoardReaderActions({
           </Link>
         </Button>
       </div>
+      <BoardReaderShareLinks title={title} publicUrl={publicUrl} />
       {share.hasCopyFailed ? (
         <p role="alert" className="w-full text-sm">
           {t('chat.threadShareCopyFailed')}

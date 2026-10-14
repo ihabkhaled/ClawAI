@@ -26,6 +26,9 @@ export type OwnedThreadPublication = {
 export type ThreadGenerationState = {
   publicationId: string;
   publicationStatus: string;
+  /** Owner-state flags from the Threads API; older responses omit them. */
+  canPublish?: boolean;
+  canRepublish?: boolean;
   jobId: string;
   status: string;
   stage: string;

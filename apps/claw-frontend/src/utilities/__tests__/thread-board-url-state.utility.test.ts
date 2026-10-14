@@ -63,14 +63,15 @@ describe('parseBoardUrlState', () => {
     ['page=-2', 1],
     ['page=abc', 1],
     ['page=1.5', 1],
-    ['page=99999', 1000],
+    ['page=99999', 500],
+    ['page=999', 500],
   ])('page %s -> %s', (qs, expected) => {
     expect(parse(qs).page).toBe(expected);
   });
 
   it('trims and caps q', () => {
     expect(parse('q=%20%20hello%20').q).toBe('hello');
-    expect(parse(`q=${'a'.repeat(500)}`).q).toHaveLength(200);
+    expect(parse(`q=${'a'.repeat(500)}`).q).toHaveLength(100);
   });
 });
 
@@ -82,6 +83,11 @@ describe('serialiseBoardUrlState', () => {
     type: ThreadBoardAllFilter.All,
     page: 1,
   };
+
+  it('strips control characters so q=%00 becomes an empty query', () => {
+    expect(parse('q=%00').q).toBe('');
+    expect(parse('q=a%00b%07c').q).toBe('abc');
+  });
 
   it('omits defaults', () => {
     expect(serialiseBoardUrlState(base, 'en')).toBe('');
@@ -122,7 +128,7 @@ describe('serialiseBoardUrlState', () => {
   it('clamps page', () => {
     expect(serialiseBoardUrlState({ ...base, page: 0 }, 'en')).toBe('');
     expect(clampBoardPage(Number.NaN)).toBe(1);
-    expect(clampBoardPage(5000)).toBe(1000);
+    expect(clampBoardPage(5000)).toBe(500);
   });
 });
 

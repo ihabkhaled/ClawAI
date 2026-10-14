@@ -26,7 +26,7 @@ export function BoardToolbar(props: BoardToolbarProps): ReactElement {
     <div className="flex flex-col gap-3" data-testid="board-toolbar">
       <div className="flex flex-col gap-3 md:flex-row md:items-center">
         <div className="min-w-0 flex-1">
-          <BoardSearchCombobox value={props.q} onSubmit={props.onSearch} />
+          <BoardSearchCombobox value={props.q} lang={props.lang} onSubmit={props.onSearch} />
         </div>
         <Select value={props.sort} onValueChange={props.onSort}>
           <SelectTrigger aria-label={t('chat.threadBoardSortLabel')} className="min-h-11 md:w-44">

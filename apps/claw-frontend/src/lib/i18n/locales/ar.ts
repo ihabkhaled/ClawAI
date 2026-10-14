@@ -865,6 +865,7 @@ export const ar: TranslationDictionary = {
       deleteConfirm: 'حذف نهائي',
       ownerOnlyNote: 'أنت وحدك من يرى هذا التقدم.',
       errorCode: 'الرمز: {code}',
+      detailsLabel: 'التفاصيل',
       pollingErrors: 'تم إيقاف التحديث المباشر بعد أخطاء متكررة. أعد تحميل الصفحة للتحقق مجددًا.',
       httpStatus: 'حالة HTTP {status}',
       durationUnit: {
@@ -904,6 +905,10 @@ export const ar: TranslationDictionary = {
         modelHardCeiling: 'كان نموذج لا يزال يعمل بعد 10 دقائق، فتم إيقاف الاستدعاء.',
         modelReasonedNoAnswer: 'استنفد نموذج ميزانية الإخراج كلها في التفكير ولم يكتب إجابة.',
         queueExpired: 'انتظرت هذه العملية في قائمة الانتظار وقتًا طويلًا، فتم إيقافها قبل أن تبدأ.',
+        fallbackSkippedSameProvider: 'تم تخطي نموذج احتياطي من المزوّد نفسه.',
+        cloudProviderUnavailable: 'مزوّد النموذج السحابي غير متاح مؤقتًا.',
+        paygCapTooLow: 'حد الإنفاق منخفض جدًا لاستدعاء نموذج واحد.',
+        paygPriceUnavailable: 'ليس لهذا النموذج سعر بعد.',
         unknown: 'حدث خطأ ما ({code}).',
       },
       hint: {
@@ -942,6 +947,10 @@ export const ar: TranslationDictionary = {
         modelReasonedNoAnswer:
           'أعد المحاولة، أو اختر نموذجًا يجيب بشكل أكثر مباشرة، أو اختصر الموضوع.',
         queueExpired: 'أعد المحاولة الآن. وإذا كانت القائمة طويلة، جرّب لاحقًا.',
+        fallbackSkippedSameProvider: 'هذا طبيعي ولا يلزم أي إجراء.',
+        cloudProviderUnavailable: 'انتظر قليلًا ثم أعد المحاولة، أو اختر نموذجًا آخر.',
+        paygCapTooLow: 'ارفع حد الإنفاق ثم أعد المحاولة.',
+        paygPriceUnavailable: 'اختر نموذجًا آخر ثم أعد المحاولة.',
         unknown: 'أعد المحاولة، أو غيّر النماذج.',
       },
       startError: {
@@ -958,6 +967,9 @@ export const ar: TranslationDictionary = {
         idempotencyKeyReused: 'تم إرسال هذا الطلب سابقًا بتفاصيل مختلفة. ابدأ من جديد من النموذج.',
         notCancellable:
           'هذه العملية ليست قيد التشغيل ولا في قائمة الانتظار، لذا لا يوجد ما يمكن إلغاؤه.',
+        fallbackSameProvider:
+          'يجب أن يكون النموذج الاحتياطي من مزوّد مختلف عن النموذج الرئيسي. اختر مزوّدًا آخر.',
+        notPublished: 'هذا الموضوع غير منشور، لذا لا يتوفر هذا الإجراء.',
         topicInvalid: 'الموضوع فارغ أو يحتوي على حرف لا يمكن حفظه. عدّله وحاول مرة أخرى.',
         textInvalid: 'يحتوي حقل نصي على حرف لا يمكن حفظه. أزل الأحرف غير المعتادة وحاول مرة أخرى.',
       },

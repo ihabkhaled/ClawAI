@@ -92,6 +92,7 @@ export function BoardSearchCombobox(props: BoardSearchComboboxProps): ReactEleme
                   key={suggestion.slug}
                   id={keyboard.optionId(index)}
                   suggestion={suggestion}
+                  query={c.draft.trim()}
                   active={index === keyboard.activeIndex}
                   onSelect={() => c.selectSuggestion(index)}
                   onHover={() => keyboard.setActiveIndex(index)}
@@ -113,7 +114,7 @@ export function BoardSearchCombobox(props: BoardSearchComboboxProps): ReactEleme
                   showAllActive ? 'bg-accent text-accent-foreground' : ''
                 }`}
               >
-                {t('chat.threadBoardShowAll', { count: c.totalLabel })}
+                {`${t('chat.threadBoardShowAll')} (${c.totalLabel})`}
               </div>
             </div>
           ) : null}

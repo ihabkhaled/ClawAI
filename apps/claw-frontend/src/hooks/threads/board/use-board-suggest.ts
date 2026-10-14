@@ -7,12 +7,11 @@ import {
   THREAD_BOARD_SUGGEST_MIN_CHARS,
   THREAD_BOARD_SUGGEST_STALE_MS,
 } from '@/constants/thread-board.constants';
-import { useLocale } from '@/hooks/use-locale';
 import { threadBoardRepository } from '@/repositories/threads/thread-board.repository';
 import type { UseBoardSuggestResult } from '@/types/thread-board.types';
 
-export function useBoardSuggest(rawQuery: string): UseBoardSuggestResult {
-  const { locale } = useLocale();
+/** `lang` is the board's active language filter (or `all`), never the UI locale. */
+export function useBoardSuggest(rawQuery: string, lang: string): UseBoardSuggestResult {
   const [debounced, setDebounced] = useState(rawQuery.trim());
 
   useEffect(() => {
@@ -22,8 +21,8 @@ export function useBoardSuggest(rawQuery: string): UseBoardSuggestResult {
 
   const enabled = debounced.length >= THREAD_BOARD_SUGGEST_MIN_CHARS;
   const query = useQuery({
-    queryKey: [THREAD_BOARD_QUERY_KEY, 'suggest', locale, debounced],
-    queryFn: ({ signal }) => threadBoardRepository.suggest(debounced, locale, { signal }),
+    queryKey: [THREAD_BOARD_QUERY_KEY, 'suggest', lang, debounced],
+    queryFn: ({ signal }) => threadBoardRepository.suggest(debounced, lang, { signal }),
     enabled,
     placeholderData: keepPreviousData,
     staleTime: THREAD_BOARD_SUGGEST_STALE_MS,

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/lib/i18n';
 import type { BoardReaderViewProps } from '@/types/thread-board-reader.types';
+import { safeThreadCitationUrl } from '@/utilities/thread-citation.utility';
 
 export function BoardReaderView({ state }: BoardReaderViewProps): ReactElement {
   const { t } = useTranslation();
@@ -61,7 +62,7 @@ export function BoardReaderView({ state }: BoardReaderViewProps): ReactElement {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-4 sm:p-6">
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-4 sm:p-6">
       <div className="flex flex-wrap items-center gap-2">
         <Button type="button" variant="ghost" size="sm" onClick={state.goBack}>
           <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden="true" />
@@ -70,7 +71,7 @@ export function BoardReaderView({ state }: BoardReaderViewProps): ReactElement {
         <nav aria-label={t('chat.threadBoardTitle')}>
           <ol className="text-muted-foreground flex min-w-0 items-center gap-1 text-sm">
             <li>
-              <Link href="/board" className="hover:underline">
+              <Link href={state.boardHref} className="hover:underline">
                 {t('chat.threadBoardNavLabel')}
               </Link>
             </li>
@@ -94,7 +95,11 @@ export function BoardReaderView({ state }: BoardReaderViewProps): ReactElement {
           markdown={publication.content.markdown}
           citations={publication.content.citations}
           truncatedLabel={t('chat.threadPublicTruncated')}
-          citationsLabel={t('chat.threadBoardSources')}
+          citationsLabel={t('chat.threadBoardSources', {
+            count: publication.content.citations.filter(
+              (citation) => safeThreadCitationUrl(citation.url) !== null,
+            ).length,
+          })}
         />
       </article>
       <BoardReaderActions
@@ -114,6 +119,6 @@ export function BoardReaderView({ state }: BoardReaderViewProps): ReactElement {
         loginHref={state.loginHref}
         actions={state.actions}
       />
-    </main>
+    </div>
   );
 }

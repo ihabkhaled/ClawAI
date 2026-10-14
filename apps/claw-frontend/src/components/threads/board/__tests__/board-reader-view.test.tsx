@@ -68,6 +68,7 @@ function createState(overrides: Partial<BoardReaderController> = {}): BoardReade
     communityLoading: false,
     communityError: false,
     loginHref: '/login',
+    boardHref: '/en/board?q=vector&lang=all',
     publicUrl: 'https://claw.local/threads/clear-writing',
     publicPath: '/threads/clear-writing',
     actions: createActions(),
@@ -103,17 +104,24 @@ describe('BoardReaderView', () => {
     render(<BoardReaderView state={createState()} />);
     expect(screen.getByRole('link', { name: 'chat.threadBoardNavLabel' })).toHaveAttribute(
       'href',
-      '/board',
+      '/en/board?q=vector&lang=all',
     );
     expect(screen.getByRole('heading', { level: 1, name: 'Clear writing' })).toBeInTheDocument();
     expect(screen.getByText('Body text')).toBeInTheDocument();
-    expect(screen.getByText('chat.threadBoardSources')).toBeInTheDocument();
+    expect(screen.getByText('chat.threadBoardSources:1')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'https://example.com/a' })).toBeInTheDocument();
     expect(screen.queryByText('javascript:alert(1)')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /chat.threadPublicLike/u })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
+  });
+
+  it('has no nested main landmark and renders the share icon row', () => {
+    render(<BoardReaderView state={createState({ publicUrl: 'https://claw.local/threads/x' })} />);
+    expect(screen.queryByRole('main')).not.toBeInTheDocument();
+    const row = screen.getByTestId('board-reader-share-links');
+    expect(row.querySelectorAll('a[target="_blank"]').length).toBeGreaterThanOrEqual(6);
   });
 
   it('goes back through the controller', () => {

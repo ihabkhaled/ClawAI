@@ -12,6 +12,7 @@ import { formatBoardTotal } from '@/utilities/board-highlight.utility';
 
 export function useBoardSearchCombobox({
   value,
+  lang,
   onSubmit,
 }: BoardSearchComboboxProps): UseBoardSearchComboboxResult {
   const router = useRouter();
@@ -19,7 +20,7 @@ export function useBoardSearchCombobox({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [draft, setDraftState] = useState(value);
   const [open, setOpen] = useState(false);
-  const suggest = useBoardSuggest(draft);
+  const suggest = useBoardSuggest(draft, lang);
 
   useEffect(() => setDraftState(value), [value]);
 

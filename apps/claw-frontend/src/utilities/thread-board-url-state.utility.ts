@@ -14,6 +14,16 @@ type ParamReader = { get: (name: string) => string | null };
 
 const LOCALE_CODES: ReadonlyArray<string> = SUPPORTED_LOCALES.map((entry) => entry.locale);
 
+/** Drops control characters (a `%00` query), trims and caps the length the API accepts. */
+export function sanitiseBoardQuery(value: string): string {
+  return Array.from(value)
+    .filter((char) => char.charCodeAt(0) >= 32 && char.charCodeAt(0) !== 127)
+    .join('')
+    .trim()
+    .slice(0, THREAD_BOARD_MAX_QUERY_LENGTH)
+    .trim();
+}
+
 export function isBoardSort(value: string | null): value is ThreadBoardSort {
   return THREAD_BOARD_SORTS.some((sort) => sort === value);
 }
@@ -51,7 +61,7 @@ function parsePage(value: string | null): number {
 export function parseBoardUrlState(params: ParamReader, defaultLang: string): ThreadBoardState {
   const sort = params.get('sort');
   return {
-    q: (params.get('q') ?? '').trim().slice(0, THREAD_BOARD_MAX_QUERY_LENGTH),
+    q: sanitiseBoardQuery(params.get('q') ?? ''),
     sort: isBoardSort(sort) ? sort : THREAD_BOARD_DEFAULT_SORT,
     lang: parseLang(params.get('lang'), defaultLang),
     type: parseType(params.get('type')),
@@ -62,7 +72,7 @@ export function parseBoardUrlState(params: ParamReader, defaultLang: string): Th
 /** Omits defaults so the canonical URL stays short. */
 export function serialiseBoardUrlState(state: ThreadBoardState, defaultLang: string): string {
   const out = new URLSearchParams();
-  const q = state.q.trim().slice(0, THREAD_BOARD_MAX_QUERY_LENGTH);
+  const q = sanitiseBoardQuery(state.q);
   if (q) {
     out.set('q', q);
   }

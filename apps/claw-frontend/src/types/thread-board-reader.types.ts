@@ -25,6 +25,8 @@ export type BoardReaderController = {
   loginHref: string;
   publicUrl: string | null;
   publicPath: string;
+  /** The Board URL the reader was opened from (filters and page kept), or plain `/board`. */
+  boardHref: string;
   actions: ThreadCommunityActionState;
   goBack: () => void;
   retry: () => void;
@@ -37,6 +39,11 @@ export type BoardReaderActionsProps = {
   likeCount: number;
   commentCount: number;
   viewCount: number;
+};
+
+export type BoardReaderShareLinksProps = {
+  title: string;
+  publicUrl: string | null;
 };
 
 export type BoardReaderViewProps = {

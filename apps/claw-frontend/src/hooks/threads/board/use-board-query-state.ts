@@ -11,7 +11,10 @@ import {
   serialiseBoardUrlState,
 } from '@/utilities/thread-board-url-state.utility';
 
-/** The URL is the only state: every setter rewrites it; filter changes reset page to 1. */
+/**
+ * The URL is the only state: every setter pushes a history entry (so Back restores the previous
+ * view); filter changes reset page to 1. The search box only commits on submit, never per key.
+ */
 export function useBoardQueryState(): UseBoardQueryStateResult {
   const router = useRouter();
   const pathname = usePathname();
@@ -28,7 +31,7 @@ export function useBoardQueryState(): UseBoardQueryStateResult {
   const commit = useCallback(
     (next: ThreadBoardState) => {
       const query = serialiseBoardUrlState(next, defaultLang);
-      router.replace(query ? `${pathname}?${query}` : pathname);
+      router.push(query ? `${pathname}?${query}` : pathname);
     },
     [router, pathname, defaultLang],
   );

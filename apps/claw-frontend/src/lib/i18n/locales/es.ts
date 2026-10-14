@@ -891,6 +891,7 @@ export const es: TranslationDictionary = {
       deleteConfirm: 'Eliminar para siempre',
       ownerOnlyNote: 'Solo tú puedes ver este progreso.',
       errorCode: 'Código: {code}',
+      detailsLabel: 'Detalles',
       pollingErrors:
         'Las actualizaciones en vivo se pausaron tras varios errores. Recarga la página para comprobar de nuevo.',
       httpStatus: 'HTTP {status}',
@@ -937,6 +938,11 @@ export const es: TranslationDictionary = {
           'Un modelo gastó todo su presupuesto de salida pensando y no escribió respuesta.',
         queueExpired:
           'Esta generación esperó demasiado en la cola, así que se detuvo antes de empezar.',
+        fallbackSkippedSameProvider: 'Se omitió un modelo de respaldo del mismo proveedor.',
+        cloudProviderUnavailable:
+          'Un proveedor de modelos en la nube no está disponible por ahora.',
+        paygCapTooLow: 'El límite de gasto es demasiado bajo para una llamada al modelo.',
+        paygPriceUnavailable: 'Este modelo aún no tiene precio.',
         unknown: 'Algo salió mal ({code}).',
       },
       hint: {
@@ -978,6 +984,10 @@ export const es: TranslationDictionary = {
         modelReasonedNoAnswer:
           'Reintenta, elige un modelo que responda más directamente o acorta el tema.',
         queueExpired: 'Reinténtalo ahora. Si la cola es larga, prueba más tarde.',
+        fallbackSkippedSameProvider: 'Es normal. No hace falta hacer nada.',
+        cloudProviderUnavailable: 'Espera un momento y reintenta, o elige otro modelo.',
+        paygCapTooLow: 'Sube el límite de gasto y reintenta.',
+        paygPriceUnavailable: 'Elige otro modelo y reintenta.',
         unknown: 'Reintenta, o cambia los modelos e inténtalo de nuevo.',
       },
       startError: {
@@ -998,6 +1008,9 @@ export const es: TranslationDictionary = {
           'Esta solicitud ya se envió con otros datos. Empieza de nuevo desde el formulario.',
         notCancellable:
           'Esta generación no está en curso ni en cola, así que no hay nada que cancelar.',
+        fallbackSameProvider:
+          'Un modelo de respaldo debe ser de un proveedor distinto al del modelo principal. Elige otro proveedor.',
+        notPublished: 'Este Thread no está publicado, así que esta acción no está disponible.',
         topicInvalid:
           'El tema está vacío o tiene un carácter que no se puede guardar. Edítalo e inténtalo de nuevo.',
         textInvalid:

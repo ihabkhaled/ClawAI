@@ -896,6 +896,7 @@ export const it: TranslationDictionary = {
       deleteConfirm: 'Elimina definitivamente',
       ownerOnlyNote: 'Solo tu puoi vedere questo avanzamento.',
       errorCode: 'Codice: {code}',
+      detailsLabel: 'Dettagli',
       pollingErrors:
         'Aggiornamenti in tempo reale sospesi dopo errori ripetuti. Ricarica la pagina per controllare di nuovo.',
       httpStatus: 'HTTP {status}',
@@ -944,6 +945,12 @@ export const it: TranslationDictionary = {
           'Un modello ha speso tutto il budget di output a pensare e non ha scritto alcuna risposta.',
         queueExpired:
           'Questa generazione è rimasta in coda troppo a lungo ed è stata fermata prima di iniziare.',
+        fallbackSkippedSameProvider:
+          'Un modello di riserva dello stesso fornitore è stato saltato.',
+        cloudProviderUnavailable:
+          'Un fornitore di modelli cloud non è temporaneamente disponibile.',
+        paygCapTooLow: 'Il limite di spesa è troppo basso per una chiamata al modello.',
+        paygPriceUnavailable: 'Questo modello non ha ancora un prezzo.',
         unknown: 'Qualcosa è andato storto ({code}).',
       },
       hint: {
@@ -986,6 +993,10 @@ export const it: TranslationDictionary = {
         modelReasonedNoAnswer:
           'Riprova, scegli un modello che risponde più direttamente o accorcia l’argomento.',
         queueExpired: 'Riprova ora. Se la coda è lunga, riprova più tardi.',
+        fallbackSkippedSameProvider: 'È normale. Nessuna azione necessaria.',
+        cloudProviderUnavailable: 'Attendi un momento e riprova, oppure scegli un altro modello.',
+        paygCapTooLow: 'Aumenta il limite di spesa, poi riprova.',
+        paygPriceUnavailable: 'Scegli un altro modello, poi riprova.',
         unknown: 'Riprova, oppure cambia i modelli.',
       },
       startError: {
@@ -1006,6 +1017,9 @@ export const it: TranslationDictionary = {
           'Questa richiesta è già stata inviata con dettagli diversi. Ricomincia dal modulo.',
         notCancellable:
           'Questa generazione non è in corso né in coda, quindi non c’è nulla da annullare.',
+        fallbackSameProvider:
+          'Un modello di riserva deve provenire da un fornitore diverso dal modello principale. Scegli un altro fornitore.',
+        notPublished: 'Questo Thread non è pubblicato, quindi questa azione non è disponibile.',
         topicInvalid:
           'L’argomento è vuoto o contiene un carattere che non può essere salvato. Modificalo e riprova.',
         textInvalid:
