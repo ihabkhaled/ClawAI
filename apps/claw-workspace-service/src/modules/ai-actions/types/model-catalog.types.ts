@@ -22,18 +22,28 @@ export type ConnectedProvider = {
 export type ConnectedProviderModel = {
   modelKey: string;
   displayName: string;
-  capabilities: string[];
+  maxContextTokens: number | null;
+  usageTier: string | null;
+  supportsStructuredOutput: boolean;
+  supportsTools: boolean;
 };
 
 export type ResolvedModelCatalog = {
   installedLocalModels: InstalledLocalModel[];
   connectedProviders: ConnectedProvider[];
   refreshedAt: Date;
+  /** False when either source could not be read; such a catalog is cached only briefly. */
+  complete: boolean;
 };
 
 export type ResolveDefaultsInput = {
   preferLocal?: boolean;
   capabilityHints?: string[];
+  /**
+   * Whose plan filters the cloud models. Without it every exposed model is a
+   * candidate, which is only right for callers that are not acting for a user.
+   */
+  userId?: string;
 };
 
 export type ResolvedDefaults = {

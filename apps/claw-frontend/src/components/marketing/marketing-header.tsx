@@ -28,7 +28,7 @@ export function MarketingHeader(): React.ReactElement {
       data-top-obstacle=""
       className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/75 sticky top-0 z-40 w-full border-b backdrop-blur"
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-6 2xl:px-8">
         <Link href="/" className="flex shrink-0 items-center gap-2 font-semibold">
           <Image src="/claw-logo.png" alt="" width={32} height={32} aria-hidden="true" priority />
           <span className="text-base">ClawAI</span>
@@ -36,7 +36,7 @@ export function MarketingHeader(): React.ReactElement {
 
         <nav
           aria-label={t('marketing.header.navLabel')}
-          className="hidden items-center gap-6 xl:flex"
+          className="hidden items-center gap-4 xl:flex 2xl:gap-6"
         >
           {MARKETING_NAV_LINKS.map((link) => (
             <Link
@@ -50,7 +50,7 @@ export function MarketingHeader(): React.ReactElement {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-1 xl:flex">
+        <div className="hidden shrink-0 items-center gap-1 xl:flex">
           <Button variant="ghost" size="sm" asChild>
             <a href={MARKETING_GITHUB_URL} target="_blank" rel="noopener noreferrer">
               {t('marketing.header.github')}

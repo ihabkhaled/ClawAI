@@ -93,8 +93,12 @@ http {
 
     # --- Security headers ---------------------------------------------------
     # Services set nosniff themselves for direct access (helmet, download
-    # controllers). Drop theirs here so exactly one reaches the client.
+    # controllers). Drop theirs here so exactly one reaches the client. The same
+    # goes for X-Frame-Options and Referrer-Policy, which Next.js also sets
+    # (next.config.mjs) for direct access: nginx is the single source of truth.
     proxy_hide_header X-Content-Type-Options;
+    proxy_hide_header X-Frame-Options;
+    proxy_hide_header Referrer-Policy;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-Frame-Options "DENY" always;
     add_header X-XSS-Protection "0" always;

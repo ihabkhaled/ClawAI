@@ -222,4 +222,26 @@ A FAILED job with no draft closes its budget as `PLATFORM_FAILED` when the cause
 `MODEL_REASONED_NO_ANSWER`, `MODEL_CATALOG_*`, `GENERATION_FAILED`, `CANDIDATES_EXHAUSTED`, `RESEARCH_*`,
 `QUEUE_EXPIRED`, `LEASE_EXPIRED`); auth refunds the Free meter money and the lifetime Thread. `REVIEW_NOT_PASSED`,
 owner or billing refusals (`PAYG_*`, plan and allowance codes, validation), owner cancels and unknown codes close
-`RELEASED`. Progress carries `allowanceRefunded`. Classifier: `utilities/classify-budget-close.utility.ts`.
+`RELEASED`. The one exception is `PAYG_FREE_ALLOWANCE_EXHAUSTED`: a Thread takes no request slot, so under a Thread it is
+the platform's own accounting and closes `PLATFORM_FAILED` (D-P5-01). Progress carries `allowanceRefunded`. Classifier: `utilities/classify-budget-close.utility.ts`.
+
+## Non-English and reasoning-model author output (2026-10-14)
+
+Production showed `ar` guides and `de` articles ending `OUTPUT_INVALID` at `AUTHOR_DRAFTS` with Gemini flash-lite while
+`en` passed, and Ollama glm-5.3 failing every author call. The author schema has no language or minimum-length rule;
+the failures were tolerance gaps, fixed at the source:
+
+| Cause                                                                                              | Fix                                                                                                                                          |
+| -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Evidence ids (hex) rewritten with Arabic-Indic digits, direction marks, full-width or CJK brackets | `canonicalCitationText` / `resolveEvidenceId` fold and match them; body markers are rewritten to ASCII `[id]`; the prompt asks for ASCII ids |
+| Thinking text before the JSON (`<think>...</think>`, orphan `</think>`)                            | `stripReasoningBlocks`; unfinished thinking is classified `TRUNCATED`                                                                        |
+| Raw line breaks in a long JSON string, trailing comma                                              | `repairJsonText` (only these two repairs)                                                                                                    |
+| Reply cut off by `maxOutputTokens` (more tokens per word in ar, hi, ru, de)                        | the next ask raises the ceiling (x1.5, or the language factor, max 32768) and says so                                                        |
+| A role stuck on a bad model                                                                        | no new candidate or retry after `ROLE_MAX_MS` (3 min); two bad replies fail over to the next fallback                                        |
+
+A hallucinated evidence id is still refused. A role with no fallback still retries per job attempt; that limit lives
+in `GenerationJobsService`. Tests: `non-english-author-output.spec.ts`, `generation-pipeline.output-recovery.spec.ts`.
+
+### Allowance refusal body (2026-10-14)
+
+When auth-service refuses the budget reservation because a plan allowance is used up or held, `ThreadBudgetClient.reserve` forwards its 403 body (`code` `THREAD_ALLOWANCE_UNAVAILABLE`, `feature`, `reason`, `used`, `limit`, `window`, `message`). A feature the plan switches off (`FEATURE_DISABLED`) stays the plain 403. Tests: `thread-budget.client.spec.ts`.

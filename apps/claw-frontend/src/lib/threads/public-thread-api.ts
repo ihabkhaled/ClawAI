@@ -4,6 +4,7 @@ import {
   THREAD_PUBLIC_SITEMAP_PAGE_SIZE,
 } from '@/constants/thread-public-api.constants';
 import type { PublicThreadPublication } from '@/types/thread-publication.types';
+import { encodeThreadSlug, isValidThreadSlug } from '@/utilities/thread-slug.utility';
 
 export function getThreadsServiceOrigin(): string | null {
   const raw = process.env['THREADS_SERVICE_URL'];
@@ -13,7 +14,7 @@ export function getThreadsServiceOrigin(): string | null {
 export async function getPublicThreadPublication(
   slug: string,
 ): Promise<PublicThreadPublication | null> {
-  if (!/^[a-zA-Z0-9-]{1,64}$/u.test(slug)) {
+  if (!isValidThreadSlug(slug)) {
     return null;
   }
   const origin = getThreadsServiceOrigin();
@@ -23,7 +24,7 @@ export async function getPublicThreadPublication(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), THREAD_PUBLIC_FETCH_TIMEOUT_MS);
   try {
-    const response = await fetch(`${origin}${THREAD_PUBLIC_API_PATH}/${encodeURIComponent(slug)}`, {
+    const response = await fetch(`${origin}${THREAD_PUBLIC_API_PATH}/${encodeThreadSlug(slug)}`, {
       cache: 'no-store',
       signal: controller.signal,
       headers: { Accept: 'application/json' },

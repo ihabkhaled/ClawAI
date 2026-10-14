@@ -23,7 +23,9 @@ migrations.
 - Cross-service data uses service APIs or RabbitMQ, never another service's database.
 - Approval changes publication and revision state atomically and returns only public-safe fields.
 - `POST /api/v1/thread-publications/generations` passes the selected cap, explicit public-intent version, and server-derived owner ID to the generation service with a service token. Generation reserves Auth entitlements after snapshot ownership validation.
-- `GET /api/v1/thread-publications/:publicationId/generation-state` verifies publication ownership before fetching job state; completed drafts are persisted privately with `PENDING` review status.
+- `GET /api/v1/thread-publications/:publicationId/generation-state` verifies publication ownership before fetching job state; completed drafts are persisted privately with `PENDING` review status. After a passing edit the answer carries the newest publishable revision's draft and `review.draftHash` (the content hash), not the original generated draft.
+- `GET /api/v1/thread-publications/mine` shows the title the public page shows: a newer STALE or PENDING revision does not replace the approved title, and `pendingRevisionStatus` names that newer revision's state (null otherwise).
+- Start and retry validation failures always carry a `THREAD_*` code: `THREAD_SPEND_CAP_TOO_LOW` (cap 0), `THREAD_AUTHOR_COUNT_INVALID`, `THREAD_LOCALE_INVALID`, `THREAD_PUBLICATION_TYPE_INVALID`, else `THREAD_REQUEST_INVALID`.
 - `POST /api/v1/thread-publications/:publicationId/cancel-generation` checks ownership before forwarding cancellation.
 - `GET /api/v1/thread-publications/:publicationId/generation-progress` returns the owner-only step-by-step record (selections, per-role steps with machine codes, durations, tokens, bounded excerpts, failure) from the generation service. Non-owners and unknown ids get `404 Publication not found`.
 - `POST /api/v1/thread-publications/:publicationId/retry-generation` (body: `idempotencyKey`, optional `topic`, `spendCapUsd`, `models`) starts a new job from the same snapshot and attaches it to the same DRAFT publication. 409 unless the publication is DRAFT and the job FAILED or CANCELLED.
@@ -80,6 +82,10 @@ All behind the normal auth guard, prefix `/api/v1`.
 
 Throttles: suggest is limited per user well below the global limit (a keystroke endpoint); the list has its own, higher limit. Exact numbers live in the controller decorators. Suggest answers `Cache-Control: private`.
 
+**Board freshness (what a guest actually waits).** The API alone is live: a published Thread is in the projection in the same transaction. Three layers sit between publish and the guest HTML: (1) the service header `s-maxage=60, stale-while-revalidate=30`, honoured only by a shared cache in front of the API (nginx has no `proxy_cache_path` for `/api/v1/thread-publications`, so none today; a CDN rule would add up to 90 s); (2) the frontend server fetch `next: { revalidate: 60 }` in `lib/threads/public-board-api.ts`, a Next data-cache entry with stale-while-revalidate semantics: after 60 s the next request still gets the OLD page and only starts the refresh, so on a quiet site the first visitor sees stale data and the one after sees the new Thread (this is the "minutes" seen on 2026-10-14); (3) the sitemap and JSON-LD follow the same fetch. Nothing calls `revalidateTag` on publish. Frontend change needed (not in this service): tag the fetch (`next: { revalidate: 60, tags: ['threads-board'] }`), add a secret-guarded route handler that calls `revalidateTag('threads-board')`, and have threads-service call it after a publish or unpublish commits; or lower the revalidate to 15 s as a cheaper step.
+
+**Did-you-mean.** The dictionary holds title words of visible publications only (`thread_board_words`, rebuilt by the maintenance job). A query word of up to 5 letters also matches when it shares its first letter with the dictionary word and trigram similarity is at least 0.2 (normal floor 0.4), so 'skie' finds 'sky'. Visibility is unchanged because only the dictionary is read.
+
 Projection: table `thread_publication_search_docs` (model `ThreadPublicationSearchDoc`) holds one row per publication that passes the public discovery predicate (PUBLISHED, OWNER_APPROVED, safety APPROVED, index eligible). It is written in the same transaction as publish, unpublish, revoke and approved edits; deleting a publication cascades. Counters are bumped in the comment, reaction and view write paths, and a reconcile job recomputes them to heal drift. One pure normaliser is used for both index and query. The migration is additive (extensions `pg_trgm`, `unaccent`, GIN and btree indexes, backfill). The Board is gated by a database-level setting, default OFF.
 
 Privacy: items carry no author field. Nothing from DRAFT, UNPUBLISHED, REVOKED or unapproved rows reaches list, suggest or "did you mean".
@@ -97,7 +103,9 @@ Privacy: items carry no author field. Nothing from DRAFT, UNPUBLISHED, REVOKED o
 
 ## Board index: segmentation, versions and view sync (2026-10-14)
 
-CJK and Thai text is word-segmented in the one shared normaliser; `doc_version` marks the index text format and the reconcile job re-indexes older rows in batches of 50. The stale-counter scan only rebuilds rows whose counters drifted. Views refresh the Board row through `BoardCountsPort.viewsChanged`. See the ADR-177 addendum.
+CJK and Thai text is word-segmented in the one shared normaliser; `doc_version` marks the index text format and the reconcile job re-indexes older rows in batches of 50. The stale-counter scan only rebuilds rows whose counters drifted. Format version 4 (2026-10-14) also strips citation markers with spaces or newlines inside the bracket (`[ id]`, `[id ]`, `[
+id
+]`); bumping the version is what makes reconcile clean old rows. Views refresh the Board row through `BoardCountsPort.viewsChanged`. See the ADR-177 addendum.
 
 ## Board search performance (2026-10-14)
 
@@ -105,13 +113,17 @@ Search reads run in a short transaction that sets `pg_trgm.similarity_threshold`
 
 ## Recommended team (ADR-174 addendum, 2026-10-14)
 
-`GET /api/v1/thread-publications/recommended-team` returns `{ planName, team, models }` for the caller only. `team` is three authors, a Judge and a Critic (each `{ provider, model, fallbacks[] }`) or null; `models` has one `{ provider, model, status }` per picker-catalog model with `status` of `AVAILABLE`, `NEEDS_PLAN`, `WINDOW_TOO_SMALL` or `UNAVAILABLE`. Code: `RecommendedTeamService` (60 s per-owner cache), `recommended-team.utility.ts` (pure ranking and classification), `ModelCatalogClient.listModels`. The plan test is the preflight's. The deny list (`THREAD_MODEL_DENY_LIST`, OPENAI and ANTHROPIC) is a constants list; lift a provider by deleting its entry. The Threads wizard preselects the team and keeps the pickers under an Advanced fold. See ADR-174.
+`GET /api/v1/thread-publications/recommended-team` returns `{ planName, team, models, excluded }` for the caller only. `excluded` lists every model the caller cannot use as `{ provider, model, reasonIfExcluded }` (`NEEDS_PLAN`, `WINDOW_TOO_SMALL`, `UNAVAILABLE`) so the wizard can explain it; the team and its fallbacks are drawn only from usable models. The Free allowance's per-model price limit lives in auth-service and is not visible here, so a Free user can still be refused at run time by the meter. `team` is three authors, a Judge and a Critic (each `{ provider, model, fallbacks[] }`) or null; `models` has one `{ provider, model, status }` per picker-catalog model with `status` of `AVAILABLE`, `NEEDS_PLAN`, `WINDOW_TOO_SMALL` or `UNAVAILABLE`. Code: `RecommendedTeamService` (60 s per-owner cache), `recommended-team.utility.ts` (pure ranking and classification), `ModelCatalogClient.listModels`. The plan test is the preflight's. The deny list (`THREAD_MODEL_DENY_LIST`, OPENAI and ANTHROPIC) is a constants list; lift a provider by deleting its entry. The Threads wizard preselects the team and keeps the pickers under an Advanced fold. See ADR-174.
 
 ## Guest Board endpoints (ADR-177 addendum, 2026-10-14)
 
-| Method | Path                                        | Notes                                                                                                                                   |
-| ------ | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | `/thread-publications/public/board`         | `@Public`. Same query and response as the signed-in list; `viewerReaction` is always `null`. 60/min per address. `public, s-maxage=60`. |
-| GET    | `/thread-publications/public/board/suggest` | `@Public`. Same as the signed-in suggest. 40/min per address. `public, s-maxage=30`. `Vary: Accept-Language`.                           |
+| Method | Path                                        | Notes                                                                                                                                                                                                                                                                                                                           |
+| ------ | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/thread-publications/public/board`         | `@Public`. Same query and response as the signed-in list; `viewerReaction` is always `null`. 60/min per address. `public, s-maxage=60, stale-while-revalidate=30`. A 429 answers `{ statusCode: 429, code: 'BOARD_RATE_LIMITED', message }` with `Retry-After` (`BoardThrottleExceptionFilter`, bound to this controller only). |
+| GET    | `/thread-publications/public/board/suggest` | `@Public`. Same as the signed-in suggest. 40/min per address. `public, s-maxage=30`. `Vary: Accept-Language`.                                                                                                                                                                                                                   |
 
 Both controllers call one `BoardService`, so SQL, visibility (only rows in `thread_publication_search_docs`, so unpublished and revoked Threads are absent) and error codes are shared. `BoardModule` must stay imported before `PublicationsModule` so `public/board` is not read as a `public/:slug`.
+
+### Allowance refusal body (2026-10-14)
+
+A start or retry refused by the budget step for a used-up or held allowance answers 403 `THREAD_GENERATION_ALLOWANCE_UNAVAILABLE` with the real message and `feature`, `used`, `limit`, `window` (forwarded from auth-service through thread-generation-service) instead of the generic plan sentence. Tests: `threads-generation.client.spec.ts`.

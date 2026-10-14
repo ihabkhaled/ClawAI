@@ -4,6 +4,10 @@ import { z } from 'zod';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { GenerationBudgetCloseStatus } from '../../../common/enums/generation-budget-close-status.enum';
+import {
+  THREAD_FEATURE_DISABLED_REASON,
+  threadAllowanceRefusalSchema,
+} from '../schemas/thread-allowance-refusal.schema';
 import { ThreadBudgetCloseRefusedError } from '../utilities/thread-budget-close-refused.error';
 
 const reservedBudgetSchema = z.object({
@@ -42,6 +46,14 @@ export class ThreadBudgetClient {
       throw new ServiceUnavailableException('Threads budget service is unavailable');
     }
     if (response.status === 403) {
+      // An allowance that is used up or held names how much is used and when it frees up: keep
+      // that body so the owner reads it. Every other 403 stays the plain refusal.
+      const refusal = threadAllowanceRefusalSchema.safeParse(
+        await response.json().catch(() => null),
+      );
+      if (refusal.success && refusal.data.reason !== THREAD_FEATURE_DISABLED_REASON) {
+        throw new ForbiddenException({ statusCode: 403, ...refusal.data });
+      }
       throw new ForbiddenException('Threads generation is not permitted');
     }
     if (!response.ok) {

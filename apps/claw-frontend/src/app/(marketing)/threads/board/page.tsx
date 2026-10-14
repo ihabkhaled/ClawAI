@@ -18,6 +18,7 @@ import { isSupportedLocale, localisePath } from '@/utilities/locale.utility';
 import { buildPublicBoardJsonLd, serializeJsonLd } from '@/utilities/structured-data.utility';
 import { boardParamReader, isIndexableBoardView } from '@/utilities/thread-board-seo.utility';
 import { parseBoardUrlState } from '@/utilities/thread-board-url-state.utility';
+import { threadCanonicalUrl } from '@/utilities/thread-slug.utility';
 
 // Rendered per request (it reads the language and the URL), but the Board data itself is cached
 // for a minute in the fetch layer, so a crawler or a spike of visitors costs one call a minute.
@@ -49,7 +50,7 @@ export default async function PublicThreadsBoardPage({
     lastReviewed: getPageBySlug(THREADS_PUBLIC_BOARD_SLUG)?.lastReviewed ?? '',
     items: (data?.items ?? []).map((item) => ({
       name: item.title,
-      url: `${siteUrl}/${item.contentLocale}/threads/${item.slug}`,
+      url: threadCanonicalUrl(siteUrl, item.contentLocale, item.slug),
     })),
     totalItems: data?.meta.total ?? 0,
   });

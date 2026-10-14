@@ -874,6 +874,8 @@ export const fr: TranslationDictionary = {
       stageLabel: 'Étape',
       attempt: 'Tentative {current} sur {max}',
       spent: 'Dépensé jusqu’ici : {amount}',
+      includedInPlan: 'Inclus dans votre forfait',
+      includedInPlanTokens: 'Inclus dans votre forfait · {tokens} jetons',
       platformFailureNotice:
         'Le problème venait de nous, pas de vous. Votre quota gratuit n’a pas été utilisé.',
       retryOnUs: 'Réessayer à nos frais',
@@ -1032,6 +1034,13 @@ export const fr: TranslationDictionary = {
         modelUnknown:
           'Un modèle sélectionné ne figure pas dans le catalogue de modèles. Choisissez-en un dans la liste.',
         spendCapTooLow: 'Le plafond de dépense est trop bas. Fixez au moins 0,01 USD.',
+        authorCountInvalid: 'Choisissez entre 3 et 5 auteurs.',
+        localeInvalid:
+          'La langue choisie n’est pas prise en charge. Choisissez-en une dans la liste.',
+        publicationTypeInvalid:
+          'Le type de publication choisi n’est pas pris en charge. Choisissez-en un dans la liste.',
+        requestInvalid:
+          'Certains détails de cette demande sont manquants ou invalides. Vérifiez le formulaire et réessayez.',
         allowanceUnavailable:
           'Votre quota de Threads est épuisé ou retenu par une génération en cours. Attendez qu’elle se termine ou changez d’offre.',
         tooManyActive:

@@ -38,6 +38,7 @@ import type {
 } from '../types/publication.types';
 import type { PrivateGenerationState } from '../types/generation.types';
 import { evaluatePublicationSafety } from '../utilities/publication-safety.utility';
+import { withLatestRevision } from '../utilities/latest-revision-state.utility';
 import {
   MIN_PUBLICATION_CRITIC_SCORE,
   MIN_PUBLICATION_JUDGE_SCORE,
@@ -132,6 +133,7 @@ export class PublicationLifecycleService {
         (await this.publications.findOwnedGeneration(publicationId, ownerId))?.status ??
         publicationStatus;
     }
+    const current = await this.withPublishableDraft(publicationId, ownerId, state);
     return {
       publicationId,
       publicationStatus,
@@ -141,8 +143,19 @@ export class PublicationLifecycleService {
       canRepublish:
         publicationStatus === PublicationStatus.UNPUBLISHED &&
         (await this.publications.hasPublishableRevision(publicationId, ownerId)),
-      ...state,
+      ...current,
     };
+  }
+
+  /** After a passing edit the owner publishes the edit, so its draft and hash replace the original. */
+  private async withPublishableDraft(
+    publicationId: string,
+    ownerId: string,
+    state: PrivateGenerationState,
+  ): Promise<PrivateGenerationState> {
+    if (!state.draft) return state;
+    const latest = await this.publications.findLatestPublishableRevision(publicationId, ownerId);
+    return latest ? withLatestRevision(state, latest) : state;
   }
 
   /**

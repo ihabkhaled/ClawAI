@@ -870,6 +870,8 @@ export const es: TranslationDictionary = {
       stageLabel: 'Etapa',
       attempt: 'Intento {current} de {max}',
       spent: 'Gastado hasta ahora: {amount}',
+      includedInPlan: 'Incluido en tu plan',
+      includedInPlanTokens: 'Incluido en tu plan · {tokens} tokens',
       platformFailureNotice: 'El problema fue nuestro, no tuyo. No se usó tu cupo gratuito.',
       retryOnUs: 'Reintentar por nuestra cuenta',
       selectedTitle: 'Lo que elegiste',
@@ -1022,6 +1024,12 @@ export const es: TranslationDictionary = {
         modelUnknown:
           'Un modelo seleccionado no está en el catálogo de modelos. Elige uno de la lista.',
         spendCapTooLow: 'El límite de gasto es demasiado bajo. Fija al menos 0,01 USD.',
+        authorCountInvalid: 'Elige entre 3 y 5 autores.',
+        localeInvalid: 'El idioma elegido no es compatible. Elige uno de la lista.',
+        publicationTypeInvalid:
+          'El tipo de publicación elegido no es compatible. Elige uno de la lista.',
+        requestInvalid:
+          'Faltan datos en esta solicitud o no son válidos. Revisa el formulario e inténtalo de nuevo.',
         allowanceUnavailable:
           'Tu cupo de Threads se agotó o lo retiene una generación en curso. Espera a que termine o mejora tu plan.',
         tooManyActive:

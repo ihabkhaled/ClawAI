@@ -254,7 +254,7 @@ chat-service reaches the runtime through `POST /api/v1/internal/plugins/invoke` 
 ## The egress guard
 
 Everything that reaches a host a user or a manifest named goes through `SafeEgressManager`
-(`src/modules/egress`): syntax first, then DNS here with every answer checked, then a connection pinned to the checked address
+(`src/modules/egress`): syntax first, then DNS here with every answer checked, then a connection pinned to the checked addresses (every validated A and AAAA answer, tried in turn so one dead address no longer times the call out)
 ([ADR-179](../13-adr/adr-179-user-mcp-servers-are-ssrf-guarded-and-consent-gated.md)). The release gate is
 `src/modules/egress/__tests__/ssrf-pentest.spec.ts`; the runbook is
 [register-an-mcp-server-safely](../../skills/register-an-mcp-server-safely.md).

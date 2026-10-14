@@ -137,7 +137,9 @@ frame type is ignored; the `message` text is never read or forwarded, only the m
 - **Free generation policy.** A job that ends FAILED (or lease/queue-expired) with no draft closes its budget as
   `PLATFORM_FAILED` when the code is platform-caused (`PLATFORM_FAILURE_STEP_CODES` plus the `CLOUD_PROVIDER_*` and
   `MODEL_CATALOG_*` prefixes in `step-recorder.constants.ts`, classified by `budgetCloseStatusForFailure`); auth then
-  refunds the Free meter money and the lifetime Thread hold. `REVIEW_NOT_PASSED`, every `NON_RETRYABLE_STEP_CODES`
+  refunds the Free meter money and the lifetime Thread hold. `PAYG_FREE_ALLOWANCE_EXHAUSTED` is the one owner-looking code
+  that ALSO closes `PLATFORM_FAILED` (`PLATFORM_ACCOUNTING_STEP_CODES`): a Thread takes no request slot, so that code is the
+  platform's own accounting (D-P5-01, ADR-162 addendum). `REVIEW_NOT_PASSED`, every other `NON_RETRYABLE_STEP_CODES`
   code, an owner cancel and any unknown code close `RELEASED` (allowance stays spent). A retried close (sweep) reads
   the job's last failed step code (`findLastFailureCode`) so it keeps the verdict. Progress exposes
   `allowanceRefunded` (`budget_close_status = PLATFORM_FAILED`). A new platform code goes in the set AND the
@@ -157,3 +159,29 @@ through `sanitizeDraftMarkup` (strips `<sup>`/`<sub>`, flattens `[[id1], [id2]]`
 service sends as a 400 with `CLOUD_PROVIDER_UNAVAILABLE` is stored as `PROVIDER_UNAVAILABLE` with HTTP 503.
 `PAYG_CAP_TOO_LOW`, `PAYG_CREDIT_EXHAUSTED`, `PAYG_PRICE_UNAVAILABLE` pass through as their own codes. A
 same-provider fallback is dropped at call time with a SKIPPED step `FALLBACK_SKIPPED_SAME_PROVIDER`.
+
+## Non-English and reasoning-model author output (2026-10-14)
+
+Production: `ar` and `de` drafts ended `OUTPUT_INVALID` where `en` passed, and Ollama glm-5.3 failed every author call.
+There is no language or length check in the author schema; the causes were three tolerance gaps.
+
+- **Citation ids mangled by the language.** Evidence ids are hex (`922197023defa567`). An Arabic or Persian answer
+  renders the digits Arabic-Indic and wraps the id in direction marks or full-width brackets, so the evidence rule
+  refused a fine draft. `normalizeAuthorOutput` now resolves ids through `resolveEvidenceId`
+  (`utilities/citation-id.utility.ts`: invisible marks removed, NFKC, local digits folded, CJK brackets and quotes
+  trimmed, case-insensitive, or the evidence url given instead of the id) and rewrites resolvable body markers to ASCII
+  `[id]`. A real unknown id is still refused. The author prompt (`buildAuthorSystemPrompt`) tells the model to keep
+  keys, ids, urls and markers ASCII; changing it replays in-flight jobs' author calls once.
+- **Reasoning models.** `stripReasoningBlocks` drops `<think>`, `<thinking>`, `<thought>`, `<reasoning>`,
+  `<reflection>` blocks (also an orphan closing tag) before JSON is looked for; an opening tag that never closes is
+  classified `TRUNCATED` (the model ran out of output while thinking). `repairJsonText` fixes raw line breaks/tabs in
+  strings and trailing commas only.
+- **Truncation.** A `TRUNCATED` reply is asked again with `escalatedOutputTokens`: x1.5, or the language factor
+  (`LOCALE_TOKEN_FACTOR`, ar 2, hi 2.2, ...) if larger, capped at 32768, plus `TRUNCATION_NOTE`.
+- **Bounded roles.** `ROLE_MAX_MS` (3 min): no new candidate or format retry starts after it. Two bad replies from one
+  model already fail over to the next fallback (`FORMAT_ATTEMPTS_PER_MODEL`). A role with no fallback still retries per
+  job attempt (`MAX_GENERATION_ATTEMPTS`, owned by `GenerationJobsService`).
+
+## Allowance refusal pass-through (2026-10-14)
+
+`ThreadBudgetClient.reserve` keeps the body of auth-service's 403 `THREAD_ALLOWANCE_UNAVAILABLE` (`feature`, `reason`, `used`, `limit`, `window`, parsed by `threadAllowanceRefusalSchema`) so threads-service can tell the owner how much is used and when it frees up. A `FEATURE_DISABLED` refusal and any other 403 stay the plain "not permitted" 403. Do not drop the body again.

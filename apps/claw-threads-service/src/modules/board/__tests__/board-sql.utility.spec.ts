@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  BOARD_DID_YOU_MEAN_MIN_SIMILARITY,
+  BOARD_DID_YOU_MEAN_SHORT_MIN_SIMILARITY,
+  BOARD_DID_YOU_MEAN_SHORT_WORD_MAX_LENGTH,
+} from '../constants/board.constants';
+import {
   buildCountQuery,
   buildDidYouMeanQuery,
   buildListQuery,
@@ -130,6 +135,21 @@ describe('board SQL builders', () => {
     expect(query.sql).not.toContain('regexp_split_to_table');
     expect(query.sql).not.toContain('w.lang =');
     expect(query.values).toContainEqual(['kubernets']);
+  });
+
+  it('did-you-mean loosens the floor for short words behind a shared first letter', () => {
+    const query = buildDidYouMeanQuery(['skie'], 'all');
+    expect(query.sql).toContain('char_length(t.token) <=');
+    expect(query.sql).toContain('left(w.word, 1) = left(t.token, 1)');
+    expect(query.values).toContain(BOARD_DID_YOU_MEAN_SHORT_MIN_SIMILARITY);
+    expect(query.values).toContain(BOARD_DID_YOU_MEAN_SHORT_WORD_MAX_LENGTH);
+    expect(BOARD_DID_YOU_MEAN_SHORT_MIN_SIMILARITY).toBeLessThan(BOARD_DID_YOU_MEAN_MIN_SIMILARITY);
+  });
+
+  it('did-you-mean reads only the dictionary built from visible documents', () => {
+    const query = buildDidYouMeanQuery(['skie'], 'all');
+    expect(query.sql).toContain('FROM thread_board_words w');
+    expect(query.sql).not.toContain('thread_board_docs');
   });
 
   it('did-you-mean honours the language filter', () => {

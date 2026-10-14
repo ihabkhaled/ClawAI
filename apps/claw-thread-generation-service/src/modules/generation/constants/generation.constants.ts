@@ -100,10 +100,11 @@ export const REPAIR_NOTE_LEAD =
   ' Your previous reply was refused. Answer again with only the requested JSON object. Reason: ';
 export const REPAIR_NOTE_MAX_CHARS = 400;
 
-/** Citation markers `[id]`, `[id1, id2]` and `[[id]]` in an author draft, and their id separator. */
-export const CITATION_MARKER_PATTERN = /\[\[?\s*([^[\]\n]{4,200}?)\s*\]\]?/gu;
-export const CITATION_ID_SPLIT_PATTERN = /\s*[,;]\s*/u;
 /** A running job's spend is copied from its budget at most this often (per job). */
 export const SPEND_SYNC_MIN_INTERVAL_MS = 5000;
 /** Throttle entries kept before the finished ones are pruned. */
 export const SPEND_SYNC_MAP_MAX_ENTRIES = 256;
+
+/** First printable ASCII code; model JSON strings may not hold raw characters below it. */
+export const JSON_FIRST_PRINTABLE_CODE = 0x20;
+export const JSON_WHITESPACE_PATTERN = /\s/u;

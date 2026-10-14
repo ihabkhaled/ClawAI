@@ -4,9 +4,16 @@ import { StringDecoder } from 'node:string_decoder';
 import { Injectable } from '@nestjs/common';
 
 import { EgressErrorCode } from '../../../common/enums/egress-error-code.enum';
-import { EGRESS_CONNECT_TIMEOUT_MS } from '../constants/egress.constants';
+import {
+  EGRESS_ADDRESS_ATTEMPT_TIMEOUT_MS,
+  EGRESS_CONNECT_TIMEOUT_MS,
+} from '../constants/egress.constants';
 import { EgressError } from '../errors/egress.error';
-import { type EgressSendInput, type EgressSendResult } from '../types/egress.types';
+import {
+  type EgressSendInput,
+  type EgressSendResult,
+  type PinnedRequestOptions,
+} from '../types/egress.types';
 import { buildPinnedLookup } from '../utilities/build-pinned-lookup.utility';
 import { EgressTransport } from './egress.transport';
 
@@ -96,7 +103,7 @@ export class PinnedHttpsTransport extends EgressTransport {
     return httpsRequest(options, onResponse);
   }
 
-  private optionsFor(input: EgressSendInput): RequestOptions {
+  private optionsFor(input: EgressSendInput): PinnedRequestOptions {
     const body = input.body === undefined ? undefined : Buffer.byteLength(input.body, 'utf8');
     return {
       hostname: input.host,
@@ -105,7 +112,13 @@ export class PinnedHttpsTransport extends EgressTransport {
       method: input.method,
       servername: input.host,
       headers: body === undefined ? input.headers : { ...input.headers, 'Content-Length': body },
-      lookup: buildPinnedLookup({ address: input.address, family: input.family }),
+      lookup: buildPinnedLookup(
+        input.addresses.length > 0
+          ? input.addresses
+          : [{ address: input.address, family: input.family }],
+      ),
+      autoSelectFamily: true,
+      autoSelectFamilyAttemptTimeout: EGRESS_ADDRESS_ATTEMPT_TIMEOUT_MS,
       agent: false,
     };
   }

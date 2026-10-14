@@ -3,6 +3,7 @@ import { CurrentUser } from '@claw/shared-auth';
 import type { AuthenticatedUser } from '@claw/shared-types';
 
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
+import { ThreadGenerationErrorCode } from '../../../common/enums/thread-generation-error-code.enum';
 import {
   type StartThreadGenerationDto,
   startThreadGenerationSchema,
@@ -15,7 +16,10 @@ export class PublicationGenerationController {
 
   @Post()
   enqueue(
-    @Body(new ZodValidationPipe(startThreadGenerationSchema)) body: StartThreadGenerationDto,
+    @Body(
+      new ZodValidationPipe(startThreadGenerationSchema, ThreadGenerationErrorCode.REQUEST_INVALID),
+    )
+    body: StartThreadGenerationDto,
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<{ publicationId: string; jobId: string; status: string }> {
     return this.generationStart.start(user.id, body);

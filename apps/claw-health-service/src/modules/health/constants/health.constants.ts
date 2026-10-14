@@ -56,3 +56,6 @@ export const DEPENDENCY_DISABLED_STATUS = 'disabled';
 
 /** The `error` a derived dependency carries when its source reports it down. Host-free. */
 export const DEPENDENCY_DOWN_ERROR = 'dependency not answering (reported by its service)';
+
+/** The Authorization scheme the detailed health view accepts. */
+export const BEARER_SCHEME = 'Bearer';

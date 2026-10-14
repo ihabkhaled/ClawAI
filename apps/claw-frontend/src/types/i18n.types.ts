@@ -772,6 +772,8 @@ export type TranslationDictionary = {
       stageLabel: string;
       attempt: string;
       spent: string;
+      includedInPlan: string;
+      includedInPlanTokens: string;
       platformFailureNotice: string;
       retryOnUs: string;
       selectedTitle: string;
@@ -902,6 +904,10 @@ export type TranslationDictionary = {
         modelNotAllowedForPlan: string;
         modelUnknown: string;
         spendCapTooLow: string;
+        authorCountInvalid: string;
+        localeInvalid: string;
+        publicationTypeInvalid: string;
+        requestInvalid: string;
         allowanceUnavailable: string;
         tooManyActive: string;
         idempotencyKeyReused: string;

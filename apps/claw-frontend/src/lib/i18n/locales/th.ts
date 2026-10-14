@@ -840,6 +840,8 @@ export const th: TranslationDictionary = {
       stageLabel: 'ขั้นตอน',
       attempt: 'ครั้งที่ {current} จาก {max}',
       spent: 'ใช้ไปแล้ว: {amount}',
+      includedInPlan: 'รวมอยู่ในแพ็กเกจของคุณ',
+      includedInPlanTokens: 'รวมอยู่ในแพ็กเกจของคุณ · {tokens} โทเค็น',
       platformFailureNotice: 'ปัญหานี้เกิดจากฝั่งเรา ไม่ใช่ความผิดของคุณ โควต้าฟรีของคุณไม่ถูกใช้',
       retryOnUs: 'ลองใหม่โดยเราออกค่าใช้จ่าย',
       selectedTitle: 'สิ่งที่คุณเลือก',
@@ -978,6 +980,11 @@ export const th: TranslationDictionary = {
         modelNotAllowedForPlan: 'โมเดลที่เลือกไม่รวมอยู่ในแพ็กเกจของคุณ เลือกโมเดลที่รวมอยู่',
         modelUnknown: 'โมเดลที่เลือกไม่อยู่ในแคตตาล็อกโมเดล เลือกจากรายการ',
         spendCapTooLow: 'วงเงินใช้จ่ายต่ำเกินไป ตั้งอย่างน้อย 0.01 USD',
+        authorCountInvalid: 'เลือกผู้เขียน 3 ถึง 5 คน',
+        localeInvalid: 'ไม่รองรับภาษาที่เลือก เลือกจากรายการ',
+        publicationTypeInvalid: 'ไม่รองรับประเภทการเผยแพร่ที่เลือก เลือกจากรายการ',
+        requestInvalid:
+          'รายละเอียดบางอย่างในคำขอนี้ขาดหายหรือไม่ถูกต้อง ตรวจสอบแบบฟอร์มแล้วลองอีกครั้ง',
         allowanceUnavailable:
           'โควตา Thread ของคุณหมดแล้ว หรือถูกการสร้างที่กำลังทำงานอยู่กันไว้ รอให้เสร็จหรืออัปเกรดแพ็กเกจ',
         tooManyActive:

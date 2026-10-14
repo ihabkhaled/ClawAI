@@ -15,8 +15,11 @@ export const BOARD_RECONCILE_BATCH_SIZE = 100;
  * the reconcile job re-indexes rows written with an older version.
  * 2: ja/zh/th words are segmented; citation markers are stripped.
  * 3: comma-separated and nested citation marker lists are stripped too.
+ * 4: whitespace and newlines inside a marker bracket ('[ id ]', '[
+id
+]') are stripped too.
  */
-export const BOARD_DOC_FORMAT_VERSION = 3;
+export const BOARD_DOC_FORMAT_VERSION = 4;
 /** Rows re-indexed per tick for a format upgrade (bounded so a big table never stalls a tick). */
 export const BOARD_REINDEX_BATCH_SIZE = 50;
 /** Oldest rows inspected per tick for counter drift; unchanged ones are only touched, not rebuilt. */

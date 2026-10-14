@@ -101,11 +101,26 @@ describe('ThreadJobBudgetService', () => {
     reset();
     featureUsage.reserve
       .mockResolvedValueOnce({ allowed: true, reservationId: 'research' })
-      .mockResolvedValueOnce({ allowed: false, reason: 'FEATURE_TRIAL_EXHAUSTED' });
+      .mockResolvedValueOnce({
+        allowed: false,
+        reason: 'FEATURE_TRIAL_EXHAUSTED',
+        used: 1,
+        limit: 1,
+        window: 'LIFETIME',
+      });
 
-    await expect(
-      build().reserve({ userId: 'user-1', requestId: 'request-1', capMicroUsd: 0n }),
-    ).rejects.toBeInstanceOf(ForbiddenException);
+    const refusal = await build()
+      .reserve({ userId: 'user-1', requestId: 'request-1', capMicroUsd: 0n })
+      .catch((error: unknown) => error);
+    expect(refusal).toBeInstanceOf(ForbiddenException);
+    // The 403 names used and limit so the owner is told how much is used and when it frees up.
+    expect((refusal as ForbiddenException).getResponse()).toMatchObject({
+      code: 'THREAD_ALLOWANCE_UNAVAILABLE',
+      feature: 'JUDGE_MODE',
+      used: 1,
+      limit: 1,
+      window: 'LIFETIME',
+    });
     expect(featureUsage.settle).toHaveBeenCalledWith('research', 'RELEASE');
     expect(repository.create).not.toHaveBeenCalled();
   });

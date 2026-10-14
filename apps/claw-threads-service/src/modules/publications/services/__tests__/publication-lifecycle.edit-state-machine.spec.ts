@@ -48,6 +48,7 @@ function fakeRepository() {
         return Promise.resolve();
       },
     ),
+    findLatestPublishableRevision: vi.fn().mockResolvedValue(null),
     hasPublishableRevision: vi.fn(() =>
       Promise.resolve(revisions.some((revision) => revision.status === 'READY')),
     ),

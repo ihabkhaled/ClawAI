@@ -28,6 +28,13 @@ import {
   SERIALIZATION_RETRY_BASE_DELAY_MS,
 } from '../constants/generation-concurrency.constants';
 import { withSerializationRetry } from '../../../common/utilities/with-serialization-retry.utility';
+import { OWNER_LIST_REVISION_WINDOW } from '../constants/publication-owner-list.constants';
+import { latestRevisionContentSchema } from '../schemas/latest-revision-content.schema';
+import type {
+  LatestRevisionDraft,
+  OwnedPublicationListItem,
+} from '../types/owner-publication.types';
+import { pickOwnerListTitle } from '../utilities/owner-list-title.utility';
 import type { NotificationPublicationTarget } from '../types/thread-notification.types';
 import type {
   EditedRevisionRecord,
@@ -65,15 +72,7 @@ import { publicationExcerpt } from '../utilities/publication-excerpt.utility';
 export class PublicationsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findOwnedPublications(ownerId: string): Promise<
-    Array<{
-      id: string;
-      status: PublicationStatus;
-      title: string | null;
-      slug: string;
-      updatedAt: Date;
-    }>
-  > {
+  async findOwnedPublications(ownerId: string): Promise<OwnedPublicationListItem[]> {
     const publications = await this.prisma.threadPublication.findMany({
       where: { ownerId },
       orderBy: { updatedAt: 'desc' },
@@ -83,12 +82,21 @@ export class PublicationsRepository {
         status: true,
         slug: true,
         updatedAt: true,
-        revisions: { orderBy: { revision: 'desc' }, take: 1, select: { title: true } },
+        revisions: {
+          orderBy: { revision: 'desc' },
+          take: OWNER_LIST_REVISION_WINDOW,
+          select: {
+            title: true,
+            reviewStatus: true,
+            safetyStatus: true,
+            indexEligible: true,
+          },
+        },
       },
     });
     return publications.map(({ revisions, ...publication }) => ({
       ...publication,
-      title: revisions[0]?.title ?? null,
+      ...pickOwnerListTitle(revisions),
     }));
   }
 
@@ -515,6 +523,39 @@ export class PublicationsRepository {
   }
 
   /** True when an approved, index-eligible revision exists, which is what Publish needs. */
+  /**
+   * The newest revision the owner could publish now (reviewed, safe, indexable), with its draft.
+   * After a passing edit this is the edit, not the original generated draft.
+   */
+  async findLatestPublishableRevision(
+    publicationId: string,
+    ownerId: string,
+  ): Promise<LatestRevisionDraft | null> {
+    const found = await this.prisma.threadPublicationRevision.findFirst({
+      where: {
+        publicationId,
+        publication: { ownerId },
+        reviewStatus: {
+          in: [RevisionReviewStatus.READY_FOR_REVIEW, RevisionReviewStatus.OWNER_APPROVED],
+        },
+        safetyStatus: PublicationSafetyStatus.APPROVED,
+        indexEligible: true,
+      },
+      orderBy: { revision: 'desc' },
+      select: { content: true, contentHash: true, judgeScore: true, criticScore: true },
+    });
+    if (!found) return null;
+    const content = latestRevisionContentSchema.safeParse(found.content);
+    if (!content.success) return null;
+    return {
+      markdown: content.data.markdown,
+      citations: content.data.citations,
+      contentHash: found.contentHash,
+      judgeScore: found.judgeScore,
+      criticScore: found.criticScore,
+    };
+  }
+
   async hasPublishableRevision(publicationId: string, ownerId: string): Promise<boolean> {
     const found = await this.prisma.threadPublicationRevision.findFirst({
       where: {

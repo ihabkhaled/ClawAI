@@ -24,6 +24,7 @@ import {
   generationProgressSchema,
   generationRetryResponseSchema,
 } from '../schemas/generation-progress.schema';
+import { generationAllowanceRefusalSchema } from '../schemas/generation-allowance-refusal.schema';
 import type {
   GenerationEnqueueInput,
   OwnerGenerationProgress,
@@ -55,6 +56,14 @@ const privateStateSchema = z.object({
     })
     .nullable(),
 });
+
+async function readJsonOrNull(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
 
 @Injectable()
 export class ThreadsGenerationClient {
@@ -178,6 +187,20 @@ export class ThreadsGenerationClient {
     if (!response.ok) {
       if (response.status === 400) throw new BadRequestException('Generation request is invalid');
       if (response.status === 403) {
+        // A used-up or held allowance arrives with its numbers: keep them so the owner reads
+        // "1 of 1 used" and when it frees up, not the generic plan sentence.
+        const refusal = generationAllowanceRefusalSchema.safeParse(await readJsonOrNull(response));
+        if (refusal.success) {
+          const { message, feature, used, limit, window } = refusal.data;
+          throw new ForbiddenException(
+            codedErrorBody(
+              message,
+              ThreadGenerationErrorCode.ALLOWANCE_UNAVAILABLE,
+              HttpStatus.FORBIDDEN,
+              { feature, used, limit, ...(window ? { window } : {}) },
+            ),
+          );
+        }
         throw new ForbiddenException(
           codedErrorBody(
             'Your plan does not include everything Thread generation needs (web research, Judge and Critic review). Upgrade your plan or ask an administrator.',

@@ -861,6 +861,8 @@ export const ja: TranslationDictionary = {
       stageLabel: '段階',
       attempt: '{max} 回中 {current} 回目の試行',
       spent: 'これまでの利用額：{amount}',
+      includedInPlan: 'プランに含まれています',
+      includedInPlanTokens: 'プランに含まれています · {tokens} トークン',
       platformFailureNotice:
         '問題は当社側にあり、お客様の責任ではありません。無料枠は消費されていません。',
       retryOnUs: '当社負担で再試行',
@@ -1008,6 +1010,11 @@ export const ja: TranslationDictionary = {
           '選択したモデルがお使いのプランに含まれていません。含まれるモデルを選んでください。',
         modelUnknown: '選択したモデルがモデルカタログにありません。一覧から選んでください。',
         spendCapTooLow: '上限額が低すぎます。0.01 USD 以上に設定してください。',
+        authorCountInvalid: '著者は 3〜5 人から選んでください。',
+        localeInvalid: '選択した言語には対応していません。一覧から選んでください。',
+        publicationTypeInvalid: '選択した公開タイプには対応していません。一覧から選んでください。',
+        requestInvalid:
+          'このリクエストの一部の内容が不足しているか無効です。フォームを確認してもう一度お試しください。',
         allowanceUnavailable:
           'Thread の利用枠を使い切ったか、実行中の生成が枠を使用しています。完了を待つか、プランをアップグレードしてください。',
         tooManyActive:

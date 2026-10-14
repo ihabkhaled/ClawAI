@@ -29,6 +29,20 @@ describe('public Threads API', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it('looks up a non-Latin slug by its real value, encoded exactly once', async () => {
+    vi.stubEnv('THREADS_SERVICE_URL', 'https://threads.internal');
+    const slug = 'كيف-يعمل-التمثيل-a1b2c3d4';
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ slug }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getPublicThreadPublication(slug)).resolves.toEqual({ slug });
+    expect(fetchMock).toHaveBeenCalledWith(
+      `https://threads.internal/api/v1/thread-publications/public/${encodeURIComponent(slug)}`,
+      expect.anything(),
+    );
+    await expect(getPublicThreadPublication(encodeURIComponent(slug))).resolves.toBeNull();
+  });
+
   it('reads discovery, feed, and sitemap data by locale', async () => {
     vi.stubEnv('THREADS_SERVICE_URL', 'https://threads.internal');
     const fetchMock = vi

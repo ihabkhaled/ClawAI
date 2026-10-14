@@ -565,3 +565,20 @@ The rollback trigger window is **30 minutes** after deploy for CRITICAL issues. 
 - Volume of data written since deploy (rollback may require migration).
 - Whether operators are actively using the new feature.
 - Whether the rollback itself could cause disruption.
+
+## Release lessons 2026-10-14
+
+- Boot every service locally on the full wave before pushing. A release crash-looped
+  on a provider missing from a Nest module; see
+  [runbook-prod-service-crash-loop](../11-runbooks/runbook-prod-service-crash-loop.md).
+- Unit tests do not build Nest modules. Add a `compile()` spec for any module whose
+  providers or consumers changed.
+- The gates receipt is bound to the tree, and the release bot rewrites versions on
+  main. Rebase, then push immediately; a delay invalidates the receipt.
+- The QA-evidence check is per push range: every fix commit in the range needs its
+  own valid record.
+- CodeQL TLS rule: never disable certificate verification (even in tests or
+  scripts); fix the trust chain or the hostname instead.
+- Manifests are LF. A CRLF checkout changes the bytes and fails the integrity check.
+- After release, verify production by
+  [verify-a-release-on-production](../../skills/verify-a-release-on-production.md).

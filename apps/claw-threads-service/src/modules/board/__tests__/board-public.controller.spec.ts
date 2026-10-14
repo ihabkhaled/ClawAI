@@ -92,7 +92,7 @@ describe('BoardPublicController', () => {
   it('sets shared-cache headers that never vary on Authorization', () => {
     const list = headersOf(BoardPublicController.prototype, 'list');
     const suggest = headersOf(BoardPublicController.prototype, 'suggest');
-    expect(list['Cache-Control']).toBe('public, s-maxage=60, stale-while-revalidate=300');
+    expect(list['Cache-Control']).toBe('public, s-maxage=60, stale-while-revalidate=30');
     expect(suggest['Cache-Control']).toBe('public, s-maxage=30');
     expect(list['Vary']).toBe('Accept-Language');
     expect(suggest['Vary']).toBe('Accept-Language');

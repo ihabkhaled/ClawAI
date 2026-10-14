@@ -25,6 +25,8 @@ const PLATFORM_CODES = [
   'GENERATION_WORKER_LOST',
   'QUEUE_EXPIRED',
   'LEASE_EXPIRED',
+  // The free allowance running out under a Thread is the platform's own accounting: refund it.
+  'PAYG_FREE_ALLOWANCE_EXHAUSTED',
 ];
 
 const KEPT_CODES = [
@@ -32,7 +34,6 @@ const KEPT_CODES = [
   'PAYG_CAP_TOO_LOW',
   'PAYG_CREDIT_EXHAUSTED',
   'PAYG_PRICE_UNAVAILABLE',
-  'PAYG_FREE_ALLOWANCE_EXHAUSTED',
   'PAYG_MODEL_UNPRICED',
   'CANCELLED',
   'CONTEXT_WINDOW_EXCEEDED',
@@ -56,7 +57,9 @@ describe('budgetCloseStatusForFailure', () => {
     expect(budgetCloseStatusForFailure(undefined)).toBe(GenerationBudgetCloseStatus.RELEASED);
   });
 
-  it('never refunds a code only the owner can fix', () => {
-    for (const code of NON_RETRYABLE_STEP_CODES) expect(isPlatformFailureCode(code)).toBe(false);
+  it('never refunds a code only the owner can fix, except the allowance the platform itself used up', () => {
+    for (const code of NON_RETRYABLE_STEP_CODES) {
+      expect(isPlatformFailureCode(code)).toBe(code === 'PAYG_FREE_ALLOWANCE_EXHAUSTED');
+    }
   });
 });

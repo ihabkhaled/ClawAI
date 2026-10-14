@@ -36,6 +36,7 @@ describe('RecommendedTeamService', () => {
     expect(result.planName).toBe('Free');
     expect(result.team?.judge.model).toBe('flash');
     expect(result.models).toEqual([{ provider: 'GEMINI', model: 'flash', status: 'AVAILABLE' }]);
+    expect(result.excluded).toEqual([]);
     expect(adapter.getEntitlements).toHaveBeenCalledWith('owner-1', { enforceTrial: false });
   });
 

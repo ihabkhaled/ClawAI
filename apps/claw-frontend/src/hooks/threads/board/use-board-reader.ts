@@ -10,7 +10,12 @@ import { threadPublicationsRepository } from '@/repositories/threads/thread-publ
 import { ApiClientError } from '@/services/shared/api-client';
 import { useAuthStore } from '@/stores/auth.store';
 import type { BoardReaderController } from '@/types/thread-board-reader.types';
-import { readBoardListUrl, threadPublicPath } from '@/utilities/thread-board-list-url.utility';
+import {
+  boardReaderPath,
+  readBoardListUrl,
+  threadPublicPath,
+} from '@/utilities/thread-board-list-url.utility';
+import { decodeThreadSlugParam } from '@/utilities/thread-slug.utility';
 import {
   readRememberedReaction,
   withRememberedReaction,
@@ -19,7 +24,8 @@ import {
 /** Everything the in-app reader needs; shares query keys with the public page so reactions stay in sync. */
 export function useBoardReader(): BoardReaderController {
   const params = useParams<{ slug: string }>();
-  const slug = params.slug ?? '';
+  // Next hands the segment over percent-encoded; the API and every query key use the real slug.
+  const slug = decodeThreadSlugParam(params.slug ?? '') ?? '';
   const router = useRouter();
   const [publicUrl, setPublicUrl] = useState<string | null>(null);
   const [boardHref, setBoardHref] = useState('/board');
@@ -53,7 +59,7 @@ export function useBoardReader(): BoardReaderController {
   const userId = useAuthStore((state) => state.user?.id ?? '');
   useThreadPublicView(slug, isAuthenticated);
   const error = publication.error;
-  const isNotFound = error instanceof ApiClientError && error.status === 404;
+  const isNotFound = slug === '' || (error instanceof ApiClientError && error.status === 404);
 
   function goBack(): void {
     router.push(boardHref);
@@ -72,7 +78,7 @@ export function useBoardReader(): BoardReaderController {
     isError: publication.isError && !isNotFound,
     communityLoading: comments.isLoading || reactions.isLoading,
     communityError: comments.isError || reactions.isError,
-    loginHref: `/login?returnTo=${encodeURIComponent(`/board/${slug}`)}`,
+    loginHref: `/login?returnTo=${encodeURIComponent(boardReaderPath(slug))}`,
     publicUrl,
     publicPath,
     boardHref,

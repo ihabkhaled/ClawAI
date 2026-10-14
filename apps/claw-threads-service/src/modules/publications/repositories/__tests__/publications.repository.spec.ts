@@ -41,7 +41,14 @@ describe('PublicationsRepository', () => {
         status: 'PUBLISHED',
         slug: 'vector-search',
         updatedAt: new Date('2026-10-07T10:00:00.000Z'),
-        revisions: [{ title: 'Vector search' }],
+        revisions: [
+          {
+            title: 'Vector search',
+            reviewStatus: 'OWNER_APPROVED',
+            safetyStatus: 'APPROVED',
+            indexEligible: true,
+          },
+        ],
       },
       { id: 'pub-2', status: 'DRAFT', slug: 'uuid-2', updatedAt: new Date(), revisions: [] },
     ]);
@@ -55,9 +62,16 @@ describe('PublicationsRepository', () => {
         select: expect.objectContaining({ slug: true }),
       }),
     );
-    expect(owned.map(({ id, slug, title }) => [id, slug, title])).toEqual([
-      ['pub-1', 'vector-search', 'Vector search'],
-      ['pub-2', 'uuid-2', null],
+    expect(
+      owned.map(({ id, slug, title, pendingRevisionStatus }) => [
+        id,
+        slug,
+        title,
+        pendingRevisionStatus,
+      ]),
+    ).toEqual([
+      ['pub-1', 'vector-search', 'Vector search', null],
+      ['pub-2', 'uuid-2', null, null],
     ]);
   });
 

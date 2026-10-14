@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { makeProgress } from '@/components/threads/__tests__/thread-progress.fixture';
+import { makeProgress, makeStep } from '@/components/threads/__tests__/thread-progress.fixture';
 import { THREAD_EXCERPT_MAX_CHARS } from '@/constants/thread-generation-progress.constants';
 
 import {
   readAllowanceRefunded,
+  readIncludedUsageTokens,
   readThreadSpentMicro,
   buildThreadRetryRequest,
   findFailedRoleKind,
@@ -288,5 +289,22 @@ describe('queued jobs and unknown spend', () => {
         freeAllowanceMicroUsd: 4500,
       } as typeof base),
     ).toBe('12300');
+  });
+});
+
+describe('readIncludedUsageTokens', () => {
+  it('sums input and output tokens of successful calls', () => {
+    const steps = [makeStep(), makeStep({ seq: 2, inputTokens: 10, outputTokens: null })];
+    expect(readIncludedUsageTokens(makeProgress({ steps }))).toBe(610);
+  });
+
+  it('is 0 when successful calls carry no counts', () => {
+    const steps = [makeStep({ inputTokens: null, outputTokens: null })];
+    expect(readIncludedUsageTokens(makeProgress({ steps }))).toBe(0);
+  });
+
+  it('is null when no call succeeded', () => {
+    const steps = [makeStep({ outcome: 'FAILED' }), makeStep({ provider: null })];
+    expect(readIncludedUsageTokens(makeProgress({ steps }))).toBeNull();
   });
 });

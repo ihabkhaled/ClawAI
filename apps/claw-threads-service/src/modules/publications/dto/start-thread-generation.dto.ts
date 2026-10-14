@@ -1,7 +1,23 @@
 import { z } from 'zod';
 import { Locale, ThreadPublicationType } from '@claw/shared-types';
 
+import { ThreadGenerationErrorCode } from '../../../common/enums/thread-generation-error-code.enum';
 import { safeText, topicText } from './safe-text.schema';
+
+const MIN_AUTHORS = 3;
+const MAX_AUTHORS = 5;
+
+function enumValue<T extends string>(
+  values: Record<string, T>,
+  code: string,
+  message: string,
+): z.ZodType<T> {
+  const allowed: readonly string[] = Object.values(values);
+  return z.custom<T>((value) => typeof value === 'string' && allowed.includes(value), {
+    message,
+    params: { code },
+  });
+}
 
 const modelRoleSchema = z.object({
   id: safeText(1, 64),
@@ -16,15 +32,35 @@ const modelRoleSchema = z.object({
 
 export const startThreadGenerationSchema = z
   .object({
-    capMicroUsd: z.number().int().safe().positive(),
+    capMicroUsd: z
+      .number()
+      .int()
+      .safe()
+      .refine((value) => value > 0, {
+        message: 'Set a spend cap above zero.',
+        params: { code: ThreadGenerationErrorCode.SPEND_CAP_TOO_LOW },
+      }),
     sourceThreadId: safeText(1, 64),
     idempotencyKey: safeText(1, 200),
     correlationId: safeText(1, 200),
     publicIntentVersion: z.literal('threads-public-v1'),
-    contentLocale: z.nativeEnum(Locale),
+    contentLocale: enumValue(
+      Locale,
+      ThreadGenerationErrorCode.LOCALE_INVALID,
+      'Choose a supported content language.',
+    ),
     topic: topicText(),
-    publicationType: z.nativeEnum(ThreadPublicationType),
-    authors: z.array(modelRoleSchema).min(3).max(5),
+    publicationType: enumValue(
+      ThreadPublicationType,
+      ThreadGenerationErrorCode.PUBLICATION_TYPE_INVALID,
+      'Choose a supported publication type.',
+    ),
+    authors: z
+      .array(modelRoleSchema)
+      .refine((authors) => authors.length >= MIN_AUTHORS && authors.length <= MAX_AUTHORS, {
+        message: `Choose between ${String(MIN_AUTHORS)} and ${String(MAX_AUTHORS)} authors.`,
+        params: { code: ThreadGenerationErrorCode.AUTHOR_COUNT_INVALID },
+      }),
     judge: modelRoleSchema,
     critic: modelRoleSchema,
   })

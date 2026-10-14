@@ -68,6 +68,41 @@ describe('buildBoardIndexDoc', () => {
   });
 });
 
+describe('stripCitationMarkers whitespace inside brackets', () => {
+  const id1 = 'efc2e342efd8b15e';
+  const id2 = '0123456789abcdef';
+  it.each([
+    [`[ ${id1}]`],
+    [`[${id1} ]`],
+    [`[ ${id1} , ${id2} ]`],
+    [`[\n${id1}\n]`],
+    [`[ \t${id1}\n , \n${id2}  ]`],
+  ])('removes %j and leaves the sentence', (marker) => {
+    const cleaned = stripCitationMarkers(`Sunsets are red ${marker} and long.`);
+    expect(cleaned).toBe('Sunsets are red and long.');
+  });
+
+  it('keeps a bracket that holds a non-id word', () => {
+    expect(stripCitationMarkers('see [ note ] here')).toBe('see [ note ] here');
+  });
+
+  it('keeps the excerpt of a built doc free of the marker', () => {
+    const doc = buildBoardIndexDoc(source({ markdown: `Hello [ ${id1}] world` }));
+    expect(doc.excerpt).toBe('Hello world');
+  });
+
+  it('is written at format version 4 so old rows are re-indexed', () => {
+    expect(BOARD_DOC_FORMAT_VERSION).toBeGreaterThanOrEqual(4);
+  });
+
+  it('stays linear on whitespace-heavy unclosed brackets', () => {
+    const started = Date.now();
+    stripCitationMarkers(`[${' \n'.repeat(100_000)}`);
+    stripCitationMarkers('[ a'.repeat(100_000));
+    expect(Date.now() - started).toBeLessThan(1500);
+  });
+});
+
 describe('stripCitationMarkers cost', () => {
   it('stays linear on a body of unclosed brackets and on long hex runs', () => {
     const hostile = [

@@ -9202,7 +9202,7 @@
       ],
       "skills": [
         {
-          "bytes": 36784,
+          "bytes": 37094,
           "file": "skills/00-index.md"
         },
         {
@@ -9610,6 +9610,10 @@
           "file": "skills/verify-a-batch-live.md"
         },
         {
+          "bytes": 4268,
+          "file": "skills/verify-a-release-on-production.md"
+        },
+        {
           "bytes": 1355,
           "file": "skills/verify-local-speech-container.md"
         },
@@ -9660,7 +9664,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 6109
+        "value": 6115
       },
       "localeCount": 13,
       "locales": [
@@ -12015,7 +12019,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 195
+        "testFiles": 196
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -12039,11 +12043,11 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 927
+        "testFiles": 936
       },
       "claw-health-service": {
         "runner": "vitest",
-        "testFiles": 14
+        "testFiles": 15
       },
       "claw-image-service": {
         "runner": "vitest",
@@ -12083,15 +12087,15 @@
       },
       "claw-thread-generation-service": {
         "runner": "vitest",
-        "testFiles": 56
+        "testFiles": 58
       },
       "claw-threads-service": {
         "runner": "vitest",
-        "testFiles": 84
+        "testFiles": 88
       },
       "claw-workspace-service": {
         "runner": "vitest",
-        "testFiles": 104
+        "testFiles": 107
       }
     },
     "workspaces": [
@@ -12946,7 +12950,7 @@
     "serviceCount": 21,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2574,
+    "totalTestFiles": 2594,
     "workspaceCount": 28
   }
 }

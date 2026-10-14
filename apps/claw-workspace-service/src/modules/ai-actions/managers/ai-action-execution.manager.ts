@@ -2,12 +2,13 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { PaygSurface } from '@claw/shared-types';
 
 import { AppConfig } from '../../../app/config/app.config';
-import { AiActionMode } from '../../../common/enums/ai-action-kind.enum';
+import { AiActionMode, AiActionPrivacyClass } from '../../../common/enums/ai-action-kind.enum';
 import { BusinessException } from '../../../common/errors/business.exception';
 import {
   AI_ACTION_FALLBACK_LOCAL_PROVIDER,
   LEARNED_PREFERENCES_PROMPT_LIMIT,
 } from '../constants/ai-action-prompts.constants';
+import { AI_ACTION_WORKFLOW_RUN } from '../constants/model-catalog.constants';
 import { AutomationPreferenceService } from '../services/automation-preference.service';
 import type {
   AiActionResult,
@@ -38,6 +39,7 @@ export class AiActionExecutionManager {
       actionKind: input.actionKind,
       privacyClass: input.privacyClass,
       preferredModel: input.preferredModel,
+      userId: input.userId,
     });
     const learnedPreferences = await this.loadLearnedPreferences(input);
     const { systemPrompt, userPrompt } = buildAiActionPrompt(
@@ -50,6 +52,8 @@ export class AiActionExecutionManager {
       resolution.primary,
       resolution.fallbackChain,
       resolution.mode,
+      input.userId,
+      input.privacyClass,
     );
     let lastError: Error | undefined;
     for (const model of modelsToTry) {
@@ -121,6 +125,8 @@ export class AiActionExecutionManager {
     primary: ModelChoice,
     declaredFallbacks: ModelChoice[],
     mode: AiActionMode,
+    userId: string,
+    privacyClass: AiActionPrivacyClass,
   ): Promise<ModelChoice[]> {
     const chain = [primary, ...declaredFallbacks];
     // MANUAL mode = user explicitly picked a model. Respect it: don't
@@ -131,13 +137,22 @@ export class AiActionExecutionManager {
     if (mode === AiActionMode.MANUAL) {
       return chain;
     }
-    const safetyNet = await this.resolver.resolveDefaults({ preferLocal: true });
+    const safetyNet = await this.resolver.resolveDefaults({ preferLocal: true, userId });
+    // PRIVATE content never leaves the host: the router already stripped cloud
+    // entries, so the safety net must not put them back.
+    const allowed = (candidate: ModelChoice): boolean =>
+      privacyClass !== AiActionPrivacyClass.PRIVATE ||
+      candidate.provider === AI_ACTION_FALLBACK_LOCAL_PROVIDER;
     const additions: ModelChoice[] = [];
-    if (safetyNet.primary !== null && !this.alreadyInChain(chain, safetyNet.primary)) {
+    if (
+      safetyNet.primary !== null &&
+      allowed(safetyNet.primary) &&
+      !this.alreadyInChain(chain, safetyNet.primary)
+    ) {
       additions.push(safetyNet.primary);
     }
     for (const candidate of safetyNet.fallbackChain) {
-      if (!this.alreadyInChain([...chain, ...additions], candidate)) {
+      if (allowed(candidate) && !this.alreadyInChain([...chain, ...additions], candidate)) {
         additions.push(candidate);
       }
     }
@@ -203,6 +218,7 @@ export class AiActionExecutionManager {
       timeoutMs: config.AI_ACTION_REQUEST_TIMEOUT_MS,
       userId,
       surface: PaygSurface.WORKSPACE_ACTION,
+      workflow: AI_ACTION_WORKFLOW_RUN,
     });
   }
 }

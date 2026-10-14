@@ -29,6 +29,12 @@ export const BOARD_WORD_SIMILARITY_THRESHOLD = 0.45;
 /** didYouMean is offered when a query finds fewer than this many results. */
 export const BOARD_DID_YOU_MEAN_BELOW = 3;
 export const BOARD_DID_YOU_MEAN_MIN_SIMILARITY = 0.4;
+/**
+ * A word this short has few trigrams, so one wrong letter ('skie' for 'sky') scores under the normal
+ * floor. Up to this length a lower floor applies, guarded by a shared first letter to keep it precise.
+ */
+export const BOARD_DID_YOU_MEAN_SHORT_WORD_MAX_LENGTH = 5;
+export const BOARD_DID_YOU_MEAN_SHORT_MIN_SIMILARITY = 0.2;
 export const BOARD_DID_YOU_MEAN_MAX_TOKENS = 6;
 export const BOARD_DID_YOU_MEAN_MIN_WORD_LENGTH = 3;
 export const BOARD_DID_YOU_MEAN_MAX_WORD_LENGTH = 64;
@@ -49,7 +55,11 @@ export const BOARD_SUGGEST_CACHE_CONTROL = 'private, max-age=15';
 /** Anonymous (marketing site) board: stricter per-address limits and shared-cache headers. */
 export const BOARD_PUBLIC_LIST_RATE_LIMIT_PER_MINUTE = 60;
 export const BOARD_PUBLIC_SUGGEST_RATE_LIMIT_PER_MINUTE = 40;
-export const BOARD_PUBLIC_LIST_CACHE_CONTROL = 'public, s-maxage=60, stale-while-revalidate=300';
+export const BOARD_PUBLIC_LIST_CACHE_CONTROL = 'public, s-maxage=60, stale-while-revalidate=30';
 export const BOARD_PUBLIC_SUGGEST_CACHE_CONTROL = 'public, s-maxage=30';
 /** Never Authorization: the anonymous response is identical for every caller. */
 export const BOARD_PUBLIC_VARY = 'Accept-Language';
+
+/** Machine code and plain message of the anonymous Board's 429 (never the throttler's class name). */
+export const BOARD_RATE_LIMITED_MESSAGE = 'Too many requests, try again in a moment';
+export const BOARD_RATE_LIMIT_RETRY_AFTER_SECONDS = BOARD_RATE_LIMIT_WINDOW_MS / 1000;

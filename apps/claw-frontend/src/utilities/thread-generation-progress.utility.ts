@@ -67,6 +67,35 @@ export function readThreadSpentMicro(progress: ThreadGenerationProgress): string
   return String(Math.max(spent, free));
 }
 
+/**
+ * For a job that reports no money but did make model calls (plan-included calls charge $0):
+ * the token total across its steps, 0 when no step carried counts. Null when the job made no
+ * successful call, so a queued or instantly refused job says nothing.
+ */
+export function readIncludedUsageTokens(progress: ThreadGenerationProgress): number | null {
+  const calls = progress.steps.filter(
+    (step) => step.outcome === 'SUCCEEDED' && step.provider !== null,
+  );
+  if (calls.length === 0) {
+    return null;
+  }
+  return calls.reduce((sum, step) => sum + (step.inputTokens ?? 0) + (step.outputTokens ?? 0), 0);
+}
+
+/** Label for a zero-money job that did make calls, with the token total when the steps carry one. */
+export function describeIncludedUsage(progress: ThreadGenerationProgress): ThreadI18nText | null {
+  const tokens = readIncludedUsageTokens(progress);
+  if (tokens === null) {
+    return null;
+  }
+  return tokens > 0
+    ? {
+        key: 'chat.threadProgress.includedInPlanTokens',
+        params: { tokens: tokens.toLocaleString() },
+      }
+    : { key: 'chat.threadProgress.includedInPlan', params: {} };
+}
+
 export function isRetryableThreadStatus(status: string): boolean {
   return THREAD_PROGRESS_RETRYABLE_STATUSES.includes(status);
 }

@@ -128,6 +128,9 @@ describe('buildContentSecurityPolicy', () => {
     expect(dev).toContain('wss:');
     const prod = buildContentSecurityPolicy(baseOptions);
     expect(prod).not.toContain("'unsafe-eval'");
+    expect(buildContentSecurityPolicy({ ...baseOptions, adsenseEnabled: true })).not.toContain(
+      "'unsafe-eval'",
+    );
     expect(prod).not.toContain('wss:');
   });
 

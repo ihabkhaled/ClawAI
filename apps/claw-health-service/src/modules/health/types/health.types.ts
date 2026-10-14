@@ -41,3 +41,23 @@ export interface ServiceCheckOutcome {
   result: ServiceHealthResult;
   body: unknown;
 }
+
+/** One service row as an anonymous caller sees it: up or down, nothing else. */
+export interface PublicServiceHealth {
+  name: string;
+  status: ServiceStatus;
+  responseTimeMs: null;
+  error: null;
+}
+
+/**
+ * The public `/health` body. Same shape as {@link AggregatedHealth} so existing
+ * consumers keep parsing it, but no error strings, no timings and no
+ * dependency list: those carry internal hostnames and DNS errors.
+ */
+export interface PublicAggregatedHealth {
+  status: AggregatedHealthStatus;
+  timestamp: string;
+  services: PublicServiceHealth[];
+  summary: AggregatedHealthSummary;
+}

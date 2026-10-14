@@ -900,7 +900,10 @@ cluster rules above rather than adding a new mechanism:
 - **Metadata.** Title and description come from `chat.threadPublicBoardSeoTitle` and `...SeoDescription` in
   `thread-public-board-translations.ts`; `threads-public-board-seo.constants.ts` derives the registry copy from that
   single source and is added to `CLUSTER_SEO_SOURCES`. `buildPublicPageMetadata(threads/board, locale)` yields the
-  self-canonical, hreflang, OpenGraph and Twitter tags and `index,follow`.
+  self-canonical, hreflang, OpenGraph and Twitter tags and `index,follow`. The SEO title carries no brand suffix: the
+  root metadata template (`%s | ClawAI`) adds it, and a suffix in the copy made the `<title>` read "... | ClawAI | ClawAI".
+  Thread URLs (canonical, hreflang, sitemap, RSS) use one percent-encoded slug segment (`threadCanonicalUrl`), so
+  Arabic, Persian, Hindi and Japanese slugs are advertised in the same form the page serves.
 - **Structured data.** `buildPublicBoardJsonLd` (`structured-data.utility.ts`) emits a `CollectionPage` whose
   `mainEntity` is an `ItemList` of the first page of Threads (name and canonical `/<locale>/threads/<slug>` URL only,
   `numberOfItems` = total) plus a `BreadcrumbList`. No rating, author or private field.

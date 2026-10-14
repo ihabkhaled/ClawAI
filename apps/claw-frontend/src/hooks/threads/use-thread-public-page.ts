@@ -16,12 +16,14 @@ import type {
   ThreadPublicPageController,
   PublicThreadPublication,
 } from '@/types/thread-publication.types';
+import { threadPublicPath } from '@/utilities/thread-board-list-url.utility';
 import {
   buildThreadHtmlDocument,
   buildThreadJsonDocument,
   buildThreadMarkdownDocument,
   buildThreadTextDocument,
 } from '@/utilities/thread-document-export.utility';
+import { decodeThreadSlugParam } from '@/utilities/thread-slug.utility';
 import {
   readRememberedReaction,
   withRememberedReaction,
@@ -31,7 +33,8 @@ export function useThreadPublicPage(
   initialPublication: PublicThreadPublication,
 ): ThreadPublicPageController {
   const params = useParams<{ slug: string }>();
-  const slug = params.slug ?? '';
+  // Next hands the segment over percent-encoded; the API and every query key use the real slug.
+  const slug = decodeThreadSlugParam(params.slug ?? '') ?? '';
   const { t } = useTranslation();
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   useEffect(() => {
@@ -89,7 +92,7 @@ export function useThreadPublicPage(
     isError: queries.publication.isError && !isNotFound,
     communityLoading: queries.comments.isLoading || queries.reactions.isLoading,
     communityError: queries.comments.isError || queries.reactions.isError,
-    loginHref: `/login?returnTo=${encodeURIComponent(`/threads/${slug}`)}`,
+    loginHref: `/login?returnTo=${encodeURIComponent(threadPublicPath(slug))}`,
     actions,
   };
 }

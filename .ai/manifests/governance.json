@@ -360,7 +360,7 @@
   ],
   "skills": [
     {
-      "bytes": 36784,
+      "bytes": 37094,
       "file": "skills/00-index.md"
     },
     {
@@ -766,6 +766,10 @@
     {
       "bytes": 5122,
       "file": "skills/verify-a-batch-live.md"
+    },
+    {
+      "bytes": 4268,
+      "file": "skills/verify-a-release-on-production.md"
     },
     {
       "bytes": 1355,

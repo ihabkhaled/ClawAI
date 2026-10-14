@@ -135,10 +135,13 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
         "'self'",
         `'nonce-${nonce}'`,
         "'strict-dynamic'",
-        // Google supports AdSense under strict CSP with these fallback tokens.
-        // CSP3 browsers ignore them when nonce + strict-dynamic are present;
-        // older browsers use them to keep dynamically loaded ad code working.
-        ...(adsenseEnabled ? ["'unsafe-inline'", "'unsafe-eval'", 'https:', 'http:'] : []),
+        // CSP2-only fallback for AdSense. A CSP3 browser ignores 'unsafe-inline',
+        // https: and http: whenever a nonce + 'strict-dynamic' are present, so they
+        // only matter to older browsers that lack strict-dynamic. 'unsafe-eval' is
+        // deliberately NOT here: it is not ignored by nonces, so it would be live
+        // in every modern browser, and neither Next.js production nor the AdSense
+        // loader needs it. Only development (React Refresh) gets it.
+        ...(adsenseEnabled ? ["'unsafe-inline'", 'https:', 'http:'] : []),
       ];
 
   const connectSrc = [

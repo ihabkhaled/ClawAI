@@ -13,6 +13,7 @@ import type { TranslateFunction } from '@/types/i18n.types';
 import type { BoardChip, BoardChipInput } from '@/types/thread-board-view.types';
 import type { ThreadBoardType } from '@/types/thread-board.types';
 import { localisePath } from '@/utilities/locale.utility';
+import { encodeThreadSlug } from '@/utilities/thread-slug.utility';
 
 /** A language's own name ("Deutsch"); falls back to the code if Intl cannot name it. */
 export function boardLanguageLabel(code: string): string {
@@ -57,7 +58,7 @@ export function buildBoardChips(input: BoardChipInput, t: TranslateFunction): Bo
 }
 
 export function boardItemPath(slug: string): string {
-  return `/board/${encodeURIComponent(slug)}`;
+  return `/board/${encodeThreadSlug(slug)}`;
 }
 
 /**
@@ -66,6 +67,6 @@ export function boardItemPath(slug: string): string {
  */
 export function boardItemHref(mode: ThreadBoardMode, slug: string, locale: Locale): string {
   return mode === ThreadBoardMode.Guest
-    ? localisePath(`/threads/${encodeURIComponent(slug)}`, locale)
+    ? localisePath(`/threads/${encodeThreadSlug(slug)}`, locale)
     : boardItemPath(slug);
 }

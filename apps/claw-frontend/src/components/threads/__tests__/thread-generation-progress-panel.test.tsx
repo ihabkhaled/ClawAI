@@ -8,7 +8,7 @@ import type { ThreadProgressPanelController } from '@/types/thread-generation-pr
 
 import { ThreadGenerationProgressPanel } from '../thread-generation-progress-panel';
 
-import { makeProgress } from './thread-progress.fixture';
+import { makeProgress, makeStep } from './thread-progress.fixture';
 
 vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({
@@ -241,6 +241,33 @@ describe('ThreadGenerationProgressPanel queued, spend and action bar', () => {
   it('hides the spend line until a real amount exists', () => {
     renderPanel(makeController({ progress: makeProgress({ spentMicroCredits: '0' }) }));
     expect(screen.queryByTestId('thread-progress-spent')).not.toBeInTheDocument();
+  });
+
+  it('says the calls were included in the plan, with tokens, when spend is zero', () => {
+    renderPanel(makeController({ progress: makeProgress({ spentMicroCredits: '0' }) }));
+    expect(screen.getByTestId('thread-progress-included')).toHaveTextContent(
+      'chat.threadProgress.includedInPlanTokens',
+    );
+  });
+
+  it('says included without tokens when the steps carry no counts', () => {
+    const steps = [makeStep({ inputTokens: null, outputTokens: null })];
+    renderPanel(makeController({ progress: makeProgress({ spentMicroCredits: '0', steps }) }));
+    expect(screen.getByTestId('thread-progress-included')).toHaveTextContent(
+      'chat.threadProgress.includedInPlan',
+    );
+  });
+
+  it('says nothing about the plan when no call succeeded or money was spent', () => {
+    const none = makeProgress({ spentMicroCredits: '0', steps: [] });
+    renderPanel(makeController({ progress: none }));
+    expect(screen.queryByTestId('thread-progress-included')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('thread-progress-spent')).not.toBeInTheDocument();
+  });
+
+  it('never shows the included line next to a real spend', () => {
+    renderPanel(makeController());
+    expect(screen.queryByTestId('thread-progress-included')).not.toBeInTheDocument();
   });
 
   it('hides the spend line for an unreadable amount', () => {

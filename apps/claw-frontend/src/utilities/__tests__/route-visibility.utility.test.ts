@@ -79,6 +79,26 @@ describe('isPublicPath', () => {
     expect(isPublicThreadPath(`/en/threads/${'a'.repeat(65)}`)).toBe(false);
   });
 
+  it.each([
+    ['Arabic', 'كيف-يعمل-التمثيل-a1b2c3d4'],
+    ['Persian', 'فتوسنتز-در-گیاهان-a1b2c3d4'],
+    ['Hindi', 'प्रकाश-संश्लेषण-a1b2c3d4'],
+    ['Japanese', '茶道-入門-a1b2c3d4'],
+  ])(
+    'treats a percent-encoded %s Thread path as public (the proxy sees it encoded)',
+    (_name, slug) => {
+      const encoded = encodeURIComponent(slug);
+      expect(isPublicThreadPath(`/ar/threads/${encoded}`)).toBe(true);
+      expect(isPublicPath(`/en/threads/${encoded}`)).toBe(true);
+      expect(isPublicThreadPath(`/ar/threads/${slug}`)).toBe(true);
+    },
+  );
+
+  it('rejects malformed encoding and an encoded slash in a Thread path', () => {
+    expect(isPublicThreadPath('/en/threads/%E0%A4%A')).toBe(false);
+    expect(isPublicThreadPath('/en/threads/a%2Fb')).toBe(false);
+  });
+
   it('does not make an unlocalised Thread path public (the proxy redirects it first)', () => {
     expect(isPublicPath('/threads/clear-writing')).toBe(false);
   });

@@ -3,6 +3,7 @@ import { RouteVisibility } from '@/enums/route-visibility.enum';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { isKnownPublicPathForLocale } from '@/utilities/content-registry.utility';
 import { parseLocaleFromPathname, stripLocaleFromPathname } from '@/utilities/locale.utility';
+import { isThreadSlugSegment } from '@/utilities/thread-slug.utility';
 
 // Framework-generated crawler files that are never registry entries but
 // must never be tagged noindex either.
@@ -40,7 +41,7 @@ export function isSharedChatPath(pathname: string): boolean {
   return unlocalizedPath.startsWith(`${SHARE_CHAT_PATH_PREFIX}/`);
 }
 
-const PUBLIC_THREAD_PATH_PATTERN = /^\/threads\/[a-zA-Z0-9-]{1,64}$/u;
+const PUBLIC_THREAD_PATH_PATTERN = /^\/threads\/([^/]+)$/u;
 
 /**
  * Whether a path is one public Thread page (`/threads/<slug>`).
@@ -51,7 +52,9 @@ const PUBLIC_THREAD_PATH_PATTERN = /^\/threads\/[a-zA-Z0-9-]{1,64}$/u;
  * signed-in owner list and `/threads/review/<id>` has two segments, so neither matches.
  */
 export function isPublicThreadPath(pathname: string): boolean {
-  return PUBLIC_THREAD_PATH_PATTERN.test(stripLocaleFromPathname(pathname));
+  const segment = PUBLIC_THREAD_PATH_PATTERN.exec(stripLocaleFromPathname(pathname))?.[1];
+  // The proxy sees the path still percent-encoded, so a non-Latin slug is decoded before the check.
+  return segment !== undefined && isThreadSlugSegment(segment);
 }
 
 export function classifyRouteVisibility(pathname: string): RouteVisibility {

@@ -1,3 +1,5 @@
+import type { RequestOptions } from 'node:https';
+
 export type EgressUrlPolicy = {
   allowedPorts: readonly number[];
 };
@@ -11,8 +13,11 @@ export type CheckedUrl = {
 
 /** A checked URL whose every DNS answer is public; the connection is pinned to `address`. */
 export type ResolvedTarget = CheckedUrl & {
+  /** The preferred address (the first of `addresses`). */
   address: string;
   family: 4 | 6;
+  /** Every validated answer, families interleaved; the connection may fall back across them. */
+  addresses: PinnedAddress[];
 };
 
 export type EgressMethod = 'GET' | 'POST' | 'DELETE';
@@ -43,6 +48,8 @@ export type EgressSendInput = {
   body?: string;
   address: string;
   family: 4 | 6;
+  /** Every validated answer, in connection order. The socket may only ever connect to these. */
+  addresses: PinnedAddress[];
   timeoutMs: number;
   maxResponseBytes: number;
   signal?: AbortSignal;
@@ -67,3 +74,9 @@ export type PinnedLookupCallback = (
   addressOrList: string | Array<{ address: string; family: number }>,
   family?: number,
 ) => void;
+
+/** node:https options plus the socket's address-fallback switches, which its typings omit. */
+export type PinnedRequestOptions = RequestOptions & {
+  autoSelectFamily?: boolean;
+  autoSelectFamilyAttemptTimeout?: number;
+};

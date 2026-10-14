@@ -4,6 +4,7 @@ import { PaygSurface } from '@claw/shared-types';
 import { AppConfig } from '../../../app/config/app.config';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { AI_ACTION_FALLBACK_LOCAL_PROVIDER } from '../../ai-actions/constants/ai-action-prompts.constants';
+import { AI_ACTION_WORKFLOW_CHAIN_DRAFT } from '../../ai-actions/constants/model-catalog.constants';
 import { ModelCatalogResolverManager } from '../../ai-actions/managers/model-catalog-resolver.manager';
 import type { ModelChoice } from '../../ai-actions/types/ai-action.types';
 import { callCloudGenerate } from '../../ai-actions/utilities/cloud-generation-client.utility';
@@ -55,7 +56,7 @@ export class ChainNlDraftManager {
       );
     }
 
-    const { primary, fallbackChain } = await this.modelResolver.resolveDefaults({});
+    const { primary, fallbackChain } = await this.modelResolver.resolveDefaults({ userId });
     if (primary === null) {
       throw new BusinessException(
         'workspace.chain_nl_draft.no_model_available',
@@ -159,6 +160,7 @@ export class ChainNlDraftManager {
       ),
       userId,
       surface: PaygSurface.WORKSPACE_ACTION,
+      workflow: AI_ACTION_WORKFLOW_CHAIN_DRAFT,
     });
     return result.content;
   }

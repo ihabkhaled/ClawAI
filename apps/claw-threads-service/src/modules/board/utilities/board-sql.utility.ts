@@ -3,6 +3,8 @@ import {
   BOARD_ALL,
   BOARD_DID_YOU_MEAN_MAX_WORD_LENGTH,
   BOARD_DID_YOU_MEAN_MIN_SIMILARITY,
+  BOARD_DID_YOU_MEAN_SHORT_MIN_SIMILARITY,
+  BOARD_DID_YOU_MEAN_SHORT_WORD_MAX_LENGTH,
   BOARD_SIMILARITY_THRESHOLD,
   BOARD_SUGGEST_LIMIT,
   BOARD_SUGGEST_TOTAL_CAP,
@@ -168,9 +170,14 @@ export function buildDidYouMeanQuery(tokens: readonly string[], lang: string): P
     CROSS JOIN LATERAL (
       SELECT w.word
       FROM thread_board_words w
-      WHERE w.word % t.token
+      WHERE (
+          (w.word % t.token
+            AND similarity(w.word, t.token) >= ${BOARD_DID_YOU_MEAN_MIN_SIMILARITY}::float8)
+          OR (char_length(t.token) <= ${BOARD_DID_YOU_MEAN_SHORT_WORD_MAX_LENGTH}
+            AND left(w.word, 1) = left(t.token, 1)
+            AND similarity(w.word, t.token) >= ${BOARD_DID_YOU_MEAN_SHORT_MIN_SIMILARITY}::float8)
+        )
         AND char_length(w.word) <= ${BOARD_DID_YOU_MEAN_MAX_WORD_LENGTH}
-        AND similarity(w.word, t.token) >= ${BOARD_DID_YOU_MEAN_MIN_SIMILARITY}::float8
         ${langClause}
       ORDER BY similarity(w.word, t.token) DESC, w.freq DESC, w.word ASC
       LIMIT 1

@@ -11,6 +11,7 @@ import {
   OUTPUT_TAIL_CHARS,
 } from '../constants/output-failure.constants';
 import { findObjectEnd, parseModelJson } from './parse-model-json.utility';
+import { stripReasoningBlocks } from './strip-reasoning-blocks.utility';
 
 /** True when every `{` in the text closes (so the JSON is malformed, not cut off). */
 function hasOnlyClosedObjects(text: string): boolean {
@@ -29,8 +30,11 @@ export function classifyModelOutput(content: string, accepts: z.ZodType): ModelO
   const text = content.trim();
   if (text.length === 0) return ModelOutputFailureKind.EMPTY;
   if (parseModelJson(text, accepts) !== undefined) return ModelOutputFailureKind.WRONG_SHAPE;
-  if (!text.includes(JSON_OPEN_BRACE)) return ModelOutputFailureKind.PROSE;
-  return hasOnlyClosedObjects(text)
+  // Thinking that never ended means the output limit hit before any answer started.
+  const { answer, unfinished } = stripReasoningBlocks(text);
+  if (unfinished && !answer.includes(JSON_OPEN_BRACE)) return ModelOutputFailureKind.TRUNCATED;
+  if (!answer.includes(JSON_OPEN_BRACE)) return ModelOutputFailureKind.PROSE;
+  return hasOnlyClosedObjects(answer)
     ? ModelOutputFailureKind.INVALID_JSON
     : ModelOutputFailureKind.TRUNCATED;
 }

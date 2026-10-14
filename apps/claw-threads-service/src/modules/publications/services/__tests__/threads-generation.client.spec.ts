@@ -180,6 +180,38 @@ describe('ThreadsGenerationClient', () => {
     });
   });
 
+  it('keeps used, limit and window when the budget step says the allowance is used up', async () => {
+    stubFetch({
+      ok: false,
+      status: 403,
+      json: async () => ({
+        statusCode: 403,
+        code: 'THREAD_ALLOWANCE_UNAVAILABLE',
+        message: 'Your plan allows 1 Thread generation with Judge review, and 1 is used.',
+        feature: 'JUDGE_MODE',
+        reason: 'LIMIT_REACHED',
+        used: 1,
+        limit: 1,
+        window: 'LIFETIME',
+      }),
+    });
+
+    const failure = await new ThreadsGenerationClient()
+      .getProgress('job-1', 'o')
+      .catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(ForbiddenException);
+    expect((failure as ForbiddenException).getResponse()).toEqual({
+      code: 'THREAD_GENERATION_ALLOWANCE_UNAVAILABLE',
+      statusCode: 403,
+      message: 'Your plan allows 1 Thread generation with Judge review, and 1 is used.',
+      feature: 'JUDGE_MODE',
+      used: 1,
+      limit: 1,
+      window: 'LIFETIME',
+    });
+  });
+
   it('answers a 404 on enqueue as a missing source thread, with the same body as not found', async () => {
     stubFetch({ ok: false, status: 404 });
     const input = {

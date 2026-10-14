@@ -28,6 +28,8 @@ function config(overrides: Partial<AppConfigType>): AppConfigType {
   return base as AppConfigType;
 }
 
+const entitlementsStub = { getEntitlements: vi.fn() };
+
 describe('internal service calls go through the outbound URL guard', () => {
   let fetchMock: Mock;
 
@@ -139,7 +141,7 @@ describe('internal service calls go through the outbound URL guard', () => {
       json: () => Promise.resolve({ models: [] }),
     });
 
-    await new ModelCatalogResolverManager().resolveDefaults();
+    await new ModelCatalogResolverManager(entitlementsStub as never).resolveDefaults();
 
     const installed = fetchMock.mock.calls.find(([target]) =>
       String(target).includes('/api/v1/internal/ollama/installed-models'),
@@ -150,7 +152,7 @@ describe('internal service calls go through the outbound URL guard', () => {
     );
   });
 
-  it('every connector config probe sends the inter-service token and never logs it', async () => {
+  it('the public catalog read sends the inter-service token and never logs it', async () => {
     vi.spyOn(AppConfig, 'get').mockReturnValue(
       config({
         OLLAMA_SERVICE_URL: 'http://ollama-service:4008',
@@ -159,7 +161,7 @@ describe('internal service calls go through the outbound URL guard', () => {
       }),
     );
     fetchMock.mockImplementation((target: string) =>
-      String(target).includes('/internal/connectors/config')
+      String(target).includes('/internal/connectors/public-catalog')
         ? Promise.reject(new Error('connector down'))
         : Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({ models: [] }) }),
     );
@@ -170,13 +172,13 @@ describe('internal service calls go through the outbound URL guard', () => {
     vi.spyOn(Logger.prototype, 'debug').mockImplementation(capture);
     vi.spyOn(Logger.prototype, 'warn').mockImplementation(capture);
 
-    await new ModelCatalogResolverManager().resolveDefaults();
+    await new ModelCatalogResolverManager(entitlementsStub as never).resolveDefaults();
 
-    const probes = fetchMock.mock.calls.filter(([target]) =>
-      String(target).includes('/api/v1/internal/connectors/config?provider='),
+    const catalogCalls = fetchMock.mock.calls.filter(([target]) =>
+      String(target).includes('/api/v1/internal/connectors/public-catalog'),
     ) as [string, RequestInit][];
-    expect(probes).toHaveLength(5);
-    for (const [, init] of probes) {
+    expect(catalogCalls).toHaveLength(1);
+    for (const [, init] of catalogCalls) {
       expect(new Headers(init.headers).get('authorization')).toBe('Service inter-service-secret');
     }
     expect(logged.length).toBeGreaterThan(0);

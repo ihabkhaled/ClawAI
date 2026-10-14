@@ -43,6 +43,8 @@ catalog check is an exact match against its public picker catalog, never the rou
 heuristic. The frontend still shows one generic sentence for any 403 on start; mapping these codes to
 the 13 locales is open.
 
+Start and retry bodies go through `ZodValidationPipe(schema, ThreadGenerationErrorCode.REQUEST_INVALID)`: a rule-coded failure keeps its own code (cap 0, author count, locale, publication type), anything else gets `THREAD_REQUEST_INVALID`. `GET mine` titles come from `pickOwnerListTitle` (approved revision wins over a STALE/PENDING newer one, `pendingRevisionStatus` reports it); `generation-state` swaps in the newest publishable revision's draft and hash (`withLatestRevision`); `recommended-team` also returns `excluded[]` with `reasonIfExcluded`.
+
 ## Atomic, idempotent, capped start and retry (ADR-174 addendum 2026-10-14)
 
 - **Retry runs the same preflight** (`assertCanRetry`: stored seats plus `models[]` overrides,
@@ -113,3 +115,7 @@ the 13 locales is open.
 ## Guest Board (ADR-177 addendum 2026-10-14)
 
 `BoardPublicController` (`thread-publications/public/board`, `.../suggest`, `@Public`) calls the same `BoardService.list(null, query)` / `suggest` as `BoardController`. Never copy the query or shape into a second path; `userId = null` drops the reaction join and `viewerReaction` stays `null`. Limits 60 and 40 per minute per address, `Cache-Control: public, s-maxage=...`, `Vary: Accept-Language` (never `Authorization`). `BoardModule` stays before `PublicationsModule` in `AppModule` or `public/board` is read as a slug.
+
+## Allowance refusal pass-through (2026-10-14)
+
+`ThreadsGenerationClient.request` maps a 403 that carries `THREAD_ALLOWANCE_UNAVAILABLE` (`generationAllowanceRefusalSchema`) to `THREAD_GENERATION_ALLOWANCE_UNAVAILABLE` with the auth message plus `feature`, `used`, `limit`, `window`. Any other 403 is still `THREAD_GENERATION_NOT_IN_PLAN`. The frontend already maps the new code (`allowanceUnavailable`); it may read the numbers from the body.

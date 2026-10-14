@@ -1,3 +1,5 @@
+import { encodeThreadSlug } from '@/utilities/thread-slug.utility';
+
 const BOARD_LIST_URL_KEY = 'thread-board:list-url';
 const BOARD_PATH = '/board';
 const LOCALE_PREFIX_PATTERN = /^[a-z]{2}$/;
@@ -40,11 +42,11 @@ export function readBoardListUrl(): string | null {
 
 /** The canonical public address of a Thread, never the in-app reader. */
 export function threadPublicPath(slug: string): string {
-  return `/threads/${encodeURIComponent(slug)}`;
+  return `/threads/${encodeThreadSlug(slug)}`;
 }
 
 export function boardReaderPath(slug: string): string {
-  return `${BOARD_PATH}/${encodeURIComponent(slug)}`;
+  return `${BOARD_PATH}/${encodeThreadSlug(slug)}`;
 }
 
 /** The slug at the end of a public Thread address, or null when the address is not one. */

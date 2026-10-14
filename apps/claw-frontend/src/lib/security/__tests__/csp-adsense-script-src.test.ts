@@ -42,7 +42,7 @@ describe('CSP script-src for AdSense', () => {
     expect(directive(csp, 'script-src')).not.toContain('googlesyndication');
   });
 
-  it('uses Google supported strict CSP fallbacks in production', () => {
+  it('keeps only CSP2 fallbacks (never unsafe-eval) in production', () => {
     const csp = buildContentSecurityPolicy({
       nonce: 'n1',
       isDev: false,
@@ -53,7 +53,7 @@ describe('CSP script-src for AdSense', () => {
     expect(scriptSrc).toContain("'strict-dynamic'");
     expect(scriptSrc).toContain("'nonce-n1'");
     expect(scriptSrc).toContain("'unsafe-inline'");
-    expect(scriptSrc).toContain("'unsafe-eval'");
+    expect(scriptSrc).not.toContain("'unsafe-eval'");
     expect(scriptSrc).toContain('https:');
     expect(scriptSrc).toContain('http:');
   });

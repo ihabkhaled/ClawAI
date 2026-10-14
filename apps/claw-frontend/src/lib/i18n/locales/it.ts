@@ -873,6 +873,8 @@ export const it: TranslationDictionary = {
       stageLabel: 'Fase',
       attempt: 'Tentativo {current} di {max}',
       spent: 'Speso finora: {amount}',
+      includedInPlan: 'Incluso nel tuo piano',
+      includedInPlanTokens: 'Incluso nel tuo piano · {tokens} token',
       platformFailureNotice:
         'Il problema era dalla nostra parte, non dalla tua. La tua quota gratuita non è stata usata.',
       retryOnUs: 'Riprova a nostre spese',
@@ -1032,6 +1034,12 @@ export const it: TranslationDictionary = {
         modelUnknown:
           'Un modello selezionato non è nel catalogo dei modelli. Scegline uno dall’elenco.',
         spendCapTooLow: 'Il limite di spesa è troppo basso. Imposta almeno 0,01 USD.',
+        authorCountInvalid: 'Scegli da 3 a 5 autori.',
+        localeInvalid: 'La lingua scelta non è supportata. Sceglierne una dall’elenco.',
+        publicationTypeInvalid:
+          'Il tipo di pubblicazione scelto non è supportato. Sceglierne uno dall’elenco.',
+        requestInvalid:
+          'Alcuni dettagli di questa richiesta mancano o non sono validi. Controlla il modulo e riprova.',
         allowanceUnavailable:
           'La tua quota di Thread è esaurita o è occupata da una generazione in corso. Aspetta che finisca o passa a un piano superiore.',
         tooManyActive:

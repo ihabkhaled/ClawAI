@@ -6,10 +6,24 @@ import type {
   ThreadBoardSuggestion,
   ThreadBoardSuggestResponse,
 } from '@/types/thread-board.types';
+import { isValidThreadSlug } from '@/utilities/thread-slug.utility';
 
 type Fields = Record<string, unknown>;
 
-const SLUG_PATTERN = /^[a-zA-Z0-9-]{1,64}$/u;
+const REPORTED_SLUGS = new Set<string>();
+const MAX_REPORTED_SLUGS = 50;
+
+/**
+ * A slug outside the expected shape is reported once and the item is still shown: its link is
+ * always built with an encoder, so it is safe, and dropping the item made the header count
+ * ('Results: 3') disagree with the cards on the page.
+ */
+function reportUnexpectedSlug(slug: string): void {
+  if (!REPORTED_SLUGS.has(slug) && REPORTED_SLUGS.size < MAX_REPORTED_SLUGS) {
+    REPORTED_SLUGS.add(slug);
+    console.warn('Thread board: unexpected slug shape, rendering with an encoded link', slug);
+  }
+}
 
 function asFields(value: unknown): Fields | null {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -62,13 +76,15 @@ export function toPublicBoardItem(raw: unknown): ThreadBoardItem | null {
   const type = publicationType(fields['publicationType']);
   if (
     slug === null ||
-    !SLUG_PATTERN.test(slug) ||
     title === null ||
     contentLocale === null ||
     publishedAt === null ||
     type === null
   ) {
     return null;
+  }
+  if (!isValidThreadSlug(slug)) {
+    reportUnexpectedSlug(slug);
   }
   return {
     slug,

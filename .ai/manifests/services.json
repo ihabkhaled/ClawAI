@@ -120,7 +120,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 195,
+      "testFiles": 196,
       "testRunner": "vitest"
     },
     {
@@ -261,7 +261,7 @@
       "port": 4009,
       "portSource": "shared-constants",
       "prismaModels": [],
-      "testFiles": 14,
+      "testFiles": 15,
       "testRunner": "vitest"
     },
     {
@@ -577,7 +577,7 @@
         "ThreadModelCommunication",
         "ThreadRevisionDraft"
       ],
-      "testFiles": 56,
+      "testFiles": 58,
       "testRunner": "vitest"
     },
     {
@@ -609,7 +609,7 @@
         "ThreadPublicationSearchDoc",
         "ThreadPublicationView"
       ],
-      "testFiles": 84,
+      "testFiles": 88,
       "testRunner": "vitest"
     },
     {
@@ -658,7 +658,7 @@
         "WorkspaceProviderDefinition",
         "WorkspaceSyncRun"
       ],
-      "testFiles": 104,
+      "testFiles": 107,
       "testRunner": "vitest"
     }
   ]

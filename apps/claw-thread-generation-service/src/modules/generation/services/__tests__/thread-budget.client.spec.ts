@@ -57,6 +57,68 @@ describe('ThreadBudgetClient', () => {
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
+  it('keeps the used/limit/window body of an allowance refusal', async () => {
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
+      AUTH_SERVICE_URL: 'https://auth-service:4001',
+      INTER_SERVICE_AUTH_TOKEN: 'x'.repeat(32),
+    } as never);
+    const body = {
+      statusCode: 403,
+      code: 'THREAD_ALLOWANCE_UNAVAILABLE',
+      message: 'Your plan allows 1 Thread generation with Judge review, and 1 is used.',
+      feature: 'JUDGE_MODE',
+      reason: 'LIMIT_REACHED',
+      used: 1,
+      limit: 1,
+      window: 'LIFETIME',
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(JSON.stringify(body), { status: 403 })),
+    );
+
+    const error = await new ThreadBudgetClient()
+      .reserve('owner-1', 'request-1', 2_000_000)
+      .catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(ForbiddenException);
+    expect((error as ForbiddenException).getResponse()).toMatchObject({
+      code: 'THREAD_ALLOWANCE_UNAVAILABLE',
+      feature: 'JUDGE_MODE',
+      used: 1,
+      limit: 1,
+      window: 'LIFETIME',
+    });
+  });
+
+  it('keeps the plain refusal for a feature the plan switches off', async () => {
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
+      AUTH_SERVICE_URL: 'https://auth-service:4001',
+      INTER_SERVICE_AUTH_TOKEN: 'x'.repeat(32),
+    } as never);
+    const body = {
+      code: 'THREAD_ALLOWANCE_UNAVAILABLE',
+      message: 'Your plan does not include Judge review.',
+      feature: 'JUDGE_MODE',
+      reason: 'FEATURE_DISABLED',
+      used: 0,
+      limit: 0,
+      window: null,
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(JSON.stringify(body), { status: 403 })),
+    );
+
+    const error = await new ThreadBudgetClient()
+      .reserve('owner-1', 'request-1', 2_000_000)
+      .catch((caught: unknown) => caught);
+
+    expect((error as ForbiddenException).getResponse()).toMatchObject({
+      message: 'Threads generation is not permitted',
+    });
+  });
+
   describe('close', () => {
     const configure = (): void => {
       vi.spyOn(AppConfig, 'get').mockReturnValue({

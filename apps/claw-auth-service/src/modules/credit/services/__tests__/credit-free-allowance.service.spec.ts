@@ -170,7 +170,7 @@ describe('CreditFreeAllowanceService', () => {
       expect(attempt).toMatchObject({ status: 'ADMITTED', admission: { countsSlot: false } });
     });
 
-    it('a Thread call with NO money meter is still counted, so nothing is left unbounded', async () => {
+    it('a Thread call with NO money meter is count-waived too: a count-only Free plan must finish its one Thread', async () => {
       await service.tryAdmit(
         makeInput({ surface: PaygSurface.THREADS }),
         RATE,
@@ -180,10 +180,10 @@ describe('CreditFreeAllowanceService', () => {
 
       expect(counters.tryConsume).toHaveBeenCalledWith(
         expect.anything(),
-        2,
+        2_147_483_647,
         expect.any(BigInt),
         null,
-        true,
+        false,
       );
     });
 
@@ -566,13 +566,74 @@ describe('CreditFreeAllowanceService', () => {
         expect(counters.tryConsume.mock.calls[0]?.[1]).toBe(10);
       });
 
-      it('does NOT waive the count when the plan has no money meter (nothing else would bound it)', async () => {
-        plans.findEffectiveForUser.mockResolvedValue(
-          metered({ creditConnectorFreeBudgetMicroUsd: null }),
-        );
-        await service.tryAdmit(threads(), CHEAP, await policyOf(), NOW);
-        expect(counters.tryConsume.mock.calls[0]?.[1]).toBe(10);
-      });
+      // Every plausible Free plan shape. Production's Free plan had no meter and a lower count, and
+      // the first Thread died at the call that reached the count (PAYG_FREE_ALLOWANCE_EXHAUSTED).
+      const SHAPES: ReadonlyArray<{
+        name: string;
+        plan: Record<string, unknown>;
+        budget: bigint | null;
+      }> = [
+        { name: 'count 10 + meter + price limit (the seed)', plan: {}, budget: 250_000n },
+        {
+          name: 'count 5, no meter, no price limit',
+          plan: {
+            creditConnectorFreeRequestsPerMonth: 5,
+            creditConnectorFreeBudgetMicroUsd: null,
+            creditConnectorFreeMaxModelOutputMicroUsd: null,
+          },
+          budget: null,
+        },
+        {
+          name: 'count 2, no meter (the ADR-142 migration default)',
+          plan: {
+            creditConnectorFreeRequestsPerMonth: 2,
+            creditConnectorFreeBudgetMicroUsd: null,
+            creditConnectorFreeMaxModelOutputMicroUsd: null,
+          },
+          budget: null,
+        },
+        {
+          name: 'count 1, no meter, price limit',
+          plan: { creditConnectorFreeRequestsPerMonth: 1, creditConnectorFreeBudgetMicroUsd: null },
+          budget: null,
+        },
+        {
+          name: 'count 5 + meter, no price limit',
+          plan: {
+            creditConnectorFreeRequestsPerMonth: 5,
+            creditConnectorFreeMaxModelOutputMicroUsd: null,
+          },
+          budget: 250_000n,
+        },
+      ];
+
+      it.each(SHAPES)(
+        'a whole Thread (30 calls) is admitted without taking a request slot: $name',
+        async ({ plan, budget }) => {
+          plans.findEffectiveForUser.mockResolvedValue(metered(plan));
+          const policy = await policyOf();
+          for (let call = 0; call < 30; call += 1) {
+            const attempt = await service.tryAdmit(threads(), CHEAP, policy, NOW);
+            expect(attempt).toMatchObject({ status: 'ADMITTED', admission: { countsSlot: false } });
+          }
+          for (const [, limit, , passedBudget, countsSlot] of counters.tryConsume.mock.calls) {
+            expect(limit).toBe(2_147_483_647);
+            expect(passedBudget).toBe(budget);
+            expect(countsSlot).toBe(false);
+          }
+        },
+      );
+
+      it.each(SHAPES)(
+        'a chat on the same plan is still held to the count: $name',
+        async ({ plan }) => {
+          plans.findEffectiveForUser.mockResolvedValue(metered(plan));
+          const policy = await policyOf();
+          await service.tryAdmit(makeInput(), CHEAP, policy, NOW);
+          expect(counters.tryConsume.mock.calls[0]?.[1]).toBe(policy.limit);
+          expect(counters.tryConsume.mock.calls[0]?.[4]).toBe(true);
+        },
+      );
 
       it('gives the slot and the hold back like any allowance call when the Thread call fails', async () => {
         const counter = { userId: 'user-1', provider: '*', periodKey: '2026-10' };

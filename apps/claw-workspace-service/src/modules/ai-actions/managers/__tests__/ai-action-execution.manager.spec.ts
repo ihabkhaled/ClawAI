@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { type Mock, type MockInstance, vi } from 'vitest';
 import { PaygSurface } from '@claw/shared-types';
 
@@ -8,6 +9,7 @@ import {
   AiActionPrivacyClass,
 } from '../../../../common/enums/ai-action-kind.enum';
 import { BusinessException } from '../../../../common/errors/business.exception';
+import * as ollamaClient from '../../utilities/ollama-generation-client.utility';
 import * as cloudClient from '../../utilities/cloud-generation-client.utility';
 import { AiActionExecutionManager } from '../ai-action-execution.manager';
 
@@ -100,6 +102,61 @@ describe('AiActionExecutionManager.run', () => {
         provider: 'ANTHROPIC',
       }),
     );
+  });
+
+  it('tags the call with the workspace-ai-action workflow', async () => {
+    const { manager } = makeManager();
+    callSpy.mockResolvedValue({ content: 'ok' });
+
+    await manager.run({
+      actionKind: AiActionKind.SUMMARIZE,
+      privacyClass: AiActionPrivacyClass.PUBLIC,
+      context: 'ctx',
+      userId: 'user-42',
+    });
+
+    expect(callSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ workflow: 'workspace-ai-action' }),
+    );
+  });
+
+  it('asks the router and the safety net for models limited to the acting user plan', async () => {
+    const { manager, router, resolver } = makeManager({ mode: AiActionMode.AUTO });
+    callSpy.mockResolvedValue({ content: 'ok' });
+
+    await manager.run({
+      actionKind: AiActionKind.SUMMARIZE,
+      privacyClass: AiActionPrivacyClass.PUBLIC,
+      context: 'ctx',
+      userId: 'user-42',
+    });
+
+    expect(router.resolve).toHaveBeenCalledWith(expect.objectContaining({ userId: 'user-42' }));
+    expect(resolver.resolveDefaults).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'user-42' }),
+    );
+  });
+
+  it('never appends a cloud model to a PRIVATE run through the safety net', async () => {
+    const local = { provider: 'local-ollama', model: 'llama:3', displayName: 'llama (local)' };
+    const cloud = { provider: 'ANTHROPIC', model: 'claude-x', displayName: 'Claude X' };
+    const { manager, resolver } = makeManager({ mode: AiActionMode.AUTO });
+    resolver.resolveDefaults.mockResolvedValue({ primary: cloud, fallbackChain: [local] });
+    callSpy.mockRejectedValue(new Error('primary down'));
+    vi.spyOn(ollamaClient, 'callOllamaGenerate').mockRejectedValue(new Error('local down'));
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(vi.fn());
+
+    await expect(
+      manager.run({
+        actionKind: AiActionKind.SUMMARIZE,
+        privacyClass: AiActionPrivacyClass.PRIVATE,
+        context: 'ctx',
+        userId: 'user-42',
+      }),
+    ).rejects.toMatchObject({
+      details: { triedModels: ['ANTHROPIC/claude-sonnet-4', 'local-ollama/llama:3'] },
+    });
+    expect(callSpy).toHaveBeenCalledTimes(1);
   });
 
   it('meters each model in the fallback chain separately — N attempts, N calls', async () => {

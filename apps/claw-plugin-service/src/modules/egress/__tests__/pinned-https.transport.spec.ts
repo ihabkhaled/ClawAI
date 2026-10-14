@@ -5,7 +5,7 @@ import { Readable } from 'node:stream';
 
 import { EgressErrorCode } from '../../../common/enums/egress-error-code.enum';
 import { PinnedHttpsTransport } from '../transports/pinned-https.transport';
-import { type EgressSendInput } from '../types/egress.types';
+import { type EgressSendInput, type PinnedRequestOptions } from '../types/egress.types';
 
 class FakeRequest extends EventEmitter {
   written: string | undefined;
@@ -33,7 +33,7 @@ class FakeResponse extends Readable {
 }
 
 class TestTransport extends PinnedHttpsTransport {
-  options: RequestOptions | undefined;
+  options: PinnedRequestOptions | undefined;
   request = new FakeRequest();
   response = new FakeResponse();
   respond: ((response: FakeResponse) => void) | undefined;
@@ -63,6 +63,7 @@ const INPUT: EgressSendInput = {
   body: '{"a":"é"}',
   address: '93.184.216.34',
   family: 4,
+  addresses: [{ address: '93.184.216.34', family: 4 }],
   timeoutMs: 1000,
   maxResponseBytes: 64,
 };
@@ -114,10 +115,52 @@ describe('PinnedHttpsTransport', () => {
     expect(all).toHaveBeenCalledWith(null, [{ address: '93.184.216.34', family: 4 }]);
   });
 
+  it('hands the socket every validated address, in order, with Happy-Eyeballs fallback on', async () => {
+    const transport = new TestTransport();
+    transport.respond = (response) => response.push(null);
+    await transport.send({
+      ...INPUT,
+      addresses: [
+        { address: '93.184.216.34', family: 4 },
+        { address: '2606:2800:220:1::1', family: 6 },
+        { address: '93.184.216.35', family: 4 },
+      ],
+    });
+
+    const all = vi.fn();
+    lookupOf(transport)('x', { all: true }, all);
+    const single = vi.fn();
+    lookupOf(transport)('x', {}, single);
+
+    expect(transport.options).toMatchObject({ autoSelectFamily: true });
+    expect(transport.options?.autoSelectFamilyAttemptTimeout).toBeGreaterThan(0);
+    expect(all).toHaveBeenCalledWith(null, [
+      { address: '93.184.216.34', family: 4 },
+      { address: '2606:2800:220:1::1', family: 6 },
+      { address: '93.184.216.35', family: 4 },
+    ]);
+    expect(single).toHaveBeenCalledWith(null, '93.184.216.34', 4);
+  });
+
+  it('never answers a lookup with an address that was not validated', async () => {
+    const transport = new TestTransport();
+    transport.respond = (response) => response.push(null);
+    await transport.send(INPUT);
+    const all = vi.fn();
+    lookupOf(transport)('rebind.example', { all: true }, all);
+    expect(all).toHaveBeenCalledTimes(1);
+    expect(all).toHaveBeenCalledWith(null, [{ address: '93.184.216.34', family: 4 }]);
+  });
+
   it('pins an IPv6 answer', async () => {
     const transport = new TestTransport();
     transport.respond = (response) => response.push(null);
-    await transport.send({ ...INPUT, address: '2606:2800:220:1::1', family: 6 });
+    await transport.send({
+      ...INPUT,
+      address: '2606:2800:220:1::1',
+      family: 6,
+      addresses: [{ address: '2606:2800:220:1::1', family: 6 }],
+    });
 
     const single = vi.fn();
     lookupOf(transport)('x', {}, single);

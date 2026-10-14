@@ -88,7 +88,7 @@ export class CreditFreeAllowanceService {
       counter,
       input,
       sized.ceiling,
-      !isCountWaived(input, allowance),
+      !isCountWaived(input),
     );
     if (
       !(await this.counters.tryConsume(

@@ -10,7 +10,11 @@ import { zodIssueCode } from '../../common/utilities/zod-issue-code.utility';
 
 @Injectable()
 export class ZodValidationPipe implements PipeTransform {
-  constructor(private readonly schema: ZodSchema) {}
+  /** `fallbackCode` is the machine code for a failure no schema rule coded itself. */
+  constructor(
+    private readonly schema: ZodSchema,
+    private readonly fallbackCode?: string,
+  ) {}
 
   transform(value: unknown, _metadata: ArgumentMetadata): unknown {
     const result = this.schema.safeParse(value);
@@ -23,7 +27,7 @@ export class ZodValidationPipe implements PipeTransform {
           ...(code ? { code } : {}),
         };
       });
-      const code = errors.find((error) => 'code' in error)?.code;
+      const code = errors.find((error) => 'code' in error)?.code ?? this.fallbackCode;
       throw new BadRequestException({
         message: 'Validation failed',
         ...(code ? { code } : {}),

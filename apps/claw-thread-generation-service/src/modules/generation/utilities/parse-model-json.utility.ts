@@ -8,7 +8,9 @@ import {
   MODEL_JSON_MAX_OBJECT_STARTS,
   UTF8_BYTE_ORDER_MARK_CODE,
 } from '../constants/generation.constants';
+import { repairJsonText } from './repair-json-text.utility';
 import { stripCodeFence } from './strip-code-fence.utility';
+import { stripReasoningBlocks } from './strip-reasoning-blocks.utility';
 
 /** Index of the brace closing the object that opens at `start`, or -1 when it never closes. */
 export function findObjectEnd(text: string, start: number): number {
@@ -37,6 +39,15 @@ function tryParse(text: string): { value: unknown } | null {
   try {
     return { value: JSON.parse(text) };
   } catch {
+    return tryParseRepaired(text);
+  }
+}
+
+/** A second read of text that is almost JSON: raw line breaks in strings, a trailing comma. */
+function tryParseRepaired(text: string): { value: unknown } | null {
+  try {
+    return { value: JSON.parse(repairJsonText(text)) };
+  } catch {
     return null;
   }
 }
@@ -45,14 +56,22 @@ function tryParse(text: string): { value: unknown } | null {
  * Every JSON value a model reply can reasonably be read as. A reply that is JSON (bare or in one
  * code fence) yields only itself; otherwise the balanced objects found inside surrounding prose
  * are yielded in order. A reply whose object never closes (cut off by the output limit) yields
- * nothing, so a truncated answer can never pass as a smaller valid one.
+ * nothing, so a truncated answer can never pass as a smaller valid one. Reasoning blocks
+ * (`<think>...</think>`) are skipped, so braces inside the model's thinking are never read.
  */
 function* jsonCandidates(content: string): Generator<unknown> {
   const unmarked = content.charCodeAt(0) === UTF8_BYTE_ORDER_MARK_CODE ? content.slice(1) : content;
-  const text = unmarked.trim();
-  const whole = tryParse(stripCodeFence(text));
+  const trimmed = unmarked.trim();
+  const whole = tryParse(stripCodeFence(trimmed));
   if (whole) {
     yield whole.value;
+    return;
+  }
+  // Reasoning models think before they answer; only what follows the thinking is the answer.
+  const text = stripReasoningBlocks(trimmed).answer;
+  const answer = text === trimmed ? null : tryParse(stripCodeFence(text));
+  if (answer) {
+    yield answer.value;
     return;
   }
   let from = 0;

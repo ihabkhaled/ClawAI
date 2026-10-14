@@ -16,6 +16,7 @@ import type { RssFeedItem } from '@/types/seo-discovery.types';
 import { getFeedPagesForLocale } from '@/utilities/content-registry.utility';
 import { resolveFeedContentType } from '@/utilities/discovery-content-type.utility';
 import { getHtmlLanguage, isSupportedLocale } from '@/utilities/locale.utility';
+import { threadCanonicalUrl } from '@/utilities/thread-slug.utility';
 import { buildRssXml } from '@/utilities/xml.utility';
 
 export async function buildLocalizedRssResponse(
@@ -70,8 +71,8 @@ export async function buildLocalizedRssResponse(
   const threadItems: RssFeedItem[] = (threadEntries ?? []).map((entry) => ({
     title: entry.title,
     description: entry.excerpt,
-    url: `${siteUrl}/${entry.contentLocale}/threads/${entry.slug}`,
-    guid: `${siteUrl}/${entry.contentLocale}/threads/${entry.slug}`,
+    url: threadCanonicalUrl(siteUrl, entry.contentLocale, entry.slug),
+    guid: threadCanonicalUrl(siteUrl, entry.contentLocale, entry.slug),
     publishedAt: entry.publishedAt,
     category: 'public-thread',
   }));

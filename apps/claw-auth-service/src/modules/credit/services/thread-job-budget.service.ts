@@ -31,6 +31,7 @@ import {
 import { ThreadJobBudgetCloseStatus } from '../enums/thread-job-budget-close-status.enum';
 import { CreditReservationManager } from '../managers/credit-reservation.manager';
 import { ThreadJobBudgetFreeMeterRepository } from '../repositories/thread-job-budget-free-meter.repository';
+import { threadAllowanceRefusal } from '../utilities/thread-job-budget-refusal.utility';
 
 @Injectable()
 export class ThreadJobBudgetService {
@@ -64,10 +65,7 @@ export class ThreadJobBudgetService {
           feature,
           requestId: `${input.requestId}:${feature}`,
         });
-        if (!result.allowed)
-          throw new ForbiddenException(
-            `Threads generation requires available ${feature} entitlement`,
-          );
+        if (!result.allowed) throw threadAllowanceRefusal(feature, result);
         if (result.reservationId) reservations.push(result.reservationId);
       }
       const budget = await this.createOrAdopt(input, reservations);

@@ -3,12 +3,13 @@ import { notFound } from 'next/navigation';
 import Script from 'next/script';
 
 import { getSiteUrl, isProductionCanonical, shouldNoIndexEverything } from '@/lib/site/site-config';
-import { getPublicThreadPublication } from '@/lib/threads/public-thread-api';
+import { loadPublicThreadFromParams } from '@/lib/threads/public-thread-page-data';
 import {
   buildThreadArticleJsonLd,
   buildThreadDescription,
   serializeJsonLd,
 } from '@/utilities/structured-data.utility';
+import { threadCanonicalUrl } from '@/utilities/thread-slug.utility';
 
 import { ThreadPublicPageClient } from './page-client';
 
@@ -17,16 +18,18 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
-  const publication = await getPublicThreadPublication(slug);
+  const publication = await loadPublicThreadFromParams(params);
   if (!publication || shouldNoIndexEverything()) {
     return { robots: { index: false, follow: false } };
   }
-  const canonical = `${getSiteUrl()}/${publication.contentLocale}/threads/${publication.slug}`;
+  const canonical = threadCanonicalUrl(getSiteUrl(), publication.contentLocale, publication.slug);
   return {
     title: publication.title,
     description: buildThreadDescription(publication.content.markdown),
-    alternates: { canonical },
+    alternates: {
+      canonical,
+      languages: { [publication.contentLocale]: canonical, 'x-default': canonical },
+    },
     robots: isProductionCanonical()
       ? { index: true, follow: true }
       : { index: false, follow: false },
@@ -44,13 +47,12 @@ export default async function PublicThreadPublicationPage({
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<React.ReactElement> {
-  const { slug } = await params;
-  const publication = await getPublicThreadPublication(slug);
+  const publication = await loadPublicThreadFromParams(params);
   if (!publication) {
     notFound();
   }
   const jsonLd = buildThreadArticleJsonLd({
-    canonicalUrl: `${getSiteUrl()}/${publication.contentLocale}/threads/${publication.slug}`,
+    canonicalUrl: threadCanonicalUrl(getSiteUrl(), publication.contentLocale, publication.slug),
     title: publication.title,
     description: buildThreadDescription(publication.content.markdown),
     publishedAt: publication.publishedAt,

@@ -2,7 +2,12 @@ import type { UserEntitlements } from '@claw/shared-entitlements';
 import { Permission, PlanModelAccessMode } from '@claw/shared-types';
 
 import { type CatalogModel, ThreadModelAvailability } from '../../types/recommended-team.types';
-import { buildRecommendedTeam, classifyCatalog, classifyModel } from '../recommended-team.utility';
+import {
+  buildRecommendedTeam,
+  classifyCatalog,
+  classifyModel,
+  listExcludedModels,
+} from '../recommended-team.utility';
 
 const model = (provider: string, id: string, extra: Partial<CatalogModel> = {}): CatalogModel => ({
   provider,
@@ -143,5 +148,44 @@ describe('buildRecommendedTeam', () => {
   it('answers null when nothing is usable', () => {
     expect(buildRecommendedTeam(entitlements(), [model('OPENAI', 'gpt-5-mini')])).toBeNull();
     expect(buildRecommendedTeam(entitlements(), [])).toBeNull();
+  });
+});
+
+describe('listExcludedModels', () => {
+  const free = entitlements({
+    modelAccessMode: PlanModelAccessMode.ALLOW_LIST,
+    allowedModels: [allowed('OLLAMA', 'gpt-oss:20b')],
+  });
+
+  it('lists every unusable model with its single reason and leaves usable ones out', () => {
+    const excluded = listExcludedModels(free, [
+      model('GEMINI', 'gemini-2.5-pro'),
+      model('OLLAMA', 'gpt-oss:20b'),
+      model('OLLAMA', 'tiny', { windowTokens: 8192 }),
+      model('OPENAI', 'gpt-5-mini'),
+    ]);
+
+    expect(excluded).toEqual([
+      { provider: 'GEMINI', model: 'gemini-2.5-pro', reasonIfExcluded: 'NEEDS_PLAN' },
+      { provider: 'OLLAMA', model: 'tiny', reasonIfExcluded: 'NEEDS_PLAN' },
+      { provider: 'OPENAI', model: 'gpt-5-mini', reasonIfExcluded: 'UNAVAILABLE' },
+    ]);
+  });
+
+  it('reports a small window as its own reason when the plan allows the model', () => {
+    expect(
+      listExcludedModels(entitlements(), [model('OLLAMA', 'tiny', { windowTokens: 8192 })]),
+    ).toEqual([{ provider: 'OLLAMA', model: 'tiny', reasonIfExcluded: 'WINDOW_TOO_SMALL' }]);
+  });
+
+  it('keeps every excluded model out of the team and its fallbacks for a Free plan', () => {
+    const team = buildRecommendedTeam(free, catalog);
+    const seats = team ? [...team.authors, team.judge, team.critic] : [];
+    const refs = seats.flatMap((seat) => [seat, ...seat.fallbacks]);
+
+    expect(refs.length).toBeGreaterThan(0);
+    expect(refs.every((ref) => ref.provider === 'OLLAMA' && ref.model === 'gpt-oss:20b')).toBe(
+      true,
+    );
   });
 });

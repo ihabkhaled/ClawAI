@@ -858,6 +858,8 @@ export const fa: TranslationDictionary = {
       stageLabel: 'مرحله',
       attempt: 'تلاش {current} از {max}',
       spent: 'هزینه تا اینجا: {amount}',
+      includedInPlan: 'شامل طرح شما',
+      includedInPlanTokens: 'شامل طرح شما · {tokens} توکن',
       platformFailureNotice: 'مشکل از طرف ما بود، نه شما. سهمیه رایگان شما مصرف نشد.',
       retryOnUs: 'تلاش دوباره به حساب ما',
       selectedTitle: 'آنچه انتخاب کردید',
@@ -1003,6 +1005,12 @@ export const fa: TranslationDictionary = {
         modelUnknown:
           'یکی از مدل‌های انتخاب‌شده در فهرست مدل‌ها نیست. یکی را از فهرست انتخاب کنید.',
         spendCapTooLow: 'سقف هزینه خیلی کم است. دست‌کم ۰٫۰۱ دلار تعیین کنید.',
+        authorCountInvalid: 'بین ۳ تا ۵ نویسنده انتخاب کنید.',
+        localeInvalid: 'زبان انتخاب‌شده پشتیبانی نمی‌شود. یکی را از فهرست انتخاب کنید.',
+        publicationTypeInvalid:
+          'نوع انتشار انتخاب‌شده پشتیبانی نمی‌شود. یکی را از فهرست انتخاب کنید.',
+        requestInvalid:
+          'برخی جزئیات این درخواست ناقص یا نامعتبر است. فرم را بررسی کنید و دوباره تلاش کنید.',
         allowanceUnavailable:
           'سهمیه Thread شما تمام شده یا یک تولید در حال اجرا آن را نگه داشته است. منتظر پایان آن بمانید یا طرح خود را ارتقا دهید.',
         tooManyActive:

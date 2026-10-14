@@ -24,7 +24,7 @@ change type needs (`rules/23-git-commits-hooks-and-release-gates.md`, gate matri
 - Database: none
 - Prisma models: none
 - API endpoints: 3 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 14 (vitest)
+- Test files: 15 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

@@ -14,6 +14,7 @@ import {
   getLanguageAlternates,
 } from '@/utilities/content-registry.utility';
 import { getHtmlLanguage, isSupportedLocale } from '@/utilities/locale.utility';
+import { threadCanonicalUrl } from '@/utilities/thread-slug.utility';
 import { buildSitemapUrlSetXml } from '@/utilities/xml.utility';
 
 // Same reason as the index: SITE_URL is injected into the running production
@@ -109,7 +110,7 @@ export async function GET(_request: Request, context: DiscoveryRouteContext): Pr
       return new Response(null, { status: 404 });
     }
     entries = page.items.map((item) => ({
-      url: `${siteUrl}/${localeValue}/threads/${item.slug}`,
+      url: threadCanonicalUrl(siteUrl, localeValue, item.slug),
       lastModified: item.publishedAt,
     }));
   } else {

@@ -867,6 +867,8 @@ export const ru: TranslationDictionary = {
       stageLabel: 'Этап',
       attempt: 'Попытка {current} из {max}',
       spent: 'Потрачено: {amount}',
+      includedInPlan: 'Входит в ваш тариф',
+      includedInPlanTokens: 'Входит в ваш тариф · {tokens} токенов',
       platformFailureNotice:
         'Проблема на нашей стороне, не на вашей. Ваш бесплатный лимит не потрачен.',
       retryOnUs: 'Повторить за наш счёт',
@@ -1016,6 +1018,12 @@ export const ru: TranslationDictionary = {
           'Выбранная модель не входит в ваш тариф. Выберите включённую модель.',
         modelUnknown: 'Выбранной модели нет в каталоге моделей. Выберите модель из списка.',
         spendCapTooLow: 'Лимит расходов слишком мал. Укажите не меньше 0,01 USD.',
+        authorCountInvalid: 'Выберите от 3 до 5 авторов.',
+        localeInvalid: 'Выбранный язык не поддерживается. Выберите язык из списка.',
+        publicationTypeInvalid:
+          'Выбранный тип публикации не поддерживается. Выберите тип из списка.',
+        requestInvalid:
+          'Некоторые данные запроса отсутствуют или недопустимы. Проверьте форму и повторите попытку.',
         allowanceUnavailable:
           'Квота Thread исчерпана или занята выполняющейся генерацией. Дождитесь её завершения или перейдите на другой тариф.',
         tooManyActive:

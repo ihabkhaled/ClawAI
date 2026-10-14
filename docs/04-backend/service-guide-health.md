@@ -34,11 +34,11 @@ No Prisma, no RabbitMQ. Redis only through `SessionRevocationGuard` (fails open)
 
 ## API Endpoints
 
-| Method | Path                    | Auth                    | Description                                                |
-| ------ | ----------------------- | ----------------------- | ---------------------------------------------------------- |
-| GET    | `/api/v1/health`        | Public                  | Aggregated health status (service names, errors)           |
-| GET    | `/api/v1/health/status` | Bearer, **ADMIN** only  | Status page: component state, uptime 24h/7d/30d, incidents |
-| GET    | `/api/v1/metrics`       | Internal (not in nginx) | Prometheus exposition of the same fan-out                  |
+| Method | Path                    | Auth                    | Description                                                                                                                                   |
+| ------ | ----------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/v1/health`        | Public / ADMIN detail   | Anonymous: overall status + per-service up/down only (no error text, timings or dependency list). Admin bearer token: full report with errors |
+| GET    | `/api/v1/health/status` | Bearer, **ADMIN** only  | Status page: component state, uptime 24h/7d/30d, incidents                                                                                    |
+| GET    | `/api/v1/metrics`       | Internal (not in nginx) | Prometheus exposition of the same fan-out                                                                                                     |
 
 ## Response Format
 

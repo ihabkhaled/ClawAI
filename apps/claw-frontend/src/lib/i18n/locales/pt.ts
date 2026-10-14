@@ -864,6 +864,8 @@ export const pt: TranslationDictionary = {
       stageLabel: 'Etapa',
       attempt: 'Tentativa {current} de {max}',
       spent: 'Gasto até agora: {amount}',
+      includedInPlan: 'Incluído no seu plano',
+      includedInPlanTokens: 'Incluído no seu plano · {tokens} tokens',
       platformFailureNotice: 'O problema foi nosso, não seu. Sua cota gratuita não foi usada.',
       retryOnUs: 'Tentar de novo por nossa conta',
       selectedTitle: 'O que você escolheu',
@@ -1017,6 +1019,12 @@ export const pt: TranslationDictionary = {
           'Um modelo selecionado não está incluído no seu plano. Escolha um modelo incluído.',
         modelUnknown: 'Um modelo selecionado não está no catálogo de modelos. Escolha um da lista.',
         spendCapTooLow: 'O limite de gastos está baixo demais. Defina pelo menos 0,01 USD.',
+        authorCountInvalid: 'Escolha de 3 a 5 autores.',
+        localeInvalid: 'O idioma escolhido não é compatível. Escolha um da lista.',
+        publicationTypeInvalid:
+          'O tipo de publicação escolhido não é compatível. Escolha um da lista.',
+        requestInvalid:
+          'Alguns dados desta solicitação estão faltando ou são inválidos. Confira o formulário e tente de novo.',
         allowanceUnavailable:
           'Sua cota de Threads acabou ou está retida por uma geração em andamento. Espere ela terminar ou faça upgrade do plano.',
         tooManyActive:

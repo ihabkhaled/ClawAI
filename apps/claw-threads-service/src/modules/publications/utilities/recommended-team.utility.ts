@@ -16,6 +16,7 @@ import {
 import type { ModelRef } from '../types/generation-preflight.types';
 import {
   type CatalogModel,
+  type ExcludedModel,
   type RecommendedModelStatus,
   type RecommendedSeat,
   type RecommendedTeam,
@@ -117,6 +118,19 @@ export function classifyCatalog(
     ...toRef(model),
     status: classifyModel(entitlements, model),
   }));
+}
+
+/** The catalog models that cannot be used, each with why. */
+export function listExcludedModels(
+  entitlements: UserEntitlements,
+  catalog: readonly CatalogModel[],
+): ExcludedModel[] {
+  return catalog.flatMap((model): ExcludedModel[] => {
+    const status = classifyModel(entitlements, model);
+    return status === ThreadModelAvailability.AVAILABLE
+      ? []
+      : [{ ...toRef(model), reasonIfExcluded: status }];
+  });
 }
 
 /**

@@ -35,8 +35,7 @@ Baseline rules for every backend service (commands, absolute rules, declarations
 
 - `GET /api/v1/health/status` is **admin-only** (`AuthGuard` +
   `SessionRevocationGuard` + `RolesGuard`, `@Roles(UserRole.ADMIN)`), throttled
-  at 120/min, `Cache-Control: private, max-age=30`. The public `/api/v1/health`
-  is unchanged.
+  at 120/min, `Cache-Control: private, max-age=30`. The public `/api/v1/health` is **reduced for anonymous callers** (status, per-service name + up/down, counts; `error` and `responseTimeMs` are always null, no `disabledDependencies`) because raw errors name internal hosts; a valid ADMIN bearer token gets the full report (`public-health.utility.ts`).
 - **It speaks components, never services.** `COMPONENT_MEMBERS` maps the
   services (plus the `clamav` and scraper-sidecar dependency rows) to 14 coarse groups. Nothing in `StatusPageResponse` may carry a
   service name, host, port, version or error text; the redaction spec in

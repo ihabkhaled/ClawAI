@@ -859,6 +859,8 @@ export const hi: TranslationDictionary = {
       stageLabel: 'चरण',
       attempt: 'प्रयास {current} / {max}',
       spent: 'अब तक खर्च: {amount}',
+      includedInPlan: 'आपके प्लान में शामिल',
+      includedInPlanTokens: 'आपके प्लान में शामिल · {tokens} टोकन',
       platformFailureNotice:
         'समस्या हमारी तरफ़ से थी, आपकी नहीं। आपका मुफ़्त कोटा इस्तेमाल नहीं हुआ।',
       retryOnUs: 'हमारे खर्च पर दोबारा कोशिश करें',
@@ -1005,6 +1007,11 @@ export const hi: TranslationDictionary = {
         modelNotAllowedForPlan: 'चुना गया एक मॉडल आपके प्लान में शामिल नहीं है। शामिल मॉडल चुनें।',
         modelUnknown: 'चुना गया एक मॉडल मॉडल कैटलॉग में नहीं है। सूची में से कोई चुनें।',
         spendCapTooLow: 'खर्च सीमा बहुत कम है। कम से कम 0.01 USD रखें।',
+        authorCountInvalid: '3 से 5 लेखक चुनें।',
+        localeInvalid: 'चुनी गई भाषा समर्थित नहीं है। सूची से कोई एक चुनें।',
+        publicationTypeInvalid: 'चुना गया प्रकाशन प्रकार समर्थित नहीं है। सूची से कोई एक चुनें।',
+        requestInvalid:
+          'इस अनुरोध की कुछ जानकारी छूटी है या मान्य नहीं है। फ़ॉर्म जाँचें और फिर कोशिश करें।',
         allowanceUnavailable:
           'आपका Thread कोटा खत्म हो गया है या किसी चल रहे जनरेशन ने उसे रोक रखा है। उसके पूरा होने तक रुकें या प्लान अपग्रेड करें।',
         tooManyActive:

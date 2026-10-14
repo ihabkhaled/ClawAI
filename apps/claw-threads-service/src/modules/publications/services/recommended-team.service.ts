@@ -13,7 +13,11 @@ import type {
   RecommendedTeamCacheEntry,
   RecommendedTeamResponse,
 } from '../types/recommended-team.types';
-import { buildRecommendedTeam, classifyCatalog } from '../utilities/recommended-team.utility';
+import {
+  buildRecommendedTeam,
+  classifyCatalog,
+  listExcludedModels,
+} from '../utilities/recommended-team.utility';
 import { ModelCatalogClient } from './model-catalog.client';
 
 /**
@@ -44,6 +48,7 @@ export class RecommendedTeamService {
       planName: entitlements.plan?.name ?? 'current',
       team: buildRecommendedTeam(entitlements, models),
       models: classifyCatalog(entitlements, models),
+      excluded: listExcludedModels(entitlements, models),
     };
     this.remember(ownerId, value, now);
     return value;

@@ -34,7 +34,8 @@ export const FREE_ALLOWANCE_ELIGIBLE_SURFACES: readonly PaygSurface[] = Object.f
  * allowance is what counts that action), so holding each call to "10 requests a month" would
  * let a Free user start their one Thread and fail it at the eleventh call.
  *
- * Waived ONLY while the plan has a money meter: without one nothing would bound the total.
+ * Waived under EVERY plan shape (D-P5-01): a count-only Free plan must finish its one Thread too.
+ * Without a meter the lifetime Thread allowance, the job's cap and the per-request ceiling bound it.
  */
 export const FREE_ALLOWANCE_COUNT_WAIVED_SURFACES: readonly PaygSurface[] = Object.freeze([
   PaygSurface.THREADS,

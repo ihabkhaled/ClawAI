@@ -36,7 +36,14 @@ import {
 } from '../utilities/deterministic-generation.error';
 import { parseStepError } from '../utilities/parse-step-error.utility';
 import { CandidatesExhaustedError } from '../utilities/candidates-exhausted.error';
-import { describeOutputFailure } from '../utilities/describe-output-failure.utility';
+import {
+  classifyModelOutput,
+  describeOutputFailure,
+} from '../utilities/describe-output-failure.utility';
+import { buildAuthorSystemPrompt } from '../utilities/author-prompt.utility';
+import { escalatedOutputTokens } from '../utilities/escalate-output-tokens.utility';
+import { ModelOutputFailureKind } from '../../../common/enums/model-output-failure-kind.enum';
+import { ROLE_MAX_MS, TRUNCATION_NOTE } from '../constants/output-retry.constants';
 import type { CandidateAttempt, CandidateOutcome } from '../types/candidate-outcome.types';
 import {
   NON_RETRYABLE_STEP_CODES,
@@ -559,7 +566,7 @@ export class GenerationPipelineManager {
     evidenceItems: Map<string, string>,
   ): Promise<AuthorDraft> {
     const prompts = {
-      systemPrompt: `Write the requested publication in ${new Intl.DisplayNames(['en'], { type: 'language' }).of(input.contentLocale) ?? input.contentLocale} (${input.contentLocale}). Use only the supplied source and research evidence. Return only one JSON object shaped {"markdown": string, "citations": [{"evidenceId": string, "url": string}]} with no other keys. "markdown" is the whole article as one string and the body cites with [evidenceId] markers. "citations" lists every cited evidence item as an object with its id and url copied exactly from researchEvidence.items; never a bare string. Minimal valid example: {"markdown":"# Title\\n\\nA claim [abc123].","citations":[{"evidenceId":"abc123","url":"https://example.com/a"}]}. Cite only evidence items from researchEvidence.items. Do not include analysis or hidden reasoning.`,
+      systemPrompt: buildAuthorSystemPrompt(input.contentLocale),
       userPrompt: `${sharedMaterial}\nRevision brief: ${revisionBrief || 'Create a complete first draft.'}`,
     };
     const saved = await this.jobs.findCommunication(
@@ -748,11 +755,14 @@ export class GenerationPipelineManager {
     accepts: z.ZodType,
   ): Promise<ChatModelResponse> {
     const candidates = [{ provider: role.provider, model: role.model }, ...role.fallbacks];
+    const deadline = Date.now() + ROLE_MAX_MS;
     const { stage, roleKind } = roleStepInfo(roleKey);
     const outcomes: CandidateOutcome[] = [];
     let lastError: unknown;
     let everyFailureDeterministic = true;
     for (const [index, candidate] of candidates.entries()) {
+      // The role's time is spent: report what failed so far instead of starting another model.
+      if (index > 0 && Date.now() > deadline) break;
       const step = { stage, round, roleKind, roleId: role.id, ...candidate };
       if (index > 0) {
         await this.recorder.record(input.jobId, {
@@ -764,7 +774,7 @@ export class GenerationPipelineManager {
       const result = await this.tryCandidate(
         input,
         step,
-        { roleKey, round, index, candidate, prompt, accepts },
+        { roleKey, round, index, candidate, prompt, accepts, deadline },
         role,
       );
       if ('response' in result) return result.response;
@@ -789,6 +799,7 @@ export class GenerationPipelineManager {
       candidate: { provider: string; model: string };
       prompt: { systemPrompt: string; userPrompt: string };
       accepts: z.ZodType;
+      deadline: number;
     },
     role: ModelRole,
   ): Promise<CandidateAttempt<ChatModelResponse>> {
@@ -801,7 +812,9 @@ export class GenerationPipelineManager {
     let error: unknown;
     let deterministic = true;
     let repairNote = '';
+    let maxOutputTokens = role.maxOutputTokens;
     for (let attempt = 1; attempt <= FORMAT_ATTEMPTS_PER_MODEL; attempt += 1) {
+      if (attempt > 1 && Date.now() > call.deadline) break;
       await this.throwIfCancelled(input);
       const requestId = `${input.jobId}:${call.roleKey}:round-${String(call.round)}:attempt-${String(input.attempt)}:cand-${String(call.index + 1)}${attempt > 1 ? `:try-${String(attempt)}` : ''}`;
       await this.recorder.record(input.jobId, { ...step, outcome: 'STARTED' });
@@ -815,7 +828,7 @@ export class GenerationPipelineManager {
           model: candidate.model,
           systemPrompt: call.prompt.systemPrompt,
           userPrompt: `${call.prompt.userPrompt}${repairNote}`,
-          maxOutputTokens: role.maxOutputTokens,
+          maxOutputTokens,
           signal: input.signal,
         });
         // Paid for even if the job is cancelled or the answer is unusable, so counted first.
@@ -835,7 +848,15 @@ export class GenerationPipelineManager {
             : describeOutputFailure(response.content, call.accepts),
         });
         if (accepted) return { response };
-        repairNote = `${REPAIR_NOTE_LEAD}${describeOutputFailure(response.content, call.accepts).slice(0, REPAIR_NOTE_MAX_CHARS)}`;
+        const reason = describeOutputFailure(response.content, call.accepts).slice(
+          0,
+          REPAIR_NOTE_MAX_CHARS,
+        );
+        const cutOff =
+          classifyModelOutput(response.content, call.accepts) === ModelOutputFailureKind.TRUNCATED;
+        // Cut off by the output limit: asking the same again fails the same way, so give it room.
+        if (cutOff) maxOutputTokens = escalatedOutputTokens(maxOutputTokens, input.contentLocale);
+        repairNote = `${cutOff ? TRUNCATION_NOTE : ''}${REPAIR_NOTE_LEAD}${reason}`;
         deterministic = false;
         failure = { ...candidate, code: OUTPUT_INVALID_CODE, httpStatus: null };
         error = new ServiceUnavailableException('A model returned invalid structured output');

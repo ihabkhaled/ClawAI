@@ -11,4 +11,6 @@ export enum BoardErrorCode {
   QUERY_TOO_SHORT = 'BOARD_QUERY_TOO_SHORT',
   /** The page number is above the maximum the Board accepts. */
   PAGE_OUT_OF_RANGE = 'BOARD_PAGE_OUT_OF_RANGE',
+  /** The caller sent more requests than the anonymous Board allows in a minute. */
+  RATE_LIMITED = 'BOARD_RATE_LIMITED',
 }

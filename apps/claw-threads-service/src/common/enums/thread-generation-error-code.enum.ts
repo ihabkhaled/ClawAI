@@ -29,4 +29,12 @@ export enum ThreadGenerationErrorCode {
   TOPIC_INVALID = 'THREAD_TOPIC_INVALID',
   /** A request text field holds a NUL byte or a lone surrogate. */
   TEXT_INVALID = 'THREAD_TEXT_INVALID',
+  /** The author count is outside the allowed three to five. */
+  AUTHOR_COUNT_INVALID = 'THREAD_AUTHOR_COUNT_INVALID',
+  /** The content locale is not one the platform supports. */
+  LOCALE_INVALID = 'THREAD_LOCALE_INVALID',
+  /** The publication type is not one the platform supports. */
+  PUBLICATION_TYPE_INVALID = 'THREAD_PUBLICATION_TYPE_INVALID',
+  /** Any other start or retry field that failed validation (missing, wrong type, too long). */
+  REQUEST_INVALID = 'THREAD_REQUEST_INVALID',
 }

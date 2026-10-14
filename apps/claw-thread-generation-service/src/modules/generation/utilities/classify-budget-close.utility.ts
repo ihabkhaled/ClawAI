@@ -1,6 +1,7 @@
 import { GenerationBudgetCloseStatus } from '../../../common/enums/generation-budget-close-status.enum';
 import {
   NON_RETRYABLE_STEP_CODES,
+  PLATFORM_ACCOUNTING_STEP_CODES,
   PLATFORM_FAILURE_CODE_PREFIXES,
   PLATFORM_FAILURE_STEP_CODES,
 } from '../constants/step-recorder.constants';
@@ -9,9 +10,10 @@ import {
 export function isPlatformFailureCode(code: string | null | undefined): boolean {
   return (
     !!code &&
-    !NON_RETRYABLE_STEP_CODES.has(code) &&
-    (PLATFORM_FAILURE_STEP_CODES.has(code) ||
-      PLATFORM_FAILURE_CODE_PREFIXES.some((prefix) => code.startsWith(prefix)))
+    (PLATFORM_ACCOUNTING_STEP_CODES.has(code) ||
+      (!NON_RETRYABLE_STEP_CODES.has(code) &&
+        (PLATFORM_FAILURE_STEP_CODES.has(code) ||
+          PLATFORM_FAILURE_CODE_PREFIXES.some((prefix) => code.startsWith(prefix)))))
   );
 }
 

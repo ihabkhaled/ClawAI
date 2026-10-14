@@ -12,6 +12,7 @@ import { useThreadProgressPanel } from '@/hooks/threads/use-thread-progress-pane
 import { useTranslation } from '@/lib/i18n';
 import type { ThreadProgressPanelProps } from '@/types/thread-generation-progress.types';
 import {
+  describeIncludedUsage,
   findFailedRoleKind,
   formatMicroUsd,
   hasThreadSpend,
@@ -38,6 +39,7 @@ export function ThreadGenerationProgressPanel({
   const headlineKey = progress ? threadHeadlineKey(progress.status, progress.stage) : null;
   const allowanceRefunded = progress !== undefined && readAllowanceRefunded(progress);
   const spentMicro = progress === undefined ? '0' : readThreadSpentMicro(progress);
+  const included = progress === undefined ? null : describeIncludedUsage(progress);
   const isQueued = progress !== undefined && isQueuedThreadStatus(progress.status);
 
   return (
@@ -91,6 +93,9 @@ export function ThreadGenerationProgressPanel({
                   amount: formatMicroUsd(spentMicro),
                 })}
               </span>
+            ) : null}
+            {!hasThreadSpend(spentMicro) && included !== null ? (
+              <span data-testid="thread-progress-included">{t(included.key, included.params)}</span>
             ) : null}
           </p>
           {isQueued ? (

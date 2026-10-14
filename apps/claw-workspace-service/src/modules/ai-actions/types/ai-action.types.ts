@@ -111,6 +111,18 @@ export type CloudGenerateInput = {
    * "where did my $5 go" is answerable on the billing page.
    */
   surface: PaygSurface;
+  /**
+   * What the ledger row calls this call (`workspace-ai-action`, ...). Optional on
+   * the wire; every caller here sets it so the spend page can tell actions,
+   * reviews and chain drafts apart.
+   */
+  workflow?: string;
+  /**
+   * Idempotency key of ONE provider call. Generated per call when absent, never
+   * shared between the attempts of a fallback chain: each attempt is its own
+   * paid request and must be its own reservation.
+   */
+  requestId?: string;
 };
 
 export type CloudGenerateOutput = {

@@ -96,6 +96,29 @@ describe('callCloudGenerate — PAYG attribution (U8/U9/U10)', () => {
     expect(sentBody()['userId']).toBe('someone-else');
   });
 
+  it('sends a fresh requestId per call and the workflow tag when given', async () => {
+    fetchMock().mockResolvedValue(okResponse({ content: 'done' }));
+
+    await callCloudGenerate({ ...input(), workflow: 'workspace-ai-action' });
+    await callCloudGenerate(input());
+
+    const bodies = fetchMock().mock.calls.map(
+      (c) => JSON.parse((c as [string, { body: string }])[1].body) as Record<string, unknown>,
+    );
+    expect(bodies[0]?.['workflow']).toBe('workspace-ai-action');
+    expect(bodies[1]).not.toHaveProperty('workflow');
+    expect(typeof bodies[0]?.['requestId']).toBe('string');
+    expect(bodies[0]?.['requestId']).not.toBe(bodies[1]?.['requestId']);
+  });
+
+  it('keeps a caller-supplied requestId', async () => {
+    fetchMock().mockResolvedValue(okResponse({ content: 'done' }));
+
+    await callCloudGenerate({ ...input(), requestId: 'req-fixed' });
+
+    expect(sentBody()['requestId']).toBe('req-fixed');
+  });
+
   it('surfaces a 402 from chat-service as a thrown upstream failure', async () => {
     fetchMock().mockResolvedValue(
       errorResponse(402, '{"errorCode":"PAYG_CREDIT_EXHAUSTED","availableMicroUsd":0}'),

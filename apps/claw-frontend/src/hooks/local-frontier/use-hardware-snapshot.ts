@@ -19,5 +19,10 @@ export function useHardwareSnapshot(enabled = true): UseQueryResult<HardwareSnap
     // bearing, because a global 10s interval polled every query in the app.
     refetchInterval: false,
     retry: false,
+    // llamacpp-service is optional (absent in production): once the call has
+    // failed with 502/404 it stays failed for the session. No re-fetch on
+    // every page mount or window focus; the manual refresh is the only retry.
+    retryOnMount: false,
+    refetchOnWindowFocus: false,
   });
 }

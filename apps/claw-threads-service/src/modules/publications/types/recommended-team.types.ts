@@ -31,6 +31,14 @@ export type RecommendedTeam = {
 
 export type RecommendedModelStatus = ModelRef & { status: ThreadModelAvailability };
 
+/** Why a catalog model is not offered: every availability except AVAILABLE. */
+export type ThreadModelExclusionReason = Exclude<
+  ThreadModelAvailability,
+  ThreadModelAvailability.AVAILABLE
+>;
+
+export type ExcludedModel = ModelRef & { reasonIfExcluded: ThreadModelExclusionReason };
+
 export type RecommendedTeamResponse = {
   /** The caller's plan name, for the "not on your plan" sentence. */
   planName: string;
@@ -38,6 +46,13 @@ export type RecommendedTeamResponse = {
   team: RecommendedTeam | null;
   /** One row per catalog model: usable, or the reason it is not. */
   models: RecommendedModelStatus[];
+  /**
+   * The models kept out of the team (and not usable on the caller's plan), each with its single
+   * reason, so the wizard can explain it. Same plan test as the start preflight; the Free
+   * allowance's per-model price limit is enforced by auth-service at run time and is not
+   * visible here.
+   */
+  excluded: ExcludedModel[];
 };
 
 /** A cached answer and the time it stops being reused. */

@@ -37,27 +37,24 @@ export function isCappedAllowance(policy: CreditFreeAllowancePolicy): boolean {
 }
 
 /**
- * True when this request is not held to the monthly request COUNT: a waived surface (Threads)
- * under a plan whose money meter bounds the total. The limit is lifted AND the call takes no
- * slot, so one Thread's dozen calls never use up the month's other credit-connector requests
- * (D-L2-04: it drove the meter to 12 of 10). The admission records this (`countsSlot`) so a
- * give-back returns exactly what was taken.
+ * True when this request is not held to the monthly request COUNT: a waived surface (Threads), under
+ * ANY plan shape, with or without a money meter. The limit is lifted AND the call takes no slot, so
+ * one Thread's dozen calls never use up the month's other credit-connector requests (D-L2-04: it
+ * drove the meter to 12 of 10) and a count-only Free plan (for example 5 a month, no meter) cannot
+ * fail its one Thread at the sixth call (production, 2026-10-14). What bounds a Thread without a
+ * meter is the plan's own lifetime Thread allowance, the job's spend cap and the per-request
+ * ceiling. The admission records this (`countsSlot`) so a give-back returns exactly what was taken.
  */
-export function isCountWaived(
-  input: Pick<CreditReserveInput, 'surface'>,
-  policy: Pick<CreditFreeAllowancePolicy, 'budgetMicroUsd'>,
-): boolean {
-  return (
-    policy.budgetMicroUsd !== null && FREE_ALLOWANCE_COUNT_WAIVED_SURFACES.includes(input.surface)
-  );
+export function isCountWaived(input: Pick<CreditReserveInput, 'surface'>): boolean {
+  return FREE_ALLOWANCE_COUNT_WAIVED_SURFACES.includes(input.surface);
 }
 
 /** The request limit the atomic counter enforces for this call (lifted for a waived surface). */
 export function counterLimitFor(
   input: Pick<CreditReserveInput, 'surface'>,
-  policy: Pick<CreditFreeAllowancePolicy, 'limit' | 'budgetMicroUsd'>,
+  policy: Pick<CreditFreeAllowancePolicy, 'limit'>,
 ): number {
-  return toCounterLimit(isCountWaived(input, policy) ? null : policy.limit);
+  return toCounterLimit(isCountWaived(input) ? null : policy.limit);
 }
 
 /** What an admitted free request carries into its usage row: the ceiling it was clamped to. */

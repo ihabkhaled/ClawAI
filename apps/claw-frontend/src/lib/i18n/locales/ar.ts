@@ -843,6 +843,8 @@ export const ar: TranslationDictionary = {
       stageLabel: 'المرحلة',
       attempt: 'المحاولة {current} من {max}',
       spent: 'المصروف حتى الآن: {amount}',
+      includedInPlan: 'مشمول في خطتك',
+      includedInPlanTokens: 'مشمول في خطتك · {tokens} رمز',
       platformFailureNotice: 'كانت المشكلة من جانبنا وليست منك. لم يُستهلك رصيدك المجاني.',
       retryOnUs: 'أعد المحاولة على حسابنا',
       selectedTitle: 'ما اخترته',
@@ -981,6 +983,10 @@ export const ar: TranslationDictionary = {
         modelNotAllowedForPlan: 'أحد النماذج المختارة غير مشمول في خطتك. اختر نموذجًا مشمولًا.',
         modelUnknown: 'أحد النماذج المختارة غير موجود في كتالوج النماذج. اختر نموذجًا من القائمة.',
         spendCapTooLow: 'حد الإنفاق منخفض جدًا. اضبطه على 0.01 دولار على الأقل.',
+        authorCountInvalid: 'اختر من 3 إلى 5 كتّاب.',
+        localeInvalid: 'اللغة المحددة غير مدعومة. اختر لغة من القائمة.',
+        publicationTypeInvalid: 'نوع المنشور المحدد غير مدعوم. اختر نوعًا من القائمة.',
+        requestInvalid: 'بعض تفاصيل الطلب ناقصة أو غير صالحة. راجع النموذج وحاول مرة أخرى.',
         allowanceUnavailable:
           'استُهلكت حصة الـ Thread لديك، أو أن عملية جارية تحتجزها. انتظر حتى تنتهي أو قم بترقية خطتك.',
         tooManyActive:

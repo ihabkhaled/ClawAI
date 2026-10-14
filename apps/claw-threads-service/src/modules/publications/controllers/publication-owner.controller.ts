@@ -9,6 +9,7 @@ import {
 } from '../dto/edit-publication-revision.dto';
 import type { PublishedPublication } from '../types/publication.types';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
+import { ThreadGenerationErrorCode } from '../../../common/enums/thread-generation-error-code.enum';
 import {
   type ResolvePublicationChangeRequestDto,
   resolvePublicationChangeRequestSchema,
@@ -73,7 +74,10 @@ export class PublicationOwnerController {
   @Post('retry-generation')
   retryGeneration(
     @Param('publicationId') publicationId: string,
-    @Body(new ZodValidationPipe(retryThreadGenerationSchema)) body: RetryThreadGenerationDto,
+    @Body(
+      new ZodValidationPipe(retryThreadGenerationSchema, ThreadGenerationErrorCode.REQUEST_INVALID),
+    )
+    body: RetryThreadGenerationDto,
     @CurrentUser() user: AuthenticatedUser,
   ): ReturnType<PublicationGenerationOwnerService['retry']> {
     return this.generationOwner.retry(publicationId, user.id, body);

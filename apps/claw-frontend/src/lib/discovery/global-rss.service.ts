@@ -15,6 +15,7 @@ import type { RssFeedItem } from '@/types/seo-discovery.types';
 import { getFeedPagesForLocale } from '@/utilities/content-registry.utility';
 import { resolveFeedContentType } from '@/utilities/discovery-content-type.utility';
 import { getHtmlLanguage } from '@/utilities/locale.utility';
+import { threadCanonicalUrl } from '@/utilities/thread-slug.utility';
 import { buildRssXml } from '@/utilities/xml.utility';
 
 // Every public URL the site has, in every locale, in one document.
@@ -63,8 +64,8 @@ async function collectLocaleItems(
   const threadItems: RssFeedItem[] = (threadEntries ?? []).map((entry) => ({
     title: entry.title,
     description: entry.excerpt,
-    url: `${siteUrl}/${entry.contentLocale}/threads/${entry.slug}`,
-    guid: `${siteUrl}/${entry.contentLocale}/threads/${entry.slug}`,
+    url: threadCanonicalUrl(siteUrl, entry.contentLocale, entry.slug),
+    guid: threadCanonicalUrl(siteUrl, entry.contentLocale, entry.slug),
     publishedAt: entry.publishedAt,
     category: 'public-thread',
     language: getHtmlLanguage(entry.contentLocale as Locale),

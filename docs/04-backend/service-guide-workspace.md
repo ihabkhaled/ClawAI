@@ -147,6 +147,16 @@ delete with no durable audit trail today (a documented, not-yet-closed gap).
 | `POST` | `/api/v1/workspace/actions/:id/approve` | Approve action      |
 | `POST` | `/api/v1/workspace/actions/:id/reject`  | Reject action       |
 
+### AI action model selection (AUTO) and billing
+
+`POST /workspace/ai-actions/run` and `/resolve` take an optional `preferredModel`. Without one the run is AUTO:
+
+- **Source of models.** The picker's own catalog, `GET connector-service /api/v1/internal/connectors/public-catalog` (enabled connector, ACTIVE + EXPOSED + CHAT model), read with the service token and cached for `AI_ACTION_MODEL_RESOLVER_TTL_SECONDS` (15 s when a source could not be read). Providers are rows in that list; no provider name appears in the code. (The earlier per-provider probe of `/internal/connectors/config` looked for a `models` field that route never returns, so the cloud chain was always empty and production AUTO resolved to a local model that does not exist.)
+- **Plan.** Cloud candidates are filtered to what the user's plan allows as a primary (`isModelAllowedForUsage` over auth-service entitlements). chat-service `generate` reserves credit but does not re-check the plan, so this is the only plan check on an AUTO pick. An entitlements outage is a coded `503 AI_ACTION_PLAN_LOOKUP_UNAVAILABLE`.
+- **Order.** Per provider the best model for the action's capability hints (structured output, long context, tools), then the cheaper cost band; best provider first, one primary plus three alternatives. Summarize, rewrite, extract and estimate prefer a local model when one is installed; every other kind is cloud first with local last. `PRIVATE` content is local only, including the safety-net models appended after a failure.
+- **Nothing available.** A coded `422 AI_ACTION_NO_MODEL_AVAILABLE` (or `AI_ACTION_PRIVATE_REQUIRES_LOCAL_MODEL` for `PRIVATE`). No placeholder model is returned.
+- **Billing.** Every cloud attempt is one `POST chat-service /internal/chat/generate` with the token-derived `userId`, `surface=WORKSPACE_ACTION`, a fresh `requestId` and a `workflow` tag (`workspace-ai-action`, `workspace-multi-review`, `workspace-multi-review-judge`, `workspace-chain-draft`). chat-service takes and settles the PAYG hold. Known gap (chat-service, not fixed here): `settleInternalGenerate` does not call `recordUsage`, so the monthly token quota and the request count on the usage page do not move for these calls.
+
 ### AI action policies (admin)
 
 The approval engine routes every draft through a `priority`-ordered chain of
@@ -425,6 +435,10 @@ sanitised `ProviderAppConfigPublic` shape is the second line of defence — even
 if `WORKSPACE_APP_CONFIG_VIEW` is mis-granted, no encrypted secret can leak.
 
 See also: [Authorization & RBAC — Workspace partial-relax permission pattern](../03-architecture/authorization-rbac.md#workspace-partial-relax-permission-pattern).
+
+## AUTO model candidates (2026-10-14)
+
+AUTO ranks the best model per provider from connector-service's public catalog. A model whose id marks it as image, speech, embedding or moderation (`CONNECTOR_PRESET_NON_CHAT_MODEL_PATTERN` in `@claw/shared-utilities`) is never a candidate, because the catalog lists them too and, with every usage tier unset, catalog order would pick `chatgpt-image-latest`. Test: `cloud-model-ranking.utility.spec.ts`.
 
 ---
 

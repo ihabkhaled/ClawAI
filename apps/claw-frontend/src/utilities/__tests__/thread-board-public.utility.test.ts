@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   toPublicBoardItem,
@@ -51,13 +51,42 @@ describe('toPublicBoardItem', () => {
     ['an array', [1]],
     ['null', null],
     ['no slug', { ...RAW_ITEM, slug: '' }],
-    ['a slug with a path', { ...RAW_ITEM, slug: '../admin' }],
     ['no title', { ...RAW_ITEM, title: undefined }],
     ['no locale', { ...RAW_ITEM, contentLocale: 5 }],
     ['an unknown type', { ...RAW_ITEM, publicationType: 'SECRET' }],
     ['no date', { ...RAW_ITEM, publishedAt: undefined }],
   ])('drops an item with %s', (_name, value) => {
     expect(toPublicBoardItem(value)).toBeNull();
+  });
+
+  it.each([
+    ['Arabic', 'كيف-يعمل-التمثيل-الضوئي-a1b2c3d4'],
+    ['Persian', 'فتوسنتز-در-گیاهان-a1b2c3d4'],
+    ['Hindi (combining marks)', 'प्रकाश-संश्लेषण-कैसे-a1b2c3d4'],
+    ['Japanese', '茶道-入門-a1b2c3d4'],
+  ])('keeps a %s slug', (_name, slug) => {
+    expect(toPublicBoardItem({ ...RAW_ITEM, slug })?.slug).toBe(slug);
+  });
+
+  it('still shows an item with an unexpected slug, and reports it once', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const first = toPublicBoardItem({ ...RAW_ITEM, slug: '../odd slug' });
+    toPublicBoardItem({ ...RAW_ITEM, slug: '../odd slug' });
+    expect(first?.slug).toBe('../odd slug');
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
+  });
+
+  it('keeps every item of a list, so the header count and the cards agree', () => {
+    const list = toPublicBoardList({
+      items: [
+        RAW_ITEM,
+        { ...RAW_ITEM, slug: 'فتوسنتز-a1b2c3d4' },
+        { ...RAW_ITEM, slug: '茶道-a1b2c3d4' },
+      ],
+      meta: { total: 3 },
+    });
+    expect(list?.items).toHaveLength(3);
   });
 
   it('turns missing or invalid counts into zero and a missing excerpt into empty text', () => {

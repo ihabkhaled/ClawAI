@@ -18,6 +18,7 @@ import {
   type ResolvedTarget,
 } from '../types/egress.types';
 import { assertPublicUrl } from '../utilities/assert-public-url.utility';
+import { interleaveFamilies } from '../utilities/interleave-families.utility';
 import { isPublicIpAddress } from '../utilities/is-public-ip-address.utility';
 
 /**
@@ -51,8 +52,10 @@ export class SafeEgressManager {
     if (refused !== undefined) {
       throw new EgressError(EgressErrorCode.BLOCKED_ADDRESS, `${checked.host} -> ${refused}`);
     }
-    const address = addresses.find((candidate) => !candidate.includes(':')) ?? addresses[0] ?? '';
-    return { ...checked, address, family: address.includes(':') ? 6 : 4 };
+    const ordered = interleaveFamilies(addresses);
+    const first = ordered[0];
+    if (first === undefined) throw new EgressError(EgressErrorCode.DNS_FAILURE, 'no answers');
+    return { ...checked, address: first.address, family: first.family, addresses: ordered };
   }
 
   async request(input: EgressRequest): Promise<EgressResponse> {
@@ -84,6 +87,7 @@ export class SafeEgressManager {
       body: input.body,
       address: target.address,
       family: target.family,
+      addresses: target.addresses,
       timeoutMs: input.timeoutMs,
       maxResponseBytes: input.maxResponseBytes,
       signal: input.signal,

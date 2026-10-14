@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { Logger } from '@nestjs/common';
 
 import type {
@@ -46,6 +48,8 @@ export async function callCloudGenerate(input: CloudGenerateInput): Promise<Clou
         userPrompt: input.userPrompt,
         userId: input.userId,
         surface: input.surface,
+        requestId: input.requestId ?? randomUUID(),
+        ...(input.workflow === undefined ? {} : { workflow: input.workflow }),
       }),
       signal: controller.signal,
     });

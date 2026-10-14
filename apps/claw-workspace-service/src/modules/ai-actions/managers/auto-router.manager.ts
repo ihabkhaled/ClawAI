@@ -1,4 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+
+import { BusinessException } from '../../../common/errors/business.exception';
 
 import {
   AiActionKind,
@@ -9,6 +11,13 @@ import {
   AI_ACTION_CAPABILITY_HINTS,
   AI_ACTION_PREFERS_LOCAL,
 } from '../constants/ai-action-routes.constants';
+import { AI_ACTION_FALLBACK_LOCAL_PROVIDER } from '../constants/ai-action-prompts.constants';
+import {
+  AI_ACTION_NO_MODEL_CODE,
+  AI_ACTION_NO_MODEL_MESSAGE,
+  AI_ACTION_PRIVATE_NO_LOCAL_CODE,
+  AI_ACTION_PRIVATE_NO_LOCAL_MESSAGE,
+} from '../constants/model-catalog.constants';
 import type { AutoRouterResolution, ModelChoice } from '../types/ai-action.types';
 
 import { ModelCatalogResolverManager } from './model-catalog-resolver.manager';
@@ -27,6 +36,8 @@ export class AutoRouterManager {
     actionKind: AiActionKind;
     privacyClass: AiActionPrivacyClass;
     preferredModel?: ModelChoice;
+    /** Whose plan limits the cloud models AUTO may pick. */
+    userId?: string;
   }): Promise<AutoRouterResolution> {
     if (input.preferredModel !== undefined) {
       return {
@@ -39,9 +50,17 @@ export class AutoRouterManager {
       input.privacyClass === AiActionPrivacyClass.PRIVATE ||
       AI_ACTION_PREFERS_LOCAL[input.actionKind];
     const hints = AI_ACTION_CAPABILITY_HINTS[input.actionKind];
-    const defaults = await this.resolver.resolveDefaults({ preferLocal, capabilityHints: hints });
+    const defaults = await this.resolver.resolveDefaults({
+      preferLocal,
+      capabilityHints: hints,
+      ...(input.userId === undefined ? {} : { userId: input.userId }),
+    });
     if (defaults.primary === null) {
-      throw new Error('AutoRouterManager: no installed local model and no connected cloud provider');
+      throw new BusinessException(
+        AI_ACTION_NO_MODEL_MESSAGE,
+        AI_ACTION_NO_MODEL_CODE,
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
     }
     const fallbackChain =
       input.privacyClass === AiActionPrivacyClass.PRIVATE
@@ -49,13 +68,15 @@ export class AutoRouterManager {
         : defaults.fallbackChain;
     if (
       input.privacyClass === AiActionPrivacyClass.PRIVATE &&
-      defaults.primary.provider !== 'local-ollama'
+      defaults.primary.provider !== AI_ACTION_FALLBACK_LOCAL_PROVIDER
     ) {
       this.logger.warn(
         `auto-router: privacy=PRIVATE but no local model available — refusing cloud fallback`,
       );
-      throw new Error(
-        'AutoRouterManager: privacy=PRIVATE requires an installed local model; none found',
+      throw new BusinessException(
+        AI_ACTION_PRIVATE_NO_LOCAL_MESSAGE,
+        AI_ACTION_PRIVATE_NO_LOCAL_CODE,
+        HttpStatus.UNPROCESSABLE_ENTITY,
       );
     }
     return {
@@ -66,6 +87,6 @@ export class AutoRouterManager {
   }
 
   private filterLocalOnly(chain: ModelChoice[]): ModelChoice[] {
-    return chain.filter((entry) => entry.provider === 'local-ollama');
+    return chain.filter((entry) => entry.provider === AI_ACTION_FALLBACK_LOCAL_PROVIDER);
   }
 }

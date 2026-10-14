@@ -136,6 +136,17 @@ export const PLATFORM_FAILURE_STEP_CODES: ReadonlySet<string> = new Set([
   STEP_QUEUE_EXPIRED_CODE,
   STEP_LEASE_EXPIRED_CODE,
 ]);
+/**
+ * Owner-facing PAYG codes that are STILL the platform's doing inside a Thread, so the close refunds
+ * the lifetime Thread and the Free meter charge. A Thread call takes no request slot (ADR-162,
+ * D-L2-04), so the free allowance running out under a Thread is the platform's own accounting (its
+ * worst-case holds, retries and earlier failed answers), not something the owner chose. Production
+ * 2026-10-14: a brand-new Free user lost the one Thread and 6,475 micro-USD to this code.
+ * Every other PAYG code stays the owner's to fix (a higher cap, credit, a priced model).
+ */
+export const PLATFORM_ACCOUNTING_STEP_CODES: ReadonlySet<string> = new Set([
+  'PAYG_FREE_ALLOWANCE_EXHAUSTED',
+]);
 /** Platform-caused families: CLOUD_PROVIDER_* and MODEL_CATALOG_*. */
 export const PLATFORM_FAILURE_CODE_PREFIXES: readonly string[] = [
   'CLOUD_PROVIDER_',

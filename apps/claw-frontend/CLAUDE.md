@@ -906,7 +906,7 @@ The idle-timeout codes `MODEL_IDLE_TIMEOUT`, `MODEL_HARD_CEILING`, `MODEL_REASON
 `THREAD_MODEL_UNKNOWN`, `THREAD_SPEND_CAP_TOO_LOW`) map through `THREAD_START_ERROR_KEYS` to
 `chat.threadProgress.startError.*`; `resolveThreadErrorMessage` checks the code before the status. The running panel shows
 `chat.threadProgress.stillWorking`. A test reads the threads-service enum, so a new refusal code fails the build until
-it has a key in all 13 locales. Full note: [`docs/05-frontend/threads-progress-codes.md`](../../docs/05-frontend/threads-progress-codes.md).
+it has a key in all 13 locales. A job with no money spent that made successful calls shows `chat.threadProgress.includedInPlan` (plus `includedInPlanTokens` when steps carry token counts) via `describeIncludedUsage`, never $0.00. `useHardwareSnapshot` sets `retryOnMount: false` and `refetchOnWindowFocus: false`, so an absent llamacpp-service (production) is called once per page load, never on every navigation. Full note: [`docs/05-frontend/threads-progress-codes.md`](../../docs/05-frontend/threads-progress-codes.md).
 
 ## Threads UI: label keys, buttons, publish banner
 

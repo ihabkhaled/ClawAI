@@ -4,6 +4,10 @@ import { PaygSurface } from '@claw/shared-types';
 import { AppConfig } from '../../../app/config/app.config';
 import { BusinessException } from '../../../common/errors/business.exception';
 import { AiActionKind } from '../../../common/enums/ai-action-kind.enum';
+import {
+  AI_ACTION_WORKFLOW_REVIEW,
+  AI_ACTION_WORKFLOW_REVIEW_JUDGE,
+} from '../constants/model-catalog.constants';
 import { MULTI_MODEL_REVIEW_REVIEWER_CAP } from '../constants/ai-action-policy.constants';
 import { AI_ACTION_PROMPTS } from '../constants/ai-action-prompts.constants';
 import type {
@@ -116,6 +120,7 @@ export class MultiModelReviewOrchestratorManager {
       timeoutMs,
       userId,
       surface: PaygSurface.WORKSPACE_ACTION,
+      workflow: AI_ACTION_WORKFLOW_REVIEW,
     });
     return {
       provider: ref.provider,
@@ -172,6 +177,7 @@ export class MultiModelReviewOrchestratorManager {
         timeoutMs,
         userId,
         surface: PaygSurface.WORKSPACE_ACTION,
+        workflow: AI_ACTION_WORKFLOW_REVIEW_JUDGE,
       });
       return {
         provider: ref.provider,

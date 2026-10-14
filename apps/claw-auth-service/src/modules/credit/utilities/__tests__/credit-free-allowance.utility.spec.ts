@@ -108,14 +108,11 @@ describe('Threads and the free allowance (D4)', () => {
     ).toBe(false);
   });
 
-  it('waives the request count for Threads only, and only under a money meter', () => {
-    const metered = { budgetMicroUsd: 250_000n };
-    const unmetered = { budgetMicroUsd: null };
-    expect(isCountWaived({ surface: PaygSurface.THREADS }, metered)).toBe(true);
-    expect(isCountWaived({ surface: PaygSurface.THREADS }, unmetered)).toBe(false);
-    expect(isCountWaived({ surface: PaygSurface.CHAT }, metered)).toBe(false);
+  it('waives the request count for Threads only, with or without a money meter', () => {
+    expect(isCountWaived({ surface: PaygSurface.THREADS })).toBe(true);
+    expect(isCountWaived({ surface: PaygSurface.CHAT })).toBe(false);
     for (const surface of FREE_ALLOWANCE_ELIGIBLE_SURFACES) {
-      expect(isCountWaived({ surface }, metered)).toBe(
+      expect(isCountWaived({ surface })).toBe(
         FREE_ALLOWANCE_COUNT_WAIVED_SURFACES.includes(surface),
       );
     }

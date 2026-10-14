@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import {
   AiActionKind,
   AiActionMode,
@@ -71,7 +71,10 @@ describe('AutoRouterManager', () => {
         actionKind: AiActionKind.DRAFT,
         privacyClass: AiActionPrivacyClass.PRIVATE,
       }),
-    ).rejects.toThrow('privacy=PRIVATE requires an installed local model');
+    ).rejects.toMatchObject({
+      code: 'AI_ACTION_PRIVATE_REQUIRES_LOCAL_MODEL',
+      status: 422,
+    });
   });
 
   it('throws when neither local nor cloud is available', async () => {
@@ -81,7 +84,31 @@ describe('AutoRouterManager', () => {
         actionKind: AiActionKind.SUMMARIZE,
         privacyClass: AiActionPrivacyClass.INTERNAL,
       }),
-    ).rejects.toThrow('no installed local model');
+    ).rejects.toMatchObject({ code: 'AI_ACTION_NO_MODEL_AVAILABLE', status: 422 });
+  });
+
+  it('passes the acting user to the resolver so the plan limits the pick', async () => {
+    const resolver = makeResolver(cloudAnthropic, []);
+    const manager = new AutoRouterManager(resolver as any);
+    await manager.resolve({
+      actionKind: AiActionKind.SUMMARIZE,
+      privacyClass: AiActionPrivacyClass.INTERNAL,
+      userId: 'user-9',
+    });
+    expect(resolver.resolveDefaults).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'user-9' }),
+    );
+  });
+
+  it('AUTO resolves to a cloud model when no local model exists (production shape)', async () => {
+    const manager = new AutoRouterManager(makeResolver(cloudAnthropic, []) as any);
+    const result = await manager.resolve({
+      actionKind: AiActionKind.SUMMARIZE,
+      privacyClass: AiActionPrivacyClass.INTERNAL,
+      userId: 'user-9',
+    });
+    expect(result.mode).toBe(AiActionMode.AUTO);
+    expect(result.primary).toEqual(cloudAnthropic);
   });
 
   it('covers all 6 action kinds', async () => {

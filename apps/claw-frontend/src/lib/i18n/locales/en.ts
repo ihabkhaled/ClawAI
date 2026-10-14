@@ -858,6 +858,8 @@ export const en: TranslationDictionary = {
       stageLabel: 'Stage',
       attempt: 'Attempt {current} of {max}',
       spent: 'Spent so far: {amount}',
+      includedInPlan: 'Included in your plan',
+      includedInPlanTokens: 'Included in your plan · {tokens} tokens',
       platformFailureNotice:
         'This was a problem on our side, not yours. Your Free allowance was not used.',
       retryOnUs: 'Retry on us',
@@ -1002,6 +1004,12 @@ export const en: TranslationDictionary = {
           'A selected model is not included in your plan. Pick an included model.',
         modelUnknown: 'A selected model is not in the model catalog. Pick one from the list.',
         spendCapTooLow: 'The spend cap is too low. Set at least 0.01 USD.',
+        authorCountInvalid: 'Pick between 3 and 5 authors.',
+        localeInvalid: 'The selected language is not supported. Pick one from the list.',
+        publicationTypeInvalid:
+          'The selected publication type is not supported. Pick one from the list.',
+        requestInvalid:
+          'Some details in this request are missing or not valid. Check the form and try again.',
         allowanceUnavailable:
           'Your Thread allowance is used up, or a running generation is holding it. Wait for it to finish or upgrade your plan.',
         tooManyActive:

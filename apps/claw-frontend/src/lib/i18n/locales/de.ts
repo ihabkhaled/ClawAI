@@ -880,6 +880,8 @@ export const de: TranslationDictionary = {
       stageLabel: 'Phase',
       attempt: 'Versuch {current} von {max}',
       spent: 'Bisher ausgegeben: {amount}',
+      includedInPlan: 'In deinem Tarif enthalten',
+      includedInPlanTokens: 'In deinem Tarif enthalten · {tokens} Tokens',
       platformFailureNotice:
         'Das Problem lag bei uns, nicht bei Ihnen. Ihr Gratis-Kontingent wurde nicht verbraucht.',
       retryOnUs: 'Auf unsere Kosten wiederholen',
@@ -1041,6 +1043,12 @@ export const de: TranslationDictionary = {
         modelUnknown:
           'Ein gewähltes Modell steht nicht im Modellkatalog. Wähle eines aus der Liste.',
         spendCapTooLow: 'Das Ausgabenlimit ist zu niedrig. Setze mindestens 0,01 USD.',
+        authorCountInvalid: 'Wähle 3 bis 5 Autoren.',
+        localeInvalid: 'Die gewählte Sprache wird nicht unterstützt. Wähle eine aus der Liste.',
+        publicationTypeInvalid:
+          'Der gewählte Veröffentlichungstyp wird nicht unterstützt. Wähle einen aus der Liste.',
+        requestInvalid:
+          'Einige Angaben in dieser Anfrage fehlen oder sind ungültig. Prüfe das Formular und versuche es erneut.',
         allowanceUnavailable:
           'Dein Thread-Kontingent ist aufgebraucht oder wird von einer laufenden Erstellung belegt. Warte, bis sie fertig ist, oder wechsle deinen Tarif.',
         tooManyActive:

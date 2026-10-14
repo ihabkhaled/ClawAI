@@ -13,6 +13,7 @@ import { getSiteUrl } from '@/lib/site/site-config';
 import { listPublicThreadDiscoveries } from '@/lib/threads/public-thread-api';
 import { isSupportedLocale } from '@/utilities/locale.utility';
 import { serializeJsonLd } from '@/utilities/structured-data.utility';
+import { threadCanonicalUrl, threadLocalePath } from '@/utilities/thread-slug.utility';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +37,7 @@ export default async function ThreadDiscoveryPage(): Promise<React.ReactElement>
       itemListElement: items.map((item, index) => ({
         '@type': 'ListItem',
         position: index + 1,
-        url: `${siteUrl}/${locale}/threads/${item.slug}`,
+        url: threadCanonicalUrl(siteUrl, locale, item.slug),
         name: item.title,
       })),
     },
@@ -68,7 +69,7 @@ export default async function ThreadDiscoveryPage(): Promise<React.ReactElement>
               <article>
                 <h2 className="text-xl font-semibold">
                   <Link
-                    href={`/${locale}/threads/${item.slug}`}
+                    href={threadLocalePath(locale, item.slug)}
                     className="underline-offset-4 hover:underline"
                   >
                     {item.title}

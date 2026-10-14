@@ -1,4 +1,4 @@
-import { Controller, Get, Header, Query } from '@nestjs/common';
+import { Controller, Get, Header, Query, UseFilters } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Public } from '@claw/shared-auth';
 
@@ -17,6 +17,7 @@ import {
   type BoardSuggestQuery,
   boardSuggestQuerySchema,
 } from '../dto/board-query.dto';
+import { BoardThrottleExceptionFilter } from '../filters/board-throttle-exception.filter';
 import { BoardService } from '../services/board.service';
 
 /**
@@ -27,6 +28,7 @@ import { BoardService } from '../services/board.service';
  * would be read as a slug.
  */
 @Public()
+@UseFilters(BoardThrottleExceptionFilter)
 @Controller('thread-publications/public/board')
 export class BoardPublicController {
   constructor(private readonly board: BoardService) {}

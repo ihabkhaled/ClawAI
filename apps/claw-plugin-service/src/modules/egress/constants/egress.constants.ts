@@ -2,6 +2,8 @@
 export const EGRESS_ALLOWED_PORTS: readonly number[] = [443, 8443];
 export const EGRESS_URL_MAX_LENGTH = 2048;
 export const EGRESS_CONNECT_TIMEOUT_MS = 5000;
+/** Happy-Eyeballs wait before the next validated address is tried (inside the connect deadline). */
+export const EGRESS_ADDRESS_ATTEMPT_TIMEOUT_MS = 500;
 export const EGRESS_DNS_TIMEOUT_MS = 5000;
 export const EGRESS_MAX_REDIRECTS_FOLLOWED = 3;
 export const HTTPS_DEFAULT_PORT = 443;

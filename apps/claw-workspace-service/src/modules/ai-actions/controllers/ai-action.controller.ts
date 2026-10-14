@@ -38,12 +38,14 @@ export class AiActionController {
   @Post('resolve')
   @HttpCode(HttpStatus.OK)
   async resolve(
+    @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(resolveAiActionSchema)) dto: ResolveAiActionDto,
   ): Promise<AutoRouterResolution> {
     return this.router.resolve({
       actionKind: dto.actionKind,
       privacyClass: dto.privacyClass,
       preferredModel: dto.preferredModel,
+      userId: user.id,
     });
   }
 

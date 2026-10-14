@@ -80,7 +80,7 @@ describe('buildPublicPageMetadata', () => {
       languages: Record<string, string>;
     };
 
-    expect(metadata.title).toBe('Öffentliches Threads-Board | ClawAI');
+    expect(metadata.title).toBe('Öffentliches Threads-Board');
     expect(alternates.canonical).toBe('https://claw.example/de/threads/board');
     expect(Object.keys(alternates.languages)).toHaveLength(14);
     expect(alternates.languages['x-default']).toBe('https://claw.example/en/threads/board');

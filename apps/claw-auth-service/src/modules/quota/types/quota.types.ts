@@ -224,17 +224,19 @@ export type TokenUsageBreakdown = {
   requestCount: number;
 };
 
+/** The refused half of {@link FeatureReservationDecision}: what stopped the run and how much is used. */
+export type FeatureReservationRefusal = {
+  allowed: false;
+  reason: Extract<FeatureReservationResult, { ok: false }>['reason'];
+  used: number;
+  limit: number;
+  window: string | null;
+};
+
 /**
  * The answer to "may this user start one more run?" (F3d, ADR-110).
  * `reservationId` is null for an unmetered caller (admin, no plan), which has
  * nothing to settle.
  */
 export type FeatureReservationDecision =
-  | { allowed: true; reservationId: string | null }
-  | {
-      allowed: false;
-      reason: Extract<FeatureReservationResult, { ok: false }>['reason'];
-      used: number;
-      limit: number;
-      window: string | null;
-    };
+  { allowed: true; reservationId: string | null } | FeatureReservationRefusal;
