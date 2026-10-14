@@ -112,7 +112,7 @@ non-zero, and leaves `.deploy/deployed-sha` unchanged — the workflow run goes
 red, production keeps serving the previous commit.
 
 The whole image build is bounded by `CLAW_DEPLOY_BUILD_TIMEOUT` (default
-3600s, `timeout --foreground` so the build stays in the deployment's process
+10800s, `timeout --foreground` so the build stays in the deployment's process
 group). A build that exceeds it is aborted and never retried: a build that
 produces nothing for an hour is wedged, not slow, and retrying it only holds
 the deploy lock longer.
@@ -447,7 +447,7 @@ things cause that, and both are now guarded:
 - A `docker compose build` that stops making progress. BuildKit can wedge a
   single `RUN` layer with no output and no worker process left, and compose
   never returns. The build is capped by `CLAW_DEPLOY_BUILD_TIMEOUT` (default
-  3600s) and aborted with a named error instead of running forever.
+  10800s) and aborted with a named error instead of running forever.
 - A deployment waiting on the deploy lock. It now prints a progress line every
   `CLAW_DEPLOY_LOCK_HEARTBEAT` seconds naming the holder, so a queued
   deployment is never mistaken for a dead connection, and the traffic keeps the

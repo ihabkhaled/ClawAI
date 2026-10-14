@@ -29,6 +29,8 @@ lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (
 
 ## Findings
 
+- 2026-10-14 release v1.215.1: the deploy failed with "exceeded the 3600s deployment limit" while building thread-generation-service. CLAW_DEPLOY_BUILD_TIMEOUT is one budget for ALL service builds of a deploy (they run one after another), and a broad release rebuilds every service, so the hour ran out. Not a hang. Default raised to 10800 s (test and docs updated); the 10-minute stall watchdog still catches a wedged step early. The same SHA was re-dispatched with the Deploy production workflow and reuses the cached layers.
+
 - 2026-10-14 CI: the rehearsal timed out (300 s, then 420 s). Cause found by timing each scenario in an Ubuntu 24.04 container: the watchdog slept a flat 5 s before its first check, so every service build cost at least 5 s and each broad deploy scenario took about 100 s. The loop now sleeps 0.2 s slices and polls the output size every CLAW_DEPLOY_BUILD_STALL_POLL seconds; the stall scenarios are unchanged.
 
 CI run on 703a5582 hit the 300 s rehearsal cap. Fixes: kill_process_tree now snapshots the whole tree once and does one TERM, bounded wait, one KILL (harness: kill of a stalled build 9 s before, 3 s after); the stub builds now `exec sleep 120` so a killed stub cannot orphan a sleep that holds the stdout pipe; three assert_no_stray_sleep checks fail fast on leaks; the test prints partial rehearsal output on timeout. The exact leak could not be reproduced here: WSL on /mnt/d is about 10 min for the whole rehearsal, so total wall time is NOT comparable to a CI runner. The wedged-build stub (sleep 120 orphaned by timeout) is the likeliest original leak. Live Release deploy still unproven until the next run.

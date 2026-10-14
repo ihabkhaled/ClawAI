@@ -19,8 +19,10 @@
 #                               failed as a crash loop instead of waiting out
 #                               the health timeout (default 3)
 #   CLAW_DEPLOY_BUILD_TIMEOUT   seconds the whole image build may take before it
-#                               is aborted (default 3600). A wedged BuildKit step
-#                               must never hold the deploy lock indefinitely.
+#                               is aborted (default 10800: a broad release rebuilds
+#                               every service one after another, and 3600 ran out
+#                               on 2026-10-14). A wedged BuildKit step is caught
+#                               earlier by the stall watchdog below.
 #   CLAW_DEPLOY_BUILD_STALL_SECONDS  seconds a service build may print NOTHING before
 #                               it is treated as a wedged BuildKit step (default
 #                               600). The stalled build client is killed and that
@@ -140,7 +142,7 @@ HEALTH_TIMEOUT_SECONDS="${CLAW_DEPLOY_HEALTH_TIMEOUT:-420}"
 # three consecutive exits is a broken image. A fast crash reaches three within
 # ~30s, so this is what keeps a doomed rollout from burning the full timeout.
 CRASH_LOOP_RESTARTS="${CLAW_DEPLOY_CRASH_LOOP_RESTARTS:-3}"
-BUILD_TIMEOUT_SECONDS="${CLAW_DEPLOY_BUILD_TIMEOUT:-3600}"
+BUILD_TIMEOUT_SECONDS="${CLAW_DEPLOY_BUILD_TIMEOUT:-10800}"
 BUILD_STALL_SECONDS="${CLAW_DEPLOY_BUILD_STALL_SECONDS:-600}"
 BUILD_STALL_POLL_SECONDS="${CLAW_DEPLOY_BUILD_STALL_POLL:-5}"
 BUILD_STALL_STATUS=97

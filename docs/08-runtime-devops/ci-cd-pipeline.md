@@ -68,7 +68,7 @@ comparison base selects every workspace.
 | `deploy-rehearsal`    | only when deploy paths changed: the end-to-end deploy rehearsal (`knowledge:test:rehearsal`)                              |
 | `architecture-rules`  | the architecture ESLint plugin's rule tests                                                                               |
 
-Deploy build guards (`scripts/deploy-prod.sh`): `CLAW_DEPLOY_BUILD_TIMEOUT` (3600 s
+Deploy build guards (`scripts/deploy-prod.sh`): `CLAW_DEPLOY_BUILD_TIMEOUT` (10800 s
 whole-build cap) and `CLAW_DEPLOY_BUILD_STALL_SECONDS` (600 s without build output
 aborts that service and retries it once on a fresh BuildKit session; a second
 stall fails as `BUILD_STALLED`).

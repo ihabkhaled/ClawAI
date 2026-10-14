@@ -48,7 +48,7 @@ treats every manifest as a real change.
 ## Recover
 
 1. If a deploy is building right now and the box is starving, let the build
-   timeout (`CLAW_DEPLOY_BUILD_TIMEOUT`, 3600 s) or cancel the workflow run; the
+   timeout (`CLAW_DEPLOY_BUILD_TIMEOUT`, 10800 s) or cancel the workflow run; the
    orphan guard aborts the remote build when the SSH session goes.
 2. Free the cache (safe: removes only rebuildable BuildKit layers, never
    images, containers or volumes):
@@ -84,16 +84,23 @@ Then `sudo systemctl restart docker` (in a maintenance window: it restarts
 every container). Wrapping the deploy in `nice`/`ionice` does not help: the
 build runs inside dockerd/BuildKit, not in the compose client process.
 
-## Release fails: "exceeded the 3600s deployment limit" at `unpacking to docker.io/library/...`
+## Release fails: "exceeded the 10800s deployment limit" (or 3600s on older deploys)
 
 **Symptom.** The Release deploy step ends with `docker compose build for <svc>
-exceeded the 3600s deployment limit; refusing to retry.` and the build log's last
+exceeded the Ns deployment limit; refusing to retry.` and the build log's last
 line is `#NN unpacking to docker.io/library/claw-<svc>:latest` (after `exporting
 layers ... done`). dockerd logs `session healthcheck failed fatally`, then
 `failed to extract layer` when the timeout kills it (run 38560707482, 2026-10-14).
 
-**Cause.** A wedged BuildKit session in the image export/unpack step. Not code,
-disk, or load. Production stays on the previous commit (correct).
+**Cause.** Two different things end with this message. (1) The limit is a budget for
+ALL service builds of one deploy, which run one after another; a broad release (every
+service rebuilt) used up the old 3600 s budget on 2026-10-14 (runs 38560707482 and
+38603092510, the last service being the one named), so the default is now 10800 s.
+(2) A wedged BuildKit session in the image export/unpack step (dockerd logs `session
+healthcheck failed fatally`), which the stall watchdog below catches after 10 quiet
+minutes. Production stays on the previous commit either way (correct); re-run the
+same SHA through the Deploy production workflow (`gh workflow run deploy-production.yml
+-f target_sha=<sha> -f trigger_source=manual`) and the layers already built are cached.
 
 **What the deploy does now.** `CLAW_DEPLOY_BUILD_STALL_SECONDS` (default 600): a
 service build that prints nothing for that long is killed (the build client
@@ -101,7 +108,7 @@ process tree only: no cache prune, no daemon restart), logs `BuildKit stalled at
 <last line>` and `retrying <svc> once with a fresh session`, then rebuilds over the
 same warm cache. A second stall fails the deploy with `docker compose build
 stalled twice` and status code `BUILD_STALLED`. Normal compile failures and
-non-transient errors are never retried by this path; the 3600 s cap still applies.
+non-transient errors are never retried by this path; the 10800 s cap still applies.
 
 **Operator.** If `BUILD_STALLED` appears, re-run the Release workflow. If it
 repeats, restart dockerd in a quiet window (`sudo systemctl restart docker`)

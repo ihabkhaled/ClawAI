@@ -104,7 +104,7 @@ test('deploy-prod.sh applies an explicit Docker Compose build concurrency limit'
 });
 
 test('deploy-prod.sh bounds the whole image build so a wedged BuildKit step cannot hold the lock', () => {
-  assert.match(script, /BUILD_TIMEOUT_SECONDS="\$\{CLAW_DEPLOY_BUILD_TIMEOUT:-3600\}"/u);
+  assert.match(script, /BUILD_TIMEOUT_SECONDS="\$\{CLAW_DEPLOY_BUILD_TIMEOUT:-10800\}"/u);
   assert.match(script, /timeout --foreground --kill-after=60 "\$timeout_seconds"/u);
   assert.match(script, /remaining=\$\(\(BUILD_TIMEOUT_SECONDS - elapsed\)\)/u);
   assert.match(script, /command -v timeout >\/dev\/null 2>&1 \|\| die/u);
