@@ -115,6 +115,20 @@ test('deploy-prod.sh bounds the whole image build so a wedged BuildKit step cann
   );
 });
 
+test('deploy-prod.sh aborts a stalled build early and retries it exactly once', () => {
+  assert.match(script, /BUILD_STALL_SECONDS="\$\{CLAW_DEPLOY_BUILD_STALL_SECONDS:-600\}"/u);
+  assert.match(script, /CLAW_DEPLOY_BUILD_STALL_SECONDS must be a whole number of seconds/u);
+  assert.match(script, /CLAW_DEPLOY_BUILD_STALL_SECONDS must be at least 1 second/u);
+  assert.match(script, /run_build_with_stall_watchdog\(\)/u);
+  assert.match(script, /kill_process_tree "\$build_pid"/u);
+  assert.match(script, /BuildKit stalled at: /u);
+  assert.match(script, /retrying \$service once with a fresh session/u);
+  assert.match(script, /DEPLOYMENT_FAILURE_CODE="BUILD_STALLED"/u);
+  assert.match(script, /\[ "\$stall_retried" -eq 0 \]/u);
+  // The cache is never dropped to recover a stall.
+  assert.doesNotMatch(script, /builder prune[^\n]*stall/iu);
+});
+
 test('deploy-prod.sh never lets a child process inherit the deploy lock', () => {
   // bash passes open descriptors to children, so a build that outlives the
   // deployment would keep holding fd 200 — the two-day outage of 2026-08-20.
@@ -173,7 +187,8 @@ test('deploy-prod.sh reports progress instead of blocking silently on the deploy
 
 test('deploy-prod.sh retries only transient build-network failures with bounded backoff', () => {
   assert.match(script, /BUILD_RETRY_DELAYS=\(10 30\)/u);
-  assert.match(script, /for attempt in 1 2 3/u);
+  assert.match(script, /attempt=\$\(\(attempt \+ 1\)\)/u);
+  assert.match(script, /\[ "\$attempt" -eq 3 \]/u);
   assert.match(script, /ECONNRESET\|ETIMEDOUT\|EAI_AGAIN/u);
   assert.match(script, /docker compose build failed for \$service with a non-transient error/u);
   assert.match(script, /transient network failure; retrying in/u);

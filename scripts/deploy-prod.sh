@@ -21,6 +21,12 @@
 #   CLAW_DEPLOY_BUILD_TIMEOUT   seconds the whole image build may take before it
 #                               is aborted (default 3600). A wedged BuildKit step
 #                               must never hold the deploy lock indefinitely.
+#   CLAW_DEPLOY_BUILD_STALL_SECONDS  seconds a service build may print NOTHING before
+#                               it is treated as a wedged BuildKit step (default
+#                               600). The stalled build client is killed and that
+#                               service is retried exactly once on a fresh
+#                               BuildKit session; a second stall fails the deploy
+#                               with BUILD_STALLED. The whole-build cap above stays.
 #   CLAW_DEPLOY_ORPHAN_GUARD    1 = abort as soon as the SSH session that started
 #                               this deployment disappears. The CI workflow sets
 #                               it; an operator running the script by hand, or
@@ -135,6 +141,10 @@ HEALTH_TIMEOUT_SECONDS="${CLAW_DEPLOY_HEALTH_TIMEOUT:-420}"
 # ~30s, so this is what keeps a doomed rollout from burning the full timeout.
 CRASH_LOOP_RESTARTS="${CLAW_DEPLOY_CRASH_LOOP_RESTARTS:-3}"
 BUILD_TIMEOUT_SECONDS="${CLAW_DEPLOY_BUILD_TIMEOUT:-3600}"
+BUILD_STALL_SECONDS="${CLAW_DEPLOY_BUILD_STALL_SECONDS:-600}"
+BUILD_STALL_POLL_SECONDS="${CLAW_DEPLOY_BUILD_STALL_POLL:-5}"
+BUILD_STALL_STATUS=97
+BUILD_STALLED=0
 BUILD_PARALLEL_LIMIT="${COMPOSE_PARALLEL_LIMIT:-1}"
 BUILD_RETRY_DELAYS=(10 30)
 
@@ -432,15 +442,76 @@ record_completed_deployment_status() {
   notify_deployment_status
 }
 
+# SIGTERM then SIGKILL for a process and everything below it. The stalled build
+# is `timeout -> docker compose -> buildx`; killing only the top leaves the
+# BuildKit session client alive and the "fresh session" would not be fresh.
+kill_process_tree() {
+  local root="$1" child
+  for child in $(pgrep -P "$root" 2>/dev/null || true); do
+    kill_process_tree "$child"
+  done
+  kill -TERM "$root" 2>/dev/null || true
+  sleep 1
+  kill -KILL "$root" 2>/dev/null || true
+}
+
+# Runs one build of one service. Returns the build's status, or
+# BUILD_STALL_STATUS when it printed nothing for BUILD_STALL_SECONDS.
+#
+# Only the build CLIENT process tree is killed on a stall. The daemon, its cache
+# and every other image are untouched: no `docker builder prune`, no
+# `buildx stop`, no daemon restart. Dropping the client closes its BuildKit
+# session, so the retry opens a new one over the same (warm) cache.
+run_build_with_stall_watchdog() {
+  local remaining="$1" service="$2" output_file="$3"
+  local build_pid size last_size last_change last_line status
+
+  : >"$output_file"
+  (
+    set +e
+    compose_build_bounded "$remaining" "$service" 2>&1 | tee "$output_file"
+    exit "${PIPESTATUS[0]}"
+  ) &
+  build_pid=$!
+  last_size=0
+  last_change="$SECONDS"
+
+  while kill -0 "$build_pid" 2>/dev/null; do
+    sleep "$BUILD_STALL_POLL_SECONDS"
+    size="$(wc -c <"$output_file" 2>/dev/null | tr -d ' ' || printf 0)"
+    if [ "$size" != "$last_size" ]; then
+      last_size="$size"
+      last_change="$SECONDS"
+      continue
+    fi
+    if [ $((SECONDS - last_change)) -ge "$BUILD_STALL_SECONDS" ] && kill -0 "$build_pid" 2>/dev/null; then
+      last_line="$(tr '[\r]' '\n' <"$output_file" 2>/dev/null | grep -v '^[[:space:]]*$' | tail -n 1 || true)"
+      BUILD_STALL_LAST_LINE="${last_line:-<no output>}"
+      err "no build output for ${BUILD_STALL_SECONDS}s while building $service; aborting this build."
+      kill_process_tree "$build_pid"
+      wait "$build_pid" 2>/dev/null || true
+      return "$BUILD_STALL_STATUS"
+    fi
+  done
+
+  set +e
+  wait "$build_pid"
+  status=$?
+  set -e
+  return "$status"
+}
+
 build_services() {
-  local service output_file attempt status delay elapsed remaining
+  local service output_file attempt status delay elapsed remaining stall_retried
   local build_started_at="$SECONDS"
 
   for service in "${PLAN_SERVICES[@]}"; do
     output_file="$TMP_DIR/build-output-$service"
+    stall_retried=0
+    attempt=0
 
-    for attempt in 1 2 3; do
-      : >"$output_file"
+    while true; do
+      attempt=$((attempt + 1))
       elapsed=$((SECONDS - build_started_at))
       remaining=$((BUILD_TIMEOUT_SECONDS - elapsed))
       if [ "$remaining" -lt 1 ]; then
@@ -449,12 +520,29 @@ build_services() {
       fi
 
       set +e
-      compose_build_bounded "$remaining" "$service" 2>&1 | tee "$output_file"
-      status="${PIPESTATUS[0]}"
+      run_build_with_stall_watchdog "$remaining" "$service" "$output_file"
+      status=$?
       set -e
 
       if [ "$status" -eq 0 ]; then
         break
+      fi
+
+      # A stall is retried exactly once per service, on a fresh BuildKit
+      # session. It does not consume a transient-network attempt.
+      if [ "$status" -eq "$BUILD_STALL_STATUS" ]; then
+        if [ "$stall_retried" -eq 0 ]; then
+          stall_retried=1
+          attempt=$((attempt - 1))
+          err "BuildKit stalled at: ${BUILD_STALL_LAST_LINE}"
+          err "retrying $service once with a fresh session."
+          sleep 5
+          continue
+        fi
+        BUILD_STALLED=1
+        err "BuildKit stalled again at: ${BUILD_STALL_LAST_LINE}"
+        err "build for $service stalled twice (no output for ${BUILD_STALL_SECONDS}s each); refusing to retry."
+        return "$status"
       fi
 
       # 124 is the shared build deadline; 137 is its follow-up SIGKILL. Both
@@ -482,7 +570,7 @@ build_services() {
 }
 
 usage() {
-  sed -n '2,40p' "$ORIGIN_SELF" | sed 's/^#\{1,\} \{0,1\}//'
+  sed -n '2,47p' "$ORIGIN_SELF" | sed 's/^#\{1,\} \{0,1\}//'
 }
 
 # =============================================================================
@@ -1731,6 +1819,19 @@ main() {
     die "CLAW_DEPLOY_BUILD_TIMEOUT must be at least 1 second"
   fi
 
+  case "$BUILD_STALL_SECONDS" in
+    '' | *[!0-9]*) die "CLAW_DEPLOY_BUILD_STALL_SECONDS must be a whole number of seconds" ;;
+  esac
+  if [ "$BUILD_STALL_SECONDS" -lt 1 ]; then
+    die "CLAW_DEPLOY_BUILD_STALL_SECONDS must be at least 1 second"
+  fi
+  case "$BUILD_STALL_POLL_SECONDS" in
+    '' | *[!0-9]*) die "CLAW_DEPLOY_BUILD_STALL_POLL must be a whole number of seconds" ;;
+  esac
+  if [ "$BUILD_STALL_POLL_SECONDS" -lt 1 ]; then
+    die "CLAW_DEPLOY_BUILD_STALL_POLL must be at least 1 second"
+  fi
+
   local target_rev="$1"
   case "$target_rev" in
     *[!0-9a-fA-F]* | '') die "not a commit SHA: '$target_rev' (expected 7-40 hex characters)" ;;
@@ -1950,6 +2051,10 @@ main() {
     err ""
     err "Build failed. No container was recreated; production is still serving"
     err "the previously deployed commit ${old_sha:-<unknown>}."
+    if [ "$BUILD_STALLED" -eq 1 ]; then
+      DEPLOYMENT_FAILURE_CODE="BUILD_STALLED"
+      die "docker compose build stalled twice (BuildKit wedged, no output); re-run the Release workflow"
+    fi
     die "docker compose build failed"
   fi
 

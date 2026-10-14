@@ -105,6 +105,16 @@ case "${1:-}" in
         if [ "${CLAW_STUB_BUILD_FAIL:-0}" = "1" ]; then exit 1; fi
         # Stands in for a wedged BuildKit step: no output, no exit, no worker.
         if [ "${CLAW_STUB_BUILD_HANG:-0}" = "1" ]; then sleep 120; fi
+        # BuildKit stalls AFTER printing a line (the 2026-10-14 unpack hang).
+        # CLAW_STUB_BUILD_STALL=N stalls the first N builds, then builds normally.
+        if [ -n "${CLAW_STUB_BUILD_STALL:-}" ]; then
+          n="$(cat "$CLAW_STUB_LOG.stalls" 2>/dev/null || printf 0)"
+          if [ "$n" -lt "$CLAW_STUB_BUILD_STALL" ]; then
+            printf '%s\n' "$((n + 1))" >"$CLAW_STUB_LOG.stalls"
+            printf '#36 unpacking to docker.io/library/claw-stub:latest\n'
+            sleep 120
+          fi
+        fi
         exit 0
         ;;
       up)
@@ -410,6 +420,29 @@ assert_contains "a wedged build refuses to retry" "$out" "refusing to retry"
 assert_contains "a wedged build fails the deployment" "$out" "docker compose build failed"
 assert_equals "a wedged build leaves the recorded SHA alone" "$(deployed_sha)" "$SHA_BASE"
 assert_contains "a wedged build records failed status" "$(cat "$PROD/.deploy/status.json")" '"state":"failed"'
+# ─── Stalled BuildKit step: abort early, retry once on a fresh session ───────
+# 2026-10-14: `unpacking to docker.io/library/...` hung for an hour. Output stops
+# but the process lives, so only a no-output watchdog can tell it from a slow build.
+reset_docker_log
+rm -f "$CLAW_STUB_LOG.stalls"
+out="$(CLAW_STUB_BUILD_STALL=1 CLAW_DEPLOY_BUILD_STALL_SECONDS=2 CLAW_DEPLOY_BUILD_STALL_POLL=1 deploy "$SHA_PAYMENT")"
+assert_contains "a stalled build names the last line" "$out" "BuildKit stalled at: #36 unpacking to docker.io/library/claw-stub:latest"
+assert_contains "a stalled build is retried once" "$out" "once with a fresh session"
+assert_equals "a stall then success deploys the commit" "$(deployed_sha)" "$SHA_PAYMENT"
+printf '%s' "$SHA_BASE" >"$PROD/.deploy/deployed-sha"
+reset_docker_log
+rm -f "$CLAW_STUB_LOG.stalls"
+out="$(CLAW_STUB_BUILD_STALL=9 CLAW_DEPLOY_BUILD_STALL_SECONDS=2 CLAW_DEPLOY_BUILD_STALL_POLL=1 deploy "$SHA_PAYMENT")"
+assert_contains "a second stall gives the distinct error" "$out" "stalled twice"
+assert_equals "a double stall builds exactly twice" "$(cat "$CLAW_STUB_LOG.stalls")" "2"
+assert_equals "a double stall leaves the recorded SHA alone" "$(deployed_sha)" "$SHA_BASE"
+assert_contains "a double stall records BUILD_STALLED" "$(cat "$PROD/.deploy/status.json")" "BUILD_STALLED"
+rm -f "$CLAW_STUB_LOG.stalls"
+out="$(CLAW_DEPLOY_BUILD_STALL_SECONDS=0 deploy "$SHA_PAYMENT")"
+assert_contains "rejects a stall window below one second" "$out" "CLAW_DEPLOY_BUILD_STALL_SECONDS must be at least 1 second"
+out="$(CLAW_DEPLOY_BUILD_STALL_SECONDS=soon deploy "$SHA_PAYMENT")"
+assert_contains "rejects a non-numeric stall window" "$out" "CLAW_DEPLOY_BUILD_STALL_SECONDS must be a whole number"
+
 out="$(CLAW_DEPLOY_BUILD_TIMEOUT=0 deploy "$SHA_PAYMENT")"
 assert_contains "rejects a build timeout below one second" "$out" "must be at least 1 second"
 out="$(CLAW_DEPLOY_BUILD_TIMEOUT=soon deploy "$SHA_PAYMENT")"

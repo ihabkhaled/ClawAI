@@ -117,6 +117,13 @@ group). A build that exceeds it is aborted and never retried: a build that
 produces nothing for an hour is wedged, not slow, and retrying it only holds
 the deploy lock longer.
 
+`CLAW_DEPLOY_BUILD_STALL_SECONDS` (default 600, whole seconds, minimum 1) is the
+early watchdog under that cap: a service build whose output does not grow for
+that long is killed and retried exactly once on a fresh BuildKit session (only
+the build client process tree is killed; the cache is never pruned). A second
+stall fails the deploy as `BUILD_STALLED`. See
+[runbook-server-overloaded-by-builds.md](11-runbooks/runbook-server-overloaded-by-builds.md).
+
 Docker Compose build concurrency defaults to `2` so a broad-impact release
 cannot start every service image build at once and starve the VPS or its SSH
 session. An operator may set the standard Compose variable

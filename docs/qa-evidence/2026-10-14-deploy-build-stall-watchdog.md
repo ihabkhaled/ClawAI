@@ -1,0 +1,36 @@
+# QA evidence - deploy-build-stall-watchdog
+
+Batch: deploy-build-stall-watchdog
+Date: 2026-10-14
+Commits: (fill in after committing)
+Verdict: PARTIAL
+
+Every lane is filled in. PASS needs the command and its real output (or a path, a count, a
+screenshot name). NOT_RUN and NOT_APPLICABLE need a reason. Verdict DONE is allowed only when no
+lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (rules/60, rules/49).
+
+| Lane | What                                                                    | Status         | Evidence or reason                                                                                                                                                                                                                                             |
+| ---- | ----------------------------------------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L01  | Unit and integration tests (only the changed files)                     | PASS           | node --test tools/**tests**/deploy-prod.test.mjs: 43 pass, 0 fail, 1 skipped (Windows-skipped e2e wrapper).                                                                                                                                                    |
+| L02  | Typecheck, lint and build (touched workspaces)                          | PASS           | bash -n scripts/deploy-prod.sh exit 0; prettier on touched docs/tests; shellcheck not installed (NOT run).                                                                                                                                                     |
+| L03  | Manual API test (curl) with the log line proving the branch ran         | NOT_APPLICABLE | No HTTP API touched; deploy script only.                                                                                                                                                                                                                       |
+| L04  | Manual browser test (Playwright against the real UI) with screenshots   | NOT_APPLICABLE | No UI touched.                                                                                                                                                                                                                                                 |
+| L05  | Automation e2e (a committed or existing spec was run)                   | PASS           | WSL Ubuntu: bash tools/**tests**/deploy-prod-e2e.sh -> 140 passed, 0 failed, exit 0; includes stall-then-success, stall-twice (BUILD_STALLED, exactly 2 builds, SHA untouched), existing normal-fail and wedged-timeout cases, validation of the new variable. |
+| L06  | RBAC across roles and plan tiers (admin, paid, FREE)                    | NOT_APPLICABLE | No roles or plans involved.                                                                                                                                                                                                                                    |
+| L07  | Device matrix (3+ widths, both orientations, RTL)                       | NOT_APPLICABLE | No UI is touched by this change, so there is no layout to test.                                                                                                                                                                                                |
+| L08  | UAT (acceptance criteria walked as the user would)                      | NOT_RUN        | Live production deploy not run (must not touch the server); first real proof is the next Release run.                                                                                                                                                          |
+| L09  | Product verification (it does what the owner asked, edge cases decided) | PASS           | Behaviour matches the brief: early abort, one retry, distinct error, 3600 s cap kept.                                                                                                                                                                          |
+| L10  | Business verification (money, limits, copy and claims match the code)   | NOT_APPLICABLE | No money, limits or copy.                                                                                                                                                                                                                                      |
+| L11  | Regression (neighbouring features still work)                           | PASS           | Existing e2e cases (transient retry, non-transient fail, health fail, rollback guard, orphan guard) still pass in the same 140.                                                                                                                                |
+| L12  | Security (authz and IDOR, secrets, injection)                           | NOT_APPLICABLE | Only kills the build client process tree; no secrets or authz touched.                                                                                                                                                                                         |
+| L13  | Performance and accessibility                                           | NOT_APPLICABLE | Poll adds at most 5 s latency to a build finish.                                                                                                                                                                                                               |
+| L14  | i18n (13 locales, RTL)                                                  | NOT_APPLICABLE | No user-facing strings.                                                                                                                                                                                                                                        |
+| L15  | Docs, knowledge delta and GitHub gates read                             | PASS           | Docs updated: script header, PRODUCTION_DEPLOYMENT.md, ci-cd-pipeline.md, runbook-server-overloaded-by-builds.md. GitHub gates not yet read (not pushed).                                                                                                      |
+
+## Findings
+
+None open. Live Release deploy still unproven until the next run.
+
+## Open gaps
+
+L08: owner, on the next Release run.
