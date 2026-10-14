@@ -327,6 +327,22 @@ describe('PublicationCommentsRepository reads', () => {
     expect(page?.hasMore).toBe(false);
   });
 
+  it('locates a reply by its root and a root by itself, null when gone', async () => {
+    const { prisma, repository } = readable();
+    prisma.threadPublicationComment.findFirst.mockResolvedValueOnce({ id: 'r1', rootId: 'c-top' });
+    await expect(repository.findCommentLocation('a-slug', 'r1')).resolves.toEqual({
+      id: 'r1',
+      rootId: 'c-top',
+    });
+    prisma.threadPublicationComment.findFirst.mockResolvedValueOnce({ id: 'c-top', rootId: null });
+    await expect(repository.findCommentLocation('a-slug', 'c-top')).resolves.toEqual({
+      id: 'c-top',
+      rootId: 'c-top',
+    });
+    prisma.threadPublicationComment.findFirst.mockResolvedValueOnce(null);
+    await expect(repository.findCommentLocation('a-slug', 'gone')).resolves.toBeNull();
+  });
+
   it('is null when the conversation is not a top-level comment of this publication', async () => {
     const { prisma, repository } = readable();
     prisma.threadPublicationComment.findFirst.mockResolvedValue(null);

@@ -31,9 +31,14 @@ function readName(content: string, start: number): string {
  * Splits comment text into plain and `@username` parts. It is a single left-to-right scan (no
  * backtracking pattern), so hostile input cannot stall it, and the parts are only ever rendered
  * as text nodes, never as markup. An `@` inside a word (an email address) is not a mention, and
- * a name longer than the limit stays plain text.
+ * a name longer than the limit stays plain text. When `known` is given (the usernames the server
+ * resolved for this comment), only those names become mentions; any other `@name` is plain text.
  */
-export function tokenizeMentions(content: string): ThreadMentionToken[] {
+export function tokenizeMentions(
+  content: string,
+  known?: ReadonlyArray<string>,
+): ThreadMentionToken[] {
+  const knownNames = known === undefined ? null : new Set(known.map((name) => name.toLowerCase()));
   const tokens: ThreadMentionToken[] = [];
   let plainStart = 0;
   let index = 0;
@@ -44,7 +49,11 @@ export function tokenizeMentions(content: string): ThreadMentionToken[] {
       continue;
     }
     const name = readName(content, index + 1);
-    if (name.length === 0 || name.length > THREAD_MENTION_MAX_LENGTH) {
+    if (
+      name.length === 0 ||
+      name.length > THREAD_MENTION_MAX_LENGTH ||
+      (knownNames !== null && !knownNames.has(name.toLowerCase()))
+    ) {
       index += 1;
       continue;
     }

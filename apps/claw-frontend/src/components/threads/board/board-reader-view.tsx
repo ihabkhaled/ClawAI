@@ -120,6 +120,8 @@ export function BoardReaderView({ state }: BoardReaderViewProps): ReactElement {
         slug={publication.slug}
         comments={state.comments}
         highlightedCommentId={state.highlightedCommentId}
+        commentMissing={state.commentMissing}
+        commentTotal={state.commentTotal}
         hasMoreComments={state.hasMoreComments}
         isLoadingMoreComments={state.isLoadingMoreComments}
         loadMoreComments={state.loadMoreComments}

@@ -10,6 +10,7 @@ import { ThreadPublicationReaction } from '@/enums/thread-publication-reaction.e
 import { useThreadCommentValidation } from '@/hooks/threads/use-thread-comment-validation';
 import { useTranslation } from '@/lib/i18n';
 import type { ThreadCommunityPanelProps } from '@/types/thread-publication.types';
+import { submitOnShortcut } from '@/utilities/submit-shortcut.utility';
 
 import { ThreadPublicReportForm } from './thread-public-report-form';
 
@@ -17,6 +18,8 @@ export function ThreadPublicCommunity({
   slug,
   comments,
   highlightedCommentId,
+  commentMissing = false,
+  commentTotal,
   hasMoreComments,
   isLoadingMoreComments,
   loadMoreComments,
@@ -43,7 +46,7 @@ export function ThreadPublicCommunity({
       className="flex flex-col gap-5"
     >
       <h2 id="thread-public-community-title" className="text-xl font-semibold">
-        {t('chat.threadPublicComments')} ({comments.length})
+        {t('chat.threadPublicComments')} ({commentTotal ?? comments.length})
       </h2>
       <section aria-labelledby="thread-public-reactions-title" className="flex flex-col gap-3">
         <h3 id="thread-public-reactions-title" className="text-lg font-semibold">
@@ -81,6 +84,11 @@ export function ThreadPublicCommunity({
           </div>
         ) : null}
       </section>
+      {commentMissing ? (
+        <p role="status" className="text-muted-foreground" data-testid="thread-comment-missing">
+          {t('chat.threadCommunityCommentGone')}
+        </p>
+      ) : null}
       {communityLoading ? <p role="status">{t('common.loading')}</p> : null}
       {communityError ? <p role="alert">{t('chat.threadPublicCommunityFailed')}</p> : null}
       {comments.length === 0 && !communityLoading ? (
@@ -140,6 +148,7 @@ export function ThreadPublicCommunity({
               aria-invalid={validation.isEmpty}
               aria-describedby={validation.isEmpty ? 'thread-public-comment-error' : undefined}
               maxLength={5000}
+              onKeyDown={(event) => submitOnShortcut(event, validation.handleSubmit)}
               value={actions.comment}
               onChange={(event) => validation.handleChange(event.target.value)}
               disabled={actions.isSubmitting}

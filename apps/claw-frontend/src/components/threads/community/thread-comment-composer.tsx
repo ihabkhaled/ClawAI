@@ -7,6 +7,7 @@ import { THREAD_COMMENT_MAX_LENGTH } from '@/constants/thread-community.constant
 import { useThreadCommentComposer } from '@/hooks/threads/use-thread-comment-composer';
 import { useTranslation } from '@/lib/i18n';
 import type { ThreadCommentComposerProps } from '@/types/thread-community.types';
+import { submitOnShortcut } from '@/utilities/submit-shortcut.utility';
 
 /** The inline reply box under a comment, opened with `@username ` already in it. */
 export function ThreadCommentComposer({
@@ -44,6 +45,7 @@ export function ThreadCommentComposer({
         aria-describedby={composer.isEmpty || composer.isFailed ? `${fieldId}-error` : undefined}
         disabled={composer.isPending}
         onChange={(event) => composer.setText(event.target.value)}
+        onKeyDown={(event) => submitOnShortcut(event, composer.submit)}
       />
       {composer.isEmpty || composer.isFailed ? (
         <p id={`${fieldId}-error`} role="alert" className="text-destructive text-sm">

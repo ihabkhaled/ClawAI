@@ -67,6 +67,8 @@ export function useBoardReader(): BoardReaderController {
     publication: publication.data,
     comments: comments.comments,
     highlightedCommentId: comments.highlightedId,
+    commentMissing: comments.commentMissing,
+    commentTotal: comments.commentTotal,
     hasMoreComments: comments.hasMore,
     isLoadingMoreComments: comments.isLoadingMore,
     loadMoreComments: comments.loadMore,

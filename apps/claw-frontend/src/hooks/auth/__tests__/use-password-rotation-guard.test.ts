@@ -28,7 +28,13 @@ describe('usePasswordRotationGuard', () => {
   // card among many and people could not find what they were asked to do.
   it('sends a forced rotation to the dedicated change-password page', () => {
     renderHook(() => usePasswordRotationGuard());
-    expect(replace).toHaveBeenCalledWith(ROUTES.CHANGE_PASSWORD);
+    expect(replace).toHaveBeenCalledWith(`/en${ROUTES.CHANGE_PASSWORD}`);
+  });
+
+  it('keeps the locale of the page the reader is on', () => {
+    pathname = '/ar/chat';
+    renderHook(() => usePasswordRotationGuard());
+    expect(replace).toHaveBeenCalledWith(`/ar${ROUTES.CHANGE_PASSWORD}`);
   });
 
   it('does not loop when already on that page, under any locale', () => {

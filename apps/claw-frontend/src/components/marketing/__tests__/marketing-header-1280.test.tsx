@@ -20,7 +20,10 @@ vi.mock('@/hooks/marketing/use-marketing-locale-switcher', () => ({
 vi.mock('@/hooks/auth/use-logout', () => ({
   useLogout: () => ({ logout: vi.fn(), isPending: false }),
 }));
-vi.mock('@/lib/i18n', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+let currentLocale = 'en';
+vi.mock('@/lib/i18n', () => ({
+  useTranslation: () => ({ t: (key: string) => key, locale: currentLocale }),
+}));
 vi.mock('@/components/layout/currency-switcher', () => ({ CurrencySwitcher: () => <div /> }));
 vi.mock('@/components/marketing/marketing-theme-toggle', () => ({
   MarketingThemeToggle: () => <div />,
@@ -47,5 +50,25 @@ describe('the marketing header at the xl breakpoint', () => {
     const cluster = cta?.closest('div.shrink-0');
 
     expect(cluster?.className).toContain('shrink-0');
+  });
+
+  it.each(['de', 'ru', 'fr', 'es', 'pt', 'it'])(
+    'keeps the hamburger until 2xl for the wide locale %s',
+    (locale) => {
+      currentLocale = locale;
+      render(<MarketingHeader />);
+      const nav = screen.getByRole('navigation');
+
+      expect(nav.className).toContain('2xl:flex');
+      expect(nav.className).not.toContain('xl:flex ');
+      currentLocale = 'en';
+    },
+  );
+
+  it('keeps the xl desktop bar for a short locale', () => {
+    currentLocale = 'en';
+    render(<MarketingHeader />);
+
+    expect(screen.getByRole('navigation').className.split(' ')).toContain('xl:flex');
   });
 });

@@ -15,6 +15,8 @@ export const THREAD_COMMENTS_PAGE_SIZE = 20;
 export const THREAD_COMMENTS_STALE_MS = 30_000;
 /** The `#comment-<id>` anchor scheme shared with the notification links. */
 export const THREAD_COMMENT_ANCHOR_PREFIX = 'comment-';
+/** At most this many page requests while looking for a linked comment (roots, then replies). */
+export const THREAD_COMMENT_LOCATE_MAX_PAGES = 10;
 /** How long a linked comment stays highlighted. */
 export const THREAD_COMMENT_HIGHLIGHT_MS = 4000;
 /** A mention is a name of at most this many characters; longer runs are plain text. */

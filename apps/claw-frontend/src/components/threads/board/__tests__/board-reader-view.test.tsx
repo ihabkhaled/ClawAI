@@ -61,6 +61,8 @@ function createState(overrides: Partial<BoardReaderController> = {}): BoardReade
     },
     comments: [],
     highlightedCommentId: null,
+    commentMissing: false,
+    commentTotal: 0,
     hasMoreComments: false,
     isLoadingMoreComments: false,
     loadMoreComments: vi.fn(),

@@ -87,6 +87,7 @@ export class PublicationCommentsService {
       page: query.page,
       pageSize: query.pageSize,
       total: data.total,
+      commentTotal: data.commentTotal,
       totalPages: Math.ceil(data.total / query.pageSize),
     };
   }
@@ -114,6 +115,12 @@ export class PublicationCommentsService {
       nextCursor: data.hasMore && last ? encodeReplyCursor(last) : null,
       hasMore: data.hasMore,
     };
+  }
+
+  async locate(slug: string, commentId: string): Promise<{ id: string; rootId: string }> {
+    const location = await this.comments.findCommentLocation(slug, commentId);
+    if (!location) throw new NotFoundException('Comment not found');
+    return location;
   }
 
   async add(

@@ -42,6 +42,15 @@ export function localisePath(path: string, locale: Locale): string {
   return `${localizedPathname}${url.search}${url.hash}`;
 }
 
+/** `path` under the locale of the page the reader is on; a path that names a locale already stays as is. */
+export function withLocaleOf(path: string, currentPathname: string): string {
+  const locale = parseLocaleFromPathname(currentPathname);
+  if (locale === null || !path.startsWith('/') || parseLocaleFromPathname(path) !== null) {
+    return path;
+  }
+  return localisePath(path, locale);
+}
+
 export function replacePathLocale(path: string, locale: Locale): string {
   return localisePath(path, locale);
 }

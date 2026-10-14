@@ -58,7 +58,7 @@ export function ThreadCommentItem({
         </p>
       ) : (
         <>
-          <ThreadCommentBody content={comment.content} />
+          <ThreadCommentBody content={comment.content} mentions={comment.mentions} />
           <div className="flex flex-wrap items-center gap-1">
             <ThreadCommentReactions
               slug={slug}

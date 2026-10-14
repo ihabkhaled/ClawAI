@@ -62,6 +62,8 @@ export function ThreadPublicPageView({ state }: ThreadPublicPageViewProps): Reac
         slug={state.publication.slug}
         comments={state.comments}
         highlightedCommentId={state.highlightedCommentId}
+        commentMissing={state.commentMissing}
+        commentTotal={state.commentTotal}
         hasMoreComments={state.hasMoreComments}
         isLoadingMoreComments={state.isLoadingMoreComments}
         loadMoreComments={state.loadMoreComments}

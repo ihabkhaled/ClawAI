@@ -5,6 +5,7 @@ import type { ThreadPublicationReaction } from '@/enums/thread-publication-react
 import { apiClient } from '@/services/shared/api-client';
 import type {
   ThreadCommentNode,
+  ThreadCommentLocation,
   ThreadCommentPage,
   ThreadReactionCounts,
   ThreadReplyPage,
@@ -57,6 +58,12 @@ export const threadPublicationsRepository = {
     const response = await apiClient.get<ThreadCommentPage>(
       `/thread-publications/public/${encodeURIComponent(slug)}/comments`,
       { page: String(page), pageSize: String(THREAD_COMMENTS_PAGE_SIZE) },
+    );
+    return response.data;
+  },
+  async locatePublicComment(slug: string, commentId: string): Promise<ThreadCommentLocation> {
+    const response = await apiClient.get<ThreadCommentLocation>(
+      `/thread-publications/public/${encodeURIComponent(slug)}/comments/by-id/${encodeURIComponent(commentId)}`,
     );
     return response.data;
   },

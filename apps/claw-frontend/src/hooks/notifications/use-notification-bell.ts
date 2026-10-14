@@ -15,6 +15,7 @@ import type { UseNotificationBellReturn } from '@/types/notifications-ui.types';
 import type { NotificationItem } from '@/types/notifications.types';
 import { localisePath } from '@/utilities/locale.utility';
 import { buildNotificationRowText } from '@/utilities/notification-text.utility';
+import { samePageHash } from '@/utilities/same-page-hash.utility';
 
 /**
  * The bell in the top bar: an unread badge that refreshes while the tab is visible (and on
@@ -71,7 +72,14 @@ export function useNotificationBell(): UseNotificationBellReturn {
         markRead.mutate(item.id);
       }
       setOpen(false);
-      router.push(localisePath(item.link, locale));
+      const target = localisePath(item.link, locale);
+      const hash = samePageHash(target, window.location.pathname);
+      if (typeof hash === 'string') {
+        // Same Thread, other comment: a real hash change lets the Thread find and highlight it.
+        window.location.hash = hash;
+      } else {
+        router.push(target);
+      }
     },
     [markRead, router, locale],
   );

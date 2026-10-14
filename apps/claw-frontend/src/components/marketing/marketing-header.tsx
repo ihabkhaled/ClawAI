@@ -10,14 +10,16 @@ import { MarketingLocaleSwitcher } from '@/components/marketing/marketing-locale
 import { MarketingMobileMenu } from '@/components/marketing/marketing-mobile-menu';
 import { MarketingThemeToggle } from '@/components/marketing/marketing-theme-toggle';
 import { Button } from '@/components/ui/button';
-import { MARKETING_GITHUB_URL, MARKETING_NAV_LINKS } from '@/constants';
+import { MARKETING_GITHUB_URL, MARKETING_NAV_LINKS, MARKETING_WIDE_NAV_LOCALES } from '@/constants';
 import { MarketingAuthActionsVariant } from '@/enums';
 import { useMarketingMobileMenu } from '@/hooks/marketing/use-marketing-mobile-menu';
 import { useTranslation } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 import { useFeedbackDialogStore } from '@/stores/feedback-dialog.store';
 
 export function MarketingHeader(): React.ReactElement {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const wide = MARKETING_WIDE_NAV_LOCALES.includes(locale);
   const { isOpen, setIsOpen, close } = useMarketingMobileMenu();
   const openFeedback = useFeedbackDialogStore((state) => state.openFeedback);
 
@@ -36,7 +38,7 @@ export function MarketingHeader(): React.ReactElement {
 
         <nav
           aria-label={t('marketing.header.navLabel')}
-          className="hidden items-center gap-4 xl:flex 2xl:gap-6"
+          className={cn('hidden items-center gap-4 2xl:gap-6', wide ? '2xl:flex' : 'xl:flex')}
         >
           {MARKETING_NAV_LINKS.map((link) => (
             <Link
@@ -50,7 +52,7 @@ export function MarketingHeader(): React.ReactElement {
           ))}
         </nav>
 
-        <div className="hidden shrink-0 items-center gap-1 xl:flex">
+        <div className={cn('hidden shrink-0 items-center gap-1', wide ? '2xl:flex' : 'xl:flex')}>
           <Button variant="ghost" size="sm" asChild>
             <a href={MARKETING_GITHUB_URL} target="_blank" rel="noopener noreferrer">
               {t('marketing.header.github')}
@@ -71,7 +73,7 @@ export function MarketingHeader(): React.ReactElement {
             a long marketing page. Someone who cannot read the current language
             is exactly the person who cannot find a menu labelled "Menu", so it
             sits in the bar at every width, as it does in the portal. */}
-        <div className="flex items-center gap-1 xl:hidden">
+        <div className={cn('flex items-center gap-1', wide ? '2xl:hidden' : 'xl:hidden')}>
           <MarketingLocaleSwitcher />
           <Button
             variant="ghost"

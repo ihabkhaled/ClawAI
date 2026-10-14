@@ -6,6 +6,7 @@ import type { ThreadCommentsData } from '@/types/thread-community.types';
 import {
   applyReaction,
   commentIdFromHash,
+  commentTotalOf,
   findComment,
   insertComment,
   mergeReplies,
@@ -113,5 +114,28 @@ describe('commentIdFromHash', () => {
     expect(commentIdFromHash('#other')).toBeNull();
     expect(commentIdFromHash('')).toBeNull();
     expect(commentIdFromHash('#comment-<script>')).toBeNull();
+  });
+});
+
+describe('comment totals', () => {
+  const page = (overrides: Record<string, unknown>) => ({
+    items: [threadCommentFixture({ id: 'a', replyCount: 3 })],
+    page: 1,
+    pageSize: 20,
+    total: 1,
+    totalPages: 1,
+    ...overrides,
+  });
+
+  it('uses the server total and counts a posted reply', () => {
+    const data = { pages: [page({ commentTotal: 8 })], pageParams: [1] };
+    expect(commentTotalOf(data)).toBe(8);
+    const reply = threadCommentFixture({ id: 'n', parentId: 'a', rootId: 'a' });
+    expect(commentTotalOf(insertComment(data, reply))).toBe(9);
+  });
+
+  it('falls back to roots plus counted replies for an older server', () => {
+    expect(commentTotalOf({ pages: [page({})], pageParams: [1] })).toBe(4);
+    expect(commentTotalOf(undefined)).toBe(0);
   });
 });

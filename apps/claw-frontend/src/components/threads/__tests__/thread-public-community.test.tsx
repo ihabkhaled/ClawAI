@@ -210,3 +210,44 @@ describe('ThreadPublicCommunity reactions and controls', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
+
+describe('ThreadPublicCommunity heading, shortcut and missing link', () => {
+  it('submits the comment form with Ctrl+Enter and Cmd+Enter', async () => {
+    const user = userEvent.setup();
+    const actions = createActions();
+    actions.comment = 'Looks right.';
+    renderCommunity(true, actions);
+    const box = document.getElementById('thread-public-comment') as HTMLElement;
+
+    box.focus();
+    await user.keyboard('{Control>}{Enter}{/Control}');
+    await user.keyboard('{Meta>}{Enter}{/Meta}');
+    await user.keyboard('{Enter}');
+
+    expect(actions.submitComment).toHaveBeenCalledTimes(2);
+  });
+
+  it('counts replies in the heading and says so when the linked comment is gone', () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <ThreadPublicCommunity
+          {...COMMUNITY_PAGING_PROPS}
+          comments={comments}
+          commentTotal={8}
+          commentMissing
+          reactions={reactions}
+          isAuthenticated={false}
+          communityLoading={false}
+          communityError={false}
+          loginHref="/login"
+          actions={createActions()}
+        />
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('(8)');
+    expect(screen.getByTestId('thread-comment-missing')).toHaveTextContent(
+      'chat.threadCommunityCommentGone',
+    );
+  });
+});

@@ -1,5 +1,5 @@
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { httpClient } from '@/lib/http-client';
 import type * as UtilitiesModule from '@/utilities';
@@ -78,5 +78,51 @@ describe('http client 401 handling', () => {
     await handle401('/client-logs/stats');
 
     expect(clearAuthStorageMock).toHaveBeenCalled();
+  });
+
+  describe('on a public page', () => {
+    const originalLocation = window.location;
+    const hrefSetter = vi.fn();
+
+    beforeEach(() => {
+      hrefSetter.mockClear();
+    });
+
+    function stubLocation(pathname: string): void {
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: {
+          pathname,
+          get href(): string {
+            return pathname;
+          },
+          set href(value: string) {
+            hrefSetter(value);
+          },
+        },
+      });
+    }
+
+    afterEach(() => {
+      Object.defineProperty(window, 'location', { configurable: true, value: originalLocation });
+    });
+
+    it.each(['/en/threads/board', '/de/threads/board', '/en/threads/clear-writing'])(
+      'drops a dead session quietly and never redirects (%s)',
+      async (pathname) => {
+        stubLocation(pathname);
+        await handle401('/thread-publications/public/clear-writing/reader-view');
+
+        expect(clearAuthStorageMock).toHaveBeenCalled();
+        expect(hrefSetter).not.toHaveBeenCalled();
+      },
+    );
+
+    it('still redirects from a page that needs login', async () => {
+      stubLocation('/en/settings');
+      await handle401('/users/me');
+
+      expect(hrefSetter).toHaveBeenCalledWith('/login');
+    });
   });
 });

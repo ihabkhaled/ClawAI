@@ -4155,6 +4155,11 @@
         "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-community.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/thread-publications/public/:slug/comments/by-id/:commentId",
+        "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-community.controller.ts"
+      },
+      {
         "method": "DELETE",
         "route": "/thread-publications/public/:slug/reactions",
         "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-community.controller.ts"
@@ -4754,5 +4759,5 @@
     ]
   },
   "generated": true,
-  "total": 942
+  "total": 943
 }

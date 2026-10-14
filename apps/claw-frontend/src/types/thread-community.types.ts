@@ -1,4 +1,4 @@
-import type { InfiniteData, UseMutationResult } from '@tanstack/react-query';
+import type { InfiniteData, QueryClient, UseMutationResult } from '@tanstack/react-query';
 import type { RefObject } from 'react';
 
 import type { ThreadMentionTokenKind } from '@/enums/thread-mention-token-kind.enum';
@@ -41,6 +41,8 @@ export type ThreadCommentPage = {
   page: number;
   pageSize: number;
   total: number;
+  /** Every visible comment and reply of the Thread; absent from an older server. */
+  commentTotal?: number;
   totalPages: number;
 };
 
@@ -51,6 +53,16 @@ export type ThreadReplyPage = {
 };
 
 export type ThreadCommentsData = InfiniteData<ThreadCommentPage, number>;
+
+export type ThreadCommentLocation = { id: string; rootId: string };
+
+export type ThreadCommentLocateRequest = {
+  slug: string;
+  commentId: string;
+  queryClient: QueryClient;
+  /** Loads the next page of top-level comments into the cache. */
+  fetchNextRoots: () => Promise<unknown>;
+};
 
 export type ThreadMentionToken = {
   /** Where the part starts in the text; unique, so it doubles as a render key. */
@@ -142,6 +154,10 @@ export type ThreadCommentsFeed = {
   comments: ThreadCommentNode[];
   /** The comment the URL fragment points at, for a few seconds after it scrolls into view. */
   highlightedId: string | null;
+  /** True when the URL points at a comment that no longer exists. */
+  commentMissing: boolean;
+  /** Comments and replies together. */
+  commentTotal: number;
   isLoading: boolean;
   isError: boolean;
   hasMore: boolean;

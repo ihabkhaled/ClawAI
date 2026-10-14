@@ -4182,6 +4182,11 @@
           "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-community.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/thread-publications/public/:slug/comments/by-id/:commentId",
+          "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-community.controller.ts"
+        },
+        {
           "method": "DELETE",
           "route": "/thread-publications/public/:slug/reactions",
           "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-community.controller.ts"
@@ -13173,7 +13178,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 58,
-    "endpointCount": 942,
+    "endpointCount": 943,
     "envVarCount": 386,
     "eventCount": 190,
     "frontendRouteCount": 181,

@@ -61,8 +61,11 @@ export class PublicationCommentsRepository {
       rootId: null,
       OR: [{ status: VISIBLE }, { replies: { some: { status: VISIBLE } } }],
     };
-    const [total, roots] = await Promise.all([
+    const [total, commentTotal, roots] = await Promise.all([
       this.prisma.threadPublicationComment.count({ where }),
+      this.prisma.threadPublicationComment.count({
+        where: { publicationId: publication.id, status: VISIBLE },
+      }),
       this.prisma.threadPublicationComment.findMany({
         where,
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
@@ -84,7 +87,24 @@ export class PublicationCommentsRepository {
       this.tallies(ids, viewerId),
       this.replyCounts(roots.map(({ id }) => id)),
     ]);
-    return { total, roots, tallies, replyCounts };
+    return { total, commentTotal, roots, tallies, replyCounts };
+  }
+
+  /** Where a visible comment lives: its own id and the root of its conversation. null when it is gone. */
+  async findCommentLocation(
+    slug: string,
+    commentId: string,
+  ): Promise<{ id: string; rootId: string } | null> {
+    const publication = await this.prisma.threadPublication.findFirst({
+      where: publicPublicationWhere(slug),
+      select: { id: true },
+    });
+    if (!publication) return null;
+    const comment = await this.prisma.threadPublicationComment.findFirst({
+      where: { id: commentId, publicationId: publication.id, status: VISIBLE },
+      select: { id: true, rootId: true },
+    });
+    return comment ? { id: comment.id, rootId: comment.rootId ?? comment.id } : null;
   }
 
   /** Replies of one conversation after `cursor`, oldest first. null when the conversation is not here. */

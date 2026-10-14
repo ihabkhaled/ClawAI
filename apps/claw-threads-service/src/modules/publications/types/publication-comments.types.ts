@@ -58,6 +58,8 @@ export type PublicComment = {
 
 export type CommentPageRecords = {
   total: number;
+  /** Every visible comment and reply of the publication. */
+  commentTotal: number;
   roots: Array<CommentRecord & { replies: CommentRecord[] }>;
   tallies: Map<string, CommentTally>;
   replyCounts: Map<string, number>;
@@ -109,6 +111,8 @@ export type PublicCommentPage = {
   page: number;
   pageSize: number;
   total: number;
+  /** Every visible comment and reply, for the comments heading. */
+  commentTotal: number;
   totalPages: number;
 };
 

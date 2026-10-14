@@ -326,7 +326,11 @@ export {
 // deep path. Server code that needs the registry should do the same.
 // Guarded by __tests__/constants-barrel-weight.test.ts.
 export { PRIVATE_ROUTE_PREFIXES } from './private-route-prefixes.constants';
-export { MARKETING_NAV_LINKS, MARKETING_GITHUB_URL } from './marketing-nav.constants';
+export {
+  MARKETING_NAV_LINKS,
+  MARKETING_GITHUB_URL,
+  MARKETING_WIDE_NAV_LOCALES,
+} from './marketing-nav.constants';
 export { APP_VERSION } from './app-version.constants';
 export { SITE_TITLE, SITE_DESCRIPTION } from './site-metadata.constants';
 export {

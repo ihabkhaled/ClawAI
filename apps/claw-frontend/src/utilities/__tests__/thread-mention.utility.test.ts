@@ -71,6 +71,17 @@ describe('tokenizeMentions', () => {
     expect(new Set(starts).size).toBe(starts.length);
   });
 
+  it('turns only the known usernames into mentions when a list is given', () => {
+    const kinds = tokenizeMentions('@Ada @nobody_zz', ['ada']).map(({ kind, value }) => [
+      kind,
+      value,
+    ]);
+    expect(kinds).toEqual([
+      [ThreadMentionTokenKind.Mention, 'Ada'],
+      [ThreadMentionTokenKind.Text, ' @nobody_zz'],
+    ]);
+  });
+
   it('handles empty input', () => {
     expect(parts('')).toEqual([]);
   });

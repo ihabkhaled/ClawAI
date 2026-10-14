@@ -4,6 +4,7 @@ import type { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axio
 import { API_BASE_URL } from '@/constants';
 import { bearerTokenOf, refreshSession } from '@/lib/session-refresh';
 import { clearAuthStorage, getAccessToken, isAuthRefreshExemptPath } from '@/utilities';
+import { redirectToLoginUnlessPublicPage } from '@/utilities/redirect-to-login.utility';
 
 function createHttpClient(): AxiosInstance {
   const client = axios.create({
@@ -45,15 +46,15 @@ function createHttpClient(): AxiosInstance {
       originalRequest._retry = true;
       // A refresh that could not even be attempted (offline, 5xx) rejects
       // here with its own error: the request fails, the session stays.
-      const token = await refreshSession(bearerTokenOf(originalRequest.headers.Authorization));
-      if (token === null) {
+      const refreshedAccess = await refreshSession(
+        bearerTokenOf(originalRequest.headers.Authorization),
+      );
+      if (refreshedAccess === null) {
         clearAuthStorage();
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
+        redirectToLoginUnlessPublicPage();
         return Promise.reject(error);
       }
-      originalRequest.headers.Authorization = `Bearer ${token}`;
+      originalRequest.headers.Authorization = `Bearer ${refreshedAccess}`;
       return client(originalRequest);
     },
   );

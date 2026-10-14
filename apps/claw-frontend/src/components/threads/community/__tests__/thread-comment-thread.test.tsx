@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ThreadPublicationReportReason } from '@/enums/thread-publication-report-reason.enum';
+import { threadPublicationsRepository } from '@/repositories/threads/thread-publications.repository';
 import { threadCommentFixture } from '@/test/fixtures/thread-comment.fixture';
 import type { ThreadCommentNode } from '@/types/thread-community.types';
 import type { ThreadCommunityActionState } from '@/types/thread-publication.types';
@@ -86,6 +87,7 @@ const ROOT = threadCommentFixture({
       author: BOB,
       replyTo: ADA,
       content: '@ada nice',
+      mentions: [{ username: 'ada' }],
     }),
     threadCommentFixture({
       id: 'r2',
@@ -94,6 +96,7 @@ const ROOT = threadCommentFixture({
       author: ADA,
       replyTo: BOB,
       content: '@bob thanks',
+      mentions: [{ username: 'bob' }],
     }),
   ],
 });
@@ -111,6 +114,19 @@ describe('ThreadCommentThread', () => {
       '@ada',
       '@bob',
     ]);
+  });
+
+  it('renders a chip only for a username the server resolved', () => {
+    renderThread(
+      threadCommentFixture({
+        content: 'hi @ada and @nobody_zz',
+        mentions: [{ username: 'ada' }],
+      }),
+    );
+    expect(screen.getAllByTestId('thread-mention').map((node) => node.textContent)).toEqual([
+      '@ada',
+    ]);
+    expect(screen.getByTestId('thread-comment-thread')).toHaveTextContent('@nobody_zz');
   });
 
   it('names an unknown author as a Member', () => {
@@ -165,5 +181,23 @@ describe('ThreadCommentThread', () => {
     );
     expect(screen.queryByRole('button', { name: 'chat.threadCommunityReply' })).toBeNull();
     expect(screen.queryByText('[removed]')).toBeNull();
+  });
+});
+
+describe('ThreadCommentThread reply box shortcut', () => {
+  it('posts the reply with Ctrl+Enter', async () => {
+    const add = vi
+      .spyOn(threadPublicationsRepository, 'addPublicComment')
+      .mockResolvedValue(threadCommentFixture({ id: 'new' }));
+    const user = userEvent.setup();
+    renderThread(threadCommentFixture({ id: 'c1', author: ADA }));
+    await user.click(
+      screen.getAllByRole('button', { name: /threadCommunityReply/u })[0] as HTMLElement,
+    );
+    const box = screen.getByRole('textbox');
+    await user.type(box, 'thanks');
+    await user.keyboard('{Control>}{Enter}{/Control}');
+
+    expect(add).toHaveBeenCalledTimes(1);
   });
 });

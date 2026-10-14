@@ -28,6 +28,7 @@ function create(options: { limit?: unknown; counts?: unknown; notifier?: unknown
   const comments = {
     findPage: vi.fn(),
     findReplies: vi.fn(),
+    findCommentLocation: vi.fn(),
     createComment: vi.fn(),
     setCommentReaction: vi.fn(),
     removeCommentReaction: vi.fn(),
@@ -149,6 +150,7 @@ describe('PublicationCommentsService.list', () => {
       page: 1,
       pageSize: 20,
       total: 0,
+      commentTotal: 0,
       totalPages: 0,
     });
     comments.findPage.mockRejectedValue(new NotFoundException('x'));
@@ -341,5 +343,19 @@ describe('PublicationCommentsService votes', () => {
       NotFoundException,
     );
     await expect(service.unreact('s', 'x', 'u1')).rejects.toBeInstanceOf(NotFoundException);
+  });
+});
+
+describe('PublicationCommentsService.locate', () => {
+  it('returns the conversation root of a reply', async () => {
+    const { service, comments } = create();
+    comments.findCommentLocation.mockResolvedValue({ id: 'r9', rootId: 'c1' });
+    await expect(service.locate('s', 'r9')).resolves.toEqual({ id: 'r9', rootId: 'c1' });
+  });
+
+  it('throws NotFound when the comment is gone', async () => {
+    const { service, comments } = create();
+    comments.findCommentLocation.mockResolvedValue(null);
+    await expect(service.locate('s', 'zz')).rejects.toBeInstanceOf(NotFoundException);
   });
 });

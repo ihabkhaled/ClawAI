@@ -2,6 +2,7 @@ import { THREAD_COMMENT_ANCHOR_PREFIX } from '@/constants/thread-community.const
 import { ThreadPublicationReaction } from '@/enums/thread-publication-reaction.enum';
 import type {
   ThreadCommentNode,
+  ThreadCommentPage,
   ThreadCommentsData,
   ThreadReactionCounts,
 } from '@/types/thread-community.types';
@@ -106,11 +107,7 @@ export function findComment(data: ThreadCommentsData, commentId: string): Thread
   return null;
 }
 
-/** Adds a freshly posted comment: a new root at the top, or a reply at the end of its root. */
-export function insertComment(
-  data: ThreadCommentsData,
-  created: ThreadCommentNode,
-): ThreadCommentsData {
+function placeComment(data: ThreadCommentsData, created: ThreadCommentNode): ThreadCommentsData {
   const rootId = created.rootId ?? created.parentId;
   if (rootId === null) {
     const [first, ...rest] = data.pages;
@@ -124,6 +121,37 @@ export function insertComment(
     replyCount: root.replyCount + 1,
     replies: mergeReplies(root.replies, [created]),
   }));
+}
+
+/** Adds a freshly posted comment: a new root at the top, or a reply at the end of its root. */
+export function insertComment(
+  data: ThreadCommentsData,
+  created: ThreadCommentNode,
+): ThreadCommentsData {
+  const placed = placeComment(data, created);
+  const [first, ...rest] = placed.pages;
+  if (!first || first.commentTotal === undefined) {
+    return placed;
+  }
+  return { ...placed, pages: [{ ...first, commentTotal: first.commentTotal + 1 }, ...rest] };
+}
+
+/** Comments and replies together: the server's count, or the roots plus the replies counted so far. */
+export function commentTotalOf(
+  data: { pages: ThreadCommentPage[]; pageParams?: readonly unknown[] } | undefined,
+): number {
+  const first = data?.pages[0];
+  if (!data || !first) {
+    return 0;
+  }
+  if (first.commentTotal !== undefined) {
+    return first.commentTotal;
+  }
+  const replies = data.pages.reduce(
+    (sum, page) => sum + page.items.reduce((inner, root) => inner + root.replyCount, 0),
+    0,
+  );
+  return first.total + replies;
 }
 
 /** How many replies of a root are not on screen yet. */

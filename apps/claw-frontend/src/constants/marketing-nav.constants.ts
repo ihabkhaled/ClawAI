@@ -2,6 +2,7 @@ import { MessagesSquare } from 'lucide-react';
 
 import { COMPARISON_HUB_PATH } from '@/constants/public-comparison.constants';
 import { THREADS_PUBLIC_BOARD_PATH } from '@/constants/thread-board-guest.constants';
+import { Locale } from '@/enums/locale.enum';
 import type { MarketingNavLink } from '@/types';
 
 // Phase B: every concept now has its own page, so the nav points at real
@@ -24,6 +25,19 @@ export const MARKETING_NAV_LINKS: ReadonlyArray<MarketingNavLink> = [
   },
   { labelKey: 'marketing.header.navCompare', href: COMPARISON_HUB_PATH },
   { labelKey: 'marketing.header.navEnterprise', href: '/local-first-ai' },
+];
+
+/**
+ * Locales whose nav labels and auth buttons are wide enough that the desktop bar overflows at
+ * 1280px and 1440px; they keep the hamburger until the 2xl breakpoint instead of xl.
+ */
+export const MARKETING_WIDE_NAV_LOCALES: ReadonlyArray<Locale> = [
+  Locale.DE,
+  Locale.RU,
+  Locale.FR,
+  Locale.ES,
+  Locale.PT,
+  Locale.IT,
 ];
 
 export const MARKETING_GITHUB_URL = 'https://github.com/ihabkhaled/ClawAI';

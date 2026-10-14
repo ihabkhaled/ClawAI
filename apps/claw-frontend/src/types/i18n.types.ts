@@ -8140,6 +8140,7 @@ export type ThreadCommunityLocaleTranslation = {
   threadCommunityReplyFailed: string;
   threadCommunityViewMoreReplies: string;
   threadCommunityRepliesFailed: string;
+  threadCommunityCommentGone: string;
   threadCommunityLoadMoreComments: string;
   threadCommunityLikeAria: string;
   threadCommunityDislikeAria: string;

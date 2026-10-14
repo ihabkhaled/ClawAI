@@ -83,6 +83,8 @@ export function useThreadPublicPage(
     publication: queries.publication.data,
     comments: queries.comments.comments,
     highlightedCommentId: queries.comments.highlightedId,
+    commentMissing: queries.comments.commentMissing,
+    commentTotal: queries.comments.commentTotal,
     hasMoreComments: queries.comments.hasMore,
     isLoadingMoreComments: queries.comments.isLoadingMore,
     loadMoreComments: queries.comments.loadMore,

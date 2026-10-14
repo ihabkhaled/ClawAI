@@ -160,6 +160,8 @@ export type ThreadPublicPageController = {
   publication: PublicThreadPublication | undefined;
   comments: PublicThreadComment[];
   highlightedCommentId: string | null;
+  commentMissing: boolean;
+  commentTotal: number;
   hasMoreComments: boolean;
   isLoadingMoreComments: boolean;
   loadMoreComments: () => void;
@@ -178,6 +180,10 @@ export type ThreadCommunityPanelProps = {
   slug: string;
   comments: PublicThreadComment[];
   highlightedCommentId: string | null;
+  /** True when the URL points at a comment that no longer exists. */
+  commentMissing?: boolean;
+  /** Comments and replies together; the heading falls back to the loaded roots. */
+  commentTotal?: number;
   hasMoreComments: boolean;
   isLoadingMoreComments: boolean;
   loadMoreComments: () => void;

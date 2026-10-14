@@ -49,6 +49,15 @@ export class PublicationCommunityController {
   }
 
   @Public()
+  @Get('comments/by-id/:commentId')
+  locateComment(
+    @Param('slug') slug: string,
+    @Param('commentId', new ZodValidationPipe(commentIdParamSchema)) commentId: string,
+  ): ReturnType<PublicationCommentsService['locate']> {
+    return this.comments.locate(slug, commentId);
+  }
+
+  @Public()
   @Get('comments/:rootId/replies')
   listReplies(
     @Param('slug') slug: string,

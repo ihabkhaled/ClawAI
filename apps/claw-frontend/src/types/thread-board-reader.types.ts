@@ -16,6 +16,8 @@ export type BoardReaderController = {
   publication: PublicThreadPublication | undefined;
   comments: PublicThreadComment[];
   highlightedCommentId: string | null;
+  commentMissing: boolean;
+  commentTotal: number;
   hasMoreComments: boolean;
   isLoadingMoreComments: boolean;
   loadMoreComments: () => void;

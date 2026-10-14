@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { ROUTES } from '@/constants';
 import { useCurrentUser } from '@/hooks/auth/use-current-user';
 import type { UsePasswordRotationGuardReturn } from '@/types';
+import { withLocaleOf } from '@/utilities/locale.utility';
 
 /**
  * Holds an account on the change-password page until the required change is done.
@@ -35,7 +36,7 @@ export function usePasswordRotationGuard(): UsePasswordRotationGuardReturn {
     // Locale-prefixed paths mean an equality check would never match, and
     // sending someone already on the page back to it would loop.
     if (mustRotate && !pathname.endsWith(ROUTES.CHANGE_PASSWORD)) {
-      router.replace(ROUTES.CHANGE_PASSWORD);
+      router.replace(withLocaleOf(ROUTES.CHANGE_PASSWORD, pathname));
     }
   }, [mustRotate, pathname, router]);
 
