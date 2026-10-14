@@ -48,6 +48,8 @@ const mockRepository = (): Record<keyof UsersRepository, Mock> => ({
   findById: vi.fn(),
   findByEmail: vi.fn(),
   findByUsername: vi.fn(),
+  findActiveProfilesByIds: vi.fn(),
+  findActiveProfileByUsername: vi.fn(),
   findAll: vi.fn(),
   updateById: vi.fn(),
   deleteById: vi.fn(),
@@ -609,6 +611,47 @@ describe('UsersService', () => {
     it('404s for an unknown user', async () => {
       repository.findById.mockResolvedValue(null);
       await expect(service.getIdentity('nope')).rejects.toThrow(EntityNotFoundException);
+    });
+  });
+
+  describe('public profiles', () => {
+    it('maps active users to username and display name, deduping ids', async () => {
+      repository.findActiveProfilesByIds.mockResolvedValue([
+        { id: 'u1', username: 'ada', firstName: 'Ada', lastName: 'Lovelace' },
+        { id: 'u2', username: 'bob', firstName: null, lastName: null },
+      ]);
+      await expect(service.getPublicProfiles(['u1', 'u2', 'u1'])).resolves.toEqual([
+        { id: 'u1', username: 'ada', displayName: 'Ada Lovelace' },
+        { id: 'u2', username: 'bob', displayName: 'bob' },
+      ]);
+      expect(repository.findActiveProfilesByIds).toHaveBeenCalledWith(['u1', 'u2']);
+    });
+
+    it('does not hit the database for an empty batch', async () => {
+      await expect(service.getPublicProfiles([])).resolves.toEqual([]);
+      expect(repository.findActiveProfilesByIds).not.toHaveBeenCalled();
+    });
+
+    it('resolves a username and 404s for unknown, inactive or malformed names', async () => {
+      repository.findActiveProfileByUsername.mockResolvedValueOnce({
+        id: 'u1',
+        username: 'Ada',
+        firstName: null,
+        lastName: null,
+      });
+      await expect(service.getPublicProfileByUsername('ada')).resolves.toEqual({
+        id: 'u1',
+        username: 'Ada',
+        displayName: 'Ada',
+      });
+      repository.findActiveProfileByUsername.mockResolvedValueOnce(null);
+      await expect(service.getPublicProfileByUsername('ghost')).rejects.toThrow(
+        EntityNotFoundException,
+      );
+      await expect(service.getPublicProfileByUsername('not valid!')).rejects.toThrow(
+        EntityNotFoundException,
+      );
+      expect(repository.findActiveProfileByUsername).toHaveBeenCalledTimes(2);
     });
   });
 

@@ -35,6 +35,15 @@ export const queryKeys = {
     me: ['auth', 'me'] as const,
     emailChange: ['auth', 'email-change'] as const,
   },
+  threadPublications: {
+    all: ['thread-publications'] as const,
+    /** The public page of one publication; the comment and reaction keys sit under it. */
+    publicPage: (slug: string) => [...queryKeys.threadPublications.all, 'public', slug] as const,
+    comments: (slug: string) =>
+      [...queryKeys.threadPublications.publicPage(slug), 'comments'] as const,
+    reactions: (slug: string) =>
+      [...queryKeys.threadPublications.publicPage(slug), 'reactions'] as const,
+  },
   threads: {
     all: ['threads'] as const,
     lists: () => [...queryKeys.threads.all, 'list'] as const,

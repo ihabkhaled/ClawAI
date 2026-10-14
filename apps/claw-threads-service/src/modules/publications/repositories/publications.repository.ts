@@ -42,8 +42,8 @@ import type {
   OwnedRevisionReviewRecord,
   PublicationExport,
   PublicationStartIdentity,
-  PublicPublication,
   PublicPublicationDiscoveryItem,
+  PublicPublicationRecord,
   PublicPublicationSitemapItem,
   PublishedPublication,
   PublishOutcome,
@@ -51,7 +51,6 @@ import type {
 import type { EditPublicationRevisionDto } from '../dto/edit-publication-revision.dto';
 import type { PublicationSafetyResult } from '../types/publication-safety.types';
 import type { CreatePublicationChangeRequestDto } from '../dto/create-publication-change-request.dto';
-import type { CreatePublicationCommentDto } from '../dto/create-publication-comment.dto';
 import type { CreatePublicationReportDto } from '../dto/create-publication-report.dto';
 import type { ResolvePublicationChangeRequestDto } from '../dto/resolve-publication-change-request.dto';
 import type { SetPublicationReactionDto } from '../dto/set-publication-reaction.dto';
@@ -59,8 +58,8 @@ import type {
   ModerationReportView,
   PublicationChangeRequestView,
   PublicationReactionSummary,
-  PublicPublicationComment,
 } from '../types/publication-community.types';
+import { publicPublicationWhere } from '../utilities/public-publication-where.utility';
 import { evaluatePublicationSafety } from '../utilities/publication-safety.utility';
 import {
   derivePublicationSlug,
@@ -677,7 +676,7 @@ export class PublicationsRepository {
     });
   }
 
-  async findPublic(slug: string): Promise<PublicPublication | null> {
+  async findPublic(slug: string): Promise<PublicPublicationRecord | null> {
     const publication = await this.prisma.threadPublication.findFirst({
       where: {
         slug,
@@ -692,6 +691,7 @@ export class PublicationsRepository {
       },
       select: {
         slug: true,
+        ownerId: true,
         contentLocale: true,
         publicationType: true,
         publishedAt: true,
@@ -721,11 +721,13 @@ export class PublicationsRepository {
           slug: publication.slug,
           title: revision.title,
           contentLocale: publication.contentLocale as Locale,
-          publicationType: publication.publicationType as PublicPublication['publicationType'],
+          publicationType:
+            publication.publicationType as PublicPublicationRecord['publicationType'],
           content: content.data,
           publishedAt: publication.publishedAt,
           viewCount: publication.viewCount,
           readerCount: publication.readerCount,
+          ownerId: publication.ownerId,
         }
       : null;
   }
@@ -781,7 +783,7 @@ export class PublicationsRepository {
           title: revision.title,
           excerpt: publicationExcerpt(content.data.markdown),
           contentLocale: row.contentLocale as Locale,
-          publicationType: row.publicationType as PublicPublication['publicationType'],
+          publicationType: row.publicationType as PublicPublicationRecord['publicationType'],
           publishedAt: row.publishedAt,
         },
       ];
@@ -884,39 +886,6 @@ export class PublicationsRepository {
           markdown: content.data.markdown,
           citations: content.data.citations,
         };
-  }
-
-  async createPublicComment(
-    slug: string,
-    authorId: string,
-    input: CreatePublicationCommentDto,
-  ): Promise<PublicPublicationComment | null> {
-    return this.prisma.$transaction(async (transaction) => {
-      const publication = await transaction.threadPublication.findFirst({
-        where: this.publicPublicationWhere(slug),
-        select: { id: true },
-      });
-      if (!publication) return null;
-      return transaction.threadPublicationComment.create({
-        data: { publicationId: publication.id, authorId, content: input.content },
-        select: { id: true, content: true, createdAt: true },
-      });
-    });
-  }
-
-  async findPublicComments(slug: string): Promise<PublicPublicationComment[] | null> {
-    const publication = await this.prisma.threadPublication.findFirst({
-      where: this.publicPublicationWhere(slug),
-      select: { id: true },
-    });
-    if (!publication) return null;
-    const comments = await this.prisma.threadPublicationComment.findMany({
-      where: { publicationId: publication.id, status: PublicationCommentStatus.VISIBLE },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-      select: { id: true, content: true, createdAt: true },
-    });
-    return comments.reverse();
   }
 
   async setPublicReaction(
@@ -1176,17 +1145,7 @@ export class PublicationsRepository {
   }
 
   private publicPublicationWhere(slug: string): Prisma.ThreadPublicationWhereInput {
-    return {
-      slug,
-      status: PublicationStatus.PUBLISHED,
-      revisions: {
-        some: {
-          reviewStatus: RevisionReviewStatus.OWNER_APPROVED,
-          safetyStatus: PublicationSafetyStatus.APPROVED,
-          indexEligible: true,
-        },
-      },
-    };
+    return publicPublicationWhere(slug);
   }
 
   private hashPublicationContent(content: {

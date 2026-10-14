@@ -14,7 +14,7 @@ The public Thread page is the indexable, canonical surface. A second list of the
 
 - Routes `/board` and `/board/[slug]` live in the `(portal)` route group, behind login, with `noindex`. The member Board is not linked from marketing pages and not in the sitemap (a separate public, read-only Board is added by the 2026-10-14 addendum below). The canonical URL of every Thread stays `/threads/[slug]`; `/board/[slug]` offers "Open public page" and "Copy link" pointing there.
 - The URL is the single state: `?q=&sort=&lang=&type=&page=`. Query keys start with `thread-board`.
-- Cards carry no author name or avatar (privacy). Publishing does not redirect to the Board.
+- Cards carried no author name or avatar (privacy); [ADR-180](adr-180-threaded-comments-votes-mentions-and-community-notifications.md) later added `owner { username, displayName } | null` (a name from auth-service, never an id or email). Publishing does not redirect to the Board.
 - Default language filter is the UI locale, with an "All languages" option.
 - Sidebar entry "Board" is a sibling of Threads.
 - All strings are `chat.threadBoard*` keys in 13 locales, defined in one translation file.
@@ -22,7 +22,7 @@ The public Thread page is the indexable, canonical surface. A second list of the
 ## Consequences
 
 - No SEO or AdSense exposure from the member Board; the public Thread page keeps all ranking signals (the public guest Board is covered by the addendum below).
-- Authorship can be added later as an explicit opt-in without changing the contract shape; today the API has no field for it.
+- Authorship was added by ADR-180 as the `owner` field; it is a name only.
 - Reactions and comments on `/board/[slug]` reuse the existing public reader components and endpoints.
 
 ## Addendum 2026-10-14: Board UI round-2 fixes

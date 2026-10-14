@@ -3,6 +3,7 @@ import type { ThreadPublicationType } from '@claw/shared-types';
 import type { ThreadBoardAllFilter } from '@/enums/thread-board-all-filter.enum';
 import type { ThreadBoardSort } from '@/enums/thread-board-sort.enum';
 import type { ThreadPublicationReaction } from '@/enums/thread-publication-reaction.enum';
+import type { ThreadAuthor } from '@/types/thread-community.types';
 
 export type ThreadBoardPageSize = number;
 
@@ -31,6 +32,8 @@ export type ThreadBoardItem = {
   commentCount: number;
   viewCount: number;
   viewerReaction: ThreadPublicationReaction | null;
+  /** Who published it; absent on older payloads. */
+  owner?: ThreadAuthor | null;
 };
 
 export type ThreadBoardMeta = {

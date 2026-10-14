@@ -147,5 +147,77 @@ export const AR_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'تصلك هذه الرسالة لأنك بدأت Thread على ClawAI. يمكنك إيقاف هذه الرسائل من إعدادات الإشعارات.',
     },
+    [AuthEmailKind.THREAD_COMMENTED]: {
+      subject: 'تعليق جديد على Thread الخاص بك',
+      preheader: 'انضم أحدهم إلى النقاش.',
+      heading: 'تعليق جديد على Thread الخاص بك',
+      intro: 'علّق أحدهم على «{value}».',
+      bodyLines: ['افتح Thread لقراءته والانضمام إلى النقاش.'],
+      actionLabel: 'فتح Thread',
+      fallbackNote: 'إذا لم يعمل الزر، يُرجى نسخ العنوان التالي ولصقه في متصفحك:',
+      expiryNote: null,
+      securityNote:
+        'تصلك هذه الرسالة لأنك شاركت في هذا Thread على ClawAI. يمكنك إيقاف هذه الرسائل من إعدادات الإشعارات.',
+    },
+    [AuthEmailKind.THREAD_COMMENT_REPLIED]: {
+      subject: 'ردّ أحدهم على تعليقك',
+      preheader: 'افتح المحادثة لقراءة الرد.',
+      heading: 'ردّ أحدهم على تعليقك',
+      intro: 'أُضيف ردّ على تعليقك في «{value}».',
+      bodyLines: ['افتح Thread لقراءته والانضمام إلى النقاش.'],
+      actionLabel: 'فتح Thread',
+      fallbackNote: 'إذا لم يعمل الزر، يُرجى نسخ العنوان التالي ولصقه في متصفحك:',
+      expiryNote: null,
+      securityNote:
+        'تصلك هذه الرسالة لأنك شاركت في هذا Thread على ClawAI. يمكنك إيقاف هذه الرسائل من إعدادات الإشعارات.',
+    },
+    [AuthEmailKind.THREAD_MENTIONED]: {
+      subject: 'تمت الإشارة إليك في تعليق',
+      preheader: 'وضع أحدهم إشارة إليك في نقاش.',
+      heading: 'تمت الإشارة إليك في تعليق',
+      intro: 'تمت الإشارة إليك في تعليق على «{value}».',
+      bodyLines: ['افتح Thread لقراءته والانضمام إلى النقاش.'],
+      actionLabel: 'فتح Thread',
+      fallbackNote: 'إذا لم يعمل الزر، يُرجى نسخ العنوان التالي ولصقه في متصفحك:',
+      expiryNote: null,
+      securityNote:
+        'تصلك هذه الرسالة لأنك شاركت في هذا Thread على ClawAI. يمكنك إيقاف هذه الرسائل من إعدادات الإشعارات.',
+    },
+    [AuthEmailKind.THREAD_REACTED]: {
+      subject: 'تلقّى Thread الخاص بك تفاعلًا',
+      preheader: 'تفاعل أحد القرّاء مع Thread الخاص بك.',
+      heading: 'تلقّى Thread الخاص بك تفاعلًا',
+      intro: 'تفاعل أحد القرّاء مع «{value}».',
+      bodyLines: ['افتح Thread لقراءته والانضمام إلى النقاش.'],
+      actionLabel: 'فتح Thread',
+      fallbackNote: 'إذا لم يعمل الزر، يُرجى نسخ العنوان التالي ولصقه في متصفحك:',
+      expiryNote: null,
+      securityNote:
+        'تصلك هذه الرسالة لأنك شاركت في هذا Thread على ClawAI. يمكنك إيقاف هذه الرسائل من إعدادات الإشعارات.',
+    },
+    [AuthEmailKind.THREAD_COMMENT_REACTED]: {
+      subject: 'أعجب أحدهم بتعليقك',
+      preheader: 'تعليقك يحظى بالتقدير.',
+      heading: 'أعجب أحدهم بتعليقك',
+      intro: 'حصل تعليقك على «{value}» على إعجاب.',
+      bodyLines: ['افتح Thread لقراءته والانضمام إلى النقاش.'],
+      actionLabel: 'فتح Thread',
+      fallbackNote: 'إذا لم يعمل الزر، يُرجى نسخ العنوان التالي ولصقه في متصفحك:',
+      expiryNote: null,
+      securityNote:
+        'تصلك هذه الرسالة لأنك شاركت في هذا Thread على ClawAI. يمكنك إيقاف هذه الرسائل من إعدادات الإشعارات.',
+    },
+    [AuthEmailKind.THREAD_CHANGE_REQUESTED]: {
+      subject: 'اقتُرح تعديل على Thread الخاص بك',
+      preheader: 'راجع الاقتراح ثم اقبله أو ارفضه.',
+      heading: 'اقتُرح تعديل على Thread الخاص بك',
+      intro: 'اقترح أحد القرّاء تعديلًا على «{value}».',
+      bodyLines: ['افتح Thread لقراءته والانضمام إلى النقاش.'],
+      actionLabel: 'فتح Thread',
+      fallbackNote: 'إذا لم يعمل الزر، يُرجى نسخ العنوان التالي ولصقه في متصفحك:',
+      expiryNote: null,
+      securityNote:
+        'تصلك هذه الرسالة لأنك شاركت في هذا Thread على ClawAI. يمكنك إيقاف هذه الرسائل من إعدادات الإشعارات.',
+    },
   },
 };

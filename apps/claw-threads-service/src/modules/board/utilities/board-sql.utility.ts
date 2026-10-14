@@ -112,7 +112,7 @@ function viewerReactionJoin(userId: string | null): Prisma.Sql {
 export function buildListQuery(params: BoardListParams): Prisma.Sql {
   const offset = (params.page - 1) * params.limit;
   return Prisma.sql`
-    SELECT d.slug, d.title, d.excerpt, d.content_locale AS "contentLocale",
+    SELECT d.slug, p.owner_id AS "ownerId", d.title, d.excerpt, d.content_locale AS "contentLocale",
       d.publication_type AS "publicationType", d.published_at AS "publishedAt",
       d.reading_minutes AS "readingMinutes", d.source_count AS "sourceCount",
       d.like_count AS "likeCount", d.comment_count AS "commentCount", d.view_count AS "viewCount",

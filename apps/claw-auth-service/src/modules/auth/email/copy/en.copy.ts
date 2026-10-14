@@ -150,5 +150,77 @@ export const EN_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'You are getting this because you started a Thread on ClawAI. You can turn these emails off in your notification settings.',
     },
+    [AuthEmailKind.THREAD_COMMENTED]: {
+      subject: 'New comment on your Thread',
+      preheader: 'Someone joined the discussion.',
+      heading: 'New comment on your Thread',
+      intro: 'Someone commented on “{value}”.',
+      bodyLines: ['Open the Thread to read it and join the conversation.'],
+      actionLabel: 'Open the Thread',
+      fallbackNote: 'If the button does not work, copy the address below into your browser:',
+      expiryNote: null,
+      securityNote:
+        'You are getting this because you took part in this Thread on ClawAI. You can turn these emails off in your notification settings.',
+    },
+    [AuthEmailKind.THREAD_COMMENT_REPLIED]: {
+      subject: 'Someone replied to your comment',
+      preheader: 'Open the conversation to read the reply.',
+      heading: 'Someone replied to your comment',
+      intro: 'A reply was added to your comment on “{value}”.',
+      bodyLines: ['Open the Thread to read it and join the conversation.'],
+      actionLabel: 'Open the Thread',
+      fallbackNote: 'If the button does not work, copy the address below into your browser:',
+      expiryNote: null,
+      securityNote:
+        'You are getting this because you took part in this Thread on ClawAI. You can turn these emails off in your notification settings.',
+    },
+    [AuthEmailKind.THREAD_MENTIONED]: {
+      subject: 'You were mentioned in a comment',
+      preheader: 'Someone tagged you in a discussion.',
+      heading: 'You were mentioned in a comment',
+      intro: 'You were mentioned in a comment on “{value}”.',
+      bodyLines: ['Open the Thread to read it and join the conversation.'],
+      actionLabel: 'Open the Thread',
+      fallbackNote: 'If the button does not work, copy the address below into your browser:',
+      expiryNote: null,
+      securityNote:
+        'You are getting this because you took part in this Thread on ClawAI. You can turn these emails off in your notification settings.',
+    },
+    [AuthEmailKind.THREAD_REACTED]: {
+      subject: 'Your Thread got a reaction',
+      preheader: 'A reader reacted to your Thread.',
+      heading: 'Your Thread got a reaction',
+      intro: 'A reader reacted to “{value}”.',
+      bodyLines: ['Open the Thread to read it and join the conversation.'],
+      actionLabel: 'Open the Thread',
+      fallbackNote: 'If the button does not work, copy the address below into your browser:',
+      expiryNote: null,
+      securityNote:
+        'You are getting this because you took part in this Thread on ClawAI. You can turn these emails off in your notification settings.',
+    },
+    [AuthEmailKind.THREAD_COMMENT_REACTED]: {
+      subject: 'Someone liked your comment',
+      preheader: 'Your comment is being appreciated.',
+      heading: 'Someone liked your comment',
+      intro: 'Your comment on “{value}” received a like.',
+      bodyLines: ['Open the Thread to read it and join the conversation.'],
+      actionLabel: 'Open the Thread',
+      fallbackNote: 'If the button does not work, copy the address below into your browser:',
+      expiryNote: null,
+      securityNote:
+        'You are getting this because you took part in this Thread on ClawAI. You can turn these emails off in your notification settings.',
+    },
+    [AuthEmailKind.THREAD_CHANGE_REQUESTED]: {
+      subject: 'A change was suggested for your Thread',
+      preheader: 'Review the suggestion and accept or decline it.',
+      heading: 'A change was suggested for your Thread',
+      intro: 'A reader suggested a change to “{value}”.',
+      bodyLines: ['Open the Thread to read it and join the conversation.'],
+      actionLabel: 'Open the Thread',
+      fallbackNote: 'If the button does not work, copy the address below into your browser:',
+      expiryNote: null,
+      securityNote:
+        'You are getting this because you took part in this Thread on ClawAI. You can turn these emails off in your notification settings.',
+    },
   },
 };

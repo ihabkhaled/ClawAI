@@ -23,6 +23,7 @@ import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
+import { THREAD_COMMUNITY_TRANSLATIONS } from './thread-community-translations';
 import { THREAD_PUBLIC_BOARD_TRANSLATIONS } from './thread-public-board-translations';
 import { USAGE_ANALYTICS_TRANSLATIONS } from './usage-analytics-translations';
 
@@ -456,6 +457,7 @@ export const ar: TranslationDictionary = {
     composerMenu: COMPOSER_MENU_TRANSLATIONS.ar,
     ...THREAD_BOARD_TRANSLATIONS.ar,
     ...THREAD_PUBLIC_BOARD_TRANSLATIONS.ar,
+    ...THREAD_COMMUNITY_TRANSLATIONS.ar,
     composerContext: {
       menuLabel: 'السياق',
       pickLabel: 'اختيار حزم السياق',

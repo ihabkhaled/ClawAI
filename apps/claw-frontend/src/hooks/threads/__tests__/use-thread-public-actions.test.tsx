@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ThreadPublicationReaction } from '@/enums/thread-publication-reaction.enum';
 import { threadPublicationsRepository } from '@/repositories/threads/thread-publications.repository';
+import { threadCommentFixture } from '@/test/fixtures/thread-comment.fixture';
 
 import { useThreadPublicActions } from '../use-thread-public-actions';
 
@@ -31,11 +32,9 @@ describe('useThreadPublicActions', () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
     });
-    vi.mocked(threadPublicationsRepository.addPublicComment).mockResolvedValue({
-      id: 'comment-1',
-      content: 'Useful.',
-      createdAt: '2026-10-05T12:00:00.000Z',
-    });
+    vi.mocked(threadPublicationsRepository.addPublicComment).mockResolvedValue(
+      threadCommentFixture({ content: 'Useful.' }),
+    );
     const { result } = renderHook(() => useThreadPublicActions('clear-writing'), {
       wrapper: createWrapper(queryClient),
     });

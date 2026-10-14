@@ -16,6 +16,25 @@ const valid = {
 };
 
 describe('userNotificationRequestedSchema', () => {
+  it('accepts every community kind with a comment anchor link and the four params', () => {
+    for (const kind of [
+      UserNotificationKind.THREAD_COMMENTED,
+      UserNotificationKind.THREAD_COMMENT_REPLIED,
+      UserNotificationKind.THREAD_MENTIONED,
+      UserNotificationKind.THREAD_REACTED,
+      UserNotificationKind.THREAD_COMMENT_REACTED,
+      UserNotificationKind.THREAD_CHANGE_REQUESTED,
+    ]) {
+      const parsed = userNotificationRequestedSchema.safeParse({
+        ...valid,
+        kind,
+        link: '/threads/my-slug#comment-abc123',
+        params: { actorName: 'Ada', actorUsername: 'ada', title: 'T', excerpt: 'مرحبا بك' },
+      });
+      expect(parsed.success).toBe(true);
+    }
+  });
+
   it('accepts a portal path with a query string', () => {
     expect(
       userNotificationRequestedSchema.safeParse({ ...valid, link: '/threads?x=1#a' }).success,
@@ -62,13 +81,13 @@ describe('notificationPreferencesSchema', () => {
 });
 
 describe('pushSubscriptionSchema', () => {
-  const valid = {
+  const validSubscription = {
     endpoint: 'https://fcm.googleapis.com/fcm/send/abc',
     keys: { p256dh: 'p', auth: 'a' },
   };
 
   it('accepts a browser subscription', () => {
-    expect(pushSubscriptionSchema.safeParse(valid).success).toBe(true);
+    expect(pushSubscriptionSchema.safeParse(validSubscription).success).toBe(true);
   });
 
   it('rejects an endpoint that is not a browser push service', () => {
@@ -77,18 +96,27 @@ describe('pushSubscriptionSchema', () => {
       'https://auth-service:4001/x',
       'https://evil.example/x',
     ]) {
-      expect(pushSubscriptionSchema.safeParse({ ...valid, endpoint }).success).toBe(false);
+      expect(pushSubscriptionSchema.safeParse({ ...validSubscription, endpoint }).success).toBe(
+        false,
+      );
     }
   });
 
   it('rejects a non-https endpoint, extra fields and missing keys', () => {
     expect(
-      pushSubscriptionSchema.safeParse({ ...valid, endpoint: 'http://push.example.test/a' })
-        .success,
+      pushSubscriptionSchema.safeParse({
+        ...validSubscription,
+        endpoint: 'http://push.example.test/a',
+      }).success,
     ).toBe(false);
-    expect(pushSubscriptionSchema.safeParse({ ...valid, userId: 'someone' }).success).toBe(false);
     expect(
-      pushSubscriptionSchema.safeParse({ endpoint: valid.endpoint, keys: { p256dh: 'p' } }).success,
+      pushSubscriptionSchema.safeParse({ ...validSubscription, userId: 'someone' }).success,
+    ).toBe(false);
+    expect(
+      pushSubscriptionSchema.safeParse({
+        endpoint: validSubscription.endpoint,
+        keys: { p256dh: 'p' },
+      }).success,
     ).toBe(false);
   });
 });

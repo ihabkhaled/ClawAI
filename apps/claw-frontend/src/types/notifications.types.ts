@@ -39,6 +39,7 @@ export type PushSubscriptionBody = {
 
 /** What a row of the bell shows, already in the person's language. */
 export type NotificationRowText = {
+  kind: UserNotificationKind;
   title: string;
   body: string;
   /** The publication title, when the notification carries one. */

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { AuthorIdentityModule } from '../author-identity/author-identity.module';
 import { PrismaModule } from '../../infrastructure/database/prisma/prisma.module';
 import { BoardPublicController } from './controllers/board-public.controller';
 import { BoardController } from './controllers/board.controller';
@@ -9,7 +10,7 @@ import { BoardMaintenanceService } from './services/board-maintenance.service';
 import { BoardService } from './services/board.service';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, AuthorIdentityModule],
   controllers: [BoardController, BoardPublicController],
   providers: [BoardRepository, BoardService, BoardMaintenanceRepository, BoardMaintenanceService],
   exports: [BoardMaintenanceService],

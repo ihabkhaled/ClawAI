@@ -15,6 +15,10 @@ export type ThreadReaderBodyProps = {
 export type BoardReaderController = {
   publication: PublicThreadPublication | undefined;
   comments: PublicThreadComment[];
+  highlightedCommentId: string | null;
+  hasMoreComments: boolean;
+  isLoadingMoreComments: boolean;
+  loadMoreComments: () => void;
   reactions: ThreadReactionSummary | undefined;
   isAuthenticated: boolean;
   isLoading: boolean;

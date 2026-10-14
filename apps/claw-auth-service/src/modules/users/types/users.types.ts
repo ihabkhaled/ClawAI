@@ -22,6 +22,26 @@ export type UserIdentity = {
   lastName: string | null;
 };
 
+/**
+ * `POST /internal/users/public-profiles` and `GET /internal/users/by-username/:username` - the only
+ * part of a profile another service may show to other people (threads-service comments). Never an
+ * email, phone, role or status.
+ */
+/** The columns the public-profile lookups read: a name and an id, nothing private. */
+export type PublicProfileSource = {
+  id: string;
+  username: string;
+  firstName: string | null;
+  lastName: string | null;
+};
+
+export type PublicProfile = {
+  id: string;
+  username: string;
+  /** First and last name when set, otherwise the username. */
+  displayName: string;
+};
+
 export interface SafeUser {
   id: string;
   email: string;

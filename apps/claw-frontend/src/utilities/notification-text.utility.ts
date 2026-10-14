@@ -39,15 +39,23 @@ export function formatNotificationTime(iso: string, locale: string, now: number)
 /** The words a row shows: the kind's title and body in the person's language, plus any title. */
 export function buildNotificationRowText(
   item: NotificationItem,
-  t: (key: string) => string,
+  t: (key: string, params?: Record<string, string | number>) => string,
   locale: string,
   now: number,
 ): NotificationRowText {
   const keys = NOTIFICATION_TEXT_KEYS[item.kind];
   const subject = item.params['title'];
+  // Every text sees all four params, so a kind that omits one never shows a raw placeholder.
+  const params = {
+    actorName: item.params['actorName'] ?? '',
+    actorUsername: item.params['actorUsername'] ?? '',
+    title: subject ?? '',
+    excerpt: item.params['excerpt'] ?? '',
+  };
   return {
-    title: t(keys.titleKey),
-    body: t(keys.bodyKey),
+    kind: item.kind,
+    title: t(keys.titleKey, params),
+    body: t(keys.bodyKey, params),
     subject: subject === undefined || subject.length === 0 ? null : subject,
     when: formatNotificationTime(item.createdAt, locale, now),
   };

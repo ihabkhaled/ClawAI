@@ -1,5 +1,7 @@
 import type { Locale, ThreadPublicationType } from '@claw/shared-types';
 
+import type { PublicAuthor } from '../../author-identity/types/author-identity.types';
+
 export type PublishedPublication = {
   id: string;
   slug: string;
@@ -18,7 +20,12 @@ export type PublicPublication = {
   /** Human views and distinct signed-in readers: counts only, never who. */
   viewCount: number;
   readerCount: number;
+  /** The publisher's name; null when the account is gone or its name could not be read. */
+  owner: PublicAuthor | null;
 };
+
+/** `findPublic` result: the owner is an id until `PublicationPublicReadService` names it. */
+export type PublicPublicationRecord = Omit<PublicPublication, 'owner'> & { ownerId: string | null };
 
 export type PublicPublicationDiscoveryItem = {
   slug: string;

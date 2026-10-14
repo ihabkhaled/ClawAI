@@ -59,3 +59,42 @@ describe('buildNotificationRowText', () => {
     ).toBeNull();
   });
 });
+
+describe('buildNotificationRowText for community kinds', () => {
+  const t = (key: string, params?: Record<string, string | number>): string =>
+    `${key}|${JSON.stringify(params ?? {})}`;
+
+  it.each([
+    UserNotificationKind.THREAD_COMMENTED,
+    UserNotificationKind.THREAD_COMMENT_REPLIED,
+    UserNotificationKind.THREAD_MENTIONED,
+    UserNotificationKind.THREAD_REACTED,
+    UserNotificationKind.THREAD_COMMENT_REACTED,
+    UserNotificationKind.THREAD_CHANGE_REQUESTED,
+  ])('passes the actor and excerpt to the %s text', (kind) => {
+    const text = buildNotificationRowText(
+      item({
+        kind,
+        params: { actorName: 'Ada', actorUsername: 'ada', title: 'T', excerpt: 'Nice work' },
+      }),
+      t,
+      'en',
+      NOW,
+    );
+    expect(text.kind).toBe(kind);
+    expect(text.title).toContain(`notifications.kinds.${kind}.title`);
+    expect(text.title).toContain('"actorName":"Ada"');
+    expect(text.body).toContain('"excerpt":"Nice work"');
+    expect(text.body).toContain('"actorUsername":"ada"');
+  });
+
+  it('never leaves a placeholder undefined when a param is missing', () => {
+    const text = buildNotificationRowText(
+      item({ kind: UserNotificationKind.THREAD_REACTED, params: {} }),
+      t,
+      'en',
+      NOW,
+    );
+    expect(text.title).toContain('"actorName":""');
+  });
+});

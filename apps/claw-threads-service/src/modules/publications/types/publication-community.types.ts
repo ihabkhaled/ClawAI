@@ -1,9 +1,3 @@
-export type PublicPublicationComment = {
-  id: string;
-  content: string;
-  createdAt: Date;
-};
-
 export type PublicationReactionSummary = {
   likes: number;
   dislikes: number;

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { AuthorIdentityModule } from '../author-identity/author-identity.module';
 import { BoardIndexModule } from '../board-index/board-index.module';
 import { PublicationModerationModule } from '../publication-moderation/publication-moderation.module';
 import { PublicationCommunityModule } from '../publication-community/publication-community.module';
@@ -13,6 +14,10 @@ import { PublicationPublicController } from './controllers/publication-public.co
 import { PublicationCommunityController } from './controllers/publication-community.controller';
 import { PublicationModerationController } from './controllers/publication-moderation.controller';
 import { PublicationCommunityService } from './services/publication-community.service';
+import { PublicationCommentsRepository } from './repositories/publication-comments.repository';
+import { PublicationCommentsService } from './services/publication-comments.service';
+import { CommunityNotificationService } from './services/community-notification.service';
+import { PublicationPublicReadService } from './services/publication-public-read.service';
 import { PublicationReportModerationService } from './services/publication-report-moderation.service';
 import { PublicationListController } from './controllers/publication-list.controller';
 import { PublicationDiscoveryController } from './controllers/publication-discovery.controller';
@@ -36,6 +41,7 @@ import { PublicationGenerationRepairController } from './controllers/publication
 @Module({
   imports: [
     PrismaModule,
+    AuthorIdentityModule,
     BoardIndexModule,
     PublicationModerationModule,
     PublicationCommunityModule,
@@ -65,6 +71,10 @@ import { PublicationGenerationRepairController } from './controllers/publication
     ModelCatalogClient,
     RecommendedTeamService,
     PublicationCommunityService,
+    PublicationCommentsRepository,
+    PublicationCommentsService,
+    CommunityNotificationService,
+    PublicationPublicReadService,
     PublicationReportModerationService,
     PublicationsRepository,
     ThreadsGenerationClient,

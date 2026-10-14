@@ -15,6 +15,8 @@ type TransactionMock = {
   threadPublicationRevision: { deleteMany: MockMethod };
   threadPublicationComment: { updateMany: MockMethod };
   threadPublicationReaction: { deleteMany: MockMethod };
+  threadPublicationCommentReaction: { deleteMany: MockMethod };
+  threadPublicationCommentMention: { deleteMany: MockMethod };
   threadPublicationReader: { findMany: MockMethod; deleteMany: MockMethod };
   threadPublicationChangeRequest: { deleteMany: MockMethod; updateMany: MockMethod };
   threadPublicationReport: { updateMany: MockMethod };
@@ -35,6 +37,8 @@ describe('Threads AccountDeletionRepository', () => {
       threadPublicationRevision: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
       threadPublicationComment: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
       threadPublicationReaction: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
+      threadPublicationCommentReaction: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
+      threadPublicationCommentMention: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
       threadPublicationReader: {
         findMany: vi.fn().mockResolvedValue([{ publicationId: 'pub-read' }]),
         deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
@@ -95,6 +99,21 @@ describe('Threads AccountDeletionRepository', () => {
         where: { ownerId: 'account-private-1', id: { notIn: ['pub-public'] } },
       }),
     );
+  });
+
+  it('forgets the comment votes, mentions and reply targets of the account', async () => {
+    await repository.applyDeletion('account-private-1', 'event-1', new Date());
+
+    expect(tx.threadPublicationCommentReaction.deleteMany).toHaveBeenCalledWith({
+      where: { userId: 'account-private-1' },
+    });
+    expect(tx.threadPublicationCommentMention.deleteMany).toHaveBeenCalledWith({
+      where: { userId: 'account-private-1' },
+    });
+    expect(tx.threadPublicationComment.updateMany).toHaveBeenCalledWith({
+      where: { replyToUserId: 'account-private-1' },
+      data: { replyToUserId: null },
+    });
   });
 
   it('does not reapply an event already represented by an account tombstone', async () => {

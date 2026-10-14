@@ -31,7 +31,14 @@ import {
   SUPER_ADMIN_SELF_LOCKED_MESSAGE,
 } from '../../../common/constants/super-admin.constants';
 import { CurrencyPreferenceMode, type User } from '../../../generated/prisma';
-import { type SafeUser, type UserIdentity, type UserSpeechPreferences } from '../types/users.types';
+import {
+  type PublicProfile,
+  type SafeUser,
+  type UserIdentity,
+  type UserSpeechPreferences,
+} from '../types/users.types';
+import { toPublicProfile } from '../service.utilities/public-profile.utility';
+import { publicProfileUsernameSchema } from '../dto/public-profiles.dto';
 import { toSafeUser } from '../service.utilities/to-safe-user.utility';
 import { validatePasswordStrength } from '../service.utilities/password-policy.utility';
 import { resolveSuperAdminMutability } from '../service.utilities/super-admin-mutability.utility';
@@ -372,6 +379,26 @@ export class UsersService {
       throw new EntityNotFoundException('User', userId);
     }
     return { firstName: user.firstName ?? null, lastName: user.lastName ?? null };
+  }
+
+  /** Public names for a page of authors. Absent (unknown or not active) ids are left out, never an error. */
+  async getPublicProfiles(ids: readonly string[]): Promise<PublicProfile[]> {
+    const unique = [...new Set(ids)];
+    if (unique.length === 0) return [];
+    const users = await this.usersRepository.findActiveProfilesByIds(unique);
+    return users.map(toPublicProfile);
+  }
+
+  /** Resolves one @mention. 404 for an unknown, malformed or non-active username. */
+  async getPublicProfileByUsername(username: string): Promise<PublicProfile> {
+    const parsed = publicProfileUsernameSchema.safeParse(username);
+    const user = parsed.success
+      ? await this.usersRepository.findActiveProfileByUsername(parsed.data)
+      : null;
+    if (!user) {
+      throw new EntityNotFoundException('User', username);
+    }
+    return toPublicProfile(user);
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {

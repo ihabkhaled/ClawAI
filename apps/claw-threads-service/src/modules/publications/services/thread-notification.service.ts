@@ -63,6 +63,26 @@ export class ThreadNotificationService {
     });
   }
 
+  /**
+   * Community notices (comments, replies, mentions, votes, change requests) are best effort: a broker
+   * failure is logged without any content and never fails the request that caused it.
+   */
+  async dispatchBestEffort(payloads: readonly UserNotificationRequestedPayload[]): Promise<void> {
+    await Promise.all(
+      payloads.map(async (payload) => {
+        try {
+          await this.send(payload);
+        } catch (error: unknown) {
+          this.logger.warn(
+            `A ${payload.kind} notification could not be sent - ${
+              error instanceof Error ? error.message : 'unknown error'
+            }`,
+          );
+        }
+      }),
+    );
+  }
+
   private async ownedTarget(
     jobId: string,
     ownerId: string,

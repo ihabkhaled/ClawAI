@@ -23,7 +23,7 @@ never public; repository tests prove it.
 
 ## Board search projection (ADR-177)
 
-`thread_publication_search_docs` is the only source for the Board list and suggest endpoints. A row exists only while the publication passes the public discovery predicate; every state change that can remove visibility (unpublish, revoke, safety change) must delete or update the row in the same transaction. Use the one shared visibility predicate, parameterised SQL only, and the one pure search normaliser for both index and query (never strip marks for Devanagari or Thai). Counters are denormalised: bump them in the existing write paths and let the reconcile job heal drift. Revoke is `POST thread-publications-moderation/publications/:id/revoke`. Board items never include author fields. See [service guide](../../docs/04-backend/service-guide-threads.md) and ADR-177.
+`thread_publication_search_docs` is the only source for the Board list and suggest endpoints. A row exists only while the publication passes the public discovery predicate; every state change that can remove visibility (unpublish, revoke, safety change) must delete or update the row in the same transaction. Use the one shared visibility predicate, parameterised SQL only, and the one pure search normaliser for both index and query (never strip marks for Devanagari or Thai). Counters are denormalised: bump them in the existing write paths and let the reconcile job heal drift. Revoke is `POST thread-publications-moderation/publications/:id/revoke`. Board items carry `owner { username, displayName } | null` (named by auth-service, never an id or email; ADR-180). See [service guide](../../docs/04-backend/service-guide-threads.md) and ADR-177.
 
 ## Start checks (ADR-174)
 
@@ -119,3 +119,13 @@ Start and retry bodies go through `ZodValidationPipe(schema, ThreadGenerationErr
 ## Allowance refusal pass-through (2026-10-14)
 
 `ThreadsGenerationClient.request` maps a 403 that carries `THREAD_ALLOWANCE_UNAVAILABLE` (`generationAllowanceRefusalSchema`) to `THREAD_GENERATION_ALLOWANCE_UNAVAILABLE` with the auth message plus `feature`, `used`, `limit`, `window`. Any other 403 is still `THREAD_GENERATION_NOT_IN_PLAN`. The frontend already maps the new code (`allowanceUnavailable`); it may read the numbers from the body.
+
+## Community: threads, votes, mentions, notices (ADR-180, 2026-10-14)
+
+- **Names only from auth-service.** `modules/author-identity` (`AuthorIdentityService.resolveMany/resolveOne/resolveByUsername`) is the one way to turn a user id into `{ username, displayName }`. Best effort, 2 s timeout, 60 s bounded cache; a failure is `null`, never an error. Owners (`PublicationPublicReadService`, `BoardService`) and comment authors use it; `ownerId`/`authorId` never leave the service.
+- **Comments live in `PublicationCommentsRepository` / `PublicationCommentsService`**, not in `PublicationsRepository`. Storage is flat: `parentId` = direct target, `rootId` = the top-level comment, both derived by `placeReply` in the creating transaction (never from the client). The target must be VISIBLE and in the same publication; the root row is locked `FOR UPDATE` and replies are capped at `MAX_REPLIES_PER_ROOT` (500). Votes and reply counts are computed, not stored.
+- **Mentions**: `parseMentionUsernames` (linear regex, code-aware, max 10) then `resolveByUsername`; unknown names and the author are dropped; stored in `thread_publication_comment_mentions`.
+- **Notices never fail a request.** `CommunityNotificationService` -> `ThreadNotificationService.dispatchBestEffort`. Matrix and keys are in `community-notification.utility.ts` (reply > comment > mention, one per person, never the actor; reaction keys carry no time). Params contract: `ThreadCommunityNotificationParams` in `@claw/shared-types`.
+- **A removed comment is a placeholder only while it has visible replies** (`removed: true`, `[removed]`, no author); never leak its text or author.
+- **Account deletion** must also delete `thread_publication_comment_reactions` and `..._mentions` rows of the user and null `replyToUserId` (`AccountDeletionRepository`; its spec checks each).
+- Specs run on the swc-free vitest config when Smart App Control blocks `@swc/core`: all new classes are built by hand with mocks, so no Nest DI metadata is needed.

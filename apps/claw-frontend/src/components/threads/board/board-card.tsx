@@ -4,6 +4,7 @@ import { ArrowRight, Clock, Eye, Link2, MessageSquare, ThumbsUp } from 'lucide-r
 import Link from 'next/link';
 import type { ReactElement } from 'react';
 
+import { ThreadAuthorBadge } from '@/components/threads/community/thread-author-badge';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { BadgeVariant } from '@/enums/badge-variant.enum';
@@ -43,6 +44,7 @@ export function BoardCard({ item }: BoardCardProps): ReactElement {
         </Link>
       </h2>
       <p className="text-muted-foreground line-clamp-3 text-sm">{item.excerpt}</p>
+      {item.owner ? <ThreadAuthorBadge author={item.owner} compact /> : null}
       <ul className="text-muted-foreground mt-auto flex flex-wrap gap-x-3 gap-y-1 text-xs">
         {stats.map(({ Icon, text }) => (
           <li key={text} className="flex items-center gap-1">

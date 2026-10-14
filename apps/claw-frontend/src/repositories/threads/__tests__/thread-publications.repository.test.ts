@@ -4,6 +4,7 @@ import { ThreadPublicationChangeRequestStatus } from '@/enums/thread-publication
 import { ThreadPublicationReaction } from '@/enums/thread-publication-reaction.enum';
 import { ThreadPublicationReportReason } from '@/enums/thread-publication-report-reason.enum';
 import { apiClient } from '@/services/shared/api-client';
+import { threadCommentFixture } from '@/test/fixtures/thread-comment.fixture';
 
 import { threadPublicationsRepository } from '../thread-publications.repository';
 
@@ -100,26 +101,31 @@ describe('threadPublicationsRepository.publicCommunity', () => {
     expect(apiClient.get).toHaveBeenCalledWith('/thread-publications/public/clear-writing');
   });
 
-  it('loads comments and reaction totals without reader identities', async () => {
+  it('loads a page of comments and reaction totals without reader identities', async () => {
+    const page = {
+      items: [threadCommentFixture()],
+      page: 1,
+      pageSize: 20,
+      total: 1,
+      totalPages: 1,
+    };
     vi.mocked(apiClient.get)
-      .mockResolvedValueOnce({
-        data: [{ id: 'comment-1', content: 'Useful.', createdAt: '2026-10-05T12:00:00.000Z' }],
-        status: 200,
-      })
+      .mockResolvedValueOnce({ data: page, status: 200 })
       .mockResolvedValueOnce({
         data: { likes: 3, dislikes: 1, viewerReaction: null },
         status: 200,
       });
 
-    await expect(threadPublicationsRepository.listPublicComments('clear-writing')).resolves.toEqual(
-      [{ id: 'comment-1', content: 'Useful.', createdAt: '2026-10-05T12:00:00.000Z' }],
-    );
+    await expect(
+      threadPublicationsRepository.listPublicComments('clear-writing', 1),
+    ).resolves.toEqual(page);
     await expect(
       threadPublicationsRepository.getPublicReactionSummary('clear-writing'),
     ).resolves.toEqual({ likes: 3, dislikes: 1, viewerReaction: null });
     expect(apiClient.get).toHaveBeenNthCalledWith(
       1,
       '/thread-publications/public/clear-writing/comments',
+      { page: '1', pageSize: '20' },
     );
     expect(apiClient.get).toHaveBeenNthCalledWith(
       2,

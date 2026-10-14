@@ -162,5 +162,83 @@ export const DE_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'Sie erhalten diese Nachricht, weil Sie auf ClawAI einen Thread gestartet haben. In Ihren Benachrichtigungseinstellungen können Sie diese E-Mails abschalten.',
     },
+    [AuthEmailKind.THREAD_COMMENTED]: {
+      subject: 'Neuer Kommentar zu Ihrem Thread',
+      preheader: 'Jemand hat sich an der Diskussion beteiligt.',
+      heading: 'Neuer Kommentar zu Ihrem Thread',
+      intro: 'Jemand hat „{value}“ kommentiert.',
+      bodyLines: ['Öffnen Sie den Thread, um ihn zu lesen und mitzudiskutieren.'],
+      actionLabel: 'Thread öffnen',
+      fallbackNote:
+        'Falls die Schaltfläche nicht funktioniert, kopieren Sie die untenstehende Adresse in Ihren Browser:',
+      expiryNote: null,
+      securityNote:
+        'Sie erhalten diese Nachricht, weil Sie an diesem Thread auf ClawAI beteiligt sind. Diese E-Mails können Sie in Ihren Benachrichtigungseinstellungen ausschalten.',
+    },
+    [AuthEmailKind.THREAD_COMMENT_REPLIED]: {
+      subject: 'Jemand hat auf Ihren Kommentar geantwortet',
+      preheader: 'Öffnen Sie die Unterhaltung, um die Antwort zu lesen.',
+      heading: 'Jemand hat auf Ihren Kommentar geantwortet',
+      intro: 'Auf Ihren Kommentar zu „{value}“ wurde geantwortet.',
+      bodyLines: ['Öffnen Sie den Thread, um ihn zu lesen und mitzudiskutieren.'],
+      actionLabel: 'Thread öffnen',
+      fallbackNote:
+        'Falls die Schaltfläche nicht funktioniert, kopieren Sie die untenstehende Adresse in Ihren Browser:',
+      expiryNote: null,
+      securityNote:
+        'Sie erhalten diese Nachricht, weil Sie an diesem Thread auf ClawAI beteiligt sind. Diese E-Mails können Sie in Ihren Benachrichtigungseinstellungen ausschalten.',
+    },
+    [AuthEmailKind.THREAD_MENTIONED]: {
+      subject: 'Sie wurden in einem Kommentar erwähnt',
+      preheader: 'Jemand hat Sie in einer Diskussion markiert.',
+      heading: 'Sie wurden in einem Kommentar erwähnt',
+      intro: 'Sie wurden in einem Kommentar zu „{value}“ erwähnt.',
+      bodyLines: ['Öffnen Sie den Thread, um ihn zu lesen und mitzudiskutieren.'],
+      actionLabel: 'Thread öffnen',
+      fallbackNote:
+        'Falls die Schaltfläche nicht funktioniert, kopieren Sie die untenstehende Adresse in Ihren Browser:',
+      expiryNote: null,
+      securityNote:
+        'Sie erhalten diese Nachricht, weil Sie an diesem Thread auf ClawAI beteiligt sind. Diese E-Mails können Sie in Ihren Benachrichtigungseinstellungen ausschalten.',
+    },
+    [AuthEmailKind.THREAD_REACTED]: {
+      subject: 'Ihr Thread hat eine Reaktion erhalten',
+      preheader: 'Ein Leser hat auf Ihren Thread reagiert.',
+      heading: 'Ihr Thread hat eine Reaktion erhalten',
+      intro: 'Ein Leser hat auf „{value}“ reagiert.',
+      bodyLines: ['Öffnen Sie den Thread, um ihn zu lesen und mitzudiskutieren.'],
+      actionLabel: 'Thread öffnen',
+      fallbackNote:
+        'Falls die Schaltfläche nicht funktioniert, kopieren Sie die untenstehende Adresse in Ihren Browser:',
+      expiryNote: null,
+      securityNote:
+        'Sie erhalten diese Nachricht, weil Sie an diesem Thread auf ClawAI beteiligt sind. Diese E-Mails können Sie in Ihren Benachrichtigungseinstellungen ausschalten.',
+    },
+    [AuthEmailKind.THREAD_COMMENT_REACTED]: {
+      subject: 'Jemand mag Ihren Kommentar',
+      preheader: 'Ihr Kommentar kommt gut an.',
+      heading: 'Jemand mag Ihren Kommentar',
+      intro: 'Ihr Kommentar zu „{value}“ hat ein Like erhalten.',
+      bodyLines: ['Öffnen Sie den Thread, um ihn zu lesen und mitzudiskutieren.'],
+      actionLabel: 'Thread öffnen',
+      fallbackNote:
+        'Falls die Schaltfläche nicht funktioniert, kopieren Sie die untenstehende Adresse in Ihren Browser:',
+      expiryNote: null,
+      securityNote:
+        'Sie erhalten diese Nachricht, weil Sie an diesem Thread auf ClawAI beteiligt sind. Diese E-Mails können Sie in Ihren Benachrichtigungseinstellungen ausschalten.',
+    },
+    [AuthEmailKind.THREAD_CHANGE_REQUESTED]: {
+      subject: 'Für Ihren Thread wurde eine Änderung vorgeschlagen',
+      preheader: 'Prüfen Sie den Vorschlag und nehmen Sie ihn an oder lehnen Sie ihn ab.',
+      heading: 'Für Ihren Thread wurde eine Änderung vorgeschlagen',
+      intro: 'Ein Leser hat eine Änderung an „{value}“ vorgeschlagen.',
+      bodyLines: ['Öffnen Sie den Thread, um ihn zu lesen und mitzudiskutieren.'],
+      actionLabel: 'Thread öffnen',
+      fallbackNote:
+        'Falls die Schaltfläche nicht funktioniert, kopieren Sie die untenstehende Adresse in Ihren Browser:',
+      expiryNote: null,
+      securityNote:
+        'Sie erhalten diese Nachricht, weil Sie an diesem Thread auf ClawAI beteiligt sind. Diese E-Mails können Sie in Ihren Benachrichtigungseinstellungen ausschalten.',
+    },
   },
 };

@@ -11,6 +11,11 @@ import type { ThreadPublicationReportReason } from '@/enums/thread-publication-r
 import type { ThreadPublicationStatus } from '@/enums/thread-publication-status.enum';
 import type { ThreadRevisionField } from '@/enums/thread-revision-field.enum';
 import type { ModelSelection } from '@/types/component.types';
+import type {
+  ThreadAuthor,
+  ThreadCommentNode,
+  ThreadCommentsFeed,
+} from '@/types/thread-community.types';
 import type { ThreadExportFile } from '@/types/thread-export.types';
 import type { ThreadErrorMessage } from '@/types/thread-generation-progress.types';
 import type { ThreadModelAvailabilityIndex } from '@/types/thread-recommended-team.types';
@@ -93,13 +98,11 @@ export type PublicThreadPublication = {
   publishedAt: string;
   viewCount: number;
   readerCount: number;
+  /** Who published it; null for a Thread published before names were shown. */
+  owner?: ThreadAuthor | null;
 };
 
-export type PublicThreadComment = {
-  id: string;
-  content: string;
-  createdAt: string;
-};
+export type PublicThreadComment = ThreadCommentNode;
 
 export type ThreadReactionSummary = {
   likes: number;
@@ -145,6 +148,10 @@ export type ThreadPublicPageController = {
   buildExportFile: (format: ThreadPublicationExportFormat) => Promise<ThreadExportFile>;
   publication: PublicThreadPublication | undefined;
   comments: PublicThreadComment[];
+  highlightedCommentId: string | null;
+  hasMoreComments: boolean;
+  isLoadingMoreComments: boolean;
+  loadMoreComments: () => void;
   reactions: ThreadReactionSummary | undefined;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -157,7 +164,12 @@ export type ThreadPublicPageController = {
 };
 
 export type ThreadCommunityPanelProps = {
+  slug: string;
   comments: PublicThreadComment[];
+  highlightedCommentId: string | null;
+  hasMoreComments: boolean;
+  isLoadingMoreComments: boolean;
+  loadMoreComments: () => void;
   reactions: ThreadReactionSummary | undefined;
   isAuthenticated: boolean;
   communityLoading: boolean;
@@ -185,7 +197,7 @@ export type ThreadPublicReportFormProps = {
 
 export type ThreadPublicQueries = {
   publication: UseQueryResult<PublicThreadPublication>;
-  comments: UseQueryResult<PublicThreadComment[]>;
+  comments: ThreadCommentsFeed;
   reactions: UseQueryResult<ThreadReactionSummary>;
 };
 

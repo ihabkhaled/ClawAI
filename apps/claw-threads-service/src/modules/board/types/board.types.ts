@@ -1,3 +1,4 @@
+import type { PublicAuthor } from '../../author-identity/types/author-identity.types';
 import type { BOARD_SORTS } from '../constants/board.constants';
 
 export type BoardSort = (typeof BOARD_SORTS)[number];
@@ -20,6 +21,8 @@ export interface BoardListParams extends BoardFilters {
 
 export interface BoardRow {
   readonly slug: string;
+  /** Id of the publisher; named by auth-service in `BoardService` and never sent to the client. */
+  readonly ownerId: string | null;
   readonly title: string;
   readonly excerpt: string;
   readonly contentLocale: string;
@@ -35,6 +38,8 @@ export interface BoardRow {
 
 export interface BoardItem {
   readonly slug: string;
+  /** The publisher's name; null when the account is gone or the name could not be read. */
+  readonly owner: PublicAuthor | null;
   readonly title: string;
   readonly excerpt: string;
   readonly contentLocale: string;

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { AuthorIdentityService } from '../../author-identity/services/author-identity.service';
 import { highlightRanges } from '../../board-index/utilities/board-match-ranges.utility';
 import { normalizeSearchText } from '../../board-index/utilities/board-search-normalizer.utility';
 import {
@@ -17,7 +18,10 @@ import { applyCorrections, charCount, tokenise } from '../utilities/board-text.u
 
 @Injectable()
 export class BoardService {
-  constructor(private readonly repository: BoardRepository) {}
+  constructor(
+    private readonly repository: BoardRepository,
+    private readonly identity: AuthorIdentityService,
+  ) {}
 
   /** `userId` null is a guest: same query and shape, `viewerReaction` always null. */
   async list(userId: string | null, query: BoardListQuery): Promise<BoardListResult> {
@@ -38,8 +42,10 @@ export class BoardService {
     ]);
     const didYouMean =
       q && total < BOARD_DID_YOU_MEAN_BELOW ? await this.didYouMean(q, query.lang) : null;
+    // One bounded name lookup for the whole page; a failure leaves every owner null.
+    const owners = await this.identity.resolveMany(rows.map(({ ownerId }) => ownerId));
     return {
-      items: rows.map(toItem),
+      items: rows.map((row) => toItem(row, owners)),
       meta: {
         total,
         page: query.page,

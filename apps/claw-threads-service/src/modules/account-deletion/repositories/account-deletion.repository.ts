@@ -53,6 +53,13 @@ export class AccountDeletionRepository {
           where: { authorId: userId },
           data: { authorId: null },
         });
+        // A reply keeps its text but forgets whom it answered; votes and mentions of the person go.
+        await transaction.threadPublicationComment.updateMany({
+          where: { replyToUserId: userId },
+          data: { replyToUserId: null },
+        });
+        await transaction.threadPublicationCommentReaction.deleteMany({ where: { userId } });
+        await transaction.threadPublicationCommentMention.deleteMany({ where: { userId } });
         await transaction.threadPublicationReaction.deleteMany({ where: { userId } });
         // A reader is only a keyed hash, but it is still removed with the account, and the
         // distinct-reader count of each publication they read goes down by one.

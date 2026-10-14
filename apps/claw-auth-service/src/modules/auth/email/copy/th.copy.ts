@@ -147,5 +147,77 @@ export const TH_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'คุณได้รับอีเมลนี้เพราะคุณเริ่ม Thread บน ClawAI คุณปิดอีเมลเหล่านี้ได้ในการตั้งค่าการแจ้งเตือน',
     },
+    [AuthEmailKind.THREAD_COMMENTED]: {
+      subject: 'มีความคิดเห็นใหม่ใน Thread ของคุณ',
+      preheader: 'มีคนเข้าร่วมการสนทนา',
+      heading: 'มีความคิดเห็นใหม่ใน Thread ของคุณ',
+      intro: 'มีคนแสดงความคิดเห็นใน “{value}”',
+      bodyLines: ['เปิด Thread เพื่ออ่านและร่วมสนทนา'],
+      actionLabel: 'เปิด Thread',
+      fallbackNote: 'หากปุ่มไม่ทำงาน กรุณาคัดลอกที่อยู่ด้านล่างนี้ไปวางในเบราว์เซอร์ของท่าน',
+      expiryNote: null,
+      securityNote:
+        'คุณได้รับข้อความนี้เพราะคุณมีส่วนร่วมใน Thread นี้บน ClawAI คุณปิดอีเมลเหล่านี้ได้ในการตั้งค่าการแจ้งเตือน',
+    },
+    [AuthEmailKind.THREAD_COMMENT_REPLIED]: {
+      subject: 'มีคนตอบกลับความคิดเห็นของคุณ',
+      preheader: 'เปิดการสนทนาเพื่ออ่านคำตอบ',
+      heading: 'มีคนตอบกลับความคิดเห็นของคุณ',
+      intro: 'มีการตอบกลับความคิดเห็นของคุณใน “{value}”',
+      bodyLines: ['เปิด Thread เพื่ออ่านและร่วมสนทนา'],
+      actionLabel: 'เปิด Thread',
+      fallbackNote: 'หากปุ่มไม่ทำงาน กรุณาคัดลอกที่อยู่ด้านล่างนี้ไปวางในเบราว์เซอร์ของท่าน',
+      expiryNote: null,
+      securityNote:
+        'คุณได้รับข้อความนี้เพราะคุณมีส่วนร่วมใน Thread นี้บน ClawAI คุณปิดอีเมลเหล่านี้ได้ในการตั้งค่าการแจ้งเตือน',
+    },
+    [AuthEmailKind.THREAD_MENTIONED]: {
+      subject: 'คุณถูกกล่าวถึงในความคิดเห็น',
+      preheader: 'มีคนแท็กคุณในการสนทนา',
+      heading: 'คุณถูกกล่าวถึงในความคิดเห็น',
+      intro: 'คุณถูกกล่าวถึงในความคิดเห็นใน “{value}”',
+      bodyLines: ['เปิด Thread เพื่ออ่านและร่วมสนทนา'],
+      actionLabel: 'เปิด Thread',
+      fallbackNote: 'หากปุ่มไม่ทำงาน กรุณาคัดลอกที่อยู่ด้านล่างนี้ไปวางในเบราว์เซอร์ของท่าน',
+      expiryNote: null,
+      securityNote:
+        'คุณได้รับข้อความนี้เพราะคุณมีส่วนร่วมใน Thread นี้บน ClawAI คุณปิดอีเมลเหล่านี้ได้ในการตั้งค่าการแจ้งเตือน',
+    },
+    [AuthEmailKind.THREAD_REACTED]: {
+      subject: 'Thread ของคุณได้รับการตอบสนอง',
+      preheader: 'ผู้อ่านตอบสนองต่อ Thread ของคุณ',
+      heading: 'Thread ของคุณได้รับการตอบสนอง',
+      intro: 'ผู้อ่านตอบสนองต่อ “{value}”',
+      bodyLines: ['เปิด Thread เพื่ออ่านและร่วมสนทนา'],
+      actionLabel: 'เปิด Thread',
+      fallbackNote: 'หากปุ่มไม่ทำงาน กรุณาคัดลอกที่อยู่ด้านล่างนี้ไปวางในเบราว์เซอร์ของท่าน',
+      expiryNote: null,
+      securityNote:
+        'คุณได้รับข้อความนี้เพราะคุณมีส่วนร่วมใน Thread นี้บน ClawAI คุณปิดอีเมลเหล่านี้ได้ในการตั้งค่าการแจ้งเตือน',
+    },
+    [AuthEmailKind.THREAD_COMMENT_REACTED]: {
+      subject: 'มีคนถูกใจความคิดเห็นของคุณ',
+      preheader: 'ความคิดเห็นของคุณได้รับการชื่นชม',
+      heading: 'มีคนถูกใจความคิดเห็นของคุณ',
+      intro: 'ความคิดเห็นของคุณใน “{value}” ได้รับการถูกใจ',
+      bodyLines: ['เปิด Thread เพื่ออ่านและร่วมสนทนา'],
+      actionLabel: 'เปิด Thread',
+      fallbackNote: 'หากปุ่มไม่ทำงาน กรุณาคัดลอกที่อยู่ด้านล่างนี้ไปวางในเบราว์เซอร์ของท่าน',
+      expiryNote: null,
+      securityNote:
+        'คุณได้รับข้อความนี้เพราะคุณมีส่วนร่วมใน Thread นี้บน ClawAI คุณปิดอีเมลเหล่านี้ได้ในการตั้งค่าการแจ้งเตือน',
+    },
+    [AuthEmailKind.THREAD_CHANGE_REQUESTED]: {
+      subject: 'มีข้อเสนอแก้ไข Thread ของคุณ',
+      preheader: 'ตรวจสอบข้อเสนอแล้วยอมรับหรือปฏิเสธ',
+      heading: 'มีข้อเสนอแก้ไข Thread ของคุณ',
+      intro: 'ผู้อ่านเสนอการแก้ไข “{value}”',
+      bodyLines: ['เปิด Thread เพื่ออ่านและร่วมสนทนา'],
+      actionLabel: 'เปิด Thread',
+      fallbackNote: 'หากปุ่มไม่ทำงาน กรุณาคัดลอกที่อยู่ด้านล่างนี้ไปวางในเบราว์เซอร์ของท่าน',
+      expiryNote: null,
+      securityNote:
+        'คุณได้รับข้อความนี้เพราะคุณมีส่วนร่วมใน Thread นี้บน ClawAI คุณปิดอีเมลเหล่านี้ได้ในการตั้งค่าการแจ้งเตือน',
+    },
   },
 };

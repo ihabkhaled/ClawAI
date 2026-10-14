@@ -157,19 +157,64 @@ model ThreadPublicationRevision {
 }
 
 model ThreadPublicationComment {
-  id            String                    @id @default(cuid())
-  publicationId String                    @map("publication_id")
-  publication   ThreadPublication         @relation(fields: [publicationId], references: [id], onDelete: Cascade)
-  authorId      String?                   @map("author_id")
-  content       String                    @db.VarChar(5000)
-  status        PublicationCommentStatus  @default(VISIBLE)
-  createdAt     DateTime                  @default(now()) @map("created_at")
-  updatedAt     DateTime                  @updatedAt @map("updated_at")
+  id            String                             @id @default(cuid())
+  publicationId String                             @map("publication_id")
+  publication   ThreadPublication                  @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  authorId      String?                            @map("author_id")
+  /// The comment this one answers (null for a top-level comment).
+  parentId      String?                            @map("parent_id")
+  parent        ThreadPublicationComment?          @relation("CommentParent", fields: [parentId], references: [id], onDelete: Cascade)
+  children      ThreadPublicationComment[]         @relation("CommentParent")
+  /// The top-level comment of the conversation, derived on the server (null for a top-level comment).
+  rootId        String?                            @map("root_id")
+  root          ThreadPublicationComment?          @relation("CommentRoot", fields: [rootId], references: [id], onDelete: Cascade)
+  replies       ThreadPublicationComment[]         @relation("CommentRoot")
+  /// Author of the comment replied to, kept so "replying to @name" survives a parent edit; null once deleted.
+  replyToUserId String?                            @map("reply_to_user_id")
+  content       String                             @db.VarChar(5000)
+  status        PublicationCommentStatus           @default(VISIBLE)
+  createdAt     DateTime                           @default(now()) @map("created_at")
+  updatedAt     DateTime                           @updatedAt @map("updated_at")
   reports       ThreadPublicationReport[]
+  reactions     ThreadPublicationCommentReaction[]
+  mentions      ThreadPublicationCommentMention[]
 
   @@index([publicationId, status, createdAt])
+  @@index([publicationId, rootId, createdAt])
+  @@index([rootId, status, createdAt, id])
+  @@index([parentId])
   @@index([authorId, createdAt])
   @@map("thread_publication_comments")
+}
+
+/// One like or dislike of one comment by one signed-in user (ADR-179). Deleted with the account.
+model ThreadPublicationCommentReaction {
+  id        String                   @id @default(cuid())
+  commentId String                   @map("comment_id")
+  comment   ThreadPublicationComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    String                   @map("user_id")
+  value     PublicationReactionValue
+  createdAt DateTime                 @default(now()) @map("created_at")
+  updatedAt DateTime                 @updatedAt @map("updated_at")
+
+  @@unique([commentId, userId])
+  @@index([commentId, value])
+  @@index([userId])
+  @@map("thread_publication_comment_reactions")
+}
+
+/// A resolved @mention: only an existing, active account other than the author. The username is a
+/// snapshot for linking; the row is deleted with the mentioned account.
+model ThreadPublicationCommentMention {
+  commentId String                   @map("comment_id")
+  comment   ThreadPublicationComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    String                   @map("user_id")
+  username  String
+  createdAt DateTime                 @default(now()) @map("created_at")
+
+  @@id([commentId, userId])
+  @@index([userId])
+  @@map("thread_publication_comment_mentions")
 }
 
 model ThreadPublicationReaction {

@@ -1317,6 +1317,16 @@
       },
       {
         "method": "GET",
+        "route": "/internal/users/by-username/:username",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/users/public-profiles",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users-internal.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/notifications",
         "source": "apps/claw-auth-service/src/modules/notifications/controllers/notifications.controller.ts"
       },
@@ -3981,6 +3991,21 @@
       },
       {
         "method": "DELETE",
+        "route": "/thread-publications/public/:slug/comments/:commentId/reaction",
+        "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-community.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/thread-publications/public/:slug/comments/:commentId/reaction",
+        "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-community.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/thread-publications/public/:slug/comments/:rootId/replies",
+        "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-community.controller.ts"
+      },
+      {
+        "method": "DELETE",
         "route": "/thread-publications/public/:slug/reactions",
         "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-community.controller.ts"
       },
@@ -4579,5 +4604,5 @@
     ]
   },
   "generated": true,
-  "total": 907
+  "total": 912
 }

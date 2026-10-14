@@ -59,7 +59,12 @@ export function ThreadPublicPageView({ state }: ThreadPublicPageViewProps): Reac
         showPdf
       />
       <ThreadPublicCommunity
+        slug={state.publication.slug}
         comments={state.comments}
+        highlightedCommentId={state.highlightedCommentId}
+        hasMoreComments={state.hasMoreComments}
+        isLoadingMoreComments={state.isLoadingMoreComments}
+        loadMoreComments={state.loadMoreComments}
         reactions={state.reactions}
         isAuthenticated={state.isAuthenticated}
         communityLoading={state.communityLoading}

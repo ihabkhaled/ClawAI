@@ -153,5 +153,77 @@ export const PT_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'Recebe esta mensagem porque iniciou um Thread no ClawAI. Pode desativar estes e-mails nas definições de notificações.',
     },
+    [AuthEmailKind.THREAD_COMMENTED]: {
+      subject: 'Novo comentário no seu Thread',
+      preheader: 'Alguém entrou na conversa.',
+      heading: 'Novo comentário no seu Thread',
+      intro: 'Alguém comentou em “{value}”.',
+      bodyLines: ['Abra o Thread para lê-lo e participar da conversa.'],
+      actionLabel: 'Abrir o Thread',
+      fallbackNote: 'Se o botão não funcionar, copie o endereço abaixo para o seu navegador:',
+      expiryNote: null,
+      securityNote:
+        'Você recebeu esta mensagem porque participou deste Thread no ClawAI. Você pode desativar estes e-mails nas configurações de notificação.',
+    },
+    [AuthEmailKind.THREAD_COMMENT_REPLIED]: {
+      subject: 'Alguém respondeu ao seu comentário',
+      preheader: 'Abra a conversa para ler a resposta.',
+      heading: 'Alguém respondeu ao seu comentário',
+      intro: 'Uma resposta foi adicionada ao seu comentário em “{value}”.',
+      bodyLines: ['Abra o Thread para lê-lo e participar da conversa.'],
+      actionLabel: 'Abrir o Thread',
+      fallbackNote: 'Se o botão não funcionar, copie o endereço abaixo para o seu navegador:',
+      expiryNote: null,
+      securityNote:
+        'Você recebeu esta mensagem porque participou deste Thread no ClawAI. Você pode desativar estes e-mails nas configurações de notificação.',
+    },
+    [AuthEmailKind.THREAD_MENTIONED]: {
+      subject: 'Você foi mencionado em um comentário',
+      preheader: 'Alguém marcou você em uma conversa.',
+      heading: 'Você foi mencionado em um comentário',
+      intro: 'Você foi mencionado em um comentário em “{value}”.',
+      bodyLines: ['Abra o Thread para lê-lo e participar da conversa.'],
+      actionLabel: 'Abrir o Thread',
+      fallbackNote: 'Se o botão não funcionar, copie o endereço abaixo para o seu navegador:',
+      expiryNote: null,
+      securityNote:
+        'Você recebeu esta mensagem porque participou deste Thread no ClawAI. Você pode desativar estes e-mails nas configurações de notificação.',
+    },
+    [AuthEmailKind.THREAD_REACTED]: {
+      subject: 'Seu Thread recebeu uma reação',
+      preheader: 'Um leitor reagiu ao seu Thread.',
+      heading: 'Seu Thread recebeu uma reação',
+      intro: 'Um leitor reagiu a “{value}”.',
+      bodyLines: ['Abra o Thread para lê-lo e participar da conversa.'],
+      actionLabel: 'Abrir o Thread',
+      fallbackNote: 'Se o botão não funcionar, copie o endereço abaixo para o seu navegador:',
+      expiryNote: null,
+      securityNote:
+        'Você recebeu esta mensagem porque participou deste Thread no ClawAI. Você pode desativar estes e-mails nas configurações de notificação.',
+    },
+    [AuthEmailKind.THREAD_COMMENT_REACTED]: {
+      subject: 'Alguém curtiu o seu comentário',
+      preheader: 'Seu comentário está sendo apreciado.',
+      heading: 'Alguém curtiu o seu comentário',
+      intro: 'Seu comentário em “{value}” recebeu uma curtida.',
+      bodyLines: ['Abra o Thread para lê-lo e participar da conversa.'],
+      actionLabel: 'Abrir o Thread',
+      fallbackNote: 'Se o botão não funcionar, copie o endereço abaixo para o seu navegador:',
+      expiryNote: null,
+      securityNote:
+        'Você recebeu esta mensagem porque participou deste Thread no ClawAI. Você pode desativar estes e-mails nas configurações de notificação.',
+    },
+    [AuthEmailKind.THREAD_CHANGE_REQUESTED]: {
+      subject: 'Uma alteração foi sugerida para o seu Thread',
+      preheader: 'Revise a sugestão e aceite ou recuse.',
+      heading: 'Uma alteração foi sugerida para o seu Thread',
+      intro: 'Um leitor sugeriu uma alteração em “{value}”.',
+      bodyLines: ['Abra o Thread para lê-lo e participar da conversa.'],
+      actionLabel: 'Abrir o Thread',
+      fallbackNote: 'Se o botão não funcionar, copie o endereço abaixo para o seu navegador:',
+      expiryNote: null,
+      securityNote:
+        'Você recebeu esta mensagem porque participou deste Thread no ClawAI. Você pode desativar estes e-mails nas configurações de notificação.',
+    },
   },
 };

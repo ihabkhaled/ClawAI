@@ -1327,7 +1327,8 @@ export type TranslationDictionary = {
       };
     };
   } & ThreadBoardLocaleTranslation &
-    ThreadPublicBoardLocaleTranslation;
+    ThreadPublicBoardLocaleTranslation &
+    ThreadCommunityLocaleTranslation;
   receipt: {
     openLabel: string;
     contextUsed: string;
@@ -7528,6 +7529,12 @@ export type NotificationsLocaleTranslation = {
     THREAD_READY_FOR_REVIEW: NotificationKindTranslation;
     THREAD_PUBLISHED: NotificationKindTranslation;
     THREAD_FAILED: NotificationKindTranslation;
+    THREAD_COMMENTED: NotificationKindTranslation;
+    THREAD_COMMENT_REPLIED: NotificationKindTranslation;
+    THREAD_MENTIONED: NotificationKindTranslation;
+    THREAD_REACTED: NotificationKindTranslation;
+    THREAD_COMMENT_REACTED: NotificationKindTranslation;
+    THREAD_CHANGE_REQUESTED: NotificationKindTranslation;
   };
   preferences: {
     title: string;
@@ -8014,6 +8021,25 @@ export type ThreadBoardLocaleTranslation = {
   threadBoardOpenPublic: string;
   threadBoardCopyLink: string;
   threadBoardViewOnBoard: string;
+};
+
+/** Flat `chat.threadCommunity*` keys for threaded comments; see thread-community-translations.ts. */
+export type ThreadCommunityLocaleTranslation = {
+  threadCommunityMember: string;
+  threadCommunityReply: string;
+  threadCommunityReplyingTo: string;
+  threadCommunityReplyLabel: string;
+  threadCommunityPostReply: string;
+  threadCommunityCancel: string;
+  threadCommunityReplyFailed: string;
+  threadCommunityViewMoreReplies: string;
+  threadCommunityRepliesFailed: string;
+  threadCommunityLoadMoreComments: string;
+  threadCommunityLikeAria: string;
+  threadCommunityDislikeAria: string;
+  threadCommunitySignInToReact: string;
+  threadCommunityReactionFailed: string;
+  threadCommunityRemovedComment: string;
 };
 
 /** Flat `chat.threadPublicBoard*` keys for the public, read-only Threads board; see thread-public-board-translations.ts. */

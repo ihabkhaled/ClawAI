@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
+import { queryKeys } from '@/repositories/shared/query-keys';
 import { threadPublicationsRepository } from '@/repositories/threads/thread-publications.repository';
 import type { PublicThreadPublication } from '@/types/thread-publication.types';
 
@@ -20,7 +21,7 @@ export function useThreadPublicView(slug: string, isAuthenticated: boolean): voi
           return;
         }
         queryClient.setQueryData<PublicThreadPublication>(
-          ['thread-publications', 'public', slug],
+          queryKeys.threadPublications.publicPage(slug),
           (current) => (current ? { ...current, ...counts } : current),
         );
       })

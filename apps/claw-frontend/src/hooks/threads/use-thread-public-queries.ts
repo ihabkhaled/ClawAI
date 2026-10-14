@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { useThreadCommentsFeed } from '@/hooks/threads/use-thread-comments-feed';
+import { queryKeys } from '@/repositories/shared/query-keys';
 import { threadPublicationsRepository } from '@/repositories/threads/thread-publications.repository';
 import type {
   PublicThreadPublication,
@@ -11,18 +13,14 @@ export function useThreadPublicQueries(
   initialPublication: PublicThreadPublication,
 ): ThreadPublicQueries {
   const publication = useQuery({
-    queryKey: ['thread-publications', 'public', slug],
+    queryKey: queryKeys.threadPublications.publicPage(slug),
     queryFn: () => threadPublicationsRepository.getPublic(slug),
     initialData: initialPublication,
     enabled: slug !== '',
   });
-  const comments = useQuery({
-    queryKey: ['thread-publications', 'public', slug, 'comments'],
-    queryFn: () => threadPublicationsRepository.listPublicComments(slug),
-    enabled: slug !== '',
-  });
+  const comments = useThreadCommentsFeed(slug);
   const reactions = useQuery({
-    queryKey: ['thread-publications', 'public', slug, 'reactions'],
+    queryKey: queryKeys.threadPublications.reactions(slug),
     queryFn: () => threadPublicationsRepository.getPublicReactionSummary(slug),
     enabled: slug !== '',
   });

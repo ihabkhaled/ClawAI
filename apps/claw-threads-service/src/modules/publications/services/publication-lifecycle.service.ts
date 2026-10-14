@@ -32,7 +32,6 @@ import type {
   PublicationExport,
   PublicationRevisionReviewState,
   PublicationStartIdentity,
-  PublicPublication,
   PublishedPublication,
   RevisionReviewSaver,
 } from '../types/publication.types';
@@ -458,12 +457,6 @@ export class PublicationLifecycleService {
       judgeScore,
       criticScore,
     });
-  }
-
-  async getPublicPublication(slug: string): Promise<PublicPublication> {
-    const publication = await this.publications.findPublic(slug);
-    if (!publication) throw new NotFoundException('Publication not found');
-    return publication;
   }
 
   async unpublish(publicationId: string, ownerId: string): Promise<{ unpublished: true }> {

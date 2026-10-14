@@ -1,7 +1,12 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ThreadPublicationReportReason } from '@/enums/thread-publication-report-reason.enum';
+import {
+  COMMUNITY_PAGING_PROPS,
+  threadCommentFixture,
+} from '@/test/fixtures/thread-comment.fixture';
 import type {
   ThreadCommunityActionState,
   ThreadReactionSummary,
@@ -64,15 +69,18 @@ describe('the public Thread page for a guest', () => {
 
   it('shows counts, and a sign-in prompt for every action instead of the controls', () => {
     render(
-      <ThreadPublicCommunity
-        comments={[{ id: 'c1', content: 'Nice.', createdAt: '2026-10-05T12:00:00.000Z' }]}
-        reactions={REACTIONS}
-        isAuthenticated={false}
-        communityLoading={false}
-        communityError={false}
-        loginHref={LOGIN}
-        actions={actions()}
-      />,
+      <QueryClientProvider client={new QueryClient()}>
+        <ThreadPublicCommunity
+          {...COMMUNITY_PAGING_PROPS}
+          comments={[threadCommentFixture({ id: 'c1', content: 'Nice.' })]}
+          reactions={REACTIONS}
+          isAuthenticated={false}
+          communityLoading={false}
+          communityError={false}
+          loginHref={LOGIN}
+          actions={actions()}
+        />
+      </QueryClientProvider>,
     );
 
     expect(screen.getByText('Nice.')).toBeInTheDocument();
@@ -90,15 +98,18 @@ describe('the public Thread page for a guest', () => {
 
   it('does not show the guest prompts to a signed-in reader', () => {
     render(
-      <ThreadPublicCommunity
-        comments={[]}
-        reactions={REACTIONS}
-        isAuthenticated
-        communityLoading={false}
-        communityError={false}
-        loginHref={LOGIN}
-        actions={actions()}
-      />,
+      <QueryClientProvider client={new QueryClient()}>
+        <ThreadPublicCommunity
+          {...COMMUNITY_PAGING_PROPS}
+          comments={[]}
+          reactions={REACTIONS}
+          isAuthenticated
+          communityLoading={false}
+          communityError={false}
+          loginHref={LOGIN}
+          actions={actions()}
+        />
+      </QueryClientProvider>,
     );
 
     expect(screen.queryByTestId('board-guest-prompts')).toBeNull();

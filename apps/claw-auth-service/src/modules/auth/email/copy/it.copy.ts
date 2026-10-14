@@ -153,5 +153,77 @@ export const IT_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'Ricevi questo messaggio perché hai avviato un Thread su ClawAI. Puoi disattivare queste e-mail nelle impostazioni delle notifiche.',
     },
+    [AuthEmailKind.THREAD_COMMENTED]: {
+      subject: 'Nuovo commento sul tuo Thread',
+      preheader: 'Qualcuno si è unito alla discussione.',
+      heading: 'Nuovo commento sul tuo Thread',
+      intro: 'Qualcuno ha commentato «{value}».',
+      bodyLines: ['Apri il Thread per leggerlo e unirti alla conversazione.'],
+      actionLabel: 'Apri il Thread',
+      fallbackNote: 'Se il pulsante non funziona, copi il seguente indirizzo nel Suo browser:',
+      expiryNote: null,
+      securityNote:
+        'Ricevi questo messaggio perché hai partecipato a questo Thread su ClawAI. Puoi disattivare queste e-mail nelle impostazioni delle notifiche.',
+    },
+    [AuthEmailKind.THREAD_COMMENT_REPLIED]: {
+      subject: 'Qualcuno ha risposto al tuo commento',
+      preheader: 'Apri la conversazione per leggere la risposta.',
+      heading: 'Qualcuno ha risposto al tuo commento',
+      intro: 'È stata aggiunta una risposta al tuo commento su «{value}».',
+      bodyLines: ['Apri il Thread per leggerlo e unirti alla conversazione.'],
+      actionLabel: 'Apri il Thread',
+      fallbackNote: 'Se il pulsante non funziona, copi il seguente indirizzo nel Suo browser:',
+      expiryNote: null,
+      securityNote:
+        'Ricevi questo messaggio perché hai partecipato a questo Thread su ClawAI. Puoi disattivare queste e-mail nelle impostazioni delle notifiche.',
+    },
+    [AuthEmailKind.THREAD_MENTIONED]: {
+      subject: 'Sei stato menzionato in un commento',
+      preheader: 'Qualcuno ti ha taggato in una discussione.',
+      heading: 'Sei stato menzionato in un commento',
+      intro: 'Sei stato menzionato in un commento su «{value}».',
+      bodyLines: ['Apri il Thread per leggerlo e unirti alla conversazione.'],
+      actionLabel: 'Apri il Thread',
+      fallbackNote: 'Se il pulsante non funziona, copi il seguente indirizzo nel Suo browser:',
+      expiryNote: null,
+      securityNote:
+        'Ricevi questo messaggio perché hai partecipato a questo Thread su ClawAI. Puoi disattivare queste e-mail nelle impostazioni delle notifiche.',
+    },
+    [AuthEmailKind.THREAD_REACTED]: {
+      subject: 'Il tuo Thread ha ricevuto una reazione',
+      preheader: 'Un lettore ha reagito al tuo Thread.',
+      heading: 'Il tuo Thread ha ricevuto una reazione',
+      intro: 'Un lettore ha reagito a «{value}».',
+      bodyLines: ['Apri il Thread per leggerlo e unirti alla conversazione.'],
+      actionLabel: 'Apri il Thread',
+      fallbackNote: 'Se il pulsante non funziona, copi il seguente indirizzo nel Suo browser:',
+      expiryNote: null,
+      securityNote:
+        'Ricevi questo messaggio perché hai partecipato a questo Thread su ClawAI. Puoi disattivare queste e-mail nelle impostazioni delle notifiche.',
+    },
+    [AuthEmailKind.THREAD_COMMENT_REACTED]: {
+      subject: 'A qualcuno è piaciuto il tuo commento',
+      preheader: 'Il tuo commento è apprezzato.',
+      heading: 'A qualcuno è piaciuto il tuo commento',
+      intro: 'Il tuo commento su «{value}» ha ricevuto un mi piace.',
+      bodyLines: ['Apri il Thread per leggerlo e unirti alla conversazione.'],
+      actionLabel: 'Apri il Thread',
+      fallbackNote: 'Se il pulsante non funziona, copi il seguente indirizzo nel Suo browser:',
+      expiryNote: null,
+      securityNote:
+        'Ricevi questo messaggio perché hai partecipato a questo Thread su ClawAI. Puoi disattivare queste e-mail nelle impostazioni delle notifiche.',
+    },
+    [AuthEmailKind.THREAD_CHANGE_REQUESTED]: {
+      subject: 'È stata suggerita una modifica al tuo Thread',
+      preheader: 'Esamina il suggerimento e accettalo o rifiutalo.',
+      heading: 'È stata suggerita una modifica al tuo Thread',
+      intro: 'Un lettore ha suggerito una modifica a «{value}».',
+      bodyLines: ['Apri il Thread per leggerlo e unirti alla conversazione.'],
+      actionLabel: 'Apri il Thread',
+      fallbackNote: 'Se il pulsante non funziona, copi il seguente indirizzo nel Suo browser:',
+      expiryNote: null,
+      securityNote:
+        'Ricevi questo messaggio perché hai partecipato a questo Thread su ClawAI. Puoi disattivare queste e-mail nelle impostazioni delle notifiche.',
+    },
   },
 };

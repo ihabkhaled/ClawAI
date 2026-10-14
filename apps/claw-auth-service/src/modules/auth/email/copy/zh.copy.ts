@@ -135,5 +135,77 @@ export const ZH_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         '你收到此邮件，是因为你在 ClawAI 上发起了 Thread。你可以在通知设置中关闭这些邮件。',
     },
+    [AuthEmailKind.THREAD_COMMENTED]: {
+      subject: '您的 Thread 有新评论',
+      preheader: '有人加入了讨论。',
+      heading: '您的 Thread 有新评论',
+      intro: '有人评论了“{value}”。',
+      bodyLines: ['打开 Thread 阅读并加入讨论。'],
+      actionLabel: '打开 Thread',
+      fallbackNote: '如果按钮无法使用，请复制下方地址并粘贴至您的浏览器中打开。',
+      expiryNote: null,
+      securityNote:
+        '您收到此邮件，是因为您参与了 ClawAI 上的这个 Thread。您可以在通知设置中关闭这些邮件。',
+    },
+    [AuthEmailKind.THREAD_COMMENT_REPLIED]: {
+      subject: '有人回复了您的评论',
+      preheader: '打开对话查看回复。',
+      heading: '有人回复了您的评论',
+      intro: '您在“{value}”中的评论收到了一条回复。',
+      bodyLines: ['打开 Thread 阅读并加入讨论。'],
+      actionLabel: '打开 Thread',
+      fallbackNote: '如果按钮无法使用，请复制下方地址并粘贴至您的浏览器中打开。',
+      expiryNote: null,
+      securityNote:
+        '您收到此邮件，是因为您参与了 ClawAI 上的这个 Thread。您可以在通知设置中关闭这些邮件。',
+    },
+    [AuthEmailKind.THREAD_MENTIONED]: {
+      subject: '您在评论中被提及',
+      preheader: '有人在讨论中标记了您。',
+      heading: '您在评论中被提及',
+      intro: '您在“{value}”的一条评论中被提及。',
+      bodyLines: ['打开 Thread 阅读并加入讨论。'],
+      actionLabel: '打开 Thread',
+      fallbackNote: '如果按钮无法使用，请复制下方地址并粘贴至您的浏览器中打开。',
+      expiryNote: null,
+      securityNote:
+        '您收到此邮件，是因为您参与了 ClawAI 上的这个 Thread。您可以在通知设置中关闭这些邮件。',
+    },
+    [AuthEmailKind.THREAD_REACTED]: {
+      subject: '您的 Thread 收到了回应',
+      preheader: '有读者对您的 Thread 做出了回应。',
+      heading: '您的 Thread 收到了回应',
+      intro: '有读者回应了“{value}”。',
+      bodyLines: ['打开 Thread 阅读并加入讨论。'],
+      actionLabel: '打开 Thread',
+      fallbackNote: '如果按钮无法使用，请复制下方地址并粘贴至您的浏览器中打开。',
+      expiryNote: null,
+      securityNote:
+        '您收到此邮件，是因为您参与了 ClawAI 上的这个 Thread。您可以在通知设置中关闭这些邮件。',
+    },
+    [AuthEmailKind.THREAD_COMMENT_REACTED]: {
+      subject: '有人赞了您的评论',
+      preheader: '您的评论受到了认可。',
+      heading: '有人赞了您的评论',
+      intro: '您在“{value}”中的评论获得了一个赞。',
+      bodyLines: ['打开 Thread 阅读并加入讨论。'],
+      actionLabel: '打开 Thread',
+      fallbackNote: '如果按钮无法使用，请复制下方地址并粘贴至您的浏览器中打开。',
+      expiryNote: null,
+      securityNote:
+        '您收到此邮件，是因为您参与了 ClawAI 上的这个 Thread。您可以在通知设置中关闭这些邮件。',
+    },
+    [AuthEmailKind.THREAD_CHANGE_REQUESTED]: {
+      subject: '有人为您的 Thread 提出了修改建议',
+      preheader: '查看建议，然后接受或拒绝。',
+      heading: '有人为您的 Thread 提出了修改建议',
+      intro: '有读者对“{value}”提出了修改建议。',
+      bodyLines: ['打开 Thread 阅读并加入讨论。'],
+      actionLabel: '打开 Thread',
+      fallbackNote: '如果按钮无法使用，请复制下方地址并粘贴至您的浏览器中打开。',
+      expiryNote: null,
+      securityNote:
+        '您收到此邮件，是因为您参与了 ClawAI 上的这个 Thread。您可以在通知设置中关闭这些邮件。',
+    },
   },
 };

@@ -22,9 +22,9 @@ change type needs (`rules/23-git-commits-hooks-and-release-gates.md`, gate matri
 ## Ownership (generated)
 - Port: 4019
 - Database: postgresql
-- Prisma models: ThreadBoardWord, ThreadDeletedAccount, ThreadPublication, ThreadPublicationChangeRequest, ThreadPublicationComment, ThreadPublicationReaction, ThreadPublicationReader, ThreadPublicationReport, ThreadPublicationRevision, ThreadPublicationSearchDoc, ThreadPublicationView
-- API endpoints: 36 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 88 (vitest)
+- Prisma models: ThreadBoardWord, ThreadDeletedAccount, ThreadPublication, ThreadPublicationChangeRequest, ThreadPublicationComment, ThreadPublicationCommentMention, ThreadPublicationCommentReaction, ThreadPublicationReaction, ThreadPublicationReader, ThreadPublicationReport, ThreadPublicationRevision, ThreadPublicationSearchDoc, ThreadPublicationView
+- API endpoints: 39 (see `.ai/manifests/api-endpoints.json`)
+- Test files: 101 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react';
 
+import { ThreadAuthorBadge } from '@/components/threads/community/thread-author-badge';
 import { ThreadReaderBody } from '@/components/threads/thread-reader-body';
 import type { ThreadPublicArticleProps } from '@/types/thread-publication.types';
 import { threadContentDirection } from '@/utilities/thread-content-direction.utility';
@@ -19,6 +20,7 @@ export function ThreadPublicArticle({
     >
       <header className="mb-6 flex flex-col gap-3">
         <h1 className="text-3xl font-bold tracking-tight">{publication.title}</h1>
+        {publication.owner ? <ThreadAuthorBadge author={publication.owner} /> : null}
         <p className="text-muted-foreground text-sm">
           {publishedLabel}{' '}
           <time dateTime={publication.publishedAt}>{publication.publishedAt.slice(0, 10)}</time>

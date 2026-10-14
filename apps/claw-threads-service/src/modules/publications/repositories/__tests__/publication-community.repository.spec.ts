@@ -1,68 +1,6 @@
 import { PublicationsRepository } from '../publications.repository';
 
-function publicWhere(slug: string) {
-  return expect.objectContaining({
-    slug,
-    status: 'PUBLISHED',
-    revisions: {
-      some: {
-        reviewStatus: 'OWNER_APPROVED',
-        safetyStatus: 'APPROVED',
-        indexEligible: true,
-      },
-    },
-  });
-}
-
 describe('PublicationsRepository community data', () => {
-  it('creates bounded public comments without returning author identity', async () => {
-    const transaction = {
-      threadPublication: { findFirst: vi.fn().mockResolvedValue({ id: 'publication-1' }) },
-      threadPublicationComment: {
-        create: vi.fn().mockResolvedValue({
-          id: 'comment-1',
-          content: 'Helpful detail',
-          createdAt: new Date('2026-10-05T00:00:00Z'),
-        }),
-      },
-    };
-    const prisma = {
-      $transaction: vi.fn((callback: (tx: unknown) => unknown) => callback(transaction)),
-    };
-    const repository = new PublicationsRepository(prisma as never);
-
-    const result = await repository.createPublicComment('public-slug', 'user-1', {
-      content: 'Helpful detail',
-    });
-
-    expect(transaction.threadPublication.findFirst).toHaveBeenCalledWith({
-      where: publicWhere('public-slug'),
-      select: { id: true },
-    });
-    expect(transaction.threadPublicationComment.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: { publicationId: 'publication-1', authorId: 'user-1', content: 'Helpful detail' },
-      }),
-    );
-    expect(result).not.toHaveProperty('authorId');
-  });
-
-  it('does not create comments for an unpublished or ineligible publication', async () => {
-    const transaction = {
-      threadPublication: { findFirst: vi.fn().mockResolvedValue(null) },
-      threadPublicationComment: { create: vi.fn() },
-    };
-    const prisma = {
-      $transaction: vi.fn((callback: (tx: unknown) => unknown) => callback(transaction)),
-    };
-    const repository = new PublicationsRepository(prisma as never);
-
-    await expect(
-      repository.createPublicComment('hidden-slug', 'user-1', { content: 'Hello' }),
-    ).resolves.toBeNull();
-    expect(transaction.threadPublicationComment.create).not.toHaveBeenCalled();
-  });
-
   it('upserts one reaction per user and returns aggregate counts', async () => {
     const transaction = {
       threadPublication: { findFirst: vi.fn().mockResolvedValue({ id: 'publication-1' }) },

@@ -219,6 +219,8 @@
       "ThreadPublication",
       "ThreadPublicationChangeRequest",
       "ThreadPublicationComment",
+      "ThreadPublicationCommentMention",
+      "ThreadPublicationCommentReaction",
       "ThreadPublicationReaction",
       "ThreadPublicationReader",
       "ThreadPublicationReport",

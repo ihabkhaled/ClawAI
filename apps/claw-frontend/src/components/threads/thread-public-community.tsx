@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { FormEvent, ReactElement } from 'react';
 
 import { BoardGuestPrompts } from '@/components/threads/board/board-guest-prompts';
+import { ThreadCommentThread } from '@/components/threads/community/thread-comment-thread';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ThreadPublicationReaction } from '@/enums/thread-publication-reaction.enum';
@@ -13,7 +14,12 @@ import type { ThreadCommunityPanelProps } from '@/types/thread-publication.types
 import { ThreadPublicReportForm } from './thread-public-report-form';
 
 export function ThreadPublicCommunity({
+  slug,
   comments,
+  highlightedCommentId,
+  hasMoreComments,
+  isLoadingMoreComments,
+  loadMoreComments,
   reactions,
   isAuthenticated,
   communityLoading,
@@ -83,33 +89,33 @@ export function ThreadPublicCommunity({
           {t('chat.threadPublicNoComments')}
         </p>
       ) : null}
-      {comments.map((comment) => (
-        <article
-          key={comment.id}
-          className="border-border bg-card flex flex-col gap-3 rounded-lg border p-4"
+      {comments.length > 0 ? (
+        <ul className="flex flex-col gap-4" data-testid="thread-comment-list">
+          {comments.map((comment) => (
+            <ThreadCommentThread
+              key={comment.id}
+              slug={slug}
+              comment={comment}
+              isAuthenticated={isAuthenticated}
+              loginHref={loginHref}
+              highlightedId={highlightedCommentId}
+              actions={actions}
+            />
+          ))}
+        </ul>
+      ) : null}
+      {hasMoreComments ? (
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full sm:w-fit"
+          onClick={loadMoreComments}
+          disabled={isLoadingMoreComments}
+          isLoading={isLoadingMoreComments}
         >
-          <p className="break-words whitespace-pre-wrap">{comment.content}</p>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <time className="text-muted-foreground text-xs" dateTime={comment.createdAt}>
-              {comment.createdAt.slice(0, 10)}
-            </time>
-            {isAuthenticated ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => actions.setReportTarget(comment.id)}
-              >
-                <Flag className="h-4 w-4" aria-hidden="true" />
-                {t('chat.threadPublicReportComment')}
-              </Button>
-            ) : null}
-          </div>
-          {actions.reportTarget === comment.id ? (
-            <ThreadPublicReportForm commentId={comment.id} actions={actions} />
-          ) : null}
-        </article>
-      ))}
+          {t('chat.threadCommunityLoadMoreComments')}
+        </Button>
+      ) : null}
       {isAuthenticated ? (
         <>
           <form

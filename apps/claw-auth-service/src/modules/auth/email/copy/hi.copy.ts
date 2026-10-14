@@ -151,5 +151,77 @@ export const HI_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'आपको यह संदेश इसलिए मिला है क्योंकि आपने ClawAI पर एक Thread शुरू किया था। आप सूचना सेटिंग में इन ईमेल को बंद कर सकते हैं।',
     },
+    [AuthEmailKind.THREAD_COMMENTED]: {
+      subject: 'आपके Thread पर नई टिप्पणी',
+      preheader: 'किसी ने चर्चा में हिस्सा लिया।',
+      heading: 'आपके Thread पर नई टिप्पणी',
+      intro: 'किसी ने “{value}” पर टिप्पणी की।',
+      bodyLines: ['Thread खोलकर उसे पढ़ें और चर्चा में शामिल हों।'],
+      actionLabel: 'Thread खोलें',
+      fallbackNote: 'यदि बटन काम न करे, तो नीचे दिया गया पता अपने ब्राउज़र में कॉपी करें:',
+      expiryNote: null,
+      securityNote:
+        'आपको यह संदेश इसलिए मिला है क्योंकि आपने ClawAI पर इस Thread में हिस्सा लिया है। आप सूचना सेटिंग में जाकर ये ईमेल बंद कर सकते हैं।',
+    },
+    [AuthEmailKind.THREAD_COMMENT_REPLIED]: {
+      subject: 'किसी ने आपकी टिप्पणी का जवाब दिया',
+      preheader: 'जवाब पढ़ने के लिए बातचीत खोलें।',
+      heading: 'किसी ने आपकी टिप्पणी का जवाब दिया',
+      intro: '“{value}” पर आपकी टिप्पणी का जवाब जोड़ा गया।',
+      bodyLines: ['Thread खोलकर उसे पढ़ें और चर्चा में शामिल हों।'],
+      actionLabel: 'Thread खोलें',
+      fallbackNote: 'यदि बटन काम न करे, तो नीचे दिया गया पता अपने ब्राउज़र में कॉपी करें:',
+      expiryNote: null,
+      securityNote:
+        'आपको यह संदेश इसलिए मिला है क्योंकि आपने ClawAI पर इस Thread में हिस्सा लिया है। आप सूचना सेटिंग में जाकर ये ईमेल बंद कर सकते हैं।',
+    },
+    [AuthEmailKind.THREAD_MENTIONED]: {
+      subject: 'एक टिप्पणी में आपका उल्लेख हुआ',
+      preheader: 'किसी ने चर्चा में आपको टैग किया।',
+      heading: 'एक टिप्पणी में आपका उल्लेख हुआ',
+      intro: '“{value}” पर एक टिप्पणी में आपका उल्लेख हुआ।',
+      bodyLines: ['Thread खोलकर उसे पढ़ें और चर्चा में शामिल हों।'],
+      actionLabel: 'Thread खोलें',
+      fallbackNote: 'यदि बटन काम न करे, तो नीचे दिया गया पता अपने ब्राउज़र में कॉपी करें:',
+      expiryNote: null,
+      securityNote:
+        'आपको यह संदेश इसलिए मिला है क्योंकि आपने ClawAI पर इस Thread में हिस्सा लिया है। आप सूचना सेटिंग में जाकर ये ईमेल बंद कर सकते हैं।',
+    },
+    [AuthEmailKind.THREAD_REACTED]: {
+      subject: 'आपके Thread पर प्रतिक्रिया मिली',
+      preheader: 'एक पाठक ने आपके Thread पर प्रतिक्रिया दी।',
+      heading: 'आपके Thread पर प्रतिक्रिया मिली',
+      intro: 'एक पाठक ने “{value}” पर प्रतिक्रिया दी।',
+      bodyLines: ['Thread खोलकर उसे पढ़ें और चर्चा में शामिल हों।'],
+      actionLabel: 'Thread खोलें',
+      fallbackNote: 'यदि बटन काम न करे, तो नीचे दिया गया पता अपने ब्राउज़र में कॉपी करें:',
+      expiryNote: null,
+      securityNote:
+        'आपको यह संदेश इसलिए मिला है क्योंकि आपने ClawAI पर इस Thread में हिस्सा लिया है। आप सूचना सेटिंग में जाकर ये ईमेल बंद कर सकते हैं।',
+    },
+    [AuthEmailKind.THREAD_COMMENT_REACTED]: {
+      subject: 'किसी ने आपकी टिप्पणी को पसंद किया',
+      preheader: 'आपकी टिप्पणी सराही जा रही है।',
+      heading: 'किसी ने आपकी टिप्पणी को पसंद किया',
+      intro: '“{value}” पर आपकी टिप्पणी को एक पसंद मिली।',
+      bodyLines: ['Thread खोलकर उसे पढ़ें और चर्चा में शामिल हों।'],
+      actionLabel: 'Thread खोलें',
+      fallbackNote: 'यदि बटन काम न करे, तो नीचे दिया गया पता अपने ब्राउज़र में कॉपी करें:',
+      expiryNote: null,
+      securityNote:
+        'आपको यह संदेश इसलिए मिला है क्योंकि आपने ClawAI पर इस Thread में हिस्सा लिया है। आप सूचना सेटिंग में जाकर ये ईमेल बंद कर सकते हैं।',
+    },
+    [AuthEmailKind.THREAD_CHANGE_REQUESTED]: {
+      subject: 'आपके Thread में बदलाव सुझाया गया',
+      preheader: 'सुझाव देखें और उसे स्वीकार या अस्वीकार करें।',
+      heading: 'आपके Thread में बदलाव सुझाया गया',
+      intro: 'एक पाठक ने “{value}” में बदलाव सुझाया।',
+      bodyLines: ['Thread खोलकर उसे पढ़ें और चर्चा में शामिल हों।'],
+      actionLabel: 'Thread खोलें',
+      fallbackNote: 'यदि बटन काम न करे, तो नीचे दिया गया पता अपने ब्राउज़र में कॉपी करें:',
+      expiryNote: null,
+      securityNote:
+        'आपको यह संदेश इसलिए मिला है क्योंकि आपने ClawAI पर इस Thread में हिस्सा लिया है। आप सूचना सेटिंग में जाकर ये ईमेल बंद कर सकते हैं।',
+    },
   },
 };

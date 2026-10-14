@@ -636,6 +636,11 @@ than quietly showing an older run.
   `{ ttsVoice }`, read by chat-service once per read-aloud POST.
 - Migration `20260926100000_add_user_tts_voice`.
 
+## Public profiles for Threads (ADR-180, 2026-10-14)
+
+- `POST /api/v1/internal/users/public-profiles` (service token, body `{ ids }`, max 100) -> `[{ id, username, displayName }]` for ACTIVE accounts; unknown ids are absent.
+- `GET /api/v1/internal/users/by-username/:username` (service token) -> `{ id, username, displayName }` or 404; case-insensitive, ACTIVE only. Used by threads-service to name comment authors, Thread owners and to resolve `@mentions`. No email, phone, role or status is ever returned. No migration.
+
 ## Usage attribution endpoints (2026-09-30)
 
 - `GET /auth/me/usage/breakdown?from&to`: the caller's own weighted usage by
@@ -670,7 +675,7 @@ in-turn tool calls (only a count) and image generation as a named tool; the
 
 ## Notifications (ADR-164, 2026-10-08)
 
-`modules/notifications`: consumes `user.notification_requested`, writes `user_notifications` (idempotent on user + dedupe key), emails through `AuthEmailAdapter.sendThreadNotification` in the person's language, and serves the signed-in person's list, read marks and channel preferences under `/api/v1/notifications` (own nginx location). Email kinds `THREAD_READY_FOR_REVIEW`, `THREAD_PUBLISHED`, `THREAD_FAILED` exist in all 13 copy files. See ADR-164.
+`modules/notifications`: consumes `user.notification_requested`, writes `user_notifications` (idempotent on user + dedupe key), emails through `AuthEmailAdapter.sendThreadNotification` in the person's language, and serves the signed-in person's list, read marks and channel preferences under `/api/v1/notifications` (own nginx location). Email kinds `THREAD_READY_FOR_REVIEW`, `THREAD_PUBLISHED`, `THREAD_FAILED` and the community kinds `THREAD_COMMENTED`, `THREAD_COMMENT_REPLIED`, `THREAD_MENTIONED`, `THREAD_REACTED`, `THREAD_COMMENT_REACTED`, `THREAD_CHANGE_REQUESTED` (ADR-180) exist in all 13 copy files. The community kinds carry `params { actorName, actorUsername, title, excerpt }` and a link ending in `#comment-<id>` for comment kinds. See ADR-164 and ADR-180.
 
 ### Web Push (ADR-166, 2026-10-11)
 

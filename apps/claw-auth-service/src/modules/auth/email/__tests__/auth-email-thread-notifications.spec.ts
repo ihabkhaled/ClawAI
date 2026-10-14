@@ -7,6 +7,12 @@ const KINDS = [
   AuthEmailKind.THREAD_READY_FOR_REVIEW,
   AuthEmailKind.THREAD_PUBLISHED,
   AuthEmailKind.THREAD_FAILED,
+  AuthEmailKind.THREAD_COMMENTED,
+  AuthEmailKind.THREAD_COMMENT_REPLIED,
+  AuthEmailKind.THREAD_MENTIONED,
+  AuthEmailKind.THREAD_REACTED,
+  AuthEmailKind.THREAD_COMMENT_REACTED,
+  AuthEmailKind.THREAD_CHANGE_REQUESTED,
 ];
 const ACTION_URL = 'https://claw.local/threads/review/pub_1';
 
@@ -30,6 +36,17 @@ describe.each(LOCALES)('Threads notification emails in %s', (locale) => {
     expect(message.html).toContain(ACTION_URL);
     expect(message.text).not.toContain('{value}');
     expect(message.html).not.toContain('{value}');
+  });
+
+  it.each([
+    AuthEmailKind.THREAD_COMMENTED,
+    AuthEmailKind.THREAD_COMMENT_REPLIED,
+    AuthEmailKind.THREAD_MENTIONED,
+    AuthEmailKind.THREAD_REACTED,
+    AuthEmailKind.THREAD_COMMENT_REACTED,
+    AuthEmailKind.THREAD_CHANGE_REQUESTED,
+  ])('puts the title of the Thread in the %s message', (kind) => {
+    expect(render(kind, locale, 'My Thread').text).toContain('My Thread');
   });
 
   it('puts the title of a published Thread in the message', () => {

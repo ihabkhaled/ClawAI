@@ -150,5 +150,77 @@ export const FA_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'این پیام را دریافت می‌کنید چون در ClawAI یک Thread آغاز کرده‌اید. می‌توانید این ایمیل‌ها را از تنظیمات اعلان‌ها خاموش کنید.',
     },
+    [AuthEmailKind.THREAD_COMMENTED]: {
+      subject: 'نظر تازه‌ای برای Thread شما',
+      preheader: 'کسی به گفتگو پیوست.',
+      heading: 'نظر تازه‌ای برای Thread شما',
+      intro: 'کسی برای «{value}» نظر گذاشت.',
+      bodyLines: ['Thread را باز کنید تا آن را بخوانید و به گفتگو بپیوندید.'],
+      actionLabel: 'باز کردن Thread',
+      fallbackNote: 'اگر دکمه کار نکرد، نشانی زیر را در مرورگر خود کپی کنید:',
+      expiryNote: null,
+      securityNote:
+        'این پیام را دریافت می‌کنید چون در این Thread در ClawAI شرکت کرده‌اید. می‌توانید این ایمیل‌ها را از تنظیمات اعلان‌ها خاموش کنید.',
+    },
+    [AuthEmailKind.THREAD_COMMENT_REPLIED]: {
+      subject: 'کسی به نظر شما پاسخ داد',
+      preheader: 'گفتگو را باز کنید تا پاسخ را بخوانید.',
+      heading: 'کسی به نظر شما پاسخ داد',
+      intro: 'به نظر شما در «{value}» پاسخی افزوده شد.',
+      bodyLines: ['Thread را باز کنید تا آن را بخوانید و به گفتگو بپیوندید.'],
+      actionLabel: 'باز کردن Thread',
+      fallbackNote: 'اگر دکمه کار نکرد، نشانی زیر را در مرورگر خود کپی کنید:',
+      expiryNote: null,
+      securityNote:
+        'این پیام را دریافت می‌کنید چون در این Thread در ClawAI شرکت کرده‌اید. می‌توانید این ایمیل‌ها را از تنظیمات اعلان‌ها خاموش کنید.',
+    },
+    [AuthEmailKind.THREAD_MENTIONED]: {
+      subject: 'در یک نظر از شما نام برده شد',
+      preheader: 'کسی شما را در یک گفتگو نشان‌دار کرد.',
+      heading: 'در یک نظر از شما نام برده شد',
+      intro: 'در یک نظر برای «{value}» از شما نام برده شد.',
+      bodyLines: ['Thread را باز کنید تا آن را بخوانید و به گفتگو بپیوندید.'],
+      actionLabel: 'باز کردن Thread',
+      fallbackNote: 'اگر دکمه کار نکرد، نشانی زیر را در مرورگر خود کپی کنید:',
+      expiryNote: null,
+      securityNote:
+        'این پیام را دریافت می‌کنید چون در این Thread در ClawAI شرکت کرده‌اید. می‌توانید این ایمیل‌ها را از تنظیمات اعلان‌ها خاموش کنید.',
+    },
+    [AuthEmailKind.THREAD_REACTED]: {
+      subject: 'Thread شما واکنش گرفت',
+      preheader: 'یکی از خوانندگان به Thread شما واکنش نشان داد.',
+      heading: 'Thread شما واکنش گرفت',
+      intro: 'یکی از خوانندگان به «{value}» واکنش نشان داد.',
+      bodyLines: ['Thread را باز کنید تا آن را بخوانید و به گفتگو بپیوندید.'],
+      actionLabel: 'باز کردن Thread',
+      fallbackNote: 'اگر دکمه کار نکرد، نشانی زیر را در مرورگر خود کپی کنید:',
+      expiryNote: null,
+      securityNote:
+        'این پیام را دریافت می‌کنید چون در این Thread در ClawAI شرکت کرده‌اید. می‌توانید این ایمیل‌ها را از تنظیمات اعلان‌ها خاموش کنید.',
+    },
+    [AuthEmailKind.THREAD_COMMENT_REACTED]: {
+      subject: 'کسی نظر شما را پسندید',
+      preheader: 'نظر شما مورد توجه قرار گرفته است.',
+      heading: 'کسی نظر شما را پسندید',
+      intro: 'نظر شما در «{value}» یک پسند گرفت.',
+      bodyLines: ['Thread را باز کنید تا آن را بخوانید و به گفتگو بپیوندید.'],
+      actionLabel: 'باز کردن Thread',
+      fallbackNote: 'اگر دکمه کار نکرد، نشانی زیر را در مرورگر خود کپی کنید:',
+      expiryNote: null,
+      securityNote:
+        'این پیام را دریافت می‌کنید چون در این Thread در ClawAI شرکت کرده‌اید. می‌توانید این ایمیل‌ها را از تنظیمات اعلان‌ها خاموش کنید.',
+    },
+    [AuthEmailKind.THREAD_CHANGE_REQUESTED]: {
+      subject: 'تغییری برای Thread شما پیشنهاد شد',
+      preheader: 'پیشنهاد را بررسی کنید و بپذیرید یا رد کنید.',
+      heading: 'تغییری برای Thread شما پیشنهاد شد',
+      intro: 'یکی از خوانندگان تغییری در «{value}» پیشنهاد کرد.',
+      bodyLines: ['Thread را باز کنید تا آن را بخوانید و به گفتگو بپیوندید.'],
+      actionLabel: 'باز کردن Thread',
+      fallbackNote: 'اگر دکمه کار نکرد، نشانی زیر را در مرورگر خود کپی کنید:',
+      expiryNote: null,
+      securityNote:
+        'این پیام را دریافت می‌کنید چون در این Thread در ClawAI شرکت کرده‌اید. می‌توانید این ایمیل‌ها را از تنظیمات اعلان‌ها خاموش کنید.',
+    },
   },
 };

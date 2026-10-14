@@ -42,3 +42,32 @@ describe('toNotificationView', () => {
     expect(isNotificationKind(UserNotificationKind.THREAD_FAILED)).toBe(true);
   });
 });
+
+describe('community notification kinds', () => {
+  it('knows every Threads community kind and keeps their params', () => {
+    for (const kind of [
+      UserNotificationKind.THREAD_COMMENTED,
+      UserNotificationKind.THREAD_COMMENT_REPLIED,
+      UserNotificationKind.THREAD_MENTIONED,
+      UserNotificationKind.THREAD_REACTED,
+      UserNotificationKind.THREAD_COMMENT_REACTED,
+      UserNotificationKind.THREAD_CHANGE_REQUESTED,
+    ]) {
+      expect(isNotificationKind(kind)).toBe(true);
+    }
+    const view = toNotificationView({
+      id: 'n1',
+      kind: UserNotificationKind.THREAD_COMMENT_REPLIED,
+      link: '/threads/a#comment-c1',
+      params: { actorName: 'Ada', actorUsername: 'ada', title: 'T', excerpt: 'مرحبا' },
+      readAt: null,
+      createdAt: new Date('2026-10-14T00:00:00Z'),
+    } as never);
+    expect(view?.params).toEqual({
+      actorName: 'Ada',
+      actorUsername: 'ada',
+      title: 'T',
+      excerpt: 'مرحبا',
+    });
+  });
+});

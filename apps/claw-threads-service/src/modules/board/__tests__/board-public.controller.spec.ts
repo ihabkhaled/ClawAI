@@ -15,6 +15,7 @@ const TTL_KEY = 'THROTTLER:TTLdefault';
 
 const row: BoardRow = {
   slug: 'a',
+  ownerId: 'owner-1',
   title: 'Kubernetes Guide',
   excerpt: 'e',
   contentLocale: 'en',
@@ -37,7 +38,10 @@ function service(rows: BoardRow[]): { board: BoardService; list: ReturnType<type
     suggestCount: vi.fn().mockResolvedValue(rows.length),
     closestWords: vi.fn().mockResolvedValue([]),
   } as unknown as BoardRepository;
-  return { board: new BoardService(repo), list };
+  return {
+    board: new BoardService(repo, { resolveMany: vi.fn().mockResolvedValue(new Map()) } as never),
+    list,
+  };
 }
 
 const query = { sort: 'latest', lang: 'all', type: 'all', page: 1, limit: 12 } as const;

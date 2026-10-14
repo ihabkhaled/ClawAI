@@ -1,7 +1,14 @@
 import type { ThreadGenerationProgress, ThreadGenerationRetryRequest } from '@claw/shared-types';
 
+import { THREAD_COMMENTS_PAGE_SIZE } from '@/constants/thread-community.constants';
 import type { ThreadPublicationReaction } from '@/enums/thread-publication-reaction.enum';
 import { apiClient } from '@/services/shared/api-client';
+import type {
+  ThreadCommentNode,
+  ThreadCommentPage,
+  ThreadReactionCounts,
+  ThreadReplyPage,
+} from '@/types/thread-community.types';
 import type { ThreadServerExportFormat } from '@/types/thread-export.types';
 import type { ThreadRetryResponse } from '@/types/thread-generation-progress.types';
 import type {
@@ -14,7 +21,6 @@ import type {
   ThreadPublicationChangeRequestResolution,
   ResolveThreadPublicationChangeRequest,
   PublicThreadPublication,
-  PublicThreadComment,
   ThreadReactionSummary,
   ThreadReportReason,
 } from '@/types/thread-publication.types';
@@ -47,9 +53,38 @@ export const threadPublicationsRepository = {
     >(`/thread-publications/public/${encodeURIComponent(slug)}/${route}`);
     return response.data;
   },
-  async listPublicComments(slug: string): Promise<PublicThreadComment[]> {
-    const response = await apiClient.get<PublicThreadComment[]>(
+  async listPublicComments(slug: string, page: number): Promise<ThreadCommentPage> {
+    const response = await apiClient.get<ThreadCommentPage>(
       `/thread-publications/public/${encodeURIComponent(slug)}/comments`,
+      { page: String(page), pageSize: String(THREAD_COMMENTS_PAGE_SIZE) },
+    );
+    return response.data;
+  },
+  async listPublicReplies(
+    slug: string,
+    rootId: string,
+    cursor: string | null,
+  ): Promise<ThreadReplyPage> {
+    const response = await apiClient.get<ThreadReplyPage>(
+      `/thread-publications/public/${encodeURIComponent(slug)}/comments/${encodeURIComponent(rootId)}/replies`,
+      { limit: String(THREAD_COMMENTS_PAGE_SIZE), ...(cursor ? { cursor } : {}) },
+    );
+    return response.data;
+  },
+  async setCommentReaction(
+    slug: string,
+    commentId: string,
+    value: ThreadPublicationReaction,
+  ): Promise<ThreadReactionCounts> {
+    const response = await apiClient.put<ThreadReactionCounts>(
+      `/thread-publications/public/${encodeURIComponent(slug)}/comments/${encodeURIComponent(commentId)}/reaction`,
+      { value },
+    );
+    return response.data;
+  },
+  async removeCommentReaction(slug: string, commentId: string): Promise<ThreadReactionCounts> {
+    const response = await apiClient.delete<ThreadReactionCounts>(
+      `/thread-publications/public/${encodeURIComponent(slug)}/comments/${encodeURIComponent(commentId)}/reaction`,
     );
     return response.data;
   },
@@ -59,8 +94,11 @@ export const threadPublicationsRepository = {
     );
     return response.data;
   },
-  async addPublicComment(slug: string, request: { content: string }): Promise<PublicThreadComment> {
-    const response = await apiClient.post<PublicThreadComment>(
+  async addPublicComment(
+    slug: string,
+    request: { content: string; parentId?: string },
+  ): Promise<ThreadCommentNode> {
+    const response = await apiClient.post<ThreadCommentNode>(
       `/thread-publications/public/${encodeURIComponent(slug)}/comments`,
       request,
     );

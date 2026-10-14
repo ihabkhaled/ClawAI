@@ -6,9 +6,14 @@ import {
   User,
   UserAppearancePreference,
   UserLanguagePreference,
+  UserStatus,
 } from '../../../generated/prisma';
 import { SortOrder } from '../../../common/enums';
-import { type UpdateUserData, type UserFilters } from '../types/users.types';
+import {
+  type PublicProfileSource,
+  type UpdateUserData,
+  type UserFilters,
+} from '../types/users.types';
 
 @Injectable()
 export class UsersRepository {
@@ -28,6 +33,22 @@ export class UsersRepository {
 
   async findByUsername(username: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { username } });
+  }
+
+  /** Active accounts only, for the public-profile lookup. Unknown, pending and suspended ids are simply absent. */
+  async findActiveProfilesByIds(ids: readonly string[]): Promise<PublicProfileSource[]> {
+    return this.prisma.user.findMany({
+      where: { id: { in: [...ids] }, status: UserStatus.ACTIVE },
+      select: { id: true, username: true, firstName: true, lastName: true },
+    });
+  }
+
+  /** Case-insensitive, ACTIVE only: a mention never resolves to a suspended or unverified account. */
+  async findActiveProfileByUsername(username: string): Promise<PublicProfileSource | null> {
+    return this.prisma.user.findFirst({
+      where: { username: { equals: username, mode: 'insensitive' }, status: UserStatus.ACTIVE },
+      select: { id: true, username: true, firstName: true, lastName: true },
+    });
   }
 
   async findAll(params: {
@@ -76,7 +97,7 @@ export class UsersRepository {
       });
       return transaction.user.update({
         where: { id },
-        data: { status: 'ACTIVE', emailVerifiedAt: now },
+        data: { status: UserStatus.ACTIVE, emailVerifiedAt: now },
       });
     });
   }

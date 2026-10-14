@@ -72,7 +72,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-auth-service",
-      "endpointCount": 147,
+      "endpointCount": 149,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -120,7 +120,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 196,
+      "testFiles": 198,
       "testRunner": "vitest"
     },
     {
@@ -583,7 +583,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-threads-service",
-      "endpointCount": 36,
+      "endpointCount": 39,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -602,6 +602,8 @@
         "ThreadPublication",
         "ThreadPublicationChangeRequest",
         "ThreadPublicationComment",
+        "ThreadPublicationCommentMention",
+        "ThreadPublicationCommentReaction",
         "ThreadPublicationReaction",
         "ThreadPublicationReader",
         "ThreadPublicationReport",
@@ -609,7 +611,7 @@
         "ThreadPublicationSearchDoc",
         "ThreadPublicationView"
       ],
-      "testFiles": 88,
+      "testFiles": 101,
       "testRunner": "vitest"
     },
     {

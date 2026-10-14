@@ -32,6 +32,30 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: 'Your Thread could not be finished',
         body: 'The reserved spend was released. You can try again.',
       },
+      THREAD_COMMENTED: {
+        title: '{actorName} commented on your Thread',
+        body: '@{actorUsername} wrote: {excerpt}',
+      },
+      THREAD_COMMENT_REPLIED: {
+        title: '{actorName} replied to your comment',
+        body: '@{actorUsername} wrote: {excerpt}',
+      },
+      THREAD_MENTIONED: {
+        title: '{actorName} mentioned you',
+        body: '@{actorUsername} wrote: {excerpt}',
+      },
+      THREAD_REACTED: {
+        title: '{actorName} reacted to your Thread',
+        body: 'From @{actorUsername}.',
+      },
+      THREAD_COMMENT_REACTED: {
+        title: '{actorName} reacted to your comment',
+        body: 'Your comment: {excerpt}',
+      },
+      THREAD_CHANGE_REQUESTED: {
+        title: '{actorName} suggested a change to your Thread',
+        body: '@{actorUsername} wrote: {excerpt}',
+      },
     },
     preferences: {
       title: 'Notifications',
@@ -72,6 +96,30 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: 'تعذّر إكمال Thread الخاص بك',
         body: 'أُفرج عن المبلغ المحجوز. يمكنك المحاولة مرة أخرى.',
       },
+      THREAD_COMMENTED: {
+        title: 'علّق {actorName} على Thread الخاص بك',
+        body: '@{actorUsername} كتب: {excerpt}',
+      },
+      THREAD_COMMENT_REPLIED: {
+        title: 'ردّ {actorName} على تعليقك',
+        body: '@{actorUsername} كتب: {excerpt}',
+      },
+      THREAD_MENTIONED: {
+        title: 'أشار إليك {actorName}',
+        body: '@{actorUsername} كتب: {excerpt}',
+      },
+      THREAD_REACTED: {
+        title: 'تفاعل {actorName} مع Thread الخاص بك',
+        body: 'من @{actorUsername}.',
+      },
+      THREAD_COMMENT_REACTED: {
+        title: 'تفاعل {actorName} مع تعليقك',
+        body: 'تعليقك: {excerpt}',
+      },
+      THREAD_CHANGE_REQUESTED: {
+        title: 'اقترح {actorName} تعديلاً على Thread الخاص بك',
+        body: '@{actorUsername} كتب: {excerpt}',
+      },
     },
     preferences: {
       title: 'الإشعارات',
@@ -111,6 +159,30 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       THREAD_FAILED: {
         title: 'Votre Thread n’a pas pu être terminé',
         body: 'La dépense réservée a été libérée. Vous pouvez réessayer.',
+      },
+      THREAD_COMMENTED: {
+        title: '{actorName} a commenté votre Thread',
+        body: '@{actorUsername} a écrit : {excerpt}',
+      },
+      THREAD_COMMENT_REPLIED: {
+        title: '{actorName} a répondu à votre commentaire',
+        body: '@{actorUsername} a écrit : {excerpt}',
+      },
+      THREAD_MENTIONED: {
+        title: '{actorName} vous a mentionné',
+        body: '@{actorUsername} a écrit : {excerpt}',
+      },
+      THREAD_REACTED: {
+        title: '{actorName} a réagi à votre Thread',
+        body: 'De @{actorUsername}.',
+      },
+      THREAD_COMMENT_REACTED: {
+        title: '{actorName} a réagi à votre commentaire',
+        body: 'Votre commentaire : {excerpt}',
+      },
+      THREAD_CHANGE_REQUESTED: {
+        title: '{actorName} a suggéré une modification de votre Thread',
+        body: '@{actorUsername} a écrit : {excerpt}',
       },
     },
     preferences: {
@@ -153,6 +225,30 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: 'Non è stato possibile completare il tuo Thread',
         body: 'La spesa riservata è stata rilasciata. Puoi riprovare.',
       },
+      THREAD_COMMENTED: {
+        title: '{actorName} ha commentato il tuo Thread',
+        body: '@{actorUsername} ha scritto: {excerpt}',
+      },
+      THREAD_COMMENT_REPLIED: {
+        title: '{actorName} ha risposto al tuo commento',
+        body: '@{actorUsername} ha scritto: {excerpt}',
+      },
+      THREAD_MENTIONED: {
+        title: '{actorName} ti ha menzionato',
+        body: '@{actorUsername} ha scritto: {excerpt}',
+      },
+      THREAD_REACTED: {
+        title: '{actorName} ha reagito al tuo Thread',
+        body: 'Da @{actorUsername}.',
+      },
+      THREAD_COMMENT_REACTED: {
+        title: '{actorName} ha reagito al tuo commento',
+        body: 'Il tuo commento: {excerpt}',
+      },
+      THREAD_CHANGE_REQUESTED: {
+        title: '{actorName} ha suggerito una modifica al tuo Thread',
+        body: '@{actorUsername} ha scritto: {excerpt}',
+      },
     },
     preferences: {
       title: 'Notifiche',
@@ -193,6 +289,30 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       THREAD_FAILED: {
         title: 'Dein Thread konnte nicht fertiggestellt werden',
         body: 'Der reservierte Betrag wurde freigegeben. Du kannst es erneut versuchen.',
+      },
+      THREAD_COMMENTED: {
+        title: '{actorName} hat deinen Thread kommentiert',
+        body: '@{actorUsername} schrieb: {excerpt}',
+      },
+      THREAD_COMMENT_REPLIED: {
+        title: '{actorName} hat auf deinen Kommentar geantwortet',
+        body: '@{actorUsername} schrieb: {excerpt}',
+      },
+      THREAD_MENTIONED: {
+        title: '{actorName} hat dich erwähnt',
+        body: '@{actorUsername} schrieb: {excerpt}',
+      },
+      THREAD_REACTED: {
+        title: '{actorName} hat auf deinen Thread reagiert',
+        body: 'Von @{actorUsername}.',
+      },
+      THREAD_COMMENT_REACTED: {
+        title: '{actorName} hat auf deinen Kommentar reagiert',
+        body: 'Dein Kommentar: {excerpt}',
+      },
+      THREAD_CHANGE_REQUESTED: {
+        title: '{actorName} hat eine Änderung an deinem Thread vorgeschlagen',
+        body: '@{actorUsername} schrieb: {excerpt}',
       },
     },
     preferences: {
@@ -236,6 +356,30 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: 'No se pudo terminar tu Thread',
         body: 'Se liberó el gasto reservado. Puedes intentarlo de nuevo.',
       },
+      THREAD_COMMENTED: {
+        title: '{actorName} comentó tu Thread',
+        body: '@{actorUsername} escribió: {excerpt}',
+      },
+      THREAD_COMMENT_REPLIED: {
+        title: '{actorName} respondió a tu comentario',
+        body: '@{actorUsername} escribió: {excerpt}',
+      },
+      THREAD_MENTIONED: {
+        title: '{actorName} te mencionó',
+        body: '@{actorUsername} escribió: {excerpt}',
+      },
+      THREAD_REACTED: {
+        title: '{actorName} reaccionó a tu Thread',
+        body: 'De @{actorUsername}.',
+      },
+      THREAD_COMMENT_REACTED: {
+        title: '{actorName} reaccionó a tu comentario',
+        body: 'Tu comentario: {excerpt}',
+      },
+      THREAD_CHANGE_REQUESTED: {
+        title: '{actorName} sugirió un cambio en tu Thread',
+        body: '@{actorUsername} escribió: {excerpt}',
+      },
     },
     preferences: {
       title: 'Notificaciones',
@@ -276,6 +420,30 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       THREAD_FAILED: {
         title: 'Não foi possível concluir seu Thread',
         body: 'O valor reservado foi liberado. Você pode tentar de novo.',
+      },
+      THREAD_COMMENTED: {
+        title: '{actorName} comentou o seu Thread',
+        body: '@{actorUsername} escreveu: {excerpt}',
+      },
+      THREAD_COMMENT_REPLIED: {
+        title: '{actorName} respondeu ao seu comentário',
+        body: '@{actorUsername} escreveu: {excerpt}',
+      },
+      THREAD_MENTIONED: {
+        title: '{actorName} mencionou-o',
+        body: '@{actorUsername} escreveu: {excerpt}',
+      },
+      THREAD_REACTED: {
+        title: '{actorName} reagiu ao seu Thread',
+        body: 'De @{actorUsername}.',
+      },
+      THREAD_COMMENT_REACTED: {
+        title: '{actorName} reagiu ao seu comentário',
+        body: 'O seu comentário: {excerpt}',
+      },
+      THREAD_CHANGE_REQUESTED: {
+        title: '{actorName} sugeriu uma alteração ao seu Thread',
+        body: '@{actorUsername} escreveu: {excerpt}',
       },
     },
     preferences: {
@@ -318,6 +486,30 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: 'Не удалось завершить ваш Thread',
         body: 'Зарезервированная сумма освобождена. Вы можете попробовать снова.',
       },
+      THREAD_COMMENTED: {
+        title: '{actorName} прокомментировал(а) ваш Thread',
+        body: '@{actorUsername} написал(а): {excerpt}',
+      },
+      THREAD_COMMENT_REPLIED: {
+        title: '{actorName} ответил(а) на ваш комментарий',
+        body: '@{actorUsername} написал(а): {excerpt}',
+      },
+      THREAD_MENTIONED: {
+        title: '{actorName} упомянул(а) вас',
+        body: '@{actorUsername} написал(а): {excerpt}',
+      },
+      THREAD_REACTED: {
+        title: '{actorName} отреагировал(а) на ваш Thread',
+        body: 'От @{actorUsername}.',
+      },
+      THREAD_COMMENT_REACTED: {
+        title: '{actorName} отреагировал(а) на ваш комментарий',
+        body: 'Ваш комментарий: {excerpt}',
+      },
+      THREAD_CHANGE_REQUESTED: {
+        title: '{actorName} предложил(а) изменение в вашем Thread',
+        body: '@{actorUsername} написал(а): {excerpt}',
+      },
     },
     preferences: {
       title: 'Уведомления',
@@ -358,6 +550,30 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: '你的 Thread 未能完成',
         body: '为其预留的费用已释放。你可以再试一次。',
       },
+      THREAD_COMMENTED: {
+        title: '{actorName} 评论了你的 Thread',
+        body: '@{actorUsername} 写道：{excerpt}',
+      },
+      THREAD_COMMENT_REPLIED: {
+        title: '{actorName} 回复了你的评论',
+        body: '@{actorUsername} 写道：{excerpt}',
+      },
+      THREAD_MENTIONED: {
+        title: '{actorName} 提到了你',
+        body: '@{actorUsername} 写道：{excerpt}',
+      },
+      THREAD_REACTED: {
+        title: '{actorName} 对你的 Thread 做出了回应',
+        body: '来自 @{actorUsername}。',
+      },
+      THREAD_COMMENT_REACTED: {
+        title: '{actorName} 对你的评论做出了回应',
+        body: '你的评论：{excerpt}',
+      },
+      THREAD_CHANGE_REQUESTED: {
+        title: '{actorName} 建议修改你的 Thread',
+        body: '@{actorUsername} 写道：{excerpt}',
+      },
     },
     preferences: {
       title: '通知',
@@ -396,6 +612,30 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       THREAD_FAILED: {
         title: 'Thread を完成できませんでした',
         body: '確保していた利用額は解放されました。もう一度お試しください。',
+      },
+      THREAD_COMMENTED: {
+        title: '{actorName} さんがあなたの Thread にコメントしました',
+        body: '@{actorUsername} さんの投稿: {excerpt}',
+      },
+      THREAD_COMMENT_REPLIED: {
+        title: '{actorName} さんがあなたのコメントに返信しました',
+        body: '@{actorUsername} さんの投稿: {excerpt}',
+      },
+      THREAD_MENTIONED: {
+        title: '{actorName} さんがあなたをメンションしました',
+        body: '@{actorUsername} さんの投稿: {excerpt}',
+      },
+      THREAD_REACTED: {
+        title: '{actorName} さんがあなたの Thread にリアクションしました',
+        body: '@{actorUsername} さんから。',
+      },
+      THREAD_COMMENT_REACTED: {
+        title: '{actorName} さんがあなたのコメントにリアクションしました',
+        body: 'あなたのコメント: {excerpt}',
+      },
+      THREAD_CHANGE_REQUESTED: {
+        title: '{actorName} さんがあなたの Thread への変更を提案しました',
+        body: '@{actorUsername} さんの投稿: {excerpt}',
       },
     },
     preferences: {
@@ -437,6 +677,30 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: 'आपका Thread पूरा नहीं हो सका',
         body: 'आरक्षित खर्च वापस कर दिया गया है। आप फिर कोशिश कर सकते हैं।',
       },
+      THREAD_COMMENTED: {
+        title: '{actorName} ने आपके Thread पर कमेंट किया',
+        body: '@{actorUsername} ने लिखा: {excerpt}',
+      },
+      THREAD_COMMENT_REPLIED: {
+        title: '{actorName} ने आपके कमेंट का जवाब दिया',
+        body: '@{actorUsername} ने लिखा: {excerpt}',
+      },
+      THREAD_MENTIONED: {
+        title: '{actorName} ने आपको मेंशन किया',
+        body: '@{actorUsername} ने लिखा: {excerpt}',
+      },
+      THREAD_REACTED: {
+        title: '{actorName} ने आपके Thread पर प्रतिक्रिया दी',
+        body: '@{actorUsername} की ओर से।',
+      },
+      THREAD_COMMENT_REACTED: {
+        title: '{actorName} ने आपके कमेंट पर प्रतिक्रिया दी',
+        body: 'आपका कमेंट: {excerpt}',
+      },
+      THREAD_CHANGE_REQUESTED: {
+        title: '{actorName} ने आपके Thread में बदलाव सुझाया',
+        body: '@{actorUsername} ने लिखा: {excerpt}',
+      },
     },
     preferences: {
       title: 'सूचनाएँ',
@@ -477,6 +741,30 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: 'ไม่สามารถทำ Thread ของคุณให้เสร็จได้',
         body: 'ยอดที่กันไว้ถูกคืนแล้ว คุณลองใหม่ได้',
       },
+      THREAD_COMMENTED: {
+        title: '{actorName} แสดงความคิดเห็นใน Thread ของคุณ',
+        body: '@{actorUsername} เขียนว่า: {excerpt}',
+      },
+      THREAD_COMMENT_REPLIED: {
+        title: '{actorName} ตอบกลับความคิดเห็นของคุณ',
+        body: '@{actorUsername} เขียนว่า: {excerpt}',
+      },
+      THREAD_MENTIONED: {
+        title: '{actorName} กล่าวถึงคุณ',
+        body: '@{actorUsername} เขียนว่า: {excerpt}',
+      },
+      THREAD_REACTED: {
+        title: '{actorName} แสดงปฏิกิริยาต่อ Thread ของคุณ',
+        body: 'จาก @{actorUsername}',
+      },
+      THREAD_COMMENT_REACTED: {
+        title: '{actorName} แสดงปฏิกิริยาต่อความคิดเห็นของคุณ',
+        body: 'ความคิดเห็นของคุณ: {excerpt}',
+      },
+      THREAD_CHANGE_REQUESTED: {
+        title: '{actorName} เสนอการแก้ไข Thread ของคุณ',
+        body: '@{actorUsername} เขียนว่า: {excerpt}',
+      },
     },
     preferences: {
       title: 'การแจ้งเตือน',
@@ -516,6 +804,30 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       THREAD_FAILED: {
         title: 'Thread شما به پایان نرسید',
         body: 'هزینهٔ رزروشده آزاد شد. می‌توانید دوباره تلاش کنید.',
+      },
+      THREAD_COMMENTED: {
+        title: '{actorName} برای Thread شما نظر گذاشت',
+        body: '@{actorUsername} نوشت: {excerpt}',
+      },
+      THREAD_COMMENT_REPLIED: {
+        title: '{actorName} به نظر شما پاسخ داد',
+        body: '@{actorUsername} نوشت: {excerpt}',
+      },
+      THREAD_MENTIONED: {
+        title: '{actorName} شما را نام برد',
+        body: '@{actorUsername} نوشت: {excerpt}',
+      },
+      THREAD_REACTED: {
+        title: '{actorName} به Thread شما واکنش نشان داد',
+        body: 'از @{actorUsername}.',
+      },
+      THREAD_COMMENT_REACTED: {
+        title: '{actorName} به نظر شما واکنش نشان داد',
+        body: 'نظر شما: {excerpt}',
+      },
+      THREAD_CHANGE_REQUESTED: {
+        title: '{actorName} تغییری را برای Thread شما پیشنهاد کرد',
+        body: '@{actorUsername} نوشت: {excerpt}',
       },
     },
     preferences: {

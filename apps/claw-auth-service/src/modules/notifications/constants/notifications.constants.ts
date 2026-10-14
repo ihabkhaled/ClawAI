@@ -30,6 +30,12 @@ export const NOTIFICATION_EMAIL_KIND: Readonly<Record<UserNotificationKind, Auth
   [UserNotificationKind.THREAD_READY_FOR_REVIEW]: AuthEmailKind.THREAD_READY_FOR_REVIEW,
   [UserNotificationKind.THREAD_PUBLISHED]: AuthEmailKind.THREAD_PUBLISHED,
   [UserNotificationKind.THREAD_FAILED]: AuthEmailKind.THREAD_FAILED,
+  [UserNotificationKind.THREAD_COMMENTED]: AuthEmailKind.THREAD_COMMENTED,
+  [UserNotificationKind.THREAD_COMMENT_REPLIED]: AuthEmailKind.THREAD_COMMENT_REPLIED,
+  [UserNotificationKind.THREAD_MENTIONED]: AuthEmailKind.THREAD_MENTIONED,
+  [UserNotificationKind.THREAD_REACTED]: AuthEmailKind.THREAD_REACTED,
+  [UserNotificationKind.THREAD_COMMENT_REACTED]: AuthEmailKind.THREAD_COMMENT_REACTED,
+  [UserNotificationKind.THREAD_CHANGE_REQUESTED]: AuthEmailKind.THREAD_CHANGE_REQUESTED,
 };
 
 /** What a person gets before they change anything: in-app and email on, push opt-in. */

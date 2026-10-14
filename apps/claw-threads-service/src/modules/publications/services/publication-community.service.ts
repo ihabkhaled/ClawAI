@@ -12,21 +12,20 @@ import {
   BOARD_COUNTS_PORT,
   type BoardCountsPort,
 } from '../../publication-community/ports/board-counts.port';
-import { CommentRateLimitService } from '../../publication-community/services/comment-rate-limit.service';
 
 import type { CreatePublicationChangeRequestDto } from '../dto/create-publication-change-request.dto';
-import type { CreatePublicationCommentDto } from '../dto/create-publication-comment.dto';
 import type { CreatePublicationReportDto } from '../dto/create-publication-report.dto';
 import type { ModeratePublicationReportDto } from '../dto/moderate-publication-report.dto';
 import type { ResolvePublicationChangeRequestDto } from '../dto/resolve-publication-change-request.dto';
 import type { SetPublicationReactionDto } from '../dto/set-publication-reaction.dto';
 import { PublicationsRepository } from '../repositories/publications.repository';
+import { CommunityNotificationService } from './community-notification.service';
 import { PublicationLifecycleService } from './publication-lifecycle.service';
+import type { CommentReactionValue } from '../types/publication-comments.types';
 import type {
   ModerationReportView,
   PublicationChangeRequestView,
   PublicationReactionSummary,
-  PublicPublicationComment,
 } from '../types/publication-community.types';
 import type { PublicationEditResult } from '../types/publication.types';
 
@@ -37,8 +36,8 @@ export class PublicationCommunityService {
   constructor(
     private readonly publications: PublicationsRepository,
     private readonly lifecycle: PublicationLifecycleService,
-    @Optional() private readonly commentRateLimit?: CommentRateLimitService,
     @Optional() @Inject(BOARD_COUNTS_PORT) private readonly boardCounts?: BoardCountsPort,
+    @Optional() private readonly notifier?: CommunityNotificationService,
   ) {}
 
   /** Community reads never turn an unexpected data error into a 500; unknown slugs stay 404. */
@@ -66,33 +65,31 @@ export class PublicationCommunityService {
     }
   }
 
-  async listComments(slug: string): Promise<PublicPublicationComment[]> {
-    const comments = await this.resilient(() => this.publications.findPublicComments(slug), []);
-    if (!comments) throw new NotFoundException('Publication not found');
-    return comments;
-  }
-
-  async addComment(
-    slug: string,
-    userId: string,
-    input: CreatePublicationCommentDto,
-  ): Promise<PublicPublicationComment> {
-    await this.commentRateLimit?.assertAllowed(userId);
-    const comment = await this.publications.createPublicComment(slug, userId, input);
-    if (!comment) throw new NotFoundException('Publication not found');
-    await this.notifyCounts((port) => port.commentsChanged(slug));
-    return comment;
-  }
-
   async setReaction(
     slug: string,
     userId: string,
     input: SetPublicationReactionDto,
   ): Promise<PublicationReactionSummary> {
+    const previous = await this.previousReaction(slug, userId);
     const summary = await this.publications.setPublicReaction(slug, userId, input);
     if (!summary) throw new NotFoundException('Publication not found');
+    await this.notifier?.threadReacted(slug, userId, input.value, previous);
     await this.notifyCounts((port) => port.reactionsChanged(slug, summary.likes, summary.dislikes));
     return summary;
+  }
+
+  /** The reaction the person had before this one; unknown counts as none (the dedupe key still holds). */
+  private async previousReaction(
+    slug: string,
+    userId: string,
+  ): Promise<CommentReactionValue | null> {
+    try {
+      return (
+        (await this.publications.findPublicReactionSummary(slug, userId))?.viewerReaction ?? null
+      );
+    } catch {
+      return null;
+    }
   }
 
   async removeReaction(slug: string, userId: string): Promise<PublicationReactionSummary> {
@@ -118,6 +115,7 @@ export class PublicationCommunityService {
   ): Promise<PublicationChangeRequestView> {
     const request = await this.publications.createPublicChangeRequest(slug, userId, input);
     if (!request) throw new NotFoundException('Publication not found');
+    await this.notifier?.changeRequested(slug, userId, request.id, input.suggestion);
     return request;
   }
 

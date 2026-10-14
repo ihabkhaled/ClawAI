@@ -1,9 +1,14 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ThreadPublicationReaction } from '@/enums/thread-publication-reaction.enum';
 import { ThreadPublicationReportReason } from '@/enums/thread-publication-report-reason.enum';
+import {
+  COMMUNITY_PAGING_PROPS,
+  threadCommentFixture,
+} from '@/test/fixtures/thread-comment.fixture';
 import type {
   PublicThreadComment,
   ThreadCommunityActionState,
@@ -16,9 +21,7 @@ vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-const comments: PublicThreadComment[] = [
-  { id: 'comment-1', content: 'Helpful detail.', createdAt: '2026-10-05T12:00:00.000Z' },
-];
+const comments: PublicThreadComment[] = [threadCommentFixture()];
 const reactions: ThreadReactionSummary = { likes: 4, dislikes: 1, viewerReaction: null };
 
 function createActions(reportTarget: string | null = null): ThreadCommunityActionState {
@@ -49,15 +52,18 @@ function renderCommunity(
   summary: ThreadReactionSummary = reactions,
 ) {
   render(
-    <ThreadPublicCommunity
-      comments={comments}
-      reactions={summary}
-      isAuthenticated={isAuthenticated}
-      communityLoading={false}
-      communityError={false}
-      loginHref="/login?returnTo=%2Fthreads%2Fclear-writing"
-      actions={actions}
-    />,
+    <QueryClientProvider client={new QueryClient()}>
+      <ThreadPublicCommunity
+        {...COMMUNITY_PAGING_PROPS}
+        comments={comments}
+        reactions={summary}
+        isAuthenticated={isAuthenticated}
+        communityLoading={false}
+        communityError={false}
+        loginHref="/login?returnTo=%2Fthreads%2Fclear-writing"
+        actions={actions}
+      />
+    </QueryClientProvider>,
   );
   return actions;
 }

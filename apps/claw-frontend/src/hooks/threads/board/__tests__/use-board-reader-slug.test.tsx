@@ -38,7 +38,13 @@ describe('useBoardReader route parameter', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(threadPublicationsRepository.getPublic).mockResolvedValue({} as never);
-    vi.mocked(threadPublicationsRepository.listPublicComments).mockResolvedValue([]);
+    vi.mocked(threadPublicationsRepository.listPublicComments).mockResolvedValue({
+      items: [],
+      page: 1,
+      pageSize: 20,
+      total: 0,
+      totalPages: 0,
+    });
     vi.mocked(threadPublicationsRepository.getPublicReactionSummary).mockResolvedValue({
       likes: 0,
       dislikes: 0,
@@ -52,7 +58,7 @@ describe('useBoardReader route parameter', () => {
 
     await waitFor(() => expect(threadPublicationsRepository.getPublic).toHaveBeenCalled());
     expect(threadPublicationsRepository.getPublic).toHaveBeenCalledWith(ARABIC);
-    expect(threadPublicationsRepository.listPublicComments).toHaveBeenCalledWith(ARABIC);
+    expect(threadPublicationsRepository.listPublicComments).toHaveBeenCalledWith(ARABIC, 1);
     expect(result.current.loginHref).toBe(
       `/login?returnTo=${encodeURIComponent(`/board/${encodeURIComponent(ARABIC)}`)}`,
     );

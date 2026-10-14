@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { ReactElement } from 'react';
 
 import { BoardReaderActions } from '@/components/threads/board/board-reader-actions';
+import { ThreadAuthorBadge } from '@/components/threads/community/thread-author-badge';
 import { ThreadPublicCommunity } from '@/components/threads/thread-public-community';
 import { ThreadReaderBody } from '@/components/threads/thread-reader-body';
 import { Button } from '@/components/ui/button';
@@ -92,6 +93,7 @@ export function BoardReaderView({ state }: BoardReaderViewProps): ReactElement {
       >
         <header className="mb-6 flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight">{publication.title}</h1>
+          {publication.owner ? <ThreadAuthorBadge author={publication.owner} /> : null}
           <time className="text-muted-foreground text-sm" dateTime={publication.publishedAt}>
             {publication.publishedAt.slice(0, 10)}
           </time>
@@ -116,7 +118,12 @@ export function BoardReaderView({ state }: BoardReaderViewProps): ReactElement {
         viewCount={publication.viewCount}
       />
       <ThreadPublicCommunity
+        slug={publication.slug}
         comments={state.comments}
+        highlightedCommentId={state.highlightedCommentId}
+        hasMoreComments={state.hasMoreComments}
+        isLoadingMoreComments={state.isLoadingMoreComments}
+        loadMoreComments={state.loadMoreComments}
         reactions={state.reactions}
         isAuthenticated={state.isAuthenticated}
         communityLoading={state.communityLoading}

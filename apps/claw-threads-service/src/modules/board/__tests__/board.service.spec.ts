@@ -7,6 +7,7 @@ import type { BoardRow } from '../types/board.types';
 
 const row = (slug: string, title = 'Kubernetes Guide'): BoardRow => ({
   slug,
+  ownerId: 'owner-1',
   title,
   excerpt: 'e',
   contentLocale: 'en',
@@ -18,6 +19,10 @@ const row = (slug: string, title = 'Kubernetes Guide'): BoardRow => ({
   commentCount: 0,
   viewCount: 9,
   viewerReaction: 'LIKE',
+});
+
+const identity = (names: Record<string, { username: string; displayName: string }> = {}) => ({
+  resolveMany: vi.fn().mockResolvedValue(new Map(Object.entries(names))),
 });
 
 function fake(overrides: Record<string, () => unknown> = {}): {
@@ -37,10 +42,33 @@ function fake(overrides: Record<string, () => unknown> = {}): {
 
 const query = { sort: 'latest', lang: 'all', type: 'all', page: 2, limit: 12 } as const;
 
+describe('BoardService.list owners', () => {
+  it('names the publisher of each item and never sends the owner id', async () => {
+    const { repo } = fake();
+    const names = identity({ 'owner-1': { username: 'ada', displayName: 'Ada Lovelace' } });
+    const result = await new BoardService(repo, names as never).list(null, query);
+    expect(names.resolveMany).toHaveBeenCalledWith(['owner-1']);
+    expect(result.items[0]?.owner).toEqual({ username: 'ada', displayName: 'Ada Lovelace' });
+    expect(result.items[0]).not.toHaveProperty('ownerId');
+  });
+
+  it('leaves the owner null when the name is unknown or the lookup failed', async () => {
+    const { repo } = fake();
+    const result = await new BoardService(repo, identity() as never).list(null, query);
+    expect(result.items[0]?.owner).toBeNull();
+  });
+
+  it('leaves the owner null for a publication whose owner account was deleted', async () => {
+    const { repo } = fake({ list: () => [{ ...row('a'), ownerId: null }] });
+    const result = await new BoardService(repo, identity() as never).list(null, query);
+    expect(result.items[0]?.owner).toBeNull();
+  });
+});
+
 describe('BoardService.list (guest)', () => {
   it('passes a null user to the repository', async () => {
     const { repo, mocks } = fake();
-    await new BoardService(repo).list(null, query);
+    await new BoardService(repo, identity() as never).list(null, query);
     expect(mocks['list']).toHaveBeenCalledWith(expect.objectContaining({ userId: null }));
   });
 });
@@ -48,7 +76,10 @@ describe('BoardService.list (guest)', () => {
 describe('BoardService.list', () => {
   it('returns items, meta and no suggestion when results are plentiful', async () => {
     const { repo, mocks } = fake();
-    const result = await new BoardService(repo).list('u1', { ...query, q: 'Kubernetes' });
+    const result = await new BoardService(repo, identity() as never).list('u1', {
+      ...query,
+      q: 'Kubernetes',
+    });
     expect(result.meta).toEqual({ total: 25, page: 2, limit: 12, totalPages: 3 });
     expect(result.items[0]?.publishedAt).toBe('2026-01-02T00:00:00.000Z');
     expect(result.items[0]?.viewerReaction).toBe('LIKE');
@@ -65,14 +96,17 @@ describe('BoardService.list', () => {
       list: () => Promise.resolve([]),
       closestWords: () => Promise.resolve([{ token: 'kubernets', word: 'kubernetes' }]),
     });
-    const result = await new BoardService(repo).list('u1', { ...query, q: 'kubernets' });
+    const result = await new BoardService(repo, identity() as never).list('u1', {
+      ...query,
+      q: 'kubernets',
+    });
     expect(result.didYouMean).toBe('kubernetes');
     expect(result.meta.totalPages).toBe(0);
   });
 
   it('skips didYouMean without a query', async () => {
     const { repo, mocks } = fake({ count: () => Promise.resolve(0) });
-    const result = await new BoardService(repo).list('u1', query);
+    const result = await new BoardService(repo, identity() as never).list('u1', query);
     expect(result.didYouMean).toBeNull();
     expect(mocks['closestWords']).not.toHaveBeenCalled();
   });
@@ -81,20 +115,29 @@ describe('BoardService.list', () => {
 describe('BoardService.suggest', () => {
   it('adds match offsets and reports the real total', async () => {
     const { repo } = fake({ suggestCount: () => Promise.resolve(40) });
-    const result = await new BoardService(repo).suggest({ q: 'guide', lang: 'all' });
+    const result = await new BoardService(repo, identity() as never).suggest({
+      q: 'guide',
+      lang: 'all',
+    });
     expect(result.suggestions[0]?.match).toEqual([[11, 16]]);
     expect(result).toMatchObject({ total: 40, totalCapped: false, didYouMean: null });
   });
 
   it('caps the total at 100', async () => {
     const { repo } = fake({ suggestCount: () => Promise.resolve(101) });
-    const result = await new BoardService(repo).suggest({ q: 'guide', lang: 'all' });
+    const result = await new BoardService(repo, identity() as never).suggest({
+      q: 'guide',
+      lang: 'all',
+    });
     expect(result).toMatchObject({ total: 100, totalCapped: true });
   });
 
   it('returns empty for text that normalises to nothing', async () => {
     const { repo, mocks } = fake();
-    const result = await new BoardService(repo).suggest({ q: '​', lang: 'all' });
+    const result = await new BoardService(repo, identity() as never).suggest({
+      q: '​',
+      lang: 'all',
+    });
     expect(result.suggestions).toEqual([]);
     expect(mocks['suggest']).not.toHaveBeenCalled();
   });
@@ -103,7 +146,10 @@ describe('BoardService.suggest', () => {
 describe('BoardService paging and short suggestions', () => {
   it('returns an empty page with real meta beyond the page cap, without reading rows', async () => {
     const { repo, mocks } = fake({ count: () => Promise.resolve(30) });
-    const result = await new BoardService(repo).list('u1', { ...query, page: 501 });
+    const result = await new BoardService(repo, identity() as never).list('u1', {
+      ...query,
+      page: 501,
+    });
     expect(result.items).toEqual([]);
     expect(result.meta).toEqual({ total: 30, page: 501, limit: 12, totalPages: 3 });
     expect(mocks['list']).not.toHaveBeenCalled();
@@ -111,14 +157,20 @@ describe('BoardService paging and short suggestions', () => {
 
   it('returns an empty page when the page is past the last page but within the cap', async () => {
     const { repo } = fake({ count: () => Promise.resolve(30), list: () => Promise.resolve([]) });
-    const result = await new BoardService(repo).list('u1', { ...query, page: 40 });
+    const result = await new BoardService(repo, identity() as never).list('u1', {
+      ...query,
+      page: 40,
+    });
     expect(result.items).toEqual([]);
     expect(result.meta.totalPages).toBe(3);
   });
 
   it('does not suggest for text that normalises below the minimum length', async () => {
     const { repo, mocks } = fake();
-    const result = await new BoardService(repo).suggest({ q: 'v', lang: 'all' });
+    const result = await new BoardService(repo, identity() as never).suggest({
+      q: 'v',
+      lang: 'all',
+    });
     expect(result.suggestions).toEqual([]);
     expect(mocks['suggest']).not.toHaveBeenCalled();
   });
@@ -128,7 +180,7 @@ describe('BoardService paging and short suggestions', () => {
       suggestCount: () => Promise.resolve(0),
       closestWords: () => Promise.resolve([]),
     });
-    await new BoardService(repo).suggest({ q: 'kubernets', lang: Locale.DE });
+    await new BoardService(repo, identity() as never).suggest({ q: 'kubernets', lang: Locale.DE });
     expect(mocks['suggest']).toHaveBeenCalledWith('kubernets', 'de');
     expect(mocks['closestWords']).toHaveBeenCalledWith(['kubernets'], 'de');
   });

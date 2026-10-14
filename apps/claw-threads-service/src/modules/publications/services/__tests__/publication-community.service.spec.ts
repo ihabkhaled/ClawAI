@@ -6,8 +6,6 @@ import { PublicationCommunityService } from '../publication-community.service';
 describe('PublicationCommunityService', () => {
   function createService() {
     const publications = {
-      findPublicComments: vi.fn().mockResolvedValue([]),
-      createPublicComment: vi.fn().mockResolvedValue({ id: 'comment-1' }),
       setPublicReaction: vi
         .fn()
         .mockResolvedValue({ likes: 1, dislikes: 0, viewerReaction: 'LIKE' }),
@@ -26,32 +24,68 @@ describe('PublicationCommunityService', () => {
       resolveModerationReport: vi.fn().mockResolvedValue(true),
     };
     const lifecycle = { editRevision: vi.fn().mockResolvedValue({ revisionId: 'revision-1' }) };
+    const notifier = {
+      threadReacted: vi.fn().mockResolvedValue(undefined),
+      changeRequested: vi.fn().mockResolvedValue(undefined),
+    };
     return {
-      service: new PublicationCommunityService(publications as never, lifecycle as never),
+      service: new PublicationCommunityService(
+        publications as never,
+        lifecycle as never,
+        undefined,
+        notifier as never,
+      ),
       publications,
       lifecycle,
+      notifier,
     };
   }
 
-  it('requires an existing public publication before exposing comments', async () => {
-    const { service, publications } = createService();
-    publications.findPublicComments.mockResolvedValue(null);
-
-    await expect(service.listComments('private-slug')).rejects.toBeInstanceOf(NotFoundException);
-  });
-
-  it('passes the authenticated identity to comments and change requests', async () => {
+  it('passes the authenticated identity to change requests', async () => {
     const { service, publications } = createService();
 
-    await service.addComment('public-slug', 'user-7', { content: 'A source is missing' });
     await service.requestChange('public-slug', 'user-7', { suggestion: 'Add a citation' });
 
-    expect(publications.createPublicComment).toHaveBeenCalledWith('public-slug', 'user-7', {
-      content: 'A source is missing',
-    });
     expect(publications.createPublicChangeRequest).toHaveBeenCalledWith('public-slug', 'user-7', {
       suggestion: 'Add a citation',
     });
+  });
+
+  it('notifies the owner of a change request with the saved request id', async () => {
+    const { service, notifier } = createService();
+
+    await service.requestChange('public-slug', 'user-7', { suggestion: 'Add a citation' });
+
+    expect(notifier.changeRequested).toHaveBeenCalledWith(
+      'public-slug',
+      'user-7',
+      'request-1',
+      'Add a citation',
+    );
+  });
+
+  it('tells the notifier the reaction the person had before, so a switch does not notify twice', async () => {
+    const { service, publications, notifier } = createService();
+    publications.findPublicReactionSummary.mockResolvedValue({
+      likes: 1,
+      dislikes: 0,
+      viewerReaction: 'LIKE',
+    });
+
+    await service.setReaction('public-slug', 'user-7', { value: 'DISLIKE' });
+
+    expect(publications.findPublicReactionSummary).toHaveBeenCalledWith('public-slug', 'user-7');
+    expect(notifier.threadReacted).toHaveBeenCalledWith('public-slug', 'user-7', 'DISLIKE', 'LIKE');
+  });
+
+  it('still saves the reaction when the previous one cannot be read', async () => {
+    const { service, publications, notifier } = createService();
+    publications.findPublicReactionSummary.mockRejectedValue(new Error('db'));
+
+    await expect(
+      service.setReaction('public-slug', 'user-7', { value: 'LIKE' }),
+    ).resolves.toMatchObject({ likes: 1 });
+    expect(notifier.threadReacted).toHaveBeenCalledWith('public-slug', 'user-7', 'LIKE', null);
   });
 
   it('removes only the authenticated reader reaction', async () => {

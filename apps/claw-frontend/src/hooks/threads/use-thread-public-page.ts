@@ -81,7 +81,11 @@ export function useThreadPublicPage(
     shareUrl,
     buildExportFile,
     publication: queries.publication.data,
-    comments: queries.comments.data ?? [],
+    comments: queries.comments.comments,
+    highlightedCommentId: queries.comments.highlightedId,
+    hasMoreComments: queries.comments.hasMore,
+    isLoadingMoreComments: queries.comments.isLoadingMore,
+    loadMoreComments: queries.comments.loadMore,
     reactions: withRememberedReaction(
       queries.reactions.data,
       isAuthenticated && userId !== '' ? readRememberedReaction(userId, slug) : null,

@@ -4,8 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { useThreadCommentsFeed } from '@/hooks/threads/use-thread-comments-feed';
 import { useThreadPublicActions } from '@/hooks/threads/use-thread-public-actions';
 import { useThreadPublicView } from '@/hooks/threads/use-thread-public-view';
+import { queryKeys } from '@/repositories/shared/query-keys';
 import { threadPublicationsRepository } from '@/repositories/threads/thread-publications.repository';
 import { ApiClientError } from '@/services/shared/api-client';
 import { useAuthStore } from '@/stores/auth.store';
@@ -38,19 +40,15 @@ export function useBoardReader(): BoardReaderController {
 
   const enabled = slug !== '';
   const publication = useQuery({
-    queryKey: ['thread-publications', 'public', slug],
+    queryKey: queryKeys.threadPublications.publicPage(slug),
     queryFn: () => threadPublicationsRepository.getPublic(slug),
     enabled,
     retry: (count, error) =>
       !(error instanceof ApiClientError && error.status === 404) && count < 2,
   });
-  const comments = useQuery({
-    queryKey: ['thread-publications', 'public', slug, 'comments'],
-    queryFn: () => threadPublicationsRepository.listPublicComments(slug),
-    enabled,
-  });
+  const comments = useThreadCommentsFeed(slug);
   const reactions = useQuery({
-    queryKey: ['thread-publications', 'public', slug, 'reactions'],
+    queryKey: queryKeys.threadPublications.reactions(slug),
     queryFn: () => threadPublicationsRepository.getPublicReactionSummary(slug),
     enabled,
   });
@@ -67,7 +65,11 @@ export function useBoardReader(): BoardReaderController {
 
   return {
     publication: publication.data,
-    comments: comments.data ?? [],
+    comments: comments.comments,
+    highlightedCommentId: comments.highlightedId,
+    hasMoreComments: comments.hasMore,
+    isLoadingMoreComments: comments.isLoadingMore,
+    loadMoreComments: comments.loadMore,
     reactions: withRememberedReaction(
       reactions.data,
       isAuthenticated && userId !== '' ? readRememberedReaction(userId, slug) : null,

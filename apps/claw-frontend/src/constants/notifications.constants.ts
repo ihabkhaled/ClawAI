@@ -40,4 +40,28 @@ export const NOTIFICATION_TEXT_KEYS: Readonly<
     titleKey: 'notifications.kinds.THREAD_FAILED.title',
     bodyKey: 'notifications.kinds.THREAD_FAILED.body',
   },
+  [UserNotificationKind.THREAD_COMMENTED]: {
+    titleKey: 'notifications.kinds.THREAD_COMMENTED.title',
+    bodyKey: 'notifications.kinds.THREAD_COMMENTED.body',
+  },
+  [UserNotificationKind.THREAD_COMMENT_REPLIED]: {
+    titleKey: 'notifications.kinds.THREAD_COMMENT_REPLIED.title',
+    bodyKey: 'notifications.kinds.THREAD_COMMENT_REPLIED.body',
+  },
+  [UserNotificationKind.THREAD_MENTIONED]: {
+    titleKey: 'notifications.kinds.THREAD_MENTIONED.title',
+    bodyKey: 'notifications.kinds.THREAD_MENTIONED.body',
+  },
+  [UserNotificationKind.THREAD_REACTED]: {
+    titleKey: 'notifications.kinds.THREAD_REACTED.title',
+    bodyKey: 'notifications.kinds.THREAD_REACTED.body',
+  },
+  [UserNotificationKind.THREAD_COMMENT_REACTED]: {
+    titleKey: 'notifications.kinds.THREAD_COMMENT_REACTED.title',
+    bodyKey: 'notifications.kinds.THREAD_COMMENT_REACTED.body',
+  },
+  [UserNotificationKind.THREAD_CHANGE_REQUESTED]: {
+    titleKey: 'notifications.kinds.THREAD_CHANGE_REQUESTED.title',
+    bodyKey: 'notifications.kinds.THREAD_CHANGE_REQUESTED.body',
+  },
 };

@@ -78,4 +78,35 @@ describe('ThreadNotificationService', () => {
     rabbit.publishConfirmed.mockRejectedValue(new Error('down'));
     await expect(service.notifyReady('job-1', 'owner-1')).rejects.toThrow('down');
   });
+
+  describe('dispatchBestEffort', () => {
+    const payload = (userId: string) => ({
+      dedupeKey: `k-${userId}`,
+      userId,
+      kind: UserNotificationKind.THREAD_COMMENTED,
+      link: '/threads/x#comment-1',
+      params: { actorName: 'Ada', actorUsername: 'ada', title: 'T', excerpt: 'e' },
+    });
+
+    it('publishes every payload through the notification event', async () => {
+      const { service, rabbit } = build(target);
+      await service.dispatchBestEffort([payload('a'), payload('b')]);
+      expect(rabbit.publishConfirmed).toHaveBeenCalledTimes(2);
+      expect(rabbit.publishConfirmed).toHaveBeenCalledWith(
+        EventPattern.USER_NOTIFICATION_REQUESTED,
+        payload('a'),
+      );
+    });
+
+    it('never throws when the broker fails, and still tries the others', async () => {
+      const { service, rabbit } = build(target);
+      rabbit.publishConfirmed
+        .mockRejectedValueOnce(new Error('broker down'))
+        .mockResolvedValueOnce(undefined);
+      await expect(
+        service.dispatchBestEffort([payload('a'), payload('b')]),
+      ).resolves.toBeUndefined();
+      expect(rabbit.publishConfirmed).toHaveBeenCalledTimes(2);
+    });
+  });
 });

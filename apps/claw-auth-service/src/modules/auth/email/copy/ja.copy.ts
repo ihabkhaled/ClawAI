@@ -155,5 +155,83 @@ export const JA_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'このメールは、ClawAI で Thread を開始したためお送りしています。通知設定でこのメールを停止できます。',
     },
+    [AuthEmailKind.THREAD_COMMENTED]: {
+      subject: 'あなたの Thread に新しいコメントがあります',
+      preheader: '誰かが議論に参加しました。',
+      heading: 'あなたの Thread に新しいコメントがあります',
+      intro: '「{value}」にコメントが付きました。',
+      bodyLines: ['Thread を開いて読み、会話に参加しましょう。'],
+      actionLabel: 'Thread を開く',
+      fallbackNote:
+        'ボタンが機能しない場合は、下記のアドレスをコピーしてブラウザーに貼り付けてください。',
+      expiryNote: null,
+      securityNote:
+        'このメールは、ClawAI のこの Thread に参加しているためお送りしています。通知設定からこのメールを停止できます。',
+    },
+    [AuthEmailKind.THREAD_COMMENT_REPLIED]: {
+      subject: 'あなたのコメントに返信がありました',
+      preheader: '会話を開いて返信を読みましょう。',
+      heading: 'あなたのコメントに返信がありました',
+      intro: '「{value}」でのあなたのコメントに返信が追加されました。',
+      bodyLines: ['Thread を開いて読み、会話に参加しましょう。'],
+      actionLabel: 'Thread を開く',
+      fallbackNote:
+        'ボタンが機能しない場合は、下記のアドレスをコピーしてブラウザーに貼り付けてください。',
+      expiryNote: null,
+      securityNote:
+        'このメールは、ClawAI のこの Thread に参加しているためお送りしています。通知設定からこのメールを停止できます。',
+    },
+    [AuthEmailKind.THREAD_MENTIONED]: {
+      subject: 'コメントであなたがメンションされました',
+      preheader: '誰かが議論であなたをタグ付けしました。',
+      heading: 'コメントであなたがメンションされました',
+      intro: '「{value}」のコメントであなたがメンションされました。',
+      bodyLines: ['Thread を開いて読み、会話に参加しましょう。'],
+      actionLabel: 'Thread を開く',
+      fallbackNote:
+        'ボタンが機能しない場合は、下記のアドレスをコピーしてブラウザーに貼り付けてください。',
+      expiryNote: null,
+      securityNote:
+        'このメールは、ClawAI のこの Thread に参加しているためお送りしています。通知設定からこのメールを停止できます。',
+    },
+    [AuthEmailKind.THREAD_REACTED]: {
+      subject: 'あなたの Thread にリアクションがありました',
+      preheader: '読者があなたの Thread に反応しました。',
+      heading: 'あなたの Thread にリアクションがありました',
+      intro: '読者が「{value}」に反応しました。',
+      bodyLines: ['Thread を開いて読み、会話に参加しましょう。'],
+      actionLabel: 'Thread を開く',
+      fallbackNote:
+        'ボタンが機能しない場合は、下記のアドレスをコピーしてブラウザーに貼り付けてください。',
+      expiryNote: null,
+      securityNote:
+        'このメールは、ClawAI のこの Thread に参加しているためお送りしています。通知設定からこのメールを停止できます。',
+    },
+    [AuthEmailKind.THREAD_COMMENT_REACTED]: {
+      subject: 'あなたのコメントに「いいね」がありました',
+      preheader: 'あなたのコメントが評価されています。',
+      heading: 'あなたのコメントに「いいね」がありました',
+      intro: '「{value}」でのあなたのコメントに「いいね」が付きました。',
+      bodyLines: ['Thread を開いて読み、会話に参加しましょう。'],
+      actionLabel: 'Thread を開く',
+      fallbackNote:
+        'ボタンが機能しない場合は、下記のアドレスをコピーしてブラウザーに貼り付けてください。',
+      expiryNote: null,
+      securityNote:
+        'このメールは、ClawAI のこの Thread に参加しているためお送りしています。通知設定からこのメールを停止できます。',
+    },
+    [AuthEmailKind.THREAD_CHANGE_REQUESTED]: {
+      subject: 'あなたの Thread に変更の提案がありました',
+      preheader: '提案を確認して、承認または却下してください。',
+      heading: 'あなたの Thread に変更の提案がありました',
+      intro: '読者が「{value}」への変更を提案しました。',
+      bodyLines: ['Thread を開いて読み、会話に参加しましょう。'],
+      actionLabel: 'Thread を開く',
+      fallbackNote:
+        'ボタンが機能しない場合は、下記のアドレスをコピーしてブラウザーに貼り付けてください。',
+      expiryNote: null,
+      securityNote:
+        'このメールは、ClawAI のこの Thread に参加しているためお送りしています。通知設定からこのメールを停止できます。',
+    },
   },
 };
