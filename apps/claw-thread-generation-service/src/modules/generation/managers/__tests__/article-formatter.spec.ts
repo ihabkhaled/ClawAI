@@ -88,7 +88,17 @@ describe('ArticleFormatter', () => {
       draftOf(JA_FIXTURE),
     );
     expect(outcome.status).toBe('SKIPPED');
-    expect(outcome.code).toBe('FORMAT_FAILED');
+    expect(outcome.code).toBe('FORMAT_MODEL_ERROR');
+  });
+
+  it('names a reply that is not the expected JSON as FORMAT_REPLY_INVALID, never the generic code', async () => {
+    const call = vi.fn().mockResolvedValue({ content: 'not json at all', costMicroUsd: 1 });
+    const outcome = await new ArticleFormatter({ call, record: vi.fn() }).format(
+      input(),
+      draftOf(EN_FIXTURE),
+    );
+    expect(outcome.status).toBe('SKIPPED');
+    expect(outcome.code).toBe('FORMAT_REPLY_INVALID');
   });
 
   it('is skipped without a model call once 85 percent of the cap is spent', async () => {

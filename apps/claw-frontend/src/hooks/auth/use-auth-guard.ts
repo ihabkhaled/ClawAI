@@ -7,6 +7,7 @@ import { ROUTES } from '@/constants';
 import { useAuthStore } from '@/stores/auth.store';
 import { logger } from '@/utilities';
 import { localizeHref, parseLocaleFromPathname } from '@/utilities/locale.utility';
+import { buildReturnTo } from '@/utilities/safe-return-route.utility';
 
 export function useAuthGuard(): { isReady: boolean } {
   const router = useRouter();
@@ -36,8 +37,7 @@ export function useAuthGuard(): { isReady: boolean } {
         action: 'guard-redirect',
         message: 'Unauthenticated user redirected to login',
       });
-      const query = searchParams.toString();
-      const returnTo = `${pathname}${query.length > 0 ? `?${query}` : ''}`;
+      const returnTo = buildReturnTo(pathname, searchParams.toString(), globalThis.location.hash);
       router.replace(
         localizeHref(
           `${ROUTES.LOGIN}?returnTo=${encodeURIComponent(returnTo)}`,

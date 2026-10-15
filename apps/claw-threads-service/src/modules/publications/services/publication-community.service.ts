@@ -32,6 +32,7 @@ import {
 } from '../constants/publication-change-request.constants';
 import type {
   ModerationReportView,
+  OwnerChangeRequestAnswer,
   PublicationChangeRequestView,
   PublicationReactionSummary,
 } from '../types/publication-community.types';
@@ -158,7 +159,7 @@ export class PublicationCommunityService {
     ownerId: string,
     requestId: string,
     input: ResolvePublicationChangeRequestDto,
-  ): Promise<{ resolved: true; edit: PublicationEditResult | null }> {
+  ): Promise<OwnerChangeRequestAnswer> {
     const existing = await this.publications.findOwnedChangeRequest(
       publicationId,
       ownerId,
@@ -167,7 +168,16 @@ export class PublicationCommunityService {
     if (!existing) throw new NotFoundException('Change request not found');
     if (existing.status !== 'PENDING') {
       // The same decision sent again (a double click, a retry) is answered, never repeated or told twice.
-      if (isSameDecision(existing.status, input.status)) return { resolved: true, edit: null };
+      if (isSameDecision(existing.status, input.status)) {
+        // The stored decision is returned as it is: a different reason in the repeat is NOT applied.
+        return {
+          resolved: true,
+          edit: null,
+          unchanged: true,
+          status: existing.status,
+          ownerResponse: existing.ownerResponse,
+        };
+      }
       throw new ConflictException('Change request is already resolved');
     }
     let acceptedRevisionId: string | null = null;
@@ -202,14 +212,22 @@ export class PublicationCommunityService {
     requestId: string,
     input: ResolvePublicationChangeRequestDto,
     edit: PublicationEditResult | null,
-  ): Promise<{ resolved: true; edit: PublicationEditResult | null }> {
+  ): Promise<OwnerChangeRequestAnswer> {
     const latest = await this.publications.findOwnedChangeRequest(
       publicationId,
       ownerId,
       requestId,
     );
     if (!latest) throw new NotFoundException('Change request not found');
-    if (isSameDecision(latest.status, input.status)) return { resolved: true, edit };
+    if (isSameDecision(latest.status, input.status)) {
+      return {
+        resolved: true,
+        edit,
+        unchanged: true,
+        status: latest.status,
+        ownerResponse: latest.ownerResponse,
+      };
+    }
     throw new ConflictException('Change request is already resolved');
   }
 

@@ -42,7 +42,10 @@ const SOURCE = {
 };
 
 function renderRequests(
-  handlers: { onRevisionStarted?: () => void; onEditMyself?: () => void } = {},
+  handlers: {
+    onRevisionStarted?: () => void;
+    onEditMyself?: (suggestion: { id: string; suggestion: string }) => void;
+  } = {},
 ) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -202,6 +205,10 @@ describe('ThreadChangeRequests', () => {
     await user.click(screen.getByRole('button', { name: 'chat.threadCrEditMyself' }));
 
     await waitFor(() => expect(onEditMyself).toHaveBeenCalledTimes(1));
+    expect(onEditMyself).toHaveBeenCalledWith({
+      id: 'request-1',
+      suggestion: 'Clarify the conclusion',
+    });
     expect(threadPublicationsRepository.resolveChangeRequest).toHaveBeenCalledWith(
       'publication-1',
       'request-1',
@@ -217,8 +224,51 @@ describe('ThreadChangeRequests', () => {
 
     const card = await screen.findByTestId('thread-change-request');
     await waitFor(() => expect(card.className).toContain('ring-2'));
-    expect(scrollIntoView).toHaveBeenCalled();
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
     expect(card.id).toBe('change-request-request-1');
+  });
+
+  it('clamps a 5000-character suggestion and toggles Show more / Show less', async () => {
+    const user = userEvent.setup();
+    const long = 'word '.repeat(1000);
+    vi.mocked(threadPublicationsRepository.listChangeRequests).mockResolvedValue([
+      { ...pendingRequest, suggestion: long },
+    ]);
+    renderRequests();
+
+    const card = await screen.findByTestId('thread-change-request');
+    expect(card.textContent?.length ?? 0).toBeLessThan(1500);
+    await user.click(within(card).getByRole('button', { name: 'threadReview.showMore' }));
+    expect(card.textContent).toContain(long.trim());
+    await user.click(within(card).getByRole('button', { name: 'threadReview.showLess' }));
+    expect(card.textContent?.length ?? 0).toBeLessThan(1500);
+  });
+
+  it('shows no toggle for a short suggestion', async () => {
+    renderRequests();
+
+    const card = await screen.findByTestId('thread-change-request');
+    expect(within(card).queryByRole('button', { name: 'threadReview.showMore' })).toBeNull();
+  });
+
+  it('says the request was already answered when the service returns unchanged', async () => {
+    const user = userEvent.setup();
+    const onEditMyself = vi.fn();
+    vi.mocked(threadPublicationsRepository.resolveChangeRequest).mockResolvedValue({
+      resolved: true,
+      edit: null,
+      unchanged: true,
+    });
+    renderRequests({ onEditMyself });
+
+    await screen.findByText('Clarify the conclusion');
+    await user.click(screen.getByRole('button', { name: 'chat.threadChangeAccept' }));
+    await user.click(screen.getByRole('button', { name: 'chat.threadCrEditMyself' }));
+
+    expect(await screen.findByTestId('thread-cr-unchanged')).toHaveTextContent(
+      'threadReview.alreadyAnswered',
+    );
+    expect(onEditMyself).not.toHaveBeenCalled();
   });
 
   it('does not highlight anything when the address names no suggestion in the list', async () => {

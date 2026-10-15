@@ -2,9 +2,11 @@ import { Injectable } from '@nestjs/common';
 
 import type { Prisma } from '../../../generated/prisma';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { resolvePublicationTitle } from '../../publications/utilities/publication-readable-title.utility';
 import { latestRevisionContentSchema } from '../../publications/schemas/latest-revision-content.schema';
 import {
   FORMAT_ALREADY_PRETTY_CODE,
+  FORMAT_ATTEMPTS_PER_DAY,
   FORMAT_PASSES_PER_DAY,
   FORMAT_WINDOW_MS,
 } from '../constants/publication-format.constants';
@@ -34,7 +36,7 @@ export class FormatPassRepository {
     if (!revision || !content?.success) return null;
     return {
       revisionId: revision.id,
-      title: revision.title,
+      title: resolvePublicationTitle(revision.title, revision.content),
       markdown: content.data.markdown,
       citations: citationsSchema.parse(content.data.citations),
       generationJobId: revision.publication.generationJobId,
@@ -68,6 +70,9 @@ export class FormatPassRepository {
       }
       const used = await this.countOn(transaction, input.publicationId);
       if (used >= FORMAT_PASSES_PER_DAY) return { outcome: 'LIMIT', used } as const;
+      // Skipped passes are free for the owner but still cost a model call, so they are bounded too.
+      const attempts = await this.countAttemptsOn(transaction, input.publicationId);
+      if (attempts >= FORMAT_ATTEMPTS_PER_DAY) return { outcome: 'LIMIT', used: attempts } as const;
       const pass = await transaction.threadFormatPass.create({
         data: {
           publicationId: input.publicationId,
@@ -92,7 +97,7 @@ export class FormatPassRepository {
     });
   }
 
-  /** Passes that count against today's limit: all but failed ones and free already-typeset skips. */
+  /** Passes that count against today's limit: only ones that produced a formatted article (ADR-189). */
   countToday(publicationId: string): Promise<number> {
     return this.countOn(this.prisma, publicationId);
   }
@@ -105,7 +110,21 @@ export class FormatPassRepository {
       where: {
         publicationId,
         createdAt: { gte: new Date(Date.now() - FORMAT_WINDOW_MS) },
-        status: { not: FormatPassStatus.FAILED },
+        status: FormatPassStatus.FORMATTED,
+      },
+    });
+  }
+
+  /** Every pass that reached the model today (formatted or skipped), but not failed or already-typeset ones. */
+  private countAttemptsOn(
+    client: Pick<PrismaService, 'threadFormatPass'> | Prisma.TransactionClient,
+    publicationId: string,
+  ): Promise<number> {
+    return client.threadFormatPass.count({
+      where: {
+        publicationId,
+        createdAt: { gte: new Date(Date.now() - FORMAT_WINDOW_MS) },
+        status: { in: [FormatPassStatus.FORMATTED, FormatPassStatus.SKIPPED] },
         OR: [{ code: null }, { code: { not: FORMAT_ALREADY_PRETTY_CODE } }],
       },
     });

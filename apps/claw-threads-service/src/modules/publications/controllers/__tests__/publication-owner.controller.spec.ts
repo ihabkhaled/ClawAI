@@ -60,4 +60,32 @@ describe('PublicationOwnerController generation routes', () => {
       status: 'REJECTED',
     });
   });
+
+  it('answers a repeated decision with 200 (the stored decision) and a first one with the default 201', async () => {
+    const { controller, community } = setup();
+    const response = { status: vi.fn() };
+    await controller.resolveChangeRequest(
+      'pub-1',
+      'req-1',
+      { status: 'REJECTED' },
+      user,
+      response as never,
+    );
+    expect(response.status).not.toHaveBeenCalled();
+    community.resolveOwnerChangeRequest.mockResolvedValueOnce({
+      resolved: true,
+      edit: null,
+      unchanged: true,
+      status: 'REJECTED',
+      ownerResponse: 'First reply',
+    });
+    await controller.resolveChangeRequest(
+      'pub-1',
+      'req-1',
+      { status: 'REJECTED' },
+      user,
+      response as never,
+    );
+    expect(response.status).toHaveBeenCalledWith(200);
+  });
 });

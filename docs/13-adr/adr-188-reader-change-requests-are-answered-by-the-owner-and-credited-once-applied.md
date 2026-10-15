@@ -37,3 +37,9 @@ A visitor suggested a change to a Thread. The owner got a notification (`Chen Ch
 - A request accepted on its own stays ACCEPTED until a newer revision goes live. If the owner never publishes, the reader keeps seeing "Accepted".
 - Requests on a Thread that is later unpublished stay readable by the owner on the review screen and by the requester in "My suggestions"; credits disappear with the public page.
 - Deployment: run the threads-service migration (adds an enum value and an index; no table rewrite). Auth-service and frontend ship code only. Deploy shared-types first (three new kinds).
+
+## Addendum 2026-10-15: live QA of v1.216.0
+
+- **A repeated decision is answered, not re-made.** The same decision sent again (even with a different reason) answers HTTP 200 with the STORED decision plus `unchanged: true` (`status`, `ownerResponse` of the first decision); the first decision still answers 201. The first reply is kept and nothing is announced twice. The opposite decision stays 409. A 200 with the stored reply was chosen over a 409 on a different reason because a double click or a retried request is not an error and the client can show the kept reply.
+- **"I will edit it myself"** opens the editor for that Thread with the suggestion text shown beside it (frontend). The review-screen deep link carries its fragment exactly once through the sign-in redirect and the card is highlighted after load.
+- **Title** of every change-request and comment notification comes from the one resolver of the ADR-189 addendum.

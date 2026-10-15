@@ -62,6 +62,14 @@ describe('useAuthGuard', () => {
     expect(result.current.isReady).toBe(true);
   });
 
+  it('keeps the deep-link fragment in returnTo, once', () => {
+    globalThis.location.hash = '#change-request-X';
+    renderHook(() => useAuthGuard());
+    globalThis.location.hash = '';
+
+    expect(mockReplace.mock.calls[0]?.[0]).toBe('/login?returnTo=%2Fchat%23change-request-X');
+  });
+
   it('redirects to login when not authenticated after hydration', () => {
     // Store is cleared (not authenticated)
     renderHook(() => useAuthGuard());

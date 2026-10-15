@@ -33,6 +33,15 @@ export function ThreadChangeRequests(props: ThreadChangeRequestsProps): ReactEle
       {requests.isLoading ? <p role="status">{t('common.loading')}</p> : null}
       {requests.isError ? <p role="alert">{t('chat.threadChangeRequestsFailed')}</p> : null}
       {resolve.isError ? <p role="alert">{t('chat.threadChangeDecisionFailed')}</p> : null}
+      {resolve.data?.unchanged === true ? (
+        <p
+          role="status"
+          className="text-muted-foreground text-sm"
+          data-testid="thread-cr-unchanged"
+        >
+          {t('threadReview.alreadyAnswered')}
+        </p>
+      ) : null}
       {requests.data?.length === 0 ? (
         <p className="text-muted-foreground text-sm">{t('chat.threadChangeRequestsEmpty')}</p>
       ) : null}

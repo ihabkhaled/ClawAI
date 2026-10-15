@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { THREAD_FORMAT_SKIP_TONE } from '@/constants/thread-format.constants';
 import {
   THREAD_STEP_OUTCOME_KEYS,
   THREAD_STEP_OUTCOME_TONES,
@@ -10,6 +11,7 @@ import { THREAD_STEP_OUTCOME_ICONS } from '@/constants/thread-step-icons.constan
 import { useThreadStepExcerpt } from '@/hooks/threads/use-thread-step-excerpt';
 import { useTranslation } from '@/lib/i18n';
 import type { ThreadStepItemProps } from '@/types/thread-generation-progress.types';
+import { isThreadFormatSkipCode } from '@/utilities/thread-format-message.utility';
 import {
   describeStepDuration,
   formatStepTime,
@@ -26,6 +28,9 @@ export function ThreadGenerationStepItem({ step }: ThreadStepItemProps): ReactEl
   const Icon = THREAD_STEP_OUTCOME_ICONS[step.outcome];
   const stageKey = threadStageLabelKey(step.stage);
   const failure = step.code === null ? null : resolveThreadFailureKeys(step.code);
+  // A formatting skip is a safe, expected outcome: neutral information, not an error.
+  const isFormatSkip = step.outcome === 'SKIPPED' && isThreadFormatSkipCode(step.code);
+  const codeTone = isFormatSkip ? THREAD_FORMAT_SKIP_TONE : THREAD_STEP_OUTCOME_TONES[step.outcome];
   const duration = step.durationMs === null ? null : describeStepDuration(step.durationMs);
   const model = [step.provider, step.model].filter(Boolean).join(' / ');
   // A healing step's excerpt is only the failure class it answered, not something the AI said.
@@ -56,8 +61,10 @@ export function ThreadGenerationStepItem({ step }: ThreadStepItemProps): ReactEl
       </p>
       {failure === null ? null : (
         <p
-          className={`text-sm ${THREAD_STEP_OUTCOME_TONES[step.outcome]}`}
+          className={`text-sm ${codeTone}`}
           data-testid="thread-progress-step-code"
+          data-kind={isFormatSkip ? 'info' : undefined}
+          role={isFormatSkip ? 'status' : undefined}
         >
           {t(failure.messageKey, failure.params)}
           {step.httpStatus === null || step.outcome !== 'FAILED'

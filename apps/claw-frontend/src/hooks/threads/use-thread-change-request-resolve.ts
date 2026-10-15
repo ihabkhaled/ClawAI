@@ -55,12 +55,13 @@ export function useThreadChangeRequestResolve({
         revision,
       });
     },
-    onSuccess: async ({ edit }, { requestId, mode }) => {
+    onSuccess: async ({ edit, unchanged }, { requestId, mode }) => {
       if (edit) {
         onRevisionStarted(edit.revisionId);
       }
-      if (mode === ThreadChangeAcceptMode.EditMyself) {
-        onEditMyself?.();
+      // An already-answered request keeps its first reply, so it does not open the editor again.
+      if (mode === ThreadChangeAcceptMode.EditMyself && unchanged !== true) {
+        onEditMyself?.(requestId);
       }
       form.finishRequest(requestId);
       await Promise.all([

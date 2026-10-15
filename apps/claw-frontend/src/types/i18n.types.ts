@@ -14,6 +14,7 @@ export type TranslationDictionary = {
   /** Relative-time wording shared by Thread bylines and comments. */
   threadTime: ThreadTimeLocaleTranslation;
   threadArticle: ThreadArticleLocaleTranslation;
+  threadReview: ThreadReviewLocaleTranslation;
   pluginsInstall: PluginsInstallLocaleTranslation;
   pluginsServers: PluginsServersLocaleTranslation;
   /** Importing a plugin from GitHub or an upload (plugin-import-translations.ts). */
@@ -8424,4 +8425,30 @@ export type ThreadArticleLocaleTranslation = {
   formatLimit: string;
   formatBusy: string;
   formatFailed: string;
+};
+
+/** The review screen's long-suggestion toggle, answered note, editor card and one friendly line per FORMAT_* skip code. */
+export type ThreadReviewLocaleTranslation = {
+  showMore: string;
+  showLess: string;
+  alreadyAnswered: string;
+  editorSuggestionTitle: string;
+  editorSuggestionDismiss: string;
+  formatAlreadyPretty: string;
+  formatSkippedBudget: string;
+  formatFailed: string;
+  formatReplyInvalid: string;
+  formatModelError: string;
+  formatEmpty: string;
+  formatRawHtml: string;
+  formatCitationLost: string;
+  formatCitationAdded: string;
+  formatNumberChanged: string;
+  formatUrlAdded: string;
+  formatLengthDrift: string;
+  formatHeadingLanguage: string;
+  formatStructure: string;
+  formatTableLost: string;
+  formatUnknown: string;
+  formatNotFormattable: string;
 };

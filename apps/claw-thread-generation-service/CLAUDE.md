@@ -213,3 +213,7 @@ There is no language or length check in the author schema; the causes were three
 - `AUTHOR_STRUCTURE_NOTE` (author prompt) asks the authors for the same structure; changing it replays in-flight author calls once. There is no merge stage: the first author's draft is the candidate and the others vote on it.
 - Owner preview: `POST internal/threads/format-preview` (`FormatPreviewService`): owner-scoped parent job lookup (404), a $0.10 budget under `format:<key>`, closed at once. A new `FORMAT_*` code needs the guard spec and the service guide row; the frontend has no translation for it yet.
 - Never add a number-, id- or url-tolerant shortcut to the guard: its strictness is the whole point (the Critic reviewed the facts). Specs: `format-guard.utility.spec.ts` (en, de, ar, ja fixtures), `article-formatter.spec.ts`, `format-preview.service.spec.ts`. Decision: [ADR-189](../../docs/13-adr/adr-189-thread-articles-are-typeset-by-a-guarded-format-stage-and-rendered-as-rich-safe-html.md).
+
+## Format preview QA fixes 2026-10-15
+
+- `prepareLegacyDraft` normalises `[address, id]` markers and a missing H1 before a preview pass; the normalised text is the guard's baseline. Skip codes `FORMAT_REPLY_INVALID` (bad JSON reply) and `FORMAT_MODEL_ERROR` (every call failed) replace most `FORMAT_FAILED`, which stays as the generic fallback.

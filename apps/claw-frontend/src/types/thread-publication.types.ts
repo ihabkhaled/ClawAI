@@ -121,6 +121,25 @@ export type ResolveThreadPublicationChangeRequest =
 export type ThreadPublicationChangeRequestResolution = {
   resolved: true;
   edit: ThreadRevisionRequestResult | null;
+  /** True when the request had already been answered: the stored decision came back and the first reply was kept. */
+  unchanged?: boolean;
+};
+
+/** The suggestion the owner is applying by hand, shown beside the editor. */
+export type ThreadEditorSuggestion = { id: string; suggestion: string };
+
+export type ThreadSuggestionClamp = {
+  visibleText: string;
+  isLong: boolean;
+  expanded: boolean;
+  toggle: () => void;
+};
+
+export type ThreadChangeRequestSuggestionTextProps = { text: string };
+
+export type ThreadEditorSuggestionCardProps = {
+  suggestion: ThreadEditorSuggestion;
+  onDismiss: () => void;
 };
 
 export type PublicThreadPublication = {
@@ -257,8 +276,8 @@ export type ThreadChangeRequestsProps = {
   publicationId: string;
   revisionSource: NonNullable<ThreadGenerationState['draft']> | null;
   onRevisionStarted: (revisionId: string) => void;
-  /** Opens the editor after an owner accepts a suggestion to apply it by hand. */
-  onEditMyself?: () => void;
+  /** Opens the editor, with the suggestion beside it, after an owner accepts one to apply it by hand. */
+  onEditMyself?: (suggestion: ThreadEditorSuggestion) => void;
 };
 
 export type ThreadGenerationFormOptions = {
@@ -331,6 +350,10 @@ export type ThreadPublicationDetailController = {
   revisionIsTerminal: boolean;
   revisionReviewMessage: string;
   startEditing: () => void;
+  /** Opens the editor and keeps the reader suggestion visible beside it. */
+  startEditingFromSuggestion: (suggestion: ThreadEditorSuggestion) => void;
+  editorSuggestion: ThreadEditorSuggestion | null;
+  dismissEditorSuggestion: () => void;
   changeRevisionField: (field: ThreadRevisionField, value: string) => void;
   startRevisionFromChangeRequest: (revisionId: string) => void;
 };
@@ -418,7 +441,7 @@ export type ThreadChangeRequestResolveInput = {
   revisionSource: ThreadChangesRevisionSource;
   form: ThreadChangeRequestForm;
   onRevisionStarted: (revisionId: string) => void;
-  onEditMyself?: () => void;
+  onEditMyself?: (requestId: string) => void;
 };
 
 export type ThreadCommentValidation = {

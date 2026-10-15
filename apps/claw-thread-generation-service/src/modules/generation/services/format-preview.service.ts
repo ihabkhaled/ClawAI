@@ -11,6 +11,7 @@ import {
 } from '../constants/format-prompt.constants';
 import type { FormatPreviewDto, FormatPreviewResult } from '../dto/format-preview.dto';
 import type { GenerationPipelineInput } from '../types/generation-pipeline.types';
+import { prepareLegacyDraft } from '../utilities/prepare-legacy-draft.utility';
 import { isFormattedArticle } from '../utilities/is-formatted-article.utility';
 import { waitBeforeRetry } from '../utilities/wait-before-retry.utility';
 import { ThreadGenerationCancelledError } from '../utilities/thread-generation-cancelled.error';
@@ -41,7 +42,9 @@ export class FormatPreviewService {
       citations: dto.draft.citations,
     };
     const request = await this.requireParentRequest(dto);
-    if (isFormattedArticle(dto.draft.markdown)) return unchanged;
+    // An article from an older release is normalised first (`[address, id]` markers, a missing H1).
+    const draft = prepareLegacyDraft(dto.draft, dto.title);
+    if (isFormattedArticle(draft.markdown)) return unchanged;
     // threads-service never sends a key twice (its own table), so a refusal here is a real one.
     const budget = await this.budgets.reserve(
       dto.ownerId,
@@ -52,7 +55,7 @@ export class FormatPreviewService {
     try {
       const outcome = await new ArticleFormatter({
         call: (input, healing, spec) => this.healer().call(input, healing, spec),
-      }).format(this.pipelineInput(dto, budget.id, request), dto.draft);
+      }).format(this.pipelineInput(dto, budget.id, request), draft);
       if (outcome.status === 'FORMATTED') status = GenerationBudgetCloseStatus.FINALIZED;
       return {
         status: outcome.status,

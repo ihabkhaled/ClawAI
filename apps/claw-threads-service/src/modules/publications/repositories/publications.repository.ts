@@ -34,6 +34,11 @@ import type {
   LatestRevisionDraft,
   OwnedPublicationListItem,
 } from '../types/owner-publication.types';
+import {
+  isPlaceholderTitle,
+  resolvePublicationTitle,
+} from '../utilities/publication-readable-title.utility';
+import { UNTITLED_PUBLICATION_TITLE } from '../constants/publication-title.constants';
 import { pickOwnerListTitle } from '../utilities/owner-list-title.utility';
 import type { NotificationPublicationTarget } from '../types/thread-notification.types';
 import type {
@@ -100,11 +105,33 @@ export class PublicationsRepository {
         },
       },
     });
-    return publications.map(({ revisions, _count, ...publication }) => ({
+    const items = publications.map(({ revisions, _count, ...publication }) => ({
       ...publication,
       pendingChangeRequests: _count.changeRequests,
       ...pickOwnerListTitle(revisions),
     }));
+    return this.resolvePlaceholderTitles(items);
+  }
+
+  /** Rows whose title is still the placeholder show the title derived from the newest such article. */
+  private async resolvePlaceholderTitles(
+    items: OwnedPublicationListItem[],
+  ): Promise<OwnedPublicationListItem[]> {
+    const pending = items.filter((item) => item.title !== null && isPlaceholderTitle(item.title));
+    if (pending.length === 0) return items;
+    const rows = await this.prisma.threadPublicationRevision.findMany({
+      where: {
+        publicationId: { in: pending.map(({ id }) => id) },
+        title: UNTITLED_PUBLICATION_TITLE,
+      },
+      orderBy: { revision: 'desc' },
+      distinct: ['publicationId'],
+      select: { publicationId: true, title: true, content: true },
+    });
+    const derived = new Map(
+      rows.map((row) => [row.publicationId, resolvePublicationTitle(row.title, row.content)]),
+    );
+    return items.map((item) => ({ ...item, title: derived.get(item.id) ?? item.title }));
   }
 
   /**
@@ -345,7 +372,7 @@ export class PublicationsRepository {
         const view = (publishedAt: Date): PublishedPublication => ({
           id: owned.id,
           slug: readableSlug ?? owned.slug,
-          title: revision.title,
+          title: resolvePublicationTitle(revision.title, revision.content),
           content: { markdown: content.data.markdown },
           publishedAt,
         });
@@ -761,7 +788,7 @@ export class PublicationsRepository {
     return publication?.publishedAt && revision && content.success
       ? {
           slug: publication.slug,
-          title: revision.title,
+          title: resolvePublicationTitle(revision.title, revision.content),
           contentLocale: publication.contentLocale as Locale,
           publicationType:
             publication.publicationType as PublicPublicationRecord['publicationType'],
@@ -833,7 +860,7 @@ export class PublicationsRepository {
       return [
         {
           slug: row.slug,
-          title: revision.title,
+          title: resolvePublicationTitle(revision.title, revision.content),
           excerpt: publicationExcerpt(content.data.markdown),
           contentLocale: row.contentLocale as Locale,
           publicationType: row.publicationType as PublicPublicationRecord['publicationType'],

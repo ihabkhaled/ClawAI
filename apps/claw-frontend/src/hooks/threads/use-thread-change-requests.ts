@@ -27,7 +27,10 @@ export function useThreadChangeRequests({
     revisionSource,
     form,
     onRevisionStarted,
-    onEditMyself,
+    onEditMyself: (requestId) => {
+      const suggestion = requests.data?.find((request) => request.id === requestId)?.suggestion;
+      onEditMyself?.({ id: requestId, suggestion: suggestion ?? '' });
+    },
   });
   const highlightedId = useThreadChangeRequestHighlight(
     (requests.data ?? []).map((request) => request.id),

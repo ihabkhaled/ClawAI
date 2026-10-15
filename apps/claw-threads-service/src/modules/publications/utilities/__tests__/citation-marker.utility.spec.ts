@@ -57,6 +57,39 @@ describe('resolveCitationMarkers (ADR-183)', () => {
     );
   });
 
+  it('resolves the legacy [address, id] bracket by id, then by address, and removes unknown ones', () => {
+    expect(
+      resolveCitationMarkers('Fact [https://example.com/one, a5505c418699ab68] ok.', citations),
+    ).toBe('Fact [1] ok.');
+    expect(
+      resolveCitationMarkers('Fact [https://example.org/two, 0123456789abcdef] ok.', citations),
+    ).toBe('Fact [2] ok.');
+    expect(
+      resolveCitationMarkers('Fact [https://elsewhere.test/x, 0123456789abcdef] ok.', citations),
+    ).toBe('Fact ok.');
+    expect(
+      resolveCitationMarkers('A [https://example.com/one, a5505c418699ab68]. B', citations),
+    ).toBe('A [1]. B');
+  });
+
+  it('resolves the legacy bracket with Arabic-Indic digits, Arabic commas and CJK brackets', () => {
+    expect(
+      resolveCitationMarkers('حقيقة [https://example.org/two، ٢f٢٥f١٩٩٧١٢eec٣d] تم', citations),
+    ).toBe('حقيقة [2] تم');
+    expect(
+      resolveCitationMarkers('事実【https://example.com/one、a5505c418699ab68】です', citations),
+    ).toBe('事実[1]です');
+    expect(
+      resolveCitationMarkers('事実［https://example.com/one，ａ5505c418699ab68］です', citations),
+    ).toBe('事実[1]です');
+  });
+
+  it('leaves a bracketed address that is not followed by an id alone', () => {
+    expect(resolveCitationMarkers('See [https://x.test/a,b] now', citations)).toBe(
+      'See https://x.test/a,b now',
+    );
+  });
+
   it('leaves markdown links alone', () => {
     const text =
       'A [https://example.com/one](https://example.com/one) link and [label](https://x.test).';

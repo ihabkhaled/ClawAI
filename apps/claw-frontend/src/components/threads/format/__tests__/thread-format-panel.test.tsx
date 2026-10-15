@@ -124,6 +124,19 @@ describe('ThreadFormatPanel', () => {
     expect(screen.queryByRole('button', { name: 'threadArticle.formatAccept' })).toBeNull();
   });
 
+  it('shows the specific reason when the guard kept the original', async () => {
+    previewMock.mockResolvedValue({
+      ...PREVIEW,
+      status: 'SKIPPED',
+      code: 'FORMAT_CITATION_LOST',
+      markdown: PREVIEW.originalMarkdown,
+    });
+    renderPanel(detailStub());
+    fireEvent.click(screen.getByRole('button', { name: 'threadArticle.formatRun' }));
+    expect(await screen.findByText('threadReview.formatCitationLost')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'threadArticle.formatAccept' })).toBeNull();
+  });
+
   it('explains the daily limit and a guard refusal', async () => {
     previewMock.mockRejectedValueOnce(
       new ApiClientError({ message: 'x', status: 429, code: 'THREAD_FORMAT_DAILY_LIMIT' }),

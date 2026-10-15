@@ -13,7 +13,7 @@ import type { ThreadFormatPanelController } from '@/types/thread-format.types';
 import type { ThreadPublicationDetailController } from '@/types/thread-publication.types';
 import {
   threadFormatErrorKey,
-  threadFormatSkippedKey,
+  threadFormatSkippedMessage,
 } from '@/utilities/thread-format-message.utility';
 import { createThreadRevisionRequest } from '@/utilities/thread-revision-request.utility';
 
@@ -74,6 +74,7 @@ export function useThreadFormatPanel(
   });
 
   const failure = run.error ?? accept.error;
+  const skipped = preview?.status === 'SKIPPED' ? threadFormatSkippedMessage(preview.code) : null;
   return {
     preview,
     view,
@@ -94,7 +95,7 @@ export function useThreadFormatPanel(
     isRunning: run.isPending,
     isAccepting: accept.isPending,
     errorText: failure ? t(threadFormatErrorKey(failure)) : null,
-    skippedText: preview?.status === 'SKIPPED' ? t(threadFormatSkippedKey(preview.code)) : null,
+    skippedText: skipped ? t(skipped.key, skipped.params) : null,
     canRun: !run.isPending && !accept.isPending,
     contentLocale: preview?.contentLocale ?? 'en',
   };

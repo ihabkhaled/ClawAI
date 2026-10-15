@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 
 import { ThreadFormatPanel } from '@/components/threads/format/thread-format-panel';
 import { ThreadChangeRequests } from '@/components/threads/thread-change-requests';
+import { ThreadEditorSuggestionCard } from '@/components/threads/thread-editor-suggestion-card';
 import { ThreadErrorNotice } from '@/components/threads/thread-error-notice';
 import { ThreadExportPanel } from '@/components/threads/thread-export-panel';
 import { ThreadGenerationProgressPanel } from '@/components/threads/thread-generation-progress-panel';
@@ -12,6 +13,10 @@ import { ThreadShareMenu } from '@/components/threads/thread-share-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  THREAD_REVISION_EDITOR_ID,
+  THREAD_REVISION_TEXTAREA_ID,
+} from '@/constants/thread-change-requests.constants';
 import { THREAD_OWNER_EXPORT_OPTIONS } from '@/constants/thread-publication.constants';
 import { ThreadPublicationStatus } from '@/enums/thread-publication-status.enum';
 import { ThreadRevisionField } from '@/enums/thread-revision-field.enum';
@@ -129,20 +134,27 @@ export function ThreadPublicationDetail({
           {generation.data.safetyBlock ? (
             <ThreadSafetyBlockNotice block={generation.data.safetyBlock} />
           ) : null}
+          {editingRevision && detail.editorSuggestion ? (
+            <ThreadEditorSuggestionCard
+              suggestion={detail.editorSuggestion}
+              onDismiss={detail.dismissEditorSuggestion}
+            />
+          ) : null}
           {editingRevision ? (
             <form
-              className="flex flex-col gap-3"
+              id={THREAD_REVISION_EDITOR_ID}
+              className="flex scroll-mt-24 flex-col gap-3"
               onSubmit={(event) => {
                 event.preventDefault();
                 editRevision.mutate();
               }}
             >
               <div className="flex flex-col gap-2">
-                <label htmlFor="thread-revision-markdown" className="text-sm font-medium">
+                <label htmlFor={THREAD_REVISION_TEXTAREA_ID} className="text-sm font-medium">
                   {t('chat.threadRevisionContent')}
                 </label>
                 <Textarea
-                  id="thread-revision-markdown"
+                  id={THREAD_REVISION_TEXTAREA_ID}
                   required
                   maxLength={100000}
                   value={detail.revisionMarkdown}
@@ -285,7 +297,7 @@ export function ThreadPublicationDetail({
           publicationId={detail.publicationId}
           revisionSource={draft ?? null}
           onRevisionStarted={detail.startRevisionFromChangeRequest}
-          onEditMyself={detail.startEditing}
+          onEditMyself={detail.startEditingFromSuggestion}
         />
       ) : null}
     </>

@@ -9,12 +9,13 @@ import { useLocale } from '@/hooks/use-locale';
 import { useLocaleNavigation } from '@/hooks/use-locale-navigation';
 import { useAppTheme } from '@/hooks/use-theme';
 import { logger } from '@/utilities';
+import { isUrlLocaleAuthoritative } from '@/utilities/locale.utility';
 import { appearanceToTheme, languageToLocale } from '@/utilities/preference.utility';
 
 export function usePreferenceBootstrap(): void {
   const { user } = useCurrentUser();
   const { setLocale } = useLocale();
-  const { replaceLocale } = useLocaleNavigation();
+  const { pathname, replaceLocale } = useLocaleNavigation();
   const { setTheme } = useAppTheme();
   const { currency: activeCurrency, selectCurrency } = useDisplayCurrency();
   const bootstrappedRef = useRef(false);
@@ -32,9 +33,12 @@ export function usePreferenceBootstrap(): void {
       details: { language: user.languagePreference, appearance: user.appearancePreference },
     });
 
-    const locale = languageToLocale(user.languagePreference);
-    setLocale(locale);
-    replaceLocale(locale);
+    // The locale in a Threads portal address wins over the stored preference.
+    if (!isUrlLocaleAuthoritative(pathname)) {
+      const locale = languageToLocale(user.languagePreference);
+      setLocale(locale);
+      replaceLocale(locale);
+    }
 
     const resolvedTheme = appearanceToTheme(user.appearancePreference);
     setTheme(resolvedTheme);
@@ -56,5 +60,5 @@ export function usePreferenceBootstrap(): void {
     ) {
       selectCurrency(preferred);
     }
-  }, [activeCurrency, replaceLocale, selectCurrency, setLocale, setTheme, user]);
+  }, [activeCurrency, pathname, replaceLocale, selectCurrency, setLocale, setTheme, user]);
 }

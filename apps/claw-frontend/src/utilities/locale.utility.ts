@@ -100,3 +100,17 @@ export function persistLocale(locale: Locale): void {
     // localStorage may be unavailable
   }
 }
+
+/**
+ * True when the locale in the address must win over the signed-in user's stored language: the
+ * Threads portal screens (`/ar/threads/my/suggestions`, `/ar/threads/review/<id>`) are opened
+ * from links written in the reader's language, and bouncing them to the stored one would leave
+ * the same Thread in two languages depending on the route.
+ */
+export function isUrlLocaleAuthoritative(pathname: string): boolean {
+  if (parseLocaleFromPathname(pathname) === null) {
+    return false;
+  }
+  const application = stripLocaleFromPathname(pathname);
+  return application === '/threads' || application.startsWith('/threads/');
+}

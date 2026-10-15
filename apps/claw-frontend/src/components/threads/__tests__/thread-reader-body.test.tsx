@@ -21,6 +21,22 @@ describe('ThreadReaderBody', () => {
     expect(container.textContent).toContain('مقال');
   });
 
+  it('renders a legacy [url, evidence-id] bracket as a clean link, never as raw text', () => {
+    const { container } = render(
+      <ThreadReaderBody
+        markdown="Claim [https://example.com/x, efc2e342efd8b15e] and another [javascript://x, efc2e342efd8b15e] end."
+        citations={[]}
+        truncatedLabel=""
+        citationsLabel="Sources"
+      />,
+    );
+    expect(container.textContent).not.toContain('efc2e342efd8b15e');
+    expect(container.textContent).not.toContain('[https://');
+    expect(container.textContent).not.toContain('javascript');
+    const link = screen.getByRole('link', { name: 'example.com' });
+    expect(link.getAttribute('href')).toBe('https://example.com/x');
+  });
+
   it('keeps numbered citations and lists the safe sources', () => {
     const { container } = render(
       <ThreadReaderBody

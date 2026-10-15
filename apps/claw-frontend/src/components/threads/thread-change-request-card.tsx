@@ -6,6 +6,7 @@ import type { ReactElement } from 'react';
 import { RelativeTime } from '@/components/shared/relative-time';
 import { ThreadChangeRequestChoice } from '@/components/threads/thread-change-request-choice';
 import { ThreadChangeRequestRevisionForm } from '@/components/threads/thread-change-request-revision-form';
+import { ThreadChangeRequestSuggestionText } from '@/components/threads/thread-change-request-suggestion-text';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -54,7 +55,7 @@ export function ThreadChangeRequestCard({
           </Badge>
         </div>
       </div>
-      <p className="min-w-0 font-medium break-words whitespace-pre-wrap">{request.suggestion}</p>
+      <ThreadChangeRequestSuggestionText text={request.suggestion} />
       {request.ownerResponse ? (
         <p className="text-muted-foreground text-sm">{request.ownerResponse}</p>
       ) : null}

@@ -5,6 +5,7 @@ import {
   MARKER_OPENERS,
   MARKER_RUN_CHARACTER,
   MARKER_SEPARATOR,
+  URL_ID_SEPARATORS,
   URL_MAX_CHARS,
 } from '../constants/citation-marker.constants';
 import type { MarkerCitation } from '../types/citation-marker.types';
@@ -77,6 +78,36 @@ function resolveBracketedUrl(
   return { replacement: ordinal === undefined ? url : `[${String(ordinal)}]`, end: cursor + 1 };
 }
 
+/**
+ * The legacy form `[https://example.com/a, efc2e342efd8b15e]`: one bracket holding an address and
+ * its evidence id. A known source (by id, else by address) becomes its number; an unknown one is
+ * removed, because neither half is readable as a citation. Null when the text at `open` is not
+ * this form, so every other bracket falls through to the other resolvers.
+ */
+function resolveUrlIdPair(
+  text: string,
+  open: number,
+  index: { byId: ReadonlyMap<string, number>; byUrl: ReadonlyMap<string, number> },
+): { replacement: string; end: number } | null {
+  if (!BARE_URL_START.test(text.slice(open + 1, open + 9))) return null;
+  const limit = Math.min(text.length, open + 1 + URL_MAX_CHARS);
+  let cursor = open + 1;
+  while (cursor < limit && !MARKER_CLOSERS.has(text.charAt(cursor))) {
+    if (MARKER_OPENERS.has(text.charAt(cursor))) return null;
+    cursor += 1;
+  }
+  if (cursor >= limit || text.charAt(cursor + 1) === '(') return null;
+  const inside = text.slice(open + 1, cursor);
+  const split = Math.max(...[...URL_ID_SEPARATORS].map((mark) => inside.lastIndexOf(mark)));
+  if (split <= 0) return null;
+  const address = inside.slice(0, split).trim();
+  const id = normaliseToken(inside.slice(split + 1).trim());
+  if (/\s/u.test(address) || !INTERNAL_ID.test(id)) return null;
+  const ordinal = index.byId.get(id) ?? index.byUrl.get(normaliseUrl(address));
+  const end = cursor + 1;
+  return { replacement: ordinal === undefined ? '' : `[${String(ordinal)}]`, end };
+}
+
 /** The index of the last closing bracket inside the run `(open, runEnd)`, or -1. */
 function lastCloserIn(text: string, open: number, runEnd: number): number {
   for (let cursor = runEnd - 1; cursor > open; cursor -= 1) {
@@ -104,6 +135,19 @@ export function resolveCitationMarkers(
     while (open < markdown.length && !MARKER_OPENERS.has(markdown.charAt(open))) open += 1;
     output += markdown.slice(index, open);
     if (open >= markdown.length) break;
+    const pair = resolveUrlIdPair(markdown, open, { byId, byUrl });
+    if (pair) {
+      output += pair.replacement;
+      index = pair.end;
+      if (
+        pair.replacement === '' &&
+        /\s$/u.test(output) &&
+        /^[ \t]/u.test(markdown.charAt(index))
+      ) {
+        index += 1;
+      }
+      continue;
+    }
     const url = resolveBracketedUrl(markdown, open, byUrl);
     if (url) {
       output += url.replacement;

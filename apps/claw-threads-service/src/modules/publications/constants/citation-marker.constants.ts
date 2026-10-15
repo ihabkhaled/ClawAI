@@ -7,3 +7,5 @@ export const MARKER_SEPARATOR = /[\s,、，;[\]［］【】〔〕]+/u;
 export const INTERNAL_ID = /^[0-9a-f]{16}$/u;
 export const BARE_URL_START = /^https?:\/\//iu;
 export const URL_MAX_CHARS = 2048;
+/** Separators between the address and the evidence id inside one legacy bracket: ASCII, Arabic and CJK commas, semicolon. */
+export const URL_ID_SEPARATORS: ReadonlySet<string> = new Set([',', '،', '，', '、', ';']);

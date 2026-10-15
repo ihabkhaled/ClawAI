@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpStatus, Param, Post, Query, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { CurrentUser } from '@claw/shared-auth';
 import type { AuthenticatedUser } from '@claw/shared-types';
 
@@ -127,13 +128,22 @@ export class PublicationOwnerController {
   }
 
   @Post('change-requests/:requestId')
-  resolveChangeRequest(
+  async resolveChangeRequest(
     @Param('publicationId') publicationId: string,
     @Param('requestId') requestId: string,
     @Body(new ZodValidationPipe(resolvePublicationChangeRequestSchema))
     body: ResolvePublicationChangeRequestDto,
     @CurrentUser() user: AuthenticatedUser,
+    @Res({ passthrough: true }) response?: Response,
   ): ReturnType<PublicationCommunityService['resolveOwnerChangeRequest']> {
-    return this.community.resolveOwnerChangeRequest(publicationId, user.id, requestId, body);
+    const answer = await this.community.resolveOwnerChangeRequest(
+      publicationId,
+      user.id,
+      requestId,
+      body,
+    );
+    // A repeated decision created nothing: 200 and the stored decision, not 201.
+    if (answer.unchanged) response?.status(HttpStatus.OK);
+    return answer;
   }
 }

@@ -66,9 +66,24 @@ describe('FormatPassRepository', () => {
     expect(tx.threadFormatPass.count).toHaveBeenCalledWith({
       where: expect.objectContaining({
         publicationId: 'pub-1',
-        status: { not: 'FAILED' },
+        status: 'FORMATTED',
       }) as unknown,
     });
+  });
+
+  it('counts only formatted passes toward the limit, so failed or skipped ones never lock the owner out', async () => {
+    const { repository, prisma } = make({ count: 0 });
+    await repository.countToday('pub-1');
+    expect(prisma.threadFormatPass.count).toHaveBeenCalledWith({
+      where: expect.objectContaining({ status: 'FORMATTED' }) as unknown,
+    });
+  });
+
+  it('bounds free skipped attempts so they cannot burn model spend without limit', async () => {
+    const { repository, tx } = make({ count: 0 });
+    tx.threadFormatPass.count.mockResolvedValueOnce(0).mockResolvedValueOnce(10);
+    expect(await repository.reserve(input)).toEqual({ outcome: 'LIMIT', used: 10 });
+    expect(tx.threadFormatPass.create).not.toHaveBeenCalled();
   });
 
   it('refuses the fourth pass of the day and creates nothing', async () => {

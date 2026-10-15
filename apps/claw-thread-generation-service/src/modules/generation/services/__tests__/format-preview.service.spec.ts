@@ -96,4 +96,13 @@ describe('FormatPreviewService', () => {
     expect(result.markdown).toBe(EN_FIXTURE.before);
     expect(budgets.close).toHaveBeenCalledWith('bud-1', 'PLATFORM_FAILED');
   });
+
+  it('normalises a legacy article ([address, id] markers) so the guard judges layout only', async () => {
+    const legacy = EN_FIXTURE.before.replaceAll('[a1b2c3d4]', '[https://example.com/a, a1b2c3d4]');
+    const { service, models } = make();
+    const result = await service.preview(dto(legacy));
+    expect(result.status).toBe('FORMATTED');
+    const prompt = JSON.stringify(models.generate.mock.calls[0]);
+    expect(prompt).not.toContain('https://example.com/a, a1b2c3d4');
+  });
 });

@@ -1,5 +1,5 @@
 import type { UseQueryResult } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -303,6 +303,39 @@ describe('ThreadPublicationDetail owner actions and publish banner', () => {
     expect(screen.getByLabelText('chat.threadRevisionCap')).toHaveValue(0.5);
     await userEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
     expect(detail.setEditingRevision).toHaveBeenCalledWith(false);
+  });
+
+  it('keeps the suggestion being applied by hand beside the editor, and lets the owner hide it', async () => {
+    const dismissEditorSuggestion = vi.fn();
+    const detail = makeDetail(
+      {
+        hasDraft: true,
+        editingRevision: true,
+        revisionMarkdown: 'Body',
+        revisionCapUsd: '0.5',
+        editorSuggestion: { id: 'cr-1', suggestion: 'Add a conclusion' },
+        dismissEditorSuggestion,
+      },
+      readyGeneration(),
+    );
+    render(<ThreadPublicationDetail detail={detail} />);
+
+    const card = screen.getByTestId('thread-editor-suggestion');
+    expect(card).toHaveTextContent('Add a conclusion');
+    await userEvent.click(
+      within(card).getByRole('button', { name: 'threadReview.editorSuggestionDismiss' }),
+    );
+    expect(dismissEditorSuggestion).toHaveBeenCalledOnce();
+  });
+
+  it('shows no suggestion card when the editor was opened without one', () => {
+    const detail = makeDetail(
+      { hasDraft: true, editingRevision: true, revisionMarkdown: 'Body', editorSuggestion: null },
+      readyGeneration(),
+    );
+    render(<ThreadPublicationDetail detail={detail} />);
+
+    expect(screen.queryByTestId('thread-editor-suggestion')).toBeNull();
   });
 
   it('says the job is queued, never "freezing your chat", before it starts', () => {

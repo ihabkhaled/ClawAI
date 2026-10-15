@@ -134,13 +134,24 @@ describe('PublicationCommunityService', () => {
 
   it('answers a repeated decision without deciding or notifying again', async () => {
     const { service, publications, notifier } = createService();
-    publications.findOwnedChangeRequest.mockResolvedValue({ id: 'request-1', status: 'REJECTED' });
+    publications.findOwnedChangeRequest.mockResolvedValue({
+      id: 'request-1',
+      status: 'REJECTED',
+      ownerResponse: 'First reply',
+    });
 
     await expect(
       service.resolveOwnerChangeRequest('publication-1', 'owner-1', 'request-1', {
         status: 'REJECTED',
+        ownerResponse: 'A different reason',
       }),
-    ).resolves.toEqual({ resolved: true, edit: null });
+    ).resolves.toEqual({
+      resolved: true,
+      edit: null,
+      unchanged: true,
+      status: 'REJECTED',
+      ownerResponse: 'First reply',
+    });
     expect(publications.resolveOwnedChangeRequest).not.toHaveBeenCalled();
     expect(notifier.changeDecided).not.toHaveBeenCalled();
   });
@@ -167,7 +178,7 @@ describe('PublicationCommunityService', () => {
       service.resolveOwnerChangeRequest('publication-1', 'owner-1', 'request-1', {
         status: 'ACCEPTED',
       }),
-    ).resolves.toEqual({ resolved: true, edit: null });
+    ).resolves.toMatchObject({ resolved: true, edit: null, unchanged: true, status: 'ACCEPTED' });
     expect(notifier.changeDecided).not.toHaveBeenCalled();
   });
 

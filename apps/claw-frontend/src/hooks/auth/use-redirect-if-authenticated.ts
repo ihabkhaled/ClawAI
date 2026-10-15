@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/stores/auth.store';
 import type { UseRedirectIfAuthenticatedReturn } from '@/types/hook.types';
 import { logger } from '@/utilities';
-import { safeReturnRoute } from '@/utilities/safe-return-route.utility';
+import { resolveLoginReturn } from '@/utilities/safe-return-route.utility';
 
 // Mirror image of useAuthGuard: on the PUBLIC auth pages (login/register), an
 // already-authenticated visitor should be sent into the app rather than shown
@@ -41,7 +41,7 @@ export function useRedirectIfAuthenticated(): UseRedirectIfAuthenticatedReturn {
         action: 'auth-page-redirect',
         message: 'Authenticated user redirected away from auth page',
       });
-      router.replace(safeReturnRoute(searchParams.get('returnTo')));
+      router.replace(resolveLoginReturn(searchParams.get('returnTo'), globalThis.location.hash));
     }
   }, [hydrated, isAuthed, router, searchParams]);
 

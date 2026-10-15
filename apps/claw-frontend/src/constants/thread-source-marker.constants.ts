@@ -17,3 +17,6 @@ export const THREAD_DIGIT_ZERO_BLOCKS: readonly number[] = [
   0x0660, 0x06f0, 0x07c0, 0x0966, 0x09e6, 0x0a66, 0x0ae6, 0x0be6, 0x0c66, 0x0ce6, 0x0d66, 0x0e50,
   0x0ed0, 0x0f20, 0x1040, 0x17e0, 0x1810, 0xff10,
 ];
+/** Any `scheme://` address; only http(s) ones survive as links. */
+export const THREAD_SOURCE_MARKER_ADDRESS_ANY = /^[a-z][a-z0-9+.-]*:\/\//iu;
+export const THREAD_SOURCE_MARKER_TOKEN_SEPARATOR = /[\s、，;]+/u;

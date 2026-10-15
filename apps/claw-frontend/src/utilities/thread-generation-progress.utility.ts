@@ -24,6 +24,10 @@ import type {
   ThreadI18nText,
   ThreadRetryRoleSelection,
 } from '@/types/thread-generation-progress.types';
+import {
+  isThreadFormatSkipCode,
+  threadFormatCodeMessage,
+} from '@/utilities/thread-format-message.utility';
 import { threadStageLabelKey } from '@/utilities/thread-generation-stage.utility';
 
 export function isTerminalThreadStatus(status: string): boolean {
@@ -169,6 +173,11 @@ export function threadRoleLabelKey(roleKind: ThreadGenerationStepRoleKind): stri
 
 /** Message and suggestion keys for a machine code; an unknown code falls back to a generic pair. */
 export function resolveThreadFailureKeys(code: string): ThreadFailureKeys {
+  if (isThreadFormatSkipCode(code)) {
+    // A formatting skip is a safe outcome with its own friendly sentence, never "Something went wrong".
+    const message = threadFormatCodeMessage(code);
+    return { messageKey: message.key, hintKey: message.key, params: message.params ?? { code } };
+  }
   const known = THREAD_GENERATION_CODE_KEYS[code];
   if (known === undefined) {
     return {

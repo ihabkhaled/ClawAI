@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { resolvePublicationTitle } from '../../publications/utilities/publication-readable-title.utility';
 import {
   Prisma,
   PublicationCommentStatus,
@@ -63,7 +64,7 @@ export class BoardIndexRepository implements BoardIndexStore {
       publicationType: publication.publicationType,
       publishedAt: publication.publishedAt,
       viewCount: publication.viewCount,
-      title: revision.title,
+      title: resolvePublicationTitle(revision.title, revision.content),
       markdown: content.data.markdown,
       sourceCount: content.data.citations.length,
       likeCount,

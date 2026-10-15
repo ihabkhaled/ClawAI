@@ -162,3 +162,10 @@ Start and retry bodies go through `ZodValidationPipe(schema, ThreadGenerationErr
 ## Format preview (ADR-189, 2026-10-16)
 
 `modules/publication-format/` owns `POST thread-publications/:id/format-preview` ("Improve formatting with AI"). It previews only; the frontend saves an accepted preview through the ordinary `POST revisions`, so the safety scan and the Judge and Critic review it again before anything is published. Owner scope is the repository query (`publication: { ownerId }`, 404 otherwise); the body is strict and carries no owner id. `thread_format_passes` (migration `20261016090000_threads_format_passes`) is the daily limit (3 counted passes per Thread per rolling day, taken under `pg_advisory_xact_lock`), the idempotency record (a replayed key returns the stored text, no model call) and the stored preview; FAILED and `FORMAT_ALREADY_PRETTY` rows are not counted; rows are deleted with the Thread and with the account (`AccountDeletionRepository`). Codes: `THREAD_FORMAT_DAILY_LIMIT` (429), `THREAD_FORMAT_IN_PROGRESS` (409), `THREAD_FORMAT_NOT_FORMATTABLE` (409). Decision: [ADR-189](../../docs/13-adr/adr-189-thread-articles-are-typeset-by-a-guarded-format-stage-and-rendered-as-rich-safe-html.md).
+
+## QA fixes 2026-10-15 (ADR-188 and ADR-189 addenda)
+
+- Format limit counts only `FORMATTED` passes; skipped and failed ones are free but bounded by `FORMAT_ATTEMPTS_PER_DAY` (10). Never count a skip against the owner.
+- ONE title resolver: always call `resolvePublicationTitle` (never read `revision.title` for display). Backfill migration `20261016120000_threads_backfill_untitled_titles` is idempotent and only touches rows equal to the placeholder.
+- `resolveCitationMarkers` also resolves the legacy `[address, id]` bracket.
+- A repeated change-request decision answers 200 `{ ..., unchanged: true }` with the stored decision; the first reply is kept.

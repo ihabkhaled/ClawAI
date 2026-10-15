@@ -37,4 +37,32 @@ describe('PublicationsRepository.findPublic source markers (ADR-183)', () => {
       { url: 'https://example.test/two' },
     ]);
   });
+
+  it('resolves a legacy [address, id] bracket and replaces the placeholder title (defects 2 and 3)', async () => {
+    const threadPublication = {
+      findFirst: vi.fn().mockResolvedValue({
+        slug: 'legacy',
+        contentLocale: 'en',
+        publicationType: 'article',
+        publishedAt: new Date('2026-10-05T12:00:00.000Z'),
+        ownerId: 'o',
+        viewCount: 0,
+        readerCount: 0,
+        revisions: [
+          {
+            title: 'Untitled draft',
+            content: {
+              markdown:
+                '# Soil health\n\nFact [https://example.test/source, a5505c418699ab68] and [https://gone.test/x, 0123456789abcdef] end.',
+              citations: [{ evidenceId: 'a5505c418699ab68', url: 'https://example.test/source' }],
+            },
+          },
+        ],
+      }),
+    };
+    const repository = new PublicationsRepository({ threadPublication } as never);
+    const publication = await repository.findPublic('legacy');
+    expect(publication?.title).toBe('Soil health');
+    expect(publication?.content.markdown).toBe('# Soil health\n\nFact [1] and end.');
+  });
 });

@@ -7,7 +7,10 @@ import {
   THREAD_SOURCE_MARKER_SEPARATOR,
   THREAD_SOURCE_MARKER_URL_MAX_CHARS,
   THREAD_SOURCE_MARKER_URL_START,
+  THREAD_SOURCE_MARKER_ADDRESS_ANY,
+  THREAD_SOURCE_MARKER_TOKEN_SEPARATOR,
 } from '@/constants/thread-source-marker.constants';
+import { safeThreadCitationUrl } from '@/utilities/thread-citation.utility';
 
 function foldDigits(text: string): string {
   return text.replaceAll(/\p{Nd}/gu, (digit) => {
@@ -49,6 +52,52 @@ function unwrapBracketedUrl(text: string, open: number): { url: string; end: num
 }
 
 /**
+ * `[https://x.test/a, efc2e342efd8b15e]`: addresses and evidence ids in ONE bracket. Each http(s)
+ * address becomes a markdown link labelled with its host; ids and other-scheme addresses are
+ * dropped, and a bracket with no usable address disappears. Anything else is not a marker.
+ */
+function resolveAddressIdBracket(
+  text: string,
+  open: number,
+): { markdown: string; end: number } | null {
+  const limit = Math.min(text.length, open + 1 + THREAD_SOURCE_MARKER_URL_MAX_CHARS);
+  let close = open + 1;
+  while (close < limit && !THREAD_SOURCE_MARKER_CLOSERS.has(text.charAt(close))) {
+    if (THREAD_SOURCE_MARKER_OPENERS.has(text.charAt(close))) {
+      return null;
+    }
+    close += 1;
+  }
+  if (close >= limit || text.charAt(close + 1) === '(') {
+    return null;
+  }
+  const tokens = text
+    .slice(open + 1, close)
+    .split(THREAD_SOURCE_MARKER_TOKEN_SEPARATOR)
+    .map((part) => part.replace(/,+$/u, ''))
+    .filter(Boolean);
+  if (tokens.length < 2) {
+    return null;
+  }
+  const addresses = tokens.filter((part) => THREAD_SOURCE_MARKER_ADDRESS_ANY.test(part));
+  const rest = tokens.filter((part) => !THREAD_SOURCE_MARKER_ADDRESS_ANY.test(part));
+  if (
+    addresses.length === 0 ||
+    !rest.every((part) => THREAD_SOURCE_MARKER_ID.test(normaliseToken(part)))
+  ) {
+    return null;
+  }
+  const links = addresses
+    .map((address) => safeThreadCitationUrl(address))
+    .filter((safe): safe is string => safe !== null)
+    .map(
+      (safe) =>
+        `[${new URL(safe).hostname}](${safe.replaceAll('(', '%28').replaceAll(')', '%29')})`,
+    );
+  return { markdown: links.join(' '), end: close + 1 };
+}
+
+/**
  * Removes internal source markers such as `[2f25f199712eec3d]`, `[[id]]`, `[id1, id2]` and
  * `[[id1], [id2]]` from a published body, also when the id carries Arabic-Indic or other local
  * digits, invisible direction marks, or sits in full-width or CJK brackets (`【id】`). A bracketed
@@ -70,6 +119,12 @@ export function stripUnresolvedSourceMarkers(text: string): string {
     output += text.slice(index, open);
     if (open >= text.length) {
       break;
+    }
+    const resolved = resolveAddressIdBracket(text, open);
+    if (resolved) {
+      output += resolved.markdown;
+      index = resolved.end;
+      continue;
     }
     const bracketed = unwrapBracketedUrl(text, open);
     if (bracketed) {

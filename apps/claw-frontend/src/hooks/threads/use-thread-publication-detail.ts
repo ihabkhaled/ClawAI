@@ -7,11 +7,15 @@ import {
 } from '@/constants/thread-publication.constants';
 import { ThreadPublicationExportFormat } from '@/enums/thread-publication-export-format.enum';
 import { ThreadRevisionField } from '@/enums/thread-revision-field.enum';
+import { useThreadEditorFocus } from '@/hooks/threads/use-thread-editor-focus';
 import { useThreadPublications } from '@/hooks/threads/use-thread-publications';
 import { useTranslation } from '@/lib/i18n';
 import { threadPublicationsRepository } from '@/repositories/threads/thread-publications.repository';
 import type { ThreadExportFile } from '@/types/thread-export.types';
-import type { ThreadPublicationDetailController } from '@/types/thread-publication.types';
+import type {
+  ThreadEditorSuggestion,
+  ThreadPublicationDetailController,
+} from '@/types/thread-publication.types';
 import {
   buildThreadHtmlDocument,
   buildThreadTextDocument,
@@ -32,6 +36,8 @@ export function useThreadPublicationDetail(
   const queryClient = useQueryClient();
   const { data: publications = [] } = useThreadPublications();
   const [editingRevision, setEditingRevision] = useState(false);
+  const [editorSuggestion, setEditorSuggestion] = useState<ThreadEditorSuggestion | null>(null);
+  useThreadEditorFocus(editingRevision);
   const [revisionMarkdown, setRevisionMarkdown] = useState('');
   const [revisionCapUsd, setRevisionCapUsd] = useState('');
   const [revisionRequestIds, setRevisionRequestIds] = useState({
@@ -98,6 +104,7 @@ export function useThreadPublicationDetail(
     onSuccess: async ({ revisionId }) => {
       setActiveRevisionId(revisionId);
       setEditingRevision(false);
+      setEditorSuggestion(null);
       setRevisionRequestIds({ idempotencyKey: '', correlationId: '' });
       publish.reset();
       await queryClient.invalidateQueries({ queryKey: ['thread-publications', 'mine'] });
@@ -180,6 +187,11 @@ export function useThreadPublicationDetail(
     setEditingRevision(true);
   }
 
+  function startEditingFromSuggestion(suggestion: ThreadEditorSuggestion): void {
+    setEditorSuggestion(suggestion);
+    startEditing();
+  }
+
   function changeRevisionField(field: ThreadRevisionField, value: string): void {
     if (field === ThreadRevisionField.Markdown) {
       setRevisionMarkdown(value);
@@ -220,6 +232,9 @@ export function useThreadPublicationDetail(
     revisionIsTerminal,
     revisionReviewMessage: getRevisionReviewMessage(),
     startEditing,
+    startEditingFromSuggestion,
+    editorSuggestion,
+    dismissEditorSuggestion: () => setEditorSuggestion(null),
     changeRevisionField,
     startRevisionFromChangeRequest,
   };

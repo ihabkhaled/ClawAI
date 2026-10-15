@@ -127,6 +127,36 @@ describe('ThreadGenerationStepItem', () => {
     expect(line).toHaveTextContent('chat.threadProgress.httpStatus|{"status":"500"}');
   });
 
+  it.each([
+    ['FORMAT_ALREADY_PRETTY', 'threadReview.formatAlreadyPretty'],
+    ['FORMAT_CITATION_LOST', 'threadReview.formatCitationLost'],
+    ['FORMAT_TABLE_LOST', 'threadReview.formatTableLost'],
+  ])('shows a skipped %s step as a neutral note, not an error', (code, key) => {
+    render(
+      <ul>
+        <ThreadGenerationStepItem step={makeStep({ outcome: 'SKIPPED', code })} />
+      </ul>,
+    );
+
+    const line = screen.getByTestId('thread-progress-step-code');
+    expect(line).toHaveTextContent(key);
+    expect(line).not.toHaveTextContent('code.unknown');
+    expect(line.className).not.toContain('text-destructive');
+    expect(line.getAttribute('data-kind')).toBe('info');
+  });
+
+  it('names an unknown FORMAT_ code with the friendly fallback', () => {
+    render(
+      <ul>
+        <ThreadGenerationStepItem step={makeStep({ outcome: 'SKIPPED', code: 'FORMAT_NEW_ONE' })} />
+      </ul>,
+    );
+
+    expect(screen.getByTestId('thread-progress-step-code')).toHaveTextContent(
+      'threadReview.formatUnknown|{"code":"FORMAT_NEW_ONE"}',
+    );
+  });
+
   it('hides an empty excerpt and shows one-sided token counts', () => {
     render(
       <ul>

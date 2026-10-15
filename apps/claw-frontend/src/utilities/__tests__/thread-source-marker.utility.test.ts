@@ -66,4 +66,33 @@ describe('stripUnresolvedSourceMarkers', () => {
     stripUnresolvedSourceMarkers('[a'.repeat(100_000));
     expect(Date.now() - started).toBeLessThan(1_500);
   });
+
+  describe('address plus evidence id in one bracket', () => {
+    it('turns the legacy form into a host-labelled link', () => {
+      expect(
+        stripUnresolvedSourceMarkers('Fact [https://example.com/x, efc2e342efd8b15e] here'),
+      ).toBe('Fact [example.com](https://example.com/x) here');
+    });
+
+    it('handles Arabic-Indic digits in the id and CJK or full-width brackets', () => {
+      expect(stripUnresolvedSourceMarkers('نص [https://example.com/x, a٥٥٠٥c٤١٨٦٩٩ab٦٨] هنا')).toBe(
+        'نص [example.com](https://example.com/x) هنا',
+      );
+      expect(
+        stripUnresolvedSourceMarkers('事実【https://example.com/x，efc2e342efd8b15e】です'),
+      ).toBe('事実[example.com](https://example.com/x)です');
+      expect(stripUnresolvedSourceMarkers('x ［https://example.com/x efc2e342efd8b15e］ y')).toBe(
+        'x [example.com](https://example.com/x) y',
+      );
+    });
+
+    it('removes a bracket whose address is not http(s)', () => {
+      expect(stripUnresolvedSourceMarkers('a [javascript://x, efc2e342efd8b15e] b')).toBe('a  b');
+    });
+
+    it('leaves a bracket that mixes an address with ordinary words', () => {
+      const text = 'a [https://example.com/x and more] b';
+      expect(stripUnresolvedSourceMarkers(text)).toBe(text);
+    });
+  });
 });

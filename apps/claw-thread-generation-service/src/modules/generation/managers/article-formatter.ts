@@ -10,7 +10,8 @@ import {
   FORMAT_ROLE_ID,
   FORMAT_SKIPPED_ALREADY_PRETTY,
   FORMAT_SKIPPED_BUDGET,
-  FORMAT_SKIPPED_FAILED,
+  FORMAT_SKIPPED_MODEL_ERROR,
+  FORMAT_SKIPPED_REPLY_INVALID,
   FORMAT_SPEND_CEILING_PERCENT,
 } from '../constants/format-prompt.constants';
 import type { ChatModelResponse } from '../../models/chat-model.client';
@@ -105,7 +106,7 @@ export class ArticleFormatter {
         return await this.skip(
           input,
           draft,
-          seen.violation ?? FORMAT_SKIPPED_FAILED,
+          seen.violation ?? FORMAT_SKIPPED_REPLY_INVALID,
           response.costMicroUsd,
         );
       }
@@ -120,7 +121,7 @@ export class ArticleFormatter {
       if (isCancellation(error, input)) {
         throw error;
       }
-      return this.skip(input, draft, seen.violation ?? FORMAT_SKIPPED_FAILED);
+      return this.skip(input, draft, seen.violation ?? FORMAT_SKIPPED_MODEL_ERROR);
     }
   }
 

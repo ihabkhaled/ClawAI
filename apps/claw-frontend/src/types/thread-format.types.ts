@@ -26,3 +26,6 @@ export type ThreadFormatPreviewViewProps = {
   markdown: string;
   contentLocale: string;
 };
+
+/** A translation key with its optional placeholders, for a FORMAT_ skip or a refusal. */
+export type ThreadFormatMessage = { key: string; params?: Record<string, string> };

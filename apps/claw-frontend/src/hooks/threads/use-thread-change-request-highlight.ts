@@ -7,7 +7,7 @@ import {
 
 /**
  * The suggestion a notification link points at (`#change-request-<id>`): scrolled into view and
- * highlighted for a few seconds once the list has loaded. Null when the address names none, or
+ * highlighted for a few seconds once the list has loaded; the card TOP is scrolled to, never its middle. Null when the address names none, or
  * names one that is not in the list.
  */
 export function useThreadChangeRequestHighlight(ids: ReadonlyArray<string>): string | null {
@@ -27,7 +27,7 @@ export function useThreadChangeRequestHighlight(ids: ReadonlyArray<string>): str
     setHighlightedId(wanted);
     document
       .getElementById(`${THREAD_CHANGE_REQUEST_ANCHOR_PREFIX}${wanted}`)
-      ?.scrollIntoView?.({ block: 'center' });
+      ?.scrollIntoView?.({ block: 'start' });
     const timer = setTimeout(() => setHighlightedId(null), THREAD_CHANGE_REQUEST_HIGHLIGHT_MS);
     return () => clearTimeout(timer);
   }, [idKey]);

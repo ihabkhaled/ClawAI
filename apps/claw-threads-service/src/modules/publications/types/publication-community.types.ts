@@ -1,3 +1,5 @@
+import type { PublicationEditResult } from './publication.types';
+
 export type PublicationReactionSummary = {
   likes: number;
   dislikes: number;
@@ -67,4 +69,17 @@ export type ModerationReportView = {
   details: string | null;
   status: 'OPEN' | 'RESOLVED' | 'DISMISSED';
   createdAt: Date;
+};
+
+/**
+ * The answer to an owner's decision. The first decision is `{ resolved, edit }` (HTTP 201). The
+ * same decision sent again is HTTP 200 with `unchanged: true` and the STORED status and reply: the
+ * first reply is kept, a different reason in the repeat is ignored, and nothing is announced twice.
+ */
+export type OwnerChangeRequestAnswer = {
+  resolved: true;
+  edit: PublicationEditResult | null;
+  unchanged?: true;
+  status?: string;
+  ownerResponse?: string | null;
 };

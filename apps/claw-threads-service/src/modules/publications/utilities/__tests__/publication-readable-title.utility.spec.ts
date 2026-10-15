@@ -1,4 +1,8 @@
-import { readablePublicationTitle } from '../publication-readable-title.utility';
+import {
+  isPlaceholderTitle,
+  readablePublicationTitle,
+  resolvePublicationTitle,
+} from '../publication-readable-title.utility';
 
 describe('readablePublicationTitle', () => {
   it('keeps a real stored title', () => {
@@ -25,5 +29,30 @@ describe('readablePublicationTitle', () => {
     expect(readablePublicationTitle('Untitled draft', { markdown: '   ' })).toBe('');
     expect(readablePublicationTitle('', null)).toBe('');
     expect(readablePublicationTitle('  ', 'not an object')).toBe('');
+  });
+});
+
+describe('resolvePublicationTitle (the one title resolver)', () => {
+  it('never shows the placeholder when the article has a heading or a first sentence', () => {
+    expect(resolvePublicationTitle('Untitled draft', { markdown: '## Soil health\n\nBody.' })).toBe(
+      'Soil health',
+    );
+    expect(
+      resolvePublicationTitle('Untitled draft', { markdown: 'Bees pollinate crops. More.' }),
+    ).toBe('Bees pollinate crops.');
+  });
+
+  it('never overwrites a real stored title', () => {
+    expect(resolvePublicationTitle('Real title', { markdown: '# Other' })).toBe('Real title');
+  });
+
+  it('falls back to the stored value when nothing readable exists', () => {
+    expect(resolvePublicationTitle('Untitled draft', { markdown: ' ' })).toBe('Untitled draft');
+  });
+
+  it('knows which stored titles are placeholders', () => {
+    expect(isPlaceholderTitle('Untitled draft')).toBe(true);
+    expect(isPlaceholderTitle(' ')).toBe(true);
+    expect(isPlaceholderTitle('Real')).toBe(false);
   });
 });

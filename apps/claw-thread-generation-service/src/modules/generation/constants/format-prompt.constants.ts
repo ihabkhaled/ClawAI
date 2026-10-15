@@ -4,7 +4,12 @@ export const FORMAT_REPLY_SHAPE = '{"markdown": string}';
 /** Step log codes of the optional FORMAT stage (ADR-189). Every SKIPPED code leaves the article as it was. */
 export const FORMAT_SKIPPED_ALREADY_PRETTY = 'FORMAT_ALREADY_PRETTY';
 export const FORMAT_SKIPPED_BUDGET = 'FORMAT_SKIPPED_BUDGET';
+/** Generic fallback only: a pass that failed for a reason none of the specific codes names. */
 export const FORMAT_SKIPPED_FAILED = 'FORMAT_FAILED';
+/** The model answered, but not with the one JSON object `{"markdown": string}` (or an empty or oversized one). */
+export const FORMAT_SKIPPED_REPLY_INVALID = 'FORMAT_REPLY_INVALID';
+/** Every model call of the pass failed (provider error, timeout, rate limit); nothing usable came back. */
+export const FORMAT_SKIPPED_MODEL_ERROR = 'FORMAT_MODEL_ERROR';
 export const FORMAT_ROLE_ID = 'format';
 /** Budget request id prefix of an owner-asked pass, so it never collides with a job's own key. */
 export const FORMAT_REQUEST_PREFIX = 'format:';
