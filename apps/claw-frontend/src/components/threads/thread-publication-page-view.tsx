@@ -2,7 +2,9 @@
 
 import type { ReactElement } from 'react';
 
+import { ThreadChangeCredits } from '@/components/threads/thread-change-credits';
 import { ThreadExportPanel } from '@/components/threads/thread-export-panel';
+import { ThreadOwnerChangeBar } from '@/components/threads/thread-owner-change-bar';
 import { ThreadPublicArticle } from '@/components/threads/thread-public-article';
 import { ThreadPublicBackLink } from '@/components/threads/thread-public-back-link';
 import { ThreadPublicCommunity } from '@/components/threads/thread-public-community';
@@ -39,6 +41,12 @@ export function ThreadPublicPageView({ state }: ThreadPublicPageViewProps): Reac
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-8 sm:px-6">
       <ThreadPublicBackLink />
+      {state.viewer?.isOwner ? (
+        <ThreadOwnerChangeBar
+          publicationId={state.viewer.publicationId}
+          pendingChangeRequests={state.viewer.pendingChangeRequests}
+        />
+      ) : null}
       <ThreadPublicArticle
         publication={state.publication}
         truncatedLabel={t('chat.threadPublicTruncated')}
@@ -49,6 +57,7 @@ export function ThreadPublicPageView({ state }: ThreadPublicPageViewProps): Reac
           readers: String(state.publication.readerCount),
         })}
       />
+      <ThreadChangeCredits credits={state.changeCredits} />
       {state.shareUrl === null ? null : (
         <ThreadShareMenu url={state.shareUrl} title={state.publication.title} />
       )}

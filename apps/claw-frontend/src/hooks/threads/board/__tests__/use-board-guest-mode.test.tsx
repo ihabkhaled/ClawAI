@@ -169,7 +169,7 @@ describe('useBoardGuestLinks', () => {
     const { result } = renderHook(() => useBoardGuestLinks());
 
     const target = encodeURIComponent('/threads/board?q=rag&lang=en');
-    expect(result.current.signInHref).toBe(`/login?returnTo=${target}`);
-    expect(result.current.registerHref).toBe(`/register?returnTo=${target}`);
+    expect(result.current.signInHref).toBe(`/fr/login?returnTo=${target}`);
+    expect(result.current.registerHref).toBe(`/fr/register?returnTo=${target}`);
   });
 });

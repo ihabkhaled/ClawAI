@@ -30,6 +30,8 @@ export function ThreadPublicArticle({
       </header>
       <ThreadReaderBody
         markdown={publication.content.markdown}
+        title={publication.title}
+        contentLocale={publication.contentLocale}
         citations={publication.content.citations}
         truncatedLabel={truncatedLabel}
         citationsLabel={citationsLabel}

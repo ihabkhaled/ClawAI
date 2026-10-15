@@ -10,7 +10,6 @@ import { PhoneInput } from '@/components/common/phone-input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ROUTES } from '@/constants';
 import { useRegisterForm } from '@/hooks/auth/use-register-form';
 
 // Field error messages are i18n keys (client schema and server field map
@@ -187,7 +186,7 @@ export function RegisterForm(): React.ReactElement {
         </form>
         <p className="text-muted-foreground mt-4 text-center text-sm">
           {t('auth.alreadyHaveAccount')}{' '}
-          <Link href={ROUTES.LOGIN} className="text-primary font-medium hover:underline">
+          <Link href={signInHref} className="text-primary font-medium hover:underline">
             {t('auth.signInLink')}
           </Link>
         </p>

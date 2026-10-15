@@ -23,6 +23,7 @@ import {
   OLDEST_FIRST,
   VISIBLE_COMMENT as VISIBLE,
 } from '../constants/publication-comments-select.constants';
+import { readablePublicationTitle } from '../utilities/publication-readable-title.utility';
 import { PUBLIC_REVISION_WHERE } from '../constants/public-revision.constants';
 import { placeReply } from '../utilities/comment-placement.utility';
 import { publicPublicationWhere } from '../utilities/public-publication-where.utility';
@@ -283,7 +284,7 @@ export class PublicationCommentsRepository {
           where: PUBLIC_REVISION_WHERE,
           orderBy: { revision: 'desc' },
           take: 1,
-          select: { title: true },
+          select: { title: true, content: true },
         },
       },
     });
@@ -292,7 +293,10 @@ export class PublicationCommentsRepository {
           id: publication.id,
           slug: publication.slug,
           ownerId: publication.ownerId,
-          title: publication.revisions[0]?.title ?? '',
+          title: readablePublicationTitle(
+            publication.revisions[0]?.title ?? '',
+            publication.revisions[0]?.content,
+          ),
         }
       : null;
   }

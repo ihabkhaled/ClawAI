@@ -17,6 +17,8 @@ export const ROUTES = {
   DASHBOARD: '/dashboard',
   CHAT: '/chat',
   THREAD_PUBLICATIONS: '/threads',
+  /** The signed-in person's own change requests on other people's Threads. */
+  THREAD_MY_SUGGESTIONS: '/threads/my/suggestions',
   THREAD_BOARD: '/board',
   CHAT_THREAD: (threadId: string) => `/chat/${threadId}` as const,
   CONNECTORS: '/connectors',

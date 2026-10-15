@@ -7,6 +7,7 @@ import { ROUTES } from '@/constants';
 import { MarketingAuthActionsVariant } from '@/enums';
 import { useIsSignedIn } from '@/hooks/auth/use-is-signed-in';
 import { useLogout } from '@/hooks/auth/use-logout';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { MarketingAuthActionsProps } from '@/types';
@@ -24,6 +25,7 @@ export function MarketingAuthActions({
   onNavigate,
 }: MarketingAuthActionsProps): React.ReactElement {
   const { t } = useTranslation();
+  const localise = useLocalizedHref();
   const isSignedIn = useIsSignedIn();
   // Same logout as the portal user menu; null = stay on this public page.
   const { logout, isPending } = useLogout(null);
@@ -42,10 +44,10 @@ export function MarketingAuthActions({
     ) : (
       <>
         <Button variant="outline" asChild onClick={onNavigate}>
-          <Link href={ROUTES.LOGIN}>{t('marketing.header.login')}</Link>
+          <Link href={localise(ROUTES.LOGIN)}>{t('marketing.header.login')}</Link>
         </Button>
         <Button asChild onClick={onNavigate}>
-          <Link href={ROUTES.REGISTER}>{t('marketing.header.createAccount')}</Link>
+          <Link href={localise(ROUTES.REGISTER)}>{t('marketing.header.createAccount')}</Link>
         </Button>
       </>
     );
@@ -58,10 +60,10 @@ export function MarketingAuthActions({
         className={cn('col-start-1 row-start-1 flex items-center gap-1', isSignedIn && 'invisible')}
       >
         <Button variant="ghost" size="sm" asChild>
-          <Link href={ROUTES.LOGIN}>{t('marketing.header.login')}</Link>
+          <Link href={localise(ROUTES.LOGIN)}>{t('marketing.header.login')}</Link>
         </Button>
         <Button size="sm" asChild>
-          <Link href={ROUTES.REGISTER}>{t('marketing.header.createAccount')}</Link>
+          <Link href={localise(ROUTES.REGISTER)}>{t('marketing.header.createAccount')}</Link>
         </Button>
       </div>
       {isSignedIn ? (

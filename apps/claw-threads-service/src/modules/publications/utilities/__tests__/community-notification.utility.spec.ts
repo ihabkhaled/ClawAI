@@ -1,4 +1,5 @@
 import { UserNotificationKind } from '@claw/shared-types';
+import { ChangeRequestDecision } from '../../../../common/enums/change-request-decision.enum';
 
 import type {
   CommunityActor,
@@ -7,6 +8,7 @@ import type {
 import {
   commentExcerpt,
   commentLink,
+  planChangeDecision,
   planChangeRequest,
   planCommentNotifications,
   planCommentReaction,
@@ -200,6 +202,27 @@ describe('planChangeRequest', () => {
     });
   });
 
+  it('links the owner straight to the review screen with the request highlighted', () => {
+    const payload = planChangeRequest({
+      actor,
+      publication,
+      requestId: 'req-1',
+      suggestion: 'Add a source',
+    });
+    expect(payload?.link).toBe('/threads/review/pub-1#change-request-req-1');
+    expect(payload?.link).not.toContain(publication.slug);
+  });
+
+  it('carries the Thread title it was given', () => {
+    const payload = planChangeRequest({
+      actor,
+      publication: { ...publication, title: 'Photosynthesis' },
+      requestId: 'req-1',
+      suggestion: 's',
+    });
+    expect(payload?.params).toMatchObject({ title: 'Photosynthesis' });
+  });
+
   it('does not notify the owner about their own request or an ownerless Thread', () => {
     const request = { requestId: 'req-1', suggestion: 's' };
     expect(
@@ -208,6 +231,74 @@ describe('planChangeRequest', () => {
     expect(
       planChangeRequest({ actor, publication: { ...publication, ownerId: null }, ...request }),
     ).toBeNull();
+  });
+});
+
+describe('planChangeDecision', () => {
+  const owner = { id: 'owner', displayName: 'Olive Owner', username: 'olive' };
+  const context = {
+    requestId: 'req-1',
+    requesterId: 'asker',
+    suggestion: 'Add a section on chlorophyll',
+    status: 'ACCEPTED' as const,
+    publication: { id: 'pub-1', slug: 'plants-1', ownerId: 'owner', title: 'Plants' },
+  };
+
+  it.each([
+    [
+      ChangeRequestDecision.ACCEPTED,
+      UserNotificationKind.THREAD_CHANGE_ACCEPTED,
+      '/threads/my/suggestions#change-request-req-1',
+    ],
+    [
+      ChangeRequestDecision.DECLINED,
+      UserNotificationKind.THREAD_CHANGE_DECLINED,
+      '/threads/my/suggestions#change-request-req-1',
+    ],
+    [
+      ChangeRequestDecision.APPLIED,
+      UserNotificationKind.THREAD_CHANGE_APPLIED,
+      '/threads/plants-1',
+    ],
+  ] as const)('%s goes to the requester with its own kind, key and link', (outcome, kind, link) => {
+    expect(planChangeDecision({ outcome, owner, context })).toEqual({
+      dedupeKey: `change-${outcome.toLowerCase()}:req-1`,
+      userId: 'asker',
+      kind,
+      link,
+      params: {
+        actorName: 'Olive Owner',
+        actorUsername: 'olive',
+        title: 'Plants',
+        excerpt: 'Add a section on chlorophyll',
+      },
+    });
+  });
+
+  it('tells nobody when the requester is unknown or is the owner', () => {
+    expect(
+      planChangeDecision({
+        outcome: ChangeRequestDecision.ACCEPTED,
+        owner,
+        context: { ...context, requesterId: null },
+      }),
+    ).toBeNull();
+    expect(
+      planChangeDecision({
+        outcome: ChangeRequestDecision.ACCEPTED,
+        owner,
+        context: { ...context, requesterId: 'owner' },
+      }),
+    ).toBeNull();
+  });
+
+  it('uses a different key for each outcome, so one request can announce all three once', () => {
+    const keys = [
+      ChangeRequestDecision.ACCEPTED,
+      ChangeRequestDecision.APPLIED,
+      ChangeRequestDecision.DECLINED,
+    ].map((outcome) => planChangeDecision({ outcome, owner, context })?.dedupeKey);
+    expect(new Set(keys).size).toBe(3);
   });
 });
 

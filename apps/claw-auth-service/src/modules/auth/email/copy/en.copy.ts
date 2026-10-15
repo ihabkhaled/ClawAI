@@ -222,6 +222,42 @@ export const EN_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'You are getting this because you took part in this Thread on ClawAI. You can turn these emails off in your notification settings.',
     },
+    [AuthEmailKind.THREAD_CHANGE_ACCEPTED]: {
+      subject: 'Your suggestion was accepted',
+      preheader: 'The owner will apply it to the Thread.',
+      heading: 'Your suggestion was accepted',
+      intro: 'The owner of “{value}” accepted the change you suggested.',
+      bodyLines: ['We will tell you when the Thread is updated.'],
+      actionLabel: 'See my suggestions',
+      fallbackNote: 'If the button does not work, copy the address below into your browser:',
+      expiryNote: null,
+      securityNote:
+        'You are getting this because you took part in this Thread on ClawAI. You can turn these emails off in your notification settings.',
+    },
+    [AuthEmailKind.THREAD_CHANGE_APPLIED]: {
+      subject: 'Your suggestion is now in the Thread',
+      preheader: 'The Thread was updated with your idea.',
+      heading: 'Your suggestion was applied',
+      intro: '“{value}” was updated with the change you suggested.',
+      bodyLines: ['Thank you for helping to improve it. You are credited on the Thread page.'],
+      actionLabel: 'Open the Thread',
+      fallbackNote: 'If the button does not work, copy the address below into your browser:',
+      expiryNote: null,
+      securityNote:
+        'You are getting this because you took part in this Thread on ClawAI. You can turn these emails off in your notification settings.',
+    },
+    [AuthEmailKind.THREAD_CHANGE_DECLINED]: {
+      subject: 'Your suggestion was not used',
+      preheader: 'The owner decided not to apply it.',
+      heading: 'Your suggestion was declined',
+      intro: 'The owner of “{value}” decided not to apply the change you suggested.',
+      bodyLines: ['You can read any reply from the owner in My suggestions.'],
+      actionLabel: 'See my suggestions',
+      fallbackNote: 'If the button does not work, copy the address below into your browser:',
+      expiryNote: null,
+      securityNote:
+        'You are getting this because you took part in this Thread on ClawAI. You can turn these emails off in your notification settings.',
+    },
     [AuthEmailKind.MCP_SERVER_APPROVED]: {
       subject: 'Your MCP server was approved',
       preheader: 'You can use it in chat now.',

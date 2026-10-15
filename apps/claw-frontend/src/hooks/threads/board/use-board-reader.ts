@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useThreadCommentsFeed } from '@/hooks/threads/use-thread-comments-feed';
 import { useThreadPublicActions } from '@/hooks/threads/use-thread-public-actions';
 import { useThreadPublicView } from '@/hooks/threads/use-thread-public-view';
@@ -29,6 +30,7 @@ export function useBoardReader(): BoardReaderController {
   // Next hands the segment over percent-encoded; the API and every query key use the real slug.
   const slug = decodeThreadSlugParam(params.slug ?? '') ?? '';
   const router = useRouter();
+  const localise = useLocalizedHref();
   const [publicUrl, setPublicUrl] = useState<string | null>(null);
   const [boardHref, setBoardHref] = useState('/board');
   const publicPath = threadPublicPath(slug);
@@ -82,7 +84,7 @@ export function useBoardReader(): BoardReaderController {
     isError: publication.isError && !isNotFound,
     communityLoading: comments.isLoading || reactions.isLoading,
     communityError: comments.isError || reactions.isError,
-    loginHref: `/login?returnTo=${encodeURIComponent(boardReaderPath(slug))}`,
+    loginHref: localise(`/login?returnTo=${encodeURIComponent(boardReaderPath(slug))}`),
     publicUrl,
     publicPath,
     boardHref,

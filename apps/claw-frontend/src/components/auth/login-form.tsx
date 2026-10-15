@@ -20,6 +20,7 @@ export function LoginForm(): React.ReactElement {
     rememberMe,
     handleRememberMeChange,
     handleForgotPasswordClick,
+    registerHref,
     onSubmit,
     isPending,
     isError,
@@ -161,7 +162,7 @@ export function LoginForm(): React.ReactElement {
       <p className="text-muted-foreground mt-4 text-center text-sm">
         {t('auth.noAccount')}{' '}
         <Link
-          href={ROUTES.REGISTER}
+          href={registerHref}
           className="text-primary inline-flex min-h-11 items-center px-1 font-medium hover:underline"
         >
           {t('auth.signUpLink')}

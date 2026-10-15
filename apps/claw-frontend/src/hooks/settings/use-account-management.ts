@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { ROUTES } from '@/constants';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useTranslation } from '@/lib/i18n';
 import {
   accountProfileSchema,
@@ -20,6 +21,7 @@ import { showToast } from '@/utilities';
 
 export function useAccountManagement(user: UserProfile | null | undefined) {
   const { t } = useTranslation();
+  const localise = useLocalizedHref();
   const router = useRouter();
   const queryClient = useQueryClient();
   const profileForm = useForm<AccountProfileFormValues>({
@@ -37,7 +39,7 @@ export function useAccountManagement(user: UserProfile | null | undefined) {
 
   const finishSession = (): void => {
     queryClient.clear();
-    router.push(ROUTES.LOGIN);
+    router.push(localise(ROUTES.LOGIN));
   };
   const updateMutation = useMutation({
     mutationFn: (data: AccountProfileFormValues) => authService.updateOwnProfile(data),

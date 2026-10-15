@@ -10,6 +10,7 @@ import {
   CHECK_EMAIL_DELIVERY_PARAM,
   RESEND_COOLDOWN_TICK_MS,
 } from '@/constants/auth-onboarding.constants';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useTranslation } from '@/lib/i18n';
 import { authRepository } from '@/repositories/auth/auth.repository';
 import type { UseCheckEmailPageReturn } from '@/types';
@@ -37,6 +38,7 @@ import { translateRateLimitError } from '@/utilities/rate-limit.utility';
 export function useCheckEmailPage(): UseCheckEmailPageReturn {
   const searchParams = useSearchParams();
   const { t } = useTranslation();
+  const localise = useLocalizedHref();
   const email = searchParams.get('email');
   // Registration can be reached from a checkout CTA, which carries a returnTo
   // all the way through. This screen is a new hop in that journey, so it has to
@@ -44,10 +46,11 @@ export function useCheckEmailPage(): UseCheckEmailPageReturn {
   // address and lands on a generic sign-in form having lost the thing they came
   // for. It was already sanitised by safeReturnRoute before it got here.
   const returnTo = searchParams.get('returnTo');
-  const loginHref =
+  const loginHref = localise(
     returnTo === null || returnTo.length === 0
       ? ROUTES.LOGIN
-      : `${ROUTES.LOGIN}?returnTo=${encodeURIComponent(returnTo)}`;
+      : `${ROUTES.LOGIN}?returnTo=${encodeURIComponent(returnTo)}`,
+  );
   const [hasResent, setHasResent] = useState(false);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
 

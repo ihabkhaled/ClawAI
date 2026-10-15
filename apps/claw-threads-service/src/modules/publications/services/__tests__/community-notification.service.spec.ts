@@ -1,5 +1,6 @@
 import { UserNotificationKind } from '@claw/shared-types';
 
+import { ChangeRequestDecision } from '../../../../common/enums/change-request-decision.enum';
 import { CommunityNotificationService } from '../community-notification.service';
 
 const publication = { id: 'pub-1', slug: 'my-thread', ownerId: 'owner', title: 'My Thread' };
@@ -10,12 +11,14 @@ function create() {
   };
   const notifications = { dispatchBestEffort: vi.fn().mockResolvedValue(undefined) };
   const comments = { findPublicationTarget: vi.fn().mockResolvedValue(publication) };
+  const requests = { findDecisionContext: vi.fn().mockResolvedValue(null) };
   const service = new CommunityNotificationService(
     identity as never,
     notifications as never,
     comments as never,
+    requests as never,
   );
-  return { service, identity, notifications, comments };
+  return { service, identity, notifications, comments, requests };
 }
 
 describe('CommunityNotificationService', () => {
@@ -142,5 +145,75 @@ describe('CommunityNotificationService', () => {
         userId: 'owner',
       }),
     ]);
+  });
+
+  describe('suggestion decisions', () => {
+    const context = {
+      requestId: 'req-1',
+      requesterId: 'asker',
+      suggestion: 'Add a section on chlorophyll',
+      status: 'ACCEPTED',
+      publication: { id: 'pub-1', slug: 'my-thread', ownerId: 'owner', title: 'Plants' },
+    };
+
+    it('tells the requester an accepted suggestion was accepted, with the real title', async () => {
+      const { service, notifications, requests } = create();
+      requests.findDecisionContext.mockResolvedValue(context);
+      await service.changeDecided('req-1', ChangeRequestDecision.ACCEPTED);
+      expect(notifications.dispatchBestEffort).toHaveBeenCalledWith([
+        expect.objectContaining({
+          userId: 'asker',
+          kind: UserNotificationKind.THREAD_CHANGE_ACCEPTED,
+          dedupeKey: 'change-accepted:req-1',
+          link: '/threads/my/suggestions#change-request-req-1',
+          params: expect.objectContaining({ title: 'Plants', actorUsername: 'ada' }),
+        }),
+      ]);
+    });
+
+    it('tells the requester a declined suggestion was declined', async () => {
+      const { service, notifications, requests } = create();
+      requests.findDecisionContext.mockResolvedValue({ ...context, status: 'REJECTED' });
+      await service.changeDecided('req-1', ChangeRequestDecision.DECLINED);
+      expect(notifications.dispatchBestEffort.mock.calls[0]?.[0][0]).toMatchObject({
+        kind: UserNotificationKind.THREAD_CHANGE_DECLINED,
+        dedupeKey: 'change-declined:req-1',
+      });
+    });
+
+    it('tells each requester once when suggestions are applied, linking the public Thread', async () => {
+      const { service, notifications, requests } = create();
+      requests.findDecisionContext
+        .mockResolvedValueOnce(context)
+        .mockResolvedValueOnce({ ...context, requestId: 'req-2', requesterId: 'other' });
+      await service.changesApplied(['req-1', 'req-2']);
+      const payloads = notifications.dispatchBestEffort.mock.calls[0]?.[0] as Array<{
+        userId: string;
+        kind: string;
+        link: string;
+        dedupeKey: string;
+      }>;
+      expect(payloads.map((payload) => payload.dedupeKey)).toEqual([
+        'change-applied:req-1',
+        'change-applied:req-2',
+      ]);
+      expect(payloads[0]).toMatchObject({
+        kind: UserNotificationKind.THREAD_CHANGE_APPLIED,
+        link: '/threads/my-thread',
+      });
+    });
+
+    it('sends nothing when the request or its requester is gone, and never throws', async () => {
+      const { service, notifications, requests } = create();
+      requests.findDecisionContext.mockResolvedValueOnce(null);
+      await service.changeDecided('missing', ChangeRequestDecision.ACCEPTED);
+      requests.findDecisionContext.mockResolvedValueOnce({ ...context, requesterId: null });
+      await service.changeDecided('req-1', ChangeRequestDecision.ACCEPTED);
+      requests.findDecisionContext.mockRejectedValueOnce(new Error('db down'));
+      await expect(
+        service.changeDecided('req-1', ChangeRequestDecision.DECLINED),
+      ).resolves.toBeUndefined();
+      expect(notifications.dispatchBestEffort).not.toHaveBeenCalled();
+    });
   });
 });

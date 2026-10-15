@@ -35,6 +35,7 @@ vi.mock('../thread-generation-progress-panel', () => ({
 }));
 vi.mock('../thread-export-panel', () => ({ ThreadExportPanel: () => <div /> }));
 vi.mock('../thread-share-menu', () => ({ ThreadShareMenu: () => <div /> }));
+vi.mock('../format/thread-format-panel', () => ({ ThreadFormatPanel: () => <div /> }));
 vi.mock('../thread-change-requests', () => ({ ThreadChangeRequests: () => <div /> }));
 
 function mutation(overrides: Record<string, unknown> = {}) {
@@ -126,6 +127,7 @@ describe('ThreadPublicationDetail', () => {
       title: 'T',
       slug: 't',
       updatedAt: '2026-10-13',
+      pendingChangeRequests: 0,
     };
     render(<ThreadPublicationDetail detail={makeDetail({ selectedPublication: published })} />);
 
@@ -268,6 +270,7 @@ describe('ThreadPublicationDetail owner actions and publish banner', () => {
       title: 'T',
       slug: 't',
       updatedAt: '2026-10-13',
+      pendingChangeRequests: 0,
     };
     const detail = makeDetail(
       { selectedPublication: published, hasDraft: true, generationFailed: false },

@@ -6,6 +6,7 @@ import {
   CHECK_EMAIL_DELIVERY_FAILED,
   CHECK_EMAIL_DELIVERY_PARAM,
 } from '@/constants/auth-onboarding.constants';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useTranslation } from '@/lib/i18n';
 import { authService } from '@/services/auth/auth.service';
 import type { RegisterRequest } from '@/types';
@@ -18,6 +19,7 @@ export function useRegister() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
+  const localise = useLocalizedHref();
 
   const mutation = useMutation({
     mutationFn: (data: RegisterRequest) => authService.register(data),
@@ -50,7 +52,7 @@ export function useRegister() {
       if (returnTo !== null) {
         params.set('returnTo', returnTo);
       }
-      router.push(`${ROUTES.CHECK_EMAIL}?${params.toString()}`);
+      router.push(localise(`${ROUTES.CHECK_EMAIL}?${params.toString()}`));
     },
     // No toast. The register form renders the one, specific explanation inline
     // (SignupFailureAlert); a toast saying the same thing beside it was the

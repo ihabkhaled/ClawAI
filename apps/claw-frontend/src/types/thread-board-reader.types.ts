@@ -10,6 +10,10 @@ export type ThreadReaderBodyProps = {
   citations: Array<{ url: string }>;
   truncatedLabel: string;
   citationsLabel: string;
+  /** The Thread title: a first `# Title` that repeats it is not drawn twice. */
+  title?: string;
+  /** The Thread's own language, for reading time. */
+  contentLocale?: string;
 };
 
 export type BoardReaderController = {

@@ -54,7 +54,12 @@ import type { CreatePublicationChangeRequestDto } from '../dto/create-publicatio
 import type { CreatePublicationReportDto } from '../dto/create-publication-report.dto';
 import type { ResolvePublicationChangeRequestDto } from '../dto/resolve-publication-change-request.dto';
 import type { SetPublicationReactionDto } from '../dto/set-publication-reaction.dto';
+import {
+  MAX_PENDING_CHANGE_REQUESTS_PER_PUBLICATION,
+  MAX_PENDING_CHANGE_REQUESTS_PER_USER,
+} from '../constants/publication-change-request.constants';
 import type {
+  CreateChangeRequestOutcome,
   ModerationReportView,
   PublicationChangeRequestView,
   PublicationReactionSummary,
@@ -82,6 +87,7 @@ export class PublicationsRepository {
         status: true,
         slug: true,
         updatedAt: true,
+        _count: { select: { changeRequests: { where: { status: 'PENDING' } } } },
         revisions: {
           orderBy: { revision: 'desc' },
           take: OWNER_LIST_REVISION_WINDOW,
@@ -94,8 +100,9 @@ export class PublicationsRepository {
         },
       },
     });
-    return publications.map(({ revisions, ...publication }) => ({
+    return publications.map(({ revisions, _count, ...publication }) => ({
       ...publication,
+      pendingChangeRequests: _count.changeRequests,
       ...pickOwnerListTitle(revisions),
     }));
   }
@@ -1015,18 +1022,36 @@ export class PublicationsRepository {
     return { likes, dislikes, viewerReaction: viewer?.value ?? null };
   }
 
+  /**
+   * Saves a reader's suggestion under the Thread's row lock, so two suggestions landing together
+   * cannot both pass the limits. The owner cannot suggest to themselves.
+   */
   async createPublicChangeRequest(
     slug: string,
     requesterId: string,
     input: CreatePublicationChangeRequestDto,
-  ): Promise<PublicationChangeRequestView | null> {
+  ): Promise<CreateChangeRequestOutcome> {
     return this.prisma.$transaction(async (transaction) => {
       const publication = await transaction.threadPublication.findFirst({
         where: this.publicPublicationWhere(slug),
-        select: { id: true },
+        select: { id: true, ownerId: true },
       });
-      if (!publication) return null;
-      return transaction.threadPublicationChangeRequest.create({
+      if (!publication) return { kind: 'NOT_FOUND' };
+      if (publication.ownerId === requesterId) return { kind: 'OWN_THREAD' };
+      await transaction.$queryRaw`SELECT id FROM thread_publications WHERE id = ${publication.id} FOR UPDATE`;
+      const [byThisPerson, onThisThread] = await Promise.all([
+        transaction.threadPublicationChangeRequest.count({
+          where: { publicationId: publication.id, requesterId, status: 'PENDING' },
+        }),
+        transaction.threadPublicationChangeRequest.count({
+          where: { publicationId: publication.id, status: 'PENDING' },
+        }),
+      ]);
+      if (byThisPerson >= MAX_PENDING_CHANGE_REQUESTS_PER_USER) return { kind: 'USER_LIMIT' };
+      if (onThisThread >= MAX_PENDING_CHANGE_REQUESTS_PER_PUBLICATION) {
+        return { kind: 'THREAD_LIMIT' };
+      }
+      const request = await transaction.threadPublicationChangeRequest.create({
         data: { publicationId: publication.id, requesterId, suggestion: input.suggestion },
         select: {
           id: true,
@@ -1037,29 +1062,7 @@ export class PublicationsRepository {
           createdAt: true,
         },
       });
-    });
-  }
-
-  async findOwnedChangeRequests(
-    publicationId: string,
-    ownerId: string,
-  ): Promise<PublicationChangeRequestView[] | null> {
-    const publication = await this.prisma.threadPublication.findFirst({
-      where: { id: publicationId, ownerId },
-      select: { id: true },
-    });
-    if (!publication) return null;
-    return this.prisma.threadPublicationChangeRequest.findMany({
-      where: { publicationId },
-      orderBy: { createdAt: 'asc' },
-      select: {
-        id: true,
-        suggestion: true,
-        status: true,
-        ownerResponse: true,
-        acceptedRevisionId: true,
-        createdAt: true,
-      },
+      return { kind: 'CREATED', request };
     });
   }
 

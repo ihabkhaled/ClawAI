@@ -219,6 +219,42 @@ export const AR_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'تصلك هذه الرسالة لأنك شاركت في هذا Thread على ClawAI. يمكنك إيقاف هذه الرسائل من إعدادات الإشعارات.',
     },
+    [AuthEmailKind.THREAD_CHANGE_ACCEPTED]: {
+      subject: 'تم قبول اقتراحك',
+      preheader: 'سيطبّقه صاحب Thread عليه.',
+      heading: 'تم قبول اقتراحك',
+      intro: 'قبل صاحب «{value}» التعديل الذي اقترحته.',
+      bodyLines: ['سنُعلمك عند تحديث Thread.'],
+      actionLabel: 'عرض اقتراحاتي',
+      fallbackNote: 'إذا لم يعمل الزر، يُرجى نسخ العنوان التالي ولصقه في متصفحك:',
+      expiryNote: null,
+      securityNote:
+        'تصلك هذه الرسالة لأنك شاركت في هذا Thread على ClawAI. يمكنك إيقاف هذه الرسائل من إعدادات الإشعارات.',
+    },
+    [AuthEmailKind.THREAD_CHANGE_APPLIED]: {
+      subject: 'اقتراحك أصبح الآن في Thread',
+      preheader: 'تم تحديث Thread بفكرتك.',
+      heading: 'تم تطبيق اقتراحك',
+      intro: 'تم تحديث «{value}» بالتعديل الذي اقترحته.',
+      bodyLines: ['شكرًا لمساهمتك في تحسينه. يظهر اسمك في صفحة Thread.'],
+      actionLabel: 'فتح Thread',
+      fallbackNote: 'إذا لم يعمل الزر، يُرجى نسخ العنوان التالي ولصقه في متصفحك:',
+      expiryNote: null,
+      securityNote:
+        'تصلك هذه الرسالة لأنك شاركت في هذا Thread على ClawAI. يمكنك إيقاف هذه الرسائل من إعدادات الإشعارات.',
+    },
+    [AuthEmailKind.THREAD_CHANGE_DECLINED]: {
+      subject: 'لم يُؤخذ باقتراحك',
+      preheader: 'قرر صاحب Thread عدم تطبيقه.',
+      heading: 'تم رفض اقتراحك',
+      intro: 'قرر صاحب «{value}» عدم تطبيق التعديل الذي اقترحته.',
+      bodyLines: ['يمكنك قراءة أي رد من صاحب Thread في صفحة اقتراحاتي.'],
+      actionLabel: 'عرض اقتراحاتي',
+      fallbackNote: 'إذا لم يعمل الزر، يُرجى نسخ العنوان التالي ولصقه في متصفحك:',
+      expiryNote: null,
+      securityNote:
+        'تصلك هذه الرسالة لأنك شاركت في هذا Thread على ClawAI. يمكنك إيقاف هذه الرسائل من إعدادات الإشعارات.',
+    },
     [AuthEmailKind.MCP_SERVER_APPROVED]: {
       subject: 'تمت الموافقة على خادم MCP الخاص بك',
       preheader: 'يمكنك استخدامه في المحادثة الآن.',

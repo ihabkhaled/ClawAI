@@ -5,7 +5,9 @@ import { useForm } from 'react-hook-form';
 
 import { ROUTES } from '@/constants';
 import { REMEMBERED_EMAIL_STORAGE_KEY } from '@/constants/login.constants';
+import { useAuthSwitchHref } from '@/hooks/auth/use-auth-switch-href';
 import { useLogin } from '@/hooks/auth/use-login';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useTranslation } from '@/lib/i18n';
 import { loginSchema } from '@/lib/validation/login.schema';
 import type { LoginFormValues } from '@/lib/validation/login.schema';
@@ -22,6 +24,8 @@ import { readRetryAfterSeconds } from '@/utilities/rate-limit.utility';
 // this hook and renders.
 export function useLoginForm(): UseLoginFormReturn {
   const { t } = useTranslation();
+  const localise = useLocalizedHref();
+  const registerHref = useAuthSwitchHref(ROUTES.REGISTER);
   const { login, isPending, isError, error } = useLogin();
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
@@ -66,7 +70,7 @@ export function useLoginForm(): UseLoginFormReturn {
     // Phase 4 placeholder — surface a coming-soon toast instead of a
     // 404 link. Forgot-password flow is tracked separately on the
     // product backlog.
-    router.push(ROUTES.FORGOT_PASSWORD);
+    router.push(localise(ROUTES.FORGOT_PASSWORD));
   };
 
   const onSubmit = (data: LoginFormValues): void => {
@@ -92,6 +96,7 @@ export function useLoginForm(): UseLoginFormReturn {
     rememberMe,
     handleRememberMeChange,
     handleForgotPasswordClick,
+    registerHref,
     onSubmit: form.handleSubmit(onSubmit),
     isPending,
     isError,

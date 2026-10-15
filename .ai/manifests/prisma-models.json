@@ -224,6 +224,7 @@
     "claw-threads-service": [
       "ThreadBoardWord",
       "ThreadDeletedAccount",
+      "ThreadFormatPass",
       "ThreadPublication",
       "ThreadPublicationChangeRequest",
       "ThreadPublicationComment",

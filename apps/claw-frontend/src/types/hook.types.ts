@@ -108,6 +108,8 @@ export type UseLoginFormReturn = {
   rememberMe: boolean;
   handleRememberMeChange: (checked: boolean) => void;
   handleForgotPasswordClick: () => void;
+  /** The sign-up screen in the reader's language, carrying the page they came from. */
+  registerHref: string;
   onSubmit: (event?: React.BaseSyntheticEvent) => Promise<void>;
   isPending: boolean;
   isError: boolean;

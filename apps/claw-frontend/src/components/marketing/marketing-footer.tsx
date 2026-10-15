@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { APP_VERSION, MARKETING_GITHUB_URL, ROUTES } from '@/constants';
 import { COMPARISON_HUB_PATH } from '@/constants/public-comparison.constants';
 import { THREADS_PUBLIC_BOARD_PATH } from '@/constants/thread-board-guest.constants';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useTranslation } from '@/lib/i18n';
 import { useFeedbackDialogStore } from '@/stores/feedback-dialog.store';
 import type { MarketingFooterProps } from '@/types';
@@ -27,6 +28,7 @@ export function MarketingFooter({
   comparisonsHeading,
 }: MarketingFooterProps): React.ReactElement {
   const { t } = useTranslation();
+  const localise = useLocalizedHref();
   const openFeedback = useFeedbackDialogStore((state) => state.openFeedback);
   const year = new Date().getFullYear();
   const socialLinks = getConfiguredSocialLinks();
@@ -124,12 +126,12 @@ export function MarketingFooter({
             </h2>
             <ul className="text-muted-foreground mt-3 space-y-2 text-sm">
               <li>
-                <Link href={ROUTES.REGISTER} className="hover:text-foreground">
+                <Link href={localise(ROUTES.REGISTER)} className="hover:text-foreground">
                   {t('marketing.header.createAccount')}
                 </Link>
               </li>
               <li>
-                <Link href={ROUTES.LOGIN} className="hover:text-foreground">
+                <Link href={localise(ROUTES.LOGIN)} className="hover:text-foreground">
                   {t('marketing.header.login')}
                 </Link>
               </li>

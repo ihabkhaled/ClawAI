@@ -27,7 +27,9 @@ import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
+import { THREAD_ARTICLE_TRANSLATIONS } from './thread-article-translations';
 import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
+import { THREAD_CHANGE_REQUESTS_TRANSLATIONS } from './thread-change-requests-translations';
 import { THREAD_COMMUNITY_TRANSLATIONS } from './thread-community-translations';
 import { THREAD_FIXES_TRANSLATIONS } from './thread-fixes-translations';
 import { THREAD_PUBLIC_BOARD_TRANSLATIONS } from './thread-public-board-translations';
@@ -40,6 +42,7 @@ export const th: TranslationDictionary = {
   pluginChat: PLUGIN_CHAT_TRANSLATIONS.th,
   pluginConsent: PLUGIN_CONSENT_TRANSLATIONS.th,
   threadTime: THREAD_TIME_TRANSLATIONS.th,
+  threadArticle: THREAD_ARTICLE_TRANSLATIONS.th,
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.th,
   pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.th,
   pluginImport: PLUGIN_IMPORT_TRANSLATIONS.th,
@@ -466,6 +469,7 @@ export const th: TranslationDictionary = {
     ...THREAD_PUBLIC_BOARD_TRANSLATIONS.th,
     ...THREAD_COMMUNITY_TRANSLATIONS.th,
     ...THREAD_FIXES_TRANSLATIONS.th,
+    ...THREAD_CHANGE_REQUESTS_TRANSLATIONS.th,
     ...PLUGIN_OWN_SERVERS_TRANSLATIONS.th,
     composerContext: {
       menuLabel: 'บริบท',

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
 import { ROUTES } from '@/constants';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useTranslation } from '@/lib/i18n';
 import { authService } from '@/services/auth/auth.service';
 import { releasePushSubscription } from '@/services/notifications/push-release.service';
@@ -13,6 +14,7 @@ export function useLogout(redirectTo: string | null = ROUTES.LOGIN) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
+  const localise = useLocalizedHref();
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -28,7 +30,7 @@ export function useLogout(redirectTo: string | null = ROUTES.LOGIN) {
     onSettled: () => {
       queryClient.clear();
       if (redirectTo !== null) {
-        router.push(redirectTo);
+        router.push(localise(redirectTo));
       }
     },
   });

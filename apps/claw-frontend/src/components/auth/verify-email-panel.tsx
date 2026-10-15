@@ -9,6 +9,7 @@ import { ROUTES } from '@/constants';
 import { EMAIL_VERIFICATION_TONE_BADGE_CLASS } from '@/constants/email-verification-tone.constants';
 import { EmailVerificationOutcome, EmailVerificationTone } from '@/enums';
 import { useVerifyEmailPage } from '@/hooks/auth/use-verify-email-page';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { cn } from '@/lib/utils';
 import {
   resolveEmailVerificationPanelCopy,
@@ -28,6 +29,7 @@ import {
  * the primary button (sign in) is exactly what will not work for them.
  */
 export function VerifyEmailPanel(): React.ReactElement {
+  const localise = useLocalizedHref();
   const { outcome, t } = useVerifyEmailPage();
   const copy = resolveEmailVerificationPanelCopy(outcome);
   const tone = resolveEmailVerificationTone(outcome);
@@ -66,13 +68,15 @@ export function VerifyEmailPanel(): React.ReactElement {
         {isPending ? null : (
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button asChild className="w-full sm:flex-1">
-              <Link href={ROUTES.LOGIN}>{t(copy.primaryActionKey)}</Link>
+              <Link href={localise(ROUTES.LOGIN)}>{t(copy.primaryActionKey)}</Link>
             </Button>
             {copy.secondaryActionKey === null ? null : (
               <Button asChild variant="outline" className="w-full sm:flex-1">
                 {/* A dead link needs a new account or a new registration; a
                     used one usually needs a password, not a new account. */}
-                <Link href={isFailure ? ROUTES.REGISTER : ROUTES.FORGOT_PASSWORD}>
+                <Link
+                  href={isFailure ? localise(ROUTES.REGISTER) : localise(ROUTES.FORGOT_PASSWORD)}
+                >
                   {t(copy.secondaryActionKey)}
                 </Link>
               </Button>

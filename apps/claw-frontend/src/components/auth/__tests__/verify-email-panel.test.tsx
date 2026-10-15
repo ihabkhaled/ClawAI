@@ -47,7 +47,7 @@ describe('VerifyEmailPanel', () => {
     expect(screen.getByText(en.auth.verifyEmailVerifiedDetail)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: en.auth.verifyEmailVerifiedAction })).toHaveAttribute(
       'href',
-      '/login',
+      '/en/login',
     );
   });
 
@@ -58,7 +58,7 @@ describe('VerifyEmailPanel', () => {
     expect(screen.getByText(en.auth.verifyEmailFailedDetail)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: en.auth.verifyEmailFailedSecondary })).toHaveAttribute(
       'href',
-      '/register',
+      '/en/register',
     );
   });
 
@@ -66,7 +66,7 @@ describe('VerifyEmailPanel', () => {
     renderPanel(EmailVerificationOutcome.AlreadyHandled);
     expect(
       screen.getByRole('link', { name: en.auth.verifyEmailAlreadyActiveSecondary }),
-    ).toHaveAttribute('href', '/forgot-password');
+    ).toHaveAttribute('href', '/en/forgot-password');
   });
 
   it('marks the waiting state as busy for assistive technology', () => {

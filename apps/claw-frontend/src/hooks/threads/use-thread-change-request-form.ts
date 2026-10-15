@@ -9,12 +9,14 @@ import type {
 export function useThreadChangeRequestForm(
   revisionSource: ThreadChangesRevisionSource,
 ): ThreadChangeRequestForm {
+  const [choosingRequestId, setChoosingRequestId] = useState('');
   const [acceptingRequestId, setAcceptingRequestId] = useState('');
   const [revisionMarkdown, setRevisionMarkdown] = useState('');
   const [spendCapUsd, setSpendCapUsd] = useState('');
   const [ownerResponses, setOwnerResponses] = useState<Record<string, string>>({});
 
   return {
+    choosingRequestId,
     acceptingRequestId,
     revisionMarkdown,
     spendCapUsd,
@@ -25,16 +27,23 @@ export function useThreadChangeRequestForm(
     setSpendCapUsd,
     setOwnerResponse: (requestId, value) =>
       setOwnerResponses((current) => ({ ...current, [requestId]: value })),
+    chooseAcceptance: (requestId) => {
+      setAcceptingRequestId('');
+      setChoosingRequestId(requestId);
+    },
     beginAcceptance: (requestId) => {
+      setChoosingRequestId('');
       setAcceptingRequestId(requestId);
       setRevisionMarkdown(revisionSource?.markdown ?? '');
       setSpendCapUsd('');
     },
     cancelAcceptance: () => {
+      setChoosingRequestId('');
       setAcceptingRequestId('');
       setSpendCapUsd('');
     },
     finishRequest: (requestId) => {
+      setChoosingRequestId('');
       setAcceptingRequestId('');
       setSpendCapUsd('');
       setOwnerResponses((current) =>

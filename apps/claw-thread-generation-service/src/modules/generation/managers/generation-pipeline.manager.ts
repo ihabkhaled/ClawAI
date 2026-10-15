@@ -43,6 +43,7 @@ import { createHealingBudget } from '../utilities/healing-budget.utility';
 import { waitBeforeRetry } from '../utilities/wait-before-retry.utility';
 import { citationTable } from '../utilities/citation-table.utility';
 import { RoleHealer } from './role-healer';
+import { ArticleFormatter } from './article-formatter';
 import type { CandidateHealth, RolePrompt } from '../types/healing.types';
 import {
   NON_RETRYABLE_STEP_CODES,
@@ -76,6 +77,7 @@ import { evaluateRevisionReview, revisionDraftHash } from '../utilities/revision
 export class GenerationPipelineManager {
   private readonly logger = new Logger(GenerationPipelineManager.name);
   private readonly healer: RoleHealer;
+  private readonly formatter: ArticleFormatter;
   private healthCache:
     { value: ReadonlyMap<string, CandidateHealth>; expiresAt: number } | undefined;
 
@@ -96,6 +98,11 @@ export class GenerationPipelineManager {
       wait: waitBeforeRetry,
       now: () => Date.now(),
       random: () => Math.random(),
+    });
+    this.formatter = new ArticleFormatter({
+      call: (input, budget, spec) => this.healer.call(input, budget, spec),
+      record: (jobId, step) => this.recorder.record(jobId, step),
+      spentMicroUsd: (jobId) => this.jobs.readSpentMicroUsd(jobId),
     });
   }
 
@@ -219,12 +226,14 @@ export class GenerationPipelineManager {
     if (critic.revisionBrief !== null) {
       return { kind: 'retry', revisionBrief: critic.revisionBrief };
     }
+    // Typesetting runs on the reviewed text and never fails the job; the hash is the stored text's.
+    const final = job.formatStage ? (await this.formatter.format(job, candidate)).draft : candidate;
     return {
       kind: 'passed',
       result: {
-        markdown: candidate.markdown,
-        citations: candidate.citations,
-        draftHash: candidateHash,
+        markdown: final.markdown,
+        citations: final.citations,
+        draftHash: final === candidate ? candidateHash : revisionDraftHash(final),
         evidenceBundle: evidence.bundle,
         evidenceHash: evidence.sha256,
         rounds: round,

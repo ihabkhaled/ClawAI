@@ -207,6 +207,42 @@ export const ZH_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         '您收到此邮件，是因为您参与了 ClawAI 上的这个 Thread。您可以在通知设置中关闭这些邮件。',
     },
+    [AuthEmailKind.THREAD_CHANGE_ACCEPTED]: {
+      subject: '您的建议已被采纳',
+      preheader: '作者将把它应用到 Thread。',
+      heading: '您的建议已被采纳',
+      intro: '“{value}”的作者采纳了您提出的修改建议。',
+      bodyLines: ['Thread 更新后我们会通知您。'],
+      actionLabel: '查看我的建议',
+      fallbackNote: '如果按钮无法使用，请复制下方地址并粘贴至您的浏览器中打开。',
+      expiryNote: null,
+      securityNote:
+        '您收到此邮件，是因为您参与了 ClawAI 上的这个 Thread。您可以在通知设置中关闭这些邮件。',
+    },
+    [AuthEmailKind.THREAD_CHANGE_APPLIED]: {
+      subject: '您的建议已加入 Thread',
+      preheader: 'Thread 已按您的想法更新。',
+      heading: '您的建议已应用',
+      intro: '“{value}”已按您提出的修改建议更新。',
+      bodyLines: ['感谢您帮助改进。您的名字会显示在 Thread 页面上。'],
+      actionLabel: '打开 Thread',
+      fallbackNote: '如果按钮无法使用，请复制下方地址并粘贴至您的浏览器中打开。',
+      expiryNote: null,
+      securityNote:
+        '您收到此邮件，是因为您参与了 ClawAI 上的这个 Thread。您可以在通知设置中关闭这些邮件。',
+    },
+    [AuthEmailKind.THREAD_CHANGE_DECLINED]: {
+      subject: '您的建议未被采用',
+      preheader: '作者决定不应用它。',
+      heading: '您的建议已被拒绝',
+      intro: '“{value}”的作者决定不应用您提出的修改建议。',
+      bodyLines: ['如有作者的回复，您可以在“我的建议”中查看。'],
+      actionLabel: '查看我的建议',
+      fallbackNote: '如果按钮无法使用，请复制下方地址并粘贴至您的浏览器中打开。',
+      expiryNote: null,
+      securityNote:
+        '您收到此邮件，是因为您参与了 ClawAI 上的这个 Thread。您可以在通知设置中关闭这些邮件。',
+    },
     [AuthEmailKind.MCP_SERVER_APPROVED]: {
       subject: '你的 MCP 服务器已获批准',
       preheader: '现在可以在聊天中使用了。',

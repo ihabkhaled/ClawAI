@@ -15,6 +15,7 @@ type TransactionMock = {
   threadPublicationRevision: { deleteMany: MockMethod };
   threadPublicationComment: { updateMany: MockMethod };
   threadPublicationReaction: { deleteMany: MockMethod };
+  threadFormatPass: { deleteMany: MockMethod };
   threadPublicationCommentReaction: { deleteMany: MockMethod };
   threadPublicationCommentMention: { deleteMany: MockMethod };
   threadPublicationReader: { findMany: MockMethod; deleteMany: MockMethod };
@@ -37,6 +38,7 @@ describe('Threads AccountDeletionRepository', () => {
       threadPublicationRevision: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
       threadPublicationComment: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
       threadPublicationReaction: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
+      threadFormatPass: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
       threadPublicationCommentReaction: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
       threadPublicationCommentMention: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
       threadPublicationReader: {
@@ -85,6 +87,9 @@ describe('Threads AccountDeletionRepository', () => {
     );
     expect(tx.threadPublicationReaction.deleteMany).toHaveBeenCalledWith({
       where: { userId: 'account-private-1' },
+    });
+    expect(tx.threadFormatPass.deleteMany).toHaveBeenCalledWith({
+      where: { ownerId: 'account-private-1' },
     });
     expect(tx.threadPublicationChangeRequest.deleteMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: expect.objectContaining({ status: 'PENDING' }) }),

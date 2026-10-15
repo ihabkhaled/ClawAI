@@ -45,7 +45,8 @@ export const THREAD_CHANGE_REQUEST_STATUS_LABEL_KEYS: Readonly<
 > = {
   [ThreadPublicationChangeRequestStatus.Pending]: 'chat.threadChangeRequestPENDING',
   [ThreadPublicationChangeRequestStatus.Accepted]: 'chat.threadChangeRequestACCEPTED',
-  [ThreadPublicationChangeRequestStatus.Rejected]: 'chat.threadChangeRequestREJECTED',
+  [ThreadPublicationChangeRequestStatus.Rejected]: 'chat.threadCrStatusDeclined',
+  [ThreadPublicationChangeRequestStatus.Applied]: 'chat.threadCrStatusApplied',
 };
 
 /**
@@ -70,6 +71,11 @@ export const THREAD_CHANGE_REQUEST_STATUS_BADGES: Readonly<
       'border-green-600/40 bg-green-100 text-green-900 dark:border-success/40 dark:bg-success-surface dark:text-success',
   },
   [ThreadPublicationChangeRequestStatus.Rejected]: { variant: 'secondary', className: '' },
+  [ThreadPublicationChangeRequestStatus.Applied]: {
+    variant: 'outline',
+    className:
+      'border-blue-600/40 bg-blue-100 text-blue-900 dark:border-info/40 dark:bg-info-surface dark:text-info',
+  },
 };
 
 /** Where this browser remembers a signed-in reader's own reaction, per user and Thread. */

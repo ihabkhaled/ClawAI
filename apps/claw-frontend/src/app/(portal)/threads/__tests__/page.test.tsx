@@ -5,7 +5,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ThreadPublicationsPage from '../page';
 
 let publicationsState: {
-  data: Array<{ id: string; title: string | null; updatedAt: string }>;
+  data: Array<{
+    id: string;
+    title: string | null;
+    updatedAt: string;
+    pendingChangeRequests?: number;
+  }>;
   isLoading: boolean;
   isError: boolean;
 };
@@ -42,6 +47,37 @@ describe('Threads list page', () => {
     expect(screen.getByRole('link', { name: /Local-first AI/u })).toHaveAttribute(
       'href',
       '/threads/review/pub1234567890',
+    );
+  });
+
+  it('shows how many reader suggestions wait on a Thread, and nothing when none do', () => {
+    publicationsState.data = [
+      {
+        id: 'pub-a',
+        title: 'Has requests',
+        updatedAt: '2026-10-07T10:00:00.000Z',
+        pendingChangeRequests: 2,
+      },
+      {
+        id: 'pub-b',
+        title: 'Has none',
+        updatedAt: '2026-10-07T10:00:00.000Z',
+        pendingChangeRequests: 0,
+      },
+    ];
+    render(<ThreadPublicationsPage />);
+
+    const badges = screen.getAllByTestId('thread-pending-badge');
+    expect(badges).toHaveLength(1);
+    expect(badges[0]).toHaveTextContent('chat.threadCrBadge');
+  });
+
+  it('links to My suggestions', () => {
+    render(<ThreadPublicationsPage />);
+
+    expect(screen.getByRole('link', { name: 'chat.threadCrMineLink' })).toHaveAttribute(
+      'href',
+      '/threads/my/suggestions',
     );
   });
 

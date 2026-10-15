@@ -36,6 +36,9 @@ export const NOTIFICATION_EMAIL_KIND: Readonly<Record<UserNotificationKind, Auth
   [UserNotificationKind.THREAD_REACTED]: AuthEmailKind.THREAD_REACTED,
   [UserNotificationKind.THREAD_COMMENT_REACTED]: AuthEmailKind.THREAD_COMMENT_REACTED,
   [UserNotificationKind.THREAD_CHANGE_REQUESTED]: AuthEmailKind.THREAD_CHANGE_REQUESTED,
+  [UserNotificationKind.THREAD_CHANGE_ACCEPTED]: AuthEmailKind.THREAD_CHANGE_ACCEPTED,
+  [UserNotificationKind.THREAD_CHANGE_APPLIED]: AuthEmailKind.THREAD_CHANGE_APPLIED,
+  [UserNotificationKind.THREAD_CHANGE_DECLINED]: AuthEmailKind.THREAD_CHANGE_DECLINED,
   [UserNotificationKind.MCP_SERVER_APPROVED]: AuthEmailKind.MCP_SERVER_APPROVED,
   [UserNotificationKind.MCP_SERVER_REJECTED]: AuthEmailKind.MCP_SERVER_REJECTED,
 };

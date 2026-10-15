@@ -9,8 +9,10 @@ import { Input } from '@/components/ui/input';
 import { ROUTES } from '@/constants';
 import { AlertVariant } from '@/enums/alert-variant.enum';
 import { useForgotPasswordForm } from '@/hooks/auth/use-forgot-password-form';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 
 export function ForgotPasswordForm(): React.ReactElement {
+  const localise = useLocalizedHref();
   const { form, onSubmit, isPending, isSuccess, errorMessage, t } = useForgotPasswordForm();
 
   if (isSuccess) {
@@ -21,7 +23,10 @@ export function ForgotPasswordForm(): React.ReactElement {
           <CardDescription>{t('auth.forgotPasswordSuccessDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Link href={ROUTES.LOGIN} className="text-primary text-sm font-medium hover:underline">
+          <Link
+            href={localise(ROUTES.LOGIN)}
+            className="text-primary text-sm font-medium hover:underline"
+          >
             {t('auth.forgotPasswordBackToLogin')}
           </Link>
         </CardContent>
@@ -65,7 +70,10 @@ export function ForgotPasswordForm(): React.ReactElement {
             {isPending ? t('auth.forgotPasswordSubmitting') : t('auth.forgotPasswordSubmit')}
           </Button>
           <div className="text-center">
-            <Link href={ROUTES.LOGIN} className="text-muted-foreground hover:text-primary text-sm">
+            <Link
+              href={localise(ROUTES.LOGIN)}
+              className="text-muted-foreground hover:text-primary text-sm"
+            >
               {t('auth.forgotPasswordBackToLogin')}
             </Link>
           </div>

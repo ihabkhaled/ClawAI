@@ -1,11 +1,13 @@
 'use client';
 
-import { Plus } from 'lucide-react';
+import { FilePenLine, Plus } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactElement } from 'react';
 
 import { ThreadCreateDialog } from '@/components/threads/thread-create-dialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ROUTES } from '@/constants/routes.constants';
 import { useToggle } from '@/hooks/common/use-toggle';
 import { useThreadPublications } from '@/hooks/threads/use-thread-publications';
 import { useTranslation } from '@/lib/i18n';
@@ -20,10 +22,15 @@ export default function ThreadPublicationsPage(): ReactElement {
     <div className="flex flex-col gap-6 p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">{t('chat.threads')}</h1>
-        <Button type="button" onClick={createDialog.open} data-tour="threads-create">
-          <Plus className="h-4 w-4" aria-hidden="true" />
-          {t('chat.threadCreateButton')}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="outline">
+            <Link href={ROUTES.THREAD_MY_SUGGESTIONS}>{t('chat.threadCrMineLink')}</Link>
+          </Button>
+          <Button type="button" onClick={createDialog.open} data-tour="threads-create">
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            {t('chat.threadCreateButton')}
+          </Button>
+        </div>
       </div>
       <div data-tour="threads-list" className="flex flex-col gap-3">
         {isLoading ? <p role="status">{t('chat.loadingThreads')}</p> : null}
@@ -44,6 +51,18 @@ export default function ThreadPublicationsPage(): ReactElement {
                   <span className="block font-medium">
                     {publication.title ?? t('chat.untitled')}
                   </span>
+                  {publication.pendingChangeRequests > 0 ? (
+                    <Badge
+                      variant="warning"
+                      className="w-fit gap-1"
+                      data-testid="thread-pending-badge"
+                    >
+                      <FilePenLine className="h-3 w-3" aria-hidden="true" />
+                      {t('chat.threadCrBadge', {
+                        count: String(publication.pendingChangeRequests),
+                      })}
+                    </Badge>
+                  ) : null}
                   <time className="text-muted-foreground text-xs" dateTime={publication.updatedAt}>
                     {new Date(publication.updatedAt).toLocaleString()}
                   </time>

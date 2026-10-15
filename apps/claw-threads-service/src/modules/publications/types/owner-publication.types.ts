@@ -23,6 +23,8 @@ export type OwnedPublicationListItem = OwnerPublicationTitle & {
   status: PublicationStatus;
   slug: string;
   updatedAt: Date;
+  /** Reader suggestions waiting for the owner's answer. */
+  pendingChangeRequests: number;
 };
 
 /** The newest revision the owner could publish, as the generation-state answer needs it. */

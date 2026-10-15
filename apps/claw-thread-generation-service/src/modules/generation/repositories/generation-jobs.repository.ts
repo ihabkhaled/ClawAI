@@ -598,6 +598,15 @@ export class GenerationJobsRepository {
     });
   }
 
+  /** The spend recorded for the job so far in micro-USD, or null when the row is gone. */
+  async readSpentMicroUsd(jobId: string): Promise<number | null> {
+    const job = await this.prisma.threadGenerationJob.findUnique({
+      where: { id: jobId },
+      select: { spentMicroCredits: true },
+    });
+    return job ? Number(job.spentMicroCredits) : null;
+  }
+
   /**
    * Raises the job's persisted spend to the budget row's settled total. Monotonic (never lowers
    * it) and not fenced on status or attempt, for the same reason as addSpend.

@@ -43,6 +43,13 @@ export const queryKeys = {
       [...queryKeys.threadPublications.publicPage(slug), 'comments'] as const,
     reactions: (slug: string) =>
       [...queryKeys.threadPublications.publicPage(slug), 'reactions'] as const,
+    /** Whether the signed-in reader owns this Thread, and how many suggestions wait. */
+    viewer: (slug: string) => [...queryKeys.threadPublications.publicPage(slug), 'viewer'] as const,
+    /** The credit line: people whose suggestion was accepted or applied. */
+    credits: (slug: string) =>
+      [...queryKeys.threadPublications.publicPage(slug), 'credits'] as const,
+    /** The signed-in person's own suggestions on other people's Threads. */
+    myChangeRequests: () => [...queryKeys.threadPublications.all, 'my-change-requests'] as const,
   },
   threads: {
     all: ['threads'] as const,

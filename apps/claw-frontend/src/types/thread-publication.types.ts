@@ -3,6 +3,7 @@ import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import type { FormEvent, RefObject } from 'react';
 
 import type { Locale } from '@/enums/locale.enum';
+import type { ThreadChangeAcceptMode } from '@/enums/thread-change-accept-mode.enum';
 import type { ThreadPublicationChangeRequestStatus } from '@/enums/thread-publication-change-request-status.enum';
 import type { ThreadPublicationCommunityAction } from '@/enums/thread-publication-community-action.enum';
 import type { ThreadPublicationExportFormat } from '@/enums/thread-publication-export-format.enum';
@@ -28,6 +29,8 @@ export type OwnedThreadPublication = {
   title: string | null;
   slug: string;
   updatedAt: string;
+  /** Reader suggestions waiting for the owner's answer. */
+  pendingChangeRequests: number;
 };
 
 /** What the sensitive-details scan flagged in the newest text (secrets and cards are masked). */
@@ -78,6 +81,9 @@ export type ThreadPublicationExport = {
   content: string | { title: string; markdown: string; citations: Array<{ url: string }> };
 };
 
+/** Who suggested a change; null when the account is gone. */
+export type ThreadChangeRequester = { displayName: string; username: string };
+
 export type ThreadPublicationChangeRequest = {
   id: string;
   suggestion: string;
@@ -85,14 +91,31 @@ export type ThreadPublicationChangeRequest = {
   ownerResponse: string | null;
   acceptedRevisionId: string | null;
   createdAt: string;
+  requester: ThreadChangeRequester | null;
 };
+
+/** One of the signed-in person's own suggestions, with the Thread it is about. */
+export type ThreadMyChangeRequest = {
+  id: string;
+  suggestion: string;
+  status: ThreadPublicationChangeRequestStatus;
+  ownerResponse: string | null;
+  createdAt: string;
+  updatedAt: string;
+  thread: { slug: string; title: string; isPublic: boolean };
+};
+
+/** Who the viewer of a public Thread is to it; only an owner learns the id and the count. */
+export type ThreadViewerOwnership =
+  { isOwner: false } | { isOwner: true; publicationId: string; pendingChangeRequests: number };
 
 export type ResolveThreadPublicationChangeRequest =
   | { status: ThreadPublicationChangeRequestStatus.Rejected; ownerResponse?: string }
   | {
       status: ThreadPublicationChangeRequestStatus.Accepted;
       ownerResponse?: string;
-      revision: ThreadRevisionRequest;
+      /** Left out when the owner will edit the article themselves. */
+      revision?: ThreadRevisionRequest;
     };
 
 export type ThreadPublicationChangeRequestResolution = {
@@ -143,6 +166,8 @@ export type ThreadCommunityActionState = {
   isSubmitting: boolean;
   actionComplete: boolean;
   actionFailed: boolean;
+  /** A more specific reason for a refused suggestion (own Thread, too many waiting), else null. */
+  actionErrorKey: string | null;
   setComment: (value: string) => void;
   setSuggestion: (value: string) => void;
   setReportTarget: (value: string | null) => void;
@@ -174,6 +199,10 @@ export type ThreadPublicPageController = {
   communityError: boolean;
   loginHref: string;
   actions: ThreadCommunityActionState;
+  /** Whether the signed-in reader owns this Thread; undefined for guests and while loading. */
+  viewer: ThreadViewerOwnership | undefined;
+  /** People whose suggestion the owner accepted or applied. */
+  changeCredits: ThreadChangeRequester[];
 };
 
 export type ThreadCommunityPanelProps = {
@@ -228,6 +257,8 @@ export type ThreadChangeRequestsProps = {
   publicationId: string;
   revisionSource: NonNullable<ThreadGenerationState['draft']> | null;
   onRevisionStarted: (revisionId: string) => void;
+  /** Opens the editor after an owner accepts a suggestion to apply it by hand. */
+  onEditMyself?: () => void;
 };
 
 export type ThreadGenerationFormOptions = {
@@ -342,10 +373,14 @@ export type ThreadChangeRequestDecision = {
   status:
     ThreadPublicationChangeRequestStatus.Accepted | ThreadPublicationChangeRequestStatus.Rejected;
   ownerResponse: string;
+  /** Accepting only: with the AI review the revised article travels along; by hand it does not. */
+  mode?: ThreadChangeAcceptMode;
 };
 
 /** What the owner has typed so far while answering reader suggestions. */
 export type ThreadChangeRequestForm = {
+  /** The request whose Accept button was pressed and who is choosing how to apply it. */
+  choosingRequestId: string;
   acceptingRequestId: string;
   revisionMarkdown: string;
   spendCapUsd: string;
@@ -355,6 +390,7 @@ export type ThreadChangeRequestForm = {
   setRevisionMarkdown: (value: string) => void;
   setSpendCapUsd: (value: string) => void;
   setOwnerResponse: (requestId: string, value: string) => void;
+  chooseAcceptance: (requestId: string) => void;
   beginAcceptance: (requestId: string) => void;
   cancelAcceptance: () => void;
   /** Clears what belongs to a request once it has been answered. */
@@ -369,6 +405,9 @@ export type ThreadChangeRequestsController = {
     ThreadChangeRequestDecision
   >;
   form: ThreadChangeRequestForm;
+  /** The suggestion a notification link points at, highlighted for a few seconds. */
+  highlightedId: string | null;
+  chooseAcceptance: (requestId: string) => void;
   beginAcceptance: (requestId: string) => void;
   cancelAcceptance: () => void;
 };
@@ -379,6 +418,7 @@ export type ThreadChangeRequestResolveInput = {
   revisionSource: ThreadChangesRevisionSource;
   form: ThreadChangeRequestForm;
   onRevisionStarted: (revisionId: string) => void;
+  onEditMyself?: () => void;
 };
 
 export type ThreadCommentValidation = {
@@ -386,4 +426,36 @@ export type ThreadCommentValidation = {
   isEmpty: boolean;
   handleSubmit: () => void;
   handleChange: (value: string) => void;
+};
+
+export type ThreadOwnerChangeBarProps = {
+  publicationId: string;
+  pendingChangeRequests: number;
+};
+
+export type ThreadChangeCreditsProps = {
+  credits: ThreadChangeRequester[];
+};
+
+export type ThreadChangeRequestCardProps = {
+  request: ThreadPublicationChangeRequest;
+  controller: ThreadChangeRequestsController;
+  revisionSource: ThreadChangesRevisionSource;
+};
+
+export type ThreadChangeRequestChoiceProps = {
+  requestId: string;
+  controller: ThreadChangeRequestsController;
+  revisionSource: ThreadChangesRevisionSource;
+};
+
+export type ThreadChangeRequestRevisionFormProps = {
+  requestId: string;
+  controller: ThreadChangeRequestsController;
+  revisionSource: ThreadChangesRevisionSource;
+};
+
+export type ThreadMyChangeRequestItemProps = {
+  request: ThreadMyChangeRequest;
+  highlighted: boolean;
 };

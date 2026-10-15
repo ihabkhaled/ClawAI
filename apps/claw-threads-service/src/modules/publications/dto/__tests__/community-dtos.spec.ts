@@ -32,7 +32,11 @@ describe('publication community DTOs', () => {
   });
 
   it('limits owners and moderators to explicit terminal decisions', () => {
+    // Accepting without a revised article means the owner will edit it themselves.
     expect(resolvePublicationChangeRequestSchema.safeParse({ status: 'ACCEPTED' }).success).toBe(
+      true,
+    );
+    expect(resolvePublicationChangeRequestSchema.safeParse({ status: 'APPLIED' }).success).toBe(
       false,
     );
     expect(

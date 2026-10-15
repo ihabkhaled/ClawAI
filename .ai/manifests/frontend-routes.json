@@ -762,6 +762,11 @@
       "route": "/settings"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/threads/my/suggestions/page.tsx",
+      "kind": "page",
+      "route": "/threads/my/suggestions"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/threads/page.tsx",
       "kind": "page",
       "route": "/threads"

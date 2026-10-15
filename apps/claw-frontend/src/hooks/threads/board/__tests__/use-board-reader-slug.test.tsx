@@ -14,6 +14,9 @@ vi.mock('next/navigation', () => ({
   useParams: () => ({ slug: route.slug }),
   useRouter: () => ({ push: vi.fn() }),
 }));
+vi.mock('@/hooks/common/use-localized-href', () => ({
+  useLocalizedHref: () => (path: string) => path,
+}));
 vi.mock('@/hooks/threads/use-thread-public-actions', () => ({
   useThreadPublicActions: () => ({}),
 }));

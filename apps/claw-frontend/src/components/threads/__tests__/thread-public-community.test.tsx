@@ -34,6 +34,7 @@ function createActions(reportTarget: string | null = null): ThreadCommunityActio
     isSubmitting: false,
     actionComplete: false,
     actionFailed: false,
+    actionErrorKey: null,
     setComment: vi.fn(),
     setSuggestion: vi.fn(),
     setReportTarget: vi.fn(),

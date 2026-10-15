@@ -12,10 +12,12 @@ import { GenerationJobsInternalController } from './controllers/generation-jobs-
 import { SourceSnapshotsModule } from '../source-snapshots/source-snapshots.module';
 import { ThreadBudgetClient } from './services/thread-budget.client';
 import { GenerationSpendSyncService } from './services/generation-spend-sync.service';
+import { FormatPreviewInternalController } from './controllers/format-preview-internal.controller';
+import { FormatPreviewService } from './services/format-preview.service';
 
 @Module({
   imports: [ModelsModule, ResearchModule, SourceSnapshotsModule],
-  controllers: [GenerationJobsInternalController],
+  controllers: [GenerationJobsInternalController, FormatPreviewInternalController],
   providers: [
     GenerationPipelineManager,
     GenerationJobsRepository,
@@ -25,6 +27,7 @@ import { GenerationSpendSyncService } from './services/generation-spend-sync.ser
     StepRecorder,
     ThreadBudgetClient,
     GenerationSpendSyncService,
+    FormatPreviewService,
   ],
   exports: [GenerationPipelineManager, GenerationJobsService],
 })

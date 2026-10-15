@@ -233,6 +233,47 @@ export const JA_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'このメールは、ClawAI のこの Thread に参加しているためお送りしています。通知設定からこのメールを停止できます。',
     },
+    [AuthEmailKind.THREAD_CHANGE_ACCEPTED]: {
+      subject: 'あなたの提案が承認されました',
+      preheader: '作成者が Thread に反映します。',
+      heading: 'あなたの提案が承認されました',
+      intro: '「{value}」の作成者が、あなたの提案した変更を承認しました。',
+      bodyLines: ['Thread が更新されたらお知らせします。'],
+      actionLabel: '自分の提案を見る',
+      fallbackNote:
+        'ボタンが機能しない場合は、下記のアドレスをコピーしてブラウザーに貼り付けてください。',
+      expiryNote: null,
+      securityNote:
+        'このメールは、ClawAI のこの Thread に参加しているためお送りしています。通知設定からこのメールを停止できます。',
+    },
+    [AuthEmailKind.THREAD_CHANGE_APPLIED]: {
+      subject: 'あなたの提案が Thread に反映されました',
+      preheader: 'あなたのアイデアで Thread が更新されました。',
+      heading: 'あなたの提案が反映されました',
+      intro: '「{value}」があなたの提案した変更で更新されました。',
+      bodyLines: [
+        '改善にご協力いただきありがとうございます。Thread ページにお名前が掲載されます。',
+      ],
+      actionLabel: 'Thread を開く',
+      fallbackNote:
+        'ボタンが機能しない場合は、下記のアドレスをコピーしてブラウザーに貼り付けてください。',
+      expiryNote: null,
+      securityNote:
+        'このメールは、ClawAI のこの Thread に参加しているためお送りしています。通知設定からこのメールを停止できます。',
+    },
+    [AuthEmailKind.THREAD_CHANGE_DECLINED]: {
+      subject: 'あなたの提案は採用されませんでした',
+      preheader: '作成者は反映しないことにしました。',
+      heading: 'あなたの提案は見送られました',
+      intro: '「{value}」の作成者は、あなたの提案した変更を反映しないことにしました。',
+      bodyLines: ['作成者からの返信は「自分の提案」で確認できます。'],
+      actionLabel: '自分の提案を見る',
+      fallbackNote:
+        'ボタンが機能しない場合は、下記のアドレスをコピーしてブラウザーに貼り付けてください。',
+      expiryNote: null,
+      securityNote:
+        'このメールは、ClawAI のこの Thread に参加しているためお送りしています。通知設定からこのメールを停止できます。',
+    },
     [AuthEmailKind.MCP_SERVER_APPROVED]: {
       subject: 'MCP サーバーが承認されました',
       preheader: 'チャットですぐに使えます。',

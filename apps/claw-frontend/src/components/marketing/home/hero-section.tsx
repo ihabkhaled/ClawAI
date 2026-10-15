@@ -6,11 +6,13 @@ import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 import { MARKETING_HOME_PATHS } from '@/constants/marketing-home.constants';
 import { ROUTES } from '@/constants/routes.constants';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useTranslation } from '@/lib/i18n';
 import type { HomeHeroProps } from '@/types';
 
 export function HeroSection({ lastReviewed }: HomeHeroProps): React.ReactElement {
   const { t } = useTranslation();
+  const localise = useLocalizedHref();
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-16 text-center sm:px-6 sm:py-24 lg:px-8">
@@ -36,10 +38,13 @@ export function HeroSection({ lastReviewed }: HomeHeroProps): React.ReactElement
        * buttonVariants() (a plain className fn) is used instead of the Radix
        * <Button asChild> component. */}
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <Link href={ROUTES.REGISTER} className={buttonVariants({ size: 'lg' })}>
+        <Link href={localise(ROUTES.REGISTER)} className={buttonVariants({ size: 'lg' })}>
           {t('marketing.home.hero.ctaRegister')}
         </Link>
-        <Link href={ROUTES.LOGIN} className={buttonVariants({ size: 'lg', variant: 'outline' })}>
+        <Link
+          href={localise(ROUTES.LOGIN)}
+          className={buttonVariants({ size: 'lg', variant: 'outline' })}
+        >
           {t('marketing.home.hero.ctaLogin')}
         </Link>
         <Link

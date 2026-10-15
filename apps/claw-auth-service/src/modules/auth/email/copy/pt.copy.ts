@@ -225,6 +225,44 @@ export const PT_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'Você recebeu esta mensagem porque participou deste Thread no ClawAI. Você pode desativar estes e-mails nas configurações de notificação.',
     },
+    [AuthEmailKind.THREAD_CHANGE_ACCEPTED]: {
+      subject: 'Sua sugestão foi aceita',
+      preheader: 'O autor vai aplicá-la ao Thread.',
+      heading: 'Sua sugestão foi aceita',
+      intro: 'O autor de “{value}” aceitou a alteração que você sugeriu.',
+      bodyLines: ['Avisaremos quando o Thread for atualizado.'],
+      actionLabel: 'Ver minhas sugestões',
+      fallbackNote: 'Se o botão não funcionar, copie o endereço abaixo para o seu navegador:',
+      expiryNote: null,
+      securityNote:
+        'Você recebeu esta mensagem porque participou deste Thread no ClawAI. Você pode desativar estes e-mails nas configurações de notificação.',
+    },
+    [AuthEmailKind.THREAD_CHANGE_APPLIED]: {
+      subject: 'Sua sugestão já está no Thread',
+      preheader: 'O Thread foi atualizado com a sua ideia.',
+      heading: 'Sua sugestão foi aplicada',
+      intro: '“{value}” foi atualizado com a alteração que você sugeriu.',
+      bodyLines: [
+        'Obrigado por ajudar a melhorá-lo. Você aparece nos créditos da página do Thread.',
+      ],
+      actionLabel: 'Abrir o Thread',
+      fallbackNote: 'Se o botão não funcionar, copie o endereço abaixo para o seu navegador:',
+      expiryNote: null,
+      securityNote:
+        'Você recebeu esta mensagem porque participou deste Thread no ClawAI. Você pode desativar estes e-mails nas configurações de notificação.',
+    },
+    [AuthEmailKind.THREAD_CHANGE_DECLINED]: {
+      subject: 'Sua sugestão não foi usada',
+      preheader: 'O autor decidiu não aplicá-la.',
+      heading: 'Sua sugestão foi recusada',
+      intro: 'O autor de “{value}” decidiu não aplicar a alteração que você sugeriu.',
+      bodyLines: ['Você pode ler a resposta do autor, se houver, em Minhas sugestões.'],
+      actionLabel: 'Ver minhas sugestões',
+      fallbackNote: 'Se o botão não funcionar, copie o endereço abaixo para o seu navegador:',
+      expiryNote: null,
+      securityNote:
+        'Você recebeu esta mensagem porque participou deste Thread no ClawAI. Você pode desativar estes e-mails nas configurações de notificação.',
+    },
     [AuthEmailKind.MCP_SERVER_APPROVED]: {
       subject: 'O seu servidor MCP foi aprovado',
       preheader: 'Já o pode usar no chat.',

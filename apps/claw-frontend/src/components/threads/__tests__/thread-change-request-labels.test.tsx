@@ -27,6 +27,7 @@ function request(id: string, status: ThreadPublicationChangeRequestStatus) {
     ownerResponse: null,
     acceptedRevisionId: null,
     createdAt: '2026-10-05T12:00:00.000Z',
+    requester: null,
   };
 }
 
@@ -36,10 +37,11 @@ describe('ThreadChangeRequests status labels', () => {
       request('a', ThreadPublicationChangeRequestStatus.Pending),
       request('b', ThreadPublicationChangeRequestStatus.Accepted),
       request('c', ThreadPublicationChangeRequestStatus.Rejected),
+      request('d', ThreadPublicationChangeRequestStatus.Applied),
     ]);
   });
 
-  it('shows Pending, Accepted and Rejected as words, never as threadChangeRequestPENDING', async () => {
+  it('shows Pending, Accepted, Declined and Applied as words, never as threadChangeRequestPENDING', async () => {
     render(
       <QueryClientProvider
         client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
@@ -55,7 +57,8 @@ describe('ThreadChangeRequests status labels', () => {
     await screen.findByText('Suggestion a');
     expect(screen.getByText('Pending')).toBeInTheDocument();
     expect(screen.getByText('Accepted')).toBeInTheDocument();
-    expect(screen.getByText('Rejected')).toBeInTheDocument();
+    expect(screen.getByText('Declined')).toBeInTheDocument();
+    expect(screen.getByText('Applied')).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/threadChangeRequest[A-Z]/u);
   });
 
@@ -73,9 +76,9 @@ describe('ThreadChangeRequests status labels', () => {
     );
 
     await screen.findByText('Suggestion a');
-    const classes = ['Pending', 'Accepted', 'Rejected'].map(
+    const classes = ['Pending', 'Accepted', 'Declined', 'Applied'].map(
       (label) => screen.getByText(label).className,
     );
-    expect(new Set(classes).size).toBe(3);
+    expect(new Set(classes).size).toBe(4);
   });
 });

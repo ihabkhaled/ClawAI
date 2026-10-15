@@ -1,4 +1,9 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  HttpException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PublicationReportResolution } from '../../../../common/enums/publication-report-resolution.enum';
 
 import { PublicationCommunityService } from '../publication-community.service';
@@ -15,7 +20,10 @@ describe('PublicationCommunityService', () => {
       findPublicReactionSummary: vi
         .fn()
         .mockResolvedValue({ likes: 1, dislikes: 0, viewerReaction: null }),
-      createPublicChangeRequest: vi.fn().mockResolvedValue({ id: 'request-1', status: 'PENDING' }),
+      createPublicChangeRequest: vi.fn().mockResolvedValue({
+        kind: 'CREATED',
+        request: { id: 'request-1', status: 'PENDING' },
+      }),
       createPublicReport: vi.fn().mockResolvedValue({ id: 'report-1', status: 'OPEN' }),
       findOwnedChangeRequests: vi.fn().mockResolvedValue([]),
       findOwnedChangeRequest: vi.fn().mockResolvedValue(null),
@@ -27,6 +35,7 @@ describe('PublicationCommunityService', () => {
     const notifier = {
       threadReacted: vi.fn().mockResolvedValue(undefined),
       changeRequested: vi.fn().mockResolvedValue(undefined),
+      changeDecided: vi.fn().mockResolvedValue(undefined),
     };
     return {
       service: new PublicationCommunityService(
@@ -62,6 +71,118 @@ describe('PublicationCommunityService', () => {
       'request-1',
       'Add a citation',
     );
+  });
+
+  it.each([
+    ['NOT_FOUND', NotFoundException, undefined],
+    ['OWN_THREAD', ForbiddenException, undefined],
+    ['USER_LIMIT', HttpException, 429],
+    ['THREAD_LIMIT', HttpException, 429],
+  ] as const)(
+    'refuses a suggestion with outcome %s and notifies nobody',
+    async (kind, error, status) => {
+      const { service, publications, notifier } = createService();
+      publications.createPublicChangeRequest.mockResolvedValue({ kind });
+
+      const attempt = service.requestChange('public-slug', 'user-7', { suggestion: 'x' });
+
+      await expect(attempt).rejects.toBeInstanceOf(error);
+      if (status) await expect(attempt).rejects.toMatchObject({ status });
+      expect(notifier.changeRequested).not.toHaveBeenCalled();
+    },
+  );
+
+  it('tells the requester about an accepted decision exactly once, after it is saved', async () => {
+    const { service, publications, notifier } = createService();
+    publications.findOwnedChangeRequest.mockResolvedValue({ id: 'request-1', status: 'PENDING' });
+
+    await service.resolveOwnerChangeRequest('publication-1', 'owner-1', 'request-1', {
+      status: 'ACCEPTED',
+    });
+
+    expect(publications.resolveOwnedChangeRequest).toHaveBeenCalledWith(
+      'publication-1',
+      'owner-1',
+      'request-1',
+      { status: 'ACCEPTED' },
+      null,
+    );
+    expect(notifier.changeDecided).toHaveBeenCalledTimes(1);
+    expect(notifier.changeDecided).toHaveBeenCalledWith('request-1', 'ACCEPTED');
+  });
+
+  it('accepting without a revised article does not start a paid review', async () => {
+    const { service, publications, lifecycle } = createService();
+    publications.findOwnedChangeRequest.mockResolvedValue({ id: 'request-1', status: 'PENDING' });
+    await service.resolveOwnerChangeRequest('publication-1', 'owner-1', 'request-1', {
+      status: 'ACCEPTED',
+    });
+    expect(lifecycle.editRevision).not.toHaveBeenCalled();
+  });
+
+  it('tells the requester about a declined decision', async () => {
+    const { service, publications, notifier } = createService();
+    publications.findOwnedChangeRequest.mockResolvedValue({ id: 'request-1', status: 'PENDING' });
+
+    await service.resolveOwnerChangeRequest('publication-1', 'owner-1', 'request-1', {
+      status: 'REJECTED',
+      ownerResponse: 'Out of scope',
+    });
+
+    expect(notifier.changeDecided).toHaveBeenCalledWith('request-1', 'DECLINED');
+  });
+
+  it('answers a repeated decision without deciding or notifying again', async () => {
+    const { service, publications, notifier } = createService();
+    publications.findOwnedChangeRequest.mockResolvedValue({ id: 'request-1', status: 'REJECTED' });
+
+    await expect(
+      service.resolveOwnerChangeRequest('publication-1', 'owner-1', 'request-1', {
+        status: 'REJECTED',
+      }),
+    ).resolves.toEqual({ resolved: true, edit: null });
+    expect(publications.resolveOwnedChangeRequest).not.toHaveBeenCalled();
+    expect(notifier.changeDecided).not.toHaveBeenCalled();
+  });
+
+  it('refuses to flip a decision that was already made the other way', async () => {
+    const { service, publications } = createService();
+    publications.findOwnedChangeRequest.mockResolvedValue({ id: 'request-1', status: 'REJECTED' });
+
+    await expect(
+      service.resolveOwnerChangeRequest('publication-1', 'owner-1', 'request-1', {
+        status: 'ACCEPTED',
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('lets the losing side of two simultaneous identical decisions succeed quietly', async () => {
+    const { service, publications, notifier } = createService();
+    publications.findOwnedChangeRequest
+      .mockResolvedValueOnce({ id: 'request-1', status: 'PENDING' })
+      .mockResolvedValueOnce({ id: 'request-1', status: 'ACCEPTED', acceptedRevisionId: null });
+    publications.resolveOwnedChangeRequest.mockResolvedValue(false);
+
+    await expect(
+      service.resolveOwnerChangeRequest('publication-1', 'owner-1', 'request-1', {
+        status: 'ACCEPTED',
+      }),
+    ).resolves.toEqual({ resolved: true, edit: null });
+    expect(notifier.changeDecided).not.toHaveBeenCalled();
+  });
+
+  it('reports a conflict when the other simultaneous decision differed', async () => {
+    const { service, publications } = createService();
+    publications.findOwnedChangeRequest
+      .mockResolvedValueOnce({ id: 'request-1', status: 'PENDING' })
+      .mockResolvedValueOnce({ id: 'request-1', status: 'REJECTED', acceptedRevisionId: null });
+    publications.resolveOwnedChangeRequest.mockResolvedValue(false);
+
+    await expect(
+      service.resolveOwnerChangeRequest('publication-1', 'owner-1', 'request-1', {
+        status: 'ACCEPTED',
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
   });
 
   it('tells the notifier the reaction the person had before, so a switch does not notify twice', async () => {

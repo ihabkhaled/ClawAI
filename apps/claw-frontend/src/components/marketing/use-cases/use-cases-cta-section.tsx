@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 import { ROUTES } from '@/constants';
 import { MARKETING_USE_CASES_PRICING_PATH } from '@/constants/marketing-use-cases.constants';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useTranslation } from '@/lib/i18n';
 
 export function UseCasesCtaSection(): React.ReactElement {
   const { t } = useTranslation();
+  const localise = useLocalizedHref();
 
   return (
     <section className="border-border bg-surface-shell border-t">
@@ -23,7 +25,7 @@ export function UseCasesCtaSection(): React.ReactElement {
          * keeps these links server-rendered while still hydrating for locale
          * switching — same pattern as the home hero. */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link href={ROUTES.REGISTER} className={buttonVariants({ size: 'lg' })}>
+          <Link href={localise(ROUTES.REGISTER)} className={buttonVariants({ size: 'lg' })}>
             {t('marketing.useCasesPage.cta.primary')}
           </Link>
           <Link

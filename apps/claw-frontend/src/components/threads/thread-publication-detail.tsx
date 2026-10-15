@@ -1,6 +1,7 @@
 import { Check, EyeOff, Pencil, Rocket, X } from 'lucide-react';
 import type { ReactElement } from 'react';
 
+import { ThreadFormatPanel } from '@/components/threads/format/thread-format-panel';
 import { ThreadChangeRequests } from '@/components/threads/thread-change-requests';
 import { ThreadErrorNotice } from '@/components/threads/thread-error-notice';
 import { ThreadExportPanel } from '@/components/threads/thread-export-panel';
@@ -124,6 +125,7 @@ export function ThreadPublicationDetail({
               </ul>
             </>
           ) : null}
+          <ThreadFormatPanel detail={detail} />
           {generation.data.safetyBlock ? (
             <ThreadSafetyBlockNotice block={generation.data.safetyBlock} />
           ) : null}
@@ -276,14 +278,15 @@ export function ThreadPublicationDetail({
           {publish.isError ? (
             <ThreadErrorNotice message={resolveThreadErrorMessage(publish.error)} />
           ) : null}
-          {isPublished ? (
-            <ThreadChangeRequests
-              publicationId={detail.publicationId}
-              revisionSource={draft ?? null}
-              onRevisionStarted={detail.startRevisionFromChangeRequest}
-            />
-          ) : null}
         </section>
+      ) : null}
+      {isPublished || (selectedPublication?.pendingChangeRequests ?? 0) > 0 ? (
+        <ThreadChangeRequests
+          publicationId={detail.publicationId}
+          revisionSource={draft ?? null}
+          onRevisionStarted={detail.startRevisionFromChangeRequest}
+          onEditMyself={detail.startEditing}
+        />
       ) : null}
     </>
   );

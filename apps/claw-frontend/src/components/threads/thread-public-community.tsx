@@ -217,7 +217,9 @@ export function ThreadPublicCommunity({
           {actions.actionComplete ? (
             <p role="status">{t('chat.threadPublicActionComplete')}</p>
           ) : null}
-          {actions.actionFailed ? <p role="alert">{t('chat.threadPublicActionFailed')}</p> : null}
+          {actions.actionFailed ? (
+            <p role="alert">{t(actions.actionErrorKey ?? 'chat.threadPublicActionFailed')}</p>
+          ) : null}
         </>
       ) : (
         <>

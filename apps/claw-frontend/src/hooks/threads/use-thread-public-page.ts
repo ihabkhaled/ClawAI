@@ -5,9 +5,12 @@ import { useEffect, useState } from 'react';
 
 import { THREAD_EXPORT_FILES } from '@/constants/thread-publication.constants';
 import { ThreadPublicationExportFormat } from '@/enums/thread-publication-export-format.enum';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
+import { useThreadChangeCredits } from '@/hooks/threads/use-thread-change-credits';
 import { useThreadPublicActions } from '@/hooks/threads/use-thread-public-actions';
 import { useThreadPublicQueries } from '@/hooks/threads/use-thread-public-queries';
 import { useThreadPublicView } from '@/hooks/threads/use-thread-public-view';
+import { useThreadViewerOwnership } from '@/hooks/threads/use-thread-viewer-ownership';
 import { useTranslation } from '@/lib/i18n';
 import { ApiClientError } from '@/services/shared/api-client';
 import { useAuthStore } from '@/stores/auth.store';
@@ -36,6 +39,7 @@ export function useThreadPublicPage(
   // Next hands the segment over percent-encoded; the API and every query key use the real slug.
   const slug = decodeThreadSlugParam(params.slug ?? '') ?? '';
   const { t } = useTranslation();
+  const localise = useLocalizedHref();
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   useEffect(() => {
     // Known only in the browser, so the share menu appears after hydration, never mismatches it.
@@ -46,6 +50,8 @@ export function useThreadPublicPage(
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const userId = useAuthStore((state) => state.user?.id ?? '');
   useThreadPublicView(slug, isAuthenticated);
+  const viewer = useThreadViewerOwnership(slug, isAuthenticated);
+  const changeCredits = useThreadChangeCredits(slug);
   const error = queries.publication.error;
   const isNotFound = error instanceof ApiClientError && error.status === 404;
 
@@ -98,7 +104,9 @@ export function useThreadPublicPage(
     isError: queries.publication.isError && !isNotFound,
     communityLoading: queries.comments.isLoading || queries.reactions.isLoading,
     communityError: queries.comments.isError || queries.reactions.isError,
-    loginHref: `/login?returnTo=${encodeURIComponent(threadPublicPath(slug))}`,
+    loginHref: localise(`/login?returnTo=${encodeURIComponent(threadPublicPath(slug))}`),
     actions,
+    viewer,
+    changeCredits,
   };
 }

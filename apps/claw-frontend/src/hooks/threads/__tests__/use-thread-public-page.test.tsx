@@ -19,6 +19,8 @@ vi.mock('@/lib/i18n', () => ({ useTranslation: () => ({ t: (key: string) => key 
 vi.mock('../use-thread-public-queries', () => ({ useThreadPublicQueries: vi.fn() }));
 vi.mock('../use-thread-public-actions', () => ({ useThreadPublicActions: () => ({}) }));
 vi.mock('../use-thread-public-view', () => ({ useThreadPublicView: vi.fn() }));
+vi.mock('../use-thread-viewer-ownership', () => ({ useThreadViewerOwnership: () => undefined }));
+vi.mock('../use-thread-change-credits', () => ({ useThreadChangeCredits: () => [] }));
 
 const PUBLICATION: PublicThreadPublication = {
   slug: 'slug-a',

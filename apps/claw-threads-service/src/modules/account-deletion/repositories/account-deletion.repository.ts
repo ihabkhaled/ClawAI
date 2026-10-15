@@ -61,6 +61,7 @@ export class AccountDeletionRepository {
         await transaction.threadPublicationCommentReaction.deleteMany({ where: { userId } });
         await transaction.threadPublicationCommentMention.deleteMany({ where: { userId } });
         await transaction.threadPublicationReaction.deleteMany({ where: { userId } });
+        await transaction.threadFormatPass.deleteMany({ where: { ownerId: userId } });
         // A reader is only a keyed hash, but it is still removed with the account, and the
         // distinct-reader count of each publication they read goes down by one.
         const readerHash = hashReader(AppConfig.get().INTER_SERVICE_AUTH_TOKEN, userId);

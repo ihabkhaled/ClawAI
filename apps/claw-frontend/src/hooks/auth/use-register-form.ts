@@ -3,7 +3,9 @@ import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { ROUTES } from '@/constants';
+import { useAuthSwitchHref } from '@/hooks/auth/use-auth-switch-href';
 import { useRegister } from '@/hooks/auth/use-register';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useTranslation } from '@/lib/i18n';
 import { registerSchema } from '@/lib/validation/register.schema';
 import type { RegisterFormValues } from '@/lib/validation/register.schema';
@@ -25,6 +27,8 @@ import {
 export function useRegisterForm(): UseRegisterFormReturn {
   const { t, locale } = useTranslation();
   const { register, isPending, isError, error } = useRegister();
+  const localise = useLocalizedHref();
+  const signInHref = useAuthSwitchHref(ROUTES.LOGIN);
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     // Format problems surface as soon as the user leaves a field, and clear as
@@ -96,8 +100,8 @@ export function useRegisterForm(): UseRegisterFormReturn {
     copyRequestId,
     passwordRules,
     phoneServerErrorKey: phoneError?.type === 'server' ? (phoneError.message ?? null) : null,
-    signInHref: ROUTES.LOGIN,
-    resetPasswordHref: ROUTES.FORGOT_PASSWORD,
+    signInHref,
+    resetPasswordHref: localise(ROUTES.FORGOT_PASSWORD),
     t,
   };
 }

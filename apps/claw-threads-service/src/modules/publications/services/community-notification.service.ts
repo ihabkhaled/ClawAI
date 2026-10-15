@@ -1,7 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { UserNotificationRequestedPayload } from '@claw/shared-types';
 
+import { ChangeRequestDecision } from '../../../common/enums/change-request-decision.enum';
 import { AuthorIdentityService } from '../../author-identity/services/author-identity.service';
+import { PublicationChangeRequestsRepository } from '../repositories/publication-change-requests.repository';
 import { PublicationCommentsRepository } from '../repositories/publication-comments.repository';
 import type {
   CommentNotificationInput,
@@ -10,6 +12,7 @@ import type {
   CommunityActor,
 } from '../types/publication-comments.types';
 import {
+  planChangeDecision,
   planChangeRequest,
   planCommentNotifications,
   planCommentReaction,
@@ -30,6 +33,7 @@ export class CommunityNotificationService {
     private readonly identity: AuthorIdentityService,
     private readonly notifications: ThreadNotificationService,
     private readonly comments: PublicationCommentsRepository,
+    private readonly requests: PublicationChangeRequestsRepository,
   ) {}
 
   async commentCreated(
@@ -94,6 +98,39 @@ export class CommunityNotificationService {
       });
       return payload ? [payload] : [];
     });
+  }
+
+  /** The owner's answer to one suggestion (accepted or declined), told to the person who made it. */
+  async changeDecided(
+    requestId: string,
+    outcome: ChangeRequestDecision.ACCEPTED | ChangeRequestDecision.DECLINED,
+  ): Promise<void> {
+    await this.guard('change decision', () => this.decisionPayloads([requestId], outcome));
+  }
+
+  /** Suggestions that went live with a republish, each told to its requester once. */
+  async changesApplied(requestIds: ReadonlyArray<string>): Promise<void> {
+    await this.guard('applied change', () =>
+      this.decisionPayloads(requestIds, ChangeRequestDecision.APPLIED),
+    );
+  }
+
+  private async decisionPayloads(
+    requestIds: ReadonlyArray<string>,
+    outcome: ChangeRequestDecision,
+  ): Promise<UserNotificationRequestedPayload[]> {
+    const payloads: UserNotificationRequestedPayload[] = [];
+    for (const requestId of requestIds) {
+      const context = await this.requests.findDecisionContext(requestId);
+      if (!context?.publication.ownerId || context.requesterId === null) continue;
+      const payload = planChangeDecision({
+        outcome,
+        owner: await this.actor(context.publication.ownerId),
+        context,
+      });
+      if (payload) payloads.push(payload);
+    }
+    return payloads;
   }
 
   /** The actor's display name and username; empty strings when auth-service cannot be reached. */

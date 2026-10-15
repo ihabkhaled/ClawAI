@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 import { HOW_IT_WORKS_PLAN_BULLET_KEYS } from '@/constants/marketing-how-it-works.constants';
 import { ROUTES } from '@/constants/routes.constants';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useTranslation } from '@/lib/i18n';
 
 export function AccountAndPlansSection(): React.ReactElement {
   const { t } = useTranslation();
+  const localise = useLocalizedHref();
 
   return (
     <section id="account" className="border-border bg-surface-shell border-t">
@@ -46,7 +48,7 @@ export function AccountAndPlansSection(): React.ReactElement {
           </p>
 
           <div className="mt-8">
-            <Link href={ROUTES.REGISTER} className={buttonVariants({ size: 'lg' })}>
+            <Link href={localise(ROUTES.REGISTER)} className={buttonVariants({ size: 'lg' })}>
               {t('marketing.howItWorksPage.account.ctaRegister')}
             </Link>
           </div>

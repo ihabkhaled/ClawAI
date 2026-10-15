@@ -1,3 +1,4 @@
+import { withLocaleOf } from '@/utilities/locale.utility';
 import { isPublicPath } from '@/utilities/route-visibility.utility';
 
 /**
@@ -8,5 +9,5 @@ export function redirectToLoginUnlessPublicPage(): void {
   if (typeof window === 'undefined' || isPublicPath(window.location.pathname)) {
     return;
   }
-  window.location.href = '/login';
+  window.location.href = withLocaleOf('/login', window.location.pathname);
 }

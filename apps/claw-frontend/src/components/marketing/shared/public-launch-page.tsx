@@ -180,7 +180,7 @@ export async function PublicLaunchPage({
             <p className="max-w-2xl text-lg font-semibold">{summary}</p>
             <div className="flex flex-wrap gap-3">
               <Link
-                href="/register"
+                href={localisePath('/register', locale)}
                 className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-11 items-center px-4 py-2 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none"
               >
                 {labels.startFree}

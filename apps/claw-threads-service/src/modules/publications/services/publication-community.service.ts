@@ -1,6 +1,8 @@
 import {
   ConflictException,
+  ForbiddenException,
   HttpException,
+  HttpStatus,
   Inject,
   Injectable,
   Logger,
@@ -8,6 +10,7 @@ import {
   Optional,
 } from '@nestjs/common';
 
+import { ChangeRequestDecision } from '../../../common/enums/change-request-decision.enum';
 import {
   BOARD_COUNTS_PORT,
   type BoardCountsPort,
@@ -20,8 +23,13 @@ import type { ResolvePublicationChangeRequestDto } from '../dto/resolve-publicat
 import type { SetPublicationReactionDto } from '../dto/set-publication-reaction.dto';
 import { PublicationsRepository } from '../repositories/publications.repository';
 import { CommunityNotificationService } from './community-notification.service';
+import { isSameDecision } from '../utilities/change-request-decision.utility';
 import { PublicationLifecycleService } from './publication-lifecycle.service';
 import type { CommentReactionValue } from '../types/publication-comments.types';
+import {
+  MAX_PENDING_CHANGE_REQUESTS_PER_PUBLICATION,
+  MAX_PENDING_CHANGE_REQUESTS_PER_USER,
+} from '../constants/publication-change-request.constants';
 import type {
   ModerationReportView,
   PublicationChangeRequestView,
@@ -113,10 +121,26 @@ export class PublicationCommunityService {
     userId: string,
     input: CreatePublicationChangeRequestDto,
   ): Promise<PublicationChangeRequestView> {
-    const request = await this.publications.createPublicChangeRequest(slug, userId, input);
-    if (!request) throw new NotFoundException('Publication not found');
-    await this.notifier?.changeRequested(slug, userId, request.id, input.suggestion);
-    return request;
+    const outcome = await this.publications.createPublicChangeRequest(slug, userId, input);
+    switch (outcome.kind) {
+      case 'NOT_FOUND':
+        throw new NotFoundException('Publication not found');
+      case 'OWN_THREAD':
+        throw new ForbiddenException('You cannot suggest a change to your own Thread');
+      case 'USER_LIMIT':
+        throw new HttpException(
+          `You already have ${MAX_PENDING_CHANGE_REQUESTS_PER_USER} suggestions waiting on this Thread`,
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
+      case 'THREAD_LIMIT':
+        throw new HttpException(
+          `This Thread already has ${MAX_PENDING_CHANGE_REQUESTS_PER_PUBLICATION} suggestions waiting`,
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
+      case 'CREATED':
+        await this.notifier?.changeRequested(slug, userId, outcome.request.id, input.suggestion);
+        return outcome.request;
+    }
   }
 
   async report(
@@ -127,15 +151,6 @@ export class PublicationCommunityService {
     const report = await this.publications.createPublicReport(slug, userId, input);
     if (!report) throw new NotFoundException('Publication or comment not found');
     return report;
-  }
-
-  async listOwnerChangeRequests(
-    publicationId: string,
-    ownerId: string,
-  ): Promise<PublicationChangeRequestView[]> {
-    const requests = await this.publications.findOwnedChangeRequests(publicationId, ownerId);
-    if (!requests) throw new NotFoundException('Publication not found');
-    return requests;
   }
 
   async resolveOwnerChangeRequest(
@@ -151,11 +166,13 @@ export class PublicationCommunityService {
     );
     if (!existing) throw new NotFoundException('Change request not found');
     if (existing.status !== 'PENDING') {
+      // The same decision sent again (a double click, a retry) is answered, never repeated or told twice.
+      if (isSameDecision(existing.status, input.status)) return { resolved: true, edit: null };
       throw new ConflictException('Change request is already resolved');
     }
     let acceptedRevisionId: string | null = null;
     let edit: PublicationEditResult | null = null;
-    if (input.status === 'ACCEPTED') {
+    if (input.status === 'ACCEPTED' && input.revision) {
       edit = await this.lifecycle.editRevision(publicationId, ownerId, input.revision);
       acceptedRevisionId = edit.revisionId;
     }
@@ -166,16 +183,33 @@ export class PublicationCommunityService {
       input,
       acceptedRevisionId,
     );
-    if (resolved) return { resolved: true, edit };
+    if (resolved) {
+      await this.notifier?.changeDecided(
+        requestId,
+        input.status === 'ACCEPTED'
+          ? ChangeRequestDecision.ACCEPTED
+          : ChangeRequestDecision.DECLINED,
+      );
+      return { resolved: true, edit };
+    }
+    return this.answerLostRace(publicationId, ownerId, requestId, input, edit);
+  }
+
+  /** The update matched nothing: another request decided first. Same decision succeeds, else 409. */
+  private async answerLostRace(
+    publicationId: string,
+    ownerId: string,
+    requestId: string,
+    input: ResolvePublicationChangeRequestDto,
+    edit: PublicationEditResult | null,
+  ): Promise<{ resolved: true; edit: PublicationEditResult | null }> {
     const latest = await this.publications.findOwnedChangeRequest(
       publicationId,
       ownerId,
       requestId,
     );
-    if (latest?.status === 'ACCEPTED' && latest.acceptedRevisionId === acceptedRevisionId) {
-      return { resolved: true, edit };
-    }
     if (!latest) throw new NotFoundException('Change request not found');
+    if (isSameDecision(latest.status, input.status)) return { resolved: true, edit };
     throw new ConflictException('Change request is already resolved');
   }
 

@@ -2,6 +2,9 @@ import { UserNotificationKind } from '@claw/shared-types';
 import {
   AtSign,
   Bell,
+  CheckCheck,
+  CircleCheck,
+  CircleX,
   FilePenLine,
   Heart,
   MessageCircle,
@@ -34,6 +37,9 @@ export const NOTIFICATION_KIND_ICONS: Readonly<Record<UserNotificationKind, Luci
   [UserNotificationKind.THREAD_REACTED]: Heart,
   [UserNotificationKind.THREAD_COMMENT_REACTED]: Heart,
   [UserNotificationKind.THREAD_CHANGE_REQUESTED]: FilePenLine,
+  [UserNotificationKind.THREAD_CHANGE_ACCEPTED]: CircleCheck,
+  [UserNotificationKind.THREAD_CHANGE_APPLIED]: CheckCheck,
+  [UserNotificationKind.THREAD_CHANGE_DECLINED]: CircleX,
   [UserNotificationKind.MCP_SERVER_APPROVED]: ServerCog,
   [UserNotificationKind.MCP_SERVER_REJECTED]: ServerCog,
 };

@@ -29,6 +29,7 @@ function createActions(
     isSubmitting: false,
     actionComplete: false,
     actionFailed: false,
+    actionErrorKey: null,
     setComment: vi.fn(),
     setSuggestion: vi.fn(),
     setReportTarget: vi.fn(),

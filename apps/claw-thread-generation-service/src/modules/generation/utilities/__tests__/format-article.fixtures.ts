@@ -1,0 +1,178 @@
+import type { Locale } from '@claw/shared-types';
+
+export type FormatFixture = {
+  locale: Locale;
+  before: string;
+  after: string;
+  evidenceIds: string[];
+  urls: string[];
+};
+
+const URLS = ['https://example.com/a', 'https://example.com/b'];
+const IDS = ['a1b2c3d4', 'e5f6a7b8'];
+
+export const EN_FIXTURE: FormatFixture = {
+  locale: 'en' as Locale,
+  evidenceIds: IDS,
+  urls: URLS,
+  before: [
+    '# Solar panel costs',
+    '',
+    'Solar panels have become cheaper over the last decade. In 2020 the average installed cost was 3.05 dollars per watt [a1b2c3d4]. By 2024 it fell to 2.56 dollars per watt [e5f6a7b8]. Monocrystalline panels reach 22 percent efficiency and cost 0.9 dollars per watt, while polycrystalline panels reach 17 percent efficiency and cost 0.7 dollars per watt [e5f6a7b8]. Homeowners should compare quotes from at least 3 installers before they sign anything. Roofs older than 15 years may need repair before installation [a1b2c3d4]. A typical system pays for itself in 8 years.',
+  ].join('\n'),
+  after: [
+    '# Solar panel costs',
+    '',
+    '## Key takeaways',
+    '',
+    '- Solar panels have become cheaper over the last decade.',
+    '- A typical system pays for itself in 8 years.',
+    '',
+    '## Price trend',
+    '',
+    'In 2020 the average installed cost was 3.05 dollars per watt [a1b2c3d4]. By 2024 it fell to 2.56 dollars per watt [e5f6a7b8].',
+    '',
+    '## Panel types',
+    '',
+    '| Type | Efficiency | Cost per watt |',
+    '| --- | --- | --- |',
+    '| Monocrystalline | reaches 22 percent efficiency | costs 0.9 dollars [e5f6a7b8] |',
+    '| Polycrystalline | reaches 17 percent efficiency | costs 0.7 dollars |',
+    '',
+    '## Before you buy',
+    '',
+    'Homeowners should compare quotes from at least 3 installers before they sign anything.',
+    '',
+    '> **Warning:** Roofs older than 15 years may need repair before installation [a1b2c3d4].',
+    '',
+    '## Sources',
+    '',
+    '- https://example.com/a',
+    '- https://example.com/b',
+  ].join('\n'),
+};
+
+export const DE_FIXTURE: FormatFixture = {
+  locale: 'de' as Locale,
+  evidenceIds: IDS,
+  urls: URLS,
+  before: [
+    '# Kosten für Solaranlagen',
+    '',
+    'Solaranlagen sind in den letzten Jahren deutlich günstiger geworden. Im Jahr 2020 lagen die durchschnittlichen Installationskosten bei 3,05 Dollar pro Watt [a1b2c3d4]. Bis 2024 sanken sie auf 2,56 Dollar pro Watt [e5f6a7b8]. Monokristalline Module erreichen 22 Prozent Wirkungsgrad, polykristalline Module erreichen 17 Prozent Wirkungsgrad [e5f6a7b8]. Hausbesitzer sollten Angebote von mindestens 3 Anbietern vergleichen, bevor sie unterschreiben. Dächer, die älter als 15 Jahre sind, müssen vor der Montage eventuell repariert werden [a1b2c3d4]. Eine typische Anlage amortisiert sich nach 8 Jahren.',
+  ].join('\n'),
+  after: [
+    '# Kosten für Solaranlagen',
+    '',
+    '## Das Wichtigste',
+    '',
+    '- Solaranlagen sind in den letzten Jahren deutlich günstiger geworden.',
+    '- Eine typische Anlage amortisiert sich nach 8 Jahren.',
+    '',
+    '## Preisentwicklung',
+    '',
+    'Im Jahr 2020 lagen die durchschnittlichen Installationskosten bei 3,05 Dollar pro Watt [a1b2c3d4]. Bis 2024 sanken sie auf 2,56 Dollar pro Watt [e5f6a7b8].',
+    '',
+    '## Modultypen',
+    '',
+    '| Modultyp | Wirkungsgrad |',
+    '| --- | ---: |',
+    '| Monokristalline Module erreichen | 22 Prozent [e5f6a7b8] |',
+    '| Polykristalline Module erreichen | 17 Prozent |',
+    '',
+    '## Vor dem Kauf',
+    '',
+    'Hausbesitzer sollten Angebote von mindestens 3 Anbietern vergleichen, bevor sie unterschreiben.',
+    '',
+    '> **Warnung:** Dächer, die älter als 15 Jahre sind, müssen vor der Montage eventuell repariert werden [a1b2c3d4].',
+    '',
+    '## Quellen',
+    '',
+    '- https://example.com/a',
+    '- https://example.com/b',
+  ].join('\n'),
+};
+
+export const AR_FIXTURE: FormatFixture = {
+  locale: 'ar' as Locale,
+  evidenceIds: IDS,
+  urls: URLS,
+  before: [
+    '# تكلفة الألواح الشمسية',
+    '',
+    'أصبحت الألواح الشمسية أرخص بكثير خلال السنوات الماضية. في عام ٢٠٢٠ كان متوسط تكلفة التركيب ٣ دولارات للواط الواحد [a1b2c3d4]. وبحلول عام ٢٠٢٤ انخفضت إلى ٢ دولار للواط الواحد [e5f6a7b8]. تصل كفاءة الألواح أحادية البلورة إلى ٢٢ بالمئة وتصل كفاءة الألواح متعددة البلورات إلى ١٧ بالمئة [e5f6a7b8]. ينبغي لأصحاب المنازل مقارنة عروض ٣ مركبين على الأقل قبل التوقيع. قد تحتاج الأسطح التي يزيد عمرها على ١٥ سنة إلى إصلاح قبل التركيب [a1b2c3d4]. يسترد النظام المعتاد تكلفته خلال ٨ سنوات.',
+  ].join('\n'),
+  after: [
+    '# تكلفة الألواح الشمسية',
+    '',
+    '## أهم النقاط',
+    '',
+    '- أصبحت الألواح الشمسية أرخص بكثير خلال السنوات الماضية.',
+    '- يسترد النظام المعتاد تكلفته خلال ٨ سنوات.',
+    '',
+    '## تطور الأسعار',
+    '',
+    'في عام ٢٠٢٠ كان متوسط تكلفة التركيب ٣ دولارات للواط الواحد [a1b2c3d4]. وبحلول عام ٢٠٢٤ انخفضت إلى ٢ دولار للواط الواحد [e5f6a7b8].',
+    '',
+    '## أنواع الألواح',
+    '',
+    '| نوع اللوح | الكفاءة |',
+    '| --- | ---: |',
+    '| أحادية البلورة تصل إلى | ٢٢ بالمئة [e5f6a7b8] |',
+    '| متعددة البلورات تصل إلى | ١٧ بالمئة |',
+    '',
+    '## قبل الشراء',
+    '',
+    'ينبغي لأصحاب المنازل مقارنة عروض ٣ مركبين على الأقل قبل التوقيع.',
+    '',
+    '> **تحذير:** قد تحتاج الأسطح التي يزيد عمرها على ١٥ سنة إلى إصلاح قبل التركيب [a1b2c3d4].',
+    '',
+    '## المصادر',
+    '',
+    '- https://example.com/a',
+    '- https://example.com/b',
+  ].join('\n'),
+};
+
+export const JA_FIXTURE: FormatFixture = {
+  locale: 'ja' as Locale,
+  evidenceIds: IDS,
+  urls: URLS,
+  before: [
+    '# 太陽光パネルの費用',
+    '',
+    '太陽光パネルはこの10年でかなり安くなりました。2020年の平均設置費用は1ワットあたり3ドルでした[a1b2c3d4]。2024年には1ワットあたり2ドルまで下がりました[e5f6a7b8]。単結晶パネルの効率は22パーセント、多結晶パネルの効率は17パーセントです[e5f6a7b8]。契約する前に、少なくとも3社の見積もりを比較してください。築15年を超える屋根は、設置前に修理が必要になる場合があります[a1b2c3d4]。標準的なシステムは8年で元が取れます。',
+  ].join('\n'),
+  after: [
+    '# 太陽光パネルの費用',
+    '',
+    '## 要点',
+    '',
+    '- 太陽光パネルはこの10年でかなり安くなりました。',
+    '- 標準的なシステムは8年で元が取れます。',
+    '',
+    '## 価格の推移',
+    '',
+    '2020年の平均設置費用は1ワットあたり3ドルでした[a1b2c3d4]。2024年には1ワットあたり2ドルまで下がりました[e5f6a7b8]。',
+    '',
+    '## パネルの種類',
+    '',
+    '| 種類 | 効率 |',
+    '| --- | ---: |',
+    '| 単結晶パネルの効率は | 22パーセント[e5f6a7b8] |',
+    '| 多結晶パネルの効率は | 17パーセント |',
+    '',
+    '## 購入前に',
+    '',
+    '契約する前に、少なくとも3社の見積もりを比較してください。',
+    '',
+    '> **注意:** 築15年を超える屋根は、設置前に修理が必要になる場合があります[a1b2c3d4]。',
+    '',
+    '## 出典',
+    '',
+    '- https://example.com/a',
+    '- https://example.com/b',
+  ].join('\n'),
+};
+
+export const FORMAT_FIXTURES: FormatFixture[] = [EN_FIXTURE, DE_FIXTURE, AR_FIXTURE, JA_FIXTURE];

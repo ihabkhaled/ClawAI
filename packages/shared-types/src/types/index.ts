@@ -117,6 +117,7 @@ export type {
   LocalizedMoneyView,
 } from './display-currency.type';
 export * from './thread-generation-progress.type';
+export * from './thread-format-preview.type';
 export * from './context-save-proposal.type';
 export type {
   AdminObsActivityBucket,

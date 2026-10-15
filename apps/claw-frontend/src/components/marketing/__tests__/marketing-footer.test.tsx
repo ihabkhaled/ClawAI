@@ -52,7 +52,7 @@ describe('MarketingFooter', () => {
     // content, so they are exempt. The guarantee under test is narrower and
     // still intact: any link that looks like a marketing route must resolve to
     // a PUBLISHED entry, never a PLANNED one.
-    const nonRegistryLinks = new Set(['/', '/login', '/register', '/chat']);
+    const nonRegistryLinks = new Set(['/', '/en/login', '/en/register', '/chat']);
     for (const link of screen.getAllByRole('link')) {
       const href = link.getAttribute('href') ?? '';
       const isKnownStaticLink =

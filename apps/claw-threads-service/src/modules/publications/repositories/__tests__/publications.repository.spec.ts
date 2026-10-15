@@ -41,6 +41,7 @@ describe('PublicationsRepository', () => {
         status: 'PUBLISHED',
         slug: 'vector-search',
         updatedAt: new Date('2026-10-07T10:00:00.000Z'),
+        _count: { changeRequests: 2 },
         revisions: [
           {
             title: 'Vector search',
@@ -50,7 +51,14 @@ describe('PublicationsRepository', () => {
           },
         ],
       },
-      { id: 'pub-2', status: 'DRAFT', slug: 'uuid-2', updatedAt: new Date(), revisions: [] },
+      {
+        id: 'pub-2',
+        status: 'DRAFT',
+        slug: 'uuid-2',
+        updatedAt: new Date(),
+        _count: { changeRequests: 0 },
+        revisions: [],
+      },
     ]);
     const repository = new PublicationsRepository({ threadPublication: { findMany } } as never);
 
@@ -63,15 +71,16 @@ describe('PublicationsRepository', () => {
       }),
     );
     expect(
-      owned.map(({ id, slug, title, pendingRevisionStatus }) => [
+      owned.map(({ id, slug, title, pendingRevisionStatus, pendingChangeRequests }) => [
         id,
         slug,
         title,
         pendingRevisionStatus,
+        pendingChangeRequests,
       ]),
     ).toEqual([
-      ['pub-1', 'vector-search', 'Vector search', null],
-      ['pub-2', 'uuid-2', null, null],
+      ['pub-1', 'vector-search', 'Vector search', null, 2],
+      ['pub-2', 'uuid-2', null, null, 0],
     ]);
   });
 
@@ -276,6 +285,10 @@ describe('PublicationsRepository', () => {
         }),
       }),
     );
+    // The public page payload never selects reader suggestions: pending and declined ones cannot leak.
+    const selected = threadPublication.findFirst.mock.calls[0]?.[0].select;
+    expect(Object.keys(selected)).not.toContain('changeRequests');
+    expect(JSON.stringify(selected)).not.toMatch(/changeRequest|requesterId|suggestion/u);
     expect(publication).toEqual({
       slug: 'opaque-slug',
       title: 'Public article',

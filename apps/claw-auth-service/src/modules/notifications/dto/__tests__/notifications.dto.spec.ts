@@ -24,6 +24,9 @@ describe('userNotificationRequestedSchema', () => {
       UserNotificationKind.THREAD_REACTED,
       UserNotificationKind.THREAD_COMMENT_REACTED,
       UserNotificationKind.THREAD_CHANGE_REQUESTED,
+      UserNotificationKind.THREAD_CHANGE_ACCEPTED,
+      UserNotificationKind.THREAD_CHANGE_APPLIED,
+      UserNotificationKind.THREAD_CHANGE_DECLINED,
     ]) {
       const parsed = userNotificationRequestedSchema.safeParse({
         ...valid,

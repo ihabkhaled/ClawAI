@@ -223,6 +223,42 @@ export const HI_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'आपको यह संदेश इसलिए मिला है क्योंकि आपने ClawAI पर इस Thread में हिस्सा लिया है। आप सूचना सेटिंग में जाकर ये ईमेल बंद कर सकते हैं।',
     },
+    [AuthEmailKind.THREAD_CHANGE_ACCEPTED]: {
+      subject: 'आपका सुझाव स्वीकार किया गया',
+      preheader: 'Thread के स्वामी इसे लागू करेंगे।',
+      heading: 'आपका सुझाव स्वीकार किया गया',
+      intro: '“{value}” के स्वामी ने आपका सुझाया बदलाव स्वीकार कर लिया।',
+      bodyLines: ['Thread अपडेट होने पर हम आपको बताएँगे।'],
+      actionLabel: 'मेरे सुझाव देखें',
+      fallbackNote: 'यदि बटन काम न करे, तो नीचे दिया गया पता अपने ब्राउज़र में कॉपी करें:',
+      expiryNote: null,
+      securityNote:
+        'आपको यह संदेश इसलिए मिला है क्योंकि आपने ClawAI पर इस Thread में हिस्सा लिया है। आप सूचना सेटिंग में जाकर ये ईमेल बंद कर सकते हैं।',
+    },
+    [AuthEmailKind.THREAD_CHANGE_APPLIED]: {
+      subject: 'आपका सुझाव अब Thread में है',
+      preheader: 'Thread आपके विचार से अपडेट हुआ।',
+      heading: 'आपका सुझाव लागू हो गया',
+      intro: '“{value}” आपके सुझाए बदलाव के साथ अपडेट हुआ।',
+      bodyLines: ['इसे बेहतर बनाने में मदद के लिए धन्यवाद। Thread पेज पर आपका नाम दिया गया है।'],
+      actionLabel: 'Thread खोलें',
+      fallbackNote: 'यदि बटन काम न करे, तो नीचे दिया गया पता अपने ब्राउज़र में कॉपी करें:',
+      expiryNote: null,
+      securityNote:
+        'आपको यह संदेश इसलिए मिला है क्योंकि आपने ClawAI पर इस Thread में हिस्सा लिया है। आप सूचना सेटिंग में जाकर ये ईमेल बंद कर सकते हैं।',
+    },
+    [AuthEmailKind.THREAD_CHANGE_DECLINED]: {
+      subject: 'आपका सुझाव नहीं अपनाया गया',
+      preheader: 'स्वामी ने इसे लागू न करने का निर्णय लिया।',
+      heading: 'आपका सुझाव अस्वीकार किया गया',
+      intro: '“{value}” के स्वामी ने आपका सुझाया बदलाव लागू न करने का निर्णय लिया।',
+      bodyLines: ['स्वामी का उत्तर आप “मेरे सुझाव” में पढ़ सकते हैं।'],
+      actionLabel: 'मेरे सुझाव देखें',
+      fallbackNote: 'यदि बटन काम न करे, तो नीचे दिया गया पता अपने ब्राउज़र में कॉपी करें:',
+      expiryNote: null,
+      securityNote:
+        'आपको यह संदेश इसलिए मिला है क्योंकि आपने ClawAI पर इस Thread में हिस्सा लिया है। आप सूचना सेटिंग में जाकर ये ईमेल बंद कर सकते हैं।',
+    },
     [AuthEmailKind.MCP_SERVER_APPROVED]: {
       subject: 'आपका MCP सर्वर स्वीकृत हो गया',
       preheader: 'अब आप इसे चैट में इस्तेमाल कर सकते हैं।',

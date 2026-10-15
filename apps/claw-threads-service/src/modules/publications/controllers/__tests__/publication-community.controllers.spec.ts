@@ -25,6 +25,8 @@ describe('publication community route access', () => {
     expect(isPublic('setReaction')).not.toBe(true);
     expect(isPublic('removeReaction')).not.toBe(true);
     expect(isPublic('requestChange')).not.toBe(true);
+    expect(isPublic('getViewer')).toBe(true);
+    expect(isPublic('listCredits')).toBe(true);
     expect(isPublic('report')).not.toBe(true);
   });
 
@@ -49,6 +51,35 @@ describe('publication community route access', () => {
     ]);
   });
 
+  it('maps the suggestion routes to the right verbs and paths', () => {
+    const route = (method: keyof PublicationCommunityController) => {
+      const handler = PublicationCommunityController.prototype[method];
+      return [
+        Reflect.getMetadata(METHOD_METADATA, handler),
+        Reflect.getMetadata(PATH_METADATA, handler),
+      ];
+    };
+    expect(route('getViewer')).toEqual([RequestMethod.GET, 'viewer']);
+    expect(route('listCredits')).toEqual([RequestMethod.GET, 'change-requests/credits']);
+    expect(route('requestChange')).toEqual([RequestMethod.POST, 'change-requests']);
+  });
+
+  it('asks for ownership with no viewer when the token is missing or invalid', async () => {
+    const views = {
+      viewerOwnership: vi.fn().mockResolvedValue({ isOwner: false }),
+      listCredits: vi.fn().mockResolvedValue([]),
+    };
+    const controller = new PublicationCommunityController({} as never, {} as never, views as never);
+
+    await controller.getViewer('s', undefined);
+    await controller.getViewer('s', 'Bearer not-a-token');
+    await controller.listCredits('s');
+
+    expect(views.viewerOwnership).toHaveBeenNthCalledWith(1, 's', undefined);
+    expect(views.viewerOwnership).toHaveBeenNthCalledWith(2, 's', undefined);
+    expect(views.listCredits).toHaveBeenCalledWith('s');
+  });
+
   it('delegates comment calls with the signed-in user and the optional viewer', async () => {
     const comments = {
       list: vi.fn().mockResolvedValue('page'),
@@ -57,7 +88,11 @@ describe('publication community route access', () => {
       react: vi.fn().mockResolvedValue('reacted'),
       unreact: vi.fn().mockResolvedValue('unreacted'),
     };
-    const controller = new PublicationCommunityController({} as never, comments as never);
+    const controller = new PublicationCommunityController(
+      {} as never,
+      comments as never,
+      {} as never,
+    );
     const user = { id: 'u1' } as never;
 
     await controller.listComments('s', { page: 2, pageSize: 10 }, undefined);

@@ -9,8 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ROUTES } from '@/constants';
 import { AlertVariant } from '@/enums/alert-variant.enum';
 import { useResetPasswordForm } from '@/hooks/auth/use-reset-password-form';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 
 export function ResetPasswordForm(): React.ReactElement {
+  const localise = useLocalizedHref();
   const { form, onSubmit, isPending, isSuccess, isError, isInvalidToken, errorMessage, t } =
     useResetPasswordForm();
 
@@ -39,7 +41,7 @@ export function ResetPasswordForm(): React.ReactElement {
         </CardHeader>
         <CardContent>
           <Button asChild className="w-full">
-            <Link href={ROUTES.LOGIN}>{t('auth.resetPasswordBackToLogin')}</Link>
+            <Link href={localise(ROUTES.LOGIN)}>{t('auth.resetPasswordBackToLogin')}</Link>
           </Button>
         </CardContent>
       </Card>

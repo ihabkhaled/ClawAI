@@ -22,8 +22,11 @@ import type {
   ThreadPublicationChangeRequestResolution,
   ResolveThreadPublicationChangeRequest,
   PublicThreadPublication,
+  ThreadChangeRequester,
+  ThreadMyChangeRequest,
   ThreadReactionSummary,
   ThreadReportReason,
+  ThreadViewerOwnership,
 } from '@/types/thread-publication.types';
 import type { ThreadGenerationRequest } from '@/utilities/thread-generation-request.utility';
 import type { ThreadRevisionRequest } from '@/utilities/thread-revision-request.utility';
@@ -210,6 +213,26 @@ export const threadPublicationsRepository = {
   async listChangeRequests(publicationId: string): Promise<ThreadPublicationChangeRequest[]> {
     const response = await apiClient.get<ThreadPublicationChangeRequest[]>(
       `/thread-publications/${encodeURIComponent(publicationId)}/change-requests`,
+    );
+    return response.data;
+  },
+  /** Who the signed-in reader is to this public Thread. Only the owner learns more than `isOwner: false`. */
+  async getPublicViewer(slug: string): Promise<ThreadViewerOwnership> {
+    const response = await apiClient.get<ThreadViewerOwnership>(
+      `/thread-publications/public/${encodeURIComponent(slug)}/viewer`,
+    );
+    return response.data;
+  },
+  /** The people whose suggestion was accepted or applied; never pending or declined ones. */
+  async listPublicChangeCredits(slug: string): Promise<ThreadChangeRequester[]> {
+    const response = await apiClient.get<ThreadChangeRequester[]>(
+      `/thread-publications/public/${encodeURIComponent(slug)}/change-requests/credits`,
+    );
+    return response.data;
+  },
+  async listMyChangeRequests(): Promise<ThreadMyChangeRequest[]> {
+    const response = await apiClient.get<ThreadMyChangeRequest[]>(
+      '/thread-publications/change-requests/mine',
     );
     return response.data;
   },

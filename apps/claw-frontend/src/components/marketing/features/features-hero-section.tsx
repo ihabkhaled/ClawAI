@@ -4,6 +4,7 @@ import Link from 'next/link';
 
 import { buttonVariants } from '@/components/ui/button';
 import { ROUTES } from '@/constants/routes.constants';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useTranslation } from '@/lib/i18n';
 import type { MarketingFeaturesHeroProps } from '@/types/marketing-features.types';
 
@@ -14,6 +15,7 @@ export function FeaturesHeroSection({
   lastReviewed,
 }: MarketingFeaturesHeroProps): React.ReactElement {
   const { t } = useTranslation();
+  const localise = useLocalizedHref();
 
   return (
     <section className="border-border bg-muted/30 border-b">
@@ -25,10 +27,13 @@ export function FeaturesHeroSection({
           {t('marketing.features.hero.subtitle')}
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link href={ROUTES.REGISTER} className={buttonVariants({ size: 'lg' })}>
+          <Link href={localise(ROUTES.REGISTER)} className={buttonVariants({ size: 'lg' })}>
             {t('marketing.features.hero.ctaPrimary')}
           </Link>
-          <Link href={ROUTES.LOGIN} className={buttonVariants({ size: 'lg', variant: 'outline' })}>
+          <Link
+            href={localise(ROUTES.LOGIN)}
+            className={buttonVariants({ size: 'lg', variant: 'outline' })}
+          >
             {t('marketing.features.hero.ctaSecondary')}
           </Link>
         </div>

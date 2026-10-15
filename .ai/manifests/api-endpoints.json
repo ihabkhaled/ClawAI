@@ -3974,6 +3974,11 @@
       },
       {
         "method": "POST",
+        "route": "/internal/threads/format-preview",
+        "source": "apps/claw-thread-generation-service/src/modules/generation/controllers/format-preview-internal.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/internal/threads/generations",
         "source": "apps/claw-thread-generation-service/src/modules/generation/controllers/generation-jobs-internal.controller.ts"
       },
@@ -4065,6 +4070,11 @@
         "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-owner.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/thread-publications/:publicationId/format-preview",
+        "source": "apps/claw-threads-service/src/modules/publication-format/controllers/publication-format.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/thread-publications/:publicationId/generation-progress",
         "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-owner.controller.ts"
@@ -4110,6 +4120,11 @@
         "source": "apps/claw-threads-service/src/modules/board/controllers/board.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/thread-publications/change-requests/mine",
+        "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-list.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/thread-publications/generations",
         "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-generation.controller.ts"
@@ -4127,6 +4142,11 @@
       {
         "method": "POST",
         "route": "/thread-publications/public/:slug/change-requests",
+        "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-community.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/thread-publications/public/:slug/change-requests/credits",
         "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-community.controller.ts"
       },
       {
@@ -4188,6 +4208,11 @@
         "method": "POST",
         "route": "/thread-publications/public/:slug/view",
         "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-views.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/thread-publications/public/:slug/viewer",
+        "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-community.controller.ts"
       },
       {
         "method": "GET",
@@ -4759,5 +4784,5 @@
     ]
   },
   "generated": true,
-  "total": 943
+  "total": 948
 }

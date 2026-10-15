@@ -42,6 +42,11 @@ export function localisePath(path: string, locale: Locale): string {
   return `${localizedPathname}${url.search}${url.hash}`;
 }
 
+/** `path` in `locale`; the path as given when the locale is not a supported one (never `/undefined/...`). */
+export function localizeHref(path: string, locale: unknown): string {
+  return isValidLocale(locale) ? localisePath(path, locale) : path;
+}
+
 /** `path` under the locale of the page the reader is on; a path that names a locale already stays as is. */
 export function withLocaleOf(path: string, currentPathname: string): string {
   const locale = parseLocaleFromPathname(currentPathname);

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 import { ROUTES } from '@/constants';
 import { MARKETING_FAQ_CONTACT_PATH } from '@/constants/marketing-faq.constants';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useTranslation } from '@/lib/i18n';
 
 // Closing section: the FAQ cannot cover everything, so send the reader
@@ -12,6 +13,7 @@ import { useTranslation } from '@/lib/i18n';
 // private deployments for organisations) or straight into sign-up.
 export function FaqContactSection(): React.ReactElement {
   const { t } = useTranslation();
+  const localise = useLocalizedHref();
 
   return (
     <section className="border-border bg-surface-shell border-t">
@@ -27,7 +29,7 @@ export function FaqContactSection(): React.ReactElement {
             {t('marketing.faqPage.contact.ctaContact')}
           </Link>
           <Link
-            href={ROUTES.REGISTER}
+            href={localise(ROUTES.REGISTER)}
             className={buttonVariants({ size: 'lg', variant: 'outline' })}
           >
             {t('marketing.faqPage.contact.ctaStart')}

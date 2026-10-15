@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { ROUTES } from '@/constants';
 import { useAuthStore } from '@/stores/auth.store';
 import { logger } from '@/utilities';
+import { localizeHref, parseLocaleFromPathname } from '@/utilities/locale.utility';
 
 export function useAuthGuard(): { isReady: boolean } {
   const router = useRouter();
@@ -37,7 +38,12 @@ export function useAuthGuard(): { isReady: boolean } {
       });
       const query = searchParams.toString();
       const returnTo = `${pathname}${query.length > 0 ? `?${query}` : ''}`;
-      router.replace(`${ROUTES.LOGIN}?returnTo=${encodeURIComponent(returnTo)}`);
+      router.replace(
+        localizeHref(
+          `${ROUTES.LOGIN}?returnTo=${encodeURIComponent(returnTo)}`,
+          parseLocaleFromPathname(pathname),
+        ),
+      );
     }
   }, [hydrated, isAuthenticated, accessToken, pathname, router, searchParams]);
 

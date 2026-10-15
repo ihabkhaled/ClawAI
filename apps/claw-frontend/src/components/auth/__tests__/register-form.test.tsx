@@ -110,11 +110,11 @@ describe('RegisterForm', () => {
     const alert = screen.getByRole('alert');
     expect(within(alert).getByRole('link', { name: en.auth.signup.actionSignIn })).toHaveAttribute(
       'href',
-      '/login',
+      '/en/login',
     );
     expect(
       within(alert).getByRole('link', { name: en.auth.signup.actionResetPassword }),
-    ).toHaveAttribute('href', '/forgot-password');
+    ).toHaveAttribute('href', '/en/forgot-password');
     expect(screen.queryByText(/req-1/)).not.toBeInTheDocument();
   });
 

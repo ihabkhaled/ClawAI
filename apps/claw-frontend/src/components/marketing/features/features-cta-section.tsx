@@ -4,11 +4,13 @@ import Link from 'next/link';
 
 import { buttonVariants } from '@/components/ui/button';
 import { ROUTES } from '@/constants/routes.constants';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useTranslation } from '@/lib/i18n';
 
 // Closing conversion block for the features page.
 export function FeaturesCtaSection(): React.ReactElement {
   const { t } = useTranslation();
+  const localise = useLocalizedHref();
 
   return (
     <section className="border-border bg-surface-shell border-t">
@@ -20,10 +22,13 @@ export function FeaturesCtaSection(): React.ReactElement {
           {t('marketing.features.cta.subtitle')}
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link href={ROUTES.REGISTER} className={buttonVariants({ size: 'lg' })}>
+          <Link href={localise(ROUTES.REGISTER)} className={buttonVariants({ size: 'lg' })}>
             {t('marketing.features.cta.primary')}
           </Link>
-          <Link href={ROUTES.LOGIN} className={buttonVariants({ size: 'lg', variant: 'outline' })}>
+          <Link
+            href={localise(ROUTES.LOGIN)}
+            className={buttonVariants({ size: 'lg', variant: 'outline' })}
+          >
             {t('marketing.features.cta.secondary')}
           </Link>
         </div>

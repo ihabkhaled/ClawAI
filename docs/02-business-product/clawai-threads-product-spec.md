@@ -51,6 +51,35 @@ Every Thread shows who published it (name and @username) on the public page, the
 
 A Thread shows when it was published and every comment and reply shows when it was written. Times are stored in UTC and shown in each visitor's own time zone as a relative label ("just now", "20 minutes ago", "yesterday", weeks, months, years) in the page language; hovering shows the full local date and time. Labels refresh while the page is open (not while the tab is hidden). A future timestamp from a skewed clock reads "just now". See `apps/claw-frontend/CLAUDE.md` (Thread timestamps).
 
+## Change requests (2026-10-15)
+
+A signed-in reader can suggest a change to a public Thread (up to 5000 characters). Decision: [ADR-188](../13-adr/adr-188-reader-change-requests-are-answered-by-the-owner-and-credited-once-applied.md).
+
+**Owner flow.** The owner's notification ("<name> suggested a change to your Thread", with the real Thread title) opens the review screen `/threads/review/<publicationId>` at that request, highlighted. The same screen is reached from the owner-only bar "Pending change requests: N - Review" at the top of their own public Thread, and from the pending badge on the Threads list. Each request shows who asked (name and @username), how long ago, the text and its status (Pending, Accepted, Declined, Applied). The owner, and only the owner, can:
+
+- **Accept**, then choose how to apply it: **Apply with AI review** (edit the article in the form; the new version goes through the capped automatic review before it can be published) or **I will edit it myself** (accepts it and opens the editor). When the owner publishes the updated Thread, an accepted request becomes **Applied** automatically.
+- **Decline**, with an optional short reason that the requester can read.
+
+Not built: a model that rewrites the article from the suggestion by itself.
+
+**The requester is told** (in-app, email and push as set in notification settings): accepted, applied (links to the Thread, which now credits them) and declined. **My suggestions** (`/threads/my/suggestions`, linked from the Threads list and from those notifications) lists their own suggestions with status and the owner's reply.
+
+**Public visibility.** A pending or declined suggestion is never shown or returned publicly. The public Thread page shows only a small credit line, "Improved with suggestions from @name", for people whose suggestion was accepted or applied. The requester sees their own pending and declined ones only in My suggestions.
+
+**Limits.** At most 3 pending suggestions per person per Thread and 50 pending per Thread; the owner cannot suggest to their own Thread; the existing rate limits stay.
+
+## Article formatting (2026-10-16)
+
+AI-written Thread articles are laid out as clean GitHub-flavoured Markdown and drawn as a well-designed article. Decision: [ADR-189](../13-adr/adr-189-thread-articles-are-typeset-by-a-guarded-format-stage-and-rendered-as-rich-safe-html.md).
+
+**What a reader sees.** One title; a short "Key takeaways" list or summary; sections with clear headings (each with a copy-link anchor); paragraphs of at most four sentences; bullet and numbered lists; tables for comparison data (they scroll inside their own box on a phone, with a header row and striped rows, and mirror in right-to-left languages); Note, Tip and Warning boxes with an icon and colour; a Sources list; reading time; and, for an article with three or more sections, a table of contents (a collapsible block on a phone, a sticky column on a desktop). The text keeps a readable line length, prints cleanly and never runs scripts: raw HTML in an article is dropped and images are not loaded.
+
+**Generation.** The authors are asked for this structure. After the Judge and Critic pass, one cheap model retypesets the article; a checker then proves that nothing but layout changed (every citation marker, number, date and table kept, no new link, word count within 15 percent, headings in the article language). If the check fails, the model fails, or 85 percent of the job spend cap is already used, the article is kept exactly as reviewed and the step log says why (a `FORMAT_*` code). The step never fails a job and never runs twice.
+
+**Existing Threads.** On the owner review screen, **Improve formatting with AI** previews the improved version next to the current one (rendered, Before/After). **Use improved version** saves it as a new version that goes through the safety check and the Judge and Critic again before it can be published; **Discard** changes nothing. Three passes per Thread per day; the same key never spends twice; only the owner can run it. A pass uses a small part of the plan Threads allowance, like an edit review.
+
+Known gaps: no "last updated" line yet (the public API carries only the publish date); the daily pass limit is a constant, not an admin setting.
+
 ## Budget and plan enforcement
 
 Reserve the existing research, judge, and critic plan allowances once per job.
@@ -158,8 +187,9 @@ The publish action appears only when the publication is marked
 public. Owners can submit edited content with a user-selected revision cap;
 revisions stay private while they pass fresh safety and model review. Owners can
 export Markdown or JSON and unpublish a live item. Owners can review reader
-change requests from the same portal. Rejection can include a private response;
-acceptance requires an edited revision, selected spend cap, and fresh paid review.
+change requests from the same portal (see Change requests above). A decline can include a reason;
+acceptance either carries an edited revision, selected spend cap and fresh paid review, or is
+accepted on its own while the owner edits by hand.
 The accepted revision stays private until the owner approves it. The public
 reader page and contribution controls are implemented; browser/accessibility/
 device QA remains open.

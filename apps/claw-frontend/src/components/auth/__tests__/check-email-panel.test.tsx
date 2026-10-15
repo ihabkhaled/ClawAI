@@ -91,11 +91,11 @@ describe('CheckEmailPanel', () => {
     renderPanel();
     expect(screen.getByRole('link', { name: en.auth.checkEmailGoToLogin })).toHaveAttribute(
       'href',
-      '/login',
+      '/en/login',
     );
     expect(screen.getByRole('link', { name: en.auth.checkEmailWrongAddress })).toHaveAttribute(
       'href',
-      '/register',
+      '/en/register',
     );
   });
 

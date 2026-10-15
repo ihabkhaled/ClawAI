@@ -27,7 +27,9 @@ import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
+import { THREAD_ARTICLE_TRANSLATIONS } from './thread-article-translations';
 import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
+import { THREAD_CHANGE_REQUESTS_TRANSLATIONS } from './thread-change-requests-translations';
 import { THREAD_COMMUNITY_TRANSLATIONS } from './thread-community-translations';
 import { THREAD_FIXES_TRANSLATIONS } from './thread-fixes-translations';
 import { THREAD_PUBLIC_BOARD_TRANSLATIONS } from './thread-public-board-translations';
@@ -40,6 +42,7 @@ export const zh: TranslationDictionary = {
   pluginChat: PLUGIN_CHAT_TRANSLATIONS.zh,
   pluginConsent: PLUGIN_CONSENT_TRANSLATIONS.zh,
   threadTime: THREAD_TIME_TRANSLATIONS.zh,
+  threadArticle: THREAD_ARTICLE_TRANSLATIONS.zh,
   pluginsInstall: PLUGINS_INSTALL_TRANSLATIONS.zh,
   pluginsServers: PLUGINS_SERVERS_TRANSLATIONS.zh,
   pluginImport: PLUGIN_IMPORT_TRANSLATIONS.zh,
@@ -454,6 +457,7 @@ export const zh: TranslationDictionary = {
     ...THREAD_PUBLIC_BOARD_TRANSLATIONS.zh,
     ...THREAD_COMMUNITY_TRANSLATIONS.zh,
     ...THREAD_FIXES_TRANSLATIONS.zh,
+    ...THREAD_CHANGE_REQUESTS_TRANSLATIONS.zh,
     ...PLUGIN_OWN_SERVERS_TRANSLATIONS.zh,
     composerContext: {
       menuLabel: '上下文',

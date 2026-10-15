@@ -8,7 +8,8 @@ export const resolvePublicationChangeRequestSchema = z.discriminatedUnion('statu
   z.object({
     status: z.literal('ACCEPTED'),
     ownerResponse: ownerResponseSchema,
-    revision: editPublicationRevisionSchema,
+    /** Sent to have the revised article reviewed now; left out when the owner will edit it themselves. */
+    revision: editPublicationRevisionSchema.optional(),
   }),
 ]);
 

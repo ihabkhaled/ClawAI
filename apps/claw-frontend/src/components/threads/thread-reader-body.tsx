@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 
-import { PublicMarkdownRenderer } from '@/components/chat-shares/public-markdown-renderer';
+import { ThreadArticleBody } from '@/components/threads/article/thread-article-body';
+import { useThreadReaderBody } from '@/hooks/threads/use-thread-reader-body';
 import type { ThreadReaderBodyProps } from '@/types/thread-board-reader.types';
 import { safeThreadCitationUrl } from '@/utilities/thread-citation.utility';
 import { stripUnresolvedSourceMarkers } from '@/utilities/thread-source-marker.utility';
@@ -11,7 +12,11 @@ export function ThreadReaderBody({
   citations,
   truncatedLabel,
   citationsLabel,
+  title,
+  contentLocale = 'en',
 }: ThreadReaderBodyProps): ReactElement {
+  const body = stripUnresolvedSourceMarkers(markdown);
+  const { labels, toc, readingTimeLabel } = useThreadReaderBody(body, title, contentLocale);
   const safeCitations = citations
     .map((citation) => ({ ...citation, safeUrl: safeThreadCitationUrl(citation.url) }))
     .filter((citation) => citation.safeUrl !== null);
@@ -19,8 +24,12 @@ export function ThreadReaderBody({
   return (
     <>
       <div className="thread-publication-content min-w-0 break-words">
-        <PublicMarkdownRenderer
-          content={stripUnresolvedSourceMarkers(markdown)}
+        <ThreadArticleBody
+          markdown={body}
+          title={title}
+          labels={labels}
+          toc={toc}
+          readingTimeLabel={readingTimeLabel}
           truncatedLabel={truncatedLabel}
         />
       </div>

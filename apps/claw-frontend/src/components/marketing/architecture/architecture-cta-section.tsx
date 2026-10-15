@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 import { MARKETING_ARCHITECTURE_CONTACT_PATH } from '@/constants/marketing-architecture.constants';
 import { ROUTES } from '@/constants/routes.constants';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useTranslation } from '@/lib/i18n';
 
 export function ArchitectureCtaSection(): React.ReactElement {
   const { t } = useTranslation();
+  const localise = useLocalizedHref();
 
   return (
     <section className="border-border bg-surface-shell border-t">
@@ -20,7 +22,7 @@ export function ArchitectureCtaSection(): React.ReactElement {
           {t('marketing.architecturePage.cta.subtitle')}
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link href={ROUTES.REGISTER} className={buttonVariants({ size: 'lg' })}>
+          <Link href={localise(ROUTES.REGISTER)} className={buttonVariants({ size: 'lg' })}>
             {t('marketing.architecturePage.cta.primary')}
           </Link>
           <Link

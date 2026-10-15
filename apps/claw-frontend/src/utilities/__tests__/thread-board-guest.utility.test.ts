@@ -23,10 +23,32 @@ describe('guest sign-in links', () => {
   });
 
   it('encodes the return target', () => {
-    expect(guestSignInHref('/threads/board?q=a b')).toBe(
+    expect(guestSignInHref('/threads/board?q=a b', '/threads/board')).toBe(
       '/login?returnTo=%2Fthreads%2Fboard%3Fq%3Da%20b',
     );
-    expect(guestRegisterHref('/threads/x')).toBe('/register?returnTo=%2Fthreads%2Fx');
+    expect(guestRegisterHref('/threads/x', '/threads/x')).toBe('/register?returnTo=%2Fthreads%2Fx');
+  });
+
+  it.each(['en', 'ar', 'fa', 'ja', 'de'])(
+    'sends a reader of /%s to the sign-in and sign-up screens in that language, returning to the same page',
+    (locale) => {
+      const pathname = `/${locale}/threads/clear-writing`;
+      const target = guestReturnTarget(pathname, '');
+      expect(target).toBe('/threads/clear-writing');
+      expect(guestSignInHref(target, pathname)).toBe(
+        `/${locale}/login?returnTo=%2Fthreads%2Fclear-writing`,
+      );
+      expect(guestRegisterHref(target, pathname)).toBe(
+        `/${locale}/register?returnTo=%2Fthreads%2Fclear-writing`,
+      );
+    },
+  );
+
+  it('keeps a Board query in the return target and the language on the link', () => {
+    const pathname = '/ar/threads/board';
+    expect(guestSignInHref(guestReturnTarget(pathname, 'q=rag&page=2'), pathname)).toBe(
+      '/ar/login?returnTo=%2Fthreads%2Fboard%3Fq%3Drag%26page%3D2',
+    );
   });
 
   it('derives the sign-up link from a sign-in link', () => {
@@ -34,6 +56,13 @@ describe('guest sign-in links', () => {
       '/register?returnTo=%2Fthreads%2Fx',
     );
     expect(registerHrefFromSignIn('/somewhere-else')).toBe('/register');
+  });
+
+  it.each(['ar', 'ja', 'de'])('keeps /%s when deriving the sign-up link', (locale) => {
+    expect(registerHrefFromSignIn(`/${locale}/login?returnTo=%2Fthreads%2Fx`)).toBe(
+      `/${locale}/register?returnTo=%2Fthreads%2Fx`,
+    );
+    expect(registerHrefFromSignIn(`/${locale}/somewhere-else`)).toBe(`/${locale}/register`);
   });
 });
 

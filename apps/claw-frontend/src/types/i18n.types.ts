@@ -13,6 +13,7 @@ export type TranslationDictionary = {
   pluginConsent: PluginConsentLocaleTranslation;
   /** Relative-time wording shared by Thread bylines and comments. */
   threadTime: ThreadTimeLocaleTranslation;
+  threadArticle: ThreadArticleLocaleTranslation;
   pluginsInstall: PluginsInstallLocaleTranslation;
   pluginsServers: PluginsServersLocaleTranslation;
   /** Importing a plugin from GitHub or an upload (plugin-import-translations.ts). */
@@ -1434,6 +1435,7 @@ export type TranslationDictionary = {
     ThreadPublicBoardLocaleTranslation &
     ThreadCommunityLocaleTranslation &
     ThreadFixesLocaleTranslation &
+    ThreadChangeRequestsLocaleTranslation &
     PluginOwnServersLocaleTranslation;
   receipt: {
     openLabel: string;
@@ -7641,6 +7643,9 @@ export type NotificationsLocaleTranslation = {
     THREAD_REACTED: NotificationKindTranslation;
     THREAD_COMMENT_REACTED: NotificationKindTranslation;
     THREAD_CHANGE_REQUESTED: NotificationKindTranslation;
+    THREAD_CHANGE_ACCEPTED: NotificationKindTranslation;
+    THREAD_CHANGE_APPLIED: NotificationKindTranslation;
+    THREAD_CHANGE_DECLINED: NotificationKindTranslation;
     MCP_SERVER_APPROVED: NotificationKindTranslation;
     MCP_SERVER_REJECTED: NotificationKindTranslation;
   };
@@ -8157,6 +8162,37 @@ export type PluginOwnServersLocaleTranslation = {
   pluginOwnServerNeedsReview: string;
 };
 
+/** Flat `chat.threadCr*` keys: reader suggestions for a Thread (owner review, badge, credits, "My suggestions"); see thread-change-requests-translations.ts. */
+export type ThreadChangeRequestsLocaleTranslation = {
+  threadCrRequesterUnknown: string;
+  threadCrDecline: string;
+  threadCrDeclineReason: string;
+  threadCrAcceptTitle: string;
+  threadCrApplyWithAi: string;
+  threadCrApplyWithAiHint: string;
+  threadCrEditMyself: string;
+  threadCrEditMyselfHint: string;
+  threadCrAcceptedWaiting: string;
+  threadCrStatusDeclined: string;
+  threadCrStatusApplied: string;
+  threadCrBadge: string;
+  threadCrOwnerBar: string;
+  threadCrOwnerBarReview: string;
+  threadCrCredits: string;
+  threadCrMineTitle: string;
+  threadCrMineIntro: string;
+  threadCrMineEmpty: string;
+  threadCrMineLoadFailed: string;
+  threadCrMineLink: string;
+  threadCrMineOnThread: string;
+  threadCrMineOwnerReply: string;
+  threadCrMineOpenThread: string;
+  threadCrUntitled: string;
+  threadCrErrorOwn: string;
+  threadCrErrorLimit: string;
+  threadCrSectionHint: string;
+};
+
 /** Flat `chat.threadFix*` keys: topic minimum, sensitive-details editor notice and queue text; see thread-fixes-translations.ts. */
 export type ThreadFixesLocaleTranslation = {
   threadFixTopicTooShort: string;
@@ -8360,4 +8396,32 @@ export type PluginsAdminCatalogLocaleTranslation = {
 export type ThreadTimeLocaleTranslation = {
   /** Under a minute ago, or a timestamp slightly in the future. */
   justNow: string;
+};
+
+/** Table of contents, section links, callout names, reading time and the owner's formatting panel (ADR-189). */
+export type ThreadArticleLocaleTranslation = {
+  toc: string;
+  copyLink: string;
+  linkCopied: string;
+  note: string;
+  tip: string;
+  warning: string;
+  readingTime: string;
+  formatTitle: string;
+  formatIntro: string;
+  formatCost: string;
+  formatRun: string;
+  formatRunning: string;
+  formatBefore: string;
+  formatAfter: string;
+  formatAccept: string;
+  formatAccepting: string;
+  formatDiscard: string;
+  formatRemaining: string;
+  formatAccepted: string;
+  formatUnchanged: string;
+  formatSkipped: string;
+  formatLimit: string;
+  formatBusy: string;
+  formatFailed: string;
 };

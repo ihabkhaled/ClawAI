@@ -1,6 +1,10 @@
 import { type Locale, ThreadArticleLength } from '@claw/shared-types';
 
-import { AUTHOR_REPLY_EXAMPLE, AUTHOR_REPLY_SHAPE } from '../constants/author-prompt.constants';
+import {
+  AUTHOR_REPLY_EXAMPLE,
+  AUTHOR_REPLY_SHAPE,
+  AUTHOR_STRUCTURE_NOTE,
+} from '../constants/author-prompt.constants';
 import { SHORT_ARTICLE_NOTE } from '../constants/healing-notes.constants';
 import { describeContentLanguage } from './review-prompt.utility';
 
@@ -20,6 +24,7 @@ export function buildAuthorSystemPrompt(locale: Locale, length?: ThreadArticleLe
     '"citations" lists every cited evidence item as an object with its id and url copied exactly from researchEvidence.items; never a bare string.',
     `Minimal valid example: ${AUTHOR_REPLY_EXAMPLE}.`,
     `The JSON keys, the evidence ids, the urls and the [evidenceId] markers stay exactly as in researchEvidence.items: ASCII brackets, ASCII digits and letters, never translated, transliterated or converted to ${language} digits. Only the article text is in ${language}.`,
+    AUTHOR_STRUCTURE_NOTE,
     'Cite only evidence items from researchEvidence.items. Do not include analysis or hidden reasoning.',
     ...(length === ThreadArticleLength.SHORT ? [SHORT_ARTICLE_NOTE] : []),
   ].join(' ');

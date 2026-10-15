@@ -11,5 +11,8 @@ export function useBoardGuestLinks(): { signInHref: string; registerHref: string
   const pathname = usePathname();
   const search = useSearchParams().toString();
   const target = guestReturnTarget(pathname, search);
-  return { signInHref: guestSignInHref(target), registerHref: guestRegisterHref(target) };
+  return {
+    signInHref: guestSignInHref(target, pathname),
+    registerHref: guestRegisterHref(target, pathname),
+  };
 }

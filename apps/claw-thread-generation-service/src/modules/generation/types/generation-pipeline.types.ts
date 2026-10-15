@@ -107,6 +107,8 @@ export type GenerationPipelineInput = {
   spentMicroUsd?: number;
   /** "Shorter article" asks the authors for about 60 percent of the usual length. */
   articleLength?: ThreadArticleLength;
+  /** Runs the optional FORMAT stage after the reviews pass (ADR-189); off for an owner's own edit. */
+  formatStage?: boolean;
   /** Set by the pipeline for one attempt: the counters that bound healing. */
   healingBudget?: HealingBudget;
   isCancellationRequested?: () => Promise<boolean>;

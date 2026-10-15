@@ -7,6 +7,8 @@ import { PublicationCommunityModule } from '../publication-community/publication
 import { PrismaModule } from '../../infrastructure/database/prisma/prisma.module';
 import { PublicationOwnerController } from './controllers/publication-owner.controller';
 import { PublicationsRepository } from './repositories/publications.repository';
+import { PublicationChangeRequestsRepository } from './repositories/publication-change-requests.repository';
+import { PublicationChangeRequestViewsService } from './services/publication-change-request-views.service';
 import { PublicationLifecycleService } from './services/publication-lifecycle.service';
 import { ThreadsGenerationClient } from './services/threads-generation.client';
 import { PublicationGenerationController } from './controllers/publication-generation.controller';
@@ -81,6 +83,8 @@ import { PublicationGenerationRepairController } from './controllers/publication
     PublicationPublicReadService,
     PublicationReportModerationService,
     PublicationsRepository,
+    PublicationChangeRequestsRepository,
+    PublicationChangeRequestViewsService,
     ThreadsGenerationClient,
     PublicationDiscoveryService,
     PublicationViewsRepository,

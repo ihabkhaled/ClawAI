@@ -99,6 +99,8 @@ export function BoardReaderView({ state }: BoardReaderViewProps): ReactElement {
         </header>
         <ThreadReaderBody
           markdown={publication.content.markdown}
+          title={publication.title}
+          contentLocale={publication.contentLocale}
           citations={publication.content.citations}
           truncatedLabel={t('chat.threadPublicTruncated')}
           citationsLabel={t('chat.threadBoardSources', {

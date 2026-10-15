@@ -21,6 +21,7 @@ vi.mock('@/hooks/auth/use-register', () => ({
 vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
+vi.mock('next/navigation', () => ({ useSearchParams: () => new URLSearchParams() }));
 
 describe('useRegisterForm', () => {
   beforeEach(() => {

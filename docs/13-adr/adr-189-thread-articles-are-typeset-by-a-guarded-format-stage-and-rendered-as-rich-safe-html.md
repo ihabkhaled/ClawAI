@@ -1,0 +1,43 @@
+# ADR-189: Thread articles are typeset by a guarded format stage and rendered as rich, safe HTML
+
+**Status:** Accepted
+
+**Date:** 2026-10-16
+
+Builds on [ADR-173](adr-173-threads-unknown-model-window-is-assumed-not-fatal.md) (spend and role calls), [ADR-181](adr-181-thread-generation-heals-itself-by-failure-class-and-resumes-at-the-failed-phase.md) (healing ladder and budget) and [ADR-174](adr-174-threads-refuses-what-cannot-succeed-before-it-queues.md) (budgets and allowance). Product rules: [Article formatting](../02-business-product/clawai-threads-product-spec.md#article-formatting-2026-10-16). Guides: [service-guide-thread-generation](../04-backend/service-guide-thread-generation.md), [service-guide-threads](../04-backend/service-guide-threads.md).
+
+## Context
+
+AI-written Threads read as a wall of text. The pipeline had no layout step: the first author's draft was the candidate (the other authors vote on its hash, nothing is merged), the Judge and Critic reviewed it, and it was stored as written. The author prompt asked for "the whole article as one string" and said nothing about structure. The public page, the Board reader and the owner screen then drew it with the shared public-message renderer: every heading (even `#`) became an `h4`, there was no anchor, no table of contents, no callout, and the owner screen showed the text in a monospaced read-only box.
+
+## Decision
+
+### 1. Generation
+
+- **The authors aim for structure.** `AUTHOR_STRUCTURE_NOTE` (author prompt) asks for one H1, a short "Key takeaways" list or summary, H2/H3 sections, paragraphs of at most four sentences, lists, a GFM table for comparison data, `> **Note:** / **Tip:** / **Warning:**` blockquotes, a final "Sources" list, headings in the article language, no raw HTML. Changing the prompt changes its hash, so an in-flight job replays its author calls once.
+- **An optional FORMAT stage runs after the Critic passes** (`ArticleFormatter`, `managers/article-formatter.ts`). It sends the reviewed article to one **cheap** model (lowest `costRank` in the plan's healing pool, else the safe default, else the Judge's model) and asks for the same article as clean Markdown (`{"markdown": string}`). Nothing else about the pipeline changes: the stage is only reached once consensus, Judge and Critic have passed, and the stored `draftHash` is the hash of the text that is stored.
+- **A deterministic guard decides whether the result replaces the original** (`validateFormatted`). It refuses a result that loses or adds a citation marker, changes or adds a number or date (digits of every script are folded), adds a url that is not cited, adds raw HTML, drops a GFM table, has no single H1, leaves an English heading word in a non-English article, or moves the word count by more than 15 percent (spaced words, `Intl.Segmenter` words for ja/zh/th). Any refusal keeps the pre-format article and writes a SKIPPED step with the code (`FORMAT_CITATION_LOST`, `FORMAT_NUMBER_CHANGED`, `FORMAT_LENGTH_DRIFT`, ...). The model call failing, a timeout or garbage output are `FORMAT_FAILED`. The stage never fails the job; only a cancel, a lost lease or the attempt ceiling propagate.
+- **Bounded by ADR-181.** One model call and at most one retry (`jobAttemptsLeft: 1`, no fallbacks, no pool, no model swap). The model's cost is added to the job's spend like every other call. It is skipped without a call when the job has already spent 85 percent of its cap (`FORMAT_SKIPPED_BUDGET`) and when the article is already typeset (`isFormattedArticle`, `FORMAT_ALREADY_PRETTY`), which also makes the stage idempotent.
+- The reply is saved in no checkpoint: a retried attempt that reaches the stage again pays one cheap call again. This is rare (the stage is the last step before the result is stored) and cheaper than a new checkpoint table.
+
+### 2. Rendering
+
+- **One renderer for the public page, the Board reader and the owner preview.** `ThreadArticleBody` (table of contents + text) draws `ThreadArticleMarkdown`, built on the existing stack (`react-markdown`, `remark-gfm`; no new dependency). Safety is structural: `skipHtml` and no `rehype-raw`, so raw HTML never becomes an element; images are never loaded (alt text only, as on public chat pages); links pass the scheme check, open in a new tab with `noopener noreferrer nofollow ugc`; a 100,000-character cap bounds the work.
+- **Outline.** The page owns the one `h1`. A first `# Title` that repeats the page title is removed; any other H1 becomes an `h2`. H2 and H3 get anchor ids made from the heading's own script (`slugifyHeading`: Arabic and Japanese headings keep their letters; duplicates become `-2`, `-3`) and a copy-link anchor. `extractThreadToc` produces the table of contents from the source text with the same rules; a test compares its ids with the rendered ones for every battery.
+- **Table of contents** only for three or more headings: a collapsible block above the text on a phone, a sticky column on a desktop; reading time beside it.
+- **Typography and components:** a 70-character measure, `leading-8` body copy, spaced lists, tables inside their own scroll box (header row sticky, zebra rows, `text-start` so Arabic tables mirror), blockquotes recognised as Note/Tip/Warning callouts by their bold label in any of the 13 languages (icon plus screen-reader label; 950-on-50 colour pairs in light and dark), code blocks, rules, print rules (whole tables and callouts, scroll boxes printed in full), smooth anchor scrolling only when motion is allowed.
+- Last-updated is **not** shown: the public API exposes only `publishedAt`; adding `updatedAt` to the public read is a follow-up.
+
+### 3. Existing Threads
+
+- Owner action "Improve formatting with AI" on the review screen (`ThreadFormatPanel`). `POST thread-publications/:id/format-preview` in threads-service (owner JWT) previews the newest revision; it saves nothing. The panel shows the current and improved versions rendered, with a Before/After toggle. **Use improved version** saves it through the ordinary edit route (`POST revisions`, spend cap $0.50), so the safety scan and the Judge and Critic run again before anything is published. **Discard** drops the preview.
+- **Owner scope** is the repository query itself (`publication: { ownerId }`), the owner id comes only from the signed-in user, a missing and a foreign Thread both answer 404, and the body schema is strict.
+- **Rate limit and idempotency.** Table `thread_format_passes` (additive migration `20261016090000_threads_format_passes`): three counted passes per Thread per rolling day, taken under a per-Thread advisory lock; a pass whose key the owner already used returns the stored preview with no model call; FAILED passes and free "already well formatted" skips do not count. The row also holds the preview text (the replay). Rows go with the Thread (cascade) and with the account (`AccountDeletionRepository`).
+- **Budget.** The pass has no job, so generation-service reserves a small budget (`FORMAT_PASS_CAP_MICRO_USD`, $0.10) under `format:<key>`, runs the same guarded stage with the same cheap model chosen from the parent job's request (owner-scoped lookup, 404 otherwise), and closes it at once: FINALIZED when formatted, PLATFORM_FAILED when the guard or the model refused (refund rules and the 5-a-day refund cap of ADR-162 apply). An article that is already well formatted is answered before any reservation.
+
+## Consequences
+
+- A budget reservation draws the plan's Threads feature allowance exactly as an edit review does (ADR-174 addendum). Accepting then reserves again for the re-review. A Free owner whose lifetime Thread is spent is refused with the plan-aware allowance message, as for editing. Counting a format pass against the parent job's closed budget is not possible (it is closed), and a separate `THREAD_FORMAT` feature key with its own allowance is the follow-up if the double draw proves annoying.
+- Existing Threads are untouched until the owner chooses; nothing is reformatted in the background.
+- `FORMAT` is a step-log stage name only (no database enum). The progress screen shows it as a SKIPPED system step with its code when it did not apply.
+- Deploy order: threads-service migration, then generation-service, then threads-service, then frontend. An older generation-service answers 404 to the preview route (the panel shows the generic failure); an older frontend simply lacks the panel.

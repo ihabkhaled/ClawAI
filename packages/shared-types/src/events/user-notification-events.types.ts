@@ -16,7 +16,7 @@ export interface UserNotificationRequestedPayload {
 
 /**
  * The `params` of the Threads community kinds (THREAD_COMMENTED, THREAD_COMMENT_REPLIED,
- * THREAD_MENTIONED, THREAD_REACTED, THREAD_COMMENT_REACTED, THREAD_CHANGE_REQUESTED). All values
+ * THREAD_MENTIONED, THREAD_REACTED, THREAD_COMMENT_REACTED, THREAD_CHANGE_REQUESTED, THREAD_CHANGE_ACCEPTED, THREAD_CHANGE_APPLIED, THREAD_CHANGE_DECLINED). All values
  * are short single-line strings; they are plain text, never HTML, and must be escaped on render.
  * `actorName` may be an empty string when the name could not be looked up: render a generic
  * "Someone". The link is the Thread page; comment kinds end in `#comment-<commentId>`.

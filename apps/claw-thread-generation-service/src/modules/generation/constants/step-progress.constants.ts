@@ -25,6 +25,7 @@ export const ROLE_KEY_PREFIXES: ReadonlyArray<{ prefix: string; info: RoleStepIn
   { prefix: 'consensus-author-', info: { stage: 'CONSENSUS', roleKind: 'AUTHOR' } },
   { prefix: 'revision-author-', info: { stage: 'REVISION', roleKind: 'AUTHOR' } },
   { prefix: 'author-', info: { stage: 'AUTHOR_DRAFTS', roleKind: 'AUTHOR' } },
+  { prefix: 'format', info: { stage: 'FORMAT', roleKind: 'SYSTEM' } },
   { prefix: 'judge', info: { stage: 'JUDGE', roleKind: 'JUDGE' } },
   { prefix: 'critic', info: { stage: 'CRITIC', roleKind: 'CRITIC' } },
 ];

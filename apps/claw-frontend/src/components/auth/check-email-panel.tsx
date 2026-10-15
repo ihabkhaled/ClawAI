@@ -13,6 +13,7 @@ import {
 } from '@/constants/auth-onboarding.constants';
 import { AlertVariant } from '@/enums/alert-variant.enum';
 import { useCheckEmailPage } from '@/hooks/auth/use-check-email-page';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 
 /**
  * The screen a brand-new account lands on.
@@ -28,6 +29,7 @@ import { useCheckEmailPage } from '@/hooks/auth/use-check-email-page';
  * what to do if it did not arrive, and what happens after.
  */
 export function CheckEmailPanel(): React.ReactElement {
+  const localise = useLocalizedHref();
   const {
     email,
     hasAddress,
@@ -139,7 +141,7 @@ export function CheckEmailPanel(): React.ReactElement {
             <Link href={loginHref}>{t('auth.checkEmailGoToLogin')}</Link>
           </Button>
           <Button asChild variant="ghost" className="w-full sm:flex-1">
-            <Link href={ROUTES.REGISTER}>{t('auth.checkEmailWrongAddress')}</Link>
+            <Link href={localise(ROUTES.REGISTER)}>{t('auth.checkEmailWrongAddress')}</Link>
           </Button>
         </div>
 

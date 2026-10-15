@@ -67,6 +67,7 @@ describe('isPublicPath', () => {
     expect(isPublicPath('/en/threads/discover')).toBe(true);
     expect(isPublicPath('/en/threads')).toBe(false);
     expect(isPublicPath('/en/threads/review/abc')).toBe(false);
+    expect(isPublicPath('/en/threads/my/suggestions')).toBe(false);
     expect(isPublicPath('/threads')).toBe(false);
   });
 

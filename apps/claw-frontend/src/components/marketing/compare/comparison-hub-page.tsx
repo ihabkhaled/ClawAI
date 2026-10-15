@@ -81,7 +81,10 @@ export async function ComparisonHubPage(): Promise<React.ReactElement> {
           <section aria-label={labels.startFree} className="editorial-comparison__cta">
             <p className="editorial-comparison__cta-copy">{summary}</p>
             <div className="editorial-comparison__cta-actions">
-              <Link href="/register" className="editorial-comparison__cta-primary">
+              <Link
+                href={localisePath('/register', locale)}
+                className="editorial-comparison__cta-primary"
+              >
                 {labels.startFree}
               </Link>
               <Link href="/pricing" className="editorial-comparison__cta-secondary">

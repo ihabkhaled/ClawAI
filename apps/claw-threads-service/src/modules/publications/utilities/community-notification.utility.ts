@@ -14,7 +14,9 @@ import type {
   CommunityActor,
   PublicationNotificationTarget,
 } from '../types/publication-comments.types';
-import { notificationTitle, publicLink } from './thread-notification.utility';
+import { ChangeRequestDecision } from '../../../common/enums/change-request-decision.enum';
+import type { ChangeDecisionContext } from '../types/publication-community.types';
+import { notificationTitle, publicLink, reviewLink } from './thread-notification.utility';
 
 /** Single-line, trimmed, cut on a character boundary at `max` characters (not UTF-16 units). */
 export function singleLine(text: string, max: number): string {
@@ -121,7 +123,17 @@ export function planCommentReaction(input: {
   };
 }
 
-/** A suggested change, to the owner. */
+/** The owner's review screen for one Thread, scrolled to one suggestion. */
+export function ownerChangeRequestLink(publicationId: string, requestId: string): string {
+  return `${reviewLink(publicationId)}#change-request-${encodeURIComponent(requestId)}`;
+}
+
+/** The requester's "My suggestions" screen, scrolled to one suggestion. */
+export function mySuggestionsLink(requestId: string): string {
+  return `/threads/my/suggestions#change-request-${encodeURIComponent(requestId)}`;
+}
+
+/** A suggested change, to the owner, linking straight to the review screen with it highlighted. */
 export function planChangeRequest(input: {
   actor: CommunityActor;
   publication: PublicationNotificationTarget;
@@ -134,7 +146,47 @@ export function planChangeRequest(input: {
     dedupeKey: `change-requested:${input.requestId}`,
     userId: publication.ownerId,
     kind: UserNotificationKind.THREAD_CHANGE_REQUESTED,
-    link: publicLink(publication.slug),
+    link: ownerChangeRequestLink(publication.id, input.requestId),
     params: { ...paramsFor(actor, publication, commentExcerpt(input.suggestion)) },
+  };
+}
+
+function decisionKind(outcome: ChangeRequestDecision): UserNotificationKind {
+  switch (outcome) {
+    case ChangeRequestDecision.ACCEPTED:
+      return UserNotificationKind.THREAD_CHANGE_ACCEPTED;
+    case ChangeRequestDecision.APPLIED:
+      return UserNotificationKind.THREAD_CHANGE_APPLIED;
+    case ChangeRequestDecision.DECLINED:
+      return UserNotificationKind.THREAD_CHANGE_DECLINED;
+  }
+}
+
+/**
+ * What the owner decided, told to the person who suggested it. Accepted and declined open "My
+ * suggestions" on that suggestion; applied opens the Thread, which now credits them. One key per
+ * request and outcome, so a repeated decision or a second publish tells them once.
+ */
+export function planChangeDecision(input: {
+  outcome: ChangeRequestDecision;
+  owner: CommunityActor;
+  context: ChangeDecisionContext;
+}): UserNotificationRequestedPayload | null {
+  const { context, outcome, owner } = input;
+  if (context.requesterId === null || context.requesterId === owner.id) return null;
+  return {
+    dedupeKey: `change-${outcome.toLowerCase()}:${context.requestId}`,
+    userId: context.requesterId,
+    kind: decisionKind(outcome),
+    link:
+      outcome === ChangeRequestDecision.APPLIED
+        ? publicLink(context.publication.slug)
+        : mySuggestionsLink(context.requestId),
+    params: {
+      actorName: singleLine(owner.displayName, NOTIFICATION_ACTOR_NAME_MAX_LENGTH),
+      actorUsername: owner.username,
+      title: notificationTitle(context.publication.title),
+      excerpt: commentExcerpt(context.suggestion),
+    },
   };
 }

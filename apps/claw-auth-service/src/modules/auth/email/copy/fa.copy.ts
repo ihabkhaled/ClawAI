@@ -222,6 +222,44 @@ export const FA_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       securityNote:
         'این پیام را دریافت می‌کنید چون در این Thread در ClawAI شرکت کرده‌اید. می‌توانید این ایمیل‌ها را از تنظیمات اعلان‌ها خاموش کنید.',
     },
+    [AuthEmailKind.THREAD_CHANGE_ACCEPTED]: {
+      subject: 'پیشنهاد شما پذیرفته شد',
+      preheader: 'صاحب Thread آن را اعمال خواهد کرد.',
+      heading: 'پیشنهاد شما پذیرفته شد',
+      intro: 'صاحب «{value}» تغییر پیشنهادی شما را پذیرفت.',
+      bodyLines: ['وقتی Thread به‌روزرسانی شود به شما اطلاع می‌دهیم.'],
+      actionLabel: 'دیدن پیشنهادهای من',
+      fallbackNote: 'اگر دکمه کار نکرد، نشانی زیر را در مرورگر خود کپی کنید:',
+      expiryNote: null,
+      securityNote:
+        'این پیام را دریافت می‌کنید چون در این Thread در ClawAI شرکت کرده‌اید. می‌توانید این ایمیل‌ها را از تنظیمات اعلان‌ها خاموش کنید.',
+    },
+    [AuthEmailKind.THREAD_CHANGE_APPLIED]: {
+      subject: 'پیشنهاد شما اکنون در Thread است',
+      preheader: 'Thread با ایدهٔ شما به‌روزرسانی شد.',
+      heading: 'پیشنهاد شما اعمال شد',
+      intro: '«{value}» با تغییر پیشنهادی شما به‌روزرسانی شد.',
+      bodyLines: [
+        'از اینکه به بهتر شدن آن کمک کردید سپاسگزاریم. نام شما در صفحهٔ Thread آمده است.',
+      ],
+      actionLabel: 'باز کردن Thread',
+      fallbackNote: 'اگر دکمه کار نکرد، نشانی زیر را در مرورگر خود کپی کنید:',
+      expiryNote: null,
+      securityNote:
+        'این پیام را دریافت می‌کنید چون در این Thread در ClawAI شرکت کرده‌اید. می‌توانید این ایمیل‌ها را از تنظیمات اعلان‌ها خاموش کنید.',
+    },
+    [AuthEmailKind.THREAD_CHANGE_DECLINED]: {
+      subject: 'از پیشنهاد شما استفاده نشد',
+      preheader: 'صاحب Thread تصمیم گرفت آن را اعمال نکند.',
+      heading: 'پیشنهاد شما رد شد',
+      intro: 'صاحب «{value}» تصمیم گرفت تغییر پیشنهادی شما را اعمال نکند.',
+      bodyLines: ['پاسخ صاحب Thread را در بخش پیشنهادهای من می‌خوانید.'],
+      actionLabel: 'دیدن پیشنهادهای من',
+      fallbackNote: 'اگر دکمه کار نکرد، نشانی زیر را در مرورگر خود کپی کنید:',
+      expiryNote: null,
+      securityNote:
+        'این پیام را دریافت می‌کنید چون در این Thread در ClawAI شرکت کرده‌اید. می‌توانید این ایمیل‌ها را از تنظیمات اعلان‌ها خاموش کنید.',
+    },
     [AuthEmailKind.MCP_SERVER_APPROVED]: {
       subject: 'سرور MCP شما تأیید شد',
       preheader: 'اکنون می‌توانید در گفتگو از آن استفاده کنید.',

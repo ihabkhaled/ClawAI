@@ -14,6 +14,7 @@ import {
   type ResolvePublicationChangeRequestDto,
   resolvePublicationChangeRequestSchema,
 } from '../dto/resolve-publication-change-request.dto';
+import { PublicationChangeRequestViewsService } from '../services/publication-change-request-views.service';
 import { PublicationCommunityService } from '../services/publication-community.service';
 import { PublicationGenerationOwnerService } from '../services/publication-generation-owner.service';
 import {
@@ -26,6 +27,7 @@ export class PublicationOwnerController {
   constructor(
     private readonly lifecycle: PublicationLifecycleService,
     private readonly community: PublicationCommunityService,
+    private readonly changeRequestViews: PublicationChangeRequestViewsService,
     private readonly generationOwner: PublicationGenerationOwnerService,
   ) {}
 
@@ -120,8 +122,8 @@ export class PublicationOwnerController {
   listChangeRequests(
     @Param('publicationId') publicationId: string,
     @CurrentUser() user: AuthenticatedUser,
-  ): ReturnType<PublicationCommunityService['listOwnerChangeRequests']> {
-    return this.community.listOwnerChangeRequests(publicationId, user.id);
+  ): ReturnType<PublicationChangeRequestViewsService['listForOwner']> {
+    return this.changeRequestViews.listForOwner(publicationId, user.id);
   }
 
   @Post('change-requests/:requestId')

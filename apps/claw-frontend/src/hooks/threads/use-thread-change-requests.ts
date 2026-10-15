@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { useThreadChangeRequestForm } from '@/hooks/threads/use-thread-change-request-form';
+import { useThreadChangeRequestHighlight } from '@/hooks/threads/use-thread-change-request-highlight';
 import { useThreadChangeRequestResolve } from '@/hooks/threads/use-thread-change-request-resolve';
 import { threadPublicationsRepository } from '@/repositories/threads/thread-publications.repository';
 import type {
@@ -13,6 +14,7 @@ export function useThreadChangeRequests({
   publicationId,
   revisionSource,
   onRevisionStarted,
+  onEditMyself,
 }: ThreadChangeRequestsProps): ThreadChangeRequestsController {
   const form = useThreadChangeRequestForm(revisionSource);
   const requests = useQuery({
@@ -25,12 +27,21 @@ export function useThreadChangeRequests({
     revisionSource,
     form,
     onRevisionStarted,
+    onEditMyself,
   });
+  const highlightedId = useThreadChangeRequestHighlight(
+    (requests.data ?? []).map((request) => request.id),
+  );
 
   return {
     requests,
     resolve,
     form,
+    highlightedId,
+    chooseAcceptance: (requestId) => {
+      form.chooseAcceptance(requestId);
+      resolve.reset();
+    },
     beginAcceptance: (requestId) => {
       form.beginAcceptance(requestId);
       resolve.reset();

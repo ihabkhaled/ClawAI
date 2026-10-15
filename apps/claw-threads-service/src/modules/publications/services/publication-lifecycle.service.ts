@@ -9,6 +9,8 @@ import {
 } from '@nestjs/common';
 
 import { PublicationStatus } from '../../../generated/prisma';
+import { PublicationChangeRequestsRepository } from '../repositories/publication-change-requests.repository';
+import { CommunityNotificationService } from './community-notification.service';
 import { BoardIndexService } from '../../board-index/services/board-index.service';
 import { PublicationsRepository } from '../repositories/publications.repository';
 import { ThreadNotificationService } from './thread-notification.service';
@@ -57,6 +59,8 @@ export class PublicationLifecycleService {
     @Optional() private readonly boardIndex?: BoardIndexService,
     @Optional() private readonly preflight?: GenerationPreflightService,
     @Optional() private readonly healingPool?: HealingPoolService,
+    @Optional() private readonly changeRequests?: PublicationChangeRequestsRepository,
+    @Optional() private readonly communityNotices?: CommunityNotificationService,
   ) {}
 
   listOwned(ownerId: string): ReturnType<PublicationsRepository['findOwnedPublications']> {
@@ -241,6 +245,7 @@ export class PublicationLifecycleService {
     }
     // Also on a repeat or a republish: the visible revision may have changed, and a sync is idempotent.
     await this.syncBoard(publicationId);
+    await this.applyAcceptedSuggestions(publicationId);
     // A repeated publish of a live article answers with it again and tells nobody twice.
     if (outcome.newlyPublished) {
       try {
@@ -251,6 +256,20 @@ export class PublicationLifecycleService {
       }
     }
     return outcome.publication;
+  }
+
+  /**
+   * Suggestions the owner accepted become APPLIED once the live revision contains them, and each
+   * requester is told. Best effort: the article is already live, and the status move is repeatable.
+   */
+  private async applyAcceptedSuggestions(publicationId: string): Promise<void> {
+    if (!this.changeRequests) return;
+    try {
+      const applied = await this.changeRequests.markAcceptedApplied(publicationId);
+      if (applied.length > 0) await this.communityNotices?.changesApplied(applied);
+    } catch {
+      this.logger.warn('Applied suggestions could not be recorded');
+    }
   }
 
   /**

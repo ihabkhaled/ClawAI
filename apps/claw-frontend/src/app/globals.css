@@ -1952,3 +1952,32 @@
     overflow-wrap: anywhere;
   }
 }
+
+/*
+ * Thread articles (ADR-189). Anchor jumps from the table of contents glide unless the reader asked
+ * for less motion; on paper the article keeps whole tables, notes and code together, headings stay
+ * with the text under them, and a scrolling table box prints in full.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.thread-article) {
+    scroll-behavior: smooth;
+  }
+}
+
+@media print {
+  .thread-article table,
+  .thread-article blockquote,
+  .thread-article pre {
+    break-inside: avoid;
+  }
+
+  .thread-article h2,
+  .thread-article h3 {
+    break-after: avoid;
+  }
+
+  .thread-article [data-thread-table] {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}

@@ -68,8 +68,8 @@ describe('HomePage', () => {
   it('routes the primary conversion path to sign-up and sign-in', async () => {
     await renderHome();
     const hrefs = hrefsOnPage();
-    expect(hrefs).toContain('/register');
-    expect(hrefs).toContain('/login');
+    expect(hrefs).toContain('/en/register');
+    expect(hrefs).toContain('/en/login');
   });
 
   it('links out to the dedicated topic pages instead of inlining them', async () => {

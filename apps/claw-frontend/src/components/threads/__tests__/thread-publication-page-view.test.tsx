@@ -1,5 +1,5 @@
 import { ThreadPublicationType } from '@claw/shared-types';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ThreadPublicPageView } from '@/components/threads/thread-publication-page-view';
@@ -48,7 +48,57 @@ const STATE: ThreadPublicPageController = {
   communityError: false,
   loginHref: '/login',
   actions: {} as ThreadPublicPageController['actions'],
+  viewer: undefined,
+  changeCredits: [],
 };
+
+describe('ThreadPublicPageView suggestions', () => {
+  it('shows the owner how many suggestions wait, with a link to the review screen', () => {
+    render(
+      <ThreadPublicPageView
+        state={{
+          ...STATE,
+          viewer: { isOwner: true, publicationId: 'pub-9', pendingChangeRequests: 3 },
+        }}
+      />,
+    );
+    expect(screen.getByTestId('thread-owner-change-bar')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'chat.threadCrOwnerBarReview' })).toHaveAttribute(
+      'href',
+      '/threads/review/pub-9',
+    );
+  });
+
+  it('shows nothing owner-only to a guest, a non-owner or an owner with nothing waiting', () => {
+    for (const viewer of [
+      undefined,
+      { isOwner: false as const },
+      { isOwner: true as const, publicationId: 'pub-9', pendingChangeRequests: 0 },
+    ]) {
+      const { unmount } = render(<ThreadPublicPageView state={{ ...STATE, viewer }} />);
+      expect(screen.queryByTestId('thread-owner-change-bar')).toBeNull();
+      unmount();
+    }
+  });
+
+  it('credits the people whose suggestion was accepted, and omits the line when there are none', () => {
+    const { rerender } = render(<ThreadPublicPageView state={STATE} />);
+    expect(screen.queryByTestId('thread-change-credits')).toBeNull();
+
+    rerender(
+      <ThreadPublicPageView
+        state={{
+          ...STATE,
+          changeCredits: [
+            { displayName: 'Chen Charlie', username: 'qa8_c' },
+            { displayName: 'Ada', username: 'ada' },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByTestId('thread-change-credits')).toHaveTextContent('@qa8_c, @ada');
+  });
+});
 
 describe('ThreadPublicPageView', () => {
   it('does not add a second main landmark inside the marketing layout main', () => {

@@ -27,6 +27,7 @@ import {
   listPublicationCommentsQuerySchema,
 } from '../dto/list-publication-comments.dto';
 import { optionalViewerId } from '../../publication-community/utilities/optional-viewer.utility';
+import { PublicationChangeRequestViewsService } from '../services/publication-change-request-views.service';
 import { PublicationCommentsService } from '../services/publication-comments.service';
 import { PublicationCommunityService } from '../services/publication-community.service';
 
@@ -35,6 +36,7 @@ export class PublicationCommunityController {
   constructor(
     private readonly community: PublicationCommunityService,
     private readonly comments: PublicationCommentsService,
+    private readonly changeRequestViews: PublicationChangeRequestViewsService,
   ) {}
 
   @Public()
@@ -120,6 +122,25 @@ export class PublicationCommunityController {
     @CurrentUser() user: AuthenticatedUser,
   ): ReturnType<PublicationCommunityService['removeReaction']> {
     return this.community.removeReaction(slug, user.id);
+  }
+
+  /** Who the reader is to this Thread. Only the owner learns more than `isOwner: false`. */
+  @Public()
+  @Get('viewer')
+  getViewer(
+    @Param('slug') slug: string,
+    @Headers('authorization') authorization?: string,
+  ): ReturnType<PublicationChangeRequestViewsService['viewerOwnership']> {
+    return this.changeRequestViews.viewerOwnership(slug, optionalViewerId(authorization));
+  }
+
+  /** "Improved with suggestions from": accepted or applied suggestions only, names only. */
+  @Public()
+  @Get('change-requests/credits')
+  listCredits(
+    @Param('slug') slug: string,
+  ): ReturnType<PublicationChangeRequestViewsService['listCredits']> {
+    return this.changeRequestViews.listCredits(slug);
   }
 
   @Post('change-requests')

@@ -11,12 +11,17 @@ describe('PublicationOwnerController generation routes', () => {
       retry: vi.fn().mockResolvedValue({ jobId: 'job-2' }),
       delete: vi.fn().mockResolvedValue({ deleted: true }),
     };
+    const community = {
+      resolveOwnerChangeRequest: vi.fn().mockResolvedValue({ resolved: true, edit: null }),
+    };
+    const views = { listForOwner: vi.fn().mockResolvedValue([]) };
     const controller = new PublicationOwnerController(
       {} as never,
-      {} as never,
+      community as never,
+      views as never,
       generationOwner as never,
     );
-    return { controller, generationOwner };
+    return { controller, generationOwner, community, views };
   }
 
   it('delegates progress with the authenticated owner id', async () => {
@@ -40,5 +45,19 @@ describe('PublicationOwnerController generation routes', () => {
     const { controller, generationOwner } = setup();
     await expect(controller.deletePublication('pub-1', user)).resolves.toEqual({ deleted: true });
     expect(generationOwner.delete).toHaveBeenCalledWith('pub-1', 'owner-1');
+  });
+
+  it('lists suggestions for the signed-in owner only', async () => {
+    const { controller, views } = setup();
+    await controller.listChangeRequests('pub-1', user);
+    expect(views.listForOwner).toHaveBeenCalledWith('pub-1', 'owner-1');
+  });
+
+  it('resolves a suggestion as the signed-in owner, never a body-supplied one', async () => {
+    const { controller, community } = setup();
+    await controller.resolveChangeRequest('pub-1', 'req-1', { status: 'REJECTED' }, user);
+    expect(community.resolveOwnerChangeRequest).toHaveBeenCalledWith('pub-1', 'owner-1', 'req-1', {
+      status: 'REJECTED',
+    });
   });
 });

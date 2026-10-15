@@ -56,6 +56,18 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: '{actorName} suggested a change to your Thread',
         body: '@{actorUsername} wrote: {excerpt}',
       },
+      THREAD_CHANGE_ACCEPTED: {
+        title: '{actorName} accepted your suggestion',
+        body: 'Your suggestion: {excerpt}',
+      },
+      THREAD_CHANGE_APPLIED: {
+        title: 'Your suggestion is now in the Thread',
+        body: 'Your suggestion: {excerpt}',
+      },
+      THREAD_CHANGE_DECLINED: {
+        title: '{actorName} declined your suggestion',
+        body: 'Your suggestion: {excerpt}',
+      },
       MCP_SERVER_APPROVED: {
         title: 'Your MCP server was approved',
         body: 'It is ready to use in chat.',
@@ -128,6 +140,18 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: 'اقترح {actorName} تعديلاً على Thread الخاص بك',
         body: '@{actorUsername} كتب: {excerpt}',
       },
+      THREAD_CHANGE_ACCEPTED: {
+        title: 'قبِل {actorName} اقتراحك',
+        body: 'اقتراحك: {excerpt}',
+      },
+      THREAD_CHANGE_APPLIED: {
+        title: 'اقتراحك أصبح الآن في Thread',
+        body: 'اقتراحك: {excerpt}',
+      },
+      THREAD_CHANGE_DECLINED: {
+        title: 'رفض {actorName} اقتراحك',
+        body: 'اقتراحك: {excerpt}',
+      },
       MCP_SERVER_APPROVED: {
         title: 'تمت الموافقة على خادم MCP الخاص بك',
         body: 'جاهز للاستخدام في المحادثة.',
@@ -199,6 +223,18 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       THREAD_CHANGE_REQUESTED: {
         title: '{actorName} a suggéré une modification de votre Thread',
         body: '@{actorUsername} a écrit : {excerpt}',
+      },
+      THREAD_CHANGE_ACCEPTED: {
+        title: '{actorName} a accepté votre suggestion',
+        body: 'Votre suggestion : {excerpt}',
+      },
+      THREAD_CHANGE_APPLIED: {
+        title: 'Votre suggestion est maintenant dans le Thread',
+        body: 'Votre suggestion : {excerpt}',
+      },
+      THREAD_CHANGE_DECLINED: {
+        title: '{actorName} a refusé votre suggestion',
+        body: 'Votre suggestion : {excerpt}',
       },
       MCP_SERVER_APPROVED: {
         title: 'Votre serveur MCP a été approuvé',
@@ -273,6 +309,18 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: '{actorName} ha suggerito una modifica al tuo Thread',
         body: '@{actorUsername} ha scritto: {excerpt}',
       },
+      THREAD_CHANGE_ACCEPTED: {
+        title: '{actorName} ha accettato il tuo suggerimento',
+        body: 'Il tuo suggerimento: {excerpt}',
+      },
+      THREAD_CHANGE_APPLIED: {
+        title: 'Il tuo suggerimento è ora nel Thread',
+        body: 'Il tuo suggerimento: {excerpt}',
+      },
+      THREAD_CHANGE_DECLINED: {
+        title: '{actorName} ha rifiutato il tuo suggerimento',
+        body: 'Il tuo suggerimento: {excerpt}',
+      },
       MCP_SERVER_APPROVED: {
         title: 'Il tuo server MCP è stato approvato',
         body: "È pronto all'uso in chat.",
@@ -345,6 +393,18 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       THREAD_CHANGE_REQUESTED: {
         title: '{actorName} hat eine Änderung an deinem Thread vorgeschlagen',
         body: '@{actorUsername} schrieb: {excerpt}',
+      },
+      THREAD_CHANGE_ACCEPTED: {
+        title: '{actorName} hat deinen Vorschlag angenommen',
+        body: 'Dein Vorschlag: {excerpt}',
+      },
+      THREAD_CHANGE_APPLIED: {
+        title: 'Dein Vorschlag ist jetzt im Thread',
+        body: 'Dein Vorschlag: {excerpt}',
+      },
+      THREAD_CHANGE_DECLINED: {
+        title: '{actorName} hat deinen Vorschlag abgelehnt',
+        body: 'Dein Vorschlag: {excerpt}',
       },
       MCP_SERVER_APPROVED: {
         title: 'Ihr MCP-Server wurde genehmigt',
@@ -420,6 +480,18 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: '{actorName} sugirió un cambio en tu Thread',
         body: '@{actorUsername} escribió: {excerpt}',
       },
+      THREAD_CHANGE_ACCEPTED: {
+        title: '{actorName} aceptó tu sugerencia',
+        body: 'Tu sugerencia: {excerpt}',
+      },
+      THREAD_CHANGE_APPLIED: {
+        title: 'Tu sugerencia ya está en el Thread',
+        body: 'Tu sugerencia: {excerpt}',
+      },
+      THREAD_CHANGE_DECLINED: {
+        title: '{actorName} rechazó tu sugerencia',
+        body: 'Tu sugerencia: {excerpt}',
+      },
       MCP_SERVER_APPROVED: {
         title: 'Tu servidor MCP fue aprobado',
         body: 'Ya está listo para usar en el chat.',
@@ -492,6 +564,18 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       THREAD_CHANGE_REQUESTED: {
         title: '{actorName} sugeriu uma alteração ao seu Thread',
         body: '@{actorUsername} escreveu: {excerpt}',
+      },
+      THREAD_CHANGE_ACCEPTED: {
+        title: '{actorName} aceitou a sua sugestão',
+        body: 'A sua sugestão: {excerpt}',
+      },
+      THREAD_CHANGE_APPLIED: {
+        title: 'A sua sugestão já está no Thread',
+        body: 'A sua sugestão: {excerpt}',
+      },
+      THREAD_CHANGE_DECLINED: {
+        title: '{actorName} recusou a sua sugestão',
+        body: 'A sua sugestão: {excerpt}',
       },
       MCP_SERVER_APPROVED: {
         title: 'O seu servidor MCP foi aprovado',
@@ -566,6 +650,18 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: '{actorName} предложил(а) изменение в вашем Thread',
         body: '@{actorUsername} написал(а): {excerpt}',
       },
+      THREAD_CHANGE_ACCEPTED: {
+        title: '{actorName} принял(а) ваше предложение',
+        body: 'Ваше предложение: {excerpt}',
+      },
+      THREAD_CHANGE_APPLIED: {
+        title: 'Ваше предложение теперь в Thread',
+        body: 'Ваше предложение: {excerpt}',
+      },
+      THREAD_CHANGE_DECLINED: {
+        title: '{actorName} отклонил(а) ваше предложение',
+        body: 'Ваше предложение: {excerpt}',
+      },
       MCP_SERVER_APPROVED: {
         title: 'Ваш MCP-сервер одобрен',
         body: 'Его можно использовать в чате.',
@@ -638,6 +734,18 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: '{actorName} 建议修改你的 Thread',
         body: '@{actorUsername} 写道：{excerpt}',
       },
+      THREAD_CHANGE_ACCEPTED: {
+        title: '{actorName} 采纳了你的建议',
+        body: '你的建议：{excerpt}',
+      },
+      THREAD_CHANGE_APPLIED: {
+        title: '你的建议已加入 Thread',
+        body: '你的建议：{excerpt}',
+      },
+      THREAD_CHANGE_DECLINED: {
+        title: '{actorName} 拒绝了你的建议',
+        body: '你的建议：{excerpt}',
+      },
       MCP_SERVER_APPROVED: {
         title: '你的 MCP 服务器已获批准',
         body: '现在可以在聊天中使用。',
@@ -708,6 +816,18 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       THREAD_CHANGE_REQUESTED: {
         title: '{actorName} さんがあなたの Thread への変更を提案しました',
         body: '@{actorUsername} さんの投稿: {excerpt}',
+      },
+      THREAD_CHANGE_ACCEPTED: {
+        title: '{actorName} さんがあなたの提案を承認しました',
+        body: 'あなたの提案: {excerpt}',
+      },
+      THREAD_CHANGE_APPLIED: {
+        title: 'あなたの提案が Thread に反映されました',
+        body: 'あなたの提案: {excerpt}',
+      },
+      THREAD_CHANGE_DECLINED: {
+        title: '{actorName} さんがあなたの提案を見送りました',
+        body: 'あなたの提案: {excerpt}',
       },
       MCP_SERVER_APPROVED: {
         title: 'MCP サーバーが承認されました',
@@ -781,6 +901,18 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: '{actorName} ने आपके Thread में बदलाव सुझाया',
         body: '@{actorUsername} ने लिखा: {excerpt}',
       },
+      THREAD_CHANGE_ACCEPTED: {
+        title: '{actorName} ने आपका सुझाव स्वीकार किया',
+        body: 'आपका सुझाव: {excerpt}',
+      },
+      THREAD_CHANGE_APPLIED: {
+        title: 'आपका सुझाव अब Thread में है',
+        body: 'आपका सुझाव: {excerpt}',
+      },
+      THREAD_CHANGE_DECLINED: {
+        title: '{actorName} ने आपका सुझाव अस्वीकार किया',
+        body: 'आपका सुझाव: {excerpt}',
+      },
       MCP_SERVER_APPROVED: {
         title: 'आपका MCP सर्वर स्वीकृत हो गया',
         body: 'यह चैट में इस्तेमाल के लिए तैयार है।',
@@ -853,6 +985,18 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
         title: '{actorName} เสนอการแก้ไข Thread ของคุณ',
         body: '@{actorUsername} เขียนว่า: {excerpt}',
       },
+      THREAD_CHANGE_ACCEPTED: {
+        title: '{actorName} ยอมรับข้อเสนอของคุณ',
+        body: 'ข้อเสนอของคุณ: {excerpt}',
+      },
+      THREAD_CHANGE_APPLIED: {
+        title: 'ข้อเสนอของคุณอยู่ใน Thread แล้ว',
+        body: 'ข้อเสนอของคุณ: {excerpt}',
+      },
+      THREAD_CHANGE_DECLINED: {
+        title: '{actorName} ปฏิเสธข้อเสนอของคุณ',
+        body: 'ข้อเสนอของคุณ: {excerpt}',
+      },
       MCP_SERVER_APPROVED: {
         title: 'เซิร์ฟเวอร์ MCP ของคุณได้รับการอนุมัติแล้ว',
         body: 'พร้อมใช้งานในแชทแล้ว',
@@ -924,6 +1068,18 @@ export const NOTIFICATIONS_TRANSLATIONS: Record<Locale, NotificationsLocaleTrans
       THREAD_CHANGE_REQUESTED: {
         title: '{actorName} تغییری را برای Thread شما پیشنهاد کرد',
         body: '@{actorUsername} نوشت: {excerpt}',
+      },
+      THREAD_CHANGE_ACCEPTED: {
+        title: '{actorName} پیشنهاد شما را پذیرفت',
+        body: 'پیشنهاد شما: {excerpt}',
+      },
+      THREAD_CHANGE_APPLIED: {
+        title: 'پیشنهاد شما اکنون در Thread است',
+        body: 'پیشنهاد شما: {excerpt}',
+      },
+      THREAD_CHANGE_DECLINED: {
+        title: '{actorName} پیشنهاد شما را رد کرد',
+        body: 'پیشنهاد شما: {excerpt}',
       },
       MCP_SERVER_APPROVED: {
         title: 'سرور MCP شما تأیید شد',

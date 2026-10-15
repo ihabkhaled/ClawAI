@@ -64,6 +64,18 @@ export const NOTIFICATION_TEXT_KEYS: Readonly<
     titleKey: 'notifications.kinds.THREAD_CHANGE_REQUESTED.title',
     bodyKey: 'notifications.kinds.THREAD_CHANGE_REQUESTED.body',
   },
+  [UserNotificationKind.THREAD_CHANGE_ACCEPTED]: {
+    titleKey: 'notifications.kinds.THREAD_CHANGE_ACCEPTED.title',
+    bodyKey: 'notifications.kinds.THREAD_CHANGE_ACCEPTED.body',
+  },
+  [UserNotificationKind.THREAD_CHANGE_APPLIED]: {
+    titleKey: 'notifications.kinds.THREAD_CHANGE_APPLIED.title',
+    bodyKey: 'notifications.kinds.THREAD_CHANGE_APPLIED.body',
+  },
+  [UserNotificationKind.THREAD_CHANGE_DECLINED]: {
+    titleKey: 'notifications.kinds.THREAD_CHANGE_DECLINED.title',
+    bodyKey: 'notifications.kinds.THREAD_CHANGE_DECLINED.body',
+  },
   [UserNotificationKind.MCP_SERVER_APPROVED]: {
     titleKey: 'notifications.kinds.MCP_SERVER_APPROVED.title',
     bodyKey: 'notifications.kinds.MCP_SERVER_APPROVED.body',

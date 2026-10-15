@@ -133,11 +133,11 @@ describe('GuestBoardPageView', () => {
     const banner = screen.getByTestId('board-guest-banner');
     expect(within(banner).getByRole('link', { name: /threadBoardGuestSignIn/u })).toHaveAttribute(
       'href',
-      '/login?returnTo=%2Fthreads%2Fboard',
+      '/en/login?returnTo=%2Fthreads%2Fboard',
     );
     expect(within(banner).getByRole('link', { name: /threadBoardGuestRegister/u })).toHaveAttribute(
       'href',
-      '/register?returnTo=%2Fthreads%2Fboard',
+      '/en/register?returnTo=%2Fthreads%2Fboard',
     );
     expect(screen.queryByRole('button', { name: /like|comment|bookmark|report/iu })).toBeNull();
   });
@@ -149,7 +149,7 @@ describe('GuestBoardPageView', () => {
     const banner = screen.getByTestId('board-guest-banner');
     expect(within(banner).getByRole('link', { name: /threadBoardGuestSignIn/u })).toHaveAttribute(
       'href',
-      `/login?returnTo=${encodeURIComponent('/threads/board?q=rag&page=2')}`,
+      `/en/login?returnTo=${encodeURIComponent('/threads/board?q=rag&page=2')}`,
     );
   });
 

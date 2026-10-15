@@ -117,7 +117,7 @@ describe('PlanTierCard', () => {
 
     expect(screen.getByRole('link')).toHaveAttribute(
       'href',
-      '/register?returnTo=%2Fbilling%2Fcheckout%3Fplan%3Dpro%26interval%3Dmonthly',
+      '/en/register?returnTo=%2Fbilling%2Fcheckout%3Fplan%3Dpro%26interval%3Dmonthly',
     );
   });
 
@@ -126,7 +126,7 @@ describe('PlanTierCard', () => {
 
     expect(screen.getByRole('link')).toHaveAttribute(
       'href',
-      '/register?returnTo=%2Fbilling%2Fcheckout%3Fplan%3Dpro%26interval%3Dyearly',
+      '/en/register?returnTo=%2Fbilling%2Fcheckout%3Fplan%3Dpro%26interval%3Dyearly',
     );
   });
 
@@ -135,7 +135,7 @@ describe('PlanTierCard', () => {
 
     expect(screen.getByRole('link')).toHaveAttribute(
       'href',
-      '/register?returnTo=%2Fbilling%2Fcheckout%3Fplan%3Dpro%26interval%3Dquarterly',
+      '/en/register?returnTo=%2Fbilling%2Fcheckout%3Fplan%3Dpro%26interval%3Dquarterly',
     );
   });
 
@@ -188,7 +188,7 @@ describe('PlanTierCard', () => {
 
     render(<PlanTierCard plan={freePlan} interval={BillingInterval.MONTHLY} />);
 
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/register?returnTo=%2Fchat');
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/en/register?returnTo=%2Fchat');
   });
 
   it('shows the trial length from the plan, and nothing for a plan with no trial', () => {

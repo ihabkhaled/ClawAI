@@ -9,8 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ROUTES } from '@/constants';
 import { AlertVariant } from '@/enums/alert-variant.enum';
 import { useConfirmEmailChangeForm } from '@/hooks/auth/use-confirm-email-change-form';
+import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 
 export function ConfirmEmailChangeForm(): ReactElement {
+  const localise = useLocalizedHref();
   const { t, onSubmit, isPending, isSuccess, isError, isInvalidToken, errorMessage } =
     useConfirmEmailChangeForm();
 
@@ -23,7 +25,7 @@ export function ConfirmEmailChangeForm(): ReactElement {
         <CardContent>
           <p>{t('auth.confirmEmailChangeInvalidToken')}</p>
           <Button asChild className="w-full">
-            <Link href={ROUTES.LOGIN}>{t('auth.confirmEmailChangeBackToLogin')}</Link>
+            <Link href={localise(ROUTES.LOGIN)}>{t('auth.confirmEmailChangeBackToLogin')}</Link>
           </Button>
         </CardContent>
       </Card>
@@ -39,7 +41,7 @@ export function ConfirmEmailChangeForm(): ReactElement {
         <CardContent>
           <p>{t('auth.confirmEmailChangeSuccess')}</p>
           <Button asChild className="w-full">
-            <Link href={ROUTES.LOGIN}>{t('auth.confirmEmailChangeBackToLogin')}</Link>
+            <Link href={localise(ROUTES.LOGIN)}>{t('auth.confirmEmailChangeBackToLogin')}</Link>
           </Button>
         </CardContent>
       </Card>

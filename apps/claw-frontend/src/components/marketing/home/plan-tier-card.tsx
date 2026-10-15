@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import type { PublicPlanCardProps } from '@/types/public-pricing.types';
 import { computeIntervalDiscountPercent } from '@/utilities/billing.utility';
 import { formatCreditRatePercent, microUsdToMinor } from '@/utilities/credit.utility';
+import { localizeHref } from '@/utilities/locale.utility';
 import {
   formatPlanQuota,
   resolvePlanMonthlyCreditMicroUsd,
@@ -190,7 +191,10 @@ export function PlanTierCard({ plan, interval }: PublicPlanCardProps): React.Rea
           The padding is the floor the auto margin grows from. */}
       <div className="border-border/60 mt-auto shrink-0 border-t pt-6">
         <Link
-          href={`${ROUTES.REGISTER}?returnTo=${encodeURIComponent(returnRoute)}`}
+          href={localizeHref(
+            `${ROUTES.REGISTER}?returnTo=${encodeURIComponent(returnRoute)}`,
+            locale,
+          )}
           aria-disabled={price === null}
           className={cn(
             buttonVariants({ variant: plan.isPopular ? 'default' : 'outline' }),

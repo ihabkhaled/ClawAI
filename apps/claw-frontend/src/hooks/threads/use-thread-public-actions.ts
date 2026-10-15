@@ -7,6 +7,7 @@ import type {
   ThreadCommunityActionState,
   ThreadReportReason,
 } from '@/types/thread-publication.types';
+import { suggestionErrorKey } from '@/utilities/thread-suggestion-error.utility';
 
 export function useThreadPublicActions(slug: string): ThreadCommunityActionState {
   const [comment, setComment] = useState('');
@@ -43,6 +44,7 @@ export function useThreadPublicActions(slug: string): ThreadCommunityActionState
     isSubmitting: mutation.isPending,
     actionComplete: mutation.isSuccess,
     actionFailed: mutation.isError,
+    actionErrorKey: suggestionErrorKey(mutation.error, mutation.variables?.kind),
     setComment,
     setSuggestion,
     setReportTarget,

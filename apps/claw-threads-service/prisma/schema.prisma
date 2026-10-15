@@ -42,6 +42,7 @@ enum PublicationChangeRequestStatus {
   PENDING
   ACCEPTED
   REJECTED
+  APPLIED
 }
 
 enum PublicationReportReason {
@@ -86,6 +87,7 @@ model ThreadPublication {
   reactions        ThreadPublicationReaction[]
   changeRequests   ThreadPublicationChangeRequest[]
   reports          ThreadPublicationReport[]
+  formatPasses     ThreadFormatPass[]
   searchDoc        ThreadPublicationSearchDoc?
 
   @@unique([ownerId, startKeyHash])
@@ -245,6 +247,7 @@ model ThreadPublicationChangeRequest {
 
   @@index([publicationId, status, createdAt])
   @@index([requesterId, createdAt])
+  @@index([publicationId, requesterId, status])
   @@map("thread_publication_change_requests")
 }
 
@@ -311,4 +314,26 @@ model ThreadBoardWord {
 
   @@id([lang, word])
   @@map("thread_board_words")
+}
+
+/// One owner-asked "Improve formatting with AI" pass over a Thread's article (ADR-189). The row is
+/// the per-Thread daily limit, the idempotency record and the stored preview, so a replayed key
+/// returns the same text without a second model call.
+model ThreadFormatPass {
+  id             String            @id @default(cuid())
+  publicationId  String            @map("publication_id")
+  publication    ThreadPublication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  ownerId        String            @map("owner_id")
+  revisionId     String            @map("revision_id")
+  idempotencyKey String            @map("idempotency_key")
+  /// PENDING while the model runs, then FORMATTED, SKIPPED (kept as it was) or FAILED.
+  status         String
+  /// The SKIPPED/FAILED machine code (FORMAT_*), never model text.
+  code           String?
+  resultMarkdown String?           @map("result_markdown")
+  createdAt      DateTime          @default(now()) @map("created_at")
+
+  @@unique([ownerId, idempotencyKey])
+  @@index([publicationId, createdAt])
+  @@map("thread_format_passes")
 }

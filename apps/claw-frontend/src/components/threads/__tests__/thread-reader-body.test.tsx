@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { ThreadReaderBody } from '../thread-reader-body';
+
+vi.mock('@/lib/i18n', () => ({
+  useTranslation: () => ({ t: (key: string) => key, locale: 'en', dir: 'ltr' }),
+}));
 
 describe('ThreadReaderBody', () => {
   it('does not show unresolved hex source markers as raw text', () => {

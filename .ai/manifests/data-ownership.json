@@ -329,6 +329,7 @@
       "prismaModels": [
         "ThreadBoardWord",
         "ThreadDeletedAccount",
+        "ThreadFormatPass",
         "ThreadPublication",
         "ThreadPublicationChangeRequest",
         "ThreadPublicationComment",

@@ -119,10 +119,11 @@ describe('http client 401 handling', () => {
     );
 
     it('still redirects from a page that needs login', async () => {
-      stubLocation('/en/settings');
+      stubLocation('/ar/settings');
       await handle401('/users/me');
 
-      expect(hrefSetter).toHaveBeenCalledWith('/login');
+      // The sign-in screen in the language of the page the session died on.
+      expect(hrefSetter).toHaveBeenCalledWith('/ar/login');
     });
   });
 });
