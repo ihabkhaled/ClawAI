@@ -29,6 +29,8 @@ lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (
 
 ## Findings
 
+- 2026-10-15 CI: consent-requests.service.spec 'wait: a still-pending request returns PENDING' failed on GitHub (expected PENDING, got EXPIRED). The fixture row expires at a fixed instant (2026-10-15T10:00Z + TTL) and the test switched to the REAL clock, which had passed it. The test now keeps the fixed clock with shouldAdvanceTime, so it no longer depends on the date it runs on.
+
 Fixed: D1 multipart sent as JSON (axios serialises FormData when the default JSON header is set); D2 NUL byte 500 (now 422 CONTENT_INVALID, any parser crash 422 PARSE_FAILED); D3 ZWNJ/ZWJ kept; D4 zip symlink from non-unix host refused; D5 AUTO routing fast path trimmed the context of an @mention turn; D6 duplicate consent cards (unique pending_key) and conversationId/messageId passed; D7 optional-provider polling gate; D8 FILE_TOO_LARGE; D9 plural forms; D10 audit actions/targets/categories/dates localized; D12 429 + Retry-After + cache (no token); D13 root SKILL.md plugin; .playwright-mcp/ was already in .gitignore (line 141).
 Not verified live: D5 root cause is inferred from code (AUTO fast path), not reproduced against a model.
 

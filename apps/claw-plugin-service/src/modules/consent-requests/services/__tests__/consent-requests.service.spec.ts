@@ -236,7 +236,11 @@ describe('ConsentRequestsService (consent card decisions)', () => {
   });
 
   it('wait: a still-pending request returns PENDING when the bounded wait runs out', async () => {
-    vi.useRealTimers();
+    // The fixture row expires at a fixed instant, so the clock must stay near it: a real clock made
+    // this test fail once the real date passed the fixture's expiry. The clock still advances with
+    // real time, so the bounded wait runs out.
+    vi.useFakeTimers({ toFake: ['Date'], shouldAdvanceTime: true });
+    vi.setSystemTime(new Date('2026-10-15T10:00:00.000Z'));
     const { service } = build();
     const view = await service.wait(OWNER, REQUEST_ID, 30);
     expect(view.status).toBe(ConsentRequestState.PENDING);
