@@ -10,12 +10,32 @@ import { createHeadingSlugger } from '@/utilities/thread-heading-slug.utility';
 const FENCE = /^\s*(?:```|~~~)/u;
 const ATX_HEADING = /^ {0,3}(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$/u;
 
+/**
+ * Removes every `<...>` segment in one left-to-right scan. A regex such as `/<[^>]*>/g` can be
+ * defeated by nesting ('<scr<script>ipt' keeps '<script'); this scan consumes from each '<' to the
+ * next '>' (or to the end), so no tag text can survive. Raw HTML never renders in the article.
+ */
+function stripAngleSegments(text: string): string {
+  let out = '';
+  let index = 0;
+  while (index < text.length) {
+    const open = text.indexOf('<', index);
+    if (open === -1) {
+      out += text.slice(index);
+      break;
+    }
+    out += text.slice(index, open);
+    const close = text.indexOf('>', open + 1);
+    index = close === -1 ? text.length : close + 1;
+  }
+  return out.replaceAll('>', '');
+}
+
 /** Plain text of a heading's inline markdown: links keep their label, emphasis and code lose their marks. */
 export function plainHeadingText(inline: string): string {
-  return inline
+  return stripAngleSegments(inline)
     .replaceAll(/!\[([^\]]*)\]\([^)]*\)/gu, '$1')
     .replaceAll(/\[([^\]]*)\]\([^)]*\)/gu, '$1')
-    .replaceAll(/<[^>]*>/gu, '')
     .replaceAll(/(?<!\\)[`*_~]/gu, '')
     .replaceAll(/\\([\\`*_{}[\]()#+\-.!|~>])/gu, '$1')
     .replaceAll(/\s+/gu, ' ')

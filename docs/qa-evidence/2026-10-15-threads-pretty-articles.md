@@ -29,6 +29,8 @@ lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (
 
 ## Findings
 
+- 2026-10-15 CI CodeQL: two new alerts from this batch. js/incomplete-multi-character-sanitization in thread-article-toc.utility.ts (a tag-stripping regex can be nested: '<scr<script>ipt'); fixed with a one-pass scanner that removes every '<' to '>' segment, test unchanged and green. js/identity-replacement in format-guard.utility.spec.ts (a replace of '- https' with itself); the no-op call was removed.
+
 - There is no merge or synthesis stage: the first author draft is the candidate and the others vote on its hash. The format stage therefore sits after the Critic and its result gets its own `draftHash`.
 - The public renderer used for Threads turned every heading (even `#`) into an h4 and had no anchors; the same article now renders with a proper outline.
 - During the run the generated Prisma client of threads-service was left truncated by a concurrent `prisma generate` (empty `package.json`); deleting `src/generated/prisma` and regenerating restored it.

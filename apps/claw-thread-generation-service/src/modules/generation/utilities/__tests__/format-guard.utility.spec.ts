@@ -41,7 +41,7 @@ describe.each(FORMAT_FIXTURES)('format guard ($locale)', (fixture) => {
   });
 
   it('refuses an invented number', () => {
-    const after = fixture.after.replace('## ', '## 999 ').replace('- https', '- https');
+    const after = fixture.after.replace('## ', '## 999 ');
     expect(validateFormatted(input(fixture, `${after}\n\nAbout 4242 more.`))).toBe(
       'FORMAT_NUMBER_CHANGED',
     );
