@@ -45,7 +45,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "lucide-react": "^1.55.0",
-    "next": "^16.4.1",
+    "next": "^16.4.2",
     "nodemailer": "^10.1.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
@@ -59,7 +59,7 @@
     "sharp": "^0.35.4",
     "tailwind-merge": "^3.7.0",
     "tailwindcss-animate": "^1.0.7",
-    "zod": "^4.6.5",
+    "zod": "^4.6.7",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
