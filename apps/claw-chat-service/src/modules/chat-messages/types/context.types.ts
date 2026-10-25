@@ -1,11 +1,18 @@
-import { type ChatMessage } from '../../../generated/prisma';
+import { type ChatMessage, type RoutingMode } from '../../../generated/prisma';
 import type { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import type { ToolTurn } from './tool-turn.types';
 import type { PluginRef } from './plugin-tools.types';
-import type { ConversationContextManifest, ModelTokenBudget } from './context-composer.types';
+import type {
+  ConversationContextManifest,
+  ModelTokenBudget,
+  SelectedConversation,
+} from './context-composer.types';
 import type { CrossThreadRetrievalResult } from './cross-thread-retrieval.types';
 import type { AttachmentDeliveryPlan } from './attachment-delivery.types';
 import type { FileMediaSummary } from './video-delivery.types';
+import type { ThreadSettings } from './execution.types';
+import type { ResearchOptions } from './research-options.types';
+import type { ResearchRunResponse } from './research.types';
 
 export type FileChunkResponse = {
   id: string;
@@ -218,6 +225,51 @@ export type AssembledContext = {
   mediaLocalOnly?: boolean;
   /** Set on the helper's own call, so it can never recurse into another helper. */
   visionHelperCall?: boolean;
+};
+
+export type ContextAssemblyRequest = {
+  userId: string;
+  threadMessages: ChatMessage[];
+  threadSettings?: ThreadSettings;
+  contextPackIds?: string[];
+  fileIds?: string[];
+  research?: ResearchOptions;
+  routingMode?: RoutingMode;
+};
+
+export type FetchedContextInputs = {
+  memories: AssembledContext['memories'];
+  contextPackItems: AssembledContext['contextPackItems'];
+  fileContents: AssembledContext['fileContents'];
+  earlierFileContents: AssembledContext['fileContents'];
+  workspaceCitations: AssembledContext['workspaceCitations'];
+  researchRun: ResearchRunResponse | null;
+};
+
+export type PreparedContextAssembly = {
+  userId: string;
+  threadMessages: ChatMessage[];
+  threadSettings?: ThreadSettings;
+  fileIds?: string[];
+  routingMode?: RoutingMode;
+  lastUserContent: string;
+  retrievalMs: number;
+  fetched: FetchedContextInputs;
+  filteredFileContents: FileContentResponse[];
+  earlierDelivered: string[];
+  researchWarnings: string[];
+  researchEvidence: ResearchEvidenceCitation[];
+  researchToolsUsed: string[];
+  researchRequested: boolean;
+};
+
+export type BudgetedContextAssembly = {
+  prepared: PreparedContextAssembly;
+  platformOrigin: string;
+  modelBudget: ModelTokenBudget;
+  conversationBudget: ModelTokenBudget;
+  crossThread: CrossThreadRetrievalResult;
+  selected: SelectedConversation;
 };
 
 export type ResearchEvidenceCitation = {

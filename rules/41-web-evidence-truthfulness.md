@@ -250,6 +250,13 @@ from the missing capability statement, and neither knew about the other.**
     `toStoredCitations` in the same commit —
     `context-assembly-citation-numbering.spec.ts` fails otherwise.
 
+17. **A GitHub repository URL scopes a crawl to that repository path.** For
+    `github.com/<owner>/<repo>`, reject sibling repositories and GitHub marketing
+    pages during candidate discovery and link following. A bounded site crawl
+    reads selected pages; it is not a clone or a complete file audit. The answer
+    must name only paths present in its fetched evidence and must not claim that
+    every repository file was inspected ([ADR-192](../docs/13-adr/adr-192-github-repository-crawls-stay-inside-the-requested-repository.md)).
+
 ## Prohibited patterns
 
 - Passing a prompt containing a URL to a search engine and calling the result

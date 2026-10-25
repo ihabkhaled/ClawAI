@@ -21,11 +21,12 @@ A generator-critic-judge pipeline that adds AI-powered quality verification to r
    a. **Critic** (different model than generator) evaluates the response with category-specific prompt
    b. Critic returns structured feedback + score (0-1)
    c. **Judge** (local gemma3:4b) receives response + critic feedback, outputs JSON verdict
-   d. Judge decides: `ACCEPT`, `REVISE`, or `ESCALATE`
+   d. Judge decides: `ACCEPT`, `REVISE`, `ESCALATE`, or `UNAVAILABLE` when a verdict cannot be read
 6. Based on verdict:
    - **ACCEPT**: Deliver response as-is with "Verified" badge
    - **REVISE**: Re-generate with critic feedback incorporated, deliver revised version
    - **ESCALATE**: Skip to next candidate in fallback chain (better model)
+   - **UNAVAILABLE**: Deliver the original answer without claiming it was verified
 7. Metadata stored: critic model, feedback, score, judge decision, reasoning, confidence
 
 The critic and judge prompts are kept intentionally small and category-specific. Compliance-oriented cases use rewrite examples, and operator-facing responses can include executive-summary examples so the judge stays stable on long-tail content.
@@ -67,12 +68,12 @@ The critic and judge prompts are kept intentionally small and category-specific.
 - Max 1 revision attempt per message (caps at 4 total LLM calls: generator + critic + judge + revision)
 - Image and file generation responses skip judge-referee (exempt via `isGenerationResponse()`)
 - Privacy modes (LOCAL_ONLY, PRIVACY_FIRST): critic and judge both use local models
-- Judge outputs JSON, parsed with fallback to ACCEPT on parse failure
+- Judge outputs JSON. Provider failures, malformed JSON and ambiguous plain text are `UNAVAILABLE`; they never default to `ACCEPT`.
 
 ## Frontend
 
 - **Thread Settings**: Switch toggle for "Judge & Referee"
-- **Message Bubble Badges**: Green "Verified" (ShieldCheck), Amber "Revised" (RefreshCw), Blue "Escalated" (ArrowUpCircle)
+- **Message Bubble Badges**: Green "Verified" only for explicit acceptance, Amber "Revised" (RefreshCw), Blue "Escalated" (ArrowUpCircle), and a muted warning for `UNAVAILABLE`
 - **Judge Details Panel**: Expandable collapsible showing critic feedback, critic score, judge decision, reasoning, confidence
 - **SSE Event**: `judge_evaluating` emitted when pipeline starts
 
@@ -102,9 +103,9 @@ user-selectable feature with its own plan gate.
 `allowCriticReview` is a sibling of `allowJudgeMode`. Both plans toggle
 independently:
 
-| Plan flag         | Effect                                          |
-| ----------------- | ----------------------------------------------- |
-| `allowJudgeMode`  | Unlocks the Judge step (verdict + revise/escalate). |
+| Plan flag           | Effect                                                                                          |
+| ------------------- | ----------------------------------------------------------------------------------------------- |
+| `allowJudgeMode`    | Unlocks the Judge step (verdict + revise/escalate).                                             |
 | `allowCriticReview` | Unlocks the user-supplied Critic model on top of Judge. Pro can ship without Critic if desired. |
 
 DTO refinement enforces `criticEnabled ⇒ judgeEnabled` — the Critic
@@ -147,15 +148,15 @@ unparseable" state instead of inferring it from an empty `feedback[]`.
 All critic state lives in `ChatMessage.metadata` under the `JudgeRefereeMetadata`
 shape (`apps/claw-chat-service/src/modules/chat-messages/types/judge-referee.types.ts`):
 
-| Field               | Source                                                            |
-| ------------------- | ----------------------------------------------------------------- |
-| `criticModel`       | Resolved by `resolveCriticTarget()` (user pick wins).             |
-| `criticFeedback`    | `parseCriticOutput().feedback` (string[]).                        |
-| `criticScore`       | `parseCriticOutput().score` (clamped 0-1).                        |
-| `criticSummary`     | `parseCriticOutput().summary` or fallback.                        |
-| `criticRequested`   | `true` if `criticEnabled` was set in the DTO; `false` otherwise.  |
-| `criticParseFailed` | `true` when the model output couldn't be parsed.                  |
-| `criticLatencyMs`   | Wall-clock ms of the critic LLM call.                             |
+| Field               | Source                                                           |
+| ------------------- | ---------------------------------------------------------------- |
+| `criticModel`       | Resolved by `resolveCriticTarget()` (user pick wins).            |
+| `criticFeedback`    | `parseCriticOutput().feedback` (string[]).                       |
+| `criticScore`       | `parseCriticOutput().score` (clamped 0-1).                       |
+| `criticSummary`     | `parseCriticOutput().summary` or fallback.                       |
+| `criticRequested`   | `true` if `criticEnabled` was set in the DTO; `false` otherwise. |
+| `criticParseFailed` | `true` when the model output couldn't be parsed.                 |
+| `criticLatencyMs`   | Wall-clock ms of the critic LLM call.                            |
 
 ### FE control surface
 

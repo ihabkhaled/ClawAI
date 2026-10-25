@@ -227,5 +227,27 @@ benchmark: [`chat-competitive-benchmark-2026-09.md`](chat-competitive-benchmark-
 - **Source:** owner-approved prompt pack decisions, 2026-10-04.
 - **Acceptance:** see the [Threads product spec](clawai-threads-product-spec.md)
   for content types, disclosure, approval, citations, spend cap, moderation,
-  deletion, and indexing requirements. The feature is planned, not shipped.
+  deletion, and indexing requirements.
+- **Current state:** the baseline publication workflow is live. A production
+  review on 2026-10-25 found an already-published thread and a separate run that
+  failed before Judge arbitration; local reliability fixes are recorded in
+  [REQ-THREADS-002](#req-threads-002). This register is not deployment evidence.
 - **History:** 2026-10-04 created for the ClawAI Threads delivery plan.
+
+### REQ-THREADS-002
+
+- **Statement:** Thread generation treats author votes as preferences among
+  candidate drafts. In every round the Judge receives the candidates and their
+  agreement percentage, selects and reviews one candidate, and the Critic reviews
+  that selected draft. Dissent alone does not fail a round. Votes and reviews are
+  checkpointed so a retry resumes saved work instead of repeating completed
+  model calls.
+- **Status:** current · **Priority:** high
+- **Source:** owner request, 2026-10-25; see [ADR-190](../13-adr/adr-190-thread-author-preferences-are-arbitrated-by-the-judge.md).
+- **Acceptance:** 50 deterministic local replay cases with split, tie and majority
+  preferences pass the Judge and Critic quality gates (target at least 45/50);
+  no live-provider reliability rate is inferred from the mock replay.
+- **Current state:** all 50 local replay cases pass. The Judge and Critic score,
+  citation and safety checks remain required. Owner-edited single drafts report
+  author agreement as information only.
+- **History:** 2026-10-25 created and implemented; no database migration.

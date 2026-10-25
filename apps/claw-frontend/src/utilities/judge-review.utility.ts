@@ -27,7 +27,8 @@ function isJudgeDecision(value: unknown): value is JudgeReviewDecision {
   return (
     value === JudgeReviewDecision.ACCEPT ||
     value === JudgeReviewDecision.REVISE ||
-    value === JudgeReviewDecision.ESCALATE
+    value === JudgeReviewDecision.ESCALATE ||
+    value === JudgeReviewDecision.UNAVAILABLE
   );
 }
 
@@ -36,7 +37,8 @@ function getJudgeResponseType(value: unknown, decision: JudgeReviewDecision): Ju
     value === JudgeResponseType.SUMMARY ||
     value === JudgeResponseType.REVISED_ANSWER ||
     value === JudgeResponseType.ESCALATED_ANSWER ||
-    value === JudgeResponseType.VERIFICATION_NOTE
+    value === JudgeResponseType.VERIFICATION_NOTE ||
+    value === JudgeResponseType.UNAVAILABLE
   ) {
     return value;
   }
@@ -47,6 +49,10 @@ function getJudgeResponseType(value: unknown, decision: JudgeReviewDecision): Ju
 
   if (decision === JudgeReviewDecision.REVISE) {
     return JudgeResponseType.REVISED_ANSWER;
+  }
+
+  if (decision === JudgeReviewDecision.UNAVAILABLE) {
+    return JudgeResponseType.UNAVAILABLE;
   }
 
   return JudgeResponseType.VERIFICATION_NOTE;

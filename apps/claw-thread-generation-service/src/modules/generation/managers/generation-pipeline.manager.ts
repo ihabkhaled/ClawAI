@@ -15,7 +15,11 @@ import {
 } from '../constants/healing.constants';
 import { ThreadFailureClass, ThreadHealingStrategy } from '@claw/shared-types';
 import { backoffDelayMs } from '../utilities/backoff-delay.utility';
-import { REVIEW_REPLY_SHAPE, VOTE_REPLY_SHAPE } from '../constants/healing-notes.constants';
+import {
+  AUTHOR_CANDIDATE_VOTE_REPLY_SHAPE,
+  REVIEW_REPLY_SHAPE,
+  VOTE_REPLY_SHAPE,
+} from '../constants/healing-notes.constants';
 import { AUTHOR_REPLY_SHAPE } from '../constants/author-prompt.constants';
 import { ThreadGenerationStage } from '../../../generated/prisma';
 import { ChatModelClient, type ChatModelResponse } from '../../models/chat-model.client';
@@ -62,7 +66,7 @@ import {
   type GenerationRoundOutcome,
   type ModelRole,
   modelRoleSchema,
-  reviewSchema,
+  reviewSchemaForCandidateCount,
   type ReviewStageResult,
   type ReviewStageSpec,
   type StructuredReview,
@@ -70,8 +74,14 @@ import {
 import {
   revisionAuthorResponseSchema,
   type RevisionAuthorVote,
+  type RevisionCandidateVote,
+  revisionCandidateVoteResponseSchema,
 } from '../types/revision-review.types';
 import { evaluateRevisionReview, revisionDraftHash } from '../utilities/revision-review.utility';
+import type {
+  AuthorCandidateReviewContext,
+  AuthorConsensusResult,
+} from '../types/author-consensus.types';
 
 @Injectable()
 export class GenerationPipelineManager {
@@ -208,20 +218,30 @@ export class GenerationPipelineManager {
   ): Promise<GenerationRoundOutcome> {
     const { job, evidence } = context;
     const drafts = await this.runAuthorStage(context, round, revisionBrief);
-    // Independent models never write byte-identical drafts, so consensus is a vote:
-    // one candidate, and every author must agree with its exact hash.
-    const candidate = drafts[0];
-    if (!candidate)
-      throw new ServiceUnavailableException('Author consensus did not produce a draft');
-    const candidateHash = revisionDraftHash(candidate);
-    if (!(await this.reachConsensus(context, round, candidate, candidateHash))) {
-      return {
-        kind: 'retry',
-        revisionBrief: `Authors did not all agree. Improve this candidate for factual support, coherence and evidence use, then return the complete improved draft: ${JSON.stringify(candidate)}`,
-      };
+    const consensus = await this.reachConsensus(context, round, drafts);
+    if (consensus.status === 'invalid') {
+      throw new DeterministicGenerationError('Author preference votes were invalid');
     }
-    const judge = await this.runReviewStage(context, round, JUDGE_STAGE, job.judge, candidate);
+    const preferredCandidate = drafts[consensus.preferredCandidateIndex];
+    if (!preferredCandidate)
+      throw new ServiceUnavailableException('The Judge has no candidate to review');
+    const candidateContext: AuthorCandidateReviewContext = {
+      candidates: drafts,
+      agreementPercent: consensus.agreementPercent,
+      preferredCandidateIndex: consensus.preferredCandidateIndex,
+    };
+    const judge = await this.runReviewStage(
+      context,
+      round,
+      JUDGE_STAGE,
+      job.judge,
+      preferredCandidate,
+      candidateContext,
+    );
     if (judge.revisionBrief !== null) return { kind: 'retry', revisionBrief: judge.revisionBrief };
+    const candidate = drafts[judge.review.selectedCandidateIndex];
+    if (!candidate)
+      throw new ServiceUnavailableException('The Judge selected an unknown candidate');
     const critic = await this.runReviewStage(context, round, CRITIC_STAGE, job.critic, candidate);
     if (critic.revisionBrief !== null) {
       return { kind: 'retry', revisionBrief: critic.revisionBrief };
@@ -233,14 +253,15 @@ export class GenerationPipelineManager {
       result: {
         markdown: final.markdown,
         citations: final.citations,
-        draftHash: final === candidate ? candidateHash : revisionDraftHash(final),
+        draftHash: revisionDraftHash(final),
         evidenceBundle: evidence.bundle,
         evidenceHash: evidence.sha256,
         rounds: round,
         authorDrafts: drafts,
         judgeReview: judge.review,
         criticReview: critic.review,
-        authorConsensus: true,
+        authorConsensus: consensus.status === 'consensus',
+        authorAgreementPercent: consensus.agreementPercent,
         reviewReady: true,
         reviewReasons: [],
       },
@@ -270,9 +291,8 @@ export class GenerationPipelineManager {
   private async reachConsensus(
     context: GenerationRoundContext,
     round: number,
-    candidate: AuthorDraft,
-    candidateHash: string,
-  ): Promise<boolean> {
+    candidates: AuthorDraft[],
+  ): Promise<AuthorConsensusResult> {
     const { job, evidence } = context;
     const voteMaterial = JSON.stringify({
       version: 1,
@@ -280,33 +300,31 @@ export class GenerationPipelineManager {
       publicationType: job.publicationType,
       sourceSnapshot: job.sourceSnapshot,
       researchEvidence: evidence.bundle,
-      exactCandidateHash: candidateHash,
+      candidateDrafts: candidates,
     });
     await this.enterStage(job, ThreadGenerationStage.CONSENSUS, round);
     const voteResults = await Promise.allSettled(
       job.authors.map((role) =>
-        this.callRevisionVote(job, role, candidate, candidateHash, voteMaterial, evidence.sha256, {
-          communicationPrefix: 'consensus-author',
-          round,
-        }),
+        this.callCandidateVote(job, role, candidates, voteMaterial, evidence.sha256, round),
       ),
     );
     const votes = this.requireFulfilled(voteResults, 'An author role failed to vote');
     const consensus = resolveAuthorConsensus(
       votes.map((vote) => ({
         role: vote.roleId,
-        draftHash: vote.agrees ? vote.draftHash : `dissent:${vote.roleId}`,
+        preferredCandidateIndex: vote.preferredCandidateIndex,
       })),
+      candidates.length,
     );
-    if (consensus.status === 'consensus' && consensus.draftHash === candidateHash) return true;
+    if (consensus.status === 'invalid') return consensus;
     await this.recorder.record(job.jobId, {
       stage: ThreadGenerationStage.CONSENSUS,
       round,
-      outcome: 'RETRY',
+      outcome: 'SUCCEEDED',
       roleKind: 'SYSTEM',
-      code: 'CONSENSUS_NOT_REACHED',
+      rawExcerpt: `Author preference agreement: ${String(consensus.agreementPercent)}%.`,
     });
-    return false;
+    return consensus;
   }
 
   private async runReviewStage(
@@ -315,6 +333,7 @@ export class GenerationPipelineManager {
     spec: ReviewStageSpec,
     role: ModelRole,
     draft: AuthorDraft,
+    candidateContext?: AuthorCandidateReviewContext,
   ): Promise<ReviewStageResult> {
     const { job, evidence, sharedMaterial } = context;
     await this.enterStage(job, spec.stage, round);
@@ -326,6 +345,7 @@ export class GenerationPipelineManager {
       sharedMaterial,
       draft,
       evidence.sha256,
+      candidateContext,
     );
     if (review.score >= spec.minScore && review.blockers.length === 0) {
       return { review, revisionBrief: null };
@@ -408,7 +428,8 @@ export class GenerationPipelineManager {
       authorDrafts: [],
       judgeReview: judge,
       criticReview: critic,
-      authorConsensus: !evaluation.reasons.includes('AUTHOR_CONSENSUS_FAILED'),
+      authorConsensus: evaluation.authorAgreementPercent > 50,
+      authorAgreementPercent: evaluation.authorAgreementPercent,
       reviewReady: evaluation.ready,
       reviewReasons: evaluation.reasons,
     };
@@ -659,10 +680,18 @@ export class GenerationPipelineManager {
     sharedMaterial: string,
     draft: AuthorDraft,
     evidenceHash: string,
+    candidateContext?: AuthorCandidateReviewContext,
   ): Promise<StructuredReview> {
+    const candidateCount = candidateContext?.candidates.length ?? 1;
+    const accepts = reviewSchemaForCandidateCount(
+      candidateCount,
+      candidateContext?.preferredCandidateIndex ?? 0,
+    );
     const prompts: RolePrompt = {
-      systemPrompt: buildReviewSystemPrompt(reviewer, input.contentLocale),
-      userPrompt: `${sharedMaterial}\nDraft:\n${JSON.stringify(draft)}`,
+      systemPrompt: buildReviewSystemPrompt(reviewer, input.contentLocale, candidateCount),
+      userPrompt: candidateContext
+        ? `${sharedMaterial}\nAuthor preference agreement: ${String(candidateContext.agreementPercent)}%.\nCandidates in author order:\n${JSON.stringify(candidateContext.candidates)}`
+        : `${sharedMaterial}\nDraft:\n${JSON.stringify(draft)}`,
       sharedMaterial,
     };
     const saved = await this.jobs.findCommunication(
@@ -674,7 +703,7 @@ export class GenerationPipelineManager {
     );
     if (saved !== null) {
       await this.recordResumed(input.jobId, role.id);
-      const parsed = reviewSchema.safeParse(saved);
+      const parsed = accepts.safeParse(saved);
       if (!parsed.success)
         throw new ServiceUnavailableException(`${reviewer} has a saved invalid review`);
       return parsed.data;
@@ -685,10 +714,10 @@ export class GenerationPipelineManager {
       reviewer.toLowerCase(),
       round,
       prompts,
-      reviewSchema,
+      accepts,
       REVIEW_REPLY_SHAPE,
     );
-    const parsed = reviewSchema.safeParse(this.parseJson(response.content, reviewSchema));
+    const parsed = accepts.safeParse(this.parseJson(response.content, accepts));
     if (!parsed.success)
       throw new ServiceUnavailableException(`${reviewer} returned an invalid review`);
     await this.persistCommunication(
@@ -764,6 +793,66 @@ export class GenerationPipelineManager {
     }
     // The hash comes from the request, never from the model's echo.
     return { roleId: role.id, agrees: parsed.data.agrees, draftHash };
+  }
+
+  private async callCandidateVote(
+    input: GenerationPipelineInput,
+    role: ModelRole,
+    candidates: AuthorDraft[],
+    sharedMaterial: string,
+    evidenceHash: string,
+    round: number,
+  ): Promise<RevisionCandidateVote> {
+    const communicationRole = { ...role, id: `candidate-vote-${role.id}` };
+    const prompts: RolePrompt = {
+      sharedMaterial,
+      systemPrompt:
+        'Compare the candidate drafts for factual support, coherence, completeness, and safety. Choose the strongest candidate. Return only JSON {"preferredCandidateIndex": integer} using the zero-based author order. Do not rewrite the draft or include chain-of-thought.',
+      userPrompt: `${sharedMaterial}\nCandidates in author order:\n${JSON.stringify(candidates)}`,
+    };
+    const inputHash = this.hash(`${prompts.systemPrompt}\n${prompts.userPrompt}`);
+    const saved = await this.jobs.findCommunication(
+      input.jobId,
+      communicationRole.id,
+      round,
+      evidenceHash,
+      inputHash,
+    );
+    if (saved !== null) await this.recordResumed(input.jobId, communicationRole.id);
+    const accepts = revisionCandidateVoteResponseSchema.refine(
+      (vote) => vote.preferredCandidateIndex < candidates.length,
+    );
+    const response =
+      saved === null
+        ? await this.callRole(
+            input,
+            role,
+            `consensus-author-${role.id}`,
+            round,
+            prompts,
+            accepts,
+            AUTHOR_CANDIDATE_VOTE_REPLY_SHAPE,
+          )
+        : null;
+    const parsed = accepts.safeParse(saved ?? this.parseJson(response?.content ?? '', accepts));
+    if (!parsed.success) {
+      throw new ServiceUnavailableException('An author returned an invalid candidate preference');
+    }
+    if (saved === null) {
+      if (!response) throw new ServiceUnavailableException('An author response is missing');
+      const persisted = await this.jobs.saveCommunication({
+        jobId: input.jobId,
+        attempt: input.attempt,
+        role: communicationRole.id,
+        round,
+        inputHash,
+        evidenceHash,
+        response,
+        output: parsed.data,
+      });
+      if (!persisted) throw new ThreadGenerationLeaseLostError();
+    }
+    return { roleId: role.id, preferredCandidateIndex: parsed.data.preferredCandidateIndex };
   }
 
   private async persistCommunication(

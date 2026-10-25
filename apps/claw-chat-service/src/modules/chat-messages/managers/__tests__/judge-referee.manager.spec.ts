@@ -74,6 +74,35 @@ describe('JudgeRefereeManager — critic invocation', () => {
     manager.setExecutionManager(executionManager as unknown as ChatExecutionManager);
   });
 
+  it('does not convert malformed judge output into an ACCEPT verdict', () => {
+    const verdict = manager.parseJudgeOutput('unstructured output with no verdict');
+
+    expect(verdict.decision).toBe(JudgeDecision.UNAVAILABLE);
+    expect(verdict.fallbackState).toBe('failed');
+  });
+
+  it('marks provider failure as unavailable without reporting verification', async () => {
+    executionManager.callProvider.mockRejectedValue(new Error('provider down'));
+
+    const result = await manager.evaluate(
+      buildResponse(),
+      buildContext(),
+      {
+        enabled: true,
+        category: undefined,
+        routingMode: 'MANUAL_MODEL',
+        isLocalOnly: false,
+        criticEnabled: false,
+        criticModel: null,
+      },
+      buildPayload(),
+    );
+
+    expect(result.judgeVerdict.decision).toBe(JudgeDecision.UNAVAILABLE);
+    expect(result.judgeVerdict.responseType).toBe('unavailable');
+    expect(result.judgeVerdict.response).toBe('');
+  });
+
   it('uses the user-supplied criticModel (PROVIDER:model) instead of the legacy default', async () => {
     // Critic call (1st), then judge call (2nd) — both go through callProvider.
     executionManager.callProvider

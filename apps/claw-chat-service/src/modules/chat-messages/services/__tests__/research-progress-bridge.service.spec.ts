@@ -103,27 +103,25 @@ describe('ResearchProgressBridgeService', () => {
     expect(emitResearchProgress).not.toHaveBeenCalled();
   });
 
-  // Every chat replica receives each tick. The payload is the dedupe key, so
-  // all replicas propose the same entry and only the first one logs it.
-  it('logs a page tick into the narration, keyed so only one replica keeps it', async () => {
+  it('keeps repeated page ticks in live progress without bloating saved narration', async () => {
     const harness = build();
     await harness.service.onModuleInit();
-    const payload = JSON.stringify({
-      correlationId: 'thread-1',
-      phase: 'page',
-      message: 'Fetched https://example.com/pricing',
-      pagesFetched: 3,
-      pagesDiscovered: 12,
-      timestamp: '2026-09-19T10:00:00.000Z',
-    });
 
-    harness.deliver(payload);
-    harness.deliver(payload);
+    for (let index = 1; index <= 181; index += 1) {
+      harness.deliver(
+        JSON.stringify({
+          correlationId: 'thread-1',
+          phase: 'page',
+          message: `Fetched https://example.com/page-${String(index)}`,
+          pagesFetched: index,
+          pagesDiscovered: 181,
+          timestamp: `2026-09-19T10:00:${String(index).padStart(2, '0')}.000Z`,
+        }),
+      );
+    }
 
-    expect(harness.append).toHaveBeenCalledTimes(2);
-    const [first, second] = harness.append.mock.calls;
-    expect(first?.[1]).toMatchObject({ kind: 'crawl_progress', params: { pagesFetched: 3 } });
-    expect(first?.[2]).toBe(second?.[2]);
+    expect(harness.emitResearchProgress).toHaveBeenCalledTimes(181);
+    expect(harness.append).not.toHaveBeenCalled();
   });
 
   it('does not narrate the start and finish, which the orchestrator reports with what was read', async () => {

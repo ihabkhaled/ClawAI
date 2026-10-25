@@ -5,7 +5,10 @@ import {
   fallbackModelTokenBudget,
 } from '../assembled-context.utility';
 import { type AssembledContext } from '../../types/context.types';
-import { injectResearchEvidenceIntoContext } from '../research-prompt.utility';
+import {
+  hasGithubRepositoryEvidence,
+  injectResearchEvidenceIntoContext,
+} from '../research-prompt.utility';
 
 function baseContext(systemPrompt: string | null): AssembledContext {
   return {
@@ -67,5 +70,14 @@ describe('injectResearchEvidenceIntoContext', () => {
     const result = injectResearchEvidenceIntoContext(context, '## Web research evidence');
 
     expect(result.systemPrompt).toBe('## Web research evidence');
+  });
+});
+
+describe('hasGithubRepositoryEvidence', () => {
+  it('recognizes repository paths but not general GitHub pages or other sites', () => {
+    expect(hasGithubRepositoryEvidence(['https://github.com/ihabkhaled/AI-Psychiatry'])).toBe(true);
+    expect(hasGithubRepositoryEvidence(['https://github.com/features'])).toBe(false);
+    expect(hasGithubRepositoryEvidence(['https://example.com/owner/repo'])).toBe(false);
+    expect(hasGithubRepositoryEvidence(['not a URL'])).toBe(false);
   });
 });

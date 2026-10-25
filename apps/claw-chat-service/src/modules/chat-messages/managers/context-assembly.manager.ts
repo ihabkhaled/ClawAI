@@ -2,7 +2,10 @@ import { randomUUID } from 'node:crypto';
 
 import { withQuotedContext } from '../utilities/quoted-turn.utility';
 import { withSaveTurnNote } from '../utilities/context-save-note.utility';
-import { buildPlatformIdentityBlock } from '../utilities/platform-identity.utility';
+import {
+  buildMentalHealthAccuracyNote,
+  buildPlatformIdentityBlock,
+} from '../utilities/platform-identity.utility';
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import {
   CONTEXT_PACK_FIT_BUDGET_SHARE,
@@ -36,10 +39,12 @@ import {
 import { MemoryRecordType } from '../../../common/enums/memory-record-type.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import {
+  GITHUB_REPOSITORY_COVERAGE_NOTE,
   RESEARCH_GROUNDING_MARKER,
   RESEARCH_GROUNDING_NO_INVENT_INSTRUCTION,
   RESEARCH_GROUNDING_REMINDER,
 } from '../constants/research-grounding.constants';
+import { hasGithubRepositoryEvidence } from '../utilities/research-prompt.utility';
 import {
   APPROX_CHARS_PER_TOKEN,
   PROMPT_TOPICAL_MEMORY_LIMIT,
@@ -54,10 +59,14 @@ import {
 } from '../types/execution.types';
 import {
   type AssembledContext,
+  type BudgetedContextAssembly,
   type ChatPacksResponse,
+  type ContextAssemblyRequest,
+  type FetchedContextInputs,
   type FileContentResponse,
   type FileIngestionState,
   type MemoryRecordResponse,
+  type PreparedContextAssembly,
   type ResearchEvidenceCitation,
   type WorkspaceCitation,
   type WorkspaceSearchApiResponse,
@@ -151,6 +160,27 @@ export class ContextAssemblyManager {
     research?: ResearchOptions,
     routingMode?: RoutingMode,
   ): Promise<AssembledContext> {
+    return this.prepareContextAssembly({
+      userId,
+      threadMessages,
+      threadSettings,
+      contextPackIds,
+      fileIds,
+      research,
+      routingMode,
+    });
+  }
+
+  private async prepareContextAssembly(request: ContextAssemblyRequest): Promise<AssembledContext> {
+    const {
+      userId,
+      threadMessages,
+      threadSettings,
+      contextPackIds,
+      fileIds,
+      research,
+      routingMode,
+    } = request;
     this.logStartAssemble(userId, threadMessages, contextPackIds, fileIds, research);
     // NOTE: no slice. Which of these messages reaches the model is decided
     // below by ContextComposerManager against a real token budget. The line
@@ -206,6 +236,45 @@ export class ContextAssemblyManager {
     // at all.
     const researchRequested = research !== undefined && research.mode !== ResearchMode.NONE;
 
+    return this.completeContextAssembly({
+      userId,
+      threadMessages,
+      threadSettings,
+      fileIds,
+      routingMode,
+      lastUserContent,
+      retrievalMs,
+      fetched,
+      filteredFileContents,
+      earlierDelivered,
+      researchWarnings,
+      researchEvidence,
+      researchToolsUsed,
+      researchRequested,
+    });
+  }
+
+  private async completeContextAssembly(
+    prepared: PreparedContextAssembly,
+  ): Promise<AssembledContext> {
+    const budgeted = await this.selectBudgetedContextAssembly(prepared);
+    this.logResearchAssembly(prepared);
+    return this.buildAssembledContext(budgeted);
+  }
+
+  private async selectBudgetedContextAssembly(
+    prepared: PreparedContextAssembly,
+  ): Promise<BudgetedContextAssembly> {
+    const {
+      userId,
+      threadMessages,
+      threadSettings,
+      lastUserContent,
+      retrievalMs,
+      fetched,
+      filteredFileContents,
+      researchEvidence,
+    } = prepared;
     // The prompt's fixed cost, measured before history is fitted, so history
     // is budgeted against what is actually left rather than against a number
     // that ignored files, memories and the system prompt entirely.
@@ -218,6 +287,7 @@ export class ContextAssemblyManager {
       fileContents: filteredFileContents,
       workspaceCitations: fetched.workspaceCitations,
       researchEvidence,
+      currentMessage: lastUserContent,
     });
     const modelBudget = resolveModelTokenBudget({
       contextWindowTokens: threadSettings?.contextWindowTokens ?? null,
@@ -254,6 +324,18 @@ export class ContextAssemblyManager {
       retrievalMs,
     });
 
+    return {
+      prepared,
+      platformOrigin,
+      modelBudget,
+      conversationBudget,
+      crossThread,
+      selected,
+    };
+  }
+
+  private logResearchAssembly(prepared: PreparedContextAssembly): void {
+    const { researchEvidence, researchWarnings, researchRequested, researchToolsUsed } = prepared;
     // The one line that answers "why did the model say it can't browse?".
     // A research run can complete, persist a bundle and still contribute
     // nothing to the prompt — the run and the prompt are assembled in
@@ -263,9 +345,30 @@ export class ContextAssemblyManager {
       `assemble: research evidence=${String(researchEvidence.length)} ` +
         `warnings=${String(researchWarnings.length)} requested=${String(researchRequested)} ` +
         `tools=[${researchToolsUsed.join(',')}] ` +
-        `block=${String(researchRequested || researchEvidence.length > 0 || researchWarnings.length > 0)}`,
+        `block=${String(
+          [researchRequested, researchEvidence.length > 0, researchWarnings.length > 0].some(
+            Boolean,
+          ),
+        )}`,
     );
+  }
 
+  private buildAssembledContext(budgeted: BudgetedContextAssembly): AssembledContext {
+    const { prepared, platformOrigin, modelBudget, conversationBudget, crossThread, selected } =
+      budgeted;
+    const {
+      userId,
+      threadSettings,
+      fileIds,
+      routingMode,
+      fetched,
+      filteredFileContents,
+      earlierDelivered,
+      researchEvidence,
+      researchWarnings,
+      researchRequested,
+      researchToolsUsed,
+    } = prepared;
     return {
       userId,
       systemPrompt: threadSettings?.systemPrompt ?? null,
@@ -301,8 +404,8 @@ export class ContextAssemblyManager {
 
   private lastUserContentOf(messages: readonly ChatMessage[]): string {
     for (let index = messages.length - 1; index >= 0; index -= 1) {
-      const message = messages[index];
-      if (message !== undefined && message.role === 'USER') {
+      const message = messages.at(index);
+      if (message?.role === 'USER') {
         return message.content ?? '';
       }
     }
@@ -325,12 +428,15 @@ export class ContextAssemblyManager {
     fileContents: AssembledContext['fileContents'];
     workspaceCitations: AssembledContext['workspaceCitations'];
     researchEvidence: ResearchEvidenceCitation[];
+    currentMessage: string;
   }): number {
     // The hidden platform block rides on every request, so it is paid for in the
     // window like the system prompt is (ADR-136).
     let tokens =
       estimateTokensFromText(parts.systemPrompt ?? '') +
       estimateTokensFromText(buildPlatformIdentityBlock(parts.platformOrigin));
+    const accuracyNote = buildMentalHealthAccuracyNote(parts.currentMessage);
+    if (accuracyNote) tokens += estimateTokensFromText(accuracyNote);
     for (const memory of parts.memories) tokens += estimateTokensFromText(memory.content);
     for (const item of parts.contextPackItems) tokens += estimateTokensFromText(item.content ?? '');
     // Each block also carries its fixed framing (header + verbatim-quote rule).
@@ -347,6 +453,9 @@ ${citation.snippet ?? ''}`);
     for (const evidence of parts.researchEvidence) {
       tokens += estimateTokensFromText(`${evidence.title ?? ''}
 ${evidence.snippet}`);
+    }
+    if (hasGithubRepositoryEvidence(parts.researchEvidence.map(({ url }) => url))) {
+      tokens += estimateTokensFromText(GITHUB_REPOSITORY_COVERAGE_NOTE);
     }
     return tokens;
   }
@@ -427,14 +536,7 @@ ${evidence.snippet}`);
     memoryTokenBudget: number;
     useMemory: boolean;
     useContext: boolean;
-  }): Promise<{
-    memories: AssembledContext['memories'];
-    contextPackItems: AssembledContext['contextPackItems'];
-    fileContents: AssembledContext['fileContents'];
-    earlierFileContents: AssembledContext['fileContents'];
-    workspaceCitations: AssembledContext['workspaceCitations'];
-    researchRun: ResearchRunResponse | null;
-  }> {
+  }): Promise<FetchedContextInputs> {
     const [memories, contextPackItems, fileContents, workspaceCitations, researchRun] =
       await Promise.all([
         args.skipExpensiveContext || !args.useMemory
@@ -679,6 +781,10 @@ ${evidence.snippet}`);
     const parts: string[] = [
       `SYSTEM: ${buildPlatformIdentityBlock(context.platformOrigin, context.platformSurface)}`,
     ];
+    const accuracyNote = buildMentalHealthAccuracyNote(
+      this.lastUserContentOf(context.threadMessages),
+    );
+    if (accuracyNote) parts.push(`SYSTEM: ${accuracyNote}`);
     if (context.systemPrompt) {
       parts.push(`SYSTEM: ${context.systemPrompt}`);
     }
@@ -1033,6 +1139,10 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     const parts: string[] = [
       buildPlatformIdentityBlock(context.platformOrigin, context.platformSurface),
     ];
+    const accuracyNote = buildMentalHealthAccuracyNote(
+      this.lastUserContentOf(context.threadMessages),
+    );
+    if (accuracyNote) parts.push(accuracyNote);
     if (context.systemPrompt) parts.push(context.systemPrompt);
     if (relevantMemories.length > 0) {
       const block = relevantMemories.map((m) => `[${m.type}] ${m.content}`).join('\n');
@@ -1603,26 +1713,33 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       Math.floor(windowChars * MEMORY_FIT_BUDGET_SHARE),
       question,
     );
-    fetched.memories = fetched.memories
-      .slice(0, memories.texts.length)
-      .map((memory, index) => ({ ...memory, content: memories.texts[index] ?? '' }));
+    const fittedMemoryTexts = memories.texts[Symbol.iterator]();
+    fetched.memories = fetched.memories.slice(0, memories.texts.length).map((memory) => ({
+      ...memory,
+      content: fittedMemoryTexts.next().value ?? '',
+    }));
 
     const packs = fitTextsByRelevance(
       fetched.contextPackItems.map((item) => item.content ?? ''),
       Math.floor(windowChars * CONTEXT_PACK_FIT_BUDGET_SHARE),
       question,
     );
+    const fittedPackTexts = packs.texts[Symbol.iterator]();
     fetched.contextPackItems = fetched.contextPackItems
       .slice(0, packs.texts.length)
-      .map((item, index) => ({ ...item, content: packs.texts[index] ?? '' }));
+      .map((item) => ({
+        ...item,
+        content: fittedPackTexts.next().value ?? '',
+      }));
 
     const textFiles = files.filter((file) => (file.extractedText ?? '').length > 0);
     const fileTexts = fitTextsToBudget(
       textFiles.map((file) => file.extractedText ?? ''),
       Math.floor(windowChars * FILE_FIT_BUDGET_SHARE),
     );
-    for (const [index, file] of textFiles.entries()) {
-      file.extractedText = fileTexts.texts[index] ?? '';
+    const fittedFileTextValues = fileTexts.texts[Symbol.iterator]();
+    for (const file of textFiles) {
+      file.extractedText = fittedFileTextValues.next().value ?? '';
     }
 
     if (memories.dropped + packs.dropped + fileTexts.dropped > 0) {
@@ -1644,6 +1761,9 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       RESEARCH_GROUNDING_NO_INVENT_INSTRUCTION,
       'LIVE RESEARCH EVIDENCE (ground your answer strictly in these sources — cite them as [n]):',
     ];
+    if (hasGithubRepositoryEvidence(context.researchEvidence.map(({ url }) => url))) {
+      lines.push(GITHUB_REPOSITORY_COVERAGE_NOTE);
+    }
     if (context.researchEvidence.length === 0) {
       lines.push(
         'This run produced NO usable web evidence — the attempt was made and it did not succeed.',
@@ -1700,9 +1820,8 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     // non-empty and this is not an image — so it used to hand the literal
     // placeholder to the model as if it were the transcript. See
     // decodeAudioContent for what replaced that.
-    if (this.isAudioFile(file)) {
-      return this.decodeAudioContent(file);
-    }
+    const mediaContent = this.decodeMediaFileContent(file);
+    if (mediaContent !== null) return mediaContent;
 
     // Also before the extracted-text branch, for the same reason as audio:
     // file-service writes `[Video file: <name>]` into a video row's
@@ -1711,17 +1830,6 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     // the timestamped document (batch 7) it is framed as a VIDEO block; until
     // then the lane is told it is still processing (or why it failed). The
     // bytes are never decoded into the prompt; a native lane never reaches here.
-    if (this.isVideoFile(file)) {
-      return hasVideoDocument(file)
-        ? formatVideoContextBlock({
-            filename: file.filename,
-            media: file.media,
-            document: file.extractedText ?? '',
-            frameSet: undefined,
-          })
-        : describeUnprocessedVideo(file);
-    }
-
     // A scanned PDF OCR could not read carries the image placeholder as its
     // "text". It is not content; say so instead of handing it over as if read.
     if (!this.isImageFile(file) && isUnreadableScannedDocument(file)) {
@@ -1757,6 +1865,19 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     return !file.content
       ? `[File "${file.filename}" has no content]`
       : `[File "${file.filename}" (${file.mimeType}) produced no readable text. Tell the user the format could not be read; do not guess at the contents.]`;
+  }
+
+  private decodeMediaFileContent(file: FileContentResponse): string | null {
+    if (this.isAudioFile(file)) return this.decodeAudioContent(file);
+    if (!this.isVideoFile(file)) return null;
+    return hasVideoDocument(file)
+      ? formatVideoContextBlock({
+          filename: file.filename,
+          media: file.media,
+          document: file.extractedText ?? '',
+          frameSet: undefined,
+        })
+      : describeUnprocessedVideo(file);
   }
 
   /**

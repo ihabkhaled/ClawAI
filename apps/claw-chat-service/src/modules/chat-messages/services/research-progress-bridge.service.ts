@@ -68,11 +68,10 @@ export class ResearchProgressBridgeService implements OnModuleInit {
       message.correlationId,
       mapCrawlPhaseToResearchProgress(message),
     );
-    // Also a line in the turn's narrated work log ("Discovered 42 sitemap
-    // URLs", "Reading /pricing"). The start and the finish are narrated by the
-    // orchestrator with what was actually READ, so only the steps between are
-    // taken from here. Every replica receives this tick; the payload itself is
-    // the dedupe key, so exactly one replica logs it.
+    // Milestones join the stored narration. Per-page ticks stay in the live
+    // progress timeline; storing each one made long crawls overwhelm the work
+    // log with entries the dedicated timeline already shows. Every replica
+    // receives ticks, so milestone payloads use a dedupe key.
     if (NARRATED_CRAWL_PHASES.has(message.phase)) {
       void this.narration.append(
         message.correlationId,

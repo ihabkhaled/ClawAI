@@ -105,10 +105,9 @@ describe('SiteCrawlManager', () => {
           }),
         );
       }
-      if (url === 'https://example.com/') {
-        return Promise.resolve(buildFetchResult({ links: [] }));
-      }
-      return Promise.resolve(buildFetchResult({ url, finalUrl: url, title: url }));
+      return url === 'https://example.com/'
+        ? Promise.resolve(buildFetchResult({ links: [] }))
+        : Promise.resolve(buildFetchResult({ url, finalUrl: url, title: url }));
     });
 
     const items = await manager.crawl(
@@ -130,6 +129,81 @@ describe('SiteCrawlManager', () => {
     expect(toolsUsed).toContain('web_crawl:robots');
     expect(toolsUsed).toContain('web_crawl:sitemap');
     expect(toolsUsed).toContain('web_fetch:site_crawl');
+  });
+
+  it('keeps a GitHub crawl inside the requested repo while following repository links', async () => {
+    fetchPage.mockImplementation((_userId: string, { url }: { url: string }) => {
+      if (url === 'https://github.com/robots.txt') {
+        return Promise.resolve(
+          buildFetchResult({
+            mimeType: 'text/plain',
+            content: 'User-agent: *\\nDisallow:\\nSitemap: https://github.com/sitemap.xml',
+          }),
+        );
+      }
+      if (url === 'https://github.com/sitemap.xml') {
+        return Promise.resolve(
+          buildFetchResult({
+            mimeType: 'application/xml',
+            content: `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+              <url><loc>https://github.com/owner/AI-Psychiatry</loc></url>
+              <url><loc>https://github.com/owner/AI-Psychiatry/tree/main</loc></url>
+              <url><loc>https://github.com/owner/AnotherRepo</loc></url>
+              <url><loc>https://github.com/features</loc></url>
+            </urlset>`,
+          }),
+        );
+      }
+      if (url === 'https://github.com/owner/AI-Psychiatry') {
+        return Promise.resolve(
+          buildFetchResult({
+            url,
+            finalUrl: url,
+            links: [
+              'https://github.com/owner/AI-Psychiatry/tree/main',
+              'https://github.com/owner/AI-Psychiatry/blob/main/README.md',
+              'https://github.com/owner/OtherRepo',
+              'https://github.com/features',
+            ],
+          }),
+        );
+      }
+      if (url === 'https://github.com/owner/AI-Psychiatry/tree/main') {
+        return Promise.resolve(buildFetchResult({ url, finalUrl: url, title: 'Repository tree' }));
+      }
+      if (url === 'https://github.com/owner/AI-Psychiatry/blob/main/README.md') {
+        return Promise.resolve(
+          buildFetchResult({ url, finalUrl: url, title: 'Repository README' }),
+        );
+      }
+      throw new Error(`unexpected out-of-scope fetch: ${url}`);
+    });
+
+    const items = await manager.crawl(
+      'u1',
+      'https://github.com/owner/AI-Psychiatry',
+      trace,
+      toolsUsed,
+      warnings,
+      undefined,
+      10,
+    );
+
+    const crawledUrls = items.map((item) => item.url);
+    expect(crawledUrls).toHaveLength(3);
+    expect(crawledUrls).toEqual(
+      expect.arrayContaining([
+        'https://github.com/owner/AI-Psychiatry',
+        'https://github.com/owner/AI-Psychiatry/tree/main',
+        'https://github.com/owner/AI-Psychiatry/blob/main/README.md',
+      ]),
+    );
+    expect(fetchPage.mock.calls.map(([, request]) => request.url)).not.toContain(
+      'https://github.com/owner/OtherRepo',
+    );
+    expect(fetchPage.mock.calls.map(([, request]) => request.url)).not.toContain(
+      'https://github.com/features',
+    );
   });
 
   it('follows a sitemap index into its nested sitemaps', async () => {
@@ -157,10 +231,9 @@ describe('SiteCrawlManager', () => {
           }),
         );
       }
-      if (url === 'https://example.com/') {
-        return Promise.resolve(buildFetchResult({ links: [] }));
-      }
-      return Promise.resolve(buildFetchResult({ url, finalUrl: url }));
+      return url === 'https://example.com/'
+        ? Promise.resolve(buildFetchResult({ links: [] }))
+        : Promise.resolve(buildFetchResult({ url, finalUrl: url }));
     });
 
     const items = await manager.crawl(
@@ -238,12 +311,11 @@ describe('SiteCrawlManager', () => {
           }),
         );
       }
-      if (url === 'https://example.com/') {
-        return Promise.resolve(
-          buildFetchResult({ links: ['https://example.com/should-not-be-fetched'] }),
-        );
-      }
-      return Promise.resolve(buildFetchResult({ url, finalUrl: url }));
+      return url === 'https://example.com/'
+        ? Promise.resolve(
+            buildFetchResult({ links: ['https://example.com/should-not-be-fetched'] }),
+          )
+        : Promise.resolve(buildFetchResult({ url, finalUrl: url }));
     });
 
     const items = await manager.crawl(
@@ -298,10 +370,9 @@ describe('SiteCrawlManager', () => {
           }),
         );
       }
-      if (url === 'https://example.com/') {
-        return Promise.resolve(buildFetchResult({ links: [] }));
-      }
-      return Promise.resolve(buildFetchResult({ url, finalUrl: url }));
+      return url === 'https://example.com/'
+        ? Promise.resolve(buildFetchResult({ links: [] }))
+        : Promise.resolve(buildFetchResult({ url, finalUrl: url }));
     });
 
     const items = await manager.crawl(
@@ -339,10 +410,9 @@ describe('SiteCrawlManager', () => {
       if (url === 'https://example.com/') {
         return Promise.resolve(buildFetchResult({ links: [] }));
       }
-      if (url === 'https://example.com/broken') {
-        return Promise.reject(new Error('500 Internal Server Error'));
-      }
-      return Promise.resolve(buildFetchResult({ url, finalUrl: url }));
+      return url === 'https://example.com/broken'
+        ? Promise.reject(new Error('500 Internal Server Error'))
+        : Promise.resolve(buildFetchResult({ url, finalUrl: url }));
     });
 
     const items = await manager.crawl(
@@ -362,10 +432,9 @@ describe('SiteCrawlManager', () => {
 
   it('returns no evidence when even the homepage fails to fetch', async () => {
     fetchPage.mockImplementation((_userId: string, { url }: { url: string }) => {
-      if (url === 'https://example.com/') {
-        return Promise.reject(new Error('connection refused'));
-      }
-      return Promise.reject(new Error('404'));
+      return url === 'https://example.com/'
+        ? Promise.reject(new Error('connection refused'))
+        : Promise.reject(new Error('404'));
     });
 
     const items = await manager.crawl(
@@ -466,10 +535,9 @@ describe('SiteCrawlManager', () => {
           }),
         );
       }
-      if (url === 'https://example.com/') {
-        return Promise.resolve(buildFetchResult({ links: [] }));
-      }
-      return Promise.resolve(buildFetchResult({ url, finalUrl: url }));
+      return url === 'https://example.com/'
+        ? Promise.resolve(buildFetchResult({ links: [] }))
+        : Promise.resolve(buildFetchResult({ url, finalUrl: url }));
     });
 
     const items = await manager.crawl(
@@ -507,10 +575,9 @@ describe('SiteCrawlManager', () => {
           }),
         );
       }
-      if (url.endsWith('/robots.txt')) {
-        return Promise.reject(new Error('not found'));
-      }
-      return Promise.resolve(buildFetchResult({ url, finalUrl: url }));
+      return url.endsWith('/robots.txt')
+        ? Promise.reject(new Error('not found'))
+        : Promise.resolve(buildFetchResult({ url, finalUrl: url }));
     });
 
     const items = await manager.crawl(
@@ -542,10 +609,9 @@ describe('SiteCrawlManager', () => {
           }),
         );
       }
-      if (url.endsWith('/robots.txt') || url.endsWith('/sitemap.xml')) {
-        return Promise.reject(new Error('not found'));
-      }
-      return Promise.resolve(buildFetchResult({ url, finalUrl: url }));
+      return url.endsWith('/robots.txt') || url.endsWith('/sitemap.xml')
+        ? Promise.reject(new Error('not found'))
+        : Promise.resolve(buildFetchResult({ url, finalUrl: url }));
     });
 
     const items = await manager.crawl(
@@ -576,10 +642,9 @@ describe('SiteCrawlManager', () => {
             }),
           );
         }
-        if (url.endsWith('/robots.txt')) {
-          return Promise.reject(new Error('not found'));
-        }
-        return Promise.resolve(buildFetchResult({ url, finalUrl: url }));
+        return url.endsWith('/robots.txt')
+          ? Promise.reject(new Error('not found'))
+          : Promise.resolve(buildFetchResult({ url, finalUrl: url }));
       });
     }
 

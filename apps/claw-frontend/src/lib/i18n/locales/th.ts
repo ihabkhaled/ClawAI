@@ -1291,6 +1291,7 @@ export const th: TranslationDictionary = {
     judgeRefereeDescription:
       'เปิดใช้งานการวิจารณ์ที่ขับเคลื่อนโดย AI และการตรวจสอบการตอบสนองเพื่อความแม่นยำที่สูงขึ้น',
     judgeVerified: 'ตรวจสอบแล้ว',
+    judgeUnavailable: 'ผู้พิพากษาไม่พร้อมใช้งาน',
     judgeRevised: 'แก้ไขแล้ว',
     judgeEscalated: 'ยกระดับแล้ว',
     judgeCriticFeedback: 'คำติชมของนักวิจารณ์',

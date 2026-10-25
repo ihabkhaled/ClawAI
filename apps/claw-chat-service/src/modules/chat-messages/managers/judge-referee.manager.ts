@@ -130,31 +130,14 @@ export class JudgeRefereeManager {
     // gets its own active/completed pair on the orchestration timeline so the
     // UI shows which of the two is running, not one merged "verifying" blob —
     // and nothing is emitted for the critic step when it is disabled.
-    let criticEvaluation: CriticEvaluation;
-    if (criticModelInfo !== null) {
-      const resolvedCriticLabel = `${criticModelInfo.provider}/${criticModelInfo.model}`;
-      this.emitReviewStage(
-        payload.threadId,
-        AiStreamStage.CRITIQUING,
-        resolvedCriticLabel,
-        OrchestrationStageStatus.ACTIVE,
-      );
-      criticEvaluation = await this.callCriticWithModel(
-        response,
-        context,
-        config,
-        criticModelInfo,
-        deliveryRecords,
-      );
-      this.emitReviewStage(
-        payload.threadId,
-        AiStreamStage.CRITIQUING,
-        resolvedCriticLabel,
-        OrchestrationStageStatus.COMPLETED,
-      );
-    } else {
-      criticEvaluation = this.buildSkippedCriticEvaluation(config);
-    }
+    const criticEvaluation = await this.runCriticEvaluation(
+      criticModelInfo,
+      response,
+      context,
+      config,
+      payload.threadId,
+      deliveryRecords,
+    );
 
     this.emitReviewStage(
       payload.threadId,
@@ -189,8 +172,27 @@ export class JudgeRefereeManager {
       totalLatencyMs,
       tokenUsage: this.buildJudgeTokenUsage(criticEvaluation, judgeVerdict),
     };
+    return this.completeEvaluation(
+      result,
+      response,
+      criticEvaluation,
+      context,
+      payload,
+      threadSettings,
+      judgeTarget,
+    );
+  }
 
-    if (judgeVerdict.decision === JudgeDecision.REVISE && this.executionManager) {
+  private async completeEvaluation(
+    result: JudgeRefereeResult,
+    response: LlmResponse,
+    criticEvaluation: CriticEvaluation,
+    context: AssembledContext,
+    payload: MessageRoutedData,
+    threadSettings: ThreadSettings | undefined,
+    judgeTarget: { provider: string; model: string },
+  ): Promise<JudgeRefereeResult> {
+    if (result.judgeVerdict.decision === JudgeDecision.REVISE && this.executionManager) {
       result.revisedResponse = await this.attemptRevision(
         response,
         criticEvaluation,
@@ -201,19 +203,54 @@ export class JudgeRefereeManager {
     }
 
     if (
-      judgeVerdict.decision === JudgeDecision.ESCALATE &&
-      judgeVerdict.response.trim().length > 0
+      result.judgeVerdict.decision === JudgeDecision.ESCALATE &&
+      result.judgeVerdict.response.trim().length > 0
     ) {
       result.escalatedResponse = {
-        content: judgeVerdict.response,
+        content: result.judgeVerdict.response,
         provider: judgeTarget.provider,
         model: judgeTarget.model,
-        latencyMs: judgeVerdict.latencyMs,
+        latencyMs: result.judgeVerdict.latencyMs,
         usedFallback: false,
       };
     }
 
     return result;
+  }
+
+  private async runCriticEvaluation(
+    criticModelInfo: { provider: string; model: string } | null,
+    response: LlmResponse,
+    context: AssembledContext,
+    config: JudgeRefereeConfig,
+    threadId: string,
+    deliveryRecords: FileDeliveryRecordView[] | undefined,
+  ): Promise<CriticEvaluation> {
+    if (criticModelInfo === null) {
+      return this.buildSkippedCriticEvaluation(config);
+    }
+
+    const modelLabel = `${criticModelInfo.provider}/${criticModelInfo.model}`;
+    this.emitReviewStage(
+      threadId,
+      AiStreamStage.CRITIQUING,
+      modelLabel,
+      OrchestrationStageStatus.ACTIVE,
+    );
+    const evaluation = await this.callCriticWithModel(
+      response,
+      context,
+      config,
+      criticModelInfo,
+      deliveryRecords,
+    );
+    this.emitReviewStage(
+      threadId,
+      AiStreamStage.CRITIQUING,
+      modelLabel,
+      OrchestrationStageStatus.COMPLETED,
+    );
+    return evaluation;
   }
 
   buildMetadata(result: JudgeRefereeResult): JudgeRefereeMetadata {
@@ -431,14 +468,14 @@ export class JudgeRefereeManager {
       };
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.warn(`callJudge: failed — ${msg}. Defaulting to ACCEPT.`);
+      this.logger.warn(`callJudge: failed — ${msg}. Marking the judge unavailable.`);
       return {
-        decision: JudgeDecision.ACCEPT,
-        summary: 'The answer passed review.',
-        reasoning: 'Judge unavailable, accepting response',
-        confidence: JUDGE_CONFIDENCE_THRESHOLD,
-        response: 'The answer passed review because the judge service was unavailable.',
-        responseType: 'verification_note',
+        decision: JudgeDecision.UNAVAILABLE,
+        summary: 'The judge could not complete a review.',
+        reasoning: 'The judge service was unavailable.',
+        confidence: 0,
+        response: '',
+        responseType: 'unavailable',
         recommendedChanges: [],
         model: judgeLabel,
         latencyMs: Date.now() - startTime,
@@ -819,6 +856,7 @@ export class JudgeRefereeManager {
     }
 
     const decision = this.inferJudgeDecision(normalizedContent);
+    if (decision === null) return null;
     const summary = this.buildJudgeSummary(normalizedContent);
     let responseType: JudgeResponseType = 'verification_note';
     if (decision === JudgeDecision.REVISE) {
@@ -838,7 +876,7 @@ export class JudgeRefereeManager {
     };
   }
 
-  private inferJudgeDecision(content: string): JudgeDecision {
+  private inferJudgeDecision(content: string): JudgeDecision | null {
     const normalized = content.toLowerCase();
 
     const escalateHints = [
@@ -862,9 +900,16 @@ export class JudgeRefereeManager {
       'missing',
       'incomplete',
     ];
-    return reviseHints.some((hint) => normalized.includes(hint))
-      ? JudgeDecision.REVISE
-      : JudgeDecision.ACCEPT;
+    if (reviseHints.some((hint) => normalized.includes(hint))) return JudgeDecision.REVISE;
+    const acceptHints = [
+      'accept',
+      'approved',
+      'passes review',
+      'passed review',
+      'looks good',
+      'no issues',
+    ];
+    return acceptHints.some((hint) => normalized.includes(hint)) ? JudgeDecision.ACCEPT : null;
   }
 
   private buildJudgeSummary(content: string): string {
@@ -884,21 +929,23 @@ export class JudgeRefereeManager {
       return this.buildParsedVerdict(parsed, decision as JudgeDecision);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Parse error';
-      this.logger.warn(`parseJudgeOutput: failed to parse — ${msg}. Defaulting to ACCEPT.`);
+      this.logger.warn(
+        `parseJudgeOutput: failed to parse — ${msg}. Marking the judge unavailable.`,
+      );
       const plainVerdict = this.parseJudgePlainTextOutput(content);
-      return plainVerdict
-        ? plainVerdict
-        : {
-            decision: JudgeDecision.ACCEPT,
-            summary: 'The judge completed a review of the answer.',
-            reasoning: 'Could not parse judge output, accepting by default',
-            confidence: JUDGE_CONFIDENCE_THRESHOLD,
-            response: 'The answer passed review.',
-            responseType: 'verification_note',
-            recommendedChanges: [],
-            wasFallback: true,
-            fallbackState: 'failed',
-          };
+      return (
+        plainVerdict ?? {
+          decision: JudgeDecision.UNAVAILABLE,
+          summary: 'The judge could not complete a review.',
+          reasoning: 'The judge response could not be parsed.',
+          confidence: 0,
+          response: '',
+          responseType: 'unavailable',
+          recommendedChanges: [],
+          wasFallback: true,
+          fallbackState: 'failed',
+        }
+      );
     }
   }
 
@@ -919,7 +966,8 @@ export class JudgeRefereeManager {
     if (
       decision !== JudgeDecision.ACCEPT &&
       decision !== JudgeDecision.REVISE &&
-      decision !== JudgeDecision.ESCALATE
+      decision !== JudgeDecision.ESCALATE &&
+      decision !== JudgeDecision.UNAVAILABLE
     ) {
       throw new Error(`Invalid decision: ${String(decision)}`);
     }
@@ -935,10 +983,14 @@ export class JudgeRefereeManager {
     const response = parsed['response'];
     const responseType = parsed['responseType'];
     const recommendedChangesRaw = parsed['recommendedChanges'];
-    let resolvedResponse =
-      decision === JudgeDecision.ESCALATE
-        ? 'A stronger answer is required for this request.'
-        : 'The answer passed review.';
+    let resolvedResponse: string;
+    if (decision === JudgeDecision.ESCALATE) {
+      resolvedResponse = 'A stronger answer is required for this request.';
+    } else if (decision === JudgeDecision.UNAVAILABLE) {
+      resolvedResponse = '';
+    } else {
+      resolvedResponse = 'The answer passed review.';
+    }
     if (typeof response === 'string' && response.trim().length > 0) {
       resolvedResponse = response;
     }
@@ -971,11 +1023,13 @@ export class JudgeRefereeManager {
       responseType === 'summary' ||
       responseType === 'revised_answer' ||
       responseType === 'escalated_answer' ||
-      responseType === 'verification_note'
+      responseType === 'verification_note' ||
+      responseType === 'unavailable'
     ) {
       return responseType;
     }
-    return decision === JudgeDecision.ESCALATE ? 'escalated_answer' : 'verification_note';
+    if (decision === JudgeDecision.ESCALATE) return 'escalated_answer';
+    return decision === JudgeDecision.UNAVAILABLE ? 'unavailable' : 'verification_note';
   }
 
   private parseCriticOutput(content: string): {

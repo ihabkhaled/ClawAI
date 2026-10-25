@@ -309,6 +309,7 @@ export class RoleHealer {
           maxOutputTokens,
           waits,
           retryAfterMs: null,
+          httpStatus: null,
           reason,
           lastReply,
         });
@@ -361,6 +362,7 @@ export class RoleHealer {
           maxOutputTokens,
           waits,
           retryAfterMs,
+          httpStatus: parsed.httpStatus,
           reason: parsed.code,
           lastReply,
         });
@@ -391,6 +393,7 @@ export class RoleHealer {
           baseMaxOutputTokens: state.spec.role.maxOutputTokens,
           currentMaxOutputTokens: state.maxOutputTokens,
           retryAfterMs: state.retryAfterMs,
+          httpStatus: state.httpStatus,
           waits: state.waits,
           reason: state.reason,
           raisedMaxOutputTokens: escalatedOutputTokens(

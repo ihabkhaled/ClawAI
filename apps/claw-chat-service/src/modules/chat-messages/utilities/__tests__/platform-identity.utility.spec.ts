@@ -1,6 +1,7 @@
 import { ChatSurface } from '../../../../common/enums/chat-surface.enum';
 import {
   asksAboutThisPlatform,
+  buildMentalHealthAccuracyNote,
   buildPlatformIdentityBlock,
   buildSelfInspectIntent,
 } from '../platform-identity.utility';
@@ -79,6 +80,21 @@ describe('asksAboutThisPlatform', () => {
     'hello',
   ])('ignores %j', (message) => {
     expect(asksAboutThisPlatform(message)).toBe(false);
+  });
+});
+
+describe('buildMentalHealthAccuracyNote', () => {
+  it('guards diagnosis and AI disorder metaphors', () => {
+    const note = buildMentalHealthAccuracyNote(
+      'Could an AI develop ADHD or narcissistic patterns?',
+    );
+
+    expect(note).toContain('Do not diagnose a person');
+    expect(note).toContain('metaphors for AI behavior');
+  });
+
+  it('does not change unrelated prompts', () => {
+    expect(buildMentalHealthAccuracyNote('How do I clone a GitHub repository?')).toBeNull();
   });
 });
 

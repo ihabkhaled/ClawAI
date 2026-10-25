@@ -208,6 +208,28 @@ function readyGeneration() {
   };
 }
 
+describe('author preference agreement', () => {
+  it('shows the percentage while leaving the final selection with the Judge', () => {
+    render(
+      <ThreadPublicationDetail
+        detail={makeDetail(
+          {},
+          {
+            data: {
+              ...readyGeneration().data,
+              review: { authorAgreementPercent: 67 },
+            },
+          },
+        )}
+      />,
+    );
+
+    expect(screen.getByTestId('thread-author-agreement')).toHaveTextContent(
+      'threadReview.authorAgreement',
+    );
+  });
+});
+
 describe('ThreadPublicationDetail owner actions and publish banner', () => {
   it('shows the live banner with the address and an Open live Thread link after publish', () => {
     const detail = makeDetail(

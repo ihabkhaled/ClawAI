@@ -1,6 +1,13 @@
 'use client';
 
-import { ArrowUpCircle, ClipboardList, Paperclip, RefreshCw, ShieldCheck } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowUpCircle,
+  ClipboardList,
+  Paperclip,
+  RefreshCw,
+  ShieldCheck,
+} from 'lucide-react';
 
 import { JudgeReviewCriticSection } from '@/components/chat/judge-review-critic-section';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +40,10 @@ function DecisionIcon({ decision }: { decision: JudgeReviewDecision }): React.Re
 
   if (decision === JudgeReviewDecision.REVISE) {
     return <RefreshCw className="h-3.5 w-3.5" />;
+  }
+
+  if (decision === JudgeReviewDecision.UNAVAILABLE) {
+    return <AlertTriangle className="h-3.5 w-3.5" />;
   }
 
   return <ShieldCheck className="h-3.5 w-3.5" />;

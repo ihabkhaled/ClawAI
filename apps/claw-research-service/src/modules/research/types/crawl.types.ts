@@ -27,6 +27,8 @@ export type CrawlFetchResult = {
 /** What each breadth-first link hop needs, fixed for the whole crawl. */
 export type CrawlLinkFollowContext = {
   siteOrigin: string;
+  /** Restricts GitHub crawls to one repository when the requested URL names one. */
+  pathPrefix: string | null;
   intent: string;
   pageBudget: number;
   robots: RobotsTxtResult;

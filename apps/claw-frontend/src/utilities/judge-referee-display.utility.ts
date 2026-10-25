@@ -10,6 +10,10 @@ export function getJudgeDecisionTone(decision: JudgeReviewDecision): string {
     return 'border-amber-500/50 text-amber-600 dark:text-amber-400';
   }
 
+  if (decision === JudgeReviewDecision.UNAVAILABLE) {
+    return 'border-muted-foreground/40 text-muted-foreground';
+  }
+
   return 'border-green-500/50 text-green-600 dark:text-green-400';
 }
 
@@ -20,6 +24,10 @@ export function getJudgeDecisionLabel(decision: JudgeReviewDecision, t: Translat
 
   if (decision === JudgeReviewDecision.REVISE) {
     return t('chat.judgeRevised');
+  }
+
+  if (decision === JudgeReviewDecision.UNAVAILABLE) {
+    return t('chat.judgeUnavailable');
   }
 
   return t('chat.judgeVerified');
@@ -39,6 +47,10 @@ export function getJudgeResponseTypeLabel(
 
   if (responseType === JudgeResponseType.SUMMARY) {
     return t('chat.judgeResponseTypeSummary');
+  }
+
+  if (responseType === JudgeResponseType.UNAVAILABLE) {
+    return t('chat.judgeUnavailable');
   }
 
   return t('chat.judgeResponseTypeVerificationNote');

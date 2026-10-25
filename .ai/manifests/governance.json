@@ -58,7 +58,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 30662,
+      "bytes": 30616,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -262,7 +262,7 @@
       "file": "rules/40-chat-surface-layout-and-composer.md"
     },
     {
-      "bytes": 25935,
+      "bytes": 26476,
       "file": "rules/41-web-evidence-truthfulness.md"
     },
     {
@@ -298,7 +298,7 @@
       "file": "rules/49-qa-team-discipline-and-test-evidence.md"
     },
     {
-      "bytes": 8763,
+      "bytes": 9066,
       "file": "rules/50-agentic-research-loop-and-narration.md"
     },
     {
@@ -334,7 +334,7 @@
       "file": "rules/58-auth-route-rate-limits.md"
     },
     {
-      "bytes": 4326,
+      "bytes": 4619,
       "file": "rules/59-chat-surfaces-are-one-pipeline.md"
     },
     {
@@ -354,7 +354,7 @@
       "file": "rules/63-docs-move-with-code.md"
     },
     {
-      "bytes": 8077,
+      "bytes": 8080,
       "file": "rules/README.md"
     }
   ],
@@ -600,7 +600,7 @@
       "file": "skills/deadlock-recovery.md"
     },
     {
-      "bytes": 2079,
+      "bytes": 2568,
       "file": "skills/debug-a-failed-thread-generation.md"
     },
     {
@@ -692,7 +692,7 @@
       "file": "skills/pair-and-use-a-mobile-device-token.md"
     },
     {
-      "bytes": 6008,
+      "bytes": 6318,
       "file": "skills/propagate-a-chat-change-to-every-mode.md"
     },
     {
@@ -784,7 +784,7 @@
       "file": "skills/verify-responsive-layout-in-browser.md"
     },
     {
-      "bytes": 3469,
+      "bytes": 4094,
       "file": "skills/verify-the-research-loop-live.md"
     },
     {

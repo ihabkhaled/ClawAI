@@ -21,6 +21,7 @@ export type PrivateGenerationState = {
   review: {
     draftHash: string;
     authorConsensus: boolean;
+    authorAgreementPercent?: number;
     ready: boolean;
     reasons: string[];
   } | null;

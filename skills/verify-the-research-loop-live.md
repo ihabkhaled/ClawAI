@@ -61,6 +61,9 @@ Prove the code is current before trusting any result: fetch the chunk with
 Then send a message and sample `[data-testid="narration-log"]` every ~300 ms:
 `LIVE:n` rising while the turn runs, then `stored:n` on the answer. Reload the
 page: the stored log must still be there, collapsed, above a separate answer.
+Page-by-page `crawl_progress` stays live and is not appended as a persisted
+narration item; the saved log should contain milestones and a final crawl count,
+not one entry per fetched page.
 
 ## 3b. The page-read line (ADR-121 addendum 2)
 
@@ -73,3 +76,11 @@ a bug); a cached page has no chip. Check the API too: `metadata.research.bundle.
 
 As a user whose plan lacks research, a message with a URL must produce no
 research at all (`research=NONE` in the chat log) — not a 403.
+
+## 5. GitHub repository evidence (ADR-192)
+
+Start a crawl from `https://github.com/<owner>/<repo>`. Verify candidates and
+followed links stay under that repository path, while README/tree pages can
+still be fetched through `FetchService`. Check that sibling repositories and
+GitHub marketing pages are excluded. The answer must not claim a full clone or
+that every file was inspected; use cited fetched paths as the coverage evidence.

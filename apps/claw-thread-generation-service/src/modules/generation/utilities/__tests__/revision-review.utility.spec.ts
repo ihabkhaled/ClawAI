@@ -15,7 +15,7 @@ describe('evaluateRevisionReview', () => {
   const judge = { score: 85, blockers: [], findings: [], revisionBrief: '' };
   const critic = { score: 78, blockers: [], findings: [], revisionBrief: '' };
 
-  it('accepts only unanimous author review of the exact edited text and passing reviews', () => {
+  it('reports unanimous agreement while passing Judge and Critic approval', () => {
     expect(
       evaluateRevisionReview({
         draft,
@@ -25,7 +25,7 @@ describe('evaluateRevisionReview', () => {
         critic,
         evidence,
       }),
-    ).toMatchObject({ ready: true, reasons: [] });
+    ).toMatchObject({ ready: true, authorAgreementPercent: 100, reasons: [] });
   });
 
   it('rejects citations that do not exactly match the saved evidence bundle', () => {
@@ -44,39 +44,56 @@ describe('evaluateRevisionReview', () => {
     ).toContain('CITATION_NOT_IN_SAVED_EVIDENCE');
   });
 
-  it('rejects a reviewer vote for a different content hash', () => {
-    expect(
-      evaluateRevisionReview({
-        draft,
-        expectedAuthorIds: ['author-1', 'author-2', 'author-3'],
-        votes: votes.map((vote, index) =>
-          index === 1 ? { ...vote, draftHash: 'different-hash' } : vote,
-        ),
-        judge,
-        critic,
-        evidence,
-      }).reasons,
-    ).toContain('AUTHOR_CONSENSUS_FAILED');
-  });
-
-  it('rejects duplicate author votes even when their count matches the configured authors', () => {
-    expect(
-      evaluateRevisionReview({
-        draft,
-        expectedAuthorIds: ['author-1', 'author-2', 'author-3'],
-        votes: votes.map((vote, index) => (index === 1 ? { ...vote, roleId: 'author-1' } : vote)),
-        judge,
-        critic,
-        evidence,
-      }).reasons,
-    ).toContain('AUTHOR_CONSENSUS_FAILED');
-  });
-
-  it('rejects disagreement, missing reviewers, and review scores below thresholds', () => {
+  it('reports only votes that reviewed the exact edited content', () => {
     const result = evaluateRevisionReview({
       draft,
       expectedAuthorIds: ['author-1', 'author-2', 'author-3'],
-      votes: votes.slice(0, 2).map((vote) => ({ ...vote, agrees: false })),
+      votes: votes.map((vote, index) =>
+        index === 1 ? { ...vote, draftHash: 'different-hash' } : vote,
+      ),
+      judge,
+      critic,
+      evidence,
+    });
+
+    expect(result.authorAgreementPercent).toBe(67);
+    expect(result.ready).toBe(true);
+  });
+
+  it('does not count duplicate votes from one author twice', () => {
+    const result = evaluateRevisionReview({
+      draft,
+      expectedAuthorIds: ['author-1', 'author-2', 'author-3'],
+      votes: votes.map((vote, index) => (index === 1 ? { ...vote, roleId: 'author-1' } : vote)),
+      judge,
+      critic,
+      evidence,
+    });
+
+    expect(result.authorAgreementPercent).toBe(67);
+    expect(result.ready).toBe(true);
+  });
+
+  it('lets Judge and Critic decide when authors disagree, and reports their percentage', () => {
+    const result = evaluateRevisionReview({
+      draft,
+      expectedAuthorIds: ['author-1', 'author-2', 'author-3'],
+      votes: votes.map((vote, index) => ({ ...vote, agrees: index === 0 })),
+      judge,
+      critic,
+      evidence,
+    });
+
+    expect(result.ready).toBe(true);
+    expect(result.authorAgreementPercent).toBe(33);
+    expect(result.reasons).toEqual([]);
+  });
+
+  it('still blocks publication when Judge or Critic review fails', () => {
+    const result = evaluateRevisionReview({
+      draft,
+      expectedAuthorIds: ['author-1', 'author-2', 'author-3'],
+      votes,
       judge: { ...judge, score: 79 },
       critic: { ...critic, score: 74, blockers: ['unsupported claim'] },
       evidence,
@@ -84,11 +101,7 @@ describe('evaluateRevisionReview', () => {
 
     expect(result.ready).toBe(false);
     expect(result.reasons).toEqual(
-      expect.arrayContaining([
-        'AUTHOR_CONSENSUS_FAILED',
-        'JUDGE_THRESHOLD_FAILED',
-        'CRITIC_THRESHOLD_FAILED',
-      ]),
+      expect.arrayContaining(['JUDGE_THRESHOLD_FAILED', 'CRITIC_THRESHOLD_FAILED']),
     );
   });
 });

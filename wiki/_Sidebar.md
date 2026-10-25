@@ -36,6 +36,7 @@
 - [[Provider-Catalog]]
 - [[Memory-and-Context-Architecture]]
 - [[File-Support-Architecture]]
+- [[Research-and-Web-Crawling]]
 
 **Runtime & Ops**
 

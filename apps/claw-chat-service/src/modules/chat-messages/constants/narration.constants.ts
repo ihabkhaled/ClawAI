@@ -17,8 +17,8 @@ export const NARRATION_DEDUPE_KEY_PREFIX = 'claw:chat:narration:dedupe:';
 export const NARRATION_TTL_SECONDS = 3600;
 
 /**
- * Lines kept per turn. A 40-page crawl emits a tick per page; beyond this the
- * log stops being readable and starts being a transcript of HTTP requests.
+ * Safety bound for the work log. Per-page crawl progress is streamed live but
+ * is not stored here; the completed crawl records the number actually read.
  */
 export const NARRATION_MAX_ENTRIES = 400;
 
@@ -46,9 +46,4 @@ return 1
 `;
 
 /** Crawl phases worth a line of their own; 'started' and 'done' are narrated by the orchestrator. */
-export const NARRATED_CRAWL_PHASES: ReadonlySet<string> = new Set([
-  'robots',
-  'sitemap',
-  'feed',
-  'page',
-]);
+export const NARRATED_CRAWL_PHASES: ReadonlySet<string> = new Set(['robots', 'sitemap', 'feed']);

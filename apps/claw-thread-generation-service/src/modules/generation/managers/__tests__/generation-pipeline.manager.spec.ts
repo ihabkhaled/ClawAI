@@ -93,10 +93,10 @@ const draft = (markdown: string) =>
     markdown,
     citations: [{ evidenceId: 'source-1', url: 'https://example.org/source' }],
   });
-const vote = (markdown: string, agrees = true) =>
-  JSON.stringify({ agrees, draftHash: revisionDraftHash(JSON.parse(draft(markdown))) });
-const review = (score: number) =>
-  JSON.stringify({ score, blockers: [], findings: [], revisionBrief: '' });
+const vote = (_markdown: string, agrees = true) =>
+  JSON.stringify({ preferredCandidateIndex: agrees ? 0 : 1 });
+const review = (score: number, selectedCandidateIndex = 0) =>
+  JSON.stringify({ score, blockers: [], findings: [], revisionBrief: '', selectedCandidateIndex });
 
 describe('GenerationPipelineManager', () => {
   it('requires every generated author draft to use the selected publication language', async () => {
@@ -271,7 +271,7 @@ ${text}
     expect(harness.models.generate).not.toHaveBeenCalled();
   });
 
-  it('restarts the round when an author votes against the exact candidate hash', async () => {
+  it('lets the Judge select the strongest draft and records the author preference percentage', async () => {
     const harness = build([
       draft('draft A'),
       draft('draft B'),
@@ -279,44 +279,87 @@ ${text}
       vote('draft A'),
       vote('draft A', false),
       vote('draft A'),
-      draft('draft C'),
-      draft('draft C'),
-      draft('draft C'),
-      vote('draft C'),
-      vote('draft C'),
-      vote('draft C'),
-      review(80),
+      review(80, 1),
       review(75),
     ]);
 
     const result = await harness.manager.generate(input);
 
-    expect(result.rounds).toBe(2);
-    expect(harness.models.generate).toHaveBeenCalledTimes(14);
-    const roundTwoBrief = harness.models.generate.mock.calls[6]?.[0].userPrompt;
-    expect(roundTwoBrief).toContain('Authors did not all agree');
-    expect(roundTwoBrief).toContain('draft A');
+    expect(result.rounds).toBe(1);
+    expect(result.markdown).toBe('draft B');
+    expect(result.authorAgreementPercent).toBe(67);
+    expect(harness.models.generate).toHaveBeenCalledTimes(8);
+    expect(harness.models.generate.mock.calls[6]?.[0].userPrompt).toContain(
+      'Author preference agreement: 67%',
+    );
+    expect(harness.models.generate.mock.calls[6]?.[0].userPrompt).toContain('draft B');
+    expect(harness.models.generate.mock.calls[7]?.[0].userPrompt).toContain('draft B');
   });
 
-  it('does not accept a consensus when one author disagrees', async () => {
+  it('passes all 50 local replay cases with split author preferences', async () => {
+    let succeeded = 0;
+
+    for (let trial = 0; trial < 50; trial += 1) {
+      const selectedCandidateIndex = trial % 3;
+      const majorityChoice = (trial + 1) % 3;
+      const preferences =
+        trial % 5 === 0 ? [0, 1, 2] : [majorityChoice, majorityChoice, (majorityChoice + 1) % 3];
+      const candidate = (index: number) =>
+        draft(`# Candidate ${String(index)} / trial ${String(trial)}`);
+      const harness = build([
+        candidate(0),
+        candidate(1),
+        candidate(2),
+        ...preferences.map((preferredCandidateIndex) =>
+          JSON.stringify({ preferredCandidateIndex }),
+        ),
+        review(90, selectedCandidateIndex),
+        review(80),
+      ]);
+
+      const result = await harness.manager.generate({
+        ...input,
+        jobId: `local-replay-${String(trial)}`,
+      });
+
+      if (
+        result.reviewReady &&
+        result.markdown === `# Candidate ${String(selectedCandidateIndex)} / trial ${String(trial)}`
+      ) {
+        succeeded += 1;
+      }
+    }
+
+    expect(succeeded).toBe(50);
+  });
+
+  it('does not skip Judge review when authors split their preferences', async () => {
     const harness = build([
       ...Array.from({ length: 3 }, () => draft('draft A')),
       vote('draft A'),
       vote('draft A'),
       vote('draft A', false),
+      review(70),
       ...Array.from({ length: 3 }, () => draft('draft A')),
       vote('draft A'),
-      vote('draft A'),
       vote('draft A', false),
+      vote('draft A', false),
+      review(70),
       ...Array.from({ length: 3 }, () => draft('draft A')),
       vote('draft A'),
-      vote('draft A'),
       vote('draft A', false),
+      vote('draft A', false),
+      review(70),
     ]);
 
     await expect(harness.manager.generate(input)).rejects.toThrow(
       'Generation did not pass consensus and reviews in three rounds',
     );
+    expect(
+      harness.models.generate.mock.calls.filter((call) =>
+        call[0].systemPrompt.includes('Review the draft independently as Judge'),
+      ),
+    ).toHaveLength(3);
   });
 
   it('does not accept citations that are not in the shared evidence bundle', async () => {
@@ -407,14 +450,14 @@ ${text}
     );
   });
 
-  it('accepts votes whose hash echo is wrong, short or missing (D-L2-01)', async () => {
-    const short = JSON.stringify({ agrees: true, draftHash: 'f'.repeat(63) });
+  it('ignores extra hash echoes on candidate preference votes', async () => {
+    const short = JSON.stringify({ preferredCandidateIndex: 0, draftHash: 'f'.repeat(63) });
     const harness = build([
       draft('grounded'),
       draft('grounded'),
       draft('grounded'),
       short,
-      JSON.stringify({ agrees: true }),
+      JSON.stringify({ preferredCandidateIndex: 0 }),
       vote('grounded'),
       review(80),
       review(75),

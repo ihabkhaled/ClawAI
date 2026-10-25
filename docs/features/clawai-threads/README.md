@@ -13,8 +13,9 @@ each would only restate those documents. That is a stated deviation.
 ## Landed (Batches 1-7)
 
 Isolated services (4019 and 4020, own databases and queue), immutable chat
-snapshots, spend cap and per-call holds, 3-5 author unanimous consensus on one
-draft hash, Judge 80 / Critic 75 gates, owner approval, edit revalidation,
+snapshots, spend cap and per-call holds, 3-5 author preference votes on candidate
+drafts, Judge selection and review with the agreement percentage reported,
+Judge 80 / Critic 75 gates, owner approval, edit revalidation,
 change requests, comments, reactions, reports, moderation, account deletion,
 13-locale UI, public hub and article, sitemap and RSS.
 

@@ -1296,6 +1296,7 @@ export const ar: TranslationDictionary = {
     judgeReferee: 'المحكّم والمُدقِّق',
     judgeRefereeDescription: 'تفعيل النقد والتحقق المدعوم بالذكاء الاصطناعي للردود لدقة أعلى.',
     judgeVerified: 'تم التحقق',
+    judgeUnavailable: 'المحكّم غير متوفر',
     judgeRevised: 'تمت المراجعة',
     judgeEscalated: 'تم التصعيد',
     judgeCriticFeedback: 'ملاحظات الناقد',

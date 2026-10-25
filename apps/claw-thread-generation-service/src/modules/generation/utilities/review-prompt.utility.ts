@@ -1,7 +1,7 @@
 import type { Locale } from '@claw/shared-types';
 
 import { REVIEW_CRITERIA, REVIEW_REPLY_SHAPE } from '../constants/review-prompt.constants';
-import type { ReviewerRole } from '../types/reviewer-role.enum';
+import { ReviewerRole } from '../types/reviewer-role.enum';
 
 /** English name of a locale for use inside a prompt ("Spanish"), falling back to the code. */
 export function describeContentLanguage(locale: Locale): string {
@@ -15,7 +15,11 @@ export function describeContentLanguage(locale: Locale): string {
  * mismatch a blocker, and they write their findings and revision brief in that language so the
  * authors get the next brief in the language they are writing.
  */
-export function buildReviewSystemPrompt(reviewer: ReviewerRole, locale: Locale): string {
+export function buildReviewSystemPrompt(
+  reviewer: ReviewerRole,
+  locale: Locale,
+  candidateCount = 1,
+): string {
   const language = describeContentLanguage(locale);
   return [
     `Review the draft independently as ${reviewer}.`,
@@ -23,6 +27,11 @@ export function buildReviewSystemPrompt(reviewer: ReviewerRole, locale: Locale):
     `Never lower the score, add a blocker, or ask for a rewrite or a translation because the draft's language differs from the language of the topic, source or evidence. Raise a language blocker only if the draft is not written in ${language}.`,
     REVIEW_CRITERIA,
     `Write every finding and the revisionBrief in ${language}.`,
+    ...(reviewer === ReviewerRole.JUDGE && candidateCount > 1
+      ? [
+          `Compare all ${String(candidateCount)} candidate drafts. Choose the strongest evidence-grounded candidate with selectedCandidateIndex, then score and review that selected draft. The author preference percentage is advisory; you make the final selection.`,
+        ]
+      : []),
     `Return only one JSON object shaped ${REVIEW_REPLY_SHAPE} with no code fences. Keep the JSON keys exactly as shown. Do not include chain-of-thought.`,
   ].join(' ');
 }

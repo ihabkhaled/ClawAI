@@ -1,6 +1,6 @@
 # ClawAI Threads product spec
 
-**Status:** Approved for implementation planning, 2026-10-04
+**Status:** Baseline workflow observed in production; reliability fixes are in local development, 2026-10-25
 **Canonical design:** [Threads design](../superpowers/specs/2026-10-04-clawai-threads-design.md)
 
 ## Product promise
@@ -18,8 +18,11 @@ participation is open to authenticated users under existing moderation rules.
   publish and may be indexed. The draft stays private until the owner approves.
 - Require a selected maximum spend before enqueue. Existing plan entitlement and
   credit reservation apply; no new pay-as-you-go price is introduced.
-- Use three to five author models, exact-draft-hash unanimous agreement, Judge
-  score of at least 80, Critic score of at least 75, and at most three rounds.
+- Use three to five author models. They vote for a draft and report their
+  plurality agreement percentage; the Judge selects and reviews a candidate,
+  then the Critic independently reviews it. Require Judge score of at least 80,
+  Critic score of at least 75, and at most three rounds. Author disagreement
+  alone does not fail a round or require identical drafts.
 - Require citations for factual claims and keep source links with the revision.
 - Authenticated users may comment, react, and request changes regardless of
   generation entitlement. Existing reporting, rate limits, owner controls, and
@@ -117,7 +120,9 @@ revision; automated review thresholds and safety checks make it eligible for
 owner approval. Owners can submit immutable edited revisions with a fresh
 user-selected cap and idempotency key. Generation rechecks the exact text and
 citation URLs against the parent's pinned source and evidence, using fresh
-author consensus plus Judge/Critic thresholds. A revision becomes eligible
+author preference votes plus Judge/Critic thresholds. For a single edited
+draft, the author agreement percentage is informational; Judge and Critic
+approval decide readiness. A revision becomes eligible
 only after its exact content hash matches the completed review and the owner
 approves it. The previously approved revision remains public until then.
 Authenticated readers can comment, react once per publication, request changes,

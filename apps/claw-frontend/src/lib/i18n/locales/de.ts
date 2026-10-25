@@ -1386,6 +1386,7 @@ export const de: TranslationDictionary = {
     judgeRefereeDescription:
       'KI-gestützte Kritik und Verifizierung von Antworten für höhere Genauigkeit aktivieren.',
     judgeVerified: 'Verifiziert',
+    judgeUnavailable: 'Judge nicht verfügbar',
     judgeRevised: 'Überarbeitet',
     judgeEscalated: 'Eskaliert',
     judgeCriticFeedback: 'Kritiker-Feedback',

@@ -213,6 +213,12 @@ When the sitemap yields fewer than `CRAWL_MIN_SITEMAP_URLS_BEFORE_LINK_FALLBACK`
 blind. Full design and the tradeoffs accepted:
 [ADR-092](../13-adr/adr-092-site-crawl-reuses-fetchservice-no-new-fetch-path.md).
 
+When the start URL is a GitHub repository (`github.com/<owner>/<repo>`),
+candidate and followed links must remain under that repository path. Adjacent
+repositories and GitHub marketing pages are out of scope. The ordinary crawl
+page budget still applies, so this reads selected repository pages; it is not a
+Git clone and cannot support a claim that every file was inspected.
+
 Every network call — robots.txt, sitemap.xml, every page — goes through the
 same `FetchService.fetchPage` every other workflow uses: no second fetch
 path, so the SSRF guard, domain policy, cache and usage accounting apply
@@ -262,7 +268,10 @@ publishes a `ResearchCrawlProgressMessage` (`@claw/shared-types`) on
 `RESEARCH_CRAWL_PROGRESS_CHANNEL` (`@claw/shared-constants`, a plain Redis
 `PUBLISH`, not a RabbitMQ event — see ADR-092's amendment) at six
 `SiteCrawlManager.crawl()` checkpoints: `started`, `robots`, `sitemap`,
-`feed`, one `page` tick per fetched candidate, and `completed`. No caller (no
+`feed`, one `page` tick per fetched candidate, and `completed`. Page ticks
+still stream to the live progress timeline but are not copied one by one into
+the saved narrated work log; `crawl_done` carries the number actually read.
+No caller (no
 `correlationId`) means no publish at all — a v1-style direct
 `POST /research/execute` call with no `correlationId` crawls exactly as
 before. Fire-and-forget: a publish failure is logged and never affects the

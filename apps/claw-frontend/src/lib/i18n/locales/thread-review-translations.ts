@@ -9,6 +9,8 @@ import type { ThreadReviewLocaleTranslation } from '@/types/i18n.types';
  */
 export const THREAD_REVIEW_TRANSLATIONS: Record<Locale, ThreadReviewLocaleTranslation> = {
   [Locale.EN]: {
+    authorAgreement:
+      'Author preference agreement: {percentage}%. The Judge makes the final choice.',
     formatNotFormattable: 'This Thread has no generated article to format yet.',
     showMore: 'Show more',
     showLess: 'Show less',
@@ -39,6 +41,7 @@ export const THREAD_REVIEW_TRANSLATIONS: Record<Locale, ThreadReviewLocaleTransl
     formatUnknown: 'Formatting was skipped ({code}). Your article was left as it was.',
   },
   [Locale.AR]: {
+    authorAgreement: 'توافق تفضيلات الكتّاب: {percentage}%. المحكّم يتخذ القرار النهائي.',
     formatNotFormattable: 'ليس لهذا الـ Thread مقال مُنشأ بعد لتنسيقه.',
     showMore: 'عرض المزيد',
     showLess: 'عرض أقل',
@@ -63,6 +66,8 @@ export const THREAD_REVIEW_TRANSLATIONS: Record<Locale, ThreadReviewLocaleTransl
     formatUnknown: 'تم تخطي التنسيق ({code}). تُرك المقال كما هو.',
   },
   [Locale.FR]: {
+    authorAgreement:
+      'Accord sur les préférences des auteurs : {percentage} %. Le juge prend la décision finale.',
     formatNotFormattable: 'Ce Thread n’a pas encore d’article généré à mettre en forme.',
     showMore: 'Afficher plus',
     showLess: 'Afficher moins',
@@ -95,6 +100,8 @@ export const THREAD_REVIEW_TRANSLATIONS: Record<Locale, ThreadReviewLocaleTransl
     formatUnknown: 'La mise en forme a été ignorée ({code}). Votre article est resté tel quel.',
   },
   [Locale.IT]: {
+    authorAgreement:
+      'Accordo sulle preferenze degli autori: {percentage}%. La scelta finale spetta al giudice.',
     formatNotFormattable: 'Questo Thread non ha ancora un articolo generato da formattare.',
     showMore: 'Mostra di più',
     showLess: 'Mostra meno',
@@ -129,6 +136,8 @@ export const THREAD_REVIEW_TRANSLATIONS: Record<Locale, ThreadReviewLocaleTransl
     formatUnknown: 'La formattazione è stata saltata ({code}). L’articolo è rimasto com’era.',
   },
   [Locale.DE]: {
+    authorAgreement:
+      'Übereinstimmung der Autorenpräferenzen: {percentage} %. Der Judge entscheidet endgültig.',
     formatNotFormattable: 'Dieser Thread hat noch keinen erzeugten Artikel zum Formatieren.',
     showMore: 'Mehr anzeigen',
     showLess: 'Weniger anzeigen',
@@ -163,6 +172,8 @@ export const THREAD_REVIEW_TRANSLATIONS: Record<Locale, ThreadReviewLocaleTransl
     formatUnknown: 'Die Formatierung wurde übersprungen ({code}). Ihr Artikel blieb unverändert.',
   },
   [Locale.ES]: {
+    authorAgreement:
+      'Acuerdo de preferencia de los autores: {percentage} %. El juez toma la decisión final.',
     formatNotFormattable: 'Este Thread aún no tiene un artículo generado para dar formato.',
     showMore: 'Mostrar más',
     showLess: 'Mostrar menos',
@@ -195,6 +206,8 @@ export const THREAD_REVIEW_TRANSLATIONS: Record<Locale, ThreadReviewLocaleTransl
     formatUnknown: 'Se omitió el formato ({code}). Tu artículo quedó como estaba.',
   },
   [Locale.RU]: {
+    authorAgreement:
+      'Совпадение предпочтений авторов: {percentage}%. Окончательный выбор делает судья.',
     formatNotFormattable: 'У этого Thread пока нет созданной статьи для форматирования.',
     showMore: 'Показать больше',
     showLess: 'Показать меньше',
@@ -226,6 +239,8 @@ export const THREAD_REVIEW_TRANSLATIONS: Record<Locale, ThreadReviewLocaleTransl
     formatUnknown: 'Форматирование пропущено ({code}). Статья осталась без изменений.',
   },
   [Locale.PT]: {
+    authorAgreement:
+      'Concordância das preferências dos autores: {percentage}%. O juiz toma a decisão final.',
     formatNotFormattable: 'Este Thread ainda não tem um artigo gerado para formatar.',
     showMore: 'Mostrar mais',
     showLess: 'Mostrar menos',
@@ -257,6 +272,7 @@ export const THREAD_REVIEW_TRANSLATIONS: Record<Locale, ThreadReviewLocaleTransl
     formatUnknown: 'A formatação foi ignorada ({code}). O artigo ficou como estava.',
   },
   [Locale.HI]: {
+    authorAgreement: 'लेखकों की पसंद में सहमति: {percentage}%. अंतिम चयन निर्णायक करता है।',
     formatNotFormattable: 'इस Thread में अभी फ़ॉर्मैट करने के लिए कोई तैयार लेख नहीं है।',
     showMore: 'और दिखाएँ',
     showLess: 'कम दिखाएँ',
@@ -284,6 +300,7 @@ export const THREAD_REVIEW_TRANSLATIONS: Record<Locale, ThreadReviewLocaleTransl
     formatUnknown: 'फ़ॉर्मैटिंग छोड़ दी गई ({code})। आपका लेख जैसा था वैसा ही रहा।',
   },
   [Locale.JA]: {
+    authorAgreement: '著者の選好一致率: {percentage}%。最終判断はジャッジが行います。',
     formatNotFormattable: 'このThreadには、整形できる生成済みの記事がまだありません。',
     showMore: 'もっと見る',
     showLess: '閉じる',
@@ -309,6 +326,7 @@ export const THREAD_REVIEW_TRANSLATIONS: Record<Locale, ThreadReviewLocaleTransl
     formatUnknown: '書式の整形をスキップしました（{code}）。記事はそのままです。',
   },
   [Locale.TH]: {
+    authorAgreement: 'ความเห็นตรงกันของผู้เขียน: {percentage}% ผู้ตัดสินเป็นผู้เลือกขั้นสุดท้าย',
     formatNotFormattable: 'Thread นี้ยังไม่มีบทความที่สร้างขึ้นให้จัดรูปแบบ',
     showMore: 'แสดงเพิ่มเติม',
     showLess: 'แสดงน้อยลง',
@@ -333,6 +351,7 @@ export const THREAD_REVIEW_TRANSLATIONS: Record<Locale, ThreadReviewLocaleTransl
     formatUnknown: 'ข้ามการจัดรูปแบบ ({code}) บทความยังคงเหมือนเดิม',
   },
   [Locale.FA]: {
+    authorAgreement: 'میزان توافق ترجیح نویسندگان: {percentage}٪. داور تصمیم نهایی را می‌گیرد.',
     formatNotFormattable: 'این Thread هنوز مقاله تولیدشده‌ای برای قالب‌بندی ندارد.',
     showMore: 'نمایش بیشتر',
     showLess: 'نمایش کمتر',
@@ -360,6 +379,7 @@ export const THREAD_REVIEW_TRANSLATIONS: Record<Locale, ThreadReviewLocaleTransl
     formatUnknown: 'قالب‌بندی رد شد ({code}). مقاله همان‌طور که بود ماند.',
   },
   [Locale.ZH]: {
+    authorAgreement: '作者偏好一致度：{percentage}%。最终选择由评审决定。',
     formatNotFormattable: '此 Thread 还没有可排版的已生成文章。',
     showMore: '显示更多',
     showLess: '收起',

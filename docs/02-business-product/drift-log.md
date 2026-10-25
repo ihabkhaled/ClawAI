@@ -94,3 +94,22 @@ page the entry names. This log is the history between them.
 - **Who:** owner; audited by the coding agent.
 - **Touched:** ADR-142, `docs/business/plan-allowances.md`, `plan-catalog.json`, `seed.cjs`.
 - **Status:** done (code and docs); the post text is the owner's to correct. **Priority:** medium
+
+## DRIFT-005 — Thread author disagreement is arbitrated, not treated as failure (2026-10-25)
+
+- **Area:** product, quality.
+- **Before:** every author had to produce the exact same draft hash before the
+  Judge ran. A single dissent could consume another full generation round and
+  still fail the job at its round limit.
+- **Now:** authors vote for the strongest candidate and the Judge selects and
+  reviews a candidate in that round; the Critic independently reviews the
+  selected draft. The owner sees the plurality agreement percentage. Dissent
+  alone does not block readiness.
+- **Why:** the Judge is the designated arbiter; author preference is not a
+  publication gate. The owner explicitly requested this change on 2026-10-25.
+- **Who:** owner; implemented by the coding agent.
+- **Impact:** fewer wasted generation rounds and clearer review status. Existing
+  spend caps and Judge, Critic, citation and safety gates remain in force.
+- **Touched:** [REQ-THREADS-002](requirements-register.md#req-threads-002),
+  [ADR-190](../13-adr/adr-190-thread-author-preferences-are-arbitrated-by-the-judge.md),
+  [Threads product spec](clawai-threads-product-spec.md).

@@ -54,6 +54,7 @@ export type ThreadGenerationState = {
   stage: string;
   round: number;
   safeErrorCode: string | null;
+  review?: { authorAgreementPercent?: number } | null;
   draft: {
     markdown: string;
     citations: Array<{ evidenceId: string; url: string }>;

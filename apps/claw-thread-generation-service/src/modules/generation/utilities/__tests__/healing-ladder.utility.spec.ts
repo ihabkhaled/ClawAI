@@ -15,6 +15,7 @@ const state = (overrides: Partial<LadderState>): LadderState => ({
   baseMaxOutputTokens: 8192,
   currentMaxOutputTokens: 8192,
   retryAfterMs: null,
+  httpStatus: null,
   waits: 0,
   reason: 'WRONG_SHAPE: citations',
   raisedMaxOutputTokens: 12_288,
@@ -94,6 +95,14 @@ describe('nextOnModelStep (ADR-181 ladder)', () => {
     const spent = new Set([ThreadHealingStrategy.SHRINK_SOURCE]);
     expect(nextOnModelStep({ ...floor, used: spent })).toBeNull();
     expect(nextOnModelStep({ ...rejected, currentMaxOutputTokens: 1024, used: spent })).toBeNull();
+  });
+
+  it('skips same-model retries when the provider says the model does not exist', () => {
+    expect(
+      nextOnModelStep(
+        state({ failureClass: ThreadFailureClass.PROVIDER_REJECTED, httpStatus: 404 }),
+      ),
+    ).toBeNull();
   });
 
   it('shrinks the source for a window overflow', () => {

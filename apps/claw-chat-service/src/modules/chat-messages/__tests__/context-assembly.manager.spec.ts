@@ -88,6 +88,29 @@ describe('ContextAssemblyManager', () => {
     expect(prompt).toContain('too weakly matched');
   });
 
+  it('does not describe a bounded GitHub repository crawl as a complete file review', () => {
+    const context = buildContext();
+    context.researchWarnings = [];
+    context.researchRequested = true;
+    context.researchEvidence = [
+      {
+        id: 'repo-root',
+        title: 'AI-Psychiatry',
+        url: 'https://github.com/ihabkhaled/AI-Psychiatry',
+        snippet: 'Repository overview',
+        source: 'fetch',
+        providerKind: null,
+        publishedAt: null,
+        confidence: 1,
+      },
+    ];
+
+    const prompt = manager.buildPromptString(context);
+
+    expect(prompt).toContain('not a clone or exhaustive file scan');
+    expect(prompt).toContain('Do not claim that all repository files were inspected');
+  });
+
   // Behaviour change, ADR-086. This test used to assert that a prior ASSISTANT
   // message was DROPPED when the next prompt looked self-contained. That rule
   // is the defect: measured live, it removed a planted fact whenever the

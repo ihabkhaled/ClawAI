@@ -52,3 +52,7 @@ export const RESEARCH_GROUNDING_MARKER = '[Platform note, not written by the use
  */
 export const RESEARCH_GROUNDING_NO_INVENT_INSTRUCTION =
   'Do not invent facts, numbers, prices, dates, URLs, or citations that are not present in the evidence below (or already in this conversation). If the evidence does not contain something, say so instead of guessing.';
+
+/** Prevents a bounded GitHub page crawl from being described as a full clone or audit. */
+export const GITHUB_REPOSITORY_COVERAGE_NOTE =
+  'The GitHub repository pages in this evidence are a bounded selection, not a clone or exhaustive file scan. Do not claim that all repository files were inspected. Name only paths present in cited evidence and state that coverage is limited.';

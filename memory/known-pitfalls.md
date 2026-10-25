@@ -4,6 +4,32 @@ Recurring traps that have bitten this codebase more than once. Each is abstracte
 from a real incident so the lesson transfers beyond the specific symptom. See
 [README](README.md) for entry format.
 
+### A reviewer cannot arbitrate candidates it never sees (2026-10-25)
+
+**What happened.** A Thread review run treated author draft-hash unanimity as a
+precondition for invoking the Judge. The production review therefore failed after
+repeated rounds with “The models could not agree on an answer.” Separate chat
+screenshots showed a green verified badge beside “Judge unavailable,” research
+answers that alternated between finding and not finding the same GitHub project,
+and a saved “How I worked on this” log with 181 crawl steps.
+
+**The durable lesson.** Consensus is useful as a preference signal; an
+independent Judge is the arbitration step. An unavailable Judge is not a pass.
+Evidence scope and saved narration must reflect what was actually fetched and
+persisted.
+
+**How to apply.** Let authors vote for candidate drafts, report their plurality
+percentage, and give the Judge the candidates in the same round. Keep independent
+Judge, Critic, citation and safety gates. Checkpoint each role result before a
+retry. Keep per-page crawl ticks live, bound GitHub repository crawls to the
+requested repository path, and label Judge unavailability as a warning.
+
+**Related.** [ADR-190](../docs/13-adr/adr-190-thread-author-preferences-are-arbitrated-by-the-judge.md),
+[ADR-191](../docs/13-adr/adr-191-unavailable-judge-results-are-never-verified.md),
+[ADR-192](../docs/13-adr/adr-192-github-repository-crawls-stay-inside-the-requested-repository.md),
+[Thread generation runbook](../skills/debug-a-failed-thread-generation.md),
+[research rule](../rules/50-agentic-research-loop-and-narration.md).
+
 ---
 
 ### SSE endpoints crash when a logger writes headers after the stream opens (2026-07-24, from earlier SSE work)

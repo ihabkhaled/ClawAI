@@ -134,6 +134,13 @@ export function ThreadPublicationDetail({
           {generation.data.safetyBlock ? (
             <ThreadSafetyBlockNotice block={generation.data.safetyBlock} />
           ) : null}
+          {generation.data.review?.authorAgreementPercent !== undefined ? (
+            <p role="status" data-testid="thread-author-agreement">
+              {t('threadReview.authorAgreement', {
+                percentage: String(generation.data.review.authorAgreementPercent),
+              })}
+            </p>
+          ) : null}
           {editingRevision && detail.editorSuggestion ? (
             <ThreadEditorSuggestionCard
               suggestion={detail.editorSuggestion}

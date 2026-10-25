@@ -492,7 +492,6 @@ export class PublicationLifecycleService {
     return Boolean(
       revision.safetyApproved &&
       review?.ready &&
-      review.authorConsensus &&
       draft &&
       draft.judgeScore >= MIN_PUBLICATION_JUDGE_SCORE &&
       draft.criticScore >= MIN_PUBLICATION_CRITIC_SCORE,

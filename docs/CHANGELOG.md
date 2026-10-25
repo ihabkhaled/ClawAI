@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
+## [1.216.2] - 2026-10-25
+
+### Fixed
+
+- Thread author disagreement now reaches Judge arbitration in the same round;
+  owner-edit agreement is informational and the reviewed candidate stays bound
+  to its content hash ([ADR-190](13-adr/adr-190-thread-author-preferences-are-arbitrated-by-the-judge.md)).
+- Unavailable chat Judge results no longer display as verified; GitHub
+  repository crawls stay within the requested repository; page-level progress
+  remains live without bloating saved narration (ADR-191/192).
+
 ## [1.177.0] - 2026-10-04
 
 ### Added
@@ -15,6 +26,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   service-token API. Generation integration and live QA remain in progress.
 
 ## [Unreleased]
+
+### Fixed
+
+- Thread author disagreement now reaches Judge arbitration in the same round;
+  owner-edit agreement is informational and the reviewed candidate remains
+  bound to its content hash ([ADR-190](13-adr/adr-190-thread-author-preferences-are-arbitrated-by-the-judge.md)).
+- An unavailable chat Judge no longer displays a green verified state;
+  GitHub repository crawls stay within the named repository; per-page crawl
+  progress stays live without bloating saved narration (ADR-191/192).
 
 ### Added
 

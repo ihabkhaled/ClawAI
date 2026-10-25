@@ -41,9 +41,13 @@ the frontend `NarrationLog`.
    that route: research-service does not enforce the plan. The one user-token
    crawl surface is `/research/crawl/runs` ([ADR-150](../docs/13-adr/adr-150-runtime-crawl-for-authenticated-clients.md)),
    which enforces the plan itself in `ResearchAccessGuard` before anything else.
-7. **Every step is narrated through `NarrationService.append`**, never by
-   emitting a frame directly — the append is what stores it for after a
-   refresh. A tick every replica receives passes a `dedupeKey`.
+7. **Persist meaningful research milestones through `NarrationService.append`**,
+   never by emitting a frame directly — append stores them after refresh. A tick
+   every replica receives passes a `dedupeKey`.
+   **Page-by-page `crawl_progress` remains live-only.** Do not append every page
+   to the persisted “How I worked on this” narration; the crawl summary records
+   the final count. This keeps large crawls from turning one answer into hundreds
+   of saved narration steps while preserving live progress.
 8. **Narration tells the truth.** Counts are what was READ (rule 41 §7); a
    failed step is `RESEARCH_FAILED`, never silence; the planner prompt requires
    its sentence to describe exactly the chosen action (a small model once

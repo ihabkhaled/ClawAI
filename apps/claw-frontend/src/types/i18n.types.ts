@@ -1194,6 +1194,7 @@ export type TranslationDictionary = {
     judgeReferee: string;
     judgeRefereeDescription: string;
     judgeVerified: string;
+    judgeUnavailable: string;
     judgeRevised: string;
     judgeEscalated: string;
     judgeCriticFeedback: string;
@@ -8429,6 +8430,7 @@ export type ThreadArticleLocaleTranslation = {
 
 /** The review screen's long-suggestion toggle, answered note, editor card and one friendly line per FORMAT_* skip code. */
 export type ThreadReviewLocaleTranslation = {
+  authorAgreement: string;
   showMore: string;
   showLess: string;
   alreadyAnswered: string;

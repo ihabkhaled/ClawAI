@@ -20,7 +20,13 @@ function build(latest: object | null): PublicationLifecycleService {
       stage: 'DONE',
       round: 1,
       safeErrorCode: null,
-      review: { draftHash: ORIGINAL_HASH, authorConsensus: true, ready: true, reasons: [] },
+      review: {
+        draftHash: ORIGINAL_HASH,
+        authorConsensus: false,
+        authorAgreementPercent: 33,
+        ready: true,
+        reasons: [],
+      },
       draft: { markdown: '# Original', citations: [], judgeScore: 8, criticScore: 7 },
     }),
   };

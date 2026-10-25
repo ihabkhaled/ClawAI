@@ -4,6 +4,8 @@
 
 **Date:** 2026-10-16
 
+The candidate-selection description below is superseded by [ADR-190](adr-190-thread-author-preferences-are-arbitrated-by-the-judge.md); the guarded formatting decision remains in effect.
+
 Builds on [ADR-173](adr-173-threads-unknown-model-window-is-assumed-not-fatal.md) (spend and role calls), [ADR-181](adr-181-thread-generation-heals-itself-by-failure-class-and-resumes-at-the-failed-phase.md) (healing ladder and budget) and [ADR-174](adr-174-threads-refuses-what-cannot-succeed-before-it-queues.md) (budgets and allowance). Product rules: [Article formatting](../02-business-product/clawai-threads-product-spec.md#article-formatting-2026-10-16). Guides: [service-guide-thread-generation](../04-backend/service-guide-thread-generation.md), [service-guide-threads](../04-backend/service-guide-threads.md).
 
 ## Context

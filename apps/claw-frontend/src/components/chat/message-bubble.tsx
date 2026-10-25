@@ -426,6 +426,12 @@ function MessageBubbleBase({
                 {t('chat.judgeEscalated')}
               </Badge>
             ) : null}
+            {judgeDecision === 'UNAVAILABLE' ? (
+              <Badge variant="outline" className="gap-1 text-xs">
+                <AlertTriangle className="h-3 w-3" />
+                {t('chat.judgeUnavailable')}
+              </Badge>
+            ) : null}
             {memoryCount > 0 ? (
               <Badge variant="secondary" className="gap-1 text-xs">
                 <Brain className="h-3 w-3" />

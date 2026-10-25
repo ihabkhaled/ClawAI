@@ -33,6 +33,9 @@ export const PLATFORM_IDENTITY_AGENT_LINES: readonly string[] = [
 /** Added to the block when the deployment's public address is known. */
 export const PLATFORM_ORIGIN_LINE_PREFIX = 'The workspace is served at: ';
 
+export const MENTAL_HEALTH_TERMS =
+  /(?:\b(?:mental\s+health|psychiatr\w*|psycholog\w*|adhd|add|ocd|autis\w*|narciss\w*|disorder\w*|depress\w*|anxiety|schizophren\w*|bipolar)\b|الاضطراب|اضطرابات|الصحة\s+النفسية|الوسواس|التوحد|النرجسية)/iu;
+
 /**
  * Messages that ask about the app itself. Literal and small: a false positive
  * spends a site crawl, so only an unambiguous question about THIS app, site or

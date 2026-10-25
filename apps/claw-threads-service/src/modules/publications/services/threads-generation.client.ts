@@ -57,6 +57,7 @@ const privateStateSchema = z.object({
     .object({
       draftHash: z.string().length(64),
       authorConsensus: z.boolean(),
+      authorAgreementPercent: z.number().int().min(0).max(100).optional(),
       ready: z.boolean(),
       reasons: z.array(z.string()),
     })

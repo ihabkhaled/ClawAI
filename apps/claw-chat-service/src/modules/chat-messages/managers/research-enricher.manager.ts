@@ -22,7 +22,11 @@ import { AiStreamStage } from '../../../common/enums';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { resolveEffectiveResearchMode } from '../utilities/auto-research-mode.utility';
 import { httpRequest } from '../../../common/utilities';
-import { RESEARCH_GROUNDING_NO_INVENT_INSTRUCTION } from '../constants/research-grounding.constants';
+import {
+  GITHUB_REPOSITORY_COVERAGE_NOTE,
+  RESEARCH_GROUNDING_NO_INVENT_INSTRUCTION,
+} from '../constants/research-grounding.constants';
+import { hasGithubRepositoryEvidence } from '../utilities/research-prompt.utility';
 import {
   RESEARCH_ENRICHER_DEFAULT_TOP_FETCH,
   RESEARCH_ENRICHER_DEFAULT_TOP_RESULTS,
@@ -459,6 +463,9 @@ export class ResearchEnricherManager {
       "Do not say that you can't browse the web or access the internet.",
       'If the evidence is incomplete, state the uncertainty briefly and give the best supported answer.',
       RESEARCH_GROUNDING_NO_INVENT_INSTRUCTION,
+      ...(hasGithubRepositoryEvidence(sources.map(({ url }) => url))
+        ? [GITHUB_REPOSITORY_COVERAGE_NOTE]
+        : []),
     ].join('\n');
     const blocks = sources.map((source, index) => this.formatSource(index + 1, source));
     return [header, '', ...blocks].join('\n').trimEnd();

@@ -1,9 +1,23 @@
-export interface AuthorDraftHash {
+import type { AuthorDraft } from './generation-pipeline.types';
+
+export interface AuthorCandidateVote {
   role: string;
-  draftHash: string;
+  preferredCandidateIndex: number;
 }
 
+export type AuthorCandidateReviewContext = {
+  candidates: AuthorDraft[];
+  agreementPercent: number;
+  preferredCandidateIndex: number;
+};
+
 export type AuthorConsensusResult =
-  | { status: 'consensus'; draftHash: string }
-  | { status: 'dissent' }
-  | { status: 'invalid'; reason: 'author-count' | 'duplicate-role' | 'missing-hash' };
+  | {
+      status: 'consensus' | 'dissent';
+      preferredCandidateIndex: number;
+      agreementPercent: number;
+    }
+  | {
+      status: 'invalid';
+      reason: 'author-count' | 'duplicate-role' | 'candidate-index';
+    };

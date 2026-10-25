@@ -1,4 +1,4 @@
-import { ThreadHealingStrategy } from '@claw/shared-types';
+import { ThreadFailureClass, ThreadHealingStrategy } from '@claw/shared-types';
 
 import {
   COMPACT_OUTPUT_NOTE,
@@ -80,6 +80,9 @@ export function nextOnModelStep(
   state: LadderState,
   random: () => number = Math.random,
 ): OnModelStep | null {
+  if (state.failureClass === ThreadFailureClass.PROVIDER_REJECTED && state.httpStatus === 404) {
+    return null;
+  }
   for (const strategy of ON_MODEL_LADDERS.get(state.failureClass) ?? []) {
     if (state.used.has(strategy)) continue;
     const step = buildStep(strategy, state, random);

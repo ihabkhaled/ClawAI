@@ -12,8 +12,8 @@ This isolated service owns durable generation jobs, attempts, checkpoints,
 evidence bundles, structured role outputs, and private revision drafts. Its
 service-token-only enqueue route obtains a filtered owner snapshot from
 chat-service, persists the job, then publishes a confirmed dispatch event. The
-worker runs research, three to five authors, exact-hash consensus, Judge and
-Critic reviews, and at most three rounds before it marks a private draft ready
+worker runs research, three to five author drafts and preference votes, Judge
+arbitration and Critic review, and at most three rounds before it marks a private draft ready
 for owner review. After verifying the source snapshot, it reserves the selected
 Auth entitlement cap with the same idempotency key before storing and dispatching
 the job. A repeated matching key returns the pinned job before taking another
@@ -93,6 +93,22 @@ The worker writes the job's `stage` and `round` as it moves (`saveProgress`, fen
 number): AUTHOR_DRAFTS, CONSENSUS, JUDGE, CRITIC, then READY_FOR_REVIEW. The review page reads them
 from `generation-state` and says what is happening. Before 2026-10-07 the stage stayed
 AUTHOR_DRAFTS until the end.
+
+## Author preferences and Judge arbitration (ADR-190)
+
+Each author votes for a candidate draft. The service records the plurality's
+agreement percentage; a tie or split vote does not fail the round. The Judge
+receives all candidates and the percentage, chooses `selectedCandidateIndex`,
+and reviews that draft. The Critic reviews the Judge-selected draft. Their
+existing score, blocker and citation gates decide whether the round passes.
+Owner edits contain one exact draft, so author agreement is reported as a
+percentage but Judge and Critic approval decide readiness. Exact content hashes
+still bind a review to the immutable revision and its citations; they no longer
+require all authors to produce identical drafts.
+
+If a provider returns HTTP 404 for a configured model, the healing ladder skips
+that model immediately and tries a configured fallback. It does not spend the
+same-model retry allowance against a model that the provider says is absent.
 
 ## Review language and source-thread visibility (ADR-174)
 

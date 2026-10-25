@@ -10,7 +10,7 @@ ClawAI Threads turns a user's private chat into a research-backed article or thr
 
 - Supported publication types at launch: article, research article, guide, and technical explanation.
 - Require real-source citations for factual claims. Preserve source URLs and evidence in the publication record.
-- Use three to five author models. Proceed only when all active authors agree on the same exact draft hash. Judge threshold defaults to 80; Critic threshold defaults to 75; stop after three rounds.
+- Use three to five author models. They vote for a candidate and report a plurality agreement percentage; the Judge chooses and reviews a candidate, then the Critic reviews it. A tie or split preference does not fail a round by itself. Judge threshold defaults to 80; Critic threshold defaults to 75; stop after three rounds.
 - The generation action records public intent after a visible disclosure about publication and indexing. Do not add a separate consent checkbox. Generation output remains private until the owner explicitly approves publication.
 - Require a user-selected maximum spend before enqueue. Use existing plan entitlement and credit-hold/finalize paths; add no PAYG pricing. The cap must bound aggregate cost over every provider call in the job.
 - Authenticated users may comment, react, and request changes regardless of generation-plan eligibility. Use existing RBAC, rate limiting, reporting, owner controls, and admin moderation.
@@ -31,7 +31,7 @@ The legacy `/api/v1/threads` path rewrites to chat-service chat threads. Preserv
 
 The generation pipeline stores structured drafts and deliberation records, never hidden chain-of-thought. Every author, Judge, and Critic receives semantically identical complete source and evidence bundles, identified by hashes. Resolve actual model context limits and output reserve before enqueue; never silently truncate. Use canonical JSON as the persisted source of truth. TOON export is allowed only with semantic round-trip tests and measured token savings; Markdown remains a user-facing export.
 
-Generation progresses through research, parallel author drafts, exact-hash unanimous consensus, Judge review, independent Critic review, and `READY_FOR_USER_REVIEW`. Revisions preserve history. Owner edits that change meaning invalidate the prior review and require revalidation. Publishing switches the active immutable revision atomically.
+Generation progresses through research, parallel author drafts, author preference votes, Judge selection and review, independent Critic review, and `READY_FOR_USER_REVIEW`. The percentage records author alignment; the Judge owns candidate selection. Revisions preserve history. Owner edits that change meaning invalidate the prior review and require revalidation; author agreement on a single edited draft is informational, while Judge, Critic and citation checks decide readiness. Publishing switches the active immutable revision atomically.
 
 The Threads public page exposes only an explicit allow-list. Opaque IDs are non-enumerable. Revoke/unpublish removes a publication from public reads and discovery. Search, sitemap, and feeds include only published, owner-approved, safety-approved, index-eligible Threads; the separate chat-share lockdown does not suppress them.
 

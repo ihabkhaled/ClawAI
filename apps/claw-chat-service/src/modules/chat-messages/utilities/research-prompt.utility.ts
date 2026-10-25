@@ -19,6 +19,19 @@
 
 import { type AssembledContext } from '../types/context.types';
 
+export function hasGithubRepositoryEvidence(urls: readonly string[]): boolean {
+  return urls.some((rawUrl) => {
+    try {
+      const url = new URL(rawUrl);
+      const host = url.hostname.toLowerCase().replace(/^www\./u, '');
+      const pathSegments = url.pathname.split('/').filter(Boolean);
+      return host === 'github.com' && pathSegments.length >= 2;
+    } catch {
+      return false;
+    }
+  });
+}
+
 export function injectResearchEvidenceIntoContext(
   context: AssembledContext,
   evidence: string,

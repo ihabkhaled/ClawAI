@@ -19,8 +19,9 @@ export const JSON_REPAIR_SYSTEM_PROMPT =
   'You fix the format of a model reply. You are given a reply that was meant to be one JSON object and the shape it must have. Return only that JSON object, valid, with every brace closed. Do not add facts, sources or sentences that are not in the reply. Keep the original language and wording. Do not include analysis.';
 
 export const REVIEW_REPLY_SHAPE =
-  '{"score": integer 0-100, "blockers": string[], "findings": string[], "revisionBrief": string}';
+  '{"score": integer 0-100, "blockers": string[], "findings": string[], "revisionBrief": string, "selectedCandidateIndex": integer 0-4}';
 export const VOTE_REPLY_SHAPE = '{"agrees": boolean}';
+export const AUTHOR_CANDIDATE_VOTE_REPLY_SHAPE = '{"preferredCandidateIndex": integer 0-4}';
 
 export const JSON_REPAIR_USER_LEAD = 'Required shape and reason it was refused: ';
 export const JSON_REPAIR_REPLY_LEAD = '\nReply to fix:\n';

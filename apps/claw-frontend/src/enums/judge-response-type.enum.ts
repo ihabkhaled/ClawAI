@@ -3,4 +3,5 @@ export enum JudgeResponseType {
   REVISED_ANSWER = 'revised_answer',
   ESCALATED_ANSWER = 'escalated_answer',
   VERIFICATION_NOTE = 'verification_note',
+  UNAVAILABLE = 'unavailable',
 }

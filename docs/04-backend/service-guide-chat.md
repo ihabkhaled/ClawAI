@@ -365,6 +365,18 @@ ledger entry. The full payload also lands in `metadata.judgeReview`
 (`JudgeReviewPayload`) so the FE can render the Judge panel without
 recomputing anything.
 
+### Judge failure is not a pass
+
+A provider failure, malformed JSON or ambiguous plain-text reply yields
+`JudgeDecision.UNAVAILABLE` with zero confidence and an empty review response.
+The original answer remains available, but the UI shows a muted warning badge;
+it must not show the green `Verified` badge. Explicit plain-text pass, revise or
+escalate language remains parseable. The shared context assembler also adds a
+short accuracy note on turns that mention mental-health conditions; it asks the
+model to describe observed behavior, avoid diagnosis from anecdotes and
+distinguish AI metaphors from human clinical diagnoses. The note is included in
+the token budget and reaches chat modes through the shared gateway.
+
 ### Plan-feature gating
 
 `AccessControlService.assertCanSendMessage()` (chat-service) is called by
@@ -634,9 +646,12 @@ AUTO research is no longer a yes/no gate inside the POST. See
   crawl (`SITE_CRAWL`, `maxPages`) → `followUpAfterCrawl()` → search
   (`SEARCH_THEN_FETCH`, `searchQuery`) → one merged bundle.
 - `NarrationService` keeps the turn's work log in `claw:chat:narration:<threadId>`
-  and streams each line as a `narration` frame; `storeAssistantResponse` copies
-  it to `metadata.narration`. `ResearchProgressBridgeService` turns crawl ticks
-  into lines with a per-tick dedupe key (every replica receives them).
+  and streams each milestone as a `narration` frame; `storeAssistantResponse`
+  copies it to `metadata.narration`. `ResearchProgressBridgeService` streams
+  every crawl tick to the live progress timeline, but only named milestones are
+  saved in the work log; per-page ticks would otherwise make it hundreds of
+  lines long. Milestone broadcasts use a per-tick dedupe key because every
+  replica receives them.
 - Research is called on `POST /api/v1/internal/research/runs` with the service
   token and the user id — never the user's bearer.
 - URL detection is `detectPromptUrls` → `@claw/shared-utilities`

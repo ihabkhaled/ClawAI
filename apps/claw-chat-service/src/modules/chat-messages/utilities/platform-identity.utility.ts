@@ -1,5 +1,6 @@
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import {
+  MENTAL_HEALTH_TERMS,
   PLATFORM_IDENTITY_AGENT_LINES,
   PLATFORM_IDENTITY_LINES,
   PLATFORM_ORIGIN_LINE_PREFIX,
@@ -24,6 +25,17 @@ export function buildPlatformIdentityBlock(
     lines.splice(3, 0, `${PLATFORM_ORIGIN_LINE_PREFIX}${origin.trim().replace(/\/+$/u, '')}`);
   }
   return lines.join('\n');
+}
+
+/** Guard clinical language only on turns where the user is discussing it. */
+export function buildMentalHealthAccuracyNote(message: string): string | null {
+  if (!MENTAL_HEALTH_TERMS.test(message)) return null;
+  return [
+    'MENTAL-HEALTH ACCURACY:',
+    'Do not diagnose a person from a short anecdote or present a label as established fact.',
+    'Describe observable behaviors, state uncertainty, distinguish metaphors for AI behavior from human clinical diagnoses, and avoid stereotypes.',
+    'Recommend assessment by a qualified professional when the user asks for a diagnosis.',
+  ].join(' ');
 }
 
 /** Whether the message asks about the app the user is in. */

@@ -1331,6 +1331,7 @@ export const hi: TranslationDictionary = {
     judgeRefereeDescription:
       'उच्च सटीकता के लिए AI-संचालित आलोचना और प्रतिक्रिया सत्यापन सक्षम करें।',
     judgeVerified: 'सत्यापित',
+    judgeUnavailable: 'जज अनुपलब्ध',
     judgeRevised: 'संशोधित',
     judgeEscalated: 'एस्केलेट किया गया',
     judgeCriticFeedback: 'आलोचक फ़ीडबैक',

@@ -1352,6 +1352,7 @@ export const ru: TranslationDictionary = {
     judgeRefereeDescription:
       'Включить критику и проверку ответов на базе ИИ для повышения точности.',
     judgeVerified: 'Проверено',
+    judgeUnavailable: 'Судья недоступен',
     judgeRevised: 'Пересмотрено',
     judgeEscalated: 'Эскалировано',
     judgeCriticFeedback: 'Отзыв критика',

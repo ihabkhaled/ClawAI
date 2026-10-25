@@ -1060,6 +1060,7 @@ export class GenerationJobsRepository {
       review: {
         draftHash: result.draftHash,
         authorConsensus: result.authorConsensus,
+        authorAgreementPercent: result.authorAgreementPercent,
         ready: result.reviewReady,
         reasons: result.reviewReasons,
       },

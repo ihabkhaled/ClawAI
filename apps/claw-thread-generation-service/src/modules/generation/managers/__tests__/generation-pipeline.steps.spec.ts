@@ -3,7 +3,6 @@ import { Locale, ThreadPublicationType } from '@claw/shared-types';
 
 import { GenerationPipelineManager } from '../generation-pipeline.manager';
 import type { GenerationPipelineInput, ModelRole } from '../../types/generation-pipeline.types';
-import { revisionDraftHash } from '../../utilities/revision-review.utility';
 
 vi.mock('../../utilities/wait-before-retry.utility', () => ({
   waitBeforeRetry: vi.fn().mockResolvedValue(undefined),
@@ -41,11 +40,7 @@ const draftJson = (citationUrl = 'https://example.org/source') =>
     markdown: 'article',
     citations: [{ evidenceId: 'source-1', url: citationUrl }],
   });
-const voteJson = () =>
-  JSON.stringify({
-    agrees: true,
-    draftHash: revisionDraftHash(JSON.parse(draftJson())),
-  });
+const voteJson = () => JSON.stringify({ preferredCandidateIndex: 0 });
 const reviewJson = (score: number) =>
   JSON.stringify({ score, blockers: [], findings: [], revisionBrief: 'fix it' });
 
@@ -296,8 +291,8 @@ describe('GenerationPipelineManager step recording', () => {
     );
   });
 
-  it('records CONSENSUS_NOT_REACHED when an author dissents', async () => {
-    const dissent = JSON.stringify({ agrees: false, draftHash: 'x'.repeat(64) });
+  it('records the author preference percentage and still proceeds to the Judge', async () => {
+    const dissent = JSON.stringify({ preferredCandidateIndex: 1 });
     const { manager, recorder } = build([
       draftJson(),
       draftJson(),
@@ -305,12 +300,6 @@ describe('GenerationPipelineManager step recording', () => {
       voteJson(),
       voteJson(),
       dissent,
-      draftJson(),
-      draftJson(),
-      draftJson(),
-      voteJson(),
-      voteJson(),
-      voteJson(),
       reviewJson(80),
       reviewJson(75),
     ]);
@@ -320,8 +309,8 @@ describe('GenerationPipelineManager step recording', () => {
     expect(recorded(recorder)).toContainEqual(
       expect.objectContaining({
         stage: 'CONSENSUS',
-        outcome: 'RETRY',
-        code: 'CONSENSUS_NOT_REACHED',
+        outcome: 'SUCCEEDED',
+        rawExcerpt: 'Author preference agreement: 67%.',
       }),
     );
   });

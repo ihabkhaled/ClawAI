@@ -53,6 +53,11 @@ line proving the branch ran; one headless Playwright pass of a lab page and Comp
 
 One line per surface group: "applies via shared gateway", "applied in <path>", or "n/a because ...".
 
+For Judge changes, include an unavailable-provider and malformed-verdict case:
+the answer stays visible, but the review state is `UNAVAILABLE` and no surface
+renders it as verified. Conditional safety context belongs in the shared context
+builder so normal chat and orchestration modes receive the same note.
+
 ## Definition of done
 
 - [ ] The change is in shared code, or in every entry the map lists.

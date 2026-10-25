@@ -120,6 +120,34 @@ describe('ResearchEnricherManager', () => {
     expect(result.evidence).toContain('[2] Reactions — https://news/reactions');
   });
 
+  it('warns orchestration modes that GitHub repository evidence is not exhaustive', async () => {
+    httpRequest.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      data: {
+        runId: 'run-github',
+        providerKind: 'tavily',
+        results: [
+          {
+            id: 'repo',
+            title: 'AI-Psychiatry',
+            url: 'https://github.com/ihabkhaled/AI-Psychiatry',
+            snippet: 'Repository overview',
+          },
+        ],
+      },
+    });
+
+    const result = await manager.enrich({
+      mode: ResearchMode.SEARCH,
+      query: 'AI-Psychiatry repository',
+      userAuthHeader: AUTH_HEADER,
+    });
+
+    expect(result.evidence).toContain('not a clone or exhaustive file scan');
+    expect(result.evidence).toContain('Do not claim that all repository files were inspected');
+  });
+
   it('SEARCH_FETCH: calls search then fetch for top N URLs, falls back to snippet when one fetch errors', async () => {
     httpRequest.mockResolvedValueOnce({
       ok: true,

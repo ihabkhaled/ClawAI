@@ -1,6 +1,6 @@
 /** JSON reply the Judge and Critic must return; keys stay English whatever the article language. */
 export const REVIEW_REPLY_SHAPE =
-  '{"score": integer 0-100, "blockers": string[] (each under 250 characters), "findings": string[] (at most five, each under 250 characters), "revisionBrief": string (under 900 characters)}';
+  '{"score": integer 0-100, "blockers": string[] (each under 250 characters), "findings": string[] (at most five, each under 250 characters), "revisionBrief": string (under 900 characters), "selectedCandidateIndex": integer 0-4}';
 
 /** What a reviewer judges. The article's language is deliberately not on this list. */
 export const REVIEW_CRITERIA =

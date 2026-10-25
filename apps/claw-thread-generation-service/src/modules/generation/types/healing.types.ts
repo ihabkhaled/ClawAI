@@ -32,6 +32,8 @@ export type LadderState = {
   baseMaxOutputTokens: number;
   currentMaxOutputTokens: number;
   retryAfterMs: number | null;
+  /** An unavailable model is replaced immediately instead of being retried with a smaller prompt. */
+  httpStatus: number | null;
   /** Count of backoff waits already taken on this model, for the exponential delay. */
   waits: number;
   reason: string;
@@ -64,6 +66,7 @@ export type PlanNextState = {
   maxOutputTokens: number;
   waits: number;
   retryAfterMs: number | null;
+  httpStatus: number | null;
   reason: string;
   lastReply: string;
 };

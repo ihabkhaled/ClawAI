@@ -77,10 +77,9 @@ export class SiteCrawlManager {
       return [];
     }
 
-    this.progressPublisher.publish(correlationId, 'started', `Starting crawl of ${origin}`, 0, 0);
+    this.publishCrawlStarted(correlationId, origin);
 
-    const robots = await this.fetchRobotsTxt(userId, origin, trace, toolsUsed);
-    this.progressPublisher.publish(correlationId, 'robots', `Checked ${origin}/robots.txt`, 0, 0);
+    const robots = await this.fetchCrawlRobots(userId, origin, trace, toolsUsed, correlationId);
 
     // The hint applies to the page the user named. If a renderer wins there, host
     // memory moves it to the front for the rest of this site's pages as well.
@@ -99,6 +98,7 @@ export class SiteCrawlManager {
     // homepage alone. Bare-domain detection makes the typed form the common
     // case, so this is no longer an edge.
     const siteOrigin = this.safeOrigin(homepage.finalUrl) ?? origin;
+    const pathPrefix = this.repositoryPathPrefix(startUrl);
 
     const discovery = await this.discoverCandidates(
       userId,
@@ -108,6 +108,7 @@ export class SiteCrawlManager {
       trace,
       toolsUsed,
       correlationId,
+      pathPrefix,
     );
 
     const pageBudget = Math.min(Math.max(1, maxPages), CRAWL_MAX_PAGES_CEILING);
@@ -129,20 +130,57 @@ export class SiteCrawlManager {
     const items = first.items;
     const skippedByRobots =
       first.skippedByRobots +
-      (await this.followLinks(
-        userId,
-        items,
-        [homepage.finalUrl, ...discovery.candidates.map((candidate) => candidate.url)],
-        [...homepage.links, ...first.links],
-        { siteOrigin, intent, pageBudget, robots, trace, warnings, correlationId, maxLinkDepth },
-      ));
+      (await this.followDiscoveredLinks(userId, homepage, discovery, first, items, {
+        siteOrigin,
+        pathPrefix,
+        intent,
+        pageBudget,
+        robots,
+        trace,
+        warnings,
+        correlationId,
+        maxLinkDepth,
+      }));
 
+    return this.completeCrawl({
+      items,
+      origin,
+      discovery,
+      toolsUsed,
+      warnings,
+      correlationId,
+      skippedByRobots,
+      plannedPages: toFetch.length + 1,
+      trace,
+    });
+  }
+
+  private completeCrawl(args: {
+    items: EvidenceItem[];
+    origin: string;
+    discovery: CrawlDiscoveryResult;
+    toolsUsed: string[];
+    warnings: string[];
+    correlationId: string | undefined;
+    skippedByRobots: number;
+    plannedPages: number;
+    trace: ResearchTraceEntry[];
+  }): EvidenceItem[] {
+    const {
+      items,
+      origin,
+      discovery,
+      toolsUsed,
+      warnings,
+      correlationId,
+      skippedByRobots,
+      plannedPages,
+      trace,
+    } = args;
     if (skippedByRobots > 0) {
       warnings.push(`${String(skippedByRobots)} page(s) skipped: disallowed by robots.txt.`);
     }
-    if (items.length > 1) {
-      toolsUsed.push('web_fetch:site_crawl');
-    }
+    this.recordCrawlTool(items, toolsUsed);
     trace.push(
       traceEntry(
         'crawl.summary',
@@ -156,9 +194,48 @@ export class SiteCrawlManager {
       'completed',
       `Crawl complete: ${String(items.length)} page(s) fetched`,
       items.length,
-      toFetch.length + 1,
+      plannedPages,
     );
     return items;
+  }
+
+  private publishCrawlStarted(correlationId: string | undefined, origin: string): void {
+    this.progressPublisher.publish(correlationId, 'started', `Starting crawl of ${origin}`, 0, 0);
+  }
+
+  private async fetchCrawlRobots(
+    userId: string,
+    origin: string,
+    trace: ResearchTraceEntry[],
+    toolsUsed: string[],
+    correlationId: string | undefined,
+  ): Promise<RobotsTxtResult> {
+    const robots = await this.fetchRobotsTxt(userId, origin, trace, toolsUsed);
+    this.progressPublisher.publish(correlationId, 'robots', `Checked ${origin}/robots.txt`, 0, 0);
+    return robots;
+  }
+
+  private recordCrawlTool(items: EvidenceItem[], toolsUsed: string[]): void {
+    if (items.length > 1) {
+      toolsUsed.push('web_fetch:site_crawl');
+    }
+  }
+
+  private followDiscoveredLinks(
+    userId: string,
+    homepage: FetchResult,
+    discovery: CrawlDiscoveryResult,
+    first: CrawlFetchResult,
+    items: EvidenceItem[],
+    context: CrawlLinkFollowContext,
+  ): Promise<number> {
+    return this.followLinks(
+      userId,
+      items,
+      [homepage.finalUrl, ...discovery.candidates.map((candidate) => candidate.url)],
+      [...homepage.links, ...first.links],
+      context,
+    );
   }
 
   /**
@@ -175,6 +252,7 @@ export class SiteCrawlManager {
     trace: ResearchTraceEntry[],
     toolsUsed: string[],
     correlationId: string | undefined,
+    pathPrefix: string | null,
   ): Promise<CrawlDiscoveryResult> {
     const sitemapBudget = { remaining: CRAWL_MAX_SITEMAP_FETCHES };
     const sitemapEntries = await this.discoverSitemapEntries(
@@ -198,11 +276,18 @@ export class SiteCrawlManager {
     const visited = new Set<string>([this.normalize(homepage.finalUrl)]);
     const candidates: CrawlCandidate[] = [];
     for (const entry of sitemapEntries) {
-      this.addCandidate(candidates, visited, origin, entry.loc, CrawlDiscoveryMethod.SITEMAP);
+      this.addCandidate(
+        candidates,
+        visited,
+        origin,
+        pathPrefix,
+        entry.loc,
+        CrawlDiscoveryMethod.SITEMAP,
+      );
     }
     if (sitemapEntries.length < CRAWL_MIN_SITEMAP_URLS_BEFORE_LINK_FALLBACK) {
       for (const link of homepage.links) {
-        this.addCandidate(candidates, visited, origin, link, CrawlDiscoveryMethod.LINK);
+        this.addCandidate(candidates, visited, origin, pathPrefix, link, CrawlDiscoveryMethod.LINK);
       }
     }
 
@@ -212,7 +297,14 @@ export class SiteCrawlManager {
     // fallback for a missing one.
     const feedEntries = await this.discoverFeedEntries(userId, homepage, trace, toolsUsed);
     for (const entry of feedEntries) {
-      this.addCandidate(candidates, visited, origin, entry.url, CrawlDiscoveryMethod.FEED);
+      this.addCandidate(
+        candidates,
+        visited,
+        origin,
+        pathPrefix,
+        entry.url,
+        CrawlDiscoveryMethod.FEED,
+      );
     }
     this.progressPublisher.publish(
       correlationId,
@@ -486,7 +578,14 @@ export class SiteCrawlManager {
     ) {
       const next: CrawlCandidate[] = [];
       for (const link of frontier) {
-        this.addCandidate(next, seen, context.siteOrigin, link, CrawlDiscoveryMethod.LINK);
+        this.addCandidate(
+          next,
+          seen,
+          context.siteOrigin,
+          context.pathPrefix,
+          link,
+          CrawlDiscoveryMethod.LINK,
+        );
       }
       if (next.length === 0) {
         break;
@@ -516,10 +615,11 @@ export class SiteCrawlManager {
     candidates: CrawlCandidate[],
     visited: Set<string>,
     origin: string,
+    pathPrefix: string | null,
     rawUrl: string,
     discoveryMethod: CrawlDiscoveryMethod,
   ): void {
-    if (!this.isSameSite(rawUrl, origin)) {
+    if (!this.isSameSite(rawUrl, origin, pathPrefix)) {
       return;
     }
     const key = this.normalize(rawUrl);
@@ -556,15 +656,33 @@ export class SiteCrawlManager {
    * the canonical host when fetched. Anything on a DIFFERENT host is still
    * refused: a crawl never leaves the site the user named.
    */
-  private isSameSite(rawUrl: string, origin: string): boolean {
+  private isSameSite(rawUrl: string, origin: string, pathPrefix: string | null): boolean {
     try {
       const candidate = new URL(rawUrl);
       const site = new URL(origin);
-      return candidate.protocol !== 'http:' && candidate.protocol !== 'https:'
-        ? false
-        : stripWww(candidate.hostname) === stripWww(site.hostname);
+      if (
+        (candidate.protocol !== 'http:' && candidate.protocol !== 'https:') ||
+        stripWww(candidate.hostname) !== stripWww(site.hostname)
+      ) {
+        return false;
+      }
+      if (pathPrefix === null) return true;
+      const candidatePath = candidate.pathname.toLowerCase();
+      const repositoryPath = pathPrefix.toLowerCase();
+      return candidatePath === repositoryPath || candidatePath.startsWith(`${repositoryPath}/`);
     } catch {
       return false;
+    }
+  }
+
+  private repositoryPathPrefix(rawUrl: string): string | null {
+    try {
+      const parsed = new URL(rawUrl);
+      if (stripWww(parsed.hostname) !== 'github.com') return null;
+      const [owner, repository] = parsed.pathname.split('/').filter(Boolean);
+      return owner && repository ? `/${owner}/${repository}` : null;
+    } catch {
+      return null;
     }
   }
 

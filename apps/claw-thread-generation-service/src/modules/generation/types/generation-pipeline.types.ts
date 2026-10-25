@@ -54,6 +54,7 @@ const REVIEW_FINDINGS_MAX = 5;
 const REVIEW_BRIEF_MAX_CHARS = 1000;
 
 export const reviewSchema = z.object({
+  selectedCandidateIndex: z.number().int().min(0).max(4).default(0),
   score: z.number().int().min(0).max(100),
   // Long or numerous items are shortened, never rejected: a verbose review is still a review.
   blockers: z.array(z.string()).transform((items) => clampReviewList(items, REVIEW_BLOCKERS_MAX)),
@@ -64,6 +65,17 @@ export const reviewSchema = z.object({
     .default('')
     .transform((text) => clampReviewText(text, REVIEW_BRIEF_MAX_CHARS)),
 });
+
+export function reviewSchemaForCandidateCount(
+  candidateCount: number,
+  defaultCandidateIndex = 0,
+): z.ZodType<StructuredReview> {
+  return reviewSchema
+    .extend({
+      selectedCandidateIndex: z.number().int().min(0).max(4).default(defaultCandidateIndex),
+    })
+    .refine((review) => review.selectedCandidateIndex < candidateCount);
+}
 
 export const checkpointBundleSchema = z.record(z.string(), z.unknown());
 
@@ -76,6 +88,7 @@ export const ownerRevisionContentSchema = z.object({
     .object({
       draftHash: z.string().length(64),
       authorConsensus: z.boolean(),
+      authorAgreementPercent: z.number().int().min(0).max(100).optional(),
       ready: z.boolean(),
       reasons: z.array(z.string()),
     })
@@ -127,6 +140,7 @@ export type GenerationPipelineResult = {
   judgeReview: StructuredReview;
   criticReview: StructuredReview;
   authorConsensus: boolean;
+  authorAgreementPercent: number;
   reviewReady: boolean;
   reviewReasons: string[];
 };
@@ -145,6 +159,7 @@ export type PrivateGenerationState = {
   review: {
     draftHash: string;
     authorConsensus: boolean;
+    authorAgreementPercent?: number;
     ready: boolean;
     reasons: string[];
   } | null;

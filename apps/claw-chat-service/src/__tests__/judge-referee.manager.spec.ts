@@ -164,17 +164,22 @@ describe('JudgeRefereeManager', () => {
       expect(result.decision).toBe('ACCEPT');
     });
 
-    it('should fallback to ACCEPT on malformed JSON', () => {
+    it('marks malformed judge output as unavailable', () => {
       const result = manager.parseJudgeOutput('This is not JSON at all');
-      expect(result.decision).toBe('ACCEPT');
-      expect(result.confidence).toBe(0.6);
+      expect(result.decision).toBe('UNAVAILABLE');
+      expect(result.confidence).toBe(0);
     });
 
-    it('should fallback to ACCEPT on invalid decision value', () => {
+    it('marks an invalid judge decision as unavailable', () => {
       const result = manager.parseJudgeOutput(
         '{"decision": "REJECT", "reasoning": "Bad", "confidence": 0.5}',
       );
-      expect(result.decision).toBe('ACCEPT');
+      expect(result.decision).toBe('UNAVAILABLE');
+    });
+
+    it('does not infer ACCEPT from ambiguous plain text', () => {
+      const result = manager.parseJudgeOutput('The model could not reach a decision.');
+      expect(result.decision).toBe('UNAVAILABLE');
     });
 
     it('should clamp confidence between 0 and 1', () => {

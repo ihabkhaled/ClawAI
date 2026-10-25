@@ -1257,6 +1257,7 @@ export const zh: TranslationDictionary = {
     judgeReferee: '裁判员和裁判员',
     judgeRefereeDescription: '启用人工智能驱动的评论和响应验证，以提高准确性。',
     judgeVerified: '已验证',
+    judgeUnavailable: '法官缺席',
     judgeRevised: '修改',
     judgeEscalated: '升级',
     judgeCriticFeedback: '评论家反馈',

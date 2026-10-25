@@ -1324,6 +1324,7 @@ export const en: TranslationDictionary = {
     judgeRefereeDescription:
       'Enable AI-powered critique and verification of responses for higher accuracy.',
     judgeVerified: 'Verified',
+    judgeUnavailable: 'Judge unavailable',
     judgeRevised: 'Revised',
     judgeEscalated: 'Escalated',
     judgeCriticFeedback: 'Critic Feedback',

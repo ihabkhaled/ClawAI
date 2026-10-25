@@ -1357,6 +1357,7 @@ export const pt: TranslationDictionary = {
     judgeRefereeDescription:
       'Habilite crítica e verificação de respostas por IA para maior precisão.',
     judgeVerified: 'Verificado',
+    judgeUnavailable: 'Juiz indisponível',
     judgeRevised: 'Revisado',
     judgeEscalated: 'Escalonado',
     judgeCriticFeedback: 'Feedback do Crítico',

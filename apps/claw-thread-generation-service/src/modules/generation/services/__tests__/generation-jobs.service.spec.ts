@@ -346,6 +346,7 @@ describe('GenerationJobsService', () => {
         judgeReview: { score: 85, blockers: [], findings: [], revisionBrief: '' },
         criticReview: { score: 78, blockers: [], findings: [], revisionBrief: '' },
         authorConsensus: true,
+        authorAgreementPercent: 100,
         reviewReady: true,
         reviewReasons: [],
       }),

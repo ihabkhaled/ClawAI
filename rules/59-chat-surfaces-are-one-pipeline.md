@@ -44,6 +44,9 @@ context, same uploads, same tools, same buttons, same billing chokepoint. The ow
    call, skips a gateway, or its DTO misses a shared fragment. The frontend side is asserted in
    `orchestration-page-shell-recorder.test.tsx`, `compare-page.test.tsx` and
    `in-thread-compare-panel.test.tsx`. Adding a surface means adding it to those lists.
+8. **Unavailable Judge output is not approval.** Provider failures, malformed
+   responses and ambiguous verdicts remain `UNAVAILABLE`; the UI must not show a
+   green verified state when no review completed ([ADR-191](../docs/13-adr/adr-191-unavailable-judge-results-are-never-verified.md)).
 
 ## What it costs when ignored
 

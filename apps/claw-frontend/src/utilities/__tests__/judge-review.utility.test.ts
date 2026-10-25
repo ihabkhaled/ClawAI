@@ -83,4 +83,21 @@ describe('getJudgeReviewFromMessage', () => {
     expect(review?.judgeResponse).toBe('Looks good.');
     expect(review?.originalAnswerSnapshot).toBe('Original answer');
   });
+
+  it('preserves an unavailable judge verdict without normalizing it to Verified', () => {
+    const review = getJudgeReviewFromMessage({
+      ...baseMessage,
+      metadata: {
+        judgeReview: {
+          version: 1,
+          judgeDecision: 'UNAVAILABLE',
+          judgeResponseType: 'unavailable',
+          judgeSummary: 'The judge could not complete a review.',
+        },
+      },
+    });
+
+    expect(review?.judgeDecision).toBe('UNAVAILABLE');
+    expect(review?.judgeResponseType).toBe('unavailable');
+  });
 });

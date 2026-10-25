@@ -14,22 +14,26 @@ export function revisionDraftHash(draft: AuthorDraft): string {
 
 export function evaluateRevisionReview(input: RevisionReviewEvaluation): {
   draftHash: string;
+  authorAgreementPercent: number;
   ready: boolean;
   reasons: string[];
 } {
   const draftHash = revisionDraftHash(input.draft);
   const expectedAuthors = new Set(input.expectedAuthorIds);
-  const votedAuthors = new Set(input.votes.map(({ roleId }) => roleId));
-  const validVotes =
-    expectedAuthors.size === input.expectedAuthorIds.length &&
-    input.votes.length === expectedAuthors.size &&
-    votedAuthors.size === expectedAuthors.size &&
-    input.votes.every(
-      (vote) => expectedAuthors.has(vote.roleId) && vote.agrees && vote.draftHash === draftHash,
-    );
+  const matchingVotes = input.votes.filter(
+    (vote, index) =>
+      expectedAuthors.has(vote.roleId) &&
+      vote.draftHash === draftHash &&
+      input.votes.findIndex((candidate) => candidate.roleId === vote.roleId) === index,
+  );
+  const authorAgreementPercent =
+    expectedAuthors.size === 0
+      ? 0
+      : Math.round(
+          (matchingVotes.filter((vote) => vote.agrees).length / expectedAuthors.size) * 100,
+        );
   const reasons: string[] = [];
 
-  if (!validVotes) reasons.push('AUTHOR_CONSENSUS_FAILED');
   if (input.draft.citations.some(({ evidenceId, url }) => input.evidence.get(evidenceId) !== url)) {
     reasons.push('CITATION_NOT_IN_SAVED_EVIDENCE');
   }
@@ -40,5 +44,5 @@ export function evaluateRevisionReview(input: RevisionReviewEvaluation): {
     reasons.push('CRITIC_THRESHOLD_FAILED');
   }
 
-  return { draftHash, ready: reasons.length === 0, reasons };
+  return { draftHash, authorAgreementPercent, ready: reasons.length === 0, reasons };
 }

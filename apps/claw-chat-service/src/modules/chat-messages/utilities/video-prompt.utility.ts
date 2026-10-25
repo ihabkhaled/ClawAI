@@ -10,7 +10,10 @@ import {
   VIDEO_PLANNER_SYSTEM_PROMPT,
 } from '../constants/video-generation.constants';
 import type { AssembledContext } from '../types/context.types';
-import { buildPlatformIdentityBlock } from './platform-identity.utility';
+import {
+  buildMentalHealthAccuracyNote,
+  buildPlatformIdentityBlock,
+} from './platform-identity.utility';
 
 /** The rewritten prompt from a planner reply, or null when the reply is unusable. */
 export function parsePlannedVideoPrompt(raw: string): string | null {
@@ -68,6 +71,8 @@ export function buildVideoPlannerPrompt(
   const sections = [
     hasSourceImage ? VIDEO_IMAGE_PLANNER_SYSTEM_PROMPT : VIDEO_PLANNER_SYSTEM_PROMPT,
   ];
+  const accuracyNote = buildMentalHealthAccuracyNote(userText);
+  if (accuracyNote) sections.push(accuracyNote);
   if (VIDEO_ABOUT_THIS_APP_PATTERN.test(userText)) {
     sections.push(`Background:\n${buildPlatformIdentityBlock(context.platformOrigin)}`);
   }

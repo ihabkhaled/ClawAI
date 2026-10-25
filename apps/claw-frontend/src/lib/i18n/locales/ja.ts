@@ -1332,6 +1332,7 @@ export const ja: TranslationDictionary = {
     judgeReferee: '裁判官および審判員',
     judgeRefereeDescription: 'AI を活用した批評と回答の検証を可能にし、精度を高めます。',
     judgeVerified: 'フォローする',
+    judgeUnavailable: '裁判官が不在',
     judgeRevised: '改訂版',
     judgeEscalated: 'エスカレートされました',
     judgeCriticFeedback: '批評家からのフィードバック',

@@ -1330,6 +1330,7 @@ export const fa: TranslationDictionary = {
     judgeRefereeDescription:
       'برای دقت بیشتر، نقد و تأیید پاسخ‌های مبتنی بر هوش مصنوعی را فعال کنید.',
     judgeVerified: 'تایید شده است',
+    judgeUnavailable: 'قاضی در دسترس نیست',
     judgeRevised: 'تجدید نظر شده است',
     judgeEscalated: 'تشدید شد',
     judgeCriticFeedback: 'بازخورد منتقد',

@@ -37,7 +37,7 @@ export type CriticEvaluation = {
 };
 
 export type JudgeResponseType =
-  'summary' | 'revised_answer' | 'escalated_answer' | 'verification_note';
+  'summary' | 'revised_answer' | 'escalated_answer' | 'verification_note' | 'unavailable';
 
 export type JudgeVerdict = {
   decision: JudgeDecision;
