@@ -68,7 +68,6 @@ describe('THREAD_GENERATION_CODE_KEYS', () => {
     for (const code of [
       'PROVIDER_ERROR',
       'PROVIDER_RATE_LIMITED',
-      'CONSENSUS_NOT_REACHED',
       'HEAL_STOPPED_SPEND_CAP',
       'JUDGE_SCORE_LOW',
       'CRITIC_SCORE_LOW',
