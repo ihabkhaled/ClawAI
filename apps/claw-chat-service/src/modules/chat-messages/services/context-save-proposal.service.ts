@@ -119,9 +119,8 @@ export class ContextSaveProposalService {
       ContextSaveStatus.PROPOSED,
       this.withRecord(metadata, dismissed),
     );
-    if (claimed) return dismissed;
     // Lost the race to a confirm or another dismiss: report what is stored now.
-    return (await this.load(userId, messageId)).record;
+    return claimed ? dismissed : (await this.load(userId, messageId)).record;
   }
 
   /**

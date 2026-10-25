@@ -150,17 +150,16 @@ export class MessageSpeechService {
       );
       return this.answer(HttpStatus.OK, current, speakable, now);
     }
-    if (current?.status === SpeechJobStatus.GENERATING && !isStaleSpeechJob(current, now)) {
-      return this.answer(HttpStatus.ACCEPTED, current, speakable, now);
-    }
     // A READY reading we could not replay (its file is gone) is redone in full.
-    return this.launch(
-      userId,
-      messageId,
-      { speakable, voice },
-      now,
-      current?.status === SpeechJobStatus.READY,
-    );
+    return current?.status === SpeechJobStatus.GENERATING && !isStaleSpeechJob(current, now)
+      ? this.answer(HttpStatus.ACCEPTED, current, speakable, now)
+      : this.launch(
+          userId,
+          messageId,
+          { speakable, voice },
+          now,
+          current?.status === SpeechJobStatus.READY,
+        );
   }
 
   /** Takes the reply's job lock and starts the background job, or reports the sibling's. */

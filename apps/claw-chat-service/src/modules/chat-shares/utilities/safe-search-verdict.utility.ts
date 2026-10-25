@@ -21,16 +21,12 @@ export function isSafeForAdvertising(annotation: SafeSearchAnnotation | null): b
   }
 
   return MODERATED_SAFE_SEARCH_CATEGORIES.every((category) => {
-    const likelihood = annotation[category];
-    if (typeof likelihood !== 'string') {
-      // The category was not reported at all. Unknown is not safe.
-      return false;
-    }
-    if (DISQUALIFYING_LIKELIHOODS.includes(likelihood)) {
-      return false;
-    }
+    const likelihood = readLikelihood(annotation, category);
     // Only the two explicitly-negative levels are an approval.
-    return likelihood === 'VERY_UNLIKELY' || likelihood === 'UNLIKELY';
+    return (
+      typeof likelihood === 'string' &&
+      (likelihood === 'VERY_UNLIKELY' || likelihood === 'UNLIKELY')
+    );
   });
 }
 
@@ -46,8 +42,21 @@ export function describeRejection(annotation: SafeSearchAnnotation | null): stri
     return 'no annotation returned';
   }
   const flagged = MODERATED_SAFE_SEARCH_CATEGORIES.filter((category) => {
-    const likelihood = annotation[category];
+    const likelihood = readLikelihood(annotation, category);
     return typeof likelihood === 'string' && DISQUALIFYING_LIKELIHOODS.includes(likelihood);
   });
   return flagged.length > 0 ? flagged.join(',') : 'unrecognised likelihood';
+}
+
+function readLikelihood(annotation: SafeSearchAnnotation, category: string): string | undefined {
+  switch (category) {
+    case 'adult':
+      return annotation['adult'];
+    case 'violence':
+      return annotation['violence'];
+    case 'racy':
+      return annotation['racy'];
+    default:
+      return undefined;
+  }
 }

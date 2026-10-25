@@ -104,10 +104,8 @@ export class CapabilityDualWriteMetricsService {
   private dualWriteEnabled(): boolean {
     const entry = Object.entries(process.env).find(([k]) => k === CAPABILITY_DUAL_WRITE_FLAG_ENV);
     const raw = entry?.[1];
-    if (raw === undefined || raw === '') {
-      return true; // default-on per CLAUDE.md until soak proves equivalence
-    }
-    return raw.toLowerCase() !== 'false';
+    // Default on per CLAUDE.md until the soak proves equivalence.
+    return raw === undefined || raw === '' || raw.toLowerCase() !== 'false';
   }
 
   private appendRecentDivergence(record: DualWriteDivergenceRecord): void {

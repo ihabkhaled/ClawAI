@@ -2151,10 +2151,6 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     }
 
     const prompt = query.trim().toLowerCase();
-    if (prompt.length === 0) {
-      return true;
-    }
-
     // A short question is still a question. This used to skip retrieval for
     // anything of three words or fewer, which meant "the codename?" and
     // "what is my name" got no memories, no context-pack items and no
@@ -2163,8 +2159,9 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     //
     // Only a pleasantry genuinely needs nothing, so only a pleasantry is
     // skipped.
-    return /^(hi|hello|hey|yo|thanks|thank you|good (morning|afternoon|evening))(?:[!.?]*)$/.test(
-      prompt,
+    return (
+      prompt.length === 0 ||
+      /^(hi|hello|hey|yo|thanks|thank you|good (morning|afternoon|evening))(?:[!.?]*)$/.test(prompt)
     );
   }
 }

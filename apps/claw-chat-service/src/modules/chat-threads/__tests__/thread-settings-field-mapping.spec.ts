@@ -1,5 +1,4 @@
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 
 /**
  * Guards the gap that swallowed `useCrossThreadContext` on its first live run.
@@ -16,11 +15,18 @@ import { join } from 'node:path';
  * field and would be forgotten in exactly the same way the mapping was.
  */
 
-const MODULE_ROOT = join(__dirname, '..');
-
-function read(relativePath: string): string {
-  return readFileSync(join(MODULE_ROOT, relativePath), 'utf8');
-}
+const serviceSource = readFileSync(
+  'src/modules/chat-threads/services/chat-threads.service.ts',
+  'utf8',
+);
+const createThreadDtoSource = readFileSync(
+  'src/modules/chat-threads/dto/create-thread.dto.ts',
+  'utf8',
+);
+const updateThreadDtoSource = readFileSync(
+  'src/modules/chat-threads/dto/update-thread.dto.ts',
+  'utf8',
+);
 
 /** Field names declared in a zod object schema, in declaration order. */
 function schemaFields(source: string, schemaName: string): string[] {
@@ -52,10 +58,8 @@ function methodSource(source: string, signature: string): string {
 const NOT_FORWARDED: Readonly<Record<string, string>> = Object.freeze({});
 
 describe('thread settings reach the database', () => {
-  const serviceSource = read('services/chat-threads.service.ts');
-
   it('forwards every field of createThreadSchema', () => {
-    const fields = schemaFields(read('dto/create-thread.dto.ts'), 'createThreadSchema');
+    const fields = schemaFields(createThreadDtoSource, 'createThreadSchema');
     expect(fields.length).toBeGreaterThan(5);
     const body = methodSource(serviceSource, 'async createThread(');
 
@@ -67,16 +71,16 @@ describe('thread settings reach the database', () => {
   });
 
   it('forwards every field of updateThreadSchema', () => {
-    const fields = schemaFields(read('dto/update-thread.dto.ts'), 'updateThreadSchema');
+    const fields = schemaFields(updateThreadDtoSource, 'updateThreadSchema');
     expect(fields.length).toBeGreaterThan(10);
     const body = methodSource(serviceSource, 'async updateThread(');
 
+    const propertyNames: string[] = body.match(/\b[a-zA-Z_$][\w$]*:/gu) ?? [];
     const missing = fields.filter((field) => {
-      if (NOT_FORWARDED[field] !== undefined) return false;
       // `criticEnabled` and `criticModel` reach the write through a conditional
       // expression rather than a direct assignment, because they are forced off
       // when the judge is off. Naming the field at all is what this asserts.
-      return !new RegExp(`\\b${field}:`).test(body);
+      return NOT_FORWARDED[field] === undefined && !propertyNames.includes(`${field}:`);
     });
 
     expect(missing).toEqual([]);

@@ -2315,16 +2315,15 @@ export class ChatExecutionManager implements OnModuleInit {
       return Math.max(MIN_OUTPUT_TOKENS, bounded);
     }
     // AUTO + fast-path: keep small responses fast for trivial prompts.
-    if ((routingMode === 'AUTO' || model === 'AUTO') && fastPathEnabled) {
-      return FAST_PATH_MAX_OUTPUT_TOKENS;
-    }
     // Default behavior: return `undefined` so we do NOT send a
     // max_tokens / num_predict to the provider. The model picks its
     // own stop token and produces a complete answer. Previously we
     // were always capping to DEFAULT_MAX_OUTPUT_TOKENS / AUTO_MAX
     // which truncated substantive answers mid-word (visible in
     // parallel-compare where every model returned exactly 112 tokens).
-    return undefined;
+    return (routingMode === 'AUTO' || model === 'AUTO') && fastPathEnabled
+      ? FAST_PATH_MAX_OUTPUT_TOKENS
+      : undefined;
   }
 
   private hasGroundingMaterial(context: AssembledContext): boolean {

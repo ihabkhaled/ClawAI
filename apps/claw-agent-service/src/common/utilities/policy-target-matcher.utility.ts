@@ -2,7 +2,6 @@ import { Logger } from '@nestjs/common';
 import picomatch from 'picomatch';
 
 import { CapabilityClass } from '../enums/capability-class.enum';
-import { CapabilityOperation } from '../enums/capability-operation.enum';
 import type { RiskAssessmentInput } from '../../modules/agent/types/capability.types';
 
 const logger = new Logger('PolicyTargetMatcherUtility');
@@ -148,10 +147,7 @@ function matchesApplication(matcher: Record<string, unknown>, input: RiskAssessm
     const title =
       readString(input.targetDescriptor, 'windowTitleRegex') ??
       readString(input.targetDescriptor, 'windowTitle');
-    if (input.capabilityOperation === CapabilityOperation.SEND_KEYSTROKE && title === undefined) {
-      // Mandatory for keystroke ops — absence trips the deny rule
-      return false;
-    }
+    // Missing titles fail closed, including mandatory keystroke operations.
     return title !== undefined && safeRegexTest(String(matcher['windowTitleRegex']), title);
   }
   return matchesGeneric(matcher, input);

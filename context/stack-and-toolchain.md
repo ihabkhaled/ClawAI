@@ -10,8 +10,8 @@
 | Layer    | Choice                                                                                                                                                                                          |
 | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Runtime  | Node **>= 22.13.0** (Docker images run `node:26-bookworm-slim` — glibc, NOT Alpine)                                                                                                             |
-| Backend  | NestJS **11.1**, Prisma **7.8** (Postgres) / Mongoose (Mongo), Zod **4.4**                                                                                                                      |
-| Frontend | Next.js **16.2**, React **19.2**, TanStack Query, Zustand, Tailwind, shadcn/ui                                                                                                                  |
+| Backend  | NestJS **12.1**, Prisma **7.10** (Postgres) / Mongoose (Mongo), Zod **4.6**                                                                                                                     |
+| Frontend | Next.js **16.4**, React and React DOM **19.3.1**, TanStack Query, Zustand, Tailwind, shadcn/ui                                                                                                  |
 | Language | TypeScript compiled by **TypeScript 7** (the Go-native compiler: the `typescript7` alias, run through `tools/typescript/run-ts7.mjs`) + **tsc-alias** for path rewriting — **NOT `nest build`** |
 | Lint     | ESLint **9** flat config, Prettier **3.8**                                                                                                                                                      |
 | Tests    | **vitest** (every workspace, backend via `unplugin-swc`), **playwright** (E2E) — ADR-099                                                                                                        |

@@ -47,15 +47,13 @@ export function buildSnapshotMessages(messages: ChatMessage[]): SnapshotMessage[
  * shows a stranger that something broke and adds nothing.
  */
 function isPublishable(message: ChatMessage): boolean {
-  if (!PUBLISHABLE_ROLES.includes(message.role)) {
-    return false;
-  }
-  if (message.content.trim().length === 0) {
-    return false;
-  }
   // Messages the execution path marked as errors were never delivered as real
   // answers; they are diagnostics, and diagnostics are internal.
-  return !isErrorMessage(message);
+  return (
+    PUBLISHABLE_ROLES.includes(message.role) &&
+    message.content.trim().length > 0 &&
+    !isErrorMessage(message)
+  );
 }
 
 /**
@@ -91,28 +89,23 @@ function extractAssetSources(message: ChatMessage): SnapshotAssetSource[] {
 
 function isErrorMessage(message: ChatMessage): boolean {
   const metadata = message.metadata;
-  if (typeof metadata !== 'object' || metadata === null || Array.isArray(metadata)) {
-    return false;
-  }
-  return (metadata as Record<string, unknown>)['error'] === true;
+  return typeof metadata !== 'object' || metadata === null || Array.isArray(metadata)
+    ? false
+    : (metadata as Record<string, unknown>)['error'] === true;
 }
 
 // A single pathological message must not be able to make a public page
 // unrenderable. Truncation is visible rather than silent.
 function truncateContent(content: string): string {
-  if (content.length <= MAX_SNAPSHOT_MESSAGE_CHARS) {
-    return content;
-  }
-  return `${content.slice(0, MAX_SNAPSHOT_MESSAGE_CHARS)}\n\n…`;
+  return content.length <= MAX_SNAPSHOT_MESSAGE_CHARS
+    ? content
+    : `${content.slice(0, MAX_SNAPSHOT_MESSAGE_CHARS)}\n\n…`;
 }
 
 // Null out anything that is not a short, human-readable label. A long or
 // structured value is more likely to be an identifier than a display name.
 function toDisplayLabel(value: string | null): string | null {
-  if (value === null || value.trim().length === 0 || value.length > 64) {
-    return null;
-  }
-  return value;
+  return value === null || value.trim().length === 0 || value.length > 64 ? null : value;
 }
 
 /**

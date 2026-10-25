@@ -228,18 +228,17 @@ function resolveVideo(
       failedVideoReason(planRefused, cancelled),
     );
   }
-  if (videoInFlight(file)) {
-    return decide(file, options, FileDeliveryMode.STILL_PROCESSING, false);
-  }
   // A row with no text and no status (predates batch 7): nothing of it can be
   // read, and the lane is told so.
-  return decide(
-    file,
-    options,
-    FileDeliveryMode.OMITTED_UNSUPPORTED,
-    false,
-    DELIVERY_REASON_NO_VIDEO_INPUT,
-  );
+  return videoInFlight(file)
+    ? decide(file, options, FileDeliveryMode.STILL_PROCESSING, false)
+    : decide(
+        file,
+        options,
+        FileDeliveryMode.OMITTED_UNSUPPORTED,
+        false,
+        DELIVERY_REASON_NO_VIDEO_INPUT,
+      );
 }
 
 /** Why a FAILED video reached the lane as a note: plan, the owner's stop, or a processing failure. */

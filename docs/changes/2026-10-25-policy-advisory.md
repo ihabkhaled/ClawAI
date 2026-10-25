@@ -60,6 +60,14 @@ detects deploy paths itself. Policy remains a normal job with supported
 `continue-on-error` behavior. The corrected workflow needs post-push CI
 verification.
 
+## CI follow-up fixes
+
+CI exposed eight `unicorn/prefer-ternary` warnings after the ESLint plugin
+upgrade and a React/React DOM mismatch that made frontend tests fail at module
+load. The warnings were simplified without changing their decisions, and both
+React packages now resolve to 19.3.1. Tests for the changed agent utilities and
+frontend startup passed locally; the next CI run must confirm the full suites.
+
 ## Paths in this change
 
 - `.github/workflows/ci.yml`
@@ -67,7 +75,19 @@ verification.
 - `.github/pull_request_template.md`
 - `package.json`
 - `package-lock.json`
+- `apps/claw-frontend/package.json`
 - `context/stack-and-toolchain.md`
+- `apps/claw-agent-service/src/common/utilities/policy-target-matcher.utility.ts`
+- `apps/claw-agent-service/src/modules/agent/services/capability-dual-write-metrics.service.ts`
+- `apps/claw-agent-service/src/modules/agent/services/command-risk.service.ts`
+- `apps/claw-chat-service/src/modules/chat-messages/managers/chat-execution.manager.ts`
+- `apps/claw-chat-service/src/modules/chat-messages/managers/context-assembly.manager.ts`
+- `apps/claw-chat-service/src/modules/chat-messages/services/context-save-proposal.service.ts`
+- `apps/claw-chat-service/src/modules/chat-messages/services/message-speech.service.ts`
+- `apps/claw-chat-service/src/modules/chat-messages/utilities/attachment-delivery.utility.ts`
+- `apps/claw-chat-service/src/modules/chat-shares/utilities/safe-search-verdict.utility.ts`
+- `apps/claw-chat-service/src/modules/chat-shares/utilities/snapshot-sanitizer.utility.ts`
+- `apps/claw-chat-service/src/modules/chat-threads/__tests__/thread-settings-field-mapping.spec.ts`
 - `tools/__tests__/ai-native-workflow.test.mjs`
 - `docs/08-runtime-devops/ci-cd-pipeline.md`
 - `docs/qa-evidence/2026-10-25-policy-advisory.md`

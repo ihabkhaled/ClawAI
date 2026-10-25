@@ -66,19 +66,16 @@ export class CommandRiskService implements OnModuleInit {
     if (legacy.blockedByPolicy) {
       return CapabilityInvocationStatus.DENIED;
     }
-    if (legacy.autoApproved) {
-      return CapabilityInvocationStatus.AUTO_APPROVED;
-    }
-    return CapabilityInvocationStatus.PENDING_APPROVAL;
+    return legacy.autoApproved
+      ? CapabilityInvocationStatus.AUTO_APPROVED
+      : CapabilityInvocationStatus.PENDING_APPROVAL;
   }
 
   private dualWriteEnabled(): boolean {
     const entry = Object.entries(process.env).find(([k]) => k === CAPABILITY_DUAL_WRITE_FLAG_ENV);
     const raw = entry?.[1];
-    if (raw === undefined || raw === '') {
-      return true; // default-on per CLAUDE.md
-    }
-    return raw.toLowerCase() !== 'false';
+    // Default on per CLAUDE.md.
+    return raw === undefined || raw === '' || raw.toLowerCase() !== 'false';
   }
 
   private async compareAgainstCapabilityPath(
@@ -190,8 +187,7 @@ export class CommandRiskService implements OnModuleInit {
   private labelFromScore(score: number): RiskLabel {
     if (score >= RISK_SCORE_CRITICAL_THRESHOLD) return RiskLabel.CRITICAL;
     if (score >= RISK_SCORE_HIGH_THRESHOLD) return RiskLabel.HIGH;
-    if (score >= RISK_SCORE_MEDIUM_THRESHOLD) return RiskLabel.MEDIUM;
-    return RiskLabel.LOW;
+    return score >= RISK_SCORE_MEDIUM_THRESHOLD ? RiskLabel.MEDIUM : RiskLabel.LOW;
   }
 
   private safeMatch(pattern: string, command: string): boolean {
