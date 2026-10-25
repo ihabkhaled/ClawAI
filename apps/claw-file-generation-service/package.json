@@ -46,7 +46,7 @@
     "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "jszip": "^3.10.2",
-    "markdown-it": "^15.0.2",
+    "markdown-it": "^15.0.3",
     "nestjs-pino": "^5.3.1",
     "pino": "^10.4.0",
     "pino-http": "^11.0.0",
