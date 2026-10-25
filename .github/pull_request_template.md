@@ -25,5 +25,5 @@ What changed and why (three bullets at most).
 ## Checklist
 
 - [ ] Landed through the hooks (no `--no-verify`); every commit has a `Docs:` trailer
-- [ ] `CI success` is green (it aggregates every CI and ai-native-os job and gates release)
+- [ ] `CI success` is green (required CI gates pass; Policy and ai-native-os are advisory)
 - [ ] No secrets, no `eslint-disable`, no lowered coverage threshold

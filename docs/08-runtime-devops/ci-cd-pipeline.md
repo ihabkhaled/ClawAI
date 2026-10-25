@@ -7,13 +7,13 @@ change type, is the gate matrix in
 
 ## Workflows
 
-| Workflow                                                                 | Trigger                                  | Role                                                      |
-| ------------------------------------------------------------------------ | ---------------------------------------- | --------------------------------------------------------- |
-| [`ci.yml`](../../.github/workflows/ci.yml)                               | every pull request; push to main/develop | The gate. `CI success` aggregates every job below.        |
-| [`ai-native-os.yml`](../../.github/workflows/ai-native-os.yml)           | called by `ci.yml` (`workflow_call`)     | Knowledge, docs, QA-evidence, tooling and rehearsal gates |
-| [`release.yml`](../../.github/workflows/release.yml)                     | `CI` completed successfully on main      | Version bump, tag, GitHub release, then deploy            |
-| [`deploy-production.yml`](../../.github/workflows/deploy-production.yml) | called by `release.yml`                  | Deploys the exact release commit                          |
-| [`lighthouse.yml`](../../.github/workflows/lighthouse.yml)               | frontend paths                           | Lighthouse CI budgets and accessibility                   |
+| Workflow                                                                 | Trigger                                  | Role                                                                     |
+| ------------------------------------------------------------------------ | ---------------------------------------- | ------------------------------------------------------------------------ |
+| [`ci.yml`](../../.github/workflows/ci.yml)                               | every pull request; push to main/develop | Required checks feed `CI success`; Policy and ai-native-os are advisory. |
+| [`ai-native-os.yml`](../../.github/workflows/ai-native-os.yml)           | called by `ci.yml` (`workflow_call`)     | Knowledge, docs, QA-evidence, tooling and rehearsal checks               |
+| [`release.yml`](../../.github/workflows/release.yml)                     | `CI` completed successfully on main      | Version bump, tag, GitHub release, then deploy                           |
+| [`deploy-production.yml`](../../.github/workflows/deploy-production.yml) | called by `release.yml`                  | Deploys the exact release commit                                         |
+| [`lighthouse.yml`](../../.github/workflows/lighthouse.yml)               | frontend paths                           | Lighthouse CI budgets and accessibility                                  |
 
 Node comes from [`.nvmrc`](../../.nvmrc) in every workflow. Third-party actions are
 pinned to commit SHAs; downloaded tools (gitleaks, actionlint) are pinned to a
@@ -22,31 +22,31 @@ version and a SHA-256.
 ## How a red job blocks a release
 
 `release.yml` runs only when the `CI` workflow concluded `success` for a push to
-main. `CI success` fails whenever any job it aggregates failed or was cancelled, or
-when a job that applies to the change (build, merged coverage, changed-lines
-coverage, Runtime V2, image scan) did not succeed. `ai-native-os` is called from
-`ci.yml`, so its jobs are part of that conclusion too. Nothing reaches
-production without every gate below green.
+main. `CI success` fails whenever any required job it aggregates failed or was cancelled,
+or when a job that applies to the change (build, merged coverage, changed-lines
+coverage, Runtime V2, image scan) did not succeed. Policy and ai-native-os run
+with `continue-on-error: true` and are excluded from the aggregate, so their
+failures remain visible without blocking releases.
 
 ## `ci.yml` jobs
 
-| Job                                       | Runs when                       | Proves                                                                                                                          |
-| ----------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `changes`                                 | always                          | Which workspaces the diff affects (`tools/affected/index.mjs ci-matrix`); deploy paths; changed production Dockerfiles          |
-| `setup`                                   | any workspace affected          | One `npm ci` (cached by OS + Node + lockfile hash), shared packages built in dependency order, every Prisma client generated    |
-| `static`                                  | per affected workspace          | ESLint: no error, no warning above `tools/lint/warnings-baseline.json`; typecheck                                               |
-| `test`                                    | per affected workspace (shards) | The suite passes with `--coverage`; a whole suite meets its coverage floor                                                      |
-| `coverage-merge`                          | a sharded workspace was tested  | Merged shard coverage meets the workspace floor (no single shard sees the whole suite)                                          |
-| `changed-lines-coverage`                  | pull requests                   | Lines the PR adds or changes in workspace source meet `changedLines` on their own                                               |
-| `runtime-v2-coverage`, `runtime-v2-redis` | chat-service affected           | Runtime V2 security coverage and the Redis Lua authority                                                                        |
-| `build`                                   | after static + test pass        | Each affected workspace builds                                                                                                  |
-| `policy`                                  | always                          | Formatting ratchet; coverage thresholds and lint baseline never went down; production `npm audit`; actionlint (with shellcheck) |
-| `secrets`                                 | always                          | gitleaks over every commit the push or PR adds, with `.gitleaks.toml`                                                           |
-| `codeql`                                  | always                          | CodeQL default suite for javascript-typescript; any finding not in `tools/security/codeql-accepted.json` fails                  |
-| `image-scan`                              | a production Dockerfile changed | The image builds; Trivy finds no fixable HIGH/CRITICAL vulnerability and no HIGH/CRITICAL Dockerfile misconfiguration           |
-| `submodule-integrity`                     | always                          | The coding-agent submodule pointer exists upstream                                                                              |
-| `ai-native-os`                            | always                          | See below                                                                                                                       |
-| `CI success`                              | always                          | The aggregate above                                                                                                             |
+| Job                                       | Runs when                       | Proves                                                                                                                       |
+| ----------------------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `changes`                                 | always                          | Which workspaces the diff affects (`tools/affected/index.mjs ci-matrix`); deploy paths; changed production Dockerfiles       |
+| `setup`                                   | any workspace affected          | One `npm ci` (cached by OS + Node + lockfile hash), shared packages built in dependency order, every Prisma client generated |
+| `static`                                  | per affected workspace          | ESLint: no error, no warning above `tools/lint/warnings-baseline.json`; typecheck                                            |
+| `test`                                    | per affected workspace (shards) | The suite passes with `--coverage`; a whole suite meets its coverage floor                                                   |
+| `coverage-merge`                          | a sharded workspace was tested  | Merged shard coverage meets the workspace floor (no single shard sees the whole suite)                                       |
+| `changed-lines-coverage`                  | pull requests                   | Lines the PR adds or changes in workspace source meet `changedLines` on their own                                            |
+| `runtime-v2-coverage`, `runtime-v2-redis` | chat-service affected           | Runtime V2 security coverage and the Redis Lua authority                                                                     |
+| `build`                                   | after static + test pass        | Each affected workspace builds                                                                                               |
+| `policy`                                  | always                          | Advisory formatting ratchet; coverage thresholds and lint baseline; production `npm audit`; actionlint (with shellcheck)     |
+| `secrets`                                 | always                          | gitleaks over every commit the push or PR adds, with `.gitleaks.toml`                                                        |
+| `codeql`                                  | always                          | CodeQL default suite for javascript-typescript; any finding not in `tools/security/codeql-accepted.json` fails               |
+| `image-scan`                              | a production Dockerfile changed | The image builds; Trivy finds no fixable HIGH/CRITICAL vulnerability and no HIGH/CRITICAL Dockerfile misconfiguration        |
+| `submodule-integrity`                     | always                          | The coding-agent submodule pointer exists upstream                                                                           |
+| `ai-native-os`                            | always                          | Advisory knowledge, QA-evidence, tooling and deploy-rehearsal checks                                                         |
+| `CI success`                              | always                          | Required gates above; Policy and ai-native-os are advisory                                                                   |
 
 Matrix jobs do not install or build anything themselves: the local
 [`prepare`](../../.github/actions/prepare/action.yml) action restores
@@ -78,11 +78,12 @@ Deploy paths: `scripts/deploy*`, `tools/release/**`, `tools/__tests__/deploy-pro
 
 ### Advisory jobs (do not block the release)
 
-`knowledge-integrity` (links, docs, no hook-bypass, contradictions) and `tooling-tests` in `ai-native-os.yml` run with
-`continue-on-error: true` (owner decision, 2026-10-14). A failure still shows on the pull request and the push, but it
-does not fail the aggregate `CI success` check, so the Release workflow can run. They are not to be ignored: fix a red
-one in the next change. `qa-evidence`, `knowledge-freshness`, `architecture-rules` and the `ci.yml` gates still block.
-`tools/__tests__/ai-native-workflow.test.mjs` locks which jobs are advisory.
+The complete `ai-native-os` reusable workflow and the `policy` job are advisory
+at their caller in `ci.yml` (`continue-on-error: true`) and are excluded from
+`ci-success.needs`. Their failures stay visible on the push and PR, but do not
+fail the aggregate or block release creation. Fix red findings promptly; they
+still identify real issues. `tools/__tests__/ai-native-workflow.test.mjs` locks
+which jobs are advisory.
 
 ## Coverage in CI
 
@@ -94,16 +95,16 @@ measured coverage that only rises. Policy and the dated path to 92 %:
 
 ## Fixing a red job
 
-| Red job                   | Usual cause → fix                                                                                                                                                               |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `static` (lint)           | A new warning above the baseline in a file you changed: fix it (lint-staged would have caught it locally)                                                                       |
-| `test` / `coverage-merge` | Coverage under the floor: add tests; never lower the floor or the threshold                                                                                                     |
-| `changed-lines-coverage`  | The listed changed lines are not executed by any test: cover them                                                                                                               |
-| `policy`                  | `npm run format:check`; a lowered threshold/floor/baseline; an unreviewed advisory (`tools/security/audit-allowlist.json` needs a reviewed, dated entry); an actionlint finding |
-| `secrets`                 | A leaked secret: rotate it first, then remove it; a false positive needs a reviewed `.gitleaks.toml` entry                                                                      |
-| `codeql`                  | Fix the finding; a reviewed false positive is dismissed in GitHub and listed in `tools/security/codeql-accepted.json`                                                           |
-| `knowledge-freshness`     | `npm run knowledge:build && npm run audit`, commit the result                                                                                                                   |
-| `knowledge-integrity`     | The listed stale reference, hand-written count, copied section, missing `Docs:` trailer or contradiction — fix the doc ([rules/63](../../rules/63-docs-move-with-code.md))      |
+| Red job                   | Usual cause → fix                                                                                                                                                          |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `static` (lint)           | A new warning above the baseline in a file you changed: fix it (lint-staged would have caught it locally)                                                                  |
+| `test` / `coverage-merge` | Coverage under the floor: add tests; never lower the floor or the threshold                                                                                                |
+| `changed-lines-coverage`  | The listed changed lines are not executed by any test: cover them                                                                                                          |
+| `policy`, `ai-native-os`  | Visible advisory only; these findings do not block release                                                                                                                 |
+| `secrets`                 | A leaked secret: rotate it first, then remove it; a false positive needs a reviewed `.gitleaks.toml` entry                                                                 |
+| `codeql`                  | Fix the finding; a reviewed false positive is dismissed in GitHub and listed in `tools/security/codeql-accepted.json`                                                      |
+| `knowledge-freshness`     | `npm run knowledge:build && npm run audit`, commit the result                                                                                                              |
+| `knowledge-integrity`     | The listed stale reference, hand-written count, copied section, missing `Docs:` trailer or contradiction — fix the doc ([rules/63](../../rules/63-docs-move-with-code.md)) |
 
 ## Adding a new workspace
 

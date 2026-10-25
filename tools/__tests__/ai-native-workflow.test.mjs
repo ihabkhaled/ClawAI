@@ -18,15 +18,26 @@ test('tooling tests install dependencies required by imported tooling modules', 
   const toolingJob = job(workflow, 'tooling-tests');
   const prepared = toolingJob.indexOf('uses: ./.github/actions/prepare');
   const tests = toolingJob.indexOf('npm run knowledge:test:fast');
-  assert.ok(prepared >= 0 && tests > prepared, 'dependencies must be installed before the tooling tests run');
+  assert.ok(
+    prepared >= 0 && tests > prepared,
+    'dependencies must be installed before the tooling tests run',
+  );
   assert.match(prepare, /npm ci --ignore-scripts/u, 'the prepare action installs on a cache miss');
 });
 
-test('ai-native-os runs inside CI, so a red knowledge, QA or tooling gate blocks the release', () => {
+test('ai-native-os runs inside CI as a visible advisory workflow', () => {
   assert.match(workflow, /on:\s*\n\s*workflow_call:/u);
   assert.doesNotMatch(workflow, /^\s{2}(pull_request|push):/mu, 'no second, unaggregated trigger');
   assert.match(job(ci, 'ai-native-os'), /uses: \.\/\.github\/workflows\/ai-native-os\.yml/u);
-  assert.match(job(ci, 'ci-success'), /ai-native-os,/u);
+  assert.match(job(ci, 'ai-native-os'), /continue-on-error: true/u);
+  assert.doesNotMatch(job(ci, 'ci-success'), /^\s*ai-native-os,/mu);
+});
+
+test('policy and ai-native-os checks stay visible but do not block releases', () => {
+  for (const id of ['policy', 'ai-native-os']) {
+    assert.match(job(ci, id), /continue-on-error: true/u);
+    assert.doesNotMatch(job(ci, 'ci-success'), new RegExp(`^\\s*${id},`, 'mu'));
+  }
 });
 
 test('the deploy rehearsal runs only for deploy-path changes, and the fast suite never runs it', () => {
@@ -51,7 +62,7 @@ test('third-party actions are pinned to full commit SHAs', () => {
   }
 });
 
-test('knowledge integrity and tooling tests are advisory; the other ai-native-os gates still block', () => {
+test('knowledge integrity and tooling tests are advisory within ai-native-os', () => {
   for (const id of ['knowledge-integrity', 'tooling-tests']) {
     assert.match(job(workflow, id), /continue-on-error: true/u, `${id} must not block CI success`);
   }

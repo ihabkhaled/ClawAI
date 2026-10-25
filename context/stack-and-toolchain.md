@@ -17,6 +17,10 @@
 | Tests    | **vitest** (every workspace, backend via `unplugin-swc`), **playwright** (E2E) — ADR-099                                                                                                        |
 | Packages | npm workspaces (`packages/*`, `apps/*`)                                                                                                                                                         |
 
+Root `overrides` pins audited transitive dependencies across the workspace.
+`multer` is pinned to `^2.5.0`, the fixed release for the pending-file-filter
+denial-of-service advisory; verify with `node tools/security/npm-audit.mjs`.
+
 Two TypeScript versions coexist on purpose: `typescript7` (`npm:typescript@7.x`,
 a root devDependency) is the compiler every build and typecheck runs, through
 `tools/typescript/run-ts7.mjs`; `typescript` 6.x stays for tools that import the

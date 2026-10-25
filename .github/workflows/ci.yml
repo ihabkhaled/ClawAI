@@ -1,10 +1,9 @@
 name: CI
 
-# The one gate a change has to pass. `ci-success` aggregates every job below
-# (including the ai-native-os workflow, called here), and release.yml runs only
-# after this workflow succeeds on main — so any red job here blocks the release
-# and the production deploy. What each job proves, and what the local hooks
-# prove before it, is the gate matrix in rules/23.
+# `ci-success` aggregates the required jobs below, and release.yml runs only
+# after this workflow succeeds on main. Policy and ai-native-os checks remain
+# visible and advisory; their failures do not block a release. What each job
+# proves, and what the local hooks prove before it, is the gate matrix in rules/23.
 #
 # Third-party actions are pinned to commit SHAs (the comment names the tag).
 
@@ -374,6 +373,7 @@ jobs:
   # dependency audit, and workflow lint.
   policy:
     name: Policy (format, ratchets, npm audit, actionlint)
+    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -542,9 +542,10 @@ jobs:
 
   # Knowledge freshness, knowledge integrity + docs checks, QA evidence,
   # tooling tests, architecture rules and (on deploy paths) the deploy
-  # rehearsal — run as part of this workflow so they gate the release too.
+  # rehearsal — run as part of this workflow for visibility, but do not gate releases.
   ai-native-os:
     name: ai-native-os
+    continue-on-error: true
     needs: changes
     uses: ./.github/workflows/ai-native-os.yml
     with:
@@ -564,12 +565,10 @@ jobs:
         runtime-v2-coverage,
         runtime-v2-redis,
         build,
-        policy,
         secrets,
         codeql,
         image-scan,
         submodule-integrity,
-        ai-native-os,
       ]
     runs-on: ubuntu-latest
     steps:

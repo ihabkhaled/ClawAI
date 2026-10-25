@@ -113,7 +113,7 @@
     "zod": "^4.6.7"
   },
   "overrides": {
-    "multer": "^2.4.0",
+    "multer": "^2.5.0",
     "mysql2": "^3.24.4",
     "@xmldom/xmldom": "^0.8.13",
     "follow-redirects": "^1.16.1",

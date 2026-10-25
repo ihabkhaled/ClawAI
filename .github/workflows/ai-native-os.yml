@@ -1,10 +1,10 @@
 # AI-native engineering OS gates. Runs the SAME authoritative scripts developers
 # run locally — no CI-only mystery commands. Pure Node: no Docker, no Prisma.
 #
-# Called by ci.yml (job `ai-native-os`), so every job here feeds `ci-success`
-# and a red gate blocks release and deploy. Running inside the CI run also
-# gives it CI's concurrency group (a newer push cancels an older run) and the
-# Node version from .nvmrc.
+# Called by ci.yml (job `ai-native-os`) for visibility and follow-up. The caller
+# treats failures as advisory; required release gates live in ci.yml's
+# `ci-success` aggregate. Running inside the CI run also gives it CI's
+# concurrency group and the Node version from .nvmrc.
 name: ai-native-os
 
 on:

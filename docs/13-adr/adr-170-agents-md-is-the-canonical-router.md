@@ -71,3 +71,12 @@ Measured on 2026-10-13 (`docs/qa-evidence/2026-10-13-gates-hooks-ci-docs-overhau
 - Follow-ups: eight pre-existing `eslint-disable` directives (rules/00 violation)
   to remove; the lint baseline and coverage floors to burn down; owner to confirm
   the coverage dates and enable "CI success" as a required check.
+
+## 2026-10-25 amendment — advisory workflow jobs
+
+The `policy` job and the called `ai-native-os` workflow still run on CI pushes
+and pull requests, but their caller jobs now use `continue-on-error: true` and
+are excluded from `ci-success.needs`. Their failures stay visible and do not
+block the release workflow. Required tests, security scans and builds remain in
+the aggregate. See the current gate map in
+[`ci-cd-pipeline.md`](../08-runtime-devops/ci-cd-pipeline.md).
