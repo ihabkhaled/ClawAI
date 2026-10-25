@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
-    "@nestjs/common": "^12.1.2",
+    "@nestjs/common": "^12.2.0",
     "@nestjs/core": "^12.1.2",
     "@swc/core": "^1.16.17",
     "@types/express": "^5.0.6",
