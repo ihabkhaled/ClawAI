@@ -46,7 +46,7 @@
     "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "jszip": "^3.10.2",
-    "markdown-it": "^15.0.2",
+    "markdown-it": "^15.0.3",
     "nestjs-pino": "^5.3.1",
     "pino": "^10.4.0",
     "pino-http": "^11.0.0",
@@ -55,7 +55,7 @@
     "prisma": "^7.10.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
