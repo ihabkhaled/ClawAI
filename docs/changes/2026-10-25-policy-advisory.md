@@ -68,6 +68,13 @@ load. The warnings were simplified without changing their decisions, and both
 React packages now resolve to 19.3.1. Tests for the changed agent utilities and
 frontend startup passed locally; the next CI run must confirm the full suites.
 
+The follow-up CI run exposed additional `unicorn/prefer-ternary` warnings in
+routing, payment, research, workspace, and shared packages. They were simplified
+without changing branch decisions. Research tests also revealed that the lockfile
+omitted Linkedom's `@acemir/cssom` dependency and coverage tried to parse generated
+Prisma declarations; the dependency is now explicit and generated files are
+excluded from coverage collection.
+
 ## Paths in this change
 
 - `.github/workflows/ci.yml`
@@ -88,6 +95,17 @@ frontend startup passed locally; the next CI run must confirm the full suites.
 - `apps/claw-chat-service/src/modules/chat-shares/utilities/safe-search-verdict.utility.ts`
 - `apps/claw-chat-service/src/modules/chat-shares/utilities/snapshot-sanitizer.utility.ts`
 - `apps/claw-chat-service/src/modules/chat-threads/__tests__/thread-settings-field-mapping.spec.ts`
+- `apps/claw-payment-service/src/common/utilities/subscription-state-machine.utility.ts`
+- `apps/claw-payment-service/src/modules/display-fx/services/display-fx.service.ts`
+- `apps/claw-payment-service/src/modules/gateways/paymob/utilities/paymob-hmac.utility.ts`
+- `apps/claw-research-service/package.json`
+- `apps/claw-research-service/src/common/utilities/ip-address.utility.ts`
+- `apps/claw-research-service/vitest.config.ts`
+- `apps/claw-routing-service/src/modules/routing/managers/prompt-builder.manager.ts`
+- `apps/claw-routing-service/src/modules/workflows/managers/live-workflow-selector.manager.ts`
+- `apps/claw-workspace-service/src/modules/workspace/adapters/gmail-compose.helper.ts`
+- `packages/shared-entitlements/src/entitlements-adapter.ts`
+- `packages/shared-utilities/src/url-detection/url-detection.utility.ts`
 - `tools/__tests__/ai-native-workflow.test.mjs`
 - `docs/08-runtime-devops/ci-cd-pipeline.md`
 - `docs/qa-evidence/2026-10-25-policy-advisory.md`

@@ -91,15 +91,14 @@ export type FeatureSettlementOutcome = 'CONSUME' | 'RELEASE';
  * is the caller's own timeout rather than a fault worth repeating.
  */
 function isTransportFailure(error: unknown): boolean {
-  if (!(error instanceof Error) || error.name === 'AbortError') {
-    return false;
-  }
-  if (error instanceof EntitlementsRequestError) {
-    return false;
-  }
   // A non-2xx is thrown as a plain Error with this prefix by `request`; the
   // server answered, so it is not a transport failure.
-  return !error.message.startsWith('Entitlements request failed:');
+  return (
+    error instanceof Error &&
+    error.name !== 'AbortError' &&
+    !(error instanceof EntitlementsRequestError) &&
+    !error.message.startsWith('Entitlements request failed:')
+  );
 }
 
 export class EntitlementsAdapter {
@@ -242,10 +241,7 @@ export class EntitlementsAdapter {
           `Entitlements request failed: ${method} ${path} → ${String(response.status)}`,
         );
       }
-      if (response.status === 204) {
-        return undefined as T;
-      }
-      return (await response.json()) as T;
+      return response.status === 204 ? (undefined as T) : ((await response.json()) as T);
     } finally {
       clearTimeout(timer);
     }

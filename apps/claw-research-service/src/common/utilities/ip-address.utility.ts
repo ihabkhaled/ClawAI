@@ -18,40 +18,23 @@ import {
 /** Whether an IPv4 address (four octets) is not a public unicast address. */
 export function isNonPublicIpv4(octets: readonly number[]): boolean {
   const [a, b, c] = octets;
-  if (a === undefined || b === undefined) {
-    return true;
-  }
-  // 0/8 "this network", 10/8, 127/8 loopback.
-  if (a === 0 || a === 10 || a === 127) {
-    return true;
-  }
-  // 169.254/16 link-local, which includes every cloud metadata address.
-  if (a === 169 && b === 254) {
-    return true;
-  }
-  if (a === 172 && b >= 16 && b <= 31) {
-    return true;
-  }
-  if (a === 192 && b === 168) {
-    return true;
-  }
-  // 100.64/10 carrier-grade NAT — reaches other tenants on shared hosting.
-  if (a === 100 && b >= 64 && b <= 127) {
-    return true;
-  }
-  // 192.0.0/24 IETF protocol assignments, 192.0.2/24 TEST-NET-1.
-  if (a === 192 && b === 0) {
-    return true;
-  }
-  // 198.18/15 benchmarking, 198.51.100/24 and 203.0.113/24 documentation.
-  if (a === 198 && (b === 18 || b === 19)) {
-    return true;
-  }
-  if ((a === 198 && b === 51 && c === 100) || (a === 203 && b === 0 && c === 113)) {
-    return true;
-  }
-  // 224/4 multicast and 240/4 reserved, which includes 255.255.255.255.
-  return a >= 224;
+  // Keep every non-public IPv4 range in one explicit predicate: loopback,
+  // link-local/cloud metadata, private, carrier NAT, special-use, and reserved.
+  return (
+    a === undefined ||
+    b === undefined ||
+    a === 0 ||
+    a === 10 ||
+    a === 127 ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    (a === 192 && b === 0) ||
+    (a === 198 && (b === 18 || b === 19 || (b === 51 && c === 100))) ||
+    (a === 203 && b === 0 && c === 113) ||
+    a >= 224
+  );
 }
 
 function ipv4Octets(address: string): number[] | null {
@@ -150,11 +133,10 @@ export function isNonPublicIpv6(address: string): boolean {
     return true;
   }
   // 2001::/23 IETF protocol assignments (Teredo, benchmarking) and 2001:db8::/32.
-  if (first === 0x20 && second === 0x01) {
-    return bytes[2] === 0 || bytes[2] === 1 || (bytes[2] === 0x0d && bytes[3] === 0xb8);
-  }
   // 64:ff9b:1::/48 local-use NAT64.
-  return first === 0 && second === 0x64 && bytes[2] === 0xff && bytes[3] === 0x9b;
+  return first === 0x20 && second === 0x01
+    ? bytes[2] === 0 || bytes[2] === 1 || (bytes[2] === 0x0d && bytes[3] === 0xb8)
+    : first === 0 && second === 0x64 && bytes[2] === 0xff && bytes[3] === 0x9b;
 }
 
 /** Whether any IP (v4 or v6, any spelling) is not a public unicast address. */

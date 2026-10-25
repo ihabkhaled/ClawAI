@@ -91,15 +91,12 @@ export class LiveWorkflowSelectorManager {
   }
 
   private matchesFreshInfoMarker(message: string): boolean {
-    if (message.length === 0) {
-      return false;
-    }
     // matchKeyword wraps every term in \b...\b with plural tolerance, so
     // "todays" matches "today" but "todays-newsletter" does NOT match
     // because the `-` is a word boundary that still requires the WHOLE
     // word "today" / "todays" to land between boundaries. That's the
     // behaviour we want: a real freshness marker, not a substring hit.
-    return matchKeyword(message, SEARCH_FIRST_TRIGGER_KEYWORDS);
+    return message.length > 0 && matchKeyword(message, SEARCH_FIRST_TRIGGER_KEYWORDS);
   }
 
   private buildAlternatives(chosen: WorkflowKind): WorkflowAvailability[] {

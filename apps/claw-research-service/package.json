@@ -26,6 +26,7 @@
     "prisma:generate": "prisma generate"
   },
   "dependencies": {
+    "@acemir/cssom": "^0.9.32",
     "@claw/shared-auth": "*",
     "@claw/shared-constants": "*",
     "@claw/shared-entitlements": "*",

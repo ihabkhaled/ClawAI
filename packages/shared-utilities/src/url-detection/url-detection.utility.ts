@@ -72,15 +72,13 @@ export function detectUrlsInText(text: string, options: DetectUrlsOptions = {}):
 }
 
 function isPlausibleBareHost(host: string, tld: string, path: string, hasWww: boolean): boolean {
-  if (BARE_HOST_KNOWN_NON_URLS.has(host)) {
-    return false;
-  }
-  if (BARE_HOST_TLDS.has(tld)) {
-    return true;
-  }
   // `vercel.app/docs` is a site; `this.app` is a property. Only the path or a
   // `www.` tells them apart.
-  return BARE_HOST_TLDS_NEEDING_PATH.has(tld) && (path.length > 1 || hasWww);
+  return (
+    !BARE_HOST_KNOWN_NON_URLS.has(host) &&
+    (BARE_HOST_TLDS.has(tld) ||
+      (BARE_HOST_TLDS_NEEDING_PATH.has(tld) && (path.length > 1 || hasWww)))
+  );
 }
 
 /**
@@ -93,10 +91,7 @@ function normalizeHttpUrl(value: string): string | null {
     if (url.protocol !== 'http:' && url.protocol !== 'https:') {
       return null;
     }
-    if (url.username !== '' || url.password !== '') {
-      return null;
-    }
-    return url.toString();
+    return url.username !== '' || url.password !== '' ? null : url.toString();
   } catch {
     return null;
   }

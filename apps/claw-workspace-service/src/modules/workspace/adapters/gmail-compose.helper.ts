@@ -26,9 +26,7 @@ export type ComposeDecision =
   | { allowed: false; reason: ComposeRejectReason; detail: string };
 
 export type ComposeRejectReason =
-  | 'SUBJECT_LOOP'
-  | 'TO_IS_MAILER_DAEMON'
-  | 'DUPLICATE_WITHIN_WINDOW';
+  'SUBJECT_LOOP' | 'TO_IS_MAILER_DAEMON' | 'DUPLICATE_WITHIN_WINDOW';
 
 // Mailer-daemon style addresses we never auto-reply to. Lower-cased
 // before matching.
@@ -126,11 +124,10 @@ export class GmailComposeHelper {
     if (ctx.inReplyTo !== undefined && ctx.inReplyTo.length > 0) {
       return `u:${userId}|imt:${ctx.inReplyTo}`;
     }
-    if (ctx.threadId !== undefined && ctx.threadId.length > 0) {
-      return `u:${userId}|tid:${ctx.threadId}`;
-    }
     // No thread context — fall back to recipient+subject.
-    return `u:${userId}|to:${ctx.to.toLowerCase()}|s:${ctx.subject.slice(0, 200)}`;
+    return ctx.threadId !== undefined && ctx.threadId.length > 0
+      ? `u:${userId}|tid:${ctx.threadId}`
+      : `u:${userId}|to:${ctx.to.toLowerCase()}|s:${ctx.subject.slice(0, 200)}`;
   }
 
   private recordSend(key: string, atMs: number): void {
@@ -149,7 +146,8 @@ export class GmailComposeHelper {
     if (signature === undefined || signature.trim().length === 0) return body;
     // RFC 3676 §4.3 signature separator: "-- " (note trailing space).
     // If body already ends with the separator, don't double it.
-    if (body.includes('\n-- \n')) return body;
-    return `${body.replace(/\s+$/, '')}\n\n-- \n${signature.trim()}`;
+    return body.includes('\n-- \n')
+      ? body
+      : `${body.replace(/\s+$/, '')}\n\n-- \n${signature.trim()}`;
   }
 }

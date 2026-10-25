@@ -59,10 +59,9 @@ export class DisplayFxService {
     if (cached !== null) {
       return cached;
     }
-    if (await this.isKnownUnsupported(quoteCurrency)) {
-      return null;
-    }
-    return this.fetchWithSingleFlight(quoteCurrency);
+    return (await this.isKnownUnsupported(quoteCurrency))
+      ? null
+      : this.fetchWithSingleFlight(quoteCurrency);
   }
 
   // One cold-cache visitor calls upstream; the rest wait briefly and read the
@@ -78,12 +77,9 @@ export class DisplayFxService {
 
     if (!acquired) {
       const waited = await this.awaitLeaderResult(quoteCurrency);
-      if (waited !== null) {
-        return waited;
-      }
       // The leader is slow or died. Fetching anyway beats showing the wrong
       // currency, and the lock TTL bounds how often this can happen.
-      return this.fetchFromProviders(quoteCurrency);
+      return waited ?? this.fetchFromProviders(quoteCurrency);
     }
 
     try {
@@ -144,10 +140,9 @@ export class DisplayFxService {
       const parsed = JSON.parse(raw) as DisplayFxRate;
       // Re-validated on the way out. A cache is storage, not a source of truth,
       // and a poisoned or half-written entry must not become a price.
-      if (parsed.quoteCurrency !== quoteCurrency || !isSaneDisplayRate(parsed.rateScaled)) {
-        return null;
-      }
-      return { ...parsed, source: DisplayFxSource.CACHE };
+      return parsed.quoteCurrency !== quoteCurrency || !isSaneDisplayRate(parsed.rateScaled)
+        ? null
+        : { ...parsed, source: DisplayFxSource.CACHE };
     } catch {
       // Redis being down degrades the cache, never the page.
       return null;

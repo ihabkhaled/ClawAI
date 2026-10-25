@@ -15,13 +15,10 @@ import { BillingException } from '../errors/billing.exception';
 // transition is a rejected write, never a silently granted entitlement.
 
 export function canTransition(from: SubscriptionStatus, to: SubscriptionStatus): boolean {
-  const allowed = SUBSCRIPTION_TRANSITIONS[from];
-  if (allowed === undefined) {
-    // Fail CLOSED on an unrecognised source status: a status this table does
-    // not know about must not be treated as freely transitionable.
-    return false;
-  }
-  return allowed.includes(to);
+  const allowed = transitionsFrom(from);
+  // Fail CLOSED on an unrecognised source status: a status this table does
+  // not know about must not be treated as freely transitionable.
+  return allowed === undefined ? false : allowed.includes(to);
 }
 
 export function assertTransition(from: SubscriptionStatus, to: SubscriptionStatus): void {
@@ -70,12 +67,11 @@ export function hasActiveEntitlement(
   if (nowMs >= entitlementValidUntilMs) {
     return false;
   }
-  if (status === SubscriptionStatus.PAST_DUE) {
-    // A past-due subscription with no grace window recorded is not entitled:
-    // absence of a deadline must not read as an unlimited one.
-    return gracePeriodEndsAtMs !== null && nowMs < gracePeriodEndsAtMs;
-  }
-  return true;
+  // A past-due subscription with no grace window recorded is not entitled:
+  // absence of a deadline must not read as an unlimited one.
+  return status === SubscriptionStatus.PAST_DUE
+    ? gracePeriodEndsAtMs !== null && nowMs < gracePeriodEndsAtMs
+    : true;
 }
 
 // The value written to Subscription.uniqueActiveKey.
@@ -91,5 +87,32 @@ export function resolveUniqueActiveKey(status: SubscriptionStatus, userId: strin
 // Statuses reachable from here. Used by the admin UI to offer only the
 // operations that will actually succeed.
 export function allowedNextStatuses(from: SubscriptionStatus): readonly SubscriptionStatus[] {
-  return SUBSCRIPTION_TRANSITIONS[from] ?? [];
+  return transitionsFrom(from) ?? [];
+}
+
+function transitionsFrom(from: SubscriptionStatus): readonly SubscriptionStatus[] | undefined {
+  switch (from) {
+    case SubscriptionStatus.PENDING:
+      return SUBSCRIPTION_TRANSITIONS[SubscriptionStatus.PENDING];
+    case SubscriptionStatus.INCOMPLETE:
+      return SUBSCRIPTION_TRANSITIONS[SubscriptionStatus.INCOMPLETE];
+    case SubscriptionStatus.ACTIVE:
+      return SUBSCRIPTION_TRANSITIONS[SubscriptionStatus.ACTIVE];
+    case SubscriptionStatus.PAST_DUE:
+      return SUBSCRIPTION_TRANSITIONS[SubscriptionStatus.PAST_DUE];
+    case SubscriptionStatus.PAUSED:
+      return SUBSCRIPTION_TRANSITIONS[SubscriptionStatus.PAUSED];
+    case SubscriptionStatus.CANCEL_AT_PERIOD_END:
+      return SUBSCRIPTION_TRANSITIONS[SubscriptionStatus.CANCEL_AT_PERIOD_END];
+    case SubscriptionStatus.CANCELLED:
+      return SUBSCRIPTION_TRANSITIONS[SubscriptionStatus.CANCELLED];
+    case SubscriptionStatus.EXPIRED:
+      return SUBSCRIPTION_TRANSITIONS[SubscriptionStatus.EXPIRED];
+    case SubscriptionStatus.REFUNDED:
+      return SUBSCRIPTION_TRANSITIONS[SubscriptionStatus.REFUNDED];
+    case SubscriptionStatus.CHARGEBACK:
+      return SUBSCRIPTION_TRANSITIONS[SubscriptionStatus.CHARGEBACK];
+    case SubscriptionStatus.SUSPENDED:
+      return SUBSCRIPTION_TRANSITIONS[SubscriptionStatus.SUSPENDED];
+  }
 }

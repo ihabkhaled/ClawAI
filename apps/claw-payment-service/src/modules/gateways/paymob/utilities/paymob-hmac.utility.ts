@@ -14,17 +14,16 @@ function readPath(payload: Record<string, unknown>, path: string): string {
     .split('.')
     .reduce<unknown>(
       (node, key) =>
-        node !== null && typeof node === 'object'
-          ? (node as Record<string, unknown>)[key]
-          : undefined,
+        node !== null && typeof node === 'object' ? readOwnValue(node, key) : undefined,
       payload,
     );
-  if (value === null || value === undefined) {
-    return '';
-  }
   // Booleans must render exactly as Paymob renders them ("true"/"false"), and
   // numbers without formatting — anything else changes the digest.
-  return String(value);
+  return value === null || value === undefined ? '' : String(value);
+}
+
+function readOwnValue(node: object, key: string): unknown {
+  return Object.getOwnPropertyDescriptor(node, key)?.value;
 }
 
 // Concatenates the HMAC source string in Paymob's fixed field order.
@@ -79,8 +78,7 @@ export function verifyPaymobCardTokenHmac(
 function digestsMatch(expected: string, received: string): boolean {
   const expectedBuffer = Buffer.from(expected, 'utf8');
   const receivedBuffer = Buffer.from(received.trim().toLowerCase(), 'utf8');
-  if (expectedBuffer.length !== receivedBuffer.length) {
-    return false;
-  }
-  return timingSafeEqual(expectedBuffer, receivedBuffer);
+  return expectedBuffer.length !== receivedBuffer.length
+    ? false
+    : timingSafeEqual(expectedBuffer, receivedBuffer);
 }

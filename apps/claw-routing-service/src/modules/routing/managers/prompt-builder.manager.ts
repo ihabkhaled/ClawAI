@@ -536,21 +536,17 @@ User message: {message}`;
       `- local degrade threshold ms: ${String(routingSignals.localDegradeLatencyMs ?? 'n/a')}`,
     );
 
-    if (latencyEntries.length > 0) {
-      lines.push(
-        `- provider latency ms: ${latencyEntries.map(([provider, latency]) => `${provider}=${String(Math.round(latency))}`).join(', ')}`,
-      );
-    } else {
-      lines.push('- provider latency ms: unavailable');
-    }
+    lines.push(
+      latencyEntries.length > 0
+        ? `- provider latency ms: ${latencyEntries.map(([provider, latency]) => `${provider}=${String(Math.round(latency))}`).join(', ')}`
+        : '- provider latency ms: unavailable',
+    );
 
-    if (openCircuits.length > 0) {
-      lines.push(
-        `- open circuits: ${openCircuits.map(([provider, openUntil]) => `${provider} until ${new Date(openUntil).toISOString()}`).join(', ')}`,
-      );
-    } else {
-      lines.push('- open circuits: none');
-    }
+    lines.push(
+      openCircuits.length > 0
+        ? `- open circuits: ${openCircuits.map(([provider, openUntil]) => `${provider} until ${new Date(openUntil).toISOString()}`).join(', ')}`
+        : '- open circuits: none',
+    );
 
     return lines.join('\n');
   }
