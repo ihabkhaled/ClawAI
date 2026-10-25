@@ -74,9 +74,8 @@ Measured on 2026-10-13 (`docs/qa-evidence/2026-10-13-gates-hooks-ci-docs-overhau
 
 ## 2026-10-25 amendment — advisory workflow jobs
 
-The `policy` job and the called `ai-native-os` workflow still run on CI pushes
-and pull requests, but their caller jobs now use `continue-on-error: true` and
-are excluded from `ci-success.needs`. Their failures stay visible and do not
-block the release workflow. Required tests, security scans and builds remain in
-the aggregate. See the current gate map in
+The `policy` job runs with `continue-on-error: true` and is excluded from
+`ci-success.needs`. `ai-native-os.yml` runs as a separate workflow on pushes and
+pull requests. Their failures stay visible and do not block the release
+workflow. Required tests, security scans and builds remain in the aggregate. See the current gate map in
 [`ci-cd-pipeline.md`](../08-runtime-devops/ci-cd-pipeline.md).

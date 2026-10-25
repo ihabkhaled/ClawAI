@@ -25,23 +25,22 @@ test('tooling tests install dependencies required by imported tooling modules', 
   assert.match(prepare, /npm ci --ignore-scripts/u, 'the prepare action installs on a cache miss');
 });
 
-test('ai-native-os runs inside CI as a visible advisory workflow', () => {
-  assert.match(workflow, /on:\s*\n\s*workflow_call:/u);
-  assert.doesNotMatch(workflow, /^\s{2}(pull_request|push):/mu, 'no second, unaggregated trigger');
-  assert.match(job(ci, 'ai-native-os'), /uses: \.\/\.github\/workflows\/ai-native-os\.yml/u);
-  assert.match(job(ci, 'ai-native-os'), /continue-on-error: true/u);
+test('ai-native-os runs independently from release-gating CI', () => {
+  assert.match(workflow, /on:\s*\n\s*push:/u);
+  assert.match(workflow, /^\s{2}pull_request:/mu);
+  assert.doesNotMatch(ci, /uses: \.\/\.github\/workflows\/ai-native-os\.yml/u);
   assert.doesNotMatch(job(ci, 'ci-success'), /^\s*ai-native-os,/mu);
 });
 
 test('policy and ai-native-os checks stay visible but do not block releases', () => {
-  for (const id of ['policy', 'ai-native-os']) {
-    assert.match(job(ci, id), /continue-on-error: true/u);
-    assert.doesNotMatch(job(ci, 'ci-success'), new RegExp(`^\\s*${id},`, 'mu'));
-  }
+  assert.match(job(ci, 'policy'), /continue-on-error: true/u);
+  assert.doesNotMatch(job(ci, 'ci-success'), /^\s*policy,/mu);
+  assert.doesNotMatch(job(ci, 'ci-success'), /^\s*ai-native-os,/mu);
 });
 
 test('the deploy rehearsal runs only for deploy-path changes, and the fast suite never runs it', () => {
-  assert.match(job(workflow, 'deploy-rehearsal'), /if: inputs\.deploy/u);
+  assert.match(job(workflow, 'deploy-rehearsal'), /needs: changes/u);
+  assert.match(job(workflow, 'deploy-rehearsal'), /needs\.changes\.outputs\.deploy/u);
   assert.match(job(workflow, 'deploy-rehearsal'), /npm run knowledge:test:rehearsal/u);
   assert.doesNotMatch(job(workflow, 'tooling-tests'), /knowledge:test:rehearsal/u);
 });

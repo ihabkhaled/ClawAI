@@ -7,13 +7,13 @@ change type, is the gate matrix in
 
 ## Workflows
 
-| Workflow                                                                 | Trigger                                  | Role                                                                     |
-| ------------------------------------------------------------------------ | ---------------------------------------- | ------------------------------------------------------------------------ |
-| [`ci.yml`](../../.github/workflows/ci.yml)                               | every pull request; push to main/develop | Required checks feed `CI success`; Policy and ai-native-os are advisory. |
-| [`ai-native-os.yml`](../../.github/workflows/ai-native-os.yml)           | called by `ci.yml` (`workflow_call`)     | Knowledge, docs, QA-evidence, tooling and rehearsal checks               |
-| [`release.yml`](../../.github/workflows/release.yml)                     | `CI` completed successfully on main      | Version bump, tag, GitHub release, then deploy                           |
-| [`deploy-production.yml`](../../.github/workflows/deploy-production.yml) | called by `release.yml`                  | Deploys the exact release commit                                         |
-| [`lighthouse.yml`](../../.github/workflows/lighthouse.yml)               | frontend paths                           | Lighthouse CI budgets and accessibility                                  |
+| Workflow                                                                 | Trigger                                  | Role                                                         |
+| ------------------------------------------------------------------------ | ---------------------------------------- | ------------------------------------------------------------ |
+| [`ci.yml`](../../.github/workflows/ci.yml)                               | every pull request; push to main/develop | Required checks feed `CI success`; Policy is advisory.       |
+| [`ai-native-os.yml`](../../.github/workflows/ai-native-os.yml)           | push to main/develop; pull request       | Separate advisory checks for knowledge, docs, QA and tooling |
+| [`release.yml`](../../.github/workflows/release.yml)                     | `CI` completed successfully on main      | Version bump, tag, GitHub release, then deploy               |
+| [`deploy-production.yml`](../../.github/workflows/deploy-production.yml) | called by `release.yml`                  | Deploys the exact release commit                             |
+| [`lighthouse.yml`](../../.github/workflows/lighthouse.yml)               | frontend paths                           | Lighthouse CI budgets and accessibility                      |
 
 Node comes from [`.nvmrc`](../../.nvmrc) in every workflow. Third-party actions are
 pinned to commit SHAs; downloaded tools (gitleaks, actionlint) are pinned to a
@@ -24,9 +24,9 @@ version and a SHA-256.
 `release.yml` runs only when the `CI` workflow concluded `success` for a push to
 main. `CI success` fails whenever any required job it aggregates failed or was cancelled,
 or when a job that applies to the change (build, merged coverage, changed-lines
-coverage, Runtime V2, image scan) did not succeed. Policy and ai-native-os run
-with `continue-on-error: true` and are excluded from the aggregate, so their
-failures remain visible without blocking releases.
+coverage, Runtime V2, image scan) did not succeed. Policy is marked
+`continue-on-error: true` and excluded from the aggregate. `ai-native-os.yml`
+runs independently, so its failures cannot change the `CI` workflow conclusion.
 
 ## `ci.yml` jobs
 
@@ -45,8 +45,7 @@ failures remain visible without blocking releases.
 | `codeql`                                  | always                          | CodeQL default suite for javascript-typescript; any finding not in `tools/security/codeql-accepted.json` fails               |
 | `image-scan`                              | a production Dockerfile changed | The image builds; Trivy finds no fixable HIGH/CRITICAL vulnerability and no HIGH/CRITICAL Dockerfile misconfiguration        |
 | `submodule-integrity`                     | always                          | The coding-agent submodule pointer exists upstream                                                                           |
-| `ai-native-os`                            | always                          | Advisory knowledge, QA-evidence, tooling and deploy-rehearsal checks                                                         |
-| `CI success`                              | always                          | Required gates above; Policy and ai-native-os are advisory                                                                   |
+| `CI success`                              | always                          | Required gates above; Policy is advisory                                                                                     |
 
 Matrix jobs do not install or build anything themselves: the local
 [`prepare`](../../.github/actions/prepare/action.yml) action restores
@@ -78,12 +77,11 @@ Deploy paths: `scripts/deploy*`, `tools/release/**`, `tools/__tests__/deploy-pro
 
 ### Advisory jobs (do not block the release)
 
-The complete `ai-native-os` reusable workflow and the `policy` job are advisory
-at their caller in `ci.yml` (`continue-on-error: true`) and are excluded from
-`ci-success.needs`. Their failures stay visible on the push and PR, but do not
-fail the aggregate or block release creation. Fix red findings promptly; they
-still identify real issues. `tools/__tests__/ai-native-workflow.test.mjs` locks
-which jobs are advisory.
+The `policy` job is advisory at its caller in `ci.yml` (`continue-on-error:
+true`) and excluded from `ci-success.needs`. The independent `ai-native-os.yml`
+workflow also runs on pushes and pull requests but cannot affect the `CI`
+workflow conclusion. Failures stay visible; fix them promptly. Workflow-shape
+tests in `tools/__tests__/ai-native-workflow.test.mjs` lock these rules.
 
 ## Coverage in CI
 

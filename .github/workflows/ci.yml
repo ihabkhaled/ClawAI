@@ -1,8 +1,8 @@
 name: CI
 
 # `ci-success` aggregates the required jobs below, and release.yml runs only
-# after this workflow succeeds on main. Policy and ai-native-os checks remain
-# visible and advisory; their failures do not block a release. What each job
+# after this workflow succeeds on main. Policy checks remain visible and
+# advisory; ai-native-os runs independently. Their failures do not block a release. What each job
 # proves, and what the local hooks prove before it, is the gate matrix in rules/23.
 #
 # Third-party actions are pinned to commit SHAs (the comment names the tag).
@@ -539,17 +539,6 @@ jobs:
           git init -q "${RUNNER_TEMP}/submodule"
           git -C "${RUNNER_TEMP}/submodule" remote add origin https://github.com/ihabkhaled/ClawAI-Coding-Agent.git
           git -C "${RUNNER_TEMP}/submodule" fetch -q --depth=1 origin "$sha"
-
-  # Knowledge freshness, knowledge integrity + docs checks, QA evidence,
-  # tooling tests, architecture rules and (on deploy paths) the deploy
-  # rehearsal — run as part of this workflow for visibility, but do not gate releases.
-  ai-native-os:
-    name: ai-native-os
-    continue-on-error: true
-    needs: changes
-    uses: ./.github/workflows/ai-native-os.yml
-    with:
-      deploy: ${{ needs.changes.outputs.deploy == 'true' }}
 
   ci-success:
     name: CI success
