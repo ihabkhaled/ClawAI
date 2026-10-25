@@ -42,7 +42,7 @@ const draftJson = JSON.stringify({
   citations: [{ evidenceId: 'source-1', url: 'https://example.org/source' }],
 });
 const voteJson = JSON.stringify({
-  agrees: true,
+  preferredCandidateIndex: 0,
   draftHash: revisionDraftHash(JSON.parse(draftJson)),
 });
 const reviewJson = (score: number) =>

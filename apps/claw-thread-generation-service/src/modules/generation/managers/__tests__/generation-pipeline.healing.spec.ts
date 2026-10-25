@@ -45,7 +45,7 @@ const draft = JSON.stringify({
   markdown: 'Article [aaaa1111bbbb2222].',
   citations: [{ evidenceId: 'aaaa1111bbbb2222', url: 'https://example.org/one' }],
 });
-const vote = JSON.stringify({ agrees: true });
+const vote = JSON.stringify({ preferredCandidateIndex: 0 });
 const review = (score: number) =>
   JSON.stringify({ score, blockers: [], findings: [], revisionBrief: '' });
 

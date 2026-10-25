@@ -280,6 +280,6 @@ describe('JudgeRefereeManager — cloud judge + token capture', () => {
 
     expect(result.judgeVerdict.wasFallback).toBe(true);
     expect(result.judgeVerdict.fallbackState).toBe('unavailable');
-    expect(result.judgeVerdict.decision).toBe(JudgeDecision.ACCEPT);
+    expect(result.judgeVerdict.decision).toBe(JudgeDecision.UNAVAILABLE);
   });
 });
