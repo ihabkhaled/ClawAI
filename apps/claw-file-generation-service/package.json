@@ -41,7 +41,7 @@
     "axios": "^1.20.0",
     "csv-parse": "^7.0.3",
     "csv-stringify": "^6.9.0",
-    "docx": "^9.13.0",
+    "docx": "^9.14.0",
     "helmet": "^8.3.0",
     "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
