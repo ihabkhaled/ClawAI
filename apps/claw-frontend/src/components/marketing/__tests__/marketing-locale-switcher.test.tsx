@@ -23,7 +23,7 @@ describe('MarketingLocaleSwitcher', () => {
     mockState.isPending = false;
     render(<MarketingLocaleSwitcher />);
 
-    expect(screen.getByRole('button', { name: 'English, Select language' })).toHaveTextContent(
+    expect(screen.getByRole('button', { name: 'EN English, Select language' })).toHaveTextContent(
       'English',
     );
   });
@@ -32,7 +32,7 @@ describe('MarketingLocaleSwitcher', () => {
     mockState.isPending = true;
     render(<MarketingLocaleSwitcher />);
 
-    expect(screen.getByRole('button', { name: 'English, Select language' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'EN English, Select language' })).toBeDisabled();
     expect(screen.getByRole('status', { name: 'Select language' })).toBeInTheDocument();
   });
 });

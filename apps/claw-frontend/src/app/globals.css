@@ -1455,6 +1455,11 @@
     color: color-mix(in srgb, var(--editorial-paper) 85%, var(--editorial-ink));
   }
 
+  /* The Threads overview nests an eyebrow in this inverted panel: the same rule applies. */
+  .editorial-comparison__cta .editorial-page-shell__eyebrow {
+    color: var(--editorial-paper);
+  }
+
   .editorial-comparison__cta-actions {
     display: flex;
     flex-wrap: wrap;

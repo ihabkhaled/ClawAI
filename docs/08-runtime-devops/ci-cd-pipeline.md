@@ -116,3 +116,10 @@ A workspace with source and no spec fails `knowledge:verify`.
 A new **service** adds more than a workspace (compose, nginx, TLS, installers, the
 production `.env` manifest, health): the whole list is
 [skills/add-a-new-service.md](../../skills/add-a-new-service.md).
+
+## Lighthouse report artifacts (2026-10-27)
+
+The Lighthouse audit job uploads `apps/claw-frontend/.lighthouseci` with `include-hidden-files: true`
+(a hidden directory is skipped by default, so a failed run used to keep no report). Download the
+`lighthouse-reports-<shard>` artifact of a failed run to read the failing audit; the diagnosis recipe is in
+[lighthouse-ci.md](../09-testing/lighthouse-ci.md).

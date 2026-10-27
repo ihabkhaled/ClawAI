@@ -26,6 +26,8 @@ export function BoardSearchCombobox(props: BoardSearchComboboxProps): ReactEleme
         className="text-muted-foreground pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2"
       />
       <input
+        id="thread-board-search"
+        name="q"
         type="text"
         role="combobox"
         dir="auto"

@@ -34,7 +34,7 @@ export function MarketingLocaleSwitcher(): React.ReactElement {
             variant="outline"
             size="sm"
             className="h-9 gap-1.5 px-2.5 text-sm font-medium"
-            aria-label={`${currentLabel}, ${t('marketing.header.languageSwitcherLabel')}`}
+            aria-label={`${locale.toUpperCase()} ${currentLabel}, ${t('marketing.header.languageSwitcherLabel')}`}
             disabled={isPending}
           >
             <Languages className="h-4 w-4" aria-hidden="true" />

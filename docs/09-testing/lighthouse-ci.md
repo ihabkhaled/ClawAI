@@ -199,3 +199,30 @@ That cap is also why the **workflow** still takes ~6 minutes end to end while a
 shard takes ~2.4: on a push the 20 shards compete with CI's ~80 jobs for the
 same 20 slots, so some of them start late. Shortening a shard shortens the
 workflow only while slots are free.
+
+## The 0.96 best-practices failure of 2026-10-27: four real causes
+
+All 20 shards of run 40510050881 scored best-practices 0.96 against the budget of 1. The budget was
+right; the pages were wrong. Reproduced locally with the CI recipe (`next start` plus the fixture, then
+`lighthouse` with the gathered artifacts) and fixed at the source:
+
+1. **`valid-source-maps` (a 6.4 MB first-party chunk).** The shared HTTP client imported
+   `redirect-to-login.utility`, which imported `route-visibility.utility`, which reads the whole marketing
+   content registry (megabytes of prose in 13 languages). Webpack (the production build since 2026-10-26)
+   cannot tree-shake it away, so every page shipped it. The redirect utility now decides "public Threads
+   page" with a tiny local check, and `lib/__tests__/http-client-weight.test.ts` walks the HTTP client's
+   import graph and fails if it ever reaches the content registry again.
+2. **`inspector-issues` (CSP `kEvalViolation`).** Zod 4 probes `Function("")` on first use; the caught
+   probe is still a CSP violation under a policy without `unsafe-eval`. `src/instrumentation-client.ts`
+   imports `lib/validation/zod-runtime.ts`, which sets `z.config({ jitless: true })` before any client
+   code runs (a provider import was too late for module-scope parses on the Board).
+3. **`inspector-issues` (`FormEmptyIdAndNameAttributesForInputError`).** The Board search input and its
+   Radix selects had no `id`/`name`; they have now.
+4. Found by the wider local sweep: `color-contrast` on an eyebrow inside the inverted CTA panel of the
+   Threads overview (dark theme) and `label-content-name-mismatch` on the language switchers (the mobile
+   code `AR` was not in the accessible name). Both fixed.
+
+The Upload step now sets `include-hidden-files: true` and `if-no-files-found: warn`: `.lighthouseci`
+is a hidden directory, so a failed run used to upload nothing and the failing audit could not be read.
+**How to diagnose next time:** `lighthouse <url> -G=<dir>` then read `<dir>/artifacts.json` →
+`InspectorIssues`; or download the `lighthouse-reports-<shard>` artifact of the failed run.

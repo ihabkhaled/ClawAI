@@ -1062,3 +1062,13 @@ Every Thread date (public/marketing/in-app byline, Board cards, suggestion rows,
 - **Tables** scroll in their own box (`data-thread-table`, `max-h-[32rem]`, sticky header, striped rows, `text-start`); print CSS lives at the end of `globals.css` (`.thread-article`); smooth anchor scroll only under `prefers-reduced-motion: no-preference`.
 - **Format panel.** `ThreadFormatPanel` (one render line in `thread-publication-detail.tsx`) -> `useThreadFormatPanel` -> `threadFormatRepository.preview`. Each click gets a new idempotency key; "Use improved version" calls the existing `editRevision` (cap `THREAD_FORMAT_ACCEPT_CAP_USD`) and hands the new revision to `startRevisionFromChangeRequest`, so the normal review path runs. Strings: `threadArticle.*` (`thread-article-translations.ts`, 13 locales).
 - Not built: a last-updated line (the public API has no `updatedAt`), translations for the `FORMAT_*` step codes. Decision: [ADR-189](../../docs/13-adr/adr-189-thread-articles-are-typeset-by-a-guarded-format-stage-and-rendered-as-rich-safe-html.md).
+
+## Lighthouse 1.0 hygiene (2026-10-27)
+
+- The shared HTTP client (`lib/http-client.ts`) must never reach `content-registry.*` or `public-page-seo*`
+  through its imports (guarded by `lib/__tests__/http-client-weight.test.ts`): a 4 MB registry chunk on every
+  page fails `valid-source-maps`. Use `isPublicThreadsPage` (utilities/redirect-to-login.utility.ts), not `isPublicPath`.
+- Zod runs jitless in the browser (`src/instrumentation-client.ts` → `lib/validation/zod-runtime.ts`) because the
+  CSP has no `unsafe-eval`. Do not import zod-runtime from server-only code.
+- Form controls need `id`/`name` (Radix `Select` takes `name`); a language switcher's `aria-label` must contain
+  the visible text (`AR` on a phone). See docs/09-testing/lighthouse-ci.md.

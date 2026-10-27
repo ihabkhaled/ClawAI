@@ -180,7 +180,10 @@ jobs:
         with:
           name: lighthouse-reports-${{ matrix.shard }}
           path: apps/claw-frontend/.lighthouseci
-          if-no-files-found: ignore
+          # .lighthouseci is a hidden directory: without this the artifact action silently uploaded
+          # nothing and the failing audit of run 40510050881 could not be read (2026-10-27).
+          include-hidden-files: true
+          if-no-files-found: warn
 
   # One result under the check name the gate has always had, so a required
   # status check keeps working: green only when every shard is green.

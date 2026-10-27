@@ -26,7 +26,7 @@ export function BoardFilters({
   const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-3 @4xl:flex-row @4xl:items-center">
-      <Select value={lang} onValueChange={onLanguageChange}>
+      <Select name="lang" value={lang} onValueChange={onLanguageChange}>
         <SelectTrigger
           id={`${idPrefix}-lang`}
           aria-label={t('chat.threadBoardFilterLanguage')}
@@ -43,7 +43,7 @@ export function BoardFilters({
           ))}
         </SelectContent>
       </Select>
-      <Select value={type} onValueChange={onTypeChange}>
+      <Select name="type" value={type} onValueChange={onTypeChange}>
         <SelectTrigger
           id={`${idPrefix}-type`}
           aria-label={t('chat.threadBoardFilterType')}

@@ -39,7 +39,7 @@ export function LocaleSwitcher(): React.ReactElement {
           size="sm"
           className="h-9 gap-1.5 px-2.5 text-sm font-medium"
           disabled={isPending}
-          aria-label={`${currentLabel}, ${t('marketing.header.languageSwitcherLabel')}`}
+          aria-label={`${locale.toUpperCase()} ${currentLabel}, ${t('marketing.header.languageSwitcherLabel')}`}
         >
           <Languages className="h-4 w-4" aria-hidden="true" />
           {/* The full language name does not fit beside the search, currency
