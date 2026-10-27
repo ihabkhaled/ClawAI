@@ -1029,6 +1029,10 @@ export const es: TranslationDictionary = {
         researchUnavailable: 'No se pudo contactar con el servicio de investigación.',
         researchFailed: 'El paso de investigación falló.',
         reviewersNotIndependent: 'Los revisores no eran independientes de los autores.',
+        researchQuery: 'Se ejecutó una consulta de investigación.',
+        researchQueryFailed: 'Una consulta de investigación falló y se omitió.',
+        researchQuerySpendCap:
+          'Se omitió una consulta de investigación para no superar el límite de gasto.',
         researchEmpty: 'La investigación no encontró fuentes utilizables.',
         reviewNotPassed: 'El borrador no superó las revisiones.',
         citationInvalid: 'No se pudo verificar el enlace de una fuente.',
@@ -1110,6 +1114,10 @@ export const es: TranslationDictionary = {
         researchFailed: 'Reintenta. Si sigue fallando, cambia el tema.',
         reviewersNotIndependent:
           'Elige un modelo revisor que no sea uno de los autores y vuelve a intentarlo.',
+        researchQuery: 'No hace falta hacer nada.',
+        researchQueryFailed: 'La investigación continúa con las otras consultas.',
+        researchQuerySpendCap:
+          'Sube el límite de gasto si quieres que se ejecuten todas las consultas.',
         researchEmpty: 'Haz el tema más concreto o más amplio y reintenta.',
         reviewNotPassed: 'Reintenta o cambia los modelos.',
         citationInvalid: 'Reintenta. Si sigue fallando, cambia el tema o los modelos.',

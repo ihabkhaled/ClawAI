@@ -24,6 +24,7 @@ const SERVICE_FILES = [
   'utilities/failure-report.utility.ts',
   'managers/generation-pipeline.manager.ts',
   'constants/healing.constants.ts',
+  'constants/research-queries.constants.ts',
   'constants/failure-class.constants.ts',
   'repositories/generation-jobs.repository.ts',
 ];

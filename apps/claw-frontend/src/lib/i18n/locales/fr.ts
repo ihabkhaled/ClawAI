@@ -1036,6 +1036,10 @@ export const fr: TranslationDictionary = {
         researchUnavailable: 'Le service de recherche est injoignable.',
         researchFailed: 'L’étape de recherche a échoué.',
         reviewersNotIndependent: 'Les relecteurs n’étaient pas indépendants des auteurs.',
+        researchQuery: 'Une requête de recherche a été exécutée.',
+        researchQueryFailed: 'Une requête de recherche a échoué et a été ignorée.',
+        researchQuerySpendCap:
+          'Une requête de recherche a été ignorée pour rester sous le plafond de dépense.',
         researchEmpty: 'La recherche n’a trouvé aucune source exploitable.',
         reviewNotPassed: 'Le brouillon n’a pas passé les relectures.',
         citationInvalid: 'Le lien d’une source n’a pas pu être vérifié.',
@@ -1117,6 +1121,9 @@ export const fr: TranslationDictionary = {
         researchFailed: 'Réessayez. Si cela échoue encore, changez le sujet.',
         reviewersNotIndependent:
           'Choisissez un modèle relecteur qui n’est pas l’un des auteurs, puis réessayez.',
+        researchQuery: 'Aucune action nécessaire.',
+        researchQueryFailed: 'La recherche continue avec les autres requêtes.',
+        researchQuerySpendCap: 'Augmentez le plafond de dépense pour exécuter toutes les requêtes.',
         researchEmpty: 'Précisez ou élargissez le sujet, puis réessayez.',
         reviewNotPassed: 'Réessayez ou changez les modèles.',
         citationInvalid: 'Réessayez. Si cela persiste, changez le sujet ou les modèles.',

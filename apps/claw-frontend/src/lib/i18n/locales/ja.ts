@@ -1020,6 +1020,9 @@ export const ja: TranslationDictionary = {
         researchUnavailable: 'リサーチサービスに接続できませんでした。',
         researchFailed: 'リサーチの手順が失敗しました。',
         reviewersNotIndependent: 'レビュアーが執筆者から独立していませんでした。',
+        researchQuery: '調査クエリを実行しました。',
+        researchQueryFailed: '調査クエリが失敗したためスキップしました。',
+        researchQuerySpendCap: '支出上限を超えないよう、調査クエリを1件スキップしました。',
         researchEmpty: 'リサーチで使える情報源が見つかりませんでした。',
         reviewNotPassed: '下書きがレビューを通過しませんでした。',
         citationInvalid: '出典リンクを確認できませんでした。',
@@ -1084,6 +1087,9 @@ export const ja: TranslationDictionary = {
         researchFailed: 'もう一度試してください。繰り返す場合はトピックを変えてください。',
         reviewersNotIndependent:
           '執筆者に含まれないレビュー用モデルを選んで、もう一度お試しください。',
+        researchQuery: '対応は不要です。',
+        researchQueryFailed: '残りのクエリで調査を続けます。',
+        researchQuerySpendCap: 'すべてのクエリを実行するには支出上限を上げてください。',
         researchEmpty: 'トピックをより具体的に、または広くしてやり直してください。',
         reviewNotPassed: 'もう一度試すか、モデルを変えてください。',
         citationInvalid:

@@ -1041,6 +1041,10 @@ export const de: TranslationDictionary = {
         researchUnavailable: 'Der Recherche-Dienst war nicht erreichbar.',
         researchFailed: 'Der Recherche-Schritt ist fehlgeschlagen.',
         reviewersNotIndependent: 'Die Prüfer waren nicht unabhängig von den Autoren.',
+        researchQuery: 'Eine Recherche-Abfrage wurde ausgeführt.',
+        researchQueryFailed: 'Eine Recherche-Abfrage ist fehlgeschlagen und wurde übersprungen.',
+        researchQuerySpendCap:
+          'Eine Recherche-Abfrage wurde übersprungen, um unter dem Ausgabenlimit zu bleiben.',
         researchEmpty: 'Die Recherche hat keine brauchbaren Quellen gefunden.',
         reviewNotPassed: 'Der Entwurf hat die Prüfungen nicht bestanden.',
         citationInvalid: 'Ein Quellenlink konnte nicht überprüft werden.',
@@ -1126,6 +1130,9 @@ export const de: TranslationDictionary = {
         researchFailed: 'Versuche es erneut. Falls es weiter scheitert, ändere das Thema.',
         reviewersNotIndependent:
           'Wähle ein Prüfmodell, das nicht zu den Autoren gehört, und versuche es erneut.',
+        researchQuery: 'Keine Aktion nötig.',
+        researchQueryFailed: 'Die Recherche läuft mit den anderen Abfragen weiter.',
+        researchQuerySpendCap: 'Erhöhe das Ausgabenlimit, wenn jede Abfrage laufen soll.',
         researchEmpty: 'Formuliere das Thema genauer oder weiter und versuche es erneut.',
         reviewNotPassed: 'Versuche es erneut oder ändere die Modelle.',
         citationInvalid:

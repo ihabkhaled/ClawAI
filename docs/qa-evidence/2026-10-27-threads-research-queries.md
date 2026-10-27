@@ -2,7 +2,7 @@
 
 Batch: threads-research-queries
 Date: 2026-10-27
-Commits: threads research queries, accepted-gap validation, independent reviewers (this commit)
+Commits: threads research queries, accepted-gap validation, independent reviewers (this commit); step messages for research queries (follow-up commit)
 Verdict: PARTIAL
 
 Every lane is filled in. PASS needs the command and its real output (or a path, a count, a
@@ -53,3 +53,7 @@ packages/shared-types (two additive optional fields). The frontend is not change
 - L04: frontend follow-up for the `ACCEPTED_GAP_NOT_A_BLOCKER` message and for showing `reviewerModel`
   (not started, not required for the fix).
 - L15: GitHub gates after the owner commits and pushes.
+
+## Follow-up: live finding
+
+- The first production retry on v1.220.0 showed "Something went wrong (RESEARCH_QUERY)" for each research query step: the three new step codes had no frontend message and the guard test did not scan research-queries.constants.ts. Messages added in 13 locales; the guard now scans that file.

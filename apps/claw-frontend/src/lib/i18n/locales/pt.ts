@@ -1024,6 +1024,10 @@ export const pt: TranslationDictionary = {
         researchUnavailable: 'Não foi possível contactar o serviço de pesquisa.',
         researchFailed: 'A etapa de pesquisa falhou.',
         reviewersNotIndependent: 'Os revisores não eram independentes dos autores.',
+        researchQuery: 'Uma consulta de pesquisa foi executada.',
+        researchQueryFailed: 'Uma consulta de pesquisa falhou e foi ignorada.',
+        researchQuerySpendCap:
+          'Uma consulta de pesquisa foi ignorada para ficar abaixo do limite de gasto.',
         researchEmpty: 'A pesquisa não encontrou fontes utilizáveis.',
         reviewNotPassed: 'O rascunho não passou nas revisões.',
         citationInvalid: 'Não foi possível verificar o link de uma fonte.',
@@ -1103,6 +1107,9 @@ export const pt: TranslationDictionary = {
         researchFailed: 'Tente de novo. Se continuar a falhar, mude o tema.',
         reviewersNotIndependent:
           'Escolha um modelo revisor que não seja um dos autores e tente de novo.',
+        researchQuery: 'Nenhuma ação necessária.',
+        researchQueryFailed: 'A pesquisa continua com as outras consultas.',
+        researchQuerySpendCap: 'Aumente o limite de gasto se quiser executar todas as consultas.',
         researchEmpty: 'Torne o tema mais específico ou mais amplo e tente de novo.',
         reviewNotPassed: 'Tente de novo ou mude os modelos.',
         citationInvalid: 'Tente de novo. Se continuar falhando, mude o tema ou os modelos.',

@@ -1027,6 +1027,10 @@ export const ru: TranslationDictionary = {
         researchUnavailable: 'Сервис исследования недоступен.',
         researchFailed: 'Шаг исследования не удался.',
         reviewersNotIndependent: 'Рецензенты не были независимы от авторов.',
+        researchQuery: 'Выполнен исследовательский запрос.',
+        researchQueryFailed: 'Исследовательский запрос не удался и был пропущен.',
+        researchQuerySpendCap:
+          'Исследовательский запрос пропущен, чтобы не превысить лимит расходов.',
         researchEmpty: 'Исследование не нашло пригодных источников.',
         reviewNotPassed: 'Черновик не прошёл проверки.',
         citationInvalid: 'Не удалось проверить ссылку на источник.',
@@ -1100,6 +1104,9 @@ export const ru: TranslationDictionary = {
         researchFailed: 'Повторите попытку. Если ошибка повторяется, смените тему.',
         reviewersNotIndependent:
           'Выберите модель-рецензента, которая не входит в число авторов, и повторите попытку.',
+        researchQuery: 'Действий не требуется.',
+        researchQueryFailed: 'Исследование продолжается по остальным запросам.',
+        researchQuerySpendCap: 'Увеличьте лимит расходов, если хотите выполнить все запросы.',
         researchEmpty: 'Сделайте тему конкретнее или шире и повторите.',
         reviewNotPassed: 'Повторите попытку или смените модели.',
         citationInvalid: 'Повторите. Если ошибка остаётся, измените тему или модели.',

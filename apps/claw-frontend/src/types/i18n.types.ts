@@ -936,6 +936,9 @@ export type TranslationDictionary = {
         researchUnavailable: string;
         researchFailed: string;
         reviewersNotIndependent: string;
+        researchQuery: string;
+        researchQueryFailed: string;
+        researchQuerySpendCap: string;
         researchEmpty: string;
         reviewNotPassed: string;
         citationInvalid: string;
@@ -991,6 +994,9 @@ export type TranslationDictionary = {
         researchUnavailable: string;
         researchFailed: string;
         reviewersNotIndependent: string;
+        researchQuery: string;
+        researchQueryFailed: string;
+        researchQuerySpendCap: string;
         researchEmpty: string;
         reviewNotPassed: string;
         citationInvalid: string;

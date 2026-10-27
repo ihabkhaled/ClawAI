@@ -1036,6 +1036,10 @@ export const it: TranslationDictionary = {
         researchUnavailable: 'Il servizio di ricerca non è raggiungibile.',
         researchFailed: 'Il passaggio di ricerca non è riuscito.',
         reviewersNotIndependent: 'I revisori non erano indipendenti dagli autori.',
+        researchQuery: 'È stata eseguita una query di ricerca.',
+        researchQueryFailed: 'Una query di ricerca è fallita ed è stata saltata.',
+        researchQuerySpendCap:
+          'Una query di ricerca è stata saltata per restare sotto il limite di spesa.',
         researchEmpty: 'La ricerca non ha trovato fonti utilizzabili.',
         reviewNotPassed: 'La bozza non ha superato le revisioni.',
         citationInvalid: 'Il link di una fonte non è stato verificato.',
@@ -1121,6 +1125,9 @@ export const it: TranslationDictionary = {
         researchFailed: 'Riprova. Se continua a fallire, cambia argomento.',
         reviewersNotIndependent:
           'Scegli un modello revisore che non sia uno degli autori e riprova.',
+        researchQuery: 'Nessuna azione necessaria.',
+        researchQueryFailed: 'La ricerca continua con le altre query.',
+        researchQuerySpendCap: 'Alza il limite di spesa se vuoi eseguire tutte le query.',
         researchEmpty: 'Rendi l’argomento più specifico o più ampio, poi riprova.',
         reviewNotPassed: 'Riprova o cambia i modelli.',
         citationInvalid: 'Riprova. Se continua a fallire, cambia argomento o modelli.',
