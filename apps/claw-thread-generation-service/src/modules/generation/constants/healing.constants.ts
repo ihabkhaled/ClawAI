@@ -38,6 +38,10 @@ export const SHRINK_ELLIPSIS = '\u2026';
 export const SHRINK_KEEP_RATIO = 0.5;
 export const SHRINK_MESSAGE_MAX_CHARS = 1_500;
 export const SHRINK_MIN_MESSAGES = 4;
+/** Mirrors chat-service's internal-generate userPrompt limit. */
+export const CHAT_GATEWAY_USER_PROMPT_MAX_CHARS = 200_000;
+/** Bound source compaction even when the fixed evidence or draft cannot fit. */
+export const MAX_PROACTIVE_SHRINK_LEVEL = 10;
 
 /** Replies longer than this are never sent to a repair pass. */
 export const JSON_REPAIR_INPUT_MAX_CHARS = 60_000;

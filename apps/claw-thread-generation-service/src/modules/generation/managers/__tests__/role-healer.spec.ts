@@ -68,7 +68,7 @@ function reply(content: string, costMicroUsd = 10): ChatModelResponse {
 
 function harness(
   script: Script,
-  options: { budget?: Partial<HealingBudget>; now?: () => number } = {},
+  options: { budget?: Partial<HealingBudget>; now?: () => number; lastSuccessful?: string } = {},
 ) {
   const requests: ChatModelRequest[] = [];
   const steps: StepRecordInput[] = [];
@@ -87,6 +87,7 @@ function harness(
     throwIfCancelled: () => Promise.resolve(),
     loadHealth: () => Promise.resolve(new Map<string, CandidateHealth>()),
     loadDemoted: () => Promise.resolve(new Set<string>()),
+    loadSuccessful: () => Promise.resolve(options.lastSuccessful ?? null),
     wait: (ms) => {
       waits.push(ms);
       return Promise.resolve();
@@ -232,6 +233,47 @@ Brief`,
     expect(h.requests[1]?.userPrompt.length).toBeLessThan(h.requests[0]?.userPrompt.length ?? 0);
     expect(h.requests[1]?.userPrompt).toContain('shortened');
     expect(codes(h.steps)).toContain(ThreadHealingStrategy.SHRINK_SOURCE);
+  });
+
+  it('shrinks an oversized source before the first gateway request', async () => {
+    const material = JSON.stringify({
+      sourceSnapshot: {
+        messages: Array.from({ length: 20 }, () => ({ content: 'source '.repeat(2_000) })),
+      },
+      researchEvidence: { items: [{ id: 'source-1', url: 'https://example.org' }] },
+    });
+    const h = harness((request) =>
+      request.userPrompt.length > 200_000
+        ? new ChatUpstreamError('Chat model request failed (400: VALIDATION_FAILED)', null, null)
+        : GOOD,
+    );
+    await h.run(job, role, {
+      systemPrompt: 'sys',
+      userPrompt: `${material}\nCandidate: preserved draft`,
+      sharedMaterial: material,
+    });
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0]?.userPrompt.length).toBeLessThanOrEqual(200_000);
+    expect(h.requests[0]?.userPrompt).toContain('Candidate: preserved draft');
+    expect(h.requests[0]?.userPrompt).toContain('https://example.org');
+  });
+
+  it('starts the next role call with the fallback that last succeeded', async () => {
+    const h = harness((request) =>
+      request.provider === 'GEMINI' ? GOOD : new Error('Chat model request failed (503)'),
+    );
+    await h.run();
+    const nextCall = h.requests.length;
+    await h.run();
+    expect(models(h.requests)[nextCall]).toBe('GEMINI/pool-1');
+  });
+
+  it('starts with a saved successful fallback after a new attempt', async () => {
+    const h = harness((request) => (request.provider === 'GEMINI' ? GOOD : 'bad'), {
+      lastSuccessful: 'GEMINI/pool-1',
+    });
+    await h.run({ ...job, attempt: 2 });
+    expect(models(h.requests)).toEqual(['GEMINI/pool-1']);
   });
 
   it('swaps instead when a window overflow has no source to shrink', async () => {

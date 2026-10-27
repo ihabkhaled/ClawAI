@@ -116,6 +116,8 @@ export type HealerDeps = {
   throwIfCancelled: (input: GenerationPipelineInput) => Promise<void>;
   loadHealth: () => Promise<ReadonlyMap<string, CandidateHealth>>;
   loadDemoted: (jobId: string, roleId: string) => Promise<ReadonlySet<string>>;
+  /** Last successful saved provider/model, when a job resumes. */
+  loadSuccessful?: (jobId: string, roleId: string) => Promise<string | null>;
   wait: (ms: number, signal: AbortSignal | undefined) => Promise<void>;
   now: () => number;
   random: () => number;

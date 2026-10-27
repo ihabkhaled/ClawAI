@@ -105,6 +105,7 @@ export class GenerationPipelineManager {
       throwIfCancelled: (input) => this.throwIfCancelled(input),
       loadHealth: () => this.loadHealth(),
       loadDemoted: (jobId, roleId) => this.loadDemoted(jobId, roleId),
+      loadSuccessful: (jobId, roleId) => this.loadSuccessful(jobId, roleId),
       wait: waitBeforeRetry,
       now: () => Date.now(),
       random: () => Math.random(),
@@ -300,7 +301,6 @@ export class GenerationPipelineManager {
       publicationType: job.publicationType,
       sourceSnapshot: job.sourceSnapshot,
       researchEvidence: evidence.bundle,
-      candidateDrafts: candidates,
     });
     await this.enterStage(job, ThreadGenerationStage.CONSENSUS, round);
     const voteResults = await Promise.allSettled(
@@ -910,6 +910,15 @@ export class GenerationPipelineManager {
       return await this.recorder.modelSpecificFailures(jobId, roleId);
     } catch {
       return new Set();
+    }
+  }
+
+  private async loadSuccessful(jobId: string, roleId: string): Promise<string | null> {
+    try {
+      const model = await this.jobs.findLastSuccessfulModel(jobId, roleId);
+      return model ? `${model.provider}/${model.model}` : null;
+    } catch {
+      return null;
     }
   }
 

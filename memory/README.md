@@ -56,6 +56,7 @@ bug of 2026-05-10), keep that original date.
 
 ## Index
 
+- [Thread generation recovery](2026-10-27-thread-generation-recovery.md) — production retry and fallback lessons.
 - [Known Pitfalls](known-pitfalls.md) — the recurring traps (SSE, polling-on-error,
   authed SSE, i18n, FE/BE type mirroring, `localeCompare`).
 - [Architecture Decisions](architecture-decisions.md)

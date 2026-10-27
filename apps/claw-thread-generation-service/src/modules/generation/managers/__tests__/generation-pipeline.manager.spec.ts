@@ -296,6 +296,35 @@ ${text}
     expect(harness.models.generate.mock.calls[7]?.[0].userPrompt).toContain('draft B');
   });
 
+  it('sends each candidate exactly once to each author during voting', async () => {
+    const harness = build([
+      draft('unique candidate alpha'),
+      draft('unique candidate beta'),
+      draft('unique candidate gamma'),
+      vote(''),
+      vote(''),
+      vote(''),
+      review(80),
+      review(75),
+    ]);
+
+    await harness.manager.generate(input);
+
+    const votes = harness.models.generate.mock.calls
+      .map((call) => call[0])
+      .filter((request) => request.requestId.includes(':consensus-author-'));
+    expect(votes).toHaveLength(3);
+    for (const request of votes) {
+      for (const candidate of [
+        'unique candidate alpha',
+        'unique candidate beta',
+        'unique candidate gamma',
+      ]) {
+        expect(request.userPrompt.split(candidate)).toHaveLength(2);
+      }
+    }
+  });
+
   it('passes all 50 local replay cases with split author preferences', async () => {
     let succeeded = 0;
 

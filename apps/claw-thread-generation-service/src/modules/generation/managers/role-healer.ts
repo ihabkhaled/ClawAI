@@ -8,12 +8,14 @@ import { findUpstreamError } from '../../models/chat-upstream.error';
 import { OUTPUT_INVALID_CODE, REPAIR_NOTE_MAX_CHARS } from '../constants/generation.constants';
 import { OUTPUT_CUSTOM_ISSUE_TEXT } from '../constants/output-failure.constants';
 import {
+  CHAT_GATEWAY_USER_PROMPT_MAX_CHARS,
   HEAL_SPEND_CEILING_PERCENT,
   HEAL_STOPPED_BUDGET_CODE,
   HEAL_STOPPED_OWNER_CODE,
   HEAL_STOPPED_SPEND_CODE,
   JSON_REPAIR_INPUT_MAX_CHARS,
   MAX_HEAL_ATTEMPTS_PER_ROLE,
+  MAX_PROACTIVE_SHRINK_LEVEL,
   PERCENT_DIVISOR,
 } from '../constants/healing.constants';
 import {
@@ -69,6 +71,7 @@ import { GenerationAttemptTimeoutError } from '../utilities/generation-attempt-t
 export class RoleHealer {
   /** The model each author is running now (or answered with), per job attempt; freed with the input. */
   private readonly authorModels = new WeakMap<GenerationPipelineInput, Map<string, string>>();
+  private readonly successfulModels = new WeakMap<GenerationPipelineInput, Map<string, string>>();
 
   constructor(private readonly deps: HealerDeps) {}
 
@@ -100,13 +103,15 @@ export class RoleHealer {
     spec: RoleCallSpec,
   ): Promise<ChatModelResponse> {
     const { role } = spec;
+    const initialPrompt = this.promptFor(spec, '', 0);
     const neededTokens =
-      estimateTextTokens(`${spec.prompt.systemPrompt}\n${spec.prompt.userPrompt}`) +
+      estimateTextTokens(`${initialPrompt.systemPrompt}\n${initialPrompt.userPrompt}`) +
       role.maxOutputTokens;
+    const demoted = await this.deps.loadDemoted(input.jobId, role.id);
     const queue = buildCandidateQueue({
       role,
       healing: input.healing,
-      demoted: await this.deps.loadDemoted(input.jobId, role.id),
+      demoted,
       health: await this.deps.loadHealth(),
       neededTokens,
     });
@@ -118,7 +123,17 @@ export class RoleHealer {
     const { stage, roleKind } = roleStepInfo(spec.roleKey);
     const outcomes: CandidateOutcome[] = [];
     const counter = { attempts: 0 };
-    let remaining = distinct(queue);
+    const lastSuccess =
+      this.successfulModels.get(input)?.get(role.id) ??
+      (await this.deps.loadSuccessful?.(input.jobId, role.id)) ??
+      null;
+    const successful = queue.find(
+      (candidate) =>
+        candidateKey(candidate) === lastSuccess && !demoted.has(candidateKey(candidate)),
+    );
+    let remaining = distinct(
+      successful ? [successful, ...queue.filter((candidate) => candidate !== successful)] : queue,
+    );
     let lastError: unknown;
     let everyFailureDeterministic = true;
     let previous: AttemptFailure | null = null;
@@ -143,7 +158,15 @@ export class RoleHealer {
         deadline,
         counter,
       });
-      if ('response' in result) return result.response;
+      if ('response' in result) {
+        const successes = this.successfulModels.get(input) ?? new Map<string, string>();
+        successes.set(role.id, candidateKey(candidate));
+        this.successfulModels.set(input, successes);
+        return result.response;
+      }
+      if (this.successfulModels.get(input)?.get(role.id) === candidateKey(candidate)) {
+        this.successfulModels.get(input)?.delete(role.id);
+      }
       outcomes.push(result.failure);
       everyFailureDeterministic &&= result.deterministic;
       lastError = result.error;
@@ -419,13 +442,23 @@ export class RoleHealer {
     shrinkLevel: number,
   ): { systemPrompt: string; userPrompt: string } {
     const { prompt } = spec;
-    const base =
+    let base =
       shrinkLevel > 0 && prompt.sharedMaterial
         ? prompt.userPrompt.replace(
             prompt.sharedMaterial,
             shrinkSharedMaterial(prompt.sharedMaterial, shrinkLevel),
           )
         : prompt.userPrompt;
+    if (prompt.sharedMaterial && base.length + note.length > CHAT_GATEWAY_USER_PROMPT_MAX_CHARS) {
+      for (let level = Math.max(1, shrinkLevel); level <= MAX_PROACTIVE_SHRINK_LEVEL; level += 1) {
+        const shortened = prompt.userPrompt.replace(
+          prompt.sharedMaterial,
+          shrinkSharedMaterial(prompt.sharedMaterial, level),
+        );
+        if (shortened.length < base.length) base = shortened;
+        if (base.length + note.length <= CHAT_GATEWAY_USER_PROMPT_MAX_CHARS) break;
+      }
+    }
     return { systemPrompt: prompt.systemPrompt, userPrompt: `${base}${note}` };
   }
 

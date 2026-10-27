@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { ThreadHealingCandidate } from '@claw/shared-types';
 import { createHash } from 'node:crypto';
 import { Prisma, ThreadGenerationStage, ThreadGenerationStatus } from '../../../generated/prisma';
 import { z } from 'zod';
@@ -635,6 +636,15 @@ export class GenerationJobsRepository {
       outputTokens: input.response.outputTokens ?? null,
       durationMs: input.response.durationMs,
     };
+    const checkpoint = {
+      modelKey: input.response.model,
+      providerKey: input.response.provider,
+      inputHash: input.inputHash,
+      evidenceBundleHash: input.evidenceHash,
+      output,
+      outputHash: createHash('sha256').update(JSON.stringify(input.output)).digest('hex'),
+      usage,
+    };
     return this.prisma.$transaction(async (tx) => {
       const job = await tx.threadGenerationJob.findFirst({
         where: {
@@ -651,15 +661,21 @@ export class GenerationJobsRepository {
           jobId: input.jobId,
           role: input.role,
           round: input.round,
-          modelKey: input.response.model,
-          providerKey: input.response.provider,
-          inputHash: input.inputHash,
-          evidenceBundleHash: input.evidenceHash,
-          output,
-          outputHash: createHash('sha256').update(JSON.stringify(input.output)).digest('hex'),
-          usage,
+          ...checkpoint,
         },
         update: {},
+      });
+      await tx.threadModelCommunication.updateMany({
+        where: {
+          jobId: input.jobId,
+          role: input.role,
+          round: input.round,
+          OR: [
+            { inputHash: { not: input.inputHash } },
+            { evidenceBundleHash: { not: input.evidenceHash } },
+          ],
+        },
+        data: { ...checkpoint, createdAt: new Date() },
       });
       return true;
     });
@@ -736,6 +752,22 @@ export class GenerationJobsRepository {
       communication.inputHash === inputHash
       ? communication.output
       : null;
+  }
+
+  /** Read the last accepted role output, including a checkpoint inherited by a retry. */
+  async findLastSuccessfulModel(
+    jobId: string,
+    roleId: string,
+  ): Promise<ThreadHealingCandidate | null> {
+    const saved = await this.prisma.threadModelCommunication.findFirst({
+      where: {
+        jobId,
+        role: { in: [roleId, `candidate-vote-${roleId}`, `revision-author-${roleId}`] },
+      },
+      orderBy: [{ round: 'desc' }, { createdAt: 'desc' }],
+      select: { providerKey: true, modelKey: true },
+    });
+    return saved ? { provider: saved.providerKey, model: saved.modelKey } : null;
   }
 
   /**

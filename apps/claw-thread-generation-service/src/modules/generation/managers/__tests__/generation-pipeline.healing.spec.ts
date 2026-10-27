@@ -102,6 +102,42 @@ const happy = (request: { requestId: string }): Reply => {
 void revisionDraftHash;
 
 describe('Thread generation self-healing in the pipeline (ADR-181)', () => {
+  it('completes 50 local replays with rate limits, malformed output, outages and model replacement', async () => {
+    let completed = 0;
+    for (let trial = 0; trial < 50; trial += 1) {
+      let rateLimited = false;
+      const scenario = trial % 5;
+      const authors = [...input.authors];
+      authors[0] = role('author-1', 'OPENAI', [{ provider: 'OLLAMA', model: 'backup' }]);
+      const replay = {
+        ...input,
+        jobId: `replay-${String(trial)}`,
+        authors,
+        critic: role('critic', 'DEEPSEEK', [{ provider: 'GROQ', model: 'critic-backup' }]),
+      };
+      const { manager } = build((request) => {
+        const firstAuthor = request.requestId.includes(':author-author-1:');
+        if (firstAuthor && request.provider === 'OPENAI') {
+          if (scenario === 0 && !rateLimited) {
+            rateLimited = true;
+            return new Error('Chat model request failed (429: PROVIDER_RATE_LIMITED)');
+          }
+          if (scenario === 1) return new Error('Chat model request failed (503)');
+          if (scenario === 2) return 'not valid JSON';
+          if (scenario === 3) return new Error('Chat model request failed (404)');
+        }
+        const criticReply =
+          scenario === 4 && request.provider === 'DEEPSEEK'
+            ? new Error('Chat model request failed (503)')
+            : happy(request);
+        return criticReply;
+      });
+      const result = await manager.generate(replay);
+      if (result.reviewReady && result.judgeReview && result.criticReview) completed += 1;
+    }
+    expect(completed).toBeGreaterThanOrEqual(45);
+  });
+
   it('retries the research service once after a short wait and records the healing step', async () => {
     const { manager, research, steps } = build(happy, 1);
 

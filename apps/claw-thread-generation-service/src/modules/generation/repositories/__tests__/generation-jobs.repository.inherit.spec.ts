@@ -111,3 +111,25 @@ describe('GenerationJobsRepository.inheritCheckpoints (ADR-181)', () => {
     expect(await missing.repository.inheritCheckpoints('job-old', 'job-new', [])).toBe(0);
   });
 });
+
+describe('last successful role model', () => {
+  it('reads the newest saved response for the exact author and its vote roles', async () => {
+    const findFirst = vi.fn().mockResolvedValue({ providerKey: 'GROK', modelKey: 'grok' });
+    const repository = new GenerationJobsRepository({
+      threadModelCommunication: { findFirst },
+    } as never);
+
+    expect(await repository.findLastSuccessfulModel('job-1', 'author-1')).toEqual({
+      provider: 'GROK',
+      model: 'grok',
+    });
+    expect(findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          jobId: 'job-1',
+          role: { in: ['author-1', 'candidate-vote-author-1', 'revision-author-author-1'] },
+        },
+      }),
+    );
+  });
+});
