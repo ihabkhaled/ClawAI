@@ -41,6 +41,37 @@ describe('retryThreadGenerationSchema', () => {
     ).toBe(false);
   });
 
+  it('accepts at most 8 evidence gaps of at most 300 characters each (ADR-194)', () => {
+    const parse = (acceptedEvidenceGaps: unknown) =>
+      retryThreadGenerationSchema.safeParse({ idempotencyKey: 'k', acceptedEvidenceGaps }).success;
+
+    expect(parse(['no primary sources for sycophancy'])).toBe(true);
+    expect(parse([])).toBe(true);
+    expect(parse(Array.from({ length: 8 }, (_, i) => `gap ${String(i)}`))).toBe(true);
+    expect(parse(Array.from({ length: 9 }, (_, i) => `gap ${String(i)}`))).toBe(false);
+    expect(parse(['x'.repeat(300)])).toBe(true);
+    expect(parse(['x'.repeat(301)])).toBe(false);
+  });
+
+  it.each([[[42]], [['   ']], [['']], ['gap'], [{ 0: 'gap' }], [['bad\u0000text']], [[null]]])(
+    'rejects acceptedEvidenceGaps %j',
+    (value) => {
+      expect(
+        retryThreadGenerationSchema.safeParse({ idempotencyKey: 'k', acceptedEvidenceGaps: value })
+          .success,
+      ).toBe(false);
+    },
+  );
+
+  it('trims an accepted gap before it is forwarded', () => {
+    const parsed = retryThreadGenerationSchema.parse({
+      idempotencyKey: 'k',
+      acceptedEvidenceGaps: ['  no sources  '],
+    });
+
+    expect(parsed.acceptedEvidenceGaps).toEqual(['no sources']);
+  });
+
   it.each([
     { idempotencyKey: '' },
     { idempotencyKey: 'k', topic: 'short' },

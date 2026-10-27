@@ -58,6 +58,38 @@ export function ThreadGenerationRetryForm({ form }: ThreadGenerationRetryFormPro
               {t('chat.threadEvidenceNarrowHint')}
             </p>
           ) : null}
+          {form.showGapPicker ? (
+            <fieldset
+              className="border-border flex min-w-0 flex-col gap-2 rounded-md border p-3"
+              data-testid="thread-retry-gaps"
+            >
+              <legend className="px-1 text-sm font-medium">{t('chat.threadGapsLegend')}</legend>
+              <p className="text-sm">{t('chat.threadGapsExplain')}</p>
+              <p className="text-muted-foreground text-xs">{t('chat.threadGapsPickHint')}</p>
+              <ul className="flex flex-col gap-2">
+                {form.gapChoices.map((gap, index) => {
+                  const id = `thread-retry-gap-${String(index)}`;
+                  return (
+                    <li key={gap} className="flex min-w-0 items-start gap-2">
+                      <Checkbox
+                        id={id}
+                        checked={form.acceptedGaps.includes(gap)}
+                        onCheckedChange={(checked) => form.toggleGap(gap, checked === true)}
+                        className="mt-0.5"
+                      />
+                      <label
+                        htmlFor={id}
+                        dir="auto"
+                        className="min-w-0 cursor-pointer text-sm break-words"
+                      >
+                        {gap}
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+            </fieldset>
+          ) : null}
           <div className="flex flex-col gap-1" data-testid="thread-retry-research-more">
             <label className="flex cursor-pointer items-start gap-2 text-sm">
               <Checkbox
@@ -98,7 +130,11 @@ export function ThreadGenerationRetryForm({ form }: ThreadGenerationRetryFormPro
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <Button
               type="submit"
-              disabled={form.isSubmitting || !form.isTopicLongEnough}
+              disabled={
+                form.isSubmitting ||
+                !form.isTopicLongEnough ||
+                (form.showGapPicker && form.acceptedGaps.length === 0)
+              }
               isLoading={form.isSubmitting}
               className="w-full sm:w-auto"
             >

@@ -103,6 +103,41 @@ describe('GenerationJobsService', () => {
     expect(repository.findOwnerState).toHaveBeenCalledWith('job-1', 'owner-1');
   });
 
+  it('tells the owner an article was written with accepted evidence gaps (ADR-194)', async () => {
+    const repository = {
+      findOwnerState: vi.fn().mockResolvedValue({
+        id: 'job-1',
+        status: 'WAITING_FOR_REVIEW',
+        stage: 'READY_FOR_REVIEW',
+        round: 1,
+        safeErrorCode: null,
+        revisions: [
+          {
+            content: {
+              markdown: '# Article',
+              citations: [],
+              judge: { score: 85 },
+              critic: { score: 78 },
+              gapsDisclosed: true,
+            },
+          },
+        ],
+      }),
+    };
+    const service = new GenerationJobsService(
+      {} as never,
+      repository as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      recorder as never,
+    );
+
+    const state = await service.getOwnerState('job-1', 'owner-1');
+
+    expect(state.draft).toMatchObject({ gapsDisclosed: true, judgeScore: 85, criticScore: 78 });
+  });
+
   it('validates the owned snapshot and reserves the cap before persisting and dispatching', async () => {
     const order: string[] = [];
     const snapshot = {

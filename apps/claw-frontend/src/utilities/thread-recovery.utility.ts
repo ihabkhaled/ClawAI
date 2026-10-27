@@ -115,6 +115,7 @@ export function buildRecoveryRetryRequest(
     case ThreadFailureRemedy.ADD_CREDIT:
     case ThreadFailureRemedy.CHANGE_TOPIC:
     case ThreadFailureRemedy.NARROW_CLAIMS:
+    case ThreadFailureRemedy.ACCEPT_GAPS:
       return null;
   }
 }

@@ -152,6 +152,8 @@ export type PublicThreadPublication = {
   publishedAt: string;
   viewCount: number;
   readerCount: number;
+  /** True when the owner accepted evidence gaps and the article states them (ADR-194). */
+  gapsDisclosed?: boolean;
   /** Who published it; null for a Thread published before names were shown. */
   owner?: ThreadAuthor | null;
 };

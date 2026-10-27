@@ -24,6 +24,7 @@ import type {
   ThreadI18nText,
   ThreadRetryRoleSelection,
 } from '@/types/thread-generation-progress.types';
+import { normalizeAcceptedGaps } from '@/utilities/thread-accepted-gaps.utility';
 import {
   isThreadFormatSkipCode,
   threadFormatCodeMessage,
@@ -212,6 +213,10 @@ export function buildThreadRetryRequest(
   const request: ThreadGenerationRetryRequest = { idempotencyKey };
   if (input.refreshResearch === true) {
     request.refreshResearch = true;
+  }
+  const gaps = normalizeAcceptedGaps(input.acceptedEvidenceGaps);
+  if (gaps.length > 0) {
+    request.acceptedEvidenceGaps = gaps;
   }
   const topic = input.topic.trim();
   if (topic !== '' && topic !== progress.selections.topic) {

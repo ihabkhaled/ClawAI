@@ -111,6 +111,22 @@ function remediesFor(
   );
 }
 
+/**
+ * A failed review with evidence-gap blockers also offers "Accept these gaps" (ADR-194), just
+ * before a model change: the owner names the gaps the evidence cannot fill and the article says so.
+ */
+function withAcceptGaps(
+  remedies: ThreadFailureRemedy[],
+  review: ThreadGenerationFailure['review'],
+  retryable: boolean,
+): ThreadFailureRemedy[] {
+  if (!retryable || (review?.evidenceGapBlockers?.length ?? 0) === 0) return remedies;
+  const at = remedies.indexOf(ThreadFailureRemedy.TRY_SUGGESTED_MODEL);
+  return at < 0
+    ? [...remedies, ThreadFailureRemedy.ACCEPT_GAPS]
+    : [...remedies.slice(0, at), ThreadFailureRemedy.ACCEPT_GAPS, ...remedies.slice(at)];
+}
+
 function toFailure(
   job: ProgressJobRecord,
   request: ProgressRequest,
@@ -169,7 +185,11 @@ function toFailure(
     retryable,
     phase: classification.phase,
     failureClass: classification.failureClass,
-    remedies: remediesFor(classification.remedies, suggestedModel, retryable),
+    remedies: withAcceptGaps(
+      remediesFor(classification.remedies, suggestedModel, retryable),
+      review,
+      retryable,
+    ),
     suggestedModel,
     ...(review === null ? {} : { review }),
   };

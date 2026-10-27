@@ -173,3 +173,7 @@ Start and retry bodies go through `ZodValidationPipe(schema, ThreadGenerationErr
 ## Retry with fresh research (ADR-193, 2026-10-27)
 
 `retryThreadGenerationSchema` accepts `refreshResearch?: boolean` and the client forwards the body as is; the generation service decides what to inherit. `generationProgressSchema` keeps `failure.review` and the `EVIDENCE_GAP` class and remedies; it must stay in step with `ThreadGenerationFailure` in `packages/shared-types`. Decision: [ADR-193](../../docs/13-adr/adr-193-a-failed-thread-review-names-its-real-cause-and-fills-evidence-gaps-once.md).
+
+## Accepted evidence gaps (ADR-194, 2026-10-27)
+
+`retryThreadGenerationSchema` accepts `acceptedEvidenceGaps` (at most 8 trimmed, storable strings of 1 to 300 characters; owner-only as before) and the client forwards the body as is. `generationProgressSchema` must keep `failure.review.evidenceGapBlockers` and the `ACCEPT_GAPS` remedy. The owner-state `draft.gapsDisclosed` is saved by `savePrivateDraft` into the revision content (only when true, no column), `createEditedRevision` copies it from the revision it edits, and `findPublic` returns `gapsDisclosed` (always a boolean) in the public payload. The publish thresholds and the safety scan do not look at it. Decision: [ADR-194](../../docs/13-adr/adr-194-the-owner-can-accept-disclosed-evidence-gaps-and-the-article-says-so.md).

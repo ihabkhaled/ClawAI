@@ -12,4 +12,6 @@ export enum ThreadFailureRemedy {
   RESEARCH_MORE = 'RESEARCH_MORE',
   /** Retry with a topic that no longer demands the missing sources. */
   NARROW_CLAIMS = 'NARROW_CLAIMS',
+  /** Retry with the owner's named evidence gaps accepted and disclosed in the article (ADR-194). */
+  ACCEPT_GAPS = 'ACCEPT_GAPS',
 }

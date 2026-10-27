@@ -2,6 +2,7 @@ import type { Locale } from '@claw/shared-types';
 
 import { REVIEW_CRITERIA, REVIEW_REPLY_SHAPE } from '../constants/review-prompt.constants';
 import { ReviewerRole } from '../types/reviewer-role.enum';
+import { reviewGapsNote } from './accepted-gaps-prompt.utility';
 
 /** English name of a locale for use inside a prompt ("Spanish"), falling back to the code. */
 export function describeContentLanguage(locale: Locale): string {
@@ -19,6 +20,7 @@ export function buildReviewSystemPrompt(
   reviewer: ReviewerRole,
   locale: Locale,
   candidateCount = 1,
+  acceptedGaps: readonly string[] = [],
 ): string {
   const language = describeContentLanguage(locale);
   return [
@@ -26,6 +28,7 @@ export function buildReviewSystemPrompt(
     `The owner requested this publication in ${language} (${locale}), so ${language} is the correct language for the draft even when the topic, the source conversation or the evidence are written in another language.`,
     `Never lower the score, add a blocker, or ask for a rewrite or a translation because the draft's language differs from the language of the topic, source or evidence. Raise a language blocker only if the draft is not written in ${language}.`,
     REVIEW_CRITERIA,
+    ...(acceptedGaps.length > 0 ? [reviewGapsNote(acceptedGaps)] : []),
     `Write every finding and the revisionBrief in ${language}.`,
     ...(reviewer === ReviewerRole.JUDGE && candidateCount > 1
       ? [

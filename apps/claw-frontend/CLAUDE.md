@@ -1080,6 +1080,14 @@ Every Thread date (public/marketing/in-app byline, Board cards, suggestion rows,
 - `RESEARCH_MORE` is a one-click retry with `refreshResearch: true`; `NARROW_CLAIMS` opens the retry dialog on the topic (`openNarrow`) with a hint. The dialog has a "Research more before writing" checkbox, ticked by default after an `EVIDENCE_GAP` failure, sent as `refreshResearch` only when ticked.
 - Strings: flat `chat.threadEvidence*` keys from `lib/i18n/locales/thread-evidence-translations.ts` (13 locales; keep `{reviewer}`, `{score}`, `{min}`, `{count}`).
 
+## Accept these gaps (ADR-194, 2026-10-27)
+
+- The server offers the remedy `ACCEPT_GAPS` when `failure.review.evidenceGapBlockers` is not empty. It is third of the three buttons; it is never one-click: `useThreadRecoveryActions` calls `retryForm.openAcceptGaps()`, which opens the retry dialog with `showGapPicker`.
+- The dialog lists `gapChoices` (`threadGapChoices`, the reviewer's own words, `dir="auto"`, never translated) as unchecked checkboxes in a `<fieldset>`; the submit button stays disabled until one is ticked. Only a ticked text that the review listed is sent, as `acceptedEvidenceGaps` (`normalizeAcceptedGaps`: at most 8, 300 characters). The ordinary retry form never sends it.
+- `ThreadGapsNotice` is shown above the article (outside the article's own direction) in `ThreadPublicArticle` and `BoardReaderView` when `publication.gapsDisclosed === true`. Never hide it and never add the flag to JSON-LD.
+- Steps `ACCEPTED_GAPS` / `ACCEPTED_GAP_WAIVED` list their texts (`THREAD_GAP_LIST_CODES`); `LIMITATIONS_MISSING` is a plain message.
+- Strings: flat `chat.threadGaps*` keys from `lib/i18n/locales/thread-accepted-gaps-translations.ts` (13 locales, no placeholders). Decision: [ADR-194](../../docs/13-adr/adr-194-the-owner-can-accept-disclosed-evidence-gaps-and-the-article-says-so.md).
+
 ## Fonts are self-hosted (2026-10-27)
 
 `src/app/fonts.ts` declares Inter, Archivo and IBM Plex Mono with `next/font/local` from the woff2 files in

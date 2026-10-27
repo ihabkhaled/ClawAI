@@ -3,7 +3,7 @@ import type { ThreadReviewVerdict } from '@claw/shared-types';
 import { REVIEW_STEP_ROLE_KINDS } from '../constants/evidence-gap.constants';
 import { MIN_CRITIC_SCORE, MIN_JUDGE_SCORE } from '../constants/generation.constants';
 import type { StepRow } from '../types/step-recorder.types';
-import { onlyEvidenceGaps } from './classify-blocker.utility';
+import { onlyEvidenceGaps, splitBlockers } from './classify-blocker.utility';
 import { parseVerdict } from './review-verdict.utility';
 
 /**
@@ -24,6 +24,7 @@ export function latestReviewVerdict(steps: readonly StepRow[]): ThreadReviewVerd
         minScore,
         blockers: verdict.blockers,
         blocked: verdict.score >= minScore && verdict.blockers.length > 0,
+        evidenceGapBlockers: splitBlockers(verdict.blockers).evidenceGaps,
       };
     }
   }

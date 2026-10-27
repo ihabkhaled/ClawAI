@@ -7,6 +7,7 @@ import type { ReactElement } from 'react';
 import { RelativeTime } from '@/components/shared/relative-time';
 import { BoardReaderActions } from '@/components/threads/board/board-reader-actions';
 import { ThreadAuthorBadge } from '@/components/threads/community/thread-author-badge';
+import { ThreadGapsNotice } from '@/components/threads/thread-gaps-notice';
 import { ThreadPublicCommunity } from '@/components/threads/thread-public-community';
 import { ThreadReaderBody } from '@/components/threads/thread-reader-body';
 import { Button } from '@/components/ui/button';
@@ -87,6 +88,7 @@ export function BoardReaderView({ state }: BoardReaderViewProps): ReactElement {
           </ol>
         </nav>
       </div>
+      {publication.gapsDisclosed === true ? <ThreadGapsNotice /> : null}
       <article
         className="border-border bg-card rounded-xl border p-5 sm:p-8"
         lang={publication.contentLocale}

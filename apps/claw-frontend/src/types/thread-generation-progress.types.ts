@@ -59,6 +59,15 @@ export type ThreadRetryFormController = {
   setRefreshResearch: (value: boolean) => void;
   /** Opens the form to narrow the claims: topic focused, with a hint about dropping the sources. */
   openNarrow: () => void;
+  /** Opens the form on the evidence gaps the owner may accept; none is ticked (ADR-194). */
+  openAcceptGaps: () => void;
+  /** True when the form was opened to accept gaps: the checkbox list is shown. */
+  showGapPicker: boolean;
+  /** The evidence-gap blocker texts of the failed review, exactly as the reviewer wrote them. */
+  gapChoices: string[];
+  /** The choices the owner ticked; sent as `acceptedEvidenceGaps`. */
+  acceptedGaps: string[];
+  toggleGap: (text: string, accepted: boolean) => void;
   showNarrowHint: boolean;
   topicRef: RefObject<HTMLTextAreaElement | null>;
   /** Puts the cursor in the topic when the form opens to narrow the claims. */
@@ -163,6 +172,8 @@ export type BuildThreadRetryRequestInput = {
   spendCapUsd: string;
   roles: ThreadRetryRoleSelection[];
   refreshResearch?: boolean;
+  /** Gap texts the owner ticked; only the ones the failed review listed are sent. */
+  acceptedEvidenceGaps?: string[];
 };
 
 export type UseThreadGenerationProgressResult = {

@@ -34,4 +34,6 @@ export type LatestRevisionDraft = {
   contentHash: string;
   judgeScore: number | null;
   criticScore: number | null;
+  /** True when the article was written with owner-accepted evidence gaps (ADR-194). */
+  gapsDisclosed?: boolean;
 };

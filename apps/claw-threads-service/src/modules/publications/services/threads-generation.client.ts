@@ -68,6 +68,7 @@ const privateStateSchema = z.object({
       citations: z.array(z.object({ evidenceId: z.string(), url: z.string().url() })),
       judgeScore: z.number().int().min(0).max(100),
       criticScore: z.number().int().min(0).max(100),
+      gapsDisclosed: z.boolean().optional(),
     })
     .nullable(),
 });

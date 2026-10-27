@@ -150,6 +150,52 @@ describe('ThreadsGenerationClient', () => {
     );
   });
 
+  it('forwards the accepted evidence gaps to the generation service (ADR-194)', async () => {
+    const fetch = stubFetch({ ok: true, json: async () => ({ jobId: 'job-2', status: 'QUEUED' }) });
+
+    await new ThreadsGenerationClient().retry('job-1', 'owner-1', {
+      idempotencyKey: 'retry-1',
+      acceptedEvidenceGaps: ['no primary sources for sycophancy'],
+    });
+
+    expect(fetch).toHaveBeenCalledWith(
+      `${base}/retry`,
+      expect.objectContaining({
+        body: JSON.stringify({
+          idempotencyKey: 'retry-1',
+          acceptedEvidenceGaps: ['no primary sources for sycophancy'],
+          ownerId: 'owner-1',
+        }),
+      }),
+    );
+  });
+
+  it('reads the disclosure flag of a finished draft from the owner state', async () => {
+    stubFetch({
+      ok: true,
+      json: async () => ({
+        jobId: 'job-1',
+        status: 'WAITING_FOR_REVIEW',
+        stage: 'READY_FOR_REVIEW',
+        round: 1,
+        safeErrorCode: null,
+        terminal: true,
+        review: null,
+        draft: {
+          markdown: '# T',
+          citations: [],
+          judgeScore: 85,
+          criticScore: 78,
+          gapsDisclosed: true,
+        },
+      }),
+    });
+
+    const state = await new ThreadsGenerationClient().getPrivateState('job-1', 'owner-1');
+
+    expect(state.draft?.gapsDisclosed).toBe(true);
+  });
+
   it('rejects a malformed retry body', async () => {
     stubFetch({ ok: true, json: async () => ({}) });
     await expect(

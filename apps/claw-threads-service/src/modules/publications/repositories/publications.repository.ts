@@ -272,11 +272,15 @@ export class PublicationsRepository {
       citations: Array<{ evidenceId: string; url: string }>;
       judgeScore: number;
       criticScore: number;
+      gapsDisclosed?: boolean;
     },
   ): Promise<void> {
+    // The flag is stored only when true, so every other article keeps the content it always had.
+    const gaps = draft.gapsDisclosed === true ? { gapsDisclosed: true } : {};
     const serializedContent = JSON.stringify({
       markdown: draft.markdown,
       citations: draft.citations,
+      ...gaps,
     });
     const safety = evaluatePublicationSafety(
       draft.markdown,
@@ -299,7 +303,7 @@ export class PublicationsRepository {
           publicationId,
           revision: 1,
           title,
-          content: { markdown: draft.markdown, citations: draft.citations },
+          content: { markdown: draft.markdown, citations: draft.citations, ...gaps },
           contentHash: createHash('sha256').update(serializedContent).digest('hex'),
           reviewStatus: reviewReady
             ? RevisionReviewStatus.READY_FOR_REVIEW
@@ -486,7 +490,13 @@ export class PublicationsRepository {
       const latest = await transaction.threadPublicationRevision.findFirst({
         where: { publicationId },
         orderBy: { revision: 'desc' },
-        select: { id: true, revision: true, reviewStatus: true, revalidationJobId: true },
+        select: {
+          id: true,
+          revision: true,
+          reviewStatus: true,
+          revalidationJobId: true,
+          content: true,
+        },
       });
       if (!latest) return null;
       if (
@@ -506,7 +516,15 @@ export class PublicationsRepository {
         };
       }
       // The last approved revision stays publishable until a NEW revision passes the Critic.
-      const content = { markdown: input.markdown, citations: input.citations };
+      // An edit keeps the disclosure of the article it edits: the notice is never lost by editing.
+      const disclosed = latestRevisionContentSchema.safeParse(latest.content);
+      const content = {
+        markdown: input.markdown,
+        citations: input.citations,
+        ...(disclosed.success && disclosed.data.gapsDisclosed === true
+          ? { gapsDisclosed: true }
+          : {}),
+      };
       const title = derivePublicationTitle(input.markdown);
       const revision = await transaction.threadPublicationRevision.create({
         data: {
@@ -595,6 +613,7 @@ export class PublicationsRepository {
       contentHash: found.contentHash,
       judgeScore: found.judgeScore,
       criticScore: found.criticScore,
+      ...(content.data.gapsDisclosed === true ? { gapsDisclosed: true } : {}),
     };
   }
 
@@ -783,6 +802,7 @@ export class PublicationsRepository {
         citations: z
           .array(z.object({ url: z.string().url(), evidenceId: z.string().optional() }))
           .default([]),
+        gapsDisclosed: z.boolean().optional(),
       })
       .safeParse(revision?.content);
     return publication?.publishedAt && revision && content.success
@@ -804,6 +824,7 @@ export class PublicationsRepository {
             ),
             citations: content.data.citations.map(({ url }) => ({ url })),
           },
+          gapsDisclosed: content.data.gapsDisclosed === true,
           publishedAt: publication.publishedAt,
           viewCount: publication.viewCount,
           readerCount: publication.readerCount,

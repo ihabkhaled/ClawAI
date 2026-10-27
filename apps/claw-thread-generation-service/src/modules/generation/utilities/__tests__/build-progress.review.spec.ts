@@ -93,7 +93,11 @@ describe('buildProgress for a failed review (ADR-193)', () => {
     expect(progress.failure).toMatchObject({
       code: 'REVIEW_NOT_PASSED',
       failureClass: ThreadFailureClass.EVIDENCE_GAP,
-      remedies: [ThreadFailureRemedy.RESEARCH_MORE, ThreadFailureRemedy.NARROW_CLAIMS],
+      remedies: [
+        ThreadFailureRemedy.RESEARCH_MORE,
+        ThreadFailureRemedy.NARROW_CLAIMS,
+        ThreadFailureRemedy.ACCEPT_GAPS,
+      ],
       retryable: true,
       review: {
         reviewer: 'JUDGE',
@@ -101,6 +105,7 @@ describe('buildProgress for a failed review (ADR-193)', () => {
         minScore: 80,
         blockers: PRODUCTION_BLOCKERS,
         blocked: true,
+        evidenceGapBlockers: PRODUCTION_BLOCKERS,
       },
     });
   });
@@ -122,6 +127,9 @@ describe('buildProgress for a failed review (ADR-193)', () => {
 
     expect(progress.failure?.failureClass).toBe(ThreadFailureClass.REVIEW_NOT_PASSED);
     expect(progress.failure?.remedies).not.toContain(ThreadFailureRemedy.RESEARCH_MORE);
+    // The sourcing blockers can still be accepted; the contradiction cannot.
+    expect(progress.failure?.remedies).toContain(ThreadFailureRemedy.ACCEPT_GAPS);
+    expect(progress.failure?.review?.evidenceGapBlockers).toEqual(PRODUCTION_BLOCKERS);
     expect(progress.failure?.review?.blocked).toBe(true);
   });
 
@@ -137,6 +145,7 @@ describe('buildProgress for a failed review (ADR-193)', () => {
 
     expect(progress.failure?.failureClass).toBe(ThreadFailureClass.REVIEW_NOT_PASSED);
     expect(progress.failure?.review).toMatchObject({ score: 55, minScore: 80, blocked: false });
+    expect(progress.failure?.remedies).not.toContain(ThreadFailureRemedy.ACCEPT_GAPS);
   });
 
   it('adds no review to a job from before verdicts were recorded', () => {
@@ -212,5 +221,59 @@ describe('refreshResearch on a retry (ADR-193)', () => {
         refreshResearch: 'yes',
       }).success,
     ).toBe(false);
+  });
+});
+
+describe('acceptedEvidenceGaps on a retry (ADR-194)', () => {
+  const owner = { ownerId: 'owner-1', idempotencyKey: 'retry-1' };
+  const GAP = 'does not cite primary sources for sycophancy';
+
+  it('is stored normalised and is part of the request comparison', () => {
+    const plain = buildRetryInput(request, retryGenerationSchema.parse(owner));
+    const accepted = buildRetryInput(
+      request,
+      retryGenerationSchema.parse({ ...owner, acceptedEvidenceGaps: ['  b gap ', GAP, GAP] }),
+    );
+    const reordered = buildRetryInput(
+      request,
+      retryGenerationSchema.parse({ ...owner, acceptedEvidenceGaps: [GAP, 'b gap'] }),
+    );
+
+    expect(plain).not.toHaveProperty('acceptedEvidenceGaps');
+    expect(accepted.acceptedEvidenceGaps).toEqual(['b gap', GAP].sort());
+    expect(enqueueGenerationSchema.safeParse(accepted).success).toBe(true);
+    expect(isSameRequest(plain, accepted)).toBe(false);
+    expect(isSameRequest(accepted, reordered)).toBe(true);
+  });
+
+  it('an empty list is the same request as none', () => {
+    const none = buildRetryInput(request, retryGenerationSchema.parse(owner));
+    const empty = buildRetryInput(
+      request,
+      retryGenerationSchema.parse({ ...owner, acceptedEvidenceGaps: [] }),
+    );
+
+    expect(empty).not.toHaveProperty('acceptedEvidenceGaps');
+    expect(isSameRequest(none, empty)).toBe(true);
+  });
+
+  it('is not inherited by the retry of a retry', () => {
+    const accepted = { ...request, acceptedEvidenceGaps: [GAP] };
+    const next = buildRetryInput(accepted, retryGenerationSchema.parse(owner));
+
+    expect(next).not.toHaveProperty('acceptedEvidenceGaps');
+  });
+
+  it('rejects more than 8 entries, an entry over 300 characters, blanks and non-strings', () => {
+    const parse = (value: unknown) =>
+      retryGenerationSchema.safeParse({ ...owner, acceptedEvidenceGaps: value }).success;
+
+    expect(parse(Array.from({ length: 8 }, (_, i) => `gap ${String(i)}`))).toBe(true);
+    expect(parse(Array.from({ length: 9 }, (_, i) => `gap ${String(i)}`))).toBe(false);
+    expect(parse(['x'.repeat(300)])).toBe(true);
+    expect(parse(['x'.repeat(301)])).toBe(false);
+    expect(parse(['   '])).toBe(false);
+    expect(parse([42])).toBe(false);
+    expect(parse('gap')).toBe(false);
   });
 });

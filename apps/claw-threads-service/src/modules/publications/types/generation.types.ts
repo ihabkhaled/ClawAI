@@ -30,6 +30,8 @@ export type PrivateGenerationState = {
     citations: Array<{ evidenceId: string; url: string }>;
     judgeScore: number;
     criticScore: number;
+    /** True when the article was written with owner-accepted evidence gaps (ADR-194). */
+    gapsDisclosed?: boolean;
   } | null;
 };
 

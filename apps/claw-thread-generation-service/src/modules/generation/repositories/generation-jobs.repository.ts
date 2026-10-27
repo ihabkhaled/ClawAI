@@ -1114,6 +1114,7 @@ export class GenerationJobsRepository {
       citations: result.citations,
       judge: result.judgeReview,
       critic: result.criticReview,
+      ...(result.gapsDisclosed === true ? { gapsDisclosed: true } : {}),
       review: {
         draftHash: result.draftHash,
         authorConsensus: result.authorConsensus,

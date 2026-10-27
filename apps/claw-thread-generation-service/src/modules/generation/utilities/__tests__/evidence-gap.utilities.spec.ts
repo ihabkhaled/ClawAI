@@ -168,6 +168,7 @@ describe('latestReviewVerdict', () => {
       minScore: 80,
       blockers: ['cite primary sources'],
       blocked: true,
+      evidenceGapBlockers: ['cite primary sources'],
     });
   });
 

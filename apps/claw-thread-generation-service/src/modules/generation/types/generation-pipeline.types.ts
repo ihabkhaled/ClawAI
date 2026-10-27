@@ -84,6 +84,7 @@ export const ownerRevisionContentSchema = z.object({
   citations: z.array(z.object({ evidenceId: z.string(), url: z.string().url() })),
   judge: z.object({ score: z.number().int().min(0).max(100) }),
   critic: z.object({ score: z.number().int().min(0).max(100) }),
+  gapsDisclosed: z.boolean().optional(),
   review: z
     .object({
       draftHash: z.string().length(64),
@@ -120,6 +121,8 @@ export type GenerationPipelineInput = {
   spentMicroUsd?: number;
   /** "Shorter article" asks the authors for about 60 percent of the usual length. */
   articleLength?: ThreadArticleLength;
+  /** Evidence-gap blockers the owner accepted for this retry; the article discloses them (ADR-194). */
+  acceptedEvidenceGaps?: string[];
   /** Runs the optional FORMAT stage after the reviews pass (ADR-189); off for an owner's own edit. */
   formatStage?: boolean;
   /** Set by the pipeline for one attempt: the counters that bound healing. */
@@ -143,6 +146,8 @@ export type GenerationPipelineResult = {
   authorAgreementPercent: number;
   reviewReady: boolean;
   reviewReasons: string[];
+  /** True when the owner accepted evidence gaps and the article discloses them (ADR-194). */
+  gapsDisclosed?: boolean;
 };
 
 export type PrivateGenerationState = {
@@ -168,6 +173,8 @@ export type PrivateGenerationState = {
     citations: AuthorDraft['citations'];
     judgeScore: number;
     criticScore: number;
+    /** Present (true) only when the article was written with owner-accepted evidence gaps. */
+    gapsDisclosed?: boolean;
   } | null;
 };
 

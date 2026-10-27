@@ -60,6 +60,7 @@ type Rec = {
   provider: string;
   model: string;
   maxOutputTokens: number;
+  systemPrompt: string;
   userPrompt: string;
   isTry: boolean;
 };
@@ -330,6 +331,7 @@ function harness(store: FakeStore, s: Scenario, input: GenerationPipelineInput, 
         provider: request.provider,
         model: request.model,
         maxOutputTokens: request.maxOutputTokens ?? 0,
+        systemPrompt: request.systemPrompt,
         userPrompt: request.userPrompt,
         isTry: request.requestId.includes(':try-'),
       });
@@ -484,10 +486,11 @@ async function execute(
   const { service, outcomes } = jobService();
   let outcome = 'UNFINISHED';
   let jobAttempts = 0;
+  let passed: unknown = null;
   for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt += 1) {
     jobAttempts = attempt;
     try {
-      await run.manager.generate({
+      passed = await run.manager.generate({
         ...input,
         ...patch,
         jobId,
@@ -519,7 +522,7 @@ async function execute(
     waits: vi.mocked(waitBeforeRetry).mock.calls.map((call) => Number(call[0])),
     researchRuns: run.research.run.mock.calls.length,
     spent: run.state.spent,
-    extra: {},
+    extra: { result: passed },
   };
 }
 
@@ -1378,6 +1381,224 @@ describe('Thread generation reliability replay (ADR-181, 50 deterministic scenar
           stepsWith(second, { outcome: 'SKIPPED', code: STEP_RESUMED_CODE, roleId }),
         ).toHaveLength(0);
       }
+    });
+  });
+
+  describe('owner-accepted evidence gaps (ADR-194)', () => {
+    const GAP = 'does not cite primary sources for sycophancy';
+    const REPO_GAP =
+      'repository files are not in the evidence, so claims about the repository cannot be verified';
+    const draftWith = (limitations: string | null): string =>
+      JSON.stringify({
+        markdown: [
+          '# Agent failure patterns',
+          '',
+          `A sourced body [${EVIDENCE_ID}].`,
+          '',
+          ...(limitations === null
+            ? []
+            : ['## Limitations and unverified items', '', limitations, '']),
+          '## Sources',
+          '',
+          '- https://example.org/one',
+        ].join('\n'),
+        citations: [{ evidenceId: EVIDENCE_ID, url: 'https://example.org/one' }],
+      });
+    const HONEST = draftWith(`- The article ${GAP}; this is unverified.`);
+    const roundOf = (ctx: Ctx): number =>
+      Number(/round-(\d+)/u.exec(ctx.req.requestId)?.[1] ?? '1');
+    const authors =
+      (reply: string): Script =>
+      (ctx) =>
+        ctx.kind === 'author' ? reply : undefined;
+    const firstOf =
+      (...scripts: Script[]): Script =>
+      (ctx) =>
+        scripts.map((script) => script(ctx)).find((reply) => reply !== undefined);
+    const judgeBlocks = (blockers: string[], score = 84): Script =>
+      always(is('judge'), reviewOf(score, blockers));
+    const scenario = (id: string, over: Partial<Scenario>): Scenario => ({
+      id,
+      group: 'accepted-gaps',
+      locale: Locale.EN,
+      recoverable: false,
+      expect: { outcome: SUCCESS, jobAttempts: 1 },
+      ...over,
+    });
+    const gapsOf = (result: Result): unknown =>
+      (result.extra['result'] as { gapsDisclosed?: boolean } | null)?.gapsDisclosed;
+
+    it('the blocker the owner accepted no longer blocks, and the result discloses the gap', async () => {
+      const s = scenario('AG1', {
+        input: () => ({ acceptedEvidenceGaps: [GAP] }),
+        script: firstOf(authors(HONEST), judgeBlocks([GAP])),
+      });
+      const result = await execute(s, 0, new FakeStore(), 'job-ag1', s.script);
+
+      expect(result.outcome).toBe(SUCCESS);
+      expect(gapsOf(result)).toBe(true);
+      expect(stepsWith(result, { code: 'ACCEPTED_GAPS', outcome: 'SUCCEEDED' })).toHaveLength(1);
+      expect(stepsWith(result, { code: 'ACCEPTED_GAP_WAIVED' })).toHaveLength(1);
+      expect(stepsWith(result, { code: 'JUDGE_BLOCKED' })).toHaveLength(0);
+      expect(stepsWith(result, { code: 'LIMITATIONS_MISSING' })).toHaveLength(0);
+      verifyBounds(result);
+    });
+
+    it('the same blocker without the owner accepting it still blocks', async () => {
+      const s = scenario('AG2', {
+        expect: { outcome: REVIEW_NOT_PASSED, jobAttempts: 1 },
+        script: firstOf(authors(HONEST), judgeBlocks([GAP])),
+      });
+      const result = await execute(s, 1, new FakeStore(), 'job-ag2', s.script);
+
+      expect(result.outcome).toBe(REVIEW_NOT_PASSED);
+      expect(stepsWith(result, { code: 'JUDGE_BLOCKED' })).toHaveLength(3);
+      expect(stepsWith(result, { code: 'ACCEPTED_GAPS' })).toHaveLength(0);
+      expect(gapsOf(result)).toBeUndefined();
+    });
+
+    it('an unrelated blocker (a contradiction) still blocks although gaps were accepted', async () => {
+      const s = scenario('AG3', {
+        expect: { outcome: REVIEW_NOT_PASSED, jobAttempts: 1 },
+        input: () => ({ acceptedEvidenceGaps: [GAP] }),
+        script: firstOf(
+          authors(HONEST),
+          judgeBlocks(['The second section contradicts the introduction.']),
+        ),
+      });
+      const result = await execute(s, 2, new FakeStore(), 'job-ag3', s.script);
+
+      expect(result.outcome).toBe(REVIEW_NOT_PASSED);
+      expect(stepsWith(result, { code: 'JUDGE_BLOCKED' })).toHaveLength(3);
+      expect(stepsWith(result, { code: 'ACCEPTED_GAP_WAIVED' })).toHaveLength(0);
+    });
+
+    it('a sourcing blocker about another topic still blocks', async () => {
+      const s = scenario('AG3b', {
+        expect: { outcome: REVIEW_NOT_PASSED, jobAttempts: 1 },
+        input: () => ({ acceptedEvidenceGaps: [GAP] }),
+        script: firstOf(authors(HONEST), judgeBlocks([REPO_GAP])),
+      });
+      const result = await execute(s, 3, new FakeStore(), 'job-ag3b', s.script);
+
+      expect(result.outcome).toBe(REVIEW_NOT_PASSED);
+      expect(stepsWith(result, { code: 'ACCEPTED_GAP_WAIVED' })).toHaveLength(0);
+    });
+
+    it('an accepted gap never lifts a low score', async () => {
+      const s = scenario('AG3c', {
+        expect: { outcome: REVIEW_NOT_PASSED, jobAttempts: 1 },
+        input: () => ({ acceptedEvidenceGaps: [GAP] }),
+        script: firstOf(authors(HONEST), judgeBlocks([GAP], 60)),
+      });
+      const result = await execute(s, 4, new FakeStore(), 'job-ag3c', s.script);
+
+      expect(result.outcome).toBe(REVIEW_NOT_PASSED);
+      expect(stepsWith(result, { code: 'JUDGE_SCORE_LOW' })).toHaveLength(3);
+    });
+
+    it('a missing limitations section is one coded repair round, then it passes', async () => {
+      const s = scenario('AG4', {
+        input: () => ({ acceptedEvidenceGaps: [GAP] }),
+        script: (ctx) =>
+          ctx.kind === 'author' ? (roundOf(ctx) === 1 ? draftWith(null) : HONEST) : undefined,
+      });
+      const result = await execute(s, 5, new FakeStore(), 'job-ag4', s.script);
+
+      expect(result.outcome).toBe(SUCCESS);
+      const missing = stepsWith(result, { code: 'LIMITATIONS_MISSING', outcome: 'RETRY' });
+      expect(missing).toHaveLength(1);
+      expect(missing[0]?.['round']).toBe(1);
+      // The first round stopped before any review: the section is checked without a model call.
+      expect(result.reqs.filter((req) => req.round === 1 && req.kind === 'judge')).toHaveLength(0);
+      const round2 = result.reqs.filter((req) => req.round === 2 && req.kind === 'author');
+      expect(round2.length).toBeGreaterThan(0);
+      expect(round2.every((req) => req.userPrompt.includes('limitations section'))).toBe(true);
+      expect(gapsOf(result)).toBe(true);
+    });
+
+    it('a limitations section that skips an accepted gap is also repaired', async () => {
+      const unrelated = draftWith('- Some unrelated remark about formatting.');
+      const s = scenario('AG4b', {
+        input: () => ({ acceptedEvidenceGaps: [GAP] }),
+        script: (ctx) =>
+          ctx.kind === 'author' ? (roundOf(ctx) === 1 ? unrelated : HONEST) : undefined,
+      });
+      const result = await execute(s, 6, new FakeStore(), 'job-ag4b', s.script);
+
+      expect(result.outcome).toBe(SUCCESS);
+      expect(stepsWith(result, { code: 'LIMITATIONS_MISSING' })).toHaveLength(1);
+    });
+
+    it('a section that never appears ends as REVIEW_NOT_PASSED, not as a published article', async () => {
+      const s = scenario('AG4c', {
+        expect: { outcome: REVIEW_NOT_PASSED, jobAttempts: 1 },
+        input: () => ({ acceptedEvidenceGaps: [GAP] }),
+        script: authors(draftWith(null)),
+      });
+      const result = await execute(s, 7, new FakeStore(), 'job-ag4c', s.script);
+
+      expect(result.outcome).toBe(REVIEW_NOT_PASSED);
+      expect(stepsWith(result, { code: 'LIMITATIONS_MISSING' })).toHaveLength(3);
+      expect(gapsOf(result)).toBeUndefined();
+    });
+
+    it('the Critic may have its accepted blocker set aside too', async () => {
+      const s = scenario('AG5', {
+        input: () => ({ acceptedEvidenceGaps: [REPO_GAP] }),
+        script: firstOf(
+          authors(draftWith(`- ${REPO_GAP}; the repository was not checked.`)),
+          always(is('critic'), reviewOf(80, [REPO_GAP])),
+        ),
+      });
+      const result = await execute(s, 8, new FakeStore(), 'job-ag5', s.script);
+
+      expect(result.outcome).toBe(SUCCESS);
+      expect(stepsWith(result, { code: 'ACCEPTED_GAP_WAIVED' })).toHaveLength(1);
+      expect(stepsWith(result, { code: 'CRITIC_BLOCKED' })).toHaveLength(0);
+    });
+
+    it('prompt capture: authors, Judge and Critic get the rule only when gaps were accepted', async () => {
+      const accepted = scenario('AG6', {
+        input: () => ({ acceptedEvidenceGaps: [GAP] }),
+        script: authors(HONEST),
+      });
+      const plain = scenario('AG6b', { script: authors(HONEST) });
+      const withGaps = await execute(accepted, 9, new FakeStore(), 'job-ag6', accepted.script);
+      const without = await execute(plain, 9, new FakeStore(), 'job-ag6b', plain.script);
+
+      for (const kind of ['author', 'judge', 'critic'] as const) {
+        const sent = withGaps.reqs.filter((req) => req.kind === kind);
+        expect(sent.length).toBeGreaterThan(0);
+        expect(sent.every((req) => req.systemPrompt.includes(JSON.stringify([GAP])))).toBe(true);
+        const plainSent = without.reqs.filter((req) => req.kind === kind);
+        expect(plainSent.length).toBeGreaterThan(0);
+        expect(
+          plainSent.some((req) => req.systemPrompt.includes('accepted that these requirements')),
+        ).toBe(false);
+      }
+      const judge = withGaps.reqs.find((req) => req.kind === 'judge');
+      expect(judge?.systemPrompt).toContain('do NOT lower the score');
+      expect(judge?.systemPrompt).toContain('fabricated claims');
+      const author = withGaps.reqs.find((req) => req.kind === 'author');
+      expect(author?.systemPrompt).toContain('Limitations and unverified items');
+      expect(author?.systemPrompt).toContain('never present unverified material as fact');
+    });
+
+    it('fabricated sources stay rejected: a citation outside the evidence never passes', async () => {
+      const invented = JSON.stringify({
+        markdown: `# T\n\nBody [zzzz0000yyyy9999].\n\n## Limitations and unverified items\n\n- ${GAP}\n`,
+        citations: [{ evidenceId: 'zzzz0000yyyy9999', url: 'https://invented.example.net/paper' }],
+      });
+      const s = scenario('AG7', {
+        expect: { outcome: 'OUTPUT_INVALID' },
+        input: () => ({ acceptedEvidenceGaps: [GAP] }),
+        script: authors(invented),
+      });
+      const result = await execute(s, 10, new FakeStore(), 'job-ag7', s.script);
+
+      expect(result.outcome).not.toBe(SUCCESS);
+      expect(gapsOf(result)).toBeUndefined();
     });
   });
 

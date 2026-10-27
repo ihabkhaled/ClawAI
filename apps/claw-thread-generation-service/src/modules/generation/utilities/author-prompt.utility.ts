@@ -6,6 +6,7 @@ import {
   AUTHOR_STRUCTURE_NOTE,
 } from '../constants/author-prompt.constants';
 import { SHORT_ARTICLE_NOTE } from '../constants/healing-notes.constants';
+import { authorGapsNote } from './accepted-gaps-prompt.utility';
 import { describeContentLanguage } from './review-prompt.utility';
 
 /**
@@ -14,7 +15,11 @@ import { describeContentLanguage } from './review-prompt.utility';
  * article otherwise gets its ids rewritten with local digits or brackets, and the citation check
  * then rejects a draft that is otherwise fine.
  */
-export function buildAuthorSystemPrompt(locale: Locale, length?: ThreadArticleLength): string {
+export function buildAuthorSystemPrompt(
+  locale: Locale,
+  length?: ThreadArticleLength,
+  acceptedGaps: readonly string[] = [],
+): string {
   const language = describeContentLanguage(locale);
   return [
     `Write the requested publication in ${language} (${locale}).`,
@@ -27,5 +32,6 @@ export function buildAuthorSystemPrompt(locale: Locale, length?: ThreadArticleLe
     AUTHOR_STRUCTURE_NOTE,
     'Cite only evidence items from researchEvidence.items. Do not include analysis or hidden reasoning.',
     ...(length === ThreadArticleLength.SHORT ? [SHORT_ARTICLE_NOTE] : []),
+    ...(acceptedGaps.length > 0 ? [authorGapsNote(acceptedGaps, locale, language)] : []),
   ].join(' ');
 }

@@ -349,6 +349,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
             citations: content.citations,
             judgeScore: content.judge.score,
             criticScore: content.critic.score,
+            ...(content.gapsDisclosed === true ? { gapsDisclosed: true } : {}),
           }
         : null,
     };
@@ -764,6 +765,8 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       spentMicroUsd: Number(job.spentMicroCredits),
       healing: 'healing' in request ? request.healing : undefined,
       articleLength: 'articleLength' in request ? request.articleLength : undefined,
+      acceptedEvidenceGaps:
+        'acceptedEvidenceGaps' in request ? request.acceptedEvidenceGaps : undefined,
     };
     if ('kind' in request) {
       const evidence = this.requireIntactEvidence(job);

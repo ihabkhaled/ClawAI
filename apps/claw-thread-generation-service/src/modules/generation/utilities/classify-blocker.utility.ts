@@ -8,7 +8,7 @@ import {
 import type { BlockerSplit } from '../types/evidence-gap.types';
 
 /** Lower case, marks and zero-width characters removed, Arabic and Persian letter variants unified. */
-function foldForMatch(text: string): string {
+export function foldForMatch(text: string): string {
   const lowered = text.normalize('NFKC').toLowerCase().replaceAll(MATCH_IGNORED_CHARS_PATTERN, '');
   return [...lowered].map((char) => ARABIC_SCRIPT_FOLDS.get(char) ?? char).join('');
 }

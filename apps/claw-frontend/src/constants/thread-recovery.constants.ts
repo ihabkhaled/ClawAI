@@ -8,6 +8,7 @@ import {
 
 import {
   THREAD_EVIDENCE_NARROW_KEY,
+  THREAD_GAPS_ACCEPT_KEY,
   THREAD_EVIDENCE_REASON_GAP_KEY,
   THREAD_EVIDENCE_RESEARCH_MORE_KEY,
 } from '@/constants/thread-evidence.constants';
@@ -66,6 +67,7 @@ export const THREAD_REMEDY_LABEL_KEYS: Readonly<Record<ThreadFailureRemedy, stri
   [ThreadFailureRemedy.CHANGE_TOPIC]: 'chat.threadProgress.recovery.remedy.changeTopic',
   [ThreadFailureRemedy.RESEARCH_MORE]: THREAD_EVIDENCE_RESEARCH_MORE_KEY,
   [ThreadFailureRemedy.NARROW_CLAIMS]: THREAD_EVIDENCE_NARROW_KEY,
+  [ThreadFailureRemedy.ACCEPT_GAPS]: THREAD_GAPS_ACCEPT_KEY,
 };
 
 export const THREAD_HEALING_RESULT_KEYS: Readonly<Record<ThreadHealingResult, string>> = {
@@ -95,6 +97,7 @@ export const THREAD_FORM_REMEDIES: ReadonlySet<ThreadFailureRemedy> = new Set([
   ThreadFailureRemedy.RAISE_SPEND_CAP,
   ThreadFailureRemedy.CHANGE_TOPIC,
   ThreadFailureRemedy.NARROW_CLAIMS,
+  ThreadFailureRemedy.ACCEPT_GAPS,
 ]);
 
 /** The seats of the recommended team, matched to the job's roles by kind and position. */

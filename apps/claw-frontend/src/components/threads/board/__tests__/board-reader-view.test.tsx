@@ -107,6 +107,22 @@ describe('BoardReaderView', () => {
     expect(state.retry).toHaveBeenCalledTimes(1);
   });
 
+  it('shows the gaps notice above the article only when the owner accepted gaps (ADR-194)', () => {
+    const base = createState().publication;
+    if (base === undefined) {
+      throw new Error('fixture');
+    }
+    const { rerender } = render(
+      <BoardReaderView state={createState({ publication: { ...base, gapsDisclosed: true } })} />,
+    );
+    const notice = screen.getByTestId('thread-gaps-notice');
+    expect(notice).toHaveTextContent('chat.threadGapsNoticeTitle');
+    expect(notice.closest('article')).toBeNull();
+
+    rerender(<BoardReaderView state={createState()} />);
+    expect(screen.queryByTestId('thread-gaps-notice')).not.toBeInTheDocument();
+  });
+
   it('renders breadcrumb, article, safe sources and the viewer reaction', () => {
     render(<BoardReaderView state={createState()} />);
     expect(screen.getByRole('link', { name: 'chat.threadBoardNavLabel' })).toHaveAttribute(

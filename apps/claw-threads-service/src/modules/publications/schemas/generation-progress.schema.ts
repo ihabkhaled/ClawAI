@@ -55,6 +55,8 @@ const reviewVerdictSchema = z.object({
   // The reviewer's blocker texts, in the article's language, kept as given and only bounded.
   blockers: z.array(z.string().max(600)).max(10),
   blocked: z.boolean(),
+  // The blockers the owner may accept as disclosed gaps (ADR-194); absent from an older service.
+  evidenceGapBlockers: z.array(z.string().max(600)).max(10).optional(),
 });
 
 const failureSchema = z.object({

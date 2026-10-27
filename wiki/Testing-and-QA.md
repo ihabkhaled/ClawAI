@@ -1,6 +1,6 @@
 # Testing and QA
 
-Current generated test-file count: **<!-- count:specFiles -->2739<!-- /count -->** across **<!-- count:workspaces -->28<!-- /count -->** workspaces.
+Current generated test-file count: **<!-- count:specFiles -->2746<!-- /count -->** across **<!-- count:workspaces -->28<!-- /count -->** workspaces.
 
 | Workspace                    | Runner | Test files |
 | ---------------------------- | ------ | ---------- |

@@ -17,6 +17,11 @@ export type PublicPublication = {
   contentLocale: Locale;
   publicationType: ThreadPublicationType;
   content: { markdown: string; citations: Array<{ url: string }> };
+  /**
+   * True when the owner accepted evidence gaps and the article states them in its limitations
+   * section (ADR-194). Readers are told at the top of the page; it is never hidden.
+   */
+  gapsDisclosed: boolean;
   publishedAt: Date;
   /** Human views and distinct signed-in readers: counts only, never who. */
   viewCount: number;

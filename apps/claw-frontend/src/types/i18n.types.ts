@@ -1439,6 +1439,7 @@ export type TranslationDictionary = {
     ThreadCommunityLocaleTranslation &
     ThreadFixesLocaleTranslation &
     ThreadEvidenceLocaleTranslation &
+    ThreadAcceptedGapsLocaleTranslation &
     ThreadChangeRequestsLocaleTranslation &
     PluginOwnServersLocaleTranslation;
   receipt: {
@@ -8228,6 +8229,19 @@ export type ThreadEvidenceLocaleTranslation = {
   threadEvidenceResearchMoreLabel: string;
   threadEvidenceResearchMoreHint: string;
   threadEvidenceNarrowHint: string;
+};
+
+/** Flat `chat.threadGaps*` keys: accepting evidence gaps, the reader notice and its step wording; see thread-accepted-gaps-translations.ts. */
+export type ThreadAcceptedGapsLocaleTranslation = {
+  threadGapsRemedyAccept: string;
+  threadGapsLegend: string;
+  threadGapsExplain: string;
+  threadGapsPickHint: string;
+  threadGapsNoticeTitle: string;
+  threadGapsNoticeBody: string;
+  threadGapsStepAccepted: string;
+  threadGapsStepWaived: string;
+  threadGapsStepMissing: string;
 };
 
 /** Flat `chat.threadFix*` keys: topic minimum, sensitive-details editor notice and queue text; see thread-fixes-translations.ts. */

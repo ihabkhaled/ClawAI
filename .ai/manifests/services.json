@@ -585,7 +585,7 @@
         "ThreadModelCommunication",
         "ThreadRevisionDraft"
       ],
-      "testFiles": 84,
+      "testFiles": 86,
       "testRunner": "vitest"
     },
     {
@@ -620,7 +620,7 @@
         "ThreadPublicationSearchDoc",
         "ThreadPublicationView"
       ],
-      "testFiles": 120,
+      "testFiles": 121,
       "testRunner": "vitest"
     },
     {

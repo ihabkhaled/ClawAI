@@ -78,6 +78,8 @@ export type ThreadReviewVerdict = {
   blockers: string[];
   /** True when the score met the minimum and the blockers alone failed the review. */
   blocked: boolean;
+  /** The blockers that ask for evidence the pipeline could not supply; the owner may accept them (ADR-194). */
+  evidenceGapBlockers?: string[];
 };
 
 export type ThreadGenerationFailure = {
@@ -162,4 +164,9 @@ export type ThreadGenerationRetryRequest = {
   articleLength?: ThreadArticleLength;
   /** True runs a fresh research pass instead of reusing the failed job's saved research. */
   refreshResearch?: boolean;
+  /**
+   * Evidence-gap blocker texts the owner accepts (at most 8, each at most 300 characters), taken
+   * from the failed review. The article then states each one in a limitations section (ADR-194).
+   */
+  acceptedEvidenceGaps?: string[];
 };

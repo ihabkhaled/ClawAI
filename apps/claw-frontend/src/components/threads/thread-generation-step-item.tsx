@@ -2,6 +2,7 @@ import type { ReactElement } from 'react';
 
 import { ThreadReviewVerdictView } from '@/components/threads/thread-review-verdict-view';
 import { Button } from '@/components/ui/button';
+import { THREAD_GAP_LIST_CODES } from '@/constants/thread-evidence.constants';
 import { THREAD_FORMAT_SKIP_TONE } from '@/constants/thread-format.constants';
 import {
   THREAD_STEP_OUTCOME_KEYS,
@@ -12,6 +13,7 @@ import { THREAD_STEP_OUTCOME_ICONS } from '@/constants/thread-step-icons.constan
 import { useThreadStepExcerpt } from '@/hooks/threads/use-thread-step-excerpt';
 import { useTranslation } from '@/lib/i18n';
 import type { ThreadStepItemProps } from '@/types/thread-generation-progress.types';
+import { splitThreadGapExcerpt } from '@/utilities/thread-accepted-gaps.utility';
 import { isThreadFormatSkipCode } from '@/utilities/thread-format-message.utility';
 import {
   describeStepDuration,
@@ -40,6 +42,11 @@ export function ThreadGenerationStepItem({ step }: ThreadStepItemProps): ReactEl
   // A formatting skip is a safe, expected outcome: neutral information, not an error.
   const isFormatSkip = step.outcome === 'SKIPPED' && isThreadFormatSkipCode(step.code);
   const codeTone = isFormatSkip ? THREAD_FORMAT_SKIP_TONE : THREAD_STEP_OUTCOME_TONES[step.outcome];
+  // The accepted gaps, or the blockers set aside because of them, are the owner's own choice: listed.
+  const gapLines =
+    step.code !== null && THREAD_GAP_LIST_CODES.has(step.code)
+      ? splitThreadGapExcerpt(step.excerpt)
+      : [];
   const duration = step.durationMs === null ? null : describeStepDuration(step.durationMs);
   const model = [step.provider, step.model].filter(Boolean).join(' / ');
   // A healing step's excerpt is only the failure class it answered, not something the AI said.
@@ -98,6 +105,15 @@ export function ThreadGenerationStepItem({ step }: ThreadStepItemProps): ReactEl
           </span>
         )}
       </p>
+      {gapLines.length === 0 ? null : (
+        <ul className="flex min-w-0 flex-col gap-1" data-testid="thread-step-gaps">
+          {gapLines.map((line) => (
+            <li key={line} dir="auto" className="text-sm break-words">
+              {line}
+            </li>
+          ))}
+        </ul>
+      )}
       {verdict === null ? null : (
         <ThreadReviewVerdictView
           verdict={{ ...verdict, blocked: step.code?.endsWith('_BLOCKED') === true }}

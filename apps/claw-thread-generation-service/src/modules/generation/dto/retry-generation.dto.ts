@@ -1,6 +1,7 @@
 import { ThreadArticleLength } from '@claw/shared-types';
 import { z } from 'zod';
 
+import { ACCEPTED_GAP_MAX_CHARS, ACCEPTED_GAPS_MAX } from '../constants/accepted-gaps.constants';
 import { healingPoolSchema } from '../types/generation-pipeline.types';
 
 export const retryGenerationSchema = z
@@ -22,6 +23,11 @@ export const retryGenerationSchema = z
     articleLength: z.nativeEnum(ThreadArticleLength).optional(),
     /** True runs a fresh research pass; the failed job's saved research is not inherited. */
     refreshResearch: z.boolean().optional(),
+    /** Evidence-gap blocker texts the owner accepts; the article discloses them (ADR-194). */
+    acceptedEvidenceGaps: z
+      .array(z.string().trim().min(1).max(ACCEPTED_GAP_MAX_CHARS))
+      .max(ACCEPTED_GAPS_MAX)
+      .optional(),
     /** Recomputed by threads-service for the retry; the stored pool is kept when absent. */
     healing: healingPoolSchema.optional(),
   })

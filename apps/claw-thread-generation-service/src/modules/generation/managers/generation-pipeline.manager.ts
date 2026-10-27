@@ -55,6 +55,18 @@ import { parseStepError } from '../utilities/parse-step-error.utility';
 import { buildAuthorSystemPrompt } from '../utilities/author-prompt.utility';
 import { createHealingBudget, isOverSpendCeiling } from '../utilities/healing-budget.utility';
 import { splitBlockers } from '../utilities/classify-blocker.utility';
+import {
+  hasLimitationsSection,
+  normalizeAcceptedGaps,
+  splitAcceptedBlockers,
+} from '../utilities/accepted-gaps.utility';
+import {
+  ACCEPTED_GAP_WAIVED_CODE,
+  ACCEPTED_GAPS_CODE,
+  ACCEPTED_GAPS_EXCERPT_MAX_CHARS,
+  LIMITATIONS_MISSING_BRIEF,
+  LIMITATIONS_MISSING_CODE,
+} from '../constants/accepted-gaps.constants';
 import { buildEvidenceGapQuery } from '../utilities/evidence-gap-query.utility';
 import { mergeEvidenceBundles } from '../utilities/evidence-merge.utility';
 import { blockedReviewCode, serializeVerdict } from '../utilities/review-verdict.utility';
@@ -164,6 +176,7 @@ export class GenerationPipelineManager {
     let context = this.roundContext(job, evidence, evidenceItems);
     let revisionBrief = '';
     let researchPassesUsed = 0;
+    await this.recordAcceptedGaps(job);
 
     for (let round = 1; round <= MAX_GENERATION_ROUNDS; round += 1) {
       const outcome = await this.runRound(context, round, revisionBrief);
@@ -341,6 +354,9 @@ export class GenerationPipelineManager {
     if (consensus.status === 'invalid') {
       throw new DeterministicGenerationError('Author preference votes were invalid');
     }
+    if (!drafts.some((draft) => this.statesLimitations(job, draft))) {
+      return this.limitationsRetry(job, round);
+    }
     const preferredCandidate = drafts[consensus.preferredCandidateIndex];
     if (!preferredCandidate)
       throw new ServiceUnavailableException('The Judge has no candidate to review');
@@ -363,6 +379,7 @@ export class GenerationPipelineManager {
     const candidate = drafts[judge.review.selectedCandidateIndex];
     if (!candidate)
       throw new ServiceUnavailableException('The Judge selected an unknown candidate');
+    if (!this.statesLimitations(job, candidate)) return this.limitationsRetry(job, round);
     const critic = await this.runReviewStage(context, round, CRITIC_STAGE, job.critic, candidate);
     if (critic.revisionBrief !== null) {
       return {
@@ -389,7 +406,81 @@ export class GenerationPipelineManager {
         authorAgreementPercent: consensus.agreementPercent,
         reviewReady: true,
         reviewReasons: [],
+        ...(this.acceptedGaps(job).length > 0 ? { gapsDisclosed: true } : {}),
       },
+    };
+  }
+
+  private acceptedGaps(job: GenerationPipelineInput): string[] {
+    return normalizeAcceptedGaps(job.acceptedEvidenceGaps);
+  }
+
+  /** The owner-visible record that the owner chose to accept these gaps (ADR-194). */
+  private async recordAcceptedGaps(job: GenerationPipelineInput): Promise<void> {
+    const accepted = this.acceptedGaps(job);
+    if (accepted.length === 0) return;
+    await this.recorder.record(job.jobId, {
+      stage: ThreadGenerationStage.RESEARCH,
+      outcome: 'SUCCEEDED',
+      roleKind: 'SYSTEM',
+      code: ACCEPTED_GAPS_CODE,
+      rawExcerpt: accepted.join(' | '),
+      excerptMaxChars: ACCEPTED_GAPS_EXCERPT_MAX_CHARS,
+    });
+  }
+
+  /**
+   * Drops the blockers the owner accepted from a review (ADR-194). Anything else stays: a blocker
+   * the classifier does not read as an evidence gap, or about another topic, still blocks. The
+   * score is never touched.
+   */
+  private async withoutAcceptedBlockers(
+    job: GenerationPipelineInput,
+    round: number,
+    spec: ReviewStageSpec,
+    review: StructuredReview,
+  ): Promise<StructuredReview> {
+    const accepted = this.acceptedGaps(job);
+    if (accepted.length === 0) return review;
+    const { waived, remaining } = splitAcceptedBlockers(review.blockers, accepted);
+    if (waived.length === 0) return review;
+    await this.recorder.record(job.jobId, {
+      stage: spec.stage,
+      round,
+      outcome: 'SUCCEEDED',
+      roleKind: 'SYSTEM',
+      code: ACCEPTED_GAP_WAIVED_CODE,
+      rawExcerpt: waived.join(' | '),
+      excerptMaxChars: ACCEPTED_GAPS_EXCERPT_MAX_CHARS,
+    });
+    return { ...review, blockers: remaining };
+  }
+
+  /** True when no gap was accepted, or the draft has the limitations section covering all of them. */
+  private statesLimitations(job: GenerationPipelineInput, draft: AuthorDraft): boolean {
+    return hasLimitationsSection(draft.markdown, this.acceptedGaps(job), job.contentLocale);
+  }
+
+  /** A round fails with a coded step; the next round's authors are asked to add the section. */
+  private async limitationsRetry(
+    job: GenerationPipelineInput,
+    round: number,
+  ): Promise<GenerationRoundOutcome> {
+    await this.recorder.record(job.jobId, {
+      stage: ThreadGenerationStage.AUTHOR_DRAFTS,
+      round,
+      outcome: 'RETRY',
+      roleKind: 'SYSTEM',
+      code: LIMITATIONS_MISSING_CODE,
+    });
+    return {
+      kind: 'retry',
+      revisionBrief: JSON.stringify({
+        revisionBrief: LIMITATIONS_MISSING_BRIEF,
+        blockers: [],
+        findings: this.acceptedGaps(job),
+      }),
+      blockers: [],
     };
   }
 
@@ -461,15 +552,20 @@ export class GenerationPipelineManager {
   ): Promise<ReviewStageResult> {
     const { job, evidence, sharedMaterial } = context;
     await this.enterStage(job, spec.stage, round);
-    const review = await this.callReview(
+    const review = await this.withoutAcceptedBlockers(
       job,
-      role,
-      spec.reviewer,
       round,
-      sharedMaterial,
-      draft,
-      evidence.sha256,
-      candidateContext,
+      spec,
+      await this.callReview(
+        job,
+        role,
+        spec.reviewer,
+        round,
+        sharedMaterial,
+        draft,
+        evidence.sha256,
+        candidateContext,
+      ),
     );
     if (review.score >= spec.minScore && review.blockers.length === 0) {
       return { review, revisionBrief: null };
@@ -754,7 +850,11 @@ export class GenerationPipelineManager {
     evidenceItems: Map<string, string>,
   ): Promise<AuthorDraft> {
     const prompts: RolePrompt = {
-      systemPrompt: buildAuthorSystemPrompt(input.contentLocale, input.articleLength),
+      systemPrompt: buildAuthorSystemPrompt(
+        input.contentLocale,
+        input.articleLength,
+        input.acceptedEvidenceGaps,
+      ),
       userPrompt: `${sharedMaterial}\nRevision brief: ${revisionBrief || 'Create a complete first draft.'}${citationTable(evidenceItems)}`,
       sharedMaterial,
     };
@@ -819,7 +919,12 @@ export class GenerationPipelineManager {
       candidateContext?.preferredCandidateIndex ?? 0,
     );
     const prompts: RolePrompt = {
-      systemPrompt: buildReviewSystemPrompt(reviewer, input.contentLocale, candidateCount),
+      systemPrompt: buildReviewSystemPrompt(
+        reviewer,
+        input.contentLocale,
+        candidateCount,
+        input.acceptedEvidenceGaps,
+      ),
       userPrompt: candidateContext
         ? `${sharedMaterial}\nAuthor preference agreement: ${String(candidateContext.agreementPercent)}%.\nCandidates in author order:\n${JSON.stringify(candidateContext.candidates)}`
         : `${sharedMaterial}\nDraft:\n${JSON.stringify(draft)}`,

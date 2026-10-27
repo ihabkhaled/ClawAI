@@ -27,6 +27,7 @@ import { PLUGINS_TRANSLATIONS } from './plugins-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
+import { THREAD_ACCEPTED_GAPS_TRANSLATIONS } from './thread-accepted-gaps-translations';
 import { THREAD_ARTICLE_TRANSLATIONS } from './thread-article-translations';
 import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
 import { THREAD_CHANGE_REQUESTS_TRANSLATIONS } from './thread-change-requests-translations';
@@ -483,6 +484,7 @@ export const en: TranslationDictionary = {
     ...THREAD_COMMUNITY_TRANSLATIONS.en,
     ...THREAD_FIXES_TRANSLATIONS.en,
     ...THREAD_EVIDENCE_TRANSLATIONS.en,
+    ...THREAD_ACCEPTED_GAPS_TRANSLATIONS.en,
     ...THREAD_CHANGE_REQUESTS_TRANSLATIONS.en,
     ...PLUGIN_OWN_SERVERS_TRANSLATIONS.en,
     composerContext: {

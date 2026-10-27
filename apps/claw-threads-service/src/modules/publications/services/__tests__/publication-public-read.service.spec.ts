@@ -36,6 +36,13 @@ describe('PublicationPublicReadService', () => {
     expect(result.title).toBe('A Title');
   });
 
+  it('passes the gaps-disclosed flag through to the public payload (ADR-194)', async () => {
+    const { service, publications } = create();
+    publications.findPublic.mockResolvedValue({ ...record, gapsDisclosed: true });
+
+    await expect(service.get('a-slug')).resolves.toMatchObject({ gapsDisclosed: true });
+  });
+
   it('leaves the owner null when the account is gone or the name cannot be read', async () => {
     const { service, identity, publications } = create();
     identity.resolveOne.mockResolvedValue(null);

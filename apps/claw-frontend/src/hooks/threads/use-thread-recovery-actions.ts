@@ -66,6 +66,8 @@ export function useThreadRecoveryActions(
         mutation.mutate(remedy);
       } else if (remedy === ThreadFailureRemedy.NARROW_CLAIMS) {
         retryForm.openNarrow();
+      } else if (remedy === ThreadFailureRemedy.ACCEPT_GAPS) {
+        retryForm.openAcceptGaps();
       } else if (remedy !== ThreadFailureRemedy.ADD_CREDIT) {
         retryForm.open();
       }

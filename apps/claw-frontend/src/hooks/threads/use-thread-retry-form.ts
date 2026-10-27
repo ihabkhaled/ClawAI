@@ -8,6 +8,7 @@ import type {
   ThreadRetryFormController,
   ThreadRetryRoleSelection,
 } from '@/types/thread-generation-progress.types';
+import { normalizeAcceptedGaps, threadGapChoices } from '@/utilities/thread-accepted-gaps.utility';
 import { resolveThreadErrorMessage } from '@/utilities/thread-error-message.utility';
 import {
   buildThreadRetryRequest,
@@ -32,8 +33,15 @@ export function useThreadRetryForm(
   const [roles, setRoles] = useState<ThreadRetryRoleSelection[]>([]);
   const [refreshResearch, setRefreshResearch] = useState(false);
   const [showNarrowHint, setShowNarrowHint] = useState(false);
+  const [showGapPicker, setShowGapPicker] = useState(false);
+  const [ticked, setTicked] = useState<string[]>([]);
   const topicRef = useRef<HTMLTextAreaElement | null>(null);
   const topicLongEnough = isThreadTopicLongEnough(topic);
+  const gapChoices = threadGapChoices(progress);
+  // Only gaps the failed review listed can be accepted, whatever was ticked earlier.
+  const acceptedGaps = showGapPicker
+    ? normalizeAcceptedGaps(ticked.filter((text) => gapChoices.includes(text)))
+    : [];
   const mutation = useMutation({
     mutationFn: () => {
       if (!progress) {
@@ -48,6 +56,7 @@ export function useThreadRetryForm(
           spendCapUsd,
           roles,
           refreshResearch,
+          acceptedEvidenceGaps: acceptedGaps,
         }),
       );
     },
@@ -58,17 +67,20 @@ export function useThreadRetryForm(
     },
   });
 
-  function open(narrow = false): void {
+  function open(narrow = false, acceptGaps = false): void {
     mutation.reset();
     setTopic(progress?.selections.topic ?? '');
     setSpendCapUsd(microUsdToInputValue(progress?.selections.spendCapMicroUsd ?? ''));
     setRoles(toThreadRetryRoleSelections(progress));
     // A review that failed only for lack of sources asks for a fresh research pass by default.
     // Narrowing the claims removes the need for sources, so it does not.
+    // Accepting the gaps means writing without more sources, so it does not ask for research.
     setRefreshResearch(
-      !narrow && progress?.failure?.failureClass === ThreadFailureClass.EVIDENCE_GAP,
+      !narrow && !acceptGaps && progress?.failure?.failureClass === ThreadFailureClass.EVIDENCE_GAP,
     );
     setShowNarrowHint(narrow);
+    setShowGapPicker(acceptGaps);
+    setTicked([]);
     setIsOpen(true);
   }
 
@@ -77,6 +89,14 @@ export function useThreadRetryForm(
       event.preventDefault();
       topicRef.current?.focus();
     }
+  }
+
+  function toggleGap(text: string, accepted: boolean): void {
+    setTicked((current) =>
+      accepted
+        ? [...current.filter((item) => item !== text), text]
+        : current.filter((item) => item !== text),
+    );
   }
 
   function changeModel(roleId: string, model: ModelSelection): void {
@@ -89,6 +109,11 @@ export function useThreadRetryForm(
     isOpen,
     open: () => open(false),
     openNarrow: () => open(true),
+    openAcceptGaps: () => open(false, true),
+    showGapPicker,
+    gapChoices,
+    acceptedGaps,
+    toggleGap,
     showNarrowHint,
     topicRef,
     onOpenAutoFocus,

@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 
 import { MICRO_USD_DECIMALS } from '../constants/step-recorder.constants';
 import type { RetryGenerationDto } from '../dto/retry-generation.dto';
+import { normalizeAcceptedGaps } from './accepted-gaps.utility';
 import type { EnqueueGenerationDto } from '../dto/enqueue-generation.dto';
 import type { ModelRole } from '../types/generation-pipeline.types';
 
@@ -43,11 +44,14 @@ export function buildRetryInput(
   if (models.some(({ roleId }) => !roleIds.has(roleId))) {
     throw new BadRequestException('Unknown role in model changes');
   }
-  // A retry of a retry must not inherit the earlier "research more": it is asked for every time.
-  const { refreshResearch: _previous, ...pinned } = original;
+  // A retry of a retry must not inherit the earlier "research more" or accepted gaps: each is
+  // the owner's choice for that one retry (ADR-193, ADR-194).
+  const { refreshResearch: _previous, acceptedEvidenceGaps: _previousGaps, ...pinned } = original;
+  const acceptedGaps = normalizeAcceptedGaps(change.acceptedEvidenceGaps);
   return {
     ...pinned,
     ...(change.refreshResearch === true ? { refreshResearch: true } : {}),
+    ...(acceptedGaps.length > 0 ? { acceptedEvidenceGaps: acceptedGaps } : {}),
     idempotencyKey: change.idempotencyKey,
     // Deterministic, so repeating the same retry call is idempotent.
     correlationId: `retry:${change.idempotencyKey}`.slice(0, 200),

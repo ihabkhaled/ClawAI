@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { Locale, ThreadArticleLength, ThreadPublicationType } from '@claw/shared-types';
 
+import { ACCEPTED_GAP_MAX_CHARS, ACCEPTED_GAPS_MAX } from '../constants/accepted-gaps.constants';
 import { healingPoolSchema, modelRoleSchema } from '../types/generation-pipeline.types';
 
 export const enqueueGenerationSchema = z
@@ -25,6 +26,11 @@ export const enqueueGenerationSchema = z
     articleLength: z.nativeEnum(ThreadArticleLength).optional(),
     /** Set by an owner retry that asked for a fresh research pass (ADR-193). */
     refreshResearch: z.boolean().optional(),
+    /** Set by an owner retry that accepted disclosed evidence gaps (ADR-194); never inherited. */
+    acceptedEvidenceGaps: z
+      .array(z.string().trim().min(1).max(ACCEPTED_GAP_MAX_CHARS))
+      .max(ACCEPTED_GAPS_MAX)
+      .optional(),
   })
   .strict();
 

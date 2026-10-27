@@ -298,6 +298,7 @@ describe('PublicationsRepository', () => {
         markdown: '# Public article',
         citations: [{ url: 'https://example.test/source' }],
       },
+      gapsDisclosed: false,
       publishedAt: new Date('2026-10-05T12:00:00.000Z'),
       // The id is kept only so PublicationPublicReadService can name the publisher; it strips it.
       ownerId: 'private-owner',
