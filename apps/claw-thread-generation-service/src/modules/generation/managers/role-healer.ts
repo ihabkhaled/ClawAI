@@ -442,24 +442,28 @@ export class RoleHealer {
     shrinkLevel: number,
   ): { systemPrompt: string; userPrompt: string } {
     const { prompt } = spec;
-    let base =
-      shrinkLevel > 0 && prompt.sharedMaterial
-        ? prompt.userPrompt.replace(
-            prompt.sharedMaterial,
-            shrinkSharedMaterial(prompt.sharedMaterial, shrinkLevel),
-          )
-        : prompt.userPrompt;
-    if (prompt.sharedMaterial && base.length + note.length > CHAT_GATEWAY_USER_PROMPT_MAX_CHARS) {
-      for (let level = Math.max(1, shrinkLevel); level <= MAX_PROACTIVE_SHRINK_LEVEL; level += 1) {
-        const shortened = prompt.userPrompt.replace(
-          prompt.sharedMaterial,
-          shrinkSharedMaterial(prompt.sharedMaterial, level),
-        );
-        if (shortened.length < base.length) base = shortened;
-        if (base.length + note.length <= CHAT_GATEWAY_USER_PROMPT_MAX_CHARS) break;
-      }
+    const shared = prompt.sharedMaterial;
+    if (!shared)
+      return { systemPrompt: prompt.systemPrompt, userPrompt: `${prompt.userPrompt}${note}` };
+    const shrunkAt = (level: number): string =>
+      prompt.userPrompt.replace(shared, shrinkSharedMaterial(shared, level));
+    // Levels the source needs before the prompt fits the gateway at all (0 when it already fits).
+    let base = prompt.userPrompt;
+    let fitLevel = 0;
+    while (
+      base.length + note.length > CHAT_GATEWAY_USER_PROMPT_MAX_CHARS &&
+      fitLevel < MAX_PROACTIVE_SHRINK_LEVEL
+    ) {
+      fitLevel += 1;
+      const shortened = shrunkAt(fitLevel);
+      if (shortened.length < base.length) base = shortened;
     }
-    return { systemPrompt: prompt.systemPrompt, userPrompt: `${base}${note}` };
+    // A shrink rung goes below what already fits: a provider that refused the fitted prompt with a
+    // 413 (smaller tier) must receive a smaller one, not the same one again.
+    return {
+      systemPrompt: prompt.systemPrompt,
+      userPrompt: `${shrinkLevel > 0 ? shrunkAt(fitLevel + shrinkLevel) : base}${note}`,
+    };
   }
 
   private repairPrompt(
