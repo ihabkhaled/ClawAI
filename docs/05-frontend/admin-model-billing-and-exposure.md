@@ -43,6 +43,11 @@ the class grants for each plan. Auth entitlements and routing enforce the same
 policy, so hiding a model in the picker is not the security boundary. See the
 [paid model access feature note](../features/paid-model-access/README.md).
 
+The frontend production build uses Next.js Webpack mode because the current
+Turbopack build fails to resolve the generated Google Font loader in CI. Keep
+`.browserslistrc` as the single Browserslist configuration; duplicating its
+targets in `package.json` makes Webpack's CSS minifier fail.
+
 ## Responsive layout (both pages)
 
 - Card/table switch is the `touch:` variant, the same as `ResponsiveTable`:

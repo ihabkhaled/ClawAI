@@ -3,8 +3,9 @@
 ## Files
 
 - `docs/05-frontend/admin-model-billing-and-exposure.md` (M)
+- `apps/claw-frontend/package.json` (M)
 - `docs/features/paid-model-access/README.md` (A)
-- `docs/qa-evidence/2026-10-27-paid-model-classes.md` (A)
+- `docs/qa-evidence/2026-10-27-paid-model-classes.md` (M)
 - `.ai/manifests/hashes.json` (M)
 - `.ai/manifests/i18n.json` (M)
 - `apps/claw-auth-service/CLAUDE.md` (M)
@@ -85,7 +86,7 @@ PREMIUM and ULTRA classes are blocked for Free and available on paid plans; the 
 
 ## Now
 
-Focused retry/pipeline verification passed 100 tests. All 19 affected workspaces typechecked, all 28 affected workspaces linted with warnings only, and the touched frontend and service builds passed. Production still shows the Thread as unpublished; the fix awaits release and a fresh owner retry.
+Focused retry/pipeline verification passed 100 tests. All 19 affected workspaces typechecked; affected workspace lint and tests passed. CI caught a Turbopack Google Font module resolution failure; switching the production build to Webpack and removing duplicate Browserslist configuration passed locally, including all 258 routes. Production still shows the Thread as unpublished; release and a fresh owner retry remain pending.
 
 ## Why
 
