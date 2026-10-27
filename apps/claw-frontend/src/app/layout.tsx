@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next';
-import { Archivo, IBM_Plex_Mono, Inter } from 'next/font/google';
 import { headers } from 'next/headers';
 import Script from 'next/script';
 
@@ -12,32 +11,9 @@ import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { buildRootMetadata } from '@/lib/seo/root-metadata';
 import { getDirection, getHtmlLanguage, isSupportedLocale } from '@/utilities/locale.utility';
 
+import { editorialDisplay, editorialMono, inter } from './fonts';
 import './globals.css';
 import { Providers } from './providers';
-
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  display: 'swap',
-  variable: '--font-inter',
-  preload: true,
-});
-
-const editorialDisplay = Archivo({
-  subsets: ['latin'],
-  weight: ['600', '700', '800'],
-  display: 'swap',
-  variable: '--font-editorial-display',
-  preload: false,
-});
-
-const editorialMono = IBM_Plex_Mono({
-  subsets: ['latin'],
-  weight: ['500', '600'],
-  display: 'swap',
-  variable: '--font-editorial-mono',
-  preload: false,
-});
 
 export const metadata: Metadata = buildRootMetadata();
 

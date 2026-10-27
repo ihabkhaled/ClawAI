@@ -1079,3 +1079,11 @@ Every Thread date (public/marketing/in-app byline, Board cards, suggestion rows,
 - The extra research pass has step codes `EVIDENCE_GAP_RESEARCH*` ("Looking for the missing sources", "Found {count} new sources"), mapped in `constants/thread-evidence.constants.ts` and resolved before the generic code table in `resolveThreadFailureKeys`.
 - `RESEARCH_MORE` is a one-click retry with `refreshResearch: true`; `NARROW_CLAIMS` opens the retry dialog on the topic (`openNarrow`) with a hint. The dialog has a "Research more before writing" checkbox, ticked by default after an `EVIDENCE_GAP` failure, sent as `refreshResearch` only when ticked.
 - Strings: flat `chat.threadEvidence*` keys from `lib/i18n/locales/thread-evidence-translations.ts` (13 locales; keep `{reviewer}`, `{score}`, `{min}`, `{count}`).
+
+## Fonts are self-hosted (2026-10-27)
+
+`src/app/fonts.ts` declares Inter, Archivo and IBM Plex Mono with `next/font/local` from the woff2 files in
+`src/app/fonts/` (latin subset, OFL licences beside them). Never import `next/font/google`: its build-time download
+failed the CI frontend build at random (`Cannot read properties of null (reading '1')`, Google answered with a
+font URL the loader could not parse). Guarded by `src/app/__tests__/self-hosted-fonts.test.ts`. To add a weight,
+copy the file from the matching `@fontsource/<family>` package and add it to `fonts.ts`.
