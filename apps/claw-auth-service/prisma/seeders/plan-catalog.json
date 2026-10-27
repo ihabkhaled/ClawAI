@@ -21,10 +21,10 @@
     "These numbers apply to FRESH INSTALLS ONLY. An existing install is moved",
     "by prisma/seeders/plan-payg-allowance.seeder.js, which only rewrites rows",
     "still holding the OLD value so an operator's tuned figure survives. Do NOT",
-    "bump plan-catalog to v3 to apply them: on an install where v2 already ran,",
-    "every plan takes the else-branch of run() and only modelAccessMode and a",
-    "null weeklyTokenQuota are written — the new allowances would land on ZERO",
-    "rows while the seeder reported success.",
+    "The catalog version is bumped only when its upgrade path is verified.",
+    "A prior allowance change used a separate seeder because the catalog upgrade",
+    "path would not update existing plans. Model class defaults use an explicit",
+    "catalog version migration and preserve administrator-configured access.",
     "",
     "media (ADR-122): Free keeps the basics, paid gets image generation/edit,",
     "helper vision, text-to-speech and 600 s of video. maxVideoSeconds null would",
@@ -59,8 +59,8 @@
       "workspaces": 5,
       "contextPacks": 10,
       "memoryItems": 10,
-      "modelAccessMode": "ALLOW_ALL",
-      "allowedCostClasses": [],
+      "modelAccessMode": "ALLOW_COST_CLASSES",
+      "allowedCostClasses": ["FREE", "CHEAP", "STANDARD"],
       "features": {
         "COMPARE_MODE": {
           "accessMode": "LIMITED",
@@ -172,8 +172,8 @@
       "workspaces": 1,
       "contextPacks": 5,
       "memoryItems": 50,
-      "modelAccessMode": "ALLOW_ALL",
-      "allowedCostClasses": [],
+      "modelAccessMode": "ALLOW_COST_CLASSES",
+      "allowedCostClasses": ["FREE", "CHEAP", "STANDARD", "PREMIUM", "ULTRA"],
       "features": {
         "COMPARE_MODE": {
           "accessMode": "LIMITED",
@@ -283,8 +283,8 @@
       "workspaces": 2,
       "contextPacks": 15,
       "memoryItems": 200,
-      "modelAccessMode": "ALLOW_ALL",
-      "allowedCostClasses": [],
+      "modelAccessMode": "ALLOW_COST_CLASSES",
+      "allowedCostClasses": ["FREE", "CHEAP", "STANDARD", "PREMIUM", "ULTRA"],
       "features": {
         "COMPARE_MODE": {
           "accessMode": "LIMITED",
@@ -394,8 +394,8 @@
       "workspaces": 5,
       "contextPacks": 50,
       "memoryItems": 1000,
-      "modelAccessMode": "ALLOW_ALL",
-      "allowedCostClasses": [],
+      "modelAccessMode": "ALLOW_COST_CLASSES",
+      "allowedCostClasses": ["FREE", "CHEAP", "STANDARD", "PREMIUM", "ULTRA"],
       "features": {
         "COMPARE_MODE": {
           "accessMode": "LIMITED",
@@ -505,8 +505,8 @@
       "workspaces": 15,
       "contextPacks": 200,
       "memoryItems": 5000,
-      "modelAccessMode": "ALLOW_ALL",
-      "allowedCostClasses": [],
+      "modelAccessMode": "ALLOW_COST_CLASSES",
+      "allowedCostClasses": ["FREE", "CHEAP", "STANDARD", "PREMIUM", "ULTRA"],
       "features": {
         "COMPARE_MODE": {
           "accessMode": "ENABLED",
@@ -616,8 +616,8 @@
       "workspaces": 50,
       "contextPacks": 1000,
       "memoryItems": 25000,
-      "modelAccessMode": "ALLOW_ALL",
-      "allowedCostClasses": [],
+      "modelAccessMode": "ALLOW_COST_CLASSES",
+      "allowedCostClasses": ["FREE", "CHEAP", "STANDARD", "PREMIUM", "ULTRA"],
       "features": {
         "COMPARE_MODE": {
           "accessMode": "ENABLED",
@@ -727,8 +727,8 @@
       "workspaces": 200,
       "contextPacks": 5000,
       "memoryItems": 100000,
-      "modelAccessMode": "ALLOW_ALL",
-      "allowedCostClasses": [],
+      "modelAccessMode": "ALLOW_COST_CLASSES",
+      "allowedCostClasses": ["FREE", "CHEAP", "STANDARD", "PREMIUM", "ULTRA"],
       "features": {
         "COMPARE_MODE": {
           "accessMode": "ENABLED",

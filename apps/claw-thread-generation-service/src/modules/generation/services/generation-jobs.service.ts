@@ -137,11 +137,16 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     const inherit = input.topic === original.data.topic;
     const snapshot = z.record(z.string(), z.unknown()).safeParse(source.sourceSnapshot);
     if (!snapshot.success) throw new BadRequestException('Saved source snapshot is invalid');
+    const failedReview =
+      inherit && (await this.repository.findLastFailureCode(source.id)) === 'REVIEW_NOT_PASSED';
+    const changedRoleIds = failedReview
+      ? [...input.authors, input.judge, input.critic].map(({ id }) => id)
+      : (change.models ?? []).map(({ roleId }) => roleId);
     return this.enqueueWithSnapshot(
       input,
       () => Promise.resolve({ snapshot: snapshot.data, sha256: source.sourceSnapshotHash }),
       source.id,
-      inherit ? (change.models ?? []).map(({ roleId }) => roleId) : null,
+      inherit ? changedRoleIds : null,
     );
   }
 

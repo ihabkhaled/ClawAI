@@ -385,3 +385,7 @@ Both detectors scan `generationRequestText(message)` (`@claw/shared-utilities` `
 Catalog read is routing's own (`ModelDeploymentRepository.findRoutableForCloudRouting`); no directive word means no read.
 `RoutingManager` takes it as its 10th constructor argument; specs that build it by hand pass a mock with `resolve`.
 Image-intent tables are in `@claw/shared-utilities` (rebuild its `dist` before routing specs see a change).
+
+## Plan model cost-class gate
+
+AUTO routing filters primary and fallback candidates through the plan's llowedCostClasses. This class set is an upper bound even when an explicit model row exists; unknown classes are excluded. Canonical model cost classes come from router-model pricing. See [plan and quota specification](../../docs/06-data/plan-and-quota-specification.md#5-model-access).

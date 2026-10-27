@@ -32,21 +32,26 @@ describe('PlansRepository model-access policy', () => {
   it('switches a customized plan to an explicit allow-list atomically', async () => {
     const repository = new PlansRepository(prisma);
 
-    await repository.replaceModelAccess('plan-1', [
-      {
-        provider: 'OPENAI',
-        model: 'gpt-4o',
-        isAllowed: true,
-        allowAsPrimary: true,
-        allowAsFallback: true,
-        allowAsJudge: true,
-        allowInCompare: true,
-      },
-    ]);
+    await repository.replaceModelAccess(
+      'plan-1',
+      [
+        {
+          provider: 'OPENAI',
+          model: 'gpt-4o',
+          isAllowed: true,
+          allowAsPrimary: true,
+          allowAsFallback: true,
+          allowAsJudge: true,
+          allowInCompare: true,
+        },
+      ],
+      PlanModelAccessMode.ALLOW_LIST,
+      [],
+    );
 
     expect(planUpdate).toHaveBeenCalledWith({
       where: { id: 'plan-1' },
-      data: { modelAccessMode: PlanModelAccessMode.ALLOW_LIST },
+      data: { modelAccessMode: PlanModelAccessMode.ALLOW_LIST, allowedCostClasses: [] },
     });
     expect(accessCreateMany).toHaveBeenCalled();
     expect(transaction).toHaveBeenCalledTimes(1);
@@ -55,11 +60,11 @@ describe('PlansRepository model-access policy', () => {
   it('switches an empty customized plan to deny-all without an empty createMany', async () => {
     const repository = new PlansRepository(prisma);
 
-    await repository.replaceModelAccess('plan-1', []);
+    await repository.replaceModelAccess('plan-1', [], PlanModelAccessMode.DENY_ALL, []);
 
     expect(planUpdate).toHaveBeenCalledWith({
       where: { id: 'plan-1' },
-      data: { modelAccessMode: PlanModelAccessMode.DENY_ALL },
+      data: { modelAccessMode: PlanModelAccessMode.DENY_ALL, allowedCostClasses: [] },
     });
     expect(accessCreateMany).not.toHaveBeenCalled();
     expect(transaction).toHaveBeenCalledTimes(1);

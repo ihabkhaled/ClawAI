@@ -5178,6 +5178,18 @@ export const de: TranslationDictionary = {
       allowTextToSpeech: 'Sprachausgabe (Text-to-Speech)',
     },
     modelAccess: {
+      mode: 'Zugriffsmodus',
+      modeCostClasses: 'Erlaubte Kostenklassen',
+      modeAllowList: 'Explizite Modellfreigabeliste',
+      modeDenyAll: 'Keine Modelle erlaubt',
+      costClasses: 'Erlaubte Modellkostenklassen',
+      costClass: {
+        FREE: 'Kostenlos',
+        CHEAP: 'Günstig',
+        STANDARD: 'Standard',
+        PREMIUM: 'Premium',
+        ULTRA: 'Ultra',
+      },
       title: 'Modellzugriff',
       description: 'Beschränken Sie, welche Anbietermodelle dieser Tarif nutzen darf.',
       empty: 'Keine Modellregeln. Dieser Tarif gewährt keine Modelle, bis eines hinzugefügt wird.',
@@ -5905,12 +5917,16 @@ export const de: TranslationDictionary = {
         'Die Verfügbarkeit der Modelle folgt dem jeweiligen Veröffentlichungsplan des Anbieters. Neue Modelle werden hinzugefügt, sobald sie erscheinen.',
     },
     pricing: {
+      modelAccessLabel: 'Modellzugriff',
+      modelAccessPaidOnly: 'Kostenlose, günstige und Standardmodelle',
+      modelAccessAllClasses: 'Alle Modellklassen einschließlich Premium und Ultra',
+      modelAccessNone: 'Keine Modellklassen',
       paygCreditRate: '{percent} % Ihres Tarifpreises',
       paygCreditLabel: 'Monatliches Connector-Guthaben',
       paygCreditNone: 'Kein Connector-Guthaben',
       sectionTitle: 'Tarife, die mit Ihnen wachsen',
       sectionSubtitle:
-        'Kostenlos starten. Upgraden, wenn Sie mehr brauchen. Jeder kostenpflichtige Tarif erreicht dieselben Modelle – der Unterschied liegt darin, wie viel Sie nutzen können.',
+        'Free umfasst die Klassen Free, Cheap und Standard. Jeder kostenpflichtige Tarif enthält zusätzlich Premium und Ultra. Die Tarifkarten zeigen die verfügbaren Klassen.',
       monthly: 'Monatlich',
       yearly: 'Jährlich',
       perMonth: '/Monat',
@@ -5945,7 +5961,7 @@ export const de: TranslationDictionary = {
       plusHighlight3: '25 Unterhaltungen und 250 Nachrichten pro Tag',
       proName: 'Pro',
       proTagline: 'Für Profis, die täglich darauf angewiesen sind.',
-      proHighlight1: 'Ergänzt Premium-Modelle, darunter Claude Opus und GPT-5',
+      proHighlight1: 'Enthält die Modellklassen Premium und Ultra',
       proHighlight2: '150 Vergleichs- und 75 Judge-Läufe pro Monat',
       proHighlight3: '75 Unterhaltungen und 750 Nachrichten pro Tag',
       teamName: 'Team',
@@ -6550,7 +6566,7 @@ export const de: TranslationDictionary = {
         bullet1:
           'Free. Ein kleines tägliches Kontingent, Modelle der Einstiegsstufe und je ein Testlauf für Vergleich, Judge und Recherche.',
         bullet2:
-          'Starter, Plus und Pro. Steigende Kontingente, mit Premium-Modellen und größeren Vergleichs- und Judge-Kontingenten, je höher Sie gehen.',
+          'Starter, Plus und Pro. Steigende Kontingente; alle kostenpflichtigen Tarife enthalten Premium- und Ultra-Modelle.',
         bullet3:
           'Team und Scale. Unbegrenzt Vergleich, Judge, Kritiker und Recherche, plus deutlich mehr Workspace-Verbindungen.',
         bullet4:
@@ -6578,7 +6594,7 @@ export const de: TranslationDictionary = {
         bedrockStrength:
           'Auf AWS gehostete Modelle für Teams, die bereits auf Amazon standardisiert sind.',
         outro:
-          'Welche Modelle ein Tarif erreicht, hängt von der Stufe ab: Einstiegsmodelle bei Free, alles inklusive der größten Spitzenmodelle ab Pro aufwärts. Neue Modelle werden hinzugefügt, sobald Anbieter sie veröffentlichen.',
+          'Free umfasst die Klassen Free, Cheap und Standard. Jeder kostenpflichtige Tarif umfasst Premium und Ultra; die Modellzugriffe stehen auf jeder Tarifkarte. Neue Modelle werden hinzugefügt, sobald Anbieter sie veröffentlichen.',
       },
       routing: {
         title: 'Wie ClawAI entscheidet, welches Modell antwortet',
@@ -7136,7 +7152,7 @@ export const de: TranslationDictionary = {
         description: 'Welche Modelle Sie erhalten und wie eines ausgewählt wird.',
         availableModelsQ: 'Welche Modelle kann ich nutzen?',
         availableModelsA:
-          'Claude Opus 5, Sonnet 5 und Fable 5; GPT-5 und GPT-5 mini; Gemini 3 Pro und Flash; Kimi K2; GLM-5.1; Qwen3; DeepSeek V3.2; Grok 4; sowie Modelle, die auf Amazon Bedrock gehostet werden. Free und die günstigeren Tarife erreichen Einstiegs- und Modelle der mittleren Stufe; die Premium-Spitzenmodelle werden ab Pro aufwärts freigeschaltet.',
+          'Claude Opus 5, Sonnet 5 und Fable 5; GPT-5 und GPT-5 mini; Gemini 3 Pro und Flash; Kimi K2; GLM-5.1; Qwen3; DeepSeek V3.2; Grok 4; sowie Modelle, die auf Amazon Bedrock gehostet werden. Free umfasst die Klassen Free, Cheap und Standard. Jeder kostenpflichtige Tarif umfasst außerdem Premium und Ultra; die Modellzugriffe stehen auf jeder Tarifkarte.',
         autoRoutingQ: 'Was macht Auto-Routing eigentlich?',
         autoRoutingA:
           'Es klassifiziert jede Nachricht – Code, Schlussfolgern, Analyse, kreatives Schreiben, Bild, Alltagsfrage – und sendet sie an ein Modell, das in dieser Kategorie stark und gerade verfügbar ist. Die Antwort verrät Ihnen dann, welches Modell gewählt wurde, wie sicher die Klassifizierung war und warum.',

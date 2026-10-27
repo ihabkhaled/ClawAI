@@ -1,5 +1,5 @@
 import { type Mock, vi } from 'vitest';
-import { Permission, UserRole } from '@claw/shared-types';
+import { ModelCostClass, Permission, UserRole } from '@claw/shared-types';
 
 import { RuntimeAdmissionService } from '../runtime-admission.service';
 import {
@@ -9,6 +9,7 @@ import {
 import { type EntitlementsService } from '../entitlements.service';
 import { type RedisService } from '../../../../infrastructure/redis/redis.service';
 import { type UserEntitlements } from '../../types/entitlements.types';
+import { type ModelRateClient } from '../../../credit/clients/model-rate.client';
 
 // Regression cover for a production lockout.
 //
@@ -75,6 +76,7 @@ describe('RuntimeAdmissionService — admin quota lockout', () => {
     service = new RuntimeAdmissionService(
       entitlementsMock as unknown as EntitlementsService,
       { getClient: () => ({ eval: evalMock }) } as unknown as RedisService,
+      { findRate: vi.fn().mockResolvedValue(null) } as unknown as ModelRateClient,
     );
   });
 
@@ -154,6 +156,37 @@ describe('RuntimeAdmissionService — admin quota lockout', () => {
     await service.reserve(input).catch(swallow);
 
     expect(limitArg()).toBe('0');
+  });
+
+  it('blocks an explicitly allowed premium model for a free cost-class plan', async () => {
+    const findRate = vi.fn().mockResolvedValue({ isPriced: true, rates: { costClass: 'PREMIUM' } });
+    service = new RuntimeAdmissionService(
+      entitlementsMock as unknown as EntitlementsService,
+      { getClient: () => ({ eval: evalMock }) } as unknown as RedisService,
+      { findRate } as unknown as ModelRateClient,
+    );
+    entitlementsMock.getEnforcedForUser.mockResolvedValue(
+      entitlement({
+        modelAccessMode: 'ALLOW_COST_CLASSES',
+        allowedCostClasses: [ModelCostClass.FREE, ModelCostClass.CHEAP, ModelCostClass.STANDARD],
+        allowedModels: [
+          {
+            provider: input.provider,
+            model: input.model,
+            isAllowed: true,
+            allowAsPrimary: true,
+            allowAsFallback: true,
+            allowAsJudge: true,
+            allowInCompare: true,
+            dailyTokenLimitOverride: null,
+          },
+        ],
+      }),
+    );
+
+    await expect(service.reserve(input)).rejects.toMatchObject({ code: 'RUNTIME_MODEL_DENIED' });
+    expect(findRate).toHaveBeenCalledWith(input.provider, input.model);
+    expect(evalMock).not.toHaveBeenCalled();
   });
 });
 

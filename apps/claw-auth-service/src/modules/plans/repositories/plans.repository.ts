@@ -225,10 +225,14 @@ export class PlansRepository {
   async replaceModelAccess(
     planId: string,
     rows: Array<Omit<Prisma.PlanModelAccessCreateManyInput, 'planId'>>,
+    modelAccessMode: PlanModelAccessMode,
+    allowedCostClasses: string[],
   ): Promise<PlanWithAccess> {
-    const mode = rows.length === 0 ? PlanModelAccessMode.DENY_ALL : PlanModelAccessMode.ALLOW_LIST;
     const operations = [
-      this.prisma.plan.update({ where: { id: planId }, data: { modelAccessMode: mode } }),
+      this.prisma.plan.update({
+        where: { id: planId },
+        data: { modelAccessMode, allowedCostClasses },
+      }),
       this.prisma.planModelAccess.deleteMany({ where: { planId } }),
     ];
     if (rows.length > 0) {

@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { Permission } from '@claw/shared-types';
+import { ModelCostClass, Permission, PlanModelAccessMode } from '@claw/shared-types';
 
 import { BusinessException } from '../../../common/errors';
 import { RedisService } from '../../../infrastructure/redis/redis.service';
@@ -25,6 +25,7 @@ import {
   runtimeAdmissionTtl,
 } from '../utilities/runtime-admission.utility';
 import { EntitlementsService } from './entitlements.service';
+import { ModelRateClient } from '../../credit/clients/model-rate.client';
 
 @Injectable()
 export class RuntimeAdmissionService {
@@ -33,19 +34,14 @@ export class RuntimeAdmissionService {
   constructor(
     private readonly entitlements: EntitlementsService,
     private readonly redis: RedisService,
+    private readonly modelRates: ModelRateClient,
   ) {}
 
   async reserve(input: RuntimeAdmissionDto): Promise<RuntimeAdmissionAck> {
     const entitlement = await this.entitlements.getEnforcedForUser(input.userId);
     this.assertPermission(entitlement.isAdmin, entitlement.permissions, Permission.AGENT_USE);
     this.assertPermission(entitlement.isAdmin, entitlement.permissions, Permission.CHAT_USE);
-    if (!this.isPrimaryModelAllowed(entitlement, input.provider, input.model)) {
-      throw new BusinessException(
-        'The selected model is not available for Runtime V2',
-        'RUNTIME_MODEL_DENIED',
-        HttpStatus.FORBIDDEN,
-      );
-    }
+    await this.assertPrimaryModelAllowed(entitlement, input.provider, input.model);
 
     const now = new Date();
     const acknowledgement = runtimeAdmissionAck(
@@ -158,10 +154,33 @@ export class RuntimeAdmissionService {
     }
   }
 
+  private async assertPrimaryModelAllowed(
+    entitlement: Awaited<ReturnType<EntitlementsService['getForUser']>>,
+    provider: string,
+    model: string,
+  ): Promise<void> {
+    let costClass: ModelCostClass | undefined;
+    if (
+      !entitlement.isAdmin &&
+      entitlement.modelAccessMode === PlanModelAccessMode.ALLOW_COST_CLASSES
+    ) {
+      const rate = await this.modelRates.findRate(provider, model);
+      costClass = rate?.isPriced === true ? rate.rates.costClass : undefined;
+    }
+    if (!this.isPrimaryModelAllowed(entitlement, provider, model, costClass)) {
+      throw new BusinessException(
+        'The selected model is not available for Runtime V2',
+        'RUNTIME_MODEL_DENIED',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+  }
+
   private isPrimaryModelAllowed(
     entitlement: Awaited<ReturnType<EntitlementsService['getForUser']>>,
     provider: string,
     model: string,
+    costClass?: ModelCostClass,
   ): boolean {
     if (entitlement.isAdmin) return true;
     if (
@@ -170,6 +189,14 @@ export class RuntimeAdmissionService {
     )
       return true;
     if (entitlement.modelAccessMode === 'DENY_ALL') return false;
+    if (entitlement.modelAccessMode === 'ALLOW_COST_CLASSES') {
+      if (costClass === undefined || !entitlement.allowedCostClasses.includes(costClass))
+        return false;
+      const explicit = entitlement.allowedModels.find(
+        (entry) => entry.provider === provider && entry.model === model,
+      );
+      return explicit === undefined || (explicit.isAllowed && explicit.allowAsPrimary);
+    }
     return entitlement.allowedModels.some(
       (entry) =>
         entry.provider === provider &&

@@ -5150,6 +5150,18 @@ export const it: TranslationDictionary = {
       allowTextToSpeech: 'Sintesi vocale',
     },
     modelAccess: {
+      mode: 'Modalità di accesso',
+      modeCostClasses: 'Allowed cost classes',
+      modeAllowList: 'Explicit model allow-list',
+      modeDenyAll: 'No models allowed',
+      costClasses: 'Allowed model cost classes',
+      costClass: {
+        FREE: 'Gratuito',
+        CHEAP: 'Economico',
+        STANDARD: 'Standard',
+        PREMIUM: 'Premium',
+        ULTRA: 'Ultra',
+      },
       title: 'Accesso ai modelli',
       description: 'Limita quali modelli del fornitore può usare questo piano.',
       empty:
@@ -5881,12 +5893,16 @@ export const it: TranslationDictionary = {
         'La disponibilità dei modelli segue il calendario di rilascio di ciascun provider. I nuovi modelli vengono aggiunti man mano che escono.',
     },
     pricing: {
+      modelAccessLabel: 'Accesso ai modelli',
+      modelAccessPaidOnly: 'Modelli gratuiti, economici e standard',
+      modelAccessAllClasses: 'Tutte le classi di modelli, incluse Premium e Ultra',
+      modelAccessNone: 'Nessuna classe di modelli',
       paygCreditRate: '{percent}% del prezzo del tuo piano',
       paygCreditLabel: 'Credito connettori mensile',
       paygCreditNone: 'Nessun credito connettori',
       sectionTitle: 'Piani che crescono con te',
       sectionSubtitle:
-        'Inizia gratis. Passa a un piano superiore quando ti serve di più. Ogni piano a pagamento raggiunge gli stessi modelli: cambia solo quanto puoi usarli.',
+        'Free include le classi Free, Cheap e Standard. Ogni piano a pagamento include anche Premium e Ultra. Le schede mostrano le classi disponibili.',
       monthly: 'Mensile',
       yearly: 'Annuale',
       perMonth: '/mese',
@@ -5921,7 +5937,7 @@ export const it: TranslationDictionary = {
       plusHighlight3: '25 chat e 250 messaggi al giorno',
       proName: 'Pro',
       proTagline: 'Per i professionisti che ci lavorano ogni giorno.',
-      proHighlight1: 'Aggiunge i modelli premium, tra cui Claude Opus e GPT-5',
+      proHighlight1: 'Include le classi di modelli Premium e Ultra',
       proHighlight2: '150 esecuzioni di Confronto e 75 di Judge al mese',
       proHighlight3: '75 chat e 750 messaggi al giorno',
       teamName: 'Team',
@@ -6520,7 +6536,7 @@ export const it: TranslationDictionary = {
         bullet1:
           'Free. Un piccolo plafond giornaliero, i modelli di fascia base e una prova a testa di Confronto, Judge e Ricerca.',
         bullet2:
-          'Starter, Plus e Pro. Plafond crescenti, con i modelli premium e quote di Confronto e Judge più ampie man mano che sali.',
+          'Starter, Plus e Pro. Quote crescenti; tutti i piani a pagamento includono i modelli Premium e Ultra.',
         bullet3:
           'Team e Scale. Confronto, Judge, Critic e Ricerca illimitati, più molte altre connessioni allo spazio di lavoro.',
         bullet4:
@@ -6546,7 +6562,7 @@ export const it: TranslationDictionary = {
         grokStrength: 'Risposte conversazionali rapide, con consapevolezza degli eventi recenti.',
         bedrockStrength: 'Modelli ospitati su AWS per i team già standardizzati su Amazon.',
         outro:
-          'Quali modelli può raggiungere un piano dipende dal livello: i modelli di fascia base sul piano Free, tutto — compresi i modelli di frontiera più grandi — dal piano Pro in su. I nuovi modelli vengono aggiunti man mano che i provider li rilasciano.',
+          'Free include i modelli delle classi Free, Cheap e Standard. Tutti i piani a pagamento includono Premium e Ultra; ogni scheda del piano mostra i modelli accessibili. I nuovi modelli vengono aggiunti man mano che i provider li rilasciano.',
       },
       routing: {
         title: 'Come ClawAI decide quale modello risponde',
@@ -7103,7 +7119,7 @@ export const it: TranslationDictionary = {
         description: 'Quali modelli ottieni e come ne viene scelto uno.',
         availableModelsQ: 'Quali modelli posso usare?',
         availableModelsA:
-          'Claude Opus 5, Sonnet 5 e Fable 5; GPT-5 e GPT-5 mini; Gemini 3 Pro e Flash; Kimi K2; GLM-5.1; Qwen3; DeepSeek V3.2; Grok 4; e i modelli ospitati su Amazon Bedrock. Il piano Free e quelli più economici raggiungono i modelli di fascia base e media; i modelli di frontiera premium si sbloccano dal piano Pro in su.',
+          'Claude Opus 5, Sonnet 5 e Fable 5; GPT-5 e GPT-5 mini; Gemini 3 Pro e Flash; Kimi K2; GLM-5.1; Qwen3; DeepSeek V3.2; Grok 4; e i modelli ospitati su Amazon Bedrock. Free include le classi Free, Cheap e Standard. Tutti i piani a pagamento includono anche Premium e Ultra; ogni scheda del piano mostra i modelli accessibili.',
         autoRoutingQ: 'Cosa fa davvero l’instradamento Auto?',
         autoRoutingA:
           'Classifica ogni messaggio — codice, ragionamento, analisi, scrittura creativa, immagini, domande di tutti i giorni — e lo invia a un modello forte in quella classe e in salute in quel momento. La risposta ti dice poi quale modello è stato scelto, quanto era sicura la classificazione e perché.',

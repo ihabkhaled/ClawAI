@@ -36,6 +36,10 @@ const source = (status: string, overrides: Record<string, unknown> = {}) => ({
 });
 
 function build(repository: Record<string, unknown>) {
+  const repositoryWithRecovery = {
+    findLastFailureCode: vi.fn().mockResolvedValue(null),
+    ...repository,
+  };
   const snapshots = { getOwnedSnapshot: vi.fn() };
   const budgets = {
     reserve: vi.fn().mockResolvedValue({ id: 'budget-2' }),
@@ -44,7 +48,7 @@ function build(repository: Record<string, unknown>) {
   const rabbit = { publishConfirmed: vi.fn().mockResolvedValue(undefined) };
   const service = new GenerationJobsService(
     snapshots as never,
-    repository as never,
+    repositoryWithRecovery as never,
     rabbit as never,
     {} as never,
     budgets as never,

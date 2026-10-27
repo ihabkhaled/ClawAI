@@ -114,6 +114,7 @@ function createJobStore(failStorage: boolean) {
         sourceSnapshot: { messages: [] },
         sourceSnapshotHash: 'h'.repeat(64),
       }),
+      findLastFailureCode: vi.fn().mockResolvedValue(null),
       findByIdempotencyKey: vi.fn(async (input: CreateInput) => {
         await tick();
         const job = byKey.get(input.idempotencyKey);

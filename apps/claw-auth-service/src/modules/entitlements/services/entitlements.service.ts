@@ -54,6 +54,9 @@ export class EntitlementsService {
       permissions,
       plan: this.resolveEntitlementPlan(isAdmin, plan, trial),
       modelAccessMode: this.resolveModelAccessMode(isAdmin, plan?.modelAccessMode),
+      allowedCostClasses: isAdmin
+        ? []
+        : ((plan?.allowedCostClasses ?? []) as UserEntitlements['allowedCostClasses']),
       hasPaygCredit: isAdmin ? false : await this.resolveHasPaygCredit(userId),
       freeCreditMaxModelOutputMicroUsd: resolveFreeCreditCeiling(isAdmin, plan),
       allowedModels: modelAccess.map((m) => ({

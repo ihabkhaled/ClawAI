@@ -166,7 +166,9 @@ export class GenerationPipelineManager {
       if (outcome.kind === 'passed') return outcome.result;
       revisionBrief = outcome.revisionBrief;
     }
-    throw new ServiceUnavailableException(
+    // Replaying the same completed model replies cannot improve a rejected draft. End this job
+    // here; an owner retry keeps research but must get fresh model work.
+    throw new DeterministicGenerationError(
       'Generation did not pass consensus and reviews in three rounds',
     );
   }

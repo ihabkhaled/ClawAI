@@ -33,6 +33,7 @@ import {
 import { applyPlanModelGate } from '../utilities/plan-model-gate.utility';
 import { applyFreeModelPriceGuard } from '../utilities/free-model-price-guard.utility';
 import { ModelOutputPriceService } from './model-output-price.service';
+import { ModelCostService } from '../../router-models/services/model-cost.service';
 import type {
   AIRoutePlannerInput,
   PlannerCandidate,
@@ -108,6 +109,7 @@ export class RoutingService implements OnModuleInit {
     @Optional() private readonly pickedModelSubstitutes?: PickedModelSubstituteManager,
     // Optional: without it the free plan's price limit is not applied to AUTO decisions.
     @Optional() private readonly modelPrices?: ModelOutputPriceService,
+    @Optional() private readonly modelCosts?: ModelCostService,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -448,27 +450,55 @@ export class RoutingService implements OnModuleInit {
     if (!parsed) {
       return;
     }
+    if (!parsed.messageId) {
+      this.logger.warn(`Received message.created without messageId for thread=${parsed.threadId}`);
+      return;
+    }
 
     const {
       messageId,
       threadId,
-      userId,
       content,
+      forcedModel,
+      allowedModels,
+      modelAccessMode,
+      freeModelPriceCap,
+    } = parsed;
+
+    this.logMessageCreatedConsumed(messageId, threadId);
+    const { context, decisionWithWorkflow } = await this.evaluateMessageRoute(parsed, payload);
+    const gatedDecision = await this.applyPlanAccessGate(
+      decisionWithWorkflow,
+      modelAccessMode,
+      parsed.allowedCostClasses,
+      allowedModels,
+    );
+
+    // ADR-162: an AUTO choice for a free plan leaves out models above its price limit.
+    // A manually selected model is checked when auth-service reserves the request.
+    const priced = await this.applyFreePriceLimit(gatedDecision, forcedModel, freeModelPriceCap);
+    await this.publishRoutedDecision(priced, context, messageId, threadId, content);
+  }
+
+  private async evaluateMessageRoute(
+    parsed: NonNullable<ReturnType<RoutingService['parseMessageCreatedPayload']>>,
+    payload: Record<string, unknown>,
+  ): Promise<{ context: RoutingContext; decisionWithWorkflow: RoutingDecisionResult }> {
+    const {
+      content,
+      threadId,
       routingMode,
       forcedProvider,
       forcedModel,
+      userId,
       allowedModels,
       modelAccessMode,
       freeModelPriceCap,
       runtimeV2,
     } = parsed;
-
-    this.logMessageCreatedConsumed(messageId, threadId);
-    // Multimodal batch 8: what the attachments need, so AUTO ranks candidates
-    // by modality fit (rule 51 item 13). Empty for a turn without attachments.
+    // Multimodal attachments contribute model-fit signals when present.
     const attachments = parseAttachmentModality(payload);
-
-    const context = {
+    const context: RoutingContext = {
       ...this.buildRoutingContext(
         content,
         threadId,
@@ -478,6 +508,8 @@ export class RoutingService implements OnModuleInit {
         userId,
       ),
       allowedModels,
+      allowedCostClasses:
+        modelAccessMode === 'ALLOW_COST_CLASSES' ? parsed.allowedCostClasses : undefined,
       modelAccessAllowAll: modelAccessMode === 'ALLOW_ALL',
       freeModelPriceCap,
       runtimeV2,
@@ -492,14 +524,45 @@ export class RoutingService implements OnModuleInit {
       runtimeV2,
       attachments.attachmentMimeTypes,
     );
-    // Phase C — AUTO-mode plan gate: never let the router land on a model the
-    // user's plan forbids. Only a plan explicitly in ALLOW_ALL mode is
-    // unrestricted; a restricted plan with an empty list now authorizes
-    // nothing, where it used to be handed the whole catalogue.
+    return { context, decisionWithWorkflow };
+  }
+
+  private async publishRoutedDecision(
+    decision: RoutingDecisionResult,
+    context: RoutingContext,
+    messageId: string,
+    threadId: string,
+    content: string,
+  ): Promise<void> {
+    const substitutes = (await this.pickedModelSubstitutes?.resolve(decision, context)) ?? [];
+    const selected =
+      substitutes.length === 0 ? decision : { ...decision, pickedModelSubstitutes: substitutes };
+    await this.storeAndPublishDecision(messageId, threadId, content, selected);
+  }
+
+  private async applyPlanAccessGate(
+    decision: RoutingDecisionResult,
+    modelAccessMode: string | undefined,
+    allowedCostClasses: string[] | undefined,
+    allowedModels: string[],
+  ): Promise<RoutingDecisionResult> {
+    const costClasses =
+      modelAccessMode === 'ALLOW_COST_CLASSES'
+        ? await this.loadKnownCostClasses(
+            [decision, ...(decision.fallbackChain ?? [])].map((candidate) => ({
+              provider:
+                'selectedProvider' in candidate ? candidate.selectedProvider : candidate.provider,
+              model: 'selectedModel' in candidate ? candidate.selectedModel : candidate.model,
+            })),
+          )
+        : new Map<string, string>();
+    // Restricted plan modes never authorize models outside their explicit policy.
     const gate = applyPlanModelGate(
-      decisionWithWorkflow,
+      decision,
       allowedModels,
       modelAccessMode === 'ALLOW_ALL',
+      modelAccessMode === 'ALLOW_COST_CLASSES' ? allowedCostClasses : undefined,
+      (provider, model) => costClasses.get(`${provider}/${model}`),
     );
     if (gate.excludedCandidates > 0) {
       this.logger.log(
@@ -516,18 +579,7 @@ export class RoutingService implements OnModuleInit {
       );
     }
 
-    // ADR-162: an AUTO choice for a plan with a free-request price limit leaves out models above it.
-    // A model the user picked is theirs to pick, so it is never swapped here; auth-service answers
-    // for it when the request is reserved.
-    const priced = await this.applyFreePriceLimit(gate.decision, forcedModel, freeModelPriceCap);
-
-    const substitutes = (await this.pickedModelSubstitutes?.resolve(priced, context)) ?? [];
-    await this.storeAndPublishDecision(
-      messageId,
-      threadId,
-      content,
-      substitutes.length === 0 ? priced : { ...priced, pickedModelSubstitutes: substitutes },
-    );
+    return gate.decision;
   }
 
   private async applyFreePriceLimit(
@@ -557,6 +609,7 @@ export class RoutingService implements OnModuleInit {
     forcedProvider: string | undefined;
     forcedModel: string | undefined;
     allowedModels: string[];
+    allowedCostClasses: string[];
     modelAccessMode: string | undefined;
     freeModelPriceCap: number | null;
     runtimeV2: boolean;
@@ -580,6 +633,10 @@ export class RoutingService implements OnModuleInit {
     // must not silently widen access.
     const modelAccessMode =
       typeof payload['modelAccessMode'] === 'string' ? payload['modelAccessMode'] : undefined;
+    const rawCostClasses = payload['allowedCostClasses'];
+    const allowedCostClasses = Array.isArray(rawCostClasses)
+      ? rawCostClasses.filter((item): item is string => typeof item === 'string')
+      : [];
 
     return {
       messageId: payload['messageId'] as string | undefined,
@@ -595,6 +652,7 @@ export class RoutingService implements OnModuleInit {
       forcedProvider: payload['forcedProvider'] as string | undefined,
       forcedModel: payload['forcedModel'] as string | undefined,
       allowedModels,
+      allowedCostClasses,
       modelAccessMode,
       // ADR-162. Anything that is not a non-negative number means no limit: an older publisher
       // must not make AUTO refuse everything.
@@ -606,6 +664,20 @@ export class RoutingService implements OnModuleInit {
           : null,
       runtimeV2: payload['runtimeV2'] === true,
     };
+  }
+
+  private async loadKnownCostClasses(
+    candidates: Array<{ provider: string; model: string }>,
+  ): Promise<Map<string, string>> {
+    const result = new Map<string, string>();
+    if (!this.modelCosts) return result;
+    await Promise.all(
+      candidates.map(async ({ provider, model }) => {
+        const costClass = await this.modelCosts?.getKnownCostClass(provider, model);
+        if (costClass !== undefined) result.set(`${provider}/${model}`, costClass);
+      }),
+    );
+    return result;
   }
 
   private logMessageCreatedConsumed(messageId: string | undefined, threadId: string): void {

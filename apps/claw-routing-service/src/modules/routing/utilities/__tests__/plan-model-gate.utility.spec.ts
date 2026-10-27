@@ -94,4 +94,38 @@ describe('applyPlanModelGate', () => {
 
     expect(applyPlanModelGate(d, []).excludedCandidates).toBe(2);
   });
+
+  it('filters premium and ultra candidates by the live class allow-set', () => {
+    const d = decision('ANTHROPIC', 'fable', [
+      { provider: 'OPENAI', model: 'sol' },
+      { provider: 'OPENAI', model: 'mini' },
+    ]);
+    const classes: Record<string, string> = {
+      'ANTHROPIC/fable': 'PREMIUM',
+      'OPENAI/sol': 'ULTRA',
+      'OPENAI/mini': 'STANDARD',
+    };
+    const result = applyPlanModelGate(
+      d,
+      [],
+      false,
+      ['FREE', 'CHEAP', 'STANDARD'],
+      (provider, model) => classes[`${provider}/${model}`],
+    );
+    expect(result.outcome).toBe('promoted');
+    expect(result.decision.selectedModel).toBe('mini');
+    expect(result.decision.fallbackChain).toEqual([]);
+  });
+
+  it('does not let an explicitly listed premium model bypass the plan class limit', () => {
+    const d = decision('OPENAI', 'astra', []);
+    const result = applyPlanModelGate(
+      d,
+      ['OPENAI/astra'],
+      false,
+      ['FREE', 'CHEAP', 'STANDARD'],
+      () => 'PREMIUM',
+    );
+    expect(result.outcome).toBe('unsatisfiable');
+  });
 });

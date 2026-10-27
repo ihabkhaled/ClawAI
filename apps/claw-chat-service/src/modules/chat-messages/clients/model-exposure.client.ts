@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { HttpMethod } from '@claw/shared-types';
+import { HttpMethod, ModelCostClass } from '@claw/shared-types';
 import { httpRequest } from '@claw/shared-utilities';
 import { z } from 'zod';
 
@@ -14,6 +14,10 @@ import {
 const validateExposedResponseSchema = z.object({
   valid: z.array(z.object({ provider: z.string(), model: z.string() })),
 });
+const modelCostClassSchema = z.object({
+  costClass: z.nativeEnum(ModelCostClass),
+  isPriced: z.boolean(),
+});
 
 @Injectable()
 export class ModelExposureClient {
@@ -23,12 +27,41 @@ export class ModelExposureClient {
   // an administrator unexposing a model has to reach both. A per-instance cache
   // would clear one and leave the other serving a stale yes.
   private static readonly cache = new Map<string, { exposed: boolean; expiresAt: number }>();
+  private static readonly costClassCache = new Map<
+    string,
+    { costClass: ModelCostClass | null; expiresAt: number }
+  >();
+
+  async getCostClass(provider: string, model: string): Promise<ModelCostClass | null> {
+    const key = `${provider}/${model}`;
+    const now = Date.now();
+    const hit = ModelExposureClient.costClassCache.get(key);
+    if (hit && hit.expiresAt > now) return hit.costClass;
+    try {
+      const response = await httpRequest<unknown>({
+        url: `${AppConfig.get().ROUTING_SERVICE_URL}/api/v1/internal/router-models/costs/${encodeURIComponent(provider)}/${encodeURIComponent(model)}`,
+        method: HttpMethod.GET,
+        headers: { Authorization: buildInterServiceAuthHeader() },
+        timeoutMs: MODEL_EXPOSURE_TIMEOUT_MS,
+      });
+      const parsed = response.ok ? modelCostClassSchema.safeParse(response.data) : null;
+      const costClass = parsed?.success && parsed.data.isPriced ? parsed.data.costClass : null;
+      ModelExposureClient.costClassCache.set(key, {
+        costClass,
+        expiresAt: now + MODEL_EXPOSURE_CACHE_TTL_MS,
+      });
+      return costClass;
+    } catch {
+      return null;
+    }
+  }
 
   // Drops every cached answer. Called when connector-service reports an
   // exposure change, so the decision takes effect immediately rather than at
   // the end of a TTL the administrator cannot see.
   static invalidateAll(): void {
     ModelExposureClient.cache.clear();
+    ModelExposureClient.costClassCache.clear();
   }
 
   // Whether this exact deployment is currently offerable to users.

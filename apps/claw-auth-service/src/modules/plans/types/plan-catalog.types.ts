@@ -68,6 +68,8 @@ export type PlanCatalogEntry = {
   isDefault: boolean;
   /** The plan the public pricing page badges "Most popular". */
   isPopular: boolean;
+  /** Model cost classes this plan may use; safe product-access data. */
+  allowedCostClasses: string[];
   /** False hides the plan from the public pricing page entirely. */
   isPublic: boolean;
   /** False means the plan is no longer sold; existing subscribers keep it. */

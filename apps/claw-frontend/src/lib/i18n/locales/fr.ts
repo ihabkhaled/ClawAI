@@ -5172,6 +5172,18 @@ export const fr: TranslationDictionary = {
       allowTextToSpeech: 'Synthèse vocale',
     },
     modelAccess: {
+      mode: 'Mode d’accès',
+      modeCostClasses: 'Classes de coût autorisées',
+      modeAllowList: 'Liste explicite des modèles autorisés',
+      modeDenyAll: 'Aucun modèle autorisé',
+      costClasses: 'Classes de coût des modèles autorisées',
+      costClass: {
+        FREE: 'Gratuit',
+        CHEAP: 'Économique',
+        STANDARD: 'Standard',
+        PREMIUM: 'Premium',
+        ULTRA: 'Ultra',
+      },
       title: 'Accès aux modèles',
       description: 'Restreignez les modèles de fournisseur que ce forfait peut utiliser.',
       empty:
@@ -5903,12 +5915,16 @@ export const fr: TranslationDictionary = {
         'La disponibilité des modèles suit le calendrier de sortie propre à chaque fournisseur. Les nouveaux modèles sont ajoutés dès leur lancement.',
     },
     pricing: {
+      modelAccessLabel: 'Accès aux modèles',
+      modelAccessPaidOnly: 'Modèles gratuits, économiques et standard',
+      modelAccessAllClasses: 'Toutes les classes, Premium et Ultra inclus',
+      modelAccessNone: 'Aucune classe de modèle',
       paygCreditRate: '{percent} % du prix de votre forfait',
       paygCreditLabel: 'Crédit connecteurs mensuel',
       paygCreditNone: 'Aucun crédit connecteurs',
       sectionTitle: 'Des forfaits qui évoluent avec vous',
       sectionSubtitle:
-        'Commencez gratuitement. Passez à un forfait supérieur quand vous avez besoin de plus. Chaque forfait payant donne accès aux mêmes modèles — la différence porte sur la quantité que vous pouvez utiliser.',
+        'Free comprend les classes Free, Cheap et Standard. Chaque forfait payant inclut aussi Premium et Ultra. Les cartes indiquent les classes disponibles.',
       monthly: 'Mensuel',
       yearly: 'Annuel',
       perMonth: '/mois',
@@ -5943,7 +5959,7 @@ export const fr: TranslationDictionary = {
       plusHighlight3: '25 conversations et 250 messages par jour',
       proName: 'Pro',
       proTagline: 'Pour les professionnels qui en dépendent au quotidien.',
-      proHighlight1: 'Ajoute des modèles premium, dont Claude Opus et GPT-5',
+      proHighlight1: 'Inclut les classes de modèles Premium et Ultra',
       proHighlight2: '150 exécutions de Comparaison et 75 de Juge par mois',
       proHighlight3: '75 conversations et 750 messages par jour',
       teamName: 'Team',
@@ -6549,7 +6565,7 @@ export const fr: TranslationDictionary = {
         bullet1:
           "Free. Un petit quota quotidien, des modèles d'entrée de gamme, et un essai gratuit chacun pour Comparaison, Juge et Recherche.",
         bullet2:
-          'Starter, Plus et Pro. Des quotas croissants, avec des modèles premium et des quotas Comparaison et Juge plus élevés à mesure que vous montez en gamme.',
+          'Starter, Plus et Pro. Des quotas croissants ; tous les forfaits payants incluent les modèles Premium et Ultra.',
         bullet3:
           "Team et Scale. Comparaison, Juge, Critique et Recherche illimités, ainsi que bien plus de connexions d'espace de travail.",
         bullet4:
@@ -6576,7 +6592,7 @@ export const fr: TranslationDictionary = {
           "Réponses conversationnelles rapides avec une connaissance de l'actualité récente.",
         bedrockStrength: 'Modèles hébergés sur AWS pour les équipes déjà standardisées sur Amazon.',
         outro:
-          "Les modèles accessibles à un forfait dépendent du niveau : modèles d'entrée sur Free, tout, y compris les plus grands modèles de pointe, à partir de Pro. De nouveaux modèles sont ajoutés à mesure que les fournisseurs les publient.",
+          'Free inclut les modèles des classes Free, Cheap et Standard. Tous les forfaits payants incluent les modèles Premium et Ultra ; chaque carte de forfait indique les modèles accessibles. De nouveaux modèles sont ajoutés à mesure que les fournisseurs les publient.',
       },
       routing: {
         title: 'Comment ClawAI décide quel modèle répond',
@@ -7133,7 +7149,7 @@ export const fr: TranslationDictionary = {
         description: "Quels modèles vous obtenez, et comment l'un d'eux est choisi.",
         availableModelsQ: 'Quels modèles puis-je utiliser ?',
         availableModelsA:
-          "Claude Opus 5, Sonnet 5 et Fable 5 ; GPT-5 et GPT-5 mini ; Gemini 3 Pro et Flash ; Kimi K2 ; GLM-5.1 ; Qwen3 ; DeepSeek V3.2 ; Grok 4 ; et des modèles hébergés sur Amazon Bedrock. Free et les forfaits moins chers donnent accès aux modèles d'entrée et de milieu de gamme ; les modèles de pointe premium se débloquent à partir de Pro.",
+          'Claude Opus 5, Sonnet 5 et Fable 5 ; GPT-5 et GPT-5 mini ; Gemini 3 Pro et Flash ; Kimi K2 ; GLM-5.1 ; Qwen3 ; DeepSeek V3.2 ; Grok 4 ; et des modèles hébergés sur Amazon Bedrock. Free inclut les classes Free, Cheap et Standard. Tous les forfaits payants incluent aussi Premium et Ultra ; chaque carte de forfait indique les modèles accessibles.',
         autoRoutingQ: 'Que fait réellement le routage Auto ?',
         autoRoutingA:
           "Il classe chaque message — code, raisonnement, analyse, écriture créative, image, question du quotidien — et l'envoie à un modèle performant dans cette catégorie et actuellement en bonne santé. La réponse vous indique ensuite quel modèle a été choisi, quelle a été la confiance de la classification, et pourquoi.",

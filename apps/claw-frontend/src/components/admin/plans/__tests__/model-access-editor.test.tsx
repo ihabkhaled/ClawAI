@@ -118,12 +118,10 @@ describe('ModelAccessEditor', () => {
     const updateRow = vi.fn();
     const user = userEvent.setup();
     render(<ModelAccessEditor {...makeProps({ updateRow })} />);
-    const checkboxes = screen.getAllByRole('checkbox') as HTMLElement[];
-    // First checkbox is isAllowed (checked) -> toggling sends a boolean.
-    await user.click(checkboxes[0]!);
+    await user.click(screen.getByRole('checkbox', { name: 'adminPlans.modelAccess.isAllowed' }));
     expect(updateRow).toHaveBeenCalledWith('rk1', 'isAllowed', expect.any(Boolean));
     // allowAsJudge starts unchecked -> toggling on sends true.
-    await user.click(checkboxes[3]!);
+    await user.click(screen.getByRole('checkbox', { name: 'adminPlans.modelAccess.allowAsJudge' }));
     expect(updateRow).toHaveBeenCalledWith('rk1', 'allowAsJudge', true);
   });
 

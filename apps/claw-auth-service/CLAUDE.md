@@ -29,6 +29,7 @@ Baseline rules for every backend service (commands, absolute rules, declarations
 
 - Library wrapping here: `src/common/utilities/hashing.utility.ts` wraps `argon2`; services import `{ hashPassword, verifyPassword }` from the wrapper.
 - The entitlements payload carries `hasPaygCredit` (metering on and wallet available > 0, fail closed); it unlocks `allowImageGeneration` only (ADR-139, rule 37 item 21).
+- Plan model access uses `allowedCostClasses`; Free defaults to `FREE`, `CHEAP`, and `STANDARD`, while every paid catalog plan includes all five classes. Class access is an upper bound: explicit model rows cannot grant a class excluded by the plan. The versioned catalog migration preserves plans with explicit access rows. See [plan and quota specification](../../docs/06-data/plan-and-quota-specification.md#5-model-access).
 
 ## PAYG connector credit — this service owns it (ADR-078)
 

@@ -170,10 +170,12 @@ describe('plan catalog', () => {
     expect(bySlug('free').features['WORKSPACES']?.accessMode).toBe('ENABLED');
   });
 
-  it('allows every discovered model on every seeded plan by default', () => {
-    for (const plan of catalog) {
-      expect(plan.modelAccessMode).toBe('ALLOW_ALL');
-      expect(plan.allowedCostClasses).toEqual([]);
+  it('limits Free to standard and below while paid plans include premium classes', () => {
+    expect(bySlug('free').modelAccessMode).toBe('ALLOW_COST_CLASSES');
+    expect(bySlug('free').allowedCostClasses).toEqual(['FREE', 'CHEAP', 'STANDARD']);
+    for (const plan of catalog.filter((entry) => entry.slug !== 'free')) {
+      expect(plan.modelAccessMode).toBe('ALLOW_COST_CLASSES');
+      expect(plan.allowedCostClasses).toEqual(['FREE', 'CHEAP', 'STANDARD', 'PREMIUM', 'ULTRA']);
     }
   });
 
@@ -267,6 +269,7 @@ describe('catalog integrity', () => {
       expect(plan.modelAccessMode).not.toBe('LEGACY_UNRESTRICTED');
     }
   });
+
   // ADR-078. `WEIGHTED_TOKENS_PER_USD === MICRO_USD_PER_USD`, so these two
   // columns are the same dollar amount under two names. They are allowed to
   // exist separately only while they agree; the moment they diverge, the

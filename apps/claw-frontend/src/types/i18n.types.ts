@@ -1,5 +1,6 @@
 import type { Direction } from '@/enums/direction.enum';
 import type { Locale } from '@/enums/locale.enum';
+import type { CostClass } from '@/enums/router-models.enum';
 import type { FeedbackTranslation } from '@/types/i18n-feedback.types';
 import type { PluginImportLocaleTranslation } from '@/types/plugin-import-i18n.types';
 import type { PluginQaFixesLocaleTranslation } from '@/types/plugin-qa-fixes-i18n.types';
@@ -4945,6 +4946,12 @@ export type TranslationDictionary = {
       allowTextToSpeech: string;
     };
     modelAccess: {
+      mode: string;
+      modeCostClasses: string;
+      modeAllowList: string;
+      modeDenyAll: string;
+      costClasses: string;
+      costClass: Record<CostClass, string>;
       title: string;
       description: string;
       empty: string;
@@ -5630,6 +5637,10 @@ export type TranslationDictionary = {
       footnote: string;
     };
     pricing: {
+      modelAccessLabel: string;
+      modelAccessPaidOnly: string;
+      modelAccessAllClasses: string;
+      modelAccessNone: string;
       paygCreditRate: string;
       paygCreditLabel: string;
       paygCreditNone: string;

@@ -147,27 +147,25 @@ The counter is a durable `FeatureUsageRecord` row keyed by
 `PlanModelAccess` array meant "unrestricted" — which silently exposed ULTRA-cost
 models to every newly created plan.
 
-| Mode                  | Meaning                                                                     |
-| --------------------- | --------------------------------------------------------------------------- |
-| `ALLOW_ALL`           | every model                                                                 |
-| `DENY_ALL`            | no model                                                                    |
-| `ALLOW_LIST`          | only the explicitly listed provider/model rows                              |
-| `ALLOW_COST_CLASSES`  | any model whose registry cost class is permitted, narrowed by explicit rows |
-| `LEGACY_UNRESTRICTED` | migration-window compatibility only                                         |
+| Mode                  | Meaning                                                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `ALLOW_ALL`           | every model                                                                                                  |
+| `DENY_ALL`            | no model                                                                                                     |
+| `ALLOW_LIST`          | only the explicitly listed provider/model rows                                                               |
+| `ALLOW_COST_CLASSES`  | only models whose registry class is permitted; explicit rows can narrow roles but never expand the class set |
+| `LEGACY_UNRESTRICTED` | migration-window compatibility only                                                                          |
 
 Seeded classes:
 
-| Plan                   | Cost classes                           |
-| ---------------------- | -------------------------------------- |
-| Free                   | `FREE`                                 |
-| Starter                | `FREE`, `CHEAP`                        |
-| Plus                   | `FREE`, `CHEAP`, `STANDARD`            |
-| Pro                    | `FREE`, `CHEAP`, `STANDARD`, `PREMIUM` |
-| Team, Scale, Unlimited | all, including `ULTRA`                 |
+| Plan                                       | Cost classes                                    |
+| ------------------------------------------ | ----------------------------------------------- |
+| Free                                       | `FREE`, `CHEAP`, `STANDARD`                     |
+| Starter, Plus, Pro, Team, Scale, Unlimited | `FREE`, `CHEAP`, `STANDARD`, `PREMIUM`, `ULTRA` |
 
-Existing installs migrate as `LEGACY_UNRESTRICTED` so no deployment loses access
-on upgrade, and every seeded plan gets an explicit mode. An unknown or
-incomplete policy **fails closed** for non-admin users. ADMIN bypass stays
+The versioned plan-catalog seeder moves existing built-in plans still using
+`ALLOW_ALL` with an empty class list to these defaults. Explicit model-access
+modes and non-empty administrator-edited class lists remain unchanged. An
+unknown or incomplete policy **fails closed** for non-admin users. ADMIN bypass stays
 explicit and audited.
 
 ---

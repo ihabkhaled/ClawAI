@@ -97,6 +97,11 @@ export class ModelCostService {
     return this.unpricedSnapshot(provider, modelKey);
   }
 
+  async getKnownCostClass(provider: string, modelKey: string): Promise<string | undefined> {
+    const snapshot = await this.getSnapshot(provider, modelKey);
+    return snapshot.isPriced ? snapshot.costClass : undefined;
+  }
+
   /**
    * A deliberately pessimistic stand-in for a model nobody has priced.
    *

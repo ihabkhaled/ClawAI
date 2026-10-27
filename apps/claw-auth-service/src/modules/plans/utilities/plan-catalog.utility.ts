@@ -54,6 +54,7 @@ export function toCatalogEntry(
     displayOrder: plan.displayOrder,
     isDefault: plan.isDefault,
     isPopular: plan.isPopular,
+    allowedCostClasses: plan.allowedCostClasses,
     isPublic: plan.isPublic,
     isActive: plan.isActive,
     currency: plan.currency,

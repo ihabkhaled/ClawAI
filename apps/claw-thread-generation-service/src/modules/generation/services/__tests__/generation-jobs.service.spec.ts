@@ -463,6 +463,15 @@ describe('GenerationJobsService', () => {
       false,
       1,
     ],
+    [
+      'a fully rejected review fails once instead of replaying the same checkpoints',
+      new DeterministicGenerationError(
+        'Generation did not pass consensus and reviews in three rounds',
+      ),
+      'FAILED',
+      false,
+      1,
+    ],
   ])(
     'keeps the parent budget held only when the attempt is retried: %s',
     async (_label, failure, outcome, retryable, closeCalls) => {

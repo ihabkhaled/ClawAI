@@ -523,15 +523,40 @@ export class PlansService {
   // notice than a refused one.
   async setModelAccess(id: string, dto: SetPlanModelAccessDto): Promise<PlanView> {
     await this.getPlan(id);
-    if (dto.models.length > EXPOSED_MODEL_VALIDATION_MAX_PAIRS) {
+    await this.assertModelsAreExposed(id, dto.models);
+    const plan = await this.plansRepository.replaceModelAccess(
+      id,
+      dto.models,
+      dto.modelAccessMode,
+      dto.allowedCostClasses,
+    );
+    this.structuredLogger.logAction({
+      level: LogLevel.INFO,
+      message: `Plan model access replaced on plan ${id}`,
+      action: 'plan_model_access_replaced',
+      service: PlansService.name,
+      metadata: {
+        planId: id,
+        models: dto.models.map((row) => `${row.provider}/${row.model}`),
+      },
+    });
+    this.logger.log(`setModelAccess: id=${id} rows=${dto.models.length}`);
+    return this.toView(plan);
+  }
+
+  private async assertModelsAreExposed(
+    id: string,
+    models: SetPlanModelAccessDto['models'],
+  ): Promise<void> {
+    if (models.length > EXPOSED_MODEL_VALIDATION_MAX_PAIRS) {
       throw new BusinessException(
         `A plan cannot be given more than ${String(EXPOSED_MODEL_VALIDATION_MAX_PAIRS)} models in one request.`,
         'PLAN_MODEL_ACCESS_TOO_MANY',
         HttpStatus.UNPROCESSABLE_ENTITY,
       );
     }
-    if (dto.models.length > 0) {
-      const requested = dto.models.map((row) => ({ provider: row.provider, model: row.model }));
+    if (models.length > 0) {
+      const requested = models.map((row) => ({ provider: row.provider, model: row.model }));
       const exposed = await this.exposedModels.findExposed(requested);
       const allowed = new Set(exposed.map((pair) => `${pair.provider}/${pair.model}`));
       const rejected = requested.filter((pair) => !allowed.has(`${pair.provider}/${pair.model}`));
@@ -558,24 +583,6 @@ export class PlansService {
         );
       }
     }
-    const plan = await this.plansRepository.replaceModelAccess(id, dto.models);
-    // Which models a plan grants is an entitlement decision, so the change has
-    // to be recoverable later — who changed it, on which plan, and to what. The
-    // rows are recorded as provider/model keys rather than the full DTO: the
-    // flags are visible on the plan, the identities are what an investigator
-    // needs.
-    this.structuredLogger.logAction({
-      level: LogLevel.INFO,
-      message: `Plan model access replaced on plan ${id}`,
-      action: 'plan_model_access_replaced',
-      service: PlansService.name,
-      metadata: {
-        planId: id,
-        models: dto.models.map((row) => `${row.provider}/${row.model}`),
-      },
-    });
-    this.logger.log(`setModelAccess: id=${id} rows=${dto.models.length}`);
-    return this.toView(plan);
   }
 
   async listUsersOnPlan(id: string): Promise<{ userIds: string[] }> {

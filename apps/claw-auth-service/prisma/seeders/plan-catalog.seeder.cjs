@@ -288,6 +288,24 @@ async function run(prisma) {
       });
       planId = existing.id;
       report.upgraded.push(definition.slug);
+    } else if (
+      PLAN_CATALOG.some((plan) => plan.slug === existing.slug) &&
+      existing.modelAccessMode === 'ALLOW_ALL' &&
+      Array.isArray(existing.allowedCostClasses) &&
+      existing.allowedCostClasses.length === 0 &&
+      (await prisma.planModelAccess.count({ where: { planId: existing.id } })) === 0
+    ) {
+      // Migrate the known built-in unrestricted model policy. Operator-edited
+      // class lists and every explicit mode stay intact.
+      await prisma.plan.update({
+        where: { id: existing.id },
+        data: {
+          modelAccessMode: definition.modelAccessMode,
+          allowedCostClasses: definition.allowedCostClasses,
+        },
+      });
+      planId = existing.id;
+      report.upgraded.push(definition.slug);
     } else {
       // Administrator-edited. Add the billing columns it cannot have had before,
       // but leave every tunable value exactly as the administrator set it.
@@ -332,26 +350,22 @@ async function run(prisma) {
 
 module.exports = {
   name: 'plan-catalog',
+  // v3: paid-only premium/ultra model classes. The migration only rewrites the
+  // known built-in ALLOW_ALL + empty-class policy; explicit operator choices
+  // are preserved by run().
   // v2: added the 9 orchestration-lab gates (definition.labs). Payload now
   // includes `labs` so a future change to the per-tier lab defaults is
   // detected by the checksum instead of silently not re-applying.
   //
-  // DELIBERATELY NOT BUMPED to v3 for the PAYG allowance change, and this is
-  // the same reasoning as the `isPopular` note in planColumns above. Trace
-  // run() on an install where v2 has already completed: `existing` is truthy
-  // for all seven plans, so the create branch never fires, and
-  // matchesLegacyFingerprint returns false for every one of them (the v2 seed
-  // already moved them off the legacy values), so every plan falls to the else
-  // branch — which writes only modelAccessMode and a null weeklyTokenQuota. A
-  // v3 bump would therefore apply the new allowances to ZERO rows while
-  // reporting success, and would burn the version number that a genuine future
-  // catalog change needs.
+  // The earlier PAYG allowance change used its own seeder because the catalog
+  // upgrade path did not reach existing rows. This v3 bump has a dedicated,
+  // guarded migration branch for built-in model access.
   //
   // Existing installs are migrated by plan-payg-allowance.seeder.js instead,
   // which targets rows still holding the OLD value so an operator's tuned
   // figure is never overwritten. The numbers in plan-catalog.json are for
   // FRESH installs, which take them through the create branch above.
-  version: 2,
+  version: 3,
   payload: PLAN_CATALOG.map((plan) => ({
     slug: plan.slug,
     monthlyMinor: plan.monthlyMinor,
@@ -360,6 +374,8 @@ module.exports = {
     weeklyTokens: plan.weeklyTokens,
     monthlyTokens: plan.monthlyTokens,
     labs: plan.labs,
+    modelAccessMode: plan.modelAccessMode,
+    allowedCostClasses: plan.allowedCostClasses,
     costCeiling: String(plan.monthlyCostCeilingMicroUsd),
   })),
   run,

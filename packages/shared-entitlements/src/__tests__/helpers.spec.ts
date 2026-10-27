@@ -1,4 +1,4 @@
-import { Permission, PlanModelAccessMode } from '@claw/shared-types';
+import { ModelCostClass, Permission, PlanModelAccessMode } from '@claw/shared-types';
 import {
   allowedModelKeys,
   hasPermission,
@@ -186,6 +186,56 @@ describe('entitlements helpers', () => {
   });
 
   describe('isModelAllowedForUsage', () => {
+    it('authorizes allowed cost classes and denies premium classes absent from the plan', () => {
+      const classPlan = {
+        ...base,
+        modelAccessMode: PlanModelAccessMode.ALLOW_COST_CLASSES,
+        allowedCostClasses: [ModelCostClass.FREE, ModelCostClass.CHEAP, ModelCostClass.STANDARD],
+      };
+      expect(
+        isModelAllowedForUsage(
+          classPlan,
+          'OPENAI',
+          'mini',
+          ModelUsageType.PRIMARY,
+          ModelCostClass.STANDARD,
+        ),
+      ).toBe(true);
+      expect(
+        isModelAllowedForUsage(
+          classPlan,
+          'OPENAI',
+          'astra',
+          ModelUsageType.PRIMARY,
+          ModelCostClass.PREMIUM,
+        ),
+      ).toBe(false);
+      const explicitPremium = {
+        ...classPlan,
+        allowedModels: [
+          {
+            provider: 'OPENAI',
+            model: 'astra',
+            isAllowed: true,
+            allowAsPrimary: true,
+            allowAsFallback: true,
+            allowAsJudge: true,
+            allowInCompare: true,
+            dailyTokenLimitOverride: null,
+          },
+        ],
+      };
+      expect(
+        isModelAllowedForUsage(
+          explicitPremium,
+          'OPENAI',
+          'astra',
+          ModelUsageType.PRIMARY,
+          ModelCostClass.PREMIUM,
+        ),
+      ).toBe(false);
+    });
+
     it('ADMIN can use any model', () => {
       expect(
         isModelAllowedForUsage(admin, 'ANTHROPIC', 'claude-opus', ModelUsageType.PRIMARY),

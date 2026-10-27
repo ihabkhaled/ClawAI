@@ -35,5 +35,7 @@ export const planModelAccessRowSchema = z.object({
 
 export const setPlanModelAccessSchema = z.object({
   models: z.array(planModelAccessRowSchema).max(500),
+  modelAccessMode: z.enum(['ALLOW_LIST', 'ALLOW_COST_CLASSES', 'DENY_ALL']),
+  allowedCostClasses: z.array(z.enum(['FREE', 'CHEAP', 'STANDARD', 'PREMIUM', 'ULTRA'])).max(5),
 });
 export type SetPlanModelAccessDto = z.infer<typeof setPlanModelAccessSchema>;

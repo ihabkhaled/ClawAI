@@ -1,4 +1,4 @@
-import { type Permission, PlanModelAccessMode } from '@claw/shared-types';
+import { type ModelCostClass, type Permission, PlanModelAccessMode } from '@claw/shared-types';
 import { CREDIT_UNLOCKABLE_FEATURES } from './credit-unlockable-features.constants';
 import { ModelUsageType, type PlanFeature, type UserEntitlements } from './types';
 
@@ -15,7 +15,9 @@ export function hasPlanFeature(ent: UserEntitlements, feature: PlanFeature): boo
   }
   return ent.hasPaygCredit === true && CREDIT_UNLOCKABLE_FEATURES.has(feature)
     ? true
-    : (ent.plan?.featureGates[feature] ?? false);
+    : Object.entries(ent.plan?.featureGates ?? {}).some(
+        ([gate, enabled]) => gate === feature && enabled === true,
+      );
 }
 
 // Is the given provider/model allowed for a usage type? ADMIN bypasses.
@@ -24,6 +26,7 @@ export function isModelAllowedForUsage(
   provider: string,
   model: string,
   usage: ModelUsageType,
+  costClass?: ModelCostClass,
 ): boolean {
   if (ent.isAdmin) {
     return true;
@@ -37,24 +40,44 @@ export function isModelAllowedForUsage(
   if (ent.modelAccessMode === PlanModelAccessMode.DENY_ALL) {
     return false;
   }
+  const entry = ent.allowedModels.find((m) => m.provider === provider && m.model === model);
+  if (ent.modelAccessMode === PlanModelAccessMode.ALLOW_COST_CLASSES) {
+    if (costClass === undefined || !(ent.allowedCostClasses ?? []).includes(costClass)) {
+      return false;
+    }
+    if (entry) {
+      if (!entry.isAllowed) return false;
+      switch (usage) {
+        case ModelUsageType.PRIMARY:
+          return entry.allowAsPrimary;
+        case ModelUsageType.FALLBACK:
+          return entry.allowAsFallback;
+        case ModelUsageType.JUDGE:
+          return entry.allowAsJudge;
+        default:
+          return entry.allowInCompare;
+      }
+    }
+    return true;
+  }
   if (ent.modelAccessMode === undefined && ent.allowedModels.length === 0) {
     return true;
   }
-  const entry = ent.allowedModels.find(
+  const allowListEntry = ent.allowedModels.find(
     (m) => m.provider === provider && m.model === model && m.isAllowed,
   );
-  if (!entry) {
+  if (!allowListEntry) {
     return false;
   }
   switch (usage) {
     case ModelUsageType.PRIMARY:
-      return entry.allowAsPrimary;
+      return allowListEntry.allowAsPrimary;
     case ModelUsageType.FALLBACK:
-      return entry.allowAsFallback;
+      return allowListEntry.allowAsFallback;
     case ModelUsageType.JUDGE:
-      return entry.allowAsJudge;
+      return allowListEntry.allowAsJudge;
     case ModelUsageType.COMPARE:
-      return entry.allowInCompare;
+      return allowListEntry.allowInCompare;
   }
 }
 

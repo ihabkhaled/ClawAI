@@ -381,8 +381,8 @@ ${text}
       review(70),
     ]);
 
-    await expect(harness.manager.generate(input)).rejects.toThrow(
-      'Generation did not pass consensus and reviews in three rounds',
+    await expect(harness.manager.generate(input)).rejects.toBeInstanceOf(
+      DeterministicGenerationError,
     );
     expect(
       harness.models.generate.mock.calls.filter((call) =>

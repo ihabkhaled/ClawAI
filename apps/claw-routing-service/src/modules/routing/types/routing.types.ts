@@ -35,6 +35,7 @@ export interface RoutingContext {
    * its pick afterwards. Ignored when `modelAccessAllowAll` is true.
    */
   allowedModels?: string[];
+  allowedCostClasses?: string[];
   modelAccessAllowAll?: boolean;
   /**
    * The dearest model, as its OUTPUT price in micro-USD per million tokens, that the plan's free

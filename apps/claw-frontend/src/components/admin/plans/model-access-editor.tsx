@@ -6,10 +6,15 @@ import type { ReactElement } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { PlanModelAccessMode } from '@/enums';
 import type { ModelAccessEditorProps } from '@/types';
 
 export function ModelAccessEditor({
   rows,
+  modelAccessMode,
+  onModelAccessModeChange,
+  allowedCostClasses,
+  onCostClassesChange,
   exposedModels,
   addRow,
   removeRow,
@@ -20,8 +25,50 @@ export function ModelAccessEditor({
   saveErrorMessage,
   t,
 }: ModelAccessEditorProps): ReactElement {
+  const costClasses = allowedCostClasses ?? [];
+  const updateCostClasses = onCostClassesChange ?? (() => undefined);
+  const accessMode = modelAccessMode ?? PlanModelAccessMode.ALLOW_COST_CLASSES;
+  const updateAccessMode = onModelAccessModeChange ?? (() => undefined);
   return (
     <div className="grid grid-cols-1 gap-4">
+      <fieldset className="grid grid-cols-1 gap-2 rounded-lg border p-4">
+        <label className="grid grid-cols-1 gap-1 text-sm">
+          {t('adminPlans.modelAccess.mode')}
+          <select
+            className="border-input bg-background h-9 rounded-md border px-3"
+            value={accessMode}
+            onChange={(event) => updateAccessMode(event.target.value as PlanModelAccessMode)}
+          >
+            <option value={PlanModelAccessMode.ALLOW_COST_CLASSES}>
+              {t('adminPlans.modelAccess.modeCostClasses')}
+            </option>
+            <option value={PlanModelAccessMode.ALLOW_LIST}>
+              {t('adminPlans.modelAccess.modeAllowList')}
+            </option>
+            <option value={PlanModelAccessMode.DENY_ALL}>
+              {t('adminPlans.modelAccess.modeDenyAll')}
+            </option>
+          </select>
+        </label>
+        <legend className="px-1 text-sm font-medium">
+          {t('adminPlans.modelAccess.costClasses')}
+        </legend>
+        {(['FREE', 'CHEAP', 'STANDARD', 'PREMIUM', 'ULTRA'] as const).map((costClass) => (
+          <label key={costClass} className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={costClasses.includes(costClass)}
+              onCheckedChange={(checked) =>
+                updateCostClasses(
+                  checked === true
+                    ? [...costClasses, costClass]
+                    : costClasses.filter((value) => value !== costClass),
+                )
+              }
+            />
+            {t(`adminPlans.modelAccess.costClass.${costClass}`)}
+          </label>
+        ))}
+      </fieldset>
       {rows.length === 0 ? (
         <p className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm">
           {t('adminPlans.modelAccess.empty')}

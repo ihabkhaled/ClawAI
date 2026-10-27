@@ -1,5 +1,5 @@
 import { type QuotaWindowUsage } from '../../quota/types/quota.types';
-import { type Permission } from '@claw/shared-types';
+import { type ModelCostClass, type Permission } from '@claw/shared-types';
 import { type PlanModelAccessMode } from '../../../generated/prisma';
 import { type PlanFeatureGates, type PlanModelAccessView } from '../../plans/types/plans.types';
 
@@ -38,6 +38,7 @@ export type UserEntitlements = {
   // The explicit mode disambiguates unrestricted access from an empty
   // allow-list or deny-all policy.
   modelAccessMode: PlanModelAccessMode;
+  allowedCostClasses: ModelCostClass[];
   // PAYG metering is on and the wallet has spendable credit (ADR-139). Lets a
   // plan-locked media feature through; the PAYG reservation still gates spend.
   hasPaygCredit: boolean;

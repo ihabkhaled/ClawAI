@@ -88,6 +88,7 @@ import { ThreadJobBudgetCreditLinkService } from './services/thread-job-budget-c
     CreditLedgerRepository,
     CreditFreeAllowanceService,
     CreditFreeAllowanceRepository,
+    ModelRateClient,
   ],
 })
 export class CreditModule {}

@@ -87,6 +87,10 @@ export function useModelAccessPage(): UseModelAccessPageResult & {
   const { groupedModels, isLoading: isCatalogLoading } = useAvailableModels();
 
   const [rows, setRows] = useState<ModelAccessRowState[]>([]);
+  const [allowedCostClasses, setAllowedCostClasses] = useState<string[]>([]);
+  const [modelAccessMode, setModelAccessMode] = useState<PlanModelAccessMode>(
+    PlanModelAccessMode.ALLOW_COST_CLASSES,
+  );
   const [saveError, setSaveError] = useState<Error | null>(null);
 
   const query = useQuery({
@@ -117,6 +121,8 @@ export function useModelAccessPage(): UseModelAccessPageResult & {
     if (seededForRef.current === seedKey) {
       return;
     }
+    setAllowedCostClasses(query.data.allowedCostClasses ?? []);
+    setModelAccessMode(query.data.modelAccessMode ?? PlanModelAccessMode.ALLOW_LIST);
 
     if (
       query.data.modelAccessMode === PlanModelAccessMode.ALLOW_LIST ||
@@ -191,8 +197,12 @@ export function useModelAccessPage(): UseModelAccessPageResult & {
       message: 'Saving model access',
       details: { planId, count: rows.length },
     });
-    saveMutation.mutate({ models: rows.map(toInput) });
-  }, [rows, saveMutation, planId]);
+    saveMutation.mutate({
+      models: rows.map(toInput),
+      modelAccessMode,
+      allowedCostClasses,
+    });
+  }, [rows, allowedCostClasses, modelAccessMode, saveMutation, planId]);
 
   const onCancel = useCallback((): void => goBack(), [goBack]);
   const onRetry = useCallback((): void => {
@@ -203,7 +213,11 @@ export function useModelAccessPage(): UseModelAccessPageResult & {
     t,
     user: user ?? null,
     plan: query.data ?? null,
+    modelAccessMode,
+    setModelAccessMode,
     rows,
+    allowedCostClasses,
+    setAllowedCostClasses,
     isLoading: query.isLoading || isCatalogLoading,
     isError: query.isError,
     error: (query.error as Error | null) ?? null,

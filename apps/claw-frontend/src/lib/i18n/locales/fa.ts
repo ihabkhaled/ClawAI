@@ -5070,6 +5070,18 @@ export const fa: TranslationDictionary = {
       allowTextToSpeech: 'تبدیل متن به گفتار',
     },
     modelAccess: {
+      mode: 'حالت دسترسی',
+      modeCostClasses: 'رده‌های هزینه مجاز',
+      modeAllowList: 'فهرست صریح مدل‌های مجاز',
+      modeDenyAll: 'هیچ مدلی مجاز نیست',
+      costClasses: 'رده‌های هزینه مدل‌های مجاز',
+      costClass: {
+        FREE: 'رایگان',
+        CHEAP: 'اقتصادی',
+        STANDARD: 'استاندارد',
+        PREMIUM: 'ممتاز',
+        ULTRA: 'فوق‌پیشرفته',
+      },
       title: 'دسترسی به مدل',
       description: 'مدل‌های ارائه‌دهنده را که این طرح می‌تواند استفاده کند، محدود کنید.',
       empty: 'قاعده‌ای برای مدل‌ها وجود ندارد. این طرح تا زمان افزودن مدل، هیچ مدلی نمی‌دهد.',
@@ -5783,12 +5795,16 @@ export const fa: TranslationDictionary = {
         'در دسترس بودن مدل از برنامه زمانبندی انتشار خود هر ارائه دهنده پیروی می کند.مدل های جدید با ارسال اضافه می شوند.',
     },
     pricing: {
+      modelAccessLabel: 'دسترسی به مدل‌ها',
+      modelAccessPaidOnly: 'مدل‌های رایگان، کم‌هزینه و استاندارد',
+      modelAccessAllClasses: 'همه رده‌های مدل، شامل Premium و Ultra',
+      modelAccessNone: 'بدون رده مدل',
       paygCreditRate: '{percent}٪ از قیمت پلن شما',
       paygCreditLabel: 'اعتبار ماهانهٔ رابط‌ها',
       paygCreditNone: 'بدون اعتبار رابط',
       sectionTitle: 'برنامه هایی که با شما مقیاس می شوند',
       sectionSubtitle:
-        'رایگان شروع کنید.زمانی که به موارد بیشتری نیاز دارید ارتقا دهید.هر طرح پولی به مدل‌های یکسانی می‌رسد - تفاوت این است که چقدر می‌توانید استفاده کنید.',
+        'طرح Free شامل رده‌های Free، Cheap و Standard است. همه طرح‌های پولی Premium و Ultra را نیز دارند. رده‌های هر طرح روی کارت آن نمایش داده می‌شود.',
       monthly: 'ماهانه',
       yearly: 'سالانه',
       perMonth: '/ماه',
@@ -5823,7 +5839,7 @@ export const fa: TranslationDictionary = {
       plusHighlight3: '25 چت و 250 پیام در روز',
       proName: 'حرفه ای',
       proTagline: 'برای حرفه ای هایی که روزانه به آن تکیه می کنند.',
-      proHighlight1: 'مدل های پریمیوم از جمله Claude Opus و GPT-5 را اضافه می کند',
+      proHighlight1: 'شامل رده‌های مدل Premium و Ultra',
       proHighlight2: '150 مقایسه و 75 قاضی اجرا در ماه',
       proHighlight3: '75 چت و 750 پیام در روز',
       teamName: 'تیم',
@@ -6432,7 +6448,7 @@ export const fa: TranslationDictionary = {
         grokStrength: 'پاسخ های مکالمه سریع با آگاهی از رویدادهای اخیر.',
         bedrockStrength: 'مدل‌های میزبان AWS برای تیم‌هایی که قبلاً در آمازون استاندارد شده‌اند.',
         outro:
-          'اینکه یک طرح به کدام مدل می‌تواند برسد، به سطح آن بستگی دارد: مدل‌های ورودی رایگان، همه چیز از جمله بزرگترین مدل‌های مرزی از Pro به بالا.با انتشار ارائه دهندگان مدل های جدید اضافه می شوند.',
+          'طرح Free شامل کلاس‌های Free، Cheap و Standard است. همه طرح‌های پولی Premium و Ultra را نیز شامل می‌شوند؛ مدل‌های در دسترس در کارت هر طرح نمایش داده می‌شوند. با انتشار ارائه‌دهندگان، مدل‌های جدید اضافه می‌شوند.',
       },
       routing: {
         title: 'چگونه ClawAI تصمیم می گیرد که کدام مدل پاسخ دهد',
@@ -6975,7 +6991,7 @@ export const fa: TranslationDictionary = {
         description: 'کدام مدل ها را دریافت می کنید، و چگونه یکی انتخاب می شود.',
         availableModelsQ: 'از کدام مدل ها می توانم استفاده کنم؟',
         availableModelsA:
-          'Claude Opus 5، Sonnet 5 و Fable 5;GPT-5 و GPT-5 مینی؛Gemini 3 Pro و Flash;Kimi K2;GLM-5.1;Qwen3;DeepSeek V3.2;Grok 4;و مدل های میزبانی شده در Amazon Bedrock.طرح‌های رایگان و ارزان‌تر به مدل‌های ورودی و میان‌رده می‌رسند.قفل مدل های مرزی ممتاز از Pro به بالا باز می شود.',
+          'Claude Opus 5، Sonnet 5 و Fable 5;GPT-5 و GPT-5 مینی؛Gemini 3 Pro و Flash;Kimi K2;GLM-5.1;Qwen3;DeepSeek V3.2;Grok 4;و مدل های میزبانی شده در Amazon Bedrock.طرح Free شامل کلاس‌های Free، Cheap و Standard است. همه طرح‌های پولی Premium و Ultra را نیز دارند؛ مدل‌های در دسترس در کارت هر طرح نمایش داده می‌شوند.',
         autoRoutingQ: 'مسیریابی خودکار در واقع چه کاری انجام می دهد؟',
         autoRoutingA:
           'هر پیام را طبقه بندی می کند - کد، استدلال، تجزیه و تحلیل، نوشتن خلاقانه، تصویر، سؤال روزمره - و آن را به مدلی می فرستد که در آن کلاس قوی و در حال حاضر سالم است.سپس پاسخ به شما می گوید که کدام مدل انتخاب شده است، طبقه بندی چقدر مطمئن بوده و چرا.',

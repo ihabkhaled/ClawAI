@@ -62,6 +62,7 @@ const makeDb = (existing: Record<string, Record<string, unknown>>) => {
         return Promise.resolve({});
       },
     },
+    planModelAccess: { count: async () => Promise.resolve(0) },
     userPlanAssignment: { updateMany: async () => Promise.resolve({ count: 0 }) },
   };
   return { db, created, updated, rules };

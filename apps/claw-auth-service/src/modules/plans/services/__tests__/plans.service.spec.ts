@@ -428,12 +428,21 @@ describe('PlansService', () => {
     it('persists rows that connector-service confirms are exposed', async () => {
       const models = [{ provider: 'GEMINI', model: 'gemini-2.5-pro', isAllowed: true }];
 
-      await service.setModelAccess(freePlan.id, { models } as never);
+      await service.setModelAccess(freePlan.id, {
+        models,
+        modelAccessMode: PlanModelAccessMode.ALLOW_LIST,
+        allowedCostClasses: [],
+      } as never);
 
       expect(exposedModels.findExposed).toHaveBeenCalledWith([
         { provider: 'GEMINI', model: 'gemini-2.5-pro' },
       ]);
-      expect(repo.replaceModelAccess).toHaveBeenCalledWith(freePlan.id, models);
+      expect(repo.replaceModelAccess).toHaveBeenCalledWith(
+        freePlan.id,
+        models,
+        PlanModelAccessMode.ALLOW_LIST,
+        [],
+      );
     });
 
     it('refuses a model that was never synced and writes nothing', async () => {
@@ -445,6 +454,8 @@ describe('PlansService', () => {
       await expect(
         service.setModelAccess(freePlan.id, {
           models: [{ provider: 'GEMINI', model: 'totally-made-up', isAllowed: true }],
+          modelAccessMode: PlanModelAccessMode.ALLOW_LIST,
+          allowedCostClasses: [],
         } as never),
       ).rejects.toThrow(/not available to assign/i);
 
@@ -473,10 +484,19 @@ describe('PlansService', () => {
     it('does not call connector-service when clearing every model', async () => {
       // An empty list removes access. There is nothing to validate, and asking
       // would fail the request whenever connector-service is down.
-      await service.setModelAccess(freePlan.id, { models: [] } as never);
+      await service.setModelAccess(freePlan.id, {
+        models: [],
+        modelAccessMode: PlanModelAccessMode.DENY_ALL,
+        allowedCostClasses: [],
+      } as never);
 
       expect(exposedModels.findExposed).not.toHaveBeenCalled();
-      expect(repo.replaceModelAccess).toHaveBeenCalledWith(freePlan.id, []);
+      expect(repo.replaceModelAccess).toHaveBeenCalledWith(
+        freePlan.id,
+        [],
+        PlanModelAccessMode.DENY_ALL,
+        [],
+      );
     });
 
     it('audits the grant with the plan and the model identities', async () => {

@@ -195,6 +195,8 @@ export type UpdatePlanRequest = Partial<CreatePlanRequest>;
 
 export type UpdatePlanModelAccessRequest = {
   models: PlanModelAccessInput[];
+  modelAccessMode?: PlanModelAccessMode;
+  allowedCostClasses?: string[];
 };
 
 export type ReorderPlansRequest = {
@@ -431,7 +433,11 @@ export type UsePlanFormPageResult = {
 
 export type UseModelAccessPageResult = {
   plan: PlanView | null;
+  modelAccessMode: PlanModelAccessMode;
+  setModelAccessMode: (mode: PlanModelAccessMode) => void;
   rows: ModelAccessRowState[];
+  allowedCostClasses: string[];
+  setAllowedCostClasses: (classes: string[]) => void;
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
@@ -496,6 +502,10 @@ export type PlanFormProps = {
 
 export type ModelAccessEditorProps = {
   rows: ModelAccessRowState[];
+  modelAccessMode?: PlanModelAccessMode;
+  onModelAccessModeChange?: (mode: PlanModelAccessMode) => void;
+  allowedCostClasses?: string[];
+  onCostClassesChange?: (classes: string[]) => void;
   /**
    * Deployments an administrator has exposed, and therefore the only ones a
    * plan may be given. Optional so the editor still renders while the list is

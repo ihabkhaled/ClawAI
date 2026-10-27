@@ -18,18 +18,28 @@ export function applyPlanModelGate(
   decision: RoutingDecisionResult,
   allowedModels: string[],
   unrestricted = false,
+  allowedCostClasses?: string[],
+  costClassOf?: (provider: string, model: string) => string | undefined,
 ): PlanModelGateResult {
   if (unrestricted) {
     return { decision, outcome: 'unrestricted', excludedCandidates: 0 };
   }
   const totalCandidates = 1 + (decision.fallbackChain ?? []).length;
-  if (allowedModels.length === 0) {
+  if (allowedModels.length === 0 && allowedCostClasses === undefined) {
     // A restricted plan with nothing on its list authorizes nothing.
     return { decision, outcome: 'unsatisfiable', excludedCandidates: totalCandidates };
   }
   const allowed = new Set(allowedModels);
-  const isAllowed = (provider: string, model: string): boolean =>
-    allowed.has(`${provider}/${model}`);
+  const classes = new Set(allowedCostClasses ?? []);
+  const isAllowed = (provider: string, model: string): boolean => {
+    if (allowedCostClasses !== undefined) {
+      const costClass = costClassOf?.(provider, model);
+      if (costClass === undefined || !classes.has(costClass)) return false;
+    }
+    if (allowed.has(`${provider}/${model}`)) return true;
+    if (allowedCostClasses === undefined) return false;
+    return true;
+  };
   const filteredChain = (decision.fallbackChain ?? []).filter((e) =>
     isAllowed(e.provider, e.model),
   );

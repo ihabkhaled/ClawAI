@@ -1,4 +1,9 @@
-import type { Permission, PlanModelAccessMode, QuotaWindow } from '@claw/shared-types';
+import type {
+  ModelCostClass,
+  Permission,
+  PlanModelAccessMode,
+  QuotaWindow,
+} from '@claw/shared-types';
 
 export type PlanFeatureGates = {
   allowCompareMode: boolean;
@@ -89,6 +94,8 @@ export type UserEntitlements = {
   // Optional during rolling upgrades; explicit modes disambiguate unrestricted
   // access from an empty allow-list or deny-all policy.
   modelAccessMode?: PlanModelAccessMode;
+  allowedCostClasses?: ModelCostClass[];
+  // Optional during rolling deploys. ALLOW_COST_CLASSES fails closed when absent.
   // True when PAYG metering is on and the wallet has spendable credit (ADR-139).
   // Optional: an older auth-service omits it, which reads as false (fail closed).
   hasPaygCredit?: boolean;

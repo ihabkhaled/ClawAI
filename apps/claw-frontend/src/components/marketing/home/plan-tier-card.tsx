@@ -104,6 +104,14 @@ export function PlanTierCard({ plan, interval }: PublicPlanCardProps): React.Rea
 
       <dl className="text-muted-foreground mt-6 space-y-2.5 text-xs">
         <div className="flex justify-between gap-2">
+          <dt>{t('marketing.pricing.modelAccessLabel')}</dt>
+          <dd className="text-foreground text-end font-medium">
+            {(plan.allowedCostClasses ?? [])
+              .map((costClass) => t(`adminPlans.modelAccess.costClass.${costClass}`))
+              .join(', ') || t('marketing.pricing.modelAccessNone')}
+          </dd>
+        </div>
+        <div className="flex justify-between gap-2">
           <dt>{t('userPlan.dailyLimitLabel')}</dt>
           <dd className="text-foreground font-medium">
             {formatPlanQuota(plan.dailyTokenQuota, disabled, unlimited, locale)}

@@ -1259,6 +1259,7 @@ export class ChatMessagesService implements OnModuleInit {
       forcedModel: regenModel,
       allowedModels: entitlements ? allowedModelKeys(entitlements) : [],
       modelAccessMode: entitlements?.modelAccessMode,
+      allowedCostClasses: entitlements?.allowedCostClasses ?? [],
       regenerate: true,
       ...modality,
       timestamp: new Date().toISOString(),
@@ -1430,6 +1431,7 @@ export class ChatMessagesService implements OnModuleInit {
       forcedModel,
       allowedModels: entitlements ? allowedModelKeys(entitlements) : [],
       modelAccessMode: entitlements?.modelAccessMode,
+      allowedCostClasses: entitlements?.allowedCostClasses ?? [],
       // The same flag regeneration uses: routing must not bill this as a new
       // turn against the daily message ceiling, because it is the same turn.
       regenerate: true,

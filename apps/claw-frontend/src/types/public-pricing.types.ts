@@ -51,6 +51,7 @@ type PublicPlanNegotiableFields = {
    * that misses one publishes a price we do not honour.
    */
   paygCreditPercentBps: number;
+  allowedCostClasses?: string[];
 };
 
 type PublicPlanCoreFields = {
@@ -63,6 +64,7 @@ type PublicPlanCoreFields = {
   isDefault: boolean;
   /** The plan this page badges "Most popular". */
   isPopular: boolean;
+  allowedCostClasses?: string[];
   dailyTokenQuota: number | null;
   weeklyTokenQuota: number | null;
   monthlyTokenQuota: number | null;

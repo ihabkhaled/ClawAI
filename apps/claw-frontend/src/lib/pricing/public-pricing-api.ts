@@ -16,6 +16,7 @@ function normalizePublicPlan(plan: PublicPlanResponse): PublicPlan {
   return {
     ...plan,
     paygCreditPercentBps: plan.paygCreditPercentBps ?? 0,
+    allowedCostClasses: plan.allowedCostClasses ?? [],
     // An older auth service omits these columns. Defaulting isPublic/isActive
     // to true keeps such a catalog renderable rather than filtering every plan
     // away and showing an empty page, which would look like an outage.

@@ -20,6 +20,7 @@ declare module '*/plan-catalog.seeder.cjs' {
       create(args: { data: Record<string, unknown> }): Promise<unknown>;
     };
     planFeatureRule: { upsert(args: Record<string, unknown>): Promise<unknown> };
+    planModelAccess: { count(args: { where: { planId: string } }): Promise<number> };
     userPlanAssignment: { updateMany(args: Record<string, unknown>): Promise<{ count: number }> };
   };
 

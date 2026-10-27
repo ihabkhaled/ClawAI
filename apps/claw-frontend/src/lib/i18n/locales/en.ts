@@ -5037,6 +5037,18 @@ export const en: TranslationDictionary = {
       allowTextToSpeech: 'Text-to-speech',
     },
     modelAccess: {
+      mode: 'Access mode',
+      modeCostClasses: 'Allowed cost classes',
+      modeAllowList: 'Explicit model allow-list',
+      modeDenyAll: 'No models allowed',
+      costClasses: 'Allowed model cost classes',
+      costClass: {
+        FREE: 'Free',
+        CHEAP: 'Cheap',
+        STANDARD: 'Standard',
+        PREMIUM: 'Premium',
+        ULTRA: 'Ultra',
+      },
       title: 'Model Access',
       description: 'Restrict which provider models this plan can use.',
       empty: 'No model rules. This plan grants no models until one is added.',
@@ -5748,12 +5760,16 @@ export const en: TranslationDictionary = {
         'Model availability follows each provider’s own release schedule. New models are added as they ship.',
     },
     pricing: {
+      modelAccessLabel: 'Model access',
+      modelAccessPaidOnly: 'Free, cost-efficient and standard models',
+      modelAccessAllClasses: 'All model classes, including Premium and Ultra',
+      modelAccessNone: 'No model classes',
       paygCreditRate: '{percent}% of your plan price',
       paygCreditLabel: 'Monthly connector credit',
       paygCreditNone: 'No connector credit',
       sectionTitle: 'Plans that scale with you',
       sectionSubtitle:
-        'Start free. Upgrade when you need more. Every paid plan reaches the same models — the difference is how much you can use.',
+        'Free includes Free, Cheap and Standard models. Every paid plan also includes Premium and Ultra models. Each plan card lists its model classes.',
       monthly: 'Monthly',
       yearly: 'Yearly',
       perMonth: '/month',
@@ -5788,7 +5804,7 @@ export const en: TranslationDictionary = {
       plusHighlight3: '25 chats and 250 messages per day',
       proName: 'Pro',
       proTagline: 'For professionals who rely on it daily.',
-      proHighlight1: 'Adds premium models including Claude Opus and GPT-5',
+      proHighlight1: 'Includes Premium and Ultra model classes',
       proHighlight2: '150 Compare and 75 Judge runs per month',
       proHighlight3: '75 chats and 750 messages per day',
       teamName: 'Team',
@@ -6375,11 +6391,11 @@ export const en: TranslationDictionary = {
           'An email address and a password is all it takes. There is no provider account to create, no API key to paste and nothing to install — ClawAI holds the provider relationships on your behalf.',
         plansHeading: 'The plans',
         plansBody:
-          'Seven tiers, from free to Unlimited. Every paid plan reaches every model; what changes is how much you can use and which multi-model modes are unlocked.',
+          'Seven tiers, from Free to Unlimited. Free includes Free, Cheap and Standard model classes; every paid plan includes all five classes. Allowances and multi-model modes vary by plan.',
         bullet1:
           'Free. A small daily allowance, entry-tier models, and one trial run each of Compare, Judge and Research.',
         bullet2:
-          'Starter, Plus and Pro. Rising allowances, with premium models and larger Compare and Judge quotas as you go up.',
+          'Starter, Plus and Pro. All five model classes, with rising allowances and larger Compare and Judge quotas as you go up.',
         bullet3:
           'Team and Scale. Unlimited Compare, Judge, Critic and Research, plus many more workspace connections.',
         bullet4:
@@ -6404,7 +6420,7 @@ export const en: TranslationDictionary = {
         grokStrength: 'Fast conversational answers with awareness of recent events.',
         bedrockStrength: 'AWS-hosted models for teams already standardised on Amazon.',
         outro:
-          'Which models a plan can reach depends on the tier: entry models on Free, everything including the largest frontier models from Pro upward. New models are added as providers release them.',
+          'Free includes Free, Cheap and Standard models. Every paid plan includes Premium and Ultra models; each plan card lists its access. New models are added as providers release them.',
       },
       routing: {
         title: 'How ClawAI decides which model answers',
@@ -6956,7 +6972,7 @@ export const en: TranslationDictionary = {
         description: 'Which models you get, and how one is chosen.',
         availableModelsQ: 'Which models can I use?',
         availableModelsA:
-          'Claude Opus 5, Sonnet 5 and Fable 5; GPT-5 and GPT-5 mini; Gemini 3 Pro and Flash; Kimi K2; GLM-5.1; Qwen3; DeepSeek V3.2; Grok 4; and models hosted on Amazon Bedrock. Free and the lower-priced plans reach entry and mid-tier models; the premium frontier models unlock from Pro upward.',
+          'Claude Opus 5, Sonnet 5 and Fable 5; GPT-5 and GPT-5 mini; Gemini 3 Pro and Flash; Kimi K2; GLM-5.1; Qwen3; DeepSeek V3.2; Grok 4; and models hosted on Amazon Bedrock. Free reaches Free, Cheap and Standard cost classes. Every paid plan also includes Premium and Ultra classes; each plan card lists its access.',
         autoRoutingQ: 'What does Auto routing actually do?',
         autoRoutingA:
           'It classifies each message — code, reasoning, analysis, creative writing, image, everyday question — and sends it to a model that is strong at that class and healthy right now. The answer then tells you which model was chosen, how confident the classification was, and why.',

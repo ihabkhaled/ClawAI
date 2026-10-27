@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import type { PaygMeter } from '@claw/shared-entitlements';
 import { AccessControlService } from '../access-control.service';
-import { BillingErrorCode } from '@claw/shared-types';
+import { BillingErrorCode, ModelCostClass, PlanModelAccessMode } from '@claw/shared-types';
 
 const getEntitlements = vi.fn();
 const finalizeQuota = vi.fn();
@@ -11,11 +11,13 @@ const settleFeatureUsage = vi.fn();
 // Exposure is a network call to connector-service; the harness stubs it so the
 // suite tests the gate's decision, not connectivity. Default: exposed.
 const isExposed = vi.fn().mockResolvedValue(true);
+const getCostClass = vi.fn();
 
 vi.mock('../../clients/model-exposure.client', () => ({
   ModelExposureClient: vi.fn(function () {
     return {
       isExposed: (...args: unknown[]) => isExposed(...args),
+      getCostClass: (...args: unknown[]) => getCostClass(...args),
     };
   }),
 }));
@@ -104,6 +106,32 @@ describe('AccessControlService', () => {
     );
     await expect(
       service.assertCanSendMessage('u1', { provider: 'ANTHROPIC', model: 'claude-opus' }),
+    ).rejects.toMatchObject({ code: 'MODEL_NOT_ALLOWED_FOR_PLAN' });
+  });
+
+  it('keeps model rows inside the plan cost-class ceiling', async () => {
+    getEntitlements.mockResolvedValue(
+      ent({
+        modelAccessMode: PlanModelAccessMode.ALLOW_COST_CLASSES,
+        allowedCostClasses: [ModelCostClass.FREE, ModelCostClass.CHEAP, ModelCostClass.STANDARD],
+        allowedModels: [
+          {
+            provider: 'OPENAI',
+            model: 'astra',
+            isAllowed: true,
+            allowAsPrimary: true,
+            allowAsFallback: true,
+            allowAsJudge: true,
+            allowInCompare: true,
+            dailyTokenLimitOverride: null,
+          },
+        ],
+      }),
+    );
+    getCostClass.mockResolvedValue(ModelCostClass.PREMIUM);
+
+    await expect(
+      service.assertCanSendMessage('u1', { provider: 'OPENAI', model: 'astra' }),
     ).rejects.toMatchObject({ code: 'MODEL_NOT_ALLOWED_FOR_PLAN' });
   });
 

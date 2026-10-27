@@ -179,6 +179,7 @@ describe('plugins plan gate', () => {
           create: async () => Promise.resolve({}),
         },
         planFeatureRule: { upsert: async () => Promise.resolve({}) },
+        planModelAccess: { count: async () => Promise.resolve(0) },
         userPlanAssignment: { updateMany: async () => Promise.resolve({ count: 0 }) },
       };
       return { db, created, updated };
@@ -243,6 +244,45 @@ describe('plugins plan gate', () => {
       expect(pro?.data).not.toHaveProperty('allowPlugins');
       expect(pro?.data).not.toHaveProperty('maxInstalledPlugins');
       expect(pro?.data).not.toHaveProperty('maxUserMcpServers');
+    });
+
+    it('migrates only built-in unrestricted plans without explicit model rules', async () => {
+      const { run } = await import('../../../../prisma/seeders/plan-catalog.seeder.cjs');
+      const { db, updated } = makeDb({
+        free: {
+          id: 'free-id',
+          slug: 'free',
+          dailyTokenQuota: 400_000,
+          modelAccessMode: 'ALLOW_ALL',
+          allowedCostClasses: [],
+        },
+      });
+
+      await run(db);
+
+      const free = updated.find((entry) => entry.id === 'free-id');
+      expect(free?.data.modelAccessMode).toBe('ALLOW_COST_CLASSES');
+      expect(free?.data.allowedCostClasses).toEqual(['FREE', 'CHEAP', 'STANDARD']);
+    });
+
+    it('preserves unrestricted plans that already have explicit model rules', async () => {
+      const { run } = await import('../../../../prisma/seeders/plan-catalog.seeder.cjs');
+      const { db, updated } = makeDb({
+        free: {
+          id: 'free-id',
+          slug: 'free',
+          dailyTokenQuota: 400_000,
+          modelAccessMode: 'ALLOW_ALL',
+          allowedCostClasses: [],
+        },
+      });
+      db.planModelAccess.count = async () => Promise.resolve(1);
+
+      await run(db);
+
+      const free = updated.find((entry) => entry.id === 'free-id');
+      expect(free?.data.modelAccessMode).toBe('ALLOW_ALL');
+      expect(free?.data).not.toHaveProperty('allowedCostClasses');
     });
   });
 

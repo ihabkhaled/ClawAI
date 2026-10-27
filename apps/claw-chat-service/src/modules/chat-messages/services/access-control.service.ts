@@ -27,7 +27,13 @@ import {
   resolvePlanLimit,
   type UserEntitlements,
 } from '@claw/shared-entitlements';
-import { type PaygFinalizeOutcome, PaygSurface, Permission, QuotaWindow } from '@claw/shared-types';
+import {
+  type PaygFinalizeOutcome,
+  PaygSurface,
+  Permission,
+  PlanModelAccessMode,
+  QuotaWindow,
+} from '@claw/shared-types';
 import { estimateTextTokens } from '@claw/shared-utilities';
 import { ModelExposureClient } from '../clients/model-exposure.client';
 import { ModelAuthorizationDenialReason } from '../enums/model-authorization-denial-reason.enum';
@@ -198,7 +204,7 @@ export class AccessControlService {
       // sum tells you what the gate costs a message.
       const startedAt = Date.now();
       try {
-        this.assertModelAllowed(ent, opts.provider, opts.model, userId);
+        await this.assertModelAllowed(ent, opts.provider, opts.model, userId);
       } catch (error) {
         this.metrics.recordDenied(ModelAuthorizationDenialReason.PLAN, Date.now() - startedAt);
         throw error;
@@ -453,13 +459,23 @@ export class AccessControlService {
     );
   }
 
-  private assertModelAllowed(
+  private async assertModelAllowed(
     ent: UserEntitlements,
     provider: string,
     model: string,
     userId: string,
-  ): void {
-    const allowed = isModelAllowedForUsage(ent, provider, model, ModelUsageType.PRIMARY);
+  ): Promise<void> {
+    const costClass =
+      ent.modelAccessMode === PlanModelAccessMode.ALLOW_COST_CLASSES
+        ? await this.exposure.getCostClass(provider, model)
+        : undefined;
+    const hasAllowedCostClass =
+      ent.modelAccessMode !== PlanModelAccessMode.ALLOW_COST_CLASSES ||
+      (costClass !== null &&
+        costClass !== undefined &&
+        (ent.allowedCostClasses ?? []).includes(costClass));
+    const allowed =
+      hasAllowedCostClass && isModelAllowedForUsage(ent, provider, model, ModelUsageType.PRIMARY);
     if (allowed) {
       return;
     }
@@ -523,11 +539,12 @@ export class AccessControlService {
     // message key. It read 'quota.dailyLimitExceeded' here while the frontend
     // mapped QUOTA_DAILY_EXCEEDED, so nothing matched and the user got this
     // sentence in English regardless of their locale.
-    throw new BusinessException(
-      QUOTA_WINDOW_MESSAGE[window],
-      QUOTA_WINDOW_ERROR_CODE[window],
-      HttpStatus.TOO_MANY_REQUESTS,
-    );
+    const message = recordGet(QUOTA_WINDOW_MESSAGE, window);
+    const errorCode = recordGet(QUOTA_WINDOW_ERROR_CODE, window);
+    if (message === undefined || errorCode === undefined) {
+      throw new Error(`No quota error mapping for window ${window}`);
+    }
+    throw new BusinessException(message, errorCode, HttpStatus.TOO_MANY_REQUESTS);
   }
 
   private async resolve(userId: string): Promise<UserEntitlements> {

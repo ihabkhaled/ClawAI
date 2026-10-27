@@ -1833,3 +1833,7 @@ message metadata; the context gateway turns them into `AssembledContext.pluginRe
   argument hash on the frame.
 - **Config** is `PLUGIN_SERVICE_URL` (already in `.env`, passed by `env_file`); loop limits are plugin-service's
   `loop.maxRounds` / `loop.maxCallsPerTurn`, returned by `resolve`, never env.
+
+## Plan model cost-class enforcement
+
+Chat checks priced model classes from routing-service before provider execution. In ALLOW_COST_CLASSES, the allowed class set is a hard limit; a model-specific allow row cannot grant an excluded class. If pricing/class lookup is unavailable, the request is denied. See [plan and quota specification](../../docs/06-data/plan-and-quota-specification.md#5-model-access).

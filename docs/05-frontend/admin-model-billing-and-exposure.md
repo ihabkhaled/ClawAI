@@ -34,6 +34,15 @@ change a model's billing, change its provider's connector switch. No backend
 change was needed; a server-joined field on `/router-models/costs` is only
 worth adding if the 60 s auth-service policy cache must be reflected exactly.
 
+## Plan model access
+
+The admin plan editor configures access by explicit model or cost class. The
+marketing plan cards display those classes, so Free and paid access is visible
+before signup. `PREMIUM` and `ULTRA` are paid-only by default; admins can adjust
+the class grants for each plan. Auth entitlements and routing enforce the same
+policy, so hiding a model in the picker is not the security boundary. See the
+[paid model access feature note](../features/paid-model-access/README.md).
+
 ## Responsive layout (both pages)
 
 - Card/table switch is the `touch:` variant, the same as `ResponsiveTable`:

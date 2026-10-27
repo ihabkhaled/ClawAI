@@ -36,6 +36,7 @@ function build(inherit: () => Promise<number> = () => Promise.resolve(2)) {
       sourceSnapshot: { messages: [] },
       sourceSnapshotHash: 'h'.repeat(64),
     }),
+    findLastFailureCode: vi.fn().mockResolvedValue(null),
     findByIdempotencyKey: vi.fn().mockResolvedValue(null),
     findRetryChild: vi.fn().mockResolvedValue(null),
     createQueued: vi.fn(async (input: Record<string, unknown>) => {
@@ -76,6 +77,25 @@ describe('a retry resumes at the failed phase (ADR-181)', () => {
     const { service, repository } = build();
     await service.retry('job-old', { ownerId: 'owner-1', idempotencyKey: 'retry-1' });
     expect(repository.inheritCheckpoints).toHaveBeenCalledWith('job-old', 'job-new', []);
+  });
+
+  it('keeps research but invalidates all cached replies after a rejected review', async () => {
+    const { service, repository } = build();
+    repository.findLastFailureCode.mockResolvedValue('REVIEW_NOT_PASSED');
+
+    await service.retry('job-old', {
+      ownerId: 'owner-1',
+      idempotencyKey: 'retry-review',
+      models: [{ roleId: 'judge', provider: 'GEMINI', model: 'flash' }],
+    });
+
+    expect(repository.inheritCheckpoints).toHaveBeenCalledWith('job-old', 'job-new', [
+      'author-1',
+      'author-2',
+      'author-3',
+      'judge',
+      'critic',
+    ]);
   });
 
   it('starts from scratch when the owner changed the topic: new research, new drafts', async () => {
