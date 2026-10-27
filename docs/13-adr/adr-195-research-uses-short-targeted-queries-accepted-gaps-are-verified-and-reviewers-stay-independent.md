@@ -114,3 +114,11 @@ generic start error), and shows `reviewerModel` nowhere yet.
 
 **Stale when:** a later ADR changes the research client contract, the review pass rule, the healing
 ladder or the retry body.
+
+## Addendum 2026-10-28: the evidence bundle must fit the gateway prompt
+
+The first production retry on v1.220.0 failed every author with HTTP 400. chat-service logged
+`userPrompt: Too big: expected string to have <=200000 characters`. The merged evidence bundle was
+allowed 400,000 characters, and the bundle is the one part of a role prompt the healer cannot
+shrink. `EVIDENCE_BUNDLE_MAX_CHARS` is now 100,000 (under half of the gateway limit), and a spec
+fails if the cap or the merged size goes past it.

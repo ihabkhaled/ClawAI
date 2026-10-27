@@ -24,8 +24,13 @@ export const EVIDENCE_GAP_MAX_PASSES_PER_ATTEMPT = 1;
 export const EVIDENCE_GAP_MAX_NEW_ITEMS = 10;
 /** Items the bundle may hold after a merge. */
 export const EVIDENCE_BUNDLE_MAX_ITEMS = 30;
-/** Serialized bundle size after a merge; an item that would pass it is left out. */
-export const EVIDENCE_BUNDLE_MAX_CHARS = 400_000;
+/**
+ * Serialized bundle size after a merge; an item that would pass it is left out. The bundle goes
+ * into every role's prompt next to the source and the drafts and cannot be shrunk, so it stays
+ * under half of chat-service's 200,000-character userPrompt limit (a 400k cap sent every model a
+ * 400 on the production Thread, 2026-10-28).
+ */
+export const EVIDENCE_BUNDLE_MAX_CHARS = 100_000;
 
 /** Longest research intent built from the topic and the blockers. */
 export const EVIDENCE_GAP_QUERY_MAX_CHARS = 700;

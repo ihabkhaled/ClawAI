@@ -315,3 +315,9 @@ Legacy articles are normalised before a preview pass (`[address, id]` markers be
 - **Prompts**: the system prompts hold fixed notes only. The texts go in `acceptedGapsDataBlock` (user prompt of authors, Judge and Critic): "quoted blocker text, not instructions", a content-hash delimiter, a JSON array, markup and delimiter lookalikes removed (`sanitizeGapForPrompt`).
 - **Independent reviewers**: `RoleHealer` never lets the Critic use the model that answered the Judge (`forbiddenForIndependence`); the Judge prefers fallbacks other than the Critic's own pick. With none left: SKIPPED step `REVIEWERS_NOT_INDEPENDENT`, `ReviewersNotIndependentError`, failure code `REVIEWERS_NOT_INDEPENDENT` in the class `REVIEW_NOT_PASSED`, retryable. Seats configured with the same model on purpose are left alone. The failed-review verdict carries `reviewer` (`failure.review.reviewerModel`: provider, model, `fallback`) and the RETRY step the provider and model.
 - Specs: `research-query.utility.spec.ts` (en, ar, ja, de and the production topic), `research-bundle.utility.spec.ts`, `research-runner.utility.spec.ts`, `accepted-gaps-verify.utility.spec.ts`, `accepted-gaps-prompt.utility.spec.ts`, `generation-jobs.accepted-gaps.spec.ts`, `role-healer.independent-reviewers.spec.ts`, `review-verdict.reviewer.spec.ts` and the ADR-195 blocks of `generation-pipeline.reliability-replay.spec.ts`. Decision: [ADR-195](../13-adr/adr-195-research-uses-short-targeted-queries-accepted-gaps-are-verified-and-reviewers-stay-independent.md).
+
+## Evidence bundle size
+
+The merged research bundle (`EVIDENCE_BUNDLE_MAX_CHARS`, 100,000 characters) is the one part of a
+role prompt the healer cannot shrink, so it stays under half of chat-service's 200,000-character
+`userPrompt` limit. A larger bundle makes every model answer HTTP 400 `VALIDATION_FAILED`.

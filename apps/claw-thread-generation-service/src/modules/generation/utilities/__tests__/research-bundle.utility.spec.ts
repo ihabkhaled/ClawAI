@@ -1,4 +1,6 @@
+import { CHAT_GATEWAY_USER_PROMPT_MAX_CHARS } from '../../constants/healing.constants';
 import {
+  EVIDENCE_BUNDLE_MAX_CHARS,
   EVIDENCE_BUNDLE_MAX_ITEMS,
   EVIDENCE_GAP_MAX_NEW_ITEMS,
 } from '../../constants/evidence-gap.constants';
@@ -160,6 +162,30 @@ describe('combining the results of several queries (ADR-195)', () => {
         .slice(0, 2)
         .map(({ id }) => id),
     ).toEqual(['p1', 'p2']);
+  });
+
+  it('keeps the combined bundle under half of the chat gateway prompt limit', () => {
+    const big = (id: string): Record<string, unknown> => ({
+      id,
+      url: `https://example.org/${id}`,
+      text: 'x'.repeat(15_000),
+    });
+    const combined = combineQueryResults([
+      answered(
+        'q1',
+        Array.from({ length: 12 }, (_, i) => big(`a${String(i)}`)),
+      ),
+      answered(
+        'q2',
+        Array.from({ length: 12 }, (_, i) => big(`b${String(i)}`)),
+      ),
+    ]);
+
+    expect(EVIDENCE_BUNDLE_MAX_CHARS).toBeLessThanOrEqual(CHAT_GATEWAY_USER_PROMPT_MAX_CHARS / 2);
+    expect(JSON.stringify(combined?.bundle).length).toBeLessThanOrEqual(
+      EVIDENCE_BUNDLE_MAX_CHARS + 1_000,
+    );
+    expect(itemsOf(combined).length).toBeGreaterThan(0);
   });
 
   it('gives the combined bundle a hash of its own content and keeps the first run id', () => {

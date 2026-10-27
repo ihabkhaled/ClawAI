@@ -57,3 +57,4 @@ packages/shared-types (two additive optional fields). The frontend is not change
 ## Follow-up: live finding
 
 - The first production retry on v1.220.0 showed "Something went wrong (RESEARCH_QUERY)" for each research query step: the three new step codes had no frontend message and the guard test did not scan research-queries.constants.ts. Messages added in 13 locales; the guard now scans that file.
+- Second live finding (v1.220.0 retry): all authors got HTTP 400 because the evidence bundle cap (400k) was above chat-service's 200k userPrompt limit. Cap lowered to 100k; research-bundle spec asserts it. Service suite 1180 tests, tsc and eslint clean.
