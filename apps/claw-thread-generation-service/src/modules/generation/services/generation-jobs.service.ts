@@ -147,6 +147,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       () => Promise.resolve({ snapshot: snapshot.data, sha256: source.sourceSnapshotHash }),
       source.id,
       inherit ? changedRoleIds : null,
+      change.refreshResearch === true,
     );
   }
 
@@ -159,9 +160,10 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     fromJobId: string,
     toJobId: string,
     changedRoleIds: readonly string[],
+    refreshResearch: boolean,
   ): Promise<void> {
     try {
-      await this.repository.inheritCheckpoints(fromJobId, toJobId, changedRoleIds);
+      await this.repository.inheritCheckpoints(fromJobId, toJobId, changedRoleIds, refreshResearch);
     } catch {
       this.logger.warn('Retry could not inherit the failed generation checkpoints');
     }
@@ -204,6 +206,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     loadSnapshot: () => Promise<{ snapshot: Record<string, unknown>; sha256: string }>,
     retriedFromJobId?: string,
     changedRoleIds: readonly string[] | null = null,
+    refreshResearch = false,
   ): Promise<GenerationEnqueueResult> {
     const replay = await this.replayIdempotentEnqueue(input);
     if (replay) return replay;
@@ -224,7 +227,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     );
     const job = await this.requireStoredJob(stored, budget.id, input);
     if (retriedFromJobId && changedRoleIds) {
-      await this.inheritFromFailedJob(retriedFromJobId, job.id, changedRoleIds);
+      await this.inheritFromFailedJob(retriedFromJobId, job.id, changedRoleIds, refreshResearch);
     }
     return this.dispatchQueuedJob(job);
   }

@@ -155,6 +155,10 @@ public Thread can download Markdown, JSON, HTML or plain text and save a PDF. An
 published Thread by copying its link, through the device share sheet, or to WhatsApp, Facebook,
 LinkedIn, X, Telegram, Reddit or email. Sharing sends nothing anywhere until the person clicks.
 
+## Review failures and missing sources (ADR-193)
+
+A draft passes review only when each reviewer's score reaches its minimum (Judge 80, Critic 75) and the reviewer lists no blockers. When a review fails the owner is told which of the two it was: a score below the minimum, or "Blocked by an unmet requirement" with the reviewer's own words quoted and the score shown next to the minimum. When a reviewer asks for sources the research did not find, the job looks once for the missing sources before the next round ("Looking for the missing sources"); a failed search never fails the job. If sources are still missing after the last round, the owner is offered "Research more" (a fresh research pass on retry, ticked by default in the retry dialog) and "Narrow the claims" (edit the topic so it no longer demands the sources). The reviewers are not relaxed: a Thread without its required sources is still not published.
+
 ## Operations: failed jobs
 
 A job that exhausts its retries and fallbacks ends FAILED with no public content and its

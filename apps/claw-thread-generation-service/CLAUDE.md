@@ -220,3 +220,12 @@ There is no language or length check in the author schema; the causes were three
 ## Format preview QA fixes 2026-10-15
 
 - `prepareLegacyDraft` normalises `[address, id]` markers and a missing H1 before a preview pass; the normalised text is the guard's baseline. Skip codes `FORMAT_REPLY_INVALID` (bad JSON reply) and `FORMAT_MODEL_ERROR` (every call failed) replace most `FORMAT_FAILED`, which stays as the generic fallback.
+
+## Failed reviews, the evidence-gap pass and "Research more" (ADR-193, 2026-10-27)
+
+- Never weaken the pass rule (score at least the minimum AND no blockers). A review that fails writes a verdict into its RETRY step (`serializeVerdict`): code `*_BLOCKED` when the score met the minimum, `*_SCORE_LOW` otherwise, excerpt `{score, minScore, blockers}`. Do not put the revision brief back into that excerpt: the frontend parses it.
+- `classify-blocker.utility.ts` is a keyword list (`EVIDENCE_GAP_TERMS` in `constants/evidence-gap.constants.ts`). A new language or phrasing is a new term plus a case in `classify-blocker.utility.spec.ts`; Latin terms match at a word start only ("resources" is not "source").
+- `fillEvidenceGap` runs at most once per job attempt, only when another round follows, never fails the job (cancel still propagates), costs one healing attempt and is skipped at 85 percent of the cap. `mergeEvidenceBundles` must keep existing ids and order: the citation rule compares `evidenceId` to `url` against the bundle, and a saved draft cites those ids.
+- `refreshResearch` is part of the stored request (`enqueueGenerationSchema`), so `isSameRequest` sees it; `buildRetryInput` drops an inherited value. `inheritCheckpoints(from, to, changed, refreshResearch)` copies nothing when it is true.
+- The step codes of the pass and of a blocked review are listed in `evidence-gap.constants.ts`; the frontend maps them in `constants/thread-evidence.constants.ts` (not scanned by the code-key contract test, so keep both in step by hand).
+- Decision: [ADR-193](../../docs/13-adr/adr-193-a-failed-thread-review-names-its-real-cause-and-fills-evidence-gaps-once.md).

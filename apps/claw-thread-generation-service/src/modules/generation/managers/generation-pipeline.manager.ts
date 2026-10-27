@@ -3,6 +3,16 @@ import { createHash } from 'node:crypto';
 import { z } from 'zod';
 
 import {
+  EVIDENCE_GAP_BRIEF_NOTE,
+  EVIDENCE_GAP_EMPTY_CODE,
+  EVIDENCE_GAP_FAILED_CODE,
+  EVIDENCE_GAP_FOUND_CODE,
+  EVIDENCE_GAP_MAX_PASSES_PER_ATTEMPT,
+  EVIDENCE_GAP_RESEARCH_CODE,
+  EVIDENCE_GAP_SPEND_CODE,
+  VERDICT_EXCERPT_MAX_CHARS,
+} from '../constants/evidence-gap.constants';
+import {
   CRITIC_STAGE,
   GENERATION_ATTEMPT_MAX_MS,
   JUDGE_STAGE,
@@ -43,7 +53,11 @@ import {
 } from '../utilities/deterministic-generation.error';
 import { parseStepError } from '../utilities/parse-step-error.utility';
 import { buildAuthorSystemPrompt } from '../utilities/author-prompt.utility';
-import { createHealingBudget } from '../utilities/healing-budget.utility';
+import { createHealingBudget, isOverSpendCeiling } from '../utilities/healing-budget.utility';
+import { splitBlockers } from '../utilities/classify-blocker.utility';
+import { buildEvidenceGapQuery } from '../utilities/evidence-gap-query.utility';
+import { mergeEvidenceBundles } from '../utilities/evidence-merge.utility';
+import { blockedReviewCode, serializeVerdict } from '../utilities/review-verdict.utility';
 import { waitBeforeRetry } from '../utilities/wait-before-retry.utility';
 import { citationTable } from '../utilities/citation-table.utility';
 import { RoleHealer } from './role-healer';
@@ -147,7 +161,39 @@ export class GenerationPipelineManager {
     const evidence = await this.resolveEvidence(job);
     const evidenceItems = this.evidenceItems(evidence.bundle);
     await this.throwIfCancelled(job);
-    const context: GenerationRoundContext = {
+    let context = this.roundContext(job, evidence, evidenceItems);
+    let revisionBrief = '';
+    let researchPassesUsed = 0;
+
+    for (let round = 1; round <= MAX_GENERATION_ROUNDS; round += 1) {
+      const outcome = await this.runRound(context, round, revisionBrief);
+      if (outcome.kind === 'passed') return outcome.result;
+      revisionBrief = outcome.revisionBrief;
+      const evidenceGaps = splitBlockers(outcome.blockers).evidenceGaps;
+      const canResearch =
+        evidenceGaps.length > 0 &&
+        round < MAX_GENERATION_ROUNDS &&
+        researchPassesUsed < EVIDENCE_GAP_MAX_PASSES_PER_ATTEMPT;
+      if (canResearch) {
+        researchPassesUsed += 1;
+        const filled = await this.fillEvidenceGap(context, round, evidenceGaps);
+        context = filled.context;
+        revisionBrief += filled.briefNote;
+      }
+    }
+    // Replaying the same completed model replies cannot improve a rejected draft. End this job
+    // here; an owner retry keeps research but must get fresh model work.
+    throw new DeterministicGenerationError(
+      'Generation did not pass consensus and reviews in three rounds',
+    );
+  }
+
+  private roundContext(
+    job: GenerationPipelineInput,
+    evidence: ResearchEvidence,
+    evidenceItems: Map<string, string>,
+  ): GenerationRoundContext {
+    return {
       job,
       evidence,
       evidenceItems,
@@ -159,18 +205,88 @@ export class GenerationPipelineManager {
         researchEvidence: evidence.bundle,
       }),
     };
-    let revisionBrief = '';
+  }
 
-    for (let round = 1; round <= MAX_GENERATION_ROUNDS; round += 1) {
-      const outcome = await this.runRound(context, round, revisionBrief);
-      if (outcome.kind === 'passed') return outcome.result;
-      revisionBrief = outcome.revisionBrief;
+  /**
+   * One targeted research pass for the evidence-gap blockers of a failed review (ADR-193). It
+   * never fails the job: a pass that is skipped, fails or finds nothing new is a SKIPPED step and
+   * the next round goes on with the bundle it had. A pass that finds new sources merges only the
+   * new items, keeps every existing id, saves the larger bundle and gives the authors the new ids.
+   */
+  private async fillEvidenceGap(
+    context: GenerationRoundContext,
+    round: number,
+    gaps: readonly string[],
+  ): Promise<{ context: GenerationRoundContext; briefNote: string }> {
+    const { job, evidence } = context;
+    const base = { stage: ThreadGenerationStage.RESEARCH, round, roleKind: 'RESEARCH' as const };
+    const unchanged = { context, briefNote: '' };
+    const skip = (code: string): Promise<void> =>
+      this.recorder.record(job.jobId, { ...base, outcome: 'SKIPPED', code });
+    if (await this.overResearchBudget(job)) {
+      await skip(EVIDENCE_GAP_SPEND_CODE);
+      return unchanged;
     }
-    // Replaying the same completed model replies cannot improve a rejected draft. End this job
-    // here; an owner retry keeps research but must get fresh model work.
-    throw new DeterministicGenerationError(
-      'Generation did not pass consensus and reviews in three rounds',
-    );
+    this.chargeHealingAttempt(job);
+    await this.throwIfCancelled(job);
+    await this.recorder.record(job.jobId, {
+      ...base,
+      outcome: 'STARTED',
+      code: EVIDENCE_GAP_RESEARCH_CODE,
+    });
+    const startedAt = Date.now();
+    let found: ResearchEvidence;
+    try {
+      found = await this.research.run(
+        job.ownerId,
+        buildEvidenceGapQuery(job.topic, gaps),
+        job.correlationId,
+      );
+    } catch {
+      await this.throwIfCancelled(job);
+      await skip(EVIDENCE_GAP_FAILED_CODE);
+      return unchanged;
+    }
+    const merged = mergeEvidenceBundles(evidence.bundle, found.bundle);
+    if (merged.addedIds.length === 0) {
+      await skip(EVIDENCE_GAP_EMPTY_CODE);
+      return unchanged;
+    }
+    const saved = await this.jobs.saveMergedEvidence(job.jobId, job.attempt, merged);
+    if (!saved) throw new ThreadGenerationLeaseLostError();
+    await this.recorder.record(job.jobId, {
+      ...base,
+      outcome: 'SUCCEEDED',
+      code: EVIDENCE_GAP_FOUND_CODE,
+      durationMs: Date.now() - startedAt,
+      rawExcerpt: JSON.stringify({ added: merged.addedIds.length }),
+    });
+    const enlarged: ResearchEvidence = {
+      ...evidence,
+      bundle: merged.bundle,
+      sha256: merged.sha256,
+    };
+    return {
+      context: this.roundContext(job, enlarged, this.evidenceItems(merged.bundle)),
+      briefNote: `\n${EVIDENCE_GAP_BRIEF_NOTE}${merged.addedIds.join(', ')}`,
+    };
+  }
+
+  /** Spends one healing attempt on the research pass, so it is counted in the attempt's budget. */
+  private chargeHealingAttempt(job: GenerationPipelineInput): void {
+    if (job.healingBudget) job.healingBudget.jobAttemptsLeft -= 1;
+  }
+
+  /** True when the pass would start past the spend ceiling or with no healing attempt left. */
+  private async overResearchBudget(job: GenerationPipelineInput): Promise<boolean> {
+    if ((job.healingBudget?.jobAttemptsLeft ?? 1) <= 0) return true;
+    let spent = job.spentMicroUsd ?? 0;
+    try {
+      spent = (await this.jobs.readSpentMicroUsd(job.jobId)) ?? spent;
+    } catch {
+      // The figure the attempt began with still bounds it.
+    }
+    return isOverSpendCeiling(job.spendCapMicroUsd ?? null, spent);
   }
 
   private async resolveEvidence(job: GenerationPipelineInput): Promise<ResearchEvidence> {
@@ -241,13 +357,19 @@ export class GenerationPipelineManager {
       preferredCandidate,
       candidateContext,
     );
-    if (judge.revisionBrief !== null) return { kind: 'retry', revisionBrief: judge.revisionBrief };
+    if (judge.revisionBrief !== null) {
+      return { kind: 'retry', revisionBrief: judge.revisionBrief, blockers: judge.review.blockers };
+    }
     const candidate = drafts[judge.review.selectedCandidateIndex];
     if (!candidate)
       throw new ServiceUnavailableException('The Judge selected an unknown candidate');
     const critic = await this.runReviewStage(context, round, CRITIC_STAGE, job.critic, candidate);
     if (critic.revisionBrief !== null) {
-      return { kind: 'retry', revisionBrief: critic.revisionBrief };
+      return {
+        kind: 'retry',
+        revisionBrief: critic.revisionBrief,
+        blockers: critic.review.blockers,
+      };
     }
     // Typesetting runs on the reviewed text and never fails the job; the hash is the stored text's.
     const final = job.formatStage ? (await this.formatter.format(job, candidate)).draft : candidate;
@@ -353,7 +475,7 @@ export class GenerationPipelineManager {
       return { review, revisionBrief: null };
     }
     const revisionBrief = this.reviewBrief(review);
-    await this.recordReviewRetry(job, round, spec.reviewer, revisionBrief);
+    await this.recordReviewRetry(job, round, spec, review);
     return { review, revisionBrief };
   }
 
@@ -519,22 +641,29 @@ export class GenerationPipelineManager {
     }
   }
 
+  /**
+   * The owner-visible record of a review that did not pass: the score, the minimum and the
+   * blockers. A score that met the minimum failed on its blockers alone and says so with its own
+   * code, so the panel never calls it "too low".
+   */
   private async recordReviewRetry(
     job: GenerationPipelineInput,
     round: number,
-    reviewer: ReviewerRole,
-    brief: string,
+    spec: ReviewStageSpec,
+    review: StructuredReview,
   ): Promise<void> {
-    const isJudge = reviewer === ReviewerRole.JUDGE;
+    const isJudge = spec.reviewer === ReviewerRole.JUDGE;
     const kind = isJudge ? 'JUDGE' : 'CRITIC';
+    const code = review.score >= spec.minScore ? blockedReviewCode(kind) : `${kind}_SCORE_LOW`;
     await this.recorder.record(job.jobId, {
       stage: kind,
       round,
       outcome: 'RETRY',
       roleKind: kind,
       roleId: isJudge ? job.judge.id : job.critic.id,
-      code: `${kind}_SCORE_LOW`,
-      rawExcerpt: brief,
+      code,
+      rawExcerpt: serializeVerdict(review, spec.minScore),
+      excerptMaxChars: VERDICT_EXCERPT_MAX_CHARS,
     });
   }
 

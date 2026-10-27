@@ -27,6 +27,20 @@ describe('retryThreadGenerationSchema', () => {
     ).toBe(true);
   });
 
+  it('accepts refreshResearch as a boolean and nothing else (ADR-193)', () => {
+    expect(
+      retryThreadGenerationSchema.safeParse({ idempotencyKey: 'k', refreshResearch: true }).success,
+    ).toBe(true);
+    expect(
+      retryThreadGenerationSchema.safeParse({ idempotencyKey: 'k', refreshResearch: false })
+        .success,
+    ).toBe(true);
+    expect(
+      retryThreadGenerationSchema.safeParse({ idempotencyKey: 'k', refreshResearch: 'yes' })
+        .success,
+    ).toBe(false);
+  });
+
   it.each([
     { idempotencyKey: '' },
     { idempotencyKey: 'k', topic: 'short' },

@@ -179,7 +179,8 @@ export type GenerationRoundContext = {
 };
 
 export type GenerationRoundOutcome =
-  { kind: 'passed'; result: GenerationPipelineResult } | { kind: 'retry'; revisionBrief: string };
+  | { kind: 'passed'; result: GenerationPipelineResult }
+  | { kind: 'retry'; revisionBrief: string; blockers: string[] };
 
 export type ReviewStageSpec = {
   reviewer: ReviewerRole;

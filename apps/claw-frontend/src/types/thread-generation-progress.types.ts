@@ -3,11 +3,13 @@ import type {
   ThreadGenerationFailure,
   ThreadGenerationHealing,
   ThreadHealingAttempt,
+  ThreadReviewVerdict,
   ThreadGenerationSelections,
   ThreadGenerationProgress,
   ThreadGenerationStep,
   ThreadGenerationStepRoleKind,
 } from '@claw/shared-types';
+import type { RefObject } from 'react';
 
 import type { ModelSelection } from '@/types/component.types';
 import type {
@@ -52,6 +54,15 @@ export type ThreadRetryFormController = {
   isTopicTooShort: boolean;
   spendCapUsd: string;
   setSpendCapUsd: (value: string) => void;
+  /** "Research more before writing": a fresh research pass instead of the saved one (ADR-193). */
+  refreshResearch: boolean;
+  setRefreshResearch: (value: boolean) => void;
+  /** Opens the form to narrow the claims: topic focused, with a hint about dropping the sources. */
+  openNarrow: () => void;
+  showNarrowHint: boolean;
+  topicRef: RefObject<HTMLTextAreaElement | null>;
+  /** Puts the cursor in the topic when the form opens to narrow the claims. */
+  onOpenAutoFocus: (event: Event) => void;
   roles: ThreadRetryRoleSelection[];
   changeModel: (roleId: string, model: ModelSelection) => void;
   submit: () => void;
@@ -82,6 +93,12 @@ export type ThreadRecoveryPanelProps = {
   failure: ThreadGenerationFailure;
   healing: ThreadGenerationHealing | undefined;
   recovery: ThreadRecoveryController;
+};
+
+export type ThreadReviewVerdictViewProps = {
+  verdict: Omit<ThreadReviewVerdict, 'reviewer'>;
+  /** Name of the reviewer for the lead sentence; null leaves the sentence out. */
+  reviewerLabel: string | null;
 };
 
 export type ThreadHealingNoticeProps = { healing: ThreadGenerationHealing };
@@ -145,6 +162,7 @@ export type BuildThreadRetryRequestInput = {
   topic: string;
   spendCapUsd: string;
   roles: ThreadRetryRoleSelection[];
+  refreshResearch?: boolean;
 };
 
 export type UseThreadGenerationProgressResult = {

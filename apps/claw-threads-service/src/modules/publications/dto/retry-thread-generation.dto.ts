@@ -19,6 +19,8 @@ export const retryThreadGenerationSchema = z
       .max(7)
       .optional(),
     articleLength: z.nativeEnum(ThreadArticleLength).optional(),
+    /** True asks for a fresh research pass instead of the failed job's saved research (ADR-193). */
+    refreshResearch: z.boolean().optional(),
   })
   .strict();
 

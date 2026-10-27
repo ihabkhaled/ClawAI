@@ -19,6 +19,8 @@ export enum ThreadFailureClass {
   ENTITLEMENT = 'ENTITLEMENT',
   RESEARCH_FAILED = 'RESEARCH_FAILED',
   REVIEW_NOT_PASSED = 'REVIEW_NOT_PASSED',
+  /** The review failed only because the draft lacks sources the reviewers asked for (ADR-193). */
+  EVIDENCE_GAP = 'EVIDENCE_GAP',
   QUEUE_WORKER = 'QUEUE_WORKER',
   CANCELLED = 'CANCELLED',
   UNKNOWN = 'UNKNOWN',

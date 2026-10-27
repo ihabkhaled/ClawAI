@@ -15,6 +15,8 @@ export type StepRecordInput = {
   outputTokens?: number | null;
   /** Raw model output; the recorder trims, redacts and bounds it. */
   rawExcerpt?: string | null;
+  /** Longer than the default bound, for a step whose excerpt is the owner's main message. */
+  excerptMaxChars?: number;
 };
 
 export type StepResponseOutcome = Pick<StepRecordInput, 'outcome' | 'code'>;

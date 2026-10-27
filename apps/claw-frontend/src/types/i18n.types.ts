@@ -1438,6 +1438,7 @@ export type TranslationDictionary = {
     ThreadPublicBoardLocaleTranslation &
     ThreadCommunityLocaleTranslation &
     ThreadFixesLocaleTranslation &
+    ThreadEvidenceLocaleTranslation &
     ThreadChangeRequestsLocaleTranslation &
     PluginOwnServersLocaleTranslation;
   receipt: {
@@ -8204,6 +8205,29 @@ export type ThreadChangeRequestsLocaleTranslation = {
   threadCrErrorOwn: string;
   threadCrErrorLimit: string;
   threadCrSectionHint: string;
+};
+
+/** Flat `chat.threadEvidence*` keys: review-failure wording and the research remedies; see thread-evidence-translations.ts. */
+export type ThreadEvidenceLocaleTranslation = {
+  threadEvidenceReasonGap: string;
+  threadEvidenceReasonBlocked: string;
+  threadEvidenceRemedyResearchMore: string;
+  threadEvidenceRemedyNarrow: string;
+  threadEvidenceBlockedTitle: string;
+  threadEvidenceBlockedLead: string;
+  threadEvidenceLowLead: string;
+  threadEvidenceScoreLine: string;
+  threadEvidenceBlockerLabel: string;
+  threadEvidenceStepBlocked: string;
+  threadEvidenceHintBlocked: string;
+  threadEvidenceStepLooking: string;
+  threadEvidenceStepFound: string;
+  threadEvidenceStepEmpty: string;
+  threadEvidenceStepFailed: string;
+  threadEvidenceStepSpend: string;
+  threadEvidenceResearchMoreLabel: string;
+  threadEvidenceResearchMoreHint: string;
+  threadEvidenceNarrowHint: string;
 };
 
 /** Flat `chat.threadFix*` keys: topic minimum, sensitive-details editor notice and queue text; see thread-fixes-translations.ts. */

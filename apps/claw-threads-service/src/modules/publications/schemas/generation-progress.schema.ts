@@ -48,6 +48,15 @@ const selectionsSchema = z.object({
   ),
 });
 
+const reviewVerdictSchema = z.object({
+  reviewer: z.enum(['JUDGE', 'CRITIC']),
+  score: z.number().int().min(0).max(100),
+  minScore: z.number().int().min(0).max(100),
+  // The reviewer's blocker texts, in the article's language, kept as given and only bounded.
+  blockers: z.array(z.string().max(600)).max(10),
+  blocked: z.boolean(),
+});
+
 const failureSchema = z.object({
   code: shortString,
   failedStage: shortString,
@@ -59,6 +68,8 @@ const failureSchema = z.object({
   failureClass: z.nativeEnum(ThreadFailureClass).optional(),
   remedies: z.array(z.nativeEnum(ThreadFailureRemedy)).max(10).optional(),
   suggestedModel: z.object({ provider: shortString, model: shortString }).nullish(),
+  // What the last failed review said (ADR-193); absent from an older generation service.
+  review: reviewVerdictSchema.nullish(),
 });
 
 const queueSchema = z.object({

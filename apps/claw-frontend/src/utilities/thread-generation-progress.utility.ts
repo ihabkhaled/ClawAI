@@ -29,6 +29,7 @@ import {
   threadFormatCodeMessage,
 } from '@/utilities/thread-format-message.utility';
 import { threadStageLabelKey } from '@/utilities/thread-generation-stage.utility';
+import { resolveThreadEvidenceKeys } from '@/utilities/thread-review-verdict.utility';
 
 export function isTerminalThreadStatus(status: string): boolean {
   return THREAD_PROGRESS_TERMINAL_STATUSES.includes(status);
@@ -172,7 +173,14 @@ export function threadRoleLabelKey(roleKind: ThreadGenerationStepRoleKind): stri
 }
 
 /** Message and suggestion keys for a machine code; an unknown code falls back to a generic pair. */
-export function resolveThreadFailureKeys(code: string): ThreadFailureKeys {
+export function resolveThreadFailureKeys(
+  code: string,
+  excerpt: string | null = null,
+): ThreadFailureKeys {
+  const evidence = resolveThreadEvidenceKeys(code, excerpt);
+  if (evidence !== null) {
+    return evidence;
+  }
   if (isThreadFormatSkipCode(code)) {
     // A formatting skip is a safe outcome with its own friendly sentence, never "Something went wrong".
     const message = threadFormatCodeMessage(code);
@@ -202,6 +210,9 @@ export function buildThreadRetryRequest(
 ): ThreadGenerationRetryRequest {
   const { progress, idempotencyKey, roles } = input;
   const request: ThreadGenerationRetryRequest = { idempotencyKey };
+  if (input.refreshResearch === true) {
+    request.refreshResearch = true;
+  }
   const topic = input.topic.trim();
   if (topic !== '' && topic !== progress.selections.topic) {
     request.topic = topic;

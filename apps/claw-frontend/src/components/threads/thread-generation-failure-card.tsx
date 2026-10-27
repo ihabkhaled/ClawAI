@@ -1,6 +1,7 @@
 import { TriangleAlert } from 'lucide-react';
 import type { ReactElement } from 'react';
 
+import { ThreadReviewVerdictView } from '@/components/threads/thread-review-verdict-view';
 import { useTranslation } from '@/lib/i18n';
 import type { ThreadFailureCardProps } from '@/types/thread-generation-progress.types';
 import {
@@ -17,6 +18,7 @@ export function ThreadGenerationFailureCard({
 }: ThreadFailureCardProps): ReactElement {
   const { t } = useTranslation();
   const keys = resolveThreadFailureKeys(failure.code);
+  const review = failure.review;
   const stageKey = threadStageLabelKey(failure.failedStage);
   const stage = stageKey === null ? failure.failedStage : t(stageKey);
 
@@ -35,7 +37,17 @@ export function ThreadGenerationFailureCard({
           ? t('chat.threadProgress.failureWhereNoRole', { stage })
           : t('chat.threadProgress.failureWhere', { stage, role: t(threadRoleLabelKey(roleKind)) })}
       </p>
-      <p className="font-medium">{t(keys.messageKey, keys.params)}</p>
+      <p className="font-medium">
+        {review?.blocked === true
+          ? t('chat.threadEvidenceBlockedTitle')
+          : t(keys.messageKey, keys.params)}
+      </p>
+      {review === undefined || review === null ? null : (
+        <ThreadReviewVerdictView
+          verdict={review}
+          reviewerLabel={t(threadRoleLabelKey(review.reviewer))}
+        />
+      )}
       {allowanceRefunded ? (
         <p className="font-medium" data-testid="thread-progress-platform-failure">
           {t('chat.threadProgress.platformFailureNotice')}

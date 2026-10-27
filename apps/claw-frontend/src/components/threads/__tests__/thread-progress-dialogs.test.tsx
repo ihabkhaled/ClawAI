@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import type {
@@ -35,6 +36,7 @@ function makeRetry(overrides: Partial<ThreadRetryFormController> = {}): ThreadRe
   return {
     isOpen: true,
     open: vi.fn(),
+    openNarrow: vi.fn(),
     close: vi.fn(),
     topic: 'A long enough topic',
     isTopicLongEnough: true,
@@ -42,6 +44,11 @@ function makeRetry(overrides: Partial<ThreadRetryFormController> = {}): ThreadRe
     setTopic: vi.fn(),
     spendCapUsd: '1',
     setSpendCapUsd: vi.fn(),
+    refreshResearch: false,
+    setRefreshResearch: vi.fn(),
+    showNarrowHint: false,
+    topicRef: createRef<HTMLTextAreaElement>(),
+    onOpenAutoFocus: vi.fn(),
     roles: [
       {
         roleId: 'author-1',

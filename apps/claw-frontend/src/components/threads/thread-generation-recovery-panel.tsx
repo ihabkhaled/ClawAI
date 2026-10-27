@@ -5,13 +5,13 @@ import type { ReactElement } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
-  THREAD_CLASS_REASON_KEYS,
   THREAD_HEALING_RESULT_KEYS,
   THREAD_PHASE_KEYS,
 } from '@/constants/thread-recovery.constants';
 import { useTranslation } from '@/lib/i18n';
 import type { ThreadRecoveryPanelProps } from '@/types/thread-generation-progress.types';
 import { viewHealingAttempts } from '@/utilities/thread-recovery.utility';
+import { threadFailureReasonKey } from '@/utilities/thread-review-verdict.utility';
 
 import { ThreadErrorNotice } from './thread-error-notice';
 
@@ -47,7 +47,7 @@ export function ThreadGenerationRecoveryPanel({
         })}
       </p>
       <p className="font-medium" data-testid="thread-recovery-reason">
-        {t(THREAD_CLASS_REASON_KEYS[failure.failureClass])}
+        {t(threadFailureReasonKey(failure, failure.failureClass))}
       </p>
       <div>
         <p className="font-medium">{t('chat.threadProgress.recovery.triedTitle')}</p>

@@ -1,6 +1,6 @@
-import type { ThreadGenerationProgress } from '@claw/shared-types';
+import { ThreadFailureClass, type ThreadGenerationProgress } from '@claw/shared-types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { threadPublicationsRepository } from '@/repositories/threads/thread-publications.repository';
 import type { ModelSelection } from '@/types/component.types';
@@ -30,6 +30,9 @@ export function useThreadRetryForm(
   const [topic, setTopic] = useState('');
   const [spendCapUsd, setSpendCapUsd] = useState('');
   const [roles, setRoles] = useState<ThreadRetryRoleSelection[]>([]);
+  const [refreshResearch, setRefreshResearch] = useState(false);
+  const [showNarrowHint, setShowNarrowHint] = useState(false);
+  const topicRef = useRef<HTMLTextAreaElement | null>(null);
   const topicLongEnough = isThreadTopicLongEnough(topic);
   const mutation = useMutation({
     mutationFn: () => {
@@ -44,6 +47,7 @@ export function useThreadRetryForm(
           topic,
           spendCapUsd,
           roles,
+          refreshResearch,
         }),
       );
     },
@@ -54,12 +58,25 @@ export function useThreadRetryForm(
     },
   });
 
-  function open(): void {
+  function open(narrow = false): void {
     mutation.reset();
     setTopic(progress?.selections.topic ?? '');
     setSpendCapUsd(microUsdToInputValue(progress?.selections.spendCapMicroUsd ?? ''));
     setRoles(toThreadRetryRoleSelections(progress));
+    // A review that failed only for lack of sources asks for a fresh research pass by default.
+    // Narrowing the claims removes the need for sources, so it does not.
+    setRefreshResearch(
+      !narrow && progress?.failure?.failureClass === ThreadFailureClass.EVIDENCE_GAP,
+    );
+    setShowNarrowHint(narrow);
     setIsOpen(true);
+  }
+
+  function onOpenAutoFocus(event: Event): void {
+    if (showNarrowHint) {
+      event.preventDefault();
+      topicRef.current?.focus();
+    }
   }
 
   function changeModel(roleId: string, model: ModelSelection): void {
@@ -70,7 +87,13 @@ export function useThreadRetryForm(
 
   return {
     isOpen,
-    open,
+    open: () => open(false),
+    openNarrow: () => open(true),
+    showNarrowHint,
+    topicRef,
+    onOpenAutoFocus,
+    refreshResearch,
+    setRefreshResearch,
     close: () => setIsOpen(false),
     topic,
     setTopic,

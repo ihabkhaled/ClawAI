@@ -571,6 +571,26 @@ export class GenerationJobsRepository {
   }
 
   /**
+   * Replaces the saved research bundle with the same bundle plus the items a targeted research
+   * pass added (ADR-193). Fenced on the attempt like every other write. Existing items keep their
+   * ids, so the citations already written still resolve; later retries inherit the larger bundle.
+   */
+  async saveMergedEvidence(
+    jobId: string,
+    attempt: number,
+    evidence: { bundle: Record<string, unknown>; sha256: string },
+  ): Promise<boolean> {
+    const saved = await this.prisma.threadGenerationJob.updateMany({
+      where: { id: jobId, status: ThreadGenerationStatus.RUNNING, attemptCount: attempt },
+      data: {
+        evidenceBundle: evidence.bundle as Prisma.InputJsonValue,
+        evidenceBundleHash: evidence.sha256,
+      },
+    });
+    return saved.count === 1;
+  }
+
+  /**
    * Records which stage and round the running attempt is in, so the owner can follow it.
    * Fenced on the attempt number like every other write: a superseded worker changes nothing.
    */
@@ -684,7 +704,8 @@ export class GenerationJobsRepository {
   /**
    * Gives a retry the finished work of the job it retries (ADR-181): the research evidence and
    * every saved model reply except those of the roles whose model the owner changed, so the
-   * retry starts at the failed phase instead of paying for the whole run again. Only a child that
+   * retry starts at the failed phase instead of paying for the whole run again. With
+   * `refreshResearch` nothing is copied: the retry researches again. Only a child that
    * has not started and has no evidence yet is touched, and rows that already exist are kept, so
    * a repeated call changes nothing. Returns how many replies were copied.
    */
@@ -692,6 +713,7 @@ export class GenerationJobsRepository {
     fromJobId: string,
     toJobId: string,
     changedRoleIds: readonly string[],
+    refreshResearch = false,
   ): Promise<number> {
     return this.prisma.$transaction(async (tx) => {
       const child = await tx.threadGenerationJob.findUnique({
@@ -701,6 +723,9 @@ export class GenerationJobsRepository {
       if (child?.status !== ThreadGenerationStatus.QUEUED || child.attemptCount > 0) {
         return 0;
       }
+      // "Research more" (ADR-193): nothing is inherited. The saved research is the thing being
+      // refreshed, and every saved model reply is keyed to that research, so none could be replayed.
+      if (refreshResearch) return 0;
       const source = await tx.threadGenerationJob.findUnique({
         where: { id: fromJobId },
         select: { evidenceBundle: true, evidenceBundleHash: true, evidenceVersion: true },

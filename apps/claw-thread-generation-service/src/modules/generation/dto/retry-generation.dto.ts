@@ -20,6 +20,8 @@ export const retryGenerationSchema = z
       .max(7)
       .optional(),
     articleLength: z.nativeEnum(ThreadArticleLength).optional(),
+    /** True runs a fresh research pass; the failed job's saved research is not inherited. */
+    refreshResearch: z.boolean().optional(),
     /** Recomputed by threads-service for the retry; the stored pool is kept when absent. */
     healing: healingPoolSchema.optional(),
   })

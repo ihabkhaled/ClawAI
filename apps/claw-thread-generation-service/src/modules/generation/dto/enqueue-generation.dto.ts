@@ -23,6 +23,8 @@ export const enqueueGenerationSchema = z
     /** Models the ladder may swap in after a role's own backups (ADR-181). */
     healing: healingPoolSchema.optional(),
     articleLength: z.nativeEnum(ThreadArticleLength).optional(),
+    /** Set by an owner retry that asked for a fresh research pass (ADR-193). */
+    refreshResearch: z.boolean().optional(),
   })
   .strict();
 

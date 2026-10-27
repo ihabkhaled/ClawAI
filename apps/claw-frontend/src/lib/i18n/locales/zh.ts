@@ -31,6 +31,7 @@ import { THREAD_ARTICLE_TRANSLATIONS } from './thread-article-translations';
 import { THREAD_BOARD_TRANSLATIONS } from './thread-board-translations';
 import { THREAD_CHANGE_REQUESTS_TRANSLATIONS } from './thread-change-requests-translations';
 import { THREAD_COMMUNITY_TRANSLATIONS } from './thread-community-translations';
+import { THREAD_EVIDENCE_TRANSLATIONS } from './thread-evidence-translations';
 import { THREAD_FIXES_TRANSLATIONS } from './thread-fixes-translations';
 import { THREAD_PUBLIC_BOARD_TRANSLATIONS } from './thread-public-board-translations';
 import { THREAD_REVIEW_TRANSLATIONS } from './thread-review-translations';
@@ -459,6 +460,7 @@ export const zh: TranslationDictionary = {
     ...THREAD_PUBLIC_BOARD_TRANSLATIONS.zh,
     ...THREAD_COMMUNITY_TRANSLATIONS.zh,
     ...THREAD_FIXES_TRANSLATIONS.zh,
+    ...THREAD_EVIDENCE_TRANSLATIONS.zh,
     ...THREAD_CHANGE_REQUESTS_TRANSLATIONS.zh,
     ...PLUGIN_OWN_SERVERS_TRANSLATIONS.zh,
     composerContext: {

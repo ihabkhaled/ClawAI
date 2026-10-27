@@ -82,6 +82,16 @@ describe('GenerationJobsRepository.inheritCheckpoints (ADR-181)', () => {
     expect(copied).toBe(3);
   });
 
+  it('copies nothing at all when the owner asked for more research (ADR-193)', async () => {
+    const { repository, update, createMany } = build({
+      replies: [reply('author-1'), reply('judge')],
+    });
+
+    expect(await repository.inheritCheckpoints('job-old', 'job-new', [], true)).toBe(0);
+    expect(update).not.toHaveBeenCalled();
+    expect(createMany).not.toHaveBeenCalled();
+  });
+
   it('touches nothing once the child has started', async () => {
     const { repository, update, createMany } = build({
       child: { status: 'RUNNING', attemptCount: 1, evidenceBundleHash: null },
@@ -131,5 +141,34 @@ describe('last successful role model', () => {
         },
       }),
     );
+  });
+});
+
+describe('GenerationJobsRepository.saveMergedEvidence (ADR-193)', () => {
+  const evidence = {
+    bundle: { items: [{ id: 'a', url: 'https://example.org' }] },
+    sha256: 'h'.repeat(64),
+  };
+
+  it('replaces the bundle and its hash, fenced on the running attempt', async () => {
+    const updateMany = vi.fn().mockResolvedValue({ count: 1 });
+    const repository = new GenerationJobsRepository({
+      threadGenerationJob: { updateMany },
+    } as never);
+
+    expect(await repository.saveMergedEvidence('job-1', 2, evidence)).toBe(true);
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: 'job-1', status: 'RUNNING', attemptCount: 2 },
+      data: { evidenceBundle: evidence.bundle, evidenceBundleHash: evidence.sha256 },
+    });
+  });
+
+  it('reports a lost lease when no row matched', async () => {
+    const updateMany = vi.fn().mockResolvedValue({ count: 0 });
+    const repository = new GenerationJobsRepository({
+      threadGenerationJob: { updateMany },
+    } as never);
+
+    expect(await repository.saveMergedEvidence('job-1', 2, evidence)).toBe(false);
   });
 });

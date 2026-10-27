@@ -20,6 +20,6 @@ export function toStepRow(
     durationMs: input.durationMs ?? null,
     inputTokens: input.inputTokens ?? null,
     outputTokens: input.outputTokens ?? null,
-    excerpt: toExcerpt(input.rawExcerpt),
+    excerpt: toExcerpt(input.rawExcerpt, input.excerptMaxChars),
   };
 }

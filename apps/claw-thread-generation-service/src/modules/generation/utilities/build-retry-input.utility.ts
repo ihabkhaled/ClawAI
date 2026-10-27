@@ -43,8 +43,11 @@ export function buildRetryInput(
   if (models.some(({ roleId }) => !roleIds.has(roleId))) {
     throw new BadRequestException('Unknown role in model changes');
   }
+  // A retry of a retry must not inherit the earlier "research more": it is asked for every time.
+  const { refreshResearch: _previous, ...pinned } = original;
   return {
-    ...original,
+    ...pinned,
+    ...(change.refreshResearch === true ? { refreshResearch: true } : {}),
     idempotencyKey: change.idempotencyKey,
     // Deterministic, so repeating the same retry call is idempotent.
     correlationId: `retry:${change.idempotencyKey}`.slice(0, 200),

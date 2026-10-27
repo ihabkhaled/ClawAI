@@ -169,3 +169,7 @@ Start and retry bodies go through `ZodValidationPipe(schema, ThreadGenerationErr
 - ONE title resolver: always call `resolvePublicationTitle` (never read `revision.title` for display). Backfill migration `20261016120000_threads_backfill_untitled_titles` is idempotent and only touches rows equal to the placeholder.
 - `resolveCitationMarkers` also resolves the legacy `[address, id]` bracket.
 - A repeated change-request decision answers 200 `{ ..., unchanged: true }` with the stored decision; the first reply is kept.
+
+## Retry with fresh research (ADR-193, 2026-10-27)
+
+`retryThreadGenerationSchema` accepts `refreshResearch?: boolean` and the client forwards the body as is; the generation service decides what to inherit. `generationProgressSchema` keeps `failure.review` and the `EVIDENCE_GAP` class and remedies; it must stay in step with `ThreadGenerationFailure` in `packages/shared-types`. Decision: [ADR-193](../../docs/13-adr/adr-193-a-failed-thread-review-names-its-real-cause-and-fills-evidence-gaps-once.md).

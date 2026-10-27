@@ -94,6 +94,8 @@ export function buildRecoveryRetryRequest(
       return { idempotencyKey };
     case ThreadFailureRemedy.SHORTER_ARTICLE:
       return { idempotencyKey, articleLength: ThreadArticleLength.SHORT };
+    case ThreadFailureRemedy.RESEARCH_MORE:
+      return { idempotencyKey, refreshResearch: true };
     case ThreadFailureRemedy.TRY_SUGGESTED_MODEL: {
       const suggested = failure?.suggestedModel ?? null;
       const roleId = failure?.roleId ?? null;
@@ -112,6 +114,7 @@ export function buildRecoveryRetryRequest(
     case ThreadFailureRemedy.RAISE_SPEND_CAP:
     case ThreadFailureRemedy.ADD_CREDIT:
     case ThreadFailureRemedy.CHANGE_TOPIC:
+    case ThreadFailureRemedy.NARROW_CLAIMS:
       return null;
   }
 }

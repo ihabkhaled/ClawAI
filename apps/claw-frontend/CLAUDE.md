@@ -1072,3 +1072,10 @@ Every Thread date (public/marketing/in-app byline, Board cards, suggestion rows,
   CSP has no `unsafe-eval`. Do not import zod-runtime from server-only code.
 - Form controls need `id`/`name` (Radix `Select` takes `name`); a language switcher's `aria-label` must contain
   the visible text (`AR` on a phone). See docs/09-testing/lighthouse-ci.md.
+
+## Failed review wording and "Research more" (ADR-193, 2026-10-27)
+
+- A review the Judge or Critic blocked while the score met the minimum is never called "too low": `ThreadGenerationFailureCard` shows "Blocked by an unmet requirement", the reviewer's blocker texts exactly as given in `ThreadReviewVerdictView` (`<blockquote dir="auto">`, never translated) and the score line "84 of 100, needs 80 and no blockers" from `failure.review`. A step with `JUDGE_BLOCKED` / `CRITIC_BLOCKED` / `*_SCORE_LOW` renders the same view from its excerpt (`parseThreadReviewVerdict`).
+- The extra research pass has step codes `EVIDENCE_GAP_RESEARCH*` ("Looking for the missing sources", "Found {count} new sources"), mapped in `constants/thread-evidence.constants.ts` and resolved before the generic code table in `resolveThreadFailureKeys`.
+- `RESEARCH_MORE` is a one-click retry with `refreshResearch: true`; `NARROW_CLAIMS` opens the retry dialog on the topic (`openNarrow`) with a hint. The dialog has a "Research more before writing" checkbox, ticked by default after an `EVIDENCE_GAP` failure, sent as `refreshResearch` only when ticked.
+- Strings: flat `chat.threadEvidence*` keys from `lib/i18n/locales/thread-evidence-translations.ts` (13 locales; keep `{reviewer}`, `{score}`, `{min}`, `{count}`).

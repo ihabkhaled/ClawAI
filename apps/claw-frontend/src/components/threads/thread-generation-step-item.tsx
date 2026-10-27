@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react';
 
+import { ThreadReviewVerdictView } from '@/components/threads/thread-review-verdict-view';
 import { Button } from '@/components/ui/button';
 import { THREAD_FORMAT_SKIP_TONE } from '@/constants/thread-format.constants';
 import {
@@ -20,6 +21,11 @@ import {
   truncateExcerpt,
 } from '@/utilities/thread-generation-progress.utility';
 import { threadStageLabelKey } from '@/utilities/thread-generation-stage.utility';
+import {
+  isThreadEvidenceCode,
+  isThreadReviewVerdictCode,
+  parseThreadReviewVerdict,
+} from '@/utilities/thread-review-verdict.utility';
 
 /** One step of the job: who did what, how it ended, why, how long, and what the AI said. */
 export function ThreadGenerationStepItem({ step }: ThreadStepItemProps): ReactElement {
@@ -27,14 +33,19 @@ export function ThreadGenerationStepItem({ step }: ThreadStepItemProps): ReactEl
   const excerpt = useThreadStepExcerpt();
   const Icon = THREAD_STEP_OUTCOME_ICONS[step.outcome];
   const stageKey = threadStageLabelKey(step.stage);
-  const failure = step.code === null ? null : resolveThreadFailureKeys(step.code);
+  const failure = step.code === null ? null : resolveThreadFailureKeys(step.code, step.excerpt);
+  const verdict = isThreadReviewVerdictCode(step.code)
+    ? parseThreadReviewVerdict(step.excerpt)
+    : null;
   // A formatting skip is a safe, expected outcome: neutral information, not an error.
   const isFormatSkip = step.outcome === 'SKIPPED' && isThreadFormatSkipCode(step.code);
   const codeTone = isFormatSkip ? THREAD_FORMAT_SKIP_TONE : THREAD_STEP_OUTCOME_TONES[step.outcome];
   const duration = step.durationMs === null ? null : describeStepDuration(step.durationMs);
   const model = [step.provider, step.model].filter(Boolean).join(' / ');
   // A healing step's excerpt is only the failure class it answered, not something the AI said.
-  const isHealingStep = step.code !== null && THREAD_HEALING_STEP_CODES.has(step.code);
+  const isHealingStep =
+    step.code !== null &&
+    (THREAD_HEALING_STEP_CODES.has(step.code) || isThreadEvidenceCode(step.code));
 
   return (
     <li
@@ -87,7 +98,13 @@ export function ThreadGenerationStepItem({ step }: ThreadStepItemProps): ReactEl
           </span>
         )}
       </p>
-      {step.excerpt === null || step.excerpt === '' || isHealingStep ? null : (
+      {verdict === null ? null : (
+        <ThreadReviewVerdictView
+          verdict={{ ...verdict, blocked: step.code?.endsWith('_BLOCKED') === true }}
+          reviewerLabel={null}
+        />
+      )}
+      {step.excerpt === null || step.excerpt === '' || isHealingStep || verdict !== null ? null : (
         <>
           <Button
             type="button"

@@ -126,4 +126,29 @@ describe('generation progress schemas', () => {
       expect(parse({ stage: 'x'.repeat(201) })).toBe(false);
     });
   });
+
+  it('keeps the last failed review so the owner sees why it did not pass (ADR-193)', () => {
+    const review = {
+      reviewer: 'JUDGE',
+      score: 84,
+      minScore: 80,
+      blockers: ['the article does not meet the request to cite independent primary sources'],
+      blocked: true,
+    };
+    const parsed = generationProgressSchema.parse({
+      ...validProgress,
+      failure: { ...validProgress.failure, failureClass: 'EVIDENCE_GAP', review },
+    });
+    expect(parsed.failure?.review).toEqual(review);
+    expect(parsed.failure?.failureClass).toBe('EVIDENCE_GAP');
+  });
+
+  it('accepts a failure without a review and rejects a malformed one', () => {
+    expect(generationProgressSchema.safeParse(validProgress).success).toBe(true);
+    const bad = {
+      ...validProgress,
+      failure: { ...validProgress.failure, review: { reviewer: 'AUTHOR', score: 1 } },
+    };
+    expect(generationProgressSchema.safeParse(bad).success).toBe(false);
+  });
 });

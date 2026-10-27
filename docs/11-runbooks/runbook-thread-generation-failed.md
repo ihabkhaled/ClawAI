@@ -32,3 +32,7 @@ Try again (panel or `POST thread-publications/:id/retry-generation`) copies the 
 ## 4. Checking the pool
 
 `healing` is chosen by threads-service when the job starts or is retried. If jobs never heal onto other providers, call `GET thread-publications/recommended-team` as that user: no usable model means no pool.
+
+## A review fails with a good score (ADR-193)
+
+`REVIEW_NOT_PASSED` with a Judge or Critic score at or above the minimum means blockers remained. Read the step log: RETRY steps `JUDGE_BLOCKED` / `CRITIC_BLOCKED` carry the verdict JSON `{score, minScore, blockers}` in their excerpt; `progress.failure.review` has the same. If every blocker asks for sources the failure class is `EVIDENCE_GAP`: the owner's remedies are "Research more" (retry with `refreshResearch: true`, which inherits no research) or "Narrow the claims". Steps `EVIDENCE_GAP_RESEARCH*` show the one targeted research pass (done, empty, failed or skipped at 85 percent of the spend cap). Do not lower the minimum scores to clear one Thread.

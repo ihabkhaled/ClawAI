@@ -8,4 +8,8 @@ export enum ThreadFailureRemedy {
   RAISE_SPEND_CAP = 'RAISE_SPEND_CAP',
   ADD_CREDIT = 'ADD_CREDIT',
   CHANGE_TOPIC = 'CHANGE_TOPIC',
+  /** Retry with a fresh research pass instead of the saved one. */
+  RESEARCH_MORE = 'RESEARCH_MORE',
+  /** Retry with a topic that no longer demands the missing sources. */
+  NARROW_CLAIMS = 'NARROW_CLAIMS',
 }

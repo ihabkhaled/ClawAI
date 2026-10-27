@@ -1,4 +1,8 @@
-import { MAX_HEAL_ATTEMPTS_PER_JOB_ATTEMPT } from '../constants/healing.constants';
+import {
+  HEAL_SPEND_CEILING_PERCENT,
+  MAX_HEAL_ATTEMPTS_PER_JOB_ATTEMPT,
+  PERCENT_DIVISOR,
+} from '../constants/healing.constants';
 import type { GenerationPipelineInput } from '../types/generation-pipeline.types';
 import type { HealingBudget } from '../types/healing.types';
 
@@ -13,4 +17,12 @@ export function createHealingBudget(input: GenerationPipelineInput): HealingBudg
     spendCapMicroUsd: input.spendCapMicroUsd ?? null,
     spentMicroUsd: input.spentMicroUsd ?? 0,
   };
+}
+
+/** True when the job has spent the ceiling share of its cap; a job without a cap is never over. */
+export function isOverSpendCeiling(capMicroUsd: number | null, spentMicroUsd: number): boolean {
+  return (
+    capMicroUsd !== null &&
+    spentMicroUsd * PERCENT_DIVISOR >= capMicroUsd * HEAL_SPEND_CEILING_PERCENT
+  );
 }

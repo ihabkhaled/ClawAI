@@ -20,7 +20,9 @@ import { ModelOutputFailureKind } from '../../../common/enums/model-output-failu
 import { buildHealingSummary } from './build-healing-summary.utility';
 import { classifyFailure } from './classify-failure.utility';
 import { suggestModel } from './suggest-model.utility';
+import { isEvidenceGapFailure, latestReviewVerdict } from './review-failure.utility';
 import { MAX_GENERATION_ATTEMPTS } from '../constants/generation.constants';
+import { EVIDENCE_GAP_CODE } from '../constants/evidence-gap.constants';
 import { STEP_OUTCOMES, STEP_ROLE_KINDS } from '../constants/step-progress.constants';
 import type { ThreadGenerationProgressCore } from '../types/generation-progress.types';
 import type { ProgressJobRecord, ProgressRequest } from '../types/generation-progress-source.types';
@@ -138,13 +140,22 @@ function toFailure(
   const code = last?.code ?? job.safeErrorCode ?? STEP_GENERATION_FAILED_CODE;
   const failedStage =
     blamed?.stage ?? (last && last.stage !== STEP_FINAL_STAGE ? last.stage : job.stage);
-  const classification = classifyFailure({
+  const baseClassification = classifyFailure({
     code,
     httpStatus: last?.httpStatus ?? null,
     stage: failedStage,
     outputKind: outputKindOf(blamed?.excerpt ?? last?.excerpt ?? null),
     citationRule: (blamed?.excerpt ?? last?.excerpt ?? '').includes(OUTPUT_CUSTOM_ISSUE_TEXT),
   });
+  // A failed review carries what the reviewer said; when it wanted only sources the pipeline
+  // could not find, the class is EVIDENCE_GAP so the panel offers "Research more" (ADR-193).
+  const review =
+    baseClassification.failureClass === ThreadFailureClass.REVIEW_NOT_PASSED
+      ? latestReviewVerdict(steps)
+      : null;
+  const classification = isEvidenceGapFailure(review)
+    ? classifyFailure({ code: EVIDENCE_GAP_CODE, httpStatus: null, stage: failedStage })
+    : baseClassification;
   const retryable = isRetryable(job, classification.retryable);
   // Only a class that offers a model change carries a suggestion.
   const suggestedModel = classification.remedies.includes(ThreadFailureRemedy.TRY_SUGGESTED_MODEL)
@@ -160,6 +171,7 @@ function toFailure(
     failureClass: classification.failureClass,
     remedies: remediesFor(classification.remedies, suggestedModel, retryable),
     suggestedModel,
+    ...(review === null ? {} : { review }),
   };
 }
 

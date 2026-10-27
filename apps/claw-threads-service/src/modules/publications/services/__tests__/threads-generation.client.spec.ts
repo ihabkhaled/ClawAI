@@ -130,6 +130,26 @@ describe('ThreadsGenerationClient', () => {
     );
   });
 
+  it('forwards refreshResearch to the generation service (ADR-193)', async () => {
+    const fetch = stubFetch({ ok: true, json: async () => ({ jobId: 'job-2', status: 'QUEUED' }) });
+
+    await new ThreadsGenerationClient().retry('job-1', 'owner-1', {
+      idempotencyKey: 'retry-1',
+      refreshResearch: true,
+    });
+
+    expect(fetch).toHaveBeenCalledWith(
+      `${base}/retry`,
+      expect.objectContaining({
+        body: JSON.stringify({
+          idempotencyKey: 'retry-1',
+          refreshResearch: true,
+          ownerId: 'owner-1',
+        }),
+      }),
+    );
+  });
+
   it('rejects a malformed retry body', async () => {
     stubFetch({ ok: true, json: async () => ({}) });
     await expect(

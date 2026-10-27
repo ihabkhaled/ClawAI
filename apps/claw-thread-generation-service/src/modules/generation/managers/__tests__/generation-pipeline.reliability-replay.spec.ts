@@ -85,6 +85,8 @@ type Scenario = {
   input?: (base: GenerationPipelineInput, probe: Probe) => Partial<GenerationPipelineInput>;
   check?: (result: Result) => void;
   ownerRetry?: boolean;
+  /** Replaces the research service: the call number (0 is the first pass) to what it returns. */
+  research?: (call: number) => Promise<unknown>;
 };
 type Outcome = {
   id: string;
@@ -263,9 +265,14 @@ class FakeStore {
   }
 
   /** Mirrors GenerationJobsRepository.inheritCheckpoints: same role filter, evidence copied once. */
-  inherit(from: string, to: string, changedRoleIds: readonly string[]): number {
+  inherit(
+    from: string,
+    to: string,
+    changedRoleIds: readonly string[],
+    refreshResearch = false,
+  ): number {
     const source = this.evidence.get(from);
-    if (!source) return 0;
+    if (!source || refreshResearch) return 0;
     if (!this.evidence.has(to)) this.evidence.set(to, source);
     let copied = 0;
     for (const [key, comm] of this.comms) {
@@ -299,7 +306,9 @@ function harness(store: FakeStore, s: Scenario, input: GenerationPipelineInput, 
     run: vi
       .fn()
       .mockImplementation(() =>
-        Promise.resolve({ researchRunId: 'r', bundle, sha256: BUNDLE_HASH, version: 1 }),
+        s.research
+          ? s.research(research.run.mock.calls.length - 1)
+          : Promise.resolve({ researchRunId: 'r', bundle, sha256: BUNDLE_HASH, version: 1 }),
       ),
   };
   const models = {
@@ -381,6 +390,18 @@ function harness(store: FakeStore, s: Scenario, input: GenerationPipelineInput, 
               ? saved.output
               : null,
           );
+        },
+      ),
+    saveMergedEvidence: vi
+      .fn()
+      .mockImplementation(
+        (
+          jobId: string,
+          _attempt: number,
+          e: { bundle: Record<string, unknown>; sha256: string },
+        ) => {
+          store.evidence.set(jobId, { bundle: e.bundle, hash: e.sha256 });
+          return Promise.resolve(true);
         },
       ),
     saveCommunication: vi.fn().mockImplementation((row: Record<string, unknown>) => {
@@ -548,7 +569,7 @@ function verify(s: Scenario, result: Result): void {
   s.check?.(result);
 }
 
-const lowJudge = always(is('judge'), reviewOf(10, ['The draft is not supported by the sources.']));
+const lowJudge = always(is('judge'), reviewOf(10, ['The draft repeats its second section twice.']));
 const lowCritic = always(is('critic'), reviewOf(10, ['The draft contradicts the evidence.']));
 const proseOnly = 'I think this draft is great and well sourced!';
 const cutOff = '{"markdown": "The article was cut off in the mid';
@@ -1058,6 +1079,7 @@ async function runOwnerRetry(
   s: Scenario,
   index: number,
   inheritAll: boolean,
+  refreshResearch = false,
 ): Promise<{ first: Result; second: Result; inherited: number; changed: string[] }> {
   const store = new FakeStore();
   const first = await execute(s, index, store, 'job-old', s.script);
@@ -1095,11 +1117,13 @@ async function runOwnerRetry(
       job: { id: 'job-new', status: 'QUEUED', correlationId: 'c', budgetId: 'b' },
     }),
     leaseDispatch: vi.fn().mockResolvedValue(true),
-    inheritCheckpoints: vi.fn((from: string, to: string, ids: readonly string[]) => {
-      changed = [...ids];
-      inherited = store.inherit(from, to, inheritAll ? [] : ids);
-      return Promise.resolve(inherited);
-    }),
+    inheritCheckpoints: vi.fn(
+      (from: string, to: string, ids: readonly string[], refresh: boolean) => {
+        changed = [...ids];
+        inherited = store.inherit(from, to, inheritAll ? [] : ids, refresh);
+        return Promise.resolve(inherited);
+      },
+    ),
   };
   const service = new GenerationJobsService(
     { getOwnedSnapshot: vi.fn() } as never,
@@ -1109,7 +1133,11 @@ async function runOwnerRetry(
     { reserve: vi.fn().mockResolvedValue({ id: 'budget-new' }), close: vi.fn() } as never,
     { record: vi.fn() } as never,
   );
-  await service.retry('job-old', { ownerId: 'owner-1', idempotencyKey: 'retry-1' });
+  await service.retry('job-old', {
+    ownerId: 'owner-1',
+    idempotencyKey: 'retry-1',
+    ...(refreshResearch ? { refreshResearch: true } : {}),
+  });
   const second = await execute({ ...s, script: undefined }, index, store, 'job-new', undefined);
   return { first, second, inherited, changed };
 }
@@ -1202,6 +1230,155 @@ describe('Thread generation reliability replay (ADR-181, 50 deterministic scenar
       stepsWith(second, { outcome: 'SKIPPED', code: STEP_RESUMED_CODE, roleId: 'author-1' }).length,
     ).toBeGreaterThan(0);
     expect(callsOf(second, 'author-1')).toHaveLength(0);
+  });
+
+  describe('blocker-aware evidence-gap loop (ADR-193)', () => {
+    const PRODUCTION_BLOCKERS = [
+      'the article does not meet the request to cite independent primary sources on sycophancy and reward hacking; the text admits the gap but must fill it or explicitly narrow the scope',
+      'repository files are not in the evidence, so claims about AI-Psychiatry cannot be verified',
+    ];
+    const FOUND_ID = 'eeee5555ffff6666';
+    const EXTRA_BUNDLE = {
+      items: [
+        { id: EVIDENCE_ID, url: 'https://example.org/one' },
+        { id: FOUND_ID, url: 'https://primary.example.org/paper' },
+        { id: 'gggg7777hhhh8888', url: 'https://EXAMPLE.org/two/' },
+        { id: 'iiii9999jjjj0000', url: 'http://127.0.0.1/admin' },
+      ],
+    };
+    const roundOf = (ctx: Ctx): number =>
+      Number(/round-(\d+)/u.exec(ctx.req.requestId)?.[1] ?? '1');
+    const firstRoundJudge =
+      (score: number, blockers: string[]): Script =>
+      (ctx) =>
+        ctx.kind === 'judge' && roundOf(ctx) === 1 ? reviewOf(score, blockers) : undefined;
+    const scenario = (id: string, over: Partial<Scenario>): Scenario => ({
+      id,
+      group: 'evidence-gap',
+      locale: Locale.EN,
+      recoverable: false,
+      expect: { outcome: SUCCESS, jobAttempts: 1 },
+      research: (call) =>
+        Promise.resolve({
+          researchRunId: `r${String(call)}`,
+          bundle: call === 0 ? bundle : EXTRA_BUNDLE,
+          sha256: call === 0 ? BUNDLE_HASH : 'x'.repeat(64),
+          version: 1,
+        }),
+      ...over,
+    });
+    const researchSteps = (result: Result): Step[] =>
+      result.steps.filter((step) => step['roleKind'] === 'RESEARCH' && Number(step['round']) > 0);
+
+    it('blocker -> one targeted research pass -> the next round cites the new source -> passes', async () => {
+      const store = new FakeStore();
+      const s = scenario('EG1', { script: firstRoundJudge(84, PRODUCTION_BLOCKERS) });
+      const result = await execute(s, 0, store, 'job-eg1', s.script);
+
+      expect(result.outcome).toBe(SUCCESS);
+      expect(result.researchRuns).toBe(2);
+      expect(stepsWith(result, { code: 'JUDGE_BLOCKED', outcome: 'RETRY' })).toHaveLength(1);
+      expect(stepsWith(result, { code: 'JUDGE_SCORE_LOW' })).toHaveLength(0);
+      expect(
+        stepsWith(result, { code: 'EVIDENCE_GAP_RESEARCH', outcome: 'STARTED', round: 1 }),
+      ).toHaveLength(1);
+      expect(stepsWith(result, { code: 'EVIDENCE_GAP_RESEARCH_DONE' })).toHaveLength(1);
+      const saved = store.evidence.get('job-eg1');
+      const ids = (saved?.bundle['items'] as Array<{ id: string }>).map((item) => item.id);
+      // Existing ids keep their place; only the genuinely new, public source was added.
+      expect(ids).toEqual([EVIDENCE_ID, 'cccc3333dddd4444', FOUND_ID]);
+      const round2 = result.reqs.filter((req) => req.round === 2 && req.kind === 'author');
+      expect(round2.length).toBeGreaterThan(0);
+      expect(round2.every((req) => req.userPrompt.includes(FOUND_ID))).toBe(true);
+      const round1 = result.reqs.filter((req) => req.round === 1 && req.kind === 'author');
+      expect(round1.every((req) => !req.userPrompt.includes(FOUND_ID))).toBe(true);
+      verifyBounds(result);
+    });
+
+    it('a style or structure blocker never triggers research', async () => {
+      const s = scenario('EG2', {
+        script: firstRoundJudge(84, ['The second section contradicts the introduction.']),
+      });
+      const result = await execute(s, 1, new FakeStore(), 'job-eg2', s.script);
+
+      expect(result.outcome).toBe(SUCCESS);
+      expect(result.researchRuns).toBe(1);
+      expect(researchSteps(result)).toHaveLength(0);
+      expect(stepsWith(result, { code: 'JUDGE_BLOCKED' })).toHaveLength(1);
+    });
+
+    it('a failing research pass is a SKIPPED step and the round goes on', async () => {
+      const s = scenario('EG3', {
+        script: firstRoundJudge(84, PRODUCTION_BLOCKERS),
+        research: (call) =>
+          call === 0
+            ? Promise.resolve({ researchRunId: 'r', bundle, sha256: BUNDLE_HASH, version: 1 })
+            : Promise.reject(new Error('Research service is unavailable')),
+      });
+      const result = await execute(s, 2, new FakeStore(), 'job-eg3', s.script);
+
+      expect(result.outcome).toBe(SUCCESS);
+      expect(
+        stepsWith(result, { outcome: 'SKIPPED', code: 'EVIDENCE_GAP_RESEARCH_FAILED' }),
+      ).toHaveLength(1);
+      expect(stepsWith(result, { outcome: 'FAILED', roleKind: 'RESEARCH' })).toHaveLength(0);
+    });
+
+    it('is skipped past 85 percent of the spend cap', async () => {
+      const s = scenario('EG4', {
+        input: () => ({ spendCapMicroUsd: 100 }),
+        script: (ctx) =>
+          ctx.kind === 'judge' && roundOf(ctx) === 1
+            ? { content: reviewOf(84, PRODUCTION_BLOCKERS), cost: 90 }
+            : undefined,
+      });
+      const result = await execute(s, 3, new FakeStore(), 'job-eg4', s.script);
+
+      expect(result.researchRuns).toBe(1);
+      expect(
+        stepsWith(result, { outcome: 'SKIPPED', code: 'EVIDENCE_GAP_RESEARCH_SPEND_CAP' }),
+      ).toHaveLength(1);
+    });
+
+    it('stays at ONE pass when the sources never arrive, and the failure stays REVIEW_NOT_PASSED', async () => {
+      const s = scenario('EG5', {
+        expect: { outcome: REVIEW_NOT_PASSED, jobAttempts: 1 },
+        script: always(is('judge'), reviewOf(84, PRODUCTION_BLOCKERS)),
+        research: (call) =>
+          Promise.resolve({
+            researchRunId: `r${String(call)}`,
+            bundle,
+            sha256: BUNDLE_HASH,
+            version: 1,
+          }),
+      });
+      const result = await execute(s, 4, new FakeStore(), 'job-eg5', s.script);
+
+      expect(result.outcome).toBe(REVIEW_NOT_PASSED);
+      expect(result.researchRuns).toBe(2);
+      expect(stepsWith(result, { code: 'EVIDENCE_GAP_RESEARCH_EMPTY' })).toHaveLength(1);
+      expect(stepsWith(result, { code: 'JUDGE_BLOCKED' })).toHaveLength(3);
+    });
+
+    it('"Research more" does not inherit the saved research and researches again', async () => {
+      const index = SCENARIOS.findIndex((c) => c.id.startsWith('E3'));
+      const s = SCENARIOS[index];
+      expect(s).toBeDefined();
+      if (!s) return;
+      const { first, second, inherited } = await runOwnerRetry(s, index, false, true);
+
+      expect(first.outcome).toBe(REVIEW_NOT_PASSED);
+      expect(inherited).toBe(0);
+      expect(second.researchRuns).toBe(1);
+      expect(
+        stepsWith(second, { stage: 'RESEARCH', outcome: 'SKIPPED', code: STEP_RESUMED_CODE }),
+      ).toHaveLength(0);
+      for (const roleId of ROLE_IDS) {
+        expect(
+          stepsWith(second, { outcome: 'SKIPPED', code: STEP_RESUMED_CODE, roleId }),
+        ).toHaveLength(0);
+      }
+    });
   });
 
   it('records the measured numbers: at least 45 of 50 reached their expected outcome', () => {

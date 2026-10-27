@@ -6,6 +6,12 @@ import {
   ThreadHealingStrategy,
 } from '@claw/shared-types';
 
+import {
+  THREAD_EVIDENCE_NARROW_KEY,
+  THREAD_EVIDENCE_REASON_GAP_KEY,
+  THREAD_EVIDENCE_RESEARCH_MORE_KEY,
+} from '@/constants/thread-evidence.constants';
+
 /** Phase of a generation (ADR-181) to the sentence part the panel shows. */
 export const THREAD_PHASE_KEYS: Readonly<Record<ThreadFailurePhase, string>> = {
   [ThreadFailurePhase.QUEUE]: 'chat.threadProgress.recovery.phase.queue',
@@ -43,6 +49,7 @@ export const THREAD_CLASS_REASON_KEYS: Readonly<Record<ThreadFailureClass, strin
   [ThreadFailureClass.ENTITLEMENT]: 'chat.threadProgress.recovery.reason.entitlement',
   [ThreadFailureClass.RESEARCH_FAILED]: 'chat.threadProgress.recovery.reason.researchFailed',
   [ThreadFailureClass.REVIEW_NOT_PASSED]: 'chat.threadProgress.recovery.reason.reviewNotPassed',
+  [ThreadFailureClass.EVIDENCE_GAP]: THREAD_EVIDENCE_REASON_GAP_KEY,
   [ThreadFailureClass.QUEUE_WORKER]: 'chat.threadProgress.recovery.reason.queueWorker',
   [ThreadFailureClass.CANCELLED]: 'chat.threadProgress.recovery.reason.cancelled',
   [ThreadFailureClass.UNKNOWN]: 'chat.threadProgress.recovery.reason.unknown',
@@ -57,6 +64,8 @@ export const THREAD_REMEDY_LABEL_KEYS: Readonly<Record<ThreadFailureRemedy, stri
   [ThreadFailureRemedy.RAISE_SPEND_CAP]: 'chat.threadProgress.recovery.remedy.raiseCap',
   [ThreadFailureRemedy.ADD_CREDIT]: 'chat.threadProgress.recovery.remedy.addCredit',
   [ThreadFailureRemedy.CHANGE_TOPIC]: 'chat.threadProgress.recovery.remedy.changeTopic',
+  [ThreadFailureRemedy.RESEARCH_MORE]: THREAD_EVIDENCE_RESEARCH_MORE_KEY,
+  [ThreadFailureRemedy.NARROW_CLAIMS]: THREAD_EVIDENCE_NARROW_KEY,
 };
 
 export const THREAD_HEALING_RESULT_KEYS: Readonly<Record<ThreadHealingResult, string>> = {
@@ -85,6 +94,7 @@ export const THREAD_FORM_REMEDIES: ReadonlySet<ThreadFailureRemedy> = new Set([
   ThreadFailureRemedy.CHOOSE_ANOTHER_MODEL,
   ThreadFailureRemedy.RAISE_SPEND_CAP,
   ThreadFailureRemedy.CHANGE_TOPIC,
+  ThreadFailureRemedy.NARROW_CLAIMS,
 ]);
 
 /** The seats of the recommended team, matched to the job's roles by kind and position. */

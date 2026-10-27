@@ -70,13 +70,18 @@ describe('a retry resumes at the failed phase (ADR-181)', () => {
       models: [{ roleId: 'judge', provider: 'GEMINI', model: 'flash' }],
     });
 
-    expect(repository.inheritCheckpoints).toHaveBeenCalledWith('job-old', 'job-new', ['judge']);
+    expect(repository.inheritCheckpoints).toHaveBeenCalledWith(
+      'job-old',
+      'job-new',
+      ['judge'],
+      false,
+    );
   });
 
   it('inherits everything when only the key changes (Try again)', async () => {
     const { service, repository } = build();
     await service.retry('job-old', { ownerId: 'owner-1', idempotencyKey: 'retry-1' });
-    expect(repository.inheritCheckpoints).toHaveBeenCalledWith('job-old', 'job-new', []);
+    expect(repository.inheritCheckpoints).toHaveBeenCalledWith('job-old', 'job-new', [], false);
   });
 
   it('keeps research but invalidates all cached replies after a rejected review', async () => {
@@ -89,13 +94,12 @@ describe('a retry resumes at the failed phase (ADR-181)', () => {
       models: [{ roleId: 'judge', provider: 'GEMINI', model: 'flash' }],
     });
 
-    expect(repository.inheritCheckpoints).toHaveBeenCalledWith('job-old', 'job-new', [
-      'author-1',
-      'author-2',
-      'author-3',
-      'judge',
-      'critic',
-    ]);
+    expect(repository.inheritCheckpoints).toHaveBeenCalledWith(
+      'job-old',
+      'job-new',
+      ['author-1', 'author-2', 'author-3', 'judge', 'critic'],
+      false,
+    );
   });
 
   it('starts from scratch when the owner changed the topic: new research, new drafts', async () => {
@@ -126,5 +130,17 @@ describe('a retry resumes at the failed phase (ADR-181)', () => {
       articleLength: ThreadArticleLength.SHORT,
     });
     expect(created[0]).toMatchObject({ articleLength: ThreadArticleLength.SHORT });
+  });
+
+  it('asks the repository to skip the research and every reply when the owner wants more research', async () => {
+    const { service, repository } = build();
+
+    await service.retry('job-old', {
+      ownerId: 'owner-1',
+      idempotencyKey: 'retry-refresh',
+      refreshResearch: true,
+    });
+
+    expect(repository.inheritCheckpoints).toHaveBeenCalledWith('job-old', 'job-new', [], true);
   });
 });

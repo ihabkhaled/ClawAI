@@ -69,6 +69,17 @@ export type ThreadHealingPool = {
   safeDefault?: ThreadHealingCandidate;
 };
 
+/** What the last failed review said, so the panel can tell a low score from an unmet requirement. */
+export type ThreadReviewVerdict = {
+  reviewer: 'JUDGE' | 'CRITIC';
+  score: number;
+  minScore: number;
+  /** The reviewer's blocker texts, in the article's language, as given. */
+  blockers: string[];
+  /** True when the score met the minimum and the blockers alone failed the review. */
+  blocked: boolean;
+};
+
 export type ThreadGenerationFailure = {
   code: string;
   failedStage: string;
@@ -82,6 +93,8 @@ export type ThreadGenerationFailure = {
   remedies?: ThreadFailureRemedy[];
   /** A model the panel can offer for the failed role, picked by the service. */
   suggestedModel?: ThreadModelRef | null;
+  /** The last failed review; absent unless the job failed its review (ADR-193). */
+  review?: ThreadReviewVerdict | null;
 };
 
 /** One healing attempt the service made, derived from the step log. */
@@ -147,4 +160,6 @@ export type ThreadGenerationRetryRequest = {
   models?: Array<{ roleId: string; provider: string; model: string }>;
   /** `SHORT` asks the authors for a shorter article (the "Shorter article" remedy). */
   articleLength?: ThreadArticleLength;
+  /** True runs a fresh research pass instead of reusing the failed job's saved research. */
+  refreshResearch?: boolean;
 };
