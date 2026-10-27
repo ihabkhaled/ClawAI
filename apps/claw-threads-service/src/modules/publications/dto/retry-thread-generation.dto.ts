@@ -33,6 +33,21 @@ export const retryThreadGenerationSchema = z
       .array(z.string().trim().min(1).max(ACCEPTED_GAP_MAX_CHARS).refine(isStorableText))
       .max(ACCEPTED_GAPS_MAX)
       .optional(),
+    /**
+     * Indexes into `progress.failure.review.evidenceGapBlockers`, so the client need not echo the
+     * text. The generation service checks both forms against the failed job's stored verdict and
+     * refuses anything else with ACCEPTED_GAP_NOT_A_BLOCKER (ADR-195).
+     */
+    acceptedEvidenceGapIndexes: z
+      .array(
+        z
+          .number()
+          .int()
+          .min(0)
+          .max(ACCEPTED_GAPS_MAX - 1),
+      )
+      .max(ACCEPTED_GAPS_MAX)
+      .optional(),
   })
   .strict();
 

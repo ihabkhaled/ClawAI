@@ -1028,6 +1028,7 @@ export const es: TranslationDictionary = {
           'El material es demasiado largo para un modelo de límite de tamaño desconocido (se supuso 32k).',
         researchUnavailable: 'No se pudo contactar con el servicio de investigación.',
         researchFailed: 'El paso de investigación falló.',
+        reviewersNotIndependent: 'Los revisores no eran independientes de los autores.',
         researchEmpty: 'La investigación no encontró fuentes utilizables.',
         reviewNotPassed: 'El borrador no superó las revisiones.',
         citationInvalid: 'No se pudo verificar el enlace de una fuente.',
@@ -1107,6 +1108,8 @@ export const es: TranslationDictionary = {
           'Elige un modelo con una ventana de contexto conocida y mayor, o acorta el tema, y reintenta.',
         researchUnavailable: 'Espera un momento y reintenta.',
         researchFailed: 'Reintenta. Si sigue fallando, cambia el tema.',
+        reviewersNotIndependent:
+          'Elige un modelo revisor que no sea uno de los autores y vuelve a intentarlo.',
         researchEmpty: 'Haz el tema más concreto o más amplio y reintenta.',
         reviewNotPassed: 'Reintenta o cambia los modelos.',
         citationInvalid: 'Reintenta. Si sigue fallando, cambia el tema o los modelos.',
@@ -1170,6 +1173,8 @@ export const es: TranslationDictionary = {
           'Tu cupo de Threads se agotó o lo retiene una generación en curso. Espera a que termine o mejora tu plan.',
         tooManyActive:
           'Ya tienes el máximo de generaciones en curso. Espera a que termine una o cancela una.',
+        acceptedGapNotABlocker:
+          'Una brecha aceptada debe ser una de las brechas de evidencia que indicaron los revisores. Investiga más e inténtalo de nuevo.',
         idempotencyKeyReused:
           'Esta solicitud ya se envió con otros datos. Empieza de nuevo desde el formulario.',
         notCancellable:

@@ -94,3 +94,14 @@ wording is required by the check, so a locale added later needs a heading, keywo
 
 **Stale when:** a later ADR changes the review pass rule, the retry body, the revision content
 shape or the public publication payload.
+
+## Addendum (2026-10-27): accepted gaps are verified by the server
+
+An automated review found that the gap texts came from the client and went into the Judge, Critic and
+author system prompts unchecked, so an owner could write instructions into their own review.
+[ADR-195](adr-195-research-uses-short-targeted-queries-accepted-gaps-are-verified-and-reviewers-stay-independent.md)
+changes three things in this decision: (1) the retry accepts only a text (or an index,
+`acceptedEvidenceGapIndexes`) that equals an evidence-gap blocker of the failed job's STORED review
+verdict, otherwise HTTP 400 `ACCEPTED_GAP_NOT_A_BLOCKER`; (2) the gap texts are no longer in any system
+prompt, only in a delimited block of quoted untrusted data in the user prompt; (3) the Judge/Critic
+rubric note and the authors' rules stay fixed system strings. The rest of this ADR is unchanged.

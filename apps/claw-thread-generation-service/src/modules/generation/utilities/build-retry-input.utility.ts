@@ -1,8 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 
 import { MICRO_USD_DECIMALS } from '../constants/step-recorder.constants';
-import type { RetryGenerationDto } from '../dto/retry-generation.dto';
 import { normalizeAcceptedGaps } from './accepted-gaps.utility';
+import type { RetryGenerationDto } from '../dto/retry-generation.dto';
 import type { EnqueueGenerationDto } from '../dto/enqueue-generation.dto';
 import type { ModelRole } from '../types/generation-pipeline.types';
 
@@ -30,11 +30,17 @@ function applyModel(role: ModelRole, models: NonNullable<RetryGenerationDto['mod
   };
 }
 
-/** The new job's request: the failed job's pinned request plus the owner's allowed changes. */
+/**
+ * The new job's request: the failed job's pinned request plus the owner's allowed changes.
+ * `acceptedGaps` are the gaps already verified against the failed job's stored review verdict;
+ * the request's own gap texts are never copied into the new job (ADR-195).
+ */
 export function buildRetryInput(
   original: EnqueueGenerationDto,
   change: RetryGenerationDto,
+  acceptedGaps: readonly string[] = [],
 ): EnqueueGenerationDto {
+  const gaps = normalizeAcceptedGaps(acceptedGaps);
   const models = change.models ?? [];
   const roleIds = new Set([
     original.judge.id,
@@ -47,11 +53,10 @@ export function buildRetryInput(
   // A retry of a retry must not inherit the earlier "research more" or accepted gaps: each is
   // the owner's choice for that one retry (ADR-193, ADR-194).
   const { refreshResearch: _previous, acceptedEvidenceGaps: _previousGaps, ...pinned } = original;
-  const acceptedGaps = normalizeAcceptedGaps(change.acceptedEvidenceGaps);
   return {
     ...pinned,
     ...(change.refreshResearch === true ? { refreshResearch: true } : {}),
-    ...(acceptedGaps.length > 0 ? { acceptedEvidenceGaps: acceptedGaps } : {}),
+    ...(gaps.length > 0 ? { acceptedEvidenceGaps: gaps } : {}),
     idempotencyKey: change.idempotencyKey,
     // Deterministic, so repeating the same retry call is idempotent.
     correlationId: `retry:${change.idempotencyKey}`.slice(0, 200),

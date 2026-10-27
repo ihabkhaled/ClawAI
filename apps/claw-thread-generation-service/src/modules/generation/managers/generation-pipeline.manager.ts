@@ -67,12 +67,21 @@ import {
   LIMITATIONS_MISSING_BRIEF,
   LIMITATIONS_MISSING_CODE,
 } from '../constants/accepted-gaps.constants';
-import { buildEvidenceGapQuery } from '../utilities/evidence-gap-query.utility';
+import { candidateKey } from '../utilities/healing-candidates.utility';
+import {
+  acceptedGapsDataBlock,
+  sanitizeGapForPrompt,
+} from '../utilities/accepted-gaps-prompt.utility';
+import { combineQueryResults } from '../utilities/research-bundle.utility';
+import { buildEvidenceGapQueries, buildResearchQueries } from '../utilities/research-query.utility';
+import { researchQueryStep } from '../utilities/research-query-step.utility';
+import { runResearchQueries } from '../utilities/research-runner.utility';
 import { mergeEvidenceBundles } from '../utilities/evidence-merge.utility';
 import { blockedReviewCode, serializeVerdict } from '../utilities/review-verdict.utility';
 import { waitBeforeRetry } from '../utilities/wait-before-retry.utility';
 import { citationTable } from '../utilities/citation-table.utility';
 import { RoleHealer } from './role-healer';
+import type { ResearchPassBase } from '../types/research-queries.types';
 import { ArticleFormatter } from './article-formatter';
 import type { CandidateHealth, RolePrompt } from '../types/healing.types';
 import {
@@ -114,6 +123,11 @@ export class GenerationPipelineManager {
   private readonly logger = new Logger(GenerationPipelineManager.name);
   private readonly healer: RoleHealer;
   private readonly formatter: ArticleFormatter;
+  /** The model that really answered each review, per job attempt: a fallback is named, not hidden. */
+  private readonly reviewerModels = new WeakMap<
+    GenerationPipelineInput,
+    Map<string, { provider: string; model: string }>
+  >();
   private healthCache:
     { value: ReadonlyMap<string, CandidateHealth>; expiresAt: number } | undefined;
 
@@ -250,11 +264,10 @@ export class GenerationPipelineManager {
     const startedAt = Date.now();
     let found: ResearchEvidence;
     try {
-      found = await this.research.run(
-        job.ownerId,
-        buildEvidenceGapQuery(job.topic, gaps),
-        job.correlationId,
-      );
+      found = await this.collectResearch(job, buildEvidenceGapQueries(job.topic, gaps), {
+        ...base,
+        checkBudget: true,
+      });
     } catch {
       await this.throwIfCancelled(job);
       await skip(EVIDENCE_GAP_FAILED_CODE);
@@ -283,6 +296,38 @@ export class GenerationPipelineManager {
       context: this.roundContext(job, enlarged, this.evidenceItems(merged.bundle)),
       briefNote: `\n${EVIDENCE_GAP_BRIEF_NOTE}${merged.addedIds.join(', ')}`,
     };
+  }
+
+  /**
+   * Runs the queries of one research pass (at most four at a time), logs each query's result
+   * count, and combines what came back into one bundle, primary sources first (ADR-195). A query
+   * that fails or is skipped for the spend ceiling loses only itself; the pass fails, with the
+   * first error, only when no query returned a bundle.
+   */
+  private async collectResearch(
+    job: GenerationPipelineInput,
+    queries: readonly string[],
+    base: ResearchPassBase,
+  ): Promise<ResearchEvidence> {
+    const { checkBudget, ...stepBase } = base;
+    let started = 0;
+    const results = await runResearchQueries(queries, {
+      run: (intent) => this.research.run(job.ownerId, intent, job.correlationId),
+      // The first pass always sends its first query; later queries stop at the spend ceiling.
+      overBudget: async () => {
+        started += 1;
+        return (checkBudget === true || started > 1) && (await this.overResearchBudget(job));
+      },
+      throwIfCancelled: () => this.throwIfCancelled(job),
+      record: (result, failed) =>
+        this.recorder.record(job.jobId, researchQueryStep(result, failed, stepBase)),
+    });
+    const combined = combineQueryResults(results);
+    if (combined) return combined;
+    throw (
+      results.find(({ error }) => error !== undefined)?.error ??
+      new ServiceUnavailableException('Research was skipped at the spend ceiling')
+    );
   }
 
   /** Spends one healing attempt on the research pass, so it is counted in the attempt's budget. */
@@ -411,6 +456,12 @@ export class GenerationPipelineManager {
     };
   }
 
+  /** The accepted gaps as a quoted data block at the end of a user prompt; empty when none (ADR-195). */
+  private gapsData(job: GenerationPipelineInput): string {
+    const block = acceptedGapsDataBlock(this.acceptedGaps(job));
+    return block === '' ? '' : `\n${block}`;
+  }
+
   private acceptedGaps(job: GenerationPipelineInput): string[] {
     return normalizeAcceptedGaps(job.acceptedEvidenceGaps);
   }
@@ -478,7 +529,7 @@ export class GenerationPipelineManager {
       revisionBrief: JSON.stringify({
         revisionBrief: LIMITATIONS_MISSING_BRIEF,
         blockers: [],
-        findings: this.acceptedGaps(job),
+        findings: this.acceptedGaps(job).map(sanitizeGapForPrompt),
       }),
       blockers: [],
     };
@@ -673,7 +724,7 @@ export class GenerationPipelineManager {
       const startedAt = Date.now();
       await this.recorder.record(job.jobId, { ...base, outcome: 'STARTED' });
       try {
-        const evidence = await this.research.run(job.ownerId, job.topic, job.correlationId);
+        const evidence = await this.collectResearch(job, buildResearchQueries(job.topic), base);
         await this.recorder.record(job.jobId, {
           ...base,
           outcome: 'SUCCEEDED',
@@ -751,14 +802,23 @@ export class GenerationPipelineManager {
     const isJudge = spec.reviewer === ReviewerRole.JUDGE;
     const kind = isJudge ? 'JUDGE' : 'CRITIC';
     const code = review.score >= spec.minScore ? blockedReviewCode(kind) : `${kind}_SCORE_LOW`;
+    const role = isJudge ? job.judge : job.critic;
+    const answered = this.reviewerModels.get(job)?.get(role.id);
     await this.recorder.record(job.jobId, {
       stage: kind,
       round,
       outcome: 'RETRY',
       roleKind: kind,
-      roleId: isJudge ? job.judge.id : job.critic.id,
+      roleId: role.id,
+      ...(answered ? { provider: answered.provider, model: answered.model } : {}),
       code,
-      rawExcerpt: serializeVerdict(review, spec.minScore),
+      rawExcerpt: serializeVerdict(
+        review,
+        spec.minScore,
+        answered
+          ? { ...answered, fallback: candidateKey(answered) !== candidateKey(role) }
+          : undefined,
+      ),
       excerptMaxChars: VERDICT_EXCERPT_MAX_CHARS,
     });
   }
@@ -855,7 +915,7 @@ export class GenerationPipelineManager {
         input.articleLength,
         input.acceptedEvidenceGaps,
       ),
-      userPrompt: `${sharedMaterial}\nRevision brief: ${revisionBrief || 'Create a complete first draft.'}${citationTable(evidenceItems)}`,
+      userPrompt: `${sharedMaterial}\nRevision brief: ${revisionBrief || 'Create a complete first draft.'}${citationTable(evidenceItems)}${this.gapsData(input)}`,
       sharedMaterial,
     };
     const saved = await this.jobs.findCommunication(
@@ -925,9 +985,11 @@ export class GenerationPipelineManager {
         candidateCount,
         input.acceptedEvidenceGaps,
       ),
-      userPrompt: candidateContext
-        ? `${sharedMaterial}\nAuthor preference agreement: ${String(candidateContext.agreementPercent)}%.\nCandidates in author order:\n${JSON.stringify(candidateContext.candidates)}`
-        : `${sharedMaterial}\nDraft:\n${JSON.stringify(draft)}`,
+      userPrompt: `${
+        candidateContext
+          ? `${sharedMaterial}\nAuthor preference agreement: ${String(candidateContext.agreementPercent)}%.\nCandidates in author order:\n${JSON.stringify(candidateContext.candidates)}`
+          : `${sharedMaterial}\nDraft:\n${JSON.stringify(draft)}`
+      }${this.gapsData(input)}`,
       sharedMaterial,
     };
     const saved = await this.jobs.findCommunication(
@@ -939,6 +1001,7 @@ export class GenerationPipelineManager {
     );
     if (saved !== null) {
       await this.recordResumed(input.jobId, role.id);
+      await this.noteSavedReviewer(input, role);
       const parsed = accepts.safeParse(saved);
       if (!parsed.success)
         throw new ServiceUnavailableException(`${reviewer} has a saved invalid review`);
@@ -953,6 +1016,7 @@ export class GenerationPipelineManager {
       accepts,
       REVIEW_REPLY_SHAPE,
     );
+    this.noteReviewer(input, role.id, { provider: response.provider, model: response.model });
     const parsed = accepts.safeParse(this.parseJson(response.content, accepts));
     if (!parsed.success)
       throw new ServiceUnavailableException(`${reviewer} returned an invalid review`);
@@ -966,6 +1030,29 @@ export class GenerationPipelineManager {
       parsed.data,
     );
     return parsed.data;
+  }
+
+  private noteReviewer(
+    input: GenerationPipelineInput,
+    roleId: string,
+    model: { provider: string; model: string },
+  ): void {
+    const known =
+      this.reviewerModels.get(input) ?? new Map<string, { provider: string; model: string }>();
+    known.set(roleId, model);
+    this.reviewerModels.set(input, known);
+  }
+
+  /** A review replayed from a saved reply was answered by the model the saved reply names. */
+  private async noteSavedReviewer(input: GenerationPipelineInput, role: ModelRole): Promise<void> {
+    const key = await this.loadSuccessful(input.jobId, role.id);
+    const slash = key?.indexOf('/') ?? -1;
+    if (key && slash > 0) {
+      this.noteReviewer(input, role.id, {
+        provider: key.slice(0, slash),
+        model: key.slice(slash + 1),
+      });
+    }
   }
 
   private async callRevisionVote(

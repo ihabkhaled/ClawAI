@@ -32,7 +32,13 @@ import { GenerationBudgetCloser } from './generation-budget-closer';
 import { StepRecorder } from './step-recorder.service';
 import type { RetryGenerationDto } from '../dto/retry-generation.dto';
 import { budgetCloseStatusForFailure } from '../utilities/classify-budget-close.utility';
+import {
+  acceptedGapRejected,
+  requestsAcceptedGaps,
+  verifyAcceptedGaps,
+} from '../utilities/accepted-gaps-verify.utility';
 import { buildRetryInput } from '../utilities/build-retry-input.utility';
+import { latestReviewVerdict } from '../utilities/review-failure.utility';
 import { isDeterministicGenerationError } from '../utilities/deterministic-generation.error';
 import { classifyFailure } from '../utilities/classify-failure.utility';
 import { parseStepError } from '../utilities/parse-step-error.utility';
@@ -40,6 +46,7 @@ import {
   NON_RETRYABLE_STEP_CODES,
   RETRY_ALREADY_EXISTS_MESSAGE,
   RETRY_CHAIN_MAX_DEPTH,
+  REVIEW_FAILURE_CODES,
   STEP_CANCELLED_CODE,
   STEP_FINAL_STAGE,
   STEP_GENERATION_FAILED_CODE,
@@ -112,6 +119,8 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
   }
 
   async enqueue(input: EnqueueGenerationDto): Promise<{ jobId: string; status: string }> {
+    // A new generation has no failed review, so there is nothing it could accept (ADR-195).
+    if ((input.acceptedEvidenceGaps?.length ?? 0) > 0) throw acceptedGapRejected();
     return this.enqueueWithSnapshot(input, async () => {
       const snapshot = await this.snapshots.getOwnedSnapshot(input.ownerId, input.sourceThreadId);
       return {
@@ -133,15 +142,12 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
     }
     const original = enqueueGenerationSchema.safeParse(source.request);
     if (!original.success) throw new ConflictException('This generation cannot be retried');
-    const input = buildRetryInput(original.data, change);
+    const acceptedGaps = await this.verifiedAcceptedGaps(source, change);
+    const input = buildRetryInput(original.data, change, acceptedGaps);
     const inherit = input.topic === original.data.topic;
     const snapshot = z.record(z.string(), z.unknown()).safeParse(source.sourceSnapshot);
     if (!snapshot.success) throw new BadRequestException('Saved source snapshot is invalid');
-    const failedReview =
-      inherit && (await this.repository.findLastFailureCode(source.id)) === 'REVIEW_NOT_PASSED';
-    const changedRoleIds = failedReview
-      ? [...input.authors, input.judge, input.critic].map(({ id }) => id)
-      : (change.models ?? []).map(({ roleId }) => roleId);
+    const changedRoleIds = await this.rolesToRerun(source.id, input, inherit, change);
     return this.enqueueWithSnapshot(
       input,
       () => Promise.resolve({ snapshot: snapshot.data, sha256: source.sourceSnapshotHash }),
@@ -149,6 +155,45 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       inherit ? changedRoleIds : null,
       change.refreshResearch === true,
     );
+  }
+
+  /**
+   * The roles whose saved replies a retry must not reuse: all of them after a review that did not
+   * pass (or whose Judge and Critic could not be independent models), else the ones the owner changed.
+   */
+  private async rolesToRerun(
+    sourceId: string,
+    input: EnqueueGenerationDto,
+    inherit: boolean,
+    change: RetryGenerationDto,
+  ): Promise<string[]> {
+    const failedReview =
+      inherit &&
+      REVIEW_FAILURE_CODES.has((await this.repository.findLastFailureCode(sourceId)) ?? '');
+    return failedReview
+      ? [...input.authors, input.judge, input.critic].map(({ id }) => id)
+      : (change.models ?? []).map(({ roleId }) => roleId);
+  }
+
+  /**
+   * The evidence gaps a retry may accept (ADR-195). They come from the failed job's STORED review
+   * verdict, never from the request: the job must have failed with a not-passed review, and every
+   * requested text or index must be one of its evidence-gap blockers, or the request is refused.
+   */
+  private async verifiedAcceptedGaps(
+    source: { id: string; status: string },
+    change: RetryGenerationDto,
+  ): Promise<string[]> {
+    const { acceptedEvidenceGaps: texts, acceptedEvidenceGapIndexes: indexes } = change;
+    if (!requestsAcceptedGaps(texts, indexes)) return [];
+    if (
+      source.status !== 'FAILED' ||
+      (await this.repository.findLastFailureCode(source.id)) !== 'REVIEW_NOT_PASSED'
+    ) {
+      throw acceptedGapRejected();
+    }
+    const verdict = latestReviewVerdict(await this.repository.findReviewVerdictSteps(source.id));
+    return verifyAcceptedGaps(verdict, texts, indexes);
   }
 
   /**

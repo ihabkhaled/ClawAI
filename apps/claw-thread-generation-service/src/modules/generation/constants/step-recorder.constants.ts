@@ -28,6 +28,15 @@ export const MICRO_USD_DECIMALS = 6;
 export const RETRY_CHAIN_MAX_DEPTH = 50;
 export const RETRY_ALREADY_EXISTS_MESSAGE = 'This generation was already retried';
 
+/** Final failure codes of a job whose review did not pass; a retry then replays no cached reply. */
+export const REVIEW_FAILURE_CODES: ReadonlySet<string> = new Set([
+  'REVIEW_NOT_PASSED',
+  'REVIEWERS_NOT_INDEPENDENT',
+]);
+
+/** Review steps read back to check the evidence gaps an owner accepts on a retry (ADR-194). */
+export const REVIEW_VERDICT_STEPS_MAX = 6;
+
 export const STEP_ROW_SELECT = {
   seq: true,
   at: true,
@@ -103,6 +112,7 @@ export const STEP_MESSAGE_CODES: ReadonlyArray<{ fragment: string; code: string 
   { fragment: 'Research evidence response is invalid', code: 'RESEARCH_FAILED' },
   { fragment: 'Research returned no', code: 'RESEARCH_EMPTY' },
   { fragment: 'did not pass consensus and reviews', code: 'REVIEW_NOT_PASSED' },
+  { fragment: 'could not be independent', code: 'REVIEWERS_NOT_INDEPENDENT' },
   { fragment: 'Model catalog is unreachable', code: 'MODEL_CATALOG_UNREACHABLE' },
   { fragment: 'Model catalog rejected', code: 'MODEL_CATALOG_REJECTED' },
 ];

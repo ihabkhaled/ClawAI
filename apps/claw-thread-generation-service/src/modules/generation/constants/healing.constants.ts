@@ -104,3 +104,10 @@ export const HEAL_STOPPED_SPEND_CODE = 'HEAL_STOPPED_SPEND_CAP';
 export const HEAL_STOPPED_BUDGET_CODE = 'HEAL_STOPPED_ATTEMPT_BUDGET';
 export const HEAL_STOPPED_OWNER_CODE = 'HEAL_STOPPED_OWNER_ACTION';
 export const HEAL_SOURCE_SHRUNK_NOTE = 'HEAL_SOURCE_SHRUNK';
+
+/**
+ * Step code of a Critic call that could only have been answered by the very model that answered
+ * the Judge of the same round (ADR-195). The pair is not independent, so the review does not pass.
+ */
+export const REVIEWERS_NOT_INDEPENDENT_CODE = 'REVIEWERS_NOT_INDEPENDENT';
+export const REVIEWERS_NOT_INDEPENDENT_MESSAGE = 'Judge and Critic could not be independent models';

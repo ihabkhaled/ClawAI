@@ -230,14 +230,12 @@ describe('acceptedEvidenceGaps on a retry (ADR-194)', () => {
 
   it('is stored normalised and is part of the request comparison', () => {
     const plain = buildRetryInput(request, retryGenerationSchema.parse(owner));
-    const accepted = buildRetryInput(
-      request,
-      retryGenerationSchema.parse({ ...owner, acceptedEvidenceGaps: ['  b gap ', GAP, GAP] }),
-    );
-    const reordered = buildRetryInput(
-      request,
-      retryGenerationSchema.parse({ ...owner, acceptedEvidenceGaps: [GAP, 'b gap'] }),
-    );
+    const accepted = buildRetryInput(request, retryGenerationSchema.parse(owner), [
+      '  b gap ',
+      GAP,
+      GAP,
+    ]);
+    const reordered = buildRetryInput(request, retryGenerationSchema.parse(owner), [GAP, 'b gap']);
 
     expect(plain).not.toHaveProperty('acceptedEvidenceGaps');
     expect(accepted.acceptedEvidenceGaps).toEqual(['b gap', GAP].sort());
@@ -248,10 +246,7 @@ describe('acceptedEvidenceGaps on a retry (ADR-194)', () => {
 
   it('an empty list is the same request as none', () => {
     const none = buildRetryInput(request, retryGenerationSchema.parse(owner));
-    const empty = buildRetryInput(
-      request,
-      retryGenerationSchema.parse({ ...owner, acceptedEvidenceGaps: [] }),
-    );
+    const empty = buildRetryInput(request, retryGenerationSchema.parse(owner), []);
 
     expect(empty).not.toHaveProperty('acceptedEvidenceGaps');
     expect(isSameRequest(none, empty)).toBe(true);

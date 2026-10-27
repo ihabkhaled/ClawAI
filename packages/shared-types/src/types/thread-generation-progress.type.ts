@@ -80,6 +80,19 @@ export type ThreadReviewVerdict = {
   blocked: boolean;
   /** The blockers that ask for evidence the pipeline could not supply; the owner may accept them (ADR-194). */
   evidenceGapBlockers?: string[];
+  /**
+   * The model that actually answered this review; `fallback` is true when it is not the model the
+   * owner chose for the seat (the chosen one failed and the service healed onto another). Absent
+   * from older services (ADR-195).
+   */
+  reviewerModel?: ThreadReviewerModel;
+};
+
+/** The model that answered a review, and whether it replaced the owner's pick. */
+export type ThreadReviewerModel = {
+  provider: string;
+  model: string;
+  fallback: boolean;
 };
 
 export type ThreadGenerationFailure = {
@@ -169,4 +182,10 @@ export type ThreadGenerationRetryRequest = {
    * from the failed review. The article then states each one in a limitations section (ADR-194).
    */
   acceptedEvidenceGaps?: string[];
+  /**
+   * The same choice as indexes into `failure.review.evidenceGapBlockers` (at most 8), so the client
+   * need not echo the text. The server accepts only what the failed review stored as an
+   * evidence-gap blocker; anything else is refused with `ACCEPTED_GAP_NOT_A_BLOCKER` (ADR-195).
+   */
+  acceptedEvidenceGapIndexes?: number[];
 };

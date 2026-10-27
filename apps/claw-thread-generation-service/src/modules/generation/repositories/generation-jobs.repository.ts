@@ -8,6 +8,7 @@ import { PrismaService } from '../../../infrastructure/database/prisma/prisma.se
 import { type EnqueueGenerationDto, enqueueGenerationSchema } from '../dto/enqueue-generation.dto';
 import type { EnqueueRevisionReviewDto } from '../dto/enqueue-revision-review.dto';
 import type { GenerationPipelineResult } from '../types/generation-pipeline.types';
+import type { StepRow } from '../types/step-recorder.types';
 import type { ChatModelResponse } from '../../models/chat-model.client';
 import { isSameRequest } from '../utilities/same-request.utility';
 import { stableJson } from '../utilities/stable-json.utility';
@@ -56,8 +57,10 @@ import {
   MAX_GENERATION_ATTEMPTS,
 } from '../constants/generation.constants';
 import {
+  REVIEW_VERDICT_STEPS_MAX,
   STEP_LEASE_EXPIRED_CODE,
   STEP_QUEUE_EXPIRED_CODE,
+  STEP_ROW_SELECT,
 } from '../constants/step-recorder.constants';
 
 @Injectable()
@@ -466,6 +469,16 @@ export class GenerationJobsRepository {
     await this.prisma.threadGenerationJob.updateMany({
       where: { id: jobId, failureReportedAt: null },
       data: { failureReportedAt: new Date() },
+    });
+  }
+
+  /** The newest review steps (Judge and Critic RETRY steps carry the verdict), newest first. */
+  async findReviewVerdictSteps(jobId: string): Promise<StepRow[]> {
+    return this.prisma.threadGenerationStep.findMany({
+      where: { jobId, outcome: 'RETRY', roleKind: { in: ['JUDGE', 'CRITIC'] } },
+      orderBy: { seq: 'desc' },
+      take: REVIEW_VERDICT_STEPS_MAX,
+      select: STEP_ROW_SELECT,
     });
   }
 

@@ -15,8 +15,10 @@ import { clampReviewText } from './clamp-review-text.utility';
 export function serializeVerdict(
   review: Pick<StructuredReview, 'score' | 'blockers'>,
   minScore: number,
+  reviewer?: ReviewVerdictRecord['reviewer'],
 ): string {
   const record: ReviewVerdictRecord = {
+    ...(reviewer ? { reviewer } : {}),
     score: review.score,
     minScore,
     blockers: review.blockers

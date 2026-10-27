@@ -28,6 +28,20 @@ export const retryGenerationSchema = z
       .array(z.string().trim().min(1).max(ACCEPTED_GAP_MAX_CHARS))
       .max(ACCEPTED_GAPS_MAX)
       .optional(),
+    /**
+     * Indexes into `progress.failure.review.evidenceGapBlockers` of the failed job; the client need
+     * not echo the text. Checked against the stored verdict like the texts (ADR-195).
+     */
+    acceptedEvidenceGapIndexes: z
+      .array(
+        z
+          .number()
+          .int()
+          .min(0)
+          .max(ACCEPTED_GAPS_MAX - 1),
+      )
+      .max(ACCEPTED_GAPS_MAX)
+      .optional(),
     /** Recomputed by threads-service for the retry; the stored pool is kept when absent. */
     healing: healingPoolSchema.optional(),
   })

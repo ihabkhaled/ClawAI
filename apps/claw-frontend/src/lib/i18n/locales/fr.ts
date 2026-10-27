@@ -1035,6 +1035,7 @@ export const fr: TranslationDictionary = {
           'Le contenu est trop long pour un modèle dont la limite de taille est inconnue (32k supposés).',
         researchUnavailable: 'Le service de recherche est injoignable.',
         researchFailed: 'L’étape de recherche a échoué.',
+        reviewersNotIndependent: 'Les relecteurs n’étaient pas indépendants des auteurs.',
         researchEmpty: 'La recherche n’a trouvé aucune source exploitable.',
         reviewNotPassed: 'Le brouillon n’a pas passé les relectures.',
         citationInvalid: 'Le lien d’une source n’a pas pu être vérifié.',
@@ -1114,6 +1115,8 @@ export const fr: TranslationDictionary = {
           'Choisissez un modèle à fenêtre de contexte connue et plus grande, ou raccourcissez le sujet, puis réessayez.',
         researchUnavailable: 'Patientez un instant puis réessayez.',
         researchFailed: 'Réessayez. Si cela échoue encore, changez le sujet.',
+        reviewersNotIndependent:
+          'Choisissez un modèle relecteur qui n’est pas l’un des auteurs, puis réessayez.',
         researchEmpty: 'Précisez ou élargissez le sujet, puis réessayez.',
         reviewNotPassed: 'Réessayez ou changez les modèles.',
         citationInvalid: 'Réessayez. Si cela persiste, changez le sujet ou les modèles.',
@@ -1179,6 +1182,8 @@ export const fr: TranslationDictionary = {
           'Votre quota de Threads est épuisé ou retenu par une génération en cours. Attendez qu’elle se termine ou changez d’offre.',
         tooManyActive:
           'Vous avez déjà le nombre maximal de générations en cours. Attendez la fin de l’une d’elles ou annulez-en une.',
+        acceptedGapNotABlocker:
+          'Une lacune acceptée doit être l’une des lacunes de preuves citées par les relecteurs. Faites plus de recherches et réessayez.',
         idempotencyKeyReused:
           'Cette demande a déjà été envoyée avec des détails différents. Recommencez depuis le formulaire.',
         notCancellable:

@@ -32,6 +32,7 @@ export const FAILURE_CLASS_BY_CODE: ReadonlyMap<string, ThreadFailureClass> = ne
   ['RESEARCH_EMPTY', ThreadFailureClass.RESEARCH_FAILED],
   ['RESEARCH_UNAVAILABLE', ThreadFailureClass.RESEARCH_FAILED],
   ['REVIEW_NOT_PASSED', ThreadFailureClass.REVIEW_NOT_PASSED],
+  ['REVIEWERS_NOT_INDEPENDENT', ThreadFailureClass.REVIEW_NOT_PASSED],
   ['EVIDENCE_GAP', ThreadFailureClass.EVIDENCE_GAP],
   ['JUDGE_SCORE_LOW', ThreadFailureClass.REVIEW_NOT_PASSED],
   ['CRITIC_SCORE_LOW', ThreadFailureClass.REVIEW_NOT_PASSED],

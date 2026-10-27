@@ -25,6 +25,7 @@ export function latestReviewVerdict(steps: readonly StepRow[]): ThreadReviewVerd
         blockers: verdict.blockers,
         blocked: verdict.score >= minScore && verdict.blockers.length > 0,
         evidenceGapBlockers: splitBlockers(verdict.blockers).evidenceGaps,
+        ...(verdict.reviewer ? { reviewerModel: verdict.reviewer } : {}),
       };
     }
   }

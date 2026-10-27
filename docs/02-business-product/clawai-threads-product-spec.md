@@ -211,3 +211,7 @@ Generation cancellation is owner-scoped. The portal shows a request in
 progress, confirms when the service accepts it, and prevents duplicate requests
 while accepted. A failed request stays retryable; accepted cancellation is not
 presented as complete until the worker reports the terminal cancelled state.
+
+## Sources, accepted gaps and reviewers (ADR-195)
+
+Research searches the sources a topic names by short targeted queries (an arXiv id, a DOI, a quoted title, "Author et al. year", a GitHub repository) instead of one query made of the whole topic, so sources named at the end of a long brief are found and the primary ones (papers, repositories) come first. An owner can accept only the evidence gaps the failed review actually raised: the server checks every accepted gap against that review, and refuses anything else with the code `ACCEPTED_GAP_NOT_A_BLOCKER`. The Judge and the Critic of one review are always two different models; if only one model is left for both, the review does not pass and the owner is told to choose other models. A failed review shows which model reviewed it.

@@ -1035,6 +1035,7 @@ export const it: TranslationDictionary = {
           'Il materiale è troppo lungo per un modello con limite di dimensione sconosciuto (ipotizzati 32k).',
         researchUnavailable: 'Il servizio di ricerca non è raggiungibile.',
         researchFailed: 'Il passaggio di ricerca non è riuscito.',
+        reviewersNotIndependent: 'I revisori non erano indipendenti dagli autori.',
         researchEmpty: 'La ricerca non ha trovato fonti utilizzabili.',
         reviewNotPassed: 'La bozza non ha superato le revisioni.',
         citationInvalid: 'Il link di una fonte non è stato verificato.',
@@ -1118,6 +1119,8 @@ export const it: TranslationDictionary = {
           'Scegli un modello con una finestra di contesto nota e più ampia, o accorcia l’argomento, poi riprova.',
         researchUnavailable: 'Attendi un momento e riprova.',
         researchFailed: 'Riprova. Se continua a fallire, cambia argomento.',
+        reviewersNotIndependent:
+          'Scegli un modello revisore che non sia uno degli autori e riprova.',
         researchEmpty: 'Rendi l’argomento più specifico o più ampio, poi riprova.',
         reviewNotPassed: 'Riprova o cambia i modelli.',
         citationInvalid: 'Riprova. Se continua a fallire, cambia argomento o modelli.',
@@ -1181,6 +1184,8 @@ export const it: TranslationDictionary = {
           'La tua quota di Thread è esaurita o è occupata da una generazione in corso. Aspetta che finisca o passa a un piano superiore.',
         tooManyActive:
           'Hai già il numero massimo di generazioni in corso. Aspetta che una finisca o annullane una.',
+        acceptedGapNotABlocker:
+          'Una lacuna accettata deve essere una delle lacune di prove indicate dai revisori. Fai più ricerca e riprova.',
         idempotencyKeyReused:
           'Questa richiesta è già stata inviata con dettagli diversi. Ricomincia dal modulo.',
         notCancellable:

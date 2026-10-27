@@ -16,6 +16,8 @@ export const reviewVerdictRecordSchema = z.object({
   score: z.number(),
   minScore: z.number(),
   blockers: z.array(z.string()),
+  /** The model that actually answered, so a fallback review is never mistaken for the chosen one. */
+  reviewer: z.object({ provider: z.string(), model: z.string(), fallback: z.boolean() }).optional(),
 });
 
 export type ReviewVerdictRecord = z.infer<typeof reviewVerdictRecordSchema>;

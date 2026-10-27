@@ -32,6 +32,6 @@ export function buildAuthorSystemPrompt(
     AUTHOR_STRUCTURE_NOTE,
     'Cite only evidence items from researchEvidence.items. Do not include analysis or hidden reasoning.',
     ...(length === ThreadArticleLength.SHORT ? [SHORT_ARTICLE_NOTE] : []),
-    ...(acceptedGaps.length > 0 ? [authorGapsNote(acceptedGaps, locale, language)] : []),
+    ...(acceptedGaps.length > 0 ? [authorGapsNote(locale, language)] : []),
   ].join(' ');
 }

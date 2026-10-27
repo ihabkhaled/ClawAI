@@ -1015,6 +1015,7 @@ export const en: TranslationDictionary = {
           'The material is too long for a model whose size limit is unknown (a 32k limit was assumed).',
         researchUnavailable: 'The research service could not be reached.',
         researchFailed: 'The research step failed.',
+        reviewersNotIndependent: 'The reviewers were not independent of the writers.',
         researchEmpty: 'Research found no usable sources.',
         reviewNotPassed: 'The draft did not pass the reviews.',
         citationInvalid: 'A source link could not be verified.',
@@ -1077,6 +1078,8 @@ export const en: TranslationDictionary = {
           'Pick a model with a known, larger context window or shorten the topic, then retry.',
         researchUnavailable: 'Wait a moment and retry.',
         researchFailed: 'Retry. If it keeps failing, change the topic.',
+        reviewersNotIndependent:
+          'Pick a reviewer model that is not one of the authors, then retry.',
         researchEmpty: 'Make the topic more specific or broader, then retry.',
         reviewNotPassed: 'Retry, or change the models and try again.',
         citationInvalid: 'Retry. If it keeps failing, change the topic or the models.',
@@ -1135,6 +1138,8 @@ export const en: TranslationDictionary = {
           'Your Thread allowance is used up, or a running generation is holding it. Wait for it to finish or upgrade your plan.',
         tooManyActive:
           'You already have the maximum number of generations running. Wait for one to finish or cancel one.',
+        acceptedGapNotABlocker:
+          'An accepted gap must be one of the evidence gaps the reviewers listed. Research more and try again.',
         idempotencyKeyReused:
           'This request was already sent with different details. Start again from the form.',
         notCancellable: 'This generation is not running or queued, so there is nothing to cancel.',

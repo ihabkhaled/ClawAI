@@ -25,6 +25,7 @@ import {
   generationProgressSchema,
   generationRetryResponseSchema,
 } from '../schemas/generation-progress.schema';
+import { acceptedGapRefusalSchema } from '../schemas/accepted-gap-refusal.schema';
 import { generationAllowanceRefusalSchema } from '../schemas/generation-allowance-refusal.schema';
 import type {
   GenerationEnqueueInput,
@@ -187,6 +188,20 @@ export class ThreadsGenerationClient {
     });
   }
 
+  /** A 400 keeps the one code the owner can act on (ADR-195); any other 400 stays generic. */
+  private async badRequestFrom(response: Response): Promise<BadRequestException> {
+    const body = acceptedGapRefusalSchema.safeParse(await readJsonOrNull(response));
+    return body.success
+      ? new BadRequestException(
+          codedErrorBody(
+            body.data.message,
+            ThreadGenerationErrorCode.ACCEPTED_GAP_NOT_A_BLOCKER,
+            HttpStatus.BAD_REQUEST,
+          ),
+        )
+      : new BadRequestException('Generation request is invalid');
+  }
+
   private jobPath(jobId: string, action: string): string {
     return `/api/v1/internal/threads/generations/${encodeURIComponent(jobId)}/${action}`;
   }
@@ -214,7 +229,7 @@ export class ThreadsGenerationClient {
       throw new ServiceUnavailableException('Generation service is unavailable');
     }
     if (!response.ok) {
-      if (response.status === 400) throw new BadRequestException('Generation request is invalid');
+      if (response.status === 400) throw await this.badRequestFrom(response);
       if (response.status === 403) {
         // A used-up or held allowance arrives with its numbers: keep them so the owner reads
         // "1 of 1 used" and when it frees up, not the generic plan sentence.

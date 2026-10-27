@@ -63,6 +63,21 @@ describe('retryThreadGenerationSchema', () => {
     },
   );
 
+  it('accepts up to 8 blocker indexes, each 0 to 7, and nothing else (ADR-195)', () => {
+    const parse = (acceptedEvidenceGapIndexes: unknown) =>
+      retryThreadGenerationSchema.safeParse({ idempotencyKey: 'k', acceptedEvidenceGapIndexes })
+        .success;
+
+    expect(parse([0, 1, 7])).toBe(true);
+    expect(parse([])).toBe(true);
+    expect(parse(Array.from({ length: 9 }, (_, i) => i % 8))).toBe(false);
+    expect(parse([8])).toBe(false);
+    expect(parse([-1])).toBe(false);
+    expect(parse([1.5])).toBe(false);
+    expect(parse(['1'])).toBe(false);
+    expect(parse(0)).toBe(false);
+  });
+
   it('trims an accepted gap before it is forwarded', () => {
     const parsed = retryThreadGenerationSchema.parse({
       idempotencyKey: 'k',

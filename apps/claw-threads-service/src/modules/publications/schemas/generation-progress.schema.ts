@@ -57,6 +57,10 @@ const reviewVerdictSchema = z.object({
   blocked: z.boolean(),
   // The blockers the owner may accept as disclosed gaps (ADR-194); absent from an older service.
   evidenceGapBlockers: z.array(z.string().max(600)).max(10).optional(),
+  // The model that really answered the review, and whether it replaced the owner's pick (ADR-195).
+  reviewerModel: z
+    .object({ provider: shortString, model: shortString, fallback: z.boolean() })
+    .optional(),
 });
 
 const failureSchema = z.object({

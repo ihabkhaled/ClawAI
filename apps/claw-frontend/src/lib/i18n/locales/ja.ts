@@ -1019,6 +1019,7 @@ export const ja: TranslationDictionary = {
         contextWindowAssumed: 'サイズ上限が不明なモデル（32k と仮定）には資料が長すぎます。',
         researchUnavailable: 'リサーチサービスに接続できませんでした。',
         researchFailed: 'リサーチの手順が失敗しました。',
+        reviewersNotIndependent: 'レビュアーが執筆者から独立していませんでした。',
         researchEmpty: 'リサーチで使える情報源が見つかりませんでした。',
         reviewNotPassed: '下書きがレビューを通過しませんでした。',
         citationInvalid: '出典リンクを確認できませんでした。',
@@ -1081,6 +1082,8 @@ export const ja: TranslationDictionary = {
           '上限が分かっていてより大きいコンテキストウィンドウのモデルを選ぶか、トピックを短くしてやり直してください。',
         researchUnavailable: '少し待ってからやり直してください。',
         researchFailed: 'もう一度試してください。繰り返す場合はトピックを変えてください。',
+        reviewersNotIndependent:
+          '執筆者に含まれないレビュー用モデルを選んで、もう一度お試しください。',
         researchEmpty: 'トピックをより具体的に、または広くしてやり直してください。',
         reviewNotPassed: 'もう一度試すか、モデルを変えてください。',
         citationInvalid:
@@ -1141,6 +1144,8 @@ export const ja: TranslationDictionary = {
           'Thread の利用枠を使い切ったか、実行中の生成が枠を使用しています。完了を待つか、プランをアップグレードしてください。',
         tooManyActive:
           '同時に実行できる生成の上限に達しています。1 件の完了を待つか、1 件をキャンセルしてください。',
+        acceptedGapNotABlocker:
+          '受け入れる不足は、レビュアーが挙げた根拠の不足のいずれかである必要があります。さらに調査してからもう一度お試しください。',
         idempotencyKeyReused:
           'このリクエストは別の内容で送信済みです。フォームからやり直してください。',
         notCancellable: 'この生成は実行中でも待機中でもないため、キャンセルするものはありません。',

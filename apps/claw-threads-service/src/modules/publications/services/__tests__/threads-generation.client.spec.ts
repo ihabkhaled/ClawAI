@@ -231,6 +231,61 @@ describe('ThreadsGenerationClient', () => {
     );
   });
 
+  it('keeps the machine code of a retry that accepted a gap the review never raised (ADR-195)', async () => {
+    stubFetch({
+      ok: false,
+      status: 400,
+      json: async () => ({
+        statusCode: 400,
+        code: 'ACCEPTED_GAP_NOT_A_BLOCKER',
+        message: 'Only evidence-gap blockers of the failed review can be accepted',
+      }),
+    });
+
+    const failure = await new ThreadsGenerationClient()
+      .retry('job-1', 'o', { idempotencyKey: 'k', acceptedEvidenceGaps: ['forged'] })
+      .catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(BadRequestException);
+    expect((failure as BadRequestException).getResponse()).toMatchObject({
+      code: 'ACCEPTED_GAP_NOT_A_BLOCKER',
+      statusCode: 400,
+    });
+  });
+
+  it('forwards the accepted-gap indexes to the generation service', async () => {
+    const fetch = stubFetch({
+      ok: true,
+      json: async () => ({ jobId: 'job-2', status: 'QUEUED' }),
+    });
+
+    await new ThreadsGenerationClient().retry('job-1', 'o', {
+      idempotencyKey: 'k',
+      acceptedEvidenceGapIndexes: [0, 2],
+    });
+
+    expect(fetch).toHaveBeenCalledWith(
+      `${base}/retry`,
+      expect.objectContaining({
+        body: expect.stringContaining('"acceptedEvidenceGapIndexes":[0,2]'),
+      }),
+    );
+  });
+
+  it('answers any other 400 with the generic message, never an upstream body', async () => {
+    stubFetch({
+      ok: false,
+      status: 400,
+      json: async () => ({ code: 'SOMETHING_ELSE', message: 'internal detail' }),
+    });
+
+    const failure = await new ThreadsGenerationClient()
+      .getProgress('job-1', 'o')
+      .catch((error: unknown) => error);
+
+    expect((failure as BadRequestException).message).toBe('Generation request is invalid');
+  });
+
   it('answers a 403 from the budget step with a machine code and a plain plan message', async () => {
     stubFetch({ ok: false, status: 403 });
 

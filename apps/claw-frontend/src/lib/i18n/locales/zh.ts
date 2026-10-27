@@ -973,6 +973,7 @@ export const zh: TranslationDictionary = {
         contextWindowAssumed: '内容对大小限制未知的模型来说太长（已假定为 32k）。',
         researchUnavailable: '无法连接到研究服务。',
         researchFailed: '研究步骤失败。',
+        reviewersNotIndependent: '审阅者与作者不够独立。',
         researchEmpty: '研究没有找到可用的来源。',
         reviewNotPassed: '草稿未通过审核。',
         citationInvalid: '某个来源链接无法验证。',
@@ -1027,6 +1028,7 @@ export const zh: TranslationDictionary = {
         contextWindowAssumed: '请选择上下文窗口已知且更大的模型，或缩短主题后重试。',
         researchUnavailable: '请稍等片刻后重试。',
         researchFailed: '请重试。若持续失败，请更换主题。',
+        reviewersNotIndependent: '请选择不属于作者之一的审阅模型，然后重试。',
         researchEmpty: '请把主题写得更具体或更宽泛，然后重试。',
         reviewNotPassed: '请重试，或更换模型。',
         citationInvalid: '请重试。若仍失败，请修改主题或模型。',
@@ -1078,6 +1080,7 @@ export const zh: TranslationDictionary = {
         allowanceUnavailable:
           '你的 Thread 额度已用完，或被正在运行的生成占用。请等待其完成，或升级套餐。',
         tooManyActive: '你已达到同时运行的生成数量上限。请等待其中一个完成，或取消一个。',
+        acceptedGapNotABlocker: '接受的缺口必须是审阅者列出的证据缺口之一。请多做研究后重试。',
         idempotencyKeyReused: '此请求已用不同的内容发送过。请从表单重新开始。',
         notCancellable: '此次生成既未运行也不在队列中，因此没有可取消的内容。',
         fallbackSameProvider: '备用模型必须来自与主模型不同的服务商。请选择其他服务商。',

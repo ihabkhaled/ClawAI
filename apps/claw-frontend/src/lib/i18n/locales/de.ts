@@ -1040,6 +1040,7 @@ export const de: TranslationDictionary = {
           'Das Material ist zu lang für ein Modell mit unbekanntem Größenlimit (angenommen wurden 32k).',
         researchUnavailable: 'Der Recherche-Dienst war nicht erreichbar.',
         researchFailed: 'Der Recherche-Schritt ist fehlgeschlagen.',
+        reviewersNotIndependent: 'Die Prüfer waren nicht unabhängig von den Autoren.',
         researchEmpty: 'Die Recherche hat keine brauchbaren Quellen gefunden.',
         reviewNotPassed: 'Der Entwurf hat die Prüfungen nicht bestanden.',
         citationInvalid: 'Ein Quellenlink konnte nicht überprüft werden.',
@@ -1123,6 +1124,8 @@ export const de: TranslationDictionary = {
           'Wähle ein Modell mit bekanntem, größerem Kontextfenster oder kürze das Thema und versuche es erneut.',
         researchUnavailable: 'Warte einen Moment und versuche es erneut.',
         researchFailed: 'Versuche es erneut. Falls es weiter scheitert, ändere das Thema.',
+        reviewersNotIndependent:
+          'Wähle ein Prüfmodell, das nicht zu den Autoren gehört, und versuche es erneut.',
         researchEmpty: 'Formuliere das Thema genauer oder weiter und versuche es erneut.',
         reviewNotPassed: 'Versuche es erneut oder ändere die Modelle.',
         citationInvalid:
@@ -1190,6 +1193,8 @@ export const de: TranslationDictionary = {
           'Dein Thread-Kontingent ist aufgebraucht oder wird von einer laufenden Erstellung belegt. Warte, bis sie fertig ist, oder wechsle deinen Tarif.',
         tooManyActive:
           'Du hast bereits die maximale Anzahl an Erstellungen gleichzeitig laufen. Warte, bis eine fertig ist, oder brich eine ab.',
+        acceptedGapNotABlocker:
+          'Eine akzeptierte Lücke muss eine der von den Prüfern genannten Belegslücken sein. Recherchiere mehr und versuche es erneut.',
         idempotencyKeyReused:
           'Diese Anfrage wurde schon mit anderen Angaben gesendet. Starte neu über das Formular.',
         notCancellable:

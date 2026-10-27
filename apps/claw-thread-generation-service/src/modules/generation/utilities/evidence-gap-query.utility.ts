@@ -20,7 +20,7 @@ function withoutControlChars(text: string): string {
     .join('');
 }
 
-function tidy(text: string, max: number): string {
+export function tidyQueryText(text: string, max: number): string {
   const cleaned = withoutControlChars(redactSensitiveText(text));
   return clampReviewText(cleaned.replaceAll(WHITESPACE_RUN_PATTERN, ' '), max);
 }
@@ -33,10 +33,10 @@ function tidy(text: string, max: number): string {
 export function buildEvidenceGapQuery(topic: string, blockers: readonly string[]): string {
   const parts = blockers
     .slice(0, EVIDENCE_GAP_QUERY_MAX_BLOCKERS)
-    .map((blocker) => tidy(blocker, EVIDENCE_GAP_QUERY_BLOCKER_CHARS))
+    .map((blocker) => tidyQueryText(blocker, EVIDENCE_GAP_QUERY_BLOCKER_CHARS))
     .filter((blocker) => blocker.length > 0);
   const query = [
-    `${EVIDENCE_GAP_QUERY_LEAD}${tidy(topic, EVIDENCE_GAP_QUERY_TOPIC_CHARS)}`,
+    `${EVIDENCE_GAP_QUERY_LEAD}${tidyQueryText(topic, EVIDENCE_GAP_QUERY_TOPIC_CHARS)}`,
     ...parts,
   ].join('\n');
   return clampReviewText(query, EVIDENCE_GAP_QUERY_MAX_CHARS);

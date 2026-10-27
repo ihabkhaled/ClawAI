@@ -935,6 +935,7 @@ export type TranslationDictionary = {
         contextWindowAssumed: string;
         researchUnavailable: string;
         researchFailed: string;
+        reviewersNotIndependent: string;
         researchEmpty: string;
         reviewNotPassed: string;
         citationInvalid: string;
@@ -989,6 +990,7 @@ export type TranslationDictionary = {
         contextWindowAssumed: string;
         researchUnavailable: string;
         researchFailed: string;
+        reviewersNotIndependent: string;
         researchEmpty: string;
         reviewNotPassed: string;
         citationInvalid: string;
@@ -1017,6 +1019,7 @@ export type TranslationDictionary = {
         requestInvalid: string;
         allowanceUnavailable: string;
         tooManyActive: string;
+        acceptedGapNotABlocker: string;
         idempotencyKeyReused: string;
         notCancellable: string;
         fallbackSameProvider: string;

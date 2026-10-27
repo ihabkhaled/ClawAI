@@ -33,6 +33,8 @@ export enum ThreadGenerationErrorCode {
   LOCALE_INVALID = 'THREAD_LOCALE_INVALID',
   /** The publication type is not one the platform supports. */
   PUBLICATION_TYPE_INVALID = 'THREAD_PUBLICATION_TYPE_INVALID',
+  /** A retry tried to accept an evidence gap that the failed review never raised as a blocker (ADR-195). */
+  ACCEPTED_GAP_NOT_A_BLOCKER = 'ACCEPTED_GAP_NOT_A_BLOCKER',
   /** Any other start or retry field that failed validation (missing, wrong type, too long). */
   REQUEST_INVALID = 'THREAD_REQUEST_INVALID',
 }

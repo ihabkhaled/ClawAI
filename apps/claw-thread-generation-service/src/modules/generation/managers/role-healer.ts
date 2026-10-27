@@ -17,6 +17,7 @@ import {
   MAX_HEAL_ATTEMPTS_PER_ROLE,
   MAX_PROACTIVE_SHRINK_LEVEL,
   PERCENT_DIVISOR,
+  REVIEWERS_NOT_INDEPENDENT_CODE,
 } from '../constants/healing.constants';
 import {
   JSON_REPAIR_REPLY_LEAD,
@@ -26,7 +27,7 @@ import {
 import { ROLE_MAX_MS } from '../constants/output-retry.constants';
 import { STEP_FALLBACK_ERROR_CODE } from '../constants/step-recorder.constants';
 import type { CandidateOutcome } from '../types/candidate-outcome.types';
-import type { GenerationPipelineInput } from '../types/generation-pipeline.types';
+import type { GenerationPipelineInput, ModelRole } from '../types/generation-pipeline.types';
 import type {
   AttemptFailure,
   HealerDeps,
@@ -39,6 +40,7 @@ import type {
 } from '../types/healing.types';
 import type { StepRecordInput } from '../types/step-recorder.types';
 import { CandidatesExhaustedError } from '../utilities/candidates-exhausted.error';
+import { ReviewersNotIndependentError } from '../utilities/reviewers-not-independent.error';
 import { classifyFailure } from '../utilities/classify-failure.utility';
 import {
   classifyModelOutput,
@@ -116,10 +118,17 @@ export class RoleHealer {
       neededTokens,
     });
     const deadline = this.deps.now() + ROLE_MAX_MS;
-    const distinct = (candidates: readonly QueuedCandidate[]): QueuedCandidate[] =>
-      this.isAuthor(input, role.id)
-        ? preferDistinctModels(candidates, this.takenByOtherAuthors(input, role.id))
-        : [...candidates];
+    // The Critic never reviews with the model that answered the Judge of its round (ADR-195).
+    const forbidden = await this.forbiddenForIndependence(input, role);
+    let sawForbidden = false;
+    let stoppedEarly = false;
+    const distinct = (candidates: readonly QueuedCandidate[]): QueuedCandidate[] => {
+      const kept = this.preferDistinct(input, role, candidates);
+      if (forbidden === null) return kept;
+      const allowed = kept.filter((candidate) => candidateKey(candidate) !== forbidden);
+      if (allowed.length !== kept.length) sawForbidden = true;
+      return allowed;
+    };
     const { stage, roleKind } = roleStepInfo(spec.roleKey);
     const outcomes: CandidateOutcome[] = [];
     const counter = { attempts: 0 };
@@ -147,6 +156,7 @@ export class RoleHealer {
         const stop = this.stopReason(budget, counter, deadline);
         if (stop !== null) {
           await this.noteStop(input, step, stop);
+          stoppedEarly = true;
           break;
         }
         await this.recordSwap(input, step, candidate, previous);
@@ -173,6 +183,7 @@ export class RoleHealer {
       previous = result;
       if (result.ownerOnly) {
         await this.noteStop(input, step, HEAL_STOPPED_OWNER_CODE);
+        stoppedEarly = true;
         break;
       }
       remaining = distinct(
@@ -184,7 +195,64 @@ export class RoleHealer {
         ),
       );
     }
+    if (forbidden !== null && sawForbidden && !stoppedEarly) {
+      await this.noteNotIndependent(input, role, spec, forbidden);
+      throw new ReviewersNotIndependentError();
+    }
     throw this.exhaustedError(outcomes, lastError, everyFailureDeterministic);
+  }
+
+  /** Authors avoid each other's models; the Judge avoids the Critic's own pick (ADR-183, ADR-195). */
+  private preferDistinct(
+    input: GenerationPipelineInput,
+    role: ModelRole,
+    candidates: readonly QueuedCandidate[],
+  ): QueuedCandidate[] {
+    if (this.isAuthor(input, role.id)) {
+      return preferDistinctModels(candidates, this.takenByOtherAuthors(input, role.id));
+    }
+    const pair = candidateKey(input.judge) !== candidateKey(input.critic);
+    return role.id === input.judge.id && pair
+      ? preferDistinctModels(candidates, new Set([candidateKey(input.critic)]))
+      : [...candidates];
+  }
+
+  /**
+   * The model the Critic must not use: the one that answered this round's Judge. Null for every
+   * other role, and when the owner picked the same model for both seats on purpose.
+   */
+  private async forbiddenForIndependence(
+    input: GenerationPipelineInput,
+    role: ModelRole,
+  ): Promise<string | null> {
+    const guarded =
+      role.id === input.critic.id && candidateKey(input.judge) !== candidateKey(input.critic);
+    return guarded
+      ? (this.successfulModels.get(input)?.get(input.judge.id) ??
+          (await this.deps.loadSuccessful?.(input.jobId, input.judge.id)) ??
+          null)
+      : null;
+  }
+
+  /** The coded step that says why the Critic could not run: the only models left were the Judge's. */
+  private async noteNotIndependent(
+    input: GenerationPipelineInput,
+    role: ModelRole,
+    spec: RoleCallSpec,
+    forbidden: string,
+  ): Promise<void> {
+    const { stage, roleKind } = roleStepInfo(spec.roleKey);
+    const slash = forbidden.indexOf('/');
+    await this.deps.record(input.jobId, {
+      stage,
+      round: spec.round,
+      roleKind,
+      roleId: role.id,
+      provider: forbidden.slice(0, Math.max(slash, 0)),
+      model: forbidden.slice(slash + 1),
+      outcome: 'SKIPPED',
+      code: REVIEWERS_NOT_INDEPENDENT_CODE,
+    });
   }
 
   /** Why no further healing attempt may start now, or null when one may. */

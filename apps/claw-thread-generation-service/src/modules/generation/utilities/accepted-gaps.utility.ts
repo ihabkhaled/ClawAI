@@ -26,7 +26,7 @@ import {
 import type { AcceptedGapSplit, MarkdownSection } from '../types/accepted-gaps.types';
 import { foldForMatch, isEvidenceGapBlocker } from './classify-blocker.utility';
 
-function stripControlCharacters(text: string): string {
+export function stripControlCharacters(text: string): string {
   return [...text]
     .filter((char) => {
       const code = char.codePointAt(0) ?? 0;
